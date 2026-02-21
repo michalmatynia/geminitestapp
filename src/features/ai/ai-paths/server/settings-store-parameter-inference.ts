@@ -6,7 +6,7 @@ export const PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME = 'Infer Parameters';
 export const buildParameterInferencePathConfigValue = (timestamp: string): string =>
   JSON.stringify({
     id: PARAMETER_INFERENCE_PATH_ID,
-    version: 7,
+    version: 8,
     name: PARAMETER_INFERENCE_PATH_NAME,
     description:
       'Infer product parameter values from name and images, then update product parameters.',
@@ -35,7 +35,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
           },
         },
         id: 'node-trigger-params',
-        position: { x: 24, y: 480 },
+        position: { x: 24, y: 520 },
       },
       {
         type: 'parser',
@@ -44,7 +44,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         inputs: ['entityJson', 'context'],
         outputs: ['bundle', 'images'],
         id: 'node-parser-params',
-        position: { x: 540, y: 470 },
+        position: { x: 540, y: 520 },
         config: {
           parser: {
             mappings: {
@@ -121,11 +121,151 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
       {
         type: 'prompt',
         title: 'Prompt',
+        description: 'Build parameter template rows for products with empty parameters.',
+        inputs: ['result'],
+        outputs: ['prompt'],
+        id: 'node-prompt-template-params',
+        position: { x: 1040, y: 40 },
+        config: {
+          prompt: {
+            template:
+              'You create PRODUCT parameter template rows from parameter definitions JSON.\n' +
+              'Parameter definitions JSON (array): {{result}}\n\n' +
+              'Rules:\n' +
+              '1. Return ONLY valid JSON array.\n' +
+              '2. Output one item per definition with id.\n' +
+              '3. Item schema: {"parameterId":"<id>","value":""}.\n' +
+              '4. parameterId must exactly match definition id.\n' +
+              '5. Skip definitions with missing/empty id.\n' +
+              '6. Do not include extra keys.\n' +
+              '7. No markdown, no explanations, no code fences.\n' +
+              '8. If input has no valid definitions, return [].',
+          },
+        },
+      },
+      {
+        type: 'model',
+        title: 'Model',
+        description: 'Create parameter template rows from definitions.',
+        inputs: ['prompt', 'context'],
+        outputs: ['result', 'jobId'],
+        id: 'node-model-template-params',
+        position: { x: 1460, y: 40 },
+        config: {
+          model: {
+            modelId: 'gemma3:12b',
+            temperature: 0,
+            maxTokens: 900,
+            vision: false,
+            waitForResult: true,
+          },
+        },
+      },
+      {
+        type: 'regex',
+        title: 'Regex JSON Extract',
+        description: 'Extract JSON array template from model response.',
+        inputs: ['value', 'prompt', 'regexCallback'],
+        outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
+        id: 'node-regex-template-params',
+        position: { x: 1880, y: 40 },
+        config: {
+          regex: {
+            pattern: '\\[[\\s\\S]*\\]',
+            flags: '',
+            mode: 'extract',
+            matchMode: 'first_overall',
+            groupBy: 'match',
+            outputMode: 'object',
+            includeUnmatched: false,
+            unmatchedKey: '__unmatched__',
+            splitLines: false,
+            sampleText: '',
+            aiPrompt: '',
+            aiAutoRun: false,
+          },
+          runtime: { waitForInputs: true },
+        },
+      },
+      {
+        type: 'database',
+        title: 'Database Query',
+        description: 'Seed product parameter rows when parameters are missing/empty.',
+        inputs: [
+          'entityId',
+          'entityType',
+          'productId',
+          'context',
+          'query',
+          'value',
+          'bundle',
+          'result',
+          'content_en',
+          'queryCallback',
+          'schema',
+          'aiQuery',
+        ],
+        outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
+        id: 'node-seed-params',
+        position: { x: 2320, y: 40 },
+        config: {
+          database: {
+            operation: 'update',
+            entityType: 'product',
+            idField: 'entityId',
+            mode: 'replace',
+            updateStrategy: 'one',
+            useMongoActions: true,
+            actionCategory: 'update',
+            action: 'updateOne',
+            mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+            updatePayloadMode: 'custom',
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              preset: 'by_id',
+              field: '_id',
+              idType: 'string',
+              queryTemplate:
+                '{\n' +
+                '  "id": "{{entityId}}",\n' +
+                '  "$or": [\n' +
+                '    { "parameters": { "$exists": false } },\n' +
+                '    { "parameters": { "$size": 0 } }\n' +
+                '  ]\n' +
+                '}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+            writeSource: 'bundle',
+            writeSourcePath: '',
+            dryRun: false,
+            distinctField: '',
+            updateTemplate:
+              '{\n' +
+              '  "$set": {\n' +
+              '    "parameters": {{value}}\n' +
+              '  }\n' +
+              '}',
+            skipEmpty: true,
+            trimStrings: false,
+            aiPrompt: '',
+            validationRuleIds: [],
+          },
+          runtime: { waitForInputs: true },
+        },
+      },
+      {
+        type: 'prompt',
+        title: 'Prompt',
         description: 'Build prompt for parameter inference.',
         inputs: ['bundle', 'title', 'images', 'result', 'entityId'],
         outputs: ['prompt', 'images'],
         id: 'node-prompt-params',
-        position: { x: 1080, y: 260 },
+        position: { x: 1080, y: 320 },
         config: {
           prompt: {
             template:
@@ -153,7 +293,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         inputs: ['prompt', 'images', 'context'],
         outputs: ['result', 'jobId'],
         id: 'node-model-params',
-        position: { x: 1540, y: 520 },
+        position: { x: 1540, y: 560 },
         config: {
           model: {
             modelId: 'gemma3:12b',
@@ -171,7 +311,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         inputs: ['value', 'prompt', 'regexCallback'],
         outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
         id: 'node-regex-params',
-        position: { x: 2000, y: 520 },
+        position: { x: 2000, y: 560 },
         config: {
           regex: {
             pattern: '\\[[\\s\\S]*\\]',
@@ -210,7 +350,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         ],
         outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
         id: 'node-update-params',
-        position: { x: 2460, y: 520 },
+        position: { x: 2460, y: 560 },
         config: {
           database: {
             operation: 'update',
@@ -280,66 +420,115 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
       },
       {
         id: 'edge-params-03',
+        from: 'node-query-params',
+        to: 'node-prompt-template-params',
+        fromPort: 'result',
+        toPort: 'result',
+      },
+      {
+        id: 'edge-params-04',
+        from: 'node-prompt-template-params',
+        to: 'node-model-template-params',
+        fromPort: 'prompt',
+        toPort: 'prompt',
+      },
+      {
+        id: 'edge-params-05',
+        from: 'node-model-template-params',
+        to: 'node-regex-template-params',
+        fromPort: 'result',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-params-06',
+        from: 'node-regex-template-params',
+        to: 'node-seed-params',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-params-07',
+        from: 'node-trigger-params',
+        to: 'node-seed-params',
+        fromPort: 'entityId',
+        toPort: 'entityId',
+      },
+      {
+        id: 'edge-params-08',
+        from: 'node-trigger-params',
+        to: 'node-seed-params',
+        fromPort: 'entityType',
+        toPort: 'entityType',
+      },
+      {
+        id: 'edge-params-09',
         from: 'node-parser-params',
         to: 'node-prompt-params',
         fromPort: 'bundle',
         toPort: 'bundle',
       },
       {
-        id: 'edge-params-04',
+        id: 'edge-params-10',
         from: 'node-query-params',
         to: 'node-prompt-params',
         fromPort: 'result',
         toPort: 'result',
       },
       {
-        id: 'edge-params-05',
+        id: 'edge-params-11',
         from: 'node-prompt-params',
         to: 'node-model-params',
         fromPort: 'prompt',
         toPort: 'prompt',
       },
       {
-        id: 'edge-params-06',
+        id: 'edge-params-12',
         from: 'node-prompt-params',
         to: 'node-model-params',
         fromPort: 'images',
         toPort: 'images',
       },
       {
-        id: 'edge-params-07',
+        id: 'edge-params-13',
         from: 'node-model-params',
         to: 'node-regex-params',
         fromPort: 'result',
         toPort: 'value',
       },
       {
-        id: 'edge-params-08',
+        id: 'edge-params-14',
         from: 'node-regex-params',
         to: 'node-update-params',
         fromPort: 'value',
         toPort: 'value',
       },
       {
-        id: 'edge-params-09',
+        id: 'edge-params-15',
         from: 'node-trigger-params',
         to: 'node-update-params',
         fromPort: 'entityId',
         toPort: 'entityId',
       },
       {
-        id: 'edge-params-10',
+        id: 'edge-params-16',
         from: 'node-trigger-params',
         to: 'node-update-params',
         fromPort: 'entityType',
         toPort: 'entityType',
       },
       {
-        id: 'edge-params-11',
+        id: 'edge-params-17',
         from: 'node-query-params',
         to: 'node-update-params',
         fromPort: 'result',
         toPort: 'result',
+      },
+      {
+        id: 'edge-params-18',
+        from: 'node-seed-params',
+        to: 'node-update-params',
+        fromPort: 'result',
+        toPort: 'bundle',
       },
     ],
     updatedAt: timestamp,
@@ -534,6 +723,113 @@ export const needsParameterInferenceConfigUpgrade = (
       return true;
     }
 
+    const templatePromptNode = nodes.find(
+      (node) => node?.['id'] === 'node-prompt-template-params'
+    );
+    const templatePromptTemplate =
+      templatePromptNode &&
+      typeof templatePromptNode === 'object' &&
+      templatePromptNode['config'] &&
+      typeof templatePromptNode['config'] === 'object' &&
+      (templatePromptNode['config'] as Record<string, unknown>)['prompt'] &&
+      typeof (templatePromptNode['config'] as Record<string, unknown>)[
+        'prompt'
+      ] === 'object'
+        ? (
+          (templatePromptNode['config'] as Record<string, unknown>)[
+            'prompt'
+          ] as Record<string, unknown>
+        )['template']
+        : null;
+    if (
+      typeof templatePromptTemplate !== 'string' ||
+      !templatePromptTemplate.includes(
+        '{"parameterId":"<id>","value":""}'
+      ) ||
+      !templatePromptTemplate.includes('If input has no valid definitions')
+    ) {
+      return true;
+    }
+
+    const templateRegexNode = nodes.find(
+      (node) => node?.['id'] === 'node-regex-template-params'
+    );
+    const templateRegexMode =
+      templateRegexNode &&
+      typeof templateRegexNode === 'object' &&
+      templateRegexNode['config'] &&
+      typeof templateRegexNode['config'] === 'object' &&
+      (templateRegexNode['config'] as Record<string, unknown>)['regex'] &&
+      typeof (templateRegexNode['config'] as Record<string, unknown>)['regex'] ===
+        'object'
+        ? (
+          (templateRegexNode['config'] as Record<string, unknown>)[
+            'regex'
+          ] as Record<string, unknown>
+        )['mode']
+        : null;
+    if (templateRegexMode !== 'extract') return true;
+
+    const seedNode = nodes.find((node) => node?.['id'] === 'node-seed-params');
+    if (seedNode?.['type'] !== 'database') return true;
+    const seedDatabase =
+      seedNode &&
+      typeof seedNode === 'object' &&
+      seedNode['config'] &&
+      typeof seedNode['config'] === 'object' &&
+      (seedNode['config'] as Record<string, unknown>)['database'] &&
+      typeof (seedNode['config'] as Record<string, unknown>)['database'] ===
+        'object'
+        ? ((seedNode['config'] as Record<string, unknown>)[
+          'database'
+        ] as Record<string, unknown>)
+        : null;
+    const seedQueryConfig =
+      seedDatabase &&
+      typeof seedDatabase['query'] === 'object' &&
+      seedDatabase['query'] !== null
+        ? (seedDatabase['query'] as Record<string, unknown>)
+        : null;
+    const seedQueryCollection =
+      seedQueryConfig && typeof seedQueryConfig['collection'] === 'string'
+        ? seedQueryConfig['collection'].trim().toLowerCase()
+        : '';
+    if (seedQueryCollection !== 'products') return true;
+    const seedQueryMode =
+      seedQueryConfig && typeof seedQueryConfig['mode'] === 'string'
+        ? seedQueryConfig['mode']
+        : null;
+    if (seedQueryMode !== 'custom') return true;
+    const seedQueryTemplate =
+      seedQueryConfig && typeof seedQueryConfig['queryTemplate'] === 'string'
+        ? seedQueryConfig['queryTemplate'].trim()
+        : '';
+    if (
+      !seedQueryTemplate ||
+      !seedQueryTemplate.includes('{{entityId}}') ||
+      !seedQueryTemplate.includes('"parameters"') ||
+      !seedQueryTemplate.includes('"$exists"') ||
+      !seedQueryTemplate.includes('"$size"')
+    ) {
+      return true;
+    }
+    const seedUpdatePayloadMode =
+      typeof seedDatabase?.['updatePayloadMode'] === 'string'
+        ? seedDatabase['updatePayloadMode']
+        : null;
+    if (seedUpdatePayloadMode !== 'custom') return true;
+    const seedUpdateTemplate =
+      typeof seedDatabase?.['updateTemplate'] === 'string'
+        ? seedDatabase['updateTemplate'].trim()
+        : '';
+    if (
+      !seedUpdateTemplate.includes('"$set"') ||
+      !seedUpdateTemplate.includes('"parameters"') ||
+      !seedUpdateTemplate.includes('{{value}}')
+    ) {
+      return true;
+    }
+
     const edges = Array.isArray(parsed['edges'])
       ? (parsed['edges'] as Array<Record<string, unknown>>)
       : [];
@@ -557,7 +853,40 @@ export const needsParameterInferenceConfigUpgrade = (
         edge['toPort'] === 'result'
       );
     });
-    return !hasDefinitionsEdgeToPrompt;
+    if (!hasDefinitionsEdgeToPrompt) return true;
+
+    const hasDefinitionsEdgeToTemplatePrompt = edges.some((edge) => {
+      if (!edge || typeof edge !== 'object') return false;
+      return (
+        edge['from'] === 'node-query-params' &&
+        edge['to'] === 'node-prompt-template-params' &&
+        edge['fromPort'] === 'result' &&
+        edge['toPort'] === 'result'
+      );
+    });
+    if (!hasDefinitionsEdgeToTemplatePrompt) return true;
+
+    const hasTemplateWriteEdgeToSeed = edges.some((edge) => {
+      if (!edge || typeof edge !== 'object') return false;
+      return (
+        edge['from'] === 'node-regex-template-params' &&
+        edge['to'] === 'node-seed-params' &&
+        edge['fromPort'] === 'value' &&
+        edge['toPort'] === 'value'
+      );
+    });
+    if (!hasTemplateWriteEdgeToSeed) return true;
+
+    const hasSeedDependencyEdgeToUpdater = edges.some((edge) => {
+      if (!edge || typeof edge !== 'object') return false;
+      return (
+        edge['from'] === 'node-seed-params' &&
+        edge['to'] === 'node-update-params' &&
+        edge['fromPort'] === 'result' &&
+        edge['toPort'] === 'bundle'
+      );
+    });
+    return !hasSeedDependencyEdgeToUpdater;
   } catch {
     return true;
   }

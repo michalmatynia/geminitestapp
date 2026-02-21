@@ -195,8 +195,9 @@ const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise
   try {
     const queueModule = await import('@/features/jobs/workers/productAiQueue');
     queueModule.startProductAiJobQueue();
+    const runtimeType = job.jobType ?? job.type ?? 'db_backup';
     void queueModule
-      .enqueueProductAiJobToQueue(job.id, job.productId, job.type, job.payload)
+      .enqueueProductAiJobToQueue(job.id, job.productId, runtimeType, job.payload)
       .catch((error: unknown) => {
         void ErrorSystem.captureException(error, {
           service: LOG_SOURCE,
@@ -205,6 +206,16 @@ const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise
             jobId: job.id,
             action: 'enqueueScheduledBackupRuntimeQueue',
           },
+        });
+        void queueModule.processSingleJob(job.id).catch((inlineError: unknown) => {
+          void ErrorSystem.captureException(inlineError, {
+            service: LOG_SOURCE,
+            context: {
+              dbType,
+              jobId: job.id,
+              action: 'processScheduledBackupInlineFallback',
+            },
+          });
         });
       });
   } catch (error: unknown) {
@@ -400,6 +411,7 @@ export async function getDatabaseBackupSchedulerStatus(
   return {
     timestamp: now.toISOString(),
     schedulerEnabled: schedule.schedulerEnabled,
+    repeatTickEnabled: schedule.repeatTickEnabled,
     lastCheckedAt: schedule.lastCheckedAt,
     queue: {
       running: false,

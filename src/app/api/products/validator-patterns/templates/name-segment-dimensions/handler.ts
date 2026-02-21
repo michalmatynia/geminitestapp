@@ -44,6 +44,8 @@ const TEMPLATE_SCOPES: ProductValidationInstanceScope[] = [
   'product_create',
   'product_edit',
 ];
+const NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_ID = 'name_segment_dimensions';
+const NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_LABEL = 'Name Segment -> Dimensions';
 
 const isNameSegmentDimensionPattern = (
   pattern: ProductValidationPattern,
@@ -134,8 +136,8 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
       replacementAppliesToScopes: [...TEMPLATE_SCOPES],
       postAcceptBehavior: 'revalidate' as const,
       validationDebounceMs: 250,
-      sequenceGroupId: null,
-      sequenceGroupLabel: null,
+      sequenceGroupId: NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_ID,
+      sequenceGroupLabel: NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_LABEL,
       sequenceGroupDebounceMs: 0,
       sequence,
       chainMode: 'continue' as const,
@@ -191,4 +193,3 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
     ensuredPatterns,
   });
 }
-

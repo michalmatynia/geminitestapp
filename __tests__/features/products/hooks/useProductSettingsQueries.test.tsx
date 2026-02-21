@@ -125,7 +125,12 @@ describe('useProductSettingsQueries invalidation', () => {
   it('useUpdateValidatorSettingsMutation invalidates settings/config key family', async () => {
     vi.mocked(productSettingsApi.updateValidatorSettings).mockResolvedValue({
       enabledByDefault: true,
-      instanceDenyBehavior: {} as never,
+      formatterEnabledByDefault: true,
+      instanceDenyBehavior: {
+        draft_template: 'ask_again',
+        product_create: 'ask_again',
+        product_edit: 'ask_again',
+      },
     });
 
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');

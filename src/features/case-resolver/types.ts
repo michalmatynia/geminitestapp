@@ -71,36 +71,36 @@ export interface CaseResolverFileEditDraft {
   content: string;
   fileType: CaseResolverFileType;
   folder: string;
-  parentCaseId?: string | null;
-  referenceCaseIds?: string[];
-  createdAt?: string;
-  updatedAt?: string;
-  documentDate?: CaseResolverDocumentDateProposal | null;
-  documentCity?: string | null;
-  originalDocumentContent?: string;
-  explodedDocumentContent?: string;
-  activeDocumentVersion?: CaseResolverDocumentVersion;
-  editorType?: CaseResolverEditorMode;
-  documentContentFormatVersion?: number;
-  documentContentVersion?: number; // Changed to number
-  baseDocumentContentVersion?: number | null; // Changed to number
-  documentContent?: string;
-  documentContentMarkdown?: string;
-  documentContentHtml?: string;
-  documentContentPlainText?: string;
+  parentCaseId?: string | null | undefined;
+  referenceCaseIds?: string[] | undefined;
+  createdAt?: string | undefined;
+  updatedAt?: string | undefined;
+  documentDate?: CaseResolverDocumentDateProposal | null | undefined;
+  documentCity?: string | null | undefined;
+  originalDocumentContent?: string | undefined;
+  explodedDocumentContent?: string | undefined;
+  activeDocumentVersion?: CaseResolverDocumentVersion | undefined;
+  editorType?: CaseResolverEditorMode | undefined;
+  documentContentFormatVersion?: number | undefined;
+  documentContentVersion?: number | undefined;
+  baseDocumentContentVersion?: number | null | undefined;
+  documentContent?: string | undefined;
+  documentContentMarkdown?: string | undefined;
+  documentContentHtml?: string | undefined;
+  documentContentPlainText?: string | undefined;
   documentHistory: CaseResolverDocumentHistoryEntry[];
-  documentConversionWarnings?: string[];
-  lastContentConversionAt?: string | null;
+  documentConversionWarnings?: string[] | undefined;
+  lastContentConversionAt?: string | null | undefined;
   scanSlots: CaseResolverScanSlot[];
-  scanOcrModel?: string;
-  scanOcrPrompt?: string;
-  isLocked?: boolean;
-  graph?: CaseResolverGraph;
-  addresser?: CaseResolverPartyReference | null;
-  addressee?: CaseResolverPartyReference | null;
-  tagId?: string | null;
-  categoryId?: string | null;
-  caseIdentifierId?: string | null;
+  scanOcrModel?: string | undefined;
+  scanOcrPrompt?: string | undefined;
+  isLocked?: boolean | undefined;
+  graph?: CaseResolverGraph | undefined;
+  addresser?: CaseResolverPartyReference | null | undefined;
+  addressee?: CaseResolverPartyReference | null | undefined;
+  tagId?: string | null | undefined;
+  categoryId?: string | null | undefined;
+  caseIdentifierId?: string | null | undefined;
 }
 
 export type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
@@ -108,6 +108,7 @@ export type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
 export type CaseResolverStateValue = {
   workspace: CaseResolverWorkspace;
   workspaceRef: React.MutableRefObject<CaseResolverWorkspace>;
+  setWorkspace: React.Dispatch<React.SetStateAction<CaseResolverWorkspace>>;
   selectedFileId: string | null;
   selectedAssetId: string | null;
   selectedFolderPath: string | null;
@@ -129,7 +130,13 @@ export type CaseResolverStateValue = {
   handleSaveWorkspace: () => void;
   updateWorkspace: (
     updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
-    options?: { persistToast?: string; mutationId?: string; source?: string; skipNormalization?: boolean }
+    options?: {
+      persistToast?: string;
+      persistNow?: boolean;
+      mutationId?: string;
+      source?: string;
+      skipNormalization?: boolean;
+    }
   ) => void;
   editingDocumentDraft: CaseResolverFileEditDraft | null;
   editingDocumentNodeContext: CaseResolverEditorNodeContext | null;

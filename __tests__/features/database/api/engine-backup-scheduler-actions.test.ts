@@ -95,6 +95,7 @@ describe('Database Engine backup scheduler actions', () => {
     vi.mocked(getDatabaseBackupSchedulerStatus).mockResolvedValue({
       timestamp: '2026-02-10T10:00:00.000Z',
       schedulerEnabled: true,
+      repeatTickEnabled: true,
       lastCheckedAt: '2026-02-10T10:00:00.000Z',
       queue: {
         running: true,

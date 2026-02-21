@@ -192,14 +192,20 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
       header: 'Display',
       cell: ({ row }) => {
         const Icon = row.original.iconId ? ICON_LIBRARY_MAP[row.original.iconId] : undefined;
-        const display = row.original.display;
-        const label = typeof display === 'string' ? display : display.label;
+        const { label, showLabel } = row.original.display;
+        const isIconOnly = showLabel === false;
 
-        if (!Icon) return <span className='text-xs text-gray-400'>{label}</span>;
+        if (!Icon) {
+          return (
+            <span className='text-xs text-gray-400'>
+              {isIconOnly ? 'Icon only' : label}
+            </span>
+          );
+        }
         return (
           <div className='flex items-center gap-2 text-gray-300'>
             <Icon className='size-4' />
-            {label !== 'icon' && <span className='text-xs'>{label}</span>}
+            {!isIconOnly && <span className='text-xs'>{label}</span>}
           </div>
         );
       },

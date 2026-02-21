@@ -13,6 +13,9 @@ import { assertDatabaseEngineManageAccess } from '@/features/database/services/d
 import type { DatabaseBackupFileDto, DatabaseBackupFileDto as DatabaseInfo } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
+const isValidDate = (value: unknown): value is Date =>
+  value instanceof Date && Number.isFinite(value.getTime());
+
 async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[]> {
   const backupsDir = type === 'mongodb' ? mongoBackupsDir : pgBackupsDir;
   const ensureDir =
@@ -28,15 +31,31 @@ async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[
     backupFiles.map(async (file) => {
       const filePath = join(backupsDir, file);
       const stats = await fs.stat(filePath);
+      const createdAt =
+        isValidDate(stats.birthtime) && stats.birthtime.getTime() > 0
+          ? stats.birthtime
+          : isValidDate(stats.ctime)
+            ? stats.ctime
+            : isValidDate(stats.mtime)
+              ? stats.mtime
+              : new Date();
+      const lastModifiedAt = isValidDate(stats.mtime) ? stats.mtime : createdAt;
       return {
         name: file,
         size: stats.size,
-        createdAt: stats.birthtime.toISOString(),
+        createdAt: createdAt.toISOString(),
+        lastModifiedAt: lastModifiedAt.toISOString(),
       };
     })
   );
 
-  return backups;
+  return backups.sort((a, b) => {
+    const aTs = Date.parse(a.lastModifiedAt ?? a.createdAt);
+    const bTs = Date.parse(b.lastModifiedAt ?? b.createdAt);
+    const safeA = Number.isFinite(aTs) ? aTs : 0;
+    const safeB = Number.isFinite(bTs) ? bTs : 0;
+    return safeB - safeA;
+  });
 }
 
 

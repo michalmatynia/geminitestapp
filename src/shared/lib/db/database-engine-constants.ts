@@ -66,6 +66,7 @@ const DEFAULT_DATABASE_ENGINE_BACKUP_TARGET_SCHEDULE: DatabaseEngineBackupTarget
 
 export const DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE: DatabaseEngineBackupSchedule = {
   schedulerEnabled: false,
+  repeatTickEnabled: false,
   lastCheckedAt: null,
   mongodb: { ...DEFAULT_DATABASE_ENGINE_BACKUP_TARGET_SCHEDULE },
   postgresql: { ...DEFAULT_DATABASE_ENGINE_BACKUP_TARGET_SCHEDULE },

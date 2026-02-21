@@ -44,8 +44,7 @@ export function TriggerButtonBar({
     <div className={cn('flex flex-wrap items-center gap-2', className)}>
       {buttons.map((button: AiTriggerButtonRecord) => {
         const Icon = button.iconId ? ICON_LIBRARY_MAP[button.iconId] : null;
-        const display = button.display ?? 'icon_label';
-        const showLabel = display !== 'icon';
+        const showLabel = button.display.showLabel !== false;
         const runState = runStates[button.id];
         const isRunning = runState?.status === 'running';
         const progress = isRunning ? Math.max(0, Math.min(1, runState?.progress ?? 0)) : 0;

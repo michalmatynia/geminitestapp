@@ -1670,7 +1670,20 @@ export type AiPathRunRepository = {
 /**
  * Legacy aliases / Runtime Types
  */
-export type RuntimeState = unknown;
+export type RuntimeState = {
+  status?: string;
+  nodeStatuses?: Record<string, string>;
+  nodeOutputs?: Record<string, RuntimePortValues>;
+  variables?: Record<string, unknown>;
+  events?: unknown[];
+  inputs?: Record<string, RuntimePortValues>;
+  outputs?: Record<string, RuntimePortValues>;
+  history?: Record<string, RuntimeHistoryEntry[]>;
+  runId?: string;
+  runStartedAt?: string;
+  hashes?: Record<string, string>;
+  hashTimestamps?: Record<string, string>;
+};
 export type RuntimePortValues = Record<string, unknown>;
 export type RuntimeEventInputDto = unknown;
 export type RunStatusDto = unknown;

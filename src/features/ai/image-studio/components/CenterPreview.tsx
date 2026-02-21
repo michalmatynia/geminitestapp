@@ -9,6 +9,7 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
 import { VectorDrawingCanvas, VectorDrawingProvider } from '@/features/vector-drawing';
+import type { VectorShape } from '@/shared/contracts/vector';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
@@ -330,9 +331,9 @@ export function CenterPreview(): React.JSX.Element {
   const eligibleMaskShapes = useMemo(
     () =>
       maskShapes.filter(
-        (shape: any) =>
+        (shape: VectorShape) =>
           shape.visible &&
-          ((shape.type === 'rect' || shape.type === 'ellipse' || (shape.type as string) === 'ellipse')
+          (shape.type === 'rect' || shape.type === 'ellipse'
             ? shape.points.length >= 2
             : shape.closed && shape.points.length >= 3)
       ),

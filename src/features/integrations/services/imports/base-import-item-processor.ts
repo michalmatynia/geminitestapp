@@ -16,7 +16,7 @@ import {
   type ProductLookupMaps,
 } from '@/features/integrations/services/imports/base-import-service-shared';
 import { mapBaseProduct } from '@/features/integrations/services/imports/base-mapper';
-import { applyBaseParameterImport } from '@/features/integrations/services/imports/parameter-import';
+import { applyBaseParameterImport } from '@/features/integrations/services/imports/parameter-import/apply';
 import {
   findProductListingByProductAndConnectionAcrossProviders,
   getProductListingRepository,
@@ -25,21 +25,6 @@ import { getTagMappingRepository } from '@/features/integrations/services/tag-ma
 import { getProducerRepository } from '@/features/products/services/producer-repository';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { getTagRepository } from '@/features/products/services/tag-repository';
-import type { 
-  ProductParameterDto as ProductParameter,
-  ProductParameterFiltersDto as ParameterFilters,
-  ProductParameterCreateInputDto as ParameterCreateInput,
-  ProductParameterUpdateInputDto as ParameterUpdateInput,
-} from '@/shared/contracts/products';
-
-export type ParameterRepository = {
-  listParameters(filters: ParameterFilters): Promise<ProductParameter[]>;
-  getParameterById(id: string): Promise<ProductParameter | null>;
-  createParameter(data: ParameterCreateInput): Promise<ProductParameter>;
-  updateParameter(id: string, data: ParameterUpdateInput): Promise<ProductParameter>;
-  deleteParameter(id: string): Promise<void>;
-  findByName(catalogId: string, name_en: string): Promise<ProductParameter | null>;
-};
 import {
   validateProductCreate,
   validateProductUpdate,
@@ -57,8 +42,10 @@ import {
   type BaseImportParameterImportSettings,
 } from '@/shared/contracts/integrations';
 import type {
+  ParameterRepository,
   ProductDto as ProductRecord,
   ProductWithImagesDto as ProductWithImages,
+  ProductParameterValueDto as ProductParameterValue,
   CreateProductDto as ProductCreateInput,
   UpdateProductDto as ProductUpdateInput,
 } from '@/shared/contracts/products';
@@ -446,6 +433,69 @@ const normalizeMappedProduct = (
   return mapped;
 };
 
+const normalizeParameterValues = (input: unknown): ProductParameterValue[] => {
+  if (!Array.isArray(input)) return [];
+  const byParameterId = new Map<string, ProductParameterValue>();
+  input.forEach((entry: unknown) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+    const record = entry as Record<string, unknown>;
+    const parameterId =
+      typeof record['parameterId'] === 'string' ? record['parameterId'].trim() : '';
+    if (!parameterId) return;
+    const value = typeof record['value'] === 'string' ? record['value'] : '';
+    const valuesByLanguageRaw = record['valuesByLanguage'];
+    const valuesByLanguage =
+      valuesByLanguageRaw &&
+      typeof valuesByLanguageRaw === 'object' &&
+      !Array.isArray(valuesByLanguageRaw)
+        ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
+          (acc: Record<string, string>, [languageCode, languageValue]: [string, unknown]) => {
+            const normalizedLanguageCode = languageCode.trim().toLowerCase();
+            if (!normalizedLanguageCode || typeof languageValue !== 'string') return acc;
+            acc[normalizedLanguageCode] = languageValue;
+            return acc;
+          },
+          {}
+        )
+        : {};
+    byParameterId.set(parameterId, {
+      parameterId,
+      value,
+      ...(Object.keys(valuesByLanguage).length > 0
+        ? { valuesByLanguage }
+        : {}),
+    });
+  });
+  return Array.from(byParameterId.values());
+};
+
+const mergeParameterValues = (
+  base: ProductParameterValue[],
+  overrides: ProductParameterValue[]
+): ProductParameterValue[] => {
+  const byParameterId = new Map<string, ProductParameterValue>();
+  normalizeParameterValues(base).forEach((entry: ProductParameterValue) => {
+    byParameterId.set(entry.parameterId, entry);
+  });
+  normalizeParameterValues(overrides).forEach((entry: ProductParameterValue) => {
+    byParameterId.set(entry.parameterId, entry);
+  });
+  return Array.from(byParameterId.values());
+};
+
+type ParameterImportSummary = {
+  extracted: number;
+  resolved: number;
+  created: number;
+  written: number;
+};
+
+type ParameterImportResult = {
+  applied: boolean;
+  parameters: ProductParameterValue[];
+  summary: ParameterImportSummary;
+};
+
 export const importSingleItem = async (input: {
   run: BaseImportRunRecord;
   item: BaseImportItemRecord;
@@ -473,6 +523,9 @@ export const importSingleItem = async (input: {
     input.raw,
     input.templateMappings,
     input.preferredPriceCurrencies
+  );
+  const templateMappedParameterValues = normalizeParameterValues(
+    mapped.parameters
   );
   const mappedProducerIds = resolveProducerIds(mapped.producerIds, input.lookups);
   const mappedTagIds = resolveTagIds(mapped.tagIds, input.lookups);
@@ -532,7 +585,7 @@ export const importSingleItem = async (input: {
   }
 
   if (decision.type === 'update') {
-    const parameterImportResult = await applyBaseParameterImport({
+    const parameterImportResult = (await applyBaseParameterImport({
       record: input.raw,
       catalogId: input.targetCatalogId,
       connectionId: input.connectionId,
@@ -548,18 +601,16 @@ export const importSingleItem = async (input: {
           defaultBaseImportParameterImportSettings
       ),
       templateMappings: input.templateMappings,
-    });
-    const parameterImportSummary = parameterImportResult.applied
+    })) as ParameterImportResult;
+    const parameterImportSummary: ParameterImportSummary | null = parameterImportResult.applied
       ? parameterImportResult.summary
       : null;
-    if (parameterImportResult.applied) {
-      mapped.parameters = parameterImportResult.parameters;
-    }
-    const resolvedParameterValues = parameterImportResult.applied
-      ? parameterImportResult.parameters
-      : Array.isArray(mapped.parameters)
-        ? mapped.parameters
-        : undefined;
+    const resolvedParameterValues = mergeParameterValues(
+      parameterImportResult.applied ? parameterImportResult.parameters : [],
+      templateMappedParameterValues
+    );
+    mapped.parameters =
+      resolvedParameterValues.length > 0 ? resolvedParameterValues : undefined;
 
     const updateData: ProductUpdateInput = {
       baseProductId: mappedBaseProductId ?? decision.target.baseProductId ?? null,
@@ -578,7 +629,7 @@ export const importSingleItem = async (input: {
       sizeWidth: mapped.sizeWidth,
       length: mapped.length,
       imageLinks: imageUrls,
-      ...(resolvedParameterValues
+      ...(resolvedParameterValues.length > 0
         ? { parameters: resolvedParameterValues }
         : {}),
     };
@@ -717,7 +768,7 @@ export const importSingleItem = async (input: {
     imageLinks: imageUrls,
   };
 
-  const parameterImportResult = await applyBaseParameterImport({
+  const parameterImportResult = (await applyBaseParameterImport({
     record: input.raw,
     catalogId: input.targetCatalogId,
     connectionId: input.connectionId,
@@ -730,13 +781,19 @@ export const importSingleItem = async (input: {
       input.parameterImportSettings ?? defaultBaseImportParameterImportSettings
     ),
     templateMappings: input.templateMappings,
-  });
-  const parameterImportSummary = parameterImportResult.applied
+  })) as ParameterImportResult;
+  const parameterImportSummary: ParameterImportSummary | null = parameterImportResult.applied
     ? parameterImportResult.summary
     : null;
-  if (parameterImportResult.applied) {
-    createData.parameters = parameterImportResult.parameters;
-    mapped.parameters = parameterImportResult.parameters;
+  const resolvedParameterValues = mergeParameterValues(
+    parameterImportResult.applied ? parameterImportResult.parameters : [],
+    templateMappedParameterValues
+  );
+  if (resolvedParameterValues.length > 0) {
+    createData.parameters = resolvedParameterValues;
+    mapped.parameters = resolvedParameterValues;
+  } else {
+    mapped.parameters = undefined;
   }
 
   const validationResult = await validateProductCreate(createData);

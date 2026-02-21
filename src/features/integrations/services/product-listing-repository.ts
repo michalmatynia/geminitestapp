@@ -21,10 +21,10 @@ const LISTING_COLLECTION = 'product_listings';
  * MongoDB Document
  */
 type ProductListingDocument = {
-  _id: string;
-  productId: string;
-  integrationId: string;
-  connectionId: string;
+  _id: string | ObjectId;
+  productId: string | ObjectId;
+  integrationId: string | ObjectId;
+  connectionId: string | ObjectId;
   externalListingId: string | null;
   inventoryId: string | null;
   status: string;
@@ -50,11 +50,66 @@ const toPrismaNullableJson = (
   return value as Prisma.InputJsonValue;
 };
 
+const normalizeLookupId = (value: unknown): string => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed.length > 0 ? trimmed : '';
+  }
+  if (value instanceof ObjectId) {
+    return value.toHexString();
+  }
+  return '';
+};
+
+const normalizeLookupIdOrFallback = (value: unknown): string => {
+  const normalized = normalizeLookupId(value);
+  if (normalized) return normalized;
+  if (value === null || value === undefined) return '';
+  const fallback = String(value).trim();
+  return fallback.length > 0 ? fallback : '';
+};
+
+const buildLookupCandidates = (ids: string[]): Array<string | ObjectId> => {
+  const seen = new Set<string>();
+  const candidates: Array<string | ObjectId> = [];
+  ids.forEach((rawId: string) => {
+    const normalized = rawId.trim();
+    if (!normalized) return;
+
+    const stringKey = `s:${normalized}`;
+    if (!seen.has(stringKey)) {
+      seen.add(stringKey);
+      candidates.push(normalized);
+    }
+
+    if (!ObjectId.isValid(normalized)) return;
+    const objectId = new ObjectId(normalized);
+    const objectKey = `o:${objectId.toHexString()}`;
+    if (!seen.has(objectKey)) {
+      seen.add(objectKey);
+      candidates.push(objectId);
+    }
+  });
+  return candidates;
+};
+
+const buildLookupFilter = (
+  field: '_id' | 'productId' | 'integrationId' | 'connectionId',
+  value: string
+): Filter<ProductListingDocument> => {
+  const candidates = buildLookupCandidates([value]);
+  if (candidates.length > 1) {
+    return { [field]: { $in: candidates } } as unknown as Filter<ProductListingDocument>;
+  }
+  const normalized = value.trim();
+  return { [field]: candidates[0] ?? normalized } as unknown as Filter<ProductListingDocument>;
+};
+
 const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => ({
-  id: doc._id,
-  productId: doc.productId,
-  integrationId: doc.integrationId,
-  connectionId: doc.connectionId,
+  id: normalizeLookupIdOrFallback(doc._id),
+  productId: normalizeLookupIdOrFallback(doc.productId),
+  integrationId: normalizeLookupIdOrFallback(doc.integrationId),
+  connectionId: normalizeLookupIdOrFallback(doc.connectionId),
   externalListingId: doc.externalListingId,
   inventoryId: doc.inventoryId ?? null,
   status: doc.status,
@@ -285,37 +340,64 @@ const mongoRepository: ProductListingRepository = {
     const db = await getMongoDb();
     const docs = await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .find({ productId })
+      .find(buildLookupFilter('productId', productId))
       .sort({ createdAt: -1 })
       .toArray();
 
-    const integrationIds = Array.from(new Set(docs.map((d) => d.integrationId)));
-    const connectionIds = Array.from(new Set(docs.map((d) => d.connectionId)));
+    const integrationIds = Array.from(
+      new Set(
+        docs
+          .map((doc: ProductListingDocument) => normalizeLookupId(doc.integrationId))
+          .filter((id: string) => id.length > 0)
+      )
+    );
+    const connectionIds = Array.from(
+      new Set(
+        docs
+          .map((doc: ProductListingDocument) => normalizeLookupId(doc.connectionId))
+          .filter((id: string) => id.length > 0)
+      )
+    );
 
-    const integrations = await db
-      .collection('integrations')
-      .find({ _id: { $in: integrationIds.map((id) => (ObjectId.isValid(id) ? new ObjectId(id) : id)) } as unknown as Filter<Document> })
-      .toArray();
-    
-    const connections = await db
-      .collection('integration_connections')
-      .find({ _id: { $in: connectionIds.map((id) => (ObjectId.isValid(id) ? new ObjectId(id) : id)) } as unknown as Filter<Document> })
-      .toArray();    
+    const integrationLookup = buildLookupCandidates(integrationIds);
+    const connectionLookup = buildLookupCandidates(connectionIds);
+
+    const integrations =
+      integrationLookup.length > 0
+        ? await db
+          .collection('integrations')
+          .find(
+            { _id: { $in: integrationLookup } } as unknown as Filter<Document>
+          )
+          .toArray()
+        : [];
+
+    const connections =
+      connectionLookup.length > 0
+        ? await db
+          .collection('integration_connections')
+          .find(
+            { _id: { $in: connectionLookup } } as unknown as Filter<Document>
+          )
+          .toArray()
+        : [];
     const integrationMap = new Map(integrations.map((i) => [i._id.toString(), i]));
     const connectionMap = new Map(connections.map((c) => [c._id.toString(), c]));
     
     return docs.map((doc) => {
-      const integration = integrationMap.get(doc.integrationId);
-      const connection = connectionMap.get(doc.connectionId);
+      const integrationId = normalizeLookupIdOrFallback(doc.integrationId);
+      const connectionId = normalizeLookupIdOrFallback(doc.connectionId);
+      const integration = integrationMap.get(integrationId);
+      const connection = connectionMap.get(connectionId);
       return {
         ...toListingRecord(doc),
         integration: {
-          id: integration?.['_id']?.toString() ?? doc.integrationId,
+          id: integration?.['_id']?.toString() ?? integrationId,
           name: String(integration?.['name'] ?? 'Unknown'),
           slug: String(integration?.['slug'] ?? 'unknown'),
         },
         connection: {
-          id: connection?.['_id']?.toString() ?? doc.connectionId,
+          id: connection?.['_id']?.toString() ?? connectionId,
           name: String(connection?.['name'] ?? 'Unknown'),
         },
       };
@@ -327,7 +409,7 @@ const mongoRepository: ProductListingRepository = {
     const db = await getMongoDb();
     const doc = await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .findOne({ _id: id });
+      .findOne(buildLookupFilter('_id', id));
     return doc ? toListingRecord(doc) : null;
   },
 
@@ -364,14 +446,20 @@ const mongoRepository: ProductListingRepository = {
     const db = await getMongoDb();
     await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne({ _id: id }, { $set: { externalListingId, updatedAt: new Date() } });
+      .updateOne(
+        buildLookupFilter('_id', id),
+        { $set: { externalListingId, updatedAt: new Date() } }
+      );
   },
       
   updateListingStatus: async (id: string, status: string): Promise<void> => {
     const db = await getMongoDb();
     await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne({ _id: id }, { $set: { status, updatedAt: new Date() } });
+      .updateOne(
+        buildLookupFilter('_id', id),
+        { $set: { status, updatedAt: new Date() } }
+      );
   },
       
   updateListing: async (id: string, input: Partial<CreateProductListingInput>): Promise<void> => {
@@ -391,19 +479,25 @@ const mongoRepository: ProductListingRepository = {
       
     await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne({ _id: id }, { $set: updateData as unknown as UpdateFilter<ProductListingDocument> });
+      .updateOne(
+        buildLookupFilter('_id', id),
+        { $set: updateData as unknown as UpdateFilter<ProductListingDocument> }
+      );
   },
   updateListingInventoryId: async (id: string, inventoryId: string | null): Promise<void> => {
     const db = await getMongoDb();
     await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .updateOne({ _id: id }, { $set: { inventoryId, updatedAt: new Date() } });
+      .updateOne(
+        buildLookupFilter('_id', id),
+        { $set: { inventoryId, updatedAt: new Date() } }
+      );
   },
 
   appendExportHistory: async (id: string, event: ProductListingExportEvent): Promise<void> => {
     const db = await getMongoDb();
     await db.collection<ProductListingDocument>(LISTING_COLLECTION).updateOne(
-      { _id: id },
+      buildLookupFilter('_id', id),
       {
         $push: {
           exportHistory: {
@@ -418,14 +512,21 @@ const mongoRepository: ProductListingRepository = {
   },
   deleteListing: async (id: string): Promise<void> => {
     const db = await getMongoDb();
-    await db.collection<ProductListingDocument>(LISTING_COLLECTION).deleteOne({ _id: id });
+    await db
+      .collection<ProductListingDocument>(LISTING_COLLECTION)
+      .deleteOne(buildLookupFilter('_id', id));
   },
 
   listingExists: async (productId: string, connectionId: string): Promise<boolean> => {
     const db = await getMongoDb();
     const count = await db
       .collection<ProductListingDocument>(LISTING_COLLECTION)
-      .countDocuments({ productId, connectionId });
+      .countDocuments({
+        $and: [
+          buildLookupFilter('productId', productId),
+          buildLookupFilter('connectionId', connectionId),
+        ],
+      } as Filter<ProductListingDocument>);
     return count > 0;
   },
 
@@ -438,9 +539,9 @@ const mongoRepository: ProductListingRepository = {
       .find({}, { projection: { productId: 1, status: 1, integrationId: 1, marketplaceData: 1 } })
       .toArray();
     return listings.map((l) => ({
-      productId: l.productId,
+      productId: normalizeLookupIdOrFallback(l.productId),
       status: l.status,
-      integrationId: l.integrationId,
+      integrationId: normalizeLookupIdOrFallback(l.integrationId),
       marketplaceData: l.marketplaceData ?? null,
     }));
   },

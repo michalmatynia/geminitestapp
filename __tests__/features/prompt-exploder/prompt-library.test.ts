@@ -161,6 +161,14 @@ describe('prompt exploder prompt library', () => {
       bindings: [manual, auto],
       warnings: [],
       reassembledPrompt: 'prompt',
+      subsections: [],
+      variables: [],
+      dependencies: [],
+      rules: [],
+      tags: [],
+      errors: [],
+      diagnostics: [],
+      sections: [],
     };
 
     const manualBindings = getManualBindingsFromDocument(document);

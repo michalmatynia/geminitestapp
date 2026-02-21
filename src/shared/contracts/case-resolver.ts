@@ -49,7 +49,7 @@ export type CaseResolverFileType = CaseResolverFileTypeDto;
 /**
  * Case Resolver Versions
  */
-export const caseResolverDocumentVersionSchema = z.literal(1);
+export const caseResolverDocumentVersionSchema = z.union([z.literal(1), z.enum(['original', 'exploded'])]);
 export type CaseResolverDocumentVersionDto = z.infer<typeof caseResolverDocumentVersionSchema>;
 export type CaseResolverDocumentVersion = CaseResolverDocumentVersionDto;
 
@@ -58,7 +58,7 @@ export type CaseResolverDocumentFormatVersion = 1;
 /**
  * Case Resolver Editor Types
  */
-export const caseResolverEditorTypeSchema = z.enum(['graph', 'document', 'capture', 'settings']);
+export const caseResolverEditorTypeSchema = z.enum(['graph', 'document', 'capture', 'settings', 'wysiwyg', 'markdown', 'code']);
 export type CaseResolverEditorTypeDto = z.infer<typeof caseResolverEditorTypeSchema>;
 export type CaseResolverEditorType = CaseResolverEditorTypeDto;
 
@@ -482,36 +482,36 @@ export const caseResolverFileEditDraftSchema = z.object({
   content: z.string(),
   fileType: caseResolverFileTypeSchema,
   folder: z.string(),
-  parentCaseId: z.string().nullable().optional(),
+  parentCaseId: z.string().optional(),
   referenceCaseIds: z.array(z.string()).optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
-  documentDate: caseResolverDocumentDateProposalSchema.nullable().optional(),
-  documentCity: z.string().nullable().optional(),
+  documentDate: caseResolverDocumentDateProposalSchema.optional(),
+  documentCity: z.string().optional(),
   originalDocumentContent: z.string().optional(),
   explodedDocumentContent: z.string().optional(),
   activeDocumentVersion: z.enum(['original', 'exploded']).optional(),
-  editorType: z.enum(['wysiwyg', 'markdown', 'code']).optional(),
+  editorType: caseResolverEditorTypeSchema.optional(),
   documentContentFormatVersion: z.number().optional(),
-  documentContentVersion: z.string().optional(),
-  baseDocumentContentVersion: z.string().nullable().optional(),
+  documentContentVersion: z.number().optional(),
+  baseDocumentContentVersion: z.number().optional(),
   documentContent: z.string().optional(),
   documentContentMarkdown: z.string().optional(),
   documentContentHtml: z.string().optional(),
   documentContentPlainText: z.string().optional(),
   documentHistory: z.array(caseResolverDocumentHistoryEntrySchema).optional(),
   documentConversionWarnings: z.array(z.string()).optional(),
-  lastContentConversionAt: z.string().nullable().optional(),
+  lastContentConversionAt: z.string().optional(),
   scanSlots: z.array(caseResolverScanSlotSchema).optional(),
   scanOcrModel: z.string().optional(),
   scanOcrPrompt: z.string().optional(),
   isLocked: z.boolean().optional(),
   graph: caseResolverGraphSchema.optional(),
-  addresser: caseResolverPartyReferenceSchema.nullable().optional(),
-  addressee: caseResolverPartyReferenceSchema.nullable().optional(),
-  tagId: z.string().nullable().optional(),
-  categoryId: z.string().nullable().optional(),
-  caseIdentifierId: z.string().nullable().optional(),
+  addresser: caseResolverPartyReferenceSchema.optional(),
+  addressee: caseResolverPartyReferenceSchema.optional(),
+  tagId: z.string().optional(),
+  categoryId: z.string().optional(),
+  caseIdentifierId: z.string().optional(),
 });
 
 export interface CaseResolverFileEditDraftDto {
@@ -529,18 +529,18 @@ export interface CaseResolverFileEditDraftDto {
   originalDocumentContent?: string | undefined;
   explodedDocumentContent?: string | undefined;
   activeDocumentVersion?: 'original' | 'exploded' | undefined;
-  editorType?: 'wysiwyg' | 'markdown' | 'code' | undefined;
+  editorType?: CaseResolverEditorType | undefined;
   documentContentFormatVersion?: number | undefined;
-  documentContentVersion?: string | undefined;
-  baseDocumentContentVersion?: string | null | undefined;
+  documentContentVersion?: number | undefined;
+  baseDocumentContentVersion?: number | null | undefined;
   documentContent?: string | undefined;
   documentContentMarkdown?: string | undefined;
   documentContentHtml?: string | undefined;
   documentContentPlainText?: string | undefined;
-  documentHistory?: CaseResolverDocumentHistoryEntry[] | undefined;
+  documentHistory: CaseResolverDocumentHistoryEntry[];
   documentConversionWarnings?: string[] | undefined;
   lastContentConversionAt?: string | null | undefined;
-  scanSlots?: CaseResolverScanSlot[] | undefined;
+  scanSlots: CaseResolverScanSlot[];
   scanOcrModel?: string | undefined;
   scanOcrPrompt?: string | undefined;
   isLocked?: boolean | undefined;

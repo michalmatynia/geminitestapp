@@ -91,7 +91,7 @@ describe('Integration Repository', () => {
       expect(prisma.integration.findMany).toHaveBeenCalledWith({
         orderBy: { name: 'asc' },
       });
-      expect(result[0].name).toBe('Int 1');
+      expect(result[0]!.name).toBe('Int 1');
     });
 
     it('createConnection calls prisma.integrationConnection.create', async () => {

@@ -125,6 +125,37 @@ describe('parameter import feature', () => {
     expect(extracted[0]?.valuesByLanguage['de']).toBe('Holz');
   });
 
+  it('includes dotted template sources in mapped mode by terminal parameter name', () => {
+    const extracted = extractBaseParameters({
+      record: {
+        text_fields: {
+          features: {
+            Material: 'Steel',
+            Color: 'Black',
+          },
+        },
+      },
+      settings: {
+        enabled: true,
+        mode: 'mapped',
+        languageScope: 'catalog_languages',
+        createMissingParameters: true,
+        overwriteExistingValues: true,
+        matchBy: 'name_only',
+      },
+      templateMappings: [
+        {
+          sourceKey: 'text_fields.features.Material',
+          targetField: 'parameter:param-material',
+        },
+      ],
+    });
+
+    expect(extracted).toHaveLength(1);
+    expect(extracted[0]?.namesByLanguage['default']).toBe('Material');
+    expect(extracted[0]?.valuesByLanguage['default']).toBe('Steel');
+  });
+
   it('creates missing parameters and writes values for catalog languages', async () => {
     const repository = createInMemoryParameterRepository();
     const result = await applyBaseParameterImport({

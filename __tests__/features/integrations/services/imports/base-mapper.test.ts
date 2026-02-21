@@ -98,5 +98,42 @@ describe('Base Mapper', () => {
         { parameterId: 'param-material', value: 'Wood' },
       ]);
     });
+
+    it('maps text_fields feature values into parameter targets', () => {
+      const record = {
+        text_fields: {
+          features: {
+            Color: 'Red',
+          },
+        },
+      };
+      const mappings = [
+        { sourceKey: 'color', targetField: 'parameter:param-color' },
+      ];
+      const result = mapBaseProduct(record, mappings);
+      expect(result.parameters).toEqual([
+        { parameterId: 'param-color', value: 'Red' },
+      ]);
+    });
+
+    it('resolves language-scoped text field paths in template mappings', () => {
+      const record = {
+        text_fields: {
+          'features|en': {
+            Material: 'Steel',
+          },
+        },
+      };
+      const mappings = [
+        {
+          sourceKey: 'text_fields.features|en.Material',
+          targetField: 'parameter:param-material',
+        },
+      ];
+      const result = mapBaseProduct(record, mappings);
+      expect(result.parameters).toEqual([
+        { parameterId: 'param-material', value: 'Steel' },
+      ]);
+    });
   });
 });

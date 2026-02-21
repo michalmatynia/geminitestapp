@@ -7,7 +7,6 @@ import {
 import { PromptValidationScopeResolutionError } from '@/features/prompt-core/errors';
 import type { PromptValidationScope } from '@/features/prompt-engine/settings';
 import type {
-  PromptExploderValidationRuleStackDto,
   PromptExploderRuntimeValidationScopeDto,
   PromptExploderValidationStackResolutionReasonDto,
   PromptExploderValidationStackResolutionDto,

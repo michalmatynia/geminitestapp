@@ -73,6 +73,10 @@ const DISPLAY_OPTIONS: Array<{ value: string; label: string }> = [
   { value: 'icon', label: 'Icon only (name in tooltip)' },
 ];
 
+const toDisplayMode = (
+  record: Pick<AiTriggerButtonDto, 'display'> | null | undefined
+): 'icon' | 'icon_label' => (record?.display.showLabel === false ? 'icon' : 'icon_label');
+
 const normalizeDraft = (record?: AiTriggerButtonDto | null): TriggerButtonDraft => ({
   ...(record?.id ? { id: record.id } : {}),
   name: record?.name ?? '',
@@ -80,10 +84,7 @@ const normalizeDraft = (record?: AiTriggerButtonDto | null): TriggerButtonDraft 
   enabled: record?.enabled ?? true,
   locations: record?.locations ?? ['product_modal'],
   mode: record?.mode ?? 'click',
-  display:
-    record?.display === 'icon' || record?.display === 'icon_label'
-      ? record.display
-      : 'icon_label',
+  display: toDisplayMode(record),
 });
 
 const BUILT_IN_TRIGGER_EVENTS = new Set<string>(['manual', 'scheduled_run']);
@@ -403,10 +404,7 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         enabled,
         locations: record.locations && record.locations.length > 0 ? record.locations : ['product_modal'],
         mode: record.mode ?? 'click',
-        display:
-          record.display === 'icon' || record.display === 'icon_label'
-            ? record.display
-            : 'icon_label',
+        display: toDisplayMode(record),
       },
     });
   }, [updateMutation]);

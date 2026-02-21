@@ -159,6 +159,22 @@ const assertValidLaunchConfig = ({
   assertValidRegex(launchValue, launchFlags);
 };
 
+const canResolveReplacementAtRuntime = ({
+  replacementEnabled,
+  replacementValue,
+  runtimeEnabled,
+  runtimeType,
+}: {
+  replacementEnabled: boolean;
+  replacementValue: string | null;
+  runtimeEnabled: boolean;
+  runtimeType: 'none' | 'database_query' | 'ai_prompt';
+}): boolean =>
+  replacementEnabled &&
+  !replacementValue &&
+  runtimeEnabled &&
+  runtimeType !== 'none';
+
 const normalizeReplacementFields = (fields: string[] | undefined): string[] => {
   if (!Array.isArray(fields) || fields.length === 0) return [];
   return [...new Set(fields)];
@@ -235,8 +251,19 @@ export async function putValidatorPatternByIdHandler(
     body.runtimeConfig !== undefined ||
     body.runtimeEnabled !== undefined ||
     body.runtimeType !== undefined;
-  if (nextReplacementEnabled && !nextReplacementValue) {
-    throw badRequestError('replacementValue is required when replacementEnabled is true');
+  if (
+    nextReplacementEnabled &&
+    !nextReplacementValue &&
+    !canResolveReplacementAtRuntime({
+      replacementEnabled: nextReplacementEnabled,
+      replacementValue: nextReplacementValue,
+      runtimeEnabled: nextRuntimeEnabled,
+      runtimeType: nextRuntimeType,
+    })
+  ) {
+    throw badRequestError(
+      'replacementValue is required when replacementEnabled is true unless runtime replacement is enabled'
+    );
   }
   if (nextLaunchEnabled && nextLaunchSourceMode !== 'current_field' && !nextLaunchSourceField) {
     throw badRequestError('launchSourceField is required when launchSourceMode is not current_field');

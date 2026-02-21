@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 
 import { 
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL, 
@@ -8,7 +9,7 @@ import {
 } from '@/features/products/constants';
 import { ProductFormContext } from '@/features/products/context/ProductFormContext';
 import { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
-import { ProductImageSlot, DebugInfo } from '@/shared/contracts/products';
+import { DebugInfo } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 

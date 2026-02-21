@@ -10,6 +10,24 @@ let initialized = false;
 const REDIS_PING_TIMEOUT_MS = 1500;
 const LOG_SOURCE = 'queue-init';
 
+const runStartupBackupSchedulerCatchup = (): void => {
+  void (async (): Promise<void> => {
+    try {
+      const { tickDatabaseBackupScheduler } = await import(
+        '@/features/database/services/database-backup-scheduler'
+      );
+      await tickDatabaseBackupScheduler();
+    } catch (error) {
+      void logSystemEvent({
+        level: 'warn',
+        source: LOG_SOURCE,
+        message: 'Startup backup scheduler catch-up tick failed',
+        error,
+      });
+    }
+  })();
+};
+
 const isRedisReachable = async (): Promise<boolean> => {
   const url = process.env['REDIS_URL'];
   if (!url) return false;
@@ -45,6 +63,7 @@ export const initializeQueues = (): void => {
       source: LOG_SOURCE,
       message: 'Worker startup disabled by DISABLE_QUEUE_WORKERS'
     });
+    runStartupBackupSchedulerCatchup();
     return;
   }
 
@@ -54,6 +73,7 @@ export const initializeQueues = (): void => {
       source: LOG_SOURCE,
       message: 'Redis not available, using inline processing mode'
     });
+    runStartupBackupSchedulerCatchup();
     return;
   }
 
@@ -65,6 +85,7 @@ export const initializeQueues = (): void => {
         source: LOG_SOURCE,
         message: 'Redis unreachable, skipping BullMQ workers'
       });
+      runStartupBackupSchedulerCatchup();
       return;
     }
 

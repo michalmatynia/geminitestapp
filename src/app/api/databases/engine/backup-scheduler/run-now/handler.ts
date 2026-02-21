@@ -72,7 +72,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
 
     try {
-      await enqueueProductAiJobToQueue(job.id, job.productId, job.jobType as string, job.payload);
+      const runtimeType = job.jobType ?? job.type ?? 'db_backup';
+      await enqueueProductAiJobToQueue(job.id, job.productId, runtimeType, job.payload);
     } catch (enqueueError: unknown) {
       await logSystemError({
         message:

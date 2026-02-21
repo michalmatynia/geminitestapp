@@ -25,28 +25,30 @@ import {
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
 } from '@/features/document-editor';
+import type { FilemakerPartyKind } from '@/features/filemaker';
 import {
   FILEMAKER_DATABASE_KEY,
   buildFilemakerPartyOptions,
   decodeFilemakerPartyReference,
   normalizeFilemakerDatabase,
   resolveFilemakerPartyLabel,
-  type FilemakerPartyKind,
 } from '@/features/filemaker/settings';
 import { savePromptExploderDraftPromptFromCaseResolver } from '@/features/prompt-exploder/bridge';
 import {
   DEFAULT_CASE_RESOLVER_NODE_META,
 } from '@/shared/contracts/case-resolver';
-import type {
+import {
+  AiNode,
   CaseResolverAssetFile,
   CaseResolverCategory,
   CaseResolverDocumentHistoryEntry,
-  CaseResolverFileEditDraft,
+  CaseResolverFile,
   CaseResolverGraph,
   CaseResolverIdentifier,
   CaseResolverNodeMeta,
   CaseResolverRelationGraph,
   CaseResolverTag,
+  CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
@@ -56,7 +58,7 @@ import {
   resolveCaptureMappingApplyGuardReason,
 } from '../capture-mapping-apply-guard';
 import { CaseResolverPageView } from '../components/CaseResolverPageView';
-import { useCaseResolverState, type CaseResolverStateValue } from '../hooks/useCaseResolverState';
+import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
   applyCaseResolverFileMutationAndRebaseDraft,
   hasCaseResolverDraftMeaningfulChanges,
@@ -68,6 +70,9 @@ import {
   normalizeFolderPaths,
 } from '../settings';
 import {
+  type CaseResolverStateValue,
+} from '../types';
+import {
   buildCombinedOcrText,
   buildDocumentPdfMarkup,
   buildFileEditDraft,
@@ -78,6 +83,8 @@ import {
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '../workspace-persistence';
+
+import type { CaseResolverFileEditDraft } from '../types';
 
 
 const readCaptureApplyNowMs = (): number => (
@@ -242,8 +249,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           connectedEdges.flatMap((edge): string[] => [edge.from, edge.to])
         )
       )
-        .filter((nodeId: string): boolean => nodeId !== input.nodeId)
-        .sort((left, right) => left.localeCompare(right));
+                  .filter((nodeId: string): boolean => nodeId !== input.nodeId)
+                  .sort((left: string, right: string) => left.localeCompare(right));
+        
       const nodeFileMeta = (() => {
         if (!input.sourceFileId || !input.nodeId) return {};
         return {
@@ -1293,7 +1301,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const editingDocumentNodeMeta = React.useMemo((): (CaseResolverNodeMeta & { nodeId: string; nodeTitle: string; canvasFileId: string; canvasFileName: string }) | null => {
     if (!editingDocumentDraft || !editingDocumentNodeContext) return null;
     const canvasFile = workspace.files.find(
-      (file: CaseResolverFile) => file.id === editingDocumentNodeContext.canvasFileId
+      (file: CaseResolverFile) => file.id === editingDocumentNodeContext.fileId
     );
     if (!canvasFile) return null;
     const canvasNode = canvasFile.graph.nodes.find(
@@ -1322,7 +1330,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   const updateEditingDocumentNodeMeta = useCallback(
     (patch: Partial<CaseResolverNodeMeta>): void => {
       if (!editingDocumentNodeContext) return;
-      const canvasFileId = editingDocumentNodeContext.canvasFileId;
+      const canvasFileId = editingDocumentNodeContext.fileId;
       const nodeId = editingDocumentNodeContext.nodeId;
       updateWorkspace((current: CaseResolverWorkspace) => {
         const canvasFileIndex = current.files.findIndex((file: CaseResolverFile) => file.id === canvasFileId);
@@ -1916,7 +1924,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       html: isMarkdownDraft
         ? (editingDocumentDraft.documentContentHtml ?? '')
         : next,
-      markdown: editingDocumentDraft.documentContentMarkdown ?? '',
+      markdown: isMarkdownDraft
+        ? next
+        : (editingDocumentDraft.documentContentMarkdown ?? ''),
     });
   }, [applyDraftCanonicalContent, editingDocumentDraft]);
 
@@ -2105,7 +2115,22 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             if (!exists) return current;
             const currentTarget = current.files.find((file) => file.id === fileId) ?? null;
             if (currentTarget?.isLocked) return current;
-            const nextFiles = current.files.filter((file) => file.id !== fileId);
+            const now = new Date().toISOString();
+            const nextFiles = current.files
+              .filter((file) => file.id !== fileId)
+              .map((file) => {
+                const nextRelatedFileIds = (file.relatedFileIds ?? []).filter(
+                  (relatedFileId: string): boolean => relatedFileId !== fileId
+                );
+                if (nextRelatedFileIds.length === (file.relatedFileIds ?? []).length) {
+                  return file;
+                }
+                return {
+                  ...file,
+                  relatedFileIds: nextRelatedFileIds.length > 0 ? nextRelatedFileIds : undefined,
+                  updatedAt: now,
+                };
+              });
             return {
               ...current,
               files: nextFiles,
@@ -2350,15 +2375,21 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const handleRelationGraphChange = useCallback(
     (nextGraph: CaseResolverRelationGraph): void => {
-      updateWorkspace((current) => {
-        if (stableStringify(current.relationGraph) === stableStringify(nextGraph)) {
-          return current;
+      updateWorkspace(
+        (current) => {
+          if (stableStringify(current.relationGraph) === stableStringify(nextGraph)) {
+            return current;
+          }
+          return {
+            ...current,
+            relationGraph: nextGraph,
+          };
+        },
+        {
+          persistNow: true,
+          source: 'case_view_relation_graph_change',
         }
-        return {
-          ...current,
-          relationGraph: nextGraph,
-        };
-      });
+      );
     },
     [updateWorkspace]
   );

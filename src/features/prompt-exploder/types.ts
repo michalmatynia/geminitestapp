@@ -18,6 +18,7 @@ import type {
   PromptExploderSegmentTypeDto,
   PromptExploderSettingsDto,
   PromptExploderSubsectionDto,
+  PromptExploderBenchmarkSuggestionDto,
 } from '@/shared/contracts/prompt-exploder';
 
 export type PromptExploderAiProvider = PromptExploderAiProviderDto;
@@ -39,3 +40,4 @@ export type PromptExploderSegment = PromptExploderSegmentDto;
 export type PromptExploderSegmentType = PromptExploderSegmentTypeDto;
 export type PromptExploderSettings = PromptExploderSettingsDto;
 export type PromptExploderSubsection = PromptExploderSubsectionDto;
+export type PromptExploderBenchmarkSuggestion = PromptExploderBenchmarkSuggestionDto;

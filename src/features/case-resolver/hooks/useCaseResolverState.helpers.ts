@@ -255,6 +255,7 @@ export const hasCaseResolverDraftMeaningfulChanges = ({
 
 type CaseResolverWorkspaceMutationOptions = {
   persistToast?: string;
+  persistNow?: boolean;
   mutationId?: string;
   source?: string;
   skipNormalization?: boolean;

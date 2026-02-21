@@ -283,9 +283,11 @@ export const upsertLearnedTemplate = (args: UpsertLearnedTemplateArgs): Template
         ? targetedTemplate
         : (exactTemplate ?? similarTemplateMatch?.template ?? null);
 
-  const nextApprovals = (existingTemplate?.approvals ?? 0) + 1;
+  const existingApprovals = existingTemplate?.approvals;
+  const currentApprovalsCount = typeof existingApprovals === 'number' ? existingApprovals : 0;
+  const nextApprovals = currentApprovalsCount + 1;
   const nextState = deriveTemplateStateAfterApproval({
-    existingState: existingTemplate?.state ?? null,
+    existingState: (typeof existingTemplate?.state === 'string' ? existingTemplate.state : null) as PromptExploderLearnedTemplate['state'] | null,
     nextApprovals,
     minApprovalsForMatching: args.minApprovalsForMatching,
     autoActivateLearnedTemplates: args.autoActivateLearnedTemplates,

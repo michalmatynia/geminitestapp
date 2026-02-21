@@ -1052,13 +1052,12 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                       onKeyDown={(
                         event: React.KeyboardEvent<HTMLInputElement>,
                       ): void => {
+                        event.stopPropagation();
                         if (event.key === 'Enter') {
                           event.preventDefault();
-                          event.stopPropagation();
                           void controller.commitRename();
                         } else if (event.key === 'Escape') {
                           event.preventDefault();
-                          event.stopPropagation();
                           controller.cancelRename();
                         }
                       }}

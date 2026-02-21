@@ -53,6 +53,25 @@ const VALIDATION_DENIED_ISSUES_SESSION_KEY = 'product_validation_denied_issues';
 const VALIDATION_ACCEPTED_ISSUES_SESSION_KEY = 'product_validation_accepted_issues';
 const VALIDATION_DENY_SESSION_ID_KEY = 'product_validation_decision_session_id';
 const PRODUCT_FORM_TAB_SET = new Set<string>(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS);
+const NUMERIC_AUTO_APPLY_FIELDS = new Set([
+  'price',
+  'stock',
+  'weight',
+  'sizeLength',
+  'sizeWidth',
+  'length',
+] as const);
+
+type NumericAutoApplyField = 'price' | 'stock' | 'weight' | 'sizeLength' | 'sizeWidth' | 'length';
+
+const isNumericAutoApplyField = (fieldName: string): fieldName is NumericAutoApplyField =>
+  NUMERIC_AUTO_APPLY_FIELDS.has(fieldName as NumericAutoApplyField);
+
+const toComparableFieldString = (value: unknown): string => {
+  if (typeof value === 'string') return value;
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  return '';
+};
 
 const normalizeProductFormTab = (value: unknown): ProductDraftOpenFormTab => {
   if (typeof value !== 'string') return 'general';
@@ -86,12 +105,13 @@ export default function ProductForm({
     handleSubmit,
     categories,
     selectedCategoryId,
+    setCategoryId,
     selectedCatalogIds,
     product,
     draft,
     ConfirmationModal,
   } = useProductFormContext();
-  const { watch } = useFormContext<ProductFormData>();
+  const { watch, getValues, setValue } = useFormContext<ProductFormData>();
 
   const searchParams = useSearchParams();
   const [isDebugOpen, setIsDebugOpen] = useState(false);
@@ -241,6 +261,13 @@ export default function ProductForm({
     [validatorConfigQuery.data?.patterns]
   );
   const validatorPatterns = validatorConfigQuery.data?.patterns ?? [];
+  const validatorPatternById = useMemo(
+    () =>
+      new Map<string, ProductValidationPattern>(
+        validatorPatterns.map((pattern: ProductValidationPattern) => [pattern.id, pattern])
+      ),
+    [validatorPatterns]
+  );
   const primaryCatalogId = useMemo((): string => {
     const selected = selectedCatalogIds[0]?.trim() ?? '';
     if (selected) return selected;
@@ -698,6 +725,50 @@ export default function ProductForm({
     ]
   );
 
+  const applyAutoReplacementToField = useCallback(
+    (fieldName: string, replacementValue: string): boolean => {
+      const normalizedReplacement = replacementValue.trim();
+      if (!normalizedReplacement) return false;
+
+      if (fieldName === 'categoryId') {
+        const currentCategoryValue = toComparableFieldString(getValues('categoryId'));
+        if (currentCategoryValue !== normalizedReplacement) {
+          setCategoryId(normalizedReplacement);
+        }
+        return true;
+      }
+
+      if (isNumericAutoApplyField(fieldName)) {
+        const numericValue = Number(normalizedReplacement.replace(',', '.'));
+        if (!Number.isFinite(numericValue)) return false;
+        const normalizedNumeric = Math.max(0, Math.floor(numericValue));
+        const currentNumeric = getValues(fieldName);
+        if (
+          typeof currentNumeric !== 'number' ||
+          !Number.isFinite(currentNumeric) ||
+          currentNumeric !== normalizedNumeric
+        ) {
+          setValue(fieldName, normalizedNumeric as ProductFormData[typeof fieldName], {
+            shouldDirty: true,
+            shouldTouch: true,
+          });
+        }
+        return true;
+      }
+
+      const formFieldName = fieldName as keyof ProductFormData;
+      const currentValue = toComparableFieldString(getValues(formFieldName));
+      if (currentValue !== normalizedReplacement) {
+        setValue(formFieldName, normalizedReplacement as ProductFormData[keyof ProductFormData], {
+          shouldDirty: true,
+          shouldTouch: true,
+        });
+      }
+      return true;
+    },
+    [getValues, setCategoryId, setValue]
+  );
+
   useEffect(() => {
     if (!validatorEnabled || !formatterEnabled) {
       if (autoAcceptedIssueKeysRef.current.size > 0) {
@@ -711,6 +782,16 @@ export default function ProductForm({
         const issueKey = buildIssueDecisionKey(fieldName, issue.patternId);
         nextVisibleIssueKeys.add(issueKey);
         if (autoAcceptedIssueKeysRef.current.has(issueKey)) continue;
+        const issuePattern = validatorPatternById.get(issue.patternId);
+        const shouldAutoApplyRuntimeReplacement =
+          issuePattern?.runtimeEnabled === true &&
+          issuePattern.replacementAutoApply === true &&
+          typeof issue.replacementValue === 'string' &&
+          issue.replacementValue.trim().length > 0;
+        if (shouldAutoApplyRuntimeReplacement) {
+          const applied = applyAutoReplacementToField(fieldName, issue.replacementValue);
+          if (!applied) continue;
+        }
         acceptIssue({
           fieldName,
           patternId: issue.patternId,
@@ -733,8 +814,10 @@ export default function ProductForm({
     });
   }, [
     acceptIssue,
+    applyAutoReplacementToField,
     buildIssueDecisionKey,
     formatterEnabled,
+    validatorPatternById,
     validatorEnabled,
     visibleFieldIssues,
   ]);

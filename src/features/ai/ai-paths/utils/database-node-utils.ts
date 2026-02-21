@@ -67,17 +67,17 @@ export const normalizeSchemaCollections = (schema: SchemaData | null): Array<Col
   if (baseCollections.length === 0) return [];
 
   const stripUndefinedProvider = (
-    collection: any
+    collection: CollectionSchema & { provider?: string }
   ): CollectionSchema => {
     const { provider, ...rest } = collection;
-    return provider ? { ...rest, provider } : rest;
+    return provider ? { ...rest, provider } as CollectionSchema : rest as CollectionSchema;
   };
 
-  if (schema.provider === 'multi') return baseCollections.map((collection) => stripUndefinedProvider(collection));
+  if (schema.provider === 'multi') return baseCollections.map((collection) => stripUndefinedProvider(collection as CollectionSchema & { provider?: string }));
 
-  const provider: 'mongodb' | 'prisma' = schema.provider as any;
+  const provider: 'mongodb' | 'prisma' = schema.provider === 'prisma' ? 'prisma' : 'mongodb';
   return baseCollections.map((collection) => ({
-    ...stripUndefinedProvider(collection),
+    ...stripUndefinedProvider(collection as CollectionSchema & { provider?: string }),
     provider,
   }));
 };
@@ -120,7 +120,7 @@ export const applySchemaSelection = (
 export const toDbSchemaSnapshotCollection = (
   collection: CollectionSchema
 ): DbSchemaSnapshot['collections'][number] => {
-  const relations = (collection as any)['relations'] as string[] | undefined;
+  const relations = collection.relations;
   
   return {
     name: collection.name,
@@ -142,7 +142,7 @@ export const toDbSchemaSnapshotSourceCollection = (
   fields: Array<{ name: string; type: string }>;
   relations?: string[];
 } => {
-  const relations = (collection as any)['relations'] as string[] | undefined;
+  const relations = collection.relations;
   
   return {
     name: collection.name,
@@ -164,7 +164,7 @@ export const toDbSchemaSnapshot = (
     const schemaSources = schema['sources'];
     const sources = schemaSources
       ? (['mongodb', 'prisma'] as const).reduce((acc, provider) => {
-        const source = schemaSources[provider];
+        const source = schemaSources[provider] as { provider: string; collections: CollectionSchema[] } | undefined;
         if (!source) return acc;
         acc[provider] = {
           provider: source.provider,
@@ -183,7 +183,7 @@ export const toDbSchemaSnapshot = (
   }
 
   return {
-    provider: schema.provider as any,
+    provider: schema.provider === 'multi' ? 'multi' : schema.provider === 'prisma' ? 'prisma' : 'mongodb',
     collections: normalizedCollections.map(toDbSchemaSnapshotCollection),
     syncedAt,
   };

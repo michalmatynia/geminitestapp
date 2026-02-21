@@ -33,18 +33,15 @@ export const aiTriggerButtonModeSchema = z.enum([
 
 export type AiTriggerButtonMode = z.infer<typeof aiTriggerButtonModeSchema>;
 
-export const aiTriggerButtonDisplaySchema = z.union([
-  z.object({
-    label: z.string(),
-    icon: z.string().optional(),
-    color: z.string().optional(),
-    variant: z.enum(['default', 'outline', 'secondary', 'ghost', 'link']).optional(),
-    size: z.enum(['default', 'sm', 'lg', 'icon']).optional(),
-    showLabel: z.boolean().optional(),
-    tooltip: z.string().optional(),
-  }),
-  z.enum(['icon', 'icon_label']),
-]);
+export const aiTriggerButtonDisplaySchema = z.object({
+  label: z.string(),
+  icon: z.string().optional(),
+  color: z.string().optional(),
+  variant: z.enum(['default', 'outline', 'secondary', 'ghost', 'link']).optional(),
+  size: z.enum(['default', 'sm', 'lg', 'icon']).optional(),
+  showLabel: z.boolean().optional(),
+  tooltip: z.string().optional(),
+});
 
 export type AiTriggerButtonDisplay = z.infer<typeof aiTriggerButtonDisplaySchema>;
 

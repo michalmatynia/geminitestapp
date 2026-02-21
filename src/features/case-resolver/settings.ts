@@ -191,6 +191,70 @@ const sanitizeOptionalIdArray = (value: unknown): string[] => {
   return Array.from(unique);
 };
 
+const normalizeCaseResolverRelatedFileLinks = (
+  files: CaseResolverFile[]
+): CaseResolverFile[] => {
+  if (files.length === 0) return files;
+
+  const filesById = new Map<string, CaseResolverFile>(
+    files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+  );
+  const relationMap = new Map<string, Set<string>>();
+  files.forEach((file: CaseResolverFile): void => {
+    relationMap.set(file.id, new Set<string>());
+  });
+
+  files.forEach((file: CaseResolverFile): void => {
+    if (file.fileType === 'case') return;
+    const sourceSet = relationMap.get(file.id);
+    if (!sourceSet) return;
+    (file.relatedFileIds ?? []).forEach((relatedFileId: string): void => {
+      const normalizedRelatedFileId = relatedFileId.trim();
+      if (!normalizedRelatedFileId || normalizedRelatedFileId === file.id) return;
+      const relatedFile = filesById.get(normalizedRelatedFileId);
+      if (!relatedFile || relatedFile.fileType === 'case') return;
+      sourceSet.add(normalizedRelatedFileId);
+    });
+  });
+
+  relationMap.forEach((relatedIds: Set<string>, sourceId: string): void => {
+    relatedIds.forEach((targetId: string): void => {
+      const reciprocal = relationMap.get(targetId);
+      if (!reciprocal) return;
+      reciprocal.add(sourceId);
+    });
+  });
+
+  return files.map((file: CaseResolverFile): CaseResolverFile => {
+    if (file.fileType === 'case') {
+      if (!file.relatedFileIds || file.relatedFileIds.length === 0) return file;
+      return {
+        ...file,
+        relatedFileIds: undefined,
+      };
+    }
+
+    const normalizedRelatedFileIds = Array.from(relationMap.get(file.id) ?? []).sort(
+      (left: string, right: string): number => left.localeCompare(right)
+    );
+    const currentRelatedFileIds = sanitizeOptionalIdArray(file.relatedFileIds).sort(
+      (left: string, right: string): number => left.localeCompare(right)
+    );
+    const hasSameRelatedFileIds =
+      normalizedRelatedFileIds.length === currentRelatedFileIds.length &&
+      normalizedRelatedFileIds.every(
+        (relatedFileId: string, index: number): boolean =>
+          relatedFileId === currentRelatedFileIds[index]
+      );
+    if (hasSameRelatedFileIds) return file;
+    return {
+      ...file,
+      relatedFileIds:
+        normalizedRelatedFileIds.length > 0 ? normalizedRelatedFileIds : undefined,
+    };
+  });
+};
+
 const sanitizeOptionalMimeType = (value: unknown): string | null => {
   const normalized = sanitizeOptionalId(value);
   return normalized ? normalized.toLowerCase() : null;
@@ -1003,8 +1067,9 @@ export const normalizeCaseResolverWorkspace = (
       graph: sanitizedGraph,
     };
   });
+  const normalizedFilesWithRelatedLinks = normalizeCaseResolverRelatedFileLinks(sanitizedFiles);
   const validCaseIds = new Set<string>(
-    sanitizedFiles
+    normalizedFilesWithRelatedLinks
       .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
       .map((file: CaseResolverFile): string => file.id)
   );
@@ -1015,26 +1080,26 @@ export const normalizeCaseResolverWorkspace = (
   );
   const folderRecords = buildCaseResolverFolderRecords({
     sourceRecords: sourceFolderRecords,
-    files: sanitizedFiles,
+    files: normalizedFilesWithRelatedLinks,
     assets: sanitizedAssets,
     validCaseIds,
   });
   const folders = normalizeFolderPaths([
     ...folderRecords.map((record: CaseResolverFolderRecord): string => record.path),
-    ...sanitizedFiles.map((file: CaseResolverFile): string => file.folder),
+    ...normalizedFilesWithRelatedLinks.map((file: CaseResolverFile): string => file.folder),
     ...sanitizedAssets.map((asset: CaseResolverAssetFile): string => asset.folder),
   ]);
   const folderTimestamps = normalizeCaseResolverFolderTimestamps({
     source: workspaceRecord['folderTimestamps'],
     folders,
-    files: sanitizedFiles,
+    files: normalizedFilesWithRelatedLinks,
     assets: sanitizedAssets,
     fallbackTimestamp: now,
   });
   const relationGraph = buildCaseResolverRelationGraph({
     source: workspaceRecord['relationGraph'],
     folders,
-    files: sanitizedFiles,
+    files: normalizedFilesWithRelatedLinks,
     assets: sanitizedAssets,
   });
 
@@ -1043,9 +1108,10 @@ export const normalizeCaseResolverWorkspace = (
       ? workspace.activeFileId
       : null;
   const activeFileId =
-    activeCandidate && sanitizedFiles.some((file: CaseResolverFile) => file.id === activeCandidate)
+    activeCandidate &&
+    normalizedFilesWithRelatedLinks.some((file: CaseResolverFile) => file.id === activeCandidate)
       ? activeCandidate
-      : sanitizedFiles[0]?.id ?? null;
+      : normalizedFilesWithRelatedLinks[0]?.id ?? null;
 
   return {
     version: 2,
@@ -1055,7 +1121,7 @@ export const normalizeCaseResolverWorkspace = (
     folders,
     folderRecords,
     folderTimestamps,
-    files: sanitizedFiles,
+    files: normalizedFilesWithRelatedLinks,
     assets: sanitizedAssets,
     relationGraph,
     activeFileId,

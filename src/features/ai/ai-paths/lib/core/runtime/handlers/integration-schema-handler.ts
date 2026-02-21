@@ -49,7 +49,7 @@ const formatSchemaAsText = (schema: SchemaResponse): string => {
       const markerStr = markers.length > 0 ? ` [${markers.join(', ')}]` : '';
       lines.push(`  - ${field.name} (${field.type})${markerStr}`);
     }
-    const relations = (collection)['relations'] as string[] | undefined;
+    const relations = collection.relations;
     if (relations && relations.length > 0) {
       lines.push(`Relations: ${relations.join(', ')}`);
     }
@@ -143,9 +143,9 @@ export const handleDbSchema: NodeHandler = async ({
         name: c.name,
         fields: config.includeFields ? (c.fields ?? []) : [],
       };
-      const relations = (c as any)['relations'] as string[] | undefined;
+      const relations = c.relations;
       if (config.includeRelations && relations) {
-        (result as any)['relations'] = relations;
+        result.relations = relations;
       }
       return result;
     });

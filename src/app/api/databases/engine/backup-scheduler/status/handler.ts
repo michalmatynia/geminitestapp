@@ -19,7 +19,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   return NextResponse.json(
     {
       ...status,
-      repeatEveryMs: DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS,
+      repeatEveryMs: status.repeatTickEnabled ? DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS : 0,
       queue,
     },
     {

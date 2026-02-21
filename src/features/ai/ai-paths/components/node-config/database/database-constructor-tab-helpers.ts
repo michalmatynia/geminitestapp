@@ -58,21 +58,28 @@ export const formatCollectionSchema = (collectionName: string, fields: FieldSche
 };
 
 export const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {
-  if (!schema || !(schema as any)?.collections?.length) return [];
+  if (!schema) return [];
+
+  const rawCollections = schema.collections;
+  const collectionsArray = Array.isArray(rawCollections)
+    ? rawCollections
+    : Object.values(rawCollections);
+
+  if (collectionsArray.length === 0) return [];
 
   const stripUndefinedProvider = (
-    collection: any
+    collection: CollectionSchema & { provider?: string }
   ): CollectionSchema => {
     const { provider, ...rest } = collection;
     return provider ? { ...rest, provider } : rest;
   };
 
-  if (schema?.provider === 'multi') {
-    return (schema.collections as any[]).map((collection) => stripUndefinedProvider(collection));
+  if (schema.provider === 'multi') {
+    return (collectionsArray as Array<CollectionSchema & { provider?: string }>).map((collection) => stripUndefinedProvider(collection));
   }
 
-  const provider: 'mongodb' | 'prisma' = (schema ? schema.provider : 'mongodb') as any;
-  return (schema ? (schema.collections as any[]) : []).map((collection) => ({
+  const provider = schema.provider === 'prisma' ? 'prisma' : 'mongodb';
+  return (collectionsArray as Array<CollectionSchema & { provider?: string }>).map((collection) => ({
     ...stripUndefinedProvider(collection),
     provider,
   }));

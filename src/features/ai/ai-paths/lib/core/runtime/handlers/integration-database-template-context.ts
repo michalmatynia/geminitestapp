@@ -3,6 +3,7 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
+import type { CollectionSchema } from '@/shared/contracts/database';
 
 import {
   normalizeNonEmptyString,
@@ -220,7 +221,7 @@ export function prepareDatabaseTemplateContext({
     : [];
 
   if (collections.length) {
-    collections.forEach((collection: any) => {
+    collections.forEach((collection: CollectionSchema) => {
       const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
       const displayName = toTitleCase(singularize(collection.name));
       const nameSet = new Set<string>([collection.name, displayName]);

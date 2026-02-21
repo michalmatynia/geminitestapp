@@ -1,214 +1,9 @@
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/CmsMenu.tsx
-   26:5   error  Unsafe argument of type error typed assigned to a parameter of type `boolean | (() => boolean)`                                                                                                                                                                                         @typescript-eslint/no-unsafe-argument
-   26:10  error  Unsafe member access .collapsible on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-   26:29  error  Unsafe member access .collapsedByDefault on a type that cannot be resolved                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
-   28:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-   28:29  error  Unsafe member access .positionMode on a type that cannot be resolved                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
-   28:51  error  Unsafe member access .stickyEnabled on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-   29:23  error  Unsafe member access .menuPlacement on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-   29:56  error  Unsafe member access .menuPlacement on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-   31:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-   31:34  error  Unsafe member access .hideOnScroll on a type that cannot be resolved                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
-   32:45  error  Unsafe argument of type error typed assigned to a parameter of type `number`                                                                                                                                                                                                            @typescript-eslint/no-unsafe-argument
-   32:50  error  Unsafe member access .showOnScrollUpAfterPx on a type that cannot be resolved                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
-   36:18  error  Unsafe argument of type error typed assigned to a parameter of type `SetStateAction<boolean>`                                                                                                                                                                                           @typescript-eslint/no-unsafe-argument
-   36:23  error  Unsafe member access .collapsible on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-   36:42  error  Unsafe member access .collapsedByDefault on a type that cannot be resolved                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
-   37:12  error  Unsafe member access .collapsible on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-   37:30  error  Unsafe member access .collapsedByDefault on a type that cannot be resolved                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
-   37:55  error  Unsafe member access .menuPlacement on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-   41:12  error  Unsafe member access .menuPlacement on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-   41:32  error  Unsafe member access .hideOnScroll on a type that cannot be resolved                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
-   79:14  error  Unsafe member access .menuColorSchemeId on a type that cannot be resolved                                                                                                                                                                                                               @typescript-eslint/no-unsafe-member-access
-   79:40  error  Unsafe member access .menuColorSchemeId on a type that cannot be resolved                                                                                                                                                                                                               @typescript-eslint/no-unsafe-member-access
-   80:13  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-   80:37  error  The type of computed name [menu.menuColorSchemeId] cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-   80:42  error  Unsafe member access .menuColorSchemeId on a type that cannot be resolved                                                                                                                                                                                                               @typescript-eslint/no-unsafe-member-access
-   83:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-   83:30  error  Unsafe member access .surface on a type that cannot be resolved                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
-   84:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-   84:24  error  Unsafe member access .text on a type that cannot be resolved                                                                                                                                                                                                                            @typescript-eslint/no-unsafe-member-access
-   85:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-   85:26  error  Unsafe member access .border on a type that cannot be resolved                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-member-access
-   86:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-   86:26  error  Unsafe member access .accent on a type that cannot be resolved                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-member-access
-   91:7   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-   91:24  error  Unsafe member access .backgroundColor on a type that cannot be resolved                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
-   92:7   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-   92:18  error  Unsafe member access .textColor on a type that cannot be resolved                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-member-access
-   93:7   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-   93:20  error  Unsafe member access .borderColor on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-   94:7   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-   94:20  error  Unsafe member access .activeColor on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-   94:40  error  Unsafe member access .activeItemColor on a type that cannot be resolved                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
-   94:64  error  Unsafe member access .textColor on a type that cannot be resolved                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-member-access
-  100:14  error  Unsafe member access .menuEntryAnimation on a type that cannot be resolved                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
-  108:51  error  Unsafe argument of type error typed assigned to a parameter of type `"none" | "zoom-in" | "zoom-out" | "fade" | "fadeIn" | "fadeInUp" | "fadeInDown" | "fadeInLeft" | "fadeInRight" | "slide-up" | "slide-down" | "slide-left" | "slide-right" | "flip-x" | ... 4 more ... | "reveal"`  @typescript-eslint/no-unsafe-argument
-  108:56  error  Unsafe member access .menuEntryAnimation on a type that cannot be resolved                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
-  114:23  error  Unsafe member access .menuEntryAnimation on a type that cannot be resolved                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
-  124:12  error  Unsafe member access .menuEntryAnimation on a type that cannot be resolved                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
-  124:37  error  Unsafe member access .items on a type that cannot be resolved                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
-  128:14  error  Unsafe member access .menuHoverAnimation on a type that cannot be resolved                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
-  129:53  error  Unsafe argument of type error typed assigned to a parameter of type `"none" | "zoom-in" | "zoom-out" | "fade" | "fadeIn" | "fadeInUp" | "fadeInDown" | "fadeInLeft" | "fadeInRight" | "slide-up" | "slide-down" | "slide-left" | "slide-right" | "flip-x" | ... 4 more ... | "reveal"`  @typescript-eslint/no-unsafe-argument
-  129:58  error  Unsafe member access .menuHoverAnimation on a type that cannot be resolved                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
-  172:12  error  Unsafe member access .menuHoverAnimation on a type that cannot be resolved                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
-  172:37  error  Unsafe member access .items on a type that cannot be resolved                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
-  174:13  error  Unsafe member access .showMenu on a type that cannot be resolved                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
-  176:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  176:35  error  Unsafe member access .collapsible on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-  176:54  error  Unsafe member access .collapsedWidth on a type that cannot be resolved                                                                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
-  176:76  error  Unsafe member access .sideWidth on a type that cannot be resolved                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-member-access
-  178:12  error  Unsafe member access .menuPlacement on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-  183:10  error  Unsafe member access .collapsible on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-  191:23  error  Unsafe member access .menuPlacement on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-  192:22  error  Unsafe member access .menuPlacement on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-  193:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  193:22  error  Unsafe member access .paddingTop on a type that cannot be resolved                                                                                                                                                                                                                      @typescript-eslint/no-unsafe-member-access
-  194:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  194:25  error  Unsafe member access .paddingBottom on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-  195:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  195:23  error  Unsafe member access .paddingLeft on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-  196:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  196:24  error  Unsafe member access .paddingRight on a type that cannot be resolved                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
-  197:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  197:22  error  Unsafe member access .fontFamily on a type that cannot be resolved                                                                                                                                                                                                                      @typescript-eslint/no-unsafe-member-access
-  198:23  error  Unsafe member access .fontSize on a type that cannot be resolved                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
-  199:22  error  Unsafe member access .fontWeight on a type that cannot be resolved                                                                                                                                                                                                                      @typescript-eslint/no-unsafe-member-access
-  200:25  error  Unsafe member access .letterSpacing on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-  200:49  error  Unsafe member access .letterSpacing on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-  201:25  error  Unsafe member access .textTransform on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-  203:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  203:43  error  Unsafe member access .stickyOffset on a type that cannot be resolved                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
-  205:16  error  Unsafe member access .menuPlacement on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-  206:17  error  Unsafe member access .menuPlacement on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-  208:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  216:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  216:31  error  Unsafe member access .fullWidth on a type that cannot be resolved                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-member-access
-  216:60  error  Unsafe member access .maxWidth on a type that cannot be resolved                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
-  217:29  error  Unsafe member access .fullWidth on a type that cannot be resolved                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-member-access
-  220:25  error  Unsafe member access .layoutStyle on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-  221:22  error  Unsafe member access .layoutStyle on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-  223:12  error  Unsafe member access .alignment on a type that cannot be resolved                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-member-access
-  225:16  error  Unsafe member access .alignment on a type that cannot be resolved                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-member-access
-  227:18  error  Unsafe member access .alignment on a type that cannot be resolved                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-member-access
-  230:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  230:15  error  Unsafe member access .itemGap on a type that cannot be resolved                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
-  234:32  error  Unsafe member access .collapsible on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-  235:25  error  Unsafe member access .layoutStyle on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-  236:5   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  236:15  error  Unsafe member access .itemGap on a type that cannot be resolved                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
-  237:22  error  Unsafe member access .layoutStyle on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-  243:15  error  Unsafe member access .collapsible on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-  253:12  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-call
-  253:17  error  Unsafe member access .items on a type that cannot be resolved                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
-  258:28  error  Unsafe member access .activeStyle on a type that cannot be resolved                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-member-access
-  280:23  error  Unsafe member access .showItemImages on a type that cannot be resolved                                                                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
-  284:28  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  284:33  error  Unsafe member access .itemImageSize on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-  285:29  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                               @typescript-eslint/no-unsafe-assignment
-  285:34  error  Unsafe member access .itemImageSize on a type that cannot be resolved                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-member-access
-  295:41  error  Unsafe member access .transitionSpeed on a type that cannot be resolved                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-member-access
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/CmsPageRenderer.tsx
-   65:27  error  Unsafe member access .content on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-   69:7   error  Unsafe assignment of an error typed value                        @typescript-eslint/no-unsafe-assignment
-   69:18  error  Unsafe member access .type on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
-  102:31  error  Unsafe assignment of an error typed value                        @typescript-eslint/no-unsafe-assignment
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/CmsPageShell.tsx
-  22:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  22:28  error  Unsafe member access .showMenu on a type that cannot be resolved           @typescript-eslint/no-unsafe-member-access
-  23:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  23:36  error  Unsafe member access .pagePadding on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
-  23:69  error  Unsafe member access .pagePadding on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
-  24:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  24:35  error  Unsafe member access .pageMargin on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-  24:67  error  Unsafe member access .pageMargin on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-  25:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  25:35  error  Unsafe member access .pagePaddingTop on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
-  25:71  error  Unsafe member access .pagePaddingTop on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
-  26:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  26:37  error  Unsafe member access .pagePaddingRight on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
-  26:75  error  Unsafe member access .pagePaddingRight on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
-  27:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  27:38  error  Unsafe member access .pagePaddingBottom on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  27:77  error  Unsafe member access .pagePaddingBottom on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  28:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  28:36  error  Unsafe member access .pagePaddingLeft on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
-  28:73  error  Unsafe member access .pagePaddingLeft on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
-  29:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  29:34  error  Unsafe member access .pageMarginTop on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  29:69  error  Unsafe member access .pageMarginTop on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  30:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  30:36  error  Unsafe member access .pageMarginRight on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
-  30:73  error  Unsafe member access .pageMarginRight on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
-  31:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  31:37  error  Unsafe member access .pageMarginBottom on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
-  31:75  error  Unsafe member access .pageMarginBottom on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
-  32:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  32:35  error  Unsafe member access .pageMarginLeft on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
-  32:71  error  Unsafe member access .pageMarginLeft on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
-  33:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  33:43  error  Unsafe member access .menuPlacement on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  33:76  error  Unsafe member access .menuPlacement on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  34:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  34:40  error  Unsafe member access .sideWidth on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
-  35:9   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  35:35  error  Unsafe member access .borderRadius on a type that cannot be resolved       @typescript-eslint/no-unsafe-member-access
-  35:69  error  Unsafe member access .borderRadius on a type that cannot be resolved       @typescript-eslint/no-unsafe-member-access
-  37:5   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  37:28  error  Unsafe member access .backgroundColor on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
-  38:5   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  42:5   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  43:5   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  44:5   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  45:5   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  46:5   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  47:5   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  48:5   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  49:5   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  53:14  error  Unsafe member access .menuPlacement on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  54:7   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  56:7   error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  64:17  error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  66:30  error  Unsafe assignment of an error typed value                                  @typescript-eslint/no-unsafe-assignment
-  66:36  error  Unsafe member access .enableAnimations on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
-
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx
-  194:3   error  Unsafe return of a value of type error                          @typescript-eslint/no-unsafe-return
-  194:37  error  Unsafe member access .offset on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  351:19  error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
-  351:99  error  Unsafe member access .scale on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
-  352:19  error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
-  367:21  error  Unsafe assignment of an error typed value                       @typescript-eslint/no-unsafe-assignment
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/ThemeProvider.tsx
-  11:5   error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
-  11:34  error  Unsafe member access .colors on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  12:5   error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
-  12:36  error  Unsafe member access .colors on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  13:5   error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
-  13:33  error  Unsafe member access .colors on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  14:5   error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
-  14:37  error  Unsafe member access .colors on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  15:5   error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
-  15:34  error  Unsafe member access .colors on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  16:5   error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
-  16:31  error  Unsafe member access .colors on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  17:5   error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
-  17:32  error  Unsafe member access .colors on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  18:5   error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
-  18:33  error  Unsafe member access .typography on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  19:5   error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
-  19:30  error  Unsafe member access .typography on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  20:38  error  Unsafe member access .typography on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  21:47  error  Unsafe member access .typography on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  22:44  error  Unsafe member access .typography on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  23:5   error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
-  23:36  error  Unsafe member access .spacing on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
-  24:5   error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
-  24:38  error  Unsafe member access .spacing on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
+  194:3   error  Unsafe return of a value of type error     @typescript-eslint/no-unsafe-return
+  351:19  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  352:19  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  367:21  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/sections/FrontendRichTextSection.tsx
   4:10  warning  'EmptyState' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -220,8 +15,12 @@
   68:35  error  Unsafe argument of type error typed assigned to a parameter of type `{ categoryId?: string | undefined; tagId?: string | undefined; search?: string | undefined; tags?: string[] | undefined; filename?: string | undefined; isPublic?: boolean | undefined; }`  @typescript-eslint/no-unsafe-argument
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/ComponentTreePanel.tsx
-  142:9   error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
-  143:11  error  Unsafe return of a value of type error     @typescript-eslint/no-unsafe-return
+  148:14  error  Unsafe object destructuring of a property with an error typed value   @typescript-eslint/no-unsafe-assignment
+  190:9   error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  200:9   error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  218:7   error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  218:40  error  Unsafe member access .placeholders on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  233:19  error  Unsafe member access .placeholders on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/MenuSettingsPanel.tsx
   148:20  error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
@@ -335,13 +134,8 @@
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/animation/ParallaxSection.tsx
    10:3   warning  'AnimationEasing' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
    34:9   error    Unsafe assignment of an error typed value                                          @typescript-eslint/no-unsafe-assignment
-   35:70  error    Unsafe member access .offset on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
-   63:13  error    Unsafe assignment of an error typed value                                          @typescript-eslint/no-unsafe-assignment
    67:9   error    Unsafe assignment of an error typed value                                          @typescript-eslint/no-unsafe-assignment
-   67:59  error    Unsafe member access .offset on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
-   69:43  error    Unsafe member access .scale on a type that cannot be resolved                      @typescript-eslint/no-unsafe-member-access
    70:9   error    Unsafe assignment of an error typed value                                          @typescript-eslint/no-unsafe-assignment
-   70:43  error    Unsafe member access .scale on a type that cannot be resolved                      @typescript-eslint/no-unsafe-member-access
   309:24  error    Unsafe assignment of an error typed value                                          @typescript-eslint/no-unsafe-assignment
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/context/ComponentSettingsContext.tsx
@@ -737,46 +531,8 @@
    97:33  error  Unsafe member access .maxContentWidth on an `any` value                                                               @typescript-eslint/no-unsafe-member-access
   101:10  error  Unsafe member access .customCss on an `any` value                                                                     @typescript-eslint/no-unsafe-member-access
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/utils/cms-master-tree-adapter.ts
-  14:3   error  Unsafe return of a value of type error                                        @typescript-eslint/no-unsafe-return
-  20:15  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  20:30  error  Unsafe call of a type that could not be resolved                              @typescript-eslint/no-unsafe-call
-  20:30  error  Unsafe call of a type that could not be resolved                              @typescript-eslint/no-unsafe-call
-  20:38  error  Unsafe member access .nextNodes on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
-  25:12  error  Unsafe member access .sort on a type that cannot be resolved                  @typescript-eslint/no-unsafe-member-access
-  26:15  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  26:30  error  Unsafe call of a type that could not be resolved                              @typescript-eslint/no-unsafe-call
-  26:43  error  Unsafe member access .findIndex on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
-  29:15  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  33:58  error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
-  37:15  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  37:28  error  Unsafe call of a type that could not be resolved                              @typescript-eslint/no-unsafe-call
-  37:36  error  Unsafe member access .previousNodes on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-  40:34  error  Unsafe member access .parentId on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
-  40:63  error  Unsafe argument of type error typed assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
-  40:74  error  Unsafe member access .parentId on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
-  41:35  error  Unsafe member access .parentId on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
-  43:15  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  43:33  error  Unsafe call of a type that could not be resolved                              @typescript-eslint/no-unsafe-call
-  43:33  error  Unsafe call of a type that could not be resolved                              @typescript-eslint/no-unsafe-call
-  43:41  error  Unsafe member access .previousNodes on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-  46:45  error  Unsafe member access .parentId on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
-  48:12  error  Unsafe member access .sort on a type that cannot be resolved                  @typescript-eslint/no-unsafe-member-access
-  49:15  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  49:29  error  Unsafe call of a type that could not be resolved                              @typescript-eslint/no-unsafe-call
-  49:45  error  Unsafe member access .findIndex on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
-  54:15  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  55:52  error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
-
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/shared/EventEffectsWrapper.tsx
   49:11  error  Unsafe return of a value of type error  @typescript-eslint/no-unsafe-return
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/services/cms-provider.ts
-  14:9   error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
-  15:9   error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
-  22:16  error  Unsafe member access .strictProviderAvailability on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
-  27:5   error  Unsafe return of a value of type error                                                 @typescript-eslint/no-unsafe-return
-  30:14  error  Unsafe member access .requireExplicitServiceRouting on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/utils/event-effects.ts
    62:3   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
@@ -793,5 +549,5 @@
   114:62  error  Unsafe member access .clickAction on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
   123:39  error  Unsafe member access .clickAction on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
 
-✖ 722 problems (716 errors, 6 warnings)
+✖ 490 problems (484 errors, 6 warnings)
 

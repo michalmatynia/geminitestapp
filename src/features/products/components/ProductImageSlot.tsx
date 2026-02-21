@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
 'use client';
 
-import { PlusIcon, XIcon, GripVertical, MoreVertical } from 'lucide-react';
+import { 
+  PlusIcon, XIcon, GripVertical, MoreVertical } from 'lucide-react';
 import NextImage from 'next/image';
 import React from 'react';
 
@@ -14,7 +16,7 @@ import {
   FileUploadTrigger,
 } from '@/shared/ui';
 
-import { useProductImageManagerUI, type SlotViewMode } from './ProductImageManagerUIContext';
+import { useProductImageManagerUI } from './ProductImageManagerUIContext';
 
 interface ProductImageSlotProps {
   index: number;
@@ -56,7 +58,6 @@ export function ProductImageSlot({
     imageLinks,
     imageBase64s,
     setImageLinkAt,
-    handleSlotDisconnectImage,
     setImageBase64At,
   } = controller;
 

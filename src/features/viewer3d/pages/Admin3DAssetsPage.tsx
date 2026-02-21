@@ -6,15 +6,13 @@ import {
   Grid,
   List,
   Filter,
-  X,
-  RefreshCw
+  X
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import {
   Button,
-  DataTable,
   StandardDataTablePanel,
   SelectSimple,
   SearchInput,

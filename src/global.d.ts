@@ -12,7 +12,7 @@ declare module 'react' {
 }
 
 declare module 'pdf-parse' {
-  function PDFParse(dataBuffer: Buffer | Uint8Array, options?: any): Promise<any>;
+  function PDFParse(dataBuffer: Buffer | Uint8Array, options?: unknown): Promise<unknown>;
   export = PDFParse;
 }
 

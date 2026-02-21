@@ -542,6 +542,11 @@ const parseTriggerButtons = (
   }
 };
 
+const buildTriggerButtonDisplay = (name: string): Record<string, unknown> => ({
+  label: name,
+  showLabel: true,
+});
+
 const ensureParameterInferenceDefaults = async (
   records: AiPathsSettingRecord[]
 ): Promise<AiPathsSettingRecord[]> => {
@@ -606,7 +611,7 @@ const ensureParameterInferenceDefaults = async (
         iconId: null,
         locations: ['product_modal'],
         mode: 'click',
-        display: 'icon_label',
+        display: buildTriggerButtonDisplay(PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME),
         createdAt: now,
         updatedAt: now,
       },
@@ -623,7 +628,7 @@ const ensureParameterInferenceDefaults = async (
       iconId: null,
       locations: ['product_modal'],
       mode: 'click',
-      display: 'icon_label',
+      display: buildTriggerButtonDisplay(PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME),
       createdAt: now,
       updatedAt: now,
     };
@@ -665,7 +670,7 @@ const ensureParameterInferenceDefaults = async (
           ])
         ),
         mode: 'click',
-        display: 'icon_label',
+        display: buildTriggerButtonDisplay(PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME),
       };
     } else {
       nextButtons.push(seededButton);
@@ -775,7 +780,7 @@ const ensureDescriptionInferenceLiteDefaults = async (
         iconId: null,
         locations: ['product_modal'],
         mode: 'click',
-        display: 'icon_label',
+        display: buildTriggerButtonDisplay(DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME),
         createdAt: now,
         updatedAt: now,
       },
@@ -792,7 +797,7 @@ const ensureDescriptionInferenceLiteDefaults = async (
       iconId: null,
       locations: ['product_modal'],
       mode: 'click',
-      display: 'icon_label',
+      display: buildTriggerButtonDisplay(DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME),
       createdAt: now,
       updatedAt: now,
     };
@@ -834,7 +839,7 @@ const ensureDescriptionInferenceLiteDefaults = async (
           ])
         ),
         mode: 'click',
-        display: 'icon_label',
+        display: buildTriggerButtonDisplay(DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME),
       };
     } else {
       nextButtons.push(seededButton);
@@ -947,7 +952,7 @@ const ensureBaseExportBlwoDefaults = async (
         iconId: null,
         locations: ['product_row'],
         mode: 'click',
-        display: 'icon_label',
+        display: buildTriggerButtonDisplay(BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME),
         createdAt: now,
         updatedAt: now,
       },
@@ -995,7 +1000,7 @@ const ensureBaseExportBlwoDefaults = async (
           ])
         ),
         mode: 'click',
-        display: 'icon_label',
+        display: buildTriggerButtonDisplay(BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME),
       };
     } else {
       nextButtons.push({
@@ -1004,7 +1009,7 @@ const ensureBaseExportBlwoDefaults = async (
         iconId: null,
         locations: ['product_row'],
         mode: 'click',
-        display: 'icon_label',
+        display: buildTriggerButtonDisplay(BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME),
         createdAt: now,
         updatedAt: now,
       });

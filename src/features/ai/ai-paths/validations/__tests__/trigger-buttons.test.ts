@@ -76,7 +76,7 @@ describe('trigger button validation', () => {
     expect(parsed[0]?.iconId).toBe('sparkles');
   });
 
-  it('uses legacy label when name is missing', () => {
+  it('falls back to legacy top-level label when name is missing', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
         {
@@ -87,9 +87,38 @@ describe('trigger button validation', () => {
     );
 
     expect(parsed[0]?.name).toBe('Legacy Label');
+    expect(parsed[0]?.display.label).toBe('Legacy Label');
   });
 
-  it('normalizes legacy display=label into icon_label', () => {
+  it('infers display.label from button name', () => {
+    const parsed = parseAiTriggerButtonsRaw(
+      JSON.stringify([
+        {
+          id: 'btn-display-label',
+          name: 'Display Label',
+          display: { label: 'Old Label' },
+        },
+      ])
+    );
+
+    expect(parsed[0]?.display.label).toBe('Display Label');
+  });
+
+  it('maps icon display mode into showLabel=false', () => {
+    const parsed = parseAiTriggerButtonsRaw(
+      JSON.stringify([
+        {
+          id: 'btn-icon-mode',
+          name: 'Icon Mode',
+          display: 'icon',
+        },
+      ])
+    );
+
+    expect(parsed[0]?.display.showLabel).toBe(false);
+  });
+
+  it('maps legacy label display mode into showLabel=true', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
         {
@@ -100,20 +129,22 @@ describe('trigger button validation', () => {
       ])
     );
 
-    expect(parsed[0]?.display).toBe('icon_label');
+    expect(parsed[0]?.display.showLabel).toBe(true);
   });
 
-  it('uses display.label when name is missing', () => {
+  it('prefers display.label when stored name is an opaque id', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
         {
-          id: 'btn-display-label',
-          display: { label: 'Display Label' },
+          id: 'btn-opaque-name',
+          name: '90f4a2f8-3f12-44cc-a32f-f2e54ed5c68f',
+          display: { label: 'Friendly Trigger Name', showLabel: true },
         },
       ])
     );
 
-    expect(parsed[0]?.name).toBe('Display Label');
+    expect(parsed[0]?.name).toBe('Friendly Trigger Name');
+    expect(parsed[0]?.display.label).toBe('Friendly Trigger Name');
   });
 
   it('parses string enabled values without dropping the record', () => {

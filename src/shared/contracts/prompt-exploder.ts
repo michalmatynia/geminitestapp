@@ -17,11 +17,11 @@ export const promptExploderListItemSchema: z.ZodType<PromptExploderListItemDto> 
   text: z.string().optional(),
   description: z.string().optional(),
   logicalOperator: promptExploderLogicalOperatorSchema.nullable().optional(),
-  logicalConditions: z.array(z.lazy(() => promptExploderLogicalConditionSchema)).optional(),
+  logicalConditions: z.array(z.lazy(() => promptExploderLogicalConditionSchema)).default([]),
   referencedParamPath: z.string().nullable().optional(),
   referencedComparator: promptExploderLogicalComparatorSchema.nullable().optional(),
   referencedValue: z.unknown().nullable().optional(),
-  children: z.array(promptExploderListItemSchema).optional(),
+  children: z.array(promptExploderListItemSchema).default([]),
 }));
 
 export interface PromptExploderListItemDto {
@@ -31,11 +31,11 @@ export interface PromptExploderListItemDto {
   text?: string;
   description?: string;
   logicalOperator?: PromptExploderLogicalOperator | null;
-  logicalConditions?: PromptExploderLogicalCondition[];
+  logicalConditions: PromptExploderLogicalCondition[];
   referencedParamPath?: string | null;
   referencedComparator?: PromptExploderLogicalComparator | null;
   referencedValue?: unknown | null;
-  children?: PromptExploderListItemDto[];
+  children: PromptExploderListItemDto[];
 }
 
 export type PromptExploderListItem = PromptExploderListItemDto;
@@ -158,7 +158,7 @@ export const promptExploderSegmentSchema = z.object({
   segments: z.array(z.any()).default([]),
 });
 
-export type PromptExploderSegmentDto = z.infer<typeof promptExploderSegmentSchema>;
+export type PromptExploderSegmentDto = z.input<typeof promptExploderSegmentSchema>;
 export type PromptExploderSegment = PromptExploderSegmentDto;
 
 export const promptExploderDocumentSchema = dtoBaseSchema.extend({
@@ -186,7 +186,7 @@ export const promptExploderDocumentSchema = dtoBaseSchema.extend({
   lastReassembledAt: z.string().optional(),
 });
 
-export type PromptExploderDocumentDto = z.infer<typeof promptExploderDocumentSchema>;
+export type PromptExploderDocumentDto = z.input<typeof promptExploderDocumentSchema>;
 export type PromptExploderDocument = PromptExploderDocumentDto;
 
 /**

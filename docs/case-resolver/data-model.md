@@ -44,7 +44,7 @@ Default workspace constructor: `createDefaultCaseResolverWorkspace()` in `settin
 Core fields (from normalization path in `createCaseResolverFile`):
 
 - identity and hierarchy: `id`, `fileType`, `name`, `folder`, `parentCaseId`
-- links: `referenceCaseIds`
+- links: `referenceCaseIds`, `relatedFileIds`
 - content model: `originalDocumentContent`, `explodedDocumentContent`, `activeDocumentVersion`, `documentContent*`
 - OCR scan fields: `scanSlots`, `scanOcrModel`, `scanOcrPrompt`
 - metadata: `tagId`, `caseIdentifierId`, `categoryId`, `isLocked`

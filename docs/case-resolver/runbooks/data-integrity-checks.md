@@ -25,6 +25,7 @@ Use this runbook for proactive or incident-driven integrity checks of Case Resol
    - no self/looping parent references
 3. Reference integrity:
    - `referenceCaseIds` must point to existing case IDs
+   - `relatedFileIds` must point to existing non-case file IDs and be bidirectional
 4. Folder consistency:
    - folder records and folder path normalization
 5. Relation graph consistency:

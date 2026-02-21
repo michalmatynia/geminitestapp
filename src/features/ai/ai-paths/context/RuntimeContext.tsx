@@ -35,8 +35,8 @@ export interface LastErrorInfo {
 export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping';
 
 export interface RuntimeControlHandlers {
-  fireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
-  fireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
+  fireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
+  fireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
   pauseActiveRun?: () => void;
   resumeActiveRun?: () => void;
   stepActiveRun?: (triggerNode?: AiNode) => void;
@@ -52,7 +52,7 @@ export interface RuntimeNodeConfigHandlers {
     entityId: string,
     options?: { notify?: boolean }
   ) => Promise<void>;
-  runSimulation?: (node: AiNode, triggerEvent?: string) => void | Promise<void>;
+  runSimulation?: (node: AiNode, triggerEvent?: string) => Promise<void>;
   sendToAi?: (databaseNodeId: string, prompt: string) => Promise<void>;
 }
 
@@ -127,8 +127,8 @@ export interface RuntimeActions {
     status: RuntimeRunStatus | ((prev: RuntimeRunStatus) => RuntimeRunStatus)
   ) => void;
   setRunControlHandlers: (handlers: RuntimeControlHandlers) => void;
-  fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
-  fireTriggerPersistent: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
+  fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
+  fireTriggerPersistent: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
   pauseActiveRun: () => void;
   resumeActiveRun: () => void;
   stepActiveRun: (triggerNode?: AiNode) => void;
@@ -212,21 +212,21 @@ export function RuntimeProvider({
 
   // Memoized update operations
   const updateNodeInputs = useCallback((nodeId: string, inputs: RuntimePortValues) => {
-    setRuntimeStateInternal( (prev: any) => ({
+    setRuntimeStateInternal((prev) => ({
       ...prev,
       inputs: { ...prev.inputs, [nodeId]: inputs },
     }));
   }, []);
 
   const updateNodeOutputs = useCallback((nodeId: string, outputs: RuntimePortValues) => {
-    setRuntimeStateInternal( (prev: any) => ({
+    setRuntimeStateInternal((prev) => ({
       ...prev,
       outputs: { ...prev.outputs, [nodeId]: outputs },
     }));
   }, []);
 
   const clearNodeRuntime = useCallback((nodeId: string) => {
-    setRuntimeStateInternal( (prev: any) => {
+    setRuntimeStateInternal((prev) => {
       const { [nodeId]: _removedInputs, ...restInputs } = prev.inputs ?? {};
       const { [nodeId]: _removedOutputs, ...restOutputs } = prev.outputs ?? {};
       const newHistory = prev.history ? { ...prev.history } : undefined;
@@ -250,7 +250,7 @@ export function RuntimeProvider({
   }, []);
 
   const addRuntimeEvent = useCallback((event: AiPathRuntimeEvent) => {
-    setRuntimeEventsInternal( (prev: any) => {
+    setRuntimeEventsInternal((prev) => {
       const next = [...prev, event];
       if (next.length > MAX_RUNTIME_EVENTS) {
         return next.slice(next.length - MAX_RUNTIME_EVENTS);
@@ -268,7 +268,7 @@ export function RuntimeProvider({
   }, []);
 
   const appendHistory = useCallback((nodeId: string, entry: RuntimeHistoryEntry) => {
-    setRuntimeStateInternal( (prev: any) => {
+    setRuntimeStateInternal((prev) => {
       const existingHistory = prev.history ?? {};
       const nodeHistory = existingHistory[nodeId] ?? [];
       return {
@@ -282,14 +282,14 @@ export function RuntimeProvider({
   }, []);
 
   const clearHistory = useCallback(() => {
-    setRuntimeStateInternal( (prev: any) => ({
+    setRuntimeStateInternal((prev) => ({
       ...prev,
       history: undefined,
     }));
   }, []);
 
   const clearNodeHistory = useCallback((nodeId: string) => {
-    setRuntimeStateInternal( (prev: any) => {
+    setRuntimeStateInternal((prev) => {
       if (!prev.history) return prev;
       const { [nodeId]: _removed, ...restHistory } = prev.history;
       return {
@@ -300,27 +300,27 @@ export function RuntimeProvider({
   }, []);
 
   const updateParserSample = useCallback((nodeId: string, sample: ParserSampleState) => {
-    setParserSamplesInternal( (prev: any) => ({ ...prev, [nodeId]: sample }));
+    setParserSamplesInternal((prev) => ({ ...prev, [nodeId]: sample }));
   }, []);
 
   const updateUpdaterSample = useCallback((nodeId: string, sample: UpdaterSampleState) => {
-    setUpdaterSamplesInternal( (prev: any) => ({ ...prev, [nodeId]: sample }));
+    setUpdaterSamplesInternal((prev) => ({ ...prev, [nodeId]: sample }));
   }, []);
 
   const updatePathDebugSnapshot = useCallback((pathId: string, snapshot: PathDebugSnapshot) => {
-    setPathDebugSnapshotsInternal( (prev: any) => ({ ...prev, [pathId]: snapshot }));
+    setPathDebugSnapshotsInternal((prev) => ({ ...prev, [pathId]: snapshot }));
   }, []);
 
   const setRunControlHandlers = useCallback((handlers: RuntimeControlHandlers) => {
     runControlHandlersRef.current = handlers;
   }, []);
 
-  const fireTrigger = useCallback((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
-    return runControlHandlersRef.current.fireTrigger?.(node, event);
+  const fireTrigger = useCallback(async (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
+    await runControlHandlersRef.current.fireTrigger?.(node, event);
   }, []);
 
-  const fireTriggerPersistent = useCallback((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
-    return runControlHandlersRef.current.fireTriggerPersistent?.(node, event);
+  const fireTriggerPersistent = useCallback(async (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => {
+    await runControlHandlersRef.current.fireTriggerPersistent?.(node, event);
   }, []);
 
   const pauseActiveRun = useCallback(() => {

@@ -62,6 +62,82 @@ describe('parameter inference seed config', () => {
     ).toBe(true);
   });
 
+  it('seeds template creation branch for empty parameter arrays', () => {
+    const config = buildConfig();
+    const nodes = Array.isArray(config.nodes) ? config.nodes : [];
+    const edges = Array.isArray(config.edges) ? config.edges : [];
+
+    const templatePromptNode = nodes.find(
+      (node) => node?.['id'] === 'node-prompt-template-params'
+    );
+    const templateRegexNode = nodes.find(
+      (node) => node?.['id'] === 'node-regex-template-params'
+    );
+    const seedNode = nodes.find((node) => node?.['id'] === 'node-seed-params');
+
+    expect(templatePromptNode?.['type']).toBe('prompt');
+    expect(templateRegexNode?.['type']).toBe('regex');
+    expect(seedNode?.['type']).toBe('database');
+
+    const templatePrompt = (
+      (((templatePromptNode?.['config'] as Record<string, unknown> | undefined)?.[
+        'prompt'
+      ] as Record<string, unknown> | undefined)?.['template'] as
+        | string
+        | undefined)
+    );
+    expect(templatePrompt).toContain('{"parameterId":"<id>","value":""}');
+
+    const seedDbConfig = (((seedNode?.['config'] as Record<string, unknown> | undefined)?.[
+      'database'
+    ] as Record<string, unknown> | undefined));
+    const seedQueryConfig = ((seedDbConfig?.['query'] as Record<string, unknown> | undefined));
+
+    expect(seedQueryConfig?.['collection']).toBe('products');
+    expect(seedQueryConfig?.['queryTemplate']).toEqual(
+      expect.stringContaining('"$exists"')
+    );
+    expect(seedQueryConfig?.['queryTemplate']).toEqual(
+      expect.stringContaining('"$size"')
+    );
+    expect(seedDbConfig?.['updateTemplate']).toEqual(
+      expect.stringContaining('"parameters": {{value}}')
+    );
+
+    expect(
+      edges.some((edge) => {
+        return (
+          edge?.['from'] === 'node-query-params' &&
+          edge?.['to'] === 'node-prompt-template-params' &&
+          edge?.['fromPort'] === 'result' &&
+          edge?.['toPort'] === 'result'
+        );
+      })
+    ).toBe(true);
+
+    expect(
+      edges.some((edge) => {
+        return (
+          edge?.['from'] === 'node-regex-template-params' &&
+          edge?.['to'] === 'node-seed-params' &&
+          edge?.['fromPort'] === 'value' &&
+          edge?.['toPort'] === 'value'
+        );
+      })
+    ).toBe(true);
+
+    expect(
+      edges.some((edge) => {
+        return (
+          edge?.['from'] === 'node-seed-params' &&
+          edge?.['to'] === 'node-update-params' &&
+          edge?.['fromPort'] === 'result' &&
+          edge?.['toPort'] === 'bundle'
+        );
+      })
+    ).toBe(true);
+  });
+
   it('seeds update node with custom update doc by simulation/entity id', () => {
     const config = buildConfig();
     const nodes = Array.isArray(config.nodes) ? config.nodes : [];

@@ -89,6 +89,10 @@ export const normalizeDatabaseEngineBackupSchedule = (
       typeof parsed?.['schedulerEnabled'] === 'boolean'
         ? parsed['schedulerEnabled']
         : DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE.schedulerEnabled,
+    repeatTickEnabled:
+      typeof parsed?.['repeatTickEnabled'] === 'boolean'
+        ? parsed['repeatTickEnabled']
+        : DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE.repeatTickEnabled,
     lastCheckedAt: normalizeIsoOrNull(parsed?.['lastCheckedAt']),
     mongodb: normalizeTarget(
       asRecord(parsed?.['mongodb']),

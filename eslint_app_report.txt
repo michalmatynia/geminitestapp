@@ -1,0 +1,95 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/exports/base/default-connection/handler.ts
+  39:63  error  Unexpected any. Specify a different type                                                                                                             @typescript-eslint/no-explicit-any
+  40:32  error  Unsafe argument of type `any` assigned to a parameter of type `string`                                                                               @typescript-eslint/no-unsafe-argument
+  40:32  error  Unsafe call of an `any` typed value                                                                                                                  @typescript-eslint/no-unsafe-call
+  40:32  error  Unsafe call of an `any` typed value                                                                                                                  @typescript-eslint/no-unsafe-call
+  40:45  error  Unsafe member access .slug on an `any` value                                                                                                         @typescript-eslint/no-unsafe-member-access
+  40:57  error  Unsafe member access .trim on an `any` value                                                                                                         @typescript-eslint/no-unsafe-member-access
+  40:64  error  Unsafe member access .toLowerCase on an `any` value                                                                                                  @typescript-eslint/no-unsafe-member-access
+  47:43  error  Unexpected any. Specify a different type                                                                                                             @typescript-eslint/no-explicit-any
+  48:47  error  Unsafe argument of type `any` assigned to a parameter of type `string`                                                                               @typescript-eslint/no-unsafe-argument
+  48:59  error  Unsafe member access .id on an `any` value                                                                                                           @typescript-eslint/no-unsafe-member-access
+  56:40  error  Unexpected any. Specify a different type                                                                                                             @typescript-eslint/no-explicit-any
+  56:59  error  Unsafe member access .id on an `any` value                                                                                                           @typescript-eslint/no-unsafe-member-access
+  63:40  error  Unexpected any. Specify a different type                                                                                                             @typescript-eslint/no-explicit-any
+  63:67  error  Unsafe argument of type `any` assigned to a parameter of type `{ baseApiToken?: string | null | undefined; password?: string | null | undefined; }`  @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/exports/base/image-retry-presets/handler.ts
+  44:36  error  Unsafe argument of type `ImageRetryPreset[]` assigned to a parameter of type `{ id: string; name: string; description: string; imageBase64Mode: "base-only" | "full-data-uri"; transform: { maxWidth?: number | undefined; maxHeight?: number | undefined; quality?: number | undefined; ... 5 more ...; height?: number | undefined; }; label?: string | undefined; }[]`  @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/import-templates/[id]/handler.ts
+  40:9  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  59:9  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/import-templates/handler.ts
+  45:9  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/jobs/handler.ts
+  19:62  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  19:70  error  Unsafe return of a value of type `any`                                  @typescript-eslint/no-unsafe-return
+  19:72  error  Unsafe member access .productId on an `any` value                       @typescript-eslint/no-unsafe-member-access
+  22:38  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  23:56  error  Unsafe argument of type `any` assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  24:65  error  Unsafe argument of type `any` assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  27:9   error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  30:43  error  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  31:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  31:23  error  Unsafe member access .id on an `any` value                              @typescript-eslint/no-unsafe-member-access
+  32:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  32:30  error  Unsafe member access .productId on an `any` value                       @typescript-eslint/no-unsafe-member-access
+  33:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  33:34  error  Unsafe member access .integrationId on an `any` value                   @typescript-eslint/no-unsafe-member-access
+  34:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  34:36  error  Unsafe member access .integration on an `any` value                     @typescript-eslint/no-unsafe-member-access
+  35:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  35:36  error  Unsafe member access .integration on an `any` value                     @typescript-eslint/no-unsafe-member-access
+  36:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  36:33  error  Unsafe member access .connectionId on an `any` value                    @typescript-eslint/no-unsafe-member-access
+  37:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  37:35  error  Unsafe member access .connection on an `any` value                      @typescript-eslint/no-unsafe-member-access
+  38:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  38:27  error  Unsafe member access .status on an `any` value                          @typescript-eslint/no-unsafe-member-access
+  39:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  39:38  error  Unsafe member access .externalListingId on an `any` value               @typescript-eslint/no-unsafe-member-access
+  40:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  40:32  error  Unsafe member access .inventoryId on an `any` value                     @typescript-eslint/no-unsafe-member-access
+  41:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  41:29  error  Unsafe member access .listedAt on an `any` value                        @typescript-eslint/no-unsafe-member-access
+  42:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  42:30  error  Unsafe member access .expiresAt on an `any` value                       @typescript-eslint/no-unsafe-member-access
+  43:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  43:33  error  Unsafe member access .nextRelistAt on an `any` value                    @typescript-eslint/no-unsafe-member-access
+  44:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  44:35  error  Unsafe member access .relistAttempts on an `any` value                  @typescript-eslint/no-unsafe-member-access
+  45:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  45:34  error  Unsafe member access .failureReason on an `any` value                   @typescript-eslint/no-unsafe-member-access
+  46:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  46:34  error  Unsafe member access .exportHistory on an `any` value                   @typescript-eslint/no-unsafe-member-access
+  47:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  47:30  error  Unsafe member access .createdAt on an `any` value                       @typescript-eslint/no-unsafe-member-access
+  48:11  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
+  48:30  error  Unsafe member access .updatedAt on an `any` value                       @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/[id]/export-to-base/handler.ts
+  412:17  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  412:31  error  Unsafe member access .requestId on an `any` value  @typescript-eslint/no-unsafe-member-access
+  412:64  error  Unsafe member access .status on an `any` value     @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/[id]/files/[slotIndex]/handler.ts
+  30:32  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  30:42  error  Unsafe member access .slotIndex on an `any` value  @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/notes/[id]/files/handler.ts
+  68:48  error  Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  68:58  error  Unsafe member access .slotIndex on an `any` value  @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/validator-patterns/[id]/handler.ts
+  285:7  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/validator-patterns/handler.ts
+  199:9  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  255:5  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+✖ 72 problems (72 errors, 0 warnings)
+

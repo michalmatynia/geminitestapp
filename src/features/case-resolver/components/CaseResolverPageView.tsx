@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
+ 
 import { Copy, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback } from 'react';
@@ -53,9 +53,9 @@ import { PromptExploderCaptureMappingModal } from './PromptExploderCaptureMappin
 import { CaseResolverPageProvider } from '../context/CaseResolverPageContext';
 import { emitCaseResolverShowDocumentInCanvas } from '../drag';
 import { resolvePromptExploderTransferStatusLabel } from '../hooks/prompt-exploder-transfer-lifecycle';
-import { type CaseResolverStateValue } from '../hooks/useCaseResolverState';
 import { buildCaseResolverNodeFileRelationIndexFromAssets } from '../nodefile-relations';
 import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
+import { type CaseResolverStateValue } from '../types';
 
 const ENABLE_CASE_RESOLVER_TRANSFER_DIAGNOSTICS =
   process.env['NEXT_PUBLIC_CASE_RESOLVER_TRANSFER_DIAGNOSTICS'] === '1';
@@ -927,6 +927,18 @@ export function CaseResolverPageView(
   }, [confirmLeaveWithUnsavedChanges, hasUnsavedChanges]);
 
   React.useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent): void => {
+      if (!hasUnsavedChanges) return;
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return (): void => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [hasUnsavedChanges]);
+
+  React.useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
       const isSaveShortcut =
         (event.metaKey || event.ctrlKey) &&
@@ -1252,8 +1264,11 @@ export function CaseResolverPageView(
                     Plain markdown output only for scan files.
                   </div>
                   <textarea
-                    readOnly
                     value={scanfileMarkdownPreview}
+                    disabled={isEditingDocumentLocked}
+                    onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+                      handleUpdateDraftDocumentContent(event.currentTarget.value);
+                    }}
                     placeholder='Run OCR to populate extracted text.'
                     className='mt-2 min-h-[320px] w-full resize-y rounded-lg border border-border/70 bg-black/20 px-3 py-2 font-mono text-xs text-gray-100'
                   />

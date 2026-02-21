@@ -238,6 +238,21 @@ const toAllowedMappedSources = (
 ): Set<string> | null => {
   if (settings.mode !== 'mapped') return null;
   const mapped = new Set<string>();
+  const addMappedSource = (value: string): void => {
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) return;
+    mapped.add(normalized);
+    if (normalized.includes('.')) {
+      const terminal = normalized
+        .split('.')
+        .map((part: string) => part.trim())
+        .filter((part: string): boolean => part.length > 0)
+        .pop();
+      if (terminal) {
+        mapped.add(terminal);
+      }
+    }
+  };
   templateMappings.forEach((mapping) => {
     const source = mapping.sourceKey?.trim().toLowerCase();
     const target = mapping.targetField?.trim().toLowerCase();
@@ -247,10 +262,10 @@ const toAllowedMappedSources = (
       target === 'parameters_all' ||
       target === 'parameter'
     ) {
-      mapped.add(source);
+      addMappedSource(source);
     }
     if (target.startsWith('parameter:')) {
-      mapped.add(source);
+      addMappedSource(source);
     }
   });
   return mapped.size > 0 ? mapped : new Set<string>();

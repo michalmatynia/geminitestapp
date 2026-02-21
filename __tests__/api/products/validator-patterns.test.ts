@@ -36,8 +36,17 @@ describe('validator-pattern routes', () => {
       severity: 'error',
       enabled: true,
       replacementEnabled: true,
+      replacementAutoApply: false,
+      skipNoopReplacementProposal: true,
       replacementValue: 'REPL',
       replacementFields: [],
+      replacementAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+      runtimeEnabled: false,
+      runtimeType: 'none',
+      runtimeConfig: null,
+      postAcceptBehavior: 'revalidate',
+      denyBehaviorOverride: null,
+      validationDebounceMs: 0,
       sequenceGroupId: null,
       sequenceGroupLabel: null,
       sequenceGroupDebounceMs: 0,
@@ -46,11 +55,14 @@ describe('validator-pattern routes', () => {
       maxExecutions: 1,
       passOutputToNext: true,
       launchEnabled: false,
+      launchAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+      launchScopeBehavior: 'gate',
       launchSourceMode: 'current_field',
       launchSourceField: null,
       launchOperator: 'equals',
       launchValue: null,
       launchFlags: null,
+      appliesToScopes: ['draft_template', 'product_create', 'product_edit'],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     });
@@ -119,6 +131,65 @@ describe('validator-pattern routes', () => {
     expect(repositoryMock.createPattern).not.toHaveBeenCalled();
   });
 
+  it('POST allows runtime replacement without static replacementValue', async () => {
+    const response = await POST(
+      new NextRequest('http://localhost/api/products/validator-patterns', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          label: 'Name Segment #4 -> Category',
+          target: 'category',
+          regex: '^.*$',
+          message: 'Resolve category from name segment.',
+          replacementEnabled: true,
+          replacementValue: null,
+          replacementFields: ['categoryId'],
+          runtimeEnabled: true,
+          runtimeType: 'database_query',
+          runtimeConfig: JSON.stringify({
+            version: 1,
+            operation: 'query',
+            payload: {
+              provider: 'auto',
+              collection: 'product_categories',
+              single: true,
+              query: { name: '[nameEnSegment4]' },
+            },
+            resultPath: 'item',
+            operator: 'truthy',
+            replacementPaths: ['item.id', 'item._id'],
+          }),
+        }),
+      }),
+    );
+
+    expect(response.status).toBe(201);
+    expect(repositoryMock.createPattern).toHaveBeenCalledTimes(1);
+  });
+
+  it('POST rejects missing replacementValue when runtime replacement is disabled', async () => {
+    const response = await POST(
+      new NextRequest('http://localhost/api/products/validator-patterns', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          label: 'Static Replacement Missing',
+          target: 'sku',
+          regex: '^.*$',
+          message: 'Missing replacement',
+          replacementEnabled: true,
+          replacementValue: null,
+          runtimeEnabled: false,
+        }),
+      }),
+    );
+    const data = await response.json();
+
+    expect(response.status).toBe(400);
+    expect(String(data.error ?? '')).toContain('replacementValue is required');
+    expect(repositoryMock.createPattern).not.toHaveBeenCalled();
+  });
+
   it('PUT rejects invalid dynamic logic regex', async () => {
     const replacementValue = encodeDynamicReplacementRecipe({
       version: 1,
@@ -170,5 +241,112 @@ describe('validator-pattern routes', () => {
     expect(String(data.error ?? '')).toContain('Invalid regex or flags');
     expect(repositoryMock.updatePattern).not.toHaveBeenCalled();
   });
-});
 
+  it('PUT allows runtime replacement without static replacementValue', async () => {
+    const response = await PUT(
+      new NextRequest('http://localhost/api/products/validator-patterns/pattern-1', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          replacementEnabled: true,
+          replacementValue: null,
+          replacementFields: ['categoryId'],
+          runtimeEnabled: true,
+          runtimeType: 'database_query',
+          runtimeConfig: JSON.stringify({
+            version: 1,
+            operation: 'query',
+            payload: {
+              provider: 'auto',
+              collection: 'product_categories',
+              single: true,
+              query: { name: '[nameEnSegment4]' },
+            },
+            resultPath: 'item',
+            operator: 'truthy',
+            replacementPaths: ['item.id'],
+          }),
+        }),
+      }),
+      { params: Promise.resolve({ id: 'pattern-1' }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(repositoryMock.updatePattern).toHaveBeenCalledTimes(1);
+  });
+
+  it('PUT allows enabling auto-apply on runtime pattern with null replacementValue', async () => {
+    repositoryMock.getPatternById.mockResolvedValueOnce({
+      id: 'pattern-1',
+      label: 'Name Segment #4 -> Category',
+      target: 'category',
+      locale: null,
+      regex: '^.*$',
+      flags: null,
+      message: 'Resolve category from segment 4.',
+      severity: 'warning',
+      enabled: true,
+      replacementEnabled: true,
+      replacementAutoApply: false,
+      skipNoopReplacementProposal: true,
+      replacementValue: null,
+      replacementFields: ['categoryId'],
+      replacementAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+      runtimeEnabled: true,
+      runtimeType: 'database_query',
+      runtimeConfig: JSON.stringify({
+        version: 1,
+        operation: 'query',
+        payload: {
+          provider: 'auto',
+          collection: 'product_categories',
+          single: true,
+          query: { name: '[nameEnSegment4]' },
+        },
+        resultPath: 'item',
+        operator: 'truthy',
+        replacementPaths: ['item.id'],
+      }),
+      postAcceptBehavior: 'revalidate',
+      denyBehaviorOverride: null,
+      validationDebounceMs: 500,
+      sequenceGroupId: null,
+      sequenceGroupLabel: null,
+      sequenceGroupDebounceMs: 0,
+      sequence: null,
+      chainMode: 'continue',
+      maxExecutions: 1,
+      passOutputToNext: true,
+      launchEnabled: true,
+      launchAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+      launchScopeBehavior: 'gate',
+      launchSourceMode: 'form_field',
+      launchSourceField: 'nameEnSegment4',
+      launchOperator: 'is_not_empty',
+      launchValue: null,
+      launchFlags: null,
+      appliesToScopes: ['draft_template', 'product_create', 'product_edit'],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    const response = await PUT(
+      new NextRequest('http://localhost/api/products/validator-patterns/pattern-1', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          replacementAutoApply: true,
+        }),
+      }),
+      { params: Promise.resolve({ id: 'pattern-1' }) },
+    );
+
+    expect(response.status).toBe(200);
+    expect(repositoryMock.updatePattern).toHaveBeenCalledWith(
+      'pattern-1',
+      expect.objectContaining({
+        replacementAutoApply: true,
+      })
+    );
+  });
+});

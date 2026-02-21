@@ -60,6 +60,7 @@ type SettingsStoreLike = {
 
 type UpdateWorkspaceOptions = {
   persistToast?: string;
+  persistNow?: boolean;
   mutationId?: string;
   source?: string;
 };

@@ -7,6 +7,7 @@ import {
 } from '@/features/ai/ai-paths/server';
 import {
   aiTriggerButtonUpdateSchema,
+  buildCanonicalTriggerButtonDisplay,
   parseAiTriggerButtonsRaw,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
@@ -42,14 +43,17 @@ export async function PATCH_handler(
   }
   const current = existing[index]!;
   const now = new Date().toISOString();
+  const nextName = parsed.data.name ? parsed.data.name.trim() : current.name;
+  const currentDisplayMode = current.display.showLabel === false ? 'icon' : 'icon_label';
+  const nextDisplayMode = parsed.data.display ?? currentDisplayMode;
   const nextRecord: AiTriggerButtonRecord = {
     ...current,
-    ...(parsed.data.name ? { name: parsed.data.name.trim() } : {}),
+    name: nextName,
     ...(parsed.data.iconId !== undefined ? { iconId: parsed.data.iconId ? parsed.data.iconId.trim() : null } : {}),
     ...(parsed.data.enabled !== undefined ? { enabled: parsed.data.enabled } : {}),
     ...(parsed.data.locations ? { locations: parsed.data.locations } : {}),
     ...(parsed.data.mode ? { mode: parsed.data.mode } : {}),
-    ...(parsed.data.display ? { display: parsed.data.display } : {}),
+    display: buildCanonicalTriggerButtonDisplay(nextName, nextDisplayMode),
     updatedAt: now,
   };
   const next = existing.slice();

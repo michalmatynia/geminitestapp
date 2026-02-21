@@ -565,22 +565,26 @@ export function useAiPathsSettingsState({
       }, []);
     if (buttons.length === 0) return palette;
 
-    const usedTitles = new Set<string>(
-      palette.map((node: NodeDefinition) => node.title),
-    );
+    const usedTitles = new Set<string>(palette.map((node: NodeDefinition) => node.title));
     const derived: NodeDefinition[] = [];
     buttons.forEach((button: AiTriggerButtonRecord) => {
-      const buttonName = button.name.trim();
-      if (!buttonName) return;
-      const baseTitle = `Trigger: ${buttonName}`;
-      const title = usedTitles.has(baseTitle)
-        ? `${baseTitle} (${button.id.slice(0, 6)})`
-        : baseTitle;
+      const nameLabel = button.name.trim();
+      const displayLabel = button.display.label.trim();
+      const label = nameLabel || displayLabel;
+      if (!label) return;
+
+      const baseTitle = `Trigger: ${label}`;
+      let title = baseTitle;
+      let suffix = 2;
+      while (usedTitles.has(title)) {
+        title = `${baseTitle} (${suffix})`;
+        suffix += 1;
+      }
       usedTitles.add(title);
       derived.push({
         type: 'trigger',
         title,
-        description: `User trigger button: ${buttonName} (${button.id}).`,
+        description: `User trigger button: ${label} (${button.id}).`,
         inputs: TRIGGER_INPUT_PORTS,
         outputs: TRIGGER_OUTPUT_PORTS,
         config: { trigger: { event: button.id } },

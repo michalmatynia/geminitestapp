@@ -472,34 +472,100 @@ const getByPath = (record: BaseProductRecord, path: string[]): unknown => {
   return current;
 };
 
+const collectTemplateParameterBuckets = (
+  record: BaseProductRecord
+): unknown[] => {
+  const buckets: unknown[] = [];
+  const pushBucket = (value: unknown): void => {
+    if (value === null || value === undefined) return;
+    buckets.push(value);
+  };
+
+  pushBucket(record['parameters']);
+  pushBucket(record['params']);
+  pushBucket(record['attributes']);
+  pushBucket(record['features']);
+  pushBucket(record['feature']);
+
+  const textFields =
+    record['text_fields'] && typeof record['text_fields'] === 'object'
+      ? (record['text_fields'] as Record<string, unknown>)
+      : null;
+  if (!textFields) {
+    return buckets;
+  }
+
+  pushBucket(textFields);
+  pushBucket(textFields['features']);
+  pushBucket(textFields['parameters']);
+
+  Object.entries(textFields).forEach(([key, value]: [string, unknown]) => {
+    const normalizedKey = key.trim().toLowerCase();
+    if (!normalizedKey) return;
+    if (
+      normalizedKey.startsWith('features|') ||
+      normalizedKey.startsWith('parameters|') ||
+      normalizedKey.startsWith('params|') ||
+      normalizedKey.startsWith('attributes|')
+    ) {
+      pushBucket(value);
+    }
+  });
+
+  return buckets;
+};
+
 const findParameterValue = (
   params: unknown,
   sourceKey: string
 ): unknown => {
   if (!params) return null;
+  const normalizedSourceKey = sourceKey.trim().toLowerCase();
+  if (!normalizedSourceKey) return null;
+  const getFromParameterRecord = (record: Record<string, unknown>): unknown => {
+    const name = toTrimmedString(
+      record['name'] ?? record['parameter'] ?? record['code'] ?? record['label'] ?? record['title']
+    );
+    const id = toTrimmedString(
+      record['id'] ?? record['parameter_id'] ?? record['param_id'] ?? record['attribute_id']
+    );
+    if (
+      name?.trim().toLowerCase() === normalizedSourceKey ||
+      id?.trim().toLowerCase() === normalizedSourceKey
+    ) {
+      return (
+        record['value'] ??
+        record['values'] ??
+        record['value_id'] ??
+        record['label'] ??
+        record['text']
+      );
+    }
+    return null;
+  };
   if (Array.isArray(params)) {
     for (const entry of params) {
       if (!entry || typeof entry !== 'object') continue;
       const record = entry as Record<string, unknown>;
-      const name = toTrimmedString(record['name'] ?? record['parameter'] ?? record['code']);
-      const id = toTrimmedString(
-        record['id'] ?? record['parameter_id'] ?? record['param_id']
-      );
-      if (name === sourceKey || id === sourceKey) {
-        return (
-          record['value'] ??
-          record['values'] ??
-          record['value_id'] ??
-          record['label'] ??
-          record['text']
-        );
-      }
+      const fromRecord = getFromParameterRecord(record);
+      if (fromRecord !== null && fromRecord !== undefined) return fromRecord;
     }
     return null;
   }
   if (typeof params === 'object') {
     const record = params as Record<string, unknown>;
     if (sourceKey in record) return record[sourceKey];
+    const byNormalizedKey = Object.entries(record).find(
+      ([key]: [string, unknown]) => key.trim().toLowerCase() === normalizedSourceKey
+    );
+    if (byNormalizedKey) {
+      return byNormalizedKey[1];
+    }
+    for (const value of Object.values(record)) {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) continue;
+      const fromRecord = getFromParameterRecord(value as Record<string, unknown>);
+      if (fromRecord !== null && fromRecord !== undefined) return fromRecord;
+    }
   }
   return null;
 };
@@ -547,14 +613,14 @@ const resolveTemplateValue = (
   if (sourceKey in record) {
     return record[sourceKey];
   }
-  const parameters =
-    record['parameters'] ?? record['params'] ?? record['attributes'] ?? null;
-  const parameterValue = findParameterValue(parameters, sourceKey);
-  if (parameterValue !== null && parameterValue !== undefined) {
-    return parameterValue;
+  const parameterBuckets = collectTemplateParameterBuckets(record);
+  for (const bucket of parameterBuckets) {
+    const parameterValue = findParameterValue(bucket, sourceKey);
+    if (parameterValue !== null && parameterValue !== undefined) {
+      return parameterValue;
+    }
   }
-  const features = record['features'] ?? record['feature'] ?? null;
-  return findParameterValue(features, sourceKey);
+  return null;
 };
 
 const applyTemplateMappings = (

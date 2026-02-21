@@ -108,7 +108,7 @@ const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return EMPTY_RUNTIME_STATE;
   if (typeof value === 'string') {
     try {
-      const parsed = JSON.parse(value);
+      const parsed = JSON.parse(value) as RuntimeState;
       return parsed && typeof parsed === 'object'
         ? {
           ...EMPTY_RUNTIME_STATE,
@@ -962,13 +962,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       ...(run.triggerContext ? { triggerContext: run.triggerContext } : {}),
       strictFlowMode,
       seedOutputs: runtimeState.outputs,
-      seedHashes: (runtimeState.hashes) ?? undefined,
-      seedHashTimestamps:
-        (runtimeState.hashTimestamps) ??
-        undefined,
-      seedHistory: runtimeState.history as Record<string, RuntimeHistoryEntry[]> | undefined,
-      seedRunId: runtimeState.runId ?? undefined,
-      seedRunStartedAt: runtimeState.runStartedAt ?? undefined,
+      seedHashes: runtimeState.hashes,
+      seedHashTimestamps: runtimeState.hashTimestamps,
+      seedHistory: runtimeState.history,
+      seedRunId: runtimeState.runId,
+      seedRunStartedAt: runtimeState.runStartedAt,
       recordHistory: true,
       historyLimit: resolvedHistoryLimit,
       skipNodeIds: skipNodes,

@@ -56,6 +56,8 @@ export const databaseBackupFileSchema = z.object({
   name: z.string(),
   size: z.number(),
   createdAt: z.string(),
+  lastModifiedAt: z.string().optional(),
+  lastRestored: z.string().optional(),
 });
 
 export type DatabaseBackupFileDto = z.infer<typeof databaseBackupFileSchema>;
@@ -204,6 +206,7 @@ export type DatabaseEngineBackupTargetScheduleDto = z.infer<typeof databaseEngin
 
 export const databaseEngineBackupScheduleSchema = z.object({
   schedulerEnabled: z.boolean(),
+  repeatTickEnabled: z.boolean(),
   lastCheckedAt: z.string().nullable(),
   mongodb: databaseEngineBackupTargetScheduleSchema,
   postgresql: databaseEngineBackupTargetScheduleSchema,
@@ -324,7 +327,8 @@ export const collectionSchemaSchema = z.object({
   count: z.number().optional(),
   documentCount: z.number().optional(),
   provider: z.string().optional(),
-}).catchall(z.any());
+  relations: z.array(z.string()).optional(),
+}).catchall(z.unknown());
 
 export type CollectionSchemaDto = z.infer<typeof collectionSchemaSchema>;
 export type CollectionSchema = CollectionSchemaDto;
@@ -413,6 +417,7 @@ export const databaseEngineBackupSchedulerStatusSchema = z.object({
   timestamp: z.string().optional(),
   enabled: z.boolean().optional(),
   schedulerEnabled: z.boolean().optional(),
+  repeatTickEnabled: z.boolean().optional(),
   lastCheckedAt: z.string().optional(),
   nextRunAt: z.string().nullable().optional(),
   lastRunAt: z.string().nullable().optional(),
@@ -518,5 +523,14 @@ export const redisStatusSchema = z.object({
 export type RedisStatusDto = z.infer<typeof redisStatusSchema>;
 export type RedisOverviewDto = RedisStatusDto;
 
-export type AiQuery = unknown;
-export type DatabasePresetOption = unknown;
+export type AiQuery = {
+  id: string;
+  query: string;
+  timestamp: string;
+};
+export type DatabasePresetOption = {
+  id: string;
+  label: string;
+  description?: string;
+  config: unknown;
+};

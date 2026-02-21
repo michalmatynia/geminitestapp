@@ -5,9 +5,12 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import type { DatabaseInfo, DatabaseType } from '@/shared/contracts/database';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
+import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { normalizeDatabaseEngineBackupSchedule } from '@/shared/lib/db/database-engine-backup-schedule';
 import {
+  DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
+  DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE,
   DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS,
 } from '@/shared/lib/db/database-engine-constants';
 import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
@@ -36,6 +39,7 @@ export function useDatabaseBackupsState() {
   const queryClient = useQueryClient();
   const isProd = process.env['NODE_ENV'] === 'production';
   const settingsQuery = useSettingsMap({ scope: 'all' });
+  const updateSetting = useUpdateSetting();
 
   const backupsQuery = useDatabaseBackups(activeTab);
   const data = useMemo(() => backupsQuery.data ?? [], [backupsQuery.data]);
@@ -52,8 +56,18 @@ export function useDatabaseBackupsState() {
     );
   }, [settingsQuery.data]);
 
+  const backupSchedule = useMemo(() => {
+    const raw = settingsQuery.data?.get(DATABASE_ENGINE_BACKUP_SCHEDULE_KEY);
+    return normalizeDatabaseEngineBackupSchedule(
+      raw ?? DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE
+    );
+  }, [settingsQuery.data]);
+
   const backupRunNowAllowed = operationControls.allowManualBackupRunNow;
   const backupMaintenanceAllowed = operationControls.allowManualBackupMaintenance;
+  const schedulerEnabled = backupSchedule.schedulerEnabled;
+  const repeatSchedulerTickEnabled = backupSchedule.repeatTickEnabled;
+  const isBackupScheduleSaving = updateSetting.isPending;
 
   const openLogModal = useCallback((content: string): void => {
     setLogModalContent(content);
@@ -85,7 +99,7 @@ export function useDatabaseBackupsState() {
         truncateBeforeRestore: truncate,
       });
       const { ok, payload } = result;
-      const log = payload.log ?? 'No log available.';
+      const log = String(payload.log ?? 'No log available.');
 
       if (ok) {
         openLogModal(
@@ -126,7 +140,7 @@ ${String(error)}`);
     try {
       const result = await createBackup.mutateAsync(activeTab);
       const { ok, payload } = result;
-      const log = payload.log ?? 'No log available.';
+      const log = String(payload.log ?? 'No log available.');
       if (ok) {
         if (payload.jobId) {
           toast(payload.message ?? `Database backup job queued (job: ${payload.jobId}).`, {
@@ -227,6 +241,39 @@ ${String(error)}`);
     window.location.assign(`/admin/databases/preview?mode=current&type=${activeTab}`);
   };
 
+  const handleRepeatSchedulerTickToggle = async (enabled: boolean): Promise<void> => {
+    const nextSchedule = {
+      ...backupSchedule,
+      repeatTickEnabled: enabled,
+    };
+
+    try {
+      await updateSetting.mutateAsync({
+        key: DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
+        value: JSON.stringify(nextSchedule),
+      });
+      void fetch('/api/databases/engine/backup-scheduler/status', {
+        method: 'GET',
+        cache: 'no-store',
+      });
+      toast(
+        enabled
+          ? 'Repeating scheduler checks enabled.'
+          : 'Repeating scheduler checks disabled.',
+        { variant: 'success' },
+      );
+    } catch (error: unknown) {
+      logClientError(error, {
+        context: {
+          source: 'DatabaseBackupsPanel',
+          action: 'updateBackupSchedule',
+          setting: 'repeatTickEnabled',
+        },
+      });
+      toast('Failed to update backup scheduling options.', { variant: 'error' });
+    }
+  };
+
   return {
     activeTab,
     setActiveTab,
@@ -243,6 +290,9 @@ ${String(error)}`);
     isProd,
     backupRunNowAllowed,
     backupMaintenanceAllowed,
+    schedulerEnabled,
+    repeatSchedulerTickEnabled,
+    isBackupScheduleSaving,
     closeLogModal,
     handleBackup,
     handleUpload,
@@ -252,5 +302,6 @@ ${String(error)}`);
     handleConfirmDelete,
     handlePreview,
     handlePreviewCurrent,
+    handleRepeatSchedulerTickToggle,
   };
 }

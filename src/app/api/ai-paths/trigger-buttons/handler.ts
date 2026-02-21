@@ -8,6 +8,7 @@ import {
 } from '@/features/ai/ai-paths/server';
 import {
   aiTriggerButtonCreateSchema,
+  buildCanonicalTriggerButtonDisplay,
   parseAiTriggerButtonsRaw,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -78,7 +79,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     enabled: enabled ?? true,
     locations,
     mode,
-    display,
+    display: buildCanonicalTriggerButtonDisplay(normalizedName, display),
     createdAt: now,
     updatedAt: now,
   };

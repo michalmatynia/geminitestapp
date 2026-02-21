@@ -761,6 +761,119 @@ describe('case-resolver settings', () => {
     expect(edgeIds.includes('custom-edge-keep')).toBe(true);
   });
 
+  it('normalizes related file links and enforces bidirectional relations', () => {
+    const raw = JSON.stringify({
+      version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
+      folders: [],
+      files: [
+        {
+          id: 'case-a',
+          fileType: 'case',
+          name: 'Case A',
+          folder: '',
+          parentCaseId: null,
+          referenceCaseIds: [],
+          relatedFileIds: ['doc-a'],
+          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+        },
+        {
+          id: 'doc-a',
+          fileType: 'document',
+          name: 'Doc A',
+          folder: '',
+          parentCaseId: 'case-a',
+          referenceCaseIds: [],
+          relatedFileIds: ['doc-b', 'doc-b', 'missing-doc', 'doc-a', 'case-a'],
+          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+        },
+        {
+          id: 'doc-b',
+          fileType: 'scanfile',
+          name: 'Doc B',
+          folder: '',
+          parentCaseId: 'case-a',
+          referenceCaseIds: [],
+          relatedFileIds: [],
+          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+        },
+        {
+          id: 'doc-c',
+          fileType: 'document',
+          name: 'Doc C',
+          folder: '',
+          parentCaseId: 'case-a',
+          referenceCaseIds: [],
+          relatedFileIds: ['doc-b'],
+          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+        },
+      ],
+      assets: [],
+      activeFileId: 'doc-a',
+    });
+
+    const workspace = parseCaseResolverWorkspace(raw);
+    const caseFile = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'case-a');
+    const docA = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-a');
+    const docB = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-b');
+    const docC = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-c');
+
+    expect(caseFile?.relatedFileIds).toBeUndefined();
+    expect(docA?.relatedFileIds).toEqual(['doc-b']);
+    expect(docB?.relatedFileIds).toEqual(['doc-a', 'doc-c']);
+    expect(docC?.relatedFileIds).toEqual(['doc-b']);
+  });
+
+  it('removes stale related links when linked files are dropped during normalization', () => {
+    const raw = JSON.stringify({
+      version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
+      folders: [],
+      files: [
+        {
+          id: 'case-a',
+          fileType: 'case',
+          name: 'Case A',
+          folder: '',
+          parentCaseId: null,
+          referenceCaseIds: [],
+          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+        },
+        {
+          id: 'doc-kept',
+          fileType: 'document',
+          name: 'Doc Kept',
+          folder: '',
+          parentCaseId: 'case-a',
+          referenceCaseIds: [],
+          relatedFileIds: ['doc-orphan'],
+          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+        },
+        {
+          id: 'doc-orphan',
+          fileType: 'document',
+          name: 'Doc Orphan',
+          folder: '',
+          parentCaseId: null,
+          referenceCaseIds: [],
+          graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+        },
+      ],
+      assets: [],
+      activeFileId: 'doc-kept',
+    });
+
+    const workspace = parseCaseResolverWorkspace(raw);
+    const keptDoc = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-kept');
+
+    expect(workspace.files.some((file: CaseResolverFile): boolean => file.id === 'doc-orphan')).toBe(false);
+    expect(keptDoc?.relatedFileIds).toBeUndefined();
+  });
+
   it('categorizes upload folders by inferred file kind', () => {
     expect(
       resolveCaseResolverUploadFolder({

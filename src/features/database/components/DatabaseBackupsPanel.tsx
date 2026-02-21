@@ -19,6 +19,7 @@ import {
   Breadcrumbs,
   StandardDataTablePanel,
   Card,
+  ToggleRow,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
@@ -71,6 +72,9 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
     isProd,
     backupRunNowAllowed,
     backupMaintenanceAllowed,
+    schedulerEnabled,
+    repeatSchedulerTickEnabled,
+    isBackupScheduleSaving,
     closeLogModal,
     handleBackup,
     handleUpload,
@@ -80,6 +84,7 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
     handleConfirmDelete,
     handlePreview,
     handlePreviewCurrent,
+    handleRepeatSchedulerTickToggle,
   } = useDatabaseBackupsState();
 
   const selectedDatabase =
@@ -156,6 +161,26 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
       <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 text-xs text-gray-300'>
         Active source: <span className='font-semibold text-white'>{selectedDatabase.label}</span>
       </Card>
+
+      <div className='space-y-2'>
+        <p className='text-[11px] font-semibold uppercase tracking-wide text-gray-400'>Backup Scheduling Options</p>
+        <ToggleRow
+          type='switch'
+          label='Enable Repeating Due-Checks'
+          description='When disabled, scheduler checks run only on startup catch-up and manual tick.'
+          checked={repeatSchedulerTickEnabled}
+          disabled={isBackupScheduleSaving}
+          onCheckedChange={(checked) => {
+            void handleRepeatSchedulerTickToggle(checked);
+          }}
+          className='border-border/60 bg-card/20'
+        />
+        {!schedulerEnabled && (
+          <Alert variant='warning'>
+            Scheduled backups are currently disabled. Enable scheduler in backup schedule settings.
+          </Alert>
+        )}
+      </div>
     </div>
   );
 

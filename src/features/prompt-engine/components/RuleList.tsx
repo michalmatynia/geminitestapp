@@ -260,7 +260,7 @@ export function RuleList(): React.JSX.Element {
 
           const group = entry.group;
           const groupDraft = getGroupDraft(group.id);
-          const isCollapsed = collapsedGroups[group.id] ?? false;
+          const isCollapsed = collapsedGroups[group.id] ?? true;
           const groupDropKey = `group:${group.id}`;
           const isGroupDropTarget = dragOverKey === groupDropKey && draggedUid !== null;
           return (

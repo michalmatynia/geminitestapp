@@ -5,6 +5,29 @@ import { ActionMenu, DataTableSortableHeader, DropdownMenuItem, DropdownMenuSepa
 
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
+const toTimestamp = (value: string | null | undefined): number => {
+  if (!value) return 0;
+  const parsed = new Date(value).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const toLocale = (value: string | null | undefined): string => {
+  const ts = toTimestamp(value);
+  return ts > 0 ? new Date(ts).toLocaleString() : '—';
+};
+
+const resolveLastModifiedAt = (row: DatabaseInfo): string =>
+  row.lastModifiedAt ?? row.createdAt;
+
+const resolveLastRestored = (row: DatabaseInfo): string => row.lastRestored ?? 'Never';
+
+const toSizeNumber = (value: unknown): number => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return 0;
+  const parsed = Number.parseFloat(value.replace(/[^0-9.]/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
 
 export const getDatabaseColumns = (options?: {
   onPreview?: (backupName: string) => void;
@@ -26,34 +49,32 @@ export const getDatabaseColumns = (options?: {
     header: ({ column }) => (
       <DataTableSortableHeader label='Size' column={column} />
     ),
-    sortingFn: (rowA: Row<DatabaseInfo>, rowB: Row<DatabaseInfo>, columnId: string): number => {
-      const toNumber = (value: string): number =>
-        Number.parseFloat(value.replace(/[^0-9.]/g, '')) || 0;
-      return (
-        toNumber(rowA.getValue<string>(columnId)) - toNumber(rowB.getValue<string>(columnId))
-      );
-    },
+    sortingFn: (rowA: Row<DatabaseInfo>, rowB: Row<DatabaseInfo>, columnId: string): number =>
+      toSizeNumber(rowA.getValue(columnId)) - toSizeNumber(rowB.getValue(columnId)),
   },
   {
     id: 'createdAt',
-    accessorFn: (row: DatabaseInfo): number => new Date(row.createdAt).getTime(),
+    accessorFn: (row: DatabaseInfo): number => toTimestamp(row.createdAt),
     header: ({ column }) => (
       <DataTableSortableHeader label='Created' column={column} />
     ),
-    cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode => row.original.created,
+    cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode =>
+      toLocale(row.original.createdAt),
   },
   {
     id: 'lastModifiedAt',
-    accessorFn: (row: DatabaseInfo): number => new Date(row.lastModifiedAt).getTime(),
+    accessorFn: (row: DatabaseInfo): number => toTimestamp(resolveLastModifiedAt(row)),
     header: ({ column }) => (
       <DataTableSortableHeader label='Last Modified' column={column} />
     ),
-    cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode => row.original.lastModified,
+    cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode =>
+      toLocale(resolveLastModifiedAt(row.original)),
   },
   {
     accessorKey: 'lastRestored',
     header: 'Last Restored',
-    cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode => row.original.lastRestored || 'Never',
+    cell: ({ row }: { row: { original: DatabaseInfo } }): React.ReactNode =>
+      resolveLastRestored(row.original),
   },
   {
     id: 'actions',

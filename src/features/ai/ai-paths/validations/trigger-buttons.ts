@@ -27,6 +27,59 @@ export const aiTriggerButtonModeSchema = z.enum([
 ]);
 export const aiTriggerButtonDisplaySchema = z.enum(['icon', 'icon_label']);
 
+type AiTriggerButtonDisplayMode = z.infer<typeof aiTriggerButtonDisplaySchema>;
+
+const normalizeText = (value: unknown): string =>
+  typeof value === 'string' ? value.trim() : '';
+
+const isOpaqueTriggerButtonName = (value: string): boolean => {
+  const normalized = value.trim();
+  if (!normalized) return false;
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(normalized)) {
+    return true;
+  }
+  if (/^[0-9a-f]{24}$/i.test(normalized)) return true;
+  if (/^[0-9a-f]{12,}$/i.test(normalized)) return true;
+  return /^[a-z0-9_-]{24,}$/i.test(normalized);
+};
+
+const readDisplayLabel = (value: Record<string, unknown>): string => {
+  const displayValue = value['display'];
+  if (!displayValue || typeof displayValue !== 'object' || Array.isArray(displayValue)) {
+    return '';
+  }
+  return normalizeText((displayValue as Record<string, unknown>)['label']);
+};
+
+const normalizeRecordForRead = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const source = value as Record<string, unknown>;
+  const id = normalizeText(source['id']);
+  if (!id) return null;
+
+  const rawName = normalizeText(source['name']);
+  const displayLabel = readDisplayLabel(source);
+  const legacyLabel = normalizeText(source['label']);
+  let resolvedName = rawName || displayLabel || legacyLabel;
+  if (!resolvedName) return null;
+
+  if (displayLabel) {
+    const rawNameLooksOpaque =
+      rawName.length > 0 && (rawName === id || isOpaqueTriggerButtonName(rawName));
+    const displayLooksOpaque =
+      displayLabel === id || isOpaqueTriggerButtonName(displayLabel);
+    if (rawNameLooksOpaque && !displayLooksOpaque) {
+      resolvedName = displayLabel;
+    }
+  }
+
+  return {
+    ...source,
+    id,
+    name: resolvedName,
+  };
+};
+
 const coerceOptionalBoolean = (value: unknown): boolean | undefined => {
   if (typeof value === 'boolean') return value;
   if (typeof value === 'number') {
@@ -42,7 +95,9 @@ const coerceOptionalBoolean = (value: unknown): boolean | undefined => {
   return undefined;
 };
 
-const normalizeDisplayForRead = (value: unknown): 'icon' | 'icon_label' | undefined => {
+const normalizeDisplayForRead = (
+  value: unknown
+): AiTriggerButtonDisplayMode | undefined => {
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     const showLabel = coerceOptionalBoolean(
       (value as Record<string, unknown>)['showLabel']
@@ -52,7 +107,8 @@ const normalizeDisplayForRead = (value: unknown): 'icon' | 'icon_label' | undefi
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim().toLowerCase();
   if (normalized === 'icon') return 'icon';
-  if (normalized === 'icon_label' || normalized === 'label') return 'icon_label';
+  if (normalized === 'icon_label') return 'icon_label';
+  if (normalized === 'label') return 'icon_label';
   return undefined;
 };
 
@@ -123,7 +179,12 @@ export const aiTriggerButtonRecordSchema = z.object({
     .preprocess(normalizeLocationsForRead, z.array(aiTriggerButtonLocationSchema))
     .optional(),
   mode: z.preprocess(normalizeModeForRead, aiTriggerButtonModeSchema).optional(),
-  display: z.preprocess(normalizeDisplayForRead, aiTriggerButtonDisplaySchema).optional(),
+  display: z
+    .preprocess((value: unknown): unknown => {
+      if (value === undefined) return undefined;
+      return normalizeDisplayForRead(value) ?? value;
+    }, aiTriggerButtonDisplaySchema)
+    .optional(),
   createdAt: z
     .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
     .optional(),
@@ -164,6 +225,14 @@ export type AiTriggerButtonCreatePayload = z.infer<typeof aiTriggerButtonCreateS
 export type AiTriggerButtonUpdatePayload = z.infer<typeof aiTriggerButtonUpdateSchema>;
 export type AiTriggerButtonReorderPayload = z.infer<typeof aiTriggerButtonReorderSchema>;
 
+export const buildCanonicalTriggerButtonDisplay = (
+  name: string,
+  mode: AiTriggerButtonDisplayMode = 'icon_label'
+): AiTriggerButtonRecord['display'] => ({
+  label: name,
+  showLabel: mode !== 'icon',
+});
+
 const normalizeAiTriggerButtonRecord = (
   record: z.infer<typeof aiTriggerButtonRecordSchema>
 ): AiTriggerButtonRecord => {
@@ -180,7 +249,10 @@ const normalizeAiTriggerButtonRecord = (
     enabled: record.enabled ?? true,
     locations: [...locations],
     mode: record.mode ?? 'click',
-    display: record.display ?? 'icon_label',
+    display: buildCanonicalTriggerButtonDisplay(
+      record.name,
+      record.display ?? 'icon_label'
+    ),
     createdAt: record.createdAt ?? now,
     updatedAt: record.updatedAt ?? record.createdAt ?? now,
     isActive: record.isActive ?? true,
@@ -196,26 +268,9 @@ export const parseAiTriggerButtonsRaw = (raw: string | null): AiTriggerButtonRec
 
     const normalized: AiTriggerButtonRecord[] = [];
     parsed.forEach((value: unknown) => {
-      if (!value || typeof value !== 'object') return;
-      const candidate = { ...(value as Record<string, unknown>) };
-      const rawName =
-        typeof candidate['name'] === 'string' ? candidate['name'].trim() : '';
-      if (!rawName) {
-        const legacyLabel =
-          typeof candidate['label'] === 'string' ? candidate['label'].trim() : '';
-        const displayLabel =
-          candidate['display'] &&
-          typeof candidate['display'] === 'object' &&
-          typeof (candidate['display'] as Record<string, unknown>)['label'] === 'string'
-            ? ((candidate['display'] as Record<string, unknown>)['label'] as string).trim()
-            : '';
-        const fallbackName = legacyLabel || displayLabel;
-        if (fallbackName) {
-          candidate['name'] = fallbackName;
-        }
-      }
-
-      const validated = aiTriggerButtonRecordSchema.safeParse(candidate);
+      const normalizedRecord = normalizeRecordForRead(value);
+      if (!normalizedRecord) return;
+      const validated = aiTriggerButtonRecordSchema.safeParse(normalizedRecord);
       if (!validated.success) return;
       normalized.push(normalizeAiTriggerButtonRecord(validated.data));
     });

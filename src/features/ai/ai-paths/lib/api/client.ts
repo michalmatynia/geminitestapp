@@ -9,6 +9,8 @@ import {
   aiTriggerButtonCreateSchema,
   aiTriggerButtonReorderSchema,
   aiTriggerButtonUpdateSchema,
+  type AiTriggerButtonCreatePayload,
+  type AiTriggerButtonUpdatePayload,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { AgentTeachingAgentRecord, AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
@@ -292,14 +294,9 @@ export const triggerButtonsApi = {
     return apiFetch<AiTriggerButtonRecord[]>('/api/ai-paths/trigger-buttons');
   },
 
-  async create(payload: {
-    name: string;
-    iconId?: string | null;
-    enabled?: boolean;
-    display?: AiTriggerButtonRecord['display'];
-    locations: AiTriggerButtonRecord['locations'];
-    mode?: AiTriggerButtonRecord['mode'];
-  }): Promise<ApiResponse<AiTriggerButtonRecord>> {
+  async create(
+    payload: AiTriggerButtonCreatePayload
+  ): Promise<ApiResponse<AiTriggerButtonRecord>> {
     const validation = aiTriggerButtonCreateSchema.safeParse(payload);
     if (!validation.success) {
       return {
@@ -312,7 +309,7 @@ export const triggerButtonsApi = {
 
   async update(
     id: string,
-    patch: Partial<Pick<AiTriggerButtonRecord, 'name' | 'iconId' | 'enabled' | 'locations' | 'mode' | 'display'>>
+    patch: AiTriggerButtonUpdatePayload
   ): Promise<ApiResponse<AiTriggerButtonRecord>> {
     const validation = aiTriggerButtonUpdateSchema.safeParse(patch);
     if (!validation.success) {

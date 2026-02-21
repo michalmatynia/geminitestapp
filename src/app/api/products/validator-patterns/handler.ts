@@ -154,6 +154,22 @@ const assertValidLaunchConfig = ({
   assertValidRegex(launchValue, launchFlags);
 };
 
+const canResolveReplacementAtRuntime = ({
+  replacementEnabled,
+  replacementValue,
+  runtimeEnabled,
+  runtimeType,
+}: {
+  replacementEnabled: boolean;
+  replacementValue: string | null;
+  runtimeEnabled: boolean;
+  runtimeType: 'none' | 'database_query' | 'ai_prompt';
+}): boolean =>
+  replacementEnabled &&
+  !replacementValue &&
+  runtimeEnabled &&
+  runtimeType !== 'none';
+
 const normalizeReplacementFields = (fields: string[] | undefined): string[] => {
   if (!Array.isArray(fields) || fields.length === 0) return [];
   return [...new Set(fields)];
@@ -217,8 +233,19 @@ export async function postValidatorPatternsHandler(
   const launchValue = typeof body.launchValue === 'string' ? body.launchValue : null;
   const launchFlags = body.launchFlags?.trim() || null;
   const appliesToScopes = normalizeProductValidationPatternScopes(body.appliesToScopes);
-  if (replacementEnabled && !replacementValue) {
-    throw badRequestError('replacementValue is required when replacementEnabled is true');
+  if (
+    replacementEnabled &&
+    !replacementValue &&
+    !canResolveReplacementAtRuntime({
+      replacementEnabled,
+      replacementValue,
+      runtimeEnabled,
+      runtimeType,
+    })
+  ) {
+    throw badRequestError(
+      'replacementValue is required when replacementEnabled is true unless runtime replacement is enabled'
+    );
   }
   if (launchEnabled && launchSourceMode !== 'current_field' && !launchSourceField) {
     throw badRequestError('launchSourceField is required when launchSourceMode is not current_field');

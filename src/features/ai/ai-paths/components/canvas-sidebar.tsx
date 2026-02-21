@@ -539,8 +539,9 @@ export function CanvasSidebar(): React.JSX.Element {
                   type='button'
                   onClick={() => {
                     const node = selectedNode?.type === 'trigger' ? selectedNode : undefined;
-                    void stepRun(node);
+                    stepRun(node);
                   }}
+                  
                   disabled={!stepRun}
                 >
                   Step
@@ -564,8 +565,9 @@ export function CanvasSidebar(): React.JSX.Element {
                 type='button'
                 onClick={() => {
                   const node = selectedNode?.type === 'trigger' ? selectedNode : undefined;
-                  void stepRun(node);
+                  stepRun(node);
                 }}
+                
                 disabled={!stepRun}
               >
                 Step Run

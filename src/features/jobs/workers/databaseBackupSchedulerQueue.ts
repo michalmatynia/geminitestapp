@@ -2,7 +2,10 @@ import 'server-only';
 
 import { tickDatabaseBackupScheduler } from '@/features/database/services/database-backup-scheduler';
 import { ErrorSystem } from '@/features/observability/server';
+import { getDatabaseEngineBackupSchedule } from '@/shared/lib/db/database-engine-policy';
 import { createManagedQueue } from '@/shared/lib/queue';
+
+import type { Queue } from 'bullmq';
 
 type DatabaseBackupSchedulerJobData = {
   type: 'scheduled-tick';
@@ -28,6 +31,8 @@ const DATABASE_BACKUP_SCHEDULER_LOCK_DURATION_MS = parseMsFromEnv(
 type DatabaseBackupSchedulerQueueState = {
   workerStarted: boolean;
   schedulerRegistered: boolean;
+  schedulerSyncInFlight: boolean;
+  startupTickQueued: boolean;
 };
 
 const globalWithState = globalThis as typeof globalThis & {
@@ -39,10 +44,16 @@ const queueState =
   (globalWithState.__databaseBackupSchedulerQueueState__ = {
     workerStarted: false,
     schedulerRegistered: false,
+    schedulerSyncInFlight: false,
+    startupTickQueued: false,
   });
 
+const SCHEDULER_REPEAT_JOB_ID = 'database-backup-scheduler-tick';
+const STARTUP_TICK_JOB_ID = 'database-backup-scheduler-startup-tick';
+const SCHEDULER_QUEUE_NAME = 'database-backup-scheduler';
+
 const queue = createManagedQueue<DatabaseBackupSchedulerJobData>({
-  name: 'database-backup-scheduler',
+  name: SCHEDULER_QUEUE_NAME,
   concurrency: 1,
   defaultJobOptions: {
     removeOnComplete: true,
@@ -61,30 +72,91 @@ const queue = createManagedQueue<DatabaseBackupSchedulerJobData>({
   },
 });
 
+const unregisterRepeatScheduler = async (): Promise<void> => {
+  if (!queueState.schedulerRegistered) return;
+
+  try {
+    const rawQueue = queue.getQueue();
+    const bullQueue = (rawQueue ?? null) as Queue | null;
+    if (bullQueue) {
+      await bullQueue.removeRepeatable(
+        SCHEDULER_QUEUE_NAME,
+        { every: DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS },
+        SCHEDULER_REPEAT_JOB_ID,
+      );
+    }
+  } catch (error) {
+    void ErrorSystem.captureException(error, {
+      service: 'database-backup-scheduler-queue',
+      action: 'unregisterRepeatScheduler',
+    });
+  } finally {
+    queueState.schedulerRegistered = false;
+  }
+};
+
+const syncRepeatSchedulerRegistration = (): void => {
+  if (queueState.schedulerSyncInFlight) return;
+  queueState.schedulerSyncInFlight = true;
+
+  void (async () => {
+    try {
+      const schedule = await getDatabaseEngineBackupSchedule();
+
+      if (!schedule.repeatTickEnabled) {
+        await unregisterRepeatScheduler();
+        return;
+      }
+
+      if (queueState.schedulerRegistered) return;
+
+      await queue.enqueue(
+        { type: 'scheduled-tick' },
+        {
+          repeat: { every: DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS },
+          jobId: SCHEDULER_REPEAT_JOB_ID,
+        },
+      );
+      queueState.schedulerRegistered = true;
+    } catch (error) {
+      queueState.schedulerRegistered = false;
+      void ErrorSystem.captureException(error, {
+        service: 'database-backup-scheduler-queue',
+        action: 'registerScheduler',
+      });
+    } finally {
+      queueState.schedulerSyncInFlight = false;
+    }
+  })();
+};
+
 export const startDatabaseBackupSchedulerQueue = (): void => {
   if (!queueState.workerStarted) {
     queueState.workerStarted = true;
     queue.startWorker();
   }
 
-  if (queueState.schedulerRegistered) return;
-  queueState.schedulerRegistered = true;
-
-  void queue
-    .enqueue(
-      { type: 'scheduled-tick' },
-      {
-        repeat: { every: DATABASE_BACKUP_SCHEDULER_REPEAT_EVERY_MS },
-        jobId: 'database-backup-scheduler-tick',
-      },
-    )
-    .catch(async (error) => {
-      queueState.schedulerRegistered = false;
-      void ErrorSystem.captureException(error, {
-        service: 'database-backup-scheduler-queue',
-        action: 'registerScheduler',
+  if (!queueState.startupTickQueued) {
+    queueState.startupTickQueued = true;
+    void queue
+      .enqueue(
+        { type: 'scheduled-tick' },
+        {
+          jobId: STARTUP_TICK_JOB_ID,
+          removeOnComplete: true,
+          removeOnFail: true,
+        },
+      )
+      .catch((error) => {
+        queueState.startupTickQueued = false;
+        void ErrorSystem.captureException(error, {
+          service: 'database-backup-scheduler-queue',
+          action: 'enqueueStartupTick',
+        });
       });
-    });
+  }
+
+  syncRepeatSchedulerRegistration();
 };
 
 export const getDatabaseBackupSchedulerQueueStatus = async (): Promise<{

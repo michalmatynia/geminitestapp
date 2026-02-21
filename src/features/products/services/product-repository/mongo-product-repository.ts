@@ -32,13 +32,13 @@ const listingCollectionName = 'product_listings';
 const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com', 'base'] as const;
 
 type IntegrationSlugDocument = {
-  _id: string;
+  _id: string | ObjectId;
   slug: string;
 };
 
 type ProductListingFilterDocument = {
-  productId: string;
-  integrationId: string;
+  productId: string | ObjectId;
+  integrationId: string | ObjectId;
   externalListingId?: string | null;
 };
 
@@ -115,6 +115,32 @@ const normalizeLookupId = (value: unknown): string => {
     return value.toHexString();
   }
   return '';
+};
+
+const buildLookupValues = (ids: string[]): Array<string | ObjectId> => {
+  const seen = new Set<string>();
+  const values: Array<string | ObjectId> = [];
+
+  ids.forEach((rawId: string) => {
+    const normalized = rawId.trim();
+    if (!normalized) return;
+
+    const stringKey = `s:${normalized}`;
+    if (!seen.has(stringKey)) {
+      seen.add(stringKey);
+      values.push(normalized);
+    }
+
+    if (!ObjectId.isValid(normalized)) return;
+    const objectId = new ObjectId(normalized);
+    const objectKey = `o:${objectId.toHexString()}`;
+    if (!seen.has(objectKey)) {
+      seen.add(objectKey);
+      values.push(objectId);
+    }
+  });
+
+  return values;
 };
 
 const normalizeProductParameterValues = (
@@ -198,8 +224,9 @@ const applyBaseExportedFilter = async (
   const integrationIds = integrations
     .map((integration: IntegrationSlugDocument) => normalizeLookupId(integration._id))
     .filter((id: string) => id.length > 0);
+  const integrationLookupValues = buildLookupValues(integrationIds);
 
-  if (integrationIds.length === 0) {
+  if (integrationLookupValues.length === 0) {
     if (baseExported) {
       return appendAndCondition(filter, {
         id: '__no_base_exported_products__',
@@ -211,13 +238,14 @@ const applyBaseExportedFilter = async (
   const exportedProductIdsRaw = await db
     .collection<ProductListingFilterDocument>(listingCollectionName)
     .distinct('productId', {
-      integrationId: { $in: integrationIds },
+      integrationId: { $in: integrationLookupValues },
       externalListingId: { $exists: true, $nin: [null, ''] },
     });
 
   const exportedProductIds = exportedProductIdsRaw
     .map((value: unknown) => normalizeLookupId(value))
     .filter((id: string) => id.length > 0);
+  const exportedProductLookupValues = buildLookupValues(exportedProductIds);
 
   if (baseExported) {
     if (exportedProductIds.length === 0) {
@@ -227,7 +255,7 @@ const applyBaseExportedFilter = async (
       $or: [
         exportedByBaseProductId,
         { id: { $in: exportedProductIds } },
-        { _id: { $in: exportedProductIds } },
+        { _id: { $in: exportedProductLookupValues } },
       ],
     } as Filter<ProductDocument>);
   }
@@ -240,7 +268,7 @@ const applyBaseExportedFilter = async (
     $and: [
       unexportedByBaseProductId,
       { id: { $nin: exportedProductIds } },
-      { _id: { $nin: exportedProductIds } },
+      { _id: { $nin: exportedProductLookupValues } },
     ],
   } as Filter<ProductDocument>);
 };

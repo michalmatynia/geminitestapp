@@ -104,12 +104,14 @@ export function GenerationHistoryPanel({
                     variant='outline'
                     className='h-6 text-[10px] text-destructive hover:text-destructive'
                     disabled={deletingId === record.id}
-                    onClick={async (e: React.MouseEvent) => {
+                    onClick={(e: React.MouseEvent) => {
                       e.stopPropagation();
-                      setDeletingId(record.id);
-                      await removeGenerationRecord(record.id);
-                      setDeletingId(null);
-                      setExpandedId((prev) => (prev === record.id ? null : prev));
+                      void (async (): Promise<void> => {
+                        setDeletingId(record.id);
+                        await removeGenerationRecord(record.id);
+                        setDeletingId(null);
+                        setExpandedId((prev) => (prev === record.id ? null : prev));
+                      })();
                     }}
                   >
                     <Trash2 className='mr-1 size-3' />

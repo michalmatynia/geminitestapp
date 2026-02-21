@@ -24,6 +24,7 @@ export type FilemakerEntityKind = FilemakerEntityKindDto;
 export const filemakerPartyReferenceSchema = z.object({
   id: z.string(),
   kind: filemakerPartyKindSchema,
+  name: z.string(),
 });
 
 export type FilemakerPartyReferenceDto = z.infer<typeof filemakerPartyReferenceSchema>;

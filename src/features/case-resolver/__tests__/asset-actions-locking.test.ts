@@ -114,13 +114,12 @@ const buildHarness = (sourceFile: CaseResolverFile): {
   };
 };
 
-const withLockedFile = (workspace: CaseResolverWorkspace, fileId: string): CaseResolverWorkspace => ({
-  ...workspace,
-  files: (workspace.files || []).map((file) => (
-    file.id === fileId ? { ...file, isLocked: true } : file
-  )),
-});
-
+  const withLockedFile = (workspace: CaseResolverWorkspace, fileId: string): CaseResolverWorkspace => ({
+    ...workspace,
+    files: (workspace.files || []).map((file: CaseResolverFile) => (
+      file.id === fileId ? { ...file, isLocked: true } : file
+    )),
+  });
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
@@ -167,8 +166,9 @@ describe('case resolver asset actions lock races', () => {
     );
     await uploadPromise;
 
-    const finalFile = harness.getWorkspace().files.find((file: any) => file.id === 'scan-1');
-    expect(finalFile?.isLocked).toBe(true);
+          const finalFile = harness.getWorkspace().files?.find((file: CaseResolverFile) => file.id === 'scan-1');
+          expect(finalFile?.isLocked).toBe(true);
+    
     expect(finalFile?.scanSlots).toHaveLength(0);
     expect(harness.toast).toHaveBeenCalledWith(
       'Document was locked before uploaded files could be attached.',
@@ -185,7 +185,7 @@ describe('case resolver asset actions lock races', () => {
         {
           id: 'slot-1',
           fileId: 'asset-scan-1',
-          status: 'ready',
+          status: 'completed',
           progress: 100,
           name: 'scan.png',
           filepath: '/uploads/case-resolver/images/scan.png',
@@ -219,17 +219,18 @@ describe('case resolver asset actions lock races', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const before = harness.getWorkspace().files.find((file: any) => file.id === 'scan-1');
-    const beforeDocumentContentVersion = before?.documentContentVersion ?? null;
-    const beforeOcrText = before?.scanSlots?.[0]?.ocrText ?? '';
-
-    const ocrPromise = harness.result.current.handleRunScanFileOcr('scan-1');
-
-    harness.setWorkspace(withLockedFile(harness.getWorkspace(), 'scan-1'));
-    enqueueDeferred.resolve(createJsonResponse({ job: { id: 'job-1' } }));
-    await ocrPromise;
-
-    const after = harness.getWorkspace().files.find((file: any) => file.id === 'scan-1');
+          const before = harness.getWorkspace().files?.find((file: CaseResolverFile) => file.id === 'scan-1');
+          const beforeDocumentContentVersion = before?.documentContentVersion ?? null;
+          const beforeOcrText = before?.scanSlots?.[0]?.ocrText ?? '';
+    
+          const ocrPromise = harness.result.current.handleRunScanFileOcr('scan-1');
+    
+          harness.setWorkspace(withLockedFile(harness.getWorkspace(), 'scan-1'));
+          enqueueDeferred.resolve(createJsonResponse({ job: { id: 'job-1' } }));
+          await ocrPromise;
+    
+          const after = harness.getWorkspace().files?.find((file: CaseResolverFile) => file.id === 'scan-1');
+    
     expect(after?.isLocked).toBe(true);
     expect(after?.scanSlots?.[0]?.ocrText ?? '').toBe(beforeOcrText);
     expect(after?.documentContentVersion ?? null).toBe(beforeDocumentContentVersion);

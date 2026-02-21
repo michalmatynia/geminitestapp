@@ -186,8 +186,8 @@ export interface CaseResolverScanSlotDto {
   progress: number;
   name?: string | undefined;
   ocrText?: string | undefined;
-  filepath?: string | undefined;
-  sourceFileId?: string | undefined;
+  filepath?: string | null | undefined;
+  sourceFileId?: string | null | undefined;
   mimeType?: string | undefined;
   size?: number | undefined;
   ocrError?: string | null | undefined;

@@ -111,7 +111,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(24);
 
-  const tagPathById = useMemo(() => buildPathLabelMap(tags.map(t => ({ ...t, name: t.name || t.label || t.id }))), [tags]);
+  const tagPathById = useMemo(() => buildPathLabelMap(tags.map(t => ({ ...t, name: t.label || t.id }))), [tags]);
   const caseIdentifierPathById = useMemo(
     () => buildPathLabelMap(identifiers.map(i => ({ ...i, name: i.name || i.label || i.id }))),
     [identifiers]
@@ -122,7 +122,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
       { value: '__all__', label: 'All tags' },
       ...tags.map((tag: CaseResolverTag) => ({
         value: tag.id,
-        label: tagPathById.get(tag.id) || tag.name || tag.label || tag.id,
+        label: tagPathById.get(tag.id) || tag.label || tag.id,
       })),
     ],
     [tagPathById, tags]

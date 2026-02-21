@@ -118,14 +118,17 @@ export function StudioModals(): React.JSX.Element {
         uploadPending={uploadMutation.isPending}
       />
 
-      <StudioInlineEditProvider>
+      <StudioInlineEditProvider triggerLocalUpload={triggerLocalUpload}>
         <StudioInlineEditPanels />
       </StudioInlineEditProvider>
 
       <input
         type='file'
         ref={localUploadInputRef}
-        onChange={handleLocalUpload}
+        onChange={(event) => {
+          const files = Array.from(event.target.files || []);
+          void handleLocalUpload(files);
+        }}
         className='hidden'
         accept='image/*'
         multiple={localUploadMode === 'create'}

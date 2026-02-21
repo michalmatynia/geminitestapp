@@ -90,7 +90,7 @@ type CreateUploadHandlersDeps = {
 type UploadHandlers = {
   handleDriveSelection: (files: ImageFileSelection[]) => Promise<void>;
   handleCreateEmptySlot: () => Promise<void>;
-  handleLocalUpload: (event: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
+  handleLocalUpload: (files: File[]) => Promise<void>;
 };
 
 const toAssetDraft = (
@@ -221,8 +221,7 @@ export const createUploadHandlers = (
     }
   };
 
-  const handleLocalUpload = async (event: React.ChangeEvent<HTMLInputElement>): Promise<void> => {
-    const files = Array.from(event.target.files || []);
+  const handleLocalUpload = async (files: File[]): Promise<void> => {
     if (files.length === 0) return;
     try {
       const previousTemporary = deps.temporaryObjectUpload;

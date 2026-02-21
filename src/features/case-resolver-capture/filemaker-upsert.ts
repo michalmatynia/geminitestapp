@@ -15,7 +15,7 @@ import type {
   FilemakerAddressDto as FilemakerAddress,
   FilemakerDatabaseDto as FilemakerDatabase,
 } from '@/shared/contracts/filemaker';
-import type { PromptExploderCaseResolverPartyCandidate } from '@/features/prompt-exploder/bridge';
+import type { PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
 
 export type UpsertFilemakerCaptureCandidateResult = {
   database: FilemakerDatabase;
@@ -62,7 +62,7 @@ const firstNonEmptyLine = (value: string): string =>
     .find((line: string): boolean => line.length > 0) ?? '';
 
 const deriveDisplayTokens = (candidate: PromptExploderCaseResolverPartyCandidate): string[] =>
-  (candidate.displayName || firstNonEmptyLine(candidate.rawText))
+  ((candidate.displayName ?? '') || firstNonEmptyLine(candidate.rawText ?? ''))
     .trim()
     .split(/\s+/)
     .map((token: string): string => token.trim())
@@ -89,9 +89,9 @@ const deriveOrganizationName = (
   candidate: PromptExploderCaseResolverPartyCandidate
 ): string =>
   (candidate.organizationName ?? '').trim() ||
-  (candidate.kind === 'organization' ? candidate.displayName.trim() : '') ||
-  firstNonEmptyLine(candidate.rawText) ||
-  candidate.displayName.trim();
+  (candidate.kind === 'organization' ? (candidate.displayName ?? '').trim() : '') ||
+  firstNonEmptyLine(candidate.rawText ?? '') ||
+  (candidate.displayName ?? '').trim();
 
 const resolvePartyKind = (
   candidate: PromptExploderCaseResolverPartyCandidate

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/filemaker-upsert';
 import type { FilemakerDatabase } from '@/features/filemaker/types';
-import type { PromptExploderCaseResolverPartyCandidate } from '@/features/prompt-exploder/bridge';
+import type { PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
 
 const createDatabase = (): FilemakerDatabase => ({
   version: 2,
@@ -46,6 +46,9 @@ const createDatabase = (): FilemakerDatabase => ({
 describe('upsertFilemakerCaptureCandidate', () => {
   it('reuses existing matched record when candidate resolves to existing party', () => {
     const candidate: PromptExploderCaseResolverPartyCandidate = {
+      id: 'c-1',
+      name: 'Michał Matynia',
+      score: 1,
       role: 'addresser',
       displayName: 'Michał Matynia',
       rawText: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin\nPoland',
@@ -71,6 +74,9 @@ describe('upsertFilemakerCaptureCandidate', () => {
 
   it('creates new filemaker organization and address when unmatched', () => {
     const candidate: PromptExploderCaseResolverPartyCandidate = {
+      id: 'c-2',
+      name: 'Urzad Miasta',
+      score: 1,
       role: 'addressee',
       displayName: 'Urzad Miasta',
       rawText: 'Urzad Miasta\nNowa 7\n00-001 Warszawa\nPoland',
@@ -94,6 +100,9 @@ describe('upsertFilemakerCaptureCandidate', () => {
 
   it('does not create record when candidate has no usable identity data', () => {
     const candidate: PromptExploderCaseResolverPartyCandidate = {
+      id: 'c-3',
+      name: '',
+      score: 0,
       role: 'addressee',
       displayName: '',
       rawText: '',

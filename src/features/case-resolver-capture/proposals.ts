@@ -187,7 +187,7 @@ const buildCaseResolverCaptureProposal = (args: {
   database: FilemakerDatabase;
 }): CaseResolverCaptureProposal | null => {
   if (!args.mapping.enabled) return null;
-  if (!args.candidate.rawText.trim() && !args.candidate.displayName.trim()) return null;
+  if (!(args.candidate.rawText ?? '').trim() && !(args.candidate.displayName ?? '').trim()) return null;
 
   const existingReference = args.mapping.autoMatchPartyReference
     ? findExistingFilemakerPartyReference(args.database, args.candidate)
@@ -244,6 +244,7 @@ const buildCaseResolverCaptureProposal = (args: {
       ? {
         kind: existingReference.kind,
         id: String(existingReference.id),
+        name: (existingReference as any).displayName || (existingReference as any).name || (existingReference as any).firstName || '',
       }
       : null,
     existingAddressId,
@@ -291,14 +292,18 @@ export const buildCaseResolverCaptureProposalState = (
   const proposals: Record<CaseResolverCaptureRole, CaseResolverCaptureProposal | null> = {
     addresser: null,
     addressee: null,
+    subject: null,
+    reference: null,
+    other: null,
   };
 
-  (['addresser', 'addressee'] as const).forEach((sourceRole) => {
+  (Object.keys(resolvedCandidates) as CaseResolverCaptureRole[]).forEach((sourceRole) => {
     const candidate = resolvedCandidates[sourceRole];
     if (!candidate) return;
 
     const mapping = settings.roleMappings[sourceRole];
-    const targetRole = mapping.targetRole;
+    if (!mapping) return;
+    const targetRole = mapping.targetRole || sourceRole;
     const proposal = buildCaseResolverCaptureProposal({
       sourceRole,
       targetRole,
@@ -328,10 +333,10 @@ export const buildCaseResolverCaptureProposalState = (
 
   const metadataPlaceDate = options?.metadata?.placeDate;
   const metadataDate = (() => {
-    if (!metadataPlaceDate) return null;
-    const year = normalizeYear(metadataPlaceDate.year ?? '');
-    const month = normalizeDateToken(metadataPlaceDate.month ?? '').padStart(2, '0');
-    const day = normalizeDateToken(metadataPlaceDate.day ?? '').padStart(2, '0');
+    if (!metadataPlaceDate || !metadataPlaceDate.year || !metadataPlaceDate.month || !metadataPlaceDate.day) return null;
+    const year = normalizeYear(metadataPlaceDate.year);
+    const month = normalizeDateToken(metadataPlaceDate.month).padStart(2, '0');
+    const day = normalizeDateToken(metadataPlaceDate.day).padStart(2, '0');
     if (year.length !== 4 || month.length !== 2 || day.length !== 2) return null;
     return extractCaseResolverDocumentDate(`${year}-${month}-${day}`);
   })();
@@ -614,7 +619,7 @@ const collectCandidateNameLines = (
   pushLine(candidate.organizationName);
   const personFullName = [
     candidate.firstName ?? '',
-    candidate.middleName ?? '',
+    (candidate as any).middleName ?? '',
     candidate.lastName ?? '',
   ]
     .map((part: string): string => part.trim())
@@ -670,7 +675,7 @@ const collectCandidateAddressLines = (
   const normalizedPostalCode = normalizeCaptureTextLine(postalCode);
   const normalizedCountry = normalizeCaptureTextLine(country);
 
-  candidate.rawText
+  (candidate.rawText ?? '')
     .split(/\r?\n/)
     .map((line: string): string => line.trim())
     .filter(Boolean)
@@ -701,7 +706,7 @@ const buildCandidateComparableText = (
     candidate.displayName,
     candidate.organizationName,
     candidate.firstName,
-    candidate.middleName,
+    (candidate as any).middleName,
     candidate.lastName,
     candidate.street,
     composeCandidateStreetNumber(candidate),
@@ -739,7 +744,7 @@ const candidateLikelyContainsSourceLine = (
 const collectCandidateRawHeaderBlockLines = (
   candidate: PromptExploderCaseResolverPartyCandidate
 ): string[] =>
-  candidate.rawText
+  (candidate.rawText ?? '')
     .split(/\r?\n/)
     .map((line: string): string => line.trim())
     .filter((line: string): boolean => isLikelyCaptureHeaderPartyLine(line))

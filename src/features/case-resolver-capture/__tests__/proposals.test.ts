@@ -13,9 +13,9 @@ import {
 } from '@/features/case-resolver-capture/settings';
 import type { FilemakerDatabase } from '@/features/filemaker/types';
 import type {
-  PromptExploderCaseResolverPartyBundle,
-  PromptExploderCaseResolverPartyCandidate,
-} from '@/features/prompt-exploder/bridge';
+  PromptExploderCaseResolverPartyBundleDto as PromptExploderCaseResolverPartyBundle,
+  PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate,
+} from '@/shared/contracts/prompt-exploder';
 
 const createDatabase = (): FilemakerDatabase => ({
   version: 2,
@@ -82,6 +82,9 @@ const createDatabase = (): FilemakerDatabase => ({
 });
 
 const createAddresserCandidate = (): PromptExploderCaseResolverPartyCandidate => ({
+  id: 'cand-1',
+  name: 'Michał Matynia',
+  score: 1,
   role: 'addresser',
   displayName: 'Michał Matynia',
   rawText: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin\nPoland',
@@ -97,6 +100,9 @@ const createAddresserCandidate = (): PromptExploderCaseResolverPartyCandidate =>
 });
 
 const createAddresseeCandidate = (): PromptExploderCaseResolverPartyCandidate => ({
+  id: 'cand-2',
+  name: 'Inspektorat ZUS w Gryficach',
+  score: 1,
   role: 'addressee',
   displayName: 'Inspektorat ZUS w Gryficach',
   rawText: 'Inspektorat ZUS w Gryficach\nDąbskiego 5\n72-300 Gryfice\nPoland',
@@ -112,8 +118,11 @@ const createAddresseeCandidate = (): PromptExploderCaseResolverPartyCandidate =>
 const createSettings = (): CaseResolverCaptureSettings => ({
   ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS,
   roleMappings: {
-    addresser: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser },
-    addressee: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee },
+    addresser: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser } as any,
+    addressee: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee } as any,
+    subject: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.subject } as any,
+    reference: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.reference } as any,
+    other: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.other } as any,
   },
 });
 

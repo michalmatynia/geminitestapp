@@ -56,7 +56,7 @@ const createMutableState = <T,>(initial: T): {
 };
 
 const buildHarness = (sourceFile: CaseResolverFile): {
-  result: ReturnType<typeof renderHook<typeof useCaseResolverStateAssetActions>>['result'];
+  result: any;
   getWorkspace: () => CaseResolverWorkspace;
   setWorkspace: (next: CaseResolverWorkspace) => void;
   toast: ReturnType<typeof vi.fn>;
@@ -65,7 +65,7 @@ const buildHarness = (sourceFile: CaseResolverFile): {
     ...parseCaseResolverWorkspace(null),
     files: [sourceFile],
     activeFileId: sourceFile.id,
-  };
+  } as any;
   const draftState = createMutableState<CaseResolverFileEditDraft | null>(null);
   const isUploadingState = createMutableState(false);
   const uploadingSlotState = createMutableState<string | null>(null);
@@ -101,7 +101,7 @@ const buildHarness = (sourceFile: CaseResolverFile): {
       setSelectedFolderPath: selectedFolderState.set,
       setSelectedAssetId: selectedAssetState.set,
       treeSaveToast: 'Case Resolver tree changes saved.',
-    })
+    } as any)
   );
 
   return {
@@ -116,10 +116,10 @@ const buildHarness = (sourceFile: CaseResolverFile): {
 
 const withLockedFile = (workspace: CaseResolverWorkspace, fileId: string): CaseResolverWorkspace => ({
   ...workspace,
-  files: workspace.files.map((file) => (
+  files: (workspace.files || []).map((file) => (
     file.id === fileId ? { ...file, isLocked: true } : file
   )),
-});
+} as any);
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -130,7 +130,7 @@ describe('case resolver asset actions lock races', () => {
   it('does not attach uploaded scan slots when document becomes locked mid-upload', async () => {
     const scanfile = createCaseResolverFile({
       id: 'scan-1',
-      fileType: 'scanfile',
+      type: 'scanfile',
       name: 'Scan Document',
       scanSlots: [],
       isLocked: false,
@@ -178,7 +178,7 @@ describe('case resolver asset actions lock races', () => {
   it('does not apply OCR output when document becomes locked mid-run', async () => {
     const scanfile = createCaseResolverFile({
       id: 'scan-1',
-      fileType: 'scanfile',
+      type: 'scanfile',
       name: 'Scan Document',
       scanSlots: [
         {

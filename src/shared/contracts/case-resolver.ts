@@ -1,8 +1,11 @@
 import { z } from 'zod';
 
-import { aiNodeTypeSchema, aiNodeSchema } from './ai-paths';
+import { aiNodeTypeSchema, aiNodeSchema, type AiNode, type Edge, type NodeDefinition } from './ai-paths';
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import { documentEditorModeSchema, type DocumentEditorModeDto } from './document-editor';
+
+export type { AiNode, Edge, NodeDefinition };
+export type AiEdge = Edge;
 
 /**
  * Case Resolver Node Roles
@@ -39,7 +42,7 @@ export type CaseResolverAssetKind = CaseResolverAssetKindDto;
 /**
  * Case Resolver File Types
  */
-export const caseResolverFileTypeSchema = z.enum(['pdf', 'image', 'text', 'markdown', 'html', 'json']);
+export const caseResolverFileTypeSchema = z.enum(['pdf', 'image', 'text', 'markdown', 'html', 'json', 'scanfile', 'document', 'case']);
 export type CaseResolverFileTypeDto = z.infer<typeof caseResolverFileTypeSchema>;
 export type CaseResolverFileType = CaseResolverFileTypeDto;
 
@@ -96,9 +99,16 @@ export const caseResolverTagSchema = z.object({
   id: z.string(),
   label: z.string(),
   color: z.string().optional(),
+  parentId: z.string().nullable().optional(),
 });
 
-export type CaseResolverTagDto = z.infer<typeof caseResolverTagSchema>;
+export interface CaseResolverTagDto {
+  id: string;
+  label: string;
+  color?: string | undefined;
+  parentId?: string | null | undefined;
+}
+
 export type CaseResolverTag = CaseResolverTagDto;
 
 export const caseResolverIdentifierSchema = z.object({
@@ -106,9 +116,17 @@ export const caseResolverIdentifierSchema = z.object({
   type: z.string(),
   value: z.string(),
   label: z.string().optional(),
+  parentId: z.string().nullable().optional(),
 });
 
-export type CaseResolverIdentifierDto = z.infer<typeof caseResolverIdentifierSchema>;
+export interface CaseResolverIdentifierDto {
+  id: string;
+  type: string;
+  value: string;
+  label?: string | undefined;
+  parentId?: string | null | undefined;
+}
+
 export type CaseResolverIdentifier = CaseResolverIdentifierDto;
 
 /**
@@ -134,10 +152,31 @@ export const caseResolverScanSlotSchema = z.object({
   fileId: z.string(),
   status: z.enum(['pending', 'processing', 'completed', 'failed']),
   progress: z.number(),
+  name: z.string().optional(),
+  ocrText: z.string().optional(),
+  filepath: z.string().optional(),
+  sourceFileId: z.string().optional(),
+  mimeType: z.string().optional(),
+  size: z.number().optional(),
+  ocrError: z.string().nullable().optional(),
   error: z.string().optional(),
 });
 
-export type CaseResolverScanSlotDto = z.infer<typeof caseResolverScanSlotSchema>;
+export interface CaseResolverScanSlotDto {
+  id: string;
+  fileId: string;
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  progress: number;
+  name?: string | undefined;
+  ocrText?: string | undefined;
+  filepath?: string | undefined;
+  sourceFileId?: string | undefined;
+  mimeType?: string | undefined;
+  size?: number | undefined;
+  ocrError?: string | null | undefined;
+  error?: string | undefined;
+}
+
 export type CaseResolverScanSlot = CaseResolverScanSlotDto;
 
 /**
@@ -159,31 +198,61 @@ export type CaseResolverDocumentHistoryEntry = CaseResolverDocumentHistoryEntryD
  * Case Resolver Meta & Graphs
  */
 export const caseResolverNodeMetaSchema = z.object({
-  role: caseResolverNodeRoleSchema,
-  includeInOutput: z.boolean(),
-  quoteMode: caseResolverQuoteModeSchema,
-  surroundPrefix: z.string(),
-  surroundSuffix: z.string(),
-  appendTrailingNewline: z.boolean(),
+  role: caseResolverNodeRoleSchema.optional(),
+  includeInOutput: z.boolean().optional(),
+  quoteMode: caseResolverQuoteModeSchema.optional(),
+  surroundPrefix: z.string().optional(),
+  surroundSuffix: z.string().optional(),
+  appendTrailingNewline: z.boolean().optional(),
   textColor: z.string().optional(),
 });
 
-export type CaseResolverNodeMetaDto = z.infer<typeof caseResolverNodeMetaSchema>;
+export interface CaseResolverNodeMetaDto {
+  role?: CaseResolverNodeRole;
+  includeInOutput?: boolean;
+  quoteMode?: CaseResolverQuoteMode;
+  surroundPrefix?: string;
+  surroundSuffix?: string;
+  appendTrailingNewline?: boolean;
+  textColor?: string;
+}
+
 export type CaseResolverNodeMeta = CaseResolverNodeMetaDto;
 
 export const caseResolverEdgeMetaSchema = z.object({
-  joinMode: caseResolverJoinModeSchema,
+  joinMode: caseResolverJoinModeSchema.optional(),
 });
 
-export type CaseResolverEdgeMetaDto = z.infer<typeof caseResolverEdgeMetaSchema>;
+export interface CaseResolverEdgeMetaDto {
+  joinMode?: CaseResolverJoinMode;
+}
+
 export type CaseResolverEdgeMeta = CaseResolverEdgeMetaDto;
 
 export const caseResolverGraphSchema = z.object({
   nodes: z.array(aiNodeSchema),
   edges: z.array(z.any()), // aiEdgeSchema
+  nodeMeta: z.record(z.string(), caseResolverNodeMetaSchema).optional(),
+  edgeMeta: z.record(z.string(), caseResolverEdgeMetaSchema).optional(),
+  pdfExtractionPresetId: z.string().optional(),
+  documentFileLinksByNode: z.record(z.string(), z.array(z.string())).optional(),
+  documentDropNodeId: z.string().nullable().optional(),
+  documentSourceFileIdByNode: z.record(z.string(), z.string()).optional(),
+  nodeFileAssetIdByNode: z.record(z.string(), z.string()).optional(),
 });
 
-export type CaseResolverGraphDto = z.infer<typeof caseResolverGraphSchema>;
+export interface CaseResolverGraphDto {
+  nodes: AiNode[];
+  edges: Edge[];
+  nodeMeta?: Record<string, CaseResolverNodeMeta> | undefined;
+  edgeMeta?: Record<string, CaseResolverEdgeMeta> | undefined;
+  pdfExtractionPresetId?: string | undefined;
+  documentFileLinksByNode?: Record<string, string[]> | undefined;
+  documentDropNodeId?: string | null | undefined;
+  documentSourceFileIdByNode?: Record<string, string> | undefined;
+  nodeFileAssetIdByNode?: Record<string, string> | undefined;
+}
+
 export type CaseResolverGraph = CaseResolverGraphDto;
 
 /**
@@ -199,14 +268,44 @@ export const caseResolverNodeFileMetaSchema = z.object({
 export type CaseResolverNodeFileMetaDto = z.infer<typeof caseResolverNodeFileMetaSchema>;
 export type CaseResolverNodeFileMeta = CaseResolverNodeFileMetaDto;
 
-export const caseResolverNodeFileSnapshotSchema = z.object({
+export const caseResolverNodeFileAssignmentSchema = z.object({
   nodeId: z.string(),
   fileId: z.string(),
   url: z.string(),
   thumbnailUrl: z.string().optional(),
 });
 
-export type CaseResolverNodeFileSnapshotDto = z.infer<typeof caseResolverNodeFileSnapshotSchema>;
+export interface CaseResolverNodeFileAssignmentDto {
+  nodeId: string;
+  fileId: string;
+  url: string;
+  thumbnailUrl?: string | undefined;
+}
+
+export type CaseResolverNodeFileAssignment = CaseResolverNodeFileAssignmentDto;
+
+export const caseResolverNodeFileSnapshotSchema = z.object({
+  kind: z.literal('case_resolver_node_file_snapshot_v1'),
+  nodes: z.array(aiNodeSchema),
+  edges: z.array(z.any()),
+  nodeFileMeta: z.record(z.string(), z.object({
+    fileId: z.string(),
+    fileType: caseResolverFileTypeSchema,
+    fileName: z.string(),
+  })),
+});
+
+export interface CaseResolverNodeFileSnapshotDto {
+  kind: 'case_resolver_node_file_snapshot_v1';
+  nodes: AiNode[];
+  edges: any[];
+  nodeFileMeta: Record<string, {
+    fileId: string;
+    fileType: CaseResolverFileType;
+    fileName: string;
+  }>;
+}
+
 export type CaseResolverNodeFileSnapshot = CaseResolverNodeFileSnapshotDto;
 
 /**
@@ -268,10 +367,35 @@ export const caseResolverFileSchema = dtoBaseSchema.extend({
   content: z.string(),
   version: caseResolverDocumentVersionSchema,
   graph: caseResolverGraphSchema.optional(),
+  isLocked: z.boolean().optional(),
+  scanSlots: z.array(caseResolverScanSlotSchema).optional(),
+  documentContentVersion: z.number().optional(),
+  ocrText: z.string().optional(),
+  documentContentPlainText: z.string().optional(),
+  documentContentHtml: z.string().optional(),
+  documentContentMarkdown: z.string().optional(),
+  originalDocumentContent: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type CaseResolverFileDto = z.infer<typeof caseResolverFileSchema>;
+export type CaseResolverFileDto = DtoBase & {
+  workspaceId: string;
+  name: string;
+  type: CaseResolverFileType;
+  content: string;
+  version: CaseResolverDocumentVersion;
+  graph?: CaseResolverGraph | undefined;
+  isLocked?: boolean | undefined;
+  scanSlots?: CaseResolverScanSlot[] | undefined;
+  documentContentVersion?: number | undefined;
+  ocrText?: string | undefined;
+  documentContentPlainText?: string | undefined;
+  documentContentHtml?: string | undefined;
+  documentContentMarkdown?: string | undefined;
+  originalDocumentContent?: string | undefined;
+  metadata?: Record<string, unknown> | undefined;
+};
+
 export type CaseResolverFile = CaseResolverFileDto;
 
 export const caseResolverFileEditDraftSchema = z.object({
@@ -290,10 +414,23 @@ export const caseResolverAssetFileSchema = dtoBaseSchema.extend({
   type: caseResolverFileTypeSchema,
   size: z.number(),
   url: z.string().optional(),
+  sourceFileId: z.string().optional(),
+  textContent: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type CaseResolverAssetFileDto = z.infer<typeof caseResolverAssetFileSchema>;
+export type CaseResolverAssetFileDto = DtoBase & {
+  workspaceId: string;
+  folderId: string | null;
+  name: string;
+  type: CaseResolverFileType;
+  size: number;
+  url?: string | undefined;
+  sourceFileId?: string | undefined;
+  textContent?: string | undefined;
+  metadata?: Record<string, unknown> | undefined;
+};
+
 export type CaseResolverAssetFile = CaseResolverAssetFileDto;
 
 /**
@@ -310,20 +447,54 @@ export type CaseResolverFolderTimestamp = CaseResolverFolderTimestampDto;
 export const caseResolverFolderRecordSchema = dtoBaseSchema.extend({
   workspaceId: z.string(),
   parentId: z.string().nullable(),
+  ownerCaseId: z.string().nullable().optional(),
   name: z.string(),
   path: z.string(),
 });
 
-export type CaseResolverFolderRecordDto = z.infer<typeof caseResolverFolderRecordSchema>;
+export interface CaseResolverFolderRecordDto extends DtoBase {
+  workspaceId: string;
+  parentId: string | null;
+  ownerCaseId?: string | null;
+  name: string;
+  path: string;
+}
+
 export type CaseResolverFolderRecord = CaseResolverFolderRecordDto;
 
 export const caseResolverWorkspaceSchema = namedDtoSchema.extend({
   ownerId: z.string(),
   isPublic: z.boolean(),
+  version: z.number().optional(),
+  activeFileId: z.string().nullable().optional(),
+  files: z.array(caseResolverFileSchema).optional(),
+  assets: z.array(caseResolverAssetFileSchema).optional(),
+  folders: z.array(z.string()).optional(),
+  folderRecords: z.array(caseResolverFolderRecordSchema).optional(),
+  folderTimestamps: z.record(z.string(), caseResolverFolderTimestampSchema).optional(),
+  workspaceRevision: z.number().optional(),
+  lastMutationId: z.string().nullable().optional(),
+  lastMutationAt: z.string().nullable().optional(),
   settings: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type CaseResolverWorkspaceDto = z.infer<typeof caseResolverWorkspaceSchema>;
+export type CaseResolverWorkspaceDto = NamedDto & {
+  ownerId: string;
+  isPublic: boolean;
+  version?: number | undefined;
+  activeFileId?: string | null | undefined;
+  files?: CaseResolverFile[] | undefined;
+  assets?: CaseResolverAssetFile[] | undefined;
+  folders?: string[] | undefined;
+  folderRecords?: CaseResolverFolderRecord[] | undefined;
+  folderTimestamps?: Record<string, CaseResolverFolderTimestamp> | undefined;
+  workspaceRevision?: number | undefined;
+  lastMutationId?: string | null | undefined;
+  lastMutationAt?: string | null | undefined;
+  relationGraph?: CaseResolverRelationGraph | undefined;
+  settings?: Record<string, unknown> | undefined;
+};
+
 export type CaseResolverWorkspace = CaseResolverWorkspaceDto;
 
 /**
@@ -354,13 +525,32 @@ export type CaseResolverCanvasEdgeDto = z.infer<typeof caseResolverCanvasEdgeSch
 export const caseResolverCaptureRoleSchema = z.enum(['addresser', 'addressee', 'subject', 'reference', 'other']);
 export type CaseResolverCaptureRoleDto = z.infer<typeof caseResolverCaptureRoleSchema>;
 
+export const caseResolverCaptureActionSchema = z.enum(['useMatched', 'createInFilemaker', 'keepText', 'ignore']);
+export type CaseResolverCaptureActionDto = z.infer<typeof caseResolverCaptureActionSchema>;
+
 export const caseResolverCaptureRoleMappingSchema = z.object({
   role: caseResolverCaptureRoleSchema,
   targetPath: z.string(),
   required: z.boolean(),
+  enabled: z.boolean().optional(),
+  targetRole: caseResolverCaptureRoleSchema.optional(),
+  defaultAction: caseResolverCaptureActionSchema.optional(),
+  autoMatchPartyReference: z.boolean().optional(),
+  autoMatchAddress: z.boolean().optional(),
 });
 
-export type CaseResolverCaptureRoleMappingDto = z.infer<typeof caseResolverCaptureRoleMappingSchema>;
+export interface CaseResolverCaptureRoleMappingDto {
+  role: 'addresser' | 'addressee' | 'subject' | 'reference' | 'other';
+  targetPath: string;
+  required: boolean;
+  enabled?: boolean | undefined;
+  targetRole?: 'addresser' | 'addressee' | 'subject' | 'reference' | 'other' | undefined;
+  defaultAction?: 'useMatched' | 'createInFilemaker' | 'keepText' | 'ignore' | undefined;
+  autoMatchPartyReference?: boolean | undefined;
+  autoMatchAddress?: boolean | undefined;
+}
+
+export type CaseResolverCaptureRoleMapping = CaseResolverCaptureRoleMappingDto;
 
 export const caseResolverCaptureProposalStateSchema = z.enum(['pending', 'accepted', 'rejected', 'modified']);
 export type CaseResolverCaptureProposalStateDto = z.infer<typeof caseResolverCaptureProposalStateSchema>;
@@ -368,10 +558,28 @@ export type CaseResolverCaptureProposalStateDto = z.infer<typeof caseResolverCap
 export const caseResolverCaptureSettingsSchema = z.object({
   enabled: z.boolean(),
   autoOpenProposalModal: z.boolean(),
-  roleMappings: z.record(caseResolverCaptureRoleSchema, caseResolverCaptureRoleMappingSchema),
+  roleMappings: z.object({
+    addresser: caseResolverCaptureRoleMappingSchema.optional(),
+    addressee: caseResolverCaptureRoleMappingSchema.optional(),
+    subject: caseResolverCaptureRoleMappingSchema.optional(),
+    reference: caseResolverCaptureRoleMappingSchema.optional(),
+    other: caseResolverCaptureRoleMappingSchema.optional(),
+  }),
 });
 
-export type CaseResolverCaptureSettingsDto = z.infer<typeof caseResolverCaptureSettingsSchema>;
+export interface CaseResolverCaptureSettingsDto {
+  enabled: boolean;
+  autoOpenProposalModal: boolean;
+  roleMappings: {
+    addresser?: CaseResolverCaptureRoleMapping | undefined;
+    addressee?: CaseResolverCaptureRoleMapping | undefined;
+    subject?: CaseResolverCaptureRoleMapping | undefined;
+    reference?: CaseResolverCaptureRoleMapping | undefined;
+    other?: CaseResolverCaptureRoleMapping | undefined;
+  };
+}
+
+export type CaseResolverCaptureSettings = CaseResolverCaptureSettingsDto;
 
 /**
  * CASE RESOLVER CONSTANTS & HELPERS
@@ -510,7 +718,7 @@ export const DEFAULT_CASE_RESOLVER_RELATION_NODE_META: CaseResolverRelationNodeM
   updatedAt: '',
 };
 
-export const DEFAULT_CASE_RESOLVER_RELATION_EDGE_META: CaseResolverEdgeMeta = {
+export const DEFAULT_CASE_RESOLVER_RELATION_EDGE_META: CaseResolverRelationEdgeMeta = {
   relationType: 'related',
   label: '',
   isStructural: false,

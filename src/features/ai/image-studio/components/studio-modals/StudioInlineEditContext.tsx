@@ -153,7 +153,15 @@ export interface StudioInlineEditContextValue {
 
 const StudioInlineEditContext = createContext<StudioInlineEditContextValue | null>(null);
 
-export function StudioInlineEditProvider({ children }: { children: React.ReactNode }) {
+type LocalUploadMode = 'create' | 'replace' | 'temporary-object' | 'environment';
+
+export function StudioInlineEditProvider({
+  children,
+  triggerLocalUpload,
+}: {
+  children: React.ReactNode;
+  triggerLocalUpload: (mode: LocalUploadMode, targetId: string | null) => void;
+}) {
   const { toast } = useToast();
   const { projectId } = useProjectsState();
   const settingsStore = useSettingsStore();
@@ -209,8 +217,6 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
     EMPTY_ENVIRONMENT_REFERENCE_DRAFT
   );
   const [environmentPreviewNaturalSize, setEnvironmentPreviewNaturalSize] = useState<{ width: number; height: number } | null>(null);
-  const [localUploadMode, setLocalUploadMode] = useState<'create' | 'replace' | 'temporary-object' | 'environment'>('create');
-  const [localUploadTargetId, setLocalUploadTargetId] = useState<string | null>(null);
   const [linkedVariantApplyBusyKey, setLinkedVariantApplyBusyKey] = useState<string | null>(null);
   const [inlinePreviewNaturalSize, setInlinePreviewNaturalSize] = useState<{ width: number; height: number } | null>(null);
   const [generationPreviewKey, setGenerationPreviewKey] = useState<string | null>(null);
@@ -483,10 +489,7 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
           if (!file) return;
           await uploadMutation.mutateAsync({
             files: [file],
-            options: {
-              silent: true,
-              replaceSlotId: selectedSlot.id,
-            }
+            folder: selectedSlot.folderPath ?? '',
           });
         } finally {
           setSlotUpdateBusy(false);
@@ -556,8 +559,7 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
       setDriveImportTargetId(selectedSlot?.id ?? null);
     },
     onUploadEnvironmentFromLocal: () => {
-      setLocalUploadMode('environment');
-      setLocalUploadTargetId(selectedSlot?.id ?? null);
+      triggerLocalUpload('environment', selectedSlot?.id ?? null);
     },
     linkedRunsQuery,
   }), [
@@ -573,7 +575,7 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
     compositeTabInputSourceLabel, linkedMaskSlots, sourceCompositeImage, studioSettings,
     uploadMutation.isPending, inlineCardImageManagerController, inlineHandlers,
     toast, linkedRunsQuery, onOpenGenerationPreviewModal, extractionHandlers,
-    setDriveImportOpen, setDriveImportMode, setDriveImportTargetId, setLocalUploadMode, setLocalUploadTargetId
+    setDriveImportOpen, setDriveImportMode, setDriveImportTargetId, triggerLocalUpload
   ]);
 
   return (

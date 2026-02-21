@@ -29,7 +29,12 @@ import {
   type MasterFolderTreeProps,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import {
+  type CaseResolverAssetFile,
+  type CaseResolverFile,
+  type CaseResolverIdentifier,
+  type CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { Button, FolderTreePanel } from '@/shared/ui';
 import {
@@ -164,7 +169,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     (): boolean =>
       Boolean(selectedAssetId) &&
       workspace.assets.some(
-        (asset) => asset.id === selectedAssetId && asset.kind === 'node_file',
+        (asset: CaseResolverAssetFile) => asset.id === selectedAssetId && asset.kind === 'node_file',
       ),
     [selectedAssetId, workspace.assets],
   );
@@ -292,14 +297,14 @@ export function CaseResolverFolderTree(): React.JSX.Element {
   const activeCaseFile = useMemo(() => {
     if (activeCaseId) {
       const explicitCase = workspace.files.find(
-        (file) => file.id === activeCaseId && file.fileType === 'case',
+        (file: CaseResolverFile) => file.id === activeCaseId && file.fileType === 'case',
       );
       if (explicitCase) return explicitCase;
     }
     if (activeFile?.fileType === 'case') return activeFile;
     if (activeFile?.parentCaseId) {
       const parentCase = workspace.files.find(
-        (file) =>
+        (file: CaseResolverFile) =>
           file.id === activeFile.parentCaseId && file.fileType === 'case',
       );
       if (parentCase) return parentCase;
@@ -310,14 +315,14 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     const identifierId = activeCaseFile?.caseIdentifierId ?? null;
     if (!identifierId) return null;
     const match = caseResolverIdentifiers.find(
-      (identifier) => identifier.id === identifierId,
+      (identifier: CaseResolverIdentifier) => identifier.id === identifierId,
     );
     return match?.name ?? identifierId;
   }, [activeCaseFile?.caseIdentifierId, caseResolverIdentifiers]);
 
   const fileLockById = useMemo((): Map<string, boolean> => {
     return new Map(
-      treeWorkspace.files.map((file): [string, boolean] => [
+      treeWorkspace.files.map((file: CaseResolverFile): [string, boolean] => [
         file.id,
         file.isLocked,
       ]),
@@ -329,7 +334,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     FolderCaseFileStats
   > => {
     const stats = new Map<string, FolderCaseFileStats>();
-    treeWorkspace.files.forEach((file): void => {
+    treeWorkspace.files.forEach((file: CaseResolverFile): void => {
       if (file.fileType === 'case') return;
       const normalizedFolder = file.folder.trim();
       if (!normalizedFolder) return;
@@ -411,8 +416,8 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     if (highlightedNodeFileAssetIds.length === 0) return;
     const validNodeFileAssetIds = new Set<string>(
       treeWorkspace.assets
-        .filter((asset): boolean => asset.kind === 'node_file')
-        .map((asset): string => asset.id),
+        .filter((asset: CaseResolverAssetFile): boolean => asset.kind === 'node_file')
+        .map((asset: CaseResolverAssetFile): string => asset.id),
     );
     const nextHighlighted = highlightedNodeFileAssetIds.filter(
       (assetId: string): boolean => validNodeFileAssetIds.has(assetId),
@@ -425,7 +430,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     if (highlightedNodeFileAssetIds.length === 0) return [];
     const highlighted = new Set<string>(highlightedNodeFileAssetIds);
     const ancestorNodeIds = new Set<string>();
-    treeWorkspace.assets.forEach((asset): void => {
+    treeWorkspace.assets.forEach((asset: CaseResolverAssetFile): void => {
       if (asset.kind !== 'node_file') return;
       if (!highlighted.has(asset.id)) return;
       resolveFolderAncestorNodeIds(asset.folder).forEach(

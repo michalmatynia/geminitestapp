@@ -3,15 +3,13 @@ import 'server-only';
 import { Prisma } from '@prisma/client';
 
 import { logSystemEvent } from '@/features/observability/server';
+import type { CmsRepository } from '@/shared/contracts/cms';
 import { internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
-
 
 import { getCmsDataProvider } from '../cms-provider';
 import { mongoCmsRepository } from './mongo-cms-repository';
 import { prismaCmsRepository } from './prisma-cms-repository';
-
-import type { CmsRepository } from '../../types/services/cms-repository';
 
 let cachedRepository: CmsRepository | null = null;
 let cachedProvider: 'mongodb' | 'prisma' | null = null;

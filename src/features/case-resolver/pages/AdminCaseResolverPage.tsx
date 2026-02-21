@@ -68,6 +68,7 @@ import {
 import {
   buildCombinedOcrText,
   buildDocumentPdfMarkup,
+  buildFileEditDraft,
   createId,
   isPathWithinFolder,
 } from '../utils/caseResolverUtils';
@@ -884,6 +885,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           acceptedDateValue !== null ||
           hasExplodedCleanup;
         let captureApplyAttempts = 1;
+        let mutationResult: ReturnType<typeof applyCaseResolverFileMutationAndRebaseDraft> | null = null;
         const mutationStartedAtMs = shouldAttemptPersistPatch ? readCaptureApplyNowMs() : null;
 
         if (shouldAttemptPersistPatch) {
@@ -984,7 +986,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           };
 
           let mutationTargetFileId = targetFileId;
-          let mutationResult = runCaptureMutation({
+          mutationResult = runCaptureMutation({
             mutationTargetFileId,
             mutationSource: 'capture_mapping_apply',
             mutationPrecheckFiles: workspaceRef.current.files,
@@ -1092,6 +1094,18 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           mutationDurationMs = resolveCaptureApplyDurationMs(mutationStartedAtMs);
         }
 
+        // Use workspaceRef.current (always up-to-date after flushSync) to avoid closure staleness.
+        // Always replace the draft — even when the file is already open — so the editor reflects
+        // the post-mutation content. Increment the seed so the WYSIWYG editor remounts and reads
+        // the fresh documentContentHtml from the new draft (the editor is uncontrolled internally).
+        const postMutationFile = workspaceRef.current.files.find((f) => f.id === targetFileId) ?? null;
+        if (postMutationFile && postMutationFile.fileType !== 'case') {
+          const freshDraft = buildFileEditDraft(postMutationFile);
+          setEditingDocumentDraft(() => ({ ...freshDraft, documentHistory: freshDraft.documentHistory ?? [] }));
+          setEditorContentRevisionSeed((v) => v + 1);
+        }
+        refetchSettingsStore();
+
         setPromptExploderPartyProposal(nextProposalState);
         setPromptExploderProposalDraft(nextProposalState);
         const totalDurationMs = resolveCaptureApplyDurationMs(applyStartedAtMs);
@@ -1193,6 +1207,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     promptExploderProposalDraft,
     setCaptureApplyDiagnostics,
     setEditingDocumentDraft,
+    setEditorContentRevisionSeed,
     setIsApplyingPromptExploderPartyProposal,
     setIsPromptExploderPartyProposalOpen,
     setPromptExploderProposalDraft,
@@ -1312,7 +1327,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const updateEditingDocumentDraft = useCallback(
     (patch: Partial<CaseResolverFileEditDraft>): void => {
-      setEditingDocumentDraft((current) => {
+      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null): CaseResolverFileEditDraft | null => {
         if (!current || current.isLocked) return current;
         return { ...current, ...patch };
       });
@@ -1781,19 +1796,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       markdown?: string | undefined;
       html?: string | undefined;
       warnings?: string[] | undefined;
-      mode?: 'markdown' | 'wysiwyg' | undefined;
     }): void => {
       setEditingDocumentDraft((current) => {
         if (!current) return current;
         if (current.isLocked) return current;
         const resolvedMode: 'markdown' | 'wysiwyg' =
-          input.mode === 'markdown' || input.mode === 'wysiwyg'
-            ? input.mode
-            : current.fileType === 'scanfile'
-              ? 'markdown'
-              : current.editorType === 'markdown'
-                ? 'markdown'
-                : 'wysiwyg';
+          current.fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
         const canonical = deriveDocumentContentSync({
           mode: resolvedMode,
           value: resolvedMode === 'markdown'
@@ -1836,11 +1844,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const handleUpdateDraftDocumentContent = useCallback((next: string) => {
     if (!editingDocumentDraft) return;
-    const isMarkdownDraft =
-      editingDocumentDraft.fileType === 'scanfile' ||
-      editingDocumentDraft.editorType === 'markdown';
+    const isMarkdownDraft = editingDocumentDraft.fileType === 'scanfile';
     applyDraftCanonicalContent({
-      mode: isMarkdownDraft ? 'markdown' : 'wysiwyg',
       value: next,
       html: isMarkdownDraft
         ? (editingDocumentDraft.documentContentHtml ?? '')
@@ -1858,10 +1863,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       return;
     }
     const targetMode: 'markdown' | 'wysiwyg' =
-      editingDocumentDraft.fileType === 'scanfile' ||
-      editingDocumentDraft.editorType === 'markdown'
-        ? 'markdown'
-        : 'wysiwyg';
+      editingDocumentDraft.fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
     if (targetMode === 'markdown') {
       const nextMarkdown = (
         entry.documentContentMarkdown.trim().length > 0
@@ -1871,7 +1873,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             : entry.documentContent
       );
       applyDraftCanonicalContent({
-        mode: 'markdown',
         value: nextMarkdown,
         markdown: nextMarkdown,
         html: entry.documentContentHtml,
@@ -1887,7 +1888,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         return ensureSafeDocumentHtml(entry.documentContent);
       })();
       applyDraftCanonicalContent({
-        mode: 'wysiwyg',
         value: nextHtml,
         html: nextHtml,
         markdown: entry.documentContentMarkdown,

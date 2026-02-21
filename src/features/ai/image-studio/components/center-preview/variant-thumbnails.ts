@@ -3,6 +3,8 @@ import {
   getImageStudioSlotImageSrc,
   isLikelyImageStudioErrorText,
 } from '@/features/ai/image-studio/utils/image-src';
+import type { ImageFileRecord } from '@/shared/contracts/files';
+import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
 
 import {
   asFiniteNumber,
@@ -14,8 +16,7 @@ import {
 } from './preview-utils';
 
 import type { VersionNode } from '../../context/VersionGraphContext';
-import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
-import type { ImageFileRecord } from '@/shared/contracts/files';
+
 
 const GENERATED_SOURCE_PATH_REGEX = /^\/uploads\/studio\/(?:center|crops|upscale|autoscale)\/[^/]+\/([^/]+)\//i;
 

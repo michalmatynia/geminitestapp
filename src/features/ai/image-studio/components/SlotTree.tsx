@@ -9,6 +9,7 @@ import {
   MasterFolderTree,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { TreeCaret, TreeContextMenu, TreeRow, useToast } from '@/shared/ui';
 import {
@@ -44,7 +45,6 @@ import {
   resolveImageStudioExternalDropAction,
 } from '../utils/studio-master-tree-external-drop';
 
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 type SlotTreeRevealRequest = {
   slotId: string;

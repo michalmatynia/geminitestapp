@@ -1,3 +1,4 @@
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import { api, type ApiError } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 
@@ -29,7 +30,6 @@ import {
 } from '../../contracts/upscale';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
 
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import type { QueryClient } from '@tanstack/react-query';
 
 type Toast = (

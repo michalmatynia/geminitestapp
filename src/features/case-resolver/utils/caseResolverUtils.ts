@@ -507,11 +507,7 @@ export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEdit
     ? explodedDocumentContent
     : originalDocumentContent;
   const resolvedDraftEditorType: CaseResolverFileEditDraft['editorType'] =
-    file.fileType === 'scanfile'
-      ? 'markdown'
-      : file.editorType === 'markdown'
-        ? 'markdown'
-        : 'wysiwyg';
+    file.fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
   const resolvedDraftMarkdown = (() => {
     if (
       typeof file.documentContentMarkdown === 'string' &&

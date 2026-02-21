@@ -65,7 +65,7 @@ const buildHarness = (sourceFile: CaseResolverFile): {
     ...parseCaseResolverWorkspace(null),
     files: [sourceFile],
     activeFileId: sourceFile.id,
-  } as any;
+  };
   const draftState = createMutableState<CaseResolverFileEditDraft | null>(null);
   const isUploadingState = createMutableState(false);
   const uploadingSlotState = createMutableState<string | null>(null);
@@ -119,7 +119,7 @@ const withLockedFile = (workspace: CaseResolverWorkspace, fileId: string): CaseR
   files: (workspace.files || []).map((file) => (
     file.id === fileId ? { ...file, isLocked: true } : file
   )),
-} as any);
+});
 
 afterEach(() => {
   vi.unstubAllGlobals();

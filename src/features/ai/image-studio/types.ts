@@ -1,6 +1,6 @@
+import type { VectorShape } from '@/features/vector-drawing';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import type { VectorShape } from '@/features/vector-drawing';
 
 export type { ImageStudioSlotRecord, VectorShape };
 

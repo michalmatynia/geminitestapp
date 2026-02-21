@@ -21,7 +21,7 @@ import {
 } from '@/shared/ui';
 
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
-import { useAsset3DListState } from '../hooks/useAsset3DListState';
+import { useAsset3DListState, type UseAsset3DListStateReturn } from '../hooks/useAsset3DListState';
 
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -149,7 +149,7 @@ export function Asset3DListPage(): React.JSX.Element {
       filters={
         <FilterPanel
           search={{
-            value: searchQuery,
+            value: String(searchQuery),
             onChange: (val) => setSearchQuery(val),
             placeholder: 'Search assets...',
           }}
@@ -158,10 +158,10 @@ export function Asset3DListPage(): React.JSX.Element {
               key: 'category',
               label: 'Category',
               type: 'select' as const,
-              value: selectedCategory ?? '__all__',
+              value: (selectedCategory ?? '__all__'),
               options: [
                 { value: '__all__', label: 'All categories' },
-                ...categories.map((cat) => ({ value: cat, label: cat })),
+                ...((categories).map((cat: string) => ({ value: cat, label: cat }))),
               ],
               onValueChange: (v: string) => setSelectedCategory(v === '__all__' ? null : v),
               width: '180px',

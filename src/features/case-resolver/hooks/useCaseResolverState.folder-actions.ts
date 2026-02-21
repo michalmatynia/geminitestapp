@@ -166,7 +166,7 @@ export const useCaseResolverStateFolderActions = ({
                   (!currentScopeCaseIds ||
                     Boolean(file.parentCaseId && currentScopeCaseIds.has(file.parentCaseId)))
               )
-              .map((file) => file.id)
+              .map((file: CaseResolverFile): string => file.id)
           );
           const nextFiles = current.files.filter(
             (file: CaseResolverFile): boolean =>
@@ -186,20 +186,20 @@ export const useCaseResolverStateFolderActions = ({
               return null;
             }
             const removedActiveFile =
-              current.files.find((file) => file.id === current.activeFileId) ?? null;
+              current.files.find((file: CaseResolverFile): boolean => file.id === current.activeFileId) ?? null;
             if (!removedActiveFile?.parentCaseId) return null;
             const parentCase =
-              current.files.find((file) => file.id === removedActiveFile.parentCaseId) ?? null;
+              current.files.find((file: CaseResolverFile): boolean => file.id === removedActiveFile.parentCaseId) ?? null;
             return parentCase?.fileType === 'case' ? parentCase.id : null;
           })();
           const fallbackFileId =
-            nextFiles.find((file) => file.fileType !== 'case')?.id ??
-            nextFiles.find((file) => file.fileType === 'case')?.id ??
+            nextFiles.find((file: CaseResolverFile): boolean => file.fileType !== 'case')?.id ??
+            nextFiles.find((file: CaseResolverFile): boolean => file.fileType === 'case')?.id ??
             null;
 
           return {
             ...current,
-            folders: current.folders.filter((path) => !isPathWithinFolder(path, normalizedFolder)),
+            folders: current.folders.filter((path: string): boolean => !isPathWithinFolder(path, normalizedFolder)),
             folderRecords: removeOwnedFolderRecordsWithinPath({
               records: current.folderRecords,
               folderPath: normalizedFolder,
@@ -265,7 +265,7 @@ export const useCaseResolverStateFolderActions = ({
         if (currentTargetFile && isLockedEditableFile(currentTargetFile)) return current;
         return {
           ...current,
-          files: current.files.map((file) =>
+          files: current.files.map((file: CaseResolverFile) =>
             file.id === fileId
               ? { ...file, folder: normalizedTarget, updatedAt: new Date().toISOString() }
               : file
@@ -286,7 +286,7 @@ export const useCaseResolverStateFolderActions = ({
       const normalizedTarget = normalizeFolderPath(targetFolder);
       updateWorkspace((current) => ({
         ...current,
-        assets: current.assets.map((asset) =>
+        assets: current.assets.map((asset: CaseResolverAssetFile) =>
           asset.id === assetId
             ? { ...asset, folder: normalizedTarget, updatedAt: new Date().toISOString() }
             : asset
@@ -319,7 +319,7 @@ export const useCaseResolverStateFolderActions = ({
         if (currentTargetFile && isLockedEditableFile(currentTargetFile)) return current;
         return {
           ...current,
-          files: current.files.map((file) =>
+          files: current.files.map((file: CaseResolverFile) =>
             file.id === fileId
               ? { ...file, name: trimmedName, updatedAt: new Date().toISOString() }
               : file
@@ -336,7 +336,7 @@ export const useCaseResolverStateFolderActions = ({
       if (!trimmedName) return;
       updateWorkspace((current) => ({
         ...current,
-        assets: current.assets.map((asset) =>
+        assets: current.assets.map((asset: CaseResolverAssetFile) =>
           asset.id === assetId
             ? { ...asset, name: trimmedName, updatedAt: new Date().toISOString() }
             : asset
@@ -413,7 +413,7 @@ export const useCaseResolverStateFolderActions = ({
               timestamps,
             ])
           ),
-          files: current.files.map((file) => {
+          files: current.files.map((file: CaseResolverFile) => {
             const shouldRename =
               isPathWithinFolder(file.folder, normalizedSource) &&
               (
@@ -427,7 +427,7 @@ export const useCaseResolverStateFolderActions = ({
             if (nextFolder === file.folder) return file;
             return { ...file, folder: nextFolder, updatedAt: now };
           }),
-          assets: current.assets.map((asset) => {
+          assets: current.assets.map((asset: CaseResolverAssetFile) => {
             const shouldRename =
               isPathWithinFolder(asset.folder, normalizedSource) &&
               (

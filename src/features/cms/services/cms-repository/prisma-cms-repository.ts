@@ -1,10 +1,25 @@
 import 'server-only';
 
+
+import type {
+  Page,
+  Slug,
+  PageComponent,
+  CmsTheme,
+  CreateCmsThemeDto as CmsThemeCreateInput,
+  UpdateCmsThemeDto as CmsThemeUpdateInput,
+  CmsRepository,
+  PageUpdateData,
+} from '@/shared/contracts/cms';
 import prisma from '@/shared/lib/db/prisma';
 
-import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '../../types';
-import type { CmsRepository, PageUpdateData } from '../../types/services/cms-repository';
-import type { Prisma, Page as PrismaPage, Slug as PrismaSlug, CmsTheme as PrismaCmsTheme, PageComponent as PrismaPageComponent } from '@prisma/client';
+import type {
+  Prisma,
+  Page as PrismaPage,
+  Slug as PrismaSlug,
+  CmsTheme as PrismaCmsTheme,
+  PageComponent as PrismaPageComponent,
+} from '@prisma/client';
 
 // ---------------------------------------------------------------------------
 // Helpers

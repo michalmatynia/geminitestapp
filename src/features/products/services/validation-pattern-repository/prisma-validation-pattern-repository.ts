@@ -1,6 +1,7 @@
 import { Prisma, ProductValidationPattern as PrismaPattern } from '@prisma/client';
 
 import {
+  PRODUCT_FORMATTER_ENABLED_BY_DEFAULT_SETTING_KEY,
   PRODUCT_VALIDATION_REPLACEMENT_FIELDS,
   PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
   PRODUCT_VALIDATOR_INSTANCE_DENY_BEHAVIOR_SETTING_KEY,
@@ -34,6 +35,7 @@ import { conflictError, operationFailedError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 
 const DEFAULT_ENABLED_BY_DEFAULT = true;
+const DEFAULT_FORMATTER_ENABLED_BY_DEFAULT = false;
 const MISSING_DELEGATE_MESSAGE =
   'ProductValidationPattern model is unavailable in Prisma Client. Run `npx prisma generate` and restart the app.';
 const SCHEMA_MISMATCH_MESSAGE =
@@ -54,10 +56,13 @@ const schemaMismatchError = (error: unknown) => {
   });
 };
 
-const parseBooleanSetting = (value: string | null | undefined): boolean => {
-  if (typeof value !== 'string') return DEFAULT_ENABLED_BY_DEFAULT;
+const parseBooleanSetting = (
+  value: string | null | undefined,
+  fallback: boolean = DEFAULT_ENABLED_BY_DEFAULT
+): boolean => {
+  if (typeof value !== 'string') return fallback;
   const normalized = value.trim().toLowerCase();
-  if (!normalized) return DEFAULT_ENABLED_BY_DEFAULT;
+  if (!normalized) return fallback;
   if (normalized === 'false' || normalized === '0' || normalized === 'off' || normalized === 'no') {
     return false;
   }
@@ -560,6 +565,31 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
       where: { key: PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY },
       create: {
         key: PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
+        value: String(enabled),
+      },
+      update: {
+        value: String(enabled),
+      },
+    });
+    return enabled;
+  },
+
+  async getFormatterEnabledByDefault(): Promise<boolean> {
+    const setting = await prisma.setting.findUnique({
+      where: { key: PRODUCT_FORMATTER_ENABLED_BY_DEFAULT_SETTING_KEY },
+      select: { value: true },
+    });
+    return parseBooleanSetting(
+      setting?.value,
+      DEFAULT_FORMATTER_ENABLED_BY_DEFAULT
+    );
+  },
+
+  async setFormatterEnabledByDefault(enabled: boolean): Promise<boolean> {
+    await prisma.setting.upsert({
+      where: { key: PRODUCT_FORMATTER_ENABLED_BY_DEFAULT_SETTING_KEY },
+      create: {
+        key: PRODUCT_FORMATTER_ENABLED_BY_DEFAULT_SETTING_KEY,
         value: String(enabled),
       },
       update: {

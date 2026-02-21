@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
 import type { VectorShape } from '@/features/vector-drawing';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 
 import {
@@ -12,7 +13,6 @@ import {
 } from './right-sidebar-utils';
 import { resolvePromptPlaceholders } from '../../utils/run-request-preview';
 
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { ImageStudioSequenceStep } from '../../utils/studio-settings';
 
 type Toast = (

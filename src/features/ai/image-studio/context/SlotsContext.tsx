@@ -13,6 +13,7 @@ import {
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { studioKeys, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import type { ImageFileSelection } from '@/shared/contracts/files';
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -35,7 +36,6 @@ import {
 } from '../utils/project-session';
 import { expandFolderPath, normalizeFolderPaths, IMAGE_STUDIO_TREE_KEY_PREFIX } from '../utils/studio-tree';
 
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 

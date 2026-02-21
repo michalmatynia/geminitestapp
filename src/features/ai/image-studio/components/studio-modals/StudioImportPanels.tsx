@@ -2,12 +2,12 @@ import { Upload } from 'lucide-react';
 import React from 'react';
 
 import type { ImageFileSelection } from '@/shared/contracts/files';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { Button, FileUploadTrigger } from '@/shared/ui';
 
 import { DriveImportModal } from '../modals/DriveImportModal';
 import { SlotCreateModal } from '../modals/SlotCreateModal';
 
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 type UploadMode = 'create' | 'replace' | 'temporary-object' | 'environment';
 

@@ -1,8 +1,8 @@
 import type { VectorShape } from '@/features/vector-drawing';
-
-import type { RunStudioPayload } from '../hooks/useImageStudioMutations';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+
 import type { ImageStudioSettings } from './studio-settings';
+import type { RunStudioPayload } from '../hooks/useImageStudioMutations';
 
 type BuildRunRequestPayloadInput = {
   projectId: string;

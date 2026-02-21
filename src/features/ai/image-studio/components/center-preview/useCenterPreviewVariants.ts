@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+
 import { normalizeImagePath, type VariantThumbnailInfo } from './preview-utils';
 import { buildVariantThumbnails } from './variant-thumbnails';
 
 import type { GenerationLandingSlot } from '../../context/GenerationContext';
 import type { PendingSequenceThumbnailState } from '../../context/UiContext';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { Dispatch, SetStateAction } from 'react';
 
 type UseCenterPreviewVariantsArgs = {

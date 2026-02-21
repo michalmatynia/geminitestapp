@@ -489,12 +489,12 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   };
 
   const copyCompiledPrompt = async (): Promise<void> => {
-    if (!compiled.prompt.trim()) {
+    if (!compiled.combinedContent.trim()) {
       toast('No compiled prompt content yet.', { variant: 'warning' });
       return;
     }
     try {
-      await navigator.clipboard.writeText(compiled.prompt);
+      await navigator.clipboard.writeText(compiled.combinedContent);
       toast('Compiled prompt copied.', { variant: 'success' });
     } catch (error) {
       toast('Failed to copy compiled prompt.', { variant: 'error' });

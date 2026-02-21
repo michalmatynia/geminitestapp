@@ -1,9 +1,9 @@
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { normalizeTreePath } from '@/shared/utils/tree-operations';
 
 import { normalizeFolderPaths } from './studio-tree';
 
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 const FOLDER_NODE_PREFIX = 'folder:';
 const SLOT_NODE_PREFIX = 'card:';

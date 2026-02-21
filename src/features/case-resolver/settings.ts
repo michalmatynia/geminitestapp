@@ -614,12 +614,8 @@ export const createCaseResolverFile = (input: {
   const activeDocumentContent =
     activeDocumentVersion === 'exploded' ? explodedDocumentContent : originalDocumentContent;
   const fileType = normalizeCaseResolverFileType(input.fileType);
-  const requestedEditorType: CaseResolverEditorType | null =
-    input.editorType === 'markdown' || input.editorType === 'wysiwyg'
-      ? input.editorType
-      : null;
   const resolvedEditorType: CaseResolverEditorType =
-    fileType === 'scanfile' ? 'markdown' : (requestedEditorType ?? 'wysiwyg');
+    fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
   const resolvedCanonicalSource = (() => {
     if (resolvedEditorType === 'markdown') {
       if (
@@ -1043,7 +1039,7 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
     ) {
       const record = parsed as Record<string, unknown>;
       const parsedNodes = (Array.isArray(record['nodes']) ? record['nodes'] : []) as CaseResolverNodeFileSnapshot['nodes'];
-      const parsedEdges = (Array.isArray(record['edges']) ? record['edges'] : []) as CaseResolverNodeFileSnapshot['edges'];
+      const parsedEdges = (Array.isArray(record['edges']) ? record['edges'] : []);
       const parsedNodeFileMeta =
         record['nodeFileMeta'] !== null &&
         typeof record['nodeFileMeta'] === 'object' &&
@@ -1078,7 +1074,7 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
             ? legacyNodes[0].id.trim()
             : ''
         );
-      const legacyEdges = (Array.isArray(record['connectedEdges']) ? record['connectedEdges'] : []) as CaseResolverNodeFileSnapshot['edges'];
+      const legacyEdges = (Array.isArray(record['connectedEdges']) ? record['connectedEdges'] : []);
       const sourceFileId = sanitizeOptionalId(record['sourceFileId']);
       const sourceFileName =
         typeof record['sourceFileName'] === 'string' && record['sourceFileName'].trim().length > 0

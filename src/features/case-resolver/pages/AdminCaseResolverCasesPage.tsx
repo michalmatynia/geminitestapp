@@ -943,22 +943,22 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     [caseResolverCategories],
   );
   const caseTagPathById = useMemo(
-    () => buildPathLabelMap(caseResolverTags),
+    () => buildPathLabelMap(caseResolverTags.map(t => ({ ...t, name: t.name || t.label || t.id, parentId: t.parentId ?? null }))),
     [caseResolverTags],
   );
   const caseIdentifierPathById = useMemo(
-    () => buildPathLabelMap(caseResolverIdentifiers),
+    () => buildPathLabelMap(caseResolverIdentifiers.map(i => ({ ...i, name: i.name || i.label || i.id, parentId: i.parentId ?? null }))),
     [caseResolverIdentifiers],
   );
   const caseCategoryPathById = useMemo(
-    () => buildPathLabelMap(caseResolverCategories),
+    () => buildPathLabelMap(caseResolverCategories.map(c => ({ ...c, name: c.name || c.id, parentId: (c as any).parentId ?? null }))),
     [caseResolverCategories],
   );
   const caseTagFilterOptions = useMemo(
     () =>
       caseResolverTags.map((tag: CaseResolverTag) => ({
         value: tag.id,
-        label: caseTagPathById.get(tag.id) ?? tag.name,
+        label: caseTagPathById.get(tag.id) || tag.name || tag.label || tag.id,
       })),
     [caseResolverTags, caseTagPathById],
   );
@@ -966,7 +966,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     () =>
       caseResolverCategories.map((category: CaseResolverCategory) => ({
         value: category.id,
-        label: caseCategoryPathById.get(category.id) ?? category.name,
+        label: caseCategoryPathById.get(category.id) || category.name || category.id,
       })),
     [caseResolverCategories, caseCategoryPathById],
   );
@@ -974,7 +974,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     () =>
       caseResolverIdentifiers.map((identifier: CaseResolverIdentifier) => ({
         value: identifier.id,
-        label: caseIdentifierPathById.get(identifier.id) ?? identifier.name,
+        label: caseIdentifierPathById.get(identifier.id) || identifier.name || identifier.label || identifier.id,
       })),
     [caseIdentifierPathById, caseResolverIdentifiers],
   );
@@ -985,7 +985,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           .map((file: CaseResolverFile): string => file.folder)
           .filter((folder: string): boolean => folder.trim() !== ''),
       ),
-    ).sort((left: string, right: string) => left.localeCompare(right));
+    ).sort((left: string, right: string): number => left.localeCompare(right));
     return [
       { value: '__all__', label: 'All folders' },
       ...folders.map((folder: string) => ({ value: folder, label: folder })),
@@ -1511,7 +1511,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
 
       const existingIdentifier = caseResolverIdentifiers.find(
         (identifier: CaseResolverIdentifier): boolean =>
-          normalizeIdentifierTerm(identifier.name) ===
+          normalizeIdentifierTerm(identifier.name || identifier.label || '') ===
           normalizeIdentifierTerm(normalizedName),
       );
       if (existingIdentifier) return existingIdentifier.id;
@@ -1520,11 +1520,13 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
       const nextIdentifier: CaseResolverIdentifier = {
         id: createId('case-identifier'),
         name: normalizedName,
+        label: normalizedName,
+        type: 'custom',
+        value: normalizedName,
         parentId: null,
-        color: '#f59e0b',
         createdAt: now,
         updatedAt: now,
-      };
+      } as any;
 
       try {
         await updateSetting.mutateAsync({
@@ -1578,8 +1580,8 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
           <MultiSelect
             options={caseReferenceOptions}
             selected={caseDraft.referenceCaseIds || []}
-            onChange={(ids) =>
-              setCaseDraft((prev) => ({ ...prev, referenceCaseIds: ids }))
+            onChange={(ids: string[]) =>
+              setCaseDraft((prev: any) => ({ ...prev, referenceCaseIds: ids }))
             }
             placeholder='Link to other cases...'
             searchPlaceholder='Search cases...'
@@ -2769,7 +2771,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         size='lg'
         fields={createFields}
         values={caseDraft}
-        onChange={(vals) => setCaseDraft((prev) => ({ ...prev, ...vals }))}
+        onChange={(vals) => setCaseDraft((prev: any) => ({ ...prev, ...vals }))}
         onSave={handleCreateCase}
         isSaving={updateSetting.isPending || isCreatingCase}
       />

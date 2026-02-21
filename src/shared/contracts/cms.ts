@@ -684,6 +684,7 @@ export type CmsRepository = {
   // Slugs
   getSlugs(): Promise<Slug[]>;
   getSlugById(id: string): Promise<Slug | null>;
+  getSlugByValue(slug: string): Promise<Slug | null>;
   createSlug(data: { slug: string; pageId?: string | null; isDefault?: boolean }): Promise<Slug>;
   updateSlug(id: string, data: Partial<{ slug: string; pageId: string | null; isDefault: boolean }>): Promise<Slug | null>;
   deleteSlug(id: string): Promise<Slug | null>;

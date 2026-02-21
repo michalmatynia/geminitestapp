@@ -3,11 +3,11 @@
 import { Copy } from 'lucide-react';
 import React from 'react';
 
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Button } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 interface SlotInlineEditModalProps extends EntityModalProps<ImageStudioSlotRecord> {
   onCopyId: (id: string) => void;

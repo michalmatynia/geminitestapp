@@ -2,6 +2,8 @@
 
 import React, { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 
+import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
+
 import { CompositeStackNode } from './CompositeStackNode';
 import { useVersionNodeMapContext } from './VersionNodeMapContext';
 import { useSettingsState } from '../context/SettingsContext';
@@ -10,7 +12,6 @@ import { getImageStudioDocTooltip } from '../utils/studio-docs';
 import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, NODE_HEIGHT, NODE_WIDTH, getCompositeNodeHeight } from '../utils/version-graph';
 
 import type { VersionNode } from '../context/VersionGraphContext';
-import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 

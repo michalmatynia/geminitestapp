@@ -333,7 +333,7 @@ export const buildCaseResolverCaptureProposalState = (
 
   const metadataPlaceDate = options?.metadata?.placeDate;
   const metadataDate = (() => {
-    if (!metadataPlaceDate || !metadataPlaceDate.year || !metadataPlaceDate.month || !metadataPlaceDate.day) return null;
+    if (!metadataPlaceDate?.year || !metadataPlaceDate.month || !metadataPlaceDate.day) return null;
     const year = normalizeYear(metadataPlaceDate.year);
     const month = normalizeDateToken(metadataPlaceDate.month).padStart(2, '0');
     const day = normalizeDateToken(metadataPlaceDate.day).padStart(2, '0');

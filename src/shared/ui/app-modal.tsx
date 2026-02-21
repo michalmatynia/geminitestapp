@@ -26,6 +26,8 @@ type AppModalProps = {
   showClose?: boolean | undefined;
   closeOnOutside?: boolean | undefined;
   closeOnEscape?: boolean | undefined;
+  onInteractOutside?: ((event: Event) => void) | undefined;
+  onEscapeKeyDown?: ((event: KeyboardEvent) => void) | undefined;
   children: React.ReactNode;
   className?: string | undefined;
   contentClassName?: string | undefined;
@@ -57,6 +59,8 @@ export function AppModal({
   showClose = true,
   closeOnOutside = true,
   closeOnEscape = true,
+  onInteractOutside,
+  onEscapeKeyDown,
   children,
   className,
   contentClassName,
@@ -73,12 +77,14 @@ export function AppModal({
     if (!closeOnOutside) {
       event.preventDefault();
     }
+    onInteractOutside?.(event);
   };
 
   const handleEscapeKeyDown = (event: KeyboardEvent): void => {
     if (!closeOnEscape) {
       event.preventDefault();
     }
+    onEscapeKeyDown?.(event);
   };
 
   const bodyHeightClass = size === 'sm' ? 'max-h-[50vh]' : 'h-[80vh]';

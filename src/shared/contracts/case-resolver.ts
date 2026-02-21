@@ -92,6 +92,20 @@ export const caseResolverPartyReferenceSchema = z.object({
 export type CaseResolverPartyReferenceDto = z.infer<typeof caseResolverPartyReferenceSchema>;
 export type CaseResolverPartyReference = CaseResolverPartyReferenceDto;
 
+export const caseResolverDocumentDateActionSchema = z.enum(['useDetectedDate', 'keepText', 'ignore']);
+export type CaseResolverDocumentDateActionDto = z.infer<typeof caseResolverDocumentDateActionSchema>;
+export type CaseResolverDocumentDateAction = CaseResolverDocumentDateActionDto;
+
+export const caseResolverDocumentDateProposalSchema = z.object({
+  isoDate: z.string(),
+  source: z.enum(['metadata', 'text']),
+  sourceLine: z.string().nullable(),
+  cityHint: z.string().nullable(),
+  action: caseResolverDocumentDateActionSchema,
+});
+export type CaseResolverDocumentDateProposalDto = z.infer<typeof caseResolverDocumentDateProposalSchema>;
+export type CaseResolverDocumentDateProposal = CaseResolverDocumentDateProposalDto;
+
 /**
  * Case Resolver Tags & Identifiers
  */
@@ -192,9 +206,24 @@ export const caseResolverDocumentHistoryEntrySchema = z.object({
   action: z.string(),
   changes: z.record(z.string(), z.unknown()),
   timestamp: z.string(),
+  documentContentVersion: z.number().optional(),
+  editorType: z.string().optional(),
+  savedAt: z.string().optional(),
+  documentContentPlainText: z.string().optional(),
 });
 
-export type CaseResolverDocumentHistoryEntryDto = z.infer<typeof caseResolverDocumentHistoryEntrySchema>;
+export interface CaseResolverDocumentHistoryEntryDto {
+  id: string;
+  documentId: string;
+  userId: string;
+  action: string;
+  changes: Record<string, unknown>;
+  timestamp: string;
+  documentContentVersion?: number | undefined;
+  editorType?: string | undefined;
+  savedAt?: string | undefined;
+  documentContentPlainText?: string | undefined;
+}
 export type CaseResolverDocumentHistoryEntry = CaseResolverDocumentHistoryEntryDto;
 
 /**
@@ -309,7 +338,7 @@ export type CaseResolverNodeFileSnapshot = CaseResolverNodeFileSnapshotDto;
 /**
  * Case Resolver Relation Contracts
  */
-export const caseResolverRelationEntityTypeSchema = z.enum(['custom', 'person', 'organization', 'place', 'event', 'date', 'amount', 'identifier']);
+export const caseResolverRelationEntityTypeSchema = z.enum(['custom', 'person', 'organization', 'place', 'event', 'date', 'amount', 'identifier', 'case']);
 export type CaseResolverRelationEntityTypeDto = z.infer<typeof caseResolverRelationEntityTypeSchema>;
 export type CaseResolverRelationEntityType = CaseResolverRelationEntityTypeDto;
 
@@ -350,6 +379,8 @@ export type CaseResolverRelationEdgeMeta = CaseResolverRelationEdgeMetaDto;
 export const caseResolverRelationGraphSchema = z.object({
   nodes: z.array(z.any()), // GraphNode
   edges: z.array(z.any()), // GraphEdge
+  nodeMeta: z.record(z.string(), caseResolverRelationNodeMetaSchema).optional(),
+  edgeMeta: z.record(z.string(), caseResolverRelationEdgeMetaSchema).optional(),
 });
 
 export type CaseResolverRelationGraphDto = z.infer<typeof caseResolverRelationGraphSchema>;
@@ -401,16 +432,36 @@ export const caseResolverFileEditDraftSchema = z.object({
   name: z.string(),
   content: z.string(),
   fileType: caseResolverFileTypeSchema,
+  folder: z.string(),
+  parentCaseId: z.string().nullable().optional(),
+  referenceCaseIds: z.array(z.string()).optional(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+  documentDate: caseResolverDocumentDateProposalSchema.nullable().optional(),
+  originalDocumentContent: z.string().optional(),
+  explodedDocumentContent: z.string().optional(),
+  activeDocumentVersion: z.enum(['original', 'exploded']).optional(),
+  editorType: z.enum(['wysiwyg', 'markdown', 'code']).optional(),
+  documentContentFormatVersion: z.number().optional(),
+  documentContentVersion: z.string().optional(),
+  baseDocumentContentVersion: z.string().nullable().optional(),
+  documentContent: z.string().optional(),
+  documentContentMarkdown: z.string().optional(),
+  documentContentHtml: z.string().optional(),
+  documentContentPlainText: z.string().optional(),
+  documentHistory: z.array(z.any()).optional(),
+  documentConversionWarnings: z.array(z.string()).optional(),
+  lastContentConversionAt: z.string().nullable().optional(),
+  scanSlots: z.array(z.any()).optional(),
+  scanOcrModel: z.string().optional(),
+  scanOcrPrompt: z.string().optional(),
+  isLocked: z.boolean().optional(),
   graph: caseResolverGraphSchema.optional(),
   addresser: caseResolverPartyReferenceSchema.nullable().optional(),
   addressee: caseResolverPartyReferenceSchema.nullable().optional(),
-  documentHistory: z.array(z.any()).optional(),
-  documentContentPlainText: z.string().optional(),
-  documentContentHtml: z.string().optional(),
-  documentContentMarkdown: z.string().optional(),
-  originalDocumentContent: z.string().optional(),
-  scanSlots: z.array(z.any()).optional(),
-  editorType: z.string().optional(),
+  tagId: z.string().nullable().optional(),
+  categoryId: z.string().nullable().optional(),
+  caseIdentifierId: z.string().nullable().optional(),
 });
 
 export interface CaseResolverFileEditDraftDto {
@@ -418,16 +469,36 @@ export interface CaseResolverFileEditDraftDto {
   name: string;
   content: string;
   fileType: CaseResolverFileType;
+  folder: string;
+  parentCaseId?: string | null | undefined;
+  referenceCaseIds?: string[] | undefined;
+  createdAt?: string | undefined;
+  updatedAt?: string | undefined;
+  documentDate?: CaseResolverDocumentDateProposal | null | undefined;
+  originalDocumentContent?: string | undefined;
+  explodedDocumentContent?: string | undefined;
+  activeDocumentVersion?: 'original' | 'exploded' | undefined;
+  editorType?: 'wysiwyg' | 'markdown' | 'code' | undefined;
+  documentContentFormatVersion?: number | undefined;
+  documentContentVersion?: string | undefined;
+  baseDocumentContentVersion?: string | null | undefined;
+  documentContent?: string | undefined;
+  documentContentMarkdown?: string | undefined;
+  documentContentHtml?: string | undefined;
+  documentContentPlainText?: string | undefined;
+  documentHistory?: any[] | undefined;
+  documentConversionWarnings?: string[] | undefined;
+  lastContentConversionAt?: string | null | undefined;
+  scanSlots?: any[] | undefined;
+  scanOcrModel?: string | undefined;
+  scanOcrPrompt?: string | undefined;
+  isLocked?: boolean | undefined;
   graph?: CaseResolverGraph | undefined;
   addresser?: CaseResolverPartyReference | null | undefined;
   addressee?: CaseResolverPartyReference | null | undefined;
-  documentHistory?: any[] | undefined;
-  documentContentPlainText?: string | undefined;
-  documentContentHtml?: string | undefined;
-  documentContentMarkdown?: string | undefined;
-  originalDocumentContent?: string | undefined;
-  scanSlots?: any[] | undefined;
-  editorType?: string | undefined;
+  tagId?: string | null | undefined;
+  categoryId?: string | null | undefined;
+  caseIdentifierId?: string | null | undefined;
 }
 
 export type CaseResolverFileEditDraft = CaseResolverFileEditDraftDto;
@@ -605,6 +676,30 @@ export interface CaseResolverCaptureSettingsDto {
 }
 
 export type CaseResolverCaptureSettings = CaseResolverCaptureSettingsDto;
+
+export interface CaseResolverCompiledSegmentDto {
+  id: string;
+  nodeId: string | null;
+  role: string;
+  content: string;
+  title?: string | undefined;
+  text?: string | undefined;
+  includeInOutput?: boolean | undefined;
+  sourceFileId?: string | null | undefined;
+  metadata?: Record<string, unknown> | undefined;
+}
+
+export type CaseResolverCompiledSegment = CaseResolverCompiledSegmentDto;
+
+export interface CaseResolverCompileResultDto {
+  segments: CaseResolverCompiledSegment[];
+  combinedContent: string;
+  prompt: string;
+  outputsByNode: Record<string, { textfield: string; content: string; plainText: string }>;
+  warnings: string[];
+}
+
+export type CaseResolverCompileResult = CaseResolverCompileResultDto;
 
 /**
  * CASE RESOLVER CONSTANTS & HELPERS

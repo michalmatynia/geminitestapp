@@ -36,7 +36,7 @@ function documentToJob(doc: ChatbotJobDocument): ChatbotJob {
   return {
     id: doc._id.toString(),
     sessionId: doc.sessionId,
-    status: doc.status as ChatbotJob['status'],
+    status: doc.status,
     model: doc.model,
     payload: doc.payload,
     resultText: doc.resultText,
@@ -106,7 +106,7 @@ export const chatbotJobRepository: ChatbotJobRepository = {
     return {
       id: result.insertedId.toString(),
       sessionId: doc.sessionId,
-      status: doc.status as ChatbotJob['status'],
+      status: doc.status,
       model: doc.model,
       payload: doc.payload,
       resultText: doc.resultText,

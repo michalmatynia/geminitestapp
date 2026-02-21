@@ -880,7 +880,8 @@ export const encodeFilemakerPartyReference = (
 };
 
 export const decodeFilemakerPartyReference = (
-  value: string
+  value: string,
+  database?: FilemakerDatabase | null
 ): FilemakerPartyReference | null => {
   const normalized = normalizeString(value);
   if (!normalized || normalized === FILEMAKER_REFERENCE_NONE) return null;
@@ -889,7 +890,19 @@ export const decodeFilemakerPartyReference = (
   const id = normalizeString(idRaw);
   if (!id) return null;
   if (kind !== 'person' && kind !== 'organization') return null;
-  return { kind, id };
+  
+  let name = '';
+  if (database) {
+    if (kind === 'person') {
+      const person = database.persons.find((p) => p.id === id);
+      name = person ? `${person.firstName} ${person.lastName}`.trim() : '';
+    } else {
+      const org = database.organizations.find((o) => o.id === id);
+      name = org?.name || '';
+    }
+  }
+
+  return { kind, id, name: name || id };
 };
 
 export const resolveFilemakerPartyLabel = (

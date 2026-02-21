@@ -4,6 +4,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRef } from 'react';
 
 import type { ImageFileRecord, ImageFileSelection } from '@/shared/contracts/files';
+import type {
+  ImageStudioProjectRecord,
+  ImageStudioSlotRecord,
+  StudioSlotsResponse,
+} from '@/shared/contracts/image-studio';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -17,11 +22,6 @@ import {
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-import type {
-  ImageStudioProjectRecord,
-  ImageStudioSlotRecord,
-  StudioSlotsResponse,
-} from '@/shared/contracts/image-studio';
 
 const normalizeStudioSlotId = (rawId: string): string => rawId.trim();
 const DELETE_SLOT_TIMEOUT_MS = 120_000;

@@ -310,7 +310,7 @@ const collectErrorMessages = (error: unknown): string[] => {
         messages.push(record['message']);
       }
       if (Array.isArray(record['causeChain'])) {
-        queue.push(...record['causeChain']);
+        queue.push(...(record['causeChain'] as unknown[]));
       }
       if (record['cause']) {
         queue.push(record['cause']);
@@ -516,7 +516,7 @@ const runInsightModel = async (params: {
       openai.chat.completions.create({
         model: modelId,
         messages: params.messages.map((message: ChatMessage) => ({
-          role: message.role as any,
+          role: message.role as 'system' | 'user' | 'assistant',
           content: message.content,
         })),
       }) as Promise<OpenAI.Chat.Completions.ChatCompletion>,
@@ -567,7 +567,7 @@ export const generateAnalyticsInsight = async (params: {
     status: parsed.status,
     source: params.source,
     score: parsed.status === 'ok' ? 100 : 50,
-    content: payload as any,
+    content: payload as Record<string, unknown>,
     metadata: {
       model: { provider, modelId, agentId },
       window: { from: summary.from, to: summary.to, scope: summary.scope ?? 'all' },
@@ -656,7 +656,7 @@ export const generateLogsInsight = async (params: {
     warnings: parsed.warnings,
     recommendations: parsed.recommendations,
     source: params.source,
-    content: payload as any,
+    content: payload as Record<string, unknown>,
     metadata: {
       model: { provider, modelId, agentId },
       window: { from: payload.window.from, to: payload.window.to },
@@ -743,7 +743,7 @@ export const generateRuntimeAnalyticsInsight = async (params: {
     warnings: parsed.warnings,
     recommendations: parsed.recommendations,
     source: params.source,
-    content: payload as any,
+    content: payload as Record<string, unknown>,
     metadata: {
       model: { provider, modelId, agentId },
       window: { from: runtimeSummary.from, to: runtimeSummary.to, scope: String(runtimeSummary.range) },
@@ -833,7 +833,7 @@ export const generateLogInterpretation = async (params: {
     warnings: parsed.warnings,
     recommendations: parsed.recommendations,
     source: params.source,
-    content: payload as any,
+    content: payload as Record<string, unknown>,
     metadata: {
       model: { provider, modelId, agentId },
       context: { logId: params.log.id },

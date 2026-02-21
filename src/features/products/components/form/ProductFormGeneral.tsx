@@ -395,7 +395,6 @@ export default function ProductFormGeneral({
         if (!isPatternEnabledForValidationScope(pattern.appliesToScopes, validationInstanceScope)) return false;
         if (isRuntimePatternEnabled(pattern)) return false;
         if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
-        if (!pattern.replacementAutoApply) return false;
         if (pattern.target !== target) return false;
         if (!isPatternLocaleMatch(pattern.locale, locale)) return false;
         return isReplacementAllowedForField(pattern, fieldNameRaw);

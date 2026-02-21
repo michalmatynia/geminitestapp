@@ -28,6 +28,7 @@ import {
   useUpdateUserPreferencesMutation,
   useUserPreferences,
 } from '@/features/auth/hooks/useUserPreferences';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import type {
   CreateMutation,
   DeleteMutation,
@@ -46,7 +47,6 @@ import {
   saveImageStudioActiveProjectLocal,
 } from '../utils/project-session';
 
-import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

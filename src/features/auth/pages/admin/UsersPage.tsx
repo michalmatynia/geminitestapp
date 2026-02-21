@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
+import type { AuthUserDto as AuthUserSummary } from '@/shared/contracts/auth';
 import { 
   StandardDataTablePanel, 
   SelectSimple, 
@@ -29,7 +30,6 @@ import { UserEditModal } from '../../components/admin/UserEditModal';
 import { useUsersState } from '../../hooks/useUsersState';
 
 
-import type { AuthUserDto as AuthUserSummary } from '@/shared/contracts/auth';
 import type { AuthRole } from '../../utils/auth-management';
 import type { ColumnDef } from '@tanstack/react-table';
 

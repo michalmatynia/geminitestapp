@@ -4,10 +4,22 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId } from 'mongodb';
 
+
+import type {
+  Page,
+  Slug,
+  PageComponent,
+  CmsTheme,
+  CreateCmsThemeDto as CmsThemeCreateInput,
+  UpdateCmsThemeDto as CmsThemeUpdateInput,
+  CmsThemeColors,
+  CmsThemeTypography,
+  CmsThemeSpacing,
+  CmsRepository,
+  PageUpdateData,
+} from '@/shared/contracts/cms';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput, CmsThemeColors, CmsThemeTypography, CmsThemeSpacing } from '../../types';
-import type { CmsRepository, PageUpdateData } from '../../types/services/cms-repository';
 import type { Filter } from 'mongodb';
 
  

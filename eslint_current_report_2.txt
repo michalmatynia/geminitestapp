@@ -1,0 +1,11 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/services/cms-repository/mongo-cms-repository.ts
+  5:1  error  There should be at least one empty line between import groups                      import/order
+  6:1  error  `mongodb` type import should occur after import of `@/shared/lib/db/mongo-client`  import/order
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/services/cms-repository/prisma-cms-repository.ts
+  3:1  error  `@prisma/client` type import should occur after import of `@/shared/lib/db/prisma`  import/order
+
+✖ 3 problems (3 errors, 0 warnings)
+  3 errors and 0 warnings potentially fixable with the `--fix` option.
+

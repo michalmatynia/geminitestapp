@@ -474,6 +474,7 @@ export function useValidatorSettingsController() {
   const handleUpdateSettings = async (
     updates: Partial<{
       enabledByDefault: boolean;
+      formatterEnabledByDefault: boolean;
       instanceDenyBehavior: ProductValidationInstanceDenyBehaviorMap;
     }>
   ): Promise<void> => {
@@ -490,6 +491,10 @@ export function useValidatorSettingsController() {
 
   const handleToggleDefault = async (enabled: boolean): Promise<void> => {
     await handleUpdateSettings({ enabledByDefault: enabled });
+  };
+
+  const handleToggleFormatterDefault = async (enabled: boolean): Promise<void> => {
+    await handleUpdateSettings({ formatterEnabledByDefault: enabled });
   };
 
   const handleInstanceBehaviorChange = async (
@@ -624,6 +629,7 @@ export function useValidatorSettingsController() {
     summary,
     orderedPatterns,
     enabledByDefault: settings?.enabledByDefault ?? true,
+    formatterEnabledByDefault: settings?.formatterEnabledByDefault ?? false,
     instanceDenyBehavior: normalizeProductValidationInstanceDenyBehaviorMap(settings?.instanceDenyBehavior ?? {}),
     loading: patternsQuery.isLoading || settingsQuery.isLoading,
     isUpdating:
@@ -648,6 +654,7 @@ export function useValidatorSettingsController() {
     handleDeletePattern,
     handleUpdateSettings,
     handleToggleDefault,
+    handleToggleFormatterDefault,
     handleInstanceBehaviorChange,
     handleEditPattern,
     handleDuplicatePattern,

@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
+import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
 import { useToast } from '@/shared/ui';
 
 import { useSlotsState, useSlotsActions } from './SlotsContext';
@@ -24,7 +25,6 @@ import {
 } from '../utils/version-graph';
 import { resolveScopedVersionGraphSlots } from '../utils/version-graph-scope';
 
-import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
 import type {
   VersionGraphActions,
   VersionGraphFilterType,

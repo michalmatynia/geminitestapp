@@ -190,27 +190,27 @@ const normalizeCaseResolverCaptureSettings = (input: unknown): CaseResolverCaptu
     roleMappings: {
       addresser: normalizeRoleMapping(
         roleMappings['addresser'],
-        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser!,
+        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser,
         'addresser'
       ),
       addressee: normalizeRoleMapping(
         roleMappings['addressee'],
-        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee!,
+        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee,
         'addressee'
       ),
       subject: normalizeRoleMapping(
         roleMappings['subject'],
-        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.subject!,
+        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.subject,
         'subject'
       ),
       reference: normalizeRoleMapping(
         roleMappings['reference'],
-        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.reference!,
+        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.reference,
         'reference'
       ),
       other: normalizeRoleMapping(
         roleMappings['other'],
-        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.other!,
+        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.other,
         'other'
       ),
     },

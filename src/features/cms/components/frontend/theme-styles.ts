@@ -1,4 +1,4 @@
-import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms';
+import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-theme';
 
 import type React from 'react';
 

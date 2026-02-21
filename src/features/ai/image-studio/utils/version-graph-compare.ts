@@ -1,6 +1,7 @@
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+
 import { readMeta } from './metadata';
 
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

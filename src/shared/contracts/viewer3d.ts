@@ -21,7 +21,7 @@ export const asset3DRecordSchema = namedDtoSchema.extend({
   fileSize: z.number().optional(),
   format: z.string().optional(),
   isPublic: z.boolean().optional(),
-  tags: z.array(z.any()).optional(),
+  tags: z.array(z.string()).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   viewerConfig: z.record(z.string(), z.unknown()).optional(),
 });
@@ -63,6 +63,44 @@ export const asset3DListFiltersSchema = z.object({
 
 export type Asset3DListFiltersDto = z.infer<typeof asset3DListFiltersSchema>;
 export type Asset3DListFilters = Asset3DListFiltersDto;
+
+export const asset3dOrderedDitheringPresetKeySchema = z.enum([
+  'balanced',
+  'fineMono',
+  'chunkyMono',
+  'inverted',
+  'custom',
+]);
+
+export type Asset3dOrderedDitheringPresetKeyDto = z.infer<typeof asset3dOrderedDitheringPresetKeySchema>;
+
+export const asset3dLightingPresetSchema = z.enum([
+  'studio',
+  'outdoor',
+  'dramatic',
+  'soft',
+]);
+export type Asset3dLightingPresetDto = z.infer<typeof asset3dLightingPresetSchema>;
+
+export const asset3dEnvironmentPresetSchema = z.enum([
+  'none',
+  'studio',
+  'city',
+  'park',
+  'lobby',
+  'apartment',
+  'gym',
+  'night',
+  'warehouse',
+  'sunset',
+  'forest',
+]);
+export type Asset3dEnvironmentPresetDto = z.infer<typeof asset3dEnvironmentPresetSchema>;
+
+export const asset3dViewModeSchema = z.enum(['grid', 'list']);
+export type Asset3dViewModeDto = z.infer<typeof asset3dViewModeSchema>;
+
+export type Asset3dDto = Asset3DRecordDto;
 
 /**
  * 3D Viewer Repository Interface

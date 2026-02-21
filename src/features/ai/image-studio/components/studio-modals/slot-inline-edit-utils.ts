@@ -1,4 +1,6 @@
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
+import type { ImageFileRecord } from '@/shared/contracts/files';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import { isImageStudioSlotImageLocked } from '../../utils/slot-image-lock';
 
@@ -10,9 +12,7 @@ import type {
   LinkedGeneratedVariantViewModel,
   LinkedMaskSlotViewModel,
 } from './slot-inline-edit-tab-types';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
-import type { ImageFileRecord } from '@/shared/contracts/files';
 
 export const applyEnvironmentReferenceAssetToDraft = (
   file: ImageFileRecord

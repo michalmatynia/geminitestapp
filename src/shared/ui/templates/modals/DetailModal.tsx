@@ -20,6 +20,10 @@ export interface DetailModalProps extends ModalStateProps {
   contentClassName?: string;
   bodyClassName?: string;
   showClose?: boolean;
+  closeOnOutside?: boolean | undefined;
+  closeOnEscape?: boolean | undefined;
+  onInteractOutside?: ((event: Event) => void) | undefined;
+  onEscapeKeyDown?: ((event: KeyboardEvent) => void) | undefined;
 }
 
 /**
@@ -43,6 +47,10 @@ export function DetailModal({
   contentClassName,
   bodyClassName,
   showClose,
+  closeOnOutside,
+  closeOnEscape,
+  onInteractOutside,
+  onEscapeKeyDown,
 }: DetailModalProps) {
   return (
     <AppModal
@@ -59,6 +67,10 @@ export function DetailModal({
       className={className}
       contentClassName={contentClassName}
       showClose={showClose}
+      closeOnOutside={closeOnOutside}
+      closeOnEscape={closeOnEscape}
+      onInteractOutside={onInteractOutside}
+      onEscapeKeyDown={onEscapeKeyDown}
       bodyClassName={`${maxHeight} overflow-y-auto ${bodyClassName ?? ''}`.trim()}
     >
       {children}

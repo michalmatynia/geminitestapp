@@ -27,6 +27,7 @@ import {
   PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT,
 } from '@/features/prompt-exploder/bridge';
 import type {
+  CaseResolverAssetFile,
   CaseResolverCategory,
   CaseResolverEditorNodeContext,
   CaseResolverFile,
@@ -319,9 +320,9 @@ export function useCaseResolverState() {
       setPromptExploderApplyDiagnostics((current) =>
         applyPromptExploderTransferLifecycleUpdate(current, {
           nextStatus: input.nextStatus,
-          reason: input.reason,
-          force: input.force,
-          patch: input.patch,
+          reason: input.reason ?? null,
+          force: input.force ?? false,
+          patch: input.patch ?? {},
         })
       );
     },
@@ -1299,7 +1300,7 @@ export function useCaseResolverState() {
     const hasActiveNodeFileAsset = Boolean(
       selectedAssetId &&
       workspace.assets.some(
-        (asset): boolean => asset.id === selectedAssetId && asset.kind === 'node_file'
+        (asset: CaseResolverAssetFile): boolean => asset.id === selectedAssetId && asset.kind === 'node_file'
       )
     );
     const shouldPreserveSelectedAsset = hasActiveNodeFileAsset || Boolean(
@@ -1315,7 +1316,7 @@ export function useCaseResolverState() {
       return;
     }
     setSelectedFileId(fileId);
-    setWorkspace((current) => (
+    setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => (
       current.activeFileId === fileId
         ? current
         : {
@@ -1348,8 +1349,13 @@ export function useCaseResolverState() {
   }, [selectedFolderPath]);
 
   const filesById = useMemo(
-    () => new Map(workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])),
+    () => new Map<string, CaseResolverFile>(workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])),
     [workspace.files]
+  );
+
+  const assetsById = useMemo(
+    () => new Map<string, CaseResolverAssetFile>(workspace.assets.map((asset: CaseResolverAssetFile): [string, CaseResolverAssetFile] => [asset.id, asset])),
+    [workspace.assets]
   );
 
   const requestedCaseContainerId = useMemo(
@@ -1385,7 +1391,7 @@ export function useCaseResolverState() {
 
   const resolveCaseIdForWorkspace = useCallback(
     (targetWorkspace: CaseResolverWorkspace): string | null => {
-      const targetFilesById = new Map(
+      const targetFilesById = new Map<string, CaseResolverFile>(
         targetWorkspace.files.map(
           (file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file]
         )
@@ -1503,7 +1509,7 @@ export function useCaseResolverState() {
           name,
           folder,
           parentCaseId: ownerCaseId,
-          editorType: 'wysiwyg',
+          editorType: 'document',
           tagId: defaultTagId,
           caseIdentifierId: defaultCaseIdentifierId,
           categoryId: defaultCategoryId,
@@ -2117,7 +2123,6 @@ export function useCaseResolverState() {
     caseResolverIdentifiers,
     caseResolverCategories,
     caseResolverSettings,
-    filemakerDatabase,
     countries,
     isMenuCollapsed,
     setIsMenuCollapsed,
@@ -2168,5 +2173,6 @@ export function useCaseResolverState() {
     confirmAction: confirm,
     ConfirmationModal,
     PromptInputModal,
+    filemakerDatabase,
   };
 }

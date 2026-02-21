@@ -2,10 +2,11 @@
 
 import React, { useCallback, useRef, useState } from 'react';
 
+import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
+
 import { NODE_WIDTH, COMPOSITE_LAYER_ROW_HEIGHT, getCompositeNodeHeight } from '../utils/version-graph';
 
 import type { VersionNode } from '../context/VersionGraphContext';
-import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 

@@ -278,7 +278,7 @@ export const compileCaseResolverPrompt = (
     visitOrder.forEach(({ nodeId }) => {
       const node = nodeById.get(nodeId);
       if (!node) return;
-      const meta = resolveNodeMeta(node.id, graph.nodeMeta);
+      const meta = resolveNodeMeta(node.id, graph.nodeMeta || {});
       const nodeText = resolveNodeText(node);
       const incomingEdges = sortEdgesBySourcePosition(
         incomingByNode.get(node.id) ?? [],
@@ -306,7 +306,7 @@ export const compileCaseResolverPrompt = (
           const sourceValue =
             type === 'plainText' ? stripHtml(rawSourceValue) : rawSourceValue;
           if (!sourceValue) return;
-          const edgeJoinMode = resolveEdgeMeta(edge.id, graph.edgeMeta).joinMode;
+          const edgeJoinMode = resolveEdgeMeta(edge.id, graph.edgeMeta || {}).joinMode;
           if (!firstJoinMode) firstJoinMode = edgeJoinMode;
           value = appendWithJoin(value, sourceValue, edgeJoinMode);
         });
@@ -327,7 +327,7 @@ export const compileCaseResolverPrompt = (
       const wrappedText = wrapByQuoteMode(resolvedTextfield, meta);
       let contentOutput = incomingContent.value;
       if (meta.includeInOutput && wrappedText.trim().length > 0) {
-        const joinMode = incomingContent.firstJoinMode ?? DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
+        const joinMode = (incomingContent.firstJoinMode || DEFAULT_CASE_RESOLVER_EDGE_META.joinMode) as CaseResolverJoinMode;
         contentOutput = appendWithJoin(contentOutput, wrappedText, joinMode);
       }
 
@@ -338,11 +338,17 @@ export const compileCaseResolverPrompt = (
       };
 
       segments.push({
-        nodeId: node.id,
-        title: node.title,
-        text: wrappedText,
-        role: meta.role,
-        includeInOutput: meta.includeInOutput,
+        id: `seg-${node.id}` || '',
+        nodeId: node.id || null,
+        role: meta.role || '',
+        content: wrappedText || '',
+        title: node.title || '',
+        text: wrappedText || '',
+        includeInOutput: meta.includeInOutput || false,
+        metadata: {
+          title: node.title,
+          includeInOutput: meta.includeInOutput,
+        },
       });
     });
 
@@ -369,16 +375,20 @@ export const compileCaseResolverPrompt = (
     })();
 
     return {
-      prompt: flowPrompt,
-      segments,
+      combinedContent: flowPrompt || '',
+      prompt: flowPrompt || '',
       outputsByNode,
+      segments,
+      warnings: [],
     };
   } catch (error) {
     console.error('Failed to compile Case Resolver prompt:', error);
     return {
+      combinedContent: '',
       prompt: '',
-      segments: [],
       outputsByNode: {},
+      segments: [],
+      warnings: [(error as Error).message || 'Unknown error'],
     };
   }
 };

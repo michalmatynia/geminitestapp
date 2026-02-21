@@ -7,6 +7,7 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -54,7 +55,6 @@ import type {
   InlinePreviewSourceViewModel,
   LinkedMaskSlotViewModel,
 } from './slot-inline-edit-tab-types';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export type EditCardTab = 'card' | 'generations' | 'environment' | 'masks' | 'composites';
 

@@ -1,4 +1,5 @@
 import type { VectorShape } from '@/features/vector-drawing';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import {
   normalizeShapeToPolygons,
@@ -7,7 +8,6 @@ import {
   type MaskShapeForExport,
 } from '../generation-toolbar/GenerationToolbarImageUtils';
 
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { RequestPreviewImage } from '../../utils/run-request-preview';
 import type {
   ImageStudioSequenceCropStep,

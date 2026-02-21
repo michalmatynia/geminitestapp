@@ -7,11 +7,7 @@ import type {
   CaseResolverCaptureProposalState,
 } from '@/features/case-resolver-capture/proposals';
 import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
-import {
-  DocumentWysiwygEditor,
-  ensureHtmlForPreview,
-  MarkdownSplitEditor,
-} from '@/features/document-editor';
+import { DocumentWysiwygEditor } from '@/features/document-editor';
 import {
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
@@ -21,6 +17,7 @@ import {
   type CaseResolverDocumentHistoryEntry,
   type CaseResolverFileEditDraft,
   type CaseResolverFile,
+  type CaseResolverAssetFile,
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
   type CaseResolverRelationGraph,
@@ -42,7 +39,6 @@ import {
   FileUploadTrigger,
   Card,
 } from '@/shared/ui';
-import { sanitizeHtml } from '@/shared/utils';
 
 import { buildMissingSelectedPartyOption } from './case-resolver-party-select';
 import { CaseResolverCanvasWorkspace } from './CaseResolverCanvasWorkspace';
@@ -59,8 +55,6 @@ import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import { buildCaseResolverNodeFileRelationIndexFromAssets } from '../nodefile-relations';
 import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
 
-const ENABLE_CASE_RESOLVER_MULTIFORMAT_EDITOR =
-  process.env['NEXT_PUBLIC_CASE_RESOLVER_MULTIFORMAT_EDITOR'] !== 'false';
 const ENABLE_CASE_RESOLVER_TRANSFER_DIAGNOSTICS =
   process.env['NEXT_PUBLIC_CASE_RESOLVER_TRANSFER_DIAGNOSTICS'] === '1';
 
@@ -206,7 +200,6 @@ export function CaseResolverPageView(
   props: CaseResolverPageViewProps,
 ): React.JSX.Element {
   const router = useRouter();
-  const [showMarkdownPreview, setShowMarkdownPreview] = React.useState(true);
   const [addresserPartySearchKind, setAddresserPartySearchKind] =
     React.useState<PartySearchKind>('person');
   const [addresseePartySearchKind, setAddresseePartySearchKind] =
@@ -243,12 +236,6 @@ export function CaseResolverPageView(
     handleOpenPromptExploderForDraft,
     editorContentRevisionSeed,
     handleUpdateDraftDocumentContent,
-    editorTextareaRef,
-    editorSplitRef,
-    editorWidth,
-    setEditorWidth,
-    isDraggingSplitter,
-    setIsDraggingSplitter,
     handleCopyDraftFileId,
     handlePreviewDraftPdf,
     handlePrintDraftDocument,
@@ -326,6 +313,7 @@ export function CaseResolverPageView(
     confirmAction,
     ConfirmationModal,
     PromptInputModal,
+    filemakerDatabase,
   } = state;
   React.useEffect(() => {
     const fallbackAddresserKind =
@@ -371,7 +359,7 @@ export function CaseResolverPageView(
           if (!normalizedQuery) return true;
           return 'none'.includes(normalizedQuery);
         }
-        const optionReference = decodeFilemakerPartyReference(option.value);
+        const optionReference = decodeFilemakerPartyReference(option.value, filemakerDatabase);
         if (!optionReference) return false;
         const isSelected = option.value === selectedValue;
         if (optionReference.kind !== kind && !isSelected) return false;
@@ -573,13 +561,13 @@ export function CaseResolverPageView(
     return linkedAssetIds
       .map(
         (assetId: string) =>
-          workspace.assets.find((asset) => asset.id === assetId) ?? null,
+          workspace.assets.find((asset: CaseResolverAssetFile) => asset.id === assetId) ?? null,
       )
       .filter(
-        (asset): asset is NonNullable<typeof asset> =>
+        (asset): asset is CaseResolverAssetFile =>
           asset !== null && asset.kind === 'node_file',
       )
-      .map((asset) => ({
+      .map((asset: CaseResolverAssetFile) => ({
         assetId: asset.id,
         label: asset.folder ? `${asset.name} (${asset.folder})` : asset.name,
       }));
@@ -924,10 +912,6 @@ export function CaseResolverPageView(
     isWorkspaceSaving,
   ]);
 
-  React.useEffect(() => {
-    if (editingDocumentDraft?.editorType !== 'markdown') return;
-    setShowMarkdownPreview(true);
-  }, [editingDocumentDraft?.id, editingDocumentDraft?.editorType]);
   React.useEffect(() => {
     if (workspaceView !== 'document') return;
     if (!selectedFileId) {
@@ -1501,11 +1485,15 @@ export function CaseResolverPageView(
                         <FormField label='Document Date'>
                           <Input
                             type='date'
-                            value={editingDocumentDraft.documentDate}
+                            value={editingDocumentDraft.documentDate?.isoDate || ''}
                             disabled={isEditingDocumentLocked}
                             onChange={(event) => {
+                              const isoDate = event.target.value;
+                              const current = editingDocumentDraft.documentDate;
                               updateEditingDocumentDraft({
-                                documentDate: event.target.value,
+                                documentDate: current 
+                                  ? { ...current, isoDate } 
+                                  : { isoDate, source: 'text', sourceLine: null, cityHint: null, action: 'useDetectedDate' },
                               });
                             }}
                           />
@@ -1554,7 +1542,7 @@ export function CaseResolverPageView(
                               disabled={isEditingDocumentLocked}
                               onValueChange={(value: string): void => {
                                 const nextReference =
-                                  decodeFilemakerPartyReference(value);
+                                  decodeFilemakerPartyReference(value, filemakerDatabase);
                                 if (nextReference?.kind) {
                                   setAddresserPartySearchKind(
                                     nextReference.kind,
@@ -1633,7 +1621,7 @@ export function CaseResolverPageView(
                               disabled={isEditingDocumentLocked}
                               onValueChange={(value: string): void => {
                                 const nextReference =
-                                  decodeFilemakerPartyReference(value);
+                                  decodeFilemakerPartyReference(value, filemakerDatabase);
                                 if (nextReference?.kind) {
                                   setAddresseePartySearchKind(
                                     nextReference.kind,
@@ -1999,11 +1987,11 @@ export function CaseResolverPageView(
                                         {entry.editorType.toUpperCase()}
                                       </div>
                                       <div className='text-[11px] text-gray-500'>
-                                        {formatHistoryTimestamp(entry.savedAt)}
+                                        {formatHistoryTimestamp(entry.savedAt || '')}
                                       </div>
                                     </div>
                                     <div className='mt-2 max-h-28 overflow-auto rounded border border-border/60 bg-card/30 px-2 py-1.5 font-mono text-[11px] text-gray-400 whitespace-pre-wrap'>
-                                      {entry.documentContentPlainText.trim()
+                                      {(entry.documentContentPlainText || '').trim()
                                         .length > 0
                                         ? entry.documentContentPlainText
                                         : '(Empty version)'}
@@ -2331,74 +2319,17 @@ export function CaseResolverPageView(
                     ) : null}
                   </div>
 
-                  {editingDocumentDraft.editorType === 'markdown' ? (
-                    <div className='flex items-center justify-end gap-2'>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        className='h-8'
-                        onClick={(): void => {
-                          setShowMarkdownPreview(
-                            (current: boolean): boolean => !current,
-                          );
-                        }}
-                      >
-                        {showMarkdownPreview ? 'Hide Preview' : 'Show Preview'}
-                      </Button>
-                    </div>
-                  ) : null}
-
-                  {ENABLE_CASE_RESOLVER_MULTIFORMAT_EDITOR ? (
-                    <>
-                      {editingDocumentDraft.editorType === 'wysiwyg' ? (
-                        <DocumentWysiwygEditor
-                          key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
-                          value={editingDocumentDraft.documentContentHtml ?? ''}
-                          onChange={handleUpdateDraftDocumentContent}
-                          disabled={isEditingDocumentLocked}
-                          allowFontFamily
-                          allowTextAlign
-                          enableAdvancedTools
-                          surfaceClassName='min-h-[300px]'
-                          editorContentClassName='[&_.ProseMirror]:!min-h-[300px]'
-                        />
-                      ) : (
-                        <MarkdownSplitEditor
-                          key={`case-resolver-markdown-${editorContentRevisionSeed}`}
-                          value={
-                            editingDocumentDraft.documentContentMarkdown ?? ''
-                          }
-                          onChange={handleUpdateDraftDocumentContent}
-                          readOnly={isEditingDocumentLocked}
-                          showPreview={showMarkdownPreview}
-                          renderPreviewHtml={(value: string): string =>
-                            ensureHtmlForPreview(value, 'markdown')
-                          }
-                          sanitizePreviewHtml={sanitizeHtml}
-                          textareaRef={editorTextareaRef}
-                          splitRef={editorSplitRef}
-                          editorWidth={editorWidth}
-                          onEditorWidthChange={setEditorWidth}
-                          isDraggingSplitter={isDraggingSplitter}
-                          onDraggingSplitterChange={setIsDraggingSplitter}
-                          placeholder='Enter document content'
-                          textareaClassName='w-full min-h-[300px] rounded-lg border px-4 py-2 font-mono'
-                        />
-                      )}
-                    </>
-                  ) : (
-                    <DocumentWysiwygEditor
-                      key={`case-resolver-wysiwyg-fallback-${editorContentRevisionSeed}`}
-                      value={editingDocumentDraft.documentContentHtml ?? ''}
-                      onChange={handleUpdateDraftDocumentContent}
-                      disabled={isEditingDocumentLocked}
-                      allowFontFamily
-                      allowTextAlign
-                      enableAdvancedTools
-                      surfaceClassName='min-h-[300px]'
-                      editorContentClassName='[&_.ProseMirror]:!min-h-[300px]'
-                    />
-                  )}
+                  <DocumentWysiwygEditor
+                    key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
+                    value={editingDocumentDraft.documentContentHtml ?? ''}
+                    onChange={handleUpdateDraftDocumentContent}
+                    disabled={isEditingDocumentLocked}
+                    allowFontFamily
+                    allowTextAlign
+                    enableAdvancedTools
+                    surfaceClassName='min-h-[300px]'
+                    editorContentClassName='[&_.ProseMirror]:!min-h-[300px]'
+                  />
 
                   <div className='flex justify-end gap-2'>
                     <Button

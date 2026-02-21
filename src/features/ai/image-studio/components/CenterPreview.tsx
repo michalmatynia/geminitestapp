@@ -10,6 +10,7 @@ import {
 } from '@/features/products/constants';
 import { VectorDrawingCanvas, VectorDrawingProvider } from '@/features/vector-drawing';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
+import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
@@ -50,7 +51,6 @@ import {
 } from './center-preview/variant-thumbnails';
 
 import type { VersionNode } from '../context/VersionGraphContext';
-import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
 
 const PREVIEW_MODE_OPTIONS = [
   { value: 'image', label: 'Image' },

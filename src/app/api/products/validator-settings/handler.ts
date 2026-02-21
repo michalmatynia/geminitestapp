@@ -14,17 +14,20 @@ const instanceDenyBehaviorSchema = z.object({
 
 export const updateValidatorSettingsSchema = z.object({
   enabledByDefault: z.boolean().optional(),
+  formatterEnabledByDefault: z.boolean().optional(),
   instanceDenyBehavior: instanceDenyBehaviorSchema.optional(),
 });
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const repository = await getValidationPatternRepository();
-  const [enabledByDefault, instanceDenyBehavior] = await Promise.all([
+  const [enabledByDefault, formatterEnabledByDefault, instanceDenyBehavior] = await Promise.all([
     repository.getEnabledByDefault(),
+    repository.getFormatterEnabledByDefault(),
     repository.getInstanceDenyBehavior(),
   ]);
   return NextResponse.json({
     enabledByDefault,
+    formatterEnabledByDefault,
     instanceDenyBehavior,
   });
 }
@@ -33,12 +36,21 @@ export async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   const body = ctx.body as z.infer<typeof updateValidatorSettingsSchema>;
   const repository = await getValidationPatternRepository();
   let enabledByDefault: boolean;
+  let formatterEnabledByDefault: boolean;
   let instanceDenyBehavior: ProductValidationInstanceDenyBehaviorMap;
 
   if (typeof body.enabledByDefault === 'boolean') {
     enabledByDefault = await repository.setEnabledByDefault(body.enabledByDefault);
   } else {
     enabledByDefault = await repository.getEnabledByDefault();
+  }
+
+  if (typeof body.formatterEnabledByDefault === 'boolean') {
+    formatterEnabledByDefault = await repository.setFormatterEnabledByDefault(
+      body.formatterEnabledByDefault
+    );
+  } else {
+    formatterEnabledByDefault = await repository.getFormatterEnabledByDefault();
   }
 
   if (body.instanceDenyBehavior) {
@@ -51,6 +63,7 @@ export async function PUT_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
 
   return NextResponse.json({
     enabledByDefault,
+    formatterEnabledByDefault,
     instanceDenyBehavior,
   });
 }

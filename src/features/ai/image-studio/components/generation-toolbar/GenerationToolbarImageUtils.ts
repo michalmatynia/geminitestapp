@@ -2,9 +2,9 @@ import {
   analyzeAndPlanAutoScaleFromRgba,
   detectObjectBoundsForLayoutFromRgba,
 } from '@/features/ai/image-studio/analysis/shared';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { ApiError } from '@/shared/lib/api-client';
 
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export type UpscaleSmoothingQuality = 'low' | 'medium' | 'high';
 

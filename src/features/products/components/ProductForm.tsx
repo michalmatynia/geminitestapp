@@ -232,7 +232,7 @@ export default function ProductForm({
     configuredInstanceDenyBehavior[validationInstanceScope];
   const patternDenyBehaviorOverrideById = useMemo(
     () =>
-      new Map(
+      new Map<string, ProductValidationDenyBehavior>(
         (validatorConfigQuery.data?.patterns ?? []).map((pattern: ProductValidationPattern) => [
           pattern.id,
           normalizeProductValidationPatternDenyBehaviorOverride(pattern.denyBehaviorOverride),
@@ -375,10 +375,19 @@ export default function ProductForm({
     if (validatorManuallyChanged) return;
     const enabledByDefault = validatorConfigQuery.data?.enabledByDefault;
     if (typeof enabledByDefault !== 'boolean') return;
+    const formatterEnabledByDefault = validatorConfigQuery.data?.formatterEnabledByDefault;
     setValidatorEnabled(enabledByDefault);
+    setFormatterEnabled(
+      enabledByDefault
+        ? (typeof formatterEnabledByDefault === 'boolean'
+          ? formatterEnabledByDefault
+          : false)
+        : false
+    );
     setValidatorInitialized(true);
   }, [
     validatorConfigQuery.data?.enabledByDefault,
+    validatorConfigQuery.data?.formatterEnabledByDefault,
     validatorInitialized,
     validatorManuallyChanged,
   ]);
@@ -389,6 +398,7 @@ export default function ProductForm({
   const denyBehaviorWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deniedIssuesWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const acceptedIssuesWriteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoAcceptedIssueKeysRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -520,7 +530,9 @@ export default function ProductForm({
     (patternId: string): ProductValidationDenyBehavior => {
       const normalizedPatternId = patternId.trim();
       if (!normalizedPatternId) return effectiveValidationDenyBehavior;
-      const override = patternDenyBehaviorOverrideById.get(normalizedPatternId);
+      const override = patternDenyBehaviorOverrideById.get(
+        normalizedPatternId
+      );
       return override ?? effectiveValidationDenyBehavior;
     },
     [effectiveValidationDenyBehavior, patternDenyBehaviorOverrideById]
@@ -685,6 +697,47 @@ export default function ProductForm({
       validationSessionId,
     ]
   );
+
+  useEffect(() => {
+    if (!validatorEnabled || !formatterEnabled) {
+      if (autoAcceptedIssueKeysRef.current.size > 0) {
+        autoAcceptedIssueKeysRef.current.clear();
+      }
+      return;
+    }
+    const nextVisibleIssueKeys = new Set<string>();
+    for (const [fieldName, issues] of Object.entries(visibleFieldIssues)) {
+      for (const issue of issues) {
+        const issueKey = buildIssueDecisionKey(fieldName, issue.patternId);
+        nextVisibleIssueKeys.add(issueKey);
+        if (autoAcceptedIssueKeysRef.current.has(issueKey)) continue;
+        acceptIssue({
+          fieldName,
+          patternId: issue.patternId,
+          postAcceptBehavior: issue.postAcceptBehavior,
+          message: issue.message,
+          replacementValue: issue.replacementValue,
+        });
+        autoAcceptedIssueKeysRef.current.add(issueKey);
+      }
+    }
+    if (autoAcceptedIssueKeysRef.current.size === 0) return;
+    const staleKeys: string[] = [];
+    for (const issueKey of autoAcceptedIssueKeysRef.current) {
+      if (!nextVisibleIssueKeys.has(issueKey)) {
+        staleKeys.push(issueKey);
+      }
+    }
+    staleKeys.forEach((issueKey) => {
+      autoAcceptedIssueKeysRef.current.delete(issueKey);
+    });
+  }, [
+    acceptIssue,
+    buildIssueDecisionKey,
+    formatterEnabled,
+    validatorEnabled,
+    visibleFieldIssues,
+  ]);
 
   return (
     <form onSubmit={(e: React.FormEvent) => { void handleSubmit(e); }} className='relative min-h-[400px] pb-10'>

@@ -1,5 +1,4 @@
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
-
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export function isLikelyImageStudioErrorText(rawValue: string | null | undefined): boolean {

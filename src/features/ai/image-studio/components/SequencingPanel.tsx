@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { Button, SelectSimple, ToggleRow, useToast, Hint } from '@/shared/ui';
@@ -44,7 +45,6 @@ import {
   type ImageStudioSequenceStep,
 } from '../utils/studio-settings';
 
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 
 type SequenceRunStatus =
   | 'queued'

@@ -802,6 +802,7 @@ export type ProductValidationSequenceGroupDto = z.infer<typeof productValidation
 
 export const productValidatorSettingsSchema = z.object({
   enabledByDefault: z.boolean(),
+  formatterEnabledByDefault: z.boolean(),
   instanceDenyBehavior: z.record(
     productValidationInstanceScopeSchema,
     productValidationDenyBehaviorSchema
@@ -815,6 +816,7 @@ export type ProductValidationInstanceDenyBehaviorMap = ProductValidationInstance
 
 export const productValidatorConfigSchema = z.object({
   enabledByDefault: z.boolean(),
+  formatterEnabledByDefault: z.boolean(),
   instanceDenyBehavior: z.record(
     productValidationInstanceScopeSchema,
     productValidationDenyBehaviorSchema
@@ -1142,6 +1144,7 @@ export const productDraftSchema = namedDtoSchema.extend({
 });
 
 export type ProductDraftDto = z.infer<typeof productDraftSchema>;
+export type ProductDraft = ProductDraftDto;
 
 export const createProductDraftSchema = productDraftSchema.omit({
   id: true,
@@ -1304,6 +1307,8 @@ export type ProductValidationPatternRepository = {
   deletePattern(id: string): Promise<void>;
   getEnabledByDefault(): Promise<boolean>;
   setEnabledByDefault(enabled: boolean): Promise<boolean>;
+  getFormatterEnabledByDefault(): Promise<boolean>;
+  setFormatterEnabledByDefault(enabled: boolean): Promise<boolean>;
   getInstanceDenyBehavior(): Promise<ProductValidationInstanceDenyBehaviorMap>;
   setInstanceDenyBehavior(
     value: ProductValidationInstanceDenyBehaviorMap
@@ -1334,4 +1339,3 @@ export type DebugInfo = {
 export type ProductFormData = ProductCreateInputDto;
 
 export type ProductListPreferences = ProductListPreferencesDto;
-

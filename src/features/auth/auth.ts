@@ -334,15 +334,16 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
         },
         session({ session, token }: { session: Session; token: JWT }): Session {
           if (session.user) {
+            const user = session.user as any;
             if (token.sub) {
-              session.user.id = token.sub;
+              user.id = token.sub;
             }
-            session.user.role = (token.role as string) ?? null;
-            session.user.permissions = (token.permissions as string[]) ?? [];
-            session.user.roleLevel = (token.roleLevel as number) ?? null;
-            session.user.isElevated = (token.isElevated as boolean) ?? false;
-            session.user.accountDisabled = (token.accountDisabled as boolean) ?? false;
-            session.user.accountBanned = (token.accountBanned as boolean) ?? false;
+            user.role = (token.role as string) ?? null;
+            user.permissions = (token.permissions as string[]) ?? [];
+            user.roleLevel = (token.roleLevel as number) ?? null;
+            user.isElevated = (token.isElevated as boolean) ?? false;
+            user.accountDisabled = (token.accountDisabled as boolean) ?? false;
+            user.accountBanned = (token.accountBanned as boolean) ?? false;
           }
           return session;
         },

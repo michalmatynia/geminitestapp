@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import type { VersionEdge, VersionNode } from '../context/VersionGraphContext';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+
+import type { VersionEdge, VersionNode } from '../context/VersionGraphContext';
 
 type VersionNodeMapContextValue = {
   nodes: VersionNode[];

@@ -8,6 +8,7 @@ import ProductImageManager, {
 } from '@/features/products/components/ProductImageManager';
 import { ProductImageManagerControllerProvider } from '@/features/products/components/ProductImageManagerControllerContext';
 import type { ManagedImageSlotDto as ProductImageSlot } from '@/shared/contracts/image-slots';
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 
@@ -20,7 +21,6 @@ import {
   setImageStudioSlotImageLocked,
 } from '../utils/slot-image-lock';
 
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 
 const OBJECT_SLOT_INDEX = 0;
 const TEMP_OBJECT_SLOT_ID = '__image_studio_temp_object__';

@@ -15,6 +15,7 @@ import {
   defaultImageStudioSettings,
   getImageStudioProjectSettingsKey,
 } from '@/features/ai/image-studio/utils/studio-settings';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
   Badge,
@@ -43,7 +44,6 @@ import {
   setImageStudioProjectDeletionLock,
 } from '../utils/project-locks';
 
-import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface StudioProjectsListProps {

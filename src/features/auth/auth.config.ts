@@ -179,19 +179,20 @@ export const authConfig = {
     },
     session({ session, token }: { session: Session; token: JWT }): Session {
       if (session.user) {
+        const user = session.user as any;
         if (token.sub) {
-          session.user.id = token.sub;
+          user.id = token.sub;
         }
-        session.user.role = (token as { role?: string }).role ?? null;
-        session.user.permissions =
+        user.role = (token as { role?: string }).role ?? null;
+        user.permissions =
           (token as { permissions?: string[] }).permissions ?? [];
-        session.user.roleLevel =
+        user.roleLevel =
           (token as { roleLevel?: number }).roleLevel ?? null;
-        session.user.isElevated =
+        user.isElevated =
           (token as { isElevated?: boolean }).isElevated ?? false;
-        session.user.accountDisabled =
+        user.accountDisabled =
           (token as { accountDisabled?: boolean }).accountDisabled ?? false;
-        session.user.accountBanned =
+        user.accountBanned =
           (token as { accountBanned?: boolean }).accountBanned ?? false;
       }
       return session;

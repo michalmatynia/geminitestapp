@@ -1,11 +1,11 @@
 import { studioKeys } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 
 import { wait, type VariantThumbnailInfo } from './preview-utils';
 import { resolveVariantSlotIdForCenterPreview } from './variant-thumbnails';
 
 import type { VariantTooltipState } from './VariantTooltipPortal';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { QueryClient } from '@tanstack/react-query';
 import type React from 'react';
 

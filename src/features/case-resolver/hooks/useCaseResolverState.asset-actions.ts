@@ -299,7 +299,7 @@ export const useCaseResolverStateAssetActions = ({
         name,
         folder,
         parentCaseId: activeCaseId,
-        editorType: 'markdown',
+        editorType: 'document',
         scanSlots: [],
         scanOcrModel:
           runtimeCaseResolverSettings.ocrModel.trim() ||
@@ -389,14 +389,14 @@ export const useCaseResolverStateAssetActions = ({
         folder,
         baseName: baseDocumentName,
       });
-      const createdFileId = createId('case-file');
+      const newDocumentId = createId('case-file');
       const createdDocument = createCaseResolverFile({
-        id: createdFileId,
+        id: newDocumentId,
         fileType: 'document',
         name,
         folder,
         parentCaseId: ownerCaseId,
-        editorType: 'markdown',
+        editorType: 'document',
         documentContentMarkdown: sourceText,
         documentContent: sourceText,
         documentContentPlainText: sourceText,
@@ -462,10 +462,10 @@ export const useCaseResolverStateAssetActions = ({
           : null;
         const normalizedFolderPath = normalizeFolderPath(input.file.folder ?? '');
         nextRelationNodeMeta[input.nodeId] = {
-          entityType: 'file',
+          entityType: 'custom',
           entityId: input.file.id,
           label: input.file.name,
-          fileKind: 'case_file',
+          fileKind: 'pdf',
           folderPath: normalizedFolderPath.length > 0 ? normalizedFolderPath : null,
           sourceFileId: input.file.id,
           isStructural: false,
@@ -617,11 +617,14 @@ export const useCaseResolverStateAssetActions = ({
           const uploaded = await uploadSourceFileToCaseResolver(sourceFile, uploadBaseFolder);
           createdSlots.push({
             id: createId('scan-slot'),
-            name: uploaded.originalName,
-            filepath: uploaded.filepath,
-            sourceFileId: uploaded.id,
-            mimeType: uploaded.mimetype,
-            size: uploaded.size,
+            fileId: uploaded.id || '',
+            status: 'completed',
+            progress: 100,
+            name: uploaded.originalName || sourceFile.name || 'file',
+            filepath: uploaded.filepath || '',
+            sourceFileId: uploaded.id || '',
+            mimeType: uploaded.mimetype || sourceFile.type,
+            size: uploaded.size || sourceFile.size || 0,
             ocrText: '',
             ocrError: null,
           });
@@ -810,13 +813,22 @@ export const useCaseResolverStateAssetActions = ({
                 file.activeDocumentVersion === 'exploded'
                   ? storedDocumentContent
                   : file.explodedDocumentContent;
+              const nextContentVersion = ((): number => {
+                const val = file.documentContentVersion;
+                if (typeof val === 'number') return val;
+                if (typeof val === 'string') {
+                  const parsed = Number.parseInt(val, 10);
+                  return Number.isNaN(parsed) ? 0 : parsed;
+                }
+                return 0;
+              })() + 1;
               return {
                 ...file,
                 scanSlots: nextSlots,
                 scanOcrModel: runtime.model,
                 scanOcrPrompt: runtime.prompt,
                 editorType: canonicalDocument.mode,
-                documentContentVersion: file.documentContentVersion + 1,
+                documentContentVersion: nextContentVersion,
                 documentContent: storedDocumentContent,
                 documentContentMarkdown: canonicalDocument.markdown,
                 documentContentHtml: canonicalDocument.html,
@@ -854,14 +866,32 @@ export const useCaseResolverStateAssetActions = ({
                 current.activeDocumentVersion === 'exploded'
                   ? storedDocumentContent
                   : (current.explodedDocumentContent ?? '');
+              const nextBaseVersion = ((): number => {
+                const val = current.baseDocumentContentVersion;
+                if (typeof val === 'number') return val;
+                if (typeof val === 'string') {
+                  const parsed = Number.parseInt(val, 10);
+                  return Number.isNaN(parsed) ? 0 : parsed;
+                }
+                return 0;
+              })() + 1;
+              const nextContentVersion = ((): number => {
+                const val = current.documentContentVersion;
+                if (typeof val === 'number') return val;
+                if (typeof val === 'string') {
+                  const parsed = Number.parseInt(val, 10);
+                  return Number.isNaN(parsed) ? 0 : parsed;
+                }
+                return 0;
+              })() + 1;
               return {
                 ...current,
                 scanSlots: nextSlots,
                 scanOcrModel: runtime.model,
                 scanOcrPrompt: runtime.prompt,
                 editorType: canonicalDocument.mode,
-                baseDocumentContentVersion: (current.baseDocumentContentVersion ?? 0) + 1,
-                documentContentVersion: (current.documentContentVersion ?? 0) + 1,
+                baseDocumentContentVersion: String(nextBaseVersion),
+                documentContentVersion: String(nextContentVersion),
                 documentContent: storedDocumentContent,
                 documentContentMarkdown: canonicalDocument.markdown,
                 documentContentHtml: canonicalDocument.html,
@@ -1150,9 +1180,9 @@ export const useCaseResolverStateAssetActions = ({
         size: uploaded.size,
         updatedAt: now,
       };
-      updateWorkspace((current) => {
+      updateWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
         let didUpdate = false;
-        const nextAssets = current.assets.map((asset) => {
+        const nextAssets = current.assets.map((asset: CaseResolverAssetFile): CaseResolverAssetFile => {
           if (asset.id !== assetId) return asset;
           didUpdate = true;
           return updatedAsset;
@@ -1163,7 +1193,7 @@ export const useCaseResolverStateAssetActions = ({
           assets: nextAssets,
           folders: normalizeFolderPaths([
             ...current.folders,
-            normalizeFolderPath(uploaded.folder || uploadFolder),
+            normalizeFolderPath(uploaded.folder || uploadFolder) || '',
           ]),
         };
       }, { persistToast: treeSaveToast });

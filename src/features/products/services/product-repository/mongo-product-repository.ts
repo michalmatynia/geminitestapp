@@ -276,6 +276,52 @@ const buildProductIdFilter = (id: string): Filter<ProductDocument> => {
   return { $or: conditions } as Filter<ProductDocument>;
 };
 
+const buildCategoryLookupFilter = (id: string): Filter<Document> => {
+  const normalized = id.trim();
+  const conditions: Array<Record<string, unknown>> = [
+    { id: normalized },
+    { _id: normalized },
+  ];
+  if (ObjectId.isValid(normalized)) {
+    conditions.push({ _id: new ObjectId(normalized) });
+  }
+  return { $or: conditions } as Filter<Document>;
+};
+
+const buildLookupFilterForIds = (ids: string[]): Filter<Document> => {
+  const normalizedIds = Array.from(
+    new Set(
+      ids
+        .map((id: string): string => id.trim())
+        .filter((id: string): boolean => id.length > 0)
+    )
+  );
+  const objectIds = normalizedIds
+    .filter((id: string): boolean => ObjectId.isValid(id))
+    .map((id: string): ObjectId => new ObjectId(id));
+  const conditions: Array<Record<string, unknown>> = [];
+  if (normalizedIds.length > 0) {
+    conditions.push({ id: { $in: normalizedIds } });
+    conditions.push({ _id: { $in: normalizedIds } });
+  }
+  if (objectIds.length > 0) {
+    conditions.push({ _id: { $in: objectIds } });
+  }
+  if (conditions.length === 0) {
+    return { _id: { $in: [] } } as Filter<Document>;
+  }
+  if (conditions.length === 1) {
+    return conditions[0] as Filter<Document>;
+  }
+  return { $or: conditions } as Filter<Document>;
+};
+
+const resolveLookupDocumentId = (doc: Document | null | undefined): string =>
+  normalizeLookupId(
+    (doc as { id?: unknown; _id?: unknown } | null)?.id ??
+      (doc as { _id?: unknown } | null)?._id
+  );
+
 const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
   const unique = new Set<string>();
   for (const rawId of imageFileIds) {
@@ -835,11 +881,13 @@ export const mongoProductRepository: ProductRepository = {
         );
       return;
     }
-    const categories = await db
+    const category = await db
       .collection('product_categories')
-      .find({ id: normalized })
-      .toArray();
-    if (categories.length === 0) {
+      .findOne(buildCategoryLookupFilter(normalized), {
+        projection: { _id: 1, id: 1 },
+      });
+    const resolvedCategoryId = resolveLookupDocumentId(category);
+    if (!resolvedCategoryId) {
       await db
         .collection<ProductDocument>(productCollectionName)
         .updateOne(
@@ -852,7 +900,7 @@ export const mongoProductRepository: ProductRepository = {
     const categoryEntries = [
       {
         productId,
-        categoryId: (categories[0] as unknown as { id: string }).id,
+        categoryId: resolvedCategoryId,
         assignedAt: now.toISOString(),
       },
     ];
@@ -878,14 +926,25 @@ export const mongoProductRepository: ProductRepository = {
     const uniqueIds = Array.from(new Set(tagIds));
     const tags = await db
       .collection('product_tags')
-      .find({ id: { $in: uniqueIds } })
+      .find(buildLookupFilterForIds(uniqueIds))
+      .project({ _id: 1, id: 1 })
       .toArray();
     const now = new Date();
-    const tagEntries = tags.map((tag: Document) => ({
-      productId,
-      tagId: (tag as unknown as { id: string }).id,
-      assignedAt: now.toISOString(),
-    }));
+    const seenTagIds = new Set<string>();
+    const tagEntries = tags.reduce(
+      (acc: Array<{ productId: string; tagId: string; assignedAt: string }>, tag: Document) => {
+        const tagId = resolveLookupDocumentId(tag);
+        if (!tagId || seenTagIds.has(tagId)) return acc;
+        seenTagIds.add(tagId);
+        acc.push({
+          productId,
+          tagId,
+          assignedAt: now.toISOString(),
+        });
+        return acc;
+      },
+      []
+    );
     await db
       .collection<ProductDocument>(productCollectionName)
       .updateOne(
@@ -908,14 +967,28 @@ export const mongoProductRepository: ProductRepository = {
     const uniqueIds = Array.from(new Set(producerIds));
     const producers = await db
       .collection('product_producers')
-      .find({ id: { $in: uniqueIds } })
+      .find(buildLookupFilterForIds(uniqueIds))
+      .project({ _id: 1, id: 1 })
       .toArray();
     const now = new Date();
-    const producerEntries = producers.map((producer: Document) => ({
-      productId,
-      producerId: (producer as unknown as { id: string }).id,
-      assignedAt: now.toISOString(),
-    }));
+    const seenProducerIds = new Set<string>();
+    const producerEntries = producers.reduce(
+      (
+        acc: Array<{ productId: string; producerId: string; assignedAt: string }>,
+        producer: Document
+      ) => {
+        const producerId = resolveLookupDocumentId(producer);
+        if (!producerId || seenProducerIds.has(producerId)) return acc;
+        seenProducerIds.add(producerId);
+        acc.push({
+          productId,
+          producerId,
+          assignedAt: now.toISOString(),
+        });
+        return acc;
+      },
+      []
+    );
     await db
       .collection<ProductDocument>(productCollectionName)
       .updateOne(

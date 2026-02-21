@@ -330,9 +330,9 @@ export function CenterPreview(): React.JSX.Element {
   const eligibleMaskShapes = useMemo(
     () =>
       maskShapes.filter(
-        (shape) =>
+        (shape: any) =>
           shape.visible &&
-          ((shape.type === 'rect' || shape.type === 'ellipse')
+          ((shape.type === 'rect' || shape.type === 'ellipse' || (shape.type as string) === 'ellipse')
             ? shape.points.length >= 2
             : shape.closed && shape.points.length >= 3)
       ),

@@ -7,14 +7,15 @@ import type {
   ParallaxPreset,
   ParallaxAxis,
   ParallaxPattern,
-} from '@/features/gsap';
+  ParallaxDefaultValue,
+} from '@/shared/contracts/gsap';
 import {
   DEFAULT_ANIMATION_CONFIG,
   ANIMATION_EASINGS,
   PARALLAX_PRESETS,
   PARALLAX_DEFAULTS,
   PARALLAX_PATTERNS,
-} from '@/features/gsap';
+} from '@/shared/contracts/gsap';
 import {
   Checkbox,
   Input,
@@ -31,8 +32,7 @@ export function ParallaxSection(): React.ReactNode {
   const parallaxSelectorValue = config.parallaxSelector ?? DEFAULT_ANIMATION_CONFIG.parallaxSelector ?? '';
   const parallaxAxisValue = config.parallaxAxis ?? DEFAULT_ANIMATION_CONFIG.parallaxAxis ?? 'y';
   const parallaxOffsetValue =
-    config.parallaxOffset ?? PARALLAX_DEFAULTS[parallaxPresetValue]?.offset ?? DEFAULT_ANIMATION_CONFIG.parallaxOffset ?? 0;
-  const parallaxScrubValue = config.parallaxScrub ?? DEFAULT_ANIMATION_CONFIG.parallaxScrub ?? 0.6;
+        config.parallaxOffset ?? (PARALLAX_DEFAULTS[parallaxPresetValue] as ParallaxDefaultValue)?.offset ?? DEFAULT_ANIMATION_CONFIG.parallaxOffset ?? 0;  const parallaxScrubValue = config.parallaxScrub ?? DEFAULT_ANIMATION_CONFIG.parallaxScrub ?? 0.6;
   const parallaxStartValue = config.parallaxStart ?? DEFAULT_ANIMATION_CONFIG.parallaxStart ?? 'top bottom';
   const parallaxEndValue = config.parallaxEnd ?? DEFAULT_ANIMATION_CONFIG.parallaxEnd ?? 'bottom top';
   const parallaxEaseValue = config.parallaxEase ?? DEFAULT_ANIMATION_CONFIG.parallaxEase ?? 'sine.inOut';
@@ -59,7 +59,7 @@ export function ParallaxSection(): React.ReactNode {
   const handleParallaxPresetChange = useCallback(
     (value: string): void => {
       const preset = value as ParallaxPreset;
-      const defaults = PARALLAX_DEFAULTS[preset];
+      const defaults = PARALLAX_DEFAULTS[preset] as ParallaxDefaultValue;
       const next: GsapAnimationConfig = {
         ...config,
         parallaxPreset: preset,
@@ -70,8 +70,7 @@ export function ParallaxSection(): React.ReactNode {
         next.parallaxScaleTo = 1;
       }
       onChange(next);
-    },
-    [config, onChange]
+    },    [config, onChange]
   );
 
   const handleParallaxSelectorChange = useCallback(

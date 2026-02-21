@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument */
 import { useQueryClient } from '@tanstack/react-query';
 import {
   type DragEvent,
@@ -36,8 +35,9 @@ import type {
   ProductValidationTarget,
   ProductValidationLaunchOperator,
   ProductValidationInstanceScope,
+  SequenceGroupDraft,
+  PatternFormData,
 } from '@/shared/contracts/products';
-import type { PatternFormData, SequenceGroupDraft } from '@/shared/contracts/products';
 import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';
 
@@ -57,7 +57,6 @@ import {
   formatReplacementFields,
   getReplacementFieldsForTarget,
 } from './helpers';
-
 
 export function useValidatorSettingsController() {
   const queryClient = useQueryClient();

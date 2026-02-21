@@ -167,7 +167,7 @@ export const toDbSchemaSnapshot = (
         const source = schemaSources[provider] as { provider: string; collections: CollectionSchema[] } | undefined;
         if (!source) return acc;
         acc[provider] = {
-          provider: source.provider as any,
+          provider: source.provider as 'mongodb' | 'prisma',
           collections: source.collections.map(toDbSchemaSnapshotSourceCollection),
         };        return acc;
       }, {} as NonNullable<DbSchemaSnapshot['sources']>)

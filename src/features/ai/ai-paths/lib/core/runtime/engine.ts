@@ -71,7 +71,7 @@ import {
 } from './handlers';
 import { buildDbQueryPayload, extractImageUrls } from './utils';
 
-type ToastFn = (message: unknown, options?: any) => void;
+type ToastFn = (message: unknown, options?: unknown) => void;
 
 export type RuntimeProfileEvent = AiPathRuntimeProfileEventDto;
 

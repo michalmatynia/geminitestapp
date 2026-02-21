@@ -94,24 +94,14 @@ export function SegmentEditorPanel(): React.JSX.Element {
     updateParameterDescription,
   } = useDocumentActions();
   const {
-    effectiveLearnedTemplates,
-    templateMergeThreshold,
-    isBusy,
-  } = useSettingsState();
-  const {
     draggingSegmentId,
     segmentDropTargetId,
     segmentDropPosition,
     draggingListItemIndex,
     listItemDropTargetIndex,
     listItemDropPosition,
-    approvalDraft,
-    matchedRuleDetails,
-    similarTemplateCandidates,
-    templateTargetOptions,
   } = useSegmentEditorState();
   const {
-    setApprovalDraft,
     handleSegmentDragStart,
     handleSegmentDragEnd,
     handleSegmentDragOver,
@@ -125,9 +115,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
     splitSegment,
     mergeSegmentWithPrevious,
     mergeSegmentWithNext,
-    handleApproveSelectedSegmentPattern,
   } = useSegmentEditorActions();
-
   const updateTopLevelListItem = (
     segmentId: string,
     index: number,

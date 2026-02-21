@@ -6,7 +6,7 @@ import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAssets3D, useAsset3DCategories, useAsset3DTags } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import type { Asset3dListFiltersDto as Asset3DListFilters, Asset3dDto as Asset3DRecord } from '@/shared/contracts/viewer3d';
+import type { Asset3DListFiltersDto as Asset3DListFilters, Asset3DRecordDto as Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { FilterPanel, Button, FormSection, EmptyState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import type { FilterField } from '@/shared/ui/templates/panels';
@@ -59,12 +59,11 @@ export function Asset3DPickerModal({
   ], [categories, tags]);
 
   const apiFilters: Asset3DListFilters = {
-    search: filters.search.trim() || null,
-    categoryId: filters.category === '__all__' ? null : filters.category,
+    search: filters.search.trim() || undefined,
+    categoryId: filters.category === '__all__' ? undefined : filters.category,
     tags: filters.tags,
     ...(filters.isPublicOnly ? { isPublic: true } : {}),
   };
-
   const assetsQuery = useAssets3D(apiFilters);
   const assets = assetsQuery.data ?? [];
 

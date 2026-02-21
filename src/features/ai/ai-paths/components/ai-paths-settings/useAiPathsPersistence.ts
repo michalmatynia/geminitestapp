@@ -508,8 +508,15 @@ export function useAiPathsPersistence({
                 const normalizedAiPathsValidation = normalizeAiPathsValidationConfig(
                   migration.config.aiPathsValidation
                 );
+                const normalizedConfigNodes = normalizeNodes(migration.config.nodes ?? []);
+                const normalizedConfigEdges = sanitizeEdges(
+                  normalizedConfigNodes,
+                  Array.isArray(migration.config.edges) ? migration.config.edges : []
+                );
                 const normalizedConfig: PathConfig = {
                   ...migration.config,
+                  nodes: normalizedConfigNodes,
+                  edges: normalizedConfigEdges,
                   runCount: normalizedRunCount,
                   strictFlowMode: normalizedStrictFlowMode,
                   aiPathsValidation: normalizedAiPathsValidation,
@@ -521,6 +528,8 @@ export function useAiPathsPersistence({
                   migration.config.strictFlowMode !== normalizedStrictFlowMode ||
                   stableStringify(migration.config.aiPathsValidation ?? null) !==
                     stableStringify(normalizedAiPathsValidation) ||
+                  stableStringify(migration.config.edges ?? []) !==
+                    stableStringify(normalizedConfigEdges) ||
                   normalizeLoadedPathName(meta.id, parsedConfig.name) !==
                     resolvedName
                 ) {
@@ -795,8 +804,10 @@ export function useAiPathsPersistence({
   );
 
   const buildPathSnapshot = useCallback(
-    (nameOverride?: string): string =>
-      stableStringify({
+    (nameOverride?: string): string => {
+      const normalizedSnapshotNodes = normalizeNodes(nodes);
+      const normalizedSnapshotEdges = sanitizeEdges(normalizedSnapshotNodes, edges);
+      return stableStringify({
         activePathId,
         name: nameOverride ?? pathName,
         description: pathDescription,
@@ -814,10 +825,12 @@ export function useAiPathsPersistence({
         nodes: stripNodeConfig([...nodes]).sort((a: AiNode, b: AiNode): number =>
           a.id.localeCompare(b.id)
         ),
-        edges: [...edges].sort((a: Edge, b: Edge): number => a.id.localeCompare(b.id)),
+        edges: [...normalizedSnapshotEdges].sort((a: Edge, b: Edge): number =>
+          a.id.localeCompare(b.id)
+        ),
         parserSamples,
         updaterSamples,
-        runtimeState: buildPersistedRuntimeState(runtimeState, nodes),
+        runtimeState: buildPersistedRuntimeState(runtimeState, normalizedSnapshotNodes),
         lastRunAt,
         runCount:
           activePathId &&
@@ -825,7 +838,8 @@ export function useAiPathsPersistence({
           Number.isFinite(pathConfigs[activePathId]?.runCount)
             ? Math.max(0, Math.trunc(pathConfigs[activePathId]?.runCount ?? 0))
             : 0,
-      }),
+      });
+    },
     [
       activePathId,
       pathName,
@@ -865,6 +879,10 @@ export function useAiPathsPersistence({
           ? Math.trunc(existingVersionRaw)
           : STORAGE_VERSION;
       const resolvedVersion = Math.max(STORAGE_VERSION, existingVersion);
+      const resolvedNodes = nodesOverride ?? nodesRef.current;
+      const normalizedNodesForEdges = normalizeNodes(resolvedNodes);
+      const resolvedEdges = edgesOverride ?? edgesRef.current;
+      const canonicalEdges = sanitizeEdges(normalizedNodesForEdges, resolvedEdges);
 
       return {
         id: activePathId ?? 'default',
@@ -877,8 +895,8 @@ export function useAiPathsPersistence({
         runMode,
         strictFlowMode,
         aiPathsValidation,
-        nodes: nodesOverride ?? nodesRef.current,
-        edges: edgesOverride ?? edgesRef.current,
+        nodes: resolvedNodes,
+        edges: canonicalEdges,
         updatedAt,
         isLocked: isPathLocked,
         isActive: isPathActive,
@@ -972,7 +990,15 @@ export function useAiPathsPersistence({
             toast(message, { variant: 'info' });
           });
         }
-        const edgesForSave = options?.edgesOverride ?? edgesRef.current;
+        const rawEdgesForSave = options?.edgesOverride ?? edgesRef.current;
+        const normalizedNodesForSave = normalizeNodes(nodesForSave);
+        const edgesForSave = sanitizeEdges(normalizedNodesForSave, rawEdgesForSave);
+        if (
+          !options?.edgesOverride &&
+          stableStringify(rawEdgesForSave) !== stableStringify(edgesForSave)
+        ) {
+          setEdges(edgesForSave);
+        }
         const compileReport = compileGraph(nodesForSave, edgesForSave);
         if (!silent && compileReport.errors > 0) {
           const primaryError = compileReport.findings.find(
@@ -993,7 +1019,7 @@ export function useAiPathsPersistence({
           updatedAt,
           nodesForSave,
           resolvedName,
-          options?.edgesOverride
+          edgesForSave
         );
         const nextPaths = pathsRef.current.map((path: PathMeta): PathMeta =>
           path.id === activePathId ? { ...path, name: resolvedName, updatedAt } : path
@@ -1053,6 +1079,7 @@ export function useAiPathsPersistence({
       reportAiPathsError,
       persistLastError,
       setLastError,
+      setEdges,
       setPathConfigs,
       setPaths,
       toast,

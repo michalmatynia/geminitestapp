@@ -17,6 +17,7 @@ import {
   evaluateAiPathsValidationPreflight,
   evaluateGraph,
   inspectPathDependencies,
+  stableStringify,
   GraphExecutionError,
   GraphExecutionCancelled,
 } from '@/features/ai/ai-paths/lib';
@@ -523,7 +524,12 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
             },
             fetchEntityByType: args.fetchEntityByType,
             reportAiPathsError: args.reportAiPathsError,
-            toast: args.toast,
+            toast: (message: unknown, options?: unknown): void => {
+              args.toast(
+                typeof message === 'string' ? message : String(message ?? ''),
+                options as Parameters<typeof args.toast>[1]
+              );
+            },
             control: {
               mode,
               stepLimit,
@@ -729,7 +735,14 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       args.toast(warningMessage, { variant: 'warning' });
     }
 
-    const compileReport = compileGraph(args.normalizedNodes, args.edges);
+    if (
+      args.onCanonicalEdgesDetected &&
+      stableStringify(args.edges) !== stableStringify(args.sanitizedEdges)
+    ) {
+      args.onCanonicalEdgesDetected(args.sanitizedEdges);
+    }
+
+    const compileReport = compileGraph(args.normalizedNodes, args.sanitizedEdges);
     if (!compileReport.ok) {
       const timestamp = new Date().toISOString();
       const primaryError = compileReport.findings.find(

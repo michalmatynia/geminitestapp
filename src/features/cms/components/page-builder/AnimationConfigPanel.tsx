@@ -7,7 +7,6 @@ import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import type { 
   GsapAnimationConfigDto as GsapAnimationConfig,
   AnimationPresetDto as AnimationPreset,
-  AnimationEasingDto as AnimationEasing,
   AnimationTriggerDto as AnimationTrigger
 } from '@/shared/contracts/gsap';
 import { 

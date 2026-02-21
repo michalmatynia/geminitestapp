@@ -1,4 +1,4 @@
-import type { VectorShape } from '@/features/vector-drawing';
+import type { VectorShape, VectorTool } from '@/features/vector-drawing';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import {
@@ -222,11 +222,10 @@ export type StudioActionHistorySnapshot = {
   selectedFolder: string;
   selectedSlotId: string | null;
   workingSlotId: string | null;
-  previewMode: 'image' | '3d';
-  compositeAssetIds: string[];
-  tool: any;
-  canvasSelectionEnabled: boolean;
-  imageTransformMode: 'none' | 'move';
+      previewMode: 'image' | '3d';
+      compositeAssetIds: string[];
+      tool: VectorTool;
+      canvasSelectionEnabled: boolean;  imageTransformMode: 'none' | 'move';
   canvasImageOffset: { x: number; y: number };
   canvasBackgroundLayerEnabled: boolean;
   canvasBackgroundColor: string;

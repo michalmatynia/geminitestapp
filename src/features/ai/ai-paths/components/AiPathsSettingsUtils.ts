@@ -17,7 +17,9 @@ import {
   backfillPathConfigNodeContracts,
   getValueAtMappingPath,
   migratePathConfigCollections,
+  normalizeNodes,
   safeStringify,
+  sanitizeEdges,
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
 import type { DbQueryPayload } from '@/features/ai/ai-paths/lib/api/client';
@@ -248,17 +250,23 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
       },
     };
   });
+  const normalizedNodes = normalizeNodes(sanitizedNodes);
+  const normalizedEdges = sanitizeEdges(
+    normalizedNodes,
+    Array.isArray(contractBackfilled.edges) ? contractBackfilled.edges : []
+  );
   const uiState = contractBackfilled.uiState ? { ...contractBackfilled.uiState } : undefined;
   if (uiState && 'configOpen' in uiState) {
     delete (uiState as { configOpen?: boolean }).configOpen;
   }
   return {
     ...contractBackfilled,
-    nodes: sanitizedNodes,
+    nodes: normalizedNodes,
+    edges: normalizedEdges,
     uiState,
     runtimeState: buildPersistedRuntimeState(
       parseRuntimeState(contractBackfilled.runtimeState),
-      sanitizedNodes
+      normalizedNodes
     ),
   };
 };

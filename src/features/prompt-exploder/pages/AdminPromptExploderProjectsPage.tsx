@@ -10,7 +10,6 @@ import {
   ConfirmModal,
   PanelHeader,
   useToast,
-  DocumentationSection,
   EmptyState,
   StandardDataTablePanel,
   Card,

@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useMemo, useCallback } from 'react';
 
 import { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
-import type { SectionInstance, BlockInstance } from '@/shared/contracts/cms';
 
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 import { getSectionDefinition, getBlockDefinition } from '../section-registry';
@@ -40,8 +39,8 @@ export function useComponentSettings(): ComponentSettingsContextValue {
 
 export function ComponentSettingsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const {
-    selectedSection: rawSelectedSection,
-    selectedBlock: rawSelectedBlock,
+    selectedSection,
+    selectedBlock,
     selectedColumn,
     selectedColumnParentSection,
     selectedParentSection,
@@ -49,11 +48,7 @@ export function ComponentSettingsProvider({ children }: { children: React.ReactN
     selectedParentRow,
     selectedParentBlock,
     dispatch,
-  } = usePageBuilder();
-  
-  const selectedSection = rawSelectedSection;
-  const selectedBlock = rawSelectedBlock;
-  const sectionDef = useMemo(() => selectedSection ? getSectionDefinition(selectedSection.type) : null, [selectedSection]);
+  } = usePageBuilder();  const sectionDef = useMemo(() => selectedSection ? getSectionDefinition(selectedSection.type) : null, [selectedSection]);
   const blockDef = useMemo(() => selectedBlock ? getBlockDefinition(selectedBlock.type) : null, [selectedBlock]);
 
   const selectedLabel = useMemo(() => {

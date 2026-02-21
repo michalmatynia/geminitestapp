@@ -15,8 +15,8 @@ export const createNoteFile = async (
     filepath: data.filepath,
     mimetype: data.mimetype,
     size: data.size,
-    ...(data.width !== undefined && { width: data.width as any }),
-    ...(data.height !== undefined && { height: data.height as any }),
+    ...(data.width !== undefined && { width: data.width as number | undefined }),
+    ...(data.height !== undefined && { height: data.height as number | undefined }),
   };
   const file = await prisma.noteFile.create({
     data: createData,

@@ -184,7 +184,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     const rawEdges = input.edges ?? [];
     const nodes = normalizeNodes(input.nodes ?? []);
     const edges = sanitizeEdges(nodes, rawEdges);
-    const compileReport = compileGraph(nodes, rawEdges);
+    const compileReport = compileGraph(nodes, edges);
     if (!compileReport.ok) {
       const primaryError = compileReport.findings.find(
         (finding): boolean => finding.severity === 'error'

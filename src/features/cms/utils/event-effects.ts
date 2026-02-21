@@ -5,6 +5,7 @@ import type {
   CmsHoverEffect,
   CmsScrollBehavior,
 } from '@/shared/contracts/cms';
+
 import type React from 'react';
 
 export const EVENT_HOVER_EFFECT_OPTIONS: Array<{ label: string; value: CmsHoverEffect }> = [

@@ -38,6 +38,7 @@ import {
   initialNodes,
   palette,
   safeStringify,
+  stableStringify,
   sanitizeEdges,
   normalizeAiPathsValidationConfig,
   TRIGGER_INPUT_PORTS,
@@ -1006,6 +1007,15 @@ export function useAiPathsSettingsState({
     handleRequeueDeadLetter,
   } = useAiPathsRunHistory({ activePathId, toast });
 
+  const handleCanonicalEdgesDetected = useCallback((nextEdges: Edge[]): void => {
+    setEdges((currentEdges: Edge[]): Edge[] => {
+      if (stableStringify(currentEdges) === stableStringify(nextEdges)) {
+        return currentEdges;
+      }
+      return nextEdges;
+    });
+  }, [setEdges]);
+
   const {
     handleRunSimulation,
     handleFireTrigger,
@@ -1038,6 +1048,7 @@ export function useAiPathsSettingsState({
     parserSamples,
     updaterSamples,
     runtimeState,
+    onCanonicalEdgesDetected: handleCanonicalEdgesDetected,
     lastRunAt,
     setLastRunAt,
     setPathConfigs,

@@ -8,6 +8,7 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { ListQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -113,8 +114,8 @@ export interface StudioInlineEditContextValue {
   compositeTabInputImages: CompositeTabImage[];
   compositeTabInputSourceLabel: string;
   linkedMaskSlots: LinkedMaskSlotViewModel[];
-  sourceCompositeImage: any;
-  studioSettings: any;
+  sourceCompositeImage: ImageStudioSlotRecord | null;
+  studioSettings: Record<string, unknown>;
   uploadPending: boolean;
   inlineCardImageManagerController: ProductImageManagerController;
   
@@ -148,7 +149,7 @@ export interface StudioInlineEditContextValue {
   onUploadEnvironmentFromLocal: () => void;
   
   // Query state
-  linkedRunsQuery: any;
+  linkedRunsQuery: ListQuery<LinkedGeneratedVariant, LinkedGeneratedRunsResponse>;
 }
 
 const StudioInlineEditContext = createContext<StudioInlineEditContextValue | null>(null);

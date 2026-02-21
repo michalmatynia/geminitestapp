@@ -20,11 +20,11 @@ import {
 } from './helpers';
 
 
-type CreatePatternMutation = {
+export type CreatePatternMutation = {
   mutateAsync: (payload: CreateValidationPatternPayload) => Promise<unknown>;
 };
 
-type UpdatePatternMutation = {
+export type UpdatePatternMutation = {
   mutateAsync: (payload: { id: string; data: UpdateValidationPatternPayload }) => Promise<unknown>;
 };
 

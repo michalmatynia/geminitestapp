@@ -22,7 +22,6 @@ import {
 } from '@/shared/contracts/observability';
 import { 
   Button, 
-  DataTable,
   DynamicFilters, 
   StandardDataTablePanel, 
   Pagination, 

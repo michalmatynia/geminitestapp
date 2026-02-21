@@ -18,8 +18,8 @@ import {
   getDiskPathFromPublicPath,
   getPublicPathFromStoredPath,
   uploadFile,
+  getImageFileRepository,
 } from '@/features/files/server';
-import { getImageFileRepository } from '@/features/files/server';
 
 export type ImageFileRepository = {
   createImageFile(data: ImageFileCreateInput): Promise<ImageFileRecord>;

@@ -920,7 +920,7 @@ export const needsParameterInferenceConfigUpgrade = (
     if (
       !parserMappings ||
       typeof parserMappings !== 'object' ||
-      !('catalogId' in (parserMappings as object))
+      !('catalogId' in (parserMappings))
     )
       return true;
 

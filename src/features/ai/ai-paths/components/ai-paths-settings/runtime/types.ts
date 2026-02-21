@@ -86,6 +86,7 @@ export interface LocalExecutionArgs {
   edges: Edge[];
   normalizedNodes: AiNode[];
   sanitizedEdges: Edge[];
+  onCanonicalEdgesDetected?: (edges: Edge[]) => void;
   pathName: string;
   pathDescription: string;
   parserSamples: Record<string, ParserSampleState>;
@@ -150,6 +151,7 @@ export interface UseAiPathsRuntimeArgs {
   isPathActive: boolean;
   nodes: AiNode[];
   edges: Edge[];
+  onCanonicalEdgesDetected?: (edges: Edge[]) => void;
   runtimeState: RuntimeState;
   parserSamples: Record<string, ParserSampleState>;
   updaterSamples: Record<string, UpdaterSampleState>;

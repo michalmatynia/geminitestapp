@@ -10,6 +10,7 @@ import type {
   PromptExploderLogicalComparatorDto,
   PromptExploderLogicalConditionDto,
   PromptExploderLogicalJoinDto,
+  PromptExploderLogicalOperatorDto,
   PromptExploderOperationModeDto,
   PromptExploderParamUiControlDto,
   PromptExploderPatternRuleMapDto,
@@ -19,6 +20,7 @@ import type {
   PromptExploderSettingsDto,
   PromptExploderSubsectionDto,
   PromptExploderBenchmarkSuggestionDto,
+  PromptExploderBenchmarkSuiteDto,
 } from '@/shared/contracts/prompt-exploder';
 
 export type PromptExploderAiProvider = PromptExploderAiProviderDto;
@@ -32,6 +34,7 @@ export type PromptExploderListItem = PromptExploderListItemDto;
 export type PromptExploderLogicalComparator = PromptExploderLogicalComparatorDto;
 export type PromptExploderLogicalCondition = PromptExploderLogicalConditionDto;
 export type PromptExploderLogicalJoin = PromptExploderLogicalJoinDto;
+export type PromptExploderLogicalOperator = PromptExploderLogicalOperatorDto;
 export type PromptExploderOperationMode = PromptExploderOperationModeDto;
 export type PromptExploderParamUiControl = PromptExploderParamUiControlDto;
 export type PromptExploderPatternRuleMap = PromptExploderPatternRuleMapDto;
@@ -41,3 +44,4 @@ export type PromptExploderSegmentType = PromptExploderSegmentTypeDto;
 export type PromptExploderSettings = PromptExploderSettingsDto;
 export type PromptExploderSubsection = PromptExploderSubsectionDto;
 export type PromptExploderBenchmarkSuggestion = PromptExploderBenchmarkSuggestionDto;
+export type PromptExploderBenchmarkSuite = PromptExploderBenchmarkSuiteDto;

@@ -157,7 +157,7 @@ export type PageSeoData = CmsPageSeoDto;
 /**
  * CMS Page Builder Contracts
  */
-  export type CmsBlockInstanceDto = {
+export type CmsBlockInstanceDto = {
     id: string;
     type: string;
     settings: Record<string, unknown>;
@@ -171,13 +171,13 @@ export interface PreviewBlockItemProps {
 export interface PreviewBlockProps {
   block: BlockInstance;
   stretch?: boolean;
-  mediaStyles?: any;
+  mediaStyles?: React.CSSProperties;
 }
 
 export interface PreviewSectionBlockProps {
   section: SectionInstance;
-  colorSchemes?: Record<string, any>;
-  mediaStyles?: any;
+  colorSchemes?: Record<string, unknown>;
+  mediaStyles?: React.CSSProperties;
 }
 
 export const cmsBlockInstanceSchema: z.ZodType<CmsBlockInstanceDto> = z.lazy(() =>
@@ -193,7 +193,7 @@ export const pageZoneSchema = z.enum(['header', 'template', 'footer']);
 export type PageZoneDto = z.infer<typeof pageZoneSchema>;
 export type PageZone = PageZoneDto;
 
-    export type CmsSectionInstanceDto = {
+export type CmsSectionInstanceDto = {
       id: string;
       type: string;
       zone: PageZone;
@@ -201,15 +201,15 @@ export type PageZone = PageZoneDto;
       blocks: CmsBlockInstanceDto[];
     };
   
-    export const cmsSectionInstanceSchema: z.ZodType<CmsSectionInstanceDto> = z.object({
-      id: z.string(),
-      type: z.string(),
-      zone: pageZoneSchema,
-      settings: z.record(z.string(), z.unknown()),
-      blocks: z.array(cmsBlockInstanceSchema),
-    });
+export const cmsSectionInstanceSchema: z.ZodType<CmsSectionInstanceDto> = z.object({
+  id: z.string(),
+  type: z.string(),
+  zone: pageZoneSchema,
+  settings: z.record(z.string(), z.unknown()),
+  blocks: z.array(cmsBlockInstanceSchema),
+});
   
-    export type SectionInstance = CmsSectionInstanceDto;
+export type SectionInstance = CmsSectionInstanceDto;
 export const clipboardDataSchema = z.object({
   type: z.enum(['section', 'block']),
   data: z.union([cmsSectionInstanceSchema, cmsBlockInstanceSchema]),

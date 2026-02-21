@@ -4,9 +4,11 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useConfiguredMasterFolderTree } from '@/features/foldertree/master/useConfiguredMasterFolderTree';
 import type { UseConfiguredMasterFolderTreeOptions } from '@/features/foldertree/master/useConfiguredMasterFolderTree';
+import type { FolderTreeProfileV2, MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/toast';
+import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
 import {
   FOLDER_TREE_UI_STATE_V1_SETTING_KEY,
   parseFolderTreeUiStateV1,
@@ -18,8 +20,7 @@ import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useMasterFolderTreeConfig } from './useMasterFolderTreeConfig';
-import type { FolderTreeProfileV2, MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
-import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
+
 import type { LucideIcon } from 'lucide-react';
 
 export type UseMasterFolderTreeInstanceOptions = Omit<
@@ -41,6 +42,83 @@ type MasterFolderTreeRootDropUi = {
   idleClassName: string;
   activeClassName: string;
 };
+
+const DEV = process.env.NODE_ENV !== 'production';
+const EXPANDED_STATE_PERSIST_DEBOUNCE_MS = 400;
+const APPLYING_STALL_WARN_MS = 8_000;
+const EXTERNAL_SYNC_THRASH_WINDOW_MS = 4_000;
+const EXTERNAL_SYNC_THRASH_LIMIT = 20;
+
+const shouldNotifyMasterTreePersistSuccessByInstance: Record<FolderTreeInstance, boolean> = {
+  notes: false,
+  image_studio: false,
+  product_categories: true,
+  cms_page_builder: true,
+  case_resolver: true,
+};
+
+const shouldNotifyMasterTreePersistErrorByInstance: Record<FolderTreeInstance, boolean> = {
+  notes: true,
+  image_studio: true,
+  product_categories: true,
+  cms_page_builder: true,
+  case_resolver: true,
+};
+
+const masterTreePersistSuccessMessageByInstance: Record<FolderTreeInstance, string> = {
+  notes: 'Folder tree updated.',
+  image_studio: 'Folder tree updated.',
+  product_categories: 'Category tree updated.',
+  cms_page_builder: 'Component tree updated.',
+  case_resolver: 'Case resolver tree updated.',
+};
+
+const normalizeExpandedNodeIds = (
+  value: ReadonlyArray<string> | null | undefined
+): MasterTreeId[] => {
+  if (!Array.isArray(value) || value.length === 0) return [];
+  const ids = new Set<MasterTreeId>();
+  value.forEach((id: string) => {
+    const normalized = id.trim();
+    if (!normalized) return;
+    ids.add(normalized);
+  });
+  return Array.from(ids).sort();
+};
+
+const areNodeIdListsEqual = (
+  left: ReadonlyArray<string> | null | undefined,
+  right: ReadonlyArray<string> | null | undefined
+): boolean => {
+  const normalizedLeft = normalizeExpandedNodeIds(left);
+  const normalizedRight = normalizeExpandedNodeIds(right);
+  if (normalizedLeft.length !== normalizedRight.length) return false;
+  for (let index = 0; index < normalizedLeft.length; index += 1) {
+    if (normalizedLeft[index] !== normalizedRight[index]) return false;
+  }
+  return true;
+};
+
+const getMasterTreeStructureFingerprint = (
+  nodes: ReadonlyArray<{
+    id: string;
+    parentId?: string | null;
+    path?: string;
+    sortOrder?: number;
+    type?: string;
+  }>
+): string =>
+  [...nodes]
+    .map((node) => ({
+      id: node.id,
+      parentId: node.parentId ?? '',
+      path: node.path ?? '',
+      sortOrder: node.sortOrder ?? 0,
+      type: node.type ?? '',
+    }))
+    .sort((left, right) => left.id.localeCompare(right.id))
+    .map((node) => `${node.id}|${node.parentId}|${node.path}|${node.sortOrder}|${node.type}`)
+    .join('\u0001');
 
 export function useMasterFolderTreeInstance({
   instance,

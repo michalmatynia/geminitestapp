@@ -646,6 +646,11 @@ export type ProductValidationSeverity = ProductValidationSeverityDto;
 export const productValidationDenyBehaviorSchema = z.enum(['ask_again', 'mute_session']);
 export type ProductValidationDenyBehaviorDto = z.infer<typeof productValidationDenyBehaviorSchema>;
 export type ProductValidationDenyBehavior = ProductValidationDenyBehaviorDto;
+export type ProductValidationPatternDenyBehaviorOverride = ProductValidationDenyBehavior | null;
+
+export const productValidationLaunchScopeBehaviorSchema = z.enum(['gate', 'condition_only']);
+export type ProductValidationLaunchScopeBehaviorDto = z.infer<typeof productValidationLaunchScopeBehaviorSchema>;
+export type ProductValidationLaunchScopeBehavior = ProductValidationLaunchScopeBehaviorDto;
 
 export const productValidationInstanceScopeSchema = z.enum([
   'draft_template',
@@ -715,8 +720,6 @@ export type ProductValidationPostAcceptBehaviorDto = 'revalidate' | 'stop_after_
 export type ProductValidationPostAcceptBehavior = ProductValidationPostAcceptBehaviorDto;
 export type ProductValidationChainModeDto = 'continue' | 'stop_on_match' | 'stop_on_replace';
 export type ProductValidationChainMode = ProductValidationChainModeDto;
-export type ProductValidationLaunchScopeBehaviorDto = 'gate' | 'condition_only';
-export type ProductValidationLaunchScopeBehavior = ProductValidationLaunchScopeBehaviorDto;
 export type ProductValidationLaunchSourceModeDto = 'current_field' | 'form_field' | 'latest_product_field';
 export type ProductValidationLaunchSourceMode = ProductValidationLaunchSourceModeDto;
 export type ProductValidationLaunchOperatorDto =
@@ -912,6 +915,7 @@ export const productValidationSequenceGroupDraftSchema = z.object({
 });
 
 export type ProductValidationSequenceGroupDraftDto = z.infer<typeof productValidationSequenceGroupDraftSchema>;
+export type SequenceGroupDraft = ProductValidationSequenceGroupDraftDto;
 
 export const productValidationPatternFormDataSchema = z.object({
   label: z.string(),

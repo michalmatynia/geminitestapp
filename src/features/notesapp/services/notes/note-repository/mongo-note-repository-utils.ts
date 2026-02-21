@@ -5,6 +5,7 @@ import type {
   NoteFileDocument,
   NoteRelationFromEmbedded,
   NoteRelationToEmbedded,
+  NoteTagEmbedded,
   NotebookDocument,
   TagDocument,
   ThemeDocument,
@@ -36,16 +37,16 @@ const toIsoUpdatedAt = (value: unknown): string | null => {
 
 export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
   const id = doc.id ?? doc._id;
-  const tags = (Array.isArray(doc.tags) ? doc.tags : []) as NoteTagEmbedded[];
-  const categories = (Array.isArray(doc.categories) ? doc.categories : []) as NoteCategoryEmbedded[];
-  const relationsFrom = (Array.isArray(doc.relationsFrom) ? doc.relationsFrom : []) as NoteRelationFromEmbedded[];
-  const relationsTo = (Array.isArray(doc.relationsTo) ? doc.relationsTo : []) as NoteRelationToEmbedded[];
+  const tags = (Array.isArray(doc.tags) ? doc.tags : []);
+  const categories = (Array.isArray(doc.categories) ? doc.categories : []);
+  const relationsFrom = (Array.isArray(doc.relationsFrom) ? doc.relationsFrom : []);
+  const relationsTo = (Array.isArray(doc.relationsTo) ? doc.relationsTo : []);
 
   return {
     id,
     title: doc.title,
     content: doc.content,
-    editorType: doc.editorType ?? 'markdown',
+    editorType: (doc.editorType as NoteRecord['editorType']) ?? 'markdown',
     color: doc.color ?? null,
     isPinned: doc.isPinned ?? false,
     isArchived: doc.isArchived ?? false,
@@ -53,13 +54,13 @@ export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
     notebookId: doc.notebookId ?? null,
     createdAt: toIsoCreatedAt(doc.createdAt),
     updatedAt: toIsoUpdatedAt(doc.updatedAt),
-    tags,
-    categories,
-    relationsFrom,
-    relationsTo,
-    tagIds: tags.map((t) => t.tagId),
-    categoryIds: categories.map((c) => c.categoryId),
-    relatedNoteIds: relationsFrom.map((r) => r.targetNoteId),
+    tags: tags as unknown as NoteRecord['tags'],
+    categories: categories as unknown as NoteRecord['categories'],
+    relationsFrom: relationsFrom as unknown as NoteRecord['relationsFrom'],
+    relationsTo: relationsTo as unknown as NoteRecord['relationsTo'],
+    tagIds: tags.map((t: NoteTagEmbedded) => t.tagId),
+    categoryIds: categories.map((c: NoteCategoryEmbedded) => c.categoryId),
+    relatedNoteIds: relationsFrom.map((r: NoteRelationFromEmbedded) => r.targetNoteId),
   } as NoteRecord;
 };
 

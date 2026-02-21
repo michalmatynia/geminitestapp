@@ -414,12 +414,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   const availableSnapshots = useMemo<PromptExploderPatternSnapshot[]>(
     () =>
-      [...promptExploderSettings.patternSnapshots].sort((left, right) =>
-        right.createdAt.localeCompare(left.createdAt)
-      ),
+      [...(promptExploderSettings.patternSnapshots ?? [])].sort((left, right) => {
+        const a = left.createdAt ?? '';
+        const b = right.createdAt ?? '';
+        return b.localeCompare(a);
+      }),
     [promptExploderSettings.patternSnapshots]
   );
-
   const selectedSnapshot = useMemo(() => {
     if (!selectedSnapshotId) return null;
     return availableSnapshots.find((snapshot) => snapshot.id === selectedSnapshotId) ?? null;

@@ -7,7 +7,6 @@ import { MassListProductModal } from '@/features/integrations/components/listing
 import { ProductListingsModal } from '@/features/integrations/components/listings/ProductListingsModal';
 import { ProductFormProvider } from '@/features/products/context/ProductFormContext';
 import { useProductListModalsContext } from '@/features/products/context/ProductListContext';
-import { AppModal } from '@/shared/ui';
 
 import { ProductFormModal } from './modals/ProductFormModal';
 

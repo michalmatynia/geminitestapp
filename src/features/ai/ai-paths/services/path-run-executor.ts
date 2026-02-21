@@ -10,6 +10,7 @@ import {
   GraphExecutionCancelled,
   inspectPathDependencies,
   normalizeAiPathsValidationConfig,
+  sanitizeEdges,
 } from '@/features/ai/ai-paths/lib';
 import {
   evaluateDisabledNodeTypesPolicy,
@@ -719,10 +720,10 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     return;
   }
 
-  // Nodes and edges are already normalized/sanitized at enqueue time
-  // (path-run-service.ts:39-40), so skip redundant re-normalization.
+  // Runs created before edge-canonicalization can still contain stale edges.
+  // Re-sanitize defensively so compile/validation checks are stable.
   const nodes = graph.nodes;
-  const edges = graph.edges;
+  const edges = sanitizeEdges(nodes, graph.edges);
   const triggerNodeId = resolveTriggerNodeId(
     nodes,
     edges,

@@ -427,9 +427,33 @@ const detectCycleNodes = (nodes: AiNode[], edges: Edge[]): Set<string> => {
   }
 
   const cycleNodes = new Set<string>();
-  nodes.forEach((node: AiNode): void => {
-    if (!processed.has(node.id)) {
-      cycleNodes.add(node.id);
+  const candidateNodeIds = nodes
+    .map((node: AiNode): string => node.id)
+    .filter((nodeId: string): boolean => !processed.has(nodeId));
+  const candidateSet = new Set(candidateNodeIds);
+
+  const participatesInDirectedCycle = (startNodeId: string): boolean => {
+    const stack: string[] = [startNodeId];
+    const seen = new Set<string>([startNodeId]);
+    while (stack.length > 0) {
+      const currentNodeId = stack.pop();
+      if (!currentNodeId) continue;
+      const neighbors = adjacency.get(currentNodeId);
+      if (!neighbors) continue;
+      for (const nextNodeId of neighbors) {
+        if (!candidateSet.has(nextNodeId)) continue;
+        if (nextNodeId === startNodeId) return true;
+        if (seen.has(nextNodeId)) continue;
+        seen.add(nextNodeId);
+        stack.push(nextNodeId);
+      }
+    }
+    return false;
+  };
+
+  candidateNodeIds.forEach((nodeId: string): void => {
+    if (participatesInDirectedCycle(nodeId)) {
+      cycleNodes.add(nodeId);
     }
   });
   return cycleNodes;

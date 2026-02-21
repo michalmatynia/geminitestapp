@@ -107,8 +107,11 @@ async function main(): Promise<void> {
     changedPaths += 1;
     changedPathIds.push(pathId);
     droppedEdges += Math.max(0, (parsed.edges?.length ?? 0) - canonicalEdges.length);
+    const originalEdgesById = new Map(
+      (parsed.edges ?? []).map((edge): [string, typeof edge] => [edge.id, edge])
+    );
     rewiredEdges += canonicalEdges.reduce((count: number, edge, index: number): number => {
-      const original = parsed.edges?.[index];
+      const original = originalEdgesById.get(edge.id) ?? parsed.edges?.[index];
       if (!original) return count;
       if (
         original.fromPort !== edge.fromPort ||
@@ -123,7 +126,6 @@ async function main(): Promise<void> {
       key: setting.key,
       value: JSON.stringify({
         ...parsed,
-        nodes: normalizedNodes,
         edges: canonicalEdges,
       }),
     });

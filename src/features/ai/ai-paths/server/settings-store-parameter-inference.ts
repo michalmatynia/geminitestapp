@@ -1,10 +1,14 @@
+import { normalizeNodes } from '@/features/ai/ai-paths/lib/core/normalization';
+import { sanitizeEdges } from '@/features/ai/ai-paths/lib/core/utils/graph';
+import type { PathConfig } from '@/shared/contracts/ai-paths';
+
 export const PARAMETER_INFERENCE_PATH_ID = 'path_syr8f4';
 export const PARAMETER_INFERENCE_PATH_NAME = 'Parameter Inference';
 export const PARAMETER_INFERENCE_TRIGGER_BUTTON_ID = '0ef40981-7ac6-416e-9205-7200289f851c';
 export const PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME = 'Infer Parameters';
 
-export const buildParameterInferencePathConfigValue = (timestamp: string): string =>
-  JSON.stringify({
+export const buildParameterInferencePathConfigValue = (timestamp: string): string => {
+  const config: PathConfig = {
     id: PARAMETER_INFERENCE_PATH_ID,
     version: 9,
     name: PARAMETER_INFERENCE_PATH_NAME,
@@ -407,13 +411,6 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
     ],
     edges: [
       {
-        id: 'edge-params-00',
-        from: 'node-parser-params',
-        to: 'node-query-params',
-        fromPort: 'catalogId',
-        toPort: 'catalogId',
-      },
-      {
         id: 'edge-params-01',
         from: 'node-trigger-params',
         to: 'node-parser-params',
@@ -536,7 +533,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         id: 'edge-params-18',
         from: 'node-seed-params',
         to: 'node-update-params',
-        fromPort: 'result',
+        fromPort: 'bundle',
         toPort: 'bundle',
       },
     ],
@@ -545,7 +542,14 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
     isActive: true,
     parserSamples: {},
     updaterSamples: {},
+  };
+  const normalizedNodes = normalizeNodes(config.nodes);
+  return JSON.stringify({
+    ...config,
+    nodes: normalizedNodes,
+    edges: sanitizeEdges(normalizedNodes, config.edges),
   });
+};
 
 export const needsParameterInferenceConfigUpgrade = (
   raw: string | undefined
@@ -896,11 +900,21 @@ export const needsParameterInferenceConfigUpgrade = (
       return (
         edge['from'] === 'node-seed-params' &&
         edge['to'] === 'node-update-params' &&
-        edge['fromPort'] === 'result' &&
+        edge['fromPort'] === 'bundle' &&
         edge['toPort'] === 'bundle'
       );
     });
     if (!hasSeedDependencyEdgeToUpdater) return true;
+    const hasLegacySeedDependencyEdgeToUpdater = edges.some((edge) => {
+      if (!edge || typeof edge !== 'object') return false;
+      return (
+        edge['from'] === 'node-seed-params' &&
+        edge['to'] === 'node-update-params' &&
+        edge['fromPort'] === 'result' &&
+        edge['toPort'] === 'bundle'
+      );
+    });
+    if (hasLegacySeedDependencyEdgeToUpdater) return true;
 
     const parserNode = nodes.find(
       (node) => node?.['id'] === 'node-parser-params'
@@ -924,7 +938,7 @@ export const needsParameterInferenceConfigUpgrade = (
     )
       return true;
 
-    const hasCatalogIdEdge = edges.some((edge) => {
+    const hasLegacyCatalogIdEdge = edges.some((edge) => {
       if (!edge || typeof edge !== 'object') return false;
       return (
         edge['from'] === 'node-parser-params' &&
@@ -933,7 +947,7 @@ export const needsParameterInferenceConfigUpgrade = (
         edge['toPort'] === 'catalogId'
       );
     });
-    return !hasCatalogIdEdge;
+    return hasLegacyCatalogIdEdge;
   } catch {
     return true;
   }

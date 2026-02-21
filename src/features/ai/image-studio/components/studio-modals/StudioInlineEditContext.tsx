@@ -56,6 +56,7 @@ import type {
   InlinePreviewSourceViewModel,
   LinkedMaskSlotViewModel,
 } from './slot-inline-edit-tab-types';
+import type { ImageStudioSettings } from '../../utils/studio-settings';
 
 export type EditCardTab = 'card' | 'generations' | 'environment' | 'masks' | 'composites';
 
@@ -115,7 +116,7 @@ export interface StudioInlineEditContextValue {
   compositeTabInputSourceLabel: string;
   linkedMaskSlots: LinkedMaskSlotViewModel[];
   sourceCompositeImage: ImageStudioSlotRecord | null;
-  studioSettings: Record<string, unknown>;
+  studioSettings: ImageStudioSettings;
   uploadPending: boolean;
   inlineCardImageManagerController: ProductImageManagerController;
   
@@ -443,18 +444,17 @@ export function StudioInlineEditProvider({
     extractDraftPrompt, previewControls, previewParams, previewSpecs, setExtractBusy, setExtractDraftPrompt,
     setExtractError, setExtractHistory, setExtractPreviewUiOverrides, setExtractReviewOpen, setParamSpecs,
     setParamUiOverrides, setParamsState, setPreviewControls, setPreviewParams, setPreviewSpecs,
-    setPreviewValidation, setPromptText, setSelectedExtractHistoryId, studioSettings: studioSettings as any,
-    toast: toast as any,
+    setPreviewValidation, setPromptText, setSelectedExtractHistoryId, studioSettings,
+    toast,
   });
-
+  
   // Inline slot handlers
   const inlineHandlers = createInlineSlotHandlers({
     clearInlineSlotSyncTimeouts, environmentReferenceDraft, flushInlineSlotDraftSync, isCardImageRemovalLocked,
     setLinkedVariantApplyBusyKey, setSlotBase64Draft, setSlotImageUrlDraft, setSlotInlineEditOpen, setSlotUpdateBusy,
-    selectedSlot, slotFolderDraft, slotNameDraft, slotsCount: slots.length, toast: toast as any,
-    updateSlotMutation: updateSlotMutation as any,
+    selectedSlot, slotFolderDraft, slotNameDraft, slotsCount: slots.length, toast,
+    updateSlotMutation,
   });
-
   const onOpenGenerationPreviewModal = useCallback((variant: LinkedGeneratedVariant) => {
     setGenerationPreviewKey(variant.key);
     setGenerationPreviewNaturalSize(null);

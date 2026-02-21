@@ -52,7 +52,7 @@ const toDateLabel = (value: string | null | undefined): string => {
   }).format(date);
 };
 
-const buildPathLabelMap = <T extends { id: string; name: string; parentId: string | null }>(
+const buildPathLabelMap = <T extends { id: string; name: string; parentId?: string | null | undefined }>(
   items: T[]
 ): Map<string, string> => {
   const byId = new Map<string, T>(items.map((item: T): [string, T] => [item.id, item]));
@@ -122,7 +122,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
       { value: '__all__', label: 'All tags' },
       ...tags.map((tag: CaseResolverTag) => ({
         value: tag.id,
-        label: tagPathById.get(tag.id) ?? tag.name,
+        label: tagPathById.get(tag.id) || tag.name || tag.label || tag.id,
       })),
     ],
     [tagPathById, tags]
@@ -132,7 +132,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
       { value: '__all__', label: 'All case identifiers' },
       ...identifiers.map((identifier: CaseResolverIdentifier) => ({
         value: identifier.id,
-        label: caseIdentifierPathById.get(identifier.id) ?? identifier.name,
+        label: caseIdentifierPathById.get(identifier.id) || identifier.name || identifier.label || identifier.id,
       })),
     ],
     [caseIdentifierPathById, identifiers]
@@ -142,7 +142,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
       { value: '__all__', label: 'All categories' },
       ...categories.map((category: CaseResolverCategory) => ({
         value: category.id,
-        label: categoryPathById.get(category.id) ?? category.name,
+        label: categoryPathById.get(category.id) || category.name || category.id,
       })),
     ],
     [categories, categoryPathById]

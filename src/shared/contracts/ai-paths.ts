@@ -1082,7 +1082,23 @@ export const edgeSchema = z.object({
   label: z.string().nullable().optional(),
 });
 
-export type EdgeDto = z.infer<typeof edgeSchema>;
+export interface EdgeDto {
+  id: string;
+  createdAt?: string | undefined;
+  updatedAt?: string | null | undefined;
+  source?: string | undefined;
+  target?: string | undefined;
+  sourceHandle?: string | null | undefined;
+  targetHandle?: string | null | undefined;
+  type?: string | undefined;
+  data?: Record<string, unknown> | undefined;
+  from?: string | undefined;
+  to?: string | undefined;
+  fromPort?: string | null | undefined;
+  toPort?: string | null | undefined;
+  label?: string | null | undefined;
+}
+
 export type Edge = EdgeDto;
 
 export const nodeDefinitionSchema = z.object({

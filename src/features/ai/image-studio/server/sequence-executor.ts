@@ -205,8 +205,8 @@ const persistSequenceOutputSlot = async (params: {
     filepath: publicPath,
     mimetype: params.mimeType,
     size: params.buffer.length,
-    width: metadataInfo?.width ?? null,
-    height: metadataInfo?.height ?? null,
+    width: metadataInfo?.width ?? undefined,
+    height: metadataInfo?.height ?? undefined,
     tags: ['image-studio', 'sequence', params.group],
   });
 

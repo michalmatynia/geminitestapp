@@ -51,7 +51,7 @@ const buildWorkspaceFixture = (): CaseResolverWorkspace => {
       nodeFileAssetIdByNode: {
         'node-b': 'asset-node-b',
       },
-    },
+    } as any,
   });
 
   return {

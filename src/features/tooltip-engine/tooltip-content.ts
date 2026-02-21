@@ -6,7 +6,7 @@ import {
 } from '@/features/documentation';
 
 export const formatDocumentationTooltip = (entry: DocumentationEntry): string =>
-  `${entry.title}: ${entry.summary}`;
+  `${entry.title}: ${entry.content}`;
 
 export const getDocumentationTooltip = (
   moduleId: DocumentationModuleId,

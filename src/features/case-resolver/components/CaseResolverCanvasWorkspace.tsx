@@ -860,6 +860,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         selectedPromptInputText={selectedPromptInputText}
         selectedPromptOutputPreview={selectedPromptOutputPreview}
         selectedCanvasFileId={activeFile?.id ?? null}
+        selectedWorkspaceId={workspace?.id ?? null}
         onEditFile={onEditFile}
         onUpdateSelectedNodeMeta={updateSelectedNodeMeta}
         selectedEdge={selectedEdge}

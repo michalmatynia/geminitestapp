@@ -38,6 +38,8 @@ describe('canvas-resize utilities', () => {
         id: 'shape-1',
         name: 'Rect 1',
         type: 'rect',
+        role: 'custom',
+        style: {},
         points: [
           { x: 0.5, y: 0.5 },
           { x: 0.8, y: 0.9 },
@@ -88,6 +90,8 @@ describe('canvas-resize utilities', () => {
         id: 'shape-2',
         name: 'Point',
         type: 'polygon',
+        role: 'custom',
+        style: {},
         points: [
           { x: 0.25, y: 0.25 },
           { x: 0.3, y: 0.25 },

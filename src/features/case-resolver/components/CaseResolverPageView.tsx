@@ -44,6 +44,7 @@ import {
 } from '@/shared/ui';
 import { sanitizeHtml } from '@/shared/utils';
 
+import { buildMissingSelectedPartyOption } from './case-resolver-party-select';
 import { CaseResolverCanvasWorkspace } from './CaseResolverCanvasWorkspace';
 import { CaseResolverCaseOverviewWorkspace } from './CaseResolverCaseOverviewWorkspace';
 import { CaseResolverFileViewer } from './CaseResolverFileViewer';
@@ -390,6 +391,10 @@ export function CaseResolverPageView(
         );
         if (selectedOption) {
           return [selectedOption, ...filtered];
+        }
+        const missingSelectedOption = buildMissingSelectedPartyOption(selectedReference);
+        if (missingSelectedOption) {
+          return [missingSelectedOption, ...filtered];
         }
       }
       return filtered;

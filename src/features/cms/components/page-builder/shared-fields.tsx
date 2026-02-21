@@ -1,6 +1,6 @@
 'use client';
 
-import { Upload, FolderOpen, Loader2 } from 'lucide-react';
+import { Upload, FolderOpen } from 'lucide-react';
 import NextImage from 'next/image';
 import React, { useState } from 'react';
 

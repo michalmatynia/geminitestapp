@@ -565,16 +565,16 @@ export const generateAnalyticsInsight = async (params: {
   const insight = await appendAiInsight('analytics', {
     name: 'Analytics Insight',
     status: parsed.status,
-    score: parsed.status === 'ok' ? 100 : 50,
-    summary: parsed.summary,
-    warnings: parsed.warnings,
-    recommendations: parsed.recommendations,
     source: params.source,
+    score: parsed.status === 'ok' ? 100 : 50,
     content: payload as any,
     metadata: {
       model: { provider, modelId, agentId },
       window: { from: summary.from, to: summary.to, scope: summary.scope ?? 'all' },
     },
+    summary: parsed.summary,
+    warnings: parsed.warnings,
+    recommendations: parsed.recommendations,
   });
   await recordBrainInsightAnalytics({
     type: 'analytics',

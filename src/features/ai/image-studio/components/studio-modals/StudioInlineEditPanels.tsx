@@ -9,6 +9,7 @@ import {
   formatBytes,
   formatDateTime,
   formatLinkedVariantTimestamp,
+  EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
 } from './slot-inline-edit-utils';
 import { SlotInlineEditCardTab } from './SlotInlineEditCardTab';
 import { SlotInlineEditCompositesTab } from './SlotInlineEditCompositesTab';

@@ -7,15 +7,24 @@ declare module 'pdf-parse' {
 
 declare module 'next-auth' {
   interface Session {
-    user: DefaultSession['user'] & {
-      id?: string;
-      role?: string | null;
-      permissions?: string[];
-      roleLevel?: number | null;
-      isElevated?: boolean;
-      accountDisabled?: boolean;
-      accountBanned?: boolean;
-    };
+    user: {
+      id: string;
+      role: string | null;
+      roleLevel: number | null;
+      isElevated: boolean;
+      permissions: string[];
+      accountDisabled: boolean;
+      accountBanned: boolean;
+    } & DefaultSession['user'];
+  }
+
+  interface User {
+    role?: string | null;
+    roleLevel?: number | null;
+    isElevated?: boolean;
+    permissions?: string[];
+    accountDisabled?: boolean;
+    accountBanned?: boolean;
   }
 }
 

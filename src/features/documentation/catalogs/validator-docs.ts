@@ -1,11 +1,21 @@
-import type {
-  DocumentationFunctionDocDto,
-  DocumentationUiDocDto,
-} from '@/shared/contracts/documentation';
+export type ValidatorFunctionDoc = {
+  id: string;
+  symbol: string;
+  file: string;
+  purpose: string;
+  params: string[];
+  returns: string;
+  errors: string[];
+  edgeCases: string[];
+  example: string;
+};
 
-export type ValidatorFunctionDoc = DocumentationFunctionDocDto;
-
-export type ValidatorUiDoc = DocumentationUiDocDto;
+export type ValidatorUiDoc = {
+  id: string;
+  title: string;
+  description: string;
+  relatedFunctions: string[];
+};
 
 export const VALIDATOR_FUNCTION_DOCS: ValidatorFunctionDoc[] = [
   {

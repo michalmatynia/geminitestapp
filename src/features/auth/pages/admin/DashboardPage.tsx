@@ -6,7 +6,7 @@ import { useAuth } from '@/features/auth/context/AuthContext';
 import { useAuthUsers } from '@/features/auth/hooks/useAuthQueries';
 import type { AuthRole } from '@/features/auth/utils/auth-management';
 import { logClientError } from '@/features/observability';
-import type { AuthUserSummary } from '@/shared/contracts/auth';
+import type { AuthUserDto as AuthUserSummary } from '@/shared/contracts/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, useToast, SectionHeader, Alert, MetadataItem, LoadingState } from '@/shared/ui';
 
 export default function AuthDashboardPage(): React.JSX.Element {

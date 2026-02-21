@@ -35,7 +35,7 @@ for (const entry of DOCUMENTATION_CATALOG) {
   const aliases = [
     entry.id,
     entry.title,
-    ...entry.aliases,
+    ...entry.keywords,
   ];
   for (const alias of aliases) {
     const normalizedAlias = normalize(alias);
@@ -98,7 +98,7 @@ export function resolveDocumentationEntry(
     const [rawModuleId, ...rest] = idOrKey.split(':');
     const localId = rest.join(':');
     if (rawModuleId && localId) {
-      return getDocumentationEntry(rawModuleId, localId);
+      return getDocumentationEntry(rawModuleId as DocumentationModuleId, localId);
     }
   }
   return getDocumentationEntry(moduleId, idOrKey);
@@ -149,11 +149,9 @@ export function searchDocumentationEntries(
     const haystack = normalize([
       entry.id,
       entry.title,
-      entry.summary,
-      entry.section ?? '',
-      entry.aliases.join(' '),
-      entry.docPath ?? '',
-      entry.tags?.join(' ') ?? '',
+      entry.content,
+      entry.keywords.join(' '),
+      entry.relatedLinks?.join(' ') ?? '',
     ].join(' '));
     return haystack.includes(normalizedQuery);
   });

@@ -118,11 +118,11 @@ const createAddresseeCandidate = (): PromptExploderCaseResolverPartyCandidate =>
 const createSettings = (): CaseResolverCaptureSettings => ({
   ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS,
   roleMappings: {
-    addresser: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser } as any,
-    addressee: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee } as any,
-    subject: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.subject } as any,
-    reference: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.reference } as any,
-    other: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.other } as any,
+    addresser: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser },
+    addressee: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee },
+    subject: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.subject },
+    reference: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.reference },
+    other: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.other },
   },
 });
 
@@ -142,7 +142,11 @@ describe('case-resolver-capture proposals', () => {
     expect(state?.addresser?.sourceRole).toBe('addresser');
     expect(state?.addresser?.action).toBe('useMatched');
     expect(state?.addresser?.matchKind).toBe('party_and_address');
-    expect(state?.addresser?.existingReference).toEqual({ kind: 'person', id: 'p-1' });
+    expect(state?.addresser?.existingReference).toEqual({ 
+      kind: 'person', 
+      id: 'p-1',
+      name: 'Michał Matynia'
+    });
     expect(state?.addresser?.existingAddressId).toBe('addr-1');
     expect(state?.addressee).toBeNull();
   });
@@ -245,6 +249,8 @@ describe('case-resolver-capture proposals', () => {
     const payload: PromptExploderCaseResolverPartyBundle = {
       addresser: {
         ...createAddresserCandidate(),
+        id: 'cand-new',
+        name: 'Jan Kowalski',
         displayName: 'Jan Kowalski',
         firstName: 'Jan',
         lastName: 'Kowalski',
@@ -267,6 +273,9 @@ describe('case-resolver-capture proposals', () => {
     const payload: PromptExploderCaseResolverPartyBundle = {
       addresser: createAddresserCandidate(),
       addressee: {
+        id: 'cand-org-new',
+        name: 'Urzad Miasta',
+        score: 1,
         role: 'addressee',
         displayName: 'Urzad Miasta',
         rawText: 'Urzad Miasta\nNowa 7\n00-001 Warszawa\nPoland',
@@ -288,13 +297,20 @@ describe('case-resolver-capture proposals', () => {
     );
 
     expect(state?.addresser?.action).toBe('useMatched');
-    expect(state?.addresser?.existingReference).toEqual({ kind: 'person', id: 'p-1' });
+    expect(state?.addresser?.existingReference).toEqual({ 
+      kind: 'person', 
+      id: 'p-1',
+      name: 'Michał Matynia'
+    });
     expect(state?.addressee?.action).toBe('createInFilemaker');
     expect(state?.addressee?.existingReference).toBeNull();
   });
 
   it('deduplicates equivalent addresser/addressee candidates and keeps organization as addressee', () => {
     const duplicatedOrganizationCandidate: PromptExploderCaseResolverPartyCandidate = {
+      id: 'cand-dup-1',
+      name: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
+      score: 1,
       role: 'addresser',
       displayName: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
       rawText: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie\nul. Matejki 22\n70-530 Szczecin',
@@ -307,6 +323,7 @@ describe('case-resolver-capture proposals', () => {
       addresser: duplicatedOrganizationCandidate,
       addressee: {
         ...duplicatedOrganizationCandidate,
+        id: 'cand-dup-2',
         role: 'addressee',
         sourcePatternLabels: ['Case Resolver Extract: Addressee Organization Name'],
       },
@@ -666,6 +683,8 @@ describe('case-resolver-capture proposals', () => {
     const payload: PromptExploderCaseResolverPartyBundle = {
       addressee: {
         ...createAddresseeCandidate(),
+        id: 'cand-addr-short',
+        name: 'Inspektorat ZUS w Gryficach',
         rawText: 'Inspektorat ZUS w Gryficach',
         street: undefined,
         streetNumber: undefined,
@@ -702,6 +721,8 @@ describe('case-resolver-capture proposals', () => {
     const payload: PromptExploderCaseResolverPartyBundle = {
       addresser: {
         ...createAddresserCandidate(),
+        id: 'cand-long-raw',
+        name: 'Michał Matynia',
         rawText: [
           'Michał Matynia',
           'Fioletowa 71/2',
@@ -738,6 +759,9 @@ describe('case-resolver-capture proposals', () => {
     ].join('\n');
     const payload: PromptExploderCaseResolverPartyBundle = {
       addressee: {
+        id: 'cand-flat',
+        name: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
+        score: 1,
         role: 'addressee',
         displayName: 'Zakład Ubezpieczeń Społecznych Oddział w Szczecinie',
         rawText:

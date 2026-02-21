@@ -141,6 +141,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setIsPromptExploderPartyProposalOpen,
     isApplyingPromptExploderPartyProposal,
     setIsApplyingPromptExploderPartyProposal,
+    refetchSettingsStore,
     confirmAction,
   } = state;
 
@@ -698,6 +699,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               key: FILEMAKER_DATABASE_KEY,
               value: JSON.stringify(normalizeFilemakerDatabase(nextDatabase)),
             });
+            refetchSettingsStore();
           } catch (error) {
             toast(
               error instanceof Error
@@ -742,15 +744,16 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         const nextAddresseeReference = acceptedAddressee
           ? normalizeRolePatchReference(rolePatches.addressee ?? null)
           : null;
-        const shouldPatchAddresser =
+        const precheckShouldPatchAddresser =
           acceptedAddresser &&
           !areRolePatchReferencesEqual(targetFile.addresser, nextAddresserReference);
-        const shouldPatchAddressee =
+        const precheckShouldPatchAddressee =
           acceptedAddressee &&
           !areRolePatchReferencesEqual(targetFile.addressee, nextAddresseeReference);
-        const changedPartyRoles: string[] = [];
-        if (shouldPatchAddresser) changedPartyRoles.push('Addresser');
-        if (shouldPatchAddressee) changedPartyRoles.push('Addressee');
+        let appliedAddresserReferencePatch = false;
+        let appliedAddresseeReferencePatch = false;
+        let appliedDocumentDatePatch = false;
+        let appliedExplodedCleanupPatch = false;
 
         const dateProposal = nextProposalState.documentDate;
         const shouldAcceptDate =
@@ -759,7 +762,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         const acceptedDateValue = shouldAcceptDate
           ? dateProposal.isoDate.trim()
           : null;
-        const shouldPatchDocumentDate =
+        const precheckShouldPatchDocumentDate =
           acceptedDateValue !== null && targetFile.documentDate !== acceptedDateValue;
         const cleanupProposalState: CaseResolverCaptureProposalState = {
           ...nextProposalState,
@@ -848,8 +851,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             targetFileId,
             appliedAddresser: acceptedAddresser,
             appliedAddressee: acceptedAddressee,
-            changedAddresserReference: shouldPatchAddresser,
-            changedAddresseeReference: shouldPatchAddressee,
+            changedAddresserReference: precheckShouldPatchAddresser,
+            changedAddresseeReference: precheckShouldPatchAddressee,
             appliedDate: shouldAcceptDate,
             cleanupChanged: hasExplodedCleanup,
             cleanupSourceWasHtml: cleanupResult.report.sourceWasHtml,
@@ -875,15 +878,15 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           ? toStorageDocumentValue(cleanedExplodedCanonical)
           : null;
 
-        const shouldPersistPatch =
-          shouldPatchAddresser ||
-          shouldPatchAddressee ||
-          shouldPatchDocumentDate ||
+        const shouldAttemptPersistPatch =
+          acceptedAddresser ||
+          acceptedAddressee ||
+          acceptedDateValue !== null ||
           hasExplodedCleanup;
         let captureApplyAttempts = 1;
-        const mutationStartedAtMs = shouldPersistPatch ? readCaptureApplyNowMs() : null;
+        const mutationStartedAtMs = shouldAttemptPersistPatch ? readCaptureApplyNowMs() : null;
 
-        if (shouldPersistPatch) {
+        if (shouldAttemptPersistPatch) {
           const now = new Date().toISOString();
           const runCaptureMutation = ({
             mutationTargetFileId,
@@ -908,14 +911,30 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 skipNormalization: true,
                 mutate: (file) => {
                   if (file.isLocked) return null;
+                  const fileShouldPatchAddresser =
+                    acceptedAddresser &&
+                    !areRolePatchReferencesEqual(file.addresser, nextAddresserReference);
+                  const fileShouldPatchAddressee =
+                    acceptedAddressee &&
+                    !areRolePatchReferencesEqual(file.addressee, nextAddresseeReference);
                   const fileShouldPatchDocumentDate =
                     acceptedDateValue !== null && file.documentDate !== acceptedDateValue;
+                  const fileShouldApplyExplodedCleanup =
+                    hasExplodedCleanup && Boolean(cleanedExplodedCanonical && cleanedExplodedStored);
                   const fileShouldPersistPatch =
-                    shouldPatchAddresser ||
-                    shouldPatchAddressee ||
+                    fileShouldPatchAddresser ||
+                    fileShouldPatchAddressee ||
                     fileShouldPatchDocumentDate ||
-                    hasExplodedCleanup;
+                    fileShouldApplyExplodedCleanup;
                   if (!fileShouldPersistPatch) return null;
+                  appliedAddresserReferencePatch =
+                    appliedAddresserReferencePatch || fileShouldPatchAddresser;
+                  appliedAddresseeReferencePatch =
+                    appliedAddresseeReferencePatch || fileShouldPatchAddressee;
+                  appliedDocumentDatePatch =
+                    appliedDocumentDatePatch || fileShouldPatchDocumentDate;
+                  appliedExplodedCleanupPatch =
+                    appliedExplodedCleanupPatch || fileShouldApplyExplodedCleanup;
                   const nextContentVersion = file.documentContentVersion + 1;
                   const nextDocumentHistory = hasExplodedCleanup
                     ? [
@@ -934,10 +953,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                     ].slice(0, 120)
                     : file.documentHistory;
                   return {
-                    ...(shouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
-                    ...(shouldPatchAddressee ? { addressee: rolePatches.addressee ?? null } : {}),
+                    ...(fileShouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
+                    ...(fileShouldPatchAddressee ? { addressee: rolePatches.addressee ?? null } : {}),
                     ...(fileShouldPatchDocumentDate ? { documentDate: acceptedDateValue ?? '' } : {}),
-                    ...(hasExplodedCleanup && cleanedExplodedCanonical && cleanedExplodedStored
+                    ...(fileShouldApplyExplodedCleanup && cleanedExplodedCanonical && cleanedExplodedStored
                       ? {
                         explodedDocumentContent: cleanedExplodedStored,
                         ...(file.activeDocumentVersion === 'exploded'
@@ -1082,7 +1101,14 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           message: JSON.stringify({
             targetFileId,
             attempts: captureApplyAttempts,
-            shouldPersistPatch,
+            shouldPersistPatch: shouldAttemptPersistPatch,
+            precheckShouldPatchAddresser,
+            precheckShouldPatchAddressee,
+            precheckShouldPatchDocumentDate,
+            appliedAddresserReferencePatch,
+            appliedAddresseeReferencePatch,
+            appliedDocumentDatePatch,
+            appliedExplodedCleanupPatch,
             cleanupDurationMs,
             mutationDurationMs,
             totalDurationMs,
@@ -1110,12 +1136,19 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           return;
         }
 
+        const changedPartyRoles: string[] = [];
+        if (appliedAddresserReferencePatch) changedPartyRoles.push('Addresser');
+        if (appliedAddresseeReferencePatch) changedPartyRoles.push('Addressee');
         setIsPromptExploderPartyProposalOpen(false);
-        if (changedPartyRoles.length > 0 || shouldPatchDocumentDate || hasExplodedCleanup) {
+        if (
+          changedPartyRoles.length > 0 ||
+          appliedDocumentDatePatch ||
+          appliedExplodedCleanupPatch
+        ) {
           const successParts: string[] = [];
           if (changedPartyRoles.length > 0) successParts.push('document parties');
-          if (shouldPatchDocumentDate) successParts.push('document date');
-          if (hasExplodedCleanup) successParts.push('reassembled text cleanup');
+          if (appliedDocumentDatePatch) successParts.push('document date');
+          if (appliedExplodedCleanupPatch) successParts.push('reassembled text cleanup');
           toast(`Capture mapping applied to ${successParts.join(', ')}.`, { variant: 'success' });
           if (cleanupMissedAcceptedRoles.length > 0) {
             toast(
@@ -1164,6 +1197,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setIsPromptExploderPartyProposalOpen,
     setPromptExploderProposalDraft,
     setPromptExploderPartyProposal,
+    refetchSettingsStore,
     toast,
     updateSetting,
     updateWorkspace,

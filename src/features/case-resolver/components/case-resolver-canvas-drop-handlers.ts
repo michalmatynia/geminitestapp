@@ -5,6 +5,7 @@ import {
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   resolveCaseResolverPdfExtractionTemplate,
+  type CaseResolverAssetKind,
   type CaseResolverEdgeMeta,
   type CaseResolverFile,
   type CaseResolverGraph,
@@ -29,7 +30,7 @@ import {
 export type CaseResolverDroppedAsset = {
   id: string;
   name: string;
-  kind: 'node_file' | 'image' | 'pdf' | 'file';
+  kind: CaseResolverAssetKind;
   filepath: string | null;
   mimeType: string | null;
   size: number | null;

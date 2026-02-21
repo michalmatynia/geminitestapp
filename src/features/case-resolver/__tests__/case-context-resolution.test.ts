@@ -89,8 +89,8 @@ describe('case resolver case context resolution', () => {
         targetFolderPath: 'case-a/folder',
         ownerCaseId: 'case-a',
         folderRecords: [
-          { path: 'case-a/folder', ownerCaseId: 'case-a' },
-          { path: 'case-b/folder', ownerCaseId: 'case-b' },
+          { path: 'case-a/folder', ownerCaseId: 'case-a' } as any,
+          { path: 'case-b/folder', ownerCaseId: 'case-b' } as any,
         ],
       }),
     ).toBe('case-a/folder');
@@ -102,8 +102,8 @@ describe('case resolver case context resolution', () => {
         targetFolderPath: 'case-b/folder',
         ownerCaseId: 'case-a',
         folderRecords: [
-          { path: 'case-a/folder', ownerCaseId: 'case-a' },
-          { path: 'case-b/folder', ownerCaseId: 'case-b' },
+          { path: 'case-a/folder', ownerCaseId: 'case-a' } as any,
+          { path: 'case-b/folder', ownerCaseId: 'case-b' } as any,
         ],
       }),
     ).toBe('');
@@ -139,8 +139,8 @@ describe('case resolver case context resolution', () => {
       activeFileId: documentFile.id,
     };
 
-    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace)).toBe(
-      serializeWorkspaceForUnsavedChangesCheck(selectedOtherFileWorkspace)
+    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as any)).toBe(
+      serializeWorkspaceForUnsavedChangesCheck(selectedOtherFileWorkspace as any)
     );
   });
 
@@ -176,8 +176,8 @@ describe('case resolver case context resolution', () => {
       lastMutationAt: '2026-02-19T00:05:00.000Z',
     };
 
-    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace)).toBe(
-      serializeWorkspaceForUnsavedChangesCheck(revisionOnlyWorkspace)
+    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as any)).toBe(
+      serializeWorkspaceForUnsavedChangesCheck(revisionOnlyWorkspace as any)
     );
   });
 
@@ -219,8 +219,8 @@ describe('case resolver case context resolution', () => {
       },
     };
 
-    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace)).toBe(
-      serializeWorkspaceForUnsavedChangesCheck(reorderedWorkspace)
+    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as any)).toBe(
+      serializeWorkspaceForUnsavedChangesCheck(reorderedWorkspace as any)
     );
   });
 
@@ -260,8 +260,8 @@ describe('case resolver case context resolution', () => {
       ],
     };
 
-    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace)).not.toBe(
-      serializeWorkspaceForUnsavedChangesCheck(renamedDocumentWorkspace)
+    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as any)).not.toBe(
+      serializeWorkspaceForUnsavedChangesCheck(renamedDocumentWorkspace as any)
     );
   });
 });

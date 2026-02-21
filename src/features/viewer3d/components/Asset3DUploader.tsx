@@ -1,6 +1,6 @@
 'use client';
 
-import { Upload, Loader2, Plus, X } from 'lucide-react';
+import { Upload, Plus, X } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';

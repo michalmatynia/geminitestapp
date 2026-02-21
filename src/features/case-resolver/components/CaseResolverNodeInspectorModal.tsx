@@ -50,6 +50,7 @@ type CaseResolverNodeInspectorModalProps = {
     plainText: string;
   } | null;
   selectedCanvasFileId: string | null;
+  selectedWorkspaceId: string | null;
   onEditFile: (
     fileId: string,
     options?: { nodeContext?: CaseResolverEditorNodeContext | null }
@@ -69,6 +70,7 @@ export function CaseResolverNodeInspectorModal({
   selectedPromptInputText,
   selectedPromptOutputPreview,
   selectedCanvasFileId,
+  selectedWorkspaceId,
   onEditFile,
   onUpdateSelectedNodeMeta,
   selectedEdge,
@@ -112,11 +114,13 @@ export function CaseResolverNodeInspectorModal({
                       type='button'
                       className='h-8 rounded-md border border-sky-400/50 px-2 text-xs text-sky-100 hover:bg-sky-500/20'
                       onClick={(): void => {
-                        const nodeContext =
-                          selectedNode && selectedCanvasFileId
+                        const nodeContext: CaseResolverEditorNodeContext | null =
+                          selectedNode && selectedCanvasFileId && selectedWorkspaceId
                             ? {
                               nodeId: selectedNode.id,
-                              canvasFileId: selectedCanvasFileId,
+                              fileId: selectedCanvasFileId,
+                              workspaceId: selectedWorkspaceId,
+                              mode: 'wysiwyg',
                             }
                             : null;
                         onEditFile(
@@ -181,7 +185,7 @@ export function CaseResolverNodeInspectorModal({
                 <div className='flex items-center justify-between rounded border border-border/60 bg-card/30 px-3 py-2'>
                   <div className='text-xs text-gray-300'>Include node in compiled output</div>
                   <Checkbox
-                    checked={selectedPromptMeta.includeInOutput}
+                    checked={!!selectedPromptMeta.includeInOutput}
                     onCheckedChange={(checked: boolean): void => {
                       onUpdateSelectedNodeMeta({ includeInOutput: checked });
                     }}

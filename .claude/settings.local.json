@@ -80,7 +80,9 @@
       "Bash(npm ls:*)",
       "Bash(git diff:*)",
       "Bash(git log:*)",
-      "Bash(npx jest:*)"
+      "Bash(npx jest:*)",
+      "Bash(\"/Users/michalmatynia/Desktop/NPM/2026/Gemini new:*)",
+      "Bash(test:*)"
     ]
   }
 }

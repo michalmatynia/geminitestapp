@@ -306,6 +306,9 @@ export function useCaseResolverState() {
     },
     []
   );
+  const refetchSettingsStore = useCallback((): void => {
+    settingsStoreRef.current.refetch();
+  }, []);
   const transitionPromptExploderApplyDiagnostics = useCallback(
     (input: {
       nextStatus: PromptExploderTransferUiStatus;
@@ -2161,6 +2164,7 @@ export function useCaseResolverState() {
     setIsPromptExploderPartyProposalOpen,
     isApplyingPromptExploderPartyProposal,
     setIsApplyingPromptExploderPartyProposal,
+    refetchSettingsStore,
     confirmAction: confirm,
     ConfirmationModal,
     PromptInputModal,

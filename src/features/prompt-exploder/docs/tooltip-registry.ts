@@ -20,10 +20,10 @@ export const resolvePromptExploderTooltipDoc = (
   return {
     id: entry.id,
     title: entry.title,
-    summary: entry.summary,
-    section: entry.section ?? 'General',
-    aliases: entry.aliases,
-    docPath: entry.docPath ?? '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
+    summary: entry.content,
+    section: 'General',
+    aliases: entry.keywords,
+    docPath: entry.relatedLinks?.[0] ?? '/docs/PROMPT_EXPLODER_FEATURE_DOCUMENTATION.md',
   };
 };
 
@@ -33,10 +33,9 @@ export const buildPromptExploderTooltipText = (
   id: doc.id,
   moduleId: MODULE_ID,
   title: doc.title,
-  summary: doc.summary,
-  section: doc.section,
-  aliases: doc.aliases,
-  docPath: doc.docPath,
+  content: doc.summary,
+  keywords: doc.aliases,
+  ...(doc.docPath ? { relatedLinks: [doc.docPath] } : {}),
 });
 
 export const promptExploderGenericTooltip = (_element: HTMLElement): string => {

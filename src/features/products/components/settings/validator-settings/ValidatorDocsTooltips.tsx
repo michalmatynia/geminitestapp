@@ -40,8 +40,8 @@ export function ValidatorDocsTooltipsProvider({
     return {
       id: entry.id,
       title: entry.title,
-      description: entry.summary,
-      relatedFunctions: entry.aliases,
+      description: entry.content,
+      relatedFunctions: entry.keywords,
     };
   }, []);
 

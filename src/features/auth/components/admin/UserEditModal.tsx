@@ -7,7 +7,7 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import { StatusToggle, MetadataItem, LoadingState, ToggleRow } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-import type { AuthUserSummary } from '../../types';
+import type { AuthUserDto as AuthUserSummary } from '@/shared/contracts/auth';
 
 interface UserEditModalProps extends EntityModalProps<AuthUserSummary> {
   setEditingUser: React.Dispatch<React.SetStateAction<AuthUserSummary | null>>;

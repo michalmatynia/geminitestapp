@@ -24,7 +24,7 @@ import { type AiNode, type AiEdge, type NodeDefinition } from '@/shared/contract
 import {
   type CaseResolverIdentifier,
   type CaseResolverFile,
-  type CaseResolverNodeFileMeta,
+  type CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
   type CaseResolverNodeFileSnapshot,
   type CaseResolverScanSlot,
 } from '@/shared/contracts/case-resolver';
@@ -96,7 +96,7 @@ const resolveContentPreview = (file: CaseResolverFile): string => {
   }
   if (file.fileType === 'scanfile') {
     const combined = file.scanSlots
-      .map((slot: CaseResolverScanSlot) => slot.ocrText.trim())
+      .map((slot: CaseResolverScanSlot): string => (slot.ocrText ?? '').trim())
       .filter(Boolean)
       .join('\n\n');
     if (!combined) return '';
@@ -119,7 +119,7 @@ const resolveSearchableDocumentContent = (file: CaseResolverFile): string => {
   }
   if (file.fileType === 'scanfile') {
     const combined = file.scanSlots
-      .map((slot: CaseResolverScanSlot): string => slot.ocrText.trim())
+      .map((slot: CaseResolverScanSlot): string => (slot.ocrText ?? '').trim())
       .filter(Boolean)
       .join('\n');
     return combined.length > SEARCHABLE_CONTENT_MAX_CHARS

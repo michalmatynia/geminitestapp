@@ -35,7 +35,7 @@ export type CaseResolverDocumentNodePort = CaseResolverDocumentNodePortDto;
 /**
  * Case Resolver Asset Kinds
  */
-export const caseResolverAssetKindSchema = z.enum(['document', 'folder', 'workspace']);
+export const caseResolverAssetKindSchema = z.enum(['document', 'folder', 'workspace', 'pdf', 'image', 'file', 'node_file']);
 export type CaseResolverAssetKindDto = z.infer<typeof caseResolverAssetKindSchema>;
 export type CaseResolverAssetKind = CaseResolverAssetKindDto;
 
@@ -268,24 +268,22 @@ export const caseResolverNodeFileMetaSchema = z.object({
   assignedAt: z.string(),
 });
 
-export type CaseResolverNodeFileMetaDto = z.infer<typeof caseResolverNodeFileMetaSchema>;
-export type CaseResolverNodeFileMeta = CaseResolverNodeFileMetaDto;
-
-export const caseResolverNodeFileAssignmentSchema = z.object({
-  nodeId: z.string(),
-  fileId: z.string(),
-  url: z.string(),
-  thumbnailUrl: z.string().optional(),
-});
-
-export interface CaseResolverNodeFileAssignmentDto {
+export interface CaseResolverNodeFileMetaDto {
+  id: string;
   nodeId: string;
   fileId: string;
-  url: string;
-  thumbnailUrl?: string | undefined;
+  assignedAt: string;
 }
 
-export type CaseResolverNodeFileAssignment = CaseResolverNodeFileAssignmentDto;
+export type CaseResolverNodeFileMeta = CaseResolverNodeFileMetaDto;
+
+export interface CaseResolverSnapshotNodeMetaDto {
+  fileId: string;
+  fileType: CaseResolverFileType;
+  fileName: string;
+}
+
+export type CaseResolverSnapshotNodeMeta = CaseResolverSnapshotNodeMetaDto;
 
 export const caseResolverNodeFileSnapshotSchema = z.object({
   kind: z.literal('case_resolver_node_file_snapshot_v1'),
@@ -300,13 +298,10 @@ export const caseResolverNodeFileSnapshotSchema = z.object({
 
 export interface CaseResolverNodeFileSnapshotDto {
   kind: 'case_resolver_node_file_snapshot_v1';
+  source?: 'manual' | 'auto' | undefined;
   nodes: AiNode[];
   edges: any[];
-  nodeFileMeta: Record<string, {
-    fileId: string;
-    fileType: CaseResolverFileType;
-    fileName: string;
-  }>;
+  nodeFileMeta: Record<string, CaseResolverSnapshotNodeMeta>;
 }
 
 export type CaseResolverNodeFileSnapshot = CaseResolverNodeFileSnapshotDto;
@@ -402,12 +397,39 @@ export type CaseResolverFileDto = DtoBase & {
 export type CaseResolverFile = CaseResolverFileDto;
 
 export const caseResolverFileEditDraftSchema = z.object({
+  id: z.string(),
   name: z.string(),
   content: z.string(),
+  fileType: caseResolverFileTypeSchema,
   graph: caseResolverGraphSchema.optional(),
+  addresser: caseResolverPartyReferenceSchema.nullable().optional(),
+  addressee: caseResolverPartyReferenceSchema.nullable().optional(),
+  documentHistory: z.array(z.any()).optional(),
+  documentContentPlainText: z.string().optional(),
+  documentContentHtml: z.string().optional(),
+  documentContentMarkdown: z.string().optional(),
+  originalDocumentContent: z.string().optional(),
+  scanSlots: z.array(z.any()).optional(),
+  editorType: z.string().optional(),
 });
 
-export type CaseResolverFileEditDraftDto = z.infer<typeof caseResolverFileEditDraftSchema>;
+export interface CaseResolverFileEditDraftDto {
+  id: string;
+  name: string;
+  content: string;
+  fileType: CaseResolverFileType;
+  graph?: CaseResolverGraph | undefined;
+  addresser?: CaseResolverPartyReference | null | undefined;
+  addressee?: CaseResolverPartyReference | null | undefined;
+  documentHistory?: any[] | undefined;
+  documentContentPlainText?: string | undefined;
+  documentContentHtml?: string | undefined;
+  documentContentMarkdown?: string | undefined;
+  originalDocumentContent?: string | undefined;
+  scanSlots?: any[] | undefined;
+  editorType?: string | undefined;
+}
+
 export type CaseResolverFileEditDraft = CaseResolverFileEditDraftDto;
 
 export const caseResolverAssetFileSchema = dtoBaseSchema.extend({

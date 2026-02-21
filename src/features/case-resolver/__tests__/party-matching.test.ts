@@ -82,6 +82,9 @@ const createDatabase = (): FilemakerDatabase => ({
 const createCandidate = (
   patch: Partial<PromptExploderCaseResolverPartyCandidate>
 ): PromptExploderCaseResolverPartyCandidate => ({
+  id: 'c-1',
+  name: 'Candidate',
+  score: 100,
   role: 'addresser',
   displayName: '',
   rawText: '',

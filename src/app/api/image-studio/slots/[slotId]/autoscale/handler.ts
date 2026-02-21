@@ -4,6 +4,7 @@ import path from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
+import { z } from 'zod';
 
 import type {
   ImageStudioDetectionDetails,
@@ -132,6 +133,117 @@ const parseJsonFormValue = <T,>(value: FormDataEntryValue | null): T | undefined
   } catch {
     return undefined;
   }
+};
+
+const coerceFiniteNumber = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const coerceBoolean = (value: unknown): boolean | null => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === 'true' || normalized === '1') return true;
+  if (normalized === 'false' || normalized === '0') return false;
+  return null;
+};
+
+const normalizeAutoScaleLayoutPayload = (value: unknown): Record<string, unknown> | undefined => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+  const layout = value as Record<string, unknown>;
+  const normalized: Record<string, unknown> = {};
+
+  const paddingPercent = coerceFiniteNumber(layout['paddingPercent']);
+  if (paddingPercent !== null) normalized['paddingPercent'] = paddingPercent;
+  const paddingXPercent = coerceFiniteNumber(layout['paddingXPercent']);
+  if (paddingXPercent !== null) normalized['paddingXPercent'] = paddingXPercent;
+  const paddingYPercent = coerceFiniteNumber(layout['paddingYPercent']);
+  if (paddingYPercent !== null) normalized['paddingYPercent'] = paddingYPercent;
+
+  const fillMissingCanvasWhite = coerceBoolean(layout['fillMissingCanvasWhite']);
+  if (fillMissingCanvasWhite !== null) normalized['fillMissingCanvasWhite'] = fillMissingCanvasWhite;
+
+  const targetCanvasWidth = coerceFiniteNumber(layout['targetCanvasWidth']);
+  if (targetCanvasWidth !== null) normalized['targetCanvasWidth'] = Math.round(targetCanvasWidth);
+  const targetCanvasHeight = coerceFiniteNumber(layout['targetCanvasHeight']);
+  if (targetCanvasHeight !== null) normalized['targetCanvasHeight'] = Math.round(targetCanvasHeight);
+  const whiteThreshold = coerceFiniteNumber(layout['whiteThreshold']);
+  if (whiteThreshold !== null) normalized['whiteThreshold'] = Math.round(whiteThreshold);
+  const chromaThreshold = coerceFiniteNumber(layout['chromaThreshold']);
+  if (chromaThreshold !== null) normalized['chromaThreshold'] = Math.round(chromaThreshold);
+
+  const shadowPolicy = typeof layout['shadowPolicy'] === 'string' ? layout['shadowPolicy'].trim() : '';
+  if (shadowPolicy) normalized['shadowPolicy'] = shadowPolicy;
+  const detection = typeof layout['detection'] === 'string' ? layout['detection'].trim() : '';
+  if (detection) normalized['detection'] = detection;
+
+  return Object.keys(normalized).length > 0 ? normalized : undefined;
+};
+
+const normalizeAutoScaleRequestBody = (body: unknown): Record<string, unknown> => {
+  const normalized =
+    body && typeof body === 'object' && !Array.isArray(body)
+      ? { ...(body as Record<string, unknown>) }
+      : {};
+
+  const nestedAutoScale = normalized['autoscale'];
+  if (nestedAutoScale && typeof nestedAutoScale === 'object' && !Array.isArray(nestedAutoScale)) {
+    Object.assign(normalized, nestedAutoScale as Record<string, unknown>);
+  }
+
+  const normalizedMode = typeof normalized['mode'] === 'string' ? normalized['mode'].trim() : '';
+  normalized['mode'] = normalizedMode || 'server_auto_scaler_v1';
+
+  const normalizedDataUrl = typeof normalized['dataUrl'] === 'string' ? normalized['dataUrl'].trim() : '';
+  if (normalizedDataUrl) {
+    normalized['dataUrl'] = normalizedDataUrl;
+  } else {
+    delete normalized['dataUrl'];
+  }
+
+  const normalizedName = typeof normalized['name'] === 'string' ? normalized['name'].trim() : '';
+  if (normalizedName) {
+    normalized['name'] = normalizedName;
+  } else {
+    delete normalized['name'];
+  }
+
+  const normalizedRequestId = typeof normalized['requestId'] === 'string' ? normalized['requestId'].trim() : '';
+  if (normalizedRequestId) {
+    normalized['requestId'] = normalizedRequestId;
+  } else {
+    delete normalized['requestId'];
+  }
+
+  const normalizedLayout = normalizeAutoScaleLayoutPayload(normalized['layout']);
+  if (normalizedLayout) {
+    normalized['layout'] = normalizedLayout;
+  } else {
+    delete normalized['layout'];
+  }
+
+  return normalized;
+};
+
+const parseAutoScaleResponsePayload = (
+  payload: unknown,
+  meta?: Record<string, unknown>
+) => {
+  const parsed = imageStudioAutoScalerResponseSchema.safeParse(payload);
+  if (parsed.success) return parsed.data;
+  throw autoScaleBadRequest(
+    IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.OUTPUT_INVALID,
+    'Invalid auto scaler response payload.',
+    {
+      responseErrors: parsed.error.format(),
+      ...(meta ?? {}),
+    }
+  );
 };
 
 async function parseAutoScalerRequestPayload(
@@ -765,14 +877,7 @@ export async function postAutoScaleSlotHandler(
 
   const startedAt = Date.now();
   const { body, uploadedClientImage } = await parseAutoScalerRequestPayload(req);
-  const normalizedBody =
-    body && typeof body === 'object' && !Array.isArray(body)
-      ? { ...(body as Record<string, unknown>) }
-      : {};
-  const normalizedMode = typeof normalizedBody['mode'] === 'string' ? normalizedBody['mode'].trim() : '';
-  if (!normalizedMode) {
-    normalizedBody['mode'] = 'server_auto_scaler_v1';
-  }
+  const normalizedBody = normalizeAutoScaleRequestBody(body);
   const parsed = imageStudioAutoScalerRequestSchema.safeParse(normalizedBody);
   if (!parsed.success) {
     throw autoScaleBadRequest(
@@ -840,7 +945,7 @@ export async function postAutoScaleSlotHandler(
       const existingSlot = await getImageStudioSlotById(existingByRequest.targetSlotId);
       if (existingSlot) {
         const existingAutoScale = readAutoScaleMetadataFromSlot(existingSlot);
-        const responseBody = imageStudioAutoScalerResponseSchema.parse({
+        const responseBody = parseAutoScaleResponsePayload({
           sourceSlotId: sourceSlot.id,
           slot: existingSlot,
           mode: payload.mode,
@@ -862,6 +967,10 @@ export async function postAutoScaleSlotHandler(
           dedupeReason: 'request',
           lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
           pipelineVersion: AUTOSCALE_PIPELINE_VERSION,
+        }, {
+          responseStage: 'request_dedupe',
+          sourceSlotId: sourceSlot.id,
+          targetSlotId: existingSlot.id,
         });
         return NextResponse.json(responseBody, { status: 200 });
       }
@@ -878,7 +987,7 @@ export async function postAutoScaleSlotHandler(
       const existingSlot = await getImageStudioSlotById(existingFingerprintLink.targetSlotId);
       if (existingSlot) {
         const existingAutoScale = readAutoScaleMetadataFromSlot(existingSlot);
-        const responseBody = imageStudioAutoScalerResponseSchema.parse({
+        const responseBody = parseAutoScaleResponsePayload({
           sourceSlotId: sourceSlot.id,
           slot: existingSlot,
           mode: payload.mode,
@@ -900,6 +1009,10 @@ export async function postAutoScaleSlotHandler(
           dedupeReason: 'fingerprint',
           lifecycle: { state: 'persisted', durationMs: Date.now() - startedAt },
           pipelineVersion: AUTOSCALE_PIPELINE_VERSION,
+        }, {
+          responseStage: 'fingerprint_dedupe',
+          sourceSlotId: sourceSlot.id,
+          targetSlotId: existingSlot.id,
         });
         return NextResponse.json(responseBody, { status: 200 });
       }
@@ -1087,7 +1200,7 @@ export async function postAutoScaleSlotHandler(
       },
     });
 
-    const responseBody = imageStudioAutoScalerResponseSchema.parse({
+    const responseBody = parseAutoScaleResponsePayload({
       sourceSlotId: sourceSlot.id,
       mode: payload.mode,
       effectiveMode: processed.effectiveMode,
@@ -1112,27 +1225,41 @@ export async function postAutoScaleSlotHandler(
         durationMs,
       },
       pipelineVersion: AUTOSCALE_PIPELINE_VERSION,
+    }, {
+      responseStage: 'created',
+      sourceSlotId: sourceSlot.id,
+      targetSlotId: createdSlot.id,
+      requestId: idempotencyKey,
     });
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
+    const normalizedError =
+      error instanceof z.ZodError
+        ? autoScaleBadRequest(
+          IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.OUTPUT_INVALID,
+          'Auto scaler schema validation failed.',
+          { responseErrors: error.format() }
+        )
+        : error;
+
     void logSystemEvent({
       level: 'warn',
       source: 'image-studio.autoscale',
       message: 'Image Studio auto scaler failed.',
       request: req,
       requestId: ctx.requestId,
-      error,
+      error: normalizedError,
       context: {
         projectId: sourceSlot.projectId,
         sourceSlotId: sourceSlot.id,
         mode: payload.mode,
         requestId: idempotencyKey,
         fingerprint,
-        autoScaleErrorCode: isAppError(error) ? error.meta?.['autoScaleErrorCode'] : undefined,
+        autoScaleErrorCode: isAppError(normalizedError) ? normalizedError.meta?.['autoScaleErrorCode'] : undefined,
         durationMs: Date.now() - startedAt,
       },
     });
-    throw error;
+    throw normalizedError;
   }
 }

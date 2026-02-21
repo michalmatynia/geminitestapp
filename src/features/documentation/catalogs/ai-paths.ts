@@ -14,10 +14,8 @@ export const AI_PATHS_DOCUMENTATION_CATALOG: DocumentationEntry[] = AI_PATHS_DOC
     id: entry.id,
     moduleId: DOCUMENTATION_MODULE_IDS.aiPaths,
     title: entry.title,
-    summary: entry.summary,
-    section: entry.section,
-    aliases: entry.aliases,
-    docPath: entry.docPath,
-    ...(entry.tags?.length ? { tags: entry.tags } : {}),
+    content: entry.summary,
+    keywords: entry.aliases,
+    ...(entry.docPath ? { relatedLinks: [entry.docPath] } : {}),
   }),
 );

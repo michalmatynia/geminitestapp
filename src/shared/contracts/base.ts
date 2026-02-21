@@ -17,13 +17,22 @@ export const dtoBaseSchema = z.object({
   createdAt: z.string().optional(),
   updatedAt: z.string().nullable().optional(),
 });
-export type DtoBase = z.infer<typeof dtoBaseSchema>;
+
+export interface DtoBase {
+  id: string;
+  createdAt?: string;
+  updatedAt?: string | null;
+}
 
 export const namedDtoSchema = dtoBaseSchema.extend({
   name: z.string(),
   description: z.string().nullable().optional(),
 });
-export type NamedDto = z.infer<typeof namedDtoSchema>;
+
+export interface NamedDto extends DtoBase {
+  name: string;
+  description?: string | null;
+}
 
 /**
  * Standard API error structure

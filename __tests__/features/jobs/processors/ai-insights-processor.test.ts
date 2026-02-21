@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
 import {
   generateAnalyticsInsight,
@@ -9,7 +10,6 @@ import {
 } from '@/features/ai/insights/generator';
 import { getAiInsightsMeta, setAiInsightsMeta } from '@/features/ai/insights/repository';
 import { tick } from '@/features/jobs/processors/ai-insights-processor';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { listSystemLogs } from '@/features/observability/server';
 
 vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({

@@ -102,8 +102,11 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
     setDraft({
       ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS,
       roleMappings: {
-        addresser: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser },
-        addressee: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee },
+        addresser: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser } as any,
+        addressee: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee } as any,
+        subject: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.subject } as any,
+        reference: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.reference } as any,
+        other: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.other } as any,
       },
     });
   };
@@ -227,7 +230,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
             <div className='grid gap-3 md:grid-cols-2'>
               <FormField label='Role Mapping Enabled' id={`mapping-enabled-${role}`}>
                 <SelectSimple
-                  value={toBooleanOptionValue(mapping.enabled)}
+                  value={toBooleanOptionValue(mapping.enabled ?? false)}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(role, 'enabled', fromBooleanOptionValue(value));
                   }}
@@ -266,7 +269,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
               </FormField>
               <FormField label='Auto-match Filemaker Party' id={`auto-match-party-${role}`}>
                 <SelectSimple
-                  value={toBooleanOptionValue(mapping.autoMatchPartyReference)}
+                  value={toBooleanOptionValue(mapping.autoMatchPartyReference ?? false)}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(role, 'autoMatchPartyReference', fromBooleanOptionValue(value));
                   }}
@@ -275,7 +278,7 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
               </FormField>
               <FormField label='Auto-match Filemaker Address' id={`auto-match-address-${role}`} className='md:col-span-2'>
                 <SelectSimple
-                  value={toBooleanOptionValue(mapping.autoMatchAddress)}
+                  value={toBooleanOptionValue(mapping.autoMatchAddress ?? false)}
                   onValueChange={(value: string): void => {
                     updateRoleMapping(role, 'autoMatchAddress', fromBooleanOptionValue(value));
                   }}

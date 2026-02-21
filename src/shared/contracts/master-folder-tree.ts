@@ -133,7 +133,7 @@ export const masterFolderTreePersistOperationSchema = z.discriminatedUnion('type
 ]);
 
 export type MasterFolderTreePersistOperationDto = z.infer<typeof masterFolderTreePersistOperationSchema>;
-export type MasterFolderTreePersistOperation = 'create' | 'update' | 'delete' | 'move' | 'refresh' | 'reorder' | 'rename' | 'replace_nodes';
+export type MasterFolderTreePersistOperation = MasterFolderTreePersistOperationDto;
 
 export const masterFolderTreeDragStateSchema = z.object({
   draggedNodeId: z.string(),

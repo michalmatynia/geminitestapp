@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { ExternalLink, Check, Loader2, Monitor, RotateCcw, RotateCw, Trash2 } from 'lucide-react';
+import { ExternalLink, Check, Monitor, RotateCcw, RotateCw, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 

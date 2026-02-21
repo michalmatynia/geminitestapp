@@ -56,8 +56,8 @@ const toVariantOutput = (
     filepath: output.filepath,
     filename: output.filename || fallbackFilename,
     size: typeof output.size === 'number' && Number.isFinite(output.size) ? output.size : 0,
-    width: typeof output.width === 'number' && Number.isFinite(output.width) ? output.width : null,
-    height: typeof output.height === 'number' && Number.isFinite(output.height) ? output.height : null,
+    width: output.width ?? null,
+    height: output.height ?? null,
   };
 };
 
@@ -173,11 +173,11 @@ const buildVariantFromSlot = (
   const output = slotImageFile
     ? {
       id: slotImageFile.id,
-      filepath: slotImageFile.url,
+      filepath: slotImageFile.filepath,
       filename: slotImageFile.filename || slot.name || `Generated ${fallbackIndex}`,
       size: slotImageFile.size,
-      width: slotImageFile.width,
-      height: slotImageFile.height,
+      width: slotImageFile.width ?? null,
+      height: slotImageFile.height ?? null,
     }
     : slot.imageFileId || safeSlotImageUrl
       ? {

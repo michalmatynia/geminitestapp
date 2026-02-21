@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ImageStudioSlotRecord } from '@/features/ai/image-studio/types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   toFolderMasterNodeId,
   toSlotMasterNodeId,
 } from '@/features/ai/image-studio/utils/master-folder-tree';
 import { createImageStudioMasterTreeAdapter } from '@/features/ai/image-studio/utils/studio-master-tree-adapter';
-import type { MasterFolderTreePersistContext } from '@/shared/contracts/master-folder-tree';
+import type { MasterFolderTreePersistContextDto as MasterFolderTreePersistContext } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const folderNode = (

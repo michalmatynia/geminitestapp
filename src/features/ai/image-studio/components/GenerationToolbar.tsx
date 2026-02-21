@@ -7,6 +7,7 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -17,8 +18,14 @@ import { useProjectsState } from '../context/ProjectsContext';
 import { useSettingsState, useSettingsActions } from '../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { useUiActions, useUiState } from '../context/UiContext';
-import { imageStudioAutoScalerResponseSchema } from '../contracts/autoscaler';
-import { imageStudioCenterResponseSchema } from '../contracts/center';
+import {
+  imageStudioAutoScalerRequestSchema,
+  imageStudioAutoScalerResponseSchema,
+} from '../contracts/autoscaler';
+import {
+  imageStudioCenterRequestSchema,
+  imageStudioCenterResponseSchema,
+} from '../contracts/center';
 import { createGenerationToolbarActionHandlers } from './generation-toolbar/generation-toolbar-action-handlers';
 import { GenerationToolbarAutoScalerSection } from './generation-toolbar/GenerationToolbarAutoScalerSection';
 import { GenerationToolbarCenterSection } from './generation-toolbar/GenerationToolbarCenterSection';
@@ -84,14 +91,13 @@ import {
 import { getImageStudioDocTooltip } from '../utils/studio-docs';
 import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
 
+import type { ImageStudioAnalysisSummaryChipData } from './ImageStudioAnalysisSummaryChip';
 import type { ImageStudioAutoScalerResponse } from '../contracts/autoscaler';
 import type {
   ImageStudioCenterDetectionMode,
   ImageStudioCenterResponse,
   ImageStudioCenterShadowPolicy,
 } from '../contracts/center';
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
-import type { ImageStudioAnalysisSummaryChipData } from './ImageStudioAnalysisSummaryChip';
 
 type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
 type UpscaleMode = 'client_canvas' | 'server_sharp';
@@ -191,6 +197,15 @@ const shouldFallbackToServerAutoScaler = (error: unknown): boolean => {
   return /invalid request payload|invalid auto scaler payload|invalid autoscaler payload/i.test(
     error.message
   );
+};
+
+const describeSchemaValidationIssue = (issues: Array<{ path: Array<string | number>; message: string }>): string => {
+  const firstIssue = issues[0];
+  if (!firstIssue) return 'Payload is invalid.';
+  const path = firstIssue.path.length > 0
+    ? firstIssue.path.map((part) => String(part)).join('.')
+    : 'payload';
+  return `${path}: ${firstIssue.message}`;
 };
 
 const normalizeMaskShapeForExport = (shape: unknown): MaskShapeForExport | null => {
@@ -1117,6 +1132,27 @@ export function GenerationToolbar(): React.JSX.Element {
     setCenterBusy(true);
     setCenterStatus('resolving');
     const centerRequestId = buildCenterRequestId();
+    const buildValidatedCenterRequestPayload = (mode: CenterMode): {
+      mode: CenterMode;
+      requestId: string;
+      layout?: Record<string, unknown>;
+    } => {
+      const validation = imageStudioCenterRequestSchema.safeParse({
+        mode,
+        requestId: centerRequestId,
+        ...(centerLayoutPayload ? { layout: centerLayoutPayload } : {}),
+      });
+      if (!validation.success) {
+        throw new Error(
+          `Center request payload is invalid (${describeSchemaValidationIssue(validation.error.issues)}).`
+        );
+      }
+      return validation.data as {
+        mode: CenterMode;
+        requestId: string;
+        layout?: Record<string, unknown>;
+      };
+    };
     const abortController = new AbortController();
     centerAbortControllerRef.current = abortController;
     try {
@@ -1145,16 +1181,17 @@ export function GenerationToolbar(): React.JSX.Element {
           }
 
           setCenterStatus('uploading');
+          const centerRequestPayload = buildValidatedCenterRequestPayload(centerMode);
           response = await withCenterRetry(
             () => {
               const formData = new FormData();
-              formData.append('mode', centerMode);
-              formData.append('requestId', centerRequestId);
-              if (centerLayoutPayload) {
+              formData.append('mode', centerRequestPayload.mode);
+              formData.append('requestId', centerRequestPayload.requestId);
+              if (centerRequestPayload.layout) {
                 formData.append(
                   'center',
                   JSON.stringify({
-                    layout: centerLayoutPayload,
+                    layout: centerRequestPayload.layout,
                   })
                 );
               }
@@ -1184,16 +1221,13 @@ export function GenerationToolbar(): React.JSX.Element {
             centerMode === 'client_object_layout_v1'
               ? 'server_object_layout_v1'
               : 'server_alpha_bbox';
+          const fallbackRequestPayload = buildValidatedCenterRequestPayload(fallbackMode);
           response = await withCenterRetry(
             () =>
               api
                 .post<unknown>(
                   `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
-                  {
-                    mode: fallbackMode,
-                    requestId: centerRequestId,
-                    ...(centerLayoutPayload ? { layout: centerLayoutPayload } : {}),
-                  },
+                  fallbackRequestPayload,
                   {
                     signal: abortController.signal,
                     timeout: CENTER_REQUEST_TIMEOUT_MS,
@@ -1215,16 +1249,13 @@ export function GenerationToolbar(): React.JSX.Element {
         }
       } else {
         setCenterStatus('processing');
+        const centerRequestPayload = buildValidatedCenterRequestPayload(centerMode);
         response = await withCenterRetry(
           () =>
             api
               .post<unknown>(
                 `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
-                {
-                  mode: centerMode,
-                  requestId: centerRequestId,
-                  ...(centerLayoutPayload ? { layout: centerLayoutPayload } : {}),
-                },
+                centerRequestPayload,
                 {
                   signal: abortController.signal,
                   timeout: CENTER_REQUEST_TIMEOUT_MS,
@@ -1361,6 +1392,27 @@ export function GenerationToolbar(): React.JSX.Element {
     setAutoScaleBusy(true);
     setAutoScaleStatus('resolving');
     const autoScaleRequestId = buildAutoScalerRequestId();
+    const buildValidatedAutoScaleRequestPayload = (mode: AutoScalerMode): {
+      mode: AutoScalerMode;
+      requestId: string;
+      layout?: Record<string, unknown>;
+    } => {
+      const validation = imageStudioAutoScalerRequestSchema.safeParse({
+        mode,
+        requestId: autoScaleRequestId,
+        layout: autoScaleLayoutPayload,
+      });
+      if (!validation.success) {
+        throw new Error(
+          `Auto scaler request payload is invalid (${describeSchemaValidationIssue(validation.error.issues)}).`
+        );
+      }
+      return validation.data as {
+        mode: AutoScalerMode;
+        requestId: string;
+        layout?: Record<string, unknown>;
+      };
+    };
     const abortController = new AbortController();
     autoScaleAbortControllerRef.current = abortController;
     try {
@@ -1388,12 +1440,15 @@ export function GenerationToolbar(): React.JSX.Element {
           }
 
           setAutoScaleStatus('uploading');
+          const autoScaleRequestPayload = buildValidatedAutoScaleRequestPayload(requestedMode);
           response = await withAutoScalerRetry(
             () => {
               const formData = new FormData();
-              formData.append('mode', requestedMode);
-              formData.append('requestId', autoScaleRequestId);
-              formData.append('layout', JSON.stringify(autoScaleLayoutPayload));
+              formData.append('mode', autoScaleRequestPayload.mode);
+              formData.append('requestId', autoScaleRequestPayload.requestId);
+              if (autoScaleRequestPayload.layout) {
+                formData.append('layout', JSON.stringify(autoScaleRequestPayload.layout));
+              }
               formData.append('image', uploadBlob, `autoscale-client-${Date.now()}.png`);
               return api
                 .post<unknown>(
@@ -1419,16 +1474,13 @@ export function GenerationToolbar(): React.JSX.Element {
           }
           setAutoScaleStatus('processing');
           const fallbackMode: AutoScalerMode = 'server_auto_scaler_v1';
+          const fallbackRequestPayload = buildValidatedAutoScaleRequestPayload(fallbackMode);
           response = await withAutoScalerRetry(
             () =>
               api
                 .post<unknown>(
                   `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
-                  {
-                    mode: fallbackMode,
-                    requestId: autoScaleRequestId,
-                    layout: autoScaleLayoutPayload,
-                  },
+                  fallbackRequestPayload,
                   {
                     signal: abortController.signal,
                     timeout: AUTOSCALER_REQUEST_TIMEOUT_MS,
@@ -1450,16 +1502,13 @@ export function GenerationToolbar(): React.JSX.Element {
         }
       } else {
         setAutoScaleStatus('processing');
+        const autoScaleRequestPayload = buildValidatedAutoScaleRequestPayload(requestedMode);
         response = await withAutoScalerRetry(
           () =>
             api
               .post<unknown>(
                 `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
-                {
-                  mode: requestedMode,
-                  requestId: autoScaleRequestId,
-                  layout: autoScaleLayoutPayload,
-                },
+                autoScaleRequestPayload,
                 {
                   signal: abortController.signal,
                   timeout: AUTOSCALER_REQUEST_TIMEOUT_MS,

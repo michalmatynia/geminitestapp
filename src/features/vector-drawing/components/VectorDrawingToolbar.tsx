@@ -70,7 +70,7 @@ const MIN_TOOLS: ToolOption[] = [
   { key: 'polygon', label: 'Pen', icon: <Pentagon className='size-4' /> },
 ];
 
-const VECTOR_TOOL_DOC_IDS: Record<VectorToolMode, string> = {
+const VECTOR_TOOL_DOC_IDS: Partial<Record<VectorToolMode, string>> = {
   select: 'vector_toolbar_tool_select',
   polygon: 'vector_toolbar_tool_polygon',
   lasso: 'vector_toolbar_tool_lasso',
@@ -141,7 +141,7 @@ export function VectorDrawingToolbar({
       {toolOptions.map((option: ToolOption) => (
         <Tooltip
           key={option.key}
-          content={resolveTooltip(VECTOR_TOOL_DOC_IDS[option.key], option.label)}
+          content={resolveTooltip(VECTOR_TOOL_DOC_IDS[option.key] ?? '', option.label)}
         >
           <Button
             type='button'

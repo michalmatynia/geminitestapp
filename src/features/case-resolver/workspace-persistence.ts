@@ -37,13 +37,13 @@ export type CaseResolverWorkspaceDebugEvent = {
   timestamp: string;
   source: string;
   action: string;
-  message?: string;
-  mutationId?: string | null;
-  expectedRevision?: number | null;
-  currentRevision?: number | null;
-  workspaceRevision?: number | null;
-  durationMs?: number;
-  payloadBytes?: number;
+  message?: string | undefined;
+  mutationId?: string | null | undefined;
+  expectedRevision?: number | null | undefined;
+  currentRevision?: number | null | undefined;
+  workspaceRevision?: number | null | undefined;
+  durationMs?: number | undefined;
+  payloadBytes?: number | undefined;
 };
 
 type SettingsRecordLike = {

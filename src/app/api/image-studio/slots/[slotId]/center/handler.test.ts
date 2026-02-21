@@ -713,6 +713,84 @@ describe('image-studio center handler', () => {
     expect(createImageStudioSlotsMock).not.toHaveBeenCalled();
   });
 
+  it('normalizes nested center payload and string layout values before validation', async () => {
+    const postCenterSlotHandler = await loadHandler();
+    const response = await postCenterSlotHandler(
+      buildRequest({
+        center: {
+          mode: ' server_object_layout_v1 ',
+          requestId: ' req_center_normalized_1234 ',
+          layout: {
+            paddingPercent: '8.5',
+            paddingXPercent: '9',
+            paddingYPercent: '7',
+            fillMissingCanvasWhite: 'true',
+            targetCanvasWidth: '40',
+            targetCanvasHeight: '30',
+            whiteThreshold: '18',
+            chromaThreshold: '9',
+            shadowPolicy: ' include_shadow ',
+            detection: ' white_bg_first_colored_pixel ',
+          },
+        },
+      }),
+      buildApiContext(),
+      { slotId: 'source-slot' }
+    );
+
+    const payload = (await response.json()) as Record<string, unknown>;
+    expect(response.status).toBe(201);
+    expect(payload['effectiveMode']).toBe('server_object_layout_v1');
+    expect(centerAndScaleObjectByLayoutMock).toHaveBeenCalledTimes(1);
+    expect(centerAndScaleObjectByLayoutMock).toHaveBeenCalledWith(sourceBuffer, {
+      paddingPercent: 8.5,
+      paddingXPercent: 9,
+      paddingYPercent: 7,
+      fillMissingCanvasWhite: true,
+      targetCanvasWidth: 40,
+      targetCanvasHeight: 30,
+      whiteThreshold: 18,
+      chromaThreshold: 9,
+      shadowPolicy: 'include_shadow',
+      detection: 'white_bg_first_colored_pixel',
+    });
+  });
+
+  it('maps center response-schema validation failures to OUTPUT_INVALID errors', async () => {
+    createImageStudioSlotsMock.mockResolvedValueOnce([
+      buildSlot({
+        id: 42 as unknown as string,
+        projectId: 'project-1',
+        name: 'Source • Centered',
+        imageFileId: 'image-file-center-1',
+        imageUrl: '/uploads/studio/center/project-1/source-slot/center-server_object_layout_v1.png',
+      }),
+    ]);
+
+    const postCenterSlotHandler = await loadHandler();
+    let thrown: unknown = null;
+    try {
+      await postCenterSlotHandler(
+        buildRequest({
+          mode: 'server_object_layout_v1',
+          requestId: 'req_output_invalid_center_1',
+        }),
+        buildApiContext(),
+        { slotId: 'source-slot' }
+      );
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).not.toBeNull();
+    expect((thrown as { code?: string }).code).toBe('BAD_REQUEST');
+    expect((thrown as { httpStatus?: number }).httpStatus).toBe(400);
+    expect((thrown as { meta?: Record<string, unknown> }).meta?.['centerErrorCode']).toBe(
+      IMAGE_STUDIO_CENTER_ERROR_CODES.OUTPUT_INVALID
+    );
+    expect((thrown as { meta?: Record<string, unknown> }).meta?.['responseStage']).toBe('created');
+  });
+
   it('throws bad request app error for invalid center payload', async () => {
     const postCenterSlotHandler = await loadHandler();
     let thrown: unknown = null;

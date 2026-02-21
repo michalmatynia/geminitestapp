@@ -29,7 +29,7 @@ import { UserEditModal } from '../../components/admin/UserEditModal';
 import { useUsersState } from '../../hooks/useUsersState';
 
 
-import type { AuthUserSummary } from '../../types';
+import type { AuthUserDto as AuthUserSummary } from '@/shared/contracts/auth';
 import type { AuthRole } from '../../utils/auth-management';
 import type { ColumnDef } from '@tanstack/react-table';
 

@@ -100,10 +100,12 @@ export const resolveCaseResolverTreeWorkspace = ({
     scopedFiles.map((file: CaseResolverFile): string => file.id)
   );
   const scopedNodeFileAssetIds = new Set<string>();
-  scopedFiles.forEach((file: CaseResolverFile): void => {
-    const nodeFileAssetIdByNode = file.graph.nodeFileAssetIdByNode ?? {};
-    Object.values(nodeFileAssetIdByNode).forEach((assetId: string): void => {
-      const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
+      scopedFiles.forEach((file: CaseResolverFile): void => {
+        const nodeFileAssetIdByNode = file.graph?.nodeFileAssetIdByNode ?? {};
+        Object.values(nodeFileAssetIdByNode).forEach((assetId: unknown): void => {
+  
+            const normalizedAssetId = typeof assetId === 'string' ? assetId.trim() : '';
+    
       if (!normalizedAssetId) return;
       scopedNodeFileAssetIds.add(normalizedAssetId);
     });

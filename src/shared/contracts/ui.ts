@@ -1,9 +1,9 @@
 import { ReactNode } from 'react';
-
+import { NextRequest } from 'next/server';
+import type { ZodSchema } from 'zod';
 
 import type { ListResponse } from './base';
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query';
-import type { ZodSchema } from 'zod';
 
 /**
  * Unified modal component prop types
@@ -96,8 +96,14 @@ export interface ApiHandlerContext {
 }
 
 export type ApiRouteHandler = (
-  req: any, // NextRequest
+  req: NextRequest,
   ctx: ApiHandlerContext
+) => Promise<Response>;
+
+export type ApiRouteHandlerWithParams<P extends Record<string, string | string[]>> = (
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+  params: P
 ) => Promise<Response>;
 
 export interface ApiHandlerOptions {

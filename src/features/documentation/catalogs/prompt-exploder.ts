@@ -15,8 +15,7 @@ export const PROMPT_EXPLODER_DOCUMENTATION_CATALOG: DocumentationEntry[] =
     id: entry.id,
     moduleId: DOCUMENTATION_MODULE_IDS.promptExploder,
     title: entry.title,
-    summary: entry.summary,
-    section: entry.section,
-    aliases: entry.aliases,
-    docPath: entry.docPath,
+    content: entry.summary,
+    keywords: entry.aliases,
+    ...(entry.docPath ? { relatedLinks: [entry.docPath] } : {}),
   }));

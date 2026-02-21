@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2 } from 'lucide-react';
+import { } from 'lucide-react';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';

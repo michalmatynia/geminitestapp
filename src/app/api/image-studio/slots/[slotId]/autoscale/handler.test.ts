@@ -801,6 +801,88 @@ describe('image-studio autoscale handler', () => {
     expect(createImageStudioSlotsMock).not.toHaveBeenCalled();
   });
 
+  it('normalizes nested autoscale payload and string layout values before validation', async () => {
+    const postAutoScaleSlotHandler = await loadHandler();
+    const response = await postAutoScaleSlotHandler(
+      buildRequest({
+        autoscale: {
+          mode: ' server_auto_scaler_v1 ',
+          requestId: ' req_autoscale_normalized_1234 ',
+          layout: {
+            paddingPercent: '8.5',
+            paddingXPercent: '9',
+            paddingYPercent: '7',
+            fillMissingCanvasWhite: 'true',
+            targetCanvasWidth: '40',
+            targetCanvasHeight: '30',
+            whiteThreshold: '18',
+            chromaThreshold: '9',
+            shadowPolicy: ' include_shadow ',
+            detection: ' white_bg_first_colored_pixel ',
+          },
+        },
+      }),
+      buildApiContext(),
+      { slotId: 'source-slot' }
+    );
+
+    const payload = (await response.json()) as Record<string, unknown>;
+    expect(response.status).toBe(201);
+    expect(payload['effectiveMode']).toBe('server_auto_scaler_v1');
+    expect(autoScaleObjectByAnalysisMock).toHaveBeenCalledTimes(1);
+    expect(autoScaleObjectByAnalysisMock).toHaveBeenCalledWith(
+      sourceBuffer,
+      {
+        paddingPercent: 8.5,
+        paddingXPercent: 9,
+        paddingYPercent: 7,
+        fillMissingCanvasWhite: true,
+        targetCanvasWidth: 40,
+        targetCanvasHeight: 30,
+        whiteThreshold: 18,
+        chromaThreshold: 9,
+        shadowPolicy: 'include_shadow',
+        detection: 'white_bg_first_colored_pixel',
+      },
+      { preferTargetCanvas: true }
+    );
+  });
+
+  it('maps autoscale response-schema validation failures to OUTPUT_INVALID errors', async () => {
+    createImageStudioSlotsMock.mockResolvedValueOnce([
+      buildSlot({
+        id: 42 as unknown as string,
+        projectId: 'project-1',
+        name: 'Source • Auto Scaled',
+        imageFileId: 'image-file-output-1',
+        imageUrl: '/uploads/studio/autoscale/project-1/source-slot/autoscale-server_auto_scaler_v1.png',
+      }),
+    ]);
+
+    const postAutoScaleSlotHandler = await loadHandler();
+    let thrown: unknown = null;
+    try {
+      await postAutoScaleSlotHandler(
+        buildRequest({
+          mode: 'server_auto_scaler_v1',
+          requestId: 'req_output_invalid_autoscale_1',
+        }),
+        buildApiContext(),
+        { slotId: 'source-slot' }
+      );
+    } catch (error) {
+      thrown = error;
+    }
+
+    expect(thrown).not.toBeNull();
+    expect((thrown as { code?: string }).code).toBe('BAD_REQUEST');
+    expect((thrown as { httpStatus?: number }).httpStatus).toBe(400);
+    expect((thrown as { meta?: Record<string, unknown> }).meta?.['autoScaleErrorCode']).toBe(
+      IMAGE_STUDIO_AUTOSCALER_ERROR_CODES.OUTPUT_INVALID
+    );
+    expect((thrown as { meta?: Record<string, unknown> }).meta?.['responseStage']).toBe('created');
+  });
+
   it('throws bad request app error for invalid payload', async () => {
     const postAutoScaleSlotHandler = await loadHandler();
     let thrown: unknown = null;

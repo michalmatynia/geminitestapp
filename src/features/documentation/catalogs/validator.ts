@@ -15,10 +15,9 @@ const validatorUiDocumentationEntries: DocumentationEntry[] = VALIDATOR_UI_DOCS.
     id: entry.id,
     moduleId: DOCUMENTATION_MODULE_IDS.validator,
     title: entry.title,
-    summary: entry.description,
-    section: 'UI Controls',
-    aliases: [entry.id, entry.title, ...entry.relatedFunctions],
-    docPath: UI_DOC_PATH,
+    content: entry.description,
+    keywords: [entry.id, entry.title, ...entry.relatedFunctions],
+    relatedLinks: [UI_DOC_PATH],
   })
 );
 
@@ -27,11 +26,9 @@ const validatorFunctionDocumentationEntries: DocumentationEntry[] = VALIDATOR_FU
     id: entry.id,
     moduleId: DOCUMENTATION_MODULE_IDS.validator,
     title: entry.symbol,
-    summary: entry.purpose,
-    section: 'Function Reference',
-    aliases: [entry.id, entry.symbol, ...entry.params],
-    docPath: FUNCTION_DOC_PATH,
-    tags: ['function-reference'],
+    content: entry.purpose,
+    keywords: [entry.id, entry.symbol, ...entry.params],
+    relatedLinks: [FUNCTION_DOC_PATH],
   })
 );
 

@@ -182,38 +182,59 @@ export function ProductMetadataMultiSelectField({
     ? loading
     : ((metadataContext?.[contextLoadingKey] as boolean) ?? (formContext?.[contextLoadingKey] as boolean) ?? loading);
 
-  const resolvedOnChange =
-    onChangeProp ??
-    (metadataContext?.[contextOnChangeKey] as (ids: string[] | string | null) => void) ??
-          (formContext
-            ? (nextIds: string[]): void => {
-              if (single) {
-                const handler = (metadataContext?.[contextOnChangeKey] ?? (formContext as unknown as Record<string, unknown> | null)?.[contextOnChangeKey]) as (id: string | null) => void;
-                if (handler) {
-                  handler(nextIds[0] || null);            return;
-                }
-              }
+  const resolveSingleChangeHandler = (): ((id: string | null) => void) | null => {
+    const metadataHandler = metadataContext?.[contextOnChangeKey];
+    if (typeof metadataHandler === 'function') {
+      return metadataHandler as (id: string | null) => void;
+    }
 
-              if (!formContextToggleName) return;
+    const formRecord = formContext as unknown as Record<string, unknown> | null;
+    const formHandler = formRecord?.[contextOnChangeKey];
+    if (typeof formHandler === 'function') {
+      return formHandler as (id: string | null) => void;
+    }
 
-              const previous = new Set(formContext[contextSelectedKey] as string[]);
-              const next = new Set(nextIds);
-        
-              // Items to add
-              for (const id of nextIds) {
-                if (!previous.has(id)) {
-                  (formContext[formContextToggleName] as (id: string) => void)(id);
-                }
-              }
-        
-              // Items to remove
-              for (const id of (formContext[contextSelectedKey] as string[])) {
-                if (!next.has(id)) {
-                  (formContext[formContextToggleName] as (id: string) => void)(id);
-                }
+    // ProductFormContext uses `setCategoryId` rather than `onCategoryChange`.
+    if (contextOnChangeKey === 'onCategoryChange' && formContext?.setCategoryId) {
+      return formContext.setCategoryId;
+    }
+
+    return null;
+  };
+
+  const resolvedOnChange: ((nextIds: string[]) => void) | null = onChangeProp
+    ? onChangeProp
+    : single
+      ? (() => {
+        const singleHandler = resolveSingleChangeHandler();
+        if (!singleHandler) return null;
+        return (nextIds: string[]): void => {
+          singleHandler(nextIds[0] || null);
+        };
+      })()
+      : (metadataContext?.[contextOnChangeKey] as (nextIds: string[]) => void) ??
+        (formContext
+          ? (nextIds: string[]): void => {
+            if (!formContextToggleName) return;
+
+            const previous = new Set(formContext[contextSelectedKey] as string[]);
+            const next = new Set(nextIds);
+
+            // Items to add
+            for (const id of nextIds) {
+              if (!previous.has(id)) {
+                (formContext[formContextToggleName] as (id: string) => void)(id);
               }
             }
-            : null);
+
+            // Items to remove
+            for (const id of formContext[contextSelectedKey] as string[]) {
+              if (!next.has(id)) {
+                (formContext[formContextToggleName] as (id: string) => void)(id);
+              }
+            }
+          }
+          : null);
 
   if (!resolvedOnChange) {
     throw internalError(
@@ -236,13 +257,7 @@ export function ProductMetadataMultiSelectField({
       label={label}
       options={options}
       selected={selectedIds}
-      onChange={(values: string[]) => {
-        if (single) {
-          (resolvedOnChange as unknown as (id: string | null) => void)(values[0] || null);
-        } else {
-          (resolvedOnChange as unknown as (ids: string[]) => void)(values);
-        }
-      }}
+      onChange={resolvedOnChange}
       loading={resolvedLoading}
       disabled={disabled}
       placeholder={placeholder || `Select ${label.toLowerCase()}`}

@@ -8,6 +8,9 @@ import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 
 export const DEFAULT_NOTE_SETTINGS: NoteSettings = {
+  sidebarCollapsed: false,
+  showPinnedSection: true,
+  defaultNotebookId: null,
   sortBy: 'created',
   sortOrder: 'desc',
   showTimestamps: true,
@@ -44,7 +47,7 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
   const previousFolderIdRef = useRef<string | null>(null);
   const previousNotebookIdRef = useRef<string | null>(null);
   const previousAutoformatRef = useRef<boolean>(false);
-  const previousEditorModeRef = useRef<'markdown' | 'wysiwyg' | 'code'>('markdown');
+  const previousEditorModeRef = useRef<NoteSettings['editorMode']>('markdown');
 
   // Queries
   const settingsQuery = useSettingsMap({ scope: 'light' });

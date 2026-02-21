@@ -195,18 +195,18 @@ export type ProductAiJobRepository = {
 export type QueueConfig<TJobData = unknown> = {
   name: string; // QueueName
   concurrency: number;
-  defaultJobOptions?: any; // Omit<JobsOptions, 'connection'>
-  workerOptions?: any; // Omit<WorkerOptions, 'connection' | 'concurrency'>
+  defaultJobOptions?: Record<string, unknown>; // Omit<JobsOptions, 'connection'>
+  workerOptions?: Record<string, unknown>; // Omit<WorkerOptions, 'connection' | 'concurrency'>
   processor: (data: TJobData, jobId: string) => Promise<unknown>;
   onCompleted?: (jobId: string, result: unknown, data: TJobData) => Promise<void>;
-  onFailed?: (jobId: string, error: Error, data: TJobData, context?: any) => Promise<void>;
+  onFailed?: (jobId: string, error: Error, data: TJobData, context?: Record<string, unknown>) => Promise<void>;
 };
 
 export type ManagedQueue<TJobData = unknown> = {
-  enqueue: (data: TJobData, opts?: any) => Promise<string>;
+  enqueue: (data: TJobData, opts?: Record<string, unknown>) => Promise<string>;
   startWorker: () => void;
   stopWorker: () => Promise<void>;
   getHealthStatus: () => Promise<QueueHealthStatus>;
   processInline: (data: TJobData) => Promise<unknown>;
-  getQueue: () => any; // import('bullmq').Queue | null
+  getQueue: () => unknown; // import('bullmq').Queue | null
 };

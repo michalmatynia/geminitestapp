@@ -53,8 +53,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   const fileBuffer = await fs.readFile(diskPath);
-  const pdfParseModule = (await import('pdf-parse')) as any;
-  const parsed = await pdfParseModule.default(fileBuffer);
+  const pdfModule = await import('pdf-parse');
+  const pdfParse = (pdfModule as unknown as { default: (buffer: Buffer) => Promise<{ text: string; numpages: number }> }).default;
+  const parsed = await pdfParse(fileBuffer);
   const text = typeof parsed.text === 'string' ? parsed.text.trim() : '';
 
   return NextResponse.json({

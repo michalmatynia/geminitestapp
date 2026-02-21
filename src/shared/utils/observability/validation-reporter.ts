@@ -12,9 +12,9 @@ export async function reportValidationError(
   if (typeof window === 'undefined') {
     const { logger } = await import('@/shared/utils/logger');
     logger.warn(`[ValidationReporter] ${message}`, {
-      service: (context as Record<string, unknown>)['service'] || 'validation',
       ...context,
-    });
+      service: context.service || 'validation',
+    } as Record<string, unknown>);
     return;
   }
 
@@ -35,6 +35,6 @@ export async function reportValidationError(
     });
   } catch (err) {
     const { logger } = await import('@/shared/utils/logger');
-    logger.error('[ValidationReporter] Failed to report client validation error', err);
+    logger.error('[ValidationReporter] Failed to report client validation error', err instanceof Error ? err : new Error(String(err)));
   }
 }

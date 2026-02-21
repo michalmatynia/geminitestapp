@@ -137,6 +137,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     onToggleFileLock,
     onEditFile,
     caseResolverIdentifiers,
+    onLinkRelatedFiles,
   } = useCaseResolverPageContext();
   const { confirm, ConfirmationModal } = useConfirm();
   const [highlightedNodeFileAssetIds, setHighlightedNodeFileAssetIds] =
@@ -705,7 +706,11 @@ export function CaseResolverFolderTree(): React.JSX.Element {
 
             if (position === 'inside') {
               if (targetId === null) return true;
-              return fromCaseResolverFolderNodeId(targetId) !== null;
+              if (fromCaseResolverFolderNodeId(targetId) !== null) return true;
+              // Allow file-on-file center drop for relation linking
+              const targetFileId = fromCaseResolverFileNodeId(targetId);
+              const draggedFileId = fromCaseResolverFileNodeId(draggedNodeId);
+              return !!(targetFileId && draggedFileId && targetFileId !== draggedFileId);
             }
 
             return targetId !== null;
@@ -727,6 +732,10 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             );
             if (edgePosition === 'before' || edgePosition === 'after') {
               return edgePosition;
+            }
+            // Center zone on a file node → 'inside' triggers relation linking
+            if (targetId && fromCaseResolverFileNodeId(targetId) !== null) {
+              return 'inside';
             }
             return 'after';
           }}
@@ -782,6 +791,17 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               draggedNodeId,
             );
             if (!isInternal) return;
+
+            // File-on-file center drop → link as related documents
+            if (position === 'inside' && targetId !== null) {
+              const draggedFileId = fromCaseResolverFileNodeId(draggedNodeId);
+              const targetFileId = fromCaseResolverFileNodeId(targetId);
+              if (draggedFileId && targetFileId) {
+                onLinkRelatedFiles(draggedFileId, targetFileId);
+                return;
+              }
+            }
+
             await applyInternalMasterTreeDrop({
               controller: ctlr,
               draggedNodeId,

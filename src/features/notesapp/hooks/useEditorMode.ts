@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
 import { logClientError } from '@/features/observability';
+import type { NoteEditorType } from '@/shared/contracts/notes';
 import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
@@ -11,26 +12,26 @@ import { useToast } from '@/shared/ui';
 // - Migration involves API calls and content updates
 // Extracting this prevents NoteForm bloat and makes migrations testable.
 export function useEditorMode(
-  note: { id?: string; editorType?: string; content?: string } | null,
-  settingsEditorMode: 'markdown' | 'wysiwyg' | 'code'
+  note: { id?: string; editorType?: string; content?: string; [key: string]: any } | null,
+  settingsEditorMode: NoteEditorType
 ): {
-  editorMode: 'markdown' | 'wysiwyg' | 'code';
-  setEditorMode: (mode: 'markdown' | 'wysiwyg' | 'code') => void;
+  editorMode: NoteEditorType;
+  setEditorMode: (mode: NoteEditorType) => void;
   isEditorModeLocked: boolean;
   isMigrating: boolean;
   handleMigrateToWysiwyg: (content: string, onSuccess?: () => void) => Promise<string | undefined>;
   handleMigrateToMarkdown: (content: string, onSuccess?: () => void) => Promise<string | undefined>;
 } {
   const { toast } = useToast();
-  const [editorMode, setEditorMode] = useState<'markdown' | 'wysiwyg' | 'code'>(
-    (note?.editorType as 'markdown' | 'wysiwyg' | 'code') || settingsEditorMode
+  const [editorMode, setEditorMode] = useState<NoteEditorType>(
+    (note?.editorType as NoteEditorType) || settingsEditorMode
   );
   const [isMigrating, setIsMigrating] = useState(false);
 
   // Sync editor mode from note's editorType
   useEffect((): void => {
     if (note?.editorType) {
-      setEditorMode(note.editorType as 'markdown' | 'wysiwyg' | 'code');
+      setEditorMode(note.editorType as NoteEditorType);
     } else {
       setEditorMode(settingsEditorMode);
     }
@@ -38,7 +39,7 @@ export function useEditorMode(
 
   const isEditorModeLocked = Boolean(note?.id);
 
-  const handleEditorModeChange = (mode: 'markdown' | 'wysiwyg' | 'code'): void => {
+  const handleEditorModeChange = (mode: NoteEditorType): void => {
     if (!note?.id) {
       setEditorMode(mode);
     }

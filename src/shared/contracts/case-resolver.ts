@@ -392,7 +392,7 @@ export type CaseResolverRelationGraph = CaseResolverRelationGraphDto;
 export const caseResolverFileSchema = dtoBaseSchema.extend({
   workspaceId: z.string(),
   name: z.string(),
-  type: caseResolverFileTypeSchema,
+  fileType: caseResolverFileTypeSchema,
   content: z.string(),
   version: caseResolverDocumentVersionSchema,
   graph: caseResolverGraphSchema.optional(),
@@ -406,13 +406,14 @@ export const caseResolverFileSchema = dtoBaseSchema.extend({
   originalDocumentContent: z.string().optional(),
   documentCity: z.string().nullable().optional(),
   documentDate: caseResolverDocumentDateProposalSchema.nullable().optional(),
+  relatedFileIds: z.array(z.string()).nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type CaseResolverFileDto = DtoBase & {
   workspaceId: string;
   name: string;
-  type: CaseResolverFileType;
+  fileType: CaseResolverFileType;
   content: string;
   version: CaseResolverDocumentVersion;
   graph?: CaseResolverGraph | undefined;
@@ -426,6 +427,7 @@ export type CaseResolverFileDto = DtoBase & {
   originalDocumentContent?: string | undefined;
   documentCity?: string | null | undefined;
   documentDate?: CaseResolverDocumentDateProposal | null | undefined;
+  relatedFileIds?: string[] | null | undefined;
   metadata?: Record<string, unknown> | undefined;
 };
 
@@ -513,7 +515,7 @@ export const caseResolverAssetFileSchema = dtoBaseSchema.extend({
   workspaceId: z.string(),
   folderId: z.string().nullable(),
   name: z.string(),
-  type: caseResolverFileTypeSchema,
+  kind: caseResolverAssetKindSchema,
   size: z.number(),
   url: z.string().optional(),
   sourceFileId: z.string().optional(),
@@ -525,7 +527,7 @@ export type CaseResolverAssetFileDto = DtoBase & {
   workspaceId: string;
   folderId: string | null;
   name: string;
-  type: CaseResolverFileType;
+  kind: CaseResolverAssetKind;
   size: number;
   url?: string | undefined;
   sourceFileId?: string | undefined;

@@ -21,6 +21,7 @@ import {
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
   type CaseResolverRelationGraph,
+  type CaseResolverFileType,
 } from '@/shared/contracts/case-resolver';
 import {
   Badge,
@@ -39,6 +40,7 @@ import {
   FileUploadTrigger,
   Card,
 } from '@/shared/ui';
+import { DRAG_KEYS } from '@/shared/utils/drag-drop';
 
 import { buildMissingSelectedPartyOption } from './case-resolver-party-select';
 import { CaseResolverCanvasWorkspace } from './CaseResolverCanvasWorkspace';
@@ -206,6 +208,8 @@ export function CaseResolverPageView(
     React.useState<PartySearchKind>('organization');
   const [addresserPartyQuery, setAddresserPartyQuery] = React.useState('');
   const [addresseePartyQuery, setAddresseePartyQuery] = React.useState('');
+  const [selectedRelatedFileId, setSelectedRelatedFileId] = React.useState<string | null>(null);
+  const [isRelationsDropActive, setIsRelationsDropActive] = React.useState(false);
   const {
     state,
     workspaceView,
@@ -538,6 +542,24 @@ export function CaseResolverPageView(
     }
     return null;
   }, [activeCaseId, activeFile, workspace.files]);
+  const relatedFiles = React.useMemo((): CaseResolverFile[] => {
+    if (!editingDocumentDraft) return [];
+    const liveFile = workspace.files.find(
+      (f: CaseResolverFile) => f.id === editingDocumentDraft.id,
+    );
+    if (!liveFile?.relatedFileIds?.length) return [];
+    const ids = new Set(liveFile.relatedFileIds);
+    return workspace.files.filter(
+      (f: CaseResolverFile) => ids.has(f.id) && f.id !== editingDocumentDraft.id,
+    );
+  }, [workspace.files, editingDocumentDraft?.id]);
+  const selectedRelatedFile = React.useMemo(
+    () => relatedFiles.find((f) => f.id === selectedRelatedFileId) ?? null,
+    [relatedFiles, selectedRelatedFileId],
+  );
+  React.useEffect(() => {
+    setSelectedRelatedFileId(null);
+  }, [editingDocumentDraft?.id]);
   const hasExplicitTreeSelection = Boolean(
     selectedFileId || selectedAssetId || selectedFolderPath !== null,
   );
@@ -994,6 +1016,8 @@ export function CaseResolverPageView(
         onUpdateSelectedAsset: handleUpdateSelectedAsset,
         onGraphChange: handleGraphChange,
         onRelationGraphChange: handleRelationGraphChange,
+        onLinkRelatedFiles: state.handleLinkRelatedFiles,
+        onUnlinkRelatedFile: state.handleUnlinkRelatedFile,
       }}
     >
       <div className='flex h-full flex-col overflow-hidden bg-background'>
@@ -1680,7 +1704,114 @@ export function CaseResolverPageView(
                     </TabsContent>
 
                     <TabsContent value='relations' className='mt-0'>
-                      <div className='grid gap-3 md:grid-cols-2'>
+                      <div
+                        className='grid gap-3 md:grid-cols-2'
+                        onDragOver={(event): void => {
+                          if (event.dataTransfer.types.includes(DRAG_KEYS.CASE_RESOLVER_ITEM)) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                            setIsRelationsDropActive(true);
+                          }
+                        }}
+                        onDragLeave={(): void => { setIsRelationsDropActive(false); }}
+                        onDrop={(event): void => {
+                          setIsRelationsDropActive(false);
+                          const raw = event.dataTransfer.getData(DRAG_KEYS.CASE_RESOLVER_ITEM);
+                          if (!raw || !editingDocumentDraft) return;
+                          try {
+                            const payload = JSON.parse(raw) as { entity?: string; fileId?: string };
+                            if (
+                              payload.entity === 'file' &&
+                              payload.fileId &&
+                              payload.fileId !== editingDocumentDraft.id
+                            ) {
+                              event.preventDefault();
+                              state.handleLinkRelatedFiles(editingDocumentDraft.id, payload.fileId);
+                            }
+                          } catch { /* ignore */ }
+                        }}
+                      >
+                        <FormField
+                          label='Related Documents'
+                          className='md:col-span-2'
+                        >
+                          <div
+                            className={`space-y-1 rounded transition-colors ${isRelationsDropActive ? 'ring-2 ring-blue-500/40 ring-offset-1 ring-offset-background' : ''}`}
+                          >
+                            {relatedFiles.length === 0 ? (
+                              <div
+                                className={`rounded border px-3 py-3 text-xs text-gray-500 transition-colors ${isRelationsDropActive ? 'border-blue-500/40 bg-blue-500/5' : 'border-dashed border-border/60'}`}
+                              >
+                                No related documents yet. Drag a document from the file tree here, or drag
+                                one document onto another in the tree to link them.
+                              </div>
+                            ) : (
+                              relatedFiles.map((relatedFile) => {
+                                const isSelected = selectedRelatedFileId === relatedFile.id;
+                                return (
+                                  <div
+                                    key={relatedFile.id}
+                                    className={`flex cursor-pointer items-center gap-2 rounded border px-2 py-1.5 transition-colors ${isSelected ? 'border-blue-500/40 bg-blue-500/10' : 'border-border/60 bg-card/20 hover:bg-card/40'}`}
+                                    onClick={(): void => {
+                                      setSelectedRelatedFileId(isSelected ? null : relatedFile.id);
+                                    }}
+                                  >
+                                    <FileText className='h-3.5 w-3.5 shrink-0 text-gray-400' />
+                                    <div className='min-w-0 flex-1'>
+                                      <div className='truncate text-xs text-gray-200'>{relatedFile.name}</div>
+                                      {relatedFile.folder ? (
+                                        <div className='truncate text-[11px] text-gray-500'>{relatedFile.folder}</div>
+                                      ) : null}
+                                    </div>
+                                    <Button
+                                      type='button'
+                                      variant='ghost'
+                                      size='sm'
+                                      className='h-6 px-1.5 text-[11px] text-gray-400 hover:text-red-400'
+                                      disabled={isEditingDocumentLocked}
+                                      onClick={(e): void => {
+                                        e.stopPropagation();
+                                        state.handleUnlinkRelatedFile(editingDocumentDraft.id, relatedFile.id);
+                                        if (selectedRelatedFileId === relatedFile.id) setSelectedRelatedFileId(null);
+                                      }}
+                                    >
+                                      Unlink
+                                    </Button>
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </FormField>
+
+                        {selectedRelatedFile ? (
+                          <div className='space-y-2 md:col-span-2'>
+                            <div className='flex items-center justify-between gap-2'>
+                              <div className='text-xs font-medium text-gray-300'>{selectedRelatedFile.name}</div>
+                              <Button
+                                type='button'
+                                variant='outline'
+                                size='sm'
+                                className='h-7 text-[11px]'
+                                onClick={(): void => {
+                                  handleOpenFileEditor(selectedRelatedFile.id);
+                                  setEditorDetailsTab('document');
+                                }}
+                              >
+                                Open &amp; Edit →
+                              </Button>
+                            </div>
+                            <div className='max-h-64 overflow-y-auto rounded border border-border/60 bg-card/10'>
+                              <DocumentWysiwygEditor
+                                key={`related-preview-${selectedRelatedFile.id}`}
+                                value={selectedRelatedFile.documentContentHtml ?? ''}
+                                onChange={(): void => { /* readonly */ }}
+                                disabled
+                                surfaceClassName='min-h-[80px]'
+                              />
+                            </div>
+                          </div>
+                        ) : null}
                         <FormField
                           label='Connected Node Canvases'
                           className='md:col-span-2'
@@ -2339,17 +2470,19 @@ export function CaseResolverPageView(
                     ) : null}
                   </div>
 
-                  <DocumentWysiwygEditor
-                    key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
-                    value={editingDocumentDraft.documentContentHtml ?? ''}
-                    onChange={handleUpdateDraftDocumentContent}
-                    disabled={isEditingDocumentLocked}
-                    allowFontFamily
-                    allowTextAlign
-                    enableAdvancedTools
-                    surfaceClassName='min-h-[300px]'
-                    editorContentClassName='[&_.ProseMirror]:!min-h-[300px]'
-                  />
+                  {editorDetailsTab !== 'relations' && (
+                    <DocumentWysiwygEditor
+                      key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
+                      value={editingDocumentDraft.documentContentHtml ?? ''}
+                      onChange={handleUpdateDraftDocumentContent}
+                      disabled={isEditingDocumentLocked}
+                      allowFontFamily
+                      allowTextAlign
+                      enableAdvancedTools
+                      surfaceClassName='min-h-[300px]'
+                      editorContentClassName='[&_.ProseMirror]:!min-h-[300px]'
+                    />
+                  )}
 
                   <div className='flex justify-end gap-2'>
                     <Button

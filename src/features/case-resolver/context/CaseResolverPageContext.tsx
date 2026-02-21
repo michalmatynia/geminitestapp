@@ -83,6 +83,8 @@ export type CaseResolverPageContextValue = {
   onUpdateSelectedAsset: (patch: CaseResolverAssetPatch) => void;
   onGraphChange: (nextGraph: CaseResolverGraph) => void;
   onRelationGraphChange: (nextGraph: CaseResolverRelationGraph) => void;
+  onLinkRelatedFiles: (fileIdA: string, fileIdB: string) => void;
+  onUnlinkRelatedFile: (sourceFileId: string, targetFileId: string) => void;
 };
 
 const CaseResolverPageContext = React.createContext<CaseResolverPageContextValue | null>(null);

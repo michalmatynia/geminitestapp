@@ -10,14 +10,27 @@ export interface NoteRelationFromEmbedded {
   id: string;
   targetNoteId: string;
   type: string;
+  assignedAt?: string | Date;
   metadata?: Record<string, unknown>;
+  targetNote?: {
+    id: string;
+    title: string;
+    color?: string | null;
+  };
 }
 
 export interface NoteRelationToEmbedded {
   id: string;
   sourceNoteId: string;
+  targetNoteId?: string;
   type: string;
+  assignedAt?: string | Date;
   metadata?: Record<string, unknown>;
+  sourceNote?: {
+    id: string;
+    title: string;
+    color?: string | null;
+  };
 }
 
 export interface NoteDocument {
@@ -67,6 +80,7 @@ export interface NotebookDocument {
   _id: string;
   id?: string;
   name: string;
+  description?: string | null;
   color?: string | null;
   defaultThemeId?: string | null;
   createdAt: string | Date;
@@ -92,6 +106,7 @@ export interface ThemeDocument {
   _id: string;
   id?: string;
   name: string;
+  description?: string | null;
   notebookId?: string | null;
   textColor?: string;
   backgroundColor?: string;
@@ -99,7 +114,7 @@ export interface ThemeDocument {
   markdownLinkColor?: string;
   markdownCodeBackground?: string;
   markdownCodeText?: string;
-  relatedNoteBorderWidth?: string;
+  relatedNoteBorderWidth?: number;
   relatedNoteBorderColor?: string;
   relatedNoteBackgroundColor?: string;
   relatedNoteTextColor?: string;

@@ -557,11 +557,13 @@ export function normalizeThemeSettings(input?: Partial<ThemeSettings> | null): T
   };
 }
 
-export function buildColorSchemeMap(input: ThemeSettings | ColorScheme[]): Record<string, ColorScheme> {
+export function buildColorSchemeMap(
+  input: ThemeSettings | ColorScheme[]
+): Record<string, ColorSchemeColors> {
   const schemes = Array.isArray(input) ? input : input.colorSchemes;
-  const map: Record<string, ColorScheme> = {};
+  const map: Record<string, ColorSchemeColors> = {};
   schemes.forEach((s) => {
-    map[s.id] = s;
+    map[s.id] = s.colors;
   });
   return map;
 }

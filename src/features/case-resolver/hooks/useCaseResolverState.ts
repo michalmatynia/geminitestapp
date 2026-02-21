@@ -1942,6 +1942,48 @@ export function useCaseResolverState() {
     treeSaveToast: CASE_RESOLVER_TREE_SAVE_TOAST,
   });
 
+  const handleLinkRelatedFiles = useCallback(
+    (fileIdA: string, fileIdB: string): void => {
+      if (fileIdA === fileIdB) return;
+      const now = new Date().toISOString();
+      updateWorkspace((current) => ({
+        ...current,
+        files: current.files.map((file: CaseResolverFile) => {
+          if (file.id === fileIdA) {
+            const existing = file.relatedFileIds ?? [];
+            if (existing.includes(fileIdB)) return file;
+            return { ...file, relatedFileIds: [...existing, fileIdB], updatedAt: now };
+          }
+          if (file.id === fileIdB) {
+            const existing = file.relatedFileIds ?? [];
+            if (existing.includes(fileIdA)) return file;
+            return { ...file, relatedFileIds: [...existing, fileIdA], updatedAt: now };
+          }
+          return file;
+        }),
+      }));
+    },
+    [updateWorkspace],
+  );
+
+  const handleUnlinkRelatedFile = useCallback(
+    (sourceFileId: string, targetFileId: string): void => {
+      const now = new Date().toISOString();
+      updateWorkspace((current) => ({
+        ...current,
+        files: current.files.map((file: CaseResolverFile) => {
+          if (file.id === sourceFileId || file.id === targetFileId) {
+            const otherId = file.id === sourceFileId ? targetFileId : sourceFileId;
+            const next = (file.relatedFileIds ?? []).filter((id: string) => id !== otherId);
+            return { ...file, relatedFileIds: next.length > 0 ? next : undefined, updatedAt: now };
+          }
+          return file;
+        }),
+      }));
+    },
+    [updateWorkspace],
+  );
+
   const handleSaveFileEditor = useCallback((): void => {
     if (!editingDocumentDraft) return;
     const currentFile = workspace.files.find(
@@ -2156,6 +2198,8 @@ export function useCaseResolverState() {
     selectedAsset,
     handleUpdateSelectedAsset,
     handleUpdateActiveFileParties,
+    handleLinkRelatedFiles,
+    handleUnlinkRelatedFile,
     handleSaveFileEditor,
     handleDiscardFileEditorDraft,
     pendingPromptExploderPayload,

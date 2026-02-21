@@ -98,6 +98,67 @@ export const databaseRestoreOperationResponseSchema = z.object({
 export type DatabaseRestoreOperationResponseDto = z.infer<typeof databaseRestoreOperationResponseSchema>;
 export type DatabaseRestoreResponse = DatabaseRestoreOperationResponseDto;
 
+/**
+ * Database Engine DTOs
+ */
+
+export const databaseEngineProviderSchema = z.enum(['mongodb', 'prisma', 'redis']);
+export type DatabaseEngineProviderDto = z.infer<typeof databaseEngineProviderSchema>;
+
+export const databaseEnginePrimaryProviderSchema = z.enum(['mongodb', 'prisma']);
+export type DatabaseEnginePrimaryProviderDto = z.infer<typeof databaseEnginePrimaryProviderSchema>;
+
+export const databaseEngineServiceSchema = z.enum(['app', 'auth', 'product', 'integrations', 'cms']);
+export type DatabaseEngineServiceDto = z.infer<typeof databaseEngineServiceSchema>;
+
+export const databaseEnginePolicySchema = z.object({
+  requireExplicitServiceRouting: z.boolean(),
+  requireExplicitCollectionRouting: z.boolean(),
+  allowAutomaticFallback: z.boolean(),
+  allowAutomaticBackfill: z.boolean(),
+  allowAutomaticMigrations: z.boolean(),
+  strictProviderAvailability: z.boolean(),
+});
+
+export type DatabaseEnginePolicyDto = z.infer<typeof databaseEnginePolicySchema>;
+
+export const databaseEngineOperationControlsSchema = z.object({
+  allowManualFullSync: z.boolean(),
+  allowManualCollectionSync: z.boolean(),
+  allowManualBackfill: z.boolean(),
+  allowManualBackupRunNow: z.boolean(),
+  allowManualBackupMaintenance: z.boolean(),
+  allowBackupSchedulerTick: z.boolean(),
+  allowOperationJobCancellation: z.boolean(),
+});
+
+export type DatabaseEngineOperationControlsDto = z.infer<typeof databaseEngineOperationControlsSchema>;
+
+export const databaseEngineBackupTargetScheduleSchema = z.object({
+  enabled: z.boolean(),
+  cadence: z.enum(['daily', 'every_n_days', 'weekly']),
+  intervalDays: z.number(),
+  weekday: z.number(),
+  timeUtc: z.string(),
+  lastQueuedAt: z.string().nullable(),
+  lastRunAt: z.string().nullable(),
+  lastStatus: z.enum(['idle', 'queued', 'running', 'success', 'failed']),
+  lastJobId: z.string().nullable(),
+  lastError: z.string().nullable(),
+  nextDueAt: z.string().nullable(),
+});
+
+export type DatabaseEngineBackupTargetScheduleDto = z.infer<typeof databaseEngineBackupTargetScheduleSchema>;
+
+export const databaseEngineBackupScheduleSchema = z.object({
+  schedulerEnabled: z.boolean(),
+  lastCheckedAt: z.string().nullable(),
+  mongodb: databaseEngineBackupTargetScheduleSchema,
+  postgresql: databaseEngineBackupTargetScheduleSchema,
+});
+
+export type DatabaseEngineBackupScheduleDto = z.infer<typeof databaseEngineBackupScheduleSchema>;
+
 export const sqlQueryFieldSchema = z.object({
   name: z.string(),
   type: z.string(),

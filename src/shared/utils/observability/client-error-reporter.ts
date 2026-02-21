@@ -25,6 +25,6 @@ export const reportClientError = async (error: unknown, context: ErrorContext = 
     });
   } catch (err) {
     const { logger } = await import('@/shared/utils/logger');
-    logger.error('Failed to send client error report', err);
+    logger.error('Failed to send client error report', err instanceof Error ? err : new Error(String(err)));
   }
 };

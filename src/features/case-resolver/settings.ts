@@ -622,6 +622,7 @@ export const createCaseResolverFile = (input: {
   folder?: string;
   parentCaseId?: string | null | undefined;
   referenceCaseIds?: string[] | null | undefined;
+  relatedFileIds?: string[] | null | undefined;
   documentDate?: CaseResolverDocumentDateProposal | string | null | undefined;
   documentCity?: string | null | undefined;
   originalDocumentContent?: string | null | undefined;
@@ -722,6 +723,9 @@ export const createCaseResolverFile = (input: {
   const referenceCaseIds = sanitizeOptionalIdArray(input.referenceCaseIds).filter(
     (referenceId: string): boolean => referenceId !== input.id
   );
+  const relatedFileIds = sanitizeOptionalIdArray(input.relatedFileIds).filter(
+    (relatedId: string): boolean => relatedId !== input.id
+  );
   const scanOcrModel =
     typeof input.scanOcrModel === 'string' ? input.scanOcrModel.trim() : '';
   const scanOcrPrompt =
@@ -735,6 +739,7 @@ export const createCaseResolverFile = (input: {
     folder: normalizeFolderPath(input.folder ?? ''),
     parentCaseId,
     referenceCaseIds,
+    relatedFileIds: relatedFileIds.length > 0 ? relatedFileIds : undefined,
     documentDate: normalizeDocumentDate(input.documentDate),
     documentCity: normalizeDocumentCity(input.documentCity),
     originalDocumentContent,
@@ -849,6 +854,7 @@ export const normalizeCaseResolverWorkspace = (
         folder: file.folder,
         parentCaseId: file.parentCaseId,
         referenceCaseIds: file.referenceCaseIds,
+        relatedFileIds: file.relatedFileIds,
         documentDate: file.documentDate,
         documentCity: (fileRecord['documentCity'] as string | null | undefined) ?? null,
         originalDocumentContent: file.originalDocumentContent,

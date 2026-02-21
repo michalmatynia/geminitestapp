@@ -1,4 +1,5 @@
 import { prismaNoteRepository } from "@/features/notesapp/services/notes/note-repository/prisma-note-repository";
+import { createNoteSchema } from "@/shared/contracts/notes";
 
 async function main() {
   console.log("Starting debug script...");
@@ -15,7 +16,7 @@ async function main() {
   console.log("Created category:", category.id);
 
   // 2. Create a note
-  const note = await prismaNoteRepository.create({
+  const noteInput = createNoteSchema.parse({
     name: "Debug Note",
     title: "Debug Note",
     content: "Content",
@@ -27,6 +28,7 @@ async function main() {
     isArchived: false,
     isFavorite: false,
   });
+  const note = await prismaNoteRepository.create(noteInput);
   console.log("Created note:", note.id);
 
   // 3. Update note to add category

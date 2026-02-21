@@ -130,20 +130,20 @@ describe('case resolver editor draft storage', () => {
     const result = writeStoredEditorDraft('case-file-1', buildDraft());
     expect(result).toEqual({ ok: true });
 
-          const persisted = readStoredEditorDraft('case-file-1');
-          expect(persisted).not.toBeNull();
-          const draft = persisted?.draft as any;
-          expect(draft.documentHistory).toBeUndefined();
-          expect(draft.documentContentPlainText).toBeUndefined();
-          expect(draft.documentContent).toBeUndefined();
-          if (draft.editorType === 'wysiwyg') {
-            expect(draft.documentContentHtml).toBe('<p>Body</p>');
-            expect(draft.documentContentMarkdown).toBeUndefined();
-          } else {
-            expect(draft.documentContentHtml).toBeUndefined();
-            expect(draft.documentContentMarkdown).toBe('# Body');
-          }
-          expect(draft.scanSlots?.[0]?.ocrText).toBe('');
+    const persisted = readStoredEditorDraft('case-file-1');
+    expect(persisted).not.toBeNull();
+    const draft = persisted?.draft as any;
+    expect(draft.documentHistory).toBeUndefined();
+    expect(draft.documentContentPlainText).toBeUndefined();
+    expect(draft.documentContent).toBeUndefined();
+    if (draft.editorType === 'wysiwyg') {
+      expect(draft.documentContentHtml).toBe('<p>Body</p>');
+      expect(draft.documentContentMarkdown).toBeUndefined();
+    } else {
+      expect(draft.documentContentHtml).toBeUndefined();
+      expect(draft.documentContentMarkdown).toBe('# Body');
+    }
+    expect(draft.scanSlots?.[0]?.ocrText).toBe('');
     
   });
 
@@ -163,11 +163,11 @@ describe('case resolver editor draft storage', () => {
 
     const result = writeStoredEditorDraft('case-file-1', buildDraft());
     expect(result).toEqual({ ok: true });
-          const persisted = readStoredEditorDraft('case-file-1');
-          expect(persisted).not.toBeNull();
-          const draft = persisted?.draft as any;
-          expect(draft.documentContentMarkdown).toBeUndefined();
-          expect(draft.originalDocumentContent).toBeUndefined();
+    const persisted = readStoredEditorDraft('case-file-1');
+    expect(persisted).not.toBeNull();
+    const draft = persisted?.draft as any;
+    expect(draft.documentContentMarkdown).toBeUndefined();
+    expect(draft.originalDocumentContent).toBeUndefined();
     
   });
 });

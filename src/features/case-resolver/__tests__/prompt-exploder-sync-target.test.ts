@@ -142,8 +142,9 @@ describe('case resolver prompt exploder manual apply flow', () => {
       expect(result.diagnostics.payloadStatus).toBe('pending');
     }
 
-    const updatedDocument = harness.getWorkspace().files.find((file) => file.id === 'doc-1');
-    expect(updatedDocument?.name).toBe('Document');
+          const updatedDocument = harness.getWorkspace().files.find((file: CaseResolverFile) => file.id === 'doc-1');
+          expect(updatedDocument?.name).toBe('Document');
+    
     expect(updatedDocument?.documentContentPlainText).toContain('Exploded output body');
     expect(readPendingCaseResolverPromptExploderPayload()).toBeNull();
   });
@@ -251,7 +252,7 @@ describe('case resolver prompt exploder manual apply flow', () => {
         queuedUpdater;
       workspace = applyQueuedUpdater(workspace);
     }
-    const updatedDocument = workspace.files.find((file) => file.id === 'doc-1');
+    const updatedDocument = workspace.files.find((file: CaseResolverFile) => file.id === 'doc-1');
     expect(updatedDocument?.documentContentPlainText).toContain('Deferred mutation payload');
   });
 
@@ -292,7 +293,7 @@ describe('case resolver prompt exploder manual apply flow', () => {
       expect(result.diagnostics.mutationResolutionStrategy).toBe('unresolved');
       expect(result.diagnostics.mutationMissingAfterPrecheck).toBe(true);
     }
-    const updatedDocument = liveWorkspace.files.find((file) => file.id === 'doc-1');
+    const updatedDocument = liveWorkspace.files.find((file: CaseResolverFile) => file.id === 'doc-1');
     expect(updatedDocument).toBeUndefined();
     expect(readPendingCaseResolverPromptExploderPayload()?.prompt).toBe(
       'Recovered from precheck snapshot'
@@ -369,7 +370,7 @@ describe('case resolver prompt exploder manual apply flow', () => {
     if (result.applied) {
       expect(result.diagnostics.resolutionStrategy).toBe('requested_id');
     }
-    const updatedDocument = workspace.files.find((file) => file.id === '  doc-spaced  ');
+    const updatedDocument = workspace.files.find((file: CaseResolverFile) => file.id === '  doc-spaced  ');
     expect(updatedDocument?.documentContentPlainText).toContain('Normalized payload');
   });
 
@@ -395,7 +396,7 @@ describe('case resolver prompt exploder manual apply flow', () => {
     if (result.applied) {
       expect(result.diagnostics.resolutionStrategy).toBe('requested_id');
     }
-    const updatedDocument = harness.getWorkspace().files.find((file) => file.id === 'doc-1');
+    const updatedDocument = harness.getWorkspace().files.find((file: CaseResolverFile) => file.id === 'doc-1');
     expect(updatedDocument?.documentContentPlainText).toContain('Context fallback payload');
     expect(readPendingCaseResolverPromptExploderPayload()).toBeNull();
   });

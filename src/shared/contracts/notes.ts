@@ -33,8 +33,18 @@ export type NotebookUpdateInput = UpdateNotebookDto;
 export const noteThemeSchema = namedDtoSchema.extend({
   description: z.string().nullable(),
   isDefault: z.boolean(),
-  themeData: z.record(z.string(), z.unknown()),
   notebookId: z.string().nullable().optional(),
+  textColor: z.string().default('#e5e7eb'),
+  backgroundColor: z.string().default('#111827'),
+  markdownHeadingColor: z.string().default('#ffffff'),
+  markdownLinkColor: z.string().default('#60a5fa'),
+  markdownCodeBackground: z.string().default('#1f2937'),
+  markdownCodeText: z.string().default('#e5e7eb'),
+  relatedNoteBorderWidth: z.number().default(1),
+  relatedNoteBorderColor: z.string().default('#374151'),
+  relatedNoteBackgroundColor: z.string().default('#1f2937'),
+  relatedNoteTextColor: z.string().default('#e5e7eb'),
+  themeData: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type NoteThemeDto = z.infer<typeof noteThemeSchema>;
@@ -116,7 +126,7 @@ export type TagUpdateInput = UpdateNoteTagDto;
 /**
  * Note Contract
  */
-export const noteEditorTypeSchema = z.enum(['markdown', 'rich-text', 'plain-text']);
+export const noteEditorTypeSchema = z.enum(['markdown', 'rich-text', 'plain-text', 'code', 'wysiwyg']);
 export type NoteEditorType = z.infer<typeof noteEditorTypeSchema>;
 
 export const noteSchema = dtoBaseSchema.extend({
@@ -206,12 +216,24 @@ export type RelatedNoteDto = z.infer<typeof relatedNoteSchema>;
 export type RelatedNote = RelatedNoteDto;
 
 export const noteWithRelationsSchema = noteSchema.extend({
-  tags: z.array(z.union([noteTagSchema, noteTagRelationSchema.extend({ tag: noteTagSchema.optional() })])).optional(),
-  category: z.union([noteCategorySchema, noteCategoryRelationSchema.extend({ category: noteCategorySchema.optional() })]).nullable().optional(),
-  categories: z.array(z.union([noteCategorySchema, noteCategoryRelationSchema.extend({ category: noteCategorySchema.optional() })])).optional(),
+  tags: z.array(z.object({
+    tagId: z.string(),
+    tag: noteTagSchema,
+  })).optional(),
+  category: z.object({
+    categoryId: z.string(),
+    category: noteCategorySchema,
+  }).nullable().optional(),
+  categories: z.array(z.object({
+    categoryId: z.string(),
+    category: noteCategorySchema,
+  })).optional(),
   notebook: notebookSchema.nullable().optional(),
   theme: noteThemeSchema.nullable().optional(),
-  relations: z.array(noteRelationSchema).optional(),
+  files: z.array(noteFileSchema).optional(),
+  relations: z.array(relatedNoteSchema).optional(),
+  relationsFrom: z.array(noteRelationSchema.extend({ targetNote: relatedNoteSchema.optional() })).optional(),
+  relationsTo: z.array(noteRelationSchema.extend({ sourceNote: relatedNoteSchema.optional() })).optional(),
 });
 
 export type NoteWithRelationsDto = z.infer<typeof noteWithRelationsSchema>;
@@ -243,7 +265,9 @@ export type NoteFilters = NoteFiltersDto;
 export const noteFileSchema = dtoBaseSchema.extend({
   noteId: z.string(),
   fileId: z.string(),
+  slotIndex: z.number(),
   filename: z.string(),
+  filepath: z.string(),
   mimetype: z.string(),
   size: z.number(),
   publicUrl: z.string().optional(),
@@ -279,10 +303,22 @@ export type CategoryWithChildren = NoteCategoryRecordWithChildrenDto & {
 export const noteSettingsSchema = z.object({
   sidebarCollapsed: z.boolean(),
   viewMode: z.enum(['list', 'grid']),
-  sortBy: z.enum(['updatedAt', 'createdAt', 'title']),
+  sortBy: z.union([
+    z.enum(['updatedAt', 'createdAt', 'title']),
+    z.enum(['name', 'created', 'updated']),
+  ]),
   sortOrder: z.enum(['asc', 'desc']),
   showPinnedSection: z.boolean(),
+  showTimestamps: z.boolean().default(true),
+  showBreadcrumbs: z.boolean().default(true),
+  showRelatedNotes: z.boolean().default(true),
   defaultNotebookId: z.string().nullable(),
+  selectedFolderId: z.string().nullable().optional(),
+  selectedNotebookId: z.string().nullable().optional(),
+  searchScope: z.enum(['both', 'title', 'content']).default('both'),
+  gridDensity: z.number().default(4),
+  editorMode: z.enum(['markdown', 'rich-text', 'plain-text', 'code', 'wysiwyg']).default('markdown'),
+  autoformatOnPaste: z.boolean().default(true),
 });
 
 export type NoteSettingsDto = z.infer<typeof noteSettingsSchema>;

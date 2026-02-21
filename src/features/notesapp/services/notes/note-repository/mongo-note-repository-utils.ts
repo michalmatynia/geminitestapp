@@ -36,9 +36,9 @@ const toIsoUpdatedAt = (value: unknown): string | null => {
 
 export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
   const id = doc.id ?? doc._id;
-  const tags = Array.isArray(doc.tags) ? doc.tags : [];
-  const categories = Array.isArray(doc.categories) ? doc.categories : [];
-  const relationsFrom = Array.isArray(doc.relationsFrom) ? doc.relationsFrom : [];
+  const tags = (Array.isArray(doc.tags) ? doc.tags : []) as any;
+  const categories = (Array.isArray(doc.categories) ? doc.categories : []) as any;
+  const relationsFrom = (Array.isArray(doc.relationsFrom) ? doc.relationsFrom : []) as any;
 
   return {
     id,
@@ -55,11 +55,11 @@ export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
     tags,
     categories,
     relationsFrom,
-    relationsTo: Array.isArray(doc.relationsTo) ? doc.relationsTo : [],
-    tagIds: tags.map((t: { tagId: string }) => t.tagId),
-    categoryIds: categories.map((c: { categoryId: string }) => c.categoryId),
-    relatedNoteIds: relationsFrom.map((r: { targetNoteId: string }) => r.targetNoteId),
-  };
+    relationsTo: (Array.isArray(doc.relationsTo) ? doc.relationsTo : []) as any,
+    tagIds: (Array.isArray(doc.tags) ? doc.tags : []).map((t: { tagId: string }) => t.tagId),
+    categoryIds: (Array.isArray(doc.categories) ? doc.categories : []).map((c: { categoryId: string }) => c.categoryId),
+    relatedNoteIds: (Array.isArray(doc.relationsFrom) ? doc.relationsFrom : []).map((r: { targetNoteId: string }) => r.targetNoteId),
+  } as NoteRecord;
 };
 
 export const toTagResponse = (doc: WithId<TagDocument>): TagRecord => ({
@@ -87,6 +87,7 @@ export const toCategoryResponse = (doc: WithId<CategoryDocument>): CategoryRecor
 export const toNotebookResponse = (doc: WithId<NotebookDocument>): NotebookRecord => ({
   id: doc.id ?? doc._id,
   name: doc.name,
+  description: doc.description ?? null,
   color: doc.color ?? null,
   defaultThemeId: doc.defaultThemeId ?? null,
   createdAt: toIsoCreatedAt(doc.createdAt),
@@ -96,31 +97,34 @@ export const toNotebookResponse = (doc: WithId<NotebookDocument>): NotebookRecor
 export const toThemeResponse = (doc: WithId<ThemeDocument>): ThemeRecord => ({
   id: doc.id ?? doc._id,
   name: doc.name,
+  description: doc.description ?? null,
+  isDefault: false, // Default to false, handled by caller if needed
+  themeData: {
+    textColor: doc.textColor,
+    backgroundColor: doc.backgroundColor,
+    markdownHeadingColor: doc.markdownHeadingColor,
+    markdownLinkColor: doc.markdownLinkColor,
+    markdownCodeBackground: doc.markdownCodeBackground,
+    markdownCodeText: doc.markdownCodeText,
+    relatedNoteBorderWidth: doc.relatedNoteBorderWidth,
+    relatedNoteBorderColor: doc.relatedNoteBorderColor,
+    relatedNoteBackgroundColor: doc.relatedNoteBackgroundColor,
+    relatedNoteTextColor: doc.relatedNoteTextColor,
+  },
   notebookId: doc.notebookId ?? null,
-  textColor: doc.textColor,
-  backgroundColor: doc.backgroundColor,
-  markdownHeadingColor: doc.markdownHeadingColor,
-  markdownLinkColor: doc.markdownLinkColor,
-  markdownCodeBackground: doc.markdownCodeBackground,
-  markdownCodeText: doc.markdownCodeText,
-  relatedNoteBorderWidth: doc.relatedNoteBorderWidth,
-  relatedNoteBorderColor: doc.relatedNoteBorderColor,
-  relatedNoteBackgroundColor: doc.relatedNoteBackgroundColor,
-  relatedNoteTextColor: doc.relatedNoteTextColor,
   createdAt: toIsoCreatedAt(doc.createdAt),
   updatedAt: toIsoUpdatedAt(doc.updatedAt),
-});
+} as ThemeRecord);
 
 export const toNoteFileResponse = (doc: WithId<NoteFileDocument>): NoteFileRecord => ({
   id: doc.id ?? doc._id,
   noteId: doc.noteId,
+  fileId: doc.id ?? doc._id,
   slotIndex: doc.slotIndex,
   filename: doc.filename,
   filepath: doc.filepath,
   mimetype: doc.mimetype,
   size: doc.size,
-  width: doc.width ?? null,
-  height: doc.height ?? null,
   createdAt: toIsoCreatedAt(doc.createdAt),
   updatedAt: toIsoUpdatedAt(doc.updatedAt) ?? toIsoCreatedAt(doc.createdAt),
 });

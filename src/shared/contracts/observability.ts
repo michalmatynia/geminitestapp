@@ -251,6 +251,7 @@ export const errorCategorySchema = z.enum([
 ]);
 
 export type ErrorCategoryDto = z.infer<typeof errorCategorySchema>;
+export type ErrorCategory = ErrorCategoryDto;
 
 export const ERROR_CATEGORY = {
   SYSTEM: 'SYSTEM',
@@ -269,6 +270,7 @@ export const suggestedActionSchema = z.object({
 });
 
 export type SuggestedActionDto = z.infer<typeof suggestedActionSchema>;
+export type SuggestedAction = SuggestedActionDto;
 
 export const errorContextSchema = z.record(z.string(), z.unknown()).and(z.object({
   service: z.string().nullable().optional(),
@@ -281,6 +283,7 @@ export const errorContextSchema = z.record(z.string(), z.unknown()).and(z.object
 }));
 
 export type ErrorContextDto = z.infer<typeof errorContextSchema>;
+export type ErrorContext = ErrorContextDto;
 
 /**
  * Transient Recovery DTOs

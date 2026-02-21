@@ -27,6 +27,8 @@ type NoteRelationWithSource = NoteRelationDto & {
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt' | 'name' | 'notebookId'> = {
+  description: 'Default dark theme',
+  isDefault: true,
   textColor: '#e5e7eb',                // gray-200
   backgroundColor: '#111827',          // gray-900
   markdownHeadingColor: '#ffffff',     // white

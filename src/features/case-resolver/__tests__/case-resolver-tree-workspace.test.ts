@@ -126,8 +126,9 @@ describe('resolveCaseResolverTreeWorkspace', () => {
       workspace,
     });
 
-    expect(scoped.files.map((file) => file.id).sort()).toEqual(['case-b', 'doc-b']);
-    expect(scoped.assets.map((asset) => asset.id).sort()).toEqual(['asset-b', 'asset-node-b']);
+          expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual(['case-b', 'doc-b']);
+          expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual(['asset-b', 'asset-node-b']);
+    
     expect(scoped.folders).toEqual(['new-folder']);
     expect(scoped.activeFileId).toBe('case-b');
   });

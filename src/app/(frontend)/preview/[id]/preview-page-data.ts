@@ -55,7 +55,7 @@ export const loadPreviewRenderData = async (id: string): Promise<PreviewRenderDa
   const hoverEffect = themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined;
   const hoverScale = themeSettings.enableAnimations ? themeSettings.hoverScale : undefined;
   const showMenu = page.showMenu !== false;
-  const rendererComponents: PageComponent[] = (page.components ?? []).map((component: Partial<PageComponent>) => ({
+  const rendererComponents: PageComponent[] = (page.components ?? []).map((component) => ({
     id: component.id ?? `component-${Math.random().toString(36).slice(2, 9)}`,
     type: component.type as string,
     order: component.order || 0,

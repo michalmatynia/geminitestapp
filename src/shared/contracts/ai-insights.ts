@@ -39,6 +39,7 @@ export const aiInsightSourceSchema = z.enum([
   'user_triggered',
   'scheduled_job',
   'manual',
+  'scheduled',
 ]);
 
 export type AiInsightSourceDto = z.infer<typeof aiInsightSourceSchema>;
@@ -63,6 +64,7 @@ export const aiInsightRecordSchema = namedDtoSchema.extend({
   metadata: z.record(z.string(), z.unknown()).optional(),
   summary: z.string().optional(),
   warnings: z.array(z.string()).optional(),
+  recommendations: z.array(z.string()).optional(),
 });
 
 export type AiInsightRecordDto = z.infer<typeof aiInsightRecordSchema>;
@@ -72,11 +74,13 @@ export const aiInsightNotificationSchema = z.object({
   id: z.string().optional(),
   insightId: z.string(),
   userId: z.string(),
+  type: aiInsightTypeSchema.optional(),
   readAt: z.string().nullable(),
   createdAt: z.string().optional(),
   status: aiInsightStatusSchema.optional(),
   summary: z.string().optional(),
   warnings: z.array(z.string()).optional(),
+  recommendations: z.array(z.string()).optional(),
 });
 
 export type AiInsightNotificationDto = z.infer<typeof aiInsightNotificationSchema>;

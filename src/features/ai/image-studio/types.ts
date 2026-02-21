@@ -1,6 +1,8 @@
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { ImageFileRecord } from '@/shared/contracts/files';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { VectorShape } from '@/features/vector-drawing';
+
+export type { ImageStudioSlotRecord, VectorShape };
 
 export type LandingSlotLike = {
   index: number;

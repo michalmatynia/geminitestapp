@@ -441,11 +441,21 @@ const buildInsightMessages = async (params: {
     : params.type === 'runtime_analytics'
       ? 'Runtime analytics snapshot'
       : 'System log snapshot';
+  const now = new Date().toISOString();
   return [
-    { role: 'system', content: `${systemPrompt}\n\n${OUTPUT_FORMAT_INSTRUCTION}` },
     {
+      id: `sys-${Date.now()}`,
+      sessionId: 'insights',
+      role: 'system',
+      content: `${systemPrompt}\n\n${OUTPUT_FORMAT_INSTRUCTION}`,
+      timestamp: now,
+    },
+    {
+      id: `user-${Date.now()}`,
+      sessionId: 'insights',
       role: 'user',
       content: `${title}:\n${JSON.stringify(params.payload, null, 2)}`,
+      timestamp: now,
     },
   ];
 };
@@ -509,10 +519,10 @@ const runInsightModel = async (params: {
       openai.chat.completions.create({
         model: modelId,
         messages: params.messages.map((message: ChatMessage) => ({
-          role: message.role,
+          role: message.role as any,
           content: message.content,
         })),
-      }),
+      }) as Promise<OpenAI.Chat.Completions.ChatCompletion>,
     { provider, modelId }
   );
   return response.choices?.[0]?.message?.content?.trim() ?? '';

@@ -12,6 +12,21 @@ import type {
 } from './slot-inline-edit-tab-types';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
+import type { ImageFileRecord } from '@/shared/contracts/files';
+
+export const applyEnvironmentReferenceAssetToDraft = (
+  file: ImageFileRecord
+): EnvironmentReferenceDraftViewModel => ({
+  imageFileId: file.id,
+  imageUrl: file.filepath,
+  filename: file.filename || '',
+  mimetype: file.mimetype,
+  size: file.size,
+  width: file.width ?? null,
+  height: file.height ?? null,
+  updatedAt: file.updatedAt || new Date().toISOString(),
+});
+
 export const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
   return value as Record<string, unknown>;

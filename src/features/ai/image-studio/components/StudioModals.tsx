@@ -6,8 +6,6 @@ import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
-import { usePromptActions, usePromptState } from '../context/PromptContext';
-import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { toSlotName } from './studio-modals/prompt-extract-utils';
 import { slotHasRenderableImage } from './studio-modals/slot-inline-edit-utils';

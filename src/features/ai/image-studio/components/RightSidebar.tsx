@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock3, GitBranch, Loader2, Play, Redo2, Sparkles, Undo2, Workflow } from 'lucide-react';
+import { Clock3, GitBranch, Play, Redo2, Sparkles, Undo2, Workflow } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';

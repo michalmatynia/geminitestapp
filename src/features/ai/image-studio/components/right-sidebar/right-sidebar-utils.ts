@@ -224,7 +224,7 @@ export type StudioActionHistorySnapshot = {
   workingSlotId: string | null;
   previewMode: 'image' | '3d';
   compositeAssetIds: string[];
-  tool: 'select' | 'polygon' | 'lasso' | 'rect' | 'ellipse' | 'brush';
+  tool: any;
   canvasSelectionEnabled: boolean;
   imageTransformMode: 'none' | 'move';
   canvasImageOffset: { x: number; y: number };

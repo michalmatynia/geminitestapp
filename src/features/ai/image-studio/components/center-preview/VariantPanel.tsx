@@ -1,4 +1,4 @@
-import { Eye, Loader2, Trash2 } from 'lucide-react';
+import { Eye, Trash2 } from 'lucide-react';
 import React from 'react';
 
 import { Button, Input, Card, Badge, Alert, LoadingState } from '@/shared/ui';

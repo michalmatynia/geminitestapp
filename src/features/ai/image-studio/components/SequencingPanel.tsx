@@ -2,7 +2,6 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  Loader2,
   Play,
   Square,
 } from 'lucide-react';

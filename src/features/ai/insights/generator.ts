@@ -473,10 +473,7 @@ const runInsightModel = async (params: {
     }
     const response = await runTeachingChat({
       agentId,
-      messages: params.messages.map((message: ChatMessage) => ({
-        role: message.role,
-        content: message.content,
-      })),
+      messages: params.messages,
     });
     return response.message ?? '';
   }
@@ -566,13 +563,18 @@ export const generateAnalyticsInsight = async (params: {
   const parsed = parseInsightPayload(raw);
 
   const insight = await appendAiInsight('analytics', {
+    name: 'Analytics Insight',
     status: parsed.status,
+    score: parsed.status === 'ok' ? 100 : 50,
     summary: parsed.summary,
     warnings: parsed.warnings,
     recommendations: parsed.recommendations,
     source: params.source,
-    model: { provider, modelId, agentId },
-    window: { from: summary.from, to: summary.to, scope: summary.scope ?? 'all' },
+    content: payload as any,
+    metadata: {
+      model: { provider, modelId, agentId },
+      window: { from: summary.from, to: summary.to, scope: summary.scope ?? 'all' },
+    },
   });
   await recordBrainInsightAnalytics({
     type: 'analytics',
@@ -586,12 +588,14 @@ export const generateAnalyticsInsight = async (params: {
 
   if (parsed.status !== 'ok' || parsed.warnings.length > 0) {
     await appendAiInsightNotification({
+      insightId: insight.id,
+      userId: 'system',
+      readAt: null,
       type: 'analytics',
       status: parsed.status,
       summary: parsed.summary,
       warnings: parsed.warnings,
-      source: params.source,
-      model: { provider, modelId, agentId },
+      recommendations: parsed.recommendations,
     });
   }
 
@@ -645,13 +649,18 @@ export const generateLogsInsight = async (params: {
   const parsed = parseInsightPayload(raw);
 
   const insight = await appendAiInsight('logs', {
+    name: 'Logs Insight',
     status: parsed.status,
+    score: parsed.status === 'ok' ? 100 : 50,
     summary: parsed.summary,
     warnings: parsed.warnings,
     recommendations: parsed.recommendations,
     source: params.source,
-    model: { provider, modelId, agentId },
-    window: { from: payload.window.from, to: payload.window.to },
+    content: payload as any,
+    metadata: {
+      model: { provider, modelId, agentId },
+      window: { from: payload.window.from, to: payload.window.to },
+    },
   });
   await recordBrainInsightAnalytics({
     type: 'logs',
@@ -665,12 +674,14 @@ export const generateLogsInsight = async (params: {
 
   if (parsed.status !== 'ok' || parsed.warnings.length > 0) {
     await appendAiInsightNotification({
+      insightId: insight.id,
+      userId: 'system',
+      readAt: null,
       type: 'logs',
       status: parsed.status,
       summary: parsed.summary,
       warnings: parsed.warnings,
-      source: params.source,
-      model: { provider, modelId, agentId },
+      recommendations: parsed.recommendations,
     });
   }
 
@@ -725,13 +736,18 @@ export const generateRuntimeAnalyticsInsight = async (params: {
   const parsed = parseInsightPayload(raw);
 
   const insight = await appendAiInsight('runtime_analytics', {
+    name: 'Runtime Analytics Insight',
     status: parsed.status,
+    score: parsed.status === 'ok' ? 100 : 50,
     summary: parsed.summary,
     warnings: parsed.warnings,
     recommendations: parsed.recommendations,
     source: params.source,
-    model: { provider, modelId, agentId },
-    window: { from: runtimeSummary.from, to: runtimeSummary.to, scope: String(runtimeSummary.range) },
+    content: payload as any,
+    metadata: {
+      model: { provider, modelId, agentId },
+      window: { from: runtimeSummary.from, to: runtimeSummary.to, scope: String(runtimeSummary.range) },
+    },
   });
 
   await setAiInsightsMeta(
@@ -741,12 +757,14 @@ export const generateRuntimeAnalyticsInsight = async (params: {
 
   if (parsed.status !== 'ok' || parsed.warnings.length > 0) {
     await appendAiInsightNotification({
+      insightId: insight.id,
+      userId: 'system',
+      readAt: null,
       type: 'runtime_analytics',
       status: parsed.status,
       summary: parsed.summary,
       warnings: parsed.warnings,
-      source: params.source,
-      model: { provider, modelId, agentId },
+      recommendations: parsed.recommendations,
     });
     await ErrorSystem.logWarning('AI runtime analytics insight reported warnings.', {
       service: 'ai-insights',
@@ -808,23 +826,30 @@ export const generateLogInterpretation = async (params: {
   const parsed = parseInsightPayload(raw);
 
   const insight = await appendAiInsight('logs', {
+    name: 'Log Interpretation',
     status: parsed.status,
+    score: parsed.status === 'ok' ? 100 : 50,
     summary: parsed.summary,
     warnings: parsed.warnings,
     recommendations: parsed.recommendations,
     source: params.source,
-    model: { provider, modelId, agentId },
-    context: { logId: params.log.id },
+    content: payload as any,
+    metadata: {
+      model: { provider, modelId, agentId },
+      context: { logId: params.log.id },
+    },
   });
 
   if (parsed.status !== 'ok' || parsed.warnings.length > 0) {
     await appendAiInsightNotification({
+      insightId: insight.id,
+      userId: 'system',
+      readAt: null,
       type: 'logs',
       status: parsed.status,
       summary: parsed.summary,
       warnings: parsed.warnings,
-      source: params.source,
-      model: { provider, modelId, agentId },
+      recommendations: parsed.recommendations,
     });
   }
 

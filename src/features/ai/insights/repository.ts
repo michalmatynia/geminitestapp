@@ -73,8 +73,8 @@ const normalizeHistory = (input: AiInsightRecord[]): AiInsightRecord[] => {
   return input
     .filter((entry: AiInsightRecord) => entry && typeof entry.id === 'string')
     .sort((a: AiInsightRecord, b: AiInsightRecord) => {
-      const aTime = new Date(a.createdAt).getTime();
-      const bTime = new Date(b.createdAt).getTime();
+      const aTime = new Date(a.createdAt || 0).getTime();
+      const bTime = new Date(b.createdAt || 0).getTime();
       return bTime - aTime;
     });
 };
@@ -109,8 +109,8 @@ const normalizeNotifications = (input: AiInsightNotification[]): AiInsightNotifi
   return input
     .filter((entry: AiInsightNotification) => entry && typeof entry.id === 'string')
     .sort((a: AiInsightNotification, b: AiInsightNotification) => {
-      const aTime = new Date(a.createdAt).getTime();
-      const bTime = new Date(b.createdAt).getTime();
+      const aTime = new Date(a.createdAt || 0).getTime();
+      const bTime = new Date(b.createdAt || 0).getTime();
       return bTime - aTime;
     });
 };

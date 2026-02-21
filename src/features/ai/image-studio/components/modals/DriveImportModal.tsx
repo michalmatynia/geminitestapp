@@ -1,6 +1,6 @@
 'use client';
 
-import { Loader2, Upload } from 'lucide-react';
+import { Upload } from 'lucide-react';
 import React from 'react';
 
 import FileManager from '@/features/files/components/FileManager';

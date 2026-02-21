@@ -5,7 +5,7 @@ import React, { useMemo, useState } from 'react';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/features/prompt-engine/settings';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { CopyButton, Input, FormSection, MetadataItem, DocumentationSection, Card, Badge, Hint } from '@/shared/ui';
+import { CopyButton, Input, FormSection, MetadataItem, Card, Hint } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { useGenerationState } from '../context/GenerationContext';

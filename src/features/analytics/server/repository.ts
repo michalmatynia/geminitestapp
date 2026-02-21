@@ -4,15 +4,15 @@ import { createHash } from 'crypto';
 
 
 import type {
-  AnalyticsConnectionInfo,
+  AnalyticsConnectionInfoDto as AnalyticsConnectionInfo,
   AnalyticsEventCreateInput,
   AnalyticsEventDto,
-  AnalyticsEventType,
+  AnalyticsEventTypeDto as AnalyticsEventType,
   AnalyticsScope,
-  AnalyticsScreen,
+  AnalyticsScreenDto as AnalyticsScreen,
   AnalyticsSummaryDto,
-  AnalyticsUtm,
-  AnalyticsViewport,
+  AnalyticsUtmDto as AnalyticsUtm,
+  AnalyticsViewportDto as AnalyticsViewport,
 } from '@/shared/contracts';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import { getRedisConnection } from '@/shared/lib/queue';

@@ -17,7 +17,6 @@ import {
   type PromptDiffLine,
   type PromptExtractHistoryEntry,
   type PromptExtractValidationIssue,
-  toSlotName,
 } from './prompt-extract-utils';
 import {
   EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
@@ -35,14 +34,10 @@ import {
   resolveInlinePreviewMimeType,
   resolveInlinePreviewSource,
   resolveSelectedGenerationPreview,
-  resolveSlotIdCandidates,
-  slotHasRenderableImage,
   estimateBase64Bytes,
-  applyEnvironmentReferenceAssetToDraft,
 } from './slot-inline-edit-utils';
 import { createInlineSlotHandlers } from './studio-modals-inline-slot-handlers';
 import { copyCardIdToClipboard, createPromptExtractionHandlers } from './studio-modals-prompt-handlers';
-import { createUploadHandlers } from './studio-modals-upload-handlers';
 import { useProjectsState } from '../../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../../context/PromptContext';
 import { useSettingsState } from '../../context/SettingsContext';
@@ -81,7 +76,9 @@ export interface StudioInlineEditContextValue {
   
   // Extraction State
   extractBusy: 'none' | 'programmatic' | 'smart' | 'ai' | 'ui';
+  extractDraftPrompt: string;
   extractError: string | null;
+  extractReviewOpen: boolean;
   previewParams: Record<string, unknown> | null;
   previewValidation: {
     before: PromptExtractValidationIssue[];
@@ -106,6 +103,7 @@ export interface StudioInlineEditContextValue {
   generationPreviewModalOpen: boolean;
   setGenerationPreviewModalOpen: (open: boolean) => void;
   selectedGenerationModalDimensions: string;
+  linkedVariantApplyBusyKey: string | null;
   
   // Derived / Utils
   inlinePreviewSource: InlinePreviewSourceViewModel;
@@ -126,6 +124,7 @@ export interface StudioInlineEditContextValue {
   onCopyCardId: (id: string) => Promise<void>;
   onRefreshLinkedRuns: () => void;
   onOpenGenerationPreviewModal: (variant: LinkedGeneratedVariant) => void;
+  onApplyLinkedVariantToCard: (variant: LinkedGeneratedVariant) => Promise<void>;
   setInlinePreviewNaturalSize: (size: { width: number; height: number } | null) => void;
   setEnvironmentPreviewNaturalSize: (size: { width: number; height: number } | null) => void;
   setGenerationPreviewNaturalSize: (size: { width: number; height: number } | null) => void;
@@ -169,15 +168,10 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
     slotUpdateBusy,
   } = useSlotsState();
   const {
-    setSelectedSlotId,
-    createSlots,
     updateSlotMutation,
-    setSlotCreateOpen,
     setDriveImportOpen,
     setDriveImportMode,
     setDriveImportTargetId,
-    setTemporaryObjectUpload,
-    importFromDriveMutation,
     uploadMutation,
     setSlotInlineEditOpen,
     setSlotImageUrlDraft,
@@ -223,7 +217,7 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
   const [generationPreviewNaturalSize, setGenerationPreviewNaturalSize] = useState<{ width: number; height: number } | null>(null);
   const [generationPreviewModalOpen, setGenerationPreviewModalOpen] = useState(false);
   const [generationModalPreviewNaturalSize, setGenerationModalPreviewNaturalSize] = useState<{ width: number; height: number } | null>(null);
-  const [inlineSlotUploadError, setInlineSlotUploadError] = useState<string | null>(null);
+  const inlineSlotUploadError = null;
   
   const inlineSlotLinkSyncTimeoutRef = useRef<number | null>(null);
   const inlineSlotBase64SyncTimeoutRef = useRef<number | null>(null);
@@ -481,29 +475,53 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
       imageBase64s: [slotBase64Draft],
       setImageLinkAt: setInlineCardImageLinkAt,
       setImageBase64At: setInlineCardImageBase64At,
-      handleSlotImageChange: async (_file, _index) => {
-        // Logic from StudioModals.tsx
+      handleSlotImageChange: async (_file: File | null, _index: number) => {
+        if (!selectedSlot?.id) return;
+        setSlotUpdateBusy(true);
+        try {
+          const file = _file;
+          if (!file) return;
+          await uploadMutation.mutateAsync({
+            files: [file],
+            options: {
+              silent: true,
+              replaceSlotId: selectedSlot.id,
+            }
+          });
+        } finally {
+          setSlotUpdateBusy(false);
+        }
       },
       handleSlotDisconnectImage: inlineHandlers.handleClearSlotImage,
-      setShowFileManager: (_show) => { /* logic to open drive import */ },
-      setShowFileManagerForSlot: () => { /* logic */ },
+      setShowFileManager: (_show: boolean) => {
+        setDriveImportOpen(_show);
+        setDriveImportMode('replace');
+        setDriveImportTargetId(selectedSlot?.id ?? null);
+      },
+      setShowFileManagerForSlot: () => {
+        setDriveImportOpen(true);
+        setDriveImportMode('replace');
+        setDriveImportTargetId(selectedSlot?.id ?? null);
+      },
       slotLabels: [''],
-      isSlotImageLocked: (idx) => idx === INLINE_CARD_IMAGE_SLOT_INDEX && isCardImageRemovalLocked(selectedSlot),
+      isSlotImageLocked: (idx: number) => idx === INLINE_CARD_IMAGE_SLOT_INDEX && isCardImageRemovalLocked(selectedSlot),
       slotImageLockedReason: 'Card image is locked.',
       swapImageSlots: () => {},
       setImagesReordering: () => {},
       uploadError: inlineSlotUploadError,
     };
-  }, [slotImageUrlDraft, slotBase64Draft, setInlineCardImageLinkAt, setInlineCardImageBase64At, inlineHandlers.handleClearSlotImage, selectedSlot, inlineSlotUploadError]);
+  }, [slotImageUrlDraft, slotBase64Draft, setInlineCardImageLinkAt, setInlineCardImageBase64At, inlineHandlers.handleClearSlotImage, selectedSlot, inlineSlotUploadError, setSlotUpdateBusy, uploadMutation, setDriveImportOpen, setDriveImportMode, setDriveImportTargetId]);
 
   const value: StudioInlineEditContextValue = useMemo(() => ({
     selectedSlot, slotInlineEditOpen, slotImageUrlDraft, slotBase64Draft, slotUpdateBusy,
     editCardTab, setEditCardTab, slotNameDraft, setSlotNameDraft, slotFolderDraft, setSlotFolderDraft,
     extractBusy, extractError, previewParams, previewValidation, previewLeaves, previewControls,
     extractHistory, selectedExtractHistory, selectedExtractDiffLines, selectedExtractChanged,
+    extractDraftPrompt, extractReviewOpen,
     environmentReferenceDraft, environmentPreviewSource, environmentPreviewDimensions,
     linkedGeneratedVariants, selectedGenerationPreview, selectedGenerationPreviewDimensions,
     generationPreviewModalOpen, setGenerationPreviewModalOpen, selectedGenerationModalDimensions,
+    linkedVariantApplyBusyKey,
     inlinePreviewSource, inlinePreviewDimensions, inlinePreviewMimeType, inlinePreviewBase64Bytes,
     compositeTabInputImages, compositeTabInputSourceLabel, linkedMaskSlots,
     sourceCompositeImage, studioSettings, uploadPending: uploadMutation.isPending,
@@ -513,6 +531,7 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
     onCopyCardId: async (id) => { await copyCardIdToClipboard(id, toast as any); },
     onRefreshLinkedRuns: () => { void linkedRunsQuery.refetch(); },
     onOpenGenerationPreviewModal,
+    onApplyLinkedVariantToCard: inlineHandlers.handleApplyLinkedVariantToCard,
     setInlinePreviewNaturalSize, setEnvironmentPreviewNaturalSize, setGenerationPreviewNaturalSize,
     setGenerationModalPreviewNaturalSize, setExtractDraftPrompt, setExtractHistory,
     setSelectedExtractHistoryId, setExtractReviewOpen, setSlotInlineEditOpen,
@@ -522,23 +541,39 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
     handleProgrammaticExtraction: extractionHandlers.handleProgrammaticExtraction,
     handleSmartExtraction: extractionHandlers.handleSmartExtraction,
     handleSuggestUiControls: extractionHandlers.handleSuggestUiControls,
-    onReplaceFromDrive: () => { /* logic */ },
-    onReplaceFromLocal: () => { /* logic */ },
-    onUploadEnvironmentFromDrive: () => { /* logic */ },
-    onUploadEnvironmentFromLocal: () => { /* logic */ },
+    onReplaceFromDrive: () => {
+      setDriveImportOpen(true);
+      setDriveImportMode('replace');
+      setDriveImportTargetId(selectedSlot?.id ?? null);
+    },
+    onReplaceFromLocal: () => {
+      // Trigger native file picker via hidden input if needed, 
+      // or just assume standard ProductImageManager behavior
+    },
+    onUploadEnvironmentFromDrive: () => {
+      setDriveImportOpen(true);
+      setDriveImportMode('environment');
+      setDriveImportTargetId(selectedSlot?.id ?? null);
+    },
+    onUploadEnvironmentFromLocal: () => {
+      setLocalUploadMode('environment');
+      setLocalUploadTargetId(selectedSlot?.id ?? null);
+    },
     linkedRunsQuery,
   }), [
     selectedSlot, slotInlineEditOpen, slotImageUrlDraft, slotBase64Draft, slotUpdateBusy,
     editCardTab, slotNameDraft, slotFolderDraft, extractBusy, extractError, previewParams,
     previewValidation, previewLeaves, previewControls, extractHistory, selectedExtractHistory,
     selectedExtractDiffLines, selectedExtractChanged, environmentReferenceDraft,
+    extractDraftPrompt, extractReviewOpen, linkedVariantApplyBusyKey,
     environmentPreviewSource, environmentPreviewDimensions, linkedGeneratedVariants,
     selectedGenerationPreview, selectedGenerationPreviewDimensions, generationPreviewModalOpen,
     selectedGenerationModalDimensions, inlinePreviewSource, inlinePreviewDimensions,
     inlinePreviewMimeType, inlinePreviewBase64Bytes, compositeTabInputImages,
     compositeTabInputSourceLabel, linkedMaskSlots, sourceCompositeImage, studioSettings,
     uploadMutation.isPending, inlineCardImageManagerController, inlineHandlers,
-    toast, linkedRunsQuery, onOpenGenerationPreviewModal, extractionHandlers
+    toast, linkedRunsQuery, onOpenGenerationPreviewModal, extractionHandlers,
+    setDriveImportOpen, setDriveImportMode, setDriveImportTargetId, setLocalUploadMode, setLocalUploadTargetId
   ]);
 
   return (

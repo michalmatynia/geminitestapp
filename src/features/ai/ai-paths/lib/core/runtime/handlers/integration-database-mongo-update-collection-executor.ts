@@ -47,10 +47,6 @@ export async function executeMongoCollectionUpdate({
   let nextResolvedFilter: Record<string, unknown> = resolvedFilter;
 
   if (action === 'updateOne') {
-    const hasFilter: boolean =
-      nextResolvedFilter &&
-      typeof nextResolvedFilter === 'object' &&
-      Object.keys(nextResolvedFilter).length > 0;
     if (!nextResolvedFilter || Object.keys(nextResolvedFilter).length === 0) {
       reportAiPathsError(
         new Error('Database update missing filter'),
@@ -69,6 +65,7 @@ export async function executeMongoCollectionUpdate({
 
   const updateResult: ApiResponse<unknown> = await dbApi.action({
     ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
+    ...(queryPayload['collectionMap'] ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> } : {}),
     action,
     collection,
     filter: nextResolvedFilter,

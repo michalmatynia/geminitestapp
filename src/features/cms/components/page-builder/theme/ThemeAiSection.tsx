@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ColorSchemeColors } from '@/shared/contracts/cms';
+import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 import {
   Button,
   Label,

@@ -69,8 +69,21 @@ export function AppModal({
   const isCurrentlyOpen = isOpen ?? open ?? false;
 
   const handleOpenChange = (newOpen: boolean): void => {
-    onOpenChange?.(newOpen);
-    if (!newOpen) onClose?.();
+    if (onOpenChange) {
+      // Many existing call sites pass a close-only callback here.
+      // Treat zero-arg handlers as "close only" to avoid fighting controlled open state.
+      if (onOpenChange.length === 0) {
+        if (!newOpen) {
+          (onOpenChange as () => void)();
+        }
+      } else {
+        onOpenChange(newOpen);
+      }
+    }
+
+    if (!newOpen && onClose && onClose !== onOpenChange) {
+      onClose();
+    }
   };
 
   const handleInteractOutside = (event: Event): void => {

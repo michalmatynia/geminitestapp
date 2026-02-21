@@ -38,6 +38,7 @@ export type DbActionPayload = {
   provider?: 'auto' | 'mongodb' | 'prisma';
   action: string;
   collection: string;
+  collectionMap?: Record<string, string>;
   filter?: unknown;
   pipeline?: unknown[];
   document?: unknown;
@@ -55,6 +56,7 @@ export type DbActionPayload = {
 export type DbQueryPayload = {
   provider: string;
   collection: string;
+  collectionMap?: Record<string, string>;
   query: unknown;
   projection?: unknown;
   sort?: unknown;
@@ -66,6 +68,7 @@ export type DbQueryPayload = {
 export type DbUpdatePayload = {
   provider: string;
   collection: string;
+  collectionMap?: Record<string, string>;
   query: unknown;
   updates: unknown;
   single?: boolean;

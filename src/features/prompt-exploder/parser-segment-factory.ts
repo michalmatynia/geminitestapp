@@ -125,6 +125,7 @@ export const createPromptExploderSegment = (args: {
     raw: normalizedRaw,
     code: args.code ?? null,
     condition: args.condition ?? null,
+    items: [],
     listItems: args.listItems ?? [],
     subsections: args.subsections ?? [],
     paramsText: resolvedParamsText,
@@ -136,8 +137,9 @@ export const createPromptExploderSegment = (args: {
     matchedPatternLabels,
     matchedSequenceLabels,
     confidence,
-  };
-};
+    validationResults: [],
+    segments: [],
+  };};
 
 const formatHeadingWithCode = (title: string, code: string | null): string => {
   const normalizedTitle = title.trim();

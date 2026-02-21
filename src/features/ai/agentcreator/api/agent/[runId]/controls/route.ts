@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runAgentBrowserControl } from '@/features/ai/agent-runtime/server';
 import { ErrorSystem } from '@/features/observability/server';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
-import { apiHandlerWithParams, type ApiHandlerContext } from '@/shared/lib/api/api-handler';
+import { apiHandlerWithParams, type ApiHandlerContext as _ApiHandlerContext } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
@@ -63,6 +63,6 @@ async function POST_handler(req: NextRequest,
 }
 
 export const POST = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { runId: string }) => POST_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].controls.POST' }
 );

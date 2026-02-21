@@ -22,15 +22,21 @@ export interface PromptConfig {
  * Returns a function to trigger prompt and the modal component to render.
  */
 export function usePrompt() {
-  const [config, setPromptConfig] = useState<PromptConfig | null>(null);
+  const [config, setPromptConfig] = useState<(PromptConfig & { resolve: (value: string | null) => void }) | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const prompt = useCallback((newConfig: PromptConfig) => {
-    setPromptConfig(newConfig);
+    return new Promise<string | null>((resolve) => {
+      setPromptConfig({
+        ...newConfig,
+        resolve,
+      });
+    });
   }, []);
 
   const handleClose = useCallback(() => {
     if (config?.onCancel) config.onCancel();
+    config?.resolve(null);
     setPromptConfig(null);
   }, [config]);
 
@@ -43,6 +49,7 @@ export function usePrompt() {
         setIsLoading(false);
       }
     }
+    config?.resolve(value);
     setPromptConfig(null);
   }, [config]);
 

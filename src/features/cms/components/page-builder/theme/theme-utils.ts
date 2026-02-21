@@ -1,5 +1,5 @@
 import type { CmsTheme } from '@/shared/contracts/cms';
-import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms';
+import type { ColorSchemeColors, ThemeSettings } from '@/shared/contracts/cms-theme';
 
 export const parseCssNumber = (value?: string | null): number | null => {
   if (!value) return null;

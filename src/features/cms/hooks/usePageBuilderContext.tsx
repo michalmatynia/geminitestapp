@@ -8,11 +8,13 @@ import { DEFAULT_INSPECTOR_SETTINGS } from '../types/page-builder';
 import { findSection, findBlock, findColumn } from './page-builder/block-helpers';
 import { pageBuilderReducer } from './page-builder/page-builder-reducer';
 
+import type { 
+  CmsSectionInstanceDto as SectionInstance, 
+  CmsBlockInstanceDto as BlockInstance 
+} from '@/shared/contracts/cms';
 import type {
   PageBuilderState,
   PageBuilderAction,
-  SectionInstance,
-  BlockInstance,
 } from '../types/page-builder';
 
 export { pageBuilderReducer } from './page-builder/page-builder-reducer';

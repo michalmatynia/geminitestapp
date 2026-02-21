@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { uploadNoteFile } from '@/features/files/server';
 import { noteService } from '@/features/notesapp/server';
+import type { NoteFileDto } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 
@@ -65,7 +66,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
 
   // Check if slot is already occupied
   const existingFiles = await noteService.getNoteFiles(noteId);
-  const existingFile = existingFiles.find( (f: any) => f.slotIndex === slotIndex);
+  const existingFile = existingFiles.find( (f: NoteFileDto) => f.slotIndex === slotIndex);
   if (existingFile) {
     throw conflictError(
       `Slot ${slotIndex} is already occupied. Delete the existing file first.`,

@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useMemo } from 'react';
 
 export interface SettingsFormContextValue {
-  values: Record<string, any>;
-  onChange: (key: string, value: any) => void;
+  values: Record<string, unknown>;
+  onChange: (key: string, value: unknown) => void;
 }
 
 const SettingsFormContext = createContext<SettingsFormContextValue | null>(null);

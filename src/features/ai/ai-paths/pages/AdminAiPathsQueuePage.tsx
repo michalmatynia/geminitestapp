@@ -31,6 +31,10 @@ const toQueueTab = (value: string): QueueTab => {
   return 'paths';
 };
 
+const TABS_ID_PREFIX = 'ai-paths-queue-tabs';
+const getTriggerId = (tab: QueueTab): string => `${TABS_ID_PREFIX}-trigger-${tab}`;
+const getContentId = (tab: QueueTab): string => `${TABS_ID_PREFIX}-content-${tab}`;
+
 export function AdminAiPathsQueuePage(): React.JSX.Element {
   const searchParams = useSearchParams();
   const requestedTab = searchParams?.get('tab') ?? 'paths';
@@ -85,7 +89,13 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
               {QUEUE_TABS.map((tab) => {
                 const Icon = tab.icon;
                 return (
-                  <TabsTrigger key={tab.id} value={tab.id} className='h-11 justify-start gap-2 px-3 text-left'>
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    id={getTriggerId(tab.id)}
+                    aria-controls={getContentId(tab.id)}
+                    className='h-11 justify-start gap-2 px-3 text-left'
+                  >
                     <Icon className='size-3.5' />
                     <Hint size='xs' uppercase className='font-semibold'>{tab.label}</Hint>
                   </TabsTrigger>
@@ -106,11 +116,21 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             ) : null
           }
         >
-          <TabsContent value='paths' className='space-y-4'>
+          <TabsContent
+            value='paths'
+            id={getContentId('paths')}
+            aria-labelledby={getTriggerId('paths')}
+            className='space-y-4'
+          >
             {activeTab === 'paths' ? <JobQueuePanel sourceFilter='ai_paths_ui' isActive /> : null}
           </TabsContent>
 
-          <TabsContent value='paths-external' className='space-y-4'>
+          <TabsContent
+            value='paths-external'
+            id={getContentId('paths-external')}
+            aria-labelledby={getTriggerId('paths-external')}
+            className='space-y-4'
+          >
             {activeTab === 'paths-external' ? (
               <JobQueuePanel sourceFilter='ai_paths_ui' sourceMode='exclude' isActive />
             ) : null}
@@ -124,11 +144,21 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             ) : null}
           </TabsContent>
 
-          <TabsContent value='file-uploads' className='space-y-4'>
+          <TabsContent
+            value='file-uploads'
+            id={getContentId('file-uploads')}
+            aria-labelledby={getTriggerId('file-uploads')}
+            className='space-y-4'
+          >
             <FileUploadEventsPanel />
           </TabsContent>
 
-          <TabsContent value='image-studio' className='space-y-4'>
+          <TabsContent
+            value='image-studio'
+            id={getContentId('image-studio')}
+            aria-labelledby={getTriggerId('image-studio')}
+            className='space-y-4'
+          >
             {activeTab === 'image-studio' ? <ImageStudioRunsQueuePanel /> : null}
           </TabsContent>
         </ListPanel>

@@ -60,6 +60,11 @@ export async function executeDatabaseInsert({
             provider: queryPayload.provider,
           }
           : {}),
+        ...(queryPayload.collectionMap
+          ? {
+            collectionMap: queryPayload.collectionMap,
+          }
+          : {}),
         action: 'insertOne' as const,
         collection,
         document: payload,
@@ -129,6 +134,11 @@ export async function executeDatabaseInsert({
         ...(queryPayload.provider
           ? {
             provider: queryPayload.provider,
+          }
+          : {}),
+        ...(queryPayload.collectionMap
+          ? {
+            collectionMap: queryPayload.collectionMap,
           }
           : {}),
         action: 'insertOne' as const,

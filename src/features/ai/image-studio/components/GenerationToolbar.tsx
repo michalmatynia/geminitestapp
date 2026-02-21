@@ -199,11 +199,11 @@ const shouldFallbackToServerAutoScaler = (error: unknown): boolean => {
   );
 };
 
-const describeSchemaValidationIssue = (issues: any[]): string => {
-  const firstIssue = issues[0];
+const describeSchemaValidationIssue = (issues: unknown[]): string => {
+  const firstIssue = issues[0] as { path: Array<string | number>; message: string } | undefined;
   if (!firstIssue) return 'Payload is invalid.';
   const path = firstIssue.path.length > 0
-    ? firstIssue.path.map((part: any) => String(part)).join('.')
+    ? firstIssue.path.map((part) => String(part)).join('.')
     : 'payload';
   return `${path}: ${firstIssue.message}`;
 };

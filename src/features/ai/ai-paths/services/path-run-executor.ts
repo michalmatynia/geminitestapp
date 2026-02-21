@@ -957,6 +957,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       activePathName: run.pathName ?? null,
       runId: run.id,
       runStartedAt,
+      runMeta: run.meta,
       ...(triggerNodeId ? { triggerNodeId } : {}),
       ...(run.triggerEvent ? { triggerEvent: run.triggerEvent } : {}),
       ...(run.triggerContext ? { triggerContext: run.triggerContext } : {}),

@@ -186,6 +186,7 @@ export const productListingWithDetailsSchema = productListingSchema.extend({
 export type ProductListingWithDetailsDto = z.infer<typeof productListingWithDetailsSchema>;
 
 export const createProductListingSchema = z.object({
+  id: z.string().optional(),
   productId: z.string(),
   integrationId: z.string(),
   connectionId: z.string(),

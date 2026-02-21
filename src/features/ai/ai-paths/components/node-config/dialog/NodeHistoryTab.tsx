@@ -1,6 +1,5 @@
 'use client';
 import { RunHistoryEntries } from '@/features/ai/ai-paths/components/RunHistoryEntries';
-import type { RuntimeHistoryEntry } from '@/features/ai/ai-paths/lib';
 import { Button } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

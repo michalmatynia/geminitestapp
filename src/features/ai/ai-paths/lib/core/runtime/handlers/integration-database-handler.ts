@@ -15,6 +15,10 @@ import { handleDatabaseStandardOperation } from './integration-database-operatio
 import { prepareDatabaseTemplateContext } from './integration-database-template-context';
 import { getCachedSchema } from './integration-schema-handler';
 import { DEFAULT_DB_QUERY } from '../../constants';
+import {
+  extractAiPathsCollectionMapFromRunMeta,
+  withAiPathsCollectionMapInput,
+} from '../../utils/collection-mapping';
 
 import type { SchemaResponse } from '../../../api/client';
 
@@ -31,9 +35,10 @@ export const handleDatabase: NodeHandler = async ({
   triggerContext,
   fallbackEntityId,
   strictFlowMode = true,
+  runMeta,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   try {
-    const resolvedInputs: Record<string, unknown> = resolveDatabaseInputs(
+    const resolvedInputsBase: Record<string, unknown> = resolveDatabaseInputs(
       {
         nodeInputs: nodeInputs,
         triggerContext,
@@ -41,6 +46,11 @@ export const handleDatabase: NodeHandler = async ({
         simulationEntityType,
         strictFlowMode,
       }
+    );
+    const collectionMap = extractAiPathsCollectionMapFromRunMeta(runMeta);
+    const resolvedInputs: Record<string, unknown> = withAiPathsCollectionMapInput(
+      resolvedInputsBase,
+      collectionMap,
     );
     const nodeInputPorts: string[] = Array.isArray(node.inputs) ? node.inputs : [];
     const defaultQuery: DbQueryConfig = DEFAULT_DB_QUERY;

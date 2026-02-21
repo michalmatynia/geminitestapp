@@ -1,0 +1,10 @@
+.next-dev/dev/types/routes.d.ts(513,26): error TS1005: ';' expected.
+.next-dev/dev/types/routes.d.ts(514,21): error TS1005: ';' expected.
+.next-dev/dev/types/routes.d.ts(515,10): error TS1005: ';' expected.
+.next-dev/dev/types/routes.d.ts(516,19): error TS1005: ';' expected.
+.next-dev/dev/types/routes.d.ts(517,17): error TS1005: ';' expected.
+.next-dev/dev/types/routes.d.ts(518,18): error TS1005: ';' expected.
+.next-dev/dev/types/routes.d.ts(518,26): error TS1005: ';' expected.
+.next-dev/dev/types/routes.d.ts(519,19): error TS1005: ';' expected.
+.next-dev/dev/types/routes.d.ts(519,27): error TS1005: ';' expected.
+.next-dev/dev/types/routes.d.ts(520,1): error TS1128: Declaration or statement expected.

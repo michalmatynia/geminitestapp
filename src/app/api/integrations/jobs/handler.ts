@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getProductListingRepository } from '@/features/integrations/server';
+import {
+  getProductListingRepository,
+} from '@/features/integrations/server';
 import { getProductRepository } from '@/features/products/server';
+import type {
+  ProductListing,
+  ProductListingWithDetails,
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 /**
@@ -16,10 +22,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const allListings = await listingRepo.listAllListings();
 
   // Group by product and get product details
-  const productIds = Array.from(new Set(allListings.map( (l: any) => l.productId)));
+  const productIds = Array.from(new Set(allListings.map( (l: Pick<ProductListing, 'productId'>) => l.productId)));
 
   const jobs = await Promise.all(
-    productIds.map(async (productId: any) => {
+    productIds.map(async (productId: string) => {
       const product = await productRepo.getProductById(productId);
       const listings = await listingRepo.getListingsByProductId(productId);
 
@@ -27,7 +33,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         productId,
         productName: product?.name_en || product?.name_pl || product?.name_de || 'Unknown',
         productSku: product?.sku || null,
-        listings: listings.map( (listing: any) => ({
+        listings: listings.map( (listing: ProductListingWithDetails) => ({
           id: listing.id,
           productId: listing.productId,
           integrationId: listing.integrationId,

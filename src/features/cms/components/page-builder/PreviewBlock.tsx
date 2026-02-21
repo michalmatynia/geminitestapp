@@ -16,6 +16,11 @@ import {
 import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
+import type { 
+  CmsSectionInstanceDto as SectionInstance, 
+  CmsBlockInstanceDto as BlockInstance,
+  PreviewBlockItemProps,
+} from '@/shared/contracts/cms';
 import { Button, Card } from '@/shared/ui';
 
 import { SectionRenderer as FrontendSectionRenderer } from '../frontend/CmsPageRenderer';
@@ -64,11 +69,6 @@ import { PreviewImageWithTextSection } from './preview/sections/PreviewImageWith
 import { PreviewRichTextSection } from './preview/sections/PreviewRichTextSection';
 import { PreviewSlideshowSection } from './preview/sections/PreviewSlideshowSection';
 
-import type { PreviewBlockItemProps } from './preview/types';
-import type {
-  SectionInstance,
-  BlockInstance,
-} from '../../types/page-builder';
 
 export type { MediaReplaceTarget };
 

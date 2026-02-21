@@ -4,13 +4,13 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 
 
-import type { PreviewSectionBlockProps, PreviewBlockItemProps } from '@/shared/contracts/cms';
+import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contracts/cms';
+import type { BlockInstance } from '@/shared/contracts/cms';
 
 import { BlockContextProvider, useBlockContext } from './context/BlockContext';
 import { usePreviewEditor } from './context/PreviewEditorContext';
 import { normalizeSlideshowAnimationType } from './preview-utils';
 
-import type { BlockInstance } from '../../../types/page-builder';
 
 // ---------------------------------------------------------------------------
 // PreviewBlockItem is needed as a dependency - import it lazily to avoid circular deps
@@ -52,7 +52,7 @@ export const parseCarouselBoolSetting = (value: unknown, defaultValue: boolean =
 export function PreviewCarouselBlock({
   block,
   stretch = false,
-}: PreviewSectionBlockProps): React.ReactNode {
+}: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
   const {
@@ -236,7 +236,7 @@ export function PreviewCarouselBlock({
 export function PreviewSlideshowBlock({
   block,
   stretch = false,
-}: PreviewSectionBlockProps): React.ReactNode {
+}: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
   const {

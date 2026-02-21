@@ -18,6 +18,7 @@ import {
   renderTemplate,
   safeStringify,
 } from '../utils';
+import { getAiPathsCollectionMapFromInputs } from '../utils/collection-mapping';
 
 export const looksLikeObjectId = (value: unknown): boolean =>
   typeof value === 'string' && /^[0-9a-fA-F]{24}$/.test(value);
@@ -388,6 +389,7 @@ export const buildDbQueryPayload = (
   sort?: Record<string, unknown>;
   provider: 'auto' | 'mongodb' | 'prisma';
   collection: string;
+  collectionMap?: Record<string, string>;
   limit?: number;
   single?: boolean;
   idType?: 'string' | 'objectId';
@@ -454,10 +456,12 @@ export const buildDbQueryPayload = (
   const sort = parseJsonSafe(queryConfig.sort ?? '') as
     | Record<string, unknown> 
     | undefined;
+  const collectionMap = getAiPathsCollectionMapFromInputs(nodeInputs);
   return {
     query,
     provider: queryConfig.provider,
     collection: queryConfig.collection,
+    ...(collectionMap ? { collectionMap } : {}),
     ...(projection !== undefined ? { projection } : {}),
     ...(sort !== undefined ? { sort } : {}),
     ...(queryConfig.limit !== undefined ? { limit: queryConfig.limit } : {}),

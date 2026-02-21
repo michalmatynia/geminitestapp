@@ -7,6 +7,12 @@ import {
   MasterFolderTree,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
+import type { 
+  PageZone, 
+  SectionInstance,
+  PageBuilderState,
+  PageBuilderAction,
+} from '@/shared/contracts/cms';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, FolderTreePanel, TreeHeader, EmptyState } from '@/shared/ui';
 import {
@@ -43,7 +49,6 @@ import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 import { TreeActionsProvider, useTreeActions } from '../../hooks/useTreeActionsContext';
 import { readSectionDragData } from '../../utils/page-builder-dnd';
 
-import type { PageZone, SectionInstance } from '../../types/page-builder';
 
 // Block types that can be promoted to standalone sections
 const PROMOTABLE_BLOCK_TYPES = [

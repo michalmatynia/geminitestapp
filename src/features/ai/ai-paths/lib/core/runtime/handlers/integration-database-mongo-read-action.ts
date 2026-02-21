@@ -86,8 +86,10 @@ export async function handleDatabaseMongoReadAction({
       };
     }
     const aggResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({ 
+      ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
       action,
       collection,
+      ...(queryPayload['collectionMap'] ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> } : {}),
       pipeline: parsedPipeline,
     });
     if (!aggResult.ok) {
@@ -131,6 +133,7 @@ export async function handleDatabaseMongoReadAction({
     ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
     action,
     collection,
+    ...(queryPayload['collectionMap'] ? { collectionMap: queryPayload['collectionMap'] as Record<string, string> } : {}),
     filter,
     ...(projection !== undefined ? { projection: projection as Record<string, unknown> } : {}),
     ...(sort !== undefined ? { sort: sort as Record<string, unknown> } : {}),

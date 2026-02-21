@@ -64,6 +64,7 @@ export function StudioModals(): React.JSX.Element {
     createSlots,
     driveImportMode,
     driveImportTargetId,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     importFromDriveMutation: importFromDriveMutation as any,
     localUploadMode,
     localUploadTargetId,
@@ -78,10 +79,14 @@ export function StudioModals(): React.JSX.Element {
     setTemporaryObjectUpload,
     slotHasRenderableImage,
     slotsCount: slots.length,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     temporaryObjectUpload: temporaryObjectUpload as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     toast: toast as any,
     toSlotName,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     updateSlotMutation: updateSlotMutation as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     uploadMutation: uploadMutation as any,
   });
 

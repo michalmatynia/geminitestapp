@@ -129,6 +129,83 @@ describe('AI Paths DB provider fallback', () => {
     );
   });
 
+  it('rejects unmapped collection names that are not allowlisted', async () => {
+    parseJsonBodyMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        provider: 'auto',
+        collection: 'Product',
+        query: { id: 'product-1' },
+        updates: { name_en: 'Updated name' },
+        single: true,
+        idType: 'string',
+      },
+    });
+    isCollectionAllowedMock.mockImplementation((value: string) => value === 'products');
+
+    await expect(
+      postAiPathsDbUpdateHandler(
+        createRequest('/api/ai-paths/db-update') as Parameters<
+          typeof postAiPathsDbUpdateHandler
+        >[0],
+        {} as Parameters<typeof postAiPathsDbUpdateHandler>[1]
+      )
+    ).rejects.toThrow('Collection not allowlisted');
+
+    expect(isCollectionAllowedMock).toHaveBeenCalledWith('Product');
+    expect(resolveCollectionProviderForRequestMock).not.toHaveBeenCalled();
+  });
+
+  it('maps collection name only when explicit collectionMap is provided', async () => {
+    parseJsonBodyMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        provider: 'auto',
+        collection: 'Product',
+        collectionMap: {
+          Product: 'products',
+        },
+        query: { id: 'product-1' },
+        updates: { name_en: 'Updated name' },
+        single: true,
+        idType: 'string',
+      },
+    });
+    isCollectionAllowedMock.mockImplementation((value: string) => value === 'products');
+    resolveCollectionProviderForRequestMock.mockResolvedValueOnce('mongodb');
+
+    const updateOneMock = vi
+      .fn()
+      .mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
+    const mongoCollectionMock = vi.fn().mockReturnValue({
+      updateOne: updateOneMock,
+      updateMany: vi.fn(),
+    });
+    getMongoDbMock.mockResolvedValue({
+      collection: mongoCollectionMock,
+    });
+
+    process.env['MONGODB_URI'] = 'mongodb://localhost/test';
+
+    const response = await postAiPathsDbUpdateHandler(
+      createRequest('/api/ai-paths/db-update') as Parameters<
+        typeof postAiPathsDbUpdateHandler
+      >[0],
+      {} as Parameters<typeof postAiPathsDbUpdateHandler>[1]
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(isCollectionAllowedMock).toHaveBeenCalledWith('products');
+    expect(resolveCollectionProviderForRequestMock).toHaveBeenCalledWith(
+      'products',
+      'auto'
+    );
+    expect(mongoCollectionMock).toHaveBeenCalledWith('products');
+    expect(body['collection']).toBe('products');
+    expect(body['requestedCollection']).toBe('Product');
+    expect(body['collectionMappedFrom']).toBe('Product');
+  });
+
   it('falls back to mongodb in db-action when primary provider does not support action', async () => {
     parseJsonBodyMock.mockResolvedValueOnce({
       ok: true,

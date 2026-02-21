@@ -9,7 +9,6 @@ import React, { useCallback } from 'react';
 import type {
   DragAxis,
   GsapAnimationConfig,
-  ObserverType,
 } from '@/features/gsap';
 import {
   DEFAULT_ANIMATION_CONFIG,

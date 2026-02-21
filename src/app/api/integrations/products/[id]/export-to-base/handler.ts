@@ -19,6 +19,7 @@ import {
 import { ErrorSystem } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
+import type { ProductListingExportEventDto } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   badRequestError,
@@ -409,9 +410,8 @@ export async function postExportToBaseHandler(
       const existingListing = await listingRepo.getListingById(listingId);
       const history = existingListing?.exportHistory ?? [];
       const prior = history.find(
-        (event: any) => event.requestId === requestId && event.status === 'success'
-      );
-      if (prior) {
+        (event: ProductListingExportEventDto) => event.requestId === requestId && event.status === 'success'
+      );      if (prior) {
         if (runId) {
           await runRepository
             .createRunEvent({

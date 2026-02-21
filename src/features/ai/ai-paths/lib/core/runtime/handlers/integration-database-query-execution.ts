@@ -7,6 +7,8 @@ import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 import { dbApi, ApiResponse } from '../../../api';
 import { parseJsonSafe } from '../../utils';
 
+import type { AiPathsCollectionMap } from '../../utils/collection-mapping';
+
 interface DbQueryResult {
   items?: unknown[];
   item?: unknown;
@@ -24,6 +26,7 @@ export type ExecuteDatabaseQueryInput = {
   queryConfig: DbQueryConfig;
   query: Record<string, unknown>;
   querySource?: string;
+  collectionMap?: AiPathsCollectionMap;
   dryRun: boolean;
   aiPrompt: string;
 };
@@ -34,6 +37,7 @@ export async function executeDatabaseQuery({
   queryConfig,
   query,
   querySource,
+  collectionMap,
   dryRun,
   aiPrompt,
 }: ExecuteDatabaseQueryInput): Promise<RuntimePortValues> {
@@ -55,6 +59,7 @@ export async function executeDatabaseQuery({
         dryRun: true,
         query,
         collection: queryConfig.collection,
+        ...(collectionMap ? { collectionMap } : {}),
         projection,
         sort,
         limit: queryConfig.limit,
@@ -76,6 +81,7 @@ export async function executeDatabaseQuery({
     sort,
     limit: queryConfig.limit,
     single: queryConfig.single,
+    ...(collectionMap ? { collectionMap } : {}),
     idType: queryConfig.idType as 'string' | 'objectId' | undefined,
   });
 

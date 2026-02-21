@@ -9,7 +9,6 @@ import React, { useEffect, useState } from 'react';
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import {
   Button,
-  Label,
   SelectSimple,
   Card,
   Hint,
@@ -94,15 +93,14 @@ export function MiniRichTextEditor({
 
   const addLink = async () => {
     if (!editor) return;
-    const url = await prompt({
+    const url = (await prompt({
       title: 'Insert Link',
       message: 'Enter the URL for the link:',
       label: 'URL',
       defaultValue: editor.getAttributes('link').href,
-    });
+    }));
 
-    if (url === null) return;
-    if (url === '') {
+    if (url === null) return;    if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();
     } else {
       editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run();
@@ -174,10 +172,9 @@ export function MiniRichTextEditor({
         )}
         <RichTextToolbarButton
           title='Insert link'
-          onClick={addLink}
+          onClick={() => { void addLink(); }}
           active={editor.isActive('link')}
-        >
-          <Link2 className='size-4' />
+        >          <Link2 className='size-4' />
         </RichTextToolbarButton>
       </Card>
       <Card variant='subtle-compact' padding='none' className='bg-card/40'>

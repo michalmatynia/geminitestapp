@@ -4,7 +4,7 @@ import { Image as ImageIcon } from 'lucide-react';
 import NextImage from 'next/image';
 
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
-import type { PreviewSectionBlockProps, PreviewBlockItemProps } from '@/shared/contracts/cms';
+import type { PreviewBlockItemProps, PreviewBlockProps } from '@/shared/contracts/cms';
 import { Card } from '@/shared/ui';
 
 import { useBlockContext, BlockContextProvider } from './context/BlockContext';
@@ -44,7 +44,7 @@ function PreviewBlockItemProxy(props: PreviewBlockItemProps): React.ReactNode {
 export function PreviewImageWithTextBlock({
   block,
   stretch = false,
-}: PreviewSectionBlockProps): React.ReactNode {
+}: PreviewBlockProps): React.ReactNode {
   const {
     inspectorSettings,
   } = usePreviewEditor();
@@ -106,7 +106,7 @@ export function PreviewImageWithTextBlock({
 export function PreviewHeroBlock({
   block,
   stretch = false,
-}: PreviewSectionBlockProps): React.ReactNode {
+}: PreviewBlockProps): React.ReactNode {
   const { mediaStyles, stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
   const children = block.blocks ?? [];
@@ -154,7 +154,7 @@ export function PreviewHeroBlock({
 export function PreviewRichTextBlock({
   block,
   stretch = false,
-}: PreviewSectionBlockProps): React.ReactNode {
+}: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
   const { inspectorSettings } = usePreviewEditor();
@@ -195,7 +195,7 @@ export function PreviewRichTextBlock({
 export function PreviewBlockSectionBlock({
   block,
   stretch = false,
-}: PreviewSectionBlockProps): React.ReactNode {
+}: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
   const { inspectorSettings } = usePreviewEditor();
@@ -257,7 +257,7 @@ export function PreviewBlockSectionBlock({
 export function PreviewTextAtomBlock({
   block,
   stretch = false,
-}: PreviewSectionBlockProps): React.ReactNode {
+}: PreviewBlockProps): React.ReactNode {
   const { stretch: contextStretch } = useBlockContext();
   const resolvedStretch = stretch ?? contextStretch ?? false;
   const { inspectorSettings } = usePreviewEditor();

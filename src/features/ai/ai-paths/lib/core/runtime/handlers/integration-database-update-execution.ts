@@ -228,6 +228,7 @@ export async function executeDatabaseUpdate({
             provider: queryPayload.provider,
             action: 'updateMany',
             collection: queryPayload.collection,
+            ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
             filter: query,
             update: customUpdateDoc,
             ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
@@ -235,6 +236,7 @@ export async function executeDatabaseUpdate({
           : await dbApi.update<DbActionResult>({
             provider: queryPayload.provider,
             collection: queryPayload.collection,
+            ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
             query,
             updates,
             single: false,
@@ -429,6 +431,7 @@ export async function executeDatabaseUpdate({
             provider: queryPayload.provider,
             action: 'updateOne',
             collection,
+            ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
             filter: resolvedFilter,
             update: customUpdateDoc,
             ...(queryPayload.idType !== undefined ? { idType: queryPayload.idType } : {}),
@@ -436,6 +439,7 @@ export async function executeDatabaseUpdate({
           : await dbApi.update<DbActionResult>({
             provider: queryPayload.provider,
             collection,
+            ...(queryPayload.collectionMap ? { collectionMap: queryPayload.collectionMap } : {}),
             query: resolvedFilter,
             updates,
             single: true,

@@ -2,6 +2,10 @@ import { ObjectId, Sort } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import {
+  normalizeAiPathsCollectionMap,
+  resolveAiPathsCollectionName,
+} from '@/features/ai/ai-paths/lib/core/utils/collection-mapping';
 import { getUnsupportedProviderActionMessage } from '@/features/ai/ai-paths/lib/core/utils/provider-actions';
 import {
   enforceAiPathsActionRateLimit,
@@ -18,6 +22,7 @@ import prisma from '@/shared/lib/db/prisma';
 const actionSchema = z.object({
   provider: z.enum(['auto', 'mongodb', 'prisma']).optional(),
   collection: z.string().trim().min(1),
+  collectionMap: z.record(z.string(), z.string()).optional(),
   action: z.enum([
     'insertOne',
     'insertMany',
@@ -265,6 +270,7 @@ export async function postAiPathsDbActionHandler(
   const {
     provider: requestedProvider,
     collection,
+    collectionMap,
     action,
     filter,
     update,
@@ -279,8 +285,15 @@ export async function postAiPathsDbActionHandler(
     upsert,
     returnDocument = 'after',
   } = data;
+  const requestedCollection = collection.trim();
+  const explicitCollectionMap = normalizeAiPathsCollectionMap(collectionMap);
+  const collectionResolution = resolveAiPathsCollectionName(
+    requestedCollection,
+    explicitCollectionMap
+  );
+  const resolvedCollection = collectionResolution.collection;
 
-  if (!isCollectionAllowed(collection)) {
+  if (!isCollectionAllowed(resolvedCollection)) {
     throw internalError('Collection not allowlisted');
   }
 
@@ -304,13 +317,13 @@ export async function postAiPathsDbActionHandler(
           'Prisma is not configured'
         );
       }
-      const resolvedCollection = resolvePrismaCollectionKey(collection);
-      const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
+      const prismaCollection = resolvePrismaCollectionKey(resolvedCollection);
+      const delegate = prismaCollection ? getPrismaDelegate(prismaCollection) : null;
       if (!delegate) {
         throw new ProviderResolutionError(
           'collection_not_available',
           provider,
-          `Collection "${collection}" is not available for Prisma.`
+          `Collection "${resolvedCollection}" is not available for Prisma.`
         );
       }
       const where = coerceQuery(filter);
@@ -497,7 +510,7 @@ export async function postAiPathsDbActionHandler(
     }
 
     const mongo = await getMongoDb();
-    const collectionRef = mongo.collection(collection);
+    const collectionRef = mongo.collection(resolvedCollection);
     const normalizedFilter = normalizeObjectId(coerceQuery(filter), idType);
     const hasFilter = Object.keys(normalizedFilter).length > 0;
 
@@ -676,7 +689,7 @@ export async function postAiPathsDbActionHandler(
   };
 
   const primaryProvider = await resolveCollectionProviderForRequest(
-    collection,
+    resolvedCollection,
     requestedProvider
   );
   const canAttemptFallback =

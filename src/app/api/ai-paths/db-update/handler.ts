@@ -3,6 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import {
+  normalizeAiPathsCollectionMap,
+  resolveAiPathsCollectionName,
+} from '@/features/ai/ai-paths/lib/core/utils/collection-mapping';
+import {
   enforceAiPathsActionRateLimit,
   isCollectionAllowed,
   requireAiPathsAccessOrInternal,
@@ -17,6 +21,7 @@ import prisma from '@/shared/lib/db/prisma';
 const updateSchema = z.object({
   provider: z.enum(['auto', 'mongodb', 'prisma']).optional(),
   collection: z.string().trim().min(1),
+  collectionMap: z.record(z.string(), z.string()).optional(),
   query: z.record(z.string(), z['unknown']()).optional(),
   updates: z.record(z.string(), z['unknown']()).optional(),
   single: z.boolean().optional(),
@@ -143,13 +148,21 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const {
     provider: requestedProvider,
     collection,
+    collectionMap,
     query,
     updates,
     single = true,
     idType,
   } = data;
+  const requestedCollection = collection.trim();
+  const explicitCollectionMap = normalizeAiPathsCollectionMap(collectionMap);
+  const collectionResolution = resolveAiPathsCollectionName(
+    requestedCollection,
+    explicitCollectionMap
+  );
+  const resolvedCollection = collectionResolution.collection;
 
-  if (!isCollectionAllowed(collection)) {
+  if (!isCollectionAllowed(resolvedCollection)) {
     throw internalError('Collection not allowlisted');
   }
 
@@ -170,8 +183,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
           'Prisma is not configured'
         );
       }
-      const resolvedCollection = resolvePrismaCollectionKey(collection);
-      const delegate = resolvedCollection ? getPrismaDelegate(resolvedCollection) : null;
+      const prismaCollection = resolvePrismaCollectionKey(resolvedCollection);
+      const delegate = prismaCollection ? getPrismaDelegate(prismaCollection) : null;
       if (!delegate) {
         throw new ProviderResolutionError(
           'collection_not_available',
@@ -189,7 +202,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       });
       return {
         ok: true,
-        collection,
+        collection: resolvedCollection,
+        requestedCollection,
+        ...(collectionResolution.mappedFrom
+          ? { collectionMappedFrom: collectionResolution.mappedFrom }
+          : {}),
         single,
         matchedCount: result.count,
         modifiedCount: result.count,
@@ -213,14 +230,18 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
 
     const mongo = await getMongoDb();
-    const collectionRef = mongo.collection(collection);
+    const collectionRef = mongo.collection(resolvedCollection);
     const result = single
       ? await collectionRef.updateOne(filter, { $set: normalizedUpdates })
       : await collectionRef.updateMany(filter, { $set: normalizedUpdates });
 
     return {
       ok: true,
-      collection,
+      collection: resolvedCollection,
+      requestedCollection,
+      ...(collectionResolution.mappedFrom
+        ? { collectionMappedFrom: collectionResolution.mappedFrom }
+        : {}),
       single,
       matchedCount: result.matchedCount,
       modifiedCount: result.modifiedCount,
@@ -231,7 +252,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   };
 
   const primaryProvider = await resolveCollectionProviderForRequest(
-    collection,
+    resolvedCollection,
     requestedProvider
   );
   const canAttemptFallback =

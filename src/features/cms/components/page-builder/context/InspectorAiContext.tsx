@@ -7,6 +7,11 @@ import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries'
 import { logClientError } from '@/features/observability';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
+import type { 
+  BlockInstance, 
+  SectionInstance,
+  CustomCssAiConfig,
+} from '@/shared/contracts/cms';
 import { internalError } from '@/shared/errors/app-error';
 import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
@@ -14,8 +19,6 @@ import { useToast } from '@/shared/ui';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 import { extractCssFromResponse, extractJsonFromResponse } from '../utils/ai-helpers';
 
-import type { CustomCssAiConfig } from '../../../types/custom-css-ai';
-import type { BlockInstance, SectionInstance } from '../../../types/page-builder';
 
 // ---------------------------------------------------------------------------
 // Context & Types

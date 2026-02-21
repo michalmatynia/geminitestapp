@@ -5,6 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { CmsDomainSelector } from '@/features/cms';
 import { logClientError } from '@/features/observability';
+import type { Slug } from '@/shared/contracts/cms';
 import { buildColorSchemeMap } from '@/shared/contracts/cms-theme';
 import { useUserPreferences } from '@/shared/hooks/useUserPreferences';
 import {
@@ -28,7 +29,6 @@ import { MediaStylesProvider } from '../frontend/media-styles-context';
 import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from '../frontend/theme-styles';
 
 
-import type { Slug } from '../../types';
 import type { PageZone, SectionInstance } from '../../types/page-builder';
 
 const ZONE_ORDER: PageZone[] = ['header', 'template', 'footer'];

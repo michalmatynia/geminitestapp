@@ -6,6 +6,7 @@ import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { executeDatabaseQuery } from './integration-database-query-execution';
 import { resolveDatabaseQuery } from './integration-database-query-resolution';
+import { getAiPathsCollectionMapFromInputs } from '../../utils/collection-mapping';
 
 export type HandleDatabaseQueryOperationInput = {
   nodeInputs: RuntimePortValues;
@@ -33,7 +34,7 @@ export async function handleDatabaseQueryOperation({
   queryConfig,
   dryRun,
   templateInputValue,
-  templateInputs,
+  templateInputs: _templateInputs,
   templateContext,
   aiPrompt,
   strictFlowMode: _strictFlowMode,
@@ -60,6 +61,7 @@ export async function handleDatabaseQueryOperation({
     queryConfig: resolution.queryConfig,
     query: resolution.query,
     querySource: resolution.querySource,
+    collectionMap: getAiPathsCollectionMapFromInputs(resolvedInputs),
     dryRun,
     aiPrompt,
   });

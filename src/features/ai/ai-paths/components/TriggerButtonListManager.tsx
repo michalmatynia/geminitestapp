@@ -14,7 +14,7 @@ import {
   StandardDataTablePanel,
 } from '@/shared/ui';
 
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, Row } from '@tanstack/react-table';
 
 // Define the record type for clarity as it's used extensively
 export type AiTriggerButtonRecord = AiTriggerButtonDto & {
@@ -51,6 +51,8 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
   const [pendingOrderedIds, setPendingOrderedIds] = useState<string[] | null>(null);
   const dropHandledRef = useRef(false);
   const dragHandleArmedIdRef = useRef<string | null>(null);
+  const draggingIdRef = useRef<string | null>(null);
+  const overIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Keep local order while reorder mutation is in-flight, otherwise sync to server state.
@@ -119,40 +121,49 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', id);
     dropHandledRef.current = false;
+    draggingIdRef.current = id;
+    overIdRef.current = id;
     setDraggingId(id);
     setOverId(id);
   }, []);
 
   const handleTableDragOver = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
-    if (!draggingId) return;
+    if (!draggingIdRef.current) return;
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
     const targetId = resolveDropTargetId(event.target);
+    if (targetId) overIdRef.current = targetId;
     setOverId((prev: string | null) => (prev === targetId ? prev : targetId));
-  }, [draggingId, resolveDropTargetId]);
+  }, [resolveDropTargetId]);
 
   const handleTableDrop = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
-    if (!draggingId) return;
+    if (!draggingIdRef.current) return;
     event.preventDefault();
     dropHandledRef.current = true;
-    const sourceId = draggingId || event.dataTransfer.getData('text/plain');
-    const targetId = resolveDropTargetId(event.target) ?? overId;
+    const sourceId = draggingIdRef.current;
+    const targetId = resolveDropTargetId(event.target) ?? overIdRef.current;
     if (sourceId && targetId && sourceId !== targetId) {
       commitReorder(sourceId, targetId);
     }
+    draggingIdRef.current = null;
+    overIdRef.current = null;
     setDraggingId(null);
     setOverId(null);
-  }, [commitReorder, draggingId, overId, resolveDropTargetId]);
+  }, [commitReorder, resolveDropTargetId]);
 
   const handleDragEnd = useCallback((): void => {
-    if (!dropHandledRef.current && draggingId && overId && draggingId !== overId) {
-      commitReorder(draggingId, overId);
+    const did = draggingIdRef.current;
+    const oid = overIdRef.current;
+    if (!dropHandledRef.current && did && oid && did !== oid) {
+      commitReorder(did, oid);
     }
     dragHandleArmedIdRef.current = null;
     dropHandledRef.current = false;
+    draggingIdRef.current = null;
+    overIdRef.current = null;
     setDraggingId(null);
     setOverId(null);
-  }, [commitReorder, draggingId, overId]);
+  }, [commitReorder]);
 
   const handleVisibilityToggle = useCallback((record: AiTriggerButtonRecord, enabled: boolean): void => {
     setLocalRows((prev) =>
@@ -160,6 +171,14 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     );
     onToggleVisibility(record, enabled);
   }, [onToggleVisibility]);
+
+  const getRowClassName = useCallback(
+    (row: Row<AiTriggerButtonRecord>): string | undefined =>
+      overId === row.original.id && draggingId !== row.original.id
+        ? 'bg-cyan-500/10'
+        : undefined,
+    [overId, draggingId],
+  );
 
   const columns = useMemo<ColumnDef<AiTriggerButtonRecord>[]>(() => [
     {
@@ -355,11 +374,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
         columns={columns}
         data={localRows}
         getRowId={(row) => row.id}
-        getRowClassName={(row) =>
-          overId === row.original.id && draggingId !== row.original.id
-            ? 'bg-cyan-500/10'
-            : undefined
-        }
+        getRowClassName={getRowClassName}
         variant='flat'
         footer={
           <div className='flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/20 p-2 rounded'>

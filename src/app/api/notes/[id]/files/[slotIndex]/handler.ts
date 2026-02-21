@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { deleteNoteFile } from '@/features/files/server';
 import { noteService } from '@/features/notesapp/server';
+import type { NoteFileDto } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
 
@@ -27,7 +28,7 @@ export async function DELETE_handler(
 
   // Get the file to find its filepath
   const files = await noteService.getNoteFiles(noteId);
-  const file = files.find( (f: any) => f.slotIndex === slotIndex);
+  const file = files.find( (f: NoteFileDto) => f.slotIndex === slotIndex);
 
   if (!file) {
     throw notFoundError('File not found in this slot', { noteId, slotIndex });

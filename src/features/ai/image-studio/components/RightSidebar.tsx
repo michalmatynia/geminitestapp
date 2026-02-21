@@ -712,10 +712,9 @@ export function RightSidebar(): React.JSX.Element {
     setPreviewMode(snapshot.previewMode);
     setCompositeAssetIds(cloneSerializableValue(snapshot.compositeAssetIds));
 
-    setTool(snapshot.tool);
+    setTool(snapshot.tool as VectorToolMode);
     setCanvasSelectionEnabled(snapshot.canvasSelectionEnabled);
-    setImageTransformMode(snapshot.imageTransformMode);
-    setCanvasImageOffset(cloneSerializableValue(snapshot.canvasImageOffset));
+    setImageTransformMode(snapshot.imageTransformMode);    setCanvasImageOffset(cloneSerializableValue(snapshot.canvasImageOffset));
     setCanvasBackgroundLayerEnabled(snapshot.canvasBackgroundLayerEnabled);
     setCanvasBackgroundColor(snapshot.canvasBackgroundColor);
     setMaskShapes(cloneSerializableValue(snapshot.maskShapes));

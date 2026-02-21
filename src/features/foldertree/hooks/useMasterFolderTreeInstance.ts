@@ -18,6 +18,9 @@ import type { MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useMasterFolderTreeConfig } from './useMasterFolderTreeConfig';
+import type { FolderTreeProfileV2, MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
+import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
+import type { LucideIcon } from 'lucide-react';
 
 export type UseMasterFolderTreeInstanceOptions = Omit<
   UseConfiguredMasterFolderTreeOptions,
@@ -26,86 +29,30 @@ export type UseMasterFolderTreeInstanceOptions = Omit<
   instance: FolderTreeInstance;
 };
 
-const DEV = process.env.NODE_ENV !== 'production';
-
-const EXPANDED_STATE_PERSIST_DEBOUNCE_MS = 220;
-
-/** If isApplying stays true for longer than this, warn in dev mode.
- *  Likely indicates an adapter that never resolves or an unhandled error. */
-const APPLYING_STALL_WARN_MS = 8_000;
-
-/** If replaceNodes fires more than this many times within the sampling window,
- *  warn in dev mode. Indicates unstable external data source causing thrashing. */
-const EXTERNAL_SYNC_THRASH_LIMIT = 10;
-const EXTERNAL_SYNC_THRASH_WINDOW_MS = 2_000;
-
-const masterTreePersistSuccessMessageByInstance: Record<FolderTreeInstance, string> = {
-  notes: 'Folder tree changes saved.',
-  image_studio: 'Image Studio tree changes saved.',
-  product_categories: 'Category tree changes saved.',
-  cms_page_builder: 'Page builder tree changes saved.',
-  case_resolver: 'Case Resolver tree changes saved.',
+type ResolveMasterFolderTreeIconInput = {
+  slot: any;
+  kind?: string | null;
+  fallback: LucideIcon;
+  fallbackId?: string | null;
 };
 
-const shouldNotifyMasterTreePersistSuccessByInstance: Record<FolderTreeInstance, boolean> = {
-  notes: false,
-  image_studio: false,
-  product_categories: false,
-  // CMS tree frequently rehydrates from external builder state; suppress noisy success toasts.
-  cms_page_builder: false,
-  case_resolver: false,
+type MasterFolderTreeRootDropUi = {
+  label: string;
+  idleClassName: string;
+  activeClassName: string;
 };
-
-const shouldNotifyMasterTreePersistErrorByInstance: Record<FolderTreeInstance, boolean> = {
-  notes: false,
-  image_studio: true,
-  product_categories: false,
-  cms_page_builder: true,
-  case_resolver: true,
-};
-
-const normalizeExpandedNodeIds = (values: Iterable<MasterTreeId>): MasterTreeId[] => {
-  const normalized = new Set<string>();
-  for (const value of values) {
-    const trimmed = value.trim();
-    if (!trimmed) continue;
-    normalized.add(trimmed);
-  }
-  return Array.from(normalized).sort((left: string, right: string) => left.localeCompare(right));
-};
-
-const areNodeIdListsEqual = (left: MasterTreeId[], right: MasterTreeId[]): boolean => {
-  if (left.length !== right.length) return false;
-  for (let index = 0; index < left.length; index += 1) {
-    if (left[index] !== right[index]) return false;
-  }
-  return true;
-};
-
-const getMasterTreeStructureFingerprint = (
-  nodes: ReturnType<typeof useConfiguredMasterFolderTree>['nodes']
-): string =>
-  nodes
-    .map((node) =>
-      [
-        node.id,
-        node.parentId ?? '',
-        node.type,
-        node.kind,
-        node.name,
-        node.path,
-        String(node.sortOrder ?? ''),
-      ].join('\u0001')
-    )
-    .join('\u0002');
 
 export function useMasterFolderTreeInstance({
   instance,
   ...controllerOptions
 }: UseMasterFolderTreeInstanceOptions): {
-  profile: ReturnType<typeof useMasterFolderTreeConfig>['profile'];
-  appearance: ReturnType<typeof useMasterFolderTreeConfig>['appearance'];
-  controller: ReturnType<typeof useConfiguredMasterFolderTree>;
+  profile: FolderTreeProfileV2;
+  appearance: {
+    placeholderClasses: FolderTreePlaceholderClassSet;
+    rootDropUi: MasterFolderTreeRootDropUi;
+    resolveIcon: (input: ResolveMasterFolderTreeIconInput) => LucideIcon;
+  };
+  controller: MasterFolderTreeController;
   panelCollapsed: boolean;
   setPanelCollapsed: (collapsed: boolean) => void;
 } {

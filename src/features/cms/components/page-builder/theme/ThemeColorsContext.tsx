@@ -7,7 +7,7 @@ import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } fro
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
-import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/shared/contracts/cms';
+import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/shared/contracts/cms-theme';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

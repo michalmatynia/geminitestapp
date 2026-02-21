@@ -71,19 +71,20 @@ type SequenceActionResult = {
 /**
  * Validator docs: see docs/validator/function-reference.md#controller.createsequenceactions
  */
-export function createSequenceActions({
-  patterns,
-  orderedPatterns,
-  sequenceGroups,
-  getGroupDraft,
-  setGroupDrafts,
-  createPattern,
-  updatePattern,
-  invalidateConfig,
-  notifySuccess,
-  notifyError,
-  notifyInfo,
-}: SequenceActionInput): SequenceActionResult {
+export function createSequenceActions(args: SequenceActionInput): SequenceActionResult {
+  const {
+    patterns,
+    orderedPatterns,
+    sequenceGroups,
+    getGroupDraft,
+    setGroupDrafts,
+    createPattern,
+    updatePattern,
+    invalidateConfig,
+    notifySuccess,
+    notifyError,
+    notifyInfo,
+  } = args;
   const handleCreateSkuAutoIncrementSequence = async (): Promise<void> => {
     const existingLabels = new Set(
       patterns
@@ -752,9 +753,10 @@ export function createSequenceActions({
   };
 
   const handleSaveSequenceGroup = async (groupId: string): Promise<void> => {
-    const group = sequenceGroups.get(groupId);
+    const group = args.sequenceGroups.get(groupId);
     if (!group || group.patternIds.length === 0) return;
-    const draft = getGroupDraft(groupId);
+    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+    const draft = args.getGroupDraft(groupId);
     const label = draft.label.trim() || 'Sequence / Group';
     const parsedDebounce = Number(draft.debounceMs);
     const debounceMs = Number.isFinite(parsedDebounce)
@@ -762,7 +764,7 @@ export function createSequenceActions({
       : 0;
     try {
       for (const patternId of group.patternIds) {
-        await updatePattern.mutateAsync({
+        await args.updatePattern.mutateAsync({
           id: patternId,
           data: {
             sequenceGroupId: groupId,
@@ -771,10 +773,11 @@ export function createSequenceActions({
           },
         });
       }
-      setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => ({
+      args.setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => ({
         ...prev,
         [groupId]: { label, debounceMs: String(debounceMs) },
       }));
+      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
       notifySuccess('Sequence group settings saved.');
     } catch (error) {
       logClientError(error, {

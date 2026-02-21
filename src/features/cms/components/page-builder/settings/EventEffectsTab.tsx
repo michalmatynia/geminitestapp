@@ -8,7 +8,7 @@ import {
   EVENT_HOVER_EFFECT_OPTIONS,
   EVENT_SCROLL_BEHAVIOR_OPTIONS,
 } from '@/features/cms/utils/event-effects';
-import { Input, Label, Hint } from '@/shared/ui';
+import { Input, Hint } from '@/shared/ui';
 
 import { useComponentSettings } from '../context/ComponentSettingsContext';
 import { RangeField, SelectField } from '../shared-fields';

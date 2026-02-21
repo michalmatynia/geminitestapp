@@ -5,8 +5,6 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 
-import { getValueAtMappingPath } from '../../utils';
-
 export type BuildMongoUpdatesFromMappingsResult = {
   updates: Record<string, unknown>;
   primaryTarget: string;

@@ -6,7 +6,7 @@ export const PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME = 'Infer Parameters';
 export const buildParameterInferencePathConfigValue = (timestamp: string): string =>
   JSON.stringify({
     id: PARAMETER_INFERENCE_PATH_ID,
-    version: 8,
+    version: 9,
     name: PARAMETER_INFERENCE_PATH_NAME,
     description:
       'Infer product parameter values from name and images, then update product parameters.',
@@ -42,12 +42,13 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         title: 'JSON Parser',
         description: 'Extract fields into outputs or a single bundle.',
         inputs: ['entityJson', 'context'],
-        outputs: ['bundle', 'images'],
+        outputs: ['bundle', 'images', 'catalogId'],
         id: 'node-parser-params',
         position: { x: 540, y: 520 },
         config: {
           parser: {
             mappings: {
+              catalogId: '',
               content_en: '',
               images: '',
               productId: '',
@@ -79,6 +80,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
           'queryCallback',
           'schema',
           'aiQuery',
+          'catalogId',
         ],
         outputs: ['result', 'bundle', 'aiPrompt'],
         id: 'node-query-params',
@@ -404,6 +406,13 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
       },
     ],
     edges: [
+      {
+        id: 'edge-params-00',
+        from: 'node-parser-params',
+        to: 'node-query-params',
+        fromPort: 'catalogId',
+        toPort: 'catalogId',
+      },
       {
         id: 'edge-params-01',
         from: 'node-trigger-params',
@@ -891,7 +900,40 @@ export const needsParameterInferenceConfigUpgrade = (
         edge['toPort'] === 'bundle'
       );
     });
-    return !hasSeedDependencyEdgeToUpdater;
+    if (!hasSeedDependencyEdgeToUpdater) return true;
+
+    const parserNode = nodes.find(
+      (node) => node?.['id'] === 'node-parser-params'
+    );
+    const parserMappings =
+      parserNode &&
+      typeof parserNode['config'] === 'object' &&
+      parserNode['config'] !== null &&
+      typeof (parserNode['config'] as Record<string, unknown>)['parser'] ===
+        'object'
+        ? (
+          (parserNode['config'] as Record<string, unknown>)[
+            'parser'
+          ] as Record<string, unknown>
+        )['mappings']
+        : null;
+    if (
+      !parserMappings ||
+      typeof parserMappings !== 'object' ||
+      !('catalogId' in (parserMappings as object))
+    )
+      return true;
+
+    const hasCatalogIdEdge = edges.some((edge) => {
+      if (!edge || typeof edge !== 'object') return false;
+      return (
+        edge['from'] === 'node-parser-params' &&
+        edge['to'] === 'node-query-params' &&
+        edge['fromPort'] === 'catalogId' &&
+        edge['toPort'] === 'catalogId'
+      );
+    });
+    return !hasCatalogIdEdge;
   } catch {
     return true;
   }

@@ -157,13 +157,28 @@ export type PageSeoData = CmsPageSeoDto;
 /**
  * CMS Page Builder Contracts
  */
-export interface CmsBlockInstanceDto {
-  id: string;
-  type: string;
-  settings: Record<string, unknown>;
-  blocks?: CmsBlockInstanceDto[] | undefined;
+  export type CmsBlockInstanceDto = {
+    id: string;
+    type: string;
+    settings: Record<string, unknown>;
+    blocks?: CmsBlockInstanceDto[] | undefined;
+  };export type BlockInstance = CmsBlockInstanceDto;
+
+export interface PreviewBlockItemProps {
+  block: BlockInstance;
 }
-export type BlockInstance = CmsBlockInstanceDto;
+
+export interface PreviewBlockProps {
+  block: BlockInstance;
+  stretch?: boolean;
+  mediaStyles?: any;
+}
+
+export interface PreviewSectionBlockProps {
+  section: SectionInstance;
+  colorSchemes?: Record<string, any>;
+  mediaStyles?: any;
+}
 
 export const cmsBlockInstanceSchema: z.ZodType<CmsBlockInstanceDto> = z.lazy(() =>
   z.object({

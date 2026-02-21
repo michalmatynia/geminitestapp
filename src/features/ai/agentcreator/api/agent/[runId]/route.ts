@@ -12,7 +12,7 @@ import {
   internalError,
   notFoundError,
 } from '@/shared/errors/app-error';
-import { apiHandlerWithParams, type ApiHandlerContext } from '@/shared/lib/api/api-handler';
+import { apiHandlerWithParams, type ApiHandlerContext as _ApiHandlerContext } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 
 import type { Prisma } from '@prisma/client';
@@ -415,14 +415,14 @@ async function DELETE_handler(req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { runId: string }) => GET_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx, params) => GET_handler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].GET' }
 );
 export const POST = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { runId: string }) => POST_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx, params) => POST_handler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].POST' }
 );
 export const DELETE = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, _ctx: ApiHandlerContext, params: { runId: string }) => DELETE_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx, params) => DELETE_handler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].DELETE' }
 );

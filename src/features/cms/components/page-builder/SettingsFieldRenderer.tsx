@@ -1,7 +1,8 @@
 import { Link2, Palette } from 'lucide-react';
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 
-import type { ColorScheme } from '@/shared/contracts/cms';
+import type { SettingsField, SettingsFieldOption } from '@/shared/contracts/cms';
+import type { ColorScheme } from '@/shared/contracts/cms-theme';
 import {
   Input,
   Label,
@@ -25,7 +26,6 @@ import {
 import { useThemeSettings } from './ThemeSettingsContext';
 import { useCmsSlugs } from '../../hooks/useCmsQueries';
 
-import type { SettingsField, SettingsFieldOption } from '../../types/page-builder';
 
 
 

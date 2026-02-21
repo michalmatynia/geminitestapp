@@ -407,6 +407,7 @@ export interface NodeHandlerContext {
   nodeById: Map<string, AiNode>;
   runId: string;
   runStartedAt: string;
+  runMeta?: Record<string, unknown> | null | undefined;
   activePathId: string | null;
   triggerNodeId?: string | undefined;
   triggerEvent?: string | undefined;

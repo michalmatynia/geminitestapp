@@ -136,6 +136,7 @@ export type EvaluateGraphOptions = {
   activePathName?: string | null | undefined;
   runId?: string | undefined;
   runStartedAt?: string | undefined;
+  runMeta?: Record<string, unknown> | null | undefined;
   seedRunId?: string | undefined;
   seedRunStartedAt?: string | undefined;
   triggerNodeId?: string | undefined;
@@ -468,6 +469,7 @@ export async function evaluateGraph({
   activePathName,
   runId,
   runStartedAt,
+  runMeta,
   seedRunId,
   seedRunStartedAt,
   triggerNodeId,
@@ -1864,6 +1866,7 @@ export async function evaluateGraph({
                     nodeById,
                     runId: resolvedRunId,
                     runStartedAt: resolvedRunStartedAt,
+                    runMeta,
                     activePathId,
                     triggerNodeId,
                     triggerEvent,

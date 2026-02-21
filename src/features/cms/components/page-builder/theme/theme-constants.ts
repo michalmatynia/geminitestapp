@@ -1,4 +1,4 @@
-import type { ColorSchemeColors } from '@/shared/contracts/cms';
+import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 
 export const THEME_SECTIONS = [
   'Logo',

@@ -7,7 +7,6 @@ import type {
   ParallaxPreset,
   ParallaxAxis,
   ParallaxPattern,
-  AnimationEasing,
 } from '@/features/gsap';
 import {
   DEFAULT_ANIMATION_CONFIG,

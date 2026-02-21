@@ -4,6 +4,7 @@ import { Layers } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import type { PageSummary } from '@/shared/contracts/cms';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { SelectSimple } from '@/shared/ui';
 
@@ -11,7 +12,6 @@ import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsPages, useCmsPage } from '../../hooks/useCmsQueries';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 
-import type { PageSummary } from '../../types';
 
 type PageSelectorBarProps = {
   variant?: 'bar' | 'toolbar';

@@ -3,6 +3,8 @@ import {
   type ImageStudioDetectionCandidateSummary,
   type ImageStudioDetectionPolicyDecision,
 } from '@/features/ai/image-studio/analysis/policy';
+
+export type { ImageStudioDetectionCandidateSummary, ImageStudioDetectionPolicyDecision };
 import {
   IMAGE_STUDIO_CENTER_ALPHA_THRESHOLD,
   IMAGE_STUDIO_CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD,

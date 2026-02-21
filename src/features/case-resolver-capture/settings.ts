@@ -38,18 +38,54 @@ export const DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS: CaseResolverCaptureSettings
   autoOpenProposalModal: true,
   roleMappings: {
     addresser: {
+      role: 'addresser',
       enabled: true,
       targetRole: 'addresser',
       defaultAction: 'useMatched',
       autoMatchPartyReference: true,
       autoMatchAddress: true,
+      targetPath: 'addresser',
+      required: true,
     },
     addressee: {
+      role: 'addressee',
       enabled: true,
       targetRole: 'addressee',
       defaultAction: 'useMatched',
       autoMatchPartyReference: true,
       autoMatchAddress: true,
+      targetPath: 'addressee',
+      required: true,
+    },
+    subject: {
+      role: 'subject',
+      enabled: true,
+      targetRole: 'subject',
+      defaultAction: 'keepText',
+      autoMatchPartyReference: false,
+      autoMatchAddress: false,
+      targetPath: 'subject',
+      required: false,
+    },
+    reference: {
+      role: 'reference',
+      enabled: true,
+      targetRole: 'reference',
+      defaultAction: 'ignore',
+      autoMatchPartyReference: false,
+      autoMatchAddress: false,
+      targetPath: 'reference',
+      required: false,
+    },
+    other: {
+      role: 'other',
+      enabled: true,
+      targetRole: 'other',
+      defaultAction: 'ignore',
+      autoMatchPartyReference: false,
+      autoMatchAddress: false,
+      targetPath: 'other',
+      required: false,
     },
   },
 };
@@ -87,6 +123,9 @@ const normalizeRoleMapping = (
 ): CaseResolverCaptureRoleMapping => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
     return {
+      role: fallback.role,
+      targetPath: fallback.targetPath,
+      required: fallback.required,
       enabled: fallback.enabled,
       targetRole: fallback.targetRole,
       defaultAction: fallback.defaultAction,
@@ -97,12 +136,15 @@ const normalizeRoleMapping = (
 
   const record = value as Record<string, unknown>;
   return {
+    role: fallback.role,
+    targetPath: fallback.targetPath,
+    required: fallback.required,
     enabled: typeof record['enabled'] === 'boolean' ? record['enabled'] : fallback.enabled,
     targetRole: normalizeCaptureRole(
       record['targetRole'],
       normalizeCaptureRole(fallback.targetRole, fallbackTargetRole)
     ),
-    defaultAction: normalizeCaptureAction(record['defaultAction'], fallback.defaultAction),
+    defaultAction: normalizeCaptureAction(record['defaultAction'], fallback.defaultAction || 'keepText'),
     autoMatchPartyReference:
       typeof record['autoMatchPartyReference'] === 'boolean'
         ? record['autoMatchPartyReference']
@@ -145,13 +187,28 @@ const normalizeCaseResolverCaptureSettings = (input: unknown): CaseResolverCaptu
     roleMappings: {
       addresser: normalizeRoleMapping(
         roleMappings['addresser'],
-        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser,
+        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser!,
         'addresser'
       ),
       addressee: normalizeRoleMapping(
         roleMappings['addressee'],
-        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee,
+        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee!,
         'addressee'
+      ),
+      subject: normalizeRoleMapping(
+        roleMappings['subject'],
+        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.subject!,
+        'subject'
+      ),
+      reference: normalizeRoleMapping(
+        roleMappings['reference'],
+        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.reference!,
+        'reference'
+      ),
+      other: normalizeRoleMapping(
+        roleMappings['other'],
+        DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.other!,
+        'other'
       ),
     },
   };

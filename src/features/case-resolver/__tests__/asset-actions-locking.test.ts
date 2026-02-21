@@ -148,7 +148,7 @@ describe('case resolver asset actions lock races', () => {
 
     const uploadPromise = harness.result.current.handleUploadScanFiles(
       'scan-1',
-      [new File(['image-bytes'], 'scan.png', { type: 'image/png' })]
+      [new File(['image-bytes'], 'scan.png', { type: 'image/png' })] as File[]
     );
 
     harness.setWorkspace(withLockedFile(harness.getWorkspace(), 'scan-1'));
@@ -156,6 +156,7 @@ describe('case resolver asset actions lock races', () => {
       createJsonResponse([
         {
           id: 'asset-upload-1',
+          fileId: 'asset-upload-1',
           originalName: 'scan.png',
           filepath: '/uploads/case-resolver/images/scan.png',
           mimetype: 'image/png',
@@ -166,7 +167,7 @@ describe('case resolver asset actions lock races', () => {
     );
     await uploadPromise;
 
-    const finalFile = harness.getWorkspace().files.find((file) => file.id === 'scan-1');
+    const finalFile = harness.getWorkspace().files.find((file: any) => file.id === 'scan-1');
     expect(finalFile?.isLocked).toBe(true);
     expect(finalFile?.scanSlots).toHaveLength(0);
     expect(harness.toast).toHaveBeenCalledWith(
@@ -183,6 +184,9 @@ describe('case resolver asset actions lock races', () => {
       scanSlots: [
         {
           id: 'slot-1',
+          fileId: 'asset-scan-1',
+          status: 'ready',
+          progress: 100,
           name: 'scan.png',
           filepath: '/uploads/case-resolver/images/scan.png',
           sourceFileId: 'asset-scan-1',
@@ -215,7 +219,7 @@ describe('case resolver asset actions lock races', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
 
-    const before = harness.getWorkspace().files.find((file) => file.id === 'scan-1');
+    const before = harness.getWorkspace().files.find((file: any) => file.id === 'scan-1');
     const beforeDocumentContentVersion = before?.documentContentVersion ?? null;
     const beforeOcrText = before?.scanSlots?.[0]?.ocrText ?? '';
 
@@ -225,7 +229,7 @@ describe('case resolver asset actions lock races', () => {
     enqueueDeferred.resolve(createJsonResponse({ job: { id: 'job-1' } }));
     await ocrPromise;
 
-    const after = harness.getWorkspace().files.find((file) => file.id === 'scan-1');
+    const after = harness.getWorkspace().files.find((file: any) => file.id === 'scan-1');
     expect(after?.isLocked).toBe(true);
     expect(after?.scanSlots?.[0]?.ocrText ?? '').toBe(beforeOcrText);
     expect(after?.documentContentVersion ?? null).toBe(beforeDocumentContentVersion);

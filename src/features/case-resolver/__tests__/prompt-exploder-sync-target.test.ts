@@ -463,11 +463,17 @@ describe('case resolver prompt exploder manual apply flow', () => {
       },
       {
         addresser: {
+          id: 'cand-1',
+          name: 'Michał Matynia',
+          score: 1,
           role: 'addresser',
           displayName: 'Michał Matynia',
           rawText: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin',
         },
         addressee: {
+          id: 'cand-2',
+          name: 'Inspektorat ZUS w Gryficach',
+          score: 1,
           role: 'addressee',
           displayName: 'Inspektorat ZUS w Gryficach',
           rawText: 'Inspektorat ZUS w Gryficach\nDąbskiego 5\n72-300 Gryfice',

@@ -104,6 +104,7 @@ export const caseResolverTagSchema = z.object({
 
 export interface CaseResolverTagDto {
   id: string;
+  name: string;
   label: string;
   color?: string | undefined;
   parentId?: string | null | undefined;
@@ -115,6 +116,7 @@ export const caseResolverIdentifierSchema = z.object({
   id: z.string(),
   type: z.string(),
   value: z.string(),
+  name: z.string().optional(),
   label: z.string().optional(),
   parentId: z.string().nullable().optional(),
 });
@@ -123,6 +125,7 @@ export interface CaseResolverIdentifierDto {
   id: string;
   type: string;
   value: string;
+  name?: string | undefined;
   label?: string | undefined;
   parentId?: string | null | undefined;
 }
@@ -571,11 +574,11 @@ export interface CaseResolverCaptureSettingsDto {
   enabled: boolean;
   autoOpenProposalModal: boolean;
   roleMappings: {
-    addresser?: CaseResolverCaptureRoleMapping | undefined;
-    addressee?: CaseResolverCaptureRoleMapping | undefined;
-    subject?: CaseResolverCaptureRoleMapping | undefined;
-    reference?: CaseResolverCaptureRoleMapping | undefined;
-    other?: CaseResolverCaptureRoleMapping | undefined;
+    addresser: CaseResolverCaptureRoleMapping;
+    addressee: CaseResolverCaptureRoleMapping;
+    subject: CaseResolverCaptureRoleMapping;
+    reference: CaseResolverCaptureRoleMapping;
+    other: CaseResolverCaptureRoleMapping;
   };
 }
 

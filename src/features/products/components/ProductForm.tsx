@@ -222,6 +222,15 @@ export default function ProductForm({
     window.sessionStorage.setItem(VALIDATION_DENY_SESSION_ID_KEY, nextId);
     return nextId;
   });
+  const footerEntityId = product?.id?.trim() || draft?.id?.trim() || '';
+  const handleCopyProductId = useCallback(async (): Promise<void> => {
+    if (!footerEntityId || typeof navigator === 'undefined' || !navigator.clipboard) return;
+    try {
+      await navigator.clipboard.writeText(footerEntityId);
+    } catch {
+      // Ignore clipboard failures to keep form interactions non-blocking.
+    }
+  }, [footerEntityId]);
   const [draftValidationInstanceId] = useState<string>(() =>
     typeof globalThis.crypto !== 'undefined' &&
     typeof globalThis.crypto.randomUUID === 'function'
@@ -936,13 +945,17 @@ export default function ProductForm({
           </TabsContent>
         </Tabs>
       </ProductValidationSettingsProvider>
-      {product?.id && (
-        <div className='absolute bottom-0 right-0 text-[10px] text-muted-foreground/50 hover:text-muted-foreground transition-colors'>
-          <span className='mr-1'>ID:</span>
-          <span className='font-mono select-all cursor-text' title='Click to select'>
-            {product.id}
-          </span>
-        </div>
+      {footerEntityId && (
+        <button
+          type='button'
+          className='absolute bottom-0 right-0 text-[10px] font-mono text-muted-foreground/50 hover:text-muted-foreground transition-colors'
+          title='Click to copy ID'
+          onClick={() => {
+            void handleCopyProductId();
+          }}
+        >
+          {footerEntityId}
+        </button>
       )}
       <ConfirmationModal />
     </form>

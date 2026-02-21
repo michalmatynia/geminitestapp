@@ -30,6 +30,7 @@ const SUPPORTED_NODE_TYPES = new Set<AiNode['type']>([
   'prompt',
   'model',
   'agent',
+  'playwright',
   'learner_agent',
   'database',
   'db_schema',

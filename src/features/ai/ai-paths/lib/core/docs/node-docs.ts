@@ -693,6 +693,81 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     },
     ...COMMON_RUNTIME_FIELDS,
   ],
+  playwright: [
+    {
+      path: 'playwright.personaId',
+      description:
+        'Optional Playwright Persona ID. When set, node runtime inherits persona browser fidelity settings.',
+      defaultValue: '""',
+    },
+    {
+      path: 'playwright.script',
+      description:
+        'User script that exports a default async function: `run({ browser, context, page, input, emit, artifacts, log, helpers })`.',
+      defaultValue: '"export default async function run(...) { ... }"',
+    },
+    {
+      path: 'playwright.waitForResult',
+      description:
+        'When true, waits for Playwright completion and emits final outputs. When false, emits runId/job status immediately.',
+      defaultValue: 'true',
+    },
+    {
+      path: 'playwright.timeoutMs',
+      description: 'Per-run timeout budget in milliseconds.',
+      defaultValue: '120000',
+    },
+    {
+      path: 'playwright.browserEngine',
+      description: 'Browser engine to launch: chromium/firefox/webkit.',
+      defaultValue: 'chromium',
+    },
+    {
+      path: 'playwright.startUrlTemplate',
+      description:
+        'Optional URL template rendered from incoming ports before script execution (example: https://example.com/{{entityId}}).',
+      defaultValue: '""',
+    },
+    {
+      path: 'playwright.launchOptionsJson',
+      description:
+        'Raw Playwright launch options JSON merged with persona-driven settings before browser launch.',
+      defaultValue: '{}',
+    },
+    {
+      path: 'playwright.contextOptionsJson',
+      description:
+        'Raw Playwright browser context options JSON applied when creating a context/page session.',
+      defaultValue: '{}',
+    },
+    {
+      path: 'playwright.settingsOverrides',
+      description:
+        'Optional partial override object for Playwright persona fields (headless, slowMo, timeouts, proxy, device emulation).',
+      defaultValue: '{}',
+    },
+    {
+      path: 'playwright.capture.screenshot',
+      description: 'Capture final screenshot artifact on run completion.',
+      defaultValue: 'true',
+    },
+    {
+      path: 'playwright.capture.html',
+      description: 'Capture final page HTML artifact on run completion.',
+      defaultValue: 'false',
+    },
+    {
+      path: 'playwright.capture.video',
+      description: 'Enable Playwright video capture for the run context.',
+      defaultValue: 'false',
+    },
+    {
+      path: 'playwright.capture.trace',
+      description: 'Enable Playwright trace collection and save trace.zip artifact.',
+      defaultValue: 'false',
+    },
+    ...COMMON_RUNTIME_FIELDS,
+  ],
   prompt: [
     {
       path: 'prompt.template',
@@ -1004,6 +1079,7 @@ const ALL_NODE_TYPES: NodeType[] = [
   'poll',
   'http',
   'api_advanced',
+  'playwright',
   'prompt',
   'model',
   'agent',
@@ -1037,7 +1113,11 @@ export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: No
       ]
       : type === 'notification'
         ? ['Configuration UI is not available yet; it runs with defaults.']
-        : undefined;
+        : type === 'playwright'
+          ? [
+            'Built-in script templates are available in the Playwright node config dialog.',
+          ]
+          : undefined;
   return {
     type,
     title: def?.title ?? type,

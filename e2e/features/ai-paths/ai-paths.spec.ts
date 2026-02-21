@@ -1,8 +1,122 @@
 import { test, expect } from '@playwright/test';
 
+const E2E_ADMIN_EMAIL =
+  process.env['PLAYWRIGHT_E2E_ADMIN_EMAIL'] ?? 'admin@example.com';
+const E2E_ADMIN_PASSWORD =
+  process.env['PLAYWRIGHT_E2E_ADMIN_PASSWORD'] ?? 'admin123';
+const PLAYWRIGHT_PERSONA_ID = 'e2e-playwright-persona';
+const PLAYWRIGHT_PERSONA_NAME = 'E2E Persona Fidelity';
+
+const ensureSignedInForAdmin = async (
+  page: import('@playwright/test').Page
+): Promise<void> => {
+  await page.waitForLoadState('domcontentloaded');
+  const canvasTab = page.getByRole('tab', { name: 'Canvas' });
+  const signInHeading = page.getByRole('heading', { name: 'Sign in' });
+  await Promise.race([
+    canvasTab.waitFor({ state: 'visible', timeout: 15000 }),
+    signInHeading.waitFor({ state: 'visible', timeout: 15000 }),
+  ]).catch(() => {});
+  if (await canvasTab.isVisible().catch(() => false)) return;
+  if (!(await signInHeading.isVisible().catch(() => false))) return;
+
+  await page.getByLabel('Email').fill(E2E_ADMIN_EMAIL);
+  await page.getByLabel('Password').fill(E2E_ADMIN_PASSWORD);
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  await page.waitForURL((url) => url.pathname.startsWith('/admin'), {
+    timeout: 20000,
+  });
+  await page.goto('/admin/ai-paths');
+};
+
+const ensurePlaywrightPersonaSetting = async (
+  page: import('@playwright/test').Page
+): Promise<void> => {
+  const personaPayload = JSON.stringify([
+    {
+      id: PLAYWRIGHT_PERSONA_ID,
+      name: PLAYWRIGHT_PERSONA_NAME,
+      description: 'Persona seeded by e2e test for Playwright node coverage.',
+      createdAt: new Date('2026-02-21T12:00:00.000Z').toISOString(),
+      updatedAt: new Date('2026-02-21T12:00:00.000Z').toISOString(),
+      settings: {
+        headless: false,
+        slowMo: 200,
+        timeout: 25000,
+        navigationTimeout: 40000,
+        humanizeMouse: true,
+        mouseJitter: 8,
+        clickDelayMin: 40,
+        clickDelayMax: 130,
+        inputDelayMin: 25,
+        inputDelayMax: 160,
+        actionDelayMin: 250,
+        actionDelayMax: 950,
+        proxyEnabled: false,
+        proxyServer: '',
+        proxyUsername: '',
+        proxyPassword: '',
+        emulateDevice: true,
+        deviceName: 'iPhone 13',
+      },
+    },
+  ]);
+  const mergePersonaSetting = async (route: import('@playwright/test').Route): Promise<void> => {
+    const upstream = await route.fetch();
+    const body = (await upstream.json()) as unknown;
+    if (!Array.isArray(body)) {
+      await route.fulfill({ response: upstream });
+      return;
+    }
+    const filtered = body.filter(
+      (entry: unknown) =>
+        entry &&
+        typeof entry === 'object' &&
+        (entry as Record<string, unknown>)['key'] !== 'playwright_personas'
+    );
+    filtered.push({
+      key: 'playwright_personas',
+      value: personaPayload,
+    });
+    await route.fulfill({
+      response: upstream,
+      json: filtered,
+    });
+  };
+  await page.route('**/api/settings?scope=light', mergePersonaSetting);
+  await page.route('**/api/settings?scope=all', mergePersonaSetting);
+  await page.route('**/api/settings/lite', mergePersonaSetting);
+};
+
+const addPlaywrightNodeToCanvas = async (
+  page: import('@playwright/test').Page
+): Promise<void> => {
+  await page.getByRole('tab', { name: 'Canvas' }).click();
+  const searchInput = page.locator('[data-doc-id="palette_search"]');
+  await expect(searchInput).toBeVisible();
+  await searchInput.fill('playwright');
+  const playwrightPaletteNode = page.locator('[data-doc-id="node_palette_playwright"]').first();
+  await expect(playwrightPaletteNode).toBeVisible();
+  const dropZone = page.locator('[data-doc-id="canvas_drop_zone"]').first();
+  await expect(dropZone).toBeVisible();
+  const dataTransfer = await page.evaluateHandle(() => new DataTransfer());
+  await playwrightPaletteNode.dispatchEvent('dragstart', { dataTransfer });
+  await dropZone.dispatchEvent('dragover', {
+    dataTransfer,
+    clientX: 420,
+    clientY: 280,
+  });
+  await dropZone.dispatchEvent('drop', {
+    dataTransfer,
+    clientX: 420,
+    clientY: 280,
+  });
+};
+
 test.describe('AI Paths Admin Page', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/admin/ai-paths');
+    await ensureSignedInForAdmin(page);
     // Ensure we are on Canvas and it's loaded
     await expect(page.getByRole('tab', { name: 'Canvas' })).toBeVisible();
     
@@ -149,6 +263,53 @@ test.describe('AI Paths Admin Page', () => {
     // Close dialog
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).not.toBeVisible();
+  });
+
+  test('should configure Playwright templates, personas, overrides, and capture toggles', async ({ page }) => {
+    await ensurePlaywrightPersonaSetting(page);
+    await page.reload();
+    await addPlaywrightNodeToCanvas(page);
+
+    await expect(page.locator('[data-doc-id="inspector_open_node_config"]')).toBeVisible();
+    await page.locator('[data-doc-id="inspector_open_node_config"]').click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.getByTestId('playwright-node-config')).toBeVisible();
+
+    const templateTrigger = page.locator('[data-doc-id="playwright_script_template_select"]').first();
+    await templateTrigger.click();
+    await page.getByRole('option', { name: 'Link Crawler' }).click();
+    await page.locator('[data-doc-id="playwright_script_template_apply"]').click();
+    const scriptEditor = page.getByTestId('playwright-script-editor');
+    await expect(scriptEditor).toContainText('Collected links');
+    await expect(page.getByTestId('playwright-script-template-description')).toContainText(
+      'Collect unique first-party links'
+    );
+
+    const personaTrigger = page.locator('[data-doc-id="playwright_persona_select"]').first();
+    await personaTrigger.click();
+    await page.getByRole('option', { name: PLAYWRIGHT_PERSONA_NAME }).click();
+    await expect(page.getByTestId('playwright-persona-fidelity')).toContainText('Headless: off');
+    await expect(page.getByTestId('playwright-persona-fidelity')).toContainText('Device: iPhone 13');
+
+    const overridesEditor = page.getByTestId('playwright-settings-overrides-editor');
+    await overridesEditor.fill('{"slowMo":"bad"}');
+    await expect(page.getByText(/Invalid override for "slowMo"/i)).toBeVisible();
+    await overridesEditor.fill('{"slowMo":75}');
+    await page.getByRole('button', { name: 'Apply overrides' }).click();
+    await expect(page.getByText(/Invalid override for "slowMo"/i)).not.toBeVisible();
+
+    const videoCaptureButton = page.locator('[data-doc-id="playwright_capture_video"]');
+    await expect(videoCaptureButton).toContainText('Off');
+    await videoCaptureButton.click();
+    await expect(videoCaptureButton).toContainText('On');
+
+    await page.keyboard.press('Escape');
+    const discardButton = page.getByRole('button', { name: 'Discard' });
+    if (await discardButton.isVisible().catch(() => false)) {
+      await discardButton.click();
+    }
+    await expect(dialog).not.toBeVisible();
   });
 
   test('should fire a trigger and see it in job queue', async ({ page }) => {

@@ -25,6 +25,7 @@ const createSegment = (input: {
   raw: input.raw,
   code: null,
   condition: null,
+  items: [],
   listItems: [],
   subsections: [],
   paramsText: '',
@@ -35,7 +36,9 @@ const createSegment = (input: {
   matchedPatternIds: input.matchedPatternIds ?? [],
   matchedPatternLabels: input.matchedPatternLabels ?? [],
   matchedSequenceLabels: input.matchedSequenceLabels ?? [],
-  confidence: 0.9,
+  confidence: 1,
+  validationResults: [],
+  segments: [],
 });
 
 describe('case resolver extraction bridge payload', () => {

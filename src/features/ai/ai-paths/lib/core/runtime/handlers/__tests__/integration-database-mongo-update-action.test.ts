@@ -2,20 +2,14 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const {
   buildMongoUpdatePlanMock,
-  executeMongoEntityUpdateMock,
   executeMongoCollectionUpdateMock,
 } = vi.hoisted(() => ({
   buildMongoUpdatePlanMock: vi.fn(),
-  executeMongoEntityUpdateMock: vi.fn(),
   executeMongoCollectionUpdateMock: vi.fn(),
 }));
 
 vi.mock('@/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-mongo-update-plan', () => ({
   buildMongoUpdatePlan: buildMongoUpdatePlanMock,
-}));
-
-vi.mock('@/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-mongo-update-entity-executor', () => ({
-  executeMongoEntityUpdate: executeMongoEntityUpdateMock,
 }));
 
 vi.mock('@/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-mongo-update-collection-executor', () => ({
@@ -44,10 +38,8 @@ const basePlan = {
 describe('handleDatabaseMongoUpdateAction', () => {
   beforeEach(() => {
     buildMongoUpdatePlanMock.mockReset();
-    executeMongoEntityUpdateMock.mockReset();
     executeMongoCollectionUpdateMock.mockReset();
     buildMongoUpdatePlanMock.mockResolvedValue(basePlan);
-    executeMongoEntityUpdateMock.mockResolvedValue({ result: { ok: true } });
     executeMongoCollectionUpdateMock.mockResolvedValue({ result: { ok: true } });
   });
 
@@ -117,10 +109,9 @@ describe('handleDatabaseMongoUpdateAction', () => {
     await handleDatabaseMongoUpdateAction(baseArgs as any);
 
     expect(executeMongoCollectionUpdateMock).toHaveBeenCalledTimes(1);
-    expect(executeMongoEntityUpdateMock).not.toHaveBeenCalled();
   });
 
-  it('uses entity update executor for mapping payload mode', async () => {
+  it('blocks mapping payload mode with explicit guardrail error', async () => {
     const args = {
       ...baseArgs,
       dbConfig: {
@@ -129,10 +120,13 @@ describe('handleDatabaseMongoUpdateAction', () => {
       },
     };
       
-    await handleDatabaseMongoUpdateAction(args as any);
-      
-    expect(executeMongoEntityUpdateMock).toHaveBeenCalledTimes(1);
+    const result = await handleDatabaseMongoUpdateAction(args as any);
       
     expect(executeMongoCollectionUpdateMock).not.toHaveBeenCalled();
+    expect(result['bundle']).toEqual(
+      expect.objectContaining({
+        guardrail: 'update-mode-explicit-only',
+      })
+    );
   });
 });

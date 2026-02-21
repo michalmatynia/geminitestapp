@@ -71,18 +71,14 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
       ),
     [resolvedActionCategory, state.action, state.queryConfig.single, state.resolvedProvider]
   );
-  const updatePayloadMode = state.databaseConfig.updatePayloadMode ?? 'mapping';
   const activeQueryTemplateValue = state.isUpdateAction
     ? (state.databaseConfig.updateTemplate ?? '')
     : state.queryTemplateValue;
-  const editingFilterOnly = state.isUpdateAction && updatePayloadMode !== 'custom';
   const queryPlaceholder = state.isUpdateAction
     ? getUpdatePlaceholderByAction(resolvedAction)
     : getQueryPlaceholderByAction(resolvedAction) || getQueryPlaceholderByOperation(state.operation);
   const filterPlaceholder = getQueryPlaceholderByAction(resolvedAction);
-  const validationTargetTemplate = editingFilterOnly
-    ? (state.queryConfig.queryTemplate ?? '')
-    : activeQueryTemplateValue;
+  const validationTargetTemplate = activeQueryTemplateValue;
   const queryValidation: QueryValidationResult = React.useMemo(() => {
     if (state.resolvedProvider === 'prisma') {
       return buildJsonQueryValidation(validationTargetTemplate);
@@ -129,7 +125,6 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
 
   const queryInputControlsValue: DatabaseQueryInputControlsContextValue = {
     provider: state.resolvedProvider,
-    updatePayloadMode,
     actionCategory: resolvedActionCategory,
     action: resolvedAction,
     actionCategoryOptions,
@@ -140,16 +135,6 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     filterTemplateValue: state.queryConfig.queryTemplate || '',
     filterPlaceholder,
     onFilterChange: (val) => state.updateQueryConfig({ queryTemplate: val }),
-    onUpdatePayloadModeChange: (value) =>
-      state.updateSelectedNodeConfig({
-        database: {
-          ...state.databaseConfig,
-          updatePayloadMode: value,
-          ...(value === 'custom' && !(state.databaseConfig.updateTemplate ?? '').trim()
-            ? { updateTemplate: getUpdatePlaceholderByAction(resolvedAction) }
-            : {}),
-        },
-      }),
     runDry: state.databaseConfig.dryRun || false,
     onToggleRunDry: () => state.updateSelectedNodeConfig({ database: { ...state.databaseConfig, dryRun: !state.databaseConfig.dryRun } }),
     queryValidation,
@@ -160,9 +145,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     onActionCategoryChange: state.handleActionCategoryChange,
     onActionChange: (val) => state.applyActionConfig(resolvedActionCategory, val),
     onFormatClick: () => {
-      const targetValue = editingFilterOnly
-        ? (state.queryConfig.queryTemplate ?? '')
-        : activeQueryTemplateValue;
+      const targetValue = activeQueryTemplateValue;
       if (!targetValue.trim()) return;
       const formatted =
         state.resolvedProvider === 'mongodb'
@@ -174,14 +157,11 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
               return targetValue;
             }
           })();
-      if (editingFilterOnly) {
-        state.updateQueryConfig({ queryTemplate: formatted });
-      } else if (state.isUpdateAction) {
+      if (state.isUpdateAction) {
         state.updateSelectedNodeConfig({
           database: {
             ...state.databaseConfig,
             updateTemplate: formatted,
-            updatePayloadMode: 'custom',
           },
         });
       } else {
@@ -204,7 +184,6 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
           database: {
             ...state.databaseConfig,
             updateTemplate: val,
-            updatePayloadMode: 'custom',
           },
         });
         return;

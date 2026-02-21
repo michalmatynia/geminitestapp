@@ -29,6 +29,7 @@ const buildSegment = (
   raw: title,
   code: null,
   condition: null,
+  items: [],
   listItems: [],
   subsections,
   paramsText: '',
@@ -40,6 +41,8 @@ const buildSegment = (
   matchedPatternLabels: [],
   matchedSequenceLabels: [],
   confidence: 0.5,
+  validationResults: [],
+  segments: [],
 });
 
 describe('prompt exploder manual bindings', () => {

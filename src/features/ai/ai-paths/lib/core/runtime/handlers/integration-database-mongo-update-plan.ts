@@ -8,14 +8,11 @@ import type {
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import {
-  ParameterInferenceGateError,
-  applyParameterInferenceGuard,
-  mergeParameterInferenceUpdates,
   normalizeNonEmptyString,
+  toRecord,
 } from './database-parameter-inference';
 import {
   buildMongoUpdateDebugPayload,
-  buildMongoUpdatesFromMappings,
   extractMissingTemplatePorts,
   resolveMongoUpdateFilter,
 } from './integration-database-mongo-update-plan-helpers';
@@ -58,11 +55,11 @@ export async function buildMongoUpdatePlan({
   actionCategory,
   action,
   node,
-  prevOutputs,
+  prevOutputs: _prevOutputs,
   reportAiPathsError,
   toast,
   resolvedInputs,
-  nodeInputPorts,
+  nodeInputPorts: _nodeInputPorts,
   dbConfig,
   queryConfig,
   collection,
@@ -71,9 +68,39 @@ export async function buildMongoUpdatePlan({
   updateTemplate,
   templateInputs,
   parseJsonTemplate,
-  ensureExistingParameterTemplateContext,
+  ensureExistingParameterTemplateContext: _ensureExistingParameterTemplateContext,
   aiPrompt,
 }: BuildMongoUpdatePlanInput): Promise<BuildMongoUpdatePlanResult> {
+  const updatePayloadMode = dbConfig.updatePayloadMode ?? 'custom';
+  if (updatePayloadMode !== 'custom') {
+    const error =
+      'Mapping-based update mode is disabled. Configure explicit filter and update document.';
+    reportAiPathsError(
+      new Error(error),
+      {
+        action: 'dbUpdateGuardrail',
+        nodeId: node.id,
+        updatePayloadMode,
+      },
+      'Database update blocked:'
+    );
+    toast(error, { variant: 'error' });
+    return {
+      output: {
+        result: null,
+        bundle: {
+          error,
+          guardrail: 'update-mode-explicit-only',
+        },
+        debugPayload: {
+          mode: 'mongo',
+          guardrail: 'update-mode-explicit-only',
+        },
+        aiPrompt,
+      },
+    };
+  }
+
   const resolvedFilter: Record<string, unknown> = resolveMongoUpdateFilter({
     filter,
     queryTemplate: queryConfig.queryTemplate,
@@ -91,71 +118,66 @@ export async function buildMongoUpdatePlan({
   const parameterTargetPath =
     normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
     'parameters';
-  let {
-    updates,
-    primaryTarget,
-    missingSourcePorts,
-    unresolvedSourcePorts,
-  } = buildMongoUpdatesFromMappings({
-    dbConfig,
-    nodeInputPorts,
-    templateInputs,
-    parameterTargetPath,
-  });
-  const guardResult = applyParameterInferenceGuard({
-    dbConfig,
-    updates,
-    templateInputs,
-  });
-  if (guardResult.applied) {
-    updates = guardResult.updates;
-    debugPayload['parameterInferenceGuard'] = guardResult.meta ?? {
-      targetPath: dbConfig.parameterInferenceGuard?.targetPath ?? 'parameters',
+
+  if (!updateTemplate.trim()) {
+    const error = 'No explicit update document provided.';
+    reportAiPathsError(
+      new Error(error),
+      {
+        action: 'dbUpdateGuardrail',
+        nodeId: node.id,
+        guardrail: 'missing_update_template',
+      },
+      'Database update blocked:'
+    );
+    toast(error, { variant: 'error' });
+    return {
+      output: {
+        result: null,
+        bundle: {
+          error,
+          guardrail: 'missing-update-template',
+        },
+        debugPayload: {
+          ...debugPayload,
+          guardrail: 'missing-update-template',
+        },
+        aiPrompt,
+      },
     };
   }
-  if (guardResult.blocked) {
-    const message =
-      guardResult.errorMessage ??
-      'Parameter inference blocked due to missing parameter definitions.';
+
+  if (!resolvedFilter || Object.keys(resolvedFilter).length === 0) {
+    const error = 'No explicit update filter provided.';
     reportAiPathsError(
-      new Error(message),
+      new Error(error),
       {
-        action: 'parameterInferenceGuard',
+        action: 'dbUpdateGuardrail',
         nodeId: node.id,
-        targetPath: parameterTargetPath,
+        guardrail: 'missing_query_filter',
       },
-      'Parameter inference guard blocked update:'
+      'Database update blocked:'
     );
-    toast(message, { variant: 'error' });
-    throw new ParameterInferenceGateError(message);
+    toast(error, { variant: 'error' });
+    return {
+      output: {
+        result: null,
+        bundle: {
+          error,
+          guardrail: 'missing-query-filter',
+        },
+        debugPayload: {
+          ...debugPayload,
+          guardrail: 'missing-query-filter',
+        },
+        aiPrompt,
+      },
+    };
   }
-  await ensureExistingParameterTemplateContext(parameterTargetPath);
-  const mergeResult = mergeParameterInferenceUpdates({
-    targetPath: parameterTargetPath,
-    updates,
-    templateInputs,
-  });
-  if (mergeResult.applied) {
-    updates = mergeResult.updates;
-    if (
-      debugPayload['parameterInferenceGuard'] &&
-      typeof debugPayload['parameterInferenceGuard'] === 'object'
-    ) {
-      (debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['writePlan'] =
-        mergeResult.meta ?? null;
-    }
-  }
+
   const missingTemplatePorts: string[] = updateTemplate
     ? extractMissingTemplatePorts(updateTemplate, templateInputs)
     : [];
-  if (!updateTemplate) {
-    if (missingSourcePorts.length > 0 || unresolvedSourcePorts.length > 0) {
-      return { output: prevOutputs };
-    }
-    if (Object.keys(updates).length === 0) {
-      return { output: prevOutputs };
-    }
-  }
   if (missingTemplatePorts.length > 0) {
     const errorMessage = `Update template is missing connected inputs: ${missingTemplatePorts.join(
       ', '
@@ -203,7 +225,7 @@ export async function buildMongoUpdatePlan({
       }
     };
   }
-  const updateDocCandidate: unknown = parsedUpdate ?? updates;
+  const updateDocCandidate: unknown = parsedUpdate;
   if (
     !updateDocCandidate ||
   (typeof updateDocCandidate !== 'object' && !Array.isArray(updateDocCandidate))
@@ -219,35 +241,6 @@ export async function buildMongoUpdatePlan({
     };
   }
   let updateDoc: unknown = updateDocCandidate;
-  if (
-    dbConfig.parameterInferenceGuard?.enabled &&
-    updates[parameterTargetPath] !== undefined &&
-    updateDoc &&
-    typeof updateDoc === 'object' &&
-    !Array.isArray(updateDoc)
-  ) {
-    const updateDocRecord = updateDoc as Record<string, unknown>;
-    const updateSet =
-      updateDocRecord['$set'] &&
-      typeof updateDocRecord['$set'] === 'object' &&
-      !Array.isArray(updateDocRecord['$set'])
-        ? (updateDocRecord['$set'] as Record<string, unknown>)
-        : null;
-    if (updateSet && Object.prototype.hasOwnProperty.call(updateSet, parameterTargetPath)) {
-      updateDoc = {
-        ...updateDocRecord,
-        $set: {
-          ...updateSet,
-          [parameterTargetPath]: updates[parameterTargetPath],
-        },
-      };
-    } else if (Object.prototype.hasOwnProperty.call(updateDocRecord, parameterTargetPath)) {
-      updateDoc = {
-        ...updateDocRecord,
-        [parameterTargetPath]: updates[parameterTargetPath],
-      };
-    }
-  }
 
   if (
     !Array.isArray(updateDoc) &&
@@ -264,6 +257,19 @@ export async function buildMongoUpdatePlan({
       }
     };
   }
+
+  const extractUpdates = (value: unknown): Record<string, unknown> => {
+    const record = toRecord(value);
+    if (!record) return {};
+    const setRecord = toRecord(record['$set']);
+    if (setRecord) return setRecord;
+    const hasOperator = Object.keys(record).some((key: string): boolean => key.startsWith('$'));
+    if (hasOperator) return {};
+    return record;
+  };
+  const updates = extractUpdates(updateDoc);
+  const primaryTarget = Object.keys(updates)[0] ?? 'content_en';
+
   debugPayload['updateDoc'] = updateDoc;
 
   return {

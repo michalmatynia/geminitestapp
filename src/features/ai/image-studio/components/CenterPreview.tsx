@@ -9,9 +9,9 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
 import { VectorDrawingCanvas, VectorDrawingProvider } from '@/features/vector-drawing';
-import type { VectorShape } from '@/shared/contracts/vector';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
+import type { VectorShape } from '@/shared/contracts/vector';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';

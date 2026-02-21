@@ -16,7 +16,7 @@ const getContentType = (filename: string) => {
 };
 
 export const GET = apiHandlerWithParams<{ runId: string; file: string }>(
-  async (req, _ctx, params) => {
+  async (_req, _ctx, params) => {
     const { runId, file } = params;
     const safeFile = path.basename(file);
     if (safeFile !== file) {

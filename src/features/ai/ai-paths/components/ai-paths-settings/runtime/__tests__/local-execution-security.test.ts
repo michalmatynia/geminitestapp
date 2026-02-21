@@ -105,4 +105,39 @@ describe('evaluateLocalExecutionSecurity', () => {
     const issues = evaluateLocalExecutionSecurity(nodes);
     expect(issues).toHaveLength(0);
   });
+
+  it('flags playwright node inline proxy credentials in overrides/options', () => {
+    const nodes: AiNode[] = [
+      makeNode({
+        id: 'playwright-secrets',
+        type: 'playwright',
+        config: {
+          playwright: {
+            settingsOverrides: {
+              proxyPassword: 'secret-1',
+            },
+            launchOptionsJson: JSON.stringify({
+              proxy: {
+                server: 'http://proxy.local:8080',
+                username: 'user',
+                password: 'secret-2',
+              },
+            }),
+            contextOptionsJson: JSON.stringify({
+              httpCredentials: {
+                username: 'user',
+                password: 'secret-3',
+              },
+            }),
+          },
+        } as AiNode['config'],
+      }),
+    ];
+
+    const issues = evaluateLocalExecutionSecurity(nodes);
+    expect(issues).toHaveLength(3);
+    expect(issues.every((issue) => issue.nodeId === 'playwright-secrets')).toBe(
+      true
+    );
+  });
 });

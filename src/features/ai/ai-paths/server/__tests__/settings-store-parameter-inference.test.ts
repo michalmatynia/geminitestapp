@@ -94,6 +94,7 @@ describe('parameter inference seed config', () => {
     const seedQueryConfig = ((seedDbConfig?.['query'] as Record<string, unknown> | undefined));
 
     expect(seedQueryConfig?.['collection']).toBe('products');
+    expect(seedDbConfig?.['action']).toBe('findOneAndUpdate');
     expect(seedQueryConfig?.['queryTemplate']).toEqual(
       expect.stringContaining('"$exists"')
     );

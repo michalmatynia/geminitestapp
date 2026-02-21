@@ -7,6 +7,10 @@ import {
   setExportDefaultConnectionId
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
+import type { 
+  IntegrationRecord as Integration, 
+  IntegrationConnectionRecord as IntegrationConnection 
+} from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
@@ -36,7 +40,7 @@ const resolveFallbackBaseConnectionId = async (
 ): Promise<string | null> => {
   const integrationRepository = await getIntegrationRepository();
   const integrations = await integrationRepository.listIntegrations();
-  const baseIntegrations = integrations.filter( (integration: any) =>
+  const baseIntegrations = integrations.filter( (integration: Integration) =>
     BASE_INTEGRATION_SLUGS.has((integration.slug ?? '').trim().toLowerCase())
   );
 
@@ -44,7 +48,7 @@ const resolveFallbackBaseConnectionId = async (
 
   const baseConnections = (
     await Promise.all(
-      baseIntegrations.map( (integration: any) =>
+      baseIntegrations.map( (integration: Integration) =>
         integrationRepository.listConnections(integration.id)
       )
     )
@@ -53,14 +57,14 @@ const resolveFallbackBaseConnectionId = async (
   if (baseConnections.length === 0) return null;
 
   const currentConnection =
-    baseConnections.find( (connection: any) => connection.id === currentConnectionId) ??
+    baseConnections.find( (connection: IntegrationConnection) => connection.id === currentConnectionId) ??
     null;
   if (currentConnection && hasBaseCredentials(currentConnection)) {
     return currentConnection.id;
   }
 
   const credentialedConnection =
-    baseConnections.find( (connection: any) => hasBaseCredentials(connection)) ?? null;
+    baseConnections.find( (connection: IntegrationConnection) => hasBaseCredentials(connection)) ?? null;
   if (credentialedConnection) {
     return credentialedConnection.id;
   }

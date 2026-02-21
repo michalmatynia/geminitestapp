@@ -3,6 +3,8 @@ import type { NodeDefinition } from '@/shared/contracts/ai-paths';
 import {
   AGENT_INPUT_PORTS,
   AGENT_OUTPUT_PORTS,
+  PLAYWRIGHT_INPUT_PORTS,
+  PLAYWRIGHT_OUTPUT_PORTS,
   AUDIO_OSCILLATOR_INPUT_PORTS,
   AUDIO_OSCILLATOR_OUTPUT_PORTS,
   AUDIO_SPEAKER_INPUT_PORTS,
@@ -40,6 +42,7 @@ import {
   TRIGGER_OUTPUT_PORTS,
   VIEWER_INPUT_PORTS,
 } from '../constants';
+import { createDefaultPlaywrightConfig } from '../playwright/default-config';
 
 const buildOptionalInputContracts = (
   inputs: string[]
@@ -423,6 +426,19 @@ export const palette: NodeDefinition[] = [
     outputs: AGENT_OUTPUT_PORTS,
     inputContracts: {
       prompt: { required: true },
+    },
+  },
+  {
+    type: 'playwright',
+    title: 'Playwright',
+    description: 'Run programmable browser automation with persona-driven fidelity.',
+    inputs: PLAYWRIGHT_INPUT_PORTS,
+    outputs: PLAYWRIGHT_OUTPUT_PORTS,
+    inputContracts: {
+      prompt: { required: false },
+    },
+    config: {
+      playwright: createDefaultPlaywrightConfig(),
     },
   },
 ];

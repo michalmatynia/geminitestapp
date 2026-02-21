@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
+import { playwrightSettingsSchema } from './playwright';
 import {
   promptValidationRuleSchema,
   promptValidationScopeSchema,
@@ -34,6 +35,7 @@ export const aiNodeTypeSchema = z.enum([
   'poll',
   'http',
   'api_advanced',
+  'playwright',
   'prompt',
   'model',
   'agent',
@@ -518,6 +520,42 @@ export const advancedApiConfigSchema = z.object({
 export type AdvancedApiConfigDto = z.infer<typeof advancedApiConfigSchema>;
 export type AdvancedApiConfig = AdvancedApiConfigDto;
 
+export const playwrightBrowserEngineSchema = z.enum([
+  'chromium',
+  'firefox',
+  'webkit',
+]);
+export type PlaywrightBrowserEngineDto = z.infer<
+  typeof playwrightBrowserEngineSchema
+>;
+export type PlaywrightBrowserEngine = PlaywrightBrowserEngineDto;
+
+export const playwrightCaptureConfigSchema = z.object({
+  screenshot: z.boolean().optional(),
+  html: z.boolean().optional(),
+  video: z.boolean().optional(),
+  trace: z.boolean().optional(),
+});
+export type PlaywrightCaptureConfigDto = z.infer<
+  typeof playwrightCaptureConfigSchema
+>;
+export type PlaywrightCaptureConfig = PlaywrightCaptureConfigDto;
+
+export const playwrightConfigSchema = z.object({
+  personaId: z.string().optional(),
+  script: z.string(),
+  waitForResult: z.boolean().optional(),
+  timeoutMs: z.number().optional(),
+  browserEngine: playwrightBrowserEngineSchema.optional(),
+  startUrlTemplate: z.string().optional(),
+  launchOptionsJson: z.string().optional(),
+  contextOptionsJson: z.string().optional(),
+  settingsOverrides: playwrightSettingsSchema.partial().optional(),
+  capture: playwrightCaptureConfigSchema.optional(),
+});
+export type PlaywrightConfigDto = z.infer<typeof playwrightConfigSchema>;
+export type PlaywrightConfig = PlaywrightConfigDto;
+
 export const dbQueryConfigSchema = z.object({
   provider: z.enum(['auto', 'mongodb', 'prisma']),
   collection: z.string(),
@@ -773,6 +811,7 @@ export const nodeConfigSchema = z.object({
   poll: pollConfigSchema.optional(),
   http: httpConfigSchema.optional(),
   apiAdvanced: advancedApiConfigSchema.optional(),
+  playwright: playwrightConfigSchema.optional(),
   db_schema: dbSchemaConfigSchema.optional(),
   description: descriptionConfigSchema.optional(),
   parser: parserConfigSchema.optional(),
@@ -1114,49 +1153,6 @@ export const nodeDefinitionSchema = z.object({
 
 export type NodeDefinitionDto = z.infer<typeof nodeDefinitionSchema>;
 export type NodeDefinition = NodeDefinitionDto;
-
-export const runtimeHistoryLinkSchema = z.object({
-  nodeId: z.string(),
-  nodeType: z.string().nullable(),
-  nodeTitle: z.string().nullable(),
-  fromPort: z.string().nullable(),
-  toPort: z.string().nullable(),
-});
-
-export type RuntimeHistoryLinkDto = z.infer<typeof runtimeHistoryLinkSchema>;
-export type RuntimeHistoryLink = RuntimeHistoryLinkDto;
-
-export const runtimeHistoryEntrySchema = z.object({
-  timestamp: z.string(),
-  runId: z.string().nullable().optional(),
-  runStartedAt: z.string().nullable().optional(),
-  pathId: z.string().nullable(),
-  pathName: z.string().nullable(),
-  nodeId: z.string(),
-  nodeType: z.string(),
-  nodeTitle: z.string().nullable(),
-  status: z.string(),
-  iteration: z.number(),
-  inputs: z.record(z.string(), z.unknown()),
-  outputs: z.record(z.string(), z.unknown()),
-  inputHash: z.string().nullable(),
-  skipReason: z.string().optional(),
-  requiredPorts: z.array(z.string()).optional(),
-  optionalPorts: z.array(z.string()).optional(),
-  waitingOnPorts: z.array(z.string()).optional(),
-  sideEffectPolicy: nodeSideEffectPolicySchema.optional(),
-  sideEffectDecision: z.string().optional(),
-  activationHash: z.string().nullable().optional(),
-  idempotencyKey: z.string().nullable().optional(),
-  error: z.string().optional(),
-  inputsFrom: z.array(runtimeHistoryLinkSchema),
-  outputsTo: z.array(runtimeHistoryLinkSchema),
-  delayMs: z.number().nullable(),
-  durationMs: z.number().nullable(),
-});
-
-export type RuntimeHistoryEntryDto = z.infer<typeof runtimeHistoryEntrySchema>;
-export type RuntimeHistoryEntry = RuntimeHistoryEntryDto;
 
 export const aiPathRuntimeAnalyticsRangeSchema = z.enum(['1h', '24h', '7d', '30d']);
 export type AiPathRuntimeAnalyticsRangeDto = z.infer<typeof aiPathRuntimeAnalyticsRangeSchema>;
@@ -1668,27 +1664,17 @@ export type AiPathRunRepository = {
 };
 
 /**
- * Legacy aliases / Runtime Types
+ * Runtime Types (imported from ai-paths-runtime for consolidation)
  */
-export type RuntimeState = {
-  status?: string;
-  nodeStatuses?: Record<string, string>;
-  nodeOutputs?: Record<string, RuntimePortValues>;
-  variables?: Record<string, unknown>;
-  events?: unknown[];
-  inputs?: Record<string, RuntimePortValues>;
-  outputs?: Record<string, RuntimePortValues>;
-  history?: Record<string, RuntimeHistoryEntry[]>;
-  runId?: string;
-  runStartedAt?: string;
-  hashes?: Record<string, string>;
-  hashTimestamps?: Record<string, string>;
-};
-export type RuntimePortValues = Record<string, unknown>;
-export type RuntimeEventInputDto = unknown;
-export type RunStatusDto = unknown;
-export type SetNodeStatusInputDto = unknown;
-export type PathExecutionMode = unknown;
-export type PathRunMode = unknown;
-export type QueuedRunDto = unknown;
-
+export type {
+  RuntimeState,
+  RuntimePortValues,
+  RuntimeEventInputDto,
+  RunStatusDto,
+  SetNodeStatusInputDto,
+  PathExecutionMode,
+  PathRunMode,
+  QueuedRunDto,
+  RuntimeHistoryEntry,
+  RuntimeHistoryLink,
+} from './ai-paths-runtime';

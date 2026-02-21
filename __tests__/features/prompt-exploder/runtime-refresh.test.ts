@@ -54,6 +54,7 @@ const buildSegment = (
   raw: title,
   code: null,
   condition: null,
+  items: [],
   listItems: [],
   subsections: [],
   paramsText: '',
@@ -65,6 +66,8 @@ const buildSegment = (
   matchedPatternLabels: [],
   matchedSequenceLabels: [],
   confidence: 0.5,
+  validationResults: [],
+  segments: [],
 });
 
 const buildDocument = (segments: PromptExploderSegment[]): PromptExploderDocument => ({
@@ -74,6 +77,14 @@ const buildDocument = (segments: PromptExploderSegment[]): PromptExploderDocumen
   bindings: [],
   warnings: [],
   reassembledPrompt: segments.map((segment) => segment.text).join('\n'),
+  subsections: [],
+  variables: [],
+  dependencies: [],
+  rules: [],
+  tags: [],
+  errors: [],
+  diagnostics: [],
+  sections: [],
 });
 
 describe('prompt exploder runtime refresh', () => {

@@ -1,0 +1,20 @@
+{
+  "score": 0,
+  "blocked": true,
+  "errors": [
+    {
+      "ruleId": "catalog_context_context_entityid_non_empty",
+      "ruleTitle": "Context Filter: context.entityId should be configured",
+      "nodeId": "node-jprmv8",
+      "message": "Entity ID to fetch when entityIdSource is manual (or as a fallback when missing).",
+      "recommendation": "Set config.context.entityId in Context Filter configuration."
+    },
+    {
+      "ruleId": "catalog_trigger_trigger_event_allowed_values",
+      "ruleTitle": "Trigger: Scheduled Run: trigger.event uses documented values",
+      "nodeId": "node-nx558jai",
+      "message": "What event fires this Trigger node. Use manual for UI-driven runs; scheduled_run for server/cron runs. Allowed values inferred from docs: server, cron, manual.",
+      "recommendation": "Set config.trigger.event to one of: server, cron, manual."
+    }
+  ]
+}

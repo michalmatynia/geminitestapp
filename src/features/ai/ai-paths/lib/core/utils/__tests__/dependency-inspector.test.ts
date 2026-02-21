@@ -43,6 +43,7 @@ describe('inspectPathDependencies', () => {
           },
           database: {
             operation: 'update',
+            updatePayloadMode: 'mapping',
             entityType: 'product',
             query: {
               provider: 'auto',
@@ -74,6 +75,11 @@ describe('inspectPathDependencies', () => {
     expect(
       report.risks.some(
         (risk) => risk.category === 'database_write_missing_identity_inputs',
+      )
+    ).toBe(true);
+    expect(
+      report.risks.some(
+        (risk) => risk.category === 'database_update_mode_mapping_disallowed',
       )
     ).toBe(true);
   });
@@ -158,6 +164,46 @@ describe('inspectPathDependencies', () => {
     expect(report.errors).toBe(0);
     expect(report.warnings).toBe(0);
     expect(report.strictReady).toBe(true);
+  });
+
+  it('flags preset query mode as disallowed for database query nodes', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'db-query',
+        type: 'database',
+        title: 'Database Query',
+        inputs: ['query', 'aiQuery', 'queryCallback'],
+        config: {
+          runtime: {
+            waitForInputs: true,
+          },
+          database: {
+            operation: 'query',
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'preset',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '',
+              limit: 20,
+              sort: '',
+              projection: '',
+              single: false,
+            },
+          },
+        },
+      }),
+    ];
+
+    const report = inspectPathDependencies(nodes, []);
+    expect(
+      report.risks.some(
+        (risk) => risk.category === 'database_query_mode_preset_disallowed',
+      )
+    ).toBe(true);
+    expect(report.strictReady).toBe(false);
   });
 
   it('supports edges using source/target handles', () => {

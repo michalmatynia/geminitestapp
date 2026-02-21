@@ -118,22 +118,39 @@ export const inspectPathDependencies = (
 
     const dbConfig = node.config?.database;
     const operation = dbConfig?.operation ?? 'query';
+    if (dbConfig?.updatePayloadMode === 'mapping') {
+      pushRisk(
+        risks,
+        node,
+        'database_update_mode_mapping_disallowed',
+        'error',
+        'Mapping-based update mode is disallowed for Database nodes.',
+        'Switch database.updatePayloadMode to `custom` and define explicit query/update templates.',
+      );
+    }
 
     if (operation === 'query') {
-      const queryMode = dbConfig?.query?.mode ?? 'preset';
-      const preset = dbConfig?.query?.preset ?? 'by_id';
-      if (
-        queryMode === 'preset' &&
-        (preset === 'by_id' || preset === 'by_entityId' || preset === 'by_productId') &&
-        !hasAnyPort(incomingPorts, ['entityId', 'productId', 'value', 'query', 'queryCallback', 'aiQuery'])
-      ) {
+      const queryMode = dbConfig?.query?.mode ?? 'custom';
+      if (queryMode === 'preset') {
         pushRisk(
           risks,
           node,
-          'database_query_preset_without_inputs',
-          'warning',
-          'Preset query can fall back to implicit runtime IDs because no query/ID inputs are connected.',
-          'Connect `entityId`, `productId`, `value`, or explicit query ports.',
+          'database_query_mode_preset_disallowed',
+          'error',
+          'Preset query mode is disallowed for Database nodes. Queries must be explicit.',
+          'Switch database.query.mode to `custom` and define explicit queryTemplate or query input.',
+        );
+      }
+      const hasQueryInput = hasAnyPort(incomingPorts, ['query', 'queryCallback', 'aiQuery']);
+      const queryTemplate = normalizeNonEmptyString(dbConfig?.query?.queryTemplate);
+      if (!queryTemplate && !hasQueryInput) {
+        pushRisk(
+          risks,
+          node,
+          'database_query_missing_explicit_query',
+          'error',
+          'Database query has no explicit query template and no explicit query input wiring.',
+          'Define database.query.queryTemplate or connect query/queryCallback/aiQuery.',
         );
       }
       return;

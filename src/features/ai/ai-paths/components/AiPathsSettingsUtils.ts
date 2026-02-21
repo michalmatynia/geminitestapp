@@ -27,13 +27,11 @@ type DatabaseOperation = 'query' | 'update' | 'insert' | 'delete';
 export const DEFAULT_DB_QUERY: DbQueryConfig = {
   provider: 'auto',
   collection: 'products',
-  mode: 'preset',
+  mode: 'custom',
   preset: 'by_id',
   field: '_id',
   idType: 'string',
-  queryTemplate: `{
-  "_id": "{{value}}"
-}`,
+  queryTemplate: '',
   limit: 20,
   sort: '',
   projection: '',
@@ -195,7 +193,7 @@ export const buildPersistedRuntimeState = (
   Object.entries(state.history ?? {}).forEach(([key, value]) => {
     if (!includeHistoryInPathConfig) return;
     if (!nodeIds.has(key)) return;
-    const entries = Array.isArray(value) ? (value as RuntimeHistoryEntry[]) : [];
+    const entries = Array.isArray(value) ? (value) : [];
     const trimmed = entries.slice(-historyLimit);
     if (trimmed.length > 0) {
       history[key] = trimmed.map((entry: RuntimeHistoryEntry): RuntimeHistoryEntry => ({
@@ -278,39 +276,36 @@ export const buildDbQueryPayload = (
   queryConfig: DbQueryConfig
 ): DbQueryPayload => {
   const inputQuery = coerceInput(nodeInputs['query']);
+  const callbackQueryInput = coerceInput(nodeInputs['queryCallback']);
+  const aiQueryInput = coerceInput(nodeInputs['aiQuery']);
   const inputValue = coerceInput(nodeInputs['value']) ?? coerceInput(nodeInputs['jobId']);
-  const entityIdInput = coerceInput(nodeInputs['entityId']);
-  const productIdInput = coerceInput(nodeInputs['productId']);
   let query: Record<string, unknown> = {};
-  if (queryConfig.mode === 'preset') {
-    const presetValue =
-      queryConfig.preset === 'by_productId'
-        ? productIdInput ?? inputValue ?? entityIdInput
-        : queryConfig.preset === 'by_entityId'
-          ? entityIdInput ?? inputValue ?? productIdInput
-          : inputValue ?? entityIdInput ?? productIdInput;
-    if (presetValue !== undefined) {
-      const field =
-        queryConfig.preset === 'by_productId'
-          ? 'productId'
-          : queryConfig.preset === 'by_entityId'
-            ? 'entityId'
-            : queryConfig.preset === 'by_field'
-              ? queryConfig.field || 'id'
-              : '_id';
-      query = { [field]: presetValue };
-    }
-  } else if (inputQuery && typeof inputQuery === 'object') {
-    query = inputQuery as Record<string, unknown>;
+  const inlineQuery =
+    (aiQueryInput && typeof aiQueryInput === 'object' && !Array.isArray(aiQueryInput)
+      ? (aiQueryInput as Record<string, unknown>)
+      : null) ??
+    (inputQuery && typeof inputQuery === 'object' && !Array.isArray(inputQuery)
+      ? (inputQuery as Record<string, unknown>)
+      : null) ??
+    (callbackQueryInput &&
+      typeof callbackQueryInput === 'object' &&
+      !Array.isArray(callbackQueryInput)
+      ? (callbackQueryInput as Record<string, unknown>)
+      : null);
+  if (inlineQuery) {
+    query = inlineQuery;
   } else {
-    const rendered = renderTemplate(
-      queryConfig.queryTemplate ?? '{}',
-      nodeInputs,
-      inputValue ?? ''
-    );
-    const parsed = parseJsonSafe(rendered);
-    if (parsed && typeof parsed === 'object') {
-      query = parsed as Record<string, unknown>;
+    const queryTemplate = queryConfig.queryTemplate ?? '';
+    if (queryTemplate.trim()) {
+      const rendered = renderTemplate(
+        queryTemplate,
+        nodeInputs,
+        inputValue ?? ''
+      );
+      const parsed = parseJsonSafe(rendered);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        query = parsed as Record<string, unknown>;
+      }
     }
   }
   const projection = parseJsonSafe(queryConfig.projection ?? '') as

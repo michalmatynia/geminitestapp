@@ -17,6 +17,7 @@ const buildSegment = (id: string, text: string, title = 'Segment'): PromptExplod
   raw: text,
   code: null,
   condition: null,
+  items: [],
   listItems: [],
   subsections: [],
   paramsText: '',
@@ -28,6 +29,8 @@ const buildSegment = (id: string, text: string, title = 'Segment'): PromptExplod
   matchedPatternLabels: [],
   matchedSequenceLabels: [],
   confidence: 0.6,
+  validationResults: [],
+  segments: [],
 });
 
 describe('prompt exploder segment transforms', () => {

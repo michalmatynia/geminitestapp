@@ -167,10 +167,9 @@ export const toDbSchemaSnapshot = (
         const source = schemaSources[provider] as { provider: string; collections: CollectionSchema[] } | undefined;
         if (!source) return acc;
         acc[provider] = {
-          provider: source.provider,
+          provider: source.provider as any,
           collections: source.collections.map(toDbSchemaSnapshotSourceCollection),
-        };
-        return acc;
+        };        return acc;
       }, {} as NonNullable<DbSchemaSnapshot['sources']>)
       : undefined;
 

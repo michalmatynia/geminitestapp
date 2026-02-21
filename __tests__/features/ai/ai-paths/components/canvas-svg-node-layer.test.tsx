@@ -23,6 +23,20 @@ const createNode = (): AiNode => ({
   outputs: ['result'],
 });
 
+const createTriggerNode = (): AiNode => ({
+  ...createNode(),
+  id: 'node-trigger-1',
+  type: 'trigger',
+  title: 'Trigger',
+  inputs: ['context'],
+  outputs: ['trigger'],
+  config: {
+    trigger: {
+      event: 'manual',
+    },
+  },
+});
+
 const createHistoryEntry = (): RuntimeHistoryEntry => ({
   timestamp: '2026-01-01T00:00:10.000Z',
   runId: 'run-1',
@@ -255,5 +269,102 @@ describe('CanvasSvgNodeLayer', () => {
     );
 
     expect(screen.getByText('Cached')).toBeDefined();
+  });
+
+  it('keeps Fire Trigger visible for trigger nodes across SVG detail levels', () => {
+    const runtimeState: RuntimeState = {
+      status: 'idle',
+      nodeStatuses: {},
+      nodeOutputs: {},
+      variables: {},
+      events: [],
+      inputs: {},
+      outputs: {},
+      history: {},
+    };
+    const props = {
+      ...baseProps(runtimeState),
+      nodes: [createTriggerNode()],
+    };
+
+    const { container, rerender } = render(
+      <svg>
+        <CanvasSvgNodeLayer
+          {...props}
+          detailLevel='full'
+          view={{ x: 0, y: 0, scale: 1 }}
+        />
+      </svg>
+    );
+
+    const assertFireControlVisible = (): void => {
+      const fireControls = container.querySelectorAll(
+        'rect[data-node-action="fire-trigger"]'
+      );
+      expect(fireControls).toHaveLength(1);
+      expect(screen.getByText('Fire Trigger')).toBeDefined();
+    };
+
+    assertFireControlVisible();
+
+    rerender(
+      <svg>
+        <CanvasSvgNodeLayer
+          {...props}
+          detailLevel='compact'
+          view={{ x: 0, y: 0, scale: 0.7 }}
+        />
+      </svg>
+    );
+    assertFireControlVisible();
+
+    rerender(
+      <svg>
+        <CanvasSvgNodeLayer
+          {...props}
+          detailLevel='skeleton'
+          view={{ x: 0, y: 0, scale: 0.45 }}
+        />
+      </svg>
+    );
+    assertFireControlVisible();
+  });
+
+  it('fires trigger from SVG button in compact detail mode', () => {
+    const runtimeState: RuntimeState = {
+      status: 'idle',
+      nodeStatuses: {},
+      nodeOutputs: {},
+      variables: {},
+      events: [],
+      inputs: {},
+      outputs: {},
+      history: {},
+    };
+    const props = {
+      ...baseProps(runtimeState),
+      nodes: [createTriggerNode()],
+    };
+
+    const { container } = render(
+      <svg>
+        <CanvasSvgNodeLayer
+          {...props}
+          detailLevel='compact'
+          view={{ x: 0, y: 0, scale: 0.7 }}
+        />
+      </svg>
+    );
+
+    const fireButton = container.querySelector(
+      'rect[data-node-action="fire-trigger"]'
+    );
+    expect(fireButton).toBeDefined();
+    fireEvent.click(fireButton as SVGRectElement);
+
+    expect(props.onFireTrigger).toHaveBeenCalledTimes(1);
+    expect(props.onFireTrigger).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'node-trigger-1', type: 'trigger' })
+    );
   });
 });

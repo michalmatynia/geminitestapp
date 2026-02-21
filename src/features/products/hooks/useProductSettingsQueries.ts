@@ -9,8 +9,20 @@ import {
   ProductCategory,
   ProductCategoryWithChildren,
   ProductParameter,
+  ProductSimpleParameter,
   ProductTag,
+  ProductValidationPattern,
+  ProductValidatorConfig,
+  ProductValidatorSettings,
 } from '@/shared/contracts/products';
+import type {
+  UpdateMutation,
+  DeleteMutation,
+  SaveMutation,
+  CreateMutation,
+  ListQuery,
+  SingleQuery,
+} from '@/shared/contracts/ui';
 import {
   createListQueryV2,
   createSingleQueryV2,
@@ -27,23 +39,11 @@ import {
 } from '@/shared/lib/query-invalidation';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
 export { productSettingsKeys };
-import type {
-  ProductValidationPattern,
-  ProductValidatorConfig,
-  ProductValidatorSettings,
-} from '@/shared/contracts/products';
-import type { 
-  UpdateMutation, 
-  DeleteMutation, 
-  SaveMutation, 
-  CreateMutation,
-  ListQuery,
-  SingleQuery,
-} from '@/shared/contracts/ui';
 
 import {
   useCatalogs as useMetadataCatalogs,
   useParameters as useMetadataParameters,
+  useSimpleParameters as useMetadataSimpleParameters,
   usePriceGroups as useMetadataPriceGroups,
   useTags as useMetadataTags,
 } from './useProductMetadataQueries';
@@ -81,6 +81,10 @@ export function useTags(catalogId: string | null): ListQuery<ProductTag> {
 
 export function useParameters(catalogId: string | null): ListQuery<ProductParameter> {
   return useMetadataParameters(catalogId ?? undefined);
+}
+
+export function useSimpleParameters(catalogId: string | null): ListQuery<ProductSimpleParameter> {
+  return useMetadataSimpleParameters(catalogId ?? undefined);
 }
 
 export function useValidatorSettings(): SingleQuery<ProductValidatorSettings> {

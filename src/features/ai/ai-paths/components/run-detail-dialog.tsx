@@ -6,7 +6,6 @@ import type {
   AiPathRunDetail,
   AiPathRunNodeRecord,
   RuntimeHistoryEntry,
-  AiPathRunEventRecord,
 } from '@/shared/contracts/ai-paths';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import {
@@ -19,6 +18,8 @@ import {
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
+import { normalizeRunEvents, normalizeRunNodes } from './job-queue-panel-utils';
+import { collectPlaywrightArtifacts } from './playwright-artifacts';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { RunTimeline } from './run-timeline';
 import { RunHistoryEntries } from './RunHistoryEntries';
@@ -83,18 +84,27 @@ export function RunDetailDialog({
   onStreamPauseToggle,
   onHistoryNodeSelect,
 }: RunDetailDialogProps): React.JSX.Element {
+  const runNodes = useMemo(
+    () => normalizeRunNodes(runDetail?.nodes),
+    [runDetail?.nodes]
+  );
+  const runEvents = useMemo(
+    () => normalizeRunEvents(runDetail?.events),
+    [runDetail?.events]
+  );
+
   const runNodeSummary = useMemo(() => {
     if (!runDetail) return null;
     const counts: Record<string, number> = {};
-    runDetail.nodes.forEach((node: AiPathRunNodeRecord) => {
+    runNodes.forEach((node: AiPathRunNodeRecord) => {
       const status = node.status ?? 'unknown';
       counts[status] = (counts[status] ?? 0) + 1;
     });
-    const total = runDetail.nodes.length;
+    const total = runNodes.length;
     const completed = counts['completed'] ?? 0;
     const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { counts, total, completed, progress };
-  }, [runDetail]);
+  }, [runDetail, runNodes]);
 
   const runDetailHistory = (
     runDetail?.run?.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined
@@ -104,10 +114,10 @@ export function RunDetailDialog({
     () =>
       buildHistoryNodeOptions(
         runDetailHistory,
-        runDetail?.nodes ?? null,
+        runNodes,
         runDetail?.run?.graph?.nodes ?? null
       ),
-    [runDetailHistory, runDetail?.nodes, runDetail?.run?.graph?.nodes]
+    [runDetailHistory, runDetail?.run?.graph?.nodes, runNodes]
   );
 
   const selectedHistoryNodeId = runHistoryNodeId ?? historyOptions[0]?.id ?? null;
@@ -149,6 +159,11 @@ export function RunDetailDialog({
       return slowest;
     }, null);
   }, [runtimeTrace]);
+
+  const playwrightArtifacts = useMemo(
+    () => collectPlaywrightArtifacts(runNodes),
+    [runNodes]
+  );
 
   const isScheduledRun = Boolean(runDetail?.run?.triggerEvent === 'scheduled_run');
 
@@ -280,10 +295,45 @@ export function RunDetailDialog({
               ) : null}
             </div>
           ) : null}
+          {playwrightArtifacts.length > 0 ? (
+            <div className='rounded-md border border-sky-500/30 bg-sky-500/5 p-3'>
+              <div className='text-[11px] font-semibold text-sky-100'>
+                Playwright Artifacts ({playwrightArtifacts.length})
+              </div>
+              <div className='mt-2 space-y-1'>
+                {playwrightArtifacts.map((artifact, index) => (
+                  <div
+                    key={`${artifact.path}:${artifact.nodeId}:${index}`}
+                    className='flex flex-wrap items-center gap-2 text-[11px]'
+                  >
+                    <span className='text-gray-400'>
+                      {artifact.nodeTitle ?? artifact.nodeId}
+                    </span>
+                    {artifact.url ? (
+                      <a
+                        href={artifact.url}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='text-sky-200 underline decoration-sky-300/60 underline-offset-2 hover:text-sky-100'
+                        title={artifact.path}
+                      >
+                        {artifact.name}
+                      </a>
+                    ) : (
+                      <span className='text-gray-200'>{artifact.name}</span>
+                    )}
+                    {artifact.kind ? (
+                      <span className='text-gray-500'>({artifact.kind})</span>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
           <RunTimeline
             run={runDetail.run}
-            nodes={runDetail.nodes}
-            events={runDetail.events as unknown as AiPathRunEventRecord[]}
+            nodes={runNodes}
+            events={runEvents}
             eventsOverflow={runEventsOverflow}
             eventsBatchLimit={runEventsBatchLimit}
           />

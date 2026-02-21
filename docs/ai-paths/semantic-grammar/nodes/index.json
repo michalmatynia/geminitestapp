@@ -345,6 +345,21 @@
     "purposeSummary": "Extract fields into outputs or a single bundle."
   },
   {
+    "nodeType": "playwright",
+    "title": "Playwright",
+    "file": "docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "nodeHash": "f3b63284ff083ea90e8ebce1d5c25f299d43ff39dbeba4219ab0ee325945b442",
+    "nodeHashAlgorithm": "sha256",
+    "inputCount": 12,
+    "outputCount": 5,
+    "configFieldCount": 15,
+    "runtimeFieldCount": 2,
+    "criticalFieldCount": 1,
+    "hasDefaultConfig": true,
+    "defaultConfigKeyCount": 1,
+    "purposeSummary": "Run programmable browser automation with persona-driven fidelity."
+  },
+  {
     "nodeType": "poll",
     "title": "Poll Job",
     "file": "docs/ai-paths/semantic-grammar/nodes/poll.json",

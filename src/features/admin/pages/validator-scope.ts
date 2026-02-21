@@ -14,8 +14,7 @@ export const VALIDATOR_SCOPE_LABELS: Record<ValidatorScope, string> = {
 };
 
 export const VALIDATOR_SCOPE_DESCRIPTIONS: Record<ValidatorScope, string> = {
-  products:
-    'Product patterns validate and normalize product Name/Description fields.',
+  products: '',
   'image-studio':
     'Image Studio patterns control prompt validation rules used in AI image workflows.',
   'prompt-exploder':

@@ -35,8 +35,8 @@ export interface LastErrorInfo {
 export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping';
 
 export interface RuntimeControlHandlers {
-  fireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
-  fireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
+  fireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
+  fireTriggerPersistent?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;
   pauseActiveRun?: () => void;
   resumeActiveRun?: () => void;
   stepActiveRun?: (triggerNode?: AiNode) => void;
@@ -45,15 +45,15 @@ export interface RuntimeControlHandlers {
 }
 
 export interface RuntimeNodeConfigHandlers {
-  fetchParserSample?: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
+  fetchParserSample?: (nodeId: string, entityType: string, entityId: string) => void | Promise<void>;
   fetchUpdaterSample?: (
     nodeId: string,
     entityType: string,
     entityId: string,
     options?: { notify?: boolean }
-  ) => Promise<void>;
-  runSimulation?: (node: AiNode, triggerEvent?: string) => Promise<void>;
-  sendToAi?: (databaseNodeId: string, prompt: string) => Promise<void>;
+  ) => void | Promise<void>;
+  runSimulation?: (node: AiNode, triggerEvent?: string) => void | Promise<void>;
+  sendToAi?: (databaseNodeId: string, prompt: string) => void | Promise<void>;
 }
 
 export interface RuntimeStateData {
@@ -573,6 +573,6 @@ export function useNodeRuntime(nodeId: string): {
   return {
     inputs: runtimeState.inputs?.[nodeId],
     outputs: runtimeState.outputs?.[nodeId],
-    history: runtimeState.history?.[nodeId] as RuntimeHistoryEntry[] | undefined,
+    history: runtimeState.history?.[nodeId],
   };
 }

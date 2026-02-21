@@ -267,10 +267,6 @@ export function CaseResolverPageView(
     selectedFileId,
     selectedAssetId,
     selectedFolderPath,
-    isWorkspaceDirty,
-    isWorkspaceSaving,
-    workspaceSaveStatus,
-    workspaceSaveError,
     folderPanelCollapsed,
     setFolderPanelCollapsed,
     setActiveMainView,
@@ -295,7 +291,6 @@ export function CaseResolverPageView(
     handleRunScanFileOcr,
     handleUploadAssets,
     handleAttachAssetFile,
-    handleSaveWorkspace,
     handleDeleteFolder,
     handleOpenFileEditor,
     activeFile,
@@ -791,6 +786,7 @@ export function CaseResolverPageView(
         },
         {
           source: 'case_view_case_metadata',
+          persistNow: true,
         },
       );
     },
@@ -860,13 +856,13 @@ export function CaseResolverPageView(
     setWorkspaceView,
   ]);
   const lastInlineEditorAutoOpenFileIdRef = React.useRef<string | null>(null);
-  const hasUnsavedChanges = isWorkspaceDirty || isEditorDraftDirty;
+  const hasUnsavedChanges = isEditorDraftDirty;
   const confirmLeaveWithUnsavedChanges = useCallback(
     (onConfirm: () => void): void => {
       confirmAction({
         title: 'Unsaved Changes',
         message:
-          'You have unsaved Case Resolver changes. Leave this page without saving?',
+          'You have unsaved document changes. Leave this page without saving?',
         confirmText: 'Leave',
         onConfirm,
       });
@@ -945,25 +941,15 @@ export function CaseResolverPageView(
         !event.altKey &&
         !event.shiftKey &&
         event.key.toLowerCase() === 's';
-      if (!isSaveShortcut) return;
+      if (!isSaveShortcut || !editingDocumentDraft) return;
       event.preventDefault();
-      if (editingDocumentDraft) {
-        handleSaveFileEditor();
-        return;
-      }
-      if (isWorkspaceSaving) return;
-      handleSaveWorkspace();
+      handleSaveFileEditor();
     };
     window.addEventListener('keydown', handleKeyDown);
     return (): void => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [
-    editingDocumentDraft,
-    handleSaveFileEditor,
-    handleSaveWorkspace,
-    isWorkspaceSaving,
-  ]);
+  }, [editingDocumentDraft, handleSaveFileEditor]);
 
   React.useEffect(() => {
     if (workspaceView !== 'document') return;
@@ -1001,15 +987,10 @@ export function CaseResolverPageView(
         selectedFileId,
         selectedAssetId,
         selectedFolderPath,
-        isWorkspaceDirty,
-        isWorkspaceSaving,
-        workspaceSaveStatus,
-        workspaceSaveError,
         activeFile,
         selectedAsset,
         panelCollapsed: folderPanelCollapsed,
         onPanelCollapsedChange: setFolderPanelCollapsed,
-        onSaveWorkspace: handleSaveWorkspace,
         onDeactivateActiveFile: handleDeactivateActiveFile,
         onSelectFile: handleSelectFile,
         onSelectAsset: handleSelectAsset,

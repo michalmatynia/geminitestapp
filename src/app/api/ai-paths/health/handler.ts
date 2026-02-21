@@ -1,3 +1,4 @@
+import { ProductAiJobStatus as PrismaJobStatus } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
@@ -134,9 +135,8 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 
       if (provider === 'prisma') {
         const totals = await Promise.all(
-          JOB_STATUSES.map(async (status) => [status, await prisma.productAiJob.count({ where: { status } })] as const)
-        );
-        const total = await prisma.productAiJob.count();
+          JOB_STATUSES.map(async (status) => [status, await prisma.productAiJob.count({ where: { status: status as PrismaJobStatus } })] as const)
+        );        const total = await prisma.productAiJob.count();
         const latest = await prisma.productAiJob.findFirst({
           orderBy: { createdAt: 'desc' },
           select: { id: true, status: true, createdAt: true, productId: true, type: true },

@@ -71,14 +71,14 @@ export async function PUT_handler(req: NextRequest, ctx: ApiHandlerContext, para
   // Update basic info, status, SEO, and components
   const updatedPage = await cmsRepository.updatePage(id, {
     name,
-    status,
-    publishedAt,
-    seoTitle,
-    seoDescription,
-    seoOgImage,
-    seoCanonical,
-    robotsMeta,
-    themeId,
+    ...(status ? { status } : {}),
+    publishedAt: publishedAt ?? undefined,
+    seoTitle: seoTitle ?? undefined,
+    seoDescription: seoDescription ?? undefined,
+    seoOgImage: seoOgImage ?? undefined,
+    seoCanonical: seoCanonical ?? undefined,
+    robotsMeta: robotsMeta ?? undefined,
+    themeId: themeId ?? undefined,
     showMenu,
     components,
   });

@@ -4,22 +4,17 @@ import type {
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
+import { extractMissingTemplatePorts } from './integration-database-mongo-update-plan-helpers';
 import {
   coerceInput,
   parseJsonSafe,
   renderJsonTemplate,
 } from '../../utils';
-import {
-  looksLikeObjectId,
-  resolveEntityIdFromInputs,
-} from '../utils';
-import { extractMissingTemplatePorts } from './integration-database-mongo-update-plan-helpers';
 
 export type QueryResolutionSource =
   | 'aiQuery'
   | 'input'
   | 'callback'
-  | 'preset'
   | 'customTemplate';
 
 export type ResolveDatabaseQueryResult =
@@ -154,9 +149,9 @@ const parseQueryInputValue = (args: {
 export function resolveDatabaseQuery({
   nodeInputs,
   toast,
-  simulationEntityType,
-  simulationEntityId,
-  resolvedInputs,
+  simulationEntityType: _simulationEntityType,
+  simulationEntityId: _simulationEntityId,
+  resolvedInputs: _resolvedInputs,
   queryConfig,
   templateInputValue,
   templateContext,
@@ -165,16 +160,8 @@ export function resolveDatabaseQuery({
   const inputQuery: unknown = coerceInput(nodeInputs['query']);
   const callbackInput: unknown = coerceInput(nodeInputs['queryCallback']);
   const aiQueryInput: unknown = coerceInput(nodeInputs['aiQuery']);
-  const resolvedEntityId: string | null = resolveEntityIdFromInputs(
-    resolvedInputs,
-    undefined,
-    simulationEntityType,
-    simulationEntityId,
-  );
 
   const inputValue: unknown = templateInputValue;
-  const entityIdInput: unknown = coerceInput(resolvedInputs['entityId']);
-  const productIdInput: unknown = coerceInput(resolvedInputs['productId']);
 
   let query: Record<string, unknown> = {};
   let nextQueryConfig: DbQueryConfig = { ...queryConfig };
@@ -256,50 +243,23 @@ export function resolveDatabaseQuery({
 
     query = parsedCallbackQuery.query;
     querySource = 'callback';
-  } else if (nextQueryConfig.mode === 'preset') {
-    const presetValue: unknown =
-      nextQueryConfig.preset === 'by_productId'
-        ? (productIdInput ?? inputValue)
-        : nextQueryConfig.preset === 'by_entityId'
-          ? (entityIdInput ?? inputValue ?? resolvedEntityId)
-          : (inputValue ??
-            resolvedEntityId ??
-            entityIdInput ??
-            productIdInput);
-    if (presetValue !== undefined) {
-      let field: string =
-        nextQueryConfig.preset === 'by_productId'
-          ? 'productId'
-          : nextQueryConfig.preset === 'by_entityId'
-            ? 'entityId'
-            : nextQueryConfig.preset === 'by_field'
-              ? nextQueryConfig.field || 'id'
-              : '_id';
-      if (
-        nextQueryConfig.preset === 'by_id' &&
-        field === '_id' &&
-        !looksLikeObjectId(presetValue as string)
-      ) {
-        field = 'id';
-      }
-      query = { [field]: presetValue };
-      querySource = 'preset';
-    } else {
-      toast('Database query needs an ID/value input.', {
-        variant: 'error',
-      });
+  } else {
+    if (nextQueryConfig.mode === 'preset') {
+      const error =
+        'Preset query mode is disabled. Define an explicit query template or connect an explicit query input.';
+      toast(error, { variant: 'error' });
       return buildResolutionErrorOutput({
         aiPrompt,
         collection: nextQueryConfig.collection,
-        error: 'Missing query value',
-        querySource: 'preset',
+        error,
+        querySource: 'customTemplate',
       });
     }
-  } else {
+
     const template = nextQueryConfig.queryTemplate ?? '';
     if (!template.trim()) {
       const error =
-        'Custom query template is empty. Use {} explicitly for full collection scans.';
+        'No explicit query provided. Define queryTemplate or connect query/queryCallback/aiQuery input.';
       toast(error, { variant: 'error' });
       return buildResolutionErrorOutput({
         aiPrompt,

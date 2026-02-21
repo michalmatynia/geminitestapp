@@ -415,14 +415,14 @@ async function DELETE_handler(req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }) => GET_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { runId: string }) => GET_handler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].GET' }
 );
 export const POST = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }) => POST_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { runId: string }) => POST_handler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].POST' }
 );
 export const DELETE = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }) => DELETE_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { runId: string }) => DELETE_handler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].DELETE' }
 );

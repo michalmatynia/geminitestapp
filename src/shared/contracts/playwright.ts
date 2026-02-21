@@ -28,12 +28,14 @@ export const playwrightSettingsSchema = z.object({
 });
 
 export type PlaywrightSettingsDto = z.infer<typeof playwrightSettingsSchema>;
+export type PlaywrightSettings = PlaywrightSettingsDto;
 
 export const playwrightPersonaSchema = namedDtoSchema.extend({
   settings: playwrightSettingsSchema,
 });
 
 export type PlaywrightPersonaDto = z.infer<typeof playwrightPersonaSchema>;
+export type PlaywrightPersona = PlaywrightPersonaDto;
 
 export const createPlaywrightPersonaSchema = playwrightPersonaSchema.omit({
   id: true,

@@ -23,8 +23,6 @@ interface DbActionResult {
 type ResolveCollectionUpdateContextInput = {
   resolvedInputs: Record<string, unknown>;
   queryConfig: DbQueryConfig;
-  entityId: string | null;
-  idField: string;
   configuredCollection: string;
   entityType: string;
 };
@@ -38,8 +36,6 @@ type ResolveCollectionUpdateContextResult = {
 const resolveCollectionUpdateContext = ({
   resolvedInputs,
   queryConfig,
-  entityId,
-  idField,
   configuredCollection,
   entityType,
 }: ResolveCollectionUpdateContextInput): ResolveCollectionUpdateContextResult => {
@@ -53,12 +49,7 @@ const resolveCollectionUpdateContext = ({
     !Array.isArray(queryPayload['query'])
       ? queryPayload['query']
       : {};
-  const query =
-    Object.keys(queryFromPayload).length > 0
-      ? queryFromPayload
-      : entityId && idField.trim().length > 0
-        ? { [idField]: entityId }
-        : {};
+  const query = queryFromPayload;
   const collection =
     (queryPayload['collection'] as string | undefined)?.trim() || configuredCollection || entityType;
   return {
@@ -81,7 +72,6 @@ export type ExecuteDatabaseUpdateInput = {
   updateStrategy: 'one' | 'many';
   entityType: string;
   shouldUseEntityUpdate: boolean;
-  idField: string;
   entityId: string | null;
   configuredCollection: string;
   updatePayloadMode?: 'mapping' | 'custom';
@@ -140,7 +130,6 @@ export async function executeDatabaseUpdate({
   updateStrategy,
   entityType,
   shouldUseEntityUpdate,
-  idField,
   entityId,
   configuredCollection,
   updatePayloadMode = 'mapping',
@@ -203,7 +192,24 @@ export async function executeDatabaseUpdate({
       };
       executed.updater.add(nodeId);
     } else if (!hasQuery && !executed.updater.has(nodeId)) {
-      return { skipped: true };
+      reportAiPathsError(
+        new Error('Database update missing explicit query filter'),
+        {
+          action: 'updateMany',
+          collection: queryPayload['collection'],
+          nodeId,
+        },
+        'Database update many failed:',
+      );
+      toast('Database update requires an explicit query filter.', {
+        variant: 'error',
+      });
+      updateResult = {
+        error: 'missing_query',
+        collection: queryPayload['collection'],
+        ...(isCustomPayloadMode ? { update: customUpdateDoc } : { updates }),
+      };
+      executed.updater.add(nodeId);
     } else if (hasQuery && !executed.updater.has(nodeId)) {
       if (dryRun) {
         updateResult = {
@@ -293,8 +299,6 @@ export async function executeDatabaseUpdate({
         } = resolveCollectionUpdateContext({
           resolvedInputs,
           queryConfig,
-          entityId,
-          idField,
           configuredCollection,
           entityType,
         });
@@ -324,7 +328,25 @@ export async function executeDatabaseUpdate({
       executed.updater.add(nodeId);
     } else if (shouldUseEntityUpdate && !isCustomPayloadMode) {
       if (!entityId) {
-        return { skipped: true };
+        reportAiPathsError(
+          new Error('Database update missing explicit entityId'),
+          { action: 'updateEntity', entityType, nodeId },
+          'Database update failed:',
+        );
+        toast(`Database update for ${entityType} requires explicit entityId.`, {
+          variant: 'error',
+        });
+        updateResult = {
+          error: 'missing_entity_id',
+          entityType,
+          updates,
+        };
+        executed.updater.add(nodeId);
+        return {
+          skipped: false,
+          updateResult,
+          executionMeta,
+        };
       }
       try {
         const entityUpdateResult = await entityApi.update({
@@ -365,8 +387,6 @@ export async function executeDatabaseUpdate({
       } = resolveCollectionUpdateContext({
         resolvedInputs,
         queryConfig,
-        entityId,
-        idField,
         configuredCollection,
         entityType,
       });

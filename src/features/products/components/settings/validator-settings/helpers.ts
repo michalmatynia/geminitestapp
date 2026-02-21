@@ -336,6 +336,13 @@ export const getSequenceGroupId = (pattern: ProductValidationPattern): string | 
   return value ? value : null;
 };
 
+const getSequenceScopeKey = (pattern: ProductValidationPattern): string | null => {
+  const groupId = getSequenceGroupId(pattern);
+  if (!groupId) return null;
+  const normalizedLocale = pattern.locale?.trim().toLowerCase() ?? '*';
+  return `${groupId}::${pattern.target}::${normalizedLocale}`;
+};
+
 /**
  * Validator docs: see docs/validator/function-reference.md#helpers.sortpatternsbysequence
  */
@@ -415,10 +422,20 @@ export const canCompileRegex = (pattern: string, flags: string): boolean => {
 export const buildSequenceGroups = (
   patterns: ProductValidationPattern[]
 ): Map<string, SequenceGroupView> => {
+  const sequenceScopeCounts = new Map<string, number>();
+  for (const pattern of patterns) {
+    if (!pattern.enabled) continue;
+    const scopeKey = getSequenceScopeKey(pattern);
+    if (!scopeKey) continue;
+    sequenceScopeCounts.set(scopeKey, (sequenceScopeCounts.get(scopeKey) ?? 0) + 1);
+  }
+
   const groups = new Map<string, SequenceGroupView>();
   for (const pattern of patterns) {
     const groupId = getSequenceGroupId(pattern);
     if (!groupId) continue;
+    const scopeKey = getSequenceScopeKey(pattern);
+    if (!scopeKey || (sequenceScopeCounts.get(scopeKey) ?? 0) <= 1) continue;
     const current = groups.get(groupId);
     if (current) {
       current.patternIds.push(pattern.id);

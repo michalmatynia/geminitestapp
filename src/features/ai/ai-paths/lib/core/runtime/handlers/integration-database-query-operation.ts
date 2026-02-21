@@ -36,7 +36,7 @@ export async function handleDatabaseQueryOperation({
   templateInputs,
   templateContext,
   aiPrompt,
-  strictFlowMode,
+  strictFlowMode: _strictFlowMode,
 }: HandleDatabaseQueryOperationInput): Promise<RuntimePortValues> {
   const resolution = resolveDatabaseQuery({
     nodeInputs,
@@ -61,8 +61,6 @@ export async function handleDatabaseQueryOperation({
     query: resolution.query,
     querySource: resolution.querySource,
     dryRun,
-    templateInputs,
     aiPrompt,
-    allowParameterDefinitionFallback: !strictFlowMode,
   });
 }

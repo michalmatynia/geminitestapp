@@ -27,6 +27,7 @@ const makeSegment = (id: string): PromptExploderSegment => ({
   raw: '',
   code: null,
   condition: null,
+  items: [],
   listItems: [],
   subsections: [],
   paramsText: '',
@@ -38,6 +39,8 @@ const makeSegment = (id: string): PromptExploderSegment => ({
   matchedPatternLabels: [],
   matchedSequenceLabels: [],
   confidence: 1,
+  validationResults: [],
+  segments: [],
 });
 
 describe('reorderListItemsForDrop', () => {

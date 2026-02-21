@@ -14,7 +14,6 @@ import {
   GripVertical,
   Lock,
   Pencil,
-  Save,
   Sparkles,
   Trash2,
   Unlock,
@@ -110,12 +109,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     selectedFileId,
     selectedAssetId,
     selectedFolderPath,
-    isWorkspaceDirty,
-    isWorkspaceSaving,
-    workspaceSaveStatus,
-    workspaceSaveError,
     activeFile,
-    onSaveWorkspace,
     onDeactivateActiveFile,
     onSelectFile,
     onSelectAsset,
@@ -139,7 +133,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     caseResolverIdentifiers,
     onLinkRelatedFiles,
   } = useCaseResolverPageContext();
-  const { confirm, ConfirmationModal } = useConfirm();
+  const { ConfirmationModal } = useConfirm();
   const [highlightedNodeFileAssetIds, setHighlightedNodeFileAssetIds] =
     useState<string[]>([]);
   const [pendingNodeCanvasAction, setPendingNodeCanvasAction] =
@@ -279,22 +273,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
   }, [activeCaseId, canCreateInActiveCase, requestedCaseStatus]);
   const disableCreateActions =
     !canCreateInActiveCase && requestedCaseStatus !== 'missing';
-  const saveStatusLabel = useMemo((): string => {
-    if (workspaceSaveStatus === 'saving') return 'Saving...';
-    if (workspaceSaveStatus === 'dirty') return 'Unsaved changes';
-    if (workspaceSaveStatus === 'conflict') return 'Conflict';
-    if (workspaceSaveStatus === 'error') return 'Save failed';
-    if (workspaceSaveStatus === 'saved') return 'Saved';
-    return 'Idle';
-  }, [workspaceSaveStatus]);
-  const saveStatusClassName = useMemo((): string => {
-    if (workspaceSaveStatus === 'saving') return 'text-cyan-200';
-    if (workspaceSaveStatus === 'dirty') return 'text-amber-200';
-    if (workspaceSaveStatus === 'conflict') return 'text-rose-200';
-    if (workspaceSaveStatus === 'error') return 'text-rose-200';
-    if (workspaceSaveStatus === 'saved') return 'text-emerald-200';
-    return 'text-gray-400';
-  }, [workspaceSaveStatus]);
   const activeCaseFile = useMemo(() => {
     if (activeCaseId) {
       const explicitCase = workspace.files.find(
@@ -576,31 +554,12 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               </div>
             </div>
             <div className='flex shrink-0 items-start gap-1'>
-              <div
-                className={`rounded border border-border/60 bg-card/40 px-2 py-1 text-[11px] ${saveStatusClassName}`}
-                title={workspaceSaveError ?? 'Case Resolver workspace save status'}
-              >
-                {saveStatusLabel}
-                {workspaceSaveError ? ` · ${workspaceSaveError}` : ''}
-              </div>
               <Button
                 type='button'
                 size='sm'
                 variant='outline'
                 className='h-7 border px-2 text-[11px] font-semibold tracking-wide text-gray-200 hover:bg-muted/50'
                 onClick={(): void => {
-                  if (isWorkspaceDirty) {
-                    confirm({
-                      title: 'Unsaved Changes',
-                      message:
-                        'You have unsaved Case Resolver changes. Leave without saving?',
-                      confirmText: 'Leave',
-                      onConfirm: () => {
-                        router.push('/admin/case-resolver/cases');
-                      },
-                    });
-                    return;
-                  }
                   router.push('/admin/case-resolver/cases');
                 }}
               >
@@ -614,23 +573,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             </div>
           ) : null}
           <div className='flex flex-wrap items-center gap-1'>
-            <Button
-              type='button'
-              onClick={onSaveWorkspace}
-              size='sm'
-              variant={isWorkspaceDirty ? 'default' : 'outline'}
-              className='h-7 w-7 border p-0 text-gray-300 hover:bg-muted/50'
-              title={
-                isWorkspaceSaving
-                  ? 'Saving Case Resolver changes...'
-                  : isWorkspaceDirty
-                    ? 'Save Case Resolver changes (Ctrl/Cmd+S)'
-                    : 'All Case Resolver changes saved'
-              }
-              disabled={isWorkspaceSaving || !isWorkspaceDirty}
-            >
-              <Save className='size-4' />
-            </Button>
             <Button
               type='button'
               onClick={(): void => {

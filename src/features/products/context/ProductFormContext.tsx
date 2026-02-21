@@ -31,6 +31,7 @@ import {
 } from '@/features/products/validations/schemas';
 import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
 import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
+import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import {
   ProductImageSlot,
 } from '@/shared/contracts/products';
@@ -220,7 +221,7 @@ const toComparableImageSlot = (slot: ProductImageSlot | null): string => {
 const serializeComparableState = (value: NonFormComparableState): string =>
   JSON.stringify(value);
 
-export interface ProductFormContextType {
+export interface ProductFormContextType extends ProductImageManagerController {
   register: UseFormRegister<ProductFormData>;
   handleSubmit: (e?: BaseSyntheticEvent) => Promise<void>;
   hasUnsavedChanges: boolean;

@@ -116,6 +116,41 @@ export type AgentEnqueuePayload = {
   };
 };
 
+export type PlaywrightNodeEnqueuePayload = {
+  script: string;
+  input?: Record<string, unknown> | undefined;
+  startUrl?: string | undefined;
+  timeoutMs?: number | undefined;
+  waitForResult?: boolean | undefined;
+  browserEngine?: 'chromium' | 'firefox' | 'webkit' | undefined;
+  personaId?: string | undefined;
+  settingsOverrides?: Record<string, unknown> | undefined;
+  launchOptions?: Record<string, unknown> | undefined;
+  contextOptions?: Record<string, unknown> | undefined;
+  capture?: {
+    screenshot?: boolean | undefined;
+    html?: boolean | undefined;
+    video?: boolean | undefined;
+    trace?: boolean | undefined;
+  } | undefined;
+};
+
+export type PlaywrightNodeRunSnapshot = {
+  runId: string;
+  status: 'queued' | 'running' | 'completed' | 'failed';
+  result?: unknown;
+  error?: string | null;
+  artifacts?: Array<{
+    name: string;
+    path: string;
+    mimeType?: string | null;
+    kind?: string | null;
+  }>;
+  logs?: string[];
+  startedAt?: string | null;
+  completedAt?: string | null;
+};
+
 // ============================================================================
 // Base Fetch Utilities
 // ============================================================================
@@ -354,6 +389,37 @@ export const agentApi = {
 
   async poll(runId: string): Promise<ApiResponse<{ run?: unknown }>> {
     return apiFetch<{ run?: unknown }>(`/api/agentcreator/agent/${encodeURIComponent(runId)}`);
+  },
+};
+
+export const playwrightNodeApi = {
+  async enqueue(
+    payload: PlaywrightNodeEnqueuePayload
+  ): Promise<ApiResponse<{ run: PlaywrightNodeRunSnapshot }>> {
+    return apiPost<{ run: PlaywrightNodeRunSnapshot }>(
+      '/api/ai-paths/playwright',
+      payload
+    );
+  },
+
+  async poll(runId: string): Promise<ApiResponse<{ run: PlaywrightNodeRunSnapshot }>> {
+    return apiFetch<{ run: PlaywrightNodeRunSnapshot }>(
+      `/api/ai-paths/playwright/${encodeURIComponent(runId)}`
+    );
+  },
+
+  artifactUrl(runId: string, file: string): string {
+    return `/api/ai-paths/playwright/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(file)}`;
+  },
+
+  artifactUrlFromPath(relativePath: string): string | null {
+    const normalized = relativePath.trim().replace(/^\/+/, '');
+    const parts = normalized.split('/');
+    if (parts.length < 2) return null;
+    const runId = parts[0];
+    const file = parts.slice(1).join('/');
+    if (!runId || !file) return null;
+    return this.artifactUrl(runId, file);
   },
 };
 
@@ -684,6 +750,17 @@ export const runsApi = {
     );
   },
 
+  stream(runId: string, options?: { since?: string | null }): EventSource {
+    const params = new URLSearchParams();
+    const since = options?.since;
+    if (typeof since === 'string' && since.trim().length > 0) {
+      params.set('since', since.trim());
+    }
+    const path = `/api/ai-paths/runs/${encodeURIComponent(runId)}/stream`;
+    const url = params.toString() ? `${path}?${params.toString()}` : path;
+    return new EventSource(resolveApiUrl(url));
+  },
+
   async remove(runId: string): Promise<ApiResponse<{ deleted: boolean; runId: string }>> {
     return apiDelete<{ deleted: boolean; runId: string }>(
       `/api/ai-paths/runs/${encodeURIComponent(runId)}`
@@ -776,20 +853,7 @@ export const analyticsApi = {
 // ============================================================================
 
 export const aiPathsApi = {
-  /**
-   * Stream a path run using EventSource
-   */
-  streamRun(pathId: string, payload: {
-    triggerNodeId: string;
-    triggerEvent: string;
-    triggerContext: Record<string, unknown>;
-  }): EventSource {
-    const params = new URLSearchParams();
-    params.set('triggerNodeId', payload.triggerNodeId);
-    params.set('triggerEvent', payload.triggerEvent);
-    params.set('triggerContext', JSON.stringify(payload.triggerContext));
-    
-    const url = `/api/ai-paths/${encodeURIComponent(pathId)}/run/stream?${params.toString()}`;
-    return new EventSource(resolveApiUrl(url));
+  streamRun(runId: string, options?: { since?: string | null }): EventSource {
+    return runsApi.stream(runId, options);
   },
 };

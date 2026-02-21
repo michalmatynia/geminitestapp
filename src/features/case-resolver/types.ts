@@ -123,11 +123,6 @@ export type CaseResolverStateValue = {
   setIsPreviewPageVisible: React.Dispatch<React.SetStateAction<boolean>>;
   isPartiesModalOpen: boolean;
   setIsPartiesModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  isWorkspaceDirty: boolean;
-  isWorkspaceSaving: boolean;
-  workspaceSaveStatus: 'idle' | 'dirty' | 'saving' | 'saved' | 'conflict' | 'error';
-  workspaceSaveError: string | null;
-  handleSaveWorkspace: () => void;
   updateWorkspace: (
     updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
     options?: {

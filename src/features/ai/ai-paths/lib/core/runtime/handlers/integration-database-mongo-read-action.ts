@@ -5,10 +5,6 @@ import type {
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-import {
-  resolveParameterIdsFromInputs,
-  shouldRunParameterDefinitionFallback,
-} from './database-parameter-inference';
 import { dbApi, ApiResponse } from '../../../api';
 
 interface DbActionResult {
@@ -48,9 +44,9 @@ export async function handleDatabaseMongoReadAction({
   idType,
   distinctField,
   queryPayload,
-  queryConfig,
+  queryConfig: _queryConfig,
   dryRun,
-  templateInputs,
+  templateInputs: _templateInputs,
   parseJsonTemplate,
   toast,
   aiPrompt,
@@ -65,7 +61,7 @@ export async function handleDatabaseMongoReadAction({
   }
   if (action === 'aggregate') {
     const parsedPipeline: unknown = parseJsonTemplate(
-      queryConfig.queryTemplate ?? '[]',
+      _queryConfig.queryTemplate ?? '[]',
     );
     if (!Array.isArray(parsedPipeline)) {
       toast('Aggregation pipeline must be a JSON array.', {
@@ -151,57 +147,6 @@ export async function handleDatabaseMongoReadAction({
   let count: number =
   (data['count'] as number) ??
   (Array.isArray(result) ? (result as unknown[]).length : result ? 1 : 0);
-  let filterForBundle: Record<string, unknown> = filter;
-  let fallbackMeta: Record<string, unknown> | undefined;
-  if (
-    (action === 'find' || action === 'findOne') &&
-    shouldRunParameterDefinitionFallback({
-      collection,
-      query: filter,
-      count,
-      queryTemplate: queryConfig.queryTemplate ?? '',
-    })
-  ) {
-    const parameterIds = resolveParameterIdsFromInputs(templateInputs);
-    if (parameterIds.length > 0) {
-      const fallbackFilter: Record<string, unknown> = {
-        id: { $in: parameterIds },
-      };
-      const fallbackReadResult: ApiResponse<DbActionResult> = await dbApi.action<DbActionResult>({
-        ...(queryPayload['provider'] ? { provider: queryPayload['provider'] as 'auto' | 'mongodb' | 'prisma' } : {}),
-        action: 'find',
-        collection,
-        filter: fallbackFilter,
-        ...(projection !== undefined ? { projection: projection as Record<string, unknown> } : {}),
-        ...(sort !== undefined ? { sort: sort as Record<string, unknown> } : {}),
-        ...(limit !== undefined ? { limit: limit as number } : {}),
-        ...(idType !== undefined ? { idType: idType as string } : {}),
-      });
-      if (fallbackReadResult.ok) {
-        const fallbackData: DbActionResult = fallbackReadResult.data;
-        const fallbackItems: unknown =
-          fallbackData['items'] ?? fallbackData['item'] ?? [];
-        const fallbackCount: number =
-          (fallbackData['count'] as number) ??
-          (Array.isArray(fallbackItems)
-            ? (fallbackItems as unknown[]).length
-            : fallbackItems
-              ? 1
-              : 0);
-        if (fallbackCount > 0) {
-          result = fallbackItems;
-          count = fallbackCount;
-          filterForBundle = fallbackFilter;
-          fallbackMeta = {
-            used: true,
-            reason: 'catalogId_missing',
-            by: 'product_parameter_ids',
-            parameterIds: parameterIds.slice(0, 50),
-          };
-        }
-      }
-    }
-  }
   toast(
     `Database query succeeded for ${collection} (${count} result${count === 1 ? '' : 's'}).`,
     { variant: 'success' },
@@ -211,8 +156,7 @@ export async function handleDatabaseMongoReadAction({
     bundle: {
       count,
       collection,
-      filter: filterForBundle,
-      ...(fallbackMeta ? { fallback: fallbackMeta } : {}),
+      filter,
     },
     aiPrompt,
   };

@@ -2,6 +2,7 @@
 
 import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { MousePointer2, Plus } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAiPathsSettingsQuery } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
@@ -16,6 +17,7 @@ import type {
   AiTriggerButtonLocation,
   AiTriggerButtonDto,
 } from '@/shared/contracts/ai-trigger-buttons';
+import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
   createDeleteMutationV2,
@@ -180,6 +182,7 @@ const extractTriggerButtonPathUsageMap = (
 export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const router = useRouter();
 
   const [editorOpen, setEditorOpen] = useState(false);
   const [iconLibraryOpen, setIconLibraryOpen] = useState(false);
@@ -408,6 +411,23 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
       },
     });
   }, [updateMutation]);
+  const handleOpenPath = useCallback((pathId: string): void => {
+    const normalizedPathId = pathId.trim();
+    if (!normalizedPathId) return;
+    void api
+      .patch('/api/user/preferences', { aiPathsActivePathId: normalizedPathId })
+      .catch((error: unknown) => {
+        logClientError(error, {
+          context: {
+            source: 'AdminAiPathsTriggerButtonsPage',
+            action: 'setActivePathPreferenceFromTriggerButtons',
+            pathId: normalizedPathId,
+          },
+        });
+      });
+    const params = new URLSearchParams({ pathId: normalizedPathId });
+    router.push(`/admin/ai-paths?${params.toString()}`);
+  }, [router]);
 
   const triggerButtonPathUsageMap = useMemo(
     () => extractTriggerButtonPathUsageMap(aiPathsSettingsQuery.data ?? []),
@@ -646,7 +666,9 @@ export function AdminAiPathsTriggerButtonsPage(): React.JSX.Element {
         onDelete={(id: string): void => { handleDeleteRequest(id); }}
         onOrderChange={(ids: string[]): void => { handleOrderChange(ids); }}
         onToggleVisibility={handleToggleVisibility}
+        onOpenPath={handleOpenPath}
         isLoading={triggerButtonsQuery.isLoading}
+        isReordering={reorderMutation.isPending}
       />
 
       <SettingsPanelBuilder

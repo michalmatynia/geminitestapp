@@ -4354,6 +4354,351 @@
     ]
   },
   {
+    "id": "node_config_field_playwright_playwright_browserengine",
+    "title": "Playwright: playwright.browserEngine",
+    "summary": "Browser engine to launch: chromium/firefox/webkit.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.browserEngine",
+      "playwright.playwright.browserEngine"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.browserEngine"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_capture_html",
+    "title": "Playwright: playwright.capture.html",
+    "summary": "Capture final page HTML artifact on run completion.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.capture.html",
+      "playwright.playwright.capture.html"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.capture.html"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_capture_screenshot",
+    "title": "Playwright: playwright.capture.screenshot",
+    "summary": "Capture final screenshot artifact on run completion.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.capture.screenshot",
+      "playwright.playwright.capture.screenshot"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.capture.screenshot"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_capture_trace",
+    "title": "Playwright: playwright.capture.trace",
+    "summary": "Enable Playwright trace collection and save trace.zip artifact.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.capture.trace",
+      "playwright.playwright.capture.trace"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.capture.trace"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_capture_video",
+    "title": "Playwright: playwright.capture.video",
+    "summary": "Enable Playwright video capture for the run context.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.capture.video",
+      "playwright.playwright.capture.video"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.capture.video"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_contextoptionsjson",
+    "title": "Playwright: playwright.contextOptionsJson",
+    "summary": "Raw Playwright browser context options JSON applied when creating a context/page session.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.contextOptionsJson",
+      "playwright.playwright.contextOptionsJson"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.contextOptionsJson"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_launchoptionsjson",
+    "title": "Playwright: playwright.launchOptionsJson",
+    "summary": "Raw Playwright launch options JSON merged with persona-driven settings before browser launch.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.launchOptionsJson",
+      "playwright.playwright.launchOptionsJson"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.launchOptionsJson"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_personaid",
+    "title": "Playwright: playwright.personaId",
+    "summary": "Optional Playwright Persona ID. When set, node runtime inherits persona browser fidelity settings.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.personaId",
+      "playwright.playwright.personaId"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.personaId"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_script",
+    "title": "Playwright: playwright.script",
+    "summary": "User script that exports a default async function: `run({ browser, context, page, input, emit, artifacts, log, helpers })`.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.script",
+      "playwright.playwright.script"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.script"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_settingsoverrides",
+    "title": "Playwright: playwright.settingsOverrides",
+    "summary": "Optional partial override object for Playwright persona fields (headless, slowMo, timeouts, proxy, device emulation).",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.settingsOverrides",
+      "playwright.playwright.settingsOverrides"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.settingsOverrides"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_starturltemplate",
+    "title": "Playwright: playwright.startUrlTemplate",
+    "summary": "Optional URL template rendered from incoming ports before script execution (example: https://example.com/{{entityId}}).",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.startUrlTemplate",
+      "playwright.playwright.startUrlTemplate"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.startUrlTemplate"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_timeoutms",
+    "title": "Playwright: playwright.timeoutMs",
+    "summary": "Per-run timeout budget in milliseconds.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.timeoutMs",
+      "playwright.playwright.timeoutMs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.timeoutMs"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_playwright_waitforresult",
+    "title": "Playwright: playwright.waitForResult",
+    "summary": "When true, waits for Playwright completion and emits final outputs. When false, emits runId/job status immediately.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "playwright.waitForResult",
+      "playwright.playwright.waitForResult"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.playwright.waitForResult"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_runtime_cache_mode",
+    "title": "Playwright: runtime.cache.mode",
+    "summary": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "runtime.cache.mode",
+      "playwright.runtime.cache.mode"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.runtime.cache.mode"
+    ]
+  },
+  {
+    "id": "node_config_field_playwright_runtime_waitforinputs",
+    "title": "Playwright: runtime.waitForInputs",
+    "summary": "If true, wait until all connected input ports have values before executing the node.",
+    "section": "Node Config - Playwright",
+    "aliases": [
+      "playwright",
+      "runtime.waitForInputs",
+      "playwright.runtime.waitForInputs"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node",
+      "config-field"
+    ],
+    "uiTargets": [
+      "node-config.playwright.runtime.waitForInputs"
+    ]
+  },
+  {
     "id": "node_config_field_poll_poll_dbquery",
     "title": "Poll Job: poll.dbQuery",
     "summary": "Database query definition used when mode is database (provider/collection/preset/queryTemplate/etc).",
@@ -6483,6 +6828,28 @@
     ]
   },
   {
+    "id": "node_config_playwright",
+    "title": "Playwright (Configuration)",
+    "summary": "Configuration reference for Playwright.",
+    "section": "Node Config",
+    "aliases": [
+      "playwright",
+      "Playwright",
+      "playwright config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.playwright"
+    ]
+  },
+  {
     "id": "node_config_poll",
     "title": "Poll Job (Configuration)",
     "summary": "Configuration reference for Poll Job.",
@@ -7247,6 +7614,28 @@
     ],
     "uiTargets": [
       "palette.node.parser"
+    ]
+  },
+  {
+    "id": "node_palette_playwright",
+    "title": "Playwright (Palette)",
+    "summary": "Run programmable browser automation with persona-driven fidelity.",
+    "section": "Node Palette",
+    "aliases": [
+      "playwright",
+      "Playwright",
+      "palette playwright"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.playwright"
     ]
   },
   {
@@ -8108,6 +8497,27 @@
     ],
     "uiTargets": [
       "docs.semantic.parser"
+    ]
+  },
+  {
+    "id": "semantic_node_playwright",
+    "title": "Semantic Node JSON: Playwright",
+    "summary": "JSON semantic scaffold and contract for playwright.",
+    "section": "Semantic Grammar",
+    "aliases": [
+      "playwright",
+      "Playwright",
+      "semantic grammar"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/playwright.json",
+    "tags": [
+      "ai-paths",
+      "semantic-grammar",
+      "nodes",
+      "semantic-node"
+    ],
+    "uiTargets": [
+      "docs.semantic.playwright"
     ]
   },
   {

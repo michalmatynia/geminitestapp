@@ -19,7 +19,7 @@ const createRuntimeSelection = (args: {
       reason: args.reason,
     },
     identity: {
-      scope: 'prompt-exploder',
+      scope: 'prompt_exploder',
       validatorScope: 'prompt-exploder',
       stack: args.stack,
       profile: 'all',

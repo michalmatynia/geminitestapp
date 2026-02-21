@@ -19,8 +19,8 @@ const PROMPT_EXPLODER_TRANSFER_ALLOWED_TRANSITIONS: Record<
   PromptExploderTransferUiStatus,
   ReadonlySet<PromptExploderTransferUiStatus>
 > = {
-  idle: new Set(['idle', 'pending']),
-  pending: new Set([
+  idle: new Set<PromptExploderTransferUiStatus>(['idle', 'pending']),
+  pending: new Set<PromptExploderTransferUiStatus>([
     'pending',
     'blocked',
     'capture_review',
@@ -30,13 +30,13 @@ const PROMPT_EXPLODER_TRANSFER_ALLOWED_TRANSITIONS: Record<
     'discarded',
     'expired',
   ]),
-  blocked: new Set(['blocked', 'pending', 'discarded', 'expired']),
-  capture_review: new Set(['capture_review', 'applied', 'dismissed', 'failed', 'discarded']),
-  applied: new Set(['applied', 'pending']),
-  failed: new Set(['failed', 'pending', 'discarded', 'expired']),
-  dismissed: new Set(['dismissed', 'pending']),
-  discarded: new Set(['discarded', 'pending']),
-  expired: new Set(['expired', 'discarded', 'pending']),
+  blocked: new Set<PromptExploderTransferUiStatus>(['blocked', 'pending', 'discarded', 'expired']),
+  capture_review: new Set<PromptExploderTransferUiStatus>(['capture_review', 'applied', 'dismissed', 'failed', 'discarded']),
+  applied: new Set<PromptExploderTransferUiStatus>(['applied', 'pending']),
+  failed: new Set<PromptExploderTransferUiStatus>(['failed', 'pending', 'discarded', 'expired']),
+  dismissed: new Set<PromptExploderTransferUiStatus>(['dismissed', 'pending']),
+  discarded: new Set<PromptExploderTransferUiStatus>(['discarded', 'pending']),
+  expired: new Set<PromptExploderTransferUiStatus>(['expired', 'discarded', 'pending']),
 };
 
 export const CASE_RESOLVER_PROMPT_EXPLODER_TRANSFER_TTL_MS = 15 * 60 * 1000;

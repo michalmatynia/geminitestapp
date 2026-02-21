@@ -16,12 +16,19 @@ import {
   ImportExportProvider,
   useImportExport,
 } from '@/features/data-import-export/context/ImportExportContext';
-import { useParameters as useProductParameters } from '@/features/products/hooks/useProductSettingsQueries';
+import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/features/products/constants';
+import {
+  useParameters as useProductParameters,
+  useSimpleParameters as useProductSimpleParameters,
+} from '@/features/products/hooks/useProductSettingsQueries';
 import type {
   Template,
   TemplateMapping,
 } from '@/shared/contracts/data-import-export';
-import type { ProductParameterDto as ProductParameter } from '@/shared/contracts/products';
+import type {
+  ProductParameterDto as ProductParameter,
+  ProductSimpleParameterDto as ProductSimpleParameter,
+} from '@/shared/contracts/products';
 import {
   Button,
   Checkbox,
@@ -79,6 +86,17 @@ const parseParameterTarget = (value: string): ParsedParameterTarget | null => {
 const toParameterTargetValue = (parameterId: string): string =>
   `${PRODUCT_PARAMETER_TARGET_PREFIX}${parameterId}`.toLowerCase();
 
+const getParameterDisplayName = (parameter: {
+  id: string;
+  name_en?: string | null;
+  name_pl?: string | null;
+  name_de?: string | null;
+}): string =>
+  parameter.name_en?.trim() ||
+  parameter.name_pl?.trim() ||
+  parameter.name_de?.trim() ||
+  parameter.id.trim();
+
 function ImportsPageContent(): React.JSX.Element {
   const {
     checkingIntegration,
@@ -120,6 +138,7 @@ function ImportsPageContent(): React.JSX.Element {
   } = useImportExport();
 
   const customParameterTargetsQuery = useProductParameters(catalogId || null);
+  const simpleParameterTargetsQuery = useProductSimpleParameters(catalogId || null);
   const customParameterTargetFields = React.useMemo(
     (): Array<{ value: string; label: string }> => {
       const parameters = customParameterTargetsQuery.data ?? [];
@@ -129,14 +148,9 @@ function ImportsPageContent(): React.JSX.Element {
           const parameterId = parameter.id.trim();
           if (!parameterId || seen.has(parameterId)) return null;
           seen.add(parameterId);
-          const label =
-            parameter.name_en?.trim() ||
-            parameter.name_pl?.trim() ||
-            parameter.name_de?.trim() ||
-            parameterId;
           return {
             value: `${PRODUCT_PARAMETER_TARGET_PREFIX}${parameterId}`,
-            label: `Parameter: ${label}`,
+            label: `Parameter: ${getParameterDisplayName(parameter)}`,
           };
         })
         .filter(
@@ -145,12 +159,45 @@ function ImportsPageContent(): React.JSX.Element {
     },
     [customParameterTargetsQuery.data]
   );
+  const simpleParameterTargetFields = React.useMemo(
+    (): Array<{ value: string; label: string }> => {
+      const parameters = simpleParameterTargetsQuery.data ?? [];
+      const seen = new Set<string>();
+      return parameters
+        .map(
+          (
+            parameter: ProductSimpleParameter
+          ): { value: string; label: string } | null => {
+            const parameterId = parameter.id.trim();
+            if (!parameterId || seen.has(parameterId)) return null;
+            seen.add(parameterId);
+            return {
+              value: `${PRODUCT_PARAMETER_TARGET_PREFIX}${PRODUCT_SIMPLE_PARAMETER_ID_PREFIX}${parameterId}`,
+              label: `Simple parameter: ${getParameterDisplayName(parameter)}`,
+            };
+          }
+        )
+        .filter(
+          (entry): entry is { value: string; label: string } => entry !== null
+        );
+    },
+    [simpleParameterTargetsQuery.data]
+  );
   const templateTargetFieldOptions = React.useMemo(
-    (): Array<{ value: string; label: string }> => [
-      ...PRODUCT_FIELDS,
-      ...customParameterTargetFields,
-    ],
-    [customParameterTargetFields]
+    (): Array<{ value: string; label: string }> => {
+      const seen = new Set<string>();
+      return [
+        ...PRODUCT_FIELDS,
+        ...customParameterTargetFields,
+        ...simpleParameterTargetFields,
+      ].filter((entry): boolean => {
+        const normalizedValue = entry.value.trim().toLowerCase();
+        if (!normalizedValue || seen.has(normalizedValue)) return false;
+        seen.add(normalizedValue);
+        return true;
+      });
+    },
+    [customParameterTargetFields, simpleParameterTargetFields]
   );
 
   const isImportTemplateScope = templateScope === 'import';
@@ -167,13 +214,15 @@ function ImportsPageContent(): React.JSX.Element {
   );
   const parameterSourceLabelByValue = React.useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
-    customParameterTargetFields.forEach((field: { value: string; label: string }) => {
+    templateTargetFieldOptions.forEach((field: { value: string; label: string }) => {
       const normalizedValue = field.value.trim().toLowerCase();
-      if (!normalizedValue) return;
+      if (!normalizedValue.startsWith(PRODUCT_PARAMETER_TARGET_PREFIX)) {
+        return;
+      }
       map.set(normalizedValue, field.label);
     });
     return map;
-  }, [customParameterTargetFields]);
+  }, [templateTargetFieldOptions]);
   const getExportSourceFieldLabel = React.useCallback(
     (sourceKey: string): string => {
       const normalizedSourceKey = sourceKey.trim();
@@ -225,12 +274,16 @@ function ImportsPageContent(): React.JSX.Element {
   const validParameterTargetValues = React.useMemo(
     (): Set<string> =>
       new Set(
-        customParameterTargetFields.map(
-          (entry: { value: string; label: string }) =>
-            entry.value.trim().toLowerCase()
-        )
+        templateTargetFieldOptions
+          .filter((entry: { value: string; label: string }) =>
+            entry.value.trim().toLowerCase().startsWith(PRODUCT_PARAMETER_TARGET_PREFIX)
+          )
+          .map(
+            (entry: { value: string; label: string }) =>
+              entry.value.trim().toLowerCase()
+          )
       ),
-    [customParameterTargetFields]
+    [templateTargetFieldOptions]
   );
 
   const updateMapping = (index: number, patch: Partial<TemplateMapping>): void => {
@@ -714,9 +767,10 @@ function ImportsPageContent(): React.JSX.Element {
                           ? `Loaded ${importSourceFieldOptions.length} source fields from the selected inventory schema.`
                           : 'No source fields loaded yet. Go to Imports tab, select connection + inventory to load schema.'}
                       {catalogId
-                        ? customParameterTargetsQuery.isLoading
+                        ? customParameterTargetsQuery.isLoading ||
+                          simpleParameterTargetsQuery.isLoading
                           ? ' Loading parameter targets...'
-                          : ` Parameter targets: ${customParameterTargetFields.length}.`
+                          : ` Parameter targets: ${customParameterTargetFields.length + simpleParameterTargetFields.length} (${customParameterTargetFields.length} custom, ${simpleParameterTargetFields.length} simple).`
                         : ' Select a catalog in Imports tab to load parameter targets.'}
                     </p>
                   )}

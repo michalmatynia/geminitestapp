@@ -26,10 +26,141 @@ const requestSchema = z.object({
   inventoryId: optionalIdSchema,
   productId: optionalIdSchema,
   connectionId: optionalIdSchema,
+  sampleSize: z.coerce.number().int().positive().max(20).optional(),
   clearOnly: z.boolean().optional()
 });
 
 const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
+
+const toStringId = (value: unknown): string | null => {
+  if (typeof value === 'string' && value.trim()) return value.trim();
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return String(value);
+  }
+  return null;
+};
+
+const extractProductIdFromRecord = (
+  record: Record<string, unknown>
+): string | null =>
+  toStringId(record['product_id']) ??
+  toStringId(record['id']) ??
+  toStringId(record['base_product_id']);
+
+const normalizeProductId = (value: unknown): string =>
+  toStringId(value)?.trim() ?? '';
+
+const extractProductIdsFromListPayload = (
+  payload: unknown,
+  limit: number
+): string[] => {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  const push = (value: unknown): void => {
+    const normalized = normalizeProductId(value);
+    if (!normalized || seen.has(normalized)) return;
+    seen.add(normalized);
+    ids.push(normalized);
+  };
+
+  const products = (payload as { products?: unknown })?.products;
+  if (Array.isArray(products)) {
+    for (const entry of products) {
+      if (ids.length >= limit) break;
+      if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+        push(extractProductIdFromRecord(entry as Record<string, unknown>));
+      } else {
+        push(entry);
+      }
+    }
+    return ids;
+  }
+
+  if (products && typeof products === 'object') {
+    Object.entries(products as Record<string, unknown>).forEach(([key, value]) => {
+      if (ids.length >= limit) return;
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const record = value as Record<string, unknown>;
+        push(extractProductIdFromRecord(record) ?? key);
+      } else {
+        push(value ?? key);
+      }
+    });
+  }
+
+  return ids;
+};
+
+type ProductRecordMatch = {
+  record: Record<string, unknown>;
+  productId: string | null;
+};
+
+const extractProductRecords = (
+  payload: unknown,
+  requestedProductIds: string[]
+): ProductRecordMatch[] => {
+  const products = (payload as { products?: unknown })?.products;
+  const requestedNormalized = requestedProductIds
+    .map((id: string) => normalizeProductId(id))
+    .filter((id: string): boolean => id.length > 0);
+  const requestedSet = new Set(requestedNormalized);
+  const matchedById = new Map<string, ProductRecordMatch>();
+  const fallback: ProductRecordMatch[] = [];
+
+  const addCandidate = (
+    record: Record<string, unknown>,
+    idHint?: string | null
+  ): void => {
+    const resolvedId = normalizeProductId(extractProductIdFromRecord(record) ?? idHint);
+    const candidate: ProductRecordMatch = {
+      record,
+      productId: resolvedId || null,
+    };
+    if (resolvedId && requestedSet.has(resolvedId)) {
+      if (!matchedById.has(resolvedId)) {
+        matchedById.set(resolvedId, candidate);
+      }
+      return;
+    }
+    fallback.push(candidate);
+  };
+
+  if (Array.isArray(products)) {
+    products.forEach((entry: unknown, index: number) => {
+      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
+      const idHint =
+        requestedNormalized[index] ??
+        null;
+      addCandidate(entry as Record<string, unknown>, idHint);
+    });
+  } else if (products && typeof products === 'object') {
+    Object.entries(products as Record<string, unknown>).forEach(([key, value]: [string, unknown]) => {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+      addCandidate(value as Record<string, unknown>, key);
+    });
+  }
+
+  const ordered: ProductRecordMatch[] = [];
+  const usedIds = new Set<string>();
+  requestedNormalized.forEach((id: string) => {
+    const matched = matchedById.get(id);
+    if (!matched) return;
+    if (matched.productId) {
+      usedIds.add(matched.productId);
+    }
+    ordered.push(matched);
+  });
+  fallback.forEach((candidate: ProductRecordMatch) => {
+    const candidateId = candidate.productId?.trim() ?? '';
+    if (candidateId && usedIds.has(candidateId)) return;
+    if (candidateId) {
+      usedIds.add(candidateId);
+    }
+    ordered.push(candidate);
+  });
+  return ordered;
+};
 
 const extractProductRecord = (payload: unknown, productId: string): Record<string, unknown> | null => {
   const products = (payload as { products?: unknown })?.products;
@@ -257,6 +388,34 @@ const collectParameterKeys = (product: Record<string, unknown>) => {
   return { keys: sortedKeys, values };
 };
 
+const mergeCollectedParameterKeys = (
+  products: Record<string, unknown>[]
+): { keys: string[]; values: Record<string, string> } => {
+  const keySet = new Set<string>();
+  const valuesByKey = new Map<string, string>();
+  products.forEach((product: Record<string, unknown>) => {
+    const collected = collectParameterKeys(product);
+    collected.keys.forEach((key: string) => {
+      keySet.add(key);
+    });
+    Object.entries(collected.values).forEach(([key, value]: [string, string]) => {
+      if (!value) return;
+      if (!valuesByKey.has(key)) {
+        valuesByKey.set(key, value);
+      }
+    });
+  });
+  const keys = Array.from(keySet).sort((a, b) => a.localeCompare(b));
+  const values: Record<string, string> = {};
+  keys.forEach((key: string) => {
+    const value = valuesByKey.get(key);
+    if (value) {
+      values[key] = value;
+    }
+  });
+  return { keys, values };
+};
+
 export async function postBaseImportParametersHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext
@@ -279,8 +438,8 @@ export async function postBaseImportParametersHandler(
     return NextResponse.json({ ok: true });
   }
 
-  if (!data.inventoryId || !data.productId) {
-    throw badRequestError('Inventory ID and Product ID are required.');
+  if (!data.inventoryId) {
+    throw badRequestError('Inventory ID is required.');
   }
 
   const integrationRepo = await getIntegrationRepository();
@@ -312,40 +471,75 @@ export async function postBaseImportParametersHandler(
   if (!token) {
     throw badRequestError('No Base API token configured.');
   }
-  const payload = await callBaseApi(token, 'getInventoryProductsData', {
-    inventory_id: data.inventoryId,
-    products: [data.productId]
-  });
-  const product = extractProductRecord(payload, data.productId);
-  if (!product || typeof product !== 'object') {
-    throw notFoundError('Product not found in response.', {
-      productId: data.productId
+  const requestedSampleSize = data.sampleSize ?? 8;
+  const sampleSize = Math.min(Math.max(1, requestedSampleSize), 20);
+  const productIds: string[] = data.productId
+    ? [data.productId]
+    : extractProductIdsFromListPayload(
+      await callBaseApi(token, 'getInventoryProductsList', {
+        inventory_id: data.inventoryId,
+        limit: sampleSize,
+      }),
+      sampleSize
+    );
+  if (productIds.length === 0) {
+    throw notFoundError('No products found in selected inventory.', {
+      inventoryId: data.inventoryId,
     });
   }
-  
-  // Inject inventory_id if missing, so it can be mapped
-  if (data.inventoryId && !product['inventory_id']) {
-    product['inventory_id'] = data.inventoryId;
+
+  const payload = await callBaseApi(token, 'getInventoryProductsData', {
+    inventory_id: data.inventoryId,
+    products: productIds
+  });
+  const explicitProductId = data.productId?.trim() ?? '';
+  const matchedProducts = explicitProductId
+    ? (() => {
+      const product = extractProductRecord(payload, explicitProductId);
+      return product ? [{ record: product, productId: explicitProductId }] : [];
+    })()
+    : extractProductRecords(payload, productIds);
+
+  if (matchedProducts.length === 0) {
+    throw notFoundError('Product not found in response.', {
+      productId: data.productId ?? productIds[0] ?? null,
+      inventoryId: data.inventoryId,
+    });
   }
 
-  // Inject product ID variants if missing
-  if (data.productId) {
-    if (!product['product_id']) {
-      product['product_id'] = data.productId;
+  const normalizedProducts = matchedProducts.map(
+    (entry: ProductRecordMatch, index: number): Record<string, unknown> => {
+      const product = { ...entry.record };
+      const resolvedProductId =
+        normalizeProductId(entry.productId) ||
+        normalizeProductId(productIds[index]) ||
+        normalizeProductId(data.productId) ||
+        null;
+      if (data.inventoryId && !product['inventory_id']) {
+        product['inventory_id'] = data.inventoryId;
+      }
+      if (resolvedProductId) {
+        if (!product['product_id']) {
+          product['product_id'] = resolvedProductId;
+        }
+        if (!product['id']) {
+          product['id'] = resolvedProductId;
+        }
+      }
+      return product;
     }
-    if (!product['id']) {
-      product['id'] = data.productId;
-    }
-  }
-
-  const { keys, values } = collectParameterKeys(
-    product
   );
+
+  const { keys, values } = mergeCollectedParameterKeys(normalizedProducts);
+  const sampleProductId =
+    normalizeProductId(data.productId) ||
+    normalizeProductId(productIds[0]) ||
+    null;
 
   try {
     await setImportParameterCache({
       inventoryId: data.inventoryId,
-      productId: data.productId,
+      productId: sampleProductId,
       keys,
       values
     });
@@ -353,11 +547,16 @@ export async function postBaseImportParametersHandler(
     void ErrorSystem.captureException(cacheError, {
       service: 'api/integrations/imports/base/parameters',
       inventoryId: data.inventoryId,
-      productId: data.productId,
+      productId: sampleProductId,
     });
   }
 
-  return NextResponse.json({ keys, values });
+  return NextResponse.json({
+    inventoryId: data.inventoryId,
+    productId: sampleProductId,
+    keys,
+    values
+  });
 }
 
 export async function getBaseImportParametersHandler(

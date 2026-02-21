@@ -3,10 +3,9 @@ import type {
   DatabaseActionCategory,
   DatabaseConfig,
   RuntimePortValues,
-  UpdaterMapping,
 } from '@/shared/contracts/ai-paths';
 
-import { coerceInput, getValueAtMappingPath } from '../../utils';
+import { getValueAtMappingPath } from '../../utils';
 
 export type BuildMongoUpdatesFromMappingsResult = {
   updates: Record<string, unknown>;
@@ -66,121 +65,19 @@ export function buildMongoUpdateDebugPayload({
 }
 
 export function buildMongoUpdatesFromMappings({
-  dbConfig,
-  nodeInputPorts,
-  templateInputs,
-  parameterTargetPath,
+  dbConfig: _dbConfig,
+  nodeInputPorts: _nodeInputPorts,
+  templateInputs: _templateInputs,
+  parameterTargetPath: _parameterTargetPath,
 }: {
   dbConfig: DatabaseConfig;
   nodeInputPorts: string[];
   templateInputs: RuntimePortValues;
   parameterTargetPath: string;
 }): BuildMongoUpdatesFromMappingsResult {
-  const fallbackTarget: string =
-    dbConfig.mappings?.[0]?.['targetPath'] ?? 'content_en';
-  const fallbackSourcePort: string = nodeInputPorts.includes('result')
-    ? 'result'
-    : 'content_en';
-  const mappings: UpdaterMapping[] =
-    dbConfig.mappings && dbConfig.mappings.length > 0
-      ? dbConfig.mappings
-      : [
-        {
-          targetPath: fallbackTarget,
-          sourcePort: fallbackSourcePort,
-        },
-      ];
-  const trimStrings: boolean = dbConfig.trimStrings ?? false;
-  const skipEmpty: boolean = dbConfig.skipEmpty ?? false;
-
-  const isEmptyValue = (value: unknown): boolean =>
-    value === undefined ||
-    value === null ||
-    (typeof value === 'string' && (value).trim() === '') ||
-    (Array.isArray(value) && (value as unknown[]).length === 0);
-  const isEffectivelyMissing = (value: unknown): boolean =>
-    isEmptyValue(value) ||
-    (typeof value === 'object' &&
-      !Array.isArray(value) &&
-      value !== null &&
-      Object.keys(value as Record<string, unknown>).length === 0);
-
-  const shouldPreserveArrayMappingValue = (
-    mapping: UpdaterMapping,
-    sourceValue: unknown,
-  ): boolean =>
-    Boolean(
-      dbConfig.parameterInferenceGuard?.enabled &&
-        mapping.targetPath === parameterTargetPath &&
-        Array.isArray(sourceValue),
-    );
-
-  const updates: Record<string, unknown> = {};
-  const requiredSourcePorts: Set<string> = new Set<string>();
-  const unresolvedSourcePorts: Set<string> = new Set<string>();
-
-  mappings.forEach((mapping: UpdaterMapping): void => {
-    const sourcePort: string = mapping.sourcePort;
-    if (!sourcePort) return;
-    requiredSourcePorts.add(sourcePort);
-    const sourceValue: unknown = templateInputs[sourcePort];
-    if (sourceValue === undefined) return;
-
-    let value: unknown = shouldPreserveArrayMappingValue(mapping, sourceValue)
-      ? sourceValue
-      : coerceInput(sourceValue);
-
-    if (value && typeof value === 'object' && mapping.sourcePath) {
-      const resolved: unknown = getValueAtMappingPath(value, mapping.sourcePath);
-      if (resolved !== undefined) {
-        value = resolved;
-      } else if (sourcePort === 'result') {
-        unresolvedSourcePorts.add(sourcePort);
-        return;
-      }
-    }
-
-    if (
-      sourcePort === 'result' &&
-      value &&
-      typeof value === 'object' &&
-      !mapping.sourcePath
-    ) {
-      const resultValue: unknown = (value as Record<string, unknown>)['result'];
-      const descriptionValue: unknown = (value as Record<string, unknown>)['description'];
-      const contentValue: unknown = (value as Record<string, unknown>)['content_en'];
-      value = resultValue ?? descriptionValue ?? contentValue ?? value;
-    }
-
-    if (sourcePort === 'result' && isEffectivelyMissing(value)) {
-      unresolvedSourcePorts.add(sourcePort);
-      return;
-    }
-
-    if (typeof value === 'string' && trimStrings) {
-      value = (value).trim();
-    }
-
-    if (skipEmpty && isEmptyValue(value)) {
-      return;
-    }
-
-    if (mapping.targetPath) {
-      updates[mapping.targetPath] = value;
-    }
-  });
-
-  const missingSourcePorts: string[] = Array.from(requiredSourcePorts).filter(
-    (sourcePort: string): boolean => templateInputs[sourcePort] === undefined,
+  throw new Error(
+    'Mapping-based database updates are disabled. Use an explicit update template instead.'
   );
-
-  return {
-    updates,
-    primaryTarget:
-      mappings.find((m: UpdaterMapping): boolean => !!m.targetPath)?.targetPath ?? fallbackTarget,
-    missingSourcePorts,
-    unresolvedSourcePorts: Array.from(unresolvedSourcePorts),
-  };
 }
 
 export function extractMissingTemplatePorts(

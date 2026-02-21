@@ -20,11 +20,9 @@ import {
   PRISMA_AGGREGATION_STAGE_SNIPPETS,
 } from '@/features/ai/ai-paths/config/query-presets';
 import type {
-  UpdaterMapping,
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
 import { DB_PROVIDER_PLACEHOLDERS } from '@/features/ai/ai-paths/lib';
-import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import type { AiQuery, CollectionSchema, DatabasePresetOption, FieldSchema } from '@/shared/contracts/database';
 import { Button, Label, Textarea, SelectSimple, Input, Tooltip, Card } from '@/shared/ui';
 
@@ -71,15 +69,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
     onSyncSchema,
     schemaSyncing,
     schemaLoading,
-    mapInputsToTargets,
-    bundleKeys,
     aiPromptRef,
-    mappings,
-    updateMapping,
-    removeMapping,
-    addMapping,
-    availablePorts,
-    uniqueTargetPathOptions,
   } = useDatabaseConstructorContext();
   const {
     setUpdaterSamples,
@@ -805,142 +795,6 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
         </div>
       )}
 
-      {/* Field Mapping: Show for query operations always, for update only after sample is fetched */}
-      {(operation !== 'update' || sampleState.json.trim().length > 0) && (
-        <div className='space-y-3 border-t border-border pt-4'>
-          <Label className='text-xs text-gray-400'>Parameter Mapping</Label>
-          <div className='flex flex-wrap items-center gap-2 mb-3'>
-            <Button
-              type='button'
-              className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-              onClick={(): void => mapInputsToTargets()}
-            >
-            Auto-map inputs
-            </Button>
-            {bundleKeys.size > 0 && (
-              <span className='text-[11px] text-gray-500'>
-              Bundle keys:{' '}
-                {Array.from(bundleKeys)
-                  .map((key: string): string => formatPortLabel(key))
-                  .join(', ')}
-              </span>
-            )}
-          </div>
-
-          <div className='space-y-3'>
-            {mappings.map((mapping: UpdaterMapping, index: number): React.JSX.Element => {
-              const targetValue = mapping.targetPath ?? '';
-              const customValue = mapping.sourcePath ?? '';
-              // Schema selection = targetValue matches a schema option
-              const hasSchemaSelection = uniqueTargetPathOptions.some((opt: { label: string; value: string }): boolean => opt.value === targetValue) && targetValue.trim().length > 0;
-              const sourcePort = mapping.sourcePort ?? '';
-              const sourcePortOptions =
-              sourcePort && !availablePorts.includes(sourcePort)
-                ? [sourcePort, ...availablePorts]
-                : availablePorts;
-
-              return (
-                <div
-                  key={`mapping-${index}`}
-                  className='flex flex-wrap gap-2 items-start'
-                >
-                  {/* "Pick from schema" dropdown - ALWAYS visible */}
-                  <div className='space-y-2 min-w-[180px]'>
-                    <SelectSimple
-                      size='xs'
-                      value={hasSchemaSelection ? targetValue : ''}
-                      onValueChange={(value: string): void => {
-                        if (value && value !== '__empty__') {
-                          updateMapping(index, { targetPath: value } as Partial<UpdaterMapping>);
-                        } else {
-                          updateMapping(index, { targetPath: '' } as Partial<UpdaterMapping>);
-                        }
-                      }}
-                      options={[
-                        { value: '__empty__', label: '— None —' },
-                        ...uniqueTargetPathOptions
-                      ]}
-                      placeholder='Pick from schema'
-                      triggerClassName='border-border bg-card/70 text-[10px] text-gray-200'
-                    />
-                  </div>
-
-                  {/* Source port selector */}
-                  <div className='space-y-2 min-w-[160px]'>
-                    <SelectSimple
-                      size='xs'
-                      value={sourcePort}
-                      onValueChange={(value: string): void =>
-                        updateMapping(index, {
-                          sourcePort: value,
-                          sourcePath: mapping.sourcePath ?? '',
-                        } as Partial<UpdaterMapping>)
-                      }
-                      options={sourcePortOptions.map((port: string) => ({
-                        value: port,
-                        label: formatPortLabel(port)
-                      }))}
-                      placeholder='Select input'
-                      triggerClassName='border-border bg-card/70 text-[10px] text-gray-200'
-                    />
-                  </div>
-
-                  {/* Source path input */}
-                  {hasSchemaSelection && sourcePort && (
-                    <div className='space-y-2 min-w-[140px]'>
-                      {sourcePort === 'bundle' && bundleKeys.size > 0 ? (
-                        <SelectSimple
-                          size='xs'
-                          value={customValue}
-                          onValueChange={(value: string): void =>
-                            updateMapping(index, {
-                              sourcePath: value,
-                            } as Partial<UpdaterMapping>)
-                          }
-                          options={Array.from(bundleKeys).map((key: string) => ({
-                            value: key,
-                            label: formatPortLabel(key)
-                          }))}
-                          placeholder='Pick bundle key'
-                          triggerClassName='border-border bg-card/70 text-[10px] text-gray-200'
-                        />
-                      ) : (
-                        <Input
-                          className='w-full rounded-md border border-border bg-card/70 text-sm text-white'
-                          value={customValue}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                            updateMapping(index, {
-                              sourcePath: event.target.value,
-                            } as Partial<UpdaterMapping>)
-                          }
-                          placeholder='Source path (optional)'
-                        />
-                      )}
-                    </div>
-                  )}
-
-                  <Button
-                    type='button'
-                    className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60 self-start'
-                    disabled={mappings.length <= 1}
-                    onClick={(): void => removeMapping(index)}
-                  >
-                  Remove
-                  </Button>
-                </div>
-              );
-            })}
-          </div>
-
-          <Button
-            type='button'
-            className='w-full rounded-md border text-xs text-white hover:bg-muted/60'
-            onClick={(): void => addMapping()}
-          >
-          Add mapping
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

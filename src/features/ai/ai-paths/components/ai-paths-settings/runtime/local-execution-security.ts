@@ -37,6 +37,31 @@ const hasInlineSecretLikeHttpHeaders = (rawHeaders: unknown): boolean => {
   }
 };
 
+const hasPlaywrightProxyPassword = (value: unknown): boolean => {
+  if (!isPlainRecord(value)) return false;
+  const proxy = value['proxy'];
+  if (!isPlainRecord(proxy)) return false;
+  return normalizeText(proxy['password']).length > 0;
+};
+
+const hasPlaywrightHttpCredentials = (value: unknown): boolean => {
+  if (!isPlainRecord(value)) return false;
+  const httpCredentials = value['httpCredentials'];
+  if (!isPlainRecord(httpCredentials)) return false;
+  return normalizeText(httpCredentials['password']).length > 0;
+};
+
+const parseJsonRecord = (value: unknown): Record<string, unknown> | null => {
+  const text = normalizeText(value);
+  if (!text) return null;
+  try {
+    const parsed = JSON.parse(text) as unknown;
+    return isPlainRecord(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 export const evaluateLocalExecutionSecurity = (
   nodes: AiNode[]
 ): LocalExecutionSecurityIssue[] => {
@@ -95,6 +120,44 @@ export const evaluateLocalExecutionSecurity = (
           nodeType: node.type,
           nodeTitle,
           reason: 'HTTP headers include inline authorization or API key values.',
+        });
+      }
+    }
+    if (node.type === 'playwright') {
+      const config = (node.config?.playwright ?? {}) as Record<string, unknown>;
+      const settingsOverrides = config['settingsOverrides'];
+      if (
+        isPlainRecord(settingsOverrides) &&
+        normalizeText(settingsOverrides['proxyPassword']).length > 0
+      ) {
+        issues.push({
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeTitle,
+          reason:
+            'Playwright settingsOverrides include proxyPassword directly in node settings.',
+        });
+      }
+
+      const launchOptions = parseJsonRecord(config['launchOptionsJson']);
+      if (launchOptions && hasPlaywrightProxyPassword(launchOptions)) {
+        issues.push({
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeTitle,
+          reason:
+            'Playwright launch options include inline proxy password credentials.',
+        });
+      }
+
+      const contextOptions = parseJsonRecord(config['contextOptionsJson']);
+      if (contextOptions && hasPlaywrightHttpCredentials(contextOptions)) {
+        issues.push({
+          nodeId: node.id,
+          nodeType: node.type,
+          nodeTitle,
+          reason:
+            'Playwright context options include inline HTTP credentials password.',
         });
       }
     }

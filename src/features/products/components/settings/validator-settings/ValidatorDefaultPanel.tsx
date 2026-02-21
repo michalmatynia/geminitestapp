@@ -1,30 +1,43 @@
 'use client';
 
+import { logClientError } from '@/features/observability';
+import {
+  useUpdateValidatorSettingsMutation,
+  useValidatorSettings,
+} from '@/features/products/hooks/useProductSettingsQueries';
 import { FormSection, ValidatorFormatterToggle } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
-import { useValidatorSettingsContext } from './ValidatorSettingsContext';
-
-type ValidatorDefaultControls = {
-  enabledByDefault: boolean;
-  formatterEnabledByDefault: boolean;
-  settingsBusy: boolean;
-  handleToggleDefault: (enabled: boolean) => Promise<void>;
-  handleToggleFormatterDefault: (enabled: boolean) => Promise<void>;
-};
 
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.validatordefaultpanel
  */
 export function ValidatorDefaultPanel(): React.JSX.Element {
-  const {
-    enabledByDefault,
-    formatterEnabledByDefault,
-    settingsBusy,
-    handleToggleDefault,
-    handleToggleFormatterDefault,
-  } = useValidatorSettingsContext() as ValidatorDefaultControls;
+  const settingsQuery = useValidatorSettings();
+  const updateSettings = useUpdateValidatorSettingsMutation();
+  const enabledByDefault = settingsQuery.data?.enabledByDefault ?? true;
+  const formatterEnabledByDefault = settingsQuery.data?.formatterEnabledByDefault ?? false;
+  const settingsBusy = settingsQuery.isLoading || updateSettings.isPending;
+
+  const handleToggleDefault = async (enabled: boolean): Promise<void> => {
+    try {
+      await updateSettings.mutateAsync({ enabledByDefault: enabled });
+    } catch (error) {
+      logClientError(error, { context: { source: 'ValidatorDefaultPanel', action: 'toggleDefault' } });
+    }
+  };
+
+  const handleToggleFormatterDefault = async (enabled: boolean): Promise<void> => {
+    try {
+      await updateSettings.mutateAsync({ formatterEnabledByDefault: enabled });
+    } catch (error) {
+      logClientError(error, {
+        context: { source: 'ValidatorDefaultPanel', action: 'toggleFormatterDefault' },
+      });
+    }
+  };
+
   return (
     <FormSection
       title='Product Validator Default'

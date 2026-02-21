@@ -37,6 +37,6 @@ async function GET_handler(req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
-  async (req: NextRequest, ctx: ApiHandlerContext, params: { runId: string }) => GET_handler(req, { params: Promise.resolve(params) }),
+  async (req: NextRequest, _ctx: ApiHandlerContext, params: { runId: string }) => GET_handler(req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.[runId].logs.GET' }
 );

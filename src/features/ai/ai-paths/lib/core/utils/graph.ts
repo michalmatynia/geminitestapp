@@ -146,6 +146,7 @@ const PROCESSING_NODE_TYPES = new Set<string>([
   'model',
   'agent',
   'learner_agent',
+  'playwright',
   'audio_oscillator',
   'audio_speaker',
   'iterator',

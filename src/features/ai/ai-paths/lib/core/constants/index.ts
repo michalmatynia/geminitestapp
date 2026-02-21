@@ -154,11 +154,11 @@ export const ITERATOR_OUTPUT_PORTS = ['value', 'index', 'total', 'done', 'status
 export const DEFAULT_DB_QUERY: DbQueryConfig = {
   provider: 'auto',
   collection: 'products',
-  mode: 'preset',
+  mode: 'custom',
   preset: 'by_id',
   field: '_id',
   idType: 'string',
-  queryTemplate: '{\n  "_id": "{{value}}"\n}',
+  queryTemplate: '',
   limit: 20,
   sort: '',
   sortPresetId: 'custom',
@@ -431,6 +431,8 @@ export const AGENT_INPUT_PORTS = [
   'productId',
 ];
 export const AGENT_OUTPUT_PORTS = ['result', 'jobId', 'status', 'bundle'];
+export const PLAYWRIGHT_INPUT_PORTS = AGENT_INPUT_PORTS;
+export const PLAYWRIGHT_OUTPUT_PORTS = ['result', 'value', 'bundle', 'status', 'jobId'];
 export const LEARNER_AGENT_INPUT_PORTS = AGENT_INPUT_PORTS;
 export const LEARNER_AGENT_OUTPUT_PORTS = ['result', 'sources', 'status', 'bundle'];
 export const NOTIFICATION_INPUT_PORTS = [
@@ -737,6 +739,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   model: ['prompt', 'database', 'viewer', 'description_updater', 'bundle', 'poll', 'notification', 'agent', 'learner_agent', 'iterator'],
   agent: ['viewer', 'bundle', 'template', 'prompt', 'database', 'description_updater', 'notification', 'delay', 'learner_agent'],
   learner_agent: ['viewer', 'bundle', 'template', 'prompt', 'database', 'notification', 'delay'],
+  playwright: ['viewer', 'bundle', 'template', 'prompt', 'database', 'poll', 'notification', 'delay'],
   viewer: [],
   ai_description: ['viewer', 'description_updater', 'bundle', 'delay', 'poll'],
   description_updater: ['viewer', 'bundle', 'delay', 'poll'],
@@ -773,6 +776,7 @@ export const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   prompt: { border: 'border-amber-500/40', glow: 'shadow-amber-500/20' },
   model: { border: 'border-fuchsia-500/40', glow: 'shadow-fuchsia-500/20' },
   agent: { border: 'border-emerald-400/40', glow: 'shadow-emerald-400/20' },
+  playwright: { border: 'border-blue-400/40', glow: 'shadow-blue-400/20' },
   learner_agent: { border: 'border-emerald-300/40', glow: 'shadow-emerald-300/20' },
   viewer: { border: 'border-violet-500/40', glow: 'shadow-violet-500/20' },
   notification: { border: 'border-amber-400/40', glow: 'shadow-amber-500/20' },
@@ -886,21 +890,16 @@ export const initialNodes = [
         entityType: 'product',
         idField: 'productId',
         mode: 'replace',
-        updatePayloadMode: 'mapping',
-        mappings: [
-          {
-            targetPath: 'content_en',
-            sourcePort: 'result',
-          },
-        ],
+        updatePayloadMode: 'custom',
+        mappings: [],
         query: {
           provider: 'auto',
           collection: 'products',
-          mode: 'preset',
+          mode: 'custom',
           preset: 'by_id',
           field: '_id',
           idType: 'string',
-          queryTemplate: '{\n  "_id": "{{value}}"\n}',
+          queryTemplate: '{\n  "id": "{{value}}"\n}',
           limit: 20,
           sort: '',
           projection: '',

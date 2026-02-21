@@ -249,8 +249,8 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           connectedEdges.flatMap((edge): string[] => [edge.from, edge.to])
         )
       )
-                  .filter((nodeId: string): boolean => nodeId !== input.nodeId)
-                  .sort((left: string, right: string) => left.localeCompare(right));
+        .filter((nodeId: string): boolean => nodeId !== input.nodeId)
+        .sort((left: string, right: string) => left.localeCompare(right));
         
       const nodeFileMeta = (() => {
         if (!input.sourceFileId || !input.nodeId) return {};
@@ -1303,7 +1303,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     const canvasFile = workspace.files.find(
       (file: CaseResolverFile) => file.id === editingDocumentNodeContext.fileId
     );
-    if (!canvasFile) return null;
+    if (!canvasFile?.graph) return null;
     const canvasNode = canvasFile.graph.nodes.find(
       (node: AiNode) => node.id === editingDocumentNodeContext.nodeId
     );

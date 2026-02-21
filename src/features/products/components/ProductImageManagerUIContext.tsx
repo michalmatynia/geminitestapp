@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
@@ -9,6 +8,7 @@ import {
 } from '@/features/products/constants';
 import { ProductFormContext } from '@/features/products/context/ProductFormContext';
 import { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
+import { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import { DebugInfo } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -32,7 +32,7 @@ export interface ProductImageManagerUIContextValue {
   externalBaseUrl: string;
   
   // Resolved Controller Props
-  controller: any; // We'll use a loose type here to avoid circularity for now, or refine it later
+  controller: ProductImageManagerController;
   
   // Handlers
   setSlotViewMode: (index: number, mode: SlotViewMode) => void;
@@ -60,7 +60,7 @@ export function ProductImageManagerUIProvider({
   explicitController,
 }: { 
   children: React.ReactNode;
-  explicitController?: any;
+  explicitController?: ProductImageManagerController;
 }) {
   const formContext = useContext(ProductFormContext);
   const controllerContext = useOptionalProductImageManagerController();
@@ -174,8 +174,9 @@ export function ProductImageManagerUIProvider({
       if (targetIndex < 0) return;
       try {
         handleSlotImageChange(file, targetIndex);
-      } catch (error: any) {
-        pushDebug({ action: 'file-change', message: error.message, slotIndex: targetIndex });
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : String(error);
+        pushDebug({ action: 'file-change', message, slotIndex: targetIndex });
       }
     });
   }, [imageSlots, handleSlotImageChange, pushDebug]);
@@ -214,8 +215,9 @@ export function ProductImageManagerUIProvider({
 
       setImageBase64At(index, dataUrl);
       setSlotViewMode(index, 'base64');
-    } catch (error: any) {
-      pushDebug({ action: 'base64-convert', message: error.message, slotIndex: index });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      pushDebug({ action: 'base64-convert', message, slotIndex: index });
     } finally {
       setBase64LoadingSlots(prev => {
         const next = { ...prev };
@@ -255,8 +257,9 @@ export function ProductImageManagerUIProvider({
       }
       setImageLinkAt(index, '');
       setSlotViewMode(index, 'upload');
-    } catch (error: any) {
-      pushDebug({ action: 'link-to-file', message: error.message, slotIndex: index });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : String(error);
+      pushDebug({ action: 'link-to-file', message, slotIndex: index });
     } finally {
       setLinkToFileLoadingSlots(prev => {
         const next = { ...prev };

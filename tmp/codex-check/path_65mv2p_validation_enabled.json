@@ -1,0 +1,126 @@
+{
+  "enabled": true,
+  "policy": "block_below_threshold",
+  "score": 0,
+  "blocked": true,
+  "shouldWarn": false,
+  "failedRules": 76,
+  "severityCounts": {
+    "error": 2,
+    "warning": 17,
+    "info": 57
+  },
+  "topFindings": [
+    {
+      "severity": "warning",
+      "ruleTitle": "Async model jobs wired to poll",
+      "ruleId": "runtime_model_async_has_poll",
+      "nodeId": "node-gfrhnz",
+      "failedConditionIds": [
+        "runtime_model_async_has_poll_in_1",
+        "runtime_model_async_has_poll_wired_to_2"
+      ]
+    },
+    {
+      "severity": "info",
+      "ruleTitle": "Context to Parser wiring",
+      "ruleId": "wiring_context_to_parser",
+      "nodeId": "node-jprmv8",
+      "failedConditionIds": [
+        "wiring_context_to_parser_wired_to_1"
+      ]
+    },
+    {
+      "severity": "info",
+      "ruleTitle": "Model result reaches viewer",
+      "ruleId": "wiring_model_result_to_viewer",
+      "nodeId": "node-05y44u",
+      "failedConditionIds": [
+        "wiring_model_result_to_viewer_wired_to_1",
+        "wiring_model_result_to_viewer_wired_to_2"
+      ]
+    },
+    {
+      "severity": "info",
+      "ruleTitle": "Database result reaches viewer",
+      "ruleId": "wiring_database_result_to_viewer",
+      "nodeId": "node-nohy8q",
+      "failedConditionIds": [
+        "wiring_database_result_to_viewer_wired_to_1"
+      ]
+    },
+    {
+      "severity": "warning",
+      "ruleTitle": "Model jobId reaches poll",
+      "ruleId": "wiring_model_jobid_to_poll",
+      "nodeId": "node-gfrhnz",
+      "failedConditionIds": [
+        "wiring_model_jobid_to_poll_in_1",
+        "wiring_model_jobid_to_poll_wired_to_2"
+      ]
+    },
+    {
+      "severity": "error",
+      "ruleTitle": "Context Filter: context.entityId should be configured",
+      "ruleId": "catalog_context_context_entityid_non_empty",
+      "nodeId": "node-jprmv8",
+      "failedConditionIds": [
+        "catalog_context_context_entityid_non_empty_non_empty_1"
+      ]
+    },
+    {
+      "severity": "warning",
+      "ruleTitle": "Context Filter: runtime.cache.mode uses documented values",
+      "ruleId": "catalog_context_runtime_cache_mode_allowed_values",
+      "nodeId": "node-jprmv8",
+      "failedConditionIds": [
+        "catalog_context_runtime_cache_mode_allowed_values_in_1"
+      ]
+    },
+    {
+      "severity": "warning",
+      "ruleTitle": "Database Query: database.mode uses documented values",
+      "ruleId": "catalog_database_database_mode_allowed_values",
+      "nodeId": "node-nohy8q",
+      "failedConditionIds": [
+        "catalog_database_database_mode_allowed_values_in_1"
+      ]
+    },
+    {
+      "severity": "warning",
+      "ruleTitle": "Database Query: database.parameterInferenceGuard.enforceOptionLabels uses documented values",
+      "ruleId": "catalog_database_database_parameterinferenceguard_enforceoptionlabels_allowed_va",
+      "nodeId": "node-nohy8q",
+      "failedConditionIds": [
+        "catalog_database_database_parameterinferenceguard_enforceoptionl"
+      ]
+    },
+    {
+      "severity": "warning",
+      "ruleTitle": "Database Query: database.query uses documented values",
+      "ruleId": "catalog_database_database_query_allowed_values",
+      "nodeId": "node-nohy8q",
+      "failedConditionIds": [
+        "catalog_database_database_query_allowed_values_in_1"
+      ]
+    },
+    {
+      "severity": "warning",
+      "ruleTitle": "Database Query: runtime.cache.mode uses documented values",
+      "ruleId": "catalog_database_runtime_cache_mode_allowed_values",
+      "nodeId": "node-nohy8q",
+      "failedConditionIds": [
+        "catalog_database_runtime_cache_mode_allowed_values_in_1"
+      ]
+    },
+    {
+      "severity": "warning",
+      "ruleTitle": "Model: runtime.cache.mode uses documented values",
+      "ruleId": "catalog_model_runtime_cache_mode_allowed_values",
+      "nodeId": "node-05y44u",
+      "failedConditionIds": [
+        "catalog_model_runtime_cache_mode_allowed_values_in_1"
+      ]
+    }
+  ]
+}

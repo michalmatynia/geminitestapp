@@ -532,5 +532,5 @@ export type DatabasePresetOption = {
   id: string;
   label: string;
   description?: string;
-  config: unknown;
+  config?: unknown;
 };

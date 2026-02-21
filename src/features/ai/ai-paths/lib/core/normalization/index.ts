@@ -12,6 +12,8 @@ import type {
 import {
   AGENT_INPUT_PORTS,
   AGENT_OUTPUT_PORTS,
+  PLAYWRIGHT_INPUT_PORTS,
+  PLAYWRIGHT_OUTPUT_PORTS,
   CONTEXT_INPUT_PORTS,
   CONTEXT_OUTPUT_PORTS,
   DATABASE_INPUT_PORTS,
@@ -47,6 +49,10 @@ import {
   VIEWER_INPUT_PORTS,
 } from '../constants';
 import { palette } from '../definitions';
+import {
+  createDefaultPlaywrightConfig,
+  normalizePlaywrightConfig,
+} from '../playwright/default-config';
 import { createParserMappings, createViewerOutputs, ensureUniquePorts, normalizePortName } from '../utils';
 
 const DEFAULT_LEGACY_DB_QUERY_TEMPLATE = '{\n  "_id": "{{value}}"\n}';
@@ -715,11 +721,11 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
         const defaultQuery = {
           provider: 'auto' as const,
           collection: 'products',
-          mode: 'preset' as const,
+          mode: 'custom' as const,
           preset: 'by_id' as const,
           field: '_id',
           idType: 'string' as const,
-          queryTemplate: '{\n  "_id": "{{value}}"\n}',
+          queryTemplate: '',
           limit: 20,
           sort: '',
           projection: '',
@@ -739,15 +745,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
           queryConfig as DbQueryConfig
         );
         const databaseConfig: DatabaseConfig = node.config?.database ?? { operation: 'query' };
-        const mappings = 
-        databaseConfig.mappings && databaseConfig.mappings.length > 0
-          ? databaseConfig.mappings
-          : [
-            {
-              targetPath: 'content_en',
-              sourcePort: node.inputs.includes('result') ? 'result' : 'content_en',
-            },
-          ];
+        const mappings = databaseConfig.mappings ?? [];
         const forcedInputs = ['result', 'content_en', 'productId', 'entityId'];
         const inferredUseMongoActions =
         databaseConfig.useMongoActions ??
@@ -784,7 +782,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
               idField: databaseConfig.idField ?? 'entityId',
               mode: databaseConfig.mode ?? 'replace',
               updateStrategy: databaseConfig.updateStrategy ?? 'one',
-              updatePayloadMode: databaseConfig.updatePayloadMode ?? 'mapping',
+              updatePayloadMode: databaseConfig.updatePayloadMode ?? 'custom',
               useMongoActions: inferredUseMongoActions,
               ...(databaseConfig.actionCategory ? { actionCategory: databaseConfig.actionCategory } : {}),
               ...(databaseConfig.action ? { action: databaseConfig.action } : {}),
@@ -885,6 +883,18 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
               promptTemplate: agentConfig?.promptTemplate ?? '',
               waitForResult: agentConfig?.waitForResult ?? true,
             },
+          },
+        };
+      }
+      if (node.type === 'playwright') {
+        const playwrightConfig = normalizePlaywrightConfig(node.config?.playwright);
+        return {
+          ...node,
+          inputs: ensureUniquePorts(node.inputs, PLAYWRIGHT_INPUT_PORTS),
+          outputs: ensureUniquePorts(node.outputs, PLAYWRIGHT_OUTPUT_PORTS),
+          config: {
+            ...node.config,
+            playwright: playwrightConfig,
           },
         };
       }
@@ -1227,6 +1237,11 @@ export const getDefaultConfigForType = (
       },
     };
   }
+  if (type === 'playwright') {
+    return {
+      playwright: createDefaultPlaywrightConfig(),
+    };
+  }
   if (type === 'database') {
     return {
       database: {
@@ -1235,22 +1250,17 @@ export const getDefaultConfigForType = (
         idField: 'entityId',
         mode: 'replace',
         updateStrategy: 'one',
-        updatePayloadMode: 'mapping',
+        updatePayloadMode: 'custom',
         useMongoActions: false,
-        mappings: [
-          {
-            targetPath: 'content_en',
-            sourcePort: inputs.includes('result') ? 'result' : 'content_en',
-          },
-        ],
+        mappings: [],
         query: {
           provider: 'auto',
           collection: 'products',
-          mode: 'preset',
+          mode: 'custom',
           preset: 'by_id',
           field: '_id',
           idType: 'string',
-          queryTemplate: '{\n  "_id": "{{value}}"\n}',
+          queryTemplate: '',
           limit: 20,
           sort: '',
           projection: '',

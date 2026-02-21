@@ -23,7 +23,6 @@ export type ExecuteMongoCollectionUpdateInput = {
   primaryTarget: string;
   resolvedFilter: Record<string, unknown>;
   updateDoc: unknown;
-  resolveEntityId: () => string | null;
   aiPrompt: string;
 };
 
@@ -43,7 +42,6 @@ export async function executeMongoCollectionUpdate({
   primaryTarget,
   resolvedFilter,
   updateDoc,
-  resolveEntityId,
   aiPrompt,
 }: ExecuteMongoCollectionUpdateInput): Promise<RuntimePortValues> {
   let nextResolvedFilter: Record<string, unknown> = resolvedFilter;
@@ -53,12 +51,6 @@ export async function executeMongoCollectionUpdate({
       nextResolvedFilter &&
       typeof nextResolvedFilter === 'object' &&
       Object.keys(nextResolvedFilter).length > 0;
-    if (!hasFilter) {
-      const fallbackEntityId = resolveEntityId();
-      if (fallbackEntityId) {
-        nextResolvedFilter = { id: fallbackEntityId };
-      }
-    }
     if (!nextResolvedFilter || Object.keys(nextResolvedFilter).length === 0) {
       reportAiPathsError(
         new Error('Database update missing filter'),
@@ -82,6 +74,9 @@ export async function executeMongoCollectionUpdate({
     filter: nextResolvedFilter,
     update: updateDoc,
     ...(idType !== undefined ? { idType: idType as string } : {}),
+    ...(action === 'findOneAndUpdate'
+      ? { returnDocument: 'after' as const }
+      : {}),
   });
   executed.updater.add(node.id);
   if (!updateResult.ok) {

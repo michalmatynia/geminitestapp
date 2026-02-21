@@ -9,7 +9,7 @@ export function NodeHistoryTab(): React.JSX.Element | null {
   const { selectedNode, runtimeState, clearNodeHistory } = useAiPathConfig();
   if (!selectedNode) return null;
 
-  const history = (runtimeState.history?.[selectedNode.id] ?? []) as RuntimeHistoryEntry[];
+  const history = (runtimeState.history?.[selectedNode.id] ?? []);
   const hasHistory = history.length > 0;
   return (
     <div className='space-y-4'>

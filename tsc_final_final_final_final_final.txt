@@ -1,7 +1,0 @@
-src/app/api/image-studio/slots/[slotId]/crop/route.ts(60,74): error TS2677: A type predicate's type must be assignable to its parameter's type.
-  Type 'BlobLikeFormValue' is not assignable to type 'FormDataEntryValue | null'.
-    Type 'BlobLikeFormValue' is missing the following properties from type 'File': lastModified, name, webkitRelativePath, bytes, and 3 more.
-src/features/case-resolver/utils/caseResolverUtils.ts(517,3): error TS2741: Property 'caseIdentifierId' is missing in type '{ id: string; fileType: CaseResolverFileType; name: string; folder: string; parentCaseId: string | null; referenceCaseIds: string[]; createdAt: string; updatedAt: string; ... 9 more ...; categoryId: string | null; }' but required in type 'CaseResolverFileEditDraft'.
-src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(70,7): error TS2353: Object literal may only specify known properties, and 'expandedIds' does not exist in type 'PromptExploderHierarchyTreeContextValue'.
-src/features/prompt-exploder/pages/AdminPromptExploderPage.tsx(139,13): error TS2322: Type '{ open: boolean; onOpenChange: Dispatch<SetStateAction<boolean>>; drafts: PromptExploderParserTuningRuleDraft[]; onDraftsChange: Dispatch<...>; }' is not assignable to type 'IntrinsicAttributes'.
-  Property 'open' does not exist on type 'IntrinsicAttributes'.

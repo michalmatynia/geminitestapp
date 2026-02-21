@@ -54,11 +54,11 @@ type SchemaConfig = {
 const DEFAULT_QUERY: DbQueryConfig = {
   provider: 'auto',
   collection: 'products',
-  mode: 'preset',
+  mode: 'custom',
   preset: 'by_id',
   field: '_id',
   idType: 'string',
-  queryTemplate: '{\n  "_id": "{{value}}"\n}',
+  queryTemplate: '',
   limit: 20,
   sort: '',
   projection: '',
@@ -109,13 +109,6 @@ const normalizeLegacyQueryProvider = (query: DbQueryConfig): DbQueryConfig => {
     queryTemplate: normalizedTemplate,
   };
 };
-
-const DEFAULT_MAPPINGS: UpdaterMapping[] = [
-  {
-    targetPath: 'content_en',
-    sourcePort: 'content_en',
-  },
-];
 
 export function useDatabaseNodeConfigState() {
   const {
@@ -199,11 +192,11 @@ export function useDatabaseNodeConfigState() {
     action: persistedDatabase?.action,
     distinctField: persistedDatabase?.distinctField ?? '',
     updateTemplate: normalizeTemplateText(persistedDatabase?.updateTemplate ?? ''),
-    mappings: persistedDatabase?.mappings && persistedDatabase.mappings.length > 0 ? persistedDatabase.mappings : DEFAULT_MAPPINGS,
+    mappings: persistedDatabase?.mappings && persistedDatabase.mappings.length > 0 ? persistedDatabase.mappings : [],
     query: normalizeLegacyQueryProvider(
       { ...DEFAULT_QUERY, ...(persistedDatabase?.query ?? {}) } as DbQueryConfig
     ),
-    updatePayloadMode: persistedDatabase?.updatePayloadMode ?? 'mapping',
+    updatePayloadMode: persistedDatabase?.updatePayloadMode ?? 'custom',
     writeSource: persistedDatabase?.writeSource ?? 'bundle',
     writeSourcePath: persistedDatabase?.writeSourcePath ?? '',
     dryRun: persistedDatabase?.dryRun ?? false,
@@ -364,7 +357,22 @@ export function useDatabaseNodeConfigState() {
   const applyDatabasePreset = useCallback((id: string) => {
     const patch: Partial<DatabaseConfig> = { presetId: id };
     if (id === 'query_by_id') {
-      Object.assign(patch, { useMongoActions: true, actionCategory: 'read', action: 'findOne', operation: 'query', entityType: 'product', query: { ...DEFAULT_QUERY, collection: 'products', mode: 'preset', preset: 'by_id', idType: 'string', single: true } });
+      Object.assign(patch, {
+        useMongoActions: true,
+        actionCategory: 'read',
+        action: 'findOne',
+        operation: 'query',
+        entityType: 'product',
+        query: {
+          ...DEFAULT_QUERY,
+          collection: 'products',
+          mode: 'custom',
+          preset: 'by_id',
+          idType: 'string',
+          queryTemplate: '{\n  "id": "{{value}}"\n}',
+          single: true,
+        },
+      });
     }
     updateSelectedNodeConfig({ database: { ...databaseConfig, ...patch } });
   }, [databaseConfig, updateSelectedNodeConfig]);
@@ -508,7 +516,7 @@ export function useDatabaseNodeConfigState() {
     return placeholders;
   }, [incomingPorts, operation, bundleKeys]);
 
-  const mappings = databaseConfig.mappings && databaseConfig.mappings.length > 0 ? databaseConfig.mappings : DEFAULT_MAPPINGS;
+  const mappings = databaseConfig.mappings && databaseConfig.mappings.length > 0 ? databaseConfig.mappings : [];
 
   const updateMapping = useCallback((index: number, patch: Partial<UpdaterMapping>) => {
     const nextMappings = mappings.map((m, idx) => idx === index ? { ...m, ...patch } : m);
@@ -516,7 +524,6 @@ export function useDatabaseNodeConfigState() {
   }, [databaseConfig, mappings, updateSelectedNodeConfig]);
 
   const removeMapping = useCallback((index: number) => {
-    if (mappings.length <= 1) return;
     updateSelectedNodeConfig({ database: { ...databaseConfig, mappings: mappings.filter((_, idx) => idx !== index) } });
   }, [databaseConfig, mappings, updateSelectedNodeConfig]);
 

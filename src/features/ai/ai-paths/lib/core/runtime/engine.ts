@@ -53,6 +53,7 @@ import {
   handleMath,
   handleModel,
   handleMutator,
+  handlePlaywright,
   handleStringMutator,
   handleNotification,
   handleParser,
@@ -70,7 +71,7 @@ import {
 } from './handlers';
 import { buildDbQueryPayload, extractImageUrls } from './utils';
 
-type ToastFn = (message: string, options?: Partial<{ variant: 'success' | 'error' | 'info'; duration: number }>) => void;
+type ToastFn = (message: unknown, options?: any) => void;
 
 export type RuntimeProfileEvent = AiPathRuntimeProfileEventDto;
 
@@ -224,6 +225,7 @@ const SIDE_EFFECT_CHANNEL_BY_NODE_TYPE: Partial<Record<AiNode['type'], SideEffec
   model: 'ai',
   agent: 'ai',
   learner_agent: 'ai',
+  playwright: 'ai',
   ai_description: 'ai',
   description_updater: 'updater',
   database: 'updater',
@@ -239,6 +241,7 @@ const IDEMPOTENCY_NODE_TYPES = new Set<AiNode['type']>([
   'model',
   'agent',
   'learner_agent',
+  'playwright',
   'http',
   'api_advanced',
   'database',
@@ -325,7 +328,7 @@ const buildDatabaseInputHash = (
       ? mappings
         .map((mapping) => mapping.sourcePort)
         .filter((port): port is string => typeof port === 'string' && port.trim().length > 0)
-      : [node.inputs.includes('result') ? 'result' : 'content_en'];
+      : [];
     sourcePorts.forEach(includeInput);
     includeInput('entityId');
     includeInput('productId');
@@ -442,6 +445,7 @@ const HANDLERS: Record<string, NodeHandler> = {
   poll: handlePoll,
   http: handleHttp,
   api_advanced: handleAdvancedApi,
+  playwright: handlePlaywright,
   database: handleDatabase,
   db_schema: handleDbSchema,
   gate: handleGate,
@@ -1019,13 +1023,11 @@ export async function evaluateGraph({
 
     if (operation === 'query') {
       const queryPorts = ['aiQuery', 'query', 'queryCallback'];
-      const idPorts = ['value', 'entityId', 'productId'];
-      const queryGroup = [...queryPorts, ...idPorts];
-      if (anyConnected(queryGroup) && !hasAnyValue(queryGroup)) {
-        markWaitingPorts(queryGroup, true);
+      if (anyConnected(queryPorts) && !hasAnyValue(queryPorts)) {
+        markWaitingPorts(queryPorts, true);
       }
       const nonQueryPorts = Array.from(connectedPorts).filter(
-        (port: string) => !queryGroup.includes(port)
+        (port: string) => !queryPorts.includes(port)
       );
       if (!allConnectedHaveValues(nonQueryPorts)) {
         markWaitingPorts(nonQueryPorts, true);
@@ -1089,7 +1091,7 @@ export async function evaluateGraph({
         ? mappings
           .map((mapping) => mapping?.sourcePort)
           .filter((port): port is string => typeof port === 'string' && port.trim().length > 0)
-        : [node.inputs.includes('result') ? 'result' : 'content_en'];
+        : [];
       const connectedSources = sourcePorts.filter((port: string) => connectedPorts.has(port));
       if (connectedSources.length > 0) {
         const allSourcesReady = connectedSources.every((port: string) =>
@@ -1109,7 +1111,7 @@ export async function evaluateGraph({
       }
 
       if ((dbConfig.updateStrategy ?? 'one') === 'many') {
-        const queryPorts = ['aiQuery', 'query', 'queryCallback', 'value', 'entityId', 'productId'];
+        const queryPorts = ['aiQuery', 'query', 'queryCallback'];
         if (anyConnected(queryPorts) && !hasAnyValue(queryPorts)) {
           markWaitingPorts(queryPorts, true);
         }
@@ -2251,7 +2253,7 @@ export async function evaluateGraphWithIteratorAutoContinue(options: EvaluateGra
         seedHashTimestamps:
           (current.hashTimestamps) ??
           undefined,
-        seedHistory: current.history as Record<string, RuntimeHistoryEntry[]> | undefined,
+        seedHistory: current.history,
         seedRunId: current.runId ?? resolvedRunId,
         seedRunStartedAt: current.runStartedAt ?? resolvedRunStartedAt,
       });

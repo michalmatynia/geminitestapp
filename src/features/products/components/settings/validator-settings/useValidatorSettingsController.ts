@@ -86,9 +86,17 @@ export function useValidatorSettingsController() {
   const updateSettings = useUpdateValidatorSettingsMutation();
 
   const sequenceGroups = useMemo(
-    () => buildSequenceGroups(patterns),
-    [patterns]
+    () => buildSequenceGroups(orderedPatterns),
+    [orderedPatterns]
   );
+
+  const sequenceScopedPatternIds = useMemo(() => {
+    const ids = new Set<string>();
+    sequenceGroups.forEach((group) => {
+      group.patternIds.forEach((patternId) => ids.add(patternId));
+    });
+    return ids;
+  }, [sequenceGroups]);
 
   const firstPatternIdByGroup = useMemo(() => {
     const map = new Map<string, string>();
@@ -558,7 +566,8 @@ export function useValidatorSettingsController() {
     const targetIndex = orderedPatterns.findIndex((p) => p.id === pattern.id);
     if (targetIndex === -1) return;
 
-    const targetGroupId = pattern.sequenceGroupId?.trim() || null;
+    const targetGroupId =
+      sequenceScopedPatternIds.has(pattern.id) ? pattern.sequenceGroupId?.trim() || null : null;
     if (!targetGroupId) {
       void handleReorder(draggedId, targetIndex);
       return;
@@ -616,7 +625,15 @@ export function useValidatorSettingsController() {
           }
         );
       });
-  }, [orderedPatterns, handleReorder, sequenceGroups, patterns, reorderPatterns.mutateAsync, toast]);
+  }, [
+    orderedPatterns,
+    handleReorder,
+    sequenceGroups,
+    patterns,
+    reorderPatterns.mutateAsync,
+    sequenceScopedPatternIds,
+    toast,
+  ]);
 
   const summary = useMemo(() => ({
     total: patterns.length,
@@ -681,7 +698,8 @@ export function useValidatorSettingsController() {
     // Sequence group actions
     sequenceGroups,
     firstPatternIdByGroup,
-    getSequenceGroupId: (p: ProductValidationPattern) => p.sequenceGroupId,
+    getSequenceGroupId: (p: ProductValidationPattern) =>
+      sequenceScopedPatternIds.has(p.id) ? p.sequenceGroupId : null,
     handleMoveGroup,
     handleReorderInGroup: handleReorderGroupInGroup,
     handleMoveToGroup,

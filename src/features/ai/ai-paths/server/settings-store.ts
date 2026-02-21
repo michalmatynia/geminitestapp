@@ -22,6 +22,10 @@ import {
   needsDescriptionInferenceLiteConfigUpgrade,
 } from './settings-store-description-inference';
 import {
+  needsServerExecutionModeConfigUpgrade,
+  upgradeServerExecutionModeConfig,
+} from './settings-store-execution-mode-server';
+import {
   buildParameterInferencePathConfigValue,
   needsParameterInferenceConfigUpgrade,
   PARAMETER_INFERENCE_PATH_ID,
@@ -1063,6 +1067,35 @@ const ensureTranslationEnPlDefaults = async (
   );
 };
 
+const ensureServerExecutionModeDefaults = async (
+  records: AiPathsSettingRecord[]
+): Promise<AiPathsSettingRecord[]> => {
+  if (records.length === 0) return records;
+  const now = new Date().toISOString();
+  const map = new Map<string, string>(
+    records.map(
+      (entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value]
+    )
+  );
+  const updates: AiPathsSettingRecord[] = [];
+  map.forEach((value: string, key: string): void => {
+    if (!key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return;
+    if (!needsServerExecutionModeConfigUpgrade(value)) return;
+    const upgraded = upgradeServerExecutionModeConfig(value, { updatedAt: now });
+    if (!upgraded || upgraded === value) return;
+    map.set(key, upgraded);
+    updates.push({ key, value: upgraded });
+  });
+  if (updates.length === 0) return records;
+  await upsertMongoAiPathsSettingsBatch(updates);
+  return Array.from(map.entries()).map(
+    ([nextKey, nextValue]: [string, string]): AiPathsSettingRecord => ({
+      key: nextKey,
+      value: nextValue,
+    })
+  );
+};
+
 const repairPathIndexFromConfigs = (records: Map<string, string>): string | null => {
   const existingIndexRaw = records.get(AI_PATHS_INDEX_KEY);
   const existingIndex = parsePathMetas(existingIndexRaw);
@@ -1290,11 +1323,23 @@ const hasTranslationEnPlDefaults = (records: AiPathsSettingRecord[]): boolean =>
   return !needsTranslationEnPlConfigUpgrade(raw);
 };
 
+const hasServerExecutionModeDefaults = (records: AiPathsSettingRecord[]): boolean => {
+  if (records.length === 0) return false;
+  let hasConfig = false;
+  for (const entry of records) {
+    if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) continue;
+    hasConfig = true;
+    if (needsServerExecutionModeConfigUpgrade(entry.value)) return false;
+  }
+  return hasConfig;
+};
+
 const hasAiPathsSeedDefaults = (records: AiPathsSettingRecord[]): boolean =>
   hasParameterInferenceDefaults(records) &&
   hasDescriptionInferenceLiteDefaults(records) &&
   hasBaseExportBlwoDefaults(records) &&
-  hasTranslationEnPlDefaults(records);
+  hasTranslationEnPlDefaults(records) &&
+  hasServerExecutionModeDefaults(records);
 
 export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   assertMongoConfigured();
@@ -1314,8 +1359,14 @@ export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   const ensuredDefaults = await ensureTranslationEnPlDefaults(
     withBaseExportDefaults
   );
-  setCachedAiPathsSettings(ensuredDefaults);
-  return ensuredDefaults;
+  const withServerExecutionDefaults = await ensureServerExecutionModeDefaults(
+    ensuredDefaults
+  );
+  const withConsistentIndex = await ensurePathIndexConsistency(
+    withServerExecutionDefaults
+  );
+  setCachedAiPathsSettings(withConsistentIndex);
+  return withConsistentIndex;
 }
 
 export async function getAiPathsSetting(key: string): Promise<string | null> {

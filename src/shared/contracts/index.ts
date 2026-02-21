@@ -56,3 +56,4 @@ export * from './system';
 export * from './ui';
 export * from './vector';
 export * from './viewer3d';
+export * from './product-image-manager';

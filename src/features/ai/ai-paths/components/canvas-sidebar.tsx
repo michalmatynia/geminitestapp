@@ -55,7 +55,7 @@ const DATA_PALETTE_GROUPS: PaletteGroup[] = [
     icon: '🧪',
   },
   { title: 'Bundles + Templates', types: ['bundle', 'template'], icon: '🧩' },
-  { title: 'IO + Fetch', types: ['http', 'api_advanced', 'database', 'db_schema'], icon: '🌐' },
+  { title: 'IO + Fetch', types: ['http', 'api_advanced', 'playwright', 'database', 'db_schema'], icon: '🌐' },
   { title: 'Prompts + Models', types: ['prompt', 'model'], icon: '🤖' },
   { title: 'Agents', types: ['agent', 'learner_agent'], icon: '🧠' },
   { title: 'Viewers', types: ['viewer', 'notification'], icon: '👁' },

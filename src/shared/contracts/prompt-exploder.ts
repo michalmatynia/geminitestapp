@@ -153,12 +153,12 @@ export const promptExploderSegmentSchema = z.object({
   suggestedTreatAsHeading: z.boolean().optional(),
   ruleCount: z.number().optional(),
   ruleStack: z.record(z.string(), z.unknown()).optional(),
-  validationResults: z.array(z.any()).default([]),
+  validationResults: z.array(z.unknown()).default([]),
   bindings: z.record(z.string(), z.unknown()).optional(),
-  segments: z.array(z.any()).default([]),
+  segments: z.array(z.unknown()).default([]),
 });
 
-export type PromptExploderSegmentDto = z.input<typeof promptExploderSegmentSchema>;
+export type PromptExploderSegmentDto = z.infer<typeof promptExploderSegmentSchema>;
 export type PromptExploderSegment = PromptExploderSegmentDto;
 
 export const promptExploderDocumentSchema = dtoBaseSchema.extend({
@@ -170,15 +170,15 @@ export const promptExploderDocumentSchema = dtoBaseSchema.extend({
   isActive: z.boolean().optional(),
   version: z.number().default(1),
   sourcePrompt: z.string().optional(),
-  segments: z.array(z.any()).default([]),
-  subsections: z.array(z.any()).default([]),
-  variables: z.array(z.any()).default([]),
-  dependencies: z.array(z.any()).default([]),
-  rules: z.array(z.any()).default([]),
+  segments: z.array(promptExploderSegmentSchema).default([]),
+  subsections: z.array(z.unknown()).default([]),
+  variables: z.array(z.unknown()).default([]),
+  dependencies: z.array(z.unknown()).default([]),
+  rules: z.array(z.unknown()).default([]),
   tags: z.array(z.string()).default([]),
-  warnings: z.array(z.any()).default([]),
-  errors: z.array(z.any()).default([]),
-  diagnostics: z.array(z.any()).default([]),
+  warnings: z.array(z.unknown()).default([]),
+  errors: z.array(z.unknown()).default([]),
+  diagnostics: z.array(z.unknown()).default([]),
   metadata: z.record(z.string(), z.unknown()).optional(),
   reassembledPrompt: z.string().optional(),
   promptLength: z.number().optional(),
@@ -186,7 +186,7 @@ export const promptExploderDocumentSchema = dtoBaseSchema.extend({
   lastReassembledAt: z.string().optional(),
 });
 
-export type PromptExploderDocumentDto = z.input<typeof promptExploderDocumentSchema>;
+export type PromptExploderDocumentDto = z.infer<typeof promptExploderDocumentSchema>;
 export type PromptExploderDocument = PromptExploderDocumentDto;
 
 /**
@@ -257,25 +257,25 @@ export const promptExploderBenchmarkSuggestionSchema = z.object({
   id: z.string().optional(),
   caseId: z.string(),
   segmentId: z.string().optional(),
-  segmentTitle: z.string().optional(),
+  segmentTitle: z.string().default(''),
   segmentType: z.string().optional(),
-  suggestedSegmentType: z.string().optional(),
+  suggestedSegmentType: promptExploderSegmentTypeSchema.default('static'),
   suggestedBindings: z.record(z.string(), z.unknown()).optional(),
   reasoning: z.string().optional(),
-  suggestedRulePattern: z.string().optional(),
-  suggestedRuleTitle: z.string().optional(),
-  suggestedPriority: z.number().optional(),
-  suggestedConfidenceBoost: z.number().optional(),
-  suggestedTreatAsHeading: z.boolean().optional(),
-  sampleText: z.string().optional(),
+  suggestedRulePattern: z.string().default(''),
+  suggestedRuleTitle: z.string().default(''),
+  suggestedPriority: z.number().default(0),
+  suggestedConfidenceBoost: z.number().default(0),
+  suggestedTreatAsHeading: z.boolean().default(true),
+  sampleText: z.string().default(''),
   confidence: z.number().optional(),
   matchedPatternIds: z.array(z.string()).optional(),
   matchedPatternLabels: z.array(z.string()).optional(),
   matchedSequenceLabels: z.array(z.string()).optional(),
 });
 
-export type PromptExploderBenchmarkSuggestionDto = z.infer<typeof promptExploderBenchmarkSuggestionSchema>;
-export type PromptExploderBenchmarkSuggestion = PromptExploderBenchmarkSuggestionDto;
+export type PromptExploderBenchmarkSuggestionDto = z.input<typeof promptExploderBenchmarkSuggestionSchema>;
+export type PromptExploderBenchmarkSuggestion = z.infer<typeof promptExploderBenchmarkSuggestionSchema>;
 
 /**
  * Prompt Exploder Runtime & Settings DTOs

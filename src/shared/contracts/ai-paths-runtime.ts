@@ -141,6 +141,49 @@ export const runtimePortValuesSchema = z.record(z.string(), z.unknown());
 export type RuntimePortValuesDto = z.infer<typeof runtimePortValuesSchema>;
 export type RuntimePortValues = RuntimePortValuesDto;
 
+export const runtimeHistoryLinkSchema = z.object({
+  nodeId: z.string(),
+  nodeType: z.string().nullable(),
+  nodeTitle: z.string().nullable(),
+  fromPort: z.string().nullable(),
+  toPort: z.string().nullable(),
+});
+
+export type RuntimeHistoryLinkDto = z.infer<typeof runtimeHistoryLinkSchema>;
+export type RuntimeHistoryLink = RuntimeHistoryLinkDto;
+
+export const runtimeHistoryEntrySchema = z.object({
+  timestamp: z.string(),
+  runId: z.string().nullable().optional(),
+  runStartedAt: z.string().nullable().optional(),
+  pathId: z.string().nullable(),
+  pathName: z.string().nullable(),
+  nodeId: z.string(),
+  nodeType: z.string(),
+  nodeTitle: z.string().nullable(),
+  status: z.string(),
+  iteration: z.number(),
+  inputs: z.record(z.string(), z.unknown()),
+  outputs: z.record(z.string(), z.unknown()),
+  inputHash: z.string().nullable(),
+  skipReason: z.string().optional(),
+  requiredPorts: z.array(z.string()).optional(),
+  optionalPorts: z.array(z.string()).optional(),
+  waitingOnPorts: z.array(z.string()).optional(),
+  sideEffectPolicy: z.enum(['per_run', 'per_activation']).optional(),
+  sideEffectDecision: z.string().optional(),
+  activationHash: z.string().nullable().optional(),
+  idempotencyKey: z.string().nullable().optional(),
+  error: z.string().optional(),
+  inputsFrom: z.array(runtimeHistoryLinkSchema).optional().default([]),
+  outputsTo: z.array(runtimeHistoryLinkSchema).optional().default([]),
+  delayMs: z.number().nullable().optional(),
+  durationMs: z.number().nullable().optional(),
+});
+
+export type RuntimeHistoryEntryDto = z.infer<typeof runtimeHistoryEntrySchema>;
+export type RuntimeHistoryEntry = RuntimeHistoryEntryDto;
+
 export const runtimeStateSchema = z.object({
   status: runStatusSchema,
   nodeStatuses: aiPathRuntimeNodeStatusMapSchema,
@@ -153,12 +196,16 @@ export const runtimeStateSchema = z.object({
   runStartedAt: z.string().nullable().optional(),
   inputs: z.record(z.string(), runtimePortValuesSchema),
   outputs: z.record(z.string(), runtimePortValuesSchema),
-  history: z.record(z.string(), z.array(z.record(z.string(), z.unknown()))).optional(),
+  history: z.record(z.string(), z.array(runtimeHistoryEntrySchema)).optional(),
   hashes: z.record(z.string(), z.string()).optional(),
   hashTimestamps: z.record(z.string(), z.number()).optional(),
 });
 
-export type RuntimeStateDto = z.infer<typeof runtimeStateSchema>;
+export type RuntimeStateDto = z.infer<typeof runtimeStateSchema> & {
+  history?: Record<string, RuntimeHistoryEntry[]> | undefined;
+  hashes?: Record<string, string> | undefined;
+  hashTimestamps?: Record<string, number> | undefined;
+};
 export type RuntimeState = RuntimeStateDto;
 
 export const queuedRunSchema = z.object({

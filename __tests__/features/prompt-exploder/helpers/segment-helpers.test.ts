@@ -21,6 +21,7 @@ const makeSegment = (overrides: Partial<PromptExploderSegment> & { id: string })
   raw: '',
   code: null,
   condition: null,
+  items: [],
   listItems: [],
   subsections: [],
   paramsText: '',
@@ -32,8 +33,10 @@ const makeSegment = (overrides: Partial<PromptExploderSegment> & { id: string })
   matchedPatternLabels: [],
   matchedSequenceLabels: [],
   confidence: 1,
+  validationResults: [],
+  segments: [],
   ...overrides,
-});
+}) as any;
 
 describe('createListItem', () => {
   it('creates item with default text', () => {

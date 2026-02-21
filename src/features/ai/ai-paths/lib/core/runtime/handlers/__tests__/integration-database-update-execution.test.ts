@@ -76,7 +76,6 @@ describe('executeDatabaseUpdate custom payload mode', () => {
       updateStrategy: 'one',
       entityType: 'product',
       shouldUseEntityUpdate: true,
-      idField: 'entityId',
       entityId: 'input-id',
       configuredCollection: 'products',
       updatePayloadMode: 'custom',

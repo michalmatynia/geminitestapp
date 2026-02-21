@@ -393,10 +393,9 @@ export const buildDbQueryPayload = (
   idType?: 'string' | 'objectId';
 } => {
   const inputQuery = coerceInput(nodeInputs['query']);
-  const aiQueryInput = coerceInput(nodeInputs['aiQuery'] ?? nodeInputs['queryCallback']);
+  const callbackQueryInput = coerceInput(nodeInputs['queryCallback']);
+  const aiQueryInput = coerceInput(nodeInputs['aiQuery']);
   const inputValue = coerceInput(nodeInputs['value']) ?? coerceInput(nodeInputs['jobId']);
-  const entityIdInput = coerceInput(nodeInputs['entityId']);
-  const productIdInput = coerceInput(nodeInputs['productId']);
   let query: Record<string, unknown> = {};
   const parseRenderedQuery = (raw: string): Record<string, unknown> | null => {
     const parsed = parseJsonSafe(
@@ -428,40 +427,25 @@ export const buildDbQueryPayload = (
     }
     return null;
   };
-  const inlineQuery = parseQueryInput(aiQueryInput ?? inputQuery);
+  const inlineQuery =
+    parseQueryInput(aiQueryInput) ??
+    parseQueryInput(inputQuery) ??
+    parseQueryInput(callbackQueryInput);
   if (inlineQuery) {
     query = inlineQuery;
-  } else if (queryConfig.mode === 'preset') {
-    const presetValue =
-      queryConfig.preset === 'by_productId'
-        ? productIdInput ?? inputValue
-        : queryConfig.preset === 'by_entityId'
-          ? entityIdInput ?? inputValue
-          : inputValue ?? entityIdInput ?? productIdInput;
-    if (presetValue !== undefined) {
-      let field =
-        queryConfig.preset === 'by_productId'
-          ? 'productId'
-          : queryConfig.preset === 'by_entityId'
-            ? 'entityId'
-            : queryConfig.preset === 'by_field'
-              ? queryConfig.field || 'id'
-              : '_id';
-      if (queryConfig.preset === 'by_id' && field === '_id' && !looksLikeObjectId(presetValue)) {
-        field = 'id';
-      }
-      query = { [field]: presetValue };
-    }
   } else {
-    const parsed = parseJsonSafe(
-      renderJsonTemplate(
-        queryConfig.queryTemplate ?? '{}',
-        nodeInputs,
-        inputValue ?? ''
-      )
-    );
-    if (parsed && typeof parsed === 'object') {
-      query = parsed as Record<string, unknown>;
+    const queryTemplate = queryConfig.queryTemplate ?? '';
+    if (queryTemplate.trim().length > 0) {
+      const parsed = parseJsonSafe(
+        renderJsonTemplate(
+          queryTemplate,
+          nodeInputs,
+          inputValue ?? ''
+        )
+      );
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        query = parsed as Record<string, unknown>;
+      }
     }
   }
   const projection = parseJsonSafe(queryConfig.projection ?? '') as

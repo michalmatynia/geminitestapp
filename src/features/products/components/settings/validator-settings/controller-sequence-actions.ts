@@ -68,9 +68,6 @@ type SequenceActionResult = {
   handleUpdateGroupDebounce: (groupId: string, debounceMs: number) => Promise<void>;
 };
 
-const NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_ID = 'name_segment_dimensions';
-const NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_LABEL = 'Name Segment -> Dimensions';
-
 /**
  * Validator docs: see docs/validator/function-reference.md#controller.createsequenceactions
  */
@@ -361,18 +358,12 @@ export function createSequenceActions({
     message,
     replacementField,
     sequence,
-    sequenceGroupId,
-    sequenceGroupLabel,
-    sequenceGroupDebounceMs,
   }: {
     target: 'size_length' | 'length';
     labelBase: string;
     message: string;
     replacementField: 'sizeLength' | 'length';
     sequence: number;
-    sequenceGroupId: string;
-    sequenceGroupLabel: string;
-    sequenceGroupDebounceMs: number;
   }): Promise<void> => {
     const existingLabels = new Set(
       patterns
@@ -421,9 +412,9 @@ export function createSequenceActions({
       replacementAppliesToScopes: ['draft_template', 'product_create', 'product_edit'],
       postAcceptBehavior: 'revalidate',
       validationDebounceMs: 250,
-      sequenceGroupId,
-      sequenceGroupLabel,
-      sequenceGroupDebounceMs,
+      sequenceGroupId: null,
+      sequenceGroupLabel: null,
+      sequenceGroupDebounceMs: 0,
       sequence,
       chainMode: 'continue',
       maxExecutions: 1,
@@ -472,13 +463,6 @@ export function createSequenceActions({
       const createdCount = (templateResult.outcomes ?? []).filter(
         (item) => item.action === 'created'
       ).length;
-      setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => ({
-        ...prev,
-        [NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_ID]: {
-          label: NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_LABEL,
-          debounceMs: '0',
-        },
-      }));
       notifySuccess('Name segment -> Length & Height patterns created or updated.');
       if (createdCount > 0) {
         notifyInfo(
@@ -501,9 +485,6 @@ export function createSequenceActions({
             'Propose Length (sizeLength) from Name segment #2 (between first and second "|").',
           replacementField: 'sizeLength',
           sequence: maxSequence + 10,
-          sequenceGroupId: NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_ID,
-          sequenceGroupLabel: NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_LABEL,
-          sequenceGroupDebounceMs: 0,
         });
         await createNameSecondSegmentDimensionPattern({
           target: 'length',
@@ -512,17 +493,7 @@ export function createSequenceActions({
             'Propose Height (length) from Name segment #2 (between first and second "|").',
           replacementField: 'length',
           sequence: maxSequence + 20,
-          sequenceGroupId: NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_ID,
-          sequenceGroupLabel: NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_LABEL,
-          sequenceGroupDebounceMs: 0,
         });
-        setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => ({
-          ...prev,
-          [NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_ID]: {
-            label: NAME_SEGMENT_DIMENSIONS_SEQUENCE_GROUP_LABEL,
-            debounceMs: '0',
-          },
-        }));
         notifySuccess('Name segment -> Length & Height patterns created or updated.');
       } catch (fallbackError) {
         logClientError(fallbackError, {

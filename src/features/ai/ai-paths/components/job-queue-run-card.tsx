@@ -31,6 +31,7 @@ import {
   type StreamConnectionStatus,
 } from './job-queue-panel-utils';
 import { RunningIndicator } from './job-queue-running-indicator';
+import { extractPlaywrightArtifactsFromNode } from './playwright-artifacts';
 import { RunHistoryEntries } from './RunHistoryEntries';
 
 type HistoryOption = {
@@ -328,56 +329,81 @@ export function JobQueueRunCard({
                   />
                 ) : (
                   <div className='mt-1 space-y-2'>
-                    {nodes.map((node: AiPathRunNodeRecord) => (
-                      <CollapsibleSection
-                        key={node.id}
-                        title={(
-                          <span className='text-[11px] text-gray-300'>
-                            {node.nodeTitle ?? node.nodeId}{' '}
-                            {node.nodeType ? `(${node.nodeType})` : ''}
-                            <span className='ml-2 text-gray-500'>{node.status}</span>
-                          </span>
-                        )}
-                        className='border-border/60 bg-black/30'
-                        variant='subtle'
-                      >
-                        <div className='mt-1 grid gap-2 text-[11px] text-gray-400 sm:grid-cols-2 lg:grid-cols-3'>
-                          <div>
-                            <span className='uppercase text-gray-500'>Started</span>
-                            <div className='text-white'>{formatDate(node.startedAt)}</div>
+                    {nodes.map((node: AiPathRunNodeRecord) => {
+                      const artifactLinks = extractPlaywrightArtifactsFromNode(node);
+                      return (
+                        <CollapsibleSection
+                          key={node.id}
+                          title={(
+                            <span className='text-[11px] text-gray-300'>
+                              {node.nodeTitle ?? node.nodeId}{' '}
+                              {node.nodeType ? `(${node.nodeType})` : ''}
+                              <span className='ml-2 text-gray-500'>{node.status}</span>
+                            </span>
+                          )}
+                          className='border-border/60 bg-black/30'
+                          variant='subtle'
+                        >
+                          <div className='mt-1 grid gap-2 text-[11px] text-gray-400 sm:grid-cols-2 lg:grid-cols-3'>
+                            <div>
+                              <span className='uppercase text-gray-500'>Started</span>
+                              <div className='text-white'>{formatDate(node.startedAt)}</div>
+                            </div>
+                            <div>
+                              <span className='uppercase text-gray-500'>Finished</span>
+                              <div className='text-white'>{formatDate(node.finishedAt)}</div>
+                            </div>
+                            <div>
+                              <span className='uppercase text-gray-500'>Attempt</span>
+                              <div className='text-white'>{node.attempt}</div>
+                            </div>
                           </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Finished</span>
-                            <div className='text-white'>{formatDate(node.finishedAt)}</div>
+                          {node.errorMessage ? (
+                            <div className='mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-[11px] text-rose-200'>
+                              Error: {node.errorMessage}
+                            </div>
+                          ) : null}
+                          <div className='mt-3 grid gap-3 lg:grid-cols-2'>
+                            <FormField label='Inputs'>
+                              <Textarea
+                                className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
+                                readOnly
+                                value={safePrettyJson(node.inputs)}
+                              />
+                            </FormField>
+                            <FormField label='Outputs'>
+                              <Textarea
+                                className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
+                                readOnly
+                                value={safePrettyJson(node.outputs)}
+                              />
+                            </FormField>
                           </div>
-                          <div>
-                            <span className='uppercase text-gray-500'>Attempt</span>
-                            <div className='text-white'>{node.attempt}</div>
-                          </div>
-                        </div>
-                        {node.errorMessage ? (
-                          <div className='mt-2 rounded-md border border-rose-500/30 bg-rose-500/10 p-2 text-[11px] text-rose-200'>
-                            Error: {node.errorMessage}
-                          </div>
-                        ) : null}
-                        <div className='mt-3 grid gap-3 lg:grid-cols-2'>
-                          <FormField label='Inputs'>
-                            <Textarea
-                              className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                              readOnly
-                              value={safePrettyJson(node.inputs)}
-                            />
-                          </FormField>
-                          <FormField label='Outputs'>
-                            <Textarea
-                              className='mt-1 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-[11px] text-gray-200'
-                              readOnly
-                              value={safePrettyJson(node.outputs)}
-                            />
-                          </FormField>
-                        </div>
-                      </CollapsibleSection>
-                    ))}
+                          {artifactLinks.length > 0 ? (
+                            <div className='mt-3 rounded-md border border-sky-500/30 bg-sky-500/5 p-2'>
+                              <div className='text-[10px] uppercase tracking-wide text-sky-200'>
+                                Playwright Artifacts
+                              </div>
+                              <div className='mt-2 flex flex-wrap gap-2'>
+                                {artifactLinks.map((artifact, index) => (
+                                  <a
+                                    key={`${artifact.path}:${index}`}
+                                    href={artifact.url ?? '#'}
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                    className='rounded border border-sky-400/40 bg-sky-500/10 px-2 py-1 text-[11px] text-sky-100 hover:bg-sky-500/20 hover:underline'
+                                    title={artifact.path}
+                                  >
+                                    {artifact.name}
+                                    {artifact.kind ? ` (${artifact.kind})` : ''}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          ) : null}
+                        </CollapsibleSection>
+                      );
+                    })}
                   </div>
                 )}
               </CollapsibleSection>

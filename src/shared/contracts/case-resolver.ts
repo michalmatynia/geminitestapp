@@ -482,36 +482,36 @@ export const caseResolverFileEditDraftSchema = z.object({
   content: z.string(),
   fileType: caseResolverFileTypeSchema,
   folder: z.string(),
-  parentCaseId: z.string().optional(),
+  parentCaseId: z.string().nullable().optional(),
   referenceCaseIds: z.array(z.string()).optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
-  documentDate: caseResolverDocumentDateProposalSchema.optional(),
-  documentCity: z.string().optional(),
+  documentDate: caseResolverDocumentDateProposalSchema.nullable().optional(),
+  documentCity: z.string().nullable().optional(),
   originalDocumentContent: z.string().optional(),
   explodedDocumentContent: z.string().optional(),
   activeDocumentVersion: z.enum(['original', 'exploded']).optional(),
   editorType: caseResolverEditorTypeSchema.optional(),
   documentContentFormatVersion: z.number().optional(),
   documentContentVersion: z.number().optional(),
-  baseDocumentContentVersion: z.number().optional(),
+  baseDocumentContentVersion: z.number().nullable().optional(),
   documentContent: z.string().optional(),
   documentContentMarkdown: z.string().optional(),
   documentContentHtml: z.string().optional(),
   documentContentPlainText: z.string().optional(),
   documentHistory: z.array(caseResolverDocumentHistoryEntrySchema).optional(),
   documentConversionWarnings: z.array(z.string()).optional(),
-  lastContentConversionAt: z.string().optional(),
+  lastContentConversionAt: z.string().nullable().optional(),
   scanSlots: z.array(caseResolverScanSlotSchema).optional(),
   scanOcrModel: z.string().optional(),
   scanOcrPrompt: z.string().optional(),
   isLocked: z.boolean().optional(),
   graph: caseResolverGraphSchema.optional(),
-  addresser: caseResolverPartyReferenceSchema.optional(),
-  addressee: caseResolverPartyReferenceSchema.optional(),
-  tagId: z.string().optional(),
-  categoryId: z.string().optional(),
-  caseIdentifierId: z.string().optional(),
+  addresser: caseResolverPartyReferenceSchema.nullable().optional(),
+  addressee: caseResolverPartyReferenceSchema.nullable().optional(),
+  tagId: z.string().nullable().optional(),
+  categoryId: z.string().nullable().optional(),
+  caseIdentifierId: z.string().nullable().optional(),
 });
 
 export interface CaseResolverFileEditDraftDto {
@@ -537,10 +537,10 @@ export interface CaseResolverFileEditDraftDto {
   documentContentMarkdown?: string | undefined;
   documentContentHtml?: string | undefined;
   documentContentPlainText?: string | undefined;
-  documentHistory: CaseResolverDocumentHistoryEntry[];
+  documentHistory?: CaseResolverDocumentHistoryEntry[] | undefined;
   documentConversionWarnings?: string[] | undefined;
   lastContentConversionAt?: string | null | undefined;
-  scanSlots: CaseResolverScanSlot[];
+  scanSlots?: CaseResolverScanSlot[] | undefined;
   scanOcrModel?: string | undefined;
   scanOcrPrompt?: string | undefined;
   isLocked?: boolean | undefined;

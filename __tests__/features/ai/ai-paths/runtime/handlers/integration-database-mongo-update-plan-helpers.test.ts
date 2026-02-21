@@ -52,38 +52,19 @@ describe('Mongo update plan helpers', () => {
     );
   });
 
-  it('preserves array mapping for parameter target when guard is enabled', () => {
-    const sourceArray = [{ parameterId: 'p_color', value: 'Blue' }];
-    const result = buildMongoUpdatesFromMappings({
-      dbConfig: {
-        mappings: [{ targetPath: 'parameters', sourcePort: 'result' }],
-        parameterInferenceGuard: {
-          enabled: true,
-          targetPath: 'parameters',
-        },
-      } as any,
-      nodeInputPorts: ['result'],
-      templateInputs: { result: sourceArray },
-      parameterTargetPath: 'parameters',
-    });
-
-    expect(result.updates).toEqual({ parameters: sourceArray });
-    expect(result.missingSourcePorts).toEqual([]);
-    expect(result.unresolvedSourcePorts).toEqual([]);
-  });
-
-  it('marks unresolved result source path when nested path is missing', () => {
-    const result = buildMongoUpdatesFromMappings({
-      dbConfig: {
-        mappings: [{ targetPath: 'content_en', sourcePort: 'result', sourcePath: 'payload.text' }],
-      } as any,
-      nodeInputPorts: ['result'],
-      templateInputs: { result: { payload: {} } },
-      parameterTargetPath: 'parameters',
-    });
-
-    expect(result.updates).toEqual({});
-    expect(result.unresolvedSourcePorts).toEqual(['result']);
+  it('blocks mapping-based update construction', () => {
+    expect(() =>
+      buildMongoUpdatesFromMappings({
+        dbConfig: {
+          mappings: [{ targetPath: 'parameters', sourcePort: 'result' }],
+        } as any,
+        nodeInputPorts: ['result'],
+        templateInputs: { result: [] },
+        parameterTargetPath: 'parameters',
+      })
+    ).toThrow(
+      'Mapping-based database updates are disabled. Use an explicit update template instead.'
+    );
   });
 
   it('extracts missing template root ports while ignoring value/current', () => {

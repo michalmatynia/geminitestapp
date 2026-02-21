@@ -49,6 +49,7 @@ export const importExportTemplateMappingSchema = z.object({
 });
 
 export type ImportExportTemplateMappingDto = z.infer<typeof importExportTemplateMappingSchema>;
+export type ImportExportTemplateMapping = ImportExportTemplateMappingDto;
 export type TemplateMapping = ImportExportTemplateMappingDto;
 
 export const importTemplateParameterImportSchema = z.object({
@@ -72,6 +73,7 @@ export const importExportTemplateSchema = namedDtoSchema.extend({
 });
 
 export type ImportExportTemplateDto = z.infer<typeof importExportTemplateSchema>;
+export type ImportExportTemplate = ImportExportTemplateDto;
 export type Template = ImportExportTemplateDto;
 
 export const createImportExportTemplateSchema = importExportTemplateSchema.omit({

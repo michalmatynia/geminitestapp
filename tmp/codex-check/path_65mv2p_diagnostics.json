@@ -1,0 +1,81 @@
+{
+  "path": {
+    "id": "path_65mv2p",
+    "name": "Description & Name",
+    "executionMode": "server",
+    "nodes": 11,
+    "edges": 16
+  },
+  "compile": {
+    "ok": false,
+    "errors": 1,
+    "warnings": 0,
+    "findings": [
+      {
+        "code": "unsupported_cycle",
+        "severity": "error",
+        "message": "Cycle includes unsupported node types: Context Filter (context), JSON Parser (parser), Prompt (prompt), Model (model), Database Query (database), Prompt (prompt), Model (model), Prompt (prompt), Model (model).",
+        "metadata": {
+          "nodeIds": [
+            "node-jprmv8",
+            "node-2t655s",
+            "node-07ywfx",
+            "node-05y44u",
+            "node-nohy8q",
+            "node-bq516q",
+            "node-gfrhnz",
+            "node-ozsf40xo",
+            "node-o8fdnje9"
+          ],
+          "nodeTypes": [
+            "context",
+            "parser",
+            "prompt",
+            "model",
+            "database",
+            "prompt",
+            "model",
+            "prompt",
+            "model"
+          ]
+        }
+      }
+    ]
+  },
+  "validation": {
+    "enabled": false,
+    "policy": "block_below_threshold",
+    "score": 100,
+    "blocked": false,
+    "shouldWarn": false,
+    "failedRules": 0,
+    "warnThreshold": 70,
+    "blockThreshold": 50,
+    "severityCounts": {
+      "error": 0,
+      "warning": 0,
+      "info": 0
+    },
+    "findings": []
+  },
+  "diagnostics": {
+    "modelNodes": [
+      {
+        "id": "node-05y44u",
+        "title": "Model",
+        "waitForResult": true
+      },
+      {
+        "id": "node-gfrhnz",
+        "title": "Model",
+        "waitForResult": false
+      },
+      {
+        "id": "node-o8fdnje9",
+        "title": "Model",
+        "waitForResult": true
+      }
+    ],
+    "pollNodes": []
+  }
+}

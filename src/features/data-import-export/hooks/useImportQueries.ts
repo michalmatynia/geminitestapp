@@ -320,26 +320,11 @@ export function useRefreshImportParameterCacheMutation(): MutationResult<
       }
 
       const normalizedConnectionId = connectionId?.trim();
-      const sample = await api.post<{ productId?: string | null }>(
-        '/api/integrations/imports/base/sample-product',
-        {
-          inventoryId: normalizedInventoryId,
-          ...(normalizedConnectionId
-            ? { connectionId: normalizedConnectionId }
-            : {}),
-        }
-      );
-      const productId =
-        typeof sample?.productId === 'string' ? sample.productId.trim() : '';
-      if (!productId) {
-        throw new Error('No sample product found in selected inventory.');
-      }
-
       return api.post<{ keys?: string[]; values?: Record<string, string> }>(
         '/api/integrations/imports/base/parameters',
         {
           inventoryId: normalizedInventoryId,
-          productId,
+          sampleSize: 8,
           ...(normalizedConnectionId
             ? { connectionId: normalizedConnectionId }
             : {}),

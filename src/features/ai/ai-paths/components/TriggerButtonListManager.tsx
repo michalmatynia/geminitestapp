@@ -1,7 +1,7 @@
 'use client';
 
-import { GripVertical, Trash2, Edit, RefreshCw, ChevronUp, ChevronDown } from 'lucide-react';
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { GripVertical, Trash2, Edit, RefreshCw } from 'lucide-react';
+import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import {
@@ -30,7 +30,9 @@ type TriggerButtonListManagerProps = {
   onDelete: (id: string) => void;
   onOrderChange: (orderedIds: string[]) => void;
   onToggleVisibility: (item: AiTriggerButtonRecord, enabled: boolean) => void;
+  onOpenPath?: ((pathId: string) => void) | undefined;
   isLoading: boolean;
+  isReordering?: boolean;
 };
 
 export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> = ({
@@ -39,17 +41,37 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
   onDelete,
   onOrderChange,
   onToggleVisibility,
+  onOpenPath,
   isLoading,
+  isReordering = false,
 }: TriggerButtonListManagerProps) => {
   const [localRows, setLocalRows] = useState<AiTriggerButtonRecord[]>(data);
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [overId, setOverId] = useState<string | null>(null);
+  const [pendingOrderedIds, setPendingOrderedIds] = useState<string[] | null>(null);
+  const dropHandledRef = useRef(false);
+  const dragHandleArmedIdRef = useRef<string | null>(null);
 
   useEffect(() => {
-    // Keep in sync with server data, but do not reset local drag state mid-drag.
+    // Keep local order while reorder mutation is in-flight, otherwise sync to server state.
     if (draggingId) return;
+    if (pendingOrderedIds) {
+      const incomingIds = data.map((row: AiTriggerButtonRecord) => row.id);
+      const isPendingOrderPersisted =
+        incomingIds.length === pendingOrderedIds.length &&
+        incomingIds.every((id: string, index: number) => id === pendingOrderedIds[index]);
+      if (isPendingOrderPersisted) {
+        setPendingOrderedIds(null);
+        setLocalRows(data);
+        return;
+      }
+      if (isReordering) return;
+      setPendingOrderedIds(null);
+      setLocalRows(data);
+      return;
+    }
     setLocalRows(data);
-  }, [data, draggingId]);
+  }, [data, draggingId, isReordering, pendingOrderedIds]);
 
   const applyOrder = useCallback(
     (rows: AiTriggerButtonRecord[], sourceId: string, targetId: string): AiTriggerButtonRecord[] => {
@@ -67,50 +89,70 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
     []
   );
 
+  const commitReorder = useCallback((sourceId: string, targetId: string): void => {
+    const nextRows = applyOrder(localRows, sourceId, targetId);
+    if (nextRows === localRows) return;
+    const orderedIds = nextRows.map((row: AiTriggerButtonRecord) => row.id);
+    setLocalRows(nextRows);
+    setPendingOrderedIds(orderedIds);
+    onOrderChange(orderedIds);
+  }, [applyOrder, localRows, onOrderChange]);
+
+  const resolveDropTargetId = useCallback((eventTarget: EventTarget | null): string | null => {
+    if (!(eventTarget instanceof Element)) return null;
+    const row = eventTarget.closest('tr[data-row-id]');
+    if (!row) return null;
+    const rowId = row.getAttribute('data-row-id')?.trim() ?? '';
+    return rowId.length > 0 ? rowId : null;
+  }, []);
+
+  const armDragHandle = useCallback((id: string): void => {
+    dragHandleArmedIdRef.current = id;
+  }, []);
+
   const handleDragStart = useCallback((event: React.DragEvent, id: string): void => {
+    if (dragHandleArmedIdRef.current !== id) {
+      event.preventDefault();
+      return;
+    }
+    dragHandleArmedIdRef.current = null;
     event.dataTransfer.effectAllowed = 'move';
     event.dataTransfer.setData('text/plain', id);
+    dropHandledRef.current = false;
     setDraggingId(id);
     setOverId(id);
   }, []);
 
-  const handleDragEnter = useCallback((id: string): void => {
+  const handleTableDragOver = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
     if (!draggingId) return;
-    if (id === overId) return;
-    setOverId(id);
-  }, [draggingId, overId]);
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    const targetId = resolveDropTargetId(event.target);
+    setOverId((prev: string | null) => (prev === targetId ? prev : targetId));
+  }, [draggingId, resolveDropTargetId]);
 
-  const handleDrop = useCallback((targetId: string): void => {
+  const handleTableDrop = useCallback((event: React.DragEvent<HTMLDivElement>): void => {
     if (!draggingId) return;
-    const nextRows = applyOrder(localRows, draggingId, targetId);
-    if (nextRows !== localRows) {
-      setLocalRows(nextRows);
-      onOrderChange(nextRows.map((row) => row.id));
+    event.preventDefault();
+    dropHandledRef.current = true;
+    const sourceId = draggingId || event.dataTransfer.getData('text/plain');
+    const targetId = resolveDropTargetId(event.target) ?? overId;
+    if (sourceId && targetId && sourceId !== targetId) {
+      commitReorder(sourceId, targetId);
     }
     setDraggingId(null);
     setOverId(null);
-  }, [applyOrder, draggingId, localRows, onOrderChange]);
+  }, [commitReorder, draggingId, overId, resolveDropTargetId]);
 
   const handleDragEnd = useCallback((): void => {
+    if (!dropHandledRef.current && draggingId && overId && draggingId !== overId) {
+      commitReorder(draggingId, overId);
+    }
+    dragHandleArmedIdRef.current = null;
+    dropHandledRef.current = false;
     setDraggingId(null);
     setOverId(null);
-  }, []);
-
-  const handleMove = useCallback((id: string, direction: 'up' | 'down'): void => {
-    setLocalRows((prev): AiTriggerButtonRecord[] => {
-      const index = prev.findIndex((row) => row.id === id);
-      if (index === -1) return prev;
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
-
-      const nextRows = [...prev];
-      const [item] = nextRows.splice(index, 1);
-      if (!item) return prev;
-      nextRows.splice(targetIndex, 0, item);
-      onOrderChange(nextRows.map((row) => row.id));
-      return nextRows;
-    });
-  }, [onOrderChange]);
+  }, [commitReorder, draggingId, overId]);
 
   const handleVisibilityToggle = useCallback((record: AiTriggerButtonRecord, enabled: boolean): void => {
     setLocalRows((prev) =>
@@ -126,18 +168,14 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
       cell: ({ row }) => (
         <div
           draggable
+          onPointerDown={() => {
+            armDragHandle(row.original.id);
+          }}
           onDragStart={(e) => handleDragStart(e, row.original.id)}
-          onDragEnter={() => handleDragEnter(row.original.id)}
           onDragEnd={handleDragEnd}
-          onDragOver={(e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-          }}
-          onDrop={(e) => {
-            e.preventDefault();
-            handleDrop(row.original.id);
-          }}
+          data-testid={`trigger-reorder-handle-${row.original.id}`}
           className='cursor-grab active:cursor-grabbing p-2'
+          title='Drag to reorder'
         >
           <GripVertical className='size-4 text-muted-foreground' />
         </div>
@@ -214,22 +252,61 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
       accessorKey: 'pathName',
       header: 'AI Paths',
       cell: ({ row }) => {
-        const names = Array.isArray(row.original.pathNames)
-          ? row.original.pathNames.filter((name): name is string => Boolean(name?.trim()))
+        const rawNames = Array.isArray(row.original.pathNames)
+          ? row.original.pathNames
           : [];
-        if (names.length === 0) {
+        const rawPathIds = Array.isArray(row.original.pathIds)
+          ? row.original.pathIds
+          : [];
+        const linkedPaths = rawNames
+          .map((name: string, index: number): { name: string; pathId: string | null } => {
+            const normalizedName = name.trim();
+            const maybePathId = rawPathIds[index];
+            const normalizedPathId =
+              typeof maybePathId === 'string' && maybePathId.trim().length > 0
+                ? maybePathId.trim()
+                : null;
+            return { name: normalizedName, pathId: normalizedPathId };
+          })
+          .filter((entry: { name: string; pathId: string | null }): boolean => entry.name.length > 0);
+        if (linkedPaths.length === 0) {
           return <span className='text-xs text-gray-500'>Not linked</span>;
         }
         return (
           <div className='flex max-w-[360px] flex-wrap gap-1'>
-            {names.map((name: string, idx: number): React.JSX.Element => (
-              <StatusBadge
-                key={`${name}-${idx}`}
-                status={name}
-                variant='neutral'
-                size='sm'
-                className='font-medium'
-              />
+            {linkedPaths.map((entry: { name: string; pathId: string | null }, idx: number): React.JSX.Element => (
+              (() => {
+                const pathId = entry.pathId;
+                if (pathId && onOpenPath) {
+                  return (
+                    <button
+                      key={`${entry.name}-${pathId}-${idx}`}
+                      type='button'
+                      className='cursor-pointer'
+                      title={`Open AI Path: ${entry.name}`}
+                      onClick={() => {
+                        onOpenPath(pathId);
+                      }}
+                    >
+                      <StatusBadge
+                        status={entry.name}
+                        variant='neutral'
+                        size='sm'
+                        className='font-medium hover:border-primary/50 hover:text-white transition-colors'
+                      />
+                    </button>
+                  );
+                }
+                return (
+                  <StatusBadge
+                    key={`${entry.name}-${idx}`}
+                    status={entry.name}
+                    variant='neutral'
+                    size='sm'
+                    className='font-medium'
+                  />
+                );
+              })()
             ))}
           </div>
         );
@@ -240,28 +317,6 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
       header: () => <div className='text-right'>Actions</div>,
       cell: ({ row }) => (
         <div className='flex justify-end gap-2'>
-          <Button
-            variant='ghost'
-            size='xs'
-            onClick={() => handleMove(row.original.id, 'up')}
-            className='h-7 w-7 p-0'
-            disabled={row.index === 0}
-            aria-label='Move up'
-            title='Move up'
-          >
-            <ChevronUp className='size-3.5' />
-          </Button>
-          <Button
-            variant='ghost'
-            size='xs'
-            onClick={() => handleMove(row.original.id, 'down')}
-            className='h-7 w-7 p-0'
-            disabled={row.index === localRows.length - 1}
-            aria-label='Move down'
-            title='Move down'
-          >
-            <ChevronDown className='size-3.5' />
-          </Button>
           <Button
             variant='ghost'
             size='xs'
@@ -281,7 +336,7 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
         </div>
       ),
     },
-  ], [handleDragStart, handleDragEnter, handleDragEnd, handleDrop, onEdit, onDelete, handleMove, handleVisibilityToggle, localRows.length]);
+  ], [armDragHandle, handleDragStart, handleDragEnd, onEdit, onDelete, handleVisibilityToggle, onOpenPath]);
 
   if (isLoading && localRows.length === 0) {
     return <p className='text-sm text-gray-500'>Loading trigger buttons...</p>;
@@ -292,17 +347,27 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
   }
 
   return (
-    <StandardDataTablePanel
-      columns={columns}
-      data={localRows}
-      getRowId={(row) => row.id}
-      variant='flat'
-      footer={
-        <div className='flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/20 p-2 rounded'>
-          <RefreshCw className='size-3' />
-          Reorder with drag-and-drop or the up/down buttons. The same order is used in modals and lists.
-        </div>
-      }
-    />
+    <div
+      onDragOver={handleTableDragOver}
+      onDrop={handleTableDrop}
+    >
+      <StandardDataTablePanel
+        columns={columns}
+        data={localRows}
+        getRowId={(row) => row.id}
+        getRowClassName={(row) =>
+          overId === row.original.id && draggingId !== row.original.id
+            ? 'bg-cyan-500/10'
+            : undefined
+        }
+        variant='flat'
+        footer={
+          <div className='flex items-center gap-2 text-[11px] text-muted-foreground bg-muted/20 p-2 rounded'>
+            <RefreshCw className='size-3' />
+            Reorder using the drag handle only. The same order is used in modals and lists.
+          </div>
+        }
+      />
+    </div>
   );
 };

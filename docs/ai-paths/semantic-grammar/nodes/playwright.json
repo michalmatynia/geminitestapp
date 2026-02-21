@@ -1,0 +1,184 @@
+{
+  "specVersion": "ai-paths.semantic-grammar.v1",
+  "nodeDocVersion": "2026-02-20.v1",
+  "nodeType": "playwright",
+  "title": "Playwright",
+  "purpose": "Run programmable browser automation with persona-driven fidelity.",
+  "inputs": [
+    "prompt",
+    "bundle",
+    "context",
+    "entityJson",
+    "value",
+    "result",
+    "title",
+    "images",
+    "content_en",
+    "entityId",
+    "entityType",
+    "productId"
+  ],
+  "outputs": [
+    "result",
+    "value",
+    "bundle",
+    "status",
+    "jobId"
+  ],
+  "configFields": [
+    {
+      "path": "playwright.personaId",
+      "description": "Optional Playwright Persona ID. When set, node runtime inherits persona browser fidelity settings.",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "playwright.script",
+      "description": "User script that exports a default async function: `run({ browser, context, page, input, emit, artifacts, log, helpers })`.",
+      "defaultValue": "\"export default async function run(...) { ... }\""
+    },
+    {
+      "path": "playwright.waitForResult",
+      "description": "When true, waits for Playwright completion and emits final outputs. When false, emits runId/job status immediately.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "playwright.timeoutMs",
+      "description": "Per-run timeout budget in milliseconds.",
+      "defaultValue": "120000"
+    },
+    {
+      "path": "playwright.browserEngine",
+      "description": "Browser engine to launch: chromium/firefox/webkit.",
+      "defaultValue": "chromium"
+    },
+    {
+      "path": "playwright.startUrlTemplate",
+      "description": "Optional URL template rendered from incoming ports before script execution (example: https://example.com/{{entityId}}).",
+      "defaultValue": "\"\""
+    },
+    {
+      "path": "playwright.launchOptionsJson",
+      "description": "Raw Playwright launch options JSON merged with persona-driven settings before browser launch.",
+      "defaultValue": "{}"
+    },
+    {
+      "path": "playwright.contextOptionsJson",
+      "description": "Raw Playwright browser context options JSON applied when creating a context/page session.",
+      "defaultValue": "{}"
+    },
+    {
+      "path": "playwright.settingsOverrides",
+      "description": "Optional partial override object for Playwright persona fields (headless, slowMo, timeouts, proxy, device emulation).",
+      "defaultValue": "{}"
+    },
+    {
+      "path": "playwright.capture.screenshot",
+      "description": "Capture final screenshot artifact on run completion.",
+      "defaultValue": "true"
+    },
+    {
+      "path": "playwright.capture.html",
+      "description": "Capture final page HTML artifact on run completion.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "playwright.capture.video",
+      "description": "Enable Playwright video capture for the run context.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "playwright.capture.trace",
+      "description": "Enable Playwright trace collection and save trace.zip artifact.",
+      "defaultValue": "false"
+    },
+    {
+      "path": "runtime.cache.mode",
+      "description": "Node output caching. auto = reuse when safe, force = always reuse, disabled = recompute each run.",
+      "defaultValue": "auto"
+    },
+    {
+      "path": "runtime.waitForInputs",
+      "description": "If true, wait until all connected input ports have values before executing the node.",
+      "defaultValue": "false"
+    }
+  ],
+  "notes": [
+    "Built-in script templates are available in the Playwright node config dialog."
+  ],
+  "defaultConfig": {
+    "playwright": {
+      "personaId": "",
+      "script": "export default async function run({ page, input, emit }) {\n  const target = input?.prompt || input?.value || input?.result || \"https://example.com\";\n  const url = typeof target === \"string\" && target.trim() ? target.trim() : \"https://example.com\";\n  await page.goto(url, { waitUntil: \"domcontentloaded\" });\n  const title = await page.title();\n  emit(\"result\", title);\n  emit(\"value\", { title, url: page.url() });\n  return { title, url: page.url() };\n}",
+      "waitForResult": true,
+      "timeoutMs": 120000,
+      "browserEngine": "chromium",
+      "startUrlTemplate": "",
+      "launchOptionsJson": "{}",
+      "contextOptionsJson": "{}",
+      "settingsOverrides": {},
+      "capture": {
+        "screenshot": true,
+        "html": false,
+        "video": false,
+        "trace": false
+      }
+    }
+  },
+  "semanticNodeExample": {
+    "id": "node_playwright",
+    "type": "playwright",
+    "title": "Playwright",
+    "description": "Run programmable browser automation with persona-driven fidelity.",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "inputs": [
+      "prompt",
+      "bundle",
+      "context",
+      "entityJson",
+      "value",
+      "result",
+      "title",
+      "images",
+      "content_en",
+      "entityId",
+      "entityType",
+      "productId"
+    ],
+    "outputs": [
+      "result",
+      "value",
+      "bundle",
+      "status",
+      "jobId"
+    ],
+    "config": {
+      "playwright": {
+        "personaId": "",
+        "script": "export default async function run({ page, input, emit }) {\n  const target = input?.prompt || input?.value || input?.result || \"https://example.com\";\n  const url = typeof target === \"string\" && target.trim() ? target.trim() : \"https://example.com\";\n  await page.goto(url, { waitUntil: \"domcontentloaded\" });\n  const title = await page.title();\n  emit(\"result\", title);\n  emit(\"value\", { title, url: page.url() });\n  return { title, url: page.url() };\n}",
+        "waitForResult": true,
+        "timeoutMs": 120000,
+        "browserEngine": "chromium",
+        "startUrlTemplate": "",
+        "launchOptionsJson": "{}",
+        "contextOptionsJson": "{}",
+        "settingsOverrides": {},
+        "capture": {
+          "screenshot": true,
+          "html": false,
+          "video": false,
+          "trace": false
+        }
+      }
+    },
+    "data": {},
+    "connections": {
+      "incoming": [],
+      "outgoing": []
+    }
+  },
+  "nodeHashAlgorithm": "sha256",
+  "nodeHash": "f3b63284ff083ea90e8ebce1d5c25f299d43ff39dbeba4219ab0ee325945b442"
+}

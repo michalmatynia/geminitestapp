@@ -239,7 +239,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const [isApplyingPromptExploderPartyProposal, setIsApplyingPromptExploderPartyProposalState] =
     useState(false);
   const [promptExploderPayloadRefreshVersion, setPromptExploderPayloadRefreshVersion] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+   
   const [promptExploderApplyDiagnostics, setPromptExploderApplyDiagnostics] =
     useState<CaseResolverPromptExploderApplyUiDiagnostics | null>(null);
   const [, setPersistedWorkspaceSnapshot] = useState<string>(
@@ -250,10 +250,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
       serializeWorkspaceForUnsavedChangesCheck(initialWorkspaceState)
     );
   const [isWorkspaceSaving, setIsWorkspaceSaving] = useState(false);
-  const [workspaceSaveStatus, setWorkspaceSaveStatus] = useState<
+  const [, setWorkspaceSaveStatus] = useState<
     'idle' | 'dirty' | 'saving' | 'saved' | 'conflict' | 'error'
   >('idle');
-  const [workspaceSaveError, setWorkspaceSaveError] = useState<string | null>(null);
+  const [, setWorkspaceSaveError] = useState<string | null>(null);
 
   const defaultTagId = caseResolverTags[0]?.id ?? null;
   const defaultCaseIdentifierId = caseResolverIdentifiers[0]?.id ?? null;
@@ -316,12 +316,12 @@ export function useCaseResolverState(): CaseResolverStateValue {
       patch?: Partial<CaseResolverPromptExploderApplyUiDiagnostics>;
     }): void => {
       setPromptExploderApplyDiagnostics((current: CaseResolverPromptExploderApplyUiDiagnostics | null) =>
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+         
         applyPromptExploderTransferLifecycleUpdate<CaseResolverPromptExploderApplyUiDiagnostics>(current, {
           nextStatus: input.nextStatus,
           reason: input.reason ?? null,
           force: input.force ?? false,
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           patch: input.patch ?? {},
         })
       );
@@ -356,12 +356,12 @@ export function useCaseResolverState(): CaseResolverStateValue {
 
   const persistAppliedPromptExploderTransferIds = useCallback((): void => {
     if (typeof window === 'undefined') return;
-          try {
-            const payload = JSON.stringify(
-              Array.from(appliedPromptExploderTransferIdsRef.current).slice(
-                -CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT
-              )
-            );
+    try {
+      const payload = JSON.stringify(
+        Array.from(appliedPromptExploderTransferIdsRef.current).slice(
+          -CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT
+        )
+      );
     
       window.localStorage.setItem(CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_KEY, payload);
     } catch {
@@ -375,10 +375,11 @@ export function useCaseResolverState(): CaseResolverStateValue {
     appliedPromptExploderTransferIdsRef.current.add(normalizedTransferId);
     if (
       appliedPromptExploderTransferIdsRef.current.size >
-      CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT
+            CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT
     ) {
-      const values = [...appliedPromptExploderTransferIdsRef.current];
+      const values = Array.from(appliedPromptExploderTransferIdsRef.current);
       const trimmed = values.slice(-CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT);
+    
       appliedPromptExploderTransferIdsRef.current = new Set(trimmed);
     }
     persistAppliedPromptExploderTransferIds();
@@ -507,7 +508,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
         return;
       }
 
-      if (result.conflict) {
+      if (!result.ok && result.conflict) {
         const serverWorkspace = result.workspace;
         const serverRevision = getCaseResolverWorkspaceRevision(serverWorkspace);
         syncPersistedWorkspaceTracking(serverWorkspace);
@@ -731,7 +732,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
             observedPromptExploderPayloadKey !== null
     ) {
       setPromptExploderApplyDiagnostics((current: CaseResolverPromptExploderApplyUiDiagnostics | null): CaseResolverPromptExploderApplyUiDiagnostics | null => (
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+         
         current
           ? {
             ...current,
@@ -1267,34 +1268,6 @@ export function useCaseResolverState(): CaseResolverStateValue {
     setWorkspaceSaveStatus('saved');
     setWorkspaceSaveError(null);
   }, [isWorkspaceDirty, isWorkspaceSaving]);
-
-  const handleSaveWorkspace = useCallback((): void => {
-    const normalizedWorkspace = normalizeCaseResolverWorkspace(workspace);
-    const serializedWorkspace = JSON.stringify(normalizedWorkspace);
-    if (!isWorkspaceDirty || serializedWorkspace === lastPersistedValueRef.current) {
-      setIsWorkspaceSaving(false);
-      setWorkspaceSaveStatus('saved');
-      setWorkspaceSaveError(null);
-      toast('No changes to save.', { variant: 'info' });
-      return;
-    }
-    queuedSerializedWorkspaceRef.current = serializedWorkspace;
-    if (queuedExpectedRevisionRef.current === null) {
-      queuedExpectedRevisionRef.current = lastPersistedRevisionRef.current;
-    }
-    if (!queuedMutationIdRef.current) {
-      queuedMutationIdRef.current =
-        normalizedWorkspace.lastMutationId ??
-        createCaseResolverWorkspaceMutationId('case-resolver-workspace-manual');
-    }
-    if (!pendingSaveToastRef.current) {
-      pendingSaveToastRef.current = 'Case Resolver changes saved.';
-    }
-    setIsWorkspaceSaving(true);
-    setWorkspaceSaveStatus('saving');
-    setWorkspaceSaveError(null);
-    flushWorkspacePersist();
-  }, [flushWorkspacePersist, isWorkspaceDirty, toast, workspace]);
 
   const handleSelectFile = useCallback((
     fileId: string,
@@ -1863,16 +1836,26 @@ export function useCaseResolverState(): CaseResolverStateValue {
     }
     const baseDraft = buildFileEditDraft(target);
     const recoveredDraft = readStoredEditorDraft(fileId);
-    const canRecoverStoredDraft =
+    const hasRecoverableStoredDraftPayload =
       !target.isLocked &&
       recoveredDraft !== null &&
       recoveredDraft.baseDocumentContentVersion === baseDraft.baseDocumentContentVersion;
-    const mergedDraft: CaseResolverFileEditDraft = canRecoverStoredDraft
+    const recoveredMergedDraft: CaseResolverFileEditDraft | null = hasRecoverableStoredDraftPayload
       ? {
         ...baseDraft,
         ...recoveredDraft.draft,
         documentHistory: baseDraft.documentHistory ?? [],
       }
+      : null;
+    const canRecoverStoredDraft =
+      recoveredMergedDraft !== null &&
+      hasCaseResolverDraftMeaningfulChanges({
+        draft: recoveredMergedDraft,
+        file: target,
+        canonicalState: buildCaseResolverDraftCanonicalState(recoveredMergedDraft),
+      });
+    const mergedDraft: CaseResolverFileEditDraft = canRecoverStoredDraft
+      ? recoveredMergedDraft
       : {
         ...baseDraft,
         documentHistory: baseDraft.documentHistory ?? [],
@@ -1910,7 +1893,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     };
     if (canRecoverStoredDraft) {
       toast('Recovered unsaved draft from local storage.', { variant: 'info' });
-    } else if (recoveredDraft) {
+    } else if (hasRecoverableStoredDraftPayload || recoveredDraft) {
       clearStoredEditorDraft(fileId);
     }
     setEditingDocumentDraft(nextDraft);
@@ -2218,11 +2201,6 @@ export function useCaseResolverState(): CaseResolverStateValue {
     workspaceRef,
     setWorkspace,
     updateWorkspace,
-    isWorkspaceDirty,
-    isWorkspaceSaving,
-    workspaceSaveStatus,
-    workspaceSaveError,
-    handleSaveWorkspace,
     selectedFileId,
     setSelectedFileId,
     selectedFolderPath,
@@ -2292,7 +2270,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     handleDiscardPendingPromptExploderPayload,
     promptExploderPartyProposal,
     setPromptExploderPartyProposal,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+     
     promptExploderApplyDiagnostics,
     isPromptExploderPartyProposalOpen,
     

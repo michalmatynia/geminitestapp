@@ -2,11 +2,12 @@
 
 import React from 'react';
 
+import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
+
 import { ProductImageManagerHeader } from './ProductImageManagerHeader';
 import { ProductImageManagerUIProvider, useProductImageManagerUI } from './ProductImageManagerUIContext';
 import { ProductImageSlot } from './ProductImageSlot';
 
-import type { ProductImageManagerController } from './ProductImageManager';
 
 export type { ProductImageManagerController };
 

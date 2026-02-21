@@ -422,8 +422,8 @@ describe('AI Paths Runtime Engine', () => {
       ? historyEntries.find((entry) => entry['skipReason'] === 'missing_inputs')
       : null;
     expect(skipHistory).toBeDefined();
-    expect((skipHistory?.['requiredPorts'] as string[] | undefined) ?? []).toContain('context');
-    expect((skipHistory?.['waitingOnPorts'] as string[] | undefined) ?? []).toContain('context');
+    expect((skipHistory?.['requiredPorts']) ?? []).toContain('context');
+    expect((skipHistory?.['waitingOnPorts']) ?? []).toContain('context');
   });
 
   it('supports per-activation side-effect policy for notification nodes', async () => {

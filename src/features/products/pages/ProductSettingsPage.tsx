@@ -17,6 +17,8 @@ import { PriceGroupsSettings } from '@/features/products/components/settings/pri
 import { ProductImageRoutingSettings } from '@/features/products/components/settings/ProductImageRoutingSettings';
 import { ProductSettingsProvider } from '@/features/products/components/settings/ProductSettingsContext';
 import { TagsSettings } from '@/features/products/components/settings/TagsSettings';
+import { ValidatorDefaultPanel } from '@/features/products/components/settings/validator-settings/ValidatorDefaultPanel';
+import { ValidatorDocsTooltipsProvider } from '@/features/products/components/settings/validator-settings/ValidatorDocsTooltips';
 import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
 import {
   useCatalogs,
@@ -314,7 +316,12 @@ export function ProductSettingsPage(): React.JSX.Element {
                 <ProductImageRoutingSettings />
               )}
               {activeSection === 'Validator' && (
-                <ValidatorSettings />
+                <ValidatorDocsTooltipsProvider>
+                  <div className='space-y-5'>
+                    <ValidatorDefaultPanel />
+                    <ValidatorSettings />
+                  </div>
+                </ValidatorDocsTooltipsProvider>
               )}
               {activeSection === 'Internationalization' && (
                 <InternationalizationSettings />

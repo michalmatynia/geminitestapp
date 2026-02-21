@@ -7,9 +7,7 @@ import type {
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
-import { resolveEntityIdFromInputs } from '../utils';
 import { executeMongoCollectionUpdate } from './integration-database-mongo-update-collection-executor';
-import { executeMongoEntityUpdate } from './integration-database-mongo-update-entity-executor';
 import { buildMongoUpdatePlan } from './integration-database-mongo-update-plan';
 
 export type HandleDatabaseMongoUpdateActionInput = {
@@ -48,8 +46,8 @@ export async function handleDatabaseMongoUpdateAction({
   executed,
   reportAiPathsError,
   toast,
-  simulationEntityType,
-  simulationEntityId,
+  simulationEntityType: _simulationEntityType,
+  simulationEntityId: _simulationEntityId,
   resolvedInputs,
   nodeInputPorts,
   dbConfig,
@@ -119,64 +117,32 @@ export async function handleDatabaseMongoUpdateAction({
     };
   }
 
-  const resolveEntityId = (): string | null => {
-    const entityIdValue =
-      typeof resolvedInputs['entityId'] === 'string'
-        ? resolvedInputs['entityId']
-        : typeof resolvedInputs['productId'] === 'string'
-          ? resolvedInputs['productId']
-          : null;
-    if (entityIdValue?.trim()) return entityIdValue;
-
-    const fallbackEntityId: string = resolveEntityIdFromInputs(
-      resolvedInputs,
-      dbConfig.idField ?? 'entityId',
-      simulationEntityType,
-      simulationEntityId,
+  const updatePayloadMode = dbConfig.updatePayloadMode ?? 'custom';
+  if (updatePayloadMode !== 'custom') {
+    const error =
+      'Mapping-based update mode is disabled. Configure explicit filter and update document.';
+    reportAiPathsError(
+      new Error(error),
+      {
+        action: 'dbUpdateGuardrail',
+        nodeId: node.id,
+        updatePayloadMode,
+      },
+      'Database update blocked:',
     );
-    if (fallbackEntityId.trim()) return fallbackEntityId;
-
-    const filterId =
-      typeof resolvedFilter['id'] === 'string'
-        ? resolvedFilter['id']
-        : typeof resolvedFilter['_id'] === 'string'
-          ? resolvedFilter['_id']
-          : null;
-    return filterId?.trim() ? filterId : null;
-  };
-
-  const normalizedCollection: string = collection.trim().toLowerCase();
-  const normalizedEntityType: string = (dbConfig.entityType ?? '').trim().toLowerCase();
-  const updatePayloadMode = dbConfig.updatePayloadMode ?? 'mapping';
-  const isCustomPayloadMode = updatePayloadMode === 'custom';
-  const isProductCollection: boolean =
-    normalizedCollection === 'product' || normalizedCollection === 'products';
-  const shouldUseEntityUpdate: boolean =
-    action === 'updateOne' &&
-    !isCustomPayloadMode &&
-    (isProductCollection || normalizedEntityType === 'product');
-
-  if (shouldUseEntityUpdate) {
-    return await executeMongoEntityUpdate({
-      action,
-      node,
-      nodeInputs,
-      prevOutputs,
-      executed,
-      reportAiPathsError,
-      toast,
-      dbConfig,
-      queryPayload,
-      collection,
-      templateInputs,
-      debugPayload,
-      parameterTargetPath,
-      updates,
-      primaryTarget,
-      updateDoc,
-      resolveEntityId,
+    toast(error, { variant: 'error' });
+    return {
+      result: null,
+      bundle: {
+        error,
+        guardrail: 'update-mode-explicit-only',
+      },
+      debugPayload: {
+        ...debugPayload,
+        guardrail: 'update-mode-explicit-only',
+      },
       aiPrompt,
-    });
+    };
   }
 
   return await executeMongoCollectionUpdate({
@@ -195,7 +161,6 @@ export async function handleDatabaseMongoUpdateAction({
     primaryTarget,
     resolvedFilter,
     updateDoc,
-    resolveEntityId,
     aiPrompt,
   });
 }

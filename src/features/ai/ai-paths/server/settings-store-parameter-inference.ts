@@ -217,7 +217,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
             updateStrategy: 'one',
             useMongoActions: true,
             actionCategory: 'update',
-            action: 'updateOne',
+            action: 'findOneAndUpdate',
             mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
             updatePayloadMode: 'custom',
             query: {
@@ -818,6 +818,11 @@ export const needsParameterInferenceConfigUpgrade = (
         ? seedDatabase['updatePayloadMode']
         : null;
     if (seedUpdatePayloadMode !== 'custom') return true;
+    const seedAction =
+      typeof seedDatabase?.['action'] === 'string'
+        ? seedDatabase['action']
+        : null;
+    if (seedAction !== 'findOneAndUpdate') return true;
     const seedUpdateTemplate =
       typeof seedDatabase?.['updateTemplate'] === 'string'
         ? seedDatabase['updateTemplate'].trim()

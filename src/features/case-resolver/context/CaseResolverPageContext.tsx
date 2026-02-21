@@ -27,13 +27,8 @@ export type CaseResolverPageContextValue = {
   selectedFileId: string | null;
   selectedAssetId: string | null;
   selectedFolderPath: string | null;
-  isWorkspaceDirty: boolean;
-  isWorkspaceSaving: boolean;
-  workspaceSaveStatus: 'idle' | 'dirty' | 'saving' | 'saved' | 'conflict' | 'error';
-  workspaceSaveError: string | null;
   panelCollapsed: boolean;
   onPanelCollapsedChange: (collapsed: boolean) => void;
-  onSaveWorkspace: () => void;
   onDeactivateActiveFile: () => void;
   onSelectFile: (
     fileId: string,

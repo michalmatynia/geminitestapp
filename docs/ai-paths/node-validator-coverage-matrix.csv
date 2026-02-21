@@ -12,6 +12,7 @@ poll,yes,yes,yes,n/a,yes,n/a,covered,Interval/attempt/result-consume checks incl
 database,yes,yes,yes,yes,n/a,yes,covered,Operation/query/update identity safety checks included
 db_schema,yes,partial,partial,yes,n/a,n/a,partial,Selected collections covered; provider relation checks pending
 http,yes,partial,partial,n/a,n/a,n/a,partial,URL required covered; method/header checks pending
+playwright,yes,yes,yes,n/a,yes,partial,partial,Persona/script/capture checks wired; extend launch/context policy validation next
 router,partial,yes,partial,n/a,n/a,n/a,partial,Outgoing branch checks included
 gate,partial,yes,partial,n/a,n/a,n/a,partial,Outgoing branch checks included
 validation_pattern,yes,partial,yes,n/a,n/a,n/a,partial,Stack/rules presence covered

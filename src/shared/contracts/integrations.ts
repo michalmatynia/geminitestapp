@@ -1,7 +1,11 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
-import { productParameterValueSchema } from './products';
+import {
+  productParameterValueSchema,
+  type ParameterRepository,
+  type ProductParameterValueDto,
+} from './products';
 
 /**
  * Image Processing Contracts
@@ -687,7 +691,14 @@ export const extractedBaseParameterSchema = z.object({
   valuesByLanguage: z.record(z.string(), z.string()),
 });
 
-export type ExtractedBaseParameterDto = z.infer<typeof extractedBaseParameterSchema>;
+export interface ExtractedBaseParameterDto {
+  key: string;
+  baseParameterId: string | null;
+  namesByLanguage: Record<string, string>;
+  valuesByLanguage: Record<string, string>;
+}
+
+export type ExtractedBaseParameter = ExtractedBaseParameterDto;
 
 export const baseParameterImportSummarySchema = z.object({
   extracted: z.number(),
@@ -765,7 +776,20 @@ export const applyBaseParameterImportInputSchema = z.object({
   templateMappings: z.array(z.object({ sourceKey: z.string(), targetField: z.string() })),
 });
 
-export type ApplyBaseParameterImportInputDto = z.infer<typeof applyBaseParameterImportInputSchema>;
+export interface ApplyBaseParameterImportInputDto {
+  record: Record<string, unknown>;
+  catalogId: string;
+  parameterRepository: ParameterRepository;
+  connectionId?: string | null | undefined;
+  inventoryId?: string | null | undefined;
+  existingValues: ProductParameterValueDto[];
+  catalogLanguageCodes: string[];
+  defaultLanguageCode?: string | null | undefined;
+  settings: BaseImportParameterImportSettingsDto;
+  templateMappings: { sourceKey: string; targetField: string }[];
+}
+
+export type ApplyBaseParameterImportInput = ApplyBaseParameterImportInputDto;
 
 export const applyBaseParameterImportResultSchema = z.object({
   applied: z.boolean(),
@@ -773,7 +797,13 @@ export const applyBaseParameterImportResultSchema = z.object({
   summary: baseParameterImportSummarySchema,
 });
 
-export type ApplyBaseParameterImportResultDto = z.infer<typeof applyBaseParameterImportResultSchema>;
+export interface ApplyBaseParameterImportResultDto {
+  applied: boolean;
+  parameters: ProductParameterValueDto[];
+  summary: BaseParameterImportSummaryDto;
+}
+
+export type ApplyBaseParameterImportResult = ApplyBaseParameterImportResultDto;
 
 /**
  * Integration Test DTOs

@@ -175,12 +175,121 @@ const normalizeReplacementFields = (fields: string[] | undefined): string[] => {
   return [...new Set(fields)];
 };
 
+const isNameSecondSegmentDimensionPattern = (pattern: {
+  target: string;
+  replacementEnabled: boolean;
+  replacementValue: string | null;
+}): boolean => {
+  if (pattern.target !== 'size_length' && pattern.target !== 'length') return false;
+  if (!pattern.replacementEnabled || !pattern.replacementValue) return false;
+  const recipe = parseDynamicReplacementRecipe(pattern.replacementValue);
+  if (!recipe) return false;
+  return (
+    recipe.sourceMode === 'form_field' &&
+    recipe.sourceField === 'name_en' &&
+    recipe.targetApply === 'replace_whole_field'
+  );
+};
+
+const getPatternSequence = (
+  pattern: { sequence?: number | null | undefined },
+  fallbackIndex: number
+): number => {
+  if (typeof pattern.sequence === 'number' && Number.isFinite(pattern.sequence)) {
+    return Math.max(0, Math.floor(pattern.sequence));
+  }
+  return (fallbackIndex + 1) * 10;
+};
+
 export async function getValidatorPatternsHandler(
   _req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
   const patterns = await listValidationPatternsCached();
-  return NextResponse.json(patterns);
+  const indexedPatterns = patterns.map((pattern, index) => ({ pattern, index }));
+  const dimensionEntries = indexedPatterns.filter(({ pattern }) =>
+    isNameSecondSegmentDimensionPattern(pattern)
+  );
+  const staleDimensionEntries = dimensionEntries.filter(({ pattern }) =>
+    Boolean(pattern.sequenceGroupId?.trim()) ||
+    Boolean(pattern.sequenceGroupLabel?.trim()) ||
+    (pattern.sequenceGroupDebounceMs ?? 0) !== 0
+  );
+
+  const mirrorEntries = indexedPatterns.filter(({ pattern }) => {
+    const label = pattern.sequenceGroupLabel?.trim().toLowerCase() ?? '';
+    return label === 'name en -> pl mirror';
+  });
+
+  const mirrorWindow =
+    mirrorEntries.length > 1
+      ? {
+        min: Math.min(...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))),
+        max: Math.max(...mirrorEntries.map(({ pattern, index }) => getPatternSequence(pattern, index))),
+      }
+      : null;
+
+  const interleavedDimensionEntries = mirrorWindow
+    ? dimensionEntries.filter(({ pattern, index }) => {
+      const sequence = getPatternSequence(pattern, index);
+      return sequence > mirrorWindow.min && sequence < mirrorWindow.max;
+    })
+    : [];
+
+  if (staleDimensionEntries.length === 0 && interleavedDimensionEntries.length === 0) {
+    return NextResponse.json(patterns);
+  }
+
+  const repository = await getValidationPatternRepository();
+  const updates = new Map<
+    string,
+    {
+      sequenceGroupId?: null;
+      sequenceGroupLabel?: null;
+      sequenceGroupDebounceMs?: number;
+      sequence?: number;
+    }
+  >();
+
+  for (const { pattern } of staleDimensionEntries) {
+    const existing = updates.get(pattern.id) ?? {};
+    updates.set(pattern.id, {
+      ...existing,
+      sequenceGroupId: null,
+      sequenceGroupLabel: null,
+      sequenceGroupDebounceMs: 0,
+    });
+  }
+
+  if (interleavedDimensionEntries.length > 0) {
+    const maxSequence = indexedPatterns.reduce(
+      (max, { pattern, index }) => Math.max(max, getPatternSequence(pattern, index)),
+      0
+    );
+    let nextSequence = maxSequence + 10;
+    const sortedInterleaved = [...interleavedDimensionEntries].sort(
+      (left, right) =>
+        getPatternSequence(left.pattern, left.index) - getPatternSequence(right.pattern, right.index)
+    );
+    for (const { pattern } of sortedInterleaved) {
+      const existing = updates.get(pattern.id) ?? {};
+      updates.set(pattern.id, {
+        ...existing,
+        sequenceGroupId: null,
+        sequenceGroupLabel: null,
+        sequenceGroupDebounceMs: 0,
+        sequence: nextSequence,
+      });
+      nextSequence += 10;
+    }
+  }
+
+  for (const [patternId, data] of updates) {
+    await repository.updatePattern(patternId, data);
+  }
+  invalidateValidationPatternRuntimeCache();
+  const refreshedPatterns = await repository.listPatterns();
+  return NextResponse.json(refreshedPatterns);
 }
 
 export async function postValidatorPatternsHandler(
@@ -214,7 +323,7 @@ export async function postValidatorPatternsHandler(
   const postAcceptBehavior = body.postAcceptBehavior ?? 'revalidate';
   const denyBehaviorOverride = normalizeProductValidationPatternDenyBehaviorOverride(
     body.denyBehaviorOverride
-  );
+  ) as 'ask_again' | 'mute_session' | null;
   const validationDebounceMs = body.validationDebounceMs ?? 0;
   const sequenceGroupId = body.sequenceGroupId?.trim() || null;
   const sequenceGroupLabel = body.sequenceGroupLabel?.trim() || null;

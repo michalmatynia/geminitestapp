@@ -42,14 +42,47 @@ describe('resolveDatabaseQuery guardrails', () => {
 
     expect(result.output['bundle']).toEqual(
       expect.objectContaining({
-        error: 'Custom query template is empty. Use {} explicitly for full collection scans.',
+        error: 'No explicit query provided. Define queryTemplate or connect query/queryCallback/aiQuery input.',
         guardrail: 'query-resolution',
         querySource: 'customTemplate',
       })
     );
     expect(toast).toHaveBeenCalledWith(
-      'Custom query template is empty. Use {} explicitly for full collection scans.',
+      'No explicit query provided. Define queryTemplate or connect query/queryCallback/aiQuery input.',
       { variant: 'error' }
+    );
+  });
+
+  it('blocks preset query mode and requires explicit query definition', () => {
+    const toast = vi.fn();
+
+    const result = resolveDatabaseQuery({
+      nodeInputs: {},
+      toast,
+      simulationEntityType: null,
+      simulationEntityId: null,
+      resolvedInputs: {},
+      queryConfig: {
+        ...baseQueryConfig,
+        mode: 'preset',
+      },
+      templateInputValue: '',
+      templateContext: {},
+      aiPrompt: 'test',
+    });
+
+    expect('output' in result).toBe(true);
+    if (!('output' in result)) {
+      throw new Error('Expected guardrail output.');
+    }
+
+    expect(result.output['bundle']).toEqual(
+      expect.objectContaining({
+        error:
+          'Preset query mode is disabled. Define an explicit query template or connect an explicit query input.',
+        guardrail: 'query-resolution',
+        querySource: 'customTemplate',
+      })
     );
   });
 

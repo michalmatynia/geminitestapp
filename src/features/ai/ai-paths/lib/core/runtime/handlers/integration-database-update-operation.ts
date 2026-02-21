@@ -2,7 +2,6 @@ import type {
   DatabaseConfig,
   DbQueryConfig,
   RuntimePortValues,
-  UpdaterMapping,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
@@ -14,17 +13,8 @@ import {
   buildDbQueryPayload,
   resolveEntityIdFromInputs,
 } from '../utils';
-import {
-  ParameterInferenceGateError,
-  applyParameterInferenceGuard,
-  coerceArrayLike,
-  mergeParameterInferenceUpdates,
-  normalizeNonEmptyString,
-  toRecord,
-} from './database-parameter-inference';
 import { extractMissingTemplatePorts } from './integration-database-mongo-update-plan-helpers';
 import { executeDatabaseUpdate } from './integration-database-update-execution';
-import { resolveDatabaseUpdateMappings } from './integration-database-update-mapping-resolution';
 
 export type HandleDatabaseUpdateOperationInput = {
   node: NodeHandlerContext['node'];
@@ -68,19 +58,15 @@ export async function handleDatabaseUpdateOperation({
   simulationEntityType,
   simulationEntityId,
   resolvedInputs,
-  nodeInputPorts,
+  nodeInputPorts: _nodeInputPorts,
   dbConfig,
   queryConfig,
   dryRun,
   templateInputs,
   aiPrompt,
-  ensureExistingParameterTemplateContext,
+  ensureExistingParameterTemplateContext: _ensureExistingParameterTemplateContext,
 }: HandleDatabaseUpdateOperationInput): Promise<RuntimePortValues> {
-  const updatePayloadMode = dbConfig.updatePayloadMode ?? 'mapping';
-  const isCustomPayloadMode = updatePayloadMode === 'custom';
-  const parameterTargetPath =
-    normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
-    'parameters';
+  const updatePayloadMode = dbConfig.updatePayloadMode ?? 'custom';
 
   const updateStrategy: 'one' | 'many' = dbConfig.updateStrategy ?? 'one';
   const entityType = (dbConfig.entityType ?? 'product').trim().toLowerCase();
@@ -99,163 +85,183 @@ export async function handleDatabaseUpdateOperation({
     simulationEntityId,
   );
 
-  let fallbackTarget = 'content_en';
-  let mappings: UpdaterMapping[] = [];
-  let updates: Record<string, unknown> = {};
-  let guardApplied = false;
-  let guardMeta: Record<string, unknown> | null = null;
-  let mergeApplied = false;
-  let mergeMeta: Record<string, unknown> | null = null;
-  let customFilter: Record<string, unknown> | undefined;
-  let customUpdateDoc: unknown;
-
-  if (isCustomPayloadMode) {
-    const updateTemplate = dbConfig.updateTemplate?.trim() ?? '';
-    if (!updateTemplate) {
-      return prevOutputs;
-    }
-
-    const missingFilterPorts = queryConfig.queryTemplate?.trim()
-      ? extractMissingTemplatePorts(queryConfig.queryTemplate, templateInputs)
-      : [];
-    const missingUpdatePorts = extractMissingTemplatePorts(updateTemplate, templateInputs);
-    if (missingFilterPorts.length > 0 || missingUpdatePorts.length > 0) {
-      return prevOutputs;
-    }
-
-    const currentValueRaw: unknown =
-      templateInputs['value'] ?? templateInputs['jobId'] ?? '';
-    const currentValue = Array.isArray(currentValueRaw)
-      ? (currentValueRaw as unknown[])[0]
-      : currentValueRaw;
-    const renderedUpdate = renderJsonTemplate(
-      updateTemplate,
-      templateInputs,
-      currentValue,
+  if (updatePayloadMode !== 'custom') {
+    const error =
+      'Mapping-based update mode is disabled. Configure an explicit query filter and explicit update document.';
+    reportAiPathsError(
+      new Error(error),
+      {
+        action: 'dbUpdateGuardrail',
+        nodeId: node.id,
+        updatePayloadMode,
+      },
+      'Database update blocked:',
     );
-    const parsedUpdate = parseJsonSafe(renderedUpdate);
-    if (
-      !parsedUpdate ||
-      (typeof parsedUpdate !== 'object' && !Array.isArray(parsedUpdate))
-    ) {
-      toast('Update template must be valid JSON.', { variant: 'error' });
-      return {
-        result: null,
-        bundle: { error: 'Invalid update template' },
-        debugPayload: {
-          mode: 'custom',
-          updateStrategy,
-          collection: configuredCollection || null,
-          updateTemplate,
-        },
-        aiPrompt,
-      };
-    }
-
-    const renderedFilterPayload = buildDbQueryPayload(templateInputs, queryConfig);
-    const renderedFilter = isPlainRecord(renderedFilterPayload.query)
-      ? renderedFilterPayload.query
-      : {};
-
-    customUpdateDoc = parsedUpdate;
-    customFilter = renderedFilter;
-  } else {
-    const {
-      fallbackTarget: resolvedFallbackTarget,
-      mappings: resolvedMappings,
-      updates: mappingUpdates,
-      requiredSourcePorts,
-      unresolvedSourcePorts,
-    } = resolveDatabaseUpdateMappings({
-      dbConfig,
-      nodeInputPorts,
-      resolvedInputs,
-      parameterTargetPath,
-    });
-    fallbackTarget = resolvedFallbackTarget;
-    mappings = resolvedMappings;
-    updates = mappingUpdates;
-
-    const guardResult = applyParameterInferenceGuard({
-      dbConfig,
-      updates,
-      templateInputs,
-    });
-    if (guardResult.applied) {
-      updates = guardResult.updates;
-      guardApplied = true;
-      guardMeta = guardResult.meta ?? null;
-    }
-    if (guardResult.blocked) {
-      const message =
-        guardResult.errorMessage ??
-        'Parameter inference blocked due to missing parameter definitions.';
-      reportAiPathsError(
-        new Error(message),
-        {
-          action: 'parameterInferenceGuard',
-          nodeId: node.id,
-          targetPath: parameterTargetPath,
-        },
-        'Parameter inference guard blocked update:',
-      );
-      toast(message, { variant: 'error' });
-      throw new ParameterInferenceGateError(message);
-    }
-
-    await ensureExistingParameterTemplateContext(parameterTargetPath);
-    const mergeResult = mergeParameterInferenceUpdates({
-      targetPath: parameterTargetPath,
-      updates,
-      templateInputs,
-    });
-    if (mergeResult.applied) {
-      updates = mergeResult.updates;
-      mergeApplied = true;
-      mergeMeta = mergeResult.meta ?? null;
-    }
-
-    const missingSourcePorts: string[] = Array.from(requiredSourcePorts).filter(
-      (sourcePort: string): boolean => resolvedInputs[sourcePort] === undefined,
-    );
-    const hasUpdates = Object.keys(updates).length > 0;
-    if (missingSourcePorts.length > 0 || unresolvedSourcePorts.size > 0) {
-      return prevOutputs;
-    }
-    if (!hasUpdates) {
-      return prevOutputs;
-    }
+    toast(error, { variant: 'error' });
+    return {
+      result: null,
+      bundle: {
+        error,
+        guardrail: 'update-mode-explicit-only',
+      },
+      debugPayload: {
+        mode: updatePayloadMode,
+        updateStrategy,
+        entityType,
+        collection: configuredCollection || null,
+        idField,
+        entityId,
+      },
+      aiPrompt,
+    };
   }
 
+  const updateTemplate = dbConfig.updateTemplate?.trim() ?? '';
+  if (!updateTemplate) {
+    const error = 'No explicit update document provided.';
+    reportAiPathsError(
+      new Error(error),
+      {
+        action: 'dbUpdateGuardrail',
+        nodeId: node.id,
+        guardrail: 'missing_update_template',
+      },
+      'Database update blocked:',
+    );
+    toast(error, { variant: 'error' });
+    return {
+      result: null,
+      bundle: {
+        error,
+        guardrail: 'missing-update-template',
+      },
+      debugPayload: {
+        mode: 'custom',
+        updateStrategy,
+        entityType,
+        collection: configuredCollection || null,
+        idField,
+        entityId,
+      },
+      aiPrompt,
+    };
+  }
+
+  const missingFilterPorts = queryConfig.queryTemplate?.trim()
+    ? extractMissingTemplatePorts(queryConfig.queryTemplate, templateInputs)
+    : [];
+  const missingUpdatePorts = extractMissingTemplatePorts(updateTemplate, templateInputs);
+  const missingTemplatePorts = Array.from(
+    new Set<string>([...missingFilterPorts, ...missingUpdatePorts]),
+  );
+  if (missingTemplatePorts.length > 0) {
+    const error = `Update query/update template is missing connected inputs: ${missingTemplatePorts.join(', ')}.`;
+    reportAiPathsError(
+      new Error(error),
+      {
+        action: 'dbUpdateTemplate',
+        nodeId: node.id,
+        missingTemplatePorts,
+      },
+      'Database update blocked:',
+    );
+    toast(error, { variant: 'error' });
+    return {
+      result: null,
+      bundle: {
+        error,
+        guardrail: 'update-template-inputs',
+        missingTemplatePorts,
+      },
+      debugPayload: {
+        mode: 'custom',
+        updateStrategy,
+        entityType,
+        collection: configuredCollection || null,
+        idField,
+        entityId,
+        missingTemplatePorts,
+      },
+      aiPrompt,
+    };
+  }
+
+  const currentValueRaw: unknown = templateInputs['value'] ?? templateInputs['jobId'] ?? '';
+  const currentValue = Array.isArray(currentValueRaw)
+    ? (currentValueRaw as unknown[])[0]
+    : currentValueRaw;
+  const renderedUpdate = renderJsonTemplate(
+    updateTemplate,
+    templateInputs,
+    currentValue,
+  );
+  const parsedUpdate = parseJsonSafe(renderedUpdate);
+  if (
+    !parsedUpdate ||
+    (typeof parsedUpdate !== 'object' && !Array.isArray(parsedUpdate))
+  ) {
+    const error = 'Update template must be valid JSON.';
+    toast(error, { variant: 'error' });
+    return {
+      result: null,
+      bundle: { error: 'Invalid update template' },
+      debugPayload: {
+        mode: 'custom',
+        updateStrategy,
+        collection: configuredCollection || null,
+        updateTemplate,
+      },
+      aiPrompt,
+    };
+  }
+
+  const renderedFilterPayload = buildDbQueryPayload(templateInputs, queryConfig);
+  const customFilter = isPlainRecord(renderedFilterPayload.query)
+    ? renderedFilterPayload.query
+    : {};
+  if (Object.keys(customFilter).length === 0) {
+    const error = 'No explicit update filter provided.';
+    reportAiPathsError(
+      new Error(error),
+      {
+        action: 'dbUpdateGuardrail',
+        nodeId: node.id,
+        guardrail: 'missing_query_filter',
+      },
+      'Database update blocked:',
+    );
+    toast(error, { variant: 'error' });
+    return {
+      result: null,
+      bundle: {
+        error,
+        guardrail: 'missing-query-filter',
+      },
+      debugPayload: {
+        mode: 'custom',
+        updateStrategy,
+        entityType,
+        collection: configuredCollection || null,
+        idField,
+        entityId,
+      },
+      aiPrompt,
+    };
+  }
+
+  const customUpdateDoc: unknown = parsedUpdate;
   const debugPayload: Record<string, unknown> = {
-    mode: updatePayloadMode,
+    mode: 'custom',
     updateStrategy,
     entityType,
     collection: configuredCollection || null,
     forceCollectionUpdate,
     idField,
     entityId,
-    ...(isCustomPayloadMode
-      ? {
-        filter: customFilter ?? {},
-        updateDoc: customUpdateDoc,
-        queryTemplate: queryConfig.queryTemplate ?? '',
-        updateTemplate: dbConfig.updateTemplate ?? '',
-      }
-      : {
-        updates,
-        mappings,
-        ...(guardApplied
-          ? {
-            parameterInferenceGuard: {
-              ...(guardMeta ?? {}),
-              ...(mergeApplied && mergeMeta
-                ? { writePlan: mergeMeta }
-                : {}),
-            },
-          }
-          : {}),
-      }),
+    filter: customFilter,
+    updateDoc: customUpdateDoc,
+    queryTemplate: queryConfig.queryTemplate ?? '',
+    updateTemplate: dbConfig.updateTemplate ?? '',
   };
 
   const executionResult = await executeDatabaseUpdate({
@@ -267,65 +273,41 @@ export async function handleDatabaseUpdateOperation({
     resolvedInputs,
     dbConfig,
     queryConfig,
-    updates,
+    updates: {},
     updateStrategy,
     entityType,
     shouldUseEntityUpdate,
-    idField,
     entityId,
     configuredCollection,
-    updatePayloadMode,
-    ...(customFilter ? { customFilter } : {}),
-    ...(customUpdateDoc !== undefined ? { customUpdateDoc } : {}),
+    updatePayloadMode: 'custom',
+    customFilter,
+    customUpdateDoc,
   });
   if (executionResult.skipped) {
-    return prevOutputs;
+    return {
+      ...prevOutputs,
+      result: null,
+      bundle: {
+        error: 'Database update was skipped.',
+        guardrail: 'update-skipped',
+      },
+      debugPayload,
+      aiPrompt,
+    };
   }
 
   debugPayload['execution'] = executionResult.executionMeta;
 
   const updateResult: unknown = executionResult.updateResult;
-  if (
-    !isCustomPayloadMode &&
-    guardApplied &&
-    debugPayload['parameterInferenceGuard'] &&
-    typeof debugPayload['parameterInferenceGuard'] === 'object'
-  ) {
-    const updateResultRecord = toRecord(updateResult);
-    const modifiedCountValue = updateResultRecord?.['modifiedCount'];
-    const modifiedCount =
-      typeof modifiedCountValue === 'number' ? modifiedCountValue : null;
-    (debugPayload['parameterInferenceGuard'] as Record<string, unknown>)['written'] = {
-      targetPath: parameterTargetPath,
-      count: coerceArrayLike(updates[parameterTargetPath]).length,
-      ...(modifiedCount !== null ? { modifiedCount } : {}),
-    };
-  }
-
-  const primaryTarget =
-    mappings.find((mapping: UpdaterMapping) => mapping.targetPath)?.targetPath ??
-    fallbackTarget;
-  const primaryValue = updates[primaryTarget];
-  const customContentEnValue = isCustomPayloadMode
-    ? resolveCustomContentEnValue(customUpdateDoc)
-    : undefined;
+  const customContentEnValue = resolveCustomContentEnValue(customUpdateDoc);
 
   return {
-    content_en:
-      isCustomPayloadMode
-        ? (customContentEnValue ?? (nodeInputs['content_en'] as string | undefined) ?? '')
-        : primaryTarget === 'content_en'
-          ? ((primaryValue as string | undefined) ??
-            (nodeInputs['content_en'] as string | undefined) ??
-            '')
-          : (nodeInputs['content_en'] as string | undefined),
-    bundle: isCustomPayloadMode
-      ? {
-        filter: customFilter ?? {},
-        update: customUpdateDoc,
-        ...(executionResult.executionMeta ?? {}),
-      }
-      : updates,
+    content_en: customContentEnValue ?? (nodeInputs['content_en'] as string | undefined) ?? '',
+    bundle: {
+      filter: customFilter,
+      update: customUpdateDoc,
+      ...(executionResult.executionMeta ?? {}),
+    },
     result: updateResult,
     debugPayload,
     aiPrompt,

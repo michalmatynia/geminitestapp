@@ -299,7 +299,15 @@ export const resolveExistingParameterValueFromInputs = (
     const record = toRecord(value);
     if (!record) return;
     candidates.push(resolveObjectPathValue(record, targetPath));
-    const nestedKeys = ['entity', 'entityJson', 'product', 'item', 'data', 'current'];
+    const nestedKeys = [
+      'entity',
+      'entityJson',
+      'product',
+      'item',
+      'data',
+      'current',
+      'value',
+    ];
     nestedKeys.forEach((key: string) => {
       candidates.push(resolveObjectPathValue(toRecord(record[key]), targetPath));
     });

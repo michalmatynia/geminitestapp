@@ -443,6 +443,7 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     return createCaseResolverFile({
       ...file,
       originalDocumentContent: file.originalDocumentContent ?? file.documentContent,
+    
       explodedDocumentContent: explodedStoredContent,
       activeDocumentVersion: 'exploded',
       editorType: canonicalExploded.mode,
@@ -459,7 +460,6 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
       createdAt: file.createdAt || now,
     });
   };
-
   let mutationResolvedTargetFileId = precheckTargetResolution.resolvedTargetFileId;
   let mutationResolutionStrategy = precheckTargetResolution.resolutionStrategy;
   const mutationWorkspaceFileCount = workspaceFiles.length;
@@ -675,12 +675,13 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
     };
   }
 
-  setEditingDocumentDraft((current) => {
+  setEditingDocumentDraft((current: CaseResolverFileEditDraft | null): CaseResolverFileEditDraft | null => {
     if (current?.id !== effectiveMutationResolvedTargetFileId) return current;
     return {
       ...effectiveMutationNextFile,
       baseDocumentContentVersion: effectiveMutationNextFile.documentContentVersion,
     };
+    
   });
 
   const primaryProposalState = buildCaseResolverCaptureProposalState(

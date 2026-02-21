@@ -328,6 +328,13 @@ export function useAiPathsPersistence({
             : null;
         const preferredPathIdFromUi =
           typeof uiState?.['activePathId'] === 'string' ? uiState?.['activePathId'] : null;
+        const preferredPathIdFromUrl = (() => {
+          if (typeof window === 'undefined') return null;
+          const rawPathId = new URLSearchParams(window.location.search).get('pathId');
+          if (typeof rawPathId !== 'string') return null;
+          const normalizedPathId = rawPathId.trim();
+          return normalizedPathId.length > 0 ? normalizedPathId : null;
+        })();
         const preferredPathIdFromUser = resolvePreferredActivePathId(userPreferences);
         const preferredGroups = Array.isArray(uiState?.['expandedGroups'])
           ? (uiState?.['expandedGroups'] as unknown[]).filter(
@@ -575,12 +582,16 @@ export function useAiPathsPersistence({
         setPaths(normalizedMetas);
         setPathConfigs(configs);
         const firstPathCandidate = normalizedMetas[0]?.id ?? Object.keys(configs)[0] ?? 'default';
-        const firstPath =
-          preferredPathIdFromUser && configs[preferredPathIdFromUser]
-            ? preferredPathIdFromUser
-            : preferredPathIdFromUi && configs[preferredPathIdFromUi]
-              ? preferredPathIdFromUi
-              : firstPathCandidate;
+        let firstPath = firstPathCandidate;
+        if (preferredPathIdFromUi && configs[preferredPathIdFromUi]) {
+          firstPath = preferredPathIdFromUi;
+        }
+        if (preferredPathIdFromUser && configs[preferredPathIdFromUser]) {
+          firstPath = preferredPathIdFromUser;
+        }
+        if (preferredPathIdFromUrl && configs[preferredPathIdFromUrl]) {
+          firstPath = preferredPathIdFromUrl;
+        }
         if (preferredPathIdFromUser && configs[preferredPathIdFromUser]) {
           lastUserPrefsActivePathIdRef.current = preferredPathIdFromUser;
         }

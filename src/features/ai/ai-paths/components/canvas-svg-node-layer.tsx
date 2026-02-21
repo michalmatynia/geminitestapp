@@ -297,9 +297,7 @@ export function CanvasSvgNodeLayer({
       if (!Array.isArray(history) || history.length === 0) return directValue;
       const lastEntry = history[history.length - 1];
       const fallbackSource =
-        (direction === 'input' ? lastEntry?.['inputs'] : lastEntry?.['outputs']) as
-          | Record<string, unknown>
-          | undefined;
+        (direction === 'input' ? lastEntry?.['inputs'] : lastEntry?.['outputs']);
       return fallbackSource?.[port];
     },
     [runtimeState]
@@ -380,7 +378,6 @@ export function CanvasSvgNodeLayer({
   const showPortLabels = detailLevel === 'full' && view.scale >= 0.88;
   const showNodeId = detailLevel !== 'skeleton' && view.scale >= 0.64;
   const showRuntimeBadges = detailLevel !== 'skeleton' && view.scale >= 0.68;
-  const showTriggerButton = detailLevel === 'full' && view.scale >= 0.96;
   const connectorHitRadius = React.useMemo((): number => {
     const scaled = connectorHitTargetPx / Math.max(0.001, view.scale);
     return Math.max(PORT_SIZE / 2 + 1, scaled);
@@ -571,29 +568,50 @@ export function CanvasSvgNodeLayer({
               </g>
             )}
 
-            {showTriggerButton && node.type === 'trigger' && (
+            {/* Keep Fire Trigger always available in SVG mode for trigger nodes, regardless zoom/detail. */}
+            {node.type === 'trigger' && (
               <g
-                transform={`translate(${NODE_WIDTH - 34} ${NODE_MIN_HEIGHT - 16})`}
+                transform={`translate(${NODE_WIDTH - 92} 6)`}
                 pointerEvents='none'
               >
-                <circle
-                  cx={12}
-                  cy={0}
-                  r={10}
-                  fill={triggerConnected.has(node.id) ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.1)'}
+                <rect
+                  data-node-action='fire-trigger'
+                  data-node-id={node.id}
+                  x={0}
+                  y={0}
+                  width={82}
+                  height={16}
+                  rx={5}
+                  fill={triggerConnected.has(node.id) ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.14)'}
                   stroke={triggerConnected.has(node.id) ? '#10b981' : '#f43f5e'}
                   strokeWidth='1'
                   style={{ cursor: 'pointer', pointerEvents: 'all' }}
-                  onClick={(event: React.MouseEvent<SVGCircleElement>) => {
+                  onPointerDown={(event: React.PointerEvent<SVGRectElement>) => {
+                    event.stopPropagation();
+                  }}
+                  onClick={(event: React.MouseEvent<SVGRectElement>) => {
                     event.stopPropagation();
                     void onFireTrigger(node);
                   }}
                 />
                 <path
-                  d='M10 4l6-4-6-4v8z'
-                  transform='translate(9 0) scale(0.6)'
+                  d='M0 0L0 7L6 3.5Z'
+                  transform='translate(8 4.5)'
                   fill={triggerConnected.has(node.id) ? '#10b981' : '#f43f5e'}
+                  pointerEvents='none'
                 />
+                <text
+                  x={46}
+                  y={11}
+                  textAnchor='middle'
+                  fill={triggerConnected.has(node.id) ? '#a7f3d0' : '#fecdd3'}
+                  fontSize='8'
+                  fontWeight='600'
+                  pointerEvents='none'
+                  style={{ userSelect: 'none' }}
+                >
+                  Fire Trigger
+                </text>
               </g>
             )}
 
@@ -641,6 +659,9 @@ export function CanvasSvgNodeLayer({
                     <g key={key} transform={`translate(0 ${y})`}>
                       <title>{buildConnectorTitle(getConnectorInfo('input', node.id, port))}</title>
                       <circle
+                        data-port='input'
+                        data-node-id={node.id}
+                        data-port-name={port}
                         cx={0}
                         cy={0}
                         r={isHovered || isPinned ? PORT_SIZE / 2 + 1.5 : PORT_SIZE / 2}
@@ -680,6 +701,9 @@ export function CanvasSvgNodeLayer({
                         }}
                       />
                       <circle
+                        data-port='input'
+                        data-node-id={node.id}
+                        data-port-name={port}
                         cx={0}
                         cy={0}
                         r={connectorHitRadius}
@@ -732,6 +756,9 @@ export function CanvasSvgNodeLayer({
                     <g key={key} transform={`translate(${NODE_WIDTH} ${y})`}>
                       <title>{buildConnectorTitle(getConnectorInfo('output', node.id, port))}</title>
                       <circle
+                        data-port='output'
+                        data-node-id={node.id}
+                        data-port-name={port}
                         cx={0}
                         cy={0}
                         r={isHovered || isPinned ? PORT_SIZE / 2 + 1.5 : PORT_SIZE / 2}
@@ -756,6 +783,14 @@ export function CanvasSvgNodeLayer({
                             info: getConnectorInfo('output', node.id, port),
                           });
                         }}
+                        onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
+                          setHoveredConnectorKey(key);
+                          onConnectorHover?.({
+                            clientX: event.clientX,
+                            clientY: event.clientY,
+                            info: getConnectorInfo('output', node.id, port),
+                          });
+                        }}
                         onPointerLeave={() => {
                           setHoveredConnectorKey(null);
                           onConnectorLeave?.();
@@ -767,6 +802,9 @@ export function CanvasSvgNodeLayer({
                         }}
                       />
                       <circle
+                        data-port='output'
+                        data-node-id={node.id}
+                        data-port-name={port}
                         cx={0}
                         cy={0}
                         r={connectorHitRadius}
@@ -778,6 +816,14 @@ export function CanvasSvgNodeLayer({
                           void onStartConnection(event, node, port);
                         }}
                         onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
+                          setHoveredConnectorKey(key);
+                          onConnectorHover?.({
+                            clientX: event.clientX,
+                            clientY: event.clientY,
+                            info: getConnectorInfo('output', node.id, port),
+                          });
+                        }}
+                        onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
                           setHoveredConnectorKey(key);
                           onConnectorHover?.({
                             clientX: event.clientX,

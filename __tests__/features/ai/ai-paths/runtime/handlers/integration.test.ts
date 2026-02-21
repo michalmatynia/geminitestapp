@@ -75,7 +75,11 @@ describe('Integration Handlers', () => {
           config: { 
             database: { 
               operation: 'query', 
-              query: { collection: 'products' } 
+              query: {
+                collection: 'products',
+                mode: 'custom',
+                queryTemplate: '{"id":"{{value}}"}',
+              }
             } 
           }
         } as any,
@@ -215,27 +219,12 @@ describe('Integration Handlers', () => {
 
       const result = await handleDatabase(ctx);
 
-      expect(api.dbApi.query).toHaveBeenCalledTimes(2);
-      expect(api.dbApi.query).toHaveBeenLastCalledWith(
-        expect.objectContaining({
-          query: {
-            id: { $in: ['p_color', 'p_material'] },
-          },
-        })
-      );
-      expect(result['result']).toEqual([
-        { id: 'p_color', selectorType: 'select', optionLabels: ['Blue'] },
-        { id: 'p_material', selectorType: 'text', optionLabels: [] },
-      ]);
-      expect((result['bundle'] as Record<string, unknown>)['fallback']).toEqual(
-        expect.objectContaining({
-          used: true,
-          by: 'product_parameter_ids',
-        })
-      );
+      expect(api.dbApi.query).toHaveBeenCalledTimes(1);
+      expect(result['result']).toEqual([]);
+      expect((result['bundle'] as Record<string, unknown>)['fallback']).toBeUndefined();
     });
 
-    it('blocks parameter updates when guard has no resolved definitions', async () => {
+    it('blocks legacy mapping updates without explicit update template', async () => {
       const ctx = createMockContext({
         node: {
           id: 'n-guard-block',
@@ -271,13 +260,17 @@ describe('Integration Handlers', () => {
         },
       });
 
-      await expect(handleDatabase(ctx)).rejects.toThrow(
-        'No parameter definitions resolved for parameter inference.'
+      const result = await handleDatabase(ctx);
+      expect(result['bundle']).toEqual(
+        expect.objectContaining({
+          guardrail: 'missing-update-template',
+        })
       );
       expect(api.entityApi.update).not.toHaveBeenCalled();
+      expect(api.dbApi.action).not.toHaveBeenCalled();
     });
 
-    it('merges inferred parameters with existing values and preserves non-empty entries', async () => {
+    it('requires explicit update template for legacy inferred parameter merge configs', async () => {
       vi.mocked(api.entityApi.update).mockResolvedValue({
         ok: true,
         data: { modifiedCount: 1 },
@@ -333,28 +326,16 @@ describe('Integration Handlers', () => {
       });
 
       const result = await handleDatabase(ctx);
-      expect(api.entityApi.update).toHaveBeenCalledWith(
+      expect(result['bundle']).toEqual(
         expect.objectContaining({
-          updates: expect.objectContaining({
-            parameters: [
-              { parameterId: 'p_material', value: 'Steel' },
-              { parameterId: 'p_color', value: 'Blue' },
-            ],
-          }),
+          guardrail: 'missing-update-template',
         })
       );
-      expect(
-        ((result['debugPayload'] as Record<string, unknown>)?.[
-          'parameterInferenceGuard'
-        ] as Record<string, unknown>)?.['written']
-      ).toEqual(
-        expect.objectContaining({
-          targetPath: 'parameters',
-        })
-      );
+      expect(api.entityApi.update).not.toHaveBeenCalled();
+      expect(api.dbApi.action).not.toHaveBeenCalled();
     });
 
-    it('canonicalizes checklist inference values against option labels', async () => {
+    it('requires explicit update template for checklist inference configs', async () => {
       vi.mocked(api.entityApi.update).mockResolvedValue({
         ok: true,
         data: { modifiedCount: 1 },
@@ -411,20 +392,17 @@ describe('Integration Handlers', () => {
         },
       });
 
-      await handleDatabase(ctx);
-
-      expect(api.entityApi.update).toHaveBeenCalledWith(
+      const result = await handleDatabase(ctx);
+      expect(result['bundle']).toEqual(
         expect.objectContaining({
-          updates: expect.objectContaining({
-            parameters: [
-              { parameterId: 'p_features', value: 'Waterproof|Bluetooth' },
-            ],
-          }),
+          guardrail: 'missing-update-template',
         })
       );
+      expect(api.entityApi.update).not.toHaveBeenCalled();
+      expect(api.dbApi.action).not.toHaveBeenCalled();
     });
 
-    it('updates only existing parameter rows and does not append inferred unknown rows', async () => {
+    it('requires explicit update template for legacy inferred rows filtering configs', async () => {
       vi.mocked(api.entityApi.update).mockResolvedValue({
         ok: true,
         data: { modifiedCount: 1 },
@@ -481,21 +459,17 @@ describe('Integration Handlers', () => {
         },
       });
 
-      await handleDatabase(ctx);
-
-      expect(api.entityApi.update).toHaveBeenCalledWith(
+      const result = await handleDatabase(ctx);
+      expect(result['bundle']).toEqual(
         expect.objectContaining({
-          updates: expect.objectContaining({
-            parameters: [
-              { parameterId: 'p_material', value: 'Metal' },
-              { parameterId: 'p_color', value: 'Blue' },
-            ],
-          }),
+          guardrail: 'missing-update-template',
         })
       );
+      expect(api.entityApi.update).not.toHaveBeenCalled();
+      expect(api.dbApi.action).not.toHaveBeenCalled();
     });
 
-    it('fetches existing product parameters when update node has no context and preserves full array', async () => {
+    it('does not fetch existing parameter context for blocked legacy mapping updates', async () => {
       vi.mocked(api.entityApi.update).mockResolvedValue({
         ok: true,
         data: { modifiedCount: 1 },
@@ -553,23 +527,16 @@ describe('Integration Handlers', () => {
         }),
       });
 
-      await handleDatabase(ctx);
+      const result = await handleDatabase(ctx);
 
-      expect(ctx.fetchEntityCached).toHaveBeenCalledWith('product', 'product-1');
-      expect(api.entityApi.update).toHaveBeenCalledWith(
+      expect(result['bundle']).toEqual(
         expect.objectContaining({
-          updates: expect.objectContaining({
-            parameters: [
-              { parameterId: 'p_model_name', value: '' },
-              { parameterId: 'p_color', value: 'Blue' },
-              { parameterId: 'p_model_number', value: '' },
-              { parameterId: 'p_tags', value: '' },
-              { parameterId: 'p_brand_attrs', value: '' },
-              { parameterId: 'p_material', value: 'Metal' },
-            ],
-          }),
+          guardrail: 'missing-update-template',
         })
       );
+      expect(ctx.fetchEntityCached).not.toHaveBeenCalled();
+      expect(api.entityApi.update).not.toHaveBeenCalled();
+      expect(api.dbApi.action).not.toHaveBeenCalled();
     });
 
     it('skips parameter write when existing parameter rows are unavailable', async () => {
@@ -618,7 +585,7 @@ describe('Integration Handlers', () => {
       expect(api.entityApi.update).not.toHaveBeenCalled();
     });
 
-    it('passes simple parameter inference updates through without legacy merge truncation', async () => {
+    it('requires explicit update template for simple parameter inference configs', async () => {
       vi.mocked(api.entityApi.update).mockResolvedValue({
         ok: true,
         data: { modifiedCount: 1 },
@@ -666,18 +633,15 @@ describe('Integration Handlers', () => {
         },
       });
 
-      await handleDatabase(ctx);
+      const result = await handleDatabase(ctx);
 
-      expect(api.entityApi.update).toHaveBeenCalledWith(
+      expect(result['bundle']).toEqual(
         expect.objectContaining({
-          updates: expect.objectContaining({
-            simpleParameters: [
-              { parameterId: 'p_color', value: 'Blue' },
-              { parameterId: 'p_material', value: 'Metal' },
-            ],
-          }),
+          guardrail: 'missing-update-template',
         })
       );
+      expect(api.entityApi.update).not.toHaveBeenCalled();
+      expect(api.dbApi.action).not.toHaveBeenCalled();
     });
   });
 

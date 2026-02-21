@@ -54,7 +54,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     embeddingModel: collection.embeddingModel,
     metadata: {
       title: data.title ?? undefined,
-      source: data.source ?? undefined,
+      source: (data.source ?? undefined) as any,
       tags: data.tags ?? [],
     },
   });

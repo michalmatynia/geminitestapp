@@ -436,9 +436,14 @@ export function CanvasBoard({
       if (!Array.isArray(history) || history.length === 0) return directValue;
       const lastEntry = history[history.length - 1];
       const fallbackSource =
-        (direction === 'input' ? lastEntry?.['inputs'] : lastEntry?.['outputs']) as
-          | Record<string, unknown>
-          | undefined;
+        direction === 'input' ? lastEntry?.['inputs'] : lastEntry?.['outputs'];
+      if (
+        !fallbackSource ||
+        typeof fallbackSource !== 'object' ||
+        Array.isArray(fallbackSource)
+      ) {
+        return directValue;
+      }
       return fallbackSource?.[port];
     },
     [runtimeState]
@@ -1014,6 +1019,7 @@ export function CanvasBoard({
       ) : null}
       <div
         ref={canvasRef}
+        data-doc-id='canvas_drop_zone'
         className='absolute left-0 top-0'
         onDrop={handleDrop}
         onDragOver={handleDragOver}

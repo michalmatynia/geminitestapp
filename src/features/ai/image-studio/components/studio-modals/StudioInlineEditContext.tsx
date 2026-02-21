@@ -59,7 +59,7 @@ import type {
   InlinePreviewSourceViewModel,
   LinkedMaskSlotViewModel,
 } from './slot-inline-edit-tab-types';
-import type { ImageStudioSlotRecord } from '../../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export type EditCardTab = 'card' | 'generations' | 'environment' | 'masks' | 'composites';
 
@@ -305,7 +305,7 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
   );
 
   const inlinePreviewBase64Bytes = useMemo(() => estimateBase64Bytes(slotBase64Draft), [slotBase64Draft]);
-  const inlinePreviewMimeType = useMemo(() => resolveInlinePreviewMimeType(selectedSlot?.imageFile?.mimeType, slotBase64Draft), [selectedSlot, slotBase64Draft]);
+  const inlinePreviewMimeType = useMemo(() => resolveInlinePreviewMimeType(selectedSlot?.imageFile?.mimetype, slotBase64Draft), [selectedSlot, slotBase64Draft]);
   
   const inlinePreviewDimensions = useMemo(
     () => resolveDimensionLabel(

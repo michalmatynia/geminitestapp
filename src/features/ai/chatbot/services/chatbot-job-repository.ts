@@ -13,7 +13,7 @@ const COLLECTION_NAME = 'chatbot_jobs';
 interface ChatbotJobDocument {
   _id: ObjectId;
   sessionId: string;
-  status: string;
+  status: ChatbotJob['status'];
   model?: string | undefined;
   payload: ChatbotJobPayload;
   resultText?: string | undefined;
@@ -36,7 +36,7 @@ function documentToJob(doc: ChatbotJobDocument): ChatbotJob {
   return {
     id: doc._id.toString(),
     sessionId: doc.sessionId,
-    status: doc.status,
+    status: doc.status as ChatbotJob['status'],
     model: doc.model,
     payload: doc.payload,
     resultText: doc.resultText,
@@ -106,7 +106,7 @@ export const chatbotJobRepository: ChatbotJobRepository = {
     return {
       id: result.insertedId.toString(),
       sessionId: doc.sessionId,
-      status: doc.status,
+      status: doc.status as ChatbotJob['status'],
       model: doc.model,
       payload: doc.payload,
       resultText: doc.resultText,

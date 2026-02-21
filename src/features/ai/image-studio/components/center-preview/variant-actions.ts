@@ -5,7 +5,7 @@ import { wait, type VariantThumbnailInfo } from './preview-utils';
 import { resolveVariantSlotIdForCenterPreview } from './variant-thumbnails';
 
 import type { VariantTooltipState } from './VariantTooltipPortal';
-import type { ImageStudioSlotRecord } from '../../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { QueryClient } from '@tanstack/react-query';
 import type React from 'react';
 

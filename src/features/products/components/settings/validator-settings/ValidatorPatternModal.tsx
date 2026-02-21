@@ -72,8 +72,28 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
     getReplacementFieldsForTarget,
     getSourceFieldOptionsForTarget,
     normalizeReplacementFields,
+    sequenceGroups,
   } = useValidatorSettingsContext();
   if (!showModal) return null;
+
+  const sequenceGroupOptions = [
+    {
+      value: '__none__',
+      label: 'No sequence group',
+      description: 'Run this pattern independently.',
+    },
+    ...Array.from(sequenceGroups.values())
+      .sort((a, b) => {
+        const labelCompare = a.label.localeCompare(b.label, undefined, { sensitivity: 'base' });
+        if (labelCompare !== 0) return labelCompare;
+        return a.id.localeCompare(b.id);
+      })
+      .map((group) => ({
+        value: group.id,
+        label: group.label,
+        description: `${group.patternIds.length} pattern${group.patternIds.length === 1 ? '' : 's'}`,
+      })),
+  ];
 
   return (
     <FormModal
@@ -220,7 +240,23 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
           </div>
         </div>
 
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <FormField
+            label='Sequence Group'
+            description='Attach this pattern to an existing sequence from the current list.'
+          >
+            <SelectSimple
+              size='sm'
+              value={formData.sequenceGroupId || '__none__'}
+              onValueChange={(value: string): void =>
+                setFormData((prev: PatternFormData) => ({
+                  ...prev,
+                  sequenceGroupId: value === '__none__' ? '' : value,
+                }))
+              }
+              options={sequenceGroupOptions}
+            />
+          </FormField>
           <FormField label='Sequence'>
             <Input
               className='h-9'
@@ -234,6 +270,9 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
               placeholder='10'
             />
           </FormField>
+        </div>
+
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <FormField label='Chain Mode'>
             <SelectSimple size='sm'
               value={formData.chainMode}

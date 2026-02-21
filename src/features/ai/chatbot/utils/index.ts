@@ -26,7 +26,18 @@ export const parseModelSize = (normalized: string): number | null => {
   return null;
 };
 
-export const buildModelProfile = (name: string): ModelProfile => {
+export type ExtendedModelProfile = ModelProfile & {
+  normalized: string;
+  size: number | null;
+  isRerank: boolean;
+  isVision: boolean;
+  isCode: boolean;
+  isInstruct: boolean;
+  isChat: boolean;
+  isReasoning: boolean;
+};
+
+export const buildModelProfile = (name: string): ExtendedModelProfile => {
   const normalized: string = name.toLowerCase();
   const isEmbedding: boolean = [
     'embed',
@@ -64,8 +75,14 @@ export const buildModelProfile = (name: string): ModelProfile => {
   const isReasoning: boolean = 
     normalized.includes('reasoner') ||
     /(^|[^a-z0-9])r1($|[^a-z0-9])/.test(normalized);
+  
   return {
+    id: name,
     name,
+    provider: 'ollama',
+    capabilities: [],
+    contextWindow: 4096,
+    maxOutputTokens: 2048,
     normalized,
     size: parseModelSize(normalized),
     isEmbedding,
@@ -78,7 +95,16 @@ export const buildModelProfile = (name: string): ModelProfile => {
   };
 };
 
-export const scoreModelForTask = (profile: ModelProfile, rule: ModelTaskRule): number => {
+export const buildModelProfileFromObject = (profile: ModelProfile): ExtendedModelProfile => {
+  const base = buildModelProfile(profile.name);
+  return {
+    ...base,
+    ...profile,
+    isEmbedding: profile.isEmbedding || base.isEmbedding,
+  };
+};
+
+export const scoreModelForTask = (profile: ExtendedModelProfile, rule: ModelTaskRule): number => {
   if (profile.isEmbedding || profile.isRerank) return Number.NEGATIVE_INFINITY;
   const size: number = profile.size ?? 7;
   let score: number = 0;
@@ -106,7 +132,8 @@ export const pickBestModel = (
   let bestScore: number = Number.NEGATIVE_INFINITY;
   let bestSize: number = -1;
 
-  for (const profile of profiles) {
+  for (const rawProfile of profiles) {
+    const profile = buildModelProfileFromObject(rawProfile);
     const score: number = scoreModelForTask(profile, rule);
     if (!Number.isFinite(score)) continue;
 
@@ -310,20 +337,22 @@ export const buildToolTimeline = (
     )
     .map((audit: AgentAuditLog): TimelineEntry => ({
       id: `audit-${audit.id}`,
-      source: 'audit' as const,
-      level: null,
-      message: audit.message,
-      createdAt: audit.createdAt || new Date().toISOString(),
+      type: 'log' as const,
+      level: audit.level,
+      content: audit.message,
+      timestamp: audit.createdAt || new Date().toISOString(),
+      metadata: audit.metadata,
     }));
   const logEntries: TimelineEntry[] = logs.map((log: AgentBrowserLog): TimelineEntry => ({
     id: `browser-${log.id}`,
-    source: 'browser' as const,
+    type: 'log' as const,
     level: log.level,
-    message: log.message,
-    createdAt: log.createdAt || new Date().toISOString(),
+    content: log.message,
+    timestamp: log.createdAt || new Date().toISOString(),
+    metadata: log.metadata,
   }));
   return [...auditEntries, ...logEntries].sort(
-    (a: TimelineEntry, b: TimelineEntry): number => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime()
+    (a: TimelineEntry, b: TimelineEntry): number => new Date(a.timestamp || 0).getTime() - new Date(b.timestamp || 0).getTime()
   );
 };
 

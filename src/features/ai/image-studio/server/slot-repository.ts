@@ -20,7 +20,7 @@ import {
 
 import type { Collection } from 'mongodb';
 
-type CascadeSlotDoc = Pick<ImageStudioSlotDocument, '_id' | 'metadata'>;
+type CascadeSlotDoc = Pick<ImageStudioSlotDocument, '_id' | 'metadata' | 'imageFileId' | 'screenshotFileId'>;
 
 export type DeleteImageStudioSlotCascadeTimingsMs = {
   resolveRoot: number;
@@ -571,6 +571,35 @@ export async function deleteImageStudioSlot(
   return deleted;
 }
 
+const sweepOrphanedChildSlots = async (params: {
+  collection: Collection<ImageStudioSlotDocument>;
+  projectId: string;
+  deletedFileIds: ReadonlySet<string>;
+  alreadyDeletedSlotIds: ReadonlySet<string>;
+}): Promise<string[]> => {
+  if (params.deletedFileIds.size === 0) return [];
+  const fileIdArray = Array.from(params.deletedFileIds);
+  const orphans = await params.collection
+    .find(
+      {
+        projectId: params.projectId,
+        _id: { $nin: Array.from(params.alreadyDeletedSlotIds) },
+        $or: [
+          { imageFileId: { $in: fileIdArray } },
+          { screenshotFileId: { $in: fileIdArray } },
+        ],
+      },
+      { projection: { _id: 1 } }
+    )
+    .toArray();
+  const orphanIds: string[] = [];
+  for (const orphan of orphans) {
+    const deleted = await deleteImageStudioSlot(orphan._id, { skipLinkCleanup: true });
+    if (deleted) orphanIds.push(orphan._id);
+  }
+  return orphanIds;
+};
+
 export type DeleteImageStudioSlotCascadeResult = {
   deleted: boolean;
   deletedSlotIds: string[];
@@ -645,6 +674,8 @@ export async function deleteImageStudioSlotCascade(
             projection: {
               _id: 1,
               metadata: 1,
+              imageFileId: 1,
+              screenshotFileId: 1,
             },
           }
         )
@@ -690,6 +721,42 @@ export async function deleteImageStudioSlotCascade(
   }
   timingsMs.slotDeletes = Date.now() - slotDeletesStartedAtMs;
 
+  // Orphan sweep: catch child slots that escaped metadata-based cascade detection.
+  // Collects imageFileIds deleted above, then finds any surviving slots in the same
+  // project whose imageFileId/screenshotFileId points to a now-deleted file.
+  let sweepProjectId: string | undefined = rootDocs[0]?.projectId;
+  {
+    const deletedFileIds = new Set<string>();
+    const deletedIdSet = new Set(deletedSlotIds);
+    for (const rootDoc of rootDocs) {
+      if (!deletedIdSet.has(rootDoc._id)) continue;
+      const fileId = asTrimmedString(rootDoc.imageFileId);
+      if (fileId) deletedFileIds.add(fileId);
+      const screenshotId = asTrimmedString(rootDoc.screenshotFileId);
+      if (screenshotId) deletedFileIds.add(screenshotId);
+    }
+    for (const docs of projectDocCache.values()) {
+      for (const doc of docs) {
+        if (!deletedIdSet.has(doc._id)) continue;
+        const fileId = asTrimmedString(doc.imageFileId);
+        if (fileId) deletedFileIds.add(fileId);
+        const screenshotId = asTrimmedString(doc.screenshotFileId);
+        if (screenshotId) deletedFileIds.add(screenshotId);
+      }
+    }
+    if (sweepProjectId && deletedFileIds.size > 0) {
+      const orphanIds = await sweepOrphanedChildSlots({
+        collection,
+        projectId: sweepProjectId,
+        deletedFileIds,
+        alreadyDeletedSlotIds: deletedIdSet,
+      });
+      for (const orphanId of orphanIds) {
+        deletedSlotIds.push(orphanId);
+      }
+    }
+  }
+
   if (deletedSlotIds.length > 0) {
     const linkCleanupStartedAtMs = Date.now();
     await deleteImageStudioSlotLinksForSlotIds(deletedSlotIds).catch(() => 0);
@@ -708,6 +775,15 @@ export async function deleteImageStudioSlotCascade(
         slotProjectById.set(rootDoc._id, rootDoc.projectId);
       }
     });
+    // Orphan slots (from sweep) may not appear in projectDocCache or rootDocs.
+    // All orphans are guaranteed to be in sweepProjectId.
+    if (sweepProjectId) {
+      for (const deletedId of deletedSlotIds) {
+        if (!slotProjectById.has(deletedId)) {
+          slotProjectById.set(deletedId, sweepProjectId);
+        }
+      }
+    }
     const deletedByProject = new Map<string, string[]>();
     deletedSlotIds.forEach((deletedSlotId: string) => {
       const projectId = slotProjectById.get(deletedSlotId);

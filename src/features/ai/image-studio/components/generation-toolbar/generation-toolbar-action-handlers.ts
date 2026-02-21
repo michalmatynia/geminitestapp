@@ -29,7 +29,7 @@ import {
 } from '../../contracts/upscale';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
 
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../../types';
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import type { QueryClient } from '@tanstack/react-query';
 
 type Toast = (

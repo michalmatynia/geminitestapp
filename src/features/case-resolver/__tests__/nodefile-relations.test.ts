@@ -86,7 +86,25 @@ describe('case-resolver nodefile relations', () => {
       createCaseResolverFile({ id: 'doc-1', fileType: 'document', name: 'Doc 1', folder: '', parentCaseId: 'case-a' }),
     ];
     const assets = [
-      createCaseResolverAssetFile({ id: 'node-asset-1', name: 'Node 1', folder: '', kind: 'node_file' }),
+      createCaseResolverAssetFile({
+        id: 'node-asset-1',
+        name: 'Node 1',
+        folder: '',
+        kind: 'node_file',
+        textContent: JSON.stringify({
+          kind: 'case_resolver_node_file_snapshot_v1',
+          source: 'manual',
+          nodes: [],
+          edges: [],
+          nodeFileMeta: {
+            n1: {
+              fileId: 'doc-1',
+              fileType: 'document',
+              fileName: 'Doc 1',
+            },
+          },
+        }),
+      }),
     ];
     const graph = createGraph({
       nodeIds: ['n1'],
@@ -112,7 +130,25 @@ describe('case-resolver nodefile relations', () => {
       createCaseResolverFile({ id: 'doc-1', fileType: 'document', name: 'Doc 1', folder: '', parentCaseId: 'case-a' }),
     ];
     const assets = [
-      createCaseResolverAssetFile({ id: 'node-asset-1', name: 'Node 1', folder: '', kind: 'node_file' }),
+      createCaseResolverAssetFile({
+        id: 'node-asset-1',
+        name: 'Node 1',
+        folder: '',
+        kind: 'node_file',
+        textContent: JSON.stringify({
+          kind: 'case_resolver_node_file_snapshot_v1',
+          source: 'manual',
+          nodes: [],
+          edges: [],
+          nodeFileMeta: {
+            n1: {
+              fileId: 'doc-1',
+              fileType: 'document',
+              fileName: 'Doc 1',
+            },
+          },
+        }),
+      }),
     ];
     const graph = createGraph({
       nodeIds: ['n1'],
@@ -123,6 +159,45 @@ describe('case-resolver nodefile relations', () => {
     const sanitized = sanitizeCaseResolverGraphNodeFileRelations({ graph, assets, files });
 
     expect(sanitized).toBe(graph);
+  });
+
+  it('drops node-file asset mapping when snapshot does not confirm source document relation', () => {
+    const files = [
+      createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
+      createCaseResolverFile({ id: 'doc-1', fileType: 'document', name: 'Doc 1', folder: '', parentCaseId: 'case-a' }),
+      createCaseResolverFile({ id: 'doc-2', fileType: 'document', name: 'Doc 2', folder: '', parentCaseId: 'case-a' }),
+    ];
+    const assets = [
+      createCaseResolverAssetFile({
+        id: 'node-asset-1',
+        name: 'Node 1',
+        folder: '',
+        kind: 'node_file',
+        textContent: JSON.stringify({
+          kind: 'case_resolver_node_file_snapshot_v1',
+          source: 'manual',
+          nodes: [],
+          edges: [],
+          nodeFileMeta: {
+            'other-node': {
+              fileId: 'doc-2',
+              fileType: 'document',
+              fileName: 'Doc 2',
+            },
+          },
+        }),
+      }),
+    ];
+    const graph = createGraph({
+      nodeIds: ['n1'],
+      documentSourceFileIdByNode: { n1: 'doc-1' },
+      nodeFileAssetIdByNode: { n1: 'node-asset-1' },
+    });
+
+    const sanitized = sanitizeCaseResolverGraphNodeFileRelations({ graph, assets, files });
+
+    expect(sanitized.documentSourceFileIdByNode).toEqual({ n1: 'doc-1' });
+    expect(sanitized.nodeFileAssetIdByNode).toEqual({});
   });
 
   it('builds document relations from node-file snapshot assets', () => {

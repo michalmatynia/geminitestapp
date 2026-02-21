@@ -7,7 +7,7 @@ import {
   type MaskShapeForExport,
 } from '../generation-toolbar/GenerationToolbarImageUtils';
 
-import type { ImageStudioSlotRecord } from '../../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { RequestPreviewImage } from '../../utils/run-request-preview';
 import type {
   ImageStudioSequenceCropStep,

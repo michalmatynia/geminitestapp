@@ -1,4 +1,4 @@
-import type { PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/case-resolver';
+import type { PromptExploderCaseResolverPartyCandidate } from '@/features/prompt-exploder/bridge';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 
 import type { FilemakerAddress, FilemakerDatabase } from '../filemaker/types';

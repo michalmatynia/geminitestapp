@@ -1,6 +1,6 @@
 import { readMeta } from './metadata';
 
-import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '../types';
+import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

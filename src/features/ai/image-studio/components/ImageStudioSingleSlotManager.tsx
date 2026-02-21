@@ -20,7 +20,7 @@ import {
   setImageStudioSlotImageLocked,
 } from '../utils/slot-image-lock';
 
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 
 const OBJECT_SLOT_INDEX = 0;
 const TEMP_OBJECT_SLOT_ID = '__image_studio_temp_object__';

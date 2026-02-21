@@ -14,6 +14,10 @@ export const vectorToolModeSchema = z.enum([
   'line',
   'freehand',
   'eraser',
+  'polygon',
+  'ellipse',
+  'brush',
+  'lasso',
 ]);
 
 export type VectorToolModeDto = z.infer<typeof vectorToolModeSchema>;
@@ -35,12 +39,16 @@ export const vectorShapeTypeSchema = z.enum([
   'line',
   'freehand',
   'text',
+  'ellipse',
+  'polygon',
+  'lasso',
+  'brush',
 ]);
 
 export type VectorShapeTypeDto = z.infer<typeof vectorShapeTypeSchema>;
 export type VectorShapeType = VectorShapeTypeDto;
 
-export const vectorShapeRoleSchema = z.enum(['contour', 'fill', 'inner', 'outer', 'custom']);
+export const vectorShapeRoleSchema = z.enum(['contour', 'fill', 'inner', 'outer', 'custom', 'product', 'shadow', 'background']);
 export type VectorShapeRoleDto = z.infer<typeof vectorShapeRoleSchema>;
 export type VectorShapeRole = VectorShapeRoleDto;
 
@@ -50,6 +58,11 @@ export const vectorShapeSchema = z.object({
   role: vectorShapeRoleSchema,
   points: z.array(vectorPointSchema),
   style: z.record(z.string(), z.unknown()),
+  label: z.string().optional(),
+  name: z.string().optional(),
+  color: z.string().optional(),
+  visible: z.boolean().optional(),
+  closed: z.boolean().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -89,7 +102,7 @@ export const createVectorDrawingSchema = vectorDrawingSchema.omit({
 export type CreateVectorDrawingDto = z.infer<typeof createVectorDrawingSchema>;
 export type UpdateVectorDrawingDto = Partial<CreateVectorDrawingDto>;
 
-export type VectorTool = 'select' | 'pencil' | 'line' | 'rect' | 'circle' | 'text' | 'eraser';
+export type VectorTool = 'select' | 'pencil' | 'line' | 'rect' | 'circle' | 'text' | 'eraser' | 'polygon' | 'ellipse' | 'brush' | 'lasso';
 
 export interface VectorCanvasState {
   shapes: VectorShape[];

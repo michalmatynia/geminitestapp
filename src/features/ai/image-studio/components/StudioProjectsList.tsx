@@ -43,7 +43,7 @@ import {
   setImageStudioProjectDeletionLock,
 } from '../utils/project-locks';
 
-import type { ImageStudioProjectRecord } from '../types';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface StudioProjectsListProps {

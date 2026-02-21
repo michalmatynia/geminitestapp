@@ -62,7 +62,7 @@ describe('upsertFilemakerCaptureCandidate', () => {
 
     const result = upsertFilemakerCaptureCandidate(createDatabase(), candidate);
 
-    expect(result.reference).toEqual({ kind: 'person', id: 'person-1' });
+    expect(result.reference).toMatchObject({ kind: 'person', id: 'person-1' });
     expect(result.createdParty).toBe(false);
     expect(result.createdAddress).toBe(false);
     expect(result.database.persons).toHaveLength(1);

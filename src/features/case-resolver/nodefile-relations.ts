@@ -547,6 +547,20 @@ export const sanitizeCaseResolverGraphNodeFileRelations = ({
       .map((file: CaseResolverFile): string => file.id.trim())
       .filter(Boolean)
   );
+  const relationIndexFromAssets = buildCaseResolverNodeFileRelationIndexFromAssets({
+    assets,
+    files,
+  });
+  const validDocumentFileIdsByNodeFileAssetId =
+    relationIndexFromAssets.documentFileIdsByNodeFileAssetId;
+  const nodeFileAssetIdsWithParsedSnapshots = new Set<string>();
+  assets.forEach((asset: CaseResolverAssetFile): void => {
+    if (asset.kind !== 'node_file') return;
+    const assetId = asset.id.trim();
+    if (!assetId) return;
+    if (!parseNodeFileSnapshotFromAsset(asset)) return;
+    nodeFileAssetIdsWithParsedSnapshots.add(assetId);
+  });
 
   const currentSourceByNode = normalizeRecord(graph.documentSourceFileIdByNode);
   const currentNodeFileByNode = normalizeRecord(graph.nodeFileAssetIdByNode);
@@ -562,6 +576,13 @@ export const sanitizeCaseResolverGraphNodeFileRelations = ({
   Object.entries(currentNodeFileByNode).forEach(([nodeId, assetId]: [string, string]): void => {
     if (!validNodeIds.has(nodeId)) return;
     if (!validNodeFileAssetIds.has(assetId)) return;
+    const sourceFileId = nextSourceByNode[nodeId] ?? '';
+    if (!sourceFileId) return;
+    const validSourceFileIds = validDocumentFileIdsByNodeFileAssetId[assetId] ?? [];
+    if (validSourceFileIds.length > 0 && !validSourceFileIds.includes(sourceFileId)) return;
+    if (validSourceFileIds.length === 0 && nodeFileAssetIdsWithParsedSnapshots.has(assetId)) {
+      return;
+    }
     nextNodeFileByNode[nodeId] = assetId;
   });
 

@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { ChatMessageDto as ChatMessage, ChatbotSettingsDto as ChatbotSettingsPayload, ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
+import type { ChatMessageDto as ChatMessage, ChatbotSettingsDto as ChatbotSettingsPayload, ChatbotSessionDto as ChatSession, ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 import type { CreateMutation, UpdateMutation } from '@/shared/contracts/ui';
 import { createCreateMutationV2, createDeleteMutationV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
@@ -22,7 +22,6 @@ import {
   saveChatbotSettings,
 } from '../api';
 
-import type { ChatbotSessionListItem, CreateChatSessionDto, UpdateChatSessionDto } from '@/shared/contracts/chatbot';
 
 /**
  * Mutation hook for creating a new chatbot session

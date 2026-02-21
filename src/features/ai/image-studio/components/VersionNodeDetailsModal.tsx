@@ -9,7 +9,7 @@ import { DetailModal } from '@/shared/ui/templates/modals';
 import { readMeta } from '../utils/metadata';
 
 import type { VersionNode } from '../context/VersionGraphContext';
-import type { ImageStudioSlotRecord } from '../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 type VersionNodeDetailsModalProps = EntityModalProps<VersionNode> & {
   getSlotImageSrc: (slot: ImageStudioSlotRecord) => string | null;

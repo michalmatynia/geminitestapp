@@ -1,6 +1,7 @@
 'use client';
 
 import type { ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
+import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { chatbotKeys } from '@/shared/lib/query-key-exports';
@@ -14,7 +15,6 @@ import {
   fetchChatbotModels,
 } from '../api';
 
-import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 
 const normalizeModelList = (payload: unknown): string[] => {
   if (Array.isArray(payload)) {

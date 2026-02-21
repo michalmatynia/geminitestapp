@@ -40,7 +40,7 @@ export interface ChatbotSessionRepository {
   create(input: CreateSessionInput): Promise<ChatSession>;
   update(id: string, input: UpdateSessionInput): Promise<ChatSession | null>;
   delete(id: string): Promise<boolean>;
-  addMessage(id: string, message: ChatSession['messages'][0]): Promise<ChatSession | null>;
+  addMessage(id: string, message: Partial<ChatMessage> & { role: ChatMessage['role']; content: string }): Promise<ChatSession | null>;
 }
 
 export const chatbotSessionRepository: ChatbotSessionRepository = {
@@ -123,15 +123,28 @@ export const chatbotSessionRepository: ChatbotSessionRepository = {
 
   async addMessage(
     id: string,
-    message: ChatSession['messages'][0]
+    message: Partial<ChatMessage> & { role: ChatMessage['role']; content: string }
   ): Promise<ChatSession | null> {
     const db = await getMongoDb();
+    const fullMessage: ChatMessage = {
+      id: message.id || `msg_${id}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      sessionId: message.sessionId || id,
+      timestamp: message.timestamp || new Date().toISOString(),
+      role: message.role,
+      content: message.content,
+      model: message.model,
+      images: message.images,
+      toolCalls: message.toolCalls,
+      toolResults: message.toolResults,
+      metadata: message.metadata,
+    };
+
     const result = await db
       .collection<ChatSessionDocument>(COLLECTION_NAME)
       .findOneAndUpdate(
         { _id: new ObjectId(id) },
         {
-          $push: { messages: message },
+          $push: { messages: fullMessage },
           $set: { updatedAt: new Date() },
         },
         { returnDocument: 'after' }

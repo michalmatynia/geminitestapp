@@ -10,7 +10,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
-import { Button, SelectSimple, ToggleRow, useToast } from '@/shared/ui';
+import { Button, SelectSimple, ToggleRow, useToast, Hint } from '@/shared/ui';
 
 import {
   normalizeShapeToPolygons,
@@ -45,7 +45,7 @@ import {
   type ImageStudioSequenceStep,
 } from '../utils/studio-settings';
 
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 
 type SequenceRunStatus =
   | 'queued'
@@ -233,7 +233,7 @@ export function SequencingPanel(): React.JSX.Element {
   const cropShapeOptions = useMemo(
     () =>
       maskShapes.map((shape, index) => {
-        const label = shape.label?.trim() || shape.name.trim() || `Shape ${index + 1}`;
+        const label = shape.label?.trim() || shape.name?.trim() || `Shape ${index + 1}`;
         return {
           value: shape.id,
           label: shape.visible ? label : `${label} (hidden)`,

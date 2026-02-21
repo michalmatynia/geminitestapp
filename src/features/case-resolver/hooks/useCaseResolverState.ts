@@ -22,7 +22,10 @@ import {
   parseFilemakerDatabase,
 } from '@/features/filemaker/settings';
 import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
-import { PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY } from '@/features/prompt-exploder/bridge';
+import {
+  PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY,
+  PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT,
+} from '@/features/prompt-exploder/bridge';
 import type {
   CaseResolverCategory,
   CaseResolverEditorNodeContext,
@@ -795,13 +798,43 @@ export function useCaseResolverState() {
   }, [refreshPendingPromptExploderPayload, requestedFileId, shouldOpenEditorFromQuery]);
 
   useEffect(() => {
-    const handleStorage = (event: StorageEvent): void => {
-      if (event.key !== PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY) return;
+    const refreshPayload = (): void => {
       refreshPendingPromptExploderPayload();
     };
+    const handleStorage = (event: StorageEvent): void => {
+      if (event.key !== PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY) return;
+      refreshPayload();
+    };
+    const handleBridgeStorageEvent = (): void => {
+      refreshPayload();
+    };
+    const handleFocus = (): void => {
+      refreshPayload();
+    };
+    const handlePageShow = (): void => {
+      refreshPayload();
+    };
+    const handleVisibilityChange = (): void => {
+      if (document.visibilityState !== 'visible') return;
+      refreshPayload();
+    };
     window.addEventListener('storage', handleStorage);
+    window.addEventListener(
+      PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT,
+      handleBridgeStorageEvent as EventListener
+    );
+    window.addEventListener('focus', handleFocus);
+    window.addEventListener('pageshow', handlePageShow);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
     return (): void => {
       window.removeEventListener('storage', handleStorage);
+      window.removeEventListener(
+        PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT,
+        handleBridgeStorageEvent as EventListener
+      );
+      window.removeEventListener('focus', handleFocus);
+      window.removeEventListener('pageshow', handlePageShow);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [refreshPendingPromptExploderPayload]);
 

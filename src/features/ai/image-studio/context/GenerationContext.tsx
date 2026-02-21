@@ -60,6 +60,7 @@ export interface GenerationActions {
   handleRunGeneration: () => void;
   restoreGeneration: (record: GenerationRecord) => void;
   clearActiveRunError: () => void;
+  removeGenerationRecord: (recordId: string) => Promise<void>;
 }
 
 type PollToken = {
@@ -241,6 +242,8 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
 
   const pollTokenRef = useRef<PollToken | null>(null);
   const lastSseHandledAtRef = useRef<number>(0);
+  const generationHistoryRef = useRef(generationHistory);
+  generationHistoryRef.current = generationHistory;
 
   const maskEligibleCount = useMemo(
     () => maskShapes.filter((s) => s.visible && s.closed && (s.type === 'polygon' || s.type === 'lasso') && s.points.length >= 3).length,
@@ -700,6 +703,31 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
     setActiveRunError(null);
   }, []);
 
+  const removeGenerationRecord = useCallback(
+    async (recordId: string): Promise<void> => {
+      const record = generationHistoryRef.current.find((r) => r.id === recordId);
+      if (record && projectId && record.outputs.length > 0) {
+        await Promise.allSettled(
+          record.outputs.map((output) =>
+            api
+              .post(
+                `/api/image-studio/projects/${encodeURIComponent(projectId)}/variants/delete`,
+                {
+                  assetId: output.id,
+                  generationRunId: record.id,
+                  sourceSlotId: record.slotId,
+                }
+              )
+              .catch(() => {})
+          )
+        );
+        void invalidateImageStudioSlots(queryClient, projectId);
+      }
+      setGenerationHistory((prev) => prev.filter((r) => r.id !== recordId));
+    },
+    [projectId, queryClient]
+  );
+
   const state = useMemo<GenerationState>(
     () => ({
       runMutation,
@@ -728,8 +756,8 @@ export function GenerationProvider({ children }: { children: React.ReactNode }):
   );
 
   const actions = useMemo<GenerationActions>(
-    () => ({ handleRunGeneration, restoreGeneration, clearActiveRunError }),
-    [handleRunGeneration, restoreGeneration, clearActiveRunError]
+    () => ({ handleRunGeneration, restoreGeneration, clearActiveRunError, removeGenerationRecord }),
+    [handleRunGeneration, restoreGeneration, clearActiveRunError, removeGenerationRecord]
   );
 
   return (

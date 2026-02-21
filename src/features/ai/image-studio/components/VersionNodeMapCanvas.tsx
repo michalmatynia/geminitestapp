@@ -10,7 +10,7 @@ import { getImageStudioDocTooltip } from '../utils/studio-docs';
 import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, NODE_HEIGHT, NODE_WIDTH, getCompositeNodeHeight } from '../utils/version-graph';
 
 import type { VersionNode } from '../context/VersionGraphContext';
-import type { CompositeLayerConfig } from '../types';
+import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -216,6 +216,16 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
     const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number } | null>(null);
     const [hoveredEdgeId, setHoveredEdgeId] = useState<string | null>(null);
     const [smoothTransition, setSmoothTransition] = useState(false);
+    const brokenImagesRef = useRef<Set<string>>(new Set());
+    const [, setBrokenTick] = useState(0);
+    const prevNodeCountRef = useRef(nodes.length);
+
+    useEffect(() => {
+      if (nodes.length !== prevNodeCountRef.current) {
+        brokenImagesRef.current.clear();
+        prevNodeCountRef.current = nodes.length;
+      }
+    }, [nodes.length]);
 
     // Expose SVG ref + fitToView + pan/zoom access
     useImperativeHandle(ref, () => ({
@@ -630,7 +640,7 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                       />
 
                       {/* Thumbnail */}
-                      {imageSrc ? (
+                      {imageSrc && !brokenImagesRef.current.has(node.id) ? (
                         <image
                           href={imageSrc}
                           x={(NODE_WIDTH - THUMB_SIZE) / 2}
@@ -639,6 +649,10 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                           height={THUMB_SIZE}
                           preserveAspectRatio='xMidYMid slice'
                           clipPath='inset(0 round 4px)'
+                          onError={() => {
+                            brokenImagesRef.current.add(node.id);
+                            setBrokenTick((t) => t + 1);
+                          }}
                         />
                       ) : (
                         <rect
@@ -648,7 +662,7 @@ export const VersionNodeMapCanvas = React.forwardRef<VersionNodeMapCanvasRef, Ve
                           height={THUMB_SIZE}
                           rx={4}
                           ry={4}
-                          fill='#374151'
+                          fill={brokenImagesRef.current.has(node.id) ? '#7f1d1d' : '#374151'}
                           fillOpacity={0.4}
                         />
                       )}

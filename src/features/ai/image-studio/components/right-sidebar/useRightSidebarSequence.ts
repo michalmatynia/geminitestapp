@@ -12,7 +12,7 @@ import {
 } from './right-sidebar-utils';
 import { resolvePromptPlaceholders } from '../../utils/run-request-preview';
 
-import type { ImageStudioSlotRecord } from '../../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { ImageStudioSequenceStep } from '../../utils/studio-settings';
 
 type Toast = (

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { VersionNode } from '../context/VersionGraphContext';
-import type { ImageStudioSlotRecord } from '../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 type VersionGraphCompareContextValue = {
   compareNodes: readonly [VersionNode, VersionNode];

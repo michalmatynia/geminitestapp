@@ -483,8 +483,10 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
             runtimeSelection.runtimeValidationRules,
             runtimeSelection.identity.scope
           );
+          const isRulesOnlyCaptureMode =
+            promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only';
           if (
-            promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only' &&
+            isRulesOnlyCaptureMode &&
             captureRules.length === 0
           ) {
             toast(
@@ -515,10 +517,16 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         }
 
         if (!hasCaptureData) {
-          toast(
-            'No addresser/addressee/date captures found in rules-only mode. No fallback extraction will run; applying will transfer text only.',
-            { variant: 'warning' }
-          );
+          if (promptExploderSettings.runtime.caseResolverCaptureMode === 'rules_only') {
+            toast(
+              'No addresser/addressee/date captures found in rules-only mode. No fallback extraction will run; applying will transfer text only.',
+              { variant: 'warning' }
+            );
+          } else {
+            toast('No addresser/addressee/date captures found. Applying will transfer text only.', {
+              variant: 'warning',
+            });
+          }
         }
         const transferContext: PromptExploderCaseResolverContext = {
           fileId: resolvedContextFileId,

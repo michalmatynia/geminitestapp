@@ -1,6 +1,6 @@
 'use client';
 
-import { Edit2, LayoutList, Users, Building2, Database } from 'lucide-react';
+import { Edit2, LayoutList, Users, Building2, Database, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
@@ -196,6 +196,13 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             onClick: () => router.push('/admin/filemaker/organizations'),
           },
           {
+            key: 'emails',
+            label: 'Emails Page',
+            icon: <Mail className='size-4' />,
+            variant: 'outline',
+            onClick: () => router.push('/admin/filemaker/emails'),
+          },
+          {
             key: 'manage',
             label: 'Manage Database',
             icon: <Database className='size-4' />,
@@ -223,6 +230,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
                 <div className='flex items-center gap-2'>
                   <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
                   <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>Emails: {database.emails.length}</Badge>
                   <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
                 </div>
                 <div className='w-full max-w-sm'>
@@ -258,6 +266,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
                 <div className='flex items-center gap-2'>
                   <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
                   <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>Emails: {database.emails.length}</Badge>
                   <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
                 </div>
                 <div className='w-full max-w-sm'>

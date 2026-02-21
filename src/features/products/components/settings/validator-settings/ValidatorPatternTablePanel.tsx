@@ -95,89 +95,108 @@ const PatternRow = memo(function PatternRow({
   return (
     <div key={pattern.id} className='space-y-2'>
       {isGroupFirst && group && (
-        <FormSection
-          title='Sequence / Group'
-          description={`${group.patternIds.length} pattern${group.patternIds.length === 1 ? '' : 's'}`}
-          variant='subtle-compact'
-          className='border-cyan-500/35 bg-cyan-500/5 p-3'
+        <div
+          onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
+            if (patternActionsPending) return;
+            event.preventDefault();
+            event.stopPropagation();
+            if (dragOverPatternId !== pattern.id) {
+              setDragOverPatternId(pattern.id);
+            }
+          }}
+          onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
+            if (patternActionsPending) return;
+            event.preventDefault();
+            event.stopPropagation();
+            onPatternDrop(pattern, event);
+          }}
         >
-          <div className='mt-3 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_140px_auto_auto]'>
-            <FormField label='Group Label'>
-              <Input
-                className='h-8'
-                value={groupDraft?.label ?? group.label}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                  setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => {
-                    const current = prev[group.id] ?? {
-                      label: group.label,
-                      debounceMs: String(group.debounceMs),
-                    };
-                    return {
-                      ...prev,
-                      [group.id]: {
-                        ...current,
-                        label: event.target.value,
-                      },
-                    };
-                  });
-                }}
-                placeholder='Sequence / Group'
-              />
-            </FormField>
-            <FormField label='Debounce (ms)'>
-              <Input
-                type='number'
-                min={0}
-                max={30000}
-                className='h-8'
-                value={groupDraft?.debounceMs ?? String(group.debounceMs)}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                  setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => {
-                    const current = prev[group.id] ?? {
-                      label: group.label,
-                      debounceMs: String(group.debounceMs),
-                    };
-                    return {
-                      ...prev,
-                      [group.id]: {
-                        ...current,
-                        debounceMs: event.target.value,
-                      },
-                    };
-                  });
-                }}
-              />
-            </FormField>
-            <div className='flex items-end'>
-              <ValidatorDocTooltip docId='validator.group.save'>
-                <Button
-                  type='button'
-                  disabled={patternActionsPending}
-                  variant='outline'
-                  size='sm'
+          <FormSection
+            title='Sequence / Group'
+            description={`${group.patternIds.length} pattern${group.patternIds.length === 1 ? '' : 's'}`}
+            variant='subtle-compact'
+            className={`border-cyan-500/35 bg-cyan-500/5 p-3 ${
+              isDragTarget ? 'ring-1 ring-cyan-300/55' : ''
+            }`}
+          >
+            <div className='mt-3 grid grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_140px_auto_auto]'>
+              <FormField label='Group Label'>
+                <Input
                   className='h-8'
-                  onClick={() => onSaveSequenceGroup(group.id)}
-                >
-                  Save Group
-                </Button>
-              </ValidatorDocTooltip>
+                  value={groupDraft?.label ?? group.label}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                    setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => {
+                      const current = prev[group.id] ?? {
+                        label: group.label,
+                        debounceMs: String(group.debounceMs),
+                      };
+                      return {
+                        ...prev,
+                        [group.id]: {
+                          ...current,
+                          label: event.target.value,
+                        },
+                      };
+                    });
+                  }}
+                  placeholder='Sequence / Group'
+                />
+              </FormField>
+              <FormField label='Debounce (ms)'>
+                <Input
+                  type='number'
+                  min={0}
+                  max={30000}
+                  className='h-8'
+                  value={groupDraft?.debounceMs ?? String(group.debounceMs)}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                    setGroupDrafts((prev: Record<string, SequenceGroupDraft>) => {
+                      const current = prev[group.id] ?? {
+                        label: group.label,
+                        debounceMs: String(group.debounceMs),
+                      };
+                      return {
+                        ...prev,
+                        [group.id]: {
+                          ...current,
+                          debounceMs: event.target.value,
+                        },
+                      };
+                    });
+                  }}
+                />
+              </FormField>
+              <div className='flex items-end'>
+                <ValidatorDocTooltip docId='validator.group.save'>
+                  <Button
+                    type='button'
+                    disabled={patternActionsPending}
+                    variant='outline'
+                    size='sm'
+                    className='h-8'
+                    onClick={() => onSaveSequenceGroup(group.id)}
+                  >
+                    Save Group
+                  </Button>
+                </ValidatorDocTooltip>
+              </div>
+              <div className='flex items-end'>
+                <ValidatorDocTooltip docId='validator.group.ungroup'>
+                  <Button
+                    type='button'
+                    disabled={patternActionsPending}
+                    variant='outline'
+                    size='sm'
+                    className='h-8 border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
+                    onClick={() => onUngroup(group.id)}
+                  >
+                    Ungroup
+                  </Button>
+                </ValidatorDocTooltip>
+              </div>
             </div>
-            <div className='flex items-end'>
-              <ValidatorDocTooltip docId='validator.group.ungroup'>
-                <Button
-                  type='button'
-                  disabled={patternActionsPending}
-                  variant='outline'
-                  size='sm'
-                  className='h-8 border-amber-500/40 text-amber-200 hover:bg-amber-500/10'
-                  onClick={() => onUngroup(group.id)}
-                >
-                  Ungroup
-                </Button>
-              </ValidatorDocTooltip>
-            </div>
-          </div>
-        </FormSection>
+          </FormSection>
+        </div>
       )}
 
       <div
@@ -197,6 +216,8 @@ const PatternRow = memo(function PatternRow({
           setDragOverPatternId(null);
         }}
         onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
+          event.preventDefault();
+          event.stopPropagation();
           onPatternDrop(pattern, event);
         }}
       >

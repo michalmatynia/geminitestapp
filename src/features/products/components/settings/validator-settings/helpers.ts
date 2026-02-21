@@ -53,6 +53,7 @@ export const EMPTY_FORM: PatternFormData = {
   logicWhenFalseValue: '',
   resultAssembly: 'segment_only',
   targetApply: 'replace_matched_segment',
+  sequenceGroupId: '',
   sequence: '',
   chainMode: 'continue',
   maxExecutions: '1',

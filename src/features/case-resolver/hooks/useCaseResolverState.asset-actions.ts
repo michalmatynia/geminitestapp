@@ -506,7 +506,7 @@ export const useCaseResolverStateAssetActions = ({
         });
       }
       const existingEdgeMeta = isObjectRecord(nextRelationEdgeMeta[relationEdgeId])
-        ? (nextRelationEdgeMeta[relationEdgeId] as Record<string, unknown>)
+        ? (nextRelationEdgeMeta[relationEdgeId])
         : null;
       nextRelationEdgeMeta[relationEdgeId] = {
         relationType: 'related',

@@ -15,7 +15,7 @@ import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { VectorCanvasImageContentFrame, VectorCanvasViewCropRect } from '@/shared/ui';
-import { Button, useToast } from '@/shared/ui';
+import { Button, useToast, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { FocusModeTogglePortal } from './center-preview/FocusModeTogglePortal';
@@ -50,7 +50,7 @@ import {
 } from './center-preview/variant-thumbnails';
 
 import type { VersionNode } from '../context/VersionGraphContext';
-import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '../types';
+import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
 
 const PREVIEW_MODE_OPTIONS = [
   { value: 'image', label: 'Image' },

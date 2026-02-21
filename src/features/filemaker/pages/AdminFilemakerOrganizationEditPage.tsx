@@ -23,6 +23,7 @@ import {
   createFilemakerOrganization,
   FILEMAKER_DATABASE_KEY,
   formatFilemakerAddress,
+  getFilemakerEmailsForParty,
   normalizeFilemakerDatabase,
   parseFilemakerDatabase,
 } from '../settings';
@@ -33,7 +34,7 @@ import {
   resolveCountryId,
 } from './filemaker-page-utils';
 
-import type { FilemakerOrganization } from '../types';
+import type { FilemakerEmail, FilemakerOrganization } from '../types';
 
 export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
   const params = useParams();
@@ -71,6 +72,13 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
         (entry: FilemakerOrganization): boolean => entry.id === organizationId
       ) ?? null,
     [database.organizations, organizationId]
+  );
+  const linkedEmails = useMemo(
+    (): FilemakerEmail[] =>
+      organization
+        ? getFilemakerEmailsForParty(database, 'organization', organization.id)
+        : [],
+    [database, organization]
   );
 
   const [name, setName] = useState('');
@@ -251,6 +259,9 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
         <Badge variant='outline' className='text-[10px]'>
           Updated: {formatTimestamp(organization.updatedAt)}
         </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Linked Emails: {linkedEmails.length}
+        </Badge>
       </div>
 
       <FormSection title='Organization Details' className='space-y-4 p-4'>
@@ -332,6 +343,28 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
             postalCode,
             country: countryById.get(countryId)?.name ?? organization.country,
           })}
+        </div>
+      </FormSection>
+
+      <FormSection title='Linked Emails' className='space-y-2 p-4'>
+        {linkedEmails.length === 0 ? (
+          <div className='text-xs text-gray-500'>
+            No linked emails for this organization.
+          </div>
+        ) : (
+          linkedEmails
+            .slice()
+            .sort((left: FilemakerEmail, right: FilemakerEmail) =>
+              left.email.localeCompare(right.email)
+            )
+            .map((email: FilemakerEmail) => (
+              <div key={email.id} className='text-xs text-gray-300'>
+                {email.email} ({email.status})
+              </div>
+            ))
+        )}
+        <div className='text-[11px] text-gray-500'>
+          Manage links in Filemaker Emails.
         </div>
       </FormSection>
     </div>

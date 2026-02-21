@@ -1,4 +1,4 @@
-import type { SlotGenerationMetadata } from '../types';
+import type { SlotGenerationMetadata } from '@/shared/contracts/image-studio';
 
 /**
  * Safely extract generation metadata from a slot record.

@@ -1,7 +1,6 @@
 'use client';
 
 import type { DbSchemaSnapshot } from '@/shared/contracts/ai-paths';
-
 import type { 
   CollectionSchema, 
   SchemaData 
@@ -62,7 +61,7 @@ export const normalizeSchemaCollections = (schema: SchemaData | null): Array<Col
   if (!schema?.collections) return [];
 
   const baseCollections = Array.isArray(schema.collections)
-    ? (schema.collections as any[])
+    ? (schema.collections)
     : Object.values(schema.collections);
 
   if (baseCollections.length === 0) return [];

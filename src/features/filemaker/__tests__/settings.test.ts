@@ -5,8 +5,14 @@ import {
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
   getFilemakerAddressById,
+  getFilemakerEmailsForParty,
+  getFilemakerPartiesForEmail,
+  linkFilemakerEmailToParty,
   parseFilemakerDatabase,
+  removeFilemakerEmail,
+  removeFilemakerPartyEmailLinks,
   resolveFilemakerPartyLabel,
+  unlinkFilemakerEmailFromParty,
 } from '@/features/filemaker/settings';
 
 describe('filemaker settings', () => {
@@ -140,5 +146,119 @@ describe('filemaker settings', () => {
     expect(database.organizations[0]?.postalCode).toBe('');
     expect(database.organizations[0]?.country).toBe('');
     expect(database.addresses).toHaveLength(0);
+  });
+
+  it('normalizes email records and email links', () => {
+    const database = parseFilemakerDatabase(
+      JSON.stringify({
+        version: 2,
+        persons: [
+          {
+            id: 'p-1',
+            firstName: 'Jane',
+            lastName: 'Smith',
+            street: 'Street 9',
+            streetNumber: '1',
+            city: 'Warsaw',
+            postalCode: '00-002',
+            country: 'Poland',
+            countryId: 'country-pl',
+            addressId: 'addr-p-1',
+            nip: '',
+            regon: '',
+            phoneNumbers: [],
+          },
+        ],
+        organizations: [
+          {
+            id: 'o-1',
+            name: 'Beta Ltd',
+            street: 'Org Avenue',
+            streetNumber: '10',
+            city: 'Poznan',
+            postalCode: '60-001',
+            country: 'Poland',
+            countryId: 'country-pl',
+            addressId: 'addr-o-1',
+          },
+        ],
+        emails: [
+          { id: 'e-1', email: 'JANE@EXAMPLE.COM', status: 'active' },
+          { id: 'e-2', email: 'jane@example.com', status: 'inactive' },
+          { id: 'e-3', email: 'invalid', status: 'bounced' },
+        ],
+        emailLinks: [
+          { id: 'l-1', emailId: 'e-1', partyKind: 'person', partyId: 'p-1' },
+          { id: 'l-2', emailId: 'e-1', partyKind: 'person', partyId: 'p-1' },
+          { id: 'l-3', emailId: 'e-1', partyKind: 'organization', partyId: 'o-1' },
+          { id: 'l-4', emailId: 'missing', partyKind: 'person', partyId: 'p-1' },
+        ],
+      })
+    );
+
+    expect(database.emails).toHaveLength(1);
+    expect(database.emails[0]?.email).toBe('jane@example.com');
+    expect(database.emailLinks).toHaveLength(2);
+    expect(getFilemakerEmailsForParty(database, 'person', 'p-1')).toHaveLength(1);
+    expect(getFilemakerPartiesForEmail(database, 'e-1').persons).toHaveLength(1);
+    expect(getFilemakerPartiesForEmail(database, 'e-1').organizations).toHaveLength(1);
+  });
+
+  it('links and unlinks emails to parties', () => {
+    const baseDatabase = parseFilemakerDatabase(
+      JSON.stringify({
+        version: 2,
+        persons: [
+          {
+            id: 'p-1',
+            firstName: 'Jane',
+            lastName: 'Smith',
+            street: 'Street 9',
+            streetNumber: '1',
+            city: 'Warsaw',
+            postalCode: '00-002',
+            country: 'Poland',
+            countryId: 'country-pl',
+            addressId: 'addr-p-1',
+            nip: '',
+            regon: '',
+            phoneNumbers: [],
+          },
+        ],
+        organizations: [],
+        emails: [{ id: 'e-1', email: 'jane@example.com', status: 'active' }],
+      })
+    );
+
+    const linked = linkFilemakerEmailToParty(baseDatabase, {
+      emailId: 'e-1',
+      partyKind: 'person',
+      partyId: 'p-1',
+    });
+    expect(linked.created).toBe(true);
+    expect(linked.database.emailLinks).toHaveLength(1);
+
+    const duplicate = linkFilemakerEmailToParty(linked.database, {
+      emailId: 'e-1',
+      partyKind: 'person',
+      partyId: 'p-1',
+    });
+    expect(duplicate.created).toBe(false);
+    expect(duplicate.database.emailLinks).toHaveLength(1);
+
+    const unlinked = unlinkFilemakerEmailFromParty(linked.database, {
+      emailId: 'e-1',
+      partyKind: 'person',
+      partyId: 'p-1',
+    });
+    expect(unlinked.emailLinks).toHaveLength(0);
+
+    const relinked = linkFilemakerEmailToParty(baseDatabase, {
+      emailId: 'e-1',
+      partyKind: 'person',
+      partyId: 'p-1',
+    }).database;
+    expect(removeFilemakerPartyEmailLinks(relinked, 'person', 'p-1').emailLinks).toHaveLength(0);
+    expect(removeFilemakerEmail(relinked, 'e-1').emails).toHaveLength(0);
   });
 });

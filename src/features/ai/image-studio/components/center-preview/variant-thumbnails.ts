@@ -14,21 +14,15 @@ import {
 } from './preview-utils';
 
 import type { VersionNode } from '../../context/VersionGraphContext';
-import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '../../types';
+import type { ImageStudioSlotRecord, SlotGenerationMetadata } from '@/shared/contracts/image-studio';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 
 const GENERATED_SOURCE_PATH_REGEX = /^\/uploads\/studio\/(?:center|crops|upscale|autoscale)\/[^/]+\/([^/]+)\//i;
 
 type LandingSlotLike = {
   index: number;
   status: string;
-  output?: {
-    id: string;
-    filepath: string;
-    filename?: string | null;
-    size?: number | null;
-    width?: number | null;
-    height?: number | null;
-  } | null;
+  output?: ImageFileRecord | null;
 };
 
 type BuildVariantThumbnailsParams = {

@@ -33,7 +33,7 @@ export const CASE_RESOLVER_OCR_JOB_POLL_INTERVAL_MS = 900;
 export const CASE_RESOLVER_OCR_JOB_TIMEOUT_MS = 120_000;
 
 export type CaseResolverDraftCanonicalState = {
-  mode: 'wysiwyg';
+  mode: 'markdown' | 'wysiwyg';
   storedContent: string;
   markdown: string;
   html: string;
@@ -104,7 +104,28 @@ type CaseResolverComparableDocumentSnapshot = {
 export const buildCaseResolverDraftCanonicalState = (
   draft: CaseResolverFileEditDraft
 ): CaseResolverDraftCanonicalState => {
-  const resolvedHtmlContent = (() => {
+  const resolvedMode: 'markdown' | 'wysiwyg' =
+    draft.fileType === 'scanfile'
+      ? 'markdown'
+      : draft.editorType === 'markdown'
+        ? 'markdown'
+        : 'wysiwyg';
+  const resolvedCanonicalSource = (() => {
+    if (resolvedMode === 'markdown') {
+      if (
+        typeof draft.documentContentMarkdown === 'string' &&
+        draft.documentContentMarkdown.trim().length > 0
+      ) {
+        return draft.documentContentMarkdown;
+      }
+      if (
+        typeof draft.documentContentPlainText === 'string' &&
+        draft.documentContentPlainText.trim().length > 0
+      ) {
+        return draft.documentContentPlainText;
+      }
+      return draft.documentContent ?? '';
+    }
     if (
       typeof draft.documentContentHtml === 'string' &&
       draft.documentContentHtml.trim().length > 0
@@ -120,9 +141,9 @@ export const buildCaseResolverDraftCanonicalState = (
     return ensureSafeDocumentHtml(draft.documentContent ?? '');
   })();
   const canonical = deriveDocumentContentSync({
-    mode: 'wysiwyg',
-    value: resolvedHtmlContent,
-    previousHtml: resolvedHtmlContent,
+    mode: resolvedMode,
+    value: resolvedCanonicalSource,
+    previousHtml: draft.documentContentHtml ?? '',
     previousMarkdown: draft.documentContentMarkdown ?? '',
   });
   const storedContent = toStorageDocumentValue(canonical);
@@ -135,7 +156,7 @@ export const buildCaseResolverDraftCanonicalState = (
       ? storedContent
       : (draft.explodedDocumentContent ?? '');
   return {
-    mode: 'wysiwyg',
+    mode: resolvedMode,
     storedContent,
     markdown: canonical.markdown,
     html: canonical.html,

@@ -286,7 +286,7 @@ describe('case resolver extraction bridge payload', () => {
     expect(result.payload.metadata).toBeUndefined();
   });
 
-  it('keeps only rules captures when rules-only mode has partial captures', () => {
+  it('fills missing roles heuristically when rules-only mode has partial rule captures', () => {
     const addresserOnlyRules: CaseResolverSegmentCaptureRule[] = [
       {
         id: 'capture.addresser.display_name',
@@ -323,7 +323,12 @@ describe('case resolver extraction bridge payload', () => {
     expect(result.usedFallback).toBe(false);
     expect(result.hasCaptureData).toBe(true);
     expect(result.payload.parties?.addresser?.displayName).toBe('Michał Matynia');
-    expect(result.payload.parties?.addressee).toBeUndefined();
+    expect(result.payload.parties?.addresser?.rawText).toContain('Fioletowa 71/2');
+    expect(result.payload.parties?.addresser?.rawText).toContain('\n');
+    expect(result.payload.parties?.addressee?.displayName).toBe('Inspektorat ZUS w Gryficach');
+    expect(result.payload.parties?.addressee?.organizationName).toBe(
+      'Inspektorat ZUS w Gryficach'
+    );
   });
 
   it('reports no transfer captures when both rule and fallback extraction fail', () => {

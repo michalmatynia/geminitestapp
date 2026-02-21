@@ -517,7 +517,7 @@ const normalizeCaptureSourceText = (
   };
 };
 
-const CAPTURE_HEADER_LINE_SEARCH_LIMIT = 80;
+const CAPTURE_HEADER_LINE_SEARCH_LIMIT = 140;
 const CAPTURE_HEADER_BLOCK_EXTRA_SPAN = 6;
 
 const splitCaptureTextLines = (sourceText: string): string[] =>
@@ -776,7 +776,7 @@ const findOrderedCaptureBlockIndices = (input: {
   } = input;
 
   const sanitizedBlock = blockLineKeys.filter(Boolean);
-  if (sanitizedBlock.length < 2) return null;
+  if (sanitizedBlock.length < 1) return null;
   if (headerSearchLimit <= 0) return null;
 
   let bestMatch: number[] | null = null;

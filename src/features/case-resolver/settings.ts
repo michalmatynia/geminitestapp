@@ -613,7 +613,29 @@ export const createCaseResolverFile = (input: {
       : requestedVersion;
   const activeDocumentContent =
     activeDocumentVersion === 'exploded' ? explodedDocumentContent : originalDocumentContent;
-  const resolvedHtmlContent = (() => {
+  const fileType = normalizeCaseResolverFileType(input.fileType);
+  const requestedEditorType: CaseResolverEditorType | null =
+    input.editorType === 'markdown' || input.editorType === 'wysiwyg'
+      ? input.editorType
+      : null;
+  const resolvedEditorType: CaseResolverEditorType =
+    fileType === 'scanfile' ? 'markdown' : (requestedEditorType ?? 'wysiwyg');
+  const resolvedCanonicalSource = (() => {
+    if (resolvedEditorType === 'markdown') {
+      if (
+        typeof input.documentContentMarkdown === 'string' &&
+        input.documentContentMarkdown.trim().length > 0
+      ) {
+        return input.documentContentMarkdown;
+      }
+      if (
+        typeof input.documentContentPlainText === 'string' &&
+        input.documentContentPlainText.trim().length > 0
+      ) {
+        return input.documentContentPlainText;
+      }
+      return activeDocumentContent;
+    }
     if (typeof input.documentContentHtml === 'string' && input.documentContentHtml.trim().length > 0) {
       return input.documentContentHtml;
     }
@@ -626,13 +648,13 @@ export const createCaseResolverFile = (input: {
     return ensureSafeDocumentHtml(activeDocumentContent);
   })();
   const canonicalDocument = deriveDocumentContentSync({
-    mode: 'wysiwyg',
-    value: resolvedHtmlContent,
+    mode: resolvedEditorType,
+    value: resolvedCanonicalSource,
     previousHtml: input.documentContentHtml,
     previousMarkdown: input.documentContentMarkdown,
   });
   const documentContent = toStorageDocumentValue(canonicalDocument);
-  const editorType: CaseResolverEditorType = 'wysiwyg';
+  const editorType: CaseResolverEditorType = resolvedEditorType;
   const documentContentFormatVersion = normalizeDocumentFormatVersion(input.documentContentFormatVersion);
   const documentContentVersion = normalizeDocumentContentVersion(input.documentContentVersion);
   const documentConversionWarnings = Array.isArray(input.documentConversionWarnings)
@@ -649,7 +671,6 @@ export const createCaseResolverFile = (input: {
   const referenceCaseIds = sanitizeOptionalIdArray(input.referenceCaseIds).filter(
     (referenceId: string): boolean => referenceId !== input.id
   );
-  const fileType = normalizeCaseResolverFileType(input.fileType);
   const scanOcrModel =
     typeof input.scanOcrModel === 'string' ? input.scanOcrModel.trim() : '';
   const scanOcrPrompt =

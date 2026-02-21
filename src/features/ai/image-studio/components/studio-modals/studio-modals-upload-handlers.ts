@@ -3,7 +3,7 @@ import type { ImageFileSelection } from '@/shared/contracts/files';
 import { setImageStudioSlotImageLocked } from '../../utils/slot-image-lock';
 
 import type { EnvironmentReferenceDraftViewModel } from './slot-inline-edit-tab-types';
-import type { ImageStudioSlotRecord } from '../../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 
 type Toast = (

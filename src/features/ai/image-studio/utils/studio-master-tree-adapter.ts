@@ -10,7 +10,7 @@ import {
   resolveFolderTargetPathForMasterNode,
 } from './master-folder-tree';
 
-import type { ImageStudioSlotRecord } from '../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export type ImageStudioMasterTreeAdapterOptions = {
   slotById: Map<string, ImageStudioSlotRecord>;

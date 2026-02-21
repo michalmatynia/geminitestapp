@@ -254,7 +254,7 @@ export function JobQueuePanel({
   const resolveRunsRefetchInterval = React.useCallback(
     (query: any): number | false => {
       if (!effectiveAutoRefreshEnabled) return false;
-      const runs = (query.state.data as any)?.runs ?? [];
+      const runs = (query.state.data)?.runs ?? [];
       const hasActiveRuns = runs.some((run: AiPathRunRecord) =>
         ACTIVE_RUN_STATUSES.has(String(run.status ?? '').trim().toLowerCase())
       );
@@ -269,7 +269,7 @@ export function JobQueuePanel({
   const resolveQueueStatusRefetchInterval = React.useCallback(
     (query: any): number | false => {
       if (!effectiveAutoRefreshEnabled) return false;
-      const activeRuns = (query.state.data as any)?.status?.activeRuns ?? 0;
+      const activeRuns = (query.state.data)?.status?.activeRuns ?? 0;
       const baseInterval = activeRuns > 0
         ? Math.max(ACTIVE_QUEUE_STATUS_REFRESH_MIN_MS, autoRefreshInterval)
         : Math.max(IDLE_QUEUE_STATUS_REFRESH_MIN_MS, autoRefreshInterval);

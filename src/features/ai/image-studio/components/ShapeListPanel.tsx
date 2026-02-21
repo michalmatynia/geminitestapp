@@ -1,6 +1,6 @@
 'use client';
 
-import { Brush, Circle, Eye, EyeOff, Lasso, PenLine, RectangleHorizontal, Trash2 } from 'lucide-react';
+import { Brush, Circle, Eye, EyeOff, Lasso, PenLine, RectangleHorizontal, Type, Trash2 } from 'lucide-react';
 import React, { useCallback, useState } from 'react';
 
 import type { VectorShape, VectorShapeRole } from '@/shared/contracts/vector';
@@ -34,6 +34,11 @@ const SHAPE_ICON_MAP = {
   rect: RectangleHorizontal,
   ellipse: Circle,
   brush: Brush,
+  path: PenLine,
+  text: Type,
+  circle: Circle,
+  line: PenLine,
+  freehand: Brush,
 } as const;
 
 const SHAPE_ICON_COLOR_MAP: Record<string, string> = {
@@ -76,7 +81,7 @@ export function ShapeListPanel({
 
   const startRename = useCallback((shape: VectorShape) => {
     setEditingId(shape.id);
-    setEditName(shape.label ?? shape.name);
+    setEditName(shape.label ?? shape.name ?? '');
   }, []);
 
   const commitRename = useCallback(() => {
@@ -175,10 +180,13 @@ export function ShapeListPanel({
                   onValueChange={(value: string) => {
                     const nextValue = value.trim();
                     if (!nextValue) {
-                      handleUpdateShape(shape.id, { role: undefined });
+                      handleUpdateShape(shape.id, { role: 'custom' });
                       return;
                     }
-                    if (!isVectorShapeRole(nextValue)) return;
+                    if (!isVectorShapeRole(nextValue)) {
+                      handleUpdateShape(shape.id, { role: 'custom' });
+                      return;
+                    }
                     handleUpdateShape(shape.id, { role: nextValue });
                   }}
                   options={[

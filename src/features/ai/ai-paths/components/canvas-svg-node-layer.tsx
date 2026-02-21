@@ -414,9 +414,9 @@ export function CanvasSvgNodeLayer({
             node.type === 'poll' ||
             node.type === 'delay') &&
                       Boolean(runtimeNodeStatus && BLOCKER_PROCESSING_STATUSES.has(runtimeNodeStatus));
-                  const inputPulse = inputPulseNodes.has(node.id);
-                  const outputPulse = outputPulseNodes.has(node.id);
-                  const typeBadge = node.type.toUpperCase();        const typeBadgeWidth = Math.max(54, typeBadge.length * 6 + 12);
+        const inputPulse = inputPulseNodes.has(node.id);
+        const outputPulse = outputPulseNodes.has(node.id);
+        const typeBadge = node.type.toUpperCase();        const typeBadgeWidth = Math.max(54, typeBadge.length * 6 + 12);
         const runtimeBadgeWidth = runtimeStatusLabel
           ? Math.max(64, runtimeStatusLabel.length * 6 + 16)
           : 0;

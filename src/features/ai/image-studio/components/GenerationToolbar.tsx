@@ -90,7 +90,7 @@ import type {
   ImageStudioCenterResponse,
   ImageStudioCenterShadowPolicy,
 } from '../contracts/center';
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 import type { ImageStudioAnalysisSummaryChipData } from './ImageStudioAnalysisSummaryChip';
 
 type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';

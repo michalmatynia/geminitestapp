@@ -5,7 +5,7 @@ import ProductImageManager, {
   type ProductImageManagerController,
 } from '@/features/products/components/ProductImageManager';
 import { ProductImageManagerControllerProvider } from '@/features/products/components/ProductImageManagerControllerContext';
-import { Button, Input, Label, TabsContent } from '@/shared/ui';
+import { Button, Input, Label, TabsContent, LoadingState } from '@/shared/ui';
 import { Hint } from '@/shared/ui';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
@@ -14,7 +14,7 @@ import type {
   InlinePreviewSourceViewModel,
   LinkedGeneratedVariantViewModel,
 } from './slot-inline-edit-tab-types';
-import type { ImageStudioSlotRecord } from '../../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 type SlotInlineEditCardTabProps = {
   clearImageDisabled: boolean;

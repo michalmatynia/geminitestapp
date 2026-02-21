@@ -768,7 +768,7 @@ export function CaseResolverPageView(
       ? 'Edit Scan'
       : 'Edit Document';
   const scanfileMarkdownPreview = React.useMemo((): string => {
-    if (!editingDocumentDraft || editingDocumentDraft.fileType !== 'scanfile') {
+    if (editingDocumentDraft?.fileType !== 'scanfile') {
       return '';
     }
     const markdown = editingDocumentDraft.documentContentMarkdown ?? '';
@@ -780,6 +780,7 @@ export function CaseResolverPageView(
       .filter((value: string): boolean => value.length > 0)
       .join('\n\n');
   }, [editingDocumentDraft]);
+  const hasScanfileMarkdownPreview = scanfileMarkdownPreview.trim().length > 0;
   const clearDocumentSelection = useCallback((): void => {
     setSelectedFileId(null);
     setSelectedAssetId(null);
@@ -1033,6 +1034,199 @@ export function CaseResolverPageView(
               />
             ) : selectedAsset ? (
               <CaseResolverFileViewer />
+            ) : editingDocumentDraft?.fileType === 'scanfile' ? (
+              <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-auto pr-1'>
+                <div className='flex flex-wrap items-center justify-between gap-3'>
+                  <div className='flex min-w-0 items-center gap-2'>
+                    <h2 className='truncate text-2xl font-bold tracking-tight text-white'>
+                      {fileEditorTitle}
+                    </h2>
+                    {isEditingDocumentLocked ? (
+                      <Badge
+                        variant='outline'
+                        className='border-amber-500/50 text-amber-200'
+                      >
+                        Locked · View only
+                      </Badge>
+                    ) : null}
+                  </div>
+                  <Button
+                    type='button'
+                    size='sm'
+                    onClick={(): void => {
+                      handleCreateDocumentFromText(editingDocumentDraft.id);
+                    }}
+                    disabled={!hasScanfileMarkdownPreview || isEditingDocumentLocked}
+                    className='h-8 min-w-[220px] rounded-md bg-emerald-600 text-white hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60'
+                  >
+                    Create Document from Text
+                  </Button>
+                </div>
+
+                <FileUploadTrigger
+                  accept='image/*,application/pdf,.pdf'
+                  onFilesSelected={(files) =>
+                    handleUploadScanFiles(editingDocumentDraft.id, files)
+                  }
+                  disabled={isUploadingScanDraftFiles || isEditingDocumentLocked}
+                  multiple
+                  asChild
+                >
+                  <Card
+                    variant='subtle'
+                    padding='sm'
+                    className={`transition ${
+                      isScanDraftDropActive
+                        ? 'border-cyan-500/70 bg-cyan-500/10'
+                        : 'bg-card/30'
+                    }`}
+                  >
+                    <div className='flex flex-wrap items-center gap-2'>
+                      <div className='text-xs font-medium text-gray-200'>
+                        Document Slots
+                      </div>
+                      <div className='ml-auto flex items-center gap-2'>
+                        <Button
+                          type='button'
+                          disabled={
+                            isUploadingScanDraftFiles || isEditingDocumentLocked
+                          }
+                          className='h-8 rounded-md border border-border text-xs text-gray-100 hover:bg-muted/60 disabled:opacity-60'
+                        >
+                          {isUploadingScanDraftFiles
+                            ? 'Uploading...'
+                            : 'Upload Files'}
+                        </Button>
+                        <Button
+                          type='button'
+                          onClick={(event): void => {
+                            event.stopPropagation();
+                            handleRunScanDraftOcr();
+                          }}
+                          disabled={
+                            (editingDocumentDraft.scanSlots ?? []).length === 0 ||
+                            isUploadingScanDraftFiles ||
+                            uploadingScanSlotId !== null ||
+                            isEditingDocumentLocked
+                          }
+                          className='h-8 rounded-md border border-cyan-500/40 text-xs text-cyan-100 hover:bg-cyan-500/15 disabled:opacity-60'
+                        >
+                          {uploadingScanSlotId !== null
+                            ? 'Running OCR...'
+                            : 'Run OCR'}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className='mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500'>
+                      <span>
+                        OCR model and prompt are controlled in Case Resolver
+                        Settings.
+                      </span>
+                      <Badge
+                        variant='outline'
+                        className='px-1.5 py-0 text-[9px] uppercase tracking-wide'
+                      >
+                        {scanOcrProviderLabel}
+                      </Badge>
+                      <span className='font-mono text-[10px] text-gray-400'>
+                        {configuredScanOcrModel || 'No OCR model configured'}
+                      </span>
+                    </div>
+                    <div className='mt-1 text-[11px] text-gray-500'>
+                      Drag and drop image or PDF files here, or use Upload Files.
+                    </div>
+                    <div className='mt-2 max-h-32 space-y-1 overflow-auto pr-1'>
+                      {(editingDocumentDraft.scanSlots ?? []).length === 0 ? (
+                        <div className='rounded border border-dashed border-border/60 px-2 py-1.5 text-[11px] text-gray-500'>
+                          No files uploaded yet.
+                        </div>
+                      ) : (
+                        (editingDocumentDraft.scanSlots ?? []).map((slot) => {
+                          const statusLabel =
+                            uploadingScanSlotId === 'all' ||
+                            uploadingScanSlotId === slot.id
+                              ? 'Processing OCR...'
+                              : slot.ocrError
+                                ? 'OCR failed'
+                                : slot.ocrText.trim().length > 0
+                                  ? 'OCR extracted'
+                                  : 'OCR pending';
+                          return (
+                            <Card
+                              key={slot.id}
+                              variant='subtle-compact'
+                              padding='none'
+                              className='flex items-center justify-between gap-2 bg-card/30 px-2 py-1.5 text-[11px]'
+                            >
+                              <div className='min-w-0'>
+                                <div className='truncate text-gray-200'>
+                                  {slot.name || 'Untitled file'}
+                                </div>
+                                <div className='text-gray-500'>
+                                  {statusLabel}
+                                </div>
+                                {slot.ocrError ? (
+                                  <div
+                                    className='truncate text-[10px] text-red-300'
+                                    title={slot.ocrError}
+                                  >
+                                    {slot.ocrError}
+                                  </div>
+                                ) : null}
+                              </div>
+                              <div className='flex items-center gap-2'>
+                                {slot.filepath ? (
+                                  <a
+                                    href={slot.filepath}
+                                    target='_blank'
+                                    rel='noreferrer'
+                                    className='text-cyan-200 hover:text-cyan-100'
+                                    onClick={(event): void => event.stopPropagation()}
+                                  >
+                                    Open
+                                  </a>
+                                ) : null}
+                                <Button
+                                  type='button'
+                                  variant='ghost'
+                                  size='xs'
+                                  disabled={
+                                    isUploadingScanDraftFiles ||
+                                    uploadingScanSlotId !== null ||
+                                    isEditingDocumentLocked
+                                  }
+                                  className='h-6 px-2 text-[10px] text-red-300 hover:bg-red-500/10 hover:text-red-200'
+                                  onClick={(event): void => {
+                                    event.stopPropagation();
+                                    handleDeleteScanDraftSlot(slot.id);
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            </Card>
+                          );
+                        })
+                      )}
+                    </div>
+                  </Card>
+                </FileUploadTrigger>
+
+                <Card variant='subtle' padding='sm' className='bg-card/30'>
+                  <div className='text-xs font-medium text-gray-200'>
+                    OCR Text (Markdown)
+                  </div>
+                  <div className='mt-1 text-[11px] text-gray-500'>
+                    Plain markdown output only for scan files.
+                  </div>
+                  <textarea
+                    readOnly
+                    value={scanfileMarkdownPreview}
+                    placeholder='Run OCR to populate extracted text.'
+                    className='mt-2 min-h-[320px] w-full resize-y rounded-lg border border-border/70 bg-black/20 px-3 py-2 font-mono text-xs text-gray-100'
+                  />
+                </Card>
+              </div>
             ) : editingDocumentDraft ? (
               <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-auto pr-1'>
                 <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>

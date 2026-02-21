@@ -1,6 +1,6 @@
 import { readMeta } from './metadata';
 
-import type { ImageStudioSlotRecord } from '../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 const resolveSourceIds = (
   slot: ImageStudioSlotRecord,

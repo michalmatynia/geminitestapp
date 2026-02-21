@@ -2,10 +2,10 @@ import type {
   ChatbotSettingsDto,
   CreateChatbotSettingsDto as ChatbotSettingsPayload 
 } from '@/shared/contracts/chatbot';
+import type { SettingRecordDto as SettingRecord } from '@/shared/contracts/settings';
 
 import { fetchWithTimeout, readErrorResponse, requestJson } from './client';
 
-import type { SettingRecordDto as SettingRecord } from '@/shared/contracts/settings';
 
 export const fetchChatbotSettings = async (
   key: string,

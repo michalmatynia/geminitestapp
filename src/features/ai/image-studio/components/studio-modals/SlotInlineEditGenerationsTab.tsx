@@ -1,7 +1,7 @@
 import { Loader2 } from 'lucide-react';
 import React from 'react';
 
-import { Button, TabsContent, Hint } from '@/shared/ui';
+import { Button, TabsContent, Hint, LoadingState } from '@/shared/ui';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
 

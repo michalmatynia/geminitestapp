@@ -26,7 +26,7 @@ import { readMeta } from '../utils/metadata';
 import { getImageStudioDocTooltip } from '../utils/studio-docs';
 import { CONTENT_OFFSET_X, CONTENT_OFFSET_Y, exportSvgAsPng } from '../utils/version-graph';
 
-import type { ImageStudioSlotRecord } from '../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 // ── Component ────────────────────────────────────────────────────────────────
 

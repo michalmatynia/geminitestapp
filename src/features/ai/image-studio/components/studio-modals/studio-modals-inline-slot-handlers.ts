@@ -5,7 +5,7 @@ import type {
   EnvironmentReferenceDraftViewModel,
   LinkedGeneratedVariantViewModel,
 } from './slot-inline-edit-tab-types';
-import type { ImageStudioSlotRecord } from '../../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { Dispatch, SetStateAction } from 'react';
 
 type Toast = (

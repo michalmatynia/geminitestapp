@@ -44,7 +44,7 @@ import {
   resolveImageStudioExternalDropAction,
 } from '../utils/studio-master-tree-external-drop';
 
-import type { ImageStudioSlotRecord } from '../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 type SlotTreeRevealRequest = {
   slotId: string;

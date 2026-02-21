@@ -15,7 +15,7 @@ import type {
   FilemakerAddressDto as FilemakerAddress,
   FilemakerDatabaseDto as FilemakerDatabase,
 } from '@/shared/contracts/filemaker';
-import type { PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
+import type { PromptExploderCaseResolverPartyCandidate } from '@/features/prompt-exploder/bridge';
 
 export type UpsertFilemakerCaptureCandidateResult = {
   database: FilemakerDatabase;
@@ -116,6 +116,23 @@ const findAddressById = (
   return database.addresses.find((address: FilemakerAddress): boolean => address.id === normalizedId) ?? null;
 };
 
+const resolveReferenceName = (
+  database: FilemakerDatabase,
+  kind: 'person' | 'organization',
+  id: string,
+  fallback = ''
+): string => {
+  if (kind === 'person') {
+    const person = database.persons.find((entry): boolean => entry.id === id);
+    if (!person) return fallback || id;
+    const resolved = `${person.firstName} ${person.lastName}`.trim();
+    return resolved || person.id;
+  }
+  const organization = database.organizations.find((entry): boolean => entry.id === id);
+  if (!organization) return fallback || id;
+  return organization.name.trim() || organization.id;
+};
+
 const findStrictPersonReference = (
   database: FilemakerDatabase,
   firstName: string,
@@ -137,7 +154,11 @@ const findStrictPersonReference = (
     return person.addressId.trim() === normalizedAddressId;
   });
   if (!matched) return null;
-  return { kind: 'person', id: matched.id };
+  return {
+    kind: 'person',
+    id: matched.id,
+    name: `${matched.firstName} ${matched.lastName}`.trim() || matched.id,
+  };
 };
 
 const findStrictOrganizationReference = (
@@ -156,7 +177,11 @@ const findStrictOrganizationReference = (
     return organization.addressId.trim() === normalizedAddressId;
   });
   if (!matched) return null;
-  return { kind: 'organization', id: matched.id };
+  return {
+    kind: 'organization',
+    id: matched.id,
+    name: matched.name.trim() || matched.id,
+  };
 };
 
 const ensureAddressRecord = (
@@ -201,11 +226,14 @@ export const upsertFilemakerCaptureCandidate = (
 ): UpsertFilemakerCaptureCandidateResult => {
   const matchedReference = findExistingFilemakerPartyReference(database, candidate);
   if (matchedReference) {
+    const resolvedKind = matchedReference.kind;
+    const resolvedId = String(matchedReference.id);
     return {
       database,
       reference: {
-        kind: matchedReference.kind,
-        id: String(matchedReference.id),
+        kind: resolvedKind,
+        id: resolvedId,
+        name: resolveReferenceName(database, resolvedKind, resolvedId),
       },
       addressId: null,
       createdParty: false,
@@ -281,7 +309,11 @@ export const upsertFilemakerCaptureCandidate = (
     };
     return {
       database: nextDatabase,
-      reference: { kind: 'person', id: personId },
+      reference: {
+        kind: 'person',
+        id: personId,
+        name: `${createdPerson.firstName} ${createdPerson.lastName}`.trim() || personId,
+      },
       addressId,
       createdParty: true,
       createdAddress: addressResult.createdAddress,
@@ -319,7 +351,11 @@ export const upsertFilemakerCaptureCandidate = (
 
   return {
     database: nextDatabase,
-    reference: { kind: 'organization', id: organizationId },
+    reference: {
+      kind: 'organization',
+      id: organizationId,
+      name: createdOrganization.name.trim() || organizationId,
+    },
     addressId,
     createdParty: true,
     createdAddress: addressResult.createdAddress,

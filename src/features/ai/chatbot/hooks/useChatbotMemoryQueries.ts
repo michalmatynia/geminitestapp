@@ -2,12 +2,12 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import type { ChatbotMemoryItem } from '@/shared/contracts/chatbot';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createDeleteMutationV2, createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-import type { ChatbotMemoryItem } from '@/shared/contracts/chatbot';
 
 export const chatbotMemoryKeys = {
   all: () => QUERY_KEYS.ai.chatbot.memory(),

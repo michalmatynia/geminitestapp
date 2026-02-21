@@ -1,8 +1,8 @@
 import type { ChatMessageDto as ChatMessage, ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
+import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 
 import { fetchWithTimeout, readErrorMessage, requestJson } from './client';
 
-import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 
 export const fetchChatbotSessions = async <TSession = ChatSession>(params?: {
   scope?: 'ids';

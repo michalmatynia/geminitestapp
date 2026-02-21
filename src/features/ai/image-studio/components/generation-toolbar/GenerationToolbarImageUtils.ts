@@ -4,7 +4,7 @@ import {
 } from '@/features/ai/image-studio/analysis/shared';
 import { ApiError } from '@/shared/lib/api-client';
 
-import type { ImageStudioSlotRecord } from '../../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export type UpscaleSmoothingQuality = 'low' | 'medium' | 'high';
 

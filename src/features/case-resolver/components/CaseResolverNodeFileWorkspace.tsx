@@ -79,6 +79,15 @@ const resolvePartyReferenceSearchLabel = (
   return [kind, id].filter(Boolean).join(':');
 };
 
+const resolveIdentifierSearchLabel = (
+  identifierId: string | null | undefined,
+  labelsById: Map<string, string>
+): string => {
+  const normalizedIdentifierId = typeof identifierId === 'string' ? identifierId.trim() : '';
+  if (!normalizedIdentifierId) return '';
+  return labelsById.get(normalizedIdentifierId) ?? normalizedIdentifierId;
+};
+
 const resolveContentPreview = (file: CaseResolverFile): string => {
   if (file.fileType === 'document') {
     const text = file.documentContentPlainText.trim() || file.documentContentMarkdown.trim();
@@ -263,20 +272,136 @@ function CaseResolverNodeFileWorkspaceInner({
       ),
     [workspace.files]
   );
-  const nodeFileOptions = useMemo(
+  const caseIdentifierLabelById = useMemo((): Map<string, string> => {
+    const labelsById = new Map<string, string>();
+    caseResolverIdentifiers.forEach((identifier: CaseResolverIdentifier): void => {
+      const identifierRecord = identifier as unknown as Record<string, unknown>;
+      const id = typeof identifier.id === 'string' ? identifier.id.trim() : '';
+      if (!id) return;
+      const name =
+        typeof identifierRecord['name'] === 'string' ? identifierRecord['name'].trim() : '';
+      const label =
+        typeof identifierRecord['label'] === 'string' ? identifierRecord['label'].trim() : '';
+      const type =
+        typeof identifierRecord['type'] === 'string' ? identifierRecord['type'].trim() : '';
+      const value =
+        typeof identifierRecord['value'] === 'string' ? identifierRecord['value'].trim() : '';
+      const resolvedLabel =
+        label ||
+        name ||
+        [type, value].filter((part: string): boolean => part.length > 0).join(': ') ||
+        id;
+      labelsById.set(id, resolvedLabel);
+    });
+    return labelsById;
+  }, [caseResolverIdentifiers]);
+  const scopedCaseIds = useMemo(
+    (): Set<string> | null => collectScopedCaseIds(workspace.files, activeCaseId),
+    [activeCaseId, workspace.files]
+  );
+  const allSearchableFiles = useMemo(
+    (): CaseResolverFile[] =>
+      workspace.files.filter((file: CaseResolverFile): boolean => file.fileType !== 'case'),
+    [workspace.files]
+  );
+  const caseScopedSearchableFiles = useMemo(
+    (): CaseResolverFile[] =>
+      allSearchableFiles.filter((file: CaseResolverFile): boolean =>
+        Boolean(file.parentCaseId && scopedCaseIds?.has(file.parentCaseId))
+      ),
+    [allSearchableFiles, scopedCaseIds]
+  );
+  const activeCaseScopeLabel = useMemo((): string => {
+    if (!activeCaseId) return 'Current case only';
+    const activeCase = workspace.files.find(
+      (file: CaseResolverFile): boolean => file.id === activeCaseId && file.fileType === 'case'
+    );
+    return activeCase ? `Current case: ${activeCase.name}` : `Current case: ${activeCaseId}`;
+  }, [activeCaseId, workspace.files]);
+  const documentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
+    const sourceFiles =
+      documentSearchScope === 'all_cases' ? allSearchableFiles : caseScopedSearchableFiles;
+    return sourceFiles
+      .map((file: CaseResolverFile): NodeFileDocumentSearchRow => {
+        const signatureLabel = resolveIdentifierSearchLabel(
+          file.caseIdentifierId,
+          caseIdentifierLabelById
+        );
+        const addresserLabel = resolvePartyReferenceSearchLabel(file.addresser);
+        const addresseeLabel = resolvePartyReferenceSearchLabel(file.addressee);
+        const searchable = normalizeSearchText(
+          [
+            file.name,
+            file.folder,
+            signatureLabel,
+            addresserLabel,
+            addresseeLabel,
+            resolveSearchableDocumentContent(file),
+          ].join('\n')
+        );
+        return {
+          file,
+          signatureLabel,
+          addresserLabel,
+          addresseeLabel,
+          searchable,
+        };
+      })
+      .sort((left: NodeFileDocumentSearchRow, right: NodeFileDocumentSearchRow): number => {
+        const leftUpdatedAt = new Date(
+          left.file.updatedAt || left.file.createdAt || 0
+        ).getTime();
+        const rightUpdatedAt = new Date(
+          right.file.updatedAt || right.file.createdAt || 0
+        ).getTime();
+        if (leftUpdatedAt !== rightUpdatedAt) return rightUpdatedAt - leftUpdatedAt;
+        return left.file.name.localeCompare(right.file.name);
+      });
+  }, [
+    allSearchableFiles,
+    caseIdentifierLabelById,
+    caseScopedSearchableFiles,
+    documentSearchScope,
+  ]);
+  const filteredDocumentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
+    const normalizedQuery = normalizeSearchText(documentSearchQuery);
+    if (!normalizedQuery) return documentSearchRows;
+    return documentSearchRows.filter((row: NodeFileDocumentSearchRow): boolean =>
+      row.searchable.includes(normalizedQuery)
+    );
+  }, [documentSearchQuery, documentSearchRows]);
+  const documentSearchOptions = useMemo(
     () =>
-      workspace.assets
-        .filter((asset): boolean => asset.kind === 'node_file')
-        .sort((left, right): number => {
-          const folderDelta = left.folder.localeCompare(right.folder);
-          if (folderDelta !== 0) return folderDelta;
-          return left.name.localeCompare(right.name);
-        })
-        .map((asset) => ({
-          value: asset.id,
-          label: asset.folder ? `${asset.name} (${asset.folder})` : asset.name,
-        })),
-    [workspace.assets]
+      filteredDocumentSearchRows.slice(0, 300).map((row: NodeFileDocumentSearchRow) => {
+        const details = [
+          row.file.fileType === 'scanfile' ? 'Scan' : 'Document',
+          row.file.folder || '(root)',
+          row.signatureLabel ? `Signature: ${row.signatureLabel}` : '',
+          row.addresserLabel ? `Addresser: ${row.addresserLabel}` : '',
+          row.addresseeLabel ? `Addressee: ${row.addresseeLabel}` : '',
+        ].filter((entry: string): boolean => entry.length > 0);
+        return {
+          value: row.file.id,
+          label: row.file.name,
+          description: details.join(' • '),
+        };
+      }),
+    [filteredDocumentSearchRows]
+  );
+  const activeNodeOptions = useMemo(
+    () =>
+      nodes.map((node: AiNode, index: number) => {
+        const linkedMeta = nodeFileMetaRef.current[node.id] ?? null;
+        const title = node.title?.trim() || `Node ${index + 1}`;
+        return {
+          value: node.id,
+          label: linkedMeta ? `${title} (${linkedMeta.fileName})` : title,
+          description: linkedMeta
+            ? `Type: ${node.type} • Linked file: ${linkedMeta.fileName}`
+            : `Type: ${node.type}`,
+        };
+      }),
+    [nodes]
   );
   const promptDefinition = useMemo(
     (): NodeDefinition | null => palette.find((entry: NodeDefinition) => entry.type === 'prompt') ?? null,
@@ -319,9 +444,10 @@ function CaseResolverNodeFileWorkspaceInner({
     const existingNodeIds = new Set(nodes.map((n: AiNode) => n.id));
     const prunedMeta: Record<string, CaseResolverNodeFileMeta> = {};
     for (const [nodeId, meta] of Object.entries(nodeFileMetaRef.current)) {
-      if (existingNodeIds.has(nodeId)) {
-        prunedMeta[nodeId] = meta;
-      }
+      if (!existingNodeIds.has(nodeId)) continue;
+      const normalizedFileId = typeof meta.fileId === 'string' ? meta.fileId.trim() : '';
+      if (!normalizedFileId || !filesById.has(normalizedFileId)) continue;
+      prunedMeta[nodeId] = meta;
     }
     nodeFileMetaRef.current = prunedMeta;
 
@@ -336,7 +462,7 @@ function CaseResolverNodeFileWorkspaceInner({
     if (hash === lastEmittedHashRef.current) return;
     lastEmittedHashRef.current = hash;
     onSnapshotChange(updated);
-  }, [nodes, onSnapshotChange, strictEdges]);
+  }, [filesById, nodes, onSnapshotChange, strictEdges]);
 
   // Migrate legacy template-based linked-file nodes to prompt nodes so they expose
   // Case Resolver document ports (wysiwygText/content/plainText).
@@ -407,6 +533,23 @@ function CaseResolverNodeFileWorkspaceInner({
       return clampCanvasPosition({ x: localX - NODE_WIDTH / 2, y: localY - NODE_MIN_HEIGHT / 2 });
     },
     [canvasRef, placePosition, view, viewportRef]
+  );
+  const focusNodeInCanvas = useCallback(
+    (nodeId: string): void => {
+      const normalizedNodeId = nodeId.trim();
+      if (!normalizedNodeId) return;
+      const node = nodes.find((entry: AiNode): boolean => entry.id === normalizedNodeId);
+      if (!node) return;
+      selectNode(normalizedNodeId);
+      const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+      if (!viewport) return;
+      setView({
+        x: viewport.width / 2 - (node.position.x + NODE_WIDTH / 2) * view.scale,
+        y: viewport.height / 2 - (node.position.y + NODE_MIN_HEIGHT / 2) * view.scale,
+        scale: view.scale,
+      });
+    },
+    [nodes, selectNode, setView, view.scale, viewportRef]
   );
 
   const addFileReferenceNode = useCallback(
@@ -533,7 +676,7 @@ function CaseResolverNodeFileWorkspaceInner({
       if (preferredNodeId) {
         const preferredMeta = nodeFileMetaRef.current[preferredNodeId] ?? null;
         if (preferredMeta?.fileId === fileId) {
-          selectNode(preferredNodeId);
+          focusNodeInCanvas(preferredNodeId);
           return;
         }
       }
@@ -542,7 +685,7 @@ function CaseResolverNodeFileWorkspaceInner({
         .filter(([, meta]): boolean => meta.fileId === fileId)
         .map(([nodeId]: [string, CaseResolverNodeFileMeta]): string => nodeId);
       if (nodeIds.length === 0) return;
-      selectNode(nodeIds[nodeIds.length - 1] ?? nodeIds[0]!);
+      focusNodeInCanvas(nodeIds[nodeIds.length - 1] ?? nodeIds[0]!);
     };
 
     window.addEventListener(
@@ -555,7 +698,7 @@ function CaseResolverNodeFileWorkspaceInner({
         listener as EventListener
       );
     };
-  }, [assetId, selectNode]);
+  }, [assetId, focusNodeInCanvas]);
 
   const handleCanvasDragOverCapture = (event: React.DragEvent<HTMLDivElement>): void => {
     const payload = parseCaseResolverTreeDropPayload(event.dataTransfer);
@@ -573,6 +716,29 @@ function CaseResolverNodeFileWorkspaceInner({
     const position = resolveDropPosition(event);
     addFileReferenceNode(payload.fileId, payload.name, position);
   };
+
+  useEffect(() => {
+    if (!selectedDocumentSearchFileId) return;
+    const hasSelection = filteredDocumentSearchRows.some(
+      (row: NodeFileDocumentSearchRow): boolean => row.file.id === selectedDocumentSearchFileId
+    );
+    if (hasSelection) return;
+    setSelectedDocumentSearchFileId('');
+  }, [filteredDocumentSearchRows, selectedDocumentSearchFileId]);
+
+  const handleDropSelectedDocument = useCallback((): void => {
+    const fileId = selectedDocumentSearchFileId.trim();
+    if (!fileId) {
+      toast('Choose a document before dropping it onto canvas.', { variant: 'warning' });
+      return;
+    }
+    const targetFile = filesById.get(fileId) ?? null;
+    if (!targetFile || targetFile.fileType === 'case') {
+      toast('Selected document is no longer available.', { variant: 'warning' });
+      return;
+    }
+    addFileReferenceNode(targetFile.id, targetFile.name, placePosition);
+  }, [addFileReferenceNode, filesById, placePosition, selectedDocumentSearchFileId, toast]);
 
   const openSelectedFile = useCallback((): void => {
     if (!selectedNodeId) return;
@@ -620,16 +786,82 @@ function CaseResolverNodeFileWorkspaceInner({
 
           <SelectSimple
             size='sm'
-            value={assetId}
+            value={selectedNodeId ?? ''}
             onValueChange={(value: string): void => {
               const normalized = value.trim();
-              if (!normalized || normalized === assetId) return;
-              onSelectAsset(normalized);
+              if (!normalized) return;
+              focusNodeInCanvas(normalized);
             }}
-            options={nodeFileOptions}
-            className='w-[260px]'
+            options={activeNodeOptions}
+            placeholder='Active nodes on canvas'
+            className='w-[280px]'
+            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+            disabled={activeNodeOptions.length === 0}
+          />
+
+          <SelectSimple
+            size='sm'
+            value={documentSearchScope}
+            onValueChange={(value: string): void => {
+              setDocumentSearchScope(value === 'all_cases' ? 'all_cases' : 'case_scope');
+            }}
+            options={[
+              {
+                value: 'case_scope',
+                label: activeCaseScopeLabel,
+                description: `${caseScopedSearchableFiles.length} documents`,
+              },
+              {
+                value: 'all_cases',
+                label: 'All cases',
+                description: `${allSearchableFiles.length} documents`,
+              },
+            ]}
+            className='w-[220px]'
             triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
           />
+
+          <SearchInput
+            value={documentSearchQuery}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+              setDocumentSearchQuery(event.target.value);
+            }}
+            onClear={(): void => {
+              setDocumentSearchQuery('');
+            }}
+            size='sm'
+            placeholder='Search by name, signature, addresser/addressee, content'
+            containerClassName='w-[320px]'
+            className='h-8 border-border bg-card/60 text-xs text-white'
+          />
+
+          <SelectSimple
+            size='sm'
+            value={selectedDocumentSearchFileId}
+            onValueChange={(value: string): void => {
+              setSelectedDocumentSearchFileId(value);
+            }}
+            options={documentSearchOptions}
+            placeholder='Select document to drop'
+            className='w-[320px]'
+            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+            disabled={documentSearchOptions.length === 0}
+          />
+
+          <Button
+            type='button'
+            onClick={handleDropSelectedDocument}
+            variant='outline'
+            size='sm'
+            disabled={!selectedDocumentSearchFileId}
+          >
+            Drop Selected
+          </Button>
+
+          <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
+            {filteredDocumentSearchRows.length} result
+            {filteredDocumentSearchRows.length !== 1 ? 's' : ''}
+          </Badge>
 
           <div className='mx-1 h-6 w-px bg-border/60' />
 

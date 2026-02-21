@@ -756,4 +756,39 @@ describe('case-resolver-capture proposals', () => {
       'Wniosek o ponowne rozpatrzenie sprawy'
     );
   });
+
+  it('removes accepted header address lines even when header block starts after long preface', () => {
+    const longPreface = Array.from({ length: 95 }, (_, index): string => `Nagłówek ${index + 1}`);
+    const sourceText = [
+      ...longPreface,
+      'Michał Matynia',
+      'Fioletowa 71/2',
+      '70-781 Szczecin',
+      'Poland',
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n');
+    const payload: PromptExploderCaseResolverPartyBundle = {
+      addresser: createAddresserCandidate(),
+    };
+
+    const state = buildCaseResolverCaptureProposalState(
+      payload,
+      'file-1',
+      createDatabase(),
+      createSettings(),
+      {
+        sourceText,
+      }
+    );
+
+    const result = stripAcceptedCaptureContentFromTextWithReport(sourceText, state);
+    expect(result.text).toBe([
+      ...longPreface,
+      '',
+      'Wniosek o ponowne rozpatrzenie sprawy',
+    ].join('\n'));
+    expect(result.report.removedAddresserLineCount).toBeGreaterThanOrEqual(4);
+    expect(result.report.removedAddressLineCount).toBeGreaterThanOrEqual(4);
+  });
 });

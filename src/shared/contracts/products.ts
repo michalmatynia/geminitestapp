@@ -955,6 +955,7 @@ export const productValidationPatternFormDataSchema = z.object({
   logicWhenFalseValue: z.string(),
   resultAssembly: dynamicReplacementResultAssemblySchema,
   targetApply: dynamicReplacementTargetApplySchema,
+  sequenceGroupId: z.string(),
   sequence: z.string(),
   chainMode: z.enum(['continue', 'stop_on_match', 'stop_on_replace']),
   maxExecutions: z.string(),
@@ -1333,5 +1334,4 @@ export type DebugInfo = {
 export type ProductFormData = ProductCreateInputDto;
 
 export type ProductListPreferences = ProductListPreferencesDto;
-
 

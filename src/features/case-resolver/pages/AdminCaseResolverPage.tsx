@@ -634,7 +634,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           addressee?: { kind: 'person' | 'organization'; id: string } | null;
         } = {};
         const failedRoles: string[] = [];
-        const appliedRoles: string[] = [];
+        const acceptedRoles: string[] = [];
 
         const applyRole = (role: 'addresser' | 'addressee'): void => {
           const proposal = nextProposalState[role];
@@ -654,7 +654,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               return;
             }
             rolePatches[role] = proposal.existingReference ?? null;
-            appliedRoles.push(roleLabel);
+            acceptedRoles.push(roleLabel);
             return;
           }
 
@@ -673,7 +673,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           }
 
           rolePatches[role] = upsertResult.reference;
-          appliedRoles.push(roleLabel);
+          acceptedRoles.push(roleLabel);
           const nextRoleProposal = nextProposalState[role];
           if (!nextRoleProposal) return;
           const nextMatchKind = upsertResult.addressId ? 'party_and_address' : 'party';
@@ -709,9 +709,48 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           }
         }
 
-        const shouldPatchAddresser = rolePatches.addresser !== undefined;
-        const shouldPatchAddressee = rolePatches.addressee !== undefined;
         const targetFile = resolvedTargetFile;
+        const normalizeRolePatchReference = (
+          reference: { kind: 'person' | 'organization'; id: string } | null | undefined
+        ): { kind: 'person' | 'organization'; id: string } | null => {
+          if (!reference) return null;
+          const normalizedId = reference.id.trim();
+          if (!normalizedId) return null;
+          return {
+            kind: reference.kind,
+            id: normalizedId,
+          };
+        };
+        const areRolePatchReferencesEqual = (
+          left: { kind: 'person' | 'organization'; id: string } | null | undefined,
+          right: { kind: 'person' | 'organization'; id: string } | null | undefined
+        ): boolean => {
+          const normalizedLeft = normalizeRolePatchReference(left);
+          const normalizedRight = normalizeRolePatchReference(right);
+          if (!normalizedLeft && !normalizedRight) return true;
+          if (!normalizedLeft || !normalizedRight) return false;
+          return (
+            normalizedLeft.kind === normalizedRight.kind &&
+            normalizedLeft.id === normalizedRight.id
+          );
+        };
+        const acceptedAddresser = rolePatches.addresser !== undefined;
+        const acceptedAddressee = rolePatches.addressee !== undefined;
+        const nextAddresserReference = acceptedAddresser
+          ? normalizeRolePatchReference(rolePatches.addresser ?? null)
+          : null;
+        const nextAddresseeReference = acceptedAddressee
+          ? normalizeRolePatchReference(rolePatches.addressee ?? null)
+          : null;
+        const shouldPatchAddresser =
+          acceptedAddresser &&
+          !areRolePatchReferencesEqual(targetFile.addresser, nextAddresserReference);
+        const shouldPatchAddressee =
+          acceptedAddressee &&
+          !areRolePatchReferencesEqual(targetFile.addressee, nextAddresseeReference);
+        const changedPartyRoles: string[] = [];
+        if (shouldPatchAddresser) changedPartyRoles.push('Addresser');
+        if (shouldPatchAddressee) changedPartyRoles.push('Addressee');
 
         const dateProposal = nextProposalState.documentDate;
         const shouldAcceptDate =
@@ -724,12 +763,12 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           acceptedDateValue !== null && targetFile.documentDate !== acceptedDateValue;
         const cleanupProposalState: CaseResolverCaptureProposalState = {
           ...nextProposalState,
-          addresser: shouldPatchAddresser
+          addresser: acceptedAddresser
             ? nextProposalState.addresser
             : nextProposalState.addresser
               ? { ...nextProposalState.addresser, action: 'keepText' }
               : null,
-          addressee: shouldPatchAddressee
+          addressee: acceptedAddressee
             ? nextProposalState.addressee
             : nextProposalState.addressee
               ? { ...nextProposalState.addressee, action: 'keepText' }
@@ -772,8 +811,9 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           return '';
         })();
         const cleanupStartedAtMs = readCaptureApplyNowMs();
+        const hasSourceExplodedContent = sourceExplodedContent.trim().length > 0;
         const cleanupResult =
-          sourceExplodedContent.trim().length > 0
+          hasSourceExplodedContent
             ? stripAcceptedCaptureContentFromTextWithReport(
               sourceExplodedContent,
               cleanupProposalState
@@ -792,13 +832,24 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         cleanupDurationMs = resolveCaptureApplyDurationMs(cleanupStartedAtMs);
         const cleanedExplodedContent = cleanupResult.text;
         const hasExplodedCleanup = cleanupResult.report.changed;
+        const cleanupMissedAcceptedRoles: string[] = [];
+        if (hasSourceExplodedContent) {
+          if (acceptedAddresser && cleanupResult.report.removedAddresserLineCount === 0) {
+            cleanupMissedAcceptedRoles.push('addresser');
+          }
+          if (acceptedAddressee && cleanupResult.report.removedAddresseeLineCount === 0) {
+            cleanupMissedAcceptedRoles.push('addressee');
+          }
+        }
         logCaseResolverWorkspaceEvent({
           source: 'case_view',
           action: 'capture_cleanup_evaluated',
           message: JSON.stringify({
             targetFileId,
-            appliedAddresser: shouldPatchAddresser,
-            appliedAddressee: shouldPatchAddressee,
+            appliedAddresser: acceptedAddresser,
+            appliedAddressee: acceptedAddressee,
+            changedAddresserReference: shouldPatchAddresser,
+            changedAddresseeReference: shouldPatchAddressee,
             appliedDate: shouldAcceptDate,
             cleanupChanged: hasExplodedCleanup,
             cleanupSourceWasHtml: cleanupResult.report.sourceWasHtml,
@@ -806,6 +857,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             removedAddresserLineCount: cleanupResult.report.removedAddresserLineCount,
             removedAddresseeLineCount: cleanupResult.report.removedAddresseeLineCount,
             removedDateLineCount: cleanupResult.report.removedDateLineCount,
+            cleanupMissedAcceptedRoles,
             cleanupDurationMs,
           }),
         });
@@ -1059,12 +1111,30 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         }
 
         setIsPromptExploderPartyProposalOpen(false);
-        if (appliedRoles.length > 0 || shouldPatchDocumentDate || hasExplodedCleanup) {
+        if (changedPartyRoles.length > 0 || shouldPatchDocumentDate || hasExplodedCleanup) {
           const successParts: string[] = [];
-          if (appliedRoles.length > 0) successParts.push('document parties');
+          if (changedPartyRoles.length > 0) successParts.push('document parties');
           if (shouldPatchDocumentDate) successParts.push('document date');
           if (hasExplodedCleanup) successParts.push('reassembled text cleanup');
           toast(`Capture mapping applied to ${successParts.join(', ')}.`, { variant: 'success' });
+          if (cleanupMissedAcceptedRoles.length > 0) {
+            toast(
+              `Capture cleanup removed no header lines for: ${cleanupMissedAcceptedRoles.join(', ')}.`,
+              { variant: 'warning' }
+            );
+          }
+          return;
+        }
+        if (acceptedRoles.length > 0) {
+          toast('Capture mapping accepted, but document party fields were unchanged.', {
+            variant: 'info',
+          });
+          if (cleanupMissedAcceptedRoles.length > 0) {
+            toast(
+              `Capture cleanup removed no header lines for: ${cleanupMissedAcceptedRoles.join(', ')}.`,
+              { variant: 'warning' }
+            );
+          }
           return;
         }
         if (shouldPersistFilemakerDatabase) {
@@ -1677,13 +1747,24 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       markdown?: string | undefined;
       html?: string | undefined;
       warnings?: string[] | undefined;
+      mode?: 'markdown' | 'wysiwyg' | undefined;
     }): void => {
       setEditingDocumentDraft((current) => {
         if (!current) return current;
         if (current.isLocked) return current;
+        const resolvedMode: 'markdown' | 'wysiwyg' =
+          input.mode === 'markdown' || input.mode === 'wysiwyg'
+            ? input.mode
+            : current.fileType === 'scanfile'
+              ? 'markdown'
+              : current.editorType === 'markdown'
+                ? 'markdown'
+                : 'wysiwyg';
         const canonical = deriveDocumentContentSync({
-          mode: 'wysiwyg',
-          value: input.value,
+          mode: resolvedMode,
+          value: resolvedMode === 'markdown'
+            ? (input.markdown ?? input.value)
+            : input.value,
           previousMarkdown: input.markdown ?? current.documentContentMarkdown,
           previousHtml: input.html ?? current.documentContentHtml,
         });
@@ -1721,9 +1802,15 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const handleUpdateDraftDocumentContent = useCallback((next: string) => {
     if (!editingDocumentDraft) return;
+    const isMarkdownDraft =
+      editingDocumentDraft.fileType === 'scanfile' ||
+      editingDocumentDraft.editorType === 'markdown';
     applyDraftCanonicalContent({
+      mode: isMarkdownDraft ? 'markdown' : 'wysiwyg',
       value: next,
-      html: next,
+      html: isMarkdownDraft
+        ? (editingDocumentDraft.documentContentHtml ?? '')
+        : next,
       markdown: editingDocumentDraft.documentContentMarkdown ?? '',
     });
   }, [applyDraftCanonicalContent, editingDocumentDraft]);
@@ -1736,20 +1823,42 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       });
       return;
     }
-    const nextHtml = (() => {
-      if (entry.documentContentHtml.trim().length > 0) {
-        return entry.documentContentHtml;
-      }
-      if (entry.documentContentMarkdown.trim().length > 0) {
-        return ensureHtmlForPreview(entry.documentContentMarkdown, 'markdown');
-      }
-      return ensureSafeDocumentHtml(entry.documentContent);
-    })();
-    applyDraftCanonicalContent({
-      value: nextHtml,
-      html: nextHtml,
-      markdown: entry.documentContentMarkdown,
-    });
+    const targetMode: 'markdown' | 'wysiwyg' =
+      editingDocumentDraft.fileType === 'scanfile' ||
+      editingDocumentDraft.editorType === 'markdown'
+        ? 'markdown'
+        : 'wysiwyg';
+    if (targetMode === 'markdown') {
+      const nextMarkdown = (
+        entry.documentContentMarkdown.trim().length > 0
+          ? entry.documentContentMarkdown
+          : entry.documentContentPlainText.trim().length > 0
+            ? entry.documentContentPlainText
+            : entry.documentContent
+      );
+      applyDraftCanonicalContent({
+        mode: 'markdown',
+        value: nextMarkdown,
+        markdown: nextMarkdown,
+        html: entry.documentContentHtml,
+      });
+    } else {
+      const nextHtml = (() => {
+        if (entry.documentContentHtml.trim().length > 0) {
+          return entry.documentContentHtml;
+        }
+        if (entry.documentContentMarkdown.trim().length > 0) {
+          return ensureHtmlForPreview(entry.documentContentMarkdown, 'markdown');
+        }
+        return ensureSafeDocumentHtml(entry.documentContent);
+      })();
+      applyDraftCanonicalContent({
+        mode: 'wysiwyg',
+        value: nextHtml,
+        html: nextHtml,
+        markdown: entry.documentContentMarkdown,
+      });
+    }
     updateEditingDocumentDraft({
       activeDocumentVersion: entry.activeDocumentVersion,
     });

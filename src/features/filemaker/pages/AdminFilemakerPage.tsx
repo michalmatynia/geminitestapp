@@ -1,6 +1,7 @@
 'use client';
 
-import { Edit2, Plus, Trash2, Database } from 'lucide-react';
+import { Edit2, Plus, Trash2, Database, Mail } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
@@ -20,22 +21,32 @@ import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import {
+  createFilemakerEmail,
   createFilemakerOrganization,
   createFilemakerPerson,
   FILEMAKER_DATABASE_KEY,
   formatFilemakerAddress,
   normalizeFilemakerDatabase,
   parseFilemakerDatabase,
+  removeFilemakerEmail,
+  removeFilemakerPartyEmailLinks,
 } from '../settings';
 
 import type {
   FilemakerDatabase,
+  FilemakerEmail,
+  FilemakerEmailStatus,
   FilemakerOrganization,
   FilemakerPerson,
 } from '../types';
 
 type PersonDraft = Partial<Omit<FilemakerPerson, 'phoneNumbers'>> & {
   phoneNumbers?: string;
+};
+
+type EmailDraft = {
+  email?: string;
+  status?: FilemakerEmailStatus;
 };
 
 const createId = (prefix: string): string => {
@@ -60,7 +71,21 @@ const hasAddressFields = (
   countryId: string
 ): boolean => Boolean(street && streetNumber && city && postalCode && countryId);
 
+const EMAIL_STATUS_OPTIONS: Array<{
+  value: FilemakerEmailStatus;
+  label: string;
+  description: string;
+}> = [
+  { value: 'active', label: 'Active', description: 'Deliverable and in use.' },
+  { value: 'inactive', label: 'Inactive', description: 'Known email, not currently used.' },
+  { value: 'bounced', label: 'Bounced', description: 'Delivery is failing.' },
+  { value: 'unverified', label: 'Unverified', description: 'Not yet verified.' },
+];
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export function AdminFilemakerPage(): React.JSX.Element {
+  const router = useRouter();
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
@@ -89,11 +114,16 @@ export function AdminFilemakerPage(): React.JSX.Element {
 
   const [personDraft, setPersonDraft] = useState<PersonDraft>({});
   const [orgDraft, setOrgDraft] = useState<Partial<FilemakerOrganization>>({});
+  const [emailDraft, setEmailDraft] = useState<EmailDraft>({
+    status: 'unverified',
+  });
   
   const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
   const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<FilemakerPerson | null>(null);
   const [editingOrg, setEditingOrg] = useState<FilemakerOrganization | null>(null);
+  const [editingEmail, setEditingEmail] = useState<FilemakerEmail | null>(null);
 
   const [confirmation, setConfirmation] = useState<{
     title: string;
@@ -121,6 +151,20 @@ export function AdminFilemakerPage(): React.JSX.Element {
       ),
     [database.organizations]
   );
+  const emails = useMemo(
+    () =>
+      [...database.emails].sort((left: FilemakerEmail, right: FilemakerEmail) =>
+        left.email.localeCompare(right.email)
+      ),
+    [database.emails]
+  );
+  const emailLinkCountByEmailId = useMemo(() => {
+    const counts = new Map<string, number>();
+    database.emailLinks.forEach((link) => {
+      counts.set(link.emailId, (counts.get(link.emailId) ?? 0) + 1);
+    });
+    return counts;
+  }, [database.emailLinks]);
   const resolveCountryId = useCallback(
     (countryId: string, countryName: string): string => {
       const normalizedId = countryId.trim();
@@ -215,11 +259,18 @@ export function AdminFilemakerPage(): React.JSX.Element {
         confirmText: 'Delete Record',
         isDangerous: true,
         onConfirm: async () => {
-          await persistDatabase(
+          const nextDatabase = removeFilemakerPartyEmailLinks(
             {
               ...database,
-              persons: database.persons.filter((entry: FilemakerPerson) => entry.id !== personId),
+              persons: database.persons.filter(
+                (entry: FilemakerPerson) => entry.id !== personId
+              ),
             },
+            'person',
+            personId
+          );
+          await persistDatabase(
+            nextDatabase,
             'Person deleted.'
           );
         }
@@ -301,13 +352,18 @@ export function AdminFilemakerPage(): React.JSX.Element {
         confirmText: 'Delete Record',
         isDangerous: true,
         onConfirm: async () => {
-          await persistDatabase(
+          const nextDatabase = removeFilemakerPartyEmailLinks(
             {
               ...database,
               organizations: database.organizations.filter(
                 (entry: FilemakerOrganization) => entry.id !== organizationId
               ),
             },
+            'organization',
+            organizationId
+          );
+          await persistDatabase(
+            nextDatabase,
             'Organization deleted.'
           );
         }
@@ -329,6 +385,94 @@ export function AdminFilemakerPage(): React.JSX.Element {
     setEditingOrg(null);
     setOrgDraft({});
     setIsOrgModalOpen(true);
+  }, []);
+
+  const handleSaveEmail = useCallback(async (): Promise<void> => {
+    const normalizedEmail = (emailDraft.email ?? '').trim().toLowerCase();
+    const status = emailDraft.status ?? 'unverified';
+
+    if (!normalizedEmail || !EMAIL_RE.test(normalizedEmail)) {
+      toast('Provide a valid email address.', { variant: 'error' });
+      return;
+    }
+
+    const duplicate = database.emails.some(
+      (entry: FilemakerEmail): boolean =>
+        entry.id !== editingEmail?.id &&
+        entry.email.trim().toLowerCase() === normalizedEmail
+    );
+    if (duplicate) {
+      toast('This email already exists in the database.', { variant: 'error' });
+      return;
+    }
+
+    let nextEmails: FilemakerEmail[];
+    if (editingEmail) {
+      nextEmails = database.emails.map((entry: FilemakerEmail) => {
+        if (entry.id !== editingEmail.id) return entry;
+        return createFilemakerEmail({
+          id: entry.id,
+          email: normalizedEmail,
+          status,
+          createdAt: entry.createdAt,
+          updatedAt: new Date().toISOString(),
+        });
+      });
+    } else {
+      nextEmails = [
+        ...database.emails,
+        createFilemakerEmail({
+          id: createId('email'),
+          email: normalizedEmail,
+          status,
+        }),
+      ];
+    }
+
+    await persistDatabase(
+      { ...database, emails: nextEmails },
+      editingEmail ? 'Email updated.' : 'Email added.'
+    );
+
+    setIsEmailModalOpen(false);
+    setEditingEmail(null);
+    setEmailDraft({ status: 'unverified' });
+  }, [database, editingEmail, emailDraft.email, emailDraft.status, persistDatabase, toast]);
+
+  const handleDeleteEmail = useCallback(
+    async (emailId: string): Promise<void> => {
+      const target = database.emails.find((entry: FilemakerEmail) => entry.id === emailId);
+      if (!target) return;
+
+      setConfirmation({
+        title: 'Delete Email?',
+        message: `Are you sure you want to delete email "${target.email}"?`,
+        confirmText: 'Delete Record',
+        isDangerous: true,
+        onConfirm: async () => {
+          await persistDatabase(
+            removeFilemakerEmail(database, emailId),
+            'Email deleted.'
+          );
+        },
+      });
+    },
+    [database, persistDatabase]
+  );
+
+  const handleStartEditEmail = useCallback((email: FilemakerEmail): void => {
+    setEditingEmail(email);
+    setEmailDraft({
+      email: email.email,
+      status: email.status,
+    });
+    setIsEmailModalOpen(true);
+  }, []);
+
+  const openCreateEmail = useCallback(() => {
+    setEditingEmail(null);
+    setEmailDraft({ status: 'unverified' });
+    setIsEmailModalOpen(true);
   }, []);
 
   const personFields: SettingsField<PersonDraft>[] = useMemo(() => [
@@ -369,17 +513,49 @@ export function AdminFilemakerPage(): React.JSX.Element {
     },
   ], [countryOptions, countriesQuery.isLoading]);
 
+  const emailFields: SettingsField<EmailDraft>[] = useMemo(
+    () => [
+      {
+        key: 'email',
+        label: 'Email',
+        type: 'text',
+        placeholder: 'name@example.com',
+        required: true,
+      },
+      {
+        key: 'status',
+        label: 'Status',
+        type: 'select',
+        options: EMAIL_STATUS_OPTIONS,
+        placeholder: 'Select status',
+        required: true,
+      },
+    ],
+    []
+  );
+
   return (
     <div className='container mx-auto space-y-6 py-8'>
       <PanelHeader
         title='Filemaker'
-        description='Manage persons and organizations that can be attached as addresser/addressee in Case Resolver documents.'
+        description='Manage persons, organizations, and emails used in Case Resolver document addressing.'
         icon={<Database className='size-4' />}
+        actions={[
+          {
+            key: 'emails',
+            label: 'Emails Page',
+            icon: <Mail className='size-4' />,
+            variant: 'outline',
+            onClick: () => router.push('/admin/filemaker/emails'),
+          },
+        ]}
       />
 
       <div className='flex flex-wrap gap-2'>
         <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
         <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
+        <Badge variant='outline' className='text-[10px]'>Emails: {emails.length}</Badge>
+        <Badge variant='outline' className='text-[10px]'>Email Links: {database.emailLinks.length}</Badge>
         <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
       </div>
 
@@ -442,6 +618,77 @@ export function AdminFilemakerPage(): React.JSX.Element {
                       className='h-8 w-8 p-0 text-red-200 hover:text-red-100'
                       onClick={(): void => {
                         void handleDeletePerson(person.id);
+                      }}
+                    >
+                      <Trash2 className='size-3.5' />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+      </FormSection>
+
+      <FormSection
+        title='Emails'
+        className='space-y-4 p-4'
+        actions={(
+          <Button
+            type='button'
+            onClick={openCreateEmail}
+            disabled={updateSetting.isPending}
+            className='h-8'
+          >
+            <Plus className='mr-1.5 size-3.5' />
+            Add Email
+          </Button>
+        )}
+      >
+        <div className='space-y-2'>
+          {emails.length === 0 ? (
+            <EmptyState
+              title='No emails'
+              description='No emails added yet.'
+              variant='compact'
+              className='bg-card/20 border-dashed border-border/60 py-8'
+            />
+          ) : (
+            emails.map((email: FilemakerEmail) => (
+              <Card key={email.id} variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
+                <div className='flex flex-wrap items-start justify-between gap-3'>
+                  <div className='min-w-0 flex-1 space-y-1'>
+                    <div className='flex items-center gap-2 text-sm font-semibold text-white'>
+                      <Mail className='size-3.5 text-blue-200' />
+                      {email.email}
+                    </div>
+                    <div className='text-[11px] text-gray-500'>
+                      Status: {email.status}
+                    </div>
+                    <div className='text-[11px] text-gray-500'>
+                      Linked parties: {emailLinkCountByEmailId.get(email.id) ?? 0}
+                    </div>
+                    <div className='text-[10px] text-gray-600'>
+                      Updated: {formatTimestamp(email.updatedAt ?? undefined)}
+                    </div>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className='h-8 w-8 p-0'
+                      onClick={(): void => {
+                        handleStartEditEmail(email);
+                      }}
+                    >
+                      <Edit2 className='size-3.5' />
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className='h-8 w-8 p-0 text-red-200 hover:text-red-100'
+                      onClick={(): void => {
+                        void handleDeleteEmail(email.id);
                       }}
                     >
                       <Trash2 className='size-3.5' />
@@ -539,6 +786,18 @@ export function AdminFilemakerPage(): React.JSX.Element {
         onSave={handleSaveOrganization}
         isSaving={updateSetting.isPending}
         size='md'
+      />
+
+      <SettingsPanelBuilder<EmailDraft>
+        open={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        title={editingEmail ? 'Edit Email' : 'Add Email'}
+        fields={emailFields}
+        values={emailDraft}
+        onChange={(vals) => setEmailDraft((prev) => ({ ...prev, ...vals }))}
+        onSave={handleSaveEmail}
+        isSaving={updateSetting.isPending}
+        size='sm'
       />
 
       <ConfirmModal

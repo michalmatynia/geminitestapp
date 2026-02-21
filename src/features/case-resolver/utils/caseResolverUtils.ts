@@ -14,8 +14,8 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import type {
   FilemakerDatabaseDto as FilemakerDatabase,
-  FilemakerEntityKindDto as FilemakerEntityKind,
   FilemakerOrganizationDto as FilemakerOrganization,
+  FilemakerPartyKindDto as FilemakerPartyKind,
   FilemakerPersonDto as FilemakerPerson,
 } from '@/shared/contracts/filemaker';
 
@@ -382,7 +382,7 @@ type CaseResolverFilemakerPartySearchOption = {
 
 export const buildCaseResolverFilemakerPartySearchOptions = (
   database: FilemakerDatabase,
-  kind: FilemakerEntityKind
+  kind: FilemakerPartyKind
 ): CaseResolverFilemakerPartySearchOption[] => {
   if (kind === 'person') {
     return database.persons
@@ -506,15 +506,35 @@ export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEdit
   const activeDocumentContent = activeDocumentVersion === 'exploded'
     ? explodedDocumentContent
     : originalDocumentContent;
+  const resolvedDraftEditorType: CaseResolverFileEditDraft['editorType'] =
+    file.fileType === 'scanfile'
+      ? 'markdown'
+      : file.editorType === 'markdown'
+        ? 'markdown'
+        : 'wysiwyg';
+  const resolvedDraftMarkdown = (() => {
+    if (
+      typeof file.documentContentMarkdown === 'string' &&
+      file.documentContentMarkdown.trim().length > 0
+    ) {
+      return file.documentContentMarkdown;
+    }
+    if (
+      typeof file.documentContentPlainText === 'string' &&
+      file.documentContentPlainText.trim().length > 0
+    ) {
+      return file.documentContentPlainText;
+    }
+    return activeDocumentContent;
+  })();
   const resolvedDraftHtml = (() => {
     if (typeof file.documentContentHtml === 'string' && file.documentContentHtml.trim().length > 0) {
       return file.documentContentHtml;
     }
     if (
-      typeof file.documentContentMarkdown === 'string' &&
-      file.documentContentMarkdown.trim().length > 0
+      resolvedDraftMarkdown.trim().length > 0
     ) {
-      return ensureHtmlForPreview(file.documentContentMarkdown, 'markdown');
+      return ensureHtmlForPreview(resolvedDraftMarkdown, 'markdown');
     }
     return ensureSafeDocumentHtml(activeDocumentContent);
   })();
@@ -531,12 +551,12 @@ export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEdit
     originalDocumentContent,
     explodedDocumentContent,
     activeDocumentVersion,
-    editorType: 'wysiwyg',
+    editorType: resolvedDraftEditorType,
     documentContentFormatVersion: file.documentContentFormatVersion,
     documentContentVersion: file.documentContentVersion,
     baseDocumentContentVersion: file.documentContentVersion,
     documentContent: activeDocumentContent,
-    documentContentMarkdown: file.documentContentMarkdown,
+    documentContentMarkdown: resolvedDraftMarkdown,
     documentContentHtml: resolvedDraftHtml,
     documentContentPlainText: file.documentContentPlainText,
     documentHistory: file.documentHistory,

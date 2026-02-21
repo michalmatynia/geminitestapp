@@ -1,6 +1,7 @@
+import type { ChatbotContextSegment } from '@/shared/contracts/chatbot';
+
 import { readErrorMessage } from './client';
 
-import type { ChatbotContextSegment } from '@/shared/contracts/chatbot';
 
 export const uploadChatbotContextPdf = async (
   file: File,

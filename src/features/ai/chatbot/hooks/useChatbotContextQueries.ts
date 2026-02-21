@@ -3,6 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { ChatbotContextSegmentDto } from '@/shared/contracts/chatbot';
+import type { SettingRecordDto as SettingRecord } from '@/shared/contracts/settings';
 import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { createCreateMutationV2, createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -10,7 +11,6 @@ import type { FileUploadHelpers } from '@/shared/ui';
 
 import * as chatbotApi from '../api';
 
-import type { SettingRecordDto as SettingRecord } from '@/shared/contracts/settings';
 
 export function useChatbotContextSettingsQuery(): ListQuery<SettingRecord> {
   const queryKey = QUERY_KEYS.ai.chatbot.settings.allSettings('global-context');

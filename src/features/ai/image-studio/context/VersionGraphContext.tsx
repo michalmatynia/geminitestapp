@@ -24,7 +24,7 @@ import {
 } from '../utils/version-graph';
 import { resolveScopedVersionGraphSlots } from '../utils/version-graph-scope';
 
-import type { CompositeLayerConfig } from '../types';
+import type { CompositeLayerConfig } from '@/shared/contracts/image-studio';
 import type {
   VersionGraphActions,
   VersionGraphFilterType,

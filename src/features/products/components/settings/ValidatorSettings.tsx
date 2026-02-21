@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useCallback } from 'react';
 
-import { FormSection, StatusToggle } from '@/shared/ui';
+import { ConfirmDialog, FormSection, StatusToggle } from '@/shared/ui';
 
 import { useValidatorSettingsController } from './validator-settings/useValidatorSettingsController';
 import { ValidatorDefaultPanel } from './validator-settings/ValidatorDefaultPanel';
@@ -21,6 +22,19 @@ import { ValidatorSettingsProvider } from './validator-settings/ValidatorSetting
  */
 export function ValidatorSettings(): React.JSX.Element {
   const controller = useValidatorSettingsController();
+  const {
+    patternToDelete,
+    setPatternToDelete,
+    handleDeletePattern,
+    patternActionsPending,
+  } = controller;
+
+  const handleConfirmDeletePattern = useCallback((): void => {
+    if (!patternToDelete) return;
+    void handleDeletePattern(patternToDelete.id).finally(() => {
+      setPatternToDelete(null);
+    });
+  }, [handleDeletePattern, patternToDelete, setPatternToDelete]);
 
   return (
     <ValidatorDocsTooltipsProvider>
@@ -32,6 +46,21 @@ export function ValidatorSettings(): React.JSX.Element {
           <ValidatorPatternTablePanel />
           <ValidatorPatternListLinkPanel />
           <ValidatorPatternModal />
+          <ConfirmDialog
+            open={Boolean(patternToDelete)}
+            onOpenChange={(open: boolean): void => {
+              if (!open) {
+                setPatternToDelete(null);
+              }
+            }}
+            title='Delete Pattern?'
+            description={`Delete "${patternToDelete?.label ?? 'this pattern'}"? This action cannot be undone.`}
+            onConfirm={handleConfirmDeletePattern}
+            confirmText='Delete'
+            cancelText='Cancel'
+            variant='destructive'
+            loading={patternActionsPending}
+          />
         </div>
       </ValidatorSettingsProvider>
     </ValidatorDocsTooltipsProvider>

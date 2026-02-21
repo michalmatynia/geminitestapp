@@ -1,4 +1,4 @@
-import type { ImageStudioSlotRecord } from '../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 type SlotImageFileLike = {
   url?: string | null | undefined;

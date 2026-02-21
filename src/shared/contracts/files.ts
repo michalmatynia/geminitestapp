@@ -12,6 +12,7 @@ export const fileSchema = namedDtoSchema.extend({
   size: z.number(),
   extension: z.string().optional(),
   publicUrl: z.string().optional(),
+  url: z.string().optional(),
   storageProvider: z.enum(['local', 's3', 'imagekit']).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
@@ -36,6 +37,7 @@ export type UpdateFileDto = z.infer<typeof updateFileSchema>;
 export const imageFileSchema = fileSchema.extend({
   width: z.number().optional(),
   height: z.number().optional(),
+  url: z.string().optional(),
   thumbnailPath: z.string().optional(),
   thumbnailUrl: z.string().optional(),
   isAnimated: z.boolean().optional(),
@@ -55,7 +57,8 @@ export type ImageFileRecord = ImageFileRecordDto;
 
 export const imageFileSelectionSchema = z.object({
   id: z.string(),
-  url: z.string(),
+  url: z.string().optional(),
+  filepath: z.string().optional(),
   thumbnailUrl: z.string().optional(),
   filename: z.string().optional(),
   width: z.number().optional(),

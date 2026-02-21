@@ -76,6 +76,14 @@ export type PromptExploderCaseResolverExtractionMode =
 
 export const normalizeText = (value: string): string => value.trim().replace(/\s+/g, ' ');
 export const normalizeComparable = (value: string): string => normalizeText(value).toLowerCase();
+const normalizeRawCaptureText = (value: string): string =>
+  value
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((line: string): string => normalizeText(line))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 
 export const normalizeCountryName = (value: string): string => {
   const normalized = normalizeText(value);
@@ -425,7 +433,7 @@ const ensurePartyDraft = (
   if (existing) return existing;
   const next: CaseResolverPartyDraft = {
     role,
-    rawText: normalizeText(segment.raw || segment.text || '') || '',
+    rawText: normalizeRawCaptureText(segment.raw || segment.text || '') || '',
     sourceSegmentId: segment.id,
     sourceSegmentTitle: resolveSegmentDisplayLabel(segment),
     sourcePatternLabels: normalizeSegmentLabels(segment.matchedPatternLabels),
@@ -603,12 +611,16 @@ const toPartyCandidateFromDraft = (
   const explicitDisplayName = normalizeText(draft.displayName ?? '');
   const nameFromParts = [firstName, middleName, lastName].filter(Boolean).join(' ');
   const displayName = explicitDisplayName || organizationName || nameFromParts;
-  const rawText = normalizeText(draft.rawText ?? '');
+  const rawText = normalizeRawCaptureText(draft.rawText ?? '');
+  const rawDisplayLine = rawText
+    .split('\n')
+    .map((line: string): string => line.trim())
+    .find((line: string): boolean => line.length > 0) ?? '';
   if (!displayName && !rawText) return null;
 
   const candidate: PromptExploderCaseResolverPartyCandidate = {
     role: draft.role,
-    displayName: displayName || rawText,
+    displayName: displayName || rawDisplayLine,
     rawText: rawText || displayName,
     sourceSegmentId: draft.sourceSegmentId,
     sourceSegmentTitle: draft.sourceSegmentTitle,
@@ -703,8 +715,12 @@ export const extractCaseResolverBridgePayloadFromSegments = (
   const ruleAddresser = toPartyCandidateFromDraft(ruleDraft.parties.addresser ?? null);
   const ruleAddressee = toPartyCandidateFromDraft(ruleDraft.parties.addressee ?? null);
   const ruleMetadata = ruleDraft.metadata.placeDate ? ruleDraft.metadata : null;
+  const hasAnyRuleCapture = Boolean(ruleAddresser || ruleAddressee || ruleMetadata);
 
-  const shouldUseHeuristics = mode === 'rules_with_heuristics';
+  const shouldUseHeuristics = (
+    mode === 'rules_with_heuristics' ||
+    (mode === 'rules_only' && captureRules.length > 0 && hasAnyRuleCapture)
+  );
   const heuristicPayload = shouldUseHeuristics
     ? (() => {
       const usedSegmentIds = new Set<string>();

@@ -21,7 +21,7 @@ import type {
   ImageStudioProjectRecord,
   ImageStudioSlotRecord,
   StudioSlotsResponse,
-} from '../types';
+} from '@/shared/contracts/image-studio';
 
 const normalizeStudioSlotId = (rawId: string): string => rawId.trim();
 const DELETE_SLOT_TIMEOUT_MS = 120_000;

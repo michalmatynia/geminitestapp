@@ -325,7 +325,6 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                       run.status === 'failed' ? 'error' :
                         run.status === 'running' ? 'info' : 'warning'
                   }
-                  size='sm'
                   className='font-bold uppercase'
                 >
                   {run.status}

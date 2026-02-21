@@ -11,7 +11,7 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { studioKeys } from '@/shared/lib/query-key-exports';
 
-import type { ImageStudioProjectRecord, StudioProjectsResponse, StudioSlotsResponse } from '../types';
+import type { ImageStudioProjectRecord, StudioProjectsResponse, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 
 export { studioKeys };
 

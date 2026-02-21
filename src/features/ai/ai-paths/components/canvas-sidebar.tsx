@@ -306,9 +306,9 @@ export function CanvasSidebar(): React.JSX.Element {
       </Card>
             
                   
-                        {!selectedEdgeId && (
-                          <Card className='border-border/60 bg-card/40 p-4'>
-                            <Hint size='xs' uppercase={false} className='mb-3 font-semibold text-white'>Inspector</Hint>          {selectedNode ? (
+      {!selectedEdgeId && (
+        <Card className='border-border/60 bg-card/40 p-4'>
+          <Hint size='xs' uppercase={false} className='mb-3 font-semibold text-white'>Inspector</Hint>          {selectedNode ? (
       
             <div className='space-y-3 text-xs text-gray-300'>
               <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50 text-[11px] text-gray-400'>

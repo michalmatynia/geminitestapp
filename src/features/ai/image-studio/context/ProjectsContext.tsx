@@ -46,7 +46,7 @@ import {
   saveImageStudioActiveProjectLocal,
 } from '../utils/project-session';
 
-import type { ImageStudioProjectRecord } from '../types';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 

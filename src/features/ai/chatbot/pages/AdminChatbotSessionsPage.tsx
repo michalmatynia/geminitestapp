@@ -4,6 +4,7 @@ import { Eye, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 
+import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 import { 
   Button, 
   Input, 
@@ -17,7 +18,6 @@ import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useChatbotSessionsState } from '../hooks/useChatbotSessionsState';
 
-import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export default function ChatbotSessionsPage(): React.JSX.Element {
@@ -93,7 +93,7 @@ export default function ChatbotSessionsPage(): React.JSX.Element {
               </span>
             )}
             <span className='text-[10px] text-gray-500'>
-              Updated {new Date(session.updatedAt).toLocaleString()}
+              Updated {session.lastMessageAt ? new Date(session.lastMessageAt).toLocaleString() : 'Never'}
             </span>
           </div>
         );

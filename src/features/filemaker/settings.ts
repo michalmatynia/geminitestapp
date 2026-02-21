@@ -594,7 +594,7 @@ export const normalizeFilemakerDatabase = (
 
       const partyKindRaw = normalizeString(entry['partyKind']).toLowerCase();
       if (partyKindRaw !== 'person' && partyKindRaw !== 'organization') return;
-      const partyKind = partyKindRaw as FilemakerPartyKind;
+      const partyKind = partyKindRaw;
 
       const partyId = normalizeString(entry['partyId']);
       if (!partyId || !isPartyPresent(personIds, organizationIds, partyKind, partyId)) {
@@ -747,12 +747,12 @@ export const linkFilemakerEmailToParty = (
   const hasParty =
     input.partyKind === 'person'
       ? database.persons.some(
-          (person: FilemakerPerson): boolean => person.id === partyId
-        )
+        (person: FilemakerPerson): boolean => person.id === partyId
+      )
       : database.organizations.some(
-          (organization: FilemakerOrganization): boolean =>
-            organization.id === partyId
-        );
+        (organization: FilemakerOrganization): boolean =>
+          organization.id === partyId
+      );
   if (!hasParty) return { database, created: false };
 
   const alreadyLinked = database.emailLinks.some(

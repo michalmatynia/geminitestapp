@@ -35,7 +35,7 @@ import {
 } from '../utils/project-session';
 import { expandFolderPath, normalizeFolderPaths, IMAGE_STUDIO_TREE_KEY_PREFIX } from '../utils/studio-tree';
 
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '../types';
+import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
 
 // ── Utilities ────────────────────────────────────────────────────────────────
 

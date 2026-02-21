@@ -11,7 +11,6 @@ import {
   StandardDataTablePanel,
   Tag,
   Card,
-  Badge,
   Hint,
 } from '@/shared/ui';
 
@@ -60,15 +59,15 @@ export default function AgentMemoryPage(): React.JSX.Element {
       ),
     },
     {
-      accessorKey: 'summary',
+      accessorKey: 'value',
       header: 'Memory / Summary',
       cell: ({ row }) => (
         <div className='flex flex-col gap-1'>
           <span className='font-medium text-white'>
-            {row.original.summary || row.original.content.slice(0, 100)}
+            {(row.original.metadata?.['summary'] as string) || row.original.value.slice(0, 100)}
           </span>
           <span className='text-[10px] text-gray-500 font-mono'>
-            Key: {row.original.memoryKey}
+            Key: {row.original.key}
           </span>
         </div>
       ),
@@ -78,8 +77,8 @@ export default function AgentMemoryPage(): React.JSX.Element {
       header: 'Tags',
       cell: ({ row }) => (
         <div className='flex flex-wrap gap-1'>
-          {row.original.tags?.length ? (
-            row.original.tags.map((t) => (
+          {(row.original.metadata?.['tags'] as string[])?.length ? (
+            (row.original.metadata?.['tags'] as string[]).map((t) => (
               <Tag key={t} label={t} />
             ))
           ) : (
@@ -93,7 +92,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
       header: 'Score',
       cell: ({ row }) => (
         <span className='text-xs font-medium text-gray-300'>
-          {row.original.importance ?? '—'}
+          {(row.original.metadata?.['importance'] as number) ?? '—'}
         </span>
       ),
     },
@@ -185,7 +184,7 @@ export default function AgentMemoryPage(): React.JSX.Element {
               <div>
                 <Hint size='xxs' uppercase className='mb-2'>Full Content</Hint>
                 <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-black/40 font-mono text-[11px] text-gray-300 whitespace-pre-wrap'>
-                  {row.original.content}
+                  {row.original.value}
                 </Card>
               </div>
               <div>
@@ -197,11 +196,11 @@ export default function AgentMemoryPage(): React.JSX.Element {
                   </div>
                   <div className='flex justify-between border-b border-white/5 pb-1'>
                     <span>Accessed</span>
-                    <span className='text-gray-200'>{formatDate(row.original.lastAccessedAt)}</span>
+                    <span className='text-gray-200'>{formatDate(row.original.metadata?.['lastAccessedAt'] as string)}</span>
                   </div>
                   <div className='flex justify-between border-b border-white/5 pb-1'>
                     <span>Run ID</span>
-                    <span className='font-mono text-gray-200'>{row.original.runId || '—'}</span>
+                    <span className='font-mono text-gray-200'>{(row.original.metadata?.['runId'] as string) || '—'}</span>
                   </div>
                 </Card>
                 {row.original.metadata && (

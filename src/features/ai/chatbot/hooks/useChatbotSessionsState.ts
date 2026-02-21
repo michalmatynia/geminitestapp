@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback } from 'react';
 
+import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
@@ -14,7 +15,6 @@ import {
   useUpdateSessionTitle,
 } from '../hooks';
 
-import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 
 export interface UseChatbotSessionsStateReturn {
   sessions: ChatbotSessionListItem[];

@@ -10,7 +10,7 @@ import type {
   LinkedGeneratedVariantViewModel,
   LinkedMaskSlotViewModel,
 } from './slot-inline-edit-tab-types';
-import type { ImageStudioSlotRecord } from '../../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export const asRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;

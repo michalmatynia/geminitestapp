@@ -173,10 +173,11 @@ const normalizeMaskShape = (value: unknown, index: number): VectorShape | null =
     name: normalizedName,
     type,
     points,
+    style: (record['style'] as Record<string, unknown>) ?? {},
     closed: typeof record['closed'] === 'boolean' ? record['closed'] : true,
     visible: typeof record['visible'] === 'boolean' ? record['visible'] : true,
     ...(label ? { label } : {}),
-    ...(role ? { role } : {}),
+    role: role || 'custom',
     ...(color ? { color } : {}),
   };
 };
@@ -566,6 +567,8 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
           name: `${labelPrefix} ${maskShapes.length + 1}`,
           type: 'rect',
           points: [{ x, y }, { x: x + w, y: y + h }],
+          style: {},
+          role: 'custom',
           closed: true,
           visible: true,
         };
@@ -648,6 +651,8 @@ export function MaskingProvider({ children }: { children: React.ReactNode }): Re
               name: `AI Polygon ${maskShapes.length + 1}`,
               type: 'polygon',
               points: result.polygon.map((p) => ({ x: p.x, y: p.y })),
+              style: {},
+              role: 'custom',
               closed: true,
               visible: true,
             };

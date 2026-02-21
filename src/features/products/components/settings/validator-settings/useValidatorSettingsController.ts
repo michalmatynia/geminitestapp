@@ -179,10 +179,79 @@ export function useValidatorSettingsController() {
     }
 
     try {
-      const recipe = buildDynamicRecipeFromForm(formData);
-      const replacementValue = recipe ? encodeDynamicReplacementRecipe(recipe) : formData.replacementValue;
+      const areStringArraysEqual = (
+        left: readonly string[] | undefined,
+        right: readonly string[] | undefined
+      ): boolean => {
+        const leftSorted = [...(left ?? [])].sort();
+        const rightSorted = [...(right ?? [])].sort();
+        if (leftSorted.length !== rightSorted.length) return false;
+        return leftSorted.every((value, index) => value === rightSorted[index]);
+      };
+
+      const parseStrictInt = (value: string): number | null => {
+        const trimmed = value.trim();
+        if (!/^-?\d+$/.test(trimmed)) return null;
+        const parsed = Number(trimmed);
+        if (!Number.isSafeInteger(parsed)) return null;
+        return parsed;
+      };
+
+      const parsedSequence = formData.sequence.trim().length === 0
+        ? null
+        : parseStrictInt(formData.sequence);
+      if (formData.sequence.trim().length > 0 && (parsedSequence === null || parsedSequence < 0)) {
+        toast('Sequence must be a whole number greater than or equal to 0.', { variant: 'error' });
+        return;
+      }
+
+      const parsedMaxExecutions = parseStrictInt(formData.maxExecutions);
+      if (
+        parsedMaxExecutions === null ||
+        parsedMaxExecutions < 1 ||
+        parsedMaxExecutions > 20
+      ) {
+        toast('Max executions must be a whole number between 1 and 20.', {
+          variant: 'error',
+        });
+        return;
+      }
+
+      const parsedValidationDebounceMs = parseStrictInt(formData.validationDebounceMs);
+      if (
+        parsedValidationDebounceMs === null ||
+        parsedValidationDebounceMs < 0 ||
+        parsedValidationDebounceMs > 30_000
+      ) {
+        toast('Debounce must be a whole number between 0 and 30000.', {
+          variant: 'error',
+        });
+        return;
+      }
+
+      let replacementValue: string | null = null;
+      if (formData.replacementMode === 'dynamic') {
+        const recipe = buildDynamicRecipeFromForm(formData);
+        if (!recipe) {
+          toast('Dynamic replacer config is incomplete.', { variant: 'error' });
+          return;
+        }
+        replacementValue = encodeDynamicReplacementRecipe(recipe);
+      } else {
+        replacementValue = formData.replacementValue.length > 0 ? formData.replacementValue : null;
+      }
       const runtimeEnabled = formData.runtimeEnabled;
-      const normalizedRuntimeConfig = formData.runtimeConfig.trim();
+      const runtimeConfig = formData.runtimeConfig;
+      const selectedSequenceGroupId = formData.sequenceGroupId.trim() || null;
+      const selectedSequenceGroup = selectedSequenceGroupId
+        ? sequenceGroups.get(selectedSequenceGroupId) ?? null
+        : null;
+      const sequenceGroupLabel = selectedSequenceGroupId
+        ? selectedSequenceGroup?.label ?? editingPattern?.sequenceGroupLabel?.trim() ?? null
+        : null;
+      const sequenceGroupDebounceMs = selectedSequenceGroupId
+        ? selectedSequenceGroup?.debounceMs ?? editingPattern?.sequenceGroupDebounceMs ?? 0
+        : 0;
 
       const payload: UpdateValidationPatternPayload = {
         label: formData.label.trim(),
@@ -196,7 +265,7 @@ export function useValidatorSettingsController() {
         replacementEnabled: formData.replacementEnabled,
         replacementAutoApply: formData.replacementAutoApply,
         skipNoopReplacementProposal: formData.skipNoopReplacementProposal,
-        replacementValue: replacementValue || null,
+        replacementValue,
         replacementFields: formData.replacementFields,
         replacementAppliesToScopes: normalizeProductValidationPatternReplacementScopes(
           formData.replacementAppliesToScopes,
@@ -207,20 +276,12 @@ export function useValidatorSettingsController() {
           formData.denyBehaviorOverride === 'inherit'
             ? null
             : (formData.denyBehaviorOverride),
-        sequenceGroupId: editingPattern?.sequenceGroupId ?? null,
-        sequenceGroupLabel: editingPattern?.sequenceGroupLabel ?? null,
-        sequenceGroupDebounceMs: editingPattern?.sequenceGroupDebounceMs ?? 0,
-        sequence:
-          formData.sequence.trim().length > 0 &&
-          Number.isFinite(Number(formData.sequence))
-            ? Math.max(0, Math.floor(Number(formData.sequence)))
-            : null,
+        sequenceGroupId: selectedSequenceGroupId,
+        sequenceGroupLabel,
+        sequenceGroupDebounceMs,
+        sequence: parsedSequence,
         chainMode: formData.chainMode,
-        maxExecutions:
-          formData.maxExecutions.trim().length > 0 &&
-          Number.isFinite(Number(formData.maxExecutions))
-            ? Math.min(20, Math.max(1, Math.floor(Number(formData.maxExecutions))))
-            : 1,
+        maxExecutions: parsedMaxExecutions,
         passOutputToNext: formData.passOutputToNext,
         launchEnabled: formData.launchEnabled,
         launchAppliesToScopes: normalizeProductValidationPatternLaunchScopes(
@@ -235,13 +296,136 @@ export function useValidatorSettingsController() {
         launchFlags: formData.launchFlags.trim() || null,
         runtimeEnabled,
         runtimeType: runtimeEnabled ? formData.runtimeType : 'none',
-        runtimeConfig: runtimeEnabled ? normalizedRuntimeConfig : null,
+        runtimeConfig: runtimeEnabled ? runtimeConfig : null,
         appliesToScopes: normalizeProductValidationPatternScopes(formData.appliesToScopes),
-        validationDebounceMs: Number(formData.validationDebounceMs) || 0,
+        validationDebounceMs: parsedValidationDebounceMs,
       };
 
       if (editingPattern) {
-        await updatePattern.mutateAsync({ id: editingPattern.id, data: payload });
+        const currentReplacementScopes = normalizeProductValidationPatternReplacementScopes(
+          editingPattern.replacementAppliesToScopes,
+          editingPattern.appliesToScopes
+        );
+        const currentLaunchScopes = normalizeProductValidationPatternLaunchScopes(
+          editingPattern.launchAppliesToScopes,
+          editingPattern.appliesToScopes
+        );
+        const currentAppliesToScopes = normalizeProductValidationPatternScopes(
+          editingPattern.appliesToScopes
+        );
+
+        const changedPayload: UpdateValidationPatternPayload = {};
+        if (payload.label !== editingPattern.label) changedPayload.label = payload.label;
+        if (payload.target !== editingPattern.target) changedPayload.target = payload.target;
+        if (payload.locale !== (editingPattern.locale ?? null)) changedPayload.locale = payload.locale;
+        if (payload.regex !== editingPattern.regex) changedPayload.regex = payload.regex;
+        if (payload.flags !== (editingPattern.flags ?? null)) changedPayload.flags = payload.flags;
+        if (payload.message !== editingPattern.message) changedPayload.message = payload.message;
+        if (payload.severity !== editingPattern.severity) changedPayload.severity = payload.severity;
+        if (payload.enabled !== editingPattern.enabled) changedPayload.enabled = payload.enabled;
+        if (payload.replacementEnabled !== editingPattern.replacementEnabled) {
+          changedPayload.replacementEnabled = payload.replacementEnabled;
+        }
+        if ((payload.replacementAutoApply ?? false) !== (editingPattern.replacementAutoApply ?? false)) {
+          changedPayload.replacementAutoApply = payload.replacementAutoApply;
+        }
+        if (
+          (payload.skipNoopReplacementProposal ?? true) !==
+          (editingPattern.skipNoopReplacementProposal ?? true)
+        ) {
+          changedPayload.skipNoopReplacementProposal = payload.skipNoopReplacementProposal;
+        }
+        if (payload.replacementValue !== (editingPattern.replacementValue ?? null)) {
+          changedPayload.replacementValue = payload.replacementValue;
+        }
+        if (!areStringArraysEqual(payload.replacementFields, editingPattern.replacementFields)) {
+          changedPayload.replacementFields = payload.replacementFields;
+        }
+        if (
+          !areStringArraysEqual(
+            payload.replacementAppliesToScopes,
+            currentReplacementScopes
+          )
+        ) {
+          changedPayload.replacementAppliesToScopes = payload.replacementAppliesToScopes;
+        }
+        if (payload.postAcceptBehavior !== editingPattern.postAcceptBehavior) {
+          changedPayload.postAcceptBehavior = payload.postAcceptBehavior;
+        }
+        if (payload.denyBehaviorOverride !== (editingPattern.denyBehaviorOverride ?? null)) {
+          changedPayload.denyBehaviorOverride = payload.denyBehaviorOverride;
+        }
+        if (
+          payload.sequenceGroupId !== (editingPattern.sequenceGroupId ?? null) ||
+          payload.sequenceGroupLabel !== (editingPattern.sequenceGroupLabel ?? null) ||
+          payload.sequenceGroupDebounceMs !== (editingPattern.sequenceGroupDebounceMs ?? 0)
+        ) {
+          changedPayload.sequenceGroupId = payload.sequenceGroupId;
+          changedPayload.sequenceGroupLabel = payload.sequenceGroupLabel;
+          changedPayload.sequenceGroupDebounceMs = payload.sequenceGroupDebounceMs;
+        }
+        if (payload.sequence !== (editingPattern.sequence ?? null)) changedPayload.sequence = payload.sequence;
+        if (payload.chainMode !== editingPattern.chainMode) changedPayload.chainMode = payload.chainMode;
+        if ((payload.maxExecutions ?? 1) !== (editingPattern.maxExecutions ?? 1)) {
+          changedPayload.maxExecutions = payload.maxExecutions;
+        }
+        if ((payload.passOutputToNext ?? true) !== (editingPattern.passOutputToNext ?? true)) {
+          changedPayload.passOutputToNext = payload.passOutputToNext;
+        }
+        if ((payload.launchEnabled ?? false) !== (editingPattern.launchEnabled ?? false)) {
+          changedPayload.launchEnabled = payload.launchEnabled;
+        }
+        if (!areStringArraysEqual(payload.launchAppliesToScopes, currentLaunchScopes)) {
+          changedPayload.launchAppliesToScopes = payload.launchAppliesToScopes;
+        }
+        if (
+          (payload.launchScopeBehavior ?? 'gate') !== (editingPattern.launchScopeBehavior ?? 'gate')
+        ) {
+          changedPayload.launchScopeBehavior = payload.launchScopeBehavior;
+        }
+        if (
+          (payload.launchSourceMode ?? 'current_field') !==
+          (editingPattern.launchSourceMode ?? 'current_field')
+        ) {
+          changedPayload.launchSourceMode = payload.launchSourceMode;
+        }
+        if (
+          (payload.launchSourceField ?? null) !== (editingPattern.launchSourceField ?? null)
+        ) {
+          changedPayload.launchSourceField = payload.launchSourceField;
+        }
+        if (payload.launchOperator !== editingPattern.launchOperator) {
+          changedPayload.launchOperator = payload.launchOperator;
+        }
+        if ((payload.launchValue ?? null) !== (editingPattern.launchValue ?? null)) {
+          changedPayload.launchValue = payload.launchValue;
+        }
+        if ((payload.launchFlags ?? null) !== (editingPattern.launchFlags ?? null)) {
+          changedPayload.launchFlags = payload.launchFlags;
+        }
+        if ((payload.runtimeEnabled ?? false) !== (editingPattern.runtimeEnabled ?? false)) {
+          changedPayload.runtimeEnabled = payload.runtimeEnabled;
+        }
+        if ((payload.runtimeType ?? 'none') !== (editingPattern.runtimeType ?? 'none')) {
+          changedPayload.runtimeType = payload.runtimeType;
+        }
+        if ((payload.runtimeConfig ?? null) !== (editingPattern.runtimeConfig ?? null)) {
+          changedPayload.runtimeConfig = payload.runtimeConfig;
+        }
+        if (!areStringArraysEqual(payload.appliesToScopes, currentAppliesToScopes)) {
+          changedPayload.appliesToScopes = payload.appliesToScopes;
+        }
+        if ((payload.validationDebounceMs ?? 0) !== (editingPattern.validationDebounceMs ?? 0)) {
+          changedPayload.validationDebounceMs = payload.validationDebounceMs;
+        }
+
+        if (Object.keys(changedPayload).length === 0) {
+          toast('No changes to save.', { variant: 'info' });
+          setShowModal(false);
+          return;
+        }
+
+        await updatePattern.mutateAsync({ id: editingPattern.id, data: changedPayload });
         toast('Pattern updated.', { variant: 'success' });
       } else {
         await createPattern.mutateAsync(payload as CreateValidationPatternPayload);
@@ -362,14 +546,71 @@ export function useValidatorSettingsController() {
   }, []);
 
   const handleDrop = useCallback((pattern: ProductValidationPattern, e: DragEvent): void => {
-    const draggedId = e.dataTransfer.getData('text/plain');
-    if (draggedId && draggedId !== pattern.id) {
-      const targetIndex = orderedPatterns.findIndex(p => p.id === pattern.id);
-      if (targetIndex !== -1) {
-        void handleReorder(draggedId, targetIndex);
-      }
+    const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('patternId');
+    if (!draggedId || draggedId === pattern.id) return;
+
+    const targetIndex = orderedPatterns.findIndex((p) => p.id === pattern.id);
+    if (targetIndex === -1) return;
+
+    const targetGroupId = pattern.sequenceGroupId?.trim() || null;
+    if (!targetGroupId) {
+      void handleReorder(draggedId, targetIndex);
+      return;
     }
-  }, [orderedPatterns, handleReorder]);
+
+    const targetGroup = sequenceGroups.get(targetGroupId);
+    const targetGroupLabel =
+      targetGroup?.label ?? pattern.sequenceGroupLabel ?? 'Sequence / Group';
+    const targetGroupDebounceMs =
+      targetGroup?.debounceMs ?? pattern.sequenceGroupDebounceMs ?? 0;
+
+    const nextPatterns = [...patterns];
+    const currentIndex = nextPatterns.findIndex((p) => p.id === draggedId);
+    if (currentIndex === -1) return;
+
+    const [moved] = nextPatterns.splice(currentIndex, 1);
+    if (!moved) return;
+    nextPatterns.splice(targetIndex, 0, moved);
+
+    const updates: ReorderValidationPatternUpdatePayload[] = nextPatterns.map((p, index) => {
+      const base: ReorderValidationPatternUpdatePayload = {
+        id: p.id,
+        sequence: (index + 1) * 10,
+      };
+
+      if (p.id !== draggedId) return base;
+
+      return {
+        ...base,
+        sequenceGroupId: targetGroupId,
+        sequenceGroupLabel: targetGroupLabel,
+        sequenceGroupDebounceMs: targetGroupDebounceMs,
+      };
+    });
+
+    void reorderPatterns
+      .mutateAsync({ updates })
+      .then(() => {
+        toast('Pattern attached to sequence.', { variant: 'success' });
+      })
+      .catch((error: unknown) => {
+        logClientError(error, {
+          context: {
+            source: 'useValidatorSettingsController',
+            action: 'dropToSequence',
+            draggedId,
+            targetId: pattern.id,
+            targetGroupId,
+          },
+        });
+        toast(
+          error instanceof Error ? error.message : 'Failed to attach pattern to sequence.',
+          {
+            variant: 'error',
+          }
+        );
+      });
+  }, [orderedPatterns, handleReorder, sequenceGroups, patterns, reorderPatterns.mutateAsync, toast]);
 
   const summary = useMemo(() => ({
     total: patterns.length,

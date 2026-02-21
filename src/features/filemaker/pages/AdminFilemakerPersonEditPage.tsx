@@ -23,6 +23,7 @@ import {
   createFilemakerPerson,
   FILEMAKER_DATABASE_KEY,
   formatFilemakerAddress,
+  getFilemakerEmailsForParty,
   normalizeFilemakerDatabase,
   parseFilemakerDatabase,
 } from '../settings';
@@ -33,7 +34,7 @@ import {
   resolveCountryId,
 } from './filemaker-page-utils';
 
-import type { FilemakerPerson } from '../types';
+import type { FilemakerEmail, FilemakerPerson } from '../types';
 
 export function AdminFilemakerPersonEditPage(): React.JSX.Element {
   const params = useParams();
@@ -71,6 +72,11 @@ export function AdminFilemakerPersonEditPage(): React.JSX.Element {
         (entry: FilemakerPerson): boolean => entry.id === personId
       ) ?? null,
     [database.persons, personId]
+  );
+  const linkedEmails = useMemo(
+    (): FilemakerEmail[] =>
+      person ? getFilemakerEmailsForParty(database, 'person', person.id) : [],
+    [database, person]
   );
 
   const [firstName, setFirstName] = useState('');
@@ -264,6 +270,9 @@ export function AdminFilemakerPersonEditPage(): React.JSX.Element {
         <Badge variant='outline' className='text-[10px]'>
           Updated: {formatTimestamp(person.updatedAt)}
         </Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Linked Emails: {linkedEmails.length}
+        </Badge>
       </div>
 
       <FormSection title='Person Details' className='space-y-4 p-4'>
@@ -387,6 +396,26 @@ export function AdminFilemakerPersonEditPage(): React.JSX.Element {
             postalCode,
             country: countryById.get(countryId)?.name ?? person.country,
           })}
+        </div>
+      </FormSection>
+
+      <FormSection title='Linked Emails' className='space-y-2 p-4'>
+        {linkedEmails.length === 0 ? (
+          <div className='text-xs text-gray-500'>No linked emails for this person.</div>
+        ) : (
+          linkedEmails
+            .slice()
+            .sort((left: FilemakerEmail, right: FilemakerEmail) =>
+              left.email.localeCompare(right.email)
+            )
+            .map((email: FilemakerEmail) => (
+              <div key={email.id} className='text-xs text-gray-300'>
+                {email.email} ({email.status})
+              </div>
+            ))
+        )}
+        <div className='text-[11px] text-gray-500'>
+          Manage links in Filemaker Emails.
         </div>
       </FormSection>
     </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { RotateCcw } from 'lucide-react';
+import { RotateCcw, Trash2 } from 'lucide-react';
 import React, { useState } from 'react';
 
 import { Button } from '@/shared/ui';
@@ -15,8 +15,9 @@ export interface GenerationHistoryPanelProps {
 export function GenerationHistoryPanel({
   className,
 }: GenerationHistoryPanelProps): React.JSX.Element {
-  const { generationHistory, restoreGeneration } = useGeneration();
+  const { generationHistory, restoreGeneration, removeGenerationRecord } = useGeneration();
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   if (generationHistory.length === 0) {
     return (
@@ -84,18 +85,37 @@ export function GenerationHistoryPanel({
                   </div>
                 )}
 
-                <Button size='xs'
-                  type='button'
-                  variant='outline'
-                  className='h-6 text-[10px]'
-                  onClick={(e: React.MouseEvent) => {
-                    e.stopPropagation();
-                    restoreGeneration(record);
-                  }}
-                >
-                  <RotateCcw className='mr-1 size-3' />
-                  Re-run
-                </Button>
+                <div className='flex items-center gap-1'>
+                  <Button size='xs'
+                    type='button'
+                    variant='outline'
+                    className='h-6 text-[10px]'
+                    onClick={(e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      restoreGeneration(record);
+                    }}
+                  >
+                    <RotateCcw className='mr-1 size-3' />
+                    Re-run
+                  </Button>
+                  <Button
+                    size='xs'
+                    type='button'
+                    variant='outline'
+                    className='h-6 text-[10px] text-destructive hover:text-destructive'
+                    disabled={deletingId === record.id}
+                    onClick={async (e: React.MouseEvent) => {
+                      e.stopPropagation();
+                      setDeletingId(record.id);
+                      await removeGenerationRecord(record.id);
+                      setDeletingId(null);
+                      setExpandedId((prev) => (prev === record.id ? null : prev));
+                    }}
+                  >
+                    <Trash2 className='mr-1 size-3' />
+                    Delete
+                  </Button>
+                </div>
               </div>
             )}
           </div>

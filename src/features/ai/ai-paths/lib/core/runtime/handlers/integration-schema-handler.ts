@@ -49,7 +49,7 @@ const formatSchemaAsText = (schema: SchemaResponse): string => {
       const markerStr = markers.length > 0 ? ` [${markers.join(', ')}]` : '';
       lines.push(`  - ${field.name} (${field.type})${markerStr}`);
     }
-    const relations = (collection as any)['relations'] as string[] | undefined;
+    const relations = (collection)['relations'] as string[] | undefined;
     if (relations && relations.length > 0) {
       lines.push(`Relations: ${relations.join(', ')}`);
     }

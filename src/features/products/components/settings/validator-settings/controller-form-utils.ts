@@ -89,6 +89,7 @@ export const buildFormDataFromPattern = (
     logicWhenFalseValue: recipe?.logicWhenFalseValue ?? '',
     resultAssembly: recipe?.resultAssembly ?? 'segment_only',
     targetApply: recipe?.targetApply ?? 'replace_matched_segment',
+    sequenceGroupId: pattern.sequenceGroupId ?? '',
     sequence:
       pattern.sequence !== null && pattern.sequence !== undefined
         ? String(pattern.sequence)

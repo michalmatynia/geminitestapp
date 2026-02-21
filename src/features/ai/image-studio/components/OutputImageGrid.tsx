@@ -1,6 +1,6 @@
 'use client';
 
-import { Download, Save } from 'lucide-react';
+import { Download, Save, Trash2 } from 'lucide-react';
 import React from 'react';
 
 import { Button } from '@/shared/ui';
@@ -15,6 +15,7 @@ export interface OutputImage {
 interface OutputImageGridProps {
   outputs: OutputImage[];
   onSaveAsSlot?: ((output: OutputImage) => void) | undefined;
+  onDelete?: ((output: OutputImage) => void) | undefined;
   className?: string | undefined;
   columns?: 2 | 3 | undefined;
 }
@@ -22,6 +23,7 @@ interface OutputImageGridProps {
 export function OutputImageGrid({
   outputs,
   onSaveAsSlot,
+  onDelete,
   className,
   columns = 2,
 }: OutputImageGridProps): React.JSX.Element | null {
@@ -66,6 +68,21 @@ export function OutputImageGrid({
                 onClick={() => onSaveAsSlot(output)}
               >
                 <Save className='size-3.5' />
+              </Button>
+            )}
+            {onDelete && (
+              <Button
+                size='xs'
+                type='button'
+                variant='ghost'
+                className='size-6 rounded p-0 text-white/80 hover:text-red-400 hover:bg-white/10'
+                title='Delete'
+                onClick={(e: React.MouseEvent) => {
+                  e.stopPropagation();
+                  onDelete(output);
+                }}
+              >
+                <Trash2 className='size-3.5' />
               </Button>
             )}
           </div>

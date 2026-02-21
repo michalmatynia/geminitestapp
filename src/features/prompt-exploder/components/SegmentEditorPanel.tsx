@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   Card,
+  Badge,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

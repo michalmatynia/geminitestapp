@@ -14,6 +14,7 @@ import type {
 
 export const PROMPT_EXPLODER_DRAFT_PROMPT_KEY = 'prompt_exploder:draft_prompt';
 export const PROMPT_EXPLODER_APPLY_TO_STUDIO_KEY = 'prompt_exploder:apply_to_studio_prompt';
+export const PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT = 'prompt_exploder:bridge_storage_update';
 
 export type {
   PromptExploderBridgePayload,
@@ -376,6 +377,18 @@ const compactPayloadVariants = (payload: PromptExploderBridgePayload): PromptExp
   return variants;
 };
 
+const dispatchBridgeStorageEvent = (storageKey: string): void => {
+  if (!hasWindow()) return;
+  if (typeof window.dispatchEvent !== 'function') return;
+  if (typeof CustomEvent === 'function') {
+    window.dispatchEvent(new CustomEvent(PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT, {
+      detail: { storageKey },
+    }));
+    return;
+  }
+  window.dispatchEvent(new Event(PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT));
+};
+
 const writeBridgePayload = (storageKey: string, payload: PromptExploderBridgePayload): void => {
   if (!hasWindow()) return;
   const storages = getBridgeStorages();
@@ -389,6 +402,7 @@ const writeBridgePayload = (storageKey: string, payload: PromptExploderBridgePay
     for (const storage of storages) {
       try {
         storage.setItem(storageKey, serialized);
+        dispatchBridgeStorageEvent(storageKey);
         return;
       } catch (error: unknown) {
         lastError = error;
@@ -479,6 +493,7 @@ const clearBridgePayload = (storageKey: string): void => {
   getBridgeStorages().forEach((storage) => {
     storage.removeItem(storageKey);
   });
+  dispatchBridgeStorageEvent(storageKey);
 };
 
 const shouldConsumeForTarget = (

@@ -1,4 +1,4 @@
-import type { ImageStudioSlotRecord } from '../types';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export const IMAGE_STUDIO_SLOT_IMAGE_LOCK_KEY = 'imageLockedToCard';
 

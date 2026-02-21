@@ -422,13 +422,8 @@ export const databaseEngineProviderPreviewSchema = z.object({
 
 export type DatabaseEngineProviderPreviewDto = z.infer<typeof databaseEngineProviderPreviewSchema>;
 
-export const databaseCollectionCopyResultSchema = z.object({
-  success: z.boolean(),
-  itemsCopied: z.number(),
-  errors: z.array(z.string()),
-});
-
-export type DatabaseCollectionCopyResultDto = z.infer<typeof databaseCollectionCopyResultSchema>;
+export type DatabaseCollectionCopyResultDto = DatabaseSyncCollectionResultDto;
+export type CollectionCopyResult = DatabaseCollectionCopyResultDto;
 
 export const databaseEngineBackupRunNowResponseSchema = z.object({
   success: z.boolean(),

@@ -176,7 +176,7 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
       color: formData.color.trim() || '#10b981',
       createdAt: now,
       updatedAt: now,
-    } as any;
+    };
     await persistCategories([...categories, nextCategory], 'Category created.');
     setShowModal(false);
   }, [categories, editableCategory, formData.color, formData.description, formData.name, formData.parentId, persistCategories, toast]);

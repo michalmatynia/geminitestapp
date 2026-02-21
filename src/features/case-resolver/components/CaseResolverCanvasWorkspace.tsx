@@ -50,7 +50,10 @@ import {
 } from '@/shared/ui';
 
 import { compileCaseResolverPrompt } from '../composer';
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import {
+  CaseResolverPageContextValue,
+  useCaseResolverPageContext,
+} from '../context/CaseResolverPageContext';
 import {
   parseCaseResolverTreeDropPayload,
 } from '../drag';
@@ -95,7 +98,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     onUploadAssets,
     onGraphChange,
     onEditFile,
-  } = useCaseResolverPageContext();
+  }: CaseResolverPageContextValue = useCaseResolverPageContext();
   const graph = activeFile!.graph;
   const defaultDropFolder = activeFile!.folder;
   const availableFiles = useMemo(

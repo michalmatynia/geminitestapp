@@ -22,6 +22,9 @@ import type {
 
 import { createCaseResolverFile } from '../settings';
 import {
+  type PromptExploderTransferUiStatus,
+} from './prompt-exploder-transfer-lifecycle';
+import {
   buildCaseResolverFileComparableFingerprint,
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
 } from './useCaseResolverState.helpers';
@@ -88,7 +91,7 @@ export type CaseResolverPromptExploderApplyTargetResolutionStrategy =
   | 'requested_id'
   | 'unresolved';
 
-export type CaseResolverPromptExploderApplyDiagnostics = {
+export interface CaseResolverPromptExploderApplyDiagnostics {
   applyAttemptId: string;
   transferId: string | null;
   payloadVersion: number | null;
@@ -113,7 +116,13 @@ export type CaseResolverPromptExploderApplyDiagnostics = {
   proposalBuilt: boolean;
   proposalReason: CaseResolverPromptExploderApplyProposalReason;
   mutationMissingAfterPrecheck: boolean;
-};
+}
+
+export interface CaseResolverPromptExploderApplyUiDiagnostics extends CaseResolverPromptExploderApplyDiagnostics {
+  status: PromptExploderTransferUiStatus;
+  reason: string | null;
+  updatedAt: string;
+}
 
 export type CaseResolverPromptExploderApplyResult =
   | {

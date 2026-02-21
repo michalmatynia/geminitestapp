@@ -554,9 +554,15 @@ export function useAiPathsSettingsState({
   });
 
   const paletteWithTriggerButtons = useMemo<NodeDefinition[]>(() => {
-    const buttons = (triggerButtonsQuery.data ?? []).filter(
-      (button: AiTriggerButtonRecord): boolean => button.isActive !== false
-    );
+    const buttons = (triggerButtonsQuery.data ?? [])
+      .filter((button: AiTriggerButtonRecord): boolean => button.enabled !== false)
+      .reduce((acc: AiTriggerButtonRecord[], button: AiTriggerButtonRecord) => {
+        if (!button.id || acc.some((item: AiTriggerButtonRecord) => item.id === button.id)) {
+          return acc;
+        }
+        acc.push(button);
+        return acc;
+      }, []);
     if (buttons.length === 0) return palette;
 
     const usedTitles = new Set<string>(
@@ -564,8 +570,9 @@ export function useAiPathsSettingsState({
     );
     const derived: NodeDefinition[] = [];
     buttons.forEach((button: AiTriggerButtonRecord) => {
-      const displayLabel = typeof button.display === 'object' ? button.display.label : '';
-      const baseTitle = `Trigger: ${displayLabel || button.id}`;
+      const buttonName = button.name.trim();
+      if (!buttonName) return;
+      const baseTitle = `Trigger: ${buttonName}`;
       const title = usedTitles.has(baseTitle)
         ? `${baseTitle} (${button.id.slice(0, 6)})`
         : baseTitle;
@@ -573,7 +580,7 @@ export function useAiPathsSettingsState({
       derived.push({
         type: 'trigger',
         title,
-        description: `User trigger button (${button.id}).`,
+        description: `User trigger button: ${buttonName} (${button.id}).`,
         inputs: TRIGGER_INPUT_PORTS,
         outputs: TRIGGER_OUTPUT_PORTS,
         config: { trigger: { event: button.id } },

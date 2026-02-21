@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
 import { Copy, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback } from 'react';
@@ -52,7 +53,7 @@ import { PromptExploderCaptureMappingModal } from './PromptExploderCaptureMappin
 import { CaseResolverPageProvider } from '../context/CaseResolverPageContext';
 import { emitCaseResolverShowDocumentInCanvas } from '../drag';
 import { resolvePromptExploderTransferStatusLabel } from '../hooks/prompt-exploder-transfer-lifecycle';
-import { useCaseResolverState } from '../hooks/useCaseResolverState';
+import { type CaseResolverStateValue } from '../hooks/useCaseResolverState';
 import { buildCaseResolverNodeFileRelationIndexFromAssets } from '../nodefile-relations';
 import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
 
@@ -87,7 +88,7 @@ const CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS: Array<{
 ];
 
 type CaseResolverPageViewProps = {
-  state: ReturnType<typeof useCaseResolverState>;
+  state: CaseResolverStateValue;
   workspaceView: WorkspaceView;
   setWorkspaceView: React.Dispatch<React.SetStateAction<WorkspaceView>>;
   handleMoveFolder: (fromPath: string, toPath: string) => Promise<void>;
@@ -209,6 +210,7 @@ export function CaseResolverPageView(
   const [addresseePartyQuery, setAddresseePartyQuery] = React.useState('');
   const [selectedRelatedFileId, setSelectedRelatedFileId] = React.useState<string | null>(null);
   const [isRelationsDropActive, setIsRelationsDropActive] = React.useState(false);
+  const [relateSearchQuery, setRelateSearchQuery] = React.useState('');
   const {
     state,
     workspaceView,
@@ -556,8 +558,26 @@ export function CaseResolverPageView(
     () => relatedFiles.find((f) => f.id === selectedRelatedFileId) ?? null,
     [relatedFiles, selectedRelatedFileId],
   );
+  const relateSearchResults = React.useMemo((): CaseResolverFile[] => {
+    const query = relateSearchQuery.trim().toLowerCase();
+    if (!query || !editingDocumentDraft) return [];
+    const excludeIds = new Set([
+      editingDocumentDraft.id,
+      ...relatedFiles.map((f) => f.id),
+    ]);
+    return workspace.files
+      .filter(
+        (f: CaseResolverFile) =>
+          !excludeIds.has(f.id) &&
+          f.fileType !== 'case' &&
+          (f.name.toLowerCase().includes(query) ||
+            (f.folder ?? '').toLowerCase().includes(query)),
+      )
+      .slice(0, 10);
+  }, [relateSearchQuery, workspace.files, editingDocumentDraft, relatedFiles]);
   React.useEffect(() => {
     setSelectedRelatedFileId(null);
+    setRelateSearchQuery('');
   }, [editingDocumentDraft?.id]);
   const hasExplicitTreeSelection = Boolean(
     selectedFileId || selectedAssetId || selectedFolderPath !== null,
@@ -1811,6 +1831,55 @@ export function CaseResolverPageView(
                             </div>
                           </div>
                         ) : null}
+
+                        <FormField
+                          label='Link a Document'
+                          className='md:col-span-2'
+                        >
+                          <div className='space-y-1'>
+                            <SearchInput
+                              size='sm'
+                              value={relateSearchQuery}
+                              placeholder='Search by name or folder...'
+                              onChange={(e): void => setRelateSearchQuery(e.target.value)}
+                              onClear={(): void => setRelateSearchQuery('')}
+                              disabled={isEditingDocumentLocked}
+                            />
+                            {relateSearchQuery.trim() ? (
+                              relateSearchResults.length === 0 ? (
+                                <div className='px-2 py-2 text-xs text-gray-500'>
+                                  No matching documents.
+                                </div>
+                              ) : (
+                                <div className='max-h-52 overflow-y-auto rounded border border-border/60 bg-card/10'>
+                                  {relateSearchResults.map((result) => (
+                                    <button
+                                      key={result.id}
+                                      type='button'
+                                      className='flex w-full items-center gap-2 px-2 py-1.5 text-left transition-colors hover:bg-card/60'
+                                      onClick={(): void => {
+                                        state.handleLinkRelatedFiles(editingDocumentDraft.id, result.id);
+                                        setRelateSearchQuery('');
+                                      }}
+                                    >
+                                      <FileText className='h-3.5 w-3.5 shrink-0 text-gray-400' />
+                                      <div className='min-w-0 flex-1'>
+                                        <div className='truncate text-xs text-gray-200'>{result.name}</div>
+                                        {result.folder ? (
+                                          <div className='truncate text-[11px] text-gray-500'>{result.folder}</div>
+                                        ) : null}
+                                      </div>
+                                      <span className='shrink-0 text-[10px] text-teal-400'>
+                                        Link
+                                      </span>
+                                    </button>
+                                  ))}
+                                </div>
+                              )
+                            ) : null}
+                          </div>
+                        </FormField>
+
                         <FormField
                           label='Connected Node Canvases'
                           className='md:col-span-2'

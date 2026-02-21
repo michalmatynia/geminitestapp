@@ -57,8 +57,8 @@ const normalizeImageBase64s = (
 
 const buildImageSlotsFromProduct = (
   product?: ProductWithImages,
-): (ProductImageSlot | null)[] => {
-  const slots: (ProductImageSlot | null)[] = buildEmptySlots(TOTAL_IMAGE_SLOTS);
+): ProductImageSlot[] => {
+  const slots: ProductImageSlot[] = buildEmptySlots(TOTAL_IMAGE_SLOTS);
   if (!product?.images?.length) return slots;
   product.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg: ProductImageRecord, index: number) => {
     if (pImg.imageFile) {
@@ -69,7 +69,7 @@ const buildImageSlotsFromProduct = (
 };
 
 export interface ProductImagesHookResult {
-  imageSlots: (ProductImageSlot | null)[];
+  imageSlots: ProductImageSlot[];
   imageLinks: string[];
   imageBase64s: string[];
   showFileManager: boolean;
@@ -91,7 +91,7 @@ export function useProductImages(
   initialImageLinks?: string[] | null,
 ): ProductImagesHookResult {
   const queryClient = useQueryClient();
-  const [imageSlots, setImageSlots] = useState<(ProductImageSlot | null)[]>(
+  const [imageSlots, setImageSlots] = useState<ProductImageSlot[]>(
     () => buildImageSlotsFromProduct(product),
   );
   const [imageLinks, setImageLinks] = useState<string[]>(() =>
@@ -148,7 +148,7 @@ export function useProductImages(
 
   const handleSlotImageChange = useCallback(
     (file: File | null, index: number): void => {
-      setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
+      setImageSlots((prevSlots: ProductImageSlot[]) => {
         const newSlots = [...prevSlots];
         if (file) {
           // Revoke existing object URL if replacing an image
@@ -173,7 +173,7 @@ export function useProductImages(
 
   const handleSlotFileSelect = useCallback(
     (file: ImageFileSelection | null, index: number): void => {
-      setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
+      setImageSlots((prevSlots: ProductImageSlot[]) => {
         const newSlots = [...prevSlots];
         if (file) {
           // Revoke object URL if replacing a file upload with an existing file
@@ -202,7 +202,7 @@ export function useProductImages(
       const slotToClear = imageSlots[index];
       if (!slotToClear) return;
 
-      setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
+      setImageSlots((prevSlots: ProductImageSlot[]) => {
         const newSlots = [...prevSlots];
         newSlots[index] = null;
         return newSlots;
@@ -243,7 +243,7 @@ export function useProductImages(
   }, []);
 
   const handleMultiImageChange = useCallback((files: File[]): void => {
-    setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
+    setImageSlots((prevSlots: ProductImageSlot[]) => {
       const newSlots = [...prevSlots];
       let fileIndex = 0;
       for (let i = 0; i < TOTAL_IMAGE_SLOTS && fileIndex < files.length; i++) {
@@ -260,7 +260,7 @@ export function useProductImages(
   }, []);
 
   const handleMultiFileSelect = useCallback((files: ImageFileSelection[]): void => {
-    setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
+    setImageSlots((prevSlots: ProductImageSlot[]) => {
       const newSlots = [...prevSlots];
       let fileIndex = 0;
       for (let i = 0; i < TOTAL_IMAGE_SLOTS && fileIndex < files.length; i++) {
@@ -282,7 +282,7 @@ export function useProductImages(
     if (fromIndex < 0 || fromIndex >= TOTAL_IMAGE_SLOTS) return;
     if (toIndex < 0 || toIndex >= TOTAL_IMAGE_SLOTS) return;
 
-    setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
+    setImageSlots((prevSlots: ProductImageSlot[]) => {
       return swapSlots(prevSlots, fromIndex, toIndex);
     });
 
@@ -304,10 +304,10 @@ export function useProductImages(
   }, []);
 
   const applyRefresh = useCallback((savedProduct: ProductWithImages): void => {
-    setImageSlots((prevSlots: (ProductImageSlot | null)[]) => {
+    setImageSlots((prevSlots: ProductImageSlot[]) => {
       // Instead of replacing all slots, update only what changed
       // This prevents flickering by keeping existing references when possible
-      const newSlots: (ProductImageSlot | null)[] = [...prevSlots];
+      const newSlots: ProductImageSlot[] = [...prevSlots];
 
       // Update slots with saved images
       savedProduct.images.slice(0, TOTAL_IMAGE_SLOTS).forEach((pImg: ProductImageRecord, index: number) => {

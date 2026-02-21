@@ -1,8 +1,18 @@
 import { DefaultSession } from 'next-auth';
 
 declare module 'pdf-parse' {
-  function PDFParse(dataBuffer: Buffer | Uint8Array, options?: any): Promise<any>;
-  export = PDFParse;
+  export interface PdfParseResult {
+    text: string;
+    numpages?: number;
+    info?: unknown;
+    metadata?: unknown;
+    version?: string;
+  }
+
+  export default function pdfParse(
+    data: Buffer | Uint8Array | ArrayBuffer,
+    options?: unknown
+  ): Promise<PdfParseResult>;
 }
 
 declare module 'next-auth' {
@@ -37,18 +47,4 @@ declare module 'next-auth/jwt' {
     accountDisabled?: boolean;
     accountBanned?: boolean;
   }
-}
-
-declare module 'pdf-parse' {
-  export interface PdfParseResult {
-    text: string;
-    numpages?: number;
-    info?: unknown;
-    metadata?: unknown;
-    version?: string;
-  }
-
-  export default function pdfParse(
-    data: Buffer | Uint8Array | ArrayBuffer
-  ): Promise<PdfParseResult>;
 }

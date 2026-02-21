@@ -76,6 +76,19 @@ describe('trigger button validation', () => {
     expect(parsed[0]?.iconId).toBe('sparkles');
   });
 
+  it('uses legacy label when name is missing', () => {
+    const parsed = parseAiTriggerButtonsRaw(
+      JSON.stringify([
+        {
+          id: 'btn-legacy-label',
+          label: 'Legacy Label',
+        },
+      ])
+    );
+
+    expect(parsed[0]?.name).toBe('Legacy Label');
+  });
+
   it('normalizes legacy display=label into icon_label', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
@@ -88,6 +101,19 @@ describe('trigger button validation', () => {
     );
 
     expect(parsed[0]?.display).toBe('icon_label');
+  });
+
+  it('uses display.label when name is missing', () => {
+    const parsed = parseAiTriggerButtonsRaw(
+      JSON.stringify([
+        {
+          id: 'btn-display-label',
+          display: { label: 'Display Label' },
+        },
+      ])
+    );
+
+    expect(parsed[0]?.name).toBe('Display Label');
   });
 
   it('parses string enabled values without dropping the record', () => {

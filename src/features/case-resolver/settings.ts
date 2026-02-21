@@ -1137,7 +1137,7 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
             ? legacyNodes[0].id.trim()
             : ''
         );
-      const legacyEdges = (Array.isArray(record['connectedEdges']) ? record['connectedEdges'] : []);
+      const legacyEdges = (Array.isArray(record['connectedEdges']) ? record['connectedEdges'] : []) as CaseResolverNodeFileSnapshot['edges'];
       const sourceFileId = sanitizeOptionalId(record['sourceFileId']);
       const sourceFileName =
         typeof record['sourceFileName'] === 'string' && record['sourceFileName'].trim().length > 0

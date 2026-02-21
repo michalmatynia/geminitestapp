@@ -68,6 +68,14 @@ describe('prompt exploder prompt library', () => {
       bindings: [],
       warnings: [],
       reassembledPrompt: 'old prompt',
+      subsections: [],
+      variables: [],
+      dependencies: [],
+      rules: [],
+      tags: [],
+      errors: [],
+      diagnostics: [],
+      sections: [],
     };
     const item = buildPromptExploderLibraryItem({
       prompt: 'new prompt',

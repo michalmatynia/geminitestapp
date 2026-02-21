@@ -572,8 +572,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     () =>
       caseResolverTags.map((tag: CaseResolverTag) => ({
         value: tag.id,
-        label: tag.name,
+        label: tag.label,
       })),
+    
     [caseResolverTags],
   );
   const caseResolverCategoryOptions = useMemo<
@@ -943,7 +944,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     [caseResolverCategories],
   );
   const caseTagPathById = useMemo(
-    () => buildPathLabelMap(caseResolverTags.map(t => ({ ...t, name: t.name || t.label || t.id, parentId: t.parentId ?? null }))),
+    () => buildPathLabelMap(caseResolverTags.map(t => ({ ...t, name: t.label || t.id, parentId: t.parentId ?? null }))),
     [caseResolverTags],
   );
   const caseIdentifierPathById = useMemo(
@@ -951,14 +952,14 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     [caseResolverIdentifiers],
   );
   const caseCategoryPathById = useMemo(
-    () => buildPathLabelMap(caseResolverCategories.map(c => ({ ...c, name: c.name || c.id, parentId: (c as any).parentId ?? null }))),
+    () => buildPathLabelMap(caseResolverCategories.map(c => ({ ...c, name: c.name || c.id, parentId: c.parentId ?? null }))),
     [caseResolverCategories],
   );
   const caseTagFilterOptions = useMemo(
     () =>
       caseResolverTags.map((tag: CaseResolverTag) => ({
         value: tag.id,
-        label: caseTagPathById.get(tag.id) || tag.name || tag.label || tag.id,
+        label: caseTagPathById.get(tag.id) || tag.label || tag.id,
       })),
     [caseResolverTags, caseTagPathById],
   );
@@ -1526,8 +1527,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         parentId: null,
         createdAt: now,
         updatedAt: now,
-      } as any;
-
+      };
       try {
         await updateSetting.mutateAsync({
           key: CASE_RESOLVER_IDENTIFIERS_KEY,
@@ -1581,8 +1581,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
             options={caseReferenceOptions}
             selected={caseDraft.referenceCaseIds || []}
             onChange={(ids: string[]) =>
-              setCaseDraft((prev: any) => ({ ...prev, referenceCaseIds: ids }))
+              setCaseDraft((prev: Partial<CaseResolverFile>) => ({ ...prev, referenceCaseIds: ids }))
             }
+            
             placeholder='Link to other cases...'
             searchPlaceholder='Search cases...'
             emptyMessage='No other cases found.'
@@ -2771,8 +2772,9 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         size='lg'
         fields={createFields}
         values={caseDraft}
-        onChange={(vals) => setCaseDraft((prev: any) => ({ ...prev, ...vals }))}
+        onChange={(vals) => setCaseDraft((prev: Partial<CaseResolverFile>) => ({ ...prev, ...vals }))}
         onSave={handleCreateCase}
+        
         isSaving={updateSetting.isPending || isCreatingCase}
       />
 

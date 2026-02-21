@@ -1670,12 +1670,12 @@ export type AiPathRunRepository = {
 /**
  * Legacy aliases / Runtime Types
  */
-export type RuntimeState = any;
+export type RuntimeState = unknown;
 export type RuntimePortValues = Record<string, unknown>;
-export type RuntimeEventInputDto = any;
-export type RunStatusDto = any;
-export type SetNodeStatusInputDto = any;
-export type PathExecutionMode = any;
-export type PathRunMode = any;
-export type QueuedRunDto = any;
+export type RuntimeEventInputDto = unknown;
+export type RunStatusDto = unknown;
+export type SetNodeStatusInputDto = unknown;
+export type PathExecutionMode = unknown;
+export type PathRunMode = unknown;
+export type QueuedRunDto = unknown;
 

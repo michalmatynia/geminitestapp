@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { ErrorSystem } from '@/features/observability/server';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
-import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
+import { apiHandlerWithParams, type ApiHandlerContext } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
@@ -34,6 +34,6 @@ async function GET_handler(_req: NextRequest,
 }
 
 export const GET = apiHandlerWithParams<{ snapshotId: string }>(
-  async (_req: any, _ctx: any, params: any) => GET_handler(_req, { params: Promise.resolve(params) }),
+  async (_req: NextRequest, _ctx: ApiHandlerContext, params: { snapshotId: string }) => GET_handler(_req, { params: Promise.resolve(params) }),
   { source: 'chatbot.agent.snapshots.[snapshotId].GET' }
 );

@@ -117,11 +117,13 @@ export const caseResolverTagSchema = z.object({
   parentId: z.string().nullable().optional(),
 });
 
-export interface CaseResolverTagDto {
+export interface CaseResolverTagDto extends DtoBase {
   id: string;
   label: string;
   color?: string | undefined;
   parentId?: string | null | undefined;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type CaseResolverTag = CaseResolverTagDto;
@@ -135,13 +137,16 @@ export const caseResolverIdentifierSchema = z.object({
   parentId: z.string().nullable().optional(),
 });
 
-export interface CaseResolverIdentifierDto {
+export interface CaseResolverIdentifierDto extends DtoBase {
   id: string;
   type: string;
   value: string;
   name?: string | undefined;
   label?: string | undefined;
   parentId?: string | null | undefined;
+  color?: string | undefined;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export type CaseResolverIdentifier = CaseResolverIdentifierDto;
@@ -158,7 +163,17 @@ export const caseResolverCategorySchema = z.object({
   icon: z.string().optional(),
 });
 
-export type CaseResolverCategoryDto = z.infer<typeof caseResolverCategorySchema>;
+export interface CaseResolverCategoryDto extends DtoBase {
+  id: string;
+  parentId?: string | null | undefined;
+  name: string;
+  sortOrder: number;
+  description?: string | undefined;
+  color?: string | undefined;
+  icon?: string | undefined;
+  createdAt: string;
+  updatedAt: string;
+}
 export type CaseResolverCategory = CaseResolverCategoryDto;
 
 /**
@@ -562,6 +577,7 @@ export interface CaseResolverAssetFileDto extends DtoBase {
   url?: string | undefined;
   filepath?: string | null | undefined;
   sourceFileId?: string | null | undefined;
+  mimeType?: string | null | undefined;
   textContent?: string | undefined;
   description?: string | undefined;
   metadata?: Record<string, unknown> | undefined;
@@ -620,6 +636,7 @@ export const caseResolverWorkspaceSchema = namedDtoSchema.extend({
 });
 
 export interface CaseResolverWorkspaceDto extends NamedDto {
+  id: string;
   ownerId: string;
   isPublic: boolean;
   version: number;

@@ -6,7 +6,7 @@ import { dtoBaseSchema, namedDtoSchema } from './base';
  * Notebook Contract
  */
 export const notebookSchema = namedDtoSchema.extend({
-  description: z.string().nullable(),
+  description: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
   defaultThemeId: z.string().nullable().optional(),
 });
@@ -31,7 +31,7 @@ export type NotebookUpdateInput = UpdateNotebookDto;
  * Note Theme Contract
  */
 export const noteThemeSchema = namedDtoSchema.extend({
-  description: z.string().nullable(),
+  description: z.string().nullable().optional(),
   isDefault: z.boolean(),
   notebookId: z.string().nullable().optional(),
   textColor: z.string().default('#e5e7eb'),
@@ -56,7 +56,7 @@ export const createNoteThemeSchema = noteThemeSchema.omit({
   updatedAt: true,
 });
 
-export type CreateNoteThemeDto = z.infer<typeof createNoteThemeSchema>;
+export type CreateNoteThemeDto = z.input<typeof createNoteThemeSchema>;
 export type ThemeCreateInput = CreateNoteThemeDto;
 
 export const updateNoteThemeSchema = createNoteThemeSchema.partial();
@@ -92,11 +92,15 @@ export const updateNoteCategorySchema = createNoteCategorySchema.partial();
 export type UpdateNoteCategoryDto = z.infer<typeof updateNoteCategorySchema>;
 export type CategoryUpdateInput = UpdateNoteCategoryDto;
 
-export const noteCategoryRecordWithChildrenSchema: z.ZodType<any> = noteCategorySchema.extend({
+export type NoteCategoryRecordWithChildrenDto = NoteCategoryDto & {
+  children: NoteCategoryRecordWithChildrenDto[];
+  notes?: NoteRecord[] | undefined;
+  _count?: { notes: number };
+};
+
+export const noteCategoryRecordWithChildrenSchema: z.ZodType<NoteCategoryRecordWithChildrenDto> = noteCategorySchema.extend({
   children: z.array(z.lazy(() => noteCategoryRecordWithChildrenSchema)),
 });
-
-export type NoteCategoryRecordWithChildrenDto = z.infer<typeof noteCategoryRecordWithChildrenSchema>;
 
 /**
  * Note Tag Contract
@@ -124,6 +128,45 @@ export type UpdateNoteTagDto = z.infer<typeof updateNoteTagSchema>;
 export type TagUpdateInput = UpdateNoteTagDto;
 
 /**
+ * Note File Contract
+ */
+export const noteFileSchema = dtoBaseSchema.extend({
+  noteId: z.string(),
+  fileId: z.string(),
+  slotIndex: z.number(),
+  filename: z.string(),
+  filepath: z.string(),
+  mimetype: z.string(),
+  size: z.number(),
+  publicUrl: z.string().optional(),
+});
+
+export type NoteFileDto = z.infer<typeof noteFileSchema>;
+export type NoteFileRecord = NoteFileDto;
+
+export const createNoteFileSchema = noteFileSchema.omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export type CreateNoteFileDto = z.infer<typeof createNoteFileSchema>;
+export type NoteFileCreateInput = CreateNoteFileDto;
+
+export type NoteRelationWithTarget = NoteRelationRecord & {
+  targetNote?: RelatedNote | undefined;
+};
+
+export type NoteRelationWithSource = NoteRelationRecord & {
+  sourceNote?: RelatedNote | undefined;
+};
+
+export type CategoryWithChildren = NoteCategoryRecordWithChildrenDto & {
+  notes?: NoteRecord[] | undefined;
+  _count?: { notes: number };
+};
+
+/**
  * Note Contract
  */
 export const noteEditorTypeSchema = z.enum(['markdown', 'rich-text', 'plain-text', 'code', 'wysiwyg']);
@@ -144,12 +187,12 @@ export const noteSchema = dtoBaseSchema.extend({
   isArchived: z.boolean().optional(),
   isPublic: z.boolean().optional(),
   shareLink: z.string().nullable().optional(),
-  tags: z.array(z.string()).default([]),
-  tagIds: z.array(z.string()).default([]),
-  categories: z.array(z.string()).default([]),
-  categoryIds: z.array(z.string()).default([]),
-  relatedNoteIds: z.array(z.string()).default([]),
-  relations: z.array(z.any()).default([]),
+  tags: z.array(z.string()).optional().default([]),
+  tagIds: z.array(z.string()).optional().default([]),
+  categories: z.array(z.string()).optional().default([]),
+  categoryIds: z.array(z.string()).optional().default([]),
+  relatedNoteIds: z.array(z.string()).optional().default([]),
+  relations: z.array(z.any()).optional().default([]),
   relationsFrom: z.array(z.any()).optional(),
   relationsTo: z.array(z.any()).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
@@ -164,7 +207,7 @@ export const createNoteSchema = noteSchema.omit({
   updatedAt: true,
 });
 
-export type CreateNoteDto = z.infer<typeof createNoteSchema>;
+export type CreateNoteDto = z.input<typeof createNoteSchema>;
 export type NoteCreateInput = CreateNoteDto;
 
 export const updateNoteSchema = createNoteSchema.partial();
@@ -217,15 +260,21 @@ export type RelatedNote = RelatedNoteDto;
 
 export const noteWithRelationsSchema = noteSchema.extend({
   tags: z.array(z.object({
+    noteId: z.string().optional(),
     tagId: z.string(),
+    assignedAt: z.string().optional(),
     tag: noteTagSchema,
   })).optional(),
   category: z.object({
+    noteId: z.string().optional(),
     categoryId: z.string(),
+    assignedAt: z.string().optional(),
     category: noteCategorySchema,
   }).nullable().optional(),
   categories: z.array(z.object({
+    noteId: z.string().optional(),
     categoryId: z.string(),
+    assignedAt: z.string().optional(),
     category: noteCategorySchema,
   })).optional(),
   notebook: notebookSchema.nullable().optional(),
@@ -258,44 +307,6 @@ export const noteFiltersSchema = z.object({
 
 export type NoteFiltersDto = z.infer<typeof noteFiltersSchema>;
 export type NoteFilters = NoteFiltersDto;
-
-/**
- * Note File Contract
- */
-export const noteFileSchema = dtoBaseSchema.extend({
-  noteId: z.string(),
-  fileId: z.string(),
-  slotIndex: z.number(),
-  filename: z.string(),
-  filepath: z.string(),
-  mimetype: z.string(),
-  size: z.number(),
-  publicUrl: z.string().optional(),
-});
-
-export type NoteFileDto = z.infer<typeof noteFileSchema>;
-export type NoteFileRecord = NoteFileDto;
-
-export const createNoteFileSchema = noteFileSchema.omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-});
-
-export type CreateNoteFileDto = z.infer<typeof createNoteFileSchema>;
-export type NoteFileCreateInput = CreateNoteFileDto;
-
-export type NoteRelationWithTarget = NoteRelationRecord & {
-  targetNote?: RelatedNote | undefined;
-};
-
-export type NoteRelationWithSource = NoteRelationRecord & {
-  sourceNote?: RelatedNote | undefined;
-};
-
-export type CategoryWithChildren = NoteCategoryRecordWithChildrenDto & {
-  notes?: NoteRecord[] | undefined;
-};
 
 /**
  * Note Settings
@@ -346,11 +357,11 @@ export type UndoAction =
 
 export interface UseNoteOperationsProps {
   selectedNotebookId: string | null;
-  notesRef: any; // RefObject<NoteWithRelations[]>
-  folderTreeRef: any; // RefObject<CategoryWithChildren[]>
+  notesRef: unknown; // RefObject<NoteWithRelations[]>
+  folderTreeRef: unknown; // RefObject<CategoryWithChildren[]>
   fetchNotes: () => Promise<void>;
   fetchFolderTree: () => Promise<void>;
-  setUndoStack: any; // React.Dispatch<React.SetStateAction<UndoAction[]>>
+  setUndoStack: unknown; // React.Dispatch<React.SetStateAction<UndoAction[]>>
   toast: (
     message: string,
     options?: { variant?: 'success' | 'error' | 'info'; duration?: number },

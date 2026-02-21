@@ -2,9 +2,8 @@
 
 import React from 'react';
 
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { internalError } from '@/shared/errors/app-error';
-
-import type { Asset3DRecord } from '../../types';
 
 type Asset3DPreviewModalViewContextValue = {
   asset: Asset3DRecord;

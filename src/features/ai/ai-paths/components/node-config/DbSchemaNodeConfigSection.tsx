@@ -36,7 +36,7 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
       : Object.values(schema.collections ?? {});
     
     if (collections.length) {
-      return collections.map((collection) => stripUndefinedProvider(collection as CollectionSchema));
+      return collections.map((collection) => stripUndefinedProvider(collection));
     }
     const merged: CollectionSchema[] = [];
     (['mongodb', 'prisma'] as const).forEach((provider) => {
@@ -63,7 +63,7 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
     : Object.values(schema.collections ?? {});
 
   return baseCollections.map((collection) => ({
-    ...stripUndefinedProvider(collection as CollectionSchema),
+    ...stripUndefinedProvider(collection),
     provider,
   }));
 };

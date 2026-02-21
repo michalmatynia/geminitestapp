@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import type {
   MasterTreeViewNodeDto,
   MasterTreeValidationIssueCodeDto,
@@ -392,13 +393,13 @@ const resolveDropContext = (
   };
 };
 
-export const canDropMasterTreeNode = ({
+export function canDropMasterTreeNode({
   nodes,
   nodeId,
   targetId,
   position = 'inside',
   profile,
-}: CanDropMasterTreeNodeInput): MasterTreeCanDropResult => {
+}: CanDropMasterTreeNodeInput): MasterTreeCanDropResult {
   const normalized = normalizeMasterTreeNodes(nodes);
   const nodeMap = createNodeMap(normalized);
   const draggedNode = nodeMap.get(nodeId);
@@ -469,7 +470,7 @@ export const canDropMasterTreeNode = ({
     ok: true,
     resolvedParentId,
   };
-};
+}
 
 const clampIndex = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -484,13 +485,13 @@ const getSortedSiblingIds = (
     .sort(compareMasterTreeNodes)
     .map((node: MasterTreeNode) => node.id);
 
-export const moveMasterTreeNode = ({
+export function moveMasterTreeNode({
   nodes,
   nodeId,
   targetParentId,
   targetIndex,
   profile,
-}: MoveMasterTreeNodeInput): MasterTreeMutationResult => {
+}: MoveMasterTreeNodeInput): MasterTreeMutationResult {
   const normalized = normalizeMasterTreeNodes(nodes);
   const nodeMap = createNodeMap(normalized);
   const draggedNode = nodeMap.get(nodeId);
@@ -557,15 +558,15 @@ export const moveMasterTreeNode = ({
     ok: true,
     nodes: normalizeMasterTreeNodes(next),
   };
-};
+}
 
-export const reorderMasterTreeNode = ({
+export function reorderMasterTreeNode({
   nodes,
   nodeId,
   targetId,
   position,
   profile,
-}: ReorderMasterTreeNodeInput): MasterTreeMutationResult => {
+}: ReorderMasterTreeNodeInput): MasterTreeMutationResult {
   const normalized = normalizeMasterTreeNodes(nodes);
   const nodeMap = createNodeMap(normalized);
   if (!nodeMap.has(nodeId)) {
@@ -611,7 +612,7 @@ export const reorderMasterTreeNode = ({
     targetIndex: nextIndex,
     profile,
   });
-};
+}
 
 export const dropMasterTreeNodeToRoot = ({
   nodes,

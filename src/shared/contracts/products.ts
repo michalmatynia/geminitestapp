@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import { localizedSchema, dtoBaseSchema, namedDtoSchema } from './base';
 import { imageFileRecordSchema } from './files';
+import { ManagedImageSlot } from './image-slots';
 import { commonListQuerySchema } from '../validations/api-schemas';
 
 /**
@@ -528,13 +529,14 @@ export const productCreateInputSchema = z.object({
 });
 
 export type ProductCreateInputDto = z.infer<typeof productCreateInputSchema>;
+export type CreateProductInput = ProductCreateInputDto;
 
 export const productUpdateInputSchema = productCreateInputSchema.partial().extend({
   sku: z.string().optional(),
 });
 
 export type ProductUpdateInputDto = z.infer<typeof productUpdateInputSchema>;
-export type ProductUpdateInput = ProductUpdateInputDto;
+export type UpdateProductInput = ProductUpdateInputDto;
 
 export const createProductSchema = productSchema.omit({
   id: true,
@@ -1281,7 +1283,7 @@ export type TransactionalProductRepository = {
 export type ProductRepository = TransactionalProductRepository & {
   getProductsWithCount(filters: ProductFilters): Promise<{ products: ProductWithImages[]; total: number }>;
   createProductInTransaction: <T>(
-    callback: (tx: TransactionalProductRepository & any) => Promise<T>
+    callback: (tx: TransactionalProductRepository & unknown) => Promise<T>
   ) => Promise<T>;
 };
 
@@ -1339,3 +1341,5 @@ export type DebugInfo = {
 export type ProductFormData = ProductCreateInputDto;
 
 export type ProductListPreferences = ProductListPreferencesDto;
+
+export type ProductImageSlot = ManagedImageSlot;

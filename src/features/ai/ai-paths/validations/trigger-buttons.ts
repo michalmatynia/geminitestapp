@@ -43,6 +43,12 @@ const coerceOptionalBoolean = (value: unknown): boolean | undefined => {
 };
 
 const normalizeDisplayForRead = (value: unknown): 'icon' | 'icon_label' | undefined => {
+  if (value && typeof value === 'object' && !Array.isArray(value)) {
+    const showLabel = coerceOptionalBoolean(
+      (value as Record<string, unknown>)['showLabel']
+    );
+    return showLabel === false ? 'icon' : 'icon_label';
+  }
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim().toLowerCase();
   if (normalized === 'icon') return 'icon';
@@ -53,15 +59,12 @@ const normalizeDisplayForRead = (value: unknown): 'icon' | 'icon_label' | undefi
 const normalizeModeForRead = (value: unknown): 'click' | 'toggle' | 'execute_path' | 'open_chat' | 'open_url' | 'copy_text' | undefined => {
   if (typeof value !== 'string') return undefined;
   const normalized = value.trim().toLowerCase();
-  if (
-    normalized === 'click' ||
-    normalized === 'toggle' ||
-    normalized === 'execute_path' ||
-    normalized === 'open_chat' ||
-    normalized === 'open_url' ||
-    normalized === 'copy_text'
-  )
-    return normalized as any;
+  if (normalized === 'click') return 'click';
+  if (normalized === 'toggle') return 'toggle';
+  if (normalized === 'execute_path') return 'execute_path';
+  if (normalized === 'open_chat') return 'open_chat';
+  if (normalized === 'open_url') return 'open_url';
+  if (normalized === 'copy_text') return 'copy_text';
   return undefined;
 };
 
@@ -193,7 +196,26 @@ export const parseAiTriggerButtonsRaw = (raw: string | null): AiTriggerButtonRec
 
     const normalized: AiTriggerButtonRecord[] = [];
     parsed.forEach((value: unknown) => {
-      const validated = aiTriggerButtonRecordSchema.safeParse(value);
+      if (!value || typeof value !== 'object') return;
+      const candidate = { ...(value as Record<string, unknown>) };
+      const rawName =
+        typeof candidate['name'] === 'string' ? candidate['name'].trim() : '';
+      if (!rawName) {
+        const legacyLabel =
+          typeof candidate['label'] === 'string' ? candidate['label'].trim() : '';
+        const displayLabel =
+          candidate['display'] &&
+          typeof candidate['display'] === 'object' &&
+          typeof (candidate['display'] as Record<string, unknown>)['label'] === 'string'
+            ? ((candidate['display'] as Record<string, unknown>)['label'] as string).trim()
+            : '';
+        const fallbackName = legacyLabel || displayLabel;
+        if (fallbackName) {
+          candidate['name'] = fallbackName;
+        }
+      }
+
+      const validated = aiTriggerButtonRecordSchema.safeParse(candidate);
       if (!validated.success) return;
       normalized.push(normalizeAiTriggerButtonRecord(validated.data));
     });

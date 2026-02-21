@@ -155,7 +155,7 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
   const openEditModal = (tag: CaseResolverTag): void => {
     setEditingTag(tag);
     setFormData({
-      name: tag.name,
+      name: tag.label,
       color: tag.color,
       parentId: tag.parentId,
     });
@@ -175,14 +175,14 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
     const nextTag: CaseResolverTag = editingTag
       ? {
         ...editingTag,
-        name: normalizedName,
+        label: normalizedName,
         parentId: normalizedParentId,
         color: formData.color.trim() || '#38bdf8',
         updatedAt: now,
       }
       : {
         id: createTagId(),
-        name: normalizedName,
+        label: normalizedName,
         parentId: normalizedParentId,
         color: formData.color.trim() || '#38bdf8',
         createdAt: now,
@@ -290,13 +290,14 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
                 >
                   <div className='min-w-0'>
                     <UiTag
-                      label={tag.name}
+                      label={tag.label}
                       color={tag.color || '#38bdf8'}
                       dot
                     />
-                    <PropertyRow label='Path' value={tagPathById.get(tag.id) ?? tag.name} className='mt-1' />
+                    <PropertyRow label='Path' value={tagPathById.get(tag.id) ?? tag.label} className='mt-1' />
                   </div>
-                  <ActionMenu ariaLabel={`Actions for tag ${tag.name}`}>
+                  <ActionMenu ariaLabel={`Actions for tag ${tag.label}`}>
+                  
                     <DropdownMenuItem onSelect={() => openEditModal(tag)}>
                       Edit
                     </DropdownMenuItem>

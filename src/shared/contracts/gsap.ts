@@ -334,7 +334,7 @@ export const VELOCITY_EFFECTS: { label: string; value: VelocityEffect }[] = [
   { label: 'Blur', value: 'blur' },
 ];
 
-export const PARALLAX_DEFAULTS: Record<string, any> = {
+export const PARALLAX_DEFAULTS: Record<string, unknown> = {
   scrub: 0.6,
   start: 'top 85%',
   end: 'bottom top',

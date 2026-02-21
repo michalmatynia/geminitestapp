@@ -79,8 +79,8 @@ export async function listTeachingAgents(): Promise<AgentTeachingAgentRecord[]> 
     .toArray();
   return docs.map((doc: AgentDoc) => ({
     id: doc._id,
-    agentId: (doc as any).agentId ?? '',
-    enabled: (doc as any).enabled ?? true,
+    agentId: doc.agentId ?? '',
+    enabled: doc.enabled ?? true,
     name: doc.name,
     description: doc.description ?? null,
     llmModel: doc.llmModel,

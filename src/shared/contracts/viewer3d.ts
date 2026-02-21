@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { dtoBaseSchema, namedDtoSchema } from './base';
+import { namedDtoSchema } from './base';
 
 /**
  * 3D Asset Contracts
@@ -117,6 +117,6 @@ export type Asset3DRepository = {
   updateAsset3D(id: string, data: Asset3DUpdateInput): Promise<Asset3DRecord | null>;
   deleteAsset(id: string): Promise<Asset3DRecord | null>;
   deleteAsset3D(id: string): Promise<Asset3DRecord | null>;
-  getCategories(): Promise<any[]>;
-  getTags(): Promise<any[]>;
+  getCategories(): Promise<unknown[]>;
+  getTags(): Promise<unknown[]>;
 };

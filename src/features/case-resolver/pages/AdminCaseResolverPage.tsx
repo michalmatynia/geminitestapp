@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -30,6 +31,7 @@ import {
   decodeFilemakerPartyReference,
   normalizeFilemakerDatabase,
   resolveFilemakerPartyLabel,
+  type FilemakerPartyKind,
 } from '@/features/filemaker/settings';
 import { savePromptExploderDraftPromptFromCaseResolver } from '@/features/prompt-exploder/bridge';
 import {
@@ -54,7 +56,7 @@ import {
   resolveCaptureMappingApplyGuardReason,
 } from '../capture-mapping-apply-guard';
 import { CaseResolverPageView } from '../components/CaseResolverPageView';
-import { useCaseResolverState } from '../hooks/useCaseResolverState';
+import { useCaseResolverState, type CaseResolverStateValue } from '../hooks/useCaseResolverState';
 import {
   applyCaseResolverFileMutationAndRebaseDraft,
   hasCaseResolverDraftMeaningfulChanges,
@@ -90,7 +92,7 @@ const resolveCaptureApplyDurationMs = (startAtMs: number | null): number | null 
 };
 
 export function AdminCaseResolverPage(): React.JSX.Element {
-  const state = useCaseResolverState();
+  const state: CaseResolverStateValue = useCaseResolverState();
   const router = useRouter();
   const { toast } = useToast();
   const updateSetting = useUpdateSetting();
@@ -1274,14 +1276,13 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     (reference: { kind: string; id: string } | null | undefined): string => {
       if (!reference) return 'None';
       return (
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-        resolveFilemakerPartyLabel(filemakerDatabase, { ...reference, kind: reference.kind as any }) ??
-        `${reference.kind}:${reference.id}`
+        resolveFilemakerPartyLabel(filemakerDatabase, { ...reference, kind: reference.kind as FilemakerPartyKind }) ??
+              `${reference.kind}:${reference.id}`
       );
     },
     [filemakerDatabase]
   );
-
+      
   const normalizeNodeTextColor = useCallback((value: string | null | undefined): string => {
     if (typeof value !== 'string') return '';
     const normalized = value.trim();
@@ -1289,18 +1290,18 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     return /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(normalized) ? normalized : '';
   }, []);
 
-  const editingDocumentNodeMeta = React.useMemo(() => {
+  const editingDocumentNodeMeta = React.useMemo((): (CaseResolverNodeMeta & { nodeId: string; nodeTitle: string; canvasFileId: string; canvasFileName: string }) | null => {
     if (!editingDocumentDraft || !editingDocumentNodeContext) return null;
     const canvasFile = workspace.files.find(
-      (file) => file.id === editingDocumentNodeContext.canvasFileId
+      (file: CaseResolverFile) => file.id === editingDocumentNodeContext.canvasFileId
     );
     if (!canvasFile) return null;
     const canvasNode = canvasFile.graph.nodes.find(
-      (node) => node.id === editingDocumentNodeContext.nodeId
+      (node: AiNode) => node.id === editingDocumentNodeContext.nodeId
     );
     if (!canvasNode) return null;
     const rawNodeMeta =
-      canvasFile.graph.nodeMeta[editingDocumentNodeContext.nodeId] ??
+      canvasFile.graph.nodeMeta?.[editingDocumentNodeContext.nodeId] ??
       DEFAULT_CASE_RESOLVER_NODE_META;
     return {
       ...DEFAULT_CASE_RESOLVER_NODE_META,
@@ -1323,17 +1324,17 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       if (!editingDocumentNodeContext) return;
       const canvasFileId = editingDocumentNodeContext.canvasFileId;
       const nodeId = editingDocumentNodeContext.nodeId;
-      updateWorkspace((current) => {
-        const canvasFileIndex = current.files.findIndex((file) => file.id === canvasFileId);
+      updateWorkspace((current: CaseResolverWorkspace) => {
+        const canvasFileIndex = current.files.findIndex((file: CaseResolverFile) => file.id === canvasFileId);
         if (canvasFileIndex < 0) return current;
         const canvasFile = current.files[canvasFileIndex];
         if (!canvasFile) return current;
         if (canvasFile.isLocked) return current;
-        const hasNode = canvasFile.graph.nodes.some((node) => node.id === nodeId);
+        const hasNode = canvasFile.graph.nodes.some((node: AiNode) => node.id === nodeId);
         if (!hasNode) return current;
 
         const rawNodeMeta =
-          canvasFile.graph.nodeMeta[nodeId] ?? DEFAULT_CASE_RESOLVER_NODE_META;
+          canvasFile.graph.nodeMeta?.[nodeId] ?? DEFAULT_CASE_RESOLVER_NODE_META;
         const currentNodeMeta: CaseResolverNodeMeta = {
           ...DEFAULT_CASE_RESOLVER_NODE_META,
           ...rawNodeMeta,

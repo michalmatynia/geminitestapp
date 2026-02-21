@@ -436,7 +436,7 @@ export type AgentSettingsPayload = AgentSettingsPayloadDto;
  * Legacy support / Additional types
  */
 export interface ChatSessionDocument {
-  _id: any; // mongodb.ObjectId
+  _id: unknown; // mongodb.ObjectId
   title: string | null;
   messages: ChatMessage[];
   createdAt: Date;
@@ -445,7 +445,7 @@ export interface ChatSessionDocument {
 }
 
 export interface ChatbotJobDocument {
-  _id: any; // mongodb.ObjectId
+  _id: unknown; // mongodb.ObjectId
   sessionId: string;
   status: string;
   model?: string | undefined;
@@ -458,14 +458,14 @@ export interface ChatbotJobDocument {
   finishedAt?: Date | undefined;
 }
 
-export type AgentPlanStepDto = any; // To avoid error if referenced
+export type AgentPlanStepDto = unknown; // To avoid error if referenced
 export type AgentPlanStep = AgentPlanStepDto;
 
-export type AgentPlanningMetaDto = any;
+export type AgentPlanningMetaDto = unknown;
 export type AgentPlanningMeta = AgentPlanningMetaDto;
 
-export type AgentSessionContextDto = any;
+export type AgentSessionContextDto = unknown;
 export type AgentSessionContext = AgentSessionContextDto;
 
-export type AgentLoginCandidatesDto = any;
+export type AgentLoginCandidatesDto = unknown;
 export type AgentLoginCandidates = AgentLoginCandidatesDto;

@@ -3,8 +3,26 @@ Cases
 Full document name
 interrelations between douccmenta
 
-Validator has to work on Auto
-Opis i tytuł doesn't seem to work
+Product Validator has to work on Auto
+Opis i tytuł doesn't seem to work, Trigger button list has two resorting mechanisms
+Paths need grouping
+
+
+Backups don't have created date
+
+Parameter inference has to use parameter template if there are no parameters in the product
+
+Relation link between documents not retained
+
+
+
+Trigger Buttons 
+
+I see the palette currently uses display.label or raw id for trigger node titles, which explains hash-like entries when labels are missing. I’m now checking the trigger-buttons API and query normalization to fix both missing buttons and bad labels at the source.
+
+Explored 12 files, 4 searches
+I’ve isolated the likely root cause: the palette titles are built from button.id instead of button.name (unless a now-unused display.label object exists), which produces hash-like entries and obscures real button names. I’m patching that mapping now and adding a legacy-name fallback parser so older records don’t get dropped.
+
 
 
 In Image Studio

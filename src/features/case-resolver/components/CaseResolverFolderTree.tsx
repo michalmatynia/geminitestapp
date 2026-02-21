@@ -715,11 +715,17 @@ export function CaseResolverFolderTree(): React.JSX.Element {
 
             return targetId !== null;
           }}
-          resolveDropPosition={(event, { targetId }, ctlr) => {
+          resolveDropPosition={(event, { draggedNodeId, targetId }, ctlr) => {
             const targetNode = ctlr.nodes.find(
               (candidate: MasterTreeNode): boolean => candidate.id === targetId,
             );
             if (targetNode?.type === 'folder') {
+              return 'inside';
+            }
+            // File-on-file: whole row is a link drop zone
+            const draggedFileId = fromCaseResolverFileNodeId(draggedNodeId);
+            const targetFileId = fromCaseResolverFileNodeId(targetId);
+            if (draggedFileId && targetFileId && draggedFileId !== targetFileId) {
               return 'inside';
             }
             const targetRect = event.currentTarget.getBoundingClientRect();
@@ -730,14 +736,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 thresholdRatio: 0.34,
               },
             );
-            if (edgePosition === 'before' || edgePosition === 'after') {
-              return edgePosition;
-            }
-            // Center zone on a file node → 'inside' triggers relation linking
-            if (targetId && fromCaseResolverFileNodeId(targetId) !== null) {
-              return 'inside';
-            }
-            return 'after';
+            return edgePosition ?? 'after';
           }}
           onNodeDragStart={({ node, event }): void => {
             const metadata = node.metadata;
@@ -896,19 +895,22 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               return DefaultFileIcon;
             })();
 
+            const isLinkDropTarget = isDropTarget && dropPosition === 'inside' && fileId !== null;
             const stateClassName = isSelected
               ? 'bg-blue-600 text-white'
               : isHighlightedNodeFile
                 ? 'bg-violet-500/15 text-violet-100 ring-1 ring-inset ring-violet-400/60'
-                : dropPosition === 'before'
-                  ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
-                  : dropPosition === 'after'
-                    ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
-                    : isDragging
-                      ? 'opacity-50 text-gray-200'
-                      : isDropTarget
-                        ? 'bg-cyan-500/10 text-cyan-100'
-                        : 'text-gray-300 hover:bg-muted/50';
+                : isLinkDropTarget
+                  ? 'bg-teal-500/20 text-teal-100 ring-2 ring-inset ring-teal-400/70'
+                  : dropPosition === 'before'
+                    ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
+                    : dropPosition === 'after'
+                      ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
+                      : isDragging
+                        ? 'opacity-50 text-gray-200'
+                        : isDropTarget
+                          ? 'bg-cyan-500/10 text-cyan-100'
+                          : 'text-gray-300 hover:bg-muted/50';
 
             return (
               <div
@@ -1077,6 +1079,11 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                       <span className='min-w-0 flex-1 truncate'>
                         {node.name}
                       </span>
+                      {isLinkDropTarget ? (
+                        <span className='shrink-0 rounded bg-teal-500/30 px-1 text-[10px] font-medium text-teal-200'>
+                          Link →
+                        </span>
+                      ) : null}
                       {isCaseFile && fileId ? (
                         <button
                           type='button'

@@ -8,7 +8,7 @@ import type {
   AgentTeachingDocumentDto as AgentTeachingEmbeddingDocumentListItem, 
   AgentTeachingChatSourceDto as AgentTeachingChatSource 
 } from '@/shared/contracts/agent-teaching';
-import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
+import type { ChatMessageDto as ChatMessage, SimpleChatMessage } from '@/shared/contracts/chatbot';
 import type { 
   ListQuery, 
   SingleQuery, 
@@ -65,11 +65,11 @@ export function useSearchEmbeddingCollectionMutation(): MutationResult<
 
 export function useTeachingChatMutation(): MutationResult<
   { message: string; sources: AgentTeachingChatSource[] },
-  { agentId: string; messages: ChatMessage[] }
+  { agentId: string; messages: SimpleChatMessage[] }
   > {
   const mutationKey = agentTeachingKeys.agents();
-  return createCreateMutationV2<{ message: string; sources: AgentTeachingChatSource[] }, { agentId: string; messages: ChatMessage[] }>({
-    mutationFn: ({ agentId, messages }: { agentId: string; messages: ChatMessage[] }) => teachingChat(agentId, messages),
+  return createCreateMutationV2<{ message: string; sources: AgentTeachingChatSource[] }, { agentId: string; messages: SimpleChatMessage[] }>({
+    mutationFn: ({ agentId, messages }: { agentId: string; messages: SimpleChatMessage[] }) => teachingChat(agentId, messages as ChatMessage[]),
     mutationKey,
     meta: {
       source: 'agentTeaching.hooks.useTeachingChatMutation',

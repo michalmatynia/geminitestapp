@@ -46,7 +46,7 @@ export function AgentTeachingChatPage(): React.JSX.Element {
     setLastSources([]);
 
     try {
-      const data = await chatMutation.mutateAsync({ agentId: selectedAgentId, messages: nextMessages as any });
+      const data = await chatMutation.mutateAsync({ agentId: selectedAgentId, messages: nextMessages });
       setMessages((prev: SimpleChatMessage[]) => [...prev, { role: 'assistant', content: data.message }]);
       setLastSources(Array.isArray(data.sources) ? data.sources : []);
     } catch (error) {

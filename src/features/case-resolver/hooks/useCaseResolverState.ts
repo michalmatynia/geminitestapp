@@ -4,8 +4,8 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
-import {
-  type CaseResolverCaptureProposalState,
+import type {
+  CaseResolverCaptureProposalState,
 } from '@/features/case-resolver-capture/proposals';
 import {
   CASE_RESOLVER_CAPTURE_SETTINGS_KEY,
@@ -31,7 +31,6 @@ import type {
   CaseResolverCategory,
   CaseResolverEditorNodeContext,
   CaseResolverFile,
-  CaseResolverFileEditDraft,
   CaseResolverFolderRecord,
   CaseResolverIdentifier,
   CaseResolverTag,
@@ -61,9 +60,15 @@ import {
   parseCaseResolverWorkspace,
 } from '../settings';
 import {
+  type CaseResolverFileEditDraft,
+  type CaseResolverRequestedCaseStatus,
+  type CaseResolverStateValue,
+} from '../types';
+import {
   applyPromptExploderTransferLifecycleUpdate,
   type PromptExploderTransferUiStatus,
 } from './prompt-exploder-transfer-lifecycle';
+import { useCaseResolverStateFolderActions } from './useCaseResolverState.folder-actions';
 import {
   buildFileEditDraft,
   createId,
@@ -79,7 +84,6 @@ import {
   stampCaseResolverWorkspaceMutation,
 } from '../workspace-persistence';
 import { useCaseResolverStateAssetActions } from './useCaseResolverState.asset-actions';
-import { useCaseResolverStateFolderActions } from './useCaseResolverState.folder-actions';
 import {
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
   buildCaseResolverDraftCanonicalState,
@@ -96,7 +100,6 @@ import {
   resolveCaseContainerIdForFileId,
   resolveCaseResolverActiveCaseId,
   resolveCaseResolverFileById,
-  type CaseResolverRequestedCaseStatus,
   writeStoredEditorDraft,
 } from './useCaseResolverState.helpers';
 import {
@@ -104,7 +107,6 @@ import {
   discardPendingCaseResolverPromptExploderPayload,
   readCaseResolverPromptExploderPayloadState,
   resolvePromptExploderPendingPayloadIdentity,
-  type CaseResolverPromptExploderApplyDiagnostics,
   type CaseResolverPromptExploderPayloadReadState,
   type CaseResolverPromptExploderPendingPayload,
 } from './useCaseResolverState.prompt-exploder-sync';
@@ -118,12 +120,6 @@ const CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_KEY =
   'case_resolver:applied_prompt_exploder_transfer_ids';
 const CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT = 80;
 
-type PromptExploderApplyUiDiagnostics = CaseResolverPromptExploderApplyDiagnostics & {
-  status: PromptExploderTransferUiStatus;
-  reason: string | null;
-  updatedAt: string;
-};
-
 type CaseResolverOpenFileEditorOptions = {
   nodeContext?: CaseResolverEditorNodeContext | null;
 };
@@ -131,7 +127,7 @@ type CaseResolverOpenFileEditorOptions = {
 /**
  * Custom hook to manage the complex state and logic of the Case Resolver page.
  */
-export function useCaseResolverState() {
+export function useCaseResolverState(): CaseResolverStateValue {
   const settingsStore = useSettingsStore();
   const settingsStoreRef = useRef(settingsStore);
   settingsStoreRef.current = settingsStore;
@@ -242,8 +238,9 @@ export function useCaseResolverState() {
   const [isApplyingPromptExploderPartyProposal, setIsApplyingPromptExploderPartyProposalState] =
     useState(false);
   const [promptExploderPayloadRefreshVersion, setPromptExploderPayloadRefreshVersion] = useState(0);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const [promptExploderApplyDiagnostics, setPromptExploderApplyDiagnostics] =
-    useState<PromptExploderApplyUiDiagnostics | null>(null);
+    useState<CaseResolverPromptExploderApplyUiDiagnostics | null>(null);
   const [, setPersistedWorkspaceSnapshot] = useState<string>(
     JSON.stringify(initialWorkspaceState)
   );
@@ -315,13 +312,15 @@ export function useCaseResolverState() {
       nextStatus: PromptExploderTransferUiStatus;
       reason?: string | null;
       force?: boolean;
-      patch?: Partial<PromptExploderApplyUiDiagnostics>;
+      patch?: Partial<CaseResolverPromptExploderApplyUiDiagnostics>;
     }): void => {
-      setPromptExploderApplyDiagnostics((current) =>
-        applyPromptExploderTransferLifecycleUpdate(current, {
+      setPromptExploderApplyDiagnostics((current: CaseResolverPromptExploderApplyUiDiagnostics | null) =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        applyPromptExploderTransferLifecycleUpdate<CaseResolverPromptExploderApplyUiDiagnostics>(current, {
           nextStatus: input.nextStatus,
           reason: input.reason ?? null,
           force: input.force ?? false,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
           patch: input.patch ?? {},
         })
       );
@@ -726,9 +725,10 @@ export function useCaseResolverState() {
     }
     if (
       lastPromptExploderPayloadKeyRef.current === observedPromptExploderPayloadKey &&
-      observedPromptExploderPayloadKey !== null
+            observedPromptExploderPayloadKey !== null
     ) {
-      setPromptExploderApplyDiagnostics((current) => (
+      setPromptExploderApplyDiagnostics((current: CaseResolverPromptExploderApplyUiDiagnostics | null): CaseResolverPromptExploderApplyUiDiagnostics | null => (
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         current
           ? {
             ...current,
@@ -747,7 +747,7 @@ export function useCaseResolverState() {
     )?.id ?? null;
     const precheckResolutionStrategy = precheckResolvedTargetFileId ? 'requested_id' : 'unresolved';
     const isExpiredPayload = Boolean(expiredPromptExploderPayload);
-    const diagnostics: PromptExploderApplyUiDiagnostics = {
+    const diagnostics: CaseResolverPromptExploderApplyUiDiagnostics = {
       applyAttemptId: 'pending',
       transferId: observedPromptExploderPayload.transferId?.trim() || null,
       payloadVersion:
@@ -857,7 +857,7 @@ export function useCaseResolverState() {
     setPromptExploderPartyProposal(null);
     setIsPromptExploderPartyProposalOpen(false);
     setIsApplyingPromptExploderPartyProposal(false);
-    const diagnostics: PromptExploderApplyUiDiagnostics = {
+    const diagnostics: CaseResolverPromptExploderApplyUiDiagnostics = {
       applyAttemptId: 'discarded',
       transferId: discardedPayload.transferId?.trim() || null,
       payloadVersion:
@@ -1940,6 +1940,13 @@ export function useCaseResolverState() {
   const handleLinkRelatedFiles = useCallback(
     (fileIdA: string, fileIdB: string): void => {
       if (fileIdA === fileIdB) return;
+      const fileA = workspace.files.find((f: CaseResolverFile) => f.id === fileIdA);
+      const fileB = workspace.files.find((f: CaseResolverFile) => f.id === fileIdB);
+      const alreadyLinked = (fileA?.relatedFileIds ?? []).includes(fileIdB);
+      if (alreadyLinked) {
+        toast('These documents are already linked.', { variant: 'info' });
+        return;
+      }
       const now = new Date().toISOString();
       updateWorkspace((current) => ({
         ...current,
@@ -1957,8 +1964,11 @@ export function useCaseResolverState() {
           return file;
         }),
       }));
+      const nameA = fileA?.name ?? fileIdA;
+      const nameB = fileB?.name ?? fileIdB;
+      toast(`"${nameA}" linked to "${nameB}".`, { variant: 'success' });
     },
-    [updateWorkspace],
+    [updateWorkspace, workspace.files, toast],
   );
 
   const handleUnlinkRelatedFile = useCallback(
@@ -2203,8 +2213,10 @@ export function useCaseResolverState() {
     handleDiscardPendingPromptExploderPayload,
     promptExploderPartyProposal,
     setPromptExploderPartyProposal,
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     promptExploderApplyDiagnostics,
     isPromptExploderPartyProposalOpen,
+    
     setIsPromptExploderPartyProposalOpen,
     isApplyingPromptExploderPartyProposal,
     setIsApplyingPromptExploderPartyProposal,

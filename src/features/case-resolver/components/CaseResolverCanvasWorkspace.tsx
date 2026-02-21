@@ -27,19 +27,6 @@ import {
   type Edge,
 } from '@/features/ai/ai-paths/lib';
 import {
-  Button,
-  useToast,
-  EmptyState,
-  Card,
-  SelectSimple,
-} from '@/shared/ui';
-
-import { compileCaseResolverPrompt } from '../composer';
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
-import {
-  parseCaseResolverTreeDropPayload,
-} from '../drag';
-import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
   CASE_RESOLVER_PDF_EXTRACTION_PRESETS,
   DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
@@ -54,6 +41,19 @@ import {
   type CaseResolverPdfExtractionPresetId,
   type NodeDefinition,
 } from '@/shared/contracts/case-resolver';
+import {
+  Button,
+  useToast,
+  EmptyState,
+  Card,
+  SelectSimple,
+} from '@/shared/ui';
+
+import { compileCaseResolverPrompt } from '../composer';
+import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import {
+  parseCaseResolverTreeDropPayload,
+} from '../drag';
 import {
   createCaseResolverCanvasDropHandlers,
   type CaseResolverDroppedAsset,
@@ -846,11 +846,11 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
             void handleCanvasDropCapture(event);
           }}
         >
-                      <CanvasBoard resolveConnectorTooltip={resolveConnectorTooltip} />
-                    </div>
-                  </Card>
+          <CanvasBoard resolveConnectorTooltip={resolveConnectorTooltip} />
+        </div>
+      </Card>
           
-                  <CaseResolverNodeInspectorModal
+      <CaseResolverNodeInspectorModal
           
         open={isNodeInspectorOpen}
         onOpenChange={setIsNodeInspectorOpen}

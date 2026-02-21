@@ -3,9 +3,9 @@
 import { Loader2 } from 'lucide-react';
 import React from 'react';
 
+import { PanelStat } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils/ui-utils';
 
-import { PanelStat } from '@/shared/contracts/ui';
 
 
 interface PanelStatsProps {

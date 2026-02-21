@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getProducerRepository } from '@/features/products/server';
-import { conflictError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { conflictError, notFoundError } from '@/shared/errors/app-error';
 
 export const producerUpdateSchema = z.object({
   name: z.string().min(1).optional(),

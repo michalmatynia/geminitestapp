@@ -4,10 +4,10 @@ import type {
   ProducerRepository, 
   ProducerFilters 
 } from '@/shared/contracts/products';
-import prisma from '@/shared/lib/db/prisma';
 import type { 
   Producer 
 } from '@/shared/contracts/products';
+import prisma from '@/shared/lib/db/prisma';
 
 const toProducerDomain = (producer: PrismaProducer): Producer => ({
   id: producer.id,

@@ -2,11 +2,11 @@
 
 import { type Query } from '@tanstack/react-query';
 
+import type { ProductJob } from '@/shared/contracts/integrations';
+import type { ProductAiJob } from '@/shared/contracts/jobs';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { jobKeys } from '@/shared/lib/query-key-exports';
-import type { ProductAiJob } from '@/shared/contracts/jobs';
-import type { ProductJob } from '@/shared/contracts/integrations';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 
 import {
   getIntegrationJobs,

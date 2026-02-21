@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -8,7 +9,6 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 
 /**
  * A generic hook to handle standard CRUD operations for a resource

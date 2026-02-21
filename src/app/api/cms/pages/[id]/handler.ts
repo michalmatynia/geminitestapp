@@ -4,9 +4,9 @@ import { logCmsActivity } from '@/features/cms/services/cms-activity';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError, validationError } from '@/shared/errors/app-error';
 import { createErrorResponse } from '@/shared/lib/api/handle-api-error';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import type { z } from 'zod';
 

@@ -131,7 +131,7 @@ describe('GenericItemMapper', () => {
     const config = createConfig({ isFetching: true });
     render(<GenericItemMapper<MockInternalItem, MockExternalItem, MockMapping> config={config} />);
 
-    const fetchButton = screen.getByText(/Fetching/);
+    const fetchButton = screen.getByRole('button', { name: /Fetch/i });
     expect(fetchButton).toBeDisabled();
   });
 

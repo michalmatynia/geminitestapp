@@ -3,9 +3,9 @@
 import React, { useMemo } from 'react';
 
 import { APP_EMBED_SETTING_KEY, type AppEmbedId } from '@/features/app-embeds/lib/constants';
+import type { PickerOption } from '@/shared/contracts/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
-import type { PickerOption } from '@/shared/contracts/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { getBlockDefinition, getColumnAllowedBlockTypes } from './section-registry';

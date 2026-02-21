@@ -4,12 +4,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { parseJsonBody } from '@/features/products/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   badRequestError,
   configurationError,
   externalServiceError,
 } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 type BraveSearchResult = {
   title?: string;

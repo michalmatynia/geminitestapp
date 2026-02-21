@@ -37,10 +37,10 @@ import {
   loadTraderaSystemSettings,
   toTruthyBoolean,
 } from '@/features/integrations/services/tradera-system-settings';
-import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations';
-import type { ProductListingRecord } from '@/shared/contracts/integrations';
 import { ErrorSystem } from '@/features/observability/server';
 import { getProductRepository, getSettingValue } from '@/features/products/server';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations';
+import type { ProductListingRecord } from '@/shared/contracts/integrations';
 import type { 
   TraderaListingJobInputDto,
   TraderaCategoryRecordDto 

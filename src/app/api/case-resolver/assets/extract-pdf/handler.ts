@@ -4,8 +4,8 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getDiskPathFromPublicPath } from '@/features/files/server';
-import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 
 type ExtractPdfRequest = {
   filepath?: unknown;

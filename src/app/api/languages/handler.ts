@@ -9,10 +9,10 @@ import {
 } from '@/features/internationalization/server';
 import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
 import { parseJsonBody } from '@/features/products/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import type { Prisma } from '@prisma/client';
 

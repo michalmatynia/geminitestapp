@@ -30,12 +30,12 @@ import {
   launchBrowser,
   createBrowserContext,
 } from '@/features/ai/agent-runtime/tools/playwright/browser';
+import { ErrorSystem } from '@/features/observability/server';
 import type {
   AgentDecision,
   PlanStep,
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
-import { ErrorSystem } from '@/features/observability/server';
 import prisma from '@/shared/lib/db/prisma';
 
 import type { Browser, BrowserContext } from 'playwright';

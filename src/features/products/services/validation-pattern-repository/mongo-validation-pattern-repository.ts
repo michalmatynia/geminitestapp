@@ -5,11 +5,6 @@ import {
   PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
   PRODUCT_VALIDATOR_INSTANCE_DENY_BEHAVIOR_SETTING_KEY,
 } from '@/features/products/constants';
-import type {
-  CreateProductValidationPatternInput,
-  ProductValidationPatternRepository,
-  UpdateProductValidationPatternInput,
-} from '@/shared/contracts/products';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
   normalizeProductValidationLaunchScopeBehavior,
@@ -19,8 +14,11 @@ import {
   normalizeProductValidationPatternScopes,
   normalizeProductValidationInstanceDenyBehaviorMap,
 } from '@/features/products/utils/validator-instance-behavior';
-import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import type {
+  CreateProductValidationPatternInput,
+  ProductValidationPatternRepository,
+  UpdateProductValidationPatternInput,
+} from '@/shared/contracts/products';
 import type {
   ProductValidationChainMode,
   ProductValidationDenyBehavior,
@@ -35,6 +33,8 @@ import type {
   ProductValidationSeverity,
   ProductValidationTarget,
 } from '@/shared/contracts/products';
+import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const COLLECTION = 'product_validation_patterns';
 const SETTINGS_COLLECTION = 'settings';

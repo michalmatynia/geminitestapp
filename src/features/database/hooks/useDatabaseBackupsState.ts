@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
+import type { DatabaseInfo, DatabaseType } from '@/shared/contracts/database';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
   DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
@@ -21,7 +22,6 @@ import {
   useUploadBackupMutation,
 } from '../hooks/useDatabaseQueries';
 
-import type { DatabaseInfo, DatabaseType } from '@/shared/contracts/database';
 
 export function useDatabaseBackupsState() {
   const dbKeys = QUERY_KEYS.system.databases;

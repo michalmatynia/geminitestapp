@@ -7,9 +7,6 @@ import {
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
-import { useAsset3DListState } from '../hooks/useAsset3DListState';
-
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import {
   Button,
@@ -22,6 +19,10 @@ import {
   FilterPanel,
   LoadingState,
 } from '@/shared/ui';
+
+import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
+import { useAsset3DListState } from '../hooks/useAsset3DListState';
+
 
 import type { ColumnDef } from '@tanstack/react-table';
 

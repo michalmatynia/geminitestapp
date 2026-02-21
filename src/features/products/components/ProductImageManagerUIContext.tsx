@@ -1,15 +1,17 @@
 'use client';
 
 import React, { createContext, useContext, useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { ProductImageSlot, DebugInfo } from '@/shared/contracts/products';
-import { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
-import { api } from '@/shared/lib/api-client';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+
 import { 
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL, 
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY 
 } from '@/features/products/constants';
 import { ProductFormContext } from '@/features/products/context/ProductFormContext';
+import { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
+import { ProductImageSlot, DebugInfo } from '@/shared/contracts/products';
+import { api } from '@/shared/lib/api-client';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+
 import { useOptionalProductImageManagerController } from './ProductImageManagerControllerContext';
 
 export type SlotViewMode = 'upload' | 'link' | 'base64';

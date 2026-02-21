@@ -1,11 +1,12 @@
 
 'use client';
 
+import { EmptyState, Card } from '@/shared/ui';
+
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useOptionalSectionBlockData } from './SectionBlockContext';
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
-import { EmptyState, Card } from '@/shared/ui';
 
 import type { BlockInstance } from '../../../types/page-builder';
 

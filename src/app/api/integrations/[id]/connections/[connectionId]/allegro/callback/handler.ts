@@ -5,8 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { logSystemEvent } from '@/features/observability/server';
-import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { mapErrorToAppError } from '@/shared/errors/error-mapper';
 
 const PROD_TOKEN_URL =
   process.env['ALLEGRO_TOKEN_URL'] ?? 'https://allegro.pl/auth/oauth/token';

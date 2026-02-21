@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { getIntegrationRepository } from '@/features/integrations/services/integration-repository';
-import prisma from '@/shared/lib/db/prisma';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import prisma from '@/shared/lib/db/prisma';
 
 // Mocks
 vi.mock('@/shared/lib/db/prisma', () => ({
@@ -25,11 +25,9 @@ vi.mock('@/shared/lib/db/prisma', () => ({
 
 const { 
   mockCollection, 
-  mockFindOne, 
   mockFind, 
   mockInsertOne, 
   mockDeleteOne, 
-  mockUpdateOne, 
   mockFindOneAndUpdate 
 } = vi.hoisted(() => {
   const mockInsertOne = vi.fn();

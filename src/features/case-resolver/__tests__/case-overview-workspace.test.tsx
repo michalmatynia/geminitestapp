@@ -3,7 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { CaseResolverCaseOverviewWorkspace } from '@/features/case-resolver/components/CaseResolverCaseOverviewWorkspace';
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
-
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 vi.mock('@/features/case-resolver/components/CaseResolverRelationsWorkspace', () => ({

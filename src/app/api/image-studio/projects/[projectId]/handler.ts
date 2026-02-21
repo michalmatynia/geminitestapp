@@ -9,12 +9,12 @@ import { deleteImageStudioSlotLinksForProject } from '@/features/ai/image-studio
 import { deleteImageStudioSlotsByProject } from '@/features/ai/image-studio/server/slot-repository';
 import { getImageStudioProjectSettingsKey } from '@/features/ai/image-studio/utils/studio-settings';
 import { getImageFileRepository } from '@/features/files/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { clearSettingsCache } from '@/shared/lib/settings-cache';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 const projectsRootResolved = path.resolve(projectsRoot);

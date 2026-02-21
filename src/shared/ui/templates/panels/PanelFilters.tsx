@@ -4,13 +4,13 @@ import { Search, X } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 
 
+import { FilterField } from '@/shared/contracts/ui';
 import { Button, Label, SelectSimple } from '@/shared/ui';
 import { Checkbox } from '@/shared/ui/checkbox';
 import { Input } from '@/shared/ui/input';
 import { MultiSelect } from '@/shared/ui/multi-select';
 import { cn } from '@/shared/utils/ui-utils';
 
-import { FilterField } from '@/shared/contracts/ui';
 
 const isActiveFilterValue = (value: unknown): boolean => {
   if (value === undefined || value === null) return false;

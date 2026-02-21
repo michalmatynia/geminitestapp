@@ -47,6 +47,7 @@ const buildContext = (
     prevOutputs: {},
     edges: [],
     nodes: [node],
+    nodeById: new Map([[node.id, node]]),
     runId: 'run-1',
     runStartedAt: new Date().toISOString(),
     activePathId: 'path-1',

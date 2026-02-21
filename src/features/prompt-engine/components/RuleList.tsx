@@ -4,6 +4,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import { Button, Input, Label, EmptyState, Card } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { RuleListDragProvider } from './context/RuleListDragContext';
 import { RuleItem } from './RuleItem';

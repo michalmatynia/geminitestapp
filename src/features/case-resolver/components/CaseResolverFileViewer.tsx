@@ -3,12 +3,12 @@
 import { ExternalLink as ExternalLinkIcon, FileText, FolderOpen, Image as ImageIcon } from 'lucide-react';
 import React from 'react';
 
+import type { CaseResolverAssetFile } from '@/shared/contracts/case-resolver';
 import { Button, ExternalLink, Label, Textarea, useToast, FileUploadTrigger, EmptyState, Card } from '@/shared/ui';
 import { PanelHeader } from '@/shared/ui/templates/panels';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 
-import type { CaseResolverAssetFile } from '@/shared/contracts/case-resolver';
 
 const formatFileSize = (size: number | null): string => {
   if (size === null || size < 0 || !Number.isFinite(size)) return 'Unknown';

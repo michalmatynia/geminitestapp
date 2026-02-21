@@ -28,6 +28,12 @@ import {
   updateAiPathsSetting,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
+import type {
+  AiNode,
+  Edge,
+  PathConfig,
+  PathMeta,
+} from '@/shared/contracts/ai-paths';
 import { api } from '@/shared/lib/api-client';
 import {
   invalidateAiPathSettings,
@@ -36,12 +42,6 @@ import {
   invalidateProductsAndCounts,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type {
-  AiNode,
-  Edge,
-  PathConfig,
-  PathMeta,
-} from '@/shared/contracts/ai-paths';
 import { useToast } from '@/shared/ui';
 
 type TriggerEventEntityType = 'product' | 'note' | 'custom';

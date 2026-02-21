@@ -1,10 +1,10 @@
 import 'server-only';
 
 import { ErrorSystem } from '@/features/observability/server';
+import type { ImageFileRecord, ImageFileRepository, ImageFileCreateInput, ImageFileListFilters } from '@/shared/contracts/files';
 
 import { getImageFileRepository } from './image-file-repository';
 
-import type { ImageFileRecord, ImageFileRepository, ImageFileCreateInput, ImageFileListFilters } from '@/shared/contracts/files';
 
 /**
  * Service that wraps the Image File repository with error handling and logging.

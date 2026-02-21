@@ -2,10 +2,10 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
+import type { AiInsightRecord, AiInsightType, AiInsightNotification } from '@/shared/contracts/ai-insights';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { AiInsightRecord, AiInsightType, AiInsightNotification } from '@/shared/contracts/ai-insights';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import { AI_INSIGHTS_SETTINGS_KEYS } from './settings';

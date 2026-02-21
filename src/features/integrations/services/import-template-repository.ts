@@ -2,18 +2,18 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
+import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
+import { getProductDataProvider } from '@/features/products/server';
 import {
   normalizeBaseImportParameterImportSettings,
   defaultBaseImportParameterImportSettings,
 } from '@/shared/contracts/integrations';
-import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
-import { getProductDataProvider } from '@/features/products/server';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
 import type {
   ImportExportTemplate as DomainImportExportTemplate,
   ImportExportTemplateMapping as DomainImportExportTemplateMapping,
 } from '@/shared/contracts/integrations';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import prisma from '@/shared/lib/db/prisma';
 
 import type { Document, Filter } from 'mongodb';
 

@@ -30,6 +30,7 @@ import {
   getDefaultProviderAction
 } from '@/features/ai/ai-paths/lib/core/utils/provider-actions';
 import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/features/prompt-engine/settings';
+import type { SchemaData, AiQuery, DatabasePresetOption } from '@/shared/contracts/database';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -42,7 +43,6 @@ import {
 } from '../utils/database-node-utils';
 
 
-import type { SchemaData, AiQuery, DatabasePresetOption } from '@/shared/contracts/database';
 
 type SchemaConfig = {
   provider?: 'auto' | 'mongodb' | 'prisma' | 'all';
@@ -179,7 +179,7 @@ export function useDatabaseNodeConfigState() {
     queryFn: async () => {
       const res = await dbApi.schema({ provider: schemaProvider });
       if (!res.ok) throw new Error(res.error || 'Failed to fetch schema.');
-      return res.data as SchemaData;
+      return res.data;
     },
     enabled: schemaConnection.hasSchemaConnection && isDatabaseSelected,
     meta: { source: 'ai.ai-paths.node-config.database.schema', operation: 'list', resource: 'databases.schema', domain: 'global' },
@@ -233,7 +233,7 @@ export function useDatabaseNodeConfigState() {
     mutationFn: async (provider): Promise<SchemaData> => {
       const result = await dbApi.schema({ provider });
       if (!result.ok) throw new Error(result.error || 'Failed to fetch schema.');
-      return result.data as SchemaData;
+      return result.data;
     },
     meta: {
       source: 'ai.ai-paths.node-config.database.schema-sync',

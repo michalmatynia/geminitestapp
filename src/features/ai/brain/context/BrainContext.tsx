@@ -20,12 +20,12 @@ import {
 } from '@/features/ai/insights/settings';
 import { logClientError } from '@/features/observability';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
-import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
-import { useSettingsMap, useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import type {
   AiPathRuntimeAnalyticsSummary,
   AnalyticsSummaryDto,
 } from '@/shared/contracts';
+import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
+import { useSettingsMap, useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useToast, type SelectSimpleOption } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 

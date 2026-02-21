@@ -14,7 +14,7 @@ import {
   useUpdateSessionTitle,
 } from '../hooks';
 
-import type { ChatbotSessionListItem } from '../types';
+import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 
 export interface UseChatbotSessionsStateReturn {
   sessions: ChatbotSessionListItem[];

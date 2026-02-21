@@ -1,11 +1,9 @@
 import { logClientError } from '@/features/observability';
-import { api } from '@/shared/lib/api-client';
 import type {
   ProductValidationPattern,
   ProductValidatorConfig,
   ProductValidatorSettings,
 } from '@/shared/contracts/products';
-
 import { 
   Catalog, 
   CatalogRecord,
@@ -15,6 +13,7 @@ import {
   ProductTag, 
   ProductParameter,
 } from '@/shared/contracts/products';
+import { api } from '@/shared/lib/api-client';
 
 
 export async function getPriceGroups(): Promise<PriceGroup[]> {

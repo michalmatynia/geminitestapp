@@ -7,8 +7,8 @@ import {
   updateExportTemplate
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const mappingSchema = z.object({
   sourceKey: z.string().trim().min(1),

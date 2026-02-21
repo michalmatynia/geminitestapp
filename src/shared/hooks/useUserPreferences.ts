@@ -2,11 +2,11 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import type { UserPreferences, UserPreferencesUpdate } from '@/shared/contracts/auth';
+import type { MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { UserPreferences, UserPreferencesUpdate } from '@/shared/contracts/auth';
-import type { MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   normalizeUserPreferencesResponse,

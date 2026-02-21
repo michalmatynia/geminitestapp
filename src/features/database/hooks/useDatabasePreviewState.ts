@@ -2,9 +2,10 @@
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 
+import type { DatabaseTableDetail, DatabasePreviewRow } from '@/shared/contracts/database';
+
 import { useDatabase } from '../context/DatabaseContext';
 
-import type { DatabaseTableDetail, DatabasePreviewRow } from '@/shared/contracts/database';
 
 export function useDatabasePreviewState() {
   const database = useDatabase();

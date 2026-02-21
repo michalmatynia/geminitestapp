@@ -7,15 +7,15 @@ import {
 } from '@/features/products/performance';
 import { getProductDataProvider } from '@/features/products/server';
 import { productService } from '@/features/products/services/productService'; // Direct import
-import type { ProductWithImages } from '@/shared/contracts/products';
 import { ProductFiltersParsed, productFilterSchema } from '@/features/products/validations';
 import { validateProductCreateMiddleware } from '@/features/products/validations/middleware';
+import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   badRequestError,
   payloadTooLargeError,
 } from '@/shared/errors/app-error';
 import { env } from '@/shared/lib/env';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export { productFilterSchema };
 

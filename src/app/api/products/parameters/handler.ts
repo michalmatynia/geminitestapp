@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getParameterRepository } from '@/features/products/server';
-import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, conflictError } from '@/shared/errors/app-error';
 import type { CatalogIdQuery } from '@/shared/validations/product-metadata-api-schemas';
 
 const SELECTOR_TYPES = ['text', 'textarea', 'radio', 'select', 'dropdown', 'checkbox', 'checklist'] as const;

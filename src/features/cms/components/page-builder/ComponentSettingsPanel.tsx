@@ -4,14 +4,14 @@ import { Trash2, MousePointer2, Monitor, Smartphone, PanelRightClose, Paintbrush
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from '@/features/app-embeds/lib/constants';
-import type { CssAnimationConfig } from '@/shared/contracts/cms';
-import type { CustomCssAiConfig } from '@/shared/contracts/cms';
-import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from '@/shared/contracts/cms';
 import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
 import type { GsapAnimationConfig } from '@/features/gsap';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import { logClientError } from '@/features/observability';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from '@/shared/contracts/cms';
+import type { CustomCssAiConfig } from '@/shared/contracts/cms';
+import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SectionHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Textarea, useToast, SidePanel, SelectSimple, ToggleRow, Tooltip } from '@/shared/ui';
@@ -28,8 +28,8 @@ import { ContentAiSection } from './settings/ContentAiSection';
 import { CssAiSection } from './settings/CssAiSection';
 import { EventEffectsTab } from './settings/EventEffectsTab';
 import { prependManagementFields, groupSettingsFields, renderFieldGroups } from './settings/field-group-helpers';
-import { SettingsFormProvider } from './settings/SettingsFormContext';
 import { PageSettingsTab } from './settings/PageSettingsTab';
+import { SettingsFormProvider } from './settings/SettingsFormContext';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 
 import type { SettingsField, InspectorSettings, BlockInstance } from '../../types/page-builder';

@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { PROMPT_EXPLODER_PATTERN_PACK } from '@/features/prompt-exploder/pattern-pack';
-import type { PromptExploderSegment } from '@/shared/contracts/prompt-exploder';
 import {
   buildCaseResolverSegmentCaptureRules,
   type CaseResolverSegmentCaptureRule,
   extractCaseResolverBridgePayloadFromSegments,
   resolveCaseResolverBridgePayloadForTransfer,
 } from '@/features/prompt-exploder/utils/case-resolver-extraction';
+import type { PromptExploderSegment } from '@/shared/contracts/prompt-exploder';
 
 
 const createSegment = (input: {

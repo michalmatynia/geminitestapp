@@ -1,8 +1,8 @@
+import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
 import {
   canvasSemanticDocumentSchema,
   semanticDocumentSchema,
 } from '@/shared/contracts/ai-paths-semantic-grammar';
-import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
 import type {
   CanvasSemanticDocumentDto as CanvasSemanticDocument,
   SemanticDocumentDto as SemanticDocument,

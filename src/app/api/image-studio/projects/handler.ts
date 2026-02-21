@@ -4,18 +4,18 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
 import {
   IMAGE_STUDIO_SETTINGS_KEY,
   getImageStudioProjectSettingsKey,
   parseImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
+import type { ImageStudioProjectRecord } from '@/shared/contracts/image-studio';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { clearSettingsCache } from '@/shared/lib/settings-cache';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');

@@ -196,7 +196,7 @@ const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise
     const queueModule = await import('@/features/jobs/workers/productAiQueue');
     queueModule.startProductAiJobQueue();
     void queueModule
-      .enqueueProductAiJobToQueue(job.id, job.productId as string, job.type, job.payload)
+      .enqueueProductAiJobToQueue(job.id, job.productId, job.type, job.payload)
       .catch((error: unknown) => {
         void ErrorSystem.captureException(error, {
           service: LOG_SOURCE,

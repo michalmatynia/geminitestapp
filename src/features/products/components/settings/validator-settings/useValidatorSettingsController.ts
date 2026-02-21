@@ -28,7 +28,6 @@ import {
   normalizeProductValidationInstanceDenyBehaviorMap,
 } from '@/features/products/utils/validator-instance-behavior';
 import { encodeDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
-import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
@@ -37,6 +36,8 @@ import type {
   ProductValidationLaunchOperator,
   ProductValidationInstanceScope,
 } from '@/shared/contracts/products';
+import type { PatternFormData, SequenceGroupDraft } from '@/shared/contracts/products';
+import { invalidateValidatorConfig } from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';
 
 import { buildFormDataFromPattern } from './controller-form-utils';
@@ -56,7 +57,6 @@ import {
   getReplacementFieldsForTarget,
 } from './helpers';
 
-import type { PatternFormData, SequenceGroupDraft } from '@/shared/contracts/products';
 
 export function useValidatorSettingsController() {
   const queryClient = useQueryClient();
@@ -93,7 +93,7 @@ export function useValidatorSettingsController() {
     const map = new Map<string, string>();
     sequenceGroups.forEach((group, groupId) => {
       if (group.patternIds.length > 0) {
-        map.set(groupId, group.patternIds[0]!);
+        map.set(groupId, group.patternIds[0]);
       }
     });
     return map;

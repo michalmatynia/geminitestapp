@@ -1,21 +1,21 @@
-import { Copy, FileText } from "lucide-react";
-import { useRouter } from "next/navigation";
-import React, { useCallback } from "react";
+import { Copy, FileText } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import React, { useCallback } from 'react';
 
 import type {
   CaseResolverCaptureDocumentDateAction,
   CaseResolverCaptureProposalState,
-} from "@/features/case-resolver-capture/proposals";
-import { type CaseResolverCaptureAction } from "@/features/case-resolver-capture/settings";
+} from '@/features/case-resolver-capture/proposals';
+import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
 import {
   DocumentWysiwygEditor,
   ensureHtmlForPreview,
   MarkdownSplitEditor,
-} from "@/features/document-editor";
+} from '@/features/document-editor';
 import {
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
-} from "@/features/filemaker/settings";
+} from '@/features/filemaker/settings';
 import {
   CASE_RESOLVER_QUOTE_MODE_OPTIONS,
   type CaseResolverDocumentHistoryEntry,
@@ -24,7 +24,7 @@ import {
   type CaseResolverGraph,
   type CaseResolverNodeMeta,
   type CaseResolverRelationGraph,
-} from "@/shared/contracts/case-resolver";
+} from '@/shared/contracts/case-resolver';
 import {
   Badge,
   Button,
@@ -41,27 +41,27 @@ import {
   EmptyState,
   FileUploadTrigger,
   Card,
-} from "@/shared/ui";
-import { sanitizeHtml } from "@/shared/utils";
+} from '@/shared/ui';
+import { sanitizeHtml } from '@/shared/utils';
 
-import { CaseResolverCanvasWorkspace } from "./CaseResolverCanvasWorkspace";
-import { CaseResolverCaseOverviewWorkspace } from "./CaseResolverCaseOverviewWorkspace";
-import { CaseResolverFileViewer } from "./CaseResolverFileViewer";
-import { CaseResolverFolderTree } from "./CaseResolverFolderTree";
-import { CaseResolverNodeFileWorkspace } from "./CaseResolverNodeFileWorkspace";
-import { CaseResolverRelationsWorkspace } from "./CaseResolverRelationsWorkspace";
-import { PromptExploderCaptureMappingModal } from "./PromptExploderCaptureMappingModal";
-import { CaseResolverPageProvider } from "../context/CaseResolverPageContext";
-import { emitCaseResolverShowDocumentInCanvas } from "../drag";
-import { resolvePromptExploderTransferStatusLabel } from "../hooks/prompt-exploder-transfer-lifecycle";
-import { useCaseResolverState } from "../hooks/useCaseResolverState";
-import { buildCaseResolverNodeFileRelationIndexFromAssets } from "../nodefile-relations";
-import { resolveCaseResolverOcrProviderLabel } from "../ocr-provider";
+import { CaseResolverCanvasWorkspace } from './CaseResolverCanvasWorkspace';
+import { CaseResolverCaseOverviewWorkspace } from './CaseResolverCaseOverviewWorkspace';
+import { CaseResolverFileViewer } from './CaseResolverFileViewer';
+import { CaseResolverFolderTree } from './CaseResolverFolderTree';
+import { CaseResolverNodeFileWorkspace } from './CaseResolverNodeFileWorkspace';
+import { CaseResolverRelationsWorkspace } from './CaseResolverRelationsWorkspace';
+import { PromptExploderCaptureMappingModal } from './PromptExploderCaptureMappingModal';
+import { CaseResolverPageProvider } from '../context/CaseResolverPageContext';
+import { emitCaseResolverShowDocumentInCanvas } from '../drag';
+import { resolvePromptExploderTransferStatusLabel } from '../hooks/prompt-exploder-transfer-lifecycle';
+import { useCaseResolverState } from '../hooks/useCaseResolverState';
+import { buildCaseResolverNodeFileRelationIndexFromAssets } from '../nodefile-relations';
+import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
 
 const ENABLE_CASE_RESOLVER_MULTIFORMAT_EDITOR =
-  process.env["NEXT_PUBLIC_CASE_RESOLVER_MULTIFORMAT_EDITOR"] !== "false";
+  process.env['NEXT_PUBLIC_CASE_RESOLVER_MULTIFORMAT_EDITOR'] !== 'false';
 const ENABLE_CASE_RESOLVER_TRANSFER_DIAGNOSTICS =
-  process.env["NEXT_PUBLIC_CASE_RESOLVER_TRANSFER_DIAGNOSTICS"] === "1";
+  process.env['NEXT_PUBLIC_CASE_RESOLVER_TRANSFER_DIAGNOSTICS'] === '1';
 
 type SelectOption = {
   value: string;
@@ -69,9 +69,9 @@ type SelectOption = {
   description?: string | undefined;
 };
 
-type WorkspaceView = "document" | "relations";
-type EditorDetailsTab = "document" | "relations" | "metadata" | "revisions";
-type PartySearchKind = "person" | "organization";
+type WorkspaceView = 'document' | 'relations';
+type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
+type PartySearchKind = 'person' | 'organization';
 
 const CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS: Array<{
   value: PartySearchKind;
@@ -79,14 +79,14 @@ const CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS: Array<{
   description: string;
 }> = [
   {
-    value: "person",
-    label: "Persons",
-    description: "Search within persons",
+    value: 'person',
+    label: 'Persons',
+    description: 'Search within persons',
   },
   {
-    value: "organization",
-    label: "Organizations",
-    description: "Search within organizations",
+    value: 'organization',
+    label: 'Organizations',
+    description: 'Search within organizations',
   },
 ];
 
@@ -153,26 +153,26 @@ type CaseResolverPageViewProps = {
   handleClosePromptExploderProposalModal: () => void;
   handleApplyPromptExploderProposal: () => void;
   updatePromptExploderProposalAction: (
-    role: "addresser" | "addressee",
+    role: 'addresser' | 'addressee',
     action: CaseResolverCaptureAction,
   ) => void;
   updatePromptExploderProposalReference: (
-    role: "addresser" | "addressee",
+    role: 'addresser' | 'addressee',
     value: string,
   ) => void;
   updatePromptExploderProposalDateAction: (
     action: CaseResolverCaptureDocumentDateAction,
   ) => void;
   resolvePromptExploderMatchedPartyLabel: (
-    reference: CaseResolverCaptureProposalState["addresser"] extends infer T
+    reference: CaseResolverCaptureProposalState['addresser'] extends infer T
       ? T extends { existingReference?: infer R | null }
         ? R | null | undefined
         : null | undefined
       : null | undefined,
   ) => string;
   captureApplyDiagnostics: {
-    status: "idle" | "success" | "failed";
-    stage: "precheck" | "mutation" | "rebase" | null;
+    status: 'idle' | 'success' | 'failed';
+    stage: 'precheck' | 'mutation' | 'rebase' | null;
     message: string;
     targetFileId: string | null;
     resolvedTargetFileId: string | null;
@@ -189,12 +189,12 @@ const formatHistoryTimestamp = (value: string): string => {
   const parsed = Date.parse(value);
   if (!Number.isFinite(parsed)) return value;
   return new Intl.DateTimeFormat(undefined, {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
   }).format(parsed);
 };
 
@@ -207,11 +207,11 @@ export function CaseResolverPageView(
   const router = useRouter();
   const [showMarkdownPreview, setShowMarkdownPreview] = React.useState(true);
   const [addresserPartySearchKind, setAddresserPartySearchKind] =
-    React.useState<PartySearchKind>("person");
+    React.useState<PartySearchKind>('person');
   const [addresseePartySearchKind, setAddresseePartySearchKind] =
-    React.useState<PartySearchKind>("organization");
-  const [addresserPartyQuery, setAddresserPartyQuery] = React.useState("");
-  const [addresseePartyQuery, setAddresseePartyQuery] = React.useState("");
+    React.useState<PartySearchKind>('organization');
+  const [addresserPartyQuery, setAddresserPartyQuery] = React.useState('');
+  const [addresseePartyQuery, setAddresseePartyQuery] = React.useState('');
   const {
     state,
     workspaceView,
@@ -297,6 +297,7 @@ export function CaseResolverPageView(
     handleCreateScanFile,
     handleCreateNodeFile,
     handleCreateImageAsset,
+    handleCreateDocumentFromText,
     handleUploadScanFiles,
     handleRunScanFileOcr,
     handleUploadAssets,
@@ -327,26 +328,26 @@ export function CaseResolverPageView(
   } = state;
   React.useEffect(() => {
     const fallbackAddresserKind =
-      caseResolverSettings.defaultAddresserPartyKind === "organization"
-        ? "organization"
-        : "person";
+      caseResolverSettings.defaultAddresserPartyKind === 'organization'
+        ? 'organization'
+        : 'person';
     const fallbackAddresseeKind =
-      caseResolverSettings.defaultAddresseePartyKind === "person"
-        ? "person"
-        : "organization";
+      caseResolverSettings.defaultAddresseePartyKind === 'person'
+        ? 'person'
+        : 'organization';
     const resolvedAddresserKind =
       editingDocumentDraft?.addresser?.kind ?? fallbackAddresserKind;
     const resolvedAddresseeKind =
       editingDocumentDraft?.addressee?.kind ?? fallbackAddresseeKind;
 
     setAddresserPartySearchKind(
-      resolvedAddresserKind === "organization" ? "organization" : "person",
+      resolvedAddresserKind === 'organization' ? 'organization' : 'person',
     );
     setAddresseePartySearchKind(
-      resolvedAddresseeKind === "person" ? "person" : "organization",
+      resolvedAddresseeKind === 'person' ? 'person' : 'organization',
     );
-    setAddresserPartyQuery("");
-    setAddresseePartyQuery("");
+    setAddresserPartyQuery('');
+    setAddresseePartyQuery('');
   }, [
     caseResolverSettings.defaultAddresseePartyKind,
     caseResolverSettings.defaultAddresserPartyKind,
@@ -365,9 +366,9 @@ export function CaseResolverPageView(
       const selectedValue = encodeFilemakerPartyReference(selectedReference);
 
       const filtered = partyOptions.filter((option): boolean => {
-        if (option.value === "none") {
+        if (option.value === 'none') {
           if (!normalizedQuery) return true;
-          return "none".includes(normalizedQuery);
+          return 'none'.includes(normalizedQuery);
         }
         const optionReference = decodeFilemakerPartyReference(option.value);
         if (!optionReference) return false;
@@ -375,13 +376,13 @@ export function CaseResolverPageView(
         if (optionReference.kind !== kind && !isSelected) return false;
         if (!normalizedQuery) return true;
         const searchSource =
-          `${option.label} ${option.description ?? ""}`.toLowerCase();
+          `${option.label} ${option.description ?? ''}`.toLowerCase();
         return searchSource.includes(normalizedQuery);
       });
 
       if (
         selectedValue &&
-        selectedValue !== "none" &&
+        selectedValue !== 'none' &&
         !filtered.some((option) => option.value === selectedValue)
       ) {
         const selectedOption = partyOptions.find(
@@ -398,14 +399,14 @@ export function CaseResolverPageView(
   const canApplyPendingPromptOutput = Boolean(pendingPromptExploderPayload);
   const hasExpiredPromptTransfer =
     !pendingPromptExploderPayload &&
-    promptExploderApplyDiagnostics?.status === "expired";
+    promptExploderApplyDiagnostics?.status === 'expired';
   const pendingPromptTransferId =
     pendingPromptExploderPayload?.transferId?.trim() ??
     promptExploderApplyDiagnostics?.transferId?.trim() ??
-    "";
+    '';
   const promptTransferStatus =
     promptExploderApplyDiagnostics?.status ??
-    (pendingPromptExploderPayload ? "pending" : "idle");
+    (pendingPromptExploderPayload ? 'pending' : 'idle');
   const promptTransferStatusLabel =
     resolvePromptExploderTransferStatusLabel(promptTransferStatus);
   const pendingPromptTransferCreatedAt =
@@ -415,11 +416,11 @@ export function CaseResolverPageView(
   const pendingPromptExploderContextFileId =
     pendingPromptExploderPayload?.caseResolverContext?.fileId?.trim() ??
     promptExploderApplyDiagnostics?.requestedTargetFileId?.trim() ??
-    "";
+    '';
   const pendingPromptExploderSessionId =
-    pendingPromptExploderPayload?.caseResolverContext?.sessionId?.trim() ?? "";
-  const requestedContextFileId = requestedFileId?.trim() ?? "";
-  const requestedSessionId = requestedPromptExploderSessionId?.trim() ?? "";
+    pendingPromptExploderPayload?.caseResolverContext?.sessionId?.trim() ?? '';
+  const requestedContextFileId = requestedFileId?.trim() ?? '';
+  const requestedSessionId = requestedPromptExploderSessionId?.trim() ?? '';
   const hasPendingPromptExploderDocumentMismatch = Boolean(
     pendingPromptExploderPayload &&
     shouldOpenEditorFromQuery &&
@@ -433,9 +434,9 @@ export function CaseResolverPageView(
     pendingPromptExploderSessionId !== requestedSessionId,
   );
   const promptExploderMismatchReason = hasPendingPromptExploderDocumentMismatch
-    ? "document"
+    ? 'document'
     : hasPendingPromptExploderSessionMismatch
-      ? "session"
+      ? 'session'
       : null;
   const hasBlockingPendingPromptExploderMismatch =
     promptExploderMismatchReason !== null;
@@ -469,10 +470,10 @@ export function CaseResolverPageView(
   const handleOpenPromptExploderTargetDocument = useCallback((): void => {
     if (!pendingPromptExploderContextFileId) return;
     const params = new URLSearchParams();
-    params.set("openEditor", "1");
-    params.set("fileId", pendingPromptExploderContextFileId);
+    params.set('openEditor', '1');
+    params.set('fileId', pendingPromptExploderContextFileId);
     if (pendingPromptExploderSessionId.length > 0) {
-      params.set("promptExploderSessionId", pendingPromptExploderSessionId);
+      params.set('promptExploderSessionId', pendingPromptExploderSessionId);
     }
     router.push(`/admin/case-resolver?${params.toString()}`);
   }, [
@@ -482,7 +483,7 @@ export function CaseResolverPageView(
   ]);
   const showPromptExploderManualRetry = Boolean(
     pendingPromptExploderPayload &&
-    promptExploderApplyDiagnostics?.status === "failed",
+    promptExploderApplyDiagnostics?.status === 'failed',
   );
   const showPromptExploderTransferCard = Boolean(
     pendingPromptExploderPayload || hasExpiredPromptTransfer,
@@ -523,22 +524,22 @@ export function CaseResolverPageView(
 
   const configuredScanOcrModel = caseResolverSettings.ocrModel.trim();
   const scanOcrProviderLabel = React.useMemo((): string => {
-    if (!configuredScanOcrModel) return "Not set";
+    if (!configuredScanOcrModel) return 'Not set';
     return resolveCaseResolverOcrProviderLabel(configuredScanOcrModel);
   }, [configuredScanOcrModel]);
   const activeCaseFile = React.useMemo((): CaseResolverFile | null => {
     if (activeCaseId) {
       const activeCase = workspace.files.find(
         (file: CaseResolverFile): boolean =>
-          file.id === activeCaseId && file.fileType === "case",
+          file.id === activeCaseId && file.fileType === 'case',
       );
       if (activeCase) return activeCase;
     }
-    if (activeFile?.fileType === "case") return activeFile;
+    if (activeFile?.fileType === 'case') return activeFile;
     if (activeFile?.parentCaseId) {
       const parentCase = workspace.files.find(
         (file: CaseResolverFile): boolean =>
-          file.id === activeFile.parentCaseId && file.fileType === "case",
+          file.id === activeFile.parentCaseId && file.fileType === 'case',
       );
       if (parentCase) return parentCase;
     }
@@ -548,13 +549,13 @@ export function CaseResolverPageView(
     selectedFileId || selectedAssetId || selectedFolderPath !== null,
   );
   const showCaseOverviewWorkspace =
-    workspaceView === "document" &&
-    (!hasExplicitTreeSelection || activeFile?.fileType === "case");
+    workspaceView === 'document' &&
+    (!hasExplicitTreeSelection || activeFile?.fileType === 'case');
   const connectedNodeCanvasLinks = React.useMemo((): Array<{
     assetId: string;
     label: string;
   }> => {
-    if (!editingDocumentDraft || editingDocumentDraft.fileType === "case") {
+    if (!editingDocumentDraft || editingDocumentDraft.fileType === 'case') {
       return [];
     }
     const relationIndex = buildCaseResolverNodeFileRelationIndexFromAssets({
@@ -571,7 +572,7 @@ export function CaseResolverPageView(
       )
       .filter(
         (asset): asset is NonNullable<typeof asset> =>
-          asset !== null && asset.kind === "node_file",
+          asset !== null && asset.kind === 'node_file',
       )
       .map((asset) => ({
         assetId: asset.id,
@@ -583,7 +584,7 @@ export function CaseResolverPageView(
       const draftFileId = editingDocumentDraft?.id ?? null;
       const openLinkedCanvas = (): void => {
         handleDiscardFileEditorDraft();
-        setWorkspaceView("document");
+        setWorkspaceView('document');
         handleSelectAsset(assetId);
         if (!draftFileId) return;
         window.setTimeout((): void => {
@@ -596,11 +597,11 @@ export function CaseResolverPageView(
 
       if (editingDocumentDraft && isEditorDraftDirty) {
         confirmAction({
-          title: "Unsaved Changes",
+          title: 'Unsaved Changes',
           message:
-            "You have unsaved changes in this document. Keep editing or discard and open linked canvas?",
-          cancelText: "Keep Editing",
-          confirmText: "Discard + Open Canvas",
+            'You have unsaved changes in this document. Keep editing or discard and open linked canvas?',
+          cancelText: 'Keep Editing',
+          confirmText: 'Discard + Open Canvas',
           isDangerous: true,
           onConfirm: openLinkedCanvas,
         });
@@ -620,13 +621,13 @@ export function CaseResolverPageView(
   );
 
   const handleCreateDocumentFromSearch = useCallback((): void => {
-    setActiveMainView("workspace");
+    setActiveMainView('workspace');
     handleCreateFile(null);
   }, [handleCreateFile, setActiveMainView]);
 
   const handleOpenFileFromSearch = useCallback(
     (id: string): void => {
-      setActiveMainView("workspace");
+      setActiveMainView('workspace');
       handleSelectFile(id);
     },
     [handleSelectFile, setActiveMainView],
@@ -634,7 +635,7 @@ export function CaseResolverPageView(
 
   const handleEditFileFromSearch = useCallback(
     (id: string): void => {
-      setActiveMainView("workspace");
+      setActiveMainView('workspace');
       handleOpenFileEditor(id);
     },
     [handleOpenFileEditor, setActiveMainView],
@@ -644,12 +645,12 @@ export function CaseResolverPageView(
       patch: Partial<
         Pick<
           CaseResolverFile,
-          | "name"
-          | "parentCaseId"
-          | "referenceCaseIds"
-          | "tagId"
-          | "caseIdentifierId"
-          | "categoryId"
+          | 'name'
+          | 'parentCaseId'
+          | 'referenceCaseIds'
+          | 'tagId'
+          | 'caseIdentifierId'
+          | 'categoryId'
         >
       >,
     ): void => {
@@ -660,37 +661,37 @@ export function CaseResolverPageView(
         (current) => {
           const currentCase = current.files.find(
             (file: CaseResolverFile): boolean =>
-              file.id === activeCaseFile.id && file.fileType === "case",
+              file.id === activeCaseFile.id && file.fileType === 'case',
           );
           if (!currentCase || currentCase.isLocked) return current;
 
           const hasNamePatch = Object.prototype.hasOwnProperty.call(
             patch,
-            "name",
+            'name',
           );
           const hasParentCasePatch = Object.prototype.hasOwnProperty.call(
             patch,
-            "parentCaseId",
+            'parentCaseId',
           );
           const hasReferencePatch = Object.prototype.hasOwnProperty.call(
             patch,
-            "referenceCaseIds",
+            'referenceCaseIds',
           );
           const hasTagPatch = Object.prototype.hasOwnProperty.call(
             patch,
-            "tagId",
+            'tagId',
           );
           const hasCaseIdentifierPatch = Object.prototype.hasOwnProperty.call(
             patch,
-            "caseIdentifierId",
+            'caseIdentifierId',
           );
           const hasCategoryPatch = Object.prototype.hasOwnProperty.call(
             patch,
-            "categoryId",
+            'categoryId',
           );
 
           const nextName = hasNamePatch
-            ? patch.name?.trim() || currentCase.name || "Untitled Case"
+            ? patch.name?.trim() || currentCase.name || 'Untitled Case'
             : currentCase.name;
           const rawParentCaseId = hasParentCasePatch
             ? (patch.parentCaseId ?? null)
@@ -702,15 +703,15 @@ export function CaseResolverPageView(
             nextParentCaseId === currentCase.id ? null : nextParentCaseId;
           const nextReferenceCaseIds = hasReferencePatch
             ? Array.from(
-                new Set(
-                  (patch.referenceCaseIds ?? [])
-                    .map((value: string): string => value.trim())
-                    .filter(
-                      (value: string): boolean =>
-                        value.length > 0 && value !== currentCase.id,
-                    ),
-                ),
-              )
+              new Set(
+                (patch.referenceCaseIds ?? [])
+                  .map((value: string): string => value.trim())
+                  .filter(
+                    (value: string): boolean =>
+                      value.length > 0 && value !== currentCase.id,
+                  ),
+              ),
+            )
             : currentCase.referenceCaseIds;
           const nextTagId = hasTagPatch
             ? patch.tagId?.trim() || null
@@ -741,21 +742,21 @@ export function CaseResolverPageView(
               (file: CaseResolverFile): CaseResolverFile =>
                 file.id === currentCase.id
                   ? {
-                      ...file,
-                      name: nextName,
-                      parentCaseId: normalizedParentCaseId,
-                      referenceCaseIds: nextReferenceCaseIds,
-                      tagId: nextTagId,
-                      caseIdentifierId: nextCaseIdentifierId,
-                      categoryId: nextCategoryId,
-                      updatedAt: now,
-                    }
+                    ...file,
+                    name: nextName,
+                    parentCaseId: normalizedParentCaseId,
+                    referenceCaseIds: nextReferenceCaseIds,
+                    tagId: nextTagId,
+                    caseIdentifierId: nextCaseIdentifierId,
+                    categoryId: nextCategoryId,
+                    updatedAt: now,
+                  }
                   : file,
             ),
           };
         },
         {
-          source: "case_view_case_metadata",
+          source: 'case_view_case_metadata',
         },
       );
     },
@@ -763,9 +764,22 @@ export function CaseResolverPageView(
   );
   const isEditingDocumentLocked = editingDocumentDraft?.isLocked === true;
   const fileEditorTitle =
-    editingDocumentDraft?.fileType === "scanfile"
-      ? "Edit Scan"
-      : "Edit Document";
+    editingDocumentDraft?.fileType === 'scanfile'
+      ? 'Edit Scan'
+      : 'Edit Document';
+  const scanfileMarkdownPreview = React.useMemo((): string => {
+    if (!editingDocumentDraft || editingDocumentDraft.fileType !== 'scanfile') {
+      return '';
+    }
+    const markdown = editingDocumentDraft.documentContentMarkdown ?? '';
+    if (markdown.trim().length > 0) return markdown;
+    const plainText = editingDocumentDraft.documentContentPlainText ?? '';
+    if (plainText.trim().length > 0) return plainText;
+    return (editingDocumentDraft.scanSlots ?? [])
+      .map((slot) => slot.ocrText.trim())
+      .filter((value: string): boolean => value.length > 0)
+      .join('\n\n');
+  }, [editingDocumentDraft]);
   const clearDocumentSelection = useCallback((): void => {
     setSelectedFileId(null);
     setSelectedAssetId(null);
@@ -783,16 +797,16 @@ export function CaseResolverPageView(
           activeFileId: nextActiveFileId,
         };
       });
-      setWorkspaceView("document");
+      setWorkspaceView('document');
     };
 
     if (editingDocumentDraft && isEditorDraftDirty) {
       confirmAction({
-        title: "Unsaved Changes",
+        title: 'Unsaved Changes',
         message:
-          "You have unsaved changes in this document. Keep editing or discard and switch to case options?",
-        cancelText: "Keep Editing",
-        confirmText: "Discard + Switch",
+          'You have unsaved changes in this document. Keep editing or discard and switch to case options?',
+        cancelText: 'Keep Editing',
+        confirmText: 'Discard + Switch',
         isDangerous: true,
         onConfirm: deactivate,
       });
@@ -815,10 +829,10 @@ export function CaseResolverPageView(
   const confirmLeaveWithUnsavedChanges = useCallback(
     (onConfirm: () => void): void => {
       confirmAction({
-        title: "Unsaved Changes",
+        title: 'Unsaved Changes',
         message:
-          "You have unsaved Case Resolver changes. Leave this page without saving?",
-        confirmText: "Leave",
+          'You have unsaved Case Resolver changes. Leave this page without saving?',
+        confirmText: 'Leave',
         onConfirm,
       });
     },
@@ -834,10 +848,10 @@ export function CaseResolverPageView(
         return;
       const rawTarget = event.target;
       if (!(rawTarget instanceof Element)) return;
-      const anchor = rawTarget.closest("a[href]");
+      const anchor = rawTarget.closest('a[href]');
       if (!(anchor instanceof HTMLAnchorElement)) return;
-      const href = anchor.getAttribute("href")?.trim() ?? "";
-      if (!href || href.startsWith("#") || href.startsWith("javascript:"))
+      const href = anchor.getAttribute('href')?.trim() ?? '';
+      if (!href || href.startsWith('#') || href.startsWith('javascript:'))
         return;
       const current = new URL(window.location.href);
       const next = new URL(anchor.href, current.href);
@@ -856,9 +870,9 @@ export function CaseResolverPageView(
         window.location.href = anchor.href;
       });
     };
-    document.addEventListener("click", handleDocumentClick, true);
+    document.addEventListener('click', handleDocumentClick, true);
     return (): void => {
-      document.removeEventListener("click", handleDocumentClick, true);
+      document.removeEventListener('click', handleDocumentClick, true);
     };
   }, [confirmLeaveWithUnsavedChanges, hasUnsavedChanges]);
 
@@ -871,9 +885,9 @@ export function CaseResolverPageView(
       });
       window.history.go(1);
     };
-    window.addEventListener("popstate", handlePopState);
+    window.addEventListener('popstate', handlePopState);
     return (): void => {
-      window.removeEventListener("popstate", handlePopState);
+      window.removeEventListener('popstate', handlePopState);
     };
   }, [confirmLeaveWithUnsavedChanges, hasUnsavedChanges]);
 
@@ -883,7 +897,7 @@ export function CaseResolverPageView(
         (event.metaKey || event.ctrlKey) &&
         !event.altKey &&
         !event.shiftKey &&
-        event.key.toLowerCase() === "s";
+        event.key.toLowerCase() === 's';
       if (!isSaveShortcut) return;
       event.preventDefault();
       if (editingDocumentDraft) {
@@ -893,9 +907,9 @@ export function CaseResolverPageView(
       if (isWorkspaceSaving) return;
       handleSaveWorkspace();
     };
-    window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
     return (): void => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, [
     editingDocumentDraft,
@@ -905,11 +919,11 @@ export function CaseResolverPageView(
   ]);
 
   React.useEffect(() => {
-    if (editingDocumentDraft?.editorType !== "markdown") return;
+    if (editingDocumentDraft?.editorType !== 'markdown') return;
     setShowMarkdownPreview(true);
   }, [editingDocumentDraft?.id, editingDocumentDraft?.editorType]);
   React.useEffect(() => {
-    if (workspaceView !== "document") return;
+    if (workspaceView !== 'document') return;
     if (!selectedFileId) {
       lastInlineEditorAutoOpenFileIdRef.current = null;
       return;
@@ -921,7 +935,7 @@ export function CaseResolverPageView(
     const selectedFile = workspace.files.find(
       (file: CaseResolverFile): boolean => file.id === selectedFileId,
     );
-    if (!selectedFile || selectedFile.fileType === "case") return;
+    if (!selectedFile || selectedFile.fileType === 'case') return;
     if (lastInlineEditorAutoOpenFileIdRef.current === selectedFileId) return;
     lastInlineEditorAutoOpenFileIdRef.current = selectedFileId;
     handleOpenFileEditor(selectedFileId);
@@ -964,7 +978,7 @@ export function CaseResolverPageView(
         onCreateImageAsset: handleCreateImageAsset,
         onCreateNodeFile: (targetFolderPath) => {
           handleCreateNodeFile(targetFolderPath);
-          setWorkspaceView("document");
+          setWorkspaceView('document');
         },
         onUploadScanFiles: handleUploadScanFiles,
         onRunScanFileOcr: handleRunScanFileOcr,
@@ -992,36 +1006,18 @@ export function CaseResolverPageView(
         onRelationGraphChange: handleRelationGraphChange,
       }}
     >
-      <div className="flex h-full flex-col overflow-hidden bg-background">
-        <div className="flex flex-1 overflow-hidden">
+      <div className='flex h-full flex-col overflow-hidden bg-background'>
+        <div className='flex flex-1 overflow-hidden'>
           {!folderPanelCollapsed && (
-            <div className="w-80 flex-shrink-0 border-r border-border bg-card/20">
+            <div className='w-80 flex-shrink-0 border-r border-border bg-card/20'>
               <CaseResolverFolderTree />
             </div>
           )}
 
-          <div className="flex flex-1 flex-col overflow-hidden p-6">
-            <div className="mb-4 flex items-center justify-end">
-              <Button
-                type="button"
-                size="sm"
-                variant={showCaseOverviewWorkspace ? "default" : "outline"}
-                onClick={handleDeactivateActiveFile}
-                disabled={
-                  showCaseOverviewWorkspace &&
-                  !editingDocumentDraft &&
-                  selectedAssetId === null &&
-                  selectedFileId === null &&
-                  selectedFolderPath === null
-                }
-              >
-                Case Options
-              </Button>
-            </div>
-
-            {selectedAsset?.kind === "node_file" ? (
+          <div className='flex flex-1 flex-col overflow-hidden p-6'>
+            {selectedAsset?.kind === 'node_file' ? (
               <CaseResolverNodeFileWorkspace />
-            ) : workspaceView === "relations" ? (
+            ) : workspaceView === 'relations' ? (
               <CaseResolverRelationsWorkspace
                 focusCaseId={activeCaseFile?.id ?? activeCaseId}
               />
@@ -1038,68 +1034,71 @@ export function CaseResolverPageView(
             ) : selectedAsset ? (
               <CaseResolverFileViewer />
             ) : editingDocumentDraft ? (
-              <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto pr-1">
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                  <div className="min-w-0">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <Button
-                        type="button"
-                        onClick={handleSaveFileEditor}
-                        size="sm"
-                        disabled={
-                          !isEditorDraftDirty || isEditingDocumentLocked
-                        }
-                        variant={isEditorDraftDirty ? "success" : "default"}
-                        className="min-w-[100px]"
-                      >
-                        Save Changes
-                      </Button>
-                      <h2 className="truncate text-2xl font-bold tracking-tight text-white">
+              <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-auto pr-1'>
+                <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
+                  <div className='min-w-0'>
+                    <div className='flex min-w-0 items-center gap-2'>
+                      <h2 className='truncate text-2xl font-bold tracking-tight text-white'>
                         {fileEditorTitle}
                       </h2>
                       {isEditingDocumentLocked ? (
                         <Badge
-                          variant="outline"
-                          className="border-amber-500/50 text-amber-200"
+                          variant='outline'
+                          className='border-amber-500/50 text-amber-200'
                         >
                           Locked · View only
                         </Badge>
                       ) : null}
                     </div>
                   </div>
-                  <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                  <div className='ml-auto flex flex-wrap items-center justify-end gap-2'>
                     <Button
-                      type="button"
+                      type='button'
+                      size='sm'
+                      onClick={handleSaveFileEditor}
+                      disabled={
+                        !isEditorDraftDirty || isEditingDocumentLocked
+                      }
+                      className={`h-8 min-w-[100px] rounded-md border text-xs transition-colors ${
+                        isEditorDraftDirty
+                          ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
+                          : 'border-border/60 text-gray-500 hover:bg-transparent'
+                      }`}
+                    >
+                      Update
+                    </Button>
+                    <Button
+                      type='button'
                       onClick={handlePreviewDraftPdf}
-                      variant="outline"
-                      className="min-w-[110px]"
+                      variant='outline'
+                      className='min-w-[110px]'
                     >
                       Preview PDF
                     </Button>
                     <Button
-                      type="button"
+                      type='button'
                       onClick={handlePrintDraftDocument}
-                      variant="outline"
-                      className="min-w-[84px]"
+                      variant='outline'
+                      className='min-w-[84px]'
                     >
                       Print
                     </Button>
                     <Button
-                      type="button"
+                      type='button'
                       onClick={(): void => {
                         void handleExportDraftPdf();
                       }}
-                      variant="outline"
-                      className="min-w-[98px]"
+                      variant='outline'
+                      className='min-w-[98px]'
                     >
                       Export PDF
                     </Button>
                   </div>
                 </div>
-                <div className="space-y-4">
-                  {editingDocumentDraft.fileType === "scanfile" ? (
+                <div className='space-y-4'>
+                  {editingDocumentDraft.fileType === 'scanfile' ? (
                     <FileUploadTrigger
-                      accept="image/*,application/pdf,.pdf"
+                      accept='image/*,application/pdf,.pdf'
                       onFilesSelected={(files) =>
                         handleUploadScanFiles(editingDocumentDraft.id, files)
                       }
@@ -1110,33 +1109,33 @@ export function CaseResolverPageView(
                       asChild
                     >
                       <Card
-                        variant="subtle"
-                        padding="sm"
+                        variant='subtle'
+                        padding='sm'
                         className={`transition ${
                           isScanDraftDropActive
-                            ? "border-cyan-500/70 bg-cyan-500/10"
-                            : "bg-card/30"
+                            ? 'border-cyan-500/70 bg-cyan-500/10'
+                            : 'bg-card/30'
                         }`}
                       >
-                        <div className="flex flex-wrap items-center gap-2">
-                          <div className="text-xs font-medium text-gray-200">
+                        <div className='flex flex-wrap items-center gap-2'>
+                          <div className='text-xs font-medium text-gray-200'>
                             Document Slots
                           </div>
-                          <div className="ml-auto flex items-center gap-2">
+                          <div className='ml-auto flex items-center gap-2'>
                             <Button
-                              type="button"
+                              type='button'
                               disabled={
                                 isUploadingScanDraftFiles ||
                                 isEditingDocumentLocked
                               }
-                              className="h-8 rounded-md border border-border text-xs text-gray-100 hover:bg-muted/60 disabled:opacity-60"
+                              className='h-8 rounded-md border border-border text-xs text-gray-100 hover:bg-muted/60 disabled:opacity-60'
                             >
                               {isUploadingScanDraftFiles
-                                ? "Uploading..."
-                                : "Upload Files"}
+                                ? 'Uploading...'
+                                : 'Upload Files'}
                             </Button>
                             <Button
-                              type="button"
+                              type='button'
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleRunScanDraftOcr();
@@ -1148,110 +1147,110 @@ export function CaseResolverPageView(
                                 uploadingScanSlotId !== null ||
                                 isEditingDocumentLocked
                               }
-                              className="h-8 rounded-md border border-cyan-500/40 text-xs text-cyan-100 hover:bg-cyan-500/15 disabled:opacity-60"
+                              className='h-8 rounded-md border border-cyan-500/40 text-xs text-cyan-100 hover:bg-cyan-500/15 disabled:opacity-60'
                             >
                               {uploadingScanSlotId !== null
-                                ? "Running OCR..."
-                                : "Run OCR"}
+                                ? 'Running OCR...'
+                                : 'Run OCR'}
                             </Button>
                           </div>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500">
+                        <div className='mt-2 flex flex-wrap items-center gap-2 text-[11px] text-gray-500'>
                           <span>
                             OCR model and prompt are controlled in Case Resolver
                             Settings.
                           </span>
                           <Badge
-                            variant="outline"
-                            className="px-1.5 py-0 text-[9px] uppercase tracking-wide"
+                            variant='outline'
+                            className='px-1.5 py-0 text-[9px] uppercase tracking-wide'
                           >
                             {scanOcrProviderLabel}
                           </Badge>
-                          <span className="font-mono text-[10px] text-gray-400">
+                          <span className='font-mono text-[10px] text-gray-400'>
                             {configuredScanOcrModel ||
-                              "No OCR model configured"}
+                              'No OCR model configured'}
                           </span>
                         </div>
-                        <div className="mt-1 text-[11px] text-gray-500">
+                        <div className='mt-1 text-[11px] text-gray-500'>
                           Drag and drop image or PDF files here, or use Upload
                           Files.
                         </div>
-                        <div className="mt-2 max-h-32 space-y-1 overflow-auto pr-1">
+                        <div className='mt-2 max-h-32 space-y-1 overflow-auto pr-1'>
                           {(editingDocumentDraft.scanSlots ?? []).length ===
                           0 ? (
-                            <div className="rounded border border-dashed border-border/60 px-2 py-1.5 text-[11px] text-gray-500">
+                              <div className='rounded border border-dashed border-border/60 px-2 py-1.5 text-[11px] text-gray-500'>
                               No files uploaded yet.
-                            </div>
-                          ) : (
-                            (editingDocumentDraft.scanSlots ?? []).map(
-                              (slot) => {
-                                const statusLabel =
-                                  uploadingScanSlotId === "all" ||
+                              </div>
+                            ) : (
+                              (editingDocumentDraft.scanSlots ?? []).map(
+                                (slot) => {
+                                  const statusLabel =
+                                  uploadingScanSlotId === 'all' ||
                                   uploadingScanSlotId === slot.id
-                                    ? "Processing OCR..."
+                                    ? 'Processing OCR...'
                                     : slot.ocrError
-                                      ? "OCR failed"
+                                      ? 'OCR failed'
                                       : slot.ocrText.trim().length > 0
-                                        ? "OCR extracted"
-                                        : "OCR pending";
-                                return (
-                                  <Card
-                                    key={slot.id}
-                                    variant="subtle-compact"
-                                    padding="none"
-                                    className="flex items-center justify-between gap-2 bg-card/30 px-2 py-1.5 text-[11px]"
-                                  >
-                                    <div className="min-w-0">
-                                      <div className="truncate text-gray-200">
-                                        {slot.name || "Untitled file"}
-                                      </div>
-                                      <div className="text-gray-500">
-                                        {statusLabel}
-                                      </div>
-                                      {slot.ocrError ? (
-                                        <div
-                                          className="truncate text-[10px] text-red-300"
-                                          title={slot.ocrError}
-                                        >
-                                          {slot.ocrError}
+                                        ? 'OCR extracted'
+                                        : 'OCR pending';
+                                  return (
+                                    <Card
+                                      key={slot.id}
+                                      variant='subtle-compact'
+                                      padding='none'
+                                      className='flex items-center justify-between gap-2 bg-card/30 px-2 py-1.5 text-[11px]'
+                                    >
+                                      <div className='min-w-0'>
+                                        <div className='truncate text-gray-200'>
+                                          {slot.name || 'Untitled file'}
                                         </div>
-                                      ) : null}
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                      {slot.filepath ? (
-                                        <a
-                                          href={slot.filepath}
-                                          target="_blank"
-                                          rel="noreferrer"
-                                          className="text-cyan-200 hover:text-cyan-100"
-                                          onClick={(e) => e.stopPropagation()}
-                                        >
+                                        <div className='text-gray-500'>
+                                          {statusLabel}
+                                        </div>
+                                        {slot.ocrError ? (
+                                          <div
+                                            className='truncate text-[10px] text-red-300'
+                                            title={slot.ocrError}
+                                          >
+                                            {slot.ocrError}
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                      <div className='flex items-center gap-2'>
+                                        {slot.filepath ? (
+                                          <a
+                                            href={slot.filepath}
+                                            target='_blank'
+                                            rel='noreferrer'
+                                            className='text-cyan-200 hover:text-cyan-100'
+                                            onClick={(e) => e.stopPropagation()}
+                                          >
                                           Open
-                                        </a>
-                                      ) : null}
-                                      <Button
-                                        type="button"
-                                        variant="ghost"
-                                        size="xs"
-                                        disabled={
-                                          isUploadingScanDraftFiles ||
+                                          </a>
+                                        ) : null}
+                                        <Button
+                                          type='button'
+                                          variant='ghost'
+                                          size='xs'
+                                          disabled={
+                                            isUploadingScanDraftFiles ||
                                           uploadingScanSlotId !== null ||
                                           isEditingDocumentLocked
-                                        }
-                                        className="h-6 px-2 text-[10px] text-red-300 hover:bg-red-500/10 hover:text-red-200"
-                                        onClick={(e): void => {
-                                          e.stopPropagation();
-                                          handleDeleteScanDraftSlot(slot.id);
-                                        }}
-                                      >
+                                          }
+                                          className='h-6 px-2 text-[10px] text-red-300 hover:bg-red-500/10 hover:text-red-200'
+                                          onClick={(e): void => {
+                                            e.stopPropagation();
+                                            handleDeleteScanDraftSlot(slot.id);
+                                          }}
+                                        >
                                         Delete
-                                      </Button>
-                                    </div>
-                                  </Card>
-                                );
-                              },
-                            )
-                          )}
+                                        </Button>
+                                      </div>
+                                    </Card>
+                                  );
+                                },
+                              )
+                            )}
                         </div>
                       </Card>
                     </FileUploadTrigger>
@@ -1261,34 +1260,34 @@ export function CaseResolverPageView(
                     value={editorDetailsTab}
                     onValueChange={(value: string): void => {
                       if (
-                        value === "document" ||
-                        value === "relations" ||
-                        value === "metadata" ||
-                        value === "revisions"
+                        value === 'document' ||
+                        value === 'relations' ||
+                        value === 'metadata' ||
+                        value === 'revisions'
                       ) {
                         setEditorDetailsTab(value);
                       }
                     }}
-                    className="space-y-3"
+                    className='space-y-3'
                   >
-                    <TabsList className="h-9">
-                      <TabsTrigger value="document" className="text-xs">
+                    <TabsList className='h-9'>
+                      <TabsTrigger value='document' className='text-xs'>
                         Document
                       </TabsTrigger>
-                      <TabsTrigger value="relations" className="text-xs">
+                      <TabsTrigger value='relations' className='text-xs'>
                         Relations
                       </TabsTrigger>
-                      <TabsTrigger value="metadata" className="text-xs">
+                      <TabsTrigger value='metadata' className='text-xs'>
                         Case Metadata
                       </TabsTrigger>
-                      <TabsTrigger value="revisions" className="text-xs">
+                      <TabsTrigger value='revisions' className='text-xs'>
                         Revisions
                       </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="document" className="mt-0">
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <FormField label="Name">
+                    <TabsContent value='document' className='mt-0'>
+                      <div className='grid gap-3 md:grid-cols-2'>
+                        <FormField label='Name'>
                           <Input
                             value={editingDocumentDraft.name}
                             disabled={isEditingDocumentLocked}
@@ -1300,9 +1299,9 @@ export function CaseResolverPageView(
                           />
                         </FormField>
 
-                        <FormField label="Document Date">
+                        <FormField label='Document Date'>
                           <Input
-                            type="date"
+                            type='date'
                             value={editingDocumentDraft.documentDate}
                             disabled={isEditingDocumentLocked}
                             onChange={(event) => {
@@ -1313,17 +1312,17 @@ export function CaseResolverPageView(
                           />
                         </FormField>
 
-                        <FormField label="Addresser">
-                          <div className="space-y-2">
-                            <div className="grid gap-2 md:grid-cols-[170px_minmax(0,1fr)]">
+                        <FormField label='Addresser'>
+                          <div className='space-y-2'>
+                            <div className='grid gap-2 md:grid-cols-[170px_minmax(0,1fr)]'>
                               <SelectSimple
-                                size="sm"
+                                size='sm'
                                 value={addresserPartySearchKind}
                                 disabled={isEditingDocumentLocked}
                                 onValueChange={(value: string): void => {
                                   if (
-                                    value !== "person" &&
-                                    value !== "organization"
+                                    value !== 'person' &&
+                                    value !== 'organization'
                                   )
                                     return;
                                   setAddresserPartySearchKind(value);
@@ -1331,8 +1330,8 @@ export function CaseResolverPageView(
                                 options={
                                   CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS
                                 }
-                                placeholder="Lookup scope"
-                                triggerClassName="h-9"
+                                placeholder='Lookup scope'
+                                triggerClassName='h-9'
                               />
                               <SearchInput
                                 value={addresserPartyQuery}
@@ -1341,15 +1340,15 @@ export function CaseResolverPageView(
                                   setAddresserPartyQuery(event.target.value);
                                 }}
                                 onClear={(): void => {
-                                  setAddresserPartyQuery("");
+                                  setAddresserPartyQuery('');
                                 }}
-                                placeholder="Search addresser"
-                                size="sm"
-                                className="h-9"
+                                placeholder='Search addresser'
+                                size='sm'
+                                className='h-9'
                               />
                             </div>
                             <SelectSimple
-                              size="sm"
+                              size='sm'
                               value={encodeFilemakerPartyReference(
                                 editingDocumentDraft.addresser,
                               )}
@@ -1367,15 +1366,15 @@ export function CaseResolverPageView(
                                 });
                               }}
                               options={addresserPartyOptions}
-                              placeholder="Select addresser"
-                              triggerClassName="h-9"
+                              placeholder='Select addresser'
+                              triggerClassName='h-9'
                             />
-                            <div className="flex justify-end">
+                            <div className='flex justify-end'>
                               <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 px-2 text-[11px] text-gray-400 hover:text-gray-200"
+                                type='button'
+                                variant='ghost'
+                                size='sm'
+                                className='h-6 px-2 text-[11px] text-gray-400 hover:text-gray-200'
                                 disabled={
                                   editingDocumentDraft.addresser === null ||
                                   isEditingDocumentLocked
@@ -1392,17 +1391,17 @@ export function CaseResolverPageView(
                           </div>
                         </FormField>
 
-                        <FormField label="Addressee">
-                          <div className="space-y-2">
-                            <div className="grid gap-2 md:grid-cols-[170px_minmax(0,1fr)]">
+                        <FormField label='Addressee'>
+                          <div className='space-y-2'>
+                            <div className='grid gap-2 md:grid-cols-[170px_minmax(0,1fr)]'>
                               <SelectSimple
-                                size="sm"
+                                size='sm'
                                 value={addresseePartySearchKind}
                                 disabled={isEditingDocumentLocked}
                                 onValueChange={(value: string): void => {
                                   if (
-                                    value !== "person" &&
-                                    value !== "organization"
+                                    value !== 'person' &&
+                                    value !== 'organization'
                                   )
                                     return;
                                   setAddresseePartySearchKind(value);
@@ -1410,8 +1409,8 @@ export function CaseResolverPageView(
                                 options={
                                   CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS
                                 }
-                                placeholder="Lookup scope"
-                                triggerClassName="h-9"
+                                placeholder='Lookup scope'
+                                triggerClassName='h-9'
                               />
                               <SearchInput
                                 value={addresseePartyQuery}
@@ -1420,15 +1419,15 @@ export function CaseResolverPageView(
                                   setAddresseePartyQuery(event.target.value);
                                 }}
                                 onClear={(): void => {
-                                  setAddresseePartyQuery("");
+                                  setAddresseePartyQuery('');
                                 }}
-                                placeholder="Search addressee"
-                                size="sm"
-                                className="h-9"
+                                placeholder='Search addressee'
+                                size='sm'
+                                className='h-9'
                               />
                             </div>
                             <SelectSimple
-                              size="sm"
+                              size='sm'
                               value={encodeFilemakerPartyReference(
                                 editingDocumentDraft.addressee,
                               )}
@@ -1446,15 +1445,15 @@ export function CaseResolverPageView(
                                 });
                               }}
                               options={addresseePartyOptions}
-                              placeholder="Select addressee"
-                              triggerClassName="h-9"
+                              placeholder='Select addressee'
+                              triggerClassName='h-9'
                             />
-                            <div className="flex justify-end">
+                            <div className='flex justify-end'>
                               <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 px-2 text-[11px] text-gray-400 hover:text-gray-200"
+                                type='button'
+                                variant='ghost'
+                                size='sm'
+                                className='h-6 px-2 text-[11px] text-gray-400 hover:text-gray-200'
                                 disabled={
                                   editingDocumentDraft.addressee === null ||
                                   isEditingDocumentLocked
@@ -1473,18 +1472,18 @@ export function CaseResolverPageView(
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="relations" className="mt-0">
-                      <div className="grid gap-3 md:grid-cols-2">
+                    <TabsContent value='relations' className='mt-0'>
+                      <div className='grid gap-3 md:grid-cols-2'>
                         <FormField
-                          label="Connected Node Canvases"
-                          className="md:col-span-2"
+                          label='Connected Node Canvases'
+                          className='md:col-span-2'
                         >
-                          <div className="mb-2 flex justify-end">
+                          <div className='mb-2 flex justify-end'>
                             <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="h-7 text-[11px]"
+                              type='button'
+                              variant='outline'
+                              size='sm'
+                              className='h-7 text-[11px]'
                               disabled={isEditingDocumentLocked}
                               onClick={(): void => {
                                 handleCreateNodeFile(
@@ -1496,19 +1495,19 @@ export function CaseResolverPageView(
                             </Button>
                           </div>
                           {connectedNodeCanvasLinks.length === 0 ? (
-                            <div className="rounded border border-dashed border-border/60 px-3 py-2 text-xs text-gray-500">
+                            <div className='rounded border border-dashed border-border/60 px-3 py-2 text-xs text-gray-500'>
                               Not connected to any node canvas yet. Add this
                               document to a node canvas to link it.
                             </div>
                           ) : (
-                            <div className="flex flex-wrap gap-2">
+                            <div className='flex flex-wrap gap-2'>
                               {connectedNodeCanvasLinks.map((entry) => (
                                 <Button
                                   key={entry.assetId}
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-7 text-[11px]"
+                                  type='button'
+                                  variant='outline'
+                                  size='sm'
+                                  className='h-7 text-[11px]'
                                   onClick={(): void => {
                                     handleOpenConnectedNodeCanvas(
                                       entry.assetId,
@@ -1523,32 +1522,32 @@ export function CaseResolverPageView(
                         </FormField>
 
                         <FormField
-                          label="Node Stream Settings"
-                          className="md:col-span-2"
+                          label='Node Stream Settings'
+                          className='md:col-span-2'
                         >
                           {editingDocumentNodeMeta ? (
-                            <div className="space-y-3 rounded border border-border/60 bg-card/25 p-3">
-                              <div className="text-[11px] text-gray-400">
-                                Active node:{" "}
-                                <span className="text-gray-200">
+                            <div className='space-y-3 rounded border border-border/60 bg-card/25 p-3'>
+                              <div className='text-[11px] text-gray-400'>
+                                Active node:{' '}
+                                <span className='text-gray-200'>
                                   {editingDocumentNodeMeta.nodeTitle}
-                                </span>{" "}
-                                in{" "}
-                                <span className="text-gray-200">
+                                </span>{' '}
+                                in{' '}
+                                <span className='text-gray-200'>
                                   {editingDocumentNodeMeta.canvasFileName}
                                 </span>
                               </div>
-                              <div className="grid gap-3 md:grid-cols-2">
-                                <FormField label="Quotation Wrapper">
+                              <div className='grid gap-3 md:grid-cols-2'>
+                                <FormField label='Quotation Wrapper'>
                                   <SelectSimple
-                                    size="sm"
+                                    size='sm'
                                     value={editingDocumentNodeMeta.quoteMode}
                                     disabled={isEditingDocumentLocked}
                                     onValueChange={(value: string): void => {
                                       if (
-                                        value === "none" ||
-                                        value === "double" ||
-                                        value === "single"
+                                        value === 'none' ||
+                                        value === 'double' ||
+                                        value === 'single'
                                       ) {
                                         updateEditingDocumentNodeMeta({
                                           quoteMode: value,
@@ -1556,12 +1555,12 @@ export function CaseResolverPageView(
                                       }
                                     }}
                                     options={CASE_RESOLVER_QUOTE_MODE_OPTIONS}
-                                    triggerClassName="h-9"
+                                    triggerClassName='h-9'
                                   />
                                 </FormField>
 
-                                <div className="flex items-center justify-between rounded border border-border/60 bg-card/30 px-3 py-2">
-                                  <div className="text-xs text-gray-300">
+                                <div className='flex items-center justify-between rounded border border-border/60 bg-card/30 px-3 py-2'>
+                                  <div className='text-xs text-gray-300'>
                                     Append new line at end
                                   </div>
                                   <Checkbox
@@ -1581,20 +1580,20 @@ export function CaseResolverPageView(
                                 </div>
 
                                 <FormField
-                                  label="Text Color (Content Output)"
-                                  className="md:col-span-2"
+                                  label='Text Color (Content Output)'
+                                  className='md:col-span-2'
                                 >
-                                  <div className="flex flex-wrap items-center gap-2">
+                                  <div className='flex flex-wrap items-center gap-2'>
                                     <Input
-                                      type="color"
+                                      type='color'
                                       disabled={isEditingDocumentLocked}
                                       value={
                                         CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN.test(
                                           editingDocumentNodeMeta.textColor ??
-                                            "",
+                                            '',
                                         )
                                           ? editingDocumentNodeMeta.textColor
-                                          : "#ffffff"
+                                          : '#ffffff'
                                       }
                                       onChange={(event): void => {
                                         const nextColor =
@@ -1609,36 +1608,36 @@ export function CaseResolverPageView(
                                           textColor: nextColor,
                                         });
                                       }}
-                                      className="h-9 w-14 p-1"
+                                      className='h-9 w-14 p-1'
                                     />
                                     <Button
-                                      type="button"
-                                      variant="ghost"
-                                      size="sm"
-                                      className="h-7 px-2 text-[11px] text-gray-400 hover:text-gray-200"
+                                      type='button'
+                                      variant='ghost'
+                                      size='sm'
+                                      className='h-7 px-2 text-[11px] text-gray-400 hover:text-gray-200'
                                       disabled={
                                         !editingDocumentNodeMeta.textColor ||
                                         isEditingDocumentLocked
                                       }
                                       onClick={(): void => {
                                         updateEditingDocumentNodeMeta({
-                                          textColor: "",
+                                          textColor: '',
                                         });
                                       }}
                                     >
                                       Clear
                                     </Button>
-                                    <span className="text-[11px] text-gray-500">
+                                    <span className='text-[11px] text-gray-500'>
                                       {editingDocumentNodeMeta.textColor
                                         ? `Using ${editingDocumentNodeMeta.textColor}`
-                                        : "No color wrapper"}
+                                        : 'No color wrapper'}
                                     </span>
                                   </div>
                                 </FormField>
                               </div>
                             </div>
                           ) : (
-                            <div className="rounded border border-dashed border-border/60 px-3 py-2 text-xs text-gray-500">
+                            <div className='rounded border border-dashed border-border/60 px-3 py-2 text-xs text-gray-500'>
                               Open this document from a canvas node to configure
                               node-level stream formatting.
                             </div>
@@ -1647,11 +1646,11 @@ export function CaseResolverPageView(
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="metadata" className="mt-0">
-                      <div className="grid gap-3 md:grid-cols-2">
+                    <TabsContent value='metadata' className='mt-0'>
+                      <div className='grid gap-3 md:grid-cols-2'>
                         <FormField
-                          label="Reference Cases"
-                          className="md:col-span-2"
+                          label='Reference Cases'
+                          className='md:col-span-2'
                         >
                           <MultiSelect
                             options={caseReferenceOptions.filter(
@@ -1673,245 +1672,245 @@ export function CaseResolverPageView(
                                 ),
                               });
                             }}
-                            placeholder="Select reference cases"
-                            searchPlaceholder="Search cases..."
-                            emptyMessage="No cases available."
-                            className="w-full"
+                            placeholder='Select reference cases'
+                            searchPlaceholder='Search cases...'
+                            emptyMessage='No cases available.'
+                            className='w-full'
                           />
                         </FormField>
 
-                        <FormField label="Parent Case">
+                        <FormField label='Parent Case'>
                           <SelectSimple
-                            size="sm"
+                            size='sm'
                             value={
-                              editingDocumentDraft.parentCaseId ?? "__none__"
+                              editingDocumentDraft.parentCaseId ?? '__none__'
                             }
                             disabled={isEditingDocumentLocked}
                             onValueChange={(value: string): void => {
                               updateEditingDocumentDraft({
                                 parentCaseId:
-                                  value === "__none__" ? null : value,
+                                  value === '__none__' ? null : value,
                               });
                             }}
                             options={parentCaseOptions.filter(
                               (option) =>
-                                option.value === "__none__" ||
+                                option.value === '__none__' ||
                                 option.value !== editingDocumentDraft.id,
                             )}
-                            placeholder="Parent case"
-                            triggerClassName="h-9"
+                            placeholder='Parent case'
+                            triggerClassName='h-9'
                           />
                         </FormField>
 
-                        <FormField label="Tag">
+                        <FormField label='Tag'>
                           <SelectSimple
-                            size="sm"
-                            value={editingDocumentDraft.tagId ?? "__none__"}
+                            size='sm'
+                            value={editingDocumentDraft.tagId ?? '__none__'}
                             disabled={isEditingDocumentLocked}
                             onValueChange={(value: string): void => {
                               updateEditingDocumentDraft({
-                                tagId: value === "__none__" ? null : value,
+                                tagId: value === '__none__' ? null : value,
                               });
                             }}
                             options={caseTagOptions}
-                            placeholder="Select tag"
-                            triggerClassName="h-9"
+                            placeholder='Select tag'
+                            triggerClassName='h-9'
                           />
                         </FormField>
 
-                        <FormField label="Case Identifier">
+                        <FormField label='Case Identifier'>
                           <SelectSimple
-                            size="sm"
+                            size='sm'
                             value={
                               editingDocumentDraft.caseIdentifierId ??
-                              "__none__"
+                              '__none__'
                             }
                             disabled={isEditingDocumentLocked}
                             onValueChange={(value: string): void => {
                               updateEditingDocumentDraft({
                                 caseIdentifierId:
-                                  value === "__none__" ? null : value,
+                                  value === '__none__' ? null : value,
                               });
                             }}
                             options={caseIdentifierOptions}
-                            placeholder="Select case identifier"
-                            triggerClassName="h-9"
+                            placeholder='Select case identifier'
+                            triggerClassName='h-9'
                           />
                         </FormField>
 
-                        <FormField label="Category">
+                        <FormField label='Category'>
                           <SelectSimple
-                            size="sm"
+                            size='sm'
                             value={
-                              editingDocumentDraft.categoryId ?? "__none__"
+                              editingDocumentDraft.categoryId ?? '__none__'
                             }
                             disabled={isEditingDocumentLocked}
                             onValueChange={(value: string): void => {
                               updateEditingDocumentDraft({
-                                categoryId: value === "__none__" ? null : value,
+                                categoryId: value === '__none__' ? null : value,
                               });
                             }}
                             options={caseCategoryOptions}
-                            placeholder="Select category"
-                            triggerClassName="h-9"
+                            placeholder='Select category'
+                            triggerClassName='h-9'
                           />
                         </FormField>
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="revisions" className="mt-0">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between gap-2 rounded border border-border/60 bg-card/30 px-3 py-2 text-xs">
-                          <span className="text-gray-400">
-                            Revision{" "}
+                    <TabsContent value='revisions' className='mt-0'>
+                      <div className='space-y-2'>
+                        <div className='flex items-center justify-between gap-2 rounded border border-border/60 bg-card/30 px-3 py-2 text-xs'>
+                          <span className='text-gray-400'>
+                            Revision{' '}
                             {editingDocumentDraft.baseDocumentContentVersion}
                             {isEditorDraftDirty
-                              ? " · unsaved changes"
-                              : " · saved"}
+                              ? ' · unsaved changes'
+                              : ' · saved'}
                           </span>
                           {(
                             editingDocumentDraft.documentConversionWarnings ??
                             []
                           ).length > 0 ? (
-                            <span className="text-amber-300">
-                              {
-                                (editingDocumentDraft.documentConversionWarnings ??
+                              <span className='text-amber-300'>
+                                {
+                                  (editingDocumentDraft.documentConversionWarnings ??
                                   [])[0]
-                              }
-                            </span>
-                          ) : null}
+                                }
+                              </span>
+                            ) : null}
                         </div>
                         {(editingDocumentDraft.documentHistory ?? []).length ===
                         0 ? (
-                          <div className="rounded border border-dashed border-border/60 px-3 py-3 text-xs text-gray-500">
+                            <div className='rounded border border-dashed border-border/60 px-3 py-3 text-xs text-gray-500'>
                             No saved versions yet. Once you save an overwrite,
                             the previous text will appear here.
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            {(editingDocumentDraft.documentHistory ?? []).map(
-                              (entry: CaseResolverDocumentHistoryEntry) => (
-                                <div
-                                  key={entry.id}
-                                  className="rounded border border-border/60 bg-card/20 px-3 py-2 text-xs"
-                                >
-                                  <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <div className="text-gray-300">
-                                      Version {entry.documentContentVersion} ·{" "}
-                                      {entry.editorType.toUpperCase()}
+                            </div>
+                          ) : (
+                            <div className='space-y-2'>
+                              {(editingDocumentDraft.documentHistory ?? []).map(
+                                (entry: CaseResolverDocumentHistoryEntry) => (
+                                  <div
+                                    key={entry.id}
+                                    className='rounded border border-border/60 bg-card/20 px-3 py-2 text-xs'
+                                  >
+                                    <div className='flex flex-wrap items-center justify-between gap-2'>
+                                      <div className='text-gray-300'>
+                                      Version {entry.documentContentVersion} ·{' '}
+                                        {entry.editorType.toUpperCase()}
+                                      </div>
+                                      <div className='text-[11px] text-gray-500'>
+                                        {formatHistoryTimestamp(entry.savedAt)}
+                                      </div>
                                     </div>
-                                    <div className="text-[11px] text-gray-500">
-                                      {formatHistoryTimestamp(entry.savedAt)}
+                                    <div className='mt-2 max-h-28 overflow-auto rounded border border-border/60 bg-card/30 px-2 py-1.5 font-mono text-[11px] text-gray-400 whitespace-pre-wrap'>
+                                      {entry.documentContentPlainText.trim()
+                                        .length > 0
+                                        ? entry.documentContentPlainText
+                                        : '(Empty version)'}
                                     </div>
-                                  </div>
-                                  <div className="mt-2 max-h-28 overflow-auto rounded border border-border/60 bg-card/30 px-2 py-1.5 font-mono text-[11px] text-gray-400 whitespace-pre-wrap">
-                                    {entry.documentContentPlainText.trim()
-                                      .length > 0
-                                      ? entry.documentContentPlainText
-                                      : "(Empty version)"}
-                                  </div>
-                                  <div className="mt-2 flex justify-end">
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      size="sm"
-                                      className="h-7 text-[11px]"
-                                      disabled={isEditingDocumentLocked}
-                                      onClick={(): void => {
-                                        handleUseHistoryEntry(entry);
-                                      }}
-                                    >
+                                    <div className='mt-2 flex justify-end'>
+                                      <Button
+                                        type='button'
+                                        variant='outline'
+                                        size='sm'
+                                        className='h-7 text-[11px]'
+                                        disabled={isEditingDocumentLocked}
+                                        onClick={(): void => {
+                                          handleUseHistoryEntry(entry);
+                                        }}
+                                      >
                                       Load Into Editor
-                                    </Button>
+                                      </Button>
+                                    </div>
                                   </div>
-                                </div>
-                              ),
-                            )}
-                          </div>
-                        )}
+                                ),
+                              )}
+                            </div>
+                          )}
                       </div>
                     </TabsContent>
                   </Tabs>
 
-                  <div className="flex justify-end gap-2">
+                  <div className='flex justify-end gap-2'>
                     {showPromptExploderTransferCard ? (
                       <div
                         className={
                           hasExpiredPromptTransfer ||
                           hasBlockingPendingPromptExploderMismatch
-                            ? "rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-100"
-                            : "rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100"
+                            ? 'rounded border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-100'
+                            : 'rounded border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-100'
                         }
                       >
-                        <div className="font-medium">
+                        <div className='font-medium'>
                           Pending Prompt Exploder output
                           {pendingPromptExploderPayload?.caseResolverContext
                             ?.fileName
                             ? ` from "${pendingPromptExploderPayload.caseResolverContext.fileName}".`
                             : pendingPromptExploderTargetFileLabel
                               ? ` targeting "${pendingPromptExploderTargetFileLabel}".`
-                              : "."}
+                              : '.'}
                         </div>
-                        <div className="mt-1 flex flex-wrap gap-1">
-                          <Badge variant="outline" className="text-[10px]">
+                        <div className='mt-1 flex flex-wrap gap-1'>
+                          <Badge variant='outline' className='text-[10px]'>
                             Stage: {promptTransferStatusLabel}
                           </Badge>
                           {pendingPromptExploderTargetFileLabel ? (
-                            <Badge variant="outline" className="text-[10px]">
+                            <Badge variant='outline' className='text-[10px]'>
                               Target: {pendingPromptExploderTargetFileLabel}
                             </Badge>
                           ) : null}
                           {pendingPromptExploderSessionId ? (
-                            <Badge variant="outline" className="text-[10px]">
+                            <Badge variant='outline' className='text-[10px]'>
                               Session: {pendingPromptExploderSessionId}
                             </Badge>
                           ) : null}
                           {pendingPromptTransferId ? (
-                            <Badge variant="outline" className="text-[10px]">
+                            <Badge variant='outline' className='text-[10px]'>
                               Transfer: {pendingPromptTransferId}
                             </Badge>
                           ) : null}
                           {pendingPromptTransferCreatedAt ? (
-                            <Badge variant="outline" className="text-[10px]">
-                              Created:{" "}
+                            <Badge variant='outline' className='text-[10px]'>
+                              Created:{' '}
                               {formatHistoryTimestamp(
                                 pendingPromptTransferCreatedAt,
                               )}
                             </Badge>
                           ) : null}
                         </div>
-                        <div className="mt-1">
+                        <div className='mt-1'>
                           {hasExpiredPromptTransfer ? (
-                            "This transfer expired before apply. Discard it and re-send from Prompt Exploder."
+                            'This transfer expired before apply. Discard it and re-send from Prompt Exploder.'
                           ) : hasBlockingPendingPromptExploderMismatch ? (
                             <>
-                              {promptExploderMismatchReason === "document"
+                              {promptExploderMismatchReason === 'document'
                                 ? `This output targets "${pendingPromptExploderTargetFileLabel ?? pendingPromptExploderContextFileId}", but you are editing "${currentPromptExploderBindingFileLabel ?? requestedContextFileId}".`
-                                : "This output belongs to a different Prompt Exploder session."}{" "}
+                                : 'This output belongs to a different Prompt Exploder session.'}{' '}
                               Open the target document or discard this pending
                               output.
                             </>
                           ) : showPromptExploderManualRetry ? (
-                            "Automatic apply failed. Retry apply or discard this output."
+                            'Automatic apply failed. Retry apply or discard this output.'
                           ) : (
-                            "Apply this output manually, or keep waiting for automatic apply."
+                            'Apply this output manually, or keep waiting for automatic apply.'
                           )}
                         </div>
                         {hasBlockingPendingPromptExploderMismatch ? (
-                          <div className="mt-2 flex flex-wrap justify-end gap-2">
+                          <div className='mt-2 flex flex-wrap justify-end gap-2'>
                             <Button
-                              type="button"
-                              variant="outline"
-                              className="h-7 text-[11px]"
+                              type='button'
+                              variant='outline'
+                              className='h-7 text-[11px]'
                               onClick={handleOpenPromptExploderTargetDocument}
                               disabled={!pendingPromptExploderContextFileId}
                             >
                               Open Target Document
                             </Button>
                             <Button
-                              type="button"
-                              variant="ghost"
-                              className="h-7 text-[11px]"
+                              type='button'
+                              variant='ghost'
+                              className='h-7 text-[11px]'
                               disabled={isApplyingPromptExploderPartyProposal}
                               onClick={(): void => {
                                 handleDiscardPendingPromptExploderPayload();
@@ -1926,173 +1925,173 @@ export function CaseResolverPageView(
                   </div>
                   {ENABLE_CASE_RESOLVER_TRANSFER_DIAGNOSTICS &&
                   promptExploderApplyDiagnostics ? (
-                    <div className="rounded border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-[11px] text-cyan-100">
-                      <div className="font-medium tracking-wide text-cyan-50">
+                      <div className='rounded border border-cyan-500/30 bg-cyan-500/10 px-3 py-2 text-[11px] text-cyan-100'>
+                        <div className='font-medium tracking-wide text-cyan-50'>
                         Prompt Exploder Transfer Diagnostics
-                      </div>
-                      <div className="mt-1 grid gap-1 sm:grid-cols-2">
-                        <div>
-                          <span className="text-cyan-200">Status:</span>{" "}
-                          {promptExploderApplyDiagnostics.status}
-                          {promptExploderApplyDiagnostics.reason
-                            ? ` (${promptExploderApplyDiagnostics.reason})`
-                            : ""}
                         </div>
-                        <div>
-                          <span className="text-cyan-200">
+                        <div className='mt-1 grid gap-1 sm:grid-cols-2'>
+                          <div>
+                            <span className='text-cyan-200'>Status:</span>{' '}
+                            {promptExploderApplyDiagnostics.status}
+                            {promptExploderApplyDiagnostics.reason
+                              ? ` (${promptExploderApplyDiagnostics.reason})`
+                              : ''}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Target Resolution:
-                          </span>{" "}
-                          {promptExploderApplyDiagnostics.resolutionStrategy}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">Apply Attempt:</span>{" "}
-                          {promptExploderApplyDiagnostics.applyAttemptId}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">Transfer ID:</span>{" "}
-                          {promptExploderApplyDiagnostics.transferId ??
-                            "(none)"}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {promptExploderApplyDiagnostics.resolutionStrategy}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>Apply Attempt:</span>{' '}
+                            {promptExploderApplyDiagnostics.applyAttemptId}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>Transfer ID:</span>{' '}
+                            {promptExploderApplyDiagnostics.transferId ??
+                            '(none)'}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Payload Version:
-                          </span>{" "}
-                          {promptExploderApplyDiagnostics.payloadVersion ??
-                            "(none)"}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">Payload Status:</span>{" "}
-                          {promptExploderApplyDiagnostics.payloadStatus ??
-                            "(none)"}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {promptExploderApplyDiagnostics.payloadVersion ??
+                            '(none)'}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>Payload Status:</span>{' '}
+                            {promptExploderApplyDiagnostics.payloadStatus ??
+                            '(none)'}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Payload Checksum:
-                          </span>{" "}
-                          {promptExploderApplyDiagnostics.payloadChecksum ??
-                            "(none)"}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {promptExploderApplyDiagnostics.payloadChecksum ??
+                            '(none)'}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Payload Created At:
-                          </span>{" "}
-                          {promptExploderApplyDiagnostics.payloadCreatedAt ??
-                            "(none)"}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {promptExploderApplyDiagnostics.payloadCreatedAt ??
+                            '(none)'}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Precheck Resolution:
-                          </span>{" "}
-                          {
-                            promptExploderApplyDiagnostics.precheckResolutionStrategy
-                          }
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {
+                              promptExploderApplyDiagnostics.precheckResolutionStrategy
+                            }
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Requested Target:
-                          </span>{" "}
-                          {promptExploderApplyDiagnostics.requestedTargetFileId ??
-                            "(none)"}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {promptExploderApplyDiagnostics.requestedTargetFileId ??
+                            '(none)'}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Fallback Target:
-                          </span>{" "}
-                          {promptExploderApplyDiagnostics.fallbackTargetFileId ??
-                            "(none)"}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {promptExploderApplyDiagnostics.fallbackTargetFileId ??
+                            '(none)'}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Resolved Target:
-                          </span>{" "}
-                          {promptExploderApplyDiagnostics.resolvedTargetFileId ??
-                            "(unresolved)"}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {promptExploderApplyDiagnostics.resolvedTargetFileId ??
+                            '(unresolved)'}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Mutation Resolution:
-                          </span>{" "}
-                          {
-                            promptExploderApplyDiagnostics.mutationResolutionStrategy
-                          }
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {
+                              promptExploderApplyDiagnostics.mutationResolutionStrategy
+                            }
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             File Count (Precheck/Mutation):
-                          </span>{" "}
-                          {
-                            promptExploderApplyDiagnostics.precheckWorkspaceFileCount
-                          }
-                          {" / "}
-                          {
-                            promptExploderApplyDiagnostics.mutationWorkspaceFileCount
-                          }
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {
+                              promptExploderApplyDiagnostics.precheckWorkspaceFileCount
+                            }
+                            {' / '}
+                            {
+                              promptExploderApplyDiagnostics.mutationWorkspaceFileCount
+                            }
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Payload Parties:
-                          </span>{" "}
-                          {promptExploderApplyDiagnostics.hasPartiesPayload
-                            ? "yes"
-                            : "no"}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">Payload Date:</span>{" "}
-                          {promptExploderApplyDiagnostics.hasMetadataPayload
-                            ? "yes"
-                            : "no"}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {promptExploderApplyDiagnostics.hasPartiesPayload
+                              ? 'yes'
+                              : 'no'}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>Payload Date:</span>{' '}
+                            {promptExploderApplyDiagnostics.hasMetadataPayload
+                              ? 'yes'
+                              : 'no'}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Capture Enabled:
-                          </span>{" "}
-                          {promptExploderApplyDiagnostics.captureSettingsEnabled
-                            ? "yes"
-                            : "no"}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">Proposal Built:</span>{" "}
-                          {promptExploderApplyDiagnostics.proposalBuilt
-                            ? "yes"
-                            : "no"}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {promptExploderApplyDiagnostics.captureSettingsEnabled
+                              ? 'yes'
+                              : 'no'}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>Proposal Built:</span>{' '}
+                            {promptExploderApplyDiagnostics.proposalBuilt
+                              ? 'yes'
+                              : 'no'}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Proposal Reason:
-                          </span>{" "}
-                          {promptExploderApplyDiagnostics.proposalReason}
-                        </div>
-                        <div>
-                          <span className="text-cyan-200">
+                            </span>{' '}
+                            {promptExploderApplyDiagnostics.proposalReason}
+                          </div>
+                          <div>
+                            <span className='text-cyan-200'>
                             Mutation Missing After Precheck:
-                          </span>{" "}
-                          {promptExploderApplyDiagnostics.mutationMissingAfterPrecheck
-                            ? "yes"
-                            : "no"}
+                            </span>{' '}
+                            {promptExploderApplyDiagnostics.mutationMissingAfterPrecheck
+                              ? 'yes'
+                              : 'no'}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ) : null}
+                    ) : null}
 
-                  <div className="flex flex-wrap justify-end gap-2">
+                  <div className='flex flex-wrap justify-end gap-2'>
                     {promptExploderPartyProposal?.targetFileId ===
                     editingDocumentDraft.id ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-8"
-                        disabled={isEditingDocumentLocked}
-                        onClick={(): void => {
-                          setIsPromptExploderPartyProposalOpen(true);
-                        }}
-                      >
+                        <Button
+                          type='button'
+                          variant='outline'
+                          className='h-8'
+                          disabled={isEditingDocumentLocked}
+                          onClick={(): void => {
+                            setIsPromptExploderPartyProposalOpen(true);
+                          }}
+                        >
                         Review Capture Mapping
-                      </Button>
-                    ) : null}
+                        </Button>
+                      ) : null}
                     <Button
-                      type="button"
-                      variant="outline"
-                      className="h-8"
+                      type='button'
+                      variant='outline'
+                      className='h-8'
                       disabled={isEditingDocumentLocked}
                       onClick={handleOpenPromptExploderForDraft}
                     >
@@ -2100,9 +2099,9 @@ export function CaseResolverPageView(
                     </Button>
                     {showPromptExploderApplyAction ? (
                       <Button
-                        type="button"
-                        variant="outline"
-                        className="h-8"
+                        type='button'
+                        variant='outline'
+                        className='h-8'
                         disabled={
                           !canApplyPendingPromptOutput ||
                           isApplyingPromptExploderPartyProposal ||
@@ -2114,15 +2113,15 @@ export function CaseResolverPageView(
                         }}
                       >
                         {isApplyingPromptExploderPartyProposal
-                          ? "Applying Output..."
-                          : "Apply Prompt Exploder Output"}
+                          ? 'Applying Output...'
+                          : 'Apply Prompt Exploder Output'}
                       </Button>
                     ) : null}
                     {showPromptExploderDiscardAction ? (
                       <Button
-                        type="button"
-                        variant="ghost"
-                        className="h-8"
+                        type='button'
+                        variant='ghost'
+                        className='h-8'
                         disabled={isApplyingPromptExploderPartyProposal}
                         onClick={(): void => {
                           handleDiscardPendingPromptExploderPayload();
@@ -2133,48 +2132,48 @@ export function CaseResolverPageView(
                     ) : null}
                   </div>
 
-                  {editingDocumentDraft.editorType === "markdown" ? (
-                    <div className="flex items-center justify-end gap-2">
+                  {editingDocumentDraft.editorType === 'markdown' ? (
+                    <div className='flex items-center justify-end gap-2'>
                       <Button
-                        type="button"
-                        variant="outline"
-                        className="h-8"
+                        type='button'
+                        variant='outline'
+                        className='h-8'
                         onClick={(): void => {
                           setShowMarkdownPreview(
                             (current: boolean): boolean => !current,
                           );
                         }}
                       >
-                        {showMarkdownPreview ? "Hide Preview" : "Show Preview"}
+                        {showMarkdownPreview ? 'Hide Preview' : 'Show Preview'}
                       </Button>
                     </div>
                   ) : null}
 
                   {ENABLE_CASE_RESOLVER_MULTIFORMAT_EDITOR ? (
                     <>
-                      {editingDocumentDraft.editorType === "wysiwyg" ? (
+                      {editingDocumentDraft.editorType === 'wysiwyg' ? (
                         <DocumentWysiwygEditor
                           key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
-                          value={editingDocumentDraft.documentContentHtml ?? ""}
+                          value={editingDocumentDraft.documentContentHtml ?? ''}
                           onChange={handleUpdateDraftDocumentContent}
                           disabled={isEditingDocumentLocked}
                           allowFontFamily
                           allowTextAlign
                           enableAdvancedTools
-                          surfaceClassName="min-h-[300px]"
-                          editorContentClassName="[&_.ProseMirror]:!min-h-[300px]"
+                          surfaceClassName='min-h-[300px]'
+                          editorContentClassName='[&_.ProseMirror]:!min-h-[300px]'
                         />
                       ) : (
                         <MarkdownSplitEditor
                           key={`case-resolver-markdown-${editorContentRevisionSeed}`}
                           value={
-                            editingDocumentDraft.documentContentMarkdown ?? ""
+                            editingDocumentDraft.documentContentMarkdown ?? ''
                           }
                           onChange={handleUpdateDraftDocumentContent}
                           readOnly={isEditingDocumentLocked}
                           showPreview={showMarkdownPreview}
                           renderPreviewHtml={(value: string): string =>
-                            ensureHtmlForPreview(value, "markdown")
+                            ensureHtmlForPreview(value, 'markdown')
                           }
                           sanitizePreviewHtml={sanitizeHtml}
                           textareaRef={editorTextareaRef}
@@ -2183,40 +2182,40 @@ export function CaseResolverPageView(
                           onEditorWidthChange={setEditorWidth}
                           isDraggingSplitter={isDraggingSplitter}
                           onDraggingSplitterChange={setIsDraggingSplitter}
-                          placeholder="Enter document content"
-                          textareaClassName="w-full min-h-[300px] rounded-lg border px-4 py-2 font-mono"
+                          placeholder='Enter document content'
+                          textareaClassName='w-full min-h-[300px] rounded-lg border px-4 py-2 font-mono'
                         />
                       )}
                     </>
                   ) : (
                     <DocumentWysiwygEditor
                       key={`case-resolver-wysiwyg-fallback-${editorContentRevisionSeed}`}
-                      value={editingDocumentDraft.documentContentHtml ?? ""}
+                      value={editingDocumentDraft.documentContentHtml ?? ''}
                       onChange={handleUpdateDraftDocumentContent}
                       disabled={isEditingDocumentLocked}
                       allowFontFamily
                       allowTextAlign
                       enableAdvancedTools
-                      surfaceClassName="min-h-[300px]"
-                      editorContentClassName="[&_.ProseMirror]:!min-h-[300px]"
+                      surfaceClassName='min-h-[300px]'
+                      editorContentClassName='[&_.ProseMirror]:!min-h-[300px]'
                     />
                   )}
 
-                  <div className="flex justify-end gap-2">
+                  <div className='flex justify-end gap-2'>
                     <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-9 max-w-[220px] gap-1.5 truncate px-2 text-[11px] text-gray-400 hover:text-gray-100"
+                      type='button'
+                      variant='ghost'
+                      size='sm'
+                      className='h-9 max-w-[220px] gap-1.5 truncate px-2 text-[11px] text-gray-400 hover:text-gray-100'
                       onClick={(): void => {
                         void handleCopyDraftFileId();
                       }}
-                      title="Copy file ID"
+                      title='Copy file ID'
                     >
-                      <span className="truncate">
+                      <span className='truncate'>
                         ID: {editingDocumentDraft.id}
                       </span>
-                      <Copy className="size-3" />
+                      <Copy className='size-3' />
                     </Button>
                   </div>
                 </div>
@@ -2225,16 +2224,16 @@ export function CaseResolverPageView(
               <CaseResolverCanvasWorkspace />
             ) : (
               <Card
-                variant="subtle"
-                padding="lg"
-                className="flex flex-1 items-center justify-center border-dashed"
+                variant='subtle'
+                padding='lg'
+                className='flex flex-1 items-center justify-center border-dashed'
               >
                 <EmptyState
-                  icon={<FileText className="size-12 text-gray-600" />}
-                  title="No case selected"
-                  description="Select a file from the tree to begin."
-                  variant="compact"
-                  className="border-none p-0"
+                  icon={<FileText className='size-12 text-gray-600' />}
+                  title='No case selected'
+                  description='Select a file from the tree to begin.'
+                  variant='compact'
+                  className='border-none p-0'
                 />
               </Card>
             )}

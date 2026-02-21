@@ -7,12 +7,12 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import { logClientError } from '@/features/observability';
+import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
+import type { ChatMessage } from '@/shared/contracts/chatbot';
 import { useUserPreferences, useUpdateUserPreferences } from '@/shared/hooks/useUserPreferences';
 import { ApiError } from '@/shared/lib/api-client';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
-import type { ChatMessage } from '@/shared/contracts/chatbot';
 import { Button, Tabs, TabsList, TabsTrigger, TabsContent, Input, Label, Checkbox, Textarea, SelectSimple, useToast, Badge, ToggleRow } from '@/shared/ui';
 
 import { useCmsDomainSelection } from '../../../hooks/useCmsDomainSelection';

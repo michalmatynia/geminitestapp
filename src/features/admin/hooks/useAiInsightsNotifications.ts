@@ -3,10 +3,10 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { AiInsightNotificationsResponseDto as NotificationsResponse } from '@/shared/contracts/ai-insights';
+import type { DeleteMutation, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createDeleteMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { DeleteMutation, SingleQuery } from '@/shared/contracts/ui';
 
 export const aiNotificationsQueryKey = QUERY_KEYS.ai.insights.notifications();
 

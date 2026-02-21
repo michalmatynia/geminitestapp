@@ -6,8 +6,9 @@ import type {
 import {
   encodeDynamicReplacementRecipe,
 } from '@/features/products/utils/validator-replacement-recipe';
-import { api } from '@/shared/lib/api-client';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
+import type { SequenceGroupDraft } from '@/shared/contracts/products';
+import { api } from '@/shared/lib/api-client';
 
 import {
   buildLatestFieldRecipe,
@@ -18,7 +19,6 @@ import {
   isNameSecondSegmentDimensionPattern,
 } from './helpers';
 
-import type { SequenceGroupDraft } from '@/shared/contracts/products';
 
 type CreatePatternMutation = {
   mutateAsync: (payload: CreateValidationPatternPayload) => Promise<unknown>;

@@ -4,6 +4,7 @@ import { ArrowDown, ArrowUp, ChevronDown, ChevronRight, Folder, FolderOpen, Plus
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
+import type { CaseResolverCategory } from '@/shared/contracts/case-resolver';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -26,7 +27,6 @@ import {
   parseCaseResolverCategories,
 } from '../settings';
 
-import type { CaseResolverCategory } from '@/shared/contracts/case-resolver';
 
 type CategoryFormData = {
   name: string;

@@ -5,11 +5,11 @@ import type {
   ProducerRepository, 
   ProducerFilters 
 } from '@/shared/contracts/products';
-import { internalError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { 
   Producer 
 } from '@/shared/contracts/products';
+import { internalError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { Filter, UpdateFilter, Document } from 'mongodb';
 

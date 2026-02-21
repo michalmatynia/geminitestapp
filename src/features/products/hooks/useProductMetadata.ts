@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 
+import type { Language } from '@/shared/contracts/internationalization';
 import type {
   CatalogRecord,
   ProductCategory,
@@ -13,7 +14,6 @@ import type {
 } from '@/shared/contracts/products';
 import type { ProductFormData } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
-import type { Language } from '@/shared/contracts/internationalization';
 
 import {
   useCatalogs,

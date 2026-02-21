@@ -1,12 +1,12 @@
 import {
-  classifyError as classifySharedError,
-  getSuggestedActions as getSharedSuggestedActions,
-} from '@/shared/errors/error-classifier';
-import {
   ERROR_CATEGORY,
   type ErrorCategory,
   type ErrorContext,
 } from '@/shared/contracts/observability';
+import {
+  classifyError as classifySharedError,
+  getSuggestedActions as getSharedSuggestedActions,
+} from '@/shared/errors/error-classifier';
 
 export const ErrorCategories = ERROR_CATEGORY;
 export type { ErrorCategory, ErrorContext };

@@ -206,79 +206,79 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
 
   if (!hasSelectedNode) return null;
 
-    return (
-      <>
-        <DetailModal
-          isOpen={configOpen}
-          onClose={requestClose}
-          title={`Configure ${selectedNodeSafe.title}`}
-          size='lg'
-          headerActions={
-            <div className='flex items-center gap-2'>
-              <Button
-                data-doc-id='node_config_update'
-                type='button'
-                size='sm'
-                className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-50'
-                disabled={!hasUnsavedChanges || isPathLocked}
-                onClick={handleUpdateNode}
-              >
-                Update Node
-              </Button>
-              {isScheduledTrigger ? (
-                <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[10px] uppercase text-amber-200'>
-                  Scheduled
-                </span>
-              ) : null}
-            </div>
-          }
-        >
-          <AiPathConfigProviderWithContext overrides={configContextOverrides}>
-            <Tabs defaultValue='settings' className='mt-2'>
-              <TabsList className='w-full justify-start'>
-                <TabsTrigger value='settings'>Settings</TabsTrigger>
-                <TabsTrigger value='notes'>Notes</TabsTrigger>
-                <TabsTrigger value='history'>History</TabsTrigger>
-              </TabsList>
-              <TabsContent value='settings'>
-                <div className='mb-4 rounded-md border border-border bg-card/60 px-3 py-2'>
-                  <div className='text-[11px] text-gray-400'>
-                    {hasUnsavedChanges
-                      ? 'Unsaved changes (manual update required).'
-                      : 'Node settings are applied in canvas. Click "Save Path" to persist.'}
-                  </div>
-                </div>
-                <NodeConfigurationSections />
-              </TabsContent>
-              <TabsContent value='notes'>
-                <NodeNotesTab />
-              </TabsContent>
-              <TabsContent value='history'>
-                <NodeHistoryTab />
-              </TabsContent>
-            </Tabs>
-          </AiPathConfigProviderWithContext>
-          <div className='mt-4 flex items-center justify-end gap-2 text-xs text-gray-400'>
-            <span className='text-[11px] uppercase tracking-wide text-gray-500'>Node ID</span>
-            <span className='max-w-[260px] truncate font-mono text-xs text-gray-300'>
-              {selectedNodeSafe.id}
-            </span>
+  return (
+    <>
+      <DetailModal
+        isOpen={configOpen}
+        onClose={requestClose}
+        title={`Configure ${selectedNodeSafe.title}`}
+        size='lg'
+        headerActions={
+          <div className='flex items-center gap-2'>
             <Button
-              data-doc-id='node_config_copy_id'
+              data-doc-id='node_config_update'
               type='button'
               size='sm'
-              className='rounded border border-border px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/50'
-              onClick={() => {
-                void navigator.clipboard.writeText(selectedNodeSafe.id).then(
-                  () => toast('Node ID copied.', { variant: 'success' }),
-                  () => toast('Failed to copy Node ID.', { variant: 'error' })
-                );
-              }}
+              className='rounded-md border border-emerald-500/40 text-xs text-emerald-200 hover:bg-emerald-500/10 disabled:opacity-50'
+              disabled={!hasUnsavedChanges || isPathLocked}
+              onClick={handleUpdateNode}
             >
-              Copy
+                Update Node
             </Button>
+            {isScheduledTrigger ? (
+              <span className='rounded-full border border-amber-400/60 bg-amber-500/15 px-2 py-[1px] text-[10px] uppercase text-amber-200'>
+                  Scheduled
+              </span>
+            ) : null}
           </div>
-        </DetailModal>      <ConfirmModal
+        }
+      >
+        <AiPathConfigProviderWithContext overrides={configContextOverrides}>
+          <Tabs defaultValue='settings' className='mt-2'>
+            <TabsList className='w-full justify-start'>
+              <TabsTrigger value='settings'>Settings</TabsTrigger>
+              <TabsTrigger value='notes'>Notes</TabsTrigger>
+              <TabsTrigger value='history'>History</TabsTrigger>
+            </TabsList>
+            <TabsContent value='settings'>
+              <div className='mb-4 rounded-md border border-border bg-card/60 px-3 py-2'>
+                <div className='text-[11px] text-gray-400'>
+                  {hasUnsavedChanges
+                    ? 'Unsaved changes (manual update required).'
+                    : 'Node settings are applied in canvas. Click "Save Path" to persist.'}
+                </div>
+              </div>
+              <NodeConfigurationSections />
+            </TabsContent>
+            <TabsContent value='notes'>
+              <NodeNotesTab />
+            </TabsContent>
+            <TabsContent value='history'>
+              <NodeHistoryTab />
+            </TabsContent>
+          </Tabs>
+        </AiPathConfigProviderWithContext>
+        <div className='mt-4 flex items-center justify-end gap-2 text-xs text-gray-400'>
+          <span className='text-[11px] uppercase tracking-wide text-gray-500'>Node ID</span>
+          <span className='max-w-[260px] truncate font-mono text-xs text-gray-300'>
+            {selectedNodeSafe.id}
+          </span>
+          <Button
+            data-doc-id='node_config_copy_id'
+            type='button'
+            size='sm'
+            className='rounded border border-border px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/50'
+            onClick={() => {
+              void navigator.clipboard.writeText(selectedNodeSafe.id).then(
+                () => toast('Node ID copied.', { variant: 'success' }),
+                () => toast('Failed to copy Node ID.', { variant: 'error' })
+              );
+            }}
+          >
+              Copy
+          </Button>
+        </div>
+      </DetailModal>      <ConfirmModal
         isOpen={closePromptOpen}
         onClose={() => setClosePromptOpen(false)}
         title='Unsaved Changes'

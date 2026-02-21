@@ -4,9 +4,9 @@ import { z } from 'zod';
 import { generateLogInterpretation } from '@/features/ai/insights/generator';
 import { startAiInsightsQueue } from '@/features/jobs/server';
 import { getSystemLogById } from '@/features/observability/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const schema = z.object({
   logId: z.string().trim().min(1),

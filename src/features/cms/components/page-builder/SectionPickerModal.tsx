@@ -5,9 +5,9 @@ import React, { createContext, useContext, useMemo } from 'react';
 
 import type { SectionDefinition } from '@/shared/contracts/cms';
 import type { ModalStateProps } from '@/shared/contracts/ui';
+import type { GridPickerItem } from '@/shared/contracts/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
-import type { GridPickerItem } from '@/shared/contracts/ui';
 
 interface SectionTemplate {
   name: string;

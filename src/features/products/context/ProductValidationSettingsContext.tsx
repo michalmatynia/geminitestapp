@@ -8,12 +8,12 @@ import {
   type SetStateAction,
 } from 'react';
 
-import { internalError } from '@/shared/errors/app-error';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceScope,
   ProductValidationPostAcceptBehavior,
 } from '@/shared/contracts/products';
+import { internalError } from '@/shared/errors/app-error';
 
 export type ProductValidationDenyIssueInput = {
   fieldName: string;

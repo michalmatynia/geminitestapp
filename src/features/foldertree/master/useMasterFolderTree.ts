@@ -2,6 +2,15 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import {
+  toMasterFolderTreeActionFail,
+  type MasterFolderTreeActionResult,
+  type MasterFolderTreeController,
+  type MasterFolderTreeError,
+  type MasterFolderTreePersistOperation,
+  type MasterFolderTreeUndoEntry,
+  type UseMasterFolderTreeOptions,
+} from '@/shared/contracts/master-folder-tree';
 import { defaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
 import type {
   MasterTreeDropPosition,
@@ -18,15 +27,6 @@ import {
   validateMasterTreeNodes,
 } from '@/shared/utils/master-folder-tree-engine';
 
-import {
-  toMasterFolderTreeActionFail,
-  type MasterFolderTreeActionResult,
-  type MasterFolderTreeController,
-  type MasterFolderTreeError,
-  type MasterFolderTreePersistOperation,
-  type MasterFolderTreeUndoEntry,
-  type UseMasterFolderTreeOptions,
-} from '@/shared/contracts/master-folder-tree';
 
 type InternalMasterFolderTreeState = {
   nodes: MasterTreeNode[];

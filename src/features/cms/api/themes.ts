@@ -1,6 +1,6 @@
+import type { CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/shared/contracts/cms';
 import { api } from '@/shared/lib/api-client';
 
-import type { CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/shared/contracts/cms';
 
 export const fetchThemes = async (): Promise<CmsTheme[]> => {
   return api.get<CmsTheme[]>('/api/cms/themes');

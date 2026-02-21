@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 import { runTeachingChat } from '@/features/ai/agentcreator/teaching/server/chat';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const chatMessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),

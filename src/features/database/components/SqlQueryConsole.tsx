@@ -9,12 +9,12 @@ import {
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
+import type { DatabaseType, SqlQueryResult } from '@/shared/contracts/database';
 import { Badge, Button, Textarea, SelectSimple, StandardDataTablePanel, Alert, Card } from '@/shared/ui';
 
 import { useDatabase } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
 
-import type { DatabaseType, SqlQueryResult } from '@/shared/contracts/database';
 import type { ColumnDef } from '@tanstack/react-table';
 
 const HISTORY_KEY = 'db-sql-query-history';
@@ -275,10 +275,10 @@ export function SqlQueryConsole({
             <p className='text-xs text-emerald-400'>
               {result.command} completed successfully. {result.rowCount} row{result.rowCount !== 1 ? 's' : ''} affected.
             </p>
-                      )}
-                    </Card>
-                  )}
-                </div>
-              );
+          )}
+        </Card>
+      )}
+    </div>
+  );
           
 }

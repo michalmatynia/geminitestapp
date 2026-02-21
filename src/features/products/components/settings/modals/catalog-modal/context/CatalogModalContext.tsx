@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import type { PriceGroup } from '@/shared/contracts/products';
 import type { Language } from '@/shared/contracts/internationalization';
+import type { PriceGroup } from '@/shared/contracts/products';
 
 type CatalogFormState = {
   name: string;

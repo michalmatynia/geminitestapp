@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 import { getProductAiJob, cancelProductAiJob, deleteProductAiJob } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const actionSchema = z.object({
   action: z.string().trim().min(1),

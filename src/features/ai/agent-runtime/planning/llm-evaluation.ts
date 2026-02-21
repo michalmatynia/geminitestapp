@@ -12,13 +12,13 @@ import {
   normalizeStringList,
   parsePlanJson,
 } from '@/features/ai/agent-runtime/planning/utils';
+import { ErrorSystem } from '@/features/observability/server';
 import type {
   PlanStep,
   PlannerAlternative,
   PlannerCritique,
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
-import { ErrorSystem } from '@/features/observability/server';
 import prisma from '@/shared/lib/db/prisma';
 
 import { normalizePlanStepSpecs } from './llm-step-specs';

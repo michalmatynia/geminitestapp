@@ -15,11 +15,11 @@ import {
   entityApi,
 } from '@/features/ai/ai-paths/lib';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
-
 import {
   AI_PATHS_ENTITY_STALE_MS,
 } from '@/shared/contracts/ai-paths-runtime';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+
 import { 
   buildSimulationContext, 
 } from './utils';

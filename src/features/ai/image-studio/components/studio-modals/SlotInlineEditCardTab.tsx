@@ -6,6 +6,7 @@ import ProductImageManager, {
 } from '@/features/products/components/ProductImageManager';
 import { ProductImageManagerControllerProvider } from '@/features/products/components/ProductImageManagerControllerContext';
 import { Button, Input, Label, TabsContent } from '@/shared/ui';
+import { Hint } from '@/shared/ui';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
 
@@ -14,7 +15,6 @@ import type {
   LinkedGeneratedVariantViewModel,
 } from './slot-inline-edit-tab-types';
 import type { ImageStudioSlotRecord } from '../../types';
-import { Hint } from '@/shared/ui';
 
 type SlotInlineEditCardTabProps = {
   clearImageDisabled: boolean;
@@ -183,24 +183,24 @@ export function SlotInlineEditCardTab({
 
       <div className='space-y-2'>
         <div className='flex items-center justify-between gap-2'>
-                      <Label className='text-xs text-gray-400'>Linked Generated Variants</Label>
-                      <Button size='xs'
-                        type='button'
-                        variant='outline'
-                        onClick={onRefreshLinkedRuns}
-                        disabled={linkedRunsIsFetching}
-                        loading={linkedRunsIsFetching}
-                      >
+          <Label className='text-xs text-gray-400'>Linked Generated Variants</Label>
+          <Button size='xs'
+            type='button'
+            variant='outline'
+            onClick={onRefreshLinkedRuns}
+            disabled={linkedRunsIsFetching}
+            loading={linkedRunsIsFetching}
+          >
                         Refresh
-                      </Button>
-                    </div>
-                            <div className='max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-2'>
-                              {linkedRunsIsLoading ? (
-                                <LoadingState message='Loading linked variants...' />
-                              ) : linkedRunsIsError ? (
-                                <div className='rounded border border-red-500/35 bg-red-500/10 px-2 py-2 text-xs text-red-200'>
-                                  {linkedRunsErrorMessage}
-                                </div>
+          </Button>
+        </div>
+        <div className='max-h-56 space-y-2 overflow-y-auto rounded-lg border border-border/60 bg-card/40 p-2'>
+          {linkedRunsIsLoading ? (
+            <LoadingState message='Loading linked variants...' />
+          ) : linkedRunsIsError ? (
+            <div className='rounded border border-red-500/35 bg-red-500/10 px-2 py-2 text-xs text-red-200'>
+              {linkedRunsErrorMessage}
+            </div>
           ) : linkedGeneratedVariants.length === 0 ? (
             <div className='px-1 py-2 text-xs text-gray-500'>
               No generated variants linked to this card yet.
@@ -259,15 +259,15 @@ export function SlotInlineEditCardTab({
         >
           Replace From Drive
         </Button>
-                  <Button size='xs'
-                    type='button'
-                    variant='outline'
-                    onClick={onReplaceFromLocal}
-                    disabled={uploadPending}
-                    loading={uploadPending}
-                  >
+        <Button size='xs'
+          type='button'
+          variant='outline'
+          onClick={onReplaceFromLocal}
+          disabled={uploadPending}
+          loading={uploadPending}
+        >
                     Replace From Local Upload
-                  </Button>        <Button size='xs'
+        </Button>        <Button size='xs'
           type='button'
           variant='outline'
           onClick={onClearSlotImage}

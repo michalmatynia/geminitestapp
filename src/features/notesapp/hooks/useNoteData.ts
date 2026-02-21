@@ -50,6 +50,7 @@ import type {
   NoteFileDto as NoteFileRecord,
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
 } from '@/shared/contracts/notes';
+import type { DeleteResponse } from '@/shared/contracts/ui';
 import { useDebounce } from '@/shared/hooks/ui/use-debounce';
 import { api, ApiError } from '@/shared/lib/api-client';
 import {
@@ -61,7 +62,6 @@ import {
   invalidateNoteDetail,
 } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { DeleteResponse } from '@/shared/contracts/ui';
 
 // --- Queries ---
 

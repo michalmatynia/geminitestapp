@@ -2,7 +2,6 @@
 
 import React, { useCallback, useMemo } from 'react';
 
-import type { CmsEventEffectsConfig } from '@/shared/contracts/cms';
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import {
   getEventClassName,
@@ -10,6 +9,7 @@ import {
   getEventHoverStyle,
   isEventClickEnabled,
 } from '@/features/cms/utils/event-effects';
+import type { CmsEventEffectsConfig } from '@/shared/contracts/cms';
 import { cn } from '@/shared/utils';
 
 interface EventEffectsWrapperProps {

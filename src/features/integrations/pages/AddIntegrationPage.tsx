@@ -6,8 +6,8 @@ import { useEffect, useMemo } from 'react';
 
 import { useCreateIntegration } from '@/features/integrations/hooks/useIntegrationMutations';
 import { useIntegrations } from '@/features/integrations/hooks/useIntegrationQueries';
-import type { Integration } from '@/shared/contracts/integrations';
 import { logClientError } from '@/features/observability';
+import type { Integration } from '@/shared/contracts/integrations';
 import { useToast, Button, SectionHeader, StatusBadge, SimpleSettingsList } from '@/shared/ui';
 
 const AVAILABLE_INTEGRATIONS = [

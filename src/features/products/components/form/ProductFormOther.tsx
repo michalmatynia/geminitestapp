@@ -12,11 +12,11 @@ import {
   useProductValidationActions,
   useProductValidationState,
 } from '@/features/products/context/ProductValidationSettingsContext';
-import { ProductFormData, CatalogRecord, PriceGroupWithDetails, ProductCategory } from '@/shared/contracts/products';
 import {
   getIssueReplacementPreview,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
+import { ProductFormData, CatalogRecord, PriceGroupWithDetails, ProductCategory } from '@/shared/contracts/products';
 import { Button, Input, SelectSimple, FormSection, FormField, StandardDataTablePanel, StatusBadge, Alert } from '@/shared/ui';
 
 import { IssueHintRow, ValidatorIssueHint } from './ProductFormGeneral';

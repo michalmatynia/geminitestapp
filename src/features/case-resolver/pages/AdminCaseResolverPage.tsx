@@ -32,10 +32,27 @@ import {
   resolveFilemakerPartyLabel,
 } from '@/features/filemaker/settings';
 import { savePromptExploderDraftPromptFromCaseResolver } from '@/features/prompt-exploder/bridge';
+import {
+  DEFAULT_CASE_RESOLVER_NODE_META,
+} from '@/shared/contracts/case-resolver';
+import type {
+  CaseResolverAssetFile,
+  CaseResolverCategory,
+  CaseResolverDocumentHistoryEntry,
+  CaseResolverFileEditDraft,
+  CaseResolverGraph,
+  CaseResolverIdentifier,
+  CaseResolverNodeMeta,
+  CaseResolverRelationGraph,
+  CaseResolverTag,
+} from '@/shared/contracts/case-resolver';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 
 import { buildPathLabelMap } from './admin-case-resolver-page-helpers';
+import {
+  resolveCaptureMappingApplyGuardReason,
+} from '../capture-mapping-apply-guard';
 import { CaseResolverPageView } from '../components/CaseResolverPageView';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
@@ -49,9 +66,6 @@ import {
   normalizeFolderPaths,
 } from '../settings';
 import {
-  DEFAULT_CASE_RESOLVER_NODE_META,
-} from '@/shared/contracts/case-resolver';
-import {
   buildCombinedOcrText,
   buildDocumentPdfMarkup,
   createId,
@@ -61,21 +75,7 @@ import {
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
 } from '../workspace-persistence';
-import {
-  resolveCaptureMappingApplyGuardReason,
-} from '../capture-mapping-apply-guard';
 
-import type {
-  CaseResolverAssetFile,
-  CaseResolverCategory,
-  CaseResolverDocumentHistoryEntry,
-  CaseResolverFileEditDraft,
-  CaseResolverGraph,
-  CaseResolverIdentifier,
-  CaseResolverNodeMeta,
-  CaseResolverRelationGraph,
-  CaseResolverTag,
-} from '@/shared/contracts/case-resolver';
 
 const readCaptureApplyNowMs = (): number => (
   typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -1854,7 +1854,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         { persistToast: 'Case Resolver tree changes saved.' }
       );
       setEditingDocumentDraft((current) => {
-        if (!current || current.id !== fileId) return current;
+        if (current?.id !== fileId) return current;
         return {
           ...current,
           isLocked: !current.isLocked,

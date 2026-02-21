@@ -2,13 +2,13 @@ import { createRequire } from 'module';
 
 import { NextRequest, NextResponse } from 'next/server';
 
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   badRequestError,
   configurationError,
   internalError,
   isAppError,
 } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 type CaseResolverExportPdfRequest = {
   html?: unknown;

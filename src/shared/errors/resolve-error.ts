@@ -5,6 +5,11 @@ import { randomUUID } from 'crypto';
 import { z } from 'zod';
 
 import {
+  ERROR_CATEGORY,
+  type ErrorCategory,
+  type SuggestedAction,
+} from '@/shared/contracts/observability';
+import {
   AppErrorCodes,
   internalError,
   isAppError,
@@ -12,11 +17,6 @@ import {
 } from '@/shared/errors/app-error';
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { mapErrorToAppError } from '@/shared/errors/error-mapper';
-import {
-  ERROR_CATEGORY,
-  type ErrorCategory,
-  type SuggestedAction,
-} from '@/shared/contracts/observability';
 
 export type ResolvedError = {
   errorId: string;

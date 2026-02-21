@@ -5,10 +5,10 @@ import React, { createContext, useContext, useState, useMemo, useEffect, useRef,
 
 import { useFetchExternalCategoriesMutation, useSaveMappingsMutation } from '@/features/integrations/hooks/useMarketplaceMutations';
 import { useExternalCategories, useCategoryMappings } from '@/features/integrations/hooks/useMarketplaceQueries';
-import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
 import { logClientError } from '@/features/observability';
 import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
 import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
+import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';
 import type { CatalogDto as Catalog, ProductCategoryDto } from '@/shared/contracts/products';
 import { useToast } from '@/shared/ui';
 
@@ -272,7 +272,7 @@ export function CategoryMapperProvider({
         return pendingMappings.get(externalCategoryId) ?? null;
       }
       const mapping = mappings.find((m: CategoryMappingWithDetails) => m.externalCategoryId === externalCategoryId);
-      if (!mapping || !mapping.isActive) return null;
+      if (!mapping?.isActive) return null;
       return mapping.internalCategoryId;
     },
     [mappings, pendingMappings]

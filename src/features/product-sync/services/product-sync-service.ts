@@ -19,6 +19,7 @@ import {
   updateProductSyncRun,
   updateProductSyncRunStatus,
 } from '@/features/product-sync/services/product-sync-repository';
+import { getProductRepository } from '@/features/products/server';
 import type {
   ProductSyncAppField,
   ProductSyncFieldRule,
@@ -28,7 +29,6 @@ import type {
   ProductSyncRunStats,
   ProductSyncRunStatus,
 } from '@/shared/contracts/product-sync';
-import { getProductRepository } from '@/features/products/server';
 import type {
   ProductWithImagesDto as ProductWithImages,
   ProductUpdateInput,

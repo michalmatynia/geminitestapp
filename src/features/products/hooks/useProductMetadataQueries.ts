@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-query';
 
 import { getLanguages } from '@/features/internationalization/api';
+import type { Language } from '@/shared/contracts/internationalization';
 import type {
   CatalogRecord,
   PriceGroupWithDetails,
@@ -16,6 +17,11 @@ import type {
   ProductParameter,
   ProductTag,
 } from '@/shared/contracts/products';
+import type { 
+  ListQuery, 
+  SaveMutation, 
+  DeleteMutation 
+} from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
@@ -25,12 +31,6 @@ import {
 import { invalidateProductMetadata } from '@/shared/lib/query-invalidation';
 import { productMetadataKeys } from '@/shared/lib/query-key-exports';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
-import type { Language } from '@/shared/contracts/internationalization';
-import type { 
-  ListQuery, 
-  SaveMutation, 
-  DeleteMutation 
-} from '@/shared/contracts/ui';
 
 export { productMetadataKeys };
 

@@ -298,4 +298,46 @@ describe('case-resolver nodefile relations', () => {
     };
     expect(parsedSnapshot.nodeFileMeta ?? {}).toEqual({});
   });
+
+  it('preserves case ownership for manual unbound node-file snapshots', () => {
+    const files = [
+      createCaseResolverFile({
+        id: 'case-a',
+        fileType: 'case',
+        name: 'Case A',
+        folder: '',
+      }),
+      createCaseResolverFile({
+        id: 'doc-a',
+        fileType: 'document',
+        name: 'Doc A',
+        folder: '',
+        parentCaseId: 'case-a',
+      }),
+    ];
+    const assets = [
+      createCaseResolverAssetFile({
+        id: 'node-asset-manual',
+        name: 'Manual Node File',
+        folder: '',
+        kind: 'node_file',
+        sourceFileId: 'case-a',
+        textContent: JSON.stringify({
+          kind: 'case_resolver_node_file_snapshot_v1',
+          source: 'manual',
+          nodes: [],
+          edges: [],
+          nodeFileMeta: {},
+        }),
+      }),
+    ];
+
+    const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({
+      assets,
+      files,
+    });
+    expect(sanitizedAssets).toHaveLength(1);
+    const asset = sanitizedAssets[0];
+    expect(asset?.sourceFileId).toBe('case-a');
+  });
 });

@@ -215,8 +215,12 @@ export function prepareDatabaseTemplateContext({
   DB_PROVIDER_PLACEHOLDERS.forEach((provider: string) => {
     placeholderContext[`DB Provider: ${provider}`] = provider;
   });
-  if (schemaData?.collections?.length) {
-    schemaData.collections.forEach((collection) => {
+  const collections = schemaData?.collections 
+    ? (Array.isArray(schemaData.collections) ? schemaData.collections : Object.values(schemaData.collections))
+    : [];
+
+  if (collections.length) {
+    collections.forEach((collection: any) => {
       const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
       const displayName = toTitleCase(singularize(collection.name));
       const nameSet = new Set<string>([collection.name, displayName]);

@@ -4,10 +4,10 @@ import { Loader2, RefreshCw } from 'lucide-react';
 import React from 'react';
 
 
+import { PanelAction } from '@/shared/contracts/ui';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/utils/ui-utils';
 
-import { PanelAction } from '@/shared/contracts/ui';
 
 interface PanelHeaderProps {
   title: string;

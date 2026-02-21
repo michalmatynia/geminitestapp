@@ -4,8 +4,8 @@ import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
 import type { UpdateCmsThemeDto } from '@/shared/contracts/cms';
-import { notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { notFoundError } from '@/shared/errors/app-error';
 
 export async function GET_handler(
   _req: NextRequest,

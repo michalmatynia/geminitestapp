@@ -1,9 +1,9 @@
 export const runtime = 'nodejs';
 
 
+import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams } from '@/shared/lib/api/api-handler';
-import type { ApiHandlerContext, ApiRouteHandler } from '@/shared/contracts/ui';
 
 import { GET_handler as getCategoriesHandler } from '../categories/handler';
 import { GET_handler as getProducersHandler } from '../producers/handler';

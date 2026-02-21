@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
-import { badRequestError } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { ProductCategory } from '@/shared/contracts/products';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 
 const MAX_CATALOG_IDS = 25;
 

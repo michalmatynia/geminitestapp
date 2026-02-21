@@ -172,7 +172,7 @@ export function JobQueuePanel({
     },
   });
   const heavyMap = React.useMemo(
-    () => new Map((aiPathsSettingsQuery.data ?? []).map((item) => [item.key, item.value])),
+    () => new Map((aiPathsSettingsQuery.data ?? []).map((item: { key: string; value: string }) => [item.key, item.value])),
     [aiPathsSettingsQuery.data]
   );
 
@@ -252,14 +252,9 @@ export function JobQueuePanel({
     isPanelActive;
 
   const resolveRunsRefetchInterval = React.useCallback(
-    (query: unknown): number | false => {
+    (query: any): number | false => {
       if (!effectiveAutoRefreshEnabled) return false;
-      const runs =
-        (
-          query as {
-            state?: { data?: { runs?: AiPathRunRecord[] } };
-          }
-        ).state?.data?.runs ?? [];
+      const runs = (query.state.data as any)?.runs ?? [];
       const hasActiveRuns = runs.some((run: AiPathRunRecord) =>
         ACTIVE_RUN_STATUSES.has(String(run.status ?? '').trim().toLowerCase())
       );
@@ -272,14 +267,9 @@ export function JobQueuePanel({
   );
 
   const resolveQueueStatusRefetchInterval = React.useCallback(
-    (query: unknown): number | false => {
+    (query: any): number | false => {
       if (!effectiveAutoRefreshEnabled) return false;
-      const activeRuns =
-        (
-          query as {
-            state?: { data?: { status?: QueueStatus } };
-          }
-        ).state?.data?.status?.activeRuns ?? 0;
+      const activeRuns = (query.state.data as any)?.status?.activeRuns ?? 0;
       const baseInterval = activeRuns > 0
         ? Math.max(ACTIVE_QUEUE_STATUS_REFRESH_MIN_MS, autoRefreshInterval)
         : Math.max(IDLE_QUEUE_STATUS_REFRESH_MIN_MS, autoRefreshInterval);
@@ -882,7 +872,7 @@ export function JobQueuePanel({
     <div className='space-y-4'>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div>
-          <Hint size='sm' uppercase={false} className='font-semibold text-white'>{panelLabel}</Hint>
+          <Hint size='xs' uppercase={false} className='font-semibold text-white'>{panelLabel}</Hint>
           <div className='text-xs text-gray-400'>{panelDescription}</div>
         </div>
         <div className='flex flex-wrap gap-2'>

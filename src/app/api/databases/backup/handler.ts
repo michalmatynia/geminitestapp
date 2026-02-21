@@ -10,8 +10,8 @@ import {
   startProductAiJobQueue,
 } from '@/features/jobs/server';
 import { logSystemError } from '@/features/observability/server';
-import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 
 const backupTypeSchema = z.enum(['mongodb', 'postgresql']);
 const isProductionRuntime = (): boolean => process.env['NODE_ENV'] === 'production';
@@ -43,7 +43,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   let processedInline = false;
   startProductAiJobQueue();
   try {
-    await enqueueProductAiJobToQueue(job.id, job.productId as string, job.jobType as string, job.payload);
+    await enqueueProductAiJobToQueue(job.id, job.productId, job.jobType as string, job.payload);
   } catch (enqueueError: unknown) {
     await logSystemError({
       message: '[databases.backup] Failed to enqueue db backup job to runtime queue, falling back to inline processing',

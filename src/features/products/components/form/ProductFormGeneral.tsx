@@ -9,7 +9,6 @@ import {
   useProductValidationActions,
   useProductValidationState,
 } from '@/features/products/context/ProductValidationSettingsContext';
-import { ProductFormData } from '@/shared/contracts/products';
 import {
   isPatternEnabledForValidationScope,
   isPatternReplacementEnabledForValidationScope,
@@ -31,6 +30,7 @@ import {
   sortValidatorPatterns,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
+import { ProductFormData } from '@/shared/contracts/products';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
 import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField, Alert, Skeleton, Hint } from '@/shared/ui';
 import { cn } from '@/shared/utils';

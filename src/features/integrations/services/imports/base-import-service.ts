@@ -46,7 +46,10 @@ import {
   type BaseConnectionContext,
   type StartBaseImportRunInput,
 } from '@/features/integrations/services/imports/base-import-service-shared';
-import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations';
+import { getCatalogRepository } from '@/features/products/services/catalog-repository';
+import { getParameterRepository } from '@/features/products/services/parameter-repository';
+import { getProductDataProvider } from '@/features/products/services/product-provider';
+import { getProductRepository } from '@/features/products/services/product-repository';
 import type {
   BaseImportErrorCode,
   BaseImportErrorClass,
@@ -58,10 +61,7 @@ import type {
   BaseImportRunParams,
   BaseImportRunRecord,
 } from '@/shared/contracts/integrations';
-import { getCatalogRepository } from '@/features/products/services/catalog-repository';
-import { getParameterRepository } from '@/features/products/services/parameter-repository';
-import { getProductDataProvider } from '@/features/products/services/product-provider';
-import { getProductRepository } from '@/features/products/services/product-repository';
+import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 

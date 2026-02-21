@@ -8,12 +8,12 @@ import type {
   CreateProductCategoryDto, 
   UpdateProductCategoryDto 
 } from '@/shared/contracts/products';
-import { internalError, notFoundError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { 
   ProductCategory, 
   ProductCategoryWithChildren 
 } from '@/shared/contracts/products';
+import { internalError, notFoundError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { AnyBulkWriteOperation, Filter, UpdateFilter, Document } from 'mongodb';
 

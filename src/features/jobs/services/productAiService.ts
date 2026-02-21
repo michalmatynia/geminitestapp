@@ -1,9 +1,9 @@
 import { getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
-import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/shared/contracts/jobs';
 import { logSystemEvent } from '@/features/observability/server';
 import { productService } from '@/features/products/server';
-import { invalidStateError, notFoundError } from '@/shared/errors/app-error';
+import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/shared/contracts/jobs';
 import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/contracts/jobs';
+import { invalidStateError, notFoundError } from '@/shared/errors/app-error';
 
 type ProductSummary = {
   name_en: string | null;
@@ -35,7 +35,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const toJobResult = (value: unknown): ProductAiJobResult | null => {
   if (value === null || value === undefined) return null;
-  return isRecord(value) ? (value as ProductAiJobResult) : null;
+  return isRecord(value) ? (value) : null;
 };
 
 const toIsoString = (value?: Date | null): string | null => {

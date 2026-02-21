@@ -4,13 +4,13 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { runsApi } from '@/features/ai/ai-paths/lib';
 import { logClientError } from '@/features/observability';
-import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
 } from '@/shared/contracts/ai-paths';
+import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
 
 import {

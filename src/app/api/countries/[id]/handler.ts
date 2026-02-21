@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   configurationError,
   notFoundError,
@@ -12,7 +13,6 @@ import {
 } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import type { Prisma } from '@prisma/client';
 

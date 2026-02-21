@@ -3,8 +3,6 @@ import 'server-only';
 import { createHash } from 'crypto';
 
 
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import { getRedisConnection } from '@/shared/lib/queue';
 import type {
   AnalyticsConnectionInfo,
   AnalyticsEventCreateInput,
@@ -16,6 +14,8 @@ import type {
   AnalyticsUtm,
   AnalyticsViewport,
 } from '@/shared/contracts';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { getRedisConnection } from '@/shared/lib/queue';
 
 import type { ObjectId } from 'mongodb';
 

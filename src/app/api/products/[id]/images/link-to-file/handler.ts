@@ -6,8 +6,8 @@ import { z } from 'zod';
 import { uploadFile } from '@/features/files/server';
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/services/product-repository';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const linkToFileSchema = z.object({
   url: z.string().trim().url(),

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { compareGenerationParams } from '@/features/ai/image-studio/utils/version-graph-compare';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 // ── Factory ──────────────────────────────────────────────────────────────────
 

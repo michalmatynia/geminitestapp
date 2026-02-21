@@ -8,12 +8,12 @@ import {
   normalizeStringList,
   parsePlanJson,
 } from '@/features/ai/agent-runtime/planning/utils';
+import { ErrorSystem } from '@/features/observability/server';
 import type {
   LoopSignal,
   PlanStep,
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
-import { ErrorSystem } from '@/features/observability/server';
 import prisma from '@/shared/lib/db/prisma';
 
 type PlanStepSpecInput = {

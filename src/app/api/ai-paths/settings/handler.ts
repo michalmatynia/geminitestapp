@@ -7,8 +7,8 @@ import {
   upsertAiPathsSetting,
   upsertAiPathsSettingsBulk,
 } from '@/features/ai/ai-paths/server';
-import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 
 const settingPayloadSchema = z.object({
   key: z.string().trim().min(1).refine((value) => value.startsWith('ai_paths_'), {

@@ -25,7 +25,8 @@ import type {
 } from '@/features/ai/ai-paths/lib';
 import { DB_PROVIDER_PLACEHOLDERS } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Button, Label, Textarea, SelectSimple, Input, Tooltip, Card, Hint } from '@/shared/ui';
+import type { AiQuery, CollectionSchema, DatabasePresetOption, FieldSchema } from '@/shared/contracts/database';
+import { Button, Label, Textarea, SelectSimple, Input, Tooltip, Card } from '@/shared/ui';
 
 import {
   extractCodeSnippets,
@@ -42,7 +43,6 @@ import { DatabaseTemplateSnippetsDialog } from './DatabaseTemplateSnippetsDialog
 import { PlaceholderMatrixDialog, type PlaceholderGroup, type PlaceholderTarget } from './PlaceholderMatrixDialog';
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
-import type { AiQuery, CollectionSchema, DatabasePresetOption, FieldSchema } from '@/shared/contracts/database';
 
 export function DatabaseConstructorTab(): React.JSX.Element | null {
   const {

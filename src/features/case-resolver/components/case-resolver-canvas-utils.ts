@@ -6,7 +6,6 @@ import {
   getDefaultConfigForType,
 } from '@/features/ai/ai-paths/lib';
 import { type EdgeDto as AiEdge } from '@/shared/contracts/ai-paths';
-
 import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,

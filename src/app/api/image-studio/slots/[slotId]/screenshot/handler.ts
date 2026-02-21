@@ -6,8 +6,8 @@ import { z } from 'zod';
 
 import { getImageStudioSlotById, updateImageStudioSlot } from '@/features/ai/image-studio/server/slot-repository';
 import { getImageFileRepository } from '@/features/files/server';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const payloadSchema = z.object({
   dataUrl: z.string().trim().min(1),

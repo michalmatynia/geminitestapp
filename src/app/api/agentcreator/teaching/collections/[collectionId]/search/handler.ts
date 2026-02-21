@@ -4,10 +4,10 @@ import { z } from 'zod';
 import { generateOllamaEmbedding } from '@/features/ai/agentcreator/teaching/server/embeddings';
 import { getEmbeddingCollectionById } from '@/features/ai/agentcreator/teaching/server/repository';
 import { retrieveTopContext } from '@/features/ai/agentcreator/teaching/server/retrieval';
+import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import type { AgentTeachingChatSource } from '@/shared/contracts/agent-teaching';
 
 const searchSchema = z.object({
   queryText: z.string().trim().min(1),

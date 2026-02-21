@@ -4,11 +4,11 @@ import path from 'path';
 import { deleteFileFromStorage, uploadToConfiguredStorage } from '@/features/files/server';
 import { ErrorSystem } from '@/features/observability/server';
 import { getAsset3DRepository } from '@/features/viewer3d/services/asset3d-repository';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { badRequestError } from '@/shared/errors/app-error';
 
 import { isValid3DAsset, validate3DFileAsync } from './validateAsset3d';
 
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 const uploadsRoot = path.join(process.cwd(), 'public', 'uploads');
 const assets3dRoot = path.join(uploadsRoot, 'assets3d');

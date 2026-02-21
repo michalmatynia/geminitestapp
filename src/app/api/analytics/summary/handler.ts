@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { getAnalyticsSummary } from '@/features/analytics/server';
 import { auth } from '@/features/auth/server';
-import { authError, badRequestError } from '@/shared/errors/app-error';
-import { getQueryParams } from '@/shared/lib/api/api-handler';
 import type { AnalyticsScope } from '@/shared/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { authError, badRequestError } from '@/shared/errors/app-error';
+import { getQueryParams } from '@/shared/lib/api/api-handler';
 
 const RANGE_VALUES = ['24h', '7d', '30d'] as const;
 type AnalyticsRange = (typeof RANGE_VALUES)[number];

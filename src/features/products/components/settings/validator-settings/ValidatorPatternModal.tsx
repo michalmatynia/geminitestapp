@@ -16,6 +16,7 @@ import type {
   ProductValidationLaunchOperator,
   ProductValidationRuntimeType,
 } from '@/shared/contracts/products';
+import type { PatternFormData, ReplacementMode } from '@/shared/contracts/products';
 import {
   Input,
   MultiSelect,
@@ -51,7 +52,6 @@ import {
 import { ValidatorDocTooltip } from './ValidatorDocsTooltips';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
 
-import type { PatternFormData, ReplacementMode } from '@/shared/contracts/products';
 
 /**
  * Validator docs: see docs/validator/function-reference.md#ui.validatorpatternmodal

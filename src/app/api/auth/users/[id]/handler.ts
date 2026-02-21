@@ -11,10 +11,10 @@ import { invalidateUserPreferencesCache } from '@/features/auth/server';
 import { AUTH_SETTINGS_KEYS, type AuthUserRoleMap } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import type { AuthUserDto } from '@/shared/contracts/auth';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, conflictError, forbiddenError, internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 export const updateSchema = z.object({

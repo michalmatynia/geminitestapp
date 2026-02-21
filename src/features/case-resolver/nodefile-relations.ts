@@ -414,6 +414,12 @@ export const sanitizeCaseResolverNodeFileAssetSnapshots = ({
       .map((file: CaseResolverFile): string => file.id.trim())
       .filter(Boolean)
   );
+  const validCaseFileIds = new Set<string>(
+    files
+      .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
+      .map((file: CaseResolverFile): string => file.id.trim())
+      .filter(Boolean)
+  );
   const validLegacyBindingKeySet = buildValidLegacyBindingKeySetFromFiles(files);
   const now = new Date().toISOString();
   let changed = false;
@@ -439,6 +445,8 @@ export const sanitizeCaseResolverNodeFileAssetSnapshots = ({
     }
 
     const record = parsed as Record<string, unknown>;
+    const existingSourceFileId =
+      typeof asset.sourceFileId === 'string' ? asset.sourceFileId.trim() : '';
     const hasCanonicalMeta =
       record['nodeFileMeta'] !== null &&
       typeof record['nodeFileMeta'] === 'object' &&
@@ -483,7 +491,17 @@ export const sanitizeCaseResolverNodeFileAssetSnapshots = ({
             .filter(Boolean)
         )
       );
-      return fileIds.length === 1 ? (fileIds[0] ?? null) : null;
+      if (fileIds.length === 1) {
+        return fileIds[0] ?? null;
+      }
+      if (
+        fileIds.length === 0 &&
+        existingSourceFileId.length > 0 &&
+        validCaseFileIds.has(existingSourceFileId)
+      ) {
+        return existingSourceFileId;
+      }
+      return null;
     })();
 
     if (nextTextContent === rawText && (asset.sourceFileId ?? null) === nextSourceFileId) {

@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { ObjectId } from 'mongodb';
 
+import { getProductDataProvider } from '@/features/products/server';
 import type {
   BaseImportItemRecord,
   BaseImportItemStatus,
@@ -17,7 +18,6 @@ import type {
   BaseImportRunStatus,
   BaseImportPreflight,
 } from '@/shared/contracts/integrations';
-import { getProductDataProvider } from '@/features/products/server';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 

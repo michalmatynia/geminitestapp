@@ -4,6 +4,7 @@ import {
   explodePromptText,
   updatePromptExploderDocument,
 } from '@/features/prompt-exploder/parser';
+import type { PromptExploderBinding, PromptExploderSegment } from '@/shared/contracts/prompt-exploder';
 
 const REFERENCE_PROMPT = [
   'REFERENCE',
@@ -21,11 +22,11 @@ describe('prompt exploder parser stability', () => {
     const first = explodePromptText({ prompt: REFERENCE_PROMPT });
     const second = explodePromptText({ prompt: REFERENCE_PROMPT });
 
-    expect(second.segments.map((segment) => segment.id)).toEqual(
-      first.segments.map((segment) => segment.id)
+    expect(second.segments.map((segment: PromptExploderSegment) => segment.id)).toEqual(
+      first.segments.map((segment: PromptExploderSegment) => segment.id)
     );
-    expect(second.bindings.map((binding) => binding.id)).toEqual(
-      first.bindings.map((binding) => binding.id)
+    expect(second.bindings.map((binding: PromptExploderBinding) => binding.id)).toEqual(
+      first.bindings.map((binding: PromptExploderBinding) => binding.id)
     );
     expect(second.bindings.length).toBeGreaterThan(0);
   });

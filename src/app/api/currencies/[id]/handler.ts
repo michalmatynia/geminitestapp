@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getCurrencyRepository } from '@/features/internationalization/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   badRequestError,
   notFoundError,
   duplicateEntryError,
 } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const currencySchema = z.object({
   code: z.enum(['USD', 'EUR', 'PLN', 'GBP', 'SEK']),

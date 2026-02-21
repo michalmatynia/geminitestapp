@@ -2,16 +2,6 @@ import { Split } from 'lucide-react';
 import React from 'react';
 
 import {
-  Button,
-  Checkbox,
-  FormField,
-  Input,
-  SelectSimple,
-  EmptyState,
-} from '@/shared/ui';
-import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
-
-import {
   CASE_RESOLVER_JOIN_MODE_OPTIONS,
   CASE_RESOLVER_NODE_ROLE_OPTIONS,
   CASE_RESOLVER_QUOTE_MODE_OPTIONS,
@@ -22,6 +12,16 @@ import {
   type CaseResolverFile,
   type CaseResolverNodeMeta,
 } from '@/shared/contracts/case-resolver';
+import {
+  Button,
+  Checkbox,
+  FormField,
+  Input,
+  SelectSimple,
+  EmptyState,
+} from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
+
 
 const CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 

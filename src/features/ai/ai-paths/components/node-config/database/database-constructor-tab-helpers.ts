@@ -67,7 +67,7 @@ export const normalizeSchemaCollections = (schema: SchemaData | null): Collectio
     return provider ? { ...rest, provider } : rest;
   };
 
-  if (schema && schema.provider === 'multi') {
+  if (schema?.provider === 'multi') {
     return (schema.collections as any[]).map((collection) => stripUndefinedProvider(collection));
   }
 

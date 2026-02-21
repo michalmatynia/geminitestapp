@@ -5,11 +5,6 @@ import {
   PRODUCT_VALIDATOR_ENABLED_BY_DEFAULT_SETTING_KEY,
   PRODUCT_VALIDATOR_INSTANCE_DENY_BEHAVIOR_SETTING_KEY,
 } from '@/features/products/constants';
-import type {
-  CreateProductValidationPatternInput,
-  ProductValidationPatternRepository,
-  UpdateProductValidationPatternInput,
-} from '@/shared/contracts/products';
 import {
   normalizeProductValidationPatternDenyBehaviorOverride,
   normalizeProductValidationLaunchScopeBehavior,
@@ -19,8 +14,11 @@ import {
   normalizeProductValidationPatternScopes,
   normalizeProductValidationInstanceDenyBehaviorMap,
 } from '@/features/products/utils/validator-instance-behavior';
-import { conflictError, operationFailedError } from '@/shared/errors/app-error';
-import prisma from '@/shared/lib/db/prisma';
+import type {
+  CreateProductValidationPatternInput,
+  ProductValidationPatternRepository,
+  UpdateProductValidationPatternInput,
+} from '@/shared/contracts/products';
 import type {
   ProductValidationChainMode,
   ProductValidationInstanceDenyBehaviorMap,
@@ -32,6 +30,8 @@ import type {
   ProductValidationSeverity,
   ProductValidationTarget,
 } from '@/shared/contracts/products';
+import { conflictError, operationFailedError } from '@/shared/errors/app-error';
+import prisma from '@/shared/lib/db/prisma';
 
 const DEFAULT_ENABLED_BY_DEFAULT = true;
 const MISSING_DELEGATE_MESSAGE =

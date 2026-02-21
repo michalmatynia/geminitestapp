@@ -3,6 +3,7 @@
 import { AlertTriangleIcon } from 'lucide-react';
 import Link from 'next/link';
 
+import type { DatabaseType } from '@/shared/contracts/database';
 import {
   PageLayout,
   Button,
@@ -20,7 +21,6 @@ import { CrudPanel } from '../components/CrudPanel';
 import { SqlQueryConsole } from '../components/SqlQueryConsole';
 import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
 
-import type { DatabaseType } from '@/shared/contracts/database';
 
 function DatabaseOperationsContent(): React.JSX.Element {
   const { dbType, setDbType, tableDetails, isLoading: previewLoading } = useDatabase();

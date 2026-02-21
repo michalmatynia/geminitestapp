@@ -1,10 +1,10 @@
 import 'server-only';
 
+import { enqueueBaseImportRunJob } from '@/features/jobs/workers/baseImportQueue';
 import type {
   BaseImportRunRecord,
   BaseImportStartResponse,
 } from '@/shared/contracts/integrations';
-import { enqueueBaseImportRunJob } from '@/features/jobs/workers/baseImportQueue';
 
 import {
   prepareBaseImportRun,

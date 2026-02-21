@@ -3,9 +3,9 @@
 import { Box, Eye, EyeOff, Trash2, Plus, GripVertical, type LucideIcon } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
+import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 import { TreeRow, TreeCaret, TreeActionButton, TreeActionSlot, TreeContextMenu, type TreeContextMenuItem, EmptyState } from '@/shared/ui';
 import { DRAG_KEYS, hasDragType, resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
-import { isCmsSectionHidden } from '@/features/cms/utils/page-builder-normalization';
 
 import { usePageBuilder } from '../../../hooks/usePageBuilderContext';
 import { useTreeActions } from '../../../hooks/useTreeActionsContext';

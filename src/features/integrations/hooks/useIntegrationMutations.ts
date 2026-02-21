@@ -2,6 +2,8 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import type { Integration, IntegrationConnection } from '@/shared/contracts/integrations';
+import type { MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -11,8 +13,6 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { invalidateIntegrations } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { Integration, IntegrationConnection } from '@/shared/contracts/integrations';
-import type { MutationResult } from '@/shared/contracts/ui';
 
 import { invalidateIntegrationConnections } from './integrationCache';
 

@@ -6,6 +6,8 @@ import { useRouter, useParams } from 'next/navigation';
 import React, { useState } from 'react';
 
 import { useCmsTheme, useUpdateTheme } from '@/features/cms/hooks/useCmsQueries';
+import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
+import { logClientError } from '@/features/observability';
 import type {
   CmsTheme,
   CmsThemeColors,
@@ -13,8 +15,6 @@ import type {
   CmsThemeTypography,
   CmsThemeUpdateInput,
 } from '@/shared/contracts/cms';
-import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
-import { logClientError } from '@/features/observability';
 import { Input, FormSection, FormField, FormActions, PageLayout, Alert, LoadingState } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 

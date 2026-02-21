@@ -3,6 +3,15 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import {
+  Catalog,
+  CatalogRecord,
+  PriceGroup,
+  ProductCategory,
+  ProductCategoryWithChildren,
+  ProductParameter,
+  ProductTag,
+} from '@/shared/contracts/products';
+import {
   createListQueryV2,
   createSingleQueryV2,
   createMutationV2,
@@ -32,22 +41,13 @@ import type {
   SingleQuery,
 } from '@/shared/contracts/ui';
 
-import * as api from '../api/settings';
-import {
-  Catalog,
-  CatalogRecord,
-  PriceGroup,
-  ProductCategory,
-  ProductCategoryWithChildren,
-  ProductParameter,
-  ProductTag,
-} from '@/shared/contracts/products';
 import {
   useCatalogs as useMetadataCatalogs,
   useParameters as useMetadataParameters,
   usePriceGroups as useMetadataPriceGroups,
   useTags as useMetadataTags,
 } from './useProductMetadataQueries';
+import * as api from '../api/settings';
 
 
 export function usePriceGroups(): ListQuery<PriceGroup> {

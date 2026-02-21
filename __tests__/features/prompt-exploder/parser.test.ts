@@ -323,7 +323,7 @@ describe('prompt exploder parser', () => {
     expect(document.bindings.some( (binding: any) => binding.type === 'uses_param')).toBe(true);
     expect(
       document.bindings.some(
-         (binding: any) =>
+        (binding: any) =>
           binding.type === 'references' &&
           /RL4/i.test(binding.targetLabel) &&
           binding.origin === 'auto' &&
@@ -343,7 +343,7 @@ describe('prompt exploder parser', () => {
       ...segment.subsections.flatMap( (subsection: any) => subsection.items),
     ]);
     const conditionalItem = allItems.find(
-       (item: any) =>
+      (item: any) =>
         item.logicalOperator === 'if' &&
         item.referencedParamPath === 'add_new_ground_shadow'
     );
@@ -374,11 +374,11 @@ describe('prompt exploder parser', () => {
     const qaSegment = document.segments.find( (segment: any) => segment.type === 'qa_matrix');
     const qaSubsection = qaSegment?.subsections.find( (subsection: any) => subsection.code === 'QA_R2');
     const relightSegment = document.segments.find(
-       (segment: any) =>
+      (segment: any) =>
         segment.type === 'sequence' && /STUDIO RELIGHTING/i.test(segment.title)
     );
     const relightSubsection = relightSegment?.subsections.find(
-       (subsection: any) => subsection.code === 'RL4'
+      (subsection: any) => subsection.code === 'RL4'
     );
     expect(qaSegment).toBeTruthy();
     expect(qaSubsection).toBeTruthy();
@@ -411,7 +411,7 @@ describe('prompt exploder parser', () => {
     expect(withManual.bindings.some( (binding: any) => binding.origin === 'manual')).toBe(true);
     expect(
       withManual.bindings.some(
-         (binding: any) =>
+        (binding: any) =>
           binding.origin === 'manual' &&
           binding.fromSegmentId === first!.id &&
           binding.toSegmentId === second!.id
@@ -419,7 +419,7 @@ describe('prompt exploder parser', () => {
     ).toBe(true);
     expect(
       withManual.bindings.some(
-         (binding: any) =>
+        (binding: any) =>
           binding.origin === 'manual' &&
           binding.fromSegmentId === qaSegment!.id &&
           binding.fromSubsectionId === qaSubsection!.id &&
@@ -493,7 +493,7 @@ Rejected when visual coherence does not hold.`;
     expect(document.segments.length).toBeGreaterThanOrEqual(4);
     expect(
       document.segments.some(
-         (segment: any) =>
+        (segment: any) =>
           segment.title.includes('Preserve the Product Exactly') &&
           (segment.type === 'sequence' || segment.type === 'list')
       )
@@ -510,10 +510,10 @@ Rejected when visual coherence does not hold.`;
     });
 
     const validationSegment = document.segments.find(
-       (segment: any) => segment.title === 'VALIDATION_MODULE'
+      (segment: any) => segment.title === 'VALIDATION_MODULE'
     );
     const dryRunSegment = document.segments.find(
-       (segment: any) => segment.title === 'DRY_RUN_BEHAVIOR'
+      (segment: any) => segment.title === 'DRY_RUN_BEHAVIOR'
     );
 
     expect(validationSegment?.type).toBe('qa_matrix');
@@ -579,7 +579,7 @@ Rejected when visual coherence does not hold.`;
     );
 
     const relighting = document.segments.find(
-       (segment: any) =>
+      (segment: any) =>
         segment.type === 'sequence' &&
         /STUDIO RELIGHTING EXTENSION/i.test(segment.title)
     );
@@ -733,7 +733,7 @@ Rejected when visual coherence does not hold.`;
       validationScope: 'prompt_exploder',
     });
     const withoutCaseScopeSegment = withoutCaseScope.segments.find(
-       (segment: any) => segment.title === 'WORKSTEPS'
+      (segment: any) => segment.title === 'WORKSTEPS'
     );
     expect(withoutCaseScopeSegment?.type).not.toBe('hierarchical_list');
 
@@ -743,7 +743,7 @@ Rejected when visual coherence does not hold.`;
       validationScope: 'case_resolver_prompt_exploder',
     });
     const withCaseScopeSegment = withCaseScope.segments.find(
-       (segment: any) => segment.title === 'WORKSTEPS'
+      (segment: any) => segment.title === 'WORKSTEPS'
     );
     expect(withCaseScopeSegment?.type).toBe('hierarchical_list');
   });

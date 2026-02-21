@@ -1,0 +1,33 @@
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(3,8): error TS1259: Module '"/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/@types/react/index"' can only be default-imported using the 'esModuleInterop' flag
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(10,8): error TS2307: Cannot find module '@/features/ai/ai-paths/lib' or its corresponding type declarations.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(19,8): error TS2307: Cannot find module '@/features/ai/ai-paths/lib' or its corresponding type declarations.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(24,8): error TS6142: Module './canvas-board-connectors' was resolved to '/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/canvas-board-connectors.tsx', but '--jsx' is not set.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(395,5): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(451,11): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(458,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(472,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(498,13): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(511,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(525,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(526,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(535,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(550,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(557,19): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(558,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(566,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(583,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(587,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(600,17): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(609,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(624,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(640,15): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(649,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(650,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(651,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(690,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(719,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(740,21): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(741,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(742,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(777,23): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.
+src/features/ai/ai-paths/components/canvas-svg-node-layer.tsx(802,25): error TS17004: Cannot use JSX unless the '--jsx' flag is provided.

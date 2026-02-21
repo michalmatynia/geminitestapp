@@ -3,6 +3,7 @@
 import { Zap } from 'lucide-react';
 import React from 'react';
 
+import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import type { 
   GsapAnimationConfigDto as GsapAnimationConfig,
   AnimationPresetDto as AnimationPreset,
@@ -13,7 +14,6 @@ import {
   ANIMATION_PRESETS, 
   ANIMATION_EASINGS,
 } from '@/shared/contracts/gsap';
-import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import { 
   Input, 
   Label, 
@@ -104,7 +104,7 @@ export function AnimationConfigPanel({
             <SelectSimple
               options={ANIMATION_EASINGS}
               value={config.easing}
-              onValueChange={(val) => onChange({ easing: val as AnimationEasing })}
+              onValueChange={(val) => onChange({ easing: val })}
             />
           </FormField>
 

@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import {
   AiPathsProvider,
+  useCanvasActions,
   useCanvasRefs,
   useCanvasState,
   useGraphActions,
@@ -19,7 +20,15 @@ import {
   palette,
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
-import { Button, useToast, Badge, Hint, SelectSimple, EmptyState, Card } from '@/shared/ui';
+import { type AiNode, type AiEdge, type NodeDefinition } from '@/shared/contracts/case-resolver';
+import {
+  type CaseResolverIdentifier,
+  type CaseResolverFile,
+  type CaseResolverNodeFileMeta,
+  type CaseResolverNodeFileSnapshot,
+  type CaseResolverScanSlot,
+} from '@/shared/contracts/case-resolver';
+import { Button, useToast, Badge, Hint, SelectSimple, EmptyState, Card, SearchInput } from '@/shared/ui';
 import { PanelHeader } from '@/shared/ui/templates/panels';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
@@ -31,13 +40,6 @@ import {
   type CaseResolverShowDocumentInCanvasDetail,
 } from '../drag';
 import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from '../settings';
-import { type AiNode, type AiEdge, type NodeDefinition } from '@/shared/contracts/case-resolver';
-import {
-  type CaseResolverFile,
-  type CaseResolverNodeFileMeta,
-  type CaseResolverNodeFileSnapshot,
-  type CaseResolverScanSlot,
-} from '@/shared/contracts/case-resolver';
 import {
   buildNode,
   buildPromptTemplateFromDroppedDocumentFile,
@@ -49,6 +51,33 @@ import {
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 const PREVIEW_MAX_CHARS = 400;
+const SEARCHABLE_CONTENT_MAX_CHARS = 6000;
+
+type NodeFileDocumentSearchScope = 'case_scope' | 'all_cases';
+
+type NodeFileDocumentSearchRow = {
+  file: CaseResolverFile;
+  signatureLabel: string;
+  addresserLabel: string;
+  addresseeLabel: string;
+  searchable: string;
+};
+
+const normalizeSearchText = (value: string): string =>
+  value
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const resolvePartyReferenceSearchLabel = (
+  reference: CaseResolverFile['addresser'] | CaseResolverFile['addressee']
+): string => {
+  if (!reference) return '';
+  const kind = typeof reference.kind === 'string' ? reference.kind.trim() : '';
+  const id = typeof reference.id === 'string' ? reference.id.trim() : '';
+  if (!kind && !id) return '';
+  return [kind, id].filter(Boolean).join(':');
+};
 
 const resolveContentPreview = (file: CaseResolverFile): string => {
   if (file.fileType === 'document') {
@@ -67,6 +96,61 @@ const resolveContentPreview = (file: CaseResolverFile): string => {
       : combined;
   }
   return '';
+};
+
+const resolveSearchableDocumentContent = (file: CaseResolverFile): string => {
+  if (file.fileType === 'document') {
+    const text =
+      file.documentContentPlainText.trim() ||
+      file.documentContentMarkdown.trim() ||
+      file.documentContent.trim();
+    return text.length > SEARCHABLE_CONTENT_MAX_CHARS
+      ? text.slice(0, SEARCHABLE_CONTENT_MAX_CHARS)
+      : text;
+  }
+  if (file.fileType === 'scanfile') {
+    const combined = file.scanSlots
+      .map((slot: CaseResolverScanSlot): string => slot.ocrText.trim())
+      .filter(Boolean)
+      .join('\n');
+    return combined.length > SEARCHABLE_CONTENT_MAX_CHARS
+      ? combined.slice(0, SEARCHABLE_CONTENT_MAX_CHARS)
+      : combined;
+  }
+  return '';
+};
+
+const collectScopedCaseIds = (
+  files: CaseResolverFile[],
+  rootCaseId: string | null
+): Set<string> | null => {
+  if (!rootCaseId) return null;
+  const caseById = new Map(
+    files
+      .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
+      .map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+  );
+  if (!caseById.has(rootCaseId)) return null;
+
+  const childrenByParent = new Map<string, string[]>();
+  caseById.forEach((file: CaseResolverFile): void => {
+    const parentCaseId = typeof file.parentCaseId === 'string' ? file.parentCaseId.trim() : '';
+    if (!parentCaseId || parentCaseId === file.id || !caseById.has(parentCaseId)) return;
+    const currentChildren = childrenByParent.get(parentCaseId) ?? [];
+    currentChildren.push(file.id);
+    childrenByParent.set(parentCaseId, currentChildren);
+  });
+
+  const scoped = new Set<string>();
+  const visit = (caseId: string): void => {
+    if (!caseId || scoped.has(caseId)) return;
+    if (!caseById.has(caseId)) return;
+    scoped.add(caseId);
+    const children = childrenByParent.get(caseId) ?? [];
+    children.forEach((childCaseId: string): void => visit(childCaseId));
+  };
+  visit(rootCaseId);
+  return scoped.size > 0 ? scoped : null;
 };
 
 // ─── inner component props ────────────────────────────────────────────────────
@@ -144,9 +228,15 @@ function CaseResolverNodeFileWorkspaceInner({
   snapshot,
   onSnapshotChange,
 }: NodeFileWorkspaceInnerProps): React.JSX.Element {
-  const { workspace, onSelectFile, onSelectAsset } = useCaseResolverPageContext();
+  const {
+    workspace,
+    activeCaseId,
+    caseResolverIdentifiers,
+    onSelectFile,
+  } = useCaseResolverPageContext();
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();
+  const { setView } = useCanvasActions();
   const { nodes, edges } = useGraphState();
   const { addNode, setNodes } = useGraphActions();
   const { selectedNodeId } = useSelectionState();
@@ -154,6 +244,11 @@ function CaseResolverNodeFileWorkspaceInner({
   const { toast } = useToast();
   const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database' | 'viewer'>('prompt');
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
+  const [documentSearchScope, setDocumentSearchScope] =
+    useState<NodeFileDocumentSearchScope>('case_scope');
+  const [documentSearchQuery, setDocumentSearchQuery] = useState('');
+  const [selectedDocumentSearchFileId, setSelectedDocumentSearchFileId] =
+    useState<string>('');
 
   // nodeFileMeta lives in a ref so changes don't trigger re-renders but are
   // always available synchronously when the save effect fires.

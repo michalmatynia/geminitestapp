@@ -4,9 +4,9 @@ import React, { useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import type { CatalogDto as Catalog } from '@/shared/contracts/products';
+import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
 import { Label } from '@/shared/ui';
 import { GenericPickerDropdown } from '@/shared/ui/templates/pickers';
-import type { PickerGroup, PickerOption } from '@/shared/contracts/ui';
 
 export function CategoryMapperCatalogSelector(): React.JSX.Element {
   const {

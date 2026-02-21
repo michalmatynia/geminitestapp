@@ -4,6 +4,10 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
+import {
+  type DatabaseTableDetail,
+  type DatabaseType,
+} from '@/shared/contracts/database';
 import { ApiError } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -11,10 +15,6 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { executeSqlQuery } from '../api';
 import { useDatabase } from '../context/DatabaseContext';
 import { useCrudMutation } from '../hooks/useDatabaseQueries';
-import {
-  type DatabaseTableDetail,
-  type DatabaseType,
-} from '@/shared/contracts/database';
 
 type CrudRowsResult = {
   rows: Record<string, unknown>[];

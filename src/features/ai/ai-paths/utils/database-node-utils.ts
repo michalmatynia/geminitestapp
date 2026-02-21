@@ -5,7 +5,7 @@ import type { DbSchemaSnapshot } from '@/shared/contracts/ai-paths';
 import type { 
   CollectionSchema, 
   SchemaData 
-} from '../components/node-config/database/types';
+} from '@/shared/contracts/database';
 
 export const toTitleCase = (value: string): string =>
   value
@@ -59,19 +59,25 @@ export const formatCollectionLabel = (collection: CollectionSchema, includeProvi
 };
 
 export const normalizeSchemaCollections = (schema: SchemaData | null): Array<CollectionSchema> => {
-  if (!schema?.collections?.length) return [];
+  if (!schema?.collections) return [];
+
+  const baseCollections = Array.isArray(schema.collections)
+    ? (schema.collections as any[])
+    : Object.values(schema.collections);
+
+  if (baseCollections.length === 0) return [];
 
   const stripUndefinedProvider = (
-    collection: SchemaData['collections'][number]
+    collection: any
   ): CollectionSchema => {
     const { provider, ...rest } = collection;
     return provider ? { ...rest, provider } : rest;
   };
 
-  if (schema.provider === 'multi') return schema.collections.map((collection) => stripUndefinedProvider(collection));
+  if (schema.provider === 'multi') return baseCollections.map((collection) => stripUndefinedProvider(collection));
 
-  const provider: 'mongodb' | 'prisma' = schema.provider;
-  return schema.collections.map((collection) => ({
+  const provider: 'mongodb' | 'prisma' = schema.provider as any;
+  return baseCollections.map((collection) => ({
     ...stripUndefinedProvider(collection),
     provider,
   }));
@@ -114,15 +120,21 @@ export const applySchemaSelection = (
 
 export const toDbSchemaSnapshotCollection = (
   collection: CollectionSchema
-): DbSchemaSnapshot['collections'][number] => ({
-  name: collection.name,
-  fields: (collection.fields ?? []).map((field: { name: string; type: string }) => ({
-    name: field.name,
-    type: field.type,
-  })),
-  ...(collection.relations ? { relations: collection.relations } : {}),
-  ...(collection.provider ? { provider: collection.provider } : {}),
-});
+): DbSchemaSnapshot['collections'][number] => {
+  const relations = (collection as any)['relations'] as string[] | undefined;
+  
+  return {
+    name: collection.name,
+    fields: (collection.fields ?? []).map((field: { name: string; type: string }) => ({
+      name: field.name,
+      type: field.type,
+    })),
+    ...(relations ? { relations } : {}),
+    ...(collection.provider === 'mongodb' || collection.provider === 'prisma'
+      ? { provider: collection.provider }
+      : {}),
+  };
+};
 
 export const toDbSchemaSnapshotSourceCollection = (
   collection: CollectionSchema
@@ -130,14 +142,18 @@ export const toDbSchemaSnapshotSourceCollection = (
   name: string;
   fields: Array<{ name: string; type: string }>;
   relations?: string[];
-} => ({
-  name: collection.name,
-  fields: (collection.fields ?? []).map((field: { name: string; type: string }) => ({
-    name: field.name,
-    type: field.type,
-  })),
-  ...(collection.relations ? { relations: collection.relations } : {}),
-});
+} => {
+  const relations = (collection as any)['relations'] as string[] | undefined;
+  
+  return {
+    name: collection.name,
+    fields: (collection.fields ?? []).map((field: { name: string; type: string }) => ({
+      name: field.name,
+      type: field.type,
+    })),
+    ...(relations ? { relations } : {}),
+  };
+};
 
 export const toDbSchemaSnapshot = (
   schema: SchemaData,
@@ -168,7 +184,7 @@ export const toDbSchemaSnapshot = (
   }
 
   return {
-    provider: schema.provider,
+    provider: schema.provider as any,
     collections: normalizedCollections.map(toDbSchemaSnapshotCollection),
     syncedAt,
   };

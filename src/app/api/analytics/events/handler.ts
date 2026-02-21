@@ -5,11 +5,11 @@ import { z } from 'zod';
 
 import { insertAnalyticsEvent, listAnalyticsEvents } from '@/features/analytics/server';
 import { auth, extractClientIp } from '@/features/auth/server';
+import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError } from '@/shared/errors/app-error';
 import { getPaginationParams, getQueryParams } from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logger } from '@/shared/utils/logger';
 
 const BLOCKING_ANALYTICS_EVENTS_INGESTION =

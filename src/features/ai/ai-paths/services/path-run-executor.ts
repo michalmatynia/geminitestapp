@@ -108,7 +108,7 @@ const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return EMPTY_RUNTIME_STATE;
   if (typeof value === 'string') {
     try {
-      const parsed = JSON.parse(value) as RuntimeState;
+      const parsed = JSON.parse(value);
       return parsed && typeof parsed === 'object'
         ? {
           ...EMPTY_RUNTIME_STATE,
@@ -183,14 +183,14 @@ const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
 
 type RuntimeProfileHighlight = {
   type: 'run' | 'iteration' | 'node';
-  phase?: 'start' | 'end';
-  nodeId?: string;
-  nodeType?: string;
-  status?: string;
-  reason?: string;
-  iteration?: number;
-  durationMs?: number;
-  hashMs?: number;
+  phase?: 'start' | 'end' | undefined;
+  nodeId?: string | undefined;
+  nodeType?: string | undefined;
+  status?: string | undefined;
+  reason?: string | undefined;
+  iteration?: number | undefined;
+  durationMs?: number | undefined;
+  hashMs?: number | undefined;
 };
 
 type RuntimeProfileNodeSpanStatus = 'running' | 'completed' | 'failed' | 'cached';

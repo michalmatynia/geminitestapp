@@ -15,13 +15,13 @@ import {
   type MongoInternalProducerDoc,
   type MongoProducerMappingDoc,
 } from '@/features/integrations/services/producer-mapping-repository-mongo-utils';
+import { getProducerRepository } from '@/features/products/services/producer-repository';
 import type {
   ProducerMapping,
   ProducerMappingCreateInput,
   ProducerMappingUpdateInput,
   ProducerMappingWithDetails,
 } from '@/shared/contracts/integrations';
-import { getProducerRepository } from '@/features/products/services/producer-repository';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

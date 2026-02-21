@@ -6,10 +6,10 @@ import type {
   ParameterCreateInput,
   ParameterUpdateInput,
 } from '@/shared/contracts/products';
-import prisma from '@/shared/lib/db/prisma';
 import type { 
   ProductParameter 
 } from '@/shared/contracts/products';
+import prisma from '@/shared/lib/db/prisma';
 
 const ALLOWED_SELECTOR_TYPES = new Set<ProductParameter['selectorType']>([
   'text',

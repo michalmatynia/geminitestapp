@@ -2,9 +2,9 @@ import 'server-only';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { auth } from '@/features/auth/server';
+import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import { forbiddenError, authError, rateLimitedError } from '@/shared/errors/app-error';
 import { getRedisConnection } from '@/shared/lib/queue';
-import type { AiPathRunRecord, AiPathRunStatus } from '@/shared/contracts/ai-paths';
 
 import type { NextRequest } from 'next/server';
 

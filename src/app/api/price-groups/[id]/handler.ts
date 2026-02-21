@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { fallbackCurrencies } from '@/features/internationalization/server';
 import { getProductDataProvider } from '@/features/products/server';
 import type { PriceGroupWithDetails } from '@/shared/contracts/products';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   badRequestError,
   configurationError,
@@ -12,7 +13,6 @@ import {
 } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import type { Prisma } from '@prisma/client';
 

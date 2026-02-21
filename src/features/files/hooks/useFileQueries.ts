@@ -3,6 +3,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { ExpandedImageFile } from '@/features/products';
+import type { 
+  ListQuery, 
+  DeleteMutation, 
+  UpdateMutation 
+} from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
@@ -11,11 +16,6 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { invalidateFiles } from '@/shared/lib/query-invalidation';
 import { fileKeys } from '@/shared/lib/query-key-exports';
-import type { 
-  ListQuery, 
-  DeleteMutation, 
-  UpdateMutation 
-} from '@/shared/contracts/ui';
 
 export { fileKeys };
 

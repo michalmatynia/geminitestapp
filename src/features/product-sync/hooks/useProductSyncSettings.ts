@@ -7,6 +7,14 @@ import type {
   ProductSyncRunDetail,
   ProductSyncRunRecord,
 } from '@/shared/contracts/product-sync';
+import type {
+  CreateMutation,
+  DeleteMutation,
+  ListQuery,
+  MutationResult,
+  SingleQuery,
+  UpdateMutation,
+} from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -17,14 +25,6 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { productSettingsKeys } from '@/shared/lib/query-key-exports';
-import type {
-  CreateMutation,
-  DeleteMutation,
-  ListQuery,
-  MutationResult,
-  SingleQuery,
-  UpdateMutation,
-} from '@/shared/contracts/ui';
 
 export function useProductSyncProfiles(): ListQuery<ProductSyncProfile> {
   const queryKey = productSettingsKeys.syncProfiles();

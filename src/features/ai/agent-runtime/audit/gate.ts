@@ -1,6 +1,6 @@
 import { DEBUG_CHATBOT, OLLAMA_BASE_URL } from '@/features/ai/agent-runtime/core/config';
-import type { PlanStep } from '@/shared/contracts/agent-runtime';
 import { ErrorSystem } from '@/features/observability/server';
+import type { PlanStep } from '@/shared/contracts/agent-runtime';
 
 const parseJsonObject = (content: string): unknown => {
   try {

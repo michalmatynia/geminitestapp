@@ -20,11 +20,6 @@ import {
   uploadFile,
 } from '@/features/files/server';
 import { getImageFileRepository } from '@/features/files/server';
-import type { 
-  ImageFileRecordDto as ImageFileRecord,
-  ImageFileCreateInputDto as ImageFileCreateInput,
-  ImageFileListFiltersDto as ImageFileListFilters
-} from '@/shared/contracts/files';
 
 export type ImageFileRepository = {
   createImageFile(data: ImageFileCreateInput): Promise<ImageFileRecord>;
@@ -45,6 +40,15 @@ import {
   parseProductForm,
 } from '@/features/products/services/product-service-form-utils';
 import { setProductStudioProject } from '@/features/products/services/product-studio-config';
+import {
+  validateProductCreate,
+  validateProductUpdate,
+} from '@/features/products/validations';
+import type { 
+  ImageFileRecordDto as ImageFileRecord,
+  ImageFileCreateInputDto as ImageFileCreateInput,
+  ImageFileListFiltersDto as ImageFileListFilters
+} from '@/shared/contracts/files';
 import type {
   ProductParameterValue,
   ProductWithImages,
@@ -55,10 +59,6 @@ import type {
   ProductFilters,
   ProductRepository,
 } from '@/shared/contracts/products';
-import {
-  validateProductCreate,
-  validateProductUpdate,
-} from '@/features/products/validations';
 import { badRequestError } from '@/shared/errors/app-error';
 
 const resolveProductRepository = async (

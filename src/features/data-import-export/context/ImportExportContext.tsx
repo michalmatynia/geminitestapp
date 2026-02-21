@@ -23,6 +23,12 @@ import type {
   CatalogRecord,
   ImportParameterCacheResponse,
 } from '@/features/data-import-export/hooks/useImportQueries';
+import {
+  getDefaultImageRetryPresets,
+  normalizeImageRetryPresets,
+} from '@/features/data-import-export/utils/image-retry-presets';
+import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
+import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import type {
   ImportResponse,
   InventoryOption,
@@ -34,22 +40,16 @@ import type {
   ImportRunDetail,
   DebugWarehouses,
 } from '@/shared/contracts/data-import-export';
-import {
-  getDefaultImageRetryPresets,
-  normalizeImageRetryPresets,
-} from '@/features/data-import-export/utils/image-retry-presets';
 import type { 
   IntegrationConnectionBasicDto as IntegrationConnectionBasic,
   IntegrationWithConnectionsDto as IntegrationWithConnections,
   BaseImportParameterImportSettingsDto as BaseImportParameterImportSettings,
   BaseImportModeDto as BaseImportMode
 } from '@/shared/contracts/integrations';
-import { useIntegrationsWithConnections } from '@/features/integrations/hooks/useIntegrationQueries';
 import {
   defaultBaseImportParameterImportSettings,
   normalizeBaseImportParameterImportSettings,
 } from '@/shared/contracts/integrations';
-import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import { useToast } from '@/shared/ui';
 
 import { createImportExportRuntimeActions } from './import-export-runtime-actions';

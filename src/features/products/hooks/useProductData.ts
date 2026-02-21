@@ -20,12 +20,12 @@ import { addQueuedProductId, removeQueuedProductId } from '@/features/products/s
 import type { 
   ProductWithImages, 
 } from '@/shared/contracts/products';
+import type { DeleteResponse } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
-import type { DeleteResponse } from '@/shared/contracts/ui';
 
 import {
   getProductCountQueryKey,

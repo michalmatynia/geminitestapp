@@ -2,7 +2,6 @@ import type {
   CaseResolverCompiledSegmentDto,
   CaseResolverCompileResultDto,
 } from '@/shared/contracts/case-resolver';
-
 import {
   type AiNode,
   type Edge,

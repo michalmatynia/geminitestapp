@@ -19,6 +19,11 @@ import type {
   BaseImportModeDto as BaseImportMode,
   ImportParameterCacheResponseDto
 } from '@/shared/contracts/integrations';
+import type {
+  ListQuery,
+  MutationResult,
+  SingleQuery,
+} from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createCreateMutationV2,
@@ -29,11 +34,6 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { importExportKeys, integrationKeys, productMetadataKeys } from '@/shared/lib/query-key-exports';
-import type {
-  ListQuery,
-  MutationResult,
-  SingleQuery,
-} from '@/shared/contracts/ui';
 
 export type ImportParameterCacheResponse = ImportParameterCacheResponseDto;
 export type { CatalogRecord };

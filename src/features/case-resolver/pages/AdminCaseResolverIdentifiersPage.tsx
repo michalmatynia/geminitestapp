@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
+import type { CaseResolverIdentifier } from '@/shared/contracts/case-resolver';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -28,7 +29,6 @@ import {
   parseCaseResolverIdentifiers,
 } from '../settings';
 
-import type { CaseResolverIdentifier } from '@/shared/contracts/case-resolver';
 
 type CaseIdentifierFormData = {
   name: string;

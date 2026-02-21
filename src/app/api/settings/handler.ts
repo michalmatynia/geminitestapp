@@ -10,6 +10,7 @@ import {
 } from '@/features/files/constants/storage-settings';
 import { invalidateFileStorageSettingsCache } from '@/features/files/services/storage/file-storage-service';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import {
@@ -43,7 +44,6 @@ import {
   getLastKnownSettings,
   type SettingsScope,
 } from '@/shared/lib/settings-cache';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
 

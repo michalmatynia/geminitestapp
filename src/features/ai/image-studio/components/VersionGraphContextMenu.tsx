@@ -12,6 +12,7 @@ import {
 import React from 'react';
 
 import { Card } from '@/shared/ui';
+
 import { useVersionGraphContextMenuContext } from './VersionGraphContextMenuContext';
 import { useSettingsState } from '../context/SettingsContext';
 import { getImageStudioDocTooltip } from '../utils/studio-docs';

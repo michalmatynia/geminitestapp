@@ -1,10 +1,10 @@
+import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type {
   MasterTreeDropPosition,
   MasterTreeId,
   MasterTreeNode,
 } from '@/shared/utils/master-folder-tree-contract';
 
-import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 
 export type MasterTreeRootDropZone = 'top' | 'bottom';
 

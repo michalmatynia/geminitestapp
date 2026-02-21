@@ -10,10 +10,10 @@ import type {
   SchemaResponseDto as SchemaResponse,
   SchemaResponsePayloadDto as SchemaResponsePayload
 } from '@/shared/contracts/database';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 // Prisma DMMF types for internal use
 type DmmfField = {

@@ -1,13 +1,13 @@
-import type { ProductParameterDto as ProductParameter, ProductParameterValueDto as ProductParameterValue } from '@/shared/contracts/products';
-
-import { extractBaseParameters } from './extractor';
-import { getCatalogParameterLinks, mergeCatalogParameterLinks } from './link-map-repository';
-
 import type {
   ApplyBaseParameterImportInput,
   ApplyBaseParameterImportResult,
   ExtractedBaseParameter,
 } from '@/shared/contracts/integrations';
+import type { ProductParameterDto as ProductParameter, ProductParameterValueDto as ProductParameterValue } from '@/shared/contracts/products';
+
+import { extractBaseParameters } from './extractor';
+import { getCatalogParameterLinks, mergeCatalogParameterLinks } from './link-map-repository';
+
 
 const toTrimmedString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;

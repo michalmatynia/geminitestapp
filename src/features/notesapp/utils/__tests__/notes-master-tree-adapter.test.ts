@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { MasterFolderTreePersistContext } from '@/shared/contracts/master-folder-tree';
 import {
   toFolderMasterNodeId,
   toNoteMasterNodeId,
@@ -9,6 +8,7 @@ import {
   createNotesMasterTreeAdapter,
   resolveNotesFolderTargetForNode,
 } from '@/features/notesapp/utils/notes-master-tree-adapter';
+import type { MasterFolderTreePersistContext } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const folderNode = (

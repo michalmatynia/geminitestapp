@@ -180,7 +180,7 @@ export function useChatbotContextState() {
       const now = new Date().toISOString();
       const nextItems: ContextItem[] = data.segments.map((segment, idx) => ({
         id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        title: segment.title || `PDF Content ${idx + 1}`,
+        title: (segment.metadata?.['title'] as string) || `PDF Content ${idx + 1}`,
         content: segment.content,
         tags: ['pdf'],
         source: 'pdf',

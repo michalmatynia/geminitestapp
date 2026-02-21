@@ -112,15 +112,15 @@ export function SlotInlineEditEnvironmentTab({
         >
           Upload Environment From Drive
         </Button>
-                  <Button size='xs'
-                    type='button'
-                    variant='outline'
-                    onClick={onUploadEnvironmentFromLocal}
-                    disabled={uploadPending}
-                    loading={uploadPending}
-                  >
+        <Button size='xs'
+          type='button'
+          variant='outline'
+          onClick={onUploadEnvironmentFromLocal}
+          disabled={uploadPending}
+          loading={uploadPending}
+        >
                     Upload Environment From Local
-                  </Button>        <Button size='xs'
+        </Button>        <Button size='xs'
           type='button'
           variant='outline'
           onClick={onClearEnvironmentImage}

@@ -4,7 +4,7 @@ import { useState, useMemo, useCallback } from 'react';
 
 import { useChatbotMemory } from '../hooks/useChatbotMemoryQueries';
 
-import type { ChatbotMemoryItem } from '../types';
+import type { ChatbotMemoryItem } from '@/shared/contracts/chatbot';
 
 // ChatbotMemoryItem already includes memoryKey, content, summary, tags, etc.
 // ExtendedMemoryItem just re-uses the base type as-is.

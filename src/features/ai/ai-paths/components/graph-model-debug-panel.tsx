@@ -1,7 +1,8 @@
 'use client';
 
-import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { Card } from '@/shared/ui';
+
+import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 
 export function GraphModelDebugPanel(): React.JSX.Element {
   const orchestrator = useAiPathsSettingsOrchestrator();

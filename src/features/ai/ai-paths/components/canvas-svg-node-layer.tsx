@@ -13,9 +13,7 @@ import {
   NODE_WIDTH,
   PORT_SIZE,
   formatRuntimeValue,
-  formatDurationMs,
   getPortOffsetY,
-  validateConnection,
 } from '@/features/ai/ai-paths/lib';
 
 import {
@@ -94,7 +92,7 @@ const BLOCKER_PROCESSING_STATUSES = new Set<string>([
 const formatRuntimeStatusLabel = (status: string): string =>
   status
     .split('_')
-    .map((part: string) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
+    .map((part: string): string => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
     .join(' ');
 
 const resolveNodePalette = (
@@ -247,14 +245,11 @@ const buildConnectorTitle = (info: ConnectorInfo): string => {
 export function CanvasSvgNodeLayer({
   cullPadding = 260,
   detailLevel = 'full',
-  nodeDurations = {},
   inputPulseNodes = new Set(),
   outputPulseNodes = new Set(),
   triggerConnected = new Set(),
   enableNodeAnimations = true,
   connectorHitTargetPx = 14,
-  connecting,
-  connectingFromNode,
   hoveredConnectorKey,
   pinnedConnectorKey,
   setHoveredConnectorKey,
@@ -418,13 +413,10 @@ export function CanvasSvgNodeLayer({
             node.type === 'learner_agent' ||
             node.type === 'poll' ||
             node.type === 'delay') &&
-          Boolean(runtimeNodeStatus && BLOCKER_PROCESSING_STATUSES.has(runtimeNodeStatus));
-        const isScheduledTrigger =
-          node.type === 'trigger' && node.config?.trigger?.event === 'scheduled_run';
-        const inputPulse = inputPulseNodes.has(node.id);
-        const outputPulse = outputPulseNodes.has(node.id);
-        const typeBadge = node.type.toUpperCase();
-        const typeBadgeWidth = Math.max(54, typeBadge.length * 6 + 12);
+                      Boolean(runtimeNodeStatus && BLOCKER_PROCESSING_STATUSES.has(runtimeNodeStatus));
+                  const inputPulse = inputPulseNodes.has(node.id);
+                  const outputPulse = outputPulseNodes.has(node.id);
+                  const typeBadge = node.type.toUpperCase();        const typeBadgeWidth = Math.max(54, typeBadge.length * 6 + 12);
         const runtimeBadgeWidth = runtimeStatusLabel
           ? Math.max(64, runtimeStatusLabel.length * 6 + 16)
           : 0;
@@ -638,8 +630,8 @@ export function CanvasSvgNodeLayer({
 
             {showNodePorts && (
               <>
-                {node.inputs?.map((port: string) => {
-                  const y = getPortOffsetY(node, 'input', port);
+                {node.inputs?.map((port: string, index: number) => {
+                  const y = getPortOffsetY(index, node.inputs.length);
                   const isConnected = incomingEdgePortSet.has(`${node.id}:${port}`);
                   const key = buildConnectorKey('input', node.id, port);
                   const isHovered = hoveredConnectorKey === key;
@@ -730,8 +722,8 @@ export function CanvasSvgNodeLayer({
                   );
                 })}
 
-                {node.outputs?.map((port: string) => {
-                  const y = getPortOffsetY(node, 'output', port);
+                {node.outputs?.map((port: string, index: number) => {
+                  const y = getPortOffsetY(index, node.outputs.length);
                   const key = buildConnectorKey('output', node.id, port);
                   const isHovered = hoveredConnectorKey === key;
                   const isPinned = pinnedConnectorKey === key;

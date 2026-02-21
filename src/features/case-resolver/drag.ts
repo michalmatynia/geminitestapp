@@ -1,6 +1,6 @@
+import type { CaseResolverAssetKind } from '@/shared/contracts/case-resolver';
 import { DRAG_KEYS, getFirstDragValue } from '@/shared/utils/drag-drop';
 
-import type { CaseResolverAssetKind } from '@/shared/contracts/case-resolver';
 
 export const CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT =
   'case_resolver:drop-document-to-canvas';

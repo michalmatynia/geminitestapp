@@ -33,8 +33,8 @@ import type {
   ProductValidationPostAcceptBehaviorDto as ProductValidationPostAcceptBehavior,
   ProductValidationSeverityDto as ProductValidationSeverity,
 } from '@/shared/contracts/products';
-import { badRequestError, configurationError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, configurationError } from '@/shared/errors/app-error';
 
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] ?? 'http://localhost:11434';
 

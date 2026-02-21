@@ -160,7 +160,7 @@ export function CanvasSidebar(): React.JSX.Element {
         data-edge-panel
       >
         <div className='mb-3 flex items-center justify-between'>
-          <Hint size='sm' uppercase={false} className='font-semibold text-white'>Node Palette</Hint>
+          <Hint size='xs' uppercase={false} className='font-semibold text-white'>Node Palette</Hint>
           <button
             data-doc-id='palette_toggle'
             type='button'
@@ -305,9 +305,11 @@ export function CanvasSidebar(): React.JSX.Element {
         )}
       </Card>
             
-                  {!selectedEdgeId && (
-                    <Card className='border-border/60 bg-card/40 p-4'>
-                      <Hint size='sm' uppercase={false} className='mb-3 font-semibold text-white'>Inspector</Hint>          {selectedNode ? (
+                  
+                        {!selectedEdgeId && (
+                          <Card className='border-border/60 bg-card/40 p-4'>
+                            <Hint size='xs' uppercase={false} className='mb-3 font-semibold text-white'>Inspector</Hint>          {selectedNode ? (
+      
             <div className='space-y-3 text-xs text-gray-300'>
               <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50 text-[11px] text-gray-400'>
                 <div className='flex items-center justify-between'>
@@ -389,11 +391,11 @@ export function CanvasSidebar(): React.JSX.Element {
               </div>
               <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/50 text-[11px] text-gray-400'>
                 Inputs:{' '}
-                {selectedNode.inputs.map((port) => formatPortLabel(port)).join(', ') ||
+                {selectedNode.inputs.map((port: string) => formatPortLabel(port)).join(', ') ||
                   'None'}{' '}
                 <br />
                 Outputs:{' '}
-                {selectedNode.outputs.map((port) => formatPortLabel(port)).join(', ') ||
+                {selectedNode.outputs.map((port: string) => formatPortLabel(port)).join(', ') ||
                   'None'}
               </Card>
               {selectedNode.type === 'prompt' && ((): React.JSX.Element | null => {
@@ -410,14 +412,14 @@ export function CanvasSidebar(): React.JSX.Element {
                     const mappings =
                       fromNode.config?.parser?.mappings ??
                       createParserMappings(fromNode.outputs);
-                    Object.keys(mappings).forEach((key) => {
+                    Object.keys(mappings).forEach((key: string) => {
                       const trimmed = key.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
                     return;
                   }
                   if (fromNode.type === 'bundle') {
-                    fromNode.inputs.forEach((port) => {
+                    fromNode.inputs.forEach((port: string) => {
                       const trimmed = port.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
@@ -425,7 +427,7 @@ export function CanvasSidebar(): React.JSX.Element {
                   if (fromNode.type === 'mapper') {
                     const mapperOutputs =
                       fromNode.config?.mapper?.outputs ?? fromNode.outputs;
-                    mapperOutputs.forEach((output) => {
+                    mapperOutputs.forEach((output: string) => {
                       const trimmed = output.trim();
                       if (trimmed) bundleKeys.add(trimmed);
                     });
@@ -535,7 +537,10 @@ export function CanvasSidebar(): React.JSX.Element {
                   variant='info'
                   size='sm'
                   type='button'
-                  onClick={() => stepRun?.(selectedNode?.type === 'trigger' ? selectedNode : undefined)}
+                  onClick={() => {
+                    const node = selectedNode?.type === 'trigger' ? selectedNode : undefined;
+                    void stepRun(node);
+                  }}
                   disabled={!stepRun}
                 >
                   Step
@@ -557,7 +562,10 @@ export function CanvasSidebar(): React.JSX.Element {
                 variant='info'
                 size='sm'
                 type='button'
-                onClick={() => stepRun?.(selectedNode?.type === 'trigger' ? selectedNode : undefined)}
+                onClick={() => {
+                  const node = selectedNode?.type === 'trigger' ? selectedNode : undefined;
+                  void stepRun(node);
+                }}
                 disabled={!stepRun}
               >
                 Step Run
@@ -568,7 +576,7 @@ export function CanvasSidebar(): React.JSX.Element {
       )}
 
       <Card className='border-border/60 bg-card/40 p-4'>
-        <Hint size='sm' uppercase={false} className='mb-3 font-semibold text-white'>Connections</Hint>
+        <Hint size='xs' uppercase={false} className='mb-3 font-semibold text-white'>Connections</Hint>
         <div className='space-y-2 text-xs text-gray-400'>
           <div>Active wires: {edges.length}</div>
           {selectedEdgeId ? ((): React.JSX.Element | null => {

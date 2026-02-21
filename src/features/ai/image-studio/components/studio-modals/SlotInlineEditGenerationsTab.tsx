@@ -52,19 +52,19 @@ export function SlotInlineEditGenerationsTab({
                 : 'No generated variants available for this card.'}
             </div>
           </div>
-                      <Button
-                        size='xs'
-                        type='button'
-                        variant='outline'
-                        onClick={onRefreshLinkedRuns}
-                        disabled={linkedRunsIsFetching}
-                        loading={linkedRunsIsFetching}
-                      >
+          <Button
+            size='xs'
+            type='button'
+            variant='outline'
+            onClick={onRefreshLinkedRuns}
+            disabled={linkedRunsIsFetching}
+            loading={linkedRunsIsFetching}
+          >
                         Refresh
-                      </Button>
-                    </div>
+          </Button>
+        </div>
           
-                  <InlineImagePreviewCanvas          imageSrc={selectedGenerationPreview?.imageSrc ?? null}
+        <InlineImagePreviewCanvas          imageSrc={selectedGenerationPreview?.imageSrc ?? null}
           imageAlt={
             selectedGenerationPreview?.output.filename ||
             `${slotNameDraft.trim() || selectedSlotName || 'Card'} generation preview`

@@ -5,12 +5,12 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useRe
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
+import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/shared/contracts/cms';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
-import type { ChatMessage } from '@/shared/contracts/chatbot';
 import { useToast } from '@/shared/ui';
 
 import { DEFAULT_SCHEME_COLORS } from './theme-constants';

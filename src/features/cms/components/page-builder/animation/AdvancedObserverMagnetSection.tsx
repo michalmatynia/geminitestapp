@@ -142,7 +142,7 @@ export function AdvancedObserverMagnetSection({
               <div className='space-y-2'>
                 <Input
                   value={observerTypeValue}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange({ ...config, observerType: e.target.value as ObserverType })}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void => onChange({ ...config, observerType: e.target.value })}
                   placeholder='wheel,touch,pointer'
                   className='h-9'
                 />
@@ -158,7 +158,7 @@ export function AdvancedObserverMagnetSection({
                           const next = types.includes(option.value)
                             ? types.filter((t: string) => t !== option.value)
                             : [...types, option.value];
-                          onChange({ ...config, observerType: next.join(',') as ObserverType });
+                          onChange({ ...config, observerType: next.join(',') });
                         }}
                         className='h-7 w-9 p-0'
                         aria-label={option.label}

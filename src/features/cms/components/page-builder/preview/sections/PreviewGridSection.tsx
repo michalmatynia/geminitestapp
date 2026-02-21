@@ -28,11 +28,11 @@ import {
   collectBackgroundImages,
   getBlockMinHeight,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
-import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
 import {
   buildScopedCustomCss,
   getCustomCssSelector,
 } from '@/features/cms/utils/custom-css';
+import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
 import { Separator, EmptyState } from '@/shared/ui';
 
 interface PreviewGridSectionProps {

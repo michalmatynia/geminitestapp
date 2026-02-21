@@ -15,6 +15,7 @@ import {
 } from '@tanstack/react-query';
 import { useRef } from 'react';
 
+import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
 import {
   attachTanstackFactoryMeta,
   emitTanstackTelemetry,
@@ -23,7 +24,6 @@ import {
 } from '@/shared/lib/observability/tanstack-telemetry';
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import type { TanstackFactoryMeta, TanstackLifecycleStage } from '@/shared/lib/tanstack-factory-v2.types';
-import type { ListQuery, MutationResult, SingleQuery } from '@/shared/contracts/ui';
 
 const DEFAULT_STALE_TIME_MS = 5 * 60 * 1000;
 const MIN_REFETCH_INTERVAL_MS = 1;

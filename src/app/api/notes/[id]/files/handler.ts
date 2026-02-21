@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { uploadNoteFile } from '@/features/files/server';
 import { noteService } from '@/features/notesapp/server';
-import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, conflictError, notFoundError } from '@/shared/errors/app-error';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_SLOT_INDEX = 9;

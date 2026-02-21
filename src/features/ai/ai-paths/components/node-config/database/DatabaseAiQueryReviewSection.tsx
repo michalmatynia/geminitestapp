@@ -2,9 +2,9 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import React from 'react';
 
 import type { DatabaseConfig, DbQueryConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
+import type { AiQuery } from '@/shared/contracts/database';
 import { Button } from '@/shared/ui';
 
-import type { AiQuery } from '@/shared/contracts/database';
 
 type DatabaseAiQueryReviewSectionProps = {
   pendingAiQuery: string;

@@ -4,9 +4,9 @@ import { useParams, useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
+import type { CountryOption } from '@/shared/contracts/internationalization';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import type { CountryOption } from '@/shared/contracts/internationalization';
 import {
   Badge,
   FormSection,

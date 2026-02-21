@@ -8,8 +8,8 @@ import {
   deleteImageStudioSlotCascade,
   listImageStudioSlots,
 } from '@/features/ai/image-studio/server/slot-repository';
-import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 
 const projectsRoot = path.join(process.cwd(), 'public', 'uploads', 'studio');
 

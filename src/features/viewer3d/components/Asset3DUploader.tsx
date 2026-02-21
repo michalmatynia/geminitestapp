@@ -4,13 +4,13 @@ import { Upload, Loader2, Plus, X } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { Button, Input, FileUploadTrigger, Textarea, Checkbox, Tag, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { uploadAsset3DFile } from '../api';
 import { validate3DFileAsync, SUPPORTED_3D_FORMATS } from '../utils/validateAsset3d';
 
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 
 export interface Asset3DUploaderProps {

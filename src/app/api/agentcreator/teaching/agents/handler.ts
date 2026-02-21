@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { listTeachingAgents, upsertTeachingAgent } from '@/features/ai/agentcreator/teaching/server/repository';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const createAgentSchema = z.object({
   name: z.string().trim().min(1),

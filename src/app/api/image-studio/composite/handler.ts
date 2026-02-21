@@ -3,8 +3,8 @@ import sharp from 'sharp';
 import { z } from 'zod';
 
 import { getImageStudioSlotById } from '@/features/ai/image-studio/server/slot-repository';
-import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 
 // ── Validation ──────────────────────────────────────────────────────────────
 

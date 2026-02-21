@@ -2,9 +2,9 @@
 
 import React from 'react';
 
+import type { ValidatorSettingsController } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 
-import type { ValidatorSettingsController } from '@/shared/contracts/products';
 
 const ValidatorSettingsContext = React.createContext<ValidatorSettingsController | null>(null);
 

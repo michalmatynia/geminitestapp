@@ -8,11 +8,11 @@ import { getAuthUserPageSettings } from '@/features/auth/server';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import { ActivityTypes, logActivity } from '@/features/observability/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError, internalError, validationError, forbiddenError } from '@/shared/errors/app-error';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logger } from '@/shared/utils/logger';
 
 

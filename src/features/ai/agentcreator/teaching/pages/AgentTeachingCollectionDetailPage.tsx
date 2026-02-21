@@ -1,6 +1,6 @@
 'use client';
 
-import { Trash2, BookOpen, Plus, Search, RefreshCw } from 'lucide-react';
+import { Trash2, BookOpen, Plus, Search } from 'lucide-react';
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 

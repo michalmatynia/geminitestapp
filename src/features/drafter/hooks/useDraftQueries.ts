@@ -3,6 +3,11 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import type { ProductDraftDto, CreateProductDraftDto, UpdateProductDraftDto } from '@/shared/contracts/products';
+import type { 
+  ListQuery, 
+  SingleQuery, 
+  MutationResult 
+} from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
@@ -16,11 +21,6 @@ import {
   invalidateDrafts,
 } from '@/shared/lib/query-invalidation';
 import { draftKeys } from '@/shared/lib/query-key-exports';
-import type { 
-  ListQuery, 
-  SingleQuery, 
-  MutationResult 
-} from '@/shared/contracts/ui';
 
 export { draftKeys };
 

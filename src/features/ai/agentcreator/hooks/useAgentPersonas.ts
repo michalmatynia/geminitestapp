@@ -3,9 +3,9 @@
 import { useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query';
 
 import { AGENT_PERSONA_SETTINGS_KEY } from '@/features/ai/agentcreator/constants/personas';
-import type { AgentPersona } from '@/shared/contracts/agents';
 import { fetchAgentPersonas } from '@/features/ai/agentcreator/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
+import type { AgentPersona } from '@/shared/contracts/agents';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAgentPersonas } from '@/shared/lib/query-invalidation';

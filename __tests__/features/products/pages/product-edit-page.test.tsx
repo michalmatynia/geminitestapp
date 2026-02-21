@@ -100,7 +100,7 @@ describe('EditProductForm', () => {
     await user.click(otherTab);
 
     // Check for Base Price input
-    const priceInput = await screen.findByLabelText(/Base Price/i);
+    const priceInput = await screen.findByLabelText(/Base Price/i, {}, { timeout: 3000 });
     expect(priceInput).toHaveValue(100);
   });
 

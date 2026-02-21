@@ -1,13 +1,14 @@
 'use client';
 
 
+import { EmptyState } from '@/shared/ui';
+
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useCmsPageContext } from '../CmsPageContext';
 import { useMediaStyles } from '../media-styles-context';
 import { useOptionalSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
-import { EmptyState } from '@/shared/ui';
 
 import type { BlockInstance } from '../../../types/page-builder';
 

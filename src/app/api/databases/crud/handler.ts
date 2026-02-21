@@ -4,10 +4,10 @@ import { ObjectId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { Client } from 'pg';
 
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { resolveCollectionProviderForRequest } from '@/shared/lib/db/collection-provider-map';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 // Validate table/collection name to prevent injection
 const SAFE_NAME_RE = /^[a-zA-Z_][a-zA-Z0-9_]*$/;

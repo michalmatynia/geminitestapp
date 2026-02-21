@@ -1,22 +1,24 @@
 'use client';
 
 import React, { createContext, useContext, useState, useMemo, useCallback, useRef, useEffect } from 'react';
+
 import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
-import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
-import { useProjectsState } from '../../context/ProjectsContext';
-import { usePromptActions, usePromptState } from '../../context/PromptContext';
-import { useSettingsState } from '../../context/SettingsContext';
-import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
-import { studioKeys } from '../../hooks/useImageStudioQueries';
-import { type ParamUiControl } from '../../utils/param-ui';
-import { type ParamSpec, flattenParams } from '../../utils/prompt-params';
+import { api } from '@/shared/lib/api-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useToast } from '@/shared/ui';
+
+import {
+  buildPromptDiffLines,
+  type PromptDiffLine,
+  type PromptExtractHistoryEntry,
+  type PromptExtractValidationIssue,
+  toSlotName,
+} from './prompt-extract-utils';
 import {
   EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
   INLINE_CARD_IMAGE_SLOT_INDEX,
@@ -38,17 +40,17 @@ import {
   estimateBase64Bytes,
   applyEnvironmentReferenceAssetToDraft,
 } from './slot-inline-edit-utils';
-import {
-  buildPromptDiffLines,
-  type PromptDiffLine,
-  type PromptExtractHistoryEntry,
-  type PromptExtractValidationIssue,
-  toSlotName,
-} from './prompt-extract-utils';
 import { createInlineSlotHandlers } from './studio-modals-inline-slot-handlers';
 import { copyCardIdToClipboard, createPromptExtractionHandlers } from './studio-modals-prompt-handlers';
 import { createUploadHandlers } from './studio-modals-upload-handlers';
-import type { ImageStudioSlotRecord } from '../../types';
+import { useProjectsState } from '../../context/ProjectsContext';
+import { usePromptActions, usePromptState } from '../../context/PromptContext';
+import { useSettingsState } from '../../context/SettingsContext';
+import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
+import { studioKeys } from '../../hooks/useImageStudioQueries';
+import { type ParamUiControl } from '../../utils/param-ui';
+import { type ParamSpec, flattenParams } from '../../utils/prompt-params';
+
 import type {
   CompositeTabImageViewModel as CompositeTabImage,
   EnvironmentReferenceDraftViewModel as EnvironmentReferenceDraft,
@@ -57,6 +59,7 @@ import type {
   InlinePreviewSourceViewModel,
   LinkedMaskSlotViewModel,
 } from './slot-inline-edit-tab-types';
+import type { ImageStudioSlotRecord } from '../../types';
 
 export type EditCardTab = 'card' | 'generations' | 'environment' | 'masks' | 'composites';
 
@@ -228,7 +231,7 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
 
   const productImagesExternalBaseUrl = useMemo(() => 
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ?? DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
-    [settingsStore]
+  [settingsStore]
   );
 
   const linkedRunsQuery = createListQueryV2<LinkedGeneratedRunsResponse, LinkedGeneratedRunsResponse>({
@@ -371,7 +374,7 @@ export function StudioInlineEditProvider({ children }: { children: React.ReactNo
 
   const selectedExtractChanged = useMemo(() => 
     selectedExtractHistory ? selectedExtractHistory.promptBefore !== selectedExtractHistory.promptAfter : false,
-    [selectedExtractHistory]
+  [selectedExtractHistory]
   );
 
   // Sync effect for open modal

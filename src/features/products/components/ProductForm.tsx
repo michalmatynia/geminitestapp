@@ -10,20 +10,17 @@ import { useProductFormContext } from '@/features/products/context/ProductFormCo
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
 import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
-import { ProductFormData } from '@/shared/contracts/products';
-import {
-  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
-  type ProductDraftOpenFormTab,
-} from '@/shared/contracts/products';
 import {
   normalizeProductValidationDenyBehavior,
   normalizeProductValidationInstanceDenyBehaviorMap,
   normalizeProductValidationPatternDenyBehaviorOverride,
 } from '@/features/products/utils/validator-instance-behavior';
 import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
-import { api } from '@/shared/lib/api-client';
-import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { ProductFormData } from '@/shared/contracts/products';
+import {
+  PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS,
+  type ProductDraftOpenFormTab,
+} from '@/shared/contracts/products';
 import type {
   ProductValidationDenyBehavior,
   ProductValidationInstanceDenyBehaviorMap,
@@ -31,6 +28,9 @@ import type {
   ProductValidationPattern,
   ProductValidationPostAcceptBehavior,
 } from '@/shared/contracts/products';
+import { api } from '@/shared/lib/api-client';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, ValidatorFormatterToggle } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

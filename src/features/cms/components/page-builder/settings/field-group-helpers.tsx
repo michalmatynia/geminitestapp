@@ -64,7 +64,7 @@ function renderFieldGroups(
   onChange?: (key: string, value: unknown) => void,
   resolveField?: (field: SettingsField) => SettingsField,
 ): React.ReactNode[] {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+   
   const context = useOptionalSettingsForm();
   const effectiveSettings = settings || context?.values || {};
   const effectiveOnChange = onChange || context?.onChange;

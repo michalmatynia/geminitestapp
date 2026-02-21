@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   buildMasterNodesFromStudioTree,
   findMasterNodeAncestorIds,
@@ -10,6 +9,7 @@ import {
   toFolderMasterNodeId,
   toSlotMasterNodeId,
 } from '@/features/ai/image-studio/utils/master-folder-tree';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const createSlot = (

@@ -2,11 +2,11 @@
 
 import { useMemo } from 'react';
 
-import type { GridPickerItem } from '@/shared/contracts/ui';
 import {
   ANIMATION_PRESETS,
   type AnimationPreset,
 } from '@/shared/contracts/gsap';
+import type { GridPickerItem } from '@/shared/contracts/ui';
 import { GenericGridPicker } from '@/shared/ui/templates/pickers';
 
 import { AnimationPreviewIcon } from './AnimationPreviewIcon';

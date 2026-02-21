@@ -10,8 +10,8 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import { resumePathRun } from '@/features/ai/ai-paths/services/path-run-service';
 import { startAiPathRunQueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
-import { notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { notFoundError } from '@/shared/errors/app-error';
 
 const resumeSchema = z.object({
   mode: z.enum(['resume', 'replay']).optional(),

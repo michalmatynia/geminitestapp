@@ -5,11 +5,11 @@ import { useMemo, useState, useEffect } from 'react';
 
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsDomains, useCmsSlug, useCmsSlugDomains, useUpdateSlug, useUpdateSlugDomains } from '@/features/cms/hooks/useCmsQueries';
-import type { CmsDomain, Slug } from '@/shared/contracts/cms';
 import {
   cmsSlugDomainsUpdateSchema,
   cmsSlugUpdateSchema,
 } from '@/features/cms/validations/api';
+import type { CmsDomain, Slug } from '@/shared/contracts/cms';
 import {
   Input,
   ToggleRow,

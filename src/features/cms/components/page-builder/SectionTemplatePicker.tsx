@@ -2,8 +2,8 @@
 
 import { useMemo } from 'react';
 
-import { GenericGridPicker } from '@/shared/ui/templates/pickers';
 import type { GridPickerItem } from '@/shared/contracts/ui';
+import { GenericGridPicker } from '@/shared/ui/templates/pickers';
 
 import { getTemplatesByCategory } from './section-templates';
 

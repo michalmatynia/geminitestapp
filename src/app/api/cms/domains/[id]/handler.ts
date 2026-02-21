@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { deleteCmsDomain, setCmsDomainAlias } from '@/features/cms/services/cms-domain';
 import { cmsDomainUpdateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { ApiParams } from '@/shared/contracts/base';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export async function PUT_handler(
   req: NextRequest,

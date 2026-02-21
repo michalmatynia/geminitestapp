@@ -3,9 +3,9 @@
 import { Plus } from 'lucide-react';
 import { memo, useState, useCallback, useMemo } from 'react';
 
+import type { GenericPickerDropdownProps, PickerOption, PickerGroup } from '@/shared/contracts/ui';
 import { cn } from '@/shared/utils';
 
-import type { GenericPickerDropdownProps, PickerOption, PickerGroup } from '@/shared/contracts/ui';
 
 /**
  * GenericPickerDropdown - Reusable dropdown picker for grouped options

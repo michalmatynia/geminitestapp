@@ -11,11 +11,11 @@ import {
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
   PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY,
 } from '@/features/products/constants';
+import { normalizeProductImageExternalBaseUrl } from '@/features/products/utils/image-routing';
 import {
   normalizeProductStudioSequenceGenerationMode,
   type ProductStudioSequenceGenerationMode,
 } from '@/shared/contracts/products';
-import { normalizeProductImageExternalBaseUrl } from '@/features/products/utils/image-routing';
 import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {

@@ -1,5 +1,5 @@
-import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import type { ErrorCategory, SuggestedAction } from '@/shared/contracts/observability';
+import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 
 export type ErrorCode = 
   | 'VALIDATION_ERROR'

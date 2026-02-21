@@ -4,6 +4,7 @@ import { Plus } from 'lucide-react';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
+import type { CaseResolverTag } from '@/shared/contracts/case-resolver';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -25,7 +26,6 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import { CaseResolverTagModal } from '../components/modals/CaseResolverTagModal';
 import { CASE_RESOLVER_TAGS_KEY, parseCaseResolverTags } from '../settings';
 
-import type { CaseResolverTag } from '@/shared/contracts/case-resolver';
 
 type TagFormData = {
   name: string;

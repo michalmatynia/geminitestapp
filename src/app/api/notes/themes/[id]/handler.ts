@@ -4,8 +4,8 @@ import { themeUpdateSchema } from '@/features/notesapp/public';
 import { noteService } from '@/features/notesapp/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { UpdateNoteThemeDto as ThemeUpdateInput } from '@/shared/contracts/notes';
-import { notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { notFoundError } from '@/shared/errors/app-error';
 import { removeUndefined } from '@/shared/utils';
 
 /**

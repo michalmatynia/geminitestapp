@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   Card,
 } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { PromptExploderHierarchyTreeProvider } from './PromptExploderHierarchyTreeContext';
 import { PromptExploderHierarchyTreeEditor } from './PromptExploderHierarchyTreeEditor';

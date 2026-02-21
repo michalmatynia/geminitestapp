@@ -181,7 +181,12 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     modelsLoading: modelLoading,
   } = useAgentCreatorSettings();
   const [latestAgentRunId, setLatestAgentRunId] = useState<string | null>(null);
-  const [debugState, setDebugState] = useState<ChatbotDebugState>({});
+  const [debugState, setDebugState] = useState<ChatbotDebugState>({
+    activeRunId: null,
+    isPaused: false,
+    stepMode: false,
+    lastUpdateAt: new Date().toISOString(),
+  });
   const [globalContext, setGlobalContext] = useState<string>('');
   const [localContext, setLocalContext] = useState<string>('');
   const [localContextMode, setLocalContextMode] = useState<
@@ -363,12 +368,12 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setWebSearchEnabled(Boolean(resolved.webSearchEnabled));
       setUseGlobalContext(Boolean(resolved.useGlobalContext));
       setUseLocalContext(Boolean(resolved.useLocalContext));
-      setLocalContextMode(resolved.localContextMode ?? 'override');
+      setLocalContextMode((resolved.localContextMode as 'append' | 'override') ?? 'override');
       setSearchProvider(resolved.searchProvider ?? 'serpapi');
       setPlaywrightPersonaId(resolved.playwrightPersonaId ?? null);
 
       setAgentModeEnabled(Boolean(resolved.agentModeEnabled));
-      setAgentBrowser(resolved.agentBrowser ?? DEFAULT_CHATBOT_SETTINGS.agentBrowser);
+      setAgentBrowser(resolved.agentBrowser ?? DEFAULT_CHATBOT_SETTINGS.agentBrowser ?? 'chromium');
       setAgentRunHeadless(Boolean(resolved.runHeadless));
       setAgentIgnoreRobotsTxt(Boolean(resolved.ignoreRobotsTxt));
       setAgentRequireHumanApproval(Boolean(resolved.requireHumanApproval));
@@ -376,19 +381,20 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       setAgentPlannerModel(resolved.plannerModel ?? '');
       setAgentSelfCheckModel(resolved.selfCheckModel ?? '');
       setAgentExtractionValidationModel(resolved.extractionValidationModel ?? '');
+      setAgentToolRouterModel(resolved.toolRouterModel ?? '');
       setAgentLoopGuardModel(resolved.loopGuardModel ?? '');
       setAgentApprovalGateModel(resolved.approvalGateModel ?? '');
       setAgentMemorySummarizationModel(resolved.memorySummarizationModel ?? '');
       setAgentSelectorInferenceModel(resolved.selectorInferenceModel ?? '');
       setAgentOutputNormalizationModel(resolved.outputNormalizationModel ?? '');
-      setAgentMaxSteps(resolved.maxSteps);
-      setAgentMaxStepAttempts(resolved.maxStepAttempts);
-      setAgentMaxReplanCalls(resolved.maxReplanCalls);
-      setAgentReplanEverySteps(resolved.replanEverySteps);
-      setAgentMaxSelfChecks(resolved.maxSelfChecks);
-      setAgentLoopGuardThreshold(resolved.loopGuardThreshold);
-      setAgentLoopBackoffBaseMs(resolved.loopBackoffBaseMs);
-      setAgentLoopBackoffMaxMs(resolved.loopBackoffMaxMs);
+      setAgentMaxSteps(resolved.maxSteps ?? 10);
+      setAgentMaxStepAttempts(resolved.maxStepAttempts ?? 3);
+      setAgentMaxReplanCalls(resolved.maxReplanCalls ?? 3);
+      setAgentReplanEverySteps(resolved.replanEverySteps ?? 5);
+      setAgentMaxSelfChecks(resolved.maxSelfChecks ?? 3);
+      setAgentLoopGuardThreshold(resolved.loopGuardThreshold ?? 3);
+      setAgentLoopBackoffBaseMs(resolved.loopBackoffBaseMs ?? 1000);
+      setAgentLoopBackoffMaxMs(resolved.loopBackoffMaxMs ?? 5000);
 
       setSettingsSnapshot(nextSettings);
       setSettingsDirty(false);
@@ -473,8 +479,11 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     if (!input.trim() || isSending) return;
 
     const userMessage: ChatMessage = {
+      id: `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      sessionId: sessionId ?? '',
       role: 'user',
       content: input.trim(),
+      timestamp: new Date().toISOString(),
     };
 
     setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, userMessage]);
@@ -490,8 +499,11 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
 
       if (data.message) {
         const assistantMessage: ChatMessage = {
+          id: `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          sessionId: sessionId ?? '',
           role: 'assistant',
           content: data.message,
+          timestamp: new Date().toISOString(),
         };
         setMessages((prev: ChatMessage[]): ChatMessage[] => [...prev, assistantMessage]);
       }
@@ -529,49 +541,49 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     setSearchProvider,
     playwrightPersonaId,
     setPlaywrightPersonaId,
-    agentBrowser,
+    agentBrowser: agentBrowser ?? 'chromium',
     setAgentBrowser,
-    agentRunHeadless,
+    agentRunHeadless: agentRunHeadless ?? false,
     setAgentRunHeadless,
-    agentIgnoreRobotsTxt,
+    agentIgnoreRobotsTxt: agentIgnoreRobotsTxt ?? false,
     setAgentIgnoreRobotsTxt,
-    agentRequireHumanApproval,
+    agentRequireHumanApproval: agentRequireHumanApproval ?? false,
     setAgentRequireHumanApproval,
-    agentMemoryValidationModel,
+    agentMemoryValidationModel: agentMemoryValidationModel ?? null,
     setAgentMemoryValidationModel,
-    agentPlannerModel,
+    agentPlannerModel: agentPlannerModel ?? null,
     setAgentPlannerModel,
-    agentSelfCheckModel,
+    agentSelfCheckModel: agentSelfCheckModel ?? null,
     setAgentSelfCheckModel,
-    agentExtractionValidationModel,
+    agentExtractionValidationModel: agentExtractionValidationModel ?? null,
     setAgentExtractionValidationModel,
-    agentToolRouterModel,
+    agentToolRouterModel: agentToolRouterModel ?? null,
     setAgentToolRouterModel,
-    agentLoopGuardModel,
+    agentLoopGuardModel: agentLoopGuardModel ?? null,
     setAgentLoopGuardModel,
-    agentApprovalGateModel,
+    agentApprovalGateModel: agentApprovalGateModel ?? null,
     setAgentApprovalGateModel,
-    agentMemorySummarizationModel,
+    agentMemorySummarizationModel: agentMemorySummarizationModel ?? null,
     setAgentMemorySummarizationModel,
-    agentSelectorInferenceModel,
+    agentSelectorInferenceModel: agentSelectorInferenceModel ?? null,
     setAgentSelectorInferenceModel,
-    agentOutputNormalizationModel,
+    agentOutputNormalizationModel: agentOutputNormalizationModel ?? null,
     setAgentOutputNormalizationModel,
-    agentMaxSteps,
+    agentMaxSteps: agentMaxSteps ?? 10,
     setAgentMaxSteps,
-    agentMaxStepAttempts,
+    agentMaxStepAttempts: agentMaxStepAttempts ?? 3,
     setAgentMaxStepAttempts,
-    agentMaxReplanCalls,
+    agentMaxReplanCalls: agentMaxReplanCalls ?? 3,
     setAgentMaxReplanCalls,
-    agentReplanEverySteps,
+    agentReplanEverySteps: agentReplanEverySteps ?? 5,
     setAgentReplanEverySteps,
-    agentMaxSelfChecks,
+    agentMaxSelfChecks: agentMaxSelfChecks ?? 3,
     setAgentMaxSelfChecks,
-    agentLoopGuardThreshold,
+    agentLoopGuardThreshold: agentLoopGuardThreshold ?? 3,
     setAgentLoopGuardThreshold,
-    agentLoopBackoffBaseMs,
+    agentLoopBackoffBaseMs: agentLoopBackoffBaseMs ?? 1000,
     setAgentLoopBackoffBaseMs,
-    agentLoopBackoffMaxMs,
+    agentLoopBackoffMaxMs: agentLoopBackoffMaxMs ?? 5000,
     setAgentLoopBackoffMaxMs,
     latestAgentRunId,
     setLatestAgentRunId,

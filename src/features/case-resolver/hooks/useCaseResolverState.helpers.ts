@@ -7,6 +7,14 @@ import {
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
 } from '@/features/document-editor/content-format';
+import type {
+  CaseResolverAssetFile,
+  CaseResolverAssetKind,
+  CaseResolverFile,
+  CaseResolverFileEditDraft,
+  CaseResolverFolderRecord,
+  CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
 
 import {
   createCaseResolverFile,
@@ -17,14 +25,6 @@ import {
 } from '../settings';
 import { createId, isPathWithinFolder } from '../utils/caseResolverUtils';
 
-import type {
-  CaseResolverAssetFile,
-  CaseResolverAssetKind,
-  CaseResolverFile,
-  CaseResolverFileEditDraft,
-  CaseResolverFolderRecord,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
 
 const CASE_RESOLVER_EDITOR_DRAFT_STORAGE_PREFIX = 'case-resolver-editor-draft-v1';
 

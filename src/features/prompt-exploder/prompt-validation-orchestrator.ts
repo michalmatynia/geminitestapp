@@ -3,9 +3,6 @@ import type {
   ValidatorScope,
 } from '@/features/admin/pages/validator-scope';
 import {
-  type PromptValidationRuntimeSelection,
-} from '@/shared/contracts';
-import {
   PromptValidationRuntimeError,
   PromptValidationScopeResolutionError,
   asPromptValidationIntegrationError,
@@ -19,6 +16,9 @@ import type {
   PromptValidationRule,
 } from '@/features/prompt-engine/settings';
 import type { PromptEngineSettings } from '@/features/prompt-engine/settings';
+import {
+  type PromptValidationRuntimeSelection,
+} from '@/shared/contracts';
 
 import {
   explodePromptText,

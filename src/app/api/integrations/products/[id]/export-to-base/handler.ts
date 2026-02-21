@@ -19,13 +19,13 @@ import {
 import { ErrorSystem } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   badRequestError,
   conflictError,
   externalServiceError,
   notFoundError
 } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import {
   BASE_EXPORT_RUN_PATH_ID,
@@ -409,7 +409,7 @@ export async function postExportToBaseHandler(
       const existingListing = await listingRepo.getListingById(listingId);
       const history = existingListing?.exportHistory ?? [];
       const prior = history.find(
-         (event: any) => event.requestId === requestId && event.status === 'success'
+        (event: any) => event.requestId === requestId && event.status === 'success'
       );
       if (prior) {
         if (runId) {

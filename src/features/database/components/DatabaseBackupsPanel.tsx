@@ -8,6 +8,7 @@ import {
   PlusIcon,
 } from 'lucide-react';
 
+import type { DatabaseType } from '@/shared/contracts/database';
 import {
   Badge,
   Button,
@@ -27,7 +28,6 @@ import { LogModal } from './LogModal';
 import { RestoreModal } from './RestoreModal';
 import { useDatabaseBackupsState } from '../hooks/useDatabaseBackupsState';
 
-import type { DatabaseType } from '@/shared/contracts/database';
 
 type BackupDatabaseOption = {
   id: string;

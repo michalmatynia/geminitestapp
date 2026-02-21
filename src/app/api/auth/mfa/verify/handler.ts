@@ -6,8 +6,8 @@ import { getAuthSecurityProfile, updateAuthSecurityProfile } from '@/features/au
 import { decryptAuthSecret } from '@/features/auth/server';
 import { generateRecoveryCodes, hashRecoveryCode, verifyTotpToken } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import { badRequestError, conflictError, authError, validationError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, conflictError, authError, validationError } from '@/shared/errors/app-error';
 
 export const payloadSchema = z.object({
   token: z.string().trim().min(4),

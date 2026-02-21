@@ -51,7 +51,7 @@ export function SessionSidebar(): React.JSX.Element {
                     {session.title}
                   </div>
                   <div className='truncate text-xs text-gray-500'>
-                    {session.messages.length} messages
+                    {session.messages?.length ?? 0} messages
                   </div>
                 </div>
                 <Button

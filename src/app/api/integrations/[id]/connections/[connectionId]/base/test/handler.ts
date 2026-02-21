@@ -5,8 +5,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { decryptSecret, encryptSecret } from '@/features/integrations/server';
 import { fetchBaseInventories } from '@/features/integrations/server';
-import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { mapStatusToAppError } from '@/shared/errors/error-mapper';
 
 type TestLogEntry = {
   step: string;

@@ -18,10 +18,10 @@ import { ProductImageCell } from '@/features/products/components/cells/ProductIm
 import { EditableCell } from '@/features/products/components/EditableCell';
 import { useProductListActionsContext } from '@/features/products/context/ProductListContext';
 import { getProductDetailQueryKey, productsListsQueryKey } from '@/features/products/hooks/productCache';
-import type { ProductWithImages } from '@/shared/contracts/products';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { invalidateProductListings } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

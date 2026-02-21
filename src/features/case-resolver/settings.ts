@@ -8,6 +8,21 @@ import type {
   CaseResolverDefaultDocumentFormatDto,
   CaseResolverSettingsDto,
 } from '@/shared/contracts/case-resolver';
+import {
+  type CaseResolverAssetFile,
+  type CaseResolverDocumentFormatVersion,
+  type CaseResolverDocumentHistoryEntry,
+  type CaseResolverDocumentVersion,
+  type CaseResolverEditorType,
+  type CaseResolverFile,
+  type CaseResolverFileType,
+  type CaseResolverFolderRecord,
+  type CaseResolverGraph,
+  type CaseResolverNodeFileSnapshot,
+  type CaseResolverPartyReference,
+  type CaseResolverScanSlot,
+  type CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import {
@@ -49,21 +64,6 @@ export {
   parseCaseResolverTags,
   type CaseResolverCategoryTreeNode,
 } from './settings-taxonomy';
-import {
-  type CaseResolverAssetFile,
-  type CaseResolverDocumentFormatVersion,
-  type CaseResolverDocumentHistoryEntry,
-  type CaseResolverDocumentVersion,
-  type CaseResolverEditorType,
-  type CaseResolverFile,
-  type CaseResolverFileType,
-  type CaseResolverFolderRecord,
-  type CaseResolverGraph,
-  type CaseResolverNodeFileSnapshot,
-  type CaseResolverPartyReference,
-  type CaseResolverScanSlot,
-  type CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
 
 export const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
 export const CASE_RESOLVER_TAGS_KEY = 'case_resolver_tags_v1';

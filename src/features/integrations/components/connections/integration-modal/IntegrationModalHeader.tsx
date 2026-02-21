@@ -1,7 +1,8 @@
 import React from 'react';
 
-import { useIntegrationModalViewContext } from './IntegrationModalViewContext';
 import { Badge } from '@/shared/ui';
+
+import { useIntegrationModalViewContext } from './IntegrationModalViewContext';
 
 export function IntegrationModalHeader(): React.JSX.Element {
   const {

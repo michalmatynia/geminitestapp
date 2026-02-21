@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { cancelImageStudioSequenceRun } from '@/features/ai/image-studio/server/sequence-runtime';
-import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 
 export async function POST_handler(
   _req: NextRequest,

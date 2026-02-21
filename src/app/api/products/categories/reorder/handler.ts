@@ -5,12 +5,12 @@ import { z } from 'zod';
 
 import { logSystemEvent } from '@/features/observability/server';
 import { getCategoryRepository } from '@/features/products/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   badRequestError,
   conflictError,
   notFoundError,
 } from '@/shared/errors/app-error';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 export const reorderCategorySchema = z.object({
   categoryId: z.string().min(1),

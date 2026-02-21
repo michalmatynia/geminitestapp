@@ -14,6 +14,11 @@ import {
   savePromptExploderApplyPromptForCaseResolver,
   type PromptExploderBridgePayload,
 } from '@/features/prompt-exploder/bridge';
+import type {
+  CaseResolverFile,
+  CaseResolverFileEditDraft,
+  CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
 
 import { createCaseResolverFile } from '../settings';
 import {
@@ -22,11 +27,6 @@ import {
 } from './useCaseResolverState.helpers';
 import { createId } from '../utils/caseResolverUtils';
 
-import type {
-  CaseResolverFile,
-  CaseResolverFileEditDraft,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
 
 type UpdateWorkspaceOptions = {
   persistToast?: string;

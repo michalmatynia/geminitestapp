@@ -3,13 +3,13 @@
 import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
+import type { UserPreferences as SharedUserPreferences } from '@/shared/contracts/auth';
 import type { ProductListPreferences } from '@/shared/contracts/products';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateUserPreferences } from '@/shared/lib/query-invalidation';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { UserPreferences as SharedUserPreferences } from '@/shared/contracts/auth';
 import {
   normalizeUserPreferencesResponse,
   normalizeUserPreferencesUpdatePayload,

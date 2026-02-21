@@ -13,8 +13,8 @@ import {
   setImportSampleProductId
 } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 const requestSchema = z.object({
   inventoryId: z.string().trim().optional().nullable(),

@@ -6,13 +6,13 @@ import { useCallback, useRef, useState, useEffect } from 'react';
 
 
 import { logClientError } from '@/features/observability/utils/client-error-logger';
+import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import type {
   ProductWithImages,
   ProductFormData,
   ProductParameterValue,
 } from '@/shared/contracts/products';
 import type { ProductImageSlot } from '@/shared/contracts/products';
-import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 import { delay } from '@/shared/utils';

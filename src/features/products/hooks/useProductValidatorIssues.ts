@@ -9,11 +9,11 @@ import {
   normalizeValidationDebounceMs,
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
-import { api } from '@/shared/lib/api-client';
 import type {
   ProductValidationInstanceScope,
   ProductValidationPattern,
 } from '@/shared/contracts/products';
+import { api } from '@/shared/lib/api-client';
 
 type UseProductValidatorIssuesOptions = {
   values: Record<string, unknown>;

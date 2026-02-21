@@ -10,13 +10,13 @@ import {
 } from '@/features/ai/ai-paths/lib/core/utils/factory';
 import { safeParseJson } from '@/features/ai/ai-paths/lib/core/utils/runtime';
 import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
-import { api } from '@/shared/lib/api-client';
-import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import type {
   AiNode,
   PathConfig,
   PathMeta,
 } from '@/shared/contracts/ai-paths';
+import { api } from '@/shared/lib/api-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import type { QueryClient } from '@tanstack/react-query';
 

@@ -22,18 +22,6 @@ import {
   getProductListingRepository,
 } from '@/features/integrations/services/product-listing-repository';
 import { getTagMappingRepository } from '@/features/integrations/services/tag-mapping-repository';
-import {
-  defaultBaseImportParameterImportSettings,
-  normalizeBaseImportParameterImportSettings,
-  type BaseImportParameterImportSettings,
-} from '@/shared/contracts/integrations';
-import type {
-  BaseImportErrorClass,
-  BaseImportErrorCode,
-  BaseImportItemRecord,
-  BaseImportMode,
-  BaseImportRunRecord,
-} from '@/shared/contracts/integrations';
 import { getProducerRepository } from '@/features/products/services/producer-repository';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { getTagRepository } from '@/features/products/services/tag-repository';
@@ -56,6 +44,18 @@ import {
   validateProductCreate,
   validateProductUpdate,
 } from '@/features/products/validations';
+import type {
+  BaseImportErrorClass,
+  BaseImportErrorCode,
+  BaseImportItemRecord,
+  BaseImportMode,
+  BaseImportRunRecord,
+} from '@/shared/contracts/integrations';
+import {
+  defaultBaseImportParameterImportSettings,
+  normalizeBaseImportParameterImportSettings,
+  type BaseImportParameterImportSettings,
+} from '@/shared/contracts/integrations';
 import type {
   ProductDto as ProductRecord,
   ProductWithImagesDto as ProductWithImages,

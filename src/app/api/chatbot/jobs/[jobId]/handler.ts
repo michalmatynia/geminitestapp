@@ -2,13 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   badRequestError,
   conflictError,
   notFoundError,
 } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logger } from '@/shared/utils/logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';

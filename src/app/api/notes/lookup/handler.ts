@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { noteService } from '@/features/notesapp/server';
 import type { RelatedNoteDto as RelatedNote } from '@/shared/contracts/notes';
-import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 
 /**
  * GET /api/notes/lookup

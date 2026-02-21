@@ -12,6 +12,8 @@ import {
   useValidatorDocsTooltips,
 } from './validator-settings/ValidatorDocsTooltips';
 import { ValidatorInstanceBehaviorPanel } from './validator-settings/ValidatorInstanceBehaviorPanel';
+import { ValidatorPatternModal } from './validator-settings/ValidatorPatternModal';
+import { ValidatorPatternTablePanel } from './validator-settings/ValidatorPatternTablePanel';
 import { ValidatorSettingsProvider } from './validator-settings/ValidatorSettingsContext';
 
 /**
@@ -23,10 +25,13 @@ export function ValidatorSettings(): React.JSX.Element {
   return (
     <ValidatorDocsTooltipsProvider>
       <ValidatorSettingsProvider value={controller}>
-        <div className='space-y-5'>          <ValidatorDocsTooltipsPanel />
+        <div className='space-y-5'>
+          <ValidatorDocsTooltipsPanel />
           <ValidatorDefaultPanel />
           <ValidatorInstanceBehaviorPanel />
+          <ValidatorPatternTablePanel />
           <ValidatorPatternListLinkPanel />
+          <ValidatorPatternModal />
         </div>
       </ValidatorSettingsProvider>
     </ValidatorDocsTooltipsProvider>
@@ -36,8 +41,8 @@ export function ValidatorSettings(): React.JSX.Element {
 function ValidatorPatternListLinkPanel(): React.JSX.Element {
   return (
     <FormSection
-      title='Pattern Validations'
-      description='Regex patterns are managed in the dedicated validator list page.'
+      title='Pattern Lists'
+      description='Manage global validator list metadata and scopes.'
       variant='subtle'
       className='p-4'
     >
@@ -45,7 +50,7 @@ function ValidatorPatternListLinkPanel(): React.JSX.Element {
         href='/admin/validator/lists'
         className='inline-flex items-center rounded-md border border-border/70 bg-card/40 px-3 py-2 text-sm text-white transition-colors hover:bg-card/70'
       >
-        Open Pattern Validations List
+        Open Validation Pattern List Manager
       </Link>
     </FormSection>
   );

@@ -4,10 +4,10 @@ import type {
   TagRepository, 
   TagFilters 
 } from '@/shared/contracts/products';
-import prisma from '@/shared/lib/db/prisma';
 import type { 
   ProductTag 
 } from '@/shared/contracts/products';
+import prisma from '@/shared/lib/db/prisma';
 
 const toTagDomain = (tag: PrismaProductTag): ProductTag => ({
   id: tag.id,

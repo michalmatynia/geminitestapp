@@ -57,6 +57,10 @@ import {
   parseCaseResolverWorkspace,
 } from '../settings';
 import {
+  applyPromptExploderTransferLifecycleUpdate,
+  type PromptExploderTransferUiStatus,
+} from './prompt-exploder-transfer-lifecycle';
+import {
   buildFileEditDraft,
   createId,
   createUniqueFolderPath,
@@ -100,10 +104,6 @@ import {
   type CaseResolverPromptExploderPayloadReadState,
   type CaseResolverPromptExploderPendingPayload,
 } from './useCaseResolverState.prompt-exploder-sync';
-import {
-  applyPromptExploderTransferLifecycleUpdate,
-  type PromptExploderTransferUiStatus,
-} from './prompt-exploder-transfer-lifecycle';
 import { useCaseResolverStateSelectionActions } from './useCaseResolverState.selection-actions';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
@@ -1593,6 +1593,7 @@ export function useCaseResolverState() {
     handleCreateNodeFile,
     handleUploadScanFiles,
     handleRunScanFileOcr,
+    handleCreateDocumentFromText,
     handleCreateImageAsset,
     handleUploadAssets,
     handleAttachAssetFile,
@@ -2098,6 +2099,7 @@ export function useCaseResolverState() {
     handleCreateScanFile,
     handleCreateNodeFile,
     handleCreateImageAsset,
+    handleCreateDocumentFromText,
     handleUploadScanFiles,
     handleRunScanFileOcr,
     handleUploadAssets,

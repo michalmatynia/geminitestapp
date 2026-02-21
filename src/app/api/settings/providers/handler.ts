@@ -13,6 +13,7 @@ import type {
   AppProviderServiceStatusDto as ProviderServiceStatus,
   AppProviderDiagnosticsDto as ProviderDiagnosticsResponse,
 } from '@/shared/contracts/system';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   APP_DB_PROVIDER_SETTING_KEY,
   getAppDbProvider,
@@ -20,7 +21,6 @@ import {
 } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const normalizeAppProvider = (value?: string | null): AppDbProvider | null => {
   if (!value) return null;

@@ -3,10 +3,10 @@ import { z } from 'zod';
 
 import { generateOllamaEmbedding } from '@/features/ai/agentcreator/teaching/server/embeddings';
 import { createEmbeddingDocument, getEmbeddingCollectionById, listEmbeddingDocuments } from '@/features/ai/agentcreator/teaching/server/repository';
+import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/contracts/agent-teaching';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/contracts/agent-teaching';
 
 const createDocumentSchema = z.object({
   text: z.string().trim().min(1),

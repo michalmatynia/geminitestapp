@@ -4,6 +4,13 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
 import { fetchAssets3D, fetchCategories, fetchTags, reindexAssets3DFromDisk } from '@/features/viewer3d/api';
+import type { 
+  ListQuery, 
+  SingleQuery, 
+  DeleteMutation, 
+  UpdateMutation 
+} from '@/shared/contracts/ui';
+import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
@@ -16,14 +23,7 @@ import {
   invalidateAsset3dDetail,
 } from '@/shared/lib/query-invalidation';
 import { viewer3dKeys as asset3dKeys } from '@/shared/lib/query-key-exports';
-import type { 
-  ListQuery, 
-  SingleQuery, 
-  DeleteMutation, 
-  UpdateMutation 
-} from '@/shared/contracts/ui';
 
-import type { Asset3DListFilters, Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 export { asset3dKeys };
 

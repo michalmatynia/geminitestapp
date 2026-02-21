@@ -4,8 +4,8 @@ import { fetchBaseTags } from '@/features/integrations/server';
 import { getExternalTagRepository } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 type FetchMarketplaceTagsRequest = {
   connectionId: string;

@@ -14,13 +14,13 @@ import { parseJsonBody } from '@/features/products/server';
 import { productUpdateSchema } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
+import { NoteUpdateInput } from '@/shared/contracts/notes';
 import type {
   ProductParameterValue,
 } from '@/shared/contracts/products';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, validationError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { NoteUpdateInput } from '@/shared/contracts/notes';
 import { removeUndefined } from '@/shared/utils';
 
 const updateSchema = z.object({

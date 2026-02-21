@@ -2,15 +2,15 @@
 
 import React from 'react';
 
+import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
+import { EmptyState } from '@/shared/ui';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import type {
   MasterTreeDropPosition,
   MasterTreeId,
 } from '@/shared/utils/master-folder-tree-contract';
 import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
-import { EmptyState } from '@/shared/ui';
 
-import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 
 const MASTER_TREE_DRAG_NODE_ID = 'application/x-master-tree-node-id';
 

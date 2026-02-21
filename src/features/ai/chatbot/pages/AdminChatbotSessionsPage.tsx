@@ -17,7 +17,7 @@ import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useChatbotSessionsState } from '../hooks/useChatbotSessionsState';
 
-import type { ChatbotSessionListItem } from '../types';
+import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export default function ChatbotSessionsPage(): React.JSX.Element {

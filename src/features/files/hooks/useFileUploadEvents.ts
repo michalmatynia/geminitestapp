@@ -1,8 +1,8 @@
 'use client';
 
+import type { SingleQuery } from '@/shared/contracts/ui';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { SingleQuery } from '@/shared/contracts/ui';
 
 export type FileUploadEventRecord = {
   id: string;

@@ -20,6 +20,7 @@ import {
   normalizeStringList,
   parsePlanJson,
 } from '@/features/ai/agent-runtime/planning/utils';
+import { ErrorSystem } from '@/features/observability/server';
 import type {
   AgentDecision,
   PlanStep,
@@ -27,7 +28,6 @@ import type {
   PlannerCritique,
   PlannerMeta,
 } from '@/shared/contracts/agent-runtime';
-import { ErrorSystem } from '@/features/observability/server';
 
 import {
   evaluatePlanWithLLM,

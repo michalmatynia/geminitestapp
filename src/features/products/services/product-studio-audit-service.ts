@@ -2,12 +2,12 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
+import type { ImageStudioRunDispatchModeDto as ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio';
 import type {
   ProductStudioExecutionRoute,
   ProductStudioSequenceGenerationMode,
   ProductStudioSequencingDiagnosticsScope,
 } from '@/shared/contracts/products';
-import type { ImageStudioRunDispatchModeDto as ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { Collection } from 'mongodb';

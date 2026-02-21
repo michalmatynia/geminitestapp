@@ -4,11 +4,12 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import React, { useState, useCallback, useEffect } from 'react';
 
 
+import type { PreviewSectionBlockProps, PreviewBlockItemProps } from '@/shared/contracts/cms';
+
 import { BlockContextProvider, useBlockContext } from './context/BlockContext';
 import { usePreviewEditor } from './context/PreviewEditorContext';
 import { normalizeSlideshowAnimationType } from './preview-utils';
 
-import type { PreviewSectionBlockProps, PreviewBlockItemProps } from '@/shared/contracts/cms';
 import type { BlockInstance } from '../../../types/page-builder';
 
 // ---------------------------------------------------------------------------

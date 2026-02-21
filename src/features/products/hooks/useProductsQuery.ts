@@ -9,9 +9,9 @@ import { z } from 'zod';
 import { getProducts, countProducts, getProductsWithCount } from '@/features/products/api/products';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import { productSchema } from '@/shared/contracts/products';
+import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 
 import {
   refetchProductsAndCounts,

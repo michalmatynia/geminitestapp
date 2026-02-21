@@ -1,5 +1,11 @@
 import { useCallback } from 'react';
 
+import type {
+  CaseResolverAssetFile,
+  CaseResolverFile,
+  CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
+
 import {
   normalizeFolderPath,
   normalizeFolderPaths,
@@ -12,11 +18,6 @@ import {
 } from './useCaseResolverState.helpers';
 import { isPathWithinFolder } from '../utils/caseResolverUtils';
 
-import type {
-  CaseResolverAssetFile,
-  CaseResolverFile,
-  CaseResolverWorkspace,
-} from '@/shared/contracts/case-resolver';
 
 type ConfirmFn = (input: {
   title: string;

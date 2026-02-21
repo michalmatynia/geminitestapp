@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
+import type { Asset3DRecord, Asset3DUpdateInput } from '@/shared/contracts/viewer3d';
 
 import { updateAsset3D } from '../api';
 
-import type { Asset3DRecord, Asset3DUpdateInput } from '@/shared/contracts/viewer3d';
 
 export function useAsset3DForm(
   asset: Asset3DRecord,

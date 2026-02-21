@@ -5,6 +5,7 @@ import { useState, useMemo, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability/utils/client-error-logger';
 import type { Asset3dViewModeDto } from '@/shared/contracts/viewer3d';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 
@@ -17,7 +18,6 @@ import {
   asset3dKeys
 } from '../hooks/useAsset3dQueries';
 
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 export type ViewMode = Asset3dViewModeDto;
 

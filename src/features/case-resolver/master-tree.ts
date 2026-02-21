@@ -1,10 +1,10 @@
-import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-
 import type {
   CaseResolverAssetFile,
   CaseResolverFile,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
+import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+
 
 const FOLDER_NODE_PREFIX = 'folder:';
 const FILE_NODE_PREFIX = 'file:';

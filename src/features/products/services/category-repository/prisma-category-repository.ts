@@ -8,12 +8,12 @@ import type {
   CreateProductCategoryDto, 
   UpdateProductCategoryDto 
 } from '@/shared/contracts/products';
-import { notFoundError } from '@/shared/errors/app-error';
-import prisma from '@/shared/lib/db/prisma';
 import type { 
   ProductCategory, 
   ProductCategoryWithChildren 
 } from '@/shared/contracts/products';
+import { notFoundError } from '@/shared/errors/app-error';
+import prisma from '@/shared/lib/db/prisma';
 
 type PrismaCategoryWithChildren = PrismaProductCategory & {
   children?: PrismaCategoryWithChildren[];

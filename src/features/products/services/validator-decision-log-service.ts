@@ -6,9 +6,9 @@ import {
   PRODUCT_VALIDATOR_DECISION_LOG_SETTING_KEY,
 } from '@/features/products/constants';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
+import type { ProductValidationDenyBehavior } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ProductValidationDenyBehavior } from '@/shared/contracts/products';
 
 import type { Document, Filter } from 'mongodb';
 

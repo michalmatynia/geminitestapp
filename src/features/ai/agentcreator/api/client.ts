@@ -1,6 +1,6 @@
-import { api } from '@/shared/lib/api-client';
 import { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { AgentSnapshot, AgentBrowserLog, AgentAuditLog } from '@/shared/contracts/chatbot';
+import { api } from '@/shared/lib/api-client';
 
 export async function getAgentRuns(): Promise<AiPathRunRecord[]> {
   const data = await api.get<{ runs?: AiPathRunRecord[] }>('/api/agentcreator/agent');

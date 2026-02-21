@@ -7,8 +7,8 @@ import { CmsDomainSelector } from '@/features/cms';
 import CmsEditorLayout from '@/features/cms/components/CmsEditorLayout';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsAllSlugs, useCmsPage, useCmsSlugs, useUpdatePage } from '@/features/cms/hooks/useCmsQueries';
-import type { Page, Slug } from '@/shared/contracts/cms';
 import { cmsPageUpdateSchema } from '@/features/cms/validations/api';
+import type { Page, Slug } from '@/shared/contracts/cms';
 import { Checkbox, Input, SectionHeader, ToggleRow, FormSection, Badge, Alert, StatusBadge, LoadingState, FormActions, Breadcrumbs, Hint } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';
 

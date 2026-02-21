@@ -3,8 +3,9 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
-import { useOptionalPreviewEditor } from './context/PreviewEditorContext';
 import { Card, Hint } from '@/shared/ui';
+
+import { useOptionalPreviewEditor } from './context/PreviewEditorContext';
 
 const INSPECTOR_TOOLTIP_DELAY_MS = 500;
 const INSPECTOR_TOOLTIP_WIDTH = 260;

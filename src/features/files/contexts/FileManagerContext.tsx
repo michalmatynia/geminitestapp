@@ -6,9 +6,9 @@ import { useFileQueries, useDeleteFile, useUpdateFileTags } from '@/features/fil
 import { logClientError } from '@/features/observability';
 import type { ExpandedImageFile } from '@/features/products';
 import { useAssets3D } from '@/features/viewer3d/hooks/useAsset3dQueries';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { Asset3dDto as Asset3DRecord, Asset3dListFiltersDto as Asset3DListFilters } from '@/shared/contracts/viewer3d';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import type { ImageFileSelection } from '@/shared/contracts/files';
 import { useToast } from '@/shared/ui';
 
 interface FileManagerContextState {

@@ -2,18 +2,20 @@
 
 import React, { useRef } from 'react';
 
-import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
+import { api } from '@/shared/lib/api-client';
+import { useToast } from '@/shared/ui';
+
 import { useProjectsState } from '../context/ProjectsContext';
 import { usePromptActions, usePromptState } from '../context/PromptContext';
 import { useSettingsState } from '../context/SettingsContext';
-import { StudioImportPanels } from './studio-modals/StudioImportPanels';
-import { StudioInlineEditPanels } from './studio-modals/StudioInlineEditPanels';
-import { StudioInlineEditProvider } from './studio-modals/StudioInlineEditContext';
-import { createUploadHandlers } from './studio-modals/studio-modals-upload-handlers';
+import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import { toSlotName } from './studio-modals/prompt-extract-utils';
 import { slotHasRenderableImage } from './studio-modals/slot-inline-edit-utils';
-import { useToast } from '@/shared/ui';
-import { api } from '@/shared/lib/api-client';
+import { createUploadHandlers } from './studio-modals/studio-modals-upload-handlers';
+import { StudioImportPanels } from './studio-modals/StudioImportPanels';
+import { StudioInlineEditProvider } from './studio-modals/StudioInlineEditContext';
+import { StudioInlineEditPanels } from './studio-modals/StudioInlineEditPanels';
+
 
 export function StudioModals(): React.JSX.Element {
   const { toast } = useToast();

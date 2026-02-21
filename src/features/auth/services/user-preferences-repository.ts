@@ -2,13 +2,13 @@ import 'server-only';
 
 import { ObjectId } from 'mongodb';
 
-import { operationFailedError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import {
   type UserPreferences,
   type UserPreferencesUpdate as UserPreferencesData,
   type JsonValue
 } from '@/shared/contracts/auth';
+import { operationFailedError } from '@/shared/errors/app-error';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 const toMongoId = (id: string): ObjectId | string => {
   if (ObjectId.isValid(id) && id.length === 24) return new ObjectId(id);

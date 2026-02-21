@@ -2,12 +2,12 @@ import 'server-only';
 
 
 import { decryptSecret } from '@/features/integrations/server';
-import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations';
 import {
   defaultPlaywrightSettings,
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,
 } from '@/features/playwright/constants/playwright';
 import { getSettingValue } from '@/features/products/server';
+import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import type { BrowserContextOptions } from 'playwright';

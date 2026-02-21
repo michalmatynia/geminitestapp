@@ -28,17 +28,17 @@ import {
   useUpdateUserPreferencesMutation,
   useUserPreferences,
 } from '@/features/auth/hooks/useUserPreferences';
+import type {
+  CreateMutation,
+  DeleteMutation,
+  UpdateMutation,
+} from '@/shared/contracts/ui';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { ApiError } from '@/shared/lib/api-client';
 import {
   invalidateImageStudioProjects,
   invalidateImageStudioSlots,
 } from '@/shared/lib/query-invalidation';
-import type {
-  CreateMutation,
-  DeleteMutation,
-  UpdateMutation,
-} from '@/shared/contracts/ui';
 import { useToast } from '@/shared/ui';
 
 import {

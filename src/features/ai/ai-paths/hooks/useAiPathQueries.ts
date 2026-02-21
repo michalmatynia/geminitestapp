@@ -2,6 +2,9 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
+import type { ListQuery, VoidMutation, SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
@@ -9,9 +12,6 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
-import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
-import type { ListQuery, VoidMutation, SingleQuery } from '@/shared/contracts/ui';
 
 import { 
   fetchAiPathsSettingsCached, 

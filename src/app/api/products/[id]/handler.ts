@@ -7,10 +7,10 @@ import { ActivityTypes, logActivity } from '@/features/observability/services/ac
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { productService } from '@/features/products/services/productService'; // Direct import
-import type { ProductRecord, ProductWithImages } from '@/shared/contracts/products';
 import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
-import { badRequestError, notFoundError, payloadTooLargeError } from '@/shared/errors/app-error';
+import type { ProductRecord, ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, notFoundError, payloadTooLargeError } from '@/shared/errors/app-error';
 
 
 const isLikelyPayloadTooLarge = (error: unknown): boolean => {

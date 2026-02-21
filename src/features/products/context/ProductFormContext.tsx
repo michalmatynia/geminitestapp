@@ -24,12 +24,15 @@ import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/features/products/
 import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
 import { useProductImages } from '@/features/products/hooks/useProductImages';
 import { useProductMetadata } from '@/features/products/hooks/useProductMetadata';
-import type {
-  CatalogRecord,
-  ProductWithImages,
-  PriceGroupWithDetails,
-  ProductFormData,
-  ProductDraft,
+import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
+import {
+  productCreateSchema,
+  productUpdateSchema,
+} from '@/features/products/validations/schemas';
+import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
+import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
+import {
+  ProductImageSlot,
 } from '@/shared/contracts/products';
 import type {
   ProductCategory,
@@ -38,16 +41,13 @@ import type {
   ProductParameterValue,
   Producer,
 } from '@/shared/contracts/products';
-import {
-  ProductImageSlot,
+import type {
+  CatalogRecord,
+  ProductWithImages,
+  PriceGroupWithDetails,
+  ProductFormData,
+  ProductDraft,
 } from '@/shared/contracts/products';
-import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
-import {
-  productCreateSchema,
-  productUpdateSchema,
-} from '@/features/products/validations/schemas';
-import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
-import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

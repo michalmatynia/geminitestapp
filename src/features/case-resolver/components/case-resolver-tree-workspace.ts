@@ -1,6 +1,7 @@
+import type { CaseResolverFile, CaseResolverFolderRecord, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+
 import { normalizeFolderPaths } from '../settings';
 
-import type { CaseResolverFile, CaseResolverFolderRecord, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 type ResolveCaseResolverTreeWorkspaceArgs = {
   selectedFileId: string | null;

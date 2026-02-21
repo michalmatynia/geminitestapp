@@ -1,18 +1,18 @@
 'use client';
 
+import type { AiInsightRecord } from '@/shared/contracts';
 import type { 
   SystemLogsResponseDto as SystemLogsResponse,
   SystemActivityResponseDto as SystemActivityResponse,
   SystemLogMetricsResponseDto as SystemLogMetricsResponse,
   ListSystemLogsInputDto as LogFilters,
 } from '@/shared/contracts/observability';
+import type { SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createSingleQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { logsKeys, activityKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
-import type { AiInsightRecord } from '@/shared/contracts';
-import type { SingleQuery } from '@/shared/contracts/ui';
 
 export type { LogFilters, SystemLogsResponse, SystemActivityResponse, SystemLogMetricsResponse };
 

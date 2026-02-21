@@ -6,10 +6,10 @@ import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot
 import { startChatbotJobQueue } from '@/features/jobs/server';
 import type { EnqueueChatbotJobRequestDto as EnqueueJobRequest } from '@/shared/contracts/chatbot';
 import type { ChatbotJobDto as ChatbotJob } from '@/shared/contracts/chatbot';
-import { badRequestError, notFoundError } from '@/shared/errors/app-error';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { JsonParseResult } from '@/shared/contracts/ui';
+import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { logger } from '@/shared/utils/logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';

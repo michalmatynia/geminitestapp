@@ -1,5 +1,5 @@
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import type { ErrorCategory, SuggestedAction } from '@/shared/contracts/observability';
+import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
 import { getTraceId } from '@/shared/utils/observability/trace';

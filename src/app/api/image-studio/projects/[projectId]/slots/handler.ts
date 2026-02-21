@@ -6,8 +6,8 @@ import {
   createImageStudioSlots,
   listImageStudioSlots,
 } from '@/features/ai/image-studio/server/slot-repository';
-import { badRequestError, quotaExceededError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, quotaExceededError } from '@/shared/errors/app-error';
 
 const MAX_PROJECT_SLOTS = 5000;
 const MAX_SLOTS_PER_REQUEST = 250;

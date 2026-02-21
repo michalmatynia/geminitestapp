@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { deleteNoteFile } from '@/features/files/server';
 import { noteService } from '@/features/notesapp/server';
-import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError, internalError, notFoundError } from '@/shared/errors/app-error';
 
 const MAX_SLOT_INDEX = 9;
 

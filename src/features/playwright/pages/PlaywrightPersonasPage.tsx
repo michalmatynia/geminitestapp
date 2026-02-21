@@ -3,11 +3,11 @@
 import { logClientError } from '@/features/observability';
 import { PlaywrightSettingsForm } from '@/features/playwright/components/PlaywrightSettingsForm';
 import { usePlaywrightPersonas, useSavePlaywrightPersonasMutation } from '@/features/playwright/hooks/usePlaywrightPersonas';
+import { buildPlaywrightSettings, createPlaywrightPersonaId } from '@/features/playwright/utils/personas';
 import type {
   PlaywrightPersona,
   PlaywrightSettings,
 } from '@/shared/contracts/playwright';
-import { buildPlaywrightSettings, createPlaywrightPersonaId } from '@/features/playwright/utils/personas';
 import { ItemLibrary, useToast, Breadcrumbs } from '@/shared/ui';
 
 import type { SetStateAction } from 'react';

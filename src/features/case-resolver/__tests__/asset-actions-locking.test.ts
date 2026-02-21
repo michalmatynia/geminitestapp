@@ -6,7 +6,6 @@ import {
   createCaseResolverFile,
   parseCaseResolverWorkspace,
 } from '@/features/case-resolver/settings';
-
 import type {
   CaseResolverFile,
   CaseResolverFileEditDraft,

@@ -4,16 +4,16 @@ import { ArrowDown, ArrowUp, FileImage, FileText, FolderOpen, Plus } from 'lucid
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { DocumentSearchPage } from '@/features/document-search';
-import { Button, EmptyState, Pagination, SearchInput, SelectSimple, Card, Badge } from '@/shared/ui';
-
-import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
-
 import type {
   CaseResolverCategory,
   CaseResolverFile,
   CaseResolverIdentifier,
   CaseResolverTag,
 } from '@/shared/contracts/case-resolver';
+import { Button, EmptyState, Pagination, SearchInput, SelectSimple, Card, Badge } from '@/shared/ui';
+
+import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+
 
 type SortKey = 'updated' | 'created' | 'name';
 type SortOrder = 'asc' | 'desc';

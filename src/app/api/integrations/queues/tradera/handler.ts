@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { initializeQueues } from '@/features/jobs/lib/queue-init';
-import { getQueueHealth, isRedisAvailable } from '@/shared/lib/queue';
 import type { QueueHealthStatus } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { getQueueHealth, isRedisAvailable } from '@/shared/lib/queue';
 
 type TraderaQueueHealthResponse = {
   ok: boolean;

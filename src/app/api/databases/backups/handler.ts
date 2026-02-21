@@ -37,7 +37,7 @@ async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[
   );
 
   return backups;
-  }
+}
 
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

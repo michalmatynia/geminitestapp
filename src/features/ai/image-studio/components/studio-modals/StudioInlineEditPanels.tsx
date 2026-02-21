@@ -15,10 +15,10 @@ import { SlotInlineEditCompositesTab } from './SlotInlineEditCompositesTab';
 import { SlotInlineEditEnvironmentTab } from './SlotInlineEditEnvironmentTab';
 import { SlotInlineEditGenerationsTab } from './SlotInlineEditGenerationsTab';
 import { SlotInlineEditMasksTab } from './SlotInlineEditMasksTab';
+import { useStudioInlineEdit } from './StudioInlineEditContext';
 import { ExtractPromptParamsModal } from '../modals/ExtractPromptParamsModal';
 import { GenerationPreviewModal } from '../modals/GenerationPreviewModal';
 import { SlotInlineEditModal } from '../modals/SlotInlineEditModal';
-import { useStudioInlineEdit } from './StudioInlineEditContext';
 
 export function StudioInlineEditPanels(): React.JSX.Element {
   const {
@@ -241,8 +241,8 @@ export function StudioInlineEditPanels(): React.JSX.Element {
           <SlotInlineEditCompositesTab
             compositeTabInputImages={compositeTabInputImages}
             compositeTabInputSourceLabel={compositeTabInputSourceLabel}
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-            sourceCompositeImage={sourceCompositeImage as any}
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+            sourceCompositeImage={sourceCompositeImage}
             formatBytes={formatBytes}
             formatDateTime={formatDateTime}
           />

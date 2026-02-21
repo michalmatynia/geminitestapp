@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { listEmbeddingCollections, upsertEmbeddingCollection } from '@/features/ai/agentcreator/teaching/server/repository';
-import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { parseJsonBody } from '@/shared/lib/api/parse-json';
 
 const createCollectionSchema = z.object({
   name: z.string().trim().min(1),

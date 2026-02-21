@@ -3,8 +3,8 @@ import { describe, it, expect, beforeAll, beforeEach, vi, afterAll } from 'vites
 vi.unmock('@/shared/lib/db/prisma');
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import prisma from '@/shared/lib/db/prisma';
 import type { AiNode } from '@/shared/contracts/ai-paths';
+import prisma from '@/shared/lib/db/prisma';
 
 describe('AiPathRunRepository', () => {
   let repo: Awaited<ReturnType<typeof getPathRunRepository>>;

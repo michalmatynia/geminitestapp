@@ -12,10 +12,6 @@ import {
   integrationSchema, 
   integrationConnectionSchema,
 } from '@/shared/contracts/integrations';
-import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
-import { api, ApiError } from '@/shared/lib/api-client';
-import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
-import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
 import type { 
   Integration, 
   IntegrationConnection, 
@@ -23,7 +19,11 @@ import type {
   BaseInventory,
   ImportExportTemplate
 } from '@/shared/contracts/integrations';
+import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
+import { api, ApiError } from '@/shared/lib/api-client';
+import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
+import { integrationKeys, playwrightKeys } from '@/shared/lib/query-key-exports';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import { getIntegrationConnectionsQueryKey } from './integrationCache';

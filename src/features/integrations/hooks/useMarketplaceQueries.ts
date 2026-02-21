@@ -9,12 +9,12 @@ import type {
   ExternalTag,
   TagMappingWithDetails,
 } from '@/shared/contracts/integrations';
+import type { ListQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { marketplaceKeys } from '@/shared/lib/query-key-exports';
-import type { ListQuery } from '@/shared/contracts/ui';
 
 export function useExternalCategories(connectionId: string): ListQuery<ExternalCategory> {
   const queryKey = marketplaceKeys.categories(connectionId);

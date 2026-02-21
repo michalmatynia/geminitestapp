@@ -1,8 +1,8 @@
 'use client';
 
 import { AGENT_PERSONA_SETTINGS_KEY, DEFAULT_AGENT_PERSONA_SETTINGS } from '@/features/ai/agentcreator/constants/personas';
-import type { AgentPersona, AgentPersonaSettings } from '@/shared/contracts/agents';
 import { fetchSettingsCached } from '@/shared/api/settings-client';
+import type { AgentPersona, AgentPersonaSettings } from '@/shared/contracts/agents';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export const createAgentPersonaId = (): string => {

@@ -9,9 +9,9 @@ import {
 } from '@/features/ai/image-studio/utils/studio-settings';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, configurationError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const uiControlEnum = z.enum([
   'auto',

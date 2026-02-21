@@ -13,9 +13,9 @@ import {
   type UpdateProductDraftDto,
   type ProductDraftOpenFormTab,
 } from '@/shared/contracts/products';
+import type { ProductParameterValue } from '@/shared/contracts/products';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ProductParameterValue } from '@/shared/contracts/products';
 
 type DraftProvider = 'mongodb' | 'prisma';
 

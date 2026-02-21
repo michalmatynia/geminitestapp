@@ -4,6 +4,7 @@ import { keepPreviousData } from '@tanstack/react-query';
 import React from 'react';
 
 import { dbApi } from '@/features/ai/ai-paths/lib/api';
+import type { CollectionSchema, SchemaData } from '@/shared/contracts/database';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { 
@@ -18,7 +19,6 @@ import {
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 
-import type { CollectionSchema, SchemaData } from '@/shared/contracts/database';
 
 const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema[] => {
   if (!schema) return [];
@@ -128,7 +128,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
       if (!result.ok) {
         throw new Error(result.error || 'Failed to fetch schema.');
       }
-      return result.data as SchemaData;
+      return result.data;
     },
     enabled: selectedNode.type === 'db_schema',
     refetchOnMount: false,
@@ -259,7 +259,7 @@ export function DbSchemaNodeConfigSection(): React.JSX.Element | null {
   return (
     <div className='space-y-4'>
       <Card variant='subtle' padding='md' className='border-purple-800/50 bg-purple-950/20'>
-        <Hint size='sm' uppercase={false} className='mb-3 font-medium text-purple-300'>
+        <Hint size='xs' uppercase={false} className='mb-3 font-medium text-purple-300'>
           Database Schema Browser
         </Hint>
 

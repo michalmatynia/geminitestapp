@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { uploadFile } from '@/features/files/server';
-import { badRequestError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { badRequestError } from '@/shared/errors/app-error';
 
 const isFileLike = (entry: FormDataEntryValue): entry is File => {
   return typeof entry === 'object' && entry !== null && 'arrayBuffer' in entry && 'size' in entry;

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { AI_PATHS_MONGO_INDEXES } from '@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import type { IndexSpecification } from 'mongodb';
 

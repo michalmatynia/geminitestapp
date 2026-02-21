@@ -3,12 +3,12 @@
 import { type Query } from '@tanstack/react-query';
 
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
+import type { ListQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
   createListQueryV2,
 } from '@/shared/lib/query-factories-v2';
 import { integrationKeys } from '@/shared/lib/query-key-exports';
-import type { ListQuery } from '@/shared/contracts/ui';
 
 const PRODUCT_LISTINGS_STALE_TIME_MS = 30_000;
 

@@ -1,6 +1,5 @@
 import { palette } from '@/features/ai/ai-paths/lib';
 import { type EdgeDto as AiEdge } from '@/shared/contracts/ai-paths';
-
 import { type AiNode, type NodeDefinition } from '@/shared/contracts/case-resolver';
 import {
   DEFAULT_CASE_RESOLVER_EDGE_META,
@@ -12,6 +11,7 @@ import {
   type CaseResolverNodeMeta,
   type CaseResolverPdfExtractionPresetId,
 } from '@/shared/contracts/case-resolver';
+
 import {
   DOCUMENT_CONTENT_PORT,
   buildCanvasNodeFileTemplate,

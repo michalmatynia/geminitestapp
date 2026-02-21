@@ -3,8 +3,8 @@ import { z } from 'zod';
 
 import { deleteFileFromStorage, getImageFileRepository } from '@/features/files/server';
 import { parseJsonBody } from '@/features/products/server';
-import { notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { notFoundError } from '@/shared/errors/app-error';
 
 const tagsSchema = z.object({
   tags: z.array(z.string().trim().min(1)).default([]),

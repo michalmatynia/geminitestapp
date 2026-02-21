@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { getProductSyncRunDetail } from '@/features/product-sync/services/product-sync-repository';
-import { notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { notFoundError } from '@/shared/errors/app-error';
 
 export const querySchema = z.object({
   page: z.coerce.number().int().min(1).optional(),

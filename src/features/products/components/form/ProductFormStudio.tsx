@@ -17,13 +17,13 @@ import {
 } from '@/features/products/constants';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
+import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
+import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type {
   ProductStudioExecutionRoute,
   ProductStudioSequenceGenerationMode,
   ProductStudioSequenceReadiness,
 } from '@/shared/contracts/products';
-import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
-import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';

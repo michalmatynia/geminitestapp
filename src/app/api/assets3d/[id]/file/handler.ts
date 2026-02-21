@@ -5,8 +5,8 @@ import { join } from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getAsset3DRepository } from '@/features/viewer3d/server';
-import { notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { notFoundError } from '@/shared/errors/app-error';
 
 export async function GET_handler(
   _request: NextRequest,
@@ -17,7 +17,7 @@ export async function GET_handler(
   const repository = getAsset3DRepository();
   const asset = await repository.getAsset3DById(id);
 
-  if (!asset || !asset.filepath) {
+  if (!asset?.filepath) {
     throw notFoundError(`Asset or filepath not found in database: ${id}`);
   }
 

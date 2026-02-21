@@ -5,6 +5,12 @@ import { randomUUID } from 'crypto';
 import { NextRequest, NextResponse } from 'next/server';
 
 import type { SystemLogLevelDto as SystemLogLevel } from '@/shared/contracts/observability';
+import type {
+  ApiHandlerOptions,
+  ApiHandlerContext,
+  ApiRouteHandler,
+  ApiRouteHandlerWithParams,
+} from '@/shared/contracts/ui';
 import { badRequestError, forbiddenError, methodNotAllowedError, payloadTooLargeError, validationError } from '@/shared/errors/app-error';
 import { resolveError } from '@/shared/errors/resolve-error';
 import { enforceRateLimit } from '@/shared/lib/api/rate-limit';
@@ -15,12 +21,6 @@ import {
   getCsrfTokenFromHeaders,
   isSameOriginRequest,
 } from '@/shared/lib/security/csrf';
-import type {
-  ApiHandlerOptions,
-  ApiHandlerContext,
-  ApiRouteHandler,
-  ApiRouteHandlerWithParams,
-} from '@/shared/contracts/ui';
 import { logger } from '@/shared/utils/logger';
 
 import type { ZodSchema } from 'zod';

@@ -10,8 +10,8 @@ import {
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { cmsSlugDomainsUpdateSchema } from '@/features/cms/validations/api';
 import { parseJsonBody } from '@/features/products/server';
-import { notFoundError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { notFoundError } from '@/shared/errors/app-error';
 
 type Params = { id: string };
 

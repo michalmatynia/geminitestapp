@@ -14,6 +14,13 @@ import {
   type AuthUsersResponse,
   type AuthUserSecurityProfile,
 } from '@/features/auth/api/users';
+import type { AuthUserSummary } from '@/shared/contracts/auth';
+import type { 
+  SingleQuery, 
+  UpdateMutation, 
+  CreateMutation, 
+  MutationResult 
+} from '@/shared/contracts/ui';
 import { ApiError } from '@/shared/lib/api-client';
 import {
   createDeleteMutationV2,
@@ -26,14 +33,7 @@ import {
   invalidateUsers,
 } from '@/shared/lib/query-invalidation';
 import { authKeys } from '@/shared/lib/query-key-exports';
-import type { 
-  SingleQuery, 
-  UpdateMutation, 
-  CreateMutation, 
-  MutationResult 
-} from '@/shared/contracts/ui';
 
-import type { AuthUserSummary } from '@/shared/contracts/auth';
 
 
 const AUTH_USERS_STALE_MS = 10_000;

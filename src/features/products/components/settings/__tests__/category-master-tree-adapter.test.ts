@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { MasterFolderTreePersistContext } from '@/shared/contracts/master-folder-tree';
 import { toCategoryMasterNodeId } from '@/features/products/components/settings/category-master-tree';
 import { createCategoryMasterTreeAdapter } from '@/features/products/components/settings/category-master-tree-adapter';
+import type { MasterFolderTreePersistContext } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const categoryNode = (

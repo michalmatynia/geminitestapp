@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { deleteEmbeddingCollection, getEmbeddingCollectionById, upsertEmbeddingCollection } from '@/features/ai/agentcreator/teaching/server/repository';
+import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
 
 const updateCollectionSchema = z.object({
   name: z.string().trim().min(1).optional(),

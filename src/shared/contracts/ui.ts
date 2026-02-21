@@ -1,7 +1,9 @@
 import { ReactNode } from 'react';
 
+
 import type { ListResponse } from './base';
 import type { UseQueryResult, UseMutationResult } from '@tanstack/react-query';
+import type { ZodSchema } from 'zod';
 
 /**
  * Unified modal component prop types
@@ -110,9 +112,9 @@ export interface ApiHandlerOptions {
   rateLimitKey?: false | 'api' | 'auth' | 'write' | 'upload' | 'search';
   maxBodyBytes?: number;
   parseJsonBody?: boolean;
-  bodySchema?: any; // ZodSchema
-  paramsSchema?: any;
-  querySchema?: any;
+  bodySchema?: ZodSchema;
+  paramsSchema?: ZodSchema;
+  querySchema?: ZodSchema;
   requireCsrf?: boolean;
 }
 

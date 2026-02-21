@@ -7,6 +7,12 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   useAiPathsSettingsQuery,
 } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
+import type {
+  AiPathsValidationConfig,
+  AiPathsValidationRule,
+  PathConfig,
+  PathMeta,
+} from '@/features/ai/ai-paths/lib';
 import {
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
@@ -15,12 +21,7 @@ import {
   AI_PATHS_NODE_DOCS as NODE_DOCS_LIST,
   type AiPathsNodeDoc,
 } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
-import type {
-  AiPathsValidationConfig,
-  AiPathsValidationRule,
-  PathConfig,
-  PathMeta,
-} from '@/features/ai/ai-paths/lib';
+import { createDefaultPathConfig } from '@/features/ai/ai-paths/lib/core/utils/factory';
 import {
   approveInferredAiPathsValidationRule,
   buildAiPathsValidationRulesFromDocs,
@@ -30,7 +31,6 @@ import {
   rejectInferredAiPathsValidationRule,
   type AiPathsValidationFinding,
 } from '@/features/ai/ai-paths/lib/core/validation-engine';
-import { createDefaultPathConfig } from '@/features/ai/ai-paths/lib/core/utils/factory';
 import { updateAiPathsSettingsBulk } from '@/features/ai/ai-paths/lib/settings-store-client';
 import {
   Badge,
@@ -1687,11 +1687,11 @@ export function AdminAiPathsValidationPage(): React.JSX.Element {
                               className='text-[10px] uppercase'
                             >
                               {finding.severity}
-                                                          </Badge>
-                                                          <Hint size='xs' uppercase={false} className='font-medium text-gray-100'>
-                                                            {finding.ruleTitle}
-                                                          </Hint>
-                                                        </div>                          <div className='mt-1 text-[11px] text-gray-400'>{finding.message}</div>
+                            </Badge>
+                            <Hint size='xs' uppercase={false} className='font-medium text-gray-100'>
+                              {finding.ruleTitle}
+                            </Hint>
+                          </div>                          <div className='mt-1 text-[11px] text-gray-400'>{finding.message}</div>
                           {finding.recommendation ? (
                             <div className='mt-1 text-[11px] text-sky-200'>
                               {finding.recommendation}

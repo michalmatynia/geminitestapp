@@ -1,6 +1,6 @@
-import type { CollectionSchemaDto } from '@/shared/contracts/database';
 import type { DbSchemaConfig } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type { CollectionSchemaDto } from '@/shared/contracts/database';
 
 import { dbApi, type ApiResponse } from '../../../api';
 
@@ -33,7 +33,11 @@ const formatSchemaAsText = (schema: SchemaResponse): string => {
     '',
   ];
 
-  for (const collection of schema.collections) {
+  const collections = Array.isArray(schema.collections)
+    ? schema.collections
+    : Object.values(schema.collections);
+
+  for (const collection of collections) {
     lines.push(`Collection: ${collection.name}`);
     lines.push('Fields:');
     for (const field of collection.fields ?? []) {
@@ -45,8 +49,9 @@ const formatSchemaAsText = (schema: SchemaResponse): string => {
       const markerStr = markers.length > 0 ? ` [${markers.join(', ')}]` : '';
       lines.push(`  - ${field.name} (${field.type})${markerStr}`);
     }
-    if (collection.relations && collection.relations.length > 0) {
-      lines.push(`Relations: ${collection.relations.join(', ')}`);
+    const relations = (collection as any)['relations'] as string[] | undefined;
+    if (relations && relations.length > 0) {
+      lines.push(`Relations: ${relations.join(', ')}`);
     }
     lines.push('');
   }
@@ -62,8 +67,13 @@ const filterCollections = (
     return schema;
   }
   const selectedSet = new Set(selectedCollections.map((c: string): string => c.toLowerCase()));
+  
+  const baseCollections = Array.isArray(schema.collections)
+    ? (schema.collections as CollectionSchemaDto[])
+    : Object.values(schema.collections);
+
   if (schema.provider === 'multi') {
-    const collections = schema.collections.filter((c): boolean =>
+    const collections = baseCollections.filter((c: CollectionSchemaDto): boolean =>
       selectedSet.has(c.name.toLowerCase()),
     );
     return {
@@ -71,7 +81,7 @@ const filterCollections = (
       collections,
     };
   }
-  const collections = schema.collections.filter((c: CollectionSchemaDto): boolean =>
+  const collections = baseCollections.filter((c: CollectionSchemaDto): boolean =>
     selectedSet.has(c.name.toLowerCase()),
   );
   return {
@@ -124,13 +134,18 @@ export const handleDbSchema: NodeHandler = async ({
 
   // Optionally filter out fields or relations
   if (!config.includeFields || !config.includeRelations) {
-    schema.collections = schema.collections.map((c: CollectionSchemaDto): CollectionSchemaDto => {
+    const baseCollections = Array.isArray(schema.collections)
+      ? (schema.collections as CollectionSchemaDto[])
+      : Object.values(schema.collections);
+
+    schema.collections = baseCollections.map((c: CollectionSchemaDto): CollectionSchemaDto => {
       const result: CollectionSchemaDto = {
         name: c.name,
         fields: config.includeFields ? (c.fields ?? []) : [],
       };
-      if (config.includeRelations && c.relations) {
-        result.relations = c.relations;
+      const relations = (c as any)['relations'] as string[] | undefined;
+      if (config.includeRelations && relations) {
+        (result as any)['relations'] = relations;
       }
       return result;
     });

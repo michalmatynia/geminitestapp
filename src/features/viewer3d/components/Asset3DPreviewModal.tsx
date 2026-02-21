@@ -11,6 +11,7 @@ import React from 'react';
 import { useState } from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { Button } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
@@ -21,7 +22,6 @@ import { Viewer3DSettingsPanel } from './Viewer3DSettingsPanel';
 import { Viewer3DStatusInfo } from './Viewer3DStatusInfo';
 import { Viewer3DProvider, useViewer3D } from '../context/Viewer3DContext';
 
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 interface Asset3DPreviewModalProps extends EntityModalProps<Asset3DRecord> {}
 

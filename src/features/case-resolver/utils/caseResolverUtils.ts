@@ -5,6 +5,14 @@ import {
   ensureSafeDocumentHtml,
 } from '@/features/document-editor/content-format';
 import type {
+  CaseResolverFile,
+  CaseResolverScanSlot,
+  CaseResolverDocumentVersion,
+  CaseResolverTag,
+  CaseResolverPartyReference,
+  CaseResolverFileEditDraft,
+} from '@/shared/contracts/case-resolver';
+import type {
   FilemakerDatabaseDto as FilemakerDatabase,
   FilemakerEntityKindDto as FilemakerEntityKind,
   FilemakerOrganizationDto as FilemakerOrganization,
@@ -14,14 +22,6 @@ import type {
 import { normalizeCaseResolverComparable } from '../party-matching';
 import { normalizeFolderPath } from '../settings';
 
-import type {
-  CaseResolverFile,
-  CaseResolverScanSlot,
-  CaseResolverDocumentVersion,
-  CaseResolverTag,
-  CaseResolverPartyReference,
-  CaseResolverFileEditDraft,
-} from '@/shared/contracts/case-resolver';
 
 export const createId = (prefix: string): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {

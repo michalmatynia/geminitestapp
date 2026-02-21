@@ -21,11 +21,6 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import React, { Suspense, useMemo, useState } from 'react';
 
-import { CrudPanel } from '../components/CrudPanel';
-import { SqlQueryConsole } from '../components/SqlQueryConsole';
-import { DatabaseProvider } from '../context/DatabaseContext';
-import { useDatabasePreviewState } from '../hooks/useDatabasePreviewState';
-
 import type {
   DatabaseColumnInfo,
   DatabaseForeignKeyInfo,
@@ -55,6 +50,12 @@ import {
   PageLayout,
   Hint,
 } from '@/shared/ui';
+
+import { CrudPanel } from '../components/CrudPanel';
+import { SqlQueryConsole } from '../components/SqlQueryConsole';
+import { DatabaseProvider } from '../context/DatabaseContext';
+import { useDatabasePreviewState } from '../hooks/useDatabasePreviewState';
+
 
 import type { ColumnDef } from '@tanstack/react-table';
 

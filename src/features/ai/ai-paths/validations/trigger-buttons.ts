@@ -127,6 +127,8 @@ export const aiTriggerButtonRecordSchema = z.object({
   updatedAt: z
     .preprocess((value) => (value instanceof Date ? value.toISOString() : value), z.string().min(1))
     .optional(),
+  isActive: z.preprocess(coerceOptionalBoolean, z.boolean().optional()),
+  sortIndex: z.coerce.number().optional(),
 });
 
 export const aiTriggerButtonCreateSchema = z.object({
@@ -178,6 +180,8 @@ const normalizeAiTriggerButtonRecord = (
     display: record.display ?? 'icon_label',
     createdAt: record.createdAt ?? now,
     updatedAt: record.updatedAt ?? record.createdAt ?? now,
+    isActive: record.isActive ?? true,
+    sortIndex: record.sortIndex ?? 0,
   };
 };
 

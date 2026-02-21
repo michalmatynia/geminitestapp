@@ -3,13 +3,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
-import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { fetchPlaywrightPersonas } from '@/features/playwright/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
+import type { PlaywrightPersona } from '@/shared/contracts/playwright';
+import type { ListQuery, VoidMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { playwrightKeys } from '@/shared/lib/query-key-exports';
-import type { ListQuery, VoidMutation } from '@/shared/contracts/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export function usePlaywrightPersonas(): ListQuery<PlaywrightPersona> {

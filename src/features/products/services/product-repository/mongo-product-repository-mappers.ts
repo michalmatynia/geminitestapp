@@ -1,9 +1,9 @@
+import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import type {
   ProductParameterValue,
   ProductRecord,
   ProductWithImages,
 } from '@/shared/contracts/products';
-import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 
 import type { WithId } from 'mongodb';
 

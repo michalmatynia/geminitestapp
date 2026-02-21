@@ -1437,17 +1437,17 @@ export function RightSidebar(): React.JSX.Element {
 
           <div className='flex items-center justify-end gap-2'>
             {modelSupportsSequenceGeneration ? (
-                                <Button
-                                  size='xs'
-                                  type='button'
-                                  variant='outline'
-                                  onClick={handleRunSequenceGeneration}
-                                  disabled={generationBusy || sequenceRunBusy}
-                                  loading={sequenceRunBusy}
-                                >
-                                  <Workflow className='mr-2 size-4' />
-                                  {sequenceRunBusy ? 'Starting Sequence...' : 'Generate Sequence'}
-                                </Button>            ) : null}
+              <Button
+                size='xs'
+                type='button'
+                variant='outline'
+                onClick={handleRunSequenceGeneration}
+                disabled={generationBusy || sequenceRunBusy}
+                loading={sequenceRunBusy}
+              >
+                <Workflow className='mr-2 size-4' />
+                {sequenceRunBusy ? 'Starting Sequence...' : 'Generate Sequence'}
+              </Button>            ) : null}
             <Button
               size='xs'
               type='button'

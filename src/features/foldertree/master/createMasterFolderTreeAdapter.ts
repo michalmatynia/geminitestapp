@@ -1,10 +1,10 @@
-import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-
 import type {
   MasterFolderTreeAdapter,
   MasterFolderTreePersistContext,
   MasterFolderTreePersistOperation,
 } from '@/shared/contracts/master-folder-tree';
+import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+
 
 type MoveOperation = Extract<MasterFolderTreePersistOperation, { type: 'move' }>;
 type ReorderOperation = Extract<MasterFolderTreePersistOperation, { type: 'reorder' }>;

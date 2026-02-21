@@ -4,11 +4,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CLIENT_LOGGING_KEYS } from '@/features/observability/constants/client-logging';
 import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/features/products/constants';
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { FOLDER_TREE_PROFILES_V2_SETTING_KEY } from '@/shared/utils/folder-tree-profiles-v2';
 
 type SettingRecord = { key: string; value: string };

@@ -2,8 +2,9 @@
 
 import React from 'react';
 
-import { useProductListingsViewContext } from './context/ProductListingsViewContext';
 import { Card } from '@/shared/ui';
+
+import { useProductListingsViewContext } from './context/ProductListingsViewContext';
 import { ProductListingItem } from './ProductListingItem';
 import { ProductListingsSyncPanel } from './ProductListingsSyncPanel';
 

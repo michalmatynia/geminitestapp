@@ -12,12 +12,12 @@ import {
   startAiPathRunQueue,
 } from '@/features/jobs/server';
 import { getProductAiJobProvider, getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
-import type { ProductAiJobStatus } from '@/shared/contracts/jobs';
 import { notifyAiPathsSloBreach } from '@/features/observability/lib/ai-paths-slo-notifier';
+import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
+import type { ProductAiJobStatus } from '@/shared/contracts/jobs';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
 
 const AI_PATH_STATUSES: AiPathRunStatus[] = [
   'queued',

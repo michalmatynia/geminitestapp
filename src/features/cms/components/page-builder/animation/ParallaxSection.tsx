@@ -125,7 +125,7 @@ export function ParallaxSection(): React.ReactNode {
 
   const handleParallaxEaseChange = useCallback(
     (value: string) => {
-      onChange({ ...config, parallaxEase: value as AnimationEasing });
+      onChange({ ...config, parallaxEase: value });
     },
     [config, onChange]
   );

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   computeVersionGraph,
   computeTimelineLayout,
 } from '@/features/ai/image-studio/utils/version-graph';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 // ── Factory ──────────────────────────────────────────────────────────────────
 

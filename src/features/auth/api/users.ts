@@ -2,9 +2,9 @@ import type {
   AuthUsersResponseDto,
   AuthUserSecurityProfileDto
 } from '@/shared/contracts/auth';
+import type { AuthUserSummary } from '@/shared/contracts/auth';
 import { api } from '@/shared/lib/api-client';
 
-import type { AuthUserSummary } from '@/shared/contracts/auth';
 
 export type AuthUsersResponse = AuthUsersResponseDto;
 export type AuthUserSecurityProfile = AuthUserSecurityProfileDto;

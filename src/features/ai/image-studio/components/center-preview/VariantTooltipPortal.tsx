@@ -2,6 +2,7 @@ import React from 'react';
 import { createPortal } from 'react-dom';
 
 import { Card } from '@/shared/ui';
+
 import { formatBytes, formatUsd, type VariantThumbnailInfo } from './preview-utils';
 
 export type VariantTooltipState = {

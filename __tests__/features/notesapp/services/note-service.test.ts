@@ -213,12 +213,12 @@ describe('NoteService', () => {
         color: null, notebookId: null, themeId: null, sortIndex: null
       });
 
-            const tree = await noteService.getCategoryTree();
-            const parentInTree = tree.find((c: any) => c.id === parent.id);
+      const tree = await noteService.getCategoryTree();
+      const parentInTree = tree.find((c: any) => c.id === parent.id);
             
-            expect(parentInTree).toBeDefined();
-            expect(parentInTree?.children.some((c: any) => c.id === child.id)).toBe(true);
-          });
-        });
-      });
+      expect(parentInTree).toBeDefined();
+      expect(parentInTree?.children.some((c: any) => c.id === child.id)).toBe(true);
+    });
+  });
+});
       

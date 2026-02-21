@@ -1,9 +1,9 @@
-import { api } from '@/shared/lib/api-client';
 import type {
   CountryOption,
   CurrencyOption,
   Language,
 } from '@/shared/contracts/internationalization';
+import { api } from '@/shared/lib/api-client';
 
 export async function getCurrencies(): Promise<CurrencyOption[]> {
   return api.get<CurrencyOption[]>('/api/currencies');

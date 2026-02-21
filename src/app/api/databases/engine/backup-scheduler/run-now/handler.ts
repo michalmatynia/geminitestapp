@@ -11,9 +11,9 @@ import {
   startProductAiJobQueue,
 } from '@/features/jobs/server';
 import { logSystemError } from '@/features/observability/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, forbiddenError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const runNowSchema = z.object({
   dbType: z.enum(['mongodb', 'postgresql', 'all']).default('all'),
@@ -72,7 +72,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
 
     try {
-      await enqueueProductAiJobToQueue(job.id, job.productId as string, job.jobType as string, job.payload);
+      await enqueueProductAiJobToQueue(job.id, job.productId, job.jobType as string, job.payload);
     } catch (enqueueError: unknown) {
       await logSystemError({
         message:

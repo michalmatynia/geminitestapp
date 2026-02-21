@@ -2,6 +2,8 @@ import 'server-only';
 
 import { Prisma, Product as PrismaProduct, ProductImage as PrismaProductImage, ImageFile as PrismaImageFile, Catalog as PrismaCatalog, ProductCatalog as PrismaProductCatalog } from '@prisma/client';
 
+import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { CatalogRecord, ProductWithImages } from '@/shared/contracts/products';
 import type { ProductParameterValue } from '@/shared/contracts/products';
 import type {
@@ -10,10 +12,8 @@ import type {
   ProductRepository,
   UpdateProductInput,
 } from '@/shared/contracts/products';
-import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { conflictError, internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
-import type { ImageFileRecord } from '@/shared/contracts/files';
 
 // ---------------------------------------------------------------------------
 // Helpers

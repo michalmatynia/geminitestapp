@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
+import type { DatabaseInfo, DatabaseType } from '@/shared/contracts/database';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
   Button,
@@ -29,7 +30,6 @@ import {
   useDeleteBackupMutation,
 } from '../hooks/useDatabaseQueries';
 
-import type { DatabaseInfo, DatabaseType } from '@/shared/contracts/database';
 
 
 function DatabasesContent(): React.JSX.Element {

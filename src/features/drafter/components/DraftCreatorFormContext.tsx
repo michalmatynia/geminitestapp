@@ -3,6 +3,7 @@
 import { createContext, useContext } from 'react';
 
 import type { ProductImageManagerController } from '@/features/products/components/ProductImageManager';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 import type {
   CatalogRecord,
   Producer,
@@ -12,7 +13,6 @@ import type {
   ProductTag,
 } from '@/shared/contracts/products';
 import type { ProductDraftOpenFormTab } from '@/shared/contracts/products';
-import type { ImageFileSelection } from '@/shared/contracts/files';
 
 export interface DraftCreatorFormContextValue {
   name: string;

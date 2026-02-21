@@ -19,7 +19,6 @@ import {
   updateAiPathsSetting,
 } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability/utils/client-error-logger';
-import { api } from '@/shared/lib/api-client';
 import type {
   AiNode,
   PathConfig,
@@ -28,6 +27,7 @@ import type {
   Edge,
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
+import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
 import {

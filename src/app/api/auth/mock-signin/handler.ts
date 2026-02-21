@@ -13,9 +13,9 @@ import {
 import { getAuthSecurityProfile } from '@/features/auth/server';
 import { getAuthUserPageSettings } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 
 export const payloadSchema = z.object({

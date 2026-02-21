@@ -2,7 +2,9 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
+import type { AiInsightRecord } from '@/shared/contracts';
 import { ClearLogsResponseDto as ClearLogsResponse } from '@/shared/contracts/observability';
+import type { UpdateMutation } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createDeleteMutationV2 } from '@/shared/lib/query-factories-v2';
 import {
@@ -10,8 +12,6 @@ import {
   invalidateSystemLogs,
 } from '@/shared/lib/query-invalidation';
 import { logsKeys, diagnosticsKeys } from '@/shared/lib/query-key-exports';
-import type { AiInsightRecord } from '@/shared/contracts';
-import type { UpdateMutation } from '@/shared/contracts/ui';
 
 export function useClearLogsMutation(): UpdateMutation<ClearLogsResponse, void> {
   const queryClient = useQueryClient();

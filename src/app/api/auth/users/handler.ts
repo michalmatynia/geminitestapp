@@ -4,10 +4,10 @@ import { auth } from '@/features/auth/server';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import type { AuthUserDto } from '@/shared/contracts/auth';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 import type { ObjectId } from 'mongodb';
 

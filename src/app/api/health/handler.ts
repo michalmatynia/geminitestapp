@@ -1,8 +1,8 @@
 import { MongoClient } from 'mongodb';
 import { NextRequest } from 'next/server';
 
-import { configurationError } from '@/shared/errors/app-error';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { configurationError } from '@/shared/errors/app-error';
 
 export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
   const uri = process.env['MONGODB_URI'];

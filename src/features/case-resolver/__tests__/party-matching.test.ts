@@ -75,6 +75,8 @@ const createDatabase = (): FilemakerDatabase => ({
       updatedAt: NOW,
     },
   ],
+  emails: [],
+  emailLinks: [],
 });
 
 const createCandidate = (

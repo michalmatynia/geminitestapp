@@ -279,7 +279,7 @@ export function computeVersionGraph(slots: ImageStudioSlotRecord[]): VersionGrap
   // Build edges
   const edges: VersionEdge[] = [];
   for (const [childId, pids] of parentIdsMap) {
-    const childMeta = readMeta(slotById.get(childId)!);
+    const childMeta = readMeta(slotById.get(childId));
     const isComposite = childMeta.role === 'composite';
     const isMerge = childMeta.role === 'merge' || pids.length > 1;
     for (const pid of pids) {

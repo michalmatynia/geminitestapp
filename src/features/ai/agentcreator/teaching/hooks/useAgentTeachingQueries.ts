@@ -9,6 +9,11 @@ import type {
   AgentTeachingChatSourceDto as AgentTeachingChatSource 
 } from '@/shared/contracts/agent-teaching';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
+import type { 
+  ListQuery, 
+  SingleQuery, 
+  MutationResult 
+} from '@/shared/contracts/ui';
 import {
   createDeleteMutationV2,
   createListQueryV2,
@@ -17,11 +22,6 @@ import {
   createUpdateMutationV2,
 } from '@/shared/lib/query-factories-v2';
 import { agentTeachingKeys } from '@/shared/lib/query-key-exports';
-import type { 
-  ListQuery, 
-  SingleQuery, 
-  MutationResult 
-} from '@/shared/contracts/ui';
 
 import { 
   getTeachingAgents, 

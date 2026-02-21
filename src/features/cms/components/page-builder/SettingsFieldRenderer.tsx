@@ -12,6 +12,7 @@ import {
 } from '@/shared/ui';
 import { SelectModal, type SelectOption } from '@/shared/ui/templates/modals/SelectModal';
 
+import { useOptionalSettingsForm } from './settings/SettingsFormContext';
 import {
   ColorField,
   NumberField,
@@ -23,7 +24,6 @@ import {
 } from './shared-fields';
 import { useThemeSettings } from './ThemeSettingsContext';
 import { useCmsSlugs } from '../../hooks/useCmsQueries';
-import { useOptionalSettingsForm } from './settings/SettingsFormContext';
 
 import type { SettingsField, SettingsFieldOption } from '../../types/page-builder';
 

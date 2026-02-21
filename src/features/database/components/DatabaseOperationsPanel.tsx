@@ -3,6 +3,7 @@
 import { AlertTriangleIcon, DatabaseIcon, Table2Icon, TerminalSquareIcon } from 'lucide-react';
 import Link from 'next/link';
 
+import type { DatabaseType } from '@/shared/contracts/database';
 import { Alert, Badge, EmptyState, FormSection, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger, SimpleSettingsList, Card } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -10,7 +11,6 @@ import { CrudPanel } from './CrudPanel';
 import { SqlQueryConsole } from './SqlQueryConsole';
 import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
 
-import type { DatabaseType } from '@/shared/contracts/database';
 
 const DATABASE_OPTIONS: Array<{
   value: DatabaseType;

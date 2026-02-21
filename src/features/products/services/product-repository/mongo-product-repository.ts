@@ -11,6 +11,8 @@ import {
   toProductResponse,
   type ProductDocument,
 } from '@/features/products/services/product-repository/mongo-product-repository-mappers';
+import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ProductImageRecord, CatalogRecord, ProductWithImages } from '@/shared/contracts/products';
 import type {
   CreateProductInput,
@@ -19,10 +21,8 @@ import type {
   TransactionalProductRepository,
   UpdateProductInput,
 } from '@/shared/contracts/products';
-import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import { conflictError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import type { ImageFileRecord } from '@/shared/contracts/files';
 
 import type { Prisma } from '@prisma/client';
 

@@ -1,6 +1,5 @@
 import type { ImageFileSelection } from '@/shared/contracts/files';
-
-import type { ManagedImageSlot } from '../types';
+import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 
 export const DEFAULT_IMAGE_SLOT_COUNT = 15;
 

@@ -242,7 +242,6 @@ export function StudioInlineEditPanels(): React.JSX.Element {
           <SlotInlineEditCompositesTab
             compositeTabInputImages={compositeTabInputImages}
             compositeTabInputSourceLabel={compositeTabInputSourceLabel}
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
             sourceCompositeImage={sourceCompositeImage}
             formatBytes={formatBytes}
             formatDateTime={formatDateTime}

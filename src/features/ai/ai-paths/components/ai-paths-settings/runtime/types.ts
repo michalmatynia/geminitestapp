@@ -66,6 +66,7 @@ export interface ServerExecutionArgs {
     currentOutputs?: Record<string, unknown>
   ) => void;
   setLastRunAt: (at: string | null) => void;
+  toast: UiToastFn;
   currentRunIdRef?: MutableRefObject<string | null>;
   currentRunStartedAtRef?: MutableRefObject<string | null>;
 }

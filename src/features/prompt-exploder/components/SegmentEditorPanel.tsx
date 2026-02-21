@@ -32,7 +32,6 @@ import {
   useSegmentEditorState,
   useSegmentEditorActions,
 } from '../context/hooks/useSegmentEditor';
-import { useSettingsState } from '../context/hooks/useSettings';
 import {
   promptExploderSafeJsonStringify,
   promptExploderIsFiniteNumber,

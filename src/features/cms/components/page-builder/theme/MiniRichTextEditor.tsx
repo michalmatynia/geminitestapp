@@ -93,12 +93,12 @@ export function MiniRichTextEditor({
 
   const addLink = async () => {
     if (!editor) return;
-    const url = (await prompt({
+    const url = await prompt({
       title: 'Insert Link',
       message: 'Enter the URL for the link:',
       label: 'URL',
-      defaultValue: editor.getAttributes('link').href,
-    }));
+      defaultValue: editor.getAttributes('link')['href'] as string | undefined,
+    });
 
     if (url === null) return;    if (url === '') {
       editor.chain().focus().extendMarkRange('link').unsetLink().run();

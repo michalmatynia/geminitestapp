@@ -1,14 +1,12 @@
 
 'use client';
 
-import { EmptyState } from '@/shared/ui';
+import type { BlockInstance } from '@/shared/contracts/cms';
 
+import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useOptionalSectionBlockData } from './SectionBlockContext';
-import { useCmsPageContext } from '../CmsPageContext';
-
-import type { BlockInstance } from '../../../types/page-builder';
 
 interface FrontendRichTextSectionProps {
   settings?: Record<string, unknown>;

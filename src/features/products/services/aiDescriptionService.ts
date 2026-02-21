@@ -8,6 +8,7 @@ import OpenAI from 'openai';
 import { getImageFileRepository } from '@/features/files/server';
 import { ErrorSystem } from '@/features/observability/server';
 import type { ImageFileRecordDto as ImageFileRecord } from '@/shared/contracts/files';
+import type { ProductFormData } from '@/shared/contracts/products';
 import {
   badRequestError,
   configurationError,
@@ -21,7 +22,6 @@ import {
   OutboundUrlPolicyError,
 } from '@/shared/lib/security/outbound-url-policy';
 
-import type { ProductFormData } from '../types/forms';
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
 const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';

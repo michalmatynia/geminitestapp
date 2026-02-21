@@ -8,6 +8,7 @@ import type { QueryValidationResult } from './query-utils';
 
 export type DatabaseQueryInputControlsContextValue = {
   provider: DbQueryConfig['provider'];
+  requestedProvider: DbQueryConfig['provider'];
   actionCategory: DatabaseActionCategory;
   action: DatabaseAction;
   actionCategoryOptions: Array<{ value: DatabaseActionCategory; label: string }>;
@@ -34,6 +35,7 @@ export type DatabaseQueryInputControlsContextValue = {
   onQueryChange: (value: string) => void;
   onQueryFocus?: () => void;
   onFilterFocus?: () => void;
+  onProviderChange: (value: DbQueryConfig['provider']) => void;
 };
 
 const DatabaseQueryInputControlsContext =

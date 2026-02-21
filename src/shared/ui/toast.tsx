@@ -10,11 +10,10 @@ import {
   useState,
 } from 'react';
 
+import type { Toast, ToastVariant } from '@/shared/contracts/ui';
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { Button } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-
-type ToastVariant = 'success' | 'error' | 'info' | 'warning';
 
 type ToastItem = {
   id: string;
@@ -30,10 +29,7 @@ type ToastSettings = {
 };
 
 type ToastContextValue = {
-  toast: (
-    message: string,
-    options?: Partial<Omit<ToastItem, 'id' | 'message'>> | undefined
-  ) => void;
+  toast: Toast;
 };
 
 type ToastSettingsContextValue = {
@@ -128,6 +124,8 @@ const getToastIcon = (variant: ToastVariant): LucideIcon => {
     case 'warning':
       return AlertTriangle;
     case 'info':
+    case 'default':
+    default:
       return Info;
   }
 };

@@ -125,6 +125,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
 
   const queryInputControlsValue: DatabaseQueryInputControlsContextValue = {
     provider: state.resolvedProvider,
+    requestedProvider: state.queryConfig.provider ?? 'auto',
     actionCategory: resolvedActionCategory,
     action: resolvedAction,
     actionCategoryOptions,
@@ -144,6 +145,7 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     queryTemplateRef: state.queryTemplateRef,
     onActionCategoryChange: state.handleActionCategoryChange,
     onActionChange: (val) => state.applyActionConfig(resolvedActionCategory, val),
+    onProviderChange: state.handleProviderChange,
     onFormatClick: () => {
       const targetValue = activeQueryTemplateValue;
       if (!targetValue.trim()) return;

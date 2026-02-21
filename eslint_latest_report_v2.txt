@@ -1,219 +1,101 @@
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-handler.ts
-   26:1  error  Expected indentation of 2 spaces but found 0   indent
-   27:1  error  Expected indentation of 2 spaces but found 0   indent
-   28:1  error  Expected indentation of 2 spaces but found 0   indent
-   29:1  error  Expected indentation of 2 spaces but found 0   indent
-   30:1  error  Expected indentation of 2 spaces but found 1   indent
-   31:1  error  Expected indentation of 2 spaces but found 1   indent
-   32:1  error  Expected indentation of 2 spaces but found 0   indent
-   33:1  error  Expected indentation of 2 spaces but found 1   indent
-   34:1  error  Expected indentation of 2 spaces but found 0   indent
-   35:1  error  Expected indentation of 2 spaces but found 0   indent
-   36:1  error  Expected indentation of 2 spaces but found 1   indent
-   37:1  error  Expected indentation of 2 spaces but found 0   indent
-   38:1  error  Expected indentation of 2 spaces but found 0   indent
-   40:1  error  Expected indentation of 2 spaces but found 1   indent
-   41:1  error  Expected indentation of 4 spaces but found 0   indent
-   42:1  error  Expected indentation of 6 spaces but found 2   indent
-   43:1  error  Expected indentation of 8 spaces but found 0   indent
-   44:1  error  Expected indentation of 8 spaces but found 1   indent
-   45:1  error  Expected indentation of 8 spaces but found 0   indent
-   46:1  error  Expected indentation of 8 spaces but found 0   indent
-   47:1  error  Expected indentation of 8 spaces but found 0   indent
-   48:1  error  Expected indentation of 6 spaces but found 1   indent
-   49:1  error  Expected indentation of 4 spaces but found 0   indent
-   50:1  error  Expected indentation of 4 spaces but found 0   indent
-   51:1  error  Expected indentation of 4 spaces but found 0   indent
-   52:1  error  Expected indentation of 6 spaces but found 1   indent
-   53:1  error  Expected indentation of 6 spaces but found 1   indent
-   54:1  error  Expected indentation of 4 spaces but found 0   indent
-   55:1  error  Expected indentation of 4 spaces but found 2   indent
-   56:1  error  Expected indentation of 4 spaces but found 0   indent
-   57:1  error  Expected indentation of 4 spaces but found 0   indent
-   59:1  error  Expected indentation of 6 spaces but found 0   indent
-   60:1  error  Expected indentation of 6 spaces but found 0   indent
-   61:1  error  Expected indentation of 6 spaces but found 2   indent
-   62:1  error  Expected indentation of 6 spaces but found 0   indent
-   63:1  error  Expected indentation of 6 spaces but found 2   indent
-   64:1  error  Expected indentation of 6 spaces but found 0   indent
-   65:1  error  Expected indentation of 6 spaces but found 1   indent
-   66:1  error  Expected indentation of 6 spaces but found 1   indent
-   67:1  error  Expected indentation of 4 spaces but found 0   indent
-   68:1  error  Expected indentation of 4 spaces but found 0   indent
-   69:1  error  Expected indentation of 4 spaces but found 0   indent
-   70:1  error  Expected indentation of 4 spaces but found 0   indent
-   71:1  error  Expected indentation of 4 spaces but found 0   indent
-   72:1  error  Expected indentation of 4 spaces but found 0   indent
-   73:1  error  Expected indentation of 4 spaces but found 1   indent
-   74:1  error  Expected indentation of 6 spaces but found 1   indent
-   75:1  error  Expected indentation of 4 spaces but found 0   indent
-   77:1  error  Expected indentation of 4 spaces but found 0   indent
-   78:1  error  Expected indentation of 6 spaces but found 0   indent
-   79:1  error  Expected indentation of 6 spaces but found 1   indent
-   80:1  error  Expected indentation of 6 spaces but found 0   indent
-   81:1  error  Expected indentation of 4 spaces but found 1   indent
-   82:1  error  Expected indentation of 4 spaces but found 0   indent
-   83:1  error  Expected indentation of 6 spaces but found 1   indent
-   84:1  error  Expected indentation of 4 spaces but found 0   indent
-   85:1  error  Expected indentation of 4 spaces but found 0   indent
-   86:1  error  Expected indentation of 4 spaces but found 1   indent
-   88:1  error  Expected indentation of 6 spaces but found 1   indent
-   89:1  error  Expected indentation of 8 spaces but found 2   indent
-   92:1  error  Expected indentation of 6 spaces but found 0   indent
-   93:1  error  Expected indentation of 8 spaces but found 1   indent
-   94:1  error  Expected indentation of 6 spaces but found 2   indent
-   95:1  error  Expected indentation of 8 spaces but found 0   indent
-   96:1  error  Expected indentation of 8 spaces but found 0   indent
-   97:1  error  Expected indentation of 10 spaces but found 3  indent
-   98:1  error  Expected indentation of 8 spaces but found 1   indent
-   99:1  error  Expected indentation of 6 spaces but found 1   indent
-  100:1  error  Expected indentation of 4 spaces but found 0   indent
-  101:1  error  Expected indentation of 4 spaces but found 0   indent
-  102:1  error  Expected indentation of 6 spaces but found 2   indent
-  103:1  error  Expected indentation of 6 spaces but found 1   indent
-  104:1  error  Expected indentation of 6 spaces but found 0   indent
-  105:1  error  Expected indentation of 6 spaces but found 0   indent
-  106:1  error  Expected indentation of 6 spaces but found 0   indent
-  107:1  error  Expected indentation of 4 spaces but found 2   indent
-  108:1  error  Expected indentation of 6 spaces but found 2   indent
-  109:1  error  Expected indentation of 6 spaces but found 1   indent
-  110:1  error  Expected indentation of 6 spaces but found 0   indent
-  111:1  error  Expected indentation of 6 spaces but found 4   indent
-  112:1  error  Expected indentation of 6 spaces but found 1   indent
-  113:1  error  Expected indentation of 6 spaces but found 0   indent
-  114:1  error  Expected indentation of 6 spaces but found 3   indent
-  115:1  error  Expected indentation of 6 spaces but found 0   indent
-  116:1  error  Expected indentation of 4 spaces but found 0   indent
-  118:1  error  Expected indentation of 4 spaces but found 0   indent
-  119:1  error  Expected indentation of 6 spaces but found 0   indent
-  120:1  error  Expected indentation of 8 spaces but found 0   indent
-  121:1  error  Expected indentation of 8 spaces but found 0   indent
-  122:1  error  Expected indentation of 8 spaces but found 0   indent
-  123:1  error  Expected indentation of 8 spaces but found 1   indent
-  124:1  error  Expected indentation of 8 spaces but found 1   indent
-  125:1  error  Expected indentation of 8 spaces but found 0   indent
-  126:1  error  Expected indentation of 8 spaces but found 5   indent
-  127:1  error  Expected indentation of 8 spaces but found 2   indent
-  128:1  error  Expected indentation of 8 spaces but found 0   indent
-  129:1  error  Expected indentation of 8 spaces but found 0   indent
-  130:1  error  Expected indentation of 8 spaces but found 1   indent
-  131:1  error  Expected indentation of 8 spaces but found 0   indent
-  132:1  error  Expected indentation of 8 spaces but found 2   indent
-  133:1  error  Expected indentation of 8 spaces but found 0   indent
-  134:1  error  Expected indentation of 8 spaces but found 0   indent
-  135:1  error  Expected indentation of 8 spaces but found 4   indent
-  136:1  error  Expected indentation of 8 spaces but found 0   indent
-  137:1  error  Expected indentation of 8 spaces but found 5   indent
-  138:1  error  Expected indentation of 8 spaces but found 0   indent
-  139:1  error  Expected indentation of 6 spaces but found 1   indent
-  140:1  error  Expected indentation of 6 spaces but found 0   indent
-  141:1  error  Expected indentation of 8 spaces but found 1   indent
-  142:1  error  Expected indentation of 6 spaces but found 2   indent
-  145:1  error  Expected indentation of 4 spaces but found 0   indent
-  146:1  error  Expected indentation of 6 spaces but found 3   indent
-  147:1  error  Expected indentation of 6 spaces but found 0   indent
-  148:1  error  Expected indentation of 6 spaces but found 0   indent
-  149:1  error  Expected indentation of 6 spaces but found 0   indent
-  150:1  error  Expected indentation of 6 spaces but found 4   indent
-  151:1  error  Expected indentation of 6 spaces but found 4   indent
-  152:1  error  Expected indentation of 6 spaces but found 2   indent
-  153:1  error  Expected indentation of 6 spaces but found 0   indent
-  154:1  error  Expected indentation of 6 spaces but found 4   indent
-  155:1  error  Expected indentation of 6 spaces but found 1   indent
-  156:1  error  Expected indentation of 6 spaces but found 4   indent
-  157:1  error  Expected indentation of 6 spaces but found 0   indent
-  158:1  error  Expected indentation of 6 spaces but found 5   indent
-  159:1  error  Expected indentation of 6 spaces but found 0   indent
-  160:1  error  Expected indentation of 6 spaces but found 2   indent
-  162:1  error  Expected indentation of 6 spaces but found 1   indent
-  163:1  error  Expected indentation of 6 spaces but found 0   indent
-  164:1  error  Expected indentation of 6 spaces but found 0   indent
-  165:1  error  Expected indentation of 6 spaces but found 2   indent
-  166:1  error  Expected indentation of 6 spaces but found 0   indent
-  167:1  error  Expected indentation of 4 spaces but found 0   indent
-  168:1  error  Expected indentation of 2 spaces but found 0   indent
-  169:1  error  Expected indentation of 4 spaces but found 0   indent
-  170:1  error  Expected indentation of 6 spaces but found 0   indent
-  171:1  error  Expected indentation of 4 spaces but found 0   indent
-  172:1  error  Expected indentation of 4 spaces but found 0   indent
-  173:1  error  Expected indentation of 6 spaces but found 0   indent
-  174:1  error  Expected indentation of 6 spaces but found 4   indent
-  175:1  error  Expected indentation of 6 spaces but found 0   indent
-  177:1  error  Expected indentation of 4 spaces but found 0   indent
-  178:1  error  Expected indentation of 6 spaces but found 1   indent
-  179:1  error  Expected indentation of 6 spaces but found 0   indent
-  180:1  error  Expected indentation of 4 spaces but found 3   indent
-  181:1  error  Expected indentation of 2 spaces but found 0   indent
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/studio-modals/studio-modals-prompt-handlers.ts
+  15:1  error  There should be at least one empty line between import groups                                import/order
+  15:1  error  `@/shared/contracts/ui` type import should occur before import of `@/shared/lib/api-client`  import/order
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/case-resolver/party-matching.ts
-  265:1  error  Expected indentation of 2 spaces but found 6    indent
-  266:1  error  Expected indentation of 2 spaces but found 6    indent
-  267:1  error  Expected indentation of 4 spaces but found 8    indent
-  268:1  error  Expected indentation of 6 spaces but found 10   indent
-  269:1  error  Expected indentation of 6 spaces but found 10   indent
-  270:1  error  Expected indentation of 6 spaces but found 10   indent
-  271:1  error  Expected indentation of 6 spaces but found 10   indent
-  272:1  error  Expected indentation of 6 spaces but found 10   indent
-  273:1  error  Expected indentation of 8 spaces but found 12   indent
-  274:1  error  Expected indentation of 8 spaces but found 12   indent
-  275:1  error  Expected indentation of 8 spaces but found 12   indent
-  276:1  error  Expected indentation of 8 spaces but found 12   indent
-  277:1  error  Expected indentation of 8 spaces but found 12   indent
-  278:1  error  Expected indentation of 6 spaces but found 10   indent
-  279:1  error  Expected indentation of 6 spaces but found 10   indent
-  280:1  error  Expected indentation of 6 spaces but found 10   indent
-  281:1  error  Expected indentation of 6 spaces but found 10   indent
-  282:1  error  Expected indentation of 6 spaces but found 10   indent
-  283:1  error  Expected indentation of 8 spaces but found 12   indent
-  284:1  error  Expected indentation of 10 spaces but found 14  indent
-  285:1  error  Expected indentation of 10 spaces but found 14  indent
-  286:1  error  Expected indentation of 10 spaces but found 14  indent
-  287:1  error  Expected indentation of 8 spaces but found 12   indent
-  288:1  error  Expected indentation of 6 spaces but found 10   indent
-  289:1  error  Expected indentation of 4 spaces but found 8    indent
-  290:1  error  Expected indentation of 2 spaces but found 6    indent
-  292:1  error  Expected indentation of 2 spaces but found 6    indent
-  293:1  error  Expected indentation of 4 spaces but found 8    indent
-  294:1  error  Expected indentation of 6 spaces but found 10   indent
-  295:1  error  Expected indentation of 6 spaces but found 10   indent
-  296:1  error  Expected indentation of 6 spaces but found 10   indent
-  297:1  error  Expected indentation of 4 spaces but found 8    indent
-  298:1  error  Expected indentation of 2 spaces but found 6    indent
-  300:1  error  Expected indentation of 2 spaces but found 6    indent
-  303:1  error  Expected indentation of 2 spaces but found 6    indent
-  304:1  error  Expected indentation of 2 spaces but found 6    indent
-  305:1  error  Expected indentation of 4 spaces but found 8    indent
-  306:1  error  Expected indentation of 6 spaces but found 10   indent
-  307:1  error  Expected indentation of 6 spaces but found 10   indent
-  308:1  error  Expected indentation of 6 spaces but found 10   indent
-  309:1  error  Expected indentation of 8 spaces but found 12   indent
-  310:1  error  Expected indentation of 8 spaces but found 12   indent
-  311:1  error  Expected indentation of 8 spaces but found 12   indent
-  312:1  error  Expected indentation of 8 spaces but found 12   indent
-  313:1  error  Expected indentation of 8 spaces but found 12   indent
-  314:1  error  Expected indentation of 6 spaces but found 10   indent
-  315:1  error  Expected indentation of 6 spaces but found 10   indent
-  316:1  error  Expected indentation of 6 spaces but found 10   indent
-  317:1  error  Expected indentation of 6 spaces but found 10   indent
-  318:1  error  Expected indentation of 8 spaces but found 12   indent
-  319:1  error  Expected indentation of 10 spaces but found 14  indent
-  320:1  error  Expected indentation of 10 spaces but found 14  indent
-  321:1  error  Expected indentation of 10 spaces but found 14  indent
-  322:1  error  Expected indentation of 8 spaces but found 12   indent
-  323:1  error  Expected indentation of 6 spaces but found 10   indent
-  324:1  error  Expected indentation of 4 spaces but found 8    indent
-  325:1  error  Expected indentation of 2 spaces but found 6    indent
-  327:1  error  Expected indentation of 2 spaces but found 6    indent
-  328:1  error  Expected indentation of 4 spaces but found 8    indent
-  329:1  error  Expected indentation of 6 spaces but found 10   indent
-  330:1  error  Expected indentation of 6 spaces but found 10   indent
-  331:1  error  Expected indentation of 6 spaces but found 10   indent
-  332:1  error  Expected indentation of 4 spaces but found 8    indent
-  333:1  error  Expected indentation of 2 spaces but found 6    indent
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/insights/components/InsightCard.tsx
+  10:39  error  Unexpected any. Specify a different type                 @typescript-eslint/no-explicit-any
+  10:44  error  Unsafe member access .recommendations on an `any` value  @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/case-resolver-capture/pages/AdminCaseResolverCapturePage.tsx
+  105:9   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  105:92  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  106:9   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  106:92  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:9   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  107:88  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  108:9   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  108:92  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:9   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  109:84  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/case-resolver-capture/proposals.ts
+  248:9    error  Unsafe assignment of an `any` value                  @typescript-eslint/no-unsafe-assignment
+  248:37   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  248:42   error  Unsafe member access .displayName on an `any` value  @typescript-eslint/no-unsafe-member-access
+  248:79   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  248:84   error  Unsafe member access .name on an `any` value         @typescript-eslint/no-unsafe-member-access
+  248:114  error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  248:119  error  Unsafe member access .firstName on an `any` value    @typescript-eslint/no-unsafe-member-access
+  637:19   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  637:24   error  Unsafe member access .middleName on an `any` value   @typescript-eslint/no-unsafe-member-access
+  724:19   error  Unexpected any. Specify a different type             @typescript-eslint/no-explicit-any
+  724:24   error  Unsafe member access .middleName on an `any` value   @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/GsapAnimationWrapper.tsx
+   79:38  error  Unsafe return of a value of type error     @typescript-eslint/no-unsafe-return
+  194:3   error  Unsafe return of a value of type error     @typescript-eslint/no-unsafe-return
+  351:19  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  352:19  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  367:21  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/frontend/sections/FrontendRichTextSection.tsx
   4:10  warning  'EmptyState' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/settings/PageSettingsTab.tsx
+  131:46   error  Unsafe argument of type error typed assigned to a parameter of type `string`   @typescript-eslint/no-unsafe-argument
+  131:51   error  Unsafe member access .slug on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  139:31   error  Unsafe return of a value of type error                                         @typescript-eslint/no-unsafe-return
+  139:58   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  143:52   error  Unsafe return of type `Set<any>` from function with return type `Set<string>`  @typescript-eslint/no-unsafe-return
+  143:92   error  Unsafe return of a value of type error                                         @typescript-eslint/no-unsafe-return
+  143:97   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  145:61   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  147:33   error  Unsafe return of a value of type error                                         @typescript-eslint/no-unsafe-return
+  152:75   error  Unsafe argument of type error typed assigned to a parameter of type `string`   @typescript-eslint/no-unsafe-argument
+  152:80   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  156:74   error  Unsafe argument of type error typed assigned to a parameter of type `string`   @typescript-eslint/no-unsafe-argument
+  156:79   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  159:9    error  Unsafe assignment of an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  160:62   error  Unsafe member access .isDefault on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
+  163:9    error  Unsafe assignment of an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  164:87   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  164:110  error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  171:47   error  Unsafe call of a type that could not be resolved                               @typescript-eslint/no-unsafe-call
+  171:47   error  Unsafe call of a type that could not be resolved                               @typescript-eslint/no-unsafe-call
+  171:52   error  Unsafe member access .slug on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  171:71   error  Unsafe member access .includes on a type that cannot be resolved               @typescript-eslint/no-unsafe-member-access
+  175:41   error  Unsafe assignment of an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  197:33   error  Unsafe return of a value of type error                                         @typescript-eslint/no-unsafe-return
+  197:68   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  202:7    error  Unsafe assignment of type `any[]` to a variable of type `string[]`             @typescript-eslint/no-unsafe-assignment
+  202:57   error  Unsafe return of a value of type error                                         @typescript-eslint/no-unsafe-return
+  202:62   error  Unsafe member access .slug on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  207:46   error  Unsafe argument of type error typed assigned to a parameter of type `string`   @typescript-eslint/no-unsafe-argument
+  207:51   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  208:70   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  209:35   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  210:26   error  Unsafe argument of type `any[]` assigned to a parameter of type `string[]`     @typescript-eslint/no-unsafe-argument
+  214:87   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  219:7    error  Unsafe assignment of an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  219:16   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  220:16   error  Unsafe assignment of an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  220:27   error  Unsafe member access .slug on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  632:24   error  Unsafe assignment of an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  680:60   error  Unsafe argument of type error typed assigned to a parameter of type `string`   @typescript-eslint/no-unsafe-argument
+  680:65   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  682:33   error  Unsafe assignment of an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  682:38   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  687:30   error  Unsafe member access .slug on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  707:26   error  Unsafe assignment of an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  707:31   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  712:28   error  Unsafe member access .slug on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  728:51   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  728:63   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  731:28   error  Unsafe assignment of an error typed value                                      @typescript-eslint/no-unsafe-assignment
+  731:33   error  Unsafe member access .id on a type that cannot be resolved                     @typescript-eslint/no-unsafe-member-access
+  734:62   error  Unsafe member access .slug on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  755:58   error  Unsafe member access .slug on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/cms/components/page-builder/settings/SettingsFormContext.tsx
   17:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
@@ -468,8 +350,8 @@
   418:5  error  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/drafter/components/DraftCreator.tsx
-  380:62  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-assignment
-  382:47  error  Unsafe argument of type error typed assigned to a parameter of type `{ name: string; length?: number | null | undefined; description?: string | null | undefined; icon?: string | null | undefined; sku?: string | null | undefined; baseProductId?: string | null | undefined; ... 29 more ...; openProductFormTab?: "other" | ... 8 more ... | undefined; }`  @typescript-eslint/no-unsafe-argument
+  380:62  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-assignment
+  382:47  error  Unsafe argument of type error typed assigned to a parameter of type `{ name: string; length?: number | null | undefined; description?: string | null | undefined; sku?: string | null | undefined; name_en?: string | null | undefined; name_pl?: string | null | undefined; ... 29 more ...; openProductFormTab?: "other" | ... 8 more ... | undefined; }`  @typescript-eslint/no-unsafe-argument
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/files/components/file-manager/FileManagerGrid.tsx
    55:28  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
@@ -809,7 +691,7 @@
   227:31  error  Unexpected any. Specify a different type                                                                                                                                                                            @typescript-eslint/no-explicit-any
   237:21  error  Unsafe argument of type `any` assigned to a parameter of type `{ [key: string]: any; id?: string; editorType?: string; content?: string; } | null`                                                                  @typescript-eslint/no-unsafe-argument
   237:29  error  Unexpected any. Specify a different type                                                                                                                                                                            @typescript-eslint/no-explicit-any
-  237:34  error  Unsafe argument of type `any` assigned to a parameter of type `"code" | "markdown" | "rich-text" | "plain-text" | "wysiwyg"`                                                                                        @typescript-eslint/no-unsafe-argument
+  237:34  error  Unsafe argument of type `any` assigned to a parameter of type `"code" | "markdown" | "wysiwyg" | "rich-text" | "plain-text"`                                                                                        @typescript-eslint/no-unsafe-argument
   237:57  error  Unexpected any. Specify a different type                                                                                                                                                                            @typescript-eslint/no-explicit-any
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/hooks/useEditorMode.ts
@@ -819,38 +701,38 @@
   8:172  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/hooks/useNoteOperations.ts
-  112:44  error  Unsafe argument of type error typed assigned to a parameter of type `TreeNodeRecord<unknown>[]`                                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-argument
-  145:13  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
-  145:29  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-call
-  145:46  error  Unsafe member access .filter on a type that cannot be resolved                                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
-  148:25  error  Unsafe member access .length on a type that cannot be resolved                                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
-  149:15  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
-  149:25  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-call
-  149:25  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-call
-  150:12  error  Unsafe member access .map on a type that cannot be resolved                                                                                                                                                                                                                                                                              @typescript-eslint/no-unsafe-member-access
-  154:12  error  Unsafe member access .filter on a type that cannot be resolved                                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
-  155:39  error  Unsafe spread of an error typed type                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unsafe-argument
-  164:44  error  Unsafe argument of type `any` assigned to a parameter of type `{ title: string; content: string; notebookId: string | null; editorType: "code" | "markdown" | "rich-text" | "plain-text" | "wysiwyg"; color?: string | null | undefined; metadata?: Record<...> | undefined; ... 16 more ...; relatedNoteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
-  176:12  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
-  207:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
-  207:25  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-call
-  207:42  error  Unsafe member access .find on a type that cannot be resolved                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-member-access
-  208:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
-  208:40  error  Unsafe member access .title on a type that cannot be resolved                                                                                                                                                                                                                                                                            @typescript-eslint/no-unsafe-member-access
-  214:41  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
-  230:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
-  230:25  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-call
-  230:42  error  Unsafe member access .find on a type that cannot be resolved                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-member-access
-  231:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
-  231:43  error  Unsafe member access .categories on a type that cannot be resolved                                                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-member-access
-  240:39  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
-  252:51  error  Unsafe argument of type error typed assigned to a parameter of type `TreeNodeRecord<unknown>[]`                                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-argument
-  273:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-assignment
-  274:44  error  Unsafe argument of type error typed assigned to a parameter of type `TreeNodeRecord<unknown>[]`                                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-argument
-  277:49  error  Unsafe argument of type error typed assigned to a parameter of type `TreeNodeRecord<unknown>[]`                                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-argument
-  278:50  error  Unsafe argument of type error typed assigned to a parameter of type `TreeNodeRecord<unknown>[]`                                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-argument
-  281:22  error  Unsafe return of a value of type error                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unsafe-return
-  282:39  error  Unsafe argument of type error typed assigned to a parameter of type `TreeNodeRecord<unknown>[]`                                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-argument
+  112:44  error  Unsafe argument of type error typed assigned to a parameter of type `TreeNodeRecord<unknown>[]`                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-argument
+  145:13  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-assignment
+  145:29  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unsafe-call
+  145:46  error  Unsafe member access .filter on a type that cannot be resolved                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+  148:25  error  Unsafe member access .length on a type that cannot be resolved                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+  149:15  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-assignment
+  149:25  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unsafe-call
+  149:25  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unsafe-call
+  150:12  error  Unsafe member access .map on a type that cannot be resolved                                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
+  154:12  error  Unsafe member access .filter on a type that cannot be resolved                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+  155:39  error  Unsafe spread of an error typed type                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unsafe-argument
+  164:44  error  Unsafe argument of type `any` assigned to a parameter of type `{ title: string; content: string; notebookId: string | null; editorType: "code" | "markdown" | "wysiwyg" | "rich-text" | "plain-text"; name?: string | undefined; description?: string | null | undefined; ... 16 more ...; relatedNoteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
+  176:12  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                              @typescript-eslint/no-explicit-any
+  207:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-assignment
+  207:25  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unsafe-call
+  207:42  error  Unsafe member access .find on a type that cannot be resolved                                                                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-member-access
+  208:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-assignment
+  208:40  error  Unsafe member access .title on a type that cannot be resolved                                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
+  214:41  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-assignment
+  230:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-assignment
+  230:25  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unsafe-call
+  230:42  error  Unsafe member access .find on a type that cannot be resolved                                                                                                                                                                                                                                                                          @typescript-eslint/no-unsafe-member-access
+  231:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-assignment
+  231:43  error  Unsafe member access .categories on a type that cannot be resolved                                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
+  240:39  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-assignment
+  252:51  error  Unsafe argument of type error typed assigned to a parameter of type `TreeNodeRecord<unknown>[]`                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-argument
+  273:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-assignment
+  274:44  error  Unsafe argument of type error typed assigned to a parameter of type `TreeNodeRecord<unknown>[]`                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-argument
+  277:49  error  Unsafe argument of type error typed assigned to a parameter of type `TreeNodeRecord<unknown>[]`                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-argument
+  278:50  error  Unsafe argument of type error typed assigned to a parameter of type `TreeNodeRecord<unknown>[]`                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-argument
+  281:22  error  Unsafe return of a value of type error                                                                                                                                                                                                                                                                                                @typescript-eslint/no-unsafe-return
+  282:39  error  Unsafe argument of type error typed assigned to a parameter of type `TreeNodeRecord<unknown>[]`                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-argument
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/form/ProductFormStudio.tsx
   895:11  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
@@ -879,7 +761,7 @@
   566:30  error  Unsafe argument of type error typed assigned to a parameter of type `Iterable<unknown> | null | undefined`    @typescript-eslint/no-unsafe-argument
   566:30  error  Unsafe call of a type that could not be resolved                                                              @typescript-eslint/no-unsafe-call
   566:46  error  Unsafe member access .map on a type that cannot be resolved                                                   @typescript-eslint/no-unsafe-member-access
-  577:46  error  Unsafe argument of type error typed assigned to a parameter of type `ArrayLike<unknown> | Iterable<unknown>`  @typescript-eslint/no-unsafe-argument
+  577:46  error  Unsafe argument of type error typed assigned to a parameter of type `Iterable<unknown> | ArrayLike<unknown>`  @typescript-eslint/no-unsafe-argument
   577:46  error  Unsafe call of a type that could not be resolved                                                              @typescript-eslint/no-unsafe-call
   577:61  error  Unsafe member access .keys on a type that cannot be resolved                                                  @typescript-eslint/no-unsafe-member-access
   612:36  error  Unsafe argument of type error typed assigned to a parameter of type `Iterable<string> | null | undefined`     @typescript-eslint/no-unsafe-argument
@@ -932,6 +814,9 @@
   22:47  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
   32:9   error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
 
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/settings/validator-settings/controller-sequence-actions.ts
+  758:5  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment', '@typescript-eslint/no-unsafe-call', or '@typescript-eslint/no-unsafe-member-access')
+
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/settings/validator-settings/helpers.ts
   442:11  error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
   444:7   error  Unsafe call of a type that could not be resolved                    @typescript-eslint/no-unsafe-call
@@ -977,7 +862,7 @@
   228:57  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-argument
   228:66  error  Unsafe member access .validationDebounceMs on a type that cannot be resolved                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
   241:20  error  Unsafe member access .replacementMode on a type that cannot be resolved                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
-  242:51  error  Unsafe argument of type error typed assigned to a parameter of type `{ label: string; target: "length" | "description" | "name" | "category" | "sku" | "stock" | "price" | "weight" | "size_length" | "size_width"; locale: string; regex: string; flags: string; ... 48 more ...; appliesToScopes: ("draft_template" | ... 1 more ... | "product_edit")[]; }`  @typescript-eslint/no-unsafe-argument
+  242:51  error  Unsafe argument of type error typed assigned to a parameter of type `{ label: string; target: "length" | "name" | "description" | "sku" | "stock" | "price" | "weight" | "category" | "size_length" | "size_width"; locale: string; regex: string; flags: string; ... 48 more ...; appliesToScopes: ("draft_template" | ... 1 more ... | "product_edit")[]; }`  @typescript-eslint/no-unsafe-argument
   249:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-assignment
   249:37  error  Unsafe member access .replacementValue on a type that cannot be resolved                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
   249:76  error  Unsafe member access .replacementValue on a type that cannot be resolved                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
@@ -1096,8 +981,9 @@
   35:10  warning  'useSettingsState' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/toast.tsx
-  13:36  warning  'ToastOptions' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  16:1   error    `@/shared/contracts/ui` type import should occur before import of `@/shared/errors/error-classifier`  import/order
+  16:36  warning  'ToastOptions' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
 
-✖ 985 problems (978 errors, 7 warnings)
-  209 errors and 0 warnings potentially fixable with the `--fix` option.
+✖ 861 problems (853 errors, 8 warnings)
+  3 errors and 1 warning potentially fixable with the `--fix` option.
 

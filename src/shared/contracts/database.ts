@@ -44,6 +44,9 @@ export const databasePreviewPayloadSchema = z.object({
   groups: z.array(databasePreviewGroupSchema).optional(),
   tables: z.array(databasePreviewTableSchema).optional(),
   tableRows: z.array(databasePreviewRowSchema).optional(),
+  tableDetails: z.array(databaseTableDetailSchema).optional(),
+  enums: z.array(databaseEnumInfoDto).optional(),
+  databaseSize: z.string().optional(),
   page: z.number().optional(),
   pageSize: z.number().optional(),
   total: z.number().optional(),
@@ -227,6 +230,7 @@ export const sqlQueryResultSchema = z.object({
   rows: z.array(databasePreviewRowSchema),
   rowCount: z.number(),
   executionTimeMs: z.number(),
+  error: z.string().nullable().optional(),
 });
 
 export type SqlQueryResultDto = z.infer<typeof sqlQueryResultSchema>;
@@ -261,7 +265,7 @@ export const databaseColumnInfoSchema = z.object({
   name: z.string(),
   type: z.string(),
   nullable: z.boolean(),
-  defaultValue: z.any().nullable(),
+  defaultValue: z.unknown().nullable(),
   isPrimaryKey: z.boolean(),
   isForeignKey: z.boolean(),
 });
@@ -298,7 +302,7 @@ export type DatabaseEnumInfo = DatabaseEnumInfoDto;
 export const databaseTableDetailSchema = z.object({
   name: z.string(),
   columns: z.array(databaseColumnInfoSchema),
-  indices: z.array(databaseIndexInfoSchema),
+  indexes: z.array(databaseIndexInfoSchema),
   foreignKeys: z.array(databaseForeignKeyInfoSchema),
 });
 
@@ -339,10 +343,7 @@ export type SchemaProvider = SchemaProviderDto;
 
 export const multiSchemaResponseSchema = z.object({
   provider: z.string(),
-  collections: z.union([
-    z.record(z.string(), collectionSchemaSchema),
-    z.array(collectionSchemaSchema.and(z.object({ provider: z.string().optional() })))
-  ]),
+  collections: z.array(collectionSchemaSchema.and(z.object({ provider: z.string().optional() }))),
   sources: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
 });
 
@@ -378,6 +379,29 @@ export const databaseEngineOperationsJobsSchema = z.object({
 
 export type DatabaseEngineOperationsJobsDto = z.infer<typeof databaseEngineOperationsJobsSchema>;
 
+export type DatabaseEngineWorkspaceViewDto = 'engine' | 'operations' | 'backups' | 'redis' | 'preview' | 'crud';
+
+export interface UnifiedCollectionDto {
+  name: string;
+  existsInMongo: boolean;
+  existsInPrisma: boolean;
+  mongoDocumentCount: number | null;
+  prismaRowCount: number | null;
+  mongoFieldCount: number | null;
+  prismaFieldCount: number | null;
+  assignedProvider: 'mongodb' | 'prisma' | 'auto';
+}
+
+export const databaseEngineCollectionProviderPreviewItemSchema = z.object({
+  collection: z.string(),
+  configuredProvider: z.string().nullable(),
+  effectiveProvider: z.string().nullable(),
+  source: z.enum(['collection_route', 'app_provider', 'error']),
+  error: z.string().nullable(),
+});
+
+export type DatabaseEngineCollectionProviderPreviewItemDto = z.infer<typeof databaseEngineCollectionProviderPreviewItemSchema>;
+
 export const databaseEngineProviderPreviewSchema = z.object({
   timestamp: z.string().optional(),
   policy: z.record(z.string(), z.unknown()).optional(),
@@ -407,8 +431,15 @@ export const databaseCollectionCopyResultSchema = z.object({
 export type DatabaseCollectionCopyResultDto = z.infer<typeof databaseCollectionCopyResultSchema>;
 
 export const databaseEngineBackupRunNowResponseSchema = z.object({
-  jobId: z.string(),
-  status: z.string(),
+  success: z.boolean(),
+  queued: z.array(z.object({
+    dbType: z.enum(['mongodb', 'postgresql']),
+    jobId: z.string(),
+  })),
+  inlineProcessed: z.array(z.object({
+    dbType: z.enum(['mongodb', 'postgresql']),
+    jobId: z.string(),
+  })),
 });
 
 export type DatabaseEngineBackupRunNowResponseDto = z.infer<typeof databaseEngineBackupRunNowResponseSchema>;

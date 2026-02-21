@@ -1,3 +1,4 @@
+import type { Toast } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 
 
@@ -13,11 +14,6 @@ import { isParamUiControl, type ParamUiControl } from '../../utils/param-ui';
 import { flattenParams, inferParamSpecs, type ParamSpec } from '../../utils/prompt-params';
 
 import type { Dispatch, SetStateAction } from 'react';
-
-type Toast = (
-  message: string,
-  options?: { variant?: 'success' | 'error' | 'warning' | 'info' | 'default' }
-) => void;
 
 type StudioPromptExtractionSettings = {
   promptExtraction: {

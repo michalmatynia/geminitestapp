@@ -22,6 +22,102 @@ import {
 
 import type { SchemaResponse } from '../../../api/client';
 
+const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const WRITE_ACTION_CATEGORIES = new Set<string>(['create', 'update', 'delete']);
+const WRITE_ACTIONS = new Set<string>([
+  'insertone',
+  'insertmany',
+  'create',
+  'createone',
+  'createmany',
+  'updateone',
+  'updatemany',
+  'findoneandupdate',
+  'replaceone',
+  'update',
+  'deleteone',
+  'deletemany',
+  'findoneanddelete',
+  'delete',
+]);
+
+const isWriteDatabaseOperation = (config: DatabaseConfig): boolean => {
+  const operation: DatabaseOperation = config.operation ?? 'query';
+  if (operation === 'insert' || operation === 'update' || operation === 'delete') {
+    return true;
+  }
+  const actionCategory = config.actionCategory ?? null;
+  return Boolean(
+    config.useMongoActions &&
+      (actionCategory === 'create' || actionCategory === 'update' || actionCategory === 'delete')
+  );
+};
+
+const isWriteResultOperation = (
+  config: DatabaseConfig,
+  result: RuntimePortValues,
+): boolean => {
+  if (isWriteDatabaseOperation(config)) return true;
+
+  const debugPayload = result['debugPayload'];
+  if (isPlainRecord(debugPayload)) {
+    const actionCategory = debugPayload['actionCategory'];
+    if (
+      typeof actionCategory === 'string' &&
+      WRITE_ACTION_CATEGORIES.has(actionCategory.toLowerCase())
+    ) {
+      return true;
+    }
+    const action = debugPayload['action'];
+    if (typeof action === 'string' && WRITE_ACTIONS.has(action.toLowerCase())) {
+      return true;
+    }
+  }
+
+  const bundle = result['bundle'];
+  if (isPlainRecord(bundle)) {
+    const action = bundle['action'];
+    if (typeof action === 'string' && WRITE_ACTIONS.has(action.toLowerCase())) {
+      return true;
+    }
+    if (
+      bundle['modifiedCount'] !== undefined ||
+      bundle['matchedCount'] !== undefined ||
+      bundle['upsertedCount'] !== undefined ||
+      bundle['deletedCount'] !== undefined ||
+      bundle['insertedCount'] !== undefined
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const extractDatabaseError = (result: RuntimePortValues): string | null => {
+  const directError = result['error'];
+  if (typeof directError === 'string' && directError.trim().length > 0) {
+    return directError.trim();
+  }
+  const bundle = result['bundle'];
+  if (isPlainRecord(bundle)) {
+    const bundleError = bundle['error'];
+    if (typeof bundleError === 'string' && bundleError.trim().length > 0) {
+      return bundleError.trim();
+    }
+  }
+  const resultPayload = result['result'];
+  if (isPlainRecord(resultPayload)) {
+    const payloadError = resultPayload['error'];
+    if (typeof payloadError === 'string' && payloadError.trim().length > 0) {
+      return payloadError.trim();
+    }
+  }
+  return null;
+};
+
 export const handleDatabase: NodeHandler = async ({
   node,
   nodeInputs,
@@ -37,6 +133,20 @@ export const handleDatabase: NodeHandler = async ({
   strictFlowMode = true,
   runMeta,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
+  const defaultQuery: DbQueryConfig = DEFAULT_DB_QUERY;
+  const dbConfig: DatabaseConfig = (node.config?.database as DatabaseConfig) ?? {
+    operation: 'query',
+    entityType: 'product',
+    idField: 'entityId',
+    mode: 'replace',
+    mappings: [],
+    query: defaultQuery,
+    writeSource: 'bundle',
+    writeSourcePath: '',
+    dryRun: false,
+  };
+  let writeOperationDetected = isWriteDatabaseOperation(dbConfig);
+
   try {
     const resolvedInputsBase: Record<string, unknown> = resolveDatabaseInputs(
       {
@@ -53,18 +163,6 @@ export const handleDatabase: NodeHandler = async ({
       collectionMap,
     );
     const nodeInputPorts: string[] = Array.isArray(node.inputs) ? node.inputs : [];
-    const defaultQuery: DbQueryConfig = DEFAULT_DB_QUERY;
-    const dbConfig: DatabaseConfig = (node.config?.database as DatabaseConfig) ?? {
-      operation: 'query',
-      entityType: 'product',
-      idField: 'entityId',
-      mode: 'replace',
-      mappings: [],
-      query: defaultQuery,
-      writeSource: 'bundle',
-      writeSourcePath: '',
-      dryRun: false,
-    };
     const operation: DatabaseOperation = dbConfig.operation ?? 'query';
     const queryConfig: DbQueryConfig = { ...defaultQuery, ...(dbConfig.query ?? {}) };
     const dryRun: boolean = dbConfig.dryRun ?? false;
@@ -138,11 +236,17 @@ export const handleDatabase: NodeHandler = async ({
         strictFlowMode,
       });
       if (mongoActionResult) {
+        writeOperationDetected =
+          writeOperationDetected || isWriteResultOperation(dbConfig, mongoActionResult);
+        const mongoError = extractDatabaseError(mongoActionResult);
+        if (writeOperationDetected && mongoError) {
+          throw new Error(mongoError);
+        }
         return mongoActionResult;
       }
     }
 
-    return await handleDatabaseStandardOperation({
+    const operationResult = await handleDatabaseStandardOperation({
       operation,
       node,
       nodeInputs,
@@ -165,6 +269,13 @@ export const handleDatabase: NodeHandler = async ({
       ensureExistingParameterTemplateContext,
       strictFlowMode,
     });
+    writeOperationDetected =
+      writeOperationDetected || isWriteResultOperation(dbConfig, operationResult);
+    const operationError = extractDatabaseError(operationResult);
+    if (writeOperationDetected && operationError) {
+      throw new Error(operationError);
+    }
+    return operationResult;
   } catch (error) {
     if (error instanceof ParameterInferenceGateError) {
       throw error;
@@ -174,6 +285,11 @@ export const handleDatabase: NodeHandler = async ({
       { action: 'handleDatabase', nodeId: node.id },
       'Unexpected database node failure:',
     );
+    if (writeOperationDetected) {
+      throw error instanceof Error
+        ? error
+        : new Error(typeof error === 'string' ? error : 'Database write failed');
+    }
     return {
       result: null,
       bundle: { error: error instanceof Error ? error.message : 'Unknown database error' },

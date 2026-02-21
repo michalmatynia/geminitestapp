@@ -3,8 +3,7 @@
 import {
   EditIcon,
   PlusIcon,
-  Trash2Icon,
-  RefreshCwIcon
+  Trash2Icon
 } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 
@@ -24,7 +23,7 @@ import {
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
-import { useCrudPanelState } from '../hooks/useCrudPanelState';
+import { useCrudPanelState, type UseCrudPanelStateReturn } from '../hooks/useCrudPanelState';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -161,9 +160,10 @@ export function CrudPanel(props: {
     tableDetails,
     columns,
     rowsQuery,
-  } = useCrudPanelState(props);
+  }: UseCrudPanelStateReturn = useCrudPanelState(props);
 
-  const errorMessage = mutationError ?? (rowsQuery.isError ? (rowsQuery.error).message : null);
+  const rowsError: string | null = rowsQuery.isError && rowsQuery.error instanceof Error ? rowsQuery.error.message : null;
+  const errorMessage: string | null = mutationError ?? rowsError;
 
   const columnDefs = useMemo<ColumnDef<Record<string, unknown>>[]>(() => {
     if (!columns.length && rows.length === 0) return [];

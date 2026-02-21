@@ -49,6 +49,60 @@ interface PromptCandidate {
   value: unknown;
 }
 
+const resolveImageUrlForOutboundPolicy = (rawUrl: string): string => {
+  const trimmed = rawUrl.trim();
+  if (!trimmed) return trimmed;
+
+  if (trimmed.startsWith('//')) {
+    return `https:${trimmed}`;
+  }
+
+  try {
+    new URL(trimmed);
+    return trimmed;
+  } catch {
+    // Resolve relative URLs against a known app base when possible.
+  }
+
+  const baseCandidates: string[] = [];
+  if (typeof window !== 'undefined') {
+    const browserOrigin = window.location?.origin;
+    if (typeof browserOrigin === 'string' && browserOrigin.trim().length > 0) {
+      baseCandidates.push(browserOrigin.trim());
+    }
+  }
+
+  const envBaseCandidates = [
+    process.env['AI_PATHS_ASSET_BASE_URL'],
+    process.env['NEXT_PUBLIC_APP_URL'],
+    process.env['NEXTAUTH_URL'],
+    process.env['VERCEL_URL']
+      ? `https://${process.env['VERCEL_URL']}`
+      : null,
+  ];
+  envBaseCandidates.forEach((candidate) => {
+    if (typeof candidate === 'string' && candidate.trim().length > 0) {
+      baseCandidates.push(candidate.trim());
+    }
+  });
+
+  for (const baseCandidate of baseCandidates) {
+    const normalizedBase =
+      /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(baseCandidate)
+        ? baseCandidate
+        : baseCandidate.startsWith('//')
+          ? `https:${baseCandidate}`
+          : `https://${baseCandidate.replace(/^\/+/, '')}`;
+    try {
+      return new URL(trimmed, normalizedBase).toString();
+    } catch {
+      continue;
+    }
+  }
+
+  return trimmed;
+};
+
 const filterImageUrlsByOutboundPolicy = (input: {
   imageUrls: string[];
   nodeId: string;
@@ -61,18 +115,21 @@ const filterImageUrlsByOutboundPolicy = (input: {
   const allowed: string[] = [];
   const blocked: Array<{
     url: string;
+    resolvedUrl: string;
     reason: string | null;
     hostname: string | null;
   }> = [];
 
   input.imageUrls.forEach((url: string): void => {
-    const decision = evaluateOutboundUrlPolicy(url);
+    const resolvedUrl = resolveImageUrlForOutboundPolicy(url);
+    const decision = evaluateOutboundUrlPolicy(resolvedUrl);
     if (decision.allowed) {
-      allowed.push(url);
+      allowed.push(resolvedUrl);
       return;
     }
     blocked.push({
       url,
+      resolvedUrl,
       reason: decision.reason,
       hostname: decision.hostname,
     });
@@ -298,6 +355,9 @@ export const handleModel: NodeHandler = async ({
       pathId: activePathId ?? undefined,
       nodeId: node.id,
       nodeTitle: node.title,
+      // Keep graph-model cache scoped to a single run so repeated manual runs
+      // do not silently reuse completed jobs from older runs.
+      runId,
     },
   };
   const productId = resolveJobProductId(nodeInputs, simulationEntityType, simulationEntityId, activePathId);

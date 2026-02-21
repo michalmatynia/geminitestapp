@@ -14,8 +14,8 @@ import type {
   InventoryOption,
   Template,
   WarehouseOption,
-  ImageRetryPreset,
 } from '@/shared/contracts/data-import-export';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import {
   Button,
   Input,

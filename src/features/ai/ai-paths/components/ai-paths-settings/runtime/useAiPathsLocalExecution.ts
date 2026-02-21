@@ -864,8 +864,16 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
         return;
       }
       if (args.runInFlightRef.current) {
-        args.toast('A local run is already in progress.', { variant: 'info' });
-        return;
+        // Server mode should always be able to enqueue; abort stale local execution state.
+        if (args.abortControllerRef.current && !args.abortControllerRef.current.signal.aborted) {
+          args.abortControllerRef.current.abort();
+        }
+        args.runInFlightRef.current = false;
+        args.pauseRequestedRef.current = false;
+        args.setRunStatus('idle');
+        args.toast('Canceled in-progress local run and switched to server execution.', {
+          variant: 'warning',
+        });
       }
       args.pendingSimulationContextRef.current = null;
       await args.runServerStream(triggerNode, triggerEvent, triggerContext);

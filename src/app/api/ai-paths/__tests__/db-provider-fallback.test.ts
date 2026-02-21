@@ -7,6 +7,7 @@ const {
   parseJsonBodyMock,
   resolveCollectionProviderForRequestMock,
   getMongoDbMock,
+  prismaMock,
 } = vi.hoisted(() => ({
   requireAiPathsAccessOrInternalMock: vi.fn(),
   enforceAiPathsActionRateLimitMock: vi.fn(),
@@ -14,6 +15,7 @@ const {
   parseJsonBodyMock: vi.fn(),
   resolveCollectionProviderForRequestMock: vi.fn(),
   getMongoDbMock: vi.fn(),
+  prismaMock: {} as Record<string, unknown>,
 }));
 
 vi.mock('@/features/ai/ai-paths/server', () => ({
@@ -35,7 +37,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 }));
 
 vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {},
+  default: prismaMock,
 }));
 
 import { postAiPathsDbActionHandler } from '@/app/api/ai-paths/db-action/handler';
@@ -60,6 +62,9 @@ describe('AI Paths DB provider fallback', () => {
     parseJsonBodyMock.mockReset();
     resolveCollectionProviderForRequestMock.mockReset();
     getMongoDbMock.mockReset();
+    Object.keys(prismaMock).forEach((key) => {
+      delete prismaMock[key];
+    });
 
     requireAiPathsAccessOrInternalMock.mockResolvedValue({
       access: {
@@ -253,5 +258,66 @@ describe('AI Paths DB provider fallback', () => {
     );
     expect(aggregateMock).toHaveBeenCalledWith([{ $match: { id: 'product-1' } }]);
     expect(aggregateToArrayMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to mongodb in db-action when prisma returns record-not-found on updateOne', async () => {
+    parseJsonBodyMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        provider: 'auto',
+        collection: 'products',
+        action: 'updateOne',
+        filter: { id: 'product-1' },
+        update: { name_en: 'Updated name' },
+      },
+    });
+    resolveCollectionProviderForRequestMock.mockResolvedValueOnce('prisma');
+
+    const prismaUpdateMock = vi.fn().mockRejectedValue(
+      Object.assign(new Error('Record not found'), { code: 'P2025' }),
+    );
+    prismaMock['product'] = {
+      update: prismaUpdateMock,
+    };
+
+    const updateOneMock = vi
+      .fn()
+      .mockResolvedValue({ matchedCount: 1, modifiedCount: 1 });
+    getMongoDbMock.mockResolvedValue({
+      collection: vi.fn().mockReturnValue({
+        updateOne: updateOneMock,
+      }),
+    });
+
+    process.env['DATABASE_URL'] = 'postgresql://localhost/test';
+    process.env['MONGODB_URI'] = 'mongodb://localhost/test';
+
+    const response = await postAiPathsDbActionHandler(
+      createRequest('/api/ai-paths/db-action') as Parameters<
+        typeof postAiPathsDbActionHandler
+      >[0],
+      {} as Parameters<typeof postAiPathsDbActionHandler>[1]
+    );
+    const body = (await response.json()) as Record<string, unknown>;
+
+    expect(prismaUpdateMock).toHaveBeenCalledWith({
+      where: { id: 'product-1' },
+      data: { name_en: 'Updated name' },
+    });
+    expect(updateOneMock).toHaveBeenCalledWith(
+      { id: 'product-1' },
+      { $set: { name_en: 'Updated name' } },
+      { upsert: false },
+    );
+    expect(body['provider']).toBe('mongodb');
+    expect(body['resolvedProvider']).toBe('mongodb');
+    expect(body['fallback']).toEqual(
+      expect.objectContaining({
+        used: true,
+        attemptedProvider: 'prisma',
+        resolvedProvider: 'mongodb',
+        code: 'record_not_found',
+      }),
+    );
   });
 });

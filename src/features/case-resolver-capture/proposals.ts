@@ -245,10 +245,9 @@ const buildCaseResolverCaptureProposal = (args: {
       ? {
         kind: existingReference.kind,
         id: String(existingReference.id),
-        name: (existingReference as any).displayName || (existingReference as any).name || (existingReference as any).firstName || '',
+        name: existingReference.displayName,
       }
-      : null,
-    existingAddressId,
+      : null,    existingAddressId,
     matchKind,
     hasAddressCandidate,
     action,
@@ -634,9 +633,8 @@ const collectCandidateNameLines = (
   pushLine(candidate.organizationName);
   const personFullName = [
     candidate.firstName ?? '',
-    (candidate as any).middleName ?? '',
-    candidate.lastName ?? '',
-  ]
+    candidate.middleName ?? '',
+    candidate.lastName ?? '',  ]
     .map((part: string): string => part.trim())
     .filter(Boolean)
     .join(' ')
@@ -721,9 +719,8 @@ const buildCandidateComparableText = (
     candidate.displayName,
     candidate.organizationName,
     candidate.firstName,
-    (candidate as any).middleName,
-    candidate.lastName,
-    candidate.street,
+    candidate.middleName,
+    candidate.lastName,    candidate.street,
     composeCandidateStreetNumber(candidate),
     candidate.city,
     candidate.postalCode,

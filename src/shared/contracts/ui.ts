@@ -51,6 +51,16 @@ export interface SimpleModalProps extends ModalStateProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
+export type ToastVariant = 'success' | 'error' | 'info' | 'warning' | 'default';
+
+export type ToastOptions = {
+  variant?: ToastVariant;
+  duration?: number;
+  error?: unknown;
+};
+
+export type Toast = (message: string, options?: ToastOptions) => void;
+
 export interface MultiSectionModalProps extends ModalStateProps {
   activeSection?: string;
   onSectionChange?: (section: string) => void;

@@ -220,6 +220,7 @@ type ProviderResolutionErrorCode =
   | 'provider_not_configured'
   | 'collection_not_available'
   | 'action_not_supported';
+type ProviderFallbackCode = ProviderResolutionErrorCode | 'record_not_found';
 
 class ProviderResolutionError extends Error {
   public readonly code: ProviderResolutionErrorCode;
@@ -241,6 +242,24 @@ const isProviderResolutionError = (
   error: unknown
 ): error is ProviderResolutionError =>
   error instanceof ProviderResolutionError;
+
+const isPrismaRecordNotFoundError = (error: unknown): boolean => {
+  if (!error || typeof error !== 'object') return false;
+  const code = (error as { code?: unknown })['code'];
+  if (typeof code === 'string' && code.toUpperCase() === 'P2025') {
+    return true;
+  }
+  const message = (error as { message?: unknown })['message'];
+  return typeof message === 'string' && message.toLowerCase().includes('record not found');
+};
+
+const FALLBACK_ON_RECORD_NOT_FOUND_ACTIONS = new Set<string>([
+  'updateOne',
+  'replaceOne',
+  'findOneAndUpdate',
+  'deleteOne',
+  'findOneAndDelete',
+]);
 
 const withProviderPayload = (
   provider: DbProvider,
@@ -699,18 +718,33 @@ export async function postAiPathsDbActionHandler(
     const result = await runActionWithProvider(primaryProvider);
     return NextResponse.json(result);
   } catch (primaryError) {
-    if (!isProviderResolutionError(primaryError)) {
+    const isResolutionError = isProviderResolutionError(primaryError);
+    const isRecordNotFoundOnPrimaryPrisma =
+      primaryProvider === 'prisma' &&
+      FALLBACK_ON_RECORD_NOT_FOUND_ACTIONS.has(action) &&
+      isPrismaRecordNotFoundError(primaryError);
+
+    if (!isResolutionError && !isRecordNotFoundOnPrimaryPrisma) {
       throw primaryError;
     }
     if (!canAttemptFallback) {
-      if (primaryError.code === 'provider_not_configured') {
-        throw internalError(primaryError.message);
+      if (isResolutionError) {
+        if (primaryError.code === 'provider_not_configured') {
+          throw internalError(primaryError.message);
+        }
+        throw badRequestError(primaryError.message);
       }
-      throw badRequestError(primaryError.message);
+      throw primaryError;
     }
 
     const fallbackProvider: DbProvider =
       primaryProvider === 'prisma' ? 'mongodb' : 'prisma';
+    const fallbackCode: ProviderFallbackCode = isResolutionError
+      ? primaryError.code
+      : 'record_not_found';
+    const fallbackReason = isResolutionError
+      ? primaryError.message
+      : 'Record not found on primary provider.';
 
     try {
       const fallbackResult = await runActionWithProvider(fallbackProvider);
@@ -721,8 +755,8 @@ export async function postAiPathsDbActionHandler(
           requestedProvider: requestedProvider ?? 'auto',
           attemptedProvider: primaryProvider,
           resolvedProvider: fallbackProvider,
-          reason: primaryError.message,
-          code: primaryError.code,
+          reason: fallbackReason,
+          code: fallbackCode,
         },
       });
     } catch {

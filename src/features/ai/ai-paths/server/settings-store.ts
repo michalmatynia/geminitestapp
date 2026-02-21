@@ -560,6 +560,7 @@ const ensureParameterInferenceDefaults = async (
   const updates: AiPathsSettingRecord[] = [];
   const now = new Date().toISOString();
   const pathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${PARAMETER_INFERENCE_PATH_ID}`;
+  let shouldSeedDefaultButton = false;
   let pathConfigRaw = map.get(pathConfigKey);
 
   const parsedConfigMeta = pathConfigRaw
@@ -567,6 +568,7 @@ const ensureParameterInferenceDefaults = async (
     : null;
   if (!pathConfigRaw || !parsedConfigMeta || needsParameterInferenceConfigUpgrade(pathConfigRaw)) {
     pathConfigRaw = buildParameterInferencePathConfigValue(now);
+    shouldSeedDefaultButton = true;
     map.set(pathConfigKey, pathConfigRaw);
     updates.push({ key: pathConfigKey, value: pathConfigRaw });
   }
@@ -676,7 +678,7 @@ const ensureParameterInferenceDefaults = async (
         mode: 'click',
         display: buildTriggerButtonDisplay(PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME),
       };
-    } else {
+    } else if (shouldSeedDefaultButton) {
       nextButtons.push(seededButton);
     }
 
@@ -725,6 +727,7 @@ const ensureDescriptionInferenceLiteDefaults = async (
   const updates: AiPathsSettingRecord[] = [];
   const now = new Date().toISOString();
   const pathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_INFERENCE_LITE_PATH_ID}`;
+  let shouldSeedDefaultButton = false;
 
   let pathConfigRaw = map.get(pathConfigKey);
   const parsedConfigMeta = pathConfigRaw
@@ -736,6 +739,7 @@ const ensureDescriptionInferenceLiteDefaults = async (
     needsDescriptionInferenceLiteConfigUpgrade(pathConfigRaw)
   ) {
     pathConfigRaw = buildDescriptionInferenceLitePathConfigValue(now);
+    shouldSeedDefaultButton = true;
     map.set(pathConfigKey, pathConfigRaw);
     updates.push({ key: pathConfigKey, value: pathConfigRaw });
   }
@@ -845,7 +849,7 @@ const ensureDescriptionInferenceLiteDefaults = async (
         mode: 'click',
         display: buildTriggerButtonDisplay(DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME),
       };
-    } else {
+    } else if (shouldSeedDefaultButton) {
       nextButtons.push(seededButton);
     }
 
@@ -900,6 +904,7 @@ const ensureBaseExportBlwoDefaults = async (
   const updates: AiPathsSettingRecord[] = [];
   const now = new Date().toISOString();
   const pathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${BASE_EXPORT_BLWO_PATH_ID}`;
+  let shouldSeedDefaultButton = false;
   let pathConfigRaw = map.get(pathConfigKey);
 
   const parsedConfigMeta = pathConfigRaw
@@ -908,6 +913,7 @@ const ensureBaseExportBlwoDefaults = async (
 
   if (!pathConfigRaw || !parsedConfigMeta || needsBaseExportBlwoConfigUpgrade(pathConfigRaw)) {
     pathConfigRaw = buildBaseExportBlwoPathConfigValue(now);
+    shouldSeedDefaultButton = true;
     map.set(pathConfigKey, pathConfigRaw);
     updates.push({ key: pathConfigKey, value: pathConfigRaw });
   }
@@ -1006,7 +1012,7 @@ const ensureBaseExportBlwoDefaults = async (
         mode: 'click',
         display: buildTriggerButtonDisplay(BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME),
       };
-    } else {
+    } else if (shouldSeedDefaultButton) {
       nextButtons.push({
         id: BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID,
         name: BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME,
@@ -1221,18 +1227,7 @@ const hasParameterInferenceDefaults = (records: AiPathsSettingRecord[]): boolean
 
   const buttons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
   if (buttons === null) return false;
-  const parameterButton = buttons.find(
-    (button: TriggerButtonSettingRecord): boolean =>
-      button.id === PARAMETER_INFERENCE_TRIGGER_BUTTON_ID
-  );
-  if (!parameterButton) return false;
-  const buttonName =
-    typeof parameterButton['name'] === 'string' ? (parameterButton['name']).trim() : '';
-  if (buttonName !== PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME) return false;
-  const locations = Array.isArray(parameterButton['locations'])
-    ? parameterButton['locations']
-    : [];
-  return locations.includes('product_modal');
+  return true;
 };
 
 const hasDescriptionInferenceLiteDefaults = (
@@ -1259,18 +1254,7 @@ const hasDescriptionInferenceLiteDefaults = (
 
   const buttons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
   if (buttons === null) return false;
-  const descriptionButton = buttons.find(
-    (button: TriggerButtonSettingRecord): boolean =>
-      button.id === DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID
-  );
-  if (!descriptionButton) return false;
-  const buttonName =
-    typeof descriptionButton['name'] === 'string' ? (descriptionButton['name']).trim() : '';
-  if (buttonName !== DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME) return false;
-  const locations = Array.isArray(descriptionButton['locations'])
-    ? descriptionButton['locations']
-    : [];
-  return locations.includes('product_modal');
+  return true;
 };
 
 const hasBaseExportBlwoDefaults = (
@@ -1297,18 +1281,7 @@ const hasBaseExportBlwoDefaults = (
 
   const buttons = parseTriggerButtons(map.get(AI_PATHS_TRIGGER_BUTTONS_KEY));
   if (buttons === null) return false;
-  const blwoButton = buttons.find(
-    (button: TriggerButtonSettingRecord): boolean =>
-      button.id === BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID
-  );
-  if (!blwoButton) return false;
-  const buttonName =
-    typeof blwoButton['name'] === 'string' ? (blwoButton['name']).trim() : '';
-  if (buttonName !== BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME) return false;
-  const locations = Array.isArray(blwoButton['locations'])
-    ? blwoButton['locations']
-    : [];
-  return locations.includes('product_row');
+  return true;
 };
 
 const hasTranslationEnPlDefaults = (records: AiPathsSettingRecord[]): boolean => {

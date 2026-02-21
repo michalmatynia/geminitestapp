@@ -110,6 +110,17 @@ const normalizeLegacyQueryProvider = (query: DbQueryConfig): DbQueryConfig => {
   };
 };
 
+const mapOperationFromActionCategory = (
+  category: DatabaseActionCategory,
+): DatabaseConfig['operation'] =>
+  category === 'create'
+    ? 'insert'
+    : category === 'update'
+      ? 'update'
+      : category === 'delete'
+        ? 'delete'
+        : 'query';
+
 export function useDatabaseNodeConfigState() {
   const {
     selectedNode,
@@ -334,6 +345,49 @@ export function useDatabaseNodeConfigState() {
     });
   }, [databaseConfig, queryConfig, updateSelectedNodeConfig]);
 
+  const handleProviderChange = useCallback((nextProvider: DbQueryConfig['provider']) => {
+    const normalizedRequestedProvider: DbQueryConfig['provider'] =
+      nextProvider === 'mongodb' || nextProvider === 'prisma' ? nextProvider : 'auto';
+    const nextResolvedProvider = resolveDbActionProvider(
+      normalizedRequestedProvider,
+      appDbProvider
+    );
+    const currentCategory = databaseConfig.actionCategory ?? 'read';
+    const normalizedCategory = isProviderActionCategorySupported(
+      nextResolvedProvider,
+      currentCategory
+    )
+      ? currentCategory
+      : 'read';
+    const fallbackAction = getDefaultProviderAction(
+      nextResolvedProvider,
+      normalizedCategory,
+      queryConfig.single ?? false
+    );
+    const normalizedAction = resolveProviderAction(
+      nextResolvedProvider,
+      normalizedCategory,
+      databaseConfig.action ?? fallbackAction,
+      queryConfig.single ?? false
+    );
+
+    updateSelectedNodeConfig({
+      database: {
+        ...databaseConfig,
+        query: {
+          ...queryConfig,
+          provider: normalizedRequestedProvider,
+        },
+        actionCategory: normalizedCategory,
+        action: normalizedAction,
+        operation:
+          databaseConfig.useMongoActions === false
+            ? databaseConfig.operation ?? 'query'
+            : mapOperationFromActionCategory(normalizedCategory),
+      },
+    });
+  }, [appDbProvider, databaseConfig, queryConfig, updateSelectedNodeConfig]);
+
   const applyActionConfig = useCallback((nextCategory: DatabaseActionCategory, nextAction: DatabaseAction) => {
     const normalizedCategory = isProviderActionCategorySupported(resolvedProvider, nextCategory) ? nextCategory : 'read';
     const nextActionResolved = resolveProviderAction(resolvedProvider, normalizedCategory, nextAction, queryConfig.single ?? false);
@@ -344,7 +398,7 @@ export function useDatabaseNodeConfigState() {
         useMongoActions: true,
         actionCategory: normalizedCategory,
         action: nextActionResolved,
-        operation: normalizedCategory === 'create' ? 'insert' : normalizedCategory === 'update' ? 'update' : normalizedCategory === 'delete' ? 'delete' : 'query',
+        operation: mapOperationFromActionCategory(normalizedCategory),
       },
     });
   }, [databaseConfig, queryConfig.single, resolvedProvider, updateSelectedNodeConfig]);
@@ -594,7 +648,7 @@ export function useDatabaseNodeConfigState() {
     closeSaveQueryPresetModal: () => setSaveQueryPresetModalOpen(false),
     handleSaveQueryPreset, handleRunQuery, isUpdateAction, queryTemplateValue,
     handleRenameQueryPreset, handleDeleteQueryPresetById,
-    handleActionCategoryChange, applyActionConfig, schemaSyncMutation, bundleKeys,
+    handleActionCategoryChange, applyActionConfig, handleProviderChange, schemaSyncMutation, bundleKeys,
     ConfirmationModal
   };
 }

@@ -6,6 +6,7 @@ import type { FilemakerAddress, FilemakerDatabase } from '../filemaker/types';
 export type MatchedCaseResolverPartyReference = {
   kind: 'person' | 'organization';
   id: string;
+  displayName: string;
 };
 
 const STREET_PREFIXES = new Set(['ul', 'al', 'aleja', 'os', 'pl']);
@@ -261,7 +262,7 @@ export const findExistingFilemakerPartyReference = (
   const personFirst = normalizeCaseResolverComparable(personName.firstName);
   const personLast = normalizeCaseResolverComparable(personName.lastName);
 
-  let bestPerson: { id: string; score: number } | null = null;
+  let bestPerson: { id: string; score: number; name: string } | null = null;
   if (kindHint !== 'organization' && (personFirst || personLast)) {
     for (const person of database.persons) {
       const first = normalizeCaseResolverComparable(person.firstName);
@@ -282,22 +283,24 @@ export const findExistingFilemakerPartyReference = (
         bestPerson = {
           id: person.id,
           score,
+          name: `${person.firstName} ${person.lastName}`.trim(),
         };
       }
     }
   }
-
+  
   if (bestPerson && bestPerson.score >= 4) {
     return {
       kind: 'person',
       id: String(bestPerson.id),
+      displayName: bestPerson.name,
     };
   }
-
+  
   const organizationName =
-    (candidate.organizationName ?? '').trim() ||
-    (candidate.kind === 'organization' ? candidate.displayName.trim() : '');
-  let bestOrganization: { id: string; score: number } | null = null;
+        (candidate.organizationName ?? '').trim() ||
+        (candidate.kind === 'organization' ? candidate.displayName.trim() : '');
+  let bestOrganization: { id: string; score: number; name: string } | null = null;
   if (kindHint !== 'person' && organizationName) {
     for (const organization of database.organizations) {
       const nameScore = scoreOrganizationNameCompatibility(organizationName, organization.name);
@@ -315,18 +318,19 @@ export const findExistingFilemakerPartyReference = (
         bestOrganization = {
           id: organization.id,
           score,
+          name: organization.name,
         };
       }
     }
   }
-
+  
   if (bestOrganization && bestOrganization.score >= 4) {
     return {
       kind: 'organization',
       id: String(bestOrganization.id),
+      displayName: bestOrganization.name,
     };
   }
-
   return null;
 };
 

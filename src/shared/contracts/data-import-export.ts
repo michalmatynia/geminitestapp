@@ -1,10 +1,17 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
+import type { 
+  BaseImportStartResponse,
+  BaseImportRunDetailResponse
+} from './integrations';
 
 /**
  * Data Import/Export DTOs
  */
+
+export type ImportResponse = BaseImportStartResponse;
+export type ImportRunDetail = BaseImportRunDetailResponse;
 
 export const importJobSchema = dtoBaseSchema.extend({
   type: z.string(),

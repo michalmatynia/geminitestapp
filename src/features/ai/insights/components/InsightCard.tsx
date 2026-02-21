@@ -7,7 +7,7 @@ import { StatusBadge, ResourceCard, DocumentationSection } from '@/shared/ui';
 
 export function InsightCard({ insight }: { insight: AiInsightRecord }): React.JSX.Element {
   const warnings = insight.warnings ?? [];
-  const recommendations = (insight as any).recommendations as string[] ?? [];
+  const recommendations = insight.recommendations ?? [];
 
   return (
     <ResourceCard

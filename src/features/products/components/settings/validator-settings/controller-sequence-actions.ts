@@ -755,7 +755,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
   const handleSaveSequenceGroup = async (groupId: string): Promise<void> => {
     const group = args.sequenceGroups.get(groupId);
     if (!group || group.patternIds.length === 0) return;
-    /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+     
     const draft = args.getGroupDraft(groupId);
     const label = draft.label.trim() || 'Sequence / Group';
     const parsedDebounce = Number(draft.debounceMs);
@@ -777,7 +777,7 @@ export function createSequenceActions(args: SequenceActionInput): SequenceAction
         ...prev,
         [groupId]: { label, debounceMs: String(debounceMs) },
       }));
-      /* eslint-enable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access */
+       
       notifySuccess('Sequence group settings saved.');
     } catch (error) {
       logClientError(error, {

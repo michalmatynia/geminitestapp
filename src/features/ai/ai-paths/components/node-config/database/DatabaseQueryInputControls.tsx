@@ -10,6 +10,7 @@ import { useDatabaseQueryInputControlsContext } from './DatabaseQueryInputContro
 export function DatabaseQueryInputControls(): React.JSX.Element {
   const {
     provider,
+    requestedProvider,
     actionCategory,
     action,
     actionCategoryOptions,
@@ -29,6 +30,7 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
     queryTemplateRef,
     onActionCategoryChange,
     onActionChange,
+    onProviderChange,
     onFormatClick,
     onFormatContextMenu,
     onToggleValidator,
@@ -46,6 +48,19 @@ export function DatabaseQueryInputControls(): React.JSX.Element {
     <div className='space-y-2'>
       <div className='flex items-center justify-between'>
         <div className='flex gap-2 items-center'>
+          <SelectSimple
+            size='xs'
+            value={requestedProvider ?? 'auto'}
+            onValueChange={(value: string): void =>
+              onProviderChange(value as 'auto' | 'mongodb' | 'prisma')
+            }
+            options={[
+              { value: 'auto', label: 'Auto' },
+              { value: 'mongodb', label: 'MongoDB' },
+              { value: 'prisma', label: 'Prisma' },
+            ]}
+            triggerClassName='h-7 w-[130px] border-border bg-card/70 text-xs text-white'
+          />
           <SelectSimple
             size='xs'
             value={actionCategory}

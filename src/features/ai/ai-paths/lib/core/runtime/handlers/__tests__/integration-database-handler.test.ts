@@ -1,0 +1,192 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const {
+  resolveDatabaseInputsMock,
+  handleDatabaseMongoActionMock,
+  handleDatabaseStandardOperationMock,
+  prepareDatabaseTemplateContextMock,
+  getCachedSchemaMock,
+} = vi.hoisted(() => ({
+  resolveDatabaseInputsMock: vi.fn(),
+  handleDatabaseMongoActionMock: vi.fn(),
+  handleDatabaseStandardOperationMock: vi.fn(),
+  prepareDatabaseTemplateContextMock: vi.fn(),
+  getCachedSchemaMock: vi.fn(),
+}));
+
+vi.mock('@/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-input-resolution', () => ({
+  resolveDatabaseInputs: resolveDatabaseInputsMock,
+}));
+
+vi.mock('@/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-mongo-actions', () => ({
+  handleDatabaseMongoAction: handleDatabaseMongoActionMock,
+}));
+
+vi.mock('@/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-operations', () => ({
+  handleDatabaseStandardOperation: handleDatabaseStandardOperationMock,
+}));
+
+vi.mock('@/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-template-context', () => ({
+  prepareDatabaseTemplateContext: prepareDatabaseTemplateContextMock,
+}));
+
+vi.mock('@/features/ai/ai-paths/lib/core/runtime/handlers/integration-schema-handler', () => ({
+  getCachedSchema: getCachedSchemaMock,
+}));
+
+import { handleDatabase } from '@/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-handler';
+
+describe('handleDatabase', () => {
+  const reportAiPathsError = vi.fn();
+  const toast = vi.fn();
+
+  beforeEach(() => {
+    resolveDatabaseInputsMock.mockReset();
+    handleDatabaseMongoActionMock.mockReset();
+    handleDatabaseStandardOperationMock.mockReset();
+    prepareDatabaseTemplateContextMock.mockReset();
+    getCachedSchemaMock.mockReset();
+    reportAiPathsError.mockReset();
+    toast.mockReset();
+
+    resolveDatabaseInputsMock.mockReturnValue({});
+    prepareDatabaseTemplateContextMock.mockReturnValue({
+      templateInputValue: null,
+      templateInputs: {},
+      templateContext: {},
+      aiPrompt: '',
+      ensureExistingParameterTemplateContext: vi.fn(async () => {}),
+    });
+    getCachedSchemaMock.mockResolvedValue({ ok: true, data: { collections: [] } });
+  });
+
+  it('throws when a write operation returns an error payload', async () => {
+    handleDatabaseMongoActionMock.mockResolvedValue({
+      result: null,
+      bundle: { error: 'Record not found' },
+    });
+
+    await expect(
+      handleDatabase({
+        node: {
+          id: 'node-db',
+          type: 'database',
+          title: 'Database Query',
+          inputs: [],
+          outputs: [],
+          description: '',
+          position: { x: 0, y: 0 },
+          config: {
+            database: {
+              operation: 'update',
+              useMongoActions: true,
+              actionCategory: 'update',
+              action: 'updateOne',
+            },
+          },
+        } as any,
+        nodeInputs: {},
+        prevOutputs: {},
+        executed: {} as any,
+        reportAiPathsError,
+        toast,
+        fetchEntityCached: vi.fn(),
+        simulationEntityType: null,
+        simulationEntityId: null,
+        triggerContext: {},
+        fallbackEntityId: null,
+        strictFlowMode: true,
+        runMeta: null,
+      } as any)
+    ).rejects.toThrow('Record not found');
+
+    expect(reportAiPathsError).toHaveBeenCalled();
+  });
+
+  it('does not throw for query operations with error payloads', async () => {
+    handleDatabaseStandardOperationMock.mockResolvedValue({
+      result: null,
+      bundle: { error: 'Query failed' },
+    });
+
+    const result = await handleDatabase({
+      node: {
+        id: 'node-db-query',
+        type: 'database',
+        title: 'Database Query',
+        inputs: [],
+        outputs: [],
+        description: '',
+        position: { x: 0, y: 0 },
+        config: {
+          database: {
+            operation: 'query',
+          },
+        },
+      } as any,
+      nodeInputs: {},
+      prevOutputs: {},
+      executed: {} as any,
+      reportAiPathsError,
+      toast,
+      fetchEntityCached: vi.fn(),
+      simulationEntityType: null,
+      simulationEntityId: null,
+      triggerContext: {},
+      fallbackEntityId: null,
+      strictFlowMode: true,
+      runMeta: null,
+    } as any);
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        bundle: expect.objectContaining({
+          error: 'Query failed',
+        }),
+      })
+    );
+  });
+
+  it('throws when query-mode config returns write-action error payload', async () => {
+    handleDatabaseStandardOperationMock.mockResolvedValue({
+      result: null,
+      bundle: { error: 'Record not found' },
+      debugPayload: {
+        mode: 'mongo',
+        actionCategory: 'update',
+        action: 'updateOne',
+      },
+    });
+
+    await expect(
+      handleDatabase({
+        node: {
+          id: 'node-db-write-like',
+          type: 'database',
+          title: 'Database Query',
+          inputs: [],
+          outputs: [],
+          description: '',
+          position: { x: 0, y: 0 },
+          config: {
+            database: {
+              operation: 'query',
+            },
+          },
+        } as any,
+        nodeInputs: {},
+        prevOutputs: {},
+        executed: {} as any,
+        reportAiPathsError,
+        toast,
+        fetchEntityCached: vi.fn(),
+        simulationEntityType: null,
+        simulationEntityId: null,
+        triggerContext: {},
+        fallbackEntityId: null,
+        strictFlowMode: true,
+        runMeta: null,
+      } as any)
+    ).rejects.toThrow('Record not found');
+  });
+});

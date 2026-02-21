@@ -7,6 +7,7 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
+import type { ManagedImageSlot } from '@/shared/contracts/image-slots';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import type { ListQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
@@ -477,9 +478,8 @@ export function StudioInlineEditProvider({
       : null;
 
     return {
-      imageSlots: [managedInlineSlot as any],
-      imageLinks: [slotImageUrlDraft],
-      imageBase64s: [slotBase64Draft],
+      imageSlots: [managedInlineSlot as ManagedImageSlot],
+      imageLinks: [slotImageUrlDraft],      imageBase64s: [slotBase64Draft],
       setImageLinkAt: setInlineCardImageLinkAt,
       setImageBase64At: setInlineCardImageBase64At,
       handleSlotImageChange: async (_file: File | null, _index: number) => {
@@ -532,8 +532,7 @@ export function StudioInlineEditProvider({
     inlineCardImageManagerController,
     onSaveInlineSlot: inlineHandlers.handleSaveInlineSlot,
     onClearSlotImage: inlineHandlers.handleClearSlotImage,
-    onCopyCardId: async (id) => { await copyCardIdToClipboard(id, toast as any); },
-    onRefreshLinkedRuns: () => { void linkedRunsQuery.refetch(); },
+    onCopyCardId: async (id) => { await copyCardIdToClipboard(id, toast); },    onRefreshLinkedRuns: () => { void linkedRunsQuery.refetch(); },
     onOpenGenerationPreviewModal,
     onApplyLinkedVariantToCard: inlineHandlers.handleApplyLinkedVariantToCard,
     setInlinePreviewNaturalSize, setEnvironmentPreviewNaturalSize, setGenerationPreviewNaturalSize,

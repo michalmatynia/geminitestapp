@@ -102,11 +102,11 @@ export function AdminCaseResolverCapturePage(): React.JSX.Element {
     setDraft({
       ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS,
       roleMappings: {
-        addresser: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser } as any,
-        addressee: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee } as any,
-        subject: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.subject } as any,
-        reference: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.reference } as any,
-        other: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.other } as any,
+        addresser: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addresser },
+        addressee: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.addressee },
+        subject: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.subject },
+        reference: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.reference },
+        other: { ...DEFAULT_CASE_RESOLVER_CAPTURE_SETTINGS.roleMappings.other },
       },
     });
   };

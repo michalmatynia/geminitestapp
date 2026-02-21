@@ -136,7 +136,30 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
       triggerEvent: string,
       triggerContext: Record<string, unknown>
     ): Promise<void> => {
-      if (!args.activePathId) return;
+      if (!args.activePathId) {
+        const message =
+          'Cannot run path: missing path id in runtime state. Reload AI Paths and try again.';
+        args.appendRuntimeEvent({
+          source: 'server',
+          kind: 'run_failed',
+          level: 'error',
+          message,
+        });
+        args.setNodeStatus({
+          nodeId: triggerNode.id,
+          status: 'failed',
+          source: 'server',
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          kind: 'node_failed',
+          level: 'error',
+          message: `Node ${triggerNode.title ?? triggerNode.id} failed before enqueue.`,
+          metadata: { error: message },
+        });
+        args.settleTransientNodeStatuses('failed');
+        args.toast(message, { variant: 'error' });
+        return;
+      }
       if (serverRunActiveRef.current) stopServerRunStream();
 
       serverRunActiveRef.current = true;
@@ -147,169 +170,175 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
       const entityId = resolveEntityIdFromContext(triggerContext);
       const entityType = resolveEntityTypeFromContext(triggerContext, entityId);
 
-      const enqueueResult = await runsApi.enqueue({
-        pathId: args.activePathId,
-        pathName: args.pathName,
-        nodes: args.normalizedNodes,
-        edges: args.sanitizedEdges,
-        triggerEvent,
-        triggerNodeId: triggerNode.id,
-        triggerContext,
-        entityId,
-        entityType,
-        meta: {
-          source: 'ai_paths_ui',
-          triggerLabel: args.activeTrigger ?? null,
-          strictFlowMode: args.strictFlowMode !== false,
-          ...(args.aiPathsValidation ? { aiPathsValidation: args.aiPathsValidation } : {}),
-        },
-      });
+      try {
+        const enqueueResult = await runsApi.enqueue({
+          pathId: args.activePathId,
+          pathName: args.pathName,
+          nodes: args.normalizedNodes,
+          edges: args.sanitizedEdges,
+          triggerEvent,
+          triggerNodeId: triggerNode.id,
+          triggerContext,
+          entityId,
+          entityType,
+          meta: {
+            source: 'ai_paths_ui',
+            triggerLabel: args.activeTrigger ?? null,
+            strictFlowMode: args.strictFlowMode !== false,
+            ...(args.aiPathsValidation ? { aiPathsValidation: args.aiPathsValidation } : {}),
+          },
+        });
 
-      if (!enqueueResult.ok) {
-        const enqueueError = enqueueResult.error || 'Failed to enqueue server run.';
-        const blocked =
-          enqueueError.includes('Validation blocked run') ||
-          enqueueError.includes('Graph compile failed');
+        if (!enqueueResult.ok) {
+          const enqueueError = enqueueResult.error || 'Failed to enqueue server run.';
+          const blocked =
+            enqueueError.includes('Validation blocked run') ||
+            enqueueError.includes('Graph compile failed') ||
+            enqueueError.includes('Graph compile blocked run') ||
+            enqueueError.includes('Strict flow blocked run');
+          args.appendRuntimeEvent({
+            source: 'server',
+            kind: 'run_failed',
+            level: blocked ? 'warn' : 'error',
+            message: enqueueError,
+          });
+          args.setNodeStatus({
+            nodeId: triggerNode.id,
+            status: blocked ? 'blocked' : 'failed',
+            source: 'server',
+            nodeType: triggerNode.type,
+            nodeTitle: triggerNode.title ?? null,
+            kind: blocked ? 'node_status' : 'node_failed',
+            level: blocked ? 'warn' : 'error',
+            message: blocked
+              ? `Node ${triggerNode.title ?? triggerNode.id} blocked before enqueue.`
+              : `Node ${triggerNode.title ?? triggerNode.id} failed to enqueue.`,
+            metadata: { error: enqueueError },
+          });
+          args.settleTransientNodeStatuses('failed');
+          args.toast(enqueueError, { variant: blocked ? 'warning' : 'error' });
+          stopServerRunStream();
+          return;
+        }
+
+        const runPayload = isRecord(enqueueResult.data) && isRecord(enqueueResult.data['run'])
+          ? (enqueueResult.data['run'] as AiPathRunRecord)
+          : null;
+        const runId = runPayload && typeof runPayload.id === 'string'
+          ? runPayload.id
+          : null;
+
+        if (!runId) {
+          const message = 'Server run was enqueued without a run id.';
+          args.appendRuntimeEvent({
+            source: 'server',
+            kind: 'run_failed',
+            level: 'error',
+            message,
+          });
+          args.settleTransientNodeStatuses('failed');
+          args.toast(message, { variant: 'error' });
+          stopServerRunStream();
+          return;
+        }
+
+        const runStartedAt =
+          (runPayload
+            ? resolveRunStartedAt(runPayload, args.runtimeStateRef.current)
+            : null) ?? new Date().toISOString();
+
+        if (args.currentRunIdRef) {
+          args.currentRunIdRef.current = runId;
+        }
+        if (args.currentRunStartedAtRef) {
+          args.currentRunStartedAtRef.current = runStartedAt;
+        }
+
         args.appendRuntimeEvent({
           source: 'server',
-          kind: 'run_failed',
-          level: blocked ? 'warn' : 'error',
-          message: enqueueError,
+          kind: 'run_started',
+          level: 'info',
+          runId,
+          runStartedAt,
+          message: 'Server run queued.',
         });
         args.setNodeStatus({
           nodeId: triggerNode.id,
-          status: blocked ? 'blocked' : 'failed',
+          status: 'queued',
           source: 'server',
+          runId,
+          runStartedAt,
           nodeType: triggerNode.type,
           nodeTitle: triggerNode.title ?? null,
-          kind: blocked ? 'node_status' : 'node_failed',
-          level: blocked ? 'warn' : 'error',
-          message: blocked
-            ? `Node ${triggerNode.title ?? triggerNode.id} blocked before enqueue.`
-            : `Node ${triggerNode.title ?? triggerNode.id} failed to enqueue.`,
-          metadata: { error: enqueueError },
+          kind: 'node_status',
+          level: 'info',
+          message: `Node ${triggerNode.title ?? triggerNode.id} queued.`,
         });
-        args.settleTransientNodeStatuses('failed');
-        stopServerRunStream();
-        return;
-      }
 
-      const runPayload = isRecord(enqueueResult.data) && isRecord(enqueueResult.data['run'])
-        ? (enqueueResult.data['run'] as AiPathRunRecord)
-        : null;
-      const runId = runPayload && typeof runPayload.id === 'string'
-        ? runPayload.id
-        : null;
+        if (runPayload?.runtimeState) {
+          const initialState = parseRuntimeState(runPayload.runtimeState);
+          args.setRuntimeState((prev) =>
+            mergeRuntimeStateSnapshot(prev, initialState, runId, runStartedAt ?? undefined)
+          );
+        }
 
-      if (!runId) {
-        args.appendRuntimeEvent({
-          source: 'server',
-          kind: 'run_failed',
-          level: 'error',
-          message: 'Server run was enqueued without a run id.',
-        });
-        args.settleTransientNodeStatuses('failed');
-        stopServerRunStream();
-        return;
-      }
+        let terminalHandled = false;
 
-      const runStartedAt =
-        (runPayload
-          ? resolveRunStartedAt(runPayload, args.runtimeStateRef.current)
-          : null) ?? new Date().toISOString();
-
-      if (args.currentRunIdRef) {
-        args.currentRunIdRef.current = runId;
-      }
-      if (args.currentRunStartedAtRef) {
-        args.currentRunStartedAtRef.current = runStartedAt;
-      }
-
-      args.appendRuntimeEvent({
-        source: 'server',
-        kind: 'run_started',
-        level: 'info',
-        runId,
-        runStartedAt,
-        message: 'Server run queued.',
-      });
-      args.setNodeStatus({
-        nodeId: triggerNode.id,
-        status: 'queued',
-        source: 'server',
-        runId,
-        runStartedAt,
-        nodeType: triggerNode.type,
-        nodeTitle: triggerNode.title ?? null,
-        kind: 'node_status',
-        level: 'info',
-        message: `Node ${triggerNode.title ?? triggerNode.id} queued.`,
-      });
-
-      if (runPayload?.runtimeState) {
-        const initialState = parseRuntimeState(runPayload.runtimeState);
-        args.setRuntimeState((prev) =>
-          mergeRuntimeStateSnapshot(prev, initialState, runId, runStartedAt ?? undefined)
-        );
-      }
-
-      let terminalHandled = false;
-
-      const finalizeRun = (
-        terminalStatus: 'completed' | 'failed' | 'canceled',
-        options?: {
+        const finalizeRun = (
+          terminalStatus: 'completed' | 'failed' | 'canceled',
+          options?: {
           run?: AiPathRunRecord | null;
           message?: string;
           finishedAt?: string | null;
           level?: RuntimeEventLevel;
         }
-      ): void => {
-        if (terminalHandled) return;
-        terminalHandled = true;
-        const runFromOptions = options?.run ?? null;
-        const finishedAt =
+        ): void => {
+          if (terminalHandled) return;
+          terminalHandled = true;
+          const runFromOptions = options?.run ?? null;
+          const finishedAt =
           options?.finishedAt ??
           (runFromOptions ? resolveRunAt(runFromOptions) : new Date().toISOString());
-        const resolvedRunStartedAt =
+          const resolvedRunStartedAt =
           (runFromOptions
             ? resolveRunStartedAt(runFromOptions, args.runtimeStateRef.current)
             : null) ??
           (args.currentRunStartedAtRef?.current ?? runStartedAt);
-        const kind =
+          const kind =
           terminalStatus === 'completed'
             ? 'run_completed'
             : terminalStatus === 'canceled'
               ? 'run_canceled'
               : 'run_failed';
-        const level =
+          const level =
           options?.level ??
           (terminalStatus === 'completed'
             ? 'info'
             : terminalStatus === 'canceled'
               ? 'warn'
               : 'error');
-        const message =
+          const message =
           options?.message ??
           (terminalStatus === 'completed'
             ? 'Server run completed.'
             : terminalStatus === 'canceled'
               ? 'Server run canceled.'
               : 'Server run failed.');
-        args.appendRuntimeEvent({
-          source: 'server',
-          kind,
-          level,
-          runId,
-          runStartedAt: resolvedRunStartedAt,
-          timestamp: finishedAt,
-          message,
-        });
-        args.setLastRunAt(finishedAt);
-        if (args.activePathId) {
-          args.setPathConfigs((prev) => ({
-            ...prev,
-            [args.activePathId!]: {
-              ...(prev[args.activePathId!] ??
+          args.appendRuntimeEvent({
+            source: 'server',
+            kind,
+            level,
+            runId,
+            runStartedAt: resolvedRunStartedAt,
+            timestamp: finishedAt,
+            message,
+          });
+          args.setLastRunAt(finishedAt);
+          if (args.activePathId) {
+            args.setPathConfigs((prev) => ({
+              ...prev,
+              [args.activePathId!]: {
+                ...(prev[args.activePathId!] ??
                 buildActivePathConfig({
                   activePathId: args.activePathId,
                   pathName: args.pathName,
@@ -328,281 +357,315 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   lastRunAt: finishedAt,
                   runCount: 1,
                 })),
-              runtimeState: args.runtimeStateRef.current,
-              lastRunAt: finishedAt,
-              runCount: Math.max(
-                1,
-                Math.trunc((prev[args.activePathId!]?.runCount ?? 0) + 1),
-              ),
-            },
-          }));
-        }
-        if (terminalStatus === 'completed') {
-          args.settleTransientNodeStatuses('completed');
-        } else if (terminalStatus === 'canceled') {
-          args.settleTransientNodeStatuses('canceled');
-        } else {
-          args.settleTransientNodeStatuses('failed');
-        }
-        stopServerRunStream();
-        if (args.currentRunIdRef) {
-          args.currentRunIdRef.current = null;
-        }
-        if (args.currentRunStartedAtRef) {
-          args.currentRunStartedAtRef.current = null;
-        }
-      };
+                runtimeState: args.runtimeStateRef.current,
+                lastRunAt: finishedAt,
+                runCount: Math.max(
+                  1,
+                  Math.trunc((prev[args.activePathId!]?.runCount ?? 0) + 1),
+                ),
+              },
+            }));
+          }
+          if (terminalStatus === 'completed') {
+            args.settleTransientNodeStatuses('completed');
+          } else if (terminalStatus === 'canceled') {
+            args.settleTransientNodeStatuses('canceled');
+          } else {
+            args.settleTransientNodeStatuses('failed');
+          }
+          stopServerRunStream();
+          if (args.currentRunIdRef) {
+            args.currentRunIdRef.current = null;
+          }
+          if (args.currentRunStartedAtRef) {
+            args.currentRunStartedAtRef.current = null;
+          }
+        };
 
-      const eventSource = runsApi.stream(runId);
-      eventSourceRef.current = eventSource;
+        const eventSource = runsApi.stream(runId);
+        eventSourceRef.current = eventSource;
 
-      eventSource.addEventListener('run', (event: Event): void => {
-        try {
-          if (!(event instanceof MessageEvent)) return;
-          const payload = parseSsePayload(event);
-          if (!isRecord(payload)) return;
-          const run = payload as AiPathRunRecord;
-          const latestRunStartedAt =
+        eventSource.addEventListener('run', (event: Event): void => {
+          try {
+            if (!(event instanceof MessageEvent)) return;
+            const payload = parseSsePayload(event);
+            if (!isRecord(payload)) return;
+            const run = payload as AiPathRunRecord;
+            const latestRunStartedAt =
             resolveRunStartedAt(run, args.runtimeStateRef.current) ??
             args.currentRunStartedAtRef?.current ??
             runStartedAt;
-          if (args.currentRunStartedAtRef && latestRunStartedAt) {
-            args.currentRunStartedAtRef.current = latestRunStartedAt;
-          }
-          if (run.runtimeState) {
-            const nextState = parseRuntimeState(run.runtimeState);
-            args.setRuntimeState((prev) =>
-              mergeRuntimeStateSnapshot(
-                prev,
-                nextState,
+            if (args.currentRunStartedAtRef && latestRunStartedAt) {
+              args.currentRunStartedAtRef.current = latestRunStartedAt;
+            }
+            if (run.runtimeState) {
+              const nextState = parseRuntimeState(run.runtimeState);
+              args.setRuntimeState((prev) =>
+                mergeRuntimeStateSnapshot(
+                  prev,
+                  nextState,
+                  runId,
+                  latestRunStartedAt ?? undefined,
+                )
+              );
+            }
+            const runStatus = asString(run.status);
+            if (runStatus === 'running') {
+              args.setNodeStatus({
+                nodeId: triggerNode.id,
+                status: 'running',
+                source: 'server',
                 runId,
-                latestRunStartedAt ?? undefined,
-              )
-            );
-          }
-          const runStatus = asString(run.status);
-          if (runStatus === 'running') {
-            args.setNodeStatus({
-              nodeId: triggerNode.id,
-              status: 'running',
-              source: 'server',
-              runId,
-              runStartedAt: latestRunStartedAt,
-              nodeType: triggerNode.type,
-              nodeTitle: triggerNode.title ?? null,
-              kind: 'node_started',
-              level: 'info',
-              message: `Node ${triggerNode.title ?? triggerNode.id} started.`,
-            });
-            return;
-          }
-          if (!runStatus || !TERMINAL_RUN_STATUSES.has(runStatus as TerminalRunStatus)) {
-            return;
-          }
-          if (runStatus === 'completed') {
-            finalizeRun('completed', { run });
-            return;
-          }
-          if (runStatus === 'canceled') {
-            finalizeRun('canceled', { run });
-            return;
-          }
-          finalizeRun('failed', {
-            run,
-            message:
+                runStartedAt: latestRunStartedAt,
+                nodeType: triggerNode.type,
+                nodeTitle: triggerNode.title ?? null,
+                kind: 'node_started',
+                level: 'info',
+                message: `Node ${triggerNode.title ?? triggerNode.id} started.`,
+              });
+              return;
+            }
+            if (!runStatus || !TERMINAL_RUN_STATUSES.has(runStatus as TerminalRunStatus)) {
+              return;
+            }
+            if (runStatus === 'completed') {
+              finalizeRun('completed', { run });
+              return;
+            }
+            if (runStatus === 'canceled') {
+              finalizeRun('canceled', { run });
+              return;
+            }
+            finalizeRun('failed', {
+              run,
+              message:
               run.errorMessage ??
               run.error ??
               (runStatus === 'dead_lettered'
                 ? 'Run moved to dead letter queue.'
                 : 'Server run failed.'),
-          });
-        } catch (err) {
-          logClientError(err, {
-            context: {
-              source: 'useAiPathsServerExecution',
-              action: 'parseRunEvent',
-              runId,
-            },
-          });
-        }
-      });
+            });
+          } catch (err) {
+            logClientError(err, {
+              context: {
+                source: 'useAiPathsServerExecution',
+                action: 'parseRunEvent',
+                runId,
+              },
+            });
+          }
+        });
 
-      eventSource.addEventListener('nodes', (event: Event): void => {
-        try {
-          if (!(event instanceof MessageEvent)) return;
-          const payload = parseSsePayload(event);
-          const nodeUpdates = normalizeNodeStreamPayload(payload);
-          nodeUpdates.forEach((nodeUpdate: AiPathRunNodeRecord): void => {
-            const nodeId = asString(nodeUpdate.nodeId);
-            if (!nodeId) return;
-            const status = args.normalizeNodeStatus(nodeUpdate.status);
-            if (!status) return;
-            const runtimeNode = runtimeNodeById.get(nodeId);
-            const nodeTitle = runtimeNode?.title ?? nodeUpdate.nodeTitle ?? nodeId;
-            const errorMessage = asString(nodeUpdate.errorMessage) ?? asString(nodeUpdate.error);
-            const runStartedAtForNode =
+        eventSource.addEventListener('nodes', (event: Event): void => {
+          try {
+            if (!(event instanceof MessageEvent)) return;
+            const payload = parseSsePayload(event);
+            const nodeUpdates = normalizeNodeStreamPayload(payload);
+            nodeUpdates.forEach((nodeUpdate: AiPathRunNodeRecord): void => {
+              const nodeId = asString(nodeUpdate.nodeId);
+              if (!nodeId) return;
+              const status = args.normalizeNodeStatus(nodeUpdate.status);
+              if (!status) return;
+              const runtimeNode = runtimeNodeById.get(nodeId);
+              const nodeTitle = runtimeNode?.title ?? nodeUpdate.nodeTitle ?? nodeId;
+              const errorMessage = asString(nodeUpdate.errorMessage) ?? asString(nodeUpdate.error);
+              const runStartedAtForNode =
               asString(nodeUpdate.startedAt) ??
               args.currentRunStartedAtRef?.current ??
               runStartedAt;
-            const iteration = asNumber(nodeUpdate.attempt);
-            args.setNodeStatus({
-              nodeId,
-              status,
-              source: 'server',
-              runId: asString(nodeUpdate.runId) ?? runId,
-              runStartedAt: runStartedAtForNode,
-              nodeType: runtimeNode?.type ?? nodeUpdate.nodeType,
-              nodeTitle: nodeTitle ?? null,
-              iteration: iteration ?? undefined,
-              kind: status === 'failed' ? 'node_failed' : 'node_status',
-              level: status === 'failed' ? 'error' : 'info',
-              message:
+              const iteration = asNumber(nodeUpdate.attempt);
+              args.setNodeStatus({
+                nodeId,
+                status,
+                source: 'server',
+                runId: asString(nodeUpdate.runId) ?? runId,
+                runStartedAt: runStartedAtForNode,
+                nodeType: runtimeNode?.type ?? nodeUpdate.nodeType,
+                nodeTitle: nodeTitle ?? null,
+                iteration: iteration ?? undefined,
+                kind: status === 'failed' ? 'node_failed' : 'node_status',
+                level: status === 'failed' ? 'error' : 'info',
+                message:
                 status === 'failed' && errorMessage
                   ? `Node ${nodeTitle} failed: ${errorMessage}`
                   : `Node ${nodeTitle} ${args.formatStatusLabel(status)}.`,
-              metadata:
+                metadata:
                 errorMessage || nodeUpdate.outputs
                   ? {
                     ...(errorMessage ? { error: errorMessage } : {}),
                     ...(nodeUpdate.outputs ? { outputs: nodeUpdate.outputs } : {}),
                   }
                   : undefined,
+              });
             });
-          });
-        } catch (err) {
-          logClientError(err, {
-            context: {
-              source: 'useAiPathsServerExecution',
-              action: 'parseNodeEvent',
-              runId,
-            },
-          });
-        }
-      });
+          } catch (err) {
+            logClientError(err, {
+              context: {
+                source: 'useAiPathsServerExecution',
+                action: 'parseNodeEvent',
+                runId,
+              },
+            });
+          }
+        });
 
-      eventSource.addEventListener('events', (event: Event): void => {
-        try {
-          if (!(event instanceof MessageEvent)) return;
-          const payload = parseSsePayload(event);
-          const rawEvents = normalizeEventStreamPayload(payload);
-          const streamedEvents: AiPathRuntimeEvent[] = [];
-          rawEvents.forEach((rawEvent: AiPathRunEventRecord | Record<string, unknown>, index: number): void => {
-            if (!isRecord(rawEvent)) return;
-            const message = asString(rawEvent.message);
-            if (!message) return;
-            const metadata = isRecord(rawEvent.metadata) ? rawEvent.metadata : null;
-            const nodeId =
+        eventSource.addEventListener('events', (event: Event): void => {
+          try {
+            if (!(event instanceof MessageEvent)) return;
+            const payload = parseSsePayload(event);
+            const rawEvents = normalizeEventStreamPayload(payload);
+            const streamedEvents: AiPathRuntimeEvent[] = [];
+            rawEvents.forEach((rawEvent: AiPathRunEventRecord | Record<string, unknown>, index: number): void => {
+              if (!isRecord(rawEvent)) return;
+              const message = asString(rawEvent.message);
+              if (!message) return;
+              const metadata = isRecord(rawEvent.metadata) ? rawEvent.metadata : null;
+              const nodeId =
               asString(rawEvent.nodeId) ??
               (metadata ? asString(metadata['nodeId']) : null) ??
               undefined;
-            const runtimeNode = nodeId ? runtimeNodeById.get(nodeId) : null;
-            const status =
+              const runtimeNode = nodeId ? runtimeNodeById.get(nodeId) : null;
+              const status =
               args.normalizeNodeStatus(rawEvent.status) ??
               (metadata ? args.normalizeNodeStatus(metadata['status']) : null);
-            const iteration =
+              const iteration =
               asNumber(rawEvent.iteration) ??
               (metadata ? asNumber(metadata['iteration']) : null);
-            const rawTimestamp =
+              const rawTimestamp =
               asString(rawEvent['createdAt']) ??
               new Date().toISOString();
-            streamedEvents.push({
-              id:
+              streamedEvents.push({
+                id:
                 asString(rawEvent.id) ??
                 `server_evt_${Date.now()}_${index}_${Math.random().toString(16).slice(2, 8)}`,
-              timestamp: rawTimestamp,
-              source: 'server',
-              kind: 'log',
-              level: normalizeRuntimeEventLevel(rawEvent.level),
-              message,
-              runId: asString(rawEvent.runId) ?? runId,
-              ...(nodeId ? { nodeId } : {}),
-              ...(runtimeNode?.type ? { nodeType: runtimeNode.type } : {}),
-              ...(runtimeNode?.title || rawEvent['nodeTitle']
-                ? { nodeTitle: runtimeNode?.title ?? asString(rawEvent['nodeTitle']) }
-                : {}),
-              ...(status ? { status } : {}),
-              ...(iteration !== null ? { iteration } : {}),
-              ...(metadata ? { metadata } : {}),
-            } as unknown as AiPathRuntimeEvent);
-          });
-          if (streamedEvents.length > 0) {
-            args.setRuntimeEvents((prev) => [...prev, ...streamedEvents]);
+                timestamp: rawTimestamp,
+                source: 'server',
+                kind: 'log',
+                level: normalizeRuntimeEventLevel(rawEvent.level),
+                message,
+                runId: asString(rawEvent.runId) ?? runId,
+                ...(nodeId ? { nodeId } : {}),
+                ...(runtimeNode?.type ? { nodeType: runtimeNode.type } : {}),
+                ...(runtimeNode?.title || rawEvent['nodeTitle']
+                  ? { nodeTitle: runtimeNode?.title ?? asString(rawEvent['nodeTitle']) }
+                  : {}),
+                ...(status ? { status } : {}),
+                ...(iteration !== null ? { iteration } : {}),
+                ...(metadata ? { metadata } : {}),
+              } as unknown as AiPathRuntimeEvent);
+            });
+            if (streamedEvents.length > 0) {
+              args.setRuntimeEvents((prev) => [...prev, ...streamedEvents]);
+            }
+          } catch (err) {
+            logClientError(err, {
+              context: {
+                source: 'useAiPathsServerExecution',
+                action: 'parseEventsEvent',
+                runId,
+              },
+            });
           }
-        } catch (err) {
-          logClientError(err, {
-            context: {
-              source: 'useAiPathsServerExecution',
-              action: 'parseEventsEvent',
-              runId,
-            },
-          });
-        }
-      });
+        });
 
-      eventSource.addEventListener('done', (event: Event): void => {
-        try {
-          if (!(event instanceof MessageEvent)) return;
-          const payload = parseSsePayload(event);
-          const status = isRecord(payload) ? asString(payload['status']) : null;
-          if (status === 'completed') {
-            finalizeRun('completed');
-            return;
-          }
-          if (status === 'canceled') {
-            finalizeRun('canceled');
-            return;
-          }
-          finalizeRun('failed', {
-            message:
+        eventSource.addEventListener('done', (event: Event): void => {
+          try {
+            if (!(event instanceof MessageEvent)) return;
+            const payload = parseSsePayload(event);
+            const status = isRecord(payload) ? asString(payload['status']) : null;
+            if (status === 'completed') {
+              finalizeRun('completed');
+              return;
+            }
+            if (status === 'canceled') {
+              finalizeRun('canceled');
+              return;
+            }
+            finalizeRun('failed', {
+              message:
               status === 'dead_lettered'
                 ? 'Run moved to dead letter queue.'
                 : 'Server run failed.',
-          });
-        } catch (err) {
-          logClientError(err, {
-            context: {
-              source: 'useAiPathsServerExecution',
-              action: 'parseDoneEvent',
-              runId,
-            },
-          });
-        }
-      });
+            });
+          } catch (err) {
+            logClientError(err, {
+              context: {
+                source: 'useAiPathsServerExecution',
+                action: 'parseDoneEvent',
+                runId,
+              },
+            });
+          }
+        });
 
-      eventSource.addEventListener('error', (event: Event): void => {
-        if (!(event instanceof MessageEvent)) return;
-        try {
-          const payload = parseSsePayload(event);
-          const errorMessage =
+        eventSource.addEventListener('error', (event: Event): void => {
+          if (!(event instanceof MessageEvent)) return;
+          try {
+            const payload = parseSsePayload(event);
+            const errorMessage =
             isRecord(payload)
               ? asString(payload['error']) ?? asString(payload['message'])
               : null;
-          finalizeRun('failed', {
-            message: errorMessage ? `Server run failed: ${errorMessage}` : 'Server run failed.',
-          });
-        } catch (err) {
-          logClientError(err, {
+            finalizeRun('failed', {
+              message: errorMessage ? `Server run failed: ${errorMessage}` : 'Server run failed.',
+            });
+          } catch (err) {
+            logClientError(err, {
+              context: {
+                source: 'useAiPathsServerExecution',
+                action: 'parseErrorEvent',
+                runId,
+              },
+            });
+          }
+        });
+
+        eventSource.onerror = (err: Event): void => {
+          if (terminalHandled || !serverRunActiveRef.current) return;
+          logClientError(new Error('Server run stream error'), {
             context: {
               source: 'useAiPathsServerExecution',
-              action: 'parseErrorEvent',
+              action: 'eventSourceOnError',
               runId,
+              error: String(err),
             },
           });
-        }
-      });
-
-      eventSource.onerror = (err: Event): void => {
-        if (terminalHandled || !serverRunActiveRef.current) return;
-        logClientError(new Error('Server run stream error'), {
+          finalizeRun('failed', { message: 'Server stream connection lost.' });
+        };
+      } catch (error) {
+        const message =
+          error instanceof Error && error.message.trim().length > 0
+            ? error.message
+            : 'Failed to enqueue server run.';
+        args.appendRuntimeEvent({
+          source: 'server',
+          kind: 'run_failed',
+          level: 'error',
+          message,
+        });
+        args.setNodeStatus({
+          nodeId: triggerNode.id,
+          status: 'failed',
+          source: 'server',
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          kind: 'node_failed',
+          level: 'error',
+          message: `Node ${triggerNode.title ?? triggerNode.id} failed to enqueue.`,
+          metadata: { error: message },
+        });
+        args.settleTransientNodeStatuses('failed');
+        args.toast(message, { variant: 'error' });
+        stopServerRunStream();
+        logClientError(error, {
           context: {
             source: 'useAiPathsServerExecution',
-            action: 'eventSourceOnError',
-            runId,
-            error: String(err),
+            action: 'runServerStream',
+            pathId: args.activePathId,
+            triggerNodeId: triggerNode.id,
           },
         });
-        finalizeRun('failed', { message: 'Server stream connection lost.' });
-      };
+      }
     },
     [args, stopServerRunStream]
   );

@@ -5,9 +5,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import {
+  type DatabaseColumnInfo,
   type DatabaseTableDetail,
   type DatabaseType,
+  type CrudResult,
+  type CrudRequest,
 } from '@/shared/contracts/database';
+import type { ListQuery, MutationResult } from '@/shared/contracts/ui';
 import { ApiError } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
@@ -21,11 +25,44 @@ type CrudRowsResult = {
   totalRows: number;
 };
 
+export interface UseCrudPanelStateReturn {
+  selectedTable: string;
+  setSelectedTable: (table: string) => void;
+  page: number;
+  setPage: (page: number) => void;
+  pageSize: number;
+  setPageSize: (size: number) => void;
+  mutationError: string | null;
+  setMutationError: (error: string | null) => void;
+  successMessage: string | null;
+  setSuccessMessage: (message: string | null) => void;
+  showAddModal: boolean;
+  setShowAddModal: (show: boolean) => void;
+  editingRow: Record<string, unknown> | null;
+  setEditingRow: (row: Record<string, unknown> | null) => void;
+  deletingRow: Record<string, unknown> | null;
+  setDeletingRow: (row: Record<string, unknown> | null) => void;
+  tableDetail: DatabaseTableDetail | undefined;
+  rows: Record<string, unknown>[];
+  totalRows: number;
+  isLoadingRows: boolean;
+  maxPage: number;
+  fetchRows: () => void;
+  handleAdd: (data: Record<string, unknown>) => void;
+  handleEdit: (data: Record<string, unknown>) => void;
+  handleDelete: () => void;
+  crudMutation: MutationResult<CrudResult, CrudRequest>;
+  dbType: DatabaseType;
+  tableDetails: DatabaseTableDetail[];
+  columns: DatabaseColumnInfo[];
+  rowsQuery: ListQuery<CrudRowsResult, CrudRowsResult>;
+}
+
 export function useCrudPanelState(props: {
   tableDetails?: DatabaseTableDetail[];
   defaultTable?: string;
   dbType?: DatabaseType;
-}) {
+}): UseCrudPanelStateReturn {
   const dbKeys = QUERY_KEYS.system.databases;
   const context = useDatabase();
   const dbType = props.dbType ?? context.dbType;

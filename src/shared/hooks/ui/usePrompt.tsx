@@ -17,11 +17,17 @@ export interface PromptConfig {
   onCancel?: () => void;
 }
 
+export interface UsePromptReturn {
+  prompt: (newConfig: PromptConfig) => Promise<string | null>;
+  PromptInputModal: () => React.JSX.Element | null;
+  isPending: boolean;
+}
+
 /**
  * Hook for managing prompt modal state.
  * Returns a function to trigger prompt and the modal component to render.
  */
-export function usePrompt() {
+export function usePrompt(): UsePromptReturn {
   const [config, setPromptConfig] = useState<(PromptConfig & { resolve: (value: string | null) => void }) | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 

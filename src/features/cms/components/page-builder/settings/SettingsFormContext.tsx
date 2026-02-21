@@ -14,8 +14,8 @@ export function SettingsFormProvider({
   onChange,
   children,
 }: {
-  values: Record<string, any>;
-  onChange: (key: string, value: any) => void;
+  values: Record<string, unknown>;
+  onChange: (key: string, value: unknown) => void;
   children: React.ReactNode;
 }) {
   const value = useMemo(() => ({ values, onChange }), [values, onChange]);

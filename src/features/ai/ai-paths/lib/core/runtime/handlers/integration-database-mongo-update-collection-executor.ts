@@ -77,15 +77,19 @@ export async function executeMongoCollectionUpdate({
   });
   executed.updater.add(node.id);
   if (!updateResult.ok) {
+    const updateErrorMessage =
+      typeof updateResult.error === 'string' && updateResult.error.trim().length > 0
+        ? updateResult.error.trim()
+        : 'Update failed';
     reportAiPathsError(
-      new Error(updateResult.error),
+      new Error(updateErrorMessage),
       { action: 'dbUpdate', collection, nodeId: node.id },
       'Database update failed:',
     );
-    toast(updateResult.error || 'Database update failed.', { variant: 'error' });
+    toast(updateErrorMessage || 'Database update failed.', { variant: 'error' });
     return {
       result: null,
-      bundle: { error: 'Update failed' },
+      bundle: { error: updateErrorMessage },
       debugPayload,
       aiPrompt,
     };

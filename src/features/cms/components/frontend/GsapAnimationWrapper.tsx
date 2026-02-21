@@ -2,7 +2,7 @@
 
 import React, { useMemo, useRef, useEffect, type ReactNode } from 'react';
 
-import type { GsapAnimationConfig, AnimationPreset } from '@/features/gsap';
+import type { GsapAnimationConfig, AnimationPreset, AnimationEasing } from '@/features/gsap';
 import { DEFAULT_ANIMATION_CONFIG, PARALLAX_DEFAULTS } from '@/features/gsap';
 import { getGsapFromVars } from '@/features/gsap/utils/presets';
 import { vectorShapesToPathWithBounds } from '@/shared/ui';
@@ -191,7 +191,9 @@ const resolveParallaxOffset = (config: GsapAnimationConfig): number => {
   const raw = config.parallaxOffset ?? 0;
   if (raw !== 0) return raw;
   const preset = config.parallaxPreset ?? 'none';
-  return PARALLAX_DEFAULTS[preset]?.offset ?? 0;
+  const presetData = PARALLAX_DEFAULTS[preset];
+  const offset = (presetData && typeof presetData === 'object' ? (presetData).offset : 0) ?? 0;
+  return typeof offset === 'number' ? offset : 0;
 };
 
 const seededRandom = (seed: number): number => {
@@ -348,9 +350,9 @@ export function GsapAnimationWrapper({
             );
             const baseScaleFrom = mergedConfig.parallaxScaleFrom ?? 1;
             const baseScaleTo = mergedConfig.parallaxScaleTo ?? 1;
-            const depthScale = mergedConfig.parallaxPreset === 'depth' ? PARALLAX_DEFAULTS.depth?.scale : undefined;
-            const scaleFromSeed = baseScaleFrom !== 1 || baseScaleTo !== 1 ? baseScaleFrom : (depthScale ?? baseScaleFrom);
-            const scaleToSeed = baseScaleFrom !== 1 || baseScaleTo !== 1 ? baseScaleTo : 1;
+            const depthData = PARALLAX_DEFAULTS.depth;
+            const depthScale = (mergedConfig.parallaxPreset === 'depth' && depthData && typeof depthData === 'object') ? (depthData).scale : undefined;
+            const scaleFromSeed = baseScaleFrom !== 1 || baseScaleTo !== 1 ? baseScaleFrom : ((depthScale) ?? baseScaleFrom);            const scaleToSeed = baseScaleFrom !== 1 || baseScaleTo !== 1 ? baseScaleTo : 1;
             const rotateFromSeed = mergedConfig.parallaxRotateFrom ?? 0;
             const rotateToSeed = mergedConfig.parallaxRotateTo ?? 0;
             const opacityFromSeed = mergedConfig.parallaxOpacityFrom ?? 1;

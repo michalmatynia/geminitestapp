@@ -57,7 +57,7 @@ export const ProductListHeader = memo(function ProductListHeader({
     catalogs,
   } = useProductListFiltersContext();
 
-  const headerBreadcrumb = (
+  const renderHeaderBreadcrumb = (): React.JSX.Element => (
     <Breadcrumbs
       items={[
         { label: 'Admin', href: '/admin' },
@@ -68,7 +68,7 @@ export const ProductListHeader = memo(function ProductListHeader({
     />
   );
 
-  const createActions = (
+  const renderCreateActions = (): React.JSX.Element => (
     <div className='flex flex-wrap items-center gap-2'>
       <Button
         onClick={onCreateProduct}
@@ -102,7 +102,7 @@ export const ProductListHeader = memo(function ProductListHeader({
     </div>
   );
 
-  const selectorsAndTriggers = (
+  const renderSelectorsAndTriggers = (): React.JSX.Element => (
     <>
       <SelectSimple
         size='sm'
@@ -151,7 +151,7 @@ export const ProductListHeader = memo(function ProductListHeader({
     </>
   );
 
-  const paginationControl = (
+  const renderPaginationControl = (): React.JSX.Element => (
     <Pagination
       page={page}
       totalPages={totalPages}
@@ -172,16 +172,16 @@ export const ProductListHeader = memo(function ProductListHeader({
           <div className='space-y-3 lg:hidden'>
             <div>
               <h1 className='text-3xl font-bold tracking-tight text-white'>Products</h1>
-              {headerBreadcrumb}
-              <div className='mt-3'>{createActions}</div>
+              {renderHeaderBreadcrumb()}
+              <div className='mt-3'>{renderCreateActions()}</div>
             </div>
 
             <div className='space-y-3'>
               <div className='flex justify-center'>
-                {paginationControl}
+                {renderPaginationControl()}
               </div>
               <div className='flex w-full items-center justify-end gap-2 max-sm:flex-wrap'>
-                {selectorsAndTriggers}
+                {renderSelectorsAndTriggers()}
               </div>
               {filtersContent ? (
                 <div className='w-full'>
@@ -194,17 +194,17 @@ export const ProductListHeader = memo(function ProductListHeader({
           <div className='hidden grid-cols-[minmax(0,1fr)_auto_minmax(0,1.5fr)] items-start gap-3 lg:grid'>
             <div className='min-w-0'>
               <h1 className='text-3xl font-bold tracking-tight text-white'>Products</h1>
-              {headerBreadcrumb}
-              <div className='mt-3'>{createActions}</div>
+              {renderHeaderBreadcrumb()}
+              <div className='mt-3'>{renderCreateActions()}</div>
             </div>
 
             <div className='flex justify-center pt-1'>
-              {paginationControl}
+              {renderPaginationControl()}
             </div>
 
             <div className='flex w-full flex-col gap-3 pt-1'>
               <div className='flex w-full items-center justify-end gap-2 lg:flex-nowrap'>
-                {selectorsAndTriggers}
+                {renderSelectorsAndTriggers()}
               </div>
               {filtersContent ? (
                 <div className='w-full'>

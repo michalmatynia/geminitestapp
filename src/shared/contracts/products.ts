@@ -1003,6 +1003,7 @@ export type ProductStudioExecutionRoute = ProductStudioExecutionRouteDto;
 export const productStudioSequencingDiagnosticsScopeSchema = z.enum(['project', 'global', 'default']);
 
 export type ProductStudioSequencingDiagnosticsScopeDto = z.infer<typeof productStudioSequencingDiagnosticsScopeSchema>;
+export type ProductStudioSequencingDiagnosticsScope = ProductStudioSequencingDiagnosticsScopeDto;
 
 export const productStudioSequenceReadinessStateSchema = z.enum([
   'ready',

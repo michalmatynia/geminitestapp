@@ -1,15 +1,4 @@
- 
- 
- 
- 
- 
- 
- 
- 
 import 'server-only';
-
-// This service encapsulates all business logic for managing products.
-
 import fs from 'fs/promises';
 import path from 'path';
 

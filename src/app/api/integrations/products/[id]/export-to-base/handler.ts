@@ -273,37 +273,6 @@ export async function postExportToBaseHandler(
       preparedExportContext.tagExternalIdByInternalId;
     const exportProduct = preparedExportContext.exportProduct;
 
-    // Check for duplicate SKU in Base.com if not allowed
-    const allowDuplicateSku = imagesOnly ? true : data.allowDuplicateSku ?? false;
-    if (!allowDuplicateSku && product.sku) {
-      await ErrorSystem.logInfo('[export-to-base] Checking if SKU exists in Base.com', {
-        sku: product.sku,
-        inventoryId: resolvedInventoryId
-      });
-
-      const skuVal = product.sku;
-      const tokenVal = token;
-      const skuCheck = await checkBaseSkuExists(
-        tokenVal,
-        resolvedInventoryId,
-        skuVal
-      );
-      if (skuCheck.exists) {
-        await ErrorSystem.logWarning('[export-to-base] SKU already exists in Base.com', {
-          sku: product.sku,
-          existingProductId: skuCheck.productId
-        });
-        throw conflictError(
-          `SKU "${product.sku}" already exists in Base.com inventory. Use "Allow duplicate SKUs" option to export anyway.`,
-          {
-            skuExists: true,
-            existingProductId: skuCheck.productId,
-            sku: product.sku
-          }
-        );
-      }
-    }
-
     const primaryListingRepo = await getProductListingRepository();
     let listingRepo = primaryListingRepo;
     const integrations = await integrationRepo.listIntegrations();
@@ -395,6 +364,10 @@ export async function postExportToBaseHandler(
           const existingListing = resolvedByConnection.listing;
           listingRepo = resolvedByConnection.repository;
           listingId = existingListing.id;
+          // Load externalListingId from the existing listing so re-exports UPDATE the
+          // Base.com product rather than creating a duplicate, and so the SKU check is
+          // skipped (the product is already in Base.com under our control).
+          listingExternalId = existingListing.externalListingId ?? listingExternalId;
           await listingRepo.updateListingStatus(existingListing.id, 'pending');
           if (existingListing.inventoryId !== resolvedInventoryId) {
             await listingRepo.updateListingInventoryId(
@@ -451,6 +424,39 @@ export async function postExportToBaseHandler(
           runId,
           logs
         });
+      }
+    }
+
+    // Check for duplicate SKU in Base.com — skipped when the product already has a known
+    // Base.com product_id (listingExternalId), which means this is a re-export/update,
+    // not a new product creation.
+    const allowDuplicateSku = imagesOnly ? true : data.allowDuplicateSku ?? false;
+    if (!allowDuplicateSku && !listingExternalId && product.sku) {
+      await ErrorSystem.logInfo('[export-to-base] Checking if SKU exists in Base.com', {
+        sku: product.sku,
+        inventoryId: resolvedInventoryId
+      });
+
+      const skuVal = product.sku;
+      const tokenVal = token;
+      const skuCheck = await checkBaseSkuExists(
+        tokenVal,
+        resolvedInventoryId,
+        skuVal
+      );
+      if (skuCheck.exists) {
+        await ErrorSystem.logWarning('[export-to-base] SKU already exists in Base.com', {
+          sku: product.sku,
+          existingProductId: skuCheck.productId
+        });
+        throw conflictError(
+          `SKU "${product.sku}" already exists in Base.com inventory. Use "Allow duplicate SKUs" option to export anyway.`,
+          {
+            skuExists: true,
+            existingProductId: skuCheck.productId,
+            sku: product.sku
+          }
+        );
       }
     }
 
@@ -587,7 +593,8 @@ export async function postExportToBaseHandler(
           exportImagesAsBase64: exportImagesAsBase64,
           ...(baseImageDiagnostics ? { imageDiagnostics: baseImageDiagnostics } : {}),
           imageBase64Mode,
-          imageTransform
+          imageTransform,
+          existingProductId: listingExternalId ?? undefined,
         }
       );
 
@@ -646,7 +653,8 @@ export async function postExportToBaseHandler(
             : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           imageBase64Mode,
-          imageTransform
+          imageTransform,
+          existingProductId: listingExternalId ?? undefined,
         }
       );
     } else if (!imagesOnly && !result.success && warehouseMismatch) {
@@ -702,7 +710,8 @@ export async function postExportToBaseHandler(
             : {}),
           exportImagesAsBase64: exportImagesAsBase64,
           imageBase64Mode,
-          imageTransform
+          imageTransform,
+          existingProductId: listingExternalId ?? undefined,
         }
       );
     }
@@ -784,7 +793,8 @@ export async function postExportToBaseHandler(
                 exportImagesAsBase64: exportImagesAsBase64,
                 imageDiagnostics,
                 imageBase64Mode,
-                imageTransform
+                imageTransform,
+                existingProductId: listingExternalId ?? undefined,
               }
             );
         } else {
@@ -835,7 +845,8 @@ export async function postExportToBaseHandler(
                 exportImagesAsBase64: exportImagesAsBase64,
                 imageDiagnostics,
                 imageBase64Mode,
-                imageTransform
+                imageTransform,
+                existingProductId: listingExternalId ?? undefined,
               }
             );
           }

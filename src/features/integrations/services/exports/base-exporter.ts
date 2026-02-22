@@ -467,6 +467,8 @@ export async function exportProductToBase(
     imageBase64Mode?: ImageBase64Mode | undefined;
     imageTransform?: ImageTransformOptions | null;
     imagesOnly?: boolean;
+    /** When set, the export updates this existing Base.com product (product_id) instead of creating a new one. */
+    existingProductId?: string | null;
   }
 ): Promise<{ success: boolean; productId?: string; error?: string }> {
   try {
@@ -477,6 +479,12 @@ export async function exportProductToBase(
       inventory_id: inventoryId,
       ...productData,
     };
+
+    // When updating an existing product, include product_id so Base.com updates rather than creates.
+    const resolvedExistingId = options?.existingProductId?.trim() || null;
+    if (resolvedExistingId) {
+      apiParams['product_id'] = resolvedExistingId;
+    }
 
     const response = await callBaseApi(token, 'addInventoryProduct', apiParams);
 

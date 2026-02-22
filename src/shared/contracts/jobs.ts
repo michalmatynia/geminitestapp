@@ -34,18 +34,22 @@ export const jobSchema = dtoBaseSchema.extend({
 
 export type JobDto = z.infer<typeof jobSchema>;
 
-export const jobRowDataSchema = z.object({
-  id: z.string(),
-  status: jobStatusSchema,
-  progress: z.number(),
-  error: z.string().nullable(),
-  createdAt: z.string(),
-  startedAt: z.string().nullable(),
-  finishedAt: z.string().nullable(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-});
+export interface JobRowDataDto {
+  id: string;
+  status: JobStatus;
+  progress: number;
+  error: string | null;
+  errorMessage?: string | null;
+  createdAt: string;
+  startedAt: string | null;
+  finishedAt: string | null;
+  metadata?: Record<string, unknown> | null;
+  entityName?: string | null;
+  entitySubText?: string | null;
+  productId?: string | null;
+  type?: string | null;
+}
 
-export type JobRowDataDto = z.infer<typeof jobRowDataSchema>;
 export type JobRowData = JobRowDataDto;
 
 /**

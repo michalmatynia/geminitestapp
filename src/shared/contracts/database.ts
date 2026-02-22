@@ -32,20 +32,29 @@ export const databasePreviewTableSchema = z.object({
 export type DatabasePreviewTableDto = z.infer<typeof databasePreviewTableSchema>;
 export type DatabasePreviewTable = DatabasePreviewTableDto;
 
-export const databasePreviewRowSchema = z.record(z.string(), z.any());
+export const databasePreviewRowSchema = z.record(z.string(), z.unknown());
 
 export type DatabasePreviewRowDto = z.infer<typeof databasePreviewRowSchema>;
 export type DatabasePreviewRow = DatabasePreviewRowDto;
 export type SqlQueryResultRow = DatabasePreviewRowDto;
+
+export const databaseTablePreviewDataSchema = z.object({
+  name: z.string(),
+  rows: z.array(databasePreviewRowSchema),
+  totalRows: z.number(),
+});
+
+export type DatabaseTablePreviewDataDto = z.infer<typeof databaseTablePreviewDataSchema>;
+export type DatabaseTablePreviewData = DatabaseTablePreviewDataDto;
 
 export const databasePreviewPayloadSchema = z.object({
   type: databaseTypeSchema.optional(),
   mode: databasePreviewModeSchema.optional(),
   groups: z.array(databasePreviewGroupSchema).optional(),
   tables: z.array(databasePreviewTableSchema).optional(),
-  tableRows: z.array(databasePreviewRowSchema).optional(),
-  tableDetails: z.array(databaseTableDetailSchema).optional(),
-  enums: z.array(databaseEnumInfoDto).optional(),
+  tableRows: z.array(databaseTablePreviewDataSchema).optional(),
+  tableDetails: z.array(z.lazy(() => databaseTableDetailSchema)).optional(),
+  enums: z.array(z.lazy(() => databaseEnumInfoDto)).optional(),
   databaseSize: z.string().optional(),
   page: z.number().optional(),
   pageSize: z.number().optional(),
@@ -106,6 +115,7 @@ export const databaseBackupOperationResponseSchema = z.object({
   success: z.boolean(),
   backupName: z.string().optional(),
   message: z.string().optional(),
+  log: z.string().nullable().optional(),
 });
 
 export type DatabaseBackupOperationResponseDto = z.infer<typeof databaseBackupOperationResponseSchema>;
@@ -114,6 +124,7 @@ export type DatabaseBackupResponse = DatabaseBackupOperationResponseDto;
 export const databaseRestoreOperationResponseSchema = z.object({
   success: z.boolean(),
   message: z.string().optional(),
+  log: z.string().nullable().optional(),
 });
 
 export type DatabaseRestoreOperationResponseDto = z.infer<typeof databaseRestoreOperationResponseSchema>;
@@ -277,6 +288,7 @@ export const databaseIndexInfoSchema = z.object({
   name: z.string(),
   columns: z.array(z.string()),
   isUnique: z.boolean(),
+  definition: z.string().optional(),
 });
 
 export type DatabaseIndexInfoDto = z.infer<typeof databaseIndexInfoSchema>;
@@ -304,6 +316,8 @@ export const databaseTableDetailSchema = z.object({
   columns: z.array(databaseColumnInfoSchema),
   indexes: z.array(databaseIndexInfoSchema),
   foreignKeys: z.array(databaseForeignKeyInfoSchema),
+  rowEstimate: z.number().default(0),
+  sizeFormatted: z.string().default(''),
 });
 
 export type DatabaseTableDetailDto = z.infer<typeof databaseTableDetailSchema>;

@@ -1,51 +1,28 @@
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/handlers/integration-schema-handler.ts
-  45:17  error  Unsafe member access .isId on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
-  46:17  error  Unsafe member access .isRequired on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  47:17  error  Unsafe member access .isUnique on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
-  48:17  error  Unsafe member access .hasDefault on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  50:31  error  Unsafe member access .name on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
-  50:46  error  Unsafe member access .type on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
-  52:11  error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
-  53:32  error  Unsafe member access .length on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  54:32  error  Unsafe call of a type that could not be resolved                    @typescript-eslint/no-unsafe-call
-  54:42  error  Unsafe member access .join on a type that cannot be resolved        @typescript-eslint/no-unsafe-member-access
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/data-import-export/components/imports/ImportTab.tsx
-  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment', '@typescript-eslint/no-unsafe-member-access', '@typescript-eslint/no-unsafe-call', '@typescript-eslint/no-unsafe-return', or '@typescript-eslint/no-unsafe-argument')
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabaseControlPanelPage.tsx
-   13:3   warning  'FormSection' is defined but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
-  177:26  error    Unsafe argument of type error typed assigned to a parameter of type `SetStateAction<string | null>`  @typescript-eslint/no-unsafe-argument
-  189:26  error    Unsafe argument of type error typed assigned to a parameter of type `SetStateAction<string | null>`  @typescript-eslint/no-unsafe-argument
+  3:54  warning  'FieldSchema' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabaseEnginePage.tsx
   50:5  warning  'isLoading' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabasePreviewPage.tsx
-  106:14  error  Unsafe call of a type that could not be resolved                        @typescript-eslint/no-unsafe-call
-  106:33  error  Unsafe member access .toLocaleString on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  261:92  error  Unsafe assignment of an error typed value                               @typescript-eslint/no-unsafe-assignment
-  328:38  error  Unsafe member access .length on an `any` value                          @typescript-eslint/no-unsafe-member-access
-  329:24  error  Unsafe argument of type `any` assigned to a parameter of type `{}`      @typescript-eslint/no-unsafe-argument
-  329:39  error  Unsafe member access [0] on an `any` value                              @typescript-eslint/no-unsafe-member-access
-  340:36  error  Unsafe member access .length on an `any` value                          @typescript-eslint/no-unsafe-member-access
-  356:52  error  Unsafe member access .length on an `any` value                          @typescript-eslint/no-unsafe-member-access
-  356:68  error  Unsafe call of an `any` typed value                                     @typescript-eslint/no-unsafe-call
-  356:88  error  Unsafe member access .toLocaleString on an `any` value                  @typescript-eslint/no-unsafe-member-access
-  360:15  error  Unsafe assignment of an `any` value                                     @typescript-eslint/no-unsafe-assignment
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabasesPage.tsx
-   86:13  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
-  117:13  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  261:92  error  Unsafe assignment of an error typed value                           @typescript-eslint/no-unsafe-assignment
+  328:38  error  Unsafe member access .length on an `any` value                      @typescript-eslint/no-unsafe-member-access
+  329:24  error  Unsafe argument of type `any` assigned to a parameter of type `{}`  @typescript-eslint/no-unsafe-argument
+  329:39  error  Unsafe member access [0] on an `any` value                          @typescript-eslint/no-unsafe-member-access
+  340:36  error  Unsafe member access .length on an `any` value                      @typescript-eslint/no-unsafe-member-access
+  356:52  error  Unsafe member access .length on an `any` value                      @typescript-eslint/no-unsafe-member-access
+  356:68  error  Unsafe call of an `any` typed value                                 @typescript-eslint/no-unsafe-call
+  356:88  error  Unsafe member access .toLocaleString on an `any` value              @typescript-eslint/no-unsafe-member-access
+  360:15  error  Unsafe assignment of an `any` value                                 @typescript-eslint/no-unsafe-assignment
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/document-editor/components/RichTextEditor.tsx
   405:5  error  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
   418:5  error  Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator  @typescript-eslint/no-floating-promises
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/drafter/components/DraftCreator.tsx
-  380:62  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-assignment
-  382:47  error  Unsafe argument of type error typed assigned to a parameter of type `{ name: string; length?: number | null | undefined; active?: boolean | undefined; description?: string | null | undefined; sku?: string | null | undefined; name_en?: string | null | undefined; ... 29 more ...; openProductFormTab?: "other" | ... 8 more ... | undefined; }`  @typescript-eslint/no-unsafe-argument
+  380:62  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-assignment
+  382:47  error  Unsafe argument of type error typed assigned to a parameter of type `{ name: string; length?: number | null | undefined; description?: string | null | undefined; sku?: string | null | undefined; name_en?: string | null | undefined; name_pl?: string | null | undefined; ... 29 more ...; openProductFormTab?: "other" | ... 8 more ... | undefined; }`  @typescript-eslint/no-unsafe-argument
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/files/components/file-manager/FileManagerGrid.tsx
    55:28  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
@@ -400,7 +377,7 @@
   150:12  error  Unsafe member access .map on a type that cannot be resolved                                                                                                                                                                                                                                                                           @typescript-eslint/no-unsafe-member-access
   154:12  error  Unsafe member access .filter on a type that cannot be resolved                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
   155:39  error  Unsafe spread of an error typed type                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unsafe-argument
-  164:44  error  Unsafe argument of type `any` assigned to a parameter of type `{ title: string; content: string; notebookId: string | null; editorType: "code" | "markdown" | "wysiwyg" | "rich-text" | "plain-text"; name?: string | undefined; description?: string | null | undefined; ... 16 more ...; relatedNoteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
+  164:44  error  Unsafe argument of type `any` assigned to a parameter of type `{ title: string; content: string; notebookId: string | null; editorType: "code" | "markdown" | "wysiwyg" | "rich-text" | "plain-text"; description?: string | null | undefined; name?: string | undefined; ... 16 more ...; relatedNoteIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
   176:12  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                              @typescript-eslint/no-explicit-any
   207:11  error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unsafe-assignment
   207:25  error  Unsafe call of a type that could not be resolved                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unsafe-call
@@ -547,7 +524,7 @@
   228:57  error  Unsafe argument of type error typed assigned to a parameter of type `string`                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-argument
   228:66  error  Unsafe member access .validationDebounceMs on a type that cannot be resolved                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unsafe-member-access
   241:20  error  Unsafe member access .replacementMode on a type that cannot be resolved                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
-  242:51  error  Unsafe argument of type error typed assigned to a parameter of type `{ label: string; target: "length" | "name" | "description" | "sku" | "stock" | "price" | "weight" | "category" | "size_length" | "size_width"; locale: string; regex: string; flags: string; ... 48 more ...; appliesToScopes: ("draft_template" | ... 1 more ... | "product_edit")[]; }`  @typescript-eslint/no-unsafe-argument
+  242:51  error  Unsafe argument of type error typed assigned to a parameter of type `{ label: string; target: "length" | "description" | "name" | "sku" | "stock" | "price" | "weight" | "category" | "size_length" | "size_width"; locale: string; regex: string; flags: string; ... 48 more ...; appliesToScopes: ("draft_template" | ... 1 more ... | "product_edit")[]; }`  @typescript-eslint/no-unsafe-argument
   249:9   error  Unsafe assignment of an error typed value                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-unsafe-assignment
   249:37  error  Unsafe member access .replacementValue on a type that cannot be resolved                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
   249:76  error  Unsafe member access .replacementValue on a type that cannot be resolved                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
@@ -641,224 +618,151 @@
   682:65  error  Unsafe member access .target on a type that cannot be resolved                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unsafe-member-access
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/productService.ts
-  5:1  error  There should be no empty line within import group  import/order
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/contracts/data-import-export.ts
   3:1  error  There should be at least one empty line between import groups  import/order
+  4:1  error  There should be no empty line within import group              import/order
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/contracts/database.ts
-  115:1  error  Expected indentation of 2 spaces but found 0  indent
-  116:1  error  Expected indentation of 2 spaces but found 0  indent
-  127:1  error  Expected indentation of 2 spaces but found 0  indent
-  128:1  error  Expected indentation of 2 spaces but found 0  indent
-  129:1  error  Expected indentation of 2 spaces but found 0  indent
-  130:1  error  Expected indentation of 2 spaces but found 0  indent
-  131:1  error  Expected indentation of 2 spaces but found 0  indent
-  137:1  error  Expected indentation of 2 spaces but found 0  indent
-  138:1  error  Expected indentation of 2 spaces but found 0  indent
-  139:1  error  Expected indentation of 2 spaces but found 0  indent
-  140:1  error  Expected indentation of 2 spaces but found 1  indent
-  141:1  error  Expected indentation of 2 spaces but found 0  indent
-  142:1  error  Expected indentation of 2 spaces but found 0  indent
-  143:1  error  Expected indentation of 2 spaces but found 0  indent
-  149:1  error  Expected indentation of 2 spaces but found 0  indent
-  150:1  error  Expected indentation of 2 spaces but found 1  indent
-  151:1  error  Expected indentation of 2 spaces but found 1  indent
-  152:1  error  Expected indentation of 2 spaces but found 1  indent
-  172:1  error  Expected indentation of 2 spaces but found 0  indent
-  173:1  error  Expected indentation of 2 spaces but found 0  indent
-  174:1  error  Expected indentation of 2 spaces but found 0  indent
-  175:1  error  Expected indentation of 2 spaces but found 0  indent
-  176:1  error  Expected indentation of 2 spaces but found 0  indent
-  177:1  error  Expected indentation of 2 spaces but found 0  indent
-  183:1  error  Expected indentation of 2 spaces but found 0  indent
-  184:1  error  Expected indentation of 2 spaces but found 0  indent
-  185:1  error  Expected indentation of 2 spaces but found 0  indent
-  186:1  error  Expected indentation of 2 spaces but found 0  indent
-  187:1  error  Expected indentation of 2 spaces but found 0  indent
-  188:1  error  Expected indentation of 2 spaces but found 0  indent
-  189:1  error  Expected indentation of 2 spaces but found 0  indent
-  195:1  error  Expected indentation of 2 spaces but found 0  indent
-  196:1  error  Expected indentation of 2 spaces but found 0  indent
-  197:1  error  Expected indentation of 2 spaces but found 0  indent
-  198:1  error  Expected indentation of 2 spaces but found 0  indent
-  199:1  error  Expected indentation of 2 spaces but found 0  indent
-  200:1  error  Expected indentation of 2 spaces but found 0  indent
-  201:1  error  Expected indentation of 2 spaces but found 0  indent
-  202:1  error  Expected indentation of 2 spaces but found 0  indent
-  203:1  error  Expected indentation of 2 spaces but found 0  indent
-  204:1  error  Expected indentation of 2 spaces but found 1  indent
-  205:1  error  Expected indentation of 2 spaces but found 0  indent
-  211:1  error  Expected indentation of 2 spaces but found 0  indent
-  212:1  error  Expected indentation of 2 spaces but found 1  indent
-  213:1  error  Expected indentation of 2 spaces but found 1  indent
-  214:1  error  Expected indentation of 2 spaces but found 0  indent
-  215:1  error  Expected indentation of 2 spaces but found 0  indent
-  221:1  error  Expected indentation of 2 spaces but found 0  indent
-  222:1  error  Expected indentation of 2 spaces but found 0  indent
-  229:1  error  Expected indentation of 2 spaces but found 0  indent
-  230:1  error  Expected indentation of 2 spaces but found 1  indent
-  231:1  error  Expected indentation of 2 spaces but found 1  indent
-  232:1  error  Expected indentation of 2 spaces but found 0  indent
-  233:1  error  Expected indentation of 2 spaces but found 0  indent
-  244:1  error  Expected indentation of 2 spaces but found 0  indent
-  245:1  error  Expected indentation of 2 spaces but found 1  indent
-  246:1  error  Expected indentation of 2 spaces but found 1  indent
-  247:1  error  Expected indentation of 2 spaces but found 0  indent
-  248:1  error  Expected indentation of 2 spaces but found 0  indent
-  249:1  error  Expected indentation of 2 spaces but found 0  indent
-  256:1  error  Expected indentation of 2 spaces but found 0  indent
-  257:1  error  Expected indentation of 2 spaces but found 0  indent
-  258:1  error  Expected indentation of 2 spaces but found 0  indent
-  265:1  error  Expected indentation of 2 spaces but found 1  indent
-  266:1  error  Expected indentation of 2 spaces but found 0  indent
-  267:1  error  Expected indentation of 2 spaces but found 0  indent
-  268:1  error  Expected indentation of 2 spaces but found 0  indent
-  269:1  error  Expected indentation of 2 spaces but found 0  indent
-  270:1  error  Expected indentation of 2 spaces but found 0  indent
-  277:1  error  Expected indentation of 2 spaces but found 0  indent
-  278:1  error  Expected indentation of 2 spaces but found 0  indent
-  279:1  error  Expected indentation of 2 spaces but found 0  indent
-  286:1  error  Expected indentation of 2 spaces but found 1  indent
-  287:1  error  Expected indentation of 2 spaces but found 0  indent
   288:1  error  Expected indentation of 2 spaces but found 0  indent
-  295:1  error  Expected indentation of 2 spaces but found 0  indent
-  296:1  error  Expected indentation of 2 spaces but found 0  indent
-  303:1  error  Expected indentation of 2 spaces but found 0  indent
-  304:1  error  Expected indentation of 2 spaces but found 0  indent
+  289:1  error  Expected indentation of 2 spaces but found 0  indent
+  290:1  error  Expected indentation of 2 spaces but found 0  indent
+  297:1  error  Expected indentation of 2 spaces but found 0  indent
+  298:1  error  Expected indentation of 2 spaces but found 0  indent
   305:1  error  Expected indentation of 2 spaces but found 0  indent
-  306:1  error  Expected indentation of 2 spaces but found 1  indent
-  313:1  error  Expected indentation of 2 spaces but found 0  indent
-  314:1  error  Expected indentation of 2 spaces but found 0  indent
-  315:1  error  Expected indentation of 2 spaces but found 0  indent
-  316:1  error  Expected indentation of 2 spaces but found 0  indent
-  317:1  error  Expected indentation of 2 spaces but found 0  indent
+  306:1  error  Expected indentation of 2 spaces but found 0  indent
+  307:1  error  Expected indentation of 2 spaces but found 1  indent
+  308:1  error  Expected indentation of 2 spaces but found 0  indent
+  309:1  error  Expected indentation of 2 spaces but found 0  indent
+  310:1  error  Expected indentation of 2 spaces but found 1  indent
+  317:1  error  Expected indentation of 2 spaces but found 1  indent
   318:1  error  Expected indentation of 2 spaces but found 0  indent
-  319:1  error  Expected indentation of 2 spaces but found 1  indent
-  320:1  error  Expected indentation of 2 spaces but found 0  indent
-  321:1  error  Expected indentation of 2 spaces but found 0  indent
-  322:1  error  Expected indentation of 2 spaces but found 0  indent
-  329:1  error  Expected indentation of 2 spaces but found 0  indent
-  330:1  error  Expected indentation of 2 spaces but found 0  indent
-  331:1  error  Expected indentation of 2 spaces but found 0  indent
-  332:1  error  Expected indentation of 2 spaces but found 1  indent
-  333:1  error  Expected indentation of 2 spaces but found 0  indent
+  319:1  error  Expected indentation of 2 spaces but found 0  indent
+  320:1  error  Expected indentation of 2 spaces but found 1  indent
+  321:1  error  Expected indentation of 2 spaces but found 1  indent
+  322:1  error  Expected indentation of 2 spaces but found 1  indent
+  323:1  error  Expected indentation of 2 spaces but found 0  indent
+  324:1  error  Expected indentation of 2 spaces but found 0  indent
+  325:1  error  Expected indentation of 2 spaces but found 1  indent
+  326:1  error  Expected indentation of 2 spaces but found 1  indent
+  333:1  error  Expected indentation of 2 spaces but found 1  indent
   334:1  error  Expected indentation of 2 spaces but found 0  indent
-  345:1  error  Expected indentation of 2 spaces but found 0  indent
-  346:1  error  Expected indentation of 2 spaces but found 0  indent
-  347:1  error  Expected indentation of 2 spaces but found 0  indent
-  357:1  error  Expected indentation of 2 spaces but found 0  indent
-  358:1  error  Expected indentation of 2 spaces but found 0  indent
-  359:1  error  Expected indentation of 2 spaces but found 0  indent
-  360:1  error  Expected indentation of 2 spaces but found 0  indent
-  361:1  error  Expected indentation of 2 spaces but found 1  indent
+  335:1  error  Expected indentation of 2 spaces but found 1  indent
+  336:1  error  Expected indentation of 2 spaces but found 0  indent
+  337:1  error  Expected indentation of 2 spaces but found 0  indent
+  338:1  error  Expected indentation of 2 spaces but found 0  indent
+  349:1  error  Expected indentation of 2 spaces but found 0  indent
+  350:1  error  Expected indentation of 2 spaces but found 1  indent
+  351:1  error  Expected indentation of 2 spaces but found 0  indent
+  361:1  error  Expected indentation of 2 spaces but found 0  indent
   362:1  error  Expected indentation of 2 spaces but found 0  indent
   363:1  error  Expected indentation of 2 spaces but found 0  indent
   364:1  error  Expected indentation of 2 spaces but found 0  indent
-  365:1  error  Expected indentation of 2 spaces but found 1  indent
+  365:1  error  Expected indentation of 2 spaces but found 0  indent
   366:1  error  Expected indentation of 2 spaces but found 0  indent
   367:1  error  Expected indentation of 2 spaces but found 0  indent
+  368:1  error  Expected indentation of 2 spaces but found 1  indent
   369:1  error  Expected indentation of 2 spaces but found 0  indent
-  375:1  error  Expected indentation of 2 spaces but found 0  indent
-  376:1  error  Expected indentation of 2 spaces but found 0  indent
-  377:1  error  Expected indentation of 2 spaces but found 0  indent
-  396:1  error  Expected indentation of 2 spaces but found 0  indent
-  397:1  error  Expected indentation of 2 spaces but found 0  indent
-  398:1  error  Expected indentation of 2 spaces but found 0  indent
-  399:1  error  Expected indentation of 2 spaces but found 0  indent
+  370:1  error  Expected indentation of 2 spaces but found 0  indent
+  371:1  error  Expected indentation of 2 spaces but found 0  indent
+  372:1  error  Expected indentation of 2 spaces but found 0  indent
+  373:1  error  Expected indentation of 2 spaces but found 0  indent
+  379:1  error  Expected indentation of 2 spaces but found 0  indent
+  380:1  error  Expected indentation of 2 spaces but found 1  indent
+  381:1  error  Expected indentation of 2 spaces but found 1  indent
   400:1  error  Expected indentation of 2 spaces but found 0  indent
-  406:1  error  Expected indentation of 2 spaces but found 0  indent
-  407:1  error  Expected indentation of 2 spaces but found 0  indent
-  408:1  error  Expected indentation of 2 spaces but found 0  indent
-  409:1  error  Expected indentation of 2 spaces but found 0  indent
+  401:1  error  Expected indentation of 2 spaces but found 0  indent
+  402:1  error  Expected indentation of 2 spaces but found 0  indent
+  403:1  error  Expected indentation of 2 spaces but found 0  indent
+  404:1  error  Expected indentation of 2 spaces but found 0  indent
   410:1  error  Expected indentation of 2 spaces but found 0  indent
-  411:1  error  Expected indentation of 2 spaces but found 0  indent
-  412:1  error  Expected indentation of 4 spaces but found 0  indent
-  413:1  error  Expected indentation of 4 spaces but found 0  indent
-  414:1  error  Expected indentation of 4 spaces but found 0  indent
-  415:1  error  Expected indentation of 4 spaces but found 0  indent
-  416:1  error  Expected indentation of 4 spaces but found 3  indent
-  417:1  error  Expected indentation of 4 spaces but found 1  indent
-  418:1  error  Expected indentation of 4 spaces but found 0  indent
-  419:1  error  Expected indentation of 4 spaces but found 3  indent
-  420:1  error  Expected indentation of 2 spaces but found 0  indent
-  429:1  error  Expected indentation of 2 spaces but found 0  indent
-  430:1  error  Expected indentation of 2 spaces but found 0  indent
-  431:1  error  Expected indentation of 4 spaces but found 0  indent
-  432:1  error  Expected indentation of 4 spaces but found 0  indent
+  411:1  error  Expected indentation of 2 spaces but found 1  indent
+  412:1  error  Expected indentation of 2 spaces but found 0  indent
+  413:1  error  Expected indentation of 2 spaces but found 1  indent
+  414:1  error  Expected indentation of 2 spaces but found 0  indent
+  415:1  error  Expected indentation of 2 spaces but found 0  indent
+  416:1  error  Expected indentation of 4 spaces but found 1  indent
+  417:1  error  Expected indentation of 4 spaces but found 0  indent
+  418:1  error  Expected indentation of 4 spaces but found 2  indent
+  419:1  error  Expected indentation of 4 spaces but found 1  indent
+  420:1  error  Expected indentation of 4 spaces but found 1  indent
+  421:1  error  Expected indentation of 4 spaces but found 0  indent
+  422:1  error  Expected indentation of 4 spaces but found 0  indent
+  423:1  error  Expected indentation of 4 spaces but found 2  indent
+  424:1  error  Expected indentation of 2 spaces but found 0  indent
   433:1  error  Expected indentation of 2 spaces but found 0  indent
-  434:1  error  Expected indentation of 2 spaces but found 0  indent
+  434:1  error  Expected indentation of 2 spaces but found 1  indent
   435:1  error  Expected indentation of 4 spaces but found 0  indent
-  436:1  error  Expected indentation of 4 spaces but found 0  indent
+  436:1  error  Expected indentation of 4 spaces but found 1  indent
   437:1  error  Expected indentation of 2 spaces but found 0  indent
-  443:1  error  Expected indentation of 2 spaces but found 0  indent
-  444:1  error  Expected indentation of 2 spaces but found 0  indent
-  445:1  error  Expected indentation of 2 spaces but found 0  indent
-  446:1  error  Expected indentation of 2 spaces but found 0  indent
+  438:1  error  Expected indentation of 2 spaces but found 0  indent
+  439:1  error  Expected indentation of 4 spaces but found 1  indent
+  440:1  error  Expected indentation of 4 spaces but found 1  indent
+  441:1  error  Expected indentation of 2 spaces but found 0  indent
   447:1  error  Expected indentation of 2 spaces but found 0  indent
-  448:1  error  Expected indentation of 2 spaces but found 0  indent
+  448:1  error  Expected indentation of 2 spaces but found 1  indent
   449:1  error  Expected indentation of 2 spaces but found 0  indent
-  450:1  error  Expected indentation of 2 spaces but found 1  indent
+  450:1  error  Expected indentation of 2 spaces but found 0  indent
   451:1  error  Expected indentation of 2 spaces but found 0  indent
   452:1  error  Expected indentation of 2 spaces but found 0  indent
   453:1  error  Expected indentation of 2 spaces but found 0  indent
-  459:1  error  Expected indentation of 2 spaces but found 0  indent
-  460:1  error  Expected indentation of 2 spaces but found 0  indent
-  461:1  error  Expected indentation of 2 spaces but found 0  indent
-  462:1  error  Expected indentation of 4 spaces but found 0  indent
-  463:1  error  Expected indentation of 4 spaces but found 0  indent
-  464:1  error  Expected indentation of 2 spaces but found 0  indent
+  454:1  error  Expected indentation of 2 spaces but found 0  indent
+  455:1  error  Expected indentation of 2 spaces but found 0  indent
+  456:1  error  Expected indentation of 2 spaces but found 0  indent
+  457:1  error  Expected indentation of 2 spaces but found 0  indent
+  463:1  error  Expected indentation of 2 spaces but found 0  indent
+  464:1  error  Expected indentation of 2 spaces but found 1  indent
   465:1  error  Expected indentation of 2 spaces but found 0  indent
-  466:1  error  Expected indentation of 4 spaces but found 2  indent
-  467:1  error  Expected indentation of 4 spaces but found 2  indent
-  468:1  error  Expected indentation of 2 spaces but found 0  indent
-  474:1  error  Expected indentation of 2 spaces but found 0  indent
-  475:1  error  Expected indentation of 2 spaces but found 0  indent
-  485:1  error  Expected indentation of 2 spaces but found 1  indent
-  486:1  error  Expected indentation of 2 spaces but found 0  indent
-  487:1  error  Expected indentation of 2 spaces but found 0  indent
-  488:1  error  Expected indentation of 2 spaces but found 0  indent
+  466:1  error  Expected indentation of 4 spaces but found 0  indent
+  467:1  error  Expected indentation of 4 spaces but found 0  indent
+  468:1  error  Expected indentation of 2 spaces but found 1  indent
+  469:1  error  Expected indentation of 2 spaces but found 0  indent
+  470:1  error  Expected indentation of 4 spaces but found 2  indent
+  471:1  error  Expected indentation of 4 spaces but found 0  indent
+  472:1  error  Expected indentation of 2 spaces but found 1  indent
+  478:1  error  Expected indentation of 2 spaces but found 0  indent
+  479:1  error  Expected indentation of 2 spaces but found 1  indent
   489:1  error  Expected indentation of 2 spaces but found 0  indent
-  490:1  error  Expected indentation of 4 spaces but found 0  indent
-  491:1  error  Expected indentation of 4 spaces but found 0  indent
+  490:1  error  Expected indentation of 2 spaces but found 0  indent
+  491:1  error  Expected indentation of 2 spaces but found 0  indent
   492:1  error  Expected indentation of 2 spaces but found 0  indent
-  498:1  error  Expected indentation of 2 spaces but found 0  indent
-  499:1  error  Expected indentation of 2 spaces but found 0  indent
-  500:1  error  Expected indentation of 2 spaces but found 1  indent
-  501:1  error  Expected indentation of 2 spaces but found 0  indent
-  502:1  error  Expected indentation of 2 spaces but found 1  indent
+  493:1  error  Expected indentation of 2 spaces but found 0  indent
+  494:1  error  Expected indentation of 4 spaces but found 0  indent
+  495:1  error  Expected indentation of 4 spaces but found 0  indent
+  496:1  error  Expected indentation of 2 spaces but found 0  indent
+  502:1  error  Expected indentation of 2 spaces but found 0  indent
   503:1  error  Expected indentation of 2 spaces but found 1  indent
   504:1  error  Expected indentation of 2 spaces but found 0  indent
-  510:1  error  Expected indentation of 2 spaces but found 0  indent
-  511:1  error  Expected indentation of 2 spaces but found 0  indent
-  512:1  error  Expected indentation of 2 spaces but found 0  indent
-  513:1  error  Expected indentation of 4 spaces but found 0  indent
-  514:1  error  Expected indentation of 4 spaces but found 0  indent
-  515:1  error  Expected indentation of 4 spaces but found 0  indent
-  516:1  error  Expected indentation of 2 spaces but found 0  indent
-  517:1  error  Expected indentation of 2 spaces but found 0  indent
-  518:1  error  Expected indentation of 2 spaces but found 0  indent
-  519:1  error  Expected indentation of 2 spaces but found 0  indent
+  505:1  error  Expected indentation of 2 spaces but found 0  indent
+  507:1  error  Expected indentation of 2 spaces but found 0  indent
+  508:1  error  Expected indentation of 2 spaces but found 0  indent
+  514:1  error  Expected indentation of 2 spaces but found 0  indent
+  515:1  error  Expected indentation of 2 spaces but found 1  indent
+  516:1  error  Expected indentation of 2 spaces but found 1  indent
+  517:1  error  Expected indentation of 4 spaces but found 0  indent
+  518:1  error  Expected indentation of 4 spaces but found 2  indent
+  519:1  error  Expected indentation of 4 spaces but found 3  indent
   520:1  error  Expected indentation of 2 spaces but found 0  indent
-  521:1  error  Expected indentation of 2 spaces but found 0  indent
-  527:1  error  Expected indentation of 2 spaces but found 0  indent
-  528:1  error  Expected indentation of 2 spaces but found 0  indent
-  529:1  error  Expected indentation of 2 spaces but found 0  indent
-  533:1  error  Expected indentation of 2 spaces but found 0  indent
-  534:1  error  Expected indentation of 2 spaces but found 0  indent
-  535:1  error  Expected indentation of 2 spaces but found 1  indent
-  536:1  error  Expected indentation of 2 spaces but found 0  indent
+  521:1  error  Expected indentation of 2 spaces but found 1  indent
+  522:1  error  Expected indentation of 2 spaces but found 0  indent
+  523:1  error  Expected indentation of 2 spaces but found 0  indent
+  524:1  error  Expected indentation of 2 spaces but found 0  indent
+  525:1  error  Expected indentation of 2 spaces but found 0  indent
+  531:1  error  Expected indentation of 2 spaces but found 0  indent
+  532:1  error  Expected indentation of 2 spaces but found 1  indent
+  533:1  error  Expected indentation of 2 spaces but found 1  indent
   537:1  error  Expected indentation of 2 spaces but found 0  indent
-  538:1  error  Expected indentation of 2 spaces but found 0  indent
+  538:1  error  Expected indentation of 2 spaces but found 1  indent
   539:1  error  Expected indentation of 2 spaces but found 0  indent
-  540:1  error  Expected indentation of 2 spaces but found 1  indent
-  541:1  error  Expected indentation of 2 spaces but found 0  indent
-  542:1  error  Expected indentation of 2 spaces but found 0  indent
-  543:1  error  Expected indentation of 2 spaces but found 0  indent
+  540:1  error  Expected indentation of 2 spaces but found 0  indent
+  541:1  error  Expected indentation of 2 spaces but found 1  indent
+  543:1  error  Expected indentation of 2 spaces but found 1  indent
   544:1  error  Expected indentation of 2 spaces but found 0  indent
   545:1  error  Expected indentation of 2 spaces but found 0  indent
-  546:1  error  Expected indentation of 2 spaces but found 1  indent
+  546:1  error  Expected indentation of 2 spaces but found 0  indent
+  547:1  error  Expected indentation of 2 spaces but found 0  indent
+  548:1  error  Expected indentation of 2 spaces but found 1  indent
+  549:1  error  Expected indentation of 2 spaces but found 0  indent
+  550:1  error  Expected indentation of 2 spaces but found 0  indent
 
-✖ 782 problems (778 errors, 4 warnings)
-  212 errors and 1 warning potentially fixable with the `--fix` option.
+✖ 694 problems (691 errors, 3 warnings)
+  141 errors and 0 warnings potentially fixable with the `--fix` option.
 

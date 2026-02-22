@@ -1,6 +1,6 @@
 import type { DbSchemaConfig } from '@/shared/contracts/ai-paths';
 import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
-import type { CollectionSchemaDto } from '@/shared/contracts/database';
+import type { CollectionSchema, CollectionSchemaDto } from '@/shared/contracts/database';
 
 import { dbApi, type ApiResponse } from '../../../api';
 
@@ -33,14 +33,16 @@ const formatSchemaAsText = (schema: SchemaResponse): string => {
     '',
   ];
 
-  const collections = Array.isArray(schema.collections)
-    ? schema.collections
-    : Object.values(schema.collections);
+  const rawCollections = schema.collections;
+  const collections: CollectionSchema[] = Array.isArray(rawCollections)
+    ? (rawCollections as CollectionSchema[])
+    : Object.values(rawCollections as Record<string, CollectionSchema>);
 
   for (const collection of collections) {
     lines.push(`Collection: ${collection.name}`);
     lines.push('Fields:');
-    for (const field of collection.fields ?? []) {
+    const fields = (collection.fields ?? []);
+    for (const field of fields) {
       const markers: string[] = [];
       if (field.isId) markers.push('ID');
       if (field.isRequired) markers.push('required');

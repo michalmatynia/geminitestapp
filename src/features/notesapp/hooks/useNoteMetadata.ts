@@ -5,7 +5,7 @@ import { useState } from 'react';
 // - Color requires normalization and contrast calculation
 // - Pins/archives/favorites need reactive updates
 // Extracting prevents prop drilling and makes metadata updates testable.
-export function useNoteMetadata(note: { id?: string; title?: string; color?: string | null; isPinned?: boolean; isArchived?: boolean; isFavorite?: boolean; [key: string]: any } | null): {
+export function useNoteMetadata(note: { id?: string; title?: string; color?: string | null; isPinned?: boolean; isArchived?: boolean; isFavorite?: boolean; [key: string]: unknown } | null): {
   title: string;
   setTitle: (title: string) => void;
   color: string;

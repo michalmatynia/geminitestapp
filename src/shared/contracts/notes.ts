@@ -1,3 +1,4 @@
+import React from 'react';
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
@@ -359,11 +360,11 @@ export type UndoAction =
 
 export interface UseNoteOperationsProps {
   selectedNotebookId: string | null;
-  notesRef: unknown; // RefObject<NoteWithRelations[]>
-  folderTreeRef: unknown; // RefObject<CategoryWithChildren[]>
+  notesRef: React.RefObject<NoteWithRelations[] | null>;
+  folderTreeRef: React.RefObject<CategoryWithChildren[] | null>;
   fetchNotes: () => Promise<void>;
   fetchFolderTree: () => Promise<void>;
-  setUndoStack: unknown; // React.Dispatch<React.SetStateAction<UndoAction[]>>
+  setUndoStack: React.Dispatch<React.SetStateAction<UndoAction[]>>;
   toast: (
     message: string,
     options?: { variant?: 'success' | 'error' | 'info'; duration?: number },

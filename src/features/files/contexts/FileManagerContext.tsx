@@ -7,7 +7,7 @@ import { logClientError } from '@/features/observability';
 import type { ExpandedImageFile } from '@/features/products';
 import { useAssets3D } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type { Asset3dDto as Asset3DRecord, Asset3dListFiltersDto as Asset3DListFilters } from '@/shared/contracts/viewer3d';
+import type { Asset3DRecordDto as Asset3DRecord, Asset3DListFiltersDto as Asset3DListFilters } from '@/shared/contracts/viewer3d';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 
@@ -125,9 +125,11 @@ export function FileManagerProvider({
 
   const { data: files = [] } = useFileQueries(queryParams);
 
-  const assetFilters = useMemo(() => {
+  const assetFilters = useMemo<Asset3DListFilters>(() => {
     const filters: Asset3DListFilters = { search: filenameSearch || null };
-    if (enableTagSearch && tagSearchList.length > 0) filters.tags = tagSearchList;
+    if (enableTagSearch && tagSearchList.length > 0) {
+      filters.tags = tagSearchList;
+    }
     return filters;
   }, [enableTagSearch, filenameSearch, tagSearchList]);
 

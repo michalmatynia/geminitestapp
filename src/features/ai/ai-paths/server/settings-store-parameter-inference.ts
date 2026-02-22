@@ -46,13 +46,13 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         title: 'JSON Parser',
         description: 'Extract fields into outputs or a single bundle.',
         inputs: ['entityJson', 'context'],
-        outputs: ['bundle', 'images', 'catalogId'],
+        outputs: ['bundle', 'images'],
         id: 'node-parser-params',
         position: { x: 540, y: 520 },
         config: {
           parser: {
             mappings: {
-              catalogId: '',
+              catalogId: '$.catalogs[0].catalogId',
               content_en: '',
               images: '',
               productId: '',
@@ -84,7 +84,6 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
           'queryCallback',
           'schema',
           'aiQuery',
-          'catalogId',
         ],
         outputs: ['result', 'bundle', 'aiPrompt'],
         id: 'node-query-params',
@@ -104,7 +103,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
               idType: 'string',
               queryTemplate:
                 '{\n' +
-                '  "catalogId": "{{catalogId}}"\n' +
+                '  "catalogId": "{{bundle.catalogId}}"\n' +
                 '}',
               limit: 200,
               sort: '',
@@ -411,6 +410,13 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
     ],
     edges: [
       {
+        id: 'edge-params-00',
+        from: 'node-parser-params',
+        to: 'node-query-params',
+        fromPort: 'bundle',
+        toPort: 'bundle',
+      },
+      {
         id: 'edge-params-01',
         from: 'node-trigger-params',
         to: 'node-parser-params',
@@ -708,7 +714,7 @@ export const needsParameterInferenceConfigUpgrade = (
     if (
       !queryTemplate ||
       !queryTemplate.includes('catalogId') ||
-      !queryTemplate.includes('{{catalogId}}')
+      !queryTemplate.includes('{{bundle.catalogId}}')
     ) {
       return true;
     }
@@ -931,10 +937,17 @@ export const needsParameterInferenceConfigUpgrade = (
           ] as Record<string, unknown>
         )['mappings']
         : null;
+    const catalogIdMapping =
+      parserMappings &&
+      typeof parserMappings === 'object' &&
+      'catalogId' in (parserMappings)
+        ? (parserMappings as Record<string, unknown>)['catalogId']
+        : undefined;
     if (
       !parserMappings ||
       typeof parserMappings !== 'object' ||
-      !('catalogId' in (parserMappings))
+      typeof catalogIdMapping !== 'string' ||
+      !catalogIdMapping.trim()
     )
       return true;
 
@@ -947,7 +960,18 @@ export const needsParameterInferenceConfigUpgrade = (
         edge['toPort'] === 'catalogId'
       );
     });
-    return hasLegacyCatalogIdEdge;
+    if (hasLegacyCatalogIdEdge) return true;
+
+    const hasBundleEdgeToQuery = edges.some((edge) => {
+      if (!edge || typeof edge !== 'object') return false;
+      return (
+        edge['from'] === 'node-parser-params' &&
+        edge['to'] === 'node-query-params' &&
+        edge['fromPort'] === 'bundle' &&
+        edge['toPort'] === 'bundle'
+      );
+    });
+    return !hasBundleEdgeToQuery;
   } catch {
     return true;
   }

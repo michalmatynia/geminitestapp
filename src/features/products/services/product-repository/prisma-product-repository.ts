@@ -635,8 +635,14 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
     return toProductRecord(duplicated as FullPrismaProduct);
   },
 
-  addProductImages: async (productId, imageFileIds) => {
-    const normalizedIds = normalizeImageFileIds(imageFileIds);
+  getProductImages: async (productId) => {
+    const images = await tx.productImage.findMany({
+      where: { productId },
+      include: { imageFile: true },
+      orderBy: { assignedAt: 'desc' },
+    });
+    return images.map(toProductImageRecord).filter((i): i is ProductImageRecord => i !== null) as ProductImageRecord[];
+    },  addProductImages: async (productId, imageFileIds) => {    const normalizedIds = normalizeImageFileIds(imageFileIds);
     if (normalizedIds.length === 0) return;
     const now = Date.now();
     await tx.productImage.createMany({
@@ -1021,6 +1027,14 @@ export const prismaProductRepository: ProductRepository = {
     return toProductRecord(duplicated as FullPrismaProduct);
   },
 
+  async getProductImages(productId: string) {
+    const images = await prisma.productImage.findMany({
+      where: { productId },
+      include: { imageFile: true },
+      orderBy: { assignedAt: 'desc' },
+    });
+    return images.map(toProductImageRecord).filter((i): i is ProductImageRecord => i !== null) as ProductImageRecord[];
+    },
   async addProductImages(productId: string, imageFileIds: string[]) {
     const normalizedIds = normalizeImageFileIds(imageFileIds);
     if (normalizedIds.length === 0) return;

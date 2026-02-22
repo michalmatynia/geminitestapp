@@ -1,0 +1,156 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/duplicate/handler.ts
+  35:9   error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  35:51  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/handler.ts
+  144:41  error  Placing a void expression inside another expression is forbidden. Move it to its own statement instead  @typescript-eslint/no-confusing-void-expression
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/images/[imageFileId]/handler.ts
+  27:9  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/count/handler.ts
+  14:9   error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  14:23  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  15:30  error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/paged/handler.ts
+  17:9   error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  17:24  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/foldertree/hooks/useMasterFolderTreeConfig.ts
+  13:9   error  Unsafe assignment of an error typed value                                                  @typescript-eslint/no-unsafe-assignment
+  14:1   error  Expected indentation of 2 spaces but found 1                                               indent
+  14:52  error  Unsafe argument of type error typed assigned to a parameter of type `FolderTreeProfileV2`  @typescript-eslint/no-unsafe-argument
+  16:1   error  Expected indentation of 2 spaces but found 0                                               indent
+  16:12  error  Unsafe assignment of an error typed value                                                  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/services/external-producer-repository.ts
+  137:9   error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  137:30  error  Unsafe member access .id on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  138:9   error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  138:24  error  Unsafe member access .name on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
+  153:15  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  153:35  error  Unsafe member access .connectionId on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  154:15  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  154:33  error  Unsafe member access .externalId on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
+  158:17  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  158:29  error  Unsafe member access .name on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
+  159:17  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  159:33  error  Unsafe member access .metadata on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
+  181:17  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  181:37  error  Unsafe member access .connectionId on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  182:17  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  182:35  error  Unsafe member access .externalId on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
+  186:15  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  186:35  error  Unsafe member access .connectionId on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  187:15  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  187:33  error  Unsafe member access .externalId on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
+  188:15  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  188:27  error  Unsafe member access .name on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
+  192:15  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  192:27  error  Unsafe member access .name on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/services/external-tag-repository.ts
+  37:9   error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  37:25  error  Unsafe member access .id on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  38:9   error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  38:19  error  Unsafe member access .name on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
+  47:17  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  47:37  error  Unsafe member access .connectionId on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  48:17  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  48:35  error  Unsafe member access .externalId on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
+  52:15  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  52:35  error  Unsafe member access .connectionId on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  53:15  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  53:33  error  Unsafe member access .externalId on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
+  54:15  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  54:27  error  Unsafe member access .name on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
+  58:15  error  Unsafe assignment of an error typed value                             @typescript-eslint/no-unsafe-assignment
+  58:27  error  Unsafe member access .name on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/services/tag-mapping-repository.ts
+   96:11  error  Unsafe assignment of an error typed value                              @typescript-eslint/no-unsafe-assignment
+   96:31  error  Unsafe member access .connectionId on a type that cannot be resolved   @typescript-eslint/no-unsafe-member-access
+   97:11  error  Unsafe assignment of an error typed value                              @typescript-eslint/no-unsafe-assignment
+   97:32  error  Unsafe member access .externalTagId on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+   98:11  error  Unsafe assignment of an error typed value                              @typescript-eslint/no-unsafe-assignment
+   98:32  error  Unsafe member access .internalTagId on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  108:21  error  Unsafe member access .externalTagId on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  109:13  error  Unsafe assignment of an error typed value                              @typescript-eslint/no-unsafe-assignment
+  109:34  error  Unsafe member access .externalTagId on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  111:21  error  Unsafe member access .isActive on a type that cannot be resolved       @typescript-eslint/no-unsafe-member-access
+  111:49  error  Unsafe assignment of an error typed value                              @typescript-eslint/no-unsafe-assignment
+  111:65  error  Unsafe member access .isActive on a type that cannot be resolved       @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/services/tradera-listing-service.ts
+  223:41  error  Unsafe member access .relistPolicy on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
+  414:60  error  Unsafe argument of type error typed assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  414:68  error  Unsafe member access .productId on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+  416:69  error  Unsafe member access .productId on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+  424:26  error  Unsafe member access .productId on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+  480:7   error  Unsafe argument of type error typed assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  480:15  error  Unsafe member access .id on a type that cannot be resolved                    @typescript-eslint/no-unsafe-member-access
+  559:40  error  Unsafe member access .marketplaceData on a type that cannot be resolved       @typescript-eslint/no-unsafe-member-access
+  579:58  error  Unsafe argument of type error typed assigned to a parameter of type `string`  @typescript-eslint/no-unsafe-argument
+  579:66  error  Unsafe member access .productId on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+  581:67  error  Unsafe member access .productId on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+  590:24  error  Unsafe member access .productId on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/components/NoteCard.tsx
+  284:31  error  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  284:58  error  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  290:35  error  Unsafe member access .id on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  291:42  error  Unsafe argument of type `any` assigned to a parameter of type `string | null`  @typescript-eslint/no-unsafe-argument
+  291:48  error  Unsafe member access .id on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  296:30  error  Unsafe member access .name on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/components/NoteDetailView.tsx
+  252:23  error  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  252:50  error  Unexpected any. Specify a different type                                       @typescript-eslint/no-explicit-any
+  254:20  error  Unsafe member access .isNote on an `any` value                                 @typescript-eslint/no-unsafe-member-access
+  255:54  error  Unsafe member access .name on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+  260:39  error  Unsafe argument of type `any` assigned to a parameter of type `string | null`  @typescript-eslint/no-unsafe-argument
+  260:45  error  Unsafe member access .id on an `any` value                                     @typescript-eslint/no-unsafe-member-access
+  266:24  error  Unsafe member access .name on an `any` value                                   @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/components/NoteListView.tsx
+  27:5  warning  'selectedNotebookId' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/context/NoteFormContext.tsx
+  227:23  error  Unsafe argument of type `any` assigned to a parameter of type `{ [key: string]: any; id?: string; title?: string; color?: string | null; isPinned?: boolean; isArchived?: boolean; isFavorite?: boolean; } | null`  @typescript-eslint/no-unsafe-argument
+  227:31  error  Unexpected any. Specify a different type                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  237:21  error  Unsafe argument of type `any` assigned to a parameter of type `{ [key: string]: any; id?: string; editorType?: string; content?: string; } | null`                                                                  @typescript-eslint/no-unsafe-argument
+  237:29  error  Unexpected any. Specify a different type                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  237:34  error  Unsafe argument of type `any` assigned to a parameter of type `"code" | "markdown" | "wysiwyg" | "rich-text" | "plain-text"`                                                                                        @typescript-eslint/no-unsafe-argument
+  237:57  error  Unexpected any. Specify a different type                                                                                                                                                                            @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/hooks/useEditorMode.ts
+  15:78  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/notesapp/hooks/useNoteMetadata.ts
+  8:172  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/form/ProductFormStudio.tsx
+  895:11  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/performance/cached-service.ts
+  100:28  error  Unsafe return of a value of type error            @typescript-eslint/no-unsafe-return
+  100:28  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+  123:7   error  Unsafe return of a value of type error            @typescript-eslint/no-unsafe-return
+  123:14  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/mongo-product-repository.ts
+   738:9  error  Duplicate key 'getProductImages'  no-dupe-keys
+  1079:9  error  Duplicate key 'getProductImages'  no-dupe-keys
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.ts
+   644:5  error  Unsafe return of a value of type `any[]`  @typescript-eslint/no-unsafe-return
+  1038:5  error  Unsafe return of a value of type `any[]`  @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/contracts/integrations.ts
+  9:8  warning  'ProductTagDto' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 110 problems (108 errors, 2 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

@@ -402,7 +402,7 @@ export function RichTextEditor({
 
   const addLink = useCallback((): void => {
     if (!editor) return;
-    prompt({
+    void prompt({
       title: 'Insert Link',
       label: 'URL',
       placeholder: 'https://...',
@@ -415,7 +415,7 @@ export function RichTextEditor({
 
   const addImage = useCallback((): void => {
     if (!editor || !allowImage) return;
-    prompt({
+    void prompt({
       title: 'Insert Image',
       label: 'Image URL',
       placeholder: 'https://...',
@@ -424,7 +424,7 @@ export function RichTextEditor({
         editor.chain().focus().setImage({ src }).run();
       }
     });
-  }, [allowImage, editor, prompt]);
+  }, [editor, allowImage, prompt]);
 
   const addTable = useCallback((): void => {
     if (!editor || !allowTable) return;

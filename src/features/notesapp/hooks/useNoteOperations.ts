@@ -173,8 +173,8 @@ export function useNoteOperations({
         categoryIds: note.categories?.map((c: { categoryId: string }) => c.categoryId) || [],
         relatedNoteIds: (note.relations ?? []).map((related: { id: string }) => related.id),
         notebookId: note.notebookId ?? selectedNotebookId ?? null,
-      } as any);
-
+      });
+              
       toast('Note duplicated successfully');
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'useNoteOperations.handleDuplicateNote', noteId } });

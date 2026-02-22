@@ -565,8 +565,13 @@ export const mongoProductRepository: ProductRepository = {
       total: result?.total?.[0]?.count ?? 0,
     };
   },
-
+  
+  async getProductImages(_productId: string) {
+    return [];
+  },
+  
   async getProductById(id: string) {
+  
     const collection = await getProductCollection();
     const doc = await collection.findOne(buildProductIdFilter(id));
     return doc ? toProductResponse({ ...doc, _id: doc._id }) : null;
@@ -730,8 +735,7 @@ export const mongoProductRepository: ProductRepository = {
     });
   },
 
-  async deleteProduct(id: string) {
-    const db = await getMongoDb();
+  async deleteProduct(id: string) {    const db = await getMongoDb();
     const result = await db
       .collection<ProductDocument>(productCollectionName)
       .findOneAndDelete(buildProductIdFilter(id));
@@ -1064,8 +1068,7 @@ export const mongoProductRepository: ProductRepository = {
       );
   },
 
-  async countProductsByImageFileId(imageFileId: string) {
-    const db = await getMongoDb();
+  async countProductsByImageFileId(imageFileId: string) {    const db = await getMongoDb();
     return db
       .collection<ProductDocument>(productCollectionName)
       .countDocuments({ 'images.imageFileId': imageFileId });

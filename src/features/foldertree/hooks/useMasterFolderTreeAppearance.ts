@@ -3,12 +3,14 @@
 import { useCallback, useMemo } from 'react';
 
 import { ICON_LIBRARY_MAP } from '@/features/icons';
+import type {
+  FolderTreeIconSlot,
+  FolderTreeProfileV2,
+} from '@/shared/contracts/master-folder-tree';
 import {
   getFolderTreePlaceholderClasses,
   resolveFolderTreeIconV2,
-  type FolderTreeIconSlot,
-  type FolderTreeProfileV2,
-} from '@/shared/utils';
+} from '@/shared/utils/folder-tree-profiles-v2';
 
 import type { LucideIcon } from 'lucide-react';
 

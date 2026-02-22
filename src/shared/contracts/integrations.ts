@@ -218,7 +218,16 @@ export const categoryMappingSchema = dtoBaseSchema.extend({
   isActive: z.boolean(),
 });
 
-export type CategoryMappingDto = z.infer<typeof categoryMappingSchema>;
+export interface CategoryMappingDto {
+  id: string;
+  connectionId: string;
+  externalCategoryId: string;
+  internalCategoryId: string;
+  catalogId: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+}
 
 export const externalCategorySchema = dtoBaseSchema.extend({
   connectionId: z.string(),
@@ -232,7 +241,20 @@ export const externalCategorySchema = dtoBaseSchema.extend({
   fetchedAt: z.string(),
 });
 
-export type ExternalCategoryDto = z.infer<typeof externalCategorySchema>;
+export interface ExternalCategoryDto {
+  id: string;
+  connectionId: string;
+  externalId: string;
+  name: string;
+  parentExternalId: string | null;
+  path: string | null;
+  depth: number;
+  isLeaf: boolean;
+  metadata: Record<string, unknown> | null;
+  fetchedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export interface ExternalCategoryWithChildrenDto extends ExternalCategoryDto {
   children: ExternalCategoryWithChildrenDto[];
@@ -269,7 +291,18 @@ export const externalCategorySyncInputSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type ExternalCategorySyncInputDto = z.infer<typeof externalCategorySyncInputSchema>;
+export interface ExternalCategorySyncInputDto {
+  connectionId: string;
+  externalId: string;
+  name: string;
+  parentExternalId: string | null;
+  path: string | null;
+  depth: number;
+  isLeaf: boolean;
+  metadata?: Record<string, unknown> | null;
+}
+
+export type ExternalCategorySyncInput = ExternalCategorySyncInputDto;
 
 export const categoryMappingCreateInputSchema = z.object({
   connectionId: z.string(),
@@ -278,21 +311,36 @@ export const categoryMappingCreateInputSchema = z.object({
   catalogId: z.string(),
 });
 
-export type CategoryMappingCreateInputDto = z.infer<typeof categoryMappingCreateInputSchema>;
+export interface CategoryMappingCreateInputDto {
+  connectionId: string;
+  externalCategoryId: string;
+  internalCategoryId: string;
+  catalogId: string;
+}
+
+export type CategoryMappingCreateInput = CategoryMappingCreateInputDto;
 
 export const categoryMappingUpdateInputSchema = z.object({
   internalCategoryId: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 
-export type CategoryMappingUpdateInputDto = z.infer<typeof categoryMappingUpdateInputSchema>;
+export interface CategoryMappingUpdateInputDto {
+  internalCategoryId?: string;
+  isActive?: boolean;
+}
+
+export type CategoryMappingUpdateInput = CategoryMappingUpdateInputDto;
 
 export const categoryMappingWithDetailsSchema = categoryMappingSchema.extend({
   externalCategory: externalCategorySchema,
   internalCategory: z.any(), // ProductCategoryDto
 });
 
-export type CategoryMappingWithDetailsDto = z.infer<typeof categoryMappingWithDetailsSchema>;
+export interface CategoryMappingWithDetailsDto extends CategoryMappingDto {
+  externalCategory: ExternalCategoryDto;
+  internalCategory: ProductCategoryDto | null;
+}
 
 export const externalTagSchema = dtoBaseSchema.extend({
   connectionId: z.string(),
@@ -320,21 +368,21 @@ export const tagMappingWithDetailsSchema = tagMappingSchema.extend({
 
 export type TagMappingWithDetailsDto = z.infer<typeof tagMappingWithDetailsSchema>;
 
-export const baseTagSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-});
+export interface BaseTagDto {
+  id: string;
+  name: string;
+}
 
-export type BaseTagDto = z.infer<typeof baseTagSchema>;
+export type BaseTag = BaseTagDto;
 
-export const externalTagSyncInputSchema = z.object({
-  connectionId: z.string(),
-  externalId: z.string(),
-  name: z.string(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-});
+export interface ExternalTagSyncInputDto {
+  connectionId: string;
+  externalId: string;
+  name: string;
+  metadata?: Record<string, unknown> | null;
+}
 
-export type ExternalTagSyncInputDto = z.infer<typeof externalTagSyncInputSchema>;
+export type ExternalTagSyncInput = ExternalTagSyncInputDto;
 
 export const tagMappingCreateInputSchema = z.object({
   connectionId: z.string(),
@@ -359,7 +407,16 @@ export const externalProducerSchema = dtoBaseSchema.extend({
   fetchedAt: z.string(),
 });
 
-export type ExternalProducerDto = z.infer<typeof externalProducerSchema>;
+export interface ExternalProducerDto {
+  id: string;
+  connectionId: string;
+  externalId: string;
+  name: string;
+  metadata: Record<string, unknown> | null;
+  fetchedAt: string;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export const producerMappingSchema = dtoBaseSchema.extend({
   connectionId: z.string(),
@@ -368,14 +425,25 @@ export const producerMappingSchema = dtoBaseSchema.extend({
   isActive: z.boolean(),
 });
 
-export type ProducerMappingDto = z.infer<typeof producerMappingSchema>;
+export interface ProducerMappingDto {
+  id: string;
+  connectionId: string;
+  externalProducerId: string;
+  internalProducerId: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+}
 
 export const producerMappingWithDetailsSchema = producerMappingSchema.extend({
   externalProducer: externalProducerSchema,
   internalProducer: z.any(), // ProducerDto
 });
 
-export type ProducerMappingWithDetailsDto = z.infer<typeof producerMappingWithDetailsSchema>;
+export interface ProducerMappingWithDetailsDto extends ProducerMappingDto {
+  externalProducer: ExternalProducerDto;
+  internalProducer: ProducerDto | null;
+}
 
 export const baseProducerFromApiSchema = z.object({
   manufacturer_id: z.union([z.number(), z.string()]).optional(),
@@ -386,21 +454,21 @@ export const baseProducerFromApiSchema = z.object({
 
 export type BaseProducerFromApiDto = z.infer<typeof baseProducerFromApiSchema>;
 
-export const baseProducerSchema = z.object({
-  id: z.string(),
-  name: z.string(),
-});
+export interface BaseProducerDto {
+  id: string;
+  name: string;
+}
 
-export type BaseProducerDto = z.infer<typeof baseProducerSchema>;
+export type BaseProducer = BaseProducerDto;
 
-export const externalProducerSyncInputSchema = z.object({
-  connectionId: z.string(),
-  externalId: z.string(),
-  name: z.string(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-});
+export interface ExternalProducerSyncInputDto {
+  connectionId: string;
+  externalId: string;
+  name: string;
+  metadata?: Record<string, unknown> | null;
+}
 
-export type ExternalProducerSyncInputDto = z.infer<typeof externalProducerSyncInputSchema>;
+export type ExternalProducerSyncInput = ExternalProducerSyncInputDto;
 
 export const producerMappingCreateInputSchema = z.object({
   connectionId: z.string(),
@@ -408,14 +476,25 @@ export const producerMappingCreateInputSchema = z.object({
   internalProducerId: z.string(),
 });
 
-export type ProducerMappingCreateInputDto = z.infer<typeof producerMappingCreateInputSchema>;
+export interface ProducerMappingCreateInputDto {
+  connectionId: string;
+  externalProducerId: string;
+  internalProducerId: string;
+}
+
+export type ProducerMappingCreateInput = ProducerMappingCreateInputDto;
 
 export const producerMappingUpdateInputSchema = z.object({
   externalProducerId: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 
-export type ProducerMappingUpdateInputDto = z.infer<typeof producerMappingUpdateInputSchema>;
+export interface ProducerMappingUpdateInputDto {
+  externalProducerId?: string;
+  isActive?: boolean;
+}
+
+export type ProducerMappingUpdateInput = ProducerMappingUpdateInputDto;
 
 /**
  * Template DTOs

@@ -8,7 +8,7 @@ import type {
   DatabasePreviewMode,
   DatabasePreviewGroup,
   DatabasePreviewTable,
-  DatabasePreviewRow,
+  DatabaseTablePreviewData,
   DatabaseEnumInfo,
 } from '@/shared/contracts/database';
 import { internalError } from '@/shared/errors/app-error';
@@ -27,7 +27,7 @@ interface DatabaseContextType {
   backupName?: string | undefined;
   groups: DatabasePreviewGroup[];
   tables: DatabasePreviewTable[];
-  tableRows: DatabasePreviewRow[];
+  tableRows: DatabaseTablePreviewData[];
   enums: DatabaseEnumInfo[];
   databaseSize: string;
   page: number;

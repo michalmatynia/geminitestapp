@@ -53,9 +53,9 @@ export type Asset3DUpdateInputDto = z.infer<typeof asset3DUpdateInputSchema>;
 export type Asset3DUpdateInput = Asset3DUpdateInputDto;
 
 export const asset3DListFiltersSchema = z.object({
-  categoryId: z.string().optional(),
-  tagId: z.string().optional(),
-  search: z.string().optional(),
+  categoryId: z.string().nullable().optional(),
+  tagId: z.string().nullable().optional(),
+  search: z.string().nullable().optional(),
   tags: z.array(z.string()).optional(),
   filename: z.string().optional(),
   isPublic: z.boolean().optional(),

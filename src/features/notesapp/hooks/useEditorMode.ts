@@ -12,7 +12,7 @@ import { useToast } from '@/shared/ui';
 // - Migration involves API calls and content updates
 // Extracting this prevents NoteForm bloat and makes migrations testable.
 export function useEditorMode(
-  note: { id?: string; editorType?: string; content?: string; [key: string]: any } | null,
+  note: { id?: string; editorType?: string; content?: string; [key: string]: unknown } | null,
   settingsEditorMode: NoteEditorType
 ): {
   editorMode: NoteEditorType;

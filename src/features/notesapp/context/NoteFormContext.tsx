@@ -224,7 +224,7 @@ export function NoteFormProvider({
     isFavorite,
     setIsFavorite,
     getReadableTextColor,
-  } = useNoteMetadata(note as any);
+  } = useNoteMetadata(note);
 
   // Editor mode & migration
   const {
@@ -234,8 +234,7 @@ export function NoteFormProvider({
     isMigrating,
     handleMigrateToWysiwyg,
     handleMigrateToMarkdown,
-  } = useEditorMode(note as any, settings.editorMode as any);
-
+  } = useEditorMode(note, settings.editorMode);
   // File attachments
   const {
     noteFiles,

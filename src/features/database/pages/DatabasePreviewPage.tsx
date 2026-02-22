@@ -25,7 +25,7 @@ import type {
   DatabaseColumnInfo,
   DatabaseForeignKeyInfo,
   DatabaseIndexInfo,
-  DatabasePreviewRow,
+  DatabaseTablePreviewData,
   DatabaseTableDetail,
   DatabaseType,
   DatabasePreviewMode,
@@ -90,7 +90,7 @@ function TableDetailCard({
   const { tableRows } = useDatabasePreviewState();
 
   const tableRow = useMemo(
-    () => tableRows.find((r: DatabasePreviewRow) => r.name === detail.name),
+    () => tableRows.find((r: DatabaseTablePreviewData) => r.name === detail.name),
     [tableRows, detail.name]
   );
 
@@ -320,7 +320,7 @@ function ForeignKeysTab({ foreignKeys }: { foreignKeys: DatabaseForeignKeyInfo[]
 function DataTab({
   tableRows,
 }: {
-  tableRows: DatabasePreviewRow | undefined;
+  tableRows: DatabaseTablePreviewData | undefined;
 }): React.JSX.Element {
   const { page, pageSize } = useDatabasePreviewState();
   

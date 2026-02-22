@@ -99,7 +99,7 @@ describe('productService', () => {
       expect(product?.sku).toBe('NEW-SKU-123');
       expect(product?.price).toBe(500);
 
-      const dbProduct = await prisma.product.findUnique({ where: { id: product!.id } });
+      const dbProduct = await prisma.product.findUnique({ where: { id: product.id } });
       expect(dbProduct).toBeDefined();
       expect(dbProduct?.name_en).toBe('New Product');
     });
@@ -119,7 +119,7 @@ describe('productService', () => {
       const product = await productService.createProduct(formData);
       
       const productInCatalog = await prisma.productCatalog.findFirst({
-        where: { productId: product!.id, catalogId: catalog.id },
+        where: { productId: product.id, catalogId: catalog.id },
       });
       expect(productInCatalog).toBeDefined();
     });

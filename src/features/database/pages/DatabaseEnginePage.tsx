@@ -47,7 +47,6 @@ function DatabaseEngineContent(): React.JSX.Element {
     rows,
     validationErrors,
     saveConfiguration,
-    isLoading,
     isFetching,
     refetch,
     engineStatus,

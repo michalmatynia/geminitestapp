@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useConfiguredMasterFolderTree } from '@/features/foldertree/master/useConfiguredMasterFolderTree';
 import type { UseConfiguredMasterFolderTreeOptions } from '@/features/foldertree/master/useConfiguredMasterFolderTree';
-import type { FolderTreeProfileV2, MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
+import type { FolderTreeIconSlot, FolderTreeProfileV2, MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui/toast';
@@ -31,7 +31,7 @@ export type UseMasterFolderTreeInstanceOptions = Omit<
 };
 
 type ResolveMasterFolderTreeIconInput = {
-  slot: any;
+  slot: FolderTreeIconSlot;
   kind?: string | null;
   fallback: LucideIcon;
   fallbackId?: string | null;

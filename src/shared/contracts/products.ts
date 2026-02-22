@@ -1160,10 +1160,12 @@ export const createProductDraftSchema = productDraftSchema.omit({
 });
 
 export type CreateProductDraftDto = z.infer<typeof createProductDraftSchema>;
+export type CreateProductDraftInput = CreateProductDraftDto;
 
 export const updateProductDraftSchema = createProductDraftSchema.partial();
 
 export type UpdateProductDraftDto = Partial<CreateProductDraftDto>;
+export type UpdateProductDraftInput = UpdateProductDraftDto;
 
 /**
  * Product Repository Interfaces
@@ -1259,8 +1261,11 @@ export type TransactionalProductRepository = {
   ): Promise<ProductRecord | null>;
   deleteProduct(id: string): Promise<ProductRecord | null>;
   duplicateProduct(id: string, sku: string): Promise<ProductRecord | null>;
+  getProductImages(productId: string): Promise<ProductImageRecord[]>;
   addProductImages(productId: string, imageFileIds: string[]): Promise<void>;
   replaceProductImages(productId: string, imageFileIds: string[]): Promise<void>;
+  removeProductImage(productId: string, imageFileId: string): Promise<void>;
+  countProductsByImageFileId(imageFileId: string): Promise<number>;
   replaceProductCatalogs(
     productId: string,
     catalogIds: string[]
@@ -1281,10 +1286,7 @@ export type TransactionalProductRepository = {
     productId: string,
     noteIds: string[]
   ): Promise<void>;
-  removeProductImage(productId: string, imageFileId: string): Promise<void>;
-  countProductsByImageFileId(imageFileId: string): Promise<number>;
 };
-
 export type ProductRepository = TransactionalProductRepository & {
   getProductsWithCount(filters: ProductFilters): Promise<{ products: ProductWithImages[]; total: number }>;
   createProductInTransaction: <T>(
@@ -1302,6 +1304,96 @@ export type TagRepository = {
   deleteTag(id: string): Promise<void>;
   findByName(catalogId: string, name: string): Promise<ProductTag | null>;
 };
+
+export type PatternFormData = ProductValidationPatternFormDataDto;
+
+export interface SequenceGroupView {
+  id: string;
+  label: string;
+  debounceMs: number;
+  patternIds: string[];
+}
+
+export interface ValidatorSettingsController {
+  patterns: ProductValidationPattern[];
+  settings: unknown; // Ideally more specific, but 'unknown' is what's implied from useValidatorSettings()
+  summary: {
+    total: number;
+    enabled: number;
+    replacementEnabled: number;
+  };
+  orderedPatterns: ProductValidationPattern[];
+  enabledByDefault: boolean;
+  formatterEnabledByDefault: boolean;
+  instanceDenyBehavior: ProductValidationInstanceDenyBehaviorMap;
+  loading: boolean;
+  isUpdating: boolean;
+  settingsBusy: boolean;
+  patternActionsPending: boolean;
+  reorderPending: boolean;
+  showModal: boolean;
+  setShowModal: (show: boolean) => void;
+  closeModal: () => void;
+  editingPattern: ProductValidationPattern | null;
+  formData: PatternFormData;
+  setFormData: (data: PatternFormData | ((prev: PatternFormData) => PatternFormData)) => void;
+  testResult: unknown;
+  handleSave: () => Promise<void>;
+  handleSavePattern: () => Promise<void>;
+  handleTogglePattern: (pattern: ProductValidationPattern) => Promise<void>;
+  handleDeletePattern: (id: string) => Promise<void>;
+  handleUpdateSettings: (updates: Partial<{
+    enabledByDefault: boolean;
+    formatterEnabledByDefault: boolean;
+    instanceDenyBehavior: ProductValidationInstanceDenyBehaviorMap;
+  }>) => Promise<void>;
+  handleToggleDefault: (enabled: boolean) => Promise<void>;
+  handleToggleFormatterDefault: (enabled: boolean) => Promise<void>;
+  handleInstanceBehaviorChange: (scope: ProductValidationInstanceScope, behavior: ProductValidationDenyBehavior) => Promise<void>;
+  handleEditPattern: (pattern: ProductValidationPattern) => void;
+  handleDuplicatePattern: (pattern: ProductValidationPattern) => void;
+  handleAddPattern: (target?: string) => void;
+  handleDragStart: (e: unknown, patternId: string) => void;
+  handleDrop: (pattern: ProductValidationPattern, e: unknown) => void;
+  replacementFieldOptions: unknown;
+  sourceFieldOptions: unknown;
+  createPatternPending: boolean;
+  updatePatternPending: boolean;
+  isLocaleTarget: (target: string) => boolean;
+  normalizeReplacementFields: (fields: unknown) => string[];
+  getReplacementFieldsForTarget: (target: string) => string[];
+  getSourceFieldOptionsForTarget: (target: string) => unknown;
+  formatReplacementFields: (fields: unknown) => string;
+  draggedPatternId: string | null;
+  setDraggedPatternId: (id: string | null) => void;
+  dragOverPatternId: string | null;
+  setDragOverPatternId: (id: string | null) => void;
+  handlePatternDrop: (pattern: ProductValidationPattern, e: unknown) => void;
+  sequenceGroups: Map<string, SequenceGroupView>;
+  firstPatternIdByGroup: Map<string, string>;
+  getSequenceGroupId: (p: ProductValidationPattern) => string | null;
+  handleMoveGroup: (groupId: string, targetIndex: number) => Promise<void>;
+  handleReorderInGroup: (groupId: string, patternId: string, targetIndex: number) => Promise<void>;
+  handleMoveToGroup: (patternId: string, targetGroupId: string | null) => Promise<void>;
+  handleRemoveFromGroup: (patternId: string) => Promise<void>;
+  handleCreateGroup: (patternId: string) => Promise<void>;
+  handleRenameGroup: (groupId: string, label: string) => Promise<void>;
+  handleUpdateGroupDebounce: (groupId: string, debounceMs: number) => Promise<void>;
+  onCreateSkuAutoIncrementSequence: () => Promise<void>;
+  onCreateLatestPriceStockSequence: () => Promise<void>;
+  handleCreateNameLengthMirrorPattern: () => Promise<void>;
+  handleCreateNameCategoryMirrorPattern: () => Promise<void>;
+  handleCreateNameMirrorPolishSequence: () => Promise<void>;
+  handleSaveSequenceGroup: (groupId: string) => Promise<void>;
+  handleUngroup: (groupId: string) => Promise<void>;
+  patternToDelete: ProductValidationPattern | null;
+  setPatternToDelete: (pattern: ProductValidationPattern | null) => void;
+  groupDrafts: Record<string, SequenceGroupDraft>;
+  setGroupDrafts: React.Dispatch<React.SetStateAction<Record<string, SequenceGroupDraft>>>;
+  getGroupDraft: (groupId: string) => SequenceGroupDraft;
+  openCreate: (target?: string) => void;
+  openEdit: (pattern: ProductValidationPattern) => void;
+}
 
 export type CreateProductValidationPatternInput = CreateProductValidationPatternDto;
 export type UpdateProductValidationPatternInput = UpdateProductValidationPatternDto;
@@ -1326,7 +1418,9 @@ export type ProductValidationPatternRepository = {
  * Product UI and Context Types
  */
 
-export type ExpandedImageFile = ProductImageRecord & {
+import type { ImageFileRecord } from './files';
+
+export type ExpandedImageFile = ImageFileRecord & {
   products: {
     product: {
       id: string;

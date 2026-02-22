@@ -306,7 +306,7 @@ export const compileCaseResolverPrompt = (
           const sourceValue =
             type === 'plainText' ? stripHtml(rawSourceValue) : rawSourceValue;
           if (!sourceValue) return;
-          const edgeJoinMode = resolveEdgeMeta(edge.id, graph.edgeMeta || {}).joinMode;
+          const edgeJoinMode = resolveEdgeMeta(edge.id, graph.edgeMeta || {}).joinMode ?? 'newline';
           if (!firstJoinMode) firstJoinMode = edgeJoinMode;
           value = appendWithJoin(value, sourceValue, edgeJoinMode);
         });

@@ -606,6 +606,7 @@ export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEdit
     documentContentFormatVersion: file.documentContentFormatVersion,
     documentContentVersion: file.documentContentVersion,
     baseDocumentContentVersion: file.documentContentVersion,
+    content: activeDocumentContent,
     documentContent: activeDocumentContent,
     documentContentMarkdown: resolvedDraftMarkdown,
     documentContentHtml: resolvedDraftHtml,

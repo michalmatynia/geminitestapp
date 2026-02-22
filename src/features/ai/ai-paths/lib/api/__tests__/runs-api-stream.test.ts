@@ -3,11 +3,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { runsApi } from '../client';
 
 describe('runsApi.stream', () => {
-  const eventSourceCtor = vi.fn((_url: string) => ({ close: vi.fn() }));
+  const eventSourceClose = vi.fn();
+  class MockEventSource {
+    close = eventSourceClose;
+    constructor(_url: string) {
+      eventSourceCtor(_url);
+    }
+  }
+  const eventSourceCtor = vi.fn();
 
   beforeEach(() => {
     eventSourceCtor.mockClear();
-    vi.stubGlobal('EventSource', eventSourceCtor as unknown as typeof EventSource);
+    eventSourceClose.mockClear();
+    vi.stubGlobal('EventSource', MockEventSource as unknown as typeof EventSource);
   });
 
   afterEach(() => {

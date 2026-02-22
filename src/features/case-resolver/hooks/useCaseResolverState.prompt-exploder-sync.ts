@@ -28,7 +28,7 @@ import {
   buildCaseResolverFileComparableFingerprint,
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
 } from './useCaseResolverState.helpers';
-import { createId } from '../utils/caseResolverUtils';
+import { createId, buildFileEditDraft } from '../utils/caseResolverUtils';
 
 
 type UpdateWorkspaceOptions = {
@@ -676,13 +676,9 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
   }
 
   setEditingDocumentDraft((current: CaseResolverFileEditDraft | null): CaseResolverFileEditDraft | null => {
-    if (current?.id !== effectiveMutationResolvedTargetFileId) return current;
-    return {
-      ...effectiveMutationNextFile,
-      baseDocumentContentVersion: effectiveMutationNextFile.documentContentVersion,
-    };
-    
-  });
+        if (current?.id !== effectiveMutationResolvedTargetFileId) return current;
+        return buildFileEditDraft(effectiveMutationNextFile);
+      });
 
   const primaryProposalState = buildCaseResolverCaptureProposalState(
     payloadToApply.caseResolverParties,

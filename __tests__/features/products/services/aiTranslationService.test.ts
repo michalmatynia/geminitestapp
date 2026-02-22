@@ -4,26 +4,32 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { translateProduct } from '@/features/products/services/aiTranslationService';
 
 // Mock OpenAI
+const mockCreate = vi.fn().mockResolvedValue({
+  choices: [
+    {
+      message: {
+        content: JSON.stringify({
+          name: 'Translated Name',
+          description: 'Translated Description',
+        }),
+      },
+    },
+  ],
+});
+
+const MockOpenAI = vi.fn().mockImplementation(() => ({
+  chat: {
+    completions: {
+      create: mockCreate,
+    },
+  },
+}));
+(MockOpenAI as any).default = MockOpenAI;
+
 vi.mock('openai', () => {
   return {
-    default: vi.fn().mockImplementation(() => ({
-      chat: {
-        completions: {
-          create: vi.fn().mockResolvedValue({
-            choices: [
-              {
-                message: {
-                  content: JSON.stringify({
-                    name: 'Translated Name',
-                    description: 'Translated Description',
-                  }),
-                },
-              },
-            ],
-          }),
-        },
-      },
-    })),
+    default: MockOpenAI,
+    OpenAI: MockOpenAI,
   };
 });
 

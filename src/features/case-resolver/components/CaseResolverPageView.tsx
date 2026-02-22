@@ -1318,7 +1318,7 @@ export function CaseResolverPageView(
                   </div>
                 </div>
                 <div className='space-y-4'>
-                  {editingDocumentDraft.fileType === 'scanfile' ? (
+                  {(editingDocumentDraft.fileType as unknown) === 'scanfile' ? (
                     <FileUploadTrigger
                       accept='image/*,application/pdf,.pdf'
                       onFilesSelected={(files) =>
@@ -1410,12 +1410,11 @@ export function CaseResolverPageView(
                                   uploadingScanSlotId === 'all' ||
                                   uploadingScanSlotId === slot.id
                                     ? 'Processing OCR...'
-                                    : slot.ocrError
-                                      ? 'OCR failed'
-                                      : slot.ocrText.trim().length > 0
-                                        ? 'OCR extracted'
-                                        : 'OCR pending';
-                                  return (
+                                                                          : slot.ocrError
+                                                                            ? 'OCR failed'
+                                                                            : (slot.ocrText || '').trim().length > 0
+                                                                              ? 'OCR extracted'
+                                                                              : 'OCR pending';                                  return (
                                     <Card
                                       key={slot.id}
                                       variant='subtle-compact'

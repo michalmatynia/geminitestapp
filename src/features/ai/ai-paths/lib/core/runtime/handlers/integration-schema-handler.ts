@@ -135,13 +135,12 @@ export const handleDbSchema: NodeHandler = async ({
       : fullSchema;
 
   // Optionally filter out fields or relations
-  if (!config.includeFields || !config.includeRelations) {
-    const baseCollections = Array.isArray(schema.collections)
-      ? (schema.collections)
-      : (Object.values(schema.collections));
-
-    schema.collections = baseCollections.map((c: CollectionSchemaDto): CollectionSchemaDto => {
-      const result: CollectionSchemaDto = {
+      if (!config.includeFields || !config.includeRelations) {
+        const baseCollections = (Array.isArray(schema.collections)
+          ? schema.collections
+          : Object.values(schema.collections)) as CollectionSchemaDto[];
+  
+        schema.collections = baseCollections.map((c: CollectionSchemaDto): CollectionSchemaDto => {      const result: CollectionSchemaDto = {
         name: c.name,
         fields: config.includeFields ? (c.fields ?? []) : [],
       };

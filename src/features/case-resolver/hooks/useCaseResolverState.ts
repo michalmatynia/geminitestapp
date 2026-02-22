@@ -2161,10 +2161,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     clearStoredEditorDraft(editingDocumentDraft.id);
     setEditingDocumentDraft((current) => {
       if (current?.id !== editingDocumentDraft.id) return current;
-      return {
-        ...nextSavedFile,
-        baseDocumentContentVersion: nextSavedFile.documentContentVersion,
-      };
+      return buildFileEditDraft(nextSavedFile);
     });
   }, [editingDocumentDraft, toast, updateWorkspace, workspace.files]);
 

@@ -4,23 +4,29 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { generateProductDescription } from '@/features/products/services/aiDescriptionService';
 
 // Mock OpenAI
+const mockCreate = vi.fn().mockResolvedValue({
+  choices: [
+    {
+      message: {
+        content: 'Mocked AI Response',
+      },
+    },
+  ],
+});
+
+const MockOpenAI = vi.fn().mockImplementation(() => ({
+  chat: {
+    completions: {
+      create: mockCreate,
+    },
+  },
+}));
+(MockOpenAI as any).default = MockOpenAI;
+
 vi.mock('openai', () => {
   return {
-    default: vi.fn().mockImplementation(() => ({
-      chat: {
-        completions: {
-          create: vi.fn().mockResolvedValue({
-            choices: [
-              {
-                message: {
-                  content: 'Mocked AI Response',
-                },
-              },
-            ],
-          }),
-        },
-      },
-    })),
+    default: MockOpenAI,
+    OpenAI: MockOpenAI,
   };
 });
 

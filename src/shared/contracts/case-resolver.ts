@@ -84,7 +84,7 @@ export type CaseResolverPdfExtractionPreset = CaseResolverPdfExtractionPresetDto
  */
 export const caseResolverPartyReferenceSchema = z.object({
   id: z.string(),
-  name: z.string(),
+  name: z.string().optional(),
   kind: z.enum(['person', 'organization']),
   role: z.string().optional(),
 });

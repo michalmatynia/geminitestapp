@@ -68,7 +68,7 @@ export type ThemeUpdateInput = UpdateNoteThemeDto;
  * Note Category Contract
  */
 export const noteCategorySchema = dtoBaseSchema.extend({
-  name: z.string().optional(),
+  name: z.string().min(1, 'Name is required'),
   description: z.string().nullable().optional(),
   color: z.string().nullable().optional(),
   parentId: z.string().nullable().optional(),
@@ -107,7 +107,7 @@ export const noteCategoryRecordWithChildrenSchema: z.ZodType<NoteCategoryRecordW
  * Note Tag Contract
  */
 export const noteTagSchema = dtoBaseSchema.extend({
-  name: z.string().optional(),
+  name: z.string().min(1, 'Name is required'),
   color: z.string().nullable().optional(),
   notebookId: z.string().nullable().optional(),
 });
@@ -177,8 +177,8 @@ export type NoteEditorType = z.infer<typeof noteEditorTypeSchema>;
 
 export const noteSchema = dtoBaseSchema.extend({
   name: z.string().optional(),
-  title: z.string(),
-  content: z.string(),
+  title: z.string().min(1, 'Title is required'),
+  content: z.string().min(1, 'Content is required'),
   description: z.string().nullable().optional(),
   editorType: noteEditorTypeSchema,
   notebookId: z.string().nullable(),
@@ -208,6 +208,9 @@ export const createNoteSchema = noteSchema.omit({
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  editorType: noteEditorTypeSchema.optional(),
+  notebookId: z.string().nullable().optional(),
 });
 
 export type CreateNoteDto = z.input<typeof createNoteSchema>;

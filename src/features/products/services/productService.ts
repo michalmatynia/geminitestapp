@@ -56,10 +56,30 @@ const resolveProductRepository = async (
   providerOverride?: ProductDbProvider,
 ): Promise<ProductRepository> => getProductRepository(providerOverride);
 
-const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
-  getImageFileRepository() as unknown as Promise<ImageFileRepository>;
+  const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
+    getImageFileRepository() as unknown as Promise<ImageFileRepository>;
 
-const normalizeProductPayloadForStorage = <
+  function formDataToObject(formData: FormData): Record<string, unknown> {
+    const obj: Record<string, unknown> = {};
+    formData.forEach((value, key) => {
+      const isArray = key.endsWith('[]');
+      const cleanKey = isArray ? key.slice(0, -2) : key;
+      const existing = obj[cleanKey];
+      if (isArray) {
+        if (Array.isArray(existing)) {
+          existing.push(value);
+        } else {
+          obj[cleanKey] = [value];
+        }
+      } else {
+        obj[cleanKey] = value;
+      }
+    });
+    return obj;
+  }
+
+  const normalizeProductPayloadForStorage = <
+
   TData extends Record<string, unknown>,
 >(
     data: TData,
@@ -139,69 +159,88 @@ async function getProductBySku(
   return product as ProductWithImages;
 }
 
-async function createProduct(
-  data: unknown,
-  options?: { provider?: ProductDbProvider; userId?: string },
-): Promise<ProductWithImages> {
-  const provider = options?.provider ?? (await getProductDataProvider());
-  const productRepository = await resolveProductRepository(provider);
+  async function createProduct(
+    data: unknown,
+    options?: { provider?: ProductDbProvider; userId?: string },
+  ): Promise<ProductWithImages> {
+    const provider = options?.provider ?? (await getProductDataProvider());
+    const productRepository = await resolveProductRepository(provider);
 
-  const validated = validateProductCreate(data);
-  const normalized = normalizeProductPayloadForStorage(validated);
+    const inputData = data instanceof FormData ? formDataToObject(data) : data;
+    const validation = await validateProductCreate(inputData);
+    if (!validation.success) {
+      throw badRequestError('Product validation failed', {
+        errors: validation.errors,
+      });
+    }
 
-  const product = await productRepository.createProduct(normalized);
+    const normalized = normalizeProductPayloadForStorage(validation.data);
 
-  void logActivity({
-    type: ActivityTypes.PRODUCT.CREATED,
-    entityId: product.id,
-    entityType: 'product',
-    userId: options?.userId,
-    description: `Created product: ${product.name_en || product.name_pl || product.id}`,
-    metadata: { productId: product.id },
-  });
+    const product = await productRepository.createProduct(normalized);
 
-  return { ...product, images: [] };
-}
+    void logActivity({
+      type: ActivityTypes.PRODUCT.CREATED,
+      entityId: product.id,
+      entityType: 'product',
+      userId: options?.userId,
+      description: `Created product: ${product.name_en || product.name_pl || product.id}`,
+      metadata: { productId: product.id },
+    });
 
-async function updateProduct(
-  id: string,
-  data: unknown,
-  options?: { provider?: ProductDbProvider; userId?: string },
-): Promise<ProductWithImages> {
-  const provider = options?.provider ?? (await getProductDataProvider());
-  const productRepository = await resolveProductRepository(provider);
-
-  const existing = await productRepository.getProductById(id);
-  if (!existing) {
-    throw badRequestError(`Product not found: ${id}`);
+    return { ...product, images: [] };
   }
 
-  const validated = validateProductUpdate(data);
-  const normalized = normalizeProductPayloadForStorage(validated);
+  async function updateProduct(
+    id: string,
+    data: unknown,
+    options?: { provider?: ProductDbProvider; userId?: string },
+  ): Promise<ProductWithImages> {
+    const provider = options?.provider ?? (await getProductDataProvider());
+    const productRepository = await resolveProductRepository(provider);
 
-  const product = await productRepository.updateProduct(id, normalized);
-  if (!product) {
-    throw badRequestError(`Failed to update product: ${id}`);
+    const existing = await productRepository.getProductById(id);
+    if (!existing) {
+      throw badRequestError(`Product not found: ${id}`);
+    }
+
+    const inputData = data instanceof FormData ? formDataToObject(data) : data;
+    const validation = await validateProductUpdate(inputData);
+    if (!validation.success) {
+      throw badRequestError('Product validation failed', {
+        errors: validation.errors,
+      });
+    }
+
+    const normalized = normalizeProductPayloadForStorage(validation.data);
+
+    const product = await productRepository.updateProduct(id, normalized);
+    if (!product) {
+      throw badRequestError(`Failed to update product: ${id}`);
+    }
+
+    const images = await productRepository.getProductImages(id);
+
+    void logActivity({
+      type: ActivityTypes.PRODUCT.UPDATED,
+      entityId: product.id,
+      entityType: 'product',
+      userId: options?.userId,
+      description: `Updated product: ${product.name_en || product.name_pl || product.id}`,
+      metadata: { productId: product.id },
+    });
+
+    return { ...product, images };
   }
+  async function duplicateProduct(
+    id: string,
+    sku: string,
+    options?: { provider?: ProductDbProvider; userId?: string },
+  ): Promise<ProductWithImages | null> {
+    if (!sku || sku.trim() === '') {
+      throw badRequestError('SKU is required for duplication.');
+    }
+    const provider = options?.provider ?? (await getProductDataProvider());
 
-  void logActivity({
-    type: ActivityTypes.PRODUCT.UPDATED,
-    entityId: product.id,
-    entityType: 'product',
-    userId: options?.userId,
-    description: `Updated product: ${product.name_en || product.name_pl || product.id}`,
-    metadata: { productId: product.id },
-  });
-
-  return product as ProductWithImages;
-}
-
-async function duplicateProduct(
-  id: string,
-  sku: string,
-  options?: { provider?: ProductDbProvider; userId?: string },
-): Promise<ProductWithImages | null> {
-  const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
 
   const duplicated = await productRepository.duplicateProduct(id, sku);
@@ -295,12 +334,19 @@ async function deleteProductImage(
   const imageRepository = await resolveImageFileRepository();
 
   const imageFile = await imageRepository.getImageFileById(imageId);
-  if (imageFile) {
+  if (!imageFile) return;
+
+  // 1. Remove the link
+  await productRepository.removeProductImage(productId, imageId);
+
+  // 2. Check if others use it
+  const remainingLinksCount = await productRepository.countProductsByImageFileId(imageId);
+
+  // 3. Cleanup if last link
+  if (remainingLinksCount === 0) {
     await deleteFileFromStorage(imageFile.filepath);
     await imageRepository.deleteImageFile(imageId);
   }
-
-  await productRepository.removeProductImage(productId, imageId);
 }
 
 async function countProducts(

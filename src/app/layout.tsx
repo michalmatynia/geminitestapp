@@ -46,10 +46,10 @@ export default function RootLayout({
                   >
                     <CsrfProvider />
                     <UrlGuardProvider />
-                    <Suspense fallback={null}>
+                    <Suspense fallback={<></>}>
                       <ClientErrorReporter />
                     </Suspense>
-                    <Suspense fallback={null}>
+                    <Suspense fallback={<></>}>
                       <PageAnalyticsTracker />
                     </Suspense>
                     <AppErrorBoundary source='RootLayout'>

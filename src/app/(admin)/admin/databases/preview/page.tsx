@@ -4,7 +4,7 @@ import { DatabasePreviewPage } from '@/features/database/public';
 
 export default function Page(): JSX.Element {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<></>}>
       <DatabasePreviewPage />
     </Suspense>
   );

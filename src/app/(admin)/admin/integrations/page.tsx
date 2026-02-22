@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export default function Page(): JSX.Element {
   return (
-    <Suspense fallback={null}>
+    <Suspense fallback={<></>}>
       <ConnectionsPage />
     </Suspense>
   );

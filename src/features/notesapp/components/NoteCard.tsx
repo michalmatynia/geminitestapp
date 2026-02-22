@@ -281,7 +281,7 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
                   note.categories?.[0]?.categoryId || null,
                   null,
                   folderTree
-                ).map((crumb: any, index: number, array: any[]) => (
+                ).map((crumb: { id: string | null; name: string }, index: number, array: unknown[]) => (
                   <React.Fragment key={index}>
                     <Button
                       variant='link'
@@ -300,8 +300,7 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
                     )}
                   </React.Fragment>
                 ))}
-              </BreadcrumbScroller>
-            </div>
+              </BreadcrumbScroller>            </div>
           )}
           {showRelatedNotes && relatedNotes.length > 0 && (
             <div className='mt-2 flex flex-wrap gap-2'>

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { localizedSchema, dtoBaseSchema, namedDtoSchema } from './base';
-import { imageFileRecordSchema } from './files';
+import { imageFileRecordSchema, type ImageFileRecordDto as ImageFileRecord } from './files';
 import { ManagedImageSlot } from './image-slots';
 import { commonListQuerySchema } from '../validations/api-schemas';
 
@@ -301,7 +301,13 @@ export const productImageRecordSchema = productImageSchema.omit({
   imageFile: imageFileRecordSchema,
 });
 
-export type ProductImageRecordDto = z.infer<typeof productImageRecordSchema>;
+export interface ProductImageRecordDto {
+  productId: string;
+  imageFileId: string;
+  assignedAt: string;
+  imageFile: ImageFileRecord;
+}
+
 export type ProductImageRecord = ProductImageRecordDto;
 
 /**
@@ -1417,8 +1423,6 @@ export type ProductValidationPatternRepository = {
 /**
  * Product UI and Context Types
  */
-
-import type { ImageFileRecord } from './files';
 
 export type ExpandedImageFile = ImageFileRecord & {
   products: {

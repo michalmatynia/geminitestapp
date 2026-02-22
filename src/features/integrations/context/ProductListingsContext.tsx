@@ -14,7 +14,10 @@ import {
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import { logClientError } from '@/features/observability';
-import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
+import type { 
+  ProductListingWithDetails,
+  ProductListingExportEventDto
+} from '@/shared/contracts/integrations';
 import type {
   ImageRetryPresetDto as ImageRetryPreset,
   ImageTransformOptionsDto as ImageTransformOptions,
@@ -304,14 +307,13 @@ export function ProductListingsProvider({
   const getLatestTemplateId = (listing: ProductListingWithDetails): string | null => {
     const history = listing.exportHistory ?? [];
     if (history.length === 0) return null;
-    const sorted = [...history].sort((a, b) => {
+    const sorted = [...history].sort((a: ProductListingExportEventDto, b: ProductListingExportEventDto) => {
       const aTime = a.exportedAt ? new Date(a.exportedAt).getTime() : 0;
       const bTime = b.exportedAt ? new Date(b.exportedAt).getTime() : 0;
       return bTime - aTime;
     });
     return sorted[0]?.templateId ?? null;
   };
-
   const exportListingToBase = useCallback(async (
     listingId: string,
     options?: {

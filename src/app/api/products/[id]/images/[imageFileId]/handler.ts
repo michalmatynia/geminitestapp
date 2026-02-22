@@ -24,6 +24,6 @@ export async function DELETE_handler(
     });
   }
 
-  await productService.unlinkImageFromProduct(productId, imageFileId);
+  await productService.deleteProductImage(productId, imageFileId);
   return new Response(null, { status: 204 });
 }

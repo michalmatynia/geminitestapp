@@ -52,7 +52,30 @@ export const imageFileRecordSchema = imageFileSchema.extend({
   // Added fields specific to DB record if needed
 });
 
-export type ImageFileRecordDto = z.infer<typeof imageFileRecordSchema>;
+export interface ImageFileRecordDto {
+  id: string;
+  name: string;
+  filename: string;
+  filepath: string;
+  mimetype: string;
+  size: number;
+  extension?: string;
+  publicUrl?: string;
+  url?: string;
+  storageProvider?: 'local' | 's3' | 'imagekit';
+  metadata?: Record<string, unknown> | null;
+  width?: number;
+  height?: number;
+  thumbnailPath?: string;
+  thumbnailUrl?: string;
+  isAnimated?: boolean;
+  hasAlpha?: boolean;
+  blurHash?: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string | null;
+}
+
 export type ImageFileRecord = ImageFileRecordDto;
 
 export const imageFileSelectionSchema = z.object({

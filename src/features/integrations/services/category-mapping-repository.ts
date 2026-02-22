@@ -692,11 +692,11 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
         }
 
         const combined = mappingDocs.map((mapping: MongoCategoryMappingDoc) => {
-          const external =
+          const external: CategoryMappingWithDetails['externalCategory'] =
             externalById.get(mapping.externalCategoryId) ??
             externalByExternalId.get(mapping.externalCategoryId) ??
             createMissingExternalCategory(mapping);
-          const internal =
+          const internal: CategoryMappingWithDetails['internalCategory'] =
             internalById.get(mapping.internalCategoryId) ??
             createMissingInternalCategory(mapping);
 
@@ -713,7 +713,6 @@ export function getCategoryMappingRepository(): CategoryMappingRepository {
             internalCategory: internal,
           } satisfies CategoryMappingWithDetails;
         });
-
         combined.sort((a: CategoryMappingWithDetails, b: CategoryMappingWithDetails) => {
           if (a.externalCategory.depth !== b.externalCategory.depth) {
             return a.externalCategory.depth - b.externalCategory.depth;

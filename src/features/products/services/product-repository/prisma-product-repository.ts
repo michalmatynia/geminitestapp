@@ -256,7 +256,9 @@ const toCatalogRecord = (catalog: PrismaCatalog & { languages?: { languageId: st
   priceGroupIds: catalog.priceGroupIds ?? [],
 });
 
-const toProductImageRecord = (image: PrismaProductImage & { imageFile?: PrismaImageFile | null }) => {
+const toProductImageRecord = (
+  image: PrismaProductImage & { imageFile?: PrismaImageFile | null }
+): ProductImageRecord | null => {
   if (!image.imageFile) return null;
   return {
     productId: image.productId,
@@ -641,8 +643,12 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       include: { imageFile: true },
       orderBy: { assignedAt: 'desc' },
     });
-    return images.map(toProductImageRecord).filter((i): i is ProductImageRecord => i !== null) as ProductImageRecord[];
-    },  addProductImages: async (productId, imageFileIds) => {    const normalizedIds = normalizeImageFileIds(imageFileIds);
+    return images.map(toProductImageRecord).filter((i): i is ProductImageRecord => i !== null);
+  },
+    
+  addProductImages: async (productId, imageFileIds) => {
+    const normalizedIds = normalizeImageFileIds(imageFileIds);
+    
     if (normalizedIds.length === 0) return;
     const now = Date.now();
     await tx.productImage.createMany({
@@ -1033,10 +1039,12 @@ export const prismaProductRepository: ProductRepository = {
       include: { imageFile: true },
       orderBy: { assignedAt: 'desc' },
     });
-    return images.map(toProductImageRecord).filter((i): i is ProductImageRecord => i !== null) as ProductImageRecord[];
-    },
+    return images.map(toProductImageRecord).filter((i): i is ProductImageRecord => i !== null);
+  },
+    
   async addProductImages(productId: string, imageFileIds: string[]) {
     const normalizedIds = normalizeImageFileIds(imageFileIds);
+    
     if (normalizedIds.length === 0) return;
     const now = Date.now();
     await prisma.productImage.createMany({

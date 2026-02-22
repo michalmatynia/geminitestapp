@@ -5,6 +5,8 @@ import {
   productParameterValueSchema,
   type ParameterRepository,
   type ProductParameterValueDto,
+  type ProducerDto,
+  type ProductCategoryDto,
 } from './products';
 
 /**
@@ -138,7 +140,18 @@ export const productListingExportEventSchema = z.object({
   requestId: z.string().nullable().optional(),
 });
 
-export type ProductListingExportEventDto = z.infer<typeof productListingExportEventSchema>;
+export interface ProductListingExportEventDto {
+  exportedAt: string;
+  status?: string | null;
+  inventoryId?: string | null;
+  templateId?: string | null;
+  warehouseId?: string | null;
+  externalListingId?: string | null;
+  expiresAt?: string | null;
+  failureReason?: string | null;
+  relist?: boolean;
+  fields?: string[] | null;
+}
 
 export const productListingRelistPolicySchema = z.object({
   enabled: z.boolean().optional(),
@@ -148,7 +161,13 @@ export const productListingRelistPolicySchema = z.object({
   templateId: z.string().nullable().optional(),
 });
 
-export type ProductListingRelistPolicyDto = z.infer<typeof productListingRelistPolicySchema>;
+export interface ProductListingRelistPolicyDto {
+  enabled?: boolean;
+  leadMinutes?: number;
+  maxAttempts?: number;
+  durationHours?: number;
+  templateId?: string | null;
+}
 
 export const productListingSchema = dtoBaseSchema.extend({
   productId: z.string(),
@@ -169,7 +188,26 @@ export const productListingSchema = dtoBaseSchema.extend({
   exportHistory: z.array(productListingExportEventSchema).nullable(),
 });
 
-export type ProductListingDto = z.infer<typeof productListingSchema>;
+export interface ProductListingDto {
+  id: string;
+  productId: string;
+  integrationId: string;
+  connectionId: string;
+  externalListingId: string | null;
+  inventoryId: string | null;
+  status: string;
+  listedAt: string | null;
+  expiresAt: string | null;
+  nextRelistAt: string | null;
+  relistPolicy?: ProductListingRelistPolicyDto | null;
+  relistAttempts?: number;
+  lastRelistedAt: string | null;
+  lastStatusCheckAt: string | null;
+  marketplaceData: Record<string, unknown> | null;
+  failureReason: string | null;
+  exportHistory: ProductListingExportEventDto[] | null;
+  createdAt: string;
+  updatedAt: string | null;}
 
 export const productListingWithDetailsSchema = productListingSchema.extend({
   integration: z.object({
@@ -183,7 +221,17 @@ export const productListingWithDetailsSchema = productListingSchema.extend({
   }),
 });
 
-export type ProductListingWithDetailsDto = z.infer<typeof productListingWithDetailsSchema>;
+export interface ProductListingWithDetailsDto extends ProductListingDto {
+  integration: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  connection: {
+    id: string;
+    name: string;
+  };
+}
 
 export const createProductListingSchema = z.object({
   id: z.string().optional(),
@@ -359,14 +407,25 @@ export const tagMappingSchema = dtoBaseSchema.extend({
   isActive: z.boolean(),
 });
 
-export type TagMappingDto = z.infer<typeof tagMappingSchema>;
+export interface TagMappingDto {
+  id: string;
+  connectionId: string;
+  externalTagId: string;
+  internalTagId: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+}
 
 export const tagMappingWithDetailsSchema = tagMappingSchema.extend({
   externalTag: externalTagSchema,
   internalTag: z.any(), // ProductTagDto
 });
 
-export type TagMappingWithDetailsDto = z.infer<typeof tagMappingWithDetailsSchema>;
+export interface TagMappingWithDetailsDto extends TagMappingDto {
+  externalTag: ExternalTagDto;
+  internalTag: ProductTagDto | null;
+}
 
 export interface BaseTagDto {
   id: string;
@@ -390,14 +449,25 @@ export const tagMappingCreateInputSchema = z.object({
   internalTagId: z.string(),
 });
 
-export type TagMappingCreateInputDto = z.infer<typeof tagMappingCreateInputSchema>;
+export interface TagMappingCreateInputDto {
+  connectionId: string;
+  externalTagId: string;
+  internalTagId: string;
+}
+
+export type TagMappingCreateInput = TagMappingCreateInputDto;
 
 export const tagMappingUpdateInputSchema = z.object({
   externalTagId: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 
-export type TagMappingUpdateInputDto = z.infer<typeof tagMappingUpdateInputSchema>;
+export interface TagMappingUpdateInputDto {
+  externalTagId?: string;
+  isActive?: boolean;
+}
+
+export type TagMappingUpdateInput = TagMappingUpdateInputDto;
 
 export const externalProducerSchema = dtoBaseSchema.extend({
   connectionId: z.string(),
@@ -1260,6 +1330,7 @@ export const integrationDefinitions = [
 export type Integration = IntegrationDto;
 export type IntegrationConnection = IntegrationConnectionDto;
 export type ProductListing = ProductListingDto;
+export type ProductListingRecord = ProductListingDto;
 export type Template = TemplateDto;
 export type TemplateMapping = TemplateMappingDto;
 export type BaseInventory = BaseInventoryDto;

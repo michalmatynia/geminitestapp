@@ -1,0 +1,25 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/duplicate/handler.ts
+  35:9   error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  35:51  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/products/[id]/images/[imageFileId]/handler.ts
+  27:9  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/services/category-mapping-repository.ts
+  699:17  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  713:13  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/form/ProductFormStudio.tsx
+  895:11  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/performance/cached-service.ts
+  100:28  error  Unsafe return of a value of type error            @typescript-eslint/no-unsafe-return
+  100:28  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.ts
+   644:5  error  Unsafe return of a value of type `any[]`  @typescript-eslint/no-unsafe-return
+  1036:5  error  Unsafe return of a value of type `any[]`  @typescript-eslint/no-unsafe-return
+
+✖ 10 problems (10 errors, 0 warnings)
+

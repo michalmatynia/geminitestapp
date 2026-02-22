@@ -585,11 +585,12 @@ export function getProducerMappingRepository(): ProducerMappingRepository {
 
         if (mongoRecords.length > 0) {
           const details = await hydrateMongoProducerMappingDetails(mongoRecords);
-          return details.sort((a, b) =>
-            a.internalProducer.name.localeCompare(b.internalProducer.name)
-          );
+          return details.sort((a, b) => {
+            const nameA = a.internalProducer?.name ?? '';
+            const nameB = b.internalProducer?.name ?? '';
+            return nameA.localeCompare(nameB);
+          });
         }
-
         try {
           const prismaRecords = await prisma.producerMapping.findMany({
             where: { connectionId },

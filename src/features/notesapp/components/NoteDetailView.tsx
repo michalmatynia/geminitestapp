@@ -249,7 +249,8 @@ export function NoteDetailView(): React.JSX.Element | null {
           selectedNote.categories?.[0]?.categoryId || null,
           selectedNote.title,
           folderTree
-        ).map((crumb: any, index: number, array: any[]) => (
+        ).map((crumb: { id: string | null; name: string; isNote?: boolean }, index: number, array: unknown[]) => (
+        
           <React.Fragment key={index}>
             {crumb.isNote ? (
               <span className='text-gray-300'>{crumb.name}</span>
@@ -270,8 +271,7 @@ export function NoteDetailView(): React.JSX.Element | null {
               <ChevronRight size={16} className='text-gray-600' />
             )}
           </React.Fragment>
-        ))}
-      </div>
+        ))}      </div>
 
       <div className='mb-4 flex items-center gap-4'>
         <Button

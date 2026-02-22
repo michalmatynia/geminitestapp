@@ -566,8 +566,109 @@ export const mongoProductRepository: ProductRepository = {
     };
   },
   
-  async getProductImages(_productId: string) {
-    return [];
+  async getProductImages(productId: string) {
+    const collection = await getProductCollection();
+    const doc = await collection.findOne(buildProductIdFilter(productId), {
+      projection: {
+        _id: 1,
+        id: 1,
+        updatedAt: 1,
+        images: 1,
+      },
+    });
+    if (!doc || !Array.isArray(doc.images) || doc.images.length === 0) {
+      return [];
+    }
+
+    const fallbackProductId = normalizeLookupId(doc.id ?? doc._id) || productId;
+    const fallbackAssignedAt =
+      doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : new Date().toISOString();
+
+    type ParsedImageEntry = {
+      productId: string;
+      imageFileId: string;
+      assignedAt: string;
+      imageFile?: ImageFileRecord;
+    };
+
+    const parsedEntries = doc.images.reduce<ParsedImageEntry[]>(
+      (acc: ParsedImageEntry[], rawImage: unknown) => {
+        if (!rawImage || typeof rawImage !== 'object') return acc;
+        const imageRecord = rawImage as Record<string, unknown>;
+        const imageFileId = normalizeLookupId(
+          imageRecord['imageFileId'] ??
+            (imageRecord['imageFile'] as { id?: unknown } | null | undefined)?.id
+        );
+        if (!imageFileId) return acc;
+
+        const rawAssignedAt = imageRecord['assignedAt'];
+        const assignedAt =
+          rawAssignedAt instanceof Date
+            ? rawAssignedAt.toISOString()
+            : typeof rawAssignedAt === 'string' && rawAssignedAt.trim().length > 0
+              ? rawAssignedAt
+              : fallbackAssignedAt;
+
+        const rawProductId = imageRecord['productId'];
+        const entryProductId =
+          normalizeLookupId(rawProductId) ||
+          fallbackProductId;
+
+        const rawImageFile = imageRecord['imageFile'];
+        const imageFile =
+          rawImageFile && typeof rawImageFile === 'object'
+            ? (rawImageFile as ImageFileRecord)
+            : undefined;
+
+        acc.push({
+          productId: entryProductId,
+          imageFileId,
+          assignedAt,
+          ...(imageFile ? { imageFile } : {}),
+        });
+        return acc;
+      },
+      []
+    );
+
+    if (parsedEntries.length === 0) {
+      return [];
+    }
+
+    const missingImageFileIds = Array.from(
+      new Set(
+        parsedEntries
+          .filter((entry: ParsedImageEntry) => !entry.imageFile)
+          .map((entry: ParsedImageEntry) => entry.imageFileId)
+      )
+    );
+
+    const hydratedImageFiles =
+      missingImageFileIds.length > 0
+        ? await mongoImageFileRepository.findImageFilesByIds(missingImageFileIds)
+        : [];
+    const hydratedById = new Map<string, ImageFileRecord>(
+      hydratedImageFiles.map((imageFile: ImageFileRecord) => [imageFile.id, imageFile])
+    );
+
+    return parsedEntries
+      .map((entry: ParsedImageEntry): ProductImageRecord | null => {
+        const imageFile = entry.imageFile ?? hydratedById.get(entry.imageFileId);
+        if (!imageFile) return null;
+        return {
+          productId: entry.productId,
+          imageFileId: entry.imageFileId,
+          assignedAt: entry.assignedAt,
+          imageFile,
+        };
+      })
+      .filter((entry: ProductImageRecord | null): entry is ProductImageRecord => entry !== null)
+      .sort((a: ProductImageRecord, b: ProductImageRecord) => {
+        const aTime = Date.parse(a.assignedAt);
+        const bTime = Date.parse(b.assignedAt);
+        if (Number.isNaN(aTime) || Number.isNaN(bTime)) return 0;
+        return bTime - aTime;
+      });
   },
   
   async getProductById(id: string) {

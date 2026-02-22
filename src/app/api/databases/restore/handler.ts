@@ -41,9 +41,9 @@ export async function postDatabasesRestoreHandler(
   await assertDatabaseEngineManageAccess();
   await assertDatabaseEngineOperationEnabled('allowManualBackupMaintenance');
 
-  let stage = 'parse';
-  let backupName: string | null = null;
-  let truncateBeforeRestore = false;
+  let stage: string;
+  let backupName: string | null;
+  let truncateBeforeRestore: boolean;
 
   const { searchParams } = new URL(req.url);
   const type = searchParams.get('type') || 'postgresql';
@@ -62,7 +62,6 @@ export async function postDatabasesRestoreHandler(
 
   if (type === 'mongodb') {
     // MongoDB restore
-    stage = 'validate';
     assertValidMongoBackupName(backupName);
     await ensureMongoBackupsDir();
 
@@ -71,7 +70,6 @@ export async function postDatabasesRestoreHandler(
     const databaseName = getMongoDatabaseName();
 
     if (truncateBeforeRestore) {
-      stage = 'truncate';
       const db = await getMongoDb();
       const collections = await db.listCollections().toArray();
 
@@ -96,8 +94,8 @@ export async function postDatabasesRestoreHandler(
 
     const commandString = `${command} ${args.join(' ')}`;
 
-    let stdout = '';
-    let stderr = '';
+    let stdout: string;
+    let stderr: string;
 
     try {
       const result = await mongoExecFileAsync(command, args);
@@ -148,7 +146,6 @@ export async function postDatabasesRestoreHandler(
     });
   } else {
     // PostgreSQL restore
-    stage = 'validate';
     assertValidPgBackupName(backupName);
     await ensurePgBackupsDir();
 
@@ -157,7 +154,6 @@ export async function postDatabasesRestoreHandler(
 
     // Data-only restore requires empty tables to avoid FK constraint violations.
     // Always truncate before restoring PostgreSQL data.
-    stage = 'truncate';
     const dbUrl = process.env['DATABASE_URL'] ?? '';
     if (
       !dbUrl.startsWith('postgres://') &&
@@ -205,8 +201,8 @@ export async function postDatabasesRestoreHandler(
 
     const commandString = `${command} ${args.join(' ')}`;
 
-    let stdout = '';
-    let stderr = '';
+    let stdout: string;
+    let stderr: string;
 
     try {
       const result = await pgExecFileAsync(command, args);

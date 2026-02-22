@@ -59,8 +59,8 @@ export async function postTestConnectionHandler(
   _ctx: ApiHandlerContext,
   params: { id: string; connectionId: string }
 ): Promise<Response> {
-  let integrationId: string | null = null;
-  let integrationConnectionId: string | null = null;
+  let integrationId: string | null;
+  let integrationConnectionId: string | null;
   const steps: TestLogEntry[] = [];
 
   let requestBody: TraderaConnectionTestRequest = {};
@@ -184,9 +184,10 @@ export async function postTestConnectionHandler(
       );
     }
 
-    let appKey = '';
-    let token = '';
-    try {
+          let appKey: string;
+          let token: string;
+          try {
+    
       appKey = decryptSecret(encryptedAppKey).trim();
       token = decryptSecret(encryptedToken).trim();
     } catch (error) {

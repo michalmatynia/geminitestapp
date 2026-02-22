@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument */
+ 
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -1299,7 +1299,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   }, []);
 
   const editingDocumentNodeMeta = React.useMemo((): (CaseResolverNodeMeta & { nodeId: string; nodeTitle: string; canvasFileId: string; canvasFileName: string }) | null => {
-    if (!editingDocumentDraft || !editingDocumentNodeContext || !editingDocumentNodeContext.nodeId) return null;
+    if (!editingDocumentDraft || !editingDocumentNodeContext?.nodeId) return null;
     const canvasFile = workspace.files.find(
       (file: CaseResolverFile) => file.id === editingDocumentNodeContext.fileId
     );
@@ -1329,14 +1329,14 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const updateEditingDocumentNodeMeta = useCallback(
     (patch: Partial<CaseResolverNodeMeta>): void => {
-      if (!editingDocumentNodeContext || !editingDocumentNodeContext.nodeId) return;
+      if (!editingDocumentNodeContext?.nodeId) return;
       const canvasFileId = editingDocumentNodeContext.fileId;
       const nodeId = editingDocumentNodeContext.nodeId;
       updateWorkspace((current: CaseResolverWorkspace) => {
         const canvasFileIndex = current.files.findIndex((file: CaseResolverFile) => file.id === canvasFileId);
         if (canvasFileIndex < 0) return current;
         const canvasFile = current.files[canvasFileIndex];
-        if (!canvasFile || !canvasFile.graph) return current;
+        if (!canvasFile?.graph) return current;
         if (canvasFile.isLocked) return current;
         const hasNode = canvasFile.graph.nodes.some((node: AiNode) => node.id === nodeId);
         if (!hasNode) return current;
@@ -2233,7 +2233,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       updateWorkspace((current) => {
         if (!current.activeFileId) return current;
         const activeFile = current.files.find((file) => file.id === current.activeFileId);
-        if (!activeFile || !activeFile.graph) return current;
+        if (!activeFile?.graph) return current;
         if (activeFile.isLocked) return current;
 
         const activeGraph = activeFile.graph;

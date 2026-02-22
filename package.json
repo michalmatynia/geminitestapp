@@ -130,6 +130,8 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^0.1.0",
+    "@eslint/js": "^10.0.1",
+    "@next/eslint-plugin-next": "^16.1.6",
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4.1.18",
     "@testing-library/jest-dom": "^6.8.0",
@@ -151,12 +153,13 @@
     "@vitest/ui": "^4.0.18",
     "autoprefixer": "^10.4.24",
     "dotenv-cli": "^11.0.0",
-    "eslint": "^10.0.1",
+    "eslint": "^9.39.3",
     "eslint-config-next": "^0.2.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-import": "^1.14.0",
     "eslint-plugin-react": "^7.22.0",
     "eslint-plugin-react-hooks": "^7.0.1",
+    "globals": "^17.3.0",
     "happy-dom": "^20.3.6",
     "jsdom": "^27.4.0",
     "msw": "^2.0.0",
@@ -170,6 +173,7 @@
     "tailwindcss": "^4.1.18",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.0",
     "vitest": "^4.0.18"
   },
   "lint-staged": {

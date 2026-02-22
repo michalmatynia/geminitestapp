@@ -240,9 +240,9 @@ const enrichCollections = (
   schema: SchemaResponse,
   provider: SchemaProvider
 ): Array<CollectionSchema & { provider: SchemaProvider }> => {
-  const collections = Array.isArray(schema.collections)
-    ? (schema.collections as CollectionSchema[])
-    : Object.values(schema.collections);
+  const collections: CollectionSchema[] = Array.isArray(schema.collections)
+    ? (schema.collections)
+    : Object.values(schema.collections as Record<string, CollectionSchema>);
 
   return collections.map((collection: CollectionSchema) => ({
     ...collection,

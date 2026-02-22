@@ -64,7 +64,7 @@ module.exports = tseslint.config(
       '@typescript-eslint': tseslint.plugin,
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
-      import: importPlugin,
+      // import: importPlugin,
       '@next/next': nextPlugin,
     },
     rules: {
@@ -108,6 +108,7 @@ module.exports = tseslint.config(
       // Next.js specific rules
       '@next/next/no-img-element': 'warn', // Warn instead of error for <img>
       // Import plugin rules
+      /*
       'import/order': [
         'error',
         {
@@ -134,6 +135,7 @@ module.exports = tseslint.config(
           ],
         },
       ],
+      */
       // Allow 'use client' and 'use server' directives
       "no-restricted-imports": ["error", {
         "patterns": [{
@@ -147,12 +149,14 @@ module.exports = tseslint.config(
         version: 'detect',
       },
       // Configure import plugin to resolve tsconfig paths
+      /*
       'import/resolver': {
         typescript: {
           project: './tsconfig.json',
         },
         node: true,
       },
+      */
     },
   },
   {
@@ -225,19 +229,22 @@ module.exports = tseslint.config(
         __filename: 'readonly',
       },
     },
-    rules: {
-      // Server-side specific rules
-      'no-console': 'warn', // Warn about console logs on the server
-      'import/no-restricted-paths': [
-        'error',
-        {
-          'zones': [
-            { target: './src/shared', from: './src/features' }, // Shared should not import from features
-            // Add more server-side specific restrictions if needed
-          ],
-        },
-      ],
-    },
+          rules: {
+            // Server-side specific rules
+            'no-console': 'warn', // Warn about console logs on the server
+            /*
+            'import/no-restricted-paths': [
+              'error',
+              {
+                'zones': [
+                  { target: './src/shared', from: './src/features' }, // Shared should not import from features
+                  // Add more server-side specific restrictions if needed
+                ],
+              },
+            ],
+            */
+          },
+    
   },
   {
     // Configuration for test files

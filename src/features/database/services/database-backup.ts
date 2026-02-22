@@ -54,9 +54,10 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
   ];
   const commandString = `${command} ${args.join(' ')}`;
 
-  let stdout = '';
-  let stderr = '';
+  let stdout: string;
+  let stderr: string;
   try {
+  
     const result = await mongoExecFileAsync(command, args);
     stdout = result.stdout;
     stderr = result.stderr;
@@ -116,9 +117,10 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
   const args = ['-Fc', '--file', backupPath, '--dbname', databaseUrl];
   const commandString = `${command} ${args.join(' ')}`;
 
-  let stdout = '';
-  let stderr = '';
+  let stdout: string;
+  let stderr: string;
   try {
+  
     const result = await pgExecFileAsync(command, args);
     stdout = result.stdout;
     stderr = result.stderr;

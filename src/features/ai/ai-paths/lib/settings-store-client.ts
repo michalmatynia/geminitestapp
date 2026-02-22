@@ -198,7 +198,7 @@ export const updateAiPathsSettingsBulk = async (
     data = await api.post<unknown>('/api/ai-paths/settings', { items: payload });
   } catch (error) {
     if (error instanceof ApiError) {
-      throw new Error(`Failed to update AI Paths settings (${error.status})`);
+      throw new Error(`Failed to update AI Paths settings (${error.status})`, { cause: error });
     }
     throw error;
   }
@@ -229,7 +229,7 @@ export const updateAiPathsSetting = async (
     data = await api.post<unknown>('/api/ai-paths/settings', { key, value });
   } catch (error) {
     if (error instanceof ApiError) {
-      throw new Error(`Failed to update AI Paths setting (${error.status})`);
+      throw new Error(`Failed to update AI Paths setting (${error.status})`, { cause: error });
     }
     throw error;
   }
@@ -259,14 +259,14 @@ export const deleteAiPathsSettings = async (keys: string[]): Promise<number> => 
   );
   if (normalizedKeys.length === 0) return 0;
 
-  let data: { deletedCount?: unknown } | null = null;
+  let data: { deletedCount?: unknown } | null;
   try {
     data = await api.delete<{ deletedCount?: unknown }>('/api/ai-paths/settings', {
       body: JSON.stringify({ keys: normalizedKeys }),
     });
   } catch (error) {
     if (error instanceof ApiError) {
-      throw new Error(`Failed to delete AI Paths settings (${error.status})`);
+      throw new Error(`Failed to delete AI Paths settings (${error.status})`, { cause: error });
     }
     throw error;
   }

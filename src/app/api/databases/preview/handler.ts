@@ -27,9 +27,9 @@ export async function postDatabasesPreviewHandler(
   _ctx: ApiHandlerContext
 ): Promise<Response> {
   let backupName: string | undefined;
-  let previewMode: 'backup' | 'current' = 'backup';
-  let previewDbName: string | null = null;
-  let safePage = 1;
+  let previewMode: 'backup' | 'current';
+  let previewDbName: string | null;
+  let safePage: number;
   let safePageSize = 20;
   const dbUrl = process.env['DATABASE_URL'] ?? '';
 
@@ -94,11 +94,12 @@ export async function postDatabasesPreviewHandler(
 
     const mongoClient = await getMongoClient();
     const db = mongoClient.db(previewDb);
-    let collections: string[] = [];
-    let tableRows: { name: string; rows: Record<string, unknown>[]; totalRows: number }[] = [];
-    let tableStats: { name: string; rowEstimate: number }[] = [];
-
+    let collections: string[];
+    let tableRows: { name: string; rows: Record<string, unknown>[]; totalRows: number }[];
+    let tableStats: { name: string; rowEstimate: number }[];
+    
     try {
+    
       const collectionInfos = await db.listCollections().toArray();
       collections = collectionInfos.map((info: { name: string }) => info.name);
 
@@ -143,9 +144,10 @@ export async function postDatabasesPreviewHandler(
   let output = '';
   if (previewMode === 'backup') {
     const backupPath = path.join(pgBackupsDir, backupName ?? '');
-    let stdout = '';
-    let stderr = '';
+    let stdout: string;
+    let stderr: string;
     try {
+  
       const result = await pgExecFileAsync(getPgRestoreCommand(), [
         '--list',
         backupPath,
@@ -231,11 +233,12 @@ export async function postDatabasesPreviewHandler(
       sizeBytes: number;
       sizeFormatted: string;
     };
-    let tableDetails: TableDetailEntry[] = [];
-    let enumTypes: { name: string; values: string[] }[] = [];
-    let databaseSize = '';
-
+    let tableDetails: TableDetailEntry[];
+    let enumTypes: { name: string; values: string[] }[];
+    let databaseSize: string;
+    
     try {
+    
       const previewUrl = new URL(process.env['DATABASE_URL'] ?? '');
       if (previewMode === 'backup') {
         await adminClient?.connect();

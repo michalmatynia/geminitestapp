@@ -35,7 +35,7 @@ const formatSchemaAsText = (schema: SchemaResponse): string => {
 
   const rawCollections = schema.collections;
   const collections: CollectionSchema[] = Array.isArray(rawCollections)
-    ? (rawCollections as CollectionSchema[])
+    ? (rawCollections)
     : Object.values(rawCollections as Record<string, CollectionSchema>);
 
   for (const collection of collections) {
@@ -70,9 +70,9 @@ const filterCollections = (
   }
   const selectedSet = new Set(selectedCollections.map((c: string): string => c.toLowerCase()));
   
-  const baseCollections = Array.isArray(schema.collections)
-    ? (schema.collections as CollectionSchemaDto[])
-    : Object.values(schema.collections);
+  const baseCollections = (Array.isArray(schema.collections)
+    ? schema.collections
+    : Object.values(schema.collections)) as CollectionSchemaDto[];
 
   if (schema.provider === 'multi') {
     const collections = baseCollections.filter((c: CollectionSchemaDto): boolean =>
@@ -137,8 +137,8 @@ export const handleDbSchema: NodeHandler = async ({
   // Optionally filter out fields or relations
   if (!config.includeFields || !config.includeRelations) {
     const baseCollections = Array.isArray(schema.collections)
-      ? (schema.collections as CollectionSchemaDto[])
-      : Object.values(schema.collections);
+      ? (schema.collections)
+      : (Object.values(schema.collections));
 
     schema.collections = baseCollections.map((c: CollectionSchemaDto): CollectionSchemaDto => {
       const result: CollectionSchemaDto = {

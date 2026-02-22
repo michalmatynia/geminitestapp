@@ -412,22 +412,22 @@ export const resolvePromptValidationRuntime = (
       templateSignature: mergedTemplateSignature,
     });
     const cached = getCachedRuntimeSelection(selectionCacheKey);
-          if (cached) {
-            recordPromptValidationCounter('runtime_cache_hit', 1, {
-              scope: stackResolution.scope ?? 'global',
-              cache: 'selection',
-            });
-            recordPromptValidationTiming(
-              'runtime_select_ms',
-              performance.now() - startedAt,
-              {
-                scope: stackResolution.scope ?? 'global',
-                stack: resolveStackId(stackResolution.stack),
-                profile: args.runtimeRuleProfile,
-                correlationId,
-                mode: 'cache_hit',
-              }
-            );
+    if (cached) {
+      recordPromptValidationCounter('runtime_cache_hit', 1, {
+        scope: stackResolution.scope ?? 'global',
+        cache: 'selection',
+      });
+      recordPromptValidationTiming(
+        'runtime_select_ms',
+        performance.now() - startedAt,
+        {
+          scope: stackResolution.scope ?? 'global',
+          stack: resolveStackId(stackResolution.stack),
+          profile: args.runtimeRuleProfile,
+          correlationId,
+          mode: 'cache_hit',
+        }
+      );
     
       return {
         correlationId,

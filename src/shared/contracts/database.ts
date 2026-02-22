@@ -323,48 +323,43 @@ export const databaseTableDetailSchema = z.object({
 export type DatabaseTableDetailDto = z.infer<typeof databaseTableDetailSchema>;
 export type DatabaseTableDetail = DatabaseTableDetailDto;
 
-export const fieldInfoSchema = z.object({
-  name: z.string(),
-  type: z.string(),
-  nullable: z.boolean().optional(),
-  isRequired: z.boolean().nullable().optional(),
-  isId: z.boolean().nullable().optional(),
-  isPrimaryKey: z.boolean().optional(),
-  isForeignKey: z.boolean().optional(),
-  isUnique: z.boolean().nullable().optional(),
-  hasDefault: z.boolean().nullable().optional(),
-  relationTo: z.string().nullable().optional(),
-});
+export interface FieldInfoDto {
+  name: string;
+  type: string;
+  nullable?: boolean;
+  isRequired?: boolean | null;
+  isId?: boolean | null;
+  isPrimaryKey?: boolean;
+  isForeignKey?: boolean;
+  isUnique?: boolean | null;
+  hasDefault?: boolean | null;
+  relationTo?: string | null;
+}
 
-export type FieldInfoDto = z.infer<typeof fieldInfoSchema>;
 export type FieldSchema = FieldInfoDto;
 
-export const collectionSchemaSchema = z.object({
-  name: z.string(),
-  fields: z.array(fieldInfoSchema),
-  count: z.number().optional(),
-  documentCount: z.number().optional(),
-  provider: z.string().optional(),
-  relations: z.array(z.string()).optional(),
-}).catchall(z.unknown());
+export interface CollectionSchemaDto {
+  name: string;
+  fields: FieldInfoDto[];
+  count?: number;
+  documentCount?: number;
+  provider?: string;
+  relations?: string[];
+  [key: string]: unknown;
+}
 
-export type CollectionSchemaDto = z.infer<typeof collectionSchemaSchema>;
 export type CollectionSchema = CollectionSchemaDto;
 
 export const schemaProviderSchema = z.enum(['prisma', 'mongodb', 'multi']);
 export type SchemaProviderDto = z.infer<typeof schemaProviderSchema>;
 export type SchemaProvider = SchemaProviderDto;
 
-export const multiSchemaResponseSchema = z.object({
-  provider: z.string(),
-  collections: z.union([
-    z.record(z.string(), collectionSchemaSchema),
-    z.array(collectionSchemaSchema.and(z.object({ provider: z.string().optional() })))
-  ]),
-  sources: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
-});
+export interface MultiSchemaResponseDto {
+  provider: string;
+  collections: CollectionSchemaDto[];
+  sources?: Record<string, Record<string, unknown>>;
+}
 
-export type MultiSchemaResponseDto = z.infer<typeof multiSchemaResponseSchema>;
 export type SchemaResponseDto = MultiSchemaResponseDto;
 export type SchemaResponsePayloadDto = SchemaResponseDto;
 export type SchemaResponse = SchemaResponseDto;

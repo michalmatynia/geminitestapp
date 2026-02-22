@@ -57,7 +57,7 @@ type ErrorFingerprintParams = {
 // Real implementations from features layer via dynamic imports to avoid circular dependencies
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
-    // eslint-disable-next-line import/no-restricted-paths
+     
     const { logSystemEvent: realLogSystemEvent } = await import('@/features/observability/server');
     await realLogSystemEvent(params);
   } catch (error) {
@@ -67,7 +67,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
 
 const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
   try {
-    // eslint-disable-next-line import/no-restricted-paths
+     
     const { getErrorFingerprint: realGetFingerprint } = await import('@/features/observability/server');
     return realGetFingerprint(params);
   } catch (error) {
@@ -78,7 +78,7 @@ const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<stri
 
 const getSessionUser = async (): Promise<{ id?: string | null } | null> => {
   try {
-    // eslint-disable-next-line import/no-restricted-paths
+     
     const { auth } = await import('@/features/auth/auth');
     const session = await auth();
     return session?.user ?? null;
@@ -153,9 +153,10 @@ const parseJsonBody = async (
     return { body: undefined };
   }
 
-  let parsed: unknown = undefined;
+  let parsed: unknown;
   try {
     parsed = JSON.parse(text);
+  
   } catch {
     throw badRequestError('Invalid JSON payload');
   }

@@ -30,42 +30,42 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
     return provider ? { ...rest, provider } : rest;
   };
 
-  if (schema.provider === 'multi') {
-    const collections = Array.isArray(schema.collections)
-      ? schema.collections
-      : Object.values(schema.collections ?? {});
-    
-    if (collections.length) {
-      return collections.map((collection) => stripUndefinedProvider(collection));
-    }
-    const merged: CollectionSchema[] = [];
-    (['mongodb', 'prisma'] as const).forEach((provider) => {
-      const source = schema.sources?.[provider] as
-        | { collections?: CollectionSchema[] | Record<string, CollectionSchema> }
-        | null
-        | undefined;
-      if (!source?.collections) return;
-      const sourceCollections = Array.isArray(source.collections)
-        ? source.collections
-        : Object.values(source.collections);
+        if (schema.provider === 'multi') {
+          const collections = (Array.isArray(schema.collections)
+            ? schema.collections
+            : Object.values(schema.collections ?? {})) as CollectionSchema[];
+          
+          if (collections.length) {
+            return collections.map((collection) => stripUndefinedProvider(collection));
+          }
+          const merged: CollectionSchema[] = [];
+          (['mongodb', 'prisma'] as const).forEach((provider) => {
+            const source = schema.sources?.[provider] as
+              | { collections?: CollectionSchema[] | Record<string, CollectionSchema> }
+              | null
+              | undefined;
+            if (!source?.collections) return;
+            const sourceCollections = (Array.isArray(source.collections)
+              ? source.collections
+              : Object.values(source.collections)) as CollectionSchema[];
+            
+            if (!sourceCollections.length) return;
+            sourceCollections.forEach((collection) => {
+              merged.push({ ...stripUndefinedProvider(collection), provider });
+            });
+          });
+          return merged;
+        }
+        
+        const provider = schema.provider as 'mongodb' | 'prisma';
+        const baseCollections = (Array.isArray(schema.collections)
+          ? schema.collections
+          : Object.values(schema.collections ?? {})) as CollectionSchema[];
       
-      if (!sourceCollections.length) return;
-      sourceCollections.forEach((collection) => {
-        merged.push({ ...stripUndefinedProvider(collection), provider });
-      });
-    });
-    return merged;
-  }
-  
-  const provider = schema.provider as 'mongodb' | 'prisma';
-  const baseCollections = Array.isArray(schema.collections)
-    ? schema.collections
-    : Object.values(schema.collections ?? {});
-
-  return baseCollections.map((collection) => ({
-    ...stripUndefinedProvider(collection),
-    provider,
-  }));
+        return baseCollections.map((collection) => ({
+          ...stripUndefinedProvider(collection),
+          provider,
+        }));
 };
 
 const buildCollectionKey = (

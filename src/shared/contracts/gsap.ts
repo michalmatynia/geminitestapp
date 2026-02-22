@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { vectorShapeSchema } from './vector';
+
 /**
  * GSAP Animation DTOs
  */
@@ -24,6 +26,28 @@ export const animationPresetSchema = z.enum([
   'blur',
   'bounce',
   'reveal',
+  'stagger',
+  'fadeOut',
+  'shake',
+  'wiggle',
+  'wobble',
+  'slideInLeft',
+  'slideInRight',
+  'slideInTop',
+  'slideInBottom',
+  'scaleUp',
+  'scaleDown',
+  'zoomIn',
+  'blurIn',
+  'rotateX',
+  'rotateY',
+  'popZ',
+  'cardTilt',
+  'flip3D',
+  'cube',
+  'carousel',
+  'orbit',
+  'skew',
 ]);
 export type AnimationPresetDto = z.infer<typeof animationPresetSchema>;
 export type AnimationPreset = AnimationPresetDto;
@@ -53,6 +77,7 @@ export const parallaxPresetSchema = z.enum([
   'horizontal-parallax',
   'scale-parallax',
   'blur-parallax',
+  'depth',
   'custom',
 ]);
 export type ParallaxPresetDto = z.infer<typeof parallaxPresetSchema>;
@@ -62,7 +87,7 @@ export const parallaxAxisSchema = z.enum(['x', 'y', 'both']);
 export type ParallaxAxisDto = z.infer<typeof parallaxAxisSchema>;
 export type ParallaxAxis = ParallaxAxisDto;
 
-export const parallaxPatternSchema = z.enum(['uniform', 'random', 'stepped', 'alternating']);
+export const parallaxPatternSchema = z.enum(['uniform', 'random', 'stepped', 'alternating', 'layers', 'increment']);
 export type ParallaxPatternDto = z.infer<typeof parallaxPatternSchema>;
 export type ParallaxPattern = ParallaxPatternDto;
 
@@ -75,6 +100,10 @@ export const textEffectSchema = z.enum([
   'scramble',
   'typing',
   'counting',
+  'splitChars',
+  'splitWords',
+  'splitLines',
+  'countUp',
 ]);
 export type TextEffectDto = z.infer<typeof textEffectSchema>;
 export type TextEffect = TextEffectDto;
@@ -91,11 +120,22 @@ export const velocityEffectSchema = z.enum(['none', 'skew', 'scale', 'opacity', 
 export type VelocityEffectDto = z.infer<typeof velocityEffectSchema>;
 export type VelocityEffect = VelocityEffectDto;
 
-export const timelineModeSchema = z.enum(['none', 'sequence', 'parallel', 'staggered', 'wave']);
+export const timelineModeSchema = z.enum([
+  'none',
+  'sequence',
+  'parallel',
+  'staggered',
+  'wave',
+  'callResponse',
+  'overlap',
+  'domino',
+  'cascade',
+  'ripple',
+]);
 export type TimelineModeDto = z.infer<typeof timelineModeSchema>;
 export type TimelineMode = TimelineModeDto;
 
-export const scrollModeSchema = z.enum(['none', 'scrub', 'pin', 'reveal', 'horizontal-scroll']);
+export const scrollModeSchema = z.enum(['none', 'scrub', 'pin', 'reveal', 'horizontal-scroll', 'story']);
 export type ScrollModeDto = z.infer<typeof scrollModeSchema>;
 export type ScrollMode = ScrollModeDto;
 
@@ -144,17 +184,17 @@ export const gsapAnimationConfigSchema = z.object({
   motionPathEnd: z.number().optional(),
   motionPathFollow: z.boolean().optional(),
   motionPathSpacing: z.number().optional(),
-  motionPathShapes: z.array(z.string()).optional(),
+  motionPathShapes: z.array(vectorShapeSchema).optional(),
   svgDrawEnabled: z.boolean().optional(),
   svgDrawSelector: z.string().optional(),
   svgDrawFrom: z.number().optional(),
   svgDrawTo: z.number().optional(),
   svgDrawPath: z.string().optional(),
-  svgDrawShapes: z.array(z.string()).optional(),
+  svgDrawShapes: z.array(vectorShapeSchema).optional(),
   svgMorphEnabled: z.boolean().optional(),
   svgMorphSelector: z.string().optional(),
   svgMorphTo: z.string().optional(),
-  svgMorphShapes: z.array(z.string()).optional(),
+  svgMorphShapes: z.array(vectorShapeSchema).optional(),
   textEffect: textEffectSchema.optional(),
   textStagger: z.number().optional(),
   textScrambleChars: z.string().optional(),
@@ -188,7 +228,7 @@ export const gsapAnimationConfigSchema = z.object({
   draggableCarouselSnap: z.boolean().optional(),
   observerEnabled: z.boolean().optional(),
   observerType: observerTypeSchema.optional(),
-  observerAxis: parallaxAxisSchema.optional(),
+  observerAxis: dragAxisSchema.optional(),
   observerSpeed: z.number().optional(),
   velocityEffect: velocityEffectSchema.optional(),
   velocityStrength: z.number().optional(),
@@ -196,7 +236,7 @@ export const gsapAnimationConfigSchema = z.object({
   magnetEnabled: z.boolean().optional(),
   magnetStrength: z.number().optional(),
   magnetRadius: z.number().optional(),
-  magnetAxis: z.string().optional(),
+  magnetAxis: dragAxisSchema.optional(),
   magnetReturn: z.number().optional(),
   timelineMode: timelineModeSchema.optional(),
   timelineGap: z.number().optional(),
@@ -242,6 +282,11 @@ export const ANIMATION_PRESETS: { label: string; value: AnimationPreset }[] = [
   { label: 'Blur', value: 'blur' },
   { label: 'Bounce', value: 'bounce' },
   { label: 'Reveal', value: 'reveal' },
+  { label: 'Stagger', value: 'stagger' },
+  { label: 'Fade Out', value: 'fadeOut' },
+  { label: 'Shake', value: 'shake' },
+  { label: 'Wiggle', value: 'wiggle' },
+  { label: 'Wobble', value: 'wobble' },
 ];
 
 export const ANIMATION_EASINGS = [
@@ -256,7 +301,7 @@ export const ANIMATION_EASINGS = [
   'expo.in', 'expo.out', 'expo.inOut',
   'circ.in', 'circ.out', 'circ.inOut',
   'none', 'linear',
-];
+].map((easing) => ({ label: easing, value: easing }));
 
 export const PARALLAX_PRESETS: { label: string; value: ParallaxPreset }[] = [
   { label: 'None', value: 'none' },
@@ -268,6 +313,7 @@ export const PARALLAX_PRESETS: { label: string; value: ParallaxPreset }[] = [
   { label: 'Horizontal Parallax', value: 'horizontal-parallax' },
   { label: 'Scale Parallax', value: 'scale-parallax' },
   { label: 'Blur Parallax', value: 'blur-parallax' },
+  { label: 'Depth', value: 'depth' },
   { label: 'Custom', value: 'custom' },
 ];
 
@@ -276,6 +322,7 @@ export const PARALLAX_PATTERNS: { label: string; value: ParallaxPattern }[] = [
   { label: 'Random', value: 'random' },
   { label: 'Stepped', value: 'stepped' },
   { label: 'Alternating', value: 'alternating' },
+  { label: 'Layers', value: 'layers' },
 ];
 
 export const TIMELINE_MODES: { label: string; value: TimelineMode }[] = [
@@ -292,6 +339,7 @@ export const SCROLL_MODES: { label: string; value: ScrollMode }[] = [
   { label: 'Pin', value: 'pin' },
   { label: 'Reveal', value: 'reveal' },
   { label: 'Horizontal Scroll', value: 'horizontal-scroll' },
+  { label: 'Story', value: 'story' },
 ];
 
 export const REVEAL_STYLES: { label: string; value: RevealStyle }[] = [

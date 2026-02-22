@@ -380,7 +380,15 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
   }
 };
 
-const AUTH_CONFIG_TTL_MS = 30_000;
+const readPositiveIntegerEnv = (key: string, fallback: number): number => {
+  const raw = process.env[key];
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+};
+
+const AUTH_CONFIG_TTL_MS = readPositiveIntegerEnv('AUTH_CONFIG_TTL_MS', 10 * 60_000);
 let cachedAuthConfig: NextAuthConfig | null = null;
 let cachedAuthConfigAt = 0;
 let cachedAuthConfigPromise: Promise<NextAuthConfig> | null = null;

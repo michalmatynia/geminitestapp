@@ -73,6 +73,23 @@ const promptExploderSupportsSegmentTextSplit = (
         segment.type === 'parameter_block')
   );
 
+const resolveSegmentCardLabel = (
+  segment: PromptExploderSegment,
+  index: number
+): string => {
+  const codeLabel = segment.code?.trim() ?? '';
+  if (codeLabel.length > 0) return codeLabel;
+  const previewSource = segment.text ?? segment.raw ?? '';
+  const previewLine = previewSource
+    .split('\n')
+    .map((line) => line.trim())
+    .find((line) => line.length > 0);
+  if (previewLine && previewLine.length > 0) {
+    return previewLine.slice(0, 80);
+  }
+  return `Segment ${index + 1}`;
+};
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 export function SegmentEditorPanel(): React.JSX.Element {
@@ -227,7 +244,9 @@ export function SegmentEditorPanel(): React.JSX.Element {
                         >
                           <GripVertical className='size-3.5' />
                         </button>
-                        <span className='truncate font-medium'>{segment.title}</span>
+                        <span className='truncate font-medium'>
+                          {resolveSegmentCardLabel(segment, segmentIndex)}
+                        </span>
                       </div>
                       <div className='flex items-center gap-1'>
                         <Badge variant='neutral' className='bg-card/50 px-1 py-0 text-[9px] font-normal uppercase'>
@@ -416,18 +435,6 @@ export function SegmentEditorPanel(): React.JSX.Element {
                     </div>
                   </FormField>
                 </div>
-
-                <FormField label='Title'>
-                  <Input
-                    value={selectedSegment.title ?? ''}
-                    onChange={(event) => {
-                      updateSegment(selectedSegment.id, (current) => ({
-                        ...current,
-                        title: event.target.value,
-                      }));
-                    }}
-                  />
-                </FormField>
 
                 {selectedSegment.type === 'metadata' ? (
                   <FormField label='Metadata Mode'>

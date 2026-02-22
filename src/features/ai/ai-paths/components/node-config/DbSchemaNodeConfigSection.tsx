@@ -31,10 +31,10 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
   };
 
   if (schema.provider === 'multi') {
-    const collections = (Array.isArray(schema.collections)
+    const collectionsRaw = Array.isArray(schema.collections)
       ? schema.collections
-      : Object.values(schema.collections ?? {}));
-
+      : Object.values(schema.collections ?? {});
+    const collections: CollectionSchema[] = Array.from(collectionsRaw as unknown as CollectionSchema[]);
     if (collections.length) {
       return collections.map((collection) => stripUndefinedProvider(collection));
     }
@@ -45,10 +45,10 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
               | null
               | undefined;
       if (!source?.collections) return;
-      const sourceCollections = (Array.isArray(source.collections)
+      const sourceCollectionsRaw = Array.isArray(source.collections)
         ? source.collections
-        : Object.values(source.collections));
-
+        : Object.values(source.collections);
+      const sourceCollections: CollectionSchema[] = Array.from(sourceCollectionsRaw as unknown as CollectionSchema[]);
       if (!sourceCollections.length) return;
       sourceCollections.forEach((collection) => {
         merged.push({ ...stripUndefinedProvider(collection), provider });
@@ -58,10 +58,10 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
   }
 
   const provider = schema.provider as 'mongodb' | 'prisma';
-  const baseCollections = (Array.isArray(schema.collections)
+  const baseCollectionsRaw = Array.isArray(schema.collections)
     ? schema.collections
-    : Object.values(schema.collections ?? {}));
-
+    : Object.values(schema.collections ?? {});
+  const baseCollections: CollectionSchema[] = Array.from(baseCollectionsRaw as unknown as CollectionSchema[]);
   return baseCollections.map((collection) => ({
     ...stripUndefinedProvider(collection),
     provider,

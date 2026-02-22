@@ -41,10 +41,11 @@ export function MediaLibraryPanel({
   const uploadMutation = useUploadCmsMedia();
 
   const handleSelect = (files: ImageFileSelection[]): void => {
-    const filepaths = files.map((file: ImageFileSelection) => file.filepath).filter(Boolean);
+    const filepaths = files
+      .map((file: ImageFileSelection) => file.filepath)
+      .filter((path): path is string => typeof path === 'string' && path.length > 0);
     if (filepaths.length === 0) return;
-    onSelect(filepaths);
-    if (selectionMode === 'single') {
+    onSelect(filepaths);    if (selectionMode === 'single') {
       onOpenChange(false);
     }
   };

@@ -28,8 +28,8 @@ import {
   Button,
   Checkbox,
   Input,
-  FormField,
-  MultiSelect,
+  Label,
+  FormField,  MultiSelect,
   SearchInput,
   SelectSimple,
   Tabs,
@@ -1273,6 +1273,21 @@ export function CaseResolverPageView(
                 <div className='flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between'>
                   <div className='min-w-0'>
                     <div className='flex min-w-0 items-center gap-2'>
+                      <Button
+                        type='button'
+                        size='sm'
+                        onClick={handleSaveFileEditor}
+                        disabled={
+                          !isEditorDraftDirty || isEditingDocumentLocked
+                        }
+                        className={`h-8 min-w-[100px] flex-shrink-0 rounded-md border text-xs transition-colors ${
+                          isEditorDraftDirty
+                            ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
+                            : 'border-border/60 text-gray-500 hover:bg-transparent'
+                        }`}
+                      >
+                        Update
+                      </Button>
                       <h2 className='truncate text-2xl font-bold tracking-tight text-white'>
                         {fileEditorTitle}
                       </h2>
@@ -1287,21 +1302,6 @@ export function CaseResolverPageView(
                     </div>
                   </div>
                   <div className='ml-auto flex flex-wrap items-center justify-end gap-2'>
-                    <Button
-                      type='button'
-                      size='sm'
-                      onClick={handleSaveFileEditor}
-                      disabled={
-                        !isEditorDraftDirty || isEditingDocumentLocked
-                      }
-                      className={`h-8 min-w-[100px] rounded-md border text-xs transition-colors ${
-                        isEditorDraftDirty
-                          ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
-                          : 'border-border/60 text-gray-500 hover:bg-transparent'
-                      }`}
-                    >
-                      Update
-                    </Button>
                     <Button
                       type='button'
                       onClick={handlePreviewDraftPdf}
@@ -1533,41 +1533,98 @@ export function CaseResolverPageView(
                           />
                         </FormField>
 
-                        <FormField label='Document Date'>
-                          <Input
-                            type='date'
-                            value={editingDocumentDraft.documentDate?.isoDate || ''}
-                            disabled={isEditingDocumentLocked}
-                            onChange={(event) => {
-                              const isoDate = event.target.value;
-                              const current = editingDocumentDraft.documentDate;
-                              updateEditingDocumentDraft({
-                                documentDate: current 
-                                  ? { ...current, isoDate } 
-                                  : {
-                                    isoDate,
-                                    source: 'text',
-                                    sourceLine: null,
-                                    cityHint: null,
-                                    city: null,
-                                    action: 'useDetectedDate',
-                                  },
-                              });
-                            }}
-                          />
-                        </FormField>
+                        <FormField label='Document Created' className='md:col-span-2'>
+                          <div className='grid gap-3 md:grid-cols-2'>
+                            <div className='space-y-2'>
+                              <Label className='text-[11px] uppercase tracking-wide text-gray-400'>
+                                Document Date
+                              </Label>
+                              <Input
+                                type='date'
+                                value={editingDocumentDraft.documentDate?.isoDate || ''}
+                                disabled={isEditingDocumentLocked}
+                                onChange={(event) => {
+                                  const isoDate = event.target.value;
+                                  const current = editingDocumentDraft.documentDate;
+                                  updateEditingDocumentDraft({
+                                    documentDate: current
+                                      ? { ...current, isoDate }
+                                      : {
+                                        isoDate,
+                                        source: 'text',
+                                        sourceLine: null,
+                                        cityHint: null,
+                                        city: null,
+                                        action: 'useDetectedDate',
+                                      },
+                                  });
+                                }}
+                              />
+                              <div className='flex justify-end'>
+                                <Button
+                                  type='button'
+                                  variant='ghost'
+                                  size='sm'
+                                  className='h-6 px-2 text-[11px] text-gray-400 hover:text-gray-200'
+                                  disabled={
+                                    (editingDocumentDraft.documentDate?.isoDate ?? '').trim().length === 0 ||
+                                    isEditingDocumentLocked
+                                  }
+                                  onClick={(): void => {
+                                    if (!editingDocumentDraft.documentDate) {
+                                      updateEditingDocumentDraft({
+                                        documentDate: null,
+                                      });
+                                      return;
+                                    }
+                                    updateEditingDocumentDraft({
+                                      documentDate: {
+                                        ...editingDocumentDraft.documentDate,
+                                        isoDate: '',
+                                      },
+                                    });
+                                  }}
+                                >
+                                  Clear
+                                </Button>
+                              </div>
+                            </div>
 
-                        <FormField label='City'>
-                          <Input
-                            value={editingDocumentDraft.documentCity ?? ''}
-                            disabled={isEditingDocumentLocked}
-                            onChange={(event) => {
-                              updateEditingDocumentDraft({
-                                documentCity: event.target.value,
-                              });
-                            }}
-                            placeholder='City'
-                          />
+                            <div className='space-y-2'>
+                              <Label className='text-[11px] uppercase tracking-wide text-gray-400'>
+                                City
+                              </Label>
+                              <Input
+                                value={editingDocumentDraft.documentCity ?? ''}
+                                disabled={isEditingDocumentLocked}
+                                onChange={(event) => {
+                                  updateEditingDocumentDraft({
+                                    documentCity: event.target.value,
+                                  });
+                                }}
+                                placeholder='City'
+                              />
+                              <div className='flex justify-end'>
+                                <Button
+                                  type='button'
+                                  variant='ghost'
+                                  size='sm'
+                                  className='h-6 px-2 text-[11px] text-gray-400 hover:text-gray-200'
+                                  disabled={
+                                    (editingDocumentDraft.documentCity ?? '').trim().length === 0 ||
+                                    isEditingDocumentLocked
+                                  }
+                                  onClick={(): void => {
+                                    updateEditingDocumentDraft({
+                                      documentCity: '',
+                                    });
+                                  }}
+                                >
+                                  Clear
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
                         </FormField>
 
                         <FormField label='Addresser'>

@@ -121,9 +121,8 @@ function RowFormModal({
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, [col.name]: e.target.value }))
                 }
-                placeholder={col.defaultValue ?? (col.nullable ? 'NULL' : 'required')}
-                className='font-mono text-xs'
-                disabled={mode === 'edit' && col.isPrimaryKey}
+                placeholder={typeof col.defaultValue === 'string' ? col.defaultValue : (col.nullable ? 'NULL' : 'required')}
+                className='font-mono text-xs'                disabled={mode === 'edit' && col.isPrimaryKey}
               />
             </div>
           </FormField>

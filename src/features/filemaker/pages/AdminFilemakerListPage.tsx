@@ -1,6 +1,6 @@
 'use client';
 
-import { Edit2, LayoutList, Users, Building2, Database, Mail } from 'lucide-react';
+import { Edit2, LayoutList, Users, Building2, CalendarDays, Database, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
@@ -24,7 +24,7 @@ import {
   parseFilemakerDatabase,
 } from '../settings';
 
-import type { FilemakerOrganization, FilemakerPerson } from '../types';
+import type { FilemakerEvent, FilemakerOrganization, FilemakerPerson } from '../types';
 import type { ColumnDef } from '@tanstack/react-table';
 
 const includeQuery = (values: string[], query: string): boolean => {
@@ -89,6 +89,28 @@ export function AdminFilemakerListPage(): React.JSX.Element {
           left.name.localeCompare(right.name)
         ),
     [database.organizations, deferredQuery]
+  );
+  const events = useMemo(
+    () =>
+      [...database.events]
+        .filter((event: FilemakerEvent) =>
+          includeQuery(
+            [
+              event.eventName,
+              event.street,
+              event.streetNumber,
+              event.city,
+              event.postalCode,
+              event.country,
+              event.countryId,
+            ],
+            deferredQuery
+          )
+        )
+        .sort((left: FilemakerEvent, right: FilemakerEvent) =>
+          left.eventName.localeCompare(right.eventName)
+        ),
+    [database.events, deferredQuery]
   );
 
   const personColumns = useMemo<ColumnDef<FilemakerPerson>[]>(() => [
@@ -173,12 +195,46 @@ export function AdminFilemakerListPage(): React.JSX.Element {
       ),
     },
   ], [router]);
+  const eventColumns = useMemo<ColumnDef<FilemakerEvent>[]>(() => [
+    {
+      id: 'event',
+      header: 'Event',
+      cell: ({ row }) => {
+        const event = row.original;
+        return (
+          <div className='min-w-0 space-y-1'>
+            <div className='text-sm font-semibold text-white'>{event.eventName}</div>
+            <div className='text-xs text-gray-300'>
+              {formatFilemakerAddress(event)}
+            </div>
+          </div>
+        );
+      },
+    },
+    {
+      id: 'actions',
+      header: () => <div className='text-right'>Actions</div>,
+      cell: ({ row }) => (
+        <div className='flex justify-end'>
+          <Button
+            type='button'
+            variant='outline'
+            size='xs'
+            onClick={() => router.push(`/admin/filemaker/events/${encodeURIComponent(row.original.id)}`)}
+          >
+            <Edit2 className='mr-1.5 size-3.5' />
+            Edit
+          </Button>
+        </div>
+      ),
+    },
+  ], [router]);
 
   return (
     <div className='container mx-auto space-y-6 py-8'>
       <PanelHeader
         title='Filemaker List'
-        description='Search persons and organizations available for Case Resolver document addressing.'
+        description='Search persons, organizations, and events available for Case Resolver document addressing.'
         icon={<LayoutList className='size-4' />}
         actions={[
           {
@@ -203,6 +259,13 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             onClick: () => router.push('/admin/filemaker/emails'),
           },
           {
+            key: 'events',
+            label: 'Events Page',
+            icon: <CalendarDays className='size-4' />,
+            variant: 'outline',
+            onClick: () => router.push('/admin/filemaker/events'),
+          },
+          {
             key: 'manage',
             label: 'Manage Database',
             icon: <Database className='size-4' />,
@@ -221,6 +284,10 @@ export function AdminFilemakerListPage(): React.JSX.Element {
             <Building2 className='size-3.5' />
             Organizations
           </TabsTrigger>
+          <TabsTrigger value='events' className='gap-2'>
+            <CalendarDays className='size-3.5' />
+            Events
+          </TabsTrigger>
         </TabsList>
         
         <TabsContent value='persons' className='m-0'>
@@ -230,6 +297,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
                 <div className='flex items-center gap-2'>
                   <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
                   <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>Events: {events.length}</Badge>
                   <Badge variant='outline' className='text-[10px]'>Emails: {database.emails.length}</Badge>
                   <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
                 </div>
@@ -266,6 +334,7 @@ export function AdminFilemakerListPage(): React.JSX.Element {
                 <div className='flex items-center gap-2'>
                   <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
                   <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>Events: {events.length}</Badge>
                   <Badge variant='outline' className='text-[10px]'>Emails: {database.emails.length}</Badge>
                   <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
                 </div>
@@ -290,6 +359,46 @@ export function AdminFilemakerListPage(): React.JSX.Element {
               <EmptyState
                 title={query ? 'No organizations found' : 'No organizations yet'}
                 description={query ? 'Try adjusting your search terms.' : 'Add your first organization to the database.'}
+              />
+            }
+          />
+        </TabsContent>
+
+        <TabsContent value='events' className='m-0'>
+          <StandardDataTablePanel
+            filters={
+              <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+                <div className='flex items-center gap-2'>
+                  <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>Events: {events.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>Emails: {database.emails.length}</Badge>
+                  <Badge variant='outline' className='text-[10px]'>
+                    Event Links: {database.eventOrganizationLinks.length}
+                  </Badge>
+                  <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
+                </div>
+                <div className='w-full max-w-sm'>
+                  <SearchInput
+                    value={query}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                      setQuery(event.target.value);
+                    }}
+                    onClear={() => setQuery('')}
+                    placeholder='Search event name and address...'
+                    size='sm'
+                  />
+                </div>
+              </div>
+            }
+            columns={eventColumns}
+            data={events}
+            isLoading={settingsStore.isLoading}
+            variant='flat'
+            emptyState={
+              <EmptyState
+                title={query ? 'No events found' : 'No events yet'}
+                description={query ? 'Try adjusting your search terms.' : 'Add your first event to the database.'}
               />
             }
           />

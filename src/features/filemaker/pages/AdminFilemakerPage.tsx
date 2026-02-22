@@ -1,6 +1,6 @@
 'use client';
 
-import { Edit2, Plus, Trash2, Database, Mail } from 'lucide-react';
+import { CalendarDays, Edit2, Plus, Trash2, Database, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
@@ -22,6 +22,7 @@ import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/
 
 import {
   createFilemakerEmail,
+  createFilemakerEvent,
   createFilemakerOrganization,
   createFilemakerPerson,
   FILEMAKER_DATABASE_KEY,
@@ -29,13 +30,17 @@ import {
   normalizeFilemakerDatabase,
   parseFilemakerDatabase,
   removeFilemakerEmail,
+  removeFilemakerEvent,
+  removeFilemakerOrganizationEventLinks,
   removeFilemakerPartyEmailLinks,
+  removeFilemakerPartyPhoneNumberLinks,
 } from '../settings';
 
 import type {
   FilemakerDatabase,
   FilemakerEmail,
   FilemakerEmailStatus,
+  FilemakerEvent,
   FilemakerOrganization,
   FilemakerPerson,
 } from '../types';
@@ -48,6 +53,8 @@ type EmailDraft = {
   email?: string;
   status?: FilemakerEmailStatus;
 };
+
+type EventDraft = Partial<FilemakerEvent>;
 
 const createId = (prefix: string): string => {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -114,15 +121,18 @@ export function AdminFilemakerPage(): React.JSX.Element {
 
   const [personDraft, setPersonDraft] = useState<PersonDraft>({});
   const [orgDraft, setOrgDraft] = useState<Partial<FilemakerOrganization>>({});
+  const [eventDraft, setEventDraft] = useState<EventDraft>({});
   const [emailDraft, setEmailDraft] = useState<EmailDraft>({
     status: 'unverified',
   });
   
   const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
   const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
   const [editingPerson, setEditingPerson] = useState<FilemakerPerson | null>(null);
   const [editingOrg, setEditingOrg] = useState<FilemakerOrganization | null>(null);
+  const [editingEvent, setEditingEvent] = useState<FilemakerEvent | null>(null);
   const [editingEmail, setEditingEmail] = useState<FilemakerEmail | null>(null);
 
   const [confirmation, setConfirmation] = useState<{
@@ -151,6 +161,13 @@ export function AdminFilemakerPage(): React.JSX.Element {
       ),
     [database.organizations]
   );
+  const events = useMemo(
+    () =>
+      [...database.events].sort((left: FilemakerEvent, right: FilemakerEvent) =>
+        left.eventName.localeCompare(right.eventName)
+      ),
+    [database.events]
+  );
   const emails = useMemo(
     () =>
       [...database.emails].sort((left: FilemakerEmail, right: FilemakerEmail) =>
@@ -165,6 +182,13 @@ export function AdminFilemakerPage(): React.JSX.Element {
     });
     return counts;
   }, [database.emailLinks]);
+  const eventLinkCountByEventId = useMemo(() => {
+    const counts = new Map<string, number>();
+    database.eventOrganizationLinks.forEach((link) => {
+      counts.set(link.eventId, (counts.get(link.eventId) ?? 0) + 1);
+    });
+    return counts;
+  }, [database.eventOrganizationLinks]);
   const resolveCountryId = useCallback(
     (countryId: string, countryName: string): string => {
       const normalizedId = countryId.trim();
@@ -259,13 +283,18 @@ export function AdminFilemakerPage(): React.JSX.Element {
         confirmText: 'Delete Record',
         isDangerous: true,
         onConfirm: async () => {
-          const nextDatabase = removeFilemakerPartyEmailLinks(
+          const withoutEmailLinks = removeFilemakerPartyEmailLinks(
             {
               ...database,
               persons: database.persons.filter(
                 (entry: FilemakerPerson) => entry.id !== personId
               ),
             },
+            'person',
+            personId
+          );
+          const nextDatabase = removeFilemakerPartyPhoneNumberLinks(
+            withoutEmailLinks,
             'person',
             personId
           );
@@ -352,7 +381,7 @@ export function AdminFilemakerPage(): React.JSX.Element {
         confirmText: 'Delete Record',
         isDangerous: true,
         onConfirm: async () => {
-          const nextDatabase = removeFilemakerPartyEmailLinks(
+          const withoutEmailLinks = removeFilemakerPartyEmailLinks(
             {
               ...database,
               organizations: database.organizations.filter(
@@ -360,6 +389,15 @@ export function AdminFilemakerPage(): React.JSX.Element {
               ),
             },
             'organization',
+            organizationId
+          );
+          const withoutOrganization = removeFilemakerPartyPhoneNumberLinks(
+            withoutEmailLinks,
+            'organization',
+            organizationId
+          );
+          const nextDatabase = removeFilemakerOrganizationEventLinks(
+            withoutOrganization,
             organizationId
           );
           await persistDatabase(
@@ -385,6 +423,89 @@ export function AdminFilemakerPage(): React.JSX.Element {
     setEditingOrg(null);
     setOrgDraft({});
     setIsOrgModalOpen(true);
+  }, []);
+
+  const handleSaveEvent = useCallback(async (): Promise<void> => {
+    const eventName = eventDraft.eventName?.trim();
+    const street = eventDraft.street?.trim() || '';
+    const streetNumber = eventDraft.streetNumber?.trim() || '';
+    const city = eventDraft.city?.trim() || '';
+    const postalCode = eventDraft.postalCode?.trim() || '';
+    const countryId = eventDraft.countryId?.trim() || '';
+    const country = countryById.get(countryId)?.name ?? '';
+    const { updatedAt: eventDraftUpdatedAt, ...eventDraftWithoutUpdatedAt } = eventDraft;
+    const normalizedEventDraft = {
+      ...eventDraftWithoutUpdatedAt,
+      ...(eventDraftUpdatedAt ? { updatedAt: eventDraftUpdatedAt } : {}),
+    };
+
+    if (!eventName || !hasAddressFields(street, streetNumber, city, postalCode, countryId)) {
+      toast('Event requires event name, street, street number, city, postal code, and country.', {
+        variant: 'error',
+      });
+      return;
+    }
+
+    const nextEvents = editingEvent
+      ? database.events.map((event) => (event.id === editingEvent.id
+        ? createFilemakerEvent({
+          ...event,
+          ...normalizedEventDraft,
+          eventName,
+          country,
+          updatedAt: new Date().toISOString(),
+        })
+        : event))
+      : [...database.events, createFilemakerEvent({
+        id: createId('event'),
+        ...normalizedEventDraft,
+        eventName,
+        country,
+      })];
+
+    await persistDatabase(
+      { ...database, events: nextEvents },
+      editingEvent ? 'Event updated.' : 'Event added.'
+    );
+    setIsEventModalOpen(false);
+    setEditingEvent(null);
+    setEventDraft({});
+  }, [countryById, database, editingEvent, eventDraft, persistDatabase, toast]);
+
+  const handleDeleteEvent = useCallback(
+    async (eventId: string): Promise<void> => {
+      const target = database.events.find((entry: FilemakerEvent) => entry.id === eventId);
+      if (!target) return;
+
+      setConfirmation({
+        title: 'Delete Event?',
+        message: `Are you sure you want to delete event "${target.eventName}"?`,
+        confirmText: 'Delete Record',
+        isDangerous: true,
+        onConfirm: async () => {
+          await persistDatabase(
+            removeFilemakerEvent(database, eventId),
+            'Event deleted.'
+          );
+        }
+      });
+    },
+    [database, persistDatabase]
+  );
+
+  const handleStartEditEvent = useCallback((event: FilemakerEvent): void => {
+    setEditingEvent(event);
+    setEventDraft({
+      ...event,
+      countryId: resolveCountryId(event.countryId, event.country),
+    });
+    setIsEventModalOpen(true);
+  }, [resolveCountryId]);
+
+  const openCreateEvent = useCallback(() => {
+    setEditingEvent(null);
+    setEventDraft({});
+    setIsEventModalOpen(true);
   }, []);
 
   const handleSaveEmail = useCallback(async (): Promise<void> => {
@@ -513,6 +634,23 @@ export function AdminFilemakerPage(): React.JSX.Element {
     },
   ], [countryOptions, countriesQuery.isLoading]);
 
+  const eventFields: SettingsField<EventDraft>[] = useMemo(() => [
+    { key: 'eventName', label: 'Event Name', type: 'text', placeholder: 'Event name', required: true },
+    { key: 'street', label: 'Street', type: 'text', placeholder: 'Street', required: true },
+    { key: 'streetNumber', label: 'Street Number', type: 'text', placeholder: 'Street number', required: true },
+    { key: 'city', label: 'City', type: 'text', placeholder: 'City', required: true },
+    { key: 'postalCode', label: 'Postal Code', type: 'text', placeholder: 'Postal code', required: true },
+    {
+      key: 'countryId',
+      label: 'Country',
+      type: 'select',
+      options: countryOptions,
+      placeholder: countriesQuery.isLoading ? 'Loading countries...' : 'Select country',
+      disabled: countriesQuery.isLoading,
+      required: true,
+    },
+  ], [countryOptions, countriesQuery.isLoading]);
+
   const emailFields: SettingsField<EmailDraft>[] = useMemo(
     () => [
       {
@@ -538,9 +676,16 @@ export function AdminFilemakerPage(): React.JSX.Element {
     <div className='container mx-auto space-y-6 py-8'>
       <PanelHeader
         title='Filemaker'
-        description='Manage persons, organizations, and emails used in Case Resolver document addressing.'
+        description='Manage persons, organizations, events, and emails used in Case Resolver document addressing.'
         icon={<Database className='size-4' />}
         actions={[
+          {
+            key: 'events',
+            label: 'Events Page',
+            icon: <CalendarDays className='size-4' />,
+            variant: 'outline',
+            onClick: () => router.push('/admin/filemaker/events'),
+          },
           {
             key: 'emails',
             label: 'Emails Page',
@@ -554,8 +699,14 @@ export function AdminFilemakerPage(): React.JSX.Element {
       <div className='flex flex-wrap gap-2'>
         <Badge variant='outline' className='text-[10px]'>Persons: {persons.length}</Badge>
         <Badge variant='outline' className='text-[10px]'>Organizations: {organizations.length}</Badge>
+        <Badge variant='outline' className='text-[10px]'>Events: {events.length}</Badge>
+        <Badge variant='outline' className='text-[10px]'>Phone Numbers: {database.phoneNumbers.length}</Badge>
+        <Badge variant='outline' className='text-[10px]'>Phone Links: {database.phoneNumberLinks.length}</Badge>
         <Badge variant='outline' className='text-[10px]'>Emails: {emails.length}</Badge>
         <Badge variant='outline' className='text-[10px]'>Email Links: {database.emailLinks.length}</Badge>
+        <Badge variant='outline' className='text-[10px]'>
+          Event-Organization Links: {database.eventOrganizationLinks.length}
+        </Badge>
         <Badge variant='outline' className='text-[10px]'>Addresses: {database.addresses.length}</Badge>
       </div>
 
@@ -764,6 +915,72 @@ export function AdminFilemakerPage(): React.JSX.Element {
         </div>
       </FormSection>
 
+      <FormSection
+        title='Events'
+        className='space-y-4 p-4'
+        actions={(
+          <Button
+            type='button'
+            onClick={openCreateEvent}
+            disabled={updateSetting.isPending}
+            className='h-8'
+          >
+            <Plus className='mr-1.5 size-3.5' />
+            Add Event
+          </Button>
+        )}
+      >
+        <div className='space-y-2'>
+          {events.length === 0 ? (
+            <EmptyState
+              title='No events'
+              description='No events added yet.'
+              variant='compact'
+              className='bg-card/20 border-dashed border-border/60 py-8'
+            />
+          ) : (
+            events.map((event: FilemakerEvent) => (
+              <Card key={event.id} variant='subtle-compact' padding='md' className='border-border/60 bg-card/35'>
+                <div className='flex flex-wrap items-start justify-between gap-3'>
+                  <div className='min-w-0 flex-1 space-y-1'>
+                    <div className='text-sm font-semibold text-white'>{event.eventName}</div>
+                    <div className='text-xs text-gray-300'>{formatFilemakerAddress(event)}</div>
+                    <div className='text-[11px] text-gray-500'>
+                      Linked organizations: {eventLinkCountByEventId.get(event.id) ?? 0}
+                    </div>
+                    <div className='text-[10px] text-gray-600'>
+                      Updated: {formatTimestamp(event.updatedAt ?? undefined)}
+                    </div>
+                  </div>
+                  <div className='flex items-center gap-2'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className='h-8 w-8 p-0'
+                      onClick={(): void => {
+                        handleStartEditEvent(event);
+                      }}
+                    >
+                      <Edit2 className='size-3.5' />
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      className='h-8 w-8 p-0 text-red-200 hover:text-red-100'
+                      onClick={(): void => {
+                        void handleDeleteEvent(event.id);
+                      }}
+                    >
+                      <Trash2 className='size-3.5' />
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            ))
+          )}
+        </div>
+      </FormSection>
+
       <SettingsPanelBuilder<PersonDraft>
         open={isPersonModalOpen}
         onClose={() => setIsPersonModalOpen(false)}
@@ -784,6 +1001,18 @@ export function AdminFilemakerPage(): React.JSX.Element {
         values={orgDraft}
         onChange={(vals) => setOrgDraft(prev => ({ ...prev, ...vals }))}
         onSave={handleSaveOrganization}
+        isSaving={updateSetting.isPending}
+        size='md'
+      />
+
+      <SettingsPanelBuilder<EventDraft>
+        open={isEventModalOpen}
+        onClose={() => setIsEventModalOpen(false)}
+        title={editingEvent ? 'Edit Event' : 'Add Event'}
+        fields={eventFields}
+        values={eventDraft}
+        onChange={(vals) => setEventDraft(prev => ({ ...prev, ...vals }))}
+        onSave={handleSaveEvent}
         isSaving={updateSetting.isPending}
         size='md'
       />

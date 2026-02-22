@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import type { DatabaseType, SqlQueryResult } from '@/shared/contracts/database';
-import { Badge, Button, Textarea, SelectSimple, StandardDataTablePanel, Alert, Card } from '@/shared/ui';
+import { Button, Textarea, SelectSimple, StandardDataTablePanel, Alert, Card } from '@/shared/ui';
 
 import { useDatabase } from '../context/DatabaseContext';
 import { useSqlQueryMutation } from '../hooks/useDatabaseQueries';
@@ -203,19 +203,13 @@ export function SqlQueryConsole({
         <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
           {/* Info bar */}
           <div className='flex flex-wrap items-center gap-3 mb-3'>
-            {result.command && (
-              <Badge variant='outline' className='text-[10px]'>
-                {result.command}
-              </Badge>
-            )}
             <span className='text-xs text-gray-400'>
               {result.rowCount} row{result.rowCount !== 1 ? 's' : ''} affected
             </span>
             <span className='text-xs text-gray-500'>
-              {result.duration}ms
+              {result.executionTimeMs}ms
             </span>
           </div>
-
           {/* Error */}
           {result.error && (
             <Alert variant='error' className='mb-3 py-2 text-xs'>
@@ -265,18 +259,17 @@ export function SqlQueryConsole({
             />
           )}
 
-          {/* No rows message for non-error SELECT */}
-          {!result.error && result.rows.length === 0 && result.command === 'SELECT' && (
-            <p className='text-xs text-gray-500'>Query returned no rows.</p>
+          {/* No rows message for non-error results with 0 rowCount */}
+          {!result.error && result.rows.length === 0 && result.rowCount === 0 && (
+            <p className='text-xs text-gray-500'>Query returned no results.</p>
           )}
 
-          {/* Success message for mutations */}
-          {!result.error && result.rows.length === 0 && result.command && result.command !== 'SELECT' && (
+          {/* Success message for mutations (where rowCount > 0 but no rows returned) */}
+          {!result.error && result.rows.length === 0 && result.rowCount > 0 && (
             <p className='text-xs text-emerald-400'>
-              {result.command} completed successfully. {result.rowCount} row{result.rowCount !== 1 ? 's' : ''} affected.
+              Command completed successfully. {result.rowCount} row{result.rowCount !== 1 ? 's' : ''} affected.
             </p>
-          )}
-        </Card>
+          )}        </Card>
       )}
     </div>
   );

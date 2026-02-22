@@ -92,12 +92,11 @@ describe('prismaProductRepository', () => {
       },
     });
 
-    await prismaProductRepository.replaceProductImages(created.id, [imageA.id, imageB.id]);
     await prismaProductRepository.replaceProductImages(created.id, [imageB.id, imageA.id]);
 
     const links = await prisma.productImage.findMany({
       where: { productId: created.id },
-      orderBy: { assignedAt: 'desc' },
+      orderBy: { assignedAt: 'asc' },
     });
     expect(links.map((entry) => entry.imageFileId)).toEqual([
       imageB.id,

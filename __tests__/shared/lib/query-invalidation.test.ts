@@ -6,6 +6,34 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 describe('query-invalidation helpers', () => {
   let queryClient: QueryClient;
+  const createRun = (overrides: Record<string, unknown> = {}) => ({
+    id: 'run-1',
+    userId: 'user-1',
+    pathId: 'path-1',
+    pathName: 'Path One',
+    prompt: null,
+    status: 'queued',
+    triggerEvent: null,
+    triggerNodeId: null,
+    triggerContext: null,
+    graph: null,
+    runtimeState: null,
+    meta: null,
+    context: null,
+    result: null,
+    entityId: null,
+    entityType: null,
+    errorMessage: null,
+    retryCount: 0,
+    maxAttempts: 3,
+    nextRetryAt: null,
+    deadLetteredAt: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: null,
+    startedAt: null,
+    finishedAt: null,
+    ...overrides,
+  });
 
   beforeEach(() => {
     queryClient = new QueryClient();
@@ -105,6 +133,62 @@ describe('query-invalidation helpers', () => {
       expect(queryClient.invalidateQueries).toHaveBeenCalledWith({
         queryKey: QUERY_KEYS.cms.pages.all,
       });
+    });
+  });
+
+  describe('AI Paths Queue Warmup', () => {
+    it('optimistically prepends queued run into matching all-runs cache', () => {
+      const queryKey = QUERY_KEYS.ai.aiPaths.jobQueue({
+        status: 'all',
+        page: 1,
+        pageSize: 25,
+      });
+      queryClient.setQueryData(queryKey, {
+        runs: [createRun({ id: 'run-existing' })],
+        total: 1,
+      });
+
+      helpers.optimisticallyInsertAiPathRunInQueueCache(
+        queryClient,
+        createRun({ id: 'run-new', status: 'queued' })
+      );
+
+      const data = queryClient.getQueryData<{ runs: Array<{ id: string }>; total: number }>(queryKey);
+      expect(data?.total).toBe(2);
+      expect(data?.runs[0]?.id).toBe('run-new');
+      expect(data?.runs[1]?.id).toBe('run-existing');
+    });
+
+    it('does not add queued run into completed-only cache', () => {
+      const queryKey = QUERY_KEYS.ai.aiPaths.jobQueue({
+        status: 'completed',
+        page: 1,
+        pageSize: 25,
+      });
+      queryClient.setQueryData(queryKey, {
+        runs: [createRun({ id: 'run-completed', status: 'completed' })],
+        total: 1,
+      });
+
+      helpers.optimisticallyInsertAiPathRunInQueueCache(
+        queryClient,
+        createRun({ id: 'run-new', status: 'queued' })
+      );
+
+      const data = queryClient.getQueryData<{ runs: Array<{ id: string }>; total: number }>(queryKey);
+      expect(data?.total).toBe(1);
+      expect(data?.runs).toHaveLength(1);
+      expect(data?.runs[0]?.id).toBe('run-completed');
+    });
+
+    it('emits run-enqueued browser event', () => {
+      const listener = vi.fn();
+      window.addEventListener('ai-path-run-enqueued', listener as EventListener);
+
+      helpers.notifyAiPathRunEnqueued('run-123');
+
+      expect(listener).toHaveBeenCalled();
+      window.removeEventListener('ai-path-run-enqueued', listener as EventListener);
     });
   });
 });

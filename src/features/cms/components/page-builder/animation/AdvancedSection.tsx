@@ -266,12 +266,12 @@ export function AdvancedSection(): React.ReactNode {
       title: 'SVG Morph Target',
       description: 'Draw the target path for morphing.',
       initialShapes: svgMorphShapesValue,
-      onApply: ({ shapes, path }: VectorOverlayResult) => {
-        onChange({ ...config, svgMorphEnabled: true, svgMorphTo: path, svgMorphShapes: shapes });
-      },
+              onApply: ({ shapes, path }: VectorOverlayResult) => {
+                onChange({ ...config, svgMorphEnabled: true, svgMorphTo: path, svgMorphShapes: shapes });
+              },
+      
     });
   }, [config, onChange, openVectorOverlay, svgMorphShapesValue]);
-
   const handleSvgMorphClear = useCallback((): void => {
     onChange({ ...config, svgMorphTo: '', svgMorphShapes: [] });
   }, [config, onChange]);
@@ -691,21 +691,21 @@ export function AdvancedSection(): React.ReactNode {
           />
         </FormField>
 
-        {textEffectValue !== 'none' && (
-          <div className='mt-4 space-y-4'>
-            {(textEffectValue === 'splitChars' ||
-              textEffectValue === 'splitWords' ||
-              textEffectValue === 'splitLines') && (
-              <FormField label='Stagger (seconds)'>
-                <Input
-                  type='number'
-                  min={0.01}
-                  max={2}
-                  step={0.01}
-                  value={textStaggerValue}
-                  onChange={handleTextStaggerChange}
-                  className='h-9'
-                />
+                  {textEffectValue !== 'none' && (
+                    <div className='mt-4 space-y-4'>
+                      {(textEffectValue === 'splitChars' ||
+                        textEffectValue === 'splitWords' ||
+                        textEffectValue === 'splitLines') && (
+                        <FormField label='Stagger (seconds)'>                <Input
+        
+                type='number'
+                min={0.01}
+                max={2}
+                step={0.01}
+                value={textStaggerValue}
+                onChange={handleTextStaggerChange}
+                className='h-9'
+              />
               </FormField>
             )}
 
@@ -739,35 +739,35 @@ export function AdvancedSection(): React.ReactNode {
               </>
             )}
 
-            {textEffectValue === 'countUp' && (
-              <div className='grid gap-3 sm:grid-cols-2'>
-                <FormField label='From'>
-                  <Input
-                    type='number'
-                    value={textCountFromValue}
-                    onChange={handleTextCountFromChange}
-                    className='h-9'
-                  />
-                </FormField>
-                <FormField label='To'>
-                  <Input
-                    type='number'
-                    value={textCountToValue}
-                    onChange={handleTextCountToChange}
-                    className='h-9'
-                  />
-                </FormField>
-                <FormField label='Decimals'>
-                  <Input
-                    type='number'
-                    min={0}
-                    max={6}
-                    step={1}
-                    value={textCountDecimalsValue}
-                    onChange={handleTextCountDecimalsChange}
-                    className='h-9'
-                  />
-                </FormField>
+                          {textEffectValue === 'countUp' && (
+                            <div className='grid gap-3 sm:grid-cols-2'>                <FormField label='From'>
+            
+                <Input
+                  type='number'
+                  value={textCountFromValue}
+                  onChange={handleTextCountFromChange}
+                  className='h-9'
+                />
+              </FormField>
+              <FormField label='To'>
+                <Input
+                  type='number'
+                  value={textCountToValue}
+                  onChange={handleTextCountToChange}
+                  className='h-9'
+                />
+              </FormField>
+              <FormField label='Decimals'>
+                <Input
+                  type='number'
+                  min={0}
+                  max={6}
+                  step={1}
+                  value={textCountDecimalsValue}
+                  onChange={handleTextCountDecimalsChange}
+                  className='h-9'
+                />
+              </FormField>
               </div>
             )}
           </div>

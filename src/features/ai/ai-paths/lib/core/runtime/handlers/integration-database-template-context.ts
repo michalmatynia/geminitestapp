@@ -216,20 +216,20 @@ export function prepareDatabaseTemplateContext({
   DB_PROVIDER_PLACEHOLDERS.forEach((provider: string) => {
     placeholderContext[`DB Provider: ${provider}`] = provider;
   });
-      const collections = (schemaData?.collections 
-        ? (Array.isArray(schemaData.collections) ? schemaData.collections : Object.values(schemaData.collections))
-        : []) as CollectionSchema[];
-          
-      if (collections.length) {
-        collections.forEach((collection: CollectionSchema) => {      const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
+  const collectionsRaw = (schemaData?.collections 
+    ? (Array.isArray(schemaData.collections) ? schemaData.collections : Object.values(schemaData.collections))
+    : []);
+  const collections: CollectionSchema[] = Array.from(collectionsRaw as unknown as CollectionSchema[]);
+  if (collections.length) {
+    collections.forEach((collection: CollectionSchema) => {
+      const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
       const displayName = toTitleCase(singularize(collection.name));
       const nameSet = new Set<string>([collection.name, displayName]);
       nameSet.forEach((name: string) => {
         placeholderContext[`Collection: ${name}`] = schemaText;
       });
     });
-  }
-  const templateInputs: RuntimePortValues = {
+  }  const templateInputs: RuntimePortValues = {
     ...resolvedInputs,
   };
   if (templateInputs['result'] === undefined && templateInputs['value'] !== undefined) {

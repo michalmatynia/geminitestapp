@@ -14,7 +14,18 @@ export const APP_DB_PROVIDER_SETTING_KEY = 'app_db_provider';
 
 export type AppDbProvider = 'prisma' | 'mongodb';
 
-const PROVIDER_CACHE_TTL_MS = 30_000;
+const readPositiveIntegerEnv = (key: string, fallback: number): number => {
+  const raw = process.env[key];
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+};
+
+const PROVIDER_CACHE_TTL_MS = readPositiveIntegerEnv(
+  'APP_DB_PROVIDER_CACHE_TTL_MS',
+  5 * 60_000
+);
 let providerCache: { value: AppDbProvider | null; ts: number } | null = null;
 let providerInflight: Promise<AppDbProvider | null> | null = null;
 

@@ -28,6 +28,11 @@ import type {
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
 import { api } from '@/shared/lib/api-client';
+import {
+  invalidateAiPathQueue,
+  notifyAiPathRunEnqueued,
+  optimisticallyInsertAiPathRunInQueueCache,
+} from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -332,6 +337,19 @@ export function useAiPathTrigger(): {
           });
           return;
         }
+        const queuedRun =
+          enqueueResult.data && typeof enqueueResult.data === 'object'
+            ? (enqueueResult.data as { run?: unknown }).run
+            : null;
+        optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRun);
+        void invalidateAiPathQueue(queryClient);
+        notifyAiPathRunEnqueued(
+          queuedRun &&
+            typeof queuedRun === 'object' &&
+            typeof (queuedRun as { id?: unknown }).id === 'string'
+            ? ((queuedRun as { id: string }).id)
+            : null
+        );
         toast('AI Path run queued.', { variant: 'success' });
         return;
       }

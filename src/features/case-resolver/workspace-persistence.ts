@@ -59,6 +59,13 @@ type SettingsRecordLike = {
   currentRevision?: unknown;
 };
 
+type WorkspaceMetadataLike = {
+  key?: unknown;
+  revision?: unknown;
+  lastMutationId?: unknown;
+  exists?: unknown;
+};
+
 type PersistWorkspaceInput = {
   workspace: CaseResolverWorkspace;
   expectedRevision: number;
@@ -90,6 +97,12 @@ export type PersistCaseResolverWorkspaceResult =
   | PersistWorkspaceSuccess
   | PersistWorkspaceConflict
   | PersistWorkspaceFailure;
+
+export type CaseResolverWorkspaceMetadata = {
+  revision: number;
+  lastMutationId: string | null;
+  exists: boolean;
+};
 
 const readDebugBuffer = (): CaseResolverWorkspaceDebugEvent[] => {
   const scope = globalThis as typeof globalThis & {
@@ -242,6 +255,80 @@ const readWorkspaceFromSettingRecord = (record: SettingsRecordLike | null, fallb
   return parseCaseResolverWorkspace(rawValue);
 };
 
+const readWorkspaceMetadata = (
+  payload: WorkspaceMetadataLike | null
+): CaseResolverWorkspaceMetadata => {
+  const revisionRaw = payload?.revision;
+  const revision =
+    typeof revisionRaw === 'number' && Number.isFinite(revisionRaw) && revisionRaw > 0
+      ? Math.floor(revisionRaw)
+      : 0;
+  const lastMutationIdRaw = payload?.lastMutationId;
+  const lastMutationId =
+    typeof lastMutationIdRaw === 'string' && lastMutationIdRaw.trim().length > 0
+      ? lastMutationIdRaw
+      : null;
+  const exists = payload?.exists !== false;
+  return {
+    revision,
+    lastMutationId,
+    exists,
+  };
+};
+
+export const fetchCaseResolverWorkspaceMetadata = async (
+  source: string
+): Promise<CaseResolverWorkspaceMetadata | null> => {
+  const startedAt = Date.now();
+  const controller =
+    typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeoutId =
+    controller
+      ? setTimeout((): void => {
+        controller.abort();
+      }, CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS)
+      : null;
+  try {
+    const response = await fetch(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}&meta=1`,
+      {
+        method: 'GET',
+        cache: 'no-store',
+        ...(controller ? { signal: controller.signal } : {}),
+      }
+    );
+    if (!response.ok) {
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'refresh_meta_failed',
+        message: `Failed to fetch workspace metadata (${response.status}).`,
+      });
+      return null;
+    }
+    const payload = (await response.json()) as WorkspaceMetadataLike | null;
+    const metadata = readWorkspaceMetadata(payload);
+    logCaseResolverWorkspaceEvent({
+      source,
+      action: 'refresh_meta_success',
+      workspaceRevision: metadata.revision,
+      durationMs: Date.now() - startedAt,
+    });
+    return metadata;
+  } catch (error: unknown) {
+    logCaseResolverWorkspaceEvent({
+      source,
+      action: 'refresh_meta_failed',
+      message: error instanceof Error ? error.message : 'Unknown metadata refresh error.',
+      durationMs: Date.now() - startedAt,
+    });
+    return null;
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
+
 export const fetchCaseResolverWorkspaceSnapshot = async (
   source: string
 ): Promise<CaseResolverWorkspace | null> => {
@@ -313,7 +400,7 @@ const compactWorkspaceForPersist = (
   if (!Array.isArray(workspace.files) || workspace.files.length === 0) {
     return workspace;
   }
-  const compactedFiles = workspace.files.map((file) => {
+  const compactedFiles = workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
     const fileRecord = file as unknown as Record<string, unknown>;
     const rawHistory = fileRecord['documentHistory'];
     const compactedHistory = Array.isArray(rawHistory)
@@ -325,7 +412,10 @@ const compactWorkspaceForPersist = (
       })
       : rawHistory;
     const { documentContentMarkdown: _fmd, documentContentPlainText: _fpt, ...fileRest } = file;
-    return { ...fileRest, documentHistory: compactedHistory };
+    return {
+      ...fileRest,
+      documentHistory: compactedHistory,
+    } as CaseResolverWorkspace['files'][number];
   });
   return { ...workspace, files: compactedFiles };
 };

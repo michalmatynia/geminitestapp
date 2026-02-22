@@ -210,11 +210,11 @@ const computeParallaxOffset = (
   if (base === 0) return 0;
   const pattern = config.parallaxPattern ?? 'uniform';
   const reverse = config.parallaxReverse ? -1 : 1;
-  if (pattern === 'alternate') {
+  if (pattern === 'alternating') {
     const sign = index % 2 === 0 ? 1 : -1;
     return base * sign * reverse;
   }
-  if (pattern === 'increment') {
+  if (pattern === 'stepped') {
     const step = config.parallaxChildStep ?? DEFAULT_ANIMATION_CONFIG.parallaxChildStep ?? 16;
     return (base + step * index) * reverse;
   }
@@ -350,7 +350,7 @@ export function GsapAnimationWrapper({
             );
             const baseScaleFrom = mergedConfig.parallaxScaleFrom ?? 1;
             const baseScaleTo = mergedConfig.parallaxScaleTo ?? 1;
-            const depthData = PARALLAX_DEFAULTS.depth;
+            const depthData = PARALLAX_DEFAULTS['depth'];
             const depthScale = (mergedConfig.parallaxPreset === 'depth' && depthData && typeof depthData === 'object') ? (depthData).scale : undefined;
             const scaleFromSeed = baseScaleFrom !== 1 || baseScaleTo !== 1 ? baseScaleFrom : ((depthScale) ?? baseScaleFrom);            const scaleToSeed = baseScaleFrom !== 1 || baseScaleTo !== 1 ? baseScaleTo : 1;
             const rotateFromSeed = mergedConfig.parallaxRotateFrom ?? 0;

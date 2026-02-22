@@ -21,7 +21,18 @@ import {
 } from './database-engine-constants';
 import { normalizeDatabaseEngineOperationControls } from './database-engine-operation-controls';
 
-const CACHE_TTL_MS = 30_000;
+const readPositiveIntegerEnv = (key: string, fallback: number): number => {
+  const raw = process.env[key];
+  if (!raw) return fallback;
+  const parsed = Number.parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return parsed;
+};
+
+const CACHE_TTL_MS = readPositiveIntegerEnv(
+  'DATABASE_ENGINE_POLICY_CACHE_TTL_MS',
+  5 * 60_000
+);
 
 type CachedValue<T> = { value: T; ts: number };
 

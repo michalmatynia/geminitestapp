@@ -102,7 +102,13 @@ export function SelectSimple({
         >
           <SelectValue placeholder={placeholder} />
         </SelectTrigger>
-        <SelectContent className={cn('max-w-[min(34rem,calc(100vw-2rem))]', contentClassName)}>
+        <SelectContent
+          position='popper'
+          className={cn(
+            'min-w-[var(--radix-select-trigger-width)] max-w-[min(34rem,calc(100vw-2rem))]',
+            contentClassName
+          )}
+        >
           {groupedOptions.groups.map((group) => (
             <SelectGroup key={group.key}>
               {groupedOptions.hasVisibleGroupLabels && group.label ? (

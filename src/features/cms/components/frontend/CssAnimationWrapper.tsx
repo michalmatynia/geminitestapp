@@ -62,7 +62,13 @@ export function CssAnimationWrapper({
     return <>{children}</>;
   }
 
-  const iterationCount = merged.loop ? 'infinite' : String(Math.max(1, merged.iterations ?? 1));
+  const iterationCount = merged.loop || merged.iterations === 'infinite'
+    ? 'infinite'
+    : String(
+      typeof merged.iterations === 'number'
+        ? Math.max(1, merged.iterations)
+        : 1
+    );
   const styleVars: React.CSSProperties = {
     ['--cms-css-anim-name' as string]: `cms-anim-${merged.effect}`,
     ['--cms-css-anim-duration' as string]: `${merged.duration ?? 700}ms`,

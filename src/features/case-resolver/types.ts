@@ -118,7 +118,7 @@ export type CaseResolverStateValue = {
   requestedCaseStatus: CaseResolverRequestedCaseStatus;
   canCreateInActiveCase: boolean;
   shouldOpenEditorFromQuery: boolean;
-  handleSelectFile: (fileId: string, options?: { preserveSelectedAsset?: boolean }) => void;
+  handleSelectFile: (fileId: string) => void;
   handleSelectAsset: (assetId: string) => void;
   handleSelectFolder: (folderPath: string | null) => void;
   handleCreateFolder: (targetFolderPath: string | null) => void;

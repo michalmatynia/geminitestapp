@@ -5,6 +5,7 @@ import {
   ensureSafeDocumentHtml,
 } from '@/features/document-editor/content-format';
 import type {
+  CaseResolverDocumentHistoryEntry,
   CaseResolverFile,
   CaseResolverScanSlot,
   CaseResolverDocumentVersion,
@@ -113,7 +114,7 @@ export const buildFilemakerAddressLabel = ({
 export const buildCombinedOcrText = (slots: CaseResolverScanSlot[]): string => {
   const parts = slots
     .map((slot: CaseResolverScanSlot): string => {
-      const text = slot.ocrText.trim();
+      const text = (slot.ocrText || '').trim();
       if (!text) return '';
       return text;
     })
@@ -136,6 +137,115 @@ export const buildCaseResolverDocumentHash = (id: string, createdAt: string): st
   const partA = hashString32(source, 0x811c9dc5);
   const partB = hashString32(reversed, 0x9e3779b1);
   return `DOC-${partA.toString(16).padStart(8, '0')}${partB.toString(16).padStart(8, '0')}`.toUpperCase();
+};
+
+const normalizeHistoryEditorType = (
+  value: CaseResolverFileEditDraft['editorType'] | CaseResolverDocumentHistoryEntry['editorType'] | undefined
+): CaseResolverDocumentHistoryEntry['editorType'] => {
+  if (value === 'markdown' || value === 'code') {
+    return value;
+  }
+  return 'wysiwyg';
+};
+
+const toComparableHistoryPayload = (input: {
+  activeDocumentVersion: CaseResolverDocumentHistoryEntry['activeDocumentVersion'] | CaseResolverFileEditDraft['activeDocumentVersion'] | undefined;
+  editorType: CaseResolverDocumentHistoryEntry['editorType'] | CaseResolverFileEditDraft['editorType'] | undefined;
+  documentContent: string | null | undefined;
+  documentContentMarkdown: string | null | undefined;
+  documentContentHtml: string | null | undefined;
+  documentContentPlainText: string | null | undefined;
+}) => {
+  return {
+    activeDocumentVersion: input.activeDocumentVersion === 'exploded' ? 'exploded' : 'original',
+    editorType: normalizeHistoryEditorType(input.editorType),
+    documentContent: input.documentContent ?? '',
+    documentContentMarkdown: input.documentContentMarkdown ?? '',
+    documentContentHtml: input.documentContentHtml ?? '',
+    documentContentPlainText: input.documentContentPlainText ?? '',
+  } as const;
+};
+
+const areComparableHistoryPayloadsEqual = (
+  left: ReturnType<typeof toComparableHistoryPayload>,
+  right: ReturnType<typeof toComparableHistoryPayload>,
+): boolean =>
+  left.activeDocumentVersion === right.activeDocumentVersion &&
+  left.editorType === right.editorType &&
+  left.documentContent === right.documentContent &&
+  left.documentContentMarkdown === right.documentContentMarkdown &&
+  left.documentContentHtml === right.documentContentHtml &&
+  left.documentContentPlainText === right.documentContentPlainText;
+
+export const prependDraftHistorySnapshotForRevisionLoad = (input: {
+  draft: CaseResolverFileEditDraft;
+  loadedEntry: CaseResolverDocumentHistoryEntry;
+  savedAt: string;
+  historyLimit?: number;
+}): CaseResolverDocumentHistoryEntry[] | undefined => {
+  const { draft, loadedEntry, savedAt } = input;
+  const historyLimit =
+    typeof input.historyLimit === 'number' && Number.isFinite(input.historyLimit)
+      ? Math.max(1, Math.floor(input.historyLimit))
+      : 120;
+
+  const currentComparable = toComparableHistoryPayload({
+    activeDocumentVersion: draft.activeDocumentVersion,
+    editorType: draft.editorType,
+    documentContent: draft.documentContent,
+    documentContentMarkdown: draft.documentContentMarkdown,
+    documentContentHtml: draft.documentContentHtml,
+    documentContentPlainText: draft.documentContentPlainText,
+  });
+  const loadedComparable = toComparableHistoryPayload({
+    activeDocumentVersion: loadedEntry.activeDocumentVersion,
+    editorType: loadedEntry.editorType,
+    documentContent: loadedEntry.documentContent,
+    documentContentMarkdown: loadedEntry.documentContentMarkdown,
+    documentContentHtml: loadedEntry.documentContentHtml,
+    documentContentPlainText: loadedEntry.documentContentPlainText,
+  });
+
+  // Loading the same content should not create a redundant snapshot entry.
+  if (areComparableHistoryPayloadsEqual(currentComparable, loadedComparable)) {
+    return draft.documentHistory;
+  }
+
+  const nextSnapshotEntry: CaseResolverDocumentHistoryEntry = {
+    id: createId('case-doc-history'),
+    savedAt,
+    documentContentVersion:
+      typeof draft.documentContentVersion === 'number' && Number.isFinite(draft.documentContentVersion)
+        ? Math.max(0, Math.trunc(draft.documentContentVersion))
+        : 0,
+    activeDocumentVersion: currentComparable.activeDocumentVersion,
+    editorType: currentComparable.editorType,
+    documentContent: currentComparable.documentContent,
+    documentContentMarkdown: currentComparable.documentContentMarkdown,
+    documentContentHtml: currentComparable.documentContentHtml,
+    documentContentPlainText: currentComparable.documentContentPlainText,
+  };
+
+  const existingHistory = draft.documentHistory ?? [];
+  const firstEntry = existingHistory[0];
+  if (firstEntry) {
+    const firstComparable = toComparableHistoryPayload({
+      activeDocumentVersion: firstEntry.activeDocumentVersion,
+      editorType: firstEntry.editorType,
+      documentContent: firstEntry.documentContent,
+      documentContentMarkdown: firstEntry.documentContentMarkdown,
+      documentContentHtml: firstEntry.documentContentHtml,
+      documentContentPlainText: firstEntry.documentContentPlainText,
+    });
+    const isSameAsFirstEntry =
+      areComparableHistoryPayloadsEqual(firstComparable, currentComparable) &&
+      firstEntry.documentContentVersion === nextSnapshotEntry.documentContentVersion;
+    if (isSameAsFirstEntry) {
+      return draft.documentHistory;
+    }
+  }
+
+  return [nextSnapshotEntry, ...existingHistory].slice(0, historyLimit);
 };
 
 export const formatFileSize = (size: number | null): string => {
@@ -456,12 +566,12 @@ export const buildCaseResolverTagPickerOptions = (
     const tag = byId.get(tagId);
     if (!tag) return { ids: [], names: [] };
     if (trail.has(tagId)) {
-      const fallback = { ids: [tag.id], names: [tag.name] };
+      const fallback = { ids: [tag.id], names: [tag.label] };
       cache.set(tagId, fallback);
       return fallback;
     }
     if (!tag.parentId || !byId.has(tag.parentId)) {
-      const rootPath = { ids: [tag.id], names: [tag.name] };
+      const rootPath = { ids: [tag.id], names: [tag.label] };
       cache.set(tagId, rootPath);
       return rootPath;
     }
@@ -470,9 +580,8 @@ export const buildCaseResolverTagPickerOptions = (
     const parentPath = resolvePath(tag.parentId, nextTrail);
     const path = {
       ids: [...parentPath.ids, tag.id],
-      names: [...parentPath.names, tag.name],
-    };
-    cache.set(tagId, path);
+      names: [...parentPath.names, tag.label],
+    };    cache.set(tagId, path);
     return path;
   };
 

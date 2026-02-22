@@ -236,22 +236,21 @@ describe('case-resolver settings', () => {
     expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A/Sub__']?.createdAt ?? ''))).toBe(false);
     expect(Number.isNaN(Date.parse(workspace.folderTimestamps['Root_A/Sub__']?.updatedAt ?? ''))).toBe(false);
 
-    expect(workspace.files[0]?.graph.nodeMeta['n1']).toEqual({
+    expect(workspace.files[0]!.graph!.nodeMeta!['n1']).toEqual({
       role: 'text_note',
       includeInOutput: true,
       quoteMode: 'double',
       surroundPrefix: '«',
       surroundSuffix: '»',
     });
-    expect(workspace.files[0]?.graph.nodeMeta['n2']).toEqual({
+    expect(workspace.files[0]!.graph!.nodeMeta!['n2']).toEqual({
       role: DEFAULT_CASE_RESOLVER_NODE_META.role,
       includeInOutput: DEFAULT_CASE_RESOLVER_NODE_META.includeInOutput,
       quoteMode: DEFAULT_CASE_RESOLVER_NODE_META.quoteMode,
       surroundPrefix: DEFAULT_CASE_RESOLVER_NODE_META.surroundPrefix,
       surroundSuffix: DEFAULT_CASE_RESOLVER_NODE_META.surroundSuffix,
     });
-    expect(workspace.files[0]?.graph.pdfExtractionPresetId).toBe('plain_text');
-  });
+    expect(workspace.files[0]!.graph!.pdfExtractionPresetId).toBe('plain_text');  });
 
   it('retains owner-scoped folder records for case-isolated empty folders', () => {
     const workspace = parseCaseResolverWorkspace(
@@ -368,9 +367,8 @@ describe('case-resolver settings', () => {
     expect(workspace.assets[0]?.name).toBe('Render 01.png');
     expect(workspace.assets[0]?.kind).toBe('image');
     expect(workspace.assets[0]?.size).toBe(120);
-    expect(workspace.files[0]?.graph.pdfExtractionPresetId).toBe('plain_text');
+    expect(workspace.files[0]!.graph!.pdfExtractionPresetId).toBe('plain_text');
   });
-
   it('preserves editor metadata and sanitizes html content payloads', () => {
     const raw = JSON.stringify({
       version: 2,
@@ -601,11 +599,10 @@ describe('case-resolver settings', () => {
       relationGraph.edges.some((edge: Edge): boolean => edge.id === 'custom-edge')
     ).toBe(true);
     expect(relationGraph.edgeMeta?.['custom-edge']?.relationType).toBe('custom');
-    
-    expect(relationGraph.edgeMeta['custom-edge']?.isStructural).toBe(false);
-    expect(relationGraph.edgeMeta['custom-edge']?.label).toBe('cross');
-  });
 
+    expect(relationGraph.edgeMeta!['custom-edge']?.isStructural).toBe(false);
+    expect(relationGraph.edgeMeta!['custom-edge']?.label).toBe('cross');
+  });
   it('coerces unknown relation node types to a safe template type', () => {
     const raw = JSON.stringify({
       version: 2,

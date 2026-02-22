@@ -1256,13 +1256,15 @@ export const prismaProductRepository: ProductRepository = {
       if (normalizedIds.length === 0) return;
 
       const now = Date.now();
-      await tx.productImage.createMany({
-        data: normalizedIds.map((imageFileId: string, index: number) => ({
-          productId,
-          imageFileId,
-          assignedAt: new Date(now + index),
-        })),
-      });
+      for (let i = 0; i < normalizedIds.length; i++) {
+        await tx.productImage.create({
+          data: {
+            productId,
+            imageFileId: normalizedIds[i]!,
+            assignedAt: new Date(now + i * 1000),
+          },
+        });
+      }
     });
   },
 

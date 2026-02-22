@@ -30,10 +30,7 @@ export type CaseResolverPageContextValue = {
   panelCollapsed: boolean;
   onPanelCollapsedChange: (collapsed: boolean) => void;
   onDeactivateActiveFile: () => void;
-  onSelectFile: (
-    fileId: string,
-    options?: { preserveSelectedAsset?: boolean }
-  ) => void;
+  onSelectFile: (fileId: string) => void;
   onSelectAsset: (assetId: string) => void;
   onSelectFolder: (folderPath: string | null) => void;
   onCreateFolder: (targetFolderPath: string | null) => void;

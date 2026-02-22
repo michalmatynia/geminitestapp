@@ -8,7 +8,7 @@ import { Viewer3D } from '@/features/viewer3d';
 import { Asset3DPreviewModal } from '@/features/viewer3d';
 import { useAsset3DById } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { Asset3dDto as Asset3DRecord } from '@/shared/contracts/viewer3d';
-import { Input, SelectSimple, Checkbox, Button, useToast, FileUploadButton, FormField, type FileUploadHelpers } from '@/shared/ui';
+import { Input, SelectSimple, Checkbox, Button, useToast, FileUploadButton, FormField, LoadingState, type FileUploadHelpers } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { Asset3DPickerModal } from './Asset3DPickerModal';

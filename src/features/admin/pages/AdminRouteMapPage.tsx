@@ -58,15 +58,17 @@ const ROUTE_DESCRIPTION_OVERRIDES: Record<string, string> = {
   '/admin/case-resolver/settings':
     'Configure Case Resolver OCR model settings.',
   '/admin/filemaker':
-    'Manage persons, organizations, and emails used as addresser/addressee data in Case Resolver documents.',
+    'Manage persons, organizations, events, and emails used as addresser/addressee data in Case Resolver documents.',
   '/admin/filemaker/persons':
     'Search and review Filemaker persons.',
   '/admin/filemaker/organizations':
     'Search and review Filemaker organizations.',
+  '/admin/filemaker/events':
+    'Search and review Filemaker events with linked organizations.',
   '/admin/filemaker/emails':
     'Search and review Filemaker emails and relationship links.',
   '/admin/filemaker/list':
-    'Search and review the combined Filemaker person and organization registry.',
+    'Search and review the combined Filemaker person, organization, and event registry.',
   '/admin/ai-paths/queue': 'Monitor queued, running, and completed path runs.',
   '/admin/ai-paths/dead-letter': 'Inspect failed AI runs and retry or requeue them.',
   '/admin/validator':

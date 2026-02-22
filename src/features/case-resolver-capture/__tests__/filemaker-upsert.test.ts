@@ -26,6 +26,7 @@ const createDatabase = (): FilemakerDatabase => ({
     },
   ],
   organizations: [],
+  events: [],
   addresses: [
     {
       id: 'address-1',
@@ -39,8 +40,12 @@ const createDatabase = (): FilemakerDatabase => ({
       updatedAt: '2026-02-01T00:00:00.000Z',
     },
   ],
+  addressLinks: [],
+  phoneNumbers: [],
+  phoneNumberLinks: [],
   emails: [],
   emailLinks: [],
+  eventOrganizationLinks: [],
 });
 
 describe('upsertFilemakerCaptureCandidate', () => {

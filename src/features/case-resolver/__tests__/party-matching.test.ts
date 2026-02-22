@@ -36,6 +36,7 @@ const createDatabase = (): FilemakerDatabase => ({
       updatedAt: NOW,
     },
   ],
+  events: [],
   organizations: [
     {
       id: 'org-1',
@@ -75,10 +76,32 @@ const createDatabase = (): FilemakerDatabase => ({
       updatedAt: NOW,
     },
   ],
+  addressLinks: [
+    {
+      id: 'address-link-person-1',
+      ownerKind: 'person',
+      ownerId: 'person-1',
+      addressId: 'address-1',
+      isDefault: true,
+      createdAt: NOW,
+      updatedAt: NOW,
+    },
+    {
+      id: 'address-link-org-1',
+      ownerKind: 'organization',
+      ownerId: 'org-1',
+      addressId: 'address-2',
+      isDefault: true,
+      createdAt: NOW,
+      updatedAt: NOW,
+    },
+  ],
+  phoneNumbers: [],
+  phoneNumberLinks: [],
   emails: [],
   emailLinks: [],
+  eventOrganizationLinks: [],
 });
-
 const createCandidate = (
   patch: Partial<PromptExploderCaseResolverPartyCandidate>
 ): PromptExploderCaseResolverPartyCandidate => ({

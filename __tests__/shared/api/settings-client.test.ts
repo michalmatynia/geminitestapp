@@ -107,7 +107,7 @@ describe('settings-client cache guards', () => {
     expect(second).toEqual(settingsPayload);
     expect(fetchMock).toHaveBeenNthCalledWith(
       1,
-      '/api/settings/lite',
+      '/api/settings/lite?fresh=1',
       expect.objectContaining({
         cache: 'no-store',
         credentials: 'include',
@@ -115,7 +115,7 @@ describe('settings-client cache guards', () => {
     );
     expect(fetchMock).toHaveBeenNthCalledWith(
       2,
-      '/api/settings/lite',
+      '/api/settings/lite?fresh=1',
       expect.objectContaining({
         cache: 'no-store',
         credentials: 'include',

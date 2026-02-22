@@ -1,6 +1,6 @@
 'use client';
 
-import { ExternalLink, FileCode2, FileText, Save, ScanLine, Sparkles } from 'lucide-react';
+import { ExternalLink, FileCode2, FileText, ScanLine, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
@@ -22,6 +22,8 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import { type AiNode, type AiEdge, type NodeDefinition } from '@/shared/contracts/case-resolver';
 import {
+  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
+  DEFAULT_CASE_RESOLVER_NODE_META,
   type CaseResolverIdentifier,
   type CaseResolverFile,
   type CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
@@ -45,7 +47,9 @@ import {
   buildPromptTemplateFromDroppedDocumentFile,
   clampCanvasPosition,
   ensureDocumentPromptPorts,
+  renderPromptNodeTextPreview,
   resolvePromptConfig,
+  stripHtmlToPlainText,
 } from './case-resolver-canvas-utils';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -185,7 +189,11 @@ function NodeFilePanel({ meta, file, onOpen }: NodeFilePanelProps): React.JSX.El
   const TypeIcon = meta.fileType === 'scanfile' ? ScanLine : FileText;
 
   return (
-    <Card variant='glass' padding='none' className='flex w-72 flex-shrink-0 flex-col gap-3 overflow-y-auto p-4'>
+    <Card
+      variant='glass'
+      padding='none'
+      className='flex w-80 flex-shrink-0 flex-col gap-3 overflow-y-auto border-border/60 bg-card/20 p-4'
+    >
       <PanelHeader
         title={meta.fileName}
         subtitle={typeLabel}
@@ -199,7 +207,11 @@ function NodeFilePanel({ meta, file, onOpen }: NodeFilePanelProps): React.JSX.El
         <div className='flex flex-col gap-1'>
           <p className='text-[10px] uppercase tracking-wide text-gray-500'>Content preview</p>
           {preview ? (
-            <Card variant='subtle-compact' padding='sm' className='max-h-52 overflow-y-auto border-border/40 bg-background/60 text-[11px] leading-relaxed text-gray-300 whitespace-pre-wrap'>
+            <Card
+              variant='subtle-compact'
+              padding='sm'
+              className='max-h-52 overflow-y-auto border-border/60 bg-card/30 text-[11px] leading-relaxed text-gray-300 whitespace-pre-wrap'
+            >
               {preview}
             </Card>
           ) : (
@@ -217,9 +229,9 @@ function NodeFilePanel({ meta, file, onOpen }: NodeFilePanelProps): React.JSX.El
         <Button
           type='button'
           onClick={onOpen}
-          variant='info'
+          variant='outline'
           size='sm'
-          className='w-full'
+          className='h-8 w-full'
         >
           <ExternalLink className='mr-1.5 size-3.5' />
           Open &ldquo;{meta.fileName}&rdquo;
@@ -252,12 +264,13 @@ function CaseResolverNodeFileWorkspaceInner({
   const { selectNode } = useSelectionActions();
   const { toast } = useToast();
   const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database' | 'viewer'>('prompt');
-  const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
+  const [isSidePanelVisible, setIsSidePanelVisible] = useState(true);
+  const [showNodeSelectorUnderCanvas, setShowNodeSelectorUnderCanvas] = useState(
+    () => nodes.length > 0
+  );
   const [documentSearchScope, setDocumentSearchScope] =
     useState<NodeFileDocumentSearchScope>('case_scope');
   const [documentSearchQuery, setDocumentSearchQuery] = useState('');
-  const [selectedDocumentSearchFileId, setSelectedDocumentSearchFileId] =
-    useState<string>('');
 
   // nodeFileMeta lives in a ref so changes don't trigger re-renders but are
   // always available synchronously when the save effect fires.
@@ -370,24 +383,6 @@ function CaseResolverNodeFileWorkspaceInner({
       row.searchable.includes(normalizedQuery)
     );
   }, [documentSearchQuery, documentSearchRows]);
-  const documentSearchOptions = useMemo(
-    () =>
-      filteredDocumentSearchRows.slice(0, 300).map((row: NodeFileDocumentSearchRow) => {
-        const details = [
-          row.file.fileType === 'scanfile' ? 'Scan' : 'Document',
-          row.file.folder || '(root)',
-          row.signatureLabel ? `Signature: ${row.signatureLabel}` : '',
-          row.addresserLabel ? `Addresser: ${row.addresserLabel}` : '',
-          row.addresseeLabel ? `Addressee: ${row.addresseeLabel}` : '',
-        ].filter((entry: string): boolean => entry.length > 0);
-        return {
-          value: row.file.id,
-          label: row.file.name,
-          description: details.join(' • '),
-        };
-      }),
-    [filteredDocumentSearchRows]
-  );
   const activeNodeOptions = useMemo(
     () =>
       nodes.map((node: AiNode, index: number) => {
@@ -590,6 +585,7 @@ function CaseResolverNodeFileWorkspaceInner({
 
       addNode(node);
       selectNode(nodeId);
+      setShowNodeSelectorUnderCanvas(true);
       toast(`Added "${fileName}" to canvas.`, { variant: 'success' });
     },
     [addNode, filesById, promptDefinition, selectNode, toast]
@@ -627,6 +623,11 @@ function CaseResolverNodeFileWorkspaceInner({
   }, [addNode, newNodeType, placePosition, selectNode]);
 
   // Listen for file drops emitted via the window event (from the folder tree button).
+  useEffect(() => {
+    if (nodes.length > 0) return;
+    setShowNodeSelectorUnderCanvas(false);
+  }, [nodes.length]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const listener = (event: Event): void => {
@@ -717,29 +718,6 @@ function CaseResolverNodeFileWorkspaceInner({
     addFileReferenceNode(payload.fileId, payload.name, position);
   };
 
-  useEffect(() => {
-    if (!selectedDocumentSearchFileId) return;
-    const hasSelection = filteredDocumentSearchRows.some(
-      (row: NodeFileDocumentSearchRow): boolean => row.file.id === selectedDocumentSearchFileId
-    );
-    if (hasSelection) return;
-    setSelectedDocumentSearchFileId('');
-  }, [filteredDocumentSearchRows, selectedDocumentSearchFileId]);
-
-  const handleDropSelectedDocument = useCallback((): void => {
-    const fileId = selectedDocumentSearchFileId.trim();
-    if (!fileId) {
-      toast('Choose a document before dropping it onto canvas.', { variant: 'warning' });
-      return;
-    }
-    const targetFile = filesById.get(fileId) ?? null;
-    if (!targetFile || targetFile.fileType === 'case') {
-      toast('Selected document is no longer available.', { variant: 'warning' });
-      return;
-    }
-    addFileReferenceNode(targetFile.id, targetFile.name, placePosition);
-  }, [addFileReferenceNode, filesById, placePosition, selectedDocumentSearchFileId, toast]);
-
   const openSelectedFile = useCallback((): void => {
     if (!selectedNodeId) return;
     const meta = nodeFileMetaRef.current[selectedNodeId];
@@ -759,7 +737,7 @@ function CaseResolverNodeFileWorkspaceInner({
       nodeFileMeta: nodeFileMetaRef.current,
     };
     onSnapshotChange(updated);
-    toast('Canvas saved.', { variant: 'success' });
+    toast('Node file updated.', { variant: 'success' });
   }, [nodes, onSnapshotChange, strictEdges, toast]);
 
   // Derived values for the side panel
@@ -769,21 +747,106 @@ function CaseResolverNodeFileWorkspaceInner({
   const selectedFile = selectedNodeMeta
     ? (filesById.get(selectedNodeMeta.fileId) ?? null)
     : null;
+  const resolveConnectorTooltip = useCallback(
+    (input: {
+      direction: 'input' | 'output';
+      node: AiNode;
+      port: string;
+    }): { content: React.ReactNode; maxWidth?: string | undefined } | null => {
+      if (input.direction !== 'output') return null;
+      if (input.node.type !== 'prompt') return null;
+      if (
+        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] &&
+        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] &&
+        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2]
+      ) {
+        return null;
+      }
+
+      const linkedMeta = nodeFileMetaRef.current[input.node.id] ?? null;
+      const sourceFile = linkedMeta ? filesById.get(linkedMeta.fileId) ?? null : null;
+      const template = resolvePromptConfig(input.node).template;
+      const wysiwygOutput = stripHtmlToPlainText(template);
+      const contentOutput =
+        renderPromptNodeTextPreview(input.node, DEFAULT_CASE_RESOLVER_NODE_META) ||
+        wysiwygOutput;
+      const plainTextOutput = stripHtmlToPlainText(contentOutput || wysiwygOutput);
+      const isContentPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1];
+      const isPlainTextPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2];
+      const outputLabel = isPlainTextPort
+        ? 'Plain text output'
+        : isContentPort
+          ? 'Content output'
+          : 'WYSIWYG text output';
+      const renderedText = isPlainTextPort
+        ? plainTextOutput
+        : isContentPort
+          ? contentOutput
+          : wysiwygOutput;
+
+      return {
+        maxWidth: '720px',
+        content: (
+          <div className='space-y-2'>
+            <div className='text-[11px] text-gray-400'>{outputLabel}</div>
+            {sourceFile ? (
+              <div className='text-[10px] text-gray-500'>
+                Source: {sourceFile.name}
+              </div>
+            ) : null}
+            <div className='max-h-80 overflow-auto rounded border border-gray-700 bg-white p-3 text-[11px] leading-relaxed text-slate-900 whitespace-pre-wrap'>
+              {renderedText || '(empty)'}
+            </div>
+          </div>
+        ),
+      };
+    },
+    [filesById]
+  );
 
   return (
-    <div className='flex h-[calc(100vh-120px)] w-full gap-3'>
+    <div className='flex h-[calc(100vh-120px)] min-h-0 w-full gap-3'>
       {/* ── Main canvas panel ── */}
-      <Card variant='glass' padding='none' className='flex min-h-0 flex-1 flex-col overflow-hidden'>
-        {/* Toolbar */}
-        <div className='flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3'>
-          <FileCode2 className='size-4 flex-shrink-0 text-violet-400' />
-          <span className='truncate text-sm font-medium text-gray-200'>{assetName}</span>
-          {nodes.length > 0 ? (
+      <Card
+        variant='glass'
+        padding='none'
+        className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'
+      >
+        <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3'>
+          <div className='flex min-w-0 items-center gap-2'>
+            <Button
+              type='button'
+              size='sm'
+              onClick={handleManualSave}
+              className='h-8 min-w-[100px] flex-shrink-0 rounded-md border border-emerald-500/40 text-xs text-emerald-200 transition-colors hover:bg-emerald-500/10'
+            >
+              Update
+            </Button>
+            <h2 className='truncate text-2xl font-bold tracking-tight text-white'>Edit Node File</h2>
+            <Badge variant='outline' className='truncate px-1.5 py-0 text-[10px]'>
+              {assetName}
+            </Badge>
+          </div>
+          <div className='ml-auto flex items-center gap-2'>
+            <Button
+              type='button'
+              variant='outline'
+              size='sm'
+              className='h-8'
+              onClick={(): void => {
+                setIsSidePanelVisible((previous) => !previous);
+              }}
+            >
+              {isSidePanelVisible ? 'Hide Sidebar' : 'Show Sidebar'}
+            </Button>
             <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
               {nodes.length} node{nodes.length !== 1 ? 's' : ''}
             </Badge>
-          ) : null}
+          </div>
+        </div>
 
+        {/* Toolbar */}
+        <div className='flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3'>
           <SelectSimple
             size='sm'
             value={selectedNodeId ?? ''}
@@ -835,29 +898,6 @@ function CaseResolverNodeFileWorkspaceInner({
             className='h-8 border-border bg-card/60 text-xs text-white'
           />
 
-          <SelectSimple
-            size='sm'
-            value={selectedDocumentSearchFileId}
-            onValueChange={(value: string): void => {
-              setSelectedDocumentSearchFileId(value);
-            }}
-            options={documentSearchOptions}
-            placeholder='Select document to drop'
-            className='w-[320px]'
-            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-            disabled={documentSearchOptions.length === 0}
-          />
-
-          <Button
-            type='button'
-            onClick={handleDropSelectedDocument}
-            variant='outline'
-            size='sm'
-            disabled={!selectedDocumentSearchFileId}
-          >
-            Drop Selected
-          </Button>
-
           <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
             {filteredDocumentSearchRows.length} result
             {filteredDocumentSearchRows.length !== 1 ? 's' : ''}
@@ -908,38 +948,18 @@ function CaseResolverNodeFileWorkspaceInner({
           >
             Add Node
           </Button>
-
-          <div className='ml-auto'>
-            <Button
-              type='button'
-              onClick={(): void => {
-                setIsSidePanelVisible((previous) => !previous);
-              }}
-              variant='outline'
-              size='sm'
-              className='mr-2'
-            >
-              {isSidePanelVisible ? 'Hide Sidebar' : 'Show Sidebar'}
-            </Button>
-            <Button
-              type='button'
-              onClick={handleManualSave}
-              variant='outline'
-              size='sm'
-            >
-              <Save className='mr-1 size-3.5' />
-              Save Canvas
-            </Button>
-          </div>
         </div>
 
         {/* Canvas */}
         <div
-          className='relative min-h-0 flex-1'
+          className='relative min-h-0 flex-1 overflow-hidden'
           onDragOverCapture={handleCanvasDragOverCapture}
           onDropCapture={handleCanvasDropCapture}
         >
-          <CanvasBoard />
+          <CanvasBoard
+            viewportClassName='h-full min-h-0'
+            resolveConnectorTooltip={resolveConnectorTooltip}
+          />
           {nodes.length === 0 ? (
             <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
               <EmptyState
@@ -951,6 +971,58 @@ function CaseResolverNodeFileWorkspaceInner({
             </div>
           ) : null}
         </div>
+
+        {showNodeSelectorUnderCanvas && activeNodeOptions.length > 0 ? (
+          <div className='shrink-0 border-t border-border/60 bg-card/40 px-4 py-3'>
+            <div className='mb-2 flex items-center justify-between gap-2'>
+              <div>
+                <div className='text-xs font-medium text-gray-200'>Node Selector</div>
+                <div className='text-[11px] text-gray-500'>
+                  Click a node to focus it on canvas.
+                </div>
+              </div>
+              <Button
+                type='button'
+                variant='ghost'
+                size='sm'
+                className='h-7 px-2 text-[11px] text-gray-400 hover:text-gray-200'
+                onClick={(): void => {
+                  setShowNodeSelectorUnderCanvas(false);
+                }}
+              >
+                Hide
+              </Button>
+            </div>
+            <div className='max-h-[35vh] overflow-x-hidden overflow-y-auto pr-1'>
+              <div className='grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-2'>
+                {activeNodeOptions.map((option) => {
+                  const isSelected = selectedNodeId === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type='button'
+                      className={`w-full rounded border px-2 py-2 text-left transition-colors ${
+                        isSelected
+                          ? 'border-cyan-400/60 bg-cyan-500/10'
+                          : 'border-border/60 bg-card/20 hover:border-cyan-500/40 hover:bg-card/40'
+                      }`}
+                      onClick={(): void => {
+                        focusNodeInCanvas(option.value);
+                      }}
+                    >
+                      <div className='truncate text-xs font-medium text-gray-200'>
+                        {option.label}
+                      </div>
+                      <div className='mt-0.5 truncate text-[10px] text-gray-500'>
+                        {option.description}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ) : null}
       </Card>
 
       {/* ── File reference side panel ── */}

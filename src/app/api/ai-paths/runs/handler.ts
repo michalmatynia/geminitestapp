@@ -31,7 +31,7 @@ const staleRunningCleanupIntervalMs = parseEnvNumber(
 const staleRunningMaxAgeMs = resolveAiPathsStaleRunningMaxAgeMs();
 const runsListResponseCacheTtlMs = parseEnvNumber(
   process.env['AI_PATHS_RUNS_LIST_CACHE_TTL_MS'],
-  2000
+  0
 );
 const runsListResponseCacheMaxEntries = parseEnvNumber(
   process.env['AI_PATHS_RUNS_LIST_CACHE_MAX_ENTRIES'],

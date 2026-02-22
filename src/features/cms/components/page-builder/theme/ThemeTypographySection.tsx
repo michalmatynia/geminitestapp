@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ThemeSettings } from '@/shared/contracts/cms';
+import type { ThemeSettings } from '@/shared/contracts/cms-theme';
 import {
   SettingsField,
   SettingsFieldsRenderer,

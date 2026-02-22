@@ -387,15 +387,26 @@ export function InspectorAiProvider({
       if (!prompt.trim()) {
         throw new ApiError('Prompt is empty.', 400);
       }
-
+    
+      const sessionId = `css-ai-${Date.now()}`;
+      const now = new Date().toISOString();
+    
       const messages: ChatMessage[] = [
         {
+          id: `sys-${Date.now()}`,
+          sessionId,
+          timestamp: now,
           role: 'system',
           content: 'You are a CSS assistant. Return only valid CSS without code fences or explanations.',
         },
-        { role: 'user', content: prompt },
+        {
+          id: `user-${Date.now()}`,
+          sessionId,
+          timestamp: now,
+          role: 'user',
+          content: prompt,
+        },
       ];
-
       const controller = new AbortController();
       cssAiAbortRef.current = controller;
 
@@ -583,15 +594,26 @@ export function InspectorAiProvider({
         throw new ApiError('Select a Deepthinking agent first.', 400);
       }
 
+      const sessionId = `content-ai-${Date.now()}`;
+      const now = new Date().toISOString();
+      
       const messages: ChatMessage[] = [
         {
+          id: `sys-${Date.now()}`,
+          sessionId,
+          timestamp: now,
           role: 'system',
           content:
-            'You are a CMS content assistant. Return only JSON. If updating settings, output an object of key/value pairs matching allowed keys.',
+                    'You are a CMS content assistant. Return only JSON. If updating settings, output an object of key/value pairs matching allowed keys.',
         },
-        { role: 'user', content: prompt },
+        {
+          id: `user-${Date.now()}`,
+          sessionId,
+          timestamp: now,
+          role: 'user',
+          content: prompt,
+        },
       ];
-
       const controller = new AbortController();
       contentAiAbortRef.current = controller;
 

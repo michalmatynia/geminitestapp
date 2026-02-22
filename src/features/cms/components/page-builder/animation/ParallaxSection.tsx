@@ -459,17 +459,17 @@ export function ParallaxSection(): React.ReactNode {
               />
             </FormField>
           </div>
-          {parallaxPatternValue === 'increment' && (
-            <FormField label='Per-child step (px)'>
-              <Input
-                type='number'
-                min={0}
-                max={200}
-                step={1}
-                value={parallaxChildStepValue}
-                onChange={handleParallaxChildStepChange}
-                className='h-9'
-              />
+                      {parallaxPatternValue === 'increment' && (
+                        <FormField label='Per-child step (px)'>              <Input
+          
+              type='number'
+              min={0}
+              max={200}
+              step={1}
+              value={parallaxChildStepValue}
+              onChange={handleParallaxChildStepChange}
+              className='h-9'
+            />
             </FormField>
           )}
 

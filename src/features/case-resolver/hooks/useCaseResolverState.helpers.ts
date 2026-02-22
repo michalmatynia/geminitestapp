@@ -167,34 +167,39 @@ export const buildCaseResolverDraftCanonicalState = (
 
 const buildCaseResolverFileComparableSnapshot = (
   file: CaseResolverFile
-): CaseResolverComparableDocumentSnapshot => ({
-  id: file.id,
-  name: file.name,
-  folder: file.folder,
-  parentCaseId: file.parentCaseId ?? null,
-  referenceCaseIds: normalizeComparableReferenceCaseIds(file.referenceCaseIds),
-  documentDate: file.documentDate,
-  documentCity:
-        typeof (file as { documentCity?: unknown }).documentCity === 'string'
-          ? (file as { documentCity?: string }).documentCity?.trim() || null
-          : null,
-  tagId: file.tagId ?? null,
-  caseIdentifierId: file.caseIdentifierId ?? null,
-  categoryId: file.categoryId ?? null,
-  scanOcrModel: file.scanOcrModel ?? '',
-  scanOcrPrompt: file.scanOcrPrompt ?? '',
-  addresser: file.addresser,  addressee: file.addressee,
-  activeDocumentVersion: file.activeDocumentVersion,
-  editorType: file.editorType,
-  documentContentFormatVersion: 1,
-  documentContent: file.documentContent,
-  documentContentMarkdown: file.documentContentMarkdown,
-  documentContentHtml: file.documentContentHtml,
-  documentContentPlainText: file.documentContentPlainText,
-  documentConversionWarnings: normalizeComparableWarnings(file.documentConversionWarnings),
-  originalDocumentContent: file.originalDocumentContent ?? '',
-  explodedDocumentContent: file.explodedDocumentContent ?? '',
-});
+): CaseResolverComparableDocumentSnapshot => {
+  const canonicalDraft = buildFileEditDraft(file);
+  const canonicalState = buildCaseResolverDraftCanonicalState(canonicalDraft);
+  return {
+    id: file.id,
+    name: file.name,
+    folder: file.folder,
+    parentCaseId: file.parentCaseId ?? null,
+    referenceCaseIds: normalizeComparableReferenceCaseIds(file.referenceCaseIds),
+    documentDate: canonicalDraft.documentDate,
+    documentCity:
+      typeof canonicalDraft.documentCity === 'string'
+        ? canonicalDraft.documentCity.trim() || null
+        : null,
+    tagId: file.tagId ?? null,
+    caseIdentifierId: file.caseIdentifierId ?? null,
+    categoryId: file.categoryId ?? null,
+    scanOcrModel: file.scanOcrModel ?? '',
+    scanOcrPrompt: file.scanOcrPrompt ?? '',
+    addresser: file.addresser,
+    addressee: file.addressee,
+    activeDocumentVersion: canonicalDraft.activeDocumentVersion,
+    editorType: canonicalState.mode,
+    documentContentFormatVersion: 1,
+    documentContent: canonicalState.storedContent,
+    documentContentMarkdown: canonicalState.markdown,
+    documentContentHtml: canonicalState.html,
+    documentContentPlainText: canonicalState.plainText,
+    documentConversionWarnings: normalizeComparableWarnings(canonicalState.warnings),
+    originalDocumentContent: canonicalState.originalDocumentContent ?? '',
+    explodedDocumentContent: canonicalState.explodedDocumentContent ?? '',
+  };
+};
 const buildCaseResolverDraftComparableSnapshot = (
   draft: CaseResolverFileEditDraft,
   canonicalState: CaseResolverDraftCanonicalState

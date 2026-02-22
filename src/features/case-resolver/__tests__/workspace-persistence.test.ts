@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { CASE_RESOLVER_WORKSPACE_KEY, createDefaultCaseResolverWorkspace } from '@/features/case-resolver/settings';
 import {
   computeCaseResolverConflictRetryDelayMs,
+  fetchCaseResolverWorkspaceMetadata,
   fetchCaseResolverWorkspaceSnapshot,
   getCaseResolverWorkspaceMaxPayloadBytes,
   getCaseResolverWorkspaceRevision,
@@ -136,6 +137,35 @@ describe('case-resolver workspace persistence', () => {
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe(
       `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+    expect(options).toMatchObject({
+      method: 'GET',
+      cache: 'no-store',
+    });
+  });
+
+  it('fetches workspace metadata via key meta endpoint', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      toJsonResponse(200, {
+        key: CASE_RESOLVER_WORKSPACE_KEY,
+        revision: 7,
+        lastMutationId: 'mutation-meta',
+        exists: true,
+      })
+    );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceMetadata('test_source');
+
+    expect(result).toEqual({
+      revision: 7,
+      lastMutationId: 'mutation-meta',
+      exists: true,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}&meta=1`
     );
     expect(options).toMatchObject({
       method: 'GET',

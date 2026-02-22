@@ -70,18 +70,19 @@ const filterCollections = (
   }
   const selectedSet = new Set(selectedCollections.map((c: string): string => c.toLowerCase()));
   
-  const baseCollections = (Array.isArray(schema.collections)
+  const baseCollectionsRaw = Array.isArray(schema.collections)
     ? schema.collections
-    : Object.values(schema.collections));
-
+    : Object.values(schema.collections);
+  const baseCollections: CollectionSchemaDto[] = Array.from(baseCollectionsRaw as unknown as CollectionSchemaDto[]);
+  
   if (schema.provider === 'multi') {
-    const collections = baseCollections.filter((c: CollectionSchemaDto): boolean =>
+    const collections = baseCollections.filter((c): boolean =>
       selectedSet.has(c.name.toLowerCase()),
     );
     return {
       ...schema,
       collections,
-    };
+    } as SchemaResponse;
   }
   const collections = baseCollections.filter((c: CollectionSchemaDto): boolean =>
     selectedSet.has(c.name.toLowerCase()),
@@ -89,7 +90,8 @@ const filterCollections = (
   return {
     provider: schema.provider,
     collections,
-  };
+  } as SchemaResponse;
+  
 };
 
 export const handleDbSchema: NodeHandler = async ({
@@ -136,19 +138,22 @@ export const handleDbSchema: NodeHandler = async ({
 
   // Optionally filter out fields or relations
   if (!config.includeFields || !config.includeRelations) {
-    const baseCollections = (Array.isArray(schema.collections)
+    const baseCollectionsRaw = Array.isArray(schema.collections)
       ? schema.collections
-      : Object.values(schema.collections));
-  
-    schema.collections = baseCollections.map((c: CollectionSchemaDto): CollectionSchemaDto => {      const result: CollectionSchemaDto = {
-      name: c.name,
-      fields: config.includeFields ? (c.fields ?? []) : [],
-    };
-    const relations = c.relations;
-    if (config.includeRelations && relations) {
-      result.relations = relations;
-    }
-    return result;
+      : Object.values(schema.collections);
+    const baseCollections: CollectionSchemaDto[] = Array.from(baseCollectionsRaw as unknown as CollectionSchemaDto[]);
+    
+    (schema).collections = baseCollections.map((c): CollectionSchemaDto => {
+      const result: CollectionSchemaDto = {
+        name: c.name,
+        fields: config.includeFields ? (c.fields ?? []) : [],
+      };
+    
+      const relations = c.relations;
+      if (config.includeRelations && relations) {
+        result.relations = relations;
+      }
+      return result;
     });
   }
 

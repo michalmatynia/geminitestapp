@@ -166,7 +166,8 @@ async function fetchSettingsFromApi(
 
 async function fetchLiteSettingsFromApi(bypassCache: boolean): Promise<SettingRecord[]> {
   try {
-    const res = await fetchWithRetry('/api/settings/lite', {
+    const url = bypassCache ? '/api/settings/lite?fresh=1' : '/api/settings/lite';
+    const res = await fetchWithRetry(url, {
       cache: bypassCache ? 'no-store' : 'default',
       credentials: 'include',
     });

@@ -61,6 +61,7 @@ import { CaseResolverPageView } from '../components/CaseResolverPageView';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
   applyCaseResolverFileMutationAndRebaseDraft,
+  CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
   hasCaseResolverDraftMeaningfulChanges,
   resolveCaptureTargetFile,
 } from '../hooks/useCaseResolverState.helpers';
@@ -76,6 +77,7 @@ import {
   buildCombinedOcrText,
   buildDocumentPdfMarkup,
   buildFileEditDraft,
+  prependDraftHistorySnapshotForRevisionLoad,
   createId,
   isPathWithinFolder,
 } from '../utils/caseResolverUtils';
@@ -184,10 +186,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   >('document');
   const [isDraggingSplitter, setIsDraggingSplitter] = React.useState(false);
   const [editorContentRevisionSeed, setEditorContentRevisionSeed] = React.useState(0);
-  const lastEditorDraftVersionRef = React.useRef<{
-    id: string;
-    documentContentVersion: number;
-  } | null>(null);
   const editorSplitRef = React.useRef<HTMLDivElement | null>(null);
   const editorTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
   const scanDraftUploadInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -292,24 +290,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     setEditorDetailsTab('document');
     setEditorContentRevisionSeed((value) => value + 1);
   }, [editingDocumentDraft?.id]);
-
-  React.useEffect(() => {
-    if (!editingDocumentDraft) {
-      lastEditorDraftVersionRef.current = null;
-      return;
-    }
-    const previous = lastEditorDraftVersionRef.current;
-    if (
-      previous?.id === editingDocumentDraft.id &&
-      previous.documentContentVersion !== editingDocumentDraft.documentContentVersion
-    ) {
-      setEditorContentRevisionSeed((value) => value + 1);
-    }
-    lastEditorDraftVersionRef.current = {
-      id: editingDocumentDraft.id,
-      documentContentVersion: editingDocumentDraft.documentContentVersion ?? 0,
-    };
-  }, [editingDocumentDraft?.documentContentVersion, editingDocumentDraft?.id]);
 
   const isEditorDraftDirty = React.useMemo(() => {
     if (!editingDocumentDraft) return false;
@@ -1932,6 +1912,24 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       });
       return;
     }
+    const snapshotSavedAt = new Date().toISOString();
+    setEditingDocumentDraft((current: CaseResolverFileEditDraft | null): CaseResolverFileEditDraft | null => {
+      if (!current) return current;
+      if (current.isLocked) return current;
+      const nextHistory = prependDraftHistorySnapshotForRevisionLoad({
+        draft: current,
+        loadedEntry: entry,
+        savedAt: snapshotSavedAt,
+        historyLimit: CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
+      });
+      if (nextHistory === current.documentHistory) {
+        return current;
+      }
+      return {
+        ...current,
+        documentHistory: nextHistory,
+      };
+    });
     const targetMode: 'markdown' | 'wysiwyg' =
       editingDocumentDraft.fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
     if (targetMode === 'markdown') {
@@ -1971,6 +1969,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   }, [
     applyDraftCanonicalContent,
     editingDocumentDraft,
+    setEditingDocumentDraft,
     toast,
     updateEditingDocumentDraft,
   ]);

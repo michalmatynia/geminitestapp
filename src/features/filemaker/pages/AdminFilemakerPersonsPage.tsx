@@ -1,6 +1,6 @@
 'use client';
 
-import { Users, Database, Building2, Mail } from 'lucide-react';
+import { Users, Database, Building2, CalendarDays, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useDeferredValue, useMemo, useState } from 'react';
 
@@ -147,6 +147,13 @@ export function AdminFilemakerPersonsPage(): React.JSX.Element {
             icon: <Mail className='size-4' />,
             variant: 'outline',
             onClick: () => router.push('/admin/filemaker/emails'),
+          },
+          {
+            key: 'events',
+            label: 'Events',
+            icon: <CalendarDays className='size-4' />,
+            variant: 'outline',
+            onClick: () => router.push('/admin/filemaker/events'),
           },
           {
             key: 'manage',

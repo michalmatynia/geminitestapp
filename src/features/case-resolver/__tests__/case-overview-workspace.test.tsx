@@ -54,19 +54,18 @@ const BASE_OPTIONS: SelectOption[] = [
 
 const renderWorkspace = (
   activeCaseFile: CaseResolverFile | null,
-  onUpdateActiveCase: ReturnType<typeof vi.fn> = vi.fn()
-): ReturnType<typeof render> =>
-  render(
-    <CaseResolverCaseOverviewWorkspace
-      activeCaseFile={activeCaseFile}
-      caseTagOptions={BASE_OPTIONS}
-      caseIdentifierOptions={BASE_OPTIONS}
-      caseCategoryOptions={BASE_OPTIONS}
-      caseReferenceOptions={BASE_OPTIONS.filter((option): boolean => option.value !== '__none__')}
-      parentCaseOptions={BASE_OPTIONS}
-      onUpdateActiveCase={onUpdateActiveCase}
-    />
-  );
+  onUpdateActiveCase: any = vi.fn()
+): ReturnType<typeof render> =>  render(
+  <CaseResolverCaseOverviewWorkspace
+    activeCaseFile={activeCaseFile}
+    caseTagOptions={BASE_OPTIONS}
+    caseIdentifierOptions={BASE_OPTIONS}
+    caseCategoryOptions={BASE_OPTIONS}
+    caseReferenceOptions={BASE_OPTIONS.filter((option): boolean => option.value !== '__none__')}
+    parentCaseOptions={BASE_OPTIONS}
+    onUpdateActiveCase={onUpdateActiveCase}
+  />
+);
 
 describe('CaseResolverCaseOverviewWorkspace', () => {
   it('renders empty state when no active case is present', () => {

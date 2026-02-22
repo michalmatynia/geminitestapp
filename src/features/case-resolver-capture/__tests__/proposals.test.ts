@@ -53,6 +53,7 @@ const createDatabase = (): FilemakerDatabase => ({
       updatedAt: '2026-02-16T00:00:00.000Z',
     },
   ],
+  events: [],
   addresses: [
     {
       id: 'addr-1',
@@ -77,11 +78,13 @@ const createDatabase = (): FilemakerDatabase => ({
       updatedAt: '2026-02-16T00:00:00.000Z',
     },
   ],
+  addressLinks: [],
+  phoneNumbers: [],
+  phoneNumberLinks: [],
   emails: [],
   emailLinks: [],
-});
-
-const createAddresserCandidate = (): PromptExploderCaseResolverPartyCandidate => ({
+  eventOrganizationLinks: [],
+});const createAddresserCandidate = (): PromptExploderCaseResolverPartyCandidate => ({
   id: 'cand-1',
   name: 'Michał Matynia',
   score: 1,

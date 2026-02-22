@@ -22,6 +22,7 @@ import {
   Pagination,
   FilterPanel,
   Hint,
+  Alert,
 } from '@/shared/ui';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
@@ -66,8 +67,6 @@ const IDLE_RUN_REFRESH_MIN_MS = 30000;
 const ACTIVE_QUEUE_STATUS_REFRESH_MIN_MS = 10000;
 const IDLE_QUEUE_STATUS_REFRESH_MIN_MS = 30000;
 const ACTIVE_RUN_STATUSES = new Set(['queued', 'running', 'paused']);
-const RUNS_REQUEST_COOLDOWN_MS = 2500;
-const QUEUE_STATUS_REQUEST_COOLDOWN_MS = 2500;
 const POLLING_JITTER_MS = 500;
 const QUEUE_LAG_THRESHOLD_KEY = 'ai_paths_queue_lag_threshold_ms';
 const STATUS_FILTERS = [
@@ -303,7 +302,6 @@ export function JobQueuePanel({
         offset,
       };
       const requestKey = JSON.stringify(requestOptions);
-      const now = Date.now();
       const guard = runsRequestGuardRef.current;
 
       if (guard.key === requestKey && guard.inFlight) {
@@ -327,19 +325,10 @@ export function JobQueuePanel({
         return inflightData;
       }
 
-      if (
-        guard.key === requestKey &&
-        now - guard.lastCompletedAt < RUNS_REQUEST_COOLDOWN_MS
-      ) {
-        if (guard.lastData) {
-          return guard.lastData;
-        }
-        if (guard.lastErrorMessage) {
-          throw new Error(guard.lastErrorMessage);
-        }
-      }
-
-      const requestPromise = runsApi.list(requestOptions);
+      const requestPromise = runsApi.list({
+        ...requestOptions,
+        timeoutMs: 60_000,
+      });
       guard.key = requestKey;
       guard.inFlight = requestPromise;
       try {
@@ -360,6 +349,10 @@ export function JobQueuePanel({
       }
     },
     enabled: isPanelActive,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     refetchInterval: resolveRunsRefetchInterval,
     meta: {
       source: 'ai.ai-paths.job-queue.runs',
@@ -374,7 +367,6 @@ export function JobQueuePanel({
     queryKey: QUERY_KEYS.ai.aiPaths.queueStatus(),
     queryFn: async () => {
       const requestKey = 'queue-status';
-      const now = Date.now();
       const guard = queueStatusRequestGuardRef.current;
 
       if (guard.key === requestKey && guard.inFlight) {
@@ -393,18 +385,6 @@ export function JobQueuePanel({
         guard.lastData = inflightData;
         guard.lastErrorMessage = null;
         return inflightData;
-      }
-
-      if (
-        guard.key === requestKey &&
-        now - guard.lastCompletedAt < QUEUE_STATUS_REQUEST_COOLDOWN_MS
-      ) {
-        if (guard.lastData) {
-          return guard.lastData;
-        }
-        if (guard.lastErrorMessage) {
-          throw new Error(guard.lastErrorMessage);
-        }
       }
 
       const requestPromise = runsApi.queueStatus();
@@ -428,6 +408,10 @@ export function JobQueuePanel({
       }
     },
     enabled: isPanelActive,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
     refetchInterval: resolveQueueStatusRefetchInterval,
     meta: {
       source: 'ai.ai-paths.job-queue.status',
@@ -595,6 +579,10 @@ export function JobQueuePanel({
     (): string => getPanelDescription(sourceFilter, sourceMode),
     [sourceFilter, sourceMode]
   );
+  const refetchQueueData = React.useCallback((): void => {
+    void runsQuery.refetch();
+    void queueStatusQuery.refetch();
+  }, [queueStatusQuery.refetch, runsQuery.refetch]);
 
   React.useEffect(() => {
     if (!queueStatus) return;
@@ -727,6 +715,35 @@ export function JobQueuePanel({
       });
     });
   }, [expandedRunIds, pausedStreams, runDetails, streamStatuses]);
+
+  React.useEffect(() => {
+    if (!isPanelActive || typeof window === 'undefined') return;
+
+    const handleRunEnqueued = (): void => {
+      refetchQueueData();
+    };
+
+    window.addEventListener('ai-path-run-enqueued', handleRunEnqueued as EventListener);
+
+    let channel: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        channel = new BroadcastChannel('ai-path-queue');
+        channel.onmessage = () => {
+          refetchQueueData();
+        };
+      } catch {
+        channel = null;
+      }
+    }
+
+    return (): void => {
+      window.removeEventListener('ai-path-run-enqueued', handleRunEnqueued as EventListener);
+      if (channel) {
+        channel.close();
+      }
+    };
+  }, [isPanelActive, refetchQueueData]);
           
   const loadRunDetail = React.useCallback(async (runId: string): Promise<void> => {
     setRunDetailErrors((prev: Record<string, string>) => {
@@ -841,7 +858,7 @@ export function JobQueuePanel({
       label: 'Status',
       type: 'select',
       options: [...STATUS_FILTERS],
-      width: '12rem',
+      width: '14rem',
     },
     {
       key: 'pageSize',
@@ -882,7 +899,7 @@ export function JobQueuePanel({
           <Button
             type='button'
             className='rounded-md border px-2 py-1 text-[10px] text-gray-200 hover:bg-muted/60'
-            onClick={() => { void runsQuery.refetch(); }}
+            onClick={refetchQueueData}
             disabled={runsQuery.isFetching}
           >
             {runsQuery.isFetching ? 'Refreshing...' : 'Refresh'}
@@ -980,6 +997,14 @@ export function JobQueuePanel({
         headerTitle='Job Queue Filters'
         searchPlaceholder='Run ID, path name, entity, error...'
       />
+
+      {runsQuery.error ? (
+        <Alert variant='error' className='text-xs'>
+          {runsQuery.error instanceof Error
+            ? runsQuery.error.message
+            : 'Failed to load job runs.'}
+        </Alert>
+      ) : null}
             
       <div className='flex flex-wrap items-center justify-between gap-2'>
         <div className='text-[11px] text-gray-400'>
@@ -997,11 +1022,11 @@ export function JobQueuePanel({
         />
       </div>            
       
-      {runs.length === 0 ? (
+      {runs.length === 0 && !runsQuery.error ? (
         <div className='rounded-md border border-border bg-card/40 p-4 text-sm text-gray-400'>
                         No runs found for the current filters.
         </div>
-      ) : (
+      ) : runs.length > 0 ? (
         <div className='space-y-3'>
           {runs.map((run: AiPathRunRecord) => {
             const isExpanded = expandedRunIds.has(run.id);
@@ -1078,7 +1103,7 @@ export function JobQueuePanel({
             );
           })}
         </div>
-      )}
+      ) : null}
 
       <ConfirmModal
         isOpen={clearScope === 'terminal'}

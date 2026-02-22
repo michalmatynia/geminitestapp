@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
+import { gunzipSync, gzipSync } from 'zlib';
 import { z } from 'zod';
 
 import { upsertAiPathsSetting } from '@/features/ai/ai-paths/server';
@@ -44,6 +45,8 @@ import {
   getLastKnownSettings,
   type SettingsScope,
 } from '@/shared/lib/settings-cache';
+import { isLiteSettingsKey } from '@/shared/lib/settings-lite-keys';
+import { clearLiteSettingsServerCache } from '@/shared/lib/settings-lite-server-cache';
 
 const shouldLog = () => process.env['DEBUG_SETTINGS'] === 'true';
 
@@ -58,6 +61,8 @@ const SETTINGS_COLLECTION = 'settings';
 const AI_PATHS_CONFIG_PREFIX = 'ai_paths_config_';
 const AI_PATHS_KEY_PREFIX = 'ai_paths_';
 const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
+const COMPRESSED_SETTING_PREFIX = '__gz_b64__:';
+const COMPRESSIBLE_SETTING_KEYS = new Set<string>([CASE_RESOLVER_WORKSPACE_KEY]);
 const HEAVY_PREFIXES = ['image_studio_', 'base_import_', 'base_export_'];
 const HEAVY_KEYS = new Set<string>([
   'agent_personas',
@@ -71,7 +76,6 @@ const HEAVY_PREFIX_REGEX = new RegExp(`^(${HEAVY_PREFIXES.map((p) => p.replace(/
 const AI_PATHS_PREFIX_REGEX = new RegExp(`^${AI_PATHS_KEY_PREFIX.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}`);
 const DEFAULT_SCOPE: SettingsScope = 'light';
 let settingsIndexesEnsured: Promise<void> | null = null;
-let mongoSettingKeysCache: { keys: string[]; ts: number } | null = null;
 
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
@@ -80,14 +84,6 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
 const SETTINGS_SLOW_SCOPE_TIMEOUT_MS = parsePositiveInt(
   process.env['SETTINGS_SLOW_SCOPE_TIMEOUT_MS'],
   3_000
-);
-const SETTINGS_KEY_CACHE_TTL_MS = parsePositiveInt(
-  process.env['SETTINGS_KEY_CACHE_TTL_MS'],
-  60_000
-);
-const SETTINGS_VALUE_READ_BATCH_SIZE = parsePositiveInt(
-  process.env['SETTINGS_VALUE_READ_BATCH_SIZE'],
-  200
 );
 const isSlowSettingsScope = (scope: SettingsScope): boolean =>
   scope === 'all' || scope === 'heavy';
@@ -135,12 +131,43 @@ const ensureSettingsIndexes = async (): Promise<void> => {
 const isHeavySettingKey = (key: string): boolean =>
   HEAVY_KEYS.has(key) || HEAVY_PREFIXES.some((prefix) => key.startsWith(prefix));
 const isAiPathsSettingKey = (key: string): boolean => key.startsWith(AI_PATHS_KEY_PREFIX);
-const shouldIncludeSettingKeyForScope = (key: string, scope: SettingsScope): boolean => {
-  if (isAiPathsSettingKey(key)) return false;
-  const isHeavy = isHeavySettingKey(key);
-  if (scope === 'all') return true;
-  if (scope === 'heavy') return isHeavy;
-  return !isHeavy;
+const shouldCompressSettingValue = (key: string): boolean =>
+  COMPRESSIBLE_SETTING_KEYS.has(key);
+const decodeSettingValue = (key: string, value: string): string => {
+  if (!shouldCompressSettingValue(key)) return value;
+  if (!value.startsWith(COMPRESSED_SETTING_PREFIX)) return value;
+  try {
+    const encoded = value.slice(COMPRESSED_SETTING_PREFIX.length);
+    const decompressedUnknown: unknown = gunzipSync(Buffer.from(encoded, 'base64'));
+    if (!Buffer.isBuffer(decompressedUnknown)) return value;
+    return decompressedUnknown.toString('utf8');
+  } catch (error) {
+    void ErrorSystem.logWarning('[settings] Failed to decompress setting value.', {
+      service: 'api/settings',
+      key,
+      error,
+    });
+    return value;
+  }
+};
+const encodeSettingValue = (key: string, value: string): string => {
+  if (!shouldCompressSettingValue(key)) return value;
+  if (value.startsWith(COMPRESSED_SETTING_PREFIX) && decodeSettingValue(key, value) !== value) {
+    return value;
+  }
+  try {
+    const compressedUnknown: unknown = gzipSync(Buffer.from(value, 'utf8'));
+    if (!Buffer.isBuffer(compressedUnknown)) return value;
+    const encoded = `${COMPRESSED_SETTING_PREFIX}${compressedUnknown.toString('base64')}`;
+    return encoded.length < value.length ? encoded : value;
+  } catch (error) {
+    void ErrorSystem.logWarning('[settings] Failed to compress setting value.', {
+      service: 'api/settings',
+      key,
+      error,
+    });
+    return value;
+  }
 };
 
 const canUsePrismaSettings = (provider: 'prisma' | 'mongodb') =>
@@ -159,7 +186,13 @@ const readPrismaSettingsForScope = async (scope: SettingsScope): Promise<Setting
       where: buildPrismaScopeWhere(scope),
       select: { key: true, value: true },
     });
-    return applyScopeFilter(settings, scope);
+    return applyScopeFilter(
+      settings.map((setting: SettingRecord) => ({
+        key: setting.key,
+        value: decodeSettingValue(setting.key, setting.value),
+      })),
+      scope
+    );
   } catch (error) {
     if (isPrismaMissingTableError(error)) return [];
     throw error;
@@ -235,7 +268,8 @@ const readCurrentSettingValue = async (
         where: { key },
         select: { value: true },
       });
-      return record?.value ?? null;
+      if (typeof record?.value !== 'string') return null;
+      return decodeSettingValue(key, record.value);
     } catch (error) {
       if (isPrismaMissingTableError(error)) return null;
       throw error;
@@ -249,7 +283,8 @@ const readCurrentSettingValue = async (
     const doc = await mongo
       .collection<SettingDocument>(SETTINGS_COLLECTION)
       .findOne({ key }, { projection: { value: 1 } });
-    return typeof doc?.value === 'string' ? doc.value : null;
+    if (typeof doc?.value !== 'string') return null;
+    return decodeSettingValue(key, doc.value);
   };
 
   return provider === 'mongodb' ? readMongo() : readPrisma();
@@ -262,6 +297,18 @@ const settingSchema = z.object({
   mutationId: z.string().trim().min(1).max(200).optional(),
 });
 
+const WORKSPACE_REVISION_PATTERN = /"workspaceRevision"\s*:\s*(\d+)/;
+const WORKSPACE_LAST_MUTATION_PATTERN = /"lastMutationId"\s*:\s*(null|"([^"\\]|\\.)*")/;
+
+const parseJsonStringLiteral = (raw: string): string | null => {
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    return typeof parsed === 'string' ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 const parseCaseResolverWorkspaceMetadata = (raw: string | null): {
   revision: number;
   lastMutationId: string | null;
@@ -270,6 +317,22 @@ const parseCaseResolverWorkspaceMetadata = (raw: string | null): {
     return {
       revision: 0,
       lastMutationId: null,
+    };
+  }
+  const revisionMatch = WORKSPACE_REVISION_PATTERN.exec(raw);
+  const mutationMatch = WORKSPACE_LAST_MUTATION_PATTERN.exec(raw);
+  if (revisionMatch || mutationMatch) {
+    const revisionCandidate = revisionMatch?.[1] ? Number.parseInt(revisionMatch[1], 10) : 0;
+    const revision = Number.isFinite(revisionCandidate) && revisionCandidate > 0
+      ? Math.floor(revisionCandidate)
+      : 0;    const mutationLiteral = mutationMatch?.[1] ?? 'null';
+    const lastMutationId =
+      mutationLiteral === 'null'
+        ? null
+        : parseJsonStringLiteral(mutationLiteral)?.trim() || null;
+    return {
+      revision,
+      lastMutationId,
     };
   }
   try {
@@ -361,7 +424,7 @@ const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => 
   return { $and: [{ $nor: heavyOr }, aiPathsFilter] };
 };
 
-const listMongoSettingsLegacyQuery = async (scope: SettingsScope): Promise<SettingRecord[]> => {
+const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]> => {
   if (!process.env['MONGODB_URI']) return [];
   await ensureSettingsIndexes();
   const mongo = await getMongoDb();
@@ -371,101 +434,11 @@ const listMongoSettingsLegacyQuery = async (scope: SettingsScope): Promise<Setti
     .find(query, { projection: { _id: 1, key: 1, value: 1 } })
     .toArray();
   return docs
-    .map((doc: WithId<SettingDocument>) => ({ key: doc.key ?? String(doc._id), value: doc.value }))
+    .map((doc: WithId<SettingDocument>) => ({
+      key: doc.key ?? String(doc._id),
+      value: decodeSettingValue(doc.key ?? String(doc._id), doc.value),
+    }))
     .filter((doc: SettingRecord) => typeof doc.key === 'string' && typeof doc.value === 'string');
-};
-
-const getMongoSettingKeys = async (): Promise<string[]> => {
-  if (!process.env['MONGODB_URI']) return [];
-  const now = Date.now();
-  if (mongoSettingKeysCache && now - mongoSettingKeysCache.ts < SETTINGS_KEY_CACHE_TTL_MS) {
-    return mongoSettingKeysCache.keys;
-  }
-  await ensureSettingsIndexes();
-  const mongo = await getMongoDb();
-  const docs = await mongo
-    .collection<SettingDocument>(SETTINGS_COLLECTION)
-    .find(
-      {},
-      {
-        projection: { _id: 0, key: 1 },
-        hint: 'settings_key',
-      }
-    )
-    .toArray();
-  const keys = Array.from(
-    new Set(
-      docs
-        .map((doc: SettingDocument) => doc.key)
-        .filter((key: string | undefined): key is string => typeof key === 'string' && key.length > 0)
-    )
-  );
-  mongoSettingKeysCache = { keys, ts: now };
-  return keys;
-};
-
-const splitIntoBatches = (values: string[], batchSize: number): string[][] => {
-  const out: string[][] = [];
-  for (let index = 0; index < values.length; index += batchSize) {
-    out.push(values.slice(index, index + batchSize));
-  }
-  return out;
-};
-
-const invalidateMongoSettingKeysCache = (): void => {
-  mongoSettingKeysCache = null;
-};
-
-const listMongoSettingsIndexed = async (scope: SettingsScope): Promise<SettingRecord[] | null> => {
-  if (!process.env['MONGODB_URI']) return [];
-  const allKeys = await getMongoSettingKeys();
-  if (allKeys.length === 0) return null;
-
-  const selectedKeys = allKeys.filter((key: string) =>
-    shouldIncludeSettingKeyForScope(key, scope)
-  );
-  if (selectedKeys.length === 0) return [];
-
-  const mongo = await getMongoDb();
-  const collection = mongo.collection<SettingDocument>(SETTINGS_COLLECTION);
-  const valueByKey = new Map<string, string>();
-  const batches = splitIntoBatches(selectedKeys, SETTINGS_VALUE_READ_BATCH_SIZE);
-  for (const keysBatch of batches) {
-    const docs = await collection
-      .find(
-        { key: { $in: keysBatch } },
-        { projection: { _id: 0, key: 1, value: 1 } }
-      )
-      .toArray();
-    docs.forEach((doc: SettingDocument) => {
-      if (typeof doc.key !== 'string' || typeof doc.value !== 'string') return;
-      valueByKey.set(doc.key, doc.value);
-    });
-  }
-
-  const records: SettingRecord[] = [];
-  selectedKeys.forEach((key: string) => {
-    const value = valueByKey.get(key);
-    if (typeof value !== 'string') return;
-    records.push({ key, value });
-  });
-  return records;
-};
-
-const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]> => {
-  try {
-    const indexed = await listMongoSettingsIndexed(scope);
-    if (indexed !== null) {
-      return indexed;
-    }
-  } catch (error) {
-    await ErrorSystem.logWarning('[settings] Indexed Mongo settings lookup failed, falling back to legacy query.', {
-      service: 'api/settings',
-      scope,
-      error,
-    });
-  }
-  return listMongoSettingsLegacyQuery(scope);
 };
 
 const upsertMongoSetting = async (
@@ -536,6 +509,10 @@ const fetchAndCacheSettings = async (
         where: buildPrismaScopeWhere(scope),
         select: { key: true, value: true },
       });
+      settings = settings.map((setting: SettingRecord) => ({
+        key: setting.key,
+        value: decodeSettingValue(setting.key, setting.value),
+      }));
       settings = applyScopeFilter(settings, scope);
     } catch (error) {
       if (isPrismaMissingTableError(error)) {
@@ -594,12 +571,39 @@ export async function GET_handler(
 
   if (requestedKey.length > 0) {
     const timings: Record<string, number | null | undefined> = {};
+    const returnMetadataOnly =
+      requestedKey === CASE_RESOLVER_WORKSPACE_KEY &&
+      req.nextUrl.searchParams.get('meta') === '1';
     const providerStart = performance.now();
     const provider = await getAppDbProvider();
     timings['provider'] = performance.now() - providerStart;
     const readStart = performance.now();
     const value = await readCurrentSettingValue(requestedKey, provider);
     timings['single'] = performance.now() - readStart;
+    if (returnMetadataOnly) {
+      const metadata = parseCaseResolverWorkspaceMetadata(value);
+      const response = NextResponse.json(
+        {
+          key: requestedKey,
+          revision: metadata.revision,
+          lastMutationId: metadata.lastMutationId,
+          exists: value !== null,
+        },
+        {
+          headers: {
+            'Cache-Control': SETTINGS_CACHE_CONTROL,
+            'X-Cache': value === null ? 'key-meta-miss' : 'key-meta-hit',
+          },
+        }
+      );
+      await attachProviderHeader(response);
+      attachTimingHeaders(response, {
+        total: performance.now() - requestStart,
+        cache: 0,
+        ...timings,
+      });
+      return response;
+    }
     const payload: SettingRecord[] =
       value === null ? [] : [{ key: requestedKey, value }];
     const response = NextResponse.json(payload, {
@@ -815,7 +819,6 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     await ErrorSystem.logInfo('[settings] POST /api/settings', { service: 'api/settings' });
   }
   clearSettingsCache();
-  invalidateMongoSettingKeysCache();
   const parsed = await parseJsonBody(req, settingSchema, {
     logPrefix: 'settings.POST',
   });
@@ -823,6 +826,9 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     return parsed.response;
   }
   const { key } = parsed.data;
+  if (isLiteSettingsKey(key) || key === APP_DB_PROVIDER_SETTING_KEY) {
+    clearLiteSettingsServerCache();
+  }
   const expectedRevision = parsed.data.expectedRevision;
   const mutationId = parsed.data.mutationId;
   let value = parsed.data.value;
@@ -882,6 +888,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       }
     }
   }
+  const valueForStorage = encodeSettingValue(key, value);
   let prismaSetting: SettingRecord | null = null;
   let mongoSetting: SettingRecord | null = null;
   if (provider === 'prisma') {
@@ -891,8 +898,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     try {
       prismaSetting = await prisma.setting.upsert({
         where: { key },
-        update: { value },
-        create: { key, value },
+        update: { value: valueForStorage },
+        create: { key, value: valueForStorage },
         select: { key: true, value: true },
       });
     } catch (error) {
@@ -905,12 +912,16 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
   }
   if (provider === 'mongodb') {
-    mongoSetting = await upsertMongoSetting(key, value);
+    mongoSetting = await upsertMongoSetting(key, valueForStorage);
   }
   const setting = prismaSetting ?? mongoSetting;
   if (!setting) {
     throw internalError('No settings store configured.');
   }
+  const normalizedSetting: SettingRecord = {
+    key: setting.key,
+    value: decodeSettingValue(setting.key, setting.value),
+  };
   if (setting.key === APP_DB_PROVIDER_SETTING_KEY) {
     invalidateAppDbProviderCache();
   }
@@ -930,7 +941,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     invalidateDatabaseEnginePolicyCache();
     invalidateCollectionProviderMapCache();
   }
-  return NextResponse.json(setting);
+  return NextResponse.json(normalizedSetting);
 }
 
 export const disableSettingsRateLimit = process.env['NODE_ENV'] !== 'production';

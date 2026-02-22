@@ -281,6 +281,7 @@ export const useCaseResolverStateAssetActions = ({
       return;
     }
     let createdImageFile = false;
+    let createdImageFileId: string | null = null;
 
     updateWorkspace((current) => {
       const folder = resolveCaseScopedFolderTarget({
@@ -311,6 +312,7 @@ export const useCaseResolverStateAssetActions = ({
         categoryId: defaultCategoryId,
       });
       createdImageFile = true;
+      createdImageFileId = createdFile.id;
       return {
         ...current,
         files: [...current.files, createdFile],
@@ -324,6 +326,11 @@ export const useCaseResolverStateAssetActions = ({
     }, { persistToast: treeSaveToast });
 
     if (createdImageFile) {
+      setSelectedAssetId(null);
+      setSelectedFolderPath(null);
+      if (createdImageFileId) {
+        setSelectedFileId(createdImageFileId);
+      }
       toast('New image file created.', { variant: 'success' });
     }
   }, [
@@ -332,6 +339,9 @@ export const useCaseResolverStateAssetActions = ({
     defaultCategoryId,
     defaultTagId,
     requestedCaseStatus,
+    setSelectedAssetId,
+    setSelectedFileId,
+    setSelectedFolderPath,
     toast,
     treeSaveToast,
     updateWorkspace,

@@ -58,11 +58,12 @@ export const buildAdminNav = (handlers: {
     label: 'Filemaker',
     href: '/admin/filemaker',
     icon: <BookOpenIcon className='size-4' />,
-    keywords: ['database', 'persons', 'organizations', 'emails', 'addressing', 'case resolver'],
+    keywords: ['database', 'persons', 'organizations', 'events', 'emails', 'addressing', 'case resolver'],
     children: [
       { id: 'filemaker/database', label: 'Database', href: '/admin/filemaker', exact: true },
       { id: 'filemaker/persons', label: 'Persons', href: '/admin/filemaker/persons' },
       { id: 'filemaker/organizations', label: 'Organizations', href: '/admin/filemaker/organizations' },
+      { id: 'filemaker/events', label: 'Events', href: '/admin/filemaker/events' },
       { id: 'filemaker/emails', label: 'Emails', href: '/admin/filemaker/emails' },
       { id: 'filemaker/list', label: 'Combined List', href: '/admin/filemaker/list' },
     ],

@@ -379,15 +379,26 @@ ${schemeContext}`;
         throw new Error('Prompt is empty.');
       }
 
+      const sessionId = `color-ai-${Date.now()}`;
+      const now = new Date().toISOString();
+      
       const messages: ChatMessage[] = [
         {
+          id: `sys-${Date.now()}`,
+          sessionId,
+          timestamp: now,
           role: 'system',
           content:
-            'You are a UI color assistant. Return only a JSON object: {"name":"...","colors":{"background":"#...","surface":"#...","text":"#...","accent":"#...","border":"#..."}}. No markdown or explanations.',
+                    'You are a UI color assistant. Return only a JSON object: {"name":"...","colors":{"background":"#...","surface":"#...","text":"#...","accent":"#...","border":"#..."}}. No markdown or explanations.',
         },
-        { role: 'user', content: prompt },
+        {
+          id: `user-${Date.now()}`,
+          sessionId,
+          timestamp: now,
+          role: 'user',
+          content: prompt,
+        },
       ];
-
       const provider = schemeAiProvider;
       const modelId = schemeAiProvider === 'model' ? (schemeAiModelId.trim() || modelOptions[0] || '') : '';
       const agentId = schemeAiProvider === 'agent' ? schemeAiAgentId.trim() : '';

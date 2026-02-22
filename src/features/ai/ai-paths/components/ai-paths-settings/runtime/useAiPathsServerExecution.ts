@@ -1,5 +1,6 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useRef } from 'react';
 
 import type {
@@ -13,6 +14,11 @@ import {
   runsApi,
 } from '@/features/ai/ai-paths/lib';
 import { logClientError } from '@/features/observability';
+import {
+  invalidateAiPathQueue,
+  notifyAiPathRunEnqueued,
+  optimisticallyInsertAiPathRunInQueueCache,
+} from '@/shared/lib/query-invalidation';
 
 import { 
   mergeRuntimeStateSnapshot, 
@@ -119,6 +125,7 @@ const resolveEntityTypeFromContext = (
 };
 
 export function useAiPathsServerExecution(args: ServerExecutionArgs) {
+  const queryClient = useQueryClient();
   const serverRunActiveRef = useRef(false);
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -241,6 +248,10 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
           stopServerRunStream();
           return;
         }
+
+        optimisticallyInsertAiPathRunInQueueCache(queryClient, runPayload);
+        void invalidateAiPathQueue(queryClient);
+        notifyAiPathRunEnqueued(runId);
 
         const runStartedAt =
           (runPayload
@@ -667,7 +678,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
         });
       }
     },
-    [args, stopServerRunStream]
+    [args, queryClient, stopServerRunStream]
   );
 
   return {

@@ -865,6 +865,7 @@ export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
     id: 'empty',
     ownerId: 'system',
     isPublic: false,
+    name: 'Default Empty Workspace',
     version: 2,
     workspaceRevision: 0,
     lastMutationId: null,

@@ -13,10 +13,15 @@ export type FilemakerPartyKind = FilemakerPartyKindDto;
 export const filemakerEntityKindSchema = z.enum([
   'person',
   'organization',
+  'event',
   'address',
+  'address_link',
   'database',
+  'phone_number',
+  'phone_number_link',
   'email',
   'email_link',
+  'event_organization_link',
 ]);
 export type FilemakerEntityKindDto = z.infer<typeof filemakerEntityKindSchema>;
 export type FilemakerEntityKind = FilemakerEntityKindDto;
@@ -41,6 +46,26 @@ export const filemakerAddressSchema = dtoBaseSchema.extend({
 
 export type FilemakerAddressDto = z.infer<typeof filemakerAddressSchema>;
 export type FilemakerAddress = FilemakerAddressDto;
+
+export const filemakerAddressOwnerKindSchema = z.enum([
+  'person',
+  'organization',
+  'event',
+]);
+export type FilemakerAddressOwnerKindDto = z.infer<
+  typeof filemakerAddressOwnerKindSchema
+>;
+export type FilemakerAddressOwnerKind = FilemakerAddressOwnerKindDto;
+
+export const filemakerAddressLinkSchema = dtoBaseSchema.extend({
+  ownerKind: filemakerAddressOwnerKindSchema,
+  ownerId: z.string(),
+  addressId: z.string(),
+  isDefault: z.boolean(),
+});
+
+export type FilemakerAddressLinkDto = z.infer<typeof filemakerAddressLinkSchema>;
+export type FilemakerAddressLink = FilemakerAddressLinkDto;
 
 export const filemakerPersonSchema = dtoBaseSchema.extend({
   firstName: z.string(),
@@ -74,6 +99,20 @@ export const filemakerOrganizationSchema = dtoBaseSchema.extend({
 export type FilemakerOrganizationDto = z.infer<typeof filemakerOrganizationSchema>;
 export type FilemakerOrganization = FilemakerOrganizationDto;
 
+export const filemakerEventSchema = dtoBaseSchema.extend({
+  eventName: z.string(),
+  addressId: z.string(),
+  street: z.string(),
+  streetNumber: z.string(),
+  city: z.string(),
+  postalCode: z.string(),
+  country: z.string(),
+  countryId: z.string(),
+});
+
+export type FilemakerEventDto = z.infer<typeof filemakerEventSchema>;
+export type FilemakerEvent = FilemakerEventDto;
+
 export const filemakerEmailStatusSchema = z.enum([
   'active',
   'inactive',
@@ -82,6 +121,22 @@ export const filemakerEmailStatusSchema = z.enum([
 ]);
 export type FilemakerEmailStatusDto = z.infer<typeof filemakerEmailStatusSchema>;
 export type FilemakerEmailStatus = FilemakerEmailStatusDto;
+
+export const filemakerPhoneNumberSchema = dtoBaseSchema.extend({
+  phoneNumber: z.string(),
+});
+
+export type FilemakerPhoneNumberDto = z.infer<typeof filemakerPhoneNumberSchema>;
+export type FilemakerPhoneNumber = FilemakerPhoneNumberDto;
+
+export const filemakerPhoneNumberLinkSchema = dtoBaseSchema.extend({
+  phoneNumberId: z.string(),
+  partyKind: filemakerPartyKindSchema,
+  partyId: z.string(),
+});
+
+export type FilemakerPhoneNumberLinkDto = z.infer<typeof filemakerPhoneNumberLinkSchema>;
+export type FilemakerPhoneNumberLink = FilemakerPhoneNumberLinkDto;
 
 export const filemakerEmailSchema = dtoBaseSchema.extend({
   email: z.string(),
@@ -100,13 +155,28 @@ export const filemakerEmailLinkSchema = dtoBaseSchema.extend({
 export type FilemakerEmailLinkDto = z.infer<typeof filemakerEmailLinkSchema>;
 export type FilemakerEmailLink = FilemakerEmailLinkDto;
 
+export const filemakerEventOrganizationLinkSchema = dtoBaseSchema.extend({
+  eventId: z.string(),
+  organizationId: z.string(),
+});
+
+export type FilemakerEventOrganizationLinkDto = z.infer<
+  typeof filemakerEventOrganizationLinkSchema
+>;
+export type FilemakerEventOrganizationLink = FilemakerEventOrganizationLinkDto;
+
 export const filemakerDatabaseSchema = z.object({
   version: z.number().int().nonnegative(),
   persons: z.array(filemakerPersonSchema),
   organizations: z.array(filemakerOrganizationSchema),
+  events: z.array(filemakerEventSchema),
   addresses: z.array(filemakerAddressSchema),
+  addressLinks: z.array(filemakerAddressLinkSchema),
+  phoneNumbers: z.array(filemakerPhoneNumberSchema),
+  phoneNumberLinks: z.array(filemakerPhoneNumberLinkSchema),
   emails: z.array(filemakerEmailSchema),
   emailLinks: z.array(filemakerEmailLinkSchema),
+  eventOrganizationLinks: z.array(filemakerEventOrganizationLinkSchema),
 });
 
 export type FilemakerDatabaseDto = z.infer<typeof filemakerDatabaseSchema>;

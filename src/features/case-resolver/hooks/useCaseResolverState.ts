@@ -27,7 +27,6 @@ import {
   PROMPT_EXPLODER_BRIDGE_STORAGE_EVENT,
 } from '@/features/prompt-exploder/bridge';
 import type {
-  CaseResolverAssetFile,
   CaseResolverCategory,
   CaseResolverEditorNodeContext,
   CaseResolverFile,
@@ -77,6 +76,7 @@ import {
 import {
   computeCaseResolverConflictRetryDelayMs,
   createCaseResolverWorkspaceMutationId,
+  fetchCaseResolverWorkspaceMetadata,
   fetchCaseResolverWorkspaceSnapshot,
   getCaseResolverWorkspaceRevision,
   logCaseResolverWorkspaceEvent,
@@ -95,12 +95,10 @@ import {
   isCaseResolverCreateContextReady,
   normalizeFolderRecords,
   resolveCaseScopedFolderTarget,
-  readStoredEditorDraft,
   serializeWorkspaceForUnsavedChangesCheck,
   resolveCaseContainerIdForFileId,
   resolveCaseResolverActiveCaseId,
   resolveCaseResolverFileById,
-  writeStoredEditorDraft,
 } from './useCaseResolverState.helpers';
 import {
   applyPendingPromptExploderPayloadToCaseResolver,
@@ -266,7 +264,6 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const queuedExpectedRevisionRef = useRef<number | null>(null);
   const queuedMutationIdRef = useRef<string | null>(null);
   const conflictRetryTimerRef = useRef<number | null>(null);
-  const draftStorageWarningShownRef = useRef(false);
   const persistWorkspaceTimerRef = useRef<number | null>(null);
   const persistWorkspaceInFlightRef = useRef(false);
   const workspaceConflictAutoRetryCountRef = useRef(0);
@@ -1293,26 +1290,11 @@ export function useCaseResolverState(): CaseResolverStateValue {
     setWorkspaceSaveError(null);
   }, [isWorkspaceDirty, isWorkspaceSaving]);
 
-  const handleSelectFile = useCallback((
-    fileId: string,
-    options?: { preserveSelectedAsset?: boolean }
-  ): void => {
-    const hasActiveNodeFileAsset = Boolean(
-      selectedAssetId &&
-      workspace.assets.some(
-        (asset: CaseResolverAssetFile): boolean => asset.id === selectedAssetId && asset.kind === 'node_file'
-      )
-    );
-    const shouldPreserveSelectedAsset = hasActiveNodeFileAsset || Boolean(
-      options?.preserveSelectedAsset && hasActiveNodeFileAsset
-    );
-
+  const handleSelectFile = useCallback((fileId: string): void => {
     if (selectedFileId === fileId) {
       setSelectedFileId(null);
       setSelectedFolderPath(null);
-      if (!shouldPreserveSelectedAsset) {
-        setSelectedAssetId(null);
-      }
+      setSelectedAssetId(null);
       return;
     }
     setSelectedFileId(fileId);
@@ -1325,10 +1307,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
         }
     ));
     setSelectedFolderPath(null);
-    if (!shouldPreserveSelectedAsset) {
-      setSelectedAssetId(null);
-    }
-  }, [selectedAssetId, selectedFileId, workspace.assets]);
+    setSelectedAssetId(null);
+  }, [selectedFileId]);
 
   const handleSelectAsset = useCallback((assetId: string): void => {
     setSelectedFileId(null);
@@ -1487,6 +1467,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
       ownerCaseId: string;
       targetFolderPath: string | null;
     }): void => {
+      let createdDocumentId: string | null = null;
       updateWorkspace((current) => {
         const folder = resolveCaseScopedFolderTarget({
           targetFolderPath,
@@ -1509,6 +1490,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
           caseIdentifierId: defaultCaseIdentifierId,
           categoryId: defaultCategoryId,
         });
+        createdDocumentId = file.id;
 
         return {
           ...current,
@@ -1521,8 +1503,21 @@ export function useCaseResolverState(): CaseResolverStateValue {
           }),
         };
       }, { persistToast: CASE_RESOLVER_TREE_SAVE_TOAST });
+      setSelectedAssetId(null);
+      setSelectedFolderPath(null);
+      if (createdDocumentId) {
+        setSelectedFileId(createdDocumentId);
+      }
     },
-    [defaultCaseIdentifierId, defaultCategoryId, defaultTagId, updateWorkspace]
+    [
+      defaultCaseIdentifierId,
+      defaultCategoryId,
+      defaultTagId,
+      setSelectedAssetId,
+      setSelectedFileId,
+      setSelectedFolderPath,
+      updateWorkspace
+    ]
   );
 
   const selectedCaseScopeIds = useMemo(
@@ -1693,6 +1688,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
 
     requestedWorkspaceRefreshFileIdRef.current = requestedFileId;
     let isCancelled = false;
+    let observedWorkspaceRevision = getCaseResolverWorkspaceRevision(workspaceRef.current);
     const wait = async (ms: number): Promise<void> =>
       new Promise<void>((resolve) => {
         window.setTimeout(resolve, ms);
@@ -1703,9 +1699,28 @@ export function useCaseResolverState(): CaseResolverStateValue {
         attempt < CASE_RESOLVER_REQUESTED_FILE_REFRESH_MAX_ATTEMPTS;
         attempt += 1
       ) {
+        const refreshedMetadata = await fetchCaseResolverWorkspaceMetadata('case_view');
+        if (isCancelled) return;
+        if (!refreshedMetadata?.exists) {
+          if (attempt < CASE_RESOLVER_REQUESTED_FILE_REFRESH_MAX_ATTEMPTS - 1) {
+            await wait(CASE_RESOLVER_REQUESTED_FILE_REFRESH_INTERVAL_MS);
+          }
+          continue;
+        }
+        if (refreshedMetadata.revision <= observedWorkspaceRevision) {
+          if (attempt < CASE_RESOLVER_REQUESTED_FILE_REFRESH_MAX_ATTEMPTS - 1) {
+            await wait(CASE_RESOLVER_REQUESTED_FILE_REFRESH_INTERVAL_MS);
+          }
+          continue;
+        }
+
         const refreshedWorkspace = await fetchCaseResolverWorkspaceSnapshot('case_view');
         if (isCancelled) return;
         if (refreshedWorkspace) {
+          observedWorkspaceRevision = Math.max(
+            observedWorkspaceRevision,
+            getCaseResolverWorkspaceRevision(refreshedWorkspace)
+          );
           const refreshedHasRequestedFile = refreshedWorkspace.files.some(
             (file: CaseResolverFile): boolean => file.id === requestedFileId
           );
@@ -1859,31 +1874,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
       return;
     }
     const baseDraft = buildFileEditDraft(target);
-    const recoveredDraft = readStoredEditorDraft(fileId);
-    const hasRecoverableStoredDraftPayload =
-      !target.isLocked &&
-      recoveredDraft !== null &&
-      recoveredDraft.baseDocumentContentVersion === baseDraft.baseDocumentContentVersion;
-    const recoveredMergedDraft: CaseResolverFileEditDraft | null = hasRecoverableStoredDraftPayload
-      ? {
-        ...baseDraft,
-        ...recoveredDraft.draft,
-        documentHistory: baseDraft.documentHistory ?? [],
-      }
-      : null;
-    const canRecoverStoredDraft =
-      recoveredMergedDraft !== null &&
-      hasCaseResolverDraftMeaningfulChanges({
-        draft: recoveredMergedDraft,
-        file: target,
-        canonicalState: buildCaseResolverDraftCanonicalState(recoveredMergedDraft),
-      });
-    const mergedDraft: CaseResolverFileEditDraft = canRecoverStoredDraft
-      ? recoveredMergedDraft
-      : {
-        ...baseDraft,
-        documentHistory: baseDraft.documentHistory ?? [],
-      };
+    const mergedDraft: CaseResolverFileEditDraft = {
+      ...baseDraft,
+      documentHistory: baseDraft.documentHistory ?? [],
+    };
     const resolvedDraftHtml = (() => {
       if (
         typeof mergedDraft.documentContentHtml === 'string' &&
@@ -1915,11 +1909,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
       documentContentPlainText: canonicalDraft.plainText,
       documentConversionWarnings: canonicalDraft.warnings,
     };
-    if (canRecoverStoredDraft) {
-      toast('Recovered unsaved draft from local storage.', { variant: 'info' });
-    } else if (hasRecoverableStoredDraftPayload || recoveredDraft) {
-      clearStoredEditorDraft(fileId);
-    }
+    clearStoredEditorDraft(fileId);
     setEditingDocumentDraft(nextDraft);
     setEditingDocumentNodeContext(options?.nodeContext ?? null);
     setSelectedFileId(fileId);
@@ -2196,26 +2186,6 @@ export function useCaseResolverState(): CaseResolverStateValue {
     setEditingDocumentDraft(null);
     setEditingDocumentNodeContext(null);
   }, [editingDocumentDraft]);
-
-  useEffect(() => {
-    if (!editingDocumentDraft) return;
-    const timer = window.setTimeout(() => {
-      const writeResult = writeStoredEditorDraft(editingDocumentDraft.id, editingDocumentDraft);
-      if (writeResult.ok) {
-        draftStorageWarningShownRef.current = false;
-        return;
-      }
-      if (writeResult.reason !== 'quota' || draftStorageWarningShownRef.current) {
-        return;
-      }
-      draftStorageWarningShownRef.current = true;
-      toast(
-        'Browser storage is full, so local draft recovery is limited. Save manually to keep changes.',
-        { variant: 'warning' }
-      );
-    }, 250);
-    return (): void => window.clearTimeout(timer);
-  }, [editingDocumentDraft, toast]);
 
   return {
     workspace,

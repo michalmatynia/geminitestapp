@@ -880,9 +880,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                       onDeactivateActiveFile();
                       return;
                     }
-                    onSelectFile(fileId, {
-                      preserveSelectedAsset: isNodeFileCanvasActive,
-                    });
+                    onSelectFile(fileId);
                     return;
                   }
                   if (assetId) {
@@ -909,9 +907,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                         onDeactivateActiveFile();
                         return;
                       }
-                      onSelectFile(fileId, {
-                        preserveSelectedAsset: isNodeFileCanvasActive,
-                      });
+                      onSelectFile(fileId);
                       return;
                     }
                     if (assetId) {

@@ -36,8 +36,11 @@ import type {
 } from '@/shared/contracts/ai-paths';
 import { api } from '@/shared/lib/api-client';
 import {
+  invalidateAiPathQueue,
   invalidateAiPathSettings,
   invalidateNotes,
+  notifyAiPathRunEnqueued,
+  optimisticallyInsertAiPathRunInQueueCache,
   invalidateProductsCountsAndDetail,
   invalidateProductsAndCounts,
 } from '@/shared/lib/query-invalidation';
@@ -750,6 +753,19 @@ export function useAiPathTriggerEvent(): {
 
       const runAt = new Date().toISOString();
       reportProgress({ status: 'success', progress: 1 });
+      const queuedRun =
+        enqueueResult.data && typeof enqueueResult.data === 'object'
+          ? (enqueueResult.data as { run?: unknown }).run
+          : null;
+      optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRun);
+      void invalidateAiPathQueue(queryClient);
+      notifyAiPathRunEnqueued(
+        queuedRun &&
+          typeof queuedRun === 'object' &&
+          typeof (queuedRun as { id?: unknown }).id === 'string'
+          ? ((queuedRun as { id: string }).id)
+          : null
+      );
       toast('AI Path run queued.', { variant: 'success' });
 
       if (args.entityType === 'product') {

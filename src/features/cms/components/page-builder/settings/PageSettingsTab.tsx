@@ -411,15 +411,26 @@ function PageSettingsTab(): React.ReactNode {
       if (provider === 'model' && !modelId) throw new ApiError('Select an AI model first.', 400);
       if (provider === 'agent' && !agentId) throw new ApiError('Select a Deepthinking agent first.', 400);
 
+      const sessionId = `page-ai-${Date.now()}`;
+      const now = new Date().toISOString();
+      
       const messages: ChatMessage[] = [
         {
+          id: `sys-${Date.now()}`,
+          sessionId,
+          timestamp: now,
           role: 'system',
           content:
-            'You are a CMS page assistant. Return only JSON with the requested fields. No markdown or explanations.',
+                    'You are a CMS page assistant. Return only JSON with the requested fields. No markdown or explanations.',
         },
-        { role: 'user', content: prompt },
+        {
+          id: `user-${Date.now()}`,
+          sessionId,
+          timestamp: now,
+          role: 'user',
+          content: prompt,
+        },
       ];
-
       const accumulated = await generatePageAiMutation.mutateAsync({
         provider,
         modelId,

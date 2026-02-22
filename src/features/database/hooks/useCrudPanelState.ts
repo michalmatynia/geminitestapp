@@ -186,13 +186,14 @@ export function useCrudPanelState(props: {
     setSuccessMessage(null);
     setMutationError(null);
     crudMutation.mutate(
-      { table: selectedTable, operation: 'insert', type: dbType, data },
+      { collection: selectedTable, operation: 'create', provider: dbType, data },
       {
         onSuccess: (result) => {
+  
           if (result.error) setMutationError(result.error);
           else {
             setShowAddModal(false);
-            setSuccessMessage(`Inserted ${result.rowCount} row(s)`);
+            setSuccessMessage('Record created successfully');
             void rowsQuery.refetch();
           }
         },
@@ -210,18 +211,19 @@ export function useCrudPanelState(props: {
     setMutationError(null);
     crudMutation.mutate(
       {
-        table: selectedTable,
+        collection: selectedTable,
         operation: 'update',
-        type: dbType,
+        provider: dbType,
         data,
-        primaryKey: getPrimaryKey(editingRow),
+        filter: getPrimaryKey(editingRow),
+        
       },
       {
         onSuccess: (result) => {
           if (result.error) setMutationError(result.error);
           else {
             setEditingRow(null);
-            setSuccessMessage(`Updated ${result.rowCount} row(s)`);
+            setSuccessMessage('Record updated successfully');
             void rowsQuery.refetch();
           }
         },
@@ -239,17 +241,18 @@ export function useCrudPanelState(props: {
     setMutationError(null);
     crudMutation.mutate(
       {
-        table: selectedTable,
+        collection: selectedTable,
         operation: 'delete',
-        type: dbType,
-        primaryKey: getPrimaryKey(deletingRow),
+        provider: dbType,
+        filter: getPrimaryKey(deletingRow),
+        
       },
       {
         onSuccess: (result) => {
           if (result.error) setMutationError(result.error);
           else {
             setDeletingRow(null);
-            setSuccessMessage(`Deleted ${result.rowCount} row(s)`);
+            setSuccessMessage('Record deleted successfully');
             void rowsQuery.refetch();
           }
         },
@@ -260,7 +263,6 @@ export function useCrudPanelState(props: {
       }
     );
   };
-
   return {
     selectedTable, setSelectedTable,
     page, setPage,

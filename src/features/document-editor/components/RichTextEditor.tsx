@@ -189,6 +189,7 @@ const textAlignExtension = Extension.create({
 export interface RichTextEditorProps {
   value: string;
   onChange: (nextValue: string) => void;
+  disabled?: boolean | undefined;
   placeholder?: string | undefined;
   variant?: RichTextEditorVariant | undefined;
   headingLevels?: HeadingLevel[] | undefined;
@@ -316,6 +317,7 @@ export function RichTextEditor({
     const activeExtensions: AnyExtension[] = [
       StarterKit.configure({
         heading: { levels: normalizedHeadingLevels },
+        link: false,
       }),
       Link.configure({
         openOnClick: false,
@@ -372,6 +374,7 @@ export function RichTextEditor({
     immediatelyRender: false,
     extensions,
     content: sanitizeContent(value),
+    editable: !disabled,
     editorProps: {
       attributes: {
         class:
@@ -399,6 +402,11 @@ export function RichTextEditor({
     lastValueRef.current = value;
     editor.commands.setContent(sanitized, { emitUpdate: false });
   }, [editor, value]);
+
+  useEffect((): void => {
+    if (!editor) return;
+    editor.setEditable(!disabled);
+  }, [editor, disabled]);
 
   const addLink = useCallback((): void => {
     if (!editor) return;

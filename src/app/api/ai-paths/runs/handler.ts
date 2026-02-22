@@ -113,6 +113,12 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     : undefined;
   const limitParam = url.searchParams.get('limit');
   const offsetParam = url.searchParams.get('offset');
+  const includeTotalParam = url.searchParams.get('includeTotal')?.trim().toLowerCase();
+  const includeTotal = !(
+    includeTotalParam === '0' ||
+    includeTotalParam === 'false' ||
+    includeTotalParam === 'no'
+  );
   const limitRaw = limitParam ? Number.parseInt(limitParam, 10) : NaN;
   const offsetRaw = offsetParam ? Number.parseInt(offsetParam, 10) : NaN;
   const limit =
@@ -132,6 +138,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     status: status ?? null,
     limit: limit ?? null,
     offset: offset ?? null,
+    includeTotal,
   });
   const now = Date.now();
   if (runsListResponseCacheTtlMs > 0) {
@@ -155,6 +162,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     ...(status ? { status } : {}),
     ...(limit !== undefined ? { limit } : {}),
     ...(offset !== undefined ? { offset } : {}),
+    ...(includeTotal ? {} : { includeTotal: false }),
   });
   if (runsListResponseCacheTtlMs > 0) {
     runsListResponseCache.set(cacheKey, {

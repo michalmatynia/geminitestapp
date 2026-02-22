@@ -45,6 +45,7 @@ type SvgNodeLayerProps = {
   onPointerUpNode: (event: React.PointerEvent<Element>, nodeId: string) => void;
   onSelectNode: (nodeId: string, options?: { toggle?: boolean }) => void | Promise<void>;
   onOpenNodeConfig: () => void;
+  openNodeConfigOnSingleClick?: boolean;
   onStartConnection: (
     event: React.PointerEvent<Element>,
     node: AiNode,
@@ -259,6 +260,7 @@ export function CanvasSvgNodeLayer({
   onPointerUpNode,
   onSelectNode,
   onOpenNodeConfig,
+  openNodeConfigOnSingleClick = false,
   onStartConnection,
   onCompleteConnection,
   onReconnectInput,
@@ -389,11 +391,15 @@ export function CanvasSvgNodeLayer({
         const isSelected = selectedNodeIdSet.has(node.id);
         const isPrimarySelected = selectedNodeId === node.id;
         const palette = resolveNodePalette(node.type);
+        const nodeHistoryEntries = runtimeState.history?.[node.id];
+        const canUsePersistedStatusFallback =
+          runtimeRunStatus === 'idle' &&
+          Array.isArray(nodeHistoryEntries) &&
+          nodeHistoryEntries.length > 0;
         const runtimeNodeStatusRaw =
           runtimeNodeStatuses?.[node.id] ??
-          (runtimeRunStatus === 'idle' &&
-          typeof runtimeState.outputs?.[node.id]?.['status'] ===
-            'string'
+          (canUsePersistedStatusFallback &&
+          typeof runtimeState.outputs?.[node.id]?.['status'] === 'string'
             ? runtimeState.outputs?.[node.id]?.['status']
             : null);
         const runtimeNodeStatus =
@@ -478,9 +484,14 @@ export function CanvasSvgNodeLayer({
                 onPointerUpNode(event, node.id);
               }}
               onClick={(event: React.MouseEvent<SVGRectElement>) => {
+                const isToggleSelection =
+                  event.shiftKey || event.metaKey || event.ctrlKey;
                 void onSelectNode(node.id, {
-                  toggle: event.shiftKey || event.metaKey || event.ctrlKey,
+                  toggle: isToggleSelection,
                 });
+                if (openNodeConfigOnSingleClick && !isToggleSelection) {
+                  onOpenNodeConfig();
+                }
               }}
             />
 

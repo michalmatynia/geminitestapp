@@ -6,7 +6,6 @@ import type {
   AiNode,
   Edge,
   RuntimeState,
-  RuntimePortValues,
 } from '@/features/ai/ai-paths/lib';
 import {
   normalizeNodes,
@@ -41,7 +40,6 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   const lastTriggerNodeIdRef = useRef<string | null>(null);
   const lastTriggerEventRef = useRef<string | null>(null);
   const triggerContextRef = useRef<Record<string, unknown> | null>(null);
-  const pendingSimulationContextRef = useRef<Record<string, unknown> | null>(null);
   const currentRunIdRef = useRef<string | null>(null);
   const currentRunStartedAtRef = useRef<string | null>(null);
   const currentRunStartedAtMsRef = useRef<number | null>(null);
@@ -57,34 +55,6 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
   const sanitizedEdges = useMemo(
     (): Edge[] => sanitizeEdges(normalizedNodes, args.edges),
     [args.edges, normalizedNodes]
-  );
-
-  // Handlers required by engine
-  const seedImmediateDownstreamInputs = useCallback(
-    (
-      inputs: Record<string, RuntimePortValues>,
-      allOutputs: Record<string, RuntimePortValues>,
-      fromNodeId: string
-    ): Record<string, RuntimePortValues> => {
-      const nextInputs: Record<string, RuntimePortValues> = { ...inputs };
-      const nodeOutputs = allOutputs[fromNodeId];
-      if (!nodeOutputs) return nextInputs;
-      sanitizedEdges.forEach((edge: Edge): void => {
-        if (edge.from !== fromNodeId || !edge.to) return;
-        const rawFromPort = edge.fromPort?.trim() || 'context';
-        const fromPort = rawFromPort === 'simulation' ? 'context' : rawFromPort;
-        const toPort = edge.toPort?.trim() || fromPort;
-        const value = (nodeOutputs)[fromPort];
-        if (value === undefined) return;
-        nextInputs[edge.to] = {
-          ...(nextInputs[edge.to] ?? {}),
-          [toPort]: value,
-        };
-      });
-
-      return nextInputs;
-    },
-    [sanitizedEdges]
   );
 
   const hasPendingIteratorAdvance = useCallback(
@@ -133,10 +103,8 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     lastTriggerNodeIdRef,
     lastTriggerEventRef,
     triggerContextRef,
-    pendingSimulationContextRef,
     sessionUser: null,
     hasPendingIteratorAdvance,
-    seedImmediateDownstreamInputs,
     fetchEntityByType
   });
 
@@ -146,7 +114,6 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     normalizedNodes,
     sanitizedEdges,
     runtimeStateRef,
-    pendingSimulationContextRef,
     runGraphForTrigger: local.runGraphForTrigger
   });
   fetchEntityByTypeRef.current = simulation.fetchEntityByType;
@@ -300,6 +267,33 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     [args, state]
   );
 
+  const resetRuntimeDiagnostics = useCallback((): void => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    server.stopServerRunStream();
+    runInFlightRef.current = false;
+    pauseRequestedRef.current = false;
+    runLoopActiveRef.current = false;
+    queuedRunsRef.current = [];
+    lastTriggerNodeIdRef.current = null;
+    lastTriggerEventRef.current = null;
+    triggerContextRef.current = null;
+    currentRunIdRef.current = null;
+    currentRunStartedAtRef.current = null;
+    currentRunStartedAtMsRef.current = null;
+    setSendingToAi(false);
+    state.setRunStatus('idle');
+    state.resetRuntimeNodeStatuses({});
+    state.setRuntimeEvents([]);
+  }, [
+    server.stopServerRunStream,
+    state.resetRuntimeNodeStatuses,
+    state.setRunStatus,
+    state.setRuntimeEvents,
+  ]);
+
   return {
     handleRunSimulation: simulation.handleRunSimulation as any,
     handleFireTrigger,
@@ -324,5 +318,6 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
     runtimeEvents: state.runtimeEvents,
     nodeDurations: state.nodeDurations,
     clearNodeCache,
+    resetRuntimeDiagnostics,
   };
 }

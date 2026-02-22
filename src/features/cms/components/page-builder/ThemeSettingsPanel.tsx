@@ -489,20 +489,20 @@ function ThemeSettingsPanelContent({ showHeader = true }: { showHeader?: boolean
               <div className='border-t border-border/30 pt-2'>
                 <Hint size='xxs' uppercase className='mb-2 block text-gray-500'>Footer description</Hint>
                 <div className='space-y-3'>
-                                      <MiniRichTextEditor
-                                        label='Headline'
-                                        value={theme.brandFooterHeadline}
-                                        onChange={updateSetting('brandFooterHeadline')}
-                                        minHeight='70px'
-                                      />
-                                      <MiniRichTextEditor
-                                        label='Description'
-                                        value={theme.brandFooterDescription}
-                                        onChange={updateSetting('brandFooterDescription')}
-                                        minHeight='140px'
-                                        showFormatSelect
-                                        enableLists
-                                      />                  <ImagePickerField
+                  <MiniRichTextEditor
+                    label='Headline'
+                    value={theme.brandFooterHeadline}
+                    onChange={updateSetting('brandFooterHeadline')}
+                    minHeight='70px'
+                  />
+                  <MiniRichTextEditor
+                    label='Description'
+                    value={theme.brandFooterDescription}
+                    onChange={updateSetting('brandFooterDescription')}
+                    minHeight='140px'
+                    showFormatSelect
+                    enableLists
+                  />                  <ImagePickerField
                     label='Image'
                     value={theme.brandFooterImage}
                     onChange={updateSetting('brandFooterImage')}

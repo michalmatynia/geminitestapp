@@ -1,8 +1,10 @@
 import type {
   ImportResponse,
-  ImageRetryPreset,
 } from '@/shared/contracts/data-import-export';
-import type { BaseImportModeDto as BaseImportMode } from '@/shared/contracts/integrations';
+import type { 
+  BaseImportModeDto as BaseImportMode,
+  ImageRetryPreset,
+} from '@/shared/contracts/integrations';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 

@@ -12,7 +12,7 @@ export const databaseSyncDirectionSchema = z.enum(['mongo_to_prisma', 'prisma_to
 export type DatabaseSyncDirectionDto = z.infer<typeof databaseSyncDirectionSchema>;
 export type DatabaseSyncDirection = DatabaseSyncDirectionDto;
 
-export const databasePreviewModeSchema = z.enum(['full', 'stats', 'tables', 'counts']);
+export const databasePreviewModeSchema = z.enum(['full', 'stats', 'tables', 'counts', 'current', 'backup']);
 export type DatabasePreviewModeDto = z.infer<typeof databasePreviewModeSchema>;
 export type DatabasePreviewMode = DatabasePreviewModeDto;
 
@@ -116,6 +116,11 @@ export const databaseBackupOperationResponseSchema = z.object({
   backupName: z.string().optional(),
   message: z.string().optional(),
   log: z.string().nullable().optional(),
+  error: z.string().optional(),
+  errorId: z.string().optional(),
+  stage: z.string().optional(),
+  jobId: z.string().optional(),
+  warning: z.string().optional(),
 });
 
 export type DatabaseBackupOperationResponseDto = z.infer<typeof databaseBackupOperationResponseSchema>;
@@ -125,6 +130,10 @@ export const databaseRestoreOperationResponseSchema = z.object({
   success: z.boolean(),
   message: z.string().optional(),
   log: z.string().nullable().optional(),
+  error: z.string().optional(),
+  errorId: z.string().optional(),
+  stage: z.string().optional(),
+  backupName: z.string().optional(),
 });
 
 export type DatabaseRestoreOperationResponseDto = z.infer<typeof databaseRestoreOperationResponseSchema>;
@@ -252,7 +261,7 @@ export type CrudOperationDto = z.infer<typeof crudOperationSchema>;
 export type CrudOperation = CrudOperationDto;
 
 export const crudRequestSchema = z.object({
-  provider: z.enum(['mongodb', 'prisma']),
+  provider: z.enum(['mongodb', 'prisma', 'postgresql']),
   collection: z.string(),
   operation: crudOperationSchema,
   filter: z.record(z.string(), z.any()).optional(),
@@ -295,9 +304,12 @@ export type DatabaseIndexInfoDto = z.infer<typeof databaseIndexInfoSchema>;
 export type DatabaseIndexInfo = DatabaseIndexInfoDto;
 
 export const databaseForeignKeyInfoSchema = z.object({
-  columnName: z.string(),
+  name: z.string(),
+  column: z.string(),
   referencedTable: z.string(),
   referencedColumn: z.string(),
+  onDelete: z.string().optional(),
+  onUpdate: z.string().optional(),
 });
 
 export type DatabaseForeignKeyInfoDto = z.infer<typeof databaseForeignKeyInfoSchema>;
@@ -417,7 +429,7 @@ export type DatabaseEngineCollectionProviderPreviewItemDto = z.infer<typeof data
 export const databaseEngineProviderPreviewSchema = z.object({
   timestamp: z.string().optional(),
   policy: z.record(z.string(), z.unknown()).optional(),
-  appProvider: z.string().optional(),
+  appProvider: z.string().nullable().optional(),
   appProviderError: z.string().nullable().optional(),
   provider: z.string().optional(),
   collections: z.array(z.object({
@@ -425,8 +437,8 @@ export const databaseEngineProviderPreviewSchema = z.object({
     collection: z.string().optional(),
     count: z.number().optional(),
     sizeBytes: z.number().nullable().optional(),
-    configuredProvider: z.string().optional(),
-    effectiveProvider: z.string().optional(),
+    configuredProvider: z.string().nullable().optional(),
+    effectiveProvider: z.string().nullable().optional(),
     source: z.string().optional(),
     error: z.string().nullable().optional(),
   })),
@@ -456,7 +468,7 @@ export const databaseEngineBackupSchedulerStatusSchema = z.object({
   enabled: z.boolean().optional(),
   schedulerEnabled: z.boolean().optional(),
   repeatTickEnabled: z.boolean().optional(),
-  lastCheckedAt: z.string().optional(),
+  lastCheckedAt: z.string().nullable().optional(),
   nextRunAt: z.string().nullable().optional(),
   lastRunAt: z.string().nullable().optional(),
   lastRunStatus: z.string().nullable().optional(),
@@ -572,3 +584,20 @@ export type DatabasePresetOption = {
   description?: string;
   config?: unknown;
 };
+
+export const settingsBackfillResultSchema = z.object({
+  matched: z.number(),
+  modified: z.number(),
+  remaining: z.number(),
+  sampleIds: z.array(z.string()).optional(),
+});
+
+export type SettingsBackfillResultDto = z.infer<typeof settingsBackfillResultSchema>;
+export type SettingsBackfillResult = SettingsBackfillResultDto;
+
+export interface SettingsBackfillResultDto {
+  matched: number;
+  modified: number;
+  remaining: number;
+  sampleIds?: string[];
+}

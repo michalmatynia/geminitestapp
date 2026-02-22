@@ -1170,6 +1170,8 @@ const createEmptyNodeFileSnapshot = (): CaseResolverNodeFileSnapshot => ({
   source: 'manual',
   nodes: [],
   edges: [],
+  nodeMeta: {},
+  edgeMeta: {},
   nodeFileMeta: {},
 });
 
@@ -1191,12 +1193,32 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
         !Array.isArray(record['nodeFileMeta'])
           ? (record['nodeFileMeta'] as CaseResolverNodeFileSnapshot['nodeFileMeta'])
           : {};
-      if (parsedNodes.length > 0 || parsedEdges.length > 0 || Object.keys(parsedNodeFileMeta).length > 0) {
+      const parsedNodeMeta =
+        record['nodeMeta'] !== null &&
+        typeof record['nodeMeta'] === 'object' &&
+        !Array.isArray(record['nodeMeta'])
+          ? (record['nodeMeta'] as NonNullable<CaseResolverNodeFileSnapshot['nodeMeta']>)
+          : {};
+      const parsedEdgeMeta =
+        record['edgeMeta'] !== null &&
+        typeof record['edgeMeta'] === 'object' &&
+        !Array.isArray(record['edgeMeta'])
+          ? (record['edgeMeta'] as NonNullable<CaseResolverNodeFileSnapshot['edgeMeta']>)
+          : {};
+      if (
+        parsedNodes.length > 0 ||
+        parsedEdges.length > 0 ||
+        Object.keys(parsedNodeFileMeta).length > 0 ||
+        Object.keys(parsedNodeMeta).length > 0 ||
+        Object.keys(parsedEdgeMeta).length > 0
+      ) {
         return {
           kind: 'case_resolver_node_file_snapshot_v1',
           source: 'manual',
           nodes: [...parsedNodes],
           edges: [...parsedEdges],
+          nodeMeta: { ...parsedNodeMeta },
+          edgeMeta: { ...parsedEdgeMeta },
           nodeFileMeta: { ...parsedNodeFileMeta },
         };
       }
@@ -1243,6 +1265,8 @@ export const parseNodeFileSnapshot = (textContent: string): CaseResolverNodeFile
         source: 'manual',
         nodes: [...legacyNodes],
         edges: [...legacyEdges],
+        nodeMeta: {},
+        edgeMeta: {},
         nodeFileMeta: { ...legacyNodeFileMeta },
       };
     }

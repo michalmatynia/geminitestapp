@@ -415,4 +415,81 @@ describe('case-resolver nodefile relations', () => {
     const asset = sanitizedAssets[0];
     expect(asset?.sourceFileId).toBe('case-a');
   });
+
+  it('preserves node and edge metadata when sanitizing canonical node-file snapshots', () => {
+    const files = [
+      createCaseResolverFile({ id: 'case-a', fileType: 'case', name: 'Case A', folder: '' }),
+      createCaseResolverFile({
+        id: 'doc-a',
+        fileType: 'document',
+        name: 'Doc A',
+        folder: '',
+        parentCaseId: 'case-a',
+      }),
+    ];
+    const assets = [
+      createCaseResolverAssetFile({
+        id: 'node-asset-meta',
+        name: 'Node Meta',
+        folder: '',
+        kind: 'node_file',
+        textContent: JSON.stringify({
+          kind: 'case_resolver_node_file_snapshot_v1',
+          source: 'manual',
+          nodes: [createPromptNode('meta-node')],
+          edges: [
+            {
+              id: 'meta-edge',
+              from: 'meta-node',
+              to: 'meta-node',
+              fromPort: 'content',
+              toPort: 'content',
+            },
+          ],
+          nodeMeta: {
+            'meta-node': {
+              role: 'explanatory',
+              includeInOutput: true,
+              quoteMode: 'none',
+              surroundPrefix: '',
+              surroundSuffix: '',
+            },
+          },
+          edgeMeta: {
+            'meta-edge': {
+              joinMode: 'tab',
+            },
+          },
+          nodeFileMeta: {
+            'meta-node': {
+              fileId: 'doc-a',
+              fileType: 'document',
+              fileName: 'Doc A',
+            },
+          },
+        }),
+      }),
+    ];
+
+    const sanitizedAssets = sanitizeCaseResolverNodeFileAssetSnapshots({ assets, files });
+    expect(sanitizedAssets).toHaveLength(1);
+    const parsedSnapshot = JSON.parse(sanitizedAssets[0]?.textContent ?? '{}') as {
+      nodeMeta?: Record<string, unknown>;
+      edgeMeta?: Record<string, unknown>;
+    };
+    expect(parsedSnapshot.nodeMeta).toEqual({
+      'meta-node': {
+        role: 'explanatory',
+        includeInOutput: true,
+        quoteMode: 'none',
+        surroundPrefix: '',
+        surroundSuffix: '',
+      },
+    });
+    expect(parsedSnapshot.edgeMeta).toEqual({
+      'meta-edge': {
+        joinMode: 'tab',
+      },
+    });
+  });
 });

@@ -423,6 +423,73 @@ const resolveNodeSideEffectPolicy = (
   return node.config?.runtime?.sideEffectPolicy ?? 'per_run';
 };
 
+type TriggerContextMode = 'simulation_required' | 'simulation_preferred' | 'trigger_only';
+type SimulationRunBehavior = 'before_connected_trigger' | 'manual_only';
+
+const DEFAULT_TRIGGER_CONTEXT_MODE: TriggerContextMode = 'simulation_preferred';
+const DEFAULT_SIMULATION_RUN_BEHAVIOR: SimulationRunBehavior =
+  'before_connected_trigger';
+
+const resolveTriggerContextMode = (node: AiNode | null): TriggerContextMode => {
+  const mode = node?.config?.trigger?.contextMode;
+  if (
+    mode === 'simulation_required' ||
+    mode === 'simulation_preferred' ||
+    mode === 'trigger_only'
+  ) {
+    return mode;
+  }
+  return DEFAULT_TRIGGER_CONTEXT_MODE;
+};
+
+const resolveSimulationRunBehavior = (node: AiNode): SimulationRunBehavior => {
+  const behavior = node.config?.simulation?.runBehavior;
+  if (behavior === 'before_connected_trigger' || behavior === 'manual_only') {
+    return behavior;
+  }
+  return DEFAULT_SIMULATION_RUN_BEHAVIOR;
+};
+
+const readEntityIdFromContext = (
+  context: Record<string, unknown> | null | undefined
+): string | null => {
+  if (!context) return null;
+  const entityId = context['entityId'];
+  if (typeof entityId === 'string' && entityId.trim().length > 0) return entityId;
+  const productId = context['productId'];
+  if (typeof productId === 'string' && productId.trim().length > 0) return productId;
+  return null;
+};
+
+const readEntityTypeFromContext = (
+  context: Record<string, unknown> | null | undefined
+): string | null => {
+  if (!context) return null;
+  const entityType = context['entityType'];
+  if (typeof entityType !== 'string') return null;
+  const normalized = entityType.trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === 'products') return 'product';
+  if (normalized === 'notes') return 'note';
+  return normalized;
+};
+
+const hasSimulationContextProvenance = (
+  context: Record<string, unknown> | null | undefined
+): boolean => {
+  if (!context) return false;
+  const contextSource = context['contextSource'];
+  if (typeof contextSource === 'string' && contextSource.trim().toLowerCase().startsWith('simulation')) {
+    return true;
+  }
+  const source = context['source'];
+  if (typeof source === 'string' && source.trim().toLowerCase() === 'simulation') {
+    return true;
+  }
+  const simulationNodeId = context['simulationNodeId'];
+  return typeof simulationNodeId === 'string' && simulationNodeId.trim().length > 0;
+};
+
 const HANDLERS: Record<string, NodeHandler> = {
   trigger: handleTrigger,
   notification: handleNotification,
@@ -699,43 +766,6 @@ export async function evaluateGraph({
   };
   const now = resolvedRunStartedAt;
   const entityCache = new Map<string, Record<string, unknown> | null>();
-
-  // Prime entityCache from seed simulation outputs so subsequent fetchEntityCached
-  // calls hit the cache instead of re-fetching from the database.
-  if (seedOutputs) {
-    for (const node of nodes) {
-      if (node.type !== 'simulation') continue;
-      const seedOut = seedOutputs[node.id];
-      if (!seedOut) continue;
-      const seedCtx =
-        typeof (seedOut)['context'] === 'object' &&
-        (seedOut)['context'] !== null
-          ? ((seedOut)['context'] as Record<string, unknown>)
-          : null;
-      const seedEnt =
-        seedCtx?.['entity'] !== undefined &&
-        seedCtx['entity'] !== null &&
-        typeof seedCtx['entity'] === 'object' &&
-        Object.keys(seedCtx['entity'] as Record<string, unknown>).length > 1
-          ? (seedCtx['entity'] as Record<string, unknown>)
-          : null;
-      if (!seedEnt) continue;
-      const simEntityType =
-        node.config?.simulation?.entityType?.trim().toLowerCase() || 'product';
-      const normalizedType =
-        simEntityType === 'products' ? 'product' : simEntityType === 'notes' ? 'note' : simEntityType;
-      const simEntityId =
-        node.config?.simulation?.entityId?.trim() ||
-        node.config?.simulation?.productId?.trim() ||
-        null;
-      if (simEntityId && normalizedType) {
-        const cacheKey = `${normalizedType}:${simEntityId}`;
-        if (!entityCache.has(cacheKey)) {
-          entityCache.set(cacheKey, seedEnt);
-        }
-      }
-    }
-  }
 
   const activeNodeIds = new Set<string>();
   const nodeById = new Map(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
@@ -1291,6 +1321,41 @@ export async function evaluateGraph({
     return normalized;
   };
 
+  const triggerNode =
+    triggerNodeId
+      ? (nodes.find(
+        (node: AiNode): boolean => node.id === triggerNodeId && node.type === 'trigger'
+      ) ?? null)
+      : null;
+  const triggerContextMode = resolveTriggerContextMode(triggerNode);
+  const allowSimulationContext = triggerContextMode !== 'trigger_only';
+  const triggerContextRecord = triggerContext ?? null;
+  const connectedSimulationNodes: AiNode[] = (() => {
+    if (!triggerNodeId) return [];
+    const simulationNodeById = new Map<string, AiNode>(
+      nodes
+        .filter((node: AiNode): boolean => node.type === 'simulation')
+        .map((node: AiNode): [string, AiNode] => [node.id, node])
+    );
+    const resolved: AiNode[] = [];
+    const seen = new Set<string>();
+    sanitizedEdges.forEach((edge: Edge): void => {
+      if (!edge.from || edge.to !== triggerNodeId) return;
+      const toPort = (edge.toPort?.trim() || 'context').toLowerCase();
+      if (toPort !== 'context') return;
+      const simulationNode = simulationNodeById.get(edge.from);
+      if (!simulationNode || seen.has(simulationNode.id)) return;
+      resolved.push(simulationNode);
+      seen.add(simulationNode.id);
+    });
+    return resolved;
+  })();
+  const autoSimulationNodes = connectedSimulationNodes.filter(
+    (node: AiNode): boolean => resolveSimulationRunBehavior(node) === 'before_connected_trigger'
+  );
+  const manualSimulationNodes = connectedSimulationNodes.filter(
+    (node: AiNode): boolean => resolveSimulationRunBehavior(node) === 'manual_only'
+  );
   let simulationEntityId: string | null = null;
   let simulationEntityType: string | null = null;
   const triggerEntityId =
@@ -1304,31 +1369,18 @@ export async function evaluateGraph({
       ? normalizeEntityType(triggerContext?.['entityType'])
       : null;
 
-  if (triggerNodeId) {
-    const simulationEdge = sanitizedEdges.find(
-      (edge: Edge) => edge.to === triggerNodeId && edge.toPort === 'context'
-    );
-    if (simulationEdge) {
-      const simNode = nodes.find(
-        (node: AiNode) => node.id === simulationEdge.from && node.type === 'simulation'
-      );
-      simulationEntityType =
-        normalizeEntityType(simNode?.config?.simulation?.entityType) ?? 'product';
-      simulationEntityId =
-        simNode?.config?.simulation?.entityId?.trim() ||
-        simNode?.config?.simulation?.productId?.trim() ||
-        null;
-    }
+  const primarySimulationNode = connectedSimulationNodes[0] ?? null;
+  if (allowSimulationContext && primarySimulationNode) {
+    simulationEntityType =
+      normalizeEntityType(primarySimulationNode.config?.simulation?.entityType) ?? 'product';
+    simulationEntityId =
+      primarySimulationNode.config?.simulation?.entityId?.trim() ||
+      primarySimulationNode.config?.simulation?.productId?.trim() ||
+      null;
   }
 
-  const resolvedEntity =
-    simulationEntityId && simulationEntityType
-      ? await fetchEntityCached(simulationEntityType, simulationEntityId)
-      : triggerEntityId && triggerEntityType
-        ? await fetchEntityCached(triggerEntityType, triggerEntityId)
-        : null;
-  const fallbackEntityId = simulationEntityId ?? triggerEntityId ?? null;
-  ensureNotCancelled();
+  let fallbackEntityId = simulationEntityId ?? triggerEntityId ?? null;
+  let resolvedEntity: Record<string, unknown> | null = null;
 
   const deriveDatabaseInputs = (
     rawInputs: RuntimePortValues
@@ -1454,82 +1506,182 @@ export async function evaluateGraph({
     return next;
   };
 
-  // Pre-calculate simulation nodes
-  for (const node of nodes) {
-    if (node.type !== 'simulation' && !isActiveNode(node)) {
-      continue;
-    }
-    if (node.type === 'simulation') {
+  const upsertSimulationOutput = (
+    node: AiNode,
+    contextPayload: Record<string, unknown>
+  ): void => {
+    const contextEntityId = readEntityIdFromContext(contextPayload);
+    const contextEntityType =
+      readEntityTypeFromContext(contextPayload) ??
+      normalizeEntityType(node.config?.simulation?.entityType);
+    const productId =
+      typeof contextPayload['productId'] === 'string' &&
+      contextPayload['productId'].trim().length > 0
+        ? contextPayload['productId']
+        : contextEntityType === 'product' && contextEntityId
+          ? contextEntityId
+          : undefined;
+    outputs[node.id] = {
+      context: contextPayload,
+      ...(contextEntityId ? { entityId: contextEntityId } : {}),
+      ...(contextEntityType ? { entityType: contextEntityType } : {}),
+      ...(productId ? { productId } : {}),
+      ...(contextPayload['entityJson'] !== undefined
+        ? { entityJson: contextPayload['entityJson'] }
+        : {}),
+    };
+  };
+
+  connectedSimulationNodes.forEach((node: AiNode): void => {
+    delete outputs[node.id];
+  });
+
+  if (allowSimulationContext) {
+    for (const node of autoSimulationNodes) {
       const entityType =
         normalizeEntityType(node.config?.simulation?.entityType) || 'product';
       const entityId =
         node.config?.simulation?.entityId?.trim() ||
         node.config?.simulation?.productId?.trim() ||
         null;
-
-      // Check if seedOutputs already provided enriched simulation data for this node.
-      const existingSeed = outputs[node.id];
-      const existingContext =
-        existingSeed &&
-        typeof (existingSeed)['context'] === 'object' &&
-        (existingSeed)['context'] !== null
-          ? ((existingSeed)['context'] as Record<string, unknown>)
-          : null;
-      const seedEntity =
-        existingContext?.['entity'] !== undefined &&
-        existingContext['entity'] !== null &&
-        typeof existingContext['entity'] === 'object'
-          ? (existingContext['entity'] as Record<string, unknown>)
-          : null;
-      const seedHasEntity = seedEntity !== null && Object.keys(seedEntity).length > 1;
-
-      if (seedHasEntity) {
-        // Seed data already has a fully-enriched entity — skip re-fetch.
-        // Prime the entityCache so downstream nodes can use fetchEntityCached.
-        if (entityId && entityType) {
-          const cacheKey = `${entityType}:${entityId}`;
-          if (!entityCache.has(cacheKey)) {
-            entityCache.set(cacheKey, seedEntity);
-          }
-        }
-        // Keep outputs[node.id] as-is from the seed.
-      } else {
-        const entity =
-          entityId && entityType ? await fetchEntityCached(entityType, entityId) : null;
-        const contextPayload: Record<string, unknown> = {
-          entityType,
-          entityId,
-          source: node.title,
-          timestamp: now,
-        };
-        if (entityId && !entity) {
-          const maybeUuid = entityId.includes('-');
-          const hint =
-            maybeUuid && entityId.length !== 36
-              ? ` (id looks like a UUID but length is ${entityId.length}; expected 36)`
-              : '';
-          contextPayload['error'] = `Entity not found: ${entityType} ${entityId}${hint}`;
-        }
-        if (entity) {
-          const imageUrls = extractImageUrls(entity);
-          if (imageUrls.length) {
-            contextPayload['images'] = imageUrls;
-            contextPayload['imageUrls'] = imageUrls;
-          }
-          contextPayload['entity'] = entity;
-          contextPayload['entityJson'] = entity;
-          if (entityType === 'product') {
-            contextPayload['product'] = entity;
-          }
-        }
-        outputs[node.id] = {
-          context: contextPayload,
-          entityId,
-          entityType,
-          productId: entityType === 'product' ? entityId : undefined,
-        };
+      if (!entityId) continue;
+      const entity = await fetchEntityCached(entityType, entityId);
+      const contextPayload: Record<string, unknown> = {
+        entityType,
+        entityId,
+        contextSource: 'simulation',
+        simulationNodeId: node.id,
+        simulationNodeTitle: node.title ?? node.id,
+        source: node.title,
+        timestamp: now,
+      };
+      if (entityId && !entity) {
+        const maybeUuid = entityId.includes('-');
+        const hint =
+          maybeUuid && entityId.length !== 36
+            ? ` (id looks like a UUID but length is ${entityId.length}; expected 36)`
+            : '';
+        contextPayload['error'] = `Entity not found: ${entityType} ${entityId}${hint}`;
       }
+      if (entity) {
+        const imageUrls = extractImageUrls(entity);
+        if (imageUrls.length) {
+          contextPayload['images'] = imageUrls;
+          contextPayload['imageUrls'] = imageUrls;
+        }
+        contextPayload['entity'] = entity;
+        contextPayload['entityJson'] = entity;
+        if (entityType === 'product') {
+          contextPayload['product'] = entity;
+        }
+      }
+      upsertSimulationOutput(node, contextPayload);
     }
+
+    const contextEntityId = readEntityIdFromContext(triggerContextRecord);
+    const contextEntityType = readEntityTypeFromContext(triggerContextRecord);
+    const contextEntity = 
+      triggerContextRecord &&
+      typeof triggerContextRecord === 'object' &&
+      triggerContextRecord['entity'] &&
+      typeof triggerContextRecord['entity'] === 'object'
+        ? (triggerContextRecord['entity'] as Record<string, unknown>)
+        : triggerContextRecord &&
+            typeof triggerContextRecord === 'object' &&
+            triggerContextRecord['entityJson'] &&
+            typeof triggerContextRecord['entityJson'] === 'object'
+          ? (triggerContextRecord['entityJson'] as Record<string, unknown>)
+          : triggerContextRecord &&
+              typeof triggerContextRecord === 'object' &&
+              triggerContextRecord['product'] &&
+              typeof triggerContextRecord['product'] === 'object'
+            ? (triggerContextRecord['product'] as Record<string, unknown>)
+            : null;
+    const triggerHasSimulationProvenance = hasSimulationContextProvenance(triggerContextRecord);
+    if (contextEntityId && contextEntityType && triggerHasSimulationProvenance) {
+      const inheritedContextSource =
+        typeof triggerContextRecord?.['contextSource'] === 'string'
+          ? triggerContextRecord['contextSource']
+          : null;
+      const contextPayloadBase: Record<string, unknown> = {
+        ...(triggerContextRecord ?? {}),
+        entityId: contextEntityId,
+        entityType: contextEntityType,
+        ...(contextEntityType === 'product' ? { productId: contextEntityId } : {}),
+        contextSource: inheritedContextSource ?? 'simulation_manual',
+        source:
+          typeof triggerContextRecord?.['source'] === 'string'
+            ? triggerContextRecord['source']
+            : 'simulation',
+        timestamp: now,
+      };
+      if (contextEntity) {
+        contextPayloadBase['entity'] = contextEntity;
+        contextPayloadBase['entityJson'] = contextEntity;
+        if (contextEntityType === 'product') {
+          contextPayloadBase['product'] = contextEntity;
+        }
+        const cacheKey = `${contextEntityType}:${contextEntityId}`;
+        if (!entityCache.has(cacheKey)) {
+          entityCache.set(cacheKey, contextEntity);
+        }
+      }
+      manualSimulationNodes.forEach((node: AiNode): void => {
+        const contextPayload = {
+          ...contextPayloadBase,
+          simulationNodeId: node.id,
+          simulationNodeTitle: node.title ?? node.id,
+        };
+        upsertSimulationOutput(node, contextPayload);
+      });
+    }
+  }
+
+  const firstSimulationOutput = connectedSimulationNodes
+    .map((node: AiNode): RuntimePortValues | null => outputs[node.id] ?? null)
+    .find((output): output is RuntimePortValues => Boolean(output));
+  const outputEntityId = readEntityIdFromContext(
+    firstSimulationOutput &&
+      typeof firstSimulationOutput['context'] === 'object' &&
+      firstSimulationOutput['context'] !== null
+      ? (firstSimulationOutput['context'] as Record<string, unknown>)
+      : null
+  );
+  const outputEntityType = readEntityTypeFromContext(
+    firstSimulationOutput &&
+      typeof firstSimulationOutput['context'] === 'object' &&
+      firstSimulationOutput['context'] !== null
+      ? (firstSimulationOutput['context'] as Record<string, unknown>)
+      : null
+  );
+  if (outputEntityId) {
+    simulationEntityId = outputEntityId;
+  }
+  if (outputEntityType) {
+    simulationEntityType = outputEntityType;
+  }
+
+  fallbackEntityId = simulationEntityId ?? triggerEntityId ?? null;
+  resolvedEntity =
+    allowSimulationContext && simulationEntityId && simulationEntityType
+      ? await fetchEntityCached(simulationEntityType, simulationEntityId)
+      : triggerEntityId && triggerEntityType
+        ? await fetchEntityCached(triggerEntityType, triggerEntityId)
+        : null;
+  ensureNotCancelled();
+
+  const simulationContextSatisfied =
+    Boolean(simulationEntityId) || hasSimulationContextProvenance(triggerContextRecord);
+  if (
+    triggerNode &&
+    triggerContextMode === 'simulation_required' &&
+    !simulationContextSatisfied
+  ) {
+    throw new GraphExecutionError(
+      `Trigger ${triggerNode.title ?? triggerNode.id} requires Simulation context, but no connected Simulation output was resolved. Run Simulation first (or set Simulation run behavior to Auto-run before connected Trigger).`,
+      buildRuntimeStateSnapshot(inputs),
+      triggerNode.id
+    );
   }
 
   const maxIterations = Math.max(2, nodes.length + 2);

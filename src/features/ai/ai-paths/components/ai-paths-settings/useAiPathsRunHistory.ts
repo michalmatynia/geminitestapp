@@ -262,8 +262,9 @@ export function useAiPathsRunHistory({
     queryFn: async ({ signal }) => {
       const res = await runsApi.list({
         ...(activePathId ? { pathId: activePathId } : {}),
+        includeTotal: false,
         limit: 100,
-        timeoutMs: 8000,
+        timeoutMs: 4000,
         ...(signal ? { signal } : {}),
       });
       return res as unknown as { ok: boolean; data: { runs: AiPathRunRecord[] } };

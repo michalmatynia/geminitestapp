@@ -774,6 +774,7 @@ export const runsApi = {
     query?: string;
     limit?: number;
     offset?: number;
+    includeTotal?: boolean;
     timeoutMs?: number;
     signal?: AbortSignal;
   }): Promise<ApiResponse<{ runs: unknown[]; total: number }>> {
@@ -786,6 +787,9 @@ export const runsApi = {
     if (options?.query) params.set('query', options.query);
     if (typeof options?.limit === 'number') params.set('limit', String(options.limit));
     if (typeof options?.offset === 'number') params.set('offset', String(options.offset));
+    if (typeof options?.includeTotal === 'boolean') {
+      params.set('includeTotal', options.includeTotal ? '1' : '0');
+    }
     const query = params.toString();
     const url = query ? `/api/ai-paths/runs?${query}` : '/api/ai-paths/runs';
     return apiFetch<{ runs: unknown[]; total: number }>(url, {

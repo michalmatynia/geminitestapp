@@ -63,6 +63,7 @@ type CanvasBoardProps = {
   /** Optional class name for the viewport container */
   viewportClassName?: string | undefined;
   confirmNodeSwitch?: ((nodeId: string) => boolean | Promise<boolean>) | undefined;
+  openNodeConfigOnSingleClick?: boolean | undefined;
   resolveConnectorTooltip?:
     | ((
         input: CanvasBoardConnectorTooltipOverrideInput
@@ -169,6 +170,7 @@ const buildConnectingPreviewPath = (
 export function CanvasBoard({
   viewportClassName,
   confirmNodeSwitch,
+  openNodeConfigOnSingleClick = false,
   resolveConnectorTooltip,
 }: CanvasBoardProps): React.JSX.Element {
   // --- Context Hooks ---
@@ -500,6 +502,16 @@ export function CanvasBoard({
     },
     [svgConnectorTooltip, viewportRef]
   );
+  const svgConnectorTooltipOverride = React.useMemo(() => {
+    if (!svgConnectorTooltip) return null;
+    const hoveredNode = nodeById.get(svgConnectorTooltip.info.nodeId);
+    if (!hoveredNode) return null;
+    return resolveConnectorTooltip?.({
+      direction: svgConnectorTooltip.info.direction,
+      node: hoveredNode,
+      port: svgConnectorTooltip.info.port,
+    }) ?? null;
+  }, [nodeById, resolveConnectorTooltip, svgConnectorTooltip]);
 
   const triggerConnected = React.useMemo((): Set<string> => {
     const triggerIds = nodes.filter((node) => node.type === 'trigger').map((node) => node.id);
@@ -1008,13 +1020,14 @@ export function CanvasBoard({
       ) : null}
       {isSvgRenderer && svgConnectorTooltip && svgConnectorTooltipPosition ? (
         <div
-          className='pointer-events-none absolute z-40 max-w-[320px] rounded-md border border-border/70 bg-card/95 p-2 shadow-lg backdrop-blur-sm'
+          className='pointer-events-none absolute z-40 rounded-md border border-border/70 bg-card/95 p-2 shadow-lg backdrop-blur-sm'
           style={{
             left: svgConnectorTooltipPosition.left,
             top: svgConnectorTooltipPosition.top,
+            maxWidth: svgConnectorTooltipOverride?.maxWidth ?? '320px',
           }}
         >
-          {renderConnectorTooltip(svgConnectorTooltip.info)}
+          {svgConnectorTooltipOverride?.content ?? renderConnectorTooltip(svgConnectorTooltip.info)}
         </div>
       ) : null}
       <div
@@ -1113,6 +1126,7 @@ export function CanvasBoard({
               onPointerUpNode={handlePointerUpNode}
               onSelectNode={handleSelectNode}
               onOpenNodeConfig={() => setConfigOpen(true)}
+              openNodeConfigOnSingleClick={openNodeConfigOnSingleClick}
               onStartConnection={handleStartConnection}
               onCompleteConnection={handleCompleteConnection}
               onReconnectInput={handleReconnectInput}
@@ -1144,7 +1158,11 @@ export function CanvasBoard({
             const isSelected = selectedNodeIdSet.has(node.id);
             const isPrimarySelected = node.id === selectedNodeId;
             const style = typeStyles[node.type] ?? typeStyles.template;
-            const canUsePersistedStatusFallback = runtimeRunStatus === 'idle';
+            const nodeHistoryEntries = runtimeState.history?.[node.id];
+            const canUsePersistedStatusFallback =
+              runtimeRunStatus === 'idle' &&
+              Array.isArray(nodeHistoryEntries) &&
+              nodeHistoryEntries.length > 0;
             const statusFromRuntimeState = runtimeState.outputs?.[node.id]?.['status'];
             const runtimeNodeStatusRaw =
             runtimeNodeStatuses?.[node.id] ??
@@ -1229,6 +1247,14 @@ export function CanvasBoard({
                   void handleSelectNode(node.id, {
                     toggle: event.shiftKey || event.metaKey || event.ctrlKey,
                   });
+                  if (
+                    openNodeConfigOnSingleClick &&
+                    !event.shiftKey &&
+                    !event.metaKey &&
+                    !event.ctrlKey
+                  ) {
+                    setConfigOpen(true);
+                  }
                 }}
                 onDoubleClick={(event) => {
                   event.stopPropagation();

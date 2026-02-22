@@ -3,9 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 
 import type {
-  BaseInventory,
   CatalogOption as CatalogRecord,
-  ImageRetryPreset,
   ImportListItem,
   ImportResponse,
   Template,
@@ -17,7 +15,9 @@ import type {
   BaseImportRunRecordDto as BaseImportRunRecord,
   BaseImportStartResponseDto as BaseImportStartResponse,
   BaseImportModeDto as BaseImportMode,
-  ImportParameterCacheResponseDto
+  ImportParameterCacheResponseDto,
+  BaseInventory,
+  ImageRetryPreset,
 } from '@/shared/contracts/integrations';
 import type {
   ListQuery,

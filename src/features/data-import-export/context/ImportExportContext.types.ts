@@ -4,7 +4,6 @@ import type {
   Template,
   TemplateMapping,
   WarehouseOption,
-  ImageRetryPreset,
   ImportListItem,
   ImportListStats,
   ImportRunDetail,
@@ -15,7 +14,8 @@ import type {
   BaseImportParameterImportSettingsDto as BaseImportParameterImportSettings,
   BaseImportModeDto as BaseImportMode,
   IntegrationConnectionBasicDto as IntegrationConnectionBasic,
-  IntegrationWithConnectionsDto as IntegrationWithConnections
+  IntegrationWithConnectionsDto as IntegrationWithConnections,
+  ImageRetryPreset,
 } from '@/shared/contracts/integrations';
 
 import type { Dispatch, SetStateAction } from 'react';

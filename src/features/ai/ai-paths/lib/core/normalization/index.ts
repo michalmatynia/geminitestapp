@@ -289,13 +289,14 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
             ...node.config,
             trigger: {
               event: node.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? 'manual',
+              contextMode: node.config?.trigger?.contextMode ?? 'simulation_preferred',
             },
           },
         };
       }
       if (node.type === 'simulation') {
         const simulationConfig = node.config?.simulation;
-        const rawEntityId = simulationConfig?.entityId ?? '';
+        const rawEntityId = simulationConfig?.entityId ?? simulationConfig?.productId ?? '';
         return {
           ...node,
           inputs: SIMULATION_INPUT_PORTS,
@@ -306,6 +307,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
               productId: rawEntityId,
               entityType: simulationConfig?.entityType ?? 'product',
               entityId: rawEntityId,
+              runBehavior: simulationConfig?.runBehavior ?? 'before_connected_trigger',
             },
           },
         };
@@ -931,10 +933,22 @@ export const getDefaultConfigForType = (
   inputs: string[]
 ): NodeConfig | undefined => {
   if (type === 'trigger') {
-    return { trigger: { event: TRIGGER_EVENTS[0]?.id ?? 'manual' } };
+    return {
+      trigger: {
+        event: TRIGGER_EVENTS[0]?.id ?? 'manual',
+        contextMode: 'simulation_preferred',
+      },
+    };
   }
   if (type === 'simulation') {
-    return { simulation: { productId: '', entityType: 'product', entityId: '' } };
+    return {
+      simulation: {
+        productId: '',
+        entityType: 'product',
+        entityId: '',
+        runBehavior: 'before_connected_trigger',
+      },
+    };
   }
   if (type === 'audio_oscillator') {
     return {

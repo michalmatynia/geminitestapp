@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useRef } from 'react';
 
-import type { DatabaseTableDetail, DatabasePreviewRow } from '@/shared/contracts/database';
+import type { DatabaseTableDetail, DatabaseTablePreviewData } from '@/shared/contracts/database';
 
 import { useDatabase } from '../context/DatabaseContext';
 
@@ -91,7 +91,7 @@ export function useDatabasePreviewState() {
 
   const maxPage = useMemo(() => {
     if (tableRows.length === 0) return 1;
-    const pages = tableRows.map((table: DatabasePreviewRow) =>
+    const pages = tableRows.map((table: DatabaseTablePreviewData) =>
       Math.max(1, Math.ceil(table.totalRows / pageSize))
     );
     return Math.max(1, ...pages);

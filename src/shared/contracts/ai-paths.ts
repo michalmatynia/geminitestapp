@@ -57,19 +57,27 @@ export type NodeType = AiNodeTypeDto;
 
 export const triggerConfigSchema = z.object({
   event: z.string(),
+  contextMode: z
+    .enum(['simulation_required', 'simulation_preferred', 'trigger_only'])
+    .optional(),
 });
 
 export type TriggerConfigDto = z.infer<typeof triggerConfigSchema>;
 export type TriggerConfig = TriggerConfigDto;
+export type TriggerContextMode = NonNullable<TriggerConfig['contextMode']>;
 
 export const simulationConfigSchema = z.object({
   productId: z.string(),
   entityType: z.string().optional(),
   entityId: z.string().optional(),
+  runBehavior: z
+    .enum(['before_connected_trigger', 'manual_only'])
+    .optional(),
 });
 
 export type SimulationConfigDto = z.infer<typeof simulationConfigSchema>;
 export type SimulationConfig = SimulationConfigDto;
+export type SimulationRunBehavior = NonNullable<SimulationConfig['runBehavior']>;
 
 export const viewerConfigSchema = z.object({
   outputs: z.record(z.string(), z.string()),
@@ -1560,6 +1568,7 @@ export const aiPathRunListOptionsSchema = z.object({
   createdBefore: z.string().nullable().optional(),
   limit: z.number().optional(),
   offset: z.number().optional(),
+  includeTotal: z.boolean().optional(),
 });
 
 export type AiPathRunListOptionsDto = z.infer<typeof aiPathRunListOptionsSchema>;

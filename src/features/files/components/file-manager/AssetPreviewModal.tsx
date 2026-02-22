@@ -28,7 +28,7 @@ export function AssetPreviewModal({
         <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
           <MetadataItem
             label='Size'
-            value={`${(previewAsset.size / 1024).toFixed(2)} KB`}
+            value={`${((previewAsset.size ?? 0) / 1024).toFixed(2)} KB`}
           />
           <MetadataItem
             label='MIME Type'
@@ -63,7 +63,7 @@ export function AssetPreviewModal({
         {(previewAsset.tags ?? []).length > 0 && (
           <FormField label='Tags'>
             <div className='flex flex-wrap gap-2'>
-              {previewAsset.tags.map(tag => (
+              {(previewAsset.tags ?? []).map(tag => (
                 <Badge key={tag} variant='secondary' className='text-[10px]'>
                   {tag}
                 </Badge>

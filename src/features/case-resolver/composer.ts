@@ -317,11 +317,31 @@ export const compileCaseResolverPrompt = (
       const incomingTextfield = collectIncoming('textfield');
       const incomingContent = collectIncoming('content');
       const incomingPlainText = collectIncoming('plainText');
-      const resolvedTextfield =
-        incomingTextfield.value.trim().length > 0
+      const hasIncomingTextfield = incomingTextfield.value.trim().length > 0;
+      const hasIncomingContent = incomingContent.value.trim().length > 0;
+      const hasIncomingPlainText = incomingPlainText.value.trim().length > 0;
+      const incomingText =
+        hasIncomingTextfield
           ? incomingTextfield.value
-          : incomingPlainText.value.trim().length > 0
+          : hasIncomingPlainText
             ? incomingPlainText.value
+            : meta.role === 'explanatory' && hasIncomingContent
+              ? incomingContent.value
+              : '';
+      const incomingTextJoinMode = (
+        hasIncomingTextfield
+          ? incomingTextfield.firstJoinMode
+          : hasIncomingPlainText
+            ? incomingPlainText.firstJoinMode
+            : meta.role === 'explanatory' && hasIncomingContent
+              ? incomingContent.firstJoinMode
+              : null
+      ) ?? DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
+      const resolvedTextfield =
+        meta.role === 'explanatory' && incomingText.trim().length > 0 && nodeText.trim().length > 0
+          ? appendWithJoin(incomingText, nodeText, incomingTextJoinMode as CaseResolverJoinMode)
+          : incomingText.trim().length > 0
+            ? incomingText
             : nodeText;
       const plainTextOutput = stripHtml(resolvedTextfield);
       const wrappedText = wrapByQuoteMode(resolvedTextfield, meta);

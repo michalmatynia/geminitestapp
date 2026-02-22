@@ -1,7 +1,17 @@
 import 'server-only';
 
 import { ErrorSystem, logActivity, ActivityTypes } from '@/features/observability/server';
-import type { Page, Slug, PageComponent, CmsTheme, CmsThemeCreateInput, CmsThemeUpdateInput } from '@/shared/contracts/cms';
+import type { 
+  Page, 
+  Slug, 
+  PageComponent, 
+  CmsTheme, 
+  CmsThemeCreateInput, 
+  CmsThemeUpdateInput,
+  CmsDomainDto,
+  CreateCmsDomainDto,
+  UpdateCmsDomainDto,
+} from '@/shared/contracts/cms';
 import type { CmsRepository, PageUpdateData } from '@/shared/contracts/cms';
 
 import { getCmsRepository } from './cms-repository';
@@ -35,7 +45,7 @@ export const cmsService: CmsRepository = {
   getPages: (): Promise<Page[]> => repoCall('getPages'),
   getPageById: (id: string): Promise<Page | null> => repoCall('getPageById', id),
   getPageBySlug: (slug: string): Promise<Page | null> => repoCall('getPageBySlug', slug),
-  createPage: async (data: { name: string }): Promise<Page> => {
+  createPage: async (data: { name: string; themeId?: string | null | undefined }): Promise<Page> => {
     const page = await repoCall('createPage', data);
     void logActivity({
       type: ActivityTypes.CMS.PAGE_CREATED,
@@ -73,14 +83,14 @@ export const cmsService: CmsRepository = {
     return page;
   },
   replacePageSlugs: (pageId: string, slugIds: string[]): Promise<void> => repoCall('replacePageSlugs', pageId, slugIds),
-  replacePageComponents: (pageId: string, components: PageComponent[]): Promise<void> => repoCall('replacePageComponents', pageId, components),
+  replacePageComponents: (pageId: string, components: Array<Partial<PageComponent> & Pick<PageComponent, 'type' | 'order' | 'content'>>): Promise<void> => repoCall('replacePageComponents', pageId, components),
 
   // Slugs
   getSlugs: (): Promise<Slug[]> => repoCall('getSlugs'),
   getSlugById: (id: string): Promise<Slug | null> => repoCall('getSlugById', id),
   getSlugByValue: (slug: string): Promise<Slug | null> => repoCall('getSlugByValue', slug),
-  createSlug: (data: { slug: string; isDefault?: boolean | undefined }): Promise<Slug> => repoCall('createSlug', data),
-  updateSlug: (id: string, data: { slug?: string | undefined; isDefault?: boolean | undefined }): Promise<Slug | null> => repoCall('updateSlug', id, data),
+  createSlug: (data: { slug: string; pageId?: string | null; isDefault?: boolean }): Promise<Slug> => repoCall('createSlug', data),
+  updateSlug: (id: string, data: Partial<{ slug: string; pageId: string | null; isDefault: boolean }>): Promise<Slug | null> => repoCall('updateSlug', id, data),
   deleteSlug: (id: string): Promise<Slug | null> => repoCall('deleteSlug', id),
 
   // Relationships
@@ -127,4 +137,13 @@ export const cmsService: CmsRepository = {
     }
     return theme;
   },
+  getDefaultTheme: (): Promise<CmsTheme | null> => repoCall('getDefaultTheme'),
+  setDefaultTheme: (id: string): Promise<void> => repoCall('setDefaultTheme', id),
+
+  // Domains
+  getDomains: (): Promise<CmsDomainDto[]> => repoCall('getDomains'),
+  getDomainById: (id: string): Promise<CmsDomainDto | null> => repoCall('getDomainById', id),
+  createDomain: (data: CreateCmsDomainDto): Promise<CmsDomainDto> => repoCall('createDomain', data),
+  updateDomain: (id: string, data: UpdateCmsDomainDto): Promise<CmsDomainDto> => repoCall('updateDomain', id, data),
+  deleteDomain: (id: string): Promise<void> => repoCall('deleteDomain', id),
 };

@@ -266,6 +266,254 @@ describe('evaluateGraph', () => {
     expect(mockFetchEntityByType).toHaveBeenCalledWith('product', 'p1');
   });
 
+  it('resolves simulation context before trigger when trigger requires simulation context', async () => {
+    const mockProduct = { id: 'product-2', title: 'Desk Lamp' };
+    mockFetchEntityByType.mockResolvedValue(mockProduct);
+
+    const nodes: AiNode[] = [
+      {
+        id: 'simulation-1',
+        type: 'simulation',
+        title: 'Simulation',
+        description: '',
+        inputs: ['trigger'],
+        outputs: ['context'],
+        position: { x: -200, y: 0 },
+        config: {
+          simulation: {
+            entityType: 'product',
+            entityId: 'product-2',
+            productId: 'product-2',
+            runBehavior: 'before_connected_trigger',
+          },
+        },
+      },
+      {
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        description: '',
+        inputs: ['context'],
+        outputs: ['context', 'entityId', 'entityType'],
+        position: { x: 0, y: 0 },
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'simulation_required',
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-sim-trigger',
+        from: 'simulation-1',
+        to: 'trigger-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      triggerNodeId: 'trigger-1',
+      triggerEvent: 'manual',
+      triggerContext: {},
+    });
+
+    expect(mockFetchEntityByType).toHaveBeenCalledWith('product', 'product-2');
+    expect(result.outputs['simulation-1']?.['entityId']).toBe('product-2');
+    expect(result.outputs['trigger-1']?.['entityId']).toBe('product-2');
+  });
+
+  it('ignores stale seeded simulation outputs for manual-only simulation nodes', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'simulation-1',
+        type: 'simulation',
+        title: 'Simulation',
+        description: '',
+        inputs: ['trigger'],
+        outputs: ['context'],
+        position: { x: -200, y: 0 },
+        config: {
+          simulation: {
+            entityType: 'product',
+            entityId: 'product-2',
+            productId: 'product-2',
+            runBehavior: 'manual_only',
+          },
+        },
+      },
+      {
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        description: '',
+        inputs: ['context'],
+        outputs: ['context', 'entityId', 'entityType'],
+        position: { x: 0, y: 0 },
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'simulation_preferred',
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-sim-trigger',
+        from: 'simulation-1',
+        to: 'trigger-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      triggerNodeId: 'trigger-1',
+      triggerEvent: 'manual',
+      triggerContext: {},
+      seedOutputs: {
+        'simulation-1': {
+          context: {
+            entityId: 'stale-product',
+            entityType: 'product',
+            entity: { id: 'stale-product' },
+          },
+          entityId: 'stale-product',
+          entityType: 'product',
+        },
+      },
+    });
+
+    expect(result.outputs['simulation-1']).toBeUndefined();
+    expect(result.outputs['trigger-1']?.['entityId'] ?? null).toBeNull();
+  });
+
+  it('fails fast when trigger requires simulation context but no simulation context can be resolved', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'simulation-1',
+        type: 'simulation',
+        title: 'Simulation',
+        description: '',
+        inputs: ['trigger'],
+        outputs: ['context'],
+        position: { x: -200, y: 0 },
+        config: {
+          simulation: {
+            entityType: 'product',
+            entityId: '',
+            productId: '',
+            runBehavior: 'manual_only',
+          },
+        },
+      },
+      {
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        description: '',
+        inputs: ['context'],
+        outputs: ['context', 'entityId', 'entityType'],
+        position: { x: 0, y: 0 },
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'simulation_required',
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-sim-trigger',
+        from: 'simulation-1',
+        to: 'trigger-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+
+    await expect(
+      evaluateGraph({
+        ...defaultOptions,
+        nodes,
+        edges,
+        triggerNodeId: 'trigger-1',
+        triggerEvent: 'manual',
+        triggerContext: {},
+      })
+    ).rejects.toThrow(/requires .*simulation context/i);
+  });
+
+  it('does not treat plain trigger entity context as simulation context when simulation is required', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'simulation-1',
+        type: 'simulation',
+        title: 'Simulation',
+        description: '',
+        inputs: ['trigger'],
+        outputs: ['context'],
+        position: { x: -200, y: 0 },
+        config: {
+          simulation: {
+            entityType: 'product',
+            entityId: '',
+            productId: '',
+            runBehavior: 'manual_only',
+          },
+        },
+      },
+      {
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        description: '',
+        inputs: ['context'],
+        outputs: ['context', 'entityId', 'entityType'],
+        position: { x: 0, y: 0 },
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'simulation_required',
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-sim-trigger',
+        from: 'simulation-1',
+        to: 'trigger-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+
+    await expect(
+      evaluateGraph({
+        ...defaultOptions,
+        nodes,
+        edges,
+        triggerNodeId: 'trigger-1',
+        triggerEvent: 'manual',
+        triggerContext: {
+          entityId: 'product-123',
+          entityType: 'product',
+        },
+      })
+    ).rejects.toThrow(/requires .*simulation context/i);
+  });
+
   it('should handle complex graph with multiple iterations', async () => {
     // node-1 (const 5) -> node-2 (math +1) -> node-3 (math +1) -> node-4 (math +1)
     const nodes: AiNode[] = [

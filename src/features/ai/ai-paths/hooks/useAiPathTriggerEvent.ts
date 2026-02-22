@@ -642,6 +642,10 @@ export function useAiPathTriggerEvent(): {
       };
 
       if (executionMode === 'local') {
+        toast(
+          'Path Execution is Local: this run executes in-browser and will not appear in Job Queue. Set Execution mode to Server to enqueue runs.',
+          { variant: 'info' }
+        );
         try {
           await evaluateGraphWithIteratorAutoContinue({
             nodes,
@@ -678,7 +682,7 @@ export function useAiPathTriggerEvent(): {
           });
           const runAt = new Date().toISOString();
           reportProgress({ status: 'success', progress: 1 });
-          toast('AI Path run completed locally.', { variant: 'success' });
+          toast('AI Path run completed locally (not queued).', { variant: 'success' });
           void appendLocalRun({
             pathId: selectedConfig.id ?? null,
             pathName: selectedConfig.name ?? null,

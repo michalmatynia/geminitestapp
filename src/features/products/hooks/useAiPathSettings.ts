@@ -43,6 +43,8 @@ export type PathSettingsResult = {
 export type FindTriggerPathOptions = {
   fallbackToAnyPath?: boolean;
   defaultTriggerEventId?: string;
+  preferServerExecution?: boolean;
+  requireServerExecution?: boolean;
 };
 
 export async function fetchPathSettings(
@@ -162,6 +164,30 @@ export function findTriggerPath(
   const fallbackTriggerEventId =
     options?.defaultTriggerEventId ?? ((TRIGGER_EVENTS[0]?.id as string) ?? 'manual');
   const fallbackToAnyPath = options?.fallbackToAnyPath !== false;
+  const preferServerExecution = options?.preferServerExecution === true;
+  const requireServerExecution = options?.requireServerExecution === true;
+  const activePathId =
+    (typeof preferredActivePathId === 'string' && preferredActivePathId.trim().length > 0
+      ? preferredActivePathId.trim()
+      : null) ??
+    (typeof uiState?.['activePathId'] === 'string' && uiState['activePathId'].trim().length > 0
+      ? uiState['activePathId'].trim()
+      : null);
+
+  const pickPreferredCandidate = (candidates: PathConfig[]): PathConfig | undefined => {
+    if (candidates.length === 0) return undefined;
+    const activeCandidate = activePathId
+      ? candidates.find((config: PathConfig): boolean => config.id === activePathId)
+      : undefined;
+    if (activeCandidate && activeCandidate.isActive !== false) {
+      return activeCandidate;
+    }
+    return (
+      candidates.find((config: PathConfig): boolean => config.isActive !== false) ??
+      activeCandidate ??
+      candidates[0]
+    );
+  };
 
   const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
     Array.isArray(config?.nodes)
@@ -172,18 +198,24 @@ export function findTriggerPath(
       )
       : false
   );
+  const serverTriggerCandidates = triggerCandidates.filter(
+    (config: PathConfig): boolean => config.executionMode !== 'local'
+  );
+  const selectedTriggerCandidate =
+    requireServerExecution
+      ? pickPreferredCandidate(serverTriggerCandidates)
+      : preferServerExecution
+        ? pickPreferredCandidate(serverTriggerCandidates) ??
+          pickPreferredCandidate(triggerCandidates)
+        : pickPreferredCandidate(triggerCandidates);
+  if (selectedTriggerCandidate) return selectedTriggerCandidate;
 
-  const activePathId =
-    (typeof preferredActivePathId === 'string' && preferredActivePathId.trim().length > 0
-      ? preferredActivePathId.trim()
-      : null) ??
-    (typeof uiState?.['activePathId'] === 'string' && uiState['activePathId'].trim().length > 0
-      ? uiState['activePathId'].trim()
-      : null);
-
-  const activeTriggerCandidate = activePathId
-    ? triggerCandidates.find((config: PathConfig): boolean => config.id === activePathId)
-    : undefined;
-
-  return activeTriggerCandidate ?? triggerCandidates[0] ?? (fallbackToAnyPath ? orderedConfigs[0] : undefined);
+  if (!fallbackToAnyPath) return undefined;
+  const serverFallbackCandidates = orderedConfigs.filter(
+    (config: PathConfig): boolean => config.executionMode !== 'local'
+  );
+  return requireServerExecution || preferServerExecution
+    ? pickPreferredCandidate(serverFallbackCandidates) ??
+      (requireServerExecution ? undefined : pickPreferredCandidate(orderedConfigs))
+    : pickPreferredCandidate(orderedConfigs);
 }

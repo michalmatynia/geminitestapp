@@ -67,6 +67,7 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
 
   const triggerConfig = selectedNode.config?.trigger ?? {
     event: TRIGGER_EVENTS[0]?.id ?? 'manual',
+    contextMode: 'simulation_preferred',
   };
   const isScheduled = triggerConfig.event === 'scheduled_run';
 
@@ -80,7 +81,10 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
           value={triggerConfig.event}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
-              trigger: { event: value },
+              trigger: {
+                ...triggerConfig,
+                event: value,
+              },
             })
           }
           options={triggerEventOptions.map((event: { id: string; label: string }) => ({
@@ -88,6 +92,40 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
             label: event.label
           }))}
           placeholder='Select action'
+          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+        />
+      </div>
+      <div>
+        <Label className='text-xs text-gray-400'>Context Source</Label>
+        <SelectSimple
+          size='sm'
+          value={triggerConfig.contextMode ?? 'simulation_preferred'}
+          onValueChange={(value: string): void =>
+            updateSelectedNodeConfig({
+              trigger: {
+                ...triggerConfig,
+                contextMode: value as
+                  | 'simulation_required'
+                  | 'simulation_preferred'
+                  | 'trigger_only',
+              },
+            })
+          }
+          options={[
+            {
+              value: 'simulation_required',
+              label: 'Simulation required',
+            },
+            {
+              value: 'simulation_preferred',
+              label: 'Simulation preferred',
+            },
+            {
+              value: 'trigger_only',
+              label: 'Trigger only',
+            },
+          ]}
+          placeholder='Select context source'
           triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
         />
       </div>

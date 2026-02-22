@@ -344,15 +344,55 @@ export const renderPromptNodeTextPreview = (
 };
 
 export const buildPromptTemplateFromDroppedDocumentFile = (file: CaseResolverFile): string => {
+  if (file.fileType === 'scanfile') {
+    const scanSlotText = file.scanSlots
+      .map((slot): string => (slot.ocrText ?? '').trim())
+      .filter((value: string): boolean => value.length > 0)
+      .join('\n\n');
+    if (scanSlotText.length > 0) {
+      return toHtmlParagraph(scanSlotText);
+    }
+    const topLevelOcrText = (file.ocrText ?? '').trim();
+    if (topLevelOcrText.length > 0) {
+      return toHtmlParagraph(topLevelOcrText);
+    }
+  }
   const sourceHtml = file.documentContentHtml.trim();
   if (sourceHtml.length > 0) {
     return sourceHtml;
   }
-  const source = file.documentContent.trim();
-  if (source.length > 0) {
-    return hasHtmlMarkup(source) ? source : toHtmlParagraph(source);
+  const sourcePlainText = file.documentContentPlainText.trim();
+  if (sourcePlainText.length > 0) {
+    return toHtmlParagraph(sourcePlainText);
+  }
+  const sourceMarkdown = file.documentContentMarkdown.trim();
+  if (sourceMarkdown.length > 0) {
+    return toHtmlParagraph(sourceMarkdown);
+  }
+  const sourceContent = file.documentContent.trim();
+  if (sourceContent.length > 0) {
+    return hasHtmlMarkup(sourceContent) ? sourceContent : toHtmlParagraph(sourceContent);
   }
   return toHtmlParagraph(`Document: ${file.name}`);
+};
+
+export const resolvePromptNodeStaticOutputs = (
+  node: AiNode,
+  nodeMeta: CaseResolverNodeMeta
+): {
+  textfield: string;
+  content: string;
+  plainText: string;
+} => {
+  const promptTemplate = resolvePromptConfig(node).template;
+  const textfield = stripHtmlToPlainText(promptTemplate);
+  const content = renderPromptNodeTextPreview(node, nodeMeta) || textfield;
+  const plainText = stripHtmlToPlainText(content || textfield);
+  return {
+    textfield,
+    content,
+    plainText,
+  };
 };
 
 export const clampCanvasPosition = (position: { x: number; y: number }): { x: number; y: number } => ({

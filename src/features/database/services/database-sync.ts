@@ -61,13 +61,13 @@ import { operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
-export type DatabaseSyncDirection = DatabaseSyncDirectionDto;
-
 export type DatabaseSyncCollectionResult = DatabaseSyncCollectionResultDto;
 
 export type DatabaseSyncResult = DatabaseSyncResultDto;
 
 export type DatabaseSyncOptions = DatabaseSyncOptionsDto;
+
+export type DatabaseSyncDirection = DatabaseSyncDirectionDto;
 
 // Utility functions (isObjectIdString, toObjectIdMaybe, toDate, toJsonValue, normalizeId)
 // are imported from ./sync-utils.ts

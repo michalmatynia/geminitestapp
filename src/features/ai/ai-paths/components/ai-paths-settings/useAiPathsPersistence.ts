@@ -36,6 +36,7 @@ import {
   stableStringify,
   sanitizeEdges,
 } from '@/features/ai/ai-paths/lib';
+import { buildCompileWarningMessage } from '@/features/ai/ai-paths/lib/core/utils/compile-warning-message';
 import {
   fetchAiPathsSettingsCached,
   updateAiPathsSettingsBulk,
@@ -1010,17 +1011,7 @@ export function useAiPathsPersistence({
           toast(message, { variant: 'warning' });
         }
         if (!silent && compileReport.warnings > 0) {
-          const warningFindings = compileReport.findings.filter(
-            (finding): boolean =>
-              finding.severity === 'warning' && finding.message.trim().length > 0
-          );
-          const primaryWarningFinding = warningFindings[0];
-          const primaryWarning = primaryWarningFinding?.message?.trim() ?? null;
-          const warningMessage = primaryWarning
-            ? `Graph compile warning (${primaryWarningFinding?.code ?? 'warning'}): ${primaryWarning}${
-              warningFindings.length > 1 ? ` (+${warningFindings.length - 1} more)` : ''
-            }`
-            : `Graph compile warnings: ${compileReport.warnings} non-blocking issue(s) detected. Open Paths Settings -> Compile Inspector for details.`;
+          const warningMessage = buildCompileWarningMessage(compileReport);
           toast(warningMessage, { variant: 'warning' });
         }
         const config = buildActivePathConfig(

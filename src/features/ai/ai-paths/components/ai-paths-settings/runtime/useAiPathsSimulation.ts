@@ -30,7 +30,6 @@ type SimulationArgs = {
   executionMode: PathExecutionMode;
   setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
   runtimeStateRef: React.MutableRefObject<RuntimeState>;
-  pendingSimulationContextRef: React.MutableRefObject<Record<string, unknown> | null>;
   reportAiPathsError: (error: unknown, context: Record<string, unknown>, fallbackMessage?: string) => void;
   toast: (message: string, options?: { variant?: 'success' | 'error' | 'info' | 'warning'; duration?: number; error?: unknown }) => void;
   // Local logic callbacks
@@ -161,10 +160,6 @@ export function useAiPathsSimulation(args: SimulationArgs) {
       }
       
       const initialContext = buildSimulationContext({ entityId, entityType, entity: null });
-      args.pendingSimulationContextRef.current = {
-        ...(args.pendingSimulationContextRef.current ?? {}),
-        ...initialContext,
-      };
       seedSimulationRuntimeState(simulationNode, initialContext);
 
       const enrichContext = async (): Promise<Record<string, unknown> | null> => {
@@ -180,13 +175,25 @@ export function useAiPathsSimulation(args: SimulationArgs) {
         // BFS to find connected trigger
         const adjacency = new Map<string, Set<string>>();
         args.sanitizedEdges.forEach((edge: Edge) => {
-          if (!edge.source || !edge.target) return;
-          const fromSet = adjacency.get(edge.source) ?? new Set<string>();
-          fromSet.add(edge.target);
-          adjacency.set(edge.source, fromSet);
-          const toSet = adjacency.get(edge.target) ?? new Set<string>();
-          toSet.add(edge.source);
-          adjacency.set(edge.target, toSet);
+          const fromNodeId =
+            typeof edge.from === 'string' && edge.from.trim().length > 0
+              ? edge.from
+              : typeof edge.source === 'string' && edge.source.trim().length > 0
+                ? edge.source
+                : null;
+          const toNodeId =
+            typeof edge.to === 'string' && edge.to.trim().length > 0
+              ? edge.to
+              : typeof edge.target === 'string' && edge.target.trim().length > 0
+                ? edge.target
+                : null;
+          if (!fromNodeId || !toNodeId) return;
+          const fromSet = adjacency.get(fromNodeId) ?? new Set<string>();
+          fromSet.add(toNodeId);
+          adjacency.set(fromNodeId, fromSet);
+          const toSet = adjacency.get(toNodeId) ?? new Set<string>();
+          toSet.add(fromNodeId);
+          adjacency.set(toNodeId, toSet);
         });
         const connected = new Set<string>();
         const queue = [simulationNode.id];
@@ -220,15 +227,10 @@ export function useAiPathsSimulation(args: SimulationArgs) {
         }
         if (!triggerNode) {
           args.toast('Connect a Trigger node to run the simulation.', { variant: 'error' });
-          args.pendingSimulationContextRef.current = null;
           return;
         }
         const enrichedContext = await enrichContext();
         const simulationContext = enrichedContext ?? initialContext;
-        args.pendingSimulationContextRef.current = {
-          ...(args.pendingSimulationContextRef.current ?? {}),
-          ...simulationContext,
-        };
         eventName = triggerNode.config?.trigger?.event ?? eventName;
         await args.runGraphForTrigger(triggerNode, undefined, simulationContext);
         dispatchTrigger(eventName, entityId, entityType);
@@ -243,10 +245,6 @@ export function useAiPathsSimulation(args: SimulationArgs) {
         const simulationContext = enrichedContext 
           ? buildSimulationContext({ entityId, entityType, entity: enrichedContext })
           : initialContext;
-        args.pendingSimulationContextRef.current = {
-          ...(args.pendingSimulationContextRef.current ?? {}),
-          ...simulationContext,
-        };
         
         const triggerNode = args.normalizedNodes.find(
           (node: AiNode): boolean => node.type === 'trigger' && node.config?.trigger?.event === triggerEvent

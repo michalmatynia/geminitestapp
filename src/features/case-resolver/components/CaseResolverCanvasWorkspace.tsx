@@ -469,6 +469,19 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     });
   };
 
+  const updateSelectedPromptTemplate = (template: string): void => {
+    if (selectedNode?.type !== 'prompt') return;
+    updateNode(selectedNode.id, {
+      config: {
+        ...(selectedNode.config ?? {}),
+        prompt: {
+          ...resolvePromptConfig(selectedNode),
+          template,
+        },
+      },
+    });
+  };
+
   const updateSelectedEdgeMeta = (patch: Partial<CaseResolverEdgeMeta>): void => {
     if (!selectedEdge) return;
     const current = normalizedEdgeMeta[selectedEdge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
@@ -504,6 +517,29 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       console.error('Failed to copy compiled prompt:', error);
     }
   };
+
+  const handleManualGraphSave = React.useCallback((): void => {
+    onGraphChange({
+      nodes,
+      edges: strictEdges,
+      nodeMeta: normalizedNodeMeta,
+      edgeMeta: normalizedEdgeMeta,
+      pdfExtractionPresetId,
+      documentFileLinksByNode: normalizedDocumentFileLinksByNode,
+      documentDropNodeId: normalizedDocumentDropNodeId,
+      documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
+    });
+  }, [
+    nodes,
+    strictEdges,
+    normalizedNodeMeta,
+    normalizedEdgeMeta,
+    pdfExtractionPresetId,
+    normalizedDocumentFileLinksByNode,
+    normalizedDocumentDropNodeId,
+    normalizedDocumentSourceFileIdByNode,
+    onGraphChange,
+  ]);
 
   const handleCanvasDragOverCapture = (event: React.DragEvent<HTMLDivElement>): void => {
     const treePayload = parseCaseResolverTreeDropPayload(event.dataTransfer);
@@ -630,6 +666,9 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     }
     return stripHtmlToPlainText(selectedPromptSourceFile.documentContent);
   }, [selectedNode, selectedPromptSourceFile]);
+  const selectedPromptTemplate = selectedNode?.type === 'prompt'
+    ? resolvePromptConfig(selectedNode).template
+    : '';
   const selectedPromptOutputPreview = useMemo(() => {
     if (selectedNode?.type !== 'prompt') return null;
     const computedOutputs = compiled.outputsByNode[selectedNode.id];
@@ -821,18 +860,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
             </Button>
             <Button
               type='button'
-              onClick={() =>
-                onGraphChange({
-                  nodes,
-                  edges: strictEdges,
-                  nodeMeta: normalizedNodeMeta,
-                  edgeMeta: normalizedEdgeMeta,
-                  pdfExtractionPresetId,
-                  documentFileLinksByNode: normalizedDocumentFileLinksByNode,
-                  documentDropNodeId: normalizedDocumentDropNodeId,
-                  documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
-                })
-              }
+              onClick={handleManualGraphSave}
               variant='outline'
               size='sm'
             >
@@ -857,14 +885,17 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
           
         open={isNodeInspectorOpen}
         onOpenChange={setIsNodeInspectorOpen}
+        onManualUpdate={handleManualGraphSave}
         selectedNode={selectedNode}
         selectedPromptMeta={selectedPromptMeta}
         selectedPromptSourceFile={selectedPromptSourceFile}
+        selectedPromptTemplate={selectedPromptTemplate}
         selectedPromptInputText={selectedPromptInputText}
         selectedPromptOutputPreview={selectedPromptOutputPreview}
         selectedCanvasFileId={activeFile?.id ?? null}
         selectedWorkspaceId={workspace?.id ?? null}
         onEditFile={onEditFile}
+        onUpdateSelectedPromptTemplate={updateSelectedPromptTemplate}
         onUpdateSelectedNodeMeta={updateSelectedNodeMeta}
         selectedEdge={selectedEdge}
         selectedEdgeJoinMode={selectedEdgeJoinMode}

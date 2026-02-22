@@ -507,6 +507,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   async listRuns(options: AiPathRunListOptions = {}) {
     await ensureIndexes();
     const db = await getMongoDb();
+    const includeTotal = options.includeTotal !== false;
     let filter = buildRunFilter(options);
     const nodeId = options.nodeId?.trim();
     if (nodeId) {
@@ -526,10 +527,11 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     if (typeof options.limit === 'number') {
       cursor.limit(options.limit);
     }
-    const [docs, total] = await Promise.all([
-      cursor.toArray(),
-      db.collection<RunDocument>(RUNS_COLLECTION).countDocuments(filter),
-    ]);
+    const docs = await cursor.toArray();
+    if (!includeTotal) {
+      return { runs: docs.map(toRunRecord), total: docs.length };
+    }
+    const total = await db.collection<RunDocument>(RUNS_COLLECTION).countDocuments(filter);
     return { runs: docs.map(toRunRecord), total };
   },
 

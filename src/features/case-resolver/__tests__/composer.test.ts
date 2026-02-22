@@ -259,6 +259,59 @@ describe('case-resolver composer', () => {
     expect(compiled.prompt).toBe('Alpha');
   });
 
+  it('merges explanatory node text with incoming textfield input', () => {
+    const graph: CaseResolverGraph = {
+      nodes: [
+        createPromptNode({ id: 'source', title: 'Source', template: 'Input text', x: 0, y: 0 }),
+        createPromptNode({ id: 'note', title: 'Explanatory', template: 'Additional note', x: 150, y: 0 }),
+      ],
+      edges: [
+        createEdge({
+          id: 'flow',
+          from: 'source',
+          to: 'note',
+          fromPort: 'content',
+          toPort: 'content',
+        }),
+      ],
+      nodeMeta: {
+        source: {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+        note: {
+          role: 'explanatory',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+      },
+      edgeMeta: {
+        flow: { joinMode: 'newline' },
+      },
+      pdfExtractionPresetId: 'plain_text',
+      documentFileLinksByNode: {},
+      documentDropNodeId: null,
+      documentSourceFileIdByNode: {
+        source: 'file-source',
+        note: 'file-note',
+      },
+    };
+
+    const compiled = compileCaseResolverPrompt(graph, 'source');
+
+    expect(compiled.outputsByNode['note']).toEqual({
+      textfield: 'Input text\nAdditional note',
+      content: 'Input text\nInput text\nAdditional note',
+      plainText: 'Input text\nAdditional note',
+    });
+    expect(compiled.prompt).toBe('Input text\nInput text\nAdditional note');
+  });
+
   it('strips escaped HTML entities from plainText output', () => {
     const graph: CaseResolverGraph = {
       nodes: [

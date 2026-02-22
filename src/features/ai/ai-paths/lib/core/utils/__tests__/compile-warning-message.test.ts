@@ -1,0 +1,48 @@
+import { describe, expect, it } from 'vitest';
+
+import { buildCompileWarningMessage } from '../compile-warning-message';
+
+describe('buildCompileWarningMessage', () => {
+  it('returns a generic warning when no warning findings are present', () => {
+    const message = buildCompileWarningMessage({
+      warnings: 1,
+      findings: [],
+    });
+    expect(message).toContain('Graph compile warnings detected (1)');
+    expect(message).toContain('Compile Inspector');
+  });
+
+  it('includes cycle node labels in cycle warnings', () => {
+    const message = buildCompileWarningMessage({
+      warnings: 1,
+      findings: [
+        {
+          severity: 'warning',
+          code: 'cycle_detected',
+          message: 'Detected a circular loop across 2 node(s).',
+          metadata: {
+            nodeLabels: ['Trigger', 'Simulation'],
+          },
+        },
+      ],
+    });
+    expect(message).toContain('Graph compile warning (cycle_detected)');
+    expect(message).toContain('Affected nodes: Trigger, Simulation.');
+    expect(message).toContain('Compile Inspector');
+  });
+
+  it('preserves explicit fix hints without appending inspector suffix', () => {
+    const message = buildCompileWarningMessage({
+      warnings: 1,
+      findings: [
+        {
+          severity: 'warning',
+          code: 'trigger_context_resolution_risk',
+          message: 'Trigger requires simulation context. Fix: connect Simulation -> Trigger.',
+        },
+      ],
+    });
+    expect(message).toContain('Fix: connect Simulation -> Trigger.');
+    expect(message).not.toContain('Compile Inspector for details');
+  });
+});

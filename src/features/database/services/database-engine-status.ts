@@ -253,7 +253,7 @@ export async function getDatabaseEngineStatus(): Promise<DatabaseEngineStatusDto
   const serviceRouteMap = services.reduce(
     (acc, service) => {
       const status = serviceStatusByService.get(service);
-      const fallbackProvider: DatabaseEngineProviderDto = status?.effectiveProvider ?? 'prisma';
+      const fallbackProvider = (status?.effectiveProvider ?? 'prisma') as DatabaseEngineProviderDto;
       acc[service] = partialServiceRouteMap[service] ?? fallbackProvider;
       return acc;
     },

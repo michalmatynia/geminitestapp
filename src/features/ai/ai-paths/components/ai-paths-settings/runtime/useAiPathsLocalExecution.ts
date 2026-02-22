@@ -21,6 +21,7 @@ import {
   GraphExecutionError,
   GraphExecutionCancelled,
 } from '@/features/ai/ai-paths/lib';
+import { buildCompileWarningMessage } from '@/features/ai/ai-paths/lib/core/utils/compile-warning-message';
 import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
 import {
@@ -40,6 +41,108 @@ import type { LocalExecutionArgs } from './types';
 
 const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+type TriggerContextMode = 'simulation_required' | 'simulation_preferred' | 'trigger_only';
+type SimulationRunBehavior = 'before_connected_trigger' | 'manual_only';
+
+const DEFAULT_TRIGGER_CONTEXT_MODE: TriggerContextMode = 'simulation_preferred';
+const DEFAULT_SIMULATION_RUN_BEHAVIOR: SimulationRunBehavior =
+  'before_connected_trigger';
+
+const normalizeEntityType = (value?: string | null): string | null => {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === 'product' || normalized === 'products') return 'product';
+  if (normalized === 'note' || normalized === 'notes') return 'note';
+  return normalized;
+};
+
+const readEntityIdFromContext = (
+  context: Record<string, unknown> | null | undefined
+): string | null => {
+  if (!context) return null;
+  const entityId = context['entityId'];
+  if (typeof entityId === 'string' && entityId.trim().length > 0) return entityId;
+  const productId = context['productId'];
+  if (typeof productId === 'string' && productId.trim().length > 0) return productId;
+  return null;
+};
+
+const readEntityTypeFromContext = (
+  context: Record<string, unknown> | null | undefined
+): string | null => {
+  if (!context) return null;
+  const entityType = context['entityType'];
+  if (typeof entityType !== 'string') return null;
+  return normalizeEntityType(entityType);
+};
+
+const hasEntityReference = (
+  context: Record<string, unknown> | null | undefined
+): boolean => readEntityIdFromContext(context) !== null;
+
+const hasSimulationContextProvenance = (
+  context: Record<string, unknown> | null | undefined
+): boolean => {
+  if (!context) return false;
+  const contextSource = context['contextSource'];
+  if (
+    typeof contextSource === 'string' &&
+    contextSource.trim().toLowerCase().startsWith('simulation')
+  ) {
+    return true;
+  }
+  const source = context['source'];
+  if (typeof source === 'string' && source.trim().toLowerCase() === 'simulation') {
+    return true;
+  }
+  const simulationNodeId = context['simulationNodeId'];
+  return typeof simulationNodeId === 'string' && simulationNodeId.trim().length > 0;
+};
+
+const resolveTriggerContextMode = (triggerNode: AiNode): TriggerContextMode => {
+  const mode = triggerNode.config?.trigger?.contextMode;
+  if (
+    mode === 'simulation_required' ||
+    mode === 'simulation_preferred' ||
+    mode === 'trigger_only'
+  ) {
+    return mode;
+  }
+  return DEFAULT_TRIGGER_CONTEXT_MODE;
+};
+
+const resolveSimulationRunBehavior = (
+  simulationNode: AiNode
+): SimulationRunBehavior => {
+  const behavior = simulationNode.config?.simulation?.runBehavior;
+  if (behavior === 'before_connected_trigger' || behavior === 'manual_only') {
+    return behavior;
+  }
+  return DEFAULT_SIMULATION_RUN_BEHAVIOR;
+};
+
+const buildSimulationOutputsFromContext = (
+  context: Record<string, unknown>
+): RuntimePortValues => {
+  const entityId = readEntityIdFromContext(context);
+  const entityType = readEntityTypeFromContext(context);
+  const productId =
+    typeof context['productId'] === 'string' && context['productId'].trim().length > 0
+      ? context['productId']
+      : entityType === 'product' && entityId
+        ? entityId
+        : null;
+  return {
+    context,
+    ...(entityId ? { entityId } : {}),
+    ...(entityType ? { entityType } : {}),
+    ...(productId ? { productId } : {}),
+    ...(context['entityJson'] !== undefined
+      ? { entityJson: context['entityJson'] }
+      : {}),
+  };
+};
 
 const extractDatabaseRuntimeMetadata = (
   nextOutputs: RuntimePortValues
@@ -587,6 +690,94 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     [args]
   );
 
+  const getConnectedSimulationNodesForTrigger = useCallback(
+    (triggerNodeId: string): AiNode[] => {
+      const simulationById = new Map<string, AiNode>(
+        args.normalizedNodes
+          .filter((node: AiNode): boolean => node.type === 'simulation')
+          .map((node: AiNode): [string, AiNode] => [node.id, node])
+      );
+      const connected: AiNode[] = [];
+      const added = new Set<string>();
+      args.sanitizedEdges.forEach((edge) => {
+        if (edge.to !== triggerNodeId || !edge.from) return;
+        const toPort = (edge.toPort?.trim() || 'context').toLowerCase();
+        if (toPort !== 'context') return;
+        const simulationNode = simulationById.get(edge.from);
+        if (!simulationNode || added.has(simulationNode.id)) return;
+        connected.push(simulationNode);
+        added.add(simulationNode.id);
+      });
+      return connected;
+    },
+    [args.normalizedNodes, args.sanitizedEdges]
+  );
+
+  const resolveSimulationContextForNode = useCallback(
+    async (
+      simulationNode: AiNode,
+      contextFallback?: Record<string, unknown> | null
+    ): Promise<Record<string, unknown> | null> => {
+      const configuredEntityId =
+        simulationNode.config?.simulation?.entityId?.trim() ||
+        simulationNode.config?.simulation?.productId?.trim() ||
+        null;
+      const configuredEntityType =
+        normalizeEntityType(simulationNode.config?.simulation?.entityType) ?? 'product';
+      const fallbackEntityId = readEntityIdFromContext(contextFallback);
+      const fallbackEntityType = readEntityTypeFromContext(contextFallback);
+      const entityId = configuredEntityId ?? fallbackEntityId;
+      const entityType = configuredEntityId
+        ? configuredEntityType
+        : fallbackEntityType ?? configuredEntityType;
+      if (!entityId) {
+        return null;
+      }
+
+      const fallbackEntity =
+        isPlainRecord(contextFallback?.['entity'])
+          ? contextFallback?.['entity']
+          : isPlainRecord(contextFallback?.['entityJson'])
+            ? contextFallback?.['entityJson']
+            : isPlainRecord(contextFallback?.['product'])
+              ? contextFallback?.['product']
+              : null;
+
+      if (fallbackEntity) {
+        return {
+          ...contextFallback,
+          contextSource: 'simulation_manual',
+          source:
+            typeof contextFallback?.['source'] === 'string'
+              ? contextFallback['source']
+              : 'simulation',
+          simulationNodeId: simulationNode.id,
+          simulationNodeTitle: simulationNode.title ?? simulationNode.id,
+          entityId,
+          entityType,
+          ...(entityType === 'product' ? { productId: entityId } : {}),
+          entity: fallbackEntity,
+          entityJson: fallbackEntity,
+          ...(entityType === 'product' ? { product: fallbackEntity } : {}),
+        };
+      }
+
+      const entity = await args.fetchEntityByType(entityType, entityId);
+      return {
+        contextSource: 'simulation',
+        source: 'simulation',
+        simulationNodeId: simulationNode.id,
+        simulationNodeTitle: simulationNode.title ?? simulationNode.id,
+        entityId,
+        entityType,
+        ...(entityType === 'product' ? { productId: entityId } : {}),
+        ...(entity ? { entity, entityJson: entity } : {}),
+        ...(entityType === 'product' && entity ? { product: entity } : {}),
+      };
+    },
+    [args.fetchEntityByType]
+  );
+
   const runGraphForTrigger = useCallback(async (
     triggerNode: AiNode,
     event?: React.MouseEvent,
@@ -599,7 +790,6 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       return;
     }
     const triggerEvent = triggerNode.config?.trigger?.event ?? TRIGGER_EVENTS[0]?.id ?? 'manual';
-    const pendingSimulationContext = args.pendingSimulationContextRef.current ?? null;
     const triggerContextArgs = {
       triggerNode,
       triggerEvent,
@@ -610,11 +800,12 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       activeTab: args.activeTab,
       activeTrigger: args.activeTrigger,
     };
-    const triggerContext = {
-      ...buildTriggerContext(triggerContextArgs),
-      ...(pendingSimulationContext ?? {}),
-      ...(contextOverride ?? {}),
-    };
+    const triggerContextMode = resolveTriggerContextMode(triggerNode);
+    const connectedSimulationNodes = getConnectedSimulationNodesForTrigger(triggerNode.id);
+    const baseTriggerContext = buildTriggerContext(triggerContextArgs);
+    const simulationSeedOutputs: Record<string, RuntimePortValues> = {};
+    let resolvedSimulationContext: Record<string, unknown> | null = null;
+    const allowSimulationContext = triggerContextMode !== 'trigger_only';
     const localSecurityIssues = evaluateLocalExecutionSecurity(args.normalizedNodes);
     if (args.executionMode === 'local' && localSecurityIssues.length > 0) {
       const timestamp = new Date().toISOString();
@@ -789,17 +980,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     }
     if (compileReport.warnings > 0) {
       const timestamp = new Date().toISOString();
-      const warningFindings = compileReport.findings.filter(
-        (finding): boolean =>
-          finding.severity === 'warning' && finding.message.trim().length > 0
-      );
-      const primaryWarningFinding = warningFindings[0];
-      const primaryWarning = primaryWarningFinding?.message?.trim() ?? null;
-      const warningMessage = primaryWarning
-        ? `Graph compile warning (${primaryWarningFinding?.code ?? 'warning'}): ${primaryWarning}${
-          warningFindings.length > 1 ? ` (+${warningFindings.length - 1} more)` : ''
-        }`
-        : `Graph compile warnings: ${compileReport.warnings} non-blocking issue(s) detected. Open Paths Settings -> Compile Inspector for details.`;
+      const warningMessage = buildCompileWarningMessage(compileReport);
       args.appendRuntimeEvent({
         source: 'local',
         kind: 'run_warning',
@@ -864,6 +1045,77 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
         return;
       }
     }
+
+    if (allowSimulationContext && connectedSimulationNodes.length > 0) {
+      for (const simulationNode of connectedSimulationNodes) {
+        const runBehavior = resolveSimulationRunBehavior(simulationNode);
+        const hasExplicitContext = hasEntityReference(contextOverride ?? null);
+        const shouldResolve =
+          runBehavior === 'before_connected_trigger' ||
+          (runBehavior === 'manual_only' && hasExplicitContext);
+        if (!shouldResolve) continue;
+        const simulationContext = await resolveSimulationContextForNode(
+          simulationNode,
+          runBehavior === 'manual_only' ? contextOverride ?? null : null
+        );
+        if (!simulationContext) continue;
+        simulationSeedOutputs[simulationNode.id] = buildSimulationOutputsFromContext(
+          simulationContext
+        );
+        resolvedSimulationContext = resolvedSimulationContext
+          ? { ...resolvedSimulationContext, ...simulationContext }
+          : simulationContext;
+      }
+    }
+
+    const triggerContext = {
+      ...baseTriggerContext,
+      ...(allowSimulationContext ? resolvedSimulationContext ?? {} : {}),
+      ...(contextOverride ?? {}),
+    };
+
+    const simulationSatisfiedFromOverride = hasSimulationContextProvenance(
+      contextOverride ?? null
+    );
+    const simulationContextSatisfied =
+      Boolean(resolvedSimulationContext) || simulationSatisfiedFromOverride;
+    if (triggerContextMode === 'simulation_required' && !simulationContextSatisfied) {
+      const timestamp = new Date().toISOString();
+      const blockedMessage =
+        'Trigger requires Simulation context. Run Simulation first, or set connected Simulation nodes to "Auto-run before connected Trigger".';
+      args.appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_blocked',
+        level: 'warn',
+        timestamp,
+        message: blockedMessage,
+        nodeId: triggerNode.id,
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        metadata: {
+          triggerContextMode,
+          connectedSimulationNodeIds: connectedSimulationNodes.map((node) => node.id),
+          hasSimulationContextOverride: simulationSatisfiedFromOverride,
+        },
+      });
+      args.setNodeStatus({
+        nodeId: triggerNode.id,
+        status: 'blocked',
+        source: 'local',
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        kind: 'node_status',
+        level: 'warn',
+        message: blockedMessage,
+        metadata: {
+          triggerContextMode,
+          hasSimulationContextOverride: simulationSatisfiedFromOverride,
+        },
+      });
+      args.toast(blockedMessage, { variant: 'warning' });
+      return;
+    }
+
     if (args.serverRunActiveRef.current) {
       args.stopServerRunStream();
     }
@@ -884,13 +1136,11 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           variant: 'warning',
         });
       }
-      args.pendingSimulationContextRef.current = null;
       await args.runServerStream(triggerNode, triggerEvent, triggerContext);
       return;
     }
     if (args.runInFlightRef.current) {
       if (args.runMode === 'automatic' && mode === 'run') {
-        args.pendingSimulationContextRef.current = null;
         args.queuedRunsRef.current.push({
           triggerNodeId: triggerNode.id,
           pathId: args.activePathId ?? null,
@@ -947,78 +1197,27 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       message: `Node ${triggerNode.title ?? triggerNode.id} started.`,
     });
     args.abortControllerRef.current = new AbortController();
-    const simulationContext = pendingSimulationContext;
     args.triggerContextRef.current = triggerContext;
-    args.pendingSimulationContextRef.current = null;
-    const immediateEntityId =
-      typeof triggerContext['entityId'] === 'string'
-        ? (triggerContext['entityId'])
-        : typeof triggerContext['productId'] === 'string'
-          ? (triggerContext['productId'])
-          : null;
-    const immediateEntityType =
-      typeof triggerContext['entityType'] === 'string'
-        ? (triggerContext['entityType'])
-        : null;
-    const immediateContext = {
-      ...triggerContext,
-      ...(immediateEntityId ? { entityId: immediateEntityId } : {}),
-      ...(immediateEntityType ? { entityType: immediateEntityType } : {}),
-      trigger: triggerEvent,
-      pathId: args.activePathId ?? null,
-      source: triggerContext['source'] ?? null,
-    };
-    const immediateOutputs: RuntimePortValues = {
-      trigger: true,
-      triggerName: triggerEvent,
-      meta: {
-        firedAt: startedAt,
-        trigger: triggerEvent,
-        pathId: args.activePathId ?? null,
-        entityId: immediateEntityId,
-        entityType: immediateEntityType,
-        ui: triggerContext['ui'] ?? null,
-        location: triggerContext['location'] ?? null,
-        source: triggerContext['source'] ?? null,
-        user: triggerContext['user'] ?? null,
-        event: triggerContext['event'] ?? null,
-        extras: triggerContext['extras'] ?? null,
-      },
-      context: immediateContext,
-      ...(immediateEntityId ? { entityId: immediateEntityId } : {}),
-      ...(immediateEntityType ? { entityType: immediateEntityType } : {}),
-    };
-    const immediateInputs = simulationContext ?? contextOverride ?? null;
     if (args.executionMode === 'local') {
-      args.setRuntimeState((prev: RuntimeState): RuntimeState => {
-        const seededInputs: Record<string, RuntimePortValues> = immediateInputs
-          ? {
-            ...(prev.inputs ?? {}),
-            [triggerNode.id]: {
-              ...(prev.inputs?.[triggerNode.id] ?? {}),
-              context: immediateInputs,
-            },
-          }
-          : { ...(prev.inputs ?? {}) };
-        const nextOutputs = {
-          ...(prev.outputs ?? {}),
-          [triggerNode.id]: immediateOutputs,
-        };
-        const nextInputs = args.seedImmediateDownstreamInputs(
-          seededInputs,
-          nextOutputs,
-          triggerNode.id
-        );
-        const next: RuntimeState = {
-          ...prev,
-          runId,
-          runStartedAt: startedAt,
-          inputs: nextInputs,
-          outputs: nextOutputs,
-        };
-        args.runtimeStateRef.current = next;
-        return next;
+      const previousState = args.runtimeStateRef.current;
+      const nextOutputs = { ...(previousState.outputs ?? {}) };
+      connectedSimulationNodes.forEach((simulationNode) => {
+        delete nextOutputs[simulationNode.id];
       });
+      Object.entries(simulationSeedOutputs).forEach(([nodeId, output]) => {
+        nextOutputs[nodeId] = {
+          ...(nextOutputs[nodeId] ?? {}),
+          ...output,
+        };
+      });
+      const nextState: RuntimeState = {
+        ...previousState,
+        runId,
+        runStartedAt: startedAt,
+        outputs: nextOutputs,
+      };
+      args.runtimeStateRef.current = nextState;
+      args.setRuntimeState(nextState);
     }
 
     const outcome = await runLocalLoop(mode);
@@ -1064,7 +1263,14 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
         void runGraphForTrigger(nextTrigger, undefined, next.contextOverride ?? undefined);
       }
     }
-  }, [args, createRunId, runLocalLoop, finalizeLocalRunOutcome]);
+  }, [
+    args,
+    createRunId,
+    runLocalLoop,
+    finalizeLocalRunOutcome,
+    getConnectedSimulationNodesForTrigger,
+    resolveSimulationContextForNode,
+  ]);
 
   return {
     runLocalLoop,

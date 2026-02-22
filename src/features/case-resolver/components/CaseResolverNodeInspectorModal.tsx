@@ -19,6 +19,7 @@ import {
   Input,
   SelectSimple,
   EmptyState,
+  Textarea,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
@@ -40,9 +41,11 @@ interface CompatEdge {
 type CaseResolverNodeInspectorModalProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onManualUpdate: () => void;
   selectedNode: AiNode | null;
   selectedPromptMeta: CaseResolverNodeMeta | null;
   selectedPromptSourceFile: CaseResolverFile | null;
+  selectedPromptTemplate: string;
   selectedPromptInputText: string;
   selectedPromptOutputPreview: {
     textfield: string;
@@ -55,6 +58,7 @@ type CaseResolverNodeInspectorModalProps = {
     fileId: string,
     options?: { nodeContext?: CaseResolverEditorNodeContext | null }
   ) => void;
+  onUpdateSelectedPromptTemplate: (template: string) => void;
   onUpdateSelectedNodeMeta: (patch: Partial<CaseResolverNodeMeta>) => void;
   selectedEdge: CaseResolverEdge | CompatEdge | null;
   selectedEdgeJoinMode: CaseResolverEdgeMeta['joinMode'];
@@ -64,14 +68,17 @@ type CaseResolverNodeInspectorModalProps = {
 export function CaseResolverNodeInspectorModal({
   open,
   onOpenChange,
+  onManualUpdate,
   selectedNode,
   selectedPromptMeta,
   selectedPromptSourceFile,
+  selectedPromptTemplate,
   selectedPromptInputText,
   selectedPromptOutputPreview,
   selectedCanvasFileId,
   selectedWorkspaceId,
   onEditFile,
+  onUpdateSelectedPromptTemplate,
   onUpdateSelectedNodeMeta,
   selectedEdge,
   selectedEdgeJoinMode,
@@ -84,7 +91,19 @@ export function CaseResolverNodeInspectorModal({
     <DetailModal
       isOpen={open}
       onClose={() => onOpenChange(false)}
-      title='Node Inspector'
+      title={(
+        <div className='flex items-center gap-2'>
+          <Button
+            type='button'
+            size='sm'
+            onClick={onManualUpdate}
+            className='h-7 rounded-md border border-emerald-500/40 px-2 text-[11px] text-emerald-200 transition-colors hover:bg-emerald-500/10'
+          >
+            Update
+          </Button>
+          <span>Node Inspector</span>
+        </div>
+      )}
       subtitle='Inspect and edit selected node/edge settings.'
       size='xl'
     >
@@ -239,6 +258,22 @@ export function CaseResolverNodeInspectorModal({
                   <div className='text-[11px] text-gray-500'>
                     Runtime AI prompt nodes are excluded by default and can be opted in.
                   </div>
+                ) : null}
+                {!selectedPromptSourceFile ? (
+                  <FormField
+                    label='Explanatory Text'
+                    description='This text is merged with incoming text for explanatory nodes.'
+                  >
+                    <Textarea
+                      value={selectedPromptTemplate}
+                      onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+                        onUpdateSelectedPromptTemplate(event.target.value);
+                      }}
+                      rows={5}
+                      className='border-border bg-card/60 text-xs text-white'
+                      placeholder='Write note text to append/merge with incoming input.'
+                    />
+                  </FormField>
                 ) : null}
 
                 <div className='grid gap-2 md:grid-cols-2'>

@@ -1,8 +1,10 @@
 import type {
   AiNode,
   CaseResolverAssetFile,
+  CaseResolverEdgeMeta,
   CaseResolverFile,
   CaseResolverGraph,
+  CaseResolverNodeMeta,
   Edge,
 } from '@/shared/contracts/case-resolver';
 
@@ -24,6 +26,8 @@ type ParsedNodeFileSnapshot = {
   sourceFormat: 'canonical' | 'legacy';
   nodes: AiNode[];
   edges: Edge[];
+  nodeMeta: Record<string, CaseResolverNodeMeta>;
+  edgeMeta: Record<string, CaseResolverEdgeMeta>;
   nodeFileMeta: Record<
     string,
     {
@@ -133,6 +137,42 @@ const normalizeNodeFileMetaRecord = (
   return normalized;
 };
 
+const normalizePromptNodeMetaRecord = (
+  input: unknown
+): ParsedNodeFileSnapshot['nodeMeta'] => {
+  const normalized: ParsedNodeFileSnapshot['nodeMeta'] = {};
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return normalized;
+  }
+
+  Object.entries(input as Record<string, unknown>).forEach(([nodeId, rawMeta]: [string, unknown]): void => {
+    const normalizedNodeId = nodeId.trim();
+    if (!normalizedNodeId) return;
+    if (!rawMeta || typeof rawMeta !== 'object' || Array.isArray(rawMeta)) return;
+    normalized[normalizedNodeId] = rawMeta as CaseResolverNodeMeta;
+  });
+
+  return normalized;
+};
+
+const normalizeEdgeMetaRecord = (
+  input: unknown
+): ParsedNodeFileSnapshot['edgeMeta'] => {
+  const normalized: ParsedNodeFileSnapshot['edgeMeta'] = {};
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
+    return normalized;
+  }
+
+  Object.entries(input as Record<string, unknown>).forEach(([edgeId, rawMeta]: [string, unknown]): void => {
+    const normalizedEdgeId = edgeId.trim();
+    if (!normalizedEdgeId) return;
+    if (!rawMeta || typeof rawMeta !== 'object' || Array.isArray(rawMeta)) return;
+    normalized[normalizedEdgeId] = rawMeta as CaseResolverEdgeMeta;
+  });
+
+  return normalized;
+};
+
 const normalizeLegacyNodeFileSnapshotRecord = (
   record: Record<string, unknown>,
   assetId: string,
@@ -141,6 +181,8 @@ const normalizeLegacyNodeFileSnapshotRecord = (
 ): {
   nodes: AiNode[];
   edges: Edge[];
+  nodeMeta: ParsedNodeFileSnapshot['nodeMeta'];
+  edgeMeta: ParsedNodeFileSnapshot['edgeMeta'];
   nodeFileMeta: ParsedNodeFileSnapshot['nodeFileMeta'];
 } => {
   const legacyNode = record['node'];
@@ -176,6 +218,8 @@ const normalizeLegacyNodeFileSnapshotRecord = (
     return {
       nodes: legacyNodes,
       edges: legacyEdges,
+      nodeMeta: {},
+      edgeMeta: {},
       nodeFileMeta,
     };
   }
@@ -185,6 +229,8 @@ const normalizeLegacyNodeFileSnapshotRecord = (
     return {
       nodes: legacyNodes,
       edges: legacyEdges,
+      nodeMeta: {},
+      edgeMeta: {},
       nodeFileMeta,
     };
   }
@@ -198,6 +244,8 @@ const normalizeLegacyNodeFileSnapshotRecord = (
   return {
     nodes: legacyNodes,
     edges: legacyEdges,
+    nodeMeta: {},
+    edgeMeta: {},
     nodeFileMeta,
   };
 };
@@ -223,13 +271,23 @@ const parseNodeFileSnapshotFromAsset = (
     const record = parsed as Record<string, unknown>;
     const nodes = (Array.isArray(record['nodes']) ? record['nodes'] : []) as AiNode[];
     const edges = (Array.isArray(record['edges']) ? record['edges'] : []) as Edge[];
+    const nodeMeta = normalizePromptNodeMetaRecord(record['nodeMeta']);
+    const edgeMeta = normalizeEdgeMetaRecord(record['edgeMeta']);
     const nodeFileMeta = normalizeNodeFileMetaRecord(record['nodeFileMeta']);
 
-    if (Object.keys(nodeFileMeta).length > 0 || nodes.length > 0 || edges.length > 0) {
+    if (
+      Object.keys(nodeFileMeta).length > 0 ||
+      Object.keys(nodeMeta).length > 0 ||
+      Object.keys(edgeMeta).length > 0 ||
+      nodes.length > 0 ||
+      edges.length > 0
+    ) {
       return {
         sourceFormat: 'canonical',
         nodes,
         edges,
+        nodeMeta,
+        edgeMeta,
         nodeFileMeta,
       };
     }
@@ -255,6 +313,8 @@ const parseNodeFileSnapshotFromAsset = (
       sourceFormat: 'legacy',
       nodes: [],
       edges: [],
+      nodeMeta: {},
+      edgeMeta: {},
       nodeFileMeta: {
         [legacyNodeId]: {
           fileId: legacySourceFileId,
@@ -479,6 +539,8 @@ export const sanitizeCaseResolverNodeFileAssetSnapshots = ({
           : 'manual',
       nodes: parsedNodes,
       edges: parsedEdges,
+      nodeMeta: normalizePromptNodeMetaRecord(record['nodeMeta']),
+      edgeMeta: normalizeEdgeMetaRecord(record['edgeMeta']),
       nodeFileMeta: normalizedNodeFileMeta,
     };
     const nextTextContent = JSON.stringify(nextSnapshotRecord);

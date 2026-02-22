@@ -341,6 +341,8 @@ export const caseResolverNodeFileSnapshotSchema = z.object({
   kind: z.literal('case_resolver_node_file_snapshot_v1'),
   nodes: z.array(aiNodeSchema),
   edges: z.array(edgeSchema),
+  nodeMeta: z.record(z.string(), caseResolverNodeMetaSchema).optional(),
+  edgeMeta: z.record(z.string(), caseResolverEdgeMetaSchema).optional(),
   nodeFileMeta: z.record(z.string(), z.object({
     fileId: z.string(),
     fileType: caseResolverFileTypeSchema,
@@ -353,6 +355,8 @@ export interface CaseResolverNodeFileSnapshotDto {
   source?: 'manual' | 'auto' | undefined;
   nodes: AiNode[];
   edges: Edge[];
+  nodeMeta?: Record<string, CaseResolverNodeMeta> | undefined;
+  edgeMeta?: Record<string, CaseResolverEdgeMeta> | undefined;
   nodeFileMeta: Record<string, CaseResolverSnapshotNodeMeta>;
 }
 

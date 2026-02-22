@@ -19,13 +19,18 @@ import {
   NODE_WIDTH,
   palette,
   stableStringify,
+  type Edge,
 } from '@/features/ai/ai-paths/lib';
 import { type AiNode, type AiEdge, type NodeDefinition } from '@/shared/contracts/case-resolver';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
+  DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
+  type CaseResolverEdgeMeta,
   type CaseResolverIdentifier,
   type CaseResolverFile,
+  type CaseResolverJoinMode,
+  type CaseResolverNodeMeta,
   type CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
   type CaseResolverNodeFileSnapshot,
   type CaseResolverScanSlot,
@@ -46,16 +51,29 @@ import {
   buildNode,
   buildPromptTemplateFromDroppedDocumentFile,
   clampCanvasPosition,
+  ensureEdgeMeta,
   ensureDocumentPromptPorts,
+  ensureNodeMeta,
+  normalizeEdgesForTextNode,
   renderPromptNodeTextPreview,
+  resolvePromptNodeStaticOutputs,
   resolvePromptConfig,
   stripHtmlToPlainText,
 } from './case-resolver-canvas-utils';
+import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
+import { compileCaseResolverPrompt } from '../composer';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
 const PREVIEW_MAX_CHARS = 400;
 const SEARCHABLE_CONTENT_MAX_CHARS = 6000;
+const LEGACY_DOCUMENT_TEXTFIELD_PORT = 'textfield';
+const NODEFILE_JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
+  newline: '\n',
+  tab: '\t',
+  space: ' ',
+  none: '',
+};
 
 type NodeFileDocumentSearchScope = 'case_scope' | 'all_cases';
 
@@ -166,6 +184,38 @@ const collectScopedCaseIds = (
   return scoped.size > 0 ? scoped : null;
 };
 
+const isDocumentTextfieldPort = (port: string | null | undefined): boolean =>
+  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] || port === LEGACY_DOCUMENT_TEXTFIELD_PORT;
+
+const isDocumentContentPort = (port: string | null | undefined): boolean =>
+  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] || !port;
+
+const isDocumentPlainTextPort = (port: string | null | undefined): boolean =>
+  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2];
+
+const resolveOutputValueByPort = (
+  outputs: { textfield: string; content: string; plainText: string } | null | undefined,
+  fromPort: string | null | undefined,
+  fallback: 'textfield' | 'content' | 'plainText'
+): string => {
+  if (!outputs) return '';
+  if (isDocumentTextfieldPort(fromPort)) return outputs.textfield;
+  if (isDocumentPlainTextPort(fromPort)) return outputs.plainText;
+  if (isDocumentContentPort(fromPort)) return outputs.content;
+  if (fallback === 'plainText') return outputs.plainText;
+  return fallback === 'textfield' ? outputs.textfield : outputs.content;
+};
+
+const appendWithJoinMode = (
+  current: string,
+  value: string,
+  joinMode: CaseResolverJoinMode
+): string => {
+  if (!value) return current;
+  if (!current) return value;
+  return `${current}${NODEFILE_JOIN_VALUE_MAP[joinMode]}${value}`;
+};
+
 // ─── inner component props ────────────────────────────────────────────────────
 
 type NodeFileWorkspaceInnerProps = {
@@ -254,23 +304,32 @@ function CaseResolverNodeFileWorkspaceInner({
     activeCaseId,
     caseResolverIdentifiers,
     onSelectFile,
+    onEditFile,
   } = useCaseResolverPageContext();
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();
   const { setView } = useCanvasActions();
   const { nodes, edges } = useGraphState();
-  const { addNode, setNodes } = useGraphActions();
-  const { selectedNodeId } = useSelectionState();
-  const { selectNode } = useSelectionActions();
+  const { addNode, setNodes, updateNode, setEdges } = useGraphActions();
+  const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
+  const { selectNode, setConfigOpen } = useSelectionActions();
   const { toast } = useToast();
   const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database' | 'viewer'>('prompt');
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(true);
+  const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
   const [showNodeSelectorUnderCanvas, setShowNodeSelectorUnderCanvas] = useState(
     () => nodes.length > 0
   );
   const [documentSearchScope, setDocumentSearchScope] =
     useState<NodeFileDocumentSearchScope>('case_scope');
   const [documentSearchQuery, setDocumentSearchQuery] = useState('');
+  const [selectedSearchDocumentId, setSelectedSearchDocumentId] = useState('');
+  const [nodeMetaByNode, setNodeMetaByNode] = useState<Record<string, CaseResolverNodeMeta>>(
+    () => snapshot.nodeMeta ?? {}
+  );
+  const [edgeMetaByEdge, setEdgeMetaByEdge] = useState<Record<string, CaseResolverEdgeMeta>>(
+    () => snapshot.edgeMeta ?? {}
+  );
 
   // nodeFileMeta lives in a ref so changes don't trigger re-renders but are
   // always available synchronously when the save effect fires.
@@ -318,14 +377,18 @@ function CaseResolverNodeFileWorkspaceInner({
     [workspace.files]
   );
   const caseScopedSearchableFiles = useMemo(
-    (): CaseResolverFile[] =>
-      allSearchableFiles.filter((file: CaseResolverFile): boolean =>
-        Boolean(file.parentCaseId && scopedCaseIds?.has(file.parentCaseId))
-      ),
-    [allSearchableFiles, scopedCaseIds]
+    (): CaseResolverFile[] => {
+      if (!activeCaseId || !scopedCaseIds || scopedCaseIds.size === 0) {
+        return allSearchableFiles;
+      }
+      return allSearchableFiles.filter((file: CaseResolverFile): boolean =>
+        Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId))
+      );
+    },
+    [activeCaseId, allSearchableFiles, scopedCaseIds]
   );
   const activeCaseScopeLabel = useMemo((): string => {
-    if (!activeCaseId) return 'Current case only';
+    if (!activeCaseId) return 'Current case (none selected, showing all)';
     const activeCase = workspace.files.find(
       (file: CaseResolverFile): boolean => file.id === activeCaseId && file.fileType === 'case'
     );
@@ -383,6 +446,22 @@ function CaseResolverNodeFileWorkspaceInner({
       row.searchable.includes(normalizedQuery)
     );
   }, [documentSearchQuery, documentSearchRows]);
+  const documentSearchOptions = useMemo(
+    () =>
+      filteredDocumentSearchRows.map((row: NodeFileDocumentSearchRow) => {
+        const metadataParts = [
+          row.file.fileType === 'scanfile' ? 'Scan file' : 'Document',
+          row.file.folder ? `Folder: ${row.file.folder}` : null,
+          row.signatureLabel ? `Signature: ${row.signatureLabel}` : null,
+        ].filter((value: string | null): value is string => Boolean(value));
+        return {
+          value: row.file.id,
+          label: row.file.name,
+          description: metadataParts.join(' • '),
+        };
+      }),
+    [filteredDocumentSearchRows]
+  );
   const activeNodeOptions = useMemo(
     () =>
       nodes.map((node: AiNode, index: number) => {
@@ -402,8 +481,8 @@ function CaseResolverNodeFileWorkspaceInner({
     (): NodeDefinition | null => palette.find((entry: NodeDefinition) => entry.type === 'prompt') ?? null,
     []
   );
-  const strictEdges = useMemo((): CaseResolverNodeFileSnapshot['edges'] => {
-    return (edges)
+  const toStrictEdges = useCallback((inputEdges: AiEdge[]): CaseResolverNodeFileSnapshot['edges'] => {
+    return inputEdges
       .map((edge: AiEdge): CaseResolverNodeFileSnapshot['edges'][number] | null => {
         const from = edge.from ?? edge.source;
         const to = edge.to ?? edge.target;
@@ -422,20 +501,185 @@ function CaseResolverNodeFileWorkspaceInner({
         };
       })
       .filter((edge): edge is CaseResolverNodeFileSnapshot['edges'][number] => edge !== null);
-  }, [edges]);
+  }, []);
+  const strictEdges = useMemo((): CaseResolverNodeFileSnapshot['edges'] => {
+    return toStrictEdges(edges);
+  }, [edges, toStrictEdges]);
+  const normalizedNodeMeta = useMemo(
+    () => ensureNodeMeta(nodes, nodeMetaByNode),
+    [nodeMetaByNode, nodes]
+  );
+  const normalizedEdgeMeta = useMemo(
+    () => ensureEdgeMeta(edges as unknown as { id: string }[], edgeMetaByEdge),
+    [edgeMetaByEdge, edges]
+  );
+  const selectedNode = useMemo(
+    () =>
+      selectedNodeId
+        ? nodes.find((node: AiNode): boolean => node.id === selectedNodeId) ?? null
+        : null,
+    [nodes, selectedNodeId]
+  );
+  const selectedEdge = useMemo(
+    () =>
+      selectedEdgeId
+        ? (edges.find((edge: Edge): boolean => edge.id === selectedEdgeId) ?? null)
+        : null,
+    [edges, selectedEdgeId]
+  );
+  const compiled = useMemo(
+    () =>
+      compileCaseResolverPrompt(
+        {
+          nodes,
+          edges: strictEdges,
+          nodeMeta: normalizedNodeMeta,
+          edgeMeta: normalizedEdgeMeta,
+          pdfExtractionPresetId: 'plain_text',
+          documentFileLinksByNode: {},
+          documentDropNodeId: null,
+          documentSourceFileIdByNode: {},
+        },
+        null
+      ),
+    [nodes, normalizedEdgeMeta, normalizedNodeMeta, strictEdges]
+  );
+  const nodeById = useMemo(
+    (): Map<string, AiNode> =>
+      new Map<string, AiNode>(nodes.map((node: AiNode): [string, AiNode] => [node.id, node])),
+    [nodes]
+  );
+  const resolvePromptTooltipOutputs = useCallback(
+    (
+      node: AiNode
+    ): {
+      sourceFile: CaseResolverFile | null;
+      outputs: { textfield: string; content: string; plainText: string };
+    } => {
+      const linkedMeta = nodeFileMetaRef.current[node.id] ?? null;
+      const sourceFile = linkedMeta ? filesById.get(linkedMeta.fileId) ?? null : null;
+      const nodeMeta = normalizedNodeMeta[node.id] ?? DEFAULT_CASE_RESOLVER_NODE_META;
+      const computedOutputs = compiled.outputsByNode[node.id];
+      const staticOutputNode = (() => {
+        const template = resolvePromptConfig(node).template;
+        if (template.trim().length > 0 || !sourceFile) {
+          return node;
+        }
+        return {
+          ...node,
+          config: {
+            ...(node.config ?? {}),
+            prompt: {
+              ...resolvePromptConfig(node),
+              template: buildPromptTemplateFromDroppedDocumentFile(sourceFile),
+            },
+          },
+        };
+      })();
+      const staticOutputs = resolvePromptNodeStaticOutputs(staticOutputNode, nodeMeta);
+      return {
+        sourceFile,
+        outputs: {
+          textfield: computedOutputs?.textfield ?? staticOutputs.textfield,
+          content: computedOutputs?.content ?? staticOutputs.content,
+          plainText: computedOutputs?.plainText ?? staticOutputs.plainText,
+        },
+      };
+    },
+    [compiled.outputsByNode, filesById, normalizedNodeMeta]
+  );
+  const resolveStaticInputPreview = useCallback(
+    (
+      nodeId: string,
+      port: string
+    ): { value: string; sourceLabels: string[]; connectedEdgeCount: number } => {
+      const fallbackType: 'textfield' | 'content' | 'plainText' = isDocumentTextfieldPort(port)
+        ? 'textfield'
+        : isDocumentPlainTextPort(port)
+          ? 'plainText'
+          : 'content';
+      const acceptsTargetPort = (targetPort: string | null | undefined): boolean => {
+        if (fallbackType === 'textfield') return isDocumentTextfieldPort(targetPort);
+        if (fallbackType === 'plainText') return isDocumentPlainTextPort(targetPort);
+        return isDocumentContentPort(targetPort);
+      };
 
-  const lastEmittedHashRef = useRef<string>(
-    stableStringify({
-      kind: 'case_resolver_node_file_snapshot_v1',
-      source: 'manual',
-      nodes: snapshot.nodes,
-      edges: snapshot.edges,
-      nodeFileMeta: snapshot.nodeFileMeta,
-    })
+      const incomingEdges = edges
+        .filter((edge: Edge): boolean => (edge.to ?? edge.target) === nodeId)
+        .filter((edge: Edge): boolean => acceptsTargetPort(edge.toPort))
+        .sort((left: Edge, right: Edge): number => {
+          const leftFrom = left.from ?? left.source;
+          const rightFrom = right.from ?? right.source;
+          const leftNode = leftFrom ? nodeById.get(leftFrom) : null;
+          const rightNode = rightFrom ? nodeById.get(rightFrom) : null;
+          if (leftNode && rightNode) {
+            if (leftNode.position.y !== rightNode.position.y) {
+              return leftNode.position.y - rightNode.position.y;
+            }
+            if (leftNode.position.x !== rightNode.position.x) {
+              return leftNode.position.x - rightNode.position.x;
+            }
+            if (leftNode.id !== rightNode.id) {
+              return leftNode.id.localeCompare(rightNode.id);
+            }
+          } else if (leftNode || rightNode) {
+            return leftNode ? -1 : 1;
+          }
+          return left.id.localeCompare(right.id);
+        });
+
+      let mergedValue = '';
+      const sourceLabels: string[] = [];
+      incomingEdges.forEach((edge: Edge): void => {
+        const sourceNodeId = edge.from ?? edge.source;
+        if (!sourceNodeId) return;
+        const sourceNode = nodeById.get(sourceNodeId);
+        if (!sourceNode) return;
+        const sourceOutputs =
+          sourceNode.type === 'prompt'
+            ? resolvePromptTooltipOutputs(sourceNode).outputs
+            : compiled.outputsByNode[sourceNodeId];
+        const rawSourceValue = resolveOutputValueByPort(
+          sourceOutputs,
+          edge.fromPort,
+          fallbackType
+        );
+        const sourceValue =
+          fallbackType === 'plainText' ? stripHtmlToPlainText(rawSourceValue) : rawSourceValue;
+        if (!sourceValue) return;
+        const joinMode =
+          (normalizedEdgeMeta[edge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode ??
+          DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
+        mergedValue = appendWithJoinMode(mergedValue, sourceValue, joinMode);
+        sourceLabels.push(sourceNode.title?.trim() || sourceNode.id);
+      });
+
+      return {
+        value: mergedValue,
+        sourceLabels,
+        connectedEdgeCount: incomingEdges.length,
+      };
+    },
+    [compiled.outputsByNode, edges, nodeById, normalizedEdgeMeta, resolvePromptTooltipOutputs]
   );
 
-  // Persist snapshot on every graph change, pruning orphaned nodeFileMeta entries.
-  useEffect(() => {
+  const initialSnapshotHash = useMemo(
+    () =>
+      stableStringify({
+        kind: 'case_resolver_node_file_snapshot_v1',
+        source: 'manual',
+        nodes: snapshot.nodes,
+        edges: snapshot.edges,
+        nodeMeta: snapshot.nodeMeta ?? {},
+        edgeMeta: snapshot.edgeMeta ?? {},
+        nodeFileMeta: snapshot.nodeFileMeta,
+      }),
+    [snapshot.edgeMeta, snapshot.edges, snapshot.nodeFileMeta, snapshot.nodeMeta, snapshot.nodes]
+  );
+  const [savedSnapshotHash, setSavedSnapshotHash] = useState<string>(initialSnapshotHash);
+  const [currentSnapshotHash, setCurrentSnapshotHash] = useState<string>(initialSnapshotHash);
+
+  const buildSnapshotFromState = useCallback((): CaseResolverNodeFileSnapshot => {
     const existingNodeIds = new Set(nodes.map((n: AiNode) => n.id));
     const prunedMeta: Record<string, CaseResolverNodeFileMeta> = {};
     for (const [nodeId, meta] of Object.entries(nodeFileMetaRef.current)) {
@@ -445,19 +689,29 @@ function CaseResolverNodeFileWorkspaceInner({
       prunedMeta[nodeId] = meta;
     }
     nodeFileMetaRef.current = prunedMeta;
-
-    const updated: CaseResolverNodeFileSnapshot = {
+    return {
       kind: 'case_resolver_node_file_snapshot_v1',
       source: 'manual',
       nodes,
       edges: strictEdges,
+      nodeMeta: normalizedNodeMeta,
+      edgeMeta: normalizedEdgeMeta,
       nodeFileMeta: prunedMeta,
     };
-    const hash = stableStringify(updated);
-    if (hash === lastEmittedHashRef.current) return;
-    lastEmittedHashRef.current = hash;
-    onSnapshotChange(updated);
-  }, [filesById, nodes, onSnapshotChange, strictEdges]);
+  }, [
+    filesById,
+    normalizedEdgeMeta,
+    normalizedNodeMeta,
+    nodes,
+    strictEdges,
+  ]);
+  useEffect(() => {
+    const hash = stableStringify(buildSnapshotFromState());
+    setCurrentSnapshotHash((previous: string): string =>
+      previous === hash ? previous : hash
+    );
+  }, [buildSnapshotFromState]);
+  const hasPendingSnapshotChanges = currentSnapshotHash !== savedSnapshotHash;
 
   // Migrate legacy template-based linked-file nodes to prompt nodes so they expose
   // Case Resolver document ports (wysiwygText/content/plainText).
@@ -584,11 +838,10 @@ function CaseResolverNodeFileWorkspaceInner({
       };
 
       addNode(node);
-      selectNode(nodeId);
       setShowNodeSelectorUnderCanvas(true);
       toast(`Added "${fileName}" to canvas.`, { variant: 'success' });
     },
-    [addNode, filesById, promptDefinition, selectNode, toast]
+    [addNode, filesById, promptDefinition, toast]
   );
 
   const addExplanatoryNode = useCallback((): void => {
@@ -609,6 +862,17 @@ function CaseResolverNodeFileWorkspaceInner({
       },
     });
     addNode(node);
+    setNodeMetaByNode((previous: Record<string, CaseResolverNodeMeta>) => ({
+      ...previous,
+      [nodeId]: {
+        ...DEFAULT_CASE_RESOLVER_NODE_META,
+        role: 'explanatory',
+        includeInOutput: true,
+        quoteMode: 'none',
+        surroundPrefix: '',
+        surroundSuffix: '',
+      },
+    }));
     selectNode(nodeId);
     toast('Explanatory node added.', { variant: 'success' });
   }, [addNode, placePosition, selectNode, toast]);
@@ -701,6 +965,21 @@ function CaseResolverNodeFileWorkspaceInner({
     };
   }, [assetId, focusNodeInCanvas]);
 
+  useEffect(() => {
+    if (!configOpen) return;
+    setIsNodeInspectorOpen(true);
+    setConfigOpen(false);
+  }, [configOpen, setConfigOpen]);
+  useEffect(() => {
+    if (!selectedSearchDocumentId) return;
+    const exists = filteredDocumentSearchRows.some(
+      (row: NodeFileDocumentSearchRow): boolean => row.file.id === selectedSearchDocumentId
+    );
+    if (!exists) {
+      setSelectedSearchDocumentId('');
+    }
+  }, [filteredDocumentSearchRows, selectedSearchDocumentId]);
+
   const handleCanvasDragOverCapture = (event: React.DragEvent<HTMLDivElement>): void => {
     const payload = parseCaseResolverTreeDropPayload(event.dataTransfer);
     if (payload?.entity !== 'file') return;
@@ -729,16 +1008,101 @@ function CaseResolverNodeFileWorkspaceInner({
   }, [onSelectFile, selectedNodeId, toast]);
 
   const handleManualSave = useCallback((): void => {
-    const updated: CaseResolverNodeFileSnapshot = {
-      kind: 'case_resolver_node_file_snapshot_v1',
-      source: 'manual',
-      nodes,
-      edges: strictEdges,
-      nodeFileMeta: nodeFileMetaRef.current,
-    };
+    const updated = buildSnapshotFromState();
+    const hash = stableStringify(updated);
+    if (hash === savedSnapshotHash) {
+      toast('No changes to update.', { variant: 'info' });
+      return;
+    }
     onSnapshotChange(updated);
+    setSavedSnapshotHash(hash);
+    setCurrentSnapshotHash(hash);
     toast('Node file updated.', { variant: 'success' });
-  }, [nodes, onSnapshotChange, strictEdges, toast]);
+  }, [buildSnapshotFromState, onSnapshotChange, savedSnapshotHash, toast]);
+  const addSelectedSearchDocument = useCallback((): void => {
+    const selectedDocument = filteredDocumentSearchRows.find(
+      (row: NodeFileDocumentSearchRow): boolean => row.file.id === selectedSearchDocumentId
+    );
+    if (!selectedDocument) {
+      toast('Select a document from search results first.', { variant: 'warning' });
+      return;
+    }
+    addFileReferenceNode(selectedDocument.file.id, selectedDocument.file.name, placePosition);
+    setSelectedSearchDocumentId('');
+  }, [
+    addFileReferenceNode,
+    filteredDocumentSearchRows,
+    placePosition,
+    selectedSearchDocumentId,
+    toast,
+  ]);
+
+  const updateSelectedNodeMeta = useCallback((patch: Partial<CaseResolverNodeMeta>): void => {
+    if (selectedNode?.type !== 'prompt') return;
+    const current = normalizedNodeMeta[selectedNode.id] ?? DEFAULT_CASE_RESOLVER_NODE_META;
+    const nextRole = patch.role ?? current.role;
+    const shouldNormalizeTextPorts =
+      nextRole === 'text_note' || nextRole === 'explanatory';
+    const nextNodes = shouldNormalizeTextPorts
+      ? nodes.map((node: AiNode): AiNode => {
+        return node.id === selectedNode.id ? ensureDocumentPromptPorts(node) : node;
+      })
+      : nodes;
+    const nextEdges = shouldNormalizeTextPorts
+      ? normalizeEdgesForTextNode(edges, selectedNode.id)
+      : edges;
+    if (shouldNormalizeTextPorts) {
+      const normalizedSelectedNode = nextNodes.find(
+        (node: AiNode): boolean => node.id === selectedNode.id
+      );
+      if (normalizedSelectedNode) {
+        updateNode(selectedNode.id, {
+          inputs: normalizedSelectedNode.inputs,
+          outputs: normalizedSelectedNode.outputs,
+        });
+      }
+      setEdges(nextEdges as unknown as Edge[]);
+    }
+    setNodeMetaByNode((previous: Record<string, CaseResolverNodeMeta>) => ({
+      ...previous,
+      [selectedNode.id]: {
+        ...current,
+        ...patch,
+      },
+    }));
+  }, [
+    edges,
+    nodes,
+    normalizedNodeMeta,
+    selectedNode,
+    setEdges,
+    updateNode,
+  ]);
+
+  const updateSelectedEdgeMeta = useCallback((patch: Partial<CaseResolverEdgeMeta>): void => {
+    if (!selectedEdge) return;
+    const current = normalizedEdgeMeta[selectedEdge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
+    setEdgeMetaByEdge((previous: Record<string, CaseResolverEdgeMeta>) => ({
+      ...previous,
+      [selectedEdge.id]: {
+        ...current,
+        ...patch,
+      },
+    }));
+  }, [normalizedEdgeMeta, selectedEdge]);
+
+  const updateSelectedPromptTemplate = useCallback((template: string): void => {
+    if (selectedNode?.type !== 'prompt') return;
+    updateNode(selectedNode.id, {
+      config: {
+        ...(selectedNode.config ?? {}),
+        prompt: {
+          ...resolvePromptConfig(selectedNode),
+          template,
+        },
+      },
+    });
+  }, [selectedNode, updateNode]);
 
   // Derived values for the side panel
   const selectedNodeMeta = selectedNodeId
@@ -747,42 +1111,99 @@ function CaseResolverNodeFileWorkspaceInner({
   const selectedFile = selectedNodeMeta
     ? (filesById.get(selectedNodeMeta.fileId) ?? null)
     : null;
+  const selectedPromptMeta =
+    selectedNode?.type === 'prompt'
+      ? normalizedNodeMeta[selectedNode.id] ?? DEFAULT_CASE_RESOLVER_NODE_META
+      : null;
+  const selectedPromptSourceFile = selectedNodeMeta
+    ? (filesById.get(selectedNodeMeta.fileId) ?? null)
+    : null;
+  const selectedPromptTemplate = selectedNode?.type === 'prompt'
+    ? resolvePromptConfig(selectedNode).template
+    : '';
+  const selectedPromptInputText = useMemo((): string => {
+    if (selectedNode?.type !== 'prompt') return '';
+    const promptTemplate = resolvePromptConfig(selectedNode).template;
+    const normalizedTemplate = stripHtmlToPlainText(promptTemplate);
+    if (normalizedTemplate) return normalizedTemplate;
+    if (!selectedPromptSourceFile) return '';
+    if (selectedPromptSourceFile.documentContentHtml.trim()) {
+      return stripHtmlToPlainText(selectedPromptSourceFile.documentContentHtml);
+    }
+    return stripHtmlToPlainText(selectedPromptSourceFile.documentContent);
+  }, [selectedNode, selectedPromptSourceFile]);
+  const selectedPromptOutputPreview = useMemo(() => {
+    if (selectedNode?.type !== 'prompt') return null;
+    const computedOutputs = compiled.outputsByNode[selectedNode.id];
+    const nodeMeta = selectedPromptMeta ?? DEFAULT_CASE_RESOLVER_NODE_META;
+    const textfieldOutput =
+      computedOutputs?.textfield ??
+      stripHtmlToPlainText(resolvePromptConfig(selectedNode).template);
+    return {
+      textfield: textfieldOutput,
+      content:
+        computedOutputs?.content ?? renderPromptNodeTextPreview(selectedNode, nodeMeta),
+      plainText: computedOutputs?.plainText ?? stripHtmlToPlainText(textfieldOutput),
+    };
+  }, [compiled.outputsByNode, selectedNode, selectedPromptMeta]);
+  const selectedEdgeJoinMode = selectedEdge
+    ? (normalizedEdgeMeta[selectedEdge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode
+    : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
   const resolveConnectorTooltip = useCallback(
     (input: {
       direction: 'input' | 'output';
       node: AiNode;
       port: string;
     }): { content: React.ReactNode; maxWidth?: string | undefined } | null => {
-      if (input.direction !== 'output') return null;
-      if (input.node.type !== 'prompt') return null;
       if (
-        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] &&
-        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] &&
-        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2]
+        !isDocumentTextfieldPort(input.port) &&
+        !isDocumentContentPort(input.port) &&
+        !isDocumentPlainTextPort(input.port)
       ) {
         return null;
       }
+      if (input.node.type !== 'prompt') return null;
 
-      const linkedMeta = nodeFileMetaRef.current[input.node.id] ?? null;
-      const sourceFile = linkedMeta ? filesById.get(linkedMeta.fileId) ?? null : null;
-      const template = resolvePromptConfig(input.node).template;
-      const wysiwygOutput = stripHtmlToPlainText(template);
-      const contentOutput =
-        renderPromptNodeTextPreview(input.node, DEFAULT_CASE_RESOLVER_NODE_META) ||
-        wysiwygOutput;
-      const plainTextOutput = stripHtmlToPlainText(contentOutput || wysiwygOutput);
       const isContentPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1];
-      const isPlainTextPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2];
+      const isPlainTextPort = isDocumentPlainTextPort(input.port);
+
+      if (input.direction === 'input') {
+        const staticInput = resolveStaticInputPreview(input.node.id, input.port);
+        if (staticInput.connectedEdgeCount === 0) return null;
+        const inputLabel = isPlainTextPort
+          ? 'Plain text input'
+          : isContentPort
+            ? 'Content input'
+            : 'WYSIWYG text input';
+        const dedupedSources = Array.from(new Set(staticInput.sourceLabels));
+        return {
+          maxWidth: '720px',
+          content: (
+            <div className='space-y-2'>
+              <div className='text-[11px] text-gray-400'>{inputLabel}</div>
+              <div className='text-[10px] text-gray-500'>
+                Connected sources: {staticInput.connectedEdgeCount}
+                {dedupedSources.length > 0 ? ` • ${dedupedSources.join(', ')}` : ''}
+              </div>
+              <div className='max-h-80 overflow-auto rounded border border-gray-700 bg-white p-3 text-[11px] leading-relaxed text-slate-900 whitespace-pre-wrap'>
+                {staticInput.value || '(empty)'}
+              </div>
+            </div>
+          ),
+        };
+      }
+
       const outputLabel = isPlainTextPort
         ? 'Plain text output'
         : isContentPort
           ? 'Content output'
           : 'WYSIWYG text output';
+      const { sourceFile, outputs } = resolvePromptTooltipOutputs(input.node);
       const renderedText = isPlainTextPort
-        ? plainTextOutput
+        ? outputs.plainText
         : isContentPort
-          ? contentOutput
-          : wysiwygOutput;
+          ? outputs.content
+          : outputs.textfield;
 
       return {
         maxWidth: '720px',
@@ -801,7 +1222,7 @@ function CaseResolverNodeFileWorkspaceInner({
         ),
       };
     },
-    [filesById]
+    [resolvePromptTooltipOutputs, resolveStaticInputPreview]
   );
 
   return (
@@ -818,7 +1239,12 @@ function CaseResolverNodeFileWorkspaceInner({
               type='button'
               size='sm'
               onClick={handleManualSave}
-              className='h-8 min-w-[100px] flex-shrink-0 rounded-md border border-emerald-500/40 text-xs text-emerald-200 transition-colors hover:bg-emerald-500/10'
+              disabled={!hasPendingSnapshotChanges}
+              className={`h-8 min-w-[100px] flex-shrink-0 rounded-md border text-xs transition-colors ${
+                hasPendingSnapshotChanges
+                  ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
+                  : 'border-border/60 text-gray-500 hover:bg-transparent'
+              }`}
             >
               Update
             </Button>
@@ -897,6 +1323,28 @@ function CaseResolverNodeFileWorkspaceInner({
             containerClassName='w-[320px]'
             className='h-8 border-border bg-card/60 text-xs text-white'
           />
+          <SelectSimple
+            size='sm'
+            value={selectedSearchDocumentId}
+            onValueChange={(value: string): void => {
+              setSelectedSearchDocumentId(value.trim());
+            }}
+            options={documentSearchOptions}
+            placeholder='Select document from results'
+            className='w-[320px]'
+            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+            contentClassName='max-h-80'
+            disabled={documentSearchOptions.length === 0}
+          />
+          <Button
+            type='button'
+            variant='outline'
+            size='sm'
+            onClick={addSelectedSearchDocument}
+            disabled={!selectedSearchDocumentId}
+          >
+            Add Selected
+          </Button>
 
           <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
             {filteredDocumentSearchRows.length} result
@@ -947,6 +1395,16 @@ function CaseResolverNodeFileWorkspaceInner({
             size='sm'
           >
             Add Node
+          </Button>
+          <Button
+            type='button'
+            onClick={(): void => {
+              setIsNodeInspectorOpen(true);
+            }}
+            variant='outline'
+            size='sm'
+          >
+            Node Inspector
           </Button>
         </div>
 
@@ -1033,6 +1491,26 @@ function CaseResolverNodeFileWorkspaceInner({
           onOpen={openSelectedFile}
         />
       ) : null}
+
+      <CaseResolverNodeInspectorModal
+        open={isNodeInspectorOpen}
+        onOpenChange={setIsNodeInspectorOpen}
+        onManualUpdate={handleManualSave}
+        selectedNode={selectedNode}
+        selectedPromptMeta={selectedPromptMeta}
+        selectedPromptSourceFile={selectedPromptSourceFile}
+        selectedPromptTemplate={selectedPromptTemplate}
+        selectedPromptInputText={selectedPromptInputText}
+        selectedPromptOutputPreview={selectedPromptOutputPreview}
+        selectedCanvasFileId={null}
+        selectedWorkspaceId={workspace.id ?? null}
+        onEditFile={onEditFile}
+        onUpdateSelectedPromptTemplate={updateSelectedPromptTemplate}
+        onUpdateSelectedNodeMeta={updateSelectedNodeMeta}
+        selectedEdge={selectedEdge}
+        selectedEdgeJoinMode={selectedEdgeJoinMode}
+        onUpdateSelectedEdgeMeta={updateSelectedEdgeMeta}
+      />
     </div>
   );
 }

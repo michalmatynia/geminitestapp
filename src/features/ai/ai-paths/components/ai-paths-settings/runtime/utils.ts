@@ -358,6 +358,8 @@ export const buildSimulationContext = (args: {
   const scopedEntity = args.entity ?? fallbackEntity;
   const imageUrls = extractImageUrls(scopedEntity);
   return {
+    contextSource: 'simulation_manual',
+    source: 'simulation',
     entityId: args.entityId,
     entityType: args.entityType,
     ...(args.entityType === 'product' ? { productId: args.entityId } : {}),

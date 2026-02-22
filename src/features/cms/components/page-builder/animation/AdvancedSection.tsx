@@ -266,9 +266,9 @@ export function AdvancedSection(): React.ReactNode {
       title: 'SVG Morph Target',
       description: 'Draw the target path for morphing.',
       initialShapes: svgMorphShapesValue,
-              onApply: ({ shapes, path }: VectorOverlayResult) => {
-                onChange({ ...config, svgMorphEnabled: true, svgMorphTo: path, svgMorphShapes: shapes });
-              },
+      onApply: ({ shapes, path }: VectorOverlayResult) => {
+        onChange({ ...config, svgMorphEnabled: true, svgMorphTo: path, svgMorphShapes: shapes });
+      },
       
     });
   }, [config, onChange, openVectorOverlay, svgMorphShapesValue]);
@@ -691,12 +691,12 @@ export function AdvancedSection(): React.ReactNode {
           />
         </FormField>
 
-                  {textEffectValue !== 'none' && (
-                    <div className='mt-4 space-y-4'>
-                      {(textEffectValue === 'splitChars' ||
+        {textEffectValue !== 'none' && (
+          <div className='mt-4 space-y-4'>
+            {(textEffectValue === 'splitChars' ||
                         textEffectValue === 'splitWords' ||
                         textEffectValue === 'splitLines') && (
-                        <FormField label='Stagger (seconds)'>                <Input
+              <FormField label='Stagger (seconds)'>                <Input
         
                 type='number'
                 min={0.01}
@@ -739,8 +739,8 @@ export function AdvancedSection(): React.ReactNode {
               </>
             )}
 
-                          {textEffectValue === 'countUp' && (
-                            <div className='grid gap-3 sm:grid-cols-2'>                <FormField label='From'>
+            {textEffectValue === 'countUp' && (
+              <div className='grid gap-3 sm:grid-cols-2'>                <FormField label='From'>
             
                 <Input
                   type='number'

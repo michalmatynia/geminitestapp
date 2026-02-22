@@ -1029,6 +1029,7 @@ export function useAiPathsSettingsState({
     runtimeEvents,
     nodeDurations,
     clearNodeCache,
+    resetRuntimeDiagnostics,
     handleSendToAi,
     sendingToAi,
   } = useAiPathsRuntime({
@@ -1070,6 +1071,7 @@ export function useAiPathsSettingsState({
     confirm,
     runtimeState,
     setRuntimeState,
+    resetRuntimeDiagnostics,
     edges,
     setEdges,
     nodes,

@@ -207,7 +207,13 @@ function ColumnsTab({ columns }: { columns: DatabaseColumnInfo[] }): React.JSX.E
     {
       accessorKey: 'defaultValue',
       header: 'Default',
-      cell: ({ row }) => <span className='font-mono text-gray-400'>{row.original.defaultValue ?? '—'}</span>,
+      cell: ({ row }) => {
+        const val = row.original.defaultValue;
+        const rendered = val === null || val === undefined 
+          ? '—' 
+          : (typeof val === 'object' ? JSON.stringify(val) : String(val));
+        return <span className='font-mono text-gray-400'>{rendered}</span>;
+      },
     },
     {
       id: 'key',

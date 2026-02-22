@@ -14,6 +14,7 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
     productId: '',
     entityType: 'product',
     entityId: '',
+    runBehavior: 'before_connected_trigger',
   };
   const simulationEntityValue =
     simulationConfig.entityId?.trim()
@@ -72,6 +73,33 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
             This looks like a UUID, but its length is {idLength}. UUIDs should be 36 characters.
           </Card>
         ) : null}
+      </div>
+      <div>
+        <Label className='text-xs text-gray-400'>Run Behavior</Label>
+        <SelectSimple
+          size='sm'
+          value={simulationConfig.runBehavior ?? 'before_connected_trigger'}
+          onValueChange={(value: string): void =>
+            updateSelectedNodeConfig({
+              simulation: {
+                ...simulationConfig,
+                runBehavior: value as 'before_connected_trigger' | 'manual_only',
+              },
+            })
+          }
+          options={[
+            {
+              value: 'before_connected_trigger',
+              label: 'Auto-run before connected Trigger',
+            },
+            {
+              value: 'manual_only',
+              label: 'Manual only',
+            },
+          ]}
+          placeholder='Select run behavior'
+          className='mt-2'
+        />
       </div>
       <p className='text-[11px] text-gray-500'>
         Used to simulate {simulationConfig.entityType ?? 'products'} collection context.

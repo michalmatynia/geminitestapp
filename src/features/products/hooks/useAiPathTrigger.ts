@@ -42,11 +42,11 @@ import {
 import { fetchPathSettings, findTriggerPath } from './useAiPathSettings';
 
 const AI_PATHS_ENTITY_STALE_MS = 10_000;
+const PRODUCT_TRIGGER_PRIMARY_EVENT_ID = 'path_generate_description';
 const PRODUCT_TRIGGER_FALLBACK_EVENT_ID = (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
-const PRODUCT_TRIGGER_EVENT_IDS = [
-  'path_generate_description',
-  PRODUCT_TRIGGER_FALLBACK_EVENT_ID,
-];
+const PRODUCT_TRIGGER_EVENT_IDS = Array.from(
+  new Set([PRODUCT_TRIGGER_PRIMARY_EVENT_ID, PRODUCT_TRIGGER_FALLBACK_EVENT_ID])
+);
 
 const normalizeNodes = (nodes: AiNode[]): AiNode[] => {
   return nodes.map((node: AiNode) => ({
@@ -248,26 +248,37 @@ export function useAiPathTrigger(): {
       const { orderedConfigs, uiState, preferredActivePathId } =
         await fetchPathSettings(queryClient);
 
-      const triggerSelection = PRODUCT_TRIGGER_EVENT_IDS
-        .map((eventId: string): { selectedConfig: PathConfig; triggerEvent: string } | null => {
-          const selectedConfig = findTriggerPath(
-            orderedConfigs,
-            uiState,
-            preferredActivePathId,
-            eventId,
-            {
-              fallbackToAnyPath: false,
-              defaultTriggerEventId: PRODUCT_TRIGGER_FALLBACK_EVENT_ID,
-            }
-          );
-          return selectedConfig ? { selectedConfig, triggerEvent: eventId } : null;
-        })
-        .find(
-          (
-            candidate
-          ): candidate is { selectedConfig: PathConfig; triggerEvent: string } =>
-            candidate !== null
+      const resolveTriggerSelection = (
+        requireServerExecution: boolean
+      ): { selectedConfig: PathConfig; triggerEvent: string } | null => {
+        return (
+          PRODUCT_TRIGGER_EVENT_IDS
+            .map((eventId: string): { selectedConfig: PathConfig; triggerEvent: string } | null => {
+              const selectedConfig = findTriggerPath(
+                orderedConfigs,
+                uiState,
+                preferredActivePathId,
+                eventId,
+                {
+                  fallbackToAnyPath: false,
+                  defaultTriggerEventId: PRODUCT_TRIGGER_FALLBACK_EVENT_ID,
+                  preferServerExecution: true,
+                  requireServerExecution,
+                }
+              );
+              return selectedConfig ? { selectedConfig, triggerEvent: eventId } : null;
+            })
+            .find(
+              (
+                candidate
+              ): candidate is { selectedConfig: PathConfig; triggerEvent: string } =>
+                candidate !== null
+            ) ?? null
         );
+      };
+
+      const triggerSelection =
+        resolveTriggerSelection(true) ?? resolveTriggerSelection(false);
 
       if (!triggerSelection) {
         toast(
@@ -278,6 +289,12 @@ export function useAiPathTrigger(): {
       }
 
       const { selectedConfig, triggerEvent } = triggerSelection;
+      if (triggerEvent !== PRODUCT_TRIGGER_PRIMARY_EVENT_ID) {
+        toast(
+          `Using fallback trigger "${triggerEvent}". Configure a Trigger node event "${PRODUCT_TRIGGER_PRIMARY_EVENT_ID}" to control Product panel routing explicitly.`,
+          { variant: 'info' }
+        );
+      }
 
       toast(`Running AI Path: ${selectedConfig.name}`, { variant: 'success' });
 

@@ -246,6 +246,8 @@ export const cmsInspectorSettingsSchema = z.object({
   showVisibilityInfo: z.boolean(),
   showConnectionInfo: z.boolean(),
   showEditorChrome: z.boolean(),
+  showLayoutGuides: z.boolean().optional(),
+  pauseAnimations: z.boolean().optional(),
 });
 
 export type CmsInspectorSettingsDto = z.infer<typeof cmsInspectorSettingsSchema>;
@@ -255,10 +257,12 @@ export const DEFAULT_INSPECTOR_SETTINGS: InspectorSettings = {
   showTooltip: true,
   showStyleSettings: true,
   showStructureInfo: true,
-  showIdentifiers: false,
+  showIdentifiers: true,
   showVisibilityInfo: true,
   showConnectionInfo: true,
-  showEditorChrome: false,
+  showEditorChrome: true,
+  showLayoutGuides: true,
+  pauseAnimations: false,
 };
 
 export const pageBuilderStateSchema = z.object({
@@ -699,6 +703,7 @@ export type CmsRepository = {
   updatePage(id: string, data: PageUpdateData): Promise<Page | null>;
   deletePage(id: string): Promise<Page | null>;
   addSlugToPage(pageId: string, slugId: string): Promise<void>;
+  removeSlugFromPage(pageId: string, slugId: string): Promise<void>;
   replacePageSlugs(pageId: string, slugIds: string[]): Promise<void>;
   replacePageComponents(pageId: string, components: Array<Partial<PageComponent> & Pick<PageComponent, 'type' | 'order' | 'content'>>): Promise<void>;
 

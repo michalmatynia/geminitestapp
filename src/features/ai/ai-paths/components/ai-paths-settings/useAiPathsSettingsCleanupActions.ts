@@ -37,6 +37,7 @@ type UseAiPathsSettingsCleanupActionsInput = {
   confirm: ConfirmFn;
   runtimeState: RuntimeState;
   setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
+  resetRuntimeDiagnostics: () => void;
   edges: Edge[];
   setEdges: React.Dispatch<React.SetStateAction<Edge[]>>;
   nodes: AiNode[];
@@ -74,6 +75,43 @@ type UseAiPathsSettingsCleanupActionsInput = {
   ) => RuntimeState;
 };
 
+const buildConnectorClearedRuntimeState = (): RuntimeState => ({
+  status: 'idle',
+  nodeStatuses: {},
+  nodeOutputs: {},
+  variables: {},
+  events: [],
+  inputs: {},
+  outputs: {},
+});
+
+const clearNodeStatusPorts = (
+  outputs: RuntimeState['outputs'] | undefined
+): RuntimeState['outputs'] => {
+  const next: RuntimeState['outputs'] = {};
+  if (!outputs) return next;
+  Object.entries(outputs).forEach(([nodeId, value]) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+    const cleanedValue = { ...value };
+    delete cleanedValue['status'];
+    next[nodeId] = cleanedValue;
+  });
+  return next;
+};
+
+const buildHistoryClearedRuntimeState = (state: RuntimeState): RuntimeState => {
+  const nextRuntimeState: RuntimeState = {
+    ...state,
+    status: 'idle',
+    nodeStatuses: {},
+    nodeOutputs: {},
+    events: [],
+    outputs: clearNodeStatusPorts(state.outputs),
+  };
+  delete nextRuntimeState.history;
+  return nextRuntimeState;
+};
+
 export type UseAiPathsSettingsCleanupActionsReturn = {
   handleClearWires: () => Promise<void>;
   handleClearConnectorData: () => Promise<void>;
@@ -88,6 +126,7 @@ export function useAiPathsSettingsCleanupActions({
   confirm,
   runtimeState,
   setRuntimeState,
+  resetRuntimeDiagnostics,
   edges,
   setEdges,
   nodes,
@@ -227,7 +266,8 @@ export function useAiPathsSettingsCleanupActions({
       confirmText: 'Clear Data',
       isDangerous: true,
       onConfirm: async () => {
-        const nextRuntimeState: RuntimeState = { inputs: {}, outputs: {} } as unknown as RuntimeState;
+        resetRuntimeDiagnostics();
+        const nextRuntimeState = buildConnectorClearedRuntimeState();
         const updatedAt = new Date().toISOString();
         const config: PathConfig = {
           id: activePathId,
@@ -302,6 +342,7 @@ export function useAiPathsSettingsCleanupActions({
     selectedNodeId,
     setPathConfigs,
     setRuntimeState,
+    resetRuntimeDiagnostics,
     toast,
     updaterSamples,
   ]);
@@ -326,8 +367,8 @@ export function useAiPathsSettingsCleanupActions({
       confirmText: 'Clear History',
       isDangerous: true,
       onConfirm: async () => {
-        const nextRuntimeState: RuntimeState = { ...runtimeState };
-        delete nextRuntimeState.history;
+        resetRuntimeDiagnostics();
+        const nextRuntimeState = buildHistoryClearedRuntimeState(runtimeState);
         const updatedAt = new Date().toISOString();
         const config: PathConfig = {
           id: activePathId,
@@ -403,6 +444,7 @@ export function useAiPathsSettingsCleanupActions({
     selectedNodeId,
     setPathConfigs,
     setRuntimeState,
+    resetRuntimeDiagnostics,
     toast,
     updaterSamples,
   ]);

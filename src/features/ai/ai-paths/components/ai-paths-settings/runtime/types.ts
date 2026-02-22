@@ -14,7 +14,6 @@ import type {
   ParserSampleState,
   QueuedRunDto,
   RuntimeEventInputDto,
-  RuntimePortValues,
   RuntimeState,
   RunStatusDto,
   SetNodeStatusInputDto,
@@ -100,7 +99,6 @@ export interface LocalExecutionArgs {
   lastTriggerNodeIdRef: MutableRefObject<string | null>;
   lastTriggerEventRef: MutableRefObject<string | null>;
   triggerContextRef: MutableRefObject<Record<string, unknown> | null>;
-  pendingSimulationContextRef: MutableRefObject<Record<string, unknown> | null>;
   runLoopActiveRef: MutableRefObject<boolean>;
   runInFlightRef: MutableRefObject<boolean>;
   abortControllerRef: MutableRefObject<AbortController | null>;
@@ -121,11 +119,6 @@ export interface LocalExecutionArgs {
   resetRuntimeNodeStatuses: (next?: AiPathRuntimeNodeStatusMap) => void;
   normalizeNodeStatus: (value: unknown) => AiPathRuntimeNodeStatus | null;
   formatStatusLabel: (status: AiPathRuntimeNodeStatus) => string;
-  seedImmediateDownstreamInputs: (
-    inputs: Record<string, RuntimePortValues>,
-    outputs: Record<string, RuntimePortValues>,
-    triggerId: string
-  ) => Record<string, RuntimePortValues>;
   hasPendingIteratorAdvance: (state: RuntimeState) => boolean;
   fetchEntityByType: (entityType: string, entityId: string) => Promise<Record<string, unknown> | null>;
   reportAiPathsError: (error: unknown, context: Record<string, unknown>, fallbackMessage?: string) => void;
@@ -180,4 +173,5 @@ export interface UseAiPathsRuntimeResult {
   runtimeEvents: AiPathRuntimeEvent[];
   nodeDurations: Record<string, number>;
   clearNodeCache: (nodeId: string) => void;
+  resetRuntimeDiagnostics: () => void;
 }

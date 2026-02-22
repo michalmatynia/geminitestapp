@@ -10,6 +10,9 @@ import type {
   UpdateCmsThemeDto as CmsThemeUpdateInput,
   CmsRepository,
   PageUpdateData,
+  CmsDomainDto,
+  CreateCmsDomainDto,
+  UpdateCmsDomainDto,
 } from '@/shared/contracts/cms';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -17,10 +20,10 @@ import type {
   Prisma,
   Page as PrismaPage,
   Slug as PrismaSlug,
-  CmsTheme as PrismaCmsTheme,
-  PageComponent as PrismaPageComponent,
-} from '@prisma/client';
-
+      CmsTheme as PrismaCmsTheme,
+      PageComponent as PrismaPageComponent,
+      CmsDomain as PrismaCmsDomain,
+    } from '@prisma/client';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -70,9 +73,11 @@ function mapPrismaTheme(t: PrismaCmsTheme): CmsTheme {
 
 function mapPrismaPageComponent(c: PrismaPageComponent): PageComponent {
   return {
+    id: c.id,
     type: c.type,
     order: c.order,
     content: c.content as unknown as Record<string, unknown>,
+    pageId: c.pageId,
   };
 }
 
@@ -98,6 +103,17 @@ function mapPrismaPage(
     updatedAt: p.updatedAt.toISOString(),
     slugs: p.slugs?.map(ps => mapPrismaSlug(ps.slug)) ?? [],
     components: p.components?.map(c => mapPrismaPageComponent(c)) ?? [],
+  };
+}
+
+function mapPrismaDomain(d: PrismaCmsDomain): CmsDomainDto {
+  return {
+    id: d.id,
+    name: d.domain,
+    domain: d.domain,
+    aliasOf: d.aliasOf ?? undefined,
+    createdAt: d.createdAt.toISOString(),
+    updatedAt: d.updatedAt.toISOString(),
   };
 }
 
@@ -334,5 +350,64 @@ export const prismaCmsRepository: CmsRepository = {
   async deleteTheme(id: string): Promise<CmsTheme | null> {
     const theme = await prisma.cmsTheme.delete({ where: { id } });
     return theme ? mapPrismaTheme(theme) : null;
+  },
+
+  async getDefaultTheme(): Promise<CmsTheme | null> {
+    const theme = await prisma.cmsTheme.findFirst({
+      where: { isDefault: true },
+    });
+    return theme ? mapPrismaTheme(theme) : null;
+  },
+
+  async setDefaultTheme(id: string): Promise<void> {
+    await prisma.$transaction([
+      prisma.cmsTheme.updateMany({
+        where: { isDefault: true },
+        data: { isDefault: false },
+      }),
+      prisma.cmsTheme.update({
+        where: { id },
+        data: { isDefault: true },
+      }),
+    ]);
+  },
+
+  // Domains
+  async getDomains(): Promise<CmsDomainDto[]> {
+    const domains = await prisma.cmsDomain.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
+    return domains.map(mapPrismaDomain);
+  },
+
+  async getDomainById(id: string): Promise<CmsDomainDto | null> {
+    const domain = await prisma.cmsDomain.findUnique({ where: { id } });
+    return domain ? mapPrismaDomain(domain) : null;
+  },
+
+  async createDomain(data: CreateCmsDomainDto): Promise<CmsDomainDto> {
+    const domain = await prisma.cmsDomain.create({
+      data: {
+        domain: data.domain,
+        aliasOf: data.aliasOf ?? null,
+      },
+    });
+    return mapPrismaDomain(domain);
+  },
+
+  async updateDomain(id: string, data: UpdateCmsDomainDto): Promise<CmsDomainDto> {
+    const cleanData = removeUndefined({
+      domain: data.domain,
+      aliasOf: data.aliasOf,
+    });
+    const domain = await prisma.cmsDomain.update({
+      where: { id },
+      data: cleanData as Prisma.CmsDomainUpdateInput,
+    });
+    return mapPrismaDomain(domain);
+  },
+
+  async deleteDomain(id: string): Promise<void> {
+    await prisma.cmsDomain.delete({ where: { id } });
   },
 };

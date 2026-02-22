@@ -35,7 +35,6 @@ import type {
   Template,
   TemplateMapping,
   WarehouseOption,
-  ImageRetryPreset,
   ImportListItem,
   ImportRunDetail,
   DebugWarehouses,
@@ -44,7 +43,8 @@ import type {
   IntegrationConnectionBasicDto as IntegrationConnectionBasic,
   IntegrationWithConnectionsDto as IntegrationWithConnections,
   BaseImportParameterImportSettingsDto as BaseImportParameterImportSettings,
-  BaseImportModeDto as BaseImportMode
+  BaseImportModeDto as BaseImportMode,
+  ImageRetryPreset,
 } from '@/shared/contracts/integrations';
 import {
   defaultBaseImportParameterImportSettings,

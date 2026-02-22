@@ -21,9 +21,14 @@ export { pageBuilderReducer } from './page-builder/page-builder-reducer';
 // ---------------------------------------------------------------------------
 
 const DEFAULT_INSPECTOR_SETTINGS: InspectorSettings = {
+  showTooltip: true,
+  showStyleSettings: true,
+  showStructureInfo: true,
   showIdentifiers: false,
-  showLayoutGuides: true,
+  showVisibilityInfo: true,
+  showConnectionInfo: true,
   showEditorChrome: true,
+  showLayoutGuides: true,
   pauseAnimations: false,
 };
 

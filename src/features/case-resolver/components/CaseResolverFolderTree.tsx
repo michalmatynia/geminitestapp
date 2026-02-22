@@ -43,7 +43,10 @@ import {
 } from '@/shared/utils/drag-drop';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
-import { createCaseResolverMasterTreeAdapter } from '../adapter';
+import {
+  createCaseResolverMasterTreeAdapter,
+  type CaseResolverMasterTreeAdapterOperations,
+} from '../adapter';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
   emitCaseResolverDropDocumentToCanvas,
@@ -192,24 +195,46 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     [masterNodes],
   );
 
+  const adapterOperationsRef = React.useRef<CaseResolverMasterTreeAdapterOperations>({
+    moveFile: onMoveFile,
+    moveAsset: onMoveAsset,
+    moveFolder: onMoveFolder,
+    renameFile: onRenameFile,
+    renameAsset: onRenameAsset,
+    renameFolder: onRenameFolder,
+  });
+  adapterOperationsRef.current = {
+    moveFile: onMoveFile,
+    moveAsset: onMoveAsset,
+    moveFolder: onMoveFolder,
+    renameFile: onRenameFile,
+    renameAsset: onRenameAsset,
+    renameFolder: onRenameFolder,
+  };
+
   const adapter = useMemo(
     () =>
       createCaseResolverMasterTreeAdapter({
-        moveFile: onMoveFile,
-        moveAsset: onMoveAsset,
-        moveFolder: onMoveFolder,
-        renameFile: onRenameFile,
-        renameAsset: onRenameAsset,
-        renameFolder: onRenameFolder,
+        moveFile: async (fileId: string, targetFolder: string): Promise<void> => {
+          await adapterOperationsRef.current.moveFile(fileId, targetFolder);
+        },
+        moveAsset: async (assetId: string, targetFolder: string): Promise<void> => {
+          await adapterOperationsRef.current.moveAsset(assetId, targetFolder);
+        },
+        moveFolder: async (folderPath: string, targetFolder: string): Promise<void> => {
+          await adapterOperationsRef.current.moveFolder(folderPath, targetFolder);
+        },
+        renameFile: async (fileId: string, nextName: string): Promise<void> => {
+          await adapterOperationsRef.current.renameFile(fileId, nextName);
+        },
+        renameAsset: async (assetId: string, nextName: string): Promise<void> => {
+          await adapterOperationsRef.current.renameAsset(assetId, nextName);
+        },
+        renameFolder: async (folderPath: string, nextFolderPath: string): Promise<void> => {
+          await adapterOperationsRef.current.renameFolder(folderPath, nextFolderPath);
+        },
       }),
-    [
-      onMoveAsset,
-      onMoveFile,
-      onMoveFolder,
-      onRenameAsset,
-      onRenameFile,
-      onRenameFolder,
-    ],
+    [],
   );
 
   const {

@@ -459,8 +459,8 @@ export function ParallaxSection(): React.ReactNode {
               />
             </FormField>
           </div>
-                      {parallaxPatternValue === 'increment' && (
-                        <FormField label='Per-child step (px)'>              <Input
+          {parallaxPatternValue === 'increment' && (
+            <FormField label='Per-child step (px)'>              <Input
           
               type='number'
               min={0}

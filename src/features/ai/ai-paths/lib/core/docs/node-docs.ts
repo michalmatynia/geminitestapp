@@ -58,6 +58,12 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
         'What event fires this Trigger node. Use manual for UI-driven runs; scheduled_run for server/cron runs.',
       defaultValue: 'manual',
     },
+    {
+      path: 'trigger.contextMode',
+      description:
+        'How Trigger reads context: simulation_required, simulation_preferred, or trigger_only.',
+      defaultValue: 'simulation_preferred',
+    },
     ...COMMON_RUNTIME_FIELDS,
   ],
   simulation: [
@@ -75,6 +81,12 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
       description:
         'Product ID alias for entity identifier. Prefer entityId + entityType.',
       defaultValue: '""',
+    },
+    {
+      path: 'simulation.runBehavior',
+      description:
+        'Execution policy for connected triggers: before_connected_trigger or manual_only.',
+      defaultValue: 'before_connected_trigger',
     },
     ...COMMON_RUNTIME_FIELDS,
   ],

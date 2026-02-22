@@ -218,6 +218,7 @@ export type GraphCompileCode =
   | 'required_input_missing_wiring'
   | 'optional_input_incompatible_wiring'
   | 'terminal_node_has_outgoing_edges'
+  | 'trigger_context_resolution_risk'
   | 'cycle_detected'
   | 'cycle_wait_deadlock_risk'
   | 'unsupported_cycle'
@@ -545,6 +546,27 @@ const resolveCycleRequiredPortsForNode = (
   return Array.from(connectedPorts);
 };
 
+const resolveNodeLabel = (node: AiNode | undefined, fallbackNodeId: string): string => {
+  const title =
+    typeof node?.title === 'string' && node.title.trim().length > 0
+      ? node.title.trim()
+      : null;
+  return title ?? fallbackNodeId;
+};
+
+const summarizeNodeLabels = (
+  nodeIds: string[],
+  nodeById: Map<string, AiNode>,
+  maxLabels = 4
+): string => {
+  const labels = nodeIds.map((nodeId: string): string =>
+    resolveNodeLabel(nodeById.get(nodeId), nodeId)
+  );
+  if (labels.length <= maxLabels) return labels.join(', ');
+  const visible = labels.slice(0, maxLabels).join(', ');
+  return `${visible}, +${labels.length - maxLabels} more`;
+};
+
 const detectReachableNodes = (nodes: AiNode[], edges: Edge[]): Set<string> => {
   if (nodes.length === 0) return new Set<string>();
   const nodeMap = new Map(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
@@ -581,6 +603,30 @@ const detectReachableNodes = (nodes: AiNode[], edges: Edge[]): Set<string> => {
   }
 
   return reachable;
+};
+
+const resolveTriggerContextMode = (
+  node: AiNode
+): 'simulation_required' | 'simulation_preferred' | 'trigger_only' => {
+  const mode = node.config?.trigger?.contextMode;
+  if (
+    mode === 'simulation_required' ||
+    mode === 'simulation_preferred' ||
+    mode === 'trigger_only'
+  ) {
+    return mode;
+  }
+  return 'simulation_preferred';
+};
+
+const resolveSimulationRunBehavior = (
+  node: AiNode
+): 'before_connected_trigger' | 'manual_only' => {
+  const behavior = node.config?.simulation?.runBehavior;
+  if (behavior === 'before_connected_trigger' || behavior === 'manual_only') {
+    return behavior;
+  }
+  return 'before_connected_trigger';
 };
 
 export const compileGraph = (
@@ -677,6 +723,86 @@ export const compileGraph = (
     });
   });
 
+  nodes
+    .filter((node: AiNode): boolean => node.type === 'trigger')
+    .forEach((triggerNode: AiNode): void => {
+      const contextMode = resolveTriggerContextMode(triggerNode);
+      const incomingContextEdges = sanitized.filter(
+        (edge: Edge): boolean =>
+          edge.to === triggerNode.id &&
+          (edge.toPort === 'context' || !edge.toPort)
+      );
+      const incomingSimulationNodes = incomingContextEdges
+        .map((edge: Edge): AiNode | null => {
+          if (!edge.from) return null;
+          const sourceNode = nodeById.get(edge.from);
+          if (sourceNode?.type !== 'simulation') return null;
+          return sourceNode;
+        })
+        .filter((node: AiNode | null): node is AiNode => Boolean(node));
+      const hasAutoSimulationSource = incomingSimulationNodes.some(
+        (simulationNode: AiNode): boolean =>
+          resolveSimulationRunBehavior(simulationNode) === 'before_connected_trigger'
+      );
+
+      if (contextMode === 'simulation_required') {
+        if (incomingSimulationNodes.length === 0) {
+          findings.push({
+            code: 'trigger_context_resolution_risk',
+            severity: 'warning',
+            message:
+              `Trigger "${triggerNode.title ?? triggerNode.id}" requires simulation context, but no Simulation context edge is connected. ` +
+              'Fix: connect Simulation -> Trigger (context), or change Trigger Context Source.',
+            nodeId: triggerNode.id,
+            nodeType: triggerNode.type,
+            port: 'context',
+            metadata: {
+              contextMode,
+            },
+          });
+          return;
+        }
+        if (!hasAutoSimulationSource) {
+          findings.push({
+            code: 'trigger_context_resolution_risk',
+            severity: 'warning',
+            message:
+              `Trigger "${triggerNode.title ?? triggerNode.id}" requires simulation context, but connected Simulation node(s) are set to manual-only. ` +
+              'Fix: set Simulation Run Behavior to "Auto-run before connected Trigger", or change Trigger Context Source.',
+            nodeId: triggerNode.id,
+            nodeType: triggerNode.type,
+            port: 'context',
+            metadata: {
+              contextMode,
+              sourceSimulationNodeIds: incomingSimulationNodes.map(
+                (simulationNode: AiNode): string => simulationNode.id
+              ),
+            },
+          });
+          return;
+        }
+      }
+
+      if (contextMode === 'trigger_only' && incomingSimulationNodes.length > 0) {
+        findings.push({
+          code: 'trigger_context_resolution_risk',
+          severity: 'warning',
+          message:
+            `Trigger "${triggerNode.title ?? triggerNode.id}" is set to trigger-only context, but Simulation context edge(s) are connected and ignored at runtime. ` +
+            'Fix: disconnect Simulation context edges, or change Trigger Context Source.',
+          nodeId: triggerNode.id,
+          nodeType: triggerNode.type,
+          port: 'context',
+          metadata: {
+            contextMode,
+            sourceSimulationNodeIds: incomingSimulationNodes.map(
+              (simulationNode: AiNode): string => simulationNode.id
+            ),
+          },
+        });
+      }
+    });
+
   const outgoingByNode = new Map<string, Edge[]>();
   edges.forEach((edge: Edge): void => {
     if (!edge.from) return;
@@ -730,11 +856,20 @@ export const compileGraph = (
           },
         });
       } else {
+        const cycleNodeIds = Array.from(nonBenignCycleNodeIds);
+        const cycleNodeSummary = summarizeNodeLabels(cycleNodeIds, nodeById);
         findings.push({
           code: 'cycle_detected',
           severity: 'warning',
-          message: `Graph contains cycle(s) across ${nonBenignCycleNodeIds.size} node(s).`,
-          metadata: { nodeIds: Array.from(nonBenignCycleNodeIds) },
+          message:
+            `Detected a circular loop across ${nonBenignCycleNodeIds.size} node(s): ${cycleNodeSummary}. ` +
+            'This means outputs feed back into earlier nodes. Fix: remove at least one loop edge, or route feedback through Delay/Iterator/Poll/Gate with one external input seed.',
+          metadata: {
+            nodeIds: cycleNodeIds,
+            nodeLabels: cycleNodeIds.map((nodeId: string): string =>
+              resolveNodeLabel(nodeById.get(nodeId), nodeId)
+            ),
+          },
         });
       }
     }
@@ -789,7 +924,7 @@ export const compileGraph = (
         code: 'cycle_wait_deadlock_risk',
         severity: 'warning',
         message:
-          'Cycle may deadlock: all wait-for-inputs nodes in the cycle depend on cycle-internal required inputs.',
+          'Cycle may deadlock: all wait-for-inputs nodes in the cycle depend on cycle-internal required inputs. Fix: provide at least one required input from outside the loop (or make one loop dependency optional).',
         metadata: {
           nodeIds: componentNodeIds,
           diagnostics: diagnostics.map((diagnostic) => ({

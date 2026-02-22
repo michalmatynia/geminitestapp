@@ -2,8 +2,6 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { ObjectId } from 'mongodb';
-
 
 import type {
   Page,
@@ -17,6 +15,9 @@ import type {
   CmsThemeSpacing,
   CmsRepository,
   PageUpdateData,
+  CmsDomainDto,
+  CreateCmsDomainDto,
+  UpdateCmsDomainDto,
 } from '@/shared/contracts/cms';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -26,6 +27,7 @@ import type { Filter } from 'mongodb';
 const pagesCollection = 'cms_pages';
 const slugsCollection = 'cms_slugs';
 const themesCollection = 'cms_themes';
+const domainsCollection = 'cms_domains';
 
 interface PageDocument {
   id: string;
@@ -44,18 +46,6 @@ interface PageDocument {
   updatedAt: Date;
 }
 
-interface ThemeDocument {
-  id: string;
-  name: string;
-  colors: CmsThemeColors;
-  typography: CmsThemeTypography;
-  spacing: CmsThemeSpacing;
-  customCss?: string | null;
-  isDefault: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
 interface SlugDocument {
   id: string;
   slug: string;
@@ -70,9 +60,79 @@ interface PageSlugDocument {
   assignedAt: Date;
 }
 
-type PageComponentDto = NonNullable<Page['components']>[number];
+interface ThemeDocument {
+  id: string;
+  name: string;
+  colors: CmsThemeColors;
+  typography: CmsThemeTypography;
+  spacing: CmsThemeSpacing;
+  customCss?: string | null;
+  isDefault?: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-// Helper to remove undefined keys for exactOptionalPropertyTypes compliance
+interface DomainDocument {
+  id: string;
+  domain: string;
+  aliasOf?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// ---------------------------------------------------------------------------
+// Mappers
+// ---------------------------------------------------------------------------
+
+function mapPageDocumentToPage(doc: PageDocument, slugs: SlugDocument[]): Page {
+  return {
+    id: doc.id,
+    name: doc.name,
+    status: doc.status as 'draft' | 'published' | 'scheduled',
+    publishedAt: doc.publishedAt?.toISOString(),
+    seoTitle: doc.seoTitle ?? undefined,
+    seoDescription: doc.seoDescription ?? undefined,
+    seoOgImage: doc.seoOgImage ?? undefined,
+    seoCanonical: doc.seoCanonical ?? undefined,
+    robotsMeta: doc.robotsMeta ?? undefined,
+    themeId: doc.themeId ?? null,
+    showMenu: doc.showMenu ?? true,
+    components: doc.components,
+    slugs: slugs.map(mapSlugDocumentToSlug),
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString(),
+  };
+}
+
+function mapSlugDocumentToSlug(doc: SlugDocument): Slug {
+  return {
+    id: doc.id,
+    slug: doc.slug,
+    isDefault: doc.isDefault,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString(),
+    pageId: null, // This would need a lookup if we strictly need it
+  };
+}
+
+function mapDomainDocumentToDomain(doc: DomainDocument): CmsDomainDto {
+  return {
+    id: doc.id,
+    name: doc.domain,
+    domain: doc.domain,
+    aliasOf: doc.aliasOf ?? undefined,
+    createdAt: doc.createdAt.toISOString(),
+    updatedAt: doc.updatedAt.toISOString(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+const buildIdFilter = <T extends { id: string }>(id: string): Filter<T> =>
+  ({ id } as Filter<T>);
+
 function removeUndefined<T extends object>(obj: T): T {
   const newObj = { ...obj };
   Object.keys(newObj).forEach((key: string): void => {
@@ -83,81 +143,15 @@ function removeUndefined<T extends object>(obj: T): T {
   return newObj;
 }
 
-function buildIdFilter<T extends { id: string }>(id: string): Filter<T> {
-  const orFilters: Filter<T>[] = [{ id } as Filter<T>];
-  
-  if (ObjectId.isValid(id)) {
-    orFilters.push({ _id: new ObjectId(id) } as Filter<T>);
-  }
-  
-  return { $or: orFilters } as Filter<T>;
-}
+const internalError = (message: string) => {
+  const err = new Error(message);
+  (err as any).status = 500;
+  return err;
+};
 
-function normalizeShowMenu(value: unknown): boolean {
-  if (value === false) return false;
-  if (value === true) return true;
-  if (typeof value === 'string') {
-    const normalized = value.trim().toLowerCase();
-    if (['false', '0', 'no', 'off'].includes(normalized)) return false;
-    if (['true', '1', 'yes', 'on'].includes(normalized)) return true;
-  }
-  return true;
-}
-
-function normalizePageStatus(value: string | null | undefined): Page['status'] {
-  if (value === 'draft' || value === 'published' || value === 'scheduled') return value;
-  return 'draft';
-}
-
-function normalizePageComponents(components: PageComponent[] | undefined): Page['components'] {
-  return (components ?? []).map((component: PageComponent, index: number): PageComponentDto => {
-    const raw = component as PageComponent & {
-      id?: string;
-      createdAt?: string;
-      updatedAt?: string | null;
-      order?: number;
-      pageId?: string;
-    };
-    return {
-      ...raw,
-      type: raw.type,
-      order: typeof raw.order === 'number' ? raw.order : index,
-      content: raw.content ?? {},
-    };
-  });
-}
-
-function mapPageDocumentToPage(doc: PageDocument, slugs: SlugDocument[]): Page {
-  const publishedAt = doc.publishedAt ? doc.publishedAt.toISOString() : undefined;
-  return {
-    id: doc.id,
-    createdAt: doc.createdAt.toISOString(),
-    updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
-    name: doc.name,
-    status: normalizePageStatus(doc.status),
-    ...(publishedAt ? { publishedAt } : {}),
-    themeId: doc.themeId ?? null,
-    showMenu: normalizeShowMenu(doc.showMenu),
-    components: normalizePageComponents(doc.components),
-    slugs: slugs.map((slugDoc: SlugDocument) => slugDoc.slug),
-    ...(doc.seoTitle ? { seoTitle: doc.seoTitle } : {}),
-    ...(doc.seoDescription ? { seoDescription: doc.seoDescription } : {}),
-    ...(doc.seoOgImage ? { seoOgImage: doc.seoOgImage } : {}),
-    ...(doc.seoCanonical ? { seoCanonical: doc.seoCanonical } : {}),
-    ...(doc.robotsMeta ? { robotsMeta: doc.robotsMeta } : {}),
-  };
-}
-
-function mapSlugDocumentToSlug(doc: SlugDocument): Slug {
-  return {
-    id: doc.id,
-    slug: doc.slug,
-    pageId: null,
-    isDefault: doc.isDefault,
-    createdAt: doc.createdAt.toISOString(),
-    updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
-  };
-}
+// ---------------------------------------------------------------------------
+// Repository Implementation
+// ---------------------------------------------------------------------------
 
 export const mongoCmsRepository: CmsRepository = {
   // Pages
@@ -287,7 +281,7 @@ export const mongoCmsRepository: CmsRepository = {
     return mapSlugDocumentToSlug(doc);
   },
 
-  async createSlug(data: { slug: string; isDefault?: boolean | undefined }): Promise<Slug> {
+  async createSlug(data: { slug: string; pageId?: string | null; isDefault?: boolean }): Promise<Slug> {
     const db = await getMongoDb();
     const id = randomUUID();
     const doc: SlugDocument = {
@@ -298,10 +292,15 @@ export const mongoCmsRepository: CmsRepository = {
       updatedAt: new Date(),
     };
     await db.collection<SlugDocument>(slugsCollection).insertOne(doc);
+    
+    if (data.pageId) {
+      await this.addSlugToPage(data.pageId, id);
+    }
+    
     return mapSlugDocumentToSlug(doc);
   },
 
-  async updateSlug(id: string, data: { slug?: string | undefined; isDefault?: boolean | undefined }): Promise<Slug | null> {
+  async updateSlug(id: string, data: Partial<{ slug: string; pageId: string | null; isDefault: boolean }>): Promise<Slug | null> {
     const db = await getMongoDb();
     const update = removeUndefined({
       slug: data.slug,
@@ -315,6 +314,15 @@ export const mongoCmsRepository: CmsRepository = {
       { returnDocument: 'after' }
     );
     if (!result) return null;
+    
+    if (data.pageId !== undefined) {
+      if (data.pageId === null) {
+        await db.collection('cms_page_slugs').deleteMany({ slugId: id });
+      } else {
+        await this.replacePageSlugs(data.pageId, [id]);
+      }
+    }
+    
     return mapSlugDocumentToSlug(result);
   },
 
@@ -354,7 +362,8 @@ export const mongoCmsRepository: CmsRepository = {
       colors: doc.colors,
       typography: doc.typography,
       spacing: doc.spacing,
-      isDefault: doc.isDefault || false,      ...(doc.customCss && { customCss: doc.customCss }),
+      isDefault: doc.isDefault || false,
+      ...(doc.customCss && { customCss: doc.customCss }),
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
     }));
@@ -448,4 +457,78 @@ export const mongoCmsRepository: CmsRepository = {
       createdAt: doc.createdAt.toISOString(),
       updatedAt: doc.updatedAt.toISOString(),
     };
-  },};
+  },
+
+  async getDefaultTheme(): Promise<CmsTheme | null> {
+    const db = await getMongoDb();
+    const doc = await db.collection<ThemeDocument>(themesCollection).findOne({ isDefault: true } as Filter<ThemeDocument>);
+    if (!doc) return null;
+    return {
+      id: doc.id,
+      name: doc.name,
+      colors: doc.colors,
+      typography: doc.typography,
+      spacing: doc.spacing,
+      isDefault: doc.isDefault || false,
+      ...(doc.customCss && { customCss: doc.customCss }),
+      createdAt: doc.createdAt.toISOString(),
+      updatedAt: doc.updatedAt.toISOString(),
+    };
+  },
+
+  async setDefaultTheme(id: string): Promise<void> {
+    const db = await getMongoDb();
+    await db.collection<ThemeDocument>(themesCollection).updateMany({ isDefault: true } as Filter<ThemeDocument>, { $set: { isDefault: false } });
+    await db.collection<ThemeDocument>(themesCollection).updateOne(buildIdFilter<ThemeDocument>(id), { $set: { isDefault: true } });
+  },
+
+  // Domains
+  async getDomains(): Promise<CmsDomainDto[]> {
+    const db = await getMongoDb();
+    const docs = await db.collection<DomainDocument>(domainsCollection).find().sort({ createdAt: -1 }).toArray();
+    return docs.map(mapDomainDocumentToDomain);
+  },
+
+  async getDomainById(id: string): Promise<CmsDomainDto | null> {
+    const db = await getMongoDb();
+    const doc = await db.collection<DomainDocument>(domainsCollection).findOne(buildIdFilter<DomainDocument>(id));
+    if (!doc) return null;
+    return mapDomainDocumentToDomain(doc);
+  },
+
+  async createDomain(data: CreateCmsDomainDto): Promise<CmsDomainDto> {
+    const db = await getMongoDb();
+    const id = randomUUID();
+    const doc: DomainDocument = {
+      id,
+      domain: data.domain,
+      aliasOf: data.aliasOf ?? null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    await db.collection<DomainDocument>(domainsCollection).insertOne(doc);
+    return mapDomainDocumentToDomain(doc);
+  },
+
+  async updateDomain(id: string, data: UpdateCmsDomainDto): Promise<CmsDomainDto> {
+    const db = await getMongoDb();
+    const update = removeUndefined({
+      domain: data.domain,
+      aliasOf: data.aliasOf,
+      updatedAt: new Date(),
+    }) as Partial<DomainDocument>;
+
+    await db.collection<DomainDocument>(domainsCollection).updateOne(
+      buildIdFilter<DomainDocument>(id),
+      { $set: update }
+    );
+    const updated = await this.getDomainById(id);
+    if (!updated) throw internalError('Failed to update domain');
+    return updated;
+  },
+
+  async deleteDomain(id: string): Promise<void> {
+    const db = await getMongoDb();
+    await db.collection(domainsCollection).deleteOne(buildIdFilter(id) as any);
+  },
+};

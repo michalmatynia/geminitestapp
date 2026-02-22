@@ -358,17 +358,19 @@ export const prismaPathRunRepository: AiPathRunRepository = {
   async listRuns(options: AiPathRunListOptions = {}): Promise<{ runs: AiPathRunRecord[]; total: number }> {
     ensureModels();
     const where = buildRunWhere(options);
-    const [runs, total] = await Promise.all([
-      prismaAny.aiPathRun!.findMany({
-        select: RUN_LIST_SELECT,
-        where,
-        orderBy: { createdAt: 'desc' },
-        ...(typeof options.offset === 'number' ? { skip: options.offset } : {}),
-        ...(typeof options.limit === 'number' ? { take: options.limit } : {}),
-      }),
-      prismaAny.aiPathRun!.count({ where }),
-    ]);
-    return { runs: (runs).map(mapRun), total };
+    const includeTotal = options.includeTotal !== false;
+    const runs = await prismaAny.aiPathRun!.findMany({
+      select: RUN_LIST_SELECT,
+      where,
+      orderBy: { createdAt: 'desc' },
+      ...(typeof options.offset === 'number' ? { skip: options.offset } : {}),
+      ...(typeof options.limit === 'number' ? { take: options.limit } : {}),
+    });
+    if (!includeTotal) {
+      return { runs: runs.map(mapRun), total: runs.length };
+    }
+    const total = await prismaAny.aiPathRun!.count({ where });
+    return { runs: runs.map(mapRun), total };
   },
 
   async deleteRuns(options: AiPathRunListOptions = {}): Promise<{ count: number }> {

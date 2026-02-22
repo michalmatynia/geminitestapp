@@ -1293,6 +1293,63 @@ describe('case-resolver settings', () => {
         fileName: 'Legacy Document',
       },
     });
+    expect(snapshot.nodeMeta).toEqual({});
+    expect(snapshot.edgeMeta).toEqual({});
+  });
+
+  it('parses node-file snapshots with node and edge metadata', () => {
+    const snapshot = parseNodeFileSnapshot(
+      JSON.stringify({
+        kind: 'case_resolver_node_file_snapshot_v1',
+        source: 'manual',
+        nodes: [createPromptNode('meta-node')],
+        edges: [
+          {
+            id: 'meta-edge',
+            from: 'meta-node',
+            to: 'meta-node',
+            fromPort: 'content',
+            toPort: 'content',
+          },
+        ],
+        nodeMeta: {
+          'meta-node': {
+            role: 'explanatory',
+            includeInOutput: true,
+            quoteMode: 'none',
+            surroundPrefix: '',
+            surroundSuffix: '',
+          },
+        },
+        edgeMeta: {
+          'meta-edge': {
+            joinMode: 'tab',
+          },
+        },
+        nodeFileMeta: {
+          'meta-node': {
+            fileId: 'doc-meta',
+            fileType: 'document',
+            fileName: 'Doc Meta',
+          },
+        },
+      })
+    );
+
+    expect(snapshot.nodeMeta).toEqual({
+      'meta-node': {
+        role: 'explanatory',
+        includeInOutput: true,
+        quoteMode: 'none',
+        surroundPrefix: '',
+        surroundSuffix: '',
+      },
+    });
+    expect(snapshot.edgeMeta).toEqual({
+      'meta-edge': {
+        joinMode: 'tab',
+      },
+    });
   });
 
   it('returns isolated empty node-file snapshots per parse call', () => {
@@ -1305,10 +1362,20 @@ describe('case-resolver settings', () => {
       fileType: 'document',
       fileName: 'Mutated',
     };
+    first.nodeMeta!['mutated-node'] = {
+      role: 'text_note',
+      includeInOutput: true,
+      quoteMode: 'none',
+      surroundPrefix: '',
+      surroundSuffix: '',
+    };
+    first.edgeMeta!['mutated-edge'] = { joinMode: 'space' };
 
     expect(second.nodes).toEqual([]);
     expect(second.edges).toEqual([]);
     expect(second.nodeFileMeta).toEqual({});
+    expect(second.nodeMeta).toEqual({});
+    expect(second.edgeMeta).toEqual({});
   });
 
   it('removes stale legacy node-file binding snapshots when no graph binding exists', () => {

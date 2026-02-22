@@ -4,13 +4,16 @@ import { dtoBaseSchema, namedDtoSchema } from './base';
 
 import type { 
   BaseImportStartResponse,
-  BaseImportRunDetailResponse
+  BaseImportRunDetailResponse,
+  ImageRetryPreset,
+  ImageRetryPresetDto,
 } from './integrations';
 
 /**
  * Data Import/Export DTOs
  */
 
+export type { ImageRetryPreset, ImageRetryPresetDto };
 export type ImportResponse = BaseImportStartResponse;
 export type ImportRunDetail = BaseImportRunDetailResponse;
 

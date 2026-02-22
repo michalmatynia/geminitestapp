@@ -44,13 +44,13 @@ export function FileManagerContent(): React.JSX.Element {
               <div className='text-xs text-gray-400 break-words'>{asset.filename}</div>
               {(asset.tags ?? []).length > 0 && (
                 <div className='mt-2 flex flex-wrap gap-1'>
-                  {asset.tags.slice(0, 4).map((tag: string) => (
+                  {(asset.tags ?? []).slice(0, 4).map((tag: string) => (
                     <Tag key={tag} label={`#${tag}`} className='text-[10px]' />
                   ))}
                 </div>
               )}
               <div className='mt-3 flex items-center justify-between text-xs text-gray-400'>
-                <span>{(asset.size / 1024).toFixed(1)} KB</span>
+                <span>{((asset.size ?? 0) / 1024).toFixed(1)} KB</span>
                 {asset.categoryId && <span>{asset.categoryId}</span>}
               </div>
               <div className='mt-3 flex justify-end'>

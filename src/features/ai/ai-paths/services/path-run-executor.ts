@@ -12,6 +12,7 @@ import {
   normalizeAiPathsValidationConfig,
   sanitizeEdges,
 } from '@/features/ai/ai-paths/lib';
+import { buildCompileWarningMessage } from '@/features/ai/ai-paths/lib/core/utils/compile-warning-message';
 import {
   evaluateDisabledNodeTypesPolicy,
   formatDisabledNodeTypesPolicyMessage,
@@ -415,29 +416,6 @@ const buildSkipSet = (
     return new Set(Array.from(completed).filter((nodeId: string) => !affected.has(nodeId)));
   }
   return new Set<string>();
-};
-
-const buildCompileWarningMessage = (compileReport: {
-  warnings: number;
-  findings: Array<{ severity: string; message: string; code?: string }>;
-}): string => {
-  const warningFindings = compileReport.findings.filter(
-    (finding: { severity: string; message: string }): boolean =>
-      finding.severity === 'warning' && finding.message.trim().length > 0
-  );
-  if (warningFindings.length === 0) {
-    return `Graph compile warnings detected (${compileReport.warnings}). Open Paths Settings -> Compile Inspector for details.`;
-  }
-  const primaryFinding = warningFindings[0];
-  const primary = primaryFinding?.message?.trim();
-  if (!primary) {
-    return `Graph compile warnings detected (${compileReport.warnings}). Open Paths Settings -> Compile Inspector for details.`;
-  }
-  const moreCount = Math.max(0, warningFindings.length - 1);
-  const warningCode = primaryFinding?.code ?? 'warning';
-  return moreCount > 0
-    ? `Graph compile warning (${warningCode}): ${primary} (+${moreCount} more).`
-    : `Graph compile warning (${warningCode}): ${primary}`;
 };
 
 const normalizeEntityType = (value?: string | null): string | null => {

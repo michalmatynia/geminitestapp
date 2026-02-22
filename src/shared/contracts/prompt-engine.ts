@@ -1,11 +1,14 @@
 import { z } from 'zod';
 
-import { validatorPatternListSchema, validatorScopeSchema } from './admin';
+import { validatorPatternListSchema, validatorScopeSchema, type ValidatorScopeDto } from './admin';
 import {
   promptExploderSegmentTypeSchema,
   promptExploderLearnedTemplateSchema,
   promptExploderRuntimeValidationScopeSchema,
   promptExploderValidationRuleStackSchema,
+  type PromptExploderLearnedTemplateDto,
+  type PromptExploderRuntimeValidationScopeDto,
+  type PromptExploderValidationRuleStack,
 } from './prompt-exploder';
 
 /**
@@ -175,7 +178,16 @@ export const promptValidationRuntimeIdentitySchema = z.object({
   cacheKey: z.string(),
 });
 
-export type PromptValidationRuntimeIdentityDto = z.infer<typeof promptValidationRuntimeIdentitySchema>;
+export interface PromptValidationRuntimeIdentityDto {
+  scope: PromptExploderRuntimeValidationScopeDto;
+  validatorScope: ValidatorScopeDto;
+  stack: PromptExploderValidationRuleStack;
+  listVersion: string;
+  settingsVersion: string;
+  profile: PromptValidationRuntimeProfileDto;
+  cacheKey: string;
+}
+
 export type PromptValidationRuntimeIdentity = PromptValidationRuntimeIdentityDto;
 
 export const promptValidationRuntimeSelectionSchema = z.object({
@@ -187,7 +199,15 @@ export const promptValidationRuntimeSelectionSchema = z.object({
   runtimeLearnedTemplates: z.array(promptExploderLearnedTemplateSchema),
 });
 
-export type PromptValidationRuntimeSelectionDto = z.infer<typeof promptValidationRuntimeSelectionSchema>;
+export interface PromptValidationRuntimeSelectionDto {
+  identity: PromptValidationRuntimeIdentityDto;
+  scopedRules: PromptValidationRuleDto[];
+  effectiveRules: PromptValidationRuleDto[];
+  runtimeValidationRules: PromptValidationRuleDto[];
+  effectiveLearnedTemplates: PromptExploderLearnedTemplateDto[];
+  runtimeLearnedTemplates: PromptExploderLearnedTemplateDto[];
+}
+
 export type PromptValidationRuntimeSelection = PromptValidationRuntimeSelectionDto;
 
 export const promptValidationStackResolutionSchema = z.object({

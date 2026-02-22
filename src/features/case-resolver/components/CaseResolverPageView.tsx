@@ -806,7 +806,7 @@ export function CaseResolverPageView(
     const plainText = editingDocumentDraft.documentContentPlainText ?? '';
     if (plainText.trim().length > 0) return plainText;
     return (editingDocumentDraft.scanSlots ?? [])
-      .map((slot) => slot.ocrText.trim())
+      .map((slot) => (slot.ocrText || '').trim())
       .filter((value: string): boolean => value.length > 0)
       .join('\n\n');
   }, [editingDocumentDraft]);
@@ -1173,7 +1173,7 @@ export function CaseResolverPageView(
                               ? 'Processing OCR...'
                               : slot.ocrError
                                 ? 'OCR failed'
-                                : slot.ocrText.trim().length > 0
+                                : (slot.ocrText || '').trim().length > 0
                                   ? 'OCR extracted'
                                   : 'OCR pending';
                           return (

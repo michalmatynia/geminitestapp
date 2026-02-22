@@ -283,7 +283,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         warning: null,
         guardrailIssue: getPromptExploderRuntimeGuardrailIssue({
           runtimeSelection: selection,
-          allowValidationStackFallback,
+          allowValidationStackFallback: allowValidationStackFallback ?? false,
         }),
       };
     } catch (error) {
@@ -308,7 +308,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         guardrailIssue:
           getPromptExploderRuntimeGuardrailIssue({
             runtimeSelection: selection,
-            allowValidationStackFallback,
+            allowValidationStackFallback: allowValidationStackFallback ?? false,
           }) ?? warning.message,
       };
     }
@@ -431,7 +431,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   useEffect(() => {
     if (hasUnsavedLearningDraft) return;
     setLearningDraftState({
-      runtimeRuleProfile: promptExploderSettings.runtime.ruleProfile,
+      runtimeRuleProfile: promptExploderSettings.runtime.ruleProfile as any,
       runtimeValidationRuleStack: normalizePromptExploderValidationRuleStack(
         promptExploderSettings.runtime.validationRuleStack,
         validatorPatternLists
@@ -440,7 +440,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       similarityThreshold: promptExploderSettings.learning.similarityThreshold,
       templateMergeThreshold: promptExploderSettings.learning.templateMergeThreshold,
       benchmarkSuggestionUpsertTemplates:
-        promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates,
+        promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates ?? false,
       minApprovalsForMatching: promptExploderSettings.learning.minApprovalsForMatching,
       maxTemplates: promptExploderSettings.learning.maxTemplates,
       autoActivateLearnedTemplates:
@@ -591,12 +591,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
           ruleProfile: learningDraft.runtimeRuleProfile,
           validationRuleStack: learningDraft.runtimeValidationRuleStack,
           benchmarkLowConfidenceThreshold: promptExploderClampNumber(
-            promptExploderSettings.runtime.benchmarkLowConfidenceThreshold,
+            promptExploderSettings.runtime.benchmarkLowConfidenceThreshold ?? 0.5,
             0.3,
             0.9
           ),
           benchmarkSuggestionLimit: promptExploderClampNumber(
-            Math.floor(promptExploderSettings.runtime.benchmarkSuggestionLimit),
+            Math.floor(promptExploderSettings.runtime.benchmarkSuggestionLimit ?? 5),
             1,
             20
           ),
@@ -643,7 +643,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const handleCapturePatternSnapshot = useCallback(async () => {
     try {
       const activeRuleScope: string =
-        activeValidationScope === 'case-resolver-prompt-exploder'
+        activeValidationScope === 'case_resolver_prompt_exploder'
           ? 'case_resolver_prompt_exploder'
           : 'prompt_exploder';
 
@@ -665,7 +665,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       const nextSettings = {
         ...promptExploderSettings,
         patternSnapshots: prependPatternSnapshot(
-          promptExploderSettings.patternSnapshots,
+          promptExploderSettings.patternSnapshots ?? [],
           snapshot,
           40
         ),
@@ -754,7 +754,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       const nextSettings = {
         ...promptExploderSettings,
         patternSnapshots: removePatternSnapshotById(
-          promptExploderSettings.patternSnapshots,
+          promptExploderSettings.patternSnapshots ?? [],
           selectedSnapshot.id
         ),
       };

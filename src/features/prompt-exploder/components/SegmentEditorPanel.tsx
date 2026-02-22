@@ -256,7 +256,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                           <DropdownMenuItem
                             disabled={!canSplitSegment}
                             onSelect={() => {
-                              splitSegment(segment.id, segment.text.length, segment.text.length);
+                              splitSegment(segment.id, (segment.text ?? '').length, (segment.text ?? '').length);
                             }}
                           >
                             Split at End
@@ -334,8 +334,8 @@ export function SegmentEditorPanel(): React.JSX.Element {
                     onClick={() => {
                       splitSegment(
                         selectedSegment.id,
-                        selectedSegment.text.length,
-                        selectedSegment.text.length
+                        (selectedSegment.text ?? '').length,
+                        (selectedSegment.text ?? '').length
                       );
                     }}
                   >
@@ -419,7 +419,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
 
                 <FormField label='Title'>
                   <Input
-                    value={selectedSegment.title}
+                    value={selectedSegment.title ?? ''}
                     onChange={(event) => {
                       updateSegment(selectedSegment.id, (current) => ({
                         ...current,
@@ -812,7 +812,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                     <FormField label='Parameters Text'>
                       <Textarea
                         className='min-h-[220px] font-mono text-[12px]'
-                        value={selectedSegment.paramsText || selectedSegment.text}
+                        value={selectedSegment.paramsText || (selectedSegment.text ?? '')}
                         onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
                           const nextText = event.target.value;
                           updateSegment(selectedSegment.id, (current) => {
@@ -906,7 +906,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                 <div className='pointer-events-none absolute inset-x-1 bottom-0 h-0.5 rounded bg-primary shadow-[0_0_8px_rgba(var(--primary),0.6)]' />
                               ) : null}
                               {(() => {
-                                const rgbLiteral = extractRgbLiteral(item.text);
+                                const rgbLiteral = extractRgbLiteral(item.text ?? '');
                                 return (
                                   <div className='flex items-center gap-1'>
                                     <button
@@ -949,7 +949,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                                           if (!parsed) return;
                                           updateTopLevelListItem(selectedSegment.id, index, (currentItem) => ({
                                             ...currentItem,
-                                            text: replaceRgbLiteral(currentItem.text, parsed),
+                                            text: replaceRgbLiteral(currentItem.text ?? '', parsed),
                                           }));
                                         }}
                                         aria-label='RGB color picker'
@@ -1012,7 +1012,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                   <FormField label='Body'>
                     <Textarea
                       className='min-h-[180px] font-mono text-[12px]'
-                      value={selectedSegment.text}
+                      value={selectedSegment.text ?? ''}
                       onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>) => {
                         const isModifier = event.metaKey || event.ctrlKey;
                         if (

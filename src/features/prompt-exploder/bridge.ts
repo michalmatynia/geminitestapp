@@ -272,12 +272,17 @@ const parseBridgePayload = (raw: string | null): PromptExploderBridgePayload | n
       parsed.source === 'case-resolver'
         ? parsed.source
         : 'image-studio';
-    const target: PromptExploderBridgeTarget | undefined =
+    const target: PromptExploderBridgeTarget =
       parsed.target === 'prompt-exploder' ||
       parsed.target === 'image-studio' ||
-      parsed.target === 'case-resolver'
+      parsed.target === 'case-resolver' ||
+      parsed.target === 'external' ||
+      parsed.target === 'clipboard' ||
+      parsed.target === 'file' ||
+      parsed.target === 'studio' ||
+      parsed.target === 'prompt_exploder'
         ? parsed.target
-        : undefined;
+        : 'image-studio';
     const createdAt =
       typeof parsed.createdAt === 'string' && parsed.createdAt.trim().length > 0
         ? parsed.createdAt

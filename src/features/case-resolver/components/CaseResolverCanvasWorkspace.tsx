@@ -123,11 +123,11 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const [isLinkedPreviewOpen, setIsLinkedPreviewOpen] = useState(false);
 
   const normalizedNodeMeta = useMemo(
-    () => ensureNodeMeta(nodes, graph.nodeMeta),
+    () => ensureNodeMeta(nodes, graph.nodeMeta || {}),
     [graph.nodeMeta, nodes]
   );
   const normalizedEdgeMeta = useMemo(
-    () => ensureEdgeMeta(edges as unknown as { id: string }[], graph.edgeMeta),
+    () => ensureEdgeMeta(edges as unknown as { id: string }[], graph.edgeMeta || {}),
     [edges, graph.edgeMeta]
   );
   const toStrictEdges = React.useCallback((inputEdges: AiEdge[]): CaseResolverGraph['edges'] => {
@@ -581,11 +581,11 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
             id: asset.id,
             name: asset.name,
             kind: mappedKind,
-            filepath: asset.filepath,
-            mimeType: asset.mimeType,
+            filepath: asset.filepath ?? null,
+            mimeType: asset.mimeType ?? null,
             size: asset.size,
-            textContent: asset.textContent,
-            description: asset.description,
+            textContent: asset.textContent ?? '',
+            description: asset.description ?? '',
           },
           dropPosition,
           index
@@ -893,7 +893,7 @@ export function CaseResolverCanvasWorkspace(): React.JSX.Element {
     );
   }
 
-  const initialNodes: AiNode[] = activeFile.graph.nodes.map((node: CaseResolverGraph['nodes'][number]): AiNode => {
+  const initialNodes: AiNode[] = (activeFile.graph?.nodes || []).map((node: CaseResolverGraph['nodes'][number]): AiNode => {
     const nodeRecord = node as Record<string, unknown>;
     const createdAt =
       (typeof nodeRecord['createdAt'] === 'string' ? nodeRecord['createdAt'] : undefined) ??
@@ -918,7 +918,7 @@ export function CaseResolverCanvasWorkspace(): React.JSX.Element {
     <AiPathsProvider
       key={activeFile.id}
       initialNodes={initialNodes}
-      initialEdges={activeFile.graph.edges}
+      initialEdges={(activeFile.graph?.edges || []) as unknown as AiEdge[]}
       initialLoading={false}
       initialRuntimeState={EMPTY_RUNTIME_STATE}
     >

@@ -10,9 +10,10 @@ import type {
   PromptExploderRuntimeValidationScopeDto,
   PromptExploderValidationStackResolutionReasonDto,
   PromptExploderValidationStackResolutionDto,
+  PromptExploderValidationRuleStack,
 } from '@/shared/contracts/prompt-exploder';
 
-export type PromptExploderValidationRuleStack = string;
+export type { PromptExploderValidationRuleStack };
 
 export type PromptExploderRuntimeValidationScope = PromptExploderRuntimeValidationScopeDto;
 

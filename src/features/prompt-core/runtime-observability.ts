@@ -11,14 +11,14 @@ type PromptValidationTimingMetric = {
   name: PromptValidationTimingName;
   value: number;
   timestamp: number;
-  tags?: Record<string, string> | undefined;
+  tags?: Record<string, any> | undefined;
 };
 
 type PromptValidationCounterMetric = {
   name: PromptValidationCounterName;
   value: number;
   timestamp: number;
-  tags?: Record<string, string> | undefined;
+  tags?: Record<string, any> | undefined;
 };
 
 const MAX_METRICS = 400;
@@ -61,7 +61,7 @@ const appendCounter = (metric: PromptValidationCounterMetric): void => {
 export const recordPromptValidationTiming = (
   name: PromptValidationTimingName,
   durationMs: number,
-  tags?: Record<string, string>
+  tags?: Record<string, any>
 ): void => {
   appendTiming({
     name,
@@ -74,7 +74,7 @@ export const recordPromptValidationTiming = (
 export const recordPromptValidationCounter = (
   name: PromptValidationCounterName,
   value = 1,
-  tags?: Record<string, string>
+  tags?: Record<string, any>
 ): void => {
   appendCounter({
     name,

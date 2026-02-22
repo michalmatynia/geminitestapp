@@ -18,6 +18,8 @@ import type {
 import type { PromptEngineSettings } from '@/features/prompt-engine/settings';
 import {
   type PromptValidationRuntimeSelection,
+  type PromptValidationRuntimeIdentityDto,
+  type PromptExploderValidationRuleStack,
 } from '@/shared/contracts';
 
 import {
@@ -45,7 +47,7 @@ type PromptValidationOrchestratorInput = {
   promptExploderSettings: PromptExploderSettings;
   validatorPatternLists: ValidatorPatternList[];
   runtimeRuleProfile: 'all' | 'pattern_pack' | 'learned_only';
-  runtimeValidationRuleStack: string;
+  runtimeValidationRuleStack: PromptExploderValidationRuleStack;
   learningEnabled: boolean;
   minApprovalsForMatching: number;
   maxTemplates: number;
@@ -190,6 +192,12 @@ const mergeTemplatesById = (
     byId.set(template.id, template);
   });
   return [...byId.values()];
+};
+
+const resolveStackId = (stack: PromptExploderValidationRuleStack | null | undefined): string => {
+  if (!stack) return 'none';
+  if (typeof stack === 'string') return stack;
+  return stack.id ?? 'anonymous';
 };
 
 const buildRuntimeCacheKey = (args: {
@@ -359,21 +367,21 @@ export const resolvePromptValidationRuntime = (
       strictUnknownStack: args.strictUnknownStack ?? false,
     });
     recordPromptValidationCounter('runtime_selection_total', 1, {
-      scope: stackResolution.scope,
-      stack: stackResolution.stack,
+      scope: stackResolution.scope ?? 'global',
+      stack: resolveStackId(stackResolution.stack),
     });
     if (stackResolution.usedFallback) {
       recordPromptValidationCounter('runtime_selection_fallback', 1, {
-        scope: stackResolution.scope,
-        stack: stackResolution.stack,
+        scope: stackResolution.scope ?? 'global',
+        stack: resolveStackId(stackResolution.stack),
       });
     }
     recordPromptValidationTiming(
       'scope_resolve_ms',
       performance.now() - stackStartedAt,
       {
-        scope: stackResolution.scope,
-        stack: stackResolution.stack,
+        scope: stackResolution.scope ?? 'global',
+        stack: resolveStackId(stackResolution.stack),
         correlationId,
       }
     );
@@ -381,8 +389,8 @@ export const resolvePromptValidationRuntime = (
     const listVersion = buildPatternListVersion(args.validatorPatternLists);
     const settingsVersion = buildPromptSettingsVersion(args.promptSettings);
     const runtimeCacheKey = buildRuntimeCacheKey({
-      scope: stackResolution.scope,
-      stack: stackResolution.stack,
+      scope: stackResolution.scope ?? 'global',
+      stack: resolveStackId(stackResolution.stack),
       profile: args.runtimeRuleProfile,
       settingsVersion,
       listVersion,
@@ -392,8 +400,8 @@ export const resolvePromptValidationRuntime = (
       ...sessionLearnedTemplates,
     ]);
     const selectionCacheKey = buildRuntimeSelectionCacheKey({
-      scope: stackResolution.scope,
-      stack: stackResolution.stack,
+      scope: stackResolution.scope ?? 'global',
+      stack: resolveStackId(stackResolution.stack),
       profile: args.runtimeRuleProfile,
       settingsVersion,
       listVersion,
@@ -404,22 +412,23 @@ export const resolvePromptValidationRuntime = (
       templateSignature: mergedTemplateSignature,
     });
     const cached = getCachedRuntimeSelection(selectionCacheKey);
-    if (cached) {
-      recordPromptValidationCounter('runtime_cache_hit', 1, {
-        scope: stackResolution.scope,
-        cache: 'selection',
-      });
-      recordPromptValidationTiming(
-        'runtime_select_ms',
-        performance.now() - startedAt,
-        {
-          scope: stackResolution.scope,
-          stack: stackResolution.stack,
-          profile: args.runtimeRuleProfile,
-          correlationId,
-          mode: 'cache_hit',
-        }
-      );
+          if (cached) {
+            recordPromptValidationCounter('runtime_cache_hit', 1, {
+              scope: stackResolution.scope ?? 'global',
+              cache: 'selection',
+            });
+            recordPromptValidationTiming(
+              'runtime_select_ms',
+              performance.now() - startedAt,
+              {
+                scope: stackResolution.scope ?? 'global',
+                stack: resolveStackId(stackResolution.stack),
+                profile: args.runtimeRuleProfile,
+                correlationId,
+                mode: 'cache_hit',
+              }
+            );
+    
       return {
         correlationId,
         stackResolution: cached.stackResolution,
@@ -432,13 +441,13 @@ export const resolvePromptValidationRuntime = (
       };
     }
     recordPromptValidationCounter('runtime_cache_miss', 1, {
-      scope: stackResolution.scope,
+      scope: stackResolution.scope ?? 'global',
       cache: 'selection',
     });
 
     const scopedRules = getPromptExploderScopedRules(
       args.promptSettings,
-      stackResolution.scope
+      stackResolution.scope ?? 'global'
     );
     const effectiveRules = mergeRulesById(
       scopedRules,
@@ -449,14 +458,14 @@ export const resolvePromptValidationRuntime = (
       args.runtimeRuleProfile
     );
     if (
-      isCaseResolverRuntimeScope(stackResolution.scope) &&
+      isCaseResolverRuntimeScope(stackResolution.scope ?? 'global') &&
       !hasUsableCaseResolverHeadingRules(runtimeValidationRules)
     ) {
       throw new PromptValidationRuntimeError(
         'Case Resolver runtime is missing heading rules. Switch to Case Resolver stack or reinstall pattern pack.',
         {
-          scope: stackResolution.scope,
-          stack: stackResolution.stack,
+          scope: stackResolution.scope ?? 'global',
+          stack: resolveStackId(stackResolution.stack),
           profile: args.runtimeRuleProfile,
           correlationId,
         }
@@ -474,21 +483,21 @@ export const resolvePromptValidationRuntime = (
       })
       : [];
     trackRuntimeVersionAndInvalidate({
-      scope: stackResolution.scope,
-      stack: stackResolution.stack,
+      scope: stackResolution.scope ?? 'global',
+      stack: resolveStackId(stackResolution.stack),
       profile: args.runtimeRuleProfile,
       settingsVersion,
       listVersion,
     });
-    const identity = {
-      scope: stackResolution.scope,
-      validatorScope: stackResolution.validatorScope,
-      stack: stackResolution.stack,
+    const identity: PromptValidationRuntimeIdentityDto = {
+      scope: stackResolution.scope ?? 'global',
+      validatorScope: (stackResolution.validatorScope as ValidatorScope) ?? 'products',
+      stack: resolveStackId(stackResolution.stack),
       profile: args.runtimeRuleProfile,
       settingsVersion,
       listVersion,
       cacheKey: runtimeCacheKey,
-    } satisfies PromptValidationOrchestrationResult['identity'];
+    };
     setCachedRuntimeSelection(selectionCacheKey, {
       stackResolution,
       identity,
@@ -519,7 +528,7 @@ export const resolvePromptValidationRuntime = (
         .then(() => {
           prewarmPromptExploderRuntimePatterns({
             rules: runtimeValidationRules,
-            scope: stackResolution.scope,
+            scope: stackResolution.scope ?? 'global',
             runtimeCacheKey,
             correlationId,
           });

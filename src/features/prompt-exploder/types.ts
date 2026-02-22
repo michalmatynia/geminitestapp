@@ -21,6 +21,7 @@ import type {
   PromptExploderSubsectionDto,
   PromptExploderBenchmarkSuggestionDto,
   PromptExploderBenchmarkSuiteDto,
+  PromptExploderValidationRuleStack,
 } from '@/shared/contracts/prompt-exploder';
 
 export type PromptExploderAiProvider = PromptExploderAiProviderDto;
@@ -45,3 +46,4 @@ export type PromptExploderSettings = PromptExploderSettingsDto;
 export type PromptExploderSubsection = PromptExploderSubsectionDto;
 export type PromptExploderBenchmarkSuggestion = PromptExploderBenchmarkSuggestionDto;
 export type PromptExploderBenchmarkSuite = PromptExploderBenchmarkSuiteDto;
+export type { PromptExploderValidationRuleStack };

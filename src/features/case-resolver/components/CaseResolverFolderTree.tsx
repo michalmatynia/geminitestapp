@@ -303,7 +303,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     return new Map(
       treeWorkspace.files.map((file: CaseResolverFile): [string, boolean] => [
         file.id,
-        file.isLocked,
+        file.isLocked ?? false,
       ]),
     );
   }, [treeWorkspace.files]);

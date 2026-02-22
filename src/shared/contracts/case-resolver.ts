@@ -289,7 +289,7 @@ export const caseResolverGraphSchema = z.object({
   edges: z.array(z.any()), // aiEdgeSchema
   nodeMeta: z.record(z.string(), caseResolverNodeMetaSchema).optional(),
   edgeMeta: z.record(z.string(), caseResolverEdgeMetaSchema).optional(),
-  pdfExtractionPresetId: z.string().optional(),
+  pdfExtractionPresetId: caseResolverPdfExtractionPresetIdSchema.optional(),
   documentFileLinksByNode: z.record(z.string(), z.array(z.string())).optional(),
   documentDropNodeId: z.string().nullable().optional(),
   documentSourceFileIdByNode: z.record(z.string(), z.string()).optional(),
@@ -301,7 +301,7 @@ export interface CaseResolverGraphDto {
   edges: Edge[];
   nodeMeta?: Record<string, CaseResolverNodeMeta> | undefined;
   edgeMeta?: Record<string, CaseResolverEdgeMeta> | undefined;
-  pdfExtractionPresetId?: string | undefined;
+  pdfExtractionPresetId?: CaseResolverPdfExtractionPresetId | undefined;
   documentFileLinksByNode?: Record<string, string[]> | undefined;
   documentDropNodeId?: string | null | undefined;
   documentSourceFileIdByNode?: Record<string, string> | undefined;

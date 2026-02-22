@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
+import { validatorScopeSchema, type ValidatorScopeDto } from './admin';
 
 /**
  * Prompt Exploder Basic DTOs
@@ -152,7 +153,7 @@ export const promptExploderSegmentSchema = z.object({
   raw: z.string().nullable().optional(),
   paramsText: z.string().nullable().optional(),
   paramsObject: z.record(z.string(), z.unknown()).nullable().optional(),
-  paramUiControls: z.record(z.string(), z.string()).default({}),
+  paramUiControls: z.record(z.string(), promptExploderParamUiControlSchema).default({}),
   paramComments: z.record(z.string(), z.string()).default({}),
   paramDescriptions: z.record(z.string(), z.string()).default({}),
   code: z.string().nullable().optional(),
@@ -171,7 +172,39 @@ export const promptExploderSegmentSchema = z.object({
   segments: z.array(z.unknown()).default([]),
 });
 
-export type PromptExploderSegmentDto = z.infer<typeof promptExploderSegmentSchema>;
+export interface PromptExploderSegmentDto {
+  id: string;
+  type: PromptExploderSegmentType;
+  title?: string | null;
+  content?: string;
+  condition?: string | null;
+  items: PromptExploderListItemDto[];
+  listItems: PromptExploderListItemDto[];
+  subsections: PromptExploderSubsectionDto[];
+  bindingKey?: string | null;
+  text?: string | null;
+  raw?: string | null;
+  paramsText?: string | null;
+  paramsObject?: Record<string, unknown> | null;
+  paramUiControls: Record<string, PromptExploderParamUiControl>;
+  paramComments: Record<string, string>;
+  paramDescriptions: Record<string, string>;
+  code?: string | null;
+  includeInOutput: boolean;
+  confidence: number;
+  matchedPatternIds: string[];
+  matchedPatternLabels: string[];
+  matchedSequenceLabels: string[];
+  isHeading?: boolean;
+  treatAsHeading?: boolean;
+  suggestedTreatAsHeading?: boolean;
+  ruleCount?: number;
+  ruleStack?: Record<string, unknown>;
+  validationResults: unknown[];
+  bindings?: Record<string, unknown>;
+  segments: unknown[];
+}
+
 export type PromptExploderSegment = PromptExploderSegmentDto;
 
 export const promptExploderDocumentSchema = dtoBaseSchema.extend({
@@ -306,14 +339,17 @@ export const promptExploderCaseResolverCaptureModeSchema = z.enum(['manual', 'as
 export type PromptExploderCaseResolverCaptureModeDto = z.infer<typeof promptExploderCaseResolverCaptureModeSchema>;
 export type PromptExploderCaseResolverCaptureMode = PromptExploderCaseResolverCaptureModeDto;
 
-export const promptExploderValidationRuleStackSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().optional(),
-  ruleIds: z.array(z.string()).optional(),
-});
+export const promptExploderValidationRuleStackSchema = z.union([
+  z.string(),
+  z.object({
+    id: z.string().optional(),
+    name: z.string().optional(),
+    ruleIds: z.array(z.string()).optional(),
+  }),
+]);
 
 export type PromptExploderValidationRuleStackDto = z.infer<typeof promptExploderValidationRuleStackSchema>;
-export type PromptExploderValidationRuleStack = string; // Always a string ID in runtime logic
+export type PromptExploderValidationRuleStack = string | PromptExploderValidationRuleStackDto;
 
 export const promptExploderRuntimeValidationScopeSchema = z.enum(['segment', 'document', 'global', 'case_resolver_prompt_exploder', 'prompt_exploder']);
 export type PromptExploderRuntimeValidationScopeDto = z.infer<typeof promptExploderRuntimeValidationScopeSchema>;
@@ -336,7 +372,7 @@ export const promptExploderValidationStackResolutionSchema = z.object({
   usedFallback: z.boolean().optional(),
   scope: promptExploderRuntimeValidationScopeSchema.optional(),
   reason: z.string().optional(),
-  validatorScope: z.string().optional(),
+  validatorScope: validatorScopeSchema.optional(),
   list: z.any().optional(),
 });
 
@@ -511,10 +547,31 @@ export interface PromptExploderCaseResolverMetadataDto {
 export const promptExploderBridgePayloadStatusSchema = z.enum(['pending', 'applied', 'dismissed', 'failed']);
 export type PromptExploderBridgePayloadStatusDto = z.infer<typeof promptExploderBridgePayloadStatusSchema>;
 
-export const promptExploderBridgeSourceSchema = z.enum(['manual', 'auto', 'external', 'draft', 'template', 'sequence', 'qa_matrix', 'prompt_exploder']);
+export const promptExploderBridgeSourceSchema = z.enum([
+  'manual',
+  'auto',
+  'external',
+  'draft',
+  'template',
+  'sequence',
+  'qa_matrix',
+  'prompt_exploder',
+  'prompt-exploder',
+  'image-studio',
+  'case-resolver',
+]);
 export type PromptExploderBridgeSourceDto = z.infer<typeof promptExploderBridgeSourceSchema>;
 
-export const promptExploderBridgeTargetSchema = z.enum(['studio', 'case-resolver', 'external', 'clipboard', 'file', 'prompt_exploder']);
+export const promptExploderBridgeTargetSchema = z.enum([
+  'studio',
+  'image-studio',
+  'case-resolver',
+  'external',
+  'clipboard',
+  'file',
+  'prompt_exploder',
+  'prompt-exploder',
+]);
 export type PromptExploderBridgeTargetDto = z.infer<typeof promptExploderBridgeTargetSchema>;
 
 export const promptExploderCaseResolverContextSchema = z.object({

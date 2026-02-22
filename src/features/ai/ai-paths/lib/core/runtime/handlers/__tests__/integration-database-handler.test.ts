@@ -147,6 +147,56 @@ describe('handleDatabase', () => {
     );
   });
 
+  it('does not throw when a write operation returns a guardrail-flagged error', async () => {
+    handleDatabaseMongoActionMock.mockResolvedValue({
+      result: null,
+      bundle: {
+        error: 'Mapping-based update mode is disabled. Configure an explicit query filter and explicit update document.',
+        guardrail: 'update-mode-explicit-only',
+      },
+    });
+
+    const result = await handleDatabase({
+      node: {
+        id: 'node-db-guardrail',
+        type: 'database',
+        title: 'Database Update',
+        inputs: [],
+        outputs: [],
+        description: '',
+        position: { x: 0, y: 0 },
+        config: {
+          database: {
+            operation: 'update',
+            useMongoActions: true,
+            actionCategory: 'update',
+            action: 'updateOne',
+          },
+        },
+      } as any,
+      nodeInputs: {},
+      prevOutputs: {},
+      executed: {} as any,
+      reportAiPathsError,
+      toast,
+      fetchEntityCached: vi.fn(),
+      simulationEntityType: null,
+      simulationEntityId: null,
+      triggerContext: {},
+      fallbackEntityId: null,
+      strictFlowMode: true,
+      runMeta: null,
+    } as any);
+
+    expect(result).toEqual(
+      expect.objectContaining({
+        bundle: expect.objectContaining({
+          guardrail: 'update-mode-explicit-only',
+        }),
+      })
+    );
+  });
+
   it('throws when query-mode config returns write-action error payload', async () => {
     handleDatabaseStandardOperationMock.mockResolvedValue({
       result: null,

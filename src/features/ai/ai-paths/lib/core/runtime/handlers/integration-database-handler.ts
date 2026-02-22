@@ -239,7 +239,8 @@ export const handleDatabase: NodeHandler = async ({
         writeOperationDetected =
           writeOperationDetected || isWriteResultOperation(dbConfig, mongoActionResult);
         const mongoError = extractDatabaseError(mongoActionResult);
-        if (writeOperationDetected && mongoError) {
+        const isGuardrail = isPlainRecord(mongoActionResult['bundle']) && !!mongoActionResult['bundle']['guardrail'];
+        if (writeOperationDetected && mongoError && !isGuardrail) {
           throw new Error(mongoError);
         }
         return mongoActionResult;
@@ -272,7 +273,8 @@ export const handleDatabase: NodeHandler = async ({
     writeOperationDetected =
       writeOperationDetected || isWriteResultOperation(dbConfig, operationResult);
     const operationError = extractDatabaseError(operationResult);
-    if (writeOperationDetected && operationError) {
+    const isGuardrail = isPlainRecord(operationResult['bundle']) && !!operationResult['bundle']['guardrail'];
+    if (writeOperationDetected && operationError && !isGuardrail) {
       throw new Error(operationError);
     }
     return operationResult;

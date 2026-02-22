@@ -413,7 +413,7 @@ export function useMasterFolderTree(
       }));
 
       if (!adapter?.applyOperation) {
-        return { ok: true };
+        return { success: true, ok: true };
       }
 
       const token = persistTokenRef.current + 1;
@@ -426,7 +426,7 @@ export function useMasterFolderTree(
           profile,
         });
 
-        if (token !== persistTokenRef.current) return { ok: true };
+        if (token !== persistTokenRef.current) return { success: true, ok: true };
 
         // Guardrail: warn when adapter doesn't return nodes.
         devWarnAdapterVoidReturn(persisted, operation.type);
@@ -463,7 +463,7 @@ export function useMasterFolderTree(
       } catch (error) {
         if (token !== persistTokenRef.current) {
           disarmApplyingGuard();
-          return { ok: false, code: 'PERSIST_CONFLICT' };
+          return { success: false, ok: false, error: { message: 'Persistence conflict', code: 'PERSIST_CONFLICT' } };
         }
 
         if (DEV) {
@@ -488,7 +488,7 @@ export function useMasterFolderTree(
         return toMasterFolderTreeActionFail('PERSIST_FAILED');
       }
 
-      return { ok: true };
+      return { success: true, ok: true };
     },
     [adapter, armApplyingGuard, disarmApplyingGuard, profile, pushUndoEntry, syncState]
   );
@@ -507,14 +507,14 @@ export function useMasterFolderTree(
             '[MasterFolderTree:guard] Blocked external_sync — optimistic operation in progress'
           );
         }
-        return { ok: true };
+        return { success: true, ok: true };
       }
 
       const normalized = normalizeMasterTreeNodes(incomingNodes);
       const previousNodes = stateRef.current.nodes;
       // Guard 2: Skip if the incoming nodes are identical to current nodes.
       if (reason === 'external_sync' && areMasterTreeNodesEqual(previousNodes, normalized)) {
-        return { ok: true };
+        return { success: true, ok: true };
       }
       // Guard 3: Cooldown — within a short window after an optimistic operation settles,
       // suppress external_sync if the incoming nodes are structurally identical
@@ -531,7 +531,7 @@ export function useMasterFolderTree(
               { elapsedMs: elapsed, cooldownMs: OPTIMISTIC_SETTLE_COOLDOWN_MS }
             );
           }
-          return { ok: true };
+          return { success: true, ok: true };
         }
       }
       syncState((prev: InternalMasterFolderTreeState) => ({
@@ -559,7 +559,7 @@ export function useMasterFolderTree(
         lastError: null,
       }));
 
-      if (!adapter?.applyOperation) return { ok: true };
+      if (!adapter?.applyOperation) return { success: true, ok: true };
 
       syncState((prev: InternalMasterFolderTreeState) => ({
         ...prev,
@@ -583,7 +583,7 @@ export function useMasterFolderTree(
             isApplying: false,
           }));
         }
-        return { ok: true };
+        return { success: true, ok: true };
       } catch (error) {
         syncState((prev: InternalMasterFolderTreeState) => ({
           ...prev,
@@ -628,7 +628,7 @@ export function useMasterFolderTree(
         isApplying: false,
         lastError: null,
       }));
-      return { ok: true };
+      return { success: true, ok: true };
     } catch (error) {
       syncState((prev: InternalMasterFolderTreeState) => ({
         ...prev,
@@ -772,7 +772,7 @@ export function useMasterFolderTree(
       if (!node) return toMasterFolderTreeActionFail('NODE_NOT_FOUND');
       if (node.name === nextName) {
         cancelRename();
-        return { ok: true };
+        return { success: true, ok: true };
       }
 
       const nextNodes = current.nodes.map((item: MasterTreeNode) =>
@@ -953,7 +953,7 @@ export function useMasterFolderTree(
       lastError: null,
     }));
 
-    if (!adapter?.applyOperation) return { ok: true };
+    if (!adapter?.applyOperation) return { success: true, ok: true };
 
     try {
       const persisted = await adapter.applyOperation(
@@ -972,7 +972,7 @@ export function useMasterFolderTree(
           isApplying: false,
         }));
       }
-      return { ok: true };
+      return { success: true, ok: true };
     } catch (error) {
       syncState({
         ...current,

@@ -6,13 +6,14 @@ import { Button, Alert } from '@/shared/ui';
 
 import { useProductImageManagerUI } from './ProductImageManagerUIContext';
 
-export function ProductImageManagerHeader({ minimalUi }: { minimalUi: boolean }) {
+export function ProductImageManagerHeader() {
   const { 
     showDebug, 
     setShowDebug, 
     debugInfo, 
     controller, 
-    convertAllSlotsToBase64 
+    convertAllSlotsToBase64,
+    minimalUi,
   } = useProductImageManagerUI();
   
   const { imageSlots, uploadError } = controller;

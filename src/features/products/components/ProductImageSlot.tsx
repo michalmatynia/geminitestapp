@@ -20,16 +20,10 @@ import { useProductImageManagerUI } from './ProductImageManagerUIContext';
 
 interface ProductImageSlotProps {
   index: number;
-  minimalUi: boolean;
-  showDragHandle: boolean;
-  minimalSingleSlotAlign: 'left' | 'center';
 }
 
 export function ProductImageSlot({
   index,
-  minimalUi,
-  showDragHandle,
-  minimalSingleSlotAlign,
 }: ProductImageSlotProps) {
   const {
     slotViewModes,
@@ -39,6 +33,9 @@ export function ProductImageSlot({
     dragOverIndex,
     isReordering,
     externalBaseUrl,
+    minimalUi,
+    showDragHandle,
+    minimalSingleSlotAlign,
     controller,
     setSlotViewMode,
     convertSlotToBase64,

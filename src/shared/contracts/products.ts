@@ -287,7 +287,7 @@ export const productImageSchema = z.object({
   productId: z.string(),
   imageFileId: z.string(),
   assignedAt: z.string(),
-  imageFile: z.lazy(() => imageFileRecordSchema).optional(),
+  imageFile: imageFileRecordSchema.optional(),
 });
 
 export type ProductImageDto = z.infer<typeof productImageSchema>;

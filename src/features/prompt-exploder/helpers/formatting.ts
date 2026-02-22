@@ -1,5 +1,4 @@
 import type { PromptExploderParamEntry } from '../params-editor';
-import type { PromptExploderBenchmarkSuite } from '../types';
 
 export const promptExploderClampNumber = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
@@ -10,7 +9,7 @@ export const promptExploderFormatTimestamp = (value: string): string => {
   return date.toLocaleString();
 };
 
-export const promptExploderBenchmarkSuiteLabel = (suite: any): string => {
+export const promptExploderBenchmarkSuiteLabel = (suite: unknown): string => {
   if (suite === 'extended') return 'extended';
   if (suite === 'custom') return 'custom';
   return 'default';

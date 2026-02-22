@@ -223,8 +223,8 @@ export function useDatabasePreview(input: {
     queryFn: async (): Promise<DatabasePreviewPayload> => {
       const result = await fetchDatabasePreview({
         backupName,
-        mode,
-        type,
+        mode: mode ?? 'current',
+        type: type ?? 'postgresql',
         page,
         pageSize,
       });

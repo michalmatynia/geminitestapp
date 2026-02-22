@@ -20,10 +20,10 @@ import type {
   Prisma,
   Page as PrismaPage,
   Slug as PrismaSlug,
-      CmsTheme as PrismaCmsTheme,
-      PageComponent as PrismaPageComponent,
-      CmsDomain as PrismaCmsDomain,
-    } from '@prisma/client';
+  CmsTheme as PrismaCmsTheme,
+  PageComponent as PrismaPageComponent,
+  CmsDomain as PrismaCmsDomain,
+} from '@prisma/client';
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------

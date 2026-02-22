@@ -89,6 +89,14 @@ export const prismaImageFileRepository: ImageFileRepository = {
     return imageFile ? toRecord(imageFile) : null;
   },
 
+  async updateImageFile(id: string, data: any) {
+    const imageFile = await prisma.imageFile.update({
+      where: { id },
+      data,
+    });
+    return imageFile ? toRecord(imageFile) : null;
+  },
+
   async deleteImageFile(id: string) {
     const imageFile = await prisma.imageFile.delete({ where: { id } });
     return imageFile ? toRecord(imageFile) : null;

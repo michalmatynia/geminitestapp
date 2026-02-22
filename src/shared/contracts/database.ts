@@ -64,6 +64,19 @@ export const databasePreviewPayloadSchema = z.object({
 export type DatabasePreviewPayloadDto = z.infer<typeof databasePreviewPayloadSchema>;
 export type DatabasePreviewPayload = DatabasePreviewPayloadDto;
 
+export const databasePreviewRequestSchema = z.object({
+  type: databaseTypeSchema,
+  mode: databasePreviewModeSchema,
+  backupName: z.string().nullable().optional(),
+  page: z.number().optional(),
+  pageSize: z.number().optional(),
+  table: z.string().optional(),
+  search: z.string().optional(),
+});
+
+export type DatabasePreviewRequestDto = z.infer<typeof databasePreviewRequestSchema>;
+export type DatabasePreviewRequest = DatabasePreviewRequestDto;
+
 export const databaseBackupFileSchema = z.object({
   name: z.string(),
   size: z.number(),
@@ -595,9 +608,3 @@ export const settingsBackfillResultSchema = z.object({
 export type SettingsBackfillResultDto = z.infer<typeof settingsBackfillResultSchema>;
 export type SettingsBackfillResult = SettingsBackfillResultDto;
 
-export interface SettingsBackfillResultDto {
-  matched: number;
-  modified: number;
-  remaining: number;
-  sampleIds?: string[];
-}

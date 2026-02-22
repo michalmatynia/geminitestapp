@@ -647,9 +647,10 @@ function CaseResolverNodeFileWorkspaceInner({
         const sourceValue =
           fallbackType === 'plainText' ? stripHtmlToPlainText(rawSourceValue) : rawSourceValue;
         if (!sourceValue) return;
-        const joinMode =
-          (normalizedEdgeMeta[edge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode ??
-          DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
+        const joinMode: CaseResolverJoinMode =
+          (normalizedEdgeMeta[edge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode ||
+          DEFAULT_CASE_RESOLVER_EDGE_META.joinMode ||
+          'newline';
         mergedValue = appendWithJoinMode(mergedValue, sourceValue, joinMode);
         sourceLabels.push(sourceNode.title?.trim() || sourceNode.id);
       });

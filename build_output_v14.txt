@@ -1,0 +1,36 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 223ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 25.7s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/foldertree/master/useMasterFolderTree.ts:1031:5
+Type error: Type '(nodeId: MasterTreeId, targetId: MasterTreeId | null, position?: MasterTreeDropPosition) => { ok: boolean; resolvedParentId: string | null; reason?: "NODE_NOT_FOUND" | "TARGET_NOT_FOUND" | ... 4 more ... | undefined; }' is not assignable to type '(nodeId: string, targetId: string | null, position?: "after" | "before" | "inside" | undefined) => boolean'.
+  Type '{ ok: boolean; resolvedParentId: string | null; reason?: "NODE_NOT_FOUND" | "TARGET_NOT_FOUND" | "TARGET_NOT_FOLDER" | "TARGET_IS_SELF" | "TARGET_IN_SUBTREE" | "PROFILE_RULE_BLOCKED" | undefined; }' is not assignable to type 'boolean'.
+
+[0m [90m 1029 |[39m     isApplying[33m:[39m state[33m.[39misApplying[33m,[39m
+ [90m 1030 |[39m     lastError[33m:[39m state[33m.[39mlastError[33m,[39m
+[31m[1m>[22m[39m[90m 1031 |[39m     canDropNode[33m,[39m
+ [90m      |[39m     [31m[1m^[22m[39m
+ [90m 1032 |[39m     selectNode[33m,[39m
+ [90m 1033 |[39m     setExpandedNodeIds[33m,[39m
+ [90m 1034 |[39m     toggleNodeExpanded[33m,[39m[0m
+Next.js build worker exited with code: 1 and signal: null

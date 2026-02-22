@@ -175,6 +175,7 @@ export type MasterFolderTreePersistContextDto = z.infer<typeof masterFolderTreeP
 export interface MasterFolderTreePersistContext {
   previousNodes: MasterTreeNode[];
   nextNodes: MasterTreeNode[];
+  profile?: FolderTreeProfileV2 | undefined;
 }
 
 export interface MasterFolderTreeAdapter {
@@ -283,7 +284,7 @@ export interface MasterFolderTreeController {
   undoHistory: { label: string; createdAt: number }[];
   isApplying: boolean;
   lastError: MasterFolderTreeError | null;
-  canDropNode: (nodeId: MasterTreeId, targetId: MasterTreeId | null, position?: MasterTreeDropPositionDto) => boolean;
+  canDropNode: (nodeId: MasterTreeId, targetId: MasterTreeId | null, position?: MasterTreeDropPositionDto) => MasterTreeCanDropResultDto;
   selectNode: (nodeId: MasterTreeId | null) => void;
   setExpandedNodeIds: (nodeIds: MasterTreeId[]) => void;
   toggleNodeExpanded: (nodeId: MasterTreeId) => void;

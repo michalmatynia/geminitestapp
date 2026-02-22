@@ -18,12 +18,8 @@ interface ProductImageManagerProps {
   minimalSingleSlotAlign?: 'left' | 'center';
 }
 
-function ProductImageManagerGrid({
-  minimalUi = false,
-  showDragHandle = true,
-  minimalSingleSlotAlign = 'center',
-}: Omit<ProductImageManagerProps, 'controller'>) {
-  const { controller } = useProductImageManagerUI();
+function ProductImageManagerGrid() {
+  const { controller, minimalUi, minimalSingleSlotAlign } = useProductImageManagerUI();
   const { imageSlots } = controller;
 
   const gridClass = minimalUi
@@ -40,9 +36,6 @@ function ProductImageManagerGrid({
           <ProductImageSlot
             key={`slot-${index}`}
             index={index}
-            minimalUi={minimalUi}
-            showDragHandle={showDragHandle}
-            minimalSingleSlotAlign={minimalSingleSlotAlign}
           />
         ))}
       </div>
@@ -52,8 +45,13 @@ function ProductImageManagerGrid({
 
 export default function ProductImageManager(props: ProductImageManagerProps) {
   return (
-    <ProductImageManagerUIProvider explicitController={props.controller}>
-      <ProductImageManagerGrid {...props} />
+    <ProductImageManagerUIProvider 
+      explicitController={props.controller}
+      minimalUi={props.minimalUi}
+      showDragHandle={props.showDragHandle}
+      minimalSingleSlotAlign={props.minimalSingleSlotAlign}
+    >
+      <ProductImageManagerGrid />
     </ProductImageManagerUIProvider>
   );
 }

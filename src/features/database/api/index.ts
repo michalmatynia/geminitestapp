@@ -11,37 +11,32 @@ import type {
   DatabaseRestoreOperationResponseDto as DatabaseRestoreResponse,
   MultiSchemaResponseDto as MultiSchemaResponse,
   RedisOverviewDto as RedisOverviewResponse,
-  SettingsBackfillResultDto,
+  SettingsBackfillResultDto as SettingsBackfillResult,
   DatabaseTablePreviewDataDto as DatabaseTablePreviewData,
   CrudRequest,
   CrudResult,
   DatabasePreviewGroup,
-  DatabasePreviewMode,
   DatabasePreviewPayload,
-  DatabasePreviewRow,
+  DatabasePreviewRequest,
   DatabasePreviewTable,
   DatabaseSyncDirection,
   DatabaseType,
   SqlQueryResult,
 } from '@/shared/contracts/database';
 import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
-import { apiClient, api, ApiError, type ApiClientOptions } from '@/shared/lib/api-client';
+import { api, ApiError, type ApiClientOptions } from '@/shared/lib/api-client';
 import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
-import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 
 export type {
   CrudRequest,
   CrudResult,
   DatabasePreviewGroup,
-  DatabasePreviewMode,
   DatabasePreviewPayload,
-  DatabasePreviewRow,
-  DatabasePreviewTable,
+  DatabasePreviewRequest,
+  DatabaseSyncDirection,
   DatabaseType,
   DatabaseInfoResponse,
-  DatabaseBackupResponse,
-  DatabaseRestoreResponse,
   SqlQueryResult,
 };
 
@@ -123,13 +118,13 @@ export const uploadDatabaseBackup = async (
   formData.append('file', file);
   formData.append('type', dbType);
 
-  return wrapInApiPayloadResult(
-    apiClient<DatabaseBackupResponse>('/api/settings/database/backup/upload', {
-      method: 'POST',
-      body: formData,
-      onProgress
-    } as any)
-  );
+  const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
+  const result = await uploadWithProgress<DatabaseBackupResponse>('/api/settings/database/backup/upload', {
+    formData,
+    onProgress,
+  });
+
+  return { ok: result.ok, payload: result.data };
 };
 
 export const executeSqlQuery = async (
@@ -147,44 +142,44 @@ export const executeSqlQuery = async (
   api.post<SqlQueryResult>('/api/settings/database/query', input);
 
 export const getDatabasePreview = async (
-  input: CrudRequest
+  input: DatabasePreviewRequest
 ): Promise<ApiPayloadResult<DatabasePreviewPayload>> => {
   const params: Record<string, string | number | boolean | undefined> = {
     table: input.table,
     page: input.page,
     pageSize: input.pageSize,
     search: input.search,
-    provider: input.provider,
-    backupName: input.backupName,
-    mode: input.mode,
     type: input.type,
+    backupName: input.backupName ?? undefined,
+    mode: input.mode,
   };
 
   try {
-    const raw = await api.get<any>('/api/settings/database/preview', { params });
+    const raw = await api.get<Record<string, unknown>>('/api/settings/database/preview', { params });
 
     // Normalize response
     const normalizeGroups = (data: unknown): DatabasePreviewGroup[] => {
       if (!Array.isArray(data)) return [];
-      return data.map((g: any) => ({
-        name: g.name,
-        tables: Array.isArray(g.tables) ? g.tables : [],
+      return data.map((g: Record<string, unknown>) => ({
+        type: (g['type'] ?? g['name']) as string,
+        objects: Array.isArray(g['objects']) ? (g['objects'] as string[]) : (Array.isArray(g['tables']) ? (g['tables'] as string[]) : []),
       }));
     };
 
-    const groups = normalizeGroups(raw.groups ?? raw.stats?.groups);
-    const tables = raw.tables ?? raw.stats?.tables ?? [];
-    const tableRows = (raw.tableRows ?? raw.data ?? []) as DatabaseTablePreviewData[];
-    const finalPage = raw.page ?? input.page;
-    const finalPageSize = raw.pageSize ?? input.pageSize;
+    const rawStats = raw['stats'] as Record<string, unknown> | undefined;
+    const groups = normalizeGroups(raw['groups'] ?? rawStats?.['groups']);
+    const tables = (raw['tables'] ?? rawStats?.['tables'] ?? []) as DatabasePreviewTable[];
+    const tableRows = (raw['tableRows'] ?? raw['data'] ?? []) as DatabaseTablePreviewData[];
+    const finalPage = raw['page'] ?? input.page;
+    const finalPageSize = raw['pageSize'] ?? input.pageSize;
     
     const payload: DatabasePreviewPayload = {
       groups,
       tables,
-      data: tableRows,
-      total: raw.total ?? raw.stats?.total ?? 0,
-      page: typeof finalPage === 'string' ? parseInt(finalPage, 10) : (finalPage || 1),
-      pageSize: typeof finalPageSize === 'string' ? parseInt(finalPageSize, 10) : (finalPageSize || 50),
+      tableRows,
+      total: (raw['total'] ?? rawStats?.['total'] ?? 0) as number,
+      page: typeof finalPage === 'string' ? parseInt(finalPage, 10) : (finalPage as number || 1),
+      pageSize: typeof finalPageSize === 'string' ? parseInt(finalPageSize, 10) : (finalPageSize as number || 50),
     };
 
     return { ok: true, payload };
@@ -295,5 +290,3 @@ export const restoreJsonBackup = async (
 
 export const fetchJsonBackups = async (): Promise<{ backups: string[] }> =>
   api.get<{ backups: string[] }>('/api/settings/database/json-backups');
-
-export type SettingsBackfillResult = SettingsBackfillResultDto;

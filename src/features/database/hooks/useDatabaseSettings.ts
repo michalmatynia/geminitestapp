@@ -6,10 +6,10 @@ import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
-import type {
-  DatabaseSyncDirection,
-  SettingsBackfillResult,
-} from '../api';
+import { 
+  DatabaseSyncDirection, 
+  SettingsBackfillResult 
+} from '@/shared/contracts/database';
 
 const dbKeys = QUERY_KEYS.system.databases;
 

@@ -125,6 +125,19 @@ export const mongoImageFileRepository: ImageFileRepository = {
     return toRecord({ ...result, _id: result._id });
   },
 
+  async updateImageFile(id: string, data: any) {
+    const db = await getMongoDb();
+    const result = await db
+      .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)
+      .findOneAndUpdate(
+        { $or: [{ _id: id }, { id }] },
+        { $set: { ...data, updatedAt: new Date() } },
+        { returnDocument: 'after' }
+      );
+    if (!result) return null;
+    return toRecord({ ...result, _id: result._id });
+  },
+
   async deleteImageFile(id: string) {
     const db = await getMongoDb();
     const result = await db

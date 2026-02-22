@@ -1,0 +1,35 @@
+
+> libapp2@0.1.0 build
+> prisma generate && next build
+
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.3.0) to ./node_modules/@prisma/client in 237ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+▲ Next.js 16.1.6 (Turbopack)
+- Environments: .env
+- Experiments (use with caution):
+  · optimizePackageImports
+  · proxyClientMaxBodySize: "50mb"
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 26.8s
+  Running TypeScript ...
+Failed to compile.
+
+./src/features/foldertree/master/useMasterFolderTree.ts:426:11
+Type error: Object literal may only specify known properties, and 'profile' does not exist in type 'MasterFolderTreePersistContext'.
+
+[0m [90m 424 |[39m           previousNodes[33m:[39m previousSnapshot[33m.[39mnodes[33m,[39m
+ [90m 425 |[39m           nextNodes[33m:[39m normalizedNext[33m,[39m
+[31m[1m>[22m[39m[90m 426 |[39m           profile[33m,[39m
+ [90m     |[39m           [31m[1m^[22m[39m
+ [90m 427 |[39m         })[33m;[39m
+ [90m 428 |[39m
+ [90m 429 |[39m         [36mif[39m (token [33m!==[39m persistTokenRef[33m.[39mcurrent) [36mreturn[39m { success[33m:[39m [36mtrue[39m[33m,[39m ok[33m:[39m [36mtrue[39m }[33m;[39m[0m
+Next.js build worker exited with code: 1 and signal: null

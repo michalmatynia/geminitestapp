@@ -9,7 +9,8 @@ import prisma from '@/shared/lib/db/prisma';
 
 import { normalizeId, toDate, toJsonValue, toObjectIdMaybe } from './sync-utils';
 
-import type { DatabaseSyncCollectionResult, DatabaseSyncDirection } from './database-sync';
+import type { DatabaseSyncDirection } from '@/shared/contracts/database';
+import type { DatabaseSyncCollectionResult } from './database-sync';
 
 // ── Types ──
 

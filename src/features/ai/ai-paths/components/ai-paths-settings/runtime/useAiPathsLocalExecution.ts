@@ -1062,9 +1062,10 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
         simulationSeedOutputs[simulationNode.id] = buildSimulationOutputsFromContext(
           simulationContext
         );
-        resolvedSimulationContext = resolvedSimulationContext
-          ? { ...resolvedSimulationContext, ...simulationContext }
-          : simulationContext;
+        resolvedSimulationContext = {
+          ...(resolvedSimulationContext || {}),
+          ...(simulationContext || {}),
+        };
       }
     }
 

@@ -133,7 +133,6 @@ export type TagUpdateInput = UpdateNoteTagDto;
  */
 export const noteFileSchema = dtoBaseSchema.extend({
   noteId: z.string(),
-  fileId: z.string(),
   slotIndex: z.number(),
   filename: z.string(),
   filepath: z.string(),

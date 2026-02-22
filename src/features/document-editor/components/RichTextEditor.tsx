@@ -275,6 +275,7 @@ function ToolbarButton({
 export function RichTextEditor({
   value,
   onChange,
+  disabled = false,
   placeholder,
   variant = 'compact',
   headingLevels = [2],

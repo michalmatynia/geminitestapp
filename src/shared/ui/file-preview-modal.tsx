@@ -10,8 +10,8 @@ export interface FilePreviewData {
   filepath: string;
   mimetype: string;
   size: number;
-  width: number | null;
-  height: number | null;
+  width?: number | null | undefined;
+  height?: number | null | undefined;
   tags?: string[];
   createdAt?: Date | string | null | undefined;
   updatedAt?: Date | string | null | undefined;

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type {
+export type {
   FolderTreeIconSlot,
   FolderTreeNestingRuleV2,
   FolderTreePlaceholderEmphasis,

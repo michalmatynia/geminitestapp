@@ -30,6 +30,9 @@ export interface ProductImageManagerUIContextValue {
   
   // Settings
   externalBaseUrl: string;
+  minimalUi: boolean;
+  showDragHandle: boolean;
+  minimalSingleSlotAlign: 'left' | 'center';
   
   // Resolved Controller Props
   controller: ProductImageManagerController;
@@ -58,9 +61,15 @@ const ProductImageManagerUIContext = createContext<ProductImageManagerUIContextV
 export function ProductImageManagerUIProvider({ 
   children,
   explicitController,
+  minimalUi = false,
+  showDragHandle = true,
+  minimalSingleSlotAlign = 'center',
 }: { 
   children: React.ReactNode;
   explicitController?: ProductImageManagerController;
+  minimalUi?: boolean;
+  showDragHandle?: boolean;
+  minimalSingleSlotAlign?: 'left' | 'center';
 }) {
   const formContext = useContext(ProductFormContext);
   const controllerContext = useOptionalProductImageManagerController();
@@ -342,6 +351,9 @@ export function ProductImageManagerUIProvider({
     debugInfo,
     showDebug,
     externalBaseUrl,
+    minimalUi,
+    showDragHandle,
+    minimalSingleSlotAlign,
     controller,
     setSlotViewMode,
     setShowDebug,
@@ -359,7 +371,9 @@ export function ProductImageManagerUIProvider({
     handleDrop,
   }), [
     slotViewModes, base64LoadingSlots, linkToFileLoadingSlots, draggedIndex, dragOverIndex,
-    isReordering, debugInfo, showDebug, externalBaseUrl, controller,
+    isReordering, debugInfo, showDebug, externalBaseUrl, 
+    minimalUi, showDragHandle, minimalSingleSlotAlign,
+    controller,
     setSlotViewMode, setShowDebug, pushDebug, convertSlotToBase64,
     convertAllSlotsToBase64, convertLinkToFile, triggerFileManager,
     handleSlotFileUpload, clearVisibleImage, handleDragStart, handleDragEnd,

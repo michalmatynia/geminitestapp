@@ -1,15 +1,16 @@
 import { z } from 'zod';
 
-import { namedDtoSchema } from './base';
+import { dtoBaseSchema } from './base';
 
 /**
  * File Contracts
  */
-export const fileSchema = namedDtoSchema.extend({
+export const fileSchema = dtoBaseSchema.extend({
   filename: z.string(),
   filepath: z.string(),
   mimetype: z.string(),
   size: z.number(),
+  name: z.string().optional(),
   extension: z.string().optional(),
   publicUrl: z.string().optional(),
   url: z.string().optional(),
@@ -54,7 +55,7 @@ export const imageFileRecordSchema = imageFileSchema.extend({
 
 export interface ImageFileRecordDto {
   id: string;
-  name: string;
+  name?: string;
   filename: string;
   filepath: string;
   mimetype: string;
@@ -64,8 +65,8 @@ export interface ImageFileRecordDto {
   url?: string;
   storageProvider?: 'local' | 's3' | 'imagekit';
   metadata?: Record<string, unknown> | null;
-  width?: number;
-  height?: number;
+  width?: number | null;
+  height?: number | null;
   thumbnailPath?: string;
   thumbnailUrl?: string;
   isAnimated?: boolean;
@@ -105,6 +106,10 @@ export const imageFileCreateInputSchema = imageFileSchema.omit({
 export type ImageFileCreateInputDto = z.infer<typeof imageFileCreateInputSchema>;
 export type ImageFileCreateInput = ImageFileCreateInputDto;
 
+export const imageFileUpdateInputSchema = imageFileCreateInputSchema.partial();
+export type ImageFileUpdateInputDto = z.infer<typeof imageFileUpdateInputSchema>;
+export type ImageFileUpdateInput = ImageFileUpdateInputDto;
+
 export const imageFileListFiltersSchema = z.object({
   search: z.string().optional(),
   filename: z.string().optional(),
@@ -127,6 +132,10 @@ export type ImageFileRepository = {
   updateImageFileTags(
     id: string,
     tags: string[]
+  ): Promise<ImageFileRecord | null>;
+  updateImageFile(
+    id: string,
+    data: ImageFileUpdateInput
   ): Promise<ImageFileRecord | null>;
   deleteImageFile(id: string): Promise<ImageFileRecord | null>;
 };

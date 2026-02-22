@@ -6,9 +6,9 @@ import {
   getSupportedCollections,
 } from '@/features/database/services/database-collection-copy';
 import { assertDatabaseEngineOperationEnabled } from '@/features/database/services/database-engine-operation-guards';
-import type { DatabaseSyncDirection } from '@/features/database/services/database-sync';
 import type {
   DatabaseSyncCollectionResultDto,
+  DatabaseSyncDirection,
 } from '@/shared/contracts/database';
 import { authError, badRequestError } from '@/shared/errors/app-error';
 

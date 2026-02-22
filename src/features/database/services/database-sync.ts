@@ -52,7 +52,7 @@ import {
 import { isObjectIdString, toObjectIdMaybe, toDate, toJsonValue, normalizeId } from '@/features/database/services/sync-utils';
 import { ErrorSystem } from '@/features/observability/server';
 import type {
-  DatabaseSyncDirectionDto,
+  DatabaseSyncDirection,
   DatabaseSyncCollectionResultDto,
   DatabaseSyncResultDto,
   DatabaseSyncOptionsDto,
@@ -66,8 +66,6 @@ export type DatabaseSyncCollectionResult = DatabaseSyncCollectionResultDto;
 export type DatabaseSyncResult = DatabaseSyncResultDto;
 
 export type DatabaseSyncOptions = DatabaseSyncOptionsDto;
-
-export type DatabaseSyncDirection = DatabaseSyncDirectionDto;
 
 // Utility functions (isObjectIdString, toObjectIdMaybe, toDate, toJsonValue, normalizeId)
 // are imported from ./sync-utils.ts

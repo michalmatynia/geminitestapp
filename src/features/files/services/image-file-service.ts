@@ -42,6 +42,8 @@ export const imageFileService: ImageFileRepository = {
     repoCall('updateImageFilePath', id, filepath),
   updateImageFileTags: (id: string, tags: string[]): Promise<ImageFileRecord | null> =>
     repoCall('updateImageFileTags', id, tags),
+  updateImageFile: (id: string, data: any): Promise<ImageFileRecord | null> =>
+    repoCall('updateImageFile', id, data),
   deleteImageFile: (id: string): Promise<ImageFileRecord | null> =>
     repoCall('deleteImageFile', id),
 };

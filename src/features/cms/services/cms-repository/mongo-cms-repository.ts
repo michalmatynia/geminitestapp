@@ -145,7 +145,7 @@ function removeUndefined<T extends object>(obj: T): T {
 
 const internalError = (message: string) => {
   const err = new Error(message);
-  (err as any).status = 500;
+  Object.assign(err, { status: 500 });
   return err;
 };
 
@@ -529,6 +529,6 @@ export const mongoCmsRepository: CmsRepository = {
 
   async deleteDomain(id: string): Promise<void> {
     const db = await getMongoDb();
-    await db.collection(domainsCollection).deleteOne(buildIdFilter(id) as any);
+    await db.collection<DomainDocument>(domainsCollection).deleteOne(buildIdFilter<DomainDocument>(id));
   },
 };

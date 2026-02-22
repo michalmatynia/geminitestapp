@@ -74,21 +74,21 @@ const masterTreePersistSuccessMessageByInstance: Record<FolderTreeInstance, stri
 };
 
 const normalizeExpandedNodeIds = (
-  value: ReadonlyArray<string> | null | undefined
+  value: ReadonlyArray<string> | Set<string> | null | undefined
 ): MasterTreeId[] => {
-  if (!Array.isArray(value) || value.length === 0) return [];
+  if (!value) return [];
   const ids = new Set<MasterTreeId>();
-  value.forEach((id: string) => {
+  for (const id of value) {
     const normalized = id.trim();
-    if (!normalized) return;
+    if (!normalized) continue;
     ids.add(normalized);
-  });
+  }
   return Array.from(ids).sort();
 };
 
 const areNodeIdListsEqual = (
-  left: ReadonlyArray<string> | null | undefined,
-  right: ReadonlyArray<string> | null | undefined
+  left: ReadonlyArray<string> | Set<string> | null | undefined,
+  right: ReadonlyArray<string> | Set<string> | null | undefined
 ): boolean => {
   const normalizedLeft = normalizeExpandedNodeIds(left);
   const normalizedRight = normalizeExpandedNodeIds(right);

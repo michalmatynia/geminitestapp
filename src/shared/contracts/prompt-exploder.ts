@@ -100,7 +100,20 @@ export const promptExploderBindingOriginSchema = z.enum(['user', 'system', 'lear
 export type PromptExploderBindingOriginDto = z.infer<typeof promptExploderBindingOriginSchema>;
 export type PromptExploderBindingOrigin = PromptExploderBindingOriginDto;
 
-export const promptExploderParamUiControlSchema = z.enum(['text', 'textarea', 'select', 'slider', 'switch', 'auto']);
+export const promptExploderParamUiControlSchema = z.enum([
+  'text',
+  'textarea',
+  'select',
+  'slider',
+  'switch',
+  'auto',
+  'checkbox',
+  'buttons',
+  'number',
+  'json',
+  'rgb',
+  'tuple2',
+]);
 export type PromptExploderParamUiControlDto = z.infer<typeof promptExploderParamUiControlSchema>;
 export type PromptExploderParamUiControl = PromptExploderParamUiControlDto;
 

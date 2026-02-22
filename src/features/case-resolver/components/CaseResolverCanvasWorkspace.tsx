@@ -99,8 +99,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     onGraphChange,
     onEditFile,
   }: CaseResolverPageContextValue = useCaseResolverPageContext();
-  const graph = activeFile!.graph;
-  const defaultDropFolder = activeFile!.folder;
+  const graph = activeFile?.graph || { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} };
+  const defaultDropFolder = activeFile?.folder || 'root';
   const availableFiles = useMemo(
     () => workspace.files.filter((file: CaseResolverFile): boolean => file.fileType !== 'case'),
     [workspace.files]

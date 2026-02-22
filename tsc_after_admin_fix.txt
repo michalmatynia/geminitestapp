@@ -1,0 +1,17 @@
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/typescript/lib/_tsc.js:123168
+      throw e;
+      ^
+
+RangeError: Maximum call stack size exceeded
+    at getPropertiesOfType (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/typescript/lib/_tsc.js:58654:31)
+    at hasCommonProperties (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/typescript/lib/_tsc.js:67194:24)
+    at isRelatedTo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/typescript/lib/_tsc.js:65110:50)
+    at eachTypeRelatedToType (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/typescript/lib/_tsc.js:65499:28)
+    at unionOrIntersectionRelatedTo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/typescript/lib/_tsc.js:65326:174)
+    at structuredTypeRelatedToWorker (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/typescript/lib/_tsc.js:65969:23)
+    at structuredTypeRelatedTo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/typescript/lib/_tsc.js:65769:21)
+    at recursiveTypeRelatedTo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/typescript/lib/_tsc.js:65720:19)
+    at isRelatedTo (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/typescript/lib/_tsc.js:65138:122)
+    at isPropertySymbolTypeRelated (/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/node_modules/typescript/lib/_tsc.js:66548:14)
+
+Node.js v22.13.0

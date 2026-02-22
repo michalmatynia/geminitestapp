@@ -67,7 +67,15 @@ describe('Agent Handlers', () => {
       expect(result['result']).toBe('Agent response');
       expect(api.learnerAgentsApi.chat).toHaveBeenCalledWith({
         agentId: 'agent-1',
-        messages: [{ role: 'user', content: 'Question' }]
+        messages: [
+          expect.objectContaining({
+            role: 'user',
+            content: 'Question',
+            id: expect.stringMatching(/^msg_/),
+            sessionId: 'test-run-id',
+            timestamp: expect.any(String),
+          }),
+        ],
       });
     });
   });

@@ -291,10 +291,11 @@ const toCatalogRecord = (
   priceGroupIds: catalog.priceGroupIds ?? [],
 });
 
-const toProductImageRecord = (
-  image: PrismaProductImage & { imageFile?: PrismaImageFile | null },
-): ProductImageRecord | null => {
-  if (!image.imageFile) return null;
+  const toProductImageRecord = (
+    image: PrismaProductImage & { imageFile?: PrismaImageFile | null },
+  ): ProductImageRecord | null => {
+    if (!image.imageFile) return null;
+
   return {
     productId: image.productId,
     imageFileId: image.imageFileId,
@@ -353,8 +354,9 @@ const resolveCategoryId = (product: FullPrismaProduct): string | null => {
   return null;
 };
 
-const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
-  const catalogs =
+  const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
+    const catalogs =
+
     product.catalogs?.map((pc) => ({
       productId: pc.productId,
       catalogId: pc.catalogId,
@@ -440,11 +442,12 @@ const createTransactionalRepository = (
 
     const products = await tx.product.findMany({
       where,
-      include: {
-        images: {
-          include: { imageFile: true },
-          orderBy: { assignedAt: 'desc' },
-        },
+          include: {
+            images: {
+              include: { imageFile: true },
+              orderBy: { assignedAt: 'asc' },
+            },
+      
         catalogs: {
           include: {
             catalog: {
@@ -508,7 +511,7 @@ const createTransactionalRepository = (
       include: {
         images: {
           include: { imageFile: true },
-          orderBy: { assignedAt: 'desc' },
+          orderBy: { assignedAt: 'asc' },
         },
         catalogs: {
           include: {
@@ -849,7 +852,7 @@ export const prismaProductRepository: ProductRepository = {
       include: {
         images: {
           include: { imageFile: true },
-          orderBy: { assignedAt: 'desc' },
+          orderBy: { assignedAt: 'asc' },
         },
         catalogs: {
           include: {
@@ -920,7 +923,7 @@ export const prismaProductRepository: ProductRepository = {
       include: {
         images: {
           include: { imageFile: true },
-          orderBy: { assignedAt: 'desc' },
+          orderBy: { assignedAt: 'asc' },
         },
         catalogs: {
           include: {
@@ -995,10 +998,23 @@ export const prismaProductRepository: ProductRepository = {
       ...(id ? { id } : {}),
     }) as Prisma.ProductCreateInput;
 
-    try {
-      const product = await prisma.product.create({ data: cleanData });
-      return toProductRecord(product as FullPrismaProduct);
-    } catch (error) {
+          try {
+            const product = await prisma.product.create({
+              data: cleanData,
+              include: {
+                images: {
+                  include: { imageFile: true },
+                  orderBy: { assignedAt: 'asc' },
+                },
+                catalogs: { include: { catalog: true } },
+                categories: true,
+                tags: true,
+                producers: true,
+              },
+            });
+            return toProductRecord(product as FullPrismaProduct);
+          } catch (error) {
+    
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
         error.code === 'P2002' &&
@@ -1036,24 +1052,31 @@ export const prismaProductRepository: ProductRepository = {
       if (imageFileIds !== undefined) {
         await tx.productImage.deleteMany({ where: { productId: id } });
         if (imageFileIds.length > 0) {
-          // We can't use createMany because we want to preserve order if possible,
-          // but Prisma doesn't guarantee order in createMany.
-          // However, for this relation table it should be fine as long as we await them in sequence or use separate creates if position matters.
-          // Actually, let's just use createMany for now as it's faster.
-          await tx.productImage.createMany({
-            data: imageFileIds.map((imageFileId) => ({
-              productId: id,
-              imageFileId,
-            })),
-          });
+          const now = Date.now();
+          for (let i = 0; i < imageFileIds.length; i++) {
+            await tx.productImage.create({
+              data: {
+                productId: id,
+                imageFileId: imageFileIds[i]!,
+                assignedAt: new Date(now + i * 1000),
+              },
+            });
+          }
         }
       }
 
-      return tx.product.update({
+      await tx.product.update({
         where: { id },
         data: cleanData,
+      });
+
+      return tx.product.findUniqueOrThrow({
+        where: { id },
         include: {
-          images: { include: { imageFile: true } },
+          images: {
+            include: { imageFile: true },
+            orderBy: { assignedAt: 'asc' },
+          },
           catalogs: { include: { catalog: true } },
           categories: true,
           tags: true,
@@ -1132,7 +1155,7 @@ export const prismaProductRepository: ProductRepository = {
     const images = await prisma.productImage.findMany({
       where: { productId },
       include: { imageFile: true },
-      orderBy: { assignedAt: 'desc' },
+      orderBy: { assignedAt: 'asc' },
     });
     return images
       .map(toProductImageRecord)

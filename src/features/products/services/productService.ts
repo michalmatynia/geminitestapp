@@ -59,41 +59,40 @@ const resolveProductRepository = async (
   const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
     getImageFileRepository() as unknown as Promise<ImageFileRepository>;
 
-  function formDataToObject(formData: FormData): Record<string, unknown> {
-    const obj: Record<string, unknown> = {};
-    formData.forEach((value, key) => {
-      const isArray = key.endsWith('[]');
-      const cleanKey = isArray ? key.slice(0, -2) : key;
-      const existing = obj[cleanKey];
-      if (isArray) {
-        if (Array.isArray(existing)) {
-          existing.push(value);
-        } else {
-          obj[cleanKey] = [value];
-        }
-      } else {
-        obj[cleanKey] = value;
+      function formDataToObject(formData: FormData): Record<string, unknown> {
+        const obj: Record<string, unknown> = {};
+        formData.forEach((value, key) => {
+          const isArrayKey = key.endsWith('[]');
+          const cleanKey = isArrayKey ? key.slice(0, -2) : key;
+          const existing = obj[cleanKey];
+          if (existing !== undefined) {
+            if (Array.isArray(existing)) {
+              existing.push(value);
+            } else {
+              obj[cleanKey] = [existing, value];
+            }
+          } else {
+            obj[cleanKey] = isArrayKey ? [value] : value;
+          }
+        });
+        return obj;
       }
-    });
-    return obj;
-  }
-
-  const normalizeProductPayloadForStorage = <
-
-  TData extends Record<string, unknown>,
->(
-    data: TData,
-  ): TData => {
-  const payload = data as TData & {
-    parameters?: ProductParameterValue[] | null;
-  };
-  return {
-    ...(payload as TData),
-    parameters: Array.isArray(payload.parameters) ? payload.parameters : [],
-  } as TData;
-};
-
-const shouldLogTiming = (): boolean =>
+        const normalizeProductPayloadForStorage = <
+          TData extends Record<string, unknown>,
+        >(
+            data: TData,
+          ): TData => {
+          const payload = data as TData & {
+            parameters?: ProductParameterValue[] | null;
+            imageFileIds?: string[] | null;
+          };
+          return {
+            ...(payload as TData),
+            parameters: Array.isArray(payload.parameters) ? payload.parameters : [],
+            imageFileIds: Array.isArray(payload.imageFileIds) ? payload.imageFileIds : undefined,
+          } as TData;
+        };
+    const shouldLogTiming = (): boolean =>
   process.env['DEBUG_API_TIMING'] === 'true';
 
 type ProductQueryTimings = Record<string, number | null | undefined>;
@@ -218,6 +217,7 @@ async function getProductBySku(
       throw badRequestError(`Failed to update product: ${id}`);
     }
 
+    // Refresh images to ensure we have the newly linked ones in the correct order
     const images = await productRepository.getProductImages(id);
 
     void logActivity({

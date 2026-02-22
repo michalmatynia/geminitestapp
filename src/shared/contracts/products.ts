@@ -522,8 +522,10 @@ export const productCreateInputSchema = z.object({
   weight: optionalNonNegativeNumberFromFormSchema,
   length: optionalNonNegativeNumberFromFormSchema,
   categoryId: z.string().nullable().optional(),
-  imageLinks: optionalStringArrayFromFormSchema,
-  imageBase64s: optionalStringArrayFromFormSchema,
+      imageLinks: optionalStringArrayFromFormSchema,
+      imageFileIds: optionalStringArrayFromFormSchema,
+      imageBase64s: optionalStringArrayFromFormSchema,
+  
   parameters: optionalParameterValuesFromFormSchema,
 });
 

@@ -892,9 +892,8 @@ export default function ProductFormStudio(): React.JSX.Element {
           slotId: slot.id,
           sourceSlotId: variantsData?.sourceSlotId ?? undefined,
           assetId: slot.imageFileId ?? slot.imageFile?.id ?? undefined,
-          filepath: slot.imageFile?.path ?? slot.imageUrl ?? undefined,
-        },
-      );
+          filepath: slot.imageFile?.filepath ?? slot.imageUrl ?? undefined,
+        },      );
       if (response.modeUsed === 'noop') {
         toast(response.warnings?.[0] || 'Variant was already removed.', { variant: 'info' });
       } else {

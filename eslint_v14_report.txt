@@ -1,0 +1,91 @@
+
+<--- Last few GCs --->
+
+[26659:0x81a000000]    90632 ms: Mark-Compact 4023.0 (4134.9) -> 4008.4 (4136.2) MB, pooled: 0 MB, 1054.17 / 0.00 ms  (average mu = 0.113, current mu = 0.025) allocation failure; scavenge might not succeed
+[26659:0x81a000000]    91867 ms: Mark-Compact 4024.4 (4136.4) -> 4008.8 (4136.7) MB, pooled: 0 MB, 1205.17 / 0.00 ms  (average mu = 0.069, current mu = 0.024) allocation failure; scavenge might not succeed
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0x102cdd1fc node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/usr/local/bin/node]
+ 2: 0x102f08704 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/usr/local/bin/node]
+ 3: 0x1030f29a4 v8::internal::Heap::stack() [/usr/local/bin/node]
+ 4: 0x103107928 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_8::operator()() const [/usr/local/bin/node]
+ 5: 0x1031071f4 void heap::base::Stack::SetMarkerAndCallbackImpl<v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags)::$_8>(heap::base::Stack*, void*, void const*) [/usr/local/bin/node]
+ 6: 0x10384dc34 PushAllRegistersAndIterateStack [/usr/local/bin/node]
+ 7: 0x1030f0bd0 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [/usr/local/bin/node]
+ 8: 0x1030e5aec v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/usr/local/bin/node]
+ 9: 0x1030e6328 v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/usr/local/bin/node]
+10: 0x1030c8da4 v8::internal::Factory::NewFillerObject(int, v8::internal::AllocationAlignment, v8::internal::AllocationType, v8::internal::AllocationOrigin) [/usr/local/bin/node]
+11: 0x1034cc168 v8::internal::Runtime_AllocateInYoungGeneration(int, unsigned long*, v8::internal::Isolate*) [/usr/local/bin/node]
+12: 0x10394daf4 Builtins_CEntry_Return1_ArgvOnStack_NoBuiltinExit [/usr/local/bin/node]
+13: 0x10f9f2d18 
+14: 0x10f86dcf4 
+15: 0x10f86df34 
+16: 0x10f8ded94 
+17: 0x10f86dda4 
+18: 0x10f86df34 
+19: 0x11081c998 
+20: 0x10fdb9ccc 
+21: 0x10f8e8858 
+22: 0x10fc2d50c 
+23: 0x10f8da784 
+24: 0x10f9f902c 
+25: 0x10f9f9290 
+26: 0x10f8db11c 
+27: 0x11091fd70 
+28: 0x10fad58a0 
+29: 0x1109997d8 
+30: 0x10fda8384 
+31: 0x1100d1960 
+32: 0x110bf9038 
+33: 0x10f9f6170 
+34: 0x10f4a3b20 
+35: 0x1100d1a08 
+36: 0x11082b8f8 
+37: 0x10fa8ac5c 
+38: 0x10ffd9f48 
+39: 0x11069fe6c 
+40: 0x110999840 
+41: 0x110bf2f60 
+42: 0x10f709134 
+43: 0x10fb6aef8 
+44: 0x110957808 
+45: 0x11095d4ac 
+46: 0x10f72a4e4 
+47: 0x1039686ec Builtins_ArrayForEach [/usr/local/bin/node]
+48: 0x10f72ba00 
+49: 0x10f9dd0ec 
+50: 0x10f9df028 
+51: 0x10f9e04e4 
+52: 0x10f9e0b9c 
+53: 0x11094a750 
+54: 0x10f9e1168 
+55: 0x10f9e30a0 
+56: 0x10f9e25b0 
+57: 0x1038f5290 Builtins_AsyncFunctionAwaitResolveClosure [/usr/local/bin/node]
+58: 0x1039c04d8 Builtins_PromiseFulfillReactionJob [/usr/local/bin/node]
+59: 0x1038e5594 Builtins_RunMicrotasks [/usr/local/bin/node]
+60: 0x1038b6af4 Builtins_JSRunMicrotasksEntry [/usr/local/bin/node]
+61: 0x10304e6e8 v8::internal::(anonymous namespace)::Invoke(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/usr/local/bin/node]
+62: 0x10304ef8c v8::internal::(anonymous namespace)::InvokeWithTryCatch(v8::internal::Isolate*, v8::internal::(anonymous namespace)::InvokeParams const&) [/usr/local/bin/node]
+63: 0x10304f0c4 v8::internal::Execution::TryRunMicrotasks(v8::internal::Isolate*, v8::internal::MicrotaskQueue*) [/usr/local/bin/node]
+64: 0x103079c70 v8::internal::MicrotaskQueue::RunMicrotasks(v8::internal::Isolate*) [/usr/local/bin/node]
+65: 0x10307a454 v8::internal::MicrotaskQueue::PerformCheckpoint(v8::Isolate*) [/usr/local/bin/node]
+66: 0x102bf9994 node::InternalCallbackScope::Close() [/usr/local/bin/node]
+67: 0x102bf9454 node::InternalCallbackScope::~InternalCallbackScope() [/usr/local/bin/node]
+68: 0x102ce19c8 node::fs::FileHandle::CloseReq::Resolve() [/usr/local/bin/node]
+69: 0x102cfdd38 node::fs::FileHandle::ClosePromise()::$_0::__invoke(uv_fs_s*) [/usr/local/bin/node]
+70: 0x102cd56d4 node::MakeLibuvRequestCallback<uv_fs_s, void (*)(uv_fs_s*)>::Wrapper(uv_fs_s*) [/usr/local/bin/node]
+71: 0x103892ddc uv__work_done [/usr/local/bin/node]
+72: 0x103896900 uv__async_io [/usr/local/bin/node]
+73: 0x1038aa2f4 uv__io_poll [/usr/local/bin/node]
+74: 0x103896e98 uv_run [/usr/local/bin/node]
+75: 0x102bfa4e4 node::SpinEventLoopInternal(node::Environment*) [/usr/local/bin/node]
+76: 0x102d24628 node::NodeMainInstance::Run(node::ExitCode*, node::Environment*) [/usr/local/bin/node]
+77: 0x102d243c4 node::NodeMainInstance::Run() [/usr/local/bin/node]
+78: 0x102c9af88 node::Start(int, char**) [/usr/local/bin/node]
+79: 0x187551d54 start [/usr/lib/dyld]

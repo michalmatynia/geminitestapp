@@ -1,4 +1,3 @@
- 
 import 'server-only';
 
 import {
@@ -6,20 +5,25 @@ import {
   uploadFile,
   getImageFileRepository,
 } from '@/features/files/server';
-import { ErrorSystem, logActivity, ActivityTypes } from '@/features/observability/server';
-import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
-import { getProductRepository } from '@/features/products/services/product-repository';
 import {
-  getProductImageFilepath,
-} from '@/features/products/services/product-service-form-utils';
+  ErrorSystem,
+  logActivity,
+  ActivityTypes,
+} from '@/features/observability/server';
+import {
+  getProductDataProvider,
+  type ProductDbProvider,
+} from '@/features/products/services/product-provider';
+import { getProductRepository } from '@/features/products/services/product-repository';
+import { getProductImageFilepath } from '@/features/products/services/product-service-form-utils';
 import {
   validateProductCreate,
   validateProductUpdate,
 } from '@/features/products/validations';
-import type { 
+import type {
   ImageFileRecordDto as ImageFileRecord,
   ImageFileCreateInputDto as ImageFileCreateInput,
-  ImageFileListFiltersDto as ImageFileListFilters
+  ImageFileListFiltersDto as ImageFileListFilters,
 } from '@/shared/contracts/files';
 import type {
   ProductParameterValue,
@@ -36,15 +40,20 @@ export type ImageFileRepository = {
   getImageFileById(id: string): Promise<ImageFileRecord | null>;
   listImageFiles(filters?: ImageFileListFilters): Promise<ImageFileRecord[]>;
   findImageFilesByIds(ids: string[]): Promise<ImageFileRecord[]>;
-  updateImageFilePath(id: string, filepath: string): Promise<ImageFileRecord | null>;
-  updateImageFileTags(id: string, tags: string[]): Promise<ImageFileRecord | null>;
+  updateImageFilePath(
+    id: string,
+    filepath: string,
+  ): Promise<ImageFileRecord | null>;
+  updateImageFileTags(
+    id: string,
+    tags: string[],
+  ): Promise<ImageFileRecord | null>;
   deleteImageFile(id: string): Promise<ImageFileRecord | null>;
 };
 
 const resolveProductRepository = async (
-  providerOverride?: ProductDbProvider
-): Promise<ProductRepository> =>
-  getProductRepository(providerOverride);
+  providerOverride?: ProductDbProvider,
+): Promise<ProductRepository> => getProductRepository(providerOverride);
 
 const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
   getImageFileRepository() as unknown as Promise<ImageFileRepository>;
@@ -52,7 +61,7 @@ const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
 const normalizeProductPayloadForStorage = <
   TData extends Record<string, unknown>,
 >(
-    data: TData
+    data: TData,
   ): TData => {
   const payload = data as TData & {
     parameters?: ProductParameterValue[] | null;
@@ -63,13 +72,14 @@ const normalizeProductPayloadForStorage = <
   } as TData;
 };
 
-const shouldLogTiming = (): boolean => process.env['DEBUG_API_TIMING'] === 'true';
+const shouldLogTiming = (): boolean =>
+  process.env['DEBUG_API_TIMING'] === 'true';
 
 type ProductQueryTimings = Record<string, number | null | undefined>;
 
 async function getProducts(
   filters: ProductFilters,
-  options?: { timings?: ProductQueryTimings; provider?: ProductDbProvider }
+  options?: { timings?: ProductQueryTimings; provider?: ProductDbProvider; userId?: string }
 ): Promise<ProductWithImages[]> {
   try {
     const timings = options?.timings;
@@ -78,7 +88,7 @@ async function getProducts(
     const productRepository = await resolveProductRepository(provider);
 
     const repoStart = performance.now();
-    const products = await productRepository.getProducts(filters);
+    const products: ProductWithImages[] = await productRepository.getProducts(filters);
     const repoMs = performance.now() - repoStart;
     if (timings) {
       timings['repo'] = repoMs;
@@ -87,23 +97,25 @@ async function getProducts(
     if (products.length > 0) {
       const imagesStart = performance.now();
       const productsWithImages = await Promise.all(
-        products.map(async (product) => {
+        products.map(async (product: ProductWithImages) => {
           const images = await productRepository.getProductImages(product.id);
-          return { ...product, images };
+          return { ...product, images } as ProductWithImages;
         })
       );
       const imagesMs = performance.now() - imagesStart;
       if (timings) {
         timings['images'] = imagesMs;
       }
-      
+
       const totalMs = performance.now() - totalStart;
       if (timings) {
         timings['total'] = totalMs;
       }
 
       if (shouldLogTiming()) {
-        console.log(`[getProducts] Total: ${totalMs.toFixed(2)}ms, Repo: ${repoMs.toFixed(2)}ms, Images: ${imagesMs.toFixed(2)}ms`);
+        console.log(
+          `[getProducts] Total: ${totalMs.toFixed(2)}ms, Repo: ${repoMs.toFixed(2)}ms, Images: ${imagesMs.toFixed(2)}ms`,
+        );
       }
 
       return productsWithImages;
@@ -111,16 +123,20 @@ async function getProducts(
 
     return [];
   } catch (error) {
-    void ErrorSystem.captureException(error, { service: 'product-service', action: 'getProducts', filters });
+    void ErrorSystem.captureException(error, {
+      service: 'product-service',
+      action: 'getProducts',
+      filters,
+    });
     throw error;
   }
 }
 
 async function getProductById(
   id: string,
-  options?: { provider?: ProductDbProvider }
+  options?: { provider?: ProductDbProvider },
 ): Promise<ProductWithImages | null> {
-  const provider = options?.provider ?? await getProductDataProvider();
+  const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
   const product = await productRepository.getProductById(id);
   if (!product) return null;
@@ -128,22 +144,35 @@ async function getProductById(
   return { ...product, images };
 }
 
+async function getProductBySku(
+  sku: string,
+  options?: { provider?: ProductDbProvider },
+): Promise<ProductWithImages | null> {
+  const provider = options?.provider ?? (await getProductDataProvider());
+  const productRepository = await resolveProductRepository(provider);
+  const product = await productRepository.getProductBySku(sku);
+  if (!product) return null;
+  const images = await productRepository.getProductImages(product.id);
+  return { ...product, images } as ProductWithImages;
+}
+
 async function createProduct(
   data: unknown,
-  options?: { provider?: ProductDbProvider }
+  options?: { provider?: ProductDbProvider; userId?: string },
 ): Promise<ProductRecord> {
-  const provider = options?.provider ?? await getProductDataProvider();
+  const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
-  
+
   const validated = validateProductCreate(data);
   const normalized = normalizeProductPayloadForStorage(validated);
-  
+
   const product = await productRepository.createProduct(normalized);
-  
+
   void logActivity({
     type: ActivityTypes.PRODUCT.CREATED,
     entityId: product.id,
     entityType: 'product',
+    userId: options?.userId,
     description: `Created product: ${product.name_en || product.name_pl || product.id}`,
     metadata: { productId: product.id },
   });
@@ -154,9 +183,9 @@ async function createProduct(
 async function updateProduct(
   id: string,
   data: unknown,
-  options?: { provider?: ProductDbProvider }
+  options?: { provider?: ProductDbProvider; userId?: string },
 ): Promise<ProductRecord> {
-  const provider = options?.provider ?? await getProductDataProvider();
+  const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
 
   const existing = await productRepository.getProductById(id);
@@ -176,6 +205,7 @@ async function updateProduct(
     type: ActivityTypes.PRODUCT.UPDATED,
     entityId: product.id,
     entityType: 'product',
+    userId: options?.userId,
     description: `Updated product: ${product.name_en || product.name_pl || product.id}`,
     metadata: { productId: product.id },
   });
@@ -186,9 +216,9 @@ async function updateProduct(
 async function duplicateProduct(
   id: string,
   sku: string,
-  options?: { provider?: ProductDbProvider; userId?: string }
+  options?: { provider?: ProductDbProvider; userId?: string },
 ): Promise<ProductWithImages | null> {
-  const provider = options?.provider ?? await getProductDataProvider();
+  const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
 
   const duplicated = await productRepository.duplicateProduct(id, sku);
@@ -197,7 +227,10 @@ async function duplicateProduct(
   // Duplicate images if any
   const images = await productRepository.getProductImages(id);
   if (images.length > 0) {
-    await productRepository.addProductImages(duplicated.id, images.map((i) => i.imageFileId));
+    await productRepository.addProductImages(
+      duplicated.id,
+      images.map((i) => i.imageFileId),
+    );
   }
 
   void logActivity({
@@ -214,9 +247,9 @@ async function duplicateProduct(
 
 async function deleteProduct(
   id: string,
-  options?: { provider?: ProductDbProvider }
+  options?: { provider?: ProductDbProvider; userId?: string },
 ): Promise<ProductRecord | null> {
-  const provider = options?.provider ?? await getProductDataProvider();
+  const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
 
   const product = await productRepository.deleteProduct(id);
@@ -226,6 +259,7 @@ async function deleteProduct(
     type: ActivityTypes.PRODUCT.DELETED,
     entityId: id,
     entityType: 'product',
+    userId: options?.userId,
     description: `Deleted product: ${product.name_en || product.name_pl || id}`,
     metadata: { productId: id },
   });
@@ -236,9 +270,9 @@ async function deleteProduct(
 async function uploadProductImage(
   productId: string,
   file: File,
-  options?: { provider?: ProductDbProvider }
+  options?: { provider?: ProductDbProvider },
 ): Promise<ProductImageRecord> {
-  const provider = options?.provider ?? await getProductDataProvider();
+  const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
   const imageRepository = await resolveImageFileRepository();
 
@@ -249,7 +283,7 @@ async function uploadProductImage(
 
   const publicPath = getProductImageFilepath(productId, file.name);
   const storedPath = await uploadFile(file, publicPath);
-  
+
   const imageFile = await imageRepository.createImageFile({
     filename: file.name,
     filepath: storedPath,
@@ -271,9 +305,9 @@ async function uploadProductImage(
 async function deleteProductImage(
   productId: string,
   imageId: string,
-  options?: { provider?: ProductDbProvider }
+  options?: { provider?: ProductDbProvider },
 ): Promise<void> {
-  const provider = options?.provider ?? await getProductDataProvider();
+  const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
   const imageRepository = await resolveImageFileRepository();
 
@@ -288,27 +322,28 @@ async function deleteProductImage(
 
 async function countProducts(
   filters: ProductFilters,
-  options?: { provider?: ProductDbProvider }
+  options?: { provider?: ProductDbProvider },
 ): Promise<number> {
-  const provider = options?.provider ?? await getProductDataProvider();
+  const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
   return productRepository.countProducts(filters);
 }
 
 async function getProductsWithCount(
   filters: ProductFilters,
-  options?: { provider?: ProductDbProvider }
+  options?: { provider?: ProductDbProvider },
 ): Promise<{ products: ProductWithImages[]; total: number }> {
-  const provider = options?.provider ?? await getProductDataProvider();
+  const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
-  
-  const { products, total } = await productRepository.getProductsWithCount(filters);
-  
+
+  const { products, total } =
+    await productRepository.getProductsWithCount(filters);
+
   const productsWithImages = await Promise.all(
     products.map(async (product) => {
       const images = await productRepository.getProductImages(product.id);
       return { ...product, images };
-    })
+    }),
   );
 
   return { products: productsWithImages, total };
@@ -319,10 +354,11 @@ export const productService = {
   countProducts,
   getProductsWithCount,
   getProductById,
+  getProductBySku,
   createProduct,
   updateProduct,
   duplicateProduct,
   deleteProduct,
   uploadProductImage,
-  deleteProductImage,
+  unlinkImageFromProduct: deleteProductImage,
 };

@@ -151,6 +151,7 @@ export interface ProductListingExportEventDto {
   failureReason?: string | null;
   relist?: boolean;
   fields?: string[] | null;
+  requestId?: string | null;
 }
 
 export const productListingRelistPolicySchema = z.object({

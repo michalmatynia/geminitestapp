@@ -76,7 +76,7 @@ export async function PUT_handler(
   }
 
   const options = _ctx.userId ? { userId: _ctx.userId } : undefined;
-  const product: ProductWithImages | null = await productService.updateProduct(id, formData, options);
+  const product: ProductWithImages | null = await productService.updateProduct(id, formData, options as any);
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
@@ -141,7 +141,7 @@ export async function DELETE_handler(
 ): Promise<Response> {
   const id = params.id;
   const options = _ctx.userId ? { userId: _ctx.userId } : undefined;
-  const product: ProductRecord | null = await productService.deleteProduct(id, options);
+  const product: ProductRecord | null = await productService.deleteProduct(id, options as any);
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }

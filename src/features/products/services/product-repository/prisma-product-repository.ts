@@ -1,10 +1,21 @@
 import 'server-only';
 
-import { Prisma, Product as PrismaProduct, ProductImage as PrismaProductImage, ImageFile as PrismaImageFile, Catalog as PrismaCatalog, ProductCatalog as PrismaProductCatalog } from '@prisma/client';
+import {
+  Prisma,
+  Product as PrismaProduct,
+  ProductImage as PrismaProductImage,
+  ImageFile as PrismaImageFile,
+  Catalog as PrismaCatalog,
+  ProductCatalog as PrismaProductCatalog,
+} from '@prisma/client';
 
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type { CatalogRecord, ProductWithImages } from '@/shared/contracts/products';
+import type {
+  CatalogRecord,
+  ProductWithImages,
+  ProductImageRecord,
+} from '@/shared/contracts/products';
 import type { ProductParameterValue } from '@/shared/contracts/products';
 import type {
   CreateProductInput,
@@ -40,7 +51,7 @@ const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
 };
 
 const normalizeProductParameterValues = (
-  input: unknown
+  input: unknown,
 ): ProductParameterValue[] => {
   if (!Array.isArray(input)) return [];
   const byParameterId = new Map<string, ProductParameterValue>();
@@ -48,7 +59,7 @@ const normalizeProductParameterValues = (
     if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
     const record = entry as Record<string, unknown>;
     const parameterId = decodeSimpleParameterStorageId(
-      typeof record['parameterId'] === 'string' ? record['parameterId'] : ''
+      typeof record['parameterId'] === 'string' ? record['parameterId'] : '',
     );
     if (!parameterId) return;
     const value = typeof record['value'] === 'string' ? record['value'] : '';
@@ -60,11 +71,12 @@ const normalizeProductParameterValues = (
         ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
           (acc: Record<string, string>, [languageCode, languageValue]) => {
             const normalizedCode = languageCode.trim().toLowerCase();
-            if (!normalizedCode || typeof languageValue !== 'string') return acc;
+            if (!normalizedCode || typeof languageValue !== 'string')
+              return acc;
             acc[normalizedCode] = languageValue;
             return acc;
           },
-          {}
+          {},
         )
         : {};
     const current = byParameterId.get(parameterId);
@@ -95,7 +107,9 @@ const normalizeProductParameterValues = (
 
 const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com', 'base'] as const;
 
-const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput => {
+const buildProductWhere = (
+  filters: ProductFilters,
+): Prisma.ProductWhereInput => {
   const where: Prisma.ProductWhereInput = {};
   const andConditions: Prisma.ProductWhereInput[] = [];
 
@@ -109,7 +123,14 @@ const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput =>
   if (filters.search) {
     if (filters.searchLanguage) {
       andConditions.push({
-        OR: [{ [filters.searchLanguage]: { contains: filters.search, mode: 'insensitive' } }],
+        OR: [
+          {
+            [filters.searchLanguage]: {
+              contains: filters.search,
+              mode: 'insensitive',
+            },
+          },
+        ],
       });
     } else {
       andConditions.push({
@@ -128,9 +149,24 @@ const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput =>
   if (filters.description) {
     andConditions.push({
       OR: [
-        { description_en: { contains: filters.description, mode: 'insensitive' } },
-        { description_pl: { contains: filters.description, mode: 'insensitive' } },
-        { description_de: { contains: filters.description, mode: 'insensitive' } },
+        {
+          description_en: {
+            contains: filters.description,
+            mode: 'insensitive',
+          },
+        },
+        {
+          description_pl: {
+            contains: filters.description,
+            mode: 'insensitive',
+          },
+        },
+        {
+          description_de: {
+            contains: filters.description,
+            mode: 'insensitive',
+          },
+        },
       ],
     });
   }
@@ -188,10 +224,7 @@ const buildProductWhere = (filters: ProductFilters): Prisma.ProductWhereInput =>
       },
     };
     const exportedByBaseProductId: Prisma.ProductWhereInput = {
-      AND: [
-        { baseProductId: { not: null } },
-        { baseProductId: { not: '' } },
-      ],
+      AND: [{ baseProductId: { not: null } }, { baseProductId: { not: '' } }],
     };
 
     if (filters.baseExported === true) {
@@ -238,12 +271,14 @@ const toImageFileRecord = (imageFile: PrismaImageFile): ImageFileRecord => ({
   size: imageFile.size,
   width: imageFile.width,
   height: imageFile.height,
-  tags: (imageFile.tags) ?? [],
+  tags: imageFile.tags ?? [],
   createdAt: imageFile.createdAt.toISOString(),
   updatedAt: imageFile.updatedAt.toISOString(),
 });
 
-const toCatalogRecord = (catalog: PrismaCatalog & { languages?: { languageId: string }[] }): CatalogRecord => ({
+const toCatalogRecord = (
+  catalog: PrismaCatalog & { languages?: { languageId: string }[] },
+): CatalogRecord => ({
   id: catalog.id,
   name: catalog.name,
   description: catalog.description,
@@ -252,12 +287,12 @@ const toCatalogRecord = (catalog: PrismaCatalog & { languages?: { languageId: st
   defaultPriceGroupId: catalog.defaultPriceGroupId,
   createdAt: catalog.createdAt.toISOString(),
   updatedAt: catalog.updatedAt.toISOString(),
-  languageIds: catalog.languages?.map(l => l.languageId) ?? [],
+  languageIds: catalog.languages?.map((l) => l.languageId) ?? [],
   priceGroupIds: catalog.priceGroupIds ?? [],
 });
 
 const toProductImageRecord = (
-  image: PrismaProductImage & { imageFile?: PrismaImageFile | null }
+  image: PrismaProductImage & { imageFile?: PrismaImageFile | null },
 ): ProductImageRecord | null => {
   if (!image.imageFile) return null;
   return {
@@ -270,10 +305,12 @@ const toProductImageRecord = (
 
 type FullPrismaProduct = PrismaProduct & {
   images?: (PrismaProductImage & { imageFile: PrismaImageFile | null })[];
-  catalogs?: (PrismaProductCatalog & { catalog: PrismaCatalog & { languages?: { languageId: string }[] } })[];
+  catalogs?: (PrismaProductCatalog & {
+    catalog: PrismaCatalog & { languages?: { languageId: string }[] };
+  })[];
   categories?: { categoryId: string } | { categoryId: string }[] | null;
-  tags?: (Prisma.ProductTagAssignmentGetPayload<{}>)[];
-  producers?: (Prisma.ProductProducerAssignmentGetPayload<{}>)[];
+  tags?: Prisma.ProductTagAssignmentGetPayload<{}>[];
+  producers?: Prisma.ProductProducerAssignmentGetPayload<{}>[];
 };
 
 const toTrimmedString = (value: unknown): string => {
@@ -282,10 +319,13 @@ const toTrimmedString = (value: unknown): string => {
 };
 
 const resolveCategoryId = (product: FullPrismaProduct): string | null => {
-  const direct = toTrimmedString((product as FullPrismaProduct & { categoryId?: unknown }).categoryId);
+  const direct = toTrimmedString(
+    (product as FullPrismaProduct & { categoryId?: unknown }).categoryId,
+  );
   if (direct) return direct;
 
-  const relation = (product as FullPrismaProduct & { categories?: unknown }).categories;
+  const relation = (product as FullPrismaProduct & { categories?: unknown })
+    .categories;
   if (Array.isArray(relation)) {
     for (const entry of relation) {
       if (!entry || typeof entry !== 'object') continue;
@@ -314,12 +354,13 @@ const resolveCategoryId = (product: FullPrismaProduct): string | null => {
 };
 
 const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
-  const catalogs = product.catalogs?.map(pc => ({
-    productId: pc.productId,
-    catalogId: pc.catalogId,
-    assignedAt: pc.assignedAt.toISOString(),
-    catalog: toCatalogRecord(pc.catalog),
-  })) ?? [];
+  const catalogs =
+    product.catalogs?.map((pc) => ({
+      productId: pc.productId,
+      catalogId: pc.catalogId,
+      assignedAt: pc.assignedAt.toISOString(),
+      catalog: toCatalogRecord(pc.catalog),
+    })) ?? [];
 
   return {
     id: product.id,
@@ -329,10 +370,10 @@ const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
     ean: product.ean ?? null,
     gtin: product.gtin ?? null,
     asin: product.asin ?? null,
-    name: { 
-      en: product.name_en ?? '', 
-      pl: product.name_pl ?? null, 
-      de: product.name_de ?? null 
+    name: {
+      en: product.name_en ?? '',
+      pl: product.name_pl ?? null,
+      de: product.name_de ?? null,
     },
     description: {
       en: product.description_en ?? '',
@@ -355,7 +396,10 @@ const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
     weight: product.weight ?? null,
     length: product.length ?? null,
     published: (product.published as boolean | null | undefined) ?? true,
-    catalogId: (product.catalogId as string | null | undefined) ?? catalogs[0]?.catalogId ?? '',
+    catalogId:
+      (product.catalogId as string | null | undefined) ??
+      catalogs[0]?.catalogId ??
+      '',
     parameters: normalizeProductParameterValues(product.parameters),
     imageLinks: product.imageLinks ?? [],
     imageBase64s: [],
@@ -363,26 +407,32 @@ const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
     createdAt: product.createdAt.toISOString(),
     updatedAt: product.updatedAt.toISOString(),
     categoryId: resolveCategoryId(product) ?? null,
-    tags: product.tags?.map(t => ({ 
-      productId: t.productId,
-      tagId: t.tagId,
-      assignedAt: t.assignedAt.toISOString(),
-    })) ?? [],
-    producers: product.producers?.map(p => ({ 
-      productId: p.productId,
-      producerId: p.producerId,
-      assignedAt: p.assignedAt.toISOString(),
-    })) ?? [],
-    images: product.images?.map(toProductImageRecord).filter((i): i is NonNullable<typeof i> => i !== null) ?? [],
+    tags:
+      product.tags?.map((t) => ({
+        productId: t.productId,
+        tagId: t.tagId,
+        assignedAt: t.assignedAt.toISOString(),
+      })) ?? [],
+    producers:
+      product.producers?.map((p) => ({
+        productId: p.productId,
+        producerId: p.producerId,
+        assignedAt: p.assignedAt.toISOString(),
+      })) ?? [],
+    images: (product.images
+      ?.map(toProductImageRecord)
+      .filter((i): i is ProductImageRecord => i !== null) ??
+      []),
     catalogs,
   };
 };
-
 // ---------------------------------------------------------------------------
 // Repository Implementation
 // ---------------------------------------------------------------------------
 
-const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRepository => ({
+const createTransactionalRepository = (
+  tx: Prisma.TransactionClient,
+): ProductRepository => ({
   getProducts: async (filters) => {
     const where = buildProductWhere(filters);
     const page = filters.page ?? 1;
@@ -398,9 +448,9 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         catalogs: {
           include: {
             catalog: {
-              include: { languages: { select: { languageId: true } } }
-            }
-          }
+              include: { languages: { select: { languageId: true } } },
+            },
+          },
         },
         categories: { select: { categoryId: true } },
         tags: { select: { tagId: true } },
@@ -411,10 +461,11 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       take: pageSize,
     });
 
-    return products.map(p => toProductRecord(p as FullPrismaProduct));
+    return products.map((p) => toProductRecord(p as FullPrismaProduct));
   },
 
-  countProducts: (filters) => tx.product.count({ where: buildProductWhere(filters) }),
+  countProducts: (filters) =>
+    tx.product.count({ where: buildProductWhere(filters) }),
 
   async getProductsWithCount(filters) {
     const where = buildProductWhere(filters);
@@ -424,10 +475,15 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       tx.product.findMany({
         where,
         include: {
-          images: { include: { imageFile: true }, orderBy: { assignedAt: 'desc' } },
+          images: {
+            include: { imageFile: true },
+            orderBy: { assignedAt: 'desc' },
+          },
           catalogs: {
             include: {
-              catalog: { include: { languages: { select: { languageId: true } } } },
+              catalog: {
+                include: { languages: { select: { languageId: true } } },
+              },
             },
           },
           categories: { select: { categoryId: true } },
@@ -440,7 +496,10 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       }),
       tx.product.count({ where }),
     ]);
-    return { products: rawProducts.map(p => toProductRecord(p as FullPrismaProduct)), total };
+    return {
+      products: rawProducts.map((p) => toProductRecord(p as FullPrismaProduct)),
+      total,
+    };
   },
 
   getProductById: async (id) => {
@@ -454,9 +513,9 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         catalogs: {
           include: {
             catalog: {
-              include: { languages: { select: { languageId: true } } }
-            }
-          }
+              include: { languages: { select: { languageId: true } } },
+            },
+          },
         },
         categories: { select: { categoryId: true } },
         tags: { select: { tagId: true } },
@@ -467,7 +526,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
   },
 
   getProductBySku: async (sku) => {
-    const product = await tx.product.findUnique({ 
+    const product = await tx.product.findUnique({
       where: { sku },
       include: {
         images: { include: { imageFile: true } },
@@ -475,7 +534,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         categories: true,
         tags: true,
         producers: true,
-      }
+      },
     });
     return product ? toProductRecord(product as FullPrismaProduct) : null;
   },
@@ -489,7 +548,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         categories: true,
         tags: true,
         producers: true,
-      }
+      },
     });
     return product ? toProductRecord(product as FullPrismaProduct) : null;
   },
@@ -561,8 +620,8 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         : {}),
     }) as Prisma.ProductUpdateInput;
 
-    const product = await tx.product.update({ 
-      where: { id }, 
+    const product = await tx.product.update({
+      where: { id },
       data: cleanData,
       include: {
         images: { include: { imageFile: true } },
@@ -570,7 +629,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         categories: true,
         tags: true,
         producers: true,
-      }
+      },
     });
     return toProductRecord(product as FullPrismaProduct);
   },
@@ -578,7 +637,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
   deleteProduct: async (id) => {
     const productExists = await tx.product.findUnique({ where: { id } });
     if (!productExists) return null;
-    const product = await tx.product.delete({ 
+    const product = await tx.product.delete({
       where: { id },
       include: {
         images: { include: { imageFile: true } },
@@ -586,7 +645,7 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         categories: true,
         tags: true,
         producers: true,
-      }
+      },
     });
     return toProductRecord(product as FullPrismaProduct);
   },
@@ -624,8 +683,9 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
         weight: product.weight,
         length: product.length,
         parameters:
-          (normalizeProductParameterValues(product.parameters) as unknown as Prisma.InputJsonValue) ||
-          [],
+          (normalizeProductParameterValues(
+            product.parameters,
+          ) as unknown as Prisma.InputJsonValue) || [],
         imageLinks: product.imageLinks || [],
         defaultPriceGroupId: product.defaultPriceGroupId ?? null,
         ean: product.ean ?? null,
@@ -643,12 +703,15 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       include: { imageFile: true },
       orderBy: { assignedAt: 'desc' },
     });
-    return images.map(toProductImageRecord).filter((i): i is ProductImageRecord => i !== null);
+    return images
+      .map(toProductImageRecord)
+      .filter(
+        (i): i is ProductImageRecord => i !== null,
+      );
   },
-    
   addProductImages: async (productId, imageFileIds) => {
     const normalizedIds = normalizeImageFileIds(imageFileIds);
-    
+
     if (normalizedIds.length === 0) return;
     const now = Date.now();
     await tx.productImage.createMany({
@@ -684,7 +747,9 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       where: { id: { in: uniqueIds } },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
+    const existingIds = new Set(
+      existing.map((entry: { id: string }) => entry.id),
+    );
     const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
     if (validIds.length === 0) return;
     await tx.productCatalog.createMany({
@@ -714,7 +779,9 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       where: { id: { in: uniqueIds } },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
+    const existingIds = new Set(
+      existing.map((entry: { id: string }) => entry.id),
+    );
     const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
     if (validIds.length === 0) return;
     await tx.productTagAssignment.createMany({
@@ -730,7 +797,9 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
       where: { id: { in: uniqueIds } },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
+    const existingIds = new Set(
+      existing.map((entry: { id: string }) => entry.id),
+    );
     const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
     if (validIds.length === 0) return;
     await tx.productProducerAssignment.createMany({
@@ -739,9 +808,9 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
   },
 
   replaceProductNotes: async (productId, noteIds) => {
-    const uniqueIds = Array.from(new Set(noteIds.filter((id: string) => id?.trim()))).map((id: string) =>
-      id.trim()
-    );
+    const uniqueIds = Array.from(
+      new Set(noteIds.filter((id: string) => id?.trim())),
+    ).map((id: string) => id.trim());
     await tx.product.update({
       where: { id: productId },
       data: { noteIds: uniqueIds },
@@ -757,11 +826,15 @@ const createTransactionalRepository = (tx: Prisma.TransactionClient): ProductRep
   countProductsByImageFileId: async (imageFileId) => {
     return tx.productImage.count({ where: { imageFileId } });
   },
-  
+
   createProductInTransaction: async <T>(
-    _callback: (txClient: ProductRepository & Prisma.TransactionClient) => Promise<T>
+    _callback: (
+      txClient: ProductRepository & Prisma.TransactionClient,
+    ) => Promise<T>,
   ): Promise<T> => {
-    throw internalError('createProductInTransaction cannot be called within a transaction');
+    throw internalError(
+      'createProductInTransaction cannot be called within a transaction',
+    );
   },
 });
 
@@ -781,9 +854,9 @@ export const prismaProductRepository: ProductRepository = {
         catalogs: {
           include: {
             catalog: {
-              include: { languages: { select: { languageId: true } } }
-            }
-          }
+              include: { languages: { select: { languageId: true } } },
+            },
+          },
         },
         categories: { select: { categoryId: true } },
         tags: { select: { tagId: true } },
@@ -794,7 +867,7 @@ export const prismaProductRepository: ProductRepository = {
       take: pageSize,
     });
 
-    return products.map(p => toProductRecord(p as FullPrismaProduct));
+    return products.map((p) => toProductRecord(p as FullPrismaProduct));
   },
 
   async countProducts(filters: ProductFilters) {
@@ -802,7 +875,9 @@ export const prismaProductRepository: ProductRepository = {
     return prisma.product.count({ where });
   },
 
-  async getProductsWithCount(filters: ProductFilters): Promise<{ products: ProductWithImages[]; total: number }> {
+  async getProductsWithCount(
+    filters: ProductFilters,
+  ): Promise<{ products: ProductWithImages[]; total: number }> {
     const where = buildProductWhere(filters);
     const page = filters.page ?? 1;
     const pageSize = filters.pageSize ?? 20;
@@ -834,7 +909,7 @@ export const prismaProductRepository: ProductRepository = {
     ]);
 
     return {
-      products: rawProducts.map(p => toProductRecord(p as FullPrismaProduct)),
+      products: rawProducts.map((p) => toProductRecord(p as FullPrismaProduct)),
       total,
     };
   },
@@ -850,9 +925,9 @@ export const prismaProductRepository: ProductRepository = {
         catalogs: {
           include: {
             catalog: {
-              include: { languages: { select: { languageId: true } } }
-            }
-          }
+              include: { languages: { select: { languageId: true } } },
+            },
+          },
         },
         categories: { select: { categoryId: true } },
         tags: { select: { tagId: true } },
@@ -863,7 +938,7 @@ export const prismaProductRepository: ProductRepository = {
   },
 
   async getProductBySku(sku: string) {
-    const product = await prisma.product.findUnique({ 
+    const product = await prisma.product.findUnique({
       where: { sku },
       include: {
         images: { include: { imageFile: true } },
@@ -871,7 +946,7 @@ export const prismaProductRepository: ProductRepository = {
         categories: true,
         tags: true,
         producers: true,
-      }
+      },
     });
     return product ? toProductRecord(product as FullPrismaProduct) : null;
   },
@@ -885,7 +960,7 @@ export const prismaProductRepository: ProductRepository = {
         categories: true,
         tags: true,
         producers: true,
-      }
+      },
     });
     return product ? toProductRecord(product as FullPrismaProduct) : null;
   },
@@ -957,8 +1032,8 @@ export const prismaProductRepository: ProductRepository = {
         : {}),
     }) as Prisma.ProductUpdateInput;
 
-    const product = await prisma.product.update({ 
-      where: { id }, 
+    const product = await prisma.product.update({
+      where: { id },
       data: cleanData,
       include: {
         images: { include: { imageFile: true } },
@@ -966,7 +1041,7 @@ export const prismaProductRepository: ProductRepository = {
         categories: true,
         tags: true,
         producers: true,
-      }
+      },
     });
     return toProductRecord(product as FullPrismaProduct);
   },
@@ -974,7 +1049,7 @@ export const prismaProductRepository: ProductRepository = {
   async deleteProduct(id: string) {
     const productExists = await prisma.product.findUnique({ where: { id } });
     if (!productExists) return null;
-    const product = await prisma.product.delete({ 
+    const product = await prisma.product.delete({
       where: { id },
       include: {
         images: { include: { imageFile: true } },
@@ -982,7 +1057,7 @@ export const prismaProductRepository: ProductRepository = {
         categories: true,
         tags: true,
         producers: true,
-      }
+      },
     });
     return toProductRecord(product as FullPrismaProduct);
   },
@@ -1020,8 +1095,9 @@ export const prismaProductRepository: ProductRepository = {
         weight: product.weight,
         length: product.length,
         parameters:
-          (normalizeProductParameterValues(product.parameters) as unknown as Prisma.InputJsonValue) ||
-          [],
+          (normalizeProductParameterValues(
+            product.parameters,
+          ) as unknown as Prisma.InputJsonValue) || [],
         imageLinks: product.imageLinks || [],
         defaultPriceGroupId: product.defaultPriceGroupId ?? null,
         ean: product.ean ?? null,
@@ -1039,12 +1115,16 @@ export const prismaProductRepository: ProductRepository = {
       include: { imageFile: true },
       orderBy: { assignedAt: 'desc' },
     });
-    return images.map(toProductImageRecord).filter((i): i is ProductImageRecord => i !== null);
+    return images
+      .map(toProductImageRecord)
+      .filter(
+        (i): i is ProductImageRecord => i !== null,
+      );
   },
-    
+
   async addProductImages(productId: string, imageFileIds: string[]) {
     const normalizedIds = normalizeImageFileIds(imageFileIds);
-    
+
     if (normalizedIds.length === 0) return;
     const now = Date.now();
     await prisma.productImage.createMany({
@@ -1082,7 +1162,9 @@ export const prismaProductRepository: ProductRepository = {
       where: { id: { in: uniqueIds } },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
+    const existingIds = new Set(
+      existing.map((entry: { id: string }) => entry.id),
+    );
     const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
     if (validIds.length === 0) return;
     await prisma.productCatalog.createMany({
@@ -1112,7 +1194,9 @@ export const prismaProductRepository: ProductRepository = {
       where: { id: { in: uniqueIds } },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
+    const existingIds = new Set(
+      existing.map((entry: { id: string }) => entry.id),
+    );
     const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
     if (validIds.length === 0) return;
     await prisma.productTagAssignment.createMany({
@@ -1128,7 +1212,9 @@ export const prismaProductRepository: ProductRepository = {
       where: { id: { in: uniqueIds } },
       select: { id: true },
     });
-    const existingIds = new Set(existing.map((entry: { id: string }) => entry.id));
+    const existingIds = new Set(
+      existing.map((entry: { id: string }) => entry.id),
+    );
     const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
     if (validIds.length === 0) return;
     await prisma.productProducerAssignment.createMany({
@@ -1137,9 +1223,9 @@ export const prismaProductRepository: ProductRepository = {
   },
 
   async replaceProductNotes(productId: string, noteIds: string[]) {
-    const uniqueIds = Array.from(new Set(noteIds.filter((id: string) => id?.trim()))).map((id: string) =>
-      id.trim()
-    );
+    const uniqueIds = Array.from(
+      new Set(noteIds.filter((id: string) => id?.trim())),
+    ).map((id: string) => id.trim());
     await prisma.product.update({
       where: { id: productId },
       data: { noteIds: uniqueIds },
@@ -1157,11 +1243,15 @@ export const prismaProductRepository: ProductRepository = {
   },
 
   async createProductInTransaction<T>(
-    callback: (txClient: ProductRepository & Prisma.TransactionClient) => Promise<T>
+    callback: (
+      txClient: ProductRepository & Prisma.TransactionClient,
+    ) => Promise<T>,
   ): Promise<T> {
     return prisma.$transaction(async (tx) => {
       const transactionalRepo = createTransactionalRepository(tx);
-      return callback(transactionalRepo as ProductRepository & Prisma.TransactionClient);
+      return callback(
+        transactionalRepo as ProductRepository & Prisma.TransactionClient,
+      );
     });
   },
 };

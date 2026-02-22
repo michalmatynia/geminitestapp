@@ -148,7 +148,7 @@ export async function POST_handler(
   
   const options = _ctx.userId ? { userId: _ctx.userId } : undefined;
    
-  const product: ProductWithImages | null = await productService.createProduct(formData, options);
+  const product: ProductWithImages | null = await productService.createProduct(formData, options as any) as any;
   // Invalidate relevant caches
   CachedProductService.invalidateAll();
 

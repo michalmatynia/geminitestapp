@@ -415,19 +415,12 @@ export type ProductRecord = ProductDto;
  * Product With Images Contract
  */
 export const productWithImagesSchema = productSchema
-  .omit({
-    images: true,
-    catalogs: true,
-    tags: true,
-    producers: true,
-  })
   .extend({
-    images: z.array(productImageRecordSchema),
-    catalogs: z.array(productCatalogRecordSchema),
-    tags: z.array(productTagRelationSchema).optional(),
-    producers: z.array(productProducerRelationSchema).optional(),
+    images: z.array(productImageRecordSchema).default([]),
+    catalogs: z.array(productCatalogRecordSchema).default([]),
+    tags: z.array(productTagRelationSchema).default([]),
+    producers: z.array(productProducerRelationSchema).default([]),
   });
-
 export type ProductWithImagesDto = z.infer<typeof productWithImagesSchema>;
 export type ProductWithImages = ProductWithImagesDto;
 

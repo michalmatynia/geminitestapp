@@ -5,6 +5,6 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 
 import { getDatabasesSchemaHandler } from './handler';
 
-export const GET = apiHandler(getDatabasesSchemaHandler, {
-  source: 'databases.schema.GET',
+export const GET = apiHandler(getDatabasesSchemaHandler as any, {
+  source: 'database.schema.GET',
 });

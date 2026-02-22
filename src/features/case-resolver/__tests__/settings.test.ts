@@ -22,6 +22,9 @@ import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
   DEFAULT_CASE_RESOLVER_NODE_META,
   type AiNode,
+  type CaseResolverFile,
+  type CaseResolverAssetFile,
+  type Edge,
 } from '@/shared/contracts/case-resolver';
 
 const createPromptNode = (id: string): AiNode => ({

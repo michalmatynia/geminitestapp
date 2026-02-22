@@ -834,18 +834,21 @@ export function JobQueuePanel({
       label: 'Path ID',
       type: 'text',
       placeholder: activePathId ? `Active path: ${activePathId}` : 'All paths',
+      width: '20rem',
     },
     {
       key: 'status',
       label: 'Status',
       type: 'select',
       options: [...STATUS_FILTERS],
+      width: '12rem',
     },
     {
       key: 'pageSize',
       label: 'Page Size',
       type: 'select',
       options: PAGE_SIZES.map((size) => ({ value: String(size), label: String(size) })),
+      width: '10rem',
     },
   ], [activePathId]);
 

@@ -13,6 +13,7 @@ module.exports = tseslint.config(
       'node_modules/',
       '.next/',
       '.next-dev/',
+      '.next-dev*/',
       'dist/',
       'public/',
       'build/',

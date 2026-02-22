@@ -4,7 +4,7 @@ import type { ManagedQueue, QueueHealthStatus } from '@/shared/contracts/jobs';
 
 const logSystemEvent = async (params: { level: 'info' | 'warn' | 'error'; message: string; source: string; context?: Record<string, unknown> }): Promise<void> => {
   try {
-    // eslint-disable-next-line 
+     
     const mod = await import('@/features/observability/server') as { logSystemEvent: (input: unknown) => Promise<void> };
     await mod.logSystemEvent(params);
   } catch {

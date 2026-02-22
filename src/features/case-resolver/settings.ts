@@ -1069,7 +1069,7 @@ export const normalizeCaseResolverWorkspace = (
 
   const sanitizedFiles = filesWithSanitizedGraph.map((file: CaseResolverFile): CaseResolverFile => {
     const sanitizedGraph = sanitizeCaseResolverGraphNodeFileRelations({
-      graph: file.graph,
+      graph: file.graph || { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
       assets: sanitizedAssets,
       files: filesWithSanitizedGraph,
     });
@@ -1126,6 +1126,10 @@ export const normalizeCaseResolverWorkspace = (
       : normalizedFilesWithRelatedLinks[0]?.id ?? null;
 
   return {
+    id: typeof workspaceRecord['id'] === 'string' ? workspaceRecord['id'] : 'default',
+    ownerId: typeof workspaceRecord['ownerId'] === 'string' ? workspaceRecord['ownerId'] : 'system',
+    isPublic: workspaceRecord['isPublic'] === true,
+    name: typeof workspaceRecord['name'] === 'string' ? workspaceRecord['name'] : 'Workspace',
     version: 2,
     workspaceRevision,
     lastMutationId,
@@ -1137,8 +1141,7 @@ export const normalizeCaseResolverWorkspace = (
     assets: sanitizedAssets,
     relationGraph,
     activeFileId,
-  };
-};
+  };};
 
 export const parseCaseResolverWorkspace = (
   raw: string | null | undefined

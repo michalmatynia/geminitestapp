@@ -595,6 +595,30 @@ export function useCaseResolverState(): CaseResolverStateValue {
     });
   }, [clearConflictRetryTimer, syncPersistedWorkspaceTracking, toast]);
 
+  useEffect(() => {
+    if (canHydrateWorkspaceFromStore) return;
+    if (requestedFileId) return;
+    let isCancelled = false;
+    void (async (): Promise<void> => {
+      const snapshot = await fetchCaseResolverWorkspaceSnapshot('case_view_bootstrap');
+      if (!snapshot || isCancelled) return;
+      const snapshotRevision = getCaseResolverWorkspaceRevision(snapshot);
+      setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+        const currentRevision = getCaseResolverWorkspaceRevision(current);
+        if (snapshotRevision <= currentRevision) return current;
+        syncPersistedWorkspaceTracking(snapshot);
+        queuedSerializedWorkspaceRef.current = null;
+        queuedExpectedRevisionRef.current = null;
+        queuedMutationIdRef.current = null;
+        return snapshot;
+      });
+      settingsStoreRef.current.refetch();
+    })();
+    return (): void => {
+      isCancelled = true;
+    };
+  }, [canHydrateWorkspaceFromStore, requestedFileId, syncPersistedWorkspaceTracking]);
+
   // Sync with store
   useEffect(() => {
     if (!canHydrateWorkspaceFromStore) return;

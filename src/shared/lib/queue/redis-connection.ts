@@ -31,7 +31,7 @@ const isTransientRedisTransportError = (error: unknown): boolean => {
 
 const captureException = async (error: unknown, context: { service: string; action: string }): Promise<void> => {
   try {
-    // eslint-disable-next-line 
+     
     const mod = await import('@/features/observability/server');
     await mod.ErrorSystem.captureException(error, context);
   } catch {

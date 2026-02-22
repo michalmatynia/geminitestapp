@@ -9,11 +9,13 @@ import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   Badge,
+  Button,
   FormSection,
   FormField,
   Input,
   SectionHeader,
   SelectSimple,
+  Textarea,
   useToast,
   FormActions,
   Breadcrumbs,
@@ -22,10 +24,14 @@ import {
 import {
   createFilemakerOrganization,
   FILEMAKER_DATABASE_KEY,
+  FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY,
   formatFilemakerAddress,
   getFilemakerEmailsForParty,
   normalizeFilemakerDatabase,
+  parseAndUpsertFilemakerEmailsForParty,
+  parseFilemakerEmailParserRulesFromPromptSettings,
   parseFilemakerDatabase,
+  upsertFilemakerEmailsForParty,
 } from '../settings';
 import {
   decodeRouteParam,
@@ -66,6 +72,11 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
 
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const database = useMemo(() => parseFilemakerDatabase(rawDatabase), [rawDatabase]);
+  const rawPromptSettings = settingsStore.get(FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY);
+  const parserRules = useMemo(
+    () => parseFilemakerEmailParserRulesFromPromptSettings(rawPromptSettings),
+    [rawPromptSettings]
+  );
   const organization = useMemo(
     () =>
       database.organizations.find(
@@ -87,6 +98,8 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
   const [city, setCity] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [countryId, setCountryId] = useState('');
+  const [emailValue, setEmailValue] = useState('');
+  const [emailParserText, setEmailParserText] = useState('');
   const [hydratedOrganizationId, setHydratedOrganizationId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -187,6 +200,101 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
     toast,
     updateSetting,
   ]);
+
+  const handleAddEmail = useCallback(async (): Promise<void> => {
+    if (!organization) {
+      toast('Organization was not found.', { variant: 'error' });
+      return;
+    }
+
+    const result = upsertFilemakerEmailsForParty(database, {
+      partyKind: 'organization',
+      partyId: organization.id,
+      emails: [emailValue],
+      status: 'unverified',
+    });
+
+    if (!result.partyFound) {
+      toast('Organization was not found.', { variant: 'error' });
+      return;
+    }
+    if (result.appliedEmails.length === 0) {
+      toast('Provide a valid email address to add.', { variant: 'error' });
+      return;
+    }
+    if (result.createdEmailCount === 0 && result.linkedEmailCount === 0) {
+      toast('Email already exists and is already linked to this organization.', {
+        variant: 'warning',
+      });
+      return;
+    }
+
+    try {
+      await updateSetting.mutateAsync({
+        key: FILEMAKER_DATABASE_KEY,
+        value: JSON.stringify(result.database),
+      });
+      setEmailValue('');
+      toast(
+        `Email processed (${result.createdEmailCount} created, ${result.linkedEmailCount} linked).`,
+        { variant: 'success' }
+      );
+    } catch (error: unknown) {
+      toast(
+        error instanceof Error ? error.message : 'Failed to add email.',
+        { variant: 'error' }
+      );
+    }
+  }, [database, emailValue, organization, toast, updateSetting]);
+
+  const handleParseEmails = useCallback(async (): Promise<void> => {
+    if (!organization) {
+      toast('Organization was not found.', { variant: 'error' });
+      return;
+    }
+    if (!emailParserText.trim()) {
+      toast('Paste text to parse emails.', { variant: 'error' });
+      return;
+    }
+
+    const result = parseAndUpsertFilemakerEmailsForParty(database, {
+      partyKind: 'organization',
+      partyId: organization.id,
+      text: emailParserText,
+      parserRules,
+      status: 'unverified',
+    });
+
+    if (result.appliedEmails.length === 0) {
+      toast('No valid email addresses were detected in pasted text.', {
+        variant: 'warning',
+      });
+      return;
+    }
+    if (result.createdEmailCount === 0 && result.linkedEmailCount === 0) {
+      toast('All parsed emails already exist and are linked to this organization.', {
+        variant: 'warning',
+      });
+      return;
+    }
+
+    try {
+      await updateSetting.mutateAsync({
+        key: FILEMAKER_DATABASE_KEY,
+        value: JSON.stringify(result.database),
+      });
+      setEmailParserText('');
+      toast(
+        `Parsed ${result.appliedEmails.length} email(s) (${result.createdEmailCount} created, ${result.linkedEmailCount} linked).`,
+        { variant: 'success' }
+      );
+    } catch (error: unknown) {
+      toast(
+        error instanceof Error ? error.message : 'Failed to parse and add emails.',
+        { variant: 'error' }
+      );
+    }
+  }, [database, emailParserText, organization, parserRules, toast, updateSetting]);
 
   if (!organization) {
     return (
@@ -365,6 +473,64 @@ export function AdminFilemakerOrganizationEditPage(): React.JSX.Element {
         )}
         <div className='text-[11px] text-gray-500'>
           Manage links in Filemaker Emails.
+        </div>
+      </FormSection>
+
+      <FormSection title='Add and Link Email' className='space-y-3 p-4'>
+        <div className='grid gap-3 md:grid-cols-[minmax(0,1fr)_auto]'>
+          <FormField label='Email Address'>
+            <Input
+              value={emailValue}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setEmailValue(event.target.value);
+              }}
+              placeholder='name@example.com'
+              className='h-9'
+            />
+          </FormField>
+          <div className='flex items-end'>
+            <Button
+              type='button'
+              size='sm'
+              className='h-9'
+              onClick={(): void => {
+                void handleAddEmail();
+              }}
+              disabled={updateSetting.isPending}
+            >
+              Add and Link
+            </Button>
+          </div>
+        </div>
+      </FormSection>
+
+      <FormSection title='Email Parser' className='space-y-3 p-4'>
+        <FormField label='Paste Text'>
+          <Textarea
+            value={emailParserText}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+              setEmailParserText(event.target.value);
+            }}
+            placeholder='Paste any text (emails, signatures, message body)...'
+            className='min-h-[120px] text-xs'
+          />
+        </FormField>
+        <div className='flex flex-wrap items-center justify-between gap-2'>
+          <div className='text-[11px] text-gray-500'>
+            {parserRules.length > 0
+              ? `Using ${parserRules.length} custom validator parser rule(s).`
+              : 'Using default parser rules (no custom validator rules found).'}
+          </div>
+          <Button
+            type='button'
+            size='sm'
+            onClick={(): void => {
+              void handleParseEmails();
+            }}
+            disabled={updateSetting.isPending}
+          >
+            Parse and Link Emails
+          </Button>
         </div>
       </FormSection>
     </div>

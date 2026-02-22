@@ -1,8 +1,0 @@
-
- RUN  v2.1.9 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp
-
-filter:  __tests__/features/case-resolver
-include: **/*.{test,spec}.?(c|m)[jt]s?(x)
-exclude:  **/node_modules/**, **/dist/**, **/cypress/**, **/.{idea,git,cache,output,temp}/**, **/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build,eslint,prettier}.config.*, e2e/**, .next/**
-
-No test files found, exiting with code 1

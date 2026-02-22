@@ -431,6 +431,138 @@ export const mergeParameterInferenceUpdates = (args: {
   };
 };
 
+const areParameterRecordArraysEqual = (
+  left: Record<string, unknown>[],
+  right: Record<string, unknown>[]
+): boolean => {
+  if (left.length !== right.length) return false;
+  for (let index = 0; index < left.length; index += 1) {
+    if (JSON.stringify(left[index]) !== JSON.stringify(right[index])) {
+      return false;
+    }
+  }
+  return true;
+};
+
+export const materializeParameterInferenceUpdates = (args: {
+  targetPath: string;
+  updates: Record<string, unknown>;
+  templateInputs: RuntimePortValues;
+  definitionsPort: string;
+  definitionsPath: string;
+}): {
+  updates: Record<string, unknown>;
+  applied: boolean;
+  meta?: Record<string, unknown>;
+} => {
+  if (!args.targetPath) return { updates: args.updates, applied: false };
+
+  const inferred = normalizeParameterEntries(args.updates[args.targetPath], {
+    allowEmptyValue: true,
+  });
+  const existingSource = resolveExistingParameterValueFromInputs(
+    args.templateInputs,
+    args.targetPath
+  );
+  const existing = normalizeParameterEntries(existingSource, {
+    allowEmptyValue: true,
+  });
+  const definitions = normalizeParameterDefinitions(
+    args.templateInputs[args.definitionsPort],
+    args.definitionsPath
+  );
+  const hasTargetPathInput = Object.prototype.hasOwnProperty.call(
+    args.updates,
+    args.targetPath
+  );
+  const shouldApply =
+    hasTargetPathInput ||
+    inferred.length > 0 ||
+    existing.length > 0 ||
+    definitions.size > 0;
+  if (!shouldApply) {
+    return { updates: args.updates, applied: false };
+  }
+
+  const baseRecords = existing.map((entry) => ({ ...entry.raw }));
+  const nextRecords = existing.map((entry) => ({ ...entry.raw }));
+  const indexByParameterId = new Map<string, number>();
+  existing.forEach((entry, index) => {
+    indexByParameterId.set(entry.parameterId, index);
+  });
+
+  let appendedMissingCount = 0;
+  definitions.forEach((_definition: ParameterDefinitionRecord, parameterId: string) => {
+    if (indexByParameterId.has(parameterId)) return;
+    indexByParameterId.set(parameterId, nextRecords.length);
+    nextRecords.push({
+      parameterId,
+      value: '',
+    });
+    appendedMissingCount += 1;
+  });
+
+  let filledBlankCount = 0;
+  let preservedNonEmptyCount = 0;
+  let appendedUnknownInferredCount = 0;
+  inferred.forEach((entry) => {
+    const existingIndex = indexByParameterId.get(entry.parameterId);
+    if (existingIndex === undefined) {
+      indexByParameterId.set(entry.parameterId, nextRecords.length);
+      nextRecords.push({
+        parameterId: entry.parameterId,
+        value: entry.value,
+      });
+      appendedUnknownInferredCount += 1;
+      return;
+    }
+
+    const current = nextRecords[existingIndex] ?? {};
+    const currentValue = resolveParameterValue(current['value']);
+    if (currentValue) {
+      preservedNonEmptyCount += 1;
+      return;
+    }
+
+    if (!entry.value) {
+      return;
+    }
+    nextRecords[existingIndex] = {
+      ...current,
+      parameterId: entry.parameterId,
+      value: entry.value,
+    };
+    filledBlankCount += 1;
+  });
+
+  const changed = !areParameterRecordArraysEqual(baseRecords, nextRecords);
+  const nextUpdates: Record<string, unknown> = { ...args.updates };
+  if (nextRecords.length > 0) {
+    nextUpdates[args.targetPath] = nextRecords;
+  } else {
+    delete nextUpdates[args.targetPath];
+  }
+  return {
+    updates: nextUpdates,
+    applied: true,
+    meta: {
+      targetPath: args.targetPath,
+      existingCount: existing.length,
+      inferredCount: inferred.length,
+      definitionsCount: definitions.size,
+      finalCount: nextRecords.length,
+      changed,
+      merged: {
+        filledBlank: filledBlankCount,
+        preservedNonEmpty: preservedNonEmptyCount,
+        appendedMissing: appendedMissingCount,
+        appendedUnknownInferred: appendedUnknownInferredCount,
+      },
+      writeCandidates: changed ? nextRecords.length : 0,
+    },
+  };
+};
+
 export const resolveParameterIdsFromInputs = (inputs: RuntimePortValues): string[] => {
   const ids = new Set<string>();
   const collectFromParameters = (value: unknown): void => {

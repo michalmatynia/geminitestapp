@@ -44,7 +44,7 @@ function DatabaseOperationsContent(): React.JSX.Element {
             triggerClassName='h-8 text-xs w-[120px]'
           />
           <Button asChild variant='outline' size='sm'>
-            <Link href='/admin/databases'>Back to Databases</Link>
+            <Link href='/admin/databases/engine'>Back to Databases</Link>
           </Button>
         </div>
       }

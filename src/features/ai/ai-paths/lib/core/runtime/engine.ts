@@ -12,6 +12,7 @@ import type {
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths-runtime';
+import type { Toast } from '@/shared/contracts/ui';
 
 import { DEFAULT_DB_QUERY } from '../constants';
 import {
@@ -70,8 +71,6 @@ import {
   handleViewer,
 } from './handlers';
 import { buildDbQueryPayload, extractImageUrls } from './utils';
-
-type ToastFn = (message: unknown, options?: unknown) => void;
 
 export type RuntimeProfileEvent = AiPathRuntimeProfileEventDto;
 
@@ -201,7 +200,7 @@ export type EvaluateGraphOptions = {
     meta: Record<string, unknown>,
     summary?: string
   ) => void;
-  toast: ToastFn;
+  toast: Toast;
 };
 
 const CACHE_VERSION = 1;

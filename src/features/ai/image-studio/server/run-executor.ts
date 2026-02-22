@@ -455,11 +455,23 @@ async function executeCenterOperation(params: {
   const centerMode = params.request.center?.mode ?? 'server_alpha_bbox';
   const normalizedLayout = normalizeCenterLayoutConfig(params.request.center?.layout);
 
-  let outputBuffer: Buffer | null = null;
-  let outputMime: string | null = null;
+  let outputBuffer: Buffer;
+  let outputMime: string;
   let sourceObjectBounds: ImageStudioCenterObjectBounds | null = null;
   let targetObjectBounds: ImageStudioCenterObjectBounds | null = null;
-  let layoutMeta: ImageStudioCenterExecutionMeta['layout'] | null = null;
+  let layoutMeta: ImageStudioCenterExecutionMeta['layout'] = {
+    paddingPercent: normalizedLayout.paddingPercent,
+    paddingXPercent: normalizedLayout.paddingXPercent,
+    paddingYPercent: normalizedLayout.paddingYPercent,
+    fillMissingCanvasWhite: normalizedLayout.fillMissingCanvasWhite,
+    targetCanvasWidth: normalizedLayout.targetCanvasWidth,
+    targetCanvasHeight: normalizedLayout.targetCanvasHeight,
+    whiteThreshold: normalizedLayout.whiteThreshold,
+    chromaThreshold: normalizedLayout.chromaThreshold,
+    shadowPolicy: normalizedLayout.shadowPolicy,
+    detectionUsed: null,
+    scale: null,
+  };
 
   if (centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1') {
     const parsedDataUrl = parseDataUrl(params.request.center?.dataUrl ?? '');
@@ -584,20 +596,22 @@ async function executeCenterOperation(params: {
     extension: normalizedOutput.format,
   });
 
+  const executionMeta: ImageStudioCenterExecutionMeta = {
+    operation: 'center_object',
+    mode: centerMode,
+    outputFormat: normalizedOutput.format,
+    requestedOutputCount: 1,
+    responseImageCount: 1,
+    inputImageCount: 1,
+    sourceObjectBounds,
+    targetObjectBounds,
+    layout: layoutMeta,
+  };
+
   return {
     projectId: params.projectId,
     outputs: [createdOutput],
-    executionMeta: {
-      operation: 'center_object',
-      mode: centerMode,
-      outputFormat: normalizedOutput.format,
-      requestedOutputCount: 1,
-      responseImageCount: 1,
-      inputImageCount: 1,
-      sourceObjectBounds: sourceObjectBounds as any,
-      targetObjectBounds: targetObjectBounds as any,
-      layout: layoutMeta as any,
-    },
+    executionMeta,
   };
 }
 

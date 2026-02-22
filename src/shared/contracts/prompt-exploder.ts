@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
-import { validatorScopeSchema, type ValidatorScopeDto } from './admin';
+import { validatorScopeSchema } from './admin';
 
 /**
  * Prompt Exploder Basic DTOs

@@ -60,4 +60,26 @@ describe('FilterPanel', () => {
     render(<FilterPanel {...defaultProps} headerTitle='Advanced Filters' />);
     expect(screen.getByText('Advanced Filters')).toBeInTheDocument();
   });
+
+  it('applies configured filter width for select controls', () => {
+    render(
+      <FilterPanel
+        {...defaultProps}
+        filters={[
+          {
+            key: 'status',
+            label: 'Status',
+            type: 'select',
+            options: [{ label: 'Active', value: 'active' }],
+            width: '12rem',
+          },
+        ]}
+        values={{ status: '' }}
+      />
+    );
+
+    expect(screen.getByText('Status').parentElement).toHaveStyle({
+      width: '12rem',
+    });
+  });
 });

@@ -86,6 +86,103 @@ describe('buildMongoUpdatePlan', () => {
     expect(result.plan.debugPayload['updateDoc']).toEqual(result.plan.updateDoc);
   });
 
+  it('materializes full parameter rows from definitions while preserving existing values', async () => {
+    const templateInputs = {
+      value: [{ parameterId: 'color', value: 'Blue' }],
+      result: [
+        { id: 'color', selectorType: 'text', optionLabels: [] },
+        { id: 'material', selectorType: 'text', optionLabels: [] },
+        { id: 'model_number', selectorType: 'text', optionLabels: [] },
+      ],
+      context: {
+        entity: {
+          parameters: [
+            { parameterId: 'color', value: '' },
+            { parameterId: 'material', value: 'Steel' },
+            { parameterId: 'cf_model_name', value: 'X100' },
+          ],
+        },
+      },
+      entityId: 'product-1',
+      productId: 'product-1',
+      entityType: 'product',
+    } as const;
+
+    const result = await buildMongoUpdatePlan({
+      actionCategory: 'update',
+      action: 'updateOne',
+      node: {
+        id: 'node-update-params',
+        type: 'database',
+        title: 'Database Query',
+      } as any,
+      prevOutputs: {},
+      reportAiPathsError: vi.fn(),
+      toast: vi.fn(),
+      resolvedInputs: {
+        entityId: 'product-1',
+        productId: 'product-1',
+        entityType: 'product',
+      },
+      nodeInputPorts: ['value', 'result', 'entityId'],
+      dbConfig: {
+        operation: 'update',
+        mode: 'replace',
+        parameterInferenceGuard: {
+          enabled: true,
+          targetPath: 'parameters',
+          definitionsPort: 'result',
+          definitionsPath: '',
+          enforceOptionLabels: false,
+          allowUnknownParameterIds: false,
+        },
+      },
+      queryConfig: {
+        provider: 'auto',
+        collection: 'products',
+        mode: 'custom',
+        preset: 'by_id',
+        field: 'id',
+        idType: 'string',
+        queryTemplate: '{"id":"{{entityId}}"}',
+        limit: 1,
+        sort: '',
+        projection: '',
+        single: true,
+      },
+      collection: 'products',
+      filter: { id: 'product-1' },
+      idType: 'string',
+      updateTemplate: '{"$set":{"parameters":{{value}}}}',
+      templateInputs,
+      parseJsonTemplate: (template: string): unknown =>
+        parseJsonSafe(
+          renderJsonTemplate(
+            template,
+            templateInputs as unknown as Record<string, unknown>,
+            templateInputs['value']
+          )
+        ),
+      ensureExistingParameterTemplateContext: vi.fn(async () => {}),
+      aiPrompt: '',
+    });
+
+    if (!('plan' in result)) {
+      throw new Error('Expected plan result');
+    }
+
+    const updateDoc = result.plan.updateDoc as Record<string, unknown>;
+    const updateSet = updateDoc['$set'] as Record<string, unknown>;
+    const parameters = updateSet['parameters'] as Array<Record<string, unknown>>;
+
+    expect(parameters).toEqual([
+      { parameterId: 'color', value: 'Blue' },
+      { parameterId: 'material', value: 'Steel' },
+      { parameterId: 'cf_model_name', value: 'X100' },
+      { parameterId: 'model_number', value: '' },
+    ]);
+  });
+
   it('blocks mapping payload mode with explicit guardrail output', async () => {
     const reportAiPathsError = vi.fn();
     const toast = vi.fn();

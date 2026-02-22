@@ -16,6 +16,8 @@ import type {
 
 export const FILEMAKER_DATABASE_KEY = 'filemaker_database_v1';
 export const FILEMAKER_REFERENCE_NONE = 'none';
+export const FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY = 'prompt_engine_settings';
+export const FILEMAKER_EMAIL_PARSER_RULE_PREFIX = 'segment.filemaker.email_parser.';
 
 const FILEMAKER_EMAIL_STATUSES: FilemakerEmailStatus[] = [
   'active',
@@ -25,6 +27,58 @@ const FILEMAKER_EMAIL_STATUSES: FilemakerEmailStatus[] = [
 ];
 
 const FILEMAKER_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export type FilemakerEmailParserRule = {
+  id: string;
+  pattern: string;
+  flags?: string | null;
+  sequence?: number | null;
+};
+
+export type FilemakerEmailExtractionResult = {
+  emails: string[];
+  totalMatches: number;
+  invalidMatches: number;
+  usedDefaultRules: boolean;
+};
+
+export type UpsertFilemakerPartyEmailsResult = {
+  database: FilemakerDatabase;
+  partyFound: boolean;
+  createdEmailCount: number;
+  linkedEmailCount: number;
+  existingEmailCount: number;
+  invalidEmailCount: number;
+  appliedEmails: string[];
+};
+
+const DEFAULT_FILEMAKER_EMAIL_PARSER_RULES: FilemakerEmailParserRule[] = [
+  {
+    id: `${FILEMAKER_EMAIL_PARSER_RULE_PREFIX}mailto`,
+    pattern: 'mailto:\\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})',
+    flags: 'gi',
+    sequence: 10,
+  },
+  {
+    id: `${FILEMAKER_EMAIL_PARSER_RULE_PREFIX}angle`,
+    pattern: '<\\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})\\s*>',
+    flags: 'gi',
+    sequence: 20,
+  },
+  {
+    id: `${FILEMAKER_EMAIL_PARSER_RULE_PREFIX}quoted`,
+    pattern: '["\']([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})["\']',
+    flags: 'gi',
+    sequence: 30,
+  },
+  {
+    id: `${FILEMAKER_EMAIL_PARSER_RULE_PREFIX}plain`,
+    pattern:
+      '(?:^|[^A-Z0-9._%+-])([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})(?=$|[^A-Z0-9._%+-])',
+    flags: 'gi',
+    sequence: 40,
+  },
+];
 
 const normalizeString = (value: unknown, fallback = ''): string =>
   typeof value === 'string' ? value.trim() : fallback;
@@ -87,6 +141,198 @@ const normalizeEmailStatus = (
   return FILEMAKER_EMAIL_STATUSES.find(
     (status: FilemakerEmailStatus): boolean => status === normalized
   ) ?? fallback;
+};
+
+type FilemakerEmailParserRuntimeRule = {
+  id: string;
+  regex: RegExp;
+  sequence: number;
+};
+
+const normalizeEmailParserFlags = (value: unknown): string => {
+  const raw = normalizeString(value);
+  const unique = new Set<string>();
+  raw.split('').forEach((flag: string): void => {
+    if (
+      flag === 'g' ||
+      flag === 'i' ||
+      flag === 'm' ||
+      flag === 's' ||
+      flag === 'u' ||
+      flag === 'd'
+    ) {
+      unique.add(flag);
+    }
+  });
+  unique.add('g');
+  return Array.from(unique).join('');
+};
+
+const sanitizeEmailCandidate = (value: string): string => {
+  let current = value.trim().replace(/^mailto:\s*/i, '');
+  if (!current) return '';
+
+  const leadingWrapperRe = /^[<([{'"`]+/;
+  const trailingWrapperRe = /[>\])}"'`.,;:!?]+$/;
+  let previous = '';
+  while (previous !== current) {
+    previous = current;
+    current = current
+      .replace(leadingWrapperRe, '')
+      .replace(trailingWrapperRe, '')
+      .trim();
+  }
+  return current;
+};
+
+const toParserRuleSequence = (value: unknown): number => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
+  return Math.max(0, Math.floor(value));
+};
+
+const sortFilemakerEmailParserRules = (
+  rules: FilemakerEmailParserRule[]
+): FilemakerEmailParserRule[] =>
+  [...rules].sort((left: FilemakerEmailParserRule, right: FilemakerEmailParserRule) => {
+    const leftSequence = toParserRuleSequence(left.sequence);
+    const rightSequence = toParserRuleSequence(right.sequence);
+    if (leftSequence !== rightSequence) return leftSequence - rightSequence;
+    return left.id.localeCompare(right.id);
+  });
+
+const compileFilemakerEmailParserRules = (
+  rules: FilemakerEmailParserRule[]
+): FilemakerEmailParserRuntimeRule[] =>
+  sortFilemakerEmailParserRules(rules)
+    .map((rule: FilemakerEmailParserRule): FilemakerEmailParserRuntimeRule | null => {
+      const pattern = normalizeString(rule.pattern);
+      if (!pattern) return null;
+      try {
+        return {
+          id: normalizeString(rule.id) || FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
+          regex: new RegExp(pattern, normalizeEmailParserFlags(rule.flags)),
+          sequence: toParserRuleSequence(rule.sequence),
+        };
+      } catch {
+        return null;
+      }
+    })
+    .filter(
+      (entry: FilemakerEmailParserRuntimeRule | null): entry is FilemakerEmailParserRuntimeRule =>
+        Boolean(entry)
+    );
+
+export const parseFilemakerEmailParserRulesFromPromptSettings = (
+  rawPromptSettings: string | null | undefined
+): FilemakerEmailParserRule[] => {
+  const parsed = parseJsonSetting<Record<string, unknown> | null>(
+    rawPromptSettings,
+    null
+  );
+  if (!parsed || typeof parsed !== 'object') return [];
+
+  const promptValidation =
+    parsed['promptValidation'] &&
+    typeof parsed['promptValidation'] === 'object' &&
+    !Array.isArray(parsed['promptValidation'])
+      ? (parsed['promptValidation'] as Record<string, unknown>)
+      : null;
+  if (!promptValidation) return [];
+
+  const rawRules = Array.isArray(promptValidation['rules'])
+    ? (promptValidation['rules'] as unknown[])
+    : [];
+  const rules = rawRules
+    .filter(
+      (entry: unknown): entry is Record<string, unknown> =>
+        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
+    )
+    .map((entry: Record<string, unknown>): FilemakerEmailParserRule | null => {
+      const id = normalizeString(entry['id']);
+      if (!id.startsWith(FILEMAKER_EMAIL_PARSER_RULE_PREFIX)) return null;
+      if (normalizeString(entry['kind']).toLowerCase() !== 'regex') return null;
+      if (entry['enabled'] === false) return null;
+
+      const pattern = normalizeString(entry['pattern']);
+      if (!pattern) return null;
+
+      return {
+        id,
+        pattern,
+        flags: normalizeString(entry['flags']),
+        sequence: typeof entry['sequence'] === 'number' ? entry['sequence'] : 0,
+      };
+    })
+    .filter(
+      (entry: FilemakerEmailParserRule | null): entry is FilemakerEmailParserRule =>
+        Boolean(entry)
+    );
+
+  return sortFilemakerEmailParserRules(rules);
+};
+
+export const extractFilemakerEmailsFromText = (
+  rawText: string,
+  options?: {
+    parserRules?: FilemakerEmailParserRule[] | null | undefined;
+  }
+): FilemakerEmailExtractionResult => {
+  const source = normalizeString(rawText);
+  const customRules = sortFilemakerEmailParserRules(options?.parserRules ?? []);
+  const fallbackRules =
+    customRules.length > 0 ? customRules : DEFAULT_FILEMAKER_EMAIL_PARSER_RULES;
+  const runtimeRules = compileFilemakerEmailParserRules(fallbackRules);
+  if (!source || runtimeRules.length === 0) {
+    return {
+      emails: [],
+      totalMatches: 0,
+      invalidMatches: 0,
+      usedDefaultRules: customRules.length === 0,
+    };
+  }
+
+  const extracted: string[] = [];
+  const uniqueEmails = new Set<string>();
+  let totalMatches = 0;
+  let invalidMatches = 0;
+
+  runtimeRules.forEach((rule: FilemakerEmailParserRuntimeRule): void => {
+    const regex = new RegExp(rule.regex.source, rule.regex.flags);
+    let match: RegExpExecArray | null = regex.exec(source);
+    while (match) {
+      totalMatches += 1;
+
+      const captured =
+        match
+          .slice(1)
+          .find((entry: string | undefined): entry is string =>
+            typeof entry === 'string' && entry.trim().length > 0
+          ) ?? match[0] ?? '';
+
+      const normalizedEmail = normalizeEmailAddress(
+        sanitizeEmailCandidate(captured)
+      );
+
+      if (!isValidEmailAddress(normalizedEmail)) {
+        invalidMatches += 1;
+      } else if (!uniqueEmails.has(normalizedEmail)) {
+        uniqueEmails.add(normalizedEmail);
+        extracted.push(normalizedEmail);
+      }
+
+      if ((match[0] ?? '').length === 0) {
+        regex.lastIndex += 1;
+      }
+      match = regex.exec(source);
+    }
+  });
+
+  return {
+    emails: extracted,
+    totalMatches,
+    invalidMatches,
+    usedDefaultRules: customRules.length === 0,
+  };
 };
 
 type FilemakerAddressFields = {
@@ -765,7 +1011,7 @@ export const linkFilemakerEmailToParty = (
     return { database, created: false };
   }
 
-  const usedIds = new Set(
+  const usedIds = new Set<string>(
     database.emailLinks.map((link: FilemakerEmailLink): string => link.id)
   );
   const id = ensureUniqueId(
@@ -790,6 +1036,178 @@ export const linkFilemakerEmailToParty = (
   return {
     database: nextDatabase,
     created: true,
+  };
+};
+
+const normalizeUniqueEmailValues = (
+  values: string[]
+): { emails: string[]; invalidEmailCount: number } => {
+  const unique = new Set<string>();
+  const normalized: string[] = [];
+  let invalidEmailCount = 0;
+
+  values.forEach((value: string): void => {
+    const normalizedEmail = normalizeEmailAddress(
+      sanitizeEmailCandidate(value)
+    );
+    if (!isValidEmailAddress(normalizedEmail)) {
+      invalidEmailCount += 1;
+      return;
+    }
+    if (unique.has(normalizedEmail)) return;
+    unique.add(normalizedEmail);
+    normalized.push(normalizedEmail);
+  });
+
+  return { emails: normalized, invalidEmailCount };
+};
+
+export const upsertFilemakerEmailsForParty = (
+  database: FilemakerDatabase,
+  input: {
+    partyKind: FilemakerPartyKind;
+    partyId: string;
+    emails: string[];
+    status?: FilemakerEmailStatus | null | undefined;
+  }
+): UpsertFilemakerPartyEmailsResult => {
+  const normalizedDatabase = normalizeFilemakerDatabase(database);
+  const normalizedPartyId = normalizeString(input.partyId);
+  if (!normalizedPartyId) {
+    return {
+      database: normalizedDatabase,
+      partyFound: false,
+      createdEmailCount: 0,
+      linkedEmailCount: 0,
+      existingEmailCount: 0,
+      invalidEmailCount: input.emails.length,
+      appliedEmails: [],
+    };
+  }
+
+  const partyFound =
+    input.partyKind === 'person'
+      ? normalizedDatabase.persons.some(
+        (person: FilemakerPerson): boolean => person.id === normalizedPartyId
+      )
+      : normalizedDatabase.organizations.some(
+        (organization: FilemakerOrganization): boolean =>
+          organization.id === normalizedPartyId
+      );
+  if (!partyFound) {
+    return {
+      database: normalizedDatabase,
+      partyFound: false,
+      createdEmailCount: 0,
+      linkedEmailCount: 0,
+      existingEmailCount: 0,
+      invalidEmailCount: input.emails.length,
+      appliedEmails: [],
+    };
+  }
+
+  const { emails, invalidEmailCount } = normalizeUniqueEmailValues(input.emails);
+  if (emails.length === 0) {
+    return {
+      database: normalizedDatabase,
+      partyFound: true,
+      createdEmailCount: 0,
+      linkedEmailCount: 0,
+      existingEmailCount: 0,
+      invalidEmailCount,
+      appliedEmails: [],
+    };
+  }
+
+  const emailIdByValue = new Map<string, string>();
+  normalizedDatabase.emails.forEach((email: FilemakerEmail): void => {
+    emailIdByValue.set(normalizeEmailAddress(email.email), email.id);
+  });
+  const usedEmailIds = new Set<string>(
+    normalizedDatabase.emails.map((email: FilemakerEmail): string => email.id)
+  );
+  const nextEmails = [...normalizedDatabase.emails];
+  const normalizedStatus = normalizeEmailStatus(input.status, 'unverified');
+  let createdEmailCount = 0;
+  let existingEmailCount = 0;
+
+  emails.forEach((emailValue: string): void => {
+    const existingId = emailIdByValue.get(emailValue);
+    if (existingId) {
+      existingEmailCount += 1;
+      return;
+    }
+
+    const baseId = defaultEmailIdForValue(emailValue);
+    const id = ensureUniqueId(baseId, usedEmailIds, baseId);
+    usedEmailIds.add(id);
+    emailIdByValue.set(emailValue, id);
+    nextEmails.push(
+      createFilemakerEmail({
+        id,
+        email: emailValue,
+        status: normalizedStatus,
+      })
+    );
+    createdEmailCount += 1;
+  });
+
+  let nextDatabase = normalizedDatabase;
+  if (createdEmailCount > 0) {
+    nextDatabase = normalizeFilemakerDatabase({
+      ...normalizedDatabase,
+      emails: nextEmails,
+    });
+  }
+  let linkedEmailCount = 0;
+
+  emails.forEach((emailValue: string): void => {
+    const emailId = emailIdByValue.get(emailValue);
+    if (!emailId) return;
+    const result = linkFilemakerEmailToParty(nextDatabase, {
+      emailId,
+      partyKind: input.partyKind,
+      partyId: normalizedPartyId,
+    });
+    nextDatabase = result.database;
+    if (result.created) {
+      linkedEmailCount += 1;
+    }
+  });
+
+  return {
+    database: nextDatabase,
+    partyFound: true,
+    createdEmailCount,
+    linkedEmailCount,
+    existingEmailCount,
+    invalidEmailCount,
+    appliedEmails: emails,
+  };
+};
+
+export const parseAndUpsertFilemakerEmailsForParty = (
+  database: FilemakerDatabase,
+  input: {
+    partyKind: FilemakerPartyKind;
+    partyId: string;
+    text: string;
+    parserRules?: FilemakerEmailParserRule[] | null | undefined;
+    status?: FilemakerEmailStatus | null | undefined;
+  }
+): UpsertFilemakerPartyEmailsResult & FilemakerEmailExtractionResult => {
+  const extraction = extractFilemakerEmailsFromText(input.text, {
+    parserRules: input.parserRules,
+  });
+  const upsert = upsertFilemakerEmailsForParty(database, {
+    partyKind: input.partyKind,
+    partyId: input.partyId,
+    emails: extraction.emails,
+    status: input.status,
+  });
+  return {
+    ...extraction,
+    ...upsert,
   };
 };
 

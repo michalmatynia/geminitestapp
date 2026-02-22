@@ -16,9 +16,9 @@ import type {
   CaseResolverEditorNodeContext,
   CaseResolverSettingsDto,
   CaseResolverAssetKind,
-  CaseResolverDocumentHistoryEntry,
   CaseResolverFileEditDraft,
 } from '@/shared/contracts/case-resolver';
+  
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type { CountryOption } from '@/shared/contracts/internationalization';
 

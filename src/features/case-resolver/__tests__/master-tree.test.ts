@@ -12,11 +12,16 @@ import { buildMasterTree } from '@/shared/utils/master-folder-tree-engine';
 describe('case-resolver master tree', () => {
   it('orders siblings by type first (folders first) then alphabetically', () => {
     const workspace: CaseResolverWorkspace = {
+      id: 'test-workspace',
+      name: 'Test Workspace',
+      ownerId: 'owner-1',
+      isPublic: false,
       version: 2,
       workspaceRevision: 0,
       lastMutationId: null,
       lastMutationAt: null,
       folders: ['beta', 'alpha', 'alpha/sub'],
+      folderRecords: [],
       folderTimestamps: {},
       files: [
         createCaseResolverFile({ id: 'case-root-hidden', name: 'Case Root', fileType: 'case', folder: '' }),
@@ -59,11 +64,16 @@ describe('case-resolver master tree', () => {
 
   it('hides image placeholders without uploaded file paths', () => {
     const workspace: CaseResolverWorkspace = {
+      id: 'test-workspace-2',
+      name: 'Test Workspace 2',
+      ownerId: 'owner-1',
+      isPublic: false,
       version: 2,
       workspaceRevision: 0,
       lastMutationId: null,
       lastMutationAt: null,
       folders: ['alpha'],
+      folderRecords: [],
       folderTimestamps: {},
       files: [
         createCaseResolverFile({ id: 'case-root-hidden', name: 'Case Root', fileType: 'case', folder: '' }),

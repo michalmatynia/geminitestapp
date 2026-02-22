@@ -16,7 +16,7 @@ import { usePromptEngine } from '../context/PromptEngineContext';
 import { useOptionalPromptEngineValidationPageContext } from '../context/PromptEngineValidationPageContext';
 
 const DEFAULT_EYEBROW = 'AI · Prompt Engine';
-const DEFAULT_BACK_LINK_HREF = '/admin/prompt-engine';
+const DEFAULT_BACK_LINK_HREF = '/admin/prompt-engine/validation';
 const DEFAULT_BACK_LINK_LABEL = 'Back to Prompt Engine';
 
 export function PromptEngineToolbar(): React.JSX.Element {

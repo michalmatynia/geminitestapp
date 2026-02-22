@@ -13,7 +13,6 @@ import {
   Input,
   Label,
   Alert,
-  LoadingState,
   Separator,
   Card,
   CardHeader,
@@ -24,15 +23,7 @@ import {
 } from '@/shared/ui';
 
 function SignInPageLoader(): React.JSX.Element {
-  const { userPageSettings, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className='flex min-h-screen items-center justify-center bg-gray-900 px-4'>
-        <LoadingState message='Loading authentication...' />
-      </div>
-    );
-  }
+  const { userPageSettings } = useAuth();
 
   const allowSocialLogin = Boolean(userPageSettings.allowSocialLogin);
 
@@ -254,7 +245,7 @@ function SignInForm({ allowSocialLogin }: { allowSocialLogin: boolean }): React.
 
 export default function SignInPage(): React.JSX.Element {
   return (
-    <Suspense fallback={<LoadingState message='Initializing...' />}>
+    <Suspense fallback={<></>}>
       <SignInPageLoader />
     </Suspense>
   );

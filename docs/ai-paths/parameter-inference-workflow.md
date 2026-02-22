@@ -14,7 +14,8 @@
 6. For selector types `radio/select/dropdown`, value must match allowed `optionLabels`.
 7. If parameter definitions are not resolved, update is blocked with explicit runtime error (`No parameter definitions resolved for parameter inference.`).
 8. Writes are merge-safe: blank existing values are filled, non-empty existing values are preserved.
-9. Runtime keeps debug payload for dropped/accepted/written parameter entries.
+9. Final product payload always materializes full catalog parameter rows, with empty-string values for not-inferred parameters.
+10. Runtime keeps debug payload for dropped/accepted/written parameter entries.
 
 ## Runtime Guard (Database Node)
 - `database.parameterInferenceGuard.enabled = true`
@@ -38,6 +39,7 @@
 7. Duplicate `parameterId` values -> first accepted, duplicates dropped.
 8. Existing non-empty parameter value + conflicting inference -> existing value preserved.
 9. Existing empty parameter value + inferred value -> empty value is filled.
+10. Partial or sparse inference output -> product still keeps full parameter template rows with empty values where missing.
 
 ## Regression Baseline
 - SKU `KEYCHA1078` must pass after catalog backfill and write at least one inferred parameter in non-dry run.
@@ -46,8 +48,8 @@
 ## Rollout Metrics
 - Path run success rate.
 - Average accepted parameters per run.
-- Dropped counts by reason: unknown parameter ID, invalid option, empty value, duplicate, invalid shape.
-- Write diagnostics: planned merges, filled blanks, preserved non-empty, appended, modified count.
+- Dropped counts by reason: unknown parameter ID, invalid option, empty candidate value, duplicate, invalid shape.
+- Write diagnostics: planned merges, filled blanks, preserved non-empty, appended missing template rows, modified count.
 - Manual correction rate in Product form after inference.
 
 ## Operational Notes

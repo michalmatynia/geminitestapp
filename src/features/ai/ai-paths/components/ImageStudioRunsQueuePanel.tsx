@@ -154,7 +154,7 @@ export function ImageStudioRunsQueuePanel(): React.JSX.Element {
                     onValueChange={(v) => setStatusFilter(v as 'all' | ImageStudioRunStatus)}
                     options={STATUS_OPTIONS}
                     size='xs'
-                    className='w-28 mt-[-2px]'
+                    className='w-44 mt-[-2px]'
                   />
                 ),
               },

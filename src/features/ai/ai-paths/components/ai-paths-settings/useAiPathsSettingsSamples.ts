@@ -182,8 +182,9 @@ export function useAiPathsSettingsSamples({
           notify,
         };
       }
-      let sample: unknown = null;
+      let sample: unknown;
       let fetchedId = entityId;
+      
       const isObjectId = (value: string): boolean =>
         /^[0-9a-fA-F]{24}$/.test(value);
       const fetchViaDbQuery = async (

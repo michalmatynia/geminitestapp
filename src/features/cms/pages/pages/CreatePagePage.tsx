@@ -3,11 +3,11 @@
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
 
-import { CmsDomainSelector } from '@/features/cms';
+import { CmsDomainSelector } from '@/features/cms/components/CmsDomainSelector';
 import { useCmsDomainSelection } from '@/features/cms/hooks/useCmsDomainSelection';
 import { useCmsAllSlugs, useCmsSlugs, useCreatePage } from '@/features/cms/hooks/useCmsQueries';
 import { cmsPageCreateSchema } from '@/features/cms/validations/api';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/features/observability/utils/client-error-logger';
 import type { Slug } from '@/shared/contracts/cms';
 import { Input, SectionHeader, Checkbox, ToggleRow, FormSection, FormField, Badge, Alert, StatusBadge, FormActions, Hint, Breadcrumbs } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';

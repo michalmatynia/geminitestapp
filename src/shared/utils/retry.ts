@@ -23,7 +23,7 @@ type LogSystemEventParams = {
 // Real implementation from features layer via dynamic import to avoid circular dependencies
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
-    // eslint-disable-next-line 
+     
     const mod = await import('@/features/observability/lib/system-logger');
     await mod.logSystemEvent(params);
   } catch (error) {

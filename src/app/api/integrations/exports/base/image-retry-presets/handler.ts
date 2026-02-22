@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { normalizeImageRetryPresets } from '@/features/data-import-export/public';
+import { normalizeImageRetryPresets } from '@/features/data-import-export/utils/image-retry-presets';
 import {
   getExportImageRetryPresets,
   setExportImageRetryPresets

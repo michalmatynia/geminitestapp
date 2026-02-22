@@ -234,7 +234,7 @@ function DatabasesContent(): React.JSX.Element {
           <Button
             variant='outline'
             onClick={(): void => {
-              window.location.assign('/admin/databases/operations');
+              window.location.assign('/admin/databases/engine?view=operations');
             }}
           >
             Database Operations

@@ -125,12 +125,12 @@ export const buildAdminNav = (handlers: {
       {
         id: 'integrations/aggregators',
         label: 'Aggregators',
-        href: '/admin/integrations/aggregators',
+        href: '/admin/integrations/aggregators/base-com/synchronization-engine',
         children: [
           {
             id: 'integrations/aggregators/base-com',
             label: 'Base.com',
-            href: '/admin/integrations/aggregators/base-com',
+            href: '/admin/integrations/aggregators/base-com/synchronization-engine',
             children: [
               {
                 id: 'integrations/aggregators/base-com/synchronization-engine',

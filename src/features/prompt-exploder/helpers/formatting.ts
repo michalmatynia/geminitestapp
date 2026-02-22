@@ -10,7 +10,7 @@ export const promptExploderFormatTimestamp = (value: string): string => {
   return date.toLocaleString();
 };
 
-export const promptExploderBenchmarkSuiteLabel = (suite: PromptExploderBenchmarkSuite | 'custom'): string => {
+export const promptExploderBenchmarkSuiteLabel = (suite: PromptExploderBenchmarkSuite): string => {
   if (suite === 'extended') return 'extended';
   if (suite === 'custom') return 'custom';
   return 'default';

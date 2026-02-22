@@ -103,7 +103,7 @@ const nextConfig = {
     return [
       {
         source: "/admin/products/constructor",
-        destination: "/admin/products/builder",
+        destination: "/admin/products/settings",
         permanent: false,
       },
     ];

@@ -59,11 +59,19 @@ const AI_PATHS_CONFIG_PREFIX = 'ai_paths_config_';
 const AI_PATHS_KEY_PREFIX = 'ai_paths_';
 const CASE_RESOLVER_WORKSPACE_KEY = 'case_resolver_workspace_v1';
 const HEAVY_PREFIXES = ['image_studio_', 'base_import_', 'base_export_'];
-const HEAVY_KEYS = new Set<string>(['agent_personas']);
+const HEAVY_KEYS = new Set<string>([
+  'agent_personas',
+  CASE_RESOLVER_WORKSPACE_KEY,
+  'product_validator_decision_log',
+  'ai_insights_analytics_history',
+  'ai_insights_runtime_analytics_history',
+  'ai_insights_logs_history',
+]);
 const HEAVY_PREFIX_REGEX = new RegExp(`^(${HEAVY_PREFIXES.map((p) => p.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')).join('|')})`);
 const AI_PATHS_PREFIX_REGEX = new RegExp(`^${AI_PATHS_KEY_PREFIX.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&')}`);
 const DEFAULT_SCOPE: SettingsScope = 'light';
 let settingsIndexesEnsured: Promise<void> | null = null;
+let mongoSettingKeysCache: { keys: string[]; ts: number } | null = null;
 
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   const parsed = Number(value);
@@ -72,6 +80,14 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
 const SETTINGS_SLOW_SCOPE_TIMEOUT_MS = parsePositiveInt(
   process.env['SETTINGS_SLOW_SCOPE_TIMEOUT_MS'],
   3_000
+);
+const SETTINGS_KEY_CACHE_TTL_MS = parsePositiveInt(
+  process.env['SETTINGS_KEY_CACHE_TTL_MS'],
+  60_000
+);
+const SETTINGS_VALUE_READ_BATCH_SIZE = parsePositiveInt(
+  process.env['SETTINGS_VALUE_READ_BATCH_SIZE'],
+  200
 );
 const isSlowSettingsScope = (scope: SettingsScope): boolean =>
   scope === 'all' || scope === 'heavy';
@@ -119,6 +135,13 @@ const ensureSettingsIndexes = async (): Promise<void> => {
 const isHeavySettingKey = (key: string): boolean =>
   HEAVY_KEYS.has(key) || HEAVY_PREFIXES.some((prefix) => key.startsWith(prefix));
 const isAiPathsSettingKey = (key: string): boolean => key.startsWith(AI_PATHS_KEY_PREFIX);
+const shouldIncludeSettingKeyForScope = (key: string, scope: SettingsScope): boolean => {
+  if (isAiPathsSettingKey(key)) return false;
+  const isHeavy = isHeavySettingKey(key);
+  if (scope === 'all') return true;
+  if (scope === 'heavy') return isHeavy;
+  return !isHeavy;
+};
 
 const canUsePrismaSettings = (provider: 'prisma' | 'mongodb') =>
   provider === 'prisma' && Boolean(process.env['DATABASE_URL']) && 'setting' in prisma;
@@ -338,7 +361,7 @@ const buildMongoScopeQuery = (scope: SettingsScope): Record<string, unknown> => 
   return { $and: [{ $nor: heavyOr }, aiPathsFilter] };
 };
 
-const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]> => {
+const listMongoSettingsLegacyQuery = async (scope: SettingsScope): Promise<SettingRecord[]> => {
   if (!process.env['MONGODB_URI']) return [];
   await ensureSettingsIndexes();
   const mongo = await getMongoDb();
@@ -350,6 +373,99 @@ const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]>
   return docs
     .map((doc: WithId<SettingDocument>) => ({ key: doc.key ?? String(doc._id), value: doc.value }))
     .filter((doc: SettingRecord) => typeof doc.key === 'string' && typeof doc.value === 'string');
+};
+
+const getMongoSettingKeys = async (): Promise<string[]> => {
+  if (!process.env['MONGODB_URI']) return [];
+  const now = Date.now();
+  if (mongoSettingKeysCache && now - mongoSettingKeysCache.ts < SETTINGS_KEY_CACHE_TTL_MS) {
+    return mongoSettingKeysCache.keys;
+  }
+  await ensureSettingsIndexes();
+  const mongo = await getMongoDb();
+  const docs = await mongo
+    .collection<SettingDocument>(SETTINGS_COLLECTION)
+    .find(
+      {},
+      {
+        projection: { _id: 0, key: 1 },
+        hint: 'settings_key',
+      }
+    )
+    .toArray();
+  const keys = Array.from(
+    new Set(
+      docs
+        .map((doc: SettingDocument) => doc.key)
+        .filter((key: string | undefined): key is string => typeof key === 'string' && key.length > 0)
+    )
+  );
+  mongoSettingKeysCache = { keys, ts: now };
+  return keys;
+};
+
+const splitIntoBatches = (values: string[], batchSize: number): string[][] => {
+  const out: string[][] = [];
+  for (let index = 0; index < values.length; index += batchSize) {
+    out.push(values.slice(index, index + batchSize));
+  }
+  return out;
+};
+
+const invalidateMongoSettingKeysCache = (): void => {
+  mongoSettingKeysCache = null;
+};
+
+const listMongoSettingsIndexed = async (scope: SettingsScope): Promise<SettingRecord[] | null> => {
+  if (!process.env['MONGODB_URI']) return [];
+  const allKeys = await getMongoSettingKeys();
+  if (allKeys.length === 0) return null;
+
+  const selectedKeys = allKeys.filter((key: string) =>
+    shouldIncludeSettingKeyForScope(key, scope)
+  );
+  if (selectedKeys.length === 0) return [];
+
+  const mongo = await getMongoDb();
+  const collection = mongo.collection<SettingDocument>(SETTINGS_COLLECTION);
+  const valueByKey = new Map<string, string>();
+  const batches = splitIntoBatches(selectedKeys, SETTINGS_VALUE_READ_BATCH_SIZE);
+  for (const keysBatch of batches) {
+    const docs = await collection
+      .find(
+        { key: { $in: keysBatch } },
+        { projection: { _id: 0, key: 1, value: 1 } }
+      )
+      .toArray();
+    docs.forEach((doc: SettingDocument) => {
+      if (typeof doc.key !== 'string' || typeof doc.value !== 'string') return;
+      valueByKey.set(doc.key, doc.value);
+    });
+  }
+
+  const records: SettingRecord[] = [];
+  selectedKeys.forEach((key: string) => {
+    const value = valueByKey.get(key);
+    if (typeof value !== 'string') return;
+    records.push({ key, value });
+  });
+  return records;
+};
+
+const listMongoSettings = async (scope: SettingsScope): Promise<SettingRecord[]> => {
+  try {
+    const indexed = await listMongoSettingsIndexed(scope);
+    if (indexed !== null) {
+      return indexed;
+    }
+  } catch (error) {
+    await ErrorSystem.logWarning('[settings] Indexed Mongo settings lookup failed, falling back to legacy query.', {
+      service: 'api/settings',
+      scope,
+      error,
+    });
+  }
+  return listMongoSettingsLegacyQuery(scope);
 };
 
 const upsertMongoSetting = async (
@@ -699,6 +815,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     await ErrorSystem.logInfo('[settings] POST /api/settings', { service: 'api/settings' });
   }
   clearSettingsCache();
+  invalidateMongoSettingKeysCache();
   const parsed = await parseJsonBody(req, settingSchema, {
     logPrefix: 'settings.POST',
   });

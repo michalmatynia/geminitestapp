@@ -240,7 +240,7 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
             onValueChange={(val) => onChange(val)}
             options={options}
             placeholder={field.placeholder}
-            triggerClassName='h-8'
+            triggerClassName='h-8 min-w-[9rem]'
             ariaLabel={field.label}
           />
         </div>

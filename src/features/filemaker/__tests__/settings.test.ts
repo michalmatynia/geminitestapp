@@ -4,15 +4,19 @@ import {
   buildFilemakerPartyOptions,
   decodeFilemakerPartyReference,
   encodeFilemakerPartyReference,
+  extractFilemakerEmailsFromText,
   getFilemakerAddressById,
   getFilemakerEmailsForParty,
   getFilemakerPartiesForEmail,
   linkFilemakerEmailToParty,
+  parseFilemakerEmailParserRulesFromPromptSettings,
   parseFilemakerDatabase,
+  parseAndUpsertFilemakerEmailsForParty,
   removeFilemakerEmail,
   removeFilemakerPartyEmailLinks,
   resolveFilemakerPartyLabel,
   unlinkFilemakerEmailFromParty,
+  upsertFilemakerEmailsForParty,
 } from '@/features/filemaker/settings';
 
 describe('filemaker settings', () => {
@@ -261,5 +265,157 @@ describe('filemaker settings', () => {
     }).database;
     expect(removeFilemakerPartyEmailLinks(relinked, 'person', 'p-1').emailLinks).toHaveLength(0);
     expect(removeFilemakerEmail(relinked, 'e-1').emails).toHaveLength(0);
+  });
+
+  it('extracts emails from free text using default parser rules', () => {
+    const result = extractFilemakerEmailsFromText(`
+      Contact: mailto:John.Doe@Example.com
+      Backup: <support@example.org>; "TEAM@example.org"
+      Also team@example.org and invalid@ value.
+    `);
+
+    expect(result.emails).toEqual([
+      'john.doe@example.com',
+      'support@example.org',
+      'team@example.org',
+    ]);
+    expect(result.totalMatches).toBeGreaterThan(0);
+  });
+
+  it('parses custom filemaker email parser rules from prompt settings payload', () => {
+    const rules = parseFilemakerEmailParserRulesFromPromptSettings(
+      JSON.stringify({
+        promptValidation: {
+          rules: [
+            {
+              id: 'segment.filemaker.email_parser.custom_mailto',
+              kind: 'regex',
+              enabled: true,
+              pattern: 'mailto:\\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})',
+              flags: 'gi',
+              sequence: 15,
+            },
+            {
+              id: 'segment.filemaker.email_parser.disabled',
+              kind: 'regex',
+              enabled: false,
+              pattern: '([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})',
+              flags: 'gi',
+              sequence: 20,
+            },
+            {
+              id: 'segment.other.scope',
+              kind: 'regex',
+              enabled: true,
+              pattern: '([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})',
+              flags: 'gi',
+              sequence: 25,
+            },
+          ],
+        },
+      })
+    );
+
+    expect(rules).toHaveLength(1);
+    expect(rules[0]).toMatchObject({
+      id: 'segment.filemaker.email_parser.custom_mailto',
+      sequence: 15,
+    });
+  });
+
+  it('upserts extracted emails for a party and remains idempotent', () => {
+    const baseDatabase = parseFilemakerDatabase(
+      JSON.stringify({
+        version: 2,
+        persons: [
+          {
+            id: 'p-1',
+            firstName: 'Jane',
+            lastName: 'Smith',
+            street: 'Street 9',
+            streetNumber: '1',
+            city: 'Warsaw',
+            postalCode: '00-002',
+            country: 'Poland',
+            countryId: 'country-pl',
+            addressId: 'addr-p-1',
+            nip: '',
+            regon: '',
+            phoneNumbers: [],
+          },
+        ],
+        organizations: [],
+        emails: [{ id: 'e-1', email: 'existing@example.com', status: 'active' }],
+        emailLinks: [],
+      })
+    );
+
+    const first = upsertFilemakerEmailsForParty(baseDatabase, {
+      partyKind: 'person',
+      partyId: 'p-1',
+      emails: ['existing@example.com', 'NEW@EXAMPLE.COM', 'invalid-email'],
+      status: 'unverified',
+    });
+
+    expect(first.partyFound).toBe(true);
+    expect(first.createdEmailCount).toBe(1);
+    expect(first.linkedEmailCount).toBe(2);
+    expect(first.invalidEmailCount).toBe(1);
+    expect(
+      getFilemakerEmailsForParty(first.database, 'person', 'p-1')
+        .map((entry) => entry.email)
+        .sort()
+    ).toEqual(['existing@example.com', 'new@example.com']);
+
+    const second = upsertFilemakerEmailsForParty(first.database, {
+      partyKind: 'person',
+      partyId: 'p-1',
+      emails: ['existing@example.com', 'new@example.com'],
+      status: 'unverified',
+    });
+
+    expect(second.createdEmailCount).toBe(0);
+    expect(second.linkedEmailCount).toBe(0);
+  });
+
+  it('parses and upserts emails in one step', () => {
+    const baseDatabase = parseFilemakerDatabase(
+      JSON.stringify({
+        version: 2,
+        persons: [
+          {
+            id: 'p-2',
+            firstName: 'Ada',
+            lastName: 'Nowak',
+            street: 'Street 10',
+            streetNumber: '2',
+            city: 'Gdynia',
+            postalCode: '81-001',
+            country: 'Poland',
+            countryId: 'country-pl',
+            addressId: 'addr-p-2',
+            nip: '',
+            regon: '',
+            phoneNumbers: [],
+          },
+        ],
+        organizations: [],
+        emails: [],
+        emailLinks: [],
+      })
+    );
+
+    const result = parseAndUpsertFilemakerEmailsForParty(baseDatabase, {
+      partyKind: 'person',
+      partyId: 'p-2',
+      text: 'Reach me at mailto:ada.nowak@example.com and <office@example.com>.',
+    });
+
+    expect(result.appliedEmails).toEqual([
+      'ada.nowak@example.com',
+      'office@example.com',
+    ]);
+    expect(result.createdEmailCount).toBe(2);
+    expect(result.linkedEmailCount).toBe(2);
   });
 });

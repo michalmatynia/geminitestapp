@@ -2,7 +2,6 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CaseResolverCaseOverviewWorkspace } from '@/features/case-resolver/components/CaseResolverCaseOverviewWorkspace';
-import { createCaseResolverFile } from '@/features/case-resolver/settings';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 vi.mock('@/features/case-resolver/components/CaseResolverRelationsWorkspace', () => ({
@@ -21,11 +20,30 @@ type SelectOption = {
 };
 
 const buildCaseFile = (input?: Partial<Pick<CaseResolverFile, 'id' | 'name' | 'isLocked'>>): CaseResolverFile =>
-  createCaseResolverFile({
+  ({
     id: input?.id ?? 'case-a',
-    fileType: 'case',
+    workspaceId: 'workspace-1',
     name: input?.name ?? 'Case Alpha',
+    fileType: 'case',
+    folder: '/',
+    documentContent: '',
+    version: 1,
     isLocked: input?.isLocked ?? false,
+    scanSlots: [],
+    documentContentVersion: 1,
+    documentContentFormatVersion: 1,
+    activeDocumentVersion: 'original',
+    editorType: 'wysiwyg',
+    documentContentPlainText: '',
+    documentContentHtml: '',
+    documentContentMarkdown: '',
+    documentHistory: [],
+    documentConversionWarnings: [],
+    scanOcrModel: '',
+    scanOcrPrompt: '',
+    referenceCaseIds: [],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   });
 
 const BASE_OPTIONS: SelectOption[] = [

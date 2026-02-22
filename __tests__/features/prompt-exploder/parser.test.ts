@@ -391,8 +391,8 @@ describe('prompt exploder parser', () => {
         type: 'depends_on',
         fromSegmentId: first!.id,
         toSegmentId: second!.id,
-        sourceLabel: first!.title,
-        targetLabel: second!.title,
+        sourceLabel: first!.title ?? undefined,
+        targetLabel: second!.title ?? undefined,
         origin: 'manual',
       },
       {

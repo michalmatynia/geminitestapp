@@ -420,7 +420,7 @@ function DatabasePreviewContent(): React.JSX.Element {
             : 'No source selected.'
       }
       eyebrow={(
-        <Link href='/admin/databases' className='text-blue-300 hover:text-blue-200 transition-colors'>
+        <Link href='/admin/databases/engine' className='text-blue-300 hover:text-blue-200 transition-colors'>
           ← Back to databases
         </Link>
       )}

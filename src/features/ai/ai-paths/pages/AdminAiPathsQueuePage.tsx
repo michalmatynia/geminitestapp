@@ -11,13 +11,19 @@ import { Badge, Button, ListPanel, Tabs, TabsContent, TabsList, TabsTrigger, Bre
 import { ImageStudioRunsQueuePanel } from '../components/ImageStudioRunsQueuePanel';
 import { JobQueuePanel } from '../components/job-queue-panel';
 
-type QueueTab = 'paths' | 'paths-external' | 'file-uploads' | 'image-studio';
+type QueueTab =
+  | 'paths-all'
+  | 'paths'
+  | 'paths-external'
+  | 'file-uploads'
+  | 'image-studio';
 
 const QUEUE_TABS: Array<{
   id: QueueTab;
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = [
+  { id: 'paths-all', label: 'All Runs', icon: ActivityIcon },
   { id: 'paths', label: 'Node Runs', icon: ActivityIcon },
   { id: 'paths-external', label: 'External Runs', icon: ExternalLinkIcon },
   { id: 'file-uploads', label: 'File Uploads', icon: UploadCloudIcon },
@@ -25,10 +31,12 @@ const QUEUE_TABS: Array<{
 ];
 
 const toQueueTab = (value: string): QueueTab => {
+  if (value === 'paths-all' || value === 'all') return 'paths-all';
   if (value === 'paths-external') return 'paths-external';
   if (value === 'file-uploads') return 'file-uploads';
   if (value === 'image-studio') return 'image-studio';
-  return 'paths';
+  if (value === 'paths') return 'paths';
+  return 'paths-all';
 };
 
 const TABS_ID_PREFIX = 'ai-paths-queue-tabs';
@@ -37,7 +45,7 @@ const getContentId = (tab: QueueTab): string => `${TABS_ID_PREFIX}-content-${tab
 
 export function AdminAiPathsQueuePage(): React.JSX.Element {
   const searchParams = useSearchParams();
-  const requestedTab = searchParams?.get('tab') ?? 'paths';
+  const requestedTab = searchParams?.get('tab') ?? 'paths-all';
   const defaultTab = toQueueTab(requestedTab);
   const [activeTab, setActiveTab] = useState<QueueTab>(defaultTab);
 
@@ -85,7 +93,7 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             </div>
           }
           filters={
-            <TabsList className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2 lg:grid-cols-4'>
+            <TabsList className='grid h-auto w-full grid-cols-2 gap-2 border border-border/60 bg-card/30 p-2 lg:grid-cols-5'>
               {QUEUE_TABS.map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -116,6 +124,15 @@ export function AdminAiPathsQueuePage(): React.JSX.Element {
             ) : null
           }
         >
+          <TabsContent
+            value='paths-all'
+            id={getContentId('paths-all')}
+            aria-labelledby={getTriggerId('paths-all')}
+            className='space-y-4'
+          >
+            {activeTab === 'paths-all' ? <JobQueuePanel isActive /> : null}
+          </TabsContent>
+
           <TabsContent
             value='paths'
             id={getContentId('paths')}

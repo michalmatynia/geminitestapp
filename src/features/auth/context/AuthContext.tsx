@@ -22,7 +22,7 @@ import {
   type AuthUserPageSettings,
 } from '@/features/auth/utils/auth-user-pages';
 import { internalError } from '@/shared/errors/app-error';
-import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useLiteSettingsMap, useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 import type { Session } from 'next-auth';
@@ -47,10 +47,26 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const { data: session, status } = useSession();
-  const settingsQuery = useSettingsMap();
-  const updateSetting = useUpdateSetting();
+type AuthProviderMode = 'full' | 'public';
+type AuthSettingsQueryState = {
+  data: Map<string, string> | undefined;
+  isPending: boolean;
+  refetch: () => Promise<unknown>;
+};
+
+const useAuthContextValue = ({
+  session,
+  status,
+  settingsQuery,
+  updateSetting,
+  isPublicMode,
+}: {
+  session: Session | null;
+  status: 'loading' | 'authenticated' | 'unauthenticated';
+  settingsQuery: AuthSettingsQueryState;
+  updateSetting: ReturnType<typeof useUpdateSetting>;
+  isPublicMode: boolean;
+}): AuthContextValue => {
 
   const permissions = useMemo(() => session?.user?.permissions ?? [], [session]);
   const isElevated = useMemo(() => Boolean(session?.user?.isElevated), [session]);
@@ -118,7 +134,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     );
   }, [settingsQuery.data]);
 
-  const isLoading = status === 'loading' || settingsQuery.isPending;
+  const isLoading = isPublicMode ? settingsQuery.isPending : status === 'loading' || settingsQuery.isPending;
 
   const value = useMemo(
     () => ({
@@ -157,7 +173,49 @@ export function AuthProvider({ children }: { children: React.ReactNode }): React
     ]
   );
 
+  return value;
+};
+
+const FullAuthProvider = ({ children }: { children: React.ReactNode }): React.JSX.Element => {
+  const { data: session, status } = useSession();
+  const settingsQuery = useSettingsMap({ scope: 'light' });
+  const updateSetting = useUpdateSetting();
+  const value = useAuthContextValue({
+    session,
+    status,
+    settingsQuery,
+    updateSetting,
+    isPublicMode: false,
+  });
+
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+const PublicAuthProvider = ({ children }: { children: React.ReactNode }): React.JSX.Element => {
+  const settingsQuery = useLiteSettingsMap();
+  const updateSetting = useUpdateSetting();
+  const value = useAuthContextValue({
+    session: null,
+    status: 'unauthenticated',
+    settingsQuery,
+    updateSetting,
+    isPublicMode: true,
+  });
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export function AuthProvider({
+  children,
+  mode = 'full',
+}: {
+  children: React.ReactNode;
+  mode?: AuthProviderMode;
+}): React.JSX.Element {
+  if (mode === 'public') {
+    return <PublicAuthProvider>{children}</PublicAuthProvider>;
+  }
+  return <FullAuthProvider>{children}</FullAuthProvider>;
 }
 
 export function useAuth(): AuthContextValue {

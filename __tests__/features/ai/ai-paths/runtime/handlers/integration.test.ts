@@ -585,6 +585,87 @@ describe('Integration Handlers', () => {
       expect(api.entityApi.update).not.toHaveBeenCalled();
     });
 
+    it('writes full parameter rows including empty template placeholders', async () => {
+      vi.mocked(api.dbApi.action).mockResolvedValue({
+        ok: true,
+        data: {
+          modifiedCount: 1,
+          matchedCount: 1,
+        },
+      } as any);
+
+      const ctx = createMockContext({
+        node: {
+          id: 'n-guard-materialize-full-rows',
+          type: 'database',
+          config: {
+            database: {
+              operation: 'update',
+              useMongoActions: true,
+              actionCategory: 'update',
+              action: 'updateOne',
+              entityType: 'product',
+              updatePayloadMode: 'custom',
+              query: {
+                provider: 'mongodb',
+                collection: 'products',
+                mode: 'custom',
+                queryTemplate: '{"id":"{{entityId}}"}',
+                single: true,
+              },
+              updateTemplate: '{"$set":{"parameters":{{value}}}}',
+              parameterInferenceGuard: {
+                enabled: true,
+                targetPath: 'parameters',
+                definitionsPort: 'result',
+                definitionsPath: '',
+                allowUnknownParameterIds: false,
+                enforceOptionLabels: false,
+              },
+            },
+          },
+        } as any,
+        nodeInputs: {
+          entityId: 'product-1',
+          value: [{ parameterId: 'p_color', value: 'Blue' }],
+          result: [
+            { id: 'p_color', selectorType: 'text', optionLabels: [] },
+            { id: 'p_material', selectorType: 'text', optionLabels: [] },
+            { id: 'p_model_number', selectorType: 'text', optionLabels: [] },
+          ],
+          context: {
+            entity: {
+              parameters: [
+                { parameterId: 'p_color', value: '' },
+                { parameterId: 'p_material', value: 'Steel' },
+                { parameterId: 'cf_model_name', value: 'X100' },
+              ],
+            },
+          },
+        },
+      });
+
+      await handleDatabase(ctx);
+
+      expect(api.dbApi.action).toHaveBeenCalledWith(
+        expect.objectContaining({
+          action: 'updateOne',
+          collection: 'products',
+          filter: { id: 'product-1' },
+          update: {
+            $set: {
+              parameters: [
+                { parameterId: 'p_color', value: 'Blue' },
+                { parameterId: 'p_material', value: 'Steel' },
+                { parameterId: 'cf_model_name', value: 'X100' },
+                { parameterId: 'p_model_number', value: '' },
+              ],
+            },
+          },
+        })
+      );
+    });
+
     it('requires explicit update template for simple parameter inference configs', async () => {
       vi.mocked(api.entityApi.update).mockResolvedValue({
         ok: true,

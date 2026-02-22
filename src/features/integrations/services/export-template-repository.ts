@@ -7,7 +7,7 @@ import { ObjectId } from 'mongodb';
 import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
-} from '@/features/data-import-export';
+} from '@/features/data-import-export/utils/image-retry-presets';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { getProductDataProvider } from '@/features/products/server';
 import type { ImageRetryPresetDto as ImageRetryPreset, TemplateDto as DomainImportExportTemplate, TemplateMappingDto as DomainImportExportTemplateMapping } from '@/shared/contracts/integrations';

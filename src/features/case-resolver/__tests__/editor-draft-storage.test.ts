@@ -60,6 +60,9 @@ const buildDraft = () => {
     scanSlots: [
       {
         id: 'slot-1',
+        fileId: 'case-file-1',
+        status: 'completed',
+        progress: 100,
         name: 'slot',
         filepath: '/tmp/slot.png',
         sourceFileId: null,

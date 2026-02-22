@@ -6,7 +6,11 @@ import {
   createCaseResolverFile,
   createEmptyCaseResolverRelationGraph,
 } from '@/features/case-resolver/settings';
-import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type {
+  CaseResolverWorkspace,
+  CaseResolverFile,
+  CaseResolverAssetFile,
+} from '@/shared/contracts/case-resolver';
 
 const buildWorkspaceFixture = (): CaseResolverWorkspace => {
   const caseA = createCaseResolverFile({
@@ -55,9 +59,14 @@ const buildWorkspaceFixture = (): CaseResolverWorkspace => {
   });
 
   return {
+    id: 'test-workspace',
+    name: 'Test Workspace',
+    ownerId: 'owner-1',
+    isPublic: false,
     version: 2,
     workspaceRevision: 0,
     lastMutationId: null,
+    
     lastMutationAt: null,
     folders: ['old-folder', 'new-folder'],
     folderRecords: [

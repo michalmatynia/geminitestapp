@@ -13,7 +13,6 @@ import {
   Input,
   Label,
   Alert,
-  LoadingState,
   Card,
   CardHeader,
   CardTitle,
@@ -23,15 +22,7 @@ import {
 } from '@/shared/ui';
 
 export default function RegisterPage(): React.JSX.Element {
-  const { userPageSettings, isLoading } = useAuth();
-
-  if (isLoading) {
-    return (
-      <div className='flex min-h-screen items-center justify-center bg-gray-900 px-4'>
-        <LoadingState message='Loading...' />
-      </div>
-    );
-  }
+  const { userPageSettings } = useAuth();
 
   const allowSignup = Boolean(userPageSettings.allowSignup);
 

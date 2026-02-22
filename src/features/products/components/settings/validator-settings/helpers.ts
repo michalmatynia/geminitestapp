@@ -136,8 +136,9 @@ export const formatReplacementFields = (fields: string[] | null | undefined): st
 export const getReplacementFieldsForTarget = (
   target: string
 ): Array<{ value: string; label: string }> => {
-  let fields: string[] = [];
+  let fields: string[];
   if (target === 'name') {
+
     fields = PRODUCT_VALIDATION_REPLACEMENT_FIELDS.filter((field) => field.startsWith('name_'));
   } else if (target === 'description') {
     fields = PRODUCT_VALIDATION_REPLACEMENT_FIELDS.filter((field) =>

@@ -65,7 +65,8 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
   return baseCollections.map((collection) => ({
     ...stripUndefinedProvider(collection),
     provider,
-  }));};
+  }));
+};
 
 const buildCollectionKey = (
   collection: CollectionSchema,

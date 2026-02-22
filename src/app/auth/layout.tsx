@@ -9,7 +9,7 @@ export default function AuthPublicLayout({
   children: React.ReactNode;
 }): React.JSX.Element {
   return (
-    <AuthProvider>
+    <AuthProvider mode='public'>
       <QueryErrorBoundary>
         {children}
       </QueryErrorBoundary>

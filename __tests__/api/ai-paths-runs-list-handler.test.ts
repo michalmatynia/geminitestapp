@@ -105,4 +105,52 @@ describe('AI Paths runs list handler', () => {
       }),
     );
   });
+
+  it('treats status=all as an unfiltered run list', async () => {
+    await GET_handler(
+      new NextRequest(
+        'http://localhost/api/ai-paths/runs?status=all&limit=25&offset=0',
+      ),
+      {} as never,
+    );
+
+    expect(listRunsMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        status: expect.any(String),
+      }),
+    );
+  });
+
+  it('forwards source and sourceMode when source is provided', async () => {
+    await GET_handler(
+      new NextRequest(
+        'http://localhost/api/ai-paths/runs?source=ai_paths_ui&sourceMode=exclude&limit=50',
+      ),
+      {} as never,
+    );
+
+    expect(listRunsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: 'user-1',
+        source: 'ai_paths_ui',
+        sourceMode: 'exclude',
+        limit: 50,
+      }),
+    );
+  });
+
+  it('ignores sourceMode when source is missing', async () => {
+    await GET_handler(
+      new NextRequest(
+        'http://localhost/api/ai-paths/runs?sourceMode=exclude&limit=10',
+      ),
+      {} as never,
+    );
+
+    expect(listRunsMock).toHaveBeenCalledWith(
+      expect.not.objectContaining({
+        sourceMode: expect.any(String),
+      }),
+    );
+  });
 });

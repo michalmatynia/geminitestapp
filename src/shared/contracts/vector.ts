@@ -102,7 +102,7 @@ export const createVectorDrawingSchema = vectorDrawingSchema.omit({
 export type CreateVectorDrawingDto = z.infer<typeof createVectorDrawingSchema>;
 export type UpdateVectorDrawingDto = Partial<CreateVectorDrawingDto>;
 
-export type VectorTool = 'select' | 'pencil' | 'line' | 'rect' | 'circle' | 'text' | 'eraser' | 'polygon' | 'ellipse' | 'brush' | 'lasso';
+export type VectorTool = VectorToolModeDto;
 
 export interface VectorCanvasState {
   shapes: VectorShape[];

@@ -104,12 +104,11 @@ async function listStudioAssetsFromDisk(projectId: string): Promise<ImageFileRec
       const updatedAt = (stats.mtime ?? stats.ctime).toISOString();
       results.push({
         id: `disk:${filepath}`,
-        name: entry.name, filename: entry.name,
+        name: entry.name,
+        filename: entry.name,
         filepath,
         mimetype: 'application/octet-stream',
         size: stats.size,
-        width: undefined,
-        height: undefined,
         tags: [],
         createdAt,
         updatedAt,

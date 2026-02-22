@@ -246,10 +246,10 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         .sort((left, right) => left.id.localeCompare(right.id));
       const relatedNodeIds = Array.from(
         new Set(
-          connectedEdges.flatMap((edge): string[] => [edge.from, edge.to])
+          connectedEdges.flatMap((edge): string[] => [edge.from ?? '', edge.to ?? ''])
         )
       )
-        .filter((nodeId: string): boolean => nodeId !== input.nodeId)
+        .filter((nodeId: string): boolean => nodeId !== input.nodeId && nodeId.length > 0)
         .sort((left: string, right: string) => left.localeCompare(right));
         
       const nodeFileMeta = (() => {
@@ -307,7 +307,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     }
     lastEditorDraftVersionRef.current = {
       id: editingDocumentDraft.id,
-      documentContentVersion: editingDocumentDraft.documentContentVersion,
+      documentContentVersion: editingDocumentDraft.documentContentVersion ?? 0,
     };
   }, [editingDocumentDraft?.documentContentVersion, editingDocumentDraft?.id]);
 
@@ -338,7 +338,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       { value: '__none__', label: caseResolverTags.length > 0 ? 'No tag' : 'No tags' },
       ...caseResolverTags.map((tag: CaseResolverTag) => ({
         value: tag.id,
-        label: caseTagPathById.get(tag.id) ?? tag.name,
+        label: caseTagPathById.get(tag.id) ?? tag.label,
       })),
     ],
     [caseResolverTags, caseTagPathById]
@@ -351,7 +351,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       },
       ...caseResolverIdentifiers.map((identifier: CaseResolverIdentifier) => ({
         value: identifier.id,
-        label: caseIdentifierPathById.get(identifier.id) ?? identifier.name,
+        label: caseIdentifierPathById.get(identifier.id) ?? identifier.label ?? identifier.name ?? '',
       })),
     ],
     [caseIdentifierPathById, caseResolverIdentifiers]
@@ -850,7 +850,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
               return draftExplodedContent;
             }
           }
-          if (targetFile.explodedDocumentContent.trim().length > 0) {
+          if (targetFile.explodedDocumentContent?.trim().length) {
             return targetFile.explodedDocumentContent;
           }
           if (targetFile.activeDocumentVersion === 'exploded') {
@@ -859,15 +859,15 @@ export function AdminCaseResolverPage(): React.JSX.Element {
           return '';
         })();
         const cleanupStartedAtMs = readCaptureApplyNowMs();
-        const hasSourceExplodedContent = sourceExplodedContent.trim().length > 0;
+        const hasSourceExplodedContent = (sourceExplodedContent ?? '').trim().length > 0;
         const cleanupResult =
           hasSourceExplodedContent
             ? stripAcceptedCaptureContentFromTextWithReport(
-              sourceExplodedContent,
+              sourceExplodedContent ?? '',
               cleanupProposalState
             )
             : {
-              text: sourceExplodedContent,
+              text: sourceExplodedContent ?? '',
               report: {
                 changed: false,
                 sourceWasHtml: false,
@@ -913,7 +913,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         const cleanedExplodedCanonical = hasExplodedCleanup
           ? deriveDocumentContentSync({
             mode: 'wysiwyg',
-            value: ensureSafeDocumentHtml(cleanedExplodedContent),
+            value: ensureSafeDocumentHtml(cleanedExplodedContent ?? ''),
             previousMarkdown:
               draftForTargetFile?.documentContentMarkdown ?? targetFile.documentContentMarkdown,
             previousHtml:
@@ -957,7 +957,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                 source: mutationSource,
                 persistToast: 'Capture mapping applied.',
                 skipNormalization: true,
-                mutate: (file) => {
+                mutate: (file): Partial<CaseResolverFile> | null => {
                   if (file.isLocked) return null;
                   const fileShouldPatchAddresser =
                     acceptedAddresser &&
@@ -1035,7 +1035,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                       : {}),
                     documentContentVersion: nextContentVersion,
                     updatedAt: now,
-                  };
+                  } as Partial<CaseResolverFile>;
                 },
               });
             });
@@ -1158,7 +1158,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         const postMutationFile = workspaceRef.current.files.find((f) => f.id === targetFileId) ?? null;
         if (postMutationFile && postMutationFile.fileType !== 'case') {
           const freshDraft = buildFileEditDraft(postMutationFile);
-          setEditingDocumentDraft(() => ({ ...freshDraft, documentHistory: freshDraft.documentHistory ?? [] }));
+          setEditingDocumentDraft(freshDraft);
           setEditorContentRevisionSeed((v) => v + 1);
         }
         refetchSettingsStore();
@@ -1299,7 +1299,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   }, []);
 
   const editingDocumentNodeMeta = React.useMemo((): (CaseResolverNodeMeta & { nodeId: string; nodeTitle: string; canvasFileId: string; canvasFileName: string }) | null => {
-    if (!editingDocumentDraft || !editingDocumentNodeContext) return null;
+    if (!editingDocumentDraft || !editingDocumentNodeContext || !editingDocumentNodeContext.nodeId) return null;
     const canvasFile = workspace.files.find(
       (file: CaseResolverFile) => file.id === editingDocumentNodeContext.fileId
     );
@@ -1329,14 +1329,14 @@ export function AdminCaseResolverPage(): React.JSX.Element {
 
   const updateEditingDocumentNodeMeta = useCallback(
     (patch: Partial<CaseResolverNodeMeta>): void => {
-      if (!editingDocumentNodeContext) return;
+      if (!editingDocumentNodeContext || !editingDocumentNodeContext.nodeId) return;
       const canvasFileId = editingDocumentNodeContext.fileId;
       const nodeId = editingDocumentNodeContext.nodeId;
       updateWorkspace((current: CaseResolverWorkspace) => {
         const canvasFileIndex = current.files.findIndex((file: CaseResolverFile) => file.id === canvasFileId);
         if (canvasFileIndex < 0) return current;
         const canvasFile = current.files[canvasFileIndex];
-        if (!canvasFile) return current;
+        if (!canvasFile || !canvasFile.graph) return current;
         if (canvasFile.isLocked) return current;
         const hasNode = canvasFile.graph.nodes.some((node: AiNode) => node.id === nodeId);
         if (!hasNode) return current;
@@ -1373,7 +1373,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
             },
           },
           updatedAt: now,
-        };
+        } as CaseResolverFile;
         return {
           ...current,
           files: current.files.map((file, index) => (
@@ -1554,12 +1554,6 @@ export function AdminCaseResolverPage(): React.JSX.Element {
     const resolvedDocumentDate = (() => {
       const rawDocumentDate = draft.documentDate;
       if (!rawDocumentDate) return '';
-      if (typeof rawDocumentDate === 'string') {
-        const trimmed = rawDocumentDate.trim();
-        if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
-        if (/^\d{4}-\d{2}-\d{2}T/.test(trimmed)) return trimmed.slice(0, 10);
-        return '';
-      }
       const isoDate = rawDocumentDate.isoDate?.trim() ?? '';
       return /^\d{4}-\d{2}-\d{2}$/.test(isoDate) ? isoDate : '';
     })();
@@ -1942,31 +1936,31 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       editingDocumentDraft.fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
     if (targetMode === 'markdown') {
       const nextMarkdown = (
-        entry.documentContentMarkdown.trim().length > 0
-          ? entry.documentContentMarkdown
-          : entry.documentContentPlainText.trim().length > 0
-            ? entry.documentContentPlainText
+        (entry.documentContentMarkdown ?? '').trim().length > 0
+          ? (entry.documentContentMarkdown ?? '')
+          : (entry.documentContentPlainText ?? '').trim().length > 0
+            ? (entry.documentContentPlainText ?? '')
             : entry.documentContent
       );
       applyDraftCanonicalContent({
         value: nextMarkdown,
         markdown: nextMarkdown,
-        html: entry.documentContentHtml,
+        html: entry.documentContentHtml ?? '',
       });
     } else {
       const nextHtml = (() => {
-        if (entry.documentContentHtml.trim().length > 0) {
-          return entry.documentContentHtml;
+        if ((entry.documentContentHtml ?? '').trim().length > 0) {
+          return entry.documentContentHtml ?? '';
         }
-        if (entry.documentContentMarkdown.trim().length > 0) {
-          return ensureHtmlForPreview(entry.documentContentMarkdown, 'markdown');
+        if ((entry.documentContentMarkdown ?? '').trim().length > 0) {
+          return ensureHtmlForPreview(entry.documentContentMarkdown ?? '', 'markdown');
         }
         return ensureSafeDocumentHtml(entry.documentContent);
       })();
       applyDraftCanonicalContent({
         value: nextHtml,
         html: nextHtml,
-        markdown: entry.documentContentMarkdown,
+        markdown: entry.documentContentMarkdown ?? '',
       });
     }
     updateEditingDocumentDraft({
@@ -2239,7 +2233,7 @@ export function AdminCaseResolverPage(): React.JSX.Element {
       updateWorkspace((current) => {
         if (!current.activeFileId) return current;
         const activeFile = current.files.find((file) => file.id === current.activeFileId);
-        if (!activeFile) return current;
+        if (!activeFile || !activeFile.graph) return current;
         if (activeFile.isLocked) return current;
 
         const activeGraph = activeFile.graph;

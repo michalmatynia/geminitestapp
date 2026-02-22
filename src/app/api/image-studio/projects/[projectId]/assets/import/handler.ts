@@ -234,12 +234,11 @@ export async function postImageStudioProjectAssetsImportHandler(
       const now = new Date();
       uploaded.push({
         id: randomUUID(),
-        name: recordInput.filename, filename: recordInput.filename,
+        name: recordInput.filename,
+        filename: recordInput.filename,
         filepath: recordInput.filepath,
         mimetype: recordInput.mimetype,
         size: recordInput.size,
-        width: undefined,
-        height: undefined,
         tags: [],
         createdAt: now.toISOString(),
         updatedAt: now.toISOString(),
@@ -277,12 +276,11 @@ export async function postImageStudioProjectAssetsImportHandler(
         const now = new Date();
         uploaded.push({
           id: randomUUID(),
-          name: recordInput.filename, filename: recordInput.filename,
+          name: recordInput.filename,
+          filename: recordInput.filename,
           filepath: recordInput.filepath,
           mimetype: recordInput.mimetype,
           size: recordInput.size,
-          width: undefined,
-          height: undefined,
           tags: [],
           createdAt: now.toISOString(),
           updatedAt: now.toISOString(),
@@ -333,12 +331,11 @@ export async function postImageStudioProjectAssetsImportHandler(
     const now = new Date();
     uploaded.push({
       id: randomUUID(),
-      name: recordInput.filename, filename: recordInput.filename,
+      name: recordInput.filename,
+      filename: recordInput.filename,
       filepath: recordInput.filepath,
       mimetype: recordInput.mimetype,
       size: recordInput.size,
-      width: undefined,
-      height: undefined,
       tags: [],
       createdAt: now.toISOString(),
       updatedAt: now.toISOString(),

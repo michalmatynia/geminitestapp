@@ -24,8 +24,8 @@ declare module 'next-auth' {
       email?: string | null;
       image?: string | null;
       isElevated?: boolean;
-      role?: string;
-      roleLevel?: number;
+      role?: string | null;
+      roleLevel?: number | null;
       permissions?: string[];
       accountDisabled?: boolean;
       accountBanned?: boolean;
@@ -34,8 +34,8 @@ declare module 'next-auth' {
 
   interface User {
     isElevated?: boolean;
-    role?: string;
-    roleLevel?: number;
+    role?: string | null;
+    roleLevel?: number | null;
     permissions?: string[];
     accountDisabled?: boolean;
     accountBanned?: boolean;
@@ -46,8 +46,8 @@ declare module 'next-auth/jwt' {
   interface JWT {
     id?: string;
     isElevated?: boolean;
-    role?: string;
-    roleLevel?: number;
+    role?: string | null;
+    roleLevel?: number | null;
     permissions?: string[];
     accountDisabled?: boolean;
     accountBanned?: boolean;

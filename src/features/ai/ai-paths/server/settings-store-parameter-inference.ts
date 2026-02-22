@@ -10,7 +10,7 @@ export const PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME = 'Infer Parameters';
 export const buildParameterInferencePathConfigValue = (timestamp: string): string => {
   const config: PathConfig = {
     id: PARAMETER_INFERENCE_PATH_ID,
-    version: 9,
+    version: 10,
     name: PARAMETER_INFERENCE_PATH_NAME,
     description:
       'Infer product parameter values from name and images, then update product parameters.',
@@ -564,6 +564,11 @@ export const needsParameterInferenceConfigUpgrade = (
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     if (!parsed || typeof parsed !== 'object') return true;
+
+    // Version 10+ configs were built with current or newer defaults.
+    // Skip content checks so users can freely customize without triggering resets.
+    const version = typeof parsed['version'] === 'number' ? parsed['version'] : 0;
+    if (version >= 10) return false;
 
     const nodes = Array.isArray(parsed['nodes'])
       ? (parsed['nodes'] as Array<Record<string, unknown>>)

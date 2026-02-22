@@ -357,7 +357,10 @@ export type SchemaProvider = SchemaProviderDto;
 
 export const multiSchemaResponseSchema = z.object({
   provider: z.string(),
-  collections: z.array(collectionSchemaSchema.and(z.object({ provider: z.string().optional() }))),
+  collections: z.union([
+    z.record(z.string(), collectionSchemaSchema),
+    z.array(collectionSchemaSchema.and(z.object({ provider: z.string().optional() })))
+  ]),
   sources: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
 });
 

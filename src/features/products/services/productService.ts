@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 import 'server-only';
 
 import {
@@ -88,40 +89,24 @@ async function getProducts(
     const productRepository = await resolveProductRepository(provider);
 
     const repoStart = performance.now();
-    const products: ProductWithImages[] = await productRepository.getProducts(filters);
+    const products = await productRepository.getProducts(filters);
     const repoMs = performance.now() - repoStart;
     if (timings) {
       timings['repo'] = repoMs;
     }
 
-    if (products.length > 0) {
-      const imagesStart = performance.now();
-      const productsWithImages = await Promise.all(
-        products.map(async (product: ProductWithImages) => {
-          const images = await productRepository.getProductImages(product.id);
-          return { ...product, images } as ProductWithImages;
-        })
-      );
-      const imagesMs = performance.now() - imagesStart;
-      if (timings) {
-        timings['images'] = imagesMs;
-      }
-
-      const totalMs = performance.now() - totalStart;
-      if (timings) {
-        timings['total'] = totalMs;
-      }
-
-      if (shouldLogTiming()) {
-        console.log(
-          `[getProducts] Total: ${totalMs.toFixed(2)}ms, Repo: ${repoMs.toFixed(2)}ms, Images: ${imagesMs.toFixed(2)}ms`,
-        );
-      }
-
-      return productsWithImages;
+    const totalMs = performance.now() - totalStart;
+    if (timings) {
+      timings['total'] = totalMs;
     }
 
-    return [];
+    if (shouldLogTiming()) {
+      console.log(
+        `[getProducts] Total: ${totalMs.toFixed(2)}ms, Repo: ${repoMs.toFixed(2)}ms`,
+      );
+    }
+
+    return products;
   } catch (error) {
     void ErrorSystem.captureException(error, {
       service: 'product-service',
@@ -140,8 +125,7 @@ async function getProductById(
   const productRepository = await resolveProductRepository(provider);
   const product = await productRepository.getProductById(id);
   if (!product) return null;
-  const images = await productRepository.getProductImages(id);
-  return { ...product, images };
+  return product as ProductWithImages;
 }
 
 async function getProductBySku(
@@ -152,14 +136,13 @@ async function getProductBySku(
   const productRepository = await resolveProductRepository(provider);
   const product = await productRepository.getProductBySku(sku);
   if (!product) return null;
-  const images = await productRepository.getProductImages(product.id);
-  return { ...product, images } as ProductWithImages;
+  return product as ProductWithImages;
 }
 
 async function createProduct(
   data: unknown,
   options?: { provider?: ProductDbProvider; userId?: string },
-): Promise<ProductRecord> {
+): Promise<ProductWithImages> {
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
 
@@ -177,14 +160,14 @@ async function createProduct(
     metadata: { productId: product.id },
   });
 
-  return product;
+  return { ...product, images: [] };
 }
 
 async function updateProduct(
   id: string,
   data: unknown,
   options?: { provider?: ProductDbProvider; userId?: string },
-): Promise<ProductRecord> {
+): Promise<ProductWithImages> {
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
 
@@ -210,7 +193,7 @@ async function updateProduct(
     metadata: { productId: product.id },
   });
 
-  return product;
+  return product as ProductWithImages;
 }
 
 async function duplicateProduct(
@@ -336,17 +319,7 @@ async function getProductsWithCount(
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
 
-  const { products, total } =
-    await productRepository.getProductsWithCount(filters);
-
-  const productsWithImages = await Promise.all(
-    products.map(async (product) => {
-      const images = await productRepository.getProductImages(product.id);
-      return { ...product, images };
-    }),
-  );
-
-  return { products: productsWithImages, total };
+  return await productRepository.getProductsWithCount(filters);
 }
 
 export const productService = {
@@ -361,4 +334,5 @@ export const productService = {
   deleteProduct,
   uploadProductImage,
   unlinkImageFromProduct: deleteProductImage,
+  deleteProductImage,
 };

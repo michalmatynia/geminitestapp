@@ -1,5 +1,5 @@
 export const buildPathLabelMap = <
-  T extends { id: string; name: string; parentId: string | null },
+  T extends { id: string; parentId?: string | null | undefined; label?: string; name?: string },
 >(
     items: T[]
   ): Map<string, string> => {
@@ -11,18 +11,19 @@ export const buildPathLabelMap = <
     if (cached) return cached;
     const item = byId.get(id);
     if (!item) return '';
+    const itemLabel = item.label ?? item.name ?? '';
     if (visited.has(id)) {
-      cache.set(id, item.name);
-      return item.name;
+      cache.set(id, itemLabel);
+      return itemLabel;
     }
     if (!item.parentId || !byId.has(item.parentId)) {
-      cache.set(id, item.name);
-      return item.name;
+      cache.set(id, itemLabel);
+      return itemLabel;
     }
     const nextVisited = new Set(visited);
     nextVisited.add(id);
     const parentLabel = resolveLabel(item.parentId, nextVisited);
-    const label = `${parentLabel} / ${item.name}`;
+    const label = `${parentLabel} / ${itemLabel}`;
     cache.set(id, label);
     return label;
   };

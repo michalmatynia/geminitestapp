@@ -17,6 +17,7 @@ import type {
   CaseResolverSettingsDto,
   CaseResolverAssetKind,
   CaseResolverDocumentHistoryEntry,
+  CaseResolverFileEditDraft,
 } from '@/shared/contracts/case-resolver';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type { CountryOption } from '@/shared/contracts/internationalization';
@@ -39,6 +40,7 @@ export type {
   CaseResolverTag,
   CaseResolverScanSlot,
   CaseResolverDocumentDateProposal,
+  CaseResolverFileEditDraft,
 };
 
 export type CaseResolverDocumentVersion = 'original' | 'exploded';
@@ -64,44 +66,6 @@ export interface CaseResolverCompileResult {
 }
 
 export type CaseResolverEditorMode = 'wysiwyg' | 'markdown' | 'code';
-
-export interface CaseResolverFileEditDraft {
-  id: string;
-  name: string;
-  content: string;
-  fileType: CaseResolverFileType;
-  folder: string;
-  parentCaseId?: string | null | undefined;
-  referenceCaseIds?: string[] | undefined;
-  createdAt?: string | undefined;
-  updatedAt?: string | undefined;
-  documentDate?: CaseResolverDocumentDateProposal | null | undefined;
-  documentCity?: string | null | undefined;
-  originalDocumentContent?: string | undefined;
-  explodedDocumentContent?: string | undefined;
-  activeDocumentVersion?: CaseResolverDocumentVersion | undefined;
-  editorType?: CaseResolverEditorMode | undefined;
-  documentContentFormatVersion?: number | undefined;
-  documentContentVersion?: number | undefined;
-  baseDocumentContentVersion?: number | null | undefined;
-  documentContent?: string | undefined;
-  documentContentMarkdown?: string | undefined;
-  documentContentHtml?: string | undefined;
-  documentContentPlainText?: string | undefined;
-  documentHistory: CaseResolverDocumentHistoryEntry[];
-  documentConversionWarnings?: string[] | undefined;
-  lastContentConversionAt?: string | null | undefined;
-  scanSlots: CaseResolverScanSlot[];
-  scanOcrModel?: string | undefined;
-  scanOcrPrompt?: string | undefined;
-  isLocked?: boolean | undefined;
-  graph?: CaseResolverGraph | undefined;
-  addresser?: CaseResolverPartyReference | null | undefined;
-  addressee?: CaseResolverPartyReference | null | undefined;
-  tagId?: string | null | undefined;
-  categoryId?: string | null | undefined;
-  caseIdentifierId?: string | null | undefined;
-}
 
 export type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
 

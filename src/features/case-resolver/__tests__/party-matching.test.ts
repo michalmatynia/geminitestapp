@@ -111,6 +111,7 @@ describe('case resolver party matching', () => {
     expect(findExistingFilemakerPartyReference(database, candidate)).toEqual({
       kind: 'person',
       id: 'person-1',
+      displayName: 'Michał Matynia',
     });
   });
 
@@ -131,6 +132,7 @@ describe('case resolver party matching', () => {
     expect(findExistingFilemakerPartyReference(database, candidate)).toEqual({
       kind: 'organization',
       id: 'org-1',
+      displayName: 'Inspektorat ZUS w Gryficach',
     });
   });
 

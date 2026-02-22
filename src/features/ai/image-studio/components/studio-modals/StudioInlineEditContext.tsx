@@ -116,7 +116,7 @@ export interface StudioInlineEditContextValue {
   compositeTabInputImages: CompositeTabImage[];
   compositeTabInputSourceLabel: string;
   linkedMaskSlots: LinkedMaskSlotViewModel[];
-  sourceCompositeImage: ImageStudioSlotRecord | null;
+  sourceCompositeImage?: CompositeTabImage;
   studioSettings: ImageStudioSettings;
   uploadPending: boolean;
   inlineCardImageManagerController: ProductImageManagerController;

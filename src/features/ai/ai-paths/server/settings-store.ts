@@ -571,6 +571,20 @@ const ensureParameterInferenceDefaults = async (
     shouldSeedDefaultButton = true;
     map.set(pathConfigKey, pathConfigRaw);
     updates.push({ key: pathConfigKey, value: pathConfigRaw });
+  } else {
+    // Path does not need a full reset. Silently bump version to 10 so future reads
+    // skip content checks, allowing users to freely customize the path.
+    try {
+      const parsedExisting = JSON.parse(pathConfigRaw) as Record<string, unknown>;
+      if (typeof parsedExisting['version'] !== 'number' || parsedExisting['version'] < 10) {
+        const bumped = JSON.stringify({ ...parsedExisting, version: 10 });
+        pathConfigRaw = bumped;
+        map.set(pathConfigKey, bumped);
+        updates.push({ key: pathConfigKey, value: bumped });
+      }
+    } catch {
+      // Ignore — config was already validated by parsedConfigMeta
+    }
   }
 
   const currentMetas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));

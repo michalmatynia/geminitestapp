@@ -31,7 +31,7 @@ describe('parameter inference seed config', () => {
     expect(queryConfig?.['collection']).toBe('product_parameters');
     expect(queryConfig?.['single']).toBe(false);
     expect(queryConfig?.['queryTemplate']).toEqual(
-      expect.stringContaining('"catalogId": "{{catalogId}}"')
+      expect.stringContaining('"catalogId": "{{bundle.catalogId}}"')
     );
   });
 
@@ -132,7 +132,7 @@ describe('parameter inference seed config', () => {
         return (
           edge?.['from'] === 'node-seed-params' &&
           edge?.['to'] === 'node-update-params' &&
-          edge?.['fromPort'] === 'result' &&
+          edge?.['fromPort'] === 'bundle' &&
           edge?.['toPort'] === 'bundle'
         );
       })
@@ -166,6 +166,8 @@ describe('parameter inference seed config', () => {
 
   it('marks legacy http query node configs for upgrade', () => {
     const config = buildConfig();
+    // Content checks only run for version < 10; downgrade to test legacy detection.
+    (config as Record<string, unknown>)['version'] = 9;
     const nodes = Array.isArray(config.nodes) ? config.nodes : [];
     const queryNode = nodes.find((node) => node?.['id'] === 'node-query-params');
     if (!queryNode) throw new Error('Expected node-query-params');
@@ -188,6 +190,8 @@ describe('parameter inference seed config', () => {
 
   it('marks mapping-mode updater configs for upgrade', () => {
     const config = buildConfig();
+    // Content checks only run for version < 10; downgrade to test legacy detection.
+    (config as Record<string, unknown>)['version'] = 9;
     const nodes = Array.isArray(config.nodes) ? config.nodes : [];
     const updateNode = nodes.find((node) => node?.['id'] === 'node-update-params');
     if (!updateNode) throw new Error('Expected node-update-params');
@@ -209,6 +213,8 @@ describe('parameter inference seed config', () => {
 
   it('marks configs with removed definition query template for upgrade', () => {
     const config = buildConfig();
+    // Content checks only run for version < 10; downgrade to test legacy detection.
+    (config as Record<string, unknown>)['version'] = 9;
     const nodes = Array.isArray(config.nodes) ? config.nodes : [];
     const queryNode = nodes.find((node) => node?.['id'] === 'node-query-params');
     if (!queryNode) throw new Error('Expected node-query-params');
@@ -234,6 +240,8 @@ describe('parameter inference seed config', () => {
 
   it('marks configs with removed updater filter query template for upgrade', () => {
     const config = buildConfig();
+    // Content checks only run for version < 10; downgrade to test legacy detection.
+    (config as Record<string, unknown>)['version'] = 9;
     const nodes = Array.isArray(config.nodes) ? config.nodes : [];
     const updateNode = nodes.find((node) => node?.['id'] === 'node-update-params');
     if (!updateNode) throw new Error('Expected node-update-params');
@@ -257,8 +265,11 @@ describe('parameter inference seed config', () => {
     expect(needsParameterInferenceConfigUpgrade(raw)).toBe(true);
   });
 
-  it('marks configs without strict multi-value prompt formatting rules for upgrade', () => {
+  it('marks version-9 configs without strict multi-value prompt formatting rules for upgrade', () => {
     const config = buildConfig();
+    // Downgrade to version 9 so that content checks run (version 10+ skips content checks
+    // to allow user customization without triggering resets).
+    (config as Record<string, unknown>)['version'] = 9;
     const nodes = Array.isArray(config.nodes) ? config.nodes : [];
     const promptNode = nodes.find((node) => node?.['id'] === 'node-prompt-params');
     if (!promptNode) throw new Error('Expected node-prompt-params');

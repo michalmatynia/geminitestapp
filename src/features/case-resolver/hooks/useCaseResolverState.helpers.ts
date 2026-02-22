@@ -1,6 +1,7 @@
 import {
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
+import React from 'react';
 import {
   deriveDocumentContentSync,
   ensureHtmlForPreview,
@@ -266,9 +267,9 @@ type CaseResolverWorkspaceUpdater = (
   options?: CaseResolverWorkspaceMutationOptions
 ) => void;
 
-type CaseResolverEditingDraftUpdater = (
-  updater: (current: CaseResolverFileEditDraft | null) => CaseResolverFileEditDraft | null
-) => void;
+type CaseResolverEditingDraftUpdater = React.Dispatch<
+  React.SetStateAction<CaseResolverFileEditDraft | null>
+>;
 
 const normalizeCaseResolverFileId = (value: string | null | undefined): string =>
   typeof value === 'string' ? value.trim() : '';

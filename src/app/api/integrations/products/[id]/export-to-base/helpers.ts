@@ -560,8 +560,12 @@ const validateTemplateParameterMappings = <TProduct extends BaseExportProductLik
     return !lookup.has(parameterId.toLowerCase());
   });
   if (missingParameterIds.length > 0) {
-    throw badRequestError(
-      `Export template maps parameters missing on this product: ${missingParameterIds.join(', ')}.`
+    void ErrorSystem.logWarning(
+      '[export-to-base] Some mapped parameters are not present on this product and will be skipped',
+      {
+        productId,
+        parameterIds: missingParameterIds,
+      }
     );
   }
 

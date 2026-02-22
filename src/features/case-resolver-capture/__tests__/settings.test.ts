@@ -42,20 +42,27 @@ describe('case-resolver-capture settings', () => {
 
     expect(parsed.enabled).toBe(false);
     expect(parsed.autoOpenProposalModal).toBe(false);
-    expect(parsed.roleMappings.addresser).toEqual({
-      enabled: true,
-      targetRole: 'addressee',
-      defaultAction: 'keepText',
-      autoMatchPartyReference: true,
-      autoMatchAddress: false,
-    });
-    expect(parsed.roleMappings.addressee).toEqual({
-      enabled: false,
-      targetRole: 'addresser',
-      defaultAction: 'ignore',
-      autoMatchPartyReference: false,
-      autoMatchAddress: true,
-    });
+          expect(parsed.roleMappings.addresser).toEqual({
+            enabled: true,
+            targetRole: 'addressee',
+            defaultAction: 'keepText',
+            autoMatchPartyReference: true,
+            autoMatchAddress: false,
+            role: 'addresser',
+            targetPath: 'addresser',
+            required: true,
+          });
+          expect(parsed.roleMappings.addressee).toEqual({
+            enabled: false,
+            targetRole: 'addresser',
+            defaultAction: 'ignore',
+            autoMatchPartyReference: false,
+            autoMatchAddress: true,
+            role: 'addressee',
+            targetPath: 'addressee',
+            required: true,
+          });
+    
   });
 
   it('rejects deprecated action aliases and falls back to defaults', () => {

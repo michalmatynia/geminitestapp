@@ -110,20 +110,20 @@ describe('FileManager Component', () => {
     expect(screen.getByText('Linked Products')).toBeInTheDocument();
   });
 
-  it('should call delete mutation when Delete is clicked and confirmed', () => {
+  it('should call delete mutation when Delete is clicked and confirmed', async () => {
     const mockDelete = vi.fn().mockResolvedValue({});
     (useDeleteFile as any).mockReturnValue({ mutateAsync: mockDelete });
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
 
     render(<FileManager />, { wrapper });
     
     const deleteButtons = screen.getAllByText('Delete');
-    act(() => {
-      fireEvent.click(deleteButtons[0]!);
-    });
+    fireEvent.click(deleteButtons[0]!);
     
-    expect(window.confirm).toHaveBeenCalled();
-    expect(mockDelete).toHaveBeenCalledWith('file-1');
+    // The ConfirmModal should be visible now
+    const confirmButton = screen.getByRole('button', { name: 'Delete' });
+    fireEvent.click(confirmButton);
+    
+    await waitFor(() => expect(mockDelete).toHaveBeenCalledWith('file-1'));
   });
 
   it('should filter files by search input', async () => {

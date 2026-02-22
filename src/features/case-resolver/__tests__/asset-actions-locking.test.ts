@@ -129,7 +129,7 @@ describe('case resolver asset actions lock races', () => {
   it('does not attach uploaded scan slots when document becomes locked mid-upload', async () => {
     const scanfile = createCaseResolverFile({
       id: 'scan-1',
-      type: 'scanfile',
+      fileType: 'scanfile',
       name: 'Scan Document',
       scanSlots: [],
       isLocked: false,
@@ -179,7 +179,7 @@ describe('case resolver asset actions lock races', () => {
   it('does not apply OCR output when document becomes locked mid-run', async () => {
     const scanfile = createCaseResolverFile({
       id: 'scan-1',
-      type: 'scanfile',
+      fileType: 'scanfile',
       name: 'Scan Document',
       scanSlots: [
         {

@@ -87,6 +87,7 @@ describe('Database Engine operations jobs API', () => {
         productId: 'system',
         status: 'completed',
         type: 'db_backup',
+        jobType: 'db_backup',
         payload: { dbType: 'mongodb', source: 'database_backup_scheduler' },
         result: { message: 'Backup created' },
         errorMessage: null,
@@ -99,6 +100,7 @@ describe('Database Engine operations jobs API', () => {
         productId: 'p1',
         status: 'completed',
         type: 'translation',
+        jobType: 'translation',
         payload: {},
         result: null,
         errorMessage: null,
@@ -138,6 +140,7 @@ describe('Database Engine operations jobs API', () => {
       productId: 'system',
       status: 'running',
       type: 'db_sync',
+      jobType: 'db_sync',
       payload: { direction: 'mongo_to_prisma' },
       result: null,
       errorMessage: null,
@@ -148,11 +151,13 @@ describe('Database Engine operations jobs API', () => {
       finishedAt: null,
       completedAt: null, // Added
       product: null,
-    } as Awaited<ReturnType<typeof getProductAiJob>>);    vi.mocked(cancelProductAiJob).mockResolvedValue({
+    } as any);
+    vi.mocked(cancelProductAiJob).mockResolvedValue({
       id: 'job-db-sync-1',
       productId: 'system',
       status: 'cancelled',
       type: 'db_sync',
+      jobType: 'db_sync',
       payload: {},
       result: null,
       errorMessage: null,
@@ -161,7 +166,7 @@ describe('Database Engine operations jobs API', () => {
       startedAt: '2026-02-10T10:00:01.000Z',
       finishedAt: '2026-02-10T10:00:10.000Z',
       completedAt: '2026-02-10T10:00:10.000Z',
-    } as Awaited<ReturnType<typeof cancelProductAiJob>>);
+    } as any);
 
     const req = new NextRequest(
       'http://localhost/api/databases/engine/operations/jobs/job-db-sync-1/cancel',

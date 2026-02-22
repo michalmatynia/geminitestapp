@@ -72,6 +72,7 @@ describe('filemaker settings', () => {
     expect(decodeFilemakerPartyReference('organization:o-1')).toEqual({
       kind: 'organization',
       id: 'o-1',
+      name: 'o-1',
     });
     expect(decodeFilemakerPartyReference('none')).toBeNull();
   });

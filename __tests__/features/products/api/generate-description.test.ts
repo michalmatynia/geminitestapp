@@ -45,22 +45,25 @@ vi.mock('@/shared/lib/db/prisma', () => ({
   },
 }));
 
-const { mockCreate } = vi.hoisted(() => {
+const { mockCreate, MockOpenAI } = vi.hoisted(() => {
+  const mockCreate = vi.fn();
+  class MockOpenAI {
+    chat = {
+      completions: {
+        create: mockCreate,
+      },
+    };
+  }
   return {
-    mockCreate: vi.fn(),
+    mockCreate,
+    MockOpenAI,
   };
 });
 
 vi.mock('openai', () => {
-  const mockChat = {
-    completions: {
-      create: mockCreate,
-    },
-  };
   return {
-    default: vi.fn().mockImplementation(() => ({
-      chat: mockChat,
-    })),
+    default: MockOpenAI,
+    OpenAI: MockOpenAI,
   };
 });
 
@@ -70,7 +73,6 @@ describe('AI Description Generation API', () => {
   beforeEach(async () => {
     process.env = { ...originalEnv, OPENAI_API_KEY: '' };
     await prisma.setting.deleteMany({});
-    (OpenAI as unknown as Mock).mockClear();
     mockCreate.mockClear();
   });
 

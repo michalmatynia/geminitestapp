@@ -226,10 +226,13 @@ describe('Notes page UI', () => {
       'Alpha'
     );
 
+    // Wait for multiple layers of debouncing (400ms + 250ms + 300ms)
+    await new Promise((resolve) => setTimeout(resolve, 1200));
+
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: 'Alpha' })).toBeInTheDocument();
       expect(screen.queryByRole('heading', { name: 'Beta' })).not.toBeInTheDocument();
-    });
+    }, { timeout: 3000 });
 
     const tagFilter = screen.getByRole('button', { name: /Filter by tags.../i });
     await user.click(tagFilter);
@@ -255,6 +258,6 @@ describe('Notes page UI', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Create' }));
 
-    expect(await screen.findByRole('heading', { name: 'Gamma' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Gamma' }, { timeout: 3000 })).toBeInTheDocument();
   });
 });

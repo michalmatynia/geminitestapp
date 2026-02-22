@@ -73,6 +73,7 @@ export function ChatInterface(): React.JSX.Element {
             variant='solid'
             className='px-4 py-2 font-medium'
             loading={isSending}
+            loadingText='Sending...'
             disabled={!input.trim()}
           >
             Send

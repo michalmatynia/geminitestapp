@@ -30,7 +30,7 @@ describe('Image Retry Presets Utils', () => {
       
       const normalized = normalizeImageRetryPresets(input);
       expect(normalized.length).toBe(1);
-      expect(normalized[0]!.label).toBe('Custom Label');
+      expect(normalized[0]!.name).toBe('Custom Label');
       expect(normalized[0]!.transform.maxDimension).toBe(800);
     });
 
@@ -42,7 +42,7 @@ describe('Image Retry Presets Utils', () => {
       }];
       
       const normalized = normalizeImageRetryPresets(input);
-      expect(normalized[0]!.label).toBe('Lower max dimension (1000px)');
+      expect(normalized[0]!.name).toBe('Lower max dimension (1000px)');
     });
   });
 

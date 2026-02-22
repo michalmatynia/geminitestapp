@@ -28,10 +28,15 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 
 vi.mock('mongodb', async (importOriginal) => {
   const actual = await importOriginal() as any;
-  const mockObjectId = vi.fn().mockImplementation((id: string) => ({
-    toString: () => id,
-    equals: (other: any) => other.toString() === id,
-  }));
+  class MockObjectId {
+    id: string;
+    constructor(id: string) {
+      this.id = id;
+    }
+    toString() { return this.id; }
+    equals(other: any) { return other.toString() === this.id; }
+  }
+  const mockObjectId = vi.fn().mockImplementation((id: string) => new MockObjectId(id));
   (mockObjectId as any).isValid = actual.ObjectId.isValid;
   return {
     ...actual,

@@ -255,9 +255,9 @@ const normalizeCaseResolverRelatedFileLinks = (
   });
 };
 
-const sanitizeOptionalMimeType = (value: unknown): string | null => {
+const sanitizeOptionalMimeType = (value: unknown): string | undefined => {
   const normalized = sanitizeOptionalId(value);
-  return normalized ? normalized.toLowerCase() : null;
+  return normalized ? normalized.toLowerCase() : undefined;
 };
 
 const normalizeWorkspaceRevision = (value: unknown): number => {
@@ -445,7 +445,7 @@ const normalizeCaseResolverFileType = (value: unknown): CaseResolverFileType => 
 
 const normalizeCaseResolverDocumentVersion = (
   value: unknown
-): CaseResolverDocumentVersion => (value === 'exploded' ? 'exploded' : 'original');
+): 'original' | 'exploded' => (value === 'exploded' ? 'exploded' : 'original');
 
 const normalizeDocumentContentVersion = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 1;
@@ -556,7 +556,7 @@ const resolveSafeCaseParentId = (
   return parentCaseId;
 };
 
-const normalizeCaseResolverScanSlots = (input: unknown): CaseResolverScanSlot[] => {
+const normalizeCaseResolverScanSlots = (input: unknown, fileId: string): CaseResolverScanSlot[] => {
   if (!Array.isArray(input)) return [];
 
   const seen = new Set<string>();
@@ -576,6 +576,9 @@ const normalizeCaseResolverScanSlots = (input: unknown): CaseResolverScanSlot[] 
     const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
     slots.push({
       id: rawId,
+      fileId,
+      status: (record['status'] as any) || 'completed',
+      progress: typeof record['progress'] === 'number' ? record['progress'] : 100,
       name: rawName || `Scan ${slots.length + 1}`,
       filepath: sanitizeOptionalId(record['filepath']),
       sourceFileId: sanitizeOptionalId(record['sourceFileId']),
@@ -585,7 +588,7 @@ const normalizeCaseResolverScanSlots = (input: unknown): CaseResolverScanSlot[] 
           Number.isFinite(record['size']) &&
           record['size'] >= 0
           ? Math.round(record['size'])
-          : null,
+          : undefined,
       ocrText: typeof record['ocrText'] === 'string' ? record['ocrText'] : '',
       ocrError:
         typeof record['ocrError'] === 'string' && record['ocrError'].trim().length > 0
@@ -679,10 +682,11 @@ export const parseCaseResolverSettings = (raw: string | null | undefined): CaseR
   return normalizeCaseResolverSettings(parseJsonSetting<unknown>(raw, DEFAULT_CASE_RESOLVER_SETTINGS));
 };
 
-export const createCaseResolverFile = (input: {
-  id: string;
-  fileType?: CaseResolverFileType | null | undefined;
-  name: string;
+  export const createCaseResolverFile = (input: {
+    id: string;
+    workspaceId?: string;
+    version?: CaseResolverDocumentVersion;
+    fileType?: CaseResolverFileType | null | undefined;  name: string;
   folder?: string;
   parentCaseId?: string | null | undefined;
   referenceCaseIds?: string[] | null | undefined;
@@ -796,11 +800,12 @@ export const createCaseResolverFile = (input: {
     typeof input.scanOcrPrompt === 'string' && input.scanOcrPrompt.trim().length > 0
       ? input.scanOcrPrompt.trim()
       : DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT;
-  return {
-    id: input.id,
-    fileType,
-    name: input.name.trim() || 'Untitled Case',
-    folder: normalizeFolderPath(input.folder ?? ''),
+      return {
+        id: input.id,
+        workspaceId: input.workspaceId ?? 'default',
+        version: input.version ?? 'original',
+        fileType,
+        name: input.name.trim() || 'Untitled Case',    folder: normalizeFolderPath(input.folder ?? ''),
     parentCaseId,
     referenceCaseIds,
     relatedFileIds: relatedFileIds.length > 0 ? relatedFileIds : undefined,
@@ -819,7 +824,7 @@ export const createCaseResolverFile = (input: {
     documentHistory: normalizeCaseResolverDocumentHistory(input.documentHistory, updatedAt),
     documentConversionWarnings,
     lastContentConversionAt,
-    scanSlots: normalizeCaseResolverScanSlots(input.scanSlots),
+    scanSlots: normalizeCaseResolverScanSlots(input.scanSlots, input.id),
     scanOcrModel: fileType === 'scanfile' ? scanOcrModel : '',
     scanOcrPrompt: fileType === 'scanfile' ? scanOcrPrompt : '',
     isLocked: input.isLocked === true,
@@ -852,6 +857,9 @@ export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
     assets: [],
   });
   return {
+    id: 'empty',
+    ownerId: 'system',
+    isPublic: false,
     version: 2,
     workspaceRevision: 0,
     lastMutationId: null,
@@ -958,13 +966,12 @@ export const normalizeCaseResolverWorkspace = (
   );
   const validReferenceCaseIds = new Set<string>(caseFilesById.keys());
   const normalizedFilesWithCaseRelations = normalizedFilesBase.map((file: CaseResolverFile): CaseResolverFile => {
-    const parentCaseId = resolveSafeCaseParentId(
-      file.id,
-      file.fileType,
-      file.parentCaseId,
-      caseFilesById
-    );
-    const referenceCaseIds = file.referenceCaseIds
+          const parentCaseId = resolveSafeCaseParentId(
+            file.id,
+            file.fileType,
+            file.parentCaseId ?? null,
+            caseFilesById
+          );    const referenceCaseIds = file.referenceCaseIds
       .filter((referenceId: string): boolean => referenceId !== file.id && validReferenceCaseIds.has(referenceId));
     const uniqueReferenceCaseIds = Array.from(new Set(referenceCaseIds));
     return {

@@ -1017,7 +1017,7 @@ export const prismaProductRepository: ProductRepository = {
     const productExists = await prisma.product.findUnique({ where: { id } });
     if (!productExists) return null;
 
-    const { categoryId: _cat, id: _id, ...rest } = data;
+    const { categoryId: _cat, id: _id, imageFileIds, ...rest } = data;
     const normalizedParameters =
       rest.parameters !== undefined
         ? normalizeProductParameterValues(rest.parameters)
@@ -1032,17 +1032,36 @@ export const prismaProductRepository: ProductRepository = {
         : {}),
     }) as Prisma.ProductUpdateInput;
 
-    const product = await prisma.product.update({
-      where: { id },
-      data: cleanData,
-      include: {
-        images: { include: { imageFile: true } },
-        catalogs: { include: { catalog: true } },
-        categories: true,
-        tags: true,
-        producers: true,
-      },
+    const product = await prisma.$transaction(async (tx) => {
+      if (imageFileIds !== undefined) {
+        await tx.productImage.deleteMany({ where: { productId: id } });
+        if (imageFileIds.length > 0) {
+          // We can't use createMany because we want to preserve order if possible,
+          // but Prisma doesn't guarantee order in createMany.
+          // However, for this relation table it should be fine as long as we await them in sequence or use separate creates if position matters.
+          // Actually, let's just use createMany for now as it's faster.
+          await tx.productImage.createMany({
+            data: imageFileIds.map((imageFileId) => ({
+              productId: id,
+              imageFileId,
+            })),
+          });
+        }
+      }
+
+      return tx.product.update({
+        where: { id },
+        data: cleanData,
+        include: {
+          images: { include: { imageFile: true } },
+          catalogs: { include: { catalog: true } },
+          categories: true,
+          tags: true,
+          producers: true,
+        },
+      });
     });
+
     return toProductRecord(product as FullPrismaProduct);
   },
 

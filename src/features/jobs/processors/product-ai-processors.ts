@@ -560,7 +560,7 @@ export async function processTranslation(job: Job): Promise<Record<string, unkno
     });
   }
 
-  let targetLanguages: string[] = [];
+  let targetLanguages: string[];
 
   if (product.catalogs && product.catalogs.length > 0) {
     const firstCatalog = product.catalogs[0] as unknown as { catalog?: { id: string; name: string; languageIds?: string[] } };

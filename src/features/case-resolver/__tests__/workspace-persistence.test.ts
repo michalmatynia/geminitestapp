@@ -134,7 +134,9 @@ describe('case-resolver workspace persistence', () => {
     expect(result).not.toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, options] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe('/api/settings?scope=light&fresh=1');
+    expect(url).toBe(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
     expect(options).toMatchObject({
       method: 'GET',
       cache: 'no-store',

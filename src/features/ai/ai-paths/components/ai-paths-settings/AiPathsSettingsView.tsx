@@ -17,6 +17,7 @@ import type {
 } from '@/features/ai/ai-paths/lib';
 import {
   buildAiPathsValidationRulesFromDocs,
+  compileGraph,
   createAiPathsValidationConditionId,
   createAiPathsValidationRuleId,
   evaluateAiPathsValidationPreflight,
@@ -205,6 +206,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
     validationCollectionMap: string;
     validationRules: string;
     validationPreview: string;
+    compileReport: string;
     dependencyReport: string;
     history: string;
   };
@@ -543,6 +545,10 @@ export function AiPathsSettingsView(): React.JSX.Element {
 
   const dependencyReport = useMemo(
     () => inspectPathDependencies(nodes, edges),
+    [nodes, edges],
+  );
+  const compileReport = useMemo(
+    () => compileGraph(nodes, edges),
     [nodes, edges],
   );
   const validationPreflightReport = useMemo(
@@ -2637,6 +2643,81 @@ export function AiPathsSettingsView(): React.JSX.Element {
             )
           },
           {
+            key: 'compileReport',
+            label: 'Compile Inspector',
+            type: 'custom',
+            render: () => (
+              <div className='space-y-2'>
+                <div className='flex flex-wrap items-center gap-2 text-[11px]'>
+                  <StatusBadge
+                    status={`Warnings: ${compileReport.warnings}`}
+                    variant={compileReport.warnings > 0 ? 'warning' : 'neutral'}
+                    size='sm'
+                  />
+                  <StatusBadge
+                    status={`Errors: ${compileReport.errors}`}
+                    variant={compileReport.errors > 0 ? 'error' : 'neutral'}
+                    size='sm'
+                  />
+                  <StatusBadge
+                    status={compileReport.ok ? 'Ready' : 'Blocked'}
+                    variant={compileReport.ok ? 'success' : 'error'}
+                    size='sm'
+                  />
+                </div>
+                {compileReport.findings.length > 0 ? (
+                  <div className='max-h-[200px] space-y-1 overflow-y-auto rounded-md border border-border/60 bg-card/40 p-2'>
+                    {compileReport.findings.slice(0, 12).map((finding, index) => {
+                      const metadata =
+                        finding.metadata && typeof finding.metadata === 'object'
+                          ? finding.metadata
+                          : null;
+                      const metadataNodeIds = Array.isArray(metadata?.['nodeIds'])
+                        ? (metadata['nodeIds'] as unknown[])
+                          .filter((entry: unknown): entry is string => typeof entry === 'string')
+                          .slice(0, 4)
+                        : [];
+                      const resolvedNodeScope = metadataNodeIds.length
+                        ? metadataNodeIds
+                          .map((nodeId: string): string => nodeTitleById.get(nodeId) ?? nodeId)
+                          .join(', ')
+                        : finding.nodeId
+                          ? nodeTitleById.get(finding.nodeId) ?? finding.nodeId
+                          : null;
+                      const portLabel = finding.port ? `Port: ${finding.port}` : null;
+                      const edgeLabel = finding.edgeId ? `Edge: ${finding.edgeId}` : null;
+                      const scopeDetails = [
+                        resolvedNodeScope ? `Nodes: ${resolvedNodeScope}` : null,
+                        portLabel,
+                        edgeLabel,
+                      ]
+                        .filter((value: string | null): value is string => Boolean(value))
+                        .join(' · ');
+                      return (
+                        <div
+                          key={`${finding.code}-${finding.nodeId ?? 'none'}-${finding.port ?? 'none'}-${index}`}
+                          className='rounded-md border border-border/50 bg-card/60 px-2 py-1.5 text-[11px]'
+                        >
+                          <div className='font-medium text-gray-100'>
+                            {finding.severity === 'error' ? '[Error]' : '[Warning]'} {finding.code}
+                          </div>
+                          <div className='mt-0.5 text-gray-300'>{finding.message}</div>
+                          {scopeDetails ? (
+                            <div className='mt-0.5 text-gray-400'>{scopeDetails}</div>
+                          ) : null}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className='text-[11px] text-emerald-200'>
+                    Graph compile reports no issues for current wiring.
+                  </div>
+                )}
+              </div>
+            )
+          },
+          {
             key: 'dependencyReport',
             label: 'Dependency Inspector',
             type: 'custom',
@@ -2727,6 +2808,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
             : validationPreflightReport.shouldWarn
               ? 'warn'
               : 'ready',
+          compileReport: compileReport.ok ? 'ready' : 'issues',
           dependencyReport: dependencyReport.strictReady ? 'strict-ready' : 'issues',
           history: String(historyRetentionPasses),
         }}

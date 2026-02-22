@@ -51,10 +51,10 @@ export async function initializePlanState(
     memorySummarizationModel,
   } = context;
 
-  let planSteps: PlanStep[] = [];
+  let planSteps: PlanStep[];
   let planHierarchy: PlanHierarchy | null = null;
-  let taskType: PlannerMeta['taskType'] | null = null;
-  let decision: AgentDecision = decideNextAction(run.prompt, memoryContext);
+  let taskType: PlannerMeta['taskType'] | null;
+  let decision: AgentDecision;
   let stepIndex = 0;
   let summaryCheckpoint = checkpoint?.summaryCheckpoint ?? 0;
   const nextPreferences = { ...preferences } as Record<string, unknown>;

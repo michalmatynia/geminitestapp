@@ -22,6 +22,11 @@ import {
   needsDescriptionInferenceLiteConfigUpgrade,
 } from './settings-store-description-inference';
 import {
+  DESCRIPTION_AND_NAME_PATH_ID,
+  needsDescriptionAndNameConfigUpgrade,
+  upgradeDescriptionAndNameConfig,
+} from './settings-store-description-and-name';
+import {
   needsServerExecutionModeConfigUpgrade,
   upgradeServerExecutionModeConfig,
 } from './settings-store-execution-mode-server';
@@ -1087,6 +1092,37 @@ const ensureTranslationEnPlDefaults = async (
   );
 };
 
+const ensureDescriptionAndNameDefaults = async (
+  records: AiPathsSettingRecord[]
+): Promise<AiPathsSettingRecord[]> => {
+  if (records.length === 0) return records;
+  const map = new Map<string, string>(
+    records.map(
+      (entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value]
+    )
+  );
+  const updates: AiPathsSettingRecord[] = [];
+  const key = `${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_AND_NAME_PATH_ID}`;
+  const raw = map.get(key);
+  if (!raw || !needsDescriptionAndNameConfigUpgrade(raw)) {
+    return records;
+  }
+
+  const upgraded = upgradeDescriptionAndNameConfig(raw);
+  if (!upgraded || upgraded === raw) {
+    return records;
+  }
+  map.set(key, upgraded);
+  updates.push({ key, value: upgraded });
+  await upsertMongoAiPathsSettingsBatch(updates);
+  return Array.from(map.entries()).map(
+    ([nextKey, nextValue]): AiPathsSettingRecord => ({
+      key: nextKey,
+      value: nextValue,
+    })
+  );
+};
+
 const ensureServerExecutionModeDefaults = async (
   records: AiPathsSettingRecord[]
 ): Promise<AiPathsSettingRecord[]> => {
@@ -1310,6 +1346,20 @@ const hasTranslationEnPlDefaults = (records: AiPathsSettingRecord[]): boolean =>
   return !needsTranslationEnPlConfigUpgrade(raw);
 };
 
+const hasDescriptionAndNameDefaults = (
+  records: AiPathsSettingRecord[]
+): boolean => {
+  if (records.length === 0) return false;
+  const map = new Map<string, string>(
+    records.map(
+      (entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value]
+    )
+  );
+  const raw = map.get(`${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_AND_NAME_PATH_ID}`);
+  if (!raw) return true;
+  return !needsDescriptionAndNameConfigUpgrade(raw);
+};
+
 const hasServerExecutionModeDefaults = (records: AiPathsSettingRecord[]): boolean => {
   if (records.length === 0) return false;
   let hasConfig = false;
@@ -1326,6 +1376,7 @@ const hasAiPathsSeedDefaults = (records: AiPathsSettingRecord[]): boolean =>
   hasDescriptionInferenceLiteDefaults(records) &&
   hasBaseExportBlwoDefaults(records) &&
   hasTranslationEnPlDefaults(records) &&
+  hasDescriptionAndNameDefaults(records) &&
   hasServerExecutionModeDefaults(records);
 
 export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
@@ -1343,8 +1394,11 @@ export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   const withBaseExportDefaults = await ensureBaseExportBlwoDefaults(
     withDescriptionDefaults
   );
-  const ensuredDefaults = await ensureTranslationEnPlDefaults(
+  const withTranslationDefaults = await ensureTranslationEnPlDefaults(
     withBaseExportDefaults
+  );
+  const ensuredDefaults = await ensureDescriptionAndNameDefaults(
+    withTranslationDefaults
   );
   const withServerExecutionDefaults = await ensureServerExecutionModeDefaults(
     ensuredDefaults

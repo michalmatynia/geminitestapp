@@ -618,9 +618,32 @@ export function PromptEngineProvider({
     URL.revokeObjectURL(url);
   }, [learnedDrafts, toast]);
 
+  const parseImportedRules = useCallback(
+    (raw: string): { ok: true; rules: PromptValidationRule[] } | { ok: false; error: string } => {
+      const direct = parsePromptValidationRules(raw);
+      if (direct.ok) return direct;
+
+      try {
+        const parsed = JSON.parse(raw) as unknown;
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          const record = parsed as Record<string, unknown>;
+          const nested = record['rules'] ?? record['patterns'];
+          if (Array.isArray(nested)) {
+            return parsePromptValidationRules(JSON.stringify(nested));
+          }
+        }
+      } catch {
+        // no-op: fall back to the direct parser error
+      }
+
+      return direct;
+    },
+    []
+  );
+
   const handleImport = useCallback(async (file: File): Promise<void> => {
     const text = await file.text();
-    const result = parsePromptValidationRules(text);
+    const result = parseImportedRules(text);
     if (!result.ok) {
       toast(result.error, { variant: 'error' });
       return;
@@ -629,11 +652,11 @@ export function PromptEngineProvider({
     setIsDirty(true);
     setSaveError(null);
     toast('Validation patterns imported. Review and save to apply.', { variant: 'success' });
-  }, [toast]);
+  }, [parseImportedRules, toast]);
 
   const handleImportLearned = useCallback(async (file: File): Promise<void> => {
     const text = await file.text();
-    const result = parsePromptValidationRules(text);
+    const result = parseImportedRules(text);
     if (!result.ok) {
       toast(result.error, { variant: 'error' });
       return;
@@ -642,7 +665,7 @@ export function PromptEngineProvider({
     setLearnedDirty(true);
     setSaveError(null);
     toast('Learned patterns imported. Review and save to apply.', { variant: 'success' });
-  }, [toast]);
+  }, [parseImportedRules, toast]);
 
   const handleSave = useCallback(async (): Promise<void> => {
     const invalidJson = drafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);

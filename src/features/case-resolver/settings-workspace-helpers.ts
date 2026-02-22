@@ -143,7 +143,7 @@ export const resolveCaseResolverUploadFolder = ({
   return normalizeFolderPath(base ? `${base}/${bucket}` : bucket);
 };
 
-  export const createCaseResolverAssetFile = (input: {
+export const createCaseResolverAssetFile = (input: {
     id: string;
     name: string;
     workspaceId?: string;
@@ -161,11 +161,11 @@ export const resolveCaseResolverUploadFolder = ({
   const now = new Date().toISOString();
   const createdAt = normalizeTimestamp(input.createdAt, now);
   const updatedAt = normalizeTimestamp(input.updatedAt, createdAt);
-      return {
-        id: input.id,
-        workspaceId: input.workspaceId ?? 'default',
-        folderId: input.folderId ?? null,
-        name: input.name.trim() || 'Untitled File',    folder: normalizeFolderPath(input.folder ?? ''),
+  return {
+    id: input.id,
+    workspaceId: input.workspaceId ?? 'default',
+    folderId: input.folderId ?? null,
+    name: input.name.trim() || 'Untitled File',    folder: normalizeFolderPath(input.folder ?? ''),
     kind: inferCaseResolverAssetKind({ kind: input.kind, mimeType: input.mimeType, name: input.name }),
     filepath:
       typeof input.filepath === 'string' && input.filepath.trim().length > 0

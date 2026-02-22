@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "domain": "validator.import",
+  "entities": [
+    {
+      "code": "validator.import.entity.pattern",
+      "name": "Imported Pattern",
+      "jsonPath": "$.patterns[]",
+      "requiredFields": ["code", "label", "target", "regex", "message"],
+      "fields": [
+        {
+          "code": "validator.import.pattern.code",
+          "name": "code",
+          "type": "semantic_code",
+          "description": "Machine-readable stable semantic code."
+        },
+        {
+          "code": "validator.import.pattern.id",
+          "name": "id",
+          "type": "string",
+          "description": "Optional explicit update target."
+        },
+        {
+          "code": "validator.import.pattern.target",
+          "name": "target",
+          "type": "enum",
+          "description": "Field target validated by the pattern."
+        },
+        {
+          "code": "validator.import.pattern.regex",
+          "name": "regex",
+          "type": "string",
+          "description": "Regex source persisted for rule matching."
+        },
+        {
+          "code": "validator.import.pattern.sequence_code",
+          "name": "sequenceCode",
+          "type": "semantic_code",
+          "description": "Optional inline link to a sequence definition."
+        },
+        {
+          "code": "validator.import.pattern.sequence_order",
+          "name": "sequenceOrder",
+          "type": "integer|null",
+          "description": "Sequence order override for inline sequence linking."
+        },
+        {
+          "code": "validator.import.pattern.options",
+          "name": "allOtherPatternOptions",
+          "type": "object",
+          "description": "All product validator pattern options from schema are accepted."
+        }
+      ]
+    },
+    {
+      "code": "validator.import.entity.sequence",
+      "name": "Sequence",
+      "jsonPath": "$.sequences[]",
+      "requiredFields": ["code", "label", "steps"],
+      "fields": [
+        {
+          "code": "validator.import.sequence.code",
+          "name": "code",
+          "type": "semantic_code",
+          "description": "Stable machine-readable sequence code."
+        },
+        {
+          "code": "validator.import.sequence.label",
+          "name": "label",
+          "type": "string",
+          "description": "Human-facing sequence label."
+        },
+        {
+          "code": "validator.import.sequence.debounce_ms",
+          "name": "debounceMs",
+          "type": "integer",
+          "description": "Debounce value for the sequence group."
+        },
+        {
+          "code": "validator.import.sequence.steps",
+          "name": "steps",
+          "type": "array",
+          "description": "Ordered references to pattern codes."
+        }
+      ]
+    },
+    {
+      "code": "validator.import.entity.sequence_step",
+      "name": "Sequence Step",
+      "jsonPath": "$.sequences[].steps[]",
+      "requiredFields": ["patternCode", "order"],
+      "fields": [
+        {
+          "code": "validator.import.step.pattern_code",
+          "name": "patternCode",
+          "type": "semantic_code",
+          "description": "References a pattern by semantic code."
+        },
+        {
+          "code": "validator.import.step.order",
+          "name": "order",
+          "type": "integer",
+          "description": "Sequence order value persisted as pattern.sequence."
+        }
+      ]
+    }
+  ]
+}

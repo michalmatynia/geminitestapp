@@ -13,6 +13,8 @@ import type { ProductDraftDto } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
+const SKU_LOOKUP_TIMEOUT_MS = 30_000;
+
 export function useProductOperations(
   setRefreshTrigger: React.Dispatch<React.SetStateAction<number>>,
 ): {
@@ -69,7 +71,9 @@ export function useProductOperations(
       const products = await queryClient.fetchQuery({
         queryKey: getProductListQueryKey({ sku }),
         queryFn: async (): Promise<ProductWithImages[]> =>
-          await api.get<ProductWithImages[]>(`/api/products?sku=${encodeURIComponent(sku)}`),
+          await api.get<ProductWithImages[]>(`/api/products?sku=${encodeURIComponent(sku)}`, {
+            timeout: SKU_LOOKUP_TIMEOUT_MS,
+          }),
       });
       
       if (products.some((p) => p.sku === sku)) {

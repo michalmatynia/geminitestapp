@@ -42,8 +42,9 @@ export async function POST_handler(request: NextRequest, _ctx: ApiHandlerContext
     throw badRequestError('Integration slug is missing');
   }
 
-  let categories: Array<{ id: string; name: string; parentId: string | null }> = [];
-  let sourceName = integration.name;
+  let categories: Array<{ id: string; name: string; parentId: string | null }>;
+  let sourceName: string;
+
   if (BASE_MARKETPLACE_SLUGS.has(integrationSlug)) {
     const tokenResolution = resolveBaseConnectionToken(connection);
     if (!tokenResolution.token) {

@@ -53,7 +53,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const limit = parsePositiveInt(searchParams.get('limit'), 200, 20, 2000);
   const count = parsePositiveInt(searchParams.get('count'), 200, 20, 1000);
 
-  let connected = false;
+  let connected: boolean;
   try {
     await client.ping();
     connected = true;
@@ -71,10 +71,9 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     let cursor = '0';
     do {
       const response = await client.scan(cursor, 'COUNT', String(count));
-      const nextCursor = response[0] ?? '0';
       const batch = response[1] ?? [];
       keys.push(...batch);
-      cursor = nextCursor;
+      cursor = response[0] ?? '0';
       if (keys.length >= limit) break;
     } while (cursor !== '0');
   }

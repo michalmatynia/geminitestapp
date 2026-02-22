@@ -13,6 +13,7 @@ const CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES_DEFAULT = 1_500_000;
 const CASE_RESOLVER_CONFLICT_RETRY_BASE_DELAY_MS_DEFAULT = 150;
 const CASE_RESOLVER_CONFLICT_RETRY_MAX_DELAY_MS_DEFAULT = 1_500;
 const CASE_RESOLVER_CONFLICT_RETRY_JITTER_MS_DEFAULT = 120;
+const CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS_DEFAULT = 8_000;
 
 const readPositiveIntegerEnv = (
   key: string,
@@ -30,6 +31,10 @@ const readPositiveIntegerEnv = (
 const CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES = readPositiveIntegerEnv(
   'NEXT_PUBLIC_CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES',
   CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES_DEFAULT
+);
+const CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS = readPositiveIntegerEnv(
+  'NEXT_PUBLIC_CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS',
+  CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS_DEFAULT
 );
 
 export type CaseResolverWorkspaceDebugEvent = {
@@ -241,11 +246,23 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
   source: string
 ): Promise<CaseResolverWorkspace | null> => {
   const startedAt = Date.now();
+  const controller =
+    typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeoutId =
+    controller
+      ? setTimeout((): void => {
+        controller.abort();
+      }, CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS)
+      : null;
   try {
-    const response = await fetch('/api/settings?scope=light&fresh=1', {
-      method: 'GET',
-      cache: 'no-store',
-    });
+    const response = await fetch(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+      {
+        method: 'GET',
+        cache: 'no-store',
+        ...(controller ? { signal: controller.signal } : {}),
+      }
+    );
     if (!response.ok) {
       logCaseResolverWorkspaceEvent({
         source,
@@ -276,6 +293,10 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
       durationMs: Date.now() - startedAt,
     });
     return null;
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
   }
 };
 

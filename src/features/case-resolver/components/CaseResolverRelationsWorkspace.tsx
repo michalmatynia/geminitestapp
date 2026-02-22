@@ -128,7 +128,7 @@ const toRuntimeNodes = (nodes: CaseResolverRelationGraph['nodes']): AiNode[] =>
       const description = typeof node['description'] === 'string' ? node['description'] : '';
       const rawType = typeof node['type'] === 'string' ? node['type'].trim() : '';
       const type = rawType && hasKnownNodeType(rawType) ? rawType : 'template';
-              const positionRecord = isObjectRecord(node['position']) ? node['position'] : ({} as Record<string, unknown>);      const x =
+      const positionRecord = isObjectRecord(node['position']) ? node['position'] : ({} as Record<string, unknown>);      const x =
         typeof positionRecord['x'] === 'number' && Number.isFinite(positionRecord['x'])
           ? positionRecord['x']
           : 0;

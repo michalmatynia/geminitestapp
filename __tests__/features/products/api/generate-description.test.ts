@@ -3,8 +3,7 @@
  */
 
 import { NextRequest } from 'next/server';
-import OpenAI from 'openai';
-import { vi, Mock } from 'vitest';
+import { vi } from 'vitest';
 
 import { POST } from '@/app/api/generate-description/route';
 import prisma from '@/shared/lib/db/prisma';

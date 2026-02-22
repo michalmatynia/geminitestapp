@@ -199,7 +199,7 @@ export function CaseResolverDocumentSearchPage(): React.JSX.Element {
       .map((row: FileSearchRow): CaseResolverFile => row.file);
 
     filtered.sort((left: CaseResolverFile, right: CaseResolverFile): number => {
-      let delta = 0;
+      let delta: number;
       if (sortBy === 'name') {
         delta = left.name.localeCompare(right.name);
       } else if (sortBy === 'created') {

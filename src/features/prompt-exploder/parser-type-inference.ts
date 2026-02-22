@@ -28,6 +28,8 @@ const CASE_RESOLVER_EMPTY_TITLE_PATTERN_IDS = new Set<string>([
 ]);
 const CASE_RESOLVER_SUBJECT_OR_SECTION_PATTERN_ID =
   'segment.case_resolver.heading.subject_or_section';
+const CASE_RESOLVER_WSA_PARTY_HEADING_PREFIX_RE =
+  /^(strona|organ|uczestnik|wnioskodawca|addresser|addressee)\s+w\s+postepowaniu\s+przed\s+wsa\b/;
 
 const isPromptExploderSegmentType = (
   value: string | null | undefined
@@ -154,7 +156,13 @@ export const shouldKeepEmptyTitleForCaseResolver = (
     return true;
   }
   if (!matchedPatternIds.includes(CASE_RESOLVER_SUBJECT_OR_SECTION_PATTERN_ID)) {
-    return false;
+    const normalizedAsciiSource = sourceText
+      .normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+    return CASE_RESOLVER_WSA_PARTY_HEADING_PREFIX_RE.test(normalizedAsciiSource);
   }
 
   const normalizedSource = normalizedSimilarityText(sourceText);

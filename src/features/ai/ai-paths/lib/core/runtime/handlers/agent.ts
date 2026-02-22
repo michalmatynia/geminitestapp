@@ -120,7 +120,7 @@ export const handleAgent: NodeHandler = async ({
     return prevOutputs;
   }
 
-  let personas: AgentPersona[] = [];
+  let personas: AgentPersona[];
   try {
     personas = await fetchAgentPersonas();
   } catch {

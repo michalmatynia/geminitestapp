@@ -163,9 +163,9 @@ export function resolveDatabaseQuery({
 
   const inputValue: unknown = templateInputValue;
 
-  let query: Record<string, unknown> = {};
+  let query: Record<string, unknown>;
   let nextQueryConfig: DbQueryConfig = { ...queryConfig };
-  let querySource: QueryResolutionSource = 'customTemplate';
+  let querySource: QueryResolutionSource;
 
   if (aiQueryInput !== undefined && aiQueryInput !== null) {
     const parsedAiQuery = parseQueryInputValue({

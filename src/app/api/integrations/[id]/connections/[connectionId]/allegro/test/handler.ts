@@ -30,8 +30,6 @@ const SANDBOX_TOKEN_URL =
  * Tests Allegro API access using stored credentials.
  */
 export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
-  let integrationId: string | null = null;
-  let integrationConnectionId: string | null = null;
   const steps: TestLogEntry[] = [];
 
   const pushStep = (
@@ -55,9 +53,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
   };
 
   const { id, connectionId } = params;
-  integrationId = id;
-  integrationConnectionId = connectionId;
-  if (!integrationId || !integrationConnectionId) {
+  if (!id || !connectionId) {
     return await fail('Loading connection', 'Integration id and connection id are required', 400);
   }
 
@@ -185,8 +181,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
 
   const raw = await response.text();
   if (!response.ok) {
-    const detail = raw || `${response.status} ${response.statusText}`.trim();
-    return await fail('Testing API connection', detail, response.status);
+    return await fail('Testing API connection', raw || `${response.status} ${response.statusText}`.trim(), response.status);
   }
 
   pushStep(
@@ -201,7 +196,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
     allegroTokenUpdatedAt: new Date().toISOString()
   });
 
-  let profile: unknown = raw;
+  let profile: unknown;
   try {
     profile = raw ? (JSON.parse(raw) as unknown) : null;
   } catch {

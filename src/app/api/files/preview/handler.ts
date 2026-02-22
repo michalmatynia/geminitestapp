@@ -29,7 +29,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   try {
     localPath = getDiskPathFromPublicPath(imageFile.filepath);
   } catch {
-    localPath = null;
+    // Ignore error
   }
 
   if (localPath) {

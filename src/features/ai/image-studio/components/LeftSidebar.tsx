@@ -380,7 +380,8 @@ export function LeftSidebar(): React.JSX.Element {
         throw new Error(
           error instanceof Error
             ? `Failed to serialize project session: ${error.message}`
-            : 'Failed to serialize project session.'
+            : 'Failed to serialize project session.',
+          { cause: error }
         );
       }
       try {

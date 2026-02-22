@@ -1,6 +1,9 @@
 import { ProductWithImages } from '@/shared/contracts/products';
 import { api, type ApiClientOptions } from '@/shared/lib/api-client';
 
+const PRODUCT_READ_TIMEOUT_MS = 60_000;
+const PRODUCT_WRITE_TIMEOUT_MS = 60_000;
+
 // This function fetches a list of products from the API.
 export async function getProducts(filters: {
   search?: string | undefined;
@@ -36,6 +39,7 @@ export async function getProducts(filters: {
     cache: 'no-store',
   };
   if (signal) options.signal = signal;
+  options.timeout = PRODUCT_READ_TIMEOUT_MS;
   return api.get<ProductWithImages[]>('/api/products', options);
 }
 
@@ -70,6 +74,7 @@ export async function countProducts(filters: {
       cache: 'no-store',
     };
     if (signal) options.signal = signal;
+    options.timeout = PRODUCT_READ_TIMEOUT_MS;
     const data = await api.get<{ count: number }>('/api/products/count', options);
     return data.count ?? 0;
   } catch (_error) {
@@ -125,18 +130,24 @@ export async function getProductsWithCount(
     cache: 'no-store',
   };
   if (signal) options.signal = signal;
+  options.timeout = PRODUCT_READ_TIMEOUT_MS;
   return api.get<ProductsPagedResult>('/api/products/paged', options);
 }
 
 export async function createProduct(formData: FormData): Promise<ProductWithImages> {
   return api.post<ProductWithImages>('/api/products', formData, {
     headers: {}, // Let browser set multipart/form-data with boundary
-    timeout: 60000, // Product creation involves many DB ops + image uploads
+    timeout: PRODUCT_WRITE_TIMEOUT_MS, // Product creation involves many DB ops + image uploads
   });
 }
 
-export async function updateProduct(id: string, data: Partial<ProductWithImages>): Promise<ProductWithImages> {
-  return api.put<ProductWithImages>(`/api/products/${id}`, data);
+export async function updateProduct(
+  id: string,
+  data: Partial<ProductWithImages> | FormData,
+): Promise<ProductWithImages> {
+  return api.put<ProductWithImages>(`/api/products/${id}`, data, {
+    timeout: PRODUCT_WRITE_TIMEOUT_MS,
+  });
 }
 
 export async function deleteProduct(id: string): Promise<{ success: boolean }> {
@@ -149,5 +160,7 @@ export async function deleteProduct(id: string): Promise<{ success: boolean }> {
 }
 
 export async function getProductById(id: string): Promise<ProductWithImages> {
-  return api.get<ProductWithImages>(`/api/products/${id}`);
+  return api.get<ProductWithImages>(`/api/products/${id}`, {
+    timeout: PRODUCT_READ_TIMEOUT_MS,
+  });
 }

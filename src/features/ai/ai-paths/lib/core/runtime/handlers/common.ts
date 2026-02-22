@@ -36,7 +36,7 @@ export const handleMath: NodeHandler = ({ node, nodeInputs }: NodeHandlerContext
   if (!Number.isFinite(numeric)) {
     return { value: inputValue };
   }
-  let result = numeric;
+  let result: number;
   switch (mathConfig.operation) {
     case 'add':
       result = numeric + operand;
@@ -78,7 +78,7 @@ export const handleCompare: NodeHandler = ({ node, nodeInputs }: NodeHandlerCont
   const target = String(compareTo ?? '');
   const value = compareConfig.caseSensitive ? base : base.toLowerCase();
   const targetValue = compareConfig.caseSensitive ? target : target.toLowerCase();
-  let valid = false;
+  let valid: boolean;
   switch (compareConfig.operator) {
     case 'eq':
       valid = value === targetValue;
@@ -133,7 +133,7 @@ export const handleRouter: NodeHandler = ({ node, nodeInputs }: NodeHandlerConte
     config.mode === 'valid' ? coerceInput(nodeInputs['valid']) : coerceInput(nodeInputs['value']);
   const compareTarget = config.compareTo ?? '';
   const asString = safeStringify(valueCandidate);
-  let shouldPass = false;
+  let shouldPass: boolean;
   switch (config.matchMode) {
     case 'truthy':
       shouldPass = Boolean(valueCandidate);

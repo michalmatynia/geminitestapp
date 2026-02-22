@@ -682,7 +682,7 @@ export const parseCaseResolverSettings = (raw: string | null | undefined): CaseR
   return normalizeCaseResolverSettings(parseJsonSetting<unknown>(raw, DEFAULT_CASE_RESOLVER_SETTINGS));
 };
 
-  export const createCaseResolverFile = (input: {
+export const createCaseResolverFile = (input: {
     id: string;
     workspaceId?: string;
     version?: CaseResolverDocumentVersion;
@@ -800,12 +800,12 @@ export const parseCaseResolverSettings = (raw: string | null | undefined): CaseR
     typeof input.scanOcrPrompt === 'string' && input.scanOcrPrompt.trim().length > 0
       ? input.scanOcrPrompt.trim()
       : DEFAULT_CASE_RESOLVER_SCANFILE_OCR_PROMPT;
-      return {
-        id: input.id,
-        workspaceId: input.workspaceId ?? 'default',
-        version: input.version ?? 'original',
-        fileType,
-        name: input.name.trim() || 'Untitled Case',    folder: normalizeFolderPath(input.folder ?? ''),
+  return {
+    id: input.id,
+    workspaceId: input.workspaceId ?? 'default',
+    version: input.version ?? 'original',
+    fileType,
+    name: input.name.trim() || 'Untitled Case',    folder: normalizeFolderPath(input.folder ?? ''),
     parentCaseId,
     referenceCaseIds,
     relatedFileIds: relatedFileIds.length > 0 ? relatedFileIds : undefined,
@@ -966,12 +966,12 @@ export const normalizeCaseResolverWorkspace = (
   );
   const validReferenceCaseIds = new Set<string>(caseFilesById.keys());
   const normalizedFilesWithCaseRelations = normalizedFilesBase.map((file: CaseResolverFile): CaseResolverFile => {
-          const parentCaseId = resolveSafeCaseParentId(
-            file.id,
-            file.fileType,
-            file.parentCaseId ?? null,
-            caseFilesById
-          );    const referenceCaseIds = file.referenceCaseIds
+    const parentCaseId = resolveSafeCaseParentId(
+      file.id,
+      file.fileType,
+      file.parentCaseId ?? null,
+      caseFilesById
+    );    const referenceCaseIds = file.referenceCaseIds
       .filter((referenceId: string): boolean => referenceId !== file.id && validReferenceCaseIds.has(referenceId));
     const uniqueReferenceCaseIds = Array.from(new Set(referenceCaseIds));
     return {

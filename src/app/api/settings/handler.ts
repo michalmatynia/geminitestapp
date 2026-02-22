@@ -405,7 +405,7 @@ const fetchAndCacheSettings = async (
   const totalStart = performance.now();
   const provider = await getAppDbProvider();
   if (timings) timings['provider'] = performance.now() - totalStart;
-  let settings: SettingRecord[] = [];
+  let settings: SettingRecord[];
   if (provider === 'mongodb') {
     const mongoStart = performance.now();
     settings = await listMongoSettings(scope);
@@ -461,6 +461,7 @@ export async function GET_handler(
     await ErrorSystem.logInfo('[settings] GET /api/settings', { service: 'api/settings' });
   }
   const scope = scopeOverride ?? normalizeScope(req.nextUrl.searchParams.get('scope'));
+  const requestedKey = req.nextUrl.searchParams.get('key')?.trim() ?? '';
   const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
   
   // Use no-store for settings to ensure freshness
@@ -474,6 +475,32 @@ export async function GET_handler(
     attachTimingHeaders(response, { total: performance.now() - requestStart, cache: 0 });
     return response;
   }
+
+  if (requestedKey.length > 0) {
+    const timings: Record<string, number | null | undefined> = {};
+    const providerStart = performance.now();
+    const provider = await getAppDbProvider();
+    timings['provider'] = performance.now() - providerStart;
+    const readStart = performance.now();
+    const value = await readCurrentSettingValue(requestedKey, provider);
+    timings['single'] = performance.now() - readStart;
+    const payload: SettingRecord[] =
+      value === null ? [] : [{ key: requestedKey, value }];
+    const response = NextResponse.json(payload, {
+      headers: {
+        'Cache-Control': SETTINGS_CACHE_CONTROL,
+        'X-Cache': value === null ? 'key-miss' : 'key-hit',
+      },
+    });
+    await attachProviderHeader(response);
+    attachTimingHeaders(response, {
+      total: performance.now() - requestStart,
+      cache: 0,
+      ...timings,
+    });
+    return response;
+  }
+
   const stale = getStaleSettings(scope);
   const lastKnown = getLastKnownSettings(scope);
   const buildTimeoutFallbackResponse = async (
@@ -719,9 +746,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       );
     }
   }
-  let currentValueForPathConfig: string | null = null;
   if (key.startsWith(AI_PATHS_CONFIG_PREFIX)) {
-    currentValueForPathConfig = await readCurrentSettingValue(key, provider);
+    const currentValueForPathConfig = await readCurrentSettingValue(key, provider);
     if (currentValueForPathConfig && isRuntimeOnlyPathConfigPayload(value)) {
       const mergedValue = mergeRuntimeOnlyPathConfigWrite(currentValueForPathConfig, value);
       if (mergedValue) {

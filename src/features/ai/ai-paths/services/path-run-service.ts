@@ -68,7 +68,8 @@ const dispatchRun = async (
     throw new Error(
       `Failed to enqueue job: ${
         queueError instanceof Error ? queueError.message : String(queueError)
-      }`
+      }`,
+      { cause: queueError }
     );
   }
 };
@@ -259,7 +260,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         durationMs: 0,
         timestamp: finishedAt,
       });
-      throw new Error(message);
+      throw new Error(message, { cause: setupError });
     }
 
     try {
@@ -449,7 +450,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
       runId,
       nodeId,
     });
-    throw error;
+    throw new Error(error instanceof Error ? error.message : String(error), { cause: error });
   }
 };
 

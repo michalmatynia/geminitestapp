@@ -113,12 +113,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   });
 
   const raw = response.choices[0]?.message?.content ?? '';
-  let json: unknown = null;
-  try {
-    json = JSON.parse(raw);
-  } catch {
-    throw internalError('Model did not return valid JSON.', { raw });
-  }
+  const json = (() => {
+    try {
+      return JSON.parse(raw) as unknown;
+    } catch {
+      throw internalError('Model did not return valid JSON.', { raw });
+    }
+  })();
   if (!json || typeof json !== 'object' || Array.isArray(json)) {
     throw internalError('Invalid response shape.');
   }

@@ -1461,10 +1461,10 @@ export async function sendProductImageToStudio(params: {
   sequenceGenerationMode?: ProductStudioSequenceGenerationMode | null | undefined;
 }): Promise<ProductStudioSendResult> {
   const startedAtMs = Date.now();
-  let importMs: number | null = null;
-  let sourceSlotUpsertMs: number | null = null;
-  let routeDecisionMs: number | null = null;
-  let dispatchMs: number | null = null;
+  let importMs: number | null;
+  let sourceSlotUpsertMs: number | null;
+  let routeDecisionMs: number | null;
+  let dispatchMs: number | null;
   const resolved = await resolveProductAndStudioTarget(params);
   const {
     parsedStudioSettings,

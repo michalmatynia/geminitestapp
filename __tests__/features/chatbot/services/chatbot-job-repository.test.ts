@@ -36,11 +36,13 @@ vi.mock('mongodb', async (importOriginal) => {
     toString() { return this.id; }
     equals(other: any) { return other.toString() === this.id; }
   }
-  const mockObjectId = vi.fn().mockImplementation((id: string) => new MockObjectId(id));
-  (mockObjectId as any).isValid = actual.ObjectId.isValid;
+  const MockObjectIdCtor = function(id: string) {
+    return new MockObjectId(id);
+  };
+  (MockObjectIdCtor as any).isValid = actual.ObjectId.isValid;
   return {
     ...actual,
-    ObjectId: mockObjectId,
+    ObjectId: MockObjectIdCtor,
   };
 });
 

@@ -1,4 +1,5 @@
 import { createValidationErrorResponse } from '@/shared/lib/api/handle-api-error';
+import { formDataToObject } from '@/features/products/services/product-service-form-utils';
 
 import { validateProductCreate, validateProductUpdate, type ValidationError } from './validators';
 
@@ -7,15 +8,22 @@ export type ValidationMiddlewareOptions = {
   customErrorHandler?: (errors: ValidationError[]) => Response;
 };
 
+const toValidationPayload = (formData: FormData): Record<string, unknown> => {
+  const payload = formDataToObject(formData);
+  // Files are handled in the service layer after validation.
+  delete payload['images'];
+  return payload;
+};
+
 export async function validateProductCreateMiddleware(
   formData: FormData,
   options: ValidationMiddlewareOptions = {}
 ): Promise<{ success: true; data: unknown } | { success: false; response: Response }> {
   if (options.skipValidation) {
-    return { success: true, data: Object.fromEntries(formData.entries()) };
+    return { success: true, data: toValidationPayload(formData) };
   }
 
-  const data = Object.fromEntries(formData.entries());
+  const data = toValidationPayload(formData);
   const result = await validateProductCreate(data);
 
   if (!result.success) {
@@ -39,10 +47,10 @@ export async function validateProductUpdateMiddleware(
   options: ValidationMiddlewareOptions = {}
 ): Promise<{ success: true; data: unknown } | { success: false; response: Response }> {
   if (options.skipValidation) {
-    return { success: true, data: Object.fromEntries(formData.entries()) };
+    return { success: true, data: toValidationPayload(formData) };
   }
 
-  const data = Object.fromEntries(formData.entries());
+  const data = toValidationPayload(formData);
   const result = await validateProductUpdate(data);
 
   if (!result.success) {

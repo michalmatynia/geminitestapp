@@ -36,6 +36,8 @@ import {
   refetchProductsAndCounts,
 } from './productCache';
 
+const PRODUCT_UPDATE_FORM_TIMEOUT_MS = 60_000;
+
 // --- Queries ---
 
 export type { UseProductsFilters };
@@ -100,15 +102,13 @@ export function useUpdateProductMutation(): UseMutationResult<
       typeof originalSku === 'string' ? originalSku.trim().toUpperCase() : '';
     if (!normalizedSku) return null;
 
-    let products: ProductWithImages[] = [];
-    try {
-      products = await api.get<ProductWithImages[]>(
-        `/api/products?sku=${encodeURIComponent(normalizedSku)}`,
-        { cache: 'no-store', logError: false }
-      );
-    } catch {
-      return null;
-    }
+    const products = await api.get<ProductWithImages[]>(
+      `/api/products?sku=${encodeURIComponent(normalizedSku)}`,
+      { cache: 'no-store', logError: false }
+    ).catch(() => null);
+
+    if (!products) return null;
+
     const exactMatches = products.filter((product: ProductWithImages): boolean =>
       typeof product.sku === 'string' && product.sku.trim().toUpperCase() === normalizedSku
     );
@@ -127,27 +127,41 @@ export function useUpdateProductMutation(): UseMutationResult<
       originalSku?: string | null;
     }): Promise<ProductWithImages> => {
       if (data instanceof FormData) {
-        const buildUpdateRequestInit = (formData: FormData): RequestInit => ({
-          method: 'PUT',
-          body: formData,
-          headers: withCsrfHeaders(),
-          credentials: 'same-origin',
-        });
+        const putProductFormData = async (
+          targetId: string,
+          formData: FormData
+        ): Promise<Response> => {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), PRODUCT_UPDATE_FORM_TIMEOUT_MS);
+          try {
+            return await fetch(`/api/products/${targetId}`, {
+              method: 'PUT',
+              body: formData,
+              headers: withCsrfHeaders(),
+              credentials: 'same-origin',
+              signal: controller.signal,
+            });
+          } catch (error) {
+            if (controller.signal.aborted) {
+              throw new Error(
+                `Request timeout after ${PRODUCT_UPDATE_FORM_TIMEOUT_MS}ms`,
+                { cause: error }
+              );
+            }
+            throw error;
+          } finally {
+            clearTimeout(timeoutId);
+          }
+        };
 
         let targetId = id;
-        let response = await fetch(
-          `/api/products/${targetId}`,
-          buildUpdateRequestInit(data)
-        );
+        let response = await putProductFormData(targetId, data);
 
         if (response.status === 404) {
           const resolvedId = await resolveProductIdBySku(originalSku);
           if (resolvedId && resolvedId !== targetId) {
             targetId = resolvedId;
-            response = await fetch(
-              `/api/products/${targetId}`,
-              buildUpdateRequestInit(data)
-            );
+            response = await putProductFormData(targetId, data);
           }
         }
 

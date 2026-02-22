@@ -707,12 +707,12 @@ export function RightSidebar(): React.JSX.Element {
 
   const applyActionHistorySnapshot = useCallback((snapshot: StudioActionHistorySnapshot): void => {
     setSelectedFolder(snapshot.selectedFolder);
-          setWorkingSlotId(snapshot.workingSlotId);
-          setPreviewMode(snapshot.previewMode);
-          setCompositeAssetIds(cloneSerializableValue(snapshot.compositeAssetIds));
+    setWorkingSlotId(snapshot.workingSlotId);
+    setPreviewMode(snapshot.previewMode);
+    setCompositeAssetIds(cloneSerializableValue(snapshot.compositeAssetIds));
     
-          setTool(snapshot.tool);
-          setCanvasSelectionEnabled(snapshot.canvasSelectionEnabled);
+    setTool(snapshot.tool);
+    setCanvasSelectionEnabled(snapshot.canvasSelectionEnabled);
     
     setImageTransformMode(snapshot.imageTransformMode);    setCanvasImageOffset(cloneSerializableValue(snapshot.canvasImageOffset));
     setCanvasBackgroundLayerEnabled(snapshot.canvasBackgroundLayerEnabled);
@@ -1016,15 +1016,15 @@ export function RightSidebar(): React.JSX.Element {
       let serializedSession: string;
       try {
         serializedSession = serializeImageStudioProjectSession(projectSession);
-              } catch (error: unknown) {
-                throw new Error(
-                  error instanceof Error
-                    ? `Failed to serialize prompt session: ${error.message}`
-                    : 'Failed to serialize prompt session.',
-                  { cause: error }
-                );
-              }
-            try {
+      } catch (error: unknown) {
+        throw new Error(
+          error instanceof Error
+            ? `Failed to serialize prompt session: ${error.message}`
+            : 'Failed to serialize prompt session.',
+          { cause: error }
+        );
+      }
+      try {
         saveImageStudioProjectSessionLocal(normalizedProjectId, projectSession);
       } catch {
         // Local cache is best-effort.
@@ -1038,7 +1038,7 @@ export function RightSidebar(): React.JSX.Element {
       toast(`Prompt saved to project "${normalizedProjectId}".`, { variant: 'success' });
     })()
       .catch((error: unknown) => {
-        let localFallbackSaved = false;
+        let localFallbackSaved: boolean;
         try {
           saveImageStudioProjectSessionLocal(normalizedProjectId, projectSession);
           localFallbackSaved = true;

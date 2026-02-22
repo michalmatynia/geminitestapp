@@ -205,7 +205,7 @@ function createResponse(payload: PromptExtractResponse): Response {
   return NextResponse.json(payload);
 }
 
-export async function postImageStudioPromptExtractHandler(
+export async function POST_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext
 ): Promise<Response> {
@@ -277,16 +277,13 @@ export async function postImageStudioPromptExtractHandler(
     settings.promptExtraction.gpt.model ||
     settings.targetAi.openai.model ||
     (await getSettingValue('openai_model')) ||
-    'gpt-4o-mini'
+          'gpt-4o-mini'
   ).trim();
-  let temperature = settings.promptExtraction.gpt.temperature ?? 0;
-  let top_p: number | undefined;
-  let max_output_tokens = settings.promptExtraction.gpt.max_output_tokens ?? 1200;
-  let aiError: string | null = null;
+  let aiError: string | null;
   if (!model) {
     aiError = 'Prompt extraction model is missing. Set it in Image Studio settings.';
   } else {
-    top_p = settings.promptExtraction.gpt.top_p ?? undefined;
+    
     const apiKey =
       (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ||
       (await getSettingValue('openai_api_key'))?.trim() ||
@@ -294,6 +291,10 @@ export async function postImageStudioPromptExtractHandler(
       null;
     if (apiKey) {
       try {
+        const temperature = settings.promptExtraction.gpt.temperature ?? 0;
+        const top_p = settings.promptExtraction.gpt.top_p ?? undefined;
+        const max_output_tokens = settings.promptExtraction.gpt.max_output_tokens ?? 1200;
+
         const aiParams = await runAiExtraction(
           parsed.data.prompt,
           model,

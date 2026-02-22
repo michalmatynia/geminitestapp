@@ -3,28 +3,33 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { translateProduct } from '@/features/products/services/aiTranslationService';
 
-// Mock OpenAI
-const mockCreate = vi.fn().mockResolvedValue({
-  choices: [
-    {
-      message: {
-        content: JSON.stringify({
-          name: 'Translated Name',
-          description: 'Translated Description',
-        }),
+const { MockOpenAI } = vi.hoisted(() => {
+  const mockCreate = vi.fn().mockResolvedValue({
+    choices: [
+      {
+        message: {
+          content: JSON.stringify({
+            name: 'Translated Name',
+            description: 'Translated Description',
+          }),
+        },
       },
-    },
-  ],
-});
+    ],
+  });
 
-const MockOpenAI = vi.fn().mockImplementation(() => ({
-  chat: {
-    completions: {
-      create: mockCreate,
-    },
-  },
-}));
-(MockOpenAI as any).default = MockOpenAI;
+  const MockOpenAI = vi.fn().mockImplementation(function(this: any) {
+    this.chat = {
+      completions: {
+        create: mockCreate,
+      },
+    };
+  });
+
+  return {
+    mockCreate,
+    MockOpenAI,
+  };
+});
 
 vi.mock('openai', () => {
   return {
@@ -85,15 +90,15 @@ describe('aiTranslationService', () => {
 
   it('should throw error if no translations succeeded', async () => {
     // Force translation failure by returning empty content
-    vi.mocked(OpenAI).mockImplementationOnce(() => ({
-      chat: {
+    vi.mocked(OpenAI).mockImplementationOnce(function(this: any) {
+      this.chat = {
         completions: {
           create: vi.fn().mockResolvedValue({
             choices: [],
           }),
         },
-      },
-    } as any));
+      };
+    });
 
     const params = {
       productId: '123',

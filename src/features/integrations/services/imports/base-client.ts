@@ -241,9 +241,10 @@ export async function callBaseApiRaw(
     body,
   });
 
-  let payload: BaseApiResponse | null = null;
-  try {
-    payload = (await response.json()) as BaseApiResponse;
+      let payload: BaseApiResponse;
+      try {
+        payload = (await response.json()) as BaseApiResponse;
+  
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Invalid JSON payload.';
     return {

@@ -656,7 +656,7 @@ export function useAiPathsCanvasInteractions({
     const canvasRect = canvasRef.current?.getBoundingClientRect() ?? null;
     const raw = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.AI_NODE]);
     if (!raw) return;
-    let payload: NodeDefinition | null = null;
+    let payload: NodeDefinition;
     try {
       payload = JSON.parse(raw) as NodeDefinition;
     } catch (error) {

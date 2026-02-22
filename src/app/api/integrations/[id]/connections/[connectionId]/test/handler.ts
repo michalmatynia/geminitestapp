@@ -184,9 +184,9 @@ export async function postTestConnectionHandler(
       );
     }
 
-          let appKey: string;
-          let token: string;
-          try {
+    let appKey: string;
+    let token: string;
+    try {
     
       appKey = decryptSecret(encryptedAppKey).trim();
       token = decryptSecret(encryptedToken).trim();

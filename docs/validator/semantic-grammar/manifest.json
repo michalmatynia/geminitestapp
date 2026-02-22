@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "generatedAt": "2026-02-22T00:00:00.000Z",
+  "artifacts": [
+    {
+      "code": "validator.import.schema.v1",
+      "path": "schema/validator-import.v1.json",
+      "sha256": "fa0ae1d6fa57c5b2d96a590618144f1f975c95d44dcefa2e59d324ab00aeb8ce"
+    },
+    {
+      "code": "validator.import.options.v1",
+      "path": "options/validator-import-options.v1.json",
+      "sha256": "d209f45b9ba041f125a1baa3a28d6072d3648418f260ead41f814e00d8fa9226"
+    },
+    {
+      "code": "validator.import.types.v1",
+      "path": "types/validator-import-types.v1.json",
+      "sha256": "c68a74b3267f8c7d361c466f1f05a57336d6dbf677c6dc78a41b2fc707b114fb"
+    }
+  ]
+}

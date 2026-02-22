@@ -210,7 +210,7 @@ export function useAiPathsRunHistory({
       counts[status] = (counts[status] ?? 0) + 1;
     });
     const total = runDetail.nodes.length;
-    const completed = counts['completed'] ?? 0;
+    const completed = (counts['completed'] ?? 0) + (counts['cached'] ?? 0);
     const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
     return { counts, total, completed, progress };
   }, [runDetail]);
@@ -259,11 +259,17 @@ export function useAiPathsRunHistory({
     { ok: boolean; data: { runs: AiPathRunRecord[] } }
   >({
     queryKey: QUERY_KEYS.ai.aiPaths.runs({ pathId: activePathId }),
-    queryFn: async () => {
-      const res = await runsApi.list({ ...(activePathId ? { pathId: activePathId } : {}) });
+    queryFn: async ({ signal }) => {
+      const res = await runsApi.list({
+        ...(activePathId ? { pathId: activePathId } : {}),
+        limit: 100,
+        timeoutMs: 8000,
+        ...(signal ? { signal } : {}),
+      });
       return res as unknown as { ok: boolean; data: { runs: AiPathRunRecord[] } };
     },
     enabled: Boolean(activePathId),
+    retry: 0,
     refetchInterval: (
       query: Query<{ ok: boolean; data: { runs: AiPathRunRecord[] } }, Error, { ok: boolean; data: { runs: AiPathRunRecord[] } }, readonly unknown[]>
     ): number | false => {

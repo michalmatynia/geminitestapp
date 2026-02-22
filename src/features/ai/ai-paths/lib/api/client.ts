@@ -176,11 +176,40 @@ const resolveApiUrl = (url: string): string => {
 
 async function apiFetch<T>(
   url: string,
-  options?: RequestInit
+  options?: (RequestInit & { timeoutMs?: number | undefined })
 ): Promise<ApiResponse<T>> {
+  const { timeoutMs = 15000, ...fetchOptions } = options ?? {};
+  const callerSignal = fetchOptions.signal;
+  const abortController =
+    typeof AbortController !== 'undefined' ? new AbortController() : null;
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+  let timedOut = false;
+  let forwardAbort: (() => void) | null = null;
+
+  if (abortController && callerSignal) {
+    if (callerSignal.aborted) {
+      abortController.abort();
+    } else {
+      forwardAbort = (): void => {
+        abortController.abort();
+      };
+      callerSignal.addEventListener('abort', forwardAbort, { once: true });
+    }
+  }
+
+  if (abortController && Number.isFinite(timeoutMs) && timeoutMs > 0) {
+    timeoutId = setTimeout((): void => {
+      timedOut = true;
+      abortController.abort();
+    }, timeoutMs);
+  }
+
   try {
     const resolvedUrl = resolveApiUrl(url);
-    const res = await fetch(resolvedUrl, options);
+    const res = await fetch(resolvedUrl, {
+      ...fetchOptions,
+      ...(abortController ? { signal: abortController.signal } : {}),
+    });
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({})) as { error?: string; message?: string };
       return {
@@ -191,10 +220,23 @@ async function apiFetch<T>(
     const data = await res.json() as T;
     return { ok: true, data };
   } catch (error) {
+    if (timedOut) {
+      return {
+        ok: false,
+        error: `Request timeout after ${timeoutMs}ms`,
+      };
+    }
     return {
       ok: false,
       error: error instanceof Error ? error.message : 'Unknown error occurred',
     };
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    if (forwardAbort && callerSignal) {
+      callerSignal.removeEventListener('abort', forwardAbort);
+    }
   }
 }
 
@@ -732,6 +774,8 @@ export const runsApi = {
     query?: string;
     limit?: number;
     offset?: number;
+    timeoutMs?: number;
+    signal?: AbortSignal;
   }): Promise<ApiResponse<{ runs: unknown[]; total: number }>> {
     const params = new URLSearchParams();
     if (options?.pathId) params.set('pathId', options.pathId);
@@ -744,7 +788,10 @@ export const runsApi = {
     if (typeof options?.offset === 'number') params.set('offset', String(options.offset));
     const query = params.toString();
     const url = query ? `/api/ai-paths/runs?${query}` : '/api/ai-paths/runs';
-    return apiFetch<{ runs: unknown[]; total: number }>(url);
+    return apiFetch<{ runs: unknown[]; total: number }>(url, {
+      ...(typeof options?.timeoutMs === 'number' ? { timeoutMs: options.timeoutMs } : {}),
+      ...(options?.signal ? { signal: options.signal } : {}),
+    });
   },
 
   async get(runId: string): Promise<ApiResponse<{ run: unknown; nodes: unknown[]; events: unknown[] }>> {

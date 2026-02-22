@@ -217,7 +217,7 @@ export async function postBaseImportsHandler(
     });
   }
 
-  let resolvedBaseConnectionId = data.connectionId?.trim() || null;
+  const resolvedBaseConnectionId = data.connectionId?.trim() || null;
   let resolvedBaseConnection: {
     id: string;
     baseApiToken?: string | null | undefined;
@@ -230,7 +230,7 @@ export async function postBaseImportsHandler(
         baseIntegrationId
       );
     if (!resolvedBaseConnection) {
-      resolvedBaseConnectionId = null;
+      // resolvedBaseConnectionId = null; // Unused
     }
   }
 
@@ -245,7 +245,7 @@ export async function postBaseImportsHandler(
         resolvedBaseConnection = connections.find(
           (connection: (typeof connections)[number]) => connection.baseApiToken || connection.password
         ) ?? null;
-        resolvedBaseConnectionId = resolvedBaseConnection?.id ?? null;
+        // resolvedBaseConnectionId = resolvedBaseConnection?.id ?? null; // Unused
       }
       if (resolvedBaseConnection) {
         try {

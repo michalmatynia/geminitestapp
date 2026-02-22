@@ -292,7 +292,7 @@ export function reducePageBuilderStateCore(
           (normalized.settings['columns'] as number) ??
           Math.max(1, (rows[0]?.blocks ?? []).filter((b: BlockInstance) => b.type === 'Column').length || 1);
         const targetRows = Math.max(1, action.rowCount);
-        let nextRows = rows;
+        let nextRows: BlockInstance[];
         if (targetRows > rows.length) {
           const newRows = Array.from({ length: targetRows - rows.length }, () => createRowBlock(columnsPerRow));
           nextRows = [...rows, ...newRows];

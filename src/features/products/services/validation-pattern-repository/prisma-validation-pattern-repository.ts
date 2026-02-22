@@ -311,7 +311,7 @@ export const prismaValidationPatternRepository: ProductValidationPatternReposito
 
   async createPattern(data: CreateProductValidationPatternInput): Promise<ProductValidationPattern> {
     const delegate = requirePatternDelegate();
-    let fallbackSequence = 10;
+    let fallbackSequence: number;
     try {
       const maxSequenceRows = await delegate.findMany({
         select: { sequence: true },

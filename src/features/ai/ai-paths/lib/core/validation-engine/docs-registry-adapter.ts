@@ -720,7 +720,7 @@ export const extractAiPathsAssertionsFromMarkdown = (
   matches.forEach((match: RegExpMatchArray, index: number) => {
     const raw = (match[1] ?? '').trim();
     if (!raw) return;
-    let parsed: unknown = null;
+    let parsed: unknown;
     try {
       parsed = JSON.parse(raw);
     } catch {

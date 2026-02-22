@@ -75,8 +75,8 @@ export async function PUT_handler(
     return validation.response;
   }
 
-      const options = _ctx.userId ? { userId: _ctx.userId } : {};
-      const product: ProductWithImages | null = await productService.updateProduct(id, formData, options);
+  const options = _ctx.userId ? { userId: _ctx.userId } : {};
+  const product: ProductWithImages | null = await productService.updateProduct(id, formData, options);
   
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
@@ -140,9 +140,9 @@ export async function DELETE_handler(
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
-      const id = params.id;
-      const options = _ctx.userId ? { userId: _ctx.userId } : {};
-      const product: ProductRecord | null = await productService.deleteProduct(id, options);
+  const id = params.id;
+  const options = _ctx.userId ? { userId: _ctx.userId } : {};
+  const product: ProductRecord | null = await productService.deleteProduct(id, options);
   
   if (!product) {
     throw notFoundError('Product not found', { productId: id });

@@ -121,6 +121,48 @@ describe('PathRunExecutor', () => {
     expect(events.some((e: any) => e.message === 'Node Const completed.')).toBe(true);
   });
 
+  it('should persist cached node finishes as cached status', async () => {
+    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
+      const runStartedAt = options.runStartedAt;
+      const runId = options.runId;
+      await options.onNodeStart({
+        node: mockNodes[0],
+        nodeInputs: {},
+        prevOutputs: {},
+        iteration: 0,
+        runStartedAt,
+      });
+      await options.onNodeFinish({
+        node: mockNodes[0],
+        nodeInputs: {},
+        nextOutputs: { value: 'cached' },
+        cached: true,
+        iteration: 0,
+        runStartedAt,
+        runId,
+      });
+      return { outputs: { 'node-1': { value: 'cached' } } };
+    });
+
+    const run = await repo.createRun({
+      pathId: 'test-cached-status',
+      graph: { nodes: mockNodes, edges: mockEdges },
+      meta: { aiPathsValidation: { enabled: false } },
+    });
+    await repo.createRunNodes(run.id, mockNodes);
+
+    await executePathRun(run);
+
+    const nodes = await repo.listRunNodes(run.id);
+    expect(nodes[0].status).toBe('cached');
+    expect(nodes[0].outputs).toEqual({ value: 'cached' });
+
+    const events = await repo.listRunEvents(run.id);
+    expect(
+      events.some((event: any) => event.message === 'Node Const reused cached outputs.')
+    ).toBe(true);
+  });
+
   it('should handle node errors correctly', async () => {
     (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
       await options.onNodeError({ node: mockNodes[0], nodeInputs: {}, prevOutputs: {}, error: new Error('Node failed') });

@@ -72,7 +72,7 @@ const coerceRuleId = (value: string): PromptExploderParserTuningRuleId | null =>
 const resolvePromptValidationScopeFromRuntime = (
   runtimeScope: PromptExploderRuntimeValidationScope
 ): PromptValidationScope => {
-  if (runtimeScope === 'case-resolver-prompt-exploder') {
+  if (runtimeScope === 'case_resolver_prompt_exploder') {
     return 'case_resolver_prompt_exploder';
   }
   return 'prompt_exploder';
@@ -177,7 +177,7 @@ export const buildPromptExploderParserTuningDrafts = (args: {
   patternPackRules: PromptValidationRule[];
   scope?: PromptExploderRuntimeValidationScope;
 }): PromptExploderParserTuningRuleDraft[] => {
-  const scope = args.scope ?? 'prompt-exploder';
+  const scope = args.scope ?? 'prompt_exploder';
   const scopedById = new Map(
     args.scopedRules
       .filter(isRegexRule)
@@ -243,7 +243,7 @@ export const applyPromptExploderParserTuningDrafts = (args: {
   patternPackRules: PromptValidationRule[];
   scope?: PromptExploderRuntimeValidationScope;
 }): PromptEngineSettings => {
-  const scope = args.scope ?? 'prompt-exploder';
+  const scope = args.scope ?? 'prompt_exploder';
   const baseSettings = args.settings?.promptValidation
     ? args.settings
     : defaultPromptEngineSettings;

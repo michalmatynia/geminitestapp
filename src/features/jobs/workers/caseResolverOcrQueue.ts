@@ -322,7 +322,7 @@ const fetchWithTimeout = async (
     });
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new Error(`${source} request timed out after ${timeoutMs}ms.`);
+      throw new Error(`${source} request timed out after ${timeoutMs}ms.`, { cause: error });
     }
     throw error;
   } finally {

@@ -456,10 +456,10 @@ async function executeCenterOperation(params: {
   const normalizedLayout = normalizeCenterLayoutConfig(params.request.center?.layout);
 
   let outputBuffer: Buffer;
-  let outputMime = 'image/png';
-  let sourceObjectBounds: ImageStudioCenterObjectBounds | null = null;
-  let targetObjectBounds: ImageStudioCenterObjectBounds | null = null;
-  let layoutMeta: ImageStudioCenterExecutionMeta['layout'] = null;
+  let outputMime: string;
+  let sourceObjectBounds: ImageStudioCenterObjectBounds | null;
+  let targetObjectBounds: ImageStudioCenterObjectBounds | null;
+  let layoutMeta: ImageStudioCenterExecutionMeta['layout'];
 
   if (centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1') {
     const parsedDataUrl = parseDataUrl(params.request.center?.dataUrl ?? '');

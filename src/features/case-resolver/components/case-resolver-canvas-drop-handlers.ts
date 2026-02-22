@@ -169,7 +169,7 @@ export const createCaseResolverCanvasDropHandlers = ({
       const payload = (await response.json()) as PdfExtractResponse;
       return typeof payload.text === 'string' ? payload.text : '';
     } catch (error) {
-      throw new Error(`PDF extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`PDF extraction failed: ${error instanceof Error ? error.message : 'Unknown error'}`, { cause: error });
     }
   };
 

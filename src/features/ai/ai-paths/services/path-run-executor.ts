@@ -391,7 +391,10 @@ const buildSkipSet = (
 
   const completed = new Set(
     Array.from(nodeStatusMap.entries())
-      .filter(([, status]: [string, string]) => status === 'completed')
+      .filter(
+        ([, status]: [string, string]) =>
+          status === 'completed' || status === 'cached'
+      )
       .map(([nodeId]: [string, string]) => nodeId)
   );
   if (mode === 'resume') {
@@ -412,6 +415,27 @@ const buildSkipSet = (
     return new Set(Array.from(completed).filter((nodeId: string) => !affected.has(nodeId)));
   }
   return new Set<string>();
+};
+
+const buildCompileWarningMessage = (compileReport: {
+  warnings: number;
+  findings: Array<{ severity: string; message: string }>;
+}): string => {
+  const warningFindings = compileReport.findings.filter(
+    (finding: { severity: string; message: string }): boolean =>
+      finding.severity === 'warning' && finding.message.trim().length > 0
+  );
+  if (warningFindings.length === 0) {
+    return `Graph compile warnings detected (${compileReport.warnings}).`;
+  }
+  const primary = warningFindings[0]?.message?.trim();
+  if (!primary) {
+    return `Graph compile warnings detected (${compileReport.warnings}).`;
+  }
+  const moreCount = Math.max(0, warningFindings.length - 1);
+  return moreCount > 0
+    ? `Graph compile warning: ${primary} (+${moreCount} more).`
+    : `Graph compile warning: ${primary}`;
 };
 
 const normalizeEntityType = (value?: string | null): string | null => {
@@ -470,7 +494,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       action: 'getRepository',
       runId: run.id,
     });
-    throw new Error('Database repository not available');
+    throw new Error('Database repository not available', { cause: error });
   }
   let dbRunMissing = false;
   const runAbortController = new AbortController();
@@ -837,10 +861,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       );
     }
     if (compileReport.warnings > 0) {
+      const warningMessage = buildCompileWarningMessage(compileReport);
       await repo.createRunEvent({
         runId: run.id,
         level: 'warn',
-        message: `Graph compile warnings detected (${compileReport.warnings}).`,
+        message: warningMessage,
         metadata: {
           compile: {
             errors: compileReport.errors,
@@ -1100,7 +1125,10 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
           const safeOutputs = toJsonSafe(nextOutputs) as RuntimePortValues;
           accInputs[node.id] = safeInputs;
-          accOutputs[node.id] = { ...(safeOutputs), status: 'completed' } as RuntimePortValues;
+          accOutputs[node.id] = {
+            ...(safeOutputs),
+            status: cached ? 'cached' : 'completed',
+          } as RuntimePortValues;
           const attempt = nodeAttemptMap.get(node.id) ?? 0;
           const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
           const nodeFinishedAt = new Date().toISOString();
@@ -1122,7 +1150,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                 repo.upsertRunNode(run.id, node.id, {
                   nodeType: node.type,
                   nodeTitle: node.title ?? null,
-                  status: 'completed',
+                  status: 'cached',
                   attempt,
                   inputs: safeInputs,
                   outputs: safeOutputs,
@@ -1139,7 +1167,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                     nodeId: node.id,
                     nodeType: node.type,
                     nodeTitle: node.title ?? null,
-                    status: 'completed',
+                    status: 'cached',
                     cached: true,
                     attempt,
                     iteration,
@@ -1159,7 +1187,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                 nodeId: node.id,
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
-                status: 'completed',
+                status: 'cached',
                 cached: true,
                 outputs: safeOutputs,
               });
@@ -1433,12 +1461,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       error instanceof GraphExecutionCancelled ||
       (error instanceof Error && error.name === 'GraphExecutionCancelled')
     ) {
-      let latestRun: AiPathRunRecord | null = null;
-      try {
-        latestRun = await repo.findRunById(run.id);
-      } catch {
-        latestRun = null;
-      }
+      const latestRun = await repo.findRunById(run.id).catch((): AiPathRunRecord | null => null);
       if (latestRun?.status === 'canceled') {
         const finishedAt = new Date().toISOString();
         try {
@@ -1470,12 +1493,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     const errorMessage = error instanceof Error ? error.message : String(error);
     const finishedAt = new Date();
 
-    let latestRun: AiPathRunRecord | null = null;
-    try {
-      latestRun = await repo.findRunById(run.id);
-    } catch {
-      latestRun = null;
-    }
+    const latestRun = await repo.findRunById(run.id).catch((): AiPathRunRecord | null => null);
     if (latestRun && TERMINAL_RUN_STATUSES.has(latestRun.status)) {
       throw error;
     }

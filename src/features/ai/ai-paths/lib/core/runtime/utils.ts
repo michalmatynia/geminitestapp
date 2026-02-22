@@ -371,7 +371,7 @@ export const pollGraphJob = async (
         throw createAbortError();
       }
       if (attempt === maxAttempts - 1) {
-        throw new Error(`Connection error after ${maxAttempts} attempts: ${error instanceof Error ? error.message : String(error)}`);
+        throw new Error(`Connection error after ${maxAttempts} attempts: ${error instanceof Error ? error.message : String(error)}`, { cause: error });
       }
       // Wait before retrying on connection errors
       await sleep(Math.max(0, intervalMs), signal);

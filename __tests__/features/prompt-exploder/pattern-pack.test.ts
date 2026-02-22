@@ -37,9 +37,8 @@ describe('prompt exploder pattern pack', () => {
       },
     };
 
-    const promptRules = getPromptExploderScopedRules(settings, 'prompt_exploder');
-    const caseRules = getPromptExploderScopedRules(settings, 'case_resolver_prompt_exploder');
-
+    const promptRules = getPromptExploderScopedRules(settings, 'prompt_exploder', { includePatternPack: false });
+    const caseRules = getPromptExploderScopedRules(settings, 'case_resolver_prompt_exploder', { includePatternPack: false });
     expect(promptRules.map((rule) => rule.id)).toEqual(['rule.prompt', 'rule.global']);
     expect(caseRules.map((rule) => rule.id)).toEqual(['rule.case', 'rule.global']);
   });

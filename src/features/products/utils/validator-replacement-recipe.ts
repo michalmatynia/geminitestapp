@@ -381,7 +381,7 @@ export const evaluateDynamicReplacementRecipe = (
 ): string | null => {
   const { fieldValue, formValues, latestProductValues, pattern } = context;
 
-  let sourceValue: string | null = null;
+  let sourceValue: string | null;
   if (recipe.sourceMode === 'current_field') {
     sourceValue = fieldValue;
   } else if (recipe.sourceMode === 'form_field') {

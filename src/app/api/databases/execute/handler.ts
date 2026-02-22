@@ -52,8 +52,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         try {
           return await handleMongoOperation(parsed);
         } catch (error) {
-          const { ErrorSystem } = await import('@/features/observability/server');
-          void ErrorSystem.captureException(error, { service: 'api/databases/execute', provider: 'mongodb', collection: parsed.collection });
+          try {
+            const { ErrorSystem } = await import('@/features/observability/server');
+            void ErrorSystem.captureException(error, { service: 'api/databases/execute', provider: 'mongodb', collection: parsed.collection });
+          } catch {
+            // Ignore error capture failures
+          }
           throw error;
         }
       }
@@ -70,8 +74,12 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   try {
     return await handlePostgresQuery(parsed.sql);
   } catch (error) {
-    const { ErrorSystem } = await import('@/features/observability/server');
-    void ErrorSystem.captureException(error, { service: 'api/databases/execute', provider: 'postgresql', sql: parsed.sql });
+    try {
+      const { ErrorSystem } = await import('@/features/observability/server');
+      void ErrorSystem.captureException(error, { service: 'api/databases/execute', provider: 'postgresql', sql: parsed.sql });
+    } catch {
+      // Ignore error capture failures
+    }
     throw error;
   }
 }
@@ -137,7 +145,7 @@ async function handleMongoOperation(
   const startTime = Date.now();
 
   let result: unknown;
-  let rowCount = 0;
+  let rowCount: number;
 
   switch (operation) {
     case 'find': {

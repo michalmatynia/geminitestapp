@@ -1063,6 +1063,19 @@ export function CaseResolverPageView(
               <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-auto pr-1'>
                 <div className='flex flex-wrap items-center justify-between gap-3'>
                   <div className='flex min-w-0 items-center gap-2'>
+                    <Button
+                      type='button'
+                      size='sm'
+                      onClick={handleSaveFileEditor}
+                      disabled={!isEditorDraftDirty || isEditingDocumentLocked}
+                      className={`h-8 min-w-[100px] flex-shrink-0 rounded-md border text-xs transition-colors ${
+                        isEditorDraftDirty
+                          ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
+                          : 'border-border/60 text-gray-500 hover:bg-transparent'
+                      }`}
+                    >
+                      Update
+                    </Button>
                     <h2 className='truncate text-2xl font-bold tracking-tight text-white'>
                       {fileEditorTitle}
                     </h2>
@@ -1410,11 +1423,11 @@ export function CaseResolverPageView(
                                   uploadingScanSlotId === 'all' ||
                                   uploadingScanSlotId === slot.id
                                     ? 'Processing OCR...'
-                                                                          : slot.ocrError
-                                                                            ? 'OCR failed'
-                                                                            : (slot.ocrText || '').trim().length > 0
-                                                                              ? 'OCR extracted'
-                                                                              : 'OCR pending';                                  return (
+                                    : slot.ocrError
+                                      ? 'OCR failed'
+                                      : (slot.ocrText || '').trim().length > 0
+                                        ? 'OCR extracted'
+                                        : 'OCR pending';                                  return (
                                     <Card
                                       key={slot.id}
                                       variant='subtle-compact'

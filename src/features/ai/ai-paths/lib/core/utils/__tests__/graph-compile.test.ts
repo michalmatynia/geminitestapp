@@ -279,6 +279,51 @@ describe('compileGraph', () => {
     ).toBe(false);
   });
 
+  it('ignores the trigger-simulation handshake cycle pattern', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'trigger-1',
+        type: 'trigger',
+        inputs: ['context'],
+        outputs: ['trigger', 'context'],
+      }),
+      buildNode({
+        id: 'simulation-1',
+        type: 'simulation',
+        inputs: ['trigger'],
+        outputs: ['context'],
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-to-simulation',
+        from: 'trigger-1',
+        to: 'simulation-1',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: 'edge-simulation-to-trigger',
+        from: 'simulation-1',
+        to: 'trigger-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+
+    const report = compileGraph(nodes, edges);
+    expect(report.ok).toBe(true);
+    expect(
+      report.findings.some((finding) => finding.code === 'cycle_detected')
+    ).toBe(false);
+    expect(
+      report.findings.some((finding) => finding.code === 'unsupported_cycle')
+    ).toBe(false);
+    expect(
+      report.findings.some((finding) => finding.code === 'cycle_wait_deadlock_risk')
+    ).toBe(false);
+  });
+
   it('warns when a wait-for-inputs cycle has only cycle-internal required dependencies', () => {
     const nodes: AiNode[] = [
       buildNode({

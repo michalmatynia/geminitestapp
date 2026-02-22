@@ -1,15 +1,56 @@
 'use client';
 
-import { DocumentationSection } from '@/shared/ui';
+import {
+  Button,
+  DocumentationSection,
+  useToast,
+} from '@/shared/ui';
 
 import {
   VALIDATOR_FUNCTION_DOCS,
   VALIDATOR_UI_DOCS,
 } from './validator-docs-catalog';
+import { buildFullValidatorDocumentationClipboardText } from './validator-documentation-clipboard';
 
 export function ValidatorDocumentationTab(): React.JSX.Element {
+  const { toast } = useToast();
+
+  const handleCopyFullDocumentation = async (): Promise<void> => {
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      toast('Clipboard API is not available in this browser.', { variant: 'error' });
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(
+        buildFullValidatorDocumentationClipboardText()
+      );
+      toast('Full validator documentation copied (including JSON snippets).', {
+        variant: 'success',
+      });
+    } catch {
+      toast('Failed to copy full validator documentation.', { variant: 'error' });
+    }
+  };
+
   return (
     <div className='space-y-4'>
+      <div className='flex flex-wrap items-center justify-between gap-2 rounded border border-border/60 bg-black/20 p-3'>
+        <p className='text-xs text-gray-400'>
+          Copy all validator docs sections and JSON snippets in one click.
+        </p>
+        <Button
+          type='button'
+          variant='outline'
+          onClick={() => {
+            void handleCopyFullDocumentation();
+          }}
+          className='border-sky-500/40 text-sky-200 hover:bg-sky-500/10'
+          title='Copy all validation docs sections including JSON snippets'
+        >
+          Copy Full Validation Docs
+        </Button>
+      </div>
+
       <DocumentationSection title='Validation Pattern Tool Documentation'>
         <p className='text-sm leading-relaxed text-gray-300'>
           This tab exposes the complete validator documentation that powers inline tooltips and

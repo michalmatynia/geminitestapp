@@ -885,24 +885,24 @@ export const useCaseResolverStateAssetActions = ({
                 }
                 return 0;
               })() + 1;
-                              return {
-                                ...current,
-                                scanSlots: nextSlots,
-                                scanOcrModel: runtime.model,
-                                scanOcrPrompt: runtime.prompt,
-                                editorType: canonicalDocument.mode,
-                                baseDocumentContentVersion: nextBaseVersion,
-                                documentContentVersion: nextContentVersion,
-                                documentContent: storedDocumentContent,
-                                documentContentMarkdown: canonicalDocument.markdown,
-                                documentContentHtml: canonicalDocument.html,
-                                documentContentPlainText: canonicalDocument.plainText,
-                                originalDocumentContent: nextOriginalDocumentContent,
-                                explodedDocumentContent: nextExplodedDocumentContent,
-                                documentConversionWarnings: canonicalDocument.warnings,
-                                lastContentConversionAt: now,
-                                updatedAt: now,
-                              };            });
+              return {
+                ...current,
+                scanSlots: nextSlots,
+                scanOcrModel: runtime.model,
+                scanOcrPrompt: runtime.prompt,
+                editorType: canonicalDocument.mode,
+                baseDocumentContentVersion: nextBaseVersion,
+                documentContentVersion: nextContentVersion,
+                documentContent: storedDocumentContent,
+                documentContentMarkdown: canonicalDocument.markdown,
+                documentContentHtml: canonicalDocument.html,
+                documentContentPlainText: canonicalDocument.plainText,
+                originalDocumentContent: nextOriginalDocumentContent,
+                explodedDocumentContent: nextExplodedDocumentContent,
+                documentConversionWarnings: canonicalDocument.warnings,
+                lastContentConversionAt: now,
+                updatedAt: now,
+              };            });
             toast(
               successfulSlots === 1
                 ? 'OCR finished for 1 file.'

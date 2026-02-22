@@ -91,9 +91,9 @@ const buildValidLegacyBindingKeySetFromFiles = (
   const keySet = new Set<string>();
   if (!files || files.length === 0) return keySet;
 
-      files.forEach((file: CaseResolverFile): void => {
-        const sourceByNode = normalizeRecord(file.graph?.documentSourceFileIdByNode);
-        const nodeFileByNode = normalizeRecord(file.graph?.nodeFileAssetIdByNode);    Object.entries(nodeFileByNode).forEach(([nodeId, assetId]: [string, string]): void => {
+  files.forEach((file: CaseResolverFile): void => {
+    const sourceByNode = normalizeRecord(file.graph?.documentSourceFileIdByNode);
+    const nodeFileByNode = normalizeRecord(file.graph?.nodeFileAssetIdByNode);    Object.entries(nodeFileByNode).forEach(([nodeId, assetId]: [string, string]): void => {
       const documentFileId = sourceByNode[nodeId] ?? '';
       if (!documentFileId) return;
       keySet.add(buildLegacyBindingKey(assetId, nodeId, documentFileId));

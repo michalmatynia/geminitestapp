@@ -95,7 +95,7 @@ export function useAiPathsSettingsSamples({
           : normalized === 'notes'
             ? 'note'
             : normalized;
-      let sample: Record<string, unknown> | null = null;
+      let sample: Record<string, unknown> | null;
       if (resolvedType === 'product') {
         sample = await queryClient.fetchQuery({
           queryKey: getProductDetailQueryKey(entityId),

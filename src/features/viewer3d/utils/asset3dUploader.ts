@@ -38,7 +38,7 @@ export async function uploadAsset3D(
   const publicDir = '/uploads/assets3d';
   const publicPath = `${publicDir}/${filename}`;
   const localDiskPath = path.join(diskDir, filename);
-  let storedFilepath = publicPath;
+  let storedFilepath: string;
 
   try {
     const storageResult = await uploadToConfiguredStorage({

@@ -773,9 +773,9 @@ export const resolveWhiteForegroundObjectDetectionFromRgba = (
     Math.max(1, maskData.coreCount)
   );
 
-  let selectedComponent: ConnectedComponent | null = null;
-  let selectedSource: WhiteForegroundMaskSource = 'foreground';
-  let appliedShadowPolicy: ImageStudioCenterShadowPolicy = shadowPolicy;
+  let selectedComponent: ConnectedComponent | null;
+  let selectedSource: WhiteForegroundMaskSource;
+  let appliedShadowPolicy: ImageStudioCenterShadowPolicy;
 
   if (shadowPolicy === 'include_shadow') {
     selectedComponent = foregroundBest ?? coreBest;

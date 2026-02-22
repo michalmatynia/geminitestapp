@@ -146,7 +146,7 @@ const importSchema = z.object({
   folder: z.string().optional(),
 });
 
-export async function postImageStudioProjectAssetsImportHandler(
+export async function POST_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { projectId: string }
@@ -154,8 +154,9 @@ export async function postImageStudioProjectAssetsImportHandler(
   const projectId = sanitizeProjectId(params.projectId);
   if (!projectId) throw badRequestError('Project id is required');
 
-  const body = (await req.json().catch(() => null)) as unknown;
-  const parsed = importSchema.safeParse(body);
+  const parsed = importSchema.safeParse(
+    (await req.json().catch(() => null)) as unknown
+  );
   if (!parsed.success) {
     throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }
@@ -177,7 +178,7 @@ export async function postImageStudioProjectAssetsImportHandler(
 
   const ids = parsed.data.files.map((item) => item.id).filter(Boolean) as string[];
   let sourceById = new Map<string, ImageFileRecord>();
-  let repo: Awaited<ReturnType<typeof getImageFileRepository>> | null = null;
+  let repo: Awaited<ReturnType<typeof getImageFileRepository>> | null;
   try {
     repo = await getImageFileRepository();
     if (ids.length > 0) {

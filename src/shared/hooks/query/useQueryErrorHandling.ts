@@ -2,7 +2,7 @@
 "use client";
 
 import { useQueryClient, type UseQueryResult } from "@tanstack/react-query";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { createListQueryV2 } from "@/shared/lib/query-factories-v2";
 import { useToast } from "@/shared/ui";
 import { logClientError, isLoggableObject } from "@/shared/utils/observability/client-error-logger";
@@ -12,10 +12,16 @@ interface ErrorHandlingConfig {
   showToast?: boolean;
   logErrors?: boolean;
   retryOnError?: boolean;
+  retryDelayMs?: number;
+  maxAutoRetriesPerQuery?: number;
+  toastDedupeWindowMs?: number;
   onError?: (error: Error, queryKey: unknown[]) => void;
 }
 
 const NOISE_MESSAGES = new Set(["{}", "[]", "[object Object]"]);
+const DEFAULT_TOAST_DEDUPE_WINDOW_MS = 20_000;
+const DEFAULT_AUTO_RETRY_DELAY_MS = 5_000;
+const DEFAULT_MAX_AUTO_RETRIES_PER_QUERY = 1;
 
 const isMeaningfulMessage = (message: string): boolean => {
   const trimmed = message.trim();
@@ -90,18 +96,91 @@ const getLoggableError = (error: unknown): unknown => {
   return undefined;
 };
 
+const toQueryKeySignature = (queryKey: unknown[]): string => {
+  try {
+    return JSON.stringify(queryKey);
+  } catch {
+    return String(queryKey);
+  }
+};
+
+const pruneErrorToastSignatures = (
+  signatures: Map<string, number>,
+  nowMs: number,
+  dedupeWindowMs: number
+): void => {
+  const maxAgeMs = Math.max(dedupeWindowMs * 3, dedupeWindowMs + 1);
+  signatures.forEach((lastShownAt: number, signature: string): void => {
+    if (nowMs - lastShownAt > maxAgeMs) {
+      signatures.delete(signature);
+    }
+  });
+};
+
+export const buildQueryErrorSignature = (
+  queryKey: unknown[],
+  message: string
+): string => `${toQueryKeySignature(queryKey)}::${message.trim().toLowerCase()}`;
+
+export const shouldEmitDedupedErrorToast = (args: {
+  signature: string;
+  dedupeWindowMs: number;
+  nowMs: number;
+  lastShownAtBySignature: Map<string, number>;
+}): boolean => {
+  const {
+    signature,
+    dedupeWindowMs,
+    nowMs,
+    lastShownAtBySignature,
+  } = args;
+  const normalizedWindowMs = Math.max(0, dedupeWindowMs);
+  if (normalizedWindowMs === 0) {
+    lastShownAtBySignature.set(signature, nowMs);
+    return true;
+  }
+
+  pruneErrorToastSignatures(lastShownAtBySignature, nowMs, normalizedWindowMs);
+  const lastShownAt = lastShownAtBySignature.get(signature);
+  if (typeof lastShownAt === "number" && nowMs - lastShownAt < normalizedWindowMs) {
+    return false;
+  }
+  lastShownAtBySignature.set(signature, nowMs);
+  return true;
+};
+
 // Global error handler for queries
 export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): void {
   const queryClient = useQueryClient();
+  const errorToastSignaturesRef = useRef<Map<string, number>>(new Map());
+  const autoRetryCountByQueryRef = useRef<Map<string, number>>(new Map());
+
+  const showToast = config.showToast ?? false;
+  const logErrors = config.logErrors !== false;
+  const retryOnError = config.retryOnError ?? false;
+  const retryDelayMs = config.retryDelayMs ?? DEFAULT_AUTO_RETRY_DELAY_MS;
+  const maxAutoRetriesPerQuery =
+    config.maxAutoRetriesPerQuery ?? DEFAULT_MAX_AUTO_RETRIES_PER_QUERY;
+  const toastDedupeWindowMs =
+    config.toastDedupeWindowMs ?? DEFAULT_TOAST_DEDUPE_WINDOW_MS;
+  const onError = config.onError;
   
   // Only use toast on client side
   const toast = typeof window !== 'undefined' ? useToast().toast : null;
 
   useEffect((): (() => void) => {
     const unsubscribe = queryClient.getQueryCache().subscribe((event): void => {
-      if (event.type === 'updated' && event.query.state.status === 'error') {
+      if (event.type !== 'updated') return;
+      const queryKey = event.query.queryKey as unknown[];
+      const queryKeySignature = toQueryKeySignature(queryKey);
+
+      if (event.query.state.status === 'success') {
+        autoRetryCountByQueryRef.current.delete(queryKeySignature);
+        return;
+      }
+
+      if (event.query.state.status === 'error') {
         const error = event.query.state.error as unknown;
-        const queryKey = event.query.queryKey;
 
         if (
           !error ||
@@ -128,7 +207,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           return;
         }
         if (
-          config.logErrors !== false &&
+          logErrors &&
           shouldLogError(error) &&
           message &&
           !(isLoggableObject(error) && error.__logged)
@@ -149,33 +228,57 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
         }
 
         // Show toast notification
-        if (config.showToast && toast) {
-          toast(message, { 
-            variant: "error",
-            error: isErrorLike ? error : new Error(message)
+        if (showToast && toast) {
+          const shouldShowToast = shouldEmitDedupedErrorToast({
+            signature: buildQueryErrorSignature(queryKey, message),
+            dedupeWindowMs: toastDedupeWindowMs,
+            nowMs: Date.now(),
+            lastShownAtBySignature: errorToastSignaturesRef.current,
           });
+          if (shouldShowToast) {
+            toast(message, {
+              variant: "error",
+              error: isErrorLike ? error : new Error(message),
+            });
+          }
         }
 
         // Custom error handler
-        config.onError?.(
+        onError?.(
           error instanceof Error ? error : new Error(message),
           queryKey as unknown[]
         );
 
-        // Auto-retry on network errors
+        // Optional additional retry hook for stubborn transient network errors.
+        // React Query already retries by default; keep this capped to avoid loops.
         if (
-          config.retryOnError &&
+          retryOnError &&
           isNetworkError(error instanceof Error ? error : new Error(message))
         ) {
+          const retriesPerformed = autoRetryCountByQueryRef.current.get(queryKeySignature) ?? 0;
+          if (retriesPerformed >= Math.max(0, maxAutoRetriesPerQuery)) {
+            return;
+          }
+          autoRetryCountByQueryRef.current.set(queryKeySignature, retriesPerformed + 1);
           setTimeout((): void => {
-            void queryClient.invalidateQueries({ queryKey: queryKey as unknown[] });
-          }, 5000);
+            void queryClient.invalidateQueries({ queryKey });
+          }, Math.max(0, retryDelayMs));
         }
       }
     });
 
     return (): void => unsubscribe();
-  }, [queryClient, config, toast]);
+  }, [
+    logErrors,
+    maxAutoRetriesPerQuery,
+    onError,
+    queryClient,
+    retryDelayMs,
+    retryOnError,
+    showToast,
+    toast,
+    toastDedupeWindowMs,
+  ]);
 }
 
 // Enhanced query hook with error recovery

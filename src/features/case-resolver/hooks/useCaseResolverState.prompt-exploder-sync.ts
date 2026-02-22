@@ -676,9 +676,9 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
   }
 
   setEditingDocumentDraft((current: CaseResolverFileEditDraft | null): CaseResolverFileEditDraft | null => {
-        if (current?.id !== effectiveMutationResolvedTargetFileId) return current;
-        return buildFileEditDraft(effectiveMutationNextFile);
-      });
+    if (current?.id !== effectiveMutationResolvedTargetFileId) return current;
+    return buildFileEditDraft(effectiveMutationNextFile);
+  });
 
   const primaryProposalState = buildCaseResolverCaptureProposalState(
     payloadToApply.caseResolverParties,

@@ -45,10 +45,9 @@ Develop further robust Tanstack factories for different requests connect them to
   migrate products/image-studio/integrations hooks to v2 factories behind flags.
 
 VALIDATION
-- expand mutation-invalidation matrix QUERY KEYS. 
-- extend support for QUERY KEYS
+- expand mutation-invalidation matrix
 - improve mutation-invalidation matrix
-standardize the QUERY_KEYS hierarchy, migrate key hooks to centralized factories
+migrate key hooks to centralized factories
  Update feature hooks to use centralized query keys
 
 STATE MANAGEMENT

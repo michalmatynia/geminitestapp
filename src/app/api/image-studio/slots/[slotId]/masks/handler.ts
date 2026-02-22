@@ -220,7 +220,7 @@ async function buildServerPolygonMaskBuffer({
     .toBuffer();
 }
 
-export async function postImageStudioMasksHandler(
+export async function POST_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { slotId: string }
@@ -228,8 +228,9 @@ export async function postImageStudioMasksHandler(
   const slotId = params.slotId?.trim() ?? '';
   if (!slotId) throw badRequestError('Slot id is required');
 
-  const body = (await req.json().catch(() => null)) as unknown;
-  const parsed = payloadSchema.safeParse(body);
+  const parsed = payloadSchema.safeParse(
+    (await req.json().catch(() => null)) as unknown
+  );
   if (!parsed.success) {
     throw badRequestError('Invalid payload', { errors: parsed.error.format() });
   }
@@ -271,7 +272,7 @@ export async function postImageStudioMasksHandler(
   const results: Array<Record<string, unknown>> = [];
 
   for (const mask of parsed.data.masks) {
-    let parsedData: { buffer: Buffer; mime: string } | null = null;
+    let parsedData: { buffer: Buffer; mime: string };
     if (mode === 'client_data_url') {
       parsedData = parseDataUrl(mask.dataUrl ?? '');
       if (!parsedData) {

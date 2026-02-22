@@ -1010,10 +1010,17 @@ export function useAiPathsPersistence({
           toast(message, { variant: 'warning' });
         }
         if (!silent && compileReport.warnings > 0) {
-          toast(
-            `Graph compile warnings: ${compileReport.warnings} non-blocking issue(s) detected.`,
-            { variant: 'warning' }
+          const warningFindings = compileReport.findings.filter(
+            (finding): boolean =>
+              finding.severity === 'warning' && finding.message.trim().length > 0
           );
+          const primaryWarning = warningFindings[0]?.message?.trim() ?? null;
+          const warningMessage = primaryWarning
+            ? `Graph compile warning: ${primaryWarning}${
+              warningFindings.length > 1 ? ` (+${warningFindings.length - 1} more)` : ''
+            }`
+            : `Graph compile warnings: ${compileReport.warnings} non-blocking issue(s) detected.`;
+          toast(warningMessage, { variant: 'warning' });
         }
         const config = buildActivePathConfig(
           updatedAt,

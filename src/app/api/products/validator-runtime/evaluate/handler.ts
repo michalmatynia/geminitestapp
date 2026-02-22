@@ -624,12 +624,13 @@ const evaluateAiRuntime = async ({
   const raw = completion.choices?.[0]?.message?.content?.trim() ?? '';
   const parsed = parseAiJson(raw);
   const resultData = parsed ? { raw, parsed, ...parsed } : { raw };
-  const parsedMatch = resolveAiMatch(parsed);
-
-  let matched = false;
-  if (parsedMatch !== null) {
-    matched = parsedMatch;
-  } else {
+      const parsedMatch = resolveAiMatch(parsed);
+  
+      let matched: boolean;
+      if (parsedMatch !== null) {
+        matched = parsedMatch;
+      } else {
+  
     const resultPath = typeof config['resultPath'] === 'string' ? config['resultPath'].trim() : 'raw';
     const operator = normalizeRuntimeOperator(config['operator'] ?? 'truthy');
     const operand = config['operand'] ?? config['value'] ?? config['expected'] ?? null;
@@ -729,7 +730,7 @@ const buildRuntimeIssue = ({
   };
 };
 
-export async function postValidatorRuntimeEvaluateHandler(
+export async function POST_handler(
   _req: NextRequest,
   ctx: ApiHandlerContext
 ): Promise<Response> {
@@ -859,8 +860,6 @@ export async function postValidatorRuntimeEvaluateHandler(
         }
         issues[fieldName].push(issue);
       } catch (error) {
-        const onError =
-          typeof runtimeConfig['onError'] === 'string' ? runtimeConfig['onError'] : 'ignore';
         void ErrorSystem.logWarning('Runtime validator evaluation failed.', {
           source: 'products.validator-runtime.evaluate',
           patternId: pattern.id,
@@ -868,6 +867,8 @@ export async function postValidatorRuntimeEvaluateHandler(
           runtimeType: pattern.runtimeType,
           error,
         });
+        const onError =
+          typeof runtimeConfig['onError'] === 'string' ? runtimeConfig['onError'] : 'ignore';
         if (onError !== 'issue') continue;
         const issue = buildRuntimeIssue({
           pattern,

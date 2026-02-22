@@ -503,3 +503,25 @@ export function useReorderValidationPatternsMutation(): UpdateMutation<
     },
   });
 }
+
+export function useImportValidationPatternsMutation(): UpdateMutation<api.ImportValidationPatternsResult, api.ImportValidationPatternsPayload> {
+  const queryClient = useQueryClient();
+  const mutationKey = productSettingsKeys.validatorPatterns();
+  return createUpdateMutationV2({
+    mutationFn: (payload: api.ImportValidationPatternsPayload) =>
+      api.importValidationPatterns(payload),
+    mutationKey,
+    meta: {
+      source: 'products.hooks.useImportValidationPatternsMutation',
+      operation: 'update',
+      resource: 'products.settings.validator.patterns.import',
+      domain: 'products',
+      mutationKey,
+      tags: ['products', 'settings', 'validator', 'patterns', 'import'],
+    },
+    onSuccess: (_data, variables) => {
+      if (variables.dryRun) return;
+      void invalidateValidatorConfig(queryClient);
+    },
+  });
+}

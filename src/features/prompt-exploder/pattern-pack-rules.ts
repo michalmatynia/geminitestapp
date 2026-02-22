@@ -14,7 +14,7 @@ const PROMPT_EXPLODER_SCOPE = ['prompt_exploder'] as const;
 const CASE_RESOLVER_PROMPT_EXPLODER_SCOPE = ['case_resolver_prompt_exploder'] as const;
 
 const isCaseResolverExploderScope = (scope: string | null | undefined): boolean =>
-  scope === 'case-resolver-prompt-exploder' || scope === 'case_resolver_prompt_exploder';
+  scope === 'case_resolver_prompt_exploder';
 
 const normalizeRuleScopes = (
   scopes: readonly PromptValidationScope[] | null | undefined,

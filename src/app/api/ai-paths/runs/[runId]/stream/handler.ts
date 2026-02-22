@@ -144,7 +144,7 @@ async function streamWithPubSub(
 ): Promise<void> {
   const sub = getRedisSubscriber();
   if (!sub || !isSubscriberConnected()) {
-    await streamWithPolling(runId, controller, send, initialCursors, isCancelled);
+    await streamWithPolling(runId, send, initialCursors, isCancelled);
     return;
   }
 
@@ -152,7 +152,7 @@ async function streamWithPubSub(
   let done = false;
   let subscriberDisconnected = false;
   let lastActivityMs = Date.now();
-  let lastCatchUpMs = Date.now();
+  let lastCatchUpMs: number;
   let cursors = { ...initialCursors };
 
   const messageHandler = (_ch: string, rawMessage: string): void => {
@@ -206,7 +206,7 @@ async function streamWithPubSub(
         } catch {
           // Already disconnected
         }
-        await streamWithPolling(runId, controller, send, cursors, isCancelled);
+        await streamWithPolling(runId, send, cursors, isCancelled);
         return;
       }
 
@@ -259,7 +259,6 @@ async function streamWithPubSub(
  */
 async function streamWithPolling(
   runId: string,
-  _controller: ReadableStreamDefaultController,
   send: (event: string, data: unknown) => void,
   initialCursors: {
     lastRunUpdatedAt: string | null;

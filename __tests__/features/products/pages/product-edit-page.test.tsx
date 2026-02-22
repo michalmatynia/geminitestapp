@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
@@ -95,17 +95,17 @@ describe('EditProductForm', () => {
     // Wait for the form to load
     await screen.findByText('Edit Product');
 
-                                        // Click on the 'Other' tab
-                                        const otherTab = screen.getByRole('tab', { name: /Other/i });
-                                        await user.click(otherTab);
+    // Click on the 'Other' tab
+    const otherTab = screen.getByRole('tab', { name: /Other/i });
+    await user.click(otherTab);
                                   
-                                        // Check for Base Price input
-                                        await screen.findByText(/Base Price/i);
-                                        const priceInput = screen.getByLabelText(/Base Price/i);
-                                        expect(priceInput).toHaveValue(100);
+    // Check for Base Price input
+    await screen.findByText(/Base Price/i);
+    const priceInput = screen.getByLabelText(/Base Price/i);
+    expect(priceInput).toHaveValue(100);
                                   
                             
-                                  });
+  });
 
   it('renders other tabs navigation', async () => {
     renderWithProviders(<EditProductPage product={mockProduct} />);

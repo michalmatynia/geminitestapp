@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "domain": "validator.import",
+  "description": "Semantic option catalog for validator import payloads.",
+  "scopes": [
+    {
+      "code": "validator.scope.products",
+      "value": "products",
+      "label": "Product Patterns",
+      "description": "Product form validator patterns and sequences."
+    },
+    {
+      "code": "validator.scope.image_studio",
+      "value": "image-studio",
+      "label": "Image Studio Patterns",
+      "description": "Image Studio validator patterns."
+    },
+    {
+      "code": "validator.scope.prompt_exploder",
+      "value": "prompt-exploder",
+      "label": "Prompt Exploder",
+      "description": "Prompt Exploder validation patterns."
+    },
+    {
+      "code": "validator.scope.case_resolver_prompt_exploder",
+      "value": "case-resolver-prompt-exploder",
+      "label": "Case Resolver Prompt Exploder",
+      "description": "Case Resolver Prompt Exploder validation patterns."
+    }
+  ],
+  "modes": [
+    {
+      "code": "validator.import.mode.append",
+      "value": "append",
+      "label": "Append",
+      "description": "Create new patterns only."
+    },
+    {
+      "code": "validator.import.mode.upsert",
+      "value": "upsert",
+      "label": "Upsert",
+      "description": "Create new patterns and update matching existing patterns."
+    },
+    {
+      "code": "validator.import.mode.replace_scope",
+      "value": "replace_scope",
+      "label": "Replace Scope",
+      "description": "Create/update imported patterns and delete non-imported patterns in scope."
+    }
+  ],
+  "patternActions": [
+    {
+      "code": "validator.import.action.create",
+      "value": "create",
+      "description": "Pattern will be created."
+    },
+    {
+      "code": "validator.import.action.update",
+      "value": "update",
+      "description": "Pattern will be updated."
+    },
+    {
+      "code": "validator.import.action.delete",
+      "value": "delete",
+      "description": "Pattern will be removed."
+    },
+    {
+      "code": "validator.import.action.skip",
+      "value": "skip",
+      "description": "Pattern remains unchanged."
+    }
+  ],
+  "sequenceTypes": [
+    {
+      "code": "validator.sequence.type.group",
+      "value": "group",
+      "description": "Ordered sequence group mapped to sequenceGroup fields."
+    }
+  ]
+}

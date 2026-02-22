@@ -76,7 +76,8 @@ function QueryProviderInner({ children }: QueryProviderProps): React.JSX.Element
   useGlobalQueryErrorHandler({
     showToast: true,
     logErrors: false,
-    retryOnError: true,
+    retryOnError: false,
+    toastDedupeWindowMs: 20000,
   });
 
   useQueryPersistence({

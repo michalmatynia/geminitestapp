@@ -163,17 +163,17 @@ const stripHtml = (value: string): string =>
 const normalizeIdentifierTerm = (value: string): string =>
   value.trim().toLowerCase();
 
-  const buildCaseIdentifierOption = (
-    identifier: CaseResolverIdentifier,
-    identifierPathById: Map<string, string>,
-  ): CaseIdentifierSelectorOption => {
-    const label = identifierPathById.get(identifier.id) ?? identifier.name ?? identifier.value;
-    return {
-      id: identifier.id,
-      label,
-      searchableLabel: `${identifier.name ?? ''} ${label}`.toLowerCase(),
-    };
+const buildCaseIdentifierOption = (
+  identifier: CaseResolverIdentifier,
+  identifierPathById: Map<string, string>,
+): CaseIdentifierSelectorOption => {
+  const label = identifierPathById.get(identifier.id) ?? identifier.name ?? identifier.value;
+  return {
+    id: identifier.id,
+    label,
+    searchableLabel: `${identifier.name ?? ''} ${label}`.toLowerCase(),
   };
+};
 function CaseIdentifierTextSelector({
   value,
   identifiers,
@@ -1089,7 +1089,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
     () =>
       (left: CaseResolverFile, right: CaseResolverFile): number => {
         const factor = caseSortOrder === 'asc' ? 1 : -1;
-        let delta = 0;
+        let delta: number;
         if (caseSortBy === 'name') {
           delta = left.name.localeCompare(right.name);
         } else if (caseSortBy === 'created') {
@@ -2354,25 +2354,25 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   );
 
   const handleViewCase = useCallback(
-    async (fileId: string): Promise<void> => {
+    (fileId: string): void => {
       const isLocallyAvailable = workspace.files.some(
         (file: CaseResolverFile): boolean =>
           file.id === fileId && file.fileType === 'case',
       );
-      const isSynced = await waitForCaseAvailability(fileId, {
-        source: 'cases_page_view_prepare',
-        maxAttempts: isLocallyAvailable ? 6 : CASE_RESOLVER_CASE_READY_MAX_ATTEMPTS,
-        intervalMs: CASE_RESOLVER_CASE_READY_INTERVAL_MS,
-      });
-      if (!isSynced && !isLocallyAvailable) {
-        toast('Case is still synchronizing. Please try again in a moment.', {
-          variant: 'warning',
+
+      if (!isLocallyAvailable) {
+        // Don't block navigation on sync polling; the destination page can
+        // reconcile missing files while the user already sees the workspace.
+        void waitForCaseAvailability(fileId, {
+          source: 'cases_page_view_prepare',
+          maxAttempts: 3,
+          intervalMs: CASE_RESOLVER_CASE_READY_INTERVAL_MS,
         });
-        return;
       }
+
       router.push(`/admin/case-resolver?fileId=${encodeURIComponent(fileId)}`);
     },
-    [router, toast, waitForCaseAvailability, workspace.files],
+    [router, waitForCaseAvailability, workspace.files],
   );
 
   const handleCopyCaseId = useCallback(
@@ -2668,7 +2668,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         variant='outline'
                         className='h-8 px-2'
                         onClick={(): void => {
-                          void handleViewCase(file.id);
+                          handleViewCase(file.id);
                         }}
                       >
                         <Eye className='mr-1.5 size-3.5' />

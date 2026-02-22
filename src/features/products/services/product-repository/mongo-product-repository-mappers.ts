@@ -185,7 +185,7 @@ const normalizeProducerRelations = (
       fallbackProductId;
 
     const rawAssignedAt = record['assignedAt'] ?? record['assigned_at'];
-    let assignedAt = fallbackAssignedAt;
+    let assignedAt: string;
     if (
       rawAssignedAt &&
       typeof rawAssignedAt === 'object' &&
@@ -236,7 +236,7 @@ const normalizeTagRelations = (
       fallbackProductId;
 
     const rawAssignedAt = record['assignedAt'] ?? record['assigned_at'];
-    let assignedAt = fallbackAssignedAt;
+    let assignedAt: string;
     if (
       rawAssignedAt &&
       typeof rawAssignedAt === 'object' &&

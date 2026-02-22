@@ -1023,6 +1023,7 @@ export const aiPathNodeStatusSchema = z.enum([
   'queued',
   'running',
   'completed',
+  'cached',
   'failed',
   'canceled',
   'skipped',

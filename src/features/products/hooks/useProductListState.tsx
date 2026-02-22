@@ -71,6 +71,9 @@ const PRODUCT_EDITOR_QUERY_KEYS = [
   'studioProjectId',
   'studioSourceSlotId',
 ] as const;
+const PRODUCT_DETAIL_TIMEOUT_MS = 60_000;
+const PRODUCT_CATEGORY_BATCH_TIMEOUT_MS = 60_000;
+const DRAFT_DETAIL_TIMEOUT_MS = 30_000;
 
 export function useProductListState(): ProductListContextType & {
   isDebugOpen: boolean;
@@ -234,7 +237,10 @@ export function useProductListState(): ProductListContextType & {
       if (categoryLookupCatalogIds.length === 0) return Promise.resolve({});
       return api.get<Record<string, ProductCategory[]>>(
         `/api/products/categories/batch?catalogIds=${categoryLookupCatalogIds.map(encodeURIComponent).join(',')}`,
-        { signal }
+        {
+          signal,
+          timeout: PRODUCT_CATEGORY_BATCH_TIMEOUT_MS,
+        }
       );
     },
     staleTime: 5 * 60 * 1_000,
@@ -300,7 +306,9 @@ export function useProductListState(): ProductListContextType & {
         ? QUERY_KEYS.products.detail(id)
         : [...QUERY_KEYS.products.details(), 'inactive'],
     queryFn: () =>
-      api.get<ProductWithImages>(`/api/products/${editingProduct?.id}`),
+      api.get<ProductWithImages>(`/api/products/${editingProduct?.id}`, {
+        timeout: PRODUCT_DETAIL_TIMEOUT_MS,
+      }),
     staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
     refetchOnMount: false,
     refetchInterval: false,
@@ -372,6 +380,7 @@ export function useProductListState(): ProductListContextType & {
             signal,
             cache: 'no-store',
             logError: false,
+            timeout: PRODUCT_DETAIL_TIMEOUT_MS,
           }),
         staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
       })
@@ -409,6 +418,7 @@ export function useProductListState(): ProductListContextType & {
             signal,
             cache: 'no-store',
             logError: false,
+            timeout: PRODUCT_DETAIL_TIMEOUT_MS,
           }),
         staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
       })
@@ -526,7 +536,10 @@ export function useProductListState(): ProductListContextType & {
       try {
         const draft = await queryClient.fetchQuery({
           queryKey: normalizeQueryKey(draftKeys.detail(draftId)),
-          queryFn: () => api.get<ProductDraftDto>(`/api/drafts/${draftId}`)
+          queryFn: () =>
+            api.get<ProductDraftDto>(`/api/drafts/${draftId}`, {
+              timeout: DRAFT_DETAIL_TIMEOUT_MS,
+            }),
         });
         setCreateDraft(draft);
         handleOpenCreateFromDraft(draft);

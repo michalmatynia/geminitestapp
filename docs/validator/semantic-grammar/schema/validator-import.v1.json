@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "validator-import.v1",
+  "title": "Validator Import Payload",
+  "description": "Copy-paste payload for creating/updating product validator patterns and sequence groups.",
+  "type": "object",
+  "required": [
+    "version",
+    "scope",
+    "mode",
+    "patterns"
+  ],
+  "properties": {
+    "version": {
+      "const": 1,
+      "description": "Schema version."
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "products",
+        "image-studio",
+        "prompt-exploder",
+        "case-resolver-prompt-exploder"
+      ],
+      "description": "Validator scope targeted by the import endpoint."
+    },
+    "mode": {
+      "type": "string",
+      "enum": [
+        "append",
+        "upsert",
+        "replace_scope"
+      ],
+      "description": "append=create only, upsert=create/update, replace_scope=create/update/delete missing."
+    },
+    "dryRun": {
+      "type": "boolean",
+      "description": "If true, validates and previews operations without writing changes."
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string" }
+      }
+    },
+    "patterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/productPattern"
+      }
+    },
+    "sequences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/sequence"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "semanticCode": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9._:-]+$",
+      "minLength": 1
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "draft_template",
+        "product_create",
+        "product_edit"
+      ]
+    },
+    "productPattern": {
+      "type": "object",
+      "required": [
+        "code",
+        "label",
+        "target",
+        "regex",
+        "message"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "$ref": "#/$defs/semanticCode" },
+        "label": { "type": "string", "minLength": 1 },
+        "target": {
+          "type": "string",
+          "enum": [
+            "name",
+            "description",
+            "sku",
+            "price",
+            "stock",
+            "category",
+            "size_length",
+            "size_width",
+            "length",
+            "weight"
+          ]
+        },
+        "locale": { "type": ["string", "null"] },
+        "regex": { "type": "string", "minLength": 1 },
+        "flags": { "type": ["string", "null"] },
+        "message": { "type": "string", "minLength": 1 },
+        "severity": { "type": "string", "enum": ["error", "warning"] },
+        "enabled": { "type": "boolean" },
+        "replacementEnabled": { "type": "boolean" },
+        "replacementAutoApply": { "type": "boolean" },
+        "skipNoopReplacementProposal": { "type": "boolean" },
+        "replacementValue": { "type": ["string", "null"] },
+        "replacementFields": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "replacementAppliesToScopes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/scope" }
+        },
+        "runtimeEnabled": { "type": "boolean" },
+        "runtimeType": {
+          "type": "string",
+          "enum": ["none", "database_query", "ai_prompt"]
+        },
+        "runtimeConfig": { "type": ["string", "null"] },
+        "postAcceptBehavior": {
+          "type": "string",
+          "enum": ["revalidate", "stop_after_accept"]
+        },
+        "denyBehaviorOverride": {
+          "type": ["string", "null"],
+          "enum": ["ask_again", "mute_session", null]
+        },
+        "validationDebounceMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30000
+        },
+        "sequenceGroupId": { "type": ["string", "null"] },
+        "sequenceGroupLabel": { "type": ["string", "null"] },
+        "sequenceGroupDebounceMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30000
+        },
+        "sequence": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "chainMode": {
+          "type": "string",
+          "enum": ["continue", "stop_on_match", "stop_on_replace"]
+        },
+        "maxExecutions": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
+        "passOutputToNext": { "type": "boolean" },
+        "launchEnabled": { "type": "boolean" },
+        "launchAppliesToScopes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/scope" }
+        },
+        "launchScopeBehavior": {
+          "type": "string",
+          "enum": ["gate", "condition_only"]
+        },
+        "launchSourceMode": {
+          "type": "string",
+          "enum": ["current_field", "form_field", "latest_product_field"]
+        },
+        "launchSourceField": { "type": ["string", "null"] },
+        "launchOperator": {
+          "type": "string",
+          "enum": [
+            "equals",
+            "not_equals",
+            "contains",
+            "starts_with",
+            "ends_with",
+            "regex",
+            "gt",
+            "gte",
+            "lt",
+            "lte",
+            "is_empty",
+            "is_not_empty"
+          ]
+        },
+        "launchValue": { "type": ["string", "null"] },
+        "launchFlags": { "type": ["string", "null"] },
+        "appliesToScopes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/scope" }
+        },
+        "sequenceCode": { "$ref": "#/$defs/semanticCode" },
+        "sequenceOrder": {
+          "type": ["integer", "null"],
+          "minimum": 0
+        },
+        "sequenceLabel": { "type": ["string", "null"] },
+        "sequenceDebounceMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30000
+        }
+      }
+    },
+    "sequence": {
+      "type": "object",
+      "required": [
+        "code",
+        "label",
+        "steps"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "code": { "$ref": "#/$defs/semanticCode" },
+        "label": { "type": "string", "minLength": 1 },
+        "debounceMs": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 30000,
+          "default": 0
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["patternCode", "order"],
+            "additionalProperties": false,
+            "properties": {
+              "patternCode": { "$ref": "#/$defs/semanticCode" },
+              "order": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

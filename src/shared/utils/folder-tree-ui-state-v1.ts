@@ -77,7 +77,7 @@ export const parseFolderTreeUiStateV1 = (
   const defaults = createDefaultFolderTreeUiStateV1();
   if (!raw) return defaults;
 
-  let parsedJson: unknown = null;
+  let parsedJson: unknown;
   try {
     parsedJson = JSON.parse(raw);
   } catch {

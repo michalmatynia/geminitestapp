@@ -3,8 +3,8 @@ import { NextRequest } from 'next/server';
 import { vi, beforeEach, afterAll, describe, it, expect } from 'vitest';
 
 // Mock Prisma client
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
+vi.mock('@/shared/lib/db/prisma', () => {
+  const mockClient = {
     product: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -59,8 +59,15 @@ vi.mock('@/shared/lib/db/prisma', () => ({
       create: vi.fn().mockResolvedValue({}),
     },
     $disconnect: vi.fn(),
-  },
-}));
+    $transaction: vi.fn().mockImplementation(async (callback: unknown) => {
+      if (typeof callback === 'function') {
+        return (callback as (tx: unknown) => Promise<unknown>)(mockClient);
+      }
+      return null;
+    }),
+  };
+  return { default: mockClient };
+});
 
 import { POST as POST_DUPLICATE } from '@/app/api/products/[id]/duplicate/route';
 import { PUT, DELETE } from '@/app/api/products/[id]/route';

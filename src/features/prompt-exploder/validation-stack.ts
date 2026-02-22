@@ -57,8 +57,8 @@ const toRuntimeScope = (
   validatorScope: ValidatorScope
 ): PromptExploderRuntimeValidationScope =>
   validatorScope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE
-    ? 'case-resolver-prompt-exploder'
-    : 'prompt-exploder';
+    ? 'case_resolver_prompt_exploder'
+    : 'prompt_exploder';
 
 const findFirstListByScope = (
   patternLists: ValidatorPatternList[],
@@ -101,7 +101,7 @@ const resolveStackByScope = (
   if (scope === CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE) {
     return {
       stack: 'case-resolver-prompt-exploder',
-      scope: 'case-resolver-prompt-exploder',
+      scope: 'case_resolver_prompt_exploder',
       validatorScope: CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
       list: null,
       usedFallback: true,
@@ -110,7 +110,7 @@ const resolveStackByScope = (
   }
   return {
     stack: DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
-    scope: 'prompt-exploder',
+    scope: 'prompt_exploder',
     validatorScope: PROMPT_EXPLODER_VALIDATOR_SCOPE,
     list: null,
     usedFallback: true,

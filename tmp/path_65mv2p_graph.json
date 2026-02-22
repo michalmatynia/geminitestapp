@@ -1,0 +1,241 @@
+{
+  "pathId": "path_65mv2p",
+  "name": "Description & Name",
+  "nodeCount": 11,
+  "edgeCount": 16,
+  "nodes": [
+    {
+      "id": "node-jprmv8",
+      "title": "Context Filter",
+      "type": "context"
+    },
+    {
+      "id": "node-2t655s",
+      "title": "JSON Parser",
+      "type": "parser"
+    },
+    {
+      "id": "node-07ywfx",
+      "title": "Prompt",
+      "type": "prompt"
+    },
+    {
+      "id": "node-05y44u",
+      "title": "Model",
+      "type": "model"
+    },
+    {
+      "id": "node-nohy8q",
+      "title": "Database Query",
+      "type": "database"
+    },
+    {
+      "id": "node-bq516q",
+      "title": "Prompt",
+      "type": "prompt"
+    },
+    {
+      "id": "node-gfrhnz",
+      "title": "Model",
+      "type": "model"
+    },
+    {
+      "id": "node-ozsf40xo",
+      "title": "Prompt",
+      "type": "prompt"
+    },
+    {
+      "id": "node-o8fdnje9",
+      "title": "Model",
+      "type": "model"
+    },
+    {
+      "id": "node-nx558jai",
+      "title": "Trigger: Opis i Tytuł",
+      "type": "trigger"
+    },
+    {
+      "id": "node-utsyoiti",
+      "title": "Simulation: Entity Modal",
+      "type": "simulation"
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge-t0hqww",
+      "from": "node-jprmv8",
+      "fromTitle": "Context Filter",
+      "fromType": "context",
+      "fromPort": "context",
+      "to": "node-2t655s",
+      "toTitle": "JSON Parser",
+      "toType": "parser",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-7lgmwa",
+      "from": "node-07ywfx",
+      "fromTitle": "Prompt",
+      "fromType": "prompt",
+      "fromPort": "prompt",
+      "to": "node-05y44u",
+      "toTitle": "Model",
+      "toType": "model",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-pw3cx8",
+      "from": "node-07ywfx",
+      "fromTitle": "Prompt",
+      "fromType": "prompt",
+      "fromPort": "images",
+      "to": "node-05y44u",
+      "toTitle": "Model",
+      "toType": "model",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-5u4nl9",
+      "from": "node-05y44u",
+      "fromTitle": "Model",
+      "fromType": "model",
+      "fromPort": "result",
+      "to": "node-bq516q",
+      "toTitle": "Prompt",
+      "toType": "prompt",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-bsgrde",
+      "from": "node-bq516q",
+      "fromTitle": "Prompt",
+      "fromType": "prompt",
+      "fromPort": "prompt",
+      "to": "node-gfrhnz",
+      "toTitle": "Model",
+      "toType": "model",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-812b7n",
+      "from": "node-gfrhnz",
+      "fromTitle": "Model",
+      "fromType": "model",
+      "fromPort": "result",
+      "to": "node-nohy8q",
+      "toTitle": "Database Query",
+      "toType": "database",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-przsyh",
+      "from": "node-ozsf40xo",
+      "fromTitle": "Prompt",
+      "fromType": "prompt",
+      "fromPort": "prompt",
+      "to": "node-o8fdnje9",
+      "toTitle": "Model",
+      "toType": "model",
+      "toPort": "prompt"
+    },
+    {
+      "id": "edge-76260h",
+      "from": "node-o8fdnje9",
+      "fromTitle": "Model",
+      "fromType": "model",
+      "fromPort": "result",
+      "to": "node-nohy8q",
+      "toTitle": "Database Query",
+      "toType": "database",
+      "toPort": "value"
+    },
+    {
+      "id": "edge-ltw3q3",
+      "from": "node-2t655s",
+      "fromTitle": "JSON Parser",
+      "fromType": "parser",
+      "fromPort": "bundle",
+      "to": "node-ozsf40xo",
+      "toTitle": "Prompt",
+      "toType": "prompt",
+      "toPort": "bundle"
+    },
+    {
+      "id": "edge-1um62a",
+      "from": "node-2t655s",
+      "fromTitle": "JSON Parser",
+      "fromType": "parser",
+      "fromPort": "images",
+      "to": "node-ozsf40xo",
+      "toTitle": "Prompt",
+      "toType": "prompt",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-bigp2y",
+      "from": "node-ozsf40xo",
+      "fromTitle": "Prompt",
+      "fromType": "prompt",
+      "fromPort": "images",
+      "to": "node-07ywfx",
+      "toTitle": "Prompt",
+      "toType": "prompt",
+      "toPort": "images"
+    },
+    {
+      "id": "edge-ww0pdj",
+      "from": "node-o8fdnje9",
+      "fromTitle": "Model",
+      "fromType": "model",
+      "fromPort": "result",
+      "to": "node-07ywfx",
+      "toTitle": "Prompt",
+      "toType": "prompt",
+      "toPort": "result"
+    },
+    {
+      "id": "edge-tphe6r",
+      "from": "node-nx558jai",
+      "fromTitle": "Trigger: Opis i Tytuł",
+      "fromType": "trigger",
+      "fromPort": "entityId",
+      "to": "node-nohy8q",
+      "toTitle": "Database Query",
+      "toType": "database",
+      "toPort": "entityId"
+    },
+    {
+      "id": "edge-zm108p",
+      "from": "node-nx558jai",
+      "fromTitle": "Trigger: Opis i Tytuł",
+      "fromType": "trigger",
+      "fromPort": "context",
+      "to": "node-jprmv8",
+      "toTitle": "Context Filter",
+      "toType": "context",
+      "toPort": "context"
+    },
+    {
+      "id": "edge-cvk0xc",
+      "from": "node-nx558jai",
+      "fromTitle": "Trigger: Opis i Tytuł",
+      "fromType": "trigger",
+      "fromPort": "trigger",
+      "to": "node-utsyoiti",
+      "toTitle": "Simulation: Entity Modal",
+      "toType": "simulation",
+      "toPort": "trigger"
+    },
+    {
+      "id": "edge-xyr0l9",
+      "from": "node-utsyoiti",
+      "fromTitle": "Simulation: Entity Modal",
+      "fromType": "simulation",
+      "fromPort": "context",
+      "to": "node-nx558jai",
+      "toTitle": "Trigger: Opis i Tytuł",
+      "toType": "trigger",
+      "toPort": "context"
+    }
+  ]
+}

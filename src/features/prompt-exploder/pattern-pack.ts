@@ -26,7 +26,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK_IDS = new Set(
 );
 
 const isCaseResolverExploderScope = (scope: string | null | undefined): boolean =>
-  scope === 'case-resolver-prompt-exploder' || scope === 'case_resolver_prompt_exploder';
+  scope === 'case_resolver_prompt_exploder';
 
 export function ensurePromptExploderPatternPack(
   settings: PromptEngineSettings,
@@ -165,8 +165,10 @@ export function ensurePromptExploderPatternPack(
 
 export function getPromptExploderScopedRules(
   settings: PromptEngineSettings,
-  scope: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder' = 'prompt-exploder'
+  scope: PromptExploderRuntimeValidationScope | 'case_resolver_prompt_exploder' = 'prompt_exploder',
+  options?: { includePatternPack?: boolean }
 ): PromptValidationRule[] {
+  const includePatternPack = options?.includePatternPack ?? true;
   const mergedRules = [
     ...settings.promptValidation.rules,
     ...(settings.promptValidation.learnedRules ?? []),
@@ -185,22 +187,25 @@ export function getPromptExploderScopedRules(
     );
   });
   const nextRules = [...scopedRules];
-  const existingRuleIds = new Set(nextRules.map((rule) => rule.id));
 
-  PROMPT_EXPLODER_PATTERN_PACK
-    .filter((rule) => includesScope(rule.appliesToScopes, scope))
-    .forEach((rule) => {
-      if (existingRuleIds.has(rule.id)) return;
-      nextRules.push({
-        ...rule,
-        appliesToScopes: remapExploderScopesForTarget(rule.appliesToScopes, scope),
-        launchAppliesToScopes: remapExploderScopesForTarget(
-          rule.launchAppliesToScopes,
-          scope
-        ),
+  if (includePatternPack) {
+    const existingRuleIds = new Set(nextRules.map((rule) => rule.id));
+
+    PROMPT_EXPLODER_PATTERN_PACK
+      .filter((rule) => includesScope(rule.appliesToScopes, scope))
+      .forEach((rule) => {
+        if (existingRuleIds.has(rule.id)) return;
+        nextRules.push({
+          ...rule,
+          appliesToScopes: remapExploderScopesForTarget(rule.appliesToScopes, scope),
+          launchAppliesToScopes: remapExploderScopesForTarget(
+            rule.launchAppliesToScopes,
+            scope
+          ),
+        });
+        existingRuleIds.add(rule.id);
       });
-      existingRuleIds.add(rule.id);
-    });
+  }
 
   return nextRules;
 }

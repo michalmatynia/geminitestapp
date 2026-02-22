@@ -170,20 +170,20 @@ const buildCaseResolverFileComparableSnapshot = (
 ): CaseResolverComparableDocumentSnapshot => ({
   id: file.id,
   name: file.name,
-      folder: file.folder,
-      parentCaseId: file.parentCaseId ?? null,
-      referenceCaseIds: normalizeComparableReferenceCaseIds(file.referenceCaseIds),
-      documentDate: file.documentDate,
-      documentCity:
+  folder: file.folder,
+  parentCaseId: file.parentCaseId ?? null,
+  referenceCaseIds: normalizeComparableReferenceCaseIds(file.referenceCaseIds),
+  documentDate: file.documentDate,
+  documentCity:
         typeof (file as { documentCity?: unknown }).documentCity === 'string'
           ? (file as { documentCity?: string }).documentCity?.trim() || null
           : null,
-      tagId: file.tagId ?? null,
-          caseIdentifierId: file.caseIdentifierId ?? null,
-          categoryId: file.categoryId ?? null,
-          scanOcrModel: file.scanOcrModel ?? '',
-          scanOcrPrompt: file.scanOcrPrompt ?? '',
-          addresser: file.addresser,  addressee: file.addressee,
+  tagId: file.tagId ?? null,
+  caseIdentifierId: file.caseIdentifierId ?? null,
+  categoryId: file.categoryId ?? null,
+  scanOcrModel: file.scanOcrModel ?? '',
+  scanOcrPrompt: file.scanOcrPrompt ?? '',
+  addresser: file.addresser,  addressee: file.addressee,
   activeDocumentVersion: file.activeDocumentVersion,
   editorType: file.editorType,
   documentContentFormatVersion: 1,
@@ -191,27 +191,27 @@ const buildCaseResolverFileComparableSnapshot = (
   documentContentMarkdown: file.documentContentMarkdown,
   documentContentHtml: file.documentContentHtml,
   documentContentPlainText: file.documentContentPlainText,
-      documentConversionWarnings: normalizeComparableWarnings(file.documentConversionWarnings),
-      originalDocumentContent: file.originalDocumentContent ?? '',
-      explodedDocumentContent: file.explodedDocumentContent ?? '',
-    });
+  documentConversionWarnings: normalizeComparableWarnings(file.documentConversionWarnings),
+  originalDocumentContent: file.originalDocumentContent ?? '',
+  explodedDocumentContent: file.explodedDocumentContent ?? '',
+});
 const buildCaseResolverDraftComparableSnapshot = (
   draft: CaseResolverFileEditDraft,
   canonicalState: CaseResolverDraftCanonicalState
 ): CaseResolverComparableDocumentSnapshot => ({
   id: draft.id,
   name: draft.name,
-      folder: draft.folder,
-      parentCaseId: draft.parentCaseId ?? null,
-      referenceCaseIds: normalizeComparableReferenceCaseIds(draft.referenceCaseIds),
-      documentDate: draft.documentDate,
-      documentCity: typeof draft.documentCity === 'string' ? draft.documentCity.trim() || null : null,
-      tagId: draft.tagId ?? null,
-          caseIdentifierId: draft.caseIdentifierId ?? null,
-          categoryId: draft.categoryId ?? null,
-          scanOcrModel: draft.scanOcrModel ?? '',
-          scanOcrPrompt: draft.scanOcrPrompt ?? '',
-          addresser: draft.addresser,  addressee: draft.addressee,
+  folder: draft.folder,
+  parentCaseId: draft.parentCaseId ?? null,
+  referenceCaseIds: normalizeComparableReferenceCaseIds(draft.referenceCaseIds),
+  documentDate: draft.documentDate,
+  documentCity: typeof draft.documentCity === 'string' ? draft.documentCity.trim() || null : null,
+  tagId: draft.tagId ?? null,
+  caseIdentifierId: draft.caseIdentifierId ?? null,
+  categoryId: draft.categoryId ?? null,
+  scanOcrModel: draft.scanOcrModel ?? '',
+  scanOcrPrompt: draft.scanOcrPrompt ?? '',
+  addresser: draft.addresser,  addressee: draft.addressee,
   activeDocumentVersion: draft.activeDocumentVersion,
   editorType: canonicalState.mode,
   documentContentFormatVersion: 1,
@@ -219,10 +219,10 @@ const buildCaseResolverDraftComparableSnapshot = (
   documentContentMarkdown: canonicalState.markdown,
   documentContentHtml: canonicalState.html,
   documentContentPlainText: canonicalState.plainText,
-      documentConversionWarnings: normalizeComparableWarnings(canonicalState.warnings),
-      originalDocumentContent: canonicalState.originalDocumentContent ?? '',
-      explodedDocumentContent: canonicalState.explodedDocumentContent ?? '',
-    });
+  documentConversionWarnings: normalizeComparableWarnings(canonicalState.warnings),
+  originalDocumentContent: canonicalState.originalDocumentContent ?? '',
+  explodedDocumentContent: canonicalState.explodedDocumentContent ?? '',
+});
 export const buildCaseResolverFileComparableFingerprint = (
   file: CaseResolverFile
 ): string => stableStringify(buildCaseResolverFileComparableSnapshot(file));
@@ -518,11 +518,11 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
       ) {
         return current;
       }
-              const rebasedBase = nextSnapshot;
-              const rebasedDraft = buildFileEditDraft(rebasedBase);
-              return {
-                ...rebasedDraft,
-              };    });
+      const rebasedBase = nextSnapshot;
+      const rebasedDraft = buildFileEditDraft(rebasedBase);
+      return {
+        ...rebasedDraft,
+      };    });
   }
 
   if (!fileFound) {

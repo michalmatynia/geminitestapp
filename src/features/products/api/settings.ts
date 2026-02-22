@@ -4,6 +4,10 @@ import type {
   ProductValidatorConfig,
   ProductValidatorSettings,
 } from '@/shared/contracts/products';
+import type {
+  ProductValidatorImportRequestDto,
+  ProductValidatorImportResultDto,
+} from '@/shared/contracts/validator-import';
 import { 
   Catalog, 
   CatalogRecord,
@@ -200,6 +204,18 @@ export async function reorderValidationPatterns(payload: {
 }): Promise<{ updated: ProductValidationPattern[] }> {
   return api.post<{ updated: ProductValidationPattern[] }>(
     '/api/products/validator-patterns/reorder',
+    payload
+  );
+}
+
+export type ImportValidationPatternsPayload = ProductValidatorImportRequestDto;
+export type ImportValidationPatternsResult = ProductValidatorImportResultDto;
+
+export async function importValidationPatterns(
+  payload: ImportValidationPatternsPayload
+): Promise<ImportValidationPatternsResult> {
+  return api.post<ImportValidationPatternsResult>(
+    '/api/products/validator-patterns/import',
     payload
   );
 }

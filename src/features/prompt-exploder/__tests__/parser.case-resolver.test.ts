@@ -378,6 +378,42 @@ Na podstawie obowiązujących przepisów informuję, że z dniem [dd.mm.2026] za
     expect(closingSegment?.title).toBe('');
   });
 
+  it('keeps WSA party line titles empty for addresser and addressee rows', () => {
+    const prompt = [
+      'Strona w postępowaniu przed WSA: Michał Matynia, ul. Fioletowa 71/2, 70-781 Szczecin',
+      '',
+      'Organ w postępowaniu przed WSA: Zakład Ubezpieczeń Społecznych Oddział w Szczecinie, ul. Matejki 22, 70-530 Szczecin',
+      '',
+      'Dotyczy: skarga na decyzję ZUS',
+    ].join('\n');
+
+    const rules = getPromptExploderScopedRules(
+      defaultPromptEngineSettings,
+      'case_resolver_prompt_exploder'
+    );
+    const document = explodePromptText({
+      prompt,
+      validationRules: rules,
+      validationScope: 'case_resolver_prompt_exploder',
+    });
+
+    const addresserSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes(
+        'Strona w postępowaniu przed WSA: Michał Matynia'
+      )
+    );
+    const addresseeSegment = document.segments.find((segment) =>
+      (segment.raw || segment.text).includes(
+        'Organ w postępowaniu przed WSA: Zakład Ubezpieczeń Społecznych'
+      )
+    );
+
+    expect(addresserSegment).toBeDefined();
+    expect(addresseeSegment).toBeDefined();
+    expect(addresserSegment?.title).toBe('');
+    expect(addresseeSegment?.title).toBe('');
+  });
+
   it('splits a full real-world ZUS letter into multiple case-resolver segments', () => {
     const prompt = `Szczecin 25.01.2026
 

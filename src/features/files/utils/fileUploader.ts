@@ -13,6 +13,7 @@ import {
 } from '@/features/files/services/storage/file-storage-service';
 import { noteService } from '@/features/notesapp/server';
 import { ErrorSystem } from '@/features/observability/server';
+import type { ProductDbProvider } from '@/features/products/services/product-provider';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { NoteFileRecord } from '@/shared/contracts/notes';
 
@@ -165,6 +166,7 @@ export async function uploadFile(
     folder?: string | null | undefined;
     allowOrphanRecord?: boolean | undefined;
     filenameOverride?: string | null | undefined;
+    provider?: ProductDbProvider | undefined;
   }
 ): Promise<ImageFileRecord> {
   const rawName =
@@ -219,7 +221,7 @@ export async function uploadFile(
     storedFilepath = storageResult.filepath;
     storageSource = storageResult.source;
 
-    const imageFileRepository = await getImageFileRepository();
+    const imageFileRepository = await getImageFileRepository(options?.provider);
     const recordInput = {
       filename,
       filepath: storedFilepath,
@@ -300,7 +302,6 @@ export async function uploadNoteFile(
   const publicDir = `/uploads/notes/${noteId}`;
   const publicPath = `${publicDir}/${filename}`;
   const localDiskPath = path.join(diskDir, filename);
-  let storedFilepath = publicPath;
   let storageSource: 'local' | 'fastcomet' = 'local';
 
   try {
@@ -317,7 +318,7 @@ export async function uploadNoteFile(
         await fs.writeFile(localDiskPath, fileBuffer);
       },
     });
-    storedFilepath = storageResult.filepath;
+    const storedFilepath = storageResult.filepath;
     storageSource = storageResult.source;
 
     const noteFile = await noteService.createNoteFile({

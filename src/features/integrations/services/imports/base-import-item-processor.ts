@@ -196,12 +196,11 @@ const downloadImage = async (
   index: number
 ): Promise<{ id: string }> => {
   const imageRepository = await getImageFileRepository();
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`Failed to download image (${response.status})`);
-  }
-
-  const contentType = response.headers.get('content-type') || guessMimeType(url);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Failed to download image (${response.status})`, { cause: response });
+      }
+    const contentType = response.headers.get('content-type') || guessMimeType(url);
   const buffer = Buffer.from(await response.arrayBuffer());
   const folderName = sku ? sanitizeSku(sku) : 'temp';
   const filename = `${Date.now()}-${index}-${extractFilename(url, 'image.jpg')}`;
@@ -824,31 +823,30 @@ export const importSingleItem = async (input: {
     };
   }
 
-  let created: ProductRecord | null = null;
-  try {
-    created = await input.productRepository.createProduct(validationResult.data);
-  } catch (error: unknown) {
-    if (isSkuConflictError(error) && input.allowDuplicateSku) {
-      const fallbackSku = await resolveUniqueSku(
-        input.productRepository,
-        mappedBaseProductId,
-        `BASE-${mappedBaseProductId ?? skuForCreate}`
-      );
-      const fallbackValidation = await validateProductCreate({
-        ...createData,
-        sku: fallbackSku,
-      });
-      if (!fallbackValidation.success) {
-        throw new Error(`Validation failed for fallback SKU ${fallbackSku}`);
+      let created: ProductRecord | null;
+      try {
+        created = await input.productRepository.createProduct(validationResult.data);
+      } catch (error: unknown) {
+        if (isSkuConflictError(error) && input.allowDuplicateSku) {
+          const fallbackSku = await resolveUniqueSku(
+            input.productRepository,
+            mappedBaseProductId,
+            `BASE-${mappedBaseProductId ?? skuForCreate}`
+          );
+          const fallbackValidation = await validateProductCreate({
+            ...createData,
+            sku: fallbackSku,
+          });
+          if (!fallbackValidation.success) {
+            throw new Error(`Validation failed for fallback SKU ${fallbackSku}`, { cause: error });
+          }
+          created = await input.productRepository.createProduct(fallbackValidation.data);
+          skuForCreate = fallbackSku;
+        } else {
+          throw error;
+        }
       }
-      created = await input.productRepository.createProduct(fallbackValidation.data);
-      skuForCreate = fallbackSku;
-    } else {
-      throw error;
-    }
-  }
-
-  if (!created) {
+    if (!created) {
     throw new Error('Failed to create product.');
   }
 

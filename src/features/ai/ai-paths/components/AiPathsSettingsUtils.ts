@@ -372,7 +372,7 @@ export const pollDatabaseQuery = async (
       ? getValueAtMappingPath(resultCandidate, successPath)
       : resultCandidate;
     const asString = safeStringify(resolvedStatus);
-    let success = false;
+    let success: boolean;
     switch (successOperator) {
       case 'truthy':
         success = Boolean(resolvedStatus);

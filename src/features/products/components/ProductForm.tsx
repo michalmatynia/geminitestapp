@@ -123,9 +123,12 @@ export default function ProductForm({
   // because the formatter effect depends on its fields from the first render.
   // The initial active tab (e.g. from a draft link) is also pre-mounted so the
   // user sees content immediately on load.
-  const [mountedTabs, setMountedTabs] = useState<Set<ProductDraftOpenFormTab>>(
-    () => new Set<ProductDraftOpenFormTab>(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS)
-  );
+  const [mountedTabs, setMountedTabs] = useState<Set<ProductDraftOpenFormTab>>(() => {
+    const initial = new Set<ProductDraftOpenFormTab>(['general']);
+    const startTab = normalizeProductFormTab(draft?.openProductFormTab);
+    initial.add(startTab);
+    return initial;
+  });
   const validatorConfigQuery = useProductValidatorConfig();
 
   // Subscribe to only the fields that validators and the nameEn segment extraction
@@ -888,19 +891,19 @@ export default function ProductForm({
           <TabsContent value='other' className='mt-4 data-[state=inactive]:hidden' forceMount>
             <ProductFormOther visibleFieldIssues={visibleFieldIssues} />
           </TabsContent>
-          <TabsContent value='parameters' className='mt-4 data-[state=inactive]:hidden' forceMount>
+          <TabsContent value='parameters' className='mt-4 data-[state=inactive]:hidden'>
             {mountedTabs.has('parameters') && <ProductFormParameters />}
           </TabsContent>
-          <TabsContent value='images' className='mt-4 data-[state=inactive]:hidden' forceMount>
+          <TabsContent value='images' className='mt-4 data-[state=inactive]:hidden'>
             {mountedTabs.has('images') && <ProductFormImages />}
           </TabsContent>
-          <TabsContent value='studio' className='mt-4 data-[state=inactive]:hidden' forceMount>
+          <TabsContent value='studio' className='mt-4 data-[state=inactive]:hidden'>
             {mountedTabs.has('studio') && <ProductFormStudio />}
           </TabsContent>
-          <TabsContent value='import-info' className='mt-4 data-[state=inactive]:hidden' forceMount>
+          <TabsContent value='import-info' className='mt-4 data-[state=inactive]:hidden'>
             {mountedTabs.has('import-info') && <ProductFormImportInfo />}
           </TabsContent>
-          <TabsContent value='note-link' className='mt-4 data-[state=inactive]:hidden' forceMount>
+          <TabsContent value='note-link' className='mt-4 data-[state=inactive]:hidden'>
             {mountedTabs.has('note-link') && <ProductFormNoteLink />}
           </TabsContent>
           <TabsContent value='validation' className='mt-4 space-y-4'>

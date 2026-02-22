@@ -20,19 +20,22 @@ import type {
   ProductValidationPattern,
 } from '@/shared/contracts/products';
 import type { SequenceGroupDraft } from '@/shared/contracts/products';
-import { 
-  Button, 
+import {
+  Button,
   EmptyState,
+  FormField,
+  FormSection,
+  Input,
   LoadingState,
-  Input, 
-  StatusToggle, 
-  FormSection, 
-  FormField, 
-  StatusBadge 
+  StatusBadge,
+  StatusToggle,
+  useToast,
 } from '@/shared/ui';
 
 import { INSTANCE_SCOPE_LABELS } from './constants';
+import { ValidatorPatternImportModal } from './ValidatorPatternImportModal';
 import { useValidatorSettingsContext } from './ValidatorSettingsContext';
+import { buildFullValidatorDocumentationClipboardText } from './validator-documentation-clipboard';
 
 
 type PatternRowProps = {
@@ -485,6 +488,7 @@ const PatternRow = memo(function PatternRow({
  * Validator docs: see docs/validator/function-reference.md#ui.validatorpatterntablepanel
  */
 export function ValidatorPatternTablePanel(): React.JSX.Element {
+  const { toast } = useToast();
   const {
     summary,
     loading,
@@ -558,9 +562,26 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
   const onDeletePattern = (pattern: ProductValidationPattern): void => {
     setPatternToDelete(pattern);
   };
+  const handleCopyFullDocumentation = async (): Promise<void> => {
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      toast('Clipboard API is not available in this browser.', { variant: 'error' });
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(
+        buildFullValidatorDocumentationClipboardText()
+      );
+      toast('Full validator documentation copied (including JSON snippets).', {
+        variant: 'success',
+      });
+    } catch {
+      toast('Failed to copy full validator documentation.', { variant: 'error' });
+    }
+  };
 
   const [collapsedPatternIds, setCollapsedPatternIds] = React.useState<Set<string>>(new Set());
   const [collapsedGroupIds, setCollapsedGroupIds] = React.useState<Set<string>>(new Set());
+  const [showImportModal, setShowImportModal] = React.useState(false);
 
   React.useEffect(() => {
     const validIds = new Set(orderedPatterns.map((pattern: ProductValidationPattern) => pattern.id));
@@ -682,6 +703,25 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
           >
             + Name EN to PL
           </Button>
+          <Button
+            type='button'
+            onClick={() => setShowImportModal(true)}
+            variant='outline'
+            className='border-fuchsia-500/40 text-fuchsia-200 hover:bg-fuchsia-500/10'
+          >
+            Import JSON
+          </Button>
+          <Button
+            type='button'
+            onClick={() => {
+              void handleCopyFullDocumentation();
+            }}
+            variant='outline'
+            className='border-sky-500/40 text-sky-200 hover:bg-sky-500/10'
+            title='Copy all validation docs sections including JSON snippets'
+          >
+            Copy Full Validation Docs
+          </Button>
           <Button onClick={() => openCreate()} variant='default'>
             <Plus className='mr-2 size-4' />
             Add Pattern
@@ -753,6 +793,10 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
           </div>
         )}
       </div>
+      <ValidatorPatternImportModal
+        open={showImportModal}
+        onClose={() => setShowImportModal(false)}
+      />
     </FormSection>
   );
 }

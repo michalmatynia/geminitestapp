@@ -738,7 +738,7 @@ export function useCanvasInteractions(args?: {
       const oldToNewNodeId = new Map<string, string>();
 
       const generateNodeId = (): string => {
-        let candidate = '';
+        let candidate: string;
         do {
           candidate = `node-${Math.random().toString(36).slice(2, 10)}`;
         } while (existingNodeIdSet.has(candidate));
@@ -746,7 +746,7 @@ export function useCanvasInteractions(args?: {
       };
 
       const generateEdgeId = (): string => {
-        let candidate = '';
+        let candidate: string;
         do {
           candidate = `edge-${Math.random().toString(36).slice(2, 10)}`;
         } while (existingEdgeIdSet.has(candidate));
@@ -2292,13 +2292,14 @@ export function useCanvasInteractions(args?: {
     if (!viewport) return;
     const canvasRect = canvasRef.current?.getBoundingClientRect() ?? null;
 
-    const raw = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.AI_NODE]);
-    if (!raw) return;
-
-    let payload: NodeDefinition | null = null;
-    try {
-      payload = JSON.parse(raw) as NodeDefinition;
-    } catch (_error) {
+          const raw = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.AI_NODE]);
+          if (!raw) return;
+    
+          let payload: NodeDefinition | null;
+          try {
+            payload = JSON.parse(raw) as NodeDefinition;
+          } catch (_error) {
+    
       toast('Failed to add node. Invalid data.', { variant: 'error' });
       return;
     }

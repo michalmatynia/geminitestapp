@@ -123,6 +123,49 @@ describe('productService', () => {
       });
       expect(productInCatalog).toBeDefined();
     });
+
+    it('should persist uploaded image and multiple catalogs on create', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
+      const catalogA = await prisma.catalog.create({ data: { name: 'Create Catalog A' } });
+      const catalogB = await prisma.catalog.create({ data: { name: 'Create Catalog B' } });
+
+      const formData = new FormData();
+      formData.append('name_en', 'Create Guard Product');
+      formData.append('sku', 'CRT-GUARD-1');
+      formData.append('catalogIds', catalogA.id);
+      formData.append('catalogIds', catalogB.id);
+      const file = new File([new Uint8Array([9, 8, 7, 6])], 'create-upload.jpg', {
+        type: 'image/jpeg',
+      });
+      if (typeof (file as File & { arrayBuffer?: unknown }).arrayBuffer !== 'function') {
+        Object.defineProperty(file, 'arrayBuffer', {
+          value: async (): Promise<ArrayBuffer> =>
+            new Uint8Array([9, 8, 7, 6]).buffer,
+        });
+      }
+      formData.append('images', file);
+
+      const created = await productService.createProduct(formData);
+
+      expect(created.catalogs.map((entry) => entry.catalogId).sort()).toEqual(
+        [catalogA.id, catalogB.id].sort()
+      );
+      expect(created.images.length).toBe(1);
+
+      const dbCatalogs = await prisma.productCatalog.findMany({
+        where: { productId: created.id },
+        select: { catalogId: true },
+      });
+      expect(dbCatalogs.map((entry) => entry.catalogId).sort()).toEqual(
+        [catalogA.id, catalogB.id].sort()
+      );
+
+      const dbImages = await prisma.productImage.findMany({
+        where: { productId: created.id },
+      });
+      expect(dbImages.length).toBe(1);
+    });
   });
 
   describe('updateProduct', () => {
@@ -151,6 +194,56 @@ describe('productService', () => {
       const updated = await productService.updateProduct(original.id, formData);
       
       expect(updated?.sku).toBe('NEW-SKU');
+    });
+
+    it('should persist multiple catalogIds on update', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
+      const original = await createMockProduct({ name_en: 'Catalog Update', sku: 'CAT-UPD-1' });
+      const catalogA = await prisma.catalog.create({ data: { name: 'Catalog A' } });
+      const catalogB = await prisma.catalog.create({ data: { name: 'Catalog B' } });
+
+      const formData = new FormData();
+      formData.append('catalogIds', catalogA.id);
+      formData.append('catalogIds', catalogB.id);
+
+      await productService.updateProduct(original.id, formData);
+
+      const links = await prisma.productCatalog.findMany({
+        where: { productId: original.id },
+        select: { catalogId: true },
+      });
+      expect(links.map((link: { catalogId: string }) => link.catalogId).sort()).toEqual(
+        [catalogA.id, catalogB.id].sort()
+      );
+    });
+
+    it('should persist uploaded image files on update', async () => {
+      if (!process.env['DATABASE_URL']) return;
+
+      const original = await createMockProduct({ name_en: 'Image Upload', sku: 'IMG-UPD-1' });
+      const file = new File([new Uint8Array([1, 2, 3, 4])], 'upload.jpg', {
+        type: 'image/jpeg',
+      });
+      if (typeof (file as File & { arrayBuffer?: unknown }).arrayBuffer !== 'function') {
+        Object.defineProperty(file, 'arrayBuffer', {
+          value: async (): Promise<ArrayBuffer> =>
+            new Uint8Array([1, 2, 3, 4]).buffer,
+        });
+      }
+
+      const formData = new FormData();
+      formData.append('images', file);
+
+      const updated = await productService.updateProduct(original.id, formData);
+
+      expect(updated.images.length).toBe(1);
+      expect(updated.images[0]?.imageFileId).toBeTruthy();
+
+      const links = await prisma.productImage.findMany({
+        where: { productId: original.id },
+      });
+      expect(links.length).toBe(1);
     });
 
     it('should persist reordered imageFileIds on update', async () => {

@@ -46,7 +46,7 @@ export class LogCapture {
     const firstArg = args[0];
 
     // Extract message and context from arguments
-    let message = '';
+    let message: string;
     let context: Record<string, unknown> | undefined;
 
     if (typeof firstArg === 'string') {

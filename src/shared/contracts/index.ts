@@ -54,6 +54,7 @@ export * from './prompt-exploder';
 export * from './settings';
 export * from './system';
 export * from './ui';
+export * from './validator-import';
 export * from './vector';
 export * from './viewer3d';
 export * from './product-image-manager';

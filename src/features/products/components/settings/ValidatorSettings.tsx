@@ -8,6 +8,8 @@ import {
   useValidatorDocsTooltips,
 } from './validator-settings/ValidatorDocsTooltips';
 import { ValidatorInstanceBehaviorPanel } from './validator-settings/ValidatorInstanceBehaviorPanel';
+import { ValidatorPatternModal } from './validator-settings/ValidatorPatternModal';
+import { ValidatorPatternTablePanel } from './validator-settings/ValidatorPatternTablePanel';
 import { ValidatorSettingsProvider } from './validator-settings/ValidatorSettingsContext';
 
 /**
@@ -21,6 +23,8 @@ export function ValidatorSettings(): React.JSX.Element {
       <div className='space-y-5'>
         <ValidatorDocsTooltipsPanel />
         <ValidatorInstanceBehaviorPanel />
+        <ValidatorPatternTablePanel />
+        <ValidatorPatternModal />
       </div>
     </ValidatorSettingsProvider>
   );

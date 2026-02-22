@@ -355,7 +355,7 @@ export default function ProductFormGeneral({
   const compiledPatterns = useMemo(
     () =>
       validatorPatterns.map((p: ProductValidationPattern) => {
-        let compiledRegex: RegExp | null = null;
+        let compiledRegex: RegExp | null;
         try {
           compiledRegex = new RegExp(p.regex, p.flags ?? undefined);
         } catch {
@@ -462,7 +462,7 @@ export default function ProductFormGeneral({
           const allowWithoutRegexMatch = isLatestPriceStockMirrorPattern(pattern);
           if (!hasMatch && !allowWithoutRegexMatch) break;
           matched = true;
-          let replacedValue = candidateValue;
+          let replacedValue: string;
           try {
             const replacement = resolvePatternReplacementValue({
               pattern,

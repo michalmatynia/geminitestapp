@@ -261,9 +261,9 @@ function computeEdgePaths(
 
       const p0 = { x: fromPos.x, y: fromPos.y };
       const p3 = { x: toPos.x, y: toPos.y };
-      let path = '';
-      let bounds = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
-      let arrow = { x: 0, y: 0, angle: 0 };
+      let path: string;
+      let bounds: { minX: number; minY: number; maxX: number; maxY: number };
+      let arrow: { x: number; y: number; angle: number };
 
       if (routingMode === 'orthogonal') {
         const points = buildOrthogonalPolyline(p0, p3);

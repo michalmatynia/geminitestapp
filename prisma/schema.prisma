@@ -1253,6 +1253,7 @@ enum AiPathNodeStatus {
   pending
   running
   completed
+  cached
   failed
   skipped
   blocked

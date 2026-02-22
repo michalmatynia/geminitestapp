@@ -52,11 +52,10 @@ describe('Chatbot Mutation Hooks', () => {
       result.current.mutate({ title: 'New' });
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(chatbotApi.createChatbotSession).toHaveBeenCalledWith({ title: 'New' }, expect.anything());
+      expect(chatbotApi.createChatbotSession).toHaveBeenCalledWith({ title: 'New' });
       expect(result.current.data).toEqual({ sessionId: 'new-s' });
     });
   });
-
   describe('useUpdateSessionTitle', () => {
     it('calls updateChatbotSessionTitle', async () => {
       vi.mocked(chatbotApi.updateChatbotSessionTitle).mockResolvedValue({ success: true } as any);
@@ -79,10 +78,9 @@ describe('Chatbot Mutation Hooks', () => {
       result.current.mutate('s1');
 
       await waitFor(() => expect(result.current.isSuccess).toBe(true));
-      expect(chatbotApi.deleteChatbotSession).toHaveBeenCalledWith('s1', expect.anything());
+      expect(chatbotApi.deleteChatbotSession).toHaveBeenCalledWith('s1');
     });
   });
-
   describe('useSaveChatbotSettings', () => {
     it('calls saveChatbotSettings', async () => {
       vi.mocked(chatbotApi.saveChatbotSettings).mockResolvedValue({ success: true } as any);

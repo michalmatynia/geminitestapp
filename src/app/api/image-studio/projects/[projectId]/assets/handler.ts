@@ -81,7 +81,6 @@ function extractUploadedFiles(formData: FormData): UploadedFileLike[] {
 
 async function listStudioAssetsFromDisk(projectId: string): Promise<ImageFileRecord[]> {
   const projectDir = path.join(projectsRoot, projectId);
-  const publicPrefix = `/uploads/studio/${projectId}`;
   const results: ImageFileRecord[] = [];
 
   const stack: Array<{ diskDir: string; relDir: string }> = [{ diskDir: projectDir, relDir: '' }];
@@ -99,9 +98,7 @@ async function listStudioAssetsFromDisk(projectId: string): Promise<ImageFileRec
       if (!entry.isFile()) continue;
       const stats = await fs.stat(diskPath).catch(() => null);
       if (!stats) continue;
-      const filepath = `${publicPrefix}/${relPath}`.replace(/\\/g, '/');
-      const createdAt = (stats.birthtime ?? stats.ctime).toISOString();
-      const updatedAt = (stats.mtime ?? stats.ctime).toISOString();
+      const filepath = `/uploads/studio/${projectId}/${relPath}`.replace(/\\/g, '/');
       results.push({
         id: `disk:${filepath}`,
         name: entry.name,
@@ -110,8 +107,8 @@ async function listStudioAssetsFromDisk(projectId: string): Promise<ImageFileRec
         mimetype: 'application/octet-stream',
         size: stats.size,
         tags: [],
-        createdAt,
-        updatedAt,
+        createdAt: (stats.birthtime ?? stats.ctime).toISOString(),
+        updatedAt: (stats.mtime ?? stats.ctime).toISOString(),
       });
     }
   }
@@ -147,7 +144,7 @@ export async function GET_handler(
   if (!projectId) throw badRequestError('Project id is required');
 
   const prefix = `/uploads/studio/${projectId}/`;
-  let repoAssets: ImageFileRecord[] = [];
+  let repoAssets: ImageFileRecord[];
   try {
     const imageFileRepository = await getImageFileRepository();
     const files = await imageFileRepository.listImageFiles();
@@ -163,8 +160,8 @@ export async function GET_handler(
     repoAssets = [];
   }
 
-  let diskAssets: ImageFileRecord[] = [];
-  let diskFolders: string[] = [];
+  let diskAssets: ImageFileRecord[];
+  let diskFolders: string[];
   try {
     diskAssets = await listStudioAssetsFromDisk(projectId);
   } catch {

@@ -42,28 +42,30 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const uniqueProductIds = Array.from(new Set(data.productIds));
   const productRepository = await getProductRepository();
 
-  for (const productId of uniqueProductIds) {
-    const product = await productRepository.getProductById(productId);
-    if (!product) {
-      continue;
-    }
-    const existingCatalogIds = product.catalogs.map(
-      (entry: { catalogId: string }) => entry.catalogId
-    );
-    let nextCatalogIds = existingCatalogIds;
-    if (mode === 'replace') {
-      nextCatalogIds = validCatalogIds;
-    } else if (mode === 'remove') {
-      nextCatalogIds = existingCatalogIds.filter(
-        (catalogId: string) => !validCatalogIds.includes(catalogId)
+  await Promise.all(
+    uniqueProductIds.map(async (productId) => {
+      const product = await productRepository.getProductById(productId);
+      if (!product) {
+        return;
+      }
+      const existingCatalogIds = product.catalogs.map(
+        (entry: { catalogId: string }) => entry.catalogId
       );
-    } else {
-      nextCatalogIds = Array.from(
-        new Set([...existingCatalogIds, ...validCatalogIds])
-      );
-    }
-    await productRepository.replaceProductCatalogs(productId, nextCatalogIds);
-  }
+      let nextCatalogIds: string[];
+      if (mode === 'replace') {
+        nextCatalogIds = validCatalogIds;
+      } else if (mode === 'remove') {
+        nextCatalogIds = existingCatalogIds.filter(
+          (catalogId: string) => !validCatalogIds.includes(catalogId)
+        );
+      } else {
+        nextCatalogIds = Array.from(
+          new Set([...existingCatalogIds, ...validCatalogIds])
+        );
+      }
+      await productRepository.replaceProductCatalogs(productId, nextCatalogIds);
+    })
+  );
 
   return NextResponse.json({
     updated: uniqueProductIds.length,

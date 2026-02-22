@@ -291,10 +291,10 @@ const toCatalogRecord = (
   priceGroupIds: catalog.priceGroupIds ?? [],
 });
 
-  const toProductImageRecord = (
-    image: PrismaProductImage & { imageFile?: PrismaImageFile | null },
-  ): ProductImageRecord | null => {
-    if (!image.imageFile) return null;
+const toProductImageRecord = (
+  image: PrismaProductImage & { imageFile?: PrismaImageFile | null },
+): ProductImageRecord | null => {
+  if (!image.imageFile) return null;
 
   return {
     productId: image.productId,
@@ -354,8 +354,8 @@ const resolveCategoryId = (product: FullPrismaProduct): string | null => {
   return null;
 };
 
-  const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
-    const catalogs =
+const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
+  const catalogs =
 
     product.catalogs?.map((pc) => ({
       productId: pc.productId,
@@ -442,11 +442,11 @@ const createTransactionalRepository = (
 
     const products = await tx.product.findMany({
       where,
-          include: {
-            images: {
-              include: { imageFile: true },
-              orderBy: { assignedAt: 'asc' },
-            },
+      include: {
+        images: {
+          include: { imageFile: true },
+          orderBy: { assignedAt: 'asc' },
+        },
       
         catalogs: {
           include: {
@@ -982,7 +982,7 @@ export const prismaProductRepository: ProductRepository = {
       }
     }
 
-    const { categoryId: _cat, id, ...rest } = data;
+    const { categoryId: _cat, id, catalogIds: _cats, tagIds: _tags, producerIds: _prods, studioProjectId: _studio, imageFileIds: _imgIds, ...rest } = data;
     const normalizedParameters =
       rest.parameters !== undefined
         ? normalizeProductParameterValues(rest.parameters)
@@ -998,22 +998,22 @@ export const prismaProductRepository: ProductRepository = {
       ...(id ? { id } : {}),
     }) as Prisma.ProductCreateInput;
 
-          try {
-            const product = await prisma.product.create({
-              data: cleanData,
-              include: {
-                images: {
-                  include: { imageFile: true },
-                  orderBy: { assignedAt: 'asc' },
-                },
-                catalogs: { include: { catalog: true } },
-                categories: true,
-                tags: true,
-                producers: true,
-              },
-            });
-            return toProductRecord(product as FullPrismaProduct);
-          } catch (error) {
+    try {
+      const product = await prisma.product.create({
+        data: cleanData,
+        include: {
+          images: {
+            include: { imageFile: true },
+            orderBy: { assignedAt: 'asc' },
+          },
+          catalogs: { include: { catalog: true } },
+          categories: true,
+          tags: true,
+          producers: true,
+        },
+      });
+      return toProductRecord(product as FullPrismaProduct);
+    } catch (error) {
     
       if (
         error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -1033,7 +1033,7 @@ export const prismaProductRepository: ProductRepository = {
     const productExists = await prisma.product.findUnique({ where: { id } });
     if (!productExists) return null;
 
-    const { categoryId: _cat, id: _id, imageFileIds, ...rest } = data;
+    const { categoryId, id: _id, imageFileIds, catalogIds, tagIds, producerIds, studioProjectId: _studio, ...rest } = data;
     const normalizedParameters =
       rest.parameters !== undefined
         ? normalizeProductParameterValues(rest.parameters)
@@ -1060,6 +1060,76 @@ export const prismaProductRepository: ProductRepository = {
                 imageFileId: imageFileIds[i]!,
                 assignedAt: new Date(now + i * 1000),
               },
+            });
+          }
+        }
+      }
+
+      if (catalogIds !== undefined) {
+        await tx.productCatalog.deleteMany({ where: { productId: id } });
+        if (catalogIds.length > 0) {
+          const uniqueIds = Array.from(new Set(catalogIds));
+          const existing = await tx.catalog.findMany({
+            where: { id: { in: uniqueIds } },
+            select: { id: true },
+          });
+          const existingIds = new Set(existing.map((e: { id: string }) => e.id));
+          const validIds = uniqueIds.filter((cid: string) => existingIds.has(cid));
+          if (validIds.length > 0) {
+            await tx.productCatalog.createMany({
+              data: validIds.map((catalogId: string) => ({ productId: id, catalogId })),
+            });
+          }
+        }
+      }
+
+      if (tagIds !== undefined) {
+        await tx.productTagAssignment.deleteMany({ where: { productId: id } });
+        if (tagIds.length > 0) {
+          const uniqueIds = Array.from(new Set(tagIds));
+          const existing = await tx.productTag.findMany({
+            where: { id: { in: uniqueIds } },
+            select: { id: true },
+          });
+          const existingIds = new Set(existing.map((e: { id: string }) => e.id));
+          const validIds = uniqueIds.filter((tid: string) => existingIds.has(tid));
+          if (validIds.length > 0) {
+            await tx.productTagAssignment.createMany({
+              data: validIds.map((tagId: string) => ({ productId: id, tagId })),
+            });
+          }
+        }
+      }
+
+      if (producerIds !== undefined) {
+        await tx.productProducerAssignment.deleteMany({ where: { productId: id } });
+        if (producerIds.length > 0) {
+          const uniqueIds = Array.from(new Set(producerIds));
+          const existing = await tx.producer.findMany({
+            where: { id: { in: uniqueIds } },
+            select: { id: true },
+          });
+          const existingIds = new Set(existing.map((e: { id: string }) => e.id));
+          const validIds = uniqueIds.filter((pid: string) => existingIds.has(pid));
+          if (validIds.length > 0) {
+            await tx.productProducerAssignment.createMany({
+              data: validIds.map((producerId: string) => ({ productId: id, producerId })),
+            });
+          }
+        }
+      }
+
+      if (categoryId !== undefined) {
+        await tx.productCategoryAssignment.deleteMany({ where: { productId: id } });
+        const normalized = typeof categoryId === 'string' ? categoryId.trim() : '';
+        if (normalized) {
+          const existing = await tx.productCategory.findUnique({
+            where: { id: normalized },
+            select: { id: true },
+          });
+          if (existing) {
+            await tx.productCategoryAssignment.create({
+              data: { productId: id, categoryId: normalized },
             });
           }
         }
@@ -1173,7 +1243,7 @@ export const prismaProductRepository: ProductRepository = {
       data: normalizedIds.map((imageFileId: string, index: number) => ({
         productId,
         imageFileId,
-        assignedAt: new Date(now - index),
+        assignedAt: new Date(now + index),
       })),
       skipDuplicates: true,
     });
@@ -1190,7 +1260,7 @@ export const prismaProductRepository: ProductRepository = {
         data: normalizedIds.map((imageFileId: string, index: number) => ({
           productId,
           imageFileId,
-          assignedAt: new Date(now - index),
+          assignedAt: new Date(now + index),
         })),
       });
     });

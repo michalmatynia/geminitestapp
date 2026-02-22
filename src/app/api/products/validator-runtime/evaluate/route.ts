@@ -5,11 +5,11 @@ import { apiHandler } from '@/shared/lib/api/api-handler';
 
 import {
   evaluateRuntimeSchema,
-  postValidatorRuntimeEvaluateHandler,
+  POST_handler,
 } from './handler';
 
 export const POST = apiHandler(
-  postValidatorRuntimeEvaluateHandler,
+  POST_handler,
   {
     source: 'products.validator-runtime.evaluate.POST',
     parseJsonBody: true,

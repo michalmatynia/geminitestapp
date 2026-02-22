@@ -317,7 +317,7 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
         onClose={() => setTagToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Tag'
-                  message={`Delete tag "${tagToDelete?.label ?? ''}"? This action cannot be undone.`}        confirmText='Delete'
+        message={`Delete tag "${tagToDelete?.label ?? ''}"? This action cannot be undone.`}        confirmText='Delete'
         isDangerous={true}
       />
 

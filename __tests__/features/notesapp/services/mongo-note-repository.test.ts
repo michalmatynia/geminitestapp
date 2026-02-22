@@ -2,9 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 vi.mock('crypto', async (importOriginal) => {
   const actual = await importOriginal<typeof import('crypto')>();
-  return {
+  const mock = {
     ...actual,
     randomUUID: vi.fn().mockReturnValue('mock-uuid'),
+  };
+  return {
+    ...mock,
+    default: mock,
   };
 });
 

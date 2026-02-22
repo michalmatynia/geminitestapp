@@ -20,8 +20,6 @@ type TestLogEntry = {
  * Tests the Base.com API connection by verifying the token and fetching inventories.
  */
 export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string; connectionId: string }): Promise<Response> {
-  let integrationId: string | null = null;
-  let integrationConnectionId: string | null = null;
   const steps: TestLogEntry[] = [];
 
   const pushStep = (
@@ -45,9 +43,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext, p
   };
 
   const { id, connectionId } = params;
-  integrationId = id;
-  integrationConnectionId = connectionId;
-  if (!integrationId || !integrationConnectionId) {
+  if (!id || !connectionId) {
     return fail('Loading connection', 'Integration id and connection id are required', 400);
   }
 

@@ -2,9 +2,9 @@ export const runtime = 'nodejs';
 
 import { apiHandler } from '@/shared/lib/api/api-handler';
 
-import { postImageStudioPromptExtractHandler } from './handler';
+import { POST_handler } from './handler';
 
 export const POST = apiHandler(
-  postImageStudioPromptExtractHandler,
+  POST_handler,
   { source: 'image-studio.prompt-extract.POST' }
 );

@@ -51,10 +51,30 @@ export function parsePromptExploderSettings(rawValue: string | null | undefined)
   if (!rawValue?.trim()) return defaultPromptExploderSettings;
 
   try {
-    const parsed: unknown = JSON.parse(rawValue);
-    const result = promptExploderSettingsSchema.safeParse(parsed);
-    if (!result.success) return defaultPromptExploderSettings;
-    return {
+    const rawParsed = JSON.parse(rawValue) as Record<string, any>;
+    const merged = {
+      ...defaultPromptExploderSettings,
+      ...rawParsed,
+      runtime: {
+        ...defaultPromptExploderSettings.runtime,
+        ...(rawParsed.runtime || {}),
+      },
+      learning: {
+        ...defaultPromptExploderSettings.learning,
+        ...(rawParsed.learning || {}),
+        templates: rawParsed.learning?.templates || [],
+      },
+      ai: {
+        ...defaultPromptExploderSettings.ai,
+        ...(rawParsed.ai || {}),
+      },
+    };
+
+    const result = promptExploderSettingsSchema.safeParse(merged);
+    if (!result.success) {
+      return defaultPromptExploderSettings;
+    }
+    const normalized = {
       ...result.data,
       runtime: {
         ...result.data.runtime,
@@ -74,6 +94,7 @@ export function parsePromptExploderSettings(rawValue: string | null | undefined)
         })),
       },
     };
+    return normalized;
   } catch {
     return defaultPromptExploderSettings;
   }

@@ -115,8 +115,8 @@ describe('CategoryMappingRepository', () => {
     
     const result = await repo.listByConnection(connection.id);
     expect(result.length).toBe(1);
-    expect(result[0]!.externalCategory.name).toBe('Ext 1');
-    expect(result[0]!.internalCategory.name).toBe('Int 1');
+    expect(result[0]!.externalCategory!.name).toBe('Ext 1');
+    expect(result[0]!.internalCategory!.name).toBe('Int 1');
   });
 
   it('bulk upserts mappings', async () => {

@@ -322,7 +322,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       }
       args.runLoopActiveRef.current = true;
       const stepLimit = mode === 'step' ? 1 : LOCAL_RUN_STEP_CHUNK;
-      let outcome: 'completed' | 'paused' | 'canceled' | 'error' = 'completed';
+      let outcome: 'completed' | 'paused' | 'canceled' | 'error';
       let capturedError: unknown = undefined;
       try {
         if (!args.abortControllerRef.current || args.abortControllerRef.current.signal.aborted) {
@@ -557,7 +557,6 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
             }
             continue;
           }
-          outcome = 'completed';
           break;
         }
       } catch (error) {
@@ -790,7 +789,16 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     }
     if (compileReport.warnings > 0) {
       const timestamp = new Date().toISOString();
-      const warningMessage = `Graph compile warnings: ${compileReport.warnings} non-blocking issue(s) detected.`;
+      const warningFindings = compileReport.findings.filter(
+        (finding): boolean =>
+          finding.severity === 'warning' && finding.message.trim().length > 0
+      );
+      const primaryWarning = warningFindings[0]?.message?.trim() ?? null;
+      const warningMessage = primaryWarning
+        ? `Graph compile warning: ${primaryWarning}${
+          warningFindings.length > 1 ? ` (+${warningFindings.length - 1} more)` : ''
+        }`
+        : `Graph compile warnings: ${compileReport.warnings} non-blocking issue(s) detected.`;
       args.appendRuntimeEvent({
         source: 'local',
         kind: 'run_warning',

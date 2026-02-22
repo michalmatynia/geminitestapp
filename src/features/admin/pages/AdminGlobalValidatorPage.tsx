@@ -6,6 +6,7 @@ import { useMemo } from 'react';
 
 import { AdminImageStudioValidationPatternsPage } from '@/features/ai/image-studio';
 import { ValidatorSettings } from '@/features/products/components/settings/ValidatorSettings';
+import { ValidatorDocsTooltipsProvider } from '@/features/products/components/settings/validator-settings/ValidatorDocsTooltips';
 import { AdminPromptEngineValidationPatternsPage } from '@/features/prompt-engine';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
@@ -57,7 +58,9 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
               {resolvedDescription}
             </p>
           </FormSection>
-          <ValidatorSettings />
+          <ValidatorDocsTooltipsProvider>
+            <ValidatorSettings />
+          </ValidatorDocsTooltipsProvider>
         </>
       );
     }

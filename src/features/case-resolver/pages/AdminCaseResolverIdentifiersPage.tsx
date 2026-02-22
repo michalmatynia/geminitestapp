@@ -85,10 +85,10 @@ const buildCaseIdentifierPathOptions = (
     const nextTrail = new Set(trail);
     nextTrail.add(caseIdentifierId);
     const parentPath = resolvePath(identifier.parentId, nextTrail);
-          const fullPath = {
-            ids: [...parentPath.ids, identifier.id],
-            names: [...parentPath.names, identifier.name ?? identifier.value],
-          };    cache.set(caseIdentifierId, fullPath);
+    const fullPath = {
+      ids: [...parentPath.ids, identifier.id],
+      names: [...parentPath.names, identifier.name ?? identifier.value],
+    };    cache.set(caseIdentifierId, fullPath);
     return fullPath;
   };
 
@@ -211,24 +211,24 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
       formData.parentId && formData.parentId !== editingCaseIdentifier?.id
         ? formData.parentId
         : null;
-          const nextCaseIdentifier: CaseResolverIdentifier = editingCaseIdentifier
-            ? {
-              ...editingCaseIdentifier,
-              name: normalizedName,
-              parentId: normalizedParentId,
-              color: formData.color.trim() || '#f59e0b',
-              updatedAt: now,
-            }
-            : {
-              id: createCaseIdentifierId(),
-              type: 'custom',
-              value: normalizedName,
-              name: normalizedName,
-              parentId: normalizedParentId,
-              color: formData.color.trim() || '#f59e0b',
-              createdAt: now,
-              updatedAt: now,
-            };
+    const nextCaseIdentifier: CaseResolverIdentifier = editingCaseIdentifier
+      ? {
+        ...editingCaseIdentifier,
+        name: normalizedName,
+        parentId: normalizedParentId,
+        color: formData.color.trim() || '#f59e0b',
+        updatedAt: now,
+      }
+      : {
+        id: createCaseIdentifierId(),
+        type: 'custom',
+        value: normalizedName,
+        name: normalizedName,
+        parentId: normalizedParentId,
+        color: formData.color.trim() || '#f59e0b',
+        createdAt: now,
+        updatedAt: now,
+      };
     const nextCaseIdentifiers = editingCaseIdentifier
       ? caseIdentifiers.map((caseIdentifier: CaseResolverIdentifier) =>
         caseIdentifier.id === editingCaseIdentifier.id

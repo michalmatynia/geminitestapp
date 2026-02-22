@@ -72,7 +72,7 @@ const filterCollections = (
   
   const baseCollections = (Array.isArray(schema.collections)
     ? schema.collections
-    : Object.values(schema.collections));
+    : Object.values(schema.collections)) as CollectionSchemaDto[];
 
   if (schema.provider === 'multi') {
     const collections = baseCollections.filter((c: CollectionSchemaDto): boolean =>
@@ -138,7 +138,7 @@ export const handleDbSchema: NodeHandler = async ({
   if (!config.includeFields || !config.includeRelations) {
     const baseCollections = (Array.isArray(schema.collections)
       ? schema.collections
-      : Object.values(schema.collections));
+      : Object.values(schema.collections)) as CollectionSchemaDto[];
   
     schema.collections = baseCollections.map((c: CollectionSchemaDto): CollectionSchemaDto => {      const result: CollectionSchemaDto = {
       name: c.name,

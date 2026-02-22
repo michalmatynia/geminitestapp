@@ -455,11 +455,11 @@ async function executeCenterOperation(params: {
   const centerMode = params.request.center?.mode ?? 'server_alpha_bbox';
   const normalizedLayout = normalizeCenterLayoutConfig(params.request.center?.layout);
 
-  let outputBuffer: Buffer;
-  let outputMime: string;
-  let sourceObjectBounds: ImageStudioCenterObjectBounds | null;
-  let targetObjectBounds: ImageStudioCenterObjectBounds | null;
-  let layoutMeta: ImageStudioCenterExecutionMeta['layout'];
+  let outputBuffer: Buffer | null = null;
+  let outputMime: string | null = null;
+  let sourceObjectBounds: ImageStudioCenterObjectBounds | null = null;
+  let targetObjectBounds: ImageStudioCenterObjectBounds | null = null;
+  let layoutMeta: ImageStudioCenterExecutionMeta['layout'] | null = null;
 
   if (centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1') {
     const parsedDataUrl = parseDataUrl(params.request.center?.dataUrl ?? '');
@@ -573,6 +573,10 @@ async function executeCenterOperation(params: {
     }
   }
 
+  if (!outputBuffer || !outputMime) {
+    throw badRequestError('Centering operation failed to produce output.');
+  }
+
   const normalizedOutput = await resolveCenterOutputFormat(outputBuffer, outputMime);
   const createdOutput = await createImageRecord({
     projectId: params.projectId,
@@ -590,9 +594,9 @@ async function executeCenterOperation(params: {
       requestedOutputCount: 1,
       responseImageCount: 1,
       inputImageCount: 1,
-      sourceObjectBounds,
-      targetObjectBounds,
-      layout: layoutMeta,
+      sourceObjectBounds: sourceObjectBounds as any,
+      targetObjectBounds: targetObjectBounds as any,
+      layout: layoutMeta as any,
     },
   };
 }

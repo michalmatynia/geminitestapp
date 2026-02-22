@@ -81,6 +81,41 @@ type TriggerButtonSettingRecord = Record<string, unknown> & {
   id: string;
 };
 
+export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
+  'compact_oversized_configs',
+  'repair_path_index',
+  'ensure_parameter_inference_defaults',
+  'ensure_description_inference_defaults',
+  'ensure_base_export_defaults',
+  'upgrade_translation_en_pl',
+  'upgrade_description_and_name',
+  'upgrade_server_execution_mode',
+] as const;
+
+export type AiPathsMaintenanceActionId =
+  (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];
+
+export type AiPathsMaintenanceActionReport = {
+  id: AiPathsMaintenanceActionId;
+  title: string;
+  description: string;
+  blocking: boolean;
+  status: 'pending' | 'ready';
+  affectedRecords: number;
+};
+
+export type AiPathsMaintenanceReport = {
+  scannedAt: string;
+  pendingActions: number;
+  blockingActions: number;
+  actions: AiPathsMaintenanceActionReport[];
+};
+
+export type AiPathsMaintenanceApplyResult = {
+  appliedActionIds: AiPathsMaintenanceActionId[];
+  report: AiPathsMaintenanceReport;
+};
+
 const parsePositiveInt = (value: string | undefined, fallback: number): number => {
   if (!value) return fallback;
   const parsed = Number(value);
@@ -1255,6 +1290,31 @@ const ensurePathIndexConsistency = async (
   );
 };
 
+const countPendingPathConfigCompactions = (records: AiPathsSettingRecord[]): number => {
+  if (records.length === 0) return 0;
+  return records.reduce((count: number, entry: AiPathsSettingRecord): number => {
+    if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return count;
+    const shouldCompact =
+      entry.value.length > AI_PATHS_CONFIG_COMPACTION_THRESHOLD ||
+      entry.value.includes('"history"') ||
+      entry.value.includes('"schemaSnapshot"');
+    if (!shouldCompact) return count;
+    const compacted = compactPathConfigValue(entry.value);
+    if (!compacted || compacted === entry.value) return count;
+    return count + 1;
+  }, 0);
+};
+
+const needsPathIndexConsistencyRepair = (
+  records: AiPathsSettingRecord[]
+): boolean => {
+  if (records.length === 0) return false;
+  const map = new Map<string, string>(
+    records.map((entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value])
+  );
+  return Boolean(repairPathIndexFromConfigs(map) ?? normalizeExistingPathIndexValue(map));
+};
+
 const hasParameterInferenceDefaults = (records: AiPathsSettingRecord[]): boolean => {
   if (records.length === 0) return false;
   const map = new Map<string, string>(
@@ -1335,7 +1395,7 @@ const hasBaseExportBlwoDefaults = (
 };
 
 const hasTranslationEnPlDefaults = (records: AiPathsSettingRecord[]): boolean => {
-  if (records.length === 0) return false;
+  if (records.length === 0) return true;
   const map = new Map<string, string>(
     records.map(
       (entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value]
@@ -1349,7 +1409,7 @@ const hasTranslationEnPlDefaults = (records: AiPathsSettingRecord[]): boolean =>
 const hasDescriptionAndNameDefaults = (
   records: AiPathsSettingRecord[]
 ): boolean => {
-  if (records.length === 0) return false;
+  if (records.length === 0) return true;
   const map = new Map<string, string>(
     records.map(
       (entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value]
@@ -1360,54 +1420,202 @@ const hasDescriptionAndNameDefaults = (
   return !needsDescriptionAndNameConfigUpgrade(raw);
 };
 
-const hasServerExecutionModeDefaults = (records: AiPathsSettingRecord[]): boolean => {
-  if (records.length === 0) return false;
-  let hasConfig = false;
-  for (const entry of records) {
-    if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) continue;
-    hasConfig = true;
-    if (needsServerExecutionModeConfigUpgrade(entry.value)) return false;
+const AI_PATHS_MAINTENANCE_ACTION_DETAILS: Record<
+  AiPathsMaintenanceActionId,
+  {
+    title: string;
+    description: string;
+    blocking: boolean;
   }
-  return hasConfig;
+> = {
+  compact_oversized_configs: {
+    title: 'Compact oversized path configs',
+    description:
+      'Removes oversized runtime snapshots/history fields from persisted path config records.',
+    blocking: false,
+  },
+  repair_path_index: {
+    title: 'Repair path index consistency',
+    description:
+      'Rebuilds/normalizes `ai_paths_index` metadata from stored path configs when index drift is detected.',
+    blocking: true,
+  },
+  ensure_parameter_inference_defaults: {
+    title: 'Seed Parameter Inference defaults',
+    description:
+      'Creates or updates the Parameter Inference path template and trigger button defaults.',
+    blocking: false,
+  },
+  ensure_description_inference_defaults: {
+    title: 'Seed Description Inference defaults',
+    description:
+      'Creates or updates the Description Inference Lite path template and trigger button defaults.',
+    blocking: false,
+  },
+  ensure_base_export_defaults: {
+    title: 'Seed Base Export defaults',
+    description:
+      'Creates or updates the Base Export (BLWO) path template and trigger button defaults.',
+    blocking: false,
+  },
+  upgrade_translation_en_pl: {
+    title: 'Upgrade EN/PL translation path',
+    description:
+      'Applies explicit config upgrades for the EN/PL translation path when required.',
+    blocking: false,
+  },
+  upgrade_description_and_name: {
+    title: 'Upgrade Name & Description path',
+    description:
+      'Applies explicit config upgrades for the Name & Description path when required.',
+    blocking: false,
+  },
+  upgrade_server_execution_mode: {
+    title: 'Upgrade server execution mode defaults',
+    description:
+      'Adds server execution mode defaults to path configs that still use legacy runtime mode.',
+    blocking: false,
+  },
 };
 
-const hasAiPathsSeedDefaults = (records: AiPathsSettingRecord[]): boolean =>
-  hasParameterInferenceDefaults(records) &&
-  hasDescriptionInferenceLiteDefaults(records) &&
-  hasBaseExportBlwoDefaults(records) &&
-  hasTranslationEnPlDefaults(records) &&
-  hasDescriptionAndNameDefaults(records) &&
-  hasServerExecutionModeDefaults(records);
+const countPendingServerExecutionModeUpgrades = (
+  records: AiPathsSettingRecord[]
+): number => {
+  if (records.length === 0) return 0;
+  return records.reduce((count: number, entry: AiPathsSettingRecord): number => {
+    if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return count;
+    return needsServerExecutionModeConfigUpgrade(entry.value) ? count + 1 : count;
+  }, 0);
+};
+
+const buildAiPathsMaintenanceReport = (
+  records: AiPathsSettingRecord[]
+): AiPathsMaintenanceReport => {
+  const pendingByAction: Record<AiPathsMaintenanceActionId, number> = {
+    compact_oversized_configs: countPendingPathConfigCompactions(records),
+    repair_path_index: needsPathIndexConsistencyRepair(records) ? 1 : 0,
+    ensure_parameter_inference_defaults: hasParameterInferenceDefaults(records) ? 0 : 1,
+    ensure_description_inference_defaults: hasDescriptionInferenceLiteDefaults(records)
+      ? 0
+      : 1,
+    ensure_base_export_defaults: hasBaseExportBlwoDefaults(records) ? 0 : 1,
+    upgrade_translation_en_pl: hasTranslationEnPlDefaults(records) ? 0 : 1,
+    upgrade_description_and_name: hasDescriptionAndNameDefaults(records) ? 0 : 1,
+    upgrade_server_execution_mode: countPendingServerExecutionModeUpgrades(records),
+  };
+
+  const actions = AI_PATHS_MAINTENANCE_ACTION_IDS.map(
+    (actionId: AiPathsMaintenanceActionId): AiPathsMaintenanceActionReport => {
+      const details = AI_PATHS_MAINTENANCE_ACTION_DETAILS[actionId];
+      const affectedRecords = pendingByAction[actionId];
+      return {
+        id: actionId,
+        title: details.title,
+        description: details.description,
+        blocking: details.blocking,
+        status: affectedRecords > 0 ? 'pending' : 'ready',
+        affectedRecords,
+      };
+    }
+  );
+
+  const pendingActions = actions.filter(
+    (action: AiPathsMaintenanceActionReport): boolean => action.status === 'pending'
+  );
+
+  return {
+    scannedAt: new Date().toISOString(),
+    pendingActions: pendingActions.length,
+    blockingActions: pendingActions.filter((action) => action.blocking).length,
+    actions,
+  };
+};
+
+const resolveRequestedMaintenanceActionIds = (
+  report: AiPathsMaintenanceReport,
+  requestedActionIds?: AiPathsMaintenanceActionId[]
+): AiPathsMaintenanceActionId[] => {
+  const orderedRequested =
+    requestedActionIds && requestedActionIds.length > 0
+      ? AI_PATHS_MAINTENANCE_ACTION_IDS.filter((actionId: AiPathsMaintenanceActionId) =>
+        requestedActionIds.includes(actionId)
+      )
+      : report.actions
+        .filter((action: AiPathsMaintenanceActionReport): boolean => action.status === 'pending')
+        .map((action: AiPathsMaintenanceActionReport): AiPathsMaintenanceActionId => action.id);
+  return Array.from(new Set(orderedRequested));
+};
+
+export async function inspectAiPathsSettingsMaintenance(): Promise<AiPathsMaintenanceReport> {
+  assertMongoConfigured();
+  const settings = await listMongoAiPathsSettings();
+  setCachedAiPathsSettings(settings);
+  return buildAiPathsMaintenanceReport(settings);
+}
+
+export async function applyAiPathsSettingsMaintenance(
+  actionIds?: AiPathsMaintenanceActionId[]
+): Promise<AiPathsMaintenanceApplyResult> {
+  assertMongoConfigured();
+  const settings = await listMongoAiPathsSettings();
+  const pendingReport = buildAiPathsMaintenanceReport(settings);
+  const selectedActionIds = resolveRequestedMaintenanceActionIds(pendingReport, actionIds);
+  if (selectedActionIds.length === 0) {
+    return {
+      appliedActionIds: [],
+      report: pendingReport,
+    };
+  }
+
+  let next = settings;
+  for (const actionId of selectedActionIds) {
+    if (actionId === 'compact_oversized_configs') {
+      next = await compactOversizedPathConfigs(next);
+      continue;
+    }
+    if (actionId === 'repair_path_index') {
+      next = await ensurePathIndexConsistency(next);
+      continue;
+    }
+    if (actionId === 'ensure_parameter_inference_defaults') {
+      next = await ensureParameterInferenceDefaults(next);
+      continue;
+    }
+    if (actionId === 'ensure_description_inference_defaults') {
+      next = await ensureDescriptionInferenceLiteDefaults(next);
+      continue;
+    }
+    if (actionId === 'ensure_base_export_defaults') {
+      next = await ensureBaseExportBlwoDefaults(next);
+      continue;
+    }
+    if (actionId === 'upgrade_translation_en_pl') {
+      next = await ensureTranslationEnPlDefaults(next);
+      continue;
+    }
+    if (actionId === 'upgrade_description_and_name') {
+      next = await ensureDescriptionAndNameDefaults(next);
+      continue;
+    }
+    if (actionId === 'upgrade_server_execution_mode') {
+      next = await ensureServerExecutionModeDefaults(next);
+    }
+  }
+
+  setCachedAiPathsSettings(next);
+  return {
+    appliedActionIds: selectedActionIds,
+    report: buildAiPathsMaintenanceReport(next),
+  };
+}
 
 export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   assertMongoConfigured();
   const cached = getCachedAiPathsSettings();
-  if (cached && hasAiPathsSeedDefaults(cached)) return cached;
-
+  if (cached) return cached;
   const settings = await listMongoAiPathsSettings();
-  const compacted = await compactOversizedPathConfigs(settings);
-  const consistent = await ensurePathIndexConsistency(compacted);
-  const withParameterDefaults = await ensureParameterInferenceDefaults(consistent);
-  const withDescriptionDefaults = await ensureDescriptionInferenceLiteDefaults(
-    withParameterDefaults
-  );
-  const withBaseExportDefaults = await ensureBaseExportBlwoDefaults(
-    withDescriptionDefaults
-  );
-  const withTranslationDefaults = await ensureTranslationEnPlDefaults(
-    withBaseExportDefaults
-  );
-  const ensuredDefaults = await ensureDescriptionAndNameDefaults(
-    withTranslationDefaults
-  );
-  const withServerExecutionDefaults = await ensureServerExecutionModeDefaults(
-    ensuredDefaults
-  );
-  const withConsistentIndex = await ensurePathIndexConsistency(
-    withServerExecutionDefaults
-  );
-  setCachedAiPathsSettings(withConsistentIndex);
-  return withConsistentIndex;
+  setCachedAiPathsSettings(settings);
+  return settings;
 }
 
 export async function getAiPathsSetting(key: string): Promise<string | null> {

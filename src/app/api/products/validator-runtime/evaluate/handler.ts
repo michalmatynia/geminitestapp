@@ -624,12 +624,12 @@ const evaluateAiRuntime = async ({
   const raw = completion.choices?.[0]?.message?.content?.trim() ?? '';
   const parsed = parseAiJson(raw);
   const resultData = parsed ? { raw, parsed, ...parsed } : { raw };
-      const parsedMatch = resolveAiMatch(parsed);
+  const parsedMatch = resolveAiMatch(parsed);
   
-      let matched: boolean;
-      if (parsedMatch !== null) {
-        matched = parsedMatch;
-      } else {
+  let matched: boolean;
+  if (parsedMatch !== null) {
+    matched = parsedMatch;
+  } else {
   
     const resultPath = typeof config['resultPath'] === 'string' ? config['resultPath'].trim() : 'raw';
     const operator = normalizeRuntimeOperator(config['operator'] ?? 'truthy');

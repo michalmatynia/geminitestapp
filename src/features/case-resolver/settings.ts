@@ -574,10 +574,15 @@ const normalizeCaseResolverScanSlots = (input: unknown, fileId: string): CaseRes
     seen.add(rawId);
 
     const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
+    const rawStatus = typeof record['status'] === 'string' ? record['status'] : '';
+    const status = (rawStatus === 'pending' || rawStatus === 'processing' || rawStatus === 'completed' || rawStatus === 'failed') 
+      ? rawStatus 
+      : 'completed';
+
     slots.push({
       id: rawId,
       fileId,
-      status: (record['status'] as any) || 'completed',
+      status,
       progress: typeof record['progress'] === 'number' ? record['progress'] : 100,
       name: rawName || `Scan ${slots.length + 1}`,
       filepath: sanitizeOptionalId(record['filepath']),
@@ -1047,7 +1052,7 @@ export const normalizeCaseResolverWorkspace = (
 
   const filesWithSanitizedGraph = normalizedFiles.map((file: CaseResolverFile): CaseResolverFile => {
     const sanitizedGraph = sanitizeCaseResolverGraphNodeFileRelations({
-      graph: file.graph,
+      graph: file.graph || { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
       assets,
       files: normalizedFiles,
     });

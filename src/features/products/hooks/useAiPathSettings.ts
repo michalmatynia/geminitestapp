@@ -4,6 +4,7 @@ import {
   AI_PATHS_UI_STATE_KEY,
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
+  TRIGGER_EVENTS,
 } from '@/features/ai/ai-paths/lib/core/constants';
 import {
   createDefaultPathConfig,
@@ -39,10 +40,15 @@ export type PathSettingsResult = {
   preferredActivePathId: string | null;
 };
 
+export type FindTriggerPathOptions = {
+  fallbackToAnyPath?: boolean;
+  defaultTriggerEventId?: string;
+};
+
 export async function fetchPathSettings(
   queryClient: QueryClient,
 ): Promise<PathSettingsResult> {
-  let settingsData: Array<{ key: string; value: string }> = [];
+  let settingsData: Array<{ key: string; value: string }>;
   try {
     settingsData = await queryClient.fetchQuery({
       queryKey: QUERY_KEYS.ai.aiPaths.settings(),
@@ -59,7 +65,7 @@ export async function fetchPathSettings(
     settingsData.map((item: { key: string; value: string }) => [item.key, item.value])
   );
 
-  let preferredActivePathId: string | null = null;
+  let preferredActivePathId: string | null;
   const cachedPreferences = queryClient.getQueryData<{ aiPathsActivePathId?: unknown }>(
     QUERY_KEYS.userPreferences.all
   );
@@ -151,13 +157,18 @@ export function findTriggerPath(
   uiState: Record<string, unknown> | null,
   preferredActivePathId: string | null,
   triggerEvent: string,
+  options?: FindTriggerPathOptions,
 ): PathConfig | undefined {
+  const fallbackTriggerEventId =
+    options?.defaultTriggerEventId ?? ((TRIGGER_EVENTS[0]?.id as string) ?? 'manual');
+  const fallbackToAnyPath = options?.fallbackToAnyPath !== false;
+
   const triggerCandidates: PathConfig[] = orderedConfigs.filter((config: PathConfig) =>
     Array.isArray(config?.nodes)
       ? config.nodes.some(
         (node: AiNode) =>
           node.type === 'trigger' &&
-            (node.config?.trigger?.event ?? triggerEvent) === triggerEvent
+            (node.config?.trigger?.event ?? fallbackTriggerEventId) === triggerEvent
       )
       : false
   );
@@ -174,5 +185,5 @@ export function findTriggerPath(
     ? triggerCandidates.find((config: PathConfig): boolean => config.id === activePathId)
     : undefined;
 
-  return activeTriggerCandidate ?? triggerCandidates[0] ?? orderedConfigs[0];
+  return activeTriggerCandidate ?? triggerCandidates[0] ?? (fallbackToAnyPath ? orderedConfigs[0] : undefined);
 }

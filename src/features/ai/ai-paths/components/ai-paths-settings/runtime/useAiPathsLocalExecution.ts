@@ -322,7 +322,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       }
       args.runLoopActiveRef.current = true;
       const stepLimit = mode === 'step' ? 1 : LOCAL_RUN_STEP_CHUNK;
-      let outcome: 'completed' | 'paused' | 'canceled' | 'error';
+      let outcome: 'completed' | 'paused' | 'canceled' | 'error' = 'completed';
       let capturedError: unknown = undefined;
       try {
         if (!args.abortControllerRef.current || args.abortControllerRef.current.signal.aborted) {
@@ -793,12 +793,13 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
         (finding): boolean =>
           finding.severity === 'warning' && finding.message.trim().length > 0
       );
-      const primaryWarning = warningFindings[0]?.message?.trim() ?? null;
+      const primaryWarningFinding = warningFindings[0];
+      const primaryWarning = primaryWarningFinding?.message?.trim() ?? null;
       const warningMessage = primaryWarning
-        ? `Graph compile warning: ${primaryWarning}${
+        ? `Graph compile warning (${primaryWarningFinding?.code ?? 'warning'}): ${primaryWarning}${
           warningFindings.length > 1 ? ` (+${warningFindings.length - 1} more)` : ''
         }`
-        : `Graph compile warnings: ${compileReport.warnings} non-blocking issue(s) detected.`;
+        : `Graph compile warnings: ${compileReport.warnings} non-blocking issue(s) detected. Open Paths Settings -> Compile Inspector for details.`;
       args.appendRuntimeEvent({
         source: 'local',
         kind: 'run_warning',

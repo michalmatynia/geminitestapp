@@ -5,6 +5,39 @@ import type { SettingRecordDto } from '@/shared/contracts/settings';
 import { ApiError, api } from '@/shared/lib/api-client';
 
 export type AiPathsSettingRecord = SettingRecordDto;
+export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
+  'compact_oversized_configs',
+  'repair_path_index',
+  'ensure_parameter_inference_defaults',
+  'ensure_description_inference_defaults',
+  'ensure_base_export_defaults',
+  'upgrade_translation_en_pl',
+  'upgrade_description_and_name',
+  'upgrade_server_execution_mode',
+] as const;
+export type AiPathsMaintenanceActionId =
+  (typeof AI_PATHS_MAINTENANCE_ACTION_IDS)[number];
+
+export type AiPathsMaintenanceActionReport = {
+  id: AiPathsMaintenanceActionId;
+  title: string;
+  description: string;
+  blocking: boolean;
+  status: 'pending' | 'ready';
+  affectedRecords: number;
+};
+
+export type AiPathsMaintenanceReport = {
+  scannedAt: string;
+  pendingActions: number;
+  blockingActions: number;
+  actions: AiPathsMaintenanceActionReport[];
+};
+
+export type AiPathsMaintenanceApplyResult = {
+  appliedActionIds: AiPathsMaintenanceActionId[];
+  report: AiPathsMaintenanceReport;
+};
 
 const AI_PATHS_SETTINGS_STALE_MS = 10_000;
 const AI_PATHS_SETTINGS_BACKUP_KEY = 'ai_paths_settings_backup_v1';
@@ -24,6 +57,81 @@ export const invalidateAiPathsSettingsCache = (): void => {
   aiPathsSettingsCache = null;
   aiPathsSettingsFetchedAt = 0;
   aiPathsSettingsInflight = null;
+};
+
+const dispatchAiPathsSettingsUpdatedEvent = (): void => {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(
+    new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
+  );
+};
+
+const isAiPathsMaintenanceActionId = (value: unknown): value is AiPathsMaintenanceActionId =>
+  typeof value === 'string' &&
+  (AI_PATHS_MAINTENANCE_ACTION_IDS as readonly string[]).includes(value);
+
+const normalizeAiPathsMaintenanceAction = (
+  value: unknown
+): AiPathsMaintenanceActionReport | null => {
+  if (!value || typeof value !== 'object') return null;
+  const item = value as Record<string, unknown>;
+  const id = item['id'];
+  const status = item['status'];
+  if (!isAiPathsMaintenanceActionId(id)) return null;
+  if (status !== 'pending' && status !== 'ready') return null;
+  return {
+    id,
+    title: typeof item['title'] === 'string' ? item['title'] : id,
+    description:
+      typeof item['description'] === 'string' ? item['description'] : '',
+    blocking: item['blocking'] === true,
+    status,
+    affectedRecords:
+      typeof item['affectedRecords'] === 'number' && Number.isFinite(item['affectedRecords'])
+        ? Math.max(0, Math.trunc(item['affectedRecords']))
+        : 0,
+  };
+};
+
+const normalizeAiPathsMaintenanceReport = (
+  value: unknown
+): AiPathsMaintenanceReport => {
+  if (!value || typeof value !== 'object') {
+    return {
+      scannedAt: new Date().toISOString(),
+      pendingActions: 0,
+      blockingActions: 0,
+      actions: [],
+    };
+  }
+  const payload = value as Record<string, unknown>;
+  const actionsRaw = Array.isArray(payload['actions']) ? payload['actions'] : [];
+  const actions = actionsRaw
+    .map((item: unknown): AiPathsMaintenanceActionReport | null =>
+      normalizeAiPathsMaintenanceAction(item)
+    )
+    .filter(
+      (item: AiPathsMaintenanceActionReport | null): item is AiPathsMaintenanceActionReport =>
+        Boolean(item)
+    );
+  const pendingActions = actions.filter((item) => item.status === 'pending');
+  return {
+    scannedAt:
+      typeof payload['scannedAt'] === 'string' && payload['scannedAt'].trim().length > 0
+        ? payload['scannedAt']
+        : new Date().toISOString(),
+    pendingActions:
+      typeof payload['pendingActions'] === 'number' &&
+      Number.isFinite(payload['pendingActions'])
+        ? Math.max(0, Math.trunc(payload['pendingActions']))
+        : pendingActions.length,
+    blockingActions:
+      typeof payload['blockingActions'] === 'number' &&
+      Number.isFinite(payload['blockingActions'])
+        ? Math.max(0, Math.trunc(payload['blockingActions']))
+        : pendingActions.filter((item) => item.blocking).length,
+    actions,
+  };
 };
 
 const readBackupSettings = (): AiPathsSettingRecord[] | null => {
@@ -203,11 +311,7 @@ export const updateAiPathsSettingsBulk = async (
     throw error;
   }
   invalidateAiPathsSettingsCache();
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(
-      new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
-    );
-  }
+  dispatchAiPathsSettingsUpdatedEvent();
   if (!Array.isArray(data)) return payload;
   return data
     .map((item: unknown): AiPathsSettingRecord | null => {
@@ -234,11 +338,7 @@ export const updateAiPathsSetting = async (
     throw error;
   }
   invalidateAiPathsSettingsCache();
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(
-      new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
-    );
-  }
+  dispatchAiPathsSettingsUpdatedEvent();
   if (!data || typeof data !== 'object') return { key, value };
   const nextKey = (data as { key?: unknown }).key;
   const nextValue = (data as { value?: unknown }).value;
@@ -271,10 +371,64 @@ export const deleteAiPathsSettings = async (keys: string[]): Promise<number> => 
     throw error;
   }
   invalidateAiPathsSettingsCache();
-  if (typeof window !== 'undefined') {
-    window.dispatchEvent(
-      new CustomEvent('ai-paths:settings:updated', { detail: { scope: 'ai-paths' } })
-    );
-  }
+  dispatchAiPathsSettingsUpdatedEvent();
   return typeof data?.deletedCount === 'number' ? data.deletedCount : 0;
+};
+
+export const fetchAiPathsMaintenanceReport = async (): Promise<AiPathsMaintenanceReport> => {
+  let data: unknown;
+  try {
+    data = await api.get<unknown>('/api/ai-paths/settings/maintenance');
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new Error(`Failed to load AI Paths maintenance report (${error.status})`, {
+        cause: error,
+      });
+    }
+    throw error;
+  }
+  return normalizeAiPathsMaintenanceReport(data);
+};
+
+export const applyAiPathsMaintenanceActions = async (
+  actionIds?: AiPathsMaintenanceActionId[]
+): Promise<AiPathsMaintenanceApplyResult> => {
+  const normalizedActionIds =
+    actionIds && actionIds.length > 0
+      ? Array.from(
+        new Set(
+          actionIds.filter((actionId): actionId is AiPathsMaintenanceActionId =>
+            isAiPathsMaintenanceActionId(actionId)
+          )
+        )
+      )
+      : undefined;
+  let data: unknown;
+  try {
+    data = await api.post<unknown>('/api/ai-paths/settings/maintenance', {
+      ...(normalizedActionIds ? { actionIds: normalizedActionIds } : {}),
+    });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw new Error(`Failed to apply AI Paths maintenance (${error.status})`, {
+        cause: error,
+      });
+    }
+    throw error;
+  }
+
+  const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
+  const appliedActionIds = Array.isArray(payload['appliedActionIds'])
+    ? payload['appliedActionIds'].filter(
+      (value: unknown): value is AiPathsMaintenanceActionId =>
+        isAiPathsMaintenanceActionId(value)
+    )
+    : [];
+  const report = normalizeAiPathsMaintenanceReport(payload['report']);
+  invalidateAiPathsSettingsCache();
+  dispatchAiPathsSettingsUpdatedEvent();
+  return {
+    appliedActionIds,
+    report,
+  };
 };

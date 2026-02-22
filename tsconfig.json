@@ -84,7 +84,9 @@
     ".next-dev/types/**/*.ts",
     ".next-dev/dev/types/**/*.ts",
     "src/global.d.ts",
-    "src/shared/contracts/ambient.d.ts"
+    "src/shared/contracts/ambient.d.ts",
+    ".next-dev-perf/types/**/*.ts",
+    ".next-dev-perf/dev/types/**/*.ts"
   ],
   "exclude": [
     "node_modules",

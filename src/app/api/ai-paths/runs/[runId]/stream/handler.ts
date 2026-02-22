@@ -133,7 +133,6 @@ async function sendCatchUp(
  */
 async function streamWithPubSub(
   runId: string,
-  controller: ReadableStreamDefaultController,
   send: (event: string, data: unknown) => void,
   initialCursors: {
     lastRunUpdatedAt: string | null;
@@ -332,7 +331,6 @@ export async function getAiPathRunStreamHandler(
 
       await streamWithPubSub(
         runId,
-        controller,
         send,
         initialCursors,
         () => cancelled

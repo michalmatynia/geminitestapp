@@ -34,7 +34,7 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
     const collections = (Array.isArray(schema.collections)
       ? schema.collections
       : Object.values(schema.collections ?? {}));
-          
+
     if (collections.length) {
       return collections.map((collection) => stripUndefinedProvider(collection));
     }
@@ -48,7 +48,7 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
       const sourceCollections = (Array.isArray(source.collections)
         ? source.collections
         : Object.values(source.collections));
-            
+
       if (!sourceCollections.length) return;
       sourceCollections.forEach((collection) => {
         merged.push({ ...stripUndefinedProvider(collection), provider });
@@ -56,17 +56,16 @@ const normalizeSchemaCollections = (schema: SchemaData | null): CollectionSchema
     });
     return merged;
   }
-        
+
   const provider = schema.provider as 'mongodb' | 'prisma';
   const baseCollections = (Array.isArray(schema.collections)
     ? schema.collections
     : Object.values(schema.collections ?? {}));
-      
+
   return baseCollections.map((collection) => ({
     ...stripUndefinedProvider(collection),
     provider,
-  }));
-};
+  }));};
 
 const buildCollectionKey = (
   collection: CollectionSchema,

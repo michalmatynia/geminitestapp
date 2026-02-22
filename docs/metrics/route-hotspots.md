@@ -1,6 +1,6 @@
 # Route Hotspots (Static Heuristic)
 
-Generated at: 2026-02-18T00:47:23.079Z
+Generated at: 2026-02-22T15:26:08.655Z
 
 This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
@@ -8,7 +8,7 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/chatbot/agent/[runId]/[action]/route.ts` | 89 |
+| `src/app/api/chatbot/agent/[runId]/[action]/route.ts` | 90 |
 | `src/app/api/integrations/exports/base/[setting]/route.ts` | 86 |
 | `src/app/api/integrations/imports/base/[setting]/route.ts` | 70 |
 | `src/app/api/marketplace/[resource]/route.ts` | 38 |
@@ -22,9 +22,9 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/api/chatbot/sessions/route.ts` | 24 |
 | `src/app/api/integrations/export-templates/[id]/route.ts` | 24 |
 | `src/app/api/integrations/import-templates/[id]/route.ts` | 24 |
+| `src/app/api/products/categories/route.ts` | 24 |
 | `src/app/api/settings/route.ts` | 23 |
 | `src/app/api/auth/users/[id]/security/route.ts` | 21 |
-| `src/app/api/products/categories/route.ts` | 21 |
 | `src/app/api/products/simple-parameters/route.ts` | 21 |
 | `src/app/api/products/validator-settings/route.ts` | 21 |
 | `src/app/api/price-groups/route.ts` | 20 |
@@ -33,13 +33,13 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 
 | Page | LOC |
 | --- | ---: |
-| `src/app/(frontend)/page.tsx` | 117 |
+| `src/app/(frontend)/page.tsx` | 119 |
 | `src/app/(frontend)/[...slug]/page.tsx` | 63 |
 | `src/app/(frontend)/preview/[id]/page.tsx` | 63 |
 | `src/app/(admin)/admin/agentcreator/page.tsx` | 45 |
 | `src/app/(admin)/admin/agentcreator/teaching/page.tsx` | 45 |
 | `src/app/(admin)/admin/settings/recovery/page.tsx` | 45 |
-| `src/app/(admin)/admin/page.tsx` | 39 |
+| `src/app/(admin)/admin/page.tsx` | 42 |
 | `src/app/(admin)/admin/settings/logging/page.tsx` | 32 |
 | `src/app/(admin)/admin/chatbot/context/page.tsx` | 14 |
 | `src/app/(admin)/admin/chatbot/page.tsx` | 14 |
@@ -50,9 +50,9 @@ This report ranks route/page complexity using LOC as a fast heuristic baseline.
 | `src/app/(admin)/admin/system/logs/page.tsx` | 14 |
 | `src/app/(frontend)/products/[id]/page.tsx` | 14 |
 | `src/app/auth/signin/page.tsx` | 14 |
+| `src/app/(admin)/admin/cms/slugs/create/page.tsx` | 13 |
+| `src/app/(admin)/admin/cms/slugs/page.tsx` | 13 |
 | `src/app/(admin)/admin/products/[id]/edit/page.tsx` | 13 |
-| `src/app/(admin)/admin/cms/slugs/create/page.tsx` | 12 |
-| `src/app/(admin)/admin/cms/slugs/page.tsx` | 12 |
 
 ## Recommended First Runtime Profiling Targets
 

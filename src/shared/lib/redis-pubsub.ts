@@ -8,7 +8,7 @@ let subscriber: Redis | null = null;
 
 const logWarning = async (message: string, context: { service: string; circuitId: string; failures: number; resetTimeoutMs: number; lastError: string }): Promise<void> => {
   try {
-    // eslint-disable-next-line import/no-restricted-paths
+     
     const mod = await import('@/features/observability/server');
     await mod.ErrorSystem.logWarning(message, context);
   } catch {
@@ -18,7 +18,7 @@ const logWarning = async (message: string, context: { service: string; circuitId
 
 const captureException = async (error: unknown, context: { source: string; context: { action: string } }): Promise<void> => {
   try {
-    // eslint-disable-next-line import/no-restricted-paths
+     
     const mod = await import('@/features/observability/server');
     await mod.ErrorSystem.captureException(error, {
       service: context.source,

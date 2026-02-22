@@ -2292,13 +2292,13 @@ export function useCanvasInteractions(args?: {
     if (!viewport) return;
     const canvasRect = canvasRef.current?.getBoundingClientRect() ?? null;
 
-          const raw = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.AI_NODE]);
-          if (!raw) return;
+    const raw = getFirstDragValue(event.dataTransfer, [DRAG_KEYS.AI_NODE]);
+    if (!raw) return;
     
-          let payload: NodeDefinition | null;
-          try {
-            payload = JSON.parse(raw) as NodeDefinition;
-          } catch (_error) {
+    let payload: NodeDefinition | null;
+    try {
+      payload = JSON.parse(raw) as NodeDefinition;
+    } catch (_error) {
     
       toast('Failed to add node. Invalid data.', { variant: 'error' });
       return;

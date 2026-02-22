@@ -25,7 +25,7 @@ import type {
   SqlQueryResult,
 } from '@/shared/contracts/database';
 import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
-import { apiClient, ApiError } from '@/shared/lib/api-client';
+import { apiClient, ApiError, type ApiClientOptions } from '@/shared/lib/api-client';
 import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
@@ -44,7 +44,7 @@ export type ApiPayloadResult<TPayload> = {
 
 const fetchJsonResult = async <TPayload>(
   input: string,
-  init?: RequestInit
+  init?: ApiClientOptions
 ): Promise<ApiPayloadResult<TPayload>> => {
   try {
     const payload = await apiClient<TPayload>(input, init);
@@ -235,7 +235,9 @@ export const executeCrudOperation = async (
 
 export const fetchAllCollectionsSchema = async (): Promise<MultiSchemaResponse> => {
   return requireOk(
-    await fetchJsonResult<MultiSchemaResponse>('/api/databases/schema?provider=all&includeCounts=true'),
+    await fetchJsonResult<MultiSchemaResponse>('/api/databases/schema?provider=all&includeCounts=true', {
+      timeout: 60_000,
+    }),
     'Failed to fetch collections schema.'
   );
 };

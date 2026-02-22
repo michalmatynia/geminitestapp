@@ -46,9 +46,9 @@ export async function runAgentBrowserControl({
     };
   }
 
-  let launch: Browser | null;
-  let context: BrowserContext | null;
-  let page: Page | null;
+  let launch: Browser | null = null;
+  let context: BrowserContext | null = null;
+  let page: Page | null = null;
 
   try {
     const run = await prisma.chatbotAgentRun.findUnique({ where: { id: runId } });

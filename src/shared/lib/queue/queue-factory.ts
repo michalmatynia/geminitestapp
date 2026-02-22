@@ -15,7 +15,7 @@ import type { Job } from 'bullmq';
 
 const logSystemEvent = async (params: { level: 'info' | 'warn' | 'error'; message: string; source: string; context?: Record<string, unknown> }): Promise<void> => {
   try {
-    // eslint-disable-next-line import/no-restricted-paths
+     
     const mod = await import('@/features/observability/server') as { logSystemEvent: (input: unknown) => Promise<void> };
     await mod.logSystemEvent(params);
   } catch {
@@ -25,7 +25,7 @@ const logSystemEvent = async (params: { level: 'info' | 'warn' | 'error'; messag
 
 const captureException = async (error: unknown, context: { service: string; category?: string; context?: Record<string, unknown> }): Promise<void> => {
   try {
-    // eslint-disable-next-line import/no-restricted-paths
+     
     const mod = await import('@/features/observability/server');
     await mod.ErrorSystem.captureException(error, context);
   } catch {

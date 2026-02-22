@@ -567,14 +567,14 @@ Rejected when visual coherence does not hold.`;
       subsection.title.toUpperCase().includes('COMPOSITION')
     );
     expect(composition?.items).toHaveLength(1);
-    expect(composition?.items[0]?.text).toContain(
+    expect(composition!.items![0]?.text).toContain(
       'allow_intentional_offcenter=true, keep intentional premium off-center.'
     );
     const details = requirements?.subsections.find( (subsection: any) =>
       subsection.title.toUpperCase().includes('DETAILS')
     );
     expect(details?.items).toHaveLength(1);
-    expect(details?.items[0]?.text).toContain(
+    expect(details!.items![0]?.text).toContain(
       'if enabled; avoid logos/text/patterns/stitching/texture.'
     );
 

@@ -26,6 +26,12 @@ import {
   runsApi,
 } from '@/features/ai/ai-paths/lib';
 import {
+  applyAiPathsMaintenanceActions,
+  fetchAiPathsMaintenanceReport,
+  type AiPathsMaintenanceActionId,
+  type AiPathsMaintenanceReport,
+} from '@/features/ai/ai-paths/lib/settings-store-client';
+import {
   Button,
   SelectSimple,
   useToast,
@@ -199,6 +205,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
     flow: string;
     runMode: string;
     strictFlowMode: string;
+    maintenance: string;
     validationEngine: string;
     validationPolicy: string;
     validationThresholds: string;
@@ -369,6 +376,12 @@ export function AiPathsSettingsView(): React.JSX.Element {
     useState<ValidationRuleDraft>(DEFAULT_RULE_DRAFT);
   const [validationRuleConditionsDraft, setValidationRuleConditionsDraft] =
     useState<AiPathsValidationCondition[]>([]);
+  const [maintenanceReport, setMaintenanceReport] =
+    useState<AiPathsMaintenanceReport | null>(null);
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+  const [maintenanceApplying, setMaintenanceApplying] = useState(false);
+  const [selectedMaintenanceActionIds, setSelectedMaintenanceActionIds] =
+    useState<Set<AiPathsMaintenanceActionId>>(new Set());
 
   const [simulationOpenNodeId, setSimulationOpenNodeId] = useState<
     string | null
@@ -399,6 +412,103 @@ export function AiPathsSettingsView(): React.JSX.Element {
     activeTab === 'canvas',
   );
 
+  const pendingMaintenanceActions = useMemo(
+    () =>
+      (maintenanceReport?.actions ?? []).filter(
+        (action) => action.status === 'pending',
+      ),
+    [maintenanceReport],
+  );
+
+  const selectedPendingMaintenanceActionIds = useMemo(
+    () =>
+      pendingMaintenanceActions
+        .filter((action) => selectedMaintenanceActionIds.has(action.id))
+        .map((action) => action.id),
+    [pendingMaintenanceActions, selectedMaintenanceActionIds],
+  );
+
+  const seedMaintenanceSelection = useCallback(
+    (_report: AiPathsMaintenanceReport): void => {
+      // Do not auto-select pending maintenance actions.
+      // Template/default seeding actions must stay explicit to avoid accidental path re-creation.
+      setSelectedMaintenanceActionIds(new Set());
+    },
+    [],
+  );
+
+  const loadMaintenanceReport = useCallback(async (): Promise<void> => {
+    setMaintenanceLoading(true);
+    try {
+      const report = await fetchAiPathsMaintenanceReport();
+      setMaintenanceReport(report);
+      seedMaintenanceSelection(report);
+    } catch (error) {
+      void error;
+      setMaintenanceReport(null);
+      setSelectedMaintenanceActionIds(new Set());
+      toast('Failed to load AI Paths maintenance report.', {
+        variant: 'error',
+      });
+    } finally {
+      setMaintenanceLoading(false);
+    }
+  }, [seedMaintenanceSelection, toast]);
+
+  const toggleMaintenanceActionSelection = useCallback(
+    (actionId: AiPathsMaintenanceActionId, checked: boolean): void => {
+      setSelectedMaintenanceActionIds((previous) => {
+        const next = new Set(previous);
+        if (checked) {
+          next.add(actionId);
+        } else {
+          next.delete(actionId);
+        }
+        return next;
+      });
+    },
+    [],
+  );
+
+  const handleApplyMaintenanceActions = useCallback(async (): Promise<void> => {
+    if (maintenanceApplying) return;
+    if (selectedPendingMaintenanceActionIds.length === 0) {
+      toast('Select at least one pending maintenance action.', {
+        variant: 'info',
+      });
+      return;
+    }
+    setMaintenanceApplying(true);
+    try {
+      const result = await applyAiPathsMaintenanceActions(
+        selectedPendingMaintenanceActionIds,
+      );
+      setMaintenanceReport(result.report);
+      seedMaintenanceSelection(result.report);
+      const appliedCount = result.appliedActionIds.length;
+      toast(
+        appliedCount > 0
+          ? `Applied ${appliedCount} maintenance action${appliedCount === 1 ? '' : 's'}.`
+          : 'No pending maintenance actions to apply.',
+        { variant: appliedCount > 0 ? 'success' : 'info' },
+      );
+      incrementLoadNonce();
+    } catch (error) {
+      void error;
+      toast('Failed to apply AI Paths maintenance actions.', {
+        variant: 'error',
+      });
+    } finally {
+      setMaintenanceApplying(false);
+    }
+  }, [
+    incrementLoadNonce,
+    maintenanceApplying,
+    seedMaintenanceSelection,
+    selectedPendingMaintenanceActionIds,
+    toast,
+  ]);
+
   useEffect((): void => {
     if (!pathSettingsModalOpen) return;
     setValidationDocsDraft(
@@ -417,6 +527,11 @@ export function AiPathsSettingsView(): React.JSX.Element {
     setValidationRuleDraft(DEFAULT_RULE_DRAFT);
     setValidationRuleConditionsDraft([]);
   }, [normalizedAiPathsValidation, pathSettingsModalOpen]);
+
+  useEffect((): void => {
+    if (!pathSettingsModalOpen) return;
+    void loadMaintenanceReport();
+  }, [loadMaintenanceReport, pathSettingsModalOpen]);
 
   const nodeTitleById = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
@@ -1670,6 +1785,150 @@ export function AiPathsSettingsView(): React.JSX.Element {
             ) : <span className='text-xs text-muted-foreground'>No save status</span>
           },
           {
+            key: 'maintenance',
+            label: 'Maintenance',
+            type: 'custom',
+            render: () => (
+              <div className='space-y-2'>
+                <div className='flex flex-wrap items-center gap-2 text-[11px]'>
+                  <StatusBadge
+                    status={`Pending: ${maintenanceReport?.pendingActions ?? 0}`}
+                    variant={
+                      (maintenanceReport?.pendingActions ?? 0) > 0
+                        ? 'warning'
+                        : 'success'
+                    }
+                    size='sm'
+                  />
+                  <StatusBadge
+                    status={`Blocking: ${maintenanceReport?.blockingActions ?? 0}`}
+                    variant={
+                      (maintenanceReport?.blockingActions ?? 0) > 0
+                        ? 'error'
+                        : 'neutral'
+                    }
+                    size='sm'
+                  />
+                  <StatusBadge
+                    status={
+                      maintenanceReport?.scannedAt
+                        ? `Scanned: ${new Date(maintenanceReport.scannedAt).toLocaleTimeString()}`
+                        : 'Scanned: n/a'
+                    }
+                    variant='neutral'
+                    size='sm'
+                  />
+                  <Button
+                    type='button'
+                    className='h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-card/70'
+                    onClick={() => {
+                      void loadMaintenanceReport();
+                    }}
+                    disabled={maintenanceLoading || maintenanceApplying}
+                  >
+                    {maintenanceLoading ? 'Refreshing...' : 'Refresh'}
+                  </Button>
+                </div>
+                <div className='text-[11px] text-gray-400'>
+                  Maintenance no longer runs behind the scenes on settings load.
+                  Review and apply pending actions explicitly from this panel.
+                </div>
+                {maintenanceLoading ? (
+                  <div className='rounded-md border border-border/60 bg-card/40 px-2 py-2 text-[11px] text-gray-300'>
+                    Loading maintenance report...
+                  </div>
+                ) : (maintenanceReport?.actions.length ?? 0) > 0 ? (
+                  <div className='max-h-[220px] space-y-1 overflow-y-auto rounded-md border border-border/60 bg-card/40 p-2'>
+                    {maintenanceReport?.actions.map((action) => {
+                      const isPending = action.status === 'pending';
+                      const checked = selectedMaintenanceActionIds.has(action.id);
+                      return (
+                        <label
+                          key={action.id}
+                          className='flex items-start gap-2 rounded-md border border-border/50 bg-card/60 px-2 py-1.5 text-[11px]'
+                        >
+                          <input
+                            type='checkbox'
+                            className='mt-0.5 size-3.5 accent-sky-500'
+                            checked={checked}
+                            disabled={!isPending || maintenanceApplying}
+                            onChange={(event) =>
+                              toggleMaintenanceActionSelection(
+                                action.id,
+                                event.target.checked,
+                              )
+                            }
+                          />
+                          <div className='min-w-0 flex-1'>
+                            <div className='flex flex-wrap items-center gap-1.5'>
+                              <span className='font-medium text-gray-100'>
+                                {action.title}
+                              </span>
+                              <StatusBadge
+                                status={isPending ? 'Pending' : 'Ready'}
+                                variant={isPending ? 'warning' : 'success'}
+                                size='sm'
+                              />
+                              <StatusBadge
+                                status={`Records: ${action.affectedRecords}`}
+                                variant='neutral'
+                                size='sm'
+                              />
+                            </div>
+                            <div className='mt-0.5 text-gray-400'>
+                              {action.description}
+                            </div>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className='rounded-md border border-border/60 bg-card/40 px-2 py-2 text-[11px] text-gray-300'>
+                    No maintenance metadata available yet.
+                  </div>
+                )}
+                <div className='flex justify-end gap-2'>
+                  <Button
+                    type='button'
+                    className='h-8 rounded-md border border-border px-2 text-[11px] text-gray-200 hover:bg-card/70'
+                    onClick={() => {
+                      setSelectedMaintenanceActionIds(
+                        new Set(
+                          pendingMaintenanceActions.map((action) => action.id),
+                        ),
+                      );
+                    }}
+                    disabled={
+                      maintenanceLoading ||
+                      maintenanceApplying ||
+                      pendingMaintenanceActions.length === 0
+                    }
+                  >
+                    Select Pending
+                  </Button>
+                  <Button
+                    type='button'
+                    className='h-8 rounded-md border border-sky-500/40 px-2 text-[11px] text-sky-100 hover:bg-sky-500/10'
+                    onClick={() => {
+                      void handleApplyMaintenanceActions();
+                    }}
+                    disabled={
+                      maintenanceLoading ||
+                      maintenanceApplying ||
+                      pendingMaintenanceActions.length === 0 ||
+                      selectedPendingMaintenanceActionIds.length === 0
+                    }
+                  >
+                    {maintenanceApplying
+                      ? 'Applying...'
+                      : `Apply Selected (${selectedPendingMaintenanceActionIds.length})`}
+                  </Button>
+                </div>
+              </div>
+            )
+          },
+          {
             key: 'execution',
             label: 'Execution',
             type: 'custom',
@@ -2791,6 +3050,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
           flow: flowIntensity,
           runMode,
           strictFlowMode: strictFlowMode ? 'on' : 'off',
+          maintenance: String(maintenanceReport?.pendingActions ?? 0),
           validationEngine:
             normalizedAiPathsValidation.enabled !== false ? 'on' : 'off',
           validationPolicy:

@@ -279,7 +279,7 @@ describe('compileGraph', () => {
     ).toBe(false);
   });
 
-  it('ignores the trigger-simulation handshake cycle pattern', () => {
+  it('reports the trigger-simulation handshake cycle pattern as explicit warning', () => {
     const nodes: AiNode[] = [
       buildNode({
         id: 'trigger-1',
@@ -315,7 +315,7 @@ describe('compileGraph', () => {
     expect(report.ok).toBe(true);
     expect(
       report.findings.some((finding) => finding.code === 'cycle_detected')
-    ).toBe(false);
+    ).toBe(true);
     expect(
       report.findings.some((finding) => finding.code === 'unsupported_cycle')
     ).toBe(false);

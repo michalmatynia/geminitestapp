@@ -51,22 +51,39 @@ export function parsePromptExploderSettings(rawValue: string | null | undefined)
   if (!rawValue?.trim()) return defaultPromptExploderSettings;
 
   try {
-    const rawParsed = JSON.parse(rawValue) as Record<string, any>;
+    const rawParsed = JSON.parse(rawValue) as unknown;
+    if (!rawParsed || typeof rawParsed !== 'object' || Array.isArray(rawParsed)) {
+      return defaultPromptExploderSettings;
+    }
+    const record = rawParsed as Record<string, unknown>;
+    
+    const getNestedObject = (key: string): Record<string, unknown> => {
+      const val = record[key];
+      return (val && typeof val === 'object' && !Array.isArray(val)) 
+        ? (val as Record<string, unknown>) 
+        : {};
+    };
+
+    const learningRecord = getNestedObject('learning');
+    const templates = Array.isArray(learningRecord['templates']) 
+      ? (learningRecord['templates'] as unknown[]) 
+      : [];
+
     const merged = {
       ...defaultPromptExploderSettings,
-      ...rawParsed,
+      ...record,
       runtime: {
         ...defaultPromptExploderSettings.runtime,
-        ...(rawParsed.runtime || {}),
+        ...getNestedObject('runtime'),
       },
       learning: {
         ...defaultPromptExploderSettings.learning,
-        ...(rawParsed.learning || {}),
-        templates: rawParsed.learning?.templates || [],
+        ...learningRecord,
+        templates,
       },
       ai: {
         ...defaultPromptExploderSettings.ai,
-        ...(rawParsed.ai || {}),
+        ...getNestedObject('ai'),
       },
     };
 

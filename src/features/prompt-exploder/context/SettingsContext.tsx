@@ -430,8 +430,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   useEffect(() => {
     if (hasUnsavedLearningDraft) return;
+    const rawRuleProfile = promptExploderSettings.runtime.ruleProfile;
+    const runtimeRuleProfile = (rawRuleProfile === 'pattern_pack' || rawRuleProfile === 'learned_only') 
+      ? rawRuleProfile 
+      : 'all';
+
     setLearningDraftState({
-      runtimeRuleProfile: promptExploderSettings.runtime.ruleProfile as any,
+      runtimeRuleProfile,
       runtimeValidationRuleStack: normalizePromptExploderValidationRuleStack(
         promptExploderSettings.runtime.validationRuleStack,
         validatorPatternLists

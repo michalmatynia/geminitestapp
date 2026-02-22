@@ -7,7 +7,6 @@ import {
 } from '@/features/ai/agent-runtime/planning/llm';
 import {
   buildBranchStepsFromAlternatives,
-  decideNextAction,
 } from '@/features/ai/agent-runtime/planning/utils';
 import type { PlanHierarchy } from '@/features/ai/agent-runtime/planning/utils';
 import type {

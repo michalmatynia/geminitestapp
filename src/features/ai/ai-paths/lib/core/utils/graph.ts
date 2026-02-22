@@ -533,58 +533,6 @@ const detectStronglyConnectedComponents = (
   });
 };
 
-const isBenignTriggerSimulationHandshakeCycle = (
-  componentNodeIds: string[],
-  edges: Edge[],
-  nodeById: Map<string, AiNode>
-): boolean => {
-  if (componentNodeIds.length !== 2) return false;
-  const componentNodeSet = new Set(componentNodeIds);
-  const componentNodes = componentNodeIds
-    .map((nodeId: string): AiNode | undefined => nodeById.get(nodeId))
-    .filter((node: AiNode | undefined): node is AiNode => Boolean(node));
-  if (componentNodes.length !== 2) return false;
-  const hasTrigger = componentNodes.some((node: AiNode): boolean => node.type === 'trigger');
-  const hasSimulation = componentNodes.some(
-    (node: AiNode): boolean => node.type === 'simulation'
-  );
-  if (!hasTrigger || !hasSimulation) return false;
-
-  const internalEdges = edges.filter((edge: Edge): boolean => {
-    if (!edge.from || !edge.to) return false;
-    return componentNodeSet.has(edge.from) && componentNodeSet.has(edge.to);
-  });
-  if (internalEdges.length !== 2) return false;
-
-  const hasTriggerToSimulation = internalEdges.some((edge: Edge): boolean => {
-    if (!edge.from || !edge.to) return false;
-    const fromNode = nodeById.get(edge.from);
-    const toNode = nodeById.get(edge.to);
-    if (!fromNode || !toNode) return false;
-    return (
-      fromNode.type === 'trigger' &&
-      toNode.type === 'simulation' &&
-      edge.fromPort === 'trigger' &&
-      edge.toPort === 'trigger'
-    );
-  });
-
-  const hasSimulationToTrigger = internalEdges.some((edge: Edge): boolean => {
-    if (!edge.from || !edge.to) return false;
-    const fromNode = nodeById.get(edge.from);
-    const toNode = nodeById.get(edge.to);
-    if (!fromNode || !toNode) return false;
-    return (
-      fromNode.type === 'simulation' &&
-      toNode.type === 'trigger' &&
-      edge.fromPort === 'context' &&
-      edge.toPort === 'context'
-    );
-  });
-
-  return hasTriggerToSimulation && hasSimulationToTrigger;
-};
-
 const resolveCycleRequiredPortsForNode = (
   node: AiNode,
   connectedPorts: Set<string>,
@@ -754,9 +702,6 @@ export const compileGraph = (
     const cycleComponents = detectStronglyConnectedComponents(nodes, sanitized);
     const nonBenignCycleNodeIds = new Set<string>();
     cycleComponents.forEach((componentNodeIds: string[]): void => {
-      if (isBenignTriggerSimulationHandshakeCycle(componentNodeIds, sanitized, nodeById)) {
-        return;
-      }
       componentNodeIds.forEach((nodeId: string): void => {
         nonBenignCycleNodeIds.add(nodeId);
       });
@@ -795,9 +740,6 @@ export const compileGraph = (
     }
 
     cycleComponents.forEach((componentNodeIds: string[]): void => {
-      if (isBenignTriggerSimulationHandshakeCycle(componentNodeIds, sanitized, nodeById)) {
-        return;
-      }
       const componentNodeSet = new Set(componentNodeIds);
       const componentNodes = componentNodeIds
         .map((nodeId: string): AiNode | undefined => nodeById.get(nodeId))

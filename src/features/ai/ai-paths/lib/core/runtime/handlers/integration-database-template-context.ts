@@ -216,9 +216,9 @@ export function prepareDatabaseTemplateContext({
   DB_PROVIDER_PLACEHOLDERS.forEach((provider: string) => {
     placeholderContext[`DB Provider: ${provider}`] = provider;
   });
-  const collections = schemaData?.collections 
+  const collections = (schemaData?.collections 
     ? (Array.isArray(schemaData.collections) ? (schemaData.collections) : (Object.values(schemaData.collections)))
-    : [];
+    : []) as CollectionSchema[];
       
   if (collections.length) {
     collections.forEach((collection: CollectionSchema) => {

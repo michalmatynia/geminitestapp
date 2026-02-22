@@ -59,7 +59,7 @@ export type ToastOptions = {
   error?: unknown;
 };
 
-export type Toast = (message: any, options?: any) => void;
+export type Toast = (message: string, options?: ToastOptions) => void;
 
 export interface MultiSectionModalProps extends ModalStateProps {
   activeSection?: string;

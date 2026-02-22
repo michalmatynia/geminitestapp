@@ -419,23 +419,25 @@ const buildSkipSet = (
 
 const buildCompileWarningMessage = (compileReport: {
   warnings: number;
-  findings: Array<{ severity: string; message: string }>;
+  findings: Array<{ severity: string; message: string; code?: string }>;
 }): string => {
   const warningFindings = compileReport.findings.filter(
     (finding: { severity: string; message: string }): boolean =>
       finding.severity === 'warning' && finding.message.trim().length > 0
   );
   if (warningFindings.length === 0) {
-    return `Graph compile warnings detected (${compileReport.warnings}).`;
+    return `Graph compile warnings detected (${compileReport.warnings}). Open Paths Settings -> Compile Inspector for details.`;
   }
-  const primary = warningFindings[0]?.message?.trim();
+  const primaryFinding = warningFindings[0];
+  const primary = primaryFinding?.message?.trim();
   if (!primary) {
-    return `Graph compile warnings detected (${compileReport.warnings}).`;
+    return `Graph compile warnings detected (${compileReport.warnings}). Open Paths Settings -> Compile Inspector for details.`;
   }
   const moreCount = Math.max(0, warningFindings.length - 1);
+  const warningCode = primaryFinding?.code ?? 'warning';
   return moreCount > 0
-    ? `Graph compile warning: ${primary} (+${moreCount} more).`
-    : `Graph compile warning: ${primary}`;
+    ? `Graph compile warning (${warningCode}): ${primary} (+${moreCount} more).`
+    : `Graph compile warning (${warningCode}): ${primary}`;
 };
 
 const normalizeEntityType = (value?: string | null): string | null => {

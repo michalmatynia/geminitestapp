@@ -274,10 +274,11 @@ export async function POST_handler(
   for (const mask of parsed.data.masks) {
     let parsedData: { buffer: Buffer; mime: string };
     if (mode === 'client_data_url') {
-      parsedData = parseDataUrl(mask.dataUrl ?? '');
-      if (!parsedData) {
+      const result = parseDataUrl(mask.dataUrl ?? '');
+      if (!result) {
         throw badRequestError('Invalid mask data URL');
       }
+      parsedData = result;
     } else {
       const polygons = mask.polygons ?? [];
       if (!(sourceWidth && sourceHeight) || !sourceBuffer) {

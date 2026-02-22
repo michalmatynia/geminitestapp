@@ -37,6 +37,11 @@ import {
 import { fetchPathSettings, findTriggerPath } from './useAiPathSettings';
 
 const AI_PATHS_ENTITY_STALE_MS = 10_000;
+const PRODUCT_TRIGGER_FALLBACK_EVENT_ID = (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
+const PRODUCT_TRIGGER_EVENT_IDS = [
+  'path_generate_description',
+  PRODUCT_TRIGGER_FALLBACK_EVENT_ID,
+];
 
 const normalizeNodes = (nodes: AiNode[]): AiNode[] => {
   return nodes.map((node: AiNode) => ({
@@ -238,21 +243,36 @@ export function useAiPathTrigger(): {
       const { orderedConfigs, uiState, preferredActivePathId } =
         await fetchPathSettings(queryClient);
 
-      const triggerEvent = (TRIGGER_EVENTS[0]?.id as string) ?? 'path_generate_description';
-      const selectedConfig = findTriggerPath(
-        orderedConfigs,
-        uiState,
-        preferredActivePathId,
-        triggerEvent
-      );
+      const triggerSelection = PRODUCT_TRIGGER_EVENT_IDS
+        .map((eventId: string): { selectedConfig: PathConfig; triggerEvent: string } | null => {
+          const selectedConfig = findTriggerPath(
+            orderedConfigs,
+            uiState,
+            preferredActivePathId,
+            eventId,
+            {
+              fallbackToAnyPath: false,
+              defaultTriggerEventId: PRODUCT_TRIGGER_FALLBACK_EVENT_ID,
+            }
+          );
+          return selectedConfig ? { selectedConfig, triggerEvent: eventId } : null;
+        })
+        .find(
+          (
+            candidate
+          ): candidate is { selectedConfig: PathConfig; triggerEvent: string } =>
+            candidate !== null
+        );
 
-      if (!selectedConfig) {
+      if (!triggerSelection) {
         toast(
-          'No AI Path found. Configure a path with the Path Generate Description trigger.',
+          'No AI Path found. Add a Trigger node with event "path_generate_description" or "manual".',
           { variant: 'error' }
         );
         return;
       }
+
+      const { selectedConfig, triggerEvent } = triggerSelection;
 
       toast(`Running AI Path: ${selectedConfig.name}`, { variant: 'success' });
 
@@ -267,7 +287,7 @@ export function useAiPathTrigger(): {
       const triggerNodes: AiNode[] = nodes.filter(
         (node: AiNode) =>
           node.type === 'trigger' &&
-          (node.config?.trigger?.event ?? triggerEvent) === triggerEvent
+          (node.config?.trigger?.event ?? PRODUCT_TRIGGER_FALLBACK_EVENT_ID) === triggerEvent
       );
       const triggerNode: AiNode | undefined =
         triggerNodes.find((node: AiNode) => edges.some((edge: Edge) => edge.from === node.id)) ??
@@ -315,6 +335,10 @@ export function useAiPathTrigger(): {
         toast('AI Path run queued.', { variant: 'success' });
         return;
       }
+
+      toast('This path is in Local mode; local runs do not appear in Job Queue.', {
+        variant: 'warning',
+      });
 
       // Local execution
       startedAt = new Date().toISOString();

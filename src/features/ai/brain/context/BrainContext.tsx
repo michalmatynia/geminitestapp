@@ -356,7 +356,7 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
 
   const insightsQuery = useBrainInsights();
 
-  const runtimeAnalyticsQuery = useBrainRuntimeAnalytics();
+  const runtimeAnalyticsQuery = useBrainRuntimeAnalytics(runtimeAnalyticsScheduleEnabled);
 
   const handleDefaultChange = useCallback((next: AiBrainAssignment): void => {
     setSettings((prev: AiBrainSettings) => ({

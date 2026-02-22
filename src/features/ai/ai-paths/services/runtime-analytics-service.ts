@@ -395,13 +395,17 @@ const loadRuntimeTraceAnalytics = async (input: {
 }): Promise<AiPathRuntimeTraceAnalytics> => {
   try {
     const repo = await getPathRunRepository();
-    const result = await repo.listRuns({
-      statuses: ['completed', 'failed', 'canceled', 'dead_lettered'],
-      createdAfter: input.from.toISOString(),
-      createdBefore: input.to.toISOString(),
-      limit: TRACE_RUN_SAMPLE_LIMIT,
-      offset: 0,
-    });
+    const result = await withTimeout(
+      repo.listRuns({
+        statuses: ['completed', 'failed', 'canceled', 'dead_lettered'],
+        createdAfter: input.from.toISOString(),
+        createdBefore: input.to.toISOString(),
+        limit: TRACE_RUN_SAMPLE_LIMIT,
+        offset: 0,
+      }),
+      SUMMARY_QUERY_TIMEOUT_MS,
+      'ai-paths runtime trace analytics query',
+    );
     return summarizeRuntimeTraceAnalytics({
       runs: result.runs,
       total: result.total,

@@ -111,7 +111,7 @@ export function useBrainInsights(): SingleQuery<InsightsSnapshot> {
   });
 }
 
-export function useBrainRuntimeAnalytics(): SingleQuery<AiPathRuntimeAnalyticsSummary> {
+export function useBrainRuntimeAnalytics(enabled: boolean = true): SingleQuery<AiPathRuntimeAnalyticsSummary> {
   const queryKey = brainKeys.runtimeAnalytics();
   return createSingleQueryV2<AiPathRuntimeAnalyticsSummary>({
     queryKey,
@@ -123,6 +123,7 @@ export function useBrainRuntimeAnalytics(): SingleQuery<AiPathRuntimeAnalyticsSu
       return data.summary;
     },
     id: 'runtime-analytics',
+    enabled,
     refetchInterval: 30_000,
     meta: {
       source: 'brain.hooks.useBrainRuntimeAnalytics',

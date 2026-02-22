@@ -101,9 +101,9 @@ export function AdminCaseResolverCategoriesPage(): React.JSX.Element {
     setEditingCategoryId(category.id);
     setFormData({
       name: category.name,
-      description: category.description,
-      color: category.color,
-      parentId: category.parentId,
+      description: category.description ?? '',
+      color: category.color ?? '',
+      parentId: category.parentId ?? null,
     });
     setShowModal(true);
   }, []);

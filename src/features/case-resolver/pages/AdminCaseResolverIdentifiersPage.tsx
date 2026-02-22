@@ -71,13 +71,13 @@ const buildCaseIdentifierPathOptions = (
     const identifier = byId.get(caseIdentifierId);
     if (!identifier) return { ids: [], names: [] };
     if (trail.has(caseIdentifierId)) {
-      const fallback = { ids: [identifier.id], names: [identifier.name] };
+      const fallback = { ids: [identifier.id], names: [identifier.name ?? identifier.value] };
       cache.set(caseIdentifierId, fallback);
       return fallback;
     }
 
     if (!identifier.parentId || !byId.has(identifier.parentId)) {
-      const rootPath = { ids: [identifier.id], names: [identifier.name] };
+      const rootPath = { ids: [identifier.id], names: [identifier.name ?? identifier.value] };
       cache.set(caseIdentifierId, rootPath);
       return rootPath;
     }
@@ -85,11 +85,10 @@ const buildCaseIdentifierPathOptions = (
     const nextTrail = new Set(trail);
     nextTrail.add(caseIdentifierId);
     const parentPath = resolvePath(identifier.parentId, nextTrail);
-    const fullPath = {
-      ids: [...parentPath.ids, identifier.id],
-      names: [...parentPath.names, identifier.name],
-    };
-    cache.set(caseIdentifierId, fullPath);
+          const fullPath = {
+            ids: [...parentPath.ids, identifier.id],
+            names: [...parentPath.names, identifier.name ?? identifier.value],
+          };    cache.set(caseIdentifierId, fullPath);
     return fullPath;
   };
 
@@ -193,9 +192,9 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
   const openEditModal = (caseIdentifier: CaseResolverIdentifier): void => {
     setEditingCaseIdentifier(caseIdentifier);
     setFormData({
-      name: caseIdentifier.name,
-      color: caseIdentifier.color,
-      parentId: caseIdentifier.parentId,
+      name: caseIdentifier.name ?? caseIdentifier.value,
+      color: caseIdentifier.color ?? '',
+      parentId: caseIdentifier.parentId ?? null,
     });
     setShowModal(true);
   };
@@ -212,23 +211,24 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
       formData.parentId && formData.parentId !== editingCaseIdentifier?.id
         ? formData.parentId
         : null;
-    const nextCaseIdentifier: CaseResolverIdentifier = editingCaseIdentifier
-      ? {
-        ...editingCaseIdentifier,
-        name: normalizedName,
-        parentId: normalizedParentId,
-        color: formData.color.trim() || '#f59e0b',
-        updatedAt: now,
-      }
-      : {
-        id: createCaseIdentifierId(),
-        name: normalizedName,
-        parentId: normalizedParentId,
-        color: formData.color.trim() || '#f59e0b',
-        createdAt: now,
-        updatedAt: now,
-      };
-
+          const nextCaseIdentifier: CaseResolverIdentifier = editingCaseIdentifier
+            ? {
+              ...editingCaseIdentifier,
+              name: normalizedName,
+              parentId: normalizedParentId,
+              color: formData.color.trim() || '#f59e0b',
+              updatedAt: now,
+            }
+            : {
+              id: createCaseIdentifierId(),
+              type: 'custom',
+              value: normalizedName,
+              name: normalizedName,
+              parentId: normalizedParentId,
+              color: formData.color.trim() || '#f59e0b',
+              createdAt: now,
+              updatedAt: now,
+            };
     const nextCaseIdentifiers = editingCaseIdentifier
       ? caseIdentifiers.map((caseIdentifier: CaseResolverIdentifier) =>
         caseIdentifier.id === editingCaseIdentifier.id
@@ -371,7 +371,7 @@ export function AdminCaseResolverIdentifiersPage(): React.JSX.Element {
                 >
                   <div className='min-w-0'>
                     <UiTag
-                      label={caseIdentifier.name}
+                      label={caseIdentifier.name ?? caseIdentifier.value}
                       color={caseIdentifier.color || '#f59e0b'}
                       dot
                     />

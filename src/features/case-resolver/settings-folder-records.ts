@@ -119,7 +119,7 @@ export const buildCaseResolverFolderRecords = ({
   };
 
   sourceRecords.forEach((record: CaseResolverFolderRecord): void => {
-    registerRecord(record.path, record.ownerCaseId);
+    registerRecord(record.path, record.ownerCaseId ?? null);
   });
 
   files.forEach((file: CaseResolverFile): void => {

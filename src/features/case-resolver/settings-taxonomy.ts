@@ -91,9 +91,12 @@ export const normalizeCaseResolverIdentifiers = (input: unknown): CaseResolverId
     seen.add(rawId);
 
     const rawName = typeof record['name'] === 'string' ? record['name'].trim() : '';
+    const finalName = rawName || `Case Identifier ${raw.length + 1}`;
     raw.push({
       id: rawId,
-      name: rawName || `Case Identifier ${raw.length + 1}`,
+      type: typeof record['type'] === 'string' ? record['type'] : 'custom',
+      value: typeof record['value'] === 'string' ? record['value'] : finalName,
+      name: finalName,
       parentId: sanitizeOptionalId(record['parentId']),
       color: normalizeHexColor(record['color'], '#f59e0b'),
       createdAt: normalizeTimestamp(record['createdAt'], now),
@@ -112,14 +115,14 @@ export const normalizeCaseResolverIdentifiers = (input: unknown): CaseResolverId
   const normalizedParents = raw.map(
     (identifier: CaseResolverIdentifier): CaseResolverIdentifier => ({
       ...identifier,
-      parentId: resolveSafeIdentifierParentId(identifier.id, identifier.parentId, byId),
+      parentId: resolveSafeIdentifierParentId(identifier.id, identifier.parentId ?? null, byId),
     })
   );
 
   const grouped = new Map<string, CaseResolverIdentifier[]>();
   const getGroupKey = (parentId: string | null): string => parentId ?? '__root__';
   normalizedParents.forEach((identifier: CaseResolverIdentifier): void => {
-    const key = getGroupKey(identifier.parentId);
+    const key = getGroupKey(identifier.parentId ?? null);
     const current = grouped.get(key) ?? [];
     current.push(identifier);
     grouped.set(key, current);
@@ -130,7 +133,9 @@ export const normalizeCaseResolverIdentifiers = (input: unknown): CaseResolverId
     const group = grouped.get(getGroupKey(parentId)) ?? [];
     group
       .sort((left: CaseResolverIdentifier, right: CaseResolverIdentifier) => {
-        const nameDelta = left.name.localeCompare(right.name);
+        const leftName = left.name ?? left.value;
+        const rightName = right.name ?? right.value;
+        const nameDelta = leftName.localeCompare(rightName);
         if (nameDelta !== 0) return nameDelta;
         return left.id.localeCompare(right.id);
       })
@@ -178,13 +183,13 @@ export const normalizeCaseResolverTags = (input: unknown): CaseResolverTag[] => 
   );
   const normalizedParents = raw.map((tag: CaseResolverTag): CaseResolverTag => ({
     ...tag,
-    parentId: resolveSafeTagParentId(tag.id, tag.parentId, byId),
+    parentId: resolveSafeTagParentId(tag.id, tag.parentId ?? null, byId),
   }));
 
   const grouped = new Map<string, CaseResolverTag[]>();
   const getGroupKey = (parentId: string | null): string => parentId ?? '__root__';
   normalizedParents.forEach((tag: CaseResolverTag): void => {
-    const key = getGroupKey(tag.parentId);
+    const key = getGroupKey(tag.parentId ?? null);
     const current = grouped.get(key) ?? [];
     current.push(tag);
     grouped.set(key, current);
@@ -246,13 +251,13 @@ export const normalizeCaseResolverCategories = (input: unknown): CaseResolverCat
   );
   const normalizedParents = raw.map((category: CaseResolverCategory): CaseResolverCategory => ({
     ...category,
-    parentId: resolveSafeCategoryParentId(category.id, category.parentId, byId),
+    parentId: resolveSafeCategoryParentId(category.id, category.parentId ?? null, byId),
   }));
 
   const grouped = new Map<string, CaseResolverCategory[]>();
   const getGroupKey = (parentId: string | null): string => parentId ?? '__root__';
   normalizedParents.forEach((category: CaseResolverCategory): void => {
-    const key = getGroupKey(category.parentId);
+    const key = getGroupKey(category.parentId ?? null);
     const current = grouped.get(key) ?? [];
     current.push(category);
     grouped.set(key, current);

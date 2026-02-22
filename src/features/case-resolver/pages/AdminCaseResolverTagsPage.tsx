@@ -58,13 +58,13 @@ const buildTagPathOptions = (tags: CaseResolverTag[]): TagPathOption[] => {
     const tag = byId.get(tagId);
     if (!tag) return { ids: [], names: [] };
     if (trail.has(tagId)) {
-      const fallback = { ids: [tag.id], names: [tag.name] };
+      const fallback = { ids: [tag.id], names: [tag.label] };
       cache.set(tagId, fallback);
       return fallback;
     }
 
     if (!tag.parentId || !byId.has(tag.parentId)) {
-      const rootPath = { ids: [tag.id], names: [tag.name] };
+      const rootPath = { ids: [tag.id], names: [tag.label] };
       cache.set(tagId, rootPath);
       return rootPath;
     }
@@ -74,7 +74,7 @@ const buildTagPathOptions = (tags: CaseResolverTag[]): TagPathOption[] => {
     const parentPath = resolvePath(tag.parentId, nextTrail);
     const fullPath = {
       ids: [...parentPath.ids, tag.id],
-      names: [...parentPath.names, tag.name],
+      names: [...parentPath.names, tag.label],
     };
     cache.set(tagId, fullPath);
     return fullPath;
@@ -156,8 +156,8 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
     setEditingTag(tag);
     setFormData({
       name: tag.label,
-      color: tag.color,
-      parentId: tag.parentId,
+      color: tag.color ?? '#38bdf8',
+      parentId: tag.parentId ?? null,
     });
     setShowModal(true);
   };
@@ -317,8 +317,7 @@ export function AdminCaseResolverTagsPage(): React.JSX.Element {
         onClose={() => setTagToDelete(null)}
         onConfirm={handleConfirmDelete}
         title='Delete Tag'
-        message={`Delete tag "${tagToDelete?.name ?? ''}"? This action cannot be undone.`}
-        confirmText='Delete'
+                  message={`Delete tag "${tagToDelete?.label ?? ''}"? This action cannot be undone.`}        confirmText='Delete'
         isDangerous={true}
       />
 

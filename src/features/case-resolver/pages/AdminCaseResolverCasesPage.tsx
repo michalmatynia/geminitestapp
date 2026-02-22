@@ -163,18 +163,17 @@ const stripHtml = (value: string): string =>
 const normalizeIdentifierTerm = (value: string): string =>
   value.trim().toLowerCase();
 
-const buildCaseIdentifierOption = (
-  identifier: CaseResolverIdentifier,
-  identifierPathById: Map<string, string>,
-): CaseIdentifierSelectorOption => {
-  const label = identifierPathById.get(identifier.id) ?? identifier.name;
-  return {
-    id: identifier.id,
-    label,
-    searchableLabel: `${identifier.name} ${label}`.toLowerCase(),
+  const buildCaseIdentifierOption = (
+    identifier: CaseResolverIdentifier,
+    identifierPathById: Map<string, string>,
+  ): CaseIdentifierSelectorOption => {
+    const label = identifierPathById.get(identifier.id) ?? identifier.name ?? identifier.value;
+    return {
+      id: identifier.id,
+      label,
+      searchableLabel: `${identifier.name ?? ''} ${label}`.toLowerCase(),
+    };
   };
-};
-
 function CaseIdentifierTextSelector({
   value,
   identifiers,
@@ -239,7 +238,7 @@ function CaseIdentifierTextSelector({
           (entry: CaseResolverIdentifier): boolean => entry.id === option.id,
         );
         if (!identifier) return false;
-        return normalizeIdentifierTerm(identifier.name) === normalizedQuery;
+        return normalizeIdentifierTerm(identifier.name ?? identifier.value) === normalizedQuery;
       }) ??
       null
     );
@@ -1939,11 +1938,11 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
   const handleStartEditCase = useCallback((file: CaseResolverFile): void => {
     setEditingCaseId(file.id);
     setEditingCaseName(file.name);
-    setEditingCaseParentId(file.parentCaseId);
+    setEditingCaseParentId(file.parentCaseId ?? null);
     setEditingCaseReferenceCaseIds(file.referenceCaseIds);
-    setEditingCaseTagId(file.tagId);
-    setEditingCaseCaseIdentifierId(file.caseIdentifierId);
-    setEditingCaseCategoryId(file.categoryId);
+    setEditingCaseTagId(file.tagId ?? null);
+    setEditingCaseCaseIdentifierId(file.caseIdentifierId ?? null);
+    setEditingCaseCategoryId(file.categoryId ?? null);
   }, []);
 
   const handleCancelEditCase = useCallback((): void => {
@@ -2146,7 +2145,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
         }
         return files.some(
           (file: CaseResolverFile): boolean =>
-            file.id !== rootId && descendantIds.has(file.id) && file.isLocked
+            file.id !== rootId && descendantIds.has(file.id) && (file.isLocked ?? false)
         );
       };
 
@@ -2628,7 +2627,7 @@ export function AdminCaseResolverCasesPage(): React.JSX.Element {
                         ) : null}
                         {file.tagId ? (
                           <Badge variant='outline' className='text-[10px]'>
-                            {caseTagById.get(file.tagId)?.name ?? 'Tag'}
+                            {caseTagById.get(file.tagId)?.label ?? 'Tag'}
                           </Badge>
                         ) : null}
                         {caseIdentifierId ? (

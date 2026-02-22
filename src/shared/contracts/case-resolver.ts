@@ -361,11 +361,11 @@ export type CaseResolverNodeFileSnapshot = CaseResolverNodeFileSnapshotDto;
 /**
  * Case Resolver Relation Contracts
  */
-export const caseResolverRelationEntityTypeSchema = z.enum(['custom', 'person', 'organization', 'place', 'event', 'date', 'amount', 'identifier', 'case']);
+export const caseResolverRelationEntityTypeSchema = z.enum(['custom', 'person', 'organization', 'place', 'event', 'date', 'amount', 'identifier', 'case', 'folder', 'file']);
 export type CaseResolverRelationEntityTypeDto = z.infer<typeof caseResolverRelationEntityTypeSchema>;
 export type CaseResolverRelationEntityType = CaseResolverRelationEntityTypeDto;
 
-export const caseResolverRelationFileKindSchema = z.enum(['image', 'pdf']).nullable();
+export const caseResolverRelationFileKindSchema = z.enum(['image', 'pdf', 'case_file', 'asset_file']).nullable();
 export type CaseResolverRelationFileKindDto = z.infer<typeof caseResolverRelationFileKindSchema>;
 export type CaseResolverRelationFileKind = CaseResolverRelationFileKindDto;
 

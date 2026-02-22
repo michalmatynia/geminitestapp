@@ -299,7 +299,7 @@ export const findExistingFilemakerPartyReference = (
   
   const organizationName =
         (candidate.organizationName ?? '').trim() ||
-        (candidate.kind === 'organization' ? candidate.displayName.trim() : '');
+        (candidate.kind === 'organization' ? (candidate.displayName || '').trim() : '');
   let bestOrganization: { id: string; score: number; name: string } | null = null;
   if (kindHint !== 'person' && organizationName) {
     for (const organization of database.organizations) {

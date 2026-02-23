@@ -58,7 +58,7 @@ export type CaseResolverDocumentFormatVersion = 1;
 /**
  * Case Resolver Editor Types
  */
-export const caseResolverEditorTypeSchema = z.enum(['graph', 'document', 'capture', 'settings', 'wysiwyg', 'markdown', 'code']);
+export const caseResolverEditorTypeSchema = z.enum(['graph', 'document', 'capture', 'settings', 'wysiwyg', 'markdown', 'code', 'rich-text', 'plain-text']);
 export type CaseResolverEditorTypeDto = z.infer<typeof caseResolverEditorTypeSchema>;
 export type CaseResolverEditorType = CaseResolverEditorTypeDto;
 
@@ -219,7 +219,7 @@ export const caseResolverDocumentHistoryEntrySchema = z.object({
   savedAt: z.string(),
   documentContentVersion: z.number(),
   activeDocumentVersion: z.enum(['original', 'exploded']),
-  editorType: z.enum(['wysiwyg', 'markdown', 'code']),
+  editorType: z.enum(['wysiwyg', 'markdown', 'code', 'rich-text', 'plain-text']),
   documentContent: z.string(),
   documentContentMarkdown: z.string().optional(),
   documentContentHtml: z.string().optional(),
@@ -236,7 +236,7 @@ export interface CaseResolverDocumentHistoryEntryDto {
   savedAt: string;
   documentContentVersion: number;
   activeDocumentVersion: 'original' | 'exploded';
-  editorType: 'wysiwyg' | 'markdown' | 'code';
+  editorType: 'wysiwyg' | 'markdown' | 'code' | 'rich-text' | 'plain-text';
   documentContent: string;
   documentContentMarkdown?: string | undefined;
   documentContentHtml?: string | undefined;
@@ -453,7 +453,7 @@ export interface CaseResolverFileDto extends DtoBase {
   documentContentVersion: number;
   documentContentFormatVersion: number;
   activeDocumentVersion: 'original' | 'exploded';
-  editorType: 'wysiwyg' | 'markdown' | 'code';
+  editorType: 'wysiwyg' | 'markdown' | 'code' | 'rich-text' | 'plain-text';
   ocrText?: string | undefined;
   documentContentPlainText: string;
   documentContentHtml: string;

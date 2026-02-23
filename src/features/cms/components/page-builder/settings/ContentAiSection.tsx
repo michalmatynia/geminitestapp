@@ -4,11 +4,11 @@ import React from 'react';
 
 import { Button, Textarea, SelectSimple, FormSection, FormField } from '@/shared/ui';
 
-import { useComponentSettings } from '../context/ComponentSettingsContext';
+import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
 import { useInspectorAi } from '../context/InspectorAiContext';
 
 function ContentAiSection(): React.JSX.Element {
-  const { selectedLabel } = useComponentSettings();
+  const { selectedLabel } = useComponentSettingsContext();
   const {
     contentAiProvider,
     setContentAiProvider,

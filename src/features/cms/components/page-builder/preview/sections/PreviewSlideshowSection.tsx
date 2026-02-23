@@ -5,37 +5,28 @@ import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { 
   getSectionContainerClass, 
   getSectionStyles,
-  type ColorSchemeColors,
 } from '@/features/cms/components/frontend/theme-styles';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
+import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
 import { 
   normalizeSlideshowAnimationType,
 } from '@/features/cms/components/page-builder/preview/preview-utils';
-import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
+import type { BlockInstance } from '@/shared/contracts/cms';
 import { EmptyState } from '@/shared/ui';
 
-interface PreviewSlideshowSectionProps {
-  section: SectionInstance;
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  selectedRing: string;
-  renderSectionActions: () => React.ReactNode;
-  divider: React.ReactNode;
-  wrapInspector: (node: React.ReactNode) => React.ReactNode;
-  handleSelect: () => void;
-  PreviewBlockItem: React.ComponentType<{ block: BlockInstance }>;
-}
+export function PreviewSlideshowSection() {
+  const { 
+    section,
+    colorSchemes,
+    selectedRing,
+    renderSectionActions,
+    divider,
+    wrapInspector,
+    handleSelect,
+    PreviewBlockItem,
+  } = usePreviewSectionContext();
 
-export function PreviewSlideshowSection({
-  section,
-  colorSchemes,
-  selectedRing,
-  renderSectionActions,
-  divider,
-  wrapInspector,
-  handleSelect,
-  PreviewBlockItem,
-}: PreviewSlideshowSectionProps) {
   const { 
     inspectorSettings,
     pauseSlideshowOnHoverInEditor 

@@ -97,7 +97,6 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     workspace,
     onUploadAssets,
     onGraphChange,
-    onEditFile,
   }: CaseResolverPageContextValue = useCaseResolverPageContext();
   const graph = activeFile?.graph || { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} };
   const defaultDropFolder = activeFile?.folder || 'root';
@@ -882,7 +881,6 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       </Card>
           
       <CaseResolverNodeInspectorModal
-          
         open={isNodeInspectorOpen}
         onOpenChange={setIsNodeInspectorOpen}
         onManualUpdate={handleManualGraphSave}
@@ -892,9 +890,6 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
         selectedPromptTemplate={selectedPromptTemplate}
         selectedPromptInputText={selectedPromptInputText}
         selectedPromptOutputPreview={selectedPromptOutputPreview}
-        selectedCanvasFileId={activeFile?.id ?? null}
-        selectedWorkspaceId={workspace?.id ?? null}
-        onEditFile={onEditFile}
         onUpdateSelectedPromptTemplate={updateSelectedPromptTemplate}
         onUpdateSelectedNodeMeta={updateSelectedNodeMeta}
         selectedEdge={selectedEdge}

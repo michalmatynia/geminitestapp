@@ -12,9 +12,9 @@ const toCurrencyDomain = (currency: Currency): CurrencyRecord => ({
   name: currency.name,
   symbol: currency.symbol ?? null,
   isDefault: false,
-  enabled: true,
+  isActive: true,
   createdAt: currency.createdAt.toISOString(),
-  updatedAt: currency.updatedAt ? currency.updatedAt.toISOString() : null,
+  updatedAt: currency.updatedAt ? currency.updatedAt.toISOString() : undefined,
 });
 
 export const prismaCurrencyRepository: CurrencyRepository = {

@@ -243,21 +243,14 @@ export const IssueHintRow = memo(function IssueHintRow({
   );
 });
 
-type ProductFormGeneralProps = {
-  validatorPatterns: ProductValidationPattern[];
-  latestProductValues: Record<string, unknown> | null;
-  visibleFieldIssues: Record<string, FieldValidatorIssue[]>;
-};
-
-export default function ProductFormGeneral({
-  validatorPatterns,
-  latestProductValues,
-  visibleFieldIssues,
-}: ProductFormGeneralProps): React.JSX.Element {
+export default function ProductFormGeneral(): React.JSX.Element {
   const {
     validationInstanceScope,
     validatorEnabled,
     formatterEnabled,
+    validatorPatterns,
+    latestProductValues,
+    visibleFieldIssues,
   } = useProductValidationState();
   const {
     filteredLanguages,

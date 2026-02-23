@@ -7,6 +7,7 @@ import { normalizePlaywrightPersonas } from '@/features/playwright/utils/persona
 import { fetchSettingsCached } from '@/shared/api/settings-client';
 import {
   importExportTemplateSchema,
+  type ImportExportTemplate,
 } from '@/shared/contracts/data-import-export';
 import { 
   integrationSchema, 
@@ -17,7 +18,6 @@ import type {
   IntegrationConnection, 
   IntegrationWithConnections,
   BaseInventory,
-  ImportExportTemplate
 } from '@/shared/contracts/integrations';
 import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';

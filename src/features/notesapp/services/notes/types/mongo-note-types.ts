@@ -107,6 +107,7 @@ export interface ThemeDocument {
   id?: string;
   name: string;
   description?: string | null;
+  isDefault?: boolean;
   notebookId?: string | null;
   textColor?: string;
   backgroundColor?: string;
@@ -118,6 +119,7 @@ export interface ThemeDocument {
   relatedNoteBorderColor?: string;
   relatedNoteBackgroundColor?: string;
   relatedNoteTextColor?: string;
+  themeData?: Record<string, unknown> | null;
   createdAt: string | Date;
   updatedAt: string | Date | null;
 }

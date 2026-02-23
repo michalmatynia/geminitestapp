@@ -13,6 +13,7 @@ import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 const defaultTheme: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> = {
   name: '',
+  isDefault: false,
   notebookId: null,
   textColor: '#e5e7eb',
   backgroundColor: '#111827',

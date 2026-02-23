@@ -23,6 +23,7 @@ import {
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
+import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 
 const CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
@@ -52,12 +53,6 @@ type CaseResolverNodeInspectorModalProps = {
     content: string;
     plainText: string;
   } | null;
-  selectedCanvasFileId: string | null;
-  selectedWorkspaceId: string | null;
-  onEditFile: (
-    fileId: string,
-    options?: { nodeContext?: CaseResolverEditorNodeContext | null }
-  ) => void;
   onUpdateSelectedPromptTemplate: (template: string) => void;
   onUpdateSelectedNodeMeta: (patch: Partial<CaseResolverNodeMeta>) => void;
   selectedEdge: CaseResolverEdge | CompatEdge | null;
@@ -75,15 +70,16 @@ export function CaseResolverNodeInspectorModal({
   selectedPromptTemplate,
   selectedPromptInputText,
   selectedPromptOutputPreview,
-  selectedCanvasFileId,
-  selectedWorkspaceId,
-  onEditFile,
   onUpdateSelectedPromptTemplate,
   onUpdateSelectedNodeMeta,
   selectedEdge,
   selectedEdgeJoinMode,
   onUpdateSelectedEdgeMeta,
 }: CaseResolverNodeInspectorModalProps): React.JSX.Element {
+  const { onEditFile, workspace, activeFile } = useCaseResolverPageContext();
+  const selectedCanvasFileId = activeFile?.id ?? null;
+  const selectedWorkspaceId = workspace?.id ?? null;
+
   const edgeFromPort = (selectedEdge as CompatEdge)?.fromPort ?? (selectedEdge as CompatEdge)?.sourceHandle;
   const edgeToPort = (selectedEdge as CompatEdge)?.toPort ?? (selectedEdge as CompatEdge)?.targetHandle;
 

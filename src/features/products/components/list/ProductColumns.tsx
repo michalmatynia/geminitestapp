@@ -452,11 +452,7 @@ const ActionsCell: React.FC<ColumnActionsProps> = ({
   );
 };
 
-export const getProductColumns = (
-  thumbnailSource: 'file' | 'link' | 'base64' = 'file',
-  imageExternalBaseUrl: string | null = null,
-  categoryNameById: ReadonlyMap<string, string> = new Map<string, string>()
-): ColumnDef<ProductWithImages>[] => [
+export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
   {
     id: 'select',
     header: ({ table }: { table: Table<ProductWithImages> }): React.JSX.Element => (
@@ -485,6 +481,7 @@ export const getProductColumns = (
     header: 'Image',
     cell: ({ row }: { row: Row<ProductWithImages> }): React.JSX.Element => {
       const product: ProductWithImages = row.original;
+      const { thumbnailSource, imageExternalBaseUrl } = useProductListActionsContext();
       
       const firstFileImage: string | undefined = product.images
         ?.map((img) => getImageFilepath(img.imageFile))
@@ -533,6 +530,7 @@ export const getProductColumns = (
         productNameKey,
         onProductNameClick,
         queuedProductIds,
+        categoryNameById,
       } = useProductListActionsContext();
 
       const nameKey: ProductNameKey = productNameKey ?? 'name_en';

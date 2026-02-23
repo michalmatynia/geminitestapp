@@ -125,18 +125,17 @@ interface Model3DProps {
 }
 
 function AutoRotateGroup({
-  enabled,
-  speed,
   children,
 }: {
-  enabled: boolean;
-  speed: number;
   children: React.ReactNode;
 }): React.JSX.Element {
+  const context = useOptionalViewer3D();
+  const autoRotate = context?.autoRotate ?? true;
+  const autoRotateSpeed = context?.autoRotateSpeed ?? 2;
   const ref = useRef<THREE.Group>(null);
   useFrame((_state: RootState, delta: number) => {
-    if (!enabled || !ref.current) return;
-    ref.current.rotation.y += delta * speed * 0.6;
+    if (!autoRotate || !ref.current) return;
+    ref.current.rotation.y += delta * autoRotateSpeed * 0.6;
   });
   return <group ref={ref}>{children}</group>;
 }
@@ -145,12 +144,19 @@ function Model3D({
   url,
   onLoad,
   onError,
-  castShadow = true,
-  receiveShadow = true,
   position,
   rotation,
   scale,
-}: Model3DProps): React.JSX.Element | null {
+}: {
+  url: string;
+  onLoad?: () => void;
+  onError?: (error: Error) => void;
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: number | [number, number, number];
+}): React.JSX.Element | null {
+  const context = useOptionalViewer3D();
+  const enableShadows = context?.enableShadows ?? true;
   const replacedTextureRef = useRef(false);
   const { scene } = useGLTF(
     url,
@@ -183,8 +189,8 @@ function Model3D({
       // Optimize materials for PBR rendering
       scene.traverse((child: THREE.Object3D) => {
         if (child instanceof THREE.Mesh) {
-          child.castShadow = castShadow;
-          child.receiveShadow = receiveShadow;
+          child.castShadow = enableShadows;
+          child.receiveShadow = enableShadows;
 
           // Enhance material properties for better realism
           if (child.material instanceof THREE.MeshStandardMaterial) {
@@ -195,7 +201,7 @@ function Model3D({
       });
       onLoad?.();
     }
-  }, [scene, onLoad, castShadow, receiveShadow]);
+  }, [scene, onLoad, enableShadows]);
 
   useEffect(() => {
     if (!scene && onError) {
@@ -216,7 +222,6 @@ function Model3D({
     );
   }
 
-  
   return (
     <primitive
       ref={modelRef}
@@ -227,14 +232,14 @@ function Model3D({
       scale={scale}
     />
   );
-  
 }
 
 // Ground plane with realistic shadows
-function Ground({ visible = true }: { visible?: boolean }): React.JSX.Element | null {
-  if (!visible) return null;
+function Ground(): React.JSX.Element | null {
+  const context = useOptionalViewer3D();
+  const showGround = context?.showGround ?? false;
+  if (!showGround) return null;
 
-  
   return (
     <mesh
       rotation={[-Math.PI / 2, 0, 0]}
@@ -248,16 +253,13 @@ function Ground({ visible = true }: { visible?: boolean }): React.JSX.Element | 
       />
     </mesh>
   );
-  
 }
 
 // Scene lighting setup
-interface SceneLightingProps {
-  preset: LightingPreset;
-  intensity?: number;
-}
-
-function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX.Element {
+function SceneLighting(): React.JSX.Element {
+  const context = useOptionalViewer3D();
+  const preset = context?.lighting ?? 'studio';
+  const intensity = context?.lightIntensity ?? 1;
   const lightConfigs = {
     studio: {
       ambient: 0.4,
@@ -285,9 +287,8 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX
     },
   };
 
-  const config = lightConfigs[preset] || lightConfigs.studio;
+  const config = lightConfigs[preset as keyof typeof lightConfigs] || lightConfigs.studio;
 
-  
   return (
     <>
       <ambientLight intensity={config.ambient * intensity} />
@@ -313,7 +314,6 @@ function SceneLighting({ preset, intensity = 1 }: SceneLightingProps): React.JSX
       />
     </>
   );
-  
 }
 
 // Camera auto-framing
@@ -446,14 +446,14 @@ export function Viewer3D({
   autoRotate: propAutoRotate,
   autoRotateSpeed: propAutoRotateSpeed,
   environment: propEnvironment,
-  lighting: propLighting,
-  lightIntensity: propLightIntensity,
+  lighting: _propLighting,
+  lightIntensity: _propLightIntensity,
   enableShadows: propEnableShadows,
   enableBloom: propEnableBloom,
   bloomIntensity: propBloomIntensity,
   enableToneMapping: propEnableToneMapping,
   exposure: propExposure,
-  showGround: propShowGround,
+  showGround: _propShowGround,
   enableContactShadows: propEnableContactShadows,
   enableVignette: propEnableVignette,
   autoFit = true,
@@ -490,20 +490,17 @@ export function Viewer3D({
   const orderedDitheringLuminanceMethod = getSetting('orderedDitheringLuminanceMethod', propOrderedDitheringLuminanceMethod, 1);
   const enablePixelation = getSetting('enablePixelation', propEnablePixelation, false);
   const pixelSize = getSetting('pixelSize', propPixelSize, 6);
-  const autoRotate = getSetting('autoRotate', propAutoRotate, true);
-  const autoRotateSpeed = getSetting('autoRotateSpeed', propAutoRotateSpeed, 2);
-  const environment = getSetting('environment', propEnvironment, 'studio' as EnvironmentPreset);
-  const lighting = getSetting('lighting', propLighting, 'studio' as LightingPreset);
-  const lightIntensity = getSetting('lightIntensity', propLightIntensity, 1);
-  const enableShadows = getSetting('enableShadows', propEnableShadows, true);
   const enableBloom = getSetting('enableBloom', propEnableBloom, false);
   const bloomIntensity = getSetting('bloomIntensity', propBloomIntensity, 0.5);
   const enableToneMapping = getSetting('enableToneMapping', propEnableToneMapping, true);
   const exposure = getSetting('exposure', propExposure, 1);
-  const showGround = getSetting('showGround', propShowGround, false);
-  const enableContactShadows = getSetting('enableContactShadows', propEnableContactShadows, true);
   const enableVignette = getSetting('enableVignette', propEnableVignette, false);
   const enableAntiAliasing = getSetting('enableAntiAliasing', propEnableAntiAliasing, true);
+  const enableShadows = getSetting('enableShadows', propEnableShadows, true);
+  const environment = getSetting('environment', propEnvironment, 'studio' as EnvironmentPreset);
+  const enableContactShadows = getSetting('enableContactShadows', propEnableContactShadows, true);
+  const autoRotate = getSetting('autoRotate', propAutoRotate, true);
+  const autoRotateSpeed = getSetting('autoRotateSpeed', propAutoRotateSpeed, 2);
 
   const hasPostProcessing =
     enableDithering ||
@@ -555,13 +552,11 @@ export function Viewer3D({
 
   const modelNode = (
     <Model3DErrorBoundary {...(onError && { onError })}>
-      <AutoRotateGroup enabled={!allowUserControls && autoRotate} speed={autoRotateSpeed}>
+      <AutoRotateGroup>
         <Model3D
           url={modelUrl}
           {...(onLoad && { onLoad })}
           {...(onError && { onError })}
-          castShadow={enableShadows}
-          receiveShadow={enableShadows}
           {...(modelPosition && { position: modelPosition })}
           {...(modelRotation && { rotation: modelRotation })}
           {...(modelScale && { scale: modelScale })}
@@ -598,7 +593,7 @@ export function Viewer3D({
         {}
 
         {/* Lighting */}
-        <SceneLighting preset={lighting} intensity={lightIntensity} />
+        <SceneLighting />
 
         {/* HDR Environment */}
         <Environment preset={environment} background={false} />
@@ -622,7 +617,7 @@ export function Viewer3D({
           )}
 
           {/* Ground and shadows */}
-          {showGround && <Ground visible={showGround} />}
+          <Ground />
 
           {enableContactShadows && (
             <ContactShadows

@@ -4,53 +4,32 @@ import React from 'react';
 import { Button, Input, Card, Badge, Alert, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import type { VariantThumbnailInfo } from './preview-utils';
+import { useVariantPanelContext } from './VariantPanelContext';
 
-type VariantPanelProps = {
-  activeRunError: string | null;
-  activeVariantId: string | null;
-  compareVariantA: VariantThumbnailInfo | null;
-  compareVariantB: VariantThumbnailInfo | null;
-  compareVariantIds: [string | null, string | null];
-  deletePending: boolean;
-  filteredVariantThumbnails: VariantThumbnailInfo[];
-  variantLoadingId: string | null;
-  variantTimestampQuery: string;
-  visibleVariantThumbnails: VariantThumbnailInfo[];
-  onClearCompare: () => void;
-  onDeleteVariant: (variant: VariantThumbnailInfo) => void;
-  onDismissRunError: () => void;
-  onLoadVariantToCanvas: (variant: VariantThumbnailInfo) => Promise<void>;
-  onOpenVariantDetails: (variant: VariantThumbnailInfo) => void;
-  onSetCompareVariantA: (variantId: string) => void;
-  onSetCompareVariantB: (variantId: string) => void;
-  onVariantTimestampQueryChange: (value: string) => void;
-  onVariantTooltipLeave: () => void;
-  onVariantTooltipMove: (event: React.MouseEvent<HTMLButtonElement>, variant: VariantThumbnailInfo) => void;
-};
+export function VariantPanel(): React.JSX.Element {
+  const {
+    activeRunError,
+    activeVariantId,
+    compareVariantA,
+    compareVariantB,
+    compareVariantIds,
+    deletePending,
+    filteredVariantThumbnails,
+    variantLoadingId,
+    variantTimestampQuery,
+    visibleVariantThumbnails,
+    onClearCompare,
+    onDeleteVariant,
+    onDismissRunError,
+    onLoadVariantToCanvas,
+    onOpenVariantDetails,
+    onSetCompareVariantA,
+    onSetCompareVariantB,
+    onVariantTimestampQueryChange,
+    onVariantTooltipLeave,
+    onVariantTooltipMove,
+  } = useVariantPanelContext();
 
-export function VariantPanel({
-  activeRunError,
-  activeVariantId,
-  compareVariantA,
-  compareVariantB,
-  compareVariantIds,
-  deletePending,
-  filteredVariantThumbnails,
-  variantLoadingId,
-  variantTimestampQuery,
-  visibleVariantThumbnails,
-  onClearCompare,
-  onDeleteVariant,
-  onDismissRunError,
-  onLoadVariantToCanvas,
-  onOpenVariantDetails,
-  onSetCompareVariantA,
-  onSetCompareVariantB,
-  onVariantTimestampQueryChange,
-  onVariantTooltipLeave,
-  onVariantTooltipMove,
-}: VariantPanelProps): React.JSX.Element {
   return (
     <Card variant='subtle-compact' padding='sm' className='h-full shrink-0 overflow-hidden bg-card/40'>
       <div className='mb-2 flex items-center gap-2'>

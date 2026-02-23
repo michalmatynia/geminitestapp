@@ -36,7 +36,7 @@ export function useLanguageForm(): UseLanguageFormResult {
         name: language.name,
         nativeName: language.nativeName ?? '',
       });
-      setSelectedCountryIds(language.countries?.map((c: { countryId: string }) => c.countryId) ?? []);
+      setSelectedCountryIds(language.countries?.map((c) => c.id) ?? []);
     } else {
       setForm({ code: '', name: '', nativeName: '' });
       setSelectedCountryIds([]);
@@ -52,12 +52,12 @@ export function useLanguageForm(): UseLanguageFormResult {
     try {
       const payload: {
         id?: string;
-        data: { code: string; name: string; nativeName: string | null; countryIds: string[] };
+        data: { code: string; name: string; nativeName: string | undefined; countryIds: string[] };
       } = {
         data: {
           code: form.code.trim(),
           name: form.name.trim(),
-          nativeName: form.nativeName.trim() || null,
+          nativeName: form.nativeName.trim() || undefined,
           countryIds: selectedCountryIds,
         },
       };

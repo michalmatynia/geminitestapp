@@ -5,13 +5,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { APP_EMBED_SETTING_KEY, type AppEmbedId, APP_EMBED_OPTIONS } from '@/features/app-embeds/lib/constants';
 import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
-import type { GsapAnimationConfig } from '@/features/gsap';
-import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import { logClientError } from '@/features/observability';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
-import { DEFAULT_CUSTOM_CSS_AI_CONFIG } from '@/shared/contracts/cms';
-import type { CustomCssAiConfig } from '@/shared/contracts/cms';
-import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SectionHeader, Tabs, TabsList, TabsTrigger, TabsContent, Input, Textarea, useToast, SidePanel, SelectSimple, ToggleRow, Tooltip } from '@/shared/ui';
@@ -30,59 +25,62 @@ import { EventEffectsTab } from './settings/EventEffectsTab';
 import { prependManagementFields, groupSettingsFields, renderFieldGroups } from './settings/field-group-helpers';
 import { PageSettingsTab } from './settings/PageSettingsTab';
 import { SettingsFormProvider } from './settings/SettingsFormContext';
+import { ComponentSettingsProvider, useComponentSettingsContext } from './context/ComponentSettingsContext';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 
-import type { SettingsField, InspectorSettings, BlockInstance } from '../../types/page-builder';
+import type { InspectorSettings, BlockInstance } from '../../types/page-builder';
 
 
 
 type TabValue = 'settings' | 'animation' | 'cssAnimation' | 'events' | 'connections' | 'customCss' | 'ai';
 
 export function ComponentSettingsPanel(): React.ReactNode {
+  return (
+    <ComponentSettingsProvider>
+      <ComponentSettingsPanelInner />
+    </ComponentSettingsProvider>
+  );
+}
+
+function ComponentSettingsPanelInner(): React.ReactNode {
   const {
     state,
     selectedSection,
     selectedBlock,
-    selectedParentSection,
     selectedColumn,
-    selectedColumnParentSection,
+    selectedParentSection,
     selectedParentColumn,
     selectedParentRow,
     selectedParentBlock,
     dispatch,
   } = usePageBuilder();
   
+  const {
+    activeTab,
+    setActiveTab,
+    selectedTitle,
+    handleSectionSettingChange,
+    handleBlockSettingChange,
+    handleColumnSettingChange,
+    customCssValue,
+    handleCustomCssChange,
+    customCssAiConfig,
+    handleCustomCssAiChange,
+    handleApplyAiSettings,
+    contentAiAllowedKeys,
+  } = useComponentSettingsContext();
+
   const settingsStore = useSettingsStore();
   const updateSetting = useUpdateSetting();
   const { toast } = useToast();
 
   const [sectionTemplateName, setSectionTemplateName] = useState<string>('');
   const [sectionTemplateCategory, setSectionTemplateCategory] = useState<string>('');
-  const [activeTab, setActiveTab] = useState<'settings' | 'animation' | 'cssAnimation' | 'events' | 'connections' | 'customCss' | 'ai'>('settings');
 
   const isRowBlock = selectedBlock?.type === 'Row' && selectedParentSection?.type === 'Grid';
   const isGridSection = selectedSection?.type === 'Grid';
   const isBlockSection = selectedSection?.type === 'Block';
   const showCustomCssTab = Boolean(isGridSection || isBlockSection || selectedColumn || selectedBlock);
-
-  const customCssValue = useMemo((): string => {
-    if (selectedSection && (isGridSection || isBlockSection)) return (selectedSection.settings['customCss'] as string) || '';
-    if (selectedColumn) return (selectedColumn.settings['customCss'] as string) || '';
-    if (selectedBlock) return (selectedBlock.settings['customCss'] as string) || '';
-    return '';
-  }, [selectedSection, selectedColumn, selectedBlock, isGridSection, isBlockSection]);
-
-  const customCssAiRaw = useMemo((): CustomCssAiConfig | undefined => {
-    if (selectedSection && (isGridSection || isBlockSection)) return selectedSection.settings['customCssAi'] as CustomCssAiConfig | undefined;
-    if (selectedColumn) return selectedColumn.settings['customCssAi'] as CustomCssAiConfig | undefined;
-    if (selectedBlock) return selectedBlock.settings['customCssAi'] as CustomCssAiConfig | undefined;
-    return undefined;
-  }, [selectedSection, selectedColumn, selectedBlock, isGridSection, isBlockSection]);
-
-  const customCssAiConfig = useMemo(
-    (): CustomCssAiConfig => ({ ...DEFAULT_CUSTOM_CSS_AI_CONFIG, ...(customCssAiRaw ?? {}) }),
-    [customCssAiRaw]
-  );
 
   const selectedGridRow = useMemo<BlockInstance | null>(() => {
     if (selectedParentSection?.type !== 'Grid' || !selectedParentColumn) return null;
@@ -105,54 +103,12 @@ export function ComponentSettingsPanel(): React.ReactNode {
     return getImageBackgroundTargetOptions(selectedParentSection?.type === 'Grid', Boolean(selectedGridRow), Boolean(selectedParentColumn));
   }, [isImageElementInContainer, selectedParentSection, selectedGridRow, selectedParentColumn]);
 
-  const handleSectionSettingChange = useCallback((key: string, value: unknown): void => {
-    if (!selectedSection) return;
-    dispatch({ type: 'UPDATE_SECTION_SETTINGS', sectionId: selectedSection.id, settings: { [key]: value, ...(key === 'background' ? { backgroundColor: '' } : {}) } });
-  }, [selectedSection, dispatch]);
-
-  const handleBlockSettingChange = useCallback((key: string, value: unknown): void => {
-    if (!selectedBlock || !selectedParentSection) return;
-    const next = { [key]: value, ...(key === 'background' ? { backgroundColor: '' } : {}), ...(selectedBlock.type === 'Row' && key === 'heightMode' && value === 'inherit' ? { height: 0 } : {}) };
-    if (selectedParentBlock && selectedParentColumn) dispatch({ type: 'UPDATE_NESTED_BLOCK_SETTINGS', sectionId: selectedParentSection.id, columnId: selectedParentColumn.id, parentBlockId: selectedParentBlock.id, blockId: selectedBlock.id, settings: next });
-    else if (selectedParentBlock) dispatch({ type: 'UPDATE_SECTION_BLOCK_SETTINGS', sectionId: selectedParentSection.id, parentBlockId: selectedParentBlock.id, blockId: selectedBlock.id, settings: next });
-    else if (selectedParentColumn) dispatch({ type: 'UPDATE_BLOCK_IN_COLUMN', sectionId: selectedParentSection.id, columnId: selectedParentColumn.id, blockId: selectedBlock.id, settings: next });
-    else if (selectedParentRow) dispatch({ type: 'UPDATE_SECTION_BLOCK_SETTINGS', sectionId: selectedParentSection.id, parentBlockId: selectedParentRow.id, blockId: selectedBlock.id, settings: next });
-    else dispatch({ type: 'UPDATE_BLOCK_SETTINGS', sectionId: selectedParentSection.id, blockId: selectedBlock.id, settings: next });
-  }, [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentRow, selectedParentBlock, dispatch]);
-
-  const handleColumnSettingChange = useCallback((key: string, value: unknown): void => {
-    if (!selectedColumn || !selectedColumnParentSection) return;
-    const next = { [key]: value, ...(key === 'background' ? { backgroundColor: '' } : {}), ...(key === 'heightMode' && value === 'inherit' ? { height: 0 } : {}) };
-    dispatch({ type: 'UPDATE_COLUMN_SETTINGS', sectionId: selectedColumnParentSection.id, columnId: selectedColumn.id, settings: next });
-  }, [selectedColumn, selectedColumnParentSection, dispatch]);
-
   const handleSectionSettingChangeWithGridColumns = useCallback((key: string, value: unknown): void => {
     if (!selectedSection) return;
     if (key === 'columns' && selectedSection.type === 'Grid') dispatch({ type: 'SET_GRID_COLUMNS', sectionId: selectedSection.id, columnCount: value as number });
     else if (key === 'rows' && selectedSection.type === 'Grid') dispatch({ type: 'SET_GRID_ROWS', sectionId: selectedSection.id, rowCount: value as number });
     else handleSectionSettingChange(key, value);
   }, [selectedSection, dispatch, handleSectionSettingChange]);
-
-  const handleCustomCssChange = useCallback((value: string): void => {
-    if (selectedSection && (isGridSection || isBlockSection)) handleSectionSettingChange('customCss', value);
-    else if (selectedColumn) handleColumnSettingChange('customCss', value);
-    else if (selectedBlock) handleBlockSettingChange('customCss', value);
-  }, [selectedSection, selectedColumn, selectedBlock, isGridSection, isBlockSection, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
-
-  const handleCustomCssAiChange = useCallback((patch: Partial<CustomCssAiConfig>): void => {
-    const next = { ...customCssAiConfig, ...patch };
-    if (selectedSection && (isGridSection || isBlockSection)) handleSectionSettingChange('customCssAi', next);
-    else if (selectedColumn) handleColumnSettingChange('customCssAi', next);
-    else if (selectedBlock) handleBlockSettingChange('customCssAi', next);
-  }, [customCssAiConfig, selectedSection, selectedColumn, selectedBlock, isGridSection, isBlockSection, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
-
-  const handleApplyAiSettings = useCallback((patch: Record<string, unknown>): void => {
-    Object.entries(patch).forEach(([key, value]) => {
-      if (selectedSection && !selectedBlock && !selectedColumn) handleSectionSettingChangeWithGridColumns(key, value);
-      else if (selectedColumn) handleColumnSettingChange(key, value);
-      else if (selectedBlock) handleBlockSettingChange(key, value);
-    });
-  }, [selectedSection, selectedBlock, selectedColumn, handleSectionSettingChangeWithGridColumns, handleColumnSettingChange, handleBlockSettingChange]);
 
   const handleRemoveSection = useCallback(() => selectedSection && dispatch({ type: 'REMOVE_SECTION', sectionId: selectedSection.id }), [selectedSection, dispatch]);
   const handleCopySection = useCallback(() => selectedSection && dispatch({ type: 'COPY_SECTION', sectionId: selectedSection.id }), [selectedSection, dispatch]);
@@ -178,23 +134,6 @@ export function ComponentSettingsPanel(): React.ReactNode {
   }, [dispatch, imageBackgroundSrc, selectedBlock, selectedGridRow, selectedParentBlock, selectedParentColumn, selectedParentSection]);
 
   const handleRemoveRow = useCallback(() => isRowBlock && selectedParentSection && selectedBlock && dispatch({ type: 'REMOVE_GRID_ROW', sectionId: selectedParentSection.id, rowId: selectedBlock.id }), [isRowBlock, selectedParentSection, selectedBlock, dispatch]);
-
-  const currentAnimationConfig = useMemo(() => (selectedSection?.settings['gsapAnimation'] ?? selectedColumn?.settings['gsapAnimation'] ?? selectedBlock?.settings['gsapAnimation'] ?? DEFAULT_ANIMATION_CONFIG) as GsapAnimationConfig, [selectedSection, selectedColumn, selectedBlock]);
-  const currentCssAnimationConfig = useMemo(() => (selectedSection?.settings['cssAnimation'] ?? selectedColumn?.settings['cssAnimation'] ?? selectedBlock?.settings['cssAnimation']) as CssAnimationConfig | undefined, [selectedSection, selectedColumn, selectedBlock]);
-
-  const handleAnimationChange = useCallback((updates: Partial<GsapAnimationConfig>): void => {
-    const config = { ...currentAnimationConfig, ...updates };
-    if (selectedSection && !selectedBlock && !selectedColumn) handleSectionSettingChange('gsapAnimation', config);
-    else if (selectedColumn) handleColumnSettingChange('gsapAnimation', config);
-    else if (selectedBlock) handleBlockSettingChange('gsapAnimation', config);
-  }, [currentAnimationConfig, selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
-
-  const handleCssAnimationChange = useCallback((updates: Partial<CssAnimationConfig>): void => {
-    const config = { ...(currentCssAnimationConfig ?? {}), ...updates };
-    if (selectedSection && !selectedBlock && !selectedColumn) handleSectionSettingChange('cssAnimation', config);
-    else if (selectedColumn) handleColumnSettingChange('cssAnimation', config);
-    else if (selectedBlock) handleBlockSettingChange('cssAnimation', config);
-  }, [currentCssAnimationConfig, selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
 
   const handleSaveSectionTemplate = useCallback(async (): Promise<void> => {
     if (!selectedSection) return;
@@ -239,10 +178,8 @@ export function ComponentSettingsPanel(): React.ReactNode {
   const handleToggleInspector = useCallback((): void => {
     const next = !state.inspectorEnabled; dispatch({ type: 'TOGGLE_INSPECTOR' });
     if (next) setActiveTab('connections'); else if (activeTab === 'connections') setActiveTab('settings');
-  }, [activeTab, dispatch, state.inspectorEnabled]);
+  }, [activeTab, dispatch, state.inspectorEnabled, setActiveTab]);
 
-  const selectedLabel = useMemo(() => selectedSection ? (sectionDef?.label ?? selectedSection.type) : (selectedColumn ? 'Column' : (selectedBlock ? (blockDef?.label ?? selectedBlock.type) : '')), [selectedSection, selectedColumn, selectedBlock, sectionDef, blockDef]);
-  const selectedTitle = useMemo(() => selectedSection ? `Section: ${selectedLabel}` : (selectedBlock ? `Block: ${selectedLabel}` : (selectedColumn ? 'Column' : 'Settings')), [selectedSection, selectedBlock, selectedColumn, selectedLabel]);
   const headerTooltips = useMemo(
     () => ({
       hideRightPanel: getDocumentationTooltip(
@@ -269,15 +206,10 @@ export function ComponentSettingsPanel(): React.ReactNode {
     []
   );
 
-  const contentAiAllowedKeys = useMemo((): string[] => {
-    const schema = selectedSection ? sectionDef?.settingsSchema : (selectedColumn ? columnDef?.settingsSchema : (selectedBlock ? blockDef?.settingsSchema : null));
-    return schema ? prependManagementFields(schema).map((f: SettingsField) => f.key) : [];
-  }, [selectedSection, selectedColumn, selectedBlock, sectionDef, columnDef, blockDef]);
-
   useEffect((): void => {
     if (!showEventsTab && activeTab === 'events') setActiveTab('settings');
     if (!showCustomCssTab && activeTab === 'customCss') setActiveTab('settings');
-  }, [showEventsTab, showCustomCssTab, activeTab]);
+  }, [showEventsTab, showCustomCssTab, activeTab, setActiveTab]);
 
   return (
     <InspectorAiProvider
@@ -474,8 +406,8 @@ export function ComponentSettingsPanel(): React.ReactNode {
                 </SettingsFormProvider>
               ) : null}
             </TabsContent>
-            <TabsContent value='animation' className='flex-1 overflow-y-auto p-4 mt-0'><AnimationConfigPanel config={currentAnimationConfig} onChange={handleAnimationChange} /></TabsContent>
-            <TabsContent value='cssAnimation' className='flex-1 overflow-y-auto p-4 mt-0'><CssAnimationConfigPanel value={currentCssAnimationConfig ?? {}} onChange={handleCssAnimationChange} /></TabsContent>
+            <TabsContent value='animation' className='flex-1 overflow-y-auto p-4 mt-0'><AnimationConfigPanel /></TabsContent>
+            <TabsContent value='cssAnimation' className='flex-1 overflow-y-auto p-4 mt-0'><CssAnimationConfigPanel /></TabsContent>
             <TabsContent value='ai' className='flex-1 overflow-y-auto p-4 mt-0'><ContentAiSection /></TabsContent>
             {showCustomCssTab && (
               <TabsContent value='customCss' className='flex-1 overflow-y-auto p-4 mt-0 space-y-3'>

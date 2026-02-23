@@ -1,5 +1,6 @@
 import 'server-only';
 
+import type { ImageFileRecord } from '@/shared/contracts/files';
 import {
   executeImageStudioRun,
   type ImageStudioRunExecutionMeta,
@@ -225,16 +226,7 @@ const createRunOutputSlotMetadata = (params: {
   finishedAt: string;
   outputIndex: number;
   outputCount: number;
-  output: {
-    id: string;
-    filename: string;
-    filepath: string;
-    mimetype: string;
-    size: number;
-    width: number | null;
-    height: number | null;
-    tags: string[];
-  };
+  output: ImageFileRecord;
   sourceContext: GenerationSourceContext;
   operation: 'generate' | 'center_object';
   model: string | null;
@@ -314,16 +306,7 @@ const materializeRunOutputSlots = async (params: {
   run: ImageStudioRunRecord;
   finishedAt: string;
   executionMeta: ImageStudioRunExecutionMeta;
-  outputs: Array<{
-    id: string;
-    filename: string;
-    filepath: string;
-    mimetype: string;
-    size: number;
-    width: number | null;
-    height: number | null;
-    tags: string[];
-  }>;
+  outputs: ImageFileRecord[];
 }): Promise<string[]> => {
   if (params.outputs.length === 0) return [];
   const sourceContext = await collectGenerationSourceContext(params.run);

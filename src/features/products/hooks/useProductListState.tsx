@@ -809,8 +809,8 @@ export function useProductListState(): ProductListContextType & {
   );
 
   const columns = useMemo(
-    () => getProductColumns(preferences.thumbnailSource ?? 'file', productImageBaseUrl, categoryNameById),
-    [categoryNameById, preferences.thumbnailSource, productImageBaseUrl]
+    () => getProductColumns(),
+    []
   );
 
   return useMemo(() => ({
@@ -882,6 +882,9 @@ export function useProductListState(): ProductListContextType & {
     traderaBadgeIds,
     traderaBadgeStatuses,
     queuedProductIds,
+    categoryNameById,
+    thumbnailSource: preferences.thumbnailSource ?? 'file',
+    imageExternalBaseUrl: productImageBaseUrl,
     getRowId,
     isLoading: !isMounted || isLoading,
     skeletonRows: tableSkeleton,
@@ -1001,6 +1004,8 @@ export function useProductListState(): ProductListContextType & {
     pageSize,
     preferences.nameLocale,
     preferences.filtersCollapsedByDefault,
+    preferences.thumbnailSource,
+    productImageBaseUrl,
     priceGroups,
     productToDelete,
     queuedProductIds,
@@ -1012,6 +1017,7 @@ export function useProductListState(): ProductListContextType & {
     sku,
     description,
     categoryId,
+    categoryNameById,
     baseExported,
     setBaseExported,
     startDate,

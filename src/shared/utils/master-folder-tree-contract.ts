@@ -3,7 +3,7 @@ import type {
   MasterTreeTargetTypeDto,
   MasterTreeDropPositionDto,
   MasterTreeNodeDto,
-} from '@/shared/contracts/master-folder-tree';
+} from '../contracts/master-folder-tree';
 
 export const masterTreeNodeTypeValues = ['folder', 'file'] as const;
 export type MasterTreeNodeType = MasterTreeNodeTypeDto;

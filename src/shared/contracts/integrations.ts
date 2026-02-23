@@ -859,6 +859,7 @@ export const baseParameterImportSummarySchema = z.object({
 });
 
 export type BaseParameterImportSummaryDto = z.infer<typeof baseParameterImportSummarySchema>;
+export type BaseParameterImportSummary = BaseParameterImportSummaryDto;
 
 /**
  * Base.com Parameter Import Settings DTOs

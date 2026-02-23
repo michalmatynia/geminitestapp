@@ -204,7 +204,7 @@ export function ProductListingItem({ listing }: { listing: ProductListingWithDet
             )}
             <ActionMenu
               trigger='Re-export images only'
-              variant='info'
+              variant='outline'
               size='sm'
               disabled={
                 exportingListing === listing.id ||

@@ -210,7 +210,7 @@ export async function getProductAiJobs(
     if (!job.productId) return false;
     const payload =
       job.payload && typeof job.payload === 'object'
-        ? (job.payload)
+        ? (job.payload as Record<string, unknown>)
         : null;
     const entityType =
       (payload?.['entityType'] as string | undefined) ??
@@ -285,7 +285,7 @@ export async function getProductAiJob(
   let product: Record<string, unknown> | null = null;
   const payload =
     job.payload && typeof job.payload === 'object'
-      ? (job.payload)
+      ? (job.payload as Record<string, unknown>)
       : null;
   const entityType =
     (payload?.['entityType'] as string | undefined) ??

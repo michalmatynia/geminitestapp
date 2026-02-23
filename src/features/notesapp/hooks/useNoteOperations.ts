@@ -109,7 +109,7 @@ export function useNoteOperations({
   }, [deleteCategoryMutation, toast, confirmAction]);
 
   const handleRenameFolder = useCallback(async (folderId: string, newName: string): Promise<void> => {
-    const currentFolder = findTreeNodeById(folderTreeRef.current, folderId);
+    const currentFolder = findTreeNodeById(folderTreeRef.current || [], folderId);
     const previousName = (currentFolder?.name as string) ?? '';
     try {
       await updateCategoryMutation.mutateAsync({ id: folderId, name: newName });
@@ -142,7 +142,7 @@ export function useNoteOperations({
       const baseTitle = note.title.replace(/\s*\(\d+\)$/, '');
       let newTitle = `${baseTitle} (1)`;
 
-      const existingNotes = notesRef.current.filter((n: NoteWithRelations) =>
+      const existingNotes = (notesRef.current || []).filter((n: NoteWithRelations) =>
         n.title.startsWith(baseTitle) && n.title !== note.title
       );
       if (existingNotes.length > 0) {
@@ -204,7 +204,7 @@ export function useNoteOperations({
   }, [deleteNoteMutation, selectedNote, setSelectedNote, toast, confirmAction]);
 
   const handleRenameNote = useCallback(async (noteId: string, newTitle: string): Promise<void> => {
-    const currentNote = notesRef.current.find((note: NoteWithRelations) => note.id === noteId);
+    const currentNote = (notesRef.current || []).find((note: NoteWithRelations) => note.id === noteId);
     const previousTitle = currentNote?.title ?? '';
     try {
       const updatedNote = await updateNoteMutation.mutateAsync({ id: noteId, title: newTitle });
@@ -227,7 +227,7 @@ export function useNoteOperations({
   }, [notesRef, updateNoteMutation, setUndoStack, selectedNote, setSelectedNote, toast]);
 
   const handleMoveNoteToFolder = useCallback(async (noteId: string, folderId: string | null): Promise<void> => {
-    const currentNote = notesRef.current.find((note: NoteWithRelations) => note.id === noteId);
+    const currentNote = (notesRef.current || []).find((note: NoteWithRelations) => note.id === noteId);
     const previousFolderId = currentNote?.categories?.[0]?.categoryId ?? null;
     try {
       await updateNoteMutation.mutateAsync({
@@ -249,7 +249,7 @@ export function useNoteOperations({
   }, [notesRef, updateNoteMutation, setUndoStack, toast]);
 
   const handleMoveFolderToFolder = useCallback(async (folderId: string, targetParentId: string | null): Promise<void> => {
-    const previousParentId = findTreeNodeParentId(folderTreeRef.current, folderId);
+    const previousParentId = findTreeNodeParentId(folderTreeRef.current || [], folderId);
     try {
       await updateCategoryMutation.mutateAsync({
         id: folderId,
@@ -270,7 +270,7 @@ export function useNoteOperations({
   }, [folderTreeRef, updateCategoryMutation, setUndoStack, toast]);
 
   const handleReorderFolder = useCallback(async (folderId: string, targetId: string, position: 'before' | 'after'): Promise<void> => {
-    const tree = folderTreeRef.current;
+    const tree = folderTreeRef.current || [];
     const draggedFolder = findTreeNodeById(tree, folderId);
     if (!draggedFolder) return;
 

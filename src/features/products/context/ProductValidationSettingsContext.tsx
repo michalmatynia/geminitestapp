@@ -8,12 +8,15 @@ import {
   type SetStateAction,
 } from 'react';
 
-import type {
+import type { 
+  ProductValidationPattern,
   ProductValidationDenyBehavior,
   ProductValidationInstanceScope,
   ProductValidationPostAcceptBehavior,
 } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
+
+import type { FieldValidatorIssue } from '../validation-engine/core';
 
 export type ProductValidationDenyIssueInput = {
   fieldName: string;
@@ -39,6 +42,9 @@ export interface ProductValidationStateValue {
   formatterEnabled: boolean;
   validationDenyBehavior: ProductValidationDenyBehavior;
   denyActionLabel: 'Deny' | 'Mute';
+  validatorPatterns: ProductValidationPattern[];
+  latestProductValues: Record<string, unknown> | null;
+  visibleFieldIssues: Record<string, FieldValidatorIssue[]>;
 }
 
 const ProductValidationStateContext =
@@ -116,6 +122,9 @@ export function ProductValidationSettingsProvider({
       formatterEnabled: value.formatterEnabled,
       validationDenyBehavior: value.validationDenyBehavior,
       denyActionLabel: value.denyActionLabel,
+      validatorPatterns: value.validatorPatterns,
+      latestProductValues: value.latestProductValues,
+      visibleFieldIssues: value.visibleFieldIssues,
     }),
     [
       value.validationInstanceScope,
@@ -123,6 +132,9 @@ export function ProductValidationSettingsProvider({
       value.formatterEnabled,
       value.validationDenyBehavior,
       value.denyActionLabel,
+      value.validatorPatterns,
+      value.latestProductValues,
+      value.visibleFieldIssues,
     ]
   );
 

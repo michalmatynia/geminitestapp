@@ -418,8 +418,8 @@ export const getAiPathRunQueueStatus = async (): Promise<AiPathRunQueueStatus> =
         )
         : 0;
     const slo = computeAiPathRunQueueSlo({
-      queueRunning: health.running,
-      queueHealthy: health.healthy,
+      queueRunning: health.running ?? false,
+      queueHealthy: health.healthy ?? false,
       queueLagMs,
       successRate24h: runtimeAnalyticsSummary.runs.successRate,
       terminalRuns24h,
@@ -429,13 +429,13 @@ export const getAiPathRunQueueStatus = async (): Promise<AiPathRunQueueStatus> =
     });
 
     return {
-      running: health.running,
-      healthy: health.healthy,
-      processing: health.processing,
+      running: health.running ?? false,
+      healthy: health.healthy ?? false,
+      processing: health.processing ?? false,
       activeRuns: health.activeCount,
       concurrency: Math.max(1, DEFAULT_CONCURRENCY),
-      lastPollTime: health.lastPollTime,
-      timeSinceLastPoll: health.timeSinceLastPoll,
+      lastPollTime: health.lastPollTime ?? 0,
+      timeSinceLastPoll: health.timeSinceLastPoll ?? 0,
       queuedCount: stats.queuedCount,
       oldestQueuedAt,
       queueLagMs,
@@ -639,7 +639,7 @@ export const enqueuePathRunJob = async (
 const resolveAiPathRunQueue = (): { queue: Queue | null; owned: boolean } => {
   const existing = queue.getQueue();
   if (existing) {
-    return { queue: existing, owned: false };
+    return { queue: existing as any, owned: false };
   }
   const connection = getRedisConnection();
   if (!connection) {

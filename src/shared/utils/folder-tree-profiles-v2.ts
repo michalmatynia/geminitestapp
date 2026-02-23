@@ -8,7 +8,7 @@ export type {
   FolderTreePlaceholderStyle,
   FolderTreeProfileV2,
   FolderTreeSelectionBehavior,
-} from '@/shared/contracts/master-folder-tree';
+} from '../contracts/master-folder-tree';
 
 import {
   normalizeMasterTreeKind,

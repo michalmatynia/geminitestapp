@@ -304,7 +304,6 @@ function CaseResolverNodeFileWorkspaceInner({
     activeCaseId,
     caseResolverIdentifiers,
     onSelectFile,
-    onEditFile,
   } = useCaseResolverPageContext();
   const { viewportRef, canvasRef } = useCanvasRefs();
   const { view } = useCanvasState();
@@ -1503,9 +1502,6 @@ function CaseResolverNodeFileWorkspaceInner({
         selectedPromptTemplate={selectedPromptTemplate}
         selectedPromptInputText={selectedPromptInputText}
         selectedPromptOutputPreview={selectedPromptOutputPreview}
-        selectedCanvasFileId={null}
-        selectedWorkspaceId={workspace.id ?? null}
-        onEditFile={onEditFile}
         onUpdateSelectedPromptTemplate={updateSelectedPromptTemplate}
         onUpdateSelectedNodeMeta={updateSelectedNodeMeta}
         selectedEdge={selectedEdge}

@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useMemo, useCallback } from 'react';
 
+import { DEFAULT_ANIMATION_CONFIG, type GsapAnimationConfig } from '@/features/gsap';
+import { DEFAULT_CUSTOM_CSS_AI_CONFIG, type CustomCssAiConfig, type CssAnimationConfig } from '@/shared/contracts/cms';
 import { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
 
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
@@ -14,13 +16,26 @@ interface ConnectionSettings {
   path: string;
   fallback: string;
 }
-interface ComponentSettingsContextValue {
+
+export interface ComponentSettingsContextValue {
   hasSelection: boolean;
   selectedLabel: string;
   selectedTitle: string;
+  activeTab: string;
+  setActiveTab: (tab: string) => void;
+  currentAnimationConfig: GsapAnimationConfig;
+  handleAnimationChange: (updates: Partial<GsapAnimationConfig>) => void;
+  currentCssAnimationConfig: CssAnimationConfig | undefined;
+  handleCssAnimationChange: (updates: Partial<CssAnimationConfig>) => void;
+  customCssValue: string;
+  handleCustomCssChange: (value: string) => void;
+  customCssAiConfig: CustomCssAiConfig;
+  handleCustomCssAiChange: (patch: Partial<CustomCssAiConfig>) => void;
+  handleApplyAiSettings: (patch: Record<string, unknown>) => void;
+  contentAiAllowedKeys: string[];
   connectionSettings: ConnectionSettings;
   updateConnectionSetting: (patch: Partial<ConnectionSettings>) => void;
-  eventConfig: ReturnType<typeof getEventEffectsConfig> | null;
+  eventConfig: any;
   handleEventSettingChange: (key: string, value: unknown) => void;
   handleBlockSettingChange: (key: string, value: unknown) => void;
   handleSectionSettingChange: (key: string, value: unknown) => void;
@@ -29,13 +44,16 @@ interface ComponentSettingsContextValue {
 
 const ComponentSettingsContext = createContext<ComponentSettingsContextValue | null>(null);
 
-export function useComponentSettings(): ComponentSettingsContextValue {
+export function useComponentSettingsContext(): ComponentSettingsContextValue {
   const context = useContext(ComponentSettingsContext);
   if (!context) {
-    throw new Error('useComponentSettings must be used within a ComponentSettingsProvider');
+    throw new Error('useComponentSettingsContext must be used within a ComponentSettingsProvider');
   }
   return context;
 }
+
+// Alias for older callers
+export const useComponentSettings = useComponentSettingsContext;
 
 export function ComponentSettingsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const {
@@ -48,7 +66,11 @@ export function ComponentSettingsProvider({ children }: { children: React.ReactN
     selectedParentRow,
     selectedParentBlock,
     dispatch,
-  } = usePageBuilder();  const sectionDef = useMemo(() => selectedSection ? getSectionDefinition(selectedSection.type) : null, [selectedSection]);
+  } = usePageBuilder();
+
+  const [activeTab, setActiveTab] = React.useState<string>('settings');
+
+  const sectionDef = useMemo(() => selectedSection ? getSectionDefinition(selectedSection.type) : null, [selectedSection]);
   const blockDef = useMemo(() => selectedBlock ? getBlockDefinition(selectedBlock.type) : null, [selectedBlock]);
 
   const selectedLabel = useMemo(() => {
@@ -66,17 +88,6 @@ export function ComponentSettingsProvider({ children }: { children: React.ReactN
   }, [selectedSection, selectedBlock, selectedColumn, selectedLabel]);
 
   const hasSelection = !!(selectedSection || selectedBlock || selectedColumn);
-
-  // --- Connection Settings ---
-  const connectionSettings = useMemo((): ConnectionSettings => {
-    const raw = ((selectedSection?.settings ?? selectedColumn?.settings ?? selectedBlock?.settings ?? null)?.['connection'] ?? {}) as Partial<ConnectionSettings>;
-    return {
-      enabled: raw.enabled ?? false,
-      source: raw.source ?? '',
-      path: raw.path ?? '',
-      fallback: raw.fallback ?? '',
-    };
-  }, [selectedSection, selectedColumn, selectedBlock]);
 
   // --- Handlers ---
   const handleSectionSettingChange = useCallback((key: string, value: unknown): void => {
@@ -119,6 +130,86 @@ export function ComponentSettingsProvider({ children }: { children: React.ReactN
     dispatch({ type: 'UPDATE_COLUMN_SETTINGS', sectionId: selectedColumnParentSection.id, columnId: selectedColumn.id, settings: next });
   }, [selectedColumn, selectedColumnParentSection, dispatch]);
 
+  // --- Animation State ---
+  const currentAnimationConfig = useMemo(() => (selectedSection?.settings['gsapAnimation'] ?? selectedColumn?.settings['gsapAnimation'] ?? selectedBlock?.settings['gsapAnimation'] ?? DEFAULT_ANIMATION_CONFIG) as GsapAnimationConfig, [selectedSection, selectedColumn, selectedBlock]);
+  const currentCssAnimationConfig = useMemo(() => (selectedSection?.settings['cssAnimation'] ?? selectedColumn?.settings['cssAnimation'] ?? selectedBlock?.settings['cssAnimation']) as CssAnimationConfig | undefined, [selectedSection, selectedColumn, selectedBlock]);
+
+  const handleAnimationChange = useCallback((updates: Partial<GsapAnimationConfig>): void => {
+    const config = { ...currentAnimationConfig, ...updates };
+    if (selectedSection && !selectedBlock && !selectedColumn) handleSectionSettingChange('gsapAnimation', config);
+    else if (selectedColumn) handleColumnSettingChange('gsapAnimation', config);
+    else if (selectedBlock) handleBlockSettingChange('gsapAnimation', config);
+  }, [currentAnimationConfig, selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
+
+  const handleCssAnimationChange = useCallback((updates: Partial<CssAnimationConfig>): void => {
+    const config = { ...(currentCssAnimationConfig ?? {}), ...updates };
+    if (selectedSection && !selectedBlock && !selectedColumn) handleSectionSettingChange('cssAnimation', config);
+    else if (selectedColumn) handleColumnSettingChange('cssAnimation', config);
+    else if (selectedBlock) handleBlockSettingChange('cssAnimation', config);
+  }, [currentCssAnimationConfig, selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
+
+  // --- Custom CSS ---
+  const customCssValue = useMemo((): string => {
+    if (selectedSection) return (selectedSection.settings['customCss'] as string) || '';
+    if (selectedColumn) return (selectedColumn.settings['customCss'] as string) || '';
+    if (selectedBlock) return (selectedBlock.settings['customCss'] as string) || '';
+    return '';
+  }, [selectedSection, selectedColumn, selectedBlock]);
+
+  const customCssAiRaw = useMemo((): CustomCssAiConfig | undefined => {
+    if (selectedSection) return selectedSection.settings['customCssAi'] as CustomCssAiConfig | undefined;
+    if (selectedColumn) return selectedColumn.settings['customCssAi'] as CustomCssAiConfig | undefined;
+    if (selectedBlock) return selectedBlock.settings['customCssAi'] as CustomCssAiConfig | undefined;
+    return undefined;
+  }, [selectedSection, selectedColumn, selectedBlock]);
+
+  const customCssAiConfig = useMemo(
+    (): CustomCssAiConfig => ({ ...DEFAULT_CUSTOM_CSS_AI_CONFIG, ...(customCssAiRaw ?? {}) }),
+    [customCssAiRaw]
+  );
+
+  const handleCustomCssChange = useCallback((value: string): void => {
+    if (selectedSection) handleSectionSettingChange('customCss', value);
+    else if (selectedColumn) handleColumnSettingChange('customCss', value);
+    else if (selectedBlock) handleBlockSettingChange('customCss', value);
+  }, [selectedSection, selectedColumn, selectedBlock, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
+
+  const handleCustomCssAiChange = useCallback((patch: Partial<CustomCssAiConfig>): void => {
+    const next = { ...customCssAiConfig, ...patch };
+    if (selectedSection) handleSectionSettingChange('customCssAi', next);
+    else if (selectedColumn) handleColumnSettingChange('customCssAi', next);
+    else if (selectedBlock) handleBlockSettingChange('customCssAi', next);
+  }, [customCssAiConfig, selectedSection, selectedColumn, selectedBlock, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange]);
+
+  // --- AI Settings ---
+  const handleApplyAiSettings = useCallback((patch: Record<string, unknown>): void => {
+    Object.entries(patch).forEach(([key, value]) => {
+      if (selectedSection && !selectedBlock && !selectedColumn) {
+        if (key === 'columns' && selectedSection.type === 'Grid') dispatch({ type: 'SET_GRID_COLUMNS', sectionId: selectedSection.id, columnCount: value as number });
+        else if (key === 'rows' && selectedSection.type === 'Grid') dispatch({ type: 'SET_GRID_ROWS', sectionId: selectedSection.id, rowCount: value as number });
+        else handleSectionSettingChange(key, value);
+      }
+      else if (selectedColumn) handleColumnSettingChange(key, value);
+      else if (selectedBlock) handleBlockSettingChange(key, value);
+    });
+  }, [selectedSection, selectedBlock, selectedColumn, handleSectionSettingChange, handleColumnSettingChange, handleBlockSettingChange, dispatch]);
+
+  const contentAiAllowedKeys = useMemo((): string[] => {
+    const schema = selectedSection ? sectionDef?.settingsSchema : (selectedBlock ? blockDef?.settingsSchema : null);
+    return schema ? schema.map((f: { key: string }) => f.key) : [];
+  }, [selectedSection, selectedBlock, sectionDef, blockDef]);
+
+  // --- Connection Settings ---
+  const connectionSettings = useMemo((): ConnectionSettings => {
+    const raw = ((selectedSection?.settings ?? selectedColumn?.settings ?? selectedBlock?.settings ?? null)?.['connection'] ?? {}) as Partial<ConnectionSettings>;
+    return {
+      enabled: raw.enabled ?? false,
+      source: raw.source ?? '',
+      path: raw.path ?? '',
+      fallback: raw.fallback ?? '',
+    };
+  }, [selectedSection, selectedColumn, selectedBlock]);
+
   const updateConnectionSetting = useCallback((patch: Partial<ConnectionSettings>): void => {
     const next = { ...connectionSettings, ...patch };
     if (selectedSection && !selectedBlock && !selectedColumn) {
@@ -142,10 +233,22 @@ export function ComponentSettingsProvider({ children }: { children: React.ReactN
     }
   }, [selectedBlock, selectedSection, handleBlockSettingChange, handleSectionSettingChange]);
 
-  const value = useMemo(() => ({
+  const contextValue = useMemo(() => ({
     hasSelection,
     selectedLabel,
     selectedTitle,
+    activeTab,
+    setActiveTab,
+    currentAnimationConfig,
+    handleAnimationChange,
+    currentCssAnimationConfig,
+    handleCssAnimationChange,
+    customCssValue,
+    handleCustomCssChange,
+    customCssAiConfig,
+    handleCustomCssAiChange,
+    handleApplyAiSettings,
+    contentAiAllowedKeys,
     connectionSettings,
     updateConnectionSetting,
     eventConfig,
@@ -157,6 +260,17 @@ export function ComponentSettingsProvider({ children }: { children: React.ReactN
     hasSelection,
     selectedLabel,
     selectedTitle,
+    activeTab,
+    currentAnimationConfig,
+    handleAnimationChange,
+    currentCssAnimationConfig,
+    handleCssAnimationChange,
+    customCssValue,
+    handleCustomCssChange,
+    customCssAiConfig,
+    handleCustomCssAiChange,
+    handleApplyAiSettings,
+    contentAiAllowedKeys,
     connectionSettings,
     updateConnectionSetting,
     eventConfig,
@@ -167,7 +281,7 @@ export function ComponentSettingsProvider({ children }: { children: React.ReactN
   ]);
 
   return (
-    <ComponentSettingsContext.Provider value={value}>
+    <ComponentSettingsContext.Provider value={contextValue}>
       {children}
     </ComponentSettingsContext.Provider>
   );

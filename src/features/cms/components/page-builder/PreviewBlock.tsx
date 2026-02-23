@@ -50,19 +50,9 @@ import {
   shouldShowSectionDivider,
   type MediaReplaceTarget,
 } from './preview/preview-utils';
-import {
-  PreviewCarouselBlock,
-  PreviewSlideshowBlock,
-  registerCarouselPreviewBlockItem,
-} from './preview/PreviewCarouselBlocks';
-import {
-  PreviewImageWithTextBlock,
-  PreviewHeroBlock,
-  PreviewRichTextBlock,
-  PreviewBlockSectionBlock,
-  PreviewTextAtomBlock,
-  registerPreviewBlockItem,
-} from './preview/PreviewSectionBlocks';
+import { PreviewCarouselBlock, PreviewSlideshowBlock, registerCarouselPreviewBlockItem } from './preview/PreviewCarouselBlocks';
+import { PreviewImageWithTextBlock, PreviewHeroBlock, PreviewRichTextBlock, PreviewBlockSectionBlock, PreviewTextAtomBlock, registerPreviewBlockItem } from './preview/PreviewSectionBlocks';
+import { PreviewSectionProvider, type PreviewSectionContextValue } from './preview/context/PreviewSectionContext';
 import { PreviewGridSection } from './preview/sections/PreviewGridSection';
 import { PreviewHeroSection } from './preview/sections/PreviewHeroSection';
 import { PreviewImageWithTextSection } from './preview/sections/PreviewImageWithTextSection';
@@ -203,86 +193,57 @@ export function PreviewSection({
 
   if (isHidden) return null;
 
+  const sectionContextValue: PreviewSectionContextValue = {
+    section,
+    colorSchemes,
+    mediaStyles,
+    selectedRing,
+    divider,
+    layout,
+    renderSectionActions,
+    wrapInspector,
+    handleSelect,
+    PreviewBlockItem,
+  };
+
   // Dispatch to modular section components
   if (section.type === 'Slideshow') {
     return (
-      <PreviewSlideshowSection
-        section={section}
-        colorSchemes={colorSchemes}
-        selectedRing={selectedRing}
-        renderSectionActions={renderSectionActions}
-        divider={divider}
-        wrapInspector={wrapInspector}
-        handleSelect={handleSelect}
-        PreviewBlockItem={PreviewBlockItem}
-      />
+      <PreviewSectionProvider value={sectionContextValue}>
+        <PreviewSlideshowSection />
+      </PreviewSectionProvider>
     );
   }
 
   if (section.type === 'Grid') {
     return (
-      <PreviewGridSection
-        section={section}
-        colorSchemes={colorSchemes}
-        mediaStyles={mediaStyles}
-        selectedRing={selectedRing}
-        renderSectionActions={renderSectionActions}
-        divider={divider}
-        wrapInspector={wrapInspector}
-        handleSelect={handleSelect}
-        PreviewBlockItem={PreviewBlockItem}
-        layout={layout}
-      />
+      <PreviewSectionProvider value={sectionContextValue}>
+        <PreviewGridSection />
+      </PreviewSectionProvider>
     );
   }
 
   if (section.type === 'ImageWithText') {
     return (
-      <PreviewImageWithTextSection
-        section={section}
-        colorSchemes={colorSchemes}
-        mediaStyles={mediaStyles}
-        selectedRing={selectedRing}
-        renderSectionActions={renderSectionActions}
-        divider={divider}
-        wrapInspector={wrapInspector}
-        handleSelect={handleSelect}
-        PreviewBlockItem={PreviewBlockItem}
-        layout={layout}
-      />
+      <PreviewSectionProvider value={sectionContextValue}>
+        <PreviewImageWithTextSection />
+      </PreviewSectionProvider>
     );
   }
 
   if (section.type === 'Hero') {
     return (
-      <PreviewHeroSection
-        section={section}
-        colorSchemes={colorSchemes}
-        mediaStyles={mediaStyles}
-        selectedRing={selectedRing}
-        renderSectionActions={renderSectionActions}
-        divider={divider}
-        wrapInspector={wrapInspector}
-        handleSelect={handleSelect}
-        PreviewBlockItem={PreviewBlockItem}
-        layout={layout}
-      />
+      <PreviewSectionProvider value={sectionContextValue}>
+        <PreviewHeroSection />
+      </PreviewSectionProvider>
     );
   }
 
   if (section.type === 'RichText') {
     return (
-      <PreviewRichTextSection
-        section={section}
-        colorSchemes={colorSchemes}
-        selectedRing={selectedRing}
-        renderSectionActions={renderSectionActions}
-        divider={divider}
-        wrapInspector={wrapInspector}
-        handleSelect={handleSelect}
-        PreviewBlockItem={PreviewBlockItem}
-        layout={layout}
-      />
+      <PreviewSectionProvider value={sectionContextValue}>
+        <PreviewRichTextSection />
+      </PreviewSectionProvider>
     );
   }
 

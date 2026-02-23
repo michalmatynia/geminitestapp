@@ -5,7 +5,6 @@ import React from 'react';
 
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import type { 
-  GsapAnimationConfigDto as GsapAnimationConfig,
   AnimationPresetDto as AnimationPreset,
   AnimationTriggerDto as AnimationTrigger
 } from '@/shared/contracts/gsap';
@@ -29,20 +28,18 @@ import { AnimationConfigProvider } from './animation/AnimationConfigContext';
 import { ParallaxSection } from './animation/ParallaxSection';
 import { TimelineSection } from './animation/TimelineSection';
 import { VisualEffectsSection } from './animation/VisualEffectsSection';
+import { useComponentSettingsContext } from './context/ComponentSettingsContext';
 
 import type { OpenVectorOverlay } from './animation/AnimationConfigContext';
 
 interface AnimationConfigPanelProps {
-  config: GsapAnimationConfig;
-  onChange: (updates: Partial<GsapAnimationConfig>) => void;
   openVectorOverlay?: OpenVectorOverlay;
 }
 
 export function AnimationConfigPanel({
-  config,
-  onChange,
   openVectorOverlay,
 }: AnimationConfigPanelProps): React.JSX.Element {
+  const { currentAnimationConfig: config, handleAnimationChange: onChange } = useComponentSettingsContext();
   const isEnabled = config.preset !== 'none' || config.motionPathEnabled || config.svgDrawEnabled || config.parallaxPreset !== 'none';
 
   return (

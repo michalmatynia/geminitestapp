@@ -29,6 +29,7 @@ import {
   loadVariantIntoCanvas,
 } from './center-preview/variant-actions';
 import { VariantPanel } from './center-preview/VariantPanel';
+import { VariantPanelProvider, type VariantPanelContextValue } from './center-preview/VariantPanelContext';
 import { VariantTooltipPortal, type VariantTooltipState } from './center-preview/VariantTooltipPortal';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
 import { VersionNodeDetailsModal } from './VersionNodeDetailsModal';
@@ -724,6 +725,54 @@ export function CenterPreview(): React.JSX.Element {
     }
   }, [captureRef, projectId, queryClient, toast, workingSlot]);
 
+  const variantPanelContextValue = useMemo<VariantPanelContextValue>(
+    () => ({
+      activeRunError,
+      activeVariantId,
+      compareVariantA,
+      compareVariantB,
+      compareVariantIds,
+      deletePending: deleteSlotMutation.isPending,
+      filteredVariantThumbnails,
+      variantLoadingId,
+      variantTimestampQuery,
+      visibleVariantThumbnails,
+      onClearCompare: (): void => setCompareVariantIds([null, null]),
+      onDeleteVariant: handleDeleteVariant,
+      onDismissRunError: clearActiveRunError,
+      onLoadVariantToCanvas: handleLoadVariantToCanvas,
+      onOpenVariantDetails: handleOpenVariantDetails,
+      onSetCompareVariantA: (variantId: string): void => {
+        setCompareVariantIds((prev) => [variantId, prev[1] === variantId ? null : prev[1]]);
+      },
+      onSetCompareVariantB: (variantId: string): void => {
+        setCompareVariantIds((prev) => [prev[0] === variantId ? null : prev[0], variantId]);
+      },
+      onVariantTimestampQueryChange: setVariantTimestampQuery,
+      onVariantTooltipLeave: (): void => setVariantTooltip(null),
+      onVariantTooltipMove: handleVariantTooltipMove,
+    }),
+    [
+      activeRunError,
+      activeVariantId,
+      compareVariantA,
+      compareVariantB,
+      compareVariantIds,
+      deleteSlotMutation.isPending,
+      filteredVariantThumbnails,
+      variantLoadingId,
+      variantTimestampQuery,
+      visibleVariantThumbnails,
+      handleDeleteVariant,
+      clearActiveRunError,
+      handleLoadVariantToCanvas,
+      handleOpenVariantDetails,
+      setCompareVariantIds,
+      setVariantTimestampQuery,
+      handleVariantTooltipMove,
+    ]
+  );
+
   return (
     <div className='order-2 relative flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0'>
       <div className='grid grid-cols-[1fr_auto_1fr] items-center gap-2 px-4 py-2'>
@@ -847,32 +896,9 @@ export function CenterPreview(): React.JSX.Element {
             ) : null}
           </div>
           {showVariantPanel ? (
-            <VariantPanel
-              activeRunError={activeRunError}
-              activeVariantId={activeVariantId}
-              compareVariantA={compareVariantA}
-              compareVariantB={compareVariantB}
-              compareVariantIds={compareVariantIds}
-              deletePending={deleteSlotMutation.isPending}
-              filteredVariantThumbnails={filteredVariantThumbnails}
-              variantLoadingId={variantLoadingId}
-              variantTimestampQuery={variantTimestampQuery}
-              visibleVariantThumbnails={visibleVariantThumbnails}
-              onClearCompare={(): void => setCompareVariantIds([null, null])}
-              onDeleteVariant={handleDeleteVariant}
-              onDismissRunError={clearActiveRunError}
-              onLoadVariantToCanvas={handleLoadVariantToCanvas}
-              onOpenVariantDetails={handleOpenVariantDetails}
-              onSetCompareVariantA={(variantId): void => {
-                setCompareVariantIds((prev) => [variantId, prev[1] === variantId ? null : prev[1]]);
-              }}
-              onSetCompareVariantB={(variantId): void => {
-                setCompareVariantIds((prev) => [prev[0] === variantId ? null : prev[0], variantId]);
-              }}
-              onVariantTimestampQueryChange={setVariantTimestampQuery}
-              onVariantTooltipLeave={(): void => setVariantTooltip(null)}
-              onVariantTooltipMove={handleVariantTooltipMove}
-            />
+            <VariantPanelProvider value={variantPanelContextValue}>
+              <VariantPanel />
+            </VariantPanelProvider>
           ) : null}
         </div>
         {showVariantPanel ? <div id={IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID} className='shrink-0' /> : null}

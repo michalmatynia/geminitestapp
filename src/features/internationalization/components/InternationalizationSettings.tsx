@@ -169,17 +169,17 @@ export function InternationalizationSettings(): React.JSX.Element {
           renderCustomContent={(item) => (
             <div className='flex flex-wrap gap-1.5'>
               {item.original.countries?.length ? (
-                item.original.countries.map((entry: { countryId: string; country: { name: string; code: string } }) => (
+                item.original.countries.map((country) => (
                   <Badge
-                    key={entry.countryId}
+                    key={country.id}
                     variant='outline'
                     className='flex items-center gap-1.5 px-1.5 py-0 text-[10px] border-border/40 bg-muted/10'
-                    title={entry.country.name}
+                    title={country.name}
                   >
                     <span className='h-2 w-3 shrink-0 overflow-hidden rounded-[1px] border border-white/10'>
-                      {countryFlagMap[entry.country.code] ?? null}
+                      {countryFlagMap[country.code] ?? null}
                     </span>
-                    <span className='truncate max-w-[60px]'>{entry.country.code}</span>
+                    <span className='truncate max-w-[60px]'>{country.code}</span>
                   </Badge>
                 ))
               ) : (

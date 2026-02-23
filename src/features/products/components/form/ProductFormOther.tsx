@@ -85,13 +85,7 @@ const CategoryIssueHintRow = memo(function CategoryIssueHintRow({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-type ProductFormOtherProps = {
-  visibleFieldIssues: Record<string, FieldValidatorIssue[]>;
-};
-
-export default function ProductFormOther({
-  visibleFieldIssues,
-}: ProductFormOtherProps): React.JSX.Element {
+export default function ProductFormOther(): React.JSX.Element {
   const {
     errors,
     catalogs,
@@ -106,7 +100,7 @@ export default function ProductFormOther({
 
   // Subscribe only to the fields this component needs — avoids cascade re-renders
   // triggered by unrelated fields (name, description, etc.).
-  const { validatorEnabled } = useProductValidationState();
+  const { validatorEnabled, visibleFieldIssues } = useProductValidationState();
 
   const { register, setValue, watch } = useFormContext<ProductFormData>();
   const basePrice = watch('price') || 0;

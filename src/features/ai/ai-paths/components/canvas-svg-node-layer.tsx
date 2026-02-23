@@ -4,9 +4,7 @@ import React from 'react';
 
 import type {
   AiNode,
-  AiPathRuntimeNodeStatusMap,
   Edge,
-  RuntimeState,
 } from '@/features/ai/ai-paths/lib';
 import {
   NODE_MIN_HEIGHT,
@@ -20,66 +18,8 @@ import {
   buildConnectorInfo,
   type ConnectorInfo,
 } from './canvas-board-connectors';
+import { useCanvasBoardUI } from './CanvasBoardUIContext';
 import { formatPortLabel } from '../utils/ui-utils';
-
-type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping';
-type SvgNodeDetailLevel = 'full' | 'compact' | 'skeleton';
-
-type SvgNodeLayerProps = {
-  cullPadding?: number;
-  detailLevel?: SvgNodeDetailLevel;
-  nodeDurations?: Record<string, number>;
-  inputPulseNodes?: Set<string>;
-  outputPulseNodes?: Set<string>;
-  triggerConnected?: Set<string>;
-  enableNodeAnimations?: boolean;
-  connectorHitTargetPx?: number;
-  connecting?: { fromNodeId: string; fromPort: string } | null;
-  connectingFromNode?: AiNode | null;
-  hoveredConnectorKey: string | null;
-  pinnedConnectorKey: string | null;
-  setHoveredConnectorKey: React.Dispatch<React.SetStateAction<string | null>>;
-  setPinnedConnectorKey: React.Dispatch<React.SetStateAction<string | null>>;
-  onPointerDownNode: (event: React.PointerEvent<Element>, nodeId: string) => void | Promise<void>;
-  onPointerMoveNode: (event: React.PointerEvent<Element>, nodeId: string) => void;
-  onPointerUpNode: (event: React.PointerEvent<Element>, nodeId: string) => void;
-  onSelectNode: (nodeId: string, options?: { toggle?: boolean }) => void | Promise<void>;
-  onOpenNodeConfig: () => void;
-  openNodeConfigOnSingleClick?: boolean;
-  onStartConnection: (
-    event: React.PointerEvent<Element>,
-    node: AiNode,
-    port: string
-  ) => void | Promise<void>;
-  onCompleteConnection: (
-    event: React.PointerEvent<Element>,
-    node: AiNode,
-    port: string
-  ) => void;
-  onReconnectInput: (
-    event: React.PointerEvent<Element>,
-    nodeId: string,
-    port: string
-  ) => void | Promise<void>;
-  onDisconnectPort: (direction: 'input' | 'output', nodeId: string, port: string) => void;
-  onFireTrigger: (node: AiNode) => void | Promise<void>;
-  onConnectorHover?: ((payload: {
-    clientX: number;
-    clientY: number;
-    info: ConnectorInfo;
-  }) => void) | undefined;
-  onConnectorLeave?: (() => void) | undefined;
-  
-  nodes: AiNode[];
-  edges: Edge[];
-  view: { x: number; y: number; scale: number };
-  viewportSize: { width: number; height: number } | null;
-  selectedNodeId: string | null;
-  selectedNodeIdSet: Set<string>;
-  runtimeState: RuntimeState;
-  runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
-  runtimeRunStatus: RuntimeRunStatus;
-};
 
 const BLOCKER_PROCESSING_STATUSES = new Set<string>([
   'running',
@@ -243,41 +183,42 @@ const buildConnectorTitle = (info: ConnectorInfo): string => {
     .join('\n');
 };
 
-export function CanvasSvgNodeLayer({
-  cullPadding = 260,
-  detailLevel = 'full',
-  inputPulseNodes = new Set(),
-  outputPulseNodes = new Set(),
-  triggerConnected = new Set(),
-  enableNodeAnimations = true,
-  connectorHitTargetPx = 14,
-  hoveredConnectorKey,
-  pinnedConnectorKey,
-  setHoveredConnectorKey,
-  setPinnedConnectorKey,
-  onPointerDownNode,
-  onPointerMoveNode,
-  onPointerUpNode,
-  onSelectNode,
-  onOpenNodeConfig,
-  openNodeConfigOnSingleClick = false,
-  onStartConnection,
-  onCompleteConnection,
-  onReconnectInput,
-  onDisconnectPort,
-  onFireTrigger,
-  onConnectorHover,
-  onConnectorLeave,
-  nodes,
-  edges,
-  view,
-  viewportSize,
-  selectedNodeId,
-  selectedNodeIdSet,
-  runtimeState,
-  runtimeNodeStatuses,
-  runtimeRunStatus,
-}: SvgNodeLayerProps): React.JSX.Element {
+export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number }): React.JSX.Element {
+  const {
+    detailLevel,
+    inputPulseNodes,
+    outputPulseNodes,
+    triggerConnected,
+    enableNodeAnimations,
+    connectorHitTargetPx,
+    hoveredConnectorKey,
+    pinnedConnectorKey,
+    setHoveredConnectorKey,
+    setPinnedConnectorKey,
+    onPointerDownNode,
+    onPointerMoveNode,
+    onPointerUpNode,
+    onSelectNode,
+    onOpenNodeConfig,
+    openNodeConfigOnSingleClick,
+    onStartConnection,
+    onCompleteConnection,
+    onReconnectInput,
+    onDisconnectPort,
+    onFireTrigger,
+    onConnectorHover,
+    onConnectorLeave,
+    nodes,
+    edges,
+    view,
+    viewportSize,
+    selectedNodeId,
+    selectedNodeIdSet,
+    runtimeState,
+    runtimeNodeStatuses,
+    runtimeRunStatus,
+  } = useCanvasBoardUI();
+
   const buildConnectorKey = React.useCallback(
     (direction: 'input' | 'output', nodeId: string, port: string): string =>
       `${direction}:${nodeId}:${port}`,

@@ -2,41 +2,30 @@
 
 import React from 'react';
 
-import type { AiNode, Edge, PathFlowIntensity } from '@/features/ai/ai-paths/lib';
-
+import { useCanvasBoardUI } from './CanvasBoardUIContext';
 import { SignalDots } from './SignalDots';
 
 import type { EdgePath } from '../context/hooks/useEdgePaths';
 
-type CanvasSvgEdgeLayerProps = {
-  edgePaths: EdgePath[];
-  edgeMetaMap: Map<string, Edge>;
-  nodeById: Map<string, AiNode>;
-  selectedEdgeId: string | null;
-  selectedNodeIdSet: Set<string>;
-  activeEdgeIds: Set<string>;
-  triggerConnected: Set<string>;
-  wireFlowEnabled: boolean;
-  flowingIntensity: Exclude<PathFlowIntensity, 'off'>;
-  reduceVisualEffects?: boolean;
-  onRemoveEdge: (edgeId: string) => void;
-  onSelectEdge: (edgeId: string) => void;
-};
-
 export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
   edgePaths,
-  edgeMetaMap,
-  nodeById,
-  selectedEdgeId,
-  selectedNodeIdSet,
-  activeEdgeIds,
-  triggerConnected,
-  wireFlowEnabled,
-  flowingIntensity,
-  reduceVisualEffects = false,
-  onRemoveEdge,
-  onSelectEdge,
-}: CanvasSvgEdgeLayerProps): React.JSX.Element {
+}: {
+  edgePaths: EdgePath[];
+}): React.JSX.Element {
+  const {
+    edgeMetaMap,
+    nodeById,
+    selectedEdgeId,
+    selectedNodeIdSet,
+    activeEdgeIds,
+    triggerConnected,
+    wireFlowEnabled,
+    flowingIntensity,
+    reduceVisualEffects,
+    onRemoveEdge,
+    onSelectEdge,
+  } = useCanvasBoardUI();
+
   return (
     <>
       {edgePaths.map((edge: EdgePath): React.JSX.Element => {

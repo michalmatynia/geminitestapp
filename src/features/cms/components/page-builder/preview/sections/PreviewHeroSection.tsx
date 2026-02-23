@@ -5,38 +5,27 @@ import React from 'react';
 import {
   getSectionContainerClass,
   getSectionStyles,
-  type ColorSchemeColors,
 } from '@/features/cms/components/frontend/theme-styles';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
-import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
+import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
+import type { BlockInstance } from '@/shared/contracts/cms';
 import { EmptyState } from '@/shared/ui';
 
-interface PreviewHeroSectionProps {
-  section: SectionInstance;
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  mediaStyles?: React.CSSProperties | null | undefined;
-  selectedRing: string;
-  renderSectionActions: () => React.ReactNode;
-  divider: React.ReactNode;
-  wrapInspector: (node: React.ReactNode) => React.ReactNode;
-  handleSelect: () => void;
-  PreviewBlockItem: React.ComponentType<{ block: BlockInstance }>;
-  layout?: { fullWidth?: boolean } | undefined;
-}
+export function PreviewHeroSection() {
+  const { 
+    section,
+    colorSchemes,
+    mediaStyles,
+    selectedRing,
+    renderSectionActions,
+    divider,
+    wrapInspector,
+    handleSelect,
+    PreviewBlockItem,
+    layout,
+  } = usePreviewSectionContext();
 
-export function PreviewHeroSection({
-  section,
-  colorSchemes,
-  mediaStyles,
-  selectedRing,
-  renderSectionActions,
-  divider,
-  wrapInspector,
-  handleSelect,
-  PreviewBlockItem,
-  layout,
-}: PreviewHeroSectionProps) {
   const { 
     inspectorSettings, 
     onOpenMedia,

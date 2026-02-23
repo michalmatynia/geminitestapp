@@ -749,7 +749,7 @@ const runCaseResolverOcr = async (input: {
   const attemptedModels: string[] = [];
 
   for (let index = 0; index < resolvedModels.length; index += 1) {
-    const model = resolvedModels[index];
+    const model = resolvedModels[index]!;
     attemptedModels.push(`${model.provider}:${model.model}`);
     try {
       return await runPreparedCaseResolverOcrRequest({
@@ -828,8 +828,8 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
     });
   },
   onFailed: async (jobId, error, data, context) => {
-    const attemptsMade = context?.attemptsMade ?? 1;
-    const maxAttempts = context?.maxAttempts ?? 1;
+    const attemptsMade = (context?.['attemptsMade'] as number | undefined) ?? 1;
+    const maxAttempts = (context?.['maxAttempts'] as number | undefined) ?? 1;
     const isFinalAttempt = attemptsMade >= maxAttempts;
     const errorMessage = error instanceof Error ? error.message : 'OCR runtime job failed.';
     const errorCategory = classifyCaseResolverOcrError(error);

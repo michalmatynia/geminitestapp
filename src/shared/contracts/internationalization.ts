@@ -32,6 +32,7 @@ export type CountryRecord = CountryDto;
 export const currencySchema = namedDtoSchema.extend({
   code: z.string(),
   symbol: z.string().nullable(),
+  exchangeRate: z.number().optional(),
   isDefault: z.boolean(),
   isActive: z.boolean(),
   createdAt: z.string().optional(),

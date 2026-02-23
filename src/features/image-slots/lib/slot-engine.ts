@@ -21,7 +21,7 @@ export const createFileImageSlot = (file: File): ManagedImageSlot => ({
 export const createExistingImageSlot = (file: ImageFileSelection): ManagedImageSlot => ({
   type: 'existing',
   data: file,
-  previewUrl: file.filepath,
+  previewUrl: file.filepath ?? '',
   slotId: file.id,
 });
 

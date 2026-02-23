@@ -850,6 +850,9 @@ export default function ProductForm({
           denyIssue,
           isIssueAccepted,
           acceptIssue,
+          validatorPatterns,
+          latestProductValues,
+          visibleFieldIssues,
         }}
       >
         <Tabs
@@ -880,16 +883,12 @@ export default function ProductForm({
           </TabsList>
           {/* General tab is always mounted — the formatter effect reads its fields from mount */}
           <TabsContent value='general' className='mt-4 data-[state=inactive]:hidden' forceMount>
-            <ProductFormGeneral
-              validatorPatterns={validatorPatterns}
-              latestProductValues={latestProductValues}
-              visibleFieldIssues={visibleFieldIssues}
-            />
+            <ProductFormGeneral />
           </TabsContent>
           {/* Remaining tabs use deferred mounting: content renders on first visit and */}
           {/* remains hidden via CSS when inactive, avoiding repeated mount/unmount cost. */}
           <TabsContent value='other' className='mt-4 data-[state=inactive]:hidden' forceMount>
-            <ProductFormOther visibleFieldIssues={visibleFieldIssues} />
+            <ProductFormOther />
           </TabsContent>
           <TabsContent value='parameters' className='mt-4 data-[state=inactive]:hidden'>
             {mountedTabs.has('parameters') && <ProductFormParameters />}

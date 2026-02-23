@@ -33,6 +33,7 @@ import { useCanvasPulseEffects } from './canvas-board-pulse-effects';
 import { CanvasMinimap } from './canvas-minimap';
 import { CanvasSvgEdgeLayer } from './canvas-svg-edge-layer';
 import { CanvasSvgNodeLayer } from './canvas-svg-node-layer';
+import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from './CanvasBoardUIContext';
 import { NodeProcessingDots } from './NodeProcessingDots';
 import { formatPortLabel } from '../utils/ui-utils';
 
@@ -809,6 +810,101 @@ export function CanvasBoard({
       ? 'cursor-crosshair'
       : 'cursor-grab';
 
+  const uiContextValue = React.useMemo<CanvasBoardUIContextValue>(
+    () => ({
+      view,
+      viewportSize,
+      detailLevel: svgDetailLevel,
+      nodes,
+      edges,
+      edgeMetaMap,
+      nodeById,
+      selectedNodeId,
+      selectedNodeIdSet,
+      selectedEdgeId,
+      runtimeState,
+      runtimeNodeStatuses,
+      runtimeRunStatus: runtimeRunStatus as 'idle' | 'running' | 'paused' | 'stepping',
+      nodeDurations,
+      inputPulseNodes,
+      outputPulseNodes,
+      activeEdgeIds,
+      triggerConnected,
+      wireFlowEnabled,
+      flowingIntensity,
+      reduceVisualEffects: svgReduceEdgeEffects,
+      enableNodeAnimations: svgEnableNodeAnimations,
+      connectorHitTargetPx: svgConnectorHitTargetPx,
+      openNodeConfigOnSingleClick: Boolean(openNodeConfigOnSingleClick),
+      hoveredConnectorKey,
+      pinnedConnectorKey,
+      setHoveredConnectorKey,
+      setPinnedConnectorKey,
+      onConnectorHover: ({ clientX, clientY, info }) => {
+        setSvgConnectorTooltip({ clientX, clientY, info });
+      },
+      onConnectorLeave: () => {
+        setSvgConnectorTooltip(null);
+      },
+      onPointerDownNode: handlePointerDownNode,
+      onPointerMoveNode: handlePointerMoveNode,
+      onPointerUpNode: handlePointerUpNode,
+      onSelectNode: handleSelectNode,
+      onOpenNodeConfig: () => setConfigOpen(true),
+      onStartConnection: handleStartConnection,
+      onCompleteConnection: handleCompleteConnection,
+      onReconnectInput: handleReconnectInput,
+      onDisconnectPort: handleDisconnectPort,
+      onFireTrigger: (node: AiNode) => {
+        void fireTrigger(node);
+      },
+      onRemoveEdge: handleRemoveEdge,
+      onSelectEdge: (edgeId: string) => selectEdge(edgeId),
+    }),
+    [
+      view,
+      viewportSize,
+      svgDetailLevel,
+      nodes,
+      edges,
+      edgeMetaMap,
+      nodeById,
+      selectedNodeId,
+      selectedNodeIdSet,
+      selectedEdgeId,
+      runtimeState,
+      runtimeNodeStatuses,
+      runtimeRunStatus,
+      nodeDurations,
+      inputPulseNodes,
+      outputPulseNodes,
+      activeEdgeIds,
+      triggerConnected,
+      wireFlowEnabled,
+      flowingIntensity,
+      svgReduceEdgeEffects,
+      svgEnableNodeAnimations,
+      svgConnectorHitTargetPx,
+      openNodeConfigOnSingleClick,
+      hoveredConnectorKey,
+      pinnedConnectorKey,
+      setHoveredConnectorKey,
+      setPinnedConnectorKey,
+      handlePointerDownNode,
+      handlePointerMoveNode,
+      handlePointerUpNode,
+      handleSelectNode,
+      handleStartConnection,
+      handleCompleteConnection,
+      handleReconnectInput,
+      handleDisconnectPort,
+      handleRemoveEdge,
+      selectEdge,
+      setConfigOpen,
+      fireTrigger,
+    ]
+  );
+
   return (
     <Card
       ref={viewportRef}
@@ -826,374 +922,319 @@ export function CanvasBoard({
       onPointerLeave={handlePanEnd}
       onPointerCancel={handlePanEnd}
     >
-      <div className='absolute bottom-3 left-3 z-10 max-w-[min(58vw,56rem)] rounded-md border border-border/60 bg-card/35 p-2 text-[11px] text-gray-400'>
-        <div className='flex flex-wrap gap-1'>
-          {canvasInfoItems.map((item, index) => (
-            <span
-              key={`${index}:${item}`}
-              className='rounded border border-border/50 bg-card/50 px-1.5 py-0.5 text-[10px] leading-4 text-gray-300'
+      <CanvasBoardUIProvider value={uiContextValue}>
+        <div className='absolute bottom-3 left-3 z-10 max-w-[min(58vw,56rem)] rounded-md border border-border/60 bg-card/35 p-2 text-[11px] text-gray-400'>
+          <div className='flex flex-wrap gap-1'>
+            {canvasInfoItems.map((item, index) => (
+              <span
+                key={`${index}:${item}`}
+                className='rounded border border-border/50 bg-card/50 px-1.5 py-0.5 text-[10px] leading-4 text-gray-300'
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className='absolute bottom-3 right-3 z-10 max-w-[min(92vw,48rem)] rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
+          <div className='mb-2 text-[11px] uppercase text-gray-500'>View Controls</div>
+          <div className='flex flex-wrap items-center justify-end gap-2'>
+            <Button
+              className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
+              type='button'
+              variant='ghost'
+              size='xs'
+              onClick={() => zoomTo(view.scale - 0.1)}
             >
-              {item}
+              -
+            </Button>
+            <span className='min-w-[56px] text-center text-[11px] text-gray-300'>
+              {Math.round(view.scale * 100)}%
             </span>
-          ))}
-        </div>
-      </div>
-      <div className='absolute bottom-3 right-3 z-10 max-w-[min(92vw,48rem)] rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
-        <div className='mb-2 text-[11px] uppercase text-gray-500'>View Controls</div>
-        <div className='flex flex-wrap items-center justify-end gap-2'>
-          <Button
-            className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
-            type='button'
-            variant='ghost'
-            size='xs'
-            onClick={() => zoomTo(view.scale - 0.1)}
-          >
-            -
-          </Button>
-          <span className='min-w-[56px] text-center text-[11px] text-gray-300'>
-            {Math.round(view.scale * 100)}%
-          </span>
-          <Button
-            className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
-            type='button'
-            variant='ghost'
-            size='xs'
-            onClick={() => zoomTo(view.scale + 0.1)}
-          >
-            +
-          </Button>
-          <Button
-            className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60'
-            type='button'
-            variant='ghost'
-            size='xs'
-            onClick={fitToNodes}
-          >
-            Fit
-          </Button>
-          <Button
-            className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60 disabled:opacity-40 disabled:hover:bg-transparent'
-            type='button'
-            variant='ghost'
-            size='xs'
-            onClick={fitToSelection}
-            disabled={!hasNodeSelection}
-          >
-            Sel
-          </Button>
-          <Button
-            className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60'
-            type='button'
-            variant='ghost'
-            size='xs'
-            onClick={resetView}
-          >
-            Reset
-          </Button>
-          {isSvgRenderer ? (
             <Button
-              className={`h-7 rounded-full border px-2 text-[11px] ${
-                showMinimap ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
-              } hover:bg-muted/60`}
+              className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
               type='button'
               variant='ghost'
               size='xs'
-              aria-pressed={showMinimap}
-              onClick={() => setShowMinimap((current) => !current)}
+              onClick={() => zoomTo(view.scale + 0.1)}
             >
-              Minimap
+              +
             </Button>
-          ) : null}
-          <div className='ml-2 flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-1 py-1'>
             <Button
-              className={`h-6 rounded-full px-2 text-[10px] ${
-                isSvgRenderer ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
-              }`}
+              className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60'
               type='button'
               variant='ghost'
               size='xs'
-              onClick={() => setRendererMode('svg')}
+              onClick={fitToNodes}
             >
-              SVG
+              Fit
             </Button>
             <Button
-              className={`h-6 rounded-full px-2 text-[10px] ${
-                !isSvgRenderer ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
-              }`}
+              className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60 disabled:opacity-40 disabled:hover:bg-transparent'
               type='button'
               variant='ghost'
               size='xs'
-              onClick={() => setRendererMode('legacy')}
+              onClick={fitToSelection}
+              disabled={!hasNodeSelection}
             >
-              Legacy
+              Sel
             </Button>
-          </div>
-          <div className='ml-1 flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-1 py-1'>
             <Button
-              className={`h-6 rounded-full px-2 text-[10px] ${
-                edgeRoutingMode === 'bezier'
-                  ? 'border-emerald-400/70 text-emerald-200'
-                  : 'text-gray-300'
-              }`}
+              className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60'
               type='button'
               variant='ghost'
               size='xs'
-              onClick={() => setEdgeRoutingMode('bezier')}
+              onClick={resetView}
             >
-              Curve
+              Reset
             </Button>
-            <Button
-              className={`h-6 rounded-full px-2 text-[10px] ${
-                edgeRoutingMode === 'orthogonal'
-                  ? 'border-emerald-400/70 text-emerald-200'
-                  : 'text-gray-300'
-              }`}
-              type='button'
-              variant='ghost'
-              size='xs'
-              onClick={() => setEdgeRoutingMode('orthogonal')}
-            >
-              Ortho
-            </Button>
-          </div>
-        </div>
-      </div>
-      {isSvgRenderer && showMinimap ? (
-        <CanvasMinimap
-          nodes={nodes}
-          edgePaths={edgePaths}
-          selectedNodeIdSet={selectedNodeIdSet}
-          view={view}
-          viewportSize={viewportSize}
-          onNavigate={centerOnCanvasPoint}
-          onZoomTo={zoomTo}
-        />
-      ) : null}
-      {selectionMarqueeRect ? (
-        <div
-          className='pointer-events-none absolute z-30 rounded-md border border-sky-300/80 bg-sky-500/15'
-          style={{
-            left: selectionMarqueeRect.x,
-            top: selectionMarqueeRect.y,
-            width: selectionMarqueeRect.width,
-            height: selectionMarqueeRect.height,
-          }}
-        />
-      ) : null}
-      {touchLongPressIndicator ? (
-        <div
-          className='pointer-events-none absolute z-40 -translate-x-1/2 -translate-y-1/2'
-          style={{
-            left: touchLongPressIndicator.x,
-            top: touchLongPressIndicator.y,
-          }}
-        >
-          <span
-            className='relative block h-11 w-11 rounded-full'
-            style={{
-              background: `conic-gradient(${
-                touchLongPressIndicator.phase === 'activated'
-                  ? 'rgba(52,211,153,0.96)'
-                  : 'rgba(56,189,248,0.94)'
-              } ${touchLongPressProgressDegrees}deg, rgba(15,23,42,0.3) 0deg)`,
-            }}
-          >
-            {touchLongPressIndicator.phase === 'activated' ? (
-              <span className='absolute inset-0 rounded-full border border-emerald-300/60 animate-ping' />
+            {isSvgRenderer ? (
+              <Button
+                className={`h-7 rounded-full border px-2 text-[11px] ${
+                  showMinimap ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
+                } hover:bg-muted/60`}
+                type='button'
+                variant='ghost'
+                size='xs'
+                aria-pressed={showMinimap}
+                onClick={() => setShowMinimap((current) => !current)}
+              >
+                Minimap
+              </Button>
             ) : null}
-            <span
-              className={`absolute inset-[4px] rounded-full border ${
-                touchLongPressIndicator.phase === 'activated'
-                  ? 'border-emerald-200/90 bg-emerald-400/20'
-                  : 'border-sky-200/80 bg-sky-500/15'
-              }`}
-            />
-            <span
-              className={`absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${
-                touchLongPressIndicator.phase === 'activated'
-                  ? 'bg-emerald-200 shadow-[0_0_10px_rgba(52,211,153,0.75)]'
-                  : 'bg-sky-200 shadow-[0_0_8px_rgba(56,189,248,0.7)]'
-              }`}
-            />
-          </span>
+            <div className='ml-2 flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-1 py-1'>
+              <Button
+                className={`h-6 rounded-full px-2 text-[10px] ${
+                  isSvgRenderer ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
+                }`}
+                type='button'
+                variant='ghost'
+                size='xs'
+                onClick={() => setRendererMode('svg')}
+              >
+                SVG
+              </Button>
+              <Button
+                className={`h-6 rounded-full px-2 text-[10px] ${
+                  !isSvgRenderer ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
+                }`}
+                type='button'
+                variant='ghost'
+                size='xs'
+                onClick={() => setRendererMode('legacy')}
+              >
+                Legacy
+              </Button>
+            </div>
+            <div className='ml-1 flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-1 py-1'>
+              <Button
+                className={`h-6 rounded-full px-2 text-[10px] ${
+                  edgeRoutingMode === 'bezier'
+                    ? 'border-emerald-400/70 text-emerald-200'
+                    : 'text-gray-300'
+                }`}
+                type='button'
+                variant='ghost'
+                size='xs'
+                onClick={() => setEdgeRoutingMode('bezier')}
+              >
+                Curve
+              </Button>
+              <Button
+                className={`h-6 rounded-full px-2 text-[10px] ${
+                  edgeRoutingMode === 'orthogonal'
+                    ? 'border-emerald-400/70 text-emerald-200'
+                    : 'text-gray-300'
+                }`}
+                type='button'
+                variant='ghost'
+                size='xs'
+                onClick={() => setEdgeRoutingMode('orthogonal')}
+              >
+                Ortho
+              </Button>
+            </div>
+          </div>
         </div>
-      ) : null}
-      {isSvgRenderer && svgConnectorTooltip && svgConnectorTooltipPosition ? (
-        <div
-          className='pointer-events-none absolute z-40 rounded-md border border-border/70 bg-card/95 p-2 shadow-lg backdrop-blur-sm'
-          style={{
-            left: svgConnectorTooltipPosition.left,
-            top: svgConnectorTooltipPosition.top,
-            maxWidth: svgConnectorTooltipOverride?.maxWidth ?? '320px',
-          }}
-        >
-          {svgConnectorTooltipOverride?.content ?? renderConnectorTooltip(svgConnectorTooltip.info)}
-        </div>
-      ) : null}
-      <div
-        ref={canvasRef}
-        data-doc-id='canvas_drop_zone'
-        className='absolute left-0 top-0'
-        onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        style={{
-          width: CANVAS_WIDTH,
-          height: CANVAS_HEIGHT,
-          transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
-          transformOrigin: '0 0',
-          willChange: isSvgRenderer ? 'transform' : undefined,
-          backgroundImage:
-            'radial-gradient(circle at 1px 1px, rgba(148,163,184,0.18) 1px, transparent 0)',
-          backgroundSize: '24px 24px',
-        }}
-      >
-        {lastDrop ? (
+        {isSvgRenderer && showMinimap ? (
+          <CanvasMinimap
+            nodes={nodes}
+            edgePaths={edgePaths}
+            selectedNodeIdSet={selectedNodeIdSet}
+            view={view}
+            viewportSize={viewportSize}
+            onNavigate={centerOnCanvasPoint}
+            onZoomTo={zoomTo}
+          />
+        ) : null}
+        {selectionMarqueeRect ? (
           <div
-            className='absolute pointer-events-none'
+            className='pointer-events-none absolute z-30 rounded-md border border-sky-300/80 bg-sky-500/15'
             style={{
-              width: 10,
-              height: 10,
-              transform: `translate(${lastDrop.x}px, ${lastDrop.y}px)`,
+              left: selectionMarqueeRect.x,
+              top: selectionMarqueeRect.y,
+              width: selectionMarqueeRect.width,
+              height: selectionMarqueeRect.height,
+            }}
+          />
+        ) : null}
+        {touchLongPressIndicator ? (
+          <div
+            className='pointer-events-none absolute z-40 -translate-x-1/2 -translate-y-1/2'
+            style={{
+              left: touchLongPressIndicator.x,
+              top: touchLongPressIndicator.y,
             }}
           >
-            <span className='absolute inset-0 rounded-full bg-sky-400/40 animate-ping' />
-            <div className='absolute inset-0 rounded-full border border-sky-300/70 bg-sky-500/60 shadow-[0_0_8px_rgba(56,189,248,0.5)]' />
+            <span
+              className='relative block h-11 w-11 rounded-full'
+              style={{
+                background: `conic-gradient(${
+                  touchLongPressIndicator.phase === 'activated'
+                    ? 'rgba(52,211,153,0.96)'
+                    : 'rgba(56,189,248,0.94)'
+                } ${touchLongPressProgressDegrees}deg, rgba(15,23,42,0.3) 0deg)`,
+              }}
+            >
+              {touchLongPressIndicator.phase === 'activated' ? (
+                <span className='absolute inset-0 rounded-full border border-emerald-300/60 animate-ping' />
+              ) : null}
+              <span
+                className={`absolute inset-[4px] rounded-full border ${
+                  touchLongPressIndicator.phase === 'activated'
+                    ? 'border-emerald-200/90 bg-emerald-400/20'
+                    : 'border-sky-200/80 bg-sky-500/15'
+                }`}
+              />
+              <span
+                className={`absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${
+                  touchLongPressIndicator.phase === 'activated'
+                    ? 'bg-emerald-200 shadow-[0_0_10px_rgba(52,211,153,0.75)]'
+                    : 'bg-sky-200 shadow-[0_0_8px_rgba(56,189,248,0.7)]'
+                }`}
+              />
+            </span>
           </div>
         ) : null}
-        <svg
-          className='absolute inset-0'
-          width={CANVAS_WIDTH}
-          height={CANVAS_HEIGHT}
-          style={{ pointerEvents: 'auto' }}
+        {isSvgRenderer && svgConnectorTooltip && svgConnectorTooltipPosition ? (
+          <div
+            className='pointer-events-none absolute z-40 rounded-md border border-border/70 bg-card/95 p-2 shadow-lg backdrop-blur-sm'
+            style={{
+              left: svgConnectorTooltipPosition.left,
+              top: svgConnectorTooltipPosition.top,
+              maxWidth: svgConnectorTooltipOverride?.maxWidth ?? '320px',
+            }}
+          >
+            {svgConnectorTooltipOverride?.content ?? renderConnectorTooltip(svgConnectorTooltip.info)}
+          </div>
+        ) : null}
+        <div
+          ref={canvasRef}
+          data-doc-id='canvas_drop_zone'
+          className='absolute left-0 top-0'
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          style={{
+            width: CANVAS_WIDTH,
+            height: CANVAS_HEIGHT,
+            transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
+            transformOrigin: '0 0',
+            willChange: isSvgRenderer ? 'transform' : undefined,
+            backgroundImage:
+              'radial-gradient(circle at 1px 1px, rgba(148,163,184,0.18) 1px, transparent 0)',
+            backgroundSize: '24px 24px',
+          }}
         >
-          <CanvasSvgEdgeLayer
-            edgePaths={renderedEdgePaths}
-            edgeMetaMap={edgeMetaMap}
-            nodeById={nodeById}
-            selectedEdgeId={selectedEdgeId}
-            selectedNodeIdSet={selectedNodeIdSet}
-            activeEdgeIds={activeEdgeIds}
-            triggerConnected={triggerConnected}
-            wireFlowEnabled={wireFlowEnabled}
-            flowingIntensity={flowingIntensity}
-            reduceVisualEffects={svgReduceEdgeEffects}
-            onRemoveEdge={handleRemoveEdge}
-            onSelectEdge={(edgeId: string) => selectEdge(edgeId)}
-          />
-          {connecting && connectingPos ? ((): React.JSX.Element => {
-            const fromX = connecting.start.x;
-            const fromY = connecting.start.y;
-            const toX = connectingPos.x;
-            const toY = connectingPos.y;
-            const path = buildConnectingPreviewPath(
-              fromX,
-              fromY,
-              toX,
-              toY,
-              edgeRoutingMode
-            );
-            return (
-              <path
-                d={path}
-                stroke='rgba(56,189,248,0.55)'
-                strokeWidth='1.6'
-                fill='none'
-              />
-            );
-          })() : null}
-          {isSvgRenderer ? (
-            <CanvasSvgNodeLayer
-              cullPadding={SVG_CULL_PADDING}
-              detailLevel={svgDetailLevel}
-              nodeDurations={nodeDurations}
-              inputPulseNodes={inputPulseNodes}
-              outputPulseNodes={outputPulseNodes}
-              triggerConnected={triggerConnected}
-              enableNodeAnimations={svgEnableNodeAnimations}
-              connectorHitTargetPx={svgConnectorHitTargetPx}
-              connecting={
-                connecting
-                  ? { fromNodeId: connecting.fromNodeId, fromPort: connecting.fromPort }
-                  : null
-              }
-              connectingFromNode={connectingFromNode}
-              hoveredConnectorKey={hoveredConnectorKey}
-              pinnedConnectorKey={pinnedConnectorKey}
-              setHoveredConnectorKey={setHoveredConnectorKey}
-              setPinnedConnectorKey={setPinnedConnectorKey}
-              onPointerDownNode={handlePointerDownNode}
-              onPointerMoveNode={handlePointerMoveNode}
-              onPointerUpNode={handlePointerUpNode}
-              onSelectNode={handleSelectNode}
-              onOpenNodeConfig={() => setConfigOpen(true)}
-              openNodeConfigOnSingleClick={openNodeConfigOnSingleClick}
-              onStartConnection={handleStartConnection}
-              onCompleteConnection={handleCompleteConnection}
-              onReconnectInput={handleReconnectInput}
-              onDisconnectPort={handleDisconnectPort}
-              onFireTrigger={(node: AiNode) => {
-                void fireTrigger(node);
+          {lastDrop ? (
+            <div
+              className='absolute pointer-events-none'
+              style={{
+                width: 10,
+                height: 10,
+                transform: `translate(${lastDrop.x}px, ${lastDrop.y}px)`,
               }}
-              onConnectorHover={({ clientX, clientY, info }) => {
-                setSvgConnectorTooltip({ clientX, clientY, info });
-              }}
-              onConnectorLeave={() => {
-                setSvgConnectorTooltip(null);
-              }}
-              nodes={nodes}
-              edges={edges}
-              view={view}
-              viewportSize={viewportSize}
-              selectedNodeId={selectedNodeId}
-              selectedNodeIdSet={selectedNodeIdSet}
-              runtimeState={runtimeState}
-              runtimeNodeStatuses={runtimeNodeStatuses}
-              runtimeRunStatus={runtimeRunStatus as 'idle' | 'running' | 'paused' | 'stepping'}
-            />
+            >
+              <span className='absolute inset-0 rounded-full bg-sky-400/40 animate-ping' />
+              <div className='absolute inset-0 rounded-full border border-sky-300/70 bg-sky-500/60 shadow-[0_0_8px_rgba(56,189,248,0.5)]' />
+            </div>
           ) : null}
-        </svg>
+          <svg
+            className='absolute inset-0'
+            width={CANVAS_WIDTH}
+            height={CANVAS_HEIGHT}
+            style={{ pointerEvents: 'auto' }}
+          >
+            <CanvasSvgEdgeLayer
+              edgePaths={renderedEdgePaths}
+            />
+            {connecting && connectingPos ? ((): React.JSX.Element => {
+              const fromX = connecting.start.x;
+              const fromY = connecting.start.y;
+              const toX = connectingPos.x;
+              const toY = connectingPos.y;
+              const path = buildConnectingPreviewPath(
+                fromX,
+                fromY,
+                toX,
+                toY,
+                edgeRoutingMode
+              );
+              return (
+                <path
+                  d={path}
+                  stroke='rgba(56,189,248,0.55)'
+                  strokeWidth='1.6'
+                  fill='none'
+                />
+              );
+            })() : null}
+            {isSvgRenderer ? (
+              <CanvasSvgNodeLayer
+                cullPadding={SVG_CULL_PADDING}
+              />
+            ) : null}
+          </svg>
 
-        {!isSvgRenderer
-          ? nodes.map((node) => {
-            const isSelected = selectedNodeIdSet.has(node.id);
-            const isPrimarySelected = node.id === selectedNodeId;
-            const style = typeStyles[node.type] ?? typeStyles.template;
-            const nodeHistoryEntries = runtimeState.history?.[node.id];
-            const canUsePersistedStatusFallback =
+          {!isSvgRenderer
+            ? nodes.map((node) => {
+              const isSelected = selectedNodeIdSet.has(node.id);
+              const isPrimarySelected = node.id === selectedNodeId;
+              const style = typeStyles[node.type] ?? typeStyles.template;
+              const nodeHistoryEntries = runtimeState.history?.[node.id];
+              const canUsePersistedStatusFallback =
               runtimeRunStatus === 'idle' &&
               Array.isArray(nodeHistoryEntries) &&
               nodeHistoryEntries.length > 0;
-            const statusFromRuntimeState = runtimeState.outputs?.[node.id]?.['status'];
-            const runtimeNodeStatusRaw =
+              const statusFromRuntimeState = runtimeState.outputs?.[node.id]?.['status'];
+              const runtimeNodeStatusRaw =
             runtimeNodeStatuses?.[node.id] ??
             (canUsePersistedStatusFallback && typeof statusFromRuntimeState === 'string'
               ? statusFromRuntimeState
               : null);
-            const runtimeNodeStatus =
+              const runtimeNodeStatus =
             typeof runtimeNodeStatusRaw === 'string' && runtimeNodeStatusRaw.trim().length > 0
               ? runtimeNodeStatusRaw.trim().toLowerCase()
               : null;
-            const runtimeNodeStatusLabel = runtimeNodeStatus
-              ? formatRuntimeStatusLabel(runtimeNodeStatus)
-              : null;
-            const iteratorOutput =
+              const runtimeNodeStatusLabel = runtimeNodeStatus
+                ? formatRuntimeStatusLabel(runtimeNodeStatus)
+                : null;
+              const iteratorOutput =
             node.type === 'iterator'
               ? runtimeState.outputs?.[node.id]
               : undefined;
-            const iteratorStatus = (iteratorOutput?.['status'] as string | undefined) ?? null;
-            const iteratorIndex =
+              const iteratorStatus = (iteratorOutput?.['status'] as string | undefined) ?? null;
+              const iteratorIndex =
             typeof iteratorOutput?.['index'] === 'number' ? (iteratorOutput?.['index']) : null;
-            const iteratorTotal =
+              const iteratorTotal =
             typeof iteratorOutput?.['total'] === 'number' ? (iteratorOutput?.['total']) : null;
-            const iteratorDone =
+              const iteratorDone =
             typeof iteratorOutput?.['done'] === 'boolean' ? (iteratorOutput?.['done']) : null;
-            const iteratorProgressLabel =
+              const iteratorProgressLabel =
             iteratorIndex !== null && iteratorTotal !== null && iteratorTotal > 0
               ? `${Math.min(iteratorIndex + 1, iteratorTotal)}/${iteratorTotal}`
               : iteratorTotal !== null && iteratorTotal === 0
                 ? '0/0'
                 : null;
-            const iteratorStatusClasses =
+              const iteratorStatusClasses =
             iteratorStatus === 'completed' || iteratorDone
               ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200'
               : iteratorStatus === 'advance_pending'
@@ -1201,7 +1242,7 @@ export function CanvasBoard({
                 : iteratorStatus === 'waiting_callback'
                   ? 'border-sky-500/60 bg-sky-500/15 text-sky-200'
                   : 'border-border bg-card/60 text-gray-200';
-            const blockerNodeStatus =
+              const blockerNodeStatus =
             node.type === 'model' ||
             node.type === 'agent' ||
             node.type === 'learner_agent' ||
@@ -1209,405 +1250,406 @@ export function CanvasBoard({
             node.type === 'delay'
               ? runtimeNodeStatus
               : undefined;
-            const isBlockerProcessing =
+              const isBlockerProcessing =
             flowEnabled &&
             !!blockerNodeStatus &&
             BLOCKER_PROCESSING_STATUSES.has(blockerNodeStatus);
-            const noteConfig = node.config?.notes;
-            const noteText = typeof noteConfig?.text === 'string' ? noteConfig.text.trim() : '';
-            const noteColor =
+              const noteConfig = node.config?.notes;
+              const noteText = typeof noteConfig?.text === 'string' ? noteConfig.text.trim() : '';
+              const noteColor =
             typeof noteConfig?.color === 'string' && noteConfig.color.trim()
               ? noteConfig.color.trim()
               : DEFAULT_NODE_NOTE_COLOR;
-            const showNote = Boolean(noteConfig?.showOnCanvas && noteText);
-            const isScheduledTrigger =
+              const showNote = Boolean(noteConfig?.showOnCanvas && noteText);
+              const isScheduledTrigger =
             node.type === 'trigger' && node.config?.trigger?.event === 'scheduled_run';
-            const isInputPulse = inputPulseNodes.has(node.id);
-            const isOutputPulse = outputPulseNodes.has(node.id);
-            const isDragging = dragState?.nodeId === node.id;
+              const isInputPulse = inputPulseNodes.has(node.id);
+              const isOutputPulse = outputPulseNodes.has(node.id);
+              const isDragging = dragState?.nodeId === node.id;
           
-            return (
-              <div
-                key={node.id}
-                className={`absolute ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-                style={{
-                  width: NODE_WIDTH,
-                  transform: `translate(${node.position.x}px, ${node.position.y}px)`,
-                }}
-                onPointerDown={(event) => {
-                  void handlePointerDownNode(event, node.id);
-                }}
-                onPointerMove={(event) => {
-                  handlePointerMoveNode(event, node.id);
-                }}
-                onPointerUp={(event) => {
-                  handlePointerUpNode(event, node.id);
-                }}
-                onClick={(event) => {
-                  void handleSelectNode(node.id, {
-                    toggle: event.shiftKey || event.metaKey || event.ctrlKey,
-                  });
-                  if (
-                    openNodeConfigOnSingleClick &&
+              return (
+                <div
+                  key={node.id}
+                  className={`absolute ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+                  style={{
+                    width: NODE_WIDTH,
+                    transform: `translate(${node.position.x}px, ${node.position.y}px)`,
+                  }}
+                  onPointerDown={(event) => {
+                    void handlePointerDownNode(event, node.id);
+                  }}
+                  onPointerMove={(event) => {
+                    handlePointerMoveNode(event, node.id);
+                  }}
+                  onPointerUp={(event) => {
+                    handlePointerUpNode(event, node.id);
+                  }}
+                  onClick={(event) => {
+                    void handleSelectNode(node.id, {
+                      toggle: event.shiftKey || event.metaKey || event.ctrlKey,
+                    });
+                    if (
+                      openNodeConfigOnSingleClick &&
                     !event.shiftKey &&
                     !event.metaKey &&
                     !event.ctrlKey
-                  ) {
+                    ) {
+                      setConfigOpen(true);
+                    }
+                  }}
+                  onDoubleClick={(event) => {
+                    event.stopPropagation();
+                    void handleSelectNode(node.id);
                     setConfigOpen(true);
-                  }
-                }}
-                onDoubleClick={(event) => {
-                  event.stopPropagation();
-                  void handleSelectNode(node.id);
-                  setConfigOpen(true);
-                }}
-              >
-                <div
-                  className={`relative flex flex-col gap-1.5 rounded-xl border bg-card/80 p-2 pb-3 text-[11px] text-gray-200 shadow-lg backdrop-blur ${
-                    style.border
-                  } ${style.glow} ${
-                    isBlockerProcessing ? 'ai-paths-node-halo' : ''
-                  } ${
-                    isPrimarySelected
-                      ? 'ring-2 ring-sky-200/60'
-                      : isSelected
-                        ? 'ring-1 ring-sky-200/40'
-                        : ''
-                  }`}
-                  style={{ minHeight: NODE_MIN_HEIGHT }}
+                  }}
                 >
-                  {isInputPulse || isOutputPulse ? (
-                    <div className='absolute -top-2 right-2 flex items-center gap-1'>
-                      {isInputPulse ? (
-                        <span
-                          className='relative inline-flex h-2.5 w-2.5'
-                          title='Input loaded'
-                        >
-                          <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/70' />
-                          <span className='relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-300 shadow-[0_0_6px_rgba(56,189,248,0.75)]' />
-                        </span>
-                      ) : null}
-                      {isOutputPulse ? (
-                        <span
-                          className='relative inline-flex h-2.5 w-2.5'
-                          title='Output sent'
-                        >
-                          <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400/70' />
-                          <span className='relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-300 shadow-[0_0_6px_rgba(251,191,36,0.75)]' />
-                        </span>
-                      ) : null}
-                    </div>
-                  ) : null}
                   <div
-                    className='pointer-events-none absolute bottom-1 right-2 w-[90%] break-all text-right text-[8px] font-mono text-gray-400/80'
+                    className={`relative flex flex-col gap-1.5 rounded-xl border bg-card/80 p-2 pb-3 text-[11px] text-gray-200 shadow-lg backdrop-blur ${
+                      style.border
+                    } ${style.glow} ${
+                      isBlockerProcessing ? 'ai-paths-node-halo' : ''
+                    } ${
+                      isPrimarySelected
+                        ? 'ring-2 ring-sky-200/60'
+                        : isSelected
+                          ? 'ring-1 ring-sky-200/40'
+                          : ''
+                    }`}
+                    style={{ minHeight: NODE_MIN_HEIGHT }}
                   >
-                    {node.id}
-                  </div>
-                  {node.inputs.map((input, index) => (
+                    {isInputPulse || isOutputPulse ? (
+                      <div className='absolute -top-2 right-2 flex items-center gap-1'>
+                        {isInputPulse ? (
+                          <span
+                            className='relative inline-flex h-2.5 w-2.5'
+                            title='Input loaded'
+                          >
+                            <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/70' />
+                            <span className='relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-300 shadow-[0_0_6px_rgba(56,189,248,0.75)]' />
+                          </span>
+                        ) : null}
+                        {isOutputPulse ? (
+                          <span
+                            className='relative inline-flex h-2.5 w-2.5'
+                            title='Output sent'
+                          >
+                            <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400/70' />
+                            <span className='relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-300 shadow-[0_0_6px_rgba(251,191,36,0.75)]' />
+                          </span>
+                        ) : null}
+                      </div>
+                    ) : null}
                     <div
-                      key={`input-${node.id}-${input}`}
-                      className='absolute flex items-center'
-                      style={{
-                        left: -(PORT_SIZE / 2) - 4,
-                        top: getPortOffsetY(index, node.inputs.length) - PORT_SIZE / 2,
-                      }}
-                      onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey('input', node.id, input))}
-                      onMouseLeave={() =>
-                        setHoveredConnectorKey((prev) =>
-                          prev === buildConnectorKey('input', node.id, input) ? null : prev
-                        )
-                      }
+                      className='pointer-events-none absolute bottom-1 right-2 w-[90%] break-all text-right text-[8px] font-mono text-gray-400/80'
                     >
-                      {(() : React.JSX.Element => {
-                        const isConnecting = Boolean(connecting && connectingFromNode);
-                        const isConnectable = isConnecting
-                          ? validateConnection(
+                      {node.id}
+                    </div>
+                    {node.inputs.map((input, index) => (
+                      <div
+                        key={`input-${node.id}-${input}`}
+                        className='absolute flex items-center'
+                        style={{
+                          left: -(PORT_SIZE / 2) - 4,
+                          top: getPortOffsetY(index, node.inputs.length) - PORT_SIZE / 2,
+                        }}
+                        onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey('input', node.id, input))}
+                        onMouseLeave={() =>
+                          setHoveredConnectorKey((prev) =>
+                            prev === buildConnectorKey('input', node.id, input) ? null : prev
+                          )
+                        }
+                      >
+                        {(() : React.JSX.Element => {
+                          const isConnecting = Boolean(connecting && connectingFromNode);
+                          const isConnectable = isConnecting
+                            ? validateConnection(
                             connectingFromNode as AiNode,
                             node,
                             connecting?.fromPort ?? '',
                             input
-                          ).valid
-                          : false;
-                        const connectorInfo = getConnectorInfo('input', node.id, input);
-                        const hasIncomingEdge = edges.some(
-                          (edge): boolean =>
-                            edge.to === node.id && edge.toPort === input
-                        );
-                        const connectorKey = buildConnectorKey('input', node.id, input);
-                        const isPinned = pinnedConnectorKey === connectorKey;
-                        const isHovered = hoveredConnectorKey === connectorKey;
-                        const isTooltipOpen = isPinned || isHovered;
-                        const hasMismatch = connectorInfo.hasMismatch;
-                        const tooltipOverride = resolveConnectorTooltip?.({
-                          direction: 'input',
-                          node,
-                          port: input,
-                        }) ?? null;
-                        return (
-                          <>
-                            <Tooltip
-                              content={tooltipOverride?.content ?? renderConnectorTooltip(connectorInfo)}
-                              side='right'
-                              maxWidth={tooltipOverride?.maxWidth ?? '360px'}
-                              open={isTooltipOpen}
-                              disableHover
-                            >
-                              <div className='relative'>
-                                <button
-                                  type='button'
-                                  data-port='input'
-                                  className={`cursor-pointer rounded-full border bg-sky-500/20 shadow-[0_0_8px_rgba(56,189,248,0.35)] hover:border-sky-200 ${
-                                    isConnecting
-                                      ? isConnectable
-                                        ? 'border-emerald-300/80 bg-emerald-500/30 shadow-[0_0_14px_rgba(52,211,153,0.55)] ring-2 ring-emerald-400/60'
-                                        : 'border-border/60 bg-card/20 opacity-40 shadow-none'
-                                      : isPinned
-                                        ? 'border-amber-300/80 ring-2 ring-amber-300/70'
-                                        : 'border-sky-400/60'
-                                  }`}
-                                  style={{
-                                    width: PORT_SIZE + 2,
-                                    height: PORT_SIZE + 2,
-                                  }}
-                                  onPointerUp={(event) => {
-                                    event.stopPropagation();
-                                    if (connecting) {
-                                      handleCompleteConnection(event, node, input);
-                                      return;
-                                    }
-                                  }}
-                                  onPointerDown={(event) => {
-                                    event.stopPropagation();
-                                    if (hasIncomingEdge) {
-                                      void handleReconnectInput(event, node.id, input);
-                                    }
-                                  }}
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    setPinnedConnectorKey((prev) =>
-                                      prev === connectorKey ? null : connectorKey
-                                    );
-                                  }}
-                                  onContextMenu={(event) => {
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    handleDisconnectPort('input', node.id, input);
-                                  }}                                aria-label={`Connect to ${formatPortLabel(input)}`}
-                                  title={`Input: ${formatPortLabel(input)}`}
-                                />
-                                {hasMismatch ? (
-                                  <span className='absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60' />
-                                ) : null}
-                              </div>
-                            </Tooltip>
-                            <span
-                              className={`ml-1.5 rounded px-1 py-0.5 text-[8px] font-medium ${
-                                isConnecting
-                                  ? isConnectable
-                                    ? 'bg-emerald-500/15 text-emerald-200'
-                                    : 'bg-muted/60 text-gray-500'
-                                  : hasMismatch
+                            ).valid
+                            : false;
+                          const connectorInfo = getConnectorInfo('input', node.id, input);
+                          const hasIncomingEdge = edges.some(
+                            (edge): boolean =>
+                              edge.to === node.id && edge.toPort === input
+                          );
+                          const connectorKey = buildConnectorKey('input', node.id, input);
+                          const isPinned = pinnedConnectorKey === connectorKey;
+                          const isHovered = hoveredConnectorKey === connectorKey;
+                          const isTooltipOpen = isPinned || isHovered;
+                          const hasMismatch = connectorInfo.hasMismatch;
+                          const tooltipOverride = resolveConnectorTooltip?.({
+                            direction: 'input',
+                            node,
+                            port: input,
+                          }) ?? null;
+                          return (
+                            <>
+                              <Tooltip
+                                content={tooltipOverride?.content ?? renderConnectorTooltip(connectorInfo)}
+                                side='right'
+                                maxWidth={tooltipOverride?.maxWidth ?? '360px'}
+                                open={isTooltipOpen}
+                                disableHover
+                              >
+                                <div className='relative'>
+                                  <button
+                                    type='button'
+                                    data-port='input'
+                                    className={`cursor-pointer rounded-full border bg-sky-500/20 shadow-[0_0_8px_rgba(56,189,248,0.35)] hover:border-sky-200 ${
+                                      isConnecting
+                                        ? isConnectable
+                                          ? 'border-emerald-300/80 bg-emerald-500/30 shadow-[0_0_14px_rgba(52,211,153,0.55)] ring-2 ring-emerald-400/60'
+                                          : 'border-border/60 bg-card/20 opacity-40 shadow-none'
+                                        : isPinned
+                                          ? 'border-amber-300/80 ring-2 ring-amber-300/70'
+                                          : 'border-sky-400/60'
+                                    }`}
+                                    style={{
+                                      width: PORT_SIZE + 2,
+                                      height: PORT_SIZE + 2,
+                                    }}
+                                    onPointerUp={(event) => {
+                                      event.stopPropagation();
+                                      if (connecting) {
+                                        handleCompleteConnection(event, node, input);
+                                        return;
+                                      }
+                                    }}
+                                    onPointerDown={(event) => {
+                                      event.stopPropagation();
+                                      if (hasIncomingEdge) {
+                                        void handleReconnectInput(event, node.id, input);
+                                      }
+                                    }}
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      setPinnedConnectorKey((prev) =>
+                                        prev === connectorKey ? null : connectorKey
+                                      );
+                                    }}
+                                    onContextMenu={(event) => {
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      handleDisconnectPort('input', node.id, input);
+                                    }}                                aria-label={`Connect to ${formatPortLabel(input)}`}
+                                    title={`Input: ${formatPortLabel(input)}`}
+                                  />
+                                  {hasMismatch ? (
+                                    <span className='absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60' />
+                                  ) : null}
+                                </div>
+                              </Tooltip>
+                              <span
+                                className={`ml-1.5 rounded px-1 py-0.5 text-[8px] font-medium ${
+                                  isConnecting
+                                    ? isConnectable
+                                      ? 'bg-emerald-500/15 text-emerald-200'
+                                      : 'bg-muted/60 text-gray-500'
+                                    : hasMismatch
+                                      ? 'bg-rose-500/15 text-rose-200'
+                                      : 'bg-sky-500/10 text-sky-300'
+                                }`}
+                              >
+                                {formatPortLabel(input)}
+                              </span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    ))}
+                    {node.outputs.map((output, index) => (
+                      <div
+                        key={`output-${node.id}-${output}`}
+                        className='absolute flex items-center'
+                        style={{
+                          right: -(PORT_SIZE / 2) - 4,
+                          top: getPortOffsetY(index, node.outputs.length) - PORT_SIZE / 2,
+                        }}
+                        onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey('output', node.id, output))}
+                        onMouseLeave={() =>
+                          setHoveredConnectorKey((prev) =>
+                            prev === buildConnectorKey('output', node.id, output) ? null : prev
+                          )
+                        }
+                      >
+                        {((): React.JSX.Element => {
+                          const connectorInfo = getConnectorInfo('output', node.id, output);
+                          const connectorKey = buildConnectorKey('output', node.id, output);
+                          const isPinned = pinnedConnectorKey === connectorKey;
+                          const isHovered = hoveredConnectorKey === connectorKey;
+                          const isTooltipOpen = isPinned || isHovered;
+                          const hasMismatch = connectorInfo.hasMismatch;
+                          const tooltipOverride = resolveConnectorTooltip?.({
+                            direction: 'output',
+                            node,
+                            port: output,
+                          }) ?? null;
+                          return (
+                            <>
+                              <span
+                                className={`mr-1.5 rounded px-1 py-0.5 text-[8px] font-medium ${
+                                  hasMismatch
                                     ? 'bg-rose-500/15 text-rose-200'
-                                    : 'bg-sky-500/10 text-sky-300'
-                              }`}
-                            >
-                              {formatPortLabel(input)}
-                            </span>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  ))}
-                  {node.outputs.map((output, index) => (
-                    <div
-                      key={`output-${node.id}-${output}`}
-                      className='absolute flex items-center'
-                      style={{
-                        right: -(PORT_SIZE / 2) - 4,
-                        top: getPortOffsetY(index, node.outputs.length) - PORT_SIZE / 2,
-                      }}
-                      onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey('output', node.id, output))}
-                      onMouseLeave={() =>
-                        setHoveredConnectorKey((prev) =>
-                          prev === buildConnectorKey('output', node.id, output) ? null : prev
-                        )
-                      }
-                    >
-                      {((): React.JSX.Element => {
-                        const connectorInfo = getConnectorInfo('output', node.id, output);
-                        const connectorKey = buildConnectorKey('output', node.id, output);
-                        const isPinned = pinnedConnectorKey === connectorKey;
-                        const isHovered = hoveredConnectorKey === connectorKey;
-                        const isTooltipOpen = isPinned || isHovered;
-                        const hasMismatch = connectorInfo.hasMismatch;
-                        const tooltipOverride = resolveConnectorTooltip?.({
-                          direction: 'output',
-                          node,
-                          port: output,
-                        }) ?? null;
-                        return (
-                          <>
-                            <span
-                              className={`mr-1.5 rounded px-1 py-0.5 text-[8px] font-medium ${
-                                hasMismatch
-                                  ? 'bg-rose-500/15 text-rose-200'
-                                  : 'bg-amber-500/10 text-amber-300'
-                              }`}
-                            >
-                              {formatPortLabel(output)}
-                            </span>
-                            <Tooltip
-                              content={tooltipOverride?.content ?? renderConnectorTooltip(connectorInfo)}
-                              side='left'
-                              maxWidth={tooltipOverride?.maxWidth ?? '360px'}
-                              open={isTooltipOpen}
-                              disableHover
-                            >
-                              <div className='relative'>
-                                <button
-                                  type='button'
-                                  data-port='output'
-                                  className={`cursor-pointer rounded-full border bg-amber-500/20 shadow-[0_0_8px_rgba(251,191,36,0.35)] hover:border-amber-200 ${
-                                    isPinned ? 'border-amber-300/80 ring-2 ring-amber-300/70' : 'border-amber-400/60'
-                                  }`}
-                                  style={{
-                                    width: PORT_SIZE + 2,
-                                    height: PORT_SIZE + 2,
-                                  }}
-                                  onPointerDown={(event) =>
-                                  { void handleStartConnection(event, node, output); }
-                                  }
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    setPinnedConnectorKey((prev) =>
-                                      prev === connectorKey ? null : connectorKey
-                                    );
-                                  }}
-                                  onContextMenu={(event) => {
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    handleDisconnectPort('output', node.id, output);
-                                  }}                                aria-label={`Start connection from ${formatPortLabel(output)}`}
-                                  title={`Output: ${formatPortLabel(output)}`}
-                                />
-                                {hasMismatch ? (
-                                  <span className='absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60' />
-                                ) : null}
-                              </div>
-                            </Tooltip>
-                          </>
-                        );
-                      })()}
-                    </div>
-                  ))}
-                  <div className='flex items-center justify-between gap-2'>
-                    <span className='text-xs font-semibold text-white'>{node.title}</span>
-                    <div className='flex items-center gap-1'>
-                      {isScheduledTrigger ? (
-                        <Badge variant='outline' className='h-auto border-amber-400/60 bg-amber-500/15 px-2 py-0 text-[9px] text-amber-200 uppercase'>
+                                    : 'bg-amber-500/10 text-amber-300'
+                                }`}
+                              >
+                                {formatPortLabel(output)}
+                              </span>
+                              <Tooltip
+                                content={tooltipOverride?.content ?? renderConnectorTooltip(connectorInfo)}
+                                side='left'
+                                maxWidth={tooltipOverride?.maxWidth ?? '360px'}
+                                open={isTooltipOpen}
+                                disableHover
+                              >
+                                <div className='relative'>
+                                  <button
+                                    type='button'
+                                    data-port='output'
+                                    className={`cursor-pointer rounded-full border bg-amber-500/20 shadow-[0_0_8px_rgba(251,191,36,0.35)] hover:border-amber-200 ${
+                                      isPinned ? 'border-amber-300/80 ring-2 ring-amber-300/70' : 'border-amber-400/60'
+                                    }`}
+                                    style={{
+                                      width: PORT_SIZE + 2,
+                                      height: PORT_SIZE + 2,
+                                    }}
+                                    onPointerDown={(event) =>
+                                    { void handleStartConnection(event, node, output); }
+                                    }
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      setPinnedConnectorKey((prev) =>
+                                        prev === connectorKey ? null : connectorKey
+                                      );
+                                    }}
+                                    onContextMenu={(event) => {
+                                      event.preventDefault();
+                                      event.stopPropagation();
+                                      handleDisconnectPort('output', node.id, output);
+                                    }}                                aria-label={`Start connection from ${formatPortLabel(output)}`}
+                                    title={`Output: ${formatPortLabel(output)}`}
+                                  />
+                                  {hasMismatch ? (
+                                    <span className='absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60' />
+                                  ) : null}
+                                </div>
+                              </Tooltip>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    ))}
+                    <div className='flex items-center justify-between gap-2'>
+                      <span className='text-xs font-semibold text-white'>{node.title}</span>
+                      <div className='flex items-center gap-1'>
+                        {isScheduledTrigger ? (
+                          <Badge variant='outline' className='h-auto border-amber-400/60 bg-amber-500/15 px-2 py-0 text-[9px] text-amber-200 uppercase'>
                         Scheduled
+                          </Badge>
+                        ) : null}
+                        <Badge variant='outline' className='h-auto px-2 py-0 text-[10px] text-gray-400 uppercase'>
+                          {node.type}
                         </Badge>
-                      ) : null}
-                      <Badge variant='outline' className='h-auto px-2 py-0 text-[10px] text-gray-400 uppercase'>
-                        {node.type}
-                      </Badge>
+                      </div>
                     </div>
-                  </div>
-                  {runtimeNodeStatusLabel && (
-                    <div className='inline-flex w-fit items-center gap-1'>
+                    {runtimeNodeStatusLabel && (
+                      <div className='inline-flex w-fit items-center gap-1'>
+                        <Badge
+                          variant='outline'
+                          className={`h-auto flex items-center gap-1 px-2 py-0.5 text-[9px] uppercase tracking-wide ${runtimeStatusBadgeClassName(runtimeNodeStatus ?? '')}`}
+                        >
+                          {runtimeNodeStatus === 'cached' && (
+                            <svg className='h-2.5 w-2.5 shrink-0' viewBox='0 0 16 16' fill='currentColor'>
+                              <path d='M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2' />
+                            </svg>
+                          )}
+                          {runtimeNodeStatusLabel}
+                        </Badge>
+                        {nodeDurations[node.id] != null && (
+                          <span className='text-[9px] text-gray-400'>
+                            {formatDurationMs(nodeDurations[node.id] ?? null)}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    {node.type === 'iterator' && (iteratorStatus || iteratorProgressLabel) ? (
                       <Badge
                         variant='outline'
-                        className={`h-auto flex items-center gap-1 px-2 py-0.5 text-[9px] uppercase tracking-wide ${runtimeStatusBadgeClassName(runtimeNodeStatus ?? '')}`}
+                        className={`h-auto inline-flex w-fit items-center gap-1 px-2 py-0.5 text-[9px] uppercase tracking-wide ${iteratorStatusClasses}`}
+                        title={
+                          iteratorProgressLabel && iteratorStatus
+                            ? `${iteratorProgressLabel} • ${iteratorStatus}`
+                            : iteratorStatus ?? iteratorProgressLabel ?? undefined
+                        }
                       >
-                        {runtimeNodeStatus === 'cached' && (
-                          <svg className='h-2.5 w-2.5 shrink-0' viewBox='0 0 16 16' fill='currentColor'>
-                            <path d='M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2' />
-                          </svg>
-                        )}
-                        {runtimeNodeStatusLabel}
+                        {iteratorProgressLabel ? <span>{iteratorProgressLabel}</span> : null}
+                        {iteratorStatus ? <span>{iteratorStatus}</span> : null}
                       </Badge>
-                      {nodeDurations[node.id] != null && (
-                        <span className='text-[9px] text-gray-400'>
-                          {formatDurationMs(nodeDurations[node.id] ?? null)}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {node.type === 'iterator' && (iteratorStatus || iteratorProgressLabel) ? (
-                    <Badge
-                      variant='outline'
-                      className={`h-auto inline-flex w-fit items-center gap-1 px-2 py-0.5 text-[9px] uppercase tracking-wide ${iteratorStatusClasses}`}
-                      title={
-                        iteratorProgressLabel && iteratorStatus
-                          ? `${iteratorProgressLabel} • ${iteratorStatus}`
-                          : iteratorStatus ?? iteratorProgressLabel ?? undefined
-                      }
-                    >
-                      {iteratorProgressLabel ? <span>{iteratorProgressLabel}</span> : null}
-                      {iteratorStatus ? <span>{iteratorStatus}</span> : null}
-                    </Badge>
-                  ) : null}
-                  {isBlockerProcessing && (
-                    <Badge
-                      variant='outline'
-                      className='h-auto inline-flex w-fit items-center gap-1 border-sky-500/40 bg-sky-500/10 px-2 py-0.5 text-[9px] uppercase tracking-wide text-sky-200'
-                    >
+                    ) : null}
+                    {isBlockerProcessing && (
+                      <Badge
+                        variant='outline'
+                        className='h-auto inline-flex w-fit items-center gap-1 border-sky-500/40 bg-sky-500/10 px-2 py-0.5 text-[9px] uppercase tracking-wide text-sky-200'
+                      >
                     Processing
-                      <NodeProcessingDots active />
-                    </Badge>
-                  )}
-                  {node.type === 'viewer' && !triggerConnected.has(node.id) && (
-                    <Badge variant='outline' className='h-auto border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200'>
+                        <NodeProcessingDots active />
+                      </Badge>
+                    )}
+                    {node.type === 'viewer' && !triggerConnected.has(node.id) && (
+                      <Badge variant='outline' className='h-auto border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200'>
                     Not wired to a Trigger
-                    </Badge>
-                  )}
-                  {node.type === 'trigger' && (
-                    <Button
-                      className='self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
-                      type='button'
-                      onPointerDown={(event) => event.stopPropagation()}
-                      onClick={(event) => { void fireTrigger(node, event); }}
-                    >
+                      </Badge>
+                    )}
+                    {node.type === 'trigger' && (
+                      <Button
+                        className='self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
+                        type='button'
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={(event) => { void fireTrigger(node, event); }}
+                      >
                     Fire Trigger
-                    </Button>
-                  )}
-                  {node.type === 'trigger' && (
-                    <div className='text-[10px] uppercase text-lime-200/80'>
-                      {isScheduledTrigger
-                        ? 'Server scheduled trigger'
-                        : 'Accepts context input'}
-                    </div>
-                  )}
-                  {node.type === 'context' && (
-                    <span className='text-[10px] uppercase text-emerald-300/80'>
+                      </Button>
+                    )}
+                    {node.type === 'trigger' && (
+                      <div className='text-[10px] uppercase text-lime-200/80'>
+                        {isScheduledTrigger
+                          ? 'Server scheduled trigger'
+                          : 'Accepts context input'}
+                      </div>
+                    )}
+                    {node.type === 'context' && (
+                      <span className='text-[10px] uppercase text-emerald-300/80'>
                     Role output can feed any Trigger
-                    </span>
-                  )}
-                  {node.type === 'simulation' && (
-                    <span className='text-[10px] uppercase text-cyan-300/80'>
+                      </span>
+                    )}
+                    {node.type === 'simulation' && (
+                      <span className='text-[10px] uppercase text-cyan-300/80'>
                     Wire Trigger ↔ Simulation
-                    </span>
-                  )}
-                  {node.type === 'viewer' && (
-                    <Badge variant='outline' className='h-auto border-border bg-card/60 px-2 py-1 text-[10px] text-gray-400'>
+                      </span>
+                    )}
+                    {node.type === 'viewer' && (
+                      <Badge variant='outline' className='h-auto border-border bg-card/60 px-2 py-1 text-[10px] text-gray-400'>
                     Open node to view results
-                    </Badge>
-                  )}
-                </div>
-                {showNote ? (
-                  <div
-                    className='mt-2 w-full rounded-lg border border-black/10 px-3 py-2 text-[11px] text-gray-900 shadow-sm'
-                    style={{ backgroundColor: noteColor }}
-                  >
-                    <div className='whitespace-pre-wrap break-words'>{noteText}</div>
+                      </Badge>
+                    )}
                   </div>
-                ) : null}
-              </div>
-            );
-          })
-          : null}
-      </div>
-      <ConfirmationModal />
+                  {showNote ? (
+                    <div
+                      className='mt-2 w-full rounded-lg border border-black/10 px-3 py-2 text-[11px] text-gray-900 shadow-sm'
+                      style={{ backgroundColor: noteColor }}
+                    >
+                      <div className='whitespace-pre-wrap break-words'>{noteText}</div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })
+            : null}
+        </div>
+        <ConfirmationModal />
+      </CanvasBoardUIProvider>
     </Card>
   );
 }

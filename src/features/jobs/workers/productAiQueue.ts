@@ -146,11 +146,11 @@ export const getQueueStatus = async (): Promise<{
 }> => {
   const health = await queue.getHealthStatus();
   return {
-    running: health.running,
-    healthy: health.healthy,
-    processing: health.processing,
-    lastPollTime: health.lastPollTime,
-    timeSinceLastPoll: health.timeSinceLastPoll,
+    running: health.running ?? false,
+    healthy: health.healthy ?? false,
+    processing: health.processing ?? false,
+    lastPollTime: health.lastPollTime ?? 0,
+    timeSinceLastPoll: health.timeSinceLastPoll ?? 0,
   };
 };
 

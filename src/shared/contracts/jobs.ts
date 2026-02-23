@@ -9,6 +9,7 @@ import { dtoBaseSchema } from './base';
 export const jobStatusSchema = z.enum([
   'pending',
   'queued',
+  'queued_relist',
   'running',
   'completed',
   'failed',
@@ -131,12 +132,10 @@ export type UpdateProductAiJobDto = z.infer<typeof updateProductAiJobSchema>;
 
 export type ProductAiJobStatus =
   | 'pending'
-  | 'queued'
   | 'running'
   | 'completed'
   | 'failed'
-  | 'canceled'
-  | 'cancelled';
+  | 'canceled';
 
 export type ProductAiJobRecord = {
   id: string;

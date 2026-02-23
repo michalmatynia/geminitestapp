@@ -8,6 +8,7 @@ import {
   type MasterFolderTreeController,
   type MasterFolderTreeError,
   type MasterFolderTreePersistOperation,
+  type MasterTreeCanDropResultDto,
   type MasterFolderTreeUndoEntry,
   type UseMasterFolderTreeOptions,
 } from '@/shared/contracts/master-folder-tree';
@@ -794,7 +795,7 @@ export function useMasterFolderTree(
       nodeId: MasterTreeId,
       targetId: MasterTreeId | null,
       position: MasterTreeDropPosition = 'inside'
-    ) =>
+    ): MasterTreeCanDropResultDto =>
       canDropMasterTreeNode({
         nodes: stateRef.current.nodes,
         nodeId,

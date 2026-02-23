@@ -68,5 +68,12 @@ export function getGsapFromVars(preset: AnimationPreset): GSAPTweenVars {
 }
 
 export function getParallaxDefaults(preset: ParallaxPreset): { offset: number; scale?: number } {
-  return PARALLAX_DEFAULTS[preset] ?? { offset: 0 };
+  const val = PARALLAX_DEFAULTS[preset];
+  if (val && typeof val === 'object') {
+    return {
+      offset: val.offset ?? 0,
+      scale: val.scale,
+    };
+  }
+  return { offset: 0 };
 }

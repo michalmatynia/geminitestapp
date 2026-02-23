@@ -198,7 +198,7 @@ export function MasterFolderTree({
     position: MasterTreeDropPosition
   ): boolean => {
     const defaultCheck = controller.canDropNode(draggedNodeId, targetId, position);
-    if (defaultCheck.ok) return true;
+    if (defaultCheck) return true;
     if (!canDrop) return false;
     return canDrop(
       {

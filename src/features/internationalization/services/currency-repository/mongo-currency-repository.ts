@@ -34,9 +34,9 @@ const toCurrencyDomain = (doc: CurrencyDoc): CurrencyRecord => ({
   description: doc.description ?? undefined,
   exchangeRate: doc.exchangeRate ?? undefined,
   isDefault: doc.isDefault ?? false,
-  enabled: doc.enabled ?? true,
+  isActive: doc.enabled ?? true,
   createdAt: doc.createdAt.toISOString(),
-  updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : null,
+  updatedAt: doc.updatedAt ? doc.updatedAt.toISOString() : undefined,
 });
 
 export const mongoCurrencyRepository: CurrencyRepository = {

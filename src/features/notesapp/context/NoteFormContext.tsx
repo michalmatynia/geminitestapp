@@ -90,8 +90,8 @@ export interface NoteFormContextValue {
   setIsFavorite: (isFavorite: boolean) => void;
   getReadableTextColor: (bgColor: string) => string;
 
-  editorMode: 'markdown' | 'wysiwyg' | 'code';
-  setEditorMode: (mode: 'markdown' | 'wysiwyg' | 'code') => void;
+  editorMode: 'markdown' | 'wysiwyg' | 'code' | 'rich-text' | 'plain-text';
+  setEditorMode: (mode: 'markdown' | 'wysiwyg' | 'code' | 'rich-text' | 'plain-text') => void;
   isEditorModeLocked: boolean;
   isMigrating: boolean;
   handleMigrateToWysiwyg: (content: string) => Promise<string | undefined>;
@@ -271,7 +271,7 @@ export function NoteFormProvider({
     handleCreateTag,
     handleRemoveTag,
   } = useNoteTags(
-    note?.tags.map((t: { tagId: string; tag: TagRecord }): string => t.tagId) || [],
+    note?.tags?.map((t: { tagId: string; tag: TagRecord }): string => t.tagId) || [],
     availableTags,
     selectedNotebookId,
     note?.notebookId,
@@ -280,7 +280,7 @@ export function NoteFormProvider({
 
   // Folder state
   const [selectedFolderId, setSelectedFolderId] = useState<string>(
-    note?.categories[0]?.categoryId || defaultFolderId || ''
+    note?.categories?.[0]?.categoryId || defaultFolderId || ''
   );
 
   const flattenFolderTree = useCallback((

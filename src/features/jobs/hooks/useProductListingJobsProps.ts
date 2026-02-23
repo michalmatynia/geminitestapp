@@ -74,11 +74,14 @@ export function useProductListingJobsProps() {
       id: listing.id,
       type: `${typeLabel}: ${listing.integrationName}`,
       status: status as JobRowData['status'],
+      progress: status === 'active' ? 100 : 0,
+      error: null,
       entityName: job.productName,
       entitySubText: `SKU: ${job.productSku || 'N/A'} · Listing`,
       productId: job.productId,
+      startedAt: listing.createdAt || new Date().toISOString(),
       createdAt: listing.createdAt || new Date().toISOString(),
-      finishedAt: listing.updatedAt,
+      finishedAt: listing.updatedAt ?? null,
     };
   }), [pagedRows]);
 

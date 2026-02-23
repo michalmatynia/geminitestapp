@@ -5,36 +5,26 @@ import React from 'react';
 import {
   getSectionContainerClass,
   getSectionStyles,
-  type ColorSchemeColors,
 } from '@/features/cms/components/frontend/theme-styles';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
-import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
+import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
+import type { BlockInstance } from '@/shared/contracts/cms';
 import { EmptyState } from '@/shared/ui';
 
-interface PreviewRichTextSectionProps {
-  section: SectionInstance;
-  colorSchemes?: Record<string, ColorSchemeColors> | undefined;
-  selectedRing: string;
-  renderSectionActions: () => React.ReactNode;
-  divider: React.ReactNode;
-  wrapInspector: (node: React.ReactNode) => React.ReactNode;
-  handleSelect: () => void;
-  PreviewBlockItem: React.ComponentType<{ block: BlockInstance }>;
-  layout?: { fullWidth?: boolean } | undefined;
-}
+export function PreviewRichTextSection() {
+  const { 
+    section,
+    colorSchemes,
+    selectedRing,
+    renderSectionActions,
+    divider,
+    wrapInspector,
+    handleSelect,
+    PreviewBlockItem,
+    layout,
+  } = usePreviewSectionContext();
 
-export function PreviewRichTextSection({
-  section,
-  colorSchemes,
-  selectedRing,
-  renderSectionActions,
-  divider,
-  wrapInspector,
-  handleSelect,
-  PreviewBlockItem,
-  layout,
-}: PreviewRichTextSectionProps) {
   const { 
     inspectorSettings, 
     onOpenMedia,

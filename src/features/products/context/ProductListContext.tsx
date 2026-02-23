@@ -98,6 +98,9 @@ export interface ProductListContextType {
   traderaBadgeIds: Set<string>;
   traderaBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
+  categoryNameById: ReadonlyMap<string, string>;
+  thumbnailSource: 'file' | 'link' | 'base64';
+  imageExternalBaseUrl: string | null;
 
   // Modal State
   isCreateOpen: boolean;
@@ -219,6 +222,9 @@ export interface ProductListActionsContextType {
   traderaBadgeIds: Set<string>;
   traderaBadgeStatuses: Map<string, string>;
   queuedProductIds: Set<string>;
+  categoryNameById: ReadonlyMap<string, string>;
+  thumbnailSource: 'file' | 'link' | 'base64';
+  imageExternalBaseUrl: string | null;
 }
 
 export interface ProductListModalsContextType {
@@ -426,6 +432,9 @@ export function ProductListProvider({
       traderaBadgeIds: value.traderaBadgeIds,
       traderaBadgeStatuses: value.traderaBadgeStatuses,
       queuedProductIds: value.queuedProductIds,
+      categoryNameById: value.categoryNameById,
+      thumbnailSource: value.thumbnailSource,
+      imageExternalBaseUrl: value.imageExternalBaseUrl,
     }),
     [value]
   );

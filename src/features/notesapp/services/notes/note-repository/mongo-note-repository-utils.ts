@@ -15,7 +15,7 @@ import type {
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
   NoteFileDto as NoteFileRecord,
   NoteFiltersDto as NoteFilters,
-  NoteWithRelationsDto as NoteRecord,
+  NoteRecord,
   NotebookDto as NotebookRecord,
   NoteTagDto as TagRecord,
   NoteThemeDto as ThemeRecord,
@@ -54,8 +54,8 @@ export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
     notebookId: doc.notebookId ?? null,
     createdAt: toIsoCreatedAt(doc.createdAt),
     updatedAt: toIsoUpdatedAt(doc.updatedAt),
-    tags: tags as unknown as NoteRecord['tags'],
-    categories: categories as unknown as NoteRecord['categories'],
+    tags: tags.map((t: NoteTagEmbedded) => t.tagId),
+    categories: categories.map((c: NoteCategoryEmbedded) => c.categoryId),
     relationsFrom: relationsFrom as unknown as NoteRecord['relationsFrom'],
     relationsTo: relationsTo as unknown as NoteRecord['relationsTo'],
     tagIds: tags.map((t: NoteTagEmbedded) => t.tagId),
@@ -100,28 +100,26 @@ export const toThemeResponse = (doc: WithId<ThemeDocument>): ThemeRecord => ({
   id: doc.id ?? doc._id,
   name: doc.name,
   description: doc.description ?? null,
-  isDefault: false, // Default to false, handled by caller if needed
-  themeData: {
-    textColor: doc.textColor,
-    backgroundColor: doc.backgroundColor,
-    markdownHeadingColor: doc.markdownHeadingColor,
-    markdownLinkColor: doc.markdownLinkColor,
-    markdownCodeBackground: doc.markdownCodeBackground,
-    markdownCodeText: doc.markdownCodeText,
-    relatedNoteBorderWidth: doc.relatedNoteBorderWidth,
-    relatedNoteBorderColor: doc.relatedNoteBorderColor,
-    relatedNoteBackgroundColor: doc.relatedNoteBackgroundColor,
-    relatedNoteTextColor: doc.relatedNoteTextColor,
-  },
+  isDefault: doc.isDefault ?? false,
   notebookId: doc.notebookId ?? null,
+  textColor: doc.textColor ?? '#e5e7eb',
+  backgroundColor: doc.backgroundColor ?? '#111827',
+  markdownHeadingColor: doc.markdownHeadingColor ?? '#ffffff',
+  markdownLinkColor: doc.markdownLinkColor ?? '#60a5fa',
+  markdownCodeBackground: doc.markdownCodeBackground ?? '#1f2937',
+  markdownCodeText: doc.markdownCodeText ?? '#e5e7eb',
+  relatedNoteBorderWidth: doc.relatedNoteBorderWidth ?? 1,
+  relatedNoteBorderColor: doc.relatedNoteBorderColor ?? '#374151',
+  relatedNoteBackgroundColor: doc.relatedNoteBackgroundColor ?? '#1f2937',
+  relatedNoteTextColor: doc.relatedNoteTextColor ?? '#e5e7eb',
+  themeData: doc.themeData ?? {},
   createdAt: toIsoCreatedAt(doc.createdAt),
   updatedAt: toIsoUpdatedAt(doc.updatedAt),
-} as ThemeRecord);
+});
 
 export const toNoteFileResponse = (doc: WithId<NoteFileDocument>): NoteFileRecord => ({
   id: doc.id ?? doc._id,
   noteId: doc.noteId,
-  fileId: doc.id ?? doc._id,
   slotIndex: doc.slotIndex,
   filename: doc.filename,
   filepath: doc.filepath,
@@ -141,13 +139,13 @@ export const buildTree = (
   });
 
   notes.forEach((note: NoteRecord): void => {
-    note.categories.forEach((nc: NoteCategoryEmbedded): void => {
-      const category = categoryMap[nc.categoryId];
+    (note.categories || []).forEach((categoryId: string): void => {
+      const category = categoryMap[categoryId];
       if (category) {
         if (!category.notes) {
           category.notes = [];
         }
-        category.notes.push(note);
+        category.notes.push(note as any);
       }
     });
   });
@@ -188,6 +186,8 @@ export const buildIncomingRelationsMap = (
       if (!targetId || !targetNoteIds.has(targetId)) return;
 
       const relation: NoteRelationToEmbedded = {
+        id: rel.id,
+        type: rel.type,
         sourceNoteId: sourceId,
         targetNoteId: targetId,
         assignedAt: toIsoCreatedAt(rel.assignedAt),

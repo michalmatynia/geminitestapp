@@ -58,6 +58,10 @@ const withActionableContext = (finding: WarningFinding): string | null => {
     if (/Compile Inspector/i.test(message)) return message;
     return `${message} Open Paths Settings -> Compile Inspector to inspect prompt loop dependencies and wait-for-input contracts.`;
   }
+  if (code === 'context_cache_scope_risk') {
+    if (/Compile Inspector/i.test(message)) return message;
+    return `${message} Open Paths Settings -> Compile Inspector to review cache mode/scope on context-bound nodes.`;
+  }
   return appendInspectorHint(message);
 };
 

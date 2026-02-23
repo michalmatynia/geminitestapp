@@ -29,6 +29,12 @@ const COMMON_RUNTIME_FIELDS: NodeConfigDocField[] = [
     defaultValue: 'auto',
   },
   {
+    path: 'runtime.cache.scope',
+    description:
+      'Cache key scope. run = isolate each run, activation = isolate by trigger/entity context, session = reuse across session.',
+    defaultValue: 'run',
+  },
+  {
     path: 'runtime.waitForInputs',
     description:
       'If true, wait until all connected input ports have values before executing the node.',

@@ -281,6 +281,7 @@ export type GraphCompileCode =
   | 'optional_input_incompatible_wiring'
   | 'terminal_node_has_outgoing_edges'
   | 'trigger_context_resolution_risk'
+  | 'context_cache_scope_risk'
   | 'cycle_detected'
   | 'cycle_wait_deadlock_risk'
   | 'model_prompt_deadlock_risk'
@@ -800,6 +801,29 @@ const buildReachableCompileScope = (
   };
 };
 
+const CONTEXT_BOUND_CACHE_NODE_TYPES = new Set<string>([
+  'trigger',
+  'fetcher',
+  'simulation',
+  'context',
+]);
+
+const readNodeCacheMode = (node: AiNode): 'auto' | 'force' | 'disabled' => {
+  const mode = node.config?.runtime?.cache?.mode;
+  if (mode === 'auto' || mode === 'force' || mode === 'disabled') {
+    return mode;
+  }
+  return 'auto';
+};
+
+const readNodeCacheScope = (node: AiNode): 'run' | 'activation' | 'session' => {
+  const scope = node.config?.runtime?.cache?.scope;
+  if (scope === 'run' || scope === 'activation' || scope === 'session') {
+    return scope;
+  }
+  return 'run';
+};
+
 export const compileGraph = (
   nodes: AiNode[],
   edges: Edge[],
@@ -900,6 +924,27 @@ export const compileGraph = (
         nodeType: node.type,
         port,
       });
+    });
+  });
+
+  nodes.forEach((node: AiNode): void => {
+    if (!CONTEXT_BOUND_CACHE_NODE_TYPES.has(node.type)) return;
+    const cacheMode = readNodeCacheMode(node);
+    if (cacheMode === 'disabled') return;
+    const cacheScope = readNodeCacheScope(node);
+    if (cacheScope !== 'session') return;
+    findings.push({
+      code: 'context_cache_scope_risk',
+      severity: 'warning',
+      message:
+        `Node "${node.title ?? node.id}" is context-bound but cache scope is set to session. ` +
+        'This can reuse outputs across different entities/runs. Fix: set Runtime -> Cache scope to "Per run" or "Per activation/entity".',
+      nodeId: node.id,
+      nodeType: node.type,
+      metadata: {
+        cacheMode,
+        cacheScope,
+      },
     });
   });
 

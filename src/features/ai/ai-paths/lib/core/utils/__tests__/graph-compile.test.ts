@@ -160,6 +160,40 @@ describe('compileGraph', () => {
     ).toBe(true);
   });
 
+  it('warns when context-bound nodes use session cache scope', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        inputs: ['trigger', 'context', 'meta', 'entityId', 'entityType'],
+        outputs: ['context', 'meta', 'entityId', 'entityType'],
+        config: {
+          fetcher: {
+            sourceMode: 'live_context',
+            entityType: 'product',
+            entityId: '',
+            productId: '',
+          },
+          runtime: {
+            cache: {
+              mode: 'auto',
+              scope: 'session',
+            },
+          },
+        },
+      }),
+    ];
+    const report = compileGraph(nodes, []);
+    expect(
+      report.findings.some(
+        (finding) =>
+          finding.code === 'context_cache_scope_risk' &&
+          finding.nodeId === 'fetcher-1'
+      )
+    ).toBe(true);
+  });
+
   it('allows run-scoped compile when missing required inputs exist only outside trigger reachability', () => {
     const nodes: AiNode[] = [
       buildNode({

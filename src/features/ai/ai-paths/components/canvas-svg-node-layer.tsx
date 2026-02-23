@@ -639,9 +639,13 @@ export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number
                           onConnectorLeave?.();
                         }}
                         onClick={(event: React.MouseEvent<SVGCircleElement>) => {
-                          if (event.altKey || event.ctrlKey || event.metaKey) {
-                            setPinnedConnectorKey(isPinned ? null : key);
+                          event.stopPropagation();
+                          if (isPinned) {
+                            setPinnedConnectorKey(null);
+                            setHoveredConnectorKey(null);
+                            return;
                           }
+                          setPinnedConnectorKey(key);
                         }}
                       />
                       <circle
@@ -673,6 +677,15 @@ export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number
                         onPointerLeave={() => {
                           setHoveredConnectorKey(null);
                           onConnectorLeave?.();
+                        }}
+                        onClick={(event: React.MouseEvent<SVGCircleElement>) => {
+                          event.stopPropagation();
+                          if (isPinned) {
+                            setPinnedConnectorKey(null);
+                            setHoveredConnectorKey(null);
+                            return;
+                          }
+                          setPinnedConnectorKey(key);
                         }}
                       />
                       {showPortLabels && (
@@ -739,9 +752,13 @@ export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number
                           onConnectorLeave?.();
                         }}
                         onClick={(event: React.MouseEvent<SVGCircleElement>) => {
-                          if (event.altKey || event.ctrlKey || event.metaKey) {
-                            setPinnedConnectorKey(isPinned ? null : key);
+                          event.stopPropagation();
+                          if (isPinned) {
+                            setPinnedConnectorKey(null);
+                            setHoveredConnectorKey(null);
+                            return;
                           }
+                          setPinnedConnectorKey(key);
                         }}
                       />
                       <circle
@@ -777,6 +794,15 @@ export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number
                         onPointerLeave={() => {
                           setHoveredConnectorKey(null);
                           onConnectorLeave?.();
+                        }}
+                        onClick={(event: React.MouseEvent<SVGCircleElement>) => {
+                          event.stopPropagation();
+                          if (isPinned) {
+                            setPinnedConnectorKey(null);
+                            setHoveredConnectorKey(null);
+                            return;
+                          }
+                          setPinnedConnectorKey(key);
                         }}
                       />
                       {showPortLabels && (

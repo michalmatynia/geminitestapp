@@ -290,6 +290,12 @@ export function CanvasBoard({
   }, [rendererMode, svgConnectorTooltip]);
 
   React.useEffect(() => {
+    if (!pinnedConnectorKey && !hoveredConnectorKey) {
+      setSvgConnectorTooltip(null);
+    }
+  }, [hoveredConnectorKey, pinnedConnectorKey]);
+
+  React.useEffect(() => {
     if (typeof window === 'undefined') return;
     const query = window.matchMedia('(prefers-reduced-motion: reduce)');
     const apply = (): void => setPrefersReducedMotion(query.matches);
@@ -419,11 +425,14 @@ export function CanvasBoard({
     }
   }, [effectiveFlowIntensity]);
 
-  const buildConnectorKey = (
-    direction: 'input' | 'output',
-    nodeId: string,
-    port: string
-  ): string => `${direction}:${nodeId}:${port}`;
+  const buildConnectorKey = React.useCallback(
+    (
+      direction: 'input' | 'output',
+      nodeId: string,
+      port: string
+    ): string => `${direction}:${nodeId}:${port}`,
+    []
+  );
   const buildEdgePortKey = React.useCallback(
     (nodeId: string, port: string): string => `${nodeId}:${port}`,
     []
@@ -844,7 +853,17 @@ export function CanvasBoard({
         setSvgConnectorTooltip({ clientX, clientY, info });
       },
       onConnectorLeave: () => {
-        setSvgConnectorTooltip(null);
+        setSvgConnectorTooltip((current) => {
+          if (!current) return null;
+          const tooltipKey = buildConnectorKey(
+            current.info.direction,
+            current.info.nodeId,
+            current.info.port
+          );
+          if (tooltipKey === pinnedConnectorKey) return current;
+          if (tooltipKey === hoveredConnectorKey) return current;
+          return null;
+        });
       },
       onPointerDownNode: handlePointerDownNode,
       onPointerMoveNode: handlePointerMoveNode,
@@ -890,6 +909,7 @@ export function CanvasBoard({
       pinnedConnectorKey,
       setHoveredConnectorKey,
       setPinnedConnectorKey,
+      buildConnectorKey,
       handlePointerDownNode,
       handlePointerMoveNode,
       handlePointerUpNode,
@@ -1117,12 +1137,17 @@ export function CanvasBoard({
         ) : null}
         {isSvgRenderer && svgConnectorTooltip && svgConnectorTooltipPosition ? (
           <div
-            className='pointer-events-none absolute z-40 rounded-md border border-border/70 bg-card/95 p-2 shadow-lg backdrop-blur-sm'
+            className='pointer-events-auto absolute z-40 rounded-md border border-border/70 bg-card/95 p-2 shadow-lg backdrop-blur-sm'
             style={{
               left: svgConnectorTooltipPosition.left,
               top: svgConnectorTooltipPosition.top,
               maxWidth: svgConnectorTooltipOverride?.maxWidth ?? '320px',
             }}
+            onPointerDown={(event) => event.stopPropagation()}
+            onPointerMove={(event) => event.stopPropagation()}
+            onPointerUp={(event) => event.stopPropagation()}
+            onWheel={(event) => event.stopPropagation()}
+            onContextMenu={(event) => event.stopPropagation()}
           >
             {svgConnectorTooltipOverride?.content ?? renderConnectorTooltip(svgConnectorTooltip.info)}
           </div>
@@ -1425,9 +1450,12 @@ export function CanvasBoard({
                                     }}
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      setPinnedConnectorKey((prev) =>
-                                        prev === connectorKey ? null : connectorKey
-                                      );
+                                      if (isPinned) {
+                                        setPinnedConnectorKey(null);
+                                        setHoveredConnectorKey(null);
+                                        return;
+                                      }
+                                      setPinnedConnectorKey(connectorKey);
                                     }}
                                     onContextMenu={(event) => {
                                       event.preventDefault();
@@ -1520,9 +1548,12 @@ export function CanvasBoard({
                                     }
                                     onClick={(event) => {
                                       event.stopPropagation();
-                                      setPinnedConnectorKey((prev) =>
-                                        prev === connectorKey ? null : connectorKey
-                                      );
+                                      if (isPinned) {
+                                        setPinnedConnectorKey(null);
+                                        setHoveredConnectorKey(null);
+                                        return;
+                                      }
+                                      setPinnedConnectorKey(connectorKey);
                                     }}
                                     onContextMenu={(event) => {
                                       event.preventDefault();

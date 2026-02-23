@@ -179,6 +179,7 @@ function MasterFolderTreeContent(): React.JSX.Element {
     applyRootDrop,
     setExternalDraggedNodeId,
     setRootDropHoverZone,
+    rootDropHoverZone,
     rootDropUi,
     clearDragIndicators,
   } = useMasterFolderTreeContext();

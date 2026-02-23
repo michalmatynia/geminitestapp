@@ -202,6 +202,13 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       assetName: activeFile?.name ?? '',
       handleManualSave: handleManualGraphSave,
       isSidebarReady: true,
+      compiled: {
+        segments: [],
+        combinedContent: '',
+        prompt: '',
+        outputsByNode: {},
+        warnings: [],
+      },
       selectedNode,
       selectedPromptMeta,
       selectedPromptSourceFile,
@@ -216,6 +223,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       updateSelectedEdgeMeta,
       isNodeInspectorOpen,
       setIsNodeInspectorOpen: setIsNodeInspectorOpenLocal,
+      isLinkedPreviewOpen,
+      setIsLinkedPreviewOpen,
       hasPendingSnapshotChanges: false,
     }),
     [
@@ -232,6 +241,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       selectedEdgeJoinMode,
       updateSelectedEdgeMeta,
       isNodeInspectorOpen,
+      isLinkedPreviewOpen,
+      setIsLinkedPreviewOpen,
     ]
   );
 
@@ -313,10 +324,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
 
         <CaseResolverNodeInspectorModal />
 
-        <CaseResolverLinkedPreviewModal
-          open={isLinkedPreviewOpen}
-          onOpenChange={setIsLinkedPreviewOpen}
-        />
+        <CaseResolverLinkedPreviewModal />
       </div>
     </NodeFileWorkspaceProvider>
   );

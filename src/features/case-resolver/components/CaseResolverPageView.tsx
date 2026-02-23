@@ -3,11 +3,6 @@ import { Copy, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import React, { useCallback } from 'react';
 
-import type {
-  CaseResolverCaptureDocumentDateAction,
-  CaseResolverCaptureProposalState,
-} from '@/features/case-resolver-capture/proposals';
-import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
 import { DocumentWysiwygEditor } from '@/features/document-editor';
 import {
   decodeFilemakerPartyReference,
@@ -16,12 +11,8 @@ import {
 import {
   CASE_RESOLVER_QUOTE_MODE_OPTIONS,
   type CaseResolverDocumentHistoryEntry,
-  type CaseResolverFileEditDraft,
   type CaseResolverFile,
   type CaseResolverAssetFile,
-  type CaseResolverGraph,
-  type CaseResolverNodeMeta,
-  type CaseResolverRelationGraph,
 } from '@/shared/contracts/case-resolver';
 import {
   Badge,
@@ -55,7 +46,7 @@ import { emitCaseResolverShowDocumentInCanvas } from '../drag';
 import { resolvePromptExploderTransferStatusLabel } from '../hooks/prompt-exploder-transfer-lifecycle';
 import { buildCaseResolverNodeFileRelationIndexFromAssets } from '../nodefile-relations';
 import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
-import { type CaseResolverStateValue } from '../types';
+import { useCaseResolverViewContext } from './CaseResolverViewContext';
 
 const ENABLE_CASE_RESOLVER_TRANSFER_DIAGNOSTICS =
   process.env['NEXT_PUBLIC_CASE_RESOLVER_TRANSFER_DIAGNOSTICS'] === '1';
@@ -66,8 +57,6 @@ type SelectOption = {
   description?: string | undefined;
 };
 
-type WorkspaceView = 'document' | 'relations';
-type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
 type PartySearchKind = 'person' | 'organization';
 
 const CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS: Array<{
@@ -86,6 +75,19 @@ const CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS: Array<{
     description: 'Search within organizations',
   },
 ];
+
+const formatHistoryTimestamp = (value: string): string => {
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return value;
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(parsed);
+};
 
 const CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN =
   /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;

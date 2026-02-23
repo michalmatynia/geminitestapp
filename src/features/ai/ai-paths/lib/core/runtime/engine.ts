@@ -1,6 +1,7 @@
 import type {
   AiNode,
   Edge,
+  NodeCacheScope,
   NodeSideEffectPolicy,
   RuntimeHistoryEntry,
   RuntimeHistoryLink,
@@ -204,7 +205,7 @@ export type EvaluateGraphOptions = {
   toast: Toast;
 };
 
-const CACHE_VERSION = 1;
+const CACHE_VERSION = 2;
 
 type SideEffectDecision =
   | 'executed'
@@ -238,6 +239,14 @@ const SIDE_EFFECT_CHANNEL_BY_NODE_TYPE: Partial<Record<AiNode['type'], SideEffec
   db_schema: 'schema',
 };
 
+const DEFAULT_NODE_CACHE_SCOPE: NodeCacheScope = 'run';
+const CONTEXT_BOUND_CACHE_NODE_TYPES = new Set<AiNode['type']>([
+  'trigger',
+  'fetcher',
+  'simulation',
+  'context',
+]);
+
 const IDEMPOTENCY_NODE_TYPES = new Set<AiNode['type']>([
   'model',
   'agent',
@@ -250,7 +259,8 @@ const IDEMPOTENCY_NODE_TYPES = new Set<AiNode['type']>([
 
 const buildNodeInputHash = (
   node: AiNode,
-  nodeInputs: RuntimePortValues
+  nodeInputs: RuntimePortValues,
+  cacheScopeFingerprint?: Record<string, unknown>
 ): string =>
   hashRuntimeValue({
     v: CACHE_VERSION,
@@ -261,11 +271,13 @@ const buildNodeInputHash = (
     inputs: nodeInputs,
     inputPorts: node.inputs ?? [],
     outputPorts: node.outputs ?? [],
+    ...(cacheScopeFingerprint ? { cacheScope: cacheScopeFingerprint } : {}),
   });
 
 const buildDatabaseInputHash = (
   node: AiNode,
-  nodeInputs: RuntimePortValues
+  nodeInputs: RuntimePortValues,
+  cacheScopeFingerprint?: Record<string, unknown>
 ): string => {
   const dbConfig = node.config?.database ?? { operation: 'query' };
   const operation = dbConfig.operation ?? 'query';
@@ -322,6 +334,7 @@ const buildDatabaseInputHash = (
       type: node.type,
       config: baseConfig,
       query: payload,
+      ...(cacheScopeFingerprint ? { cacheScope: cacheScopeFingerprint } : {}),
     });
   }
   if (operation === 'update') {
@@ -349,6 +362,7 @@ const buildDatabaseInputHash = (
       type: node.type,
       config: baseConfig,
       inputs,
+      ...(cacheScopeFingerprint ? { cacheScope: cacheScopeFingerprint } : {}),
     });
   }
   if (operation === 'insert') {
@@ -362,6 +376,7 @@ const buildDatabaseInputHash = (
       type: node.type,
       config: baseConfig,
       inputs,
+      ...(cacheScopeFingerprint ? { cacheScope: cacheScopeFingerprint } : {}),
     });
   }
   if (operation === 'delete') {
@@ -378,6 +393,7 @@ const buildDatabaseInputHash = (
       type: node.type,
       config: baseConfig,
       inputs,
+      ...(cacheScopeFingerprint ? { cacheScope: cacheScopeFingerprint } : {}),
     });
   }
   return hashRuntimeValue({
@@ -386,6 +402,7 @@ const buildDatabaseInputHash = (
     type: node.type,
     config: baseConfig,
     inputs,
+    ...(cacheScopeFingerprint ? { cacheScope: cacheScopeFingerprint } : {}),
   });
 };
 
@@ -422,6 +439,14 @@ const resolveNodeSideEffectPolicy = (
 ): NodeSideEffectPolicy | null => {
   if (!channel) return null;
   return node.config?.runtime?.sideEffectPolicy ?? 'per_run';
+};
+
+const resolveNodeCacheScope = (node: AiNode): NodeCacheScope => {
+  const scope = node.config?.runtime?.cache?.scope;
+  if (scope === 'run' || scope === 'activation' || scope === 'session') {
+    return scope;
+  }
+  return DEFAULT_NODE_CACHE_SCOPE;
 };
 
 type TriggerContextMode = 'simulation_required' | 'simulation_preferred' | 'trigger_only';
@@ -526,6 +551,188 @@ const readEntityTypeFromPorts = (
   const context = output['context'];
   if (!context || typeof context !== 'object') return null;
   return readEntityTypeFromContext(context as Record<string, unknown>);
+};
+
+const readEntityIdFromNodeInputs = (
+  nodeInputs: RuntimePortValues
+): string | null => {
+  const directEntityId = nodeInputs['entityId'];
+  if (typeof directEntityId === 'string' && directEntityId.trim().length > 0) {
+    return directEntityId.trim();
+  }
+  if (typeof directEntityId === 'number' && Number.isFinite(directEntityId)) {
+    return String(directEntityId);
+  }
+  const directProductId = nodeInputs['productId'];
+  if (typeof directProductId === 'string' && directProductId.trim().length > 0) {
+    return directProductId.trim();
+  }
+  if (typeof directProductId === 'number' && Number.isFinite(directProductId)) {
+    return String(directProductId);
+  }
+  const context = nodeInputs['context'];
+  if (context && typeof context === 'object' && !Array.isArray(context)) {
+    const contextEntityId = readEntityIdFromContext(context as Record<string, unknown>);
+    if (contextEntityId) return contextEntityId;
+  }
+  const bundle = nodeInputs['bundle'];
+  if (bundle && typeof bundle === 'object' && !Array.isArray(bundle)) {
+    const bundleEntityId = readEntityIdFromContext(bundle as Record<string, unknown>);
+    if (bundleEntityId) return bundleEntityId;
+  }
+  return null;
+};
+
+const readEntityTypeFromNodeInputs = (
+  nodeInputs: RuntimePortValues
+): string | null => {
+  const directEntityType = nodeInputs['entityType'];
+  if (typeof directEntityType === 'string' && directEntityType.trim().length > 0) {
+    const normalized = directEntityType.trim().toLowerCase();
+    if (normalized === 'products') return 'product';
+    if (normalized === 'notes') return 'note';
+    return normalized;
+  }
+  const context = nodeInputs['context'];
+  if (context && typeof context === 'object' && !Array.isArray(context)) {
+    const contextEntityType = readEntityTypeFromContext(
+      context as Record<string, unknown>
+    );
+    if (contextEntityType) return contextEntityType;
+  }
+  const bundle = nodeInputs['bundle'];
+  if (bundle && typeof bundle === 'object' && !Array.isArray(bundle)) {
+    const bundleEntityType = readEntityTypeFromContext(
+      bundle as Record<string, unknown>
+    );
+    if (bundleEntityType) return bundleEntityType;
+  }
+  return null;
+};
+
+const resolveNodeActivationContext = (args: {
+  node: AiNode;
+  nodeInputs: RuntimePortValues;
+  triggerContext: Record<string, unknown> | null;
+  triggerEvent?: string | null;
+  simulationEntityId?: string | null;
+  simulationEntityType?: string | null;
+}): {
+  entityId: string | null;
+  entityType: string | null;
+  triggerEvent: string | null;
+  fetcherSourceMode: FetcherSourceMode | null;
+} => {
+  const inputEntityId = readEntityIdFromNodeInputs(args.nodeInputs);
+  const inputEntityType = readEntityTypeFromNodeInputs(args.nodeInputs);
+  const triggerContextEntityId = readEntityIdFromContext(args.triggerContext);
+  const triggerContextEntityType = readEntityTypeFromContext(args.triggerContext);
+  const normalizedSimulationEntityType =
+    typeof args.simulationEntityType === 'string' &&
+    args.simulationEntityType.trim().length > 0
+      ? args.simulationEntityType.trim().toLowerCase()
+      : null;
+  const entityId =
+    inputEntityId ?? triggerContextEntityId ?? args.simulationEntityId ?? null;
+  const entityType =
+    inputEntityType ??
+    triggerContextEntityType ??
+    normalizedSimulationEntityType;
+  const triggerEvent =
+    typeof args.triggerEvent === 'string' && args.triggerEvent.trim().length > 0
+      ? args.triggerEvent.trim()
+      : null;
+  return {
+    entityId,
+    entityType,
+    triggerEvent,
+    fetcherSourceMode:
+      args.node.type === 'fetcher' ? resolveFetcherSourceMode(args.node) : null,
+  };
+};
+
+const buildNodeCacheScopeFingerprint = (args: {
+  node: AiNode;
+  nodeInputs: RuntimePortValues;
+  scope: NodeCacheScope;
+  runId: string;
+  activePathId: string | null;
+  triggerContext: Record<string, unknown> | null;
+  triggerEvent?: string | null;
+  simulationEntityId?: string | null;
+  simulationEntityType?: string | null;
+}): Record<string, unknown> => {
+  const activation = resolveNodeActivationContext({
+    node: args.node,
+    nodeInputs: args.nodeInputs,
+    triggerContext: args.triggerContext,
+    triggerEvent: args.triggerEvent,
+    simulationEntityId: args.simulationEntityId,
+    simulationEntityType: args.simulationEntityType,
+  });
+  if (args.scope === 'session') {
+    return {
+      scope: 'session',
+    };
+  }
+  if (args.scope === 'activation') {
+    return {
+      scope: 'activation',
+      pathId: args.activePathId,
+      triggerEvent: activation.triggerEvent,
+      entityId: activation.entityId,
+      entityType: activation.entityType,
+      ...(activation.fetcherSourceMode
+        ? { fetcherSourceMode: activation.fetcherSourceMode }
+        : {}),
+    };
+  }
+  return {
+    scope: 'run',
+    runId: args.runId,
+    triggerEvent: activation.triggerEvent,
+    entityId: activation.entityId,
+    entityType: activation.entityType,
+    ...(activation.fetcherSourceMode
+      ? { fetcherSourceMode: activation.fetcherSourceMode }
+      : {}),
+  };
+};
+
+const hasContextBoundCacheMismatch = (args: {
+  node: AiNode;
+  nodeInputs: RuntimePortValues;
+  prevOutputs: RuntimePortValues | undefined;
+  triggerContext: Record<string, unknown> | null;
+  triggerEvent?: string | null;
+  simulationEntityId?: string | null;
+  simulationEntityType?: string | null;
+}): boolean => {
+  if (!CONTEXT_BOUND_CACHE_NODE_TYPES.has(args.node.type)) {
+    return false;
+  }
+  const expected = resolveNodeActivationContext({
+    node: args.node,
+    nodeInputs: args.nodeInputs,
+    triggerContext: args.triggerContext,
+    triggerEvent: args.triggerEvent,
+    simulationEntityId: args.simulationEntityId,
+    simulationEntityType: args.simulationEntityType,
+  });
+  const cachedEntityId = readEntityIdFromPorts(args.prevOutputs);
+  const cachedEntityType = readEntityTypeFromPorts(args.prevOutputs);
+  if (expected.entityId) {
+    if (!cachedEntityId) return true;
+    if (cachedEntityId !== expected.entityId) return true;
+  }
+  if (
+    expected.entityType &&
+    cachedEntityType &&
+    cachedEntityType !== expected.entityType
+  ) {
+    return true;
+  }
+  return false;
 };
 
 const hasSimulationContextProvenance = (
@@ -883,6 +1090,46 @@ export async function evaluateGraph({
     outgoing.push(edge);
     outgoingEdgesByNode.set(edge.from, outgoing);
   });
+  const hasValidTriggerRoot = Boolean(triggerNodeId && nodeById.has(triggerNodeId));
+  if (hasValidTriggerRoot && triggerNodeId) {
+    const queue: string[] = [triggerNodeId];
+    activeNodeIds.add(triggerNodeId);
+    while (queue.length > 0) {
+      const current = queue.shift();
+      if (!current) continue;
+      const outgoing = outgoingEdgesByNode.get(current) ?? [];
+      outgoing.forEach((edge: Edge): void => {
+        const targetId = edge.to;
+        if (!targetId || activeNodeIds.has(targetId)) return;
+        activeNodeIds.add(targetId);
+        queue.push(targetId);
+      });
+    }
+  }
+  const isNodeActiveById = (nodeId: string): boolean =>
+    !triggerNodeId || !hasValidTriggerRoot || activeNodeIds.has(nodeId);
+  if (triggerNodeId && hasValidTriggerRoot) {
+    Object.keys(outputs).forEach((nodeId: string): void => {
+      if (!isNodeActiveById(nodeId)) {
+        delete outputs[nodeId];
+      }
+    });
+    Array.from(inputHashes.keys()).forEach((nodeId: string): void => {
+      if (!isNodeActiveById(nodeId)) {
+        inputHashes.delete(nodeId);
+      }
+    });
+    Array.from(hashTimestamps.keys()).forEach((nodeId: string): void => {
+      if (!isNodeActiveById(nodeId)) {
+        hashTimestamps.delete(nodeId);
+      }
+    });
+    Array.from(history.keys()).forEach((nodeId: string): void => {
+      if (!isNodeActiveById(nodeId)) {
+        history.delete(nodeId);
+      }
+    });
+  }
   const orderNodesByDependencies = (): AiNode[] => {
     if (nodes.length <= 1) return nodes;
     const indegree = new Map<string, number>();
@@ -1022,6 +1269,7 @@ export async function evaluateGraph({
     incoming.forEach((edge: Edge) => {
       const fromNodeId = edge.from;
       if (!fromNodeId) return;
+      if (!isNodeActiveById(fromNodeId)) return;
       const fromOutput = outputs[fromNodeId];
       if (!fromOutput || !edge.fromPort || !edge.toPort) return;
       const value = (fromOutput)[edge.fromPort];
@@ -1180,6 +1428,19 @@ export async function evaluateGraph({
   ): NodeInputReadiness => {
     const incoming = incomingEdgesByNode.get(node.id) ?? [];
     if (incoming.length === 0) {
+      const requiredPorts = resolveConfiguredRequiredInputPorts(node, new Set<string>());
+      if (requiredPorts.length > 0) {
+        const waitingOnPorts = requiredPorts.filter(
+          (port: string): boolean => rawInputs[port] === undefined
+        );
+        return {
+          ready: waitingOnPorts.length === 0,
+          requiredPorts,
+          optionalPorts: [],
+          waitingOnPorts,
+          waitingOnDetails: buildWaitingOnDetails(node, new Set(waitingOnPorts)),
+        };
+      }
       return {
         ready: true,
         requiredPorts: [],
@@ -1193,6 +1454,19 @@ export async function evaluateGraph({
       if (edge.toPort) connectedPorts.add(edge.toPort);
     });
     if (connectedPorts.size === 0) {
+      const requiredPorts = resolveConfiguredRequiredInputPorts(node, connectedPorts);
+      if (requiredPorts.length > 0) {
+        const waitingOnPorts = requiredPorts.filter(
+          (port: string): boolean => rawInputs[port] === undefined
+        );
+        return {
+          ready: waitingOnPorts.length === 0,
+          requiredPorts,
+          optionalPorts: [],
+          waitingOnPorts,
+          waitingOnDetails: buildWaitingOnDetails(node, new Set(waitingOnPorts)),
+        };
+      }
       return {
         ready: true,
         requiredPorts: [],
@@ -1464,36 +1738,8 @@ export async function evaluateGraph({
     return created;
   };
 
-  if (triggerNodeId) {
-    const adjacency = new Map<string, Set<string>>();
-    sanitizedEdges.forEach((edge: Edge) => {
-      if (!edge.from || !edge.to) return;
-      const fromSet = adjacency.get(edge.from) ?? new Set<string>();
-      fromSet.add(edge.to);
-      adjacency.set(edge.from, fromSet);
-      const toSet = adjacency.get(edge.to) ?? new Set<string>();
-      toSet.add(edge.from);
-      adjacency.set(edge.to, toSet);
-    });
-    const queue = [triggerNodeId];
-    activeNodeIds.add(triggerNodeId);
-    while (queue.length) {
-      const current = queue.shift();
-      if (!current) continue;
-      const neighbors = adjacency.get(current);
-      if (!neighbors) continue;
-      neighbors.forEach((neighbor: string) => {
-        if (activeNodeIds.has(neighbor)) return;
-        activeNodeIds.add(neighbor);
-        queue.push(neighbor);
-      });
-    }
-  }
-  const alwaysActiveTypes = new Set(['parser', 'prompt', 'viewer', 'database']);
   const isActiveNode = (node: AiNode): boolean =>
-    !triggerNodeId ||
-    activeNodeIds.has(node.id) ||
-    alwaysActiveTypes.has(node.type);
+    isNodeActiveById(node.id);
   const skipNodeSet = skipNodeIds
     ? new Set(Array.isArray(skipNodeIds) ? skipNodeIds : Array.from(skipNodeIds))
     : null;
@@ -2068,6 +2314,7 @@ export async function evaluateGraph({
       }
 
       const cacheMode = node.config?.runtime?.cache?.mode ?? 'auto';
+      const cacheScope = resolveNodeCacheScope(node);
       const isWriteNode = isDatabaseWriteNode(node);
       const isEventNode = node.type === 'trigger';
       const isCacheable = cacheMode !== 'disabled' && !isWriteNode && !isEventNode;
@@ -2075,29 +2322,49 @@ export async function evaluateGraph({
         inputHashes.delete(node.id);
         hashTimestamps.delete(node.id);
       }
+      const cacheScopeFingerprint = buildNodeCacheScopeFingerprint({
+        node,
+        nodeInputs,
+        scope: cacheScope,
+        runId: resolvedRunId,
+        activePathId,
+        triggerContext: triggerContextRecord,
+        triggerEvent,
+        simulationEntityId,
+        simulationEntityType,
+      });
       let hashMs: number | undefined;
       let fenceHash: string;
       if (profileEnabled) {
         const hashStartMs = nowMs();
         fenceHash =
           node.type === 'database'
-            ? buildDatabaseInputHash(node, nodeInputs)
-            : buildNodeInputHash(node, nodeInputs);
+            ? buildDatabaseInputHash(node, nodeInputs, cacheScopeFingerprint)
+            : buildNodeInputHash(node, nodeInputs, cacheScopeFingerprint);
         hashMs = nowMs() - hashStartMs;
         recordHashProfile(node, hashMs);
       } else {
         fenceHash =
           node.type === 'database'
-            ? buildDatabaseInputHash(node, nodeInputs)
-            : buildNodeInputHash(node, nodeInputs);
+            ? buildDatabaseInputHash(node, nodeInputs, cacheScopeFingerprint)
+            : buildNodeInputHash(node, nodeInputs, cacheScopeFingerprint);
       }
       const inputHash = isCacheable ? fenceHash : null;
       const historyInputHash = fenceHash ?? null;
       const profileHashMs = typeof hashMs === 'number' ? hashMs : undefined;
       const canReusePrevOutputs = hasReusableNodeOutputsForCache(node, prevOutputs);
+      const hasContextCacheMismatch = hasContextBoundCacheMismatch({
+        node,
+        nodeInputs,
+        prevOutputs,
+        triggerContext: triggerContextRecord,
+        triggerEvent,
+        simulationEntityId,
+        simulationEntityType,
+      });
       if (fenceHash) {
         const fenceSet = getRunFence(node.id);
-        if (fenceSet.has(fenceHash) && canReusePrevOutputs) {
+        if (fenceSet.has(fenceHash) && canReusePrevOutputs && !hasContextCacheMismatch) {
           pushSkipEntry(node, nodeInputs, prevOutputs, {
             status: 'cached',
             reason: 'run_fence',
@@ -2155,6 +2422,7 @@ export async function evaluateGraph({
         inputHashes.get(node.id) === inputHash &&
         outputs[node.id] !== undefined &&
         canReusePrevOutputs &&
+        !hasContextCacheMismatch &&
         !isTtlExpired;
 
       if (hasCachedOutput) {

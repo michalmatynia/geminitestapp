@@ -60,4 +60,20 @@ describe('buildCompileWarningMessage', () => {
     expect(message).toContain('Graph compile warning (model_prompt_deadlock_risk)');
     expect(message).toContain('Compile Inspector');
   });
+
+  it('adds cache-scope inspector hint for context cache scope risk', () => {
+    const message = buildCompileWarningMessage({
+      warnings: 1,
+      findings: [
+        {
+          severity: 'warning',
+          code: 'context_cache_scope_risk',
+          message: 'Fetcher cache scope can reuse outputs across entities.',
+        },
+      ],
+    });
+    expect(message).toContain('Graph compile warning (context_cache_scope_risk)');
+    expect(message).toContain('Compile Inspector');
+    expect(message).toContain('cache mode/scope');
+  });
 });

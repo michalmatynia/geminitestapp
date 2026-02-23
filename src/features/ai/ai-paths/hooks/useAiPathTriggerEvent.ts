@@ -556,9 +556,6 @@ export function useAiPathTriggerEvent(): {
         const fromSet = adjacency.get(edge.from) ?? new Set<string>();
         fromSet.add(edge.to);
         adjacency.set(edge.from, fromSet);
-        const toSet = adjacency.get(edge.to) ?? new Set<string>();
-        toSet.add(edge.from);
-        adjacency.set(edge.to, toSet);
       });
 
       const connected = new Set<string>();
@@ -601,12 +598,11 @@ export function useAiPathTriggerEvent(): {
 
       toast(`Running AI Path: ${selectedConfig.name}`, { variant: 'success' });
 
-      const alwaysActiveTypes = new Set(['parser', 'prompt', 'viewer', 'database']);
       const totalNodes = Math.max(
         1,
         nodes.filter((node: AiNode): boolean => {
           if (node.type === 'simulation') return false;
-          return connected.has(node.id) || alwaysActiveTypes.has(node.type);
+          return connected.has(node.id);
         }).length
       );
       const completed = new Set<string>();

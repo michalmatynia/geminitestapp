@@ -250,7 +250,7 @@ export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element =
           })}
         </div>
       ) : null}
-      <pre className='mt-1 max-h-56 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
+      <pre className='mt-1 max-h-56 overflow-auto whitespace-pre text-[11px] text-gray-200'>
         {formatConnectorValue(info.value)}
       </pre>
       {showNodeInputData ? (
@@ -258,7 +258,7 @@ export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element =
           <div className='text-[10px] text-gray-400'>
             Node input data:
           </div>
-          <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap text-[10px] text-gray-300'>
+          <pre className='mt-1 max-h-28 overflow-auto whitespace-pre text-[10px] text-gray-300'>
             {formatConnectorValue(info.nodeInputs)}
           </pre>
         </div>
@@ -268,7 +268,7 @@ export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element =
           <div className='text-[10px] text-gray-400'>
             Data passed through node (outputs):
           </div>
-          <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap text-[10px] text-gray-300'>
+          <pre className='mt-1 max-h-28 overflow-auto whitespace-pre text-[10px] text-gray-300'>
             {formatConnectorValue(info.nodeOutputs)}
           </pre>
         </div>

@@ -355,6 +355,7 @@ function CaseResolverNodeFileWorkspaceInner({
   const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database' | 'viewer'>('prompt');
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
   const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
+  const [isLinkedPreviewOpen, setIsLinkedPreviewOpen] = useState(false);
   const [showNodeSelectorUnderCanvas, setShowNodeSelectorUnderCanvas] = useState(
     () => nodes.length > 0
   );
@@ -1405,6 +1406,7 @@ function CaseResolverNodeFileWorkspaceInner({
       assetName,
       handleManualSave,
       isSidebarReady,
+      compiled,
       selectedNode,
       selectedPromptMeta,
       selectedPromptSourceFile,
@@ -1419,6 +1421,8 @@ function CaseResolverNodeFileWorkspaceInner({
       updateSelectedEdgeMeta,
       isNodeInspectorOpen,
       setIsNodeInspectorOpen,
+      isLinkedPreviewOpen,
+      setIsLinkedPreviewOpen,
       hasPendingSnapshotChanges,
     }),
     [
@@ -1426,6 +1430,7 @@ function CaseResolverNodeFileWorkspaceInner({
       assetName,
       handleManualSave,
       isSidebarReady,
+      compiled,
       selectedNode,
       selectedPromptMeta,
       selectedPromptSourceFile,
@@ -1440,6 +1445,8 @@ function CaseResolverNodeFileWorkspaceInner({
       updateSelectedEdgeMeta,
       isNodeInspectorOpen,
       setIsNodeInspectorOpen,
+      isLinkedPreviewOpen,
+      setIsLinkedPreviewOpen,
       hasPendingSnapshotChanges,
     ]
   );

@@ -3,19 +3,15 @@ import React from 'react';
 import { EmptyState } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
-import type { CaseResolverCompileResult } from '../composer';
+import { useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
 
-type CaseResolverLinkedPreviewModalProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  compiled: CaseResolverCompileResult;
-};
+export function CaseResolverLinkedPreviewModal(): React.JSX.Element {
+  const { 
+    isLinkedPreviewOpen: open,
+    setIsLinkedPreviewOpen: onOpenChange,
+    compiled,
+  } = useNodeFileWorkspaceContext();
 
-export function CaseResolverLinkedPreviewModal({
-  open,
-  onOpenChange,
-  compiled,
-}: CaseResolverLinkedPreviewModalProps): React.JSX.Element {
   return (
     <DetailModal
       isOpen={open}

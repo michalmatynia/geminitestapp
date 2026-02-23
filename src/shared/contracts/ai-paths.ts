@@ -775,6 +775,10 @@ export const nodeCacheModeSchema = z.enum(['auto', 'force', 'disabled']);
 export type NodeCacheModeDto = z.infer<typeof nodeCacheModeSchema>;
 export type NodeCacheMode = NodeCacheModeDto;
 
+export const nodeCacheScopeSchema = z.enum(['run', 'activation', 'session']);
+export type NodeCacheScopeDto = z.infer<typeof nodeCacheScopeSchema>;
+export type NodeCacheScope = NodeCacheScopeDto;
+
 export const nodeSideEffectPolicySchema = z.enum(['per_run', 'per_activation']);
 export type NodeSideEffectPolicyDto = z.infer<typeof nodeSideEffectPolicySchema>;
 export type NodeSideEffectPolicy = NodeSideEffectPolicyDto;
@@ -793,6 +797,7 @@ export type NodePortContract = NodePortContractDto;
 export const nodeRuntimeConfigSchema = z.object({
   cache: z.object({
     mode: nodeCacheModeSchema.optional(),
+    scope: nodeCacheScopeSchema.optional(),
     ttlMs: z.number().optional(),
   }).optional(),
   inputContracts: z.record(z.string(), nodePortContractSchema).optional(),

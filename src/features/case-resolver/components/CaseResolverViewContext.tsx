@@ -100,7 +100,12 @@ export type CaseResolverViewContextValue = {
     action: CaseResolverCaptureDocumentDateAction,
   ) => void;
   resolvePromptExploderMatchedPartyLabel: (
-    reference: any
+    reference: { 
+      id: string; 
+      kind: "person" | "organization"; 
+      name?: string | undefined; 
+      role?: string | undefined; 
+    } | null | undefined
   ) => string;
   captureApplyDiagnostics: {
     status: 'idle' | 'success' | 'failed';

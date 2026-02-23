@@ -20,6 +20,7 @@ export type MasterFolderTreeContextValue = MasterFolderTreeProps & {
   applyRootDrop: (draggedNodeId: string, rootDropZone?: 'top' | 'bottom') => Promise<void>;
   setExternalDraggedNodeId: (id: string | null) => void;
   setRootDropHoverZone: (zone: 'top' | 'bottom' | null) => void;
+  rootDropHoverZone: 'top' | 'bottom' | null;
   clearDragIndicators: () => void;
 };
 

@@ -6,7 +6,8 @@ import type {
   CaseResolverNodeMeta, 
   CaseResolverFile, 
   Edge,
-  CaseResolverEdgeMeta
+  CaseResolverEdgeMeta,
+  CaseResolverCompileResult,
 } from '@/shared/contracts/case-resolver';
 
 export type NodeFileWorkspaceContextValue = {
@@ -14,6 +15,7 @@ export type NodeFileWorkspaceContextValue = {
   assetName: string;
   handleManualSave: () => void;
   isSidebarReady: boolean;
+  compiled: CaseResolverCompileResult;
   selectedNode: AiNode | null;
   selectedPromptMeta: CaseResolverNodeMeta | null;
   selectedPromptSourceFile: CaseResolverFile | null;
@@ -33,6 +35,8 @@ export type NodeFileWorkspaceContextValue = {
   updateSelectedEdgeMeta: (patch: Partial<CaseResolverEdgeMeta>) => void;
   isNodeInspectorOpen: boolean;
   setIsNodeInspectorOpen: (open: boolean) => void;
+  isLinkedPreviewOpen: boolean;
+  setIsLinkedPreviewOpen: (open: boolean) => void;
   hasPendingSnapshotChanges: boolean;
 };
 

@@ -1,6 +1,10 @@
 'use client';
 
-import type { NodeCacheMode, NodeSideEffectPolicy } from '@/features/ai/ai-paths/lib';
+import type {
+  NodeCacheMode,
+  NodeCacheScope,
+  NodeSideEffectPolicy,
+} from '@/features/ai/ai-paths/lib';
 import { Button, Input, MultiSelect, SelectSimple, ToggleRow, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -9,6 +13,12 @@ const cacheModeOptions = [
   { value: 'auto', label: 'Auto (deterministic only)' },
   { value: 'force', label: 'Force cache' },
   { value: 'disabled', label: 'Disable cache' },
+];
+
+const cacheScopeOptions = [
+  { value: 'run', label: 'Per run (default)' },
+  { value: 'activation', label: 'Per activation/entity' },
+  { value: 'session', label: 'Across session' },
 ];
 
 const sideEffectPolicyOptions = [
@@ -37,6 +47,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
   const cacheConfig = runtimeConfig.cache ?? {};
   const retryConfig = runtimeConfig.retry ?? {};
   const cacheMode: NodeCacheMode = cacheConfig.mode ?? 'auto';
+  const cacheScope: NodeCacheScope = cacheConfig.scope ?? 'run';
   const cacheTtlSeconds = cacheConfig.ttlMs ? Math.round(cacheConfig.ttlMs / 1000) : '';
   const defaultWaitForInputs = selectedNode.type === 'database';
   const waitForInputs = runtimeConfig.waitForInputs ?? defaultWaitForInputs;
@@ -152,6 +163,30 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
           />
         </FormField>
       )}
+      {cacheMode !== 'disabled' && (
+        <FormField
+          label='Cache scope'
+          description='Defines where cache keys are isolated: current run, current activation/entity, or full editor session.'
+        >
+          <SelectSimple
+            size='sm'
+            value={cacheScope}
+            onValueChange={(value: string): void =>
+              updateSelectedNodeConfig({
+                runtime: {
+                  ...runtimeConfig,
+                  cache: {
+                    ...cacheConfig,
+                    scope: value as NodeCacheScope,
+                  },
+                },
+              })
+            }
+            options={cacheScopeOptions}
+            className='mt-2'
+          />
+        </FormField>
+      )}
       {cacheMode !== 'disabled' && clearNodeCache && (
         <Button
           variant='ghost'
@@ -163,7 +198,7 @@ export function RuntimeNodeConfigSection(): React.JSX.Element | null {
         </Button>
       )}
       <p className='text-[11px] text-gray-500'>
-        Auto caching skips re-execution when inputs are unchanged within a run.
+        Auto caching skips re-execution when inputs are unchanged under the selected cache scope.
       </p>
       <p className='text-[11px] text-gray-500'>
         Disable cache to always re-run nodes that must execute every time (HTTP, DB writes, AI, delays, notifications).

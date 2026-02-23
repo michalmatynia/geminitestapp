@@ -5,8 +5,10 @@ import { ObjectId } from 'mongodb';
 export const isObjectIdString = (value: string): boolean =>
   /^[a-fA-F0-9]{24}$/.test(value);
 
-export const toObjectIdMaybe = (value: string): ObjectId | string =>
-  isObjectIdString(value) ? new ObjectId(value) : value;
+export const toObjectIdMaybe = (value: string | null | undefined): ObjectId | string | null => {
+  if (!value) return null;
+  return isObjectIdString(value) ? new ObjectId(value) : value;
+};
 
 export const toDate = (value: unknown): Date | null => {
   if (!value) return null;

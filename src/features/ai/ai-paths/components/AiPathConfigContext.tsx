@@ -27,14 +27,35 @@ import {
 } from '../context';
 import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 
-export interface AiPathConfigData {
+// --- Selection Context ---
+export interface AiPathSelectionData {
   configOpen: boolean;
   setConfigOpen: (open: boolean) => void;
   selectedNode: AiNode | null;
+  onDirtyChange: (dirty: boolean) => void;
+}
+const AiPathSelectionContext = createContext<AiPathSelectionData | null>(null);
+export const useAiPathSelection = () => {
+  const context = useContext(AiPathSelectionContext);
+  if (!context) throw new Error('useAiPathSelection must be used within AiPathConfigProvider');
+  return context;
+};
+
+// --- Graph Context ---
+export interface AiPathGraphData {
   nodes: AiNode[];
   edges: Edge[];
   isPathLocked: boolean;
-  modelOptions: string[];
+}
+const AiPathGraphContext = createContext<AiPathGraphData | null>(null);
+export const useAiPathGraph = () => {
+  const context = useContext(AiPathGraphContext);
+  if (!context) throw new Error('useAiPathGraph must be used within AiPathConfigProvider');
+  return context;
+};
+
+// --- Runtime Context ---
+export interface AiPathRuntimeData {
   parserSamples: Record<string, ParserSampleState>;
   setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
   parserSampleLoading: boolean;
@@ -43,8 +64,6 @@ export interface AiPathConfigData {
   updaterSampleLoading: boolean;
   runtimeState: RuntimeState;
   pathDebugSnapshot: PathDebugSnapshot | null;
-  updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
   handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
   handleFetchUpdaterSample: (
     nodeId: string,
@@ -55,20 +74,38 @@ export interface AiPathConfigData {
   handleRunSimulation: (node: AiNode) => void | Promise<void>;
   clearRuntimeForNode: (nodeId: string) => void;
   clearNodeCache: (nodeId: string) => void;
-  clearNodeHistory: (nodeId: string) => void | Promise<void>;
   onSendToAi: (databaseNodeId: string, prompt: string) => Promise<void>;
   sendingToAi: boolean;
+}
+const AiPathRuntimeContext = createContext<AiPathRuntimeData | null>(null);
+export const useAiPathRuntime = () => {
+  const context = useContext(AiPathRuntimeContext);
+  if (!context) throw new Error('useAiPathRuntime must be used within AiPathConfigProvider');
+  return context;
+};
+
+// --- Presets Context ---
+export interface AiPathPresetsData {
   dbQueryPresets: DbQueryPreset[];
   setDbQueryPresets: React.Dispatch<React.SetStateAction<DbQueryPreset[]>>;
   saveDbQueryPresets: (nextPresets: DbQueryPreset[]) => Promise<void>;
   dbNodePresets: DbNodePreset[];
   setDbNodePresets: React.Dispatch<React.SetStateAction<DbNodePreset[]>>;
   saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
-  toast: (
-    message: string,
-    options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-  ) => void;
-  onDirtyChange: (dirty: boolean) => void;
+}
+const AiPathPresetsContext = createContext<AiPathPresetsData | null>(null);
+export const useAiPathPresets = () => {
+  const context = useContext(AiPathPresetsContext);
+  if (!context) throw new Error('useAiPathPresets must be used within AiPathConfigProvider');
+  return context;
+};
+
+// --- Orchestrator/Actions Context ---
+export interface AiPathOrchestratorData {
+  modelOptions: string[];
+  updateSelectedNode: (patch: Partial<AiNode>, options?: { nodeId?: string }) => void;
+  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
+  clearNodeHistory: (nodeId: string) => void | Promise<void>;
   savePathConfig: (options?: {
     silent?: boolean | undefined;
     includeNodeConfig?: boolean | undefined;
@@ -77,11 +114,48 @@ export interface AiPathConfigData {
     nodeOverride?: AiNode | undefined;
     edgesOverride?: Edge[] | undefined;
   }) => Promise<boolean>;
+  toast: (
+    message: string,
+    options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
+  ) => void;
 }
+const AiPathOrchestratorContext = createContext<AiPathOrchestratorData | null>(null);
+export const useAiPathOrchestrator = () => {
+  const context = useContext(AiPathOrchestratorContext);
+  if (!context) throw new Error('useAiPathOrchestrator must be used within AiPathConfigProvider');
+  return context;
+};
+
+// --- Legacy Aggregated Interface ---
+export interface AiPathConfigData
+  extends AiPathSelectionData,
+    AiPathGraphData,
+    AiPathRuntimeData,
+    AiPathPresetsData,
+    AiPathOrchestratorData {}
 
 const AiPathConfigContext = createContext<AiPathConfigData | null>(null);
 
-const useAiPathConfigDefaults = (): AiPathConfigData => {
+export function useAiPathConfig(): AiPathConfigData {
+  const selection = useAiPathSelection();
+  const graph = useAiPathGraph();
+  const runtime = useAiPathRuntime();
+  const presets = useAiPathPresets();
+  const orchestrator = useAiPathOrchestrator();
+
+  return useMemo(
+    () => ({
+      ...selection,
+      ...graph,
+      ...runtime,
+      ...presets,
+      ...orchestrator,
+    }),
+    [selection, graph, runtime, presets, orchestrator]
+  );
+}
+
+const useAiPathConfigDefaults = () => {
   const orchestrator = useAiPathsSettingsOrchestrator();
   const { toast } = useToast();
   const { selectedNodeId, configOpen } = useSelectionState();
@@ -109,15 +183,27 @@ const useAiPathConfigDefaults = (): AiPathConfigData => {
     [graphState.activePathId, runtimeState.pathDebugSnapshots]
   );
 
-  return useMemo(
-    (): AiPathConfigData => ({
+  const selectionValue = useMemo<AiPathSelectionData>(
+    () => ({
       configOpen,
       setConfigOpen: selectionActions.setConfigOpen,
       selectedNode,
+      onDirtyChange: selectionActions.setNodeConfigDirty,
+    }),
+    [configOpen, selectionActions.setConfigOpen, selectedNode, selectionActions.setNodeConfigDirty]
+  );
+
+  const graphValue = useMemo<AiPathGraphData>(
+    () => ({
       nodes: graphState.nodes,
       edges: graphState.edges,
       isPathLocked: graphState.isPathLocked,
-      modelOptions: orchestrator.modelOptions,
+    }),
+    [graphState.nodes, graphState.edges, graphState.isPathLocked]
+  );
+
+  const runtimeValue = useMemo<AiPathRuntimeData>(
+    () => ({
       parserSamples: runtimeState.parserSamples,
       setParserSamples: runtimeActions.setParserSamples,
       parserSampleLoading: runtimeState.parserSampleLoading,
@@ -126,61 +212,48 @@ const useAiPathConfigDefaults = (): AiPathConfigData => {
       updaterSampleLoading: runtimeState.updaterSampleLoading,
       runtimeState: runtimeState.runtimeState,
       pathDebugSnapshot,
-      updateSelectedNode: orchestrator.updateSelectedNode,
-      updateSelectedNodeConfig: orchestrator.updateSelectedNodeConfig,
       handleFetchParserSample: runtimeActions.fetchParserSample,
       handleFetchUpdaterSample: runtimeActions.fetchUpdaterSample,
       handleRunSimulation: runtimeActions.runSimulation,
       clearRuntimeForNode: runtimeActions.clearNodeRuntime,
       clearNodeCache: runtimeActions.clearNodeRuntime,
-      clearNodeHistory: orchestrator.handleClearNodeHistory,
       onSendToAi: runtimeActions.sendToAi,
       sendingToAi: runtimeState.sendingToAi,
+    }),
+    [runtimeState, runtimeActions, pathDebugSnapshot]
+  );
+
+  const presetsValue = useMemo<AiPathPresetsData>(
+    () => ({
       dbQueryPresets: presetsState.dbQueryPresets,
       setDbQueryPresets: presetsActions.setDbQueryPresets,
       saveDbQueryPresets: presetsActions.saveDbQueryPresets,
       dbNodePresets: presetsState.dbNodePresets,
       setDbNodePresets: presetsActions.setDbNodePresets,
       saveDbNodePresets: presetsActions.saveDbNodePresets,
-      toast,
-      onDirtyChange: selectionActions.setNodeConfigDirty,
-      savePathConfig: persistenceActions.savePathConfig,
     }),
-    [
-      configOpen,
-      selectionActions.setConfigOpen,
-      selectedNode,
-      graphState.nodes,
-      graphState.edges,
-      graphState.isPathLocked,
-      graphState.activePathId,
-      orchestrator,
-      runtimeState.parserSamples,
-      runtimeState.parserSampleLoading,
-      runtimeState.updaterSamples,
-      runtimeState.updaterSampleLoading,
-      runtimeState.runtimeState,
-      runtimeState.pathDebugSnapshots,
-      runtimeState.sendingToAi,
-      runtimeActions.setParserSamples,
-      runtimeActions.setUpdaterSamples,
-      runtimeActions.fetchParserSample,
-      runtimeActions.fetchUpdaterSample,
-      runtimeActions.runSimulation,
-      runtimeActions.clearNodeRuntime,
-      runtimeActions.sendToAi,
-      presetsState.dbQueryPresets,
-      presetsState.dbNodePresets,
-      presetsActions.setDbQueryPresets,
-      presetsActions.saveDbQueryPresets,
-      presetsActions.setDbNodePresets,
-      presetsActions.saveDbNodePresets,
-      toast,
-      selectionActions.setNodeConfigDirty,
-      persistenceActions.savePathConfig,
-      pathDebugSnapshot,
-    ]
+    [presetsState, presetsActions]
   );
+
+  const orchestratorValue = useMemo<AiPathOrchestratorData>(
+    () => ({
+      modelOptions: orchestrator.modelOptions,
+      updateSelectedNode: orchestrator.updateSelectedNode,
+      updateSelectedNodeConfig: orchestrator.updateSelectedNodeConfig,
+      clearNodeHistory: orchestrator.handleClearNodeHistory,
+      savePathConfig: persistenceActions.savePathConfig,
+      toast,
+    }),
+    [orchestrator, persistenceActions.savePathConfig, toast]
+  );
+
+  return {
+    selectionValue,
+    graphValue,
+    runtimeValue,
+    presetsValue,
+    orchestratorValue,
+  };
 };
 
 type AiPathConfigProviderProps = {
@@ -193,9 +266,19 @@ export function AiPathConfigProvider({
   value,
 }: AiPathConfigProviderProps): React.ReactNode {
   return (
-    <AiPathConfigContext.Provider value={value}>
-      {children}
-    </AiPathConfigContext.Provider>
+    <AiPathSelectionContext.Provider value={value}>
+      <AiPathGraphContext.Provider value={value}>
+        <AiPathRuntimeContext.Provider value={value}>
+          <AiPathPresetsContext.Provider value={value}>
+            <AiPathOrchestratorContext.Provider value={value}>
+              <AiPathConfigContext.Provider value={value}>
+                {children}
+              </AiPathConfigContext.Provider>
+            </AiPathOrchestratorContext.Provider>
+          </AiPathPresetsContext.Provider>
+        </AiPathRuntimeContext.Provider>
+      </AiPathGraphContext.Provider>
+    </AiPathSelectionContext.Provider>
   );
 }
 
@@ -208,29 +291,44 @@ export function AiPathConfigProviderWithContext({
   children,
   overrides,
 }: AiPathConfigProviderWithContextProps): React.ReactNode {
-  const defaults = useAiPathConfigDefaults();
+  const {
+    selectionValue,
+    graphValue,
+    runtimeValue,
+    presetsValue,
+    orchestratorValue,
+  } = useAiPathConfigDefaults();
 
-  const value = useMemo<AiPathConfigData>(() => {
-    if (!overrides) return defaults;
-    return {
-      ...defaults,
-      ...Object.fromEntries(
-        Object.entries(overrides).filter((entry) => entry[1] !== undefined)
-      ),
-    } as AiPathConfigData;
-  }, [defaults, overrides]);
+  const selection = useMemo(() => overrides ? { ...selectionValue, ...overrides } : selectionValue, [selectionValue, overrides]);
+  const graph = useMemo(() => overrides ? { ...graphValue, ...overrides } : graphValue, [graphValue, overrides]);
+  const runtime = useMemo(() => overrides ? { ...runtimeValue, ...overrides } : runtimeValue, [runtimeValue, overrides]);
+  const presets = useMemo(() => overrides ? { ...presetsValue, ...overrides } : presetsValue, [presetsValue, overrides]);
+  const orchestrator = useMemo(() => overrides ? { ...orchestratorValue, ...overrides } : orchestratorValue, [orchestratorValue, overrides]);
+
+  const aggregatedValue = useMemo<AiPathConfigData>(
+    () => ({
+      ...selection,
+      ...graph,
+      ...runtime,
+      ...presets,
+      ...orchestrator,
+    }),
+    [selection, graph, runtime, presets, orchestrator]
+  );
 
   return (
-    <AiPathConfigProvider value={value}>
-      {children}
-    </AiPathConfigProvider>
+    <AiPathSelectionContext.Provider value={selection}>
+      <AiPathGraphContext.Provider value={graph}>
+        <AiPathRuntimeContext.Provider value={runtime}>
+          <AiPathPresetsContext.Provider value={presets}>
+            <AiPathOrchestratorContext.Provider value={orchestrator}>
+              <AiPathConfigContext.Provider value={aggregatedValue}>
+                {children}
+              </AiPathConfigContext.Provider>
+            </AiPathOrchestratorContext.Provider>
+          </AiPathPresetsContext.Provider>
+        </AiPathRuntimeContext.Provider>
+      </AiPathGraphContext.Provider>
+    </AiPathSelectionContext.Provider>
   );
-}
-
-export function useAiPathConfig(): AiPathConfigData {
-  const context = useContext(AiPathConfigContext);
-  if (!context) {
-    throw new Error('useAiPathConfig must be used within AiPathConfigProvider');
-  }
-  return context;
 }

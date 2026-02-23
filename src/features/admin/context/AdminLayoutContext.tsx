@@ -1,19 +1,40 @@
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 
-interface AdminLayoutContextType {
+// --- Granular Contexts ---
+
+export interface AdminLayoutState {
   isMenuCollapsed: boolean;
-  setIsMenuCollapsed: (isCollapsed: boolean) => void;
   isMenuHidden: boolean;
-  setIsMenuHidden: (isHidden: boolean) => void;
   isProgrammaticallyCollapsed: boolean;
-  setIsProgrammaticallyCollapsed: (isProgrammaticallyCollapsed: boolean) => void;
   aiDrawerOpen: boolean;
+}
+const StateContext = createContext<AdminLayoutState | null>(null);
+export const useAdminLayoutState = () => {
+  const context = useContext(StateContext);
+  if (!context) throw new Error('useAdminLayoutState must be used within an AdminLayoutProvider');
+  return context;
+};
+
+export interface AdminLayoutActions {
+  setIsMenuCollapsed: (isCollapsed: boolean) => void;
+  setIsMenuHidden: (isHidden: boolean) => void;
+  setIsProgrammaticallyCollapsed: (isProgrammaticallyCollapsed: boolean) => void;
   setAiDrawerOpen: (isOpen: boolean) => void;
 }
+const ActionsContext = createContext<AdminLayoutActions | null>(null);
+export const useAdminLayoutActions = () => {
+  const context = useContext(ActionsContext);
+  if (!context) throw new Error('useAdminLayoutActions must be used within an AdminLayoutProvider');
+  return context;
+};
+
+// --- Legacy Aggregator ---
+
+interface AdminLayoutContextType extends AdminLayoutState, AdminLayoutActions {}
 
 const AdminLayoutContext = createContext<AdminLayoutContextType | undefined>(
   undefined
@@ -31,21 +52,33 @@ export function AdminLayoutProvider({
   const [isProgrammaticallyCollapsed, setIsProgrammaticallyCollapsed] = useState(false);
   const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
 
+  const stateValue = useMemo<AdminLayoutState>(() => ({
+    isMenuCollapsed,
+    isMenuHidden,
+    isProgrammaticallyCollapsed,
+    aiDrawerOpen,
+  }), [isMenuCollapsed, isMenuHidden, isProgrammaticallyCollapsed, aiDrawerOpen]);
+
+  const actionsValue = useMemo<AdminLayoutActions>(() => ({
+    setIsMenuCollapsed,
+    setIsMenuHidden,
+    setIsProgrammaticallyCollapsed,
+    setAiDrawerOpen,
+  }), []);
+
+  const aggregatedValue = useMemo<AdminLayoutContextType>(() => ({
+    ...stateValue,
+    ...actionsValue,
+  }), [stateValue, actionsValue]);
+
   return (
-    <AdminLayoutContext.Provider
-      value={{
-        isMenuCollapsed,
-        setIsMenuCollapsed,
-        isMenuHidden,
-        setIsMenuHidden,
-        isProgrammaticallyCollapsed,
-        setIsProgrammaticallyCollapsed,
-        aiDrawerOpen,
-        setAiDrawerOpen,
-      }}
-    >
-      {children}
-    </AdminLayoutContext.Provider>
+    <StateContext.Provider value={stateValue}>
+      <ActionsContext.Provider value={actionsValue}>
+        <AdminLayoutContext.Provider value={aggregatedValue}>
+          {children}
+        </AdminLayoutContext.Provider>
+      </ActionsContext.Provider>
+    </StateContext.Provider>
   );
 }
 

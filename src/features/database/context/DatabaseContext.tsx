@@ -15,26 +15,55 @@ import { internalError } from '@/shared/errors/app-error';
 
 import { useDatabasePreview } from '../hooks/useDatabaseQueries';
 
+// --- Granular Contexts ---
 
-interface DatabaseContextType {
+export interface DatabaseConfig {
   dbType: DatabaseType;
   setDbType: (type: DatabaseType) => void;
+  mode: DatabasePreviewMode;
+  backupName?: string | undefined;
+}
+const ConfigContext = createContext<DatabaseConfig | null>(null);
+export const useDatabaseConfig = () => {
+  const context = useContext(ConfigContext);
+  if (!context) throw internalError('useDatabaseConfig must be used within a DatabaseProvider');
+  return context;
+};
+
+export interface DatabaseData {
   tableDetails: DatabaseTableDetail[];
   isLoading: boolean;
   error: string | null;
   refresh: () => void;
-  mode: DatabasePreviewMode;
-  backupName?: string | undefined;
   groups: DatabasePreviewGroup[];
   tables: DatabasePreviewTable[];
   tableRows: DatabaseTablePreviewData[];
   enums: DatabaseEnumInfo[];
   databaseSize: string;
+}
+const DataContext = createContext<DatabaseData | null>(null);
+export const useDatabaseData = () => {
+  const context = useContext(DataContext);
+  if (!context) throw internalError('useDatabaseData must be used within a DatabaseProvider');
+  return context;
+};
+
+export interface DatabasePagination {
   page: number;
   setPage: (page: number) => void;
   pageSize: number;
   setPageSize: (size: number) => void;
 }
+const PaginationContext = createContext<DatabasePagination | null>(null);
+export const useDatabasePagination = () => {
+  const context = useContext(PaginationContext);
+  if (!context) throw internalError('useDatabasePagination must be used within a DatabaseProvider');
+  return context;
+};
+
+// --- Legacy Aggregator ---
+
+interface DatabaseContextType extends DatabaseConfig, DatabaseData, DatabasePagination {}
 
 const DatabaseContext = createContext<DatabaseContextType | undefined>(undefined);
 
@@ -69,45 +98,49 @@ export function DatabaseProvider({
   const enums = useMemo(() => data?.enums ?? [], [data]);
   const databaseSize = data?.databaseSize ?? '';
 
-  const value = useMemo(
-    () => ({
-      dbType,
-      setDbType,
-      tableDetails,
-      isLoading,
-      error: error?.message ?? null,
-      refresh: () => { void refetch(); },
-      mode,
-      backupName,
-      groups,
-      tables,
-      tableRows,
-      enums,
-      databaseSize,
-      page,
-      setPage,
-      pageSize,
-      setPageSize,
-    }),
-    [
-      dbType,
-      tableDetails,
-      isLoading,
-      error,
-      refetch,
-      mode,
-      backupName,
-      groups,
-      tables,
-      tableRows,
-      enums,
-      databaseSize,
-      page,
-      pageSize,
-    ]
-  );
+  const configValue = useMemo<DatabaseConfig>(() => ({
+    dbType,
+    setDbType,
+    mode,
+    backupName,
+  }), [dbType, mode, backupName]);
 
-  return <DatabaseContext.Provider value={value}>{children}</DatabaseContext.Provider>;
+  const dataValue = useMemo<DatabaseData>(() => ({
+    tableDetails,
+    isLoading,
+    error: error?.message ?? null,
+    refresh: () => { void refetch(); },
+    groups,
+    tables,
+    tableRows,
+    enums,
+    databaseSize,
+  }), [tableDetails, isLoading, error, refetch, groups, tables, tableRows, enums, databaseSize]);
+
+  const paginationValue = useMemo<DatabasePagination>(() => ({
+    page,
+    setPage,
+    pageSize,
+    setPageSize,
+  }), [page, pageSize]);
+
+  const aggregatedValue = useMemo<DatabaseContextType>(() => ({
+    ...configValue,
+    ...dataValue,
+    ...paginationValue,
+  }), [configValue, dataValue, paginationValue]);
+
+  return (
+    <ConfigContext.Provider value={configValue}>
+      <DataContext.Provider value={dataValue}>
+        <PaginationContext.Provider value={paginationValue}>
+          <DatabaseContext.Provider value={aggregatedValue}>
+            {children}
+          </DatabaseContext.Provider>
+        </PaginationContext.Provider>
+      </DataContext.Provider>
+    </ConfigContext.Provider>
+  );
 }
 
 export function useDatabase(): DatabaseContextType {

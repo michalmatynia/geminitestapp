@@ -43,6 +43,149 @@ import { useNoteMetadata } from '../hooks/useNoteMetadata';
 import { useNoteTags } from '../hooks/useNoteTags';
 import { autoformatMarkdown } from '../utils';
 
+// --- Granular Contexts ---
+
+export interface NoteContentData {
+  content: string;
+  setContent: (content: string) => void;
+  undo: () => void;
+  redo: () => void;
+  canUndo: boolean;
+  canRedo: boolean;
+}
+const ContentContext = createContext<NoteContentData | null>(null);
+export const useNoteContent = () => {
+  const context = useContext(ContentContext);
+  if (!context) throw new Error('useNoteContent must be used within NoteFormProvider');
+  return context;
+};
+
+export interface NoteMetadataData {
+  title: string;
+  setTitle: (title: string) => void;
+  color: string;
+  setColor: (color: string) => void;
+  isPinned: boolean;
+  setIsPinned: (isPinned: boolean) => void;
+  isArchived: boolean;
+  setIsArchived: (isArchived: boolean) => void;
+  isFavorite: boolean;
+  setIsFavorite: (isFavorite: boolean) => void;
+  getReadableTextColor: (bgColor: string) => string;
+}
+const MetadataContext = createContext<NoteMetadataData | null>(null);
+export const useNoteMetadataContext = () => {
+  const context = useContext(MetadataContext);
+  if (!context) throw new Error('useNoteMetadataContext must be used within NoteFormProvider');
+  return context;
+};
+
+export interface NoteEditorData {
+  editorMode: 'markdown' | 'wysiwyg' | 'code' | 'rich-text' | 'plain-text';
+  setEditorMode: (mode: 'markdown' | 'wysiwyg' | 'code' | 'rich-text' | 'plain-text') => void;
+  isEditorModeLocked: boolean;
+  isMigrating: boolean;
+  handleMigrateToWysiwyg: (content: string) => Promise<string | undefined>;
+  handleMigrateToMarkdown: (content: string) => Promise<string | undefined>;
+  showPreview: boolean;
+  setShowPreview: (show: boolean) => void;
+  textColor: string;
+  setTextColor: (color: string) => void;
+  fontFamily: string;
+  setFontFamily: (font: string) => void;
+  editorWidth: number | null;
+  setEditorWidth: (width: number | null | ((prev: number | null) => number | null)) => void;
+  isDraggingSplitter: boolean;
+  setIsDraggingSplitter: (isDragging: boolean) => void;
+  editorSplitRef: React.RefObject<HTMLDivElement | null>;
+  contentRef: React.RefObject<HTMLTextAreaElement | null>;
+  effectiveTheme: ThemeRecord;
+  contentBackground: string;
+  contentTextColor: string;
+  previewTypographyStyle: React.CSSProperties;
+}
+const EditorContext = createContext<NoteEditorData | null>(null);
+export const useNoteEditor = () => {
+  const context = useContext(EditorContext);
+  if (!context) throw new Error('useNoteEditor must be used within NoteFormProvider');
+  return context;
+};
+
+export interface NoteFilesData {
+  noteFiles: NoteFileRecord[];
+  uploadingSlots: Set<number>;
+  addUploadingSlot: (slot: number) => void;
+  removeUploadingSlot: (slot: number) => void;
+  lightboxImage: string | null;
+  setLightboxImage: (img: string | null) => void;
+  isPasting: boolean;
+  setIsPasting: (isPasting: boolean) => void;
+  MAX_SLOTS: number;
+  handleFileUpload: (slotIndex: number, file: File, helpers?: { reportProgress: (loaded: number, total?: number) => void }) => Promise<void>;
+  handleMultiFileUpload: (files: FileList | File[], helpers?: { setProgress: (value: number) => void }) => Promise<void>;
+  handleFileDelete: (slotIndex: number) => Promise<void>;
+  insertFileReference: (file: NoteFileRecord) => void;
+  getNextAvailableSlot: () => number | null;
+  handlePaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => Promise<void>;
+  formatFileSize: (bytes: number) => string;
+  isImageFile: (mimetype: string) => boolean;
+}
+const FilesContext = createContext<NoteFilesData | null>(null);
+export const useNoteFiles = () => {
+  const context = useContext(FilesContext);
+  if (!context) throw new Error('useNoteFiles must be used within NoteFormProvider');
+  return context;
+};
+
+export interface NoteTagsData {
+  selectedTagIds: string[];
+  tagInput: string;
+  setTagInput: (input: string) => void;
+  isTagDropdownOpen: boolean;
+  setIsTagDropdownOpen: (open: boolean) => void;
+  filteredTags: TagRecord[];
+  handleAddTag: (tag: TagRecord) => void;
+  handleCreateTag: () => Promise<void>;
+  handleRemoveTag: (tagId: string) => void;
+  availableTags: TagRecord[];
+  handleFilterByTag: (tagId: string) => void;
+}
+const TagsContext = createContext<NoteTagsData | null>(null);
+export const useNoteTagsContext = () => {
+  const context = useContext(TagsContext);
+  if (!context) throw new Error('useNoteTagsContext must be used within NoteFormProvider');
+  return context;
+};
+
+export interface NoteFoldersData {
+  selectedFolderId: string;
+  setSelectedFolderId: (id: string) => void;
+  flatFolders: Array<{ id: string; name: string; level: number }>;
+}
+const FoldersContext = createContext<NoteFoldersData | null>(null);
+export const useNoteFolders = () => {
+  const context = useContext(FoldersContext);
+  if (!context) throw new Error('useNoteFolders must be used within NoteFormProvider');
+  return context;
+};
+
+export interface NoteRelationsData {
+  selectedRelatedNotes: RelatedNoteItem[];
+  setSelectedRelatedNotes: React.Dispatch<React.SetStateAction<RelatedNoteItem[]>>;
+  relatedNoteQuery: string;
+  setRelatedNoteQuery: (query: string) => void;
+  isRelatedDropdownOpen: boolean;
+  setIsRelatedDropdownOpen: (open: boolean) => void;
+  relatedNoteResults: NoteWithRelations[];
+  isRelatedLoading: boolean;
+  handleSelectRelatedNote: (noteId: string) => void;
+}
+const RelationsContext = createContext<NoteRelationsData | null>(null);
+export const useNoteRelations = () => {
+  const context = useContext(RelationsContext);
+  if (!context) throw new Error('useNoteRelations must be used within NoteFormProvider');
+  return context;
+};
 
 // Hardcoded dark mode fallback theme - consistent with page styling
 const FALLBACK_THEME = {
@@ -69,99 +212,9 @@ interface RelatedNoteItem {
   content: string;
 }
 
-export interface NoteFormContextValue {
+export interface NoteFormContextValue extends NoteContentData, NoteMetadataData, NoteEditorData, NoteFilesData, NoteTagsData, NoteFoldersData, NoteRelationsData {
   note: NoteWithRelations | null;
-  content: string;
-  setContent: (content: string) => void;
-  undo: () => void;
-  redo: () => void;
-  canUndo: boolean;
-  canRedo: boolean;
-  
-  title: string;
-  setTitle: (title: string) => void;
-  color: string;
-  setColor: (color: string) => void;
-  isPinned: boolean;
-  setIsPinned: (isPinned: boolean) => void;
-  isArchived: boolean;
-  setIsArchived: (isArchived: boolean) => void;
-  isFavorite: boolean;
-  setIsFavorite: (isFavorite: boolean) => void;
-  getReadableTextColor: (bgColor: string) => string;
-
-  editorMode: 'markdown' | 'wysiwyg' | 'code' | 'rich-text' | 'plain-text';
-  setEditorMode: (mode: 'markdown' | 'wysiwyg' | 'code' | 'rich-text' | 'plain-text') => void;
-  isEditorModeLocked: boolean;
-  isMigrating: boolean;
-  handleMigrateToWysiwyg: (content: string) => Promise<string | undefined>;
-  handleMigrateToMarkdown: (content: string) => Promise<string | undefined>;
-
-  noteFiles: NoteFileRecord[];
-  uploadingSlots: Set<number>;
-  addUploadingSlot: (slot: number) => void;
-  removeUploadingSlot: (slot: number) => void;
-  lightboxImage: string | null;
-  setLightboxImage: (img: string | null) => void;
-  isPasting: boolean;
-  setIsPasting: (isPasting: boolean) => void;
-  MAX_SLOTS: number;
-  handleFileUpload: (slotIndex: number, file: File, helpers?: { reportProgress: (loaded: number, total?: number) => void }) => Promise<void>;
-  handleMultiFileUpload: (files: FileList | File[], helpers?: { setProgress: (value: number) => void }) => Promise<void>;
-  handleFileDelete: (slotIndex: number) => Promise<void>;
-  insertFileReference: (file: NoteFileRecord) => void;
-  getNextAvailableSlot: () => number | null;
-  handlePaste: (e: React.ClipboardEvent<HTMLTextAreaElement>) => Promise<void>;
-  formatFileSize: (bytes: number) => string;
-  isImageFile: (mimetype: string) => boolean;
-
-  selectedTagIds: string[];
-  tagInput: string;
-  setTagInput: (input: string) => void;
-  isTagDropdownOpen: boolean;
-  setIsTagDropdownOpen: (open: boolean) => void;
-  filteredTags: TagRecord[];
-  handleAddTag: (tag: TagRecord) => void;
-  handleCreateTag: () => Promise<void>;
-  handleRemoveTag: (tagId: string) => void;
-
-  selectedFolderId: string;
-  setSelectedFolderId: (id: string) => void;
-  flatFolders: Array<{ id: string; name: string; level: number }>;
-
-  selectedRelatedNotes: RelatedNoteItem[];
-  setSelectedRelatedNotes: React.Dispatch<React.SetStateAction<RelatedNoteItem[]>>;
-  relatedNoteQuery: string;
-  setRelatedNoteQuery: (query: string) => void;
-  isRelatedDropdownOpen: boolean;
-  setIsRelatedDropdownOpen: (open: boolean) => void;
-  relatedNoteResults: NoteWithRelations[];
-  isRelatedLoading: boolean;
-  handleSelectRelatedNote: (noteId: string) => void;
-
-  availableTags: TagRecord[];
-  handleFilterByTag: (tagId: string) => void;
   setIsCreating: (val: boolean) => void;
-
-  showPreview: boolean;
-  setShowPreview: (show: boolean) => void;
-  textColor: string;
-  setTextColor: (color: string) => void;
-  fontFamily: string;
-  setFontFamily: (font: string) => void;
-  
-  editorWidth: number | null;
-  setEditorWidth: (width: number | null | ((prev: number | null) => number | null)) => void;
-  isDraggingSplitter: boolean;
-  setIsDraggingSplitter: (isDragging: boolean) => void;
-  editorSplitRef: React.RefObject<HTMLDivElement | null>;
-  contentRef: React.RefObject<HTMLTextAreaElement | null>;
-
-  effectiveTheme: ThemeRecord;
-  contentBackground: string;
-  contentTextColor: string;
-  previewTypographyStyle: React.CSSProperties;
-  
   handleSubmit: (e: React.FormEvent) => Promise<void>;
 }
 
@@ -680,14 +733,16 @@ export function NoteFormProvider({
     }
   }, [note?.id, note?.content, resetHistory]);
 
-  const value: NoteFormContextValue = useMemo(() => ({
-    note,
+  const contentValue = useMemo<NoteContentData>(() => ({
     content,
     setContent,
     undo,
     redo,
     canUndo,
     canRedo,
+  }), [content, setContent, undo, redo, canUndo, canRedo]);
+
+  const metadataValue = useMemo<NoteMetadataData>(() => ({
     title,
     setTitle,
     color,
@@ -699,12 +754,38 @@ export function NoteFormProvider({
     isFavorite,
     setIsFavorite,
     getReadableTextColor,
+  }), [title, setTitle, color, setColor, isPinned, isArchived, isFavorite, getReadableTextColor]);
+
+  const editorValue = useMemo<NoteEditorData>(() => ({
     editorMode,
     setEditorMode,
     isEditorModeLocked,
     isMigrating,
     handleMigrateToWysiwyg,
     handleMigrateToMarkdown,
+    showPreview,
+    setShowPreview,
+    textColor,
+    setTextColor,
+    fontFamily,
+    setFontFamily,
+    editorWidth,
+    setEditorWidth,
+    isDraggingSplitter,
+    setIsDraggingSplitter,
+    editorSplitRef,
+    contentRef,
+    effectiveTheme,
+    contentBackground,
+    contentTextColor,
+    previewTypographyStyle,
+  }), [
+    editorMode, setEditorMode, isEditorModeLocked, isMigrating, handleMigrateToWysiwyg, handleMigrateToMarkdown,
+    showPreview, setShowPreview, textColor, setTextColor, fontFamily, setFontFamily,
+    editorWidth, setEditorWidth, isDraggingSplitter, effectiveTheme, contentBackground, contentTextColor, previewTypographyStyle
+  ]);
+
+  const filesValue = useMemo<NoteFilesData>(() => ({
     noteFiles,
     uploadingSlots,
     addUploadingSlot,
@@ -717,11 +798,17 @@ export function NoteFormProvider({
     handleFileUpload,
     handleMultiFileUpload,
     handleFileDelete,
-    handlePaste,
     insertFileReference,
     getNextAvailableSlot,
+    handlePaste,
     formatFileSize,
     isImageFile,
+  }), [
+    noteFiles, uploadingSlots, addUploadingSlot, removeUploadingSlot, lightboxImage, isPasting, MAX_SLOTS,
+    handleFileUpload, handleMultiFileUpload, handleFileDelete, insertFileReference, getNextAvailableSlot, handlePaste, formatFileSize, isImageFile
+  ]);
+
+  const tagsValue = useMemo<NoteTagsData>(() => ({
     selectedTagIds,
     tagInput,
     setTagInput,
@@ -731,9 +818,17 @@ export function NoteFormProvider({
     handleAddTag,
     handleCreateTag,
     handleRemoveTag,
+    availableTags,
+    handleFilterByTag,
+  }), [selectedTagIds, tagInput, isTagDropdownOpen, filteredTags, handleAddTag, handleCreateTag, handleRemoveTag, availableTags, handleFilterByTag]);
+
+  const foldersValue = useMemo<NoteFoldersData>(() => ({
     selectedFolderId,
     setSelectedFolderId,
     flatFolders,
+  }), [selectedFolderId, setSelectedFolderId, flatFolders]);
+
+  const relationsValue = useMemo<NoteRelationsData>(() => ({
     selectedRelatedNotes,
     setSelectedRelatedNotes,
     relatedNoteQuery,
@@ -743,110 +838,38 @@ export function NoteFormProvider({
     relatedNoteResults,
     isRelatedLoading,
     handleSelectRelatedNote,
-    availableTags,
-    handleFilterByTag,
-    setIsCreating,
-    showPreview,
-    setShowPreview,
-    textColor,
-    setTextColor,
-    fontFamily,
-    setFontFamily,
-    editorWidth,
-    setEditorWidth,
-    isDraggingSplitter,
-    setIsDraggingSplitter,
-    editorSplitRef,
-    contentRef,
-    effectiveTheme,
-    contentBackground,
-    contentTextColor,
-    previewTypographyStyle,
-    handleSubmit
-  }), [
+  }), [selectedRelatedNotes, relatedNoteQuery, isRelatedDropdownOpen, relatedNoteResults, isRelatedLoading, handleSelectRelatedNote]);
+
+  const aggregatedValue: NoteFormContextValue = useMemo(() => ({
+    ...contentValue,
+    ...metadataValue,
+    ...editorValue,
+    ...filesValue,
+    ...tagsValue,
+    ...foldersValue,
+    ...relationsValue,
     note,
-    content,
-    setContent,
-    undo,
-    redo,
-    canUndo,
-    canRedo,
-    title,
-    setTitle,
-    color,
-    setColor,
-    isPinned,
-    setIsPinned,
-    isArchived,
-    setIsArchived,
-    isFavorite,
-    setIsFavorite,
-    getReadableTextColor,
-    editorMode,
-    setEditorMode,
-    isEditorModeLocked,
-    isMigrating,
-    handleMigrateToWysiwyg,
-    handleMigrateToMarkdown,
-    noteFiles,
-    uploadingSlots,
-    addUploadingSlot,
-    removeUploadingSlot,
-    lightboxImage,
-    isPasting,
-    setIsPasting,
-    MAX_SLOTS,
-    handleFileUpload,
-    handleMultiFileUpload,
-    handleFileDelete,
-    handlePaste,
-    insertFileReference,
-    getNextAvailableSlot,
-    formatFileSize,
-    isImageFile,
-    selectedTagIds,
-    tagInput,
-    setTagInput,
-    isTagDropdownOpen,
-    setIsTagDropdownOpen,
-    filteredTags,
-    handleAddTag,
-    handleCreateTag,
-    handleRemoveTag,
-    selectedFolderId,
-    setSelectedFolderId,
-    flatFolders,
-    selectedRelatedNotes,
-    relatedNoteQuery,
-    isRelatedDropdownOpen,
-    relatedNoteResults,
-    isRelatedLoading,
-    handleSelectRelatedNote,
-    availableTags,
-    handleFilterByTag,
     setIsCreating,
-    showPreview,
-    setShowPreview,
-    textColor,
-    setTextColor,
-    fontFamily,
-    setFontFamily,
-    editorWidth,
-    setEditorWidth,
-    isDraggingSplitter,
-    setIsDraggingSplitter,
-    editorSplitRef,
-    contentRef,
-    effectiveTheme,
-    contentBackground,
-    contentTextColor,
-    previewTypographyStyle,
     handleSubmit
-  ]);
+  }), [contentValue, metadataValue, editorValue, filesValue, tagsValue, foldersValue, relationsValue, note, setIsCreating, handleSubmit]);
 
   return (
-    <NoteFormContext.Provider value={value}>
-      {children}
-    </NoteFormContext.Provider>
+    <ContentContext.Provider value={contentValue}>
+      <MetadataContext.Provider value={metadataValue}>
+        <EditorContext.Provider value={editorValue}>
+          <FilesContext.Provider value={filesValue}>
+            <TagsContext.Provider value={tagsValue}>
+              <FoldersContext.Provider value={foldersValue}>
+                <RelationsContext.Provider value={relationsValue}>
+                  <NoteFormContext.Provider value={aggregatedValue}>
+                    {children}
+                  </NoteFormContext.Provider>
+                </RelationsContext.Provider>
+              </FoldersContext.Provider>
+            </TagsContext.Provider>
+          </FilesContext.Provider>
+        </EditorContext.Provider>
+      </MetadataContext.Provider>
+    </ContentContext.Provider>
   );
 }

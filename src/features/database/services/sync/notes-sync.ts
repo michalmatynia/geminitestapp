@@ -1,3 +1,4 @@
+import { ObjectId } from 'mongodb';
 import type { Prisma } from '@prisma/client';
 import type { SyncHandler } from './types';
 
@@ -259,7 +260,7 @@ export const syncNotes: SyncHandler = async ({ mongo, prisma }) => {
       tagId: tag.tagId,
       assignedAt: (tag.assignedAt ? new Date(tag.assignedAt) : new Date()),
     }))
-  );
+  ) as Prisma.NoteTagCreateManyInput[];
   if (tagRows.length) await prisma.noteTag.createMany({ data: tagRows });
 
   const categoryRows = data.flatMap((note) =>
@@ -268,16 +269,18 @@ export const syncNotes: SyncHandler = async ({ mongo, prisma }) => {
       categoryId: cat.categoryId,
       assignedAt: (cat.assignedAt ? new Date(cat.assignedAt) : new Date()),
     }))
-  );
+  ) as Prisma.NoteCategoryCreateManyInput[];
   if (categoryRows.length) await prisma.noteCategory.createMany({ data: categoryRows });
 
   const relationRows = data.flatMap((note) =>
-    note.relationsFrom.map((rel: { targetNoteId: string; assignedAt?: Date | string }) => ({
-      sourceNoteId: note.id,
-      targetNoteId: rel.targetNoteId,
-      assignedAt: (rel.assignedAt ? new Date(rel.assignedAt) : new Date()),
-    }))
-  );
+    note.relationsFrom
+      .filter((rel): rel is { targetNoteId: string; assignedAt?: Date | string } => Boolean(rel.targetNoteId))
+      .map((rel) => ({
+        sourceNoteId: note.id,
+        targetNoteId: rel.targetNoteId,
+        assignedAt: (rel.assignedAt ? new Date(rel.assignedAt) : new Date()),
+      }))
+  ) as Prisma.NoteRelationCreateManyInput[];
   if (relationRows.length) await prisma.noteRelation.createMany({ data: relationRows });
 
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };

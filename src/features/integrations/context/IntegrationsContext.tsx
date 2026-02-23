@@ -22,6 +22,7 @@ import type {
   IntegrationsContextType,
   SessionPayload,
   StepWithResult,
+  IntegrationDefinition,
 } from '@/features/integrations/context/integrations-context-types';
 import { createEmptyConnectionForm } from '@/features/integrations/context/integrations-context-types';
 import { invalidateIntegrationConnections } from '@/features/integrations/hooks/integrationCache';
@@ -47,11 +48,154 @@ import {
   Integration,
   IntegrationConnection,
   TestLogEntry,
-  integrationDefinitions,
+  SessionCookie,
 } from '@/shared/contracts/integrations';
-import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
+import type { PlaywrightPersonaDto as PlaywrightPersona, PlaywrightSettingsDto as PlaywrightSettings } from '@/shared/contracts/playwright';
 import { internalError } from '@/shared/errors/app-error';
 import { useToast } from '@/shared/ui';
+
+// --- Data Context ---
+export interface IntegrationsData {
+  integrations: Integration[];
+  integrationsLoading: boolean;
+  activeIntegration: Integration | null;
+  setActiveIntegration: (integration: Integration | null) => void;
+  connections: IntegrationConnection[];
+  connectionsLoading: boolean;
+  playwrightPersonas: PlaywrightPersona[];
+  playwrightPersonasLoading: boolean;
+}
+const DataContext = createContext<IntegrationsData | null>(null);
+export const useIntegrationsData = () => {
+  const context = useContext(DataContext);
+  if (!context) throw new Error('useIntegrationsData must be used within IntegrationsProvider');
+  return context;
+};
+
+// --- Form Context ---
+export interface IntegrationsForm {
+  isModalOpen: boolean;
+  setIsModalOpen: (open: boolean) => void;
+  editingConnectionId: string | null;
+  setEditingConnectionId: (id: string | null) => void;
+  connectionForm: ConnectionFormState;
+  setConnectionForm: React.Dispatch<React.SetStateAction<ConnectionFormState>>;
+  connectionToDelete: IntegrationConnection | null;
+  setConnectionToDelete: (conn: IntegrationConnection | null) => void;
+  playwrightSettings: PlaywrightSettings;
+  setPlaywrightSettings: React.Dispatch<React.SetStateAction<PlaywrightSettings>>;
+  playwrightPersonaId: string | null;
+  savingAllegroSandbox: boolean;
+}
+const FormContext = createContext<IntegrationsForm | null>(null);
+export const useIntegrationsForm = () => {
+  const context = useContext(FormContext);
+  if (!context) throw new Error('useIntegrationsForm must be used within IntegrationsProvider');
+  return context;
+};
+
+// --- Testing Context ---
+export interface IntegrationsTesting {
+  isTesting: boolean;
+  testLog: TestLogEntry[];
+  showTestLogModal: boolean;
+  setShowTestLogModal: (open: boolean) => void;
+  selectedStep: StepWithResult | null;
+  setSelectedStep: (step: StepWithResult | null) => void;
+  showTestErrorModal: boolean;
+  setShowTestErrorModal: (open: boolean) => void;
+  testError: string | null;
+  testErrorMeta: {
+    errorId?: string;
+    integrationId?: string | null;
+    connectionId?: string | null;
+  } | null;
+  showTestSuccessModal: boolean;
+  setShowTestSuccessModal: (open: boolean) => void;
+  testSuccessMessage: string | null;
+}
+const TestingContext = createContext<IntegrationsTesting | null>(null);
+export const useIntegrationsTesting = () => {
+  const context = useContext(TestingContext);
+  if (!context) throw new Error('useIntegrationsTesting must be used within IntegrationsProvider');
+  return context;
+};
+
+// --- Session Context ---
+export interface IntegrationsSession {
+  showSessionModal: boolean;
+  setShowSessionModal: (open: boolean) => void;
+  sessionLoading: boolean;
+  sessionError: string | null;
+  sessionCookies: SessionCookie[];
+  sessionOrigins: unknown[];
+  sessionUpdatedAt: string | null;
+}
+const SessionContext = createContext<IntegrationsSession | null>(null);
+export const useIntegrationsSession = () => {
+  const context = useContext(SessionContext);
+  if (!context) throw new Error('useIntegrationsSession must be used within IntegrationsProvider');
+  return context;
+};
+
+// --- API Console Context ---
+export interface IntegrationsApiConsole {
+  baseApiMethod: string;
+  setBaseApiMethod: (method: string) => void;
+  baseApiParams: string;
+  setBaseApiParams: (params: string) => void;
+  baseApiLoading: boolean;
+  baseApiError: string | null;
+  baseApiResponse: { data: unknown } | null;
+  allegroApiMethod: string;
+  setAllegroApiMethod: (method: string) => void;
+  allegroApiPath: string;
+  setAllegroApiPath: (path: string) => void;
+  allegroApiBody: string;
+  setAllegroApiBody: (body: string) => void;
+  allegroApiLoading: boolean;
+  allegroApiError: string | null;
+  allegroApiResponse: {
+    status: number;
+    statusText: string;
+    data?: unknown;
+    refreshed?: boolean;
+  } | null;
+}
+const ApiConsoleContext = createContext<IntegrationsApiConsole | null>(null);
+export const useIntegrationsApiConsole = () => {
+  const context = useContext(ApiConsoleContext);
+  if (!context) throw new Error('useIntegrationsApiConsole must be used within IntegrationsProvider');
+  return context;
+};
+
+// --- Actions Context ---
+export interface IntegrationsActions {
+  handleIntegrationClick: (definition: IntegrationDefinition) => Promise<void>;
+  handleSaveConnection: () => Promise<void>;
+  handleDeleteConnection: (connection: IntegrationConnection) => void;
+  handleConfirmDeleteConnection: () => Promise<void>;
+  handleBaselinkerTest: (connection: IntegrationConnection) => Promise<void>;
+  handleAllegroTest: (connection: IntegrationConnection) => Promise<void>;
+  handleTestConnection: (connection: IntegrationConnection) => Promise<void>;
+  handleTraderaManualLogin: (connection: IntegrationConnection) => Promise<void>;
+  handleSelectPlaywrightPersona: (personaId: string | null) => Promise<void>;
+  handleSavePlaywrightSettings: () => Promise<void>;
+  handleAllegroAuthorize: () => void;
+  handleAllegroDisconnect: () => Promise<void>;
+  handleAllegroSandboxToggle: (value: boolean) => Promise<void>;
+  handleAllegroSandboxConnect: () => Promise<void>;
+  handleBaseApiRequest: () => Promise<void>;
+  handleAllegroApiRequest: () => Promise<void>;
+  onCloseModal: () => void;
+  onOpenSessionModal: () => void;
+}
+const ActionsContext = createContext<IntegrationsActions | null>(null);
+export const useIntegrationsActions = () => {
+  const context = useContext(ActionsContext);
+  if (!context) throw new Error('useIntegrationsActions must be used within IntegrationsProvider');
+  return context;
+};
 
 const IntegrationsContext = createContext<IntegrationsContextType | null>(null);
 
@@ -286,26 +430,26 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   }, [playwrightPersonas, playwrightSettings, playwrightPersonaId]);
 
   // Handlers
-  const ensureIntegration = async (definition: (typeof integrationDefinitions)[number]): Promise<Integration | null> => {
-    let currentIntegrations = integrations;
-    if (!currentIntegrations.length && integrationsQuery.isFetching) {
-      const refreshed = await integrationsQuery.refetch();
-      currentIntegrations = refreshed.data ?? integrationsQuery.data ?? [];
-    }
-    const existing = currentIntegrations.find((i: Integration) => i.slug === definition.slug);
-    if (existing) return existing;
-    try {
-      return await createIntegrationMutation.mutateAsync({
-        name: definition.name,
-        slug: definition.slug,
-      });
-    } catch (error: unknown) {
-      toast((error as Error)?.message ?? `Failed to add ${definition.name}`, { variant: 'error' });
-      return null;
-    }
-  };
+  const handleIntegrationClick = async (definition: IntegrationDefinition): Promise<void> => {
+    const ensureIntegration = async (def: IntegrationDefinition): Promise<Integration | null> => {
+      let currentIntegrations = integrations;
+      if (!currentIntegrations.length && integrationsQuery.isFetching) {
+        const refreshed = await integrationsQuery.refetch();
+        currentIntegrations = refreshed.data ?? integrationsQuery.data ?? [];
+      }
+      const existing = currentIntegrations.find((i: Integration) => i.slug === def.slug);
+      if (existing) return existing;
+      try {
+        return await createIntegrationMutation.mutateAsync({
+          name: def.name,
+          slug: def.slug,
+        });
+      } catch (error: unknown) {
+        toast((error as Error)?.message ?? `Failed to add \${def.name}`, { variant: 'error' });
+        return null;
+      }
+    };
 
-  const handleIntegrationClick = async (definition: (typeof integrationDefinitions)[number]): Promise<void> => {
     const integration = await ensureIntegration(definition);
     if (!integration) return;
     setActiveIntegration(integration);
@@ -473,7 +617,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     setShowTestSuccessModal(false);
     setTestSuccessMessage(null);
 
-    const requestUrl = `/api/integrations/${activeIntegration.id}/connections/${connection.id}/${type}`;
+    const requestUrl = `/api/integrations/\${activeIntegration.id}/connections/\${connection.id}/\${type}`;
     const startedAt = performance.now();
 
     try {
@@ -504,9 +648,9 @@ Inventories found: \${String(payload['inventoryCount'])}`;
 Account: \${identifier}`;
       }
 
-      setTestSuccessMessage(`${title} succeeded.
-URL: ${requestUrl}
-Duration: ${durationMs}ms${extraInfo}`);
+      setTestSuccessMessage(`\${title} succeeded.
+URL: \${requestUrl}
+Duration: \${durationMs}ms\${extraInfo}`);
       setShowTestSuccessModal(true);
       refreshConnections(activeIntegration.id);
     } catch (error: unknown) {
@@ -514,26 +658,26 @@ Duration: ${durationMs}ms${extraInfo}`);
       const message = (error as Error)?.message ?? 'Unknown error';
       const data = (error as Record<string, unknown>)['data'] as Record<string, unknown> | undefined;
       
-      let errorMessage = `${title} failed.
-URL: ${requestUrl}
-Duration: ${durationMs}ms
-Error: ${message}`;
+      let errorMessage = `\${title} failed.
+URL: \${requestUrl}
+Duration: \${durationMs}ms
+Error: \${message}`;
       
       if (data) {
         const normalizedSteps = normalizeSteps((data['steps'] as unknown[]) || []);
         const failedStep = normalizedSteps.find((s: TestLogEntry) => s.status === 'failed');
         const failedStepDetail = failedStep?.detail || '';
         const errorBody = (data['error'] as string) || failedStepDetail || 'No response body';
-        errorMessage = `${title} failed.
-URL: ${requestUrl}
-Duration: ${durationMs}ms
+        errorMessage = `\${title} failed.
+URL: \${requestUrl}
+Duration: \${durationMs}ms
 
 Response:
-${errorBody}`;
+\${errorBody}`;
 
         const steps = normalizedSteps.length
           ? normalizedSteps.map((s: TestLogEntry) => s.status === 'failed' && !s.detail ? { ...s, detail: errorMessage } : s)
-          : [{ step: `${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }];
+          : [{ step: `\${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }];
           
         setTestLog(steps);
         setTestErrorMeta({
@@ -542,7 +686,7 @@ ${errorBody}`;
           connectionId: data['connectionId'] as string,
         });
       } else {
-        setTestLog([{ step: `${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }]);
+        setTestLog([{ step: `\${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }]);
       }
 
       setTestError(errorMessage);
@@ -571,7 +715,7 @@ ${errorBody}`;
     const { buildPlaywrightSettings } = await import('@/features/playwright');
     setPlaywrightPersonaId(persona.id);
     setPlaywrightSettings(buildPlaywrightSettings(persona.settings));
-    toast(`Applied persona "${persona.name}".`, { variant: 'success' });
+    toast(`Applied persona "\${persona.name}".`, { variant: 'success' });
   };
 
   const handleSavePlaywrightSettings = async (): Promise<void> => {
@@ -586,7 +730,7 @@ ${errorBody}`;
           username: connection.username,
           playwrightPersonaId,
           ...playwrightSettings,
-          proxyPassword: playwrightSettings.proxyPassword, // Ensure password is sent if provided
+          proxyPassword: playwrightSettings.proxyPassword,
         } as Record<string, unknown>,
       });
       toast('Playwright settings saved.', { variant: 'success' });
@@ -600,7 +744,7 @@ ${errorBody}`;
       toast('Create an Allegro connection first.', { variant: 'error' });
       return;
     }
-    window.location.href = `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
+    window.location.href = `/api/integrations/\${activeIntegration.id}/connections/\${activeConnection.id}/allegro/authorize`;
   };
 
   const handleAllegroDisconnect = async (): Promise<void> => {
@@ -656,7 +800,7 @@ ${errorBody}`;
           allegroUseSandbox: true,
         },
       });
-      window.location.href = `/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize`;
+      window.location.href = `/api/integrations/\${activeIntegration.id}/connections/\${activeConnection.id}/allegro/authorize`;
     } catch (error: unknown) {
       toast((error as Error)?.message ?? 'Failed to enable Allegro sandbox.', { variant: 'error' });
     } finally {
@@ -730,7 +874,7 @@ ${errorBody}`;
   const onCloseModal = () => setIsModalOpen(false);
   const onOpenSessionModal = () => setShowSessionModal(true);
 
-  const value = useMemo(() => ({
+  const dataValue = useMemo<IntegrationsData>(() => ({
     integrations,
     integrationsLoading,
     activeIntegration,
@@ -739,14 +883,24 @@ ${errorBody}`;
     connectionsLoading,
     playwrightPersonas,
     playwrightPersonasLoading,
+  }), [integrations, integrationsLoading, activeIntegration, connections, connectionsLoading, playwrightPersonas, playwrightPersonasLoading]);
+
+  const formValue = useMemo<IntegrationsForm>(() => ({
     isModalOpen,
     setIsModalOpen,
     editingConnectionId,
-    setEditingConnectionId: (id: string | null): void => {
-      setEditingConnectionId(id);
-    },
+    setEditingConnectionId,
     connectionForm,
     setConnectionForm,
+    connectionToDelete,
+    setConnectionToDelete,
+    playwrightSettings,
+    setPlaywrightSettings,
+    playwrightPersonaId,
+    savingAllegroSandbox,
+  }), [isModalOpen, editingConnectionId, connectionForm, connectionToDelete, playwrightSettings, playwrightPersonaId, savingAllegroSandbox]);
+
+  const testingValue = useMemo<IntegrationsTesting>(() => ({
     isTesting,
     testLog,
     showTestLogModal,
@@ -760,6 +914,9 @@ ${errorBody}`;
     showTestSuccessModal,
     setShowTestSuccessModal,
     testSuccessMessage,
+  }), [isTesting, testLog, showTestLogModal, selectedStep, showTestErrorModal, testError, testErrorMeta, showTestSuccessModal, testSuccessMessage]);
+
+  const sessionValue = useMemo<IntegrationsSession>(() => ({
     showSessionModal,
     setShowSessionModal,
     sessionLoading: sessionQuery.isFetching,
@@ -767,9 +924,9 @@ ${errorBody}`;
     sessionCookies,
     sessionOrigins,
     sessionUpdatedAt,
-    playwrightSettings,
-    setPlaywrightSettings,
-    playwrightPersonaId,
+  }), [showSessionModal, sessionQuery.isFetching, sessionError, sessionCookies, sessionOrigins, sessionUpdatedAt]);
+
+  const apiConsoleValue = useMemo<IntegrationsApiConsole>(() => ({
     baseApiMethod,
     setBaseApiMethod,
     baseApiParams,
@@ -786,13 +943,13 @@ ${errorBody}`;
     allegroApiLoading,
     allegroApiError,
     allegroApiResponse,
-    savingAllegroSandbox,
+  }), [baseApiMethod, baseApiParams, baseApiLoading, baseApiError, baseApiResponse, allegroApiMethod, allegroApiPath, allegroApiBody, allegroApiLoading, allegroApiError, allegroApiResponse]);
+
+  const actionsValue = useMemo<IntegrationsActions>(() => ({
     handleIntegrationClick,
     handleSaveConnection,
     handleDeleteConnection,
     handleConfirmDeleteConnection,
-    connectionToDelete,
-    setConnectionToDelete,
     handleBaselinkerTest,
     handleAllegroTest,
     handleTestConnection,
@@ -808,67 +965,37 @@ ${errorBody}`;
     onCloseModal,
     onOpenSessionModal,
   }), [
-    activeIntegration,
-    allegroApiBody,
-    allegroApiError,
-    allegroApiLoading,
-    allegroApiMethod,
-    allegroApiPath,
-    allegroApiResponse,
-    baseApiError,
-    baseApiLoading,
-    baseApiMethod,
-    baseApiParams,
-    baseApiResponse,
-    connectionForm,
-    connectionToDelete,
-    connections,
-    connectionsLoading,
-    editingConnectionId,
-    handleAllegroApiRequest,
-    handleAllegroAuthorize,
-    handleAllegroDisconnect,
-    handleAllegroSandboxConnect,
-    handleAllegroSandboxToggle,
-    handleAllegroTest,
-    handleBaseApiRequest,
-    handleBaselinkerTest,
-    handleConfirmDeleteConnection,
-    handleDeleteConnection,
-    handleIntegrationClick,
-    handleSaveConnection,
-    handleSavePlaywrightSettings,
-    handleSelectPlaywrightPersona,
-    handleTestConnection,
-    handleTraderaManualLogin,
-    isModalOpen,
-    isTesting,
-    integrations,
-    integrationsLoading,
-    playwrightPersonaId,
-    playwrightPersonas,
-    playwrightPersonasLoading,
-    playwrightSettings,
-    savingAllegroSandbox,
-    selectedStep,
-    sessionCookies,
-    sessionError,
-    sessionOrigins,
-    sessionQuery.isFetching,
-    sessionUpdatedAt,
-    showSessionModal,
-    showTestErrorModal,
-    showTestLogModal,
-    showTestSuccessModal,
-    testError,
-    testErrorMeta,
-    testLog,
-    testSuccessMessage,
+    handleIntegrationClick, handleSaveConnection, handleDeleteConnection, handleConfirmDeleteConnection,
+    handleBaselinkerTest, handleAllegroTest, handleTestConnection, handleTraderaManualLogin,
+    handleSelectPlaywrightPersona, handleSavePlaywrightSettings, handleAllegroAuthorize,
+    handleAllegroDisconnect, handleAllegroSandboxToggle, handleAllegroSandboxConnect,
+    handleBaseApiRequest, handleAllegroApiRequest, onCloseModal, onOpenSessionModal
   ]);
 
+  const aggregatedValue = useMemo<IntegrationsContextType>(() => ({
+    ...dataValue,
+    ...formValue,
+    ...testingValue,
+    ...sessionValue,
+    ...apiConsoleValue,
+    ...actionsValue,
+  }), [dataValue, formValue, testingValue, sessionValue, apiConsoleValue, actionsValue]);
+
   return (
-    <IntegrationsContext.Provider value={value}>
-      {children}
-    </IntegrationsContext.Provider>
+    <DataContext.Provider value={dataValue}>
+      <FormContext.Provider value={formValue}>
+        <TestingContext.Provider value={testingValue}>
+          <SessionContext.Provider value={sessionValue}>
+            <ApiConsoleContext.Provider value={apiConsoleValue}>
+              <ActionsContext.Provider value={actionsValue}>
+                <IntegrationsContext.Provider value={aggregatedValue}>
+                  {children}
+                </IntegrationsContext.Provider>
+              </ActionsContext.Provider>
+            </ApiConsoleContext.Provider>
+          </SessionContext.Provider>
+        </TestingContext.Provider>
+      </FormContext.Provider>
+    </DataContext.Provider>
   );
 }

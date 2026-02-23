@@ -18,7 +18,12 @@ import {
 } from '@/shared/contracts/products';
 import { Button, Input, Textarea, SelectSimple, FormField, FormSection, Card, EmptyState } from '@/shared/ui';
 
-import { useDraftCreatorFormContext } from './DraftCreatorFormContext';
+import {
+  useDraftCreatorBasicInfo,
+  useDraftCreatorProductData,
+  useDraftCreatorMetadata,
+  useDraftCreatorParameters,
+} from './DraftCreatorFormContext';
 
 const DEFAULT_ICON_COLOR = '#60a5fa';
 const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
@@ -61,7 +66,7 @@ export function DraftCreatorDraftInfoSection(): React.JSX.Element {
     setOpenProductFormTab,
     resolvedIconColor,
     openIconLibrary,
-  } = useDraftCreatorFormContext();
+  } = useDraftCreatorBasicInfo();
   const SelectedIcon = icon ? ICON_LIBRARY_MAP[icon] : null;
 
   return (
@@ -260,7 +265,7 @@ export function DraftCreatorProductDefaultsSection(): React.JSX.Element {
     setDescPl,
     descDe,
     setDescDe,
-  } = useDraftCreatorFormContext();
+  } = useDraftCreatorProductData();
 
   return (
     <FormSection title='Default Product Values' className='p-4'>
@@ -431,7 +436,7 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
     setSupplierLink,
     priceComment,
     setPriceComment,
-  } = useDraftCreatorFormContext();
+  } = useDraftCreatorProductData();
 
   return (
     <FormSection title='Pricing & Supplier Information' className='p-4'>
@@ -488,7 +493,7 @@ export function DraftCreatorPricingSupplierSection(): React.JSX.Element {
 }
 
 export function DraftCreatorImportInfoSection(): React.JSX.Element {
-  const { baseProductId, setBaseProductId } = useDraftCreatorFormContext();
+  const { baseProductId, setBaseProductId } = useDraftCreatorProductData();
 
   return (
     <FormSection title='Import Information' className='p-4'>
@@ -525,7 +530,7 @@ export function DraftCreatorDetailsTab(): React.JSX.Element {
     producersLoading,
     selectedProducerIds,
     setSelectedProducerIds,
-  } = useDraftCreatorFormContext();
+  } = useDraftCreatorMetadata();
 
   return (
     <ProductMetadataFieldProvider
@@ -611,7 +616,7 @@ export function DraftCreatorParametersTab(): React.JSX.Element {
     updateParameterId,
     updateParameterValue,
     removeParameterValue,
-  } = useDraftCreatorFormContext();
+  } = useDraftCreatorParameters();
 
   const selectedParameterIds = useMemo(
     (): (string | undefined)[] =>

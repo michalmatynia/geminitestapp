@@ -9,7 +9,7 @@ import { Button, Input, Label, Textarea } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { useDatabasePresetsTabContext } from './DatabasePresetsTabContext';
-import { useAiPathConfig } from '../../AiPathConfigContext';
+import { useAiPathPresets } from '../../AiPathConfigContext';
 
 
 export function DatabasePresetsTab(): React.JSX.Element {
@@ -19,7 +19,7 @@ export function DatabasePresetsTab(): React.JSX.Element {
     onRenameQueryPreset,
     onDeleteQueryPreset,
   } = useDatabasePresetsTabContext();
-  const { dbQueryPresets } = useAiPathConfig();
+  const { dbQueryPresets } = useAiPathPresets();
   const [queryNameDrafts, setQueryNameDrafts] = React.useState<Record<string, string>>({});
   const [viewPresetId, setViewPresetId] = React.useState<string | null>(null);
   const activePreset = viewPresetId

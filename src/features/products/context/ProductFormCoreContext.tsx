@@ -5,6 +5,7 @@ import {
   createContext,
   useContext,
   BaseSyntheticEvent,
+  useCallback,
   useState,
   useMemo,
 } from 'react';
@@ -113,13 +114,27 @@ export function ProductFormCoreProvider({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [handleSubmitFn, setHandleSubmitFn] = useState<
     (e?: BaseSyntheticEvent) => Promise<void>
-  >(() => async () => {});
+      >(() => async () => {});
   const [ConfirmationModal, setConfirmationModal] = useState<
     React.ComponentType
   >(() => () => null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState(false);
+
+  const updateHandleSubmit = useCallback(
+    (fn: (e?: BaseSyntheticEvent) => Promise<void>): void => {
+      setHandleSubmitFn(() => fn);
+    },
+    []
+  );
+
+  const updateConfirmationModal = useCallback(
+    (component: React.ComponentType): void => {
+      setConfirmationModal(() => component);
+    },
+    []
+  );
 
   const toggleNote = (noteId: string): void => {
     const id = noteId.trim();
@@ -154,8 +169,8 @@ export function ProductFormCoreProvider({
       draft,
       ConfirmationModal,
       methods,
-      setHandleSubmit: setHandleSubmitFn,
-      setConfirmationModal,
+      setHandleSubmit: updateHandleSubmit,
+      setConfirmationModal: updateConfirmationModal,
       setHasUnsavedChanges,
       uploading,
       setUploading,
@@ -173,6 +188,8 @@ export function ProductFormCoreProvider({
       product,
       draft,
       ConfirmationModal,
+      updateHandleSubmit,
+      updateConfirmationModal,
       uploading,
       uploadError,
       uploadSuccess,

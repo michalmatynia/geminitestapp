@@ -5,10 +5,10 @@ import { cn } from '@/shared/utils';
 import { CenterPreview } from './CenterPreview';
 import { LeftSidebar } from './LeftSidebar';
 import { RightSidebar } from './RightSidebar';
-import { useUiState } from '../context/UiContext';
+import { useUiLayoutState } from '../context/UiContext';
 
 export function StudioMainContent(): React.JSX.Element {
-  const { isFocusMode } = useUiState();
+  const { isFocusMode } = useUiLayoutState();
 
   return (
     <div className='relative flex h-full min-h-0 min-w-0 flex-1 overflow-hidden'>

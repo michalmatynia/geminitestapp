@@ -43,10 +43,9 @@ import {
 import { createCmsMasterTreeAdapter } from './utils/cms-master-tree-adapter';
 import { isCmsSectionSamePositionDrop } from './utils/cms-tree-external-drop';
 import { useDragState } from '../../hooks/useDragStateContext';
-import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+import { usePageBuilderState, usePageBuilderDispatch } from '../../hooks/usePageBuilderContext';
 import { TreeActionsProvider, useTreeActions } from '../../hooks/useTreeActionsContext';
 import { readSectionDragData } from '../../utils/page-builder-dnd';
-
 
 // Block types that can be promoted to standalone sections
 const PROMOTABLE_BLOCK_TYPES = [
@@ -60,7 +59,8 @@ const PROMOTABLE_BLOCK_TYPES = [
 ];
 
 export function ComponentTreePanel(): React.ReactNode {
-  const { state, dispatch } = usePageBuilder();
+  const state = usePageBuilderState();
+  const dispatch = usePageBuilderDispatch();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const settingsStore = useSettingsStore();
 

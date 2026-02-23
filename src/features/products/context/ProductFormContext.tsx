@@ -184,10 +184,12 @@ function ProductFormSubmitController({
   onSuccess,
   onEditSave,
   children,
+  nonFormDirtyTrackingLockedRef,
 }: {
   onSuccess?: (info?: { queued?: boolean }) => void;
   onEditSave?: (saved: ProductWithImages) => void;
   children: React.ReactNode;
+  nonFormDirtyTrackingLockedRef: { current: boolean };
 }) {
   const {
     methods,
@@ -260,13 +262,8 @@ function ProductFormSubmitController({
   }, [uploadSuccess, setUploadSuccess]);
 
   // Dirty tracking
-  const nonFormDirtyTrackingLockedRef = useRef<boolean>(false);
   const lastEntityIdentityRef = useRef<string>('');
   const lastUploadSuccessRef = useRef<boolean>(false);
-
-  const markNonFormInteraction = (): void => {
-    nonFormDirtyTrackingLockedRef.current = true;
-  };
 
   const nonFormComparableKey = useMemo(() => {
     const comparableState: NonFormComparableState = {
@@ -351,9 +348,7 @@ function ProductFormSubmitController({
 
   return (
     <ProductFormContext.Provider value={legacyContextValue}>
-      <ProductFormInteractionProvider onInteraction={markNonFormInteraction}>
-        {children}
-      </ProductFormInteractionProvider>
+      {children}
     </ProductFormContext.Provider>
   );
 }
@@ -433,12 +428,24 @@ function ProductFormSubProviders({
   onSuccess?: (info?: { queued?: boolean }) => void;
   onEditSave?: (saved: ProductWithImages) => void;
 }) {
+  const nonFormDirtyTrackingLockedRef = useRef<boolean>(false);
+  const markNonFormInteraction = (): void => {
+    nonFormDirtyTrackingLockedRef.current = true;
+  };
+
   return (
-    <ProductFormSubmitController onSuccess={onSuccess} onEditSave={onEditSave}>
-      <ProductFormSubProvidersInner product={product} draft={draft} initialCatalogId={initialCatalogId}>
+    <ProductFormInteractionProvider onInteraction={markNonFormInteraction}>
+      <ProductFormSubProvidersInner
+        product={product}
+        draft={draft}
+        initialCatalogId={initialCatalogId}
+        onSuccess={onSuccess}
+        onEditSave={onEditSave}
+        nonFormDirtyTrackingLockedRef={nonFormDirtyTrackingLockedRef}
+      >
         {children}
       </ProductFormSubProvidersInner>
-    </ProductFormSubmitController>
+    </ProductFormInteractionProvider>
   );
 }
 
@@ -447,11 +454,17 @@ function ProductFormSubProvidersInner({
   product,
   draft,
   initialCatalogId,
+  onSuccess,
+  onEditSave,
+  nonFormDirtyTrackingLockedRef,
 }: {
   children: React.ReactNode;
   product?: ProductWithImages;
   draft?: ProductDraft | null;
   initialCatalogId?: string;
+  onSuccess?: (info?: { queued?: boolean }) => void;
+  onEditSave?: (saved: ProductWithImages) => void;
+  nonFormDirtyTrackingLockedRef: { current: boolean };
 }) {
   const onInteraction = useProductFormInteraction() || (() => {});
   const { uploading, uploadError, uploadSuccess } = useProductFormCore();
@@ -463,20 +476,26 @@ function ProductFormSubProvidersInner({
       initialCatalogId={initialCatalogId}
       onInteraction={onInteraction}
     >
-       <ProductFormParameterProviderWrapper product={product} draft={draft} onInteraction={onInteraction}>
-         <ProductFormStudioProvider product={product}>
-           <ProductFormImageProvider
-              product={product}
-              draft={draft}
-              uploading={uploading}
-              uploadError={uploadError}
-              uploadSuccess={uploadSuccess}
-              onInteraction={onInteraction}
+      <ProductFormParameterProviderWrapper product={product} draft={draft} onInteraction={onInteraction}>
+        <ProductFormStudioProvider product={product}>
+          <ProductFormImageProvider
+            product={product}
+            draft={draft}
+            uploading={uploading}
+            uploadError={uploadError}
+            uploadSuccess={uploadSuccess}
+            onInteraction={onInteraction}
+          >
+            <ProductFormSubmitController
+              onSuccess={onSuccess}
+              onEditSave={onEditSave}
+              nonFormDirtyTrackingLockedRef={nonFormDirtyTrackingLockedRef}
             >
               {children}
-           </ProductFormImageProvider>
-         </ProductFormStudioProvider>
-       </ProductFormParameterProviderWrapper>
+            </ProductFormSubmitController>
+          </ProductFormImageProvider>
+        </ProductFormStudioProvider>
+      </ProductFormParameterProviderWrapper>
     </ProductFormMetadataProvider>
   );
 }

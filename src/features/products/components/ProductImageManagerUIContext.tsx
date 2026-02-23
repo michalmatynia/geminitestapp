@@ -6,8 +6,8 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL, 
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY 
 } from '@/features/products/constants';
-import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
-import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
+import { ProductFormCoreContext } from '@/features/products/context/ProductFormCoreContext';
+import { ProductFormImageContext } from '@/features/products/context/ProductFormImageContext';
 import { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
 import { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import { DebugInfo } from '@/shared/contracts/products';
@@ -72,10 +72,12 @@ export function ProductImageManagerUIProvider({
   showDragHandle?: boolean;
   minimalSingleSlotAlign?: 'left' | 'center';
 }) {
-  const formImages = useProductFormImages();
-  const formCore = useProductFormCore();
+  const formImagesContext = useContext(ProductFormImageContext);
+  const formImagesController = formImagesContext as ProductImageManagerController | null;
+  const formCore = useContext(ProductFormCoreContext);
   const controllerContext = useOptionalProductImageManagerController();
-  const controller = explicitController ?? controllerContext ?? formImages;
+  const controller: ProductImageManagerController | null =
+    explicitController ?? controllerContext ?? formImagesController ?? null;
 
   if (!controller) {
     throw new Error('ProductImageManagerUIProvider requires ProductFormImageContext or an explicit controller.');

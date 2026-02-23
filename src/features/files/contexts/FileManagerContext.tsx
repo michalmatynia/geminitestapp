@@ -11,8 +11,9 @@ import type { Asset3DRecordDto as Asset3DRecord, Asset3DListFiltersDto as Asset3
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 
-interface FileManagerContextState {
-  // Config
+// --- Granular Contexts ---
+
+export interface FileManagerConfig {
   mode: 'view' | 'select';
   selectionMode: 'single' | 'multiple';
   autoConfirmSelection: boolean;
@@ -21,20 +22,52 @@ interface FileManagerContextState {
   showBulkActions: boolean;
   showTagSearch: boolean;
   onSelectFile: ((files: ImageFileSelection[]) => void) | undefined;
+}
+const ConfigContext = createContext<FileManagerConfig | null>(null);
+export const useFileManagerConfig = () => {
+  const context = useContext(ConfigContext);
+  if (!context) throw new Error('useFileManagerConfig must be used within FileManagerProvider');
+  return context;
+};
 
-  // State
+export interface FileManagerSearch {
   filenameSearch: string;
+  setFilenameSearch: (val: string) => void;
   productNameSearch: string;
+  setProductNameSearch: (val: string) => void;
   tagSearch: string;
-  bulkTagInput: string;
-  bulkTagMode: 'add' | 'replace';
-  localFolderFilter: string | null;
-  previewFile: ExpandedImageFile | null;
-  previewAsset: Asset3DRecord | null;
-  activeTab: 'uploads' | 'links' | 'base64' | 'assets3d';
-  selectedFiles: ImageFileSelection[];
+  setTagSearch: (val: string) => void;
+}
+const SearchContext = createContext<FileManagerSearch | null>(null);
+export const useFileManagerSearch = () => {
+  const context = useContext(SearchContext);
+  if (!context) throw new Error('useFileManagerSearch must be used within FileManagerProvider');
+  return context;
+};
 
-  // Derived
+export interface FileManagerUIState {
+  bulkTagInput: string;
+  setBulkTagInput: (val: string) => void;
+  bulkTagMode: 'add' | 'replace';
+  setBulkTagMode: (val: 'add' | 'replace') => void;
+  localFolderFilter: string | null;
+  setLocalFolderFilter: (val: string | null) => void;
+  previewFile: ExpandedImageFile | null;
+  setPreviewFile: (val: ExpandedImageFile | null) => void;
+  previewAsset: Asset3DRecord | null;
+  setPreviewAsset: (val: Asset3DRecord | null) => void;
+  activeTab: 'uploads' | 'links' | 'base64' | 'assets3d';
+  setActiveTab: (val: 'uploads' | 'links' | 'base64' | 'assets3d') => void;
+  selectedFiles: ImageFileSelection[];
+}
+const UIStateContext = createContext<FileManagerUIState | null>(null);
+export const useFileManagerUIState = () => {
+  const context = useContext(UIStateContext);
+  if (!context) throw new Error('useFileManagerUIState must be used within FileManagerProvider');
+  return context;
+};
+
+export interface FileManagerData {
   files: ExpandedImageFile[];
   assets3d: Asset3DRecord[];
   folderOptions: string[];
@@ -42,19 +75,15 @@ interface FileManagerContextState {
   filteredFiles: ExpandedImageFile[];
   folderFilter: string;
   isPending: boolean;
+}
+const DataContext = createContext<FileManagerData | null>(null);
+export const useFileManagerData = () => {
+  const context = useContext(DataContext);
+  if (!context) throw new Error('useFileManagerData must be used within FileManagerProvider');
+  return context;
+};
 
-  // Setters
-  setFilenameSearch: (val: string) => void;
-  setProductNameSearch: (val: string) => void;
-  setTagSearch: (val: string) => void;
-  setBulkTagInput: (val: string) => void;
-  setBulkTagMode: (val: 'add' | 'replace') => void;
-  setLocalFolderFilter: (val: string | null) => void;
-  setPreviewFile: (val: ExpandedImageFile | null) => void;
-  setPreviewAsset: (val: Asset3DRecord | null) => void;
-  setActiveTab: (val: 'uploads' | 'links' | 'base64' | 'assets3d') => void;
-
-  // Actions
+export interface FileManagerActions {
   handleToggleSelect: (file: ImageFileSelection) => void;
   handleConfirmSelection: () => void;
   handleSelectAll: () => void;
@@ -62,10 +91,18 @@ interface FileManagerContextState {
   handleDeleteSelected: () => Promise<void>;
   handleApplyTags: () => Promise<void>;
   handleDelete: (fileId: string) => Promise<void>;
-  
-  // Confirmation
   ConfirmationModal: React.ComponentType;
 }
+const ActionsContext = createContext<FileManagerActions | null>(null);
+export const useFileManagerActions = () => {
+  const context = useContext(ActionsContext);
+  if (!context) throw new Error('useFileManagerActions must be used within FileManagerProvider');
+  return context;
+};
+
+// --- Legacy Aggregator ---
+
+export interface FileManagerContextState extends FileManagerConfig, FileManagerSearch, FileManagerUIState, FileManagerData, FileManagerActions {}
 
 const FileManagerContext = createContext<FileManagerContextState | undefined>(undefined);
 
@@ -312,7 +349,7 @@ export function FileManagerProvider({
     });
   }, [deleteFileMutation, toast, confirm]);
 
-  const value = useMemo(() => ({
+  const configValue = useMemo<FileManagerConfig>(() => ({
     mode,
     selectionMode,
     autoConfirmSelection,
@@ -321,18 +358,34 @@ export function FileManagerProvider({
     showBulkActions,
     showTagSearch,
     onSelectFile,
+  }), [mode, selectionMode, autoConfirmSelection, showFolderFilter, defaultFolder, showBulkActions, showTagSearch, onSelectFile]);
 
+  const searchValue = useMemo<FileManagerSearch>(() => ({
     filenameSearch,
+    setFilenameSearch,
     productNameSearch,
+    setProductNameSearch,
     tagSearch,
-    bulkTagInput,
-    bulkTagMode,
-    localFolderFilter,
-    previewFile,
-    previewAsset,
-    activeTab,
-    selectedFiles,
+    setTagSearch,
+  }), [filenameSearch, productNameSearch, tagSearch]);
 
+  const uiStateValue = useMemo<FileManagerUIState>(() => ({
+    bulkTagInput,
+    setBulkTagInput,
+    bulkTagMode,
+    setBulkTagMode,
+    localFolderFilter,
+    setLocalFolderFilter,
+    previewFile,
+    setPreviewFile,
+    previewAsset,
+    setPreviewAsset,
+    activeTab,
+    setActiveTab,
+    selectedFiles,
+  }), [bulkTagInput, bulkTagMode, localFolderFilter, previewFile, previewAsset, activeTab, selectedFiles]);
+
+  const dataValue = useMemo<FileManagerData>(() => ({
     files,
     assets3d,
     folderOptions,
@@ -340,17 +393,9 @@ export function FileManagerProvider({
     filteredFiles,
     folderFilter,
     isPending: updateTagsMutation.isPending || deleteFileMutation.isPending,
+  }), [files, assets3d, folderOptions, tagOptions, filteredFiles, folderFilter, updateTagsMutation.isPending, deleteFileMutation.isPending]);
 
-    setFilenameSearch,
-    setProductNameSearch,
-    setTagSearch,
-    setBulkTagInput,
-    setBulkTagMode,
-    setLocalFolderFilter,
-    setPreviewFile,
-    setPreviewAsset,
-    setActiveTab,
-
+  const actionsValue = useMemo<FileManagerActions>(() => ({
     handleToggleSelect,
     handleConfirmSelection,
     handleSelectAll,
@@ -359,19 +404,30 @@ export function FileManagerProvider({
     handleApplyTags,
     handleDelete,
     ConfirmationModal,
-  }), [
-    mode, selectionMode, autoConfirmSelection, showFolderFilter, defaultFolder, showBulkActions, showTagSearch, onSelectFile,
-    filenameSearch, productNameSearch, tagSearch, bulkTagInput, bulkTagMode, localFolderFilter, previewFile, previewAsset, activeTab, selectedFiles,
-    files, assets3d, folderOptions, tagOptions, filteredFiles, folderFilter,
-    updateTagsMutation.isPending, deleteFileMutation.isPending,
-    handleToggleSelect, handleConfirmSelection, handleSelectAll, handleClearSelection, handleDeleteSelected, handleApplyTags, handleDelete,
-    ConfirmationModal
-  ]);
+  }), [handleToggleSelect, handleConfirmSelection, handleSelectAll, handleClearSelection, handleDeleteSelected, handleApplyTags, handleDelete, ConfirmationModal]);
+
+  const aggregatedValue = useMemo<FileManagerContextState>(() => ({
+    ...configValue,
+    ...searchValue,
+    ...uiStateValue,
+    ...dataValue,
+    ...actionsValue,
+  }), [configValue, searchValue, uiStateValue, dataValue, actionsValue]);
 
   return (
-    <FileManagerContext.Provider value={value}>
-      {children}
-    </FileManagerContext.Provider>
+    <ConfigContext.Provider value={configValue}>
+      <SearchContext.Provider value={searchValue}>
+        <UIStateContext.Provider value={uiStateValue}>
+          <DataContext.Provider value={dataValue}>
+            <ActionsContext.Provider value={actionsValue}>
+              <FileManagerContext.Provider value={aggregatedValue}>
+                {children}
+              </FileManagerContext.Provider>
+            </ActionsContext.Provider>
+          </DataContext.Provider>
+        </UIStateContext.Provider>
+      </SearchContext.Provider>
+    </ConfigContext.Provider>
   );
 }
 

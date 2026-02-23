@@ -3,14 +3,10 @@
 import React, { useReducer, useMemo, useState, useCallback, type ReactNode } from 'react';
 
 import type { 
-  SectionInstance, 
-  BlockInstance,
   PageBuilderState,
   PageBuilderAction,
   InspectorSettings,
 } from '@/shared/contracts/cms';
-import type { VectorShape } from '@/shared/ui';
-
 import { findSection, findBlock, findColumn } from './page-builder/block-helpers';
 import { pageBuilderReducer } from './page-builder/page-builder-reducer';
 

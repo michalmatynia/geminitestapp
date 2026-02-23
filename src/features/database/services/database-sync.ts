@@ -2,8 +2,6 @@ import 'server-only';
 
 import {
   Prisma,
-  ProductAiJobStatus,
-  AiPathRunEventLevel,
 } from '@prisma/client';
 
 import { createFullDatabaseBackup } from '@/features/database/services/database-backup';
@@ -11,7 +9,6 @@ import {
   AUTH_COLLECTIONS,
   countryCodes,
   currencyCodes,
-  type MongoProductDoc,
 } from '@/features/database/services/database-sync-types';
 import { toObjectIdMaybe, toDate, toJsonValue, normalizeId } from '@/features/database/services/sync-utils';
 import { ErrorSystem } from '@/features/observability/server';

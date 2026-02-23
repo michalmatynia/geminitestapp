@@ -23,7 +23,7 @@ import { useThemeSettings } from './ThemeSettingsContext';
 import { VectorOverlay } from './VectorOverlay';
 import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsSlugs, useUpdatePage } from '../../hooks/useCmsQueries';
-import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+import { usePageBuilderState, usePageBuilderDispatch, useVectorOverlay } from '../../hooks/usePageBuilderContext';
 import { CmsPageProvider } from '../frontend/CmsPageContext';
 import { MediaStylesProvider } from '../frontend/media-styles-context';
 import { getHoverEffectVars, getMediaInlineStyles, getMediaStyleVars } from '../frontend/theme-styles';
@@ -48,7 +48,9 @@ const normalizePageSlugValues = (slugs: unknown): string[] => {
 };
 
 export function PagePreviewPanel(): React.ReactNode {
-  const { state, dispatch, vectorOverlay, closeVectorOverlay } = usePageBuilder();
+  const state = usePageBuilderState();
+  const dispatch = usePageBuilderDispatch();
+  const { vectorOverlay, closeVectorOverlay } = useVectorOverlay();
   const { theme } = useThemeSettings();
   const { activeDomainId, activeDomain } = useCmsDomainSelection();
   const slugsQuery = useCmsSlugs(activeDomainId);

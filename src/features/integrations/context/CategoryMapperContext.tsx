@@ -17,28 +17,59 @@ interface InternalCategoryOption {
   label: string;
 }
 
-interface CategoryMapperContextValue {
+// --- Granular Contexts ---
+
+export interface CategoryMapperConfig {
   connectionId: string;
   connectionName: string;
-  
-  // Queries
+}
+const ConfigContext = createContext<CategoryMapperConfig | null>(null);
+export const useCategoryMapperConfig = () => {
+  const context = useContext(ConfigContext);
+  if (!context) throw new Error('useCategoryMapperConfig must be used within CategoryMapperProvider');
+  return context;
+};
+
+export interface CategoryMapperData {
   catalogs: Catalog[];
   catalogsLoading: boolean;
   selectedCatalogId: string | null;
   setSelectedCatalogId: (id: string | null) => void;
-  
   internalCategories: ProductCategoryDto[];
   internalCategoriesLoading: boolean;
   internalCategoryOptions: InternalCategoryOption[];
-  
   externalCategories: ExternalCategory[];
   externalCategoriesLoading: boolean;
   externalIds: Set<string>;
-  
   mappings: CategoryMappingWithDetails[];
   mappingsLoading: boolean;
-  
-  // Mutations
+  categoryTree: ExternalCategory[];
+}
+const DataContext = createContext<CategoryMapperData | null>(null);
+export const useCategoryMapperData = () => {
+  const context = useContext(DataContext);
+  if (!context) throw new Error('useCategoryMapperData must be used within CategoryMapperProvider');
+  return context;
+};
+
+export interface CategoryMapperUIState {
+  pendingMappings: Map<string, string | null>;
+  expandedIds: Set<string>;
+  toggleExpand: (categoryId: string) => void;
+  stats: { total: number; mapped: number; pending: number };
+}
+const UIStateContext = createContext<CategoryMapperUIState | null>(null);
+export const useCategoryMapperUIState = () => {
+  const context = useContext(UIStateContext);
+  if (!context) throw new Error('useCategoryMapperUIState must be used within CategoryMapperProvider');
+  return context;
+};
+
+export interface CategoryMapperActions {
+  handleFetchFromBase: () => Promise<void>;
+  handleMappingChange: (externalCategoryId: string, internalCategoryId: string | null) => void;
+  handleSave: () => Promise<void>;
+  getMappingForExternal: (externalCategoryId: string) => string | null;
   fetchMutation: UseMutationResult<
     { fetched: number; message: string },
     Error,
@@ -49,22 +80,17 @@ interface CategoryMapperContextValue {
     Error,
     { connectionId: string; catalogId: string; mappings: { externalCategoryId: string; internalCategoryId: string | null }[] }
   >;
-  
-  // UI State
-  pendingMappings: Map<string, string | null>;
-  expandedIds: Set<string>;
-  toggleExpand: (categoryId: string) => void;
-  
-  // Stats
-  stats: { total: number; mapped: number; pending: number };
-  categoryTree: ExternalCategory[];
-  
-  // Handlers
-  handleFetchFromBase: () => Promise<void>;
-  handleMappingChange: (externalCategoryId: string, internalCategoryId: string | null) => void;
-  handleSave: () => Promise<void>;
-  getMappingForExternal: (externalCategoryId: string) => string | null;
 }
+const ActionsContext = createContext<CategoryMapperActions | null>(null);
+export const useCategoryMapperActions = () => {
+  const context = useContext(ActionsContext);
+  if (!context) throw new Error('useCategoryMapperActions must be used within CategoryMapperProvider');
+  return context;
+};
+
+// --- Legacy Aggregator ---
+
+interface CategoryMapperContextValue extends CategoryMapperConfig, CategoryMapperData, CategoryMapperUIState, CategoryMapperActions {}
 
 const CategoryMapperContext = createContext<CategoryMapperContextValue | null>(null);
 
@@ -347,9 +373,12 @@ export function CategoryMapperProvider({
     return { total, mapped, pending };
   }, [externalCategories, getMappingForExternal, pendingMappings.size]);
 
-  const value = useMemo(() => ({
+  const configValue = useMemo<CategoryMapperConfig>(() => ({
     connectionId,
     connectionName,
+  }), [connectionId, connectionName]);
+
+  const dataValue = useMemo<CategoryMapperData>(() => ({
     catalogs,
     catalogsLoading,
     selectedCatalogId,
@@ -362,47 +391,43 @@ export function CategoryMapperProvider({
     externalIds,
     mappings,
     mappingsLoading,
-    fetchMutation,
-    saveMutation,
+    categoryTree,
+  }), [catalogs, catalogsLoading, selectedCatalogId, internalCategories, internalCategoriesLoading, internalCategoryOptions, externalCategories, externalCategoriesLoading, externalIds, mappings, mappingsLoading, categoryTree]);
+
+  const uiStateValue = useMemo<CategoryMapperUIState>(() => ({
     pendingMappings,
     expandedIds,
     toggleExpand,
     stats,
-    categoryTree,
+  }), [pendingMappings, expandedIds, toggleExpand, stats]);
+
+  const actionsValue = useMemo<CategoryMapperActions>(() => ({
     handleFetchFromBase,
     handleMappingChange,
     handleSave,
-    getMappingForExternal
-  }), [
-    connectionId,
-    connectionName,
-    catalogs,
-    catalogsLoading,
-    selectedCatalogId,
-    internalCategories,
-    internalCategoriesLoading,
-    internalCategoryOptions,
-    externalCategories,
-    externalCategoriesLoading,
-    externalIds,
-    mappings,
-    mappingsLoading,
+    getMappingForExternal,
     fetchMutation,
     saveMutation,
-    pendingMappings,
-    expandedIds,
-    toggleExpand,
-    stats,
-    categoryTree,
-    handleFetchFromBase,
-    handleMappingChange,
-    handleSave,
-    getMappingForExternal
-  ]);
+  }), [handleFetchFromBase, handleMappingChange, handleSave, getMappingForExternal, fetchMutation, saveMutation]);
+
+  const aggregatedValue = useMemo<CategoryMapperContextValue>(() => ({
+    ...configValue,
+    ...dataValue,
+    ...uiStateValue,
+    ...actionsValue,
+  }), [configValue, dataValue, uiStateValue, actionsValue]);
 
   return (
-    <CategoryMapperContext.Provider value={value}>
-      {children}
-    </CategoryMapperContext.Provider>
+    <ConfigContext.Provider value={configValue}>
+      <DataContext.Provider value={dataValue}>
+        <UIStateContext.Provider value={uiStateValue}>
+          <ActionsContext.Provider value={actionsValue}>
+            <CategoryMapperContext.Provider value={aggregatedValue}>
+              {children}
+            </CategoryMapperContext.Provider>
+          </ActionsContext.Provider>
+        </UIStateContext.Provider>
+      </DataContext.Provider>
+    </ConfigContext.Provider>
   );
 }

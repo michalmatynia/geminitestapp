@@ -6,7 +6,7 @@ import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';
 import { Button, Input } from '@/shared/ui';
 
 import { ChatMessageContent } from './ChatMessageContent';
-import { useChatbot } from '../context/ChatbotContext';
+import { useChatbotMessages } from '../context/ChatbotContext';
 
 export function ChatInterface(): React.JSX.Element {
   const {
@@ -15,7 +15,7 @@ export function ChatInterface(): React.JSX.Element {
     setInput,
     isSending,
     sendMessage,
-  } = useChatbot();
+  } = useChatbotMessages();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 

@@ -6,19 +6,20 @@ import { DEFAULT_AGENT_SETTINGS } from '@/features/ai/agentcreator/utils/constan
 import { DEFAULT_MODELS } from '@/features/ai/ai-paths/lib';
 import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 
-type AgentCreatorSettingsContextType = {
+// --- Granular Contexts ---
+
+export interface AgentCreatorModes {
   agentModeEnabled: boolean;
   setAgentModeEnabled: (value: boolean) => void;
-  agentBrowser: string | undefined;
-  setAgentBrowser: (value: string | undefined) => void;
-  agentMaxSteps: number | undefined;
-  setAgentMaxSteps: (value: number | undefined) => void;
-  agentRunHeadless: boolean | undefined;
-  setAgentRunHeadless: (value: boolean | undefined) => void;
-  agentIgnoreRobotsTxt: boolean | undefined;
-  setAgentIgnoreRobotsTxt: (value: boolean | undefined) => void;
-  agentRequireHumanApproval: boolean | undefined;
-  setAgentRequireHumanApproval: (value: boolean | undefined) => void;
+}
+const ModesContext = createContext<AgentCreatorModes | null>(null);
+export const useAgentCreatorModes = () => {
+  const context = useContext(ModesContext);
+  if (!context) throw new Error('useAgentCreatorModes must be used within AgentCreatorSettingsProvider');
+  return context;
+};
+
+export interface AgentCreatorModels {
   agentMemoryValidationModel: string | null | undefined;
   setAgentMemoryValidationModel: (value: string | null | undefined) => void;
   agentPlannerModel: string | null | undefined;
@@ -39,6 +40,19 @@ type AgentCreatorSettingsContextType = {
   setAgentSelectorInferenceModel: (value: string | null | undefined) => void;
   agentOutputNormalizationModel: string | null | undefined;
   setAgentOutputNormalizationModel: (value: string | null | undefined) => void;
+  modelOptions: string[];
+  modelsLoading: boolean;
+}
+const ModelsContext = createContext<AgentCreatorModels | null>(null);
+export const useAgentCreatorModels = () => {
+  const context = useContext(ModelsContext);
+  if (!context) throw new Error('useAgentCreatorModels must be used within AgentCreatorSettingsProvider');
+  return context;
+};
+
+export interface AgentCreatorPerformance {
+  agentMaxSteps: number | undefined;
+  setAgentMaxSteps: (value: number | undefined) => void;
   agentMaxStepAttempts: number | undefined;
   setAgentMaxStepAttempts: (value: number | undefined) => void;
   agentMaxReplanCalls: number | undefined;
@@ -53,9 +67,34 @@ type AgentCreatorSettingsContextType = {
   setAgentLoopBackoffBaseMs: (value: number | undefined) => void;
   agentLoopBackoffMaxMs: number | undefined;
   setAgentLoopBackoffMaxMs: (value: number | undefined) => void;
-  modelOptions: string[];
-  modelsLoading: boolean;
+}
+const PerformanceContext = createContext<AgentCreatorPerformance | null>(null);
+export const useAgentCreatorPerformance = () => {
+  const context = useContext(PerformanceContext);
+  if (!context) throw new Error('useAgentCreatorPerformance must be used within AgentCreatorSettingsProvider');
+  return context;
 };
+
+export interface AgentCreatorOperations {
+  agentBrowser: string | undefined;
+  setAgentBrowser: (value: string | undefined) => void;
+  agentRunHeadless: boolean | undefined;
+  setAgentRunHeadless: (value: boolean | undefined) => void;
+  agentIgnoreRobotsTxt: boolean | undefined;
+  setAgentIgnoreRobotsTxt: (value: boolean | undefined) => void;
+  agentRequireHumanApproval: boolean | undefined;
+  setAgentRequireHumanApproval: (value: boolean | undefined) => void;
+}
+const OperationsContext = createContext<AgentCreatorOperations | null>(null);
+export const useAgentCreatorOperations = () => {
+  const context = useContext(OperationsContext);
+  if (!context) throw new Error('useAgentCreatorOperations must be used within AgentCreatorSettingsProvider');
+  return context;
+};
+
+// --- Legacy Aggregator ---
+
+type AgentCreatorSettingsContextType = AgentCreatorModes & AgentCreatorModels & AgentCreatorPerformance & AgentCreatorOperations;
 
 const AgentCreatorSettingsContext = createContext<AgentCreatorSettingsContextType | null>(null);
 
@@ -144,37 +183,50 @@ export function AgentCreatorSettingsProvider({ children }: { children: ReactNode
     DEFAULT_AGENT_SETTINGS.loopBackoffMaxMs
   );
 
-  const value: AgentCreatorSettingsContextType = useMemo(() => ({
+  const modesValue = useMemo<AgentCreatorModes>(() => ({
     agentModeEnabled,
     setAgentModeEnabled,
-    agentBrowser,
-    setAgentBrowser,
-    agentRunHeadless,
-    setAgentRunHeadless,
-    agentIgnoreRobotsTxt,
-    setAgentIgnoreRobotsTxt,
-    agentRequireHumanApproval,
-    setAgentRequireHumanApproval,
+  }), [agentModeEnabled]);
+
+  const modelsValue = useMemo<AgentCreatorModels>(() => ({
     agentMemoryValidationModel,
-    setAgentMemoryValidationModel: setAgentMemoryValidationModel as (value: string | null | undefined) => void,
+    setAgentMemoryValidationModel,
     agentPlannerModel,
-    setAgentPlannerModel: setAgentPlannerModel as (value: string | null | undefined) => void,
+    setAgentPlannerModel,
     agentSelfCheckModel,
-    setAgentSelfCheckModel: setAgentSelfCheckModel as (value: string | null | undefined) => void,
+    setAgentSelfCheckModel,
     agentExtractionValidationModel,
-    setAgentExtractionValidationModel: setAgentExtractionValidationModel as (value: string | null | undefined) => void,
+    setAgentExtractionValidationModel,
     agentToolRouterModel,
-    setAgentToolRouterModel: setAgentToolRouterModel as (value: string | null | undefined) => void,
+    setAgentToolRouterModel,
     agentLoopGuardModel,
-    setAgentLoopGuardModel: setAgentLoopGuardModel as (value: string | null | undefined) => void,
+    setAgentLoopGuardModel,
     agentApprovalGateModel,
-    setAgentApprovalGateModel: setAgentApprovalGateModel as (value: string | null | undefined) => void,
+    setAgentApprovalGateModel,
     agentMemorySummarizationModel,
-    setAgentMemorySummarizationModel: setAgentMemorySummarizationModel as (value: string | null | undefined) => void,
+    setAgentMemorySummarizationModel,
     agentSelectorInferenceModel,
-    setAgentSelectorInferenceModel: setAgentSelectorInferenceModel as (value: string | null | undefined) => void,
+    setAgentSelectorInferenceModel,
     agentOutputNormalizationModel,
-    setAgentOutputNormalizationModel: setAgentOutputNormalizationModel as (value: string | null | undefined) => void,
+    setAgentOutputNormalizationModel,
+    modelOptions,
+    modelsLoading,
+  }), [
+    agentMemoryValidationModel,
+    agentPlannerModel,
+    agentSelfCheckModel,
+    agentExtractionValidationModel,
+    agentToolRouterModel,
+    agentLoopGuardModel,
+    agentApprovalGateModel,
+    agentMemorySummarizationModel,
+    agentSelectorInferenceModel,
+    agentOutputNormalizationModel,
+    modelOptions,
+    modelsLoading,
+  ]);
+
+  const performanceValue = useMemo<AgentCreatorPerformance>(() => ({
     agentMaxSteps,
     setAgentMaxSteps,
     agentMaxStepAttempts,
@@ -191,24 +243,7 @@ export function AgentCreatorSettingsProvider({ children }: { children: ReactNode
     setAgentLoopBackoffBaseMs,
     agentLoopBackoffMaxMs,
     setAgentLoopBackoffMaxMs,
-    modelOptions,
-    modelsLoading,
   }), [
-    agentModeEnabled,
-    agentBrowser,
-    agentRunHeadless,
-    agentIgnoreRobotsTxt,
-    agentRequireHumanApproval,
-    agentMemoryValidationModel,
-    agentPlannerModel,
-    agentSelfCheckModel,
-    agentExtractionValidationModel,
-    agentToolRouterModel,
-    agentLoopGuardModel,
-    agentApprovalGateModel,
-    agentMemorySummarizationModel,
-    agentSelectorInferenceModel,
-    agentOutputNormalizationModel,
     agentMaxSteps,
     agentMaxStepAttempts,
     agentMaxReplanCalls,
@@ -217,13 +252,42 @@ export function AgentCreatorSettingsProvider({ children }: { children: ReactNode
     agentLoopGuardThreshold,
     agentLoopBackoffBaseMs,
     agentLoopBackoffMaxMs,
-    modelOptions,
-    modelsLoading,
   ]);
 
+  const operationsValue = useMemo<AgentCreatorOperations>(() => ({
+    agentBrowser,
+    setAgentBrowser,
+    agentRunHeadless,
+    setAgentRunHeadless,
+    agentIgnoreRobotsTxt,
+    setAgentIgnoreRobotsTxt,
+    agentRequireHumanApproval,
+    setAgentRequireHumanApproval,
+  }), [
+    agentBrowser,
+    agentRunHeadless,
+    agentIgnoreRobotsTxt,
+    agentRequireHumanApproval,
+  ]);
+
+  const aggregatedValue = useMemo<AgentCreatorSettingsContextType>(() => ({
+    ...modesValue,
+    ...modelsValue,
+    ...performanceValue,
+    ...operationsValue,
+  }), [modesValue, modelsValue, performanceValue, operationsValue]);
+
   return (
-    <AgentCreatorSettingsContext.Provider value={value}>
-      {children}
-    </AgentCreatorSettingsContext.Provider>
+    <ModesContext.Provider value={modesValue}>
+      <ModelsContext.Provider value={modelsValue}>
+        <PerformanceContext.Provider value={performanceValue}>
+          <OperationsContext.Provider value={operationsValue}>
+            <AgentCreatorSettingsContext.Provider value={aggregatedValue}>
+              {children}
+            </AgentCreatorSettingsContext.Provider>
+          </OperationsContext.Provider>
+        </PerformanceContext.Provider>
+      </ModelsContext.Provider>
+    </ModesContext.Provider>
   );
 }

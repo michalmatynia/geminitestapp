@@ -2,7 +2,7 @@
 
 import { LogList, Card } from '@/shared/ui';
 
-import { useChatbot } from '../context/ChatbotContext';
+import { useChatbotUI } from '../context/ChatbotContext';
 
 interface LogEntry {
   id: string;
@@ -18,7 +18,7 @@ interface DebugPanelProps {
 export function DebugPanel({
   agentRunLogs = [],
 }: DebugPanelProps): React.JSX.Element {
-  const { debugState } = useChatbot();
+  const { debugState } = useChatbotUI();
 
   return (
     <div className='h-full overflow-y-auto bg-card p-4 text-xs text-gray-300'>

@@ -55,20 +55,33 @@ const normalizeCanvasBackgroundColor = (value: string): string => {
   return DEFAULT_CANVAS_BACKGROUND_COLOR;
 };
 
-export interface UiState {
+// --- Granular State Interfaces ---
+
+export interface UiLayoutState {
   isFocusMode: boolean;
-  maskPreviewEnabled: boolean;
-  centerGuidesEnabled: boolean;
-  validatorEnabled: boolean;
-  formatterEnabled: boolean;
-  canvasSelectionEnabled: boolean;
+}
+
+export interface UiCanvasState {
   previewCanvasSize: PreviewCanvasSize;
   imageTransformMode: ImageTransformMode;
   canvasImageOffset: CanvasImageOffset;
   canvasBackgroundLayerEnabled: boolean;
   canvasBackgroundColor: string;
+}
+
+export interface UiToolsState {
+  maskPreviewEnabled: boolean;
+  centerGuidesEnabled: boolean;
+  validatorEnabled: boolean;
+  formatterEnabled: boolean;
+  canvasSelectionEnabled: boolean;
+}
+
+export interface UiSequenceState {
   pendingSequenceThumbnail: PendingSequenceThumbnailState | null;
 }
+
+export interface UiState extends UiLayoutState, UiCanvasState, UiToolsState, UiSequenceState {}
 
 export interface UiActions {
   setIsFocusMode: (value: boolean) => void;
@@ -91,6 +104,11 @@ export interface UiActions {
   getPreviewCanvasImageFrame: () => PreviewCanvasImageFrameBinding | null;
 }
 
+const UiLayoutContext = createContext<UiLayoutState | null>(null);
+const UiCanvasContext = createContext<UiCanvasState | null>(null);
+const UiToolsContext = createContext<UiToolsState | null>(null);
+const UiSequenceContext = createContext<UiSequenceState | null>(null);
+
 const UiStateContext = createContext<UiState | null>(null);
 const UiActionsContext = createContext<UiActions | null>(null);
 
@@ -110,35 +128,33 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
   const previewCanvasViewportCropResolverRef = useRef<PreviewCanvasViewportCropResolver | null>(null);
   const previewCanvasImageFrameResolverRef = useRef<PreviewCanvasImageFrameResolver | null>(null);
 
+  const layoutState = useMemo<UiLayoutState>(() => ({ isFocusMode }), [isFocusMode]);
+  const canvasState = useMemo<UiCanvasState>(() => ({
+    previewCanvasSize,
+    imageTransformMode,
+    canvasImageOffset: canvasImageOffsetState,
+    canvasBackgroundLayerEnabled,
+    canvasBackgroundColor,
+  }), [previewCanvasSize, imageTransformMode, canvasImageOffsetState, canvasBackgroundLayerEnabled, canvasBackgroundColor]);
+
+  const toolsState = useMemo<UiToolsState>(() => ({
+    maskPreviewEnabled,
+    centerGuidesEnabled,
+    validatorEnabled,
+    formatterEnabled,
+    canvasSelectionEnabled,
+  }), [maskPreviewEnabled, centerGuidesEnabled, validatorEnabled, formatterEnabled, canvasSelectionEnabled]);
+
+  const sequenceState = useMemo<UiSequenceState>(() => ({ pendingSequenceThumbnail }), [pendingSequenceThumbnail]);
+
   const state = useMemo<UiState>(
     () => ({
-      isFocusMode,
-      maskPreviewEnabled,
-      centerGuidesEnabled,
-      validatorEnabled,
-      formatterEnabled,
-      canvasSelectionEnabled,
-      previewCanvasSize,
-      imageTransformMode,
-      canvasImageOffset: canvasImageOffsetState,
-      canvasBackgroundLayerEnabled,
-      canvasBackgroundColor,
-      pendingSequenceThumbnail,
+      ...layoutState,
+      ...canvasState,
+      ...toolsState,
+      ...sequenceState,
     }),
-    [
-      centerGuidesEnabled,
-      canvasSelectionEnabled,
-      previewCanvasSize,
-      formatterEnabled,
-      imageTransformMode,
-      isFocusMode,
-      maskPreviewEnabled,
-      validatorEnabled,
-      canvasImageOffsetState,
-      canvasBackgroundLayerEnabled,
-      canvasBackgroundColor,
-      pendingSequenceThumbnail,
-    ]
+    [layoutState, canvasState, toolsState, sequenceState]
   );
 
   const actions = useMemo<UiActions>(
@@ -188,11 +204,43 @@ export function UiProvider({ children }: { children: React.ReactNode }): React.J
 
   return (
     <UiActionsContext.Provider value={actions}>
-      <UiStateContext.Provider value={state}>
-        {children}
-      </UiStateContext.Provider>
+      <UiLayoutContext.Provider value={layoutState}>
+        <UiCanvasContext.Provider value={canvasState}>
+          <UiToolsContext.Provider value={toolsState}>
+            <UiSequenceContext.Provider value={sequenceState}>
+              <UiStateContext.Provider value={state}>
+                {children}
+              </UiStateContext.Provider>
+            </UiSequenceContext.Provider>
+          </UiToolsContext.Provider>
+        </UiCanvasContext.Provider>
+      </UiLayoutContext.Provider>
     </UiActionsContext.Provider>
   );
+}
+
+export function useUiLayoutState(): UiLayoutState {
+  const ctx = useContext(UiLayoutContext);
+  if (!ctx) throw new Error('useUiLayoutState must be used within a UiProvider');
+  return ctx;
+}
+
+export function useUiCanvasState(): UiCanvasState {
+  const ctx = useContext(UiCanvasContext);
+  if (!ctx) throw new Error('useUiCanvasState must be used within a UiProvider');
+  return ctx;
+}
+
+export function useUiToolsState(): UiToolsState {
+  const ctx = useContext(UiToolsContext);
+  if (!ctx) throw new Error('useUiToolsState must be used within a UiProvider');
+  return ctx;
+}
+
+export function useUiSequenceState(): UiSequenceState {
+  const ctx = useContext(UiSequenceContext);
+  if (!ctx) throw new Error('useUiSequenceState must be used within a UiProvider');
+  return ctx;
 }
 
 export function useUiState(): UiState {

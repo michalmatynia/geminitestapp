@@ -10,7 +10,7 @@ import { SelectSimple } from '@/shared/ui';
 
 import { useCmsDomainSelection } from '../../hooks/useCmsDomainSelection';
 import { useCmsPages, useCmsPage } from '../../hooks/useCmsQueries';
-import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+import { usePageBuilderState, usePageBuilderDispatch } from '../../hooks/usePageBuilderContext';
 
 
 type PageSelectorBarProps = {
@@ -19,7 +19,8 @@ type PageSelectorBarProps = {
 
 export function PageSelectorBar({ variant = 'bar' }: PageSelectorBarProps): React.ReactNode {
   const isToolbar = variant === 'toolbar';
-  const { state, dispatch } = usePageBuilder();
+  const state = usePageBuilderState();
+  const dispatch = usePageBuilderDispatch();
   const { activeDomainId } = useCmsDomainSelection();
   const pagesQuery = useCmsPages(activeDomainId);
   const searchParams = useSearchParams();

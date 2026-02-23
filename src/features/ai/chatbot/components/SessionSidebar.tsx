@@ -5,7 +5,7 @@ import { Plus, Trash2, MessageSquare } from 'lucide-react';
 import type { ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbot';
 import { Button } from '@/shared/ui';
 
-import { useChatbot } from '../context/ChatbotContext';
+import { useChatbotSessions } from '../context/ChatbotContext';
 
 export function SessionSidebar(): React.JSX.Element {
   const {
@@ -14,7 +14,7 @@ export function SessionSidebar(): React.JSX.Element {
     selectSession: onSelectSession,
     createNewSession: onNewSession,
     deleteSession: onDeleteSession,
-  } = useChatbot();
+  } = useChatbotSessions();
 
   return (
     <div className='flex h-full flex-col bg-card/80 border-r border-border'>

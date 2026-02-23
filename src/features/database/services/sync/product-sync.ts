@@ -52,7 +52,10 @@ export const syncProducts: SyncHandler = async ({ mongo, prisma, normalizeId, to
           : [],
         categories: ((): Array<{ categoryId: string; assignedAt: Date }> => {
           const categoryId = doc.categoryId;
-          const categories = Array.isArray(doc.categories) ? doc.categories : [];
+          const categories = (Array.isArray(doc.categories) ? doc.categories : []).map(c => ({
+            categoryId: c.categoryId,
+            assignedAt: toDate(c.assignedAt) ?? new Date()
+          }));
           if (categoryId && !categories.some((c) => c.categoryId === categoryId)) {
             return [{ categoryId, assignedAt: new Date() }, ...categories];
           }

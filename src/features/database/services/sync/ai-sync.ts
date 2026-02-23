@@ -1,4 +1,4 @@
-import type { Prisma, ProductAiJobStatus, AiPathRunStatus, AiPathNodeStatus } from '@prisma/client';
+import type { Prisma, ProductAiJobStatus, AiPathRunStatus, AiPathNodeStatus, AiPathRunEventLevel } from '@prisma/client';
 import type { SyncHandler } from './types';
 
 export const syncProductAiJobs: SyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
@@ -96,7 +96,7 @@ export const syncAiPathRunNodes: SyncHandler = async ({ mongo, prisma, normalize
   return { sourceCount: data.length, targetDeleted: deleted.count, targetInserted: created.count };
 };
 
-export const syncAiPathRunEvents: SyncHandler = async ({ mongo, prisma, normalizeId, toDate, toJsonValue }) => {
+export const syncAiPathRunEvents: SyncHandler = async ({ mongo, prisma, normalizeId, toJsonValue }) => {
   const docs = await mongo.collection('ai_path_run_events').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.AiPathRunEventCreateManyInput | null => {
@@ -106,7 +106,7 @@ export const syncAiPathRunEvents: SyncHandler = async ({ mongo, prisma, normaliz
       return {
         id,
         runId,
-        level: (doc as { level?: string }).level ?? 'info',
+        level: ((doc as { level?: string }).level as AiPathRunEventLevel) ?? 'info',
         message: (doc as { message?: string }).message ?? '',
         metadata: toJsonValue((doc as { metadata?: unknown }).metadata ?? null) as Prisma.InputJsonValue,
         createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),

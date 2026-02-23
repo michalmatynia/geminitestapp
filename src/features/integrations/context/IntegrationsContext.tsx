@@ -597,7 +597,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     }
   };
 
-  const handleConnectionTest = async (
+  const handleConnectionTest = React.useCallback(async (
     connection: IntegrationConnection,
     type: 'test' | 'base/test' | 'allegro/test',
     title: string,
@@ -648,9 +648,9 @@ Inventories found: \${String(payload['inventoryCount'])}`;
 Account: \${identifier}`;
       }
 
-      setTestSuccessMessage(`\${title} succeeded.
-URL: \${requestUrl}
-Duration: \${durationMs}ms\${extraInfo}`);
+      setTestSuccessMessage(`${title} succeeded.
+URL: ${requestUrl}
+Duration: ${durationMs}ms${extraInfo}`);
       setShowTestSuccessModal(true);
       refreshConnections(activeIntegration.id);
     } catch (error: unknown) {
@@ -658,26 +658,26 @@ Duration: \${durationMs}ms\${extraInfo}`);
       const message = (error as Error)?.message ?? 'Unknown error';
       const data = (error as Record<string, unknown>)['data'] as Record<string, unknown> | undefined;
       
-      let errorMessage = `\${title} failed.
-URL: \${requestUrl}
-Duration: \${durationMs}ms
-Error: \${message}`;
+      let errorMessage = `${title} failed.
+URL: ${requestUrl}
+Duration: ${durationMs}ms
+Error: ${message}`;
       
       if (data) {
         const normalizedSteps = normalizeSteps((data['steps'] as unknown[]) || []);
         const failedStep = normalizedSteps.find((s: TestLogEntry) => s.status === 'failed');
         const failedStepDetail = failedStep?.detail || '';
         const errorBody = (data['error'] as string) || failedStepDetail || 'No response body';
-        errorMessage = `\${title} failed.
-URL: \${requestUrl}
-Duration: \${durationMs}ms
+        errorMessage = `${title} failed.
+URL: ${requestUrl}
+Duration: ${durationMs}ms
 
 Response:
-\${errorBody}`;
+${errorBody}`;
 
         const steps = normalizedSteps.length
           ? normalizedSteps.map((s: TestLogEntry) => s.status === 'failed' && !s.detail ? { ...s, detail: errorMessage } : s)
-          : [{ step: `\${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }];
+          : [{ step: `${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }];
           
         setTestLog(steps);
         setTestErrorMeta({
@@ -694,7 +694,7 @@ Response:
     } finally {
       setIsTesting(false);
     }
-  };
+  }, [activeIntegration, testConnectionMutation, refreshConnections]);
 
   const handleBaselinkerTest = (c: IntegrationConnection) => handleConnectionTest(c, 'base/test', 'Baselinker connection test');
   const handleAllegroTest = (c: IntegrationConnection) => handleConnectionTest(c, 'allegro/test', 'Allegro connection test');

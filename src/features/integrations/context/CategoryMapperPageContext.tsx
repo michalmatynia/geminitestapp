@@ -26,14 +26,35 @@ type SelectedMarketplaceConnection = {
   integration: IntegrationWithConnections;
 };
 
-type CategoryMapperPageContextType = {
+// --- Granular Contexts ---
+
+export interface CategoryMapperPageData {
   integrations: IntegrationWithConnections[];
   loading: boolean;
+}
+const DataContext = createContext<CategoryMapperPageData | null>(null);
+export const useCategoryMapperPageData = () => {
+  const context = useContext(DataContext);
+  if (!context) throw new Error('useCategoryMapperPageData must be used within CategoryMapperPageProvider');
+  return context;
+};
+
+export interface CategoryMapperPageSelection {
   selectedConnectionId: string | null;
   selectedConnection: SelectedMarketplaceConnection | null;
   isSupportedConnection: boolean;
   setSelectedConnectionId: (connectionId: string) => void;
+}
+const SelectionContext = createContext<CategoryMapperPageSelection | null>(null);
+export const useCategoryMapperPageSelection = () => {
+  const context = useContext(SelectionContext);
+  if (!context) throw new Error('useCategoryMapperPageSelection must be used within CategoryMapperPageProvider');
+  return context;
 };
+
+// --- Legacy Aggregator ---
+
+type CategoryMapperPageContextType = CategoryMapperPageData & CategoryMapperPageSelection;
 
 const CategoryMapperPageContext = createContext<CategoryMapperPageContextType | null>(null);
 
@@ -111,28 +132,33 @@ export function CategoryMapperPageProvider({
     setSelectedConnectionIdOverride(connectionId);
   }, []);
 
-  const value = useMemo<CategoryMapperPageContextType>(
+  const dataValue = useMemo<CategoryMapperPageData>(() => ({
+    integrations,
+    loading: integrationsQuery.isLoading,
+  }), [integrations, integrationsQuery.isLoading]);
+
+  const selectionValue = useMemo<CategoryMapperPageSelection>(() => ({
+    selectedConnectionId,
+    selectedConnection,
+    isSupportedConnection,
+    setSelectedConnectionId,
+  }), [selectedConnectionId, selectedConnection, isSupportedConnection, setSelectedConnectionId]);
+
+  const aggregatedValue = useMemo<CategoryMapperPageContextType>(
     () => ({
-      integrations,
-      loading: integrationsQuery.isLoading,
-      selectedConnectionId,
-      selectedConnection,
-      isSupportedConnection,
-      setSelectedConnectionId,
+      ...dataValue,
+      ...selectionValue,
     }),
-    [
-      integrations,
-      integrationsQuery.isLoading,
-      selectedConnectionId,
-      selectedConnection,
-      isSupportedConnection,
-      setSelectedConnectionId,
-    ]
+    [dataValue, selectionValue]
   );
 
   return (
-    <CategoryMapperPageContext.Provider value={value}>
-      {children}
-    </CategoryMapperPageContext.Provider>
+    <DataContext.Provider value={dataValue}>
+      <SelectionContext.Provider value={selectionValue}>
+        <CategoryMapperPageContext.Provider value={aggregatedValue}>
+          {children}
+        </CategoryMapperPageContext.Provider>
+      </SelectionContext.Provider>
+    </DataContext.Provider>
   );
 }

@@ -17,8 +17,9 @@ import { internalError } from '@/shared/errors/app-error';
 import { useBaseComSettings } from '../components/listings/hooks/useBaseComSettings';
 import { useIntegrationSelection } from '../components/listings/hooks/useIntegrationSelection';
 
-interface ListingSettingsContextType {
-  // Integration & Connection Selection
+// --- Granular Contexts ---
+
+export interface ListingSelection {
   integrations: IntegrationWithConnections[];
   loadingIntegrations: boolean;
   selectedIntegrationId: string;
@@ -28,8 +29,15 @@ interface ListingSettingsContextType {
   isTraderaIntegration: boolean;
   setSelectedIntegrationId: (id: string) => void;
   setSelectedConnectionId: (id: string) => void;
+}
+const SelectionContext = createContext<ListingSelection | null>(null);
+export const useListingSelection = () => {
+  const context = useContext(SelectionContext);
+  if (!context) throw new Error('useListingSelection must be used within ListingSettingsProvider');
+  return context;
+};
 
-  // Base.com Settings
+export interface ListingBaseComSettings {
   templates: Template[];
   selectedTemplateId: string;
   setSelectedTemplateId: (id: string) => void;
@@ -39,8 +47,15 @@ interface ListingSettingsContextType {
   loadingInventories: boolean;
   allowDuplicateSku: boolean;
   setAllowDuplicateSku: (allowed: boolean) => void;
+}
+const BaseComSettingsContext = createContext<ListingBaseComSettings | null>(null);
+export const useListingBaseComSettings = () => {
+  const context = useContext(BaseComSettingsContext);
+  if (!context) throw new Error('useListingBaseComSettings must be used within ListingSettingsProvider');
+  return context;
+};
 
-  // Tradera Settings
+export interface ListingTraderaSettings {
   selectedTraderaDurationHours: number;
   setSelectedTraderaDurationHours: (value: number) => void;
   selectedTraderaAutoRelistEnabled: boolean;
@@ -50,6 +65,16 @@ interface ListingSettingsContextType {
   selectedTraderaTemplateId: string;
   setSelectedTraderaTemplateId: (value: string) => void;
 }
+const TraderaSettingsContext = createContext<ListingTraderaSettings | null>(null);
+export const useListingTraderaSettings = () => {
+  const context = useContext(TraderaSettingsContext);
+  if (!context) throw new Error('useListingTraderaSettings must be used within ListingSettingsProvider');
+  return context;
+};
+
+// --- Legacy Aggregator ---
+
+interface ListingSettingsContextType extends ListingSelection, ListingBaseComSettings, ListingTraderaSettings {}
 
 const ListingSettingsContext = createContext<ListingSettingsContextType | null>(null);
 
@@ -123,11 +148,13 @@ export function ListingSettingsProvider({
     );
   }, [selection.isTraderaIntegration, selectedTraderaConnection]);
 
-  const value: ListingSettingsContextType = {
+  const selectionValue = useMemo<ListingSelection>(() => ({
     ...selection,
     selectedIntegration: selection.selectedIntegration ?? null,
     loadingIntegrations: selection.loading,
-    ...baseComSettings,
+  }), [selection]);
+
+  const traderaValue = useMemo<ListingTraderaSettings>(() => ({
     selectedTraderaDurationHours,
     setSelectedTraderaDurationHours,
     selectedTraderaAutoRelistEnabled,
@@ -136,11 +163,23 @@ export function ListingSettingsProvider({
     setSelectedTraderaAutoRelistLeadMinutes,
     selectedTraderaTemplateId,
     setSelectedTraderaTemplateId,
-  };
+  }), [selectedTraderaDurationHours, selectedTraderaAutoRelistEnabled, selectedTraderaAutoRelistLeadMinutes, selectedTraderaTemplateId]);
+
+  const aggregatedValue = useMemo<ListingSettingsContextType>(() => ({
+    ...selectionValue,
+    ...baseComSettings,
+    ...traderaValue,
+  }), [selectionValue, baseComSettings, traderaValue]);
 
   return (
-    <ListingSettingsContext.Provider value={value}>
-      {children}
-    </ListingSettingsContext.Provider>
+    <SelectionContext.Provider value={selectionValue}>
+      <BaseComSettingsContext.Provider value={baseComSettings}>
+        <TraderaSettingsContext.Provider value={traderaValue}>
+          <ListingSettingsContext.Provider value={aggregatedValue}>
+            {children}
+          </ListingSettingsContext.Provider>
+        </TraderaSettingsContext.Provider>
+      </BaseComSettingsContext.Provider>
+    </SelectionContext.Provider>
   );
 }

@@ -6,7 +6,7 @@ import { useFormContext } from 'react-hook-form';
 
 import * as productsApi from '@/features/products/api/products';
 import DebugPanel from '@/features/products/components/DebugPanel';
-import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
@@ -107,7 +107,7 @@ export default function ProductForm({
     product,
     draft,
     ConfirmationModal,
-  } = useProductFormCore();
+  } = useProductFormContext();
 
   const {
     categories,

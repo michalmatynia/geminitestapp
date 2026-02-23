@@ -159,7 +159,7 @@ export const syncProducts: SyncHandler = async ({ mongo, prisma, normalizeId, to
   };
 };
 
-export const syncProductDrafts: SyncHandler = async ({ mongo, prisma, normalizeId, toDate, toJsonValue }) => {
+export const syncProductDrafts: SyncHandler = async ({ mongo, prisma, normalizeId, toDate }) => {
   const docs = await mongo.collection('product_drafts').find({}).toArray();
   const data = docs
     .map((doc: Record<string, unknown>): Prisma.ProductDraftCreateManyInput | null => {

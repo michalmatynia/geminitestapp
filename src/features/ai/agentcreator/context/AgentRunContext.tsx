@@ -8,20 +8,50 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 import { useAgentAudits, useAgentLogs, useAgentRuns, useAgentSnapshots } from '../hooks/useAgentRunsQueries';
 
-interface AgentRunContextType {
+// --- Granular Contexts ---
+
+export interface AgentRunListData {
+  agentRuns: AiPathRunRecord[];
+  isLoadingRuns: boolean;
+  refetchRuns: () => Promise<unknown>;
+  error: Error | null;
+}
+const RunListContext = createContext<AgentRunListData | null>(null);
+export const useAgentRunList = () => {
+  const context = useContext(RunListContext);
+  if (!context) throw new Error('useAgentRunList must be used within AgentRunProvider');
+  return context;
+};
+
+export interface AgentRunSelectionData {
   selectedAgentRunId: string | null;
   setSelectedAgentRunId: (id: string | null) => void;
   selectedAgentRun: AiPathRunRecord | null;
-  agentRuns: AiPathRunRecord[];
+}
+const RunSelectionContext = createContext<AgentRunSelectionData | null>(null);
+export const useAgentRunSelection = () => {
+  const context = useContext(RunSelectionContext);
+  if (!context) throw new Error('useAgentRunSelection must be used within AgentRunProvider');
+  return context;
+};
+
+export interface AgentRunDetailData {
   agentSnapshots: AgentSnapshot[];
   agentBrowserLogs: AgentBrowserLog[];
   agentAuditLogs: AgentAuditLog[];
   agentStreamStatus: 'idle' | 'connecting' | 'live' | 'error';
   setAgentStreamStatus: (status: 'idle' | 'connecting' | 'live' | 'error') => void;
-  isLoadingRuns: boolean;
-  refetchRuns: () => Promise<unknown>;
-  error: Error | null;
 }
+const RunDetailContext = createContext<AgentRunDetailData | null>(null);
+export const useAgentRunDetail = () => {
+  const context = useContext(RunDetailContext);
+  if (!context) throw new Error('useAgentRunDetail must be used within AgentRunProvider');
+  return context;
+};
+
+// --- Legacy Aggregator ---
+
+interface AgentRunContextType extends AgentRunListData, AgentRunSelectionData, AgentRunDetailData {}
 
 const AgentRunContext = createContext<AgentRunContextType | null>(null);
 
@@ -78,24 +108,42 @@ export function AgentRunProvider({ children }: { children: ReactNode }): React.J
     };
   }, [selectedAgentRunId]);
 
-  const value = useMemo((): AgentRunContextType => ({
+  const listValue = useMemo<AgentRunListData>(() => ({
+    agentRuns,
+    isLoadingRuns,
+    refetchRuns,
+    error,
+  }), [agentRuns, isLoadingRuns, refetchRuns, error]);
+
+  const selectionValue = useMemo<AgentRunSelectionData>(() => ({
     selectedAgentRunId,
     setSelectedAgentRunId,
     selectedAgentRun,
-    agentRuns,
+  }), [selectedAgentRunId, selectedAgentRun]);
+
+  const detailValue = useMemo<AgentRunDetailData>(() => ({
     agentSnapshots,
     agentBrowserLogs,
     agentAuditLogs,
     agentStreamStatus,
     setAgentStreamStatus,
-    isLoadingRuns,
-    refetchRuns,
-    error,
-  }), [selectedAgentRunId, selectedAgentRun, agentRuns, agentSnapshots, agentBrowserLogs, agentAuditLogs, agentStreamStatus, setAgentStreamStatus, isLoadingRuns, refetchRuns, error]);
+  }), [agentSnapshots, agentBrowserLogs, agentAuditLogs, agentStreamStatus]);
+
+  const aggregatedValue = useMemo((): AgentRunContextType => ({
+    ...listValue,
+    ...selectionValue,
+    ...detailValue,
+  }), [listValue, selectionValue, detailValue]);
 
   return (
-    <AgentRunContext.Provider value={value}>
-      {children}
-    </AgentRunContext.Provider>
+    <RunListContext.Provider value={listValue}>
+      <RunSelectionContext.Provider value={selectionValue}>
+        <RunDetailContext.Provider value={detailValue}>
+          <AgentRunContext.Provider value={aggregatedValue}>
+            {children}
+          </AgentRunContext.Provider>
+        </RunDetailContext.Provider>
+      </RunSelectionContext.Provider>
+    </RunListContext.Provider>
   );
 }

@@ -15,8 +15,7 @@ import {
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import { logClientError } from '@/features/observability';
 import type { 
-  ProductListingWithDetails,
-  ProductListingExportEventDto
+  ProductListingWithDetails
 } from '@/shared/contracts/integrations';
 import type {
   ImageRetryPresetDto as ImageRetryPreset,
@@ -27,14 +26,23 @@ import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 
-interface ProductListingsContextType {
+// --- Granular Contexts ---
+
+export interface ProductListingsData {
   product: ProductWithImages;
   listings: ProductListingWithDetails[];
   isLoading: boolean;
   error: string | null;
   setError: (error: string | null) => void;
-  
-  // UI States
+}
+const DataContext = createContext<ProductListingsData | null>(null);
+export const useProductListingsData = () => {
+  const context = useContext(DataContext);
+  if (!context) throw new Error('useProductListingsData must be used within ProductListingsProvider');
+  return context;
+};
+
+export interface ProductListingsUIState {
   deletingFromBase: string | null;
   purgingListing: string | null;
   exportingListing: string | null;
@@ -46,22 +54,46 @@ interface ProductListingsContextType {
   setInventoryOverrides: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   historyOpenByListing: Record<string, boolean>;
   setHistoryOpenByListing: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
-  
-  // Modals/Dialogs
+}
+const UIStateContext = createContext<ProductListingsUIState | null>(null);
+export const useProductListingsUIState = () => {
+  const context = useContext(UIStateContext);
+  if (!context) throw new Error('useProductListingsUIState must be used within ProductListingsProvider');
+  return context;
+};
+
+export interface ProductListingsModals {
   listingToDelete: string | null;
   setListingToDelete: (id: string | null) => void;
   listingToPurge: string | null;
   setListingToPurge: (id: string | null) => void;
   isSyncImagesConfirmOpen: boolean;
   setIsSyncImagesConfirmOpen: (open: boolean) => void;
-  
-  // Export Logs
+  onClose: () => void;
+  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
+  filterIntegrationSlug?: string | null | undefined;
+}
+const ModalsContext = createContext<ProductListingsModals | null>(null);
+export const useProductListingsModals = () => {
+  const context = useContext(ModalsContext);
+  if (!context) throw new Error('useProductListingsModals must be used within ProductListingsProvider');
+  return context;
+};
+
+export interface ProductListingsLogs {
   exportLogs: CapturedLog[];
   logsOpen: boolean;
   setLogsOpen: (open: boolean) => void;
   lastExportListingId: string | null;
-  
-  // Actions
+}
+const LogsContext = createContext<ProductListingsLogs | null>(null);
+export const useProductListingsLogs = () => {
+  const context = useContext(LogsContext);
+  if (!context) throw new Error('useProductListingsLogs must be used within ProductListingsProvider');
+  return context;
+};
+
+export interface ProductListingsActions {
   handleDeleteFromBase: (listingId: string) => Promise<void>;
   handlePurgeListing: (listingId: string) => Promise<void>;
   handleSaveInventoryId: (listingId: string) => Promise<void>;
@@ -76,12 +108,17 @@ interface ProductListingsContextType {
   handleExportImagesOnly: (listingId: string, preset?: ImageRetryPreset) => Promise<void>;
   handleImageRetry: (preset: ImageRetryPreset) => Promise<void>;
   refetchListings: () => Promise<void>;
-  
-  // Modal Props
-  onClose: () => void;
-  onStartListing?: ((integrationId: string, connectionId: string) => void) | undefined;
-  filterIntegrationSlug?: string | null | undefined;
 }
+const ActionsContext = createContext<ProductListingsActions | null>(null);
+export const useProductListingsActions = () => {
+  const context = useContext(ActionsContext);
+  if (!context) throw new Error('useProductListingsActions must be used within ProductListingsProvider');
+  return context;
+};
+
+// --- Legacy Aggregator ---
+
+interface ProductListingsContextType extends ProductListingsData, ProductListingsUIState, ProductListingsModals, ProductListingsLogs, ProductListingsActions {}
 
 const ProductListingsContext = createContext<ProductListingsContextType | undefined>(undefined);
 
@@ -307,7 +344,7 @@ export function ProductListingsProvider({
   const getLatestTemplateId = (listing: ProductListingWithDetails): string | null => {
     const history = listing.exportHistory ?? [];
     if (history.length === 0) return null;
-    const sorted = [...history].sort((a: ProductListingExportEventDto, b: ProductListingExportEventDto) => {
+    const sorted = [...history].sort((a: any, b: any) => {
       const aTime = a.exportedAt ? new Date(a.exportedAt).getTime() : 0;
       const bTime = b.exportedAt ? new Date(b.exportedAt).getTime() : 0;
       return bTime - aTime;
@@ -431,12 +468,15 @@ export function ProductListingsProvider({
     }
   }, [exportListingToBase, lastExportListingId, onListingsUpdated, product.id]);
 
-  const value = useMemo(() => ({
+  const dataValue = useMemo<ProductListingsData>(() => ({
     product,
     listings,
     isLoading: isListingsLoading,
     error,
     setError,
+  }), [product, listings, isListingsLoading, error]);
+
+  const uiStateValue = useMemo<ProductListingsUIState>(() => ({
     deletingFromBase,
     purgingListing,
     exportingListing,
@@ -448,16 +488,28 @@ export function ProductListingsProvider({
     setInventoryOverrides,
     historyOpenByListing,
     setHistoryOpenByListing,
+  }), [deletingFromBase, purgingListing, exportingListing, savingInventoryId, syncingImages, relistingListing, openingTraderaLogin, inventoryOverrides, historyOpenByListing]);
+
+  const modalsValue = useMemo<ProductListingsModals>(() => ({
     listingToDelete,
     setListingToDelete,
     listingToPurge,
     setListingToPurge,
     isSyncImagesConfirmOpen,
     setIsSyncImagesConfirmOpen,
+    onClose,
+    onStartListing,
+    filterIntegrationSlug,
+  }), [listingToDelete, listingToPurge, isSyncImagesConfirmOpen, onClose, onStartListing, filterIntegrationSlug]);
+
+  const logsValue = useMemo<ProductListingsLogs>(() => ({
     exportLogs,
     logsOpen,
     setLogsOpen,
     lastExportListingId,
+  }), [exportLogs, logsOpen, lastExportListingId]);
+
+  const actionsValue = useMemo<ProductListingsActions>(() => ({
     handleDeleteFromBase,
     handlePurgeListing,
     handleSaveInventoryId,
@@ -468,21 +520,30 @@ export function ProductListingsProvider({
     handleExportImagesOnly,
     handleImageRetry,
     refetchListings: async () => { await listingsQuery.refetch(); },
-    onClose,
-    onStartListing,
-    filterIntegrationSlug,
-  }), [
-    product, listings, listingsQuery, isListingsLoading, error, deletingFromBase, purgingListing, exportingListing,
-    savingInventoryId, syncingImages, relistingListing, openingTraderaLogin, inventoryOverrides, historyOpenByListing, listingToDelete,
-    listingToPurge, isSyncImagesConfirmOpen, exportLogs, logsOpen, lastExportListingId,
-    handleDeleteFromBase, handlePurgeListing, handleSaveInventoryId, handleSyncBaseImages,
-    handleRelistTradera, handleOpenTraderaLogin, handleExportAgain, handleExportImagesOnly, handleImageRetry, onClose, onStartListing, filterIntegrationSlug
-  ]);
+  }), [handleDeleteFromBase, handlePurgeListing, handleSaveInventoryId, handleSyncBaseImages, handleRelistTradera, handleOpenTraderaLogin, handleExportAgain, handleExportImagesOnly, handleImageRetry, listingsQuery]);
+
+  const aggregatedValue = useMemo<ProductListingsContextType>(() => ({
+    ...dataValue,
+    ...uiStateValue,
+    ...modalsValue,
+    ...logsValue,
+    ...actionsValue,
+  }), [dataValue, uiStateValue, modalsValue, logsValue, actionsValue]);
 
   return (
-    <ProductListingsContext.Provider value={value}>
-      {children}
-    </ProductListingsContext.Provider>
+    <DataContext.Provider value={dataValue}>
+      <UIStateContext.Provider value={uiStateValue}>
+        <ModalsContext.Provider value={modalsValue}>
+          <LogsContext.Provider value={logsValue}>
+            <ActionsContext.Provider value={actionsValue}>
+              <ProductListingsContext.Provider value={aggregatedValue}>
+                {children}
+              </ProductListingsContext.Provider>
+            </ActionsContext.Provider>
+          </LogsContext.Provider>
+        </ModalsContext.Provider>
+      </UIStateContext.Provider>
+    </DataContext.Provider>
   );
 }
 

@@ -233,11 +233,11 @@ export default function ProductFormStudio(): React.JSX.Element {
 
   const {
     product,
-    refreshImagesFromProduct,
   } = useProductFormCore();
 
   const {
     imageSlots,
+    refreshImagesFromProduct,
   } = useProductFormImages();
   const studioProjectsQuery = useStudioProjects();
   const studioProjectIds = useMemo(

@@ -162,6 +162,9 @@ export const ProductFormContext = createContext<ProductFormContextType | null>(
 );
 
 export const useProductFormContext = (): ProductFormContextType => {
+  const legacyContext = useContext(ProductFormContext);
+  if (legacyContext) return legacyContext;
+
   const core = useProductFormCore();
   const metadata = useProductFormMetadata();
   const images = useProductFormImages();
@@ -193,8 +196,6 @@ function ProductFormSubmitController({
 }) {
   const {
     methods,
-    setHandleSubmit,
-    setConfirmationModal,
     setHasUnsavedChanges,
     product,
     selectedNoteIds,
@@ -240,14 +241,6 @@ function ProductFormSubmitController({
     onSuccess,
     onEditSave,
   });
-
-  useEffect(() => {
-    setHandleSubmit(handleSubmit);
-  }, [handleSubmit, setHandleSubmit]);
-
-  useEffect(() => {
-    setConfirmationModal(ConfirmationModal);
-  }, [ConfirmationModal, setConfirmationModal]);
 
   useEffect(() => {
     setUploading(uploading);
@@ -342,8 +335,18 @@ function ProductFormSubmitController({
       ...imagesValue,
       ...parameterValue,
       ...studioValue,
+      handleSubmit,
+      ConfirmationModal,
     }),
-    [coreValue, metadataValue, imagesValue, parameterValue, studioValue]
+    [
+      coreValue,
+      metadataValue,
+      imagesValue,
+      parameterValue,
+      studioValue,
+      handleSubmit,
+      ConfirmationModal,
+    ]
   );
 
   return (

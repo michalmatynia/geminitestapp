@@ -56,38 +56,62 @@ type PromptEngineProviderProps = {
 };
 export type { RuleDraft } from './prompt-engine-context-utils';
 
-export interface PromptEngineContextValue {
-  // State
+// --- Granular Contexts ---
+
+export interface PromptEngineConfig {
   promptEngineSettings: PromptEngineSettings;
-  query: string;
-  severity: SeverityFilter;
-  scope: ScopeFilter;
   patternTab: PatternCollectionTab;
   exploderSubTab: ExploderPatternSubTab;
   patternTabLocked: boolean;
   exploderSubTabLocked: boolean;
   scopeLocked: boolean;
+  isUsingDefaults: boolean;
+}
+const ConfigContext = createContext<PromptEngineConfig | null>(null);
+export const usePromptEngineConfig = () => {
+  const context = useContext(ConfigContext);
+  if (!context) throw new Error('usePromptEngineConfig must be used within PromptEngineProvider');
+  return context;
+};
+
+export interface PromptEngineFilters {
+  query: string;
+  setQuery: (query: string) => void;
+  severity: SeverityFilter;
+  setSeverity: (severity: SeverityFilter) => void;
+  scope: ScopeFilter;
+  setScope: (scope: ScopeFilter) => void;
   includeDisabled: boolean;
+  setIncludeDisabled: (include: boolean) => void;
+}
+const FiltersContext = createContext<PromptEngineFilters | null>(null);
+export const usePromptEngineFilters = () => {
+  const context = useContext(FiltersContext);
+  if (!context) throw new Error('usePromptEngineFilters must be used within PromptEngineProvider');
+  return context;
+};
+
+export interface PromptEngineData {
   drafts: RuleDraft[];
   learnedDrafts: RuleDraft[];
+  filteredDrafts: RuleDraft[];
+  filteredLearnedDrafts: RuleDraft[];
   isDirty: boolean;
   learnedDirty: boolean;
   saveError: string | null;
   isLoading: boolean;
   isSaving: boolean;
-  isUsingDefaults: boolean;
-  
-  // Derived state
-  filteredDrafts: RuleDraft[];
-  filteredLearnedDrafts: RuleDraft[];
-  
-  // Actions
-  setQuery: (query: string) => void;
-  setSeverity: (severity: SeverityFilter) => void;
-  setScope: (scope: ScopeFilter) => void;
+}
+const DataContext = createContext<PromptEngineData | null>(null);
+export const usePromptEngineData = () => {
+  const context = useContext(DataContext);
+  if (!context) throw new Error('usePromptEngineData must be used within PromptEngineProvider');
+  return context;
+};
+
+export interface PromptEngineActions {
   setPatternTab: (tab: PatternCollectionTab) => void;
   setExploderSubTab: (subTab: ExploderPatternSubTab) => void;
-  setIncludeDisabled: (include: boolean) => void;
   handleRuleTextChange: (uid: string, nextText: string) => void;
   handlePatchRule: (uid: string, patch: RulePatch) => void;
   handleToggleRuleEnabled: (uid: string, enabled: boolean) => void;
@@ -108,6 +132,16 @@ export interface PromptEngineContextValue {
   handleSave: () => Promise<void>;
   handleCopy: (value: string, label: string) => Promise<void>;
 }
+const ActionsContext = createContext<PromptEngineActions | null>(null);
+export const usePromptEngineActions = () => {
+  const context = useContext(ActionsContext);
+  if (!context) throw new Error('usePromptEngineActions must be used within PromptEngineProvider');
+  return context;
+};
+
+// --- Legacy Aggregator ---
+
+export interface PromptEngineContextValue extends PromptEngineConfig, PromptEngineFilters, PromptEngineData, PromptEngineActions {}
 
 const PromptEngineContext = createContext<PromptEngineContextValue | undefined>(undefined);
 
@@ -594,7 +628,7 @@ export function PromptEngineProvider({
   const handleExport = useCallback((): void => {
     const invalidJson = drafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
     if (invalidJson.length > 0) {
-      toast(`Fix invalid JSON in ${invalidJson.length} rule(s) before exporting.`, { variant: 'error' });
+      toast(`Fix invalid JSON in \${invalidJson.length} rule(s) before exporting.`, { variant: 'error' });
       return;
     }
     const parsedRules = drafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
@@ -607,7 +641,7 @@ export function PromptEngineProvider({
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `prompt-engine-validation-patterns-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.download = `prompt-engine-validation-patterns-\${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -617,7 +651,7 @@ export function PromptEngineProvider({
   const handleExportLearned = useCallback((): void => {
     const invalidJson = learnedDrafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
     if (invalidJson.length > 0) {
-      toast(`Fix invalid JSON in ${invalidJson.length} learned rule(s) before exporting.`, { variant: 'error' });
+      toast(`Fix invalid JSON in \${invalidJson.length} learned rule(s) before exporting.`, { variant: 'error' });
       return;
     }
     const parsedRules = learnedDrafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
@@ -630,7 +664,7 @@ export function PromptEngineProvider({
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `prompt-engine-learned-patterns-${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.download = `prompt-engine-learned-patterns-\${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -667,7 +701,7 @@ export function PromptEngineProvider({
       toast(result.error, { variant: 'error' });
       return;
     }
-    setDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
+    setDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `\${rule.id}-\${index}`)));
     setIsDirty(true);
     setSaveError(null);
     toast('Validation patterns imported. Review and save to apply.', { variant: 'success' });
@@ -680,7 +714,7 @@ export function PromptEngineProvider({
       toast(result.error, { variant: 'error' });
       return;
     }
-    setLearnedDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
+    setLearnedDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `\${rule.id}-\${index}`)));
     setLearnedDirty(true);
     setSaveError(null);
     toast('Learned patterns imported. Review and save to apply.', { variant: 'success' });
@@ -689,12 +723,12 @@ export function PromptEngineProvider({
   const handleSave = useCallback(async (): Promise<void> => {
     const invalidJson = drafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
     if (invalidJson.length > 0) {
-      toast(`Fix invalid JSON in ${invalidJson.length} rule(s) before saving.`, { variant: 'error' });
+      toast(`Fix invalid JSON in \${invalidJson.length} rule(s) before saving.`, { variant: 'error' });
       return;
     }
     const invalidLearnedJson = learnedDrafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
     if (invalidLearnedJson.length > 0) {
-      toast(`Fix invalid JSON in ${invalidLearnedJson.length} learned rule(s) before saving.`, { variant: 'error' });
+      toast(`Fix invalid JSON in \${invalidLearnedJson.length} learned rule(s) before saving.`, { variant: 'error' });
       return;
     }
 
@@ -704,20 +738,20 @@ export function PromptEngineProvider({
     const invalidRuleIds: string[] = [];
     parsedRules.forEach((rule, index) => {
       const result = parsePromptValidationRules(JSON.stringify([rule]));
-      if (!result.ok) invalidRuleIds.push(rule.id || `#${index + 1}`);
+      if (!result.ok) invalidRuleIds.push(rule.id || `#\${index + 1}`);
     });
     if (invalidRuleIds.length > 0) {
-      toast(`Invalid rule(s): ${invalidRuleIds.join(', ')}.`, { variant: 'error' });
+      toast(`Invalid rule(s): \${invalidRuleIds.join(', ')}.`, { variant: 'error' });
       return;
     }
 
     const invalidLearnedIds: string[] = [];
     parsedLearnedRules.forEach((rule, index) => {
       const result = parsePromptValidationRules(JSON.stringify([rule]));
-      if (!result.ok) invalidLearnedIds.push(rule.id || `#${index + 1}`);
+      if (!result.ok) invalidLearnedIds.push(rule.id || `#\${index + 1}`);
     });
     if (invalidLearnedIds.length > 0) {
-      toast(`Invalid learned rule(s): ${invalidLearnedIds.join(', ')}.`, { variant: 'error' });
+      toast(`Invalid learned rule(s): \${invalidLearnedIds.join(', ')}.`, { variant: 'error' });
       return;
     }
 
@@ -746,8 +780,8 @@ export function PromptEngineProvider({
         key: PROMPT_ENGINE_SETTINGS_KEY,
         value: serializeSetting(nextSettings),
       });
-      setDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
-      setLearnedDrafts(learnedResult.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
+      setDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `\${rule.id}-\${index}`)));
+      setLearnedDrafts(learnedResult.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `\${rule.id}-\${index}`)));
       setIsDirty(false);
       setLearnedDirty(false);
       toast('Validation patterns saved.', { variant: 'success' });
@@ -761,107 +795,89 @@ export function PromptEngineProvider({
   const handleCopy = async (value: string, label: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(value);
-      toast(`${label} copied.`, { variant: 'success' });
+      toast(`\${label} copied.`, { variant: 'success' });
     } catch {
       toast('Failed to copy.', { variant: 'error' });
     }
   };
 
-  const value = useMemo(
-    () => ({
-      promptEngineSettings,
-      query,
-      severity,
-      scope,
-      patternTab: activePatternTab,
-      exploderSubTab: activeExploderSubTab,
-      patternTabLocked,
-      exploderSubTabLocked,
-      scopeLocked,
-      includeDisabled,
-      drafts,
-      learnedDrafts,
-      isDirty,
-      learnedDirty,
-      saveError,
-      isLoading: settingsQuery.isLoading,
-      isSaving: updateSetting.isPending,
-      isUsingDefaults: !rawSettings,
-      filteredDrafts,
-      filteredLearnedDrafts,
-      setQuery,
-      setSeverity,
-      setScope: handleSetScope,
-      setPatternTab: handleSetPatternTab,
-      setExploderSubTab: handleSetExploderSubTab,
-      setIncludeDisabled,
-      handleRuleTextChange,
-      handlePatchRule,
-      handleToggleRuleEnabled,
-      handleDuplicateRule,
-      handleSequenceDrop,
-      handleSaveSequenceGroup,
-      handleUngroupSequenceGroup,
-      handleLearnedRuleTextChange,
-      handleAddRule,
-      handleAddLearnedRule,
-      handleRemoveRule,
-      handleRemoveLearnedRule,
-      handleRefresh,
-      handleExport,
-      handleExportLearned,
-      handleImport,
-      handleImportLearned,
-      handleSave,
-      handleCopy,
-    }),
-    [
-      promptEngineSettings,
-      query,
-      severity,
-      scope,
-      activePatternTab,
-      activeExploderSubTab,
-      patternTabLocked,
-      exploderSubTabLocked,
-      scopeLocked,
-      includeDisabled,
-      drafts,
-      learnedDrafts,
-      isDirty,
-      learnedDirty,
-      saveError,
-      settingsQuery.isLoading,
-      updateSetting.isPending,
-      rawSettings,
-      filteredDrafts,
-      filteredLearnedDrafts,
-      handleSetScope,
-      handleSetPatternTab,
-      handleSetExploderSubTab,
-      handleRuleTextChange,
-      handlePatchRule,
-      handleToggleRuleEnabled,
-      handleDuplicateRule,
-      handleSequenceDrop,
-      handleSaveSequenceGroup,
-      handleUngroupSequenceGroup,
-      handleLearnedRuleTextChange,
-      handleAddRule,
-      handleAddLearnedRule,
-      handleRemoveRule,
-      handleRemoveLearnedRule,
-      handleRefresh,
-      handleExport,
-      handleExportLearned,
-      handleImport,
-      handleImportLearned,
-      handleSave,
-      handleCopy,
-    ]
-  );
+  const configValue = useMemo<PromptEngineConfig>(() => ({
+    promptEngineSettings,
+    patternTab: activePatternTab,
+    exploderSubTab: activeExploderSubTab,
+    patternTabLocked,
+    exploderSubTabLocked,
+    scopeLocked,
+    isUsingDefaults: !rawSettings,
+  }), [promptEngineSettings, activePatternTab, activeExploderSubTab, patternTabLocked, exploderSubTabLocked, scopeLocked, rawSettings]);
 
-  return <PromptEngineContext.Provider value={value}>{children}</PromptEngineContext.Provider>;
+  const filtersValue = useMemo<PromptEngineFilters>(() => ({
+    query,
+    setQuery,
+    severity,
+    setSeverity,
+    scope,
+    setScope: handleSetScope,
+    includeDisabled,
+    setIncludeDisabled,
+  }), [query, severity, scope, handleSetScope, includeDisabled]);
+
+  const dataValue = useMemo<PromptEngineData>(() => ({
+    drafts,
+    learnedDrafts,
+    filteredDrafts,
+    filteredLearnedDrafts,
+    isDirty,
+    learnedDirty,
+    saveError,
+    isLoading: settingsQuery.isLoading,
+    isSaving: updateSetting.isPending,
+  }), [drafts, learnedDrafts, filteredDrafts, filteredLearnedDrafts, isDirty, learnedDirty, saveError, settingsQuery.isLoading, updateSetting.isPending]);
+
+  const actionsValue = useMemo<PromptEngineActions>(() => ({
+    setPatternTab: handleSetPatternTab,
+    setExploderSubTab: handleSetExploderSubTab,
+    handleRuleTextChange,
+    handlePatchRule,
+    handleToggleRuleEnabled,
+    handleDuplicateRule,
+    handleSequenceDrop,
+    handleSaveSequenceGroup,
+    handleUngroupSequenceGroup,
+    handleLearnedRuleTextChange,
+    handleAddRule,
+    handleAddLearnedRule,
+    handleRemoveRule,
+    handleRemoveLearnedRule,
+    handleRefresh,
+    handleExport,
+    handleExportLearned,
+    handleImport,
+    handleImportLearned,
+    handleSave,
+    handleCopy,
+  }), [handleSetPatternTab, handleSetExploderSubTab, handleRuleTextChange, handlePatchRule, handleToggleRuleEnabled, handleDuplicateRule, handleSequenceDrop, handleSaveSequenceGroup, handleUngroupSequenceGroup, handleLearnedRuleTextChange, handleAddRule, handleAddLearnedRule, handleRemoveRule, handleRemoveLearnedRule, handleRefresh, handleExport, handleExportLearned, handleImport, handleImportLearned, handleSave, handleCopy]);
+
+  const aggregatedValue = useMemo<PromptEngineContextValue>(() => ({
+    ...configValue,
+    ...filtersValue,
+    ...dataValue,
+    ...actionsValue,
+  }), [configValue, filtersValue, dataValue, actionsValue]);
+
+  return (
+    <ConfigContext.Provider value={configValue}>
+      <FiltersContext.Provider value={filtersValue}>
+        <DataContext.Provider value={dataValue}>
+          <ActionsContext.Provider value={actionsValue}>
+            <PromptEngineContext.Provider value={aggregatedValue}>
+              {children}
+            </PromptEngineContext.Provider>
+          </ActionsContext.Provider>
+        </DataContext.Provider>
+      </FiltersContext.Provider>
+    </ConfigContext.Provider>
+  );
 }
 
 export function usePromptEngine(): PromptEngineContextValue {

@@ -1,5 +1,5 @@
-import type { PrismaClient } from '@prisma/client';
-import type { Db } from 'mongodb';
+import type { PrismaClient, Prisma } from '@prisma/client';
+import type { Db, ObjectId } from 'mongodb';
 
 export interface SyncCollectionResult {
   sourceCount: number;

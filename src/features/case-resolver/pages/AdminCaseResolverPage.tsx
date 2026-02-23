@@ -58,6 +58,7 @@ import {
   resolveCaptureMappingApplyGuardReason,
 } from '../capture-mapping-apply-guard';
 import { CaseResolverPageView } from '../components/CaseResolverPageView';
+import { CaseResolverViewProvider } from '../components/CaseResolverViewContext';
 import { useCaseResolverState } from '../hooks/useCaseResolverState';
 import {
   applyCaseResolverFileMutationAndRebaseDraft,
@@ -2388,64 +2389,66 @@ export function AdminCaseResolverPage(): React.JSX.Element {
   );
 
   return (
-    <>
-      <CaseResolverPageView
-        state={state}
-        workspaceView={workspaceView}
-        setWorkspaceView={setWorkspaceView}
-        handleMoveFolder={handleMoveFolder}
-        handleToggleFolderLock={handleToggleFolderLock}
-        handleToggleFileLock={handleToggleFileLock}
-        handleDeleteFile={handleDeleteFile}
-        handleDeleteAsset={handleDeleteAsset}
-        handleGraphChange={handleGraphChange}
-        handleRelationGraphChange={handleRelationGraphChange}
-        editorDetailsTab={editorDetailsTab}
-        setEditorDetailsTab={setEditorDetailsTab}
-        isScanDraftDropActive={isScanDraftDropActive}
-        scanDraftUploadInputRef={scanDraftUploadInputRef}
-        handleScanDraftDragEnter={handleScanDraftDragEnter}
-        handleScanDraftDragOver={handleScanDraftDragOver}
-        handleScanDraftDragLeave={handleScanDraftDragLeave}
-        handleScanDraftDrop={handleScanDraftDrop}
-        handleScanDraftUploadInputChange={handleScanDraftUploadInputChange}
-        handleTriggerScanDraftUpload={handleTriggerScanDraftUpload}
-        handleDeleteScanDraftSlot={handleDeleteScanDraftSlot}
-        handleRunScanDraftOcr={handleRunScanDraftOcr}
-        updateEditingDocumentDraft={updateEditingDocumentDraft}
-        editingDocumentNodeMeta={editingDocumentNodeMeta}
-        updateEditingDocumentNodeMeta={updateEditingDocumentNodeMeta}
-        caseTagOptions={caseTagOptions}
-        caseIdentifierOptions={caseIdentifierOptions}
-        caseCategoryOptions={caseCategoryOptions}
-        caseReferenceOptions={caseReferenceOptions}
-        parentCaseOptions={parentCaseOptions}
-        partyOptions={partyOptions}
-        handleUseHistoryEntry={handleUseHistoryEntry}
-        isEditorDraftDirty={isEditorDraftDirty}
-        handleOpenPromptExploderForDraft={handleOpenPromptExploderForDraft}
-        editorContentRevisionSeed={editorContentRevisionSeed}
-        handleUpdateDraftDocumentContent={handleUpdateDraftDocumentContent}
-        editorTextareaRef={editorTextareaRef}
-        editorSplitRef={editorSplitRef}
-        editorWidth={editorWidth}
-        setEditorWidth={setEditorWidth}
-        isDraggingSplitter={isDraggingSplitter}
-        setIsDraggingSplitter={setIsDraggingSplitter}
-        handleCopyDraftFileId={handleCopyDraftFileId}
-        handlePreviewDraftPdf={handlePreviewDraftPdf}
-        handlePrintDraftDocument={handlePrintDraftDocument}
-        handleExportDraftPdf={handleExportDraftPdf}
-        promptExploderProposalDraft={promptExploderProposalDraft}
-        captureProposalTargetFileName={captureProposalTargetFileName}
-        handleClosePromptExploderProposalModal={handleClosePromptExploderProposalModal}
-        handleApplyPromptExploderProposal={handleApplyPromptExploderProposal}
-        updatePromptExploderProposalAction={updatePromptExploderProposalAction}
-        updatePromptExploderProposalReference={updatePromptExploderProposalReference}
-        updatePromptExploderProposalDateAction={updatePromptExploderProposalDateAction}
-        resolvePromptExploderMatchedPartyLabel={resolvePromptExploderMatchedPartyLabel}
-        captureApplyDiagnostics={captureApplyDiagnostics}
-      />
-    </>
+    <CaseResolverViewProvider
+      value={{
+        state,
+        workspaceView,
+        setWorkspaceView,
+        handleMoveFolder,
+        handleToggleFolderLock,
+        handleToggleFileLock,
+        handleDeleteFile,
+        handleDeleteAsset,
+        handleGraphChange,
+        handleRelationGraphChange,
+        editorDetailsTab,
+        setEditorDetailsTab,
+        isScanDraftDropActive,
+        scanDraftUploadInputRef,
+        handleScanDraftDragEnter,
+        handleScanDraftDragOver,
+        handleScanDraftDragLeave,
+        handleScanDraftDrop,
+        handleScanDraftUploadInputChange,
+        handleTriggerScanDraftUpload,
+        handleDeleteScanDraftSlot,
+        handleRunScanDraftOcr,
+        updateEditingDocumentDraft,
+        editingDocumentNodeMeta,
+        updateEditingDocumentNodeMeta,
+        caseTagOptions,
+        caseIdentifierOptions,
+        caseCategoryOptions,
+        caseReferenceOptions,
+        parentCaseOptions,
+        partyOptions,
+        handleUseHistoryEntry,
+        isEditorDraftDirty,
+        handleOpenPromptExploderForDraft,
+        editorContentRevisionSeed,
+        handleUpdateDraftDocumentContent,
+        editorTextareaRef,
+        editorSplitRef,
+        editorWidth,
+        setEditorWidth,
+        isDraggingSplitter,
+        setIsDraggingSplitter,
+        handleCopyDraftFileId,
+        handlePreviewDraftPdf,
+        handlePrintDraftDocument,
+        handleExportDraftPdf,
+        promptExploderProposalDraft,
+        captureProposalTargetFileName,
+        handleClosePromptExploderProposalModal,
+        handleApplyPromptExploderProposal,
+        updatePromptExploderProposalAction,
+        updatePromptExploderProposalReference,
+        updatePromptExploderProposalDateAction,
+        resolvePromptExploderMatchedPartyLabel,
+        captureApplyDiagnostics,
+      }}
+    >
+      <CaseResolverPageView />
+    </CaseResolverViewProvider>
   );
 }

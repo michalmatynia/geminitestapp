@@ -122,6 +122,7 @@ const resolveHistoryRetentionPasses = (
 export type FireAiPathTriggerEventArgs = {
   triggerEventId: string;
   triggerLabel?: string | null | undefined;
+  preferredPathId?: string | null | undefined;
   entityType: TriggerEventEntityType;
   entityId?: string | null | undefined;
   getEntityJson?: (() => Record<string, unknown> | null) | undefined;
@@ -209,7 +210,10 @@ const loadPathConfigsFromSettings = async (
 const resolveTriggerSelection = async (
   settingsData: Array<{ key: string; value: string }>,
   triggerEventId: string,
-  preferredActivePathId?: string | null
+  options?: {
+    preferredPathId?: string | null | undefined;
+    preferredActivePathId?: string | null | undefined;
+  }
 ): Promise<{
   triggerCandidates: PathConfig[];
   selectedConfig: PathConfig | null;
@@ -245,20 +249,42 @@ const resolveTriggerSelection = async (
       : false
   );
 
+  const preferredPathId =
+    typeof options?.preferredPathId === 'string' &&
+    options.preferredPathId.trim().length > 0
+      ? options.preferredPathId.trim()
+      : null;
   const activePathId =
-    (typeof preferredActivePathId === 'string' && preferredActivePathId.trim().length > 0
-      ? preferredActivePathId.trim()
+    (typeof options?.preferredActivePathId === 'string' &&
+      options.preferredActivePathId.trim().length > 0
+      ? options.preferredActivePathId.trim()
       : null) ??
     (typeof uiState?.['activePathId'] === 'string' && uiState['activePathId'].trim().length > 0
       ? uiState['activePathId'].trim()
       : null);
 
+  const preferredByButton = preferredPathId
+    ? triggerCandidates.find(
+      (config: PathConfig): boolean => config.id === preferredPathId
+    )
+    : null;
+  const preferredByActivePath = activePathId
+    ? triggerCandidates.find(
+      (config: PathConfig): boolean => config.id === activePathId
+    )
+    : null;
+  if (!preferredPathId && triggerCandidates.length > 1 && !preferredByActivePath) {
+    return { triggerCandidates, selectedConfig: null, uiState };
+  }
   const preferredConfig: PathConfig | null =
-    (activePathId
-      ? triggerCandidates.find((config: PathConfig): boolean => config.id === activePathId)
-      : undefined) ??
+    (preferredPathId ? preferredByButton : null) ??
+    preferredByActivePath ??
     triggerCandidates[0] ??
     null;
+
+  if (preferredPathId && !preferredByButton) {
+    return { triggerCandidates, selectedConfig: null, uiState };
+  }
 
   const selectedConfig =
     preferredConfig?.isActive === false
@@ -441,7 +467,10 @@ export function useAiPathTriggerEvent(): {
       let selection = await resolveTriggerSelection(
         settingsData,
         triggerEventId,
-        preferredActivePathId
+        {
+          preferredPathId: args.preferredPathId ?? null,
+          preferredActivePathId,
+        }
       );
       const triggerCandidates: PathConfig[] = selection.triggerCandidates;
 
@@ -456,6 +485,20 @@ export function useAiPathTriggerEvent(): {
       let selectedConfig = selection.selectedConfig;
       let uiState = selection.uiState;
       if (!selectedConfig) {
+        if (args.preferredPathId) {
+          toast(
+            `No matching AI Path found for trigger "${args.triggerLabel ?? triggerEventId}" and bound path "${args.preferredPathId}".`,
+            { variant: 'error' }
+          );
+          return;
+        }
+        if (triggerCandidates.length > 1) {
+          toast(
+            `Trigger "${args.triggerLabel ?? triggerEventId}" matches multiple AI Paths. Set an active path in AI Paths settings or bind this trigger button to a specific path.`,
+            { variant: 'error' }
+          );
+          return;
+        }
         toast(
           `No AI Path found for trigger "${args.triggerLabel ?? triggerEventId}". Add a Trigger node with event "${triggerEventId}".`,
           { variant: 'error' }
@@ -472,7 +515,10 @@ export function useAiPathTriggerEvent(): {
         selection = await resolveTriggerSelection(
           freshSettingsData,
           triggerEventId,
-          preferredActivePathId
+          {
+            preferredPathId: args.preferredPathId ?? null,
+            preferredActivePathId,
+          }
         );
         if (selection.selectedConfig?.isActive === false || !selection.selectedConfig) {
           toast('This path is deactivated. Activate it to run.', { variant: 'info' });
@@ -483,8 +529,6 @@ export function useAiPathTriggerEvent(): {
         selectedConfig = selection.selectedConfig;
         uiState = selection.uiState;
       }
-
-      toast(`Running AI Path: ${selectedConfig.name}`, { variant: 'success' });
 
       const nodes: AiNode[] = normalizeNodes(Array.isArray(selectedConfig.nodes) ? selectedConfig.nodes : []);
       const edges: Edge[] = sanitizeEdges(nodes, Array.isArray(selectedConfig.edges) ? selectedConfig.edges : []);
@@ -531,6 +575,31 @@ export function useAiPathTriggerEvent(): {
           queue.push(neighbor);
         });
       }
+
+      const connectedFetcherRequiresLiveEntityContext = nodes.some(
+        (node: AiNode): boolean => {
+          if (node.type !== 'fetcher' || !connected.has(node.id)) return false;
+          const sourceMode = node.config?.fetcher?.sourceMode ?? 'live_context';
+          return sourceMode === 'live_context';
+        }
+      );
+      const normalizedEntityId =
+        typeof args.entityId === 'string' && args.entityId.trim().length > 0
+          ? args.entityId.trim()
+          : null;
+      if (
+        connectedFetcherRequiresLiveEntityContext &&
+        !normalizedEntityId &&
+        args.entityType !== 'custom'
+      ) {
+        toast(
+          'Selected AI Path expects live entity context, but no entity id was provided. Run from a row/modal item or bind this trigger to a path with simulation context.',
+          { variant: 'error' }
+        );
+        return;
+      }
+
+      toast(`Running AI Path: ${selectedConfig.name}`, { variant: 'success' });
 
       const alwaysActiveTypes = new Set(['parser', 'prompt', 'viewer', 'database']);
       const totalNodes = Math.max(

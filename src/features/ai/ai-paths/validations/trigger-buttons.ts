@@ -32,6 +32,16 @@ type AiTriggerButtonDisplayMode = z.infer<typeof aiTriggerButtonDisplaySchema>;
 const normalizeText = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';
 
+const normalizePathId = (
+  value: unknown
+): string | null | undefined => {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
 const isOpaqueTriggerButtonName = (value: string): boolean => {
   const normalized = value.trim();
   if (!normalized) return false;
@@ -49,6 +59,17 @@ const readDisplayLabel = (value: Record<string, unknown>): string => {
     return '';
   }
   return normalizeText((displayValue as Record<string, unknown>)['label']);
+};
+
+const readPathIdForRead = (value: Record<string, unknown>): string | null => {
+  const directPathId = normalizePathId(value['pathId']);
+  if (typeof directPathId === 'string') return directPathId;
+  const rawPathIds = value['pathIds'];
+  if (!Array.isArray(rawPathIds)) return null;
+  const firstPathId = rawPathIds
+    .map((entry: unknown): string | null | undefined => normalizePathId(entry))
+    .find((entry: string | null | undefined): entry is string => typeof entry === 'string');
+  return firstPathId ?? null;
 };
 
 const normalizeRecordForRead = (value: unknown): Record<string, unknown> | null => {
@@ -77,6 +98,7 @@ const normalizeRecordForRead = (value: unknown): Record<string, unknown> | null 
     ...source,
     id,
     name: resolvedName,
+    pathId: readPathIdForRead(source),
   };
 };
 
@@ -174,6 +196,7 @@ export const aiTriggerButtonRecordSchema = z.object({
   name: z.string().trim().min(1),
   icon: z.string().trim().min(1).nullable().optional(),
   iconId: z.string().trim().min(1).nullable().optional(),
+  pathId: z.preprocess(normalizePathId, z.string().trim().min(1).nullable().optional()),
   enabled: z.preprocess(coerceOptionalBoolean, z.boolean().optional()),
   locations: z
     .preprocess(normalizeLocationsForRead, z.array(aiTriggerButtonLocationSchema))
@@ -198,6 +221,7 @@ export const aiTriggerButtonRecordSchema = z.object({
 export const aiTriggerButtonCreateSchema = z.object({
   name: z.string().trim().min(1),
   iconId: z.string().trim().min(1).nullable().optional().default(null),
+  pathId: z.preprocess(normalizePathId, z.string().trim().min(1).nullable().optional()),
   enabled: z.boolean().optional().default(true),
   locations: z.array(aiTriggerButtonLocationSchema).min(1),
   mode: aiTriggerButtonModeSchema.optional().default('click'),
@@ -208,6 +232,7 @@ export const aiTriggerButtonUpdateSchema = z
   .object({
     name: z.string().trim().min(1).optional(),
     iconId: z.string().trim().min(1).nullable().optional(),
+    pathId: z.preprocess(normalizePathId, z.string().trim().min(1).nullable().optional()),
     enabled: z.boolean().optional(),
     locations: z.array(aiTriggerButtonLocationSchema).min(1).optional(),
     mode: aiTriggerButtonModeSchema.optional(),
@@ -246,6 +271,7 @@ const normalizeAiTriggerButtonRecord = (
     id: record.id,
     name: record.name,
     iconId: record.iconId ?? record.icon ?? null,
+    pathId: record.pathId ?? null,
     enabled: record.enabled ?? true,
     locations: [...locations],
     mode: record.mode ?? 'click',

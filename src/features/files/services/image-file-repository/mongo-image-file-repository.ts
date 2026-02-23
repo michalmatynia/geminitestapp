@@ -7,6 +7,7 @@ import type {
   ImageFileListFilters,
   ImageFileRecord,
   ImageFileRepository,
+  ImageFileUpdateInput,
 } from '@/shared/contracts/files';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
@@ -125,7 +126,7 @@ export const mongoImageFileRepository: ImageFileRepository = {
     return toRecord({ ...result, _id: result._id });
   },
 
-  async updateImageFile(id: string, data: any) {
+  async updateImageFile(id: string, data: ImageFileUpdateInput) {
     const db = await getMongoDb();
     const result = await db
       .collection<ImageFileDocument>(IMAGE_FILE_COLLECTION)

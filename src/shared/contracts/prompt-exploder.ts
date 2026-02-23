@@ -80,17 +80,25 @@ export type PromptExploderLogicalJoinGroup = PromptExploderLogicalJoinGroupDto;
  * Prompt Exploder Document Structure DTOs
  */
 
-export const promptExploderSubsectionSchema = z.object({
+export const promptExploderSubsectionSchema: z.ZodType<PromptExploderSubsectionDto> = z.lazy(() => z.object({
   id: z.string(),
   title: z.string(),
-  segments: z.array(z.any()).optional(),
+  segments: z.array(z.lazy(() => promptExploderSegmentSchema)).optional(),
   code: z.string().nullable().optional(),
-  items: z.array(z.any()).optional(),
+  items: z.array(z.lazy(() => promptExploderListItemSchema)).optional(),
   condition: z.string().nullable().optional(),
   guidance: z.string().nullable().optional(),
-});
+}));
 
-export type PromptExploderSubsectionDto = z.infer<typeof promptExploderSubsectionSchema>;
+export type PromptExploderSubsectionDto = {
+  id: string;
+  title: string;
+  segments?: PromptExploderSegmentDto[];
+  code?: string | null;
+  items?: PromptExploderListItemDto[];
+  condition?: string | null;
+  guidance?: string | null;
+};
 export type PromptExploderSubsection = PromptExploderSubsectionDto;
 
 export const promptExploderBindingTypeSchema = z.enum(['text', 'number', 'boolean', 'json', 'list', 'depends_on', 'references']);
@@ -139,7 +147,7 @@ export const promptExploderBindingSchema = z.object({
 export type PromptExploderBindingDto = z.infer<typeof promptExploderBindingSchema>;
 export type PromptExploderBinding = PromptExploderBindingDto;
 
-export const promptExploderSegmentSchema = z.object({
+export const promptExploderSegmentSchema: z.ZodType<PromptExploderSegmentDto> = z.lazy(() => z.object({
   id: z.string(),
   type: promptExploderSegmentTypeSchema,
   title: z.string().nullable().optional(),
@@ -167,10 +175,10 @@ export const promptExploderSegmentSchema = z.object({
   suggestedTreatAsHeading: z.boolean().optional(),
   ruleCount: z.number().optional(),
   ruleStack: z.record(z.string(), z.unknown()).optional(),
-  validationResults: z.array(z.unknown()).default([]),
+  validationResults: z.array(z.string()).default([]),
   bindings: z.record(z.string(), z.unknown()).optional(),
-  segments: z.array(z.unknown()).default([]),
-});
+  segments: z.array(promptExploderSegmentSchema).default([]),
+}));
 
 export interface PromptExploderSegmentDto {
   id: string;
@@ -200,9 +208,9 @@ export interface PromptExploderSegmentDto {
   suggestedTreatAsHeading?: boolean;
   ruleCount?: number;
   ruleStack?: Record<string, unknown>;
-  validationResults: unknown[];
+  validationResults: string[];
   bindings?: Record<string, unknown>;
-  segments: unknown[];
+  segments: PromptExploderSegmentDto[];
 }
 
 export type PromptExploderSegment = PromptExploderSegmentDto;
@@ -217,14 +225,14 @@ export const promptExploderDocumentSchema = dtoBaseSchema.extend({
   version: z.number().default(1),
   sourcePrompt: z.string().optional(),
   segments: z.array(promptExploderSegmentSchema).default([]),
-  subsections: z.array(z.unknown()).default([]),
-  variables: z.array(z.unknown()).default([]),
-  dependencies: z.array(z.unknown()).default([]),
-  rules: z.array(z.unknown()).default([]),
+  subsections: z.array(promptExploderSubsectionSchema).default([]),
+  variables: z.array(z.string()).default([]),
+  dependencies: z.array(z.string()).default([]),
+  rules: z.array(z.string()).default([]),
   tags: z.array(z.string()).default([]),
-  warnings: z.array(z.unknown()).default([]),
-  errors: z.array(z.unknown()).default([]),
-  diagnostics: z.array(z.unknown()).default([]),
+  warnings: z.array(z.string()).default([]),
+  errors: z.array(z.string()).default([]),
+  diagnostics: z.array(z.string()).default([]),
   metadata: z.record(z.string(), z.unknown()).optional(),
   reassembledPrompt: z.string().optional(),
   promptLength: z.number().optional(),

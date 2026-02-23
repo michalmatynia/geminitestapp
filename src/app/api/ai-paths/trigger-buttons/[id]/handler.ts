@@ -50,6 +50,7 @@ export async function PATCH_handler(
     ...current,
     name: nextName,
     ...(parsed.data.iconId !== undefined ? { iconId: parsed.data.iconId ? parsed.data.iconId.trim() : null } : {}),
+    ...(parsed.data.pathId !== undefined ? { pathId: parsed.data.pathId ? parsed.data.pathId.trim() : null } : {}),
     ...(parsed.data.enabled !== undefined ? { enabled: parsed.data.enabled } : {}),
     ...(parsed.data.locations ? { locations: parsed.data.locations } : {}),
     ...(parsed.data.mode ? { mode: parsed.data.mode } : {}),

@@ -198,6 +198,8 @@ export const buildConnectorInfo = ({
 
 export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element => {
   const label = info.direction === 'input' ? 'Input' : 'Output';
+  const showNodeInputData = info.direction === 'input';
+  const showNodeOutputData = info.direction === 'output';
   const diff =
     info.isHistory && Array.isArray(info.rawValue) && info.rawValue.length > 1
       ? buildDiffLines(
@@ -251,22 +253,26 @@ export const renderConnectorTooltip = (info: ConnectorInfo): React.JSX.Element =
       <pre className='mt-1 max-h-56 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
         {formatConnectorValue(info.value)}
       </pre>
-      <div className='mt-2 border-t border-white/10 pt-2'>
-        <div className='text-[10px] text-gray-400'>
-          Node input data:
+      {showNodeInputData ? (
+        <div className='mt-2 border-t border-white/10 pt-2'>
+          <div className='text-[10px] text-gray-400'>
+            Node input data:
+          </div>
+          <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap text-[10px] text-gray-300'>
+            {formatConnectorValue(info.nodeInputs)}
+          </pre>
         </div>
-        <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap text-[10px] text-gray-300'>
-          {formatConnectorValue(info.nodeInputs)}
-        </pre>
-      </div>
-      <div className='mt-2 border-t border-white/10 pt-2'>
-        <div className='text-[10px] text-gray-400'>
-          Data passed through node (outputs):
+      ) : null}
+      {showNodeOutputData ? (
+        <div className='mt-2 border-t border-white/10 pt-2'>
+          <div className='text-[10px] text-gray-400'>
+            Data passed through node (outputs):
+          </div>
+          <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap text-[10px] text-gray-300'>
+            {formatConnectorValue(info.nodeOutputs)}
+          </pre>
         </div>
-        <pre className='mt-1 max-h-28 overflow-auto whitespace-pre-wrap text-[10px] text-gray-300'>
-          {formatConnectorValue(info.nodeOutputs)}
-        </pre>
-      </div>
+      ) : null}
       <div className='text-[10px] text-gray-500'>
         Right-click to disconnect. Drag to reconnect.
       </div>

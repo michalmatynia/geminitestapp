@@ -57,7 +57,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   });
   if (!parsed.ok) return parsed.response;
 
-  const { name, iconId, enabled, locations, mode, display } = parsed.data;
+  const { name, iconId, pathId, enabled, locations, mode, display } = parsed.data;
   const raw = await readTriggerButtonsRaw();
   const existing = parseAiTriggerButtonsRaw(raw);
   const normalizedName = name.trim();
@@ -76,6 +76,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     name: normalizedName,
     icon: iconId ? iconId.trim() : null,
     iconId: iconId ? iconId.trim() : null,
+    pathId: pathId ? pathId.trim() : null,
     enabled: enabled ?? true,
     locations,
     mode,

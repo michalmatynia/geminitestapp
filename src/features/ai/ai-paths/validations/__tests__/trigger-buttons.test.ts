@@ -32,6 +32,25 @@ describe('trigger button validation', () => {
     });
 
     expect(parsed.enabled).toBe(false);
+    expect(parsed.pathId).toBeUndefined();
+  });
+
+  it('normalizes pathId in create payloads', () => {
+    const parsed = aiTriggerButtonCreateSchema.parse({
+      name: 'Run Path',
+      pathId: '  path-name-description  ',
+      locations: ['product_modal'],
+    });
+
+    expect(parsed.pathId).toBe('path-name-description');
+  });
+
+  it('accepts pathId updates', () => {
+    const parsed = aiTriggerButtonUpdateSchema.parse({
+      pathId: ' path-target ',
+    });
+
+    expect(parsed.pathId).toBe('path-target');
   });
 
   it('normalizes missing enabled field to true when reading stored buttons', () => {
@@ -173,5 +192,33 @@ describe('trigger button validation', () => {
     );
 
     expect(parsed[0]?.locations).toEqual(['product_modal']);
+  });
+
+  it('preserves stored pathId', () => {
+    const parsed = parseAiTriggerButtonsRaw(
+      JSON.stringify([
+        {
+          id: 'btn-path-id',
+          name: 'Run Target Path',
+          pathId: 'path_desc_name',
+        },
+      ])
+    );
+
+    expect(parsed[0]?.pathId).toBe('path_desc_name');
+  });
+
+  it('falls back to first pathIds entry when pathId is missing', () => {
+    const parsed = parseAiTriggerButtonsRaw(
+      JSON.stringify([
+        {
+          id: 'btn-path-ids',
+          name: 'Run Target Path',
+          pathIds: ['path_one', 'path_two'],
+        },
+      ])
+    );
+
+    expect(parsed[0]?.pathId).toBe('path_one');
   });
 });

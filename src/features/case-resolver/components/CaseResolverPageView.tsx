@@ -87,120 +87,10 @@ const CASE_RESOLVER_PARTY_SEARCH_KIND_OPTIONS: Array<{
   },
 ];
 
-type CaseResolverPageViewProps = {
-  state: CaseResolverStateValue;
-  workspaceView: WorkspaceView;
-  setWorkspaceView: React.Dispatch<React.SetStateAction<WorkspaceView>>;
-  handleMoveFolder: (fromPath: string, toPath: string) => Promise<void>;
-  handleToggleFolderLock: (folderPath: string) => void;
-  handleToggleFileLock: (fileId: string) => void;
-  handleDeleteFile: (fileId: string) => void;
-  handleDeleteAsset: (assetId: string) => void;
-  handleGraphChange: (nextGraph: CaseResolverGraph) => void;
-  handleRelationGraphChange: (nextGraph: CaseResolverRelationGraph) => void;
-  editorDetailsTab: EditorDetailsTab;
-  setEditorDetailsTab: React.Dispatch<React.SetStateAction<EditorDetailsTab>>;
-  isScanDraftDropActive: boolean;
-  scanDraftUploadInputRef: React.MutableRefObject<HTMLInputElement | null>;
-  handleScanDraftDragEnter: (event: React.DragEvent<HTMLDivElement>) => void;
-  handleScanDraftDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
-  handleScanDraftDragLeave: (event: React.DragEvent<HTMLDivElement>) => void;
-  handleScanDraftDrop: (event: React.DragEvent<HTMLDivElement>) => void;
-  handleScanDraftUploadInputChange: (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => void;
-  handleTriggerScanDraftUpload: () => void;
-  handleDeleteScanDraftSlot: (slotId: string) => void;
-  handleRunScanDraftOcr: () => void;
-  updateEditingDocumentDraft: (
-    patch: Partial<CaseResolverFileEditDraft>,
-  ) => void;
-  editingDocumentNodeMeta:
-    | (CaseResolverNodeMeta & {
-        nodeId: string;
-        nodeTitle: string;
-        canvasFileId: string;
-        canvasFileName: string;
-      })
-    | null;
-  updateEditingDocumentNodeMeta: (patch: Partial<CaseResolverNodeMeta>) => void;
-  caseTagOptions: SelectOption[];
-  caseIdentifierOptions: SelectOption[];
-  caseCategoryOptions: SelectOption[];
-  caseReferenceOptions: SelectOption[];
-  parentCaseOptions: SelectOption[];
-  partyOptions: SelectOption[];
-  handleUseHistoryEntry: (entry: CaseResolverDocumentHistoryEntry) => void;
-  isEditorDraftDirty: boolean;
-  handleOpenPromptExploderForDraft: () => void;
-  editorContentRevisionSeed: number;
-  handleUpdateDraftDocumentContent: (next: string) => void;
-  editorTextareaRef: React.MutableRefObject<HTMLTextAreaElement | null>;
-  editorSplitRef: React.MutableRefObject<HTMLDivElement | null>;
-  editorWidth: number | null;
-  setEditorWidth: React.Dispatch<React.SetStateAction<number | null>>;
-  isDraggingSplitter: boolean;
-  setIsDraggingSplitter: React.Dispatch<React.SetStateAction<boolean>>;
-  handleCopyDraftFileId: () => Promise<void>;
-  handlePreviewDraftPdf: () => void;
-  handlePrintDraftDocument: () => void;
-  handleExportDraftPdf: () => Promise<void>;
-  promptExploderProposalDraft: CaseResolverCaptureProposalState | null;
-  captureProposalTargetFileName: string | null;
-  handleClosePromptExploderProposalModal: () => void;
-  handleApplyPromptExploderProposal: () => void;
-  updatePromptExploderProposalAction: (
-    role: 'addresser' | 'addressee',
-    action: CaseResolverCaptureAction,
-  ) => void;
-  updatePromptExploderProposalReference: (
-    role: 'addresser' | 'addressee',
-    value: string,
-  ) => void;
-  updatePromptExploderProposalDateAction: (
-    action: CaseResolverCaptureDocumentDateAction,
-  ) => void;
-  resolvePromptExploderMatchedPartyLabel: (
-    reference: CaseResolverCaptureProposalState['addresser'] extends infer T
-      ? T extends { existingReference?: infer R | null }
-        ? R | null | undefined
-        : null | undefined
-      : null | undefined,
-  ) => string;
-  captureApplyDiagnostics: {
-    status: 'idle' | 'success' | 'failed';
-    stage: 'precheck' | 'mutation' | 'rebase' | null;
-    message: string;
-    targetFileId: string | null;
-    resolvedTargetFileId: string | null;
-    workspaceRevision: number;
-    attempts: number;
-    at: string;
-    cleanupDurationMs?: number | null;
-    mutationDurationMs?: number | null;
-    totalDurationMs?: number | null;
-  } | null;
-};
-
-const formatHistoryTimestamp = (value: string): string => {
-  const parsed = Date.parse(value);
-  if (!Number.isFinite(parsed)) return value;
-  return new Intl.DateTimeFormat(undefined, {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  }).format(parsed);
-};
-
 const CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN =
   /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
-export function CaseResolverPageView(
-  props: CaseResolverPageViewProps,
-): React.JSX.Element {
+export function CaseResolverPageView(): React.JSX.Element {
   const router = useRouter();
   const [addresserPartySearchKind, setAddresserPartySearchKind] =
     React.useState<PartySearchKind>('person');
@@ -211,6 +101,7 @@ export function CaseResolverPageView(
   const [selectedRelatedFileId, setSelectedRelatedFileId] = React.useState<string | null>(null);
   const [isRelationsDropActive, setIsRelationsDropActive] = React.useState(false);
   const [relateSearchQuery, setRelateSearchQuery] = React.useState('');
+  
   const {
     state,
     workspaceView,
@@ -254,7 +145,7 @@ export function CaseResolverPageView(
     updatePromptExploderProposalDateAction,
     resolvePromptExploderMatchedPartyLabel,
     captureApplyDiagnostics,
-  } = props;
+  } = useCaseResolverViewContext();
 
   const {
     workspace,

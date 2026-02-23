@@ -10,12 +10,7 @@ import {
   CASE_RESOLVER_JOIN_MODE_OPTIONS,
   CASE_RESOLVER_NODE_ROLE_OPTIONS,
   CASE_RESOLVER_QUOTE_MODE_OPTIONS,
-  type AiNode,
-  type Edge as CaseResolverEdge,
-  type CaseResolverEdgeMeta,
   type CaseResolverEditorNodeContext,
-  type CaseResolverFile,
-  type CaseResolverNodeMeta,
 } from '@/shared/contracts/case-resolver';
 import {
   Button,
@@ -33,6 +28,7 @@ import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import { CaseResolverRichTextEditor } from './CaseResolverRichTextEditor';
+import { useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
 
 const CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
@@ -48,46 +44,25 @@ interface CompatEdge {
   targetHandle?: string | null | undefined;
 }
 
-type CaseResolverNodeInspectorModalProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onManualUpdate: () => void;
-  selectedNode: AiNode | null;
-  selectedPromptMeta: CaseResolverNodeMeta | null;
-  selectedPromptSourceFile: CaseResolverFile | null;
-  selectedPromptTemplate: string;
-  selectedPromptInputText: string;
-  selectedPromptOutputPreview: {
-    textfield: string;
-    plaintextContent: string;
-    plainText: string;
-    wysiwygContent: string;
-  } | null;
-  selectedPromptSecondaryOutputHint?: boolean;
-  onUpdateSelectedPromptTemplate: (template: string) => void;
-  onUpdateSelectedNodeMeta: (patch: Partial<CaseResolverNodeMeta>) => void;
-  selectedEdge: CaseResolverEdge | CompatEdge | null;
-  selectedEdgeJoinMode: CaseResolverEdgeMeta['joinMode'];
-  onUpdateSelectedEdgeMeta: (patch: Partial<CaseResolverEdgeMeta>) => void;
-};
+export function CaseResolverNodeInspectorModal(): React.JSX.Element {
+  const {
+    isNodeInspectorOpen: open,
+    setIsNodeInspectorOpen: onOpenChange,
+    handleManualSave: onManualUpdate,
+    selectedNode,
+    selectedPromptMeta,
+    selectedPromptSourceFile,
+    selectedPromptTemplate,
+    selectedPromptInputText,
+    selectedPromptOutputPreview,
+    selectedPromptSecondaryOutputHint = false,
+    updateSelectedPromptTemplate: onUpdateSelectedPromptTemplate,
+    updateSelectedNodeMeta: onUpdateSelectedNodeMeta,
+    selectedEdge,
+    selectedEdgeJoinMode,
+    updateSelectedEdgeMeta: onUpdateSelectedEdgeMeta,
+  } = useNodeFileWorkspaceContext();
 
-export function CaseResolverNodeInspectorModal({
-  open,
-  onOpenChange,
-  onManualUpdate,
-  selectedNode,
-  selectedPromptMeta,
-  selectedPromptSourceFile,
-  selectedPromptTemplate,
-  selectedPromptInputText,
-  selectedPromptOutputPreview,
-  selectedPromptSecondaryOutputHint = false,
-  onUpdateSelectedPromptTemplate,
-  onUpdateSelectedNodeMeta,
-  selectedEdge,
-  selectedEdgeJoinMode,
-  onUpdateSelectedEdgeMeta,
-}: CaseResolverNodeInspectorModalProps): React.JSX.Element {
   const { onEditFile, workspace, activeFile } = useCaseResolverPageContext();
   const { toast } = useToast();
   const settingsQuery = useSettingsMap({ scope: 'light' });

@@ -509,7 +509,7 @@ export function runPromptExploderBenchmark(args: {
     );
     const lowConfidenceSuggestions: PromptExploderBenchmarkSuggestion[] =
       [...lowConfidenceSegmentList]
-        .sort((left, right) => left.confidence - right.confidence)
+        .sort((left: PromptExploderSegment, right: PromptExploderSegment) => left.confidence - right.confidence)
         .slice(0, suggestionLimit)
         .map((segment: PromptExploderSegment, index: number) => {
           const sampleText = buildSuggestionSampleText({

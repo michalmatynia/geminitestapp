@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { ErrorSystem } from '@/features/observability/server';
-import type { ImageFileRecord, ImageFileRepository, ImageFileCreateInput, ImageFileListFilters } from '@/shared/contracts/files';
+import type { ImageFileRecord, ImageFileRepository, ImageFileCreateInput, ImageFileListFilters, ImageFileUpdateInput } from '@/shared/contracts/files';
 
 import { getImageFileRepository } from './image-file-repository';
 
@@ -42,7 +42,7 @@ export const imageFileService: ImageFileRepository = {
     repoCall('updateImageFilePath', id, filepath),
   updateImageFileTags: (id: string, tags: string[]): Promise<ImageFileRecord | null> =>
     repoCall('updateImageFileTags', id, tags),
-  updateImageFile: (id: string, data: any): Promise<ImageFileRecord | null> =>
+  updateImageFile: (id: string, data: ImageFileUpdateInput): Promise<ImageFileRecord | null> =>
     repoCall('updateImageFile', id, data),
   deleteImageFile: (id: string): Promise<ImageFileRecord | null> =>
     repoCall('deleteImageFile', id),

@@ -585,6 +585,7 @@ export function Viewer3D({
 
         {/* HDR Environment */}
         {environment !== 'none' && environment !== 'gym' && (
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           <Environment preset={environment as any} background={false} />
         )}
 

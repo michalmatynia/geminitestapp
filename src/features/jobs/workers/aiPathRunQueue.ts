@@ -639,7 +639,7 @@ export const enqueuePathRunJob = async (
 const resolveAiPathRunQueue = (): { queue: Queue | null; owned: boolean } => {
   const existing = queue.getQueue();
   if (existing) {
-    return { queue: existing as any, owned: false };
+    return { queue: existing as unknown as Queue, owned: false };
   }
   const connection = getRedisConnection();
   if (!connection) {

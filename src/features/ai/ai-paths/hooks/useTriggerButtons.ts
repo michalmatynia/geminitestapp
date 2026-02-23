@@ -106,6 +106,7 @@ export function useTriggerButtons({
       await fireAiPathTriggerEvent({
         triggerEventId: button.id,
         triggerLabel: button.name,
+        preferredPathId: button.pathId ?? null,
         entityType,
         entityId,
         ...(getEntityJson ? { getEntityJson } : {}),

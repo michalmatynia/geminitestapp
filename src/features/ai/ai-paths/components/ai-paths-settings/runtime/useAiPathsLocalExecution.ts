@@ -555,7 +555,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
             }) => {
               const rawStatus = (nextOutputs)?.['status'];
               const normalizedStatus =
-                args.normalizeNodeStatus(rawStatus) ?? (cached ? 'cached' : 'completed');
+                (cached ? 'cached' : args.normalizeNodeStatus(rawStatus)) ?? 'completed';
               const metadata =
                 node.type === 'database'
                   ? extractDatabaseRuntimeMetadata(nextOutputs)

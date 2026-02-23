@@ -98,8 +98,6 @@ export function SegmentEditorPanel(): React.JSX.Element {
     selectedSegmentId,
     selectedSegment,
     selectedParamEntriesState,
-    listParamOptions,
-    listParamEntryByPath,
   } = useDocumentState();
   const {
     setSelectedSegmentId,
@@ -150,15 +148,12 @@ export function SegmentEditorPanel(): React.JSX.Element {
     <SegmentEditorListItemLogicalEditor
       item={args.item}
       onChange={args.onChange}
-      listParamOptions={listParamOptions}
-      listParamEntryByPath={listParamEntryByPath}
     />
   );
 
-  const selectedSegmentIndex = selectedSegmentId
-    ? documentState?.segments.findIndex((segment) => segment.id === selectedSegmentId) ?? -1
-    : -1;
-  const canMergeSelectedWithPrevious = selectedSegmentIndex > 0;
+      const selectedSegmentIndex = selectedSegmentId
+        ? documentState?.segments.findIndex((segment: PromptExploderSegment) => segment.id === selectedSegmentId) ?? -1
+        : -1;  const canMergeSelectedWithPrevious = selectedSegmentIndex > 0;
   const canMergeSelectedWithNext =
     selectedSegmentIndex >= 0 &&
     selectedSegmentIndex < (documentState?.segments.length ?? 0) - 1;
@@ -1005,7 +1000,6 @@ export function SegmentEditorPanel(): React.JSX.Element {
                 {selectedSegment.type === 'sequence' || selectedSegment.type === 'qa_matrix' ? (
                   <SegmentEditorSubsectionsPanel
                     segment={selectedSegment}
-                    renderListItemLogicalEditor={renderListItemLogicalEditor}
                   />
                 ) : null}
 

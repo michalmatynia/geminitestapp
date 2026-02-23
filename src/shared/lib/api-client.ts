@@ -135,6 +135,7 @@ export async function apiClient<T>(
     }
 
     const error = new ApiError(errorMessage, response.status, errorId, category, suggestedActions);
+    error.payload = data;
 
     if (logError) {
       logClientError(error, { 

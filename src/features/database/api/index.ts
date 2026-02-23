@@ -24,7 +24,7 @@ import type {
   SqlQueryResult,
 } from '@/shared/contracts/database';
 import type { AppProviderDiagnosticsDto as ProviderDiagnosticsResponse } from '@/shared/contracts/system';
-import { api, ApiError, type ApiClientOptions } from '@/shared/lib/api-client';
+import { api, ApiError } from '@/shared/lib/api-client';
 import { DATABASE_ENGINE_COLLECTION_ROUTE_MAP_KEY } from '@/shared/lib/db/database-engine-constants';
 
 
@@ -49,6 +49,17 @@ export type ApiPayloadResult<T> = {
 // Helpers
 // ---------------------------------------------------------------------------
 
+const withDbTypeQuery = (endpoint: string, dbType?: DatabaseType): string => {
+  if (!dbType) return endpoint;
+  return `${endpoint}?type=${encodeURIComponent(dbType)}`;
+};
+
+const toFallbackErrorPayload = <T>(error: unknown): T =>
+  ({
+    success: false,
+    error: error instanceof Error ? error.message : String(error),
+  }) as T;
+
 const wrapInApiPayloadResult = async <T>(
   promise: Promise<T>
 ): Promise<ApiPayloadResult<T>> => {
@@ -57,9 +68,12 @@ const wrapInApiPayloadResult = async <T>(
     return { ok: true, payload: data };
   } catch (error) {
     if (error instanceof ApiError) {
-      return { ok: false, payload: error.payload as T };
+      if (error.payload !== undefined && error.payload !== null) {
+        return { ok: false, payload: error.payload as T };
+      }
+      return { ok: false, payload: toFallbackErrorPayload<T>(error) };
     }
-    return { ok: false, payload: { error: error instanceof Error ? error.message : String(error) } as unknown as T };
+    return { ok: false, payload: toFallbackErrorPayload<T>(error) };
   }
 };
 
@@ -68,23 +82,22 @@ const wrapInApiPayloadResult = async <T>(
 // ---------------------------------------------------------------------------
 
 export const getDatabaseStatus = async (): Promise<DatabaseEngineStatusResponse> =>
-  api.get<DatabaseEngineStatusResponse>('/api/system/database/status');
+  api.get<DatabaseEngineStatusResponse>('/api/databases/engine/status');
 
 export const fetchDatabaseEngineStatus = getDatabaseStatus;
 
 export const getDatabaseInfo = async (dbType?: DatabaseType): Promise<DatabaseInfoResponse[]> => {
-  const url = dbType ? `/api/settings/database/info?type=${dbType}` : '/api/settings/database/info';
+  const url = withDbTypeQuery('/api/databases/backups', dbType);
   return api.get<DatabaseInfoResponse[]>(url);
 };
 
 export const fetchDatabaseBackups = getDatabaseInfo;
 
 export const createDatabaseBackup = async (
-  dbType?: DatabaseType,
-  name?: string
+  dbType?: DatabaseType
 ): Promise<ApiPayloadResult<DatabaseBackupResponse>> =>
   wrapInApiPayloadResult(
-    api.post<DatabaseBackupResponse>('/api/settings/database/backup', { type: dbType, name })
+    api.post<DatabaseBackupResponse>(withDbTypeQuery('/api/databases/backup', dbType))
   );
 
 export const restoreDatabaseBackup = async (
@@ -92,10 +105,9 @@ export const restoreDatabaseBackup = async (
   options: { backupName: string; truncateBeforeRestore: boolean }
 ): Promise<ApiPayloadResult<DatabaseRestoreResponse>> =>
   wrapInApiPayloadResult(
-    api.post<DatabaseRestoreResponse>('/api/settings/database/restore', {
-      type: dbType,
-      filename: options.backupName,
-      truncate: options.truncateBeforeRestore,
+    api.post<DatabaseRestoreResponse>(withDbTypeQuery('/api/databases/restore', dbType), {
+      backupName: options.backupName,
+      truncateBeforeRestore: options.truncateBeforeRestore,
     })
   );
 
@@ -104,9 +116,7 @@ export const deleteDatabaseBackup = async (
   backupName: string
 ): Promise<ApiPayloadResult<DatabaseBackupResponse>> =>
   wrapInApiPayloadResult(
-    api.delete<DatabaseBackupResponse>('/api/settings/database/backup', {
-      body: JSON.stringify({ type: dbType, filename: backupName }),
-    } as ApiClientOptions)
+    api.post<DatabaseBackupResponse>('/api/databases/delete', { type: dbType, backupName })
   );
 
 export const uploadDatabaseBackup = async (
@@ -119,7 +129,7 @@ export const uploadDatabaseBackup = async (
   formData.append('type', dbType);
 
   const { uploadWithProgress } = await import('@/shared/utils/upload-with-progress');
-  const result = await uploadWithProgress<DatabaseBackupResponse>('/api/settings/database/backup/upload', {
+  const result = await uploadWithProgress<DatabaseBackupResponse>('/api/databases/upload', {
     formData,
     onProgress,
   });
@@ -139,23 +149,13 @@ export const executeSqlQuery = async (
     pipeline?: Record<string, unknown>[];
   }
 ): Promise<SqlQueryResult> =>
-  api.post<SqlQueryResult>('/api/settings/database/query', input);
+  api.post<SqlQueryResult>('/api/databases/execute', input);
 
 export const getDatabasePreview = async (
   input: DatabasePreviewRequest
 ): Promise<ApiPayloadResult<DatabasePreviewPayload>> => {
-  const params: Record<string, string | number | boolean | undefined> = {
-    table: input.table,
-    page: input.page,
-    pageSize: input.pageSize,
-    search: input.search,
-    type: input.type,
-    backupName: input.backupName ?? undefined,
-    mode: input.mode,
-  };
-
   try {
-    const raw = await api.get<Record<string, unknown>>('/api/settings/database/preview', { params });
+    const raw = await api.post<Record<string, unknown>>('/api/databases/preview', input);
 
     // Normalize response
     const normalizeGroups = (data: unknown): DatabasePreviewGroup[] => {
@@ -185,9 +185,12 @@ export const getDatabasePreview = async (
     return { ok: true, payload };
   } catch (error) {
     if (error instanceof ApiError) {
-      return { ok: false, payload: error.payload as DatabasePreviewPayload };
+      if (error.payload !== undefined && error.payload !== null) {
+        return { ok: false, payload: error.payload as DatabasePreviewPayload };
+      }
+      return { ok: false, payload: toFallbackErrorPayload<DatabasePreviewPayload>(error) };
     }
-    return { ok: false, payload: { error: error instanceof Error ? error.message : String(error) } as unknown as DatabasePreviewPayload };
+    return { ok: false, payload: toFallbackErrorPayload<DatabasePreviewPayload>(error) };
   }
 };
 
@@ -196,34 +199,34 @@ export const fetchDatabasePreview = getDatabasePreview;
 export const executeCrudOperation = async (
   input: CrudRequest
 ): Promise<CrudResult> =>
-  api.post<CrudResult>('/api/settings/database/crud', input);
+  api.post<CrudResult>('/api/databases/crud', input);
 
 export const getProviderDiagnostics = async (): Promise<ProviderDiagnosticsResponse> =>
-  api.get<ProviderDiagnosticsResponse>('/api/system/diagnostics');
+  api.get<ProviderDiagnosticsResponse>('/api/settings/providers');
 
 export const getRedisOverview = async (limit: number = 200): Promise<RedisOverviewResponse> =>
-  api.get<RedisOverviewResponse>('/api/system/redis/overview', { params: { limit } });
+  api.get<RedisOverviewResponse>('/api/databases/redis', { params: { limit } });
 
 export const fetchRedisOverview = getRedisOverview;
 
 export const getDatabaseEngineStatus = async (): Promise<DatabaseEngineStatusResponse> =>
-  api.get<DatabaseEngineStatusResponse>('/api/system/database/engine/status');
+  api.get<DatabaseEngineStatusResponse>('/api/databases/engine/status');
 
 export const runDatabaseEngineBackupNow = async (dbType: 'mongodb' | 'postgresql' | 'all'): Promise<DatabaseEngineBackupRunNowResponse> =>
-  api.post<DatabaseEngineBackupRunNowResponse>('/api/system/database/engine/backup/run', { type: dbType });
+  api.post<DatabaseEngineBackupRunNowResponse>('/api/databases/engine/backup-scheduler/run-now', { dbType });
 
 export const getDatabaseEngineBackupSchedulerStatus = async (): Promise<DatabaseEngineBackupSchedulerStatusResponse> =>
-  api.get<DatabaseEngineBackupSchedulerStatusResponse>('/api/system/database/engine/backup/scheduler/status');
+  api.get<DatabaseEngineBackupSchedulerStatusResponse>('/api/databases/engine/backup-scheduler/status');
 
 export const fetchDatabaseEngineBackupSchedulerStatus = getDatabaseEngineBackupSchedulerStatus;
 
 export const tickDatabaseEngineBackupScheduler = async (): Promise<DatabaseEngineBackupSchedulerTickResponse> =>
-  api.post<DatabaseEngineBackupSchedulerTickResponse>('/api/system/database/engine/backup/scheduler/tick');
+  api.post<DatabaseEngineBackupSchedulerTickResponse>('/api/databases/engine/backup-scheduler/tick');
 
 export const runDatabaseEngineBackupSchedulerTick = tickDatabaseEngineBackupScheduler;
 
 export const getDatabaseEngineOperationsJobs = async (limit: number = 30): Promise<DatabaseEngineOperationsJobsResponse> =>
-  api.get<DatabaseEngineOperationsJobsResponse>('/api/system/database/engine/operations/jobs', { params: { limit } });
+  api.get<DatabaseEngineOperationsJobsResponse>('/api/databases/engine/operations/jobs', { params: { limit } });
 
 export const fetchDatabaseEngineOperationsJobs = getDatabaseEngineOperationsJobs;
 
@@ -231,7 +234,7 @@ export const getDatabaseEngineProviderPreview = async (
   collections?: string[]
 ): Promise<DatabaseEngineProviderPreviewResponse> => {
   const params = collections ? { collections: collections.join(',') } : undefined;
-  return api.get<DatabaseEngineProviderPreviewResponse>('/api/system/database/engine/provider/preview', { params });
+  return api.get<DatabaseEngineProviderPreviewResponse>('/api/databases/engine/provider-preview', { params });
 };
 
 export const fetchDatabaseEngineProviderPreview = getDatabaseEngineProviderPreview;
@@ -241,7 +244,7 @@ export const copyCollectionBetweenProviders = async (
   direction: 'mongo_to_prisma' | 'prisma_to_mongo'
 ): Promise<ApiPayloadResult<CollectionCopyResult>> =>
   wrapInApiPayloadResult(
-    api.post<CollectionCopyResult>('/api/system/database/engine/operations/copy-collection', { collection, direction })
+    api.post<CollectionCopyResult>('/api/databases/copy-collection', { collection, direction })
   );
 
 export const updateDatabaseCollectionProviderMap = async (
@@ -271,22 +274,22 @@ export const backfillSettingsKeys = async (
 export const cancelDatabaseEngineOperationJob = async (
   jobId: string
 ): Promise<{ success: boolean; job: unknown }> =>
-  api.post<{ success: boolean; job: unknown }>(`/api/system/database/engine/operations/jobs/${jobId}/cancel`);
+  api.post<{ success: boolean; job: unknown }>(`/api/databases/engine/operations/jobs/${jobId}/cancel`);
 
 export const fetchAllCollectionsSchema = async (): Promise<MultiSchemaResponse> =>
-  api.get<MultiSchemaResponse>('/api/system/database/engine/schema/all');
+  api.get<MultiSchemaResponse>('/api/databases/schema');
 
 export const createJsonBackup = async (): Promise<ApiPayloadResult<DatabaseBackupResponse>> =>
   wrapInApiPayloadResult(
-    api.post<DatabaseBackupResponse>('/api/settings/database/json-backup')
+    api.post<DatabaseBackupResponse>('/api/databases/json-backup')
   );
 
 export const restoreJsonBackup = async (
   backupName: string
 ): Promise<ApiPayloadResult<DatabaseRestoreResponse>> =>
   wrapInApiPayloadResult(
-    api.post<DatabaseRestoreResponse>('/api/settings/database/json-restore', { filename: backupName })
+    api.post<DatabaseRestoreResponse>('/api/databases/json-restore', { backupName })
   );
 
 export const fetchJsonBackups = async (): Promise<{ backups: string[] }> =>
-  api.get<{ backups: string[] }>('/api/settings/database/json-backups');
+  api.get<{ backups: string[] }>('/api/databases/json-backup');

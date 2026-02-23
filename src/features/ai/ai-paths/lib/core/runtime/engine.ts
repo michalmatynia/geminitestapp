@@ -544,6 +544,54 @@ const hasSimulationContextProvenance = (
   return typeof simulationNodeId === 'string' && simulationNodeId.trim().length > 0;
 };
 
+const NON_REUSABLE_CACHE_STATUSES = new Set<string>([
+  'running',
+  'queued',
+  'polling',
+  'waiting_callback',
+  'advance_pending',
+  'pending',
+]);
+
+const TERMINAL_STATUS_ONLY_CACHE_STATUSES = new Set<string>([
+  'blocked',
+  'skipped',
+  'failed',
+  'timeout',
+  'canceled',
+  'cancelled',
+]);
+
+const hasReusableNodeOutputsForCache = (
+  node: AiNode,
+  nodeOutputs: RuntimePortValues | undefined
+): boolean => {
+  if (!nodeOutputs || typeof nodeOutputs !== 'object' || Array.isArray(nodeOutputs)) {
+    return false;
+  }
+  const rawStatus = nodeOutputs['status'];
+  const normalizedStatus =
+    typeof rawStatus === 'string' ? rawStatus.trim().toLowerCase() : '';
+  if (normalizedStatus && NON_REUSABLE_CACHE_STATUSES.has(normalizedStatus)) {
+    return false;
+  }
+  const declaredOutputPorts = Array.isArray(node.outputs)
+    ? node.outputs.filter((port: string): boolean => typeof port === 'string' && port.trim().length > 0)
+    : [];
+  if (declaredOutputPorts.length === 0) {
+    return true;
+  }
+  const hasDeclaredOutputValue = declaredOutputPorts.some(
+    (port: string): boolean => (nodeOutputs)[port] !== undefined
+  );
+  if (hasDeclaredOutputValue) {
+    return true;
+  }
+  return Boolean(
+    normalizedStatus && TERMINAL_STATUS_ONLY_CACHE_STATUSES.has(normalizedStatus)
+  );
+};
+
 const HANDLERS: Record<string, NodeHandler> = {
   trigger: handleTrigger,
   fetcher: handleFetcher,
@@ -2046,9 +2094,10 @@ export async function evaluateGraph({
       const inputHash = isCacheable ? fenceHash : null;
       const historyInputHash = fenceHash ?? null;
       const profileHashMs = typeof hashMs === 'number' ? hashMs : undefined;
+      const canReusePrevOutputs = hasReusableNodeOutputsForCache(node, prevOutputs);
       if (fenceHash) {
         const fenceSet = getRunFence(node.id);
-        if (fenceSet.has(fenceHash)) {
+        if (fenceSet.has(fenceHash) && canReusePrevOutputs) {
           pushSkipEntry(node, nodeInputs, prevOutputs, {
             status: 'cached',
             reason: 'run_fence',
@@ -2105,6 +2154,7 @@ export async function evaluateGraph({
         inputHash !== null &&
         inputHashes.get(node.id) === inputHash &&
         outputs[node.id] !== undefined &&
+        canReusePrevOutputs &&
         !isTtlExpired;
 
       if (hasCachedOutput) {

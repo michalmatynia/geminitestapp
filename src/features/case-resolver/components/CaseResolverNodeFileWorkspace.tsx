@@ -74,6 +74,7 @@ import {
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
 import { compileCaseResolverPrompt } from '../composer';
 import { applyCaseResolverPlainTextValidation } from '../plain-text-validation';
+import { NodeFileWorkspaceProvider, type NodeFileWorkspaceContextValue } from './NodeFileWorkspaceContext';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -1398,345 +1399,376 @@ function CaseResolverNodeFileWorkspaceInner({
     [hasWysiwygOnlyInputFlow, resolvePromptTooltipOutputs, resolveStaticInputPreview]
   );
 
+  const contextValue = useMemo(
+    (): NodeFileWorkspaceContextValue => ({
+      assetId,
+      assetName,
+      handleManualSave,
+      isSidebarReady,
+      selectedNode,
+      selectedPromptMeta,
+      selectedPromptSourceFile,
+      selectedPromptTemplate,
+      selectedPromptInputText,
+      selectedPromptOutputPreview,
+      selectedPromptSecondaryOutputHint,
+      updateSelectedPromptTemplate,
+      updateSelectedNodeMeta,
+      selectedEdge,
+      selectedEdgeJoinMode,
+      updateSelectedEdgeMeta,
+      isNodeInspectorOpen,
+      setIsNodeInspectorOpen,
+      hasPendingSnapshotChanges,
+    }),
+    [
+      assetId,
+      assetName,
+      handleManualSave,
+      isSidebarReady,
+      selectedNode,
+      selectedPromptMeta,
+      selectedPromptSourceFile,
+      selectedPromptTemplate,
+      selectedPromptInputText,
+      selectedPromptOutputPreview,
+      selectedPromptSecondaryOutputHint,
+      updateSelectedPromptTemplate,
+      updateSelectedNodeMeta,
+      selectedEdge,
+      selectedEdgeJoinMode,
+      updateSelectedEdgeMeta,
+      isNodeInspectorOpen,
+      setIsNodeInspectorOpen,
+      hasPendingSnapshotChanges,
+    ]
+  );
+
   return (
-    <div className='flex h-[calc(100vh-120px)] min-h-0 w-full gap-3'>
-      {/* ── Main canvas panel ── */}
-      <Card
-        variant='glass'
-        padding='none'
-        className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'
-      >
-        <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3'>
-          <div className='flex min-w-0 items-center gap-2'>
-            <Button
-              type='button'
-              size='sm'
-              onClick={handleManualSave}
-              disabled={!hasPendingSnapshotChanges}
-              className={`h-8 min-w-[100px] flex-shrink-0 rounded-md border text-xs transition-colors ${
-                hasPendingSnapshotChanges
-                  ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
-                  : 'border-border/60 text-gray-500 hover:bg-transparent'
-              }`}
-            >
-              Update
-            </Button>
-            <h2 className='truncate text-2xl font-bold tracking-tight text-white'>Edit Node File</h2>
-            <Badge variant='outline' className='truncate px-1.5 py-0 text-[10px]'>
-              {assetName}
-            </Badge>
+    <NodeFileWorkspaceProvider value={contextValue}>
+      <div className='flex h-[calc(100vh-120px)] min-h-0 w-full gap-3'>
+        {/* ── Main canvas panel ── */}
+        <Card
+          variant='glass'
+          padding='none'
+          className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'
+        >
+          <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3'>
+            <div className='flex min-w-0 items-center gap-2'>
+              <Button
+                type='button'
+                size='sm'
+                onClick={handleManualSave}
+                disabled={!hasPendingSnapshotChanges}
+                className={`h-8 min-w-[100px] flex-shrink-0 rounded-md border text-xs transition-colors ${
+                  hasPendingSnapshotChanges
+                    ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
+                    : 'border-border/60 text-gray-500 hover:bg-transparent'
+                }`}
+              >
+                Update
+              </Button>
+              <h2 className='truncate text-2xl font-bold tracking-tight text-white'>Edit Node File</h2>
+              <Badge variant='outline' className='truncate px-1.5 py-0 text-[10px]'>
+                {assetName}
+              </Badge>
+            </div>
+            <div className='ml-auto flex items-center gap-2'>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                disabled={!isSidebarReady}
+                className='h-8'
+                onClick={(): void => {
+                  setIsSidePanelVisible((previous) => !previous);
+                }}
+              >
+                {isSidePanelVisible ? 'Hide Sidebar' : 'Show Sidebar'}
+              </Button>
+              <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
+                {nodes.length} node{nodes.length !== 1 ? 's' : ''}
+              </Badge>
+            </div>
           </div>
-          <div className='ml-auto flex items-center gap-2'>
+
+          {/* Toolbar */}
+          <div className='flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3'>
+            <SelectSimple
+              size='sm'
+              value={selectedNodeId ?? ''}
+              onValueChange={(value: string): void => {
+                const normalized = value.trim();
+                if (!normalized) return;
+                focusNodeInCanvas(normalized);
+              }}
+              options={activeNodeOptions}
+              placeholder='Active nodes on canvas'
+              className='w-[280px]'
+              triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+              disabled={activeNodeOptions.length === 0}
+            />
+
+            <SelectSimple
+              size='sm'
+              value={documentSearchScope}
+              onValueChange={(value: string): void => {
+                setDocumentSearchScope(value === 'all_cases' ? 'all_cases' : 'case_scope');
+              }}
+              options={[
+                {
+                  value: 'case_scope',
+                  label: activeCaseScopeLabel,
+                  description: `${caseScopedSearchableFiles.length} documents`,
+                },
+                {
+                  value: 'all_cases',
+                  label: 'All cases',
+                  description: `${allSearchableFiles.length} documents`,
+                },
+              ]}
+              className='w-[220px]'
+              triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+            />
+
+            <div ref={documentSearchRef} className='relative w-[360px]'>
+              <SearchInput
+                value={documentSearchQuery}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                  setDocumentSearchQuery(event.target.value);
+                  setIsDocumentSearchOpen(true);
+                }}
+                onFocus={(): void => {
+                  setIsDocumentSearchOpen(true);
+                }}
+                onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+                  if (event.key !== 'Enter') return;
+                  if (selectedSearchDocumentId) {
+                    event.preventDefault();
+                    addSelectedSearchDocument();
+                    return;
+                  }
+                  const firstResult = visibleDocumentSearchRows[0];
+                  if (!firstResult) return;
+                  event.preventDefault();
+                  setSelectedSearchDocumentId(firstResult.file.id);
+                  setDocumentSearchQuery(firstResult.file.name);
+                }}
+                onClear={(): void => {
+                  setDocumentSearchQuery('');
+                  setSelectedSearchDocumentId('');
+                  setIsDocumentSearchOpen(true);
+                }}
+                size='sm'
+                placeholder='Search by name, signature, addresser/addressee, content'
+                containerClassName='w-full'
+                className='h-8 border-border bg-card/60 text-xs text-white'
+              />
+              {isDocumentSearchOpen ? (
+                <div className='absolute top-full z-30 mt-1 w-full overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-xl backdrop-blur-sm'>
+                  {visibleDocumentSearchRows.length === 0 ? (
+                    <div className='px-3 py-2 text-xs text-gray-400'>
+                      No documents match this search.
+                    </div>
+                  ) : (
+                    <div className='max-h-80 overflow-auto p-1'>
+                      {visibleDocumentSearchRows.map((row: NodeFileDocumentSearchRow) => {
+                        const metadataParts = [
+                          row.file.fileType === 'scanfile' ? 'Scan file' : 'Document',
+                          row.file.folder ? `Folder: ${row.file.folder}` : null,
+                          row.signatureLabel ? `Signature: ${row.signatureLabel}` : null,
+                        ].filter((value: string | null): value is string => Boolean(value));
+                        const isSelected = selectedSearchDocumentId === row.file.id;
+                        return (
+                          <button
+                            key={row.file.id}
+                            type='button'
+                            className={`w-full rounded px-2 py-1.5 text-left transition-colors ${
+                              isSelected
+                                ? 'bg-cyan-500/15 text-cyan-100'
+                                : 'text-gray-200 hover:bg-card/70'
+                            }`}
+                            onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                              // Keep focus in the search field until click handler finalizes selection.
+                              event.preventDefault();
+                            }}
+                            onClick={(): void => {
+                              setSelectedSearchDocumentId(row.file.id);
+                              setDocumentSearchQuery(row.file.name);
+                              setIsDocumentSearchOpen(false);
+                            }}
+                          >
+                            <div className='truncate text-xs font-medium'>{row.file.name}</div>
+                            <div className='truncate text-[10px] text-gray-400'>
+                              {metadataParts.join(' • ')}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : null}
+            </div>
             <Button
               type='button'
               variant='outline'
               size='sm'
-              disabled={!isSidebarReady}
-              className='h-8'
-              onClick={(): void => {
-                setIsSidePanelVisible((previous) => !previous);
-              }}
+              onClick={addSelectedSearchDocument}
+              disabled={!selectedSearchDocumentId}
             >
-              {isSidePanelVisible ? 'Hide Sidebar' : 'Show Sidebar'}
+              Add Selected
             </Button>
+
             <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
-              {nodes.length} node{nodes.length !== 1 ? 's' : ''}
+              {filteredDocumentSearchRows.length} result
+              {filteredDocumentSearchRows.length !== 1 ? 's' : ''}
             </Badge>
-          </div>
-        </div>
 
-        {/* Toolbar */}
-        <div className='flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3'>
-          <SelectSimple
-            size='sm'
-            value={selectedNodeId ?? ''}
-            onValueChange={(value: string): void => {
-              const normalized = value.trim();
-              if (!normalized) return;
-              focusNodeInCanvas(normalized);
-            }}
-            options={activeNodeOptions}
-            placeholder='Active nodes on canvas'
-            className='w-[280px]'
-            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-            disabled={activeNodeOptions.length === 0}
-          />
+            <div className='mx-1 h-6 w-px bg-border/60' />
 
-          <SelectSimple
-            size='sm'
-            value={documentSearchScope}
-            onValueChange={(value: string): void => {
-              setDocumentSearchScope(value === 'all_cases' ? 'all_cases' : 'case_scope');
-            }}
-            options={[
-              {
-                value: 'case_scope',
-                label: activeCaseScopeLabel,
-                description: `${caseScopedSearchableFiles.length} documents`,
-              },
-              {
-                value: 'all_cases',
-                label: 'All cases',
-                description: `${allSearchableFiles.length} documents`,
-              },
-            ]}
-            className='w-[220px]'
-            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-          />
-
-          <div ref={documentSearchRef} className='relative w-[360px]'>
-            <SearchInput
-              value={documentSearchQuery}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                setDocumentSearchQuery(event.target.value);
-                setIsDocumentSearchOpen(true);
-              }}
-              onFocus={(): void => {
-                setIsDocumentSearchOpen(true);
-              }}
-              onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
-                if (event.key !== 'Enter') return;
-                if (selectedSearchDocumentId) {
-                  event.preventDefault();
-                  addSelectedSearchDocument();
-                  return;
-                }
-                const firstResult = visibleDocumentSearchRows[0];
-                if (!firstResult) return;
-                event.preventDefault();
-                setSelectedSearchDocumentId(firstResult.file.id);
-                setDocumentSearchQuery(firstResult.file.name);
-              }}
-              onClear={(): void => {
-                setDocumentSearchQuery('');
-                setSelectedSearchDocumentId('');
-                setIsDocumentSearchOpen(true);
-              }}
+            <Button
+              type='button'
+              onClick={addExplanatoryNode}
+              variant='success'
               size='sm'
-              placeholder='Search by name, signature, addresser/addressee, content'
-              containerClassName='w-full'
-              className='h-8 border-border bg-card/60 text-xs text-white'
+            >
+              <Sparkles className='mr-1 size-3.5' />
+              Explanatory Node
+            </Button>
+
+            <SelectSimple
+              size='sm'
+              value={newNodeType}
+              onValueChange={(value: string): void => {
+                if (
+                  value === 'prompt' ||
+                  value === 'model' ||
+                  value === 'template' ||
+                  value === 'database' ||
+                  value === 'viewer'
+                ) {
+                  setNewNodeType(value);
+                }
+              }}
+              options={[
+                { value: 'prompt', label: 'Prompt Node' },
+                { value: 'model', label: 'Model Node' },
+                { value: 'template', label: 'Template Node' },
+                { value: 'database', label: 'Database Node' },
+                { value: 'viewer', label: 'Result Viewer Node' },
+              ]}
+              className='w-[170px]'
+              triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
             />
-            {isDocumentSearchOpen ? (
-              <div className='absolute top-full z-30 mt-1 w-full overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-xl backdrop-blur-sm'>
-                {visibleDocumentSearchRows.length === 0 ? (
-                  <div className='px-3 py-2 text-xs text-gray-400'>
-                    No documents match this search.
-                  </div>
-                ) : (
-                  <div className='max-h-80 overflow-auto p-1'>
-                    {visibleDocumentSearchRows.map((row: NodeFileDocumentSearchRow) => {
-                      const metadataParts = [
-                        row.file.fileType === 'scanfile' ? 'Scan file' : 'Document',
-                        row.file.folder ? `Folder: ${row.file.folder}` : null,
-                        row.signatureLabel ? `Signature: ${row.signatureLabel}` : null,
-                      ].filter((value: string | null): value is string => Boolean(value));
-                      const isSelected = selectedSearchDocumentId === row.file.id;
-                      return (
-                        <button
-                          key={row.file.id}
-                          type='button'
-                          className={`w-full rounded px-2 py-1.5 text-left transition-colors ${
-                            isSelected
-                              ? 'bg-cyan-500/15 text-cyan-100'
-                              : 'text-gray-200 hover:bg-card/70'
-                          }`}
-                          onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                            // Keep focus in the search field until click handler finalizes selection.
-                            event.preventDefault();
-                          }}
-                          onClick={(): void => {
-                            setSelectedSearchDocumentId(row.file.id);
-                            setDocumentSearchQuery(row.file.name);
-                            setIsDocumentSearchOpen(false);
-                          }}
-                        >
-                          <div className='truncate text-xs font-medium'>{row.file.name}</div>
-                          <div className='truncate text-[10px] text-gray-400'>
-                            {metadataParts.join(' • ')}
-                          </div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
+
+            <Button
+              type='button'
+              onClick={addGenericNode}
+              variant='outline'
+              size='sm'
+            >
+              Add Node
+            </Button>
+            <Button
+              type='button'
+              onClick={(): void => {
+                setIsNodeInspectorOpen(true);
+              }}
+              variant='outline'
+              size='sm'
+            >
+              Node Inspector
+            </Button>
+          </div>
+
+          {/* Canvas */}
+          <div
+            className='relative min-h-0 flex-1 overflow-hidden'
+            onDragOverCapture={handleCanvasDragOverCapture}
+            onDropCapture={handleCanvasDropCapture}
+          >
+            <CanvasBoard
+              viewportClassName='h-full min-h-0'
+              resolveConnectorTooltip={resolveConnectorTooltip}
+            />
+            {nodes.length === 0 ? (
+              <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
+                <EmptyState
+                  title='Empty canvas'
+                  description='Use the ✦ button next to a file in the tree, or drag a file directly onto this canvas.'
+                  icon={<FileCode2 className='size-12' />}
+                  className='border-none bg-card/60 backdrop-blur-sm px-8 py-6'
+                />
               </div>
             ) : null}
           </div>
-          <Button
-            type='button'
-            variant='outline'
-            size='sm'
-            onClick={addSelectedSearchDocument}
-            disabled={!selectedSearchDocumentId}
-          >
-            Add Selected
-          </Button>
 
-          <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
-            {filteredDocumentSearchRows.length} result
-            {filteredDocumentSearchRows.length !== 1 ? 's' : ''}
-          </Badge>
-
-          <div className='mx-1 h-6 w-px bg-border/60' />
-
-          <Button
-            type='button'
-            onClick={addExplanatoryNode}
-            variant='success'
-            size='sm'
-          >
-            <Sparkles className='mr-1 size-3.5' />
-            Explanatory Node
-          </Button>
-
-          <SelectSimple
-            size='sm'
-            value={newNodeType}
-            onValueChange={(value: string): void => {
-              if (
-                value === 'prompt' ||
-                value === 'model' ||
-                value === 'template' ||
-                value === 'database' ||
-                value === 'viewer'
-              ) {
-                setNewNodeType(value);
-              }
-            }}
-            options={[
-              { value: 'prompt', label: 'Prompt Node' },
-              { value: 'model', label: 'Model Node' },
-              { value: 'template', label: 'Template Node' },
-              { value: 'database', label: 'Database Node' },
-              { value: 'viewer', label: 'Result Viewer Node' },
-            ]}
-            className='w-[170px]'
-            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-          />
-
-          <Button
-            type='button'
-            onClick={addGenericNode}
-            variant='outline'
-            size='sm'
-          >
-            Add Node
-          </Button>
-          <Button
-            type='button'
-            onClick={(): void => {
-              setIsNodeInspectorOpen(true);
-            }}
-            variant='outline'
-            size='sm'
-          >
-            Node Inspector
-          </Button>
-        </div>
-
-        {/* Canvas */}
-        <div
-          className='relative min-h-0 flex-1 overflow-hidden'
-          onDragOverCapture={handleCanvasDragOverCapture}
-          onDropCapture={handleCanvasDropCapture}
-        >
-          <CanvasBoard
-            viewportClassName='h-full min-h-0'
-            resolveConnectorTooltip={resolveConnectorTooltip}
-          />
-          {nodes.length === 0 ? (
-            <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
-              <EmptyState
-                title='Empty canvas'
-                description='Use the ✦ button next to a file in the tree, or drag a file directly onto this canvas.'
-                icon={<FileCode2 className='size-12' />}
-                className='border-none bg-card/60 backdrop-blur-sm px-8 py-6'
-              />
-            </div>
-          ) : null}
-        </div>
-
-        {showNodeSelectorUnderCanvas && activeNodeOptions.length > 0 ? (
-          <div className='shrink-0 border-t border-border/60 bg-card/40 px-4 py-3'>
-            <div className='mb-2 flex items-center justify-between gap-2'>
-              <div>
-                <div className='text-xs font-medium text-gray-200'>Node Selector</div>
-                <div className='text-[11px] text-gray-500'>
-                  Click a node to focus it on canvas.
+          {showNodeSelectorUnderCanvas && activeNodeOptions.length > 0 ? (
+            <div className='shrink-0 border-t border-border/60 bg-card/40 px-4 py-3'>
+              <div className='mb-2 flex items-center justify-between gap-2'>
+                <div>
+                  <div className='text-xs font-medium text-gray-200'>Node Selector</div>
+                  <div className='text-[11px] text-gray-500'>
+                    Click a node to focus it on canvas.
+                  </div>
+                </div>
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='sm'
+                  className='h-7 px-2 text-[11px] text-gray-400 hover:text-gray-200'
+                  onClick={(): void => {
+                    setShowNodeSelectorUnderCanvas(false);
+                  }}
+                >
+                  Hide
+                </Button>
+              </div>
+              <div className='max-h-[35vh] overflow-x-hidden overflow-y-auto pr-1'>
+                <div className='grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-2'>
+                  {activeNodeOptions.map((option) => {
+                    const isSelected = selectedNodeId === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type='button'
+                        className={`w-full rounded border px-2 py-2 text-left transition-colors ${
+                          isSelected
+                            ? 'border-cyan-400/60 bg-cyan-500/10'
+                            : 'border-border/60 bg-card/20 hover:border-cyan-500/40 hover:bg-card/40'
+                        }`}
+                        onClick={(): void => {
+                          focusNodeInCanvas(option.value);
+                        }}
+                      >
+                        <div className='truncate text-xs font-medium text-gray-200'>
+                          {option.label}
+                        </div>
+                        <div className='mt-0.5 truncate text-[10px] text-gray-500'>
+                          {option.description}
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <Button
-                type='button'
-                variant='ghost'
-                size='sm'
-                className='h-7 px-2 text-[11px] text-gray-400 hover:text-gray-200'
-                onClick={(): void => {
-                  setShowNodeSelectorUnderCanvas(false);
-                }}
-              >
-                Hide
-              </Button>
             </div>
-            <div className='max-h-[35vh] overflow-x-hidden overflow-y-auto pr-1'>
-              <div className='grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-2'>
-                {activeNodeOptions.map((option) => {
-                  const isSelected = selectedNodeId === option.value;
-                  return (
-                    <button
-                      key={option.value}
-                      type='button'
-                      className={`w-full rounded border px-2 py-2 text-left transition-colors ${
-                        isSelected
-                          ? 'border-cyan-400/60 bg-cyan-500/10'
-                          : 'border-border/60 bg-card/20 hover:border-cyan-500/40 hover:bg-card/40'
-                      }`}
-                      onClick={(): void => {
-                        focusNodeInCanvas(option.value);
-                      }}
-                    >
-                      <div className='truncate text-xs font-medium text-gray-200'>
-                        {option.label}
-                      </div>
-                      <div className='mt-0.5 truncate text-[10px] text-gray-500'>
-                        {option.description}
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+          ) : null}
+        </Card>
+
+        {/* ── File reference side panel ── */}
+        {isSidePanelVisible && selectedNodeMeta ? (
+          <NodeFilePanel
+            meta={selectedNodeMeta}
+            file={selectedFile}
+            onOpen={openSelectedFile}
+          />
         ) : null}
-      </Card>
 
-      {/* ── File reference side panel ── */}
-      {isSidePanelVisible && selectedNodeMeta ? (
-        <NodeFilePanel
-          meta={selectedNodeMeta}
-          file={selectedFile}
-          onOpen={openSelectedFile}
-        />
-      ) : null}
-
-      <CaseResolverNodeInspectorModal
-        open={isNodeInspectorOpen}
-        onOpenChange={setIsNodeInspectorOpen}
-        onManualUpdate={handleManualSave}
-        selectedNode={selectedNode}
-        selectedPromptMeta={selectedPromptMeta}
-        selectedPromptSourceFile={selectedPromptSourceFile}
-        selectedPromptTemplate={selectedPromptTemplate}
-        selectedPromptInputText={selectedPromptInputText}
-        selectedPromptOutputPreview={selectedPromptOutputPreview}
-        selectedPromptSecondaryOutputHint={selectedPromptSecondaryOutputHint}
-        onUpdateSelectedPromptTemplate={updateSelectedPromptTemplate}
-        onUpdateSelectedNodeMeta={updateSelectedNodeMeta}
-        selectedEdge={selectedEdge}
-        selectedEdgeJoinMode={selectedEdgeJoinMode}
-        onUpdateSelectedEdgeMeta={updateSelectedEdgeMeta}
-      />
-    </div>
+        <CaseResolverNodeInspectorModal />
+      </div>
+    </NodeFileWorkspaceProvider>
   );
 }
 

@@ -14,6 +14,7 @@ import {
 
 import { PromptExploderHierarchyTreeProvider } from './PromptExploderHierarchyTreeContext';
 import { PromptExploderHierarchyTreeEditor } from './PromptExploderHierarchyTreeEditor';
+import { SegmentEditorListItemLogicalEditor } from './SegmentEditorListItemLogicalEditor';
 import { useDocumentState, useDocumentActions } from '../context/hooks/useDocument';
 import {
   PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS,
@@ -37,14 +38,9 @@ import type {
 
 export function SegmentEditorSubsectionsPanel(args: {
   segment: PromptExploderSegment;
-  renderListItemLogicalEditor: (args: {
-    item: PromptExploderListItem;
-    onChange: (updater: (item: PromptExploderListItem) => PromptExploderListItem) => void;
-  }) => React.JSX.Element;
 }): React.JSX.Element | null {
   const {
     segment,
-    renderListItemLogicalEditor,
   } = args;
   
   const { listParamOptions, listParamEntryByPath } = useDocumentState();
@@ -53,6 +49,16 @@ export function SegmentEditorSubsectionsPanel(args: {
   if (segment.type !== 'sequence' && segment.type !== 'qa_matrix') {
     return null;
   }
+
+  const renderListItemLogicalEditor = (renderArgs: {
+    item: PromptExploderListItem;
+    onChange: (updater: (item: PromptExploderListItem) => PromptExploderListItem) => void;
+  }): React.JSX.Element => (
+    <SegmentEditorListItemLogicalEditor
+      item={renderArgs.item}
+      onChange={renderArgs.onChange}
+    />
+  );
 
   const onUpdateSegment = (updater: (current: PromptExploderSegment) => PromptExploderSegment) => {
     updateSegment(segment.id, updater);
@@ -69,10 +75,13 @@ export function SegmentEditorSubsectionsPanel(args: {
             variant='outline'
             size='sm'
             onClick={() => {
-              onUpdateSegment((current) => ({
-                ...current,
-                subsections: [...current.subsections, promptExploderCreateSubsection()],
-              }));
+              onUpdateSegment((current: PromptExploderSegment) => {
+                const typedCurrent = current as PromptExploderSegment;
+                return {
+                  ...typedCurrent,
+                  subsections: [...typedCurrent.subsections, promptExploderCreateSubsection()],
+                };
+              });
             }}
           >
             <Plus className='mr-2 size-3.5' />
@@ -83,7 +92,7 @@ export function SegmentEditorSubsectionsPanel(args: {
       {segment.subsections.length === 0 ? (
         <div className='text-xs text-gray-500'>No subsections detected.</div>
       ) : null}
-      {segment.subsections.map((subsection: PromptExploderSubsection, subsectionIndex: number) => (
+      {(segment.subsections).map((subsection: PromptExploderSubsection, subsectionIndex: number) => (
         <Card key={subsection.id} variant='subtle-compact' padding='md' className='space-y-2 border-border/50 bg-card/20'>
           <SectionHeader
             title={`Subsection ${subsectionIndex + 1}`}
@@ -96,10 +105,13 @@ export function SegmentEditorSubsectionsPanel(args: {
                   size='icon'
                   disabled={subsectionIndex === 0}
                   onClick={() => {
-                    onUpdateSegment((current) => ({
-                      ...current,
-                      subsections: moveByDelta(current.subsections, subsectionIndex, -1),
-                    }));
+                    onUpdateSegment((current: PromptExploderSegment) => {
+                      const typedCurrent = current as PromptExploderSegment;
+                      return {
+                        ...typedCurrent,
+                        subsections: moveByDelta(typedCurrent.subsections, subsectionIndex, -1),
+                      };
+                    });
                   }}
                 >
                   <ArrowUp className='size-3.5' />
@@ -108,12 +120,15 @@ export function SegmentEditorSubsectionsPanel(args: {
                   type='button'
                   variant='ghost'
                   size='icon'
-                  disabled={subsectionIndex === segment.subsections.length - 1}
+                  disabled={subsectionIndex === (segment.subsections).length - 1}
                   onClick={() => {
-                    onUpdateSegment((current) => ({
-                      ...current,
-                      subsections: moveByDelta(current.subsections, subsectionIndex, 1),
-                    }));
+                    onUpdateSegment((current: PromptExploderSegment) => {
+                      const typedCurrent = current as PromptExploderSegment;
+                      return {
+                        ...typedCurrent,
+                        subsections: moveByDelta(typedCurrent.subsections, subsectionIndex, 1),
+                      };
+                    });
                   }}
                 >
                   <ArrowDown className='size-3.5' />
@@ -123,12 +138,15 @@ export function SegmentEditorSubsectionsPanel(args: {
                   variant='ghost'
                   size='icon'
                   onClick={() => {
-                    onUpdateSegment((current) => ({
-                      ...current,
-                      subsections: current.subsections.filter(
-                        (_: PromptExploderSubsection, index: number) => index !== subsectionIndex
-                      ),
-                    }));
+                    onUpdateSegment((current: PromptExploderSegment) => {
+                      const typedCurrent = current as PromptExploderSegment;
+                      return {
+                        ...typedCurrent,
+                        subsections: typedCurrent.subsections.filter(
+                          (_: PromptExploderSubsection, index: number) => index !== subsectionIndex
+                        ),
+                      };
+                    });
                   }}
                 >
                   <Trash2 className='size-3.5' />
@@ -140,8 +158,9 @@ export function SegmentEditorSubsectionsPanel(args: {
             <Input
               value={subsection.title}
               onChange={(event) => {
-                onUpdateSegment((current) => {
-                  const nextSubsections = current.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
+                onUpdateSegment((current: PromptExploderSegment) => {
+                  const typedCurrent = current as PromptExploderSegment;
+                  const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
                     candidateIndex === subsectionIndex
                       ? {
                         ...candidate,
@@ -150,7 +169,7 @@ export function SegmentEditorSubsectionsPanel(args: {
                       : candidate
                   );
                   return {
-                    ...current,
+                    ...typedCurrent,
                     subsections: nextSubsections,
                   };
                 });
@@ -160,8 +179,9 @@ export function SegmentEditorSubsectionsPanel(args: {
             <Input
               value={subsection.code ?? ''}
               onChange={(event) => {
-                onUpdateSegment((current) => {
-                  const nextSubsections = current.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
+                onUpdateSegment((current: PromptExploderSegment) => {
+                  const typedCurrent = current as PromptExploderSegment;
+                  const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
                     candidateIndex === subsectionIndex
                       ? {
                         ...candidate,
@@ -170,7 +190,7 @@ export function SegmentEditorSubsectionsPanel(args: {
                       : candidate
                   );
                   return {
-                    ...current,
+                    ...typedCurrent,
                     subsections: nextSubsections,
                   };
                 });
@@ -181,8 +201,9 @@ export function SegmentEditorSubsectionsPanel(args: {
           <Input
             value={subsection.condition ?? ''}
             onChange={(event) => {
-              onUpdateSegment((current) => {
-                const nextSubsections = current.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
+              onUpdateSegment((current: PromptExploderSegment) => {
+                const typedCurrent = current as PromptExploderSegment;
+                const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
                   candidateIndex === subsectionIndex
                     ? {
                       ...candidate,
@@ -191,7 +212,7 @@ export function SegmentEditorSubsectionsPanel(args: {
                     : candidate
                 );
                 return {
-                  ...current,
+                  ...typedCurrent,
                   subsections: nextSubsections,
                 };
               });
@@ -241,8 +262,9 @@ export function SegmentEditorSubsectionsPanel(args: {
                 comparator: nextComparator,
                 value: nextValue,
               });
-              onUpdateSegment((current) => {
-                const nextSubsections = current.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
+              onUpdateSegment((current: PromptExploderSegment) => {
+                const typedCurrent = current as PromptExploderSegment;
+                const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
                   candidateIndex === subsectionIndex
                     ? {
                       ...candidate,
@@ -251,7 +273,7 @@ export function SegmentEditorSubsectionsPanel(args: {
                     : candidate
                 );
                 return {
-                  ...current,
+                  ...typedCurrent,
                   subsections: nextSubsections,
                 };
               });
@@ -264,8 +286,9 @@ export function SegmentEditorSubsectionsPanel(args: {
                     value={operatorValue}
                     onValueChange={(next: string) => {
                       if (next === 'none') {
-                        onUpdateSegment((current) => {
-                          const nextSubsections = current.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
+                        onUpdateSegment((current: PromptExploderSegment) => {
+                          const typedCurrent = current as PromptExploderSegment;
+                          const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
                             candidateIndex === subsectionIndex
                               ? {
                                 ...candidate,
@@ -274,7 +297,7 @@ export function SegmentEditorSubsectionsPanel(args: {
                               : candidate
                           );
                           return {
-                            ...current,
+                            ...typedCurrent,
                             subsections: nextSubsections,
                           };
                         });
@@ -363,9 +386,11 @@ export function SegmentEditorSubsectionsPanel(args: {
           })()}
           <PromptExploderHierarchyTreeProvider
             value={{
-              items: subsection.items || [],              onChange: (nextItems) => {
-                onUpdateSegment((current) => {
-                  const nextSubsections = current.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) => {
+              items: subsection.items || [],
+              onChange: (nextItems) => {
+                onUpdateSegment((current: PromptExploderSegment) => {
+                  const typedCurrent = current as PromptExploderSegment;
+                  const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) => {
                     if (candidateIndex !== subsectionIndex) return candidate;
                     return {
                       ...candidate,
@@ -373,7 +398,7 @@ export function SegmentEditorSubsectionsPanel(args: {
                     };
                   });
                   return {
-                    ...current,
+                    ...typedCurrent,
                     subsections: nextSubsections,
                   };
                 });

@@ -3,6 +3,7 @@ import type {
   ImageFileListFilters,
   ImageFileRecord,
   ImageFileRepository,
+  ImageFileUpdateInput,
 } from '@/shared/contracts/files';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -89,7 +90,7 @@ export const prismaImageFileRepository: ImageFileRepository = {
     return imageFile ? toRecord(imageFile) : null;
   },
 
-  async updateImageFile(id: string, data: any) {
+  async updateImageFile(id: string, data: ImageFileUpdateInput) {
     const imageFile = await prisma.imageFile.update({
       where: { id },
       data,

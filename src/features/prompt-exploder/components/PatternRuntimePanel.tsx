@@ -232,7 +232,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
           <Hint size='xxs' uppercase className='text-gray-500'>Benchmark Suite</Hint>
-          <div className='mt-1 text-gray-100'>{typeof benchmarkSuiteDraft === 'string' ? benchmarkSuiteDraft : benchmarkSuiteDraft?.name || 'custom'}</div>
+          <div className='mt-1 text-gray-100'>{String(benchmarkSuiteDraft)}</div>
         </Card>        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
           <Hint size='xxs' uppercase className='text-gray-500'>Low Confidence</Hint>
           <div className='mt-1 text-gray-100'>
@@ -273,7 +273,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
           <Label className='text-[11px] text-gray-400'>Validation Stack</Label>
           <SelectSimple
             size='sm'
-            value={learningDraft.runtimeValidationRuleStack as any}
+            value={typeof learningDraft.runtimeValidationRuleStack === 'string' ? learningDraft.runtimeValidationRuleStack : (learningDraft.runtimeValidationRuleStack?.id || '')}
             onValueChange={(value: string) => {
               setLearningDraft((previous) => ({
                 ...previous,
@@ -281,7 +281,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
               }));
             }}
             options={validationStackOptions.map((option) => ({
-              value: option.value as any,
+              value: typeof option.value === 'string' ? option.value : (option.value.id || ''),
               label: option.label,
             }))}
           />        </div>
@@ -449,7 +449,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             Bench upsert {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}
           </Badge>
           <Badge variant='neutral' className='border-border/60 bg-card/20 font-normal'>
-                            Suite {typeof benchmarkSuiteDraft === 'string' ? benchmarkSuiteDraft : benchmarkSuiteDraft?.name || 'custom'}
+                            Suite {String(benchmarkSuiteDraft)}
           </Badge>        </div>
       </div>
       <Card variant='subtle-compact' padding='sm' className='mt-3 border-border/60 bg-card/20 text-xs text-gray-300'>

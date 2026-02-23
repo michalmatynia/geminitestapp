@@ -29,6 +29,10 @@ import type {
 import { EmptyState } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import { 
+  CaseResolverRelationsWorkspaceProvider, 
+  useCaseResolverRelationsWorkspaceContext 
+} from './CaseResolverRelationsWorkspaceContext';
 import {
   buildCaseResolverRelationGraph,
   toCaseResolverRelationCaseNodeId,
@@ -50,17 +54,6 @@ type CompatEdge = {
 
 type CaseResolverRelationsWorkspaceProps = {
   focusCaseId?: string | null;
-};
-
-type CaseResolverRelationsWorkspaceInnerProps = {
-  relationGraph: CaseResolverRelationGraph;
-  focusCaseId: string | null;
-  workspaceSnapshot: {
-    relationGraphSource: unknown;
-    folders: string[];
-    files: CaseResolverFile[];
-    assets: CaseResolverAssetFile[];
-  };
 };
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
@@ -288,11 +281,12 @@ const projectCaseOnlyRelationGraph = (
   };
 };
 
-function CaseResolverRelationsWorkspaceInner({
-  relationGraph,
-  focusCaseId,
-  workspaceSnapshot,
-}: CaseResolverRelationsWorkspaceInnerProps): React.JSX.Element {
+function CaseResolverRelationsWorkspaceInner(): React.JSX.Element {
+  const {
+    relationGraph,
+    focusCaseId,
+    workspaceSnapshot,
+  } = useCaseResolverRelationsWorkspaceContext();
   const {
     selectedFileId,
     onSelectFile,
@@ -495,18 +489,22 @@ export function CaseResolverRelationsWorkspace({
     : undefined;
 
   return (
-    <AiPathsProvider
-      initialSelectedNodeId={initialSelectedNodeId}
-      initialNodes={toRuntimeNodes(relationGraph.nodes)}
-      initialEdges={toStrictEdges(relationGraph.edges as unknown as Edge[]) as unknown as Edge[]}
-      initialLoading={false}
-      initialRuntimeState={EMPTY_RUNTIME_STATE}
+    <CaseResolverRelationsWorkspaceProvider
+      value={{
+        relationGraph,
+        focusCaseId,
+        workspaceSnapshot,
+      }}
     >
-      <CaseResolverRelationsWorkspaceInner
-        relationGraph={relationGraph}
-        focusCaseId={focusCaseId}
-        workspaceSnapshot={workspaceSnapshot}
-      />
-    </AiPathsProvider>
+      <AiPathsProvider
+        initialSelectedNodeId={initialSelectedNodeId}
+        initialNodes={toRuntimeNodes(relationGraph.nodes)}
+        initialEdges={toStrictEdges(relationGraph.edges as unknown as Edge[]) as unknown as Edge[]}
+        initialLoading={false}
+        initialRuntimeState={EMPTY_RUNTIME_STATE}
+      >
+        <CaseResolverRelationsWorkspaceInner />
+      </AiPathsProvider>
+    </CaseResolverRelationsWorkspaceProvider>
   );
 }

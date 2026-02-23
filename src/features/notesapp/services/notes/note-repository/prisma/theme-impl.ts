@@ -22,7 +22,7 @@ export const getAllThemes = async (
   });
   return themes.map((theme: Theme) => ({
     ...theme,
-    isDefault: (theme as any).isDefault ?? false,
+    isDefault: (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
     createdAt: theme.createdAt.toISOString(),
     updatedAt: theme.updatedAt?.toISOString() ?? null,
   }));
@@ -32,7 +32,7 @@ export const getThemeById = async (id: string): Promise<ThemeRecord | null> => {
   const theme = await prisma.theme.findUnique({ where: { id } });
   return theme ? {
     ...theme,
-    isDefault: (theme as any).isDefault ?? false,
+    isDefault: (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
     createdAt: theme.createdAt.toISOString(),
     updatedAt: theme.updatedAt?.toISOString() ?? null,
   } : null;
@@ -82,7 +82,7 @@ export const createTheme = async (
   });
   return {
     ...theme,
-    isDefault: (theme as any).isDefault ?? false,
+    isDefault: (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
     createdAt: theme.createdAt.toISOString(),
     updatedAt: theme.updatedAt?.toISOString() ?? null,
   };
@@ -134,7 +134,7 @@ export const updateTheme = async (
     });
     return {
       ...theme,
-      isDefault: (theme as any).isDefault ?? false,
+      isDefault: (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
       createdAt: theme.createdAt.toISOString(),
       updatedAt: theme.updatedAt?.toISOString() ?? null,
     };

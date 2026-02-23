@@ -11,6 +11,7 @@ import {
   Card,
 } from '@/shared/ui';
 
+import { useDocumentState } from '../context/hooks/useDocument';
 import { promptExploderSafeJsonStringify } from '../helpers/formatting';
 import {
   createLogicalCondition,
@@ -28,24 +29,6 @@ import type {
   PromptExploderLogicalCondition,
   PromptExploderLogicalOperator,
 } from '../types';
-
-type LogicalParamOption = {
-  value: string;
-  label: string;
-};
-
-type LogicalParamEntry = {
-  spec?: {
-    path?: string | undefined;
-    kind?: string | null | undefined;
-    enumOptions?: string[] | null | undefined;
-    hint?: string | undefined;
-    min?: number | undefined;
-    max?: number | undefined;
-    step?: number | undefined;
-    integer?: boolean | undefined;
-  } | null | undefined;
-};
 
 function normalizeLogicalConditionList(
   item: PromptExploderListItem,
@@ -152,10 +135,9 @@ function normalizeListItemLogicalState(
 export function SegmentEditorListItemLogicalEditor(args: {
   item: PromptExploderListItem;
   onChange: (updater: (item: PromptExploderListItem) => PromptExploderListItem) => void;
-  listParamOptions: LogicalParamOption[];
-  listParamEntryByPath: ReadonlyMap<string, LogicalParamEntry>;
 }): React.JSX.Element {
-  const { item, onChange, listParamOptions, listParamEntryByPath } = args;
+  const { item, onChange } = args;
+  const { listParamOptions, listParamEntryByPath } = useDocumentState();
   const operatorValue = item.logicalOperator ?? 'none';
   const logicalConditions =
     operatorValue === 'none' ? [] : getEditableLogicalConditions(item);

@@ -67,7 +67,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
             <SelectSimple size='sm'
               value={benchmarkSuiteDraft}
               onValueChange={(value: string) => {
-                setBenchmarkSuiteDraft(value as any);
+                setBenchmarkSuiteDraft(value as 'default' | 'extended' | 'custom');
               }}
               options={[
                 {
@@ -124,7 +124,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
             selected Prompt Exploder runtime profile.
           </div>
         </div>
-        {(benchmarkSuiteDraft as unknown as string) === 'custom' ? (
+        {benchmarkSuiteDraft === 'custom' ? (
           <FormField label='Custom Benchmark Cases JSON' id='custom-benchmark-cases'>
             <div className='grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto_auto]'>
               <Input

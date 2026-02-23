@@ -23,7 +23,7 @@ export function BindingsPanel(): React.JSX.Element {
     const segment = segmentById.get(segmentId);
     if (!segment) return 'Unknown segment';
     if (!subsectionId) return segment.title || 'Untitled';
-    const subsection = (segment.subsections || []).find((candidate: PromptExploderSubsection) => candidate.id === subsectionId);
+    const subsection = (segment.subsections as PromptExploderSubsection[] || []).find((candidate: PromptExploderSubsection) => candidate.id === subsectionId);
     if (!subsection) return segment.title || 'Untitled';
     return `${segment.title || 'Untitled'} · ${promptExploderFormatSubsectionLabel(subsection)}`;
   };

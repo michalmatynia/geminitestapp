@@ -2,8 +2,16 @@
 
 import React, { createContext, useContext, useMemo, useCallback } from 'react';
 
-import { DEFAULT_ANIMATION_CONFIG, type GsapAnimationConfig } from '@/features/gsap';
-import { DEFAULT_CUSTOM_CSS_AI_CONFIG, type CustomCssAiConfig, type CssAnimationConfig } from '@/shared/contracts/cms';
+import { 
+  DEFAULT_ANIMATION_CONFIG, 
+  type GsapAnimationConfig 
+} from '@/features/gsap';
+import { 
+  DEFAULT_CUSTOM_CSS_AI_CONFIG, 
+  type CustomCssAiConfig, 
+  type CssAnimationConfig,
+  type CmsEventEffectsConfig,
+} from '@/shared/contracts/cms';
 import { getEventEffectsConfig } from '@/features/cms/utils/event-effects';
 
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
@@ -35,7 +43,7 @@ export interface ComponentSettingsContextValue {
   contentAiAllowedKeys: string[];
   connectionSettings: ConnectionSettings;
   updateConnectionSetting: (patch: Partial<ConnectionSettings>) => void;
-  eventConfig: any;
+  eventConfig: CmsEventEffectsConfig | null;
   handleEventSettingChange: (key: string, value: unknown) => void;
   handleBlockSettingChange: (key: string, value: unknown) => void;
   handleSectionSettingChange: (key: string, value: unknown) => void;

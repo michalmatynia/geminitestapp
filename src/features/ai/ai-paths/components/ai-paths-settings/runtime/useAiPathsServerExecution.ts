@@ -477,6 +477,14 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
               if (!nodeId) return;
               const status = args.normalizeNodeStatus(nodeUpdate.status);
               if (!status) return;
+              const nodeInputs =
+                isRecord(nodeUpdate.inputs) && !Array.isArray(nodeUpdate.inputs)
+                  ? nodeUpdate.inputs
+                  : null;
+              const nodeOutputs =
+                isRecord(nodeUpdate.outputs) && !Array.isArray(nodeUpdate.outputs)
+                  ? nodeUpdate.outputs
+                  : null;
               const runtimeNode = runtimeNodeById.get(nodeId);
               const nodeTitle = runtimeNode?.title ?? nodeUpdate.nodeTitle ?? nodeId;
               const errorMessage = asString(nodeUpdate.errorMessage) ?? asString(nodeUpdate.error);
@@ -509,6 +517,30 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                     ...(nodeUpdate.outputs ? { outputs: nodeUpdate.outputs } : {}),
                   }
                   : undefined,
+              });
+              args.setRuntimeState((prev) => {
+                const nextInputs = {
+                  ...(prev.inputs ?? {}),
+                  ...(nodeInputs ? { [nodeId]: nodeInputs } : {}),
+                };
+                const mergedNodeOutputs = {
+                  ...(prev.outputs?.[nodeId] ?? {}),
+                  ...(nodeOutputs ?? {}),
+                  status,
+                  ...(isFailed && errorMessage ? { error: errorMessage } : {}),
+                };
+                const next = {
+                  ...prev,
+                  runId,
+                  ...(runStartedAtForNode ? { runStartedAt: runStartedAtForNode } : {}),
+                  inputs: nextInputs,
+                  outputs: {
+                    ...(prev.outputs ?? {}),
+                    [nodeId]: mergedNodeOutputs,
+                  },
+                };
+                args.runtimeStateRef.current = next;
+                return next;
               });
             });
           } catch (err) {

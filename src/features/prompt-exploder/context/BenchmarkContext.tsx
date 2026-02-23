@@ -37,7 +37,6 @@ import { useSettingsState, useSettingsActions } from './hooks/useSettings';
 
 import type {
   PromptExploderBenchmarkSuggestion,
-  PromptExploderBenchmarkSuite,
   PromptExploderSegment,
 } from '../types';
 
@@ -45,7 +44,7 @@ import type {
 
 export interface BenchmarkState {
   benchmarkReport: PromptExploderBenchmarkReport | null;
-  benchmarkSuiteDraft: any;
+  benchmarkSuiteDraft: 'default' | 'extended' | 'custom';
   benchmarkLowConfidenceThresholdDraft: number;
   benchmarkSuggestionLimitDraft: number;
   customBenchmarkCasesDraft: string;
@@ -57,7 +56,7 @@ export interface BenchmarkState {
 }
 
 export interface BenchmarkActions {
-  setBenchmarkSuiteDraft: React.Dispatch<React.SetStateAction<any>>;
+  setBenchmarkSuiteDraft: React.Dispatch<React.SetStateAction<'default' | 'extended' | 'custom'>>;
   setBenchmarkLowConfidenceThresholdDraft: React.Dispatch<React.SetStateAction<number>>;
   setBenchmarkSuggestionLimitDraft: React.Dispatch<React.SetStateAction<number>>;
   setCustomBenchmarkCasesDraft: React.Dispatch<React.SetStateAction<string>>;
@@ -108,7 +107,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
   const { setDocumentState, setManualBindings, setSelectedSegmentId } = useDocumentActions();
 
   const [benchmarkReport, setBenchmarkReport] = useState<PromptExploderBenchmarkReport | null>(null);
-  const [benchmarkSuiteDraft, setBenchmarkSuiteDraft] = useState<string | PromptExploderBenchmarkSuite>('default');
+  const [benchmarkSuiteDraft, setBenchmarkSuiteDraft] = useState<'default' | 'extended' | 'custom'>('default');
   const [benchmarkLowConfidenceThresholdDraft, setBenchmarkLowConfidenceThresholdDraft] =
     useState(PROMPT_EXPLODER_DEFAULT_LOW_CONFIDENCE_THRESHOLD);
   const [benchmarkSuggestionLimitDraft, setBenchmarkSuggestionLimitDraft] =

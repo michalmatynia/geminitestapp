@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import {
   useExportToBaseMutation,
   useCreateListingMutation,
@@ -21,25 +22,10 @@ type UseListProductFormResult = {
   setLogsOpen: (value: boolean) => void;
   submitting: boolean;
   handleSubmit: (
-    selectedIntegrationId: string | null,
-    selectedConnectionId: string | null,
-    isBaseComIntegration: boolean,
-    isTraderaIntegration: boolean,
-    selectedInventoryId: string | null,
-    selectedTemplateId: string | null,
-    traderaDurationHours: number,
-    traderaAutoRelistEnabled: boolean,
-    traderaAutoRelistLeadMinutes: number,
-    traderaTemplateId: string,
-    productId: string,
     onSuccess: () => void
   ) => Promise<void>;
   handleImageRetry: (
     preset: ImageRetryPreset,
-    isBaseComIntegration: boolean,
-    selectedConnectionId: string | null,
-    selectedInventoryId: string | null,
-    productId: string,
     onSuccess: () => void
   ) => Promise<void>;
 };
@@ -49,6 +35,19 @@ export function useListProductForm(productId: string): UseListProductFormResult 
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);
   const [logsOpen, setLogsOpen] = useState<boolean>(false);
   const { toast } = useToast();
+
+  const {
+    selectedIntegrationId,
+    selectedConnectionId,
+    isBaseComIntegration,
+    selectedInventoryId,
+    selectedTemplateId,
+    isTraderaIntegration,
+    selectedTraderaDurationHours,
+    selectedTraderaAutoRelistEnabled,
+    selectedTraderaAutoRelistLeadMinutes,
+    selectedTraderaTemplateId,
+  } = useListingSettingsContext();
 
   const exportToBaseMutation = useExportToBaseMutation(productId);
   const createListingMutation = useCreateListingMutation(productId);
@@ -81,17 +80,6 @@ export function useListProductForm(productId: string): UseListProductFormResult 
   };
 
   const handleSubmit = async (
-    selectedIntegrationId: string | null,
-    selectedConnectionId: string | null,
-    isBaseComIntegration: boolean,
-    isTraderaIntegration: boolean,
-    selectedInventoryId: string | null,
-    selectedTemplateId: string | null,
-    traderaDurationHours: number,
-    traderaAutoRelistEnabled: boolean,
-    traderaAutoRelistLeadMinutes: number,
-    traderaTemplateId: string,
-    productId: string,
     onSuccess: () => void
   ): Promise<void> => {
     const validation = validateFormData(
@@ -135,12 +123,12 @@ export function useListProductForm(productId: string): UseListProductFormResult 
           connectionId: selectedConnectionId!,
           ...(isTraderaIntegration
             ? {
-              durationHours: traderaDurationHours,
-              autoRelistEnabled: traderaAutoRelistEnabled,
-              autoRelistLeadMinutes: traderaAutoRelistLeadMinutes,
+              durationHours: selectedTraderaDurationHours,
+              autoRelistEnabled: selectedTraderaAutoRelistEnabled,
+              autoRelistLeadMinutes: selectedTraderaAutoRelistLeadMinutes,
               templateId:
-                  traderaTemplateId && traderaTemplateId !== 'none'
-                    ? traderaTemplateId
+                  selectedTraderaTemplateId && selectedTraderaTemplateId !== 'none'
+                    ? selectedTraderaTemplateId
                     : null,
             }
             : {}),
@@ -173,10 +161,6 @@ export function useListProductForm(productId: string): UseListProductFormResult 
 
   const handleImageRetry = async (
     preset: ImageRetryPreset,
-    isBaseComIntegration: boolean,
-    selectedConnectionId: string | null,
-    selectedInventoryId: string | null,
-    productId: string,
     onSuccess: () => void
   ): Promise<void> => {
     if (!isBaseComIntegration || !selectedConnectionId || !selectedInventoryId) {

@@ -1,13 +1,10 @@
 'use client';
 
-import { ArrowRight } from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 import {
-  useProductValidationActions,
   useProductValidationState,
 } from '@/features/products/context/ProductValidationSettingsContext';
 import {
@@ -17,7 +14,6 @@ import {
 import {
   applyResolvedReplacement,
   buildSequenceGroupCounts,
-  getIssueReplacementPreview,
   isLatestPriceStockMirrorPattern,
   isPatternInSequenceGroup,
   isPatternLocaleMatch,
@@ -29,220 +25,13 @@ import {
   resolvePatternReplacementValue,
   shouldLaunchPattern,
   sortValidatorPatterns,
-  type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
 import { ProductFormData } from '@/shared/contracts/products';
 import type { ProductValidationPattern } from '@/shared/contracts/products';
-import { Button, Input, Textarea, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField, Alert, Skeleton, Hint } from '@/shared/ui';
+import { Input, Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, FormSection, FormField, Alert, Skeleton } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-const buildIssueSnippet = (
-  value: string,
-  index: number,
-  length: number
-): { before: string; match: string; after: string } => {
-  const start = Math.max(0, index - 24);
-  const end = Math.min(value.length, index + length + 24);
-  const rawBefore = value.slice(start, index);
-  const rawMatch = value.slice(index, Math.min(value.length, index + length));
-  const rawAfter = value.slice(Math.min(value.length, index + length), end);
-
-  return {
-    before: `${start > 0 ? '...' : ''}${rawBefore}`,
-    match: rawMatch || value.slice(index, Math.min(value.length, index + 1)) || ' ',
-    after: `${rawAfter}${end < value.length ? '...' : ''}`,
-  };
-};
-
-export const ValidatorIssueHint = memo(function ValidatorIssueHint({
-  issue,
-  value,
-  onReplace,
-  onDeny,
-  denyLabel = 'Deny',
-  proposedValueOverride,
-  hideMatchSnippet = false,
-}: {
-  issue: FieldValidatorIssue;
-  value: string;
-  onReplace?: (() => void) | undefined;
-  onDeny?: (() => void) | undefined;
-  denyLabel?: 'Deny' | 'Mute';
-  proposedValueOverride?: string | null;
-  hideMatchSnippet?: boolean;
-}): React.JSX.Element {
-  const snippet = buildIssueSnippet(value, issue.index, issue.length);
-  const toneClass =
-    issue.severity === 'warning'
-      ? 'border-amber-500/40 bg-amber-500/10 text-amber-100'
-      : 'border-red-500/40 bg-red-500/10 text-red-100';
-  const matchClass =
-    issue.severity === 'warning'
-      ? 'bg-amber-300/30 text-amber-50'
-      : 'bg-red-300/30 text-red-50';
-  const replacementBadgeClass =
-    issue.replacementScope === 'global'
-      ? 'border-emerald-500/50 bg-emerald-500/15 text-emerald-100'
-      : issue.replacementScope === 'field'
-        ? issue.replacementActive
-          ? 'border-cyan-500/50 bg-cyan-500/15 text-cyan-100'
-          : 'border-cyan-500/40 bg-cyan-500/10 text-cyan-200/80'
-        : 'border-gray-500/40 bg-gray-500/10 text-gray-200/80';
-  const replacementBadgeText =
-    issue.replacementScope === 'global'
-      ? 'Global replacer'
-      : issue.replacementScope === 'field'
-        ? issue.replacementActive
-          ? 'Field replacer'
-          : 'Field replacer (other field)'
-        : 'Validation only';
-  const proposedValue =
-    proposedValueOverride ??
-    (issue.replacementValue ? getIssueReplacementPreview(value, issue) : null);
-  const hasProposedChange = Boolean(
-    proposedValue !== null && proposedValue !== value
-  );
-
-  return (
-    <div className={cn('mt-2 rounded-md border px-2 py-2 text-xs', toneClass)}>
-      <div className='flex items-start gap-2'>
-        <ArrowRight className='mt-0.5 size-4 shrink-0 animate-bounce' />
-        <span className='min-w-0 flex-1 break-words'>{issue.message}</span>
-      </div>
-      <div className='mt-2 flex flex-wrap items-center gap-1'>
-        <span className={cn('shrink-0 rounded border px-1.5 py-0.5 text-[10px]', replacementBadgeClass)}>
-          {replacementBadgeText}
-        </span>
-        {onDeny || (issue.replacementValue && onReplace) ? (
-          <div className='ml-auto flex flex-wrap justify-end gap-1'>
-            {onDeny ? (
-              <Button
-                type='button'
-                onClick={onDeny}
-                className='h-6 rounded border border-red-500/50 bg-red-500/15 px-2 text-[10px] text-red-100 hover:bg-red-500/25'
-              >
-                {denyLabel}
-              </Button>
-            ) : null}
-            {issue.replacementValue && onReplace ? (
-              <Button
-                type='button'
-                onClick={onReplace}
-                className='h-6 rounded border border-emerald-500/50 bg-emerald-500/15 px-2 text-[10px] text-emerald-100 hover:bg-emerald-500/25'
-              >
-                Replace
-              </Button>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
-      {!hideMatchSnippet ? (
-        <div className='mt-1 font-mono text-[11px] break-all'>
-          <span className='opacity-90'>{snippet.before}</span>
-          <mark className={cn('rounded px-0.5', matchClass)}>{snippet.match}</mark>
-          <span className='opacity-90'>{snippet.after}</span>
-        </div>
-      ) : null}
-      {hasProposedChange ? (
-        <div className='mt-2 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-1.5'>
-          <Hint uppercase size='xxs' variant='info' className='text-emerald-200/90'>
-            Proposed Result
-          </Hint>
-          <p className='mt-1 break-all font-mono text-[11px] text-emerald-100'>
-            {proposedValue}
-          </p>
-        </div>
-      ) : null}
-    </div>
-  );
-});
-
-type IssueHintRowProps = {
-  fieldName: string;
-  issue: FieldValidatorIssue;
-  fieldValue: string;
-  numericField?: 'weight' | 'sizeLength' | 'sizeWidth' | 'length' | 'price' | 'stock';
-};
-
-/**
- * Memoized wrapper around ValidatorIssueHint that owns stable onReplace/onDeny
- * callbacks via useCallback. Prevents re-rendering hints for unchanged fields
- * when a sibling field is edited.
- */
-export const IssueHintRow = memo(function IssueHintRow({
-  fieldName,
-  issue,
-  fieldValue,
-  numericField,
-}: IssueHintRowProps): React.JSX.Element {
-  const { getValues, setValue } = useFormContext<ProductFormData>();
-  const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationActions();
-
-  const onReplace = useCallback((): void => {
-    if (numericField) {
-      const raw = getValues(numericField);
-      const currentValue =
-        typeof raw === 'string'
-          ? raw
-          : typeof raw === 'number' && Number.isFinite(raw)
-            ? String(raw)
-            : '';
-      const nextValue = getIssueReplacementPreview(currentValue, issue);
-      acceptIssue({
-        fieldName,
-        patternId: issue.patternId,
-        postAcceptBehavior: issue.postAcceptBehavior,
-        message: issue.message,
-        replacementValue: issue.replacementValue,
-      });
-      if (nextValue === currentValue) return;
-      const numericValue = Number(nextValue.replace(',', '.'));
-      if (!Number.isFinite(numericValue)) return;
-      setValue(
-        numericField,
-        Math.max(0, Math.floor(numericValue)) as ProductFormData[typeof numericField],
-        { shouldDirty: true, shouldTouch: true }
-      );
-    } else {
-      const currentValue =
-        (getValues(fieldName as keyof ProductFormData) as string | undefined) ?? '';
-      const nextValue = getIssueReplacementPreview(currentValue, issue);
-      acceptIssue({
-        fieldName,
-        patternId: issue.patternId,
-        postAcceptBehavior: issue.postAcceptBehavior,
-        message: issue.message,
-        replacementValue: issue.replacementValue,
-      });
-      if (nextValue !== currentValue) {
-        setValue(
-          fieldName as keyof ProductFormData,
-          nextValue as ProductFormData[keyof ProductFormData],
-          { shouldDirty: true, shouldTouch: true }
-        );
-      }
-    }
-  }, [acceptIssue, fieldName, getValues, issue, numericField, setValue]);
-
-  const onDeny = useCallback((): void => {
-    denyIssue({
-      fieldName,
-      patternId: issue.patternId,
-      message: issue.message,
-      replacementValue: issue.replacementValue,
-    });
-  }, [denyIssue, fieldName, issue.message, issue.patternId, issue.replacementValue]);
-
-  return (
-    <ValidatorIssueHint
-      issue={issue}
-      value={fieldValue}
-      onReplace={issue.replacementValue ? onReplace : undefined}
-      onDeny={onDeny}
-      denyLabel={getDenyActionLabel(issue.patternId)}
-    />
-  );
-});
+import { ValidatedField } from './ValidatedField';
 
 export default function ProductFormGeneral(): React.JSX.Element {
   const {
@@ -251,15 +40,10 @@ export default function ProductFormGeneral(): React.JSX.Element {
     formatterEnabled,
     validatorPatterns,
     latestProductValues,
-    visibleFieldIssues,
   } = useProductValidationState();
   const {
     filteredLanguages,
   } = useProductFormMetadata();
-
-  const {
-    errors,
-  } = useProductFormCore();
 
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
   const [activeNameTab, setActiveNameTab] = useState<string>('');
@@ -344,12 +128,6 @@ export default function ProductFormGeneral(): React.JSX.Element {
       prev && languageTabValues.includes(prev) ? prev : firstLanguageTab
     );
   }, [firstLanguageTab, languageTabValues]);
-
-  const toFieldString = (value: unknown): string => {
-    if (typeof value === 'string') return value;
-    if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-    return '';
-  };
 
   // Pre-compile regexes once per validatorPatterns change instead of re-creating
   // them on every loop iteration inside the formatter effect (Fix 1.2).
@@ -660,35 +438,13 @@ export default function ProductFormGeneral(): React.JSX.Element {
             </TabsList>
             {filteredLanguages.map((language: { name: string; code: string }) => {
               const fieldName = `name_${language.code.toLowerCase()}` as keyof ProductFormData;
-              const error = errors[fieldName]?.message;
-              const fieldNameKey = String(fieldName);
-              const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldNameKey] ?? [] : [];
-              const fieldIssue = fieldIssueList[0];
-              const fieldValue = (displayValues[String(fieldName)] as string | undefined) ?? '';
               return (
                 <TabsContent key={language.code} value={language.code.toLowerCase()}>
-                  <FormField label={`${language.name} Name`} error={error} id={fieldName}>
-                    <Input
-                      id={fieldName}
-                      className={cn(
-                        validatorEnabled &&
-                        fieldIssue &&
-                          (fieldIssue.severity === 'warning'
-                            ? 'border-amber-500/60'
-                            : 'border-red-500/60')
-                      )}
-                      {...register(fieldName)}
-                      placeholder={`Enter product name in ${language.name}`}
-                    />
-                    {validatorEnabled && fieldIssueList.map((issue: FieldValidatorIssue) => (
-                      <IssueHintRow
-                        key={issue.patternId}
-                        fieldName={fieldNameKey}
-                        issue={issue}
-                        fieldValue={fieldValue}
-                      />
-                    ))}
-                  </FormField>
+                  <ValidatedField
+                    name={fieldName}
+                    label={`${language.name} Name`}
+                    placeholder={`Enter product name in ${language.name}`}
+                  />
                 </TabsContent>
               );
             })}
@@ -720,36 +476,15 @@ export default function ProductFormGeneral(): React.JSX.Element {
             </TabsList>
             {filteredLanguages.map((language: { name: string; code: string }) => {
               const fieldName = `description_${language.code.toLowerCase()}` as keyof ProductFormData;
-              const error = errors[fieldName]?.message;
-              const fieldNameKey = String(fieldName);
-              const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldNameKey] ?? [] : [];
-              const fieldIssue = fieldIssueList[0];
-              const fieldValue = (displayValues[String(fieldName)] as string | undefined) ?? '';
               return (
                 <TabsContent key={language.code} value={language.code.toLowerCase()}>
-                  <FormField label={`${language.name} Description`} error={error} id={fieldName}>
-                    <Textarea
-                      id={fieldName}
-                      className={cn(
-                        validatorEnabled &&
-                        fieldIssue &&
-                          (fieldIssue.severity === 'warning'
-                            ? 'border-amber-500/60'
-                            : 'border-red-500/60')
-                      )}
-                      {...register(fieldName)}
-                      placeholder={`Enter product description in ${language.name}`}
-                      rows={4}
-                    />
-                    {validatorEnabled && fieldIssueList.map((issue: FieldValidatorIssue) => (
-                      <IssueHintRow
-                        key={issue.patternId}
-                        fieldName={fieldNameKey}
-                        issue={issue}
-                        fieldValue={fieldValue}
-                      />
-                    ))}
-                  </FormField>
+                  <ValidatedField
+                    name={fieldName}
+                    label={`${language.name} Description`}
+                    placeholder={`Enter product description in ${language.name}`}
+                    type='textarea'
+                    rows={4}
+                  />
                 </TabsContent>
               );
             })}
@@ -758,38 +493,12 @@ export default function ProductFormGeneral(): React.JSX.Element {
       )}
 
       <FormSection title='Identifiers' gridClassName='md:grid-cols-2'>
-        <FormField label='SKU' required error={errors.sku?.message} id='sku'>
-          {(() => {
-            const skuFieldIssueList = validatorEnabled ? visibleFieldIssues['sku'] ?? [] : [];
-            const skuFieldIssue = skuFieldIssueList[0];
-            const skuValue = (displayValues['sku'] as string | undefined) ?? '';
-            return (
-              <>
-                <Input
-                  id='sku'
-                  className={cn(
-                    validatorEnabled &&
-                    skuFieldIssue &&
-                      (skuFieldIssue.severity === 'warning'
-                        ? 'border-amber-500/60'
-                        : 'border-red-500/60')
-                  )}
-                  {...register('sku')}
-                  placeholder='Unique stock keeping unit'
-                />
-                {validatorEnabled &&
-                  skuFieldIssueList.map((issue: FieldValidatorIssue) => (
-                    <IssueHintRow
-                      key={issue.patternId}
-                      fieldName='sku'
-                      issue={issue}
-                      fieldValue={skuValue}
-                    />
-                  ))}
-              </>
-            );
-          })()}
-        </FormField>
+        <ValidatedField
+          name='sku'
+          label='SKU'
+          required
+          placeholder='Unique stock keeping unit'
+        />
         
         <FormField label='Product Identifier' description='EAN, GTIN or ASIN code.'>
           <div className='flex gap-2'>
@@ -815,189 +524,37 @@ export default function ProductFormGeneral(): React.JSX.Element {
       </FormSection>
 
       <FormSection title='Dimensions & Weight' gridClassName='grid-cols-2 md:grid-cols-4'>
-        <FormField label='Weight (kg)' error={errors.weight?.message} id='weight'>
-          {(() => {
-            const fieldName = 'weight';
-            const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldName] ?? [] : [];
-            const fieldIssue = fieldIssueList[0];
-            const fieldValue = toFieldString(displayValues[String(fieldName)]);
-            return (
-              <>
-                <div className='relative'>
-                  <Input
-                    id='weight'
-                    type='number'
-                    step='0.01'
-                    className={cn(
-                      'pr-8',
-                      validatorEnabled &&
-                        fieldIssue &&
-                        (fieldIssue.severity === 'warning'
-                          ? 'border-amber-500/60'
-                          : 'border-red-500/60')
-                    )}
-                    {...register('weight', { valueAsNumber: true })}
-                  />
-                  <Hint 
-                    uppercase 
-                    size='xxs' 
-                    className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-bold'
-                  >
-                    KG
-                  </Hint>
-                </div>
-                {validatorEnabled &&
-                  fieldIssueList.map((issue: FieldValidatorIssue) => (
-                    <IssueHintRow
-                      key={issue.patternId}
-                      fieldName={fieldName}
-                      issue={issue}
-                      fieldValue={fieldValue}
-                      numericField={fieldName}
-                    />
-                  ))}
-              </>
-            );
-          })()}
-        </FormField>
+        <ValidatedField
+          name='weight'
+          label='Weight (kg)'
+          type='number'
+          step='0.01'
+          unit='KG'
+        />
 
-        <FormField label='Length (cm)' error={errors.sizeLength?.message} id='sizeLength'>
-          {(() => {
-            const fieldName = 'sizeLength';
-            const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldName] ?? [] : [];
-            const fieldIssue = fieldIssueList[0];
-            const fieldValue = toFieldString(displayValues[String(fieldName)]);
-            return (
-              <>
-                <div className='relative'>
-                  <Input
-                    id='sizeLength'
-                    type='number'
-                    step='0.1'
-                    className={cn(
-                      'pr-8',
-                      validatorEnabled &&
-                        fieldIssue &&
-                        (fieldIssue.severity === 'warning'
-                          ? 'border-amber-500/60'
-                          : 'border-red-500/60')
-                    )}
-                    {...register('sizeLength', { valueAsNumber: true })}
-                  />
-                  <Hint 
-                    uppercase 
-                    size='xxs' 
-                    className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-bold'
-                  >
-                    CM
-                  </Hint>
-                </div>
-                {validatorEnabled &&
-                  fieldIssueList.map((issue: FieldValidatorIssue) => (
-                    <IssueHintRow
-                      key={issue.patternId}
-                      fieldName={fieldName}
-                      issue={issue}
-                      fieldValue={fieldValue}
-                      numericField={fieldName}
-                    />
-                  ))}
-              </>
-            );
-          })()}
-        </FormField>
+        <ValidatedField
+          name='sizeLength'
+          label='Length (cm)'
+          type='number'
+          step='0.1'
+          unit='CM'
+        />
 
-        <FormField label='Width (cm)' error={errors.sizeWidth?.message} id='sizeWidth'>
-          {(() => {
-            const fieldName = 'sizeWidth';
-            const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldName] ?? [] : [];
-            const fieldIssue = fieldIssueList[0];
-            const fieldValue = toFieldString(displayValues[String(fieldName)]);
-            return (
-              <>
-                <div className='relative'>
-                  <Input
-                    id='sizeWidth'
-                    type='number'
-                    step='0.1'
-                    className={cn(
-                      'pr-8',
-                      validatorEnabled &&
-                        fieldIssue &&
-                        (fieldIssue.severity === 'warning'
-                          ? 'border-amber-500/60'
-                          : 'border-red-500/60')
-                    )}
-                    {...register('sizeWidth', { valueAsNumber: true })}
-                  />
-                  <Hint 
-                    uppercase 
-                    size='xxs' 
-                    className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-bold'
-                  >
-                    CM
-                  </Hint>
-                </div>
-                {validatorEnabled &&
-                  fieldIssueList.map((issue: FieldValidatorIssue) => (
-                    <IssueHintRow
-                      key={issue.patternId}
-                      fieldName={fieldName}
-                      issue={issue}
-                      fieldValue={fieldValue}
-                      numericField={fieldName}
-                    />
-                  ))}
-              </>
-            );
-          })()}
-        </FormField>
+        <ValidatedField
+          name='sizeWidth'
+          label='Width (cm)'
+          type='number'
+          step='0.1'
+          unit='CM'
+        />
 
-        <FormField label='Height (cm)' error={errors.length?.message} id='length'>
-          {(() => {
-            const fieldName = 'length';
-            const fieldIssueList = validatorEnabled ? visibleFieldIssues[fieldName] ?? [] : [];
-            const fieldIssue = fieldIssueList[0];
-            const fieldValue = toFieldString(displayValues[String(fieldName)]);
-            return (
-              <>
-                <div className='relative'>
-                  <Input
-                    id='length'
-                    type='number'
-                    step='0.1'
-                    className={cn(
-                      'pr-8',
-                      validatorEnabled &&
-                        fieldIssue &&
-                        (fieldIssue.severity === 'warning'
-                          ? 'border-amber-500/60'
-                          : 'border-red-500/60')
-                    )}
-                    {...register('length', { valueAsNumber: true })}
-                  />
-                  <Hint 
-                    uppercase 
-                    size='xxs' 
-                    className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 font-bold'
-                  >
-                    CM
-                  </Hint>
-                </div>
-                {validatorEnabled &&
-                  fieldIssueList.map((issue: FieldValidatorIssue) => (
-                    <IssueHintRow
-                      key={issue.patternId}
-                      fieldName={fieldName}
-                      issue={issue}
-                      fieldValue={fieldValue}
-                      numericField={fieldName}
-                    />
-                  ))}
-              </>
-            );
-          })()}
-        </FormField>
+        <ValidatedField
+          name='length'
+          label='Height (cm)'
+          type='number'
+          step='0.1'
+          unit='CM'
+        />
       </FormSection>
     </div>
   );

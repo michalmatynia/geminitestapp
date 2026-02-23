@@ -18,9 +18,10 @@ import {
   type FieldValidatorIssue,
 } from '@/features/products/validation-engine/core';
 import { ProductFormData, CatalogRecord, PriceGroupWithDetails, ProductCategory } from '@/shared/contracts/products';
-import { Button, Input, SelectSimple, FormSection, FormField, StandardDataTablePanel, StatusBadge, Alert } from '@/shared/ui';
+import { Button, SelectSimple, FormSection, FormField, StandardDataTablePanel, StatusBadge, Alert } from '@/shared/ui';
 
-import { IssueHintRow, ValidatorIssueHint } from './ProductFormGeneral';
+import { ValidatedField } from './ValidatedField';
+import { ValidatorIssueHint } from './ValidatorIssueHint';
 
 interface PriceGroupWithCalculatedPrice extends PriceGroupWithDetails {
   calculatedPrice: number | null;
@@ -98,7 +99,6 @@ export default function ProductFormOther(): React.JSX.Element {
   } = useProductFormMetadata();
 
   const {
-    errors,
     product,
   } = useProductFormCore();
 
@@ -106,9 +106,8 @@ export default function ProductFormOther(): React.JSX.Element {
   // triggered by unrelated fields (name, description, etc.).
   const { validatorEnabled, visibleFieldIssues } = useProductValidationState();
 
-  const { register, setValue, watch } = useFormContext<ProductFormData>();
+  const { setValue, watch } = useFormContext<ProductFormData>();
   const basePrice = watch('price') || 0;
-  const stockValue = watch('stock');
   const selectedDefaultPriceGroupId = watch('defaultPriceGroupId');
 
   const selectedCategoryName = useMemo((): string => {
@@ -125,10 +124,6 @@ export default function ProductFormOther(): React.JSX.Element {
     const issueList = visibleFieldIssues[fieldName];
     return Array.isArray(issueList) ? issueList : [];
   };
-  const priceIssueList = getIssueList('price');
-  const priceIssue = priceIssueList[0];
-  const stockIssueList = getIssueList('stock');
-  const stockIssue = stockIssueList[0];
   const categoryIssueList = getIssueList('categoryId');
 
   const categoryNameById = useMemo((): Map<string, string> => {
@@ -189,32 +184,13 @@ export default function ProductFormOther(): React.JSX.Element {
 
       {hasCatalogs && (
         <FormSection title='Pricing' gridClassName='md:grid-cols-2'>
-          <FormField label='Base Price' error={errors.price?.message} id='price'>
-            <Input
-              id='price'
-              type='number'
-              step='0.01'
-              className={
-                validatorEnabled && priceIssue
-                  ? priceIssue.severity === 'warning'
-                    ? 'border-amber-500/60'
-                    : 'border-red-500/60'
-                  : undefined
-              }
-              {...register('price', { valueAsNumber: true })}
-              placeholder='0.00'
-            />
-            {validatorEnabled &&
-              priceIssueList.map((issue: FieldValidatorIssue) => (
-                <IssueHintRow
-                  key={issue.patternId}
-                  fieldName='price'
-                  issue={issue}
-                  fieldValue={String(basePrice || 0)}
-                  numericField='price'
-                />
-              ))}
-          </FormField>
+          <ValidatedField
+            name='price'
+            label='Base Price'
+            type='number'
+            step='0.01'
+            placeholder='0.00'
+          />
 
           <FormField
             label='Default Price Group'
@@ -297,43 +273,30 @@ export default function ProductFormOther(): React.JSX.Element {
       )}
 
       <FormSection title='Organization' gridClassName='md:grid-cols-2'>
-        <FormField label='Supplier Name' error={errors.supplierName?.message} id='supplierName'>
-          <Input id='supplierName' {...register('supplierName')} placeholder='e.g. Acme Corp' />
-        </FormField>
+        <ValidatedField
+          name='supplierName'
+          label='Supplier Name'
+          placeholder='e.g. Acme Corp'
+        />
 
-        <FormField label='Supplier Link' error={errors.supplierLink?.message} id='supplierLink'>
-          <Input id='supplierLink' {...register('supplierLink')} placeholder='https://...' />
-        </FormField>
+        <ValidatedField
+          name='supplierLink'
+          label='Supplier Link'
+          placeholder='https://...'
+        />
 
-        <FormField label='Price Comment' error={errors.priceComment?.message} id='priceComment'>
-          <Input id='priceComment' {...register('priceComment')} placeholder='Internal notes about pricing' />
-        </FormField>
+        <ValidatedField
+          name='priceComment'
+          label='Price Comment'
+          placeholder='Internal notes about pricing'
+        />
 
-        <FormField label='Stock' error={errors.stock?.message} id='stock'>
-          <Input
-            id='stock'
-            type='number'
-            className={
-              validatorEnabled && stockIssue
-                ? stockIssue.severity === 'warning'
-                  ? 'border-amber-500/60'
-                  : 'border-red-500/60'
-                : undefined
-            }
-            {...register('stock', { valueAsNumber: true })}
-            placeholder='0'
-          />
-          {validatorEnabled &&
-            stockIssueList.map((issue: FieldValidatorIssue) => (
-              <IssueHintRow
-                key={issue.patternId}
-                fieldName='stock'
-                issue={issue}
-                fieldValue={String(stockValue ?? '')}
-                numericField='stock'
-              />
-            ))}
-        </FormField>
+        <ValidatedField
+          name='stock'
+          label='Stock'
+          type='number'
+          placeholder='0'
+        />
       </FormSection>
 
       <FormSection title='Relationships' gridClassName='md:grid-cols-2'>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useEffect, useMemo, useState, useContext } from 'react';
 
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/features/prompt-engine/settings';
 import { useToast } from '@/shared/ui';
@@ -20,6 +20,7 @@ import {
 import {
   promptExploderInsertSegmentRelative,
   promptExploderMergeSegment,
+  promptExploderMergeSegmentById,
   promptExploderRemoveSegmentById,
   promptExploderSplitSegmentByRange,
 } from '../helpers/segment-transforms';
@@ -47,13 +48,18 @@ import type {
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export interface SegmentEditorState {
+// --- Granular State Interfaces ---
+
+export interface SegmentEditorReorderState {
   draggingSegmentId: string | null;
   segmentDropTargetId: string | null;
   segmentDropPosition: 'before' | 'after' | null;
   draggingListItemIndex: number | null;
   listItemDropTargetIndex: number | null;
   listItemDropPosition: 'before' | 'after' | null;
+}
+
+export interface SegmentEditorPatternsState {
   approvalDraft: ApprovalDraft;
   matchedRuleDetails: Array<{
     id: string;
@@ -75,6 +81,8 @@ export interface SegmentEditorState {
   }>;
   templateTargetOptions: Array<{ value: string; label: string }>;
 }
+
+export interface SegmentEditorState extends SegmentEditorReorderState, SegmentEditorPatternsState {}
 
 export interface SegmentEditorActions {
   setDraggingSegmentId: React.Dispatch<React.SetStateAction<string | null>>;
@@ -101,6 +109,9 @@ export interface SegmentEditorActions {
 }
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
+
+const ReorderContext = createContext<SegmentEditorReorderState | null>(null);
+const PatternsContext = createContext<SegmentEditorPatternsState | null>(null);
 
 const SegmentEditorStateContext = createContext<SegmentEditorState | null>(null);
 const SegmentEditorActionsContext = createContext<SegmentEditorActions | null>(null);
@@ -214,7 +225,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
                   sameType: boolean;
                                 normalizedTitle?: string;
                               }>;
-    const sourceText = `${selectedSegment.title || ''} ${promptExploderBuildSegmentSampleText(selectedSegment)}`.trim();
+    const sourceText = `${selectedSegment.title || ''} \${promptExploderBuildSegmentSampleText(selectedSegment)}`.trim();
     const normalizedSelectedTitle = normalizeLearningText(selectedSegment.title || '');    return effectiveLearnedTemplates
       .map((template) => {
         const score = templateSimilarityScore(sourceText, template);
@@ -266,7 +277,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
         .slice(0, 80)
         .map((template) => ({
           value: template.id,
-          label: `${template.title} (${template.state}, ${normalizeApprovals(template.approvals)})`,
+          label: `\${template.title} (\${template.state}, \${normalizeApprovals(template.approvals)})`,
         }));
     },
     [approvalDraft.ruleSegmentType, effectiveLearnedTemplates]
@@ -477,7 +488,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     } catch (error) {
       toast(
         error instanceof Error
-          ? `Invalid regex pattern: ${error.message}`
+          ? `Invalid regex pattern: \${error.message}`
           : 'Invalid regex pattern.',
         { variant: 'error' }
       );
@@ -486,7 +497,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     try {
       const now = new Date().toISOString();
       const segmentSampleText = promptExploderBuildSegmentSampleText(selectedSegment);
-      const segmentLearningSource = `${selectedSegment.title || ''} ${segmentSampleText}`.trim();
+      const segmentLearningSource = `\${selectedSegment.title || ''} \${segmentSampleText}`.trim();
       const templateUpsert = upsertLearnedTemplate({
         templates: effectiveLearnedTemplates,
         segmentType: approvalDraft.ruleSegmentType,
@@ -499,9 +510,9 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
         targetTemplateId: approvalDraft.templateTargetId,
         now,
         createTemplateId: ({ segmentType, existingTemplateIds }) => {
-          let nextId = `template_${segmentType}_${Date.now().toString(36)}`;
+          let nextId = `template_\${segmentType}_\${Date.now().toString(36)}`;
           while (existingTemplateIds.has(nextId)) {
-            nextId = `${nextId}_x`;
+            nextId = `\${nextId}_x`;
           }
           return nextId;
         },
@@ -512,7 +523,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
       }
       const { nextTemplate, nextTemplates, mergeMessage } = templateUpsert;
 
-      const learnedRuleId = `segment.learned.${approvalDraft.ruleSegmentType}.${nextTemplate.id}`;
+      const learnedRuleId = `segment.learned.\${approvalDraft.ruleSegmentType}.\${nextTemplate.id}`;
       const learnedRuleDraft = buildManualLearnedRegexRuleDraft({
         id: learnedRuleId,
         segmentTitle: selectedSegment.title || '',
@@ -609,8 +620,8 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
       }
 
       const messageParts = [
-        `Pattern approved: ${learnedRuleUpsert.nextRule.title}.`,
-        mergeMessage ? `Template: ${mergeMessage}.` : null,
+        `Pattern approved: \${learnedRuleUpsert.nextRule.title}.`,
+        mergeMessage ? `Template: \${mergeMessage}.` : null,
       ].filter(Boolean);
       toast(messageParts.join(' '), { variant: 'success' });
     } catch (error) {
@@ -645,31 +656,28 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
 
   // ── Memoized context values ────────────────────────────────────────────────
 
+  const reorderValue = useMemo<SegmentEditorReorderState>(() => ({
+    draggingSegmentId,
+    segmentDropTargetId,
+    segmentDropPosition,
+    draggingListItemIndex,
+    listItemDropTargetIndex,
+    listItemDropPosition,
+  }), [draggingSegmentId, segmentDropTargetId, segmentDropPosition, draggingListItemIndex, listItemDropTargetIndex, listItemDropPosition]);
+
+  const patternsValue = useMemo<SegmentEditorPatternsState>(() => ({
+    approvalDraft,
+    matchedRuleDetails,
+    similarTemplateCandidates,
+    templateTargetOptions,
+  }), [approvalDraft, matchedRuleDetails, similarTemplateCandidates, templateTargetOptions]);
+
   const stateValue = useMemo<SegmentEditorState>(
     () => ({
-      draggingSegmentId,
-      segmentDropTargetId,
-      segmentDropPosition,
-      draggingListItemIndex,
-      listItemDropTargetIndex,
-      listItemDropPosition,
-      approvalDraft,
-      matchedRuleDetails,
-      similarTemplateCandidates,
-      templateTargetOptions,
+      ...reorderValue,
+      ...patternsValue,
     }),
-    [
-      draggingSegmentId,
-      segmentDropTargetId,
-      segmentDropPosition,
-      draggingListItemIndex,
-      listItemDropTargetIndex,
-      listItemDropPosition,
-      approvalDraft,
-      matchedRuleDetails,
-      similarTemplateCandidates,
-      templateTargetOptions,
-    ]
+    [reorderValue, patternsValue]
   );
 
   const actionsValue = useMemo<SegmentEditorActions>(
@@ -715,12 +723,28 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
   );
 
   return (
-    <SegmentEditorStateContext.Provider value={stateValue}>
-      <SegmentEditorActionsContext.Provider value={actionsValue}>
-        {children}
-      </SegmentEditorActionsContext.Provider>
-    </SegmentEditorStateContext.Provider>
+    <ReorderContext.Provider value={reorderValue}>
+      <PatternsContext.Provider value={patternsValue}>
+        <SegmentEditorStateContext.Provider value={stateValue}>
+          <SegmentEditorActionsContext.Provider value={actionsValue}>
+            {children}
+          </SegmentEditorActionsContext.Provider>
+        </SegmentEditorStateContext.Provider>
+      </PatternsContext.Provider>
+    </ReorderContext.Provider>
   );
+}
+
+export function useSegmentEditorReorder(): SegmentEditorReorderState {
+  const context = useContext(ReorderContext);
+  if (!context) throw new Error('useSegmentEditorReorder must be used within SegmentEditorProvider');
+  return context;
+}
+
+export function useSegmentEditorPatterns(): SegmentEditorPatternsState {
+  const context = useContext(PatternsContext);
+  if (!context) throw new Error('useSegmentEditorPatterns must be used within SegmentEditorProvider');
+  return context;
 }
 
 export { SegmentEditorStateContext, SegmentEditorActionsContext };

@@ -2,7 +2,7 @@
 
 import { useContext } from 'react';
 
-import { ProductFormContext } from '@/features/products/context/ProductFormContext';
+import { ProductFormMetadataContext } from '@/features/products/context/ProductFormMetadataContext';
 import { internalError } from '@/shared/errors/app-error';
 import { MultiSelect } from '@/shared/ui';
 
@@ -167,20 +167,75 @@ export function ProductMetadataMultiSelectField({
   formContextToggleName,
   single = false,
 }: ProductMetadataMultiSelectFieldProps): React.JSX.Element {
-  const formContext = useContext(ProductFormContext);
+  const formMetadataContext = useContext(ProductFormMetadataContext);
   const metadataContext = useOptionalProductMetadataFieldContext();
 
-  const items = itemsProp ?? (metadataContext?.[contextItemsKey] as MetadataItem[]) ?? (formContext?.[contextItemsKey] as MetadataItem[]) ?? [];
+  const contextItems = (() => {
+    if (!formMetadataContext) return [];
+    switch (contextItemsKey) {
+      case 'catalogs':
+        return formMetadataContext.catalogs;
+      case 'producers':
+        return formMetadataContext.producers;
+      case 'tags':
+        return formMetadataContext.tags;
+      case 'categories':
+        return formMetadataContext.categories;
+      default:
+        return [];
+    }
+  })();
+
+  const items =
+    itemsProp ??
+    (metadataContext?.[contextItemsKey] as MetadataItem[]) ??
+    (contextItems as MetadataItem[]);
   
   // Handle both single string/null and string[]
-  const rawSelected = selectedIdsProp ?? (metadataContext?.[contextSelectedKey] as string[] | string | null) ?? (formContext?.[contextSelectedKey] as string[] | string | null);
+  const contextSelected = (() => {
+    if (!formMetadataContext) return null;
+    switch (contextSelectedKey) {
+      case 'selectedCatalogIds':
+        return formMetadataContext.selectedCatalogIds;
+      case 'selectedProducerIds':
+        return formMetadataContext.selectedProducerIds;
+      case 'selectedTagIds':
+        return formMetadataContext.selectedTagIds;
+      case 'selectedCategoryId':
+        return formMetadataContext.selectedCategoryId;
+      default:
+        return null;
+    }
+  })();
+
+  const rawSelected =
+    selectedIdsProp ??
+    (metadataContext?.[contextSelectedKey] as string[] | string | null) ??
+    contextSelected;
+
   const selectedIds = Array.isArray(rawSelected) 
     ? rawSelected 
     : (rawSelected ? [rawSelected] : []);
 
+  const contextLoading = (() => {
+    if (!formMetadataContext) return loading;
+    switch (contextLoadingKey) {
+      case 'catalogsLoading':
+        return formMetadataContext.catalogsLoading;
+      case 'producersLoading':
+        return formMetadataContext.producersLoading;
+      case 'tagsLoading':
+        return formMetadataContext.tagsLoading;
+      case 'categoriesLoading':
+        return formMetadataContext.categoriesLoading;
+      default:
+        return loading;
+    }
+  })();
+
   const resolvedLoading = itemsProp
     ? loading
-    : ((metadataContext?.[contextLoadingKey] as boolean) ?? (formContext?.[contextLoadingKey] as boolean) ?? loading);
+    : ((metadataContext?.[contextLoadingKey] as boolean) ?? contextLoading);
 
   const resolveSingleChangeHandler = (): ((id: string | null) => void) | null => {
     const metadataHandler = metadataContext?.[contextOnChangeKey];
@@ -188,18 +243,59 @@ export function ProductMetadataMultiSelectField({
       return metadataHandler as (id: string | null) => void;
     }
 
-    const formRecord = formContext as unknown as Record<string, unknown> | null;
-    const formHandler = formRecord?.[contextOnChangeKey];
-    if (typeof formHandler === 'function') {
-      return formHandler as (id: string | null) => void;
-    }
-
-    // ProductFormContext uses `setCategoryId` rather than `onCategoryChange`.
-    if (contextOnChangeKey === 'onCategoryChange' && formContext?.setCategoryId) {
-      return formContext.setCategoryId;
+    if (contextOnChangeKey === 'onCategoryChange' && formMetadataContext?.setCategoryId) {
+      return formMetadataContext.setCategoryId;
     }
 
     return null;
+  };
+
+  const resolveFormContextMultiHandler = (): ((nextIds: string[]) => void) | null => {
+    if (!formMetadataContext || !formContextToggleName) return null;
+
+    const toggleById = (() => {
+      switch (formContextToggleName) {
+        case 'toggleCatalog':
+          return formMetadataContext.toggleCatalog;
+        case 'toggleProducer':
+          return formMetadataContext.toggleProducer;
+        case 'toggleTag':
+          return formMetadataContext.toggleTag;
+        default:
+          return null;
+      }
+    })();
+    if (!toggleById) return null;
+
+    const currentSelection = (() => {
+      switch (contextSelectedKey) {
+        case 'selectedCatalogIds':
+          return formMetadataContext.selectedCatalogIds;
+        case 'selectedProducerIds':
+          return formMetadataContext.selectedProducerIds;
+        case 'selectedTagIds':
+          return formMetadataContext.selectedTagIds;
+        default:
+          return [];
+      }
+    })();
+
+    return (nextIds: string[]): void => {
+      const previous = new Set(currentSelection);
+      const next = new Set(nextIds);
+
+      for (const id of nextIds) {
+        if (!previous.has(id)) {
+          toggleById(id);
+        }
+      }
+
+      for (const id of currentSelection) {
+        if (!next.has(id)) {
+          toggleById(id);
+        }
+      }
+    };
   };
 
   const resolvedOnChange: ((nextIds: string[]) => void) | null = onChangeProp
@@ -213,32 +309,11 @@ export function ProductMetadataMultiSelectField({
         };
       })()
       : (metadataContext?.[contextOnChangeKey] as (nextIds: string[]) => void) ??
-        (formContext
-          ? (nextIds: string[]): void => {
-            if (!formContextToggleName) return;
-
-            const previous = new Set(formContext[contextSelectedKey] as string[]);
-            const next = new Set(nextIds);
-
-            // Items to add
-            for (const id of nextIds) {
-              if (!previous.has(id)) {
-                (formContext[formContextToggleName] as (id: string) => void)(id);
-              }
-            }
-
-            // Items to remove
-            for (const id of formContext[contextSelectedKey] as string[]) {
-              if (!next.has(id)) {
-                (formContext[formContextToggleName] as (id: string) => void)(id);
-              }
-            }
-          }
-          : null);
+        resolveFormContextMultiHandler();
 
   if (!resolvedOnChange) {
     throw internalError(
-      `${label} field requires 'onChange' prop when used outside ProductFormContext or ProductMetadataFieldContext.`
+      `${label} field requires 'onChange' prop when used outside ProductFormMetadataContext or ProductMetadataFieldContext.`
     );
   }
 

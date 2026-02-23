@@ -18,6 +18,7 @@ import type {
   ProductWithImages,
   ProductDraft,
 } from '@/shared/contracts/products';
+import { internalError } from '@/shared/errors/app-error';
 
 import {
   ProductFormCoreContextType,
@@ -123,14 +124,19 @@ const normalizeComparableParameterValues = (
     .filter((entry: ComparableParameterValue): boolean => entry.parameterId.length > 0);
 };
 
-const toComparableImageSlot = (slot: any): string => {
-  if (!slot) return '';
-  if (slot.type === 'existing') {
-    return `existing:${normalizeComparableString(slot.data.id)}`;
+const toComparableImageSlot = (slot: unknown): string => {
+  if (!slot || typeof slot !== 'object') return '';
+  const slotRecord = slot as { type?: unknown; data?: unknown };
+  if (slotRecord.type === 'existing') {
+    const existingRecord =
+      slotRecord.data && typeof slotRecord.data === 'object'
+        ? (slotRecord.data as Record<string, unknown>)
+        : {};
+    return `existing:${normalizeComparableString(existingRecord['id'])}`;
   }
   const fileRecord =
-    slot.data && typeof slot.data === 'object'
-      ? (slot.data as Record<string, unknown>)
+    slotRecord.data && typeof slotRecord.data === 'object'
+      ? (slotRecord.data as Record<string, unknown>)
       : {};
   const sizeValue = fileRecord['size'];
   const lastModifiedValue = fileRecord['lastModified'];
@@ -155,21 +161,34 @@ export interface ProductFormContextType
     ProductFormMetadataContextType,
     ProductFormImageContextType,
     ProductFormParameterContextType,
-    ProductFormStudioContextType {}
+    ProductFormStudioContextType,
+    ProductFormSubmitContextType {}
 
-export const ProductFormContext = createContext<ProductFormContextType | null>(
-  null
-);
+export type ProductFormSubmitContextType = Pick<
+  ProductFormCoreContextType,
+  'handleSubmit' | 'ConfirmationModal'
+>;
+
+export const ProductFormSubmitContext =
+  createContext<ProductFormSubmitContextType | null>(null);
+
+export const useProductFormSubmitContext = (): ProductFormSubmitContextType => {
+  const context = useContext(ProductFormSubmitContext);
+  if (!context) {
+    throw internalError(
+      'useProductFormSubmitContext must be used within a ProductFormSubmitContext provider'
+    );
+  }
+  return context;
+};
 
 export const useProductFormContext = (): ProductFormContextType => {
-  const legacyContext = useContext(ProductFormContext);
-  if (legacyContext) return legacyContext;
-
   const core = useProductFormCore();
   const metadata = useProductFormMetadata();
   const images = useProductFormImages();
   const parameters = useProductFormParameters();
   const studio = useProductFormStudio();
+  const submit = useProductFormSubmitContext();
 
   return useMemo(
     () => ({
@@ -178,8 +197,9 @@ export const useProductFormContext = (): ProductFormContextType => {
       ...images,
       ...parameters,
       ...studio,
+      ...submit,
     }),
-    [core, metadata, images, parameters, studio]
+    [core, metadata, images, parameters, studio, submit]
   );
 };
 
@@ -321,38 +341,21 @@ function ProductFormSubmitController({
     setHasUnsavedChanges(hasUnsavedChanges);
   }, [hasUnsavedChanges, setHasUnsavedChanges]);
 
-  // Context aggregation for legacy useProductFormContext
-  const coreValue = useProductFormCore();
-  const metadataValue = useProductFormMetadata();
-  const imagesValue = useProductFormImages();
-  const parameterValue = useProductFormParameters();
-  const studioValue = useProductFormStudio();
-
-  const legacyContextValue = useMemo(
+  const submitContextValue = useMemo(
     () => ({
-      ...coreValue,
-      ...metadataValue,
-      ...imagesValue,
-      ...parameterValue,
-      ...studioValue,
       handleSubmit,
       ConfirmationModal,
     }),
     [
-      coreValue,
-      metadataValue,
-      imagesValue,
-      parameterValue,
-      studioValue,
       handleSubmit,
       ConfirmationModal,
     ]
   );
 
   return (
-    <ProductFormContext.Provider value={legacyContextValue}>
+    <ProductFormSubmitContext.Provider value={submitContextValue}>
       {children}
-    </ProductFormContext.Provider>
+    </ProductFormSubmitContext.Provider>
   );
 }
 

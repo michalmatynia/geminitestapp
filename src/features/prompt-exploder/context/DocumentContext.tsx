@@ -49,15 +49,32 @@ import type {
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export interface DocumentState {
+// --- Granular State Interfaces ---
+
+export interface DocumentPromptState {
   promptText: string;
+  returnTarget: 'image-studio' | 'case-resolver';
+}
+
+export interface DocumentCoreState {
   documentState: PromptExploderDocument | null;
   manualBindings: PromptExploderBinding[];
+  segmentById: Map<string, PromptExploderSegment>;
+  segmentOptions: Array<{ value: string; label: string }>;
+}
+
+export interface DocumentSelectionState {
   selectedSegmentId: string | null;
   selectedSegment: PromptExploderSegment | null;
+}
+
+export interface DocumentParamsState {
   selectedParamEntriesState: PromptExploderParamEntriesState | null;
   listParamOptions: Array<{ value: string; label: string }>;
   listParamEntryByPath: Map<string, PromptExploderParamEntry>;
+}
+
+export interface DocumentMetricsState {
   explosionMetrics: {
     total: number;
     avgConfidence: number;
@@ -66,10 +83,9 @@ export interface DocumentState {
     typedCoverage: number;
     typeCounts: Record<string, number>;
   } | null;
-  segmentOptions: Array<{ value: string; label: string }>;
-  segmentById: Map<string, PromptExploderSegment>;
-  returnTarget: 'image-studio' | 'case-resolver';
 }
+
+export interface DocumentState extends DocumentPromptState, DocumentCoreState, DocumentSelectionState, DocumentParamsState, DocumentMetricsState {}
 
 export interface DocumentActions {
   setPromptText: (text: string) => void;
@@ -93,6 +109,12 @@ export interface DocumentActions {
 }
 
 // ── Contexts ─────────────────────────────────────────────────────────────────
+
+const DocumentPromptContext = createContext<DocumentPromptState | null>(null);
+const DocumentCoreContext = createContext<DocumentCoreState | null>(null);
+const DocumentSelectionContext = createContext<DocumentSelectionState | null>(null);
+const DocumentParamsContext = createContext<DocumentParamsState | null>(null);
+const DocumentMetricsContext = createContext<DocumentMetricsState | null>(null);
 
 export const DocumentStateContext = createContext<DocumentState | null>(null);
 export const DocumentActionsContext = createContext<DocumentActions | null>(null);
@@ -238,7 +260,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     () =>
       (documentState?.segments ?? []).map((segment: PromptExploderSegment) => ({
         value: segment.id,
-        label: segment.title || `Segment ${segment.id}`,
+        label: segment.title || `Segment \${segment.id}`,
       })),
     [documentState?.segments]
   );
@@ -318,7 +340,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         0.95
       );
       const learnedTemplateSignature = runtimeSelection.runtimeLearnedTemplates
-        .map((template) => `${template.id}:${template.state}:${template.updatedAt}`)
+        .map((template) => `\${template.id}:\${template.state}:\${template.updatedAt}`)
         .join('|');
       const runtimeSignature = [
         trimmed,
@@ -334,7 +356,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         setManualBindings([]);
         setDocumentState(nextDocument);
         setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
-        toast(`Reused ${nextDocument.segments.length} cached segment(s).`, {
+        toast(`Reused \${nextDocument.segments.length} cached segment(s).`, {
           variant: 'info',
         });
         return;
@@ -373,7 +395,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       setManualBindings([]);
       setDocumentState(nextDocument);
       setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
-      toast(`Exploded into ${nextDocument.segments.length} segment(s).`, {
+      toast(`Exploded into \${nextDocument.segments.length} segment(s).`, {
         variant: 'success',
       });
       if (!orchestratorEnabled) {
@@ -711,35 +733,42 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
 
   // ── Context values ─────────────────────────────────────────────────────────
 
+  const promptValue = useMemo<DocumentPromptState>(() => ({
+    promptText,
+    returnTarget,
+  }), [promptText, returnTarget]);
+
+  const coreValue = useMemo<DocumentCoreState>(() => ({
+    documentState,
+    manualBindings,
+    segmentById,
+    segmentOptions,
+  }), [documentState, manualBindings, segmentById, segmentOptions]);
+
+  const selectionValue = useMemo<DocumentSelectionState>(() => ({
+    selectedSegmentId,
+    selectedSegment,
+  }), [selectedSegmentId, selectedSegment]);
+
+  const paramsValue = useMemo<DocumentParamsState>(() => ({
+    selectedParamEntriesState,
+    listParamOptions,
+    listParamEntryByPath,
+  }), [selectedParamEntriesState, listParamOptions, listParamEntryByPath]);
+
+  const metricsValue = useMemo<DocumentMetricsState>(() => ({
+    explosionMetrics,
+  }), [explosionMetrics]);
+
   const stateValue = useMemo<DocumentState>(
     () => ({
-      promptText,
-      documentState,
-      manualBindings,
-      selectedSegmentId,
-      selectedSegment,
-      selectedParamEntriesState,
-      listParamOptions,
-      listParamEntryByPath,
-      explosionMetrics,
-      segmentOptions,
-      segmentById,
-      returnTarget,
+      ...promptValue,
+      ...coreValue,
+      ...selectionValue,
+      ...paramsValue,
+      ...metricsValue,
     }),
-    [
-      promptText,
-      documentState,
-      manualBindings,
-      selectedSegmentId,
-      selectedSegment,
-      selectedParamEntriesState,
-      listParamOptions,
-      listParamEntryByPath,
-      explosionMetrics,
-      segmentOptions,
-      segmentById,
-      returnTarget,
-    ]
+    [promptValue, coreValue, selectionValue, paramsValue, metricsValue]
   );
 
   const actionsValue = useMemo<DocumentActions>(
@@ -780,12 +809,52 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   );
 
   return (
-    <DocumentStateContext.Provider value={stateValue}>
-      <DocumentActionsContext.Provider value={actionsValue}>
-        {children}
-      </DocumentActionsContext.Provider>
-    </DocumentStateContext.Provider>
+    <DocumentPromptContext.Provider value={promptValue}>
+      <DocumentCoreContext.Provider value={coreValue}>
+        <DocumentSelectionContext.Provider value={selectionValue}>
+          <DocumentParamsContext.Provider value={paramsValue}>
+            <DocumentMetricsContext.Provider value={metricsValue}>
+              <DocumentStateContext.Provider value={stateValue}>
+                <DocumentActionsContext.Provider value={actionsValue}>
+                  {children}
+                </DocumentActionsContext.Provider>
+              </DocumentStateContext.Provider>
+            </DocumentMetricsContext.Provider>
+          </DocumentParamsContext.Provider>
+        </DocumentSelectionContext.Provider>
+      </DocumentCoreContext.Provider>
+    </DocumentPromptContext.Provider>
   );
+}
+
+export function useDocumentPrompt(): DocumentPromptState {
+  const context = useContext(DocumentPromptContext);
+  if (!context) throw new Error('useDocumentPrompt must be used within DocumentProvider');
+  return context;
+}
+
+export function useDocumentCore(): DocumentCoreState {
+  const context = useContext(DocumentCoreContext);
+  if (!context) throw new Error('useDocumentCore must be used within DocumentProvider');
+  return context;
+}
+
+export function useDocumentSelection(): DocumentSelectionState {
+  const context = useContext(DocumentSelectionContext);
+  if (!context) throw new Error('useDocumentSelection must be used within DocumentProvider');
+  return context;
+}
+
+export function useDocumentParams(): DocumentParamsState {
+  const context = useContext(DocumentParamsContext);
+  if (!context) throw new Error('useDocumentParams must be used within DocumentProvider');
+  return context;
+}
+
+export function useDocumentMetrics(): DocumentMetricsState {
+  const context = useContext(DocumentMetricsContext);
+  if (!context) throw new Error('useDocumentMetrics must be used within DocumentProvider');
+  return context;
 }
 
 export function useDocumentState(): DocumentState {

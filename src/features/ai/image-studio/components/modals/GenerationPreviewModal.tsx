@@ -7,6 +7,8 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import { StatusBadge, MetadataItem, FormActions } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
+import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
+
 // TODO: These types should be defined in a more central place
 export type LinkedGeneratedVariant = {
   key: string;
@@ -81,22 +83,18 @@ const formatLinkedVariantTimestamp = (value: string): string => {
   return parsed.toLocaleString();
 };
 
-interface GenerationPreviewModalProps extends EntityModalProps<LinkedGeneratedVariant> {
-  selectedGenerationModalDimensions: string;
-  slotUpdateBusy: boolean;
-  handleApplyLinkedVariantToCard: (variant: LinkedGeneratedVariant) => Promise<void>;
-  setGenerationModalPreviewNaturalSize: (dimensions: { width: number; height: number } | null) => void;
-}
-
 export function GenerationPreviewModal({
   isOpen,
   onClose,
-  item: selectedGenerationPreview,
-  selectedGenerationModalDimensions,
-  slotUpdateBusy,
-  handleApplyLinkedVariantToCard,
-  setGenerationModalPreviewNaturalSize,
-}: GenerationPreviewModalProps): React.JSX.Element {
+}: Pick<EntityModalProps<LinkedGeneratedVariant>, 'isOpen' | 'onClose'>): React.JSX.Element {
+  const {
+    selectedGenerationPreview,
+    selectedGenerationModalDimensions,
+    slotUpdateBusy,
+    onApplyLinkedVariantToCard,
+    setGenerationModalPreviewNaturalSize,
+  } = useStudioInlineEdit();
+
   return (
     <DetailModal
       isOpen={isOpen}
@@ -114,7 +112,7 @@ export function GenerationPreviewModal({
           <FormActions
             onCancel={onClose}
             cancelText='Close Preview'
-            onSave={selectedGenerationPreview ? (): void => { void handleApplyLinkedVariantToCard(selectedGenerationPreview); } : undefined}
+            onSave={selectedGenerationPreview ? (): void => { void onApplyLinkedVariantToCard(selectedGenerationPreview); } : undefined}
             saveText='Apply to Card'
             isSaving={slotUpdateBusy}
           />

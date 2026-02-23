@@ -1056,7 +1056,7 @@ export const mongoProductRepository: ProductRepository = {
       .collection<ProductDocument>(productCollectionName)
       .updateMany(
         { id: { $in: productIds } } as Filter<ProductDocument>,
-        { $set: { catalogs: catalogEntries, updatedAt: new Date() } }
+        { $set: { catalogs: catalogEntries as any, updatedAt: new Date() } }
       );
   },
 
@@ -1077,7 +1077,7 @@ export const mongoProductRepository: ProductRepository = {
       .updateMany(
         { id: { $in: productIds } } as Filter<ProductDocument>,
         {
-          $addToSet: { catalogs: { $each: catalogEntries } },
+          $addToSet: { catalogs: { $each: catalogEntries as any } },
           $set: { updatedAt: new Date() },
         }
       );

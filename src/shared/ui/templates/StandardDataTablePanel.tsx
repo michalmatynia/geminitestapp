@@ -46,6 +46,7 @@ export interface StandardDataTablePanelProps<TData> {
   expanded?: ExpandedState | undefined;
   onExpandedChange?: OnChangeFn<ExpandedState> | undefined;
   renderRowDetails?: (props: { row: Row<TData> }) => React.ReactNode | undefined;
+  enableVirtualization?: boolean | undefined;
   
   /**
    * Whether to use the full ListPanel loading state (centered spinner) 
@@ -97,6 +98,7 @@ export function StandardDataTablePanel<TData>({
   expanded,
   onExpandedChange,
   renderRowDetails,
+  enableVirtualization,
   loadingVariant = 'panel',
   children,
 }: StandardDataTablePanelProps<TData>): React.JSX.Element {
@@ -142,6 +144,7 @@ export function StandardDataTablePanel<TData>({
           {...(expanded !== undefined ? { expanded } : {})}
           {...(onExpandedChange !== undefined ? { onExpandedChange } : {})}
           {...(renderRowDetails !== undefined ? { renderRowDetails } : {})}
+          enableVirtualization={enableVirtualization}
         />
       )}
     </ListPanel>

@@ -93,6 +93,7 @@ export const ProductListPanel = memo(function ProductListPanel() {
           skeletonRows={tableProps.skeletonRows}
           maxHeight={tableProps.maxHeight}
           stickyHeader={tableProps.stickyHeader}
+          enableVirtualization={true}
         />
 
         <PromptModal

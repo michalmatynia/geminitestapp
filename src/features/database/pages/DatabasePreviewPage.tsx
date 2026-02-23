@@ -365,6 +365,8 @@ function DataTab({
         columns={columns}
         data={tableRows.rows}
         variant='flat'
+        maxHeight='50vh'
+        enableVirtualization={true}
       />
     </div>
   );

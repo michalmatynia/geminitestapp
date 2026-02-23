@@ -447,6 +447,7 @@ function LogList(): React.JSX.Element {
       data={logs}
       maxHeight='60vh'
       stickyHeader
+      enableVirtualization={true}
       renderRowDetails={({ row }: { row: { original: SystemLogRecord } }) => {
         const log = row.original;
         const category = getLogCategory(log);

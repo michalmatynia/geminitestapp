@@ -893,7 +893,7 @@ export function AdvancedSection(): React.ReactNode {
         )}
       </FormSection>
 
-      <AdvancedObserverMagnetSection config={config} onChange={onChange} />
+      <AdvancedObserverMagnetSection />
     </>
   );
 }

@@ -2,8 +2,10 @@
 
 import React from 'react';
 
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import { useToast } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+
+import { useUsers } from '../../context/UsersContext';
 
 export interface UserCreateFormState {
   name: string;
@@ -11,12 +13,6 @@ export interface UserCreateFormState {
   password: string;
   roleId: string;
   verified: boolean;
-}
-
-interface UserCreateModalProps extends EntityModalProps<UserCreateFormState> {
-  setCreateForm: React.Dispatch<React.SetStateAction<UserCreateFormState>>;
-  isSaving: boolean;
-  onSave: () => void;
 }
 
 const FIELDS: SettingsField<UserCreateFormState>[] = [
@@ -42,14 +38,40 @@ const FIELDS: SettingsField<UserCreateFormState>[] = [
   },
 ];
 
-export function UserCreateModal({
-  isOpen,
-  onClose,
-  item: createForm,
-  setCreateForm,
-  isSaving,
-  onSave,
-}: UserCreateModalProps): React.JSX.Element | null {
+export function UserCreateModal(): React.JSX.Element | null {
+  const { toast } = useToast();
+  const {
+    createOpen: isOpen,
+    setCreateOpen,
+    createForm,
+    setCreateForm,
+    mutations,
+    refetch,
+  } = useUsers();
+
+  const isSaving = mutations.register.isPending;
+  const onClose = () => setCreateOpen(false);
+
+  const onSave = async () => {
+    if (!createForm.email || !createForm.password) {
+      toast('Email and password required', { variant: 'error' });
+      return;
+    }
+    try {
+      await mutations.register.mutateAsync({
+        email: createForm.email,
+        password: createForm.password,
+        name: createForm.name
+      });
+      setCreateOpen(false);
+      setCreateForm({ name: '', email: '', password: '', roleId: 'none', verified: false });
+      toast('User provisioned successfully', { variant: 'success' });
+      refetch();
+    } catch (_e) {
+      toast('Provisioning failed', { variant: 'error' });
+    }
+  };
+
   const handleChange = (values: Partial<UserCreateFormState>) => {
     setCreateForm(prev => {
       if (!prev) return prev;

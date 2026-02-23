@@ -4,6 +4,17 @@ import React from 'react';
 
 type RightSidebarContextValue = {
   switchToControls: () => void;
+  canvasSizePresetOptions: Array<{ value: string; label: string; description?: string }>;
+  canvasSizePresetValue: string;
+  setCanvasSizePresetValue: (value: string) => void;
+  canvasSizeLabel: string;
+  canApplyCanvasSizePreset: boolean;
+  canRecenterCanvasImage: boolean;
+  onApplyCanvasSizePreset: () => void;
+  onOpenResizeCanvasModal: () => void;
+  quickActionsHostEl: HTMLElement | null;
+  quickActionsPanelContent: React.ReactNode;
+  resizeCanvasDisabled: boolean;
 };
 
 const RightSidebarContext = React.createContext<RightSidebarContextValue | null>(null);

@@ -3,19 +3,17 @@ import React from 'react';
 import { TabsContent } from '@/shared/ui';
 import { Hint } from '@/shared/ui';
 
-import type { LinkedMaskSlotViewModel } from './slot-inline-edit-tab-types';
-
-type SlotInlineEditMasksTabProps = {
-  formatBytes: (value: number | null) => string;
-  formatDateTime: (value: string | Date | null | undefined) => string;
-  linkedMaskSlots: LinkedMaskSlotViewModel[];
-};
-
-export function SlotInlineEditMasksTab({
+import { 
   formatBytes,
   formatDateTime,
-  linkedMaskSlots,
-}: SlotInlineEditMasksTabProps): React.JSX.Element {
+} from './slot-inline-edit-utils';
+import { useStudioInlineEdit } from './StudioInlineEditContext';
+
+export function SlotInlineEditMasksTab(): React.JSX.Element {
+  const {
+    linkedMaskSlots,
+  } = useStudioInlineEdit();
+
   return (
     <TabsContent value='masks' className='mt-0 space-y-4'>
       <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>

@@ -29,17 +29,11 @@ import { ParallaxSection } from './animation/ParallaxSection';
 import { TimelineSection } from './animation/TimelineSection';
 import { VisualEffectsSection } from './animation/VisualEffectsSection';
 import { useComponentSettingsContext } from './context/ComponentSettingsContext';
+import { usePageBuilder } from '../../hooks/usePageBuilderContext';
 
-import type { OpenVectorOverlay } from './animation/AnimationConfigContext';
-
-interface AnimationConfigPanelProps {
-  openVectorOverlay?: OpenVectorOverlay;
-}
-
-export function AnimationConfigPanel({
-  openVectorOverlay,
-}: AnimationConfigPanelProps): React.JSX.Element {
+export function AnimationConfigPanel(): React.JSX.Element {
   const { currentAnimationConfig: config, handleAnimationChange: onChange } = useComponentSettingsContext();
+  const { openVectorOverlay } = usePageBuilder();
   const isEnabled = config.preset !== 'none' || config.motionPathEnabled || config.svgDrawEnabled || config.parallaxPreset !== 'none';
 
   return (
@@ -134,7 +128,7 @@ export function AnimationConfigPanel({
           <AnimationConfigProvider value={{ 
             config, 
             onChange, 
-            openVectorOverlay: openVectorOverlay ?? (() => {}) 
+            openVectorOverlay
           }}>
             <TimelineSection />
             <ParallaxSection />

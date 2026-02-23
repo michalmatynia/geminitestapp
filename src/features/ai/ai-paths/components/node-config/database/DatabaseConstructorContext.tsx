@@ -46,6 +46,10 @@ export type DatabaseConstructorContextValue = {
   addMapping: () => void;
   availablePorts: string[];
   uniqueTargetPathOptions: Array<{ label: string; value: string }>;
+  codeSnippets: string[];
+  selectedSnippetIndex: number;
+  setSelectedSnippetIndex: React.Dispatch<React.SetStateAction<number>>;
+  insertTemplateSnippet: (snippet: string) => void;
 };
 
 const DatabaseConstructorContext = React.createContext<DatabaseConstructorContextValue | null>(null);

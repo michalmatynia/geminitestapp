@@ -7,29 +7,20 @@ import type {
   PromptValidationSimilarPattern,
 } from '../settings';
 
-type RuleItemSimilarPatternsSectionProps = {
-  rule: PromptValidationRule;
-  onAddSimilar: () => void;
-  onUpdateSimilar: (
-    index: number,
-    patch: Partial<PromptValidationSimilarPattern>,
-  ) => void;
-  onRemoveSimilar: (index: number) => void;
-};
+import { useRuleItemContext } from './context/RuleItemContext';
 
-export function RuleItemSimilarPatternsSection({
-  rule,
-  onAddSimilar,
-  onUpdateSimilar,
-  onRemoveSimilar,
-}: RuleItemSimilarPatternsSectionProps): React.JSX.Element {
+export function RuleItemSimilarPatternsSection(): React.JSX.Element | null {
+  const { rule, addSimilar, updateSimilar, removeSimilar } = useRuleItemContext();
+
+  if (!rule) return null;
+
   return (
     <div className='space-y-3 rounded border border-border/40 bg-foreground/5 p-3'>
       <div className='flex items-center justify-between gap-2'>
         <Hint size='xs' uppercase className='font-semibold text-gray-300'>
           Similar Patterns
         </Hint>
-        <Button type='button' variant='outline' size='sm' onClick={onAddSimilar}>
+        <Button type='button' variant='outline' size='sm' onClick={addSimilar}>
           Add Similar
         </Button>
       </div>
@@ -47,7 +38,7 @@ export function RuleItemSimilarPatternsSection({
               className='h-8 font-mono'
               value={sim.pattern}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                onUpdateSimilar(index, { pattern: event.target.value });
+                updateSimilar(index, { pattern: event.target.value });
               }}
             />
           </div>
@@ -57,7 +48,7 @@ export function RuleItemSimilarPatternsSection({
               className='h-8 font-mono'
               value={sim.flags ?? ''}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                onUpdateSimilar(index, {
+                updateSimilar(index, {
                   flags: event.target.value.trim() || undefined,
                 });
               }}
@@ -69,7 +60,7 @@ export function RuleItemSimilarPatternsSection({
               className='h-8'
               value={sim.suggestion}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                onUpdateSimilar(index, { suggestion: event.target.value });
+                updateSimilar(index, { suggestion: event.target.value });
               }}
             />
           </div>
@@ -79,7 +70,7 @@ export function RuleItemSimilarPatternsSection({
               className='h-8'
               value={sim.comment ?? ''}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                onUpdateSimilar(index, {
+                updateSimilar(index, {
                   comment: event.target.value.trim() || null,
                 });
               }}
@@ -90,7 +81,7 @@ export function RuleItemSimilarPatternsSection({
               type='button'
               variant='outline'
               size='sm'
-              onClick={() => onRemoveSimilar(index)}
+              onClick={() => removeSimilar(index)}
               className='w-full'
             >
               Remove

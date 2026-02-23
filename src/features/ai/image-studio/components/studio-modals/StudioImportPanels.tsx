@@ -9,47 +9,29 @@ import { DriveImportModal } from '../modals/DriveImportModal';
 import { SlotCreateModal } from '../modals/SlotCreateModal';
 
 
-type UploadMode = 'create' | 'replace' | 'temporary-object' | 'environment';
+import { useStudioImportContext } from './StudioImportContext';
 
-type StudioImportPanelsProps = {
-  driveImportMode: UploadMode;
-  driveImportOpen: boolean;
-  driveImportTargetId: string | null;
-  handleCreateEmptySlot: () => Promise<void>;
-  handleDriveSelection: (files: ImageFileSelection[]) => Promise<void>;
-  handleLocalUpload: (files: File[]) => Promise<void>;
-  projectId: string | null;
-  selectedSlot: ImageStudioSlotRecord | null;
-  setDriveImportMode: (mode: UploadMode) => void;
-  setDriveImportOpen: (open: boolean) => void;
-  setDriveImportTargetId: (targetId: string | null) => void;
-  setLocalUploadMode: (mode: UploadMode) => void;
-  setLocalUploadTargetId: (targetId: string | null) => void;
-  setSlotCreateOpen: (open: boolean) => void;
-  slotCreateOpen: boolean;
-  triggerLocalUpload: (mode: UploadMode, targetId: string | null) => void;
-  uploadPending: boolean;
-};
+export function StudioImportPanels(): React.JSX.Element {
+  const {
+    driveImportMode,
+    driveImportOpen,
+    driveImportTargetId,
+    handleCreateEmptySlot,
+    handleDriveSelection,
+    handleLocalUpload,
+    projectId,
+    selectedSlot,
+    setDriveImportMode,
+    setDriveImportOpen,
+    setDriveImportTargetId,
+    setLocalUploadMode,
+    setLocalUploadTargetId,
+    setSlotCreateOpen,
+    slotCreateOpen,
+    triggerLocalUpload,
+    uploadPending,
+  } = useStudioImportContext();
 
-export function StudioImportPanels({
-  driveImportMode,
-  driveImportOpen,
-  driveImportTargetId,
-  handleCreateEmptySlot,
-  handleDriveSelection,
-  handleLocalUpload,
-  projectId,
-  selectedSlot,
-  setDriveImportMode,
-  setDriveImportOpen,
-  setDriveImportTargetId,
-  setLocalUploadMode,
-  setLocalUploadTargetId,
-  setSlotCreateOpen,
-  slotCreateOpen,
-  triggerLocalUpload,
-  uploadPending,
-}: StudioImportPanelsProps): React.JSX.Element {
   const driveImportTitle =
     driveImportMode === 'replace'
       ? 'Attach Image To Selected Card'

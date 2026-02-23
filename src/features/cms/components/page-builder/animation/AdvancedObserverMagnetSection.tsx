@@ -8,7 +8,6 @@ import React, { useCallback } from 'react';
 
 import type {
   DragAxis,
-  GsapAnimationConfig,
 } from '@/features/gsap';
 import {
   DEFAULT_ANIMATION_CONFIG,
@@ -24,11 +23,7 @@ import {
   SelectSimple,
   Tooltip,
 } from '@/shared/ui';
-
-type AdvancedObserverMagnetSectionProps = {
-  config: GsapAnimationConfig;
-  onChange: (config: GsapAnimationConfig) => void;
-};
+import { useAnimationConfigContext } from './AnimationConfigContext';
 
 const observerTypeIcons: Record<string, React.ReactNode> = {
   'wheel,touch': (
@@ -43,10 +38,8 @@ const observerTypeIcons: Record<string, React.ReactNode> = {
   'wheel,touch,pointer': <Layers className='size-3.5' />,
 };
 
-export function AdvancedObserverMagnetSection({
-  config,
-  onChange,
-}: AdvancedObserverMagnetSectionProps): React.JSX.Element {
+export function AdvancedObserverMagnetSection(): React.JSX.Element {
+  const { config, onChange } = useAnimationConfigContext();
   const observerEnabledValue =
     config.observerEnabled ?? DEFAULT_ANIMATION_CONFIG.observerEnabled ?? false;
   const observerTypeValue = config.observerType ?? DEFAULT_ANIMATION_CONFIG.observerType ?? 'wheel,touch';

@@ -560,8 +560,8 @@ function MasterFolderTreeNode({
 export function MasterFolderTree(props: MasterFolderTreeProps): React.JSX.Element {
   const { controller, resolveDraggedNodeId, canDrop, onNodeDrop, resolveDropPosition } = props;
   
-  const [_, setExternalDraggedNodeId] = React.useState<MasterTreeId | null>(null);
-  const [__, setRootDropHoverZone] = React.useState<'top' | 'bottom' | null>(null);
+  const [_externalDraggedNodeId, setExternalDraggedNodeId] = React.useState<MasterTreeId | null>(null);
+  const [rootDropHoverZone, setRootDropHoverZone] = React.useState<'top' | 'bottom' | null>(null);
 
   const resolveDraggedNode = React.useCallback((
     event: React.DragEvent<HTMLElement>
@@ -684,6 +684,7 @@ export function MasterFolderTree(props: MasterFolderTreeProps): React.JSX.Elemen
       clearAllDragState,
       applyRootDrop,
       setExternalDraggedNodeId,
+      rootDropHoverZone,
       setRootDropHoverZone,
       clearDragIndicators,
     }),
@@ -694,6 +695,9 @@ export function MasterFolderTree(props: MasterFolderTreeProps): React.JSX.Elemen
       resolveNodeDropPosition,
       clearAllDragState,
       applyRootDrop,
+      setExternalDraggedNodeId,
+      setRootDropHoverZone,
+      rootDropHoverZone,
       clearDragIndicators,
     ]
   );
@@ -704,4 +708,3 @@ export function MasterFolderTree(props: MasterFolderTreeProps): React.JSX.Elemen
     </MasterFolderTreeProvider>
   );
 }
-

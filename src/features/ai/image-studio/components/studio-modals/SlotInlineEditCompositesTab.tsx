@@ -2,23 +2,19 @@ import React from 'react';
 
 import { TabsContent } from '@/shared/ui';
 
-import type { CompositeTabImageViewModel } from './slot-inline-edit-tab-types';
-
-type SlotInlineEditCompositesTabProps = {
-  compositeTabInputImages: CompositeTabImageViewModel[];
-  compositeTabInputSourceLabel: string;
-  formatBytes: (value: number | null) => string;
-  formatDateTime: (value: string | Date | null | undefined) => string;
-  sourceCompositeImage?: CompositeTabImageViewModel | null;
-};
-
-export function SlotInlineEditCompositesTab({
-  compositeTabInputImages,
-  compositeTabInputSourceLabel,
+import { 
   formatBytes,
   formatDateTime,
-  sourceCompositeImage,
-}: SlotInlineEditCompositesTabProps): React.JSX.Element {
+} from './slot-inline-edit-utils';
+import { useStudioInlineEdit } from './StudioInlineEditContext';
+
+export function SlotInlineEditCompositesTab(): React.JSX.Element {
+  const {
+    compositeTabInputImages,
+    compositeTabInputSourceLabel,
+    sourceCompositeImage,
+  } = useStudioInlineEdit();
+
   return (
     <TabsContent value='composites' className='mt-0 space-y-4'>
       <div className='space-y-2 rounded-lg border border-border/60 bg-card/35 p-3'>

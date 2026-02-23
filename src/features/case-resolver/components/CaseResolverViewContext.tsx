@@ -102,7 +102,7 @@ export type CaseResolverViewContextValue = {
   resolvePromptExploderMatchedPartyLabel: (
     reference: { 
       id: string; 
-      kind: "person" | "organization"; 
+      kind: 'person' | 'organization'; 
       name?: string | undefined; 
       role?: string | undefined; 
     } | null | undefined

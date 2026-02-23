@@ -14,9 +14,6 @@ import {
   PROMPT_ENGINE_SETTINGS_KEY,
 } from '@/features/prompt-engine/settings';
 import { savePromptExploderDraftPrompt } from '@/features/prompt-exploder/bridge';
-import {
-  type VectorToolMode,
-} from '@/features/vector-drawing';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
@@ -69,7 +66,6 @@ import {
   type ImageStudioProjectSession,
 } from '../utils/project-session';
 import { buildRunRequestPreview } from '../utils/run-request-preview';
-import { isImageStudioSlotImageLocked } from '../utils/slot-image-lock';
 import { normalizeImageStudioModelPresets, resolveImageStudioSequenceActiveSteps } from '../utils/studio-settings';
 
 import type { ParamUiControl } from '../utils/param-ui';
@@ -239,7 +235,6 @@ export function RightSidebar(): React.JSX.Element {
     setCanvasSelectionEnabled,
     setImageTransformMode,
     setCanvasImageOffset,
-    resetCanvasImageOffset,
     setCanvasBackgroundLayerEnabled,
     setCanvasBackgroundColor,
     getPreviewCanvasImageFrame,
@@ -254,8 +249,6 @@ export function RightSidebar(): React.JSX.Element {
     maskInvert,
     maskFeather,
     brushRadius,
-    maskThresholdSensitivity,
-    maskEdgeSensitivity,
   } = useMaskingState();
   const {
     setTool,
@@ -265,19 +258,15 @@ export function RightSidebar(): React.JSX.Element {
     setMaskInvert,
     setMaskFeather,
     setBrushRadius,
-    setMaskThresholdSensitivity,
-    setMaskEdgeSensitivity,
   } = useMaskingActions();
   const {
     workingSlot,
-    selectedSlot,
     slots,
     selectedFolder,
     selectedSlotId,
     workingSlotId,
     previewMode,
     compositeAssetIds,
-    compositeAssetOptions,
   } = useSlotsState();
   const {
     setCompositeAssetIds,
@@ -523,44 +512,9 @@ export function RightSidebar(): React.JSX.Element {
       ? 'Queued...'
       : 'Generating...'
     : `Generate From Prompt ${(studioSettings.targetAi.openai.image.n ?? 1) > 1 ? `(${studioSettings.targetAi.openai.image.n})` : ''}`;
-  const hasCanvasImage = Boolean(
-    workingSlot ||
-    (selectedSlot && !isImageStudioSlotImageLocked(selectedSlot))
-  );
   const canResetCanvasImageOffset = Math.abs(canvasImageOffset.x) > 0.5 || Math.abs(canvasImageOffset.y) > 0.5;
   const isMoveImageActive = imageTransformMode === 'move';
   const canRecenterCanvasImage = isMoveImageActive && canResetCanvasImageOffset;
-  const isSelectToolActive = tool === 'select' && canvasSelectionEnabled;
-  const activeShapeDrawingTool = tool === 'select' ? null : tool;
-
-  const handleToggleSelectTool = useCallback((): void => {
-    if (isSelectToolActive) {
-      setCanvasSelectionEnabled(false);
-      return;
-    }
-    setTool('select');
-    setCanvasSelectionEnabled(true);
-  }, [isSelectToolActive, setCanvasSelectionEnabled, setTool]);
-
-  const handleSelectShapeTool = useCallback((nextTool: VectorToolMode): void => {
-    const isTogglingActiveShapeToolOff = nextTool !== 'select' && tool === nextTool;
-    if (isTogglingActiveShapeToolOff) {
-      setTool('select');
-      if (canvasSelectionEnabled) {
-        setCanvasSelectionEnabled(false);
-      }
-      return;
-    }
-
-    setTool(nextTool);
-    if (nextTool === 'select') {
-      setCanvasSelectionEnabled(true);
-      return;
-    }
-    if (canvasSelectionEnabled) {
-      setCanvasSelectionEnabled(false);
-    }
-  }, [canvasSelectionEnabled, setCanvasSelectionEnabled, setTool, tool]);
 
   const runCanvasResize = useCallback(async ({
     nextWidth,
@@ -855,14 +809,6 @@ export function RightSidebar(): React.JSX.Element {
     };
   }, [projectId, sidebarTab]);
 
-  const handleClearAllShapes = useCallback((): void => {
-    if (maskShapes.length === 0) return;
-    setMaskShapes([]);
-    setActiveMaskId(null);
-    setSelectedPointIndex(null);
-    toast('All shapes removed from canvas.', { variant: 'info' });
-  }, [maskShapes.length, setActiveMaskId, setMaskShapes, setSelectedPointIndex, toast]);
-
   const handleModelChange = useCallback((value: string): void => {
     setStudioSettings((prev) => ({
       ...prev,
@@ -892,14 +838,6 @@ export function RightSidebar(): React.JSX.Element {
   const handleApplyCanvasSizePresetClick = useCallback((): void => {
     void handleApplyCanvasSizePreset();
   }, [handleApplyCanvasSizePreset]);
-
-  const handleToggleMoveImage = useCallback((): void => {
-    setImageTransformMode(isMoveImageActive ? 'none' : 'move');
-  }, [isMoveImageActive, setImageTransformMode]);
-
-  const handleToggleCanvasBackgroundLayer = useCallback((): void => {
-    setCanvasBackgroundLayerEnabled(!canvasBackgroundLayerEnabled);
-  }, [canvasBackgroundLayerEnabled, setCanvasBackgroundLayerEnabled]);
 
   const requestPreview = useMemo(
     () =>
@@ -1209,7 +1147,20 @@ export function RightSidebar(): React.JSX.Element {
 
   return (
     <>
-      <RightSidebarProvider value={{ switchToControls }}>
+      <RightSidebarProvider value={{ 
+        switchToControls,
+        canvasSizePresetOptions,
+        canvasSizePresetValue,
+        setCanvasSizePresetValue,
+        canvasSizeLabel: projectCanvasSizeLabel,
+        canApplyCanvasSizePreset,
+        canRecenterCanvasImage,
+        onApplyCanvasSizePreset: handleApplyCanvasSizePresetClick,
+        onOpenResizeCanvasModal: handleOpenResizeCanvasModal,
+        quickActionsHostEl,
+        quickActionsPanelContent,
+        resizeCanvasDisabled,
+      }}>
         <div
           className={cn(
             'order-3 flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 transition-all duration-300 ease-in-out',
@@ -1358,46 +1309,7 @@ export function RightSidebar(): React.JSX.Element {
               onRestoreActionStep={handleRestoreActionStep}
             />
           ) : (
-            <RightSidebarControlsTab
-              activeShapeDrawingTool={activeShapeDrawingTool}
-              brushRadius={brushRadius}
-              canvasBackgroundColor={canvasBackgroundColor}
-              canvasBackgroundLayerEnabled={canvasBackgroundLayerEnabled}
-              canvasSizePresetOptions={canvasSizePresetOptions}
-              canvasSizePresetValue={canvasSizePresetValue}
-              canvasSizeLabel={projectCanvasSizeLabel}
-              canApplyCanvasSizePreset={canApplyCanvasSizePreset}
-              canRecenterCanvasImage={canRecenterCanvasImage}
-              compositeAssetIds={compositeAssetIds}
-              compositeAssetOptions={compositeAssetOptions}
-              hasCanvasImage={hasCanvasImage}
-              isMoveImageActive={isMoveImageActive}
-              isSelectToolActive={isSelectToolActive}
-              maskEdgeSensitivity={maskEdgeSensitivity}
-              maskFeather={maskFeather}
-              maskShapesLength={maskShapes.length}
-              maskThresholdSensitivity={maskThresholdSensitivity}
-              onBrushRadiusChange={setBrushRadius}
-              onCanvasBackgroundColorChange={setCanvasBackgroundColor}
-              onClearAllShapes={handleClearAllShapes}
-              onCompositeAssetIdsChange={setCompositeAssetIds}
-              onMaskEdgeSensitivityChange={setMaskEdgeSensitivity}
-              onMaskFeatherChange={setMaskFeather}
-              onMaskThresholdSensitivityChange={setMaskThresholdSensitivity}
-              onApplyCanvasSizePreset={handleApplyCanvasSizePresetClick}
-              onCanvasSizePresetChange={setCanvasSizePresetValue}
-              onOpenResizeCanvasModal={handleOpenResizeCanvasModal}
-              onRecenterCanvasImage={resetCanvasImageOffset}
-              onSelectShapeTool={handleSelectShapeTool}
-              onToggleMoveImage={handleToggleMoveImage}
-              onToggleCanvasBackgroundLayer={handleToggleCanvasBackgroundLayer}
-              onToggleSelectTool={handleToggleSelectTool}
-              quickActionsHostEl={quickActionsHostEl}
-              quickActionsPanelContent={quickActionsPanelContent}
-              resizeCanvasDisabled={resizeCanvasDisabled}
-              tool={tool}
-              workingSlotPresent={Boolean(workingSlot)}
-            />
+            <RightSidebarControlsTab />
           )}
         </div>
       </RightSidebarProvider>

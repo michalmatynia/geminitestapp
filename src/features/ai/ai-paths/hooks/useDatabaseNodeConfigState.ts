@@ -41,6 +41,7 @@ import {
   toDbSchemaSnapshot,
   applySchemaSelection,
 } from '../utils/database-node-utils';
+import { extractCodeSnippets } from '../components/node-config/database/database-constructor-tab-helpers';
 
 
 
@@ -151,6 +152,16 @@ export function useDatabaseNodeConfigState() {
   const [testQueryLoading, setTestQueryLoading] = useState(false);
   const [queryValidatorEnabled, setQueryValidatorEnabled] = useState(false);
   const [queryFormatterEnabled, setQueryFormatterEnabled] = useState(true);
+  const [selectedSnippetIndex, setSelectedSnippetIndex] = useState<number>(-1);
+
+  const codeSnippets = useMemo((): string[] => {
+    if (!pendingAiQuery) return [];
+    return extractCodeSnippets(pendingAiQuery);
+  }, [pendingAiQuery]);
+
+  useEffect((): void => {
+    setSelectedSnippetIndex((_prev: number): number => codeSnippets.length > 0 ? 0 : -1);
+  }, [pendingAiQuery, codeSnippets.length]);
 
   const queryTemplateRef = useRef<HTMLTextAreaElement | null>(null);
   const aiPromptRef = useRef<HTMLTextAreaElement | null>(null);

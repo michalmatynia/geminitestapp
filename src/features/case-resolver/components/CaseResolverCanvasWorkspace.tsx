@@ -106,8 +106,11 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   );
 
   const selectedEdge = useMemo(
-    (): unknown | null =>
-      selectedEdgeId ? (activeFile?.graph?.edges as any[])?.find((e: any) => e.id === selectedEdgeId) ?? null : null,
+    (): unknown | null => {
+      const edges = activeFile?.graph?.edges;
+      if (!selectedEdgeId || !Array.isArray(edges)) return null;
+      return (edges as AiEdge[]).find((e) => e.id === selectedEdgeId) ?? null;
+    },
     [activeFile?.graph?.edges, selectedEdgeId]
   );
 
@@ -133,14 +136,18 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const selectedPromptOutputPreview = null; 
   const selectedPromptSecondaryOutputHint = false;
 
-  const updateSelectedPromptTemplate = useCallback((_template: string): void => {
+  const updateSelectedPromptTemplate = useCallback((template: string): void => {
     // No-op for now in canvas workspace
+    console.log('Update template requested:', template);
   }, []);
 
   const updateSelectedNodeMeta = useCallback((patch: Partial<CaseResolverNodeMeta>): void => {
-    if (!selectedNodeId || !activeFile) return;
+    if (!selectedNodeId || !activeFile?.graph) return;
     const nextMeta = { ...normalizedNodeMeta, [selectedNodeId]: { ...selectedNodeMeta, ...patch } };
-    onGraphChange({ ...activeFile.graph, nodeMeta: nextMeta } as any);
+    onGraphChange({ 
+      ...activeFile.graph, 
+      nodeMeta: nextMeta 
+    } as unknown as any);
   }, [selectedNodeId, activeFile, normalizedNodeMeta, selectedNodeMeta, onGraphChange]);
 
   const selectedEdgeJoinMode = useMemo(
@@ -149,19 +156,22 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   );
 
   const updateSelectedEdgeMeta = useCallback((patch: Partial<CaseResolverEdgeMeta>): void => {
-    if (!selectedEdgeId || !activeFile) return;
+    if (!selectedEdgeId || !activeFile?.graph) return;
     const currentMeta = normalizedEdgeMeta[selectedEdgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
     const nextMeta = { ...normalizedEdgeMeta, [selectedEdgeId]: { ...currentMeta, ...patch } };
-    onGraphChange({ ...activeFile.graph, edgeMeta: nextMeta } as any);
+    onGraphChange({ 
+      ...activeFile.graph, 
+      edgeMeta: nextMeta 
+    } as unknown as any);
   }, [selectedEdgeId, activeFile, normalizedEdgeMeta, onGraphChange]);
 
   const handleManualGraphSave = useCallback((): void => {
-    if (!activeFile) return;
+    if (!activeFile?.graph) return;
     onGraphChange({ 
       ...activeFile.graph, 
       nodeMeta: normalizedNodeMeta, 
       edgeMeta: normalizedEdgeMeta 
-    } as any);
+    } as unknown as any);
   }, [activeFile, normalizedEdgeMeta, normalizedNodeMeta, onGraphChange]);
 
   const handlePersistUiState = useCallback(async (): Promise<void> => {
@@ -194,7 +204,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     if (!configOpen) return;
     setIsNodeInspectorOpenLocal(true);
     setConfigOpen(false);
-  }, [configOpen, setConfigOpen]);
+  }, [configOpen, setConfigOpen, setIsNodeInspectorOpenLocal]);
 
   const contextValue = useMemo(
     (): NodeFileWorkspaceContextValue => ({
@@ -357,12 +367,14 @@ export function CaseResolverCanvasWorkspace(): React.JSX.Element {
 }
 
 function normalizeNodes(nodes: unknown[]): AiNode[] {
-  return nodes.map((n: any) => ({
-    ...n,
-    inputs: Array.isArray(n.inputs) ? (n.inputs as string[]) : ['in'],
-    outputs: Array.isArray(n.outputs) ? (n.outputs as string[]) : ['out'],
-    position: n.position || { x: 0, y: 0 },
-    createdAt: (n.createdAt as string) || new Date().toISOString(),
-    updatedAt: (n.updatedAt as string) || new Date().toISOString(),
-  }));
+  return (nodes as Array<Record<string, unknown>>).map((n) => {
+    return {
+      ...n,
+      inputs: Array.isArray(n['inputs']) ? (n['inputs'] as string[]) : ['in'],
+      outputs: Array.isArray(n['outputs']) ? (n['outputs'] as string[]) : ['out'],
+      position: (n['position'] as { x: number; y: number }) || { x: 0, y: 0 },
+      createdAt: (n['createdAt'] as string) || new Date().toISOString(),
+      updatedAt: (n['updatedAt'] as string) || new Date().toISOString(),
+    } as unknown as AiNode;
+  });
 }

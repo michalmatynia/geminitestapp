@@ -48,6 +48,12 @@ export interface UseUsersStateReturn {
   setCreateOpen: Dispatch<SetStateAction<boolean>>;
   createForm: CreateUserForm;
   setCreateForm: Dispatch<SetStateAction<CreateUserForm>>;
+  mockOpen: boolean;
+  setMockOpen: Dispatch<SetStateAction<boolean>>;
+  mockEmail: string;
+  setMockEmail: (email: string) => void;
+  mockPassword: string;
+  setMockPassword: (password: string) => void;
   isLoading: boolean;
   isFetching: boolean;
   canReadUsers: boolean;
@@ -87,6 +93,10 @@ export function useUsersState(): UseUsersStateReturn {
   
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState<CreateUserForm>(EMPTY_CREATE);
+
+  const [mockOpen, setMockOpen] = useState(false);
+  const [mockEmail, setMockEmail] = useState('');
+  const [mockPassword, setMockPassword] = useState('');
 
   const authUsersQuery = useAuthUsers(canReadUsers);
   const userSecurityQuery = useAuthUserSecurity(canManageSecurity ? editingUser?.id : null);
@@ -166,6 +176,12 @@ export function useUsersState(): UseUsersStateReturn {
     setCreateOpen,
     createForm,
     setCreateForm,
+    mockOpen,
+    setMockOpen,
+    mockEmail,
+    setMockEmail,
+    mockPassword,
+    setMockPassword,
     isLoading: authUsersQuery.isPending || authLoading,
     isFetching: authUsersQuery.isFetching,
     canReadUsers,

@@ -1,86 +1,59 @@
 import { } from 'lucide-react';
 import React from 'react';
 
-import ProductImageManager, {
-  type ProductImageManagerController,
-} from '@/features/products/components/ProductImageManager';
+import ProductImageManager from '@/features/products/components/ProductImageManager';
 import { ProductImageManagerControllerProvider } from '@/features/products/components/ProductImageManagerControllerContext';
-import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { Button, Input, Label, TabsContent, LoadingState } from '@/shared/ui';
 import { Hint } from '@/shared/ui';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
-
-import type {
-  InlinePreviewSourceViewModel,
-  LinkedGeneratedVariantViewModel,
-} from './slot-inline-edit-tab-types';
-
-type SlotInlineEditCardTabProps = {
-  clearImageDisabled: boolean;
-  clearImageTitle?: string;
-  formatBytes: (value: number | null) => string;
-  formatDateTime: (value: string | Date | null | undefined) => string;
-  formatLinkedVariantTimestamp: (value: string) => string;
-  inlineCardImageManagerController: ProductImageManagerController;
-  inlinePreviewBase64Bytes: number | null;
-  inlinePreviewDimensions: string;
-  inlinePreviewMimeType: string;
-  inlinePreviewSource: InlinePreviewSourceViewModel;
-  linkedGeneratedVariants: LinkedGeneratedVariantViewModel[];
-  linkedRunsErrorMessage: string;
-  linkedRunsIsError: boolean;
-  linkedRunsIsFetching: boolean;
-  linkedRunsIsLoading: boolean;
-  linkedVariantApplyBusyKey: string | null;
-  onApplyLinkedVariantToCard: (variant: LinkedGeneratedVariantViewModel) => void;
-  onClearSlotImage: () => void;
-  onRefreshLinkedRuns: () => void;
-  onReplaceFromDrive: () => void;
-  onReplaceFromLocal: () => void;
-  onSlotFolderChange: (value: string) => void;
-  onSlotNameChange: (value: string) => void;
-  selectedSlot: ImageStudioSlotRecord | null;
-  setInlinePreviewNaturalSize: (dimensions: { width: number; height: number } | null) => void;
-  slotBase64Draft: string;
-  slotFolderDraft: string;
-  slotNameDraft: string;
-  slotUpdateBusy: boolean;
-  uploadPending: boolean;
-};
-
-export function SlotInlineEditCardTab({
-  clearImageDisabled,
-  clearImageTitle,
+import { 
+  isCardImageRemovalLocked,
   formatBytes,
   formatDateTime,
   formatLinkedVariantTimestamp,
-  inlineCardImageManagerController,
-  inlinePreviewBase64Bytes,
-  inlinePreviewDimensions,
-  inlinePreviewMimeType,
-  inlinePreviewSource,
-  linkedGeneratedVariants,
-  linkedRunsErrorMessage,
-  linkedRunsIsError,
-  linkedRunsIsFetching,
-  linkedRunsIsLoading,
-  linkedVariantApplyBusyKey,
-  onApplyLinkedVariantToCard,
-  onClearSlotImage,
-  onRefreshLinkedRuns,
-  onReplaceFromDrive,
-  onReplaceFromLocal,
-  onSlotFolderChange,
-  onSlotNameChange,
-  selectedSlot,
-  setInlinePreviewNaturalSize,
-  slotBase64Draft,
-  slotFolderDraft,
-  slotNameDraft,
-  slotUpdateBusy,
-  uploadPending,
-}: SlotInlineEditCardTabProps): React.JSX.Element {
+} from './slot-inline-edit-utils';
+import { useStudioInlineEdit } from './StudioInlineEditContext';
+
+export function SlotInlineEditCardTab(): React.JSX.Element {
+  const {
+    inlineCardImageManagerController,
+    inlinePreviewBase64Bytes,
+    inlinePreviewDimensions,
+    inlinePreviewMimeType,
+    inlinePreviewSource,
+    linkedGeneratedVariants,
+    linkedRunsQuery,
+    linkedVariantApplyBusyKey,
+    onApplyLinkedVariantToCard,
+    onClearSlotImage,
+    onReplaceFromDrive,
+    onReplaceFromLocal,
+    selectedSlot,
+    setInlinePreviewNaturalSize,
+    setSlotFolderDraft,
+    setSlotNameDraft,
+    slotBase64Draft,
+    slotFolderDraft,
+    slotNameDraft,
+    slotUpdateBusy,
+    uploadPending,
+    onRefreshLinkedRuns,
+  } = useStudioInlineEdit();
+
+  const linkedRunsErrorMessage = linkedRunsQuery.error instanceof Error
+    ? linkedRunsQuery.error.message
+    : 'Failed to load linked variants.';
+  
+  const linkedRunsIsError = linkedRunsQuery.isError;
+  const linkedRunsIsFetching = linkedRunsQuery.isFetching;
+  const linkedRunsIsLoading = linkedRunsQuery.isLoading;
+
+  const clearImageDisabled = slotUpdateBusy || isCardImageRemovalLocked(selectedSlot);
+  const clearImageTitle = isCardImageRemovalLocked(selectedSlot)
+    ? 'Card image is locked and can only be removed by deleting the card.'
+    : undefined;
+
   return (
     <TabsContent value='card' className='mt-0 space-y-4'>
       <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>
@@ -157,7 +130,7 @@ export function SlotInlineEditCardTab({
           <Label className='text-xs text-gray-400'>Card Name</Label>
           <Input size='sm'
             value={slotNameDraft}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => onSlotNameChange(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotNameDraft(event.target.value)}
             className='h-9'
           />
         </div>
@@ -165,7 +138,7 @@ export function SlotInlineEditCardTab({
           <Label className='text-xs text-gray-400'>Folder Path</Label>
           <Input size='sm'
             value={slotFolderDraft}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>) => onSlotFolderChange(event.target.value)}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) => setSlotFolderDraft(event.target.value)}
             placeholder='e.g. variants/red'
             className='h-9'
           />
@@ -237,7 +210,7 @@ export function SlotInlineEditCardTab({
                     type='button'
                     variant='outline'
                     onClick={() => {
-                      onApplyLinkedVariantToCard(variant);
+                      void onApplyLinkedVariantToCard(variant);
                     }}
                     disabled={slotUpdateBusy}
                     loading={isApplying}
@@ -270,7 +243,9 @@ export function SlotInlineEditCardTab({
         </Button>        <Button size='xs'
           type='button'
           variant='outline'
-          onClick={onClearSlotImage}
+          onClick={() => {
+            void onClearSlotImage();
+          }}
           disabled={clearImageDisabled}
           title={clearImageTitle}
         >

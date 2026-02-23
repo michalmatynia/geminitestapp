@@ -1,5 +1,7 @@
+'use client';
+
 import { MousePointer2, Move } from 'lucide-react';
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import {
   type VectorToolMode,
@@ -8,91 +10,122 @@ import {
 import { Button, MultiSelect, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { useMaskingActions, useMaskingState } from '../../context/MaskingContext';
+import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
+import { useUiActions, useUiState } from '../../context/UiContext';
 import { GenerationToolbar } from '../GenerationToolbar';
 import { LabeledSlider } from '../LabeledSlider';
 import { StudioCard } from '../StudioCard';
+import { useRightSidebarContext } from '../RightSidebarContext';
 
-type RightSidebarControlsTabProps = {
-  activeShapeDrawingTool: VectorToolMode | null;
-  brushRadius: number;
-  canvasBackgroundColor: string;
-  canvasBackgroundLayerEnabled: boolean;
-  canvasSizePresetOptions: Array<{ value: string; label: string; description?: string }>;
-  canvasSizePresetValue: string;
-  canvasSizeLabel: string;
-  canApplyCanvasSizePreset: boolean;
-  canRecenterCanvasImage: boolean;
-  compositeAssetIds: string[];
-  compositeAssetOptions: Array<{ value: string; label: string }>;
-  hasCanvasImage: boolean;
-  isMoveImageActive: boolean;
-  isSelectToolActive: boolean;
-  maskEdgeSensitivity: number;
-  maskFeather: number;
-  maskShapesLength: number;
-  maskThresholdSensitivity: number;
-  onBrushRadiusChange: (value: number) => void;
-  onCanvasBackgroundColorChange: (value: string) => void;
-  onClearAllShapes: () => void;
-  onCompositeAssetIdsChange: (value: string[]) => void;
-  onMaskEdgeSensitivityChange: (value: number) => void;
-  onMaskFeatherChange: (value: number) => void;
-  onMaskThresholdSensitivityChange: (value: number) => void;
-  onApplyCanvasSizePreset: () => void;
-  onCanvasSizePresetChange: (value: string) => void;
-  onRecenterCanvasImage: () => void;
-  onOpenResizeCanvasModal: () => void;
-  onSelectShapeTool: (nextTool: VectorToolMode) => void;
-  onToggleMoveImage: () => void;
-  onToggleCanvasBackgroundLayer: () => void;
-  onToggleSelectTool: () => void;
-  quickActionsHostEl: HTMLElement | null;
-  quickActionsPanelContent: React.ReactNode;
-  resizeCanvasDisabled: boolean;
-  tool: VectorToolMode;
-  workingSlotPresent: boolean;
-};
+export const RightSidebarControlsTab = React.memo(function RightSidebarControlsTab(): React.JSX.Element {
+  const {
+    imageTransformMode,
+    canvasBackgroundColor,
+    canvasBackgroundLayerEnabled,
+    canvasSelectionEnabled,
+  } = useUiState();
 
-export const RightSidebarControlsTab = React.memo(function RightSidebarControlsTab({
-  activeShapeDrawingTool,
-  brushRadius,
-  canvasBackgroundColor,
-  canvasBackgroundLayerEnabled,
-  canvasSizePresetOptions,
-  canvasSizePresetValue,
-  canvasSizeLabel,
-  canApplyCanvasSizePreset,
-  canRecenterCanvasImage,
-  compositeAssetIds,
-  compositeAssetOptions,
-  hasCanvasImage,
-  isMoveImageActive,
-  isSelectToolActive,
-  maskEdgeSensitivity,
-  maskFeather,
-  maskShapesLength,
-  maskThresholdSensitivity,
-  onBrushRadiusChange,
-  onCanvasBackgroundColorChange,
-  onClearAllShapes,
-  onCompositeAssetIdsChange,
-  onMaskEdgeSensitivityChange,
-  onMaskFeatherChange,
-  onMaskThresholdSensitivityChange,
-  onApplyCanvasSizePreset,
-  onCanvasSizePresetChange,
-  onRecenterCanvasImage,
-  onOpenResizeCanvasModal,
-  onSelectShapeTool,
-  onToggleMoveImage,
-  onToggleCanvasBackgroundLayer,
-  onToggleSelectTool,
-  quickActionsHostEl,
-  quickActionsPanelContent,
-  resizeCanvasDisabled,
-  tool,
-  workingSlotPresent,
-}: RightSidebarControlsTabProps): React.JSX.Element {
+  const {
+    setImageTransformMode,
+    setCanvasBackgroundColor,
+    setCanvasBackgroundLayerEnabled,
+    setCanvasSelectionEnabled,
+    resetCanvasImageOffset,
+  } = useUiActions();
+
+  const {
+    tool,
+    maskShapes,
+    brushRadius,
+    maskFeather,
+    maskThresholdSensitivity,
+    maskEdgeSensitivity,
+  } = useMaskingState();
+
+  const {
+    setTool,
+    setMaskShapes,
+    setActiveMaskId,
+    setSelectedPointIndex,
+    setBrushRadius,
+    setMaskFeather,
+    setMaskThresholdSensitivity,
+    setMaskEdgeSensitivity,
+  } = useMaskingActions();
+
+  const {
+    workingSlot,
+    selectedSlot,
+    compositeAssetIds,
+    compositeAssetOptions,
+  } = useSlotsState();
+
+  const {
+    setCompositeAssetIds,
+  } = useSlotsActions();
+
+  const {
+    canvasSizePresetOptions,
+    canvasSizePresetValue,
+    setCanvasSizePresetValue,
+    canvasSizeLabel,
+    canApplyCanvasSizePreset,
+    canRecenterCanvasImage,
+    onApplyCanvasSizePreset,
+    onOpenResizeCanvasModal,
+    quickActionsHostEl,
+    quickActionsPanelContent,
+    resizeCanvasDisabled,
+  } = useRightSidebarContext();
+
+  const workingSlotPresent = Boolean(workingSlot);
+  const maskShapesLength = maskShapes.length;
+  const isMoveImageActive = imageTransformMode === 'move';
+  const isSelectToolActive = tool === 'select' && canvasSelectionEnabled;
+  const activeShapeDrawingTool = tool === 'select' ? null : tool;
+  const hasCanvasImage = Boolean(workingSlot || selectedSlot);
+
+  const handleToggleSelectTool = useCallback((): void => {
+    if (isSelectToolActive) {
+      setCanvasSelectionEnabled(false);
+      return;
+    }
+    setTool('select');
+    setCanvasSelectionEnabled(true);
+  }, [isSelectToolActive, setCanvasSelectionEnabled, setTool]);
+
+  const handleSelectShapeTool = useCallback((nextTool: VectorToolMode): void => {
+    const isTogglingActiveShapeToolOff = nextTool !== 'select' && tool === nextTool;
+    if (isTogglingActiveShapeToolOff) {
+      setTool('select');
+      if (canvasSelectionEnabled) {
+        setCanvasSelectionEnabled(false);
+      }
+      return;
+    }
+
+    setTool(nextTool);
+    if (nextTool === 'select') {
+      setCanvasSelectionEnabled(true);
+      return;
+    }
+    if (canvasSelectionEnabled) {
+      setCanvasSelectionEnabled(false);
+    }
+  }, [canvasSelectionEnabled, setCanvasSelectionEnabled, setTool, tool]);
+
+  const handleClearAllShapes = useCallback((): void => {
+    if (maskShapes.length === 0) return;
+    setMaskShapes([]);
+    setActiveMaskId(null);
+    setSelectedPointIndex(null);
+  }, [maskShapes.length, setActiveMaskId, setMaskShapes, setSelectedPointIndex]);
+
+  const handleToggleMoveImage = useCallback((): void => {
+    setImageTransformMode(isMoveImageActive ? 'none' : 'move');
+  }, [isMoveImageActive, setImageTransformMode]);
+
   return (
     <>
       {!quickActionsHostEl ? (
@@ -109,7 +142,7 @@ export const RightSidebarControlsTab = React.memo(function RightSidebarControlsT
                 size='xs'
                 type='button'
                 variant={isSelectToolActive ? 'default' : 'outline'}
-                onClick={onToggleSelectTool}
+                onClick={handleToggleSelectTool}
                 aria-pressed={isSelectToolActive}
                 title={isSelectToolActive
                   ? 'Disable selection mode (canvas drag pans view)'
@@ -128,9 +161,9 @@ export const RightSidebarControlsTab = React.memo(function RightSidebarControlsT
             </div>
             <VectorDrawingToolbar
               tool={tool}
-              onSelectTool={onSelectShapeTool}
+              onSelectTool={handleSelectShapeTool}
               showSelectTool={false}
-              onClear={onClearAllShapes}
+              onClear={handleClearAllShapes}
               disableClear={maskShapesLength === 0}
               className='w-full flex-wrap justify-start rounded-xl border-border/60 bg-card/40'
             />
@@ -140,13 +173,13 @@ export const RightSidebarControlsTab = React.memo(function RightSidebarControlsT
                   <LabeledSlider
                     label='Mask Feather'
                     value={maskFeather}
-                    onChange={onMaskFeatherChange}
+                    onChange={setMaskFeather}
                   />
                   {activeShapeDrawingTool === 'brush' ? (
                     <LabeledSlider
                       label='Brush Radius'
                       value={brushRadius}
-                      onChange={onBrushRadiusChange}
+                      onChange={setBrushRadius}
                       min={1}
                       max={64}
                       fallbackValue={8}
@@ -170,7 +203,7 @@ export const RightSidebarControlsTab = React.memo(function RightSidebarControlsT
                 size='xs'
                 type='button'
                 variant={isMoveImageActive ? 'default' : 'outline'}
-                onClick={onToggleMoveImage}
+                onClick={handleToggleMoveImage}
                 disabled={!hasCanvasImage}
                 aria-pressed={isMoveImageActive}
                 title={isMoveImageActive ? 'Disable image reposition mode' : 'Enable image reposition mode in canvas'}
@@ -188,7 +221,7 @@ export const RightSidebarControlsTab = React.memo(function RightSidebarControlsT
                 size='xs'
                 type='button'
                 variant='outline'
-                onClick={onRecenterCanvasImage}
+                onClick={resetCanvasImageOffset}
                 disabled={!canRecenterCanvasImage}
                 title={
                   isMoveImageActive
@@ -221,7 +254,7 @@ export const RightSidebarControlsTab = React.memo(function RightSidebarControlsT
               <SelectSimple
                 size='sm'
                 value={canvasSizePresetValue}
-                onValueChange={onCanvasSizePresetChange}
+                onValueChange={setCanvasSizePresetValue}
                 options={canvasSizePresetOptions}
                 triggerClassName='h-8 text-xs'
                 placeholder='Select canvas size'
@@ -251,7 +284,7 @@ export const RightSidebarControlsTab = React.memo(function RightSidebarControlsT
                 size='xs'
                 type='button'
                 variant={canvasBackgroundLayerEnabled ? 'default' : 'outline'}
-                onClick={onToggleCanvasBackgroundLayer}
+                onClick={() => setCanvasBackgroundLayerEnabled(!canvasBackgroundLayerEnabled)}
                 aria-pressed={canvasBackgroundLayerEnabled}
                 title={canvasBackgroundLayerEnabled ? 'Disable canvas background layer' : 'Enable canvas background layer'}
                 aria-label='Toggle canvas background layer'
@@ -268,7 +301,7 @@ export const RightSidebarControlsTab = React.memo(function RightSidebarControlsT
                 <input
                   type='color'
                   value={canvasBackgroundColor}
-                  onChange={(event) => onCanvasBackgroundColorChange(event.target.value)}
+                  onChange={(event) => setCanvasBackgroundColor(event.target.value)}
                   aria-label='Canvas background color'
                   className='h-7 w-10 cursor-pointer rounded border border-border/60 bg-transparent p-0'
                 />
@@ -295,14 +328,14 @@ export const RightSidebarControlsTab = React.memo(function RightSidebarControlsT
               <LabeledSlider
                 label='Threshold Sensitivity'
                 value={maskThresholdSensitivity}
-                onChange={onMaskThresholdSensitivityChange}
+                onChange={setMaskThresholdSensitivity}
                 fallbackValue={55}
                 disabled={!workingSlotPresent}
               />
               <LabeledSlider
                 label='Edge Sensitivity'
                 value={maskEdgeSensitivity}
-                onChange={onMaskEdgeSensitivityChange}
+                onChange={setMaskEdgeSensitivity}
                 fallbackValue={55}
                 disabled={!workingSlotPresent}
               />
@@ -314,7 +347,7 @@ export const RightSidebarControlsTab = React.memo(function RightSidebarControlsT
           <MultiSelect
             options={compositeAssetOptions}
             selected={compositeAssetIds}
-            onChange={onCompositeAssetIdsChange}
+            onChange={setCompositeAssetIds}
             placeholder='Select additional reference cards'
             searchPlaceholder='Search cards...'
             emptyMessage='No cards available.'

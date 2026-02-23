@@ -2,33 +2,41 @@
 
 import React from 'react';
 
-import type { AuthUserSecurityProfile } from '@/features/auth/api/users';
 import type { AuthUserDto as AuthUserSummary } from '@/shared/contracts/auth';
-import type { EntityModalProps } from '@/shared/contracts/ui';
-import { StatusToggle, MetadataItem, LoadingState, ToggleRow } from '@/shared/ui';
+import { StatusToggle, MetadataItem, LoadingState, ToggleRow, useToast } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
+import { useUsers } from '../../context/UsersContext';
 
-interface UserEditModalProps extends EntityModalProps<AuthUserSummary> {
-  setEditingUser: React.Dispatch<React.SetStateAction<AuthUserSummary | null>>;
-  isSaving: boolean;
-  loadingSecurity: boolean;
-  canManageSecurity: boolean;
-  userSecurity: AuthUserSecurityProfile | undefined;
-  onSave: () => void;
-}
+export function UserEditModal(): React.JSX.Element | null {
+  const { toast } = useToast();
+  const {
+    editingUser,
+    setEditingUser,
+    mutations,
+    loadingSecurity,
+    canManageSecurity,
+    userSecurity,
+  } = useUsers();
 
-export function UserEditModal({
-  isOpen,
-  onClose,
-  item: editingUser,
-  setEditingUser,
-  isSaving,
-  loadingSecurity,
-  canManageSecurity,
-  userSecurity,
-  onSave,
-}: UserEditModalProps): React.JSX.Element | null {
+  const isOpen = Boolean(editingUser);
+  const onClose = () => setEditingUser(null);
+  const isSaving = mutations.updateUser.isPending;
+
+  const onSave = async () => {
+    if (!editingUser) return;
+    try {
+      await mutations.updateUser.mutateAsync({
+        userId: editingUser.id,
+        input: { name: editingUser.name, email: editingUser.email }
+      });
+      setEditingUser(null);
+      toast('Identity updated successfully', { variant: 'success' });
+    } catch (_e) {
+      toast('Failed to update identity', { variant: 'error' });
+    }
+  };
+
   const handleChange = (values: Partial<AuthUserSummary>) => {
     setEditingUser(prev => prev ? ({ ...prev, ...values }) : null);
   };

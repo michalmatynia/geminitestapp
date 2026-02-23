@@ -4,42 +4,35 @@ import React from 'react';
 import { Button, TabsContent, Hint, LoadingState } from '@/shared/ui';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
-
-import type { LinkedGeneratedVariantViewModel } from './slot-inline-edit-tab-types';
-
-type SlotInlineEditGenerationsTabProps = {
-  formatBytes: (value: number | null) => string;
-  formatLinkedVariantTimestamp: (value: string) => string;
-  linkedGeneratedVariants: LinkedGeneratedVariantViewModel[];
-  linkedRunsErrorMessage: string;
-  linkedRunsIsError: boolean;
-  linkedRunsIsFetching: boolean;
-  linkedRunsIsLoading: boolean;
-  onOpenGenerationPreviewModal: (variant: LinkedGeneratedVariantViewModel) => void;
-  onRefreshLinkedRuns: () => void;
-  selectedGenerationPreview: LinkedGeneratedVariantViewModel | null;
-  selectedGenerationPreviewDimensions: string;
-  selectedSlotName?: string | null;
-  setGenerationPreviewNaturalSize: (dimensions: { width: number; height: number } | null) => void;
-  slotNameDraft: string;
-};
-
-export function SlotInlineEditGenerationsTab({
+import { 
   formatBytes,
   formatLinkedVariantTimestamp,
-  linkedGeneratedVariants,
-  linkedRunsErrorMessage,
-  linkedRunsIsError,
-  linkedRunsIsFetching,
-  linkedRunsIsLoading,
-  onOpenGenerationPreviewModal,
-  onRefreshLinkedRuns,
-  selectedGenerationPreview,
-  selectedGenerationPreviewDimensions,
-  selectedSlotName,
-  setGenerationPreviewNaturalSize,
-  slotNameDraft,
-}: SlotInlineEditGenerationsTabProps): React.JSX.Element {
+} from './slot-inline-edit-utils';
+import { useStudioInlineEdit } from './StudioInlineEditContext';
+
+export function SlotInlineEditGenerationsTab(): React.JSX.Element {
+  const {
+    linkedGeneratedVariants,
+    linkedRunsQuery,
+    onOpenGenerationPreviewModal,
+    onRefreshLinkedRuns,
+    selectedGenerationPreview,
+    selectedGenerationPreviewDimensions,
+    selectedSlot,
+    setGenerationPreviewNaturalSize,
+    slotNameDraft,
+  } = useStudioInlineEdit();
+
+  const linkedRunsErrorMessage = linkedRunsQuery.error instanceof Error
+    ? linkedRunsQuery.error.message
+    : 'Failed to load linked variants.';
+  
+  const linkedRunsIsError = linkedRunsQuery.isError;
+  const linkedRunsIsFetching = linkedRunsQuery.isFetching;
+  const linkedRunsIsLoading = linkedRunsQuery.isLoading;
+
+  const selectedSlotName = selectedSlot?.name ?? null;
+
   return (
     <TabsContent value='generations' className='mt-0 space-y-4'>
       <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>

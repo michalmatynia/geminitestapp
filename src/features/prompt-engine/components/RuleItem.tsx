@@ -23,14 +23,6 @@ import { cn } from '@/shared/utils';
 
 import { useRuleItemDragState } from './context/RuleListDragContext';
 import {
-  addAutofixOperationToRule,
-  addSimilarToRule,
-  removeAutofixOperationFromRule,
-  removeSimilarFromRule,
-  updateAutofixOperationInRule,
-  updateSimilarInRule,
-} from './rule-item-mutations';
-import {
   LAUNCH_OPERATORS,
   PROMPT_EXPLODER_SEGMENT_OPTIONS,
   SCOPE_OPTIONS,
@@ -43,13 +35,12 @@ import {
 } from './rule-item-utils';
 import { RuleItemSimilarPatternsSection } from './RuleItemSimilarPatternsSection';
 import { usePromptEngine, type RuleDraft } from '../context/PromptEngineContext';
+import { RuleItemProvider, useRuleItemContext } from './context/RuleItemContext';
 import {
   type PromptExploderRuleSegmentType,
   type PromptExploderCaptureApplyTo,
   type PromptExploderCaptureNormalize,
   type PromptValidationScope,
-  type PromptValidationSimilarPattern,
-  type PromptAutofixOperation,
   type PromptValidationChainMode,
   type PromptValidationLaunchScopeBehavior,
   type PromptValidationLaunchOperator,
@@ -62,11 +53,26 @@ type RuleItemProps = {
   onCollapsedChange?: ((collapsed: boolean) => void) | undefined;
 };
 
-export function RuleItem({
-  draft,
+export function RuleItem(props: RuleItemProps): React.JSX.Element {
+  return (
+    <RuleItemProvider draft={props.draft}>
+      <RuleItemInner {...props} />
+    </RuleItemProvider>
+  );
+}
+
+function RuleItemInner({
   collapsed,
   onCollapsedChange,
 }: RuleItemProps): React.JSX.Element {
+  const {
+    draft,
+    rule,
+    patchRule,
+    addAutofixOperation,
+    updateAutofixOperation,
+    removeAutofixOperation,
+  } = useRuleItemContext();
   const {
     draggableEnabled,
     isDragging,
@@ -76,14 +82,12 @@ export function RuleItem({
   } = useRuleItemDragState(draft.uid);
   const {
     handleRuleTextChange,
-    handlePatchRule,
     handleToggleRuleEnabled,
     handleDuplicateRule,
     handleRemoveRule,
     handleCopy,
   } = usePromptEngine();
   const [internalCollapsed, setInternalCollapsed] = React.useState(true);
-  const rule = draft.parsed;
   const isCollapsed = collapsed ?? internalCollapsed;
   const setCollapsed = onCollapsedChange ?? setInternalCollapsed;
   const regexStatus = rule?.kind === 'regex' ? compileRegex(rule.pattern, rule.flags) : null;
@@ -143,32 +147,6 @@ export function RuleItem({
     appliesToScopes,
     launchAppliesToScopes
   );
-
-  const patchRule = (patch: Partial<PromptValidationRule>): void => {
-    if (!rule) return;
-    handlePatchRule(draft.uid, patch);
-  };
-
-  const updateSimilar = (
-    index: number,
-    patch: Partial<PromptValidationSimilarPattern>,
-  ): void => updateSimilarInRule(rule, patchRule, index, patch);
-
-  const removeSimilar = (index: number): void =>
-    removeSimilarFromRule(rule, patchRule, index);
-
-  const addSimilar = (): void => addSimilarToRule(rule, patchRule);
-
-  const updateAutofixOperation = (
-    index: number,
-    operation: PromptAutofixOperation,
-  ): void => updateAutofixOperationInRule(rule, patchRule, index, operation);
-
-  const removeAutofixOperation = (index: number): void =>
-    removeAutofixOperationFromRule(rule, patchRule, index);
-
-  const addAutofixOperation = (kind: PromptAutofixOperation['kind']): void =>
-    addAutofixOperationToRule(rule, patchRule, kind);
 
   return (
     <Card
@@ -736,12 +714,7 @@ export function RuleItem({
                 ) : null}
               </Card>
 
-              <RuleItemSimilarPatternsSection
-                rule={rule}
-                onAddSimilar={addSimilar}
-                onUpdateSimilar={updateSimilar}
-                onRemoveSimilar={removeSimilar}
-              />
+              <RuleItemSimilarPatternsSection />
 
               <Card variant='subtle-compact' padding='sm' className='space-y-3 border-border/40 bg-foreground/5'>
                 <div className='flex flex-wrap items-center justify-between gap-2'>
@@ -812,48 +785,48 @@ export function RuleItem({
                           <Input
                             className='h-8 font-mono'
                             value={op.pattern}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                               updateAutofixOperation(index, {
                                 ...op,
                                 pattern: event.target.value,
-                              })
-                            }
+                              });
+                            }}
                           />
                         </FormField>
                         <FormField label='Flags'>
                           <Input
                             className='h-8 font-mono'
                             value={op.flags ?? ''}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                               updateAutofixOperation(index, {
                                 ...op,
                                 flags: event.target.value.trim() || undefined,
-                              })
-                            }
+                              });
+                            }}
                           />
                         </FormField>
                         <FormField label='Replacement'>
                           <Input
                             className='h-8'
                             value={op.replacement}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                               updateAutofixOperation(index, {
                                 ...op,
                                 replacement: event.target.value,
-                              })
-                            }
+                              });
+                            }}
                           />
                         </FormField>
                         <FormField label='Comment' className='md:col-span-4'>
                           <Input
                             className='h-8'
                             value={op.comment ?? ''}
-                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                               updateAutofixOperation(index, {
                                 ...op,
                                 comment: event.target.value.trim() || null,
-                              })
-                            }
+                              });
+                            }}
                           />
                         </FormField>
                       </div>
@@ -862,12 +835,12 @@ export function RuleItem({
                         <Input
                           className='h-8'
                           value={op.comment ?? ''}
-                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                          onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                             updateAutofixOperation(index, {
                               ...op,
                               comment: event.target.value.trim() || null,
-                            })
-                          }
+                            });
+                          }}
                         />
                       </FormField>
                     )}

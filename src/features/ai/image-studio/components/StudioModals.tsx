@@ -11,6 +11,7 @@ import { toSlotName } from './studio-modals/prompt-extract-utils';
 import { slotHasRenderableImage } from './studio-modals/slot-inline-edit-utils';
 import { createUploadHandlers } from './studio-modals/studio-modals-upload-handlers';
 import { StudioImportPanels } from './studio-modals/StudioImportPanels';
+import { StudioImportProvider } from './studio-modals/StudioImportContext';
 import { StudioInlineEditProvider } from './studio-modals/StudioInlineEditContext';
 import { StudioInlineEditPanels } from './studio-modals/StudioInlineEditPanels';
 
@@ -103,25 +104,29 @@ export function StudioModals(): React.JSX.Element {
 
   return (
     <>
-      <StudioImportPanels
-        driveImportMode={driveImportMode}
-        driveImportOpen={driveImportOpen}
-        driveImportTargetId={driveImportTargetId}
-        handleCreateEmptySlot={handleCreateEmptySlot}
-        handleDriveSelection={handleDriveSelection}
-        handleLocalUpload={handleLocalUpload}
-        projectId={projectId ?? null}
-        selectedSlot={selectedSlot}
-        setDriveImportMode={setDriveImportMode}
-        setDriveImportOpen={setDriveImportOpen}
-        setDriveImportTargetId={setDriveImportTargetId}
-        setLocalUploadMode={setLocalUploadMode}
-        setLocalUploadTargetId={setLocalUploadTargetId}
-        setSlotCreateOpen={setSlotCreateOpen}
-        slotCreateOpen={slotCreateOpen}
-        triggerLocalUpload={triggerLocalUpload}
-        uploadPending={uploadMutation.isPending}
-      />
+      <StudioImportProvider
+        value={{
+          driveImportMode,
+          driveImportOpen,
+          driveImportTargetId,
+          handleCreateEmptySlot,
+          handleDriveSelection,
+          handleLocalUpload,
+          projectId: projectId ?? null,
+          selectedSlot,
+          setDriveImportMode,
+          setDriveImportOpen,
+          setDriveImportTargetId,
+          setLocalUploadMode,
+          setLocalUploadTargetId,
+          setSlotCreateOpen,
+          slotCreateOpen,
+          triggerLocalUpload,
+          uploadPending: uploadMutation.isPending,
+        }}
+      >
+        <StudioImportPanels />
+      </StudioImportProvider>
 
       <StudioInlineEditProvider triggerLocalUpload={triggerLocalUpload}>
         <StudioInlineEditPanels />

@@ -7,14 +7,13 @@ import {
   Key,
   Users
 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import type { AuthUserDto as AuthUserSummary } from '@/shared/contracts/auth';
 import { 
   StandardDataTablePanel, 
   SelectSimple, 
   StatusBadge,
-  useToast,
   PanelHeader,
   SearchInput,
   EmptyState,
@@ -27,14 +26,21 @@ import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { MockSignInModal } from '../../components/admin/MockSignInModal';
 import { UserCreateModal } from '../../components/admin/UserCreateModal';
 import { UserEditModal } from '../../components/admin/UserEditModal';
-import { useUsersState } from '../../hooks/useUsersState';
+import { UsersProvider, useUsers } from '../../context/UsersContext';
 
 
 import type { AuthRole } from '../../utils/auth-management';
 import type { ColumnDef } from '@tanstack/react-table';
 
 export default function AuthUsersPage(): React.JSX.Element {
-  const { toast } = useToast();
+  return (
+    <UsersProvider>
+      <AuthUsersPageContent />
+    </UsersProvider>
+  );
+}
+
+function AuthUsersPageContent(): React.JSX.Element {
   const {
     filteredUsers,
     search,
@@ -43,30 +49,19 @@ export default function AuthUsersPage(): React.JSX.Element {
     handleRoleChange,
     dirtyRoles,
     saveRoles,
-    editingUser,
     setEditingUser,
     userToDelete,
     setUserToDelete,
     deleteUser,
-    createOpen,
     setCreateOpen,
-    createForm,
-    setCreateForm,
+    setMockOpen,
     canReadUsers,
-    canManageSecurity,
     roles,
     provider,
     refetch,
     isFetching,
     isLoading,
-    mutations,
-    userSecurity,
-    loadingSecurity
-  } = useUsersState();
-
-  const [mockOpen, setMockOpen] = useState(false);
-  const [mockEmail, setMockEmail] = useState('');
-  const [mockPassword, setMockPassword] = useState('');
+  } = useUsers();
 
   const columns = useMemo<ColumnDef<AuthUserSummary>[]>(() => [
     {
@@ -219,85 +214,11 @@ export default function AuthUsersPage(): React.JSX.Element {
         }
       />
 
-      <UserEditModal
-        isOpen={Boolean(editingUser)}
-        onClose={() => setEditingUser(null)}
-        item={editingUser}
-        setEditingUser={setEditingUser}
-        isSaving={mutations.updateUser.isPending}
-        loadingSecurity={loadingSecurity}
-        canManageSecurity={canManageSecurity}
-        userSecurity={userSecurity}
-        onSave={() => {
-          const handleSave = async () => {
-            if (!editingUser) return;
-            try {
-              await mutations.updateUser.mutateAsync({
-                userId: editingUser.id,
-                input: { name: editingUser.name, email: editingUser.email }
-              });
-              setEditingUser(null);
-              toast('Identity updated successfully', { variant: 'success' });
-            } catch (_e) {
-              toast('Failed to update identity', { variant: 'error' });
-            }
-          };
-          void handleSave();
-        }}
-      />
+      <UserEditModal />
 
-      <UserCreateModal
-        isOpen={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onSuccess={() => {}}
-        item={createForm}
-        setCreateForm={setCreateForm}
-        isSaving={mutations.register.isPending}
-        onSave={() => {
-          const handleSave = async () => {
-            if (!createForm.email || !createForm.password) {
-              toast('Email and password required', { variant: 'error' });
-              return;
-            }
-            try {
-              await mutations.register.mutateAsync({
-                email: createForm.email,
-                password: createForm.password,
-                name: createForm.name
-              });
-              setCreateOpen(false);
-              setCreateForm({ name: '', email: '', password: '', roleId: 'none', verified: false });
-              toast('User provisioned successfully', { variant: 'success' });
-              refetch();
-            } catch (_e) {
-              toast('Provisioning failed', { variant: 'error' });
-            }
-          };
-          void handleSave();
-        }}
-      />
+      <UserCreateModal />
 
-      <MockSignInModal
-        isOpen={mockOpen}
-        onClose={() => setMockOpen(false)}
-        onSuccess={() => {}}
-        item={{ email: mockEmail, password: mockPassword }}
-        setEmail={setMockEmail}
-        setPassword={setMockPassword}
-        isSaving={mutations.mockSignIn.isPending}
-        onSave={() => {
-          const handleSave = async () => {
-            try {
-              const res = await mutations.mockSignIn.mutateAsync({ email: mockEmail, password: mockPassword });
-              if (res.ok) toast('Credentials valid', { variant: 'success' });
-              else toast('Invalid credentials', { variant: 'error' });
-            } catch (_e) {
-              toast('Verification failed', { variant: 'error' });
-            }
-          };
-          void handleSave();
-        }}
-      />
+      <MockSignInModal />
 
       <ConfirmModal
         isOpen={Boolean(userToDelete)}

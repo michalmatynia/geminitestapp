@@ -153,99 +153,11 @@ export function StudioInlineEditPanels(): React.JSX.Element {
             <TabsTrigger value='masks' className='text-xs'>Masks</TabsTrigger>
             <TabsTrigger value='composites' className='text-xs'>Composites</TabsTrigger>
           </TabsList>
-          <SlotInlineEditCardTab
-            clearImageDisabled={slotUpdateBusy || isCardImageRemovalLocked(selectedSlot)}
-            {...(isCardImageRemovalLocked(selectedSlot)
-              ? {
-                clearImageTitle:
-                    'Card image is locked and can only be removed by deleting the card.',
-              }
-              : {})}
-            formatBytes={formatBytes}
-            formatDateTime={formatDateTime}
-            formatLinkedVariantTimestamp={formatLinkedVariantTimestamp}
-            inlineCardImageManagerController={inlineCardImageManagerController}
-            inlinePreviewBase64Bytes={inlinePreviewBase64Bytes}
-            inlinePreviewDimensions={inlinePreviewDimensions}
-            inlinePreviewMimeType={inlinePreviewMimeType}
-            inlinePreviewSource={inlinePreviewSource}
-            linkedGeneratedVariants={linkedGeneratedVariants}
-            linkedRunsErrorMessage={linkedRunsErrorMessageForCard}
-            linkedRunsIsError={linkedRunsQuery.isError}
-            linkedRunsIsFetching={linkedRunsQuery.isFetching}
-            linkedRunsIsLoading={linkedRunsQuery.isLoading}
-            linkedVariantApplyBusyKey={linkedVariantApplyBusyKey}
-            onApplyLinkedVariantToCard={(variant) => {
-              void onApplyLinkedVariantToCard(variant);
-            }}
-            onClearSlotImage={() => {
-              void onClearSlotImage();
-            }}
-            onRefreshLinkedRuns={() => {
-              onRefreshLinkedRuns();
-            }}
-            onReplaceFromDrive={onReplaceFromDrive}
-            onReplaceFromLocal={onReplaceFromLocal}
-            onSlotFolderChange={setSlotFolderDraft}
-            onSlotNameChange={setSlotNameDraft}
-            selectedSlot={selectedSlot}
-            setInlinePreviewNaturalSize={setInlinePreviewNaturalSize}
-            slotBase64Draft={slotBase64Draft}
-            slotFolderDraft={slotFolderDraft}
-            slotNameDraft={slotNameDraft}
-            slotUpdateBusy={slotUpdateBusy}
-            uploadPending={uploadPending}
-          />
-          <SlotInlineEditGenerationsTab
-            formatBytes={formatBytes}
-            formatLinkedVariantTimestamp={formatLinkedVariantTimestamp}
-            linkedGeneratedVariants={linkedGeneratedVariants}
-            linkedRunsErrorMessage={linkedRunsErrorMessageForGenerations}
-            linkedRunsIsError={linkedRunsQuery.isError}
-            linkedRunsIsFetching={linkedRunsQuery.isFetching}
-            linkedRunsIsLoading={linkedRunsQuery.isLoading}
-            onOpenGenerationPreviewModal={onOpenGenerationPreviewModal}
-            onRefreshLinkedRuns={() => {
-              onRefreshLinkedRuns();
-            }}
-            selectedGenerationPreview={selectedGenerationPreview}
-            selectedGenerationPreviewDimensions={selectedGenerationPreviewDimensions}
-            selectedSlotName={selectedSlot?.name ?? null}
-            setGenerationPreviewNaturalSize={setGenerationPreviewNaturalSize}
-            slotNameDraft={slotNameDraft}
-          />
-          <SlotInlineEditEnvironmentTab
-            canClearEnvironmentImage={Boolean(
-              environmentReferenceDraft.imageFileId || environmentReferenceDraft.imageUrl.trim()
-            )}
-            environmentPreviewDimensions={environmentPreviewDimensions}
-            environmentPreviewSource={environmentPreviewSource}
-            environmentReferenceDraft={environmentReferenceDraft}
-            formatBytes={formatBytes}
-            formatDateTime={formatDateTime}
-            onClearEnvironmentImage={() => {
-              setEnvironmentReferenceDraft({ ...EMPTY_ENVIRONMENT_REFERENCE_DRAFT });
-              setEnvironmentPreviewNaturalSize(null);
-            }}
-            onUploadEnvironmentFromDrive={onUploadEnvironmentFromDrive}
-            onUploadEnvironmentFromLocal={onUploadEnvironmentFromLocal}
-            selectedSlotName={selectedSlot?.name ?? null}
-            setEnvironmentPreviewNaturalSize={setEnvironmentPreviewNaturalSize}
-            slotNameDraft={slotNameDraft}
-            uploadPending={uploadPending}
-          />
-          <SlotInlineEditMasksTab
-            linkedMaskSlots={linkedMaskSlots}
-            formatBytes={formatBytes}
-            formatDateTime={formatDateTime}
-          />
-          <SlotInlineEditCompositesTab
-            compositeTabInputImages={compositeTabInputImages}
-            compositeTabInputSourceLabel={compositeTabInputSourceLabel}
-            sourceCompositeImage={sourceCompositeImage}
-            formatBytes={formatBytes}
-            formatDateTime={formatDateTime}
-          />
+          <SlotInlineEditCardTab />
+          <SlotInlineEditGenerationsTab />
+          <SlotInlineEditEnvironmentTab />
+          <SlotInlineEditMasksTab />
+          <SlotInlineEditCompositesTab />
         </Tabs>
       </SlotInlineEditModal>
 

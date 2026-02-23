@@ -4,43 +4,38 @@ import React from 'react';
 import { Button, TabsContent, Hint } from '@/shared/ui';
 
 import { InlineImagePreviewCanvas } from './InlineImagePreviewCanvas';
-
-import type {
-  EnvironmentReferenceDraftViewModel,
-  InlinePreviewSourceViewModel,
-} from './slot-inline-edit-tab-types';
-
-type SlotInlineEditEnvironmentTabProps = {
-  canClearEnvironmentImage: boolean;
-  environmentPreviewDimensions: string;
-  environmentPreviewSource: InlinePreviewSourceViewModel;
-  environmentReferenceDraft: EnvironmentReferenceDraftViewModel;
-  formatBytes: (value: number | null) => string;
-  formatDateTime: (value: string | Date | null | undefined) => string;
-  onClearEnvironmentImage: () => void;
-  onUploadEnvironmentFromDrive: () => void;
-  onUploadEnvironmentFromLocal: () => void;
-  selectedSlotName?: string | null;
-  setEnvironmentPreviewNaturalSize: (dimensions: { width: number; height: number } | null) => void;
-  slotNameDraft: string;
-  uploadPending: boolean;
-};
-
-export function SlotInlineEditEnvironmentTab({
-  canClearEnvironmentImage,
-  environmentPreviewDimensions,
-  environmentPreviewSource,
-  environmentReferenceDraft,
+import { 
   formatBytes,
   formatDateTime,
-  onClearEnvironmentImage,
-  onUploadEnvironmentFromDrive,
-  onUploadEnvironmentFromLocal,
-  selectedSlotName,
-  setEnvironmentPreviewNaturalSize,
-  slotNameDraft,
-  uploadPending,
-}: SlotInlineEditEnvironmentTabProps): React.JSX.Element {
+  EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
+} from './slot-inline-edit-utils';
+import { useStudioInlineEdit } from './StudioInlineEditContext';
+
+export function SlotInlineEditEnvironmentTab(): React.JSX.Element {
+  const {
+    environmentPreviewDimensions,
+    environmentPreviewSource,
+    environmentReferenceDraft,
+    onUploadEnvironmentFromDrive,
+    onUploadEnvironmentFromLocal,
+    selectedSlot,
+    setEnvironmentPreviewNaturalSize,
+    setEnvironmentReferenceDraft,
+    slotNameDraft,
+    uploadPending,
+  } = useStudioInlineEdit();
+
+  const canClearEnvironmentImage = Boolean(
+    environmentReferenceDraft.imageFileId || environmentReferenceDraft.imageUrl.trim()
+  );
+
+  const onClearEnvironmentImage = (): void => {
+    setEnvironmentReferenceDraft({ ...EMPTY_ENVIRONMENT_REFERENCE_DRAFT });
+    setEnvironmentPreviewNaturalSize(null);
+  };
+
+  const selectedSlotName = selectedSlot?.name ?? null;
+
   return (
     <TabsContent value='environment' className='mt-0 space-y-4'>
       <div className='space-y-3 rounded-lg border border-border/60 bg-card/35 p-3'>

@@ -109,8 +109,7 @@ export function useNoteOperations({
   }, [deleteCategoryMutation, toast, confirmAction]);
 
   const handleRenameFolder = useCallback(async (folderId: string, newName: string): Promise<void> => {
-    const currentFolder = findTreeNodeById(folderTreeRef.current || [], folderId);
-    const previousName = (currentFolder?.name as string) ?? '';
+    const currentFolder = findTreeNodeById<CategoryWithChildren>(folderTreeRef.current || [], folderId);    const previousName = (currentFolder?.name as string) ?? '';
     try {
       await updateCategoryMutation.mutateAsync({ id: folderId, name: newName });
 
@@ -249,7 +248,7 @@ export function useNoteOperations({
   }, [notesRef, updateNoteMutation, setUndoStack, toast]);
 
   const handleMoveFolderToFolder = useCallback(async (folderId: string, targetParentId: string | null): Promise<void> => {
-    const previousParentId = findTreeNodeParentId(folderTreeRef.current || [], folderId);
+    const previousParentId = findTreeNodeParentId<CategoryWithChildren>(folderTreeRef.current || [], folderId);
     try {
       await updateCategoryMutation.mutateAsync({
         id: folderId,
@@ -271,15 +270,15 @@ export function useNoteOperations({
 
   const handleReorderFolder = useCallback(async (folderId: string, targetId: string, position: 'before' | 'after'): Promise<void> => {
     const tree = folderTreeRef.current || [];
-    const draggedFolder = findTreeNodeById(tree, folderId);
+    const draggedFolder = findTreeNodeById<CategoryWithChildren>(tree, folderId);
     if (!draggedFolder) return;
 
-    const targetParentId = findTreeNodeParentId(tree, targetId);
-    const draggedParentId = findTreeNodeParentId(tree, folderId);
+    const targetParentId = findTreeNodeParentId<CategoryWithChildren>(tree, targetId);
+    const draggedParentId = findTreeNodeParentId<CategoryWithChildren>(tree, folderId);
 
     const getSiblings = (parentId: string | null): CategoryWithChildren[] => {
       if (!parentId) return tree;
-      const parent = findTreeNodeById(tree, parentId);
+      const parent = findTreeNodeById<CategoryWithChildren>(tree, parentId);
       return parent?.children ?? [];
     };
 

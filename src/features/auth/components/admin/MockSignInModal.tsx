@@ -2,30 +2,42 @@
 
 import React, { useMemo } from 'react';
 
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import { useToast } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
-interface MockSignInModalProps extends EntityModalProps<MockSignInFormState> {
-  setEmail: (value: string) => void;
-  setPassword: (value: string) => void;
-  isSaving: boolean;
-  onSave: () => void;
-}
+import { useUsers } from '../../context/UsersContext';
 
 type MockSignInFormState = {
   email: string;
   password: string;
 };
 
-export function MockSignInModal({
-  isOpen,
-  onClose,
-  item: values,
-  setEmail,
-  setPassword,
-  isSaving,
-  onSave,
-}: MockSignInModalProps): React.JSX.Element | null {
+export function MockSignInModal(): React.JSX.Element | null {
+  const { toast } = useToast();
+  const {
+    mockOpen: isOpen,
+    setMockOpen,
+    mockEmail,
+    setMockEmail,
+    mockPassword,
+    setMockPassword,
+    mutations,
+  } = useUsers();
+
+  const isSaving = mutations.mockSignIn.isPending;
+  const onClose = () => setMockOpen(false);
+
+  const values = useMemo(() => ({ email: mockEmail, password: mockPassword }), [mockEmail, mockPassword]);
+
+  const onSave = async () => {
+    try {
+      const res = await mutations.mockSignIn.mutateAsync({ email: mockEmail, password: mockPassword });
+      if (res.ok) toast('Credentials valid', { variant: 'success' });
+      else toast('Invalid credentials', { variant: 'error' });
+    } catch (_e) {
+      toast('Verification failed', { variant: 'error' });
+    }
+  };
 
   const fields: SettingsField<MockSignInFormState>[] = useMemo(() => [
     {
@@ -43,8 +55,8 @@ export function MockSignInModal({
   ], []);
 
   const handleChange = (vals: Partial<MockSignInFormState>) => {
-    if (vals.email !== undefined) setEmail(vals.email);
-    if (vals.password !== undefined) setPassword(vals.password);
+    if (vals.email !== undefined) setMockEmail(vals.email);
+    if (vals.password !== undefined) setMockPassword(vals.password);
   };
 
   return (

@@ -192,6 +192,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
             source: 'ai_paths_ui',
             triggerLabel: args.activeTrigger ?? null,
             strictFlowMode: args.strictFlowMode !== false,
+            blockedRunPolicy: args.blockedRunPolicy ?? 'fail_run',
             ...(args.aiPathsValidation ? { aiPathsValidation: args.aiPathsValidation } : {}),
           },
         });
@@ -358,6 +359,7 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                   executionMode: args.executionMode,
                   runMode: args.runMode,
                   strictFlowMode: args.strictFlowMode,
+                  blockedRunPolicy: args.blockedRunPolicy,
                   aiPathsValidation: args.aiPathsValidation,
                   nodes: args.normalizedNodes,
                   edges: args.sanitizedEdges,

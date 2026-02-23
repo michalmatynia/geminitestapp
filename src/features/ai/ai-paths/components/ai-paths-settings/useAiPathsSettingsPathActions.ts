@@ -4,6 +4,7 @@ import type {
   AiNode,
   Edge,
   ParserSampleState,
+  PathBlockedRunPolicy,
   PathConfig,
   PathExecutionMode,
   PathFlowIntensity,
@@ -64,6 +65,7 @@ type UseAiPathsSettingsPathActionsInput = {
   setFlowIntensity: React.Dispatch<React.SetStateAction<PathFlowIntensity>>;
   setRunMode: React.Dispatch<React.SetStateAction<PathRunMode>>;
   setStrictFlowMode: React.Dispatch<React.SetStateAction<boolean>>;
+  setBlockedRunPolicy: React.Dispatch<React.SetStateAction<PathBlockedRunPolicy>>;
   setAiPathsValidation: React.Dispatch<
     React.SetStateAction<AiPathsValidationConfig>
   >;
@@ -123,6 +125,7 @@ export function useAiPathsSettingsPathActions({
   setFlowIntensity,
   setRunMode,
   setStrictFlowMode,
+  setBlockedRunPolicy,
   setAiPathsValidation,
   setParserSamples,
   setUpdaterSamples,
@@ -196,6 +199,11 @@ export function useAiPathsSettingsPathActions({
             : 'manual'
       );
       setStrictFlowMode(config.strictFlowMode !== false);
+      setBlockedRunPolicy(
+        config.blockedRunPolicy === 'complete_with_warning'
+          ? 'complete_with_warning'
+          : 'fail_run'
+      );
       setAiPathsValidation(
         normalizeAiPathsValidationConfig(config.aiPathsValidation)
       );
@@ -231,6 +239,7 @@ export function useAiPathsSettingsPathActions({
       setPathName,
       setRunMode,
       setStrictFlowMode,
+      setBlockedRunPolicy,
       setAiPathsValidation,
       setRuntimeState,
       setSelectedNodeId,

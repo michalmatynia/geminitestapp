@@ -448,6 +448,89 @@ const parseHistoryRetentionPasses = (value: unknown): number | null => {
   );
 };
 
+type BlockedRunPolicy = 'fail_run' | 'complete_with_warning';
+
+const resolveBlockedRunPolicy = (meta: Record<string, unknown> | null): BlockedRunPolicy =>
+  meta?.['blockedRunPolicy'] === 'complete_with_warning'
+    ? 'complete_with_warning'
+    : 'fail_run';
+
+type BlockedNodeDiagnostic = {
+  nodeId: string;
+  nodeType: string;
+  nodeTitle: string | null;
+  blockedReason: string;
+  message: string | null;
+  requiredPorts: string[];
+  waitingOnPorts: string[];
+};
+
+const normalizePortList = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((entry: unknown): entry is string => typeof entry === 'string')
+    .map((entry: string): string => entry.trim())
+    .filter((entry: string): boolean => entry.length > 0);
+};
+
+const collectBlockedNodeDiagnostics = (
+  nodes: AiNode[],
+  outputs: Record<string, RuntimePortValues> | undefined
+): BlockedNodeDiagnostic[] => {
+  if (!outputs) return [];
+  const nodeById = new Map<string, AiNode>(nodes.map((node: AiNode) => [node.id, node]));
+  return Object.entries(outputs)
+    .map(([nodeId, value]): BlockedNodeDiagnostic | null => {
+      const status =
+        typeof value?.['status'] === 'string'
+          ? value['status'].trim().toLowerCase()
+          : '';
+      if (status !== 'blocked') return null;
+      const node = nodeById.get(nodeId);
+      const blockedReason =
+        typeof value['blockedReason'] === 'string' && value['blockedReason'].trim().length > 0
+          ? value['blockedReason'].trim()
+          : typeof value['skipReason'] === 'string' && value['skipReason'].trim().length > 0
+            ? value['skipReason'].trim()
+            : 'blocked';
+      const message =
+        typeof value['message'] === 'string' && value['message'].trim().length > 0
+          ? value['message'].trim()
+          : null;
+      return {
+        nodeId,
+        nodeType: node?.type ?? 'unknown',
+        nodeTitle: node?.title ?? null,
+        blockedReason,
+        message,
+        requiredPorts: normalizePortList(value['requiredPorts']),
+        waitingOnPorts: normalizePortList(value['waitingOnPorts']),
+      };
+    })
+    .filter(
+      (entry: BlockedNodeDiagnostic | null): entry is BlockedNodeDiagnostic => Boolean(entry)
+    );
+};
+
+const buildBlockedRunFailureMessage = (
+  blockedNodes: BlockedNodeDiagnostic[]
+): string => {
+  const [first] = blockedNodes;
+  if (!first) {
+    return 'Run blocked: one or more nodes are missing required inputs.';
+  }
+  const title = first.nodeTitle ?? first.nodeId;
+  const waiting =
+    first.waitingOnPorts.length > 0
+      ? ` (waiting on: ${first.waitingOnPorts.join(', ')})`
+      : '';
+  const suffix =
+    blockedNodes.length > 1
+      ? ` (+${blockedNodes.length - 1} more blocked node${blockedNodes.length === 2 ? '' : 's'})`
+      : '';
+  return `Run blocked by ${title}${waiting}${suffix}.`;
+};
+
 const fetchEntityByType = async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
   if (!entityType || !entityId) return null;
   const normalized = normalizeEntityType(entityType);
@@ -793,15 +876,17 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   };
 
   const envHistoryLimit = parseHistoryRetentionPasses(process.env['AI_PATHS_HISTORY_LIMIT']);
+  const runMetaRecord =
+    run.meta && typeof run.meta === 'object'
+      ? run.meta
+      : null;
   const metaHistoryLimit = parseHistoryRetentionPasses(
-    (run.meta as Record<string, unknown> | null)?.['historyRetentionPasses']
+    runMetaRecord?.['historyRetentionPasses']
   );
-  const strictFlowMode =
-    (run.meta as Record<string, unknown> | null)?.['strictFlowMode'] !== false;
+  const strictFlowMode = runMetaRecord?.['strictFlowMode'] !== false;
+  const blockedRunPolicy = resolveBlockedRunPolicy(runMetaRecord);
   const validationConfig = normalizeAiPathsValidationConfig(
-    (
-      run.meta as Record<string, unknown> | null
-    )?.['aiPathsValidation'] as Record<string, unknown> | undefined
+    runMetaRecord?.['aiPathsValidation'] as Record<string, unknown> | undefined
   );
   const nodeValidationEnabled = validationConfig.enabled !== false;
   const resolvedHistoryLimit =
@@ -973,6 +1058,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       return;
     }
 
+    let runtimeHaltReason: 'step_limit' | 'completed' | 'cancelled' | 'blocked' | null = null;
+    let runtimeHaltIteration: number | null = null;
     const resultState = await evaluateGraphWithIteratorAutoContinue({
       nodes,
       edges,
@@ -1400,6 +1487,10 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       },
       control: {
         signal: runAbortController.signal,
+        onHalt: ({ reason, iteration }): void => {
+          runtimeHaltReason = reason;
+          runtimeHaltIteration = iteration;
+        },
       },
     });
 
@@ -1413,7 +1504,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       'Runtime profile summary recorded.'
     );
     const finishedAt = new Date();
-    let finalizedAsCompleted = false;
+    const blockedNodeDiagnostics = collectBlockedNodeDiagnostics(nodes, resultState.outputs);
+    const haltedAsBlocked = runtimeHaltReason === 'blocked';
+    const runBlocked = haltedAsBlocked || blockedNodeDiagnostics.length > 0;
+    const shouldFailOnBlocked = runBlocked && blockedRunPolicy === 'fail_run';
+    const blockedFailureMessage = buildBlockedRunFailureMessage(blockedNodeDiagnostics);
+    let finalizedTerminalStatus: AiPathRunStatus | null = null;
+    let finalizedErrorMessage: string | null = null;
     try {
       const latestRun = await repo.findRunById(run.id);
       if (latestRun?.status === 'canceled') {
@@ -1422,26 +1519,61 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           ...(latestRun.finishedAt ? {} : { finishedAt: finishedAt.toISOString() }),
         });
       } else if (!latestRun || !TERMINAL_RUN_STATUSES.has(latestRun.status)) {
-        const updated = await updateRunSnapshot({
-          status: 'completed',
-          runtimeState: sanitizeRuntimeState(resultState),
-          finishedAt: finishedAt.toISOString(),
-          errorMessage: null,
-          meta: {
-            ...(run.meta ?? {}),
-            runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
-            resumeMode: 'replay',
-            retryNodeIds: [],
-          },
-        });
+        const updated = shouldFailOnBlocked
+          ? await updateRunSnapshot({
+            status: 'failed',
+            runtimeState: sanitizeRuntimeState(resultState),
+            finishedAt: finishedAt.toISOString(),
+            errorMessage: blockedFailureMessage,
+            meta: {
+              ...(run.meta ?? {}),
+              runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
+              resumeMode: 'replay',
+              retryNodeIds: [],
+            },
+          })
+          : await updateRunSnapshot({
+            status: 'completed',
+            runtimeState: sanitizeRuntimeState(resultState),
+            finishedAt: finishedAt.toISOString(),
+            errorMessage: null,
+            meta: {
+              ...(run.meta ?? {}),
+              runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
+              resumeMode: 'replay',
+              retryNodeIds: [],
+            },
+          });
         if (updated) {
           await repo.createRunEvent({
             runId: run.id,
-            level: 'info',
-            message: 'Run completed successfully.',
-            metadata: { runStartedAt, traceId },
+            level:
+              shouldFailOnBlocked
+                ? 'error'
+                : runBlocked
+                  ? 'warn'
+                  : 'info',
+            message:
+              shouldFailOnBlocked
+                ? 'Run failed: blocked node inputs detected.'
+                : runBlocked
+                  ? 'Run completed with blocked node warnings.'
+                  : 'Run completed successfully.',
+            metadata: {
+              runStartedAt,
+              traceId,
+              ...(runBlocked
+                ? {
+                  haltReason: runtimeHaltReason,
+                  haltIteration: runtimeHaltIteration,
+                  blockedRunPolicy,
+                  blockedNodes: blockedNodeDiagnostics.slice(0, 10),
+                }
+                : {}),
+            },
           });
-          finalizedAsCompleted = true;
+          finalizedTerminalStatus = shouldFailOnBlocked ? 'failed' : 'completed';
+          finalizedErrorMessage = shouldFailOnBlocked ? blockedFailureMessage : null;
         }
       }
     } catch (finalDbError) {
@@ -1452,8 +1584,17 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       });
     }
 
-    if (finalizedAsCompleted) {
-      publishRunUpdate(run.id, 'done', { status: 'completed', traceId });
+    if (finalizedTerminalStatus) {
+      if (finalizedTerminalStatus === 'failed') {
+        publishRunUpdate(run.id, 'error', {
+          error: finalizedErrorMessage ?? blockedFailureMessage,
+          traceId,
+        });
+      }
+      publishRunUpdate(run.id, 'done', {
+        status: finalizedTerminalStatus,
+        traceId,
+      });
       try {
         const startedAtMs = Date.parse(runStartedAt);
         const durationMs = Number.isFinite(startedAtMs)
@@ -1461,12 +1602,12 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           : null;
         await recordRuntimeRunFinished({
           runId: run.id,
-          status: 'completed',
+          status: finalizedTerminalStatus,
           durationMs,
           timestamp: finishedAt,
         });
       } catch (analyticsError) {
-        void ErrorSystem.logWarning('Failed to record completion analytics', {
+        void ErrorSystem.logWarning('Failed to record finalization analytics', {
           service: 'ai-paths-executor',
           error: analyticsError,
           runId: run.id,

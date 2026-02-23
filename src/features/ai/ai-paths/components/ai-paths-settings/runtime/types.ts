@@ -8,6 +8,7 @@ import type {
   AiPathsValidationConfig,
   Edge,
   PathConfig,
+  PathBlockedRunPolicy,
   PathDebugSnapshot,
   PathExecutionMode,
   PathRunMode,
@@ -46,6 +47,7 @@ export interface ServerExecutionArgs {
   executionMode: PathExecutionMode;
   runMode: PathRunMode;
   strictFlowMode: boolean;
+  blockedRunPolicy: PathBlockedRunPolicy;
   aiPathsValidation?: AiPathsValidationConfig | undefined;
   normalizedNodes: AiNode[];
   sanitizedEdges: Edge[];
@@ -80,6 +82,7 @@ export interface LocalExecutionArgs {
   executionMode: PathExecutionMode;
   runMode: PathRunMode;
   strictFlowMode: boolean;
+  blockedRunPolicy: PathBlockedRunPolicy;
   aiPathsValidation: AiPathsValidationConfig;
   historyRetentionPasses: number;
   isPathActive: boolean;
@@ -140,6 +143,7 @@ export interface UseAiPathsRuntimeArgs {
   executionMode: PathExecutionMode;
   runMode: PathRunMode;
   strictFlowMode: boolean;
+  blockedRunPolicy: PathBlockedRunPolicy;
   aiPathsValidation: AiPathsValidationConfig;
   historyRetentionPasses: number;
   isPathActive: boolean;

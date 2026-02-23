@@ -5,6 +5,7 @@ import type {
   AiPathRunRecord,
   Edge,
   PathConfig,
+  PathBlockedRunPolicy,
   PathDebugEntry,
   PathDebugSnapshot,
   PathExecutionMode,
@@ -117,6 +118,7 @@ export const buildActivePathConfig = (args: {
   executionMode: PathExecutionMode;
   runMode: PathRunMode;
   strictFlowMode?: boolean;
+  blockedRunPolicy?: PathBlockedRunPolicy;
   aiPathsValidation?: AiPathsValidationConfig | undefined;
   nodes: AiNode[];
   edges: Edge[];
@@ -135,6 +137,7 @@ export const buildActivePathConfig = (args: {
   executionMode: args.executionMode,
   runMode: args.runMode,
   strictFlowMode: args.strictFlowMode ?? true,
+  blockedRunPolicy: args.blockedRunPolicy ?? 'fail_run',
   aiPathsValidation: args.aiPathsValidation,
   nodes: args.nodes,
   edges: args.edges,

@@ -787,30 +787,37 @@ function CaseResolverNodeFileWorkspaceInner({
         const fallbackTemplate = linkedFile
           ? buildPromptTemplateFromDroppedDocumentFile(linkedFile)
           : `<p>Document: ${linkedMeta.fileName}</p>`;
-        const promptTemplate =
-          typeof node.config?.prompt?.template === 'string'
-            ? node.config.prompt.template
-            : typeof node.config?.template?.template === 'string'
-              ? node.config.template.template
-              : fallbackTemplate;
+        const promptTemplate = typeof node.config?.prompt?.template === 'string'
+          ? node.config.prompt.template
+          : typeof node.config?.template?.template === 'string'
+            ? node.config.template.template
+            : fallbackTemplate;
+        const hasPromptTemplate = typeof node.config?.prompt?.template === 'string';
+        const currentPromptTemplate = hasPromptTemplate
+          ? node.config?.prompt?.template ?? ''
+          : '';
+        const needsPromptConversion = node.type !== 'prompt';
+        const needsPromptTemplateUpdate = !hasPromptTemplate || currentPromptTemplate !== promptTemplate;
 
         const promptBase: AiNode =
-          node.type === 'prompt'
-            ? node
-            : {
-              ...node,
-              type: 'prompt',
-            };
+          needsPromptConversion || needsPromptTemplateUpdate
+            ? {
+              ...(needsPromptConversion
+                ? {
+                  ...node,
+                  type: 'prompt',
+                }
+                : node),
+              config: {
+                ...(node.config ?? {}),
+                prompt: {
+                  template: promptTemplate,
+                },
+              },
+            }
+            : node;
         const nodeRole = normalizedNodeMeta[node.id]?.role ?? null;
-        const normalizedPromptNode = ensureDocumentPromptPorts({
-          ...promptBase,
-          config: {
-            ...(promptBase.config ?? {}),
-            prompt: {
-              template: promptTemplate,
-            },
-          },
-        }, nodeRole);
+        const normalizedPromptNode = ensureDocumentPromptPorts(promptBase, nodeRole);
         if (normalizedPromptNode === node) return node;
         changed = true;
         return normalizedPromptNode;

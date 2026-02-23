@@ -4,13 +4,6 @@ import React from 'react';
 
 import { Button, Tabs, TabsList, TabsTrigger } from '@/shared/ui';
 
-import {
-  isCardImageRemovalLocked,
-  formatBytes,
-  formatDateTime,
-  formatLinkedVariantTimestamp,
-  EMPTY_ENVIRONMENT_REFERENCE_DRAFT,
-} from './slot-inline-edit-utils';
 import { SlotInlineEditCardTab } from './SlotInlineEditCardTab';
 import { SlotInlineEditCompositesTab } from './SlotInlineEditCompositesTab';
 import { SlotInlineEditEnvironmentTab } from './SlotInlineEditEnvironmentTab';
@@ -23,37 +16,16 @@ import { SlotInlineEditModal } from '../modals/SlotInlineEditModal';
 
 export function StudioInlineEditPanels(): React.JSX.Element {
   const {
-    compositeTabInputImages,
-    compositeTabInputSourceLabel,
     editCardTab,
-    environmentPreviewDimensions,
-    environmentPreviewSource,
-    environmentReferenceDraft,
     extractBusy,
     extractDraftPrompt,
     extractError,
     extractHistory,
     extractReviewOpen,
     generationPreviewModalOpen,
-    inlineCardImageManagerController,
-    inlinePreviewBase64Bytes,
-    inlinePreviewDimensions,
-    inlinePreviewMimeType,
-    inlinePreviewSource,
-    linkedGeneratedVariants,
-    linkedMaskSlots,
-    linkedRunsQuery,
-    linkedVariantApplyBusyKey,
     onApplyLinkedVariantToCard,
-    onClearSlotImage,
     onCopyCardId,
-    onOpenGenerationPreviewModal,
-    onRefreshLinkedRuns,
-    onReplaceFromDrive,
-    onReplaceFromLocal,
     onSaveInlineSlot,
-    onUploadEnvironmentFromDrive,
-    onUploadEnvironmentFromLocal,
     previewControls,
     previewLeaves,
     previewParams,
@@ -63,44 +35,24 @@ export function StudioInlineEditPanels(): React.JSX.Element {
     selectedExtractHistory,
     selectedGenerationModalDimensions,
     selectedGenerationPreview,
-    selectedGenerationPreviewDimensions,
     selectedSlot,
     setEditCardTab,
-    setEnvironmentPreviewNaturalSize,
-    setEnvironmentReferenceDraft,
     setExtractDraftPrompt,
     setExtractHistory,
     setExtractReviewOpen,
     setGenerationModalPreviewNaturalSize,
     setGenerationPreviewModalOpen,
-    setGenerationPreviewNaturalSize,
-    setInlinePreviewNaturalSize,
     setSelectedExtractHistoryId,
-    setSlotFolderDraft,
-    setSlotInlineEditOpen,
-    setSlotNameDraft,
-    slotBase64Draft,
-    slotFolderDraft,
     slotInlineEditOpen,
-    slotNameDraft,
+    setSlotInlineEditOpen,
     slotUpdateBusy,
-    sourceCompositeImage,
     studioSettings,
-    uploadPending,
     handleAiExtraction,
     handleApplyExtraction,
     handleProgrammaticExtraction,
     handleSmartExtraction,
     handleSuggestUiControls,
   } = useStudioInlineEdit();
-
-  const linkedRunsErrorMessageForCard = linkedRunsQuery.error instanceof Error
-    ? linkedRunsQuery.error.message
-    : 'Failed to load linked variants.';
-    
-  const linkedRunsErrorMessageForGenerations = linkedRunsQuery.error instanceof Error
-    ? linkedRunsQuery.error.message
-    : 'Failed to load generated images.';
 
   const editCardModalHeader = (
     <div className='flex items-center gap-3'>

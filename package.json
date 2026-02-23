@@ -82,6 +82,7 @@
     "@tanstack/react-query-persist-client": "^5.90.22",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-table-devtools": "^8.21.3",
+    "@tanstack/react-virtual": "^3.13.18",
     "@tiptap/extension-image": "^3.16.0",
     "@tiptap/extension-link": "^3.16.0",
     "@tiptap/extension-table": "^3.16.0",

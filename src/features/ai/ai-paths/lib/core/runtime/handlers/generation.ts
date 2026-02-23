@@ -46,7 +46,10 @@ export const handlePrompt: NodeHandler = ({ node, nodeInputs }: NodeHandlerConte
 interface PromptCandidate {
   edge: Edge;
   fromNode: AiNode | undefined;
-  value: unknown;
+  edgeValue: unknown;
+  promptValue: unknown;
+  derivedPromptValue: unknown;
+  sourceOutputs: RuntimePortValues;
 }
 
 const resolveImageUrlForOutboundPolicy = (rawUrl: string): string => {
@@ -224,31 +227,8 @@ export const handleModel: NodeHandler = async ({
       reason: 'ai_jobs_disabled',
     });
   }
+  if (executed.ai.has(node.id)) return prevOutputs;
   const promptInputs = coerceInputArray(nodeInputs['prompt']);
-  const promptCandidates = edges
-    .filter((edge: Edge) => edge.to === node.id && edge.toPort === 'prompt')
-    .map((edge: Edge): PromptCandidate => {
-      const fromNodeId = edge.from;
-      const fromNode = fromNodeId
-        ? (nodeById?.get(fromNodeId) ?? nodes.find((item: AiNode) => item.id === fromNodeId))
-        : undefined;
-      const value = fromNodeId
-        ? allOutputs[fromNodeId]?.[edge.fromPort ?? 'prompt']
-        : undefined;
-      return {
-        edge,
-        fromNode,
-        value,
-      };
-    })
-    .filter((entry: PromptCandidate): boolean => entry.fromNode?.type === 'prompt');
-  const promptEdge = promptCandidates.find(
-    (entry: PromptCandidate): boolean =>
-      entry.value !== undefined &&
-      entry.value !== null &&
-      (typeof entry.value !== 'string' || entry.value.trim() !== '')
-  );
-  const promptSourceNode = promptCandidates[0]?.fromNode ?? null;
   const hasMeaningfulValue = (value: unknown): boolean => {
     if (value === undefined || value === null) return false;
     if (typeof value === 'string') return value.trim().length > 0;
@@ -256,50 +236,101 @@ export const handleModel: NodeHandler = async ({
     if (typeof value === 'object') return Object.keys(value).length > 0;
     return true;
   };
-  if (promptSourceNode) {
-    const upstreamEdges = edges.filter((edge: Edge) => edge.to === promptSourceNode.id);
-    if (upstreamEdges.length > 0) {
-      const promptSourceInputs = allInputs[promptSourceNode.id] ?? {};
-      const hasInputValue = Object.values(promptSourceInputs).some(
-        hasMeaningfulValue
-      );
-      if (!hasInputValue) {
-        return buildModelTerminalOutputs({
-          status: 'blocked',
-          reason: 'prompt_source_missing_inputs',
-          details: {
-            promptSourceNodeId: promptSourceNode.id,
-          },
-        });
-      }
-    }
-  }
+  const firstMeaningfulValue = (values: unknown[]): unknown =>
+    values.find((value: unknown): boolean => hasMeaningfulValue(value));
+  const promptCandidates = edges
+    .filter((edge: Edge) => edge.to === node.id && edge.toPort === 'prompt')
+    .map((edge: Edge): PromptCandidate => {
+      const fromNodeId = edge.from;
+      const fromNode = fromNodeId
+        ? (nodeById?.get(fromNodeId) ?? nodes.find((item: AiNode) => item.id === fromNodeId))
+        : undefined;
+      const sourceOutputs = fromNodeId ? (allOutputs[fromNodeId] ?? {}) : {};
+      const sourceInputs = fromNodeId ? (allInputs[fromNodeId] ?? {}) : {};
+      const edgeValue = sourceOutputs[edge.fromPort ?? 'prompt'];
+      const promptValue = sourceOutputs['prompt'];
+      const promptTemplate =
+        typeof fromNode?.config?.prompt?.template === 'string'
+          ? fromNode.config.prompt.template.trim()
+          : '';
+      const hasSourceInputValue = Object.values(sourceInputs).some(hasMeaningfulValue);
+      const shouldDerivePrompt = promptTemplate.length > 0 || hasSourceInputValue;
+      const derivedPromptValue =
+        fromNode?.type === 'prompt' && shouldDerivePrompt
+          ? buildPromptOutput(fromNode.config?.prompt, sourceInputs).promptOutput
+          : undefined;
+      return {
+        edge,
+        fromNode,
+        edgeValue,
+        promptValue,
+        derivedPromptValue,
+        sourceOutputs,
+      };
+    })
+    .filter((entry: PromptCandidate): boolean => entry.fromNode?.type === 'prompt');
+  const promptCandidate = promptCandidates.find(
+    (entry: PromptCandidate): boolean =>
+      hasMeaningfulValue(entry.edgeValue) ||
+      hasMeaningfulValue(entry.promptValue) ||
+      hasMeaningfulValue(entry.derivedPromptValue)
+  );
+  const promptSourceNode =
+    promptCandidate?.fromNode ??
+    promptCandidates[0]?.fromNode ??
+    null;
   const promptSourceInputs = promptSourceNode
     ? (allInputs[promptSourceNode.id] ?? {})
     : {};
-  const derivedPrompt = promptSourceNode
+  const promptSourceTemplate =
+    typeof promptSourceNode?.config?.prompt?.template === 'string'
+      ? promptSourceNode.config.prompt.template.trim()
+      : '';
+  const promptSourceHasInputs = Object.values(promptSourceInputs).some(hasMeaningfulValue);
+  const derivedPrompt = promptSourceNode && (promptSourceTemplate.length > 0 || promptSourceHasInputs)
     ? buildPromptOutput(promptSourceNode.config?.prompt, promptSourceInputs)
     : null;
-  const promptSourceOutput = promptSourceNode
-    ? derivedPrompt?.promptOutput ?? allOutputs[promptSourceNode.id]?.['prompt']
-    : undefined;
+  const promptSourceOutput =
+    firstMeaningfulValue([
+      promptCandidate?.edgeValue,
+      promptCandidate?.promptValue,
+      promptCandidate?.derivedPromptValue,
+      promptSourceNode ? allOutputs[promptSourceNode.id]?.['prompt'] : undefined,
+      derivedPrompt?.promptOutput,
+    ]) ??
+    undefined;
   const promptInput =
-    promptSourceOutput ??
-    promptEdge?.value ??
-    [...promptInputs]
-      .reverse()
-      .find((value: unknown): boolean => {
-        if (value === undefined || value === null) return false;
-        if (typeof value === 'string') return Boolean(value.trim());
-        return true;
-      });
+    firstMeaningfulValue([
+      promptSourceOutput,
+      ...([...promptInputs].reverse()),
+    ]) ?? undefined;
   if (promptInput === undefined || promptInput === null) {
+    const promptSourceWaitingOnPorts = promptCandidates
+      .flatMap((entry: PromptCandidate): string[] => {
+        const waitingOnPorts = entry.sourceOutputs['waitingOnPorts'];
+        if (!Array.isArray(waitingOnPorts)) return [];
+        return waitingOnPorts
+          .filter((port: unknown): port is string => typeof port === 'string')
+          .map((port: string): string => port.trim())
+          .filter((port: string): boolean => port.length > 0);
+      });
     return buildModelTerminalOutputs({
       status: 'blocked',
       reason: 'missing_prompt',
+      details: {
+        requiredPorts: ['prompt'],
+        optionalPorts: [],
+        waitingOnPorts: ['prompt'],
+        promptSourceNodeId: promptSourceNode?.id ?? null,
+        promptSourceNodeIds: promptCandidates
+          .map((entry: PromptCandidate): string | null => entry.fromNode?.id ?? null)
+          .filter((value: string | null): value is string => Boolean(value)),
+        ...(promptSourceWaitingOnPorts.length > 0
+          ? { promptSourceWaitingOnPorts: Array.from(new Set(promptSourceWaitingOnPorts)) }
+          : {}),
+      },
     });
   }
-  if (executed.ai.has(node.id)) return prevOutputs;
   const modelConfig = node.config?.model ?? {
     modelId: 'gpt-4o',
     temperature: 0.7,
@@ -340,7 +371,7 @@ export const handleModel: NodeHandler = async ({
   }
   const imageEdge = edges
     .filter((edge: Edge): boolean => edge.to === node.id && edge.toPort === 'images')
-    .map((edge: Edge): PromptCandidate => {
+    .map((edge: Edge): { edge: Edge; fromNode: AiNode | undefined; value: unknown } => {
       const fromNodeId = edge.from;
       const fromNode = fromNodeId
         ? (nodeById?.get(fromNodeId) ?? nodes.find((item: AiNode) => item.id === fromNodeId))
@@ -354,11 +385,10 @@ export const handleModel: NodeHandler = async ({
         value,
       };
     })
-    .find(
-      (entry: PromptCandidate): boolean =>
-        entry.fromNode?.type === 'prompt' &&
-        entry.value !== undefined &&
-        entry.value !== null
+    .find((entry): boolean =>
+      entry.fromNode?.type === 'prompt' &&
+      entry.value !== undefined &&
+      entry.value !== null
     );
   const promptImageOutput = promptSourceNode?.id
     ? derivedPrompt?.imagesValue ?? allOutputs[promptSourceNode.id]?.['images']

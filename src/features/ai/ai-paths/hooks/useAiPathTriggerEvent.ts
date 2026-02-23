@@ -836,6 +836,10 @@ export function useAiPathTriggerEvent(): {
           triggerLabel: args.triggerLabel ?? null,
           historyRetentionPasses,
           strictFlowMode: selectedConfig.strictFlowMode !== false,
+          blockedRunPolicy:
+            selectedConfig.blockedRunPolicy === 'complete_with_warning'
+              ? 'complete_with_warning'
+              : 'fail_run',
           aiPathsValidation: validationConfig,
           validationPreflight: validationReport,
           ...(args.source ? { sourceInfo: args.source } : {}),

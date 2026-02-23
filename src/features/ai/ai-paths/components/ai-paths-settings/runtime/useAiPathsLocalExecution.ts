@@ -269,6 +269,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                 executionMode: args.executionMode,
                 runMode: args.runMode,
                 strictFlowMode: args.strictFlowMode,
+                blockedRunPolicy: args.blockedRunPolicy,
                 aiPathsValidation: args.aiPathsValidation,
                 nodes: args.normalizedNodes,
                 edges: args.sanitizedEdges,
@@ -339,6 +340,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                   executionMode: args.executionMode,
                   runMode: args.runMode,
                   strictFlowMode: args.strictFlowMode,
+                  blockedRunPolicy: args.blockedRunPolicy,
                   aiPathsValidation: args.aiPathsValidation,
                   nodes: args.normalizedNodes,
                   edges: args.sanitizedEdges,
@@ -400,6 +402,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                 executionMode: args.executionMode,
                 runMode: args.runMode,
                 strictFlowMode: args.strictFlowMode,
+                blockedRunPolicy: args.blockedRunPolicy,
                 aiPathsValidation: args.aiPathsValidation,
                 nodes: args.normalizedNodes,
                 edges: args.sanitizedEdges,
@@ -667,6 +670,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           args.runtimeStateRef.current = nextState;
           args.setRuntimeState(nextState);
           if (haltRef.reason === 'blocked') {
+            const failOnBlocked = args.blockedRunPolicy !== 'complete_with_warning';
             const firstBlockedNode = args.normalizedNodes.find((node: AiNode): boolean => {
               const status = nextState.outputs?.[node.id]?.['status'];
               return typeof status === 'string' && status.trim().toLowerCase() === 'blocked';
@@ -685,7 +689,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
             args.appendRuntimeEvent({
               source: 'local',
               kind: 'run_blocked',
-              level: 'warn',
+              level: failOnBlocked ? 'error' : 'warn',
               runId,
               runStartedAt,
               timestamp: new Date().toISOString(),
@@ -695,6 +699,15 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
                   ? `Run blocked: ${blockedCount} node${blockedCount === 1 ? '' : 's'} waiting for required inputs.`
                   : 'Run blocked: one or more nodes are waiting for required inputs.'),
             });
+            if (failOnBlocked) {
+              capturedError = new Error(
+                firstBlockedMessage ||
+                  (blockedCount > 0
+                    ? `Run blocked: ${blockedCount} node${blockedCount === 1 ? '' : 's'} waiting for required inputs.`
+                    : 'Run blocked: one or more nodes are waiting for required inputs.')
+              );
+              outcome = 'error';
+            }
             break;
           }
           const iteratorPending = args.hasPendingIteratorAdvance(nextState);

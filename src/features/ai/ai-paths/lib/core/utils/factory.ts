@@ -32,6 +32,7 @@ export const createDefaultPathConfig = (id: string): PathConfig => {
     flowIntensity: 'medium',
     runMode: 'block',
     strictFlowMode: true,
+    blockedRunPolicy: 'fail_run',
     aiPathsValidation: normalizeAiPathsValidationConfig(
       DEFAULT_AI_PATHS_VALIDATION_CONFIG
     ),
@@ -223,6 +224,7 @@ export const createAiDescriptionPath = (id: string): PathConfig => {
     flowIntensity: 'medium',
     runMode: 'block',
     strictFlowMode: true,
+    blockedRunPolicy: 'fail_run',
     aiPathsValidation: normalizeAiPathsValidationConfig(
       DEFAULT_AI_PATHS_VALIDATION_CONFIG
     ),

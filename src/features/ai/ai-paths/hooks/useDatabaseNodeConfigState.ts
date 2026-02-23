@@ -356,6 +356,111 @@ export function useDatabaseNodeConfigState() {
     });
   }, [databaseConfig, queryConfig, updateSelectedNodeConfig]);
 
+  const applyQueryTemplateUpdate = useCallback((nextQuery: string): void => {
+    if (isUpdateAction) {
+      updateSelectedNodeConfig({
+        database: {
+          ...databaseConfig,
+          updateTemplate: nextQuery,
+        },
+      });
+      return;
+    }
+    const currentPresetId = databaseConfig.presetId ?? 'custom';
+    const currentAiQueryId = selectedAiQueryId;
+
+    if (currentPresetId !== 'custom' || currentAiQueryId) {
+      setSelectedAiQueryId('');
+      updateSelectedNodeConfig({
+        database: {
+          ...databaseConfig,
+          presetId: 'custom',
+          query: {
+            ...queryConfig,
+            mode: 'custom',
+            queryTemplate: nextQuery,
+          },
+        },
+      });
+    } else {
+      updateQueryConfig({
+        mode: 'custom',
+        queryTemplate: nextQuery,
+      });
+    }
+  }, [databaseConfig, isUpdateAction, queryConfig, selectedAiQueryId, setSelectedAiQueryId, updateQueryConfig, updateSelectedNodeConfig]);
+
+  const insertTemplateSnippet = useCallback((placeholder: string): void => {
+    const currentTemplate = queryTemplateValue ?? '';
+    const textArea = queryTemplateRef?.current;
+    const selectionStart =
+      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentTemplate.length;
+    const selectionEnd =
+      typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentTemplate.length;
+    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
+    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
+    const nextQuery = `${currentTemplate.slice(0, rangeStart)}${placeholder}${currentTemplate.slice(rangeEnd)}`;
+
+    applyQueryTemplateUpdate(nextQuery);
+
+    window.setTimeout(() => {
+      const node = queryTemplateRef?.current;
+      if (!node) return;
+      const cursorPosition = rangeStart + placeholder.length;
+      node.focus();
+      node.setSelectionRange(cursorPosition, cursorPosition);
+    }, 0);
+  }, [applyQueryTemplateUpdate, queryTemplateRef, queryTemplateValue]);
+
+  const insertQueryPlaceholder = useCallback((placeholder: string): void => {
+    const currentTemplate = queryTemplateValue ?? '';
+    const textArea = queryTemplateRef?.current;
+    const selectionStart =
+      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentTemplate.length;
+    const selectionEnd =
+      typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentTemplate.length;
+    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
+    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
+    const nextQuery = `${currentTemplate.slice(0, rangeStart)}${placeholder}${currentTemplate.slice(rangeEnd)}`;
+
+    applyQueryTemplateUpdate(nextQuery);
+
+    window.setTimeout(() => {
+      const node = queryTemplateRef?.current;
+      if (!node) return;
+      const cursorPosition = rangeStart + placeholder.length;
+      node.focus();
+      node.setSelectionRange(cursorPosition, cursorPosition);
+    }, 0);
+  }, [applyQueryTemplateUpdate, queryTemplateRef, queryTemplateValue]);
+
+  const insertAiPromptPlaceholder = useCallback((placeholder: string): void => {
+    const currentValue = databaseConfig.aiPrompt ?? '';
+    const textArea = aiPromptRef?.current;
+    const selectionStart =
+      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentValue.length;
+    const selectionEnd =
+      typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentValue.length;
+    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentValue.length));
+    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentValue.length));
+    const nextValue = `${currentValue.slice(0, rangeStart)}${placeholder}${currentValue.slice(rangeEnd)}`;
+
+    updateSelectedNodeConfig({
+      database: {
+        ...databaseConfig,
+        aiPrompt: nextValue,
+      },
+    });
+
+    window.setTimeout(() => {
+      const node = aiPromptRef?.current;
+      if (!node) return;
+      const cursorPosition = rangeStart + placeholder.length;
+      node.focus();
+      node.setSelectionRange(cursorPosition, cursorPosition);
+    }, 0);
+  }, [databaseConfig, updateSelectedNodeConfig, aiPromptRef]);
+
   const handleProviderChange = useCallback((nextProvider: DbQueryConfig['provider']) => {
     const normalizedRequestedProvider: DbQueryConfig['provider'] =
       nextProvider === 'mongodb' || nextProvider === 'prisma' ? nextProvider : 'auto';
@@ -646,6 +751,7 @@ export function useDatabaseNodeConfigState() {
     pendingAiQuery, setPendingAiQuery, aiQueries, setAiQueries, selectedAiQueryId, setSelectedAiQueryId,
     testQueryResult, setTestQueryResult, testQueryLoading, setTestQueryLoading,
     queryValidatorEnabled, setQueryValidatorEnabled, queryFormatterEnabled, setQueryFormatterEnabled,
+    codeSnippets, selectedSnippetIndex, setSelectedSnippetIndex,
     schemaQuery, promptEngineSettings, schemaConnection, fetchedDbSchema,
     updateSelectedNodeConfig, updateQueryConfig, handleSyncSchema,
     toast, appDbProvider, resolvedProvider, runtimeState, pathDebugSnapshot, nodes, edges,
@@ -655,6 +761,8 @@ export function useDatabaseNodeConfigState() {
     uniqueTargetPathOptions, availablePorts, mappings,
     updateMapping, removeMapping, addMapping,
     mapInputsToTargets, presetOptions, applyDatabasePreset,
+    insertTemplateSnippet, applyQueryTemplateUpdate,
+    insertQueryPlaceholder, insertAiPromptPlaceholder,
     openSaveQueryPresetModal: () => { setNewQueryPresetName(''); setSaveQueryPresetModalOpen(true); },
     closeSaveQueryPresetModal: () => setSaveQueryPresetModalOpen(false),
     handleSaveQueryPreset, handleRunQuery, isUpdateAction, queryTemplateValue,

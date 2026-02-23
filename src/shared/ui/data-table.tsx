@@ -17,8 +17,9 @@ import {
   Row,
   Column,
 } from '@tanstack/react-table';
+import { useVirtualizer } from '@tanstack/react-virtual';
 import { Loader2 } from 'lucide-react';
-import React, { JSX, memo, useEffect, useMemo, useState } from 'react';
+import React, { JSX, memo, useEffect, useMemo, useState, useRef } from 'react';
 
 import { cn } from '@/shared/utils';
 
@@ -48,6 +49,7 @@ interface DataTableProps<TData> {
   getRowClassName?: ((row: Row<TData>) => string | undefined) | undefined;
   maxHeight?: string | number | undefined;
   stickyHeader?: boolean | undefined;
+  enableVirtualization?: boolean;
 }
 
 export function DataTableSortableHeader<TData, TValue>({
@@ -108,11 +110,13 @@ export const DataTable = memo(function DataTable<TData>({
   getRowClassName,
   maxHeight,
   stickyHeader = false,
+  enableVirtualization = false,
 }: DataTableProps<TData>) {
   const [internalRowSelection, setInternalRowSelection] = useState<RowSelectionState>({});
   const [internalExpanded, setInternalExpanded] = useState<ExpandedState>({});
   const [sorting, setSorting] = useState<SortingState>(initialSorting ?? []);
   const queryClient = useQueryClient();
+  const parentRef = useRef<HTMLDivElement>(null);
 
   const rowSelection = controlledRowSelection ?? internalRowSelection;
   const onRowSelectionChange = controlledOnRowSelectionChange ?? setInternalRowSelection;
@@ -173,12 +177,25 @@ export const DataTable = memo(function DataTable<TData>({
     meta: tableMeta,
   });
 
+  const { rows } = table.getRowModel();
+
+  const rowVirtualizer = useVirtualizer({
+    count: rows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 48, // Default row height estimation
+    overscan: 10,
+    enabled: enableVirtualization,
+  });
+
   return (
     <div 
       className={cn('rounded-md border border-border flex flex-col', className, 'w-full min-w-0 max-w-none')}
       style={maxHeight ? { maxHeight } : undefined}
     >
-      <div className={cn('flex-1 min-h-0', maxHeight && 'overflow-auto')}>
+      <div 
+        ref={parentRef}
+        className={cn('flex-1 min-h-0', maxHeight && 'overflow-auto')}
+      >
         <Table className='border-collapse'>
           <TableHeader className={cn(stickyHeader && 'sticky top-0 z-10 bg-background')}>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -216,29 +233,78 @@ export const DataTable = memo(function DataTable<TData>({
                   </TableCell>
                 </TableRow>
               )
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <React.Fragment key={row.id}>
-                  <TableRow
-                    data-state={row.getIsSelected() && 'selected'}
-                    className={cn('border-border', getRowClassName?.(row))}
-                    data-row-id={getRowId ? getRowId(row.original) : undefined}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className='text-muted-foreground'>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                  {row.getIsExpanded() && renderRowDetails && (
-                    <TableRow className='border-border bg-muted/30'>
-                      <TableCell colSpan={columns.length} className='p-0'>
-                        {renderRowDetails({ row })}
-                      </TableCell>
+            ) : rows.length ? (
+              enableVirtualization ? (
+                <>
+                  {rowVirtualizer.getVirtualItems().length > 0 && (
+                    <TableRow>
+                      <TableCell colSpan={columns.length} style={{ height: `${rowVirtualizer.getVirtualItems()[0]?.start ?? 0}px`, padding: 0 }} />
                     </TableRow>
                   )}
-                </React.Fragment>
-              ))
+                  {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                    const row = rows[virtualRow.index];
+                    if (!row) return null;
+                    return (
+                      <React.Fragment key={row.id}>
+                        <TableRow
+                          data-state={row.getIsSelected() && 'selected'}
+                          className={cn('border-border', getRowClassName?.(row))}
+                          data-row-id={getRowId ? getRowId(row.original) : undefined}
+                          data-index={virtualRow.index}
+                          ref={rowVirtualizer.measureElement}
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id} className='text-muted-foreground'>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                        {row.getIsExpanded() && renderRowDetails && (
+                          <TableRow className='border-border bg-muted/30'>
+                            <TableCell colSpan={columns.length} className='p-0'>
+                              {renderRowDetails({ row })}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                  {rowVirtualizer.getVirtualItems().length > 0 && (
+                    <TableRow>
+                      <TableCell 
+                        colSpan={columns.length} 
+                        style={{ 
+                          height: `${rowVirtualizer.getTotalSize() - (rowVirtualizer.getVirtualItems()[rowVirtualizer.getVirtualItems().length - 1]?.end ?? 0)}px`, 
+                          padding: 0 
+                        }} 
+                      />
+                    </TableRow>
+                  )}
+                </>
+              ) : (
+                rows.map((row) => (
+                  <React.Fragment key={row.id}>
+                    <TableRow
+                      data-state={row.getIsSelected() && 'selected'}
+                      className={cn('border-border', getRowClassName?.(row))}
+                      data-row-id={getRowId ? getRowId(row.original) : undefined}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id} className='text-muted-foreground'>
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                    {row.getIsExpanded() && renderRowDetails && (
+                      <TableRow className='border-border bg-muted/30'>
+                        <TableCell colSpan={columns.length} className='p-0'>
+                          {renderRowDetails({ row })}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </React.Fragment>
+                ))
+              )
             ) : (
               <TableRow>
                 <TableCell

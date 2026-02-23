@@ -4,6 +4,7 @@ import type {
   AiNode,
   Edge,
   ParserSampleState,
+  PathBlockedRunPolicy,
   PathConfig,
   PathExecutionMode,
   PathFlowIntensity,
@@ -48,6 +49,7 @@ type UseAiPathsSettingsCleanupActionsInput = {
   flowIntensity: PathFlowIntensity;
   runMode: PathRunMode;
   strictFlowMode: boolean;
+  blockedRunPolicy: PathBlockedRunPolicy;
   aiPathsValidation: AiPathsValidationConfig;
   isPathActive: boolean;
   parserSamples: Record<string, ParserSampleState>;
@@ -137,6 +139,7 @@ export function useAiPathsSettingsCleanupActions({
   flowIntensity,
   runMode,
   strictFlowMode,
+  blockedRunPolicy,
   aiPathsValidation,
   isPathActive,
   parserSamples,
@@ -182,6 +185,7 @@ export function useAiPathsSettingsCleanupActions({
           flowIntensity,
           runMode,
           strictFlowMode,
+          blockedRunPolicy,
           aiPathsValidation,
           nodes,
           edges: [],
@@ -279,6 +283,7 @@ export function useAiPathsSettingsCleanupActions({
           flowIntensity,
           runMode,
           strictFlowMode,
+          blockedRunPolicy,
           aiPathsValidation,
           nodes,
           edges,
@@ -481,6 +486,7 @@ export function useAiPathsSettingsCleanupActions({
       flowIntensity,
       runMode,
       strictFlowMode,
+      blockedRunPolicy,
       aiPathsValidation,
       nodes,
       edges,

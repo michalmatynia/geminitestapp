@@ -6,6 +6,7 @@ import type {
   Edge,
   ParserSampleState,
   PathConfig,
+  PathBlockedRunPolicy,
   PathExecutionMode,
   PathFlowIntensity,
   AiPathsValidationConfig,
@@ -54,6 +55,7 @@ export type UseAiPathsPersistenceArgs = {
   flowIntensity: PathFlowIntensity;
   runMode: PathRunMode;
   strictFlowMode: boolean;
+  blockedRunPolicy: PathBlockedRunPolicy;
   aiPathsValidation: AiPathsValidationConfig;
   selectedNodeId: string | null;
   runtimeState: RuntimeState;
@@ -93,6 +95,7 @@ export type UseAiPathsPersistenceArgs = {
   setFlowIntensity: (value: PathFlowIntensity) => void;
   setRunMode: (value: PathRunMode) => void;
   setStrictFlowMode: (value: boolean) => void;
+  setBlockedRunPolicy: (value: PathBlockedRunPolicy) => void;
   setAiPathsValidation: (value: AiPathsValidationConfig) => void;
   setHistoryRetentionPasses: (value: number) => void;
   setHistoryRetentionOptionsMax: (value: number) => void;

@@ -1,41 +1,29 @@
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import React from 'react';
 
-import type { DatabaseConfig, DbQueryConfig, NodeConfig } from '@/features/ai/ai-paths/lib';
 import type { AiQuery } from '@/shared/contracts/database';
 import { Button } from '@/shared/ui';
+import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
+export function DatabaseAiQueryReviewSection(): React.JSX.Element | null {
+  const {
+    pendingAiQuery,
+    setPendingAiQuery,
+    codeSnippets,
+    selectedSnippetIndex,
+    setSelectedSnippetIndex,
+    setAiQueries,
+    setSelectedAiQueryId,
+    databaseConfig,
+    queryConfig,
+  } = useDatabaseConstructorContext();
 
-type DatabaseAiQueryReviewSectionProps = {
-  pendingAiQuery: string;
-  codeSnippets: string[];
-  selectedSnippetIndex: number;
-  setSelectedSnippetIndex: React.Dispatch<React.SetStateAction<number>>;
-  setAiQueries: React.Dispatch<React.SetStateAction<AiQuery[]>>;
-  setSelectedAiQueryId: React.Dispatch<React.SetStateAction<string>>;
-  setPendingAiQuery: React.Dispatch<React.SetStateAction<string>>;
-  updateSelectedNodeConfig: (patch: Partial<NodeConfig>) => void;
-  databaseConfig: DatabaseConfig;
-  queryConfig: DbQueryConfig;
-  toast: (
-    message: string,
-    options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-  ) => void;
-};
+  const {
+    updateSelectedNodeConfig,
+    toast,
+  } = useAiPathConfig();
 
-export function DatabaseAiQueryReviewSection({
-  pendingAiQuery,
-  codeSnippets,
-  selectedSnippetIndex,
-  setSelectedSnippetIndex,
-  setAiQueries,
-  setSelectedAiQueryId,
-  setPendingAiQuery,
-  updateSelectedNodeConfig,
-  databaseConfig,
-  queryConfig,
-  toast,
-}: DatabaseAiQueryReviewSectionProps): React.JSX.Element | null {
   if (!pendingAiQuery) {
     return null;
   }

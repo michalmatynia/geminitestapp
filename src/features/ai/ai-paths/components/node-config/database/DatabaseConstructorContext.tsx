@@ -50,6 +50,9 @@ export type DatabaseConstructorContextValue = {
   selectedSnippetIndex: number;
   setSelectedSnippetIndex: React.Dispatch<React.SetStateAction<number>>;
   insertTemplateSnippet: (snippet: string) => void;
+  applyQueryTemplateUpdate: (nextQuery: string) => void;
+  insertQueryPlaceholder: (placeholder: string) => void;
+  insertAiPromptPlaceholder: (placeholder: string) => void;
 };
 
 const DatabaseConstructorContext = React.createContext<DatabaseConstructorContextValue | null>(null);

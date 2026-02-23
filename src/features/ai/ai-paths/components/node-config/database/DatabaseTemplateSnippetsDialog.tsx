@@ -1,8 +1,9 @@
 import React from 'react';
 
-import type { DbQueryConfig } from '@/features/ai/ai-paths/lib';
 import { Button, Label } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
+import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
 type TemplateSnippet = { label: string; value: string };
 type ReadQuerySnippet = {
@@ -29,14 +30,6 @@ type DatabaseTemplateSnippetsDialogProps = {
   aggregationStageSnippets: StageSnippet[];
   sortPresets: SortPreset[];
   projectionPresets: ProjectionPreset[];
-  isPrismaProvider: boolean;
-  setSelectedAiQueryId: React.Dispatch<React.SetStateAction<string>>;
-  updateQueryConfig: (patch: Partial<DbQueryConfig>) => void;
-  insertTemplateSnippet: (snippet: string) => void;
-  toast: (
-    message: string,
-    options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-  ) => void;
 };
 
 export function DatabaseTemplateSnippetsDialog({
@@ -49,12 +42,18 @@ export function DatabaseTemplateSnippetsDialog({
   aggregationStageSnippets,
   sortPresets,
   projectionPresets,
-  isPrismaProvider,
-  setSelectedAiQueryId,
-  updateQueryConfig,
-  insertTemplateSnippet,
-  toast,
 }: DatabaseTemplateSnippetsDialogProps): React.JSX.Element {
+  const {
+    setSelectedAiQueryId,
+    updateQueryConfig,
+    insertTemplateSnippet,
+    resolvedProvider,
+  } = useDatabaseConstructorContext();
+
+  const { toast } = useAiPathConfig();
+
+  const isPrismaProvider = resolvedProvider === 'prisma';
+
   return (
     <DetailModal
       isOpen={open}

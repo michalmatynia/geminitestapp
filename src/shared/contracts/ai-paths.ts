@@ -1461,6 +1461,15 @@ export type AiPathsValidationConfigDto = z.infer<
 >;
 export type AiPathsValidationConfig = AiPathsValidationConfigDto;
 
+export const pathBlockedRunPolicySchema = z.enum([
+  'fail_run',
+  'complete_with_warning',
+]);
+export type PathBlockedRunPolicyDto = z.infer<
+  typeof pathBlockedRunPolicySchema
+>;
+export type PathBlockedRunPolicy = PathBlockedRunPolicyDto;
+
 export const pathConfigSchema = z.object({
   id: z.string(),
   version: z.number(),
@@ -1471,6 +1480,7 @@ export const pathConfigSchema = z.object({
   flowIntensity: z.string().optional(),
   runMode: z.string().optional(),
   strictFlowMode: z.boolean().optional(),
+  blockedRunPolicy: pathBlockedRunPolicySchema.optional(),
   nodes: z.array(aiNodeSchema),
   edges: z.array(edgeSchema),
   updatedAt: z.string(),

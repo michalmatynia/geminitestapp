@@ -56,7 +56,7 @@ type PromptEngineProviderProps = {
 };
 export type { RuleDraft } from './prompt-engine-context-utils';
 
-interface PromptEngineContextType {
+export interface PromptEngineContextValue {
   // State
   promptEngineSettings: PromptEngineSettings;
   query: string;
@@ -109,7 +109,7 @@ interface PromptEngineContextType {
   handleCopy: (value: string, label: string) => Promise<void>;
 }
 
-const PromptEngineContext = createContext<PromptEngineContextType | undefined>(undefined);
+const PromptEngineContext = createContext<PromptEngineContextValue | undefined>(undefined);
 
 export function PromptEngineProvider({
   children,
@@ -864,7 +864,7 @@ export function PromptEngineProvider({
   return <PromptEngineContext.Provider value={value}>{children}</PromptEngineContext.Provider>;
 }
 
-export function usePromptEngine(): PromptEngineContextType {
+export function usePromptEngine(): PromptEngineContextValue {
   const context = useContext(PromptEngineContext);
   if (context === undefined) {
     throw new Error('usePromptEngine must be used within a PromptEngineProvider');

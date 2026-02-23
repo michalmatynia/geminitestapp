@@ -14,6 +14,7 @@ import type {
   AiPathsValidationOperator,
   AiPathsValidationRule,
   AiPathsValidationSeverity,
+  PathBlockedRunPolicy,
 } from '@/features/ai/ai-paths/lib';
 import {
   buildAiPathsValidationRulesFromDocs,
@@ -155,6 +156,11 @@ const VALIDATION_OPERATOR_OPTIONS: Array<{ label: string; value: AiPathsValidati
   { label: 'Node positions finite', value: 'node_positions_finite' },
 ];
 
+const BLOCKED_RUN_POLICY_OPTIONS: Array<{ label: string; value: PathBlockedRunPolicy }> = [
+  { label: 'Fail Run', value: 'fail_run' },
+  { label: 'Complete + Warning', value: 'complete_with_warning' },
+];
+
 const DEFAULT_CONDITION_DRAFT: ValidationConditionDraft = {
   operator: 'non_empty',
   field: '',
@@ -205,6 +211,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
     flow: string;
     runMode: string;
     strictFlowMode: string;
+    blockedRunPolicy: string;
     maintenance: string;
     validationEngine: string;
     validationPolicy: string;
@@ -283,6 +290,8 @@ export function AiPathsSettingsView(): React.JSX.Element {
     handleFlowIntensityChange,
     handleRunModeChange,
     handleStrictFlowModeChange,
+    blockedRunPolicy,
+    handleBlockedRunPolicyChange,
     aiPathsValidation,
     setAiPathsValidation,
     updateAiPathsValidation,
@@ -2024,6 +2033,31 @@ export function AiPathsSettingsView(): React.JSX.Element {
             )
           },
           {
+            key: 'blockedRunPolicy',
+            label: 'Blocked Run Behavior',
+            type: 'custom',
+            render: () => (
+              <div className='space-y-2'>
+                <SelectSimple
+                  size='sm'
+                  value={blockedRunPolicy}
+                  onValueChange={(value: string): void => {
+                    if (value === blockedRunPolicy) return;
+                    if (value === 'fail_run' || value === 'complete_with_warning') {
+                      handleBlockedRunPolicyChange(value);
+                    }
+                  }}
+                  options={[...BLOCKED_RUN_POLICY_OPTIONS]}
+                  triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                  disabled={isPathLocked}
+                />
+                <div className='text-[11px] text-gray-400'>
+                  Controls whether blocked node statuses fail the run or allow completion with warning.
+                </div>
+              </div>
+            )
+          },
+          {
             key: 'validationEngine',
             label: 'Validation Engine',
             type: 'custom',
@@ -3050,6 +3084,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
           flow: flowIntensity,
           runMode,
           strictFlowMode: strictFlowMode ? 'on' : 'off',
+          blockedRunPolicy,
           maintenance: String(maintenanceReport?.pendingActions ?? 0),
           validationEngine:
             normalizedAiPathsValidation.enabled !== false ? 'on' : 'off',

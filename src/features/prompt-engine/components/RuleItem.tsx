@@ -45,6 +45,7 @@ import {
   type PromptValidationLaunchScopeBehavior,
   type PromptValidationLaunchOperator,
   type PromptValidationRule,
+  type PromptAutofixOperation,
 } from '../settings';
 
 type RuleItemProps = {
@@ -761,7 +762,7 @@ function RuleItemInner({
                 {(rule.autofix?.operations ?? []).length === 0 ? (
                   <div className='text-xs text-gray-400'>No autofix operations configured.</div>
                 ) : null}
-                {(rule.autofix?.operations ?? []).map((op, index) => (
+                {(rule.autofix?.operations ?? []).map((op: PromptAutofixOperation, index: number) => (
                   <Card
                     key={`${rule.id}-autofix-${index}`}
                     variant='subtle-compact'

@@ -3,7 +3,6 @@ import React from 'react';
 import { Button, Input, Label, Hint } from '@/shared/ui';
 
 import type {
-  PromptValidationRule,
   PromptValidationSimilarPattern,
 } from '../settings';
 
@@ -27,7 +26,7 @@ export function RuleItemSimilarPatternsSection(): React.JSX.Element | null {
       {rule.similar.length === 0 ? (
         <div className='text-xs text-gray-400'>No similar patterns configured.</div>
       ) : null}
-      {rule.similar.map((sim, index) => (
+      {rule.similar.map((sim: PromptValidationSimilarPattern, index: number) => (
         <div
           key={`${rule.id}-similar-${index}`}
           className='grid gap-2 rounded border border-border/40 bg-background/40 p-2 md:grid-cols-6'

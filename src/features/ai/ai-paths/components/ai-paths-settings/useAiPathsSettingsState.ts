@@ -7,6 +7,7 @@ import type {
   Edge,
   NodeConfig,
   NodeDefinition,
+  PathBlockedRunPolicy,
   ParserSampleState,
   PathConfig,
   PathExecutionMode,
@@ -120,6 +121,7 @@ export interface UseAiPathsSettingsStateReturn {
   flowIntensity: PathFlowIntensity;
   runMode: PathRunMode;
   strictFlowMode: boolean;
+  blockedRunPolicy: PathBlockedRunPolicy;
   aiPathsValidation: AiPathsValidationConfig;
   historyRetentionPasses: number;
   historyRetentionOptionsMax: number;
@@ -127,6 +129,7 @@ export interface UseAiPathsSettingsStateReturn {
   handleFlowIntensityChange: (intensity: PathFlowIntensity) => void;
   handleRunModeChange: (mode: PathRunMode) => void;
   handleStrictFlowModeChange: (enabled: boolean) => void;
+  handleBlockedRunPolicyChange: (policy: PathBlockedRunPolicy) => void;
   setAiPathsValidation: React.Dispatch<React.SetStateAction<AiPathsValidationConfig>>;
   updateAiPathsValidation: (patch: Partial<AiPathsValidationConfig>) => void;
   handleHistoryRetentionChange: (passes: number) => Promise<void>;
@@ -427,6 +430,8 @@ export function useAiPathsSettingsState({
     useState<PathFlowIntensity>('medium');
   const [runMode, setRunMode] = useState<PathRunMode>('manual');
   const [strictFlowMode, setStrictFlowMode] = useState<boolean>(true);
+  const [blockedRunPolicy, setBlockedRunPolicy] =
+    useState<PathBlockedRunPolicy>('fail_run');
   const [aiPathsValidationState, setAiPathsValidationState] =
     useState<AiPathsValidationConfig>(
       normalizeAiPathsValidationConfig(DEFAULT_AI_PATHS_VALIDATION_CONFIG),
@@ -932,6 +937,7 @@ export function useAiPathsSettingsState({
     paths,
     runMode,
     strictFlowMode,
+    blockedRunPolicy,
     aiPathsValidation: aiPathsValidationState,
     selectedNodeId,
     runtimeState,
@@ -965,6 +971,7 @@ export function useAiPathsSettingsState({
     setFlowIntensity,
     setRunMode,
     setStrictFlowMode,
+    setBlockedRunPolicy,
     setAiPathsValidation,
     setHistoryRetentionPasses,
     setHistoryRetentionOptionsMax,
@@ -1039,6 +1046,7 @@ export function useAiPathsSettingsState({
     executionMode,
     runMode,
     strictFlowMode,
+    blockedRunPolicy,
     aiPathsValidation: aiPathsValidationState,
     historyRetentionPasses,
     isPathActive,
@@ -1082,6 +1090,7 @@ export function useAiPathsSettingsState({
     flowIntensity,
     runMode,
     strictFlowMode,
+    blockedRunPolicy,
     aiPathsValidation: aiPathsValidationState,
     isPathActive,
     parserSamples,
@@ -1226,6 +1235,7 @@ export function useAiPathsSettingsState({
     handleFlowIntensityChange,
     handleRunModeChange,
     handleStrictFlowModeChange,
+    handleBlockedRunPolicyChange,
     handleHistoryRetentionChange,
     handleTogglePathLock,
     handleTogglePathActive,
@@ -1244,6 +1254,8 @@ export function useAiPathsSettingsState({
     setRunMode,
     strictFlowMode,
     setStrictFlowMode,
+    blockedRunPolicy,
+    setBlockedRunPolicy,
     aiPathsValidation: aiPathsValidationState,
     historyRetentionPasses,
     setHistoryRetentionPasses,
@@ -1290,6 +1302,7 @@ export function useAiPathsSettingsState({
     setFlowIntensity,
     setRunMode,
     setStrictFlowMode,
+    setBlockedRunPolicy,
     setAiPathsValidation,
     setParserSamples,
     setUpdaterSamples,
@@ -1435,6 +1448,7 @@ export function useAiPathsSettingsState({
     flowIntensity,
     runMode,
     strictFlowMode,
+    blockedRunPolicy,
     aiPathsValidation: aiPathsValidationState,
     historyRetentionPasses,
     historyRetentionOptionsMax,
@@ -1442,6 +1456,7 @@ export function useAiPathsSettingsState({
     handleFlowIntensityChange,
     handleRunModeChange,
     handleStrictFlowModeChange,
+    handleBlockedRunPolicyChange,
     setAiPathsValidation,
     updateAiPathsValidation,
     handleHistoryRetentionChange,

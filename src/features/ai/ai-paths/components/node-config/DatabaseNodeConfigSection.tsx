@@ -121,6 +121,13 @@ export function DatabaseNodeConfigSection(): React.JSX.Element | null {
     addMapping: state.addMapping,
     availablePorts: state.availablePorts,
     uniqueTargetPathOptions: state.uniqueTargetPathOptions,
+    codeSnippets: state.codeSnippets,
+    selectedSnippetIndex: state.selectedSnippetIndex,
+    setSelectedSnippetIndex: state.setSelectedSnippetIndex,
+    insertTemplateSnippet: state.insertTemplateSnippet,
+    applyQueryTemplateUpdate: state.applyQueryTemplateUpdate,
+    insertQueryPlaceholder: state.insertQueryPlaceholder,
+    insertAiPromptPlaceholder: state.insertAiPromptPlaceholder,
   };
 
   const queryInputControlsValue: DatabaseQueryInputControlsContextValue = {

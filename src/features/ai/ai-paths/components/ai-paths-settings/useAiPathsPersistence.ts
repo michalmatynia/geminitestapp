@@ -96,6 +96,7 @@ export function useAiPathsPersistence({
   flowIntensity,
   runMode,
   strictFlowMode,
+  blockedRunPolicy,
   aiPathsValidation,
   selectedNodeId,
   runtimeState,
@@ -127,6 +128,7 @@ export function useAiPathsPersistence({
   setFlowIntensity,
   setRunMode,
   setStrictFlowMode,
+  setBlockedRunPolicy,
   setAiPathsValidation,
   setHistoryRetentionPasses,
   setHistoryRetentionOptionsMax,
@@ -506,6 +508,10 @@ export function useAiPathsPersistence({
                     : 0;
                 const normalizedStrictFlowMode =
                   migration.config.strictFlowMode !== false;
+                const normalizedBlockedRunPolicy =
+                  migration.config.blockedRunPolicy === 'complete_with_warning'
+                    ? 'complete_with_warning'
+                    : 'fail_run';
                 const normalizedAiPathsValidation = normalizeAiPathsValidationConfig(
                   migration.config.aiPathsValidation
                 );
@@ -520,6 +526,7 @@ export function useAiPathsPersistence({
                   edges: normalizedConfigEdges,
                   runCount: normalizedRunCount,
                   strictFlowMode: normalizedStrictFlowMode,
+                  blockedRunPolicy: normalizedBlockedRunPolicy,
                   aiPathsValidation: normalizedAiPathsValidation,
                 };
                 settingsConfigs[meta.id] = normalizedConfig;
@@ -527,6 +534,7 @@ export function useAiPathsPersistence({
                   migration.changed ||
                   normalizedRunCountRaw !== normalizedRunCount ||
                   migration.config.strictFlowMode !== normalizedStrictFlowMode ||
+                  migration.config.blockedRunPolicy !== normalizedBlockedRunPolicy ||
                   stableStringify(migration.config.aiPathsValidation ?? null) !==
                     stableStringify(normalizedAiPathsValidation) ||
                   stableStringify(migration.config.edges ?? []) !==
@@ -651,6 +659,11 @@ export function useAiPathsPersistence({
               : 'manual'
         );
         setStrictFlowMode(activeConfig.strictFlowMode !== false);
+        setBlockedRunPolicy(
+          activeConfig.blockedRunPolicy === 'complete_with_warning'
+            ? 'complete_with_warning'
+            : 'fail_run'
+        );
         setAiPathsValidation(
           normalizeAiPathsValidationConfig(activeConfig.aiPathsValidation)
         );
@@ -817,6 +830,7 @@ export function useAiPathsPersistence({
         flowIntensity,
         runMode,
         strictFlowMode,
+        blockedRunPolicy,
         aiPathsValidation,
         isLocked: isPathLocked,
         isActive: isPathActive,
@@ -850,6 +864,7 @@ export function useAiPathsPersistence({
       flowIntensity,
       runMode,
       strictFlowMode,
+      blockedRunPolicy,
       aiPathsValidation,
       isPathLocked,
       isPathActive,
@@ -895,6 +910,7 @@ export function useAiPathsPersistence({
         flowIntensity,
         runMode,
         strictFlowMode,
+        blockedRunPolicy,
         aiPathsValidation,
         nodes: resolvedNodes,
         edges: canonicalEdges,
@@ -925,6 +941,7 @@ export function useAiPathsPersistence({
       flowIntensity,
       runMode,
       strictFlowMode,
+      blockedRunPolicy,
       aiPathsValidation,
       isPathLocked,
       isPathActive,

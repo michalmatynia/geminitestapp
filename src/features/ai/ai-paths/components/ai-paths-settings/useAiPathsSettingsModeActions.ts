@@ -4,6 +4,7 @@ import type {
   AiNode,
   Edge,
   ParserSampleState,
+  PathBlockedRunPolicy,
   PathConfig,
   PathExecutionMode,
   PathFlowIntensity,
@@ -44,6 +45,8 @@ type UseAiPathsSettingsModeActionsInput = {
   setRunMode: React.Dispatch<React.SetStateAction<PathRunMode>>;
   strictFlowMode: boolean;
   setStrictFlowMode: React.Dispatch<React.SetStateAction<boolean>>;
+  blockedRunPolicy: PathBlockedRunPolicy;
+  setBlockedRunPolicy: React.Dispatch<React.SetStateAction<PathBlockedRunPolicy>>;
   aiPathsValidation: AiPathsValidationConfig;
   historyRetentionPasses: number;
   setHistoryRetentionPasses: React.Dispatch<React.SetStateAction<number>>;
@@ -79,6 +82,7 @@ export type UseAiPathsSettingsModeActionsReturn = {
   handleFlowIntensityChange: (intensity: PathFlowIntensity) => void;
   handleRunModeChange: (mode: PathRunMode) => void;
   handleStrictFlowModeChange: (enabled: boolean) => void;
+  handleBlockedRunPolicyChange: (policy: PathBlockedRunPolicy) => void;
   handleHistoryRetentionChange: (passes: number) => Promise<void>;
   handleTogglePathLock: () => void;
   handleTogglePathActive: () => void;
@@ -99,6 +103,8 @@ export function useAiPathsSettingsModeActions({
   setRunMode,
   strictFlowMode,
   setStrictFlowMode,
+  blockedRunPolicy,
+  setBlockedRunPolicy,
   aiPathsValidation,
   historyRetentionPasses,
   setHistoryRetentionPasses,
@@ -210,6 +216,37 @@ export function useAiPathsSettingsModeActions({
       );
     },
     [activePathId, isPathLocked, setPathConfigs, setStrictFlowMode, toast],
+  );
+
+  const handleBlockedRunPolicyChange = useCallback(
+    (policy: PathBlockedRunPolicy): void => {
+      if (policy === blockedRunPolicy) return;
+      if (!activePathId) {
+        setBlockedRunPolicy(policy);
+        return;
+      }
+      if (isPathLocked) {
+        toast('This path is locked. Unlock it to change blocked run behavior.', {
+          variant: 'info',
+        });
+        return;
+      }
+      setBlockedRunPolicy(policy);
+      setPathConfigs(
+        (prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+          const base = prev[activePathId] ?? createDefaultPathConfig(activePathId);
+          return { ...prev, [activePathId]: { ...base, blockedRunPolicy: policy } };
+        },
+      );
+    },
+    [
+      activePathId,
+      blockedRunPolicy,
+      isPathLocked,
+      setBlockedRunPolicy,
+      setPathConfigs,
+      toast,
+    ],
   );
 
   const normalizeHistoryRetentionPasses = useCallback((value: number): number => {
@@ -435,6 +472,7 @@ export function useAiPathsSettingsModeActions({
     handleFlowIntensityChange,
     handleRunModeChange,
     handleStrictFlowModeChange,
+    handleBlockedRunPolicyChange,
     handleHistoryRetentionChange,
     handleTogglePathLock,
     handleTogglePathActive,

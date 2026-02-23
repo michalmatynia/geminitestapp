@@ -19,16 +19,9 @@ import {
   AGGREGATION_STAGE_SNIPPETS,
   PRISMA_AGGREGATION_STAGE_SNIPPETS,
 } from '@/features/ai/ai-paths/config/query-presets';
-import type {
-  UpdaterSampleState,
-} from '@/features/ai/ai-paths/lib';
-import { DB_PROVIDER_PLACEHOLDERS } from '@/features/ai/ai-paths/lib';
-import type { AiQuery, CollectionSchema, DatabasePresetOption, FieldSchema } from '@/shared/contracts/database';
-import { Button, Label, Textarea, SelectSimple, Input, Tooltip, Card } from '@/shared/ui';
+import { Button, Label, Textarea, SelectSimple, Input, Card } from '@/shared/ui';
 
 import {
-  extractCodeSnippets,
-  formatCollectionDisplayName,
   formatCollectionLabel,
   formatCollectionSchema,
   normalizeSchemaCollections,
@@ -38,30 +31,19 @@ import { DatabaseAiQueryReviewSection } from './DatabaseAiQueryReviewSection';
 import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
 import { DatabaseQueryInputControls } from './DatabaseQueryInputControls';
 import { DatabaseTemplateSnippetsDialog } from './DatabaseTemplateSnippetsDialog';
-import { PlaceholderMatrixDialog, type PlaceholderGroup, type PlaceholderTarget } from './PlaceholderMatrixDialog';
+import { PlaceholderMatrixDialog, type PlaceholderGroup, type PlaceholderTarget, type PlaceholderEntry } from './PlaceholderMatrixDialog';
 import { useAiPathConfig } from '../../AiPathConfigContext';
+import { type UpdaterSampleState } from '@/features/ai/ai-paths/lib';
 
 
 export function DatabaseConstructorTab(): React.JSX.Element | null {
   const {
-    pendingAiQuery,
-    setPendingAiQuery,
-    aiQueries,
-    setAiQueries,
-    selectedAiQueryId,
     setSelectedAiQueryId,
-    presetOptions,
-    applyDatabasePreset,
     openSaveQueryPresetModal,
     databaseConfig,
     queryConfig,
     resolvedProvider,
     operation,
-    queryTemplateValue,
-    queryTemplateRef,
-    sampleState,
-    parsedSampleError,
-    updateQueryConfig,
     connectedPlaceholders,
     hasSchemaConnection,
     fetchedDbSchema,
@@ -69,8 +51,11 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
     onSyncSchema,
     schemaSyncing,
     schemaLoading,
-    aiPromptRef,
+    insertQueryPlaceholder,
+    insertAiPromptPlaceholder,
+    sampleState,
   } = useDatabaseConstructorContext();
+
   const {
     setUpdaterSamples,
     handleFetchUpdaterSample: onFetchUpdaterSample,
@@ -84,10 +69,15 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
     updaterSampleLoading,
     toast,
   } = useAiPathConfig();
+
+  // State for template snippets modal
+  const [snippetsModalOpen, setSnippetsModalOpen] = React.useState<boolean>(false);
+  const [placeholderMatrixOpen, setPlaceholderMatrixOpen] = React.useState<boolean>(false);
+  const [placeholderTarget, setPlaceholderTarget] = React.useState<PlaceholderTarget>('query');
+
   if (!selectedNode) return null;
+
   const selectedNodeId = selectedNode.id;
-  const isUpdateAction =
-    databaseConfig.useMongoActions && databaseConfig.actionCategory === 'update';
   const isPrismaProvider = resolvedProvider === 'prisma';
   const providerLabel =
     queryConfig.provider === 'auto'
@@ -104,6 +94,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
     : AGGREGATION_STAGE_SNIPPETS;
   const sortPresets = isPrismaProvider ? PRISMA_SORT_PRESETS : SORT_PRESETS;
   const projectionPresets = isPrismaProvider ? PRISMA_PROJECTION_PRESETS : PROJECTION_PRESETS;
+  
   const schemaCollections = React.useMemo(
     () => normalizeSchemaCollections(schemaMatrix),
     [schemaMatrix]
@@ -113,129 +104,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
     [fetchedDbSchema]
   );
   const isMultiSchema = schemaMatrix?.provider === 'multi';
-  // State for code snippet navigation in AI responses
-  const [selectedSnippetIndex, setSelectedSnippetIndex] = React.useState<number>(-1);
-  // State for template snippets modal
-  const [snippetsModalOpen, setSnippetsModalOpen] = React.useState<boolean>(false);
-  const [placeholderMatrixOpen, setPlaceholderMatrixOpen] = React.useState<boolean>(false);
-  const [placeholderTarget, setPlaceholderTarget] = React.useState<PlaceholderTarget>('query');
-
-  // Extract code snippets from pending AI query
-  const codeSnippets = React.useMemo((): string[] => {
-    if (!pendingAiQuery) return [];
-    return extractCodeSnippets(pendingAiQuery);
-  }, [pendingAiQuery]);
-
-  // Reset snippet selection when pending query changes
-  React.useEffect((): void => {
-    setSelectedSnippetIndex((_prev: number): number => codeSnippets.length > 0 ? 0 : -1);
-  }, [pendingAiQuery, codeSnippets.length]);
-
-  const applyQueryTemplateUpdate = (nextQuery: string): void => {
-    if (isUpdateAction) {
-      updateSelectedNodeConfig({
-        database: {
-          ...databaseConfig,
-          updateTemplate: nextQuery,
-        },
-      });
-      return;
-    }
-    const currentPresetId = databaseConfig.presetId ?? 'custom';
-    const currentAiQueryId = selectedAiQueryId;
-
-    if (currentPresetId !== 'custom' || currentAiQueryId) {
-      setSelectedAiQueryId('');
-      updateSelectedNodeConfig({
-        database: {
-          ...databaseConfig,
-          presetId: 'custom',
-          query: {
-            ...queryConfig,
-            mode: 'custom',
-            queryTemplate: nextQuery,
-          },
-        },
-      });
-    } else {
-      updateQueryConfig({
-        mode: 'custom',
-        queryTemplate: nextQuery,
-      });
-    }
-  };
-
-  const insertQueryPlaceholder = (placeholder: string): void => {
-    const currentTemplate = queryTemplateValue ?? '';
-    const textArea = queryTemplateRef?.current;
-    const selectionStart =
-      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentTemplate.length;
-    const selectionEnd =
-      typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentTemplate.length;
-    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
-    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
-    const nextQuery = `${currentTemplate.slice(0, rangeStart)}${placeholder}${currentTemplate.slice(rangeEnd)}`;
-
-    applyQueryTemplateUpdate(nextQuery);
-
-    window.setTimeout(() => {
-      const node = queryTemplateRef?.current;
-      if (!node) return;
-      const cursorPosition = rangeStart + placeholder.length;
-      node.focus();
-      node.setSelectionRange(cursorPosition, cursorPosition);
-    }, 0);
-  };
-
-  const insertAiPromptPlaceholder = (placeholder: string): void => {
-    const currentValue = databaseConfig.aiPrompt ?? '';
-    const textArea = aiPromptRef?.current;
-    const selectionStart =
-      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentValue.length;
-    const selectionEnd =
-      typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentValue.length;
-    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentValue.length));
-    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentValue.length));
-    const nextValue = `${currentValue.slice(0, rangeStart)}${placeholder}${currentValue.slice(rangeEnd)}`;
-
-    updateSelectedNodeConfig({
-      database: {
-        ...databaseConfig,
-        aiPrompt: nextValue,
-      },
-    });
-
-    window.setTimeout(() => {
-      const node = aiPromptRef?.current;
-      if (!node) return;
-      const cursorPosition = rangeStart + placeholder.length;
-      node.focus();
-      node.setSelectionRange(cursorPosition, cursorPosition);
-    }, 0);
-  };
-
-  const insertTemplateSnippet = (snippet: string): void => {
-    const currentTemplate = queryTemplateValue ?? '';
-    const textArea = queryTemplateRef?.current;
-    const selectionStart =
-      typeof textArea?.selectionStart === 'number' ? textArea.selectionStart : currentTemplate.length;
-    const selectionEnd =
-      typeof textArea?.selectionEnd === 'number' ? textArea.selectionEnd : currentTemplate.length;
-    const rangeStart = Math.max(0, Math.min(selectionStart, selectionEnd, currentTemplate.length));
-    const rangeEnd = Math.max(rangeStart, Math.min(Math.max(selectionStart, selectionEnd), currentTemplate.length));
-    const nextTemplate = `${currentTemplate.slice(0, rangeStart)}${snippet}${currentTemplate.slice(rangeEnd)}`;
-
-    applyQueryTemplateUpdate(nextTemplate);
-
-    window.setTimeout(() => {
-      const node = queryTemplateRef?.current;
-      if (!node) return;
-      const cursorPosition = rangeStart + snippet.length;
-      node.focus();
-      node.setSelectionRange(cursorPosition, cursorPosition);
-    }, 0);
-  };
-
+  
   const handleInsertPlaceholder = (placeholder: string, target: PlaceholderTarget): void => {
     if (target === 'aiPrompt') {
       insertAiPromptPlaceholder(placeholder);
@@ -246,252 +115,406 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
 
   const placeholderGroups = React.useMemo((): PlaceholderGroup[] => {
     const groups: PlaceholderGroup[] = [];
-    const connectedEntries = connectedPlaceholders.map((token: string, index: number) => {
+    const connectedEntries = connectedPlaceholders.map((token: string, index: number): PlaceholderEntry => {
       const raw = token.replace(/^\{\{|\}\}$/g, '').trim();
-      let description = 'Connected input placeholder.';
-      if (raw.startsWith('bundle.')) {
-        description = `Bundle key: ${raw.replace('bundle.', '')}`;
-      } else if (raw.startsWith('context.')) {
-        description = `Context value: ${raw.replace('context.', '')}`;
-      } else if (raw.startsWith('meta.')) {
-        description = `Meta value: ${raw.replace('meta.', '')}`;
-      }
       return {
-        id: `connected-${index}-${raw}`,
-        label: raw || token,
+        id: `connected-${index}`,
+        label: raw,
         token,
-        resolvesTo: description,
+        resolvesTo: '—',
       };
     });
+
     if (connectedEntries.length > 0) {
       groups.push({
         id: 'connected',
         title: 'Connected Inputs',
-        description: 'Placeholders derived from currently wired inputs.',
         entries: connectedEntries,
       });
     }
 
-    const activeEntries: PlaceholderGroup = {
-      id: 'active',
-      title: 'Active Query Context',
-      description: 'Current operation & selection placeholders.',
-      entries: [
-        {
-          id: `operation-${operation}`,
-          label: `Operation: ${operation}`,
-          token: `{{operation:${operation}}}`,
-          resolvesTo: operation,
-        },
-        {
-          id: `collection-${queryConfig.collection}`,
-          label: `Collection: ${queryConfig.collection}`,
-          token: `{{collection:${queryConfig.collection}}}`,
-          resolvesTo: queryConfig.collection,
-        },
-        {
-          id: `provider-${queryConfig.provider}`,
-          label: `Provider: ${queryConfig.provider === 'auto' ? 'auto' : queryConfig.provider}`,
-          token: `{{provider:${queryConfig.provider === 'auto' ? 'auto-detect' : queryConfig.provider}}}`,
-          resolvesTo: queryConfig.provider === 'auto' ? 'auto-detect' : queryConfig.provider,
-        },
-      ],
-    };
-    groups.push(activeEntries);
-
-    const providerEntries = DB_PROVIDER_PLACEHOLDERS.map((provider: string) => ({
-      id: `db-provider-${provider}`,
-      label: provider,
-      token: `{{DB Provider: ${provider}}}`,
-      resolvesTo: provider,
-    }));
-    if (providerEntries.length > 0) {
-      groups.push({
-        id: 'providers',
-        title: 'Database Providers',
-        description: 'Static provider placeholders.',
-        entries: providerEntries,
-      });
-    }
-
-    const dateEntry = {
-      id: 'date-current',
-      label: 'Date: Current',
-      token: '{{Date: Current}}',
-      resolvesTo: new Date().toISOString(),
-      dynamic: true,
-    };
     groups.push({
-      id: 'dates',
-      title: 'Dynamic Dates',
-      description: 'Runtime date placeholders.',
-      entries: [dateEntry],
+      id: 'special',
+      title: 'Special Tokens',
+      entries: [
+        { id: 'val', label: 'value', token: '{{value}}', resolvesTo: 'Last node output' },
+        { id: 'ctx-id', label: 'context.entityId', token: '{{context.entityId}}', resolvesTo: 'ID of current entity' },
+        { id: 'ctx-type', label: 'context.entityType', token: '{{context.entityType}}', resolvesTo: 'Type of current entity' },
+      ],
     });
 
-    const schemaEntries: PlaceholderGroup['entries'] = [];
-    if (schemaCollections.length) {
-      schemaCollections.forEach((collection: CollectionSchema, index: number) => {
-        const schemaText = formatCollectionSchema(collection.name, collection.fields ?? []);
-        const displayName = formatCollectionDisplayName(collection.name);
-        if (isMultiSchema && collection.provider) {
-          const labeledName = `${collection.name} (${collection.provider})`;
-          const labeledDisplay = `${displayName} (${collection.provider})`;
-          const nameSet = new Set<string>([labeledName, labeledDisplay]);
-          Array.from(nameSet).forEach((name: string) => {
-            schemaEntries.push({
-              id: `schema-${index}-${name}`,
-              label: `Collection: ${name}`,
-              token: `{{Collection: ${name}}}`,
-              resolvesTo: schemaText,
-              dynamic: true,
-            });
-          });
-        } else {
-          const nameSet = new Set<string>([collection.name, displayName]);
-          Array.from(nameSet).forEach((name: string) => {
-            schemaEntries.push({
-              id: `schema-${index}-${name}`,
-              label: `Collection: ${name}`,
-              token: `{{Collection: ${name}}}`,
-              resolvesTo: schemaText,
-              dynamic: true,
-            });
-          });
-        }
-      });
-    }
-    if (schemaEntries.length > 0) {
-      groups.push({
-        id: 'schemas',
-        title: 'Collection Schemas',
-        description: 'Synchronized schema snapshots for use in prompts or queries.',
-        entries: schemaEntries,
-      });
-    }
-
     return groups;
-  }, [connectedPlaceholders, operation, queryConfig.collection, queryConfig.provider, schemaCollections, isMultiSchema]);
+  }, [connectedPlaceholders]);
 
   return (
-    <div className='space-y-4 rounded-md border border-border bg-card/40 p-3'>
-      <div onFocusCapture={(): void => setPlaceholderTarget('query')}>
-        <DatabaseQueryInputControls />
-      </div>
-      <Card variant='subtle-compact' padding='sm' className='flex flex-wrap items-center gap-2 border-border/60 bg-card/35 text-[10px] text-gray-300'>
-        <span className='uppercase tracking-wide text-gray-500'>Provider</span>
-        <span className='rounded border border-border/70 bg-card/70 px-2 py-0.5'>
-          Requested: {queryConfig.provider}
-        </span>
-        <span className='rounded border border-border/70 bg-card/70 px-2 py-0.5'>
-          Effective: {resolvedProvider}
-        </span>
-      </Card>
+    <div className='space-y-4'>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <Card variant='subtle-compact' padding='sm' className='flex flex-wrap items-center gap-2 border-border/60 bg-card/35 text-[10px] text-gray-300'>
+          <span className='uppercase tracking-wide text-gray-500'>Provider</span>
+          <span className='rounded border border-border/70 bg-card/70 px-2 py-0.5'>
+            Requested: {queryConfig.provider}
+          </span>
+          <span className='rounded border border-border/70 bg-card/70 px-2 py-0.5'>
+            Effective: {resolvedProvider}
+          </span>
+        </Card>
 
-      <DatabaseAiQueryReviewSection
-        pendingAiQuery={pendingAiQuery}
-        codeSnippets={codeSnippets}
-        selectedSnippetIndex={selectedSnippetIndex}
-        setSelectedSnippetIndex={setSelectedSnippetIndex}
-        setAiQueries={setAiQueries}
-        setSelectedAiQueryId={setSelectedAiQueryId}
-        setPendingAiQuery={setPendingAiQuery}
-        updateSelectedNodeConfig={updateSelectedNodeConfig}
-        databaseConfig={databaseConfig}
-        queryConfig={queryConfig}
-        toast={toast}
-      />
+        <DatabaseAiQueryReviewSection />
 
-      <div className='space-y-3'>
-        <Label className='text-xs text-gray-400'>Quick Presets</Label>
-        <div className='flex flex-wrap gap-2 items-center'>
-          <Button
-            type='button'
-            className='h-7 rounded-md border border-blue-700 bg-blue-500/10 px-2 text-[10px] text-blue-200 hover:bg-blue-500/20'
-            onClick={(): void => openSaveQueryPresetModal()}
-          >
-            Save As Preset
-          </Button>
-          <SelectSimple
-            size='xs'
-            value={databaseConfig.presetId ?? 'custom'}
-            onValueChange={(value: string): void => applyDatabasePreset(value)}
-            options={presetOptions.map((preset: DatabasePresetOption) => ({
-              value: preset.id,
-              label: preset.label
-            }))}
-            placeholder='Select preset'
-            triggerClassName='h-7 w-[180px] border-border bg-card/70 text-xs text-white'
-          />
-          <SelectSimple
-            size='xs'
-            value={selectedAiQueryId || 'none'}
-            onValueChange={(value: string): void => {
-              if (value === 'none') {
-                setSelectedAiQueryId('');
-                return;
-              }
-              const aiQuery = aiQueries.find((q: AiQuery) => q.id === value);
-              if (aiQuery) {
-                setSelectedAiQueryId(value);
-                updateSelectedNodeConfig({
-                  database: {
-                    ...databaseConfig,
-                    query: {
-                      ...queryConfig,
-                      mode: 'custom',
-                      queryTemplate: aiQuery.query,
-                    },
-                  },
-                });
-              }
-            }}
-            options={[
-              { value: 'none', label: 'No AI Query' },
-              ...aiQueries.map((aiQuery: AiQuery) => ({
-                value: aiQuery.id,
-                label: `AI Query ${new Date(aiQuery.timestamp).toLocaleTimeString()}`
-              }))
-            ]}
-            placeholder='AI Queries'
-            triggerClassName='h-7 w-[180px] border-border bg-card/70 text-xs text-white'
-          />
-          <Button
-            type='button'
-            className='h-7 rounded-md border border-rose-500/40 px-2 text-[10px] text-rose-200 hover:bg-rose-500/10 disabled:opacity-40'
-            disabled={!selectedAiQueryId}
-            onClick={(): void => {
-              if (!selectedAiQueryId) return;
-              const targetId = selectedAiQueryId;
-              setAiQueries((prev: AiQuery[]): AiQuery[] =>
-                prev.filter((query: AiQuery): boolean => query.id !== targetId)
-              );
-              setSelectedAiQueryId('');
-              toast('AI query removed.', { variant: 'success' });
-            }}
-            title='Remove selected AI query'
-          >
-            Remove AI Query
-          </Button>
-        </div>
-      </div>
-
-      <Card variant='subtle-compact' padding='sm' className='flex flex-wrap items-center justify-between gap-2 border-border/60 bg-card/40'>
-        <div>
-          <div className='text-xs font-medium text-gray-200'>Placeholders</div>
-          <div className='text-[10px] text-gray-400'>
-            Open the matrix to insert any placeholder into queries or prompts.
+        <div className='space-y-3'>
+          <Label className='text-xs text-gray-400'>Quick Presets</Label>
+          <div className='flex flex-wrap gap-2 items-center'>
+            <Button
+              type='button'
+              className='h-7 rounded-md border border-blue-700 bg-blue-500/10 px-2 text-[10px] text-blue-200 hover:bg-blue-500/20'
+              onClick={(): void => openSaveQueryPresetModal()}
+            >
+              Save as Preset
+            </Button>
+            <Button
+              type='button'
+              className='h-7 rounded-md border border-purple-700 bg-purple-500/10 px-2 text-[10px] text-purple-200 hover:bg-purple-500/20'
+              onClick={(): void => setSnippetsModalOpen(true)}
+            >
+              Templates & Snippets
+            </Button>
           </div>
         </div>
-        <Button
-          type='button'
-          variant='info'
-          size='xs'
-          onClick={(): void => setPlaceholderMatrixOpen(true)}
-        >
-          <LayoutGrid className='mr-2 h-3.5 w-3.5' />
-          Placeholders
-        </Button>
-      </Card>
+
+        <DatabaseTemplateSnippetsDialog
+          open={snippetsModalOpen}
+          onOpenChange={setSnippetsModalOpen}
+          templateSnippets={templateSnippets}
+          readQueryTypes={readQueryTypes}
+          queryOperatorGroups={queryOperatorGroups}
+          updateOperatorGroups={updateOperatorGroups}
+          aggregationStageSnippets={aggregationStageSnippets}
+          sortPresets={sortPresets}
+          projectionPresets={projectionPresets}
+        />
+
+        <div className='space-y-3'>
+          <div className='flex items-center justify-between gap-2'>
+            <Label className='text-xs text-gray-400'>AI Generation Prompt</Label>
+            <div className='flex items-center gap-2'>
+              <Button
+                type='button'
+                variant='outline'
+                size='xs'
+                className='h-6 gap-1 px-2 text-[9px]'
+                onClick={(): void => {
+                  setPlaceholderTarget('aiPrompt');
+                  setPlaceholderMatrixOpen(true);
+                }}
+              >
+                <LayoutGrid className='size-3' />
+                Insert Placeholder
+              </Button>
+              <Button
+                type='button'
+                className='h-6 rounded-md border border-purple-700 bg-purple-500/10 px-2 text-[9px] text-purple-200 hover:bg-purple-500/20'
+                loading={sendingToAi}
+                disabled={sendingToAi || !databaseConfig.aiPrompt?.trim()}
+                onClick={(): void => {
+                  if (onSendToAi && selectedNodeId && databaseConfig.aiPrompt) {
+                    void onSendToAi(selectedNodeId, databaseConfig.aiPrompt);
+                  }
+                }}
+              >
+                Generate Query
+              </Button>
+            </div>
+          </div>
+          <Textarea
+            className='min-h-[80px] w-full rounded-md border border-border bg-card/60 text-xs text-white'
+            value={databaseConfig.aiPrompt ?? ''}
+            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
+              updateSelectedNodeConfig({
+                database: {
+                  ...databaseConfig,
+                  aiPrompt: event.target.value,
+                },
+              })
+            }
+            onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+              // Send on Ctrl+Enter or Cmd+Enter
+              if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                event.preventDefault();
+                if (onSendToAi && selectedNodeId && databaseConfig.aiPrompt?.trim() && !sendingToAi) {
+                  void onSendToAi(selectedNodeId, databaseConfig.aiPrompt);
+                }
+              }
+            }}
+            placeholder={`Write a ${providerLabel} query that finds products where... (Ctrl+Enter to send)`}
+          />
+          <DatabaseAiPromptConnectionStatus
+            edges={edges}
+            nodes={nodes}
+            selectedNodeId={selectedNodeId}
+            runtimeState={runtimeState}
+            aiPrompt={databaseConfig.aiPrompt ?? ''}
+            sendingToAi={sendingToAi}
+            onSendToAi={onSendToAi}
+            updateQueryConfig={(patch) => {
+              updateSelectedNodeConfig({
+                database: {
+                  ...databaseConfig,
+                  query: {
+                    ...queryConfig,
+                    ...patch,
+                  },
+                },
+              });
+            }}
+            toast={toast}
+          />
+        </div>
+
+        <DatabaseQueryInputControls />
+
+        {operation === 'update' && (
+          <div className='space-y-3 rounded-md border border-border bg-card/40 p-3'>
+            <Label className='text-xs text-gray-400'>Sample JSON (fetch to enable Field Mapping)</Label>
+            <div className='flex flex-wrap gap-2 items-center'>
+              {hasSchemaConnection && fetchedCollections.length > 0 && (
+                <SelectSimple
+                  size='sm'
+                  value={sampleState.entityType}
+                  onValueChange={(value: string): void => {
+                    setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
+                      ...prev,
+                      [selectedNodeId]: {
+                        ...sampleState,
+                        entityType: value,
+                      },
+                    }));
+                    // Auto-fetch first document from selected collection
+                    void onFetchUpdaterSample(selectedNodeId, value, '', {
+                      notify: false,
+                    });
+                  }}
+                  options={fetchedCollections.map((coll) => ({
+                    value: coll.name,
+                    label: formatCollectionLabel(coll, Boolean(fetchedDbSchema?.provider === 'multi'))
+                  }))}
+                  placeholder='Select collection'
+                  triggerClassName='h-7 w-[220px] border-border bg-card/70 text-[11px] text-white'
+                />
+              )}
+              <Input
+                size='sm'
+                value={sampleState.entityId}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>): void => {
+                  setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
+                    ...prev,
+                    [selectedNodeId]: { ...sampleState, entityId: e.target.value },
+                  }));
+                }}
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>): void => {
+                  if (e.key === 'Enter') {
+                    void onFetchUpdaterSample(selectedNodeId, sampleState.entityType, sampleState.entityId);
+                  }
+                }}
+                placeholder='Entity ID (e.g. products/123 or product-uuid)'
+                className='h-7 flex-1 border-border bg-card/70 text-[11px] text-white'
+              />
+              <Button
+                type='button'
+                className='h-7 rounded-md border border-border bg-card/70 px-3 text-[10px] text-gray-200 hover:bg-muted/60'
+                loading={updaterSampleLoading}
+                onClick={(): void => {
+                  void onFetchUpdaterSample(selectedNodeId, sampleState.entityType, sampleState.entityId);
+                }}
+              >
+                Fetch
+              </Button>
+            </div>
+          </div>
+        )}
+
+        <div className='space-y-3'>
+          <div className='flex items-center justify-between gap-2'>
+            <div className='flex items-center gap-2'>
+              <Label className='text-xs text-gray-400'>Target Schema Context</Label>
+              {hasSchemaConnection ? (
+                <div className='flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-medium text-emerald-400 border border-emerald-500/20'>
+                  <div className='h-1 w-1 rounded-full bg-emerald-400' />
+                  CONNECTED
+                </div>
+              ) : (
+                <div className='flex items-center gap-1.5 rounded-full bg-gray-500/10 px-2 py-0.5 text-[9px] font-medium text-gray-400 border border-border'>
+                  NO SCHEMA NODE
+                </div>
+              )}
+            </div>
+            <div className='flex items-center gap-2'>
+              {hasSchemaConnection && (
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='xs'
+                  className='h-6 gap-1 px-2 text-[9px]'
+                  onClick={onSyncSchema}
+                  loading={schemaSyncing}
+                  disabled={schemaSyncing}
+                >
+                  Sync Schema
+                </Button>
+              )}
+              <Button
+                type='button'
+                variant='outline'
+                size='xs'
+                className='h-6 gap-1 px-2 text-[9px]'
+                onClick={(): void => {
+                  setPlaceholderTarget('query');
+                  setPlaceholderMatrixOpen(true);
+                }}
+              >
+                <LayoutGrid className='size-3' />
+                Placeholders
+              </Button>
+            </div>
+          </div>
+
+          <div className='grid gap-3 lg:grid-cols-[1fr_300px]'>
+            <div className='space-y-3 min-w-0'>
+              {!schemaMatrix && !schemaLoading && (
+                <div className='rounded-md border border-dashed border-border p-4 text-center'>
+                  <p className='text-[11px] text-gray-500'>
+                    Connect a <strong>Database Schema</strong> node to enable schema-aware
+                    constructor tools.
+                  </p>
+                </div>
+              )}
+
+              {schemaLoading && (
+                <div className='flex h-32 items-center justify-center rounded-md border border-border bg-card/20'>
+                  <div className='flex items-center gap-2 text-xs text-gray-500'>
+                    <div className='h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent' />
+                    Analyzing database schema...
+                  </div>
+                </div>
+              )}
+
+              {schemaMatrix && (
+                <div className='grid gap-3 sm:grid-cols-2'>
+                  <Card variant='subtle-compact' padding='sm' className='space-y-2 border-border/60 bg-card/35'>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500'>Collections</span>
+                      <span className='text-[10px] text-gray-400'>{schemaCollections.length} found</span>
+                    </div>
+                    <div className='max-h-48 overflow-y-auto space-y-1 pr-1'>
+                      {schemaCollections.map((coll) => (
+                        <button
+                          key={coll.name}
+                          type='button'
+                          className={`w-full text-left rounded px-2 py-1.5 text-[11px] transition-colors ${
+                            queryConfig.collection === coll.name
+                              ? 'bg-emerald-500/15 text-emerald-200 border border-emerald-500/30'
+                              : 'text-gray-400 hover:bg-card/60 border border-transparent'
+                          }`}
+                          onClick={() => {
+                            setSelectedAiQueryId('');
+                            updateSelectedNodeConfig({
+                              database: {
+                                ...databaseConfig,
+                                query: {
+                                  ...queryConfig,
+                                  collection: coll.name,
+                                }
+                              }
+                            });
+                          }}
+                        >
+                          <div className='flex items-center justify-between'>
+                            <span className='font-medium truncate'>{coll.name}</span>
+                            {isMultiSchema && coll.provider && (
+                              <span className='text-[9px] opacity-60 ml-2'>{coll.provider}</span>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </Card>
+
+                  <Card variant='subtle-compact' padding='sm' className='space-y-2 border-border/60 bg-card/35'>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500'>Fields</span>
+                      <span className='text-[10px] text-gray-400'>
+                        {queryConfig.collection ? (schemaCollections.find(c => c.name === queryConfig.collection)?.fields.length ?? 0) : 0} fields
+                      </span>
+                    </div>
+                    <div className='max-h-48 overflow-y-auto pr-1'>
+                      {queryConfig.collection ? (
+                        <div className='space-y-1'>
+                          {schemaCollections.find(c => c.name === queryConfig.collection)?.fields.map(field => (
+                            <div key={field.name} className='group flex items-center justify-between rounded px-2 py-1 hover:bg-card/60 transition-colors'>
+                              <div className='flex items-center gap-2 truncate'>
+                                <span className='text-[11px] text-gray-300 font-medium truncate'>{field.name}</span>
+                                <span className='text-[9px] text-gray-500 font-mono'>{field.type}</span>
+                              </div>
+                              <Button
+                                type='button'
+                                variant='ghost'
+                                size='xs'
+                                className='h-5 w-5 p-0 opacity-0 group-hover:opacity-100'
+                                onClick={() => handleInsertPlaceholder(`{{${field.name}}}`, 'query')}
+                                title='Insert as placeholder'
+                              >
+                                <LayoutGrid className='size-2.5' />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className='text-[10px] text-gray-500 text-center py-4 italic'>Select a collection to view fields</p>
+                      )}
+                    </div>
+                  </Card>
+                </div>
+              )}
+            </div>
+
+            <div className='space-y-3'>
+              {queryConfig.collection && (
+                <Card variant='subtle-compact' padding='none' className='border-border/60 bg-card/35 overflow-hidden flex flex-col h-full min-h-[200px]'>
+                  <div className='px-3 py-2 border-b border-border/60 bg-black/20 flex items-center justify-between'>
+                    <span className='text-[10px] font-bold uppercase tracking-wider text-gray-500'>Type Definition</span>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='xs'
+                      className='h-5 px-1.5 text-[9px] text-gray-400 hover:text-gray-200'
+                      onClick={() => {
+                        const coll = schemaCollections.find(c => c.name === queryConfig.collection);
+                        if (coll) {
+                          const definition = formatCollectionSchema(coll.name, coll.fields);
+                          void navigator.clipboard.writeText(definition);
+                          toast('Interface copied to clipboard', { variant: 'success' });
+                        }
+                      }}
+                    >
+                      Copy TS
+                    </Button>
+                  </div>
+                  <div className='flex-1 p-2 overflow-auto font-mono text-[10px] text-emerald-300/90 leading-relaxed'>
+                    {(() => {
+                      const coll = schemaCollections.find(c => c.name === queryConfig.collection);
+                      if (!coll) return '// Select a collection';
+                      return (
+                        <pre className='whitespace-pre-wrap break-all'>
+                          {formatCollectionSchema(coll.name, coll.fields)}
+                        </pre>
+                      );
+                    })()}
+                  </div>
+                </Card>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       <PlaceholderMatrixDialog
         open={placeholderMatrixOpen}
@@ -499,302 +522,11 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
         groups={placeholderGroups}
         target={placeholderTarget}
         onTargetChange={setPlaceholderTarget}
-        onInsert={handleInsertPlaceholder}
-        onSync={onSyncSchema}
-        syncing={schemaSyncing}
+        onInsert={(token, target) => {
+          handleInsertPlaceholder(token, target);
+          setPlaceholderMatrixOpen(false);
+        }}
       />
-
-      {hasSchemaConnection && (
-        <div className='rounded-md border border-purple-800/50 bg-purple-950/20 p-3'>
-          <div className='mb-2 flex items-center gap-2'>
-            <span className='text-[11px] font-medium text-purple-300'>
-              Database Schema
-            </span>
-            {schemaLoading && (
-              <span className='text-[10px] text-gray-500'>Loading...</span>
-            )}
-          </div>
-          {fetchedCollections.length > 0 ? (
-            <div className='space-y-2'>
-              <div className='text-[10px] text-gray-400'>
-                Click to set collection or insert field:
-              </div>
-              <div className='flex flex-wrap gap-1'>
-                {fetchedCollections.map((coll: CollectionSchema): React.JSX.Element => {
-                  const schemaFields = coll.fields?.map((f: FieldSchema): string => `${f.name}: ${f.type}`).join(', ') ?? '';
-                  const resolvedTooltip = `{{schema:Collection "${coll.name}" with fields: ${schemaFields || 'unknown'}}}`;
-                  return (
-                    <Tooltip
-                      key={`${coll.provider ?? 'db'}:${coll.name}`}
-                      content={resolvedTooltip}
-                      side='bottom'
-                      maxWidth='500px'
-                    >
-                      <Button
-                        type='button'
-                        className='rounded-md border border-purple-700/50 bg-purple-500/10 px-2 py-1 text-[10px] text-purple-300 hover:bg-purple-500/20'
-                        onClick={(): void => {
-                          updateQueryConfig({
-                            mode: 'custom',
-                            collection: coll.name,
-                          });
-                          toast(`Collection set to: ${coll.name}`, { variant: 'success' });
-                        }}
-                      >
-                        {formatCollectionLabel(coll, Boolean(fetchedDbSchema?.provider === 'multi'))}
-                      </Button>
-                    </Tooltip>
-                  );
-                })}
-              </div>
-              {((): React.JSX.Element | null => {
-                const currentColl = fetchedCollections.find(
-                  (c: CollectionSchema) => c.name === queryConfig.collection
-                );
-                if (!currentColl?.fields?.length) return null;
-                return (
-                  <div className='mt-2'>
-                    <div className='text-[10px] text-gray-400'>
-                      Fields in {currentColl.name}:
-                    </div>
-                    <div className='mt-1 flex flex-wrap gap-1'>
-                      {currentColl.fields.slice(0, 20).map((field: FieldSchema): React.JSX.Element => (
-                        <Button
-                          key={field.name}
-                          type='button'
-                          className='rounded-md border border/50 bg-card/30 px-2 py-0.5 text-[9px] text-gray-300 hover:bg-gray-700/50'
-                          onClick={(): void => {
-                            const fieldQuery = `"${field.name}": "{{value}}"`;
-                            const current = queryTemplateValue.trim();
-                            let newQuery: string;
-                            if (!current || current === '{}') {
-                              newQuery = `{\n  ${fieldQuery}\n}`;
-                            } else if (current.endsWith('}')) {
-                              const insertPos = current.lastIndexOf('}');
-                              const before = current.slice(0, insertPos).trimEnd();
-                              const needsComma =
-                                before.length > 1 && !before.endsWith('{') && !before.endsWith(',');
-                              newQuery = `${before}${needsComma ? ',' : ''}\n  ${fieldQuery}\n}`;
-                            } else {
-                              newQuery = `${current}\n  ${fieldQuery}`;
-                            }
-                            applyQueryTemplateUpdate(newQuery);
-                          }}
-                          title={`Type: ${field.type}`}
-                        >
-                          {field.name}
-                          <span className='ml-1 text-[8px] text-gray-500'>
-                            {field.type}
-                          </span>
-                        </Button>
-                      ))}
-                      {currentColl.fields.length > 20 && (
-                        <span className='px-2 py-0.5 text-[9px] text-gray-500'>
-                          +{currentColl.fields.length - 20} more
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })()}
-            </div>
-          ) : !schemaLoading ? (
-            <div className='text-[10px] text-gray-500 italic'>
-              No schema data available
-            </div>
-          ) : null}
-        </div>
-      )}
-
-      <div className='space-y-2'>
-        <Label className='text-xs text-gray-400'>Template Snippets</Label>
-        <Button
-          type='button'
-          className='flex items-center gap-2 rounded-md border border-purple-600 bg-purple-500/10 px-3 py-1.5 text-[11px] text-purple-200 hover:bg-purple-500/20'
-          onClick={(): void => setSnippetsModalOpen(true)}
-        >
-          <LayoutGrid className='h-3.5 w-3.5' />
-          Browse Snippets
-        </Button>
-      </div>
-
-      <DatabaseTemplateSnippetsDialog
-        open={snippetsModalOpen}
-        onOpenChange={setSnippetsModalOpen}
-        templateSnippets={templateSnippets}
-        readQueryTypes={readQueryTypes}
-        queryOperatorGroups={queryOperatorGroups}
-        updateOperatorGroups={updateOperatorGroups}
-        aggregationStageSnippets={aggregationStageSnippets}
-        sortPresets={sortPresets}
-        projectionPresets={projectionPresets}
-        isPrismaProvider={isPrismaProvider}
-        setSelectedAiQueryId={setSelectedAiQueryId}
-        updateQueryConfig={updateQueryConfig}
-        insertTemplateSnippet={insertTemplateSnippet}
-        toast={toast}
-      />
-
-      <div className='space-y-3'>
-        <Label className='text-xs text-gray-400'>AI Prompt (Output to AI Node)</Label>
-        <Textarea
-          ref={aiPromptRef}
-          className='min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
-          value={databaseConfig.aiPrompt ?? ''}
-          onFocus={(): void => setPlaceholderTarget('aiPrompt')}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
-            updateSelectedNodeConfig({
-              database: {
-                ...databaseConfig,
-                aiPrompt: event.target.value,
-              },
-            })
-          }
-          onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
-            // Send on Ctrl+Enter or Cmd+Enter
-            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-              event.preventDefault();
-              if (onSendToAi && selectedNode?.id && databaseConfig.aiPrompt?.trim() && !sendingToAi) {
-                void onSendToAi(selectedNode.id, databaseConfig.aiPrompt);
-              }
-            }
-          }}
-          placeholder={`Write a ${providerLabel} query that finds products where... (Ctrl+Enter to send)`}
-        />
-        <DatabaseAiPromptConnectionStatus
-          edges={edges}
-          nodes={nodes}
-          selectedNodeId={selectedNode.id}
-          runtimeState={runtimeState}
-          aiPrompt={databaseConfig.aiPrompt ?? ''}
-          sendingToAi={sendingToAi}
-          onSendToAi={onSendToAi}
-          updateQueryConfig={updateQueryConfig}
-          toast={toast}
-        />
-      </div>
-
-      {operation === 'update' && (
-        <div className='space-y-3 rounded-md border border-border bg-card/40 p-3'>
-          <Label className='text-xs text-gray-400'>Sample JSON (fetch to enable Field Mapping)</Label>
-          <div className='flex flex-wrap gap-2 items-center'>
-            {hasSchemaConnection && fetchedCollections.length > 0 && (
-              <SelectSimple
-                size='sm'
-                value={sampleState.entityType}
-                onValueChange={(value: string): void => {
-                  setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
-                    ...prev,
-                    [selectedNodeId]: {
-                      ...sampleState,
-                      entityType: value,
-                    },
-                  }));
-                  // Auto-fetch first document from selected collection
-                  void onFetchUpdaterSample(selectedNodeId, value, '', {
-                    notify: false,
-                  });
-                }}
-                options={fetchedCollections.map((coll: CollectionSchema) => ({
-                  value: coll.name,
-                  label: formatCollectionLabel(coll, Boolean(fetchedDbSchema?.provider === 'multi'))
-                }))}
-                placeholder='Select collection'
-                triggerClassName='w-[180px] border-border bg-card/70 text-sm text-white'
-              />
-            )}
-            <Input
-              className='w-[200px] rounded-md border border-border bg-card/70 text-sm text-white'
-              value={sampleState.entityId}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
-                  ...prev,
-                  [selectedNodeId]: {
-                    ...sampleState,
-                    entityId: event.target.value,
-                  },
-                }))
-              }
-              placeholder='Document ID'
-            />
-            <Button
-              type='button'
-              className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
-              disabled={updaterSampleLoading || (hasSchemaConnection && !sampleState.entityType)}
-              onClick={(): void =>
-                void onFetchUpdaterSample(
-                  selectedNodeId,
-                  sampleState.entityType,
-                  sampleState.entityId
-                )
-              }
-            >
-              {updaterSampleLoading ? 'Loading...' : 'Fetch sample'}
-            </Button>
-          </div>
-          {hasSchemaConnection && !fetchedDbSchema?.collections?.length && !schemaLoading && (
-            <p className='text-[11px] text-amber-300'>Connect a Database Schema node to select collections</p>
-          )}
-          <Textarea
-            className='min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
-            value={sampleState.json}
-            onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
-              setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
-                ...prev,
-                [selectedNodeId]: {
-                  ...sampleState,
-                  json: event.target.value,
-                },
-              }))
-            }
-            placeholder='{ "id": "123", "title": "Sample" }'
-          />
-          {parsedSampleError ? (
-            <p className='text-[11px] text-rose-300'>{parsedSampleError}</p>
-          ) : null}
-          <div className='flex flex-wrap gap-2'>
-            <SelectSimple
-              size='sm'
-              value={String(sampleState.depth)}
-              onValueChange={(value: string): void =>
-                setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
-                  ...prev,
-                  [selectedNodeId]: {
-                    ...sampleState,
-                    depth: Number(value),
-                  },
-                }))
-              }
-              options={[1, 2, 3, 4].map((depth: number) => ({
-                value: String(depth),
-                label: `Depth ${depth}`
-              }))}
-              placeholder='Depth'
-              triggerClassName='w-[150px] border-border bg-card/70 text-sm text-white'
-            />
-            <Button
-              type='button'
-              className={`rounded-md border px-3 text-[10px] ${
-                sampleState.includeContainers
-                  ? 'text-emerald-200 hover:bg-emerald-500/10'
-                  : 'text-gray-300 hover:bg-muted/60'
-              }`}
-              onClick={(): void =>
-                setUpdaterSamples((prev: Record<string, UpdaterSampleState>): Record<string, UpdaterSampleState> => ({
-                  ...prev,
-                  [selectedNodeId]: {
-                    ...sampleState,
-                    includeContainers: !sampleState.includeContainers,
-                  },
-                }))
-              }
-            >
-              {sampleState.includeContainers ? 'Containers: On' : 'Containers: Off'}
-            </Button>
-          </div>
-        </div>
-      )}
-
     </div>
   );
 }

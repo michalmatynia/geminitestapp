@@ -1,12 +1,12 @@
 'use client';
 
 import React, { createContext, useContext, useCallback, useMemo } from 'react';
-import type { RuleDraft, PromptEngineContextValue } from '../context/PromptEngineContext';
+import type { RuleDraft } from '../../context/PromptEngineContext';
 import type { 
   PromptValidationRule, 
   PromptValidationSimilarPattern, 
   PromptAutofixOperation 
-} from '../settings';
+} from '../../settings';
 import { 
   updateSimilarInRule, 
   removeSimilarFromRule, 
@@ -15,7 +15,7 @@ import {
   removeAutofixOperationFromRule,
   addAutofixOperationToRule
 } from '../rule-item-mutations';
-import { usePromptEngine } from '../context/PromptEngineContext';
+import { usePromptEngine } from '../../context/PromptEngineContext';
 
 interface RuleItemContextValue {
   draft: RuleDraft;

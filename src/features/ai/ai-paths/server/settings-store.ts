@@ -1605,7 +1605,11 @@ export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   assertMongoConfigured();
   const cached = getCachedAiPathsSettings();
   if (cached) return cached;
-  const settings = await listMongoAiPathsSettings();
+  let settings = await listMongoAiPathsSettings();
+  // Auto-apply built-in path upgrades on cold reads (idempotent once up-to-date).
+  if (!hasParameterInferenceDefaults(settings)) {
+    settings = await ensureParameterInferenceDefaults(settings);
+  }
   setCachedAiPathsSettings(settings);
   return settings;
 }

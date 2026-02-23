@@ -30,6 +30,8 @@ import { usePageBuilderState, usePageBuilderDispatch, usePageBuilderSelection } 
 
 import type { InspectorSettings, BlockInstance } from '../../types/page-builder';
 
+type TabValue = 'settings' | 'animation' | 'cssAnimation' | 'customCss' | 'events' | 'connections' | 'ai';
+
 function ComponentSettingsPanelInner(): React.ReactNode {
   const state = usePageBuilderState();
   const dispatch = usePageBuilderDispatch();
@@ -409,5 +411,13 @@ function ComponentSettingsPanelInner(): React.ReactNode {
         )}
       </SidePanel>
     </InspectorAiProvider>
+  );
+}
+
+export function ComponentSettingsPanel(): React.ReactNode {
+  return (
+    <ComponentSettingsProvider>
+      <ComponentSettingsPanelInner />
+    </ComponentSettingsProvider>
   );
 }

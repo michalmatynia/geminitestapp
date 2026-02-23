@@ -1,9 +1,16 @@
 'use client';
 
-import { createContext, useContext } from 'react';
-import type { ProductImageSlot, ProductWithImages } from '@/shared/contracts/products';
+import { createContext, useContext, useMemo } from 'react';
+
 import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
+import type {
+  ProductImageSlot,
+  ProductWithImages,
+  ProductDraft,
+} from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
+
+import { useProductImages } from '../hooks/useProductImages';
 
 export interface ProductFormImageContextType {
   imageSlots: (ProductImageSlot | null)[];
@@ -26,12 +33,84 @@ export interface ProductFormImageContextType {
   refreshImagesFromProduct: (savedProduct: ProductWithImages) => void;
 }
 
-export const ProductFormImageContext = createContext<ProductFormImageContextType | null>(null);
+export const ProductFormImageContext =
+  createContext<ProductFormImageContextType | null>(null);
+
+export function ProductFormImageProvider({
+  children,
+  product,
+  draft,
+  uploading,
+  uploadError,
+  uploadSuccess,
+  onInteraction,
+}: {
+  children: React.ReactNode;
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+  uploading: boolean;
+  uploadError: string | null;
+  uploadSuccess: boolean;
+  onInteraction?: () => void;
+}) {
+  const images = useProductImages(product, draft?.imageLinks);
+
+  const value = useMemo(
+    () => ({
+      ...images,
+      uploading,
+      uploadError,
+      uploadSuccess,
+      refreshImagesFromProduct: images.refreshFromProduct,
+      handleSlotImageChange: (file: File | null, index: number) => {
+        onInteraction?.();
+        images.handleSlotImageChange(file, index);
+      },
+      handleSlotFileSelect: (file: ImageFileSelection | null, index: number) => {
+        onInteraction?.();
+        images.handleSlotFileSelect(file, index);
+      },
+      handleSlotDisconnectImage: async (index: number) => {
+        onInteraction?.();
+        await images.handleSlotDisconnectImage(index);
+      },
+      handleMultiImageChange: (files: File[]) => {
+        onInteraction?.();
+        images.handleMultiImageChange(files);
+      },
+      handleMultiFileSelect: (files: ImageFileSelection[]) => {
+        onInteraction?.();
+        images.handleMultiFileSelect(files);
+      },
+      swapImageSlots: (from: number, to: number) => {
+        onInteraction?.();
+        images.swapImageSlots(from, to);
+      },
+      setImageLinkAt: (index: number, value: string) => {
+        onInteraction?.();
+        images.setImageLinkAt(index, value);
+      },
+      setImageBase64At: (index: number, value: string) => {
+        onInteraction?.();
+        images.setImageBase64At(index, value);
+      },
+    }),
+    [images, uploading, uploadError, uploadSuccess, onInteraction]
+  );
+
+  return (
+    <ProductFormImageContext.Provider value={value}>
+      {children}
+    </ProductFormImageContext.Provider>
+  );
+}
 
 export const useProductFormImages = (): ProductFormImageContextType => {
   const context = useContext(ProductFormImageContext);
   if (!context) {
-    throw internalError('useProductFormImages must be used within a ProductFormImageProvider');
+    throw internalError(
+      'useProductFormImages must be used within a ProductFormImageProvider'
+    );
   }
   return context;
 };

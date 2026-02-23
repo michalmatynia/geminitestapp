@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useMemo, useState, useCallback, type ReactNode } from 'react';
+import React, { useReducer, useMemo, useState, useCallback, type ReactNode } from 'react';
 
 import type { 
   SectionInstance, 
@@ -19,7 +19,10 @@ export { pageBuilderReducer } from './page-builder/page-builder-reducer';
 import { PageStateContext, usePageBuilderState } from './page-builder/PageStateContext';
 import { PageDispatchContext, usePageBuilderDispatch } from './page-builder/PageDispatchContext';
 import { PageSelectionContext, PageSelectionValue, usePageBuilderSelection } from './page-builder/PageSelectionContext';
-import { VectorOverlayContext, VectorOverlayRequest, VectorOverlayValue, useVectorOverlay } from './page-builder/VectorOverlayContext';
+import { VectorOverlayContext, VectorOverlayRequest, VectorOverlayValue, useVectorOverlay, VectorOverlayResult } from './page-builder/VectorOverlayContext';
+
+export { usePageBuilderState, usePageBuilderDispatch, usePageBuilderSelection, useVectorOverlay };
+export type { VectorOverlayResult, VectorOverlayRequest };
 
 // ---------------------------------------------------------------------------
 // Context

@@ -25,7 +25,7 @@ export interface SelectSimpleOption {
 interface SelectSimpleProps {
   value: string | undefined;
   onValueChange: (value: string) => void;
-  options: SelectSimpleOption[];
+  options: SelectSimpleOption[] | readonly SelectSimpleOption[];
   placeholder?: string | undefined;
   className?: string | undefined;
   triggerClassName?: string | undefined;

@@ -1,15 +1,20 @@
 'use client';
 
-import { createContext, useContext } from 'react';
-import type { 
-  CatalogRecord, 
-  ProductCategory, 
-  ProductTag, 
-  Producer, 
-  PriceGroupWithDetails 
-} from '@/shared/contracts/products';
+import { createContext, useContext, useMemo } from 'react';
+
 import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
+import type {
+  CatalogRecord,
+  ProductCategory,
+  ProductTag,
+  Producer,
+  PriceGroupWithDetails,
+  ProductWithImages,
+  ProductDraft,
+} from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
+
+import { useProductMetadata } from '../hooks/useProductMetadata';
 
 export interface ProductFormMetadataContextType {
   catalogs: CatalogRecord[];
@@ -33,12 +38,72 @@ export interface ProductFormMetadataContextType {
   filteredPriceGroups: PriceGroupWithDetails[];
 }
 
-export const ProductFormMetadataContext = createContext<ProductFormMetadataContextType | null>(null);
+export const ProductFormMetadataContext =
+  createContext<ProductFormMetadataContextType | null>(null);
+
+export function ProductFormMetadataProvider({
+  children,
+  product,
+  draft,
+  initialCatalogId,
+  onInteraction,
+}: {
+  children: React.ReactNode;
+  product?: ProductWithImages;
+  draft?: ProductDraft | null;
+  initialCatalogId?: string;
+  onInteraction?: () => void;
+}) {
+  const metadata = useProductMetadata({
+    product,
+    initialCatalogId,
+    initialCatalogIds:
+      draft?.catalogIds && draft.catalogIds.length > 0
+        ? draft.catalogIds
+        : initialCatalogId
+          ? [initialCatalogId]
+          : undefined,
+    initialCategoryId: draft?.categoryId ?? null,
+    initialTagIds: draft?.tagIds,
+    initialProducerIds: draft?.producerIds,
+  });
+
+  const value = useMemo(
+    () => ({
+      ...metadata,
+      toggleCatalog: (id: string) => {
+        onInteraction?.();
+        metadata.toggleCatalog(id);
+      },
+      setCategoryId: (id: string | null) => {
+        onInteraction?.();
+        metadata.setCategoryId(id);
+      },
+      toggleTag: (id: string) => {
+        onInteraction?.();
+        metadata.toggleTag(id);
+      },
+      toggleProducer: (id: string) => {
+        onInteraction?.();
+        metadata.toggleProducer(id);
+      },
+    }),
+    [metadata, onInteraction]
+  );
+
+  return (
+    <ProductFormMetadataContext.Provider value={value}>
+      {children}
+    </ProductFormMetadataContext.Provider>
+  );
+}
 
 export const useProductFormMetadata = (): ProductFormMetadataContextType => {
   const context = useContext(ProductFormMetadataContext);
   if (!context) {
-    throw internalError('useProductFormMetadata must be used within a ProductFormMetadataProvider');
+    throw internalError(
+      'useProductFormMetadata must be used within a ProductFormMetadataProvider'
+    );
   }
   return context;
 };

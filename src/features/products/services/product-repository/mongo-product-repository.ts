@@ -1040,6 +1040,63 @@ export const mongoProductRepository: ProductRepository = {
       );
   },
 
+  async bulkReplaceProductCatalogs(productIds: string[], catalogIds: string[]) {
+    const db = await getMongoDb();
+    if (productIds.length === 0) return;
+    const uniqueIds = Array.from(new Set(catalogIds));
+    const catalogs = await mongoCatalogRepository.getCatalogsByIds(uniqueIds);
+    const now = new Date();
+    const catalogEntries = catalogs.map((catalog: CatalogRecord) => ({
+      catalogId: catalog.id,
+      assignedAt: now.toISOString(),
+      catalog,
+    }));
+
+    await db
+      .collection<ProductDocument>(productCollectionName)
+      .updateMany(
+        { id: { $in: productIds } } as Filter<ProductDocument>,
+        { $set: { catalogs: catalogEntries, updatedAt: new Date() } }
+      );
+  },
+
+  async bulkAddProductCatalogs(productIds: string[], catalogIds: string[]) {
+    const db = await getMongoDb();
+    if (productIds.length === 0 || catalogIds.length === 0) return;
+    const uniqueIds = Array.from(new Set(catalogIds));
+    const catalogs = await mongoCatalogRepository.getCatalogsByIds(uniqueIds);
+    const now = new Date();
+    const catalogEntries = catalogs.map((catalog: CatalogRecord) => ({
+      catalogId: catalog.id,
+      assignedAt: now.toISOString(),
+      catalog,
+    }));
+
+    await db
+      .collection<ProductDocument>(productCollectionName)
+      .updateMany(
+        { id: { $in: productIds } } as Filter<ProductDocument>,
+        {
+          $addToSet: { catalogs: { $each: catalogEntries } },
+          $set: { updatedAt: new Date() },
+        }
+      );
+  },
+
+  async bulkRemoveProductCatalogs(productIds: string[], catalogIds: string[]) {
+    const db = await getMongoDb();
+    if (productIds.length === 0 || catalogIds.length === 0) return;
+    await db
+      .collection<ProductDocument>(productCollectionName)
+      .updateMany(
+        { id: { $in: productIds } } as Filter<ProductDocument>,
+        {
+          $pull: { catalogs: { catalogId: { $in: catalogIds } } } as any,
+          $set: { updatedAt: new Date() },
+        }
+      );
+  },
+
   async replaceProductCategory(productId: string, categoryId: string | null) {
     const db = await getMongoDb();
     const normalized = typeof categoryId === 'string' ? categoryId.trim() : '';

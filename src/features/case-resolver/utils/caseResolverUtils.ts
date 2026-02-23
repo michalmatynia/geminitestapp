@@ -166,6 +166,39 @@ const toComparableHistoryPayload = (input: {
   } as const;
 };
 
+const stripHtmlToComparablePlainText = (value: string): string => value
+  .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+  .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+  .replace(/<br\s*\/?>/gi, '\n')
+  .replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6|tr)>/gi, '\n')
+  .replace(/<[^>]+>/g, ' ')
+  .replace(/&nbsp;/gi, ' ')
+  .replace(/&amp;/gi, '&')
+  .replace(/&lt;/gi, '<')
+  .replace(/&gt;/gi, '>')
+  .replace(/&quot;/gi, '"')
+  .replace(/&#39;|&apos;/gi, '\'')
+  .replace(/\s+/g, ' ')
+  .trim();
+
+const hasMeaningfulComparableHistoryPayload = (
+  payload: ReturnType<typeof toComparableHistoryPayload>
+): boolean => {
+  if (payload.documentContentPlainText.trim().length > 0) {
+    return true;
+  }
+  const normalizedHtml = (() => {
+    if (payload.documentContentHtml.trim().length > 0) {
+      return payload.documentContentHtml;
+    }
+    if (payload.documentContentMarkdown.trim().length > 0) {
+      return ensureHtmlForPreview(payload.documentContentMarkdown, 'markdown');
+    }
+    return ensureSafeDocumentHtml(payload.documentContent);
+  })();
+  return stripHtmlToComparablePlainText(normalizedHtml).length > 0;
+};
+
 const areComparableHistoryPayloadsEqual = (
   left: ReturnType<typeof toComparableHistoryPayload>,
   right: ReturnType<typeof toComparableHistoryPayload>,
@@ -176,6 +209,43 @@ const areComparableHistoryPayloadsEqual = (
   left.documentContentMarkdown === right.documentContentMarkdown &&
   left.documentContentHtml === right.documentContentHtml &&
   left.documentContentPlainText === right.documentContentPlainText;
+
+export const createCaseResolverHistorySnapshotEntry = (input: {
+  savedAt: string;
+  documentContentVersion: number | null | undefined;
+  activeDocumentVersion: CaseResolverDocumentHistoryEntry['activeDocumentVersion'] | CaseResolverFileEditDraft['activeDocumentVersion'] | undefined;
+  editorType: CaseResolverDocumentHistoryEntry['editorType'] | CaseResolverFileEditDraft['editorType'] | undefined;
+  documentContent: string | null | undefined;
+  documentContentMarkdown: string | null | undefined;
+  documentContentHtml: string | null | undefined;
+  documentContentPlainText: string | null | undefined;
+}): CaseResolverDocumentHistoryEntry | null => {
+  const comparable = toComparableHistoryPayload({
+    activeDocumentVersion: input.activeDocumentVersion,
+    editorType: input.editorType,
+    documentContent: input.documentContent,
+    documentContentMarkdown: input.documentContentMarkdown,
+    documentContentHtml: input.documentContentHtml,
+    documentContentPlainText: input.documentContentPlainText,
+  });
+  if (!hasMeaningfulComparableHistoryPayload(comparable)) {
+    return null;
+  }
+  return {
+    id: createId('case-doc-history'),
+    savedAt: input.savedAt,
+    documentContentVersion:
+      typeof input.documentContentVersion === 'number' && Number.isFinite(input.documentContentVersion)
+        ? Math.max(0, Math.trunc(input.documentContentVersion))
+        : 0,
+    activeDocumentVersion: comparable.activeDocumentVersion,
+    editorType: comparable.editorType,
+    documentContent: comparable.documentContent,
+    documentContentMarkdown: comparable.documentContentMarkdown,
+    documentContentHtml: comparable.documentContentHtml,
+    documentContentPlainText: comparable.documentContentPlainText,
+  };
+};
 
 export const prependDraftHistorySnapshotForRevisionLoad = (input: {
   draft: CaseResolverFileEditDraft;
@@ -211,20 +281,19 @@ export const prependDraftHistorySnapshotForRevisionLoad = (input: {
     return draft.documentHistory;
   }
 
-  const nextSnapshotEntry: CaseResolverDocumentHistoryEntry = {
-    id: createId('case-doc-history'),
+  const nextSnapshotEntry = createCaseResolverHistorySnapshotEntry({
     savedAt,
-    documentContentVersion:
-      typeof draft.documentContentVersion === 'number' && Number.isFinite(draft.documentContentVersion)
-        ? Math.max(0, Math.trunc(draft.documentContentVersion))
-        : 0,
+    documentContentVersion: draft.documentContentVersion,
     activeDocumentVersion: currentComparable.activeDocumentVersion,
     editorType: currentComparable.editorType,
     documentContent: currentComparable.documentContent,
     documentContentMarkdown: currentComparable.documentContentMarkdown,
     documentContentHtml: currentComparable.documentContentHtml,
     documentContentPlainText: currentComparable.documentContentPlainText,
-  };
+  });
+  if (!nextSnapshotEntry) {
+    return draft.documentHistory;
+  }
 
   const existingHistory = draft.documentHistory ?? [];
   const firstEntry = existingHistory[0];
@@ -708,6 +777,7 @@ export const buildFileEditDraft = (file: CaseResolverFile): CaseResolverFileEdit
     updatedAt: file.updatedAt,
     documentDate: normalizeDraftDocumentDate(file.documentDate),
     documentCity: normalizeDraftDocumentCity(file.documentCity),
+    isSent: file.isSent === true,
     originalDocumentContent,
     explodedDocumentContent,
     activeDocumentVersion,

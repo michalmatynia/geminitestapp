@@ -447,6 +447,10 @@ const normalizeCaseResolverDocumentVersion = (
   value: unknown
 ): 'original' | 'exploded' => (value === 'exploded' ? 'exploded' : 'original');
 
+const normalizeCaseResolverCaseStatus = (
+  value: unknown
+): 'pending' | 'completed' => (value === 'completed' ? 'completed' : 'pending');
+
 const normalizeDocumentContentVersion = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 1;
   const normalized = Math.floor(value);
@@ -688,10 +692,12 @@ export const parseCaseResolverSettings = (raw: string | null | undefined): CaseR
 };
 
 export const createCaseResolverFile = (input: {
-    id: string;
-    workspaceId?: string;
-    version?: CaseResolverDocumentVersion;
-    fileType?: CaseResolverFileType | null | undefined;  name: string;
+  id: string;
+  workspaceId?: string;
+  version?: CaseResolverDocumentVersion;
+  fileType?: CaseResolverFileType | null | undefined;
+  name: string;
+  caseStatus?: 'pending' | 'completed' | null | undefined;
   folder?: string;
   parentCaseId?: string | null | undefined;
   referenceCaseIds?: string[] | null | undefined;
@@ -714,6 +720,7 @@ export const createCaseResolverFile = (input: {
   scanSlots?: CaseResolverScanSlot[] | null | undefined;
   scanOcrModel?: string | null | undefined;
   scanOcrPrompt?: string | null | undefined;
+  isSent?: boolean | null | undefined;
   isLocked?: boolean | null | undefined;
   graph?: Partial<CaseResolverGraph> | null;
   addresser?: CaseResolverPartyReference | null | undefined;
@@ -743,6 +750,8 @@ export const createCaseResolverFile = (input: {
   const activeDocumentContent =
     activeDocumentVersion === 'exploded' ? explodedDocumentContent : originalDocumentContent;
   const fileType = normalizeCaseResolverFileType(input.fileType);
+  const caseStatus =
+    fileType === 'case' ? normalizeCaseResolverCaseStatus(input.caseStatus) : undefined;
   const resolvedEditorType: CaseResolverEditorType =
     fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
   const resolvedCanonicalSource = (() => {
@@ -810,7 +819,9 @@ export const createCaseResolverFile = (input: {
     workspaceId: input.workspaceId ?? 'default',
     version: input.version ?? 'original',
     fileType,
-    name: input.name.trim() || 'Untitled Case',    folder: normalizeFolderPath(input.folder ?? ''),
+    caseStatus,
+    name: input.name.trim() || 'Untitled Case',
+    folder: normalizeFolderPath(input.folder ?? ''),
     parentCaseId,
     referenceCaseIds,
     relatedFileIds: relatedFileIds.length > 0 ? relatedFileIds : undefined,
@@ -832,6 +843,7 @@ export const createCaseResolverFile = (input: {
     scanSlots: normalizeCaseResolverScanSlots(input.scanSlots, input.id),
     scanOcrModel: fileType === 'scanfile' ? scanOcrModel : '',
     scanOcrPrompt: fileType === 'scanfile' ? scanOcrPrompt : '',
+    isSent: input.isSent === true,
     isLocked: input.isLocked === true,
     addresser: sanitizePartyReference(input.addresser),
     addressee: sanitizePartyReference(input.addressee),
@@ -931,6 +943,7 @@ export const normalizeCaseResolverWorkspace = (
         id,
         fileType: normalizedFileType,
         name: file.name,
+        caseStatus: fileRecord['caseStatus'] as 'pending' | 'completed' | null | undefined,
         folder: file.folder,
         parentCaseId: file.parentCaseId,
         referenceCaseIds: file.referenceCaseIds,
@@ -953,6 +966,7 @@ export const normalizeCaseResolverWorkspace = (
         scanSlots: file.scanSlots,
         scanOcrModel: fileRecord['scanOcrModel'] as string | null | undefined,
         scanOcrPrompt: fileRecord['scanOcrPrompt'] as string | null | undefined,
+        isSent: file.isSent,
         isLocked: file.isLocked,
         graph: file.graph,
         addresser: file.addresser,

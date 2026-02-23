@@ -1,4 +1,5 @@
 import { Eye, Trash2 } from 'lucide-react';
+import Image from 'next/image';
 import React from 'react';
 
 import { Button, Input, Card, Badge, Alert, LoadingState } from '@/shared/ui';
@@ -112,12 +113,15 @@ export function VariantPanel(): React.JSX.Element {
                   >
                     <div className='mb-1 text-[10px] text-gray-400'>Variant {variant.index}</div>
                     {variant.output ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={variant.imageSrc || variant.output.filepath}
-                        alt={variant.output.filename || `Generated ${variant.index}`}
-                        className='h-20 w-full rounded object-cover'
-                      />
+                      <div className='relative h-20 w-full overflow-hidden rounded'>
+                        <Image
+                          src={variant.imageSrc || variant.output.filepath}
+                          alt={variant.output.filename || `Generated ${variant.index}`}
+                          fill
+                          className='object-cover'
+                          unoptimized
+                        />
+                      </div>
                     ) : (
                       <Card variant='subtle-compact' padding='none' className='flex h-20 w-full items-center justify-center border-dashed border-border/70 text-[10px] text-gray-500'>
                         {variant.status === 'pending' ? (

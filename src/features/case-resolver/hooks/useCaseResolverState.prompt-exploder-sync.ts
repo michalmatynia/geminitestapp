@@ -28,7 +28,11 @@ import {
   buildCaseResolverFileComparableFingerprint,
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
 } from './useCaseResolverState.helpers';
-import { createId, buildFileEditDraft } from '../utils/caseResolverUtils';
+import {
+  buildFileEditDraft,
+  createCaseResolverHistorySnapshotEntry,
+  createId,
+} from '../utils/caseResolverUtils';
 
 
 type UpdateWorkspaceOptions = {
@@ -426,20 +430,19 @@ export const applyPendingPromptExploderPayloadToCaseResolver = ({
   const explodedStoredContent = toStorageDocumentValue(canonicalExploded);
 
   const buildExplodedFile = (file: CaseResolverFile): CaseResolverFile => {
-    const nextDocumentHistory = [
-      {
-        id: createId('case-doc-history'),
-        savedAt: now,
-        documentContentVersion: file.documentContentVersion,
-        activeDocumentVersion: file.activeDocumentVersion,
-        editorType: file.editorType,
-        documentContent: file.documentContent,
-        documentContentMarkdown: file.documentContentMarkdown,
-        documentContentHtml: file.documentContentHtml,
-        documentContentPlainText: file.documentContentPlainText,
-      },
-      ...file.documentHistory,
-    ].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT);
+    const currentSnapshot = createCaseResolverHistorySnapshotEntry({
+      savedAt: now,
+      documentContentVersion: file.documentContentVersion,
+      activeDocumentVersion: file.activeDocumentVersion,
+      editorType: file.editorType,
+      documentContent: file.documentContent,
+      documentContentMarkdown: file.documentContentMarkdown,
+      documentContentHtml: file.documentContentHtml,
+      documentContentPlainText: file.documentContentPlainText,
+    });
+    const nextDocumentHistory = currentSnapshot
+      ? [currentSnapshot, ...file.documentHistory].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT)
+      : file.documentHistory;
     return createCaseResolverFile({
       ...file,
       originalDocumentContent: file.originalDocumentContent ?? file.documentContent,

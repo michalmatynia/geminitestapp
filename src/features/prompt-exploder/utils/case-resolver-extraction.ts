@@ -23,7 +23,7 @@ export const PLACE_DATE_CAPTURE_RE =
 export const STREET_NUMBER_RE =
   /^(?:(?:ul\.?|al\.?|os\.?|pl\.?|aleja)\s+)?([\p{L}][\p{L}\s'’.-]{1,80}?)\s+(\d+[A-Za-z]?)(?:\s*\/\s*([0-9A-Za-z-]+))?$/u;
 export const ORGANIZATION_HINT_RE =
-  /\b(sp\.|s\.a\.|sa|llc|inc|corp|company|inspektorat|urzad|urząd|organ|fundacja|stowarzyszenie|office|department|instytut|zakład|zaklad|zus|oddział|oddzial)\b/i;
+  /\b(sp\.|s\.a\.|sa|llc|inc|corp|company|komisariat|komenda|policja|policji|prokuratura|rzecznik|biuro|inspektorat|urzad|urząd|ministerstwo|fundacja|stowarzyszenie|office|department|agency|authority|instytut|institute|zakład|zaklad|oddział|oddzial|sąd|sad|court|university|uniwersytet|bank)\b/i;
 
 export const COUNTRY_NORMALIZATION_MAP: Record<string, string> = {
   polska: 'Poland',

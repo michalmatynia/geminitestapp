@@ -111,6 +111,107 @@ const buildWorkspaceFixture = (): CaseResolverWorkspace => {
   };
 };
 
+const buildNestedCaseWorkspaceFixture = (): CaseResolverWorkspace => {
+  const parentCase = createCaseResolverFile({
+    id: 'case-parent',
+    name: 'Case Parent',
+    fileType: 'case',
+    folder: '',
+  });
+  const childCase = createCaseResolverFile({
+    id: 'case-child',
+    name: 'Case Child',
+    fileType: 'case',
+    folder: '',
+    parentCaseId: 'case-parent',
+  });
+  const grandchildCase = createCaseResolverFile({
+    id: 'case-grandchild',
+    name: 'Case Grandchild',
+    fileType: 'case',
+    folder: '',
+    parentCaseId: 'case-child',
+  });
+  const parentDoc = createCaseResolverFile({
+    id: 'doc-parent',
+    name: 'Parent Doc',
+    folder: 'parent-folder',
+    parentCaseId: 'case-parent',
+  });
+  const childDoc = createCaseResolverFile({
+    id: 'doc-child',
+    name: 'Child Doc',
+    folder: 'child-folder',
+    parentCaseId: 'case-child',
+  });
+  const grandchildDoc = createCaseResolverFile({
+    id: 'doc-grandchild',
+    name: 'Grandchild Doc',
+    folder: 'grandchild-folder',
+    parentCaseId: 'case-grandchild',
+  });
+
+  return {
+    id: 'nested-workspace',
+    name: 'Nested Workspace',
+    ownerId: 'owner-1',
+    isPublic: false,
+    version: 2,
+    workspaceRevision: 0,
+    lastMutationId: null,
+    lastMutationAt: null,
+    folders: ['parent-folder', 'child-folder', 'grandchild-folder'],
+    folderRecords: [
+      { path: 'parent-folder', ownerCaseId: 'case-parent' },
+      { path: 'child-folder', ownerCaseId: 'case-child' },
+      { path: 'grandchild-folder', ownerCaseId: 'case-grandchild' },
+    ],
+    folderTimestamps: {
+      'parent-folder': {
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      },
+      'child-folder': {
+        createdAt: '2026-01-02T00:00:00.000Z',
+        updatedAt: '2026-01-02T00:00:00.000Z',
+      },
+      'grandchild-folder': {
+        createdAt: '2026-01-03T00:00:00.000Z',
+        updatedAt: '2026-01-03T00:00:00.000Z',
+      },
+    },
+    files: [parentCase, childCase, grandchildCase, parentDoc, childDoc, grandchildDoc],
+    assets: [
+      createCaseResolverAssetFile({
+        id: 'asset-parent',
+        name: 'parent.pdf',
+        folder: 'parent-folder',
+        kind: 'pdf',
+        filepath: '/uploads/parent.pdf',
+        sourceFileId: 'doc-parent',
+      }),
+      createCaseResolverAssetFile({
+        id: 'asset-child',
+        name: 'child.pdf',
+        folder: 'child-folder',
+        kind: 'pdf',
+        filepath: '/uploads/child.pdf',
+        sourceFileId: 'doc-child',
+      }),
+      createCaseResolverAssetFile({
+        id: 'asset-grandchild',
+        name: 'grandchild.pdf',
+        folder: 'grandchild-folder',
+        kind: 'pdf',
+        filepath: '/uploads/grandchild.pdf',
+        sourceFileId: 'doc-grandchild',
+      }),
+    ],
+    relationGraph: createEmptyCaseResolverRelationGraph(),
+    activeFileId: 'case-parent',
+  };
+};
+
 describe('resolveCaseResolverTreeWorkspace', () => {
   it('returns an empty scoped workspace when URL requested file is missing', () => {
     const workspace = buildWorkspaceFixture();
@@ -154,5 +255,47 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     expect(scoped.assets).toEqual([]);
     expect(scoped.folders).toEqual([]);
     expect(scoped.folderRecords).toEqual([]);
+  });
+
+  it('includes descendant case scope by default', () => {
+    const workspace = buildNestedCaseWorkspaceFixture();
+    const scoped = resolveCaseResolverTreeWorkspace({
+      selectedFileId: 'case-parent',
+      requestedFileId: null,
+      workspace,
+    });
+
+    expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual([
+      'case-child',
+      'case-grandchild',
+      'case-parent',
+      'doc-child',
+      'doc-grandchild',
+      'doc-parent',
+    ]);
+    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual([
+      'asset-child',
+      'asset-grandchild',
+      'asset-parent',
+    ]);
+    expect(scoped.folders).toEqual(['child-folder', 'grandchild-folder', 'parent-folder']);
+  });
+
+  it('scopes folder tree to parent case only when descendant scope is disabled', () => {
+    const workspace = buildNestedCaseWorkspaceFixture();
+    const scoped = resolveCaseResolverTreeWorkspace({
+      selectedFileId: 'case-parent',
+      requestedFileId: null,
+      workspace,
+      includeDescendantCaseScope: false,
+    });
+
+    expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual([
+      'case-parent',
+      'doc-parent',
+    ]);
+    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id)).toEqual(['asset-parent']);
+    expect(scoped.folders).toEqual(['parent-folder']);
+    expect(scoped.folderRecords).toEqual([{ path: 'parent-folder', ownerCaseId: 'case-parent' }]);
   });
 });

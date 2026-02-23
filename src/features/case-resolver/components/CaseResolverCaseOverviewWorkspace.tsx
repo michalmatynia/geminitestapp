@@ -16,6 +16,19 @@ import {
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import { CaseResolverRelationsWorkspace } from './CaseResolverRelationsWorkspace';
 
+const CASE_STATUS_OPTIONS = [
+  {
+    value: 'pending',
+    label: 'Pending',
+    description: 'Case is still in progress.',
+  },
+  {
+    value: 'completed',
+    label: 'Completed',
+    description: 'Case has been completed.',
+  },
+] as const;
+
 export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
   const {
     activeFile: activeCaseFile,
@@ -109,6 +122,22 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
               }}
               options={filteredParentOptions}
               placeholder='Parent case'
+              triggerClassName='h-9'
+            />
+          </FormField>
+
+          <FormField label='Case Status'>
+            <SelectSimple
+              size='sm'
+              value={activeCaseFile.caseStatus === 'completed' ? 'completed' : 'pending'}
+              disabled={isCaseLocked}
+              onValueChange={(value: string): void => {
+                onUpdateActiveCase({
+                  caseStatus: value === 'completed' ? 'completed' : 'pending',
+                });
+              }}
+              options={CASE_STATUS_OPTIONS}
+              placeholder='Select case status'
               triggerClassName='h-9'
             />
           </FormField>

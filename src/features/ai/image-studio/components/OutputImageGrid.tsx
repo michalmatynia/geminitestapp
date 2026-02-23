@@ -1,6 +1,7 @@
 'use client';
 
 import { Download, Save, Trash2 } from 'lucide-react';
+import Image from 'next/image';
 import React from 'react';
 
 import { Button } from '@/shared/ui';
@@ -40,16 +41,17 @@ export function OutputImageGrid({
             href={output.filepath}
             target='_blank'
             rel='noopener noreferrer'
-            className='block'
+            className='block relative aspect-square'
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={output.filepath}
               alt={output.filename}
-              className='aspect-square w-full object-cover'
+              fill
+              className='object-cover'
+              unoptimized
             />
           </a>
-          <div className='absolute bottom-0 left-0 right-0 flex items-center justify-end gap-1 bg-gradient-to-t from-black/70 to-transparent p-1 opacity-0 transition-opacity group-hover:opacity-100'>
+          <div className='absolute bottom-0 left-0 right-0 z-10 flex items-center justify-end gap-1 bg-gradient-to-t from-black/70 to-transparent p-1 opacity-0 transition-opacity group-hover:opacity-100'>
             <a
               href={output.filepath}
               download={output.filename}

@@ -44,6 +44,7 @@ import { PromptExploderCaptureMappingModal } from './PromptExploderCaptureMappin
 import { CaseResolverPageProvider } from '../context/CaseResolverPageContext';
 import { emitCaseResolverShowDocumentInCanvas } from '../drag';
 import { resolvePromptExploderTransferStatusLabel } from '../hooks/prompt-exploder-transfer-lifecycle';
+import { canCaseResolverDraftPerformInitialManualSave } from '../hooks/useCaseResolverState.helpers';
 import { buildCaseResolverNodeFileRelationIndexFromAssets } from '../nodefile-relations';
 import { resolveCaseResolverOcrProviderLabel } from '../ocr-provider';
 import { useCaseResolverViewContext } from './CaseResolverViewContext';
@@ -472,7 +473,8 @@ export function CaseResolverPageView(): React.JSX.Element {
   );
   const showCaseOverviewWorkspace =
     workspaceView === 'document' &&
-    (!hasExplicitTreeSelection || activeFile?.fileType === 'case');
+    (!hasExplicitTreeSelection ||
+      (selectedFileId !== null && activeFile?.fileType === 'case'));
   const connectedNodeCanvasLinks = React.useMemo((): Array<{
     assetId: string;
     label: string;
@@ -573,6 +575,7 @@ export function CaseResolverPageView(): React.JSX.Element {
           | 'tagId'
           | 'caseIdentifierId'
           | 'categoryId'
+          | 'caseStatus'
         >
       >,
     ): void => {
@@ -611,6 +614,10 @@ export function CaseResolverPageView(): React.JSX.Element {
             patch,
             'categoryId',
           );
+          const hasCaseStatusPatch = Object.prototype.hasOwnProperty.call(
+            patch,
+            'caseStatus',
+          );
 
           const nextName = hasNamePatch
             ? patch.name?.trim() || currentCase.name || 'Untitled Case'
@@ -644,6 +651,9 @@ export function CaseResolverPageView(): React.JSX.Element {
           const nextCategoryId = hasCategoryPatch
             ? patch.categoryId?.trim() || null
             : currentCase.categoryId;
+          const nextCaseStatus = hasCaseStatusPatch
+            ? (patch.caseStatus === 'completed' ? 'completed' : 'pending')
+            : (currentCase.caseStatus === 'completed' ? 'completed' : 'pending');
 
           if (
             nextName === currentCase.name &&
@@ -651,6 +661,7 @@ export function CaseResolverPageView(): React.JSX.Element {
             nextTagId === currentCase.tagId &&
             nextCaseIdentifierId === currentCase.caseIdentifierId &&
             nextCategoryId === currentCase.categoryId &&
+            nextCaseStatus === (currentCase.caseStatus === 'completed' ? 'completed' : 'pending') &&
             JSON.stringify(nextReferenceCaseIds) ===
               JSON.stringify(currentCase.referenceCaseIds)
           ) {
@@ -671,6 +682,7 @@ export function CaseResolverPageView(): React.JSX.Element {
                     tagId: nextTagId,
                     caseIdentifierId: nextCaseIdentifierId,
                     categoryId: nextCategoryId,
+                    caseStatus: nextCaseStatus,
                     updatedAt: now,
                   }
                   : file,
@@ -686,6 +698,24 @@ export function CaseResolverPageView(): React.JSX.Element {
     [activeCaseFile, updateWorkspace],
   );
   const isEditingDocumentLocked = editingDocumentDraft?.isLocked === true;
+  const canSavePristineInitialDocumentDraft = React.useMemo((): boolean => {
+    if (!editingDocumentDraft) return false;
+    const currentFile = workspace.files.find(
+      (file: CaseResolverFile): boolean => file.id === editingDocumentDraft.id
+    );
+    if (!currentFile) return false;
+    return canCaseResolverDraftPerformInitialManualSave({
+      draft: editingDocumentDraft,
+      file: currentFile,
+    });
+  }, [editingDocumentDraft, workspace.files]);
+  const isEditorSaveEnabled = isEditorDraftDirty || canSavePristineInitialDocumentDraft;
+  const createdAtLabel = editingDocumentDraft?.createdAt
+    ? formatHistoryTimestamp(editingDocumentDraft.createdAt)
+    : 'Unknown';
+  const updatedAtLabel = editingDocumentDraft?.updatedAt
+    ? formatHistoryTimestamp(editingDocumentDraft.updatedAt)
+    : 'Unknown';
   const fileEditorTitle =
     editingDocumentDraft?.fileType === 'scanfile'
       ? 'Edit Scan'
@@ -959,9 +989,9 @@ export function CaseResolverPageView(): React.JSX.Element {
                       type='button'
                       size='sm'
                       onClick={handleSaveFileEditor}
-                      disabled={!isEditorDraftDirty || isEditingDocumentLocked}
+                      disabled={!isEditorSaveEnabled || isEditingDocumentLocked}
                       className={`h-8 min-w-[100px] flex-shrink-0 rounded-md border text-xs transition-colors ${
-                        isEditorDraftDirty
+                        isEditorSaveEnabled
                           ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
                           : 'border-border/60 text-gray-500 hover:bg-transparent'
                       }`}
@@ -1159,6 +1189,34 @@ export function CaseResolverPageView(): React.JSX.Element {
                     className='mt-2 min-h-[320px] w-full resize-y rounded-lg border border-border/70 bg-black/20 px-3 py-2 font-mono text-xs text-gray-100'
                   />
                 </Card>
+
+                <div className='mt-auto flex flex-wrap items-center justify-between gap-2'>
+                  <div className='flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-500'>
+                    <span>
+                      Created:{' '}
+                      <span className='text-gray-300'>{createdAtLabel}</span>
+                    </span>
+                    <span>
+                      Modified:{' '}
+                      <span className='text-gray-300'>{updatedAtLabel}</span>
+                    </span>
+                  </div>
+                  <Button
+                    type='button'
+                    variant='ghost'
+                    size='sm'
+                    className='h-9 max-w-[220px] gap-1.5 truncate px-2 text-[11px] text-gray-400 hover:text-gray-100'
+                    onClick={(): void => {
+                      void handleCopyDraftFileId();
+                    }}
+                    title='Copy file ID'
+                  >
+                    <span className='truncate'>
+                      ID: {editingDocumentDraft.id}
+                    </span>
+                    <Copy className='size-3' />
+                  </Button>
+                </div>
               </div>
             ) : editingDocumentDraft ? (
               <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-auto pr-1'>
@@ -1170,10 +1228,10 @@ export function CaseResolverPageView(): React.JSX.Element {
                         size='sm'
                         onClick={handleSaveFileEditor}
                         disabled={
-                          !isEditorDraftDirty || isEditingDocumentLocked
+                          !isEditorSaveEnabled || isEditingDocumentLocked
                         }
                         className={`h-8 min-w-[100px] flex-shrink-0 rounded-md border text-xs transition-colors ${
-                          isEditorDraftDirty
+                          isEditorSaveEnabled
                             ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
                             : 'border-border/60 text-gray-500 hover:bg-transparent'
                         }`}
@@ -1516,6 +1574,23 @@ export function CaseResolverPageView(): React.JSX.Element {
                                 </Button>
                               </div>
                             </div>
+                          </div>
+                        </FormField>
+
+                        <FormField label='Sent'>
+                          <div className='flex items-center justify-between rounded border border-border/60 bg-card/30 px-3 py-2'>
+                            <div className='text-xs text-gray-300'>
+                              Mark whether this document has already been sent.
+                            </div>
+                            <Checkbox
+                              checked={editingDocumentDraft.isSent === true}
+                              disabled={isEditingDocumentLocked}
+                              onCheckedChange={(checked): void => {
+                                updateEditingDocumentDraft({
+                                  isSent: checked === true,
+                                });
+                              }}
+                            />
                           </div>
                         </FormField>
 
@@ -2509,7 +2584,17 @@ export function CaseResolverPageView(): React.JSX.Element {
                     />
                   )}
 
-                  <div className='flex justify-end gap-2'>
+                  <div className='flex flex-wrap items-center justify-between gap-2'>
+                    <div className='flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-gray-500'>
+                      <span>
+                        Created:{' '}
+                        <span className='text-gray-300'>{createdAtLabel}</span>
+                      </span>
+                      <span>
+                        Modified:{' '}
+                        <span className='text-gray-300'>{updatedAtLabel}</span>
+                      </span>
+                    </div>
                     <Button
                       type='button'
                       variant='ghost'

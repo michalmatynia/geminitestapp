@@ -1,4 +1,5 @@
 import React from 'react';
+import Image from 'next/image';
 
 import { SelectSimple } from '@/shared/ui';
 
@@ -82,12 +83,15 @@ export function RightSidebarRequestPreviewBody({
                 <div className='mb-1 text-[10px] uppercase tracking-wide text-gray-500'>
                   {image.kind === 'base' ? 'Base' : 'Reference'}
                 </div>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={image.filepath}
-                  alt={image.name}
-                  className='h-28 w-full rounded object-cover'
-                />
+                <div className='relative h-28 w-full overflow-hidden rounded'>
+                  <Image
+                    src={image.filepath}
+                    alt={image.name}
+                    fill
+                    className='object-cover'
+                    unoptimized
+                  />
+                </div>
                 <div className='mt-1 truncate text-[11px] text-gray-200'>{image.name}</div>
                 <div className='truncate text-[10px] text-gray-500'>{image.filepath}</div>
               </div>

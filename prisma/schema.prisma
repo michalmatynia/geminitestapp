@@ -44,6 +44,10 @@ model Product {
   listings            ProductListing[]
   producers           ProductProducerAssignment[]
   tags                ProductTagAssignment[]
+
+  @@index([catalogId])
+  @@index([createdAt])
+  @@index([published])
 }
 
 model Setting {
@@ -432,6 +436,9 @@ model ChatbotMessage {
   content   String
   createdAt DateTime       @default(now())
   session   ChatbotSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([createdAt])
 }
 
 model ChatbotJob {
@@ -446,6 +453,9 @@ model ChatbotJob {
   startedAt    DateTime?
   finishedAt   DateTime?
   session      ChatbotSession   @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+  @@index([createdAt])
 }
 
 model CatalogLanguage {
@@ -581,6 +591,11 @@ model Note {
   relationsFrom NoteRelation[] @relation("NoteRelationsFrom")
   relationsTo   NoteRelation[] @relation("NoteRelationsTo")
   tags          NoteTag[]
+
+  @@index([notebookId])
+  @@index([isArchived])
+  @@index([createdAt])
+  @@index([updatedAt])
 }
 
 model NoteFile {
@@ -1011,6 +1026,9 @@ model ProductDraft {
   producerIds         Json     @default("[]")
   iconColor           String?
   iconColorMode       String?  @default("theme")
+
+  @@index([active])
+  @@index([createdAt])
 }
 
 model ProductValidationPattern {

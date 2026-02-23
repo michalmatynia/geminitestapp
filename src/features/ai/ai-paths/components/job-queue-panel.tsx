@@ -2,7 +2,8 @@
 
 import { Trash2 } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
+import { useVirtualizer } from '@tanstack/react-virtual';
 
 import { runsApi } from '@/features/ai/ai-paths/lib';
 import type {
@@ -562,6 +563,15 @@ export function JobQueuePanel({
   const total = runsQuery.data?.total ?? 0;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const runs = runsQuery.data?.runs ?? [];
+
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const rowVirtualizer = useVirtualizer({
+    count: runs.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 140, // Estimated height of a run card
+    overscan: 5,
+  });
   const queueStatus = queueStatusQuery.data?.status;
   const [queueHistory, setQueueHistory] = React.useState<QueueHistoryEntry[]>([]);
   const [showMetricsPanel, setShowMetricsPanel] = React.useState(false);
@@ -1027,84 +1037,111 @@ export function JobQueuePanel({
                         No runs found for the current filters.
         </div>
       ) : runs.length > 0 ? (
-        <div className='space-y-3'>
-          {runs.map((run: AiPathRunRecord) => {
-            const isExpanded = expandedRunIds.has(run.id);
-            const detail = normalizeRunDetail(runDetails[run.id]);
-            const detailLoading = runDetailLoading.has(run.id);
-            const detailError = runDetailErrors[run.id];
-            const detailRun = detail?.run ?? run;
-            const isRunning = isRunningStatus(detailRun.status);
-            const isScheduledRun = detailRun.triggerEvent === 'scheduled_run';
-            const streamStatus: StreamConnectionStatus = pausedStreams.has(run.id)
-              ? 'paused'
-              : streamStatuses[run.id] ?? 'stopped';
-            const canCancel = ['queued', 'running', 'paused'].includes(detailRun.status);
-            const isCancellingThisRun =
-              cancelRunMutation.isPending && cancelRunMutation.variables === run.id;
-            const isDeletingThisRun =
-              deleteRunMutation.isPending && deleteRunMutation.variables === run.id;
-            const runOrigin = resolveRunOrigin(detailRun);
-            const runExecution = resolveRunExecutionKind(detailRun);
-            const runSource = resolveRunSource(detailRun) ?? 'unknown';
-            const runSourceDebug = resolveRunSourceDebug(detailRun);
-            const nodes = normalizeRunNodes(detail?.nodes);
-            const events = normalizeRunEvents(detail?.events);
-            const history = (detailRun.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined)?.history;
-            const historyOptions = buildHistoryNodeOptions(
-              history,
-              nodes,
-              detailRun.graph?.nodes ?? null
-            );
-            const selectedHistoryNodeId = ensureHistorySelection(run.id, historyOptions);
-            const historyEntries =
-              selectedHistoryNodeId && history
-                ? history[selectedHistoryNodeId] ?? []
-                : [];
+        <div 
+          ref={parentRef}
+          className='space-y-3 overflow-auto'
+          style={{ maxHeight: '75vh' }}
+        >
+          <div
+            style={{
+              height: `${rowVirtualizer.getTotalSize()}px`,
+              width: '100%',
+              position: 'relative',
+            }}
+          >
+            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+              const run = runs[virtualRow.index];
+              if (!run) return null;
 
-            return (
-              <JobQueueRunCard
-                key={run.id}
-                detailRun={detailRun}
-                detail={detail}
-                detailLoading={detailLoading}
-                detailError={detailError}
-                isExpanded={isExpanded}
-                isRunning={isRunning}
-                isScheduledRun={isScheduledRun}
-                streamStatus={streamStatus}
-                paused={pausedStreams.has(run.id)}
-                canCancel={canCancel}
-                isCancellingThisRun={isCancellingThisRun}
-                isDeletingThisRun={isDeletingThisRun}
-                runOrigin={runOrigin}
-                runExecution={runExecution}
-                runSource={runSource}
-                runSourceDebug={runSourceDebug}
-                nodes={nodes}
-                events={events}
-                historyOptions={historyOptions}
-                selectedHistoryNodeId={selectedHistoryNodeId}
-                historyEntries={historyEntries}
-                onToggleRun={() => toggleRun(run.id)}
-                onToggleStream={() => toggleStream(run.id)}
-                onRefreshDetail={() => {
-                  void loadRunDetail(run.id);
-                }}
-                onCancelRun={() => cancelRunMutation.mutate(run.id)}
-                onDeleteRun={() => setRunToDelete(detailRun)}
-                onSelectHistoryNode={(value: string) => {
-                  setHistorySelection((prev: Record<string, string>) => ({
-                    ...prev,
-                    [run.id]: value,
-                  }));
-                }}
-              />
-            );
-          })}
+              const isExpanded = expandedRunIds.has(run.id);
+              const detail = normalizeRunDetail(runDetails[run.id]);
+              const detailLoading = runDetailLoading.has(run.id);
+              const detailError = runDetailErrors[run.id];
+              const detailRun = detail?.run ?? run;
+              const isRunning = isRunningStatus(detailRun.status);
+              const isScheduledRun = detailRun.triggerEvent === 'scheduled_run';
+              const streamStatus: StreamConnectionStatus = pausedStreams.has(run.id)
+                ? 'paused'
+                : streamStatuses[run.id] ?? 'stopped';
+              const canCancel = ['queued', 'running', 'paused'].includes(detailRun.status);
+              const isCancellingThisRun =
+                cancelRunMutation.isPending && cancelRunMutation.variables === run.id;
+              const isDeletingThisRun =
+                deleteRunMutation.isPending && deleteRunMutation.variables === run.id;
+              const runOrigin = resolveRunOrigin(detailRun);
+              const runExecution = resolveRunExecutionKind(detailRun);
+              const runSource = resolveRunSource(detailRun) ?? 'unknown';
+              const runSourceDebug = resolveRunSourceDebug(detailRun);
+              const nodes = normalizeRunNodes(detail?.nodes);
+              const events = normalizeRunEvents(detail?.events);
+              const history = (detailRun.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined)?.history;
+              const historyOptions = buildHistoryNodeOptions(
+                history,
+                nodes,
+                detailRun.graph?.nodes ?? null
+              );
+              const selectedHistoryNodeId = ensureHistorySelection(run.id, historyOptions);
+              const historyEntries =
+                selectedHistoryNodeId && history
+                  ? history[selectedHistoryNodeId] ?? []
+                  : [];
+
+              return (
+                <div
+                  key={run.id}
+                  data-index={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                    paddingBottom: '12px',
+                  }}
+                >
+                  <JobQueueRunCard
+                    detailRun={detailRun}
+                    detail={detail}
+                    detailLoading={detailLoading}
+                    detailError={detailError}
+                    isExpanded={isExpanded}
+                    isRunning={isRunning}
+                    isScheduledRun={isScheduledRun}
+                    streamStatus={streamStatus}
+                    paused={pausedStreams.has(run.id)}
+                    canCancel={canCancel}
+                    isCancellingThisRun={isCancellingThisRun}
+                    isDeletingThisRun={isDeletingThisRun}
+                    runOrigin={runOrigin}
+                    runExecution={runExecution}
+                    runSource={runSource}
+                    runSourceDebug={runSourceDebug}
+                    nodes={nodes}
+                    events={events}
+                    historyOptions={historyOptions}
+                    selectedHistoryNodeId={selectedHistoryNodeId}
+                    historyEntries={historyEntries}
+                    onToggleRun={() => toggleRun(run.id)}
+                    onToggleStream={() => toggleStream(run.id)}
+                    onRefreshDetail={() => {
+                      void loadRunDetail(run.id);
+                    }}
+                    onCancelRun={() => cancelRunMutation.mutate(run.id)}
+                    onDeleteRun={() => setRunToDelete(detailRun)}
+                    onSelectHistoryNode={(value: string) => {
+                      setHistorySelection((prev: Record<string, string>) => ({
+                        ...prev,
+                        [run.id]: value,
+                      }));
+                    }}
+                  />
+                </div>
+              );
+            })}
+          </div>
         </div>
       ) : null}
-
       <ConfirmModal
         isOpen={clearScope === 'terminal'}
         onClose={() => setClearScope(null)}

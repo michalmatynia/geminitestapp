@@ -88,6 +88,8 @@ export function RecentEventsTable(): React.JSX.Element {
       data={events}
       isLoading={summaryQuery.isLoading}
       variant='flat'
+      maxHeight='60vh'
+      enableVirtualization={true}
       emptyState={
         <EmptyState
           title='No events yet'

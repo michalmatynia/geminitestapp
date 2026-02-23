@@ -1,5 +1,11 @@
+import dynamic from 'next/dynamic';
+
 // Public client-safe API for the Viewer3D feature
-export { Viewer3D, preloadModel } from './components/Viewer3D';
+export const Viewer3D = dynamic(() => import('./components/Viewer3D').then((m) => m.Viewer3D), {
+  ssr: false,
+});
+
+export { preloadModel } from './components/Viewer3D';
 export type { Viewer3DProps, LightingPreset, EnvironmentPreset } from './components/Viewer3D';
 export { Asset3DUploader } from './components/Asset3DUploader';
 export { Asset3DPreviewModal } from './components/Asset3DPreviewModal';

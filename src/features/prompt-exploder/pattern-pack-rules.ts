@@ -132,6 +132,21 @@ const createRegexRule = (rule: {
   promptExploderCaptureOverwrite: rule.promptExploderCaptureOverwrite ?? false,
 });
 
+const CASE_RESOLVER_BODY_SENTENCE_NEGATIVE_LOOKAHEAD =
+  'niniejszym|dotyczy|uzasadnienie|wnosz[ęe]|na\\s+podstawie|post[ęe]powani\\p{L}*';
+const CASE_RESOLVER_ORGANIZATION_KEYWORD_PATTERN =
+  'komisariat|komenda|policj\\p{L}*|prokuratur\\p{L}*|rzecznik|inspektorat|urz\\p{L}*|s[ąa]d\\p{L}*|minister\\p{L}*|zak[łl]ad\\p{L}*|oddzia\\p{L}*|fundacj\\p{L}*|stowarzysz\\p{L}*|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|ltd|inc|corp|office|depart\\p{L}*|agency|authority|institut\\p{L}*|universit\\p{L}*|bank|court|police|bureau|commission|ministry';
+const CASE_RESOLVER_PERSON_HEADING_STOPWORDS_PATTERN =
+  'z|ze|na|w|we|do|od|dotyczy|wniosek|uzasadnienie|niniejszym|sincerely|regards|organ|inspektorat|komisariat|komenda|policj\\p{L}*|prokuratur\\p{L}*|rzecznik|urz\\p{L}*|s[ąa]d\\p{L}*|minister\\p{L}*|zak[łl]ad\\p{L}*|oddzia\\p{L}*|fundacj\\p{L}*|stowarzysz\\p{L}*|bank|court|police|bureau|ministry|office|agency|authority';
+const CASE_RESOLVER_PERSON_NAME_LINE_PATTERN =
+  `^\\s*(?!(?:${CASE_RESOLVER_PERSON_HEADING_STOPWORDS_PATTERN})\\b)([\\p{Lu}][\\p{L}\'’.-]{1,40}(?:\\s+[\\p{Lu}][\\p{L}\'’.-]{1,40}){1,3})\\s*$`;
+const CASE_RESOLVER_PERSON_NAME_CAPTURE_PATTERN =
+  `^\\s*(?!(?:${CASE_RESOLVER_PERSON_HEADING_STOPWORDS_PATTERN})\\b)([\\p{Lu}][\\p{L}\'’.-]+)(?:\\s+([\\p{Lu}][\\p{L}\'’.-]+(?:\\s+[\\p{Lu}][\\p{L}\'’.-]+){0,2}))?\\s+([\\p{Lu}][\\p{L}\'’.-]+)\\s*$`;
+const CASE_RESOLVER_ORGANIZATION_LINE_PATTERN =
+  `^\\s*(?!.*\\b(?:${CASE_RESOLVER_BODY_SENTENCE_NEGATIVE_LOOKAHEAD})\\b)(?=.*\\b(?:${CASE_RESOLVER_ORGANIZATION_KEYWORD_PATTERN})\\b)[\\p{L}0-9][\\p{L}0-9&.,'’"\\-\\p{Pd}\\/()\\s]{2,120}\\s*$`;
+const CASE_RESOLVER_ORGANIZATION_LINE_CAPTURE_PATTERN =
+  `^\\s*((?!.*\\b(?:${CASE_RESOLVER_BODY_SENTENCE_NEGATIVE_LOOKAHEAD})\\b)(?=.*\\b(?:${CASE_RESOLVER_ORGANIZATION_KEYWORD_PATTERN})\\b)[\\p{L}0-9][\\p{L}0-9&.,'’"\\-\\p{Pd}\\/()\\s]{2,120})\\s*$`;
+
 export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
   createRegexRule({
     id: 'segment.metadata.banner',
@@ -380,8 +395,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Heading: Addresser Person',
     description:
       'Detects sender person-name heading lines to split addresser blocks into a dedicated segment.',
-    pattern:
-      '^\\s*(?!(?:z|ze|na|w|we|do|od|dotyczy|wniosek|uzasadnienie|niniejszym|sincerely|regards|inspektorat|urząd|urzad|ministerstwo|organ|zus)\\b)([\\p{Lu}][\\p{L}\'’.-]{1,40}(?:\\s+[\\p{Lu}][\\p{L}\'’.-]{1,40}){1,3})\\s*$',
+    pattern: CASE_RESOLVER_PERSON_NAME_LINE_PATTERN,
     flags: 'imu',
     message: 'Addresser person heading detected.',
     sequence: 36,
@@ -398,8 +412,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Heading: Addressee Organization',
     description:
       'Detects organization addressee heading lines in correspondence blocks.',
-    pattern:
-      '^\\s*(?!.*\\b(niniejszym|przez|jednocześnie|jednoczesnie|wnoszę|wnosze|na\\s+podstawie|albowiem|ponieważ|poniewaz|uzasadnienie|dotyczy|wnioskodawca|organ\\s+rentowy|postępowania|postepowania)\\b)(?=.*\\b(zus|zakład|zaklad|ubezpieczeń|ubezpieczen|społecznych|spolecznych|oddział|oddzial|inspektorat|urząd|urzad|sąd|sad|ministerstwo|fundacja|stowarzyszenie|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|inc|corp|office|department|agency|authority|institute|university|bank)\\b)[\\p{L}0-9][\\p{L}0-9&.,\'’"\\-\\/()\\s]{2,96}\\s*$',
+    pattern: CASE_RESOLVER_ORGANIZATION_LINE_PATTERN,
     flags: 'imu',
     message: 'Addressee organization heading detected.',
     sequence: 36,
@@ -408,6 +421,24 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     promptExploderPriority: 45,
     promptExploderConfidenceBoost: 0.22,
     promptExploderTreatAsHeading: true,
+    appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+    launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
+  }),
+  createRegexRule({
+    id: 'segment.not_heading.case_resolver.body_sentence',
+    title: 'Not Heading: Case Resolver Body Sentence',
+    description:
+      'Prevents body/request sentence starters from being misclassified as heading boundaries.',
+    pattern:
+      '^\\s*(w\\s+związku\\s+z\\b|w\\s+zwiazku\\s+z\\b|biorąc\\s+pod\\s+uwagę\\b|biorac\\s+pod\\s+uwage\\b|ponadto\\b|jednocześnie\\b|jednoczesnie\\b).*$',
+    flags: 'imu',
+    message: 'Case Resolver body sentence detected (not a heading).',
+    sequence: 37,
+    sequenceGroupId: 'case_resolver_structure',
+    sequenceGroupLabel: 'Case Resolver Structure',
+    promptExploderPriority: 48,
+    promptExploderConfidenceBoost: 0.05,
+    promptExploderTreatAsHeading: false,
     appliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
     launchAppliesToScopes: [...CASE_RESOLVER_PROMPT_EXPLODER_SCOPE],
   }),
@@ -576,8 +607,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Extract: Addresser First Name',
     description:
       'Extracts addresser first name from a capitalized person name line.',
-    pattern:
-      '^\\s*(?!(?:z|ze|na|w|we|do|od|dotyczy|wniosek|uzasadnienie|niniejszym|sincerely|regards|inspektorat|urząd|urzad|ministerstwo|organ|zus)\\b)([\\p{Lu}][\\p{L}\'’.-]+)(?:\\s+([\\p{Lu}][\\p{L}\'’.-]+(?:\\s+[\\p{Lu}][\\p{L}\'’.-]+){0,2}))?\\s+([\\p{Lu}][\\p{L}\'’.-]+)\\s*$',
+    pattern: CASE_RESOLVER_PERSON_NAME_CAPTURE_PATTERN,
     flags: 'imu',
     message: 'Case Resolver addresser first name captured.',
     sequence: 42,
@@ -598,8 +628,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Extract: Addresser Middle Name',
     description:
       'Extracts addresser middle name from a capitalized person name line when present.',
-    pattern:
-      '^\\s*(?!(?:z|ze|na|w|we|do|od|dotyczy|wniosek|uzasadnienie|niniejszym|sincerely|regards|inspektorat|urząd|urzad|ministerstwo|organ|zus)\\b)([\\p{Lu}][\\p{L}\'’.-]+)(?:\\s+([\\p{Lu}][\\p{L}\'’.-]+(?:\\s+[\\p{Lu}][\\p{L}\'’.-]+){0,2}))?\\s+([\\p{Lu}][\\p{L}\'’.-]+)\\s*$',
+    pattern: CASE_RESOLVER_PERSON_NAME_CAPTURE_PATTERN,
     flags: 'imu',
     message: 'Case Resolver addresser middle name captured.',
     sequence: 43,
@@ -620,8 +649,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Extract: Addresser Last Name',
     description:
       'Extracts addresser last name from a capitalized person name line.',
-    pattern:
-      '^\\s*(?!(?:z|ze|na|w|we|do|od|dotyczy|wniosek|uzasadnienie|niniejszym|sincerely|regards|inspektorat|urząd|urzad|ministerstwo|organ|zus)\\b)([\\p{Lu}][\\p{L}\'’.-]+)(?:\\s+([\\p{Lu}][\\p{L}\'’.-]+(?:\\s+[\\p{Lu}][\\p{L}\'’.-]+){0,2}))?\\s+([\\p{Lu}][\\p{L}\'’.-]+)\\s*$',
+    pattern: CASE_RESOLVER_PERSON_NAME_CAPTURE_PATTERN,
     flags: 'imu',
     message: 'Case Resolver addresser last name captured.',
     sequence: 44,
@@ -642,8 +670,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Extract: Addresser Organization Name',
     description:
       'Extracts addresser organization/company name when sender is an institution.',
-    pattern:
-      '^\\s*((?=.*\\b(zus|inspektorat|urząd|urzad|sąd|sad|ministerstwo|fundacja|stowarzyszenie|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|inc|corp|office|department|agency|authority|institute|university|bank)\\b)[\\p{L}0-9][\\p{L}0-9&.,\'’"\\-\\/()\\s]{2,120})\\s*$',
+    pattern: CASE_RESOLVER_ORGANIZATION_LINE_CAPTURE_PATTERN,
     flags: 'imu',
     message: 'Case Resolver addresser organization captured.',
     sequence: 45,
@@ -796,8 +823,7 @@ export const PROMPT_EXPLODER_PATTERN_PACK: PromptValidationRule[] = [
     title: 'Case Resolver Extract: Addressee Organization Name',
     description:
       'Extracts addressee organization/company name.',
-    pattern:
-      '^\\s*((?=.*\\b(zus|zakład|zaklad|ubezpieczeń|ubezpieczen|społecznych|spolecznych|oddział|oddzial|inspektorat|urząd|urzad|sąd|sad|ministerstwo|fundacja|stowarzyszenie|sp\\.?\\s*z\\s*o\\.?\\s*o\\.?|s\\.?a\\.?|llc|inc|corp|office|department|agency|authority|institute|university|bank)\\b)[\\p{L}0-9][\\p{L}0-9&.,\'’"\\-\\/()\\s]{2,120})\\s*$',
+    pattern: CASE_RESOLVER_ORGANIZATION_LINE_CAPTURE_PATTERN,
     flags: 'imu',
     message: 'Case Resolver addressee organization captured.',
     sequence: 52,

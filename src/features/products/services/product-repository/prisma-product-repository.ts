@@ -1366,6 +1366,60 @@ export const prismaProductRepository: ProductRepository = {
     });
   },
 
+  async bulkReplaceProductCatalogs(productIds: string[], catalogIds: string[]) {
+    if (productIds.length === 0) return;
+    const uniqueCatalogIds = Array.from(new Set(catalogIds));
+    const existing = await prisma.catalog.findMany({
+      where: { id: { in: uniqueCatalogIds } },
+      select: { id: true },
+    });
+    const validCatalogIds = existing.map((entry: { id: string }) => entry.id);
+
+    await prisma.$transaction([
+      prisma.productCatalog.deleteMany({
+        where: { productId: { in: productIds } },
+      }),
+      ...(validCatalogIds.length > 0
+        ? [
+            prisma.productCatalog.createMany({
+              data: productIds.flatMap((productId) =>
+                validCatalogIds.map((catalogId) => ({ productId, catalogId })),
+              ),
+              skipDuplicates: true,
+            }),
+          ]
+        : []),
+    ]);
+  },
+
+  async bulkAddProductCatalogs(productIds: string[], catalogIds: string[]) {
+    if (productIds.length === 0 || catalogIds.length === 0) return;
+    const uniqueCatalogIds = Array.from(new Set(catalogIds));
+    const existing = await prisma.catalog.findMany({
+      where: { id: { in: uniqueCatalogIds } },
+      select: { id: true },
+    });
+    const validCatalogIds = existing.map((entry: { id: string }) => entry.id);
+    if (validCatalogIds.length === 0) return;
+
+    await prisma.productCatalog.createMany({
+      data: productIds.flatMap((productId) =>
+        validCatalogIds.map((catalogId) => ({ productId, catalogId })),
+      ),
+      skipDuplicates: true,
+    });
+  },
+
+  async bulkRemoveProductCatalogs(productIds: string[], catalogIds: string[]) {
+    if (productIds.length === 0 || catalogIds.length === 0) return;
+    await prisma.productCatalog.deleteMany({
+      where: {
+        productId: { in: productIds },
+        catalogId: { in: catalogIds },
+      },
+    });
+  },
+
   async removeProductImage(productId: string, imageFileId: string) {
     await prisma.productImage.deleteMany({
       where: { productId, imageFileId },

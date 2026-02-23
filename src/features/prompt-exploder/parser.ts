@@ -193,6 +193,8 @@ const selectHeadingRuleForLine = (
 ): RuntimeRegexRule | null => {
   const trimmed = line.trim();
   if (!trimmed) return null;
+  // Let explicit non-heading guard rules veto heading classification.
+  if (runtime.nonHeadingRules.some((rule) => rule.regex.test(trimmed))) return null;
   const matches = runtime.headingRules.filter((rule) => rule.regex.test(trimmed));
   if (matches.length === 0) return null;
   matches.sort((left, right) => {

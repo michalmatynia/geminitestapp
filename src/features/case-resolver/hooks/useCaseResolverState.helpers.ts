@@ -84,6 +84,7 @@ type CaseResolverComparableDocumentSnapshot = {
   referenceCaseIds: string[];
   documentDate: CaseResolverFileEditDraft['documentDate'];
   documentCity: string | null;
+  isSent: boolean;
   tagId: string | null;
   caseIdentifierId: string | null;
   categoryId: string | null;
@@ -181,6 +182,7 @@ const buildCaseResolverFileComparableSnapshot = (
       typeof canonicalDraft.documentCity === 'string'
         ? canonicalDraft.documentCity.trim() || null
         : null,
+    isSent: file.isSent === true,
     tagId: file.tagId ?? null,
     caseIdentifierId: file.caseIdentifierId ?? null,
     categoryId: file.categoryId ?? null,
@@ -211,6 +213,7 @@ const buildCaseResolverDraftComparableSnapshot = (
   referenceCaseIds: normalizeComparableReferenceCaseIds(draft.referenceCaseIds),
   documentDate: draft.documentDate,
   documentCity: typeof draft.documentCity === 'string' ? draft.documentCity.trim() || null : null,
+  isSent: draft.isSent === true,
   tagId: draft.tagId ?? null,
   caseIdentifierId: draft.caseIdentifierId ?? null,
   categoryId: draft.categoryId ?? null,
@@ -254,6 +257,40 @@ export const hasCaseResolverDraftMeaningfulChanges = ({
 }): boolean =>
   buildCaseResolverDraftComparableFingerprint(draft, canonicalState) !==
   buildCaseResolverFileComparableFingerprint(file);
+
+export const canCaseResolverDraftPerformInitialManualSave = ({
+  draft,
+  file,
+  canonicalState,
+}: {
+  draft: CaseResolverFileEditDraft;
+  file: CaseResolverFile;
+  canonicalState?: CaseResolverDraftCanonicalState;
+}): boolean => {
+  if (draft.id !== file.id) return false;
+  if (draft.fileType !== 'document' || file.fileType !== 'document') return false;
+  if ((file.documentHistory?.length ?? 0) > 0) return false;
+  if (file.documentContentVersion > 1) return false;
+  if (file.updatedAt !== file.createdAt) return false;
+
+  const resolvedCanonicalState = canonicalState ?? buildCaseResolverDraftCanonicalState(draft);
+  if (
+    hasCaseResolverDraftMeaningfulChanges({
+      draft,
+      file,
+      canonicalState: resolvedCanonicalState,
+    })
+  ) {
+    return false;
+  }
+
+  const hasAnyTextContent =
+    resolvedCanonicalState.plainText.trim().length > 0 ||
+    resolvedCanonicalState.markdown.trim().length > 0 ||
+    resolvedCanonicalState.originalDocumentContent.trim().length > 0 ||
+    resolvedCanonicalState.explodedDocumentContent.trim().length > 0;
+  return !hasAnyTextContent;
+};
 
 type CaseResolverWorkspaceMutationOptions = {
   persistToast?: string;
@@ -601,6 +638,7 @@ const buildStoredEditorDraftPatch = (
       updatedAt: draft.updatedAt,
       documentDate: draft.documentDate,
       documentCity: draft.documentCity,
+      isSent: draft.isSent === true,
       activeDocumentVersion: draft.activeDocumentVersion,
       editorType: draft.editorType,
       documentContentFormatVersion: draft.documentContentFormatVersion,

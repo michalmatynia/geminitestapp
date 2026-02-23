@@ -1,6 +1,7 @@
 'use client';
 
 import { RotateCcw, Trash2 } from 'lucide-react';
+import Image from 'next/image';
 import React, { useState } from 'react';
 
 import { Button } from '@/shared/ui';
@@ -74,11 +75,13 @@ export function GenerationHistoryPanel({
                         rel='noopener noreferrer'
                         className='block overflow-hidden rounded border border-border/40 hover:border-primary/60 transition-colors'
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={output.filepath}
                           alt={output.filename ?? 'Output'}
-                          className='h-12 w-12 object-cover'
+                          width={48}
+                          height={48}
+                          className='object-cover'
+                          unoptimized
                         />
                       </a>
                     ))}

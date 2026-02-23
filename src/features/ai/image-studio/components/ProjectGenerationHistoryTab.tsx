@@ -1,6 +1,7 @@
 'use client';
 
 import { } from 'lucide-react';
+import Image from 'next/image';
 import React, { useEffect, useMemo, useState } from 'react';
 
 import { api } from '@/shared/lib/api-client';
@@ -377,13 +378,13 @@ export function ProjectGenerationHistoryTab(): React.JSX.Element {
                     <div className='grid gap-2 sm:grid-cols-2 xl:grid-cols-3'>
                       {run.outputs.map((output, index) => (
                         <Card key={output.id} variant='subtle-compact' padding='sm' className='border-border/50 bg-card/50'>
-                          <a href={output.filepath} target='_blank' rel='noopener noreferrer'>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
+                          <a href={output.filepath} target='_blank' rel='noopener noreferrer' className='block relative h-36 w-full rounded overflow-hidden'>
+                            <Image
                               src={output.filepath}
                               alt={output.filename || `Output ${index + 1}`}
-                              className='h-36 w-full rounded object-cover'
-                              loading='lazy'
+                              fill
+                              className='object-cover'
+                              unoptimized
                             />
                           </a>
                           <div className='mt-2 space-y-0.5 text-[11px] text-muted-foreground'>

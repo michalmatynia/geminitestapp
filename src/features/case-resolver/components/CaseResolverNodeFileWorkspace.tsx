@@ -1,6 +1,16 @@
 'use client';
 
-import { ExternalLink, FileCode2, FileText, ScanLine, Sparkles } from 'lucide-react';
+import {
+  ChevronDown,
+  ChevronRight,
+  ExternalLink,
+  FileCode2,
+  FileText,
+  Folder,
+  FolderOpen,
+  ScanLine,
+  Sparkles,
+} from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
@@ -95,7 +105,24 @@ type NodeFileDocumentSearchRow = {
   signatureLabel: string;
   addresserLabel: string;
   addresseeLabel: string;
+  folderPath: string;
+  folderSegments: string[];
   searchable: string;
+};
+
+type NodeFileDocumentFolderNode = {
+  path: string;
+  name: string;
+  parentPath: string | null;
+  depth: number;
+  directFileCount: number;
+  descendantFileCount: number;
+};
+
+type NodeFileDocumentFolderTree = {
+  nodesByPath: Map<string, NodeFileDocumentFolderNode>;
+  childPathsByParent: Map<string | null, string[]>;
+  rootFileCount: number;
 };
 
 const normalizeSearchText = (value: string): string =>
@@ -103,6 +130,19 @@ const normalizeSearchText = (value: string): string =>
     .toLowerCase()
     .replace(/\s+/g, ' ')
     .trim();
+
+const normalizeFolderPathSegments = (folderPath: string): string[] =>
+  folderPath
+    .split('/')
+    .map((segment: string): string => segment.trim())
+    .filter((segment: string): boolean => segment.length > 0);
+
+const isFolderPathWithinScope = (
+  candidateFolderPath: string,
+  scopeFolderPath: string
+): boolean =>
+  candidateFolderPath === scopeFolderPath ||
+  candidateFolderPath.startsWith(`${scopeFolderPath}/`);
 
 const resolvePartyReferenceSearchLabel = (
   reference: CaseResolverFile['addresser'] | CaseResolverFile['addressee']
@@ -362,6 +402,12 @@ function CaseResolverNodeFileWorkspaceInner({
   const [documentSearchScope, setDocumentSearchScope] =
     useState<NodeFileDocumentSearchScope>('case_scope');
   const [documentSearchQuery, setDocumentSearchQuery] = useState('');
+  const [selectedSearchFolderPath, setSelectedSearchFolderPath] = useState<string | null>(
+    null
+  );
+  const [expandedSearchFolderPaths, setExpandedSearchFolderPaths] = useState<Set<string>>(
+    () => new Set()
+  );
   const [selectedSearchDocumentId, setSelectedSearchDocumentId] = useState('');
   const [isDocumentSearchOpen, setIsDocumentSearchOpen] = useState(false);
   const [nodeMetaByNode, setNodeMetaByNode] = useState<Record<string, CaseResolverNodeMeta>>(
@@ -440,6 +486,8 @@ function CaseResolverNodeFileWorkspaceInner({
       documentSearchScope === 'all_cases' ? allSearchableFiles : caseScopedSearchableFiles;
     return sourceFiles
       .map((file: CaseResolverFile): NodeFileDocumentSearchRow => {
+        const folderPath = typeof file.folder === 'string' ? file.folder.trim() : '';
+        const folderSegments = normalizeFolderPathSegments(folderPath);
         const signatureLabel = resolveIdentifierSearchLabel(
           file.caseIdentifierId,
           caseIdentifierLabelById
@@ -461,6 +509,8 @@ function CaseResolverNodeFileWorkspaceInner({
           signatureLabel,
           addresserLabel,
           addresseeLabel,
+          folderPath,
+          folderSegments,
           searchable,
         };
       })
@@ -480,16 +530,135 @@ function CaseResolverNodeFileWorkspaceInner({
     caseScopedSearchableFiles,
     documentSearchScope,
   ]);
+  const normalizedDocumentSearchQuery = useMemo(
+    (): string => normalizeSearchText(documentSearchQuery),
+    [documentSearchQuery]
+  );
   const filteredDocumentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    const normalizedQuery = normalizeSearchText(documentSearchQuery);
-    if (!normalizedQuery) return documentSearchRows;
+    if (!normalizedDocumentSearchQuery) return documentSearchRows;
     return documentSearchRows.filter((row: NodeFileDocumentSearchRow): boolean =>
-      row.searchable.includes(normalizedQuery)
+      row.searchable.includes(normalizedDocumentSearchQuery)
     );
-  }, [documentSearchQuery, documentSearchRows]);
-  const visibleDocumentSearchRows = useMemo(
-    (): NodeFileDocumentSearchRow[] => filteredDocumentSearchRows.slice(0, 12),
+  }, [documentSearchRows, normalizedDocumentSearchQuery]);
+  const documentSearchFolderTree = useMemo(
+    (): NodeFileDocumentFolderTree => {
+      const nodesByPath = new Map<string, NodeFileDocumentFolderNode>();
+      const childPathsByParent = new Map<string | null, string[]>();
+      const directFileCountByPath = new Map<string, number>();
+      const descendantFileCountByPath = new Map<string, number>();
+      let rootFileCount = 0;
+      const registerChildPath = (parentPath: string | null, childPath: string): void => {
+        const currentChildPaths = childPathsByParent.get(parentPath) ?? [];
+        if (!currentChildPaths.includes(childPath)) {
+          currentChildPaths.push(childPath);
+          childPathsByParent.set(parentPath, currentChildPaths);
+        }
+      };
+
+      filteredDocumentSearchRows.forEach((row: NodeFileDocumentSearchRow): void => {
+        if (row.folderSegments.length === 0) {
+          rootFileCount += 1;
+          return;
+        }
+        row.folderSegments.forEach((segment: string, index: number): void => {
+          const path = row.folderSegments.slice(0, index + 1).join('/');
+          const parentPath =
+            index === 0 ? null : row.folderSegments.slice(0, index).join('/');
+          if (!nodesByPath.has(path)) {
+            nodesByPath.set(path, {
+              path,
+              name: segment,
+              parentPath,
+              depth: index,
+              directFileCount: 0,
+              descendantFileCount: 0,
+            });
+          }
+          registerChildPath(parentPath, path);
+          descendantFileCountByPath.set(path, (descendantFileCountByPath.get(path) ?? 0) + 1);
+        });
+        directFileCountByPath.set(
+          row.folderPath,
+          (directFileCountByPath.get(row.folderPath) ?? 0) + 1
+        );
+      });
+
+      nodesByPath.forEach((node: NodeFileDocumentFolderNode, path: string): void => {
+        node.directFileCount = directFileCountByPath.get(path) ?? 0;
+        node.descendantFileCount = descendantFileCountByPath.get(path) ?? 0;
+      });
+
+      childPathsByParent.forEach((childPaths: string[], parentPath: string | null): void => {
+        childPaths.sort((left: string, right: string): number => {
+          const leftNode = nodesByPath.get(left);
+          const rightNode = nodesByPath.get(right);
+          const leftName = leftNode?.name ?? left;
+          const rightName = rightNode?.name ?? right;
+          return leftName.localeCompare(rightName);
+        });
+        childPathsByParent.set(parentPath, childPaths);
+      });
+
+      return {
+        nodesByPath,
+        childPathsByParent,
+        rootFileCount,
+      };
+    },
     [filteredDocumentSearchRows]
+  );
+  const rootSearchFolderPaths = useMemo(
+    (): string[] => documentSearchFolderTree.childPathsByParent.get(null) ?? [],
+    [documentSearchFolderTree]
+  );
+  const folderScopedDocumentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
+    if (documentSearchScope !== 'all_cases') return filteredDocumentSearchRows;
+    if (!selectedSearchFolderPath) return filteredDocumentSearchRows;
+    return filteredDocumentSearchRows.filter((row: NodeFileDocumentSearchRow): boolean =>
+      isFolderPathWithinScope(row.folderPath, selectedSearchFolderPath)
+    );
+  }, [documentSearchScope, filteredDocumentSearchRows, selectedSearchFolderPath]);
+  const visibleDocumentSearchFolderRows = useMemo(
+    (): Array<
+      NodeFileDocumentFolderNode & { hasChildren: boolean; isExpanded: boolean }
+    > => {
+      if (documentSearchScope !== 'all_cases') return [];
+      const forceExpandAll = normalizedDocumentSearchQuery.length > 0;
+      const rows: Array<
+        NodeFileDocumentFolderNode & { hasChildren: boolean; isExpanded: boolean }
+      > = [];
+      const visit = (folderPath: string): void => {
+        const folderNode = documentSearchFolderTree.nodesByPath.get(folderPath);
+        if (!folderNode) return;
+        const childPaths = documentSearchFolderTree.childPathsByParent.get(folderPath) ?? [];
+        const hasChildren = childPaths.length > 0;
+        const isExpanded = forceExpandAll || expandedSearchFolderPaths.has(folderPath);
+        rows.push({
+          ...folderNode,
+          hasChildren,
+          isExpanded,
+        });
+        if (!hasChildren || !isExpanded) return;
+        childPaths.forEach((childPath: string): void => visit(childPath));
+      };
+      rootSearchFolderPaths.forEach((folderPath: string): void => visit(folderPath));
+      return rows;
+    },
+    [
+      documentSearchFolderTree.childPathsByParent,
+      documentSearchFolderTree.nodesByPath,
+      documentSearchScope,
+      expandedSearchFolderPaths,
+      normalizedDocumentSearchQuery.length,
+      rootSearchFolderPaths,
+    ]
+  );
+  const visibleDocumentSearchRows = useMemo(
+    (): NodeFileDocumentSearchRow[] =>
+      documentSearchScope === 'all_cases'
+        ? folderScopedDocumentSearchRows.slice(0, 80)
+        : folderScopedDocumentSearchRows.slice(0, 12),
+    [documentSearchScope, folderScopedDocumentSearchRows]
   );
   const activeNodeOptions = useMemo(
     () =>
@@ -1037,14 +1206,71 @@ function CaseResolverNodeFileWorkspaceInner({
     setConfigOpen(false);
   }, [configOpen, setConfigOpen]);
   useEffect(() => {
+    if (documentSearchScope !== 'all_cases') {
+      setSelectedSearchFolderPath(null);
+      setExpandedSearchFolderPaths(new Set<string>());
+      return;
+    }
+    if (rootSearchFolderPaths.length === 0) return;
+    setExpandedSearchFolderPaths((previous: Set<string>): Set<string> => {
+      if (previous.size > 0) return previous;
+      return new Set<string>(rootSearchFolderPaths);
+    });
+  }, [documentSearchScope, rootSearchFolderPaths]);
+  useEffect(() => {
+    if (documentSearchScope !== 'all_cases') return;
+    if (!selectedSearchFolderPath) return;
+    if (documentSearchFolderTree.nodesByPath.has(selectedSearchFolderPath)) return;
+    setSelectedSearchFolderPath(null);
+  }, [
+    documentSearchFolderTree.nodesByPath,
+    documentSearchScope,
+    selectedSearchFolderPath,
+  ]);
+  useEffect(() => {
+    if (documentSearchScope !== 'all_cases') return;
+    const pathsToExpand = new Set<string>();
+    const registerAncestors = (folderPath: string): void => {
+      const segments = normalizeFolderPathSegments(folderPath);
+      segments.forEach((_: string, index: number): void => {
+        pathsToExpand.add(segments.slice(0, index + 1).join('/'));
+      });
+    };
+    if (selectedSearchFolderPath) {
+      registerAncestors(selectedSearchFolderPath);
+    }
+    if (normalizedDocumentSearchQuery.length > 0) {
+      filteredDocumentSearchRows.forEach((row: NodeFileDocumentSearchRow): void => {
+        if (!row.folderPath) return;
+        registerAncestors(row.folderPath);
+      });
+    }
+    if (pathsToExpand.size === 0) return;
+    setExpandedSearchFolderPaths((previous: Set<string>): Set<string> => {
+      const next = new Set<string>(previous);
+      let changed = false;
+      pathsToExpand.forEach((path: string): void => {
+        if (next.has(path)) return;
+        next.add(path);
+        changed = true;
+      });
+      return changed ? next : previous;
+    });
+  }, [
+    documentSearchScope,
+    filteredDocumentSearchRows,
+    normalizedDocumentSearchQuery.length,
+    selectedSearchFolderPath,
+  ]);
+  useEffect(() => {
     if (!selectedSearchDocumentId) return;
-    const exists = filteredDocumentSearchRows.some(
+    const exists = folderScopedDocumentSearchRows.some(
       (row: NodeFileDocumentSearchRow): boolean => row.file.id === selectedSearchDocumentId
     );
     if (!exists) {
       setSelectedSearchDocumentId('');
     }
-  }, [filteredDocumentSearchRows, selectedSearchDocumentId]);
+  }, [folderScopedDocumentSearchRows, selectedSearchDocumentId]);
   useEffect(() => {
     const handlePointerDown = (event: PointerEvent): void => {
       const container = documentSearchRef.current;
@@ -1099,8 +1325,21 @@ function CaseResolverNodeFileWorkspaceInner({
     setCurrentSnapshotHash(hash);
     toast('Node file updated.', { variant: 'success' });
   }, [buildSnapshotFromState, onSnapshotChange, savedSnapshotHash, toast]);
+  const toggleSearchFolderExpanded = useCallback((folderPath: string): void => {
+    const normalizedFolderPath = folderPath.trim();
+    if (!normalizedFolderPath) return;
+    setExpandedSearchFolderPaths((previous: Set<string>): Set<string> => {
+      const next = new Set<string>(previous);
+      if (next.has(normalizedFolderPath)) {
+        next.delete(normalizedFolderPath);
+      } else {
+        next.add(normalizedFolderPath);
+      }
+      return next;
+    });
+  }, []);
   const addSelectedSearchDocument = useCallback((): void => {
-    const selectedDocument = filteredDocumentSearchRows.find(
+    const selectedDocument = folderScopedDocumentSearchRows.find(
       (row: NodeFileDocumentSearchRow): boolean => row.file.id === selectedSearchDocumentId
     );
     if (!selectedDocument) {
@@ -1113,7 +1352,7 @@ function CaseResolverNodeFileWorkspaceInner({
     setIsDocumentSearchOpen(false);
   }, [
     addFileReferenceNode,
-    filteredDocumentSearchRows,
+    folderScopedDocumentSearchRows,
     placePosition,
     selectedSearchDocumentId,
     toast,
@@ -1545,7 +1784,10 @@ function CaseResolverNodeFileWorkspaceInner({
               triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
             />
 
-            <div ref={documentSearchRef} className='relative w-[360px]'>
+            <div
+              ref={documentSearchRef}
+              className={documentSearchScope === 'all_cases' ? 'relative w-[520px]' : 'relative w-[360px]'}
+            >
               <SearchInput
                 value={documentSearchQuery}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -1579,49 +1821,204 @@ function CaseResolverNodeFileWorkspaceInner({
                 className='h-8 border-border bg-card/60 text-xs text-white'
               />
               {isDocumentSearchOpen ? (
-                <div className='absolute top-full z-30 mt-1 w-full overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-xl backdrop-blur-sm'>
-                  {visibleDocumentSearchRows.length === 0 ? (
-                    <div className='px-3 py-2 text-xs text-gray-400'>
-                      No documents match this search.
-                    </div>
-                  ) : (
-                    <div className='max-h-80 overflow-auto p-1'>
-                      {visibleDocumentSearchRows.map((row: NodeFileDocumentSearchRow) => {
-                        const metadataParts = [
-                          row.file.fileType === 'scanfile' ? 'Scan file' : 'Document',
-                          row.file.folder ? `Folder: ${row.file.folder}` : null,
-                          row.signatureLabel ? `Signature: ${row.signatureLabel}` : null,
-                        ].filter((value: string | null): value is string => Boolean(value));
-                        const isSelected = selectedSearchDocumentId === row.file.id;
-                        return (
-                          <button
-                            key={row.file.id}
-                            type='button'
-                            className={`w-full rounded px-2 py-1.5 text-left transition-colors ${
-                              isSelected
-                                ? 'bg-cyan-500/15 text-cyan-100'
-                                : 'text-gray-200 hover:bg-card/70'
-                            }`}
-                            onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                              // Keep focus in the search field until click handler finalizes selection.
-                              event.preventDefault();
-                            }}
-                            onClick={(): void => {
-                              setSelectedSearchDocumentId(row.file.id);
-                              setDocumentSearchQuery(row.file.name);
-                              setIsDocumentSearchOpen(false);
-                            }}
-                          >
-                            <div className='truncate text-xs font-medium'>{row.file.name}</div>
-                            <div className='truncate text-[10px] text-gray-400'>
-                              {metadataParts.join(' • ')}
+                documentSearchScope === 'all_cases' ? (
+                  <div className='absolute top-full left-0 z-30 mt-1 w-[min(860px,calc(100vw-3rem))] overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-xl backdrop-blur-sm'>
+                    <div className='grid max-h-[420px] min-h-[260px] grid-cols-[minmax(220px,280px)_minmax(0,1fr)]'>
+                      <div className='border-r border-border/60 p-1'>
+                        <div className='mb-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
+                          Folders
+                        </div>
+                        <button
+                          type='button'
+                          className={`mb-1 flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors ${
+                            selectedSearchFolderPath === null
+                              ? 'bg-cyan-500/15 text-cyan-100'
+                              : 'text-gray-200 hover:bg-card/70'
+                          }`}
+                          onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                            event.preventDefault();
+                          }}
+                          onClick={(): void => {
+                            setSelectedSearchFolderPath(null);
+                          }}
+                        >
+                          <span className='truncate'>(All folders)</span>
+                          <span className='ml-2 shrink-0 text-[10px] text-gray-400'>
+                            {filteredDocumentSearchRows.length}
+                          </span>
+                        </button>
+                        <div className='max-h-[350px] overflow-auto pr-1'>
+                          {visibleDocumentSearchFolderRows.length === 0 ? (
+                            <div className='px-2 py-2 text-[11px] text-gray-400'>
+                              No folders match this search.
                             </div>
-                          </button>
-                        );
-                      })}
+                          ) : (
+                            visibleDocumentSearchFolderRows.map(
+                              (
+                                folderRow: NodeFileDocumentFolderNode & {
+                                  hasChildren: boolean;
+                                  isExpanded: boolean;
+                                }
+                              ) => (
+                                <button
+                                  key={folderRow.path}
+                                  type='button'
+                                  className={`flex w-full items-center gap-1 rounded py-1.5 pr-2 text-left text-xs transition-colors ${
+                                    selectedSearchFolderPath === folderRow.path
+                                      ? 'bg-cyan-500/15 text-cyan-100'
+                                      : 'text-gray-200 hover:bg-card/70'
+                                  }`}
+                                  style={{ paddingLeft: `${folderRow.depth * 14 + 8}px` }}
+                                  onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                                    event.preventDefault();
+                                  }}
+                                  onClick={(): void => {
+                                    setSelectedSearchFolderPath(folderRow.path);
+                                  }}
+                                >
+                                  {folderRow.hasChildren ? (
+                                    <button
+                                      type='button'
+                                      className='inline-flex size-4 shrink-0 items-center justify-center rounded hover:bg-card/80'
+                                      aria-label={
+                                        folderRow.isExpanded
+                                          ? `Collapse ${folderRow.name}`
+                                          : `Expand ${folderRow.name}`
+                                      }
+                                      onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                      }}
+                                      onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                                        event.preventDefault();
+                                        event.stopPropagation();
+                                        toggleSearchFolderExpanded(folderRow.path);
+                                      }}
+                                    >
+                                      {folderRow.isExpanded ? (
+                                        <ChevronDown className='size-3' />
+                                      ) : (
+                                        <ChevronRight className='size-3' />
+                                      )}
+                                    </button>
+                                  ) : (
+                                    <span className='inline-flex size-4 shrink-0 items-center justify-center opacity-40'>
+                                      •
+                                    </span>
+                                  )}
+                                  {folderRow.isExpanded ? (
+                                    <FolderOpen className='size-3.5 shrink-0 text-gray-400' />
+                                  ) : (
+                                    <Folder className='size-3.5 shrink-0 text-gray-400' />
+                                  )}
+                                  <span className='min-w-0 flex-1 truncate'>{folderRow.name}</span>
+                                  <span className='ml-1 shrink-0 text-[10px] text-gray-400'>
+                                    {folderRow.descendantFileCount}
+                                  </span>
+                                </button>
+                              )
+                            )
+                          )}
+                        </div>
+                      </div>
+                      <div className='p-1'>
+                        <div className='mb-1 flex items-center justify-between px-2 py-1'>
+                          <div className='truncate text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
+                            {selectedSearchFolderPath
+                              ? `Folder: ${selectedSearchFolderPath}`
+                              : 'Documents'}
+                          </div>
+                          <div className='text-[10px] text-gray-400'>
+                            {folderScopedDocumentSearchRows.length}
+                          </div>
+                        </div>
+                        {visibleDocumentSearchRows.length === 0 ? (
+                          <div className='px-2 py-2 text-xs text-gray-400'>
+                            No documents match this folder and search.
+                          </div>
+                        ) : (
+                          <div className='max-h-[350px] overflow-auto p-1'>
+                            {visibleDocumentSearchRows.map((row: NodeFileDocumentSearchRow) => {
+                              const metadataParts = [
+                                row.file.fileType === 'scanfile' ? 'Scan file' : 'Document',
+                                row.folderPath ? `Folder: ${row.folderPath}` : 'Folder: (root)',
+                                row.signatureLabel ? `Signature: ${row.signatureLabel}` : null,
+                              ].filter((value: string | null): value is string => Boolean(value));
+                              const isSelected = selectedSearchDocumentId === row.file.id;
+                              return (
+                                <button
+                                  key={row.file.id}
+                                  type='button'
+                                  className={`w-full rounded px-2 py-1.5 text-left transition-colors ${
+                                    isSelected
+                                      ? 'bg-cyan-500/15 text-cyan-100'
+                                      : 'text-gray-200 hover:bg-card/70'
+                                  }`}
+                                  onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                                    event.preventDefault();
+                                  }}
+                                  onClick={(): void => {
+                                    setSelectedSearchDocumentId(row.file.id);
+                                    setDocumentSearchQuery(row.file.name);
+                                    setIsDocumentSearchOpen(false);
+                                  }}
+                                >
+                                  <div className='truncate text-xs font-medium'>{row.file.name}</div>
+                                  <div className='truncate text-[10px] text-gray-400'>
+                                    {metadataParts.join(' • ')}
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className='absolute top-full z-30 mt-1 w-full overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-xl backdrop-blur-sm'>
+                    {visibleDocumentSearchRows.length === 0 ? (
+                      <div className='px-3 py-2 text-xs text-gray-400'>
+                        No documents match this search.
+                      </div>
+                    ) : (
+                      <div className='max-h-80 overflow-auto p-1'>
+                        {visibleDocumentSearchRows.map((row: NodeFileDocumentSearchRow) => {
+                          const metadataParts = [
+                            row.file.fileType === 'scanfile' ? 'Scan file' : 'Document',
+                            row.file.folder ? `Folder: ${row.file.folder}` : null,
+                            row.signatureLabel ? `Signature: ${row.signatureLabel}` : null,
+                          ].filter((value: string | null): value is string => Boolean(value));
+                          const isSelected = selectedSearchDocumentId === row.file.id;
+                          return (
+                            <button
+                              key={row.file.id}
+                              type='button'
+                              className={`w-full rounded px-2 py-1.5 text-left transition-colors ${
+                                isSelected
+                                  ? 'bg-cyan-500/15 text-cyan-100'
+                                  : 'text-gray-200 hover:bg-card/70'
+                              }`}
+                              onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                                event.preventDefault();
+                              }}
+                              onClick={(): void => {
+                                setSelectedSearchDocumentId(row.file.id);
+                                setDocumentSearchQuery(row.file.name);
+                                setIsDocumentSearchOpen(false);
+                              }}
+                            >
+                              <div className='truncate text-xs font-medium'>{row.file.name}</div>
+                              <div className='truncate text-[10px] text-gray-400'>
+                                {metadataParts.join(' • ')}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )
               ) : null}
             </div>
             <Button
@@ -1635,8 +2032,8 @@ function CaseResolverNodeFileWorkspaceInner({
             </Button>
 
             <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
-              {filteredDocumentSearchRows.length} result
-              {filteredDocumentSearchRows.length !== 1 ? 's' : ''}
+              {folderScopedDocumentSearchRows.length} result
+              {folderScopedDocumentSearchRows.length !== 1 ? 's' : ''}
             </Badge>
 
             <div className='mx-1 h-6 w-px bg-border/60' />

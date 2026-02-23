@@ -77,7 +77,7 @@ export type CaseResolverPageContextValue = {
   onRelationGraphChange: (nextGraph: CaseResolverRelationGraph) => void;
   onLinkRelatedFiles: (fileIdA: string, fileIdB: string) => void;
   onUnlinkRelatedFile: (sourceFileId: string, targetFileId: string) => void;
-  onUpdateActiveCase: (patch: Partial<Pick<CaseResolverFile, 'name' | 'parentCaseId' | 'referenceCaseIds' | 'tagId' | 'caseIdentifierId' | 'categoryId'>>) => void;
+  onUpdateActiveCase: (patch: Partial<Pick<CaseResolverFile, 'name' | 'parentCaseId' | 'referenceCaseIds' | 'tagId' | 'caseIdentifierId' | 'categoryId' | 'caseStatus'>>) => void;
   caseTagOptions: Array<{ value: string; label: string; description?: string }>;
   caseIdentifierOptions: Array<{ value: string; label: string; description?: string }>;
   caseCategoryOptions: Array<{ value: string; label: string; description?: string }>;

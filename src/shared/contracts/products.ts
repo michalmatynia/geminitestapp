@@ -1306,6 +1306,18 @@ export type TransactionalProductRepository = {
     productId: string,
     noteIds: string[]
   ): Promise<void>;
+  bulkReplaceProductCatalogs(
+    productIds: string[],
+    catalogIds: string[]
+  ): Promise<void>;
+  bulkAddProductCatalogs(
+    productIds: string[],
+    catalogIds: string[]
+  ): Promise<void>;
+  bulkRemoveProductCatalogs(
+    productIds: string[],
+    catalogIds: string[]
+  ): Promise<void>;
 };
 export type ProductRepository = TransactionalProductRepository & {
   getProductsWithCount(filters: ProductFilters): Promise<{ products: ProductWithImages[]; total: number }>;

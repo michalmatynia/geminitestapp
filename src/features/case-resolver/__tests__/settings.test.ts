@@ -173,6 +173,7 @@ describe('case-resolver settings', () => {
           folder: 'Root A/Sub *',
           createdAt: '',
           updatedAt: '',
+          isSent: true,
           addresser: { kind: 'person', id: 'p-1' },
           addressee: { kind: 'invalid', id: 'x-1' },
           caseIdentifierId: '  identifier-1  ',
@@ -220,6 +221,7 @@ describe('case-resolver settings', () => {
     expect(workspace.files[0]?.id).toBe('dup-file');
     expect(workspace.files[0]?.folder).toBe('Root_A/Sub__');
     expect(workspace.files[0]?.documentDate).toBeNull();
+    expect(workspace.files[0]?.isSent).toBe(true);
     expect(workspace.files[0]?.addresser).toEqual({ kind: 'person', id: 'p-1' });
     expect(workspace.files[0]?.addressee).toBeNull();
     expect(workspace.files[0]?.caseIdentifierId).toBe('identifier-1');
@@ -410,6 +412,7 @@ describe('case-resolver settings', () => {
 
     expect(file?.editorType).toBe('wysiwyg');
     expect(file?.documentContentVersion).toBe(5);
+    expect(file?.isSent).toBe(false);
     expect(file?.documentContentHtml).not.toContain('<script');
     expect(file?.documentContentPlainText).toContain('Hello');
     expect(file?.documentContentPlainText).toContain('World');

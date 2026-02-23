@@ -11,6 +11,7 @@ import {
   Folder,
   FolderOpen,
   FolderPlus,
+  GitBranch,
   GripVertical,
   Lock,
   Pencil,
@@ -35,7 +36,7 @@ import {
   type CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { Button, FolderTreePanel } from '@/shared/ui';
+import { Button, FolderTreePanel, Switch } from '@/shared/ui';
 import {
   DRAG_KEYS,
   resolveVerticalDropPosition,
@@ -86,9 +87,38 @@ const resolveFolderAncestorNodeIds = (folderPath: string): string[] => {
   );
 };
 
+const forEachFolderPathAncestor = (
+  folderPath: string,
+  callback: (path: string) => void,
+): void => {
+  const normalizedFolder = folderPath.trim();
+  if (!normalizedFolder) return;
+  const parts = normalizedFolder.split('/').filter(Boolean);
+  for (let index = 0; index < parts.length; index += 1) {
+    callback(parts.slice(0, index + 1).join('/'));
+  }
+};
+
 const areStringArraysEqual = (left: string[], right: string[]): boolean =>
   left.length === right.length &&
   left.every((value: string, index: number): boolean => value === right[index]);
+
+const CHILD_CASE_STRUCTURE_FOLDER_PATH =
+  '__case_resolver_children_case_structure__';
+const CHILD_CASE_STRUCTURE_NODE_ID = toCaseResolverFolderNodeId(
+  CHILD_CASE_STRUCTURE_FOLDER_PATH,
+);
+const CHILD_CASE_STRUCTURE_METADATA_VALUE = 'children_case_structure';
+
+const isChildCaseStructureFolderPath = (folderPath: string): boolean =>
+  folderPath.trim() === CHILD_CASE_STRUCTURE_FOLDER_PATH;
+
+const isChildCaseStructureNode = (
+  node: Pick<MasterTreeNode, 'id' | 'metadata'>,
+): boolean =>
+  isChildCaseStructureFolderPath(fromCaseResolverFolderNodeId(node.id) ?? '') ||
+  parseString(node.metadata?.['virtualSection']) ===
+    CHILD_CASE_STRUCTURE_METADATA_VALUE;
 
 type PendingNodeCanvasAction = {
   kind: 'drop' | 'show';
@@ -141,6 +171,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     useState<string[]>([]);
   const [pendingNodeCanvasAction, setPendingNodeCanvasAction] =
     useState<PendingNodeCanvasAction | null>(null);
+  const [showChildCaseFolders, setShowChildCaseFolders] = useState(false);
   const dragHandleNodeIdRef = React.useRef<string | null>(null);
 
   useEffect((): (() => void) => {
@@ -159,8 +190,9 @@ export function CaseResolverFolderTree(): React.JSX.Element {
         selectedFileId,
         requestedFileId,
         workspace,
+        includeDescendantCaseScope: showChildCaseFolders,
       }),
-    [requestedFileId, selectedFileId, workspace],
+    [requestedFileId, selectedFileId, showChildCaseFolders, workspace],
   );
 
   const isNodeFileCanvasActive = useMemo(
@@ -172,16 +204,151 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     [selectedAssetId, workspace.assets],
   );
 
+  const activeCaseFile = useMemo(() => {
+    if (activeCaseId) {
+      const explicitCase = workspace.files.find(
+        (file: CaseResolverFile) => file.id === activeCaseId && file.fileType === 'case',
+      );
+      if (explicitCase) return explicitCase;
+    }
+    if (activeFile?.fileType === 'case') return activeFile;
+    if (activeFile?.parentCaseId) {
+      const parentCase = workspace.files.find(
+        (file: CaseResolverFile) =>
+          file.id === activeFile.parentCaseId && file.fileType === 'case',
+      );
+      if (parentCase) return parentCase;
+    }
+    return null;
+  }, [activeCaseId, activeFile, workspace.files]);
+
   const masterNodes = useMemo(
-    (): MasterTreeNode[] =>
-      buildMasterNodesFromCaseResolverWorkspace(treeWorkspace),
-    [treeWorkspace],
+    (): MasterTreeNode[] => {
+      const baseNodes = buildMasterNodesFromCaseResolverWorkspace(treeWorkspace);
+      if (!showChildCaseFolders) return baseNodes;
+      const rootCaseId = activeCaseFile?.id ?? null;
+      if (!rootCaseId) return baseNodes;
+
+      const childCaseIdSet = new Set<string>();
+      treeWorkspace.files.forEach((file: CaseResolverFile): void => {
+        if (file.fileType !== 'case') return;
+        if (file.id === rootCaseId) return;
+        childCaseIdSet.add(file.id);
+      });
+      if (childCaseIdSet.size === 0) return baseNodes;
+
+      const fileOwnerCaseIdById = new Map<string, string>();
+      treeWorkspace.files.forEach((file: CaseResolverFile): void => {
+        if (file.fileType === 'case') return;
+        const ownerCaseId = file.parentCaseId?.trim() ?? '';
+        if (!ownerCaseId) return;
+        fileOwnerCaseIdById.set(file.id, ownerCaseId);
+      });
+
+      const assetOwnerCaseIdById = new Map<string, string>();
+      treeWorkspace.assets.forEach((asset: CaseResolverAssetFile): void => {
+        const sourceFileId = asset.sourceFileId?.trim() ?? '';
+        if (!sourceFileId) return;
+        const ownerCaseId = fileOwnerCaseIdById.get(sourceFileId);
+        if (!ownerCaseId) return;
+        assetOwnerCaseIdById.set(asset.id, ownerCaseId);
+      });
+
+      const folderOwnerCaseIdsByPath = new Map<string, string[]>();
+      const folderOwnerSetsByPath = new Map<string, Set<string>>();
+      const addFolderOwner = (
+        folderPath: string,
+        ownerCaseId: string | null | undefined,
+      ): void => {
+        const normalizedOwnerCaseId = ownerCaseId?.trim() ?? '';
+        if (!normalizedOwnerCaseId) return;
+        forEachFolderPathAncestor(folderPath, (ancestorPath: string): void => {
+          const currentOwners = folderOwnerSetsByPath.get(ancestorPath) ?? new Set<string>();
+          currentOwners.add(normalizedOwnerCaseId);
+          folderOwnerSetsByPath.set(ancestorPath, currentOwners);
+        });
+      };
+      (treeWorkspace.folderRecords ?? []).forEach((record): void => {
+        addFolderOwner(record.path, record.ownerCaseId);
+      });
+      treeWorkspace.files.forEach((file: CaseResolverFile): void => {
+        if (file.fileType === 'case') return;
+        addFolderOwner(file.folder, file.parentCaseId);
+      });
+      treeWorkspace.assets.forEach((asset: CaseResolverAssetFile): void => {
+        addFolderOwner(asset.folder, assetOwnerCaseIdById.get(asset.id));
+      });
+      folderOwnerSetsByPath.forEach((ownerIds: Set<string>, folderPath: string): void => {
+        folderOwnerCaseIdsByPath.set(folderPath, Array.from(ownerIds));
+      });
+
+      const getNodeOwnerCaseIds = (node: MasterTreeNode): string[] => {
+        const folderPath = fromCaseResolverFolderNodeId(node.id);
+        if (folderPath !== null) {
+          return folderOwnerCaseIdsByPath.get(folderPath) ?? [];
+        }
+        const fileId = fromCaseResolverFileNodeId(node.id);
+        if (fileId) {
+          const ownerCaseId = fileOwnerCaseIdById.get(fileId);
+          return ownerCaseId ? [ownerCaseId] : [];
+        }
+        const assetId = fromCaseResolverAssetNodeId(node.id);
+        if (assetId) {
+          const ownerCaseId = assetOwnerCaseIdById.get(assetId);
+          return ownerCaseId ? [ownerCaseId] : [];
+        }
+        return [];
+      };
+
+      let hasChildStructureRoots = false;
+      const remappedNodes = baseNodes.map((node: MasterTreeNode): MasterTreeNode => {
+        if (node.parentId !== null) return node;
+        if (isChildCaseStructureNode(node)) return node;
+        const ownerCaseIds = getNodeOwnerCaseIds(node);
+        if (ownerCaseIds.length === 0) return node;
+        const ownedByRootCase = ownerCaseIds.includes(rootCaseId);
+        const ownedByChildCase = ownerCaseIds.some((caseId: string): boolean =>
+          childCaseIdSet.has(caseId),
+        );
+        if (!ownedByChildCase || ownedByRootCase) return node;
+        hasChildStructureRoots = true;
+        return {
+          ...node,
+          parentId: CHILD_CASE_STRUCTURE_NODE_ID,
+        };
+      });
+      if (!hasChildStructureRoots) return baseNodes;
+
+      return [
+        ...remappedNodes,
+        {
+          id: CHILD_CASE_STRUCTURE_NODE_ID,
+          type: 'folder',
+          kind: 'folder',
+          parentId: null,
+          name: 'Children Cases',
+          path: CHILD_CASE_STRUCTURE_FOLDER_PATH,
+          sortOrder: Number.MAX_SAFE_INTEGER,
+          metadata: {
+            entity: 'folder',
+            rawPath: CHILD_CASE_STRUCTURE_FOLDER_PATH,
+            virtualSection: CHILD_CASE_STRUCTURE_METADATA_VALUE,
+            createdAt: null,
+            updatedAt: null,
+          },
+        },
+      ];
+    },
+    [activeCaseFile?.id, showChildCaseFolders, treeWorkspace],
   );
 
   const selectedMasterNodeId = useMemo((): string | null => {
     if (selectedFileId) return toCaseResolverFileNodeId(selectedFileId);
     if (selectedAssetId) return toCaseResolverAssetNodeId(selectedAssetId);
-    if (selectedFolderPath !== null) {
+    if (
+      selectedFolderPath !== null &&
+      !isChildCaseStructureFolderPath(selectedFolderPath)
+    ) {
       return toCaseResolverFolderNodeId(selectedFolderPath);
     }
     return null;
@@ -251,6 +418,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
   const canStartTreeDrag = React.useCallback<
     NonNullable<MasterFolderTreeProps['canStartDrag']>
   >(({ node, event }): boolean => {
+    if (isChildCaseStructureNode(node)) return false;
     if (node.type !== 'file') return true;
     const eventTarget = event.target;
     if (eventTarget instanceof Element) {
@@ -280,14 +448,29 @@ export function CaseResolverFolderTree(): React.JSX.Element {
   const selectedFolderForCreate = useMemo((): string | null => {
     if (!controller.selectedNodeId) return selectedFolderPath;
     const folderPath = fromCaseResolverFolderNodeId(controller.selectedNodeId);
-    if (folderPath !== null) return folderPath;
+    if (
+      folderPath !== null &&
+      !isChildCaseStructureFolderPath(folderPath)
+    ) {
+      return folderPath;
+    }
     const selectedNode = controller.nodes.find(
       (node: MasterTreeNode) => node.id === controller.selectedNodeId,
     );
     if (!selectedNode?.parentId) return '';
-    return fromCaseResolverFolderNodeId(selectedNode.parentId);
+    const parentFolderPath = fromCaseResolverFolderNodeId(selectedNode.parentId);
+    if (
+      parentFolderPath !== null &&
+      !isChildCaseStructureFolderPath(parentFolderPath)
+    ) {
+      return parentFolderPath;
+    }
+    return '';
   }, [controller.nodes, controller.selectedNodeId, selectedFolderPath]);
-  const selectedFolderForFolderCreate = selectedFolderPath;
+  const selectedFolderForFolderCreate =
+    selectedFolderPath && isChildCaseStructureFolderPath(selectedFolderPath)
+      ? ''
+      : selectedFolderPath;
   const createContextTooltip = useMemo((): string | null => {
     if (canCreateInActiveCase) return null;
     if (requestedCaseStatus === 'loading') return 'Loading case context...';
@@ -298,23 +481,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
   }, [activeCaseId, canCreateInActiveCase, requestedCaseStatus]);
   const disableCreateActions =
     !canCreateInActiveCase && requestedCaseStatus !== 'missing';
-  const activeCaseFile = useMemo(() => {
-    if (activeCaseId) {
-      const explicitCase = workspace.files.find(
-        (file: CaseResolverFile) => file.id === activeCaseId && file.fileType === 'case',
-      );
-      if (explicitCase) return explicitCase;
-    }
-    if (activeFile?.fileType === 'case') return activeFile;
-    if (activeFile?.parentCaseId) {
-      const parentCase = workspace.files.find(
-        (file: CaseResolverFile) =>
-          file.id === activeFile.parentCaseId && file.fileType === 'case',
-      );
-      if (parentCase) return parentCase;
-    }
-    return null;
-  }, [activeCaseId, activeFile, workspace.files]);
   const activeCaseIdentifierLabel = useMemo((): string | null => {
     const identifierId = activeCaseFile?.caseIdentifierId ?? null;
     if (!identifierId) return null;
@@ -323,6 +489,102 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     );
     return match?.name ?? identifierId;
   }, [activeCaseFile?.caseIdentifierId, caseResolverIdentifiers]);
+  const activeCaseChildCount = useMemo((): number => {
+    const caseId = activeCaseFile?.id ?? '';
+    if (!caseId) return 0;
+    return workspace.files.filter(
+      (file: CaseResolverFile): boolean =>
+        file.fileType === 'case' && file.parentCaseId === caseId,
+    ).length;
+  }, [activeCaseFile?.id, workspace.files]);
+  const hasActiveCaseChildren = activeCaseChildCount > 0;
+  const caseNameById = useMemo((): Map<string, string> => {
+    const map = new Map<string, string>();
+    treeWorkspace.files.forEach((file: CaseResolverFile): void => {
+      if (file.fileType !== 'case') return;
+      const name = file.name.trim();
+      map.set(file.id, name.length > 0 ? name : file.id);
+    });
+    return map;
+  }, [treeWorkspace.files]);
+  const childCaseIdSet = useMemo((): Set<string> => {
+    const set = new Set<string>();
+    if (!showChildCaseFolders) return set;
+    const rootCaseId = activeCaseFile?.id ?? null;
+    treeWorkspace.files.forEach((file: CaseResolverFile): void => {
+      if (file.fileType !== 'case') return;
+      if (rootCaseId && file.id === rootCaseId) return;
+      set.add(file.id);
+    });
+    return set;
+  }, [activeCaseFile?.id, showChildCaseFolders, treeWorkspace.files]);
+  const fileOwnerCaseIdById = useMemo((): Map<string, string> => {
+    const map = new Map<string, string>();
+    treeWorkspace.files.forEach((file: CaseResolverFile): void => {
+      if (file.fileType === 'case') return;
+      const ownerCaseId = file.parentCaseId?.trim() ?? '';
+      if (!ownerCaseId) return;
+      map.set(file.id, ownerCaseId);
+    });
+    return map;
+  }, [treeWorkspace.files]);
+  const assetOwnerCaseIdById = useMemo((): Map<string, string> => {
+    const map = new Map<string, string>();
+    treeWorkspace.assets.forEach((asset: CaseResolverAssetFile): void => {
+      const sourceFileId = asset.sourceFileId?.trim() ?? '';
+      if (!sourceFileId) return;
+      const ownerCaseId = fileOwnerCaseIdById.get(sourceFileId);
+      if (!ownerCaseId) return;
+      map.set(asset.id, ownerCaseId);
+    });
+    return map;
+  }, [fileOwnerCaseIdById, treeWorkspace.assets]);
+  const folderOwnerCaseIdsByPath = useMemo((): Map<string, string[]> => {
+    const ownersByPath = new Map<string, Set<string>>();
+    const addOwnerForPath = (
+      folderPath: string,
+      ownerCaseId: string | null | undefined,
+    ): void => {
+      const normalizedOwnerCaseId = ownerCaseId?.trim() ?? '';
+      if (!normalizedOwnerCaseId) return;
+      forEachFolderPathAncestor(folderPath, (ancestorPath: string): void => {
+        const currentOwners = ownersByPath.get(ancestorPath) ?? new Set<string>();
+        currentOwners.add(normalizedOwnerCaseId);
+        ownersByPath.set(ancestorPath, currentOwners);
+      });
+    };
+
+    (treeWorkspace.folderRecords ?? []).forEach((record): void => {
+      addOwnerForPath(record.path, record.ownerCaseId);
+    });
+    treeWorkspace.files.forEach((file: CaseResolverFile): void => {
+      if (file.fileType === 'case') return;
+      addOwnerForPath(file.folder, file.parentCaseId);
+    });
+    treeWorkspace.assets.forEach((asset: CaseResolverAssetFile): void => {
+      addOwnerForPath(asset.folder, assetOwnerCaseIdById.get(asset.id));
+    });
+
+    const resolved = new Map<string, string[]>();
+    ownersByPath.forEach((ownerIds: Set<string>, folderPath: string): void => {
+      resolved.set(
+        folderPath,
+        Array.from(ownerIds).sort((left: string, right: string): number =>
+          left.localeCompare(right),
+        ),
+      );
+    });
+    return resolved;
+  }, [
+    assetOwnerCaseIdById,
+    treeWorkspace.assets,
+    treeWorkspace.files,
+    treeWorkspace.folderRecords,
+  ]);
+
+  useEffect((): void => {
+    setShowChildCaseFolders(false);
+  }, [activeCaseFile?.id]);
 
   const fileLockById = useMemo((): Map<string, boolean> => {
     return new Map(
@@ -592,6 +854,21 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               </Button>
             </div>
           </div>
+          {hasActiveCaseChildren ? (
+            <div className='flex items-center justify-between rounded border border-border/60 bg-card/35 px-2 py-1.5'>
+              <div className='text-[11px] text-gray-300'>
+                Show children folders ({activeCaseChildCount})
+              </div>
+              <Switch
+                checked={showChildCaseFolders}
+                onCheckedChange={(checked): void => {
+                  setShowChildCaseFolders(checked === true);
+                }}
+                aria-label='Show children case folders'
+                className='h-5 w-9'
+              />
+            </div>
+          ) : null}
           {createContextTooltip ? (
             <div className='rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200'>
               {createContextTooltip}
@@ -665,6 +942,16 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             position,
             defaultAllowed,
           }): boolean => {
+            const draggedNode = controller.nodes.find(
+              (candidate: MasterTreeNode): boolean => candidate.id === draggedNodeId,
+            );
+            if (draggedNode && isChildCaseStructureNode(draggedNode)) return false;
+            const targetNode = targetId
+              ? controller.nodes.find(
+                (candidate: MasterTreeNode): boolean => candidate.id === targetId,
+              )
+              : null;
+            if (targetNode && isChildCaseStructureNode(targetNode)) return false;
             if (defaultAllowed) return true;
             const dragged = decodeCaseResolverMasterNodeId(draggedNodeId);
             if (!dragged) return false;
@@ -834,6 +1121,37 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               folderStats.total > 0 &&
               folderStats.total === folderStats.locked,
             );
+            const isChildStructureSectionNode = isChildCaseStructureNode(node);
+            const nodeOwnerCaseIds = (() => {
+              if (isChildStructureSectionNode) return [];
+              if (folderPath !== null) {
+                return folderOwnerCaseIdsByPath.get(folderPath) ?? [];
+              }
+              if (fileId) {
+                const ownerCaseId = fileOwnerCaseIdById.get(fileId);
+                return ownerCaseId ? [ownerCaseId] : [];
+              }
+              if (assetId) {
+                const ownerCaseId = assetOwnerCaseIdById.get(assetId);
+                return ownerCaseId ? [ownerCaseId] : [];
+              }
+              return [];
+            })();
+            const childOwnerCaseIds = nodeOwnerCaseIds.filter((caseId: string): boolean =>
+              childCaseIdSet.has(caseId),
+            );
+            const childOwnerCaseNames = Array.from(
+              new Set(
+                childOwnerCaseIds.map(
+                  (caseId: string): string => caseNameById.get(caseId) ?? caseId,
+                ),
+              ),
+            );
+            const isChildOwnedStructureNode = childOwnerCaseNames.length > 0;
+            const childStructureHint =
+              childOwnerCaseNames.length === 1
+                ? `Child case structure: ${childOwnerCaseNames[0]}`
+                : `Child case structure: ${childOwnerCaseNames.join(', ')}`;
             const hoverOnlyControlClass = isSelected
               ? 'opacity-100'
               : 'opacity-0 group-hover:opacity-100';
@@ -863,21 +1181,25 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             })();
 
             const isLinkDropTarget = isDropTarget && dropPosition === 'inside' && fileId !== null;
-            const stateClassName = isSelected
-              ? 'bg-blue-600 text-white'
-              : isHighlightedNodeFile
-                ? 'bg-violet-500/15 text-violet-100 ring-1 ring-inset ring-violet-400/60'
-                : isLinkDropTarget
-                  ? 'bg-teal-500/20 text-teal-100 ring-2 ring-inset ring-teal-400/70'
-                  : dropPosition === 'before'
-                    ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
-                    : dropPosition === 'after'
-                      ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
-                      : isDragging
-                        ? 'opacity-50 text-gray-200'
-                        : isDropTarget
-                          ? 'bg-cyan-500/10 text-cyan-100'
-                          : 'text-gray-300 hover:bg-muted/50';
+            const stateClassName = isChildStructureSectionNode
+              ? isSelected
+                ? 'bg-cyan-600/30 text-cyan-50 ring-1 ring-inset ring-cyan-400/70'
+                : 'bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/15'
+              : isSelected
+                ? 'bg-blue-600 text-white'
+                : isHighlightedNodeFile
+                  ? 'bg-violet-500/15 text-violet-100 ring-1 ring-inset ring-violet-400/60'
+                  : isLinkDropTarget
+                    ? 'bg-teal-500/20 text-teal-100 ring-2 ring-inset ring-teal-400/70'
+                    : dropPosition === 'before'
+                      ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
+                      : dropPosition === 'after'
+                        ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-cyan-400/60'
+                        : isDragging
+                          ? 'opacity-50 text-gray-200'
+                          : isDropTarget
+                            ? 'bg-cyan-500/10 text-cyan-100'
+                            : 'text-gray-300 hover:bg-muted/50';
 
             return (
               <div
@@ -886,16 +1208,19 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                 role='button'
                 tabIndex={0}
                 title={
-                  isNodeFileAsset
-                    ? 'Canvas file — click to open'
-                    : isCanvasCaseFile
-                      ? 'Drag file to canvas'
-                      : node.name
+                  isChildStructureSectionNode
+                    ? 'Children cases folder structure'
+                    : isNodeFileAsset
+                      ? 'Canvas file — click to open'
+                      : isCanvasCaseFile
+                        ? 'Drag file to canvas'
+                        : node.name
                 }
                 onClick={(): void => {
                   if (!isSelected) {
                     select();
                   }
+                  if (isChildStructureSectionNode) return;
                   if (folderPath !== null) {
                     onSelectFolder(folderPath);
                     return;
@@ -913,6 +1238,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                   }
                 }}
                 onDoubleClick={(): void => {
+                  if (isChildStructureSectionNode) return;
                   startRename();
                 }}
                 onKeyDown={(
@@ -923,6 +1249,7 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                     if (!isSelected) {
                       select();
                     }
+                    if (isChildStructureSectionNode) return;
                     if (folderPath !== null) {
                       onSelectFolder(folderPath);
                       return;
@@ -993,11 +1320,20 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                   </span>
                 )}
                 <Icon className='size-4 shrink-0' />
-                {isFolder && isFolderLocked ? (
+                {isFolder && isFolderLocked && !isChildStructureSectionNode ? (
                   <Lock
                     className='size-3.5 shrink-0 text-amber-300'
                     aria-hidden='true'
                   />
+                ) : null}
+                {isChildOwnedStructureNode ? (
+                  <span
+                    className='inline-flex size-4 shrink-0 items-center justify-center rounded border border-cyan-500/30 bg-cyan-500/10 text-cyan-200'
+                    title={childStructureHint}
+                    aria-label={childStructureHint}
+                  >
+                    <GitBranch className='size-3' />
+                  </span>
                 ) : null}
                 <div className='min-w-0 flex flex-1 items-center gap-1'>
                   {isRenaming ? (
@@ -1041,6 +1377,16 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                       <span className='min-w-0 flex-1 truncate'>
                         {node.name}
                       </span>
+                      {isChildOwnedStructureNode ? (
+                        <span
+                          className='inline-flex max-w-[140px] shrink-0 items-center truncate rounded border border-cyan-500/30 bg-cyan-500/10 px-1 text-[10px] font-medium text-cyan-200'
+                          title={childStructureHint}
+                        >
+                          {childOwnerCaseNames.length === 1
+                            ? childOwnerCaseNames[0]
+                            : `${childOwnerCaseNames.length} child cases`}
+                        </span>
+                      ) : null}
                       {isLinkDropTarget ? (
                         <span className='shrink-0 rounded bg-teal-500/30 px-1 text-[10px] font-medium text-teal-200'>
                           Link →
@@ -1070,62 +1416,65 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                     </>
                   )}
                 </div>
-                {!isRenaming && isFolder && folderPath !== null ? (
-                  <div
-                    className={`flex shrink-0 items-center gap-1 transition ${
-                      hoverOnlyControlClass
-                    }`}
-                  >
-                    <button
-                      type='button'
-                      className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-gray-300 transition hover:bg-muted/60 hover:text-white disabled:cursor-not-allowed disabled:opacity-50'
-                      title={
-                        !folderHasCaseFiles
-                          ? 'No case files in folder'
-                          : isFolderLocked
-                            ? 'Unlock folder files'
-                            : 'Lock folder files'
-                      }
-                      aria-label={
-                        !folderHasCaseFiles
-                          ? 'No case files in folder'
-                          : isFolderLocked
-                            ? 'Unlock folder files'
-                            : 'Lock folder files'
-                      }
-                      disabled={!folderHasCaseFiles}
-                      onClick={(event): void => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        onToggleFolderLock(folderPath);
-                      }}
+                {!isRenaming &&
+                isFolder &&
+                folderPath !== null &&
+                !isChildStructureSectionNode ? (
+                    <div
+                      className={`flex shrink-0 items-center gap-1 transition ${
+                        hoverOnlyControlClass
+                      }`}
                     >
-                      {isFolderLocked ? (
-                        <Unlock className='size-3.5' />
-                      ) : (
-                        <Lock className='size-3.5' />
-                      )}
-                    </button>
-                    <button
-                      type='button'
-                      className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-red-300 transition hover:bg-red-500/20 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50'
-                      title={
-                        folderHasLockedFiles
-                          ? 'Unlock folder files before removing'
-                          : 'Remove folder'
-                      }
-                      aria-label='Remove folder'
-                      disabled={folderHasLockedFiles}
-                      onClick={(event): void => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        onDeleteFolder(folderPath);
-                      }}
-                    >
-                      <Trash2 className='size-3.5' />
-                    </button>
-                  </div>
-                ) : null}
+                      <button
+                        type='button'
+                        className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-gray-300 transition hover:bg-muted/60 hover:text-white disabled:cursor-not-allowed disabled:opacity-50'
+                        title={
+                          !folderHasCaseFiles
+                            ? 'No case files in folder'
+                            : isFolderLocked
+                              ? 'Unlock folder files'
+                              : 'Lock folder files'
+                        }
+                        aria-label={
+                          !folderHasCaseFiles
+                            ? 'No case files in folder'
+                            : isFolderLocked
+                              ? 'Unlock folder files'
+                              : 'Lock folder files'
+                        }
+                        disabled={!folderHasCaseFiles}
+                        onClick={(event): void => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onToggleFolderLock(folderPath);
+                        }}
+                      >
+                        {isFolderLocked ? (
+                          <Unlock className='size-3.5' />
+                        ) : (
+                          <Lock className='size-3.5' />
+                        )}
+                      </button>
+                      <button
+                        type='button'
+                        className='inline-flex size-6 items-center justify-center rounded border border-border/60 bg-card/60 text-red-300 transition hover:bg-red-500/20 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50'
+                        title={
+                          folderHasLockedFiles
+                            ? 'Unlock folder files before removing'
+                            : 'Remove folder'
+                        }
+                        aria-label='Remove folder'
+                        disabled={folderHasLockedFiles}
+                        onClick={(event): void => {
+                          event.preventDefault();
+                          event.stopPropagation();
+                          onDeleteFolder(folderPath);
+                        }}
+                      >
+                        <Trash2 className='size-3.5' />
+                      </button>
+                    </div>
+                  ) : null}
                 {!isRenaming && isCaseFile && fileId ? (
                   <div
                     className={`flex shrink-0 items-center gap-1 transition ${

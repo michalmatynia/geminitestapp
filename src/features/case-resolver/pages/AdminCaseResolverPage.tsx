@@ -76,6 +76,7 @@ import {
 } from '../types';
 import {
   buildCombinedOcrText,
+  createCaseResolverHistorySnapshotEntry,
   buildDocumentPdfMarkup,
   buildFileEditDraft,
   prependDraftHistorySnapshotForRevisionLoad,
@@ -973,21 +974,20 @@ export function AdminCaseResolverPage(): React.JSX.Element {
                   appliedExplodedCleanupPatch =
                     appliedExplodedCleanupPatch || fileShouldApplyExplodedCleanup;
                   const nextContentVersion = file.documentContentVersion + 1;
-                  const nextDocumentHistory = hasExplodedCleanup
-                    ? [
-                      {
-                        id: createId('case-doc-history'),
-                        savedAt: now,
-                        documentContentVersion: file.documentContentVersion,
-                        activeDocumentVersion: file.activeDocumentVersion,
-                        editorType: file.editorType,
-                        documentContent: file.documentContent,
-                        documentContentMarkdown: file.documentContentMarkdown,
-                        documentContentHtml: file.documentContentHtml,
-                        documentContentPlainText: file.documentContentPlainText,
-                      },
-                      ...file.documentHistory,
-                    ].slice(0, 120)
+                  const currentSnapshot = hasExplodedCleanup
+                    ? createCaseResolverHistorySnapshotEntry({
+                      savedAt: now,
+                      documentContentVersion: file.documentContentVersion,
+                      activeDocumentVersion: file.activeDocumentVersion,
+                      editorType: file.editorType,
+                      documentContent: file.documentContent,
+                      documentContentMarkdown: file.documentContentMarkdown,
+                      documentContentHtml: file.documentContentHtml,
+                      documentContentPlainText: file.documentContentPlainText,
+                    })
+                    : null;
+                  const nextDocumentHistory = currentSnapshot
+                    ? [currentSnapshot, ...file.documentHistory].slice(0, 120)
                     : file.documentHistory;
                   return {
                     ...(fileShouldPatchAddresser ? { addresser: rolePatches.addresser ?? null } : {}),
@@ -1962,8 +1962,13 @@ export function AdminCaseResolverPage(): React.JSX.Element {
         markdown: entry.documentContentMarkdown ?? '',
       });
     }
+    const nextDraftDocumentContentVersion =
+      typeof entry.documentContentVersion === 'number' && Number.isFinite(entry.documentContentVersion)
+        ? Math.max(0, Math.trunc(entry.documentContentVersion))
+        : editingDocumentDraft.documentContentVersion;
     updateEditingDocumentDraft({
       activeDocumentVersion: entry.activeDocumentVersion,
+      documentContentVersion: nextDraftDocumentContentVersion,
     });
     setEditorDetailsTab('document');
     toast('Revision loaded into the editor. Save to apply it.', { variant: 'info' });

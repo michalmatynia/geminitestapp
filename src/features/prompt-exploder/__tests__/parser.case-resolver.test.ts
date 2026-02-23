@@ -319,6 +319,74 @@ Na podstawie obowiązujących przepisów informuję, że z dniem [dd.mm.2026] za
     );
   });
 
+  it('splits sender and police addressee blocks for unicode and ascii dash variants', () => {
+    const addresseeHeadings = [
+      'Komisariat Policji Szczecin–Dąbie',
+      'Komisariat Policji Szczecin-Dąbie',
+    ];
+
+    addresseeHeadings.forEach((addresseeHeading) => {
+      const prompt = `Szczecin 14.02.2026
+
+Michał Matynia
+Fioletowa 71/2
+70-781 Szczecin
+Polska
+${addresseeHeading}
+ul. Pomorska 15
+70-812 Szczecin
+
+Dotyczy: wezwania na dzień 12.02.2026 r., godz. 08:30, pok. 24
+Niniejszym wnoszę o zwrot kosztów podróży świadka.`;
+
+      const rules = getPromptExploderScopedRules(
+        defaultPromptEngineSettings,
+        'case_resolver_prompt_exploder'
+      );
+      const document = explodePromptText({
+        prompt,
+        validationRules: rules,
+        validationScope: 'case_resolver_prompt_exploder',
+      });
+
+      const segmentBodies = document.segments.map((segment) => segment.raw || segment.text);
+      const addresserIndex = segmentBodies.findIndex((value) =>
+        (value || '').includes('Michał Matynia')
+      );
+      const addresseeIndex = segmentBodies.findIndex((value) =>
+        (value || '').includes(addresseeHeading)
+      );
+      const dotyczyIndex = segmentBodies.findIndex((value) =>
+        (value || '').includes('Dotyczy: wezwania na dzień 12.02.2026 r., godz. 08:30, pok. 24')
+      );
+      const bodyIndex = segmentBodies.findIndex((value) =>
+        (value || '').includes('Niniejszym wnoszę o zwrot kosztów podróży świadka.')
+      );
+
+      expect(addresserIndex).toBeGreaterThanOrEqual(0);
+      expect(addresseeIndex).toBeGreaterThanOrEqual(0);
+      expect(dotyczyIndex).toBeGreaterThanOrEqual(0);
+      expect(bodyIndex).toBeGreaterThanOrEqual(0);
+      expect(addresseeIndex).toBeGreaterThan(addresserIndex);
+      expect(dotyczyIndex).toBeGreaterThan(addresseeIndex);
+      expect(bodyIndex).toBeGreaterThan(dotyczyIndex);
+
+      const addresserSegment = document.segments[addresserIndex];
+      const addresseeSegment = document.segments[addresseeIndex];
+      const bodySegment = document.segments[bodyIndex];
+
+      expect(addresserSegment?.raw).toContain('Fioletowa 71/2');
+      expect(addresserSegment?.raw).not.toContain(addresseeHeading);
+      expect(addresseeSegment?.raw).toContain('ul. Pomorska 15');
+      expect(addresseeSegment?.raw).not.toContain('Michał Matynia');
+      expect(addresseeSegment?.matchedPatternLabels).toContain(
+        'Case Resolver Heading: Addressee Organization'
+      );
+      expect(bodySegment?.raw).toContain('Niniejszym wnoszę o zwrot kosztów podróży świadka.');
+      expect(bodySegment?.raw).not.toContain(addresseeHeading);
+    });
+  });
+
   it('keeps Uzasadnienie in title only and removes it from body text', () => {
     const prompt = [
       '<p><strong>Uzasadnienie</strong></p>',

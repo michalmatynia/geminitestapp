@@ -259,6 +259,55 @@ describe('case resolver extraction bridge payload', () => {
     expect(payload.parties?.addressee?.city).toBe('Szczecin');
   });
 
+  it('captures police addressee organization in rules-only mode', () => {
+    const segments: PromptExploderSegment[] = [
+      createSegment({
+        id: 'rules-addresser-police',
+        raw: 'Michał Matynia\nFioletowa 71/2\n70-781 Szczecin\nPolska',
+        matchedPatternIds: [
+          'segment.case_resolver.heading.addresser_person',
+          'segment.case_resolver.extract.addresser.first_name',
+          'segment.case_resolver.extract.addresser.last_name',
+          'segment.case_resolver.extract.address.street',
+          'segment.case_resolver.extract.address.street_number',
+          'segment.case_resolver.extract.address.house_number',
+          'segment.case_resolver.extract.address.postal_code',
+          'segment.case_resolver.extract.address.city',
+          'segment.case_resolver.extract.address.country',
+        ],
+      }),
+      createSegment({
+        id: 'rules-addressee-police',
+        raw: 'Komisariat Policji Szczecin–Dąbie\nul. Pomorska 15\n70-812 Szczecin',
+        matchedPatternIds: [
+          'segment.case_resolver.heading.addressee_organization',
+          'segment.case_resolver.extract.addressee.organization_name',
+          'segment.case_resolver.extract.address.street',
+          'segment.case_resolver.extract.address.street_number',
+          'segment.case_resolver.extract.address.postal_code',
+          'segment.case_resolver.extract.address.city',
+        ],
+      }),
+    ];
+
+    const payload = extractCaseResolverBridgePayloadFromSegments(segments, {
+      captureRules,
+      mode: 'rules_only',
+    });
+
+    expect(payload.parties?.addresser?.displayName).toBe('Michał Matynia');
+    expect(payload.parties?.addresser?.kind).toBe('person');
+    expect(payload.parties?.addressee?.displayName).toBe('Komisariat Policji Szczecin–Dąbie');
+    expect(payload.parties?.addressee?.organizationName).toBe(
+      'Komisariat Policji Szczecin–Dąbie'
+    );
+    expect(payload.parties?.addressee?.kind).toBe('organization');
+    expect(payload.parties?.addressee?.street).toBe('Pomorska');
+    expect(payload.parties?.addressee?.streetNumber).toBe('15');
+    expect(payload.parties?.addressee?.postalCode).toBe('70-812');
+    expect(payload.parties?.addressee?.city).toBe('Szczecin');
+  });
+
   it('does not apply transfer fallback when rules-only mode has no captures', () => {
     const segments: PromptExploderSegment[] = [
       createSegment({

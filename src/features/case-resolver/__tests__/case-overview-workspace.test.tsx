@@ -121,4 +121,12 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
 
     expect(onUpdateActiveCase).not.toHaveBeenCalled();
   });
+
+  it('renders case status dropdown with pending as default value', () => {
+    const caseFile = buildCaseFile();
+    renderWorkspace(caseFile);
+
+    expect(screen.getByText('Case Status')).toBeInTheDocument();
+    expect(screen.getByText('Pending')).toBeInTheDocument();
+  });
 });

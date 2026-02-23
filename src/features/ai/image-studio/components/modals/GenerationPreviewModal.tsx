@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { StatusBadge, MetadataItem, FormActions } from '@/shared/ui';
@@ -45,10 +46,15 @@ function InlineImagePreviewCanvas({
   }, [imageSrc, imageAlt, onImageDimensionsChange]);
 
   return (
-    <div className='flex h-[400px] items-center justify-center bg-black/40 rounded-lg border border-border/60 overflow-hidden shadow-inner'>
+    <div className='flex h-[400px] items-center justify-center bg-black/40 rounded-lg border border-border/60 overflow-hidden shadow-inner relative'>
       {imageSrc ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={imageSrc} alt={imageAlt} className='max-h-full max-w-full object-contain' />
+        <Image 
+          src={imageSrc} 
+          alt={imageAlt} 
+          fill
+          className='object-contain'
+          unoptimized
+        />
       ) : (
         <span className='text-sm text-muted-foreground italic'>No preview available</span>
       )}

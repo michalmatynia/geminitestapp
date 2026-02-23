@@ -42,30 +42,22 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const uniqueProductIds = Array.from(new Set(data.productIds));
   const productRepository = await getProductRepository();
 
-  await Promise.all(
-    uniqueProductIds.map(async (productId) => {
-      const product = await productRepository.getProductById(productId);
-      if (!product) {
-        return;
-      }
-      const existingCatalogIds = product.catalogs.map(
-        (entry: { catalogId: string }) => entry.catalogId
-      );
-      let nextCatalogIds: string[];
-      if (mode === 'replace') {
-        nextCatalogIds = validCatalogIds;
-      } else if (mode === 'remove') {
-        nextCatalogIds = existingCatalogIds.filter(
-          (catalogId: string) => !validCatalogIds.includes(catalogId)
-        );
-      } else {
-        nextCatalogIds = Array.from(
-          new Set([...existingCatalogIds, ...validCatalogIds])
-        );
-      }
-      await productRepository.replaceProductCatalogs(productId, nextCatalogIds);
-    })
-  );
+  if (mode === 'replace') {
+    await productRepository.bulkReplaceProductCatalogs(
+      uniqueProductIds,
+      validCatalogIds
+    );
+  } else if (mode === 'remove') {
+    await productRepository.bulkRemoveProductCatalogs(
+      uniqueProductIds,
+      validCatalogIds
+    );
+  } else {
+    await productRepository.bulkAddProductCatalogs(
+      uniqueProductIds,
+      validCatalogIds
+    );
+  }
 
   return NextResponse.json({
     updated: uniqueProductIds.length,

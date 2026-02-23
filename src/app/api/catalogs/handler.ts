@@ -62,46 +62,51 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
       });
 
       const collection = mongo.collection<{ _id: string; id: string }>('catalogs');
-      catalogs = await Promise.all(
-        catalogs.map(async (catalog: CatalogRecord) => {
-          const nextLanguageIds =
-            catalog.languageIds?.map(
-              (languageId: string) => languageCodeById.get(languageId) ?? languageId
-            ) ?? [];
-          const nextDefaultLanguageId = catalog.defaultLanguageId
-            ? languageCodeById.get(catalog.defaultLanguageId) ??
-              catalog.defaultLanguageId
-            : null;
+      const bulkOps: any[] = [];
+      const updatedCatalogs = catalogs.map((catalog: CatalogRecord) => {
+        const nextLanguageIds =
+          catalog.languageIds?.map(
+            (languageId: string) => languageCodeById.get(languageId) ?? languageId
+          ) ?? [];
+        const nextDefaultLanguageId = catalog.defaultLanguageId
+          ? languageCodeById.get(catalog.defaultLanguageId) ??
+            catalog.defaultLanguageId
+          : null;
 
-          const languageIdsChanged =
-            nextLanguageIds.length !== (catalog.languageIds?.length ?? 0) ||
-            nextLanguageIds.some(
-              (languageId: string, index: number) => languageId !== catalog.languageIds?.[index]
-            );
-          const defaultChanged =
-            nextDefaultLanguageId !== catalog.defaultLanguageId;
+        const languageIdsChanged =
+          nextLanguageIds.length !== (catalog.languageIds?.length ?? 0) ||
+          nextLanguageIds.some(
+            (languageId: string, index: number) => languageId !== catalog.languageIds?.[index]
+          );
+        const defaultChanged =
+          nextDefaultLanguageId !== catalog.defaultLanguageId;
 
-          if (languageIdsChanged || defaultChanged) {
-            const filter: Filter<{ _id: string; id: string }> = { $or: [{ _id: catalog.id }, { id: catalog.id }] };
-            await collection.updateOne(
-              filter,
-              {
+        if (languageIdsChanged || defaultChanged) {
+          bulkOps.push({
+            updateOne: {
+              filter: { $or: [{ _id: catalog.id }, { id: catalog.id }] },
+              update: {
                 $set: {
                   languageIds: nextLanguageIds,
                   defaultLanguageId: nextDefaultLanguageId,
                   updatedAt: new Date(),
                 },
-              }
-            );
-          }
+              },
+            },
+          });
+        }
 
-          return {
-            ...catalog,
-            languageIds: nextLanguageIds,
-            defaultLanguageId: nextDefaultLanguageId,
-          };
-        })
-      );
+        return {
+          ...catalog,
+          languageIds: nextLanguageIds,
+          defaultLanguageId: nextDefaultLanguageId,
+        };
+      });
+
+      if (bulkOps.length > 0) {
+        await collection.bulkWrite(bulkOps);
+      }
+      catalogs = updatedCatalogs;
     } catch (error: unknown) {
       void logSystemEvent({
         level: 'warn',

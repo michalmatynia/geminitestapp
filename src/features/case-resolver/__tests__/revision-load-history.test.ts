@@ -4,7 +4,10 @@ import type {
   CaseResolverDocumentHistoryEntry,
   CaseResolverFileEditDraft,
 } from '@/shared/contracts/case-resolver';
-import { prependDraftHistorySnapshotForRevisionLoad } from '@/features/case-resolver/utils/caseResolverUtils';
+import {
+  createCaseResolverHistorySnapshotEntry,
+  prependDraftHistorySnapshotForRevisionLoad,
+} from '@/features/case-resolver/utils/caseResolverUtils';
 
 const buildHistoryEntry = (
   overrides: Partial<CaseResolverDocumentHistoryEntry> = {}
@@ -156,5 +159,40 @@ describe('prependDraftHistorySnapshotForRevisionLoad', () => {
     expect(nextHistory).toHaveLength(2);
     expect(nextHistory?.[0]?.documentContent).toBe('<p>Current text</p>');
     expect(nextHistory?.[1]?.id).toBe('history-1');
+  });
+});
+
+describe('createCaseResolverHistorySnapshotEntry', () => {
+  it('returns null for semantically empty editor payload', () => {
+    const entry = createCaseResolverHistorySnapshotEntry({
+      savedAt: '2026-02-22T12:00:00.000Z',
+      documentContentVersion: 1,
+      activeDocumentVersion: 'original',
+      editorType: 'wysiwyg',
+      documentContent: '<p><br></p>',
+      documentContentMarkdown: '',
+      documentContentHtml: '<p><br></p>',
+      documentContentPlainText: '',
+    });
+
+    expect(entry).toBeNull();
+  });
+
+  it('creates a snapshot entry for meaningful content', () => {
+    const entry = createCaseResolverHistorySnapshotEntry({
+      savedAt: '2026-02-22T12:00:00.000Z',
+      documentContentVersion: 4,
+      activeDocumentVersion: 'original',
+      editorType: 'wysiwyg',
+      documentContent: '<p>Current text</p>',
+      documentContentMarkdown: 'Current text',
+      documentContentHtml: '<p>Current text</p>',
+      documentContentPlainText: 'Current text',
+    });
+
+    expect(entry).toBeDefined();
+    expect(entry?.id.startsWith('case-doc-history-')).toBe(true);
+    expect(entry?.documentContentVersion).toBe(4);
+    expect(entry?.documentContentPlainText).toBe('Current text');
   });
 });

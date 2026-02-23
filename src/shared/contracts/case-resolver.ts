@@ -432,6 +432,7 @@ export const caseResolverFileSchema = dtoBaseSchema.extend({
   workspaceId: z.string(),
   name: z.string(),
   fileType: caseResolverFileTypeSchema,
+  caseStatus: z.enum(['pending', 'completed']).optional(),
   documentContent: z.string(),
   version: caseResolverDocumentVersionSchema,
   graph: caseResolverGraphSchema.optional(),
@@ -445,6 +446,7 @@ export const caseResolverFileSchema = dtoBaseSchema.extend({
   originalDocumentContent: z.string().optional(),
   documentCity: z.string().nullable().optional(),
   documentDate: caseResolverDocumentDateProposalSchema.nullable().optional(),
+  isSent: z.boolean().optional(),
   relatedFileIds: z.array(z.string()).nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
@@ -454,6 +456,7 @@ export interface CaseResolverFileDto extends DtoBase {
   workspaceId: string;
   name: string;
   fileType: CaseResolverFileType;
+  caseStatus?: 'pending' | 'completed' | undefined;
   folder: string;
   parentCaseId?: string | null | undefined;
   referenceCaseIds: string[];
@@ -474,6 +477,7 @@ export interface CaseResolverFileDto extends DtoBase {
   explodedDocumentContent?: string | undefined;
   documentCity?: string | null | undefined;
   documentDate?: CaseResolverDocumentDateProposal | null | undefined;
+  isSent?: boolean | undefined;
   documentHistory: CaseResolverDocumentHistoryEntry[];
   documentConversionWarnings: string[];
   lastContentConversionAt?: string | null | undefined;
@@ -504,6 +508,7 @@ export const caseResolverFileEditDraftSchema = z.object({
   updatedAt: z.string().optional(),
   documentDate: caseResolverDocumentDateProposalSchema.nullable().optional(),
   documentCity: z.string().nullable().optional(),
+  isSent: z.boolean().optional(),
   originalDocumentContent: z.string().optional(),
   explodedDocumentContent: z.string().optional(),
   activeDocumentVersion: z.enum(['original', 'exploded']).optional(),
@@ -542,6 +547,7 @@ export interface CaseResolverFileEditDraftDto {
   updatedAt?: string | undefined;
   documentDate?: CaseResolverDocumentDateProposal | null | undefined;
   documentCity?: string | null | undefined;
+  isSent?: boolean | undefined;
   originalDocumentContent?: string | undefined;
   explodedDocumentContent?: string | undefined;
   activeDocumentVersion?: 'original' | 'exploded' | undefined;

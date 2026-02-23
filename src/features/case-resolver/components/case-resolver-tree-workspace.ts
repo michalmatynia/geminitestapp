@@ -7,12 +7,14 @@ type ResolveCaseResolverTreeWorkspaceArgs = {
   selectedFileId: string | null;
   requestedFileId: string | null;
   workspace: CaseResolverWorkspace;
+  includeDescendantCaseScope?: boolean;
 };
 
 export const resolveCaseResolverTreeWorkspace = ({
   selectedFileId,
   requestedFileId,
   workspace,
+  includeDescendantCaseScope = true,
 }: ResolveCaseResolverTreeWorkspaceArgs): CaseResolverWorkspace => {
   const filesById = new Map<string, CaseResolverFile>(
     workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
@@ -74,6 +76,7 @@ export const resolveCaseResolverTreeWorkspace = ({
     const candidate = filesById.get(caseId);
     if (candidate?.fileType !== 'case') return;
     scopedCaseIds.add(caseId);
+    if (!includeDescendantCaseScope) return;
     const childCaseIds = caseChildIdsByParentId.get(caseId) ?? [];
     childCaseIds.forEach((childCaseId: string): void => {
       visitCase(childCaseId);

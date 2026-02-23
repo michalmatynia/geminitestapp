@@ -1,4 +1,5 @@
 import { } from 'lucide-react';
+import Image from 'next/image';
 import React from 'react';
 
 import { Button, TabsContent, Hint, LoadingState } from '@/shared/ui';
@@ -146,14 +147,14 @@ export function SlotInlineEditGenerationsTab(): React.JSX.Element {
                   title='Open generation preview'
                 >
                   <div className='relative aspect-square overflow-hidden bg-black/35'>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={variant.imageSrc}
                       alt={variant.output.filename || `Generation ${variant.outputIndex}`}
-                      className='h-full w-full object-cover'
-                      loading='lazy'
+                      fill
+                      className='object-cover'
+                      unoptimized
                     />
-                    <div className='absolute left-1 top-1 rounded border border-border/60 bg-black/65 px-1 py-0.5 text-[10px] text-gray-200'>
+                    <div className='absolute left-1 top-1 z-10 rounded border border-border/60 bg-black/65 px-1 py-0.5 text-[10px] text-gray-200'>
                       {variant.outputIndex}/{variant.outputCount}
                     </div>
                   </div>

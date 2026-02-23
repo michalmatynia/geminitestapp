@@ -70,6 +70,7 @@ import {
 import { useCaseResolverStateFolderActions } from './useCaseResolverState.folder-actions';
 import {
   buildFileEditDraft,
+  createCaseResolverHistorySnapshotEntry,
   createId,
   createUniqueFolderPath,
 } from '../utils/caseResolverUtils';
@@ -88,6 +89,7 @@ import {
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
   buildCaseResolverDraftCanonicalState,
   appendOwnedFolderRecords,
+  canCaseResolverDraftPerformInitialManualSave,
   clearStoredEditorDraft,
   collectCaseScopeIds,
   createUniqueCaseFileName,
@@ -2104,8 +2106,13 @@ export function useCaseResolverState(): CaseResolverStateValue {
       file: currentFile,
       canonicalState,
     });
+    const canSavePristineInitialDocument = canCaseResolverDraftPerformInitialManualSave({
+      draft: editingDocumentDraft,
+      file: currentFile,
+      canonicalState,
+    });
 
-    if (!hasMeaningfulChanges) {
+    if (!hasMeaningfulChanges && !canSavePristineInitialDocument) {
       clearStoredEditorDraft(editingDocumentDraft.id);
       if (hasVersionDrift) {
         setEditingDocumentDraft((current) => (
@@ -2128,21 +2135,20 @@ export function useCaseResolverState(): CaseResolverStateValue {
     }
     const now = new Date().toISOString();
     const nextDocumentContentVersion = currentFile.documentContentVersion + 1;
-    const nextDocumentHistory = hasContentChanges
-      ? [
-        {
-          id: createId('case-doc-history'),
-          savedAt: now,
-          documentContentVersion: currentFile.documentContentVersion,
-          activeDocumentVersion: currentFile.activeDocumentVersion,
-          editorType: currentFile.editorType,
-          documentContent: currentFile.documentContent,
-          documentContentMarkdown: currentFile.documentContentMarkdown,
-          documentContentHtml: currentFile.documentContentHtml,
-          documentContentPlainText: currentFile.documentContentPlainText,
-        },
-        ...currentFile.documentHistory,
-      ].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT)
+    const currentSnapshot = hasContentChanges
+      ? createCaseResolverHistorySnapshotEntry({
+        savedAt: now,
+        documentContentVersion: currentFile.documentContentVersion,
+        activeDocumentVersion: currentFile.activeDocumentVersion,
+        editorType: currentFile.editorType,
+        documentContent: currentFile.documentContent,
+        documentContentMarkdown: currentFile.documentContentMarkdown,
+        documentContentHtml: currentFile.documentContentHtml,
+        documentContentPlainText: currentFile.documentContentPlainText,
+      })
+      : null;
+    const nextDocumentHistory = currentSnapshot
+      ? [currentSnapshot, ...currentFile.documentHistory].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT)
       : currentFile.documentHistory;
     const nextSavedFile = createCaseResolverFile({
       ...currentFile,

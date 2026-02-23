@@ -1,28 +1,28 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-18T00:47:22.353Z
+Generated at: 2026-02-23T19:21:15.950Z
 
 ## Snapshot
 
-- Source files: 2788
-- Source lines: 444968
-- use client files: 901
-- Files >= 1000 LOC: 14
-- Files >= 1500 LOC: 5
-- Largest file: `src/features/database/services/database-sync.ts` (3352 LOC)
-- API routes: 294
+- Source files: 2971
+- Source lines: 552666
+- use client files: 961
+- Files >= 1000 LOC: 61
+- Files >= 1500 LOC: 25
+- Largest file: `src/features/database/services/database-sync.ts` (3339 LOC)
+- API routes: 314
 - API delegated server routes: 15
 - API routes without apiHandler/delegation: 0
-- API explicit cache policy coverage: 294/294 (100.0%)
-- Cross-feature dependency pairs: 118
-- Shared -> features imports: 15
-- setInterval occurrences: 22
+- API explicit cache policy coverage: 314/314 (100.0%)
+- Cross-feature dependency pairs: 133
+- Shared -> features imports: 16
+- setInterval occurrences: 24
 
 ## Top API Hotspots (by LOC)
 
 | Route | LOC |
 | --- | ---: |
-| `src/app/api/chatbot/agent/[runId]/[action]/route.ts` | 89 |
+| `src/app/api/chatbot/agent/[runId]/[action]/route.ts` | 90 |
 | `src/app/api/integrations/exports/base/[setting]/route.ts` | 86 |
 | `src/app/api/integrations/imports/base/[setting]/route.ts` | 70 |
 | `src/app/api/marketplace/[resource]/route.ts` | 38 |
@@ -36,49 +36,49 @@ Generated at: 2026-02-18T00:47:22.353Z
 | `src/app/api/chatbot/sessions/route.ts` | 24 |
 | `src/app/api/integrations/export-templates/[id]/route.ts` | 24 |
 | `src/app/api/integrations/import-templates/[id]/route.ts` | 24 |
-| `src/app/api/settings/route.ts` | 23 |
+| `src/app/api/products/categories/route.ts` | 24 |
 
 ## Top Cross-Feature Dependencies
 
 | Edge | References |
 | --- | ---: |
-| `integrations -> products` | 56 |
-| `ai -> observability` | 46 |
-| `prompt-exploder -> prompt-engine` | 32 |
+| `ai -> observability` | 45 |
+| `products -> observability` | 32 |
 | `jobs -> observability` | 30 |
-| `products -> observability` | 30 |
-| `drafter -> products` | 26 |
-| `jobs -> ai` | 26 |
+| `jobs -> ai` | 29 |
+| `prompt-exploder -> prompt-engine` | 28 |
 | `products -> ai` | 25 |
-| `cms -> gsap` | 22 |
-| `ai -> products` | 21 |
+| `integrations -> products` | 24 |
+| `ai -> products` | 23 |
 | `integrations -> observability` | 19 |
-| `ai -> prompt-engine` | 17 |
-| `case-resolver -> ai` | 16 |
-| `integrations -> data-import-export` | 16 |
+| `case-resolver -> ai` | 18 |
+| `ai -> prompt-engine` | 16 |
+| `cms -> gsap` | 16 |
+| `drafter -> products` | 16 |
+| `case-resolver -> case-resolver-capture` | 14 |
 | `cms -> observability` | 14 |
 
 ## Top File Hotspots (by LOC)
 
 | File | LOC |
 | --- | ---: |
-| `src/features/database/services/database-sync.ts` | 3352 |
-| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2692 |
-| `src/shared/ui/vector-canvas.tsx` | 2472 |
-| `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 1968 |
-| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts` | 1502 |
-| `src/features/ai/ai-paths/server/settings-store.ts` | 1205 |
-| `src/features/ai/image-studio/components/SequencingPanel.tsx` | 1178 |
-| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 1161 |
-| `src/features/products/components/ProductImageManager.tsx` | 1060 |
-| `src/features/foldertree/master/useMasterFolderTree.ts` | 1056 |
-| `src/features/ai/image-studio/components/RightSidebar.tsx` | 1023 |
-| `src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts` | 1018 |
-| `src/features/case-resolver/__tests__/settings.test.ts` | 1016 |
-| `src/features/ai/image-studio/components/StudioModals.tsx` | 1007 |
-| `src/app/api/image-studio/slots/[slotId]/upscale/handler.ts` | 999 |
-| `src/features/data-import-export/context/ImportExportContext.tsx` | 997 |
-| `src/features/ai/ai-paths/components/canvas-board.tsx` | 996 |
-| `src/features/integrations/services/tradera-listing-service.ts` | 996 |
-| `src/features/ai/agent-runtime/tools/index.ts` | 995 |
-| `src/features/products/services/product-studio-service.ts` | 990 |
+| `src/features/database/services/database-sync.ts` | 3339 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx` | 3179 |
+| `src/features/filemaker/settings.ts` | 3063 |
+| `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2985 |
+| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2966 |
+| `src/features/case-resolver/components/CaseResolverPageView.tsx` | 2657 |
+| `src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts` | 2544 |
+| `src/shared/ui/vector-canvas.tsx` | 2498 |
+| `src/features/case-resolver/pages/AdminCaseResolverPage.tsx` | 2460 |
+| `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 2302 |
+| `src/features/case-resolver/hooks/useCaseResolverState.ts` | 2285 |
+| `src/features/case-resolver/components/CaseResolverNodeFileWorkspace.tsx` | 2262 |
+| `src/features/products/services/product-studio-service.ts` | 2070 |
+| `src/features/ai/ai-paths/lib/core/validation-engine/docs-registry-adapter.ts` | 1816 |
+| `src/features/ai/ai-paths/pages/AdminAiPathsValidationPage.tsx` | 1729 |
+| `src/features/ai/ai-paths/services/path-run-executor.ts` | 1727 |
+| `src/shared/contracts/ai-paths.ts` | 1721 |
+| `src/features/ai/ai-paths/components/canvas-board.tsx` | 1687 |
+| `src/features/ai/ai-paths/server/settings-store.ts` | 1673 |
+| `src/features/ai/ai-paths/lib/core/normalization/index.ts` | 1642 |

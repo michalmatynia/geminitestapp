@@ -1380,8 +1380,8 @@ export interface ValidatorSettingsController {
   createPatternPending: boolean;
   updatePatternPending: boolean;
   isLocaleTarget: (target: string) => boolean;
-  normalizeReplacementFields: (fields: unknown) => string[];
-  getReplacementFieldsForTarget: (target: string) => string[];
+  normalizeReplacementFields: (fields: unknown, target?: string) => string[];
+  getReplacementFieldsForTarget: (target: string) => Array<{ value: string; label: string }>;
   getSourceFieldOptionsForTarget: (target: string) => unknown;
   formatReplacementFields: (fields: unknown) => string;
   draggedPatternId: string | null;
@@ -1394,9 +1394,9 @@ export interface ValidatorSettingsController {
   getSequenceGroupId: (p: ProductValidationPattern) => string | null;
   handleMoveGroup: (groupId: string, targetIndex: number) => Promise<void>;
   handleReorderInGroup: (groupId: string, patternId: string, targetIndex: number) => Promise<void>;
-  handleMoveToGroup: (patternId: string, targetGroupId: string | null) => Promise<void>;
+  handleMoveToGroup: (patternId: string, targetGroupId: string) => Promise<void>;
   handleRemoveFromGroup: (patternId: string) => Promise<void>;
-  handleCreateGroup: (patternId: string) => Promise<void>;
+  handleCreateGroup: (patternIds: string[]) => Promise<void>;
   handleRenameGroup: (groupId: string, label: string) => Promise<void>;
   handleUpdateGroupDebounce: (groupId: string, debounceMs: number) => Promise<void>;
   onCreateSkuAutoIncrementSequence: () => Promise<void>;

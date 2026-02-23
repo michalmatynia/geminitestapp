@@ -109,12 +109,13 @@ const ALLOWED_REPLACEMENT_FIELDS = new Set<string>(PRODUCT_VALIDATION_REPLACEMEN
  * Validator docs: see docs/validator/function-reference.md#helpers.normalizereplacementfields
  */
 export const normalizeReplacementFields = (
-  fields: string[] | null | undefined,
+  fields: unknown,
   _target?: string
 ): string[] => {
   if (!Array.isArray(fields) || fields.length === 0) return [];
   const unique = new Set<string>();
-  for (const field of fields) {
+  const fieldsArray = fields as string[];
+  for (const field of fieldsArray) {
     if (!field || !ALLOWED_REPLACEMENT_FIELDS.has(field)) continue;
     unique.add(field);
   }
@@ -124,9 +125,9 @@ export const normalizeReplacementFields = (
 /**
  * Validator docs: see docs/validator/function-reference.md#helpers.formatreplacementfields
  */
-export const formatReplacementFields = (fields: string[] | null | undefined): string => {
+export const formatReplacementFields = (fields: unknown): string => {
   const normalized = normalizeReplacementFields(fields);
-  if (normalized.length === 0) return 'all matching fields';
+  if (normalized.length === 0) return 'No fields selected';
   return normalized.map((field) => REPLACEMENT_FIELD_LABELS[field] ?? field).join(', ');
 };
 

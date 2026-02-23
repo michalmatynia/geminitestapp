@@ -1,6 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  type DragEvent,
   useCallback,
   useMemo,
   useState,
@@ -554,12 +553,17 @@ export function useValidatorSettingsController() {
     await handleReorder(patternId, targetIndex);
   }, [handleReorder]);
 
-  const handleDragStart = useCallback((e: DragEvent, patternId: string): void => {
-    e.dataTransfer.setData('patternId', patternId);
+  const handleDragStart = useCallback((e: unknown, patternId: string): void => {
+    const dragEvent = e as DragEvent;
+    if (dragEvent.dataTransfer) {
+      dragEvent.dataTransfer.setData('patternId', patternId);
+    }
   }, []);
 
-  const handleDrop = useCallback((pattern: ProductValidationPattern, e: DragEvent): void => {
-    const draggedId = e.dataTransfer.getData('text/plain') || e.dataTransfer.getData('patternId');
+  const handleDrop = useCallback((pattern: ProductValidationPattern, e: unknown): void => {
+    const dragEvent = e as DragEvent;
+    if (!dragEvent.dataTransfer) return;
+    const draggedId = dragEvent.dataTransfer.getData('text/plain') || dragEvent.dataTransfer.getData('patternId');
     if (!draggedId || draggedId === pattern.id) return;
 
     const targetIndex = orderedPatterns.findIndex((p) => p.id === pattern.id);

@@ -93,7 +93,7 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
     initiallyExpandedNodeIds: expandedNodeIds,
     externalRevision: treeRevision,
     adapter: {
-      applyOperation: (_operation, context) => {
+      applyOperation: async (_operation, context) => {
         const nextItems = rebuildPromptExploderListFromMasterNodes({
           nodes: context.nextNodes,
           previousItems: itemsRef.current,
@@ -216,11 +216,11 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
         <div className='space-y-2 rounded border border-border/60 bg-card/30 p-2'>
           <Label className='text-[10px] text-gray-500'>Selected Item</Label>
           {(() => {
-            const rgbLiteral = extractRgbLiteral(selectedItem.text);
+            const rgbLiteral = extractRgbLiteral(selectedItem.text || '');
             return (
               <div className='flex items-center gap-1'>
                 <Input
-                  value={selectedItem.text}
+                  value={selectedItem.text || ''}
                   onChange={(event) => {
                     updateSelectedItem((item) => ({
                       ...item,
@@ -238,7 +238,7 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
                       if (!parsed) return;
                       updateSelectedItem((item) => ({
                         ...item,
-                        text: replaceRgbLiteral(item.text, parsed),
+                        text: replaceRgbLiteral(item.text || '', parsed),
                       }));
                     }}
                     aria-label='RGB color picker'
@@ -246,8 +246,7 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
                 ) : null}
               </div>
             );
-          })()}
-          {renderLogicalEditor
+          })()}          {renderLogicalEditor
             ? renderLogicalEditor({
               item: selectedItem,
               onChange: (updater) => {

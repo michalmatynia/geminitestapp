@@ -136,10 +136,9 @@ export function Asset3DPreviewModal({
       isOpen={isOpen}
       onClose={onClose}
       title={asset.name || asset.filename}
-      subtitle={formatFileSize(asset.size)}
+      subtitle={formatFileSize(asset.size || 0)}
       size='xl'
-    >
-      <Viewer3DProvider>
+    >      <Viewer3DProvider>
         <Asset3DPreviewModalViewProvider value={{ asset }}>
           <Asset3DPreviewModalContent />
         </Asset3DPreviewModalViewProvider>

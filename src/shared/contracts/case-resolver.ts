@@ -28,7 +28,13 @@ export type CaseResolverJoinMode = CaseResolverJoinModeDto;
 /**
  * Case Resolver Node Ports
  */
-export const caseResolverDocumentNodePortSchema = z.enum(['wysiwygText', 'content', 'plainText']);
+export const caseResolverDocumentNodePortSchema = z.enum([
+  'wysiwygText',
+  'content',
+  'plaintextContent',
+  'plainText',
+  'wysiwygContent',
+]);
 export type CaseResolverDocumentNodePortDto = z.infer<typeof caseResolverDocumentNodePortSchema>;
 export type CaseResolverDocumentNodePort = CaseResolverDocumentNodePortDto;
 
@@ -791,7 +797,15 @@ export interface CaseResolverCompileResultDto {
   segments: CaseResolverCompiledSegment[];
   combinedContent: string;
   prompt: string;
-  outputsByNode: Record<string, { textfield: string; content: string; plainText: string }>;
+  outputsByNode: Record<
+    string,
+    {
+      textfield: string;
+      plaintextContent: string;
+      plainText: string;
+      wysiwygContent: string;
+    }
+  >;
   warnings: string[];
 }
 
@@ -829,16 +843,32 @@ export const CASE_RESOLVER_JOIN_MODE_OPTIONS: Array<{
   { value: 'none', label: 'No Separator' },
 ];
 
+export const CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT: CaseResolverDocumentNodePort = 'content';
+export const CASE_RESOLVER_PLAINTEXT_CONTENT_PORT: CaseResolverDocumentNodePort =
+  'plaintextContent';
+export const CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT: CaseResolverDocumentNodePort =
+  'wysiwygContent';
+
 export const CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS: CaseResolverDocumentNodePort[] = [
   'wysiwygText',
-  'content',
+  CASE_RESOLVER_PLAINTEXT_CONTENT_PORT,
   'plainText',
 ];
 
 export const CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS: CaseResolverDocumentNodePort[] = [
   'wysiwygText',
-  'content',
+  CASE_RESOLVER_PLAINTEXT_CONTENT_PORT,
   'plainText',
+];
+
+export const CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS: CaseResolverDocumentNodePort[] = [
+  ...CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT,
+];
+
+export const CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS: CaseResolverDocumentNodePort[] = [
+  ...CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT,
 ];
 
 export const CASE_RESOLVER_PDF_EXTRACTION_PRESETS: CaseResolverPdfExtractionPreset[] = [

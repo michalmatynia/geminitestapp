@@ -303,7 +303,7 @@ export const promptExploderBenchmarkSuggestionSchema = z.object({
   id: z.string().optional(),
   caseId: z.string(),
   segmentId: z.string().optional(),
-  segmentTitle: z.string().default(''),
+  segmentTitle: z.string().nullable().optional(),
   segmentType: z.string().optional(),
   suggestedSegmentType: promptExploderSegmentTypeSchema.default('static'),
   suggestedBindings: z.record(z.string(), z.unknown()).optional(),
@@ -327,11 +327,11 @@ export type PromptExploderBenchmarkSuggestion = z.infer<typeof promptExploderBen
  * Prompt Exploder Runtime & Settings DTOs
  */
 
-export const promptExploderOperationModeSchema = z.enum(['manual', 'semi-auto', 'automatic']);
+export const promptExploderOperationModeSchema = z.enum(['rules_only', 'hybrid', 'ai_assisted', 'manual', 'semi-auto', 'automatic']);
 export type PromptExploderOperationModeDto = z.infer<typeof promptExploderOperationModeSchema>;
 export type PromptExploderOperationMode = PromptExploderOperationModeDto;
 
-export const promptExploderAiProviderSchema = z.enum(['openai', 'anthropic', 'google', 'ollama']);
+export const promptExploderAiProviderSchema = z.enum(['auto', 'openai', 'anthropic', 'google', 'gemini', 'ollama']);
 export type PromptExploderAiProviderDto = z.infer<typeof promptExploderAiProviderSchema>;
 export type PromptExploderAiProvider = PromptExploderAiProviderDto;
 
@@ -379,13 +379,21 @@ export const promptExploderValidationStackResolutionSchema = z.object({
 export type PromptExploderValidationStackResolutionDto = z.infer<typeof promptExploderValidationStackResolutionSchema>;
 export type PromptExploderValidationStackResolution = PromptExploderValidationStackResolutionDto;
 
+export const promptExploderRuntimeRuleProfileSchema = z.enum(['all', 'pattern_pack', 'learned_only']);
+export type PromptExploderRuntimeRuleProfileDto = z.infer<typeof promptExploderRuntimeRuleProfileSchema>;
+export type PromptExploderRuntimeRuleProfile = PromptExploderRuntimeRuleProfileDto;
+
+export const promptExploderCaseResolverExtractionModeSchema = z.enum(['rules_only', 'rules_with_heuristics']);
+export type PromptExploderCaseResolverExtractionModeDto = z.infer<typeof promptExploderCaseResolverExtractionModeSchema>;
+export type PromptExploderCaseResolverExtractionMode = PromptExploderCaseResolverExtractionModeDto;
+
 export const promptExploderSettingsSchema = z.object({
   version: z.number(),
   runtime: z.object({
-    ruleProfile: z.string(),
+    ruleProfile: promptExploderRuntimeRuleProfileSchema,
     validationRuleStack: z.string(),
     allowValidationStackFallback: z.boolean().optional(),
-    caseResolverCaptureMode: z.string().optional(),
+    caseResolverCaptureMode: promptExploderCaseResolverExtractionModeSchema.optional(),
     orchestratorEnabled: z.boolean().optional(),
     benchmarkSuite: z.string().optional(),
     benchmarkLowConfidenceThreshold: z.number().optional(),
@@ -403,8 +411,8 @@ export const promptExploderSettingsSchema = z.object({
     templates: z.array(z.lazy(() => promptExploderLearnedTemplateSchema)),
   }),
   ai: z.object({
-    operationMode: z.string(),
-    provider: z.string(),
+    operationMode: promptExploderOperationModeSchema,
+    provider: promptExploderAiProviderSchema,
     modelId: z.string(),
     fallbackModelId: z.string(),
     temperature: z.number(),
@@ -416,10 +424,10 @@ export const promptExploderSettingsSchema = z.object({
 export interface PromptExploderSettingsDto {
   version: number;
   runtime: {
-    ruleProfile: string;
-    validationRuleStack: string;
+    ruleProfile: PromptExploderRuntimeRuleProfile;
+    validationRuleStack: PromptExploderValidationRuleStack;
     allowValidationStackFallback?: boolean;
-    caseResolverCaptureMode?: string;
+    caseResolverCaptureMode?: PromptExploderCaseResolverExtractionMode;
     orchestratorEnabled?: boolean;
     benchmarkSuite?: string;
     benchmarkLowConfidenceThreshold?: number;
@@ -437,8 +445,8 @@ export interface PromptExploderSettingsDto {
     templates: PromptExploderLearnedTemplateDto[];
   };
   ai: {
-    operationMode: string;
-    provider: string;
+    operationMode: PromptExploderOperationMode;
+    provider: PromptExploderAiProvider;
     modelId: string;
     fallbackModelId: string;
     temperature: number;

@@ -89,20 +89,20 @@ export function Asset3DListPage(): React.JSX.Element {
       header: 'Tags',
       cell: ({ row }) => (
         <div className='flex flex-wrap gap-1'>
-          {row.original.tags.slice(0, 2).map((tag) => (
+          {(row.original.tags || []).slice(0, 2).map((tag) => (
             <StatusBadge key={tag} status={tag} variant='neutral' size='sm' className='font-medium' />
           ))}
-          {row.original.tags.length > 2 && (
-            <StatusBadge status={'+' + (row.original.tags.length - 2)} variant='neutral' size='sm' className='font-bold' />
+          {(row.original.tags || []).length > 2 && (
+            <StatusBadge status={'+' + ((row.original.tags || []).length - 2)} variant='neutral' size='sm' className='font-bold' />
           )}
-          {row.original.tags.length === 0 && <span className='text-muted-foreground'>-</span>}
+          {(row.original.tags || []).length === 0 && <span className='text-muted-foreground'>-</span>}
         </div>
       ),
     },
     {
       accessorKey: 'size',
       header: 'Size',
-      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatFileSize(row.original.size)}</span>,
+      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatFileSize(row.original.size || 0)}</span>,
     },
     {
       accessorKey: 'createdAt',
@@ -153,25 +153,33 @@ export function Asset3DListPage(): React.JSX.Element {
       }
       alerts={error ? <Alert variant='error'>{error}</Alert> : null}
       filters={
-        <FilterPanel
-          search={searchConfig}
-          fields={[
-            ...(categories.length > 0 ? [{
-              key: 'category',
-              label: 'Category',
-              type: 'select' as const,
-              value: (selectedCategory ?? '__all__'),
-              options: [
-                { value: '__all__', label: 'All categories' },
-                ...((categories).map((cat: string) => ({ value: cat, label: cat }))),
-              ],
-              onValueChange: (v: string) => setSelectedCategory(v === '__all__' ? null : v),
-              width: '180px',
-            }] : []),
-          ]}
-          actions={
-            <div className='flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>
-              <Button
+        <div className='space-y-3'>
+          <FilterPanel
+            search={searchConfig.value}
+            onSearchChange={searchConfig.onChange}
+            searchPlaceholder={searchConfig.placeholder}
+            values={{
+              category: selectedCategory ?? '__all__',
+            }}
+            onFilterChange={(key, val) => {
+              if (key === 'category') {
+                setSelectedCategory(val === '__all__' ? null : val as string);
+              }
+            }}
+            filters={[
+              ...(categories.length > 0 ? [{
+                key: 'category',
+                label: 'Category',
+                type: 'select' as const,
+                options: [
+                  { value: '__all__', label: 'All categories' },
+                  ...((categories).map((cat: string) => ({ value: cat, label: cat }))),
+                ],
+                width: '180px',
+              }] : []),
+            ]}
+            headerAction={
+              <div className='flex items-center overflow-hidden rounded-md border border-border bg-muted/20'>                <Button
                 variant={viewMode === 'grid' ? 'default' : 'ghost'}
                 size='icon'
                 className='h-8 w-8 rounded-none'
@@ -187,9 +195,9 @@ export function Asset3DListPage(): React.JSX.Element {
               >
                 <List className='h-4 w-4' />
               </Button>
-            </div>
-          }
-        >
+              </div>
+            }
+          />
           {allTags.length > 0 && (
             <div className='flex flex-wrap gap-2 pt-2'>
               {allTags.slice(0, 5).map((tag) => (
@@ -209,7 +217,7 @@ export function Asset3DListPage(): React.JSX.Element {
               ))}
             </div>
           )}
-        </FilterPanel>
+        </div>
       }
       footer={stats}
       columns={columns}
@@ -272,7 +280,7 @@ export function Asset3DListPage(): React.JSX.Element {
                     <StatusBadge status={asset.categoryId} variant='info' size='sm' className='font-medium' />
                   ) : <div />}
                   <span className='text-[10px] text-muted-foreground font-medium'>
-                    {formatFileSize(asset.size)}
+                    {formatFileSize(asset.size || 0)}
                   </span>
                 </div>
               </div>

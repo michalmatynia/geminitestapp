@@ -98,8 +98,8 @@ describe('case-resolver composer', () => {
     expect(compiled.prompt).toBe('Alpha\n"Beta"');
     expect(compiled.segments.map((segment) => segment.nodeId)).toEqual(['a', 'b', 'c']);
     expect(compiled.segments[2]?.includeInOutput).toBe(false);
-    expect(compiled.outputsByNode['a']?.content).toBe('Alpha');
-    expect(compiled.outputsByNode['b']?.content).toBe('Alpha\n"Beta"');
+    expect(compiled.outputsByNode['a']?.plaintextContent).toBe('Alpha');
+    expect(compiled.outputsByNode['b']?.plaintextContent).toBe('Alpha\n"Beta"');
   });
 
   it('supports custom surround text around compiled node values', () => {
@@ -137,9 +137,10 @@ describe('case-resolver composer', () => {
     expect(compiled.segments).toHaveLength(1);
     expect(compiled.segments[0]?.text).toBe('<<\'Quoted text\'>>');
     expect(compiled.outputsByNode['focus']).toEqual({
-      textfield: 'Quoted text',
-      content: '<<\'Quoted text\'>>',
-      plainText: 'Quoted text',
+      textfield: '<<\'Quoted text\'>>',
+      plaintextContent: '<<\'Quoted text\'>>',
+      plainText: '<<\'Quoted text\'>>',
+      wysiwygContent: '',
     });
   });
 
@@ -154,8 +155,8 @@ describe('case-resolver composer', () => {
           id: 'content-flow',
           from: 'doc-a',
           to: 'doc-b',
-          fromPort: 'content',
-          toPort: 'content',
+          fromPort: 'plaintextContent',
+          toPort: 'plaintextContent',
         }),
       ],
       nodeMeta: {
@@ -190,13 +191,15 @@ describe('case-resolver composer', () => {
 
     expect(compiled.outputsByNode['doc-a']).toEqual({
       textfield: 'Alpha',
-      content: 'Alpha',
+      plaintextContent: 'Alpha',
       plainText: 'Alpha',
+      wysiwygContent: '',
     });
     expect(compiled.outputsByNode['doc-b']).toEqual({
-      textfield: 'Beta',
-      content: 'Alpha\n"Beta"',
-      plainText: 'Beta',
+      textfield: '"Beta"',
+      plaintextContent: 'Alpha\n"Beta"',
+      plainText: '"Beta"',
+      wysiwygContent: '',
     });
     expect(compiled.prompt).toBe('Alpha\n"Beta"');
   });
@@ -212,7 +215,7 @@ describe('case-resolver composer', () => {
           id: 'plain-flow',
           from: 'source',
           to: 'target',
-          fromPort: 'content',
+          fromPort: 'plaintextContent',
           toPort: 'plainText',
         }),
       ],
@@ -247,16 +250,147 @@ describe('case-resolver composer', () => {
     const compiled = compileCaseResolverPrompt(graph, 'source');
 
     expect(compiled.outputsByNode['source']).toEqual({
-      textfield: 'Alpha',
-      content: '<b>Alpha</b>',
+      textfield: '<b>Alpha</b>',
+      plaintextContent: '<b>Alpha</b>',
       plainText: 'Alpha',
+      wysiwygContent: '',
     });
     expect(compiled.outputsByNode['target']).toEqual({
       textfield: 'Alpha',
-      content: 'Alpha',
+      plaintextContent: 'Alpha',
       plainText: 'Alpha',
+      wysiwygContent: '',
     });
     expect(compiled.prompt).toBe('Alpha');
+  });
+
+  it('injects plainText input into node text lane and forwards plainText output', () => {
+    const graph: CaseResolverGraph = {
+      nodes: [
+        createPromptNode({ id: 'source', title: 'Source', template: 'Upstream text', x: 0, y: 0 }),
+        createPromptNode({ id: 'scan-edit', title: 'Edit Scan', template: 'Existing markdown', x: 150, y: 0 }),
+        createPromptNode({ id: 'next', title: 'Next', template: 'Tail', x: 300, y: 0 }),
+      ],
+      edges: [
+        createEdge({
+          id: 'source-to-scan-plain',
+          from: 'source',
+          to: 'scan-edit',
+          fromPort: 'plainText',
+          toPort: 'plainText',
+        }),
+        createEdge({
+          id: 'scan-to-next-plain',
+          from: 'scan-edit',
+          to: 'next',
+          fromPort: 'plainText',
+          toPort: 'plainText',
+        }),
+      ],
+      nodeMeta: {
+        source: {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+        'scan-edit': {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+        next: {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+      },
+      edgeMeta: {
+        'source-to-scan-plain': { joinMode: 'newline' },
+        'scan-to-next-plain': { joinMode: 'newline' },
+      },
+      pdfExtractionPresetId: 'plain_text',
+      documentFileLinksByNode: {},
+      documentDropNodeId: null,
+      documentSourceFileIdByNode: {
+        source: 'file-source',
+        'scan-edit': 'file-scan',
+        next: 'file-next',
+      },
+    };
+
+    const compiled = compileCaseResolverPrompt(graph, 'source');
+
+    expect(compiled.outputsByNode['scan-edit']).toEqual({
+      textfield: 'Upstream text',
+      plaintextContent: 'Upstream text',
+      plainText: 'Upstream text',
+      wysiwygContent: '',
+    });
+    expect(compiled.outputsByNode['next']).toEqual({
+      textfield: 'Upstream text',
+      plaintextContent: 'Upstream text',
+      plainText: 'Upstream text',
+      wysiwygContent: '',
+    });
+  });
+
+  it('keeps explanatory plainText output to explanatory text while content appends upstream plainText', () => {
+    const graph: CaseResolverGraph = {
+      nodes: [
+        createPromptNode({ id: 'source', title: 'Source', template: 'Upstream text', x: 0, y: 0 }),
+        createPromptNode({ id: 'note', title: 'Explanatory', template: 'Additional note', x: 150, y: 0 }),
+      ],
+      edges: [
+        createEdge({
+          id: 'plain-flow',
+          from: 'source',
+          to: 'note',
+          fromPort: 'plainText',
+          toPort: 'plainText',
+        }),
+      ],
+      nodeMeta: {
+        source: {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+        note: {
+          role: 'explanatory',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+      },
+      edgeMeta: {
+        'plain-flow': { joinMode: 'newline' },
+      },
+      pdfExtractionPresetId: 'plain_text',
+      documentFileLinksByNode: {},
+      documentDropNodeId: null,
+      documentSourceFileIdByNode: {
+        source: 'file-source',
+        note: 'file-note',
+      },
+    };
+
+    const compiled = compileCaseResolverPrompt(graph, 'source');
+
+    expect(compiled.outputsByNode['note']).toEqual({
+      textfield: 'Upstream text\nAdditional note',
+      plaintextContent: 'Upstream text\nAdditional note',
+      plainText: 'Additional note',
+      wysiwygContent: 'Additional note',
+    });
   });
 
   it('merges explanatory node text with incoming textfield input', () => {
@@ -270,8 +404,8 @@ describe('case-resolver composer', () => {
           id: 'flow',
           from: 'source',
           to: 'note',
-          fromPort: 'content',
-          toPort: 'content',
+          fromPort: 'plaintextContent',
+          toPort: 'plaintextContent',
         }),
       ],
       nodeMeta: {
@@ -306,8 +440,9 @@ describe('case-resolver composer', () => {
 
     expect(compiled.outputsByNode['note']).toEqual({
       textfield: 'Input text\nAdditional note',
-      content: 'Input text\nInput text\nAdditional note',
+      plaintextContent: 'Input text\nInput text\nAdditional note',
       plainText: 'Input text\nAdditional note',
+      wysiwygContent: 'Additional note',
     });
     expect(compiled.prompt).toBe('Input text\nInput text\nAdditional note');
   });
@@ -323,8 +458,8 @@ describe('case-resolver composer', () => {
           id: 'flow',
           from: 'source',
           to: 'note',
-          fromPort: 'content',
-          toPort: 'content',
+          fromPort: 'plaintextContent',
+          toPort: 'plaintextContent',
         }),
       ],
       nodeMeta: {
@@ -362,10 +497,11 @@ describe('case-resolver composer', () => {
 
     expect(noteOutputs).toEqual({
       textfield: '<span style="color: #ff0000;">Alpha</span>\nAdditional note',
-      content: 'Alpha\nAlpha\nAdditional note',
+      plaintextContent: 'Alpha\nAlpha\nAdditional note',
       plainText: 'Alpha\nAdditional note',
+      wysiwygContent: 'Additional note',
     });
-    expect(noteOutputs?.content).not.toContain('<');
+    expect(noteOutputs?.plaintextContent).not.toContain('<');
     expect(noteOutputs?.plainText).not.toContain('<');
   });
 
@@ -416,10 +552,60 @@ describe('case-resolver composer', () => {
 
     expect(compiled.outputsByNode['note']).toEqual({
       textfield: 'Input text',
-      content: '',
+      plaintextContent: '',
       plainText: '',
+      wysiwygContent: '',
     });
     expect(compiled.prompt).toBe('');
+  });
+
+  it('appends incoming WYSIWYGContent with explanatory node WYSIWYG text', () => {
+    const graph: CaseResolverGraph = {
+      nodes: [
+        createPromptNode({ id: 'note-a', title: 'Note A', template: '<p>First</p>', x: 0, y: 0 }),
+        createPromptNode({ id: 'note-b', title: 'Note B', template: '<p>Second</p>', x: 180, y: 0 }),
+      ],
+      edges: [
+        createEdge({
+          id: 'wysiwyg-flow',
+          from: 'note-a',
+          to: 'note-b',
+          fromPort: 'wysiwygContent',
+          toPort: 'wysiwygContent',
+        }),
+      ],
+      nodeMeta: {
+        'note-a': {
+          role: 'explanatory',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+        'note-b': {
+          role: 'explanatory',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+      },
+      edgeMeta: {
+        'wysiwyg-flow': { joinMode: 'newline' },
+      },
+      pdfExtractionPresetId: 'plain_text',
+      documentFileLinksByNode: {},
+      documentDropNodeId: null,
+      documentSourceFileIdByNode: {
+        'note-a': 'file-note-a',
+        'note-b': 'file-note-b',
+      },
+    };
+
+    const compiled = compileCaseResolverPrompt(graph, 'note-a');
+
+    expect(compiled.outputsByNode['note-a']?.wysiwygContent).toBe('<p>First</p>');
+    expect(compiled.outputsByNode['note-b']?.wysiwygContent).toBe('<p>First</p>\n<p>Second</p>');
   });
 
   it('strips escaped HTML entities from plainText output', () => {
@@ -449,9 +635,10 @@ describe('case-resolver composer', () => {
     const compiled = compileCaseResolverPrompt(graph, 'source');
 
     expect(compiled.outputsByNode['source']).toEqual({
-      textfield: 'Alpha',
-      content: '&lt;b&gt;Alpha&lt;/b&gt;',
+      textfield: '&lt;b&gt;Alpha&lt;/b&gt;',
+      plaintextContent: '&lt;b&gt;Alpha&lt;/b&gt;',
       plainText: 'Alpha',
+      wysiwygContent: '',
     });
   });
 
@@ -484,9 +671,10 @@ describe('case-resolver composer', () => {
     const compiled = compileCaseResolverPrompt(graph, 'source');
 
     expect(compiled.outputsByNode['source']).toEqual({
-      textfield: 'Alpha',
-      content: '<span style="color: #ff0000;">Alpha\n</span>',
+      textfield: 'Alpha\n',
+      plaintextContent: '<span style="color: #ff0000;">Alpha\n</span>',
       plainText: 'Alpha',
+      wysiwygContent: '',
     });
     expect(compiled.prompt).toBe('<span style="color: #ff0000;">Alpha\n</span>');
   });

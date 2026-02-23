@@ -21,8 +21,8 @@ export function WarningsPanel(): React.JSX.Element {
       ) : (
         <Card variant='warning' padding='md' className='border-amber-500/20'>
           <ul className='list-disc pl-5 text-xs text-amber-200'>
-            {documentState.warnings.map((warning: string) => (
-              <li key={warning}>{warning}</li>
+            {documentState.warnings.map((warning: any) => (
+              <li key={String(warning)}>{String(warning)}</li>
             ))}
           </ul>
         </Card>

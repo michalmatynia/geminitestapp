@@ -1,4 +1,4 @@
-import { Split } from 'lucide-react';
+import { Copy, Split } from 'lucide-react';
 import React from 'react';
 
 import {
@@ -26,11 +26,13 @@ import {
   SelectSimple,
   EmptyState,
   Textarea,
+  useToast,
   ValidatorFormatterToggle,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
+import { CaseResolverRichTextEditor } from './CaseResolverRichTextEditor';
 
 const CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN = /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
@@ -57,8 +59,9 @@ type CaseResolverNodeInspectorModalProps = {
   selectedPromptInputText: string;
   selectedPromptOutputPreview: {
     textfield: string;
-    content: string;
+    plaintextContent: string;
     plainText: string;
+    wysiwygContent: string;
   } | null;
   selectedPromptSecondaryOutputHint?: boolean;
   onUpdateSelectedPromptTemplate: (template: string) => void;
@@ -86,6 +89,7 @@ export function CaseResolverNodeInspectorModal({
   onUpdateSelectedEdgeMeta,
 }: CaseResolverNodeInspectorModalProps): React.JSX.Element {
   const { onEditFile, workspace, activeFile } = useCaseResolverPageContext();
+  const { toast } = useToast();
   const settingsQuery = useSettingsMap({ scope: 'light' });
   const rawPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
   const plainTextPatternStacks = React.useMemo(
@@ -110,6 +114,32 @@ export function CaseResolverNodeInspectorModal({
 
   const edgeFromPort = (selectedEdge as CompatEdge)?.fromPort ?? (selectedEdge as CompatEdge)?.sourceHandle;
   const edgeToPort = (selectedEdge as CompatEdge)?.toPort ?? (selectedEdge as CompatEdge)?.targetHandle;
+  const handleCopyOutputPreview = React.useCallback(
+    async (value: string): Promise<void> => {
+      try {
+        await navigator.clipboard.writeText(value);
+        toast('output copied.', { variant: 'success' });
+      } catch {
+        toast('Failed to copy output.', { variant: 'error' });
+      }
+    },
+    [toast]
+  );
+  const outputPreviewRows = React.useMemo(
+    (): Array<{ label: string; value: string }> => {
+      if (!selectedPromptOutputPreview) return [];
+      const rows: Array<{ label: string; value: string }> = [
+        { label: 'wysiwygText', value: selectedPromptOutputPreview.textfield || '' },
+        { label: 'plaintextContent', value: selectedPromptOutputPreview.plaintextContent || '' },
+        { label: 'plainText', value: selectedPromptOutputPreview.plainText || '' },
+      ];
+      if (selectedPromptMeta?.role === 'explanatory') {
+        rows.push({ label: 'WYSIWYGContent', value: selectedPromptOutputPreview.wysiwygContent || '' });
+      }
+      return rows;
+    },
+    [selectedPromptMeta?.role, selectedPromptOutputPreview]
+  );
 
   return (
     <DetailModal
@@ -327,7 +357,7 @@ export function CaseResolverNodeInspectorModal({
                   ) : null}
                   {selectedPromptMeta.role === 'explanatory' ? (
                     <p className='text-[11px] text-gray-500'>
-                      Explanatory nodes keep connector output as plain text.
+                      Explanatory nodes expose plain-text outputs plus an additional WYSIWYGContent lane.
                     </p>
                   ) : null}
                 </div>
@@ -338,18 +368,33 @@ export function CaseResolverNodeInspectorModal({
                 ) : null}
                 {!selectedPromptSourceFile ? (
                   <FormField
-                    label='Explanatory Text'
-                    description='This text is merged with incoming text for explanatory nodes.'
+                    label={selectedPromptMeta.role === 'explanatory' ? 'Explanatory Text (WYSIWYG)' : 'Node Text'}
+                    description={
+                      selectedPromptMeta.role === 'explanatory'
+                        ? 'This rich text is appended to incoming WYSIWYGContent and transformed to plain text by validation patterns.'
+                        : 'This text is merged with incoming text for this node.'
+                    }
                   >
-                    <Textarea
-                      value={selectedPromptTemplate}
-                      onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-                        onUpdateSelectedPromptTemplate(event.target.value);
-                      }}
-                      rows={5}
-                      className='border-border bg-card/60 text-xs text-white'
-                      placeholder='Write note text to append/merge with incoming input.'
-                    />
+                    {selectedPromptMeta.role === 'explanatory' ? (
+                      <div className='rounded border border-border/70 bg-card/40 p-2'>
+                        <CaseResolverRichTextEditor
+                          value={selectedPromptTemplate}
+                          onChange={onUpdateSelectedPromptTemplate}
+                          placeholder='Write explanatory rich text to append to incoming WYSIWYG content.'
+                          appearance='document-preview'
+                        />
+                      </div>
+                    ) : (
+                      <Textarea
+                        value={selectedPromptTemplate}
+                        onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
+                          onUpdateSelectedPromptTemplate(event.target.value);
+                        }}
+                        rows={5}
+                        className='border-border bg-card/60 text-xs text-white'
+                        placeholder='Write note text to append/merge with incoming input.'
+                      />
+                    )}
                   </FormField>
                 ) : null}
 
@@ -366,7 +411,7 @@ export function CaseResolverNodeInspectorModal({
                       <div className='rounded border border-amber-500/35 bg-amber-500/10 p-2 text-[10px] text-amber-100'>
                         Only <span className='font-semibold'>wysiwygText</span> input is connected.
                         {' '}
-                        <span className='font-semibold'>content</span>
+                        <span className='font-semibold'>plaintextContent</span>
                         {' '}
                         and
                         {' '}
@@ -376,24 +421,41 @@ export function CaseResolverNodeInspectorModal({
                       </div>
                     ) : null}
                     <div className='space-y-1 text-[11px]'>
-                      <div className='text-gray-500'>wysiwygText</div>
-                      <div className='max-h-20 overflow-auto whitespace-pre-wrap rounded border border-border/60 bg-card/50 p-2 text-[12px] text-gray-100'>
-                        {selectedPromptOutputPreview?.textfield || '(empty)'}
-                      </div>
-                      <div className='text-gray-500'>content</div>
-                      <div className='max-h-20 overflow-auto whitespace-pre-wrap rounded border border-border/60 bg-card/50 p-2 text-[12px] text-gray-100'>
-                        {selectedPromptOutputPreview?.content || '(empty)'}
-                      </div>
-                      <div className='text-gray-500'>plainText</div>
-                      <div className='max-h-20 overflow-auto whitespace-pre-wrap rounded border border-border/60 bg-card/50 p-2 text-[12px] text-gray-100'>
-                        {selectedPromptOutputPreview?.plainText || '(empty)'}
-                      </div>
+                      {outputPreviewRows.map((row) => (
+                        <React.Fragment key={row.label}>
+                          <div className='flex items-center justify-between gap-2'>
+                            <div className='text-gray-500'>{row.label}</div>
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='sm'
+                              className='h-6 w-6 p-0 text-gray-400 hover:text-gray-200'
+                              onClick={(): void => {
+                                void handleCopyOutputPreview(row.value || '');
+                              }}
+                              title={`Copy ${row.label}`}
+                              aria-label={`Copy ${row.label}`}
+                            >
+                              <Copy className='size-3' />
+                            </Button>
+                          </div>
+                          <div className='max-h-20 overflow-auto whitespace-pre-wrap rounded border border-border/60 bg-card/50 p-2 text-[12px] text-gray-100'>
+                            {row.value || '(empty)'}
+                          </div>
+                        </React.Fragment>
+                      ))}
                     </div>
                   </div>
                 </div>
 
                 <div className='rounded border border-border/60 bg-card/30 px-3 py-2 text-xs text-gray-400'>
-                  Document nodes support <span className='text-gray-200'>wysiwygText</span>, <span className='text-gray-200'>content</span>, and <span className='text-gray-200'>plainText</span> I/O.
+                  Document nodes support <span className='text-gray-200'>wysiwygText</span>, <span className='text-gray-200'>plaintextContent</span>, and <span className='text-gray-200'>plainText</span> I/O.
+                  {selectedPromptMeta.role === 'explanatory' ? (
+                    <>
+                      {' '}
+                      Explanatory nodes also support <span className='text-gray-200'>WYSIWYGContent</span> I/O.
+                    </>
+                  ) : null}
                   Use <span className='text-gray-200'>plainText</span> input to strip incoming HTML to clean text automatically.
                 </div>
               </>

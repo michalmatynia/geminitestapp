@@ -52,20 +52,28 @@ const BASE_OPTIONS: SelectOption[] = [
   { value: 'case-b', label: 'Case Beta' },
 ];
 
+import { CaseResolverPageProvider } from '../context/CaseResolverPageContext';
+
 const renderWorkspace = (
   activeCaseFile: CaseResolverFile | null,
   onUpdateActiveCase: any = vi.fn()
-): ReturnType<typeof render> =>  render(
-  <CaseResolverCaseOverviewWorkspace
-    activeCaseFile={activeCaseFile}
-    caseTagOptions={BASE_OPTIONS}
-    caseIdentifierOptions={BASE_OPTIONS}
-    caseCategoryOptions={BASE_OPTIONS}
-    caseReferenceOptions={BASE_OPTIONS.filter((option): boolean => option.value !== '__none__')}
-    parentCaseOptions={BASE_OPTIONS}
-    onUpdateActiveCase={onUpdateActiveCase}
-  />
-);
+): ReturnType<typeof render> => {
+  const contextValue: any = {
+    activeFile: activeCaseFile,
+    caseTagOptions: BASE_OPTIONS,
+    caseIdentifierOptions: BASE_OPTIONS,
+    caseCategoryOptions: BASE_OPTIONS,
+    caseReferenceOptions: BASE_OPTIONS.filter((option): boolean => option.value !== '__none__'),
+    parentCaseOptions: BASE_OPTIONS,
+    onUpdateActiveCase,
+  };
+
+  return render(
+    <CaseResolverPageProvider value={contextValue}>
+      <CaseResolverCaseOverviewWorkspace />
+    </CaseResolverPageProvider>
+  );
+};
 
 describe('CaseResolverCaseOverviewWorkspace', () => {
   it('renders empty state when no active case is present', () => {

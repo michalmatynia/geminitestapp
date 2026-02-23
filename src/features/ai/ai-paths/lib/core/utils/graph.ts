@@ -20,9 +20,18 @@ export const getPortOffsetY = (index: number, _totalPorts: number): number => {
 };
 
 export const normalizePortName = (port: string): string => {
-  if (port === 'productJson') return 'entityJson';
-  if (port === 'simulation') return 'context';
-  return port;
+  const trimmed = typeof port === 'string' ? port.trim() : '';
+  const normalized = trimmed.toLowerCase();
+  if (normalized === 'productjson') return 'entityJson';
+  if (normalized === 'simulation') return 'context';
+  if (
+    normalized === 'images (urls)' ||
+    normalized === 'images(urls)' ||
+    normalized === 'image urls'
+  ) {
+    return 'images';
+  }
+  return trimmed;
 };
 
 export const isValidConnection = (
@@ -296,6 +305,8 @@ export type GraphCompileReport = {
   findings: GraphCompileFinding[];
 };
 
+export type GraphCompileScopeMode = 'full' | 'reachable_from_roots';
+
 export type GraphCompileOptions = {
   allowCycles?: boolean;
   allowedCycleNodeTypes?: string[];
@@ -309,6 +320,8 @@ export type GraphCompileOptions = {
     string,
     Record<string, { required?: boolean; cardinality?: PortCardinality }>
   >;
+  scopeMode?: GraphCompileScopeMode;
+  scopeRootNodeIds?: string[] | Set<string>;
 };
 
 const DEFAULT_ALLOWED_CYCLE_NODE_TYPES = new Set<string>([
@@ -702,11 +715,105 @@ const isSimulationCapableFetcher = (node: AiNode): boolean => {
   return mode === 'simulation_id' || mode === 'live_then_simulation';
 };
 
+const resolveScopedRootNodeIds = (
+  nodes: AiNode[],
+  edges: Edge[],
+  options: GraphCompileOptions
+): string[] => {
+  const nodeIdSet = new Set(nodes.map((node: AiNode): string => node.id));
+  const explicitRootIds = (
+    Array.isArray(options.scopeRootNodeIds)
+      ? options.scopeRootNodeIds
+      : options.scopeRootNodeIds
+        ? Array.from(options.scopeRootNodeIds)
+        : []
+  )
+    .map((nodeId: string): string => nodeId.trim())
+    .filter((nodeId: string): boolean => nodeId.length > 0 && nodeIdSet.has(nodeId));
+  const explicitUnique = Array.from(new Set(explicitRootIds));
+  if (explicitUnique.length > 0) return explicitUnique;
+
+  const triggerRootIds = nodes
+    .filter((node: AiNode): boolean => node.type === 'trigger')
+    .map((node: AiNode): string => node.id);
+  if (triggerRootIds.length > 0) return triggerRootIds;
+
+  const incomingNodeIds = new Set<string>();
+  edges.forEach((edge: Edge): void => {
+    if (!edge.to || !nodeIdSet.has(edge.to)) return;
+    incomingNodeIds.add(edge.to);
+  });
+  const fallbackRootIds = nodes
+    .filter((node: AiNode): boolean => !incomingNodeIds.has(node.id))
+    .map((node: AiNode): string => node.id);
+  if (fallbackRootIds.length > 0) return fallbackRootIds;
+
+  return nodes[0] ? [nodes[0].id] : [];
+};
+
+const buildReachableCompileScope = (
+  nodes: AiNode[],
+  edges: Edge[],
+  options: GraphCompileOptions
+): { nodes: AiNode[]; edges: Edge[] } => {
+  if (nodes.length === 0) return { nodes, edges };
+
+  const sanitized = sanitizeEdges(nodes, edges);
+  const rootNodeIds = resolveScopedRootNodeIds(nodes, sanitized, options);
+  if (rootNodeIds.length === 0) return { nodes, edges };
+
+  const adjacency = new Map<string, Set<string>>();
+  sanitized.forEach((edge: Edge): void => {
+    if (!edge.from || !edge.to) return;
+    const next = adjacency.get(edge.from) ?? new Set<string>();
+    next.add(edge.to);
+    adjacency.set(edge.from, next);
+  });
+
+  const queue = [...rootNodeIds];
+  const reachableNodeIds = new Set<string>(rootNodeIds);
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) continue;
+    const next = adjacency.get(current);
+    if (!next) continue;
+    next.forEach((nodeId: string): void => {
+      if (reachableNodeIds.has(nodeId)) return;
+      reachableNodeIds.add(nodeId);
+      queue.push(nodeId);
+    });
+  }
+
+  if (reachableNodeIds.size === 0 || reachableNodeIds.size === nodes.length) {
+    return { nodes, edges };
+  }
+
+  const scopedNodes = nodes.filter((node: AiNode): boolean => reachableNodeIds.has(node.id));
+  const scopedNodeIdSet = new Set(scopedNodes.map((node: AiNode): string => node.id));
+  const scopedEdges = edges.filter((edge: Edge): boolean => {
+    if (!edge.from || !edge.to) return false;
+    return scopedNodeIdSet.has(edge.from) && scopedNodeIdSet.has(edge.to);
+  });
+  return {
+    nodes: scopedNodes,
+    edges: scopedEdges,
+  };
+};
+
 export const compileGraph = (
   nodes: AiNode[],
   edges: Edge[],
   options: GraphCompileOptions = {}
 ): GraphCompileReport => {
+  if (options.scopeMode === 'reachable_from_roots') {
+    const scoped = buildReachableCompileScope(nodes, edges, options);
+    return compileGraph(scoped.nodes, scoped.edges, {
+      ...options,
+      scopeMode: 'full',
+      scopeRootNodeIds: undefined,
+    });
+  }
+
   const findings: GraphCompileFinding[] = [];
   const nodeById = new Map(nodes.map((node: AiNode): [string, AiNode] => [node.id, node]));
   const sanitized = sanitizeEdges(nodes, edges);

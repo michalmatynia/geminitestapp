@@ -130,10 +130,15 @@ export function PatternRuntimePanel(): React.JSX.Element {
     [validatorPatternLists]
   );
   const activeStackLabel = React.useMemo(
-    () =>
-      validationStackOptions.find(
+    () => {
+      const optionLabel = validationStackOptions.find(
         (option) => option.value === activeValidationRuleStack
-      )?.label ?? activeValidationRuleStack,
+      )?.label;
+      if (optionLabel) return optionLabel;
+      return typeof activeValidationRuleStack === 'string'
+        ? activeValidationRuleStack
+        : activeValidationRuleStack?.name || activeValidationRuleStack?.id || 'anonymous';
+    },
     [activeValidationRuleStack, validationStackOptions]
   );
   const isCaseResolverStack = React.useMemo(
@@ -227,9 +232,8 @@ export function PatternRuntimePanel(): React.JSX.Element {
         </Card>
         <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
           <Hint size='xxs' uppercase className='text-gray-500'>Benchmark Suite</Hint>
-          <div className='mt-1 text-gray-100'>{benchmarkSuiteDraft}</div>
-        </Card>
-        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
+          <div className='mt-1 text-gray-100'>{typeof benchmarkSuiteDraft === 'string' ? benchmarkSuiteDraft : benchmarkSuiteDraft?.name || 'custom'}</div>
+        </Card>        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
           <Hint size='xxs' uppercase className='text-gray-500'>Low Confidence</Hint>
           <div className='mt-1 text-gray-100'>
             {promptExploderClampNumber(benchmarkLowConfidenceThresholdDraft, 0.3, 0.9).toFixed(2)}
@@ -269,7 +273,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
           <Label className='text-[11px] text-gray-400'>Validation Stack</Label>
           <SelectSimple
             size='sm'
-            value={learningDraft.runtimeValidationRuleStack}
+            value={learningDraft.runtimeValidationRuleStack as any}
             onValueChange={(value: string) => {
               setLearningDraft((previous) => ({
                 ...previous,
@@ -277,11 +281,10 @@ export function PatternRuntimePanel(): React.JSX.Element {
               }));
             }}
             options={validationStackOptions.map((option) => ({
-              value: option.value,
+              value: option.value as any,
               label: option.label,
             }))}
-          />
-        </div>
+          />        </div>
         <div className='min-w-0 space-y-1'>
           <Label className='text-[11px] text-gray-400'>Runtime Rule Profile</Label>
           <SelectSimple size='sm'
@@ -446,9 +449,8 @@ export function PatternRuntimePanel(): React.JSX.Element {
             Bench upsert {learningDraft.benchmarkSuggestionUpsertTemplates ? 'on' : 'off'}
           </Badge>
           <Badge variant='neutral' className='border-border/60 bg-card/20 font-normal'>
-            Suite {benchmarkSuiteDraft}
-          </Badge>
-        </div>
+                            Suite {typeof benchmarkSuiteDraft === 'string' ? benchmarkSuiteDraft : benchmarkSuiteDraft?.name || 'custom'}
+          </Badge>        </div>
       </div>
       <Card variant='subtle-compact' padding='sm' className='mt-3 border-border/60 bg-card/20 text-xs text-gray-300'>
         <Hint size='xxs' uppercase className='mb-2 text-gray-400'>
@@ -580,13 +582,12 @@ export function PatternRuntimePanel(): React.JSX.Element {
                     {template.title}
                   </div>
                   <div className='text-[10px] text-gray-500'>
-                    {template.segmentType} · approvals {template.approvals}
+                    {template.segmentType} · approvals {typeof template.approvals === 'number' ? template.approvals : 0}
                   </div>
                 </div>
                 <div className='mt-1 flex items-center justify-between gap-2'>
                   <SelectSimple size='sm'
-                    value={template.state}
-                    onValueChange={(value: string) => {
+                    value={(template.state as string) || 'candidate'}                    onValueChange={(value: string) => {
                       void handleTemplateStateChange(
                         template.id,
                         value as PromptExploderLearnedTemplate['state']

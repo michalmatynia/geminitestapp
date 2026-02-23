@@ -15,7 +15,7 @@ export const fileSchema = dtoBaseSchema.extend({
   publicUrl: z.string().optional(),
   url: z.string().optional(),
   storageProvider: z.enum(['local', 's3', 'imagekit']).optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
 export type FileDto = z.infer<typeof fileSchema>;
@@ -36,8 +36,8 @@ export type UpdateFileDto = z.infer<typeof updateFileSchema>;
  * Image File Contracts
  */
 export const imageFileSchema = fileSchema.extend({
-  width: z.number().optional(),
-  height: z.number().optional(),
+  width: z.number().nullable().optional(),
+  height: z.number().nullable().optional(),
   url: z.string().optional(),
   thumbnailPath: z.string().optional(),
   thumbnailUrl: z.string().optional(),
@@ -73,8 +73,8 @@ export interface ImageFileRecordDto {
   hasAlpha?: boolean;
   blurHash?: string;
   tags?: string[];
-  createdAt: string;
-  updatedAt: string | null;
+  createdAt?: string;
+  updatedAt?: string | null;
 }
 
 export type ImageFileRecord = ImageFileRecordDto;
@@ -85,8 +85,8 @@ export const imageFileSelectionSchema = z.object({
   filepath: z.string().optional(),
   thumbnailUrl: z.string().optional(),
   filename: z.string().optional(),
-  width: z.number().optional(),
-  height: z.number().optional(),
+  width: z.number().nullable().optional(),
+  height: z.number().nullable().optional(),
 });
 
 export type ImageFileSelectionDto = z.infer<typeof imageFileSelectionSchema>;

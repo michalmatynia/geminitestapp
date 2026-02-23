@@ -363,8 +363,7 @@ export function SegmentEditorSubsectionsPanel(args: {
           })()}
           <PromptExploderHierarchyTreeProvider
             value={{
-              items: subsection.items,
-              onChange: (nextItems) => {
+              items: subsection.items || [],              onChange: (nextItems) => {
                 onUpdateSegment((current) => {
                   const nextSubsections = current.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) => {
                     if (candidateIndex !== subsectionIndex) return candidate;

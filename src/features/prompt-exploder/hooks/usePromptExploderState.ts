@@ -303,7 +303,7 @@ export function usePromptExploderState() {
       enabled: promptExploderSettings.learning.enabled,
       similarityThreshold: promptExploderSettings.learning.similarityThreshold,
       templateMergeThreshold: promptExploderSettings.learning.templateMergeThreshold,
-      benchmarkSuggestionUpsertTemplates: promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates,
+      benchmarkSuggestionUpsertTemplates: promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates ?? true,
       minApprovalsForMatching: promptExploderSettings.learning.minApprovalsForMatching,
       maxTemplates: promptExploderSettings.learning.maxTemplates,
       autoActivateLearnedTemplates: promptExploderSettings.learning.autoActivateLearnedTemplates,
@@ -367,14 +367,13 @@ export function usePromptExploderState() {
       });
 
       const rollout = resolvePromptExploderOrchestratorRollout({
-        settingsEnabled: promptExploderSettings.runtime.orchestratorEnabled,
+        settingsEnabled: promptExploderSettings.runtime.orchestratorEnabled ?? true,
         cohortSeed: runtimeResolution.runtime.identity.cacheKey,
       });
       const orchestratorEnabled = isPromptExploderOrchestratorEnabled(
-        promptExploderSettings.runtime.orchestratorEnabled,
+        promptExploderSettings.runtime.orchestratorEnabled ?? true,
         runtimeResolution.runtime.identity.cacheKey
-      );
-      const nextDocument = orchestratorEnabled
+      );      const nextDocument = orchestratorEnabled
         ? explodePromptWithValidationRuntime({
           prompt: trimmed,
           runtime: runtimeResolution.runtime,

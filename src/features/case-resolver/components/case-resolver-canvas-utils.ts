@@ -9,6 +9,10 @@ import { type EdgeDto as AiEdge } from '@/shared/contracts/ai-paths';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT,
+  CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   type AiNode,
@@ -49,10 +53,18 @@ export const buildNode = (
   };
 };
 
-export const ensureDocumentPromptPorts = (node: AiNode): AiNode => {
+export const ensureDocumentPromptPorts = (
+  node: AiNode,
+  role: CaseResolverNodeMeta['role'] | null = null
+): AiNode => {
   if (node.type !== 'prompt') return node;
-  const nextInputs = [...CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS];
-  const nextOutputs = [...CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS];
+  const isExplanatory = role === 'explanatory';
+  const nextInputs = isExplanatory
+    ? [...CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS]
+    : [...CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS];
+  const nextOutputs = isExplanatory
+    ? [...CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS]
+    : [...CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS];
   const currentInputs = Array.isArray(node.inputs) ? node.inputs : [];
   const currentOutputs = Array.isArray(node.outputs) ? node.outputs : [];
   const sameInputs =
@@ -70,39 +82,60 @@ export const ensureDocumentPromptPorts = (node: AiNode): AiNode => {
 };
 
 export const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'wysiwygText';
-export const DOCUMENT_CONTENT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
+export const DOCUMENT_PLAINTEXT_CONTENT_PORT =
+  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'plaintextContent';
 export const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
+export const DOCUMENT_WYSIWYG_CONTENT_PORT = CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT;
 const LEGACY_DOCUMENT_TEXTFIELD_PORT = 'textfield';
+const LEGACY_DOCUMENT_CONTENT_PORT = CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT;
 
-const normalizeTextNodeInputPort = (value: string | null | undefined): string => {
+const normalizeTextNodeInputPort = (
+  value: string | null | undefined,
+  allowWysiwygContentPort: boolean
+): string => {
   if (value === LEGACY_DOCUMENT_TEXTFIELD_PORT) {
     return DOCUMENT_TEXTFIELD_PORT;
   }
+  if (value === LEGACY_DOCUMENT_CONTENT_PORT) {
+    return DOCUMENT_PLAINTEXT_CONTENT_PORT;
+  }
   if (
     value === DOCUMENT_TEXTFIELD_PORT ||
-    value === DOCUMENT_CONTENT_PORT ||
-    value === DOCUMENT_PLAIN_TEXT_PORT
+    value === DOCUMENT_PLAINTEXT_CONTENT_PORT ||
+    value === DOCUMENT_PLAIN_TEXT_PORT ||
+    (allowWysiwygContentPort && value === DOCUMENT_WYSIWYG_CONTENT_PORT)
   ) {
     return value;
   }
-  return DOCUMENT_CONTENT_PORT;
+  return DOCUMENT_PLAINTEXT_CONTENT_PORT;
 };
 
-const normalizeTextNodeOutputPort = (value: string | null | undefined): string => {
+const normalizeTextNodeOutputPort = (
+  value: string | null | undefined,
+  allowWysiwygContentPort: boolean
+): string => {
   if (value === LEGACY_DOCUMENT_TEXTFIELD_PORT) {
     return DOCUMENT_TEXTFIELD_PORT;
   }
+  if (value === LEGACY_DOCUMENT_CONTENT_PORT) {
+    return DOCUMENT_PLAINTEXT_CONTENT_PORT;
+  }
   if (
     value === DOCUMENT_TEXTFIELD_PORT ||
-    value === DOCUMENT_CONTENT_PORT ||
-    value === DOCUMENT_PLAIN_TEXT_PORT
+    value === DOCUMENT_PLAINTEXT_CONTENT_PORT ||
+    value === DOCUMENT_PLAIN_TEXT_PORT ||
+    (allowWysiwygContentPort && value === DOCUMENT_WYSIWYG_CONTENT_PORT)
   ) {
     return value;
   }
-  return DOCUMENT_CONTENT_PORT;
+  return DOCUMENT_PLAINTEXT_CONTENT_PORT;
 };
 
-export const normalizeEdgesForTextNode = (edges: AiEdge[], nodeId: string): AiEdge[] =>
+export const normalizeEdgesForTextNode = (
+  edges: AiEdge[],
+  nodeId: string,
+  isExplanatoryNode = false
+): AiEdge[] =>
   edges.map((edge: AiEdge): AiEdge => {
     const legacyEdge = edge as AiEdge & {
       from?: string;
@@ -118,10 +151,10 @@ export const normalizeEdgesForTextNode = (edges: AiEdge[], nodeId: string): AiEd
     let nextFromPort = currentFromPort;
     let nextToPort = currentToPort;
     if (from === nodeId) {
-      nextFromPort = normalizeTextNodeOutputPort(currentFromPort);
+      nextFromPort = normalizeTextNodeOutputPort(currentFromPort, isExplanatoryNode);
     }
     if (to === nodeId) {
-      nextToPort = normalizeTextNodeInputPort(currentToPort);
+      nextToPort = normalizeTextNodeInputPort(currentToPort, isExplanatoryNode);
     }
     if (nextFromPort === currentFromPort && nextToPort === currentToPort) return edge;
     return {
@@ -306,7 +339,7 @@ const stripHtmlTagsPreserveBreaks = (value: string): string =>
     .replace(/<br\s*\/?\s*>/gi, '\n')
     .replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|blockquote)>/gi, '\n')
     .replace(/<li>/gi, '• ')
-    .replace(/<[^>]+>/g, '');
+    .replace(/<\/?[a-z][^>]*>/gi, '');
 
 export const stripHtmlToPlainText = (html: string): string => {
   const decoded = decodeHtmlEntity(html);
@@ -345,6 +378,19 @@ export const renderPromptNodeTextPreview = (
 
 export const buildPromptTemplateFromDroppedDocumentFile = (file: CaseResolverFile): string => {
   if (file.fileType === 'scanfile') {
+    const scanMarkdown = file.documentContentMarkdown.trim();
+    if (scanMarkdown.length > 0) {
+      return toHtmlParagraph(scanMarkdown);
+    }
+    const scanPlainText = file.documentContentPlainText.trim();
+    if (scanPlainText.length > 0) {
+      return toHtmlParagraph(scanPlainText);
+    }
+    const scanStoredContent = file.documentContent.trim();
+    if (scanStoredContent.length > 0) {
+      const normalizedScanContent = stripHtmlToPlainText(scanStoredContent) || scanStoredContent;
+      return toHtmlParagraph(normalizedScanContent);
+    }
     const scanSlotText = file.scanSlots
       .map((slot): string => (slot.ocrText ?? '').trim())
       .filter((value: string): boolean => value.length > 0)
@@ -381,17 +427,20 @@ export const resolvePromptNodeStaticOutputs = (
   nodeMeta: CaseResolverNodeMeta
 ): {
   textfield: string;
-  content: string;
+  plaintextContent: string;
   plainText: string;
+  wysiwygContent: string;
 } => {
   const promptTemplate = resolvePromptConfig(node).template;
   const textfield = stripHtmlToPlainText(promptTemplate);
-  const content = renderPromptNodeTextPreview(node, nodeMeta) || textfield;
-  const plainText = stripHtmlToPlainText(content || textfield);
+  const plaintextContent = renderPromptNodeTextPreview(node, nodeMeta) || textfield;
+  const plainText = stripHtmlToPlainText(plaintextContent || textfield);
+  const wysiwygContent = nodeMeta.role === 'explanatory' ? promptTemplate : '';
   return {
     textfield,
-    content,
+    plaintextContent,
     plainText,
+    wysiwygContent,
   };
 };
 

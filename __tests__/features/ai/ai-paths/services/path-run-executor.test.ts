@@ -43,6 +43,51 @@ describe('PathRunExecutor', () => {
   ];
 
   const mockEdges: Edge[] = [];
+  const disconnectedCompileNodes: AiNode[] = [
+    {
+      id: 'trigger-1',
+      type: 'trigger',
+      title: 'Trigger',
+      description: '',
+      position: { x: 0, y: 0 },
+      inputs: ['context'],
+      outputs: ['trigger', 'context'],
+      config: { trigger: { event: 'manual' } },
+    },
+    {
+      id: 'model-1',
+      type: 'model',
+      title: 'Model',
+      description: '',
+      position: { x: 180, y: 0 },
+      inputs: ['prompt', 'context', 'images'],
+      outputs: ['result'],
+      inputContracts: {
+        prompt: { required: true },
+        images: { required: false },
+      },
+      config: {},
+    },
+    {
+      id: 'viewer-1',
+      type: 'viewer',
+      title: 'Viewer',
+      description: '',
+      position: { x: 360, y: 0 },
+      inputs: ['result'],
+      outputs: [],
+      config: {},
+    },
+  ];
+  const disconnectedCompileEdges: Edge[] = [
+    {
+      id: 'edge-model-viewer',
+      from: 'model-1',
+      to: 'viewer-1',
+      fromPort: 'result',
+      toPort: 'result',
+    },
+  ];
 
   it('should execute a run successfully', async () => {
     (evaluateGraphWithIteratorAutoContinue as any).mockResolvedValue({
@@ -432,7 +477,7 @@ describe('PathRunExecutor', () => {
     }
   });
 
-  it('should block strict runs when dependency inspector reports errors', async () => {
+  it('should block strict runs when dependency inspector reports errors and node validation is enabled', async () => {
     const riskyNodes: AiNode[] = [
       {
         id: 'db-1',
@@ -473,7 +518,7 @@ describe('PathRunExecutor', () => {
       graph: { nodes: riskyNodes, edges: [] },
       meta: {
         strictFlowMode: true,
-        aiPathsValidation: { enabled: false },
+        aiPathsValidation: { enabled: true, policy: 'report_only' },
       },
     } as any);
     await repo.createRunNodes(run.id, riskyNodes);
@@ -491,6 +536,102 @@ describe('PathRunExecutor', () => {
         event.message === 'Run blocked by strict flow dependency validation.',
       ),
     ).toBe(true);
+  });
+
+  it('should bypass strict-flow preflight when node validation is disabled', async () => {
+    const riskyNodes: AiNode[] = [
+      {
+        id: 'db-1',
+        type: 'database',
+        title: 'Database',
+        description: '',
+        position: { x: 0, y: 0 },
+        inputs: ['entityId', 'productId', 'value'],
+        outputs: ['result'],
+        config: {
+          runtime: { waitForInputs: true },
+          database: {
+            operation: 'update',
+            entityType: 'product',
+            idField: 'entityId',
+            mode: 'replace',
+            mappings: [],
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'preset',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '{"id":"{{entityId}}"}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+          },
+        },
+      },
+    ];
+    (evaluateGraphWithIteratorAutoContinue as any).mockResolvedValue({
+      outputs: { 'db-1': { ok: true } },
+    });
+
+    const run = await repo.createRun({
+      pathId: 'test',
+      graph: { nodes: riskyNodes, edges: [] },
+      meta: {
+        strictFlowMode: true,
+        aiPathsValidation: { enabled: false },
+      },
+    } as any);
+    await repo.createRunNodes(run.id, riskyNodes);
+
+    await executePathRun(run);
+    expect(evaluateGraphWithIteratorAutoContinue).toHaveBeenCalledTimes(1);
+
+    const updatedRun = await repo.findRunById(run.id);
+    expect(updatedRun.status).toBe('completed');
+  });
+
+  it('should bypass compile blockers when node validation is disabled', async () => {
+    (evaluateGraphWithIteratorAutoContinue as any).mockResolvedValue({
+      outputs: { 'trigger-1': {}, 'model-1': {} },
+    });
+    const run = await repo.createRun({
+      pathId: 'test',
+      graph: { nodes: disconnectedCompileNodes, edges: disconnectedCompileEdges },
+      meta: {
+        strictFlowMode: false,
+        aiPathsValidation: { enabled: false },
+      },
+    } as any);
+    await repo.createRunNodes(run.id, disconnectedCompileNodes);
+
+    await executePathRun(run);
+    expect(evaluateGraphWithIteratorAutoContinue).toHaveBeenCalledTimes(1);
+
+    const updatedRun = await repo.findRunById(run.id);
+    expect(updatedRun.status).toBe('completed');
+  });
+
+  it('should block compile errors when node validation is enabled', async () => {
+    const run = await repo.createRun({
+      pathId: 'test',
+      graph: { nodes: disconnectedCompileNodes, edges: disconnectedCompileEdges },
+      meta: {
+        strictFlowMode: false,
+        aiPathsValidation: { enabled: true },
+      },
+    } as any);
+    await repo.createRunNodes(run.id, disconnectedCompileNodes);
+
+    await expect(executePathRun(run)).rejects.toThrow('Graph compile blocked run');
+    expect(evaluateGraphWithIteratorAutoContinue).not.toHaveBeenCalled();
+
+    const updatedRun = await repo.findRunById(run.id);
+    expect(updatedRun.status).toBe('failed');
+    expect(updatedRun.errorMessage).toContain('Graph compile blocked run');
   });
 
   it('should block run when AI Paths validation preflight policy fails', async () => {

@@ -20,18 +20,29 @@ export type DependencyReport = {
   strictReady: boolean;
 };
 
+export type DependencyInspectorScopeMode = 'full' | 'reachable_from_roots';
+
+export type DependencyInspectorOptions = {
+  scopeMode?: DependencyInspectorScopeMode;
+  scopeRootNodeIds?: string[] | Set<string>;
+};
+
 const normalizeNonEmptyString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
 };
 
+const resolveEdgeFromNodeId = (edge: Edge): string | null =>
+  normalizeNonEmptyString(edge.from) ?? normalizeNonEmptyString(edge.source);
+
+const resolveEdgeToNodeId = (edge: Edge): string | null =>
+  normalizeNonEmptyString(edge.to) ?? normalizeNonEmptyString(edge.target);
+
 const getIncomingPorts = (nodeId: string, edges: Edge[]): Set<string> => {
   const ports = new Set<string>();
   edges.forEach((edge: Edge): void => {
-    const targetNodeId =
-      normalizeNonEmptyString(edge.to) ??
-      normalizeNonEmptyString(edge.target);
+    const targetNodeId = resolveEdgeToNodeId(edge);
     if (targetNodeId !== nodeId) return;
     const toPort =
       normalizeNonEmptyString(edge.toPort) ??
@@ -65,10 +76,111 @@ const pushRisk = (
   });
 };
 
+const resolveScopedRootNodeIds = (
+  nodes: AiNode[],
+  edges: Edge[],
+  options: DependencyInspectorOptions,
+): string[] => {
+  const nodeIdSet = new Set(nodes.map((node: AiNode): string => node.id));
+  const explicitRootIds = (
+    Array.isArray(options.scopeRootNodeIds)
+      ? options.scopeRootNodeIds
+      : options.scopeRootNodeIds
+        ? Array.from(options.scopeRootNodeIds)
+        : []
+  )
+    .map((nodeId: string): string => nodeId.trim())
+    .filter((nodeId: string): boolean => nodeId.length > 0 && nodeIdSet.has(nodeId));
+  const explicitUnique = Array.from(new Set(explicitRootIds));
+  if (explicitUnique.length > 0) return explicitUnique;
+
+  const triggerRootIds = nodes
+    .filter((node: AiNode): boolean => node.type === 'trigger')
+    .map((node: AiNode): string => node.id);
+  if (triggerRootIds.length > 0) return triggerRootIds;
+
+  const incomingNodeIds = new Set<string>();
+  edges.forEach((edge: Edge): void => {
+    const toNodeId = resolveEdgeToNodeId(edge);
+    if (!toNodeId || !nodeIdSet.has(toNodeId)) return;
+    incomingNodeIds.add(toNodeId);
+  });
+  const fallbackRootIds = nodes
+    .filter((node: AiNode): boolean => !incomingNodeIds.has(node.id))
+    .map((node: AiNode): string => node.id);
+  if (fallbackRootIds.length > 0) return fallbackRootIds;
+
+  return nodes[0] ? [nodes[0].id] : [];
+};
+
+const buildReachableDependencyScope = (
+  nodes: AiNode[],
+  edges: Edge[],
+  options: DependencyInspectorOptions,
+): { nodes: AiNode[]; edges: Edge[] } => {
+  if (nodes.length === 0) return { nodes, edges };
+
+  const nodeIdSet = new Set(nodes.map((node: AiNode): string => node.id));
+  const rootNodeIds = resolveScopedRootNodeIds(nodes, edges, options);
+  if (rootNodeIds.length === 0) return { nodes, edges };
+
+  const adjacency = new Map<string, Set<string>>();
+  edges.forEach((edge: Edge): void => {
+    const fromNodeId = resolveEdgeFromNodeId(edge);
+    const toNodeId = resolveEdgeToNodeId(edge);
+    if (!fromNodeId || !toNodeId) return;
+    if (!nodeIdSet.has(fromNodeId) || !nodeIdSet.has(toNodeId)) return;
+    const next = adjacency.get(fromNodeId) ?? new Set<string>();
+    next.add(toNodeId);
+    adjacency.set(fromNodeId, next);
+  });
+
+  const queue = [...rootNodeIds];
+  const reachableNodeIds = new Set<string>(rootNodeIds);
+  while (queue.length > 0) {
+    const current = queue.shift();
+    if (!current) continue;
+    const next = adjacency.get(current);
+    if (!next) continue;
+    next.forEach((nodeId: string): void => {
+      if (reachableNodeIds.has(nodeId)) return;
+      reachableNodeIds.add(nodeId);
+      queue.push(nodeId);
+    });
+  }
+
+  if (reachableNodeIds.size === 0 || reachableNodeIds.size === nodes.length) {
+    return { nodes, edges };
+  }
+
+  const scopedNodes = nodes.filter((node: AiNode): boolean => reachableNodeIds.has(node.id));
+  const scopedNodeIdSet = new Set(scopedNodes.map((node: AiNode): string => node.id));
+  const scopedEdges = edges.filter((edge: Edge): boolean => {
+    const fromNodeId = resolveEdgeFromNodeId(edge);
+    const toNodeId = resolveEdgeToNodeId(edge);
+    if (!fromNodeId || !toNodeId) return false;
+    return scopedNodeIdSet.has(fromNodeId) && scopedNodeIdSet.has(toNodeId);
+  });
+  return {
+    nodes: scopedNodes,
+    edges: scopedEdges,
+  };
+};
+
 export const inspectPathDependencies = (
   nodes: AiNode[],
   edges: Edge[],
+  options: DependencyInspectorOptions = {},
 ): DependencyReport => {
+  if (options.scopeMode === 'reachable_from_roots') {
+    const scoped = buildReachableDependencyScope(nodes, edges, options);
+    return inspectPathDependencies(scoped.nodes, scoped.edges, {
+      ...options,
+      scopeMode: 'full',
+      scopeRootNodeIds: undefined,
+    });
+  }
+
   const risks: DependencyRisk[] = [];
 
   nodes.forEach((node: AiNode): void => {

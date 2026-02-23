@@ -15,7 +15,6 @@ export * from './services/product-migration';
 export * from './services/product-provider';
 export * from './services/product-repository';
 export * from './services/productService';
-export * from './services/product-provider';
 export {
   ProductsImagesUploadPOST,
 } from './api/routes/images-upload-route';
@@ -24,8 +23,7 @@ export {
   ProductsV2POST,
 } from './api/routes/v2-products-route';
 export * from '@/shared/contracts/products';
-export * from '@/shared/contracts/products';
-export type { ProductWithImages } from '@/shared/contracts/products';
+export { type ProductDbProvider } from '@/shared/contracts/products';
 // Only re-export server-safe validations (schemas, validators, types).
 // Client hooks (useProductCreateValidation, etc.) and context (ValidationProvider)
 // must be imported directly from './validations' or './validations/hooks'.

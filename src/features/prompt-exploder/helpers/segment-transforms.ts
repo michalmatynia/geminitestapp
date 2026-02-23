@@ -46,6 +46,9 @@ const createBlankSegment = (
     matchedPatternLabels: [],
     matchedSequenceLabels: [],
     confidence: template?.confidence ?? 0.5,
+    items: [],
+    validationResults: [],
+    segments: [],
   };
 };
 
@@ -142,7 +145,7 @@ export const promptExploderSplitSegmentByRange = (args: {
     };
   }
 
-  const sourceText = normalizeNewLines(target.text);
+  const sourceText = normalizeNewLines(target.text || '');
   const max = sourceText.length;
   const start = clampIndex(args.selectionStart, 0, max);
   const end = clampIndex(args.selectionEnd, 0, max);
@@ -170,8 +173,7 @@ export const promptExploderSplitSegmentByRange = (args: {
     paramsText: target.type === 'parameter_block' ? remaining : target.paramsText,
   };
   const nextSplit = createBlankSegment(target, extracted);
-  nextSplit.title = target.title.trim().length > 0 ? `${target.title} (Split)` : '';
-
+  nextSplit.title = (target.title && target.title.trim().length > 0) ? `${target.title} (Split)` : '';
   const nextSegments = [...segments];
   nextSegments[targetIndex] = nextCurrent;
   nextSegments.splice(targetIndex + 1, 0, nextSplit);
@@ -208,7 +210,7 @@ export const promptExploderMergeSegment = (args: {
   const sourceIndex = direction === 'previous' ? targetIndex : peerIndex;
   const base = segments[baseIndex]!;
   const source = segments[sourceIndex]!;
-  const mergedText = joinSegmentText(base.text, source.text);
+  const mergedText = joinSegmentText(base.text || '', source.text || '');
   const mergedSegment: PromptExploderSegment = {
     ...base,
     includeInOutput: base.includeInOutput || source.includeInOutput,

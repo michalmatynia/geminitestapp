@@ -184,26 +184,25 @@ export const renderPromptExploderSegment = (segment: PromptExploderSegment): str
   const lines: string[] = [];
 
   const appendTitle = (): void => {
-    if (segment.title.trim().length > 0) {
+    if (segment.title && segment.title.trim().length > 0) {
       if (segment.type === 'referential_list') {
-        lines.push(formatHeadingWithCode(segment.title, segment.code));
+        lines.push(formatHeadingWithCode(segment.title, segment.code ?? null));
         return;
-      }
-      lines.push(segment.title.trim());
+      }      lines.push(segment.title.trim());
     }
   };
 
   switch (segment.type) {
     case 'metadata':
-      lines.push(segment.text.trim());
+      if (segment.text) lines.push(segment.text.trim());
       break;
     case 'parameter_block':
       appendTitle();
-      if (segment.paramsText.trim().length > 0) {
-        const body = stripLeadingTitleLine(segment.paramsText, segment.title);
+      if (segment.paramsText && segment.paramsText.trim().length > 0) {
+        const body = stripLeadingTitleLine(segment.paramsText, segment.title || '');
         if (body.length > 0) lines.push(body);
-      } else if (segment.text.trim().length > 0) {
-        const body = stripLeadingTitleLine(segment.text, segment.title);
+      } else if (segment.text && segment.text.trim().length > 0) {
+        const body = stripLeadingTitleLine(segment.text, segment.title || '');
         if (body.length > 0) lines.push(body);
       }
       break;
@@ -220,7 +219,7 @@ export const renderPromptExploderSegment = (segment: PromptExploderSegment): str
         if (subsectionHeading) {
           lines.push(subsectionHeading);
         }
-        lines.push(...flattenItemsToTextLines(subsection.items));
+        lines.push(...flattenItemsToTextLines(subsection.items || []));
       });
       break;
     case 'qa_matrix':
@@ -231,38 +230,37 @@ export const renderPromptExploderSegment = (segment: PromptExploderSegment): str
             lines.push('');
           }
           const subsectionHeading = formatHeadingWithCode(
-            subsection.title,
-            subsection.code
+            subsection.title || '',
+            subsection.code || ''
           );
           if (subsectionHeading) {
             lines.push(subsectionHeading);
           }
-          lines.push(...flattenItemsToTextLines(subsection.items));
+          lines.push(...flattenItemsToTextLines(subsection.items || []));
         });
         break;
       }
-      lines.push(...flattenItemsToTextLines(segment.listItems));
+      lines.push(...flattenItemsToTextLines(segment.listItems || []));
       break;
     case 'hierarchical_list':
     case 'conditional_list':
     case 'referential_list':
     case 'list':
       appendTitle();
-      lines.push(...flattenItemsToTextLines(segment.listItems, {
+      lines.push(...flattenItemsToTextLines(segment.listItems || [], {
         ordered: segment.type === 'list' || segment.type === 'hierarchical_list',
       }));
       break;
     case 'assigned_text':
     default:
       appendTitle();
-      if (segment.text.trim().length > 0) {
-        const body = stripLeadingTitleLine(segment.text, segment.title);
+      if (segment.text && segment.text.trim().length > 0) {
+        const body = stripLeadingTitleLine(segment.text, segment.title || '');
         if (body.length > 0) {
           lines.push(body);
         }
       }
-      break;
-  }
+      break;  }
 
   return trimTrailingBlankLines(lines.join('\n'));
 };

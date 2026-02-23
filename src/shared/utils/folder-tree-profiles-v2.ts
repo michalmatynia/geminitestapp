@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export type {
+import type {
   FolderTreeIconSlot,
   FolderTreeNestingRuleV2,
   FolderTreePlaceholderEmphasis,
@@ -9,6 +9,16 @@ export type {
   FolderTreeProfileV2,
   FolderTreeSelectionBehavior,
 } from '../contracts/master-folder-tree';
+
+export type {
+  FolderTreeIconSlot,
+  FolderTreeNestingRuleV2,
+  FolderTreePlaceholderEmphasis,
+  FolderTreePlaceholderPreset,
+  FolderTreePlaceholderStyle,
+  FolderTreeProfileV2,
+  FolderTreeSelectionBehavior,
+};
 
 import {
   normalizeMasterTreeKind,
@@ -107,10 +117,10 @@ export type CanNestTreeNodeV2Input = {
   targetFolderKind?: string | null;
 };
 
-const placeholderPresetSchema = z.enum(folderTreePlaceholderPresetValues as [string, ...string[]]);
-const placeholderStyleSchema = z.enum(folderTreePlaceholderStyleValues as [string, ...string[]]);
-const placeholderEmphasisSchema = z.enum(folderTreePlaceholderEmphasisValues as [string, ...string[]]);
-const selectionBehaviorSchema = z.enum(folderTreeSelectionBehaviorValues as [string, ...string[]]);
+const placeholderPresetSchema = z.enum(folderTreePlaceholderPresetValues as [string, ...string[]]) as z.ZodType<FolderTreePlaceholderPreset>;
+const placeholderStyleSchema = z.enum(folderTreePlaceholderStyleValues as [string, ...string[]]) as z.ZodType<FolderTreePlaceholderStyle>;
+const placeholderEmphasisSchema = z.enum(folderTreePlaceholderEmphasisValues as [string, ...string[]]) as z.ZodType<FolderTreePlaceholderEmphasis>;
+const selectionBehaviorSchema = z.enum(folderTreeSelectionBehaviorValues as [string, ...string[]]) as z.ZodType<FolderTreeSelectionBehavior>;
 const nodeTypeSchema = z.enum(['folder', 'file']);
 const targetTypeSchema = z.enum(['folder', 'root']);
 const iconSlotSchema = z.string().trim().min(1).nullable();

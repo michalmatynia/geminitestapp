@@ -16,9 +16,11 @@ import {
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
   appendLocalRun,
+  compileGraph,
   entityApi,
   evaluateAiPathsValidationPreflight,
   evaluateGraphWithIteratorAutoContinue,
+  inspectPathDependencies,
   normalizeAiPathsValidationConfig,
   runsApi,
 } from '@/features/ai/ai-paths/lib';
@@ -597,6 +599,33 @@ export function useAiPathTriggerEvent(): {
           `Validation warning: score ${validationReport.score} with ${validationReport.failedRules} failed rule(s).`,
           { variant: 'warning' }
         );
+      }
+      if (validationReport.enabled) {
+        const compileReport = compileGraph(nodes, edges);
+        if (!compileReport.ok) {
+          reportProgress({ status: 'error', progress: 0 });
+          const primaryError = compileReport.findings.find(
+            (finding): boolean => finding.severity === 'error'
+          );
+          toast(
+            (primaryError ? `Graph compile failed: ${primaryError.message}` : null) ??
+              `Graph compile failed with ${compileReport.errors} blocking issue(s).`,
+            { variant: 'error' }
+          );
+          return;
+        }
+
+        if (selectedConfig.strictFlowMode !== false) {
+          const dependencyReport = inspectPathDependencies(nodes, edges);
+          if (dependencyReport.errors > 0) {
+            reportProgress({ status: 'error', progress: 0 });
+            toast(
+              `Strict flow blocked run: ${dependencyReport.errors} dependency error(s) detected.`,
+              { variant: 'error' }
+            );
+            return;
+          }
+        }
       }
 
       const persistRunSnapshot = async (runAt: string): Promise<void> => {

@@ -110,6 +110,7 @@ export const formatPortDataTypes = (types: PortDataType[]): string => {
 export const getValueTypeLabel = (value: unknown): string => {
   if (value === undefined) return 'undefined';
   if (value === null) return 'null';
+  if (typeof value === 'string') return 'string';
   if (typeof value === 'object' && !Array.isArray(value)) {
     const record = value as Record<string, unknown>;
     const recordHintKeys = [
@@ -137,7 +138,6 @@ export const getValueTypeLabel = (value: unknown): string => {
   }
   if (isImageLikeValue(value)) return 'image';
   if (Array.isArray(value)) return 'array';
-  if (typeof value === 'string') return 'string';
   if (typeof value === 'number') return 'number';
   if (typeof value === 'boolean') return 'boolean';
   if (typeof value === 'object') return 'object';
@@ -153,6 +153,8 @@ export const isValueCompatibleWithTypes = (
   const actualType = getValueTypeLabel(value);
   const expected = expandTypes(expectedTypes);
   if (expected.has('any')) return true;
+  // URL-like strings remain string-typed, but image ports should still accept them.
+  if (typeof value === 'string' && expected.has('image') && isImageLikeValue(value)) return true;
   if (actualType === 'image' && expected.has('array')) return true;
   return expected.has(actualType);
 };

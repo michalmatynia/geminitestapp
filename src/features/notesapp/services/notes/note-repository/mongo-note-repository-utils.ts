@@ -15,7 +15,7 @@ import type {
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
   NoteFileDto as NoteFileRecord,
   NoteFiltersDto as NoteFilters,
-  NoteWithRelationsDto as NoteRecord,
+  NoteDto as NoteRecord,
   NotebookDto as NotebookRecord,
   NoteTagDto as TagRecord,
   NoteThemeDto as ThemeRecord,
@@ -59,9 +59,10 @@ export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
     tagIds: tags.map((t: NoteTagEmbedded) => t.tagId),
     categoryIds: categories.map((c: NoteCategoryEmbedded) => c.categoryId),
     relatedNoteIds: relationsFrom.map((r: NoteRelationFromEmbedded) => r.targetNoteId),
-    relationsFrom: relationsFrom as any,
-    relationsTo: relationsTo as any,
-  } as NoteRecord;
+    relations: [],
+    relationsFrom: relationsFrom as unknown as NoteRecord['relationsFrom'],
+    relationsTo: relationsTo as unknown as NoteRecord['relationsTo'],
+  } as unknown as NoteRecord;
 };
 
 export const toTagResponse = (doc: WithId<TagDocument>): TagRecord => ({
@@ -139,15 +140,15 @@ export const buildTree = (
   });
 
   notes.forEach((note: NoteRecord): void => {
-    const noteCategories = note.categories || [];
-    noteCategories.forEach((c: any): void => {
+    const noteCategories = (note.categories || []) as unknown as Array<string | { categoryId: string }>;
+    noteCategories.forEach((c): void => {
       const categoryId = typeof c === 'string' ? c : c.categoryId;
       const category = categoryMap[categoryId];
       if (category) {
         if (!category.notes) {
           category.notes = [];
         }
-        category.notes.push(note as any);
+        category.notes.push(note);
       }
     });
   });

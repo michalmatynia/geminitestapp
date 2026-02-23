@@ -214,6 +214,22 @@ export const handleParser: NodeHandler = async ({
       }
     });
 
+    const buildDeclaredOutputs = (sourceRecord: Record<string, unknown>): Record<string, unknown> =>
+      node.outputs.reduce<Record<string, unknown>>(
+        (acc: Record<string, unknown>, output: string): Record<string, unknown> => {
+          if (output === 'bundle') return acc;
+          const outputKey = output.trim();
+          if (!outputKey) return acc;
+          const direct = sourceRecord[outputKey];
+          const resolved = isEmptyValue(direct) ? fallbackForKey(outputKey) ?? direct : direct;
+          if (resolved !== undefined) {
+            acc[outputKey] = normalizeParserOutputValue(outputKey, resolved);
+          }
+          return acc;
+        },
+        {}
+      );
+
     if (outputMode === 'bundle') {
       if (!hasMappings || Object.keys(parsed).length === 0) {
         const fullBundle: Record<string, unknown> =
@@ -226,14 +242,10 @@ export const handleParser: NodeHandler = async ({
         if (fullBundle['imageUrls'] !== undefined) {
           fullBundle['imageUrls'] = normalizeParserOutputValue('imageUrls', fullBundle['imageUrls']);
         }
-        return { bundle: fullBundle };
+        const declaredOutputs = buildDeclaredOutputs(fullBundle);
+        return { bundle: fullBundle, ...declaredOutputs };
       }
-      const extraOutputs = node.outputs.reduce<Record<string, unknown>>((acc: Record<string, unknown>, output: string): Record<string, unknown> => {
-        if (output !== 'bundle' && parsed[output] !== undefined) {
-          acc[output] = (parsed)[output];
-        }
-        return acc;
-      }, {});
+      const extraOutputs = buildDeclaredOutputs(parsed);
       return { bundle: parsed, ...extraOutputs };
     } else {
       return parsed;

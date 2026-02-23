@@ -6,6 +6,8 @@ import {
   type AiNode,
   type Edge,
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT,
+  CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   type CaseResolverEdgeMeta,
@@ -21,7 +23,7 @@ export type CaseResolverCompileResult = CaseResolverCompileResultDto;
 export type CaseResolverPlainTextTransformInput = {
   nodeId: string;
   nodeMeta: CaseResolverNodeMeta;
-  output: 'plainText' | 'content';
+  output: 'plainText' | 'plaintextContent' | 'content';
   value: string;
 };
 
@@ -39,9 +41,12 @@ const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
 };
 
 const DOCUMENT_TEXTFIELD_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0] ?? 'wysiwygText';
-const DOCUMENT_CONTENT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'content';
+const DOCUMENT_PLAINTEXT_CONTENT_PORT =
+  CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[1] ?? 'plaintextContent';
 const DOCUMENT_PLAIN_TEXT_PORT = CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[2] ?? 'plainText';
+const DOCUMENT_WYSIWYG_CONTENT_PORT = CASE_RESOLVER_EXPLANATORY_WYSIWYG_CONTENT_PORT;
 const LEGACY_DOCUMENT_TEXTFIELD_PORT = 'textfield';
+const LEGACY_DOCUMENT_CONTENT_PORT = CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT;
 
 const resolveNodeMeta = (
   nodeId: string,
@@ -86,7 +91,7 @@ const stripHtmlTagsPreserveBreaks = (value: string): string =>
     .replace(/<br\s*\/?\s*>/gi, '\n')
     .replace(/<\/(p|div|h1|h2|h3|h4|h5|h6|li|blockquote)>/gi, '\n')
     .replace(/<li>/gi, '• ')
-    .replace(/<[^>]+>/g, '');
+    .replace(/<\/?[a-z][^>]*>/gi, '');
 
 const stripHtml = (html: string): string => {
   // Decode first so escaped HTML tags (e.g. &lt;b&gt;) are stripped as markup, not emitted as text.
@@ -114,8 +119,21 @@ const resolveNodeText = (node: AiNode): string => {
   return '';
 };
 
+const resolveNodeWysiwygText = (node: AiNode): string => {
+  const promptTemplate = node.config?.prompt?.template;
+  if (typeof promptTemplate === 'string' && promptTemplate.trim().length > 0) {
+    return promptTemplate;
+  }
+  const noteText = node.config?.notes?.text;
+  if (typeof noteText === 'string' && noteText.trim().length > 0) {
+    return noteText;
+  }
+  return '';
+};
+
 const wrapByQuoteMode = (value: string, meta: CaseResolverNodeMeta): string => {
-  if (!value) return value;
+  const wrappedValue = wrapByQuoteModeWithoutColor(value, meta);
+  if (!wrappedValue) return wrappedValue;
   const canApplyHtmlColorWrapper = meta.role !== 'explanatory';
   const normalizedColor =
     canApplyHtmlColorWrapper &&
@@ -123,13 +141,20 @@ const wrapByQuoteMode = (value: string, meta: CaseResolverNodeMeta): string => {
     /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(meta.textColor.trim())
       ? meta.textColor.trim()
       : '';
-  const quotedValue =
-    meta.quoteMode === 'double' ? `"${value}"` : meta.quoteMode === 'single' ? `'${value}'` : value;
-  const wrappedValue = `${meta.surroundPrefix}${quotedValue}${meta.surroundSuffix}${
-    meta.appendTrailingNewline ? '\n' : ''
-  }`;
   if (!normalizedColor) return wrappedValue;
   return `<span style="color: ${normalizedColor};">${wrappedValue}</span>`;
+};
+
+const wrapByQuoteModeWithoutColor = (
+  value: string,
+  meta: CaseResolverNodeMeta
+): string => {
+  if (!value) return value;
+  const quotedValue =
+    meta.quoteMode === 'double' ? `"${value}"` : meta.quoteMode === 'single' ? `'${value}'` : value;
+  return `${meta.surroundPrefix}${quotedValue}${meta.surroundSuffix}${
+    meta.appendTrailingNewline ? '\n' : ''
+  }`;
 };
 
 const sortNodeIdsByPosition = (nodes: AiNode[]): string[] =>
@@ -178,34 +203,51 @@ const sortEdgesBySourcePosition = (
 };
 
 const resolveSourceOutputValue = (
-  sourceOutputs: { textfield: string; content: string; plainText: string } | null | undefined,
+  sourceOutputs:
+    | {
+      textfield: string;
+      plaintextContent: string;
+      plainText: string;
+      wysiwygContent: string;
+    }
+    | null
+    | undefined,
   fromPort: string | null | undefined,
-  fallback: 'textfield' | 'content' | 'plainText'
+  fallback: 'textfield' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
 ): string => {
   if (!sourceOutputs) return '';
   if (fromPort === DOCUMENT_TEXTFIELD_PORT || fromPort === LEGACY_DOCUMENT_TEXTFIELD_PORT) {
     return sourceOutputs.textfield;
   }
-  if (fromPort === DOCUMENT_CONTENT_PORT) {
-    return sourceOutputs.content;
+  if (fromPort === DOCUMENT_PLAINTEXT_CONTENT_PORT || fromPort === LEGACY_DOCUMENT_CONTENT_PORT) {
+    return sourceOutputs.plaintextContent;
   }
   if (fromPort === DOCUMENT_PLAIN_TEXT_PORT) {
     return sourceOutputs.plainText;
   }
+  if (fromPort === DOCUMENT_WYSIWYG_CONTENT_PORT) {
+    return sourceOutputs.wysiwygContent;
+  }
   if (fallback === 'plainText') {
     return sourceOutputs.plainText;
   }
-  return fallback === 'textfield' ? sourceOutputs.textfield : sourceOutputs.content;
+  if (fallback === 'wysiwygContent') {
+    return sourceOutputs.wysiwygContent;
+  }
+  return fallback === 'textfield' ? sourceOutputs.textfield : sourceOutputs.plaintextContent;
 };
 
 const isTextfieldInputPort = (port: string | null | undefined): boolean =>
   port === DOCUMENT_TEXTFIELD_PORT || port === LEGACY_DOCUMENT_TEXTFIELD_PORT;
 
-const isContentInputPort = (port: string | null | undefined): boolean =>
-  port === DOCUMENT_CONTENT_PORT || !port;
+const isPlaintextContentInputPort = (port: string | null | undefined): boolean =>
+  port === DOCUMENT_PLAINTEXT_CONTENT_PORT || port === LEGACY_DOCUMENT_CONTENT_PORT || !port;
 
 const isPlainTextInputPort = (port: string | null | undefined): boolean =>
   port === DOCUMENT_PLAIN_TEXT_PORT;
+
+const isWysiwygContentInputPort = (port: string | null | undefined): boolean =>
+  port === DOCUMENT_WYSIWYG_CONTENT_PORT;
 
 export const compileCaseResolverPrompt = (
   graph: CaseResolverGraph,
@@ -288,7 +330,15 @@ export const compileCaseResolverPrompt = (
     }
 
     const segments: CaseResolverCompiledSegment[] = [];
-    const outputsByNode: Record<string, { textfield: string; content: string; plainText: string }> = {};
+    const outputsByNode: Record<
+      string,
+      {
+        textfield: string;
+        plaintextContent: string;
+        plainText: string;
+        wysiwygContent: string;
+      }
+    > = {};
     const visitedNodeIds = new Set<string>(visitOrder.map((entry) => entry.nodeId));
 
     visitOrder.forEach(({ nodeId }) => {
@@ -296,13 +346,14 @@ export const compileCaseResolverPrompt = (
       if (!node) return;
       const meta = resolveNodeMeta(node.id, graph.nodeMeta || {});
       const nodeText = resolveNodeText(node);
+      const nodeWysiwygText = resolveNodeWysiwygText(node);
       const incomingEdges = sortEdgesBySourcePosition(
         incomingByNode.get(node.id) ?? [],
         nodeById
       );
 
       const collectIncoming = (
-        type: 'textfield' | 'content' | 'plainText'
+        type: 'textfield' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
       ): { value: string; firstJoinMode: CaseResolverJoinMode | null } => {
         let value = '';
         let firstJoinMode: CaseResolverJoinMode | null = null;
@@ -311,9 +362,11 @@ export const compileCaseResolverPrompt = (
           const acceptsEdge =
             type === 'textfield'
               ? isTextfieldInputPort(edge.toPort)
-              : type === 'content'
-                ? isContentInputPort(edge.toPort)
-                : isPlainTextInputPort(edge.toPort);
+              : type === 'plaintextContent'
+                ? isPlaintextContentInputPort(edge.toPort)
+                : type === 'plainText'
+                  ? isPlainTextInputPort(edge.toPort)
+                  : isWysiwygContentInputPort(edge.toPort);
           if (!acceptsEdge) return;
           const edgeFromNodeId = edge.from ?? edge.source;
           if (!edgeFromNodeId) return;
@@ -331,26 +384,30 @@ export const compileCaseResolverPrompt = (
       };
 
       const incomingTextfield = collectIncoming('textfield');
-      const incomingContent = collectIncoming('content');
+      const incomingPlaintextContent = collectIncoming('plaintextContent');
       const incomingPlainText = collectIncoming('plainText');
+      const incomingWysiwygContent = collectIncoming('wysiwygContent');
       const hasIncomingTextfield = incomingTextfield.value.trim().length > 0;
-      const hasIncomingContent = incomingContent.value.trim().length > 0;
+      const hasIncomingPlaintextContent = incomingPlaintextContent.value.trim().length > 0;
       const hasIncomingPlainText = incomingPlainText.value.trim().length > 0;
+      const hasIncomingWysiwygContent = incomingWysiwygContent.value.trim().length > 0;
+      const isExplanatoryPlainTextInputFlow =
+        meta.role === 'explanatory' && hasIncomingPlainText;
       const incomingText =
         hasIncomingTextfield
           ? incomingTextfield.value
           : hasIncomingPlainText
             ? incomingPlainText.value
-            : meta.role === 'explanatory' && hasIncomingContent
-              ? incomingContent.value
+            : meta.role === 'explanatory' && hasIncomingPlaintextContent
+              ? incomingPlaintextContent.value
               : '';
       const incomingTextJoinMode = (
         hasIncomingTextfield
           ? incomingTextfield.firstJoinMode
           : hasIncomingPlainText
             ? incomingPlainText.firstJoinMode
-            : meta.role === 'explanatory' && hasIncomingContent
-              ? incomingContent.firstJoinMode
+            : meta.role === 'explanatory' && hasIncomingPlaintextContent
+              ? incomingPlaintextContent.firstJoinMode
               : null
       ) ?? DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
       const resolvedTextfield =
@@ -360,20 +417,38 @@ export const compileCaseResolverPrompt = (
             ? incomingText
             : nodeText;
       const hasTextfieldOnlyIncoming =
-        hasIncomingTextfield && !hasIncomingContent && !hasIncomingPlainText;
-      const secondaryOutputSeed = hasTextfieldOnlyIncoming ? nodeText : resolvedTextfield;
+        hasIncomingTextfield &&
+        !hasIncomingPlaintextContent &&
+        !hasIncomingPlainText &&
+        !hasIncomingWysiwygContent;
+      const secondaryOutputSeed = isExplanatoryPlainTextInputFlow
+        ? nodeText
+        : hasTextfieldOnlyIncoming
+          ? nodeText
+          : resolvedTextfield;
+      const wrappedTextfieldOutput = wrapByQuoteModeWithoutColor(resolvedTextfield, meta);
+      const wrappedSecondaryPlainTextSeed = wrapByQuoteModeWithoutColor(
+        secondaryOutputSeed,
+        meta
+      );
       let plainTextOutput = options.transformPlainTextOutput
-        ? secondaryOutputSeed
-        : stripHtml(secondaryOutputSeed);
+        ? wrappedSecondaryPlainTextSeed
+        : stripHtml(wrappedSecondaryPlainTextSeed);
       const wrappedText = wrapByQuoteMode(resolvedTextfield, meta);
       const wrappedSecondaryText = wrapByQuoteMode(secondaryOutputSeed, meta);
-      let contentOutput = incomingContent.value;
+      let plaintextContentOutput = isExplanatoryPlainTextInputFlow
+        ? incomingPlainText.value
+        : incomingPlaintextContent.value;
       if (meta.includeInOutput && wrappedSecondaryText.trim().length > 0) {
-        const joinMode = (incomingContent.firstJoinMode || DEFAULT_CASE_RESOLVER_EDGE_META.joinMode) as CaseResolverJoinMode;
-        contentOutput = appendWithJoin(contentOutput, wrappedSecondaryText, joinMode);
+        const joinMode: CaseResolverJoinMode = (
+          isExplanatoryPlainTextInputFlow
+            ? incomingPlainText.firstJoinMode
+            : incomingPlaintextContent.firstJoinMode
+        ) || (DEFAULT_CASE_RESOLVER_EDGE_META.joinMode ?? 'newline');
+        plaintextContentOutput = appendWithJoin(plaintextContentOutput, wrappedSecondaryText, joinMode);
       }
       if (meta.role === 'explanatory' && !options.transformPlainTextOutput) {
-        contentOutput = stripHtml(contentOutput);
+        plaintextContentOutput = stripHtml(plaintextContentOutput);
       }
       if (options.transformPlainTextOutput) {
         plainTextOutput = options.transformPlainTextOutput({
@@ -383,19 +458,28 @@ export const compileCaseResolverPrompt = (
           value: plainTextOutput,
         });
         if (meta.role === 'explanatory') {
-          contentOutput = options.transformPlainTextOutput({
+          plaintextContentOutput = options.transformPlainTextOutput({
             nodeId: node.id,
             nodeMeta: meta,
-            output: 'content',
-            value: contentOutput,
+            output: 'plaintextContent',
+            value: plaintextContentOutput,
           });
         }
       }
+      let wysiwygContentOutput = meta.role === 'explanatory' ? incomingWysiwygContent.value : '';
+      if (meta.role === 'explanatory' && meta.includeInOutput && nodeWysiwygText.trim().length > 0) {
+        const joinMode: CaseResolverJoinMode =
+          incomingWysiwygContent.firstJoinMode ||
+          DEFAULT_CASE_RESOLVER_EDGE_META.joinMode ||
+          'newline';
+        wysiwygContentOutput = appendWithJoin(wysiwygContentOutput, nodeWysiwygText, joinMode);
+      }
 
       outputsByNode[node.id] = {
-        textfield: resolvedTextfield,
-        content: contentOutput,
+        textfield: wrappedTextfieldOutput,
+        plaintextContent: plaintextContentOutput,
         plainText: plainTextOutput,
+        wysiwygContent: wysiwygContentOutput,
       };
 
       segments.push({
@@ -427,7 +511,7 @@ export const compileCaseResolverPrompt = (
       const dedupedLeafOutputs: string[] = [];
       const seenLeafOutputs = new Set<string>();
       leafNodeIds.forEach((nodeId: string): void => {
-        const output = outputsByNode[nodeId]?.content?.trim();
+        const output = outputsByNode[nodeId]?.plaintextContent?.trim();
         if (!output || seenLeafOutputs.has(output)) return;
         seenLeafOutputs.add(output);
         dedupedLeafOutputs.push(output);

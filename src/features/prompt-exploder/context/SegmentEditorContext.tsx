@@ -204,34 +204,34 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
   const similarTemplateCandidates = useMemo(() => {
     if (!selectedSegment)
       return [] as Array<{
-        id: string;
-        title: string;
-        segmentType: PromptExploderLearnedTemplate['segmentType'];
-        score: number;
-        approvals: number;
-        state: PromptExploderLearnedTemplate['state'];
-        mergeEligible: boolean;
-      }>;
-    const sourceText = `${selectedSegment.title} ${promptExploderBuildSegmentSampleText(selectedSegment)}`.trim();
-    const normalizedSelectedTitle = normalizeLearningText(selectedSegment.title);
-    return effectiveLearnedTemplates
+                  id: string;
+                  title: string;
+                  segmentType: PromptExploderLearnedTemplate['segmentType'];
+                  score: number;
+                  approvals: number;
+                  state: PromptExploderLearnedTemplate['state'];
+                  mergeEligible: boolean;
+                  sameType: boolean;
+                                normalizedTitle?: string;
+                              }>;
+    const sourceText = `${selectedSegment.title || ''} ${promptExploderBuildSegmentSampleText(selectedSegment)}`.trim();
+    const normalizedSelectedTitle = normalizeLearningText(selectedSegment.title || '');    return effectiveLearnedTemplates
       .map((template) => {
         const score = templateSimilarityScore(sourceText, template);
         const sameType = template.segmentType === approvalDraft.ruleSegmentType;
         const mergeEligible = sameType && score >= templateMergeThreshold;
         return {
           id: template.id,
-          title: template.title,
+          title: template.title || 'Untitled',
           segmentType: template.segmentType,
           score,
-          approvals: template.approvals,
-          state: template.state,
+          approvals: typeof template.approvals === 'number' ? template.approvals : 0,
+          state: (template.state as string) || 'candidate',
           mergeEligible,
           sameType,
           normalizedTitle: template.normalizedTitle,
         };
-      })
-      .filter(
+      })      .filter(
         (candidate) =>
           candidate.score >= promptExploderClampNumber(templateMergeThreshold - 0.1, 0.3, 0.95) ||
           candidate.normalizedTitle === normalizedSelectedTitle
@@ -249,18 +249,26 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
   }, [approvalDraft.ruleSegmentType, effectiveLearnedTemplates, selectedSegment, templateMergeThreshold]);
 
   const templateTargetOptions = useMemo(
-    () =>
-      effectiveLearnedTemplates
+    () => {
+      const normalizeApprovals = (val: unknown): number => {
+        if (typeof val === 'number') return val;
+        return 0;
+      };
+
+      return effectiveLearnedTemplates
         .filter((template) => template.segmentType === approvalDraft.ruleSegmentType)
         .sort((left, right) => {
-          if (right.approvals !== left.approvals) return right.approvals - left.approvals;
-          return right.updatedAt.localeCompare(left.updatedAt);
+          const leftApprovals = normalizeApprovals(left.approvals);
+          const rightApprovals = normalizeApprovals(right.approvals);
+          if (rightApprovals !== leftApprovals) return rightApprovals - leftApprovals;
+          return (String(right.updatedAt || '')).localeCompare(String(left.updatedAt || ''));
         })
         .slice(0, 80)
         .map((template) => ({
           value: template.id,
-          label: `${template.title} (${template.state}, ${template.approvals})`,
-        })),
+          label: `${template.title} (${template.state}, ${normalizeApprovals(template.approvals)})`,
+        }));
+    },
     [approvalDraft.ruleSegmentType, effectiveLearnedTemplates]
   );
 
@@ -478,12 +486,11 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     try {
       const now = new Date().toISOString();
       const segmentSampleText = promptExploderBuildSegmentSampleText(selectedSegment);
-      const segmentLearningSource = `${selectedSegment.title} ${segmentSampleText}`.trim();
+      const segmentLearningSource = `${selectedSegment.title || ''} ${segmentSampleText}`.trim();
       const templateUpsert = upsertLearnedTemplate({
         templates: effectiveLearnedTemplates,
         segmentType: approvalDraft.ruleSegmentType,
-        title: selectedSegment.title,
-        sourceText: segmentLearningSource,
+        title: selectedSegment.title || '',        sourceText: segmentLearningSource,
         sampleText: segmentSampleText,
         similarityThreshold: templateMergeThreshold,
         minApprovalsForMatching: learningDraft.minApprovalsForMatching,
@@ -508,9 +515,8 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
       const learnedRuleId = `segment.learned.${approvalDraft.ruleSegmentType}.${nextTemplate.id}`;
       const learnedRuleDraft = buildManualLearnedRegexRuleDraft({
         id: learnedRuleId,
-        segmentTitle: selectedSegment.title,
-        segmentType: approvalDraft.ruleSegmentType,
-        sequence: 1000 + nextTemplates.length,
+        segmentTitle: selectedSegment.title || '',
+        segmentType: approvalDraft.ruleSegmentType,        sequence: 1000 + nextTemplates.length,
         ruleTitle: approvalDraft.ruleTitle,
         rulePattern: approvalDraft.rulePattern,
         priority: approvalDraft.rulePriority,

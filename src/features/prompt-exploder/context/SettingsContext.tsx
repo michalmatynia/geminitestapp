@@ -708,7 +708,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       toast('Select a snapshot to restore.', { variant: 'info' });
       return;
     }
-    const parsed = parsePromptValidationRules(selectedSnapshot.rulesJson);
+    const parsed = parsePromptValidationRules(selectedSnapshot.rulesJson || '[]');
     if (!parsed.ok) {
       toast(`Snapshot is invalid: ${parsed.error}`, { variant: 'error' });
       return;

@@ -316,8 +316,7 @@ const buildPartyCandidateFromSegment = (
     }
   });
 
-  if (!base.displayName.trim() && !base.rawText.trim()) return null;
-  return base;
+  if (!(base.displayName || '').trim() && !(base.rawText || '').trim()) return null;  return base;
 };
 
 const resolvePlaceDateMetadata = (

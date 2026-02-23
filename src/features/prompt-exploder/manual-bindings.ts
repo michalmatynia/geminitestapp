@@ -143,12 +143,12 @@ export const buildManualBindingFromDraft = (args: {
     };
   }
 
-  const defaultSourceLabel = fromSubsection
+  const defaultSourceLabel = (fromSubsection
     ? args.formatSubsectionLabel(fromSubsection)
-    : fromSegment.title;
-  const defaultTargetLabel = toSubsection
+    : fromSegment.title) || '';
+  const defaultTargetLabel = (toSubsection
     ? args.formatSubsectionLabel(toSubsection)
-    : toSegment.title;
+    : toSegment.title) || '';
 
   return {
     ok: true,
@@ -159,8 +159,8 @@ export const buildManualBindingFromDraft = (args: {
       toSegmentId: toSegment.id,
       fromSubsectionId: fromSubsection?.id ?? null,
       toSubsectionId: toSubsection?.id ?? null,
-      sourceLabel: args.draft.sourceLabel.trim() || defaultSourceLabel,
-      targetLabel: args.draft.targetLabel.trim() || defaultTargetLabel,
+      sourceLabel: (args.draft.sourceLabel || '').trim() || defaultSourceLabel || 'Source',
+      targetLabel: (args.draft.targetLabel || '').trim() || defaultTargetLabel || 'Target',
       origin: 'manual',
     },
   };

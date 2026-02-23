@@ -4,6 +4,7 @@ import {
   compileGraph,
   migrateTriggerToFetcherGraph,
   normalizeNodes,
+  normalizeAiPathsValidationConfig,
   sanitizeEdges,
 } from '@/features/ai/ai-paths/lib';
 import {
@@ -192,13 +193,26 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     const migratedGraph = migrateTriggerToFetcherGraph(normalizedNodes, rawEdges);
     const nodes = normalizeNodes(migratedGraph.nodes);
     const edges = sanitizeEdges(nodes, migratedGraph.edges);
-    const compileReport = compileGraph(nodes, edges);
-    if (!compileReport.ok) {
+    const validationConfig = normalizeAiPathsValidationConfig(
+      (input.meta as Record<string, unknown> | null)?.['aiPathsValidation'] as
+        | Record<string, unknown>
+        | undefined
+    );
+    const nodeValidationEnabled = validationConfig.enabled !== false;
+    const compileReport = nodeValidationEnabled
+      ? compileGraph(nodes, edges)
+      : compileGraph(nodes, edges, {
+        scopeMode: 'reachable_from_roots',
+        ...(input.triggerNodeId ? { scopeRootNodeIds: [input.triggerNodeId] } : {}),
+      });
+    if (nodeValidationEnabled && !compileReport.ok) {
       const primaryError = compileReport.findings.find(
         (finding): boolean => finding.severity === 'error'
       );
       throw new Error(
-        primaryError?.message ??
+        (primaryError
+          ? `Graph compile failed: ${primaryError.message}`
+          : null) ??
           `Graph compile failed with ${compileReport.errors} blocking issue(s).`
       );
     }

@@ -825,8 +825,10 @@ describe('evaluateGraph', () => {
           model: {
             modelId: 'test-model',
             waitForResult: true,
-          },
-        },
+            temperature: 0.7,
+            maxTokens: 1000,
+            vision: false,
+          },        },
       },
     ];
     const edges: Edge[] = [
@@ -895,8 +897,10 @@ describe('evaluateGraph', () => {
           model: {
             modelId: 'test-model',
             waitForResult: true,
-          },
-        },
+            temperature: 0.7,
+            maxTokens: 1000,
+            vision: false,
+          },        },
       },
     ];
     const edges: Edge[] = [
@@ -942,6 +946,77 @@ describe('evaluateGraph', () => {
     );
   });
 
+  it('accepts prompt text containing image URLs as model prompt input', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'prompt-1',
+        type: 'prompt',
+        title: 'Prompt',
+        description: '',
+        inputs: ['images'],
+        outputs: ['prompt'],
+        position: { x: 0, y: 0 },
+        config: {
+          prompt: {
+            template:
+              'Analyze URL text only: https://example.com/image.png and return a title.',
+          },
+          runtime: {
+            waitForInputs: false,
+            inputContracts: {
+              images: { required: false },
+            },
+          },
+        },
+      },
+      {
+        id: 'model-1',
+        type: 'model',
+        title: 'Model',
+        description: '',
+        inputs: ['prompt'],
+        outputs: ['result', 'jobId'],
+        position: { x: 220, y: 0 },
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              prompt: { required: true },
+            },
+          },
+          model: {
+            modelId: 'test-model',
+            waitForResult: true,
+            temperature: 0.7,
+            maxTokens: 1000,
+            vision: false,
+          },        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-prompt-model',
+        from: 'prompt-1',
+        to: 'model-1',
+        fromPort: 'prompt',
+        toPort: 'prompt',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      skipAiJobs: true,
+    });
+
+    expect(result.inputs['model-1']).toMatchObject({
+      prompt: expect.stringContaining('https://example.com/image.png'),
+    });
+    expect(result.outputs['model-1']?.['status']).toBe('skipped');
+    expect(result.outputs['model-1']?.['skipReason']).toBe('ai_jobs_disabled');
+  });
+
   it('clears stale model outputs when required inputs are missing', async () => {
     const nodes: AiNode[] = [
       {
@@ -979,8 +1054,10 @@ describe('evaluateGraph', () => {
           model: {
             modelId: 'test-model',
             waitForResult: true,
-          },
-        },
+            temperature: 0.7,
+            maxTokens: 1000,
+            vision: false,
+          },        },
       },
     ];
     const edges: Edge[] = [
@@ -1048,8 +1125,10 @@ describe('evaluateGraph', () => {
           model: {
             modelId: 'test-model',
             waitForResult: true,
-          },
-        },
+            temperature: 0.7,
+            maxTokens: 1000,
+            vision: false,
+          },        },
       },
     ];
     const edges: Edge[] = [

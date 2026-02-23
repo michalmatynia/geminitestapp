@@ -154,9 +154,58 @@ export const getLatestEventTimestamp = (
   return max > 0 ? new Date(max).toISOString() : null;
 };
 
-export const normalizeRunNodes = (value: unknown): AiPathRunNodeRecord[] => (
-  Array.isArray(value) ? (value as AiPathRunNodeRecord[]) : []
-);
+const toTimestamp = (value: unknown): number | null => {
+  if (typeof value !== 'string') return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+export const normalizeRunNodes = (value: unknown): AiPathRunNodeRecord[] => {
+  if (!Array.isArray(value)) return [];
+  return (value as AiPathRunNodeRecord[])
+    .map((node: AiPathRunNodeRecord, index: number) => ({ node, index }))
+    .sort((left, right) => {
+      const leftFinished =
+        toTimestamp(left.node.finishedAt) ?? toTimestamp(left.node.completedAt);
+      const rightFinished =
+        toTimestamp(right.node.finishedAt) ?? toTimestamp(right.node.completedAt);
+      if (leftFinished !== null && rightFinished !== null && leftFinished !== rightFinished) {
+        return leftFinished - rightFinished;
+      }
+      if (leftFinished !== null && rightFinished === null) return -1;
+      if (leftFinished === null && rightFinished !== null) return 1;
+
+      const leftStarted = toTimestamp(left.node.startedAt);
+      const rightStarted = toTimestamp(right.node.startedAt);
+      if (leftStarted !== null && rightStarted !== null && leftStarted !== rightStarted) {
+        return leftStarted - rightStarted;
+      }
+      if (leftStarted !== null && rightStarted === null) return -1;
+      if (leftStarted === null && rightStarted !== null) return 1;
+
+      const leftUpdated = toTimestamp(left.node.updatedAt);
+      const rightUpdated = toTimestamp(right.node.updatedAt);
+      if (leftUpdated !== null && rightUpdated !== null && leftUpdated !== rightUpdated) {
+        return leftUpdated - rightUpdated;
+      }
+      if (leftUpdated !== null && rightUpdated === null) return -1;
+      if (leftUpdated === null && rightUpdated !== null) return 1;
+
+      const leftCreated = toTimestamp(left.node.createdAt);
+      const rightCreated = toTimestamp(right.node.createdAt);
+      if (leftCreated !== null && rightCreated !== null && leftCreated !== rightCreated) {
+        return leftCreated - rightCreated;
+      }
+      if (leftCreated !== null && rightCreated === null) return -1;
+      if (leftCreated === null && rightCreated !== null) return 1;
+
+      const leftNodeId = left.node.nodeId ?? '';
+      const rightNodeId = right.node.nodeId ?? '';
+      if (leftNodeId !== rightNodeId) return leftNodeId.localeCompare(rightNodeId);
+      return left.index - right.index;
+    })
+    .map((entry) => entry.node);
+};
 
 export const normalizeRunEvents = (value: unknown): AiPathRunEventRecord[] => (
   Array.isArray(value) ? (value as AiPathRunEventRecord[]) : []

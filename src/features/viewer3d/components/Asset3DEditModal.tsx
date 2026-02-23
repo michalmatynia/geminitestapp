@@ -69,7 +69,7 @@ export function Asset3DEditModal({
     name,
     description,
     category,
-    isPublic,
+    isPublic: isPublic ?? false,
   };
 
   const handleChange = (vals: Partial<AssetFormState>) => {
@@ -95,11 +95,10 @@ export function Asset3DEditModal({
           />
           <MetadataItem
             label='File Size'
-            value={formatFileSize(asset.size)}
+            value={formatFileSize(asset.size || 0)}
             variant='card'
             className='p-3'
-          />
-        </div>
+          />        </div>
       )
     },
     {

@@ -215,11 +215,11 @@ export function RuleItem({
             <GripVertical className='size-3.5' />
           </button>
           {rule ? (
-            <Badge variant={rule.severity === 'error' ? 'error' : rule.severity === 'warning' ? 'warning' : 'info'} size='sm' className='font-bold uppercase'>
+            <Badge variant={rule.severity === 'error' ? 'error' : rule.severity === 'warning' ? 'warning' : 'info'} className='font-bold uppercase'>
               {formatSeverityLabel(rule.severity)}
             </Badge>
           ) : (
-            <Badge variant='neutral' size='sm' className='font-bold uppercase'>Invalid</Badge>
+            <Badge variant='neutral' className='font-bold uppercase'>Invalid</Badge>
           )}
           {rule ? (
             <button
@@ -235,7 +235,7 @@ export function RuleItem({
             </button>
           ) : null}
           {isImageStudioRule ? (
-            <Badge variant='info' size='sm' className='border-teal-500/45 bg-teal-500/10 text-teal-200 font-bold uppercase'>
+            <Badge variant='info' className='border-teal-500/45 bg-teal-500/10 text-teal-200 font-bold uppercase'>
               Image Studio Rule
             </Badge>
           ) : null}

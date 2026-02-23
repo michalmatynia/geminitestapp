@@ -9,7 +9,7 @@ import {
   swapSlots,
 } from '@/features/image-slots';
 import { logClientError } from '@/features/observability';
-import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
+import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ProductWithImages, ProductImageRecord } from '@/shared/contracts/products';
 import type { ProductImageSlot } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';

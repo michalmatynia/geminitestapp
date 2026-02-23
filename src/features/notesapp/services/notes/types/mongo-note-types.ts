@@ -2,14 +2,14 @@ export interface NoteTagEmbedded {
   tagId: string;
   noteId?: string;
   assignedAt?: string | Date;
-  tag?: any;
+  tag?: unknown;
 }
 
 export interface NoteCategoryEmbedded {
   categoryId: string;
   noteId?: string;
   assignedAt?: string | Date;
-  category?: any;
+  category?: unknown;
 }
 
 export interface NoteRelationFromEmbedded {

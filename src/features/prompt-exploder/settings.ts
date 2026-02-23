@@ -91,10 +91,11 @@ export function parsePromptExploderSettings(rawValue: string | null | undefined)
     if (!result.success) {
       return defaultPromptExploderSettings;
     }
-    const normalized = {
+    const normalized: PromptExploderSettings = {
       ...result.data,
       runtime: {
         ...result.data.runtime,
+        ruleProfile: result.data.runtime.ruleProfile,
         validationRuleStack: normalizePromptExploderValidationRuleStack(
           result.data.runtime.validationRuleStack
         ),

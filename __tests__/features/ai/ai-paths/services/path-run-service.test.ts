@@ -21,7 +21,7 @@ import {
   deletePathRunsWithRepository,
   retryPathRunNode 
 } from '@/features/ai/ai-paths/services/path-run-service';
-import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/features/jobs/workers/aiPathRunQueue', () => ({
@@ -53,6 +53,51 @@ describe('PathRunService', () => {
       outputs: ['value'],
       config: { trigger: { event: 'manual' } }
     }
+  ];
+  const disconnectedCompileNodes: AiNode[] = [
+    {
+      id: 'trigger-1',
+      type: 'trigger',
+      title: 'Trigger',
+      description: '',
+      position: { x: 0, y: 0 },
+      inputs: ['context'],
+      outputs: ['trigger', 'context'],
+      config: { trigger: { event: 'manual' } },
+    },
+    {
+      id: 'model-1',
+      type: 'model',
+      title: 'Model',
+      description: '',
+      position: { x: 180, y: 0 },
+      inputs: ['prompt', 'context', 'images'],
+      outputs: ['result'],
+      inputContracts: {
+        prompt: { required: true },
+        images: { required: false },
+      },
+      config: {},
+    },
+    {
+      id: 'viewer-1',
+      type: 'viewer',
+      title: 'Viewer',
+      description: '',
+      position: { x: 360, y: 0 },
+      inputs: ['result'],
+      outputs: [],
+      config: {},
+    },
+  ];
+  const disconnectedCompileEdges: Edge[] = [
+    {
+      id: 'edge-model-viewer',
+      from: 'model-1',
+      to: 'viewer-1',
+      fromPort: 'result',
+      toPort: 'result',
+    },
   ];
 
   describe('enqueuePathRun', () => {
@@ -114,6 +159,37 @@ describe('PathRunService', () => {
           process.env['AI_PATHS_DISABLED_NODE_TYPES'] = previous;
         }
       }
+    });
+
+    it('should allow enqueue when compile checks fail but node validation is disabled', async () => {
+      const run = await enqueuePathRun({
+        pathId: 'test-path-validation-disabled',
+        nodes: disconnectedCompileNodes,
+        edges: disconnectedCompileEdges,
+        meta: {
+          aiPathsValidation: { enabled: false },
+        },
+      });
+
+      expect(run.id).toBeDefined();
+      const compileMeta = (run.meta as Record<string, unknown>)?.['graphCompile'] as
+        | { errors?: number }
+        | undefined;
+      expect(typeof compileMeta?.errors).toBe('number');
+      expect(compileMeta?.errors).toBe(0);
+    });
+
+    it('should block enqueue when compile checks fail and node validation is enabled', async () => {
+      await expect(
+        enqueuePathRun({
+          pathId: 'test-path-validation-enabled',
+          nodes: disconnectedCompileNodes,
+          edges: disconnectedCompileEdges,
+          meta: {
+            aiPathsValidation: { enabled: true },
+          },
+        })
+      ).rejects.toThrow('Graph compile failed');
     });
 
     it('should dedupe active runs by requestId', async () => {

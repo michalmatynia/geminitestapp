@@ -37,7 +37,7 @@ export function ensurePromptExploderPatternPack(
   const baseSettings = settings?.promptValidation
     ? settings
     : defaultPromptEngineSettings;
-  const targetScope = options?.scope ?? 'prompt-exploder';
+  const targetScope = options?.scope ?? 'prompt_exploder';
 
   const nextRules = [...baseSettings.promptValidation.rules];
   const addedRuleIds: string[] = [];

@@ -3,7 +3,6 @@
 import { Network } from 'lucide-react';
 import React from 'react';
 
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import {
   Badge,
   Card,
@@ -14,40 +13,20 @@ import {
   SelectSimple,
 } from '@/shared/ui';
 
+import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import { CaseResolverRelationsWorkspace } from './CaseResolverRelationsWorkspace';
 
-type SelectOption = {
-  value: string;
-  label: string;
-  description?: string | undefined;
-};
+export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
+  const {
+    activeFile: activeCaseFile,
+    caseTagOptions,
+    caseIdentifierOptions,
+    caseCategoryOptions,
+    caseReferenceOptions,
+    parentCaseOptions,
+    onUpdateActiveCase,
+  } = useCaseResolverPageContext();
 
-type CaseMetadataPatch = Partial<
-  Pick<
-    CaseResolverFile,
-    'name' | 'parentCaseId' | 'referenceCaseIds' | 'tagId' | 'caseIdentifierId' | 'categoryId'
-  >
->;
-
-type CaseResolverCaseOverviewWorkspaceProps = {
-  activeCaseFile: CaseResolverFile | null;
-  caseTagOptions: SelectOption[];
-  caseIdentifierOptions: SelectOption[];
-  caseCategoryOptions: SelectOption[];
-  caseReferenceOptions: SelectOption[];
-  parentCaseOptions: SelectOption[];
-  onUpdateActiveCase: (patch: CaseMetadataPatch) => void;
-};
-
-export function CaseResolverCaseOverviewWorkspace({
-  activeCaseFile,
-  caseTagOptions,
-  caseIdentifierOptions,
-  caseCategoryOptions,
-  caseReferenceOptions,
-  parentCaseOptions,
-  onUpdateActiveCase,
-}: CaseResolverCaseOverviewWorkspaceProps): React.JSX.Element {
   const [caseNameDraft, setCaseNameDraft] = React.useState(activeCaseFile?.name ?? '');
 
   React.useEffect(() => {

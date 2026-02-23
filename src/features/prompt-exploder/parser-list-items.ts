@@ -354,8 +354,7 @@ export const flattenItemsToTextLines = (
     const indent = '  '.repeat(level);
     const marker = ordered && level === 0 ? `${index + 1}.` : '*';
     const logicalPrefix = formatLogicalListItemPrefix(item);
-    const bodyText = item.text.trim();
-    const renderedText = logicalPrefix
+    const bodyText = (item.text || '').trim();    const renderedText = logicalPrefix
       ? (bodyText ? `${logicalPrefix}: ${bodyText}` : logicalPrefix)
       : bodyText;
     lines.push(`${indent}${marker} ${renderedText}`);

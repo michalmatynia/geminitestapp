@@ -21,6 +21,7 @@ import {
   createParserMappings,
   extractJsonPathEntries,
   inferImageMappingPath,
+  normalizePortName,
   safeParseJson,
 } from '@/features/ai/ai-paths/lib';
 import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
@@ -241,11 +242,27 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
     nextMode: 'individual' | 'bundle' = outputMode,
     nextPresetId: string = presetId
   ): void => {
-    const keys = Object.keys(nextMappings)
+    const normalizedMappings = Object.entries(nextMappings).reduce<Record<string, string>>(
+      (
+        acc: Record<string, string>,
+        [rawKey, rawPath]: [string, string]
+      ): Record<string, string> => {
+        const key = normalizePortName(rawKey).trim();
+        if (!key) return acc;
+        const path = typeof rawPath === 'string' ? rawPath : '';
+        if (!(key in acc) || (!acc[key] && path)) {
+          acc[key] = path;
+        }
+        return acc;
+      },
+      {}
+    );
+    const keys = Object.keys(normalizedMappings)
       .map((key: string) => key.trim())
       .filter(Boolean);
     const hasImagesOutput = keys.some(
-      (key: string) => key.toLowerCase() === 'images'
+      (key: string) =>
+        key.toLowerCase() === 'images' || key.toLowerCase() === 'imageurls'
     );
     const nextOutputs =
       nextMode === 'bundle'
@@ -256,7 +273,7 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
       config: {
         ...selectedNode.config,
         parser: {
-          mappings: nextMappings,
+          mappings: normalizedMappings,
           outputMode: nextMode,
           presetId: nextPresetId,
         },

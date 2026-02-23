@@ -114,20 +114,19 @@ const anchorCoverageScore = (
 };
 
 const segmentSimilaritySource = (segment: PromptExploderSegment): string => {
-  const lines: string[] = [segment.title];
-  if (segment.listItems.length > 0) {
-    lines.push(segment.listItems.slice(0, 3).map((item: PromptExploderListItem) => item.text).join(' '));
+  const lines: string[] = [segment.title || ''];
+  if (segment.listItems && segment.listItems.length > 0) {
+    lines.push(segment.listItems.slice(0, 3).map((item: PromptExploderListItem) => item.text || '').join(' '));
   }
-  if (segment.subsections.length > 0) {
+  if (segment.subsections && segment.subsections.length > 0) {
     const subsection = segment.subsections[0];
     if (subsection) {
-      lines.push(subsection.title);
-      if (subsection.items.length > 0) {
-        lines.push(subsection.items.slice(0, 2).map((item: PromptExploderListItem) => item.text).join(' '));
+      lines.push(subsection.title || '');
+      if (subsection.items && subsection.items.length > 0) {
+        lines.push(subsection.items.slice(0, 2).map((item: PromptExploderListItem) => item.text || '').join(' '));
       }
     }
-  }
-  if (segment.text) {
+  }  if (segment.text) {
     lines.push(segment.text.slice(0, 180));
   }
   return lines.join(' ');
@@ -247,9 +246,10 @@ export const inferTypeFromLearnedTemplates = (
   let bestScore = 0;
 
   templates.forEach((template: PromptExploderLearnedTemplate) => {
+    const titleReference = template.normalizedTitle || template.title || '';
     const titleScore = Math.max(
-      diceSimilarity(sourceText, template.normalizedTitle || template.title),
-      jaccardSimilarity(sourceText, template.normalizedTitle || template.title)
+      diceSimilarity(sourceText, titleReference),
+      jaccardSimilarity(sourceText, titleReference)
     );
     const sampleScore = template.sampleText
       ? Math.max(
@@ -257,8 +257,7 @@ export const inferTypeFromLearnedTemplates = (
         jaccardSimilarity(sourceText, template.sampleText)
       )
       : 0;
-    const anchorScore = anchorCoverageScore(sourceText, template.anchorTokens);
-    const totalScore = Math.max(titleScore, sampleScore * 0.8 + anchorScore * 0.2);
+    const anchorScore = anchorCoverageScore(sourceText, template.anchorTokens || []);    const totalScore = Math.max(titleScore, sampleScore * 0.8 + anchorScore * 0.2);
 
     if (totalScore > bestScore) {
       bestScore = totalScore;

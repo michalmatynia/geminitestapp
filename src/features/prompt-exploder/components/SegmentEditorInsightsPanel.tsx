@@ -168,11 +168,10 @@ export function SegmentEditorInsightsPanel(args: {
                   </span>
                 </div>
                 <div className='mt-1 text-[10px] text-gray-500'>
-                  score {(candidate.score * 100).toFixed(1)}% ·
+                                        score {(candidate.score * 100).toFixed(1)}% ·
                   {' '}type {candidate.segmentType} ·
-                  {' '}state {candidate.state} · approvals {candidate.approvals}
-                </div>
-                <div className='mt-1 flex justify-end'>
+                  {' '}state {(candidate.state as string) || 'candidate'} · approvals {typeof candidate.approvals === 'number' ? candidate.approvals : 0}
+                </div>                <div className='mt-1 flex justify-end'>
                   <Button
                     type='button'
                     variant='outline'

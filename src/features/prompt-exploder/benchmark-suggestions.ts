@@ -23,8 +23,9 @@ export const dedupeBenchmarkSuggestionsById = (
   const seen = new Set<string>();
   const unique: PromptExploderBenchmarkSuggestion[] = [];
   suggestions.forEach((suggestion) => {
-    if (seen.has(suggestion.id)) return;
-    seen.add(suggestion.id);
+    const id = suggestion.id || '';
+    if (!id || seen.has(id)) return;
+    seen.add(id);
     unique.push(suggestion);
   });
   return unique;
@@ -45,13 +46,13 @@ export const prepareBenchmarkSuggestionsForApply = (
   const uniqueSuggestions = dedupeBenchmarkSuggestionsById(suggestions);
   const invalidSegmentTitles: string[] = [];
   const validSuggestions = uniqueSuggestions.filter((suggestion) => {
-    const pattern = suggestion.suggestedRulePattern.trim();
+    const pattern = (suggestion.suggestedRulePattern || '').trim();
     if (!pattern) {
-      invalidSegmentTitles.push(suggestion.segmentTitle);
+      invalidSegmentTitles.push(suggestion.segmentTitle || 'Untitled');
       return false;
     }
     if (!isValidRegexPattern(pattern, 'mi')) {
-      invalidSegmentTitles.push(suggestion.segmentTitle);
+      invalidSegmentTitles.push(suggestion.segmentTitle || 'Untitled');
       return false;
     }
     return true;

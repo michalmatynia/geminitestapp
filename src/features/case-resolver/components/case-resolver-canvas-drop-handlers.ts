@@ -14,7 +14,7 @@ import {
 } from '@/shared/contracts/case-resolver';
 
 import {
-  DOCUMENT_CONTENT_PORT,
+  DOCUMENT_PLAINTEXT_CONTENT_PORT,
   buildCanvasNodeFileTemplate,
   buildNode,
   buildPromptTemplateFromDroppedDocumentFile,
@@ -298,7 +298,7 @@ export const createCaseResolverCanvasDropHandlers = ({
         from: modelNodeId,
         to: outputNodeId,
         fromPort: 'result',
-        toPort: DOCUMENT_CONTENT_PORT,
+        toPort: DOCUMENT_PLAINTEXT_CONTENT_PORT,
       };
 
       addNode(pdfNode);

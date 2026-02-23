@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-return */
 'use client';
 
 import {
@@ -125,13 +124,13 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 onValueChange={(value: string): void =>
                   setFormData((prev: PatternFormData) => {
                     const nextTarget = value as PatternFormData['target'];
-                    const allowed = new Set<string>(getReplacementFieldsForTarget(nextTarget));
-                    const nextSourceOptions = getSourceFieldOptionsForTarget(nextTarget) as any[];
+                    const allowed = new Set<string>(getReplacementFieldsForTarget(nextTarget).map(o => o.value));
+                    const nextSourceOptions = getSourceFieldOptionsForTarget(nextTarget) as Array<{ value: string; label: string }>;
                     const hasSourceField = nextSourceOptions.some(
-                      (option: { value: string }) => option.value === prev.sourceField
+                      (option) => option.value === prev.sourceField
                     );
                     const hasLaunchSourceField = nextSourceOptions.some(
-                      (option: { value: string }) => option.value === prev.launchSourceField
+                      (option) => option.value === prev.launchSourceField
                     );
                     return {
                       ...prev,
@@ -435,7 +434,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                     }
                     options={[
                       SOURCE_FIELD_PLACEHOLDER_OPTION,
-                      ...(sourceFieldOptions as any[]),
+                      ...(sourceFieldOptions as Array<{ value: string; label: string }>),
                     ]}
                   />
                 </FormField>
@@ -536,7 +535,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                     }
                     options={[
                       SOURCE_FIELD_PLACEHOLDER_OPTION,
-                      ...(sourceFieldOptions as any[]),
+                      ...(sourceFieldOptions as Array<{ value: string; label: string }>),
                     ]}
                   />
                 </FormField>
@@ -793,12 +792,12 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
         >
           <ValidatorDocTooltip docId='validator.modal.replacement.toggle'>
             <MultiSelect
-              options={replacementFieldOptions as any}
+              options={replacementFieldOptions as Array<{ value: string; label: string }>}
               selected={formData.replacementFields}
               onChange={(values: string[]) =>
                 setFormData((prev: PatternFormData) => ({
                   ...prev,
-                  replacementFields: normalizeReplacementFields(values, prev.target),
+                  replacementFields: normalizeReplacementFields(values),
                 }))
               }
               placeholder='All matching fields (global)'

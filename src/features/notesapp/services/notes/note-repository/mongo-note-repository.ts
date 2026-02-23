@@ -16,7 +16,8 @@ import type {
 } from '@/features/notesapp/services/notes/types/mongo-note-types';
 import type { NoteRepository } from '@/features/notesapp/services/notes/types/note-repository';
 import type {
-  NoteWithRelationsDto as NoteRecord,
+  NoteDto as NoteRecord,
+  NoteWithRelationsDto as NoteWithRelations,
   NoteFiltersDto as NoteFilters,
   CreateNoteDto as NoteCreateInput,
   UpdateNoteDto as NoteUpdateInput,
@@ -106,7 +107,7 @@ export const mongoNoteRepository: NoteRepository = {
   },
 
   // Note CRUD operations
-  async getAll(filters: NoteFilters = {}): Promise<NoteRecord[]> {
+  async getAll(filters: NoteFilters = {}): Promise<NoteWithRelations[]> {
     const db = await getMongoDb();
     const resolvedNotebookId =
       filters.notebookId ?? (await mongoNoteRepository.getOrCreateDefaultNotebook()).id;
@@ -148,13 +149,13 @@ export const mongoNoteRepository: NoteRepository = {
       return result.map((note: NoteRecord) => ({
         ...note,
         content: note.content.length > 300 ? note.content.slice(0, 300) + '...' : note.content,
-      })) as NoteRecord[];
+      })) as unknown as NoteWithRelations[];
     }
 
-    return result as NoteRecord[];
+    return result as unknown as NoteWithRelations[];
   },
 
-  async getById(id: string): Promise<NoteRecord | null> {
+  async getById(id: string): Promise<NoteWithRelations | null> {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
     const doc = await collection.findOne({ $or: [{ id }, { _id: id }] } as Filter<NoteDocument>);
@@ -190,10 +191,10 @@ export const mongoNoteRepository: NoteRepository = {
         };
       })
       .filter((rel: NoteRelationToEmbedded | null): rel is NoteRelationToEmbedded => rel !== null);
-    return { ...note, files: noteFiles.map(toNoteFileResponse), relationsTo } as NoteRecord;
+    return { ...note, files: noteFiles.map(toNoteFileResponse), relationsTo } as unknown as NoteWithRelations;
   },
 
-  async create(data: NoteCreateInput): Promise<NoteRecord> {
+  async create(data: NoteCreateInput): Promise<NoteWithRelations> {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
 
@@ -287,10 +288,10 @@ export const mongoNoteRepository: NoteRepository = {
     };
 
     await collection.insertOne(doc);
-    return toNoteResponse(doc);
+    return toNoteResponse(doc) as unknown as NoteWithRelations;
   },
 
-  async update(id: string, data: NoteUpdateInput): Promise<NoteRecord> {
+  async update(id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null> {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
     const currentDoc = await collection.findOne({ $or: [{ id }, { _id: id }] } as Filter<NoteDocument>);
@@ -410,7 +411,7 @@ export const mongoNoteRepository: NoteRepository = {
     );
 
     if (!result) throw notFoundError('Note not found');
-    return toNoteResponse(result);
+    return toNoteResponse(result) as unknown as NoteWithRelations;
   },
 
   async delete(id: string): Promise<boolean> {

@@ -64,14 +64,14 @@ export const applyBenchmarkSuggestions = (args: {
     const suggestedRuleDraft = buildBenchmarkLearnedRegexRuleDraft({
       id: ruleId,
       caseId: suggestion.caseId,
-      segmentTitle: suggestion.segmentTitle,
-      segmentType: suggestion.suggestedSegmentType,
+      segmentTitle: suggestion.segmentTitle ?? '',
+      segmentType: suggestion.suggestedSegmentType ?? 'static',
       sequence: nextSequence,
-      suggestedRuleTitle: suggestion.suggestedRuleTitle,
-      suggestedRulePattern: suggestion.suggestedRulePattern,
-      suggestedPriority: suggestion.suggestedPriority,
-      suggestedConfidenceBoost: suggestion.suggestedConfidenceBoost,
-      suggestedTreatAsHeading: suggestion.suggestedTreatAsHeading,
+      suggestedRuleTitle: suggestion.suggestedRuleTitle ?? '',
+      suggestedRulePattern: suggestion.suggestedRulePattern ?? '',
+      suggestedPriority: suggestion.suggestedPriority ?? 0,
+      suggestedConfidenceBoost: suggestion.suggestedConfidenceBoost ?? 0,
+      suggestedTreatAsHeading: suggestion.suggestedTreatAsHeading ?? false,
     });
     const existingRule = learnedById.get(ruleId);
     const suggestedRule = mergeRegexLearnedRule({
@@ -86,10 +86,10 @@ export const applyBenchmarkSuggestions = (args: {
       const now = args.nowFactory?.() ?? new Date().toISOString();
       const templateUpsert = upsertLearnedTemplate({
         templates: [...templateById.values()],
-        segmentType: suggestion.suggestedSegmentType,
-        title: suggestion.segmentTitle,
+        segmentType: suggestion.suggestedSegmentType ?? 'static',
+        title: suggestion.segmentTitle ?? '',
         sourceText,
-        sampleText: suggestion.sampleText,
+        sampleText: suggestion.sampleText ?? '',
         similarityThreshold: args.templateMergeThreshold,
         minApprovalsForMatching: args.minApprovalsForMatching,
         autoActivateLearnedTemplates: args.autoActivateLearnedTemplates,
@@ -97,7 +97,7 @@ export const applyBenchmarkSuggestions = (args: {
         now,
         createTemplateId: ({ existingTemplateIds }) => {
           const baseId = `template_benchmark_${suggestion.suggestedSegmentType}_${toSlug(
-            suggestion.segmentTitle
+            suggestion.segmentTitle ?? ''
           )}_${Date.now().toString(36)}_${index + 1}`;
           let nextId = baseId;
           while (existingTemplateIds.has(nextId)) {
@@ -107,7 +107,7 @@ export const applyBenchmarkSuggestions = (args: {
         },
       });
       if (!templateUpsert.ok) {
-        invalidSegmentTitles.push(suggestion.segmentTitle);
+        invalidSegmentTitles.push(suggestion.segmentTitle ?? '');
         return;
       }
       templateById.set(templateUpsert.nextTemplate.id, templateUpsert.nextTemplate);

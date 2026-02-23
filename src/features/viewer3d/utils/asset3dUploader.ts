@@ -95,8 +95,9 @@ export async function deleteAsset3D(id: string): Promise<boolean> {
       return false;
     }
 
-    await deleteFileFromStorage(asset.filepath);
-
+    if (asset.filepath) {
+      await deleteFileFromStorage(asset.filepath);
+    }
     // Delete from database
     await repository.deleteAsset3D(id);
 

@@ -61,7 +61,15 @@ export interface CaseResolverCompileResult {
   segments: CaseResolverCompiledSegment[];
   combinedContent: string;
   prompt: string;
-  outputsByNode: Record<string, { textfield: string; content: string; plainText: string }>;
+  outputsByNode: Record<
+    string,
+    {
+      textfield: string;
+      plaintextContent: string;
+      plainText: string;
+      wysiwygContent: string;
+    }
+  >;
   warnings: string[];
 }
 

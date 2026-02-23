@@ -19,6 +19,11 @@ export type PromptExploderRuntimeRuleProfile =
   | 'pattern_pack'
   | 'learned_only';
 
+const normalizeApprovals = (value: unknown): number => {
+  if (typeof value === 'number') return value;
+  return 0;
+};
+
 export const filterTemplatesForRuntime = (
   templates: PromptExploderLearnedTemplate[],
   options: { minApprovalsForMatching: number; maxTemplates: number }
@@ -30,16 +35,20 @@ export const filterTemplatesForRuntime = (
   );
   const maxTemplates = clampNumber(Math.floor(options.maxTemplates), 50, 5000);
   const sorted = [...templates].sort((left, right) => {
-    if (right.approvals !== left.approvals) {
-      return right.approvals - left.approvals;
+    const leftApprovals = normalizeApprovals(left.approvals);
+    const rightApprovals = normalizeApprovals(right.approvals);
+    if (rightApprovals !== leftApprovals) {
+      return rightApprovals - leftApprovals;
     }
-    return right.updatedAt.localeCompare(left.updatedAt);
+    const leftUpdated = left.updatedAt || '';
+    const rightUpdated = right.updatedAt || '';
+    return rightUpdated.localeCompare(leftUpdated);
   });
   return sorted
     .filter(
       (template) =>
         template.state === 'active' &&
-        template.approvals >= minApprovals
+        normalizeApprovals(template.approvals) >= minApprovals
     )
     .slice(0, maxTemplates);
 };
@@ -112,10 +121,9 @@ export const resolveSegmentIdAfterReexplode = (args: {
     const targetTitle = args.strategy.title;
     const matched = args.document.segments.find(
       (segment: PromptExploderSegment) =>
-        normalizeLearningText(segment.title) ===
-        normalizeLearningText(targetTitle)
-    );
-    return matched?.id ?? args.document.segments[0]?.id ?? null;
+        normalizeLearningText(segment.title || '') ===
+                  normalizeLearningText(targetTitle)
+    );    return matched?.id ?? args.document.segments[0]?.id ?? null;
   }
   if (args.strategy.kind === 'preserve_id') {
     const { previousId } = args.strategy;

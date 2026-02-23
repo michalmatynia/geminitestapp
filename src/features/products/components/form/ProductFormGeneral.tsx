@@ -261,6 +261,10 @@ export default function ProductFormGeneral(): React.JSX.Element {
   const [activeNameTab, setActiveNameTab] = useState<string>('');
   const [activeDescriptionTab, setActiveDescriptionTab] = useState<string>('');
   const sequenceGroupDebounceRef = useRef<Record<string, number>>({});
+  const formatterLoopGuardRef = useRef<{ recentSignatures: string[]; cycleHits: number }>({
+    recentSignatures: [],
+    cycleHits: 0,
+  });
 
   const [identifierType, setIdentifierType] = useState<'ean' | 'gtin' | 'asin'>((): 'ean' | 'gtin' | 'asin' => {
     const vals = getValues();
@@ -362,10 +366,30 @@ export default function ProductFormGeneral(): React.JSX.Element {
   useEffect(() => {
     if (!validatorEnabled || !formatterEnabled) return;
     if (compiledPatterns.length === 0) return;
+    const formatterInputSignature = JSON.stringify([
+      validationInstanceScope,
+      nameEn,
+      namePl,
+      nameDe,
+      descEn,
+      descPl,
+      descDe,
+      sku,
+      price,
+      stock,
+      weight,
+      sizeLength,
+      sizeWidth,
+      fieldLength,
+      supplierName,
+      supplierLink,
+      priceComment,
+    ]);
     // Read current form values lazily inside the effect so we don't need allValues
     // in the dependency array. This means the effect only re-runs when one of the
     // formatter-target watched fields changes, not on every unrelated field change.
     const currentValues = getValues() as Record<string, unknown>;
+    const pendingFieldUpdates = new Map<keyof ProductFormData, ProductFormData[keyof ProductFormData]>();
     const orderedPatterns = sortValidatorPatterns(compiledPatterns.map((c) => c.pattern));
     const sequenceGroupCounts = buildSequenceGroupCounts(orderedPatterns);
     // Build a map for O(1) compiled-regex lookup inside the inner loop.
@@ -510,17 +534,48 @@ export default function ProductFormGeneral(): React.JSX.Element {
           const numericValue = Number(nextValue.replace(',', '.'));
           if (!Number.isFinite(numericValue)) continue;
           const normalizedNumeric = Math.max(0, Math.floor(numericValue));
-          setValue(fieldName, normalizedNumeric as ProductFormData[typeof fieldName], {
-            shouldDirty: true,
-            shouldTouch: true,
-          });
+          const currentNumeric =
+            typeof rawUnknown === 'number' && Number.isFinite(rawUnknown)
+              ? rawUnknown
+              : Number.NaN;
+          if (Number.isFinite(currentNumeric) && currentNumeric === normalizedNumeric) {
+            continue;
+          }
+          pendingFieldUpdates.set(
+            fieldName,
+            normalizedNumeric as ProductFormData[typeof fieldName]
+          );
           continue;
         }
-        setValue(fieldName, nextValue as ProductFormData[typeof fieldName], {
-          shouldDirty: true,
-          shouldTouch: true,
-        });
+        pendingFieldUpdates.set(
+          fieldName,
+          nextValue as ProductFormData[typeof fieldName]
+        );
       }
+    }
+    if (pendingFieldUpdates.size === 0) {
+      formatterLoopGuardRef.current.cycleHits = 0;
+      formatterLoopGuardRef.current.recentSignatures = [];
+      return;
+    }
+    const seenBefore = formatterLoopGuardRef.current.recentSignatures.includes(
+      formatterInputSignature
+    );
+    formatterLoopGuardRef.current.cycleHits = seenBefore
+      ? formatterLoopGuardRef.current.cycleHits + 1
+      : 0;
+    formatterLoopGuardRef.current.recentSignatures = [
+      ...formatterLoopGuardRef.current.recentSignatures.slice(-7),
+      formatterInputSignature,
+    ];
+    if (formatterLoopGuardRef.current.cycleHits >= 4) {
+      return;
+    }
+    for (const [fieldName, fieldValue] of pendingFieldUpdates.entries()) {
+      setValue(fieldName, fieldValue, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
     }
   }, [
     // Specific watched field values drive WHEN the formatter runs. getValues()

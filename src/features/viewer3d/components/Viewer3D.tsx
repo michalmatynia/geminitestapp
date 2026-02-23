@@ -584,7 +584,9 @@ export function Viewer3D({
         <SceneLighting />
 
         {/* HDR Environment */}
-        <Environment preset={environment} background={false} />
+        {environment !== 'none' && environment !== 'gym' && (
+          <Environment preset={environment as any} background={false} />
+        )}
 
         <Suspense fallback={<Loader />}>
           {presentationMode && allowUserControls ? (

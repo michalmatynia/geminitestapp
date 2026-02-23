@@ -248,4 +248,156 @@ describe('inspectPathDependencies', () => {
       report.risks.some((risk) => risk.category === 'parser_entity_fallback')
     ).toBe(false);
   });
+
+  it('allows scoped inspection when dependency errors are only outside trigger reachability', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        inputs: ['context'],
+        outputs: ['trigger', 'context'],
+      }),
+      buildNode({
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        inputs: ['trigger', 'context', 'meta', 'entityId', 'entityType'],
+        outputs: ['context'],
+      }),
+      buildNode({
+        id: 'parser-1',
+        type: 'parser',
+        title: 'Parser',
+        inputs: ['entityJson', 'context'],
+        outputs: ['title'],
+      }),
+      buildNode({
+        id: 'db-detached',
+        type: 'database',
+        title: 'Detached DB',
+        inputs: ['entityId', 'productId', 'value'],
+        config: {
+          runtime: { waitForInputs: true },
+          database: {
+            operation: 'update',
+            updatePayloadMode: 'mapping',
+            entityType: 'product',
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '{"id":"{{entityId}}"}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+          },
+        },
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-fetcher',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: 'edge-fetcher-parser',
+        from: 'fetcher-1',
+        to: 'parser-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+
+    const fullReport = inspectPathDependencies(nodes, edges);
+    expect(fullReport.errors).toBeGreaterThan(0);
+
+    const scopedReport = inspectPathDependencies(nodes, edges, {
+      scopeMode: 'reachable_from_roots',
+      scopeRootNodeIds: ['trigger-1'],
+    });
+    expect(scopedReport.errors).toBe(0);
+    expect(scopedReport.strictReady).toBe(true);
+  });
+
+  it('keeps scoped inspection blocking for dependency errors in trigger-reachable branch', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        inputs: ['context'],
+        outputs: ['trigger', 'context'],
+      }),
+      buildNode({
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        inputs: ['trigger', 'context', 'meta', 'entityId', 'entityType'],
+        outputs: ['context'],
+      }),
+      buildNode({
+        id: 'db-1',
+        type: 'database',
+        title: 'Database',
+        inputs: ['entityId', 'productId', 'value', 'context', 'bundle', 'meta'],
+        config: {
+          runtime: { waitForInputs: true },
+          database: {
+            operation: 'update',
+            updatePayloadMode: 'mapping',
+            entityType: 'product',
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '{"id":"{{entityId}}"}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+          },
+        },
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-fetcher',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: 'edge-fetcher-db',
+        from: 'fetcher-1',
+        to: 'db-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+
+    const scopedReport = inspectPathDependencies(nodes, edges, {
+      scopeMode: 'reachable_from_roots',
+      scopeRootNodeIds: ['trigger-1'],
+    });
+    expect(scopedReport.errors).toBeGreaterThan(0);
+    expect(
+      scopedReport.risks.some(
+        (risk) => risk.category === 'database_update_mode_mapping_disallowed',
+      )
+    ).toBe(true);
+  });
 });

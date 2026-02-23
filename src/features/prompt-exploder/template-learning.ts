@@ -146,7 +146,7 @@ export const templateSimilarityScore = (
   sourceText: string,
   template: PromptExploderLearnedTemplate
 ): number => {
-  const titleReference = template.normalizedTitle || template.title;
+  const titleReference = template.normalizedTitle || template.title || '';
   const titleScore = Math.max(
     learningDiceSimilarity(sourceText, titleReference),
     learningJaccardSimilarity(sourceText, titleReference)
@@ -157,7 +157,7 @@ export const templateSimilarityScore = (
       learningJaccardSimilarity(sourceText, template.sampleText)
     )
     : 0;
-  const anchorScore = learningAnchorCoverageScore(sourceText, template.anchorTokens);
+  const anchorScore = learningAnchorCoverageScore(sourceText, template.anchorTokens || []);
   return Math.max(titleScore, sampleScore * 0.8 + anchorScore * 0.2);
 };
 
@@ -189,6 +189,11 @@ export const mergeTemplateSampleText = (existing: string, incoming: string): str
   return `${existingText}\n${incomingText}`.slice(0, 1200);
 };
 
+const normalizeApprovals = (value: unknown): number => {
+  if (typeof value === 'number') return value;
+  return 0;
+};
+
 export const findSimilarTemplateMatch = (args: {
   templates: PromptExploderLearnedTemplate[];
   segmentType: PromptExploderLearnedTemplate['segmentType'];
@@ -205,10 +210,14 @@ export const findSimilarTemplateMatch = (args: {
     .filter((candidate) => candidate.score >= mergeThreshold)
     .sort((left, right) => {
       if (right.score !== left.score) return right.score - left.score;
-      if (right.template.approvals !== left.template.approvals) {
-        return right.template.approvals - left.template.approvals;
+      const leftApprovals = normalizeApprovals(left.template.approvals);
+      const rightApprovals = normalizeApprovals(right.template.approvals);
+      if (rightApprovals !== leftApprovals) {
+        return rightApprovals - leftApprovals;
       }
-      return right.template.updatedAt.localeCompare(left.template.updatedAt);
+      const leftUpdated = left.template.updatedAt || '';
+      const rightUpdated = right.template.updatedAt || '';
+      return rightUpdated.localeCompare(leftUpdated);
     });
   return candidates[0] ?? null;
 };
@@ -311,10 +320,10 @@ export const upsertLearnedTemplate = (args: UpsertLearnedTemplateArgs): Template
       state: nextState,
       updatedAt: now,
       anchorTokens: mergeTemplateAnchorTokens(
-        existingTemplate.anchorTokens,
+        existingTemplate.anchorTokens || [],
         learningTokens(sourceText)
       ),
-      sampleText: mergeTemplateSampleText(existingTemplate.sampleText, sampleText),
+      sampleText: mergeTemplateSampleText(existingTemplate.sampleText || '', sampleText),
     }
     : {
       id: nextTemplateId,

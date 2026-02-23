@@ -43,6 +43,10 @@ export interface FilterPanelProps {
   headerTitle?: string;
   headerAction?: ReactNode;
 
+  // Custom slots
+  actions?: ReactNode;
+  children?: ReactNode;
+
   // Styling
   className?: string;
 }
@@ -63,6 +67,8 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
   showHeader = true,
   headerTitle = 'Filters',
   headerAction,
+  actions,
+  children,
   className,
 }) => {
   const isActiveFilterValue = (value: unknown): boolean => {
@@ -109,7 +115,15 @@ export const FilterPanel: React.FC<FilterPanelProps> = ({
         compact={compact}
         collapsible={collapsible}
         {...(defaultExpanded !== undefined ? { defaultExpanded } : {})}
+        {...(actions !== undefined ? { actions } : {})}
       />
+
+      {/* Children slot (e.g. tag lists) */}
+      {children && (
+        <div className='mt-3'>
+          {children}
+        </div>
+      )}
 
       {/* Presets (if provided) */}
       {presets.length > 0 && (

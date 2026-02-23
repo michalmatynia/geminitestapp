@@ -157,7 +157,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     if (!selectedSegment.paramsObject) return null;
     return buildPromptExploderParamEntries({
       paramsObject: selectedSegment.paramsObject,
-      paramsText: selectedSegment.paramsText || selectedSegment.text,
+      paramsText: (selectedSegment.paramsText || selectedSegment.text) || '',
       paramUiControls: selectedSegment.paramUiControls ?? null,
       paramComments: selectedSegment.paramComments ?? null,
       paramDescriptions: selectedSegment.paramDescriptions ?? null,
@@ -172,7 +172,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     if (!paramsSegment?.paramsObject) return null;
     return buildPromptExploderParamEntries({
       paramsObject: paramsSegment.paramsObject,
-      paramsText: paramsSegment.paramsText || paramsSegment.text,
+      paramsText: (paramsSegment.paramsText || paramsSegment.text) || '',
       paramUiControls: paramsSegment.paramUiControls ?? null,
       paramComments: paramsSegment.paramComments ?? null,
       paramDescriptions: paramsSegment.paramDescriptions ?? null,
@@ -199,11 +199,10 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
   const explosionMetrics = useMemo(() => {
     if (!documentState) return null;
     const lowConfidenceThreshold = promptExploderClampNumber(
-      promptExploderSettings.runtime.benchmarkLowConfidenceThreshold,
+      promptExploderSettings.runtime.benchmarkLowConfidenceThreshold ?? 0.55,
       0.3,
       0.9
-    );
-    const segments = documentState.segments;
+    );    const segments = documentState.segments;
     const total = segments.length;
     if (total === 0) {
       return {
@@ -239,11 +238,10 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     () =>
       (documentState?.segments ?? []).map((segment: PromptExploderSegment) => ({
         value: segment.id,
-        label: segment.title,
+        label: segment.title || `Segment ${segment.id}`,
       })),
     [documentState?.segments]
   );
-
   const segmentById = useMemo(
     () => new Map<string, PromptExploderSegment>((documentState?.segments ?? []).map((segment: PromptExploderSegment) => [segment.id, segment])),
     [documentState?.segments]
@@ -346,14 +344,13 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       });
 
       const rollout = resolvePromptExploderOrchestratorRollout({
-        settingsEnabled: promptExploderSettings.runtime.orchestratorEnabled,
+        settingsEnabled: promptExploderSettings.runtime.orchestratorEnabled ?? true,
         cohortSeed: runtimeSelection.identity.cacheKey,
       });
       const orchestratorEnabled = isPromptExploderOrchestratorEnabled(
-        promptExploderSettings.runtime.orchestratorEnabled,
+        promptExploderSettings.runtime.orchestratorEnabled ?? true,
         runtimeSelection.identity.cacheKey
-      );
-      const nextDocument = orchestratorEnabled
+      );      const nextDocument = orchestratorEnabled
         ? explodePromptWithValidationRuntime({
           prompt: trimmed,
           runtime: runtimeSelection,

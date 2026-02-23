@@ -142,6 +142,45 @@ describe('handleParser strict context hydration', () => {
     expect(Array.isArray(output['images'])).toBe(true);
   });
 
+  it('hydrates declared outputs from full bundle when mappings are empty in bundle mode', async () => {
+    const ctx = buildContext({
+      node: {
+        ...buildParserNode(),
+        outputs: ['bundle', 'images', 'title'],
+        config: {
+          parser: {
+            mappings: {},
+            outputMode: 'bundle',
+          },
+        },
+      } as AiNode,
+      nodeInputs: {
+        entityJson: {
+          title: 'Desk Lamp',
+          images: [
+            { url: 'https://cdn.example.com/lamp-a.jpg' },
+            { filePath: '/uploads/lamp-b.png' },
+          ],
+        },
+      },
+    });
+
+    const output = await handleParser(ctx);
+
+    expect(output['images']).toEqual([
+      'https://cdn.example.com/lamp-a.jpg',
+      '/uploads/lamp-b.png',
+    ]);
+    expect(output['title']).toBe('Desk Lamp');
+    expect(output['bundle']).toMatchObject({
+      title: 'Desk Lamp',
+      images: [
+        'https://cdn.example.com/lamp-a.jpg',
+        '/uploads/lamp-b.png',
+      ],
+    });
+  });
+
   it('returns empty output when strict mode has no explicit source', async () => {
     const fetchEntityCached = vi.fn();
     const ctx = buildContext({

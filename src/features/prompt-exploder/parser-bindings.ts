@@ -63,12 +63,11 @@ const buildBindingCodeTargets = (
   };
 
   segments.forEach((segment: PromptExploderSegment) => {
-    register(segment.code, segment.id, null, segment.title);
+    register(segment.code || '', segment.id, null, segment.title || '');
     segment.subsections.forEach((subsection: PromptExploderSubsection) => {
-      register(subsection.code, segment.id, subsection.id, subsection.title);
+      register(subsection.code || '', segment.id, subsection.id, subsection.title || '');
     });
   });
-
   return map;
 };
 
@@ -80,9 +79,8 @@ const normalizeManualBindings = (
   const segmentById = new Map(segments.map((segment: PromptExploderSegment) => [segment.id, segment]));
   return bindings
     .filter((binding: PromptExploderBinding) => {
-      const fromSegment = segmentById.get(binding.fromSegmentId);
-      const toSegment = segmentById.get(binding.toSegmentId);
-      if (!fromSegment || !toSegment) return false;
+      const fromSegment = segmentById.get(binding.fromSegmentId || '');
+      const toSegment = segmentById.get(binding.toSegmentId || '');      if (!fromSegment || !toSegment) return false;
       const fromSubsectionId = binding.fromSubsectionId ?? null;
       const toSubsectionId = binding.toSubsectionId ?? null;
       if (
@@ -142,10 +140,9 @@ const detectAutoBindings = ({
         toSegmentId: target.segmentId,
         fromSubsectionId: null,
         toSubsectionId: target.subsectionId,
-        sourceLabel,
+        sourceLabel: sourceLabel || '',
         targetLabel: `${target.code} ${target.label}`.trim(),
-        origin: 'auto',
-      });
+        origin: 'auto',      });
     });
 
     if (!paramsSegment || paramsSegment.id === segment.id) {
@@ -158,17 +155,17 @@ const detectAutoBindings = ({
       if (!paramPath || !isKnownParamPath(paramPath)) continue;
       referencedParams.add(paramPath);
     }
-    collectReferencedParamsFromItems(segment.listItems).forEach((paramPath: string) => {
+    collectReferencedParamsFromItems(segment.listItems || []).forEach((paramPath: string) => {
       if (!isKnownParamPath(paramPath)) return;
       referencedParams.add(paramPath);
     });
     segment.subsections.forEach((subsection: PromptExploderSubsection) => {
-      collectReferencedParamsFromItems(subsection.items).forEach((paramPath: string) => {
+      collectReferencedParamsFromItems(subsection.items || []).forEach((paramPath: string) => {
         if (!isKnownParamPath(paramPath)) return;
         referencedParams.add(paramPath);
       });
     });
-
+    
     referencedParams.forEach((paramPath: string) => {
       bindings.push({
         id: createBindingId(),
@@ -177,12 +174,11 @@ const detectAutoBindings = ({
         toSegmentId: paramsSegment.id,
         fromSubsectionId: null,
         toSubsectionId: null,
-        sourceLabel,
+        sourceLabel: sourceLabel || '',
         targetLabel: `params.${paramPath}`,
         origin: 'auto',
       });
-    });
-  });
+    });  });
 
   return bindings;
 };

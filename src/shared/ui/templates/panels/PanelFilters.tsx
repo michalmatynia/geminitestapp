@@ -62,6 +62,7 @@ interface PanelFiltersProps {
   compact?: boolean;
   collapsible?: boolean;
   defaultExpanded?: boolean;
+  actions?: React.ReactNode;
   className?: string;
 }
 
@@ -80,6 +81,7 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
   compact = false,
   collapsible = false,
   defaultExpanded,
+  actions,
   className,
 }) => {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded ?? !compact);
@@ -140,6 +142,12 @@ export const PanelFilters: React.FC<PanelFiltersProps> = ({
                   <X className='h-4 w-4' />
                 </button>
               )}
+            </div>
+          )}
+
+          {actions && (
+            <div className='flex items-center gap-2 shrink-0'>
+              {actions}
             </div>
           )}
 

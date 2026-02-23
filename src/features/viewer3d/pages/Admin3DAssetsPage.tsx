@@ -108,20 +108,20 @@ export function Admin3DAssetsPage(): React.JSX.Element {
       header: 'Tags',
       cell: ({ row }) => (
         <div className='flex flex-wrap gap-1'>
-          {row.original.tags.slice(0, 2).map((tag) => (
+          {(row.original.tags || []).slice(0, 2).map((tag) => (
             <StatusBadge key={tag} status={tag} variant='neutral' size='sm' className='font-medium' />
           ))}
-          {row.original.tags.length > 2 && (
-            <StatusBadge status={'+' + (row.original.tags.length - 2)} variant='neutral' size='sm' className='font-bold' />
+          {(row.original.tags || []).length > 2 && (
+            <StatusBadge status={'+' + ((row.original.tags || []).length - 2)} variant='neutral' size='sm' className='font-bold' />
           )}
-          {row.original.tags.length === 0 && <span className='text-muted-foreground'>-</span>}
+          {(row.original.tags || []).length === 0 && <span className='text-muted-foreground'>-</span>}
         </div>
       ),
     },
     {
       accessorKey: 'size',
       header: 'Size',
-      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatFileSize(row.original.size)}</span>,
+      cell: ({ row }) => <span className='text-xs text-muted-foreground'>{formatFileSize(row.original.size || 0)}</span>,
     },
     {
       accessorKey: 'createdAt',

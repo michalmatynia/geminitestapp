@@ -32,6 +32,8 @@ import {
 import { type AiNode, type AiEdge, type NodeDefinition } from '@/shared/contracts/case-resolver';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
+  CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
   type CaseResolverEdgeMeta,
@@ -197,23 +199,38 @@ const collectScopedCaseIds = (
 const isDocumentTextfieldPort = (port: string | null | undefined): boolean =>
   port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] || port === LEGACY_DOCUMENT_TEXTFIELD_PORT;
 
-const isDocumentContentPort = (port: string | null | undefined): boolean =>
-  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] || !port;
+const isDocumentPlaintextContentPort = (port: string | null | undefined): boolean =>
+  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] ||
+  port === CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT ||
+  !port;
 
 const isDocumentPlainTextPort = (port: string | null | undefined): boolean =>
   port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2];
 
+const isDocumentWysiwygContentPort = (port: string | null | undefined): boolean =>
+  port === CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS[3];
+
 const resolveOutputValueByPort = (
-  outputs: { textfield: string; content: string; plainText: string } | null | undefined,
+  outputs:
+    | {
+      textfield: string;
+      plaintextContent: string;
+      plainText: string;
+      wysiwygContent: string;
+    }
+    | null
+    | undefined,
   fromPort: string | null | undefined,
-  fallback: 'textfield' | 'content' | 'plainText'
+  fallback: 'textfield' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
 ): string => {
   if (!outputs) return '';
   if (isDocumentTextfieldPort(fromPort)) return outputs.textfield;
   if (isDocumentPlainTextPort(fromPort)) return outputs.plainText;
-  if (isDocumentContentPort(fromPort)) return outputs.content;
+  if (isDocumentWysiwygContentPort(fromPort)) return outputs.wysiwygContent;
+  if (isDocumentPlaintextContentPort(fromPort)) return outputs.plaintextContent;
   if (fallback === 'plainText') return outputs.plainText;
-  return fallback === 'textfield' ? outputs.textfield : outputs.content;
+  if (fallback === 'wysiwygContent') return outputs.wysiwygContent;
+  return fallback === 'textfield' ? outputs.textfield : outputs.plaintextContent;
 };
 
 const appendWithJoinMode = (
@@ -335,7 +352,7 @@ function CaseResolverNodeFileWorkspaceInner({
     [rawPromptEngineSettings]
   );
   const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database' | 'viewer'>('prompt');
-  const [isSidePanelVisible, setIsSidePanelVisible] = useState(true);
+  const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
   const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
   const [showNodeSelectorUnderCanvas, setShowNodeSelectorUnderCanvas] = useState(
     () => nodes.length > 0
@@ -344,6 +361,7 @@ function CaseResolverNodeFileWorkspaceInner({
     useState<NodeFileDocumentSearchScope>('case_scope');
   const [documentSearchQuery, setDocumentSearchQuery] = useState('');
   const [selectedSearchDocumentId, setSelectedSearchDocumentId] = useState('');
+  const [isDocumentSearchOpen, setIsDocumentSearchOpen] = useState(false);
   const [nodeMetaByNode, setNodeMetaByNode] = useState<Record<string, CaseResolverNodeMeta>>(
     () => snapshot.nodeMeta ?? {}
   );
@@ -356,6 +374,7 @@ function CaseResolverNodeFileWorkspaceInner({
   const nodeFileMetaRef = useRef<Record<string, CaseResolverNodeFileMeta>>(
     snapshot.nodeFileMeta
   );
+  const documentSearchRef = useRef<HTMLDivElement | null>(null);
 
   const filesById = useMemo(
     () =>
@@ -466,20 +485,8 @@ function CaseResolverNodeFileWorkspaceInner({
       row.searchable.includes(normalizedQuery)
     );
   }, [documentSearchQuery, documentSearchRows]);
-  const documentSearchOptions = useMemo(
-    () =>
-      filteredDocumentSearchRows.map((row: NodeFileDocumentSearchRow) => {
-        const metadataParts = [
-          row.file.fileType === 'scanfile' ? 'Scan file' : 'Document',
-          row.file.folder ? `Folder: ${row.file.folder}` : null,
-          row.signatureLabel ? `Signature: ${row.signatureLabel}` : null,
-        ].filter((value: string | null): value is string => Boolean(value));
-        return {
-          value: row.file.id,
-          label: row.file.name,
-          description: metadataParts.join(' • '),
-        };
-      }),
+  const visibleDocumentSearchRows = useMemo(
+    (): NodeFileDocumentSearchRow[] => filteredDocumentSearchRows.slice(0, 12),
     [filteredDocumentSearchRows]
   );
   const activeNodeOptions = useMemo(
@@ -550,7 +557,7 @@ function CaseResolverNodeFileWorkspaceInner({
   const transformPlainTextOutput = useCallback(
     (input: {
       nodeMeta: CaseResolverNodeMeta;
-      output: 'plainText' | 'content';
+      output: 'plainText' | 'plaintextContent' | 'content';
       value: string;
     }): string => {
       const forceForExplanatoryOutput = input.nodeMeta.role === 'explanatory';
@@ -593,7 +600,12 @@ function CaseResolverNodeFileWorkspaceInner({
       node: AiNode
     ): {
       sourceFile: CaseResolverFile | null;
-      outputs: { textfield: string; content: string; plainText: string };
+      outputs: {
+        textfield: string;
+        plaintextContent: string;
+        plainText: string;
+        wysiwygContent: string;
+      };
     } => {
       const linkedMeta = nodeFileMetaRef.current[node.id] ?? null;
       const sourceFile = linkedMeta ? filesById.get(linkedMeta.fileId) ?? null : null;
@@ -620,8 +632,9 @@ function CaseResolverNodeFileWorkspaceInner({
         sourceFile,
         outputs: {
           textfield: computedOutputs?.textfield ?? staticOutputs.textfield,
-          content: computedOutputs?.content ?? staticOutputs.content,
+          plaintextContent: computedOutputs?.plaintextContent ?? staticOutputs.plaintextContent,
           plainText: computedOutputs?.plainText ?? staticOutputs.plainText,
+          wysiwygContent: computedOutputs?.wysiwygContent ?? staticOutputs.wysiwygContent,
         },
       };
     },
@@ -632,15 +645,18 @@ function CaseResolverNodeFileWorkspaceInner({
       nodeId: string,
       port: string
     ): { value: string; sourceLabels: string[]; connectedEdgeCount: number } => {
-      const fallbackType: 'textfield' | 'content' | 'plainText' = isDocumentTextfieldPort(port)
+      const fallbackType: 'textfield' | 'plaintextContent' | 'plainText' | 'wysiwygContent' = isDocumentTextfieldPort(port)
         ? 'textfield'
         : isDocumentPlainTextPort(port)
           ? 'plainText'
-          : 'content';
+          : isDocumentWysiwygContentPort(port)
+            ? 'wysiwygContent'
+            : 'plaintextContent';
       const acceptsTargetPort = (targetPort: string | null | undefined): boolean => {
         if (fallbackType === 'textfield') return isDocumentTextfieldPort(targetPort);
         if (fallbackType === 'plainText') return isDocumentPlainTextPort(targetPort);
-        return isDocumentContentPort(targetPort);
+        if (fallbackType === 'wysiwygContent') return isDocumentWysiwygContentPort(targetPort);
+        return isDocumentPlaintextContentPort(targetPort);
       };
 
       const incomingEdges = edges
@@ -754,7 +770,7 @@ function CaseResolverNodeFileWorkspaceInner({
   const hasPendingSnapshotChanges = currentSnapshotHash !== savedSnapshotHash;
 
   // Migrate legacy template-based linked-file nodes to prompt nodes so they expose
-  // Case Resolver document ports (wysiwygText/content/plainText).
+  // Case Resolver document ports (wysiwygText/plaintextContent/plainText).
   useEffect(() => {
     if (!promptDefinition) return;
     setNodes((previousNodes: AiNode[]): AiNode[] => {
@@ -783,6 +799,7 @@ function CaseResolverNodeFileWorkspaceInner({
               ...node,
               type: 'prompt',
             };
+        const nodeRole = normalizedNodeMeta[node.id]?.role ?? null;
         const normalizedPromptNode = ensureDocumentPromptPorts({
           ...promptBase,
           config: {
@@ -791,14 +808,14 @@ function CaseResolverNodeFileWorkspaceInner({
               template: promptTemplate,
             },
           },
-        });
+        }, nodeRole);
         if (normalizedPromptNode === node) return node;
         changed = true;
         return normalizedPromptNode;
       });
       return changed ? nextNodes : previousNodes;
     });
-  }, [filesById, promptDefinition, setNodes]);
+  }, [filesById, normalizedNodeMeta, promptDefinition, setNodes]);
 
   const placePosition = useMemo(() => {
     const index = nodes.length;
@@ -866,7 +883,7 @@ function CaseResolverNodeFileWorkspaceInner({
             template: buildPromptTemplateFromDroppedDocumentFile(file),
           },
         },
-      });
+      }, 'text_note');
 
       nodeFileMetaRef.current = {
         ...nodeFileMetaRef.current,
@@ -900,7 +917,7 @@ function CaseResolverNodeFileWorkspaceInner({
           template: '',
         },
       },
-    });
+    }, 'explanatory');
     addNode(node);
     setNodeMetaByNode((previous: Record<string, CaseResolverNodeMeta>) => ({
       ...previous,
@@ -1019,6 +1036,20 @@ function CaseResolverNodeFileWorkspaceInner({
       setSelectedSearchDocumentId('');
     }
   }, [filteredDocumentSearchRows, selectedSearchDocumentId]);
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent): void => {
+      const container = documentSearchRef.current;
+      if (!container) return;
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (container.contains(target)) return;
+      setIsDocumentSearchOpen(false);
+    };
+    window.addEventListener('pointerdown', handlePointerDown);
+    return (): void => {
+      window.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, []);
 
   const handleCanvasDragOverCapture = (event: React.DragEvent<HTMLDivElement>): void => {
     const payload = parseCaseResolverTreeDropPayload(event.dataTransfer);
@@ -1068,7 +1099,9 @@ function CaseResolverNodeFileWorkspaceInner({
       return;
     }
     addFileReferenceNode(selectedDocument.file.id, selectedDocument.file.name, placePosition);
+    setDocumentSearchQuery('');
     setSelectedSearchDocumentId('');
+    setIsDocumentSearchOpen(false);
   }, [
     addFileReferenceNode,
     filteredDocumentSearchRows,
@@ -1085,11 +1118,11 @@ function CaseResolverNodeFileWorkspaceInner({
       nextRole === 'text_note' || nextRole === 'explanatory';
     const nextNodes = shouldNormalizeTextPorts
       ? nodes.map((node: AiNode): AiNode => {
-        return node.id === selectedNode.id ? ensureDocumentPromptPorts(node) : node;
+        return node.id === selectedNode.id ? ensureDocumentPromptPorts(node, nextRole) : node;
       })
       : nodes;
     const nextEdges = shouldNormalizeTextPorts
-      ? normalizeEdgesForTextNode(edges, selectedNode.id)
+      ? normalizeEdgesForTextNode(edges, selectedNode.id, nextRole === 'explanatory')
       : edges;
     if (shouldNormalizeTextPorts) {
       const normalizedSelectedNode = nextNodes.find(
@@ -1148,6 +1181,7 @@ function CaseResolverNodeFileWorkspaceInner({
   const selectedNodeMeta = selectedNodeId
     ? (nodeFileMetaRef.current[selectedNodeId] ?? null)
     : null;
+  const isSidebarReady = Boolean(selectedNodeMeta);
   const selectedFile = selectedNodeMeta
     ? (filesById.get(selectedNodeMeta.fileId) ?? null)
     : null;
@@ -1163,38 +1197,75 @@ function CaseResolverNodeFileWorkspaceInner({
     : '';
   const selectedPromptInputText = useMemo((): string => {
     if (selectedNode?.type !== 'prompt') return '';
+    const incomingTextfield = resolveStaticInputPreview(
+      selectedNode.id,
+      CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] ?? 'wysiwygText'
+    ).value;
+    if (incomingTextfield.trim().length > 0) {
+      return incomingTextfield;
+    }
+    const incomingPlainText = resolveStaticInputPreview(
+      selectedNode.id,
+      CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2] ?? 'plainText'
+    ).value;
+    if (incomingPlainText.trim().length > 0) {
+      return incomingPlainText;
+    }
     const promptTemplate = resolvePromptConfig(selectedNode).template;
     const normalizedTemplate = stripHtmlToPlainText(promptTemplate);
     if (normalizedTemplate) return normalizedTemplate;
     if (!selectedPromptSourceFile) return '';
+    if (selectedPromptSourceFile.fileType === 'scanfile') {
+      const scanMarkdown = (selectedPromptSourceFile.documentContentMarkdown ?? '').trim();
+      if (scanMarkdown.length > 0) return scanMarkdown;
+      const scanPlainText = (selectedPromptSourceFile.documentContentPlainText ?? '').trim();
+      if (scanPlainText.length > 0) return scanPlainText;
+      const scanSlotText = (selectedPromptSourceFile.scanSlots ?? [])
+        .map((slot: CaseResolverScanSlot): string => (slot.ocrText ?? '').trim())
+        .filter((value: string): boolean => value.length > 0)
+        .join('\n\n');
+      if (scanSlotText.length > 0) return scanSlotText;
+      const topLevelOcrText = (selectedPromptSourceFile.ocrText ?? '').trim();
+      if (topLevelOcrText.length > 0) return topLevelOcrText;
+    }
     if (selectedPromptSourceFile.documentContentHtml.trim()) {
       return stripHtmlToPlainText(selectedPromptSourceFile.documentContentHtml);
     }
     return stripHtmlToPlainText(selectedPromptSourceFile.documentContent);
-  }, [selectedNode, selectedPromptSourceFile]);
+  }, [resolveStaticInputPreview, selectedNode, selectedPromptSourceFile]);
   const hasWysiwygOnlyInputFlow = useCallback(
     (
       nodeId: string,
-      outputs: { textfield: string; content: string; plainText: string }
+      outputs: {
+        textfield: string;
+        plaintextContent: string;
+        plainText: string;
+        wysiwygContent: string;
+      }
     ): boolean => {
       const textfieldInput = resolveStaticInputPreview(
         nodeId,
         CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] ?? 'wysiwygText'
       );
-      const contentInput = resolveStaticInputPreview(
+      const plaintextContentInput = resolveStaticInputPreview(
         nodeId,
-        CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] ?? 'content'
+        CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] ?? 'plaintextContent'
       );
       const plainTextInput = resolveStaticInputPreview(
         nodeId,
         CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2] ?? 'plainText'
       );
+      const wysiwygContentInput = resolveStaticInputPreview(
+        nodeId,
+        CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS[3] ?? 'wysiwygContent'
+      );
       const hasTextfieldOnlyConnectedInputs =
         textfieldInput.connectedEdgeCount > 0 &&
-        contentInput.connectedEdgeCount === 0 &&
-        plainTextInput.connectedEdgeCount === 0;
+        plaintextContentInput.connectedEdgeCount === 0 &&
+        plainTextInput.connectedEdgeCount === 0 &&
+        wysiwygContentInput.connectedEdgeCount === 0;
       const hasSecondaryOutputValues =
-        outputs.content.trim().length > 0 || outputs.plainText.trim().length > 0;
+        outputs.plaintextContent.trim().length > 0 || outputs.plainText.trim().length > 0;
       return hasTextfieldOnlyConnectedInputs && !hasSecondaryOutputValues;
     },
     [resolveStaticInputPreview]
@@ -1208,9 +1279,10 @@ function CaseResolverNodeFileWorkspaceInner({
       stripHtmlToPlainText(resolvePromptConfig(selectedNode).template);
     return {
       textfield: textfieldOutput,
-      content:
-        computedOutputs?.content ?? renderPromptNodeTextPreview(selectedNode, nodeMeta),
+      plaintextContent:
+        computedOutputs?.plaintextContent ?? renderPromptNodeTextPreview(selectedNode, nodeMeta),
       plainText: computedOutputs?.plainText ?? stripHtmlToPlainText(textfieldOutput),
+      wysiwygContent: computedOutputs?.wysiwygContent ?? '',
     };
   }, [compiled.outputsByNode, selectedNode, selectedPromptMeta]);
   const selectedPromptSecondaryOutputHint = useMemo((): boolean => {
@@ -1218,6 +1290,10 @@ function CaseResolverNodeFileWorkspaceInner({
     if (!selectedPromptOutputPreview) return false;
     return hasWysiwygOnlyInputFlow(selectedNode.id, selectedPromptOutputPreview);
   }, [hasWysiwygOnlyInputFlow, selectedNode, selectedPromptOutputPreview]);
+  useEffect(() => {
+    if (isSidebarReady || !isSidePanelVisible) return;
+    setIsSidePanelVisible(false);
+  }, [isSidePanelVisible, isSidebarReady]);
   const selectedEdgeJoinMode = selectedEdge
     ? (normalizedEdgeMeta[selectedEdge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode
     : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
@@ -1229,24 +1305,28 @@ function CaseResolverNodeFileWorkspaceInner({
     }): { content: React.ReactNode; maxWidth?: string | undefined } | null => {
       if (
         !isDocumentTextfieldPort(input.port) &&
-        !isDocumentContentPort(input.port) &&
-        !isDocumentPlainTextPort(input.port)
+        !isDocumentPlaintextContentPort(input.port) &&
+        !isDocumentPlainTextPort(input.port) &&
+        !isDocumentWysiwygContentPort(input.port)
       ) {
         return null;
       }
       if (input.node.type !== 'prompt') return null;
 
-      const isContentPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1];
+      const isPlaintextContentPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1];
       const isPlainTextPort = isDocumentPlainTextPort(input.port);
+      const isWysiwygContentPort = isDocumentWysiwygContentPort(input.port);
 
       if (input.direction === 'input') {
         const staticInput = resolveStaticInputPreview(input.node.id, input.port);
         if (staticInput.connectedEdgeCount === 0) return null;
         const inputLabel = isPlainTextPort
           ? 'Plain text input'
-          : isContentPort
-            ? 'Content input'
-            : 'WYSIWYG text input';
+          : isPlaintextContentPort
+            ? 'plaintextContent input'
+            : isWysiwygContentPort
+              ? 'WYSIWYGContent input'
+              : 'WYSIWYG text input';
         const dedupedSources = Array.from(new Set(staticInput.sourceLabels));
         return {
           maxWidth: '720px',
@@ -1267,17 +1347,21 @@ function CaseResolverNodeFileWorkspaceInner({
 
       const outputLabel = isPlainTextPort
         ? 'Plain text output'
-        : isContentPort
-          ? 'Content output'
-          : 'WYSIWYG text output';
+        : isPlaintextContentPort
+          ? 'plaintextContent output'
+          : isWysiwygContentPort
+            ? 'WYSIWYGContent output'
+            : 'WYSIWYG text output';
       const { sourceFile, outputs } = resolvePromptTooltipOutputs(input.node);
       const renderedText = isPlainTextPort
         ? outputs.plainText
-        : isContentPort
-          ? outputs.content
-          : outputs.textfield;
+        : isPlaintextContentPort
+          ? outputs.plaintextContent
+          : isWysiwygContentPort
+            ? outputs.wysiwygContent
+            : outputs.textfield;
       const showSecondaryOutputHint =
-        (isContentPort || isPlainTextPort) &&
+        (isPlaintextContentPort || isPlainTextPort) &&
         hasWysiwygOnlyInputFlow(input.node.id, outputs);
 
       return {
@@ -1295,7 +1379,7 @@ function CaseResolverNodeFileWorkspaceInner({
                 Only <span className='font-semibold'>wysiwygText</span> input is connected.
                 This output lane stays empty until a matching
                 {' '}
-                <span className='font-semibold'>content</span>
+                <span className='font-semibold'>plaintextContent</span>
                 {' '}
                 or
                 {' '}
@@ -1347,6 +1431,7 @@ function CaseResolverNodeFileWorkspaceInner({
               type='button'
               variant='outline'
               size='sm'
+              disabled={!isSidebarReady}
               className='h-8'
               onClick={(): void => {
                 setIsSidePanelVisible((previous) => !previous);
@@ -1399,32 +1484,85 @@ function CaseResolverNodeFileWorkspaceInner({
             triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
           />
 
-          <SearchInput
-            value={documentSearchQuery}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              setDocumentSearchQuery(event.target.value);
-            }}
-            onClear={(): void => {
-              setDocumentSearchQuery('');
-            }}
-            size='sm'
-            placeholder='Search by name, signature, addresser/addressee, content'
-            containerClassName='w-[320px]'
-            className='h-8 border-border bg-card/60 text-xs text-white'
-          />
-          <SelectSimple
-            size='sm'
-            value={selectedSearchDocumentId}
-            onValueChange={(value: string): void => {
-              setSelectedSearchDocumentId(value.trim());
-            }}
-            options={documentSearchOptions}
-            placeholder='Select document from results'
-            className='w-[320px]'
-            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-            contentClassName='max-h-80'
-            disabled={documentSearchOptions.length === 0}
-          />
+          <div ref={documentSearchRef} className='relative w-[360px]'>
+            <SearchInput
+              value={documentSearchQuery}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                setDocumentSearchQuery(event.target.value);
+                setIsDocumentSearchOpen(true);
+              }}
+              onFocus={(): void => {
+                setIsDocumentSearchOpen(true);
+              }}
+              onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
+                if (event.key !== 'Enter') return;
+                if (selectedSearchDocumentId) {
+                  event.preventDefault();
+                  addSelectedSearchDocument();
+                  return;
+                }
+                const firstResult = visibleDocumentSearchRows[0];
+                if (!firstResult) return;
+                event.preventDefault();
+                setSelectedSearchDocumentId(firstResult.file.id);
+                setDocumentSearchQuery(firstResult.file.name);
+              }}
+              onClear={(): void => {
+                setDocumentSearchQuery('');
+                setSelectedSearchDocumentId('');
+                setIsDocumentSearchOpen(true);
+              }}
+              size='sm'
+              placeholder='Search by name, signature, addresser/addressee, content'
+              containerClassName='w-full'
+              className='h-8 border-border bg-card/60 text-xs text-white'
+            />
+            {isDocumentSearchOpen ? (
+              <div className='absolute top-full z-30 mt-1 w-full overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-xl backdrop-blur-sm'>
+                {visibleDocumentSearchRows.length === 0 ? (
+                  <div className='px-3 py-2 text-xs text-gray-400'>
+                    No documents match this search.
+                  </div>
+                ) : (
+                  <div className='max-h-80 overflow-auto p-1'>
+                    {visibleDocumentSearchRows.map((row: NodeFileDocumentSearchRow) => {
+                      const metadataParts = [
+                        row.file.fileType === 'scanfile' ? 'Scan file' : 'Document',
+                        row.file.folder ? `Folder: ${row.file.folder}` : null,
+                        row.signatureLabel ? `Signature: ${row.signatureLabel}` : null,
+                      ].filter((value: string | null): value is string => Boolean(value));
+                      const isSelected = selectedSearchDocumentId === row.file.id;
+                      return (
+                        <button
+                          key={row.file.id}
+                          type='button'
+                          className={`w-full rounded px-2 py-1.5 text-left transition-colors ${
+                            isSelected
+                              ? 'bg-cyan-500/15 text-cyan-100'
+                              : 'text-gray-200 hover:bg-card/70'
+                          }`}
+                          onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+                            // Keep focus in the search field until click handler finalizes selection.
+                            event.preventDefault();
+                          }}
+                          onClick={(): void => {
+                            setSelectedSearchDocumentId(row.file.id);
+                            setDocumentSearchQuery(row.file.name);
+                            setIsDocumentSearchOpen(false);
+                          }}
+                        >
+                          <div className='truncate text-xs font-medium'>{row.file.name}</div>
+                          <div className='truncate text-[10px] text-gray-400'>
+                            {metadataParts.join(' • ')}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
           <Button
             type='button'
             variant='outline'

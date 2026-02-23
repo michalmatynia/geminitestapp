@@ -1853,6 +1853,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     setSelectedFileId,
     setSelectedAssetId,
     setSelectedFolderPath,
+    setEditingDocumentDraft,
     treeSaveToast: CASE_RESOLVER_TREE_SAVE_TOAST,
   });
 

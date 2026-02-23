@@ -354,7 +354,10 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           key: 'validationRuleStack',
           label: 'Validation Stack',
           type: 'select',
-          options: validationPatternStackOptions,
+          options: validationPatternStackOptions.map((opt) => ({
+            label: opt.label,
+            value: typeof opt.value === 'string' ? opt.value : (opt.value.id || ''),
+          })),
         },
         {
           key: 'allowValidationStackFallback',
@@ -478,12 +481,12 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           validatorPatternLists,
         ),
         benchmarkLowConfidenceThreshold: clampNumber(
-          draft.runtime.benchmarkLowConfidenceThreshold,
+          draft.runtime.benchmarkLowConfidenceThreshold ?? 0.55,
           0.3,
           0.9,
         ),
         benchmarkSuggestionLimit: toIntInRange(
-          draft.runtime.benchmarkSuggestionLimit,
+          draft.runtime.benchmarkSuggestionLimit ?? 4,
           1,
           20,
         ),
@@ -491,16 +494,15 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
       learning: {
         ...draft.learning,
         similarityThreshold: clampNumber(
-          draft.learning.similarityThreshold,
+          draft.learning.similarityThreshold ?? 0.68,
           0.3,
           0.95,
         ),
         templateMergeThreshold: clampNumber(
-          draft.learning.templateMergeThreshold,
+          draft.learning.templateMergeThreshold ?? 0.63,
           0.3,
           0.95,
-        ),
-        minApprovalsForMatching: toIntInRange(
+        ),        minApprovalsForMatching: toIntInRange(
           draft.learning.minApprovalsForMatching,
           1,
           20,

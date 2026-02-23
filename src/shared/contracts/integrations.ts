@@ -302,8 +302,8 @@ export interface ExternalCategoryDto {
   isLeaf: boolean;
   metadata: Record<string, unknown> | null;
   fetchedAt: string;
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string | null;
 }
 
 export interface ExternalCategoryWithChildrenDto extends ExternalCategoryDto {

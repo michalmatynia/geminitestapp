@@ -1030,6 +1030,13 @@ export function CaseResolverPageView(
         onRelationGraphChange: handleRelationGraphChange,
         onLinkRelatedFiles: state.handleLinkRelatedFiles,
         onUnlinkRelatedFile: state.handleUnlinkRelatedFile,
+        onUpdateActiveCase: handleUpdateActiveCaseMetadata,
+        caseTagOptions,
+        caseIdentifierOptions,
+        caseCategoryOptions,
+        caseReferenceOptions,
+        parentCaseOptions,
+        partyOptions,
       }}
     >
       <div className='flex h-full flex-col overflow-hidden bg-background'>
@@ -1048,15 +1055,7 @@ export function CaseResolverPageView(
                 focusCaseId={activeCaseFile?.id ?? activeCaseId}
               />
             ) : showCaseOverviewWorkspace ? (
-              <CaseResolverCaseOverviewWorkspace
-                activeCaseFile={activeCaseFile}
-                caseTagOptions={caseTagOptions}
-                caseIdentifierOptions={caseIdentifierOptions}
-                caseCategoryOptions={caseCategoryOptions}
-                caseReferenceOptions={caseReferenceOptions}
-                parentCaseOptions={parentCaseOptions}
-                onUpdateActiveCase={handleUpdateActiveCaseMetadata}
-              />
+              <CaseResolverCaseOverviewWorkspace />
             ) : selectedAsset ? (
               <CaseResolverFileViewer />
             ) : editingDocumentDraft?.fileType === 'scanfile' ? (

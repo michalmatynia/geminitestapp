@@ -512,12 +512,16 @@ export function runPromptExploderBenchmark(args: {
         .sort((left, right) => left.confidence - right.confidence)
         .slice(0, suggestionLimit)
         .map((segment: PromptExploderSegment, index: number) => {
-          const sampleText = buildSuggestionSampleText(segment);
+          const sampleText = buildSuggestionSampleText({
+            text: segment.text || '',
+            listItems: (segment.listItems || []).map((item) => ({ text: item.text || '' })),
+            subsections: (segment.subsections || []).map((sub) => ({ title: sub.title || '' })),
+          });
           const suggestedRulePattern = buildSuggestedRulePattern(
-            segment.title,
+            segment.title || '',
             sampleText
           );
-          const segmentSlug = safeSlug(segment.title);
+          const segmentSlug = safeSlug(segment.title || '');
           return {
             id: `bench_${benchmarkCase.id}_${segmentSlug}_${index + 1}`,
             caseId: benchmarkCase.id,
@@ -527,15 +531,14 @@ export function runPromptExploderBenchmark(args: {
             confidence: segment.confidence,
             sampleText,
             matchedPatternIds: [...segment.matchedPatternIds],
-            suggestedRuleTitle: `Benchmark ${benchmarkCase.id} · ${segment.type} · ${segment.title}`,
+            suggestedRuleTitle: `Benchmark ${benchmarkCase.id} · ${segment.type} · ${segment.title || 'Untitled'}`,
             suggestedRulePattern,
             suggestedSegmentType: segment.type,
             suggestedPriority: 18,
             suggestedConfidenceBoost: 0.1,
-            suggestedTreatAsHeading: isHeadingLike(segment.title),
+            suggestedTreatAsHeading: isHeadingLike(segment.title || ''),
           };
-        });
-    const meetsMinSegments = document.segments.length >= benchmarkCase.minSegments;
+        });    const meetsMinSegments = document.segments.length >= benchmarkCase.minSegments;
 
     reports.push({
       id: benchmarkCase.id,

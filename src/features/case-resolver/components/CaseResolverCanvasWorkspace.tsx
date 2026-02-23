@@ -28,6 +28,7 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
   CASE_RESOLVER_PDF_EXTRACTION_PRESETS,
   DEFAULT_CASE_RESOLVER_PDF_EXTRACTION_PRESET_ID,
   DEFAULT_CASE_RESOLVER_EDGE_META,
@@ -237,7 +238,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const transformPlainTextOutput = useCallback(
     (input: {
       nodeMeta: CaseResolverNodeMeta;
-      output: 'plainText' | 'content';
+      output: 'plainText' | 'plaintextContent' | 'content';
       value: string;
     }): string => {
       const forceForExplanatoryOutput = input.nodeMeta.role === 'explanatory';
@@ -427,7 +428,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
           template: '',
         },
       },
-    });
+    }, 'explanatory');
     addNode(explanatoryNode);
     selectNode(id);
 
@@ -474,11 +475,11 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       (nextRole === 'text_note' || nextRole === 'explanatory');
     const nextNodes = shouldNormalizeTextPorts
       ? nodes.map((node: AiNode): AiNode => {
-        return node.id === selectedNode.id ? ensureDocumentPromptPorts(node) : node;
+        return node.id === selectedNode.id ? ensureDocumentPromptPorts(node, nextRole) : node;
       })
       : nodes;
     const nextEdges = shouldNormalizeTextPorts
-      ? normalizeEdgesForTextNode(edges, selectedNode.id)
+      ? normalizeEdgesForTextNode(edges, selectedNode.id, nextRole === 'explanatory')
       : edges;
     if (shouldNormalizeTextPorts) {
       const normalizedSelectedNode = nextNodes.find(
@@ -720,9 +721,10 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       stripHtmlToPlainText(resolvePromptConfig(selectedNode).template);
     return {
       textfield: textfieldOutput,
-      content:
-        computedOutputs?.content ?? renderPromptNodeTextPreview(selectedNode, nodeMeta),
+      plaintextContent:
+        computedOutputs?.plaintextContent ?? renderPromptNodeTextPreview(selectedNode, nodeMeta),
       plainText: computedOutputs?.plainText ?? stripHtmlToPlainText(textfieldOutput),
+      wysiwygContent: computedOutputs?.wysiwygContent ?? '',
     };
   }, [compiled.outputsByNode, selectedNode, selectedPromptMeta]);
 
@@ -752,9 +754,9 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       if (input.node.type !== 'prompt') return null;
       if (
         input.port !== 'prompt' &&
-        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] &&
-        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] &&
-        input.port !== CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2]
+        !CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS.includes(
+          input.port as (typeof CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS)[number]
+        )
       ) {
         return null;
       }
@@ -764,20 +766,26 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       const nodeMeta = normalizedNodeMeta[input.node.id] ?? DEFAULT_CASE_RESOLVER_NODE_META;
       const computedOutputs = compiled.outputsByNode[input.node.id];
       const textfieldOutput = computedOutputs?.textfield ?? renderPromptNodeTextPreview(input.node, nodeMeta);
-      const contentOutput = computedOutputs?.content ?? '';
+      const plaintextContentOutput = computedOutputs?.plaintextContent ?? '';
       const plainTextOutput = computedOutputs?.plainText ?? stripHtmlToPlainText(textfieldOutput);
-      const isContentPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1];
+      const wysiwygContentOutput = computedOutputs?.wysiwygContent ?? '';
+      const isPlaintextContentPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1];
       const isPlainTextPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2];
+      const isWysiwygContentPort = input.port === CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS[3];
       const renderedText = isPlainTextPort
         ? plainTextOutput
-        : isContentPort
-          ? contentOutput
-          : textfieldOutput;
+        : isPlaintextContentPort
+          ? plaintextContentOutput
+          : isWysiwygContentPort
+            ? wysiwygContentOutput
+            : textfieldOutput;
       const outputLabel = isPlainTextPort
         ? 'Plain text output'
-        : isContentPort
-          ? 'Content output'
-          : 'WYSIWYG text output';
+        : isPlaintextContentPort
+          ? 'plaintextContent output'
+          : isWysiwygContentPort
+            ? 'WYSIWYGContent output'
+            : 'WYSIWYG text output';
 
       return {
         maxWidth: '720px',

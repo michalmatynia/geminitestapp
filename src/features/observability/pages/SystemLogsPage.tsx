@@ -314,7 +314,7 @@ function AiLogInterpreter(): React.JSX.Element {
           insightsQuery.data.insights.map((insight: AiInsightRecord) => (
             <Card key={insight.id} variant='glass' padding='md' className='bg-gray-950/40'>
               <div className='flex items-center justify-between mb-3'>
-                <span className='text-[10px] font-mono text-gray-500 uppercase'>{formatTimestamp(insight.createdAt)}</span>
+                <span className='text-[10px] font-mono text-gray-500 uppercase'>{formatTimestamp(insight.createdAt ?? '')}</span>
                 <StatusBadge status={insight.status} />
               </div>
               <p className='text-sm text-gray-200 leading-relaxed'>{insight.summary}</p>

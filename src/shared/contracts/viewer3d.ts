@@ -94,6 +94,7 @@ export const asset3dEnvironmentPresetSchema = z.enum([
   'warehouse',
   'sunset',
   'forest',
+  'dawn',
 ]);
 export type Asset3dEnvironmentPresetDto = z.infer<typeof asset3dEnvironmentPresetSchema>;
 

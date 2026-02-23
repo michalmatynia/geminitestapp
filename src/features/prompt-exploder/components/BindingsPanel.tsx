@@ -22,10 +22,10 @@ export function BindingsPanel(): React.JSX.Element {
   ): string => {
     const segment = segmentById.get(segmentId);
     if (!segment) return 'Unknown segment';
-    if (!subsectionId) return segment.title;
-    const subsection = segment.subsections.find((candidate: PromptExploderSubsection) => candidate.id === subsectionId);
-    if (!subsection) return segment.title;
-    return `${segment.title} · ${promptExploderFormatSubsectionLabel(subsection)}`;
+    if (!subsectionId) return segment.title || 'Untitled';
+    const subsection = (segment.subsections || []).find((candidate: PromptExploderSubsection) => candidate.id === subsectionId);
+    if (!subsection) return segment.title || 'Untitled';
+    return `${segment.title || 'Untitled'} · ${promptExploderFormatSubsectionLabel(subsection)}`;
   };
 
   return (
@@ -148,9 +148,8 @@ export function BindingsPanel(): React.JSX.Element {
                     <div className='flex items-center gap-2 text-gray-200'>
                       <Link2 className='size-3.5' />
                       <span className='uppercase text-[10px] tracking-wide text-gray-500'>
-                        {binding.type.replaceAll('_', ' ')}
-                      </span>
-                      <span className='rounded border border-border/60 px-1 py-0.5 text-[9px] uppercase text-gray-400'>
+                        {(binding.type || '').replaceAll('_', ' ')}
+                      </span>                      <span className='rounded border border-border/60 px-1 py-0.5 text-[9px] uppercase text-gray-400'>
                         {binding.origin}
                       </span>
                     </div>
@@ -159,7 +158,7 @@ export function BindingsPanel(): React.JSX.Element {
                         type='button'
                         variant='ghost'
                         size='icon'
-                        onClick={() => handleRemoveManualBinding(binding.id)}
+                        onClick={() => handleRemoveManualBinding(binding.id ?? '')}
                         title='Remove manual binding'
                         aria-label='Remove manual binding'
                       >
@@ -171,10 +170,9 @@ export function BindingsPanel(): React.JSX.Element {
                     {binding.sourceLabel} → {binding.targetLabel}
                   </div>
                   <div className='mt-1 text-[10px] text-gray-500'>
-                    {describeBindingEndpoint(binding.fromSegmentId, binding.fromSubsectionId)} →{' '}
-                    {describeBindingEndpoint(binding.toSegmentId, binding.toSubsectionId)}
-                  </div>
-                </div>
+                    {describeBindingEndpoint(binding.fromSegmentId ?? '', binding.fromSubsectionId)} →{' '}
+                    {describeBindingEndpoint(binding.toSegmentId ?? '', binding.toSubsectionId)}
+                  </div>                </div>
               ))}
             </div>
           )}

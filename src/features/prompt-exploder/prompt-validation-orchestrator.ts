@@ -513,7 +513,7 @@ export const resolvePromptValidationRuntime = (
       performance.now() - startedAt,
       {
         scope: stackResolution.scope,
-        stack: stackResolution.stack,
+        stack: typeof stackResolution.stack === 'string' ? stackResolution.stack : stackResolution.stack?.id || 'anonymous',
         profile: args.runtimeRuleProfile,
         correlationId,
         mode: 'cache_miss',
@@ -582,8 +582,7 @@ export const explodePromptWithValidationRuntime = (args: {
       performance.now() - pipelineStartedAt,
       {
         scope: args.runtime.identity.scope,
-        stack: args.runtime.identity.stack,
-        correlationId: args.runtime.correlationId,
+        stack: typeof args.runtime.identity.stack === 'string' ? args.runtime.identity.stack : args.runtime.identity.stack?.id || 'anonymous',        correlationId: args.runtime.correlationId,
         status,
       }
     );
@@ -608,8 +607,7 @@ export const explodePromptWithValidationRuntime = (args: {
         performance.now() - explodeStartedAt,
         {
           scope: args.runtime.identity.scope,
-          stack: args.runtime.identity.stack,
-          correlationId: args.runtime.correlationId,
+          stack: typeof args.runtime.identity.stack === 'string' ? args.runtime.identity.stack : args.runtime.identity.stack?.id || 'anonymous',          correlationId: args.runtime.correlationId,
           attempt: String(attempt),
         }
       );

@@ -14,14 +14,14 @@ export type Localized<T = string> = Record<string, T | null>;
 
 export const dtoBaseSchema = z.object({
   id: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string().nullable(),
+  createdAt: z.string().optional(),
+  updatedAt: z.string().nullable().optional(),
 });
 
 export interface DtoBase {
   id: string;
-  createdAt: string;
-  updatedAt: string | null;
+  createdAt?: string;
+  updatedAt?: string | null;
 }
 
 export const namedDtoSchema = dtoBaseSchema.extend({

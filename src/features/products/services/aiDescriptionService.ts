@@ -314,8 +314,8 @@ export async function generateProductDescription(params: {
     );
   }
 
-  let analysisInitial: string;
-  let analysisFinal: string;
+  let analysisInitial = '';
+  let analysisFinal = '';
   const { openai: visionClient, isOllama: isVisionOllama } = getClient(
     visionModel,
     apiKey,
@@ -387,8 +387,8 @@ export async function generateProductDescription(params: {
     generationModel,
     apiKey,
   );
-  let descriptionInitial: string;
-  let descriptionFinal: string;
+  let descriptionInitial = '';
+  let descriptionFinal = '';
 
   try {
     const prompt2_1 = processPrompt(

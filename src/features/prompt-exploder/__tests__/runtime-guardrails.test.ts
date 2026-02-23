@@ -12,15 +12,15 @@ const createRuntimeSelection = (args: {
     correlationId: 'test-correlation',
     stackResolution: {
       stack: args.stack,
-      scope: 'prompt-exploder',
-      validatorScope: 'prompt-exploder',
+      scope: 'prompt_exploder',
+      validatorScope: 'prompt_exploder',
       list: null,
       usedFallback: args.usedFallback,
       reason: args.reason,
     },
     identity: {
       scope: 'prompt_exploder',
-      validatorScope: 'prompt-exploder',
+      validatorScope: 'prompt_exploder',
       stack: args.stack,
       profile: 'all',
       settingsVersion: 'settings-v1',
@@ -32,8 +32,7 @@ const createRuntimeSelection = (args: {
     runtimeValidationRules: [],
     effectiveLearnedTemplates: [],
     runtimeLearnedTemplates: [],
-  }) as PromptValidationOrchestrationResult;
-
+  }) as any;
 describe('prompt exploder runtime guardrails', () => {
   it('returns a blocking issue when fallback is used and not allowed', () => {
     const runtimeSelection = createRuntimeSelection({

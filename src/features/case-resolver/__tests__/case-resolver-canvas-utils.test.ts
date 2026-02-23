@@ -16,8 +16,8 @@ const createPromptNode = (template: string): AiNode => ({
   type: 'prompt',
   title: 'Prompt',
   description: '',
-  inputs: ['wysiwygText', 'content', 'plainText'],
-  outputs: ['wysiwygText', 'content', 'plainText'],
+  inputs: ['wysiwygText', 'plaintextContent', 'plainText'],
+  outputs: ['wysiwygText', 'plaintextContent', 'plainText'],
   position: { x: 0, y: 0 },
   config: {
     prompt: {
@@ -70,9 +70,23 @@ describe('case-resolver canvas utils', () => {
     );
   });
 
-  it('prefers scan slot OCR text for dropped scan files', () => {
+  it('prefers scan markdown text for dropped scan files', () => {
     const file = createTemplateSourceFile({
       name: 'Scan A',
+      fileType: 'scanfile',
+      documentContentMarkdown: 'Edited markdown text',
+      scanSlots: [{ ocrText: 'First page OCR' }, { ocrText: 'Second page OCR' }],
+      ocrText: 'Fallback OCR',
+    });
+
+    expect(stripHtmlToPlainText(buildPromptTemplateFromDroppedDocumentFile(file))).toBe(
+      'Edited markdown text'
+    );
+  });
+
+  it('falls back to scan slot OCR text when scan markdown is unavailable', () => {
+    const file = createTemplateSourceFile({
+      name: 'Scan B',
       fileType: 'scanfile',
       scanSlots: [{ ocrText: 'First page OCR' }, { ocrText: 'Second page OCR' }],
       ocrText: 'Fallback OCR',
@@ -94,8 +108,9 @@ describe('case-resolver canvas utils', () => {
 
     expect(outputs).toEqual({
       textfield: 'Alpha',
-      content: '[["Alpha"]]',
+      plaintextContent: '[["Alpha"]]',
       plainText: '[["Alpha"]]',
+      wysiwygContent: '',
     });
   });
 });

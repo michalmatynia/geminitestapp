@@ -160,6 +160,158 @@ describe('compileGraph', () => {
     ).toBe(true);
   });
 
+  it('allows run-scoped compile when missing required inputs exist only outside trigger reachability', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        inputs: ['context'],
+        outputs: ['trigger', 'context'],
+      }),
+      buildNode({
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        inputs: ['trigger', 'context', 'meta', 'entityId', 'entityType'],
+        outputs: ['context'],
+      }),
+      buildNode({
+        id: 'parser-1',
+        type: 'parser',
+        title: 'Parser',
+        inputs: ['context'],
+        outputs: ['title'],
+      }),
+      buildNode({
+        id: 'model-1',
+        type: 'model',
+        title: 'Model',
+        inputs: ['prompt', 'images'],
+        outputs: ['result'],
+        inputContracts: {
+          prompt: { required: true },
+          images: { required: false },
+        },
+      }),
+      buildNode({
+        id: 'viewer-1',
+        type: 'viewer',
+        title: 'Viewer',
+        inputs: ['result'],
+        outputs: [],
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-fetcher',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: 'edge-fetcher-parser',
+        from: 'fetcher-1',
+        to: 'parser-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+      {
+        id: 'edge-model-viewer',
+        from: 'model-1',
+        to: 'viewer-1',
+        fromPort: 'result',
+        toPort: 'result',
+      },
+    ];
+
+    const fullReport = compileGraph(nodes, edges);
+    expect(fullReport.ok).toBe(false);
+    expect(
+      fullReport.findings.some(
+        (finding) =>
+          finding.code === 'required_input_missing_wiring' &&
+          finding.nodeId === 'model-1' &&
+          finding.port === 'prompt'
+      )
+    ).toBe(true);
+
+    const scopedReport = compileGraph(nodes, edges, {
+      scopeMode: 'reachable_from_roots',
+      scopeRootNodeIds: ['trigger-1'],
+    });
+    expect(scopedReport.ok).toBe(true);
+    expect(
+      scopedReport.findings.some(
+        (finding) =>
+          finding.code === 'required_input_missing_wiring' &&
+          finding.nodeId === 'model-1' &&
+          finding.port === 'prompt'
+      )
+    ).toBe(false);
+  });
+
+  it('still blocks run-scoped compile when required inputs are missing inside trigger reachability', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        inputs: ['context'],
+        outputs: ['trigger', 'context'],
+      }),
+      buildNode({
+        id: 'model-1',
+        type: 'model',
+        title: 'Model',
+        inputs: ['prompt', 'context', 'images'],
+        outputs: ['result'],
+        inputContracts: {
+          prompt: { required: true },
+          images: { required: false },
+        },
+      }),
+      buildNode({
+        id: 'viewer-1',
+        type: 'viewer',
+        title: 'Viewer',
+        inputs: ['result'],
+        outputs: [],
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-model-context',
+        from: 'trigger-1',
+        to: 'model-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+      {
+        id: 'edge-model-viewer',
+        from: 'model-1',
+        to: 'viewer-1',
+        fromPort: 'result',
+        toPort: 'result',
+      },
+    ];
+
+    const scopedReport = compileGraph(nodes, edges, {
+      scopeMode: 'reachable_from_roots',
+      scopeRootNodeIds: ['trigger-1'],
+    });
+    expect(scopedReport.ok).toBe(false);
+    expect(
+      scopedReport.findings.some(
+        (finding) =>
+          finding.code === 'required_input_missing_wiring' &&
+          finding.nodeId === 'model-1' &&
+          finding.port === 'prompt'
+      )
+    ).toBe(true);
+  });
+
   it('warns when optional inputs are wired incompatibly', () => {
     const nodes: AiNode[] = [
       buildNode({

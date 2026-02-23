@@ -100,11 +100,9 @@ export const normalizeRuntimeValidationScope = (
     | null
     | undefined
 ): PromptExploderRuntimeValidationScope =>
-  scope === 'case-resolver-prompt-exploder' ||
-    scope === 'case_resolver_prompt_exploder'
-    ? 'case-resolver-prompt-exploder'
-    : 'prompt-exploder';
-
+  scope === 'case_resolver_prompt_exploder'
+    ? 'case_resolver_prompt_exploder'
+    : 'prompt_exploder';
 const runtimePatternCacheByRules = new WeakMap<
   PromptValidationRule[],
   Map<PromptExploderRuntimeValidationScope, PatternRuntime>
@@ -241,8 +239,7 @@ const compileRuntimePatterns = (
     );
   }
 
-  const allowDefaultFallback = scope !== 'case-resolver-prompt-exploder';
-  const byId = new Map<string, RegExp>();
+  const allowDefaultFallback = scope !== 'case_resolver_prompt_exploder';  const byId = new Map<string, RegExp>();
   const runtimeRulesById = new Map<string, RuntimeRegexRule>();
   const compileErrors: PromptValidationRuleCompileError[] = [];
 
@@ -267,8 +264,7 @@ const compileRuntimePatterns = (
     if (!rule.enabled) return false;
     if (rule.kind !== 'regex') return false;
     const scopes = (rule.appliesToScopes || []) as string[];
-    const activeRuleScope = scope === 'case-resolver-prompt-exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';
-    return scopes.length === 0 || scopes.includes(activeRuleScope) || scopes.includes('global');
+    const activeRuleScope = scope === 'case_resolver_prompt_exploder' ? 'case_resolver_prompt_exploder' : 'prompt_exploder';    return scopes.length === 0 || scopes.includes(activeRuleScope) || scopes.includes('global');
   });
 
   scopedRules.forEach((rule) => {

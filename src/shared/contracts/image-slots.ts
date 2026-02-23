@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { imageFileSelectionSchema } from './files';
+import { imageFileSelectionSchema, type ImageFileSelection } from './files';
 
 /**
  * Image Slots DTOs
@@ -27,5 +27,23 @@ export const managedImageSlotSchema = z.union([
   managedImageSlotExistingSchema,
 ]).nullable();
 
-export type ManagedImageSlotDto = z.infer<typeof managedImageSlotSchema>;
-export type ManagedImageSlot = ManagedImageSlotDto;
+export interface ManagedImageSlotFile {
+  type: 'file';
+  data: unknown; // Browser File object
+  previewUrl: string;
+  slotId: string;
+  originalIndex?: number;
+}
+
+export interface ManagedImageSlotExisting {
+  type: 'existing';
+  data: ImageFileSelection;
+  previewUrl: string;
+  slotId: string;
+  originalIndex?: number;
+}
+
+export type ManagedImageSlot = ManagedImageSlotFile | ManagedImageSlotExisting | null;
+
+export type ManagedImageSlotDto = ManagedImageSlot;
+

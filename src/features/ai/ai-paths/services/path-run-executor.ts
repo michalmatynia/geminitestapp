@@ -798,6 +798,12 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   );
   const strictFlowMode =
     (run.meta as Record<string, unknown> | null)?.['strictFlowMode'] !== false;
+  const validationConfig = normalizeAiPathsValidationConfig(
+    (
+      run.meta as Record<string, unknown> | null
+    )?.['aiPathsValidation'] as Record<string, unknown> | undefined
+  );
+  const nodeValidationEnabled = validationConfig.enabled !== false;
   const resolvedHistoryLimit =
     metaHistoryLimit ?? envHistoryLimit ?? AI_PATHS_HISTORY_RETENTION_DEFAULT;
   const nodeRecords = await repo.listRunNodes(run.id);
@@ -830,8 +836,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const toast = (): void => {};
 
   try {
-    const compileReport = compileGraph(nodes, edges);
-    if (!compileReport.ok) {
+    const compileReport = nodeValidationEnabled
+      ? compileGraph(nodes, edges)
+      : compileGraph(nodes, edges, {
+        scopeMode: 'reachable_from_roots',
+        ...(triggerNodeId ? { scopeRootNodeIds: [triggerNodeId] } : {}),
+      });
+    if (nodeValidationEnabled && !compileReport.ok) {
       await repo.createRunEvent({
         runId: run.id,
         level: 'error',
@@ -850,7 +861,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         `Graph compile blocked run: ${compileReport.errors} issue(s) detected.`
       );
     }
-    if (compileReport.warnings > 0) {
+    if (nodeValidationEnabled && compileReport.warnings > 0) {
       const warningMessage = buildCompileWarningMessage(compileReport);
       await repo.createRunEvent({
         runId: run.id,
@@ -886,11 +897,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     const validationReport = evaluateAiPathsValidationPreflight({
       nodes,
       edges,
-      config: normalizeAiPathsValidationConfig(
-        (
-          run.meta as Record<string, unknown> | null
-        )?.['aiPathsValidation'] as Record<string, unknown> | undefined
-      ),
+      config: validationConfig,
     });
     if (validationReport.enabled && validationReport.blocked) {
       await repo.createRunEvent({
@@ -934,7 +941,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       });
     }
 
-    if (strictFlowMode) {
+    if (nodeValidationEnabled && strictFlowMode) {
       const dependencyReport = inspectPathDependencies(nodes, edges);
       if (dependencyReport.errors > 0) {
         await repo.createRunEvent({

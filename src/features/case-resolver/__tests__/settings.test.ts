@@ -20,6 +20,8 @@ import {
 import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS,
+  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
   DEFAULT_CASE_RESOLVER_NODE_META,
   type AiNode,
   type CaseResolverFile,
@@ -242,6 +244,9 @@ describe('case-resolver settings', () => {
       quoteMode: 'double',
       surroundPrefix: '«',
       surroundSuffix: '»',
+      plainTextValidationEnabled: true,
+      plainTextFormatterEnabled: true,
+      plainTextValidationStackId: '',
     });
     expect(workspace.files[0]!.graph!.nodeMeta!['n2']).toEqual({
       role: DEFAULT_CASE_RESOLVER_NODE_META.role,
@@ -249,6 +254,9 @@ describe('case-resolver settings', () => {
       quoteMode: DEFAULT_CASE_RESOLVER_NODE_META.quoteMode,
       surroundPrefix: DEFAULT_CASE_RESOLVER_NODE_META.surroundPrefix,
       surroundSuffix: DEFAULT_CASE_RESOLVER_NODE_META.surroundSuffix,
+      plainTextValidationEnabled: DEFAULT_CASE_RESOLVER_NODE_META.plainTextValidationEnabled,
+      plainTextFormatterEnabled: DEFAULT_CASE_RESOLVER_NODE_META.plainTextFormatterEnabled,
+      plainTextValidationStackId: DEFAULT_CASE_RESOLVER_NODE_META.plainTextValidationStackId,
     });
     expect(workspace.files[0]!.graph!.pdfExtractionPresetId).toBe('plain_text');  });
 
@@ -1073,7 +1081,7 @@ describe('case-resolver settings', () => {
     expect(parseCaseResolverIdentifiers('not-json')).toEqual([]);
   });
 
-  it('adds document wysiwygText/content/plainText ports for linked document nodes', () => {
+  it('adds document wysiwygText/plaintextContent/plainText ports for linked document nodes', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -1116,7 +1124,7 @@ describe('case-resolver settings', () => {
     );
   });
 
-  it('normalizes explanatory prompt nodes to document wysiwygText/content/plainText ports', () => {
+  it('normalizes explanatory prompt nodes to document ports with wysiwygContent lane', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -1153,8 +1161,8 @@ describe('case-resolver settings', () => {
     const graph = workspace.files[0]?.graph;
     const explanatoryNode = graph?.nodes.find((node: AiNode): boolean => node.id === 'explanatory-node');
 
-    expect(explanatoryNode?.inputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS);
-    expect(explanatoryNode?.outputs).toEqual(CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS);
+    expect(explanatoryNode?.inputs).toEqual(CASE_RESOLVER_EXPLANATORY_NODE_INPUT_PORTS);
+    expect(explanatoryNode?.outputs).toEqual(CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS);
   });
 
   it('migrates legacy template document nodes to prompt nodes', () => {
@@ -1308,8 +1316,8 @@ describe('case-resolver settings', () => {
             id: 'meta-edge',
             from: 'meta-node',
             to: 'meta-node',
-            fromPort: 'content',
-            toPort: 'content',
+            fromPort: 'plaintextContent',
+            toPort: 'plaintextContent',
           },
         ],
         nodeMeta: {
@@ -1524,11 +1532,11 @@ describe('case-resolver settings', () => {
 
     const graph = workspace.files[0]?.graph;
     const edgeById = new Map<string, Edge>((graph?.edges ?? []).map((edge: Edge) => [edge.id, edge]));
-    expect(edgeById.get('edge-in-prompt')?.toPort).toBe('content');
-    expect(edgeById.get('edge-in-unknown')?.toPort).toBe('content');
+    expect(edgeById.get('edge-in-prompt')?.toPort).toBe('plaintextContent');
+    expect(edgeById.get('edge-in-unknown')?.toPort).toBe('plaintextContent');
     expect(edgeById.get('edge-in-legacy-textfield')?.toPort).toBe(CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS[0]);
-    expect(edgeById.get('edge-out-result')?.fromPort).toBe('content');
-    expect(edgeById.get('edge-out-prompt')?.fromPort).toBe('content');
+    expect(edgeById.get('edge-out-result')?.fromPort).toBe('plaintextContent');
+    expect(edgeById.get('edge-out-prompt')?.fromPort).toBe('plaintextContent');
     expect(edgeById.get('edge-out-legacy-textfield')?.fromPort).toBe(
       CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0]
     );

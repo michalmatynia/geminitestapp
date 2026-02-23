@@ -348,7 +348,10 @@ describe('AI Paths Runtime Engine', () => {
       skipNodeIds: ['optional-source'],
     });
 
-    expect(result.outputs['bundle-node']).toBeUndefined();
+    expect(result.outputs['bundle-node']).toMatchObject({
+      status: 'blocked',
+      blockedReason: 'missing_inputs',
+    });
   });
 
   it('emits waiting diagnostics for missing required inputs', async () => {

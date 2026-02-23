@@ -52,22 +52,22 @@ export const promptExploderFormatSubsectionLabel = (subsection: PromptExploderSu
 // ── Segment helpers ─────────────────────────────────────────────────────────
 
 export const promptExploderBuildSegmentSampleText = (segment: PromptExploderSegment): string => {
-  if (segment.listItems.length > 0) {
-    return segment.listItems.slice(0, 4).map((item: PromptExploderListItem) => item.text).join(' ');
+  if (segment.listItems && segment.listItems.length > 0) {
+    return segment.listItems.slice(0, 4).map((item: PromptExploderListItem) => item.text || '').join(' ');
   }
-  if (segment.subsections.length > 0) {
+  if (segment.subsections && segment.subsections.length > 0) {
     return segment.subsections
       .slice(0, 3)
-      .map((subsection: PromptExploderSubsection) => subsection.title)
+      .map((subsection: PromptExploderSubsection) => subsection.title || '')
       .join(' ');
   }
-  return segment.text.slice(0, 220);
+  return (segment.text || '').slice(0, 220);
 };
 
 export const promptExploderBuildLearnedRulePattern = (segment: PromptExploderSegment): string => {
-  const tokens = learningTokens(`${segment.title} ${promptExploderBuildSegmentSampleText(segment)}`);
+  const tokens = learningTokens(`${segment.title || ''} ${promptExploderBuildSegmentSampleText(segment)}`);
   if (tokens.length === 0) {
-    const escaped = segment.title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escaped = (segment.title || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     return `^\\s*${escaped}\\s*$`;
   }
   const anchors = tokens.slice(0, 4);
@@ -108,9 +108,8 @@ export const promptExploderCreateApprovalDraftFromSegment = (
     rulePriority: 30,
     ruleConfidenceBoost: 0.2,
     ruleTreatAsHeading: /^[A-Z0-9 _()[\]\\,:&+.-]{3,}$/.test(
-      segment.title.trim()
-    ),
-    templateMergeMode: 'auto',
+      (segment.title || '').trim()
+    ),    templateMergeMode: 'auto',
     templateTargetId: '',
   };
 };

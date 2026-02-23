@@ -45,7 +45,7 @@ import type {
 
 export interface BenchmarkState {
   benchmarkReport: PromptExploderBenchmarkReport | null;
-  benchmarkSuiteDraft: PromptExploderBenchmarkSuite;
+  benchmarkSuiteDraft: any;
   benchmarkLowConfidenceThresholdDraft: number;
   benchmarkSuggestionLimitDraft: number;
   customBenchmarkCasesDraft: string;
@@ -57,7 +57,7 @@ export interface BenchmarkState {
 }
 
 export interface BenchmarkActions {
-  setBenchmarkSuiteDraft: React.Dispatch<React.SetStateAction<PromptExploderBenchmarkSuite>>;
+  setBenchmarkSuiteDraft: React.Dispatch<React.SetStateAction<any>>;
   setBenchmarkLowConfidenceThresholdDraft: React.Dispatch<React.SetStateAction<number>>;
   setBenchmarkSuggestionLimitDraft: React.Dispatch<React.SetStateAction<number>>;
   setCustomBenchmarkCasesDraft: React.Dispatch<React.SetStateAction<string>>;
@@ -108,7 +108,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
   const { setDocumentState, setManualBindings, setSelectedSegmentId } = useDocumentActions();
 
   const [benchmarkReport, setBenchmarkReport] = useState<PromptExploderBenchmarkReport | null>(null);
-  const [benchmarkSuiteDraft, setBenchmarkSuiteDraft] = useState<PromptExploderBenchmarkSuite>('default');
+  const [benchmarkSuiteDraft, setBenchmarkSuiteDraft] = useState<string | PromptExploderBenchmarkSuite>('default');
   const [benchmarkLowConfidenceThresholdDraft, setBenchmarkLowConfidenceThresholdDraft] =
     useState(PROMPT_EXPLODER_DEFAULT_LOW_CONFIDENCE_THRESHOLD);
   const [benchmarkSuggestionLimitDraft, setBenchmarkSuggestionLimitDraft] =
@@ -132,7 +132,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
   const visibleBenchmarkSuggestions = useMemo(() => {
     if (benchmarkSuggestions.length === 0) return [] as PromptExploderBenchmarkSuggestion[];
     const hiddenIds = new Set(dismissedBenchmarkSuggestionIds);
-    return benchmarkSuggestions.filter((suggestion) => !hiddenIds.has(suggestion.id));
+    return benchmarkSuggestions.filter((suggestion) => !hiddenIds.has(suggestion.id || ''));
   }, [benchmarkSuggestions, dismissedBenchmarkSuggestionIds]);
 
   // ── Actions ────────────────────────────────────────────────────────────────
@@ -357,9 +357,8 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
           });
         }
         setDismissedBenchmarkSuggestionIds((previous) => [
-          ...new Set([...previous, ...validSuggestions.map((suggestion) => suggestion.id)]),
+          ...new Set([...previous, ...validSuggestions.map((suggestion) => suggestion.id).filter((id): id is string => Boolean(id))]),
         ]);
-
         const sourcePrompt = promptText.trim() || documentState?.sourcePrompt || '';
         if (sourcePrompt) {
           const nextRuntimeRules = buildRuntimeRulesForReexplode({
@@ -452,7 +451,7 @@ export function BenchmarkProvider({ children }: { children: React.ReactNode }): 
   const handleDismissAllVisibleBenchmarkSuggestions = useCallback(() => {
     if (visibleBenchmarkSuggestions.length === 0) return;
     setDismissedBenchmarkSuggestionIds((previous) => [
-      ...new Set([...previous, ...visibleBenchmarkSuggestions.map((s) => s.id)]),
+      ...new Set([...previous, ...visibleBenchmarkSuggestions.map((s) => s.id).filter((id): id is string => Boolean(id))]),
     ]);
   }, [visibleBenchmarkSuggestions]);
 

@@ -845,9 +845,9 @@ export function explodePromptText(args: {
     }
   );
   const parsedSegments =
-    validationScope === 'case-resolver-prompt-exploder'
-      ? parseSegmentsRuleDriven(prompt, runtime)
-      : parseSegments(prompt, runtime);
+            validationScope === 'case_resolver_prompt_exploder'
+              ? parseSegmentsRuleDriven(prompt, runtime)
+              : parseSegments(prompt, runtime);
   const segments = applyLearnedTemplateTypes(
     parsedSegments,
     args.learnedTemplates ?? [],
@@ -855,19 +855,18 @@ export function explodePromptText(args: {
   );
   const bindings = buildBindings(segments);
   const warnings: string[] = [];
-
+  
   if (segments.length === 0) {
     warnings.push('No segments were detected.');
   }
+  
+  if (validationScope === 'prompt_exploder') {    if (!segments.some((segment) => segment.type === 'parameter_block')) {
+    warnings.push('No PARAMS block was detected.');
+  }
 
-  if (validationScope === 'prompt-exploder') {
-    if (!segments.some((segment) => segment.type === 'parameter_block')) {
-      warnings.push('No PARAMS block was detected.');
-    }
-
-    if (!segments.some((segment) => segment.type === 'qa_matrix')) {
-      warnings.push('No FINAL QA matrix was detected.');
-    }
+  if (!segments.some((segment) => segment.type === 'qa_matrix')) {
+    warnings.push('No FINAL QA matrix was detected.');
+  }
   }
 
   const reassembledPrompt = reassemblePromptSegments(segments);
@@ -879,8 +878,15 @@ export function explodePromptText(args: {
     bindings,
     warnings,
     reassembledPrompt,
-  };
-}
+    sections: [],
+    subsections: [],
+    variables: [],
+    dependencies: [],
+    rules: [],
+    tags: [],
+    errors: [],
+    diagnostics: [],
+  };}
 
 export function reassemblePromptSegments(segments: PromptExploderSegment[]): string {
   const rendered = segments
@@ -919,13 +925,13 @@ export function ensureSegmentTitle(segment: PromptExploderSegment): PromptExplod
       segment.title || segment.raw || segment.text || ''
     )
   ) {
-    if (segment.title.length === 0) return segment;
+    if (!segment.title || segment.title.length === 0) return segment;
     return {
       ...segment,
       title: '',
     };
   }
-  if (segment.title.trim().length > 0) return segment;
+  if (segment.title && segment.title.trim().length > 0) return segment;
   return {
     ...segment,
     title: `Segment ${segment.id}`,

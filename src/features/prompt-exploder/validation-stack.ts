@@ -50,8 +50,11 @@ const FALLBACK_VALIDATION_STACK_OPTIONS: PromptExploderValidationRuleStackOption
   },
 ];
 
-const normalizeStackValue = (value: string | null | undefined): string =>
-  typeof value === 'string' ? value.trim() : '';
+const normalizeStackValue = (value: PromptExploderValidationRuleStack | null | undefined): string => {
+  if (!value) return '';
+  if (typeof value === 'string') return value.trim();
+  return (value.id || '').trim();
+};
 
 const toRuntimeScope = (
   validatorScope: ValidatorScope
@@ -187,7 +190,7 @@ export const normalizePromptExploderValidationRuleStack = (
   return resolvePromptExploderValidationStack({
     stack,
     patternLists,
-  }).stack;
+  }).stack || DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK;
 };
 
 export const promptExploderValidationScopeFromStack = (
@@ -197,13 +200,13 @@ export const promptExploderValidationScopeFromStack = (
   resolvePromptExploderValidationStack({
     stack,
     patternLists,
-  }).scope;
+  }).scope || 'global';
 
 export const promptExploderValidationStackFromScope = (
   scope: PromptValidationScope | null | undefined,
   patternLists: ValidatorPatternList[] = []
 ): PromptExploderValidationRuleStack =>
-  scope === 'case_resolver_prompt_exploder'
+  (scope === 'case_resolver_prompt_exploder'
     ? resolveStackByScope(
       CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
       patternLists,
@@ -213,13 +216,13 @@ export const promptExploderValidationStackFromScope = (
       PROMPT_EXPLODER_VALIDATOR_SCOPE,
       patternLists,
       'default_scope'
-    ).stack;
+    ).stack) || DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK;
 
 export const promptExploderValidationStackFromBridgeSource = (
   source: 'image-studio' | 'case-resolver' | 'prompt-exploder' | null | undefined,
   patternLists: ValidatorPatternList[] = []
 ): PromptExploderValidationRuleStack =>
-  source === 'case-resolver'
+  (source === 'case-resolver'
     ? resolveStackByScope(
       CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
       patternLists,
@@ -229,7 +232,7 @@ export const promptExploderValidationStackFromBridgeSource = (
       PROMPT_EXPLODER_VALIDATOR_SCOPE,
       patternLists,
       'default_scope'
-    ).stack;
+    ).stack) || DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK;
 
 export const promptExploderValidatorScopeFromStack = (
   stack: PromptExploderValidationRuleStack | null | undefined,

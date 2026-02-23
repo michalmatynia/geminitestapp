@@ -70,12 +70,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     (metaRecord['aiPathsValidation'] as Record<string, unknown> | undefined) ??
       undefined
   );
+  const nodeValidationEnabled = validationConfig.enabled !== false;
   const validationReport = evaluateAiPathsValidationPreflight({
     nodes: normalizedNodes,
     edges: normalizedEdges,
     config: validationConfig,
   });
-  if (validationReport.enabled && validationReport.blocked) {
+  if (nodeValidationEnabled && validationReport.blocked) {
     const finding = validationReport.findings[0];
     throw badRequestError(
       finding
@@ -89,11 +90,16 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     validationPreflight: validationReport,
   };
 
-  const compileReport = compileGraph(normalizedNodes, normalizedEdges);
-  if (!compileReport.ok) {
+  const compileReport = nodeValidationEnabled
+    ? compileGraph(normalizedNodes, normalizedEdges)
+    : compileGraph(normalizedNodes, normalizedEdges, {
+      scopeMode: 'reachable_from_roots',
+      ...(rest.triggerNodeId ? { scopeRootNodeIds: [rest.triggerNodeId] } : {}),
+    });
+  if (nodeValidationEnabled && !compileReport.ok) {
     const primaryError = compileReport.findings.find((finding) => finding.severity === 'error');
     throw badRequestError(
-      primaryError?.message ??
+      (primaryError ? `Graph compile failed: ${primaryError.message}` : null) ??
         `Graph compile failed with ${compileReport.errors} blocking issue(s).`
     );
   }

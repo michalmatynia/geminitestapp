@@ -3,6 +3,7 @@ import { useCallback } from 'react';
 import type {
   CaseResolverAssetFile,
   CaseResolverFile,
+  CaseResolverFileEditDraft,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 
@@ -54,6 +55,9 @@ type UseCaseResolverStateFolderActionsInput = {
   setSelectedFileId: React.Dispatch<React.SetStateAction<string | null>>;
   setSelectedAssetId: React.Dispatch<React.SetStateAction<string | null>>;
   setSelectedFolderPath: React.Dispatch<React.SetStateAction<string | null>>;
+  setEditingDocumentDraft: React.Dispatch<
+    React.SetStateAction<CaseResolverFileEditDraft | null>
+  >;
   treeSaveToast: string;
 };
 
@@ -76,6 +80,7 @@ export const useCaseResolverStateFolderActions = ({
   setSelectedFileId,
   setSelectedAssetId,
   setSelectedFolderPath,
+  setEditingDocumentDraft,
   treeSaveToast,
 }: UseCaseResolverStateFolderActionsInput): UseCaseResolverStateFolderActionsResult => {
   const isLockedEditableFile = useCallback(
@@ -278,8 +283,23 @@ export const useCaseResolverStateFolderActions = ({
           ),
         };
       }, { persistToast: treeSaveToast });
+      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) => {
+        if (current?.id !== fileId) return current;
+        return {
+          ...current,
+          folder: normalizedTarget,
+          updatedAt: new Date().toISOString(),
+        };
+      });
     },
-    [isLockedEditableFile, toast, treeSaveToast, updateWorkspace, workspace.files]
+    [
+      isLockedEditableFile,
+      setEditingDocumentDraft,
+      toast,
+      treeSaveToast,
+      updateWorkspace,
+      workspace.files,
+    ]
   );
 
   const handleMoveAsset = useCallback(
@@ -327,8 +347,23 @@ export const useCaseResolverStateFolderActions = ({
           ),
         };
       }, { persistToast: treeSaveToast });
+      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) => {
+        if (current?.id !== fileId) return current;
+        return {
+          ...current,
+          name: trimmedName,
+          updatedAt: new Date().toISOString(),
+        };
+      });
     },
-    [isLockedEditableFile, toast, treeSaveToast, updateWorkspace, workspace.files]
+    [
+      isLockedEditableFile,
+      setEditingDocumentDraft,
+      toast,
+      treeSaveToast,
+      updateWorkspace,
+      workspace.files,
+    ]
   );
 
   const handleRenameAsset = useCallback(
@@ -447,11 +482,20 @@ export const useCaseResolverStateFolderActions = ({
         if (!current || !isPathWithinFolder(current, normalizedSource)) return current;
         return renameFolderPath(current, normalizedSource, normalizedTarget);
       });
+      setEditingDocumentDraft((current: CaseResolverFileEditDraft | null) => {
+        if (!current || !isPathWithinFolder(current.folder, normalizedSource)) return current;
+        return {
+          ...current,
+          folder: renameFolderPath(current.folder, normalizedSource, normalizedTarget),
+          updatedAt: new Date().toISOString(),
+        };
+      });
     },
     [
       isLockedEditableFile,
       selectedCaseContainerId,
       selectedCaseScopeIds,
+      setEditingDocumentDraft,
       setSelectedFolderPath,
       toast,
       treeSaveToast,

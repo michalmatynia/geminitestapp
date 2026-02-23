@@ -14,9 +14,9 @@ export function useAsset3DForm(
   const [name, setName] = useState(asset.name ?? '');
   const [description, setDescription] = useState(asset.description ?? '');
   const [category, setCategory] = useState(asset.categoryId ?? '');
-  const [tags, setTags] = useState<string[]>(asset.tags);
+  const [tags, setTags] = useState<string[]>(asset.tags || []);
   const [newTag, setNewTag] = useState('');
-  const [isPublic, setIsPublic] = useState(asset.isPublic);
+  const [isPublic, setIsPublic] = useState(asset.isPublic ?? false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,8 +24,8 @@ export function useAsset3DForm(
     setName(asset.name ?? '');
     setDescription(asset.description ?? '');
     setCategory(asset.categoryId ?? '');
-    setTags(asset.tags);
-    setIsPublic(asset.isPublic);
+    setTags(asset.tags || []);
+    setIsPublic(asset.isPublic ?? false);
     setError(null);
   }, [asset]);
 

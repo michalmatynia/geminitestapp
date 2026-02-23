@@ -1656,11 +1656,12 @@ export function VectorCanvas({
           id: `shape_${Date.now().toString(36)}`,
           name: tool === 'brush' ? `Brush ${shapes.length + 1}` : `Lasso ${shapes.length + 1}`,
           type: tool === 'brush' ? 'brush' : 'lasso',
+          role: 'custom',
           points: [nextPoint],
+          style: {},
           closed: false,
           visible: true,
-        };
-        drawingRef.current = { shapeId: newShape.id, type: newShape.type };
+        };        drawingRef.current = { shapeId: newShape.id, type: newShape.type };
         onSelectShape(newShape.id);
         onChange([...shapes, newShape]);
         return;
@@ -1673,11 +1674,12 @@ export function VectorCanvas({
           id: `shape_${Date.now().toString(36)}`,
           name: tool === 'rect' ? `Rect ${shapes.length + 1}` : `Ellipse ${shapes.length + 1}`,
           type: tool,
+          role: 'custom',
           points: [nextPoint, nextPoint],
+          style: {},
           closed: true,
           visible: true,
-        };
-        drawingRef.current = { shapeId: newShape.id, type: newShape.type, anchor: nextPoint };
+        };        drawingRef.current = { shapeId: newShape.id, type: newShape.type, anchor: nextPoint };
         onSelectShape(newShape.id);
         onChange([...shapes, newShape]);
       }

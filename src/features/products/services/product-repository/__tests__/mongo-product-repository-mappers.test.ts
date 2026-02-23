@@ -21,12 +21,12 @@ describe('mongo product repository mappers', () => {
       published: false,
     } as any);
 
-    expect(result.name.en).toBe('new name');
-    expect(result.name.pl).toBeNull();
-    expect(result.name.de).toBe('new de');
-    expect(result.description.en).toBe('new description');
-    expect(result.description.pl).toBe('new pl');
-    expect(result.description.de).toBeNull();
+    expect(result.name['en']).toBe('new name');
+    expect(result.name['pl']).toBeNull();
+    expect(result.name['de']).toBe('new de');
+    expect(result.description['en']).toBe('new description');
+    expect(result.description['pl']).toBe('new pl');
+    expect(result.description['de']).toBeNull();
   });
 
   it('falls back to nested localized object when scalar fields are missing', () => {
@@ -43,8 +43,8 @@ describe('mongo product repository mappers', () => {
       published: false,
     } as any);
 
-    expect(result.description.en).toBe('legacy description');
-    expect(result.description.pl).toBe('legacy-pl');
-    expect(result.description.de).toBeNull();
+    expect(result.description['en']).toBe('legacy description');
+    expect(result.description['pl']).toBe('legacy-pl');
+    expect(result.description['de']).toBeNull();
   });
 });

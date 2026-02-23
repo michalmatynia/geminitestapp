@@ -929,7 +929,8 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       edges: args.sanitizedEdges,
       config: args.aiPathsValidation,
     });
-    if (validationReport.enabled && validationReport.blocked) {
+    const nodeValidationEnabled = validationReport.enabled;
+    if (nodeValidationEnabled && validationReport.blocked) {
       const timestamp = new Date().toISOString();
       const primaryFinding = validationReport.findings[0];
       const blockedMessage = primaryFinding
@@ -982,7 +983,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       );
       return;
     }
-    if (validationReport.enabled && validationReport.shouldWarn) {
+    if (nodeValidationEnabled && validationReport.shouldWarn) {
       const warningMessage = `Validation warning: score ${validationReport.score} with ${validationReport.failedRules} failed rule(s).`;
       args.appendRuntimeEvent({
         source: 'local',
@@ -1013,80 +1014,16 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       args.onCanonicalEdgesDetected(args.sanitizedEdges);
     }
 
-    const compileReport = compileGraph(args.normalizedNodes, args.sanitizedEdges);
-    if (!compileReport.ok) {
-      const timestamp = new Date().toISOString();
-      const primaryError = compileReport.findings.find(
-        (finding): boolean => finding.severity === 'error'
-      );
-      const blockedMessage =
-        primaryError?.message ??
-        `Graph compile blocked run: ${compileReport.errors} issue(s) require fixes.`;
-      args.appendRuntimeEvent({
-        source: 'local',
-        kind: 'run_blocked',
-        level: 'warn',
-        timestamp,
-        message: blockedMessage,
-        nodeId: triggerNode.id,
-        nodeType: triggerNode.type,
-        nodeTitle: triggerNode.title ?? null,
-        metadata: {
-          compile: {
-            errors: compileReport.errors,
-            warnings: compileReport.warnings,
-            findings: compileReport.findings,
-          },
-        },
-      });
-      args.setNodeStatus({
-        nodeId: triggerNode.id,
-        status: 'blocked',
-        source: 'local',
-        nodeType: triggerNode.type,
-        nodeTitle: triggerNode.title ?? null,
-        kind: 'node_status',
-        level: 'warn',
-        message: blockedMessage,
-        metadata: {
-          graphCompileBlocked: true,
-          graphCompileErrors: compileReport.errors,
-        },
-      });
-      args.toast(
-        `Graph compile blocked run (${compileReport.errors} error${compileReport.errors === 1 ? '' : 's'}).`,
-        { variant: 'error' }
-      );
-      return;
-    }
-    if (compileReport.warnings > 0) {
-      const timestamp = new Date().toISOString();
-      const warningMessage = buildCompileWarningMessage(compileReport);
-      args.appendRuntimeEvent({
-        source: 'local',
-        kind: 'run_warning',
-        level: 'warn',
-        timestamp,
-        message: warningMessage,
-        nodeId: triggerNode.id,
-        nodeType: triggerNode.type,
-        nodeTitle: triggerNode.title ?? null,
-        metadata: {
-          compile: {
-            errors: compileReport.errors,
-            warnings: compileReport.warnings,
-            findings: compileReport.findings,
-          },
-        },
-      });
-      args.toast(warningMessage, { variant: 'warning' });
-    }
-
-    if (args.strictFlowMode) {
-      const dependencyReport = inspectPathDependencies(args.normalizedNodes, args.sanitizedEdges);
-      if (dependencyReport.errors > 0) {
+    if (nodeValidationEnabled) {
+      const compileReport = compileGraph(args.normalizedNodes, args.sanitizedEdges);
+      if (!compileReport.ok) {
         const timestamp = new Date().toISOString();
-        const blockedMessage = `Strict flow blocked run: ${dependencyReport.errors} dependency error(s) detected.`;
+        const primaryError = compileReport.findings.find(
+          (finding): boolean => finding.severity === 'error'
+        );
+        const blockedMessage =
+          primaryError?.message ??
+          `Graph compile blocked run: ${compileReport.errors} issue(s) require fixes.`;
         args.appendRuntimeEvent({
           source: 'local',
           kind: 'run_blocked',
@@ -1097,12 +1034,11 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           nodeType: triggerNode.type,
           nodeTitle: triggerNode.title ?? null,
           metadata: {
-            strictFlowMode: true,
-            dependencyErrors: dependencyReport.errors,
-            dependencyWarnings: dependencyReport.warnings,
-            blockedRiskIds: dependencyReport.risks
-              .filter((risk): boolean => risk.severity === 'error')
-              .map((risk) => risk.id),
+            compile: {
+              errors: compileReport.errors,
+              warnings: compileReport.warnings,
+              findings: compileReport.findings,
+            },
           },
         });
         args.setNodeStatus({
@@ -1115,15 +1051,79 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           level: 'warn',
           message: blockedMessage,
           metadata: {
-            strictFlowMode: true,
-            dependencyErrors: dependencyReport.errors,
+            graphCompileBlocked: true,
+            graphCompileErrors: compileReport.errors,
           },
         });
-        args.toast(
-          'Strict flow blocked run. Fix Dependency Inspector errors in Path Settings.',
-          { variant: 'error' },
-        );
+        args.toast(blockedMessage, { variant: 'error' });
         return;
+      }
+      if (compileReport.warnings > 0) {
+        const timestamp = new Date().toISOString();
+        const warningMessage = buildCompileWarningMessage(compileReport);
+        args.appendRuntimeEvent({
+          source: 'local',
+          kind: 'run_warning',
+          level: 'warn',
+          timestamp,
+          message: warningMessage,
+          nodeId: triggerNode.id,
+          nodeType: triggerNode.type,
+          nodeTitle: triggerNode.title ?? null,
+          metadata: {
+            compile: {
+              errors: compileReport.errors,
+              warnings: compileReport.warnings,
+              findings: compileReport.findings,
+            },
+          },
+        });
+        args.toast(warningMessage, { variant: 'warning' });
+      }
+
+      if (args.strictFlowMode) {
+        const dependencyReport = inspectPathDependencies(args.normalizedNodes, args.sanitizedEdges);
+        if (dependencyReport.errors > 0) {
+          const timestamp = new Date().toISOString();
+          const blockedMessage = `Strict flow blocked run: ${dependencyReport.errors} dependency error(s) detected.`;
+          args.appendRuntimeEvent({
+            source: 'local',
+            kind: 'run_blocked',
+            level: 'warn',
+            timestamp,
+            message: blockedMessage,
+            nodeId: triggerNode.id,
+            nodeType: triggerNode.type,
+            nodeTitle: triggerNode.title ?? null,
+            metadata: {
+              strictFlowMode: true,
+              dependencyErrors: dependencyReport.errors,
+              dependencyWarnings: dependencyReport.warnings,
+              blockedRiskIds: dependencyReport.risks
+                .filter((risk): boolean => risk.severity === 'error')
+                .map((risk) => risk.id),
+            },
+          });
+          args.setNodeStatus({
+            nodeId: triggerNode.id,
+            status: 'blocked',
+            source: 'local',
+            nodeType: triggerNode.type,
+            nodeTitle: triggerNode.title ?? null,
+            kind: 'node_status',
+            level: 'warn',
+            message: blockedMessage,
+            metadata: {
+              strictFlowMode: true,
+              dependencyErrors: dependencyReport.errors,
+            },
+          });
+          args.toast(
+            'Strict flow blocked run. Fix Dependency Inspector errors in Path Settings.',
+            { variant: 'error' },
+          );
+          return;
+        }
       }
     }
 

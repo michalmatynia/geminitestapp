@@ -39,7 +39,7 @@ export function Asset3DCard({
     });
   };
 
-  const displayName = asset.name || asset.filename.replace(/^\d+-/, '');
+  const displayName = asset.name || (asset.filename || '').replace(/^\d+-/, '');
 
   return (
     <ResourceCard
@@ -120,25 +120,25 @@ export function Asset3DCard({
       }
       footer={
         <div className='text-xs text-muted-foreground'>
-          <span>{formatFileSize(asset.size)}</span>
+          <span>{formatFileSize(asset.size || 0)}</span>
           <span className='mx-1'>•</span>
           <span>{asset.createdAt ? formatDate(asset.createdAt) : ''}</span>
         </div>
       }
     >
       {/* Tags */}
-      {asset.tags.length > 0 && (
+      {(asset.tags || []).length > 0 && (
         <div className='flex flex-wrap gap-1'>
-          {asset.tags.slice(0, 3).map((tag: string) => (
+          {(asset.tags || []).slice(0, 3).map((tag: string) => (
             <Tag
               key={tag}
               label={tag}
               className='bg-muted text-muted-foreground'
             />
           ))}
-          {asset.tags.length > 3 && (
+          {(asset.tags || []).length > 3 && (
             <Tag
-              label={`+${asset.tags.length - 3}`}
+              label={`+${(asset.tags || []).length - 3}`}
               className='bg-muted text-muted-foreground'
             />
           )}

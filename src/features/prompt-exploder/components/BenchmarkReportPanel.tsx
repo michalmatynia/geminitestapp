@@ -13,8 +13,6 @@ import { useBenchmarkState, useBenchmarkActions } from '../context/hooks/useBenc
 import { useSettingsState } from '../context/hooks/useSettings';
 import { promptExploderClampNumber } from '../helpers/formatting';
 
-import type { PromptExploderBenchmarkSuite } from '../types';
-
 export function BenchmarkReportPanel(): React.JSX.Element {
   const { isBusy } = useSettingsState();
   const {
@@ -69,7 +67,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
             <SelectSimple size='sm'
               value={benchmarkSuiteDraft}
               onValueChange={(value: string) => {
-                setBenchmarkSuiteDraft(value as PromptExploderBenchmarkSuite);
+                setBenchmarkSuiteDraft(value as any);
               }}
               options={[
                 {
@@ -126,7 +124,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
             selected Prompt Exploder runtime profile.
           </div>
         </div>
-        {benchmarkSuiteDraft === 'custom' ? (
+        {(benchmarkSuiteDraft as unknown as string) === 'custom' ? (
           <FormField label='Custom Benchmark Cases JSON' id='custom-benchmark-cases'>
             <div className='grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto_auto]'>
               <Input
@@ -326,14 +324,13 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                           [{suggestion.caseId}] {suggestion.segmentTitle}
                         </div>
                         <div className='text-[10px] text-gray-500'>
-                          {(suggestion.confidence * 100).toFixed(0)}%
+                          {((suggestion.confidence || 0) * 100).toFixed(0)}%
                         </div>
                       </div>
                       <div className='mt-1 text-[10px] text-gray-500'>
-                        type: {suggestion.segmentType} · matched:{' '}
-                        {suggestion.matchedPatternIds.join(', ') || 'none'}
-                      </div>
-                      <div className='mt-1 rounded border border-border/50 bg-card/20 px-2 py-1 font-mono text-[10px] text-gray-300'>
+                                                      type: {suggestion.segmentType} · matched:{' '}
+                        {(suggestion.matchedPatternIds || []).join(', ') || 'none'}
+                      </div>                      <div className='mt-1 rounded border border-border/50 bg-card/20 px-2 py-1 font-mono text-[10px] text-gray-300'>
                         {suggestion.suggestedRulePattern}
                       </div>
                       <div className='mt-2 flex items-center justify-between gap-2'>
@@ -357,7 +354,7 @@ export function BenchmarkReportPanel(): React.JSX.Element {
                             variant='outline'
                             size='sm'
                             onClick={() => {
-                              handleDismissBenchmarkSuggestion(suggestion.id);
+                              handleDismissBenchmarkSuggestion(suggestion.id ?? '');
                             }}
                           >
                             Dismiss

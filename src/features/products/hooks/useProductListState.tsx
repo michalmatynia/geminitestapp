@@ -180,6 +180,10 @@ export function useProductListState(): ProductListContextType & {
     setPageSize,
     search,
     setSearch,
+    productId,
+    setProductId,
+    idMatchMode,
+    setIdMatchMode,
     sku,
     setSku,
     description,
@@ -654,6 +658,8 @@ export function useProductListState(): ProductListContextType & {
     try {
       const filters = {
         search,
+        id: productId || undefined,
+        idMatchMode: productId ? idMatchMode : undefined,
         sku,
         description,
         categoryId: categoryId || undefined,
@@ -688,7 +694,7 @@ export function useProductListState(): ProductListContextType & {
     } finally {
       setLoadingGlobalSelection(false);
     }
-  }, [search, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, catalogFilter, baseExported, preferences.nameLocale, toast, queryClient]);
+  }, [search, productId, idMatchMode, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, catalogFilter, baseExported, preferences.nameLocale, toast, queryClient]);
 
   const handleMassDelete = useCallback(async () => {
     const selectedProductIds = Object.keys(rowSelection).filter(
@@ -839,6 +845,10 @@ export function useProductListState(): ProductListContextType & {
     onDismissActionError: handleDismissActionError,
     search,
     setSearch,
+    productId,
+    setProductId,
+    idMatchMode,
+    setIdMatchMode,
     sku,
     setSku,
     description,
@@ -1012,8 +1022,12 @@ export function useProductListState(): ProductListContextType & {
     refresh,
     rowSelection,
     search,
+    productId,
+    idMatchMode,
     showIntegrationModal,
     showListProductModal,
+    setProductId,
+    setIdMatchMode,
     sku,
     description,
     categoryId,

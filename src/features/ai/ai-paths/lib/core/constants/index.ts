@@ -42,8 +42,10 @@ export const CACHEABLE_NODE_TYPES: NodeType[] = [
   'viewer',
 ];
 export const CACHEABLE_NODE_TYPE_SET = new Set<NodeType>(CACHEABLE_NODE_TYPES);
-export const TRIGGER_INPUT_PORTS = ['context'];
-export const TRIGGER_OUTPUT_PORTS = ['trigger', 'triggerName', 'context', 'meta', 'entityId', 'entityType'];
+export const TRIGGER_INPUT_PORTS: string[] = [];
+export const TRIGGER_OUTPUT_PORTS = ['trigger', 'triggerName'];
+export const FETCHER_INPUT_PORTS = ['trigger', 'context', 'meta', 'entityId', 'entityType'];
+export const FETCHER_OUTPUT_PORTS = ['context', 'meta', 'entityId', 'entityType'];
 export const CONTEXT_INPUT_PORTS = ['context'];
 export const CONTEXT_OUTPUT_PORTS = ['context', 'entityId', 'entityType', 'entityJson'];
 export const SIMULATION_INPUT_PORTS = ['trigger'];
@@ -585,6 +587,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     'database',
   ],
   trigger: [
+    'fetcher',
     'context',
     'parser',
     'iterator',
@@ -603,6 +606,25 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
     'api_advanced',
     'database',
     'simulation',
+  ],
+  fetcher: [
+    'context',
+    'parser',
+    'iterator',
+    'viewer',
+    'notification',
+    'mapper',
+    'mutator',
+    'validator',
+    'validation_pattern',
+    'bundle',
+    'template',
+    'router',
+    'delay',
+    'poll',
+    'http',
+    'api_advanced',
+    'database',
   ],
   simulation: ['trigger', 'notification'],
   parser: [
@@ -748,6 +770,7 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
 
 export const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   trigger: { border: 'border-lime-500/40', glow: 'shadow-lime-500/20' },
+  fetcher: { border: 'border-cyan-400/40', glow: 'shadow-cyan-400/20' },
   simulation: { border: 'border-cyan-500/40', glow: 'shadow-cyan-500/20' },
   context: { border: 'border-emerald-500/40', glow: 'shadow-emerald-500/20' },
   audio_oscillator: { border: 'border-violet-400/40', glow: 'shadow-violet-400/20' },

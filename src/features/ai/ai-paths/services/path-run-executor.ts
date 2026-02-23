@@ -9,6 +9,8 @@ import {
   evaluateGraphWithIteratorAutoContinue,
   GraphExecutionCancelled,
   inspectPathDependencies,
+  migrateTriggerToFetcherGraph,
+  normalizeNodes,
   normalizeAiPathsValidationConfig,
   sanitizeEdges,
 } from '@/features/ai/ai-paths/lib';
@@ -195,7 +197,13 @@ type RuntimeProfileHighlight = {
   hashMs?: number | undefined;
 };
 
-type RuntimeProfileNodeSpanStatus = 'running' | 'completed' | 'failed' | 'cached';
+type RuntimeProfileNodeSpanStatus =
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'cached'
+  | 'skipped'
+  | 'blocked';
 
 type RuntimeProfileNodeSpan = {
   spanId: string;
@@ -725,9 +733,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   }
 
   // Runs created before edge-canonicalization can still contain stale edges.
-  // Re-sanitize defensively so compile/validation checks are stable.
-  const nodes = graph.nodes;
-  const edges = sanitizeEdges(nodes, graph.edges);
+  // Re-sanitize and migrate Trigger->Fetcher wiring defensively so compile/runtime checks are stable.
+  const normalizedNodes = normalizeNodes(graph.nodes);
+  const migratedTriggerGraph = migrateTriggerToFetcherGraph(normalizedNodes, graph.edges);
+  const nodes = normalizeNodes(migratedTriggerGraph.nodes);
+  const edges = sanitizeEdges(nodes, migratedTriggerGraph.edges);
   const triggerNodeId = resolveTriggerNodeId(
     nodes,
     edges,
@@ -1104,10 +1114,20 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           // Update accumulated state with completed outputs
           const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
           const safeOutputs = toJsonSafe(nextOutputs) as RuntimePortValues;
+          const rawOutputStatus =
+            typeof safeOutputs?.['status'] === 'string'
+              ? safeOutputs['status'].trim().toLowerCase()
+              : null;
+          const resolvedStatus =
+            cached
+              ? 'cached'
+              : rawOutputStatus === 'blocked' || rawOutputStatus === 'skipped'
+                ? rawOutputStatus
+                : 'completed';
           accInputs[node.id] = safeInputs;
           accOutputs[node.id] = {
             ...(safeOutputs),
-            status: cached ? 'cached' : 'completed',
+            status: resolvedStatus,
           } as RuntimePortValues;
           const attempt = nodeAttemptMap.get(node.id) ?? 0;
           const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
@@ -1119,12 +1139,12 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             nodeTitle: node.title ?? null,
             iteration,
             attempt,
-            status: cached ? 'cached' : 'completed',
+            status: resolvedStatus,
             finishedAt: nodeFinishedAt,
             cached: Boolean(cached),
           });
 
-          if (cached) {
+          if (resolvedStatus === 'cached') {
             if (iteration === 0) {
               await Promise.all([
                 repo.upsertRunNode(run.id, node.id, {
@@ -1174,11 +1194,21 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             }
             return;
           }
+          const terminalLevel =
+            resolvedStatus === 'blocked' || resolvedStatus === 'skipped'
+              ? 'warn'
+              : 'info';
+          const terminalMessage =
+            resolvedStatus === 'blocked'
+              ? `Node ${node.title ?? node.id} blocked.`
+              : resolvedStatus === 'skipped'
+                ? `Node ${node.title ?? node.id} skipped.`
+                : `Node ${node.title ?? node.id} completed.`;
           await Promise.all([
             repo.upsertRunNode(run.id, node.id, {
               nodeType: node.type,
               nodeTitle: node.title ?? null,
-              status: 'completed',
+              status: resolvedStatus,
               attempt,
               inputs: safeInputs,
               outputs: safeOutputs,
@@ -1187,15 +1217,15 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             }),
             repo.createRunEvent({
               runId: run.id,
-              level: 'info',
-              message: `Node ${node.title ?? node.id} completed.`,
+              level: terminalLevel,
+              message: terminalMessage,
               metadata: {
                 traceId,
                 spanId: nodeSpanId,
                 nodeId: node.id,
                 nodeType: node.type,
                 nodeTitle: node.title ?? null,
-                status: 'completed',
+                status: resolvedStatus,
                 attempt,
                 iteration,
                 runStartedAt: cbRunStartedAt,
@@ -1206,7 +1236,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           await recordRuntimeNodeStatus({
             runId: run.id,
             nodeId: node.id,
-            status: 'completed',
+            status: resolvedStatus,
           });
           publishRunUpdate(run.id, 'nodes', {
             traceId,
@@ -1214,7 +1244,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             nodeId: node.id,
             nodeType: node.type,
             nodeTitle: node.title ?? null,
-            status: 'completed',
+            status: resolvedStatus,
             outputs: safeOutputs,
             iteration,
           });

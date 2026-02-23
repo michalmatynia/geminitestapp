@@ -329,6 +329,7 @@ const toModuleFromNodeType = (
 ): AiPathsValidationModule => {
   if (nodeType === 'trigger') return 'trigger';
   if (nodeType === 'simulation') return 'simulation';
+  if (nodeType === 'fetcher') return 'simulation';
   if (nodeType === 'context') return 'context';
   if (nodeType === 'parser' || nodeType === 'regex') return 'parser';
   if (nodeType === 'database') return 'database';
@@ -347,6 +348,7 @@ const normalizeLabel = (value: string): string =>
 
 const NODE_LABEL_TO_TYPE: Record<string, string> = {
   trigger: 'trigger',
+  fetcher: 'fetcher',
   simulation: 'simulation',
   contextfilter: 'context',
   context: 'context',

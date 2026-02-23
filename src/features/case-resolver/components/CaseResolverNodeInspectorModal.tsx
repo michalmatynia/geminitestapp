@@ -2,6 +2,11 @@ import { Split } from 'lucide-react';
 import React from 'react';
 
 import {
+  VALIDATOR_PATTERN_LISTS_KEY,
+  parseValidatorPatternLists,
+} from '@/features/admin/pages/validator-scope';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
+import {
   CASE_RESOLVER_JOIN_MODE_OPTIONS,
   CASE_RESOLVER_NODE_ROLE_OPTIONS,
   CASE_RESOLVER_QUOTE_MODE_OPTIONS,
@@ -17,9 +22,11 @@ import {
   Checkbox,
   FormField,
   Input,
+  Label,
   SelectSimple,
   EmptyState,
   Textarea,
+  ValidatorFormatterToggle,
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
@@ -53,6 +60,7 @@ type CaseResolverNodeInspectorModalProps = {
     content: string;
     plainText: string;
   } | null;
+  selectedPromptSecondaryOutputHint?: boolean;
   onUpdateSelectedPromptTemplate: (template: string) => void;
   onUpdateSelectedNodeMeta: (patch: Partial<CaseResolverNodeMeta>) => void;
   selectedEdge: CaseResolverEdge | CompatEdge | null;
@@ -70,6 +78,7 @@ export function CaseResolverNodeInspectorModal({
   selectedPromptTemplate,
   selectedPromptInputText,
   selectedPromptOutputPreview,
+  selectedPromptSecondaryOutputHint = false,
   onUpdateSelectedPromptTemplate,
   onUpdateSelectedNodeMeta,
   selectedEdge,
@@ -77,6 +86,25 @@ export function CaseResolverNodeInspectorModal({
   onUpdateSelectedEdgeMeta,
 }: CaseResolverNodeInspectorModalProps): React.JSX.Element {
   const { onEditFile, workspace, activeFile } = useCaseResolverPageContext();
+  const settingsQuery = useSettingsMap({ scope: 'light' });
+  const rawPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
+  const plainTextPatternStacks = React.useMemo(
+    () =>
+      parseValidatorPatternLists(rawPatternLists).filter(
+        (list): boolean => list.scope === 'case-resolver-plain-text'
+      ),
+    [rawPatternLists]
+  );
+  const plainTextPatternStackOptions = React.useMemo(
+    () =>
+      plainTextPatternStacks.map((stack) => ({
+        value: stack.id,
+        label: stack.name,
+        description: stack.description.trim() || 'Case Resolver plain-text transformation rules.',
+      })),
+    [plainTextPatternStacks]
+  );
+  const defaultPlainTextStackId = plainTextPatternStacks[0]?.id ?? '';
   const selectedCanvasFileId = activeFile?.id ?? null;
   const selectedWorkspaceId = workspace?.id ?? null;
 
@@ -250,6 +278,59 @@ export function CaseResolverNodeInspectorModal({
                     </span>
                   </div>
                 </FormField>
+                <div className='space-y-2 rounded border border-border/60 bg-card/30 px-3 py-3'>
+                  <div className='text-[11px] text-gray-300'>Case Resolver Plain Text Validation</div>
+                  <ValidatorFormatterToggle
+                    validatorEnabled={selectedPromptMeta.plainTextValidationEnabled ?? true}
+                    formatterEnabled={selectedPromptMeta.plainTextFormatterEnabled ?? true}
+                    validatorLabel='Validation'
+                    formatterLabel='Auto Plain Text'
+                    onValidatorChange={(next: boolean): void => {
+                      const currentStackId =
+                        selectedPromptMeta.plainTextValidationStackId?.trim() ?? '';
+                      const fallbackStackId = currentStackId || defaultPlainTextStackId;
+                      onUpdateSelectedNodeMeta({
+                        plainTextValidationEnabled: next,
+                        plainTextFormatterEnabled:
+                          next ? (selectedPromptMeta.plainTextFormatterEnabled ?? true) : false,
+                        ...(next && fallbackStackId
+                          ? { plainTextValidationStackId: fallbackStackId }
+                          : {}),
+                      });
+                    }}
+                    onFormatterChange={(next: boolean): void => {
+                      onUpdateSelectedNodeMeta({ plainTextFormatterEnabled: next });
+                    }}
+                  />
+                  {(selectedPromptMeta.plainTextValidationEnabled ?? true) ? (
+                    plainTextPatternStackOptions.length > 0 ? (
+                      <div className='space-y-1'>
+                        <Label className='text-[11px] text-gray-400'>Validation Stack</Label>
+                        <SelectSimple
+                          size='sm'
+                          value={
+                            selectedPromptMeta.plainTextValidationStackId?.trim() ||
+                            defaultPlainTextStackId
+                          }
+                          onValueChange={(value: string): void => {
+                            onUpdateSelectedNodeMeta({ plainTextValidationStackId: value });
+                          }}
+                          options={plainTextPatternStackOptions}
+                          triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
+                        />
+                      </div>
+                    ) : (
+                      <p className='text-[11px] text-amber-200'>
+                        No &ldquo;Case Resolver - Plain Text&rdquo; validation stacks are configured yet.
+                      </p>
+                    )
+                  ) : null}
+                  {selectedPromptMeta.role === 'explanatory' ? (
+                    <p className='text-[11px] text-gray-500'>
+                      Explanatory nodes keep connector output as plain text.
+                    </p>
+                  ) : null}
+                </div>
                 {selectedPromptMeta.role === 'ai_prompt' ? (
                   <div className='text-[11px] text-gray-500'>
                     Runtime AI prompt nodes are excluded by default and can be opted in.
@@ -281,6 +362,19 @@ export function CaseResolverNodeInspectorModal({
                   </div>
                   <div className='space-y-2 rounded border border-border/60 bg-card/30 p-3'>
                     <div className='text-[11px] text-gray-400'>Output Preview</div>
+                    {selectedPromptSecondaryOutputHint ? (
+                      <div className='rounded border border-amber-500/35 bg-amber-500/10 p-2 text-[10px] text-amber-100'>
+                        Only <span className='font-semibold'>wysiwygText</span> input is connected.
+                        {' '}
+                        <span className='font-semibold'>content</span>
+                        {' '}
+                        and
+                        {' '}
+                        <span className='font-semibold'>plainText</span>
+                        {' '}
+                        outputs remain empty until those lanes are connected.
+                      </div>
+                    ) : null}
                     <div className='space-y-1 text-[11px]'>
                       <div className='text-gray-500'>wysiwygText</div>
                       <div className='max-h-20 overflow-auto whitespace-pre-wrap rounded border border-border/60 bg-card/50 p-2 text-[12px] text-gray-100'>

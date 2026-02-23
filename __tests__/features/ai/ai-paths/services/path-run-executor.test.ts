@@ -163,6 +163,40 @@ describe('PathRunExecutor', () => {
     ).toBe(true);
   });
 
+  it('should persist blocked node finishes as blocked status', async () => {
+    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
+      const runStartedAt = options.runStartedAt;
+      const runId = options.runId;
+      await options.onNodeFinish({
+        node: mockNodes[0],
+        nodeInputs: {},
+        nextOutputs: {
+          status: 'blocked',
+          waitingOnPorts: ['trigger'],
+        },
+        iteration: 0,
+        runStartedAt,
+        runId,
+      });
+      return { outputs: { 'node-1': { waitingOnPorts: ['trigger'] } } };
+    });
+
+    const run = await repo.createRun({
+      pathId: 'test-blocked-status',
+      graph: { nodes: mockNodes, edges: mockEdges },
+      meta: { aiPathsValidation: { enabled: false } },
+    });
+    await repo.createRunNodes(run.id, mockNodes);
+
+    await executePathRun(run);
+
+    const nodes = await repo.listRunNodes(run.id);
+    expect(nodes[0].status).toBe('blocked');
+
+    const events = await repo.listRunEvents(run.id);
+    expect(events.some((event: any) => event.message === 'Node Const blocked.')).toBe(true);
+  });
+
   it('should handle node errors correctly', async () => {
     (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
       await options.onNodeError({ node: mockNodes[0], nodeInputs: {}, prevOutputs: {}, error: new Error('Node failed') });

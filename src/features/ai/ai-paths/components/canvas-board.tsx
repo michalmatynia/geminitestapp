@@ -1433,8 +1433,8 @@ export function CanvasBoard({
                                       event.preventDefault();
                                       event.stopPropagation();
                                       handleDisconnectPort('input', node.id, input);
-                                    }}                                aria-label={`Connect to ${formatPortLabel(input)}`}
-                                    title={`Input: ${formatPortLabel(input)}`}
+                                    }}
+                                    aria-label={`Connect to ${formatPortLabel(input)}`}
                                   />
                                   {hasMismatch ? (
                                     <span className='absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60' />
@@ -1528,8 +1528,8 @@ export function CanvasBoard({
                                       event.preventDefault();
                                       event.stopPropagation();
                                       handleDisconnectPort('output', node.id, output);
-                                    }}                                aria-label={`Start connection from ${formatPortLabel(output)}`}
-                                    title={`Output: ${formatPortLabel(output)}`}
+                                    }}
+                                    aria-label={`Start connection from ${formatPortLabel(output)}`}
                                   />
                                   {hasMismatch ? (
                                     <span className='absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60' />

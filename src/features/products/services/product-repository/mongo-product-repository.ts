@@ -370,9 +370,37 @@ const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
   return Array.from(unique);
 };
 
+const escapeRegex = (value: string): string =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
 const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => {
   const filter: Filter<ProductDocument> = {};
   const andConditions: Filter<ProductDocument>[] = [];
+
+  if (filters.id) {
+    const normalizedId = filters.id.trim();
+    if (normalizedId.length > 0) {
+      if (filters.idMatchMode === 'partial') {
+        const escapedId = escapeRegex(normalizedId);
+        andConditions.push({
+          $or: [
+            { id: { $regex: escapedId, $options: 'i' } },
+            {
+              $expr: {
+                $regexMatch: {
+                  input: { $toString: '$_id' },
+                  regex: escapedId,
+                  options: 'i',
+                },
+              },
+            },
+          ],
+        } as Filter<ProductDocument>);
+      } else {
+        andConditions.push(buildProductIdFilter(normalizedId));
+      }
+    }
+  }
 
   if (filters.sku) {
     filter.sku = { $regex: filters.sku, $options: 'i' };

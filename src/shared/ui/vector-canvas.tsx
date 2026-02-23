@@ -1614,7 +1614,9 @@ export function VectorCanvas({
             id: `shape_${Date.now().toString(36)}`,
             name: `Polygon ${shapes.length + 1}`,
             type: 'polygon',
+            role: 'custom',
             points: [nextPoint],
+            style: {},
             closed: false,
             visible: true,
           };

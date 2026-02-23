@@ -1,13 +1,20 @@
 export interface NoteTagEmbedded {
   tagId: string;
+  noteId?: string;
+  assignedAt?: string | Date;
+  tag?: any;
 }
 
 export interface NoteCategoryEmbedded {
   categoryId: string;
+  noteId?: string;
+  assignedAt?: string | Date;
+  category?: any;
 }
 
 export interface NoteRelationFromEmbedded {
   id: string;
+  sourceNoteId: string;
   targetNoteId: string;
   type: string;
   assignedAt?: string | Date;
@@ -22,7 +29,7 @@ export interface NoteRelationFromEmbedded {
 export interface NoteRelationToEmbedded {
   id: string;
   sourceNoteId: string;
-  targetNoteId?: string;
+  targetNoteId: string;
   type: string;
   assignedAt?: string | Date;
   metadata?: Record<string, unknown>;
@@ -38,7 +45,7 @@ export interface NoteDocument {
   id?: string;
   title: string;
   content: string;
-  editorType?: 'markdown' | 'rich-text' | 'plain-text';
+  editorType?: 'markdown' | 'rich-text' | 'plain-text' | 'code' | 'wysiwyg';
   color?: string | null;
   isPinned?: boolean;
   isArchived?: boolean;
@@ -50,6 +57,9 @@ export interface NoteDocument {
   categories?: NoteCategoryEmbedded[];
   relationsFrom?: NoteRelationFromEmbedded[];
   relationsTo?: NoteRelationToEmbedded[];
+  tagIds?: string[];
+  categoryIds?: string[];
+  relatedNoteIds?: string[];
 }
 
 export interface TagDocument {

@@ -9,7 +9,7 @@ export const buildBaseExportBlwoPathConfigValue = (
 ): string =>
   JSON.stringify({
     id: BASE_EXPORT_BLWO_PATH_ID,
-    version: 1,
+    version: 2,
     name: BASE_EXPORT_BLWO_PATH_NAME,
     description:
       'Product-row workflow export to Base.com launched by BLWo trigger button.',
@@ -24,12 +24,39 @@ export const buildBaseExportBlwoPathConfigValue = (
         type: 'trigger',
         title: 'Trigger: BLWo Product Row',
         description: `User trigger button (${BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID}).`,
-        inputs: ['context'],
-        outputs: ['trigger', 'triggerName', 'context', 'meta', 'entityId', 'entityType'],
+        inputs: [],
+        outputs: ['trigger', 'triggerName'],
         position: { x: 40, y: 300 },
         config: {
           trigger: {
             event: BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID,
+          },
+        },
+      },
+      {
+        id: 'node-fetcher-blwo',
+        type: 'fetcher',
+        title: 'Fetcher: Trigger Context',
+        description: 'Resolve context, metadata, and entity identity from trigger input.',
+        inputs: ['trigger', 'context', 'meta', 'entityId', 'entityType'],
+        outputs: ['context', 'meta', 'entityId', 'entityType'],
+        position: { x: 220, y: 300 },
+        config: {
+          fetcher: {
+            sourceMode: 'live_context',
+            entityType: 'product',
+            entityId: '',
+            productId: '',
+          },
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              trigger: { required: true },
+              context: { required: false },
+              meta: { required: false },
+              entityId: { required: false },
+              entityType: { required: false },
+            },
           },
         },
       },
@@ -209,15 +236,22 @@ export const buildBaseExportBlwoPathConfigValue = (
     ],
     edges: [
       {
-        id: 'edge-blwo-01',
+        id: 'edge-blwo-00',
         from: 'node-trigger-blwo',
+        to: 'node-fetcher-blwo',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: 'edge-blwo-01',
+        from: 'node-fetcher-blwo',
         to: 'node-http-default-connection',
         fromPort: 'context',
         toPort: 'context',
       },
       {
         id: 'edge-blwo-02',
-        from: 'node-trigger-blwo',
+        from: 'node-fetcher-blwo',
         to: 'node-http-default-inventory',
         fromPort: 'context',
         toPort: 'context',
@@ -238,14 +272,14 @@ export const buildBaseExportBlwoPathConfigValue = (
       },
       {
         id: 'edge-blwo-05',
-        from: 'node-trigger-blwo',
+        from: 'node-fetcher-blwo',
         to: 'node-bundle-export-input',
         fromPort: 'entityId',
         toPort: 'entityId',
       },
       {
         id: 'edge-blwo-06',
-        from: 'node-trigger-blwo',
+        from: 'node-fetcher-blwo',
         to: 'node-bundle-export-input',
         fromPort: 'entityType',
         toPort: 'entityType',
@@ -323,6 +357,8 @@ export const needsBaseExportBlwoConfigUpgrade = (raw: string | null | undefined)
   if (!raw) return true;
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const version = typeof parsed['version'] === 'number' ? parsed['version'] : 0;
+    if (version < 2) return true;
     const nodes = Array.isArray(parsed['nodes']) ? (parsed['nodes'] as unknown[]) : [];
     const hasTrigger = nodes.some((entry: unknown): boolean => {
       if (!entry || typeof entry !== 'object') return false;
@@ -339,9 +375,13 @@ export const needsBaseExportBlwoConfigUpgrade = (raw: string | null | undefined)
       const node = entry as Record<string, unknown>;
       return node['type'] === 'api_advanced';
     });
-    return !hasTrigger || !hasAdvancedApi;
+    const hasFetcher = nodes.some((entry: unknown): boolean => {
+      if (!entry || typeof entry !== 'object') return false;
+      const node = entry as Record<string, unknown>;
+      return node['type'] === 'fetcher';
+    });
+    return !hasTrigger || !hasFetcher || !hasAdvancedApi;
   } catch {
     return true;
   }
 };
-

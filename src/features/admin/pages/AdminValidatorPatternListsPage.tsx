@@ -54,6 +54,10 @@ const scopeOptions: Array<{ value: ValidatorScope; label: string }> = [
     value: 'case-resolver-prompt-exploder',
     label: VALIDATOR_SCOPE_LABELS['case-resolver-prompt-exploder'],
   },
+  {
+    value: 'case-resolver-plain-text',
+    label: VALIDATOR_SCOPE_LABELS['case-resolver-plain-text'],
+  },
 ];
 
 const createListId = (): string => {

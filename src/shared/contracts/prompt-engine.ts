@@ -27,6 +27,7 @@ export const promptValidationScopeSchema = z.enum([
   'image_studio_generation',
   'prompt_exploder',
   'case_resolver_prompt_exploder',
+  'case_resolver_plain_text',
   'global',
 ]);
 export type PromptValidationScopeDto = z.infer<typeof promptValidationScopeSchema>;

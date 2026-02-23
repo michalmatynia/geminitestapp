@@ -99,6 +99,49 @@ describe('handleParser strict context hydration', () => {
     });
   });
 
+  it('keeps bundle object and images output distinct in bundle mode', async () => {
+    const ctx = buildContext({
+      node: {
+        ...buildParserNode(),
+        outputs: ['bundle', 'images', 'title'],
+        config: {
+          parser: {
+            mappings: {
+              images: 'images',
+              title: 'title',
+            },
+            outputMode: 'bundle',
+          },
+        },
+      } as AiNode,
+      nodeInputs: {
+        entityJson: {
+          title: 'Desk Lamp',
+          images: [
+            { url: 'https://cdn.example.com/lamp-a.jpg' },
+            { filePath: '/uploads/lamp-b.png' },
+          ],
+        },
+      },
+    });
+
+    const output = await handleParser(ctx);
+
+    expect(output['images']).toEqual([
+      'https://cdn.example.com/lamp-a.jpg',
+      '/uploads/lamp-b.png',
+    ]);
+    expect(output['bundle']).toMatchObject({
+      title: 'Desk Lamp',
+      images: [
+        'https://cdn.example.com/lamp-a.jpg',
+        '/uploads/lamp-b.png',
+      ],
+    });
+    expect(Array.isArray(output['bundle'])).toBe(false);
+    expect(Array.isArray(output['images'])).toBe(true);
+  });
+
   it('returns empty output when strict mode has no explicit source', async () => {
     const fetchEntityCached = vi.fn();
     const ctx = buildContext({
@@ -107,7 +150,11 @@ describe('handleParser strict context hydration', () => {
     });
 
     const output = await handleParser(ctx);
-    expect(output).toEqual({});
+    expect(output).toMatchObject({
+      status: 'blocked',
+      skipReason: 'missing_source',
+      blockedReason: 'missing_source',
+    });
     expect(fetchEntityCached).not.toHaveBeenCalled();
   });
 });

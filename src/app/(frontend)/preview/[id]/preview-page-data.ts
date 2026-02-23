@@ -61,6 +61,8 @@ export const loadPreviewRenderData = async (id: string): Promise<PreviewRenderDa
     order: component.order || 0,
     content: (component.content as Record<string, unknown>) ?? {},
     pageId: page.id,
+    createdAt: component.createdAt ?? new Date().toISOString(),
+    updatedAt: component.updatedAt ?? null,
   }));
 
   return {

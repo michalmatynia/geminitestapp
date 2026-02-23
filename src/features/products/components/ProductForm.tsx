@@ -261,7 +261,7 @@ export default function ProductForm({
     configuredInstanceDenyBehavior[validationInstanceScope];
   const patternDenyBehaviorOverrideById = useMemo(
     () =>
-      new Map<string, ProductValidationDenyBehavior>(
+      new Map<string, ProductValidationDenyBehavior | null>(
         (validatorConfigQuery.data?.patterns ?? []).map((pattern: ProductValidationPattern) => [
           pattern.id,
           normalizeProductValidationPatternDenyBehaviorOverride(pattern.denyBehaviorOverride),
@@ -798,7 +798,7 @@ export default function ProductForm({
           typeof issue.replacementValue === 'string' &&
           issue.replacementValue.trim().length > 0;
         if (shouldAutoApplyRuntimeReplacement) {
-          const applied = applyAutoReplacementToField(fieldName, issue.replacementValue);
+          const applied = applyAutoReplacementToField(fieldName, issue.replacementValue ?? '');
           if (!applied) continue;
         }
         acceptIssue({

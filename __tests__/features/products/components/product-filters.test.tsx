@@ -13,8 +13,20 @@ describe('ProductFilters Component', () => {
   const mockContextValue: Partial<ProductListContextType> = {
     search: '',
     setSearch: vi.fn(),
+    productId: '',
+    setProductId: vi.fn(),
+    idMatchMode: 'exact',
+    setIdMatchMode: vi.fn(),
     sku: '',
     setSku: vi.fn(),
+    description: '',
+    setDescription: vi.fn(),
+    categoryId: '',
+    setCategoryId: vi.fn(),
+    catalogFilter: 'all',
+    nameLocale: 'name_en',
+    baseExported: '',
+    setBaseExported: vi.fn(),
     minPrice: undefined,
     setMinPrice: vi.fn(),
     maxPrice: undefined,
@@ -23,6 +35,8 @@ describe('ProductFilters Component', () => {
     setStartDate: vi.fn(),
     endDate: '',
     setEndDate: vi.fn(),
+    filtersCollapsedByDefault: false,
+    catalogs: [],
   };
 
   const renderWithProviders = (contextValue: Partial<ProductListContextType>) => {
@@ -39,11 +53,21 @@ describe('ProductFilters Component', () => {
     renderWithProviders(mockContextValue);
     
     expect(screen.getByPlaceholderText('Search by product name...')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('Search by product ID...')).toBeInTheDocument();
+    expect(screen.getByLabelText('ID Match')).toBeInTheDocument();
+    expect(screen.getByText('Exact')).toBeInTheDocument();
     expect(screen.getByPlaceholderText('Search by SKU...')).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/min price/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/max price/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/from/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/to/i)).toBeInTheDocument();
+  });
+
+  it('calls setProductId when Product ID input changes', () => {
+    renderWithProviders(mockContextValue);
+    const input = screen.getByPlaceholderText('Search by product ID...');
+    fireEvent.change(input, { target: { value: 'cma123' } });
+    expect(mockContextValue.setProductId).toHaveBeenCalledWith('cma123');
   });
 
   it('calls setSearch when name input changes', async () => {

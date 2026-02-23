@@ -26,6 +26,27 @@ type AgentRunRecord = {
   planState?: unknown;
 };
 
+type AiTerminalStatus = 'blocked' | 'skipped';
+
+const buildAiTerminalOutputs = (options: {
+  status: AiTerminalStatus;
+  reason: string;
+  details?: RuntimePortValues;
+}): RuntimePortValues => {
+  const base: RuntimePortValues = {
+    status: options.status,
+    skipReason: options.reason,
+    result: '',
+  };
+  if (options.status === 'blocked') {
+    base['blockedReason'] = options.reason;
+  }
+  return {
+    ...base,
+    ...(options.details ?? {}),
+  };
+};
+
 const parseAgentPersonas = (value: unknown): AgentPersona[] => {
   if (!value) return [];
   if (Array.isArray(value)) {
@@ -85,7 +106,15 @@ export const handleAgent: NodeHandler = async ({
   reportAiPathsError,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (skipAiJobs) {
-    return prevOutputs;
+    return buildAiTerminalOutputs({
+      status: 'skipped',
+      reason: 'ai_jobs_disabled',
+      details: {
+        bundle: {
+          status: 'skipped',
+        },
+      },
+    });
   }
   if (executed.ai.has(node.id)) return prevOutputs;
 
@@ -117,7 +146,15 @@ export const handleAgent: NodeHandler = async ({
       : formatRuntimeValue(rawPrompt);
 
   if (!prompt || prompt === '—') {
-    return prevOutputs;
+    return buildAiTerminalOutputs({
+      status: 'blocked',
+      reason: 'missing_prompt',
+      details: {
+        bundle: {
+          status: 'blocked',
+        },
+      },
+    });
   }
 
   let personas: AgentPersona[];
@@ -244,7 +281,16 @@ export const handleLearnerAgent: NodeHandler = async ({
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   if (node.type !== 'learner_agent') return prevOutputs;
   if (skipAiJobs) {
-    return prevOutputs;
+    return buildAiTerminalOutputs({
+      status: 'skipped',
+      reason: 'ai_jobs_disabled',
+      details: {
+        sources: [],
+        bundle: {
+          status: 'skipped',
+        },
+      },
+    });
   }
 
   const learnerConfig = node.config?.learnerAgent ?? {
@@ -254,7 +300,18 @@ export const handleLearnerAgent: NodeHandler = async ({
   };
 
   const agentId = learnerConfig.agentId?.trim();
-  if (!agentId) return prevOutputs;
+  if (!agentId) {
+    return buildAiTerminalOutputs({
+      status: 'blocked',
+      reason: 'missing_agent_id',
+      details: {
+        sources: [],
+        bundle: {
+          status: 'blocked',
+        },
+      },
+    });
+  }
 
   const template = learnerConfig.promptTemplate?.trim();
   const promptFromTemplate = template
@@ -278,7 +335,17 @@ export const handleLearnerAgent: NodeHandler = async ({
       : formatRuntimeValue(rawPrompt);
 
   if (!prompt || prompt === '—') {
-    return prevOutputs;
+    return buildAiTerminalOutputs({
+      status: 'blocked',
+      reason: 'missing_prompt',
+      details: {
+        sources: [],
+        bundle: {
+          agentId,
+          status: 'blocked',
+        },
+      },
+    });
   }
 
   const messages: ChatMessage[] = [

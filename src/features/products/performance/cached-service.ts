@@ -58,6 +58,8 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
 
   const normalized: ProductFilters = {};
   const search = toOptionalString(filters['search']);
+  const id = toOptionalString(filters['id']);
+  const idMatchModeRaw = toOptionalString(filters['idMatchMode']);
   const sku = toOptionalString(filters['sku']);
   const minPrice = toOptionalNumber(filters['minPrice']);
   const maxPrice = toOptionalNumber(filters['maxPrice']);
@@ -68,6 +70,10 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
   const baseExported = toOptionalBoolean(filters['baseExported']);
 
   if (search !== undefined) normalized.search = search;
+  if (id !== undefined) normalized.id = id;
+  if (idMatchModeRaw === 'exact' || idMatchModeRaw === 'partial') {
+    normalized.idMatchMode = idMatchModeRaw;
+  }
   if (sku !== undefined) normalized.sku = sku;
   if (minPrice !== undefined) normalized.minPrice = minPrice;
   if (maxPrice !== undefined) normalized.maxPrice = maxPrice;

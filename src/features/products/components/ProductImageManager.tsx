@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 
 import { ProductImageManagerHeader } from './ProductImageManagerHeader';
@@ -30,7 +28,7 @@ function ProductImageManagerGrid() {
 
   return (
     <div data-preserve-slot-selection='true'>
-      <ProductImageManagerHeader minimalUi={minimalUi} />
+      <ProductImageManagerHeader />
       <div className={gridClass}>
         {imageSlots.map((_, index) => (
           <ProductImageSlot

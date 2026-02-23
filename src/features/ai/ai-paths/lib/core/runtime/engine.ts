@@ -66,6 +66,7 @@ import {
   handleRouter,
   handleLearnerAgent,
   handleTemplate,
+  handleFetcher,
   handleTrigger,
   handleValidator,
   handleViewer,
@@ -98,7 +99,7 @@ export class GraphExecutionError extends Error {
   }
 }
 
-export type RuntimeExecutionHaltReason = 'step_limit' | 'completed' | 'cancelled';
+export type RuntimeExecutionHaltReason = 'step_limit' | 'completed' | 'cancelled' | 'blocked';
 
 export type RuntimeExecutionHalt = {
   reason: RuntimeExecutionHaltReason;
@@ -425,10 +426,12 @@ const resolveNodeSideEffectPolicy = (
 
 type TriggerContextMode = 'simulation_required' | 'simulation_preferred' | 'trigger_only';
 type SimulationRunBehavior = 'before_connected_trigger' | 'manual_only';
+type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulation';
 
-const DEFAULT_TRIGGER_CONTEXT_MODE: TriggerContextMode = 'simulation_preferred';
+const DEFAULT_TRIGGER_CONTEXT_MODE: TriggerContextMode = 'trigger_only';
 const DEFAULT_SIMULATION_RUN_BEHAVIOR: SimulationRunBehavior =
   'before_connected_trigger';
+const DEFAULT_FETCHER_SOURCE_MODE: FetcherSourceMode = 'live_context';
 
 const resolveTriggerContextMode = (node: AiNode | null): TriggerContextMode => {
   const mode = node?.config?.trigger?.contextMode;
@@ -448,6 +451,23 @@ const resolveSimulationRunBehavior = (node: AiNode): SimulationRunBehavior => {
     return behavior;
   }
   return DEFAULT_SIMULATION_RUN_BEHAVIOR;
+};
+
+const resolveFetcherSourceMode = (node: AiNode): FetcherSourceMode => {
+  const mode = node.config?.fetcher?.sourceMode;
+  if (
+    mode === 'live_context' ||
+    mode === 'simulation_id' ||
+    mode === 'live_then_simulation'
+  ) {
+    return mode;
+  }
+  return DEFAULT_FETCHER_SOURCE_MODE;
+};
+
+const isSimulationCapableFetcher = (node: AiNode): boolean => {
+  const mode = resolveFetcherSourceMode(node);
+  return mode === 'simulation_id' || mode === 'live_then_simulation';
 };
 
 const readEntityIdFromContext = (
@@ -474,6 +494,40 @@ const readEntityTypeFromContext = (
   return normalized;
 };
 
+const readEntityIdFromPorts = (
+  output: RuntimePortValues | null | undefined
+): string | null => {
+  if (!output) return null;
+  const directEntityId = output['entityId'];
+  if (typeof directEntityId === 'string' && directEntityId.trim().length > 0) {
+    return directEntityId;
+  }
+  const directProductId = output['productId'];
+  if (typeof directProductId === 'string' && directProductId.trim().length > 0) {
+    return directProductId;
+  }
+  const context = output['context'];
+  if (!context || typeof context !== 'object') return null;
+  return readEntityIdFromContext(context as Record<string, unknown>);
+};
+
+const readEntityTypeFromPorts = (
+  output: RuntimePortValues | null | undefined
+): string | null => {
+  if (!output) return null;
+  const directEntityType = output['entityType'];
+  if (typeof directEntityType === 'string' && directEntityType.trim().length > 0) {
+    const normalized = directEntityType.trim().toLowerCase();
+    if (!normalized) return null;
+    if (normalized === 'products') return 'product';
+    if (normalized === 'notes') return 'note';
+    return normalized;
+  }
+  const context = output['context'];
+  if (!context || typeof context !== 'object') return null;
+  return readEntityTypeFromContext(context as Record<string, unknown>);
+};
+
 const hasSimulationContextProvenance = (
   context: Record<string, unknown> | null | undefined
 ): boolean => {
@@ -492,6 +546,7 @@ const hasSimulationContextProvenance = (
 
 const HANDLERS: Record<string, NodeHandler> = {
   trigger: handleTrigger,
+  fetcher: handleFetcher,
   notification: handleNotification,
   context: handleContext,
   audio_oscillator: handleAudioOscillator,
@@ -931,6 +986,28 @@ export async function evaluateGraph({
     return collected;
   };
 
+  const refreshDownstreamInputs = (
+    sourceNodeId: string,
+    nextInputs: Record<string, RuntimePortValues>
+  ): void => {
+    const outgoing = outgoingEdgesByNode.get(sourceNodeId) ?? [];
+    if (outgoing.length === 0) return;
+    const touched = new Set<string>();
+    outgoing.forEach((edge: Edge) => {
+      if (edge.to) {
+        touched.add(edge.to);
+      }
+    });
+    touched.forEach((targetId: string) => {
+      let updatedInputs = collectNodeInputs(targetId);
+      const targetNode = nodeById.get(targetId);
+      if (targetNode?.type === 'database') {
+        updatedInputs = deriveDatabaseInputs(updatedInputs);
+      }
+      nextInputs[targetId] = updatedInputs;
+    });
+  };
+
   const hasMeaningfulValue = (value: unknown): boolean => {
     if (value === undefined || value === null) return false;
     if (typeof value === 'string') return value.trim().length > 0;
@@ -944,6 +1021,18 @@ export async function evaluateGraph({
     requiredPorts: string[];
     optionalPorts: string[];
     waitingOnPorts: string[];
+    waitingOnDetails: Array<{
+      port: string;
+      upstream: Array<{
+        nodeId: string;
+        nodeType: string | null;
+        nodeTitle: string | null;
+        sourcePort: string | null;
+        status: string;
+        blockedReason?: string;
+        waitingOnPorts?: string[];
+      }>;
+    }>;
   };
 
   const resolveConfiguredRequiredInputPorts = (
@@ -964,6 +1053,79 @@ export async function evaluateGraph({
     return explicitRequired;
   };
 
+  const hasRequiredInputContracts = (node: AiNode): boolean => {
+    const contractPorts = new Set<string>([
+      ...Object.keys(node.inputContracts ?? {}),
+      ...Object.keys(node.config?.runtime?.inputContracts ?? {}),
+    ]);
+    if (contractPorts.size === 0) return false;
+    return Array.from(contractPorts).some(
+      (port: string): boolean => getNodeInputPortContract(node, port).required === true
+    );
+  };
+
+  const buildWaitingOnDetails = (
+    node: AiNode,
+    waitingPorts: Set<string>
+  ): NodeInputReadiness['waitingOnDetails'] => {
+    if (waitingPorts.size === 0) return [];
+    const incoming = incomingEdgesByNode.get(node.id) ?? [];
+    const detailsByPort = new Map<
+      string,
+      {
+        port: string;
+        upstream: Array<{
+          nodeId: string;
+          nodeType: string | null;
+          nodeTitle: string | null;
+          sourcePort: string | null;
+          status: string;
+          blockedReason?: string;
+          waitingOnPorts?: string[];
+        }>;
+      }
+    >();
+    waitingPorts.forEach((port: string): void => {
+      detailsByPort.set(port, { port, upstream: [] });
+    });
+    incoming.forEach((edge: Edge): void => {
+      if (!edge.toPort || !waitingPorts.has(edge.toPort)) return;
+      if (!edge.from) return;
+      const detail = detailsByPort.get(edge.toPort);
+      if (!detail) return;
+      const sourceNode = nodeById.get(edge.from);
+      const sourceOutputs = outputs[edge.from] ?? {};
+      const rawStatus = sourceOutputs['status'];
+      const status =
+        typeof rawStatus === 'string' && rawStatus.trim().length > 0
+          ? rawStatus.trim().toLowerCase()
+          : 'pending';
+      const rawWaitingOnPorts = sourceOutputs['waitingOnPorts'];
+      detail.upstream.push({
+        nodeId: edge.from,
+        nodeType: sourceNode?.type ?? null,
+        nodeTitle: sourceNode?.title ?? null,
+        sourcePort: edge.fromPort ?? null,
+        status,
+        ...(typeof sourceOutputs['blockedReason'] === 'string'
+          ? { blockedReason: sourceOutputs['blockedReason'] }
+          : {}),
+        ...(Array.isArray(rawWaitingOnPorts)
+          ? {
+            waitingOnPorts: rawWaitingOnPorts
+              .filter((port: unknown): port is string => typeof port === 'string')
+              .map((port: string): string => port.trim())
+              .filter((port: string): boolean => port.length > 0),
+          }
+          : {}),
+      });
+    });
+    return Array.from(detailsByPort.values()).map((detail) => ({
+      ...detail,
+      upstream: detail.upstream.sort((left, right) => left.nodeId.localeCompare(right.nodeId)),
+    }));
+  };
+
   const evaluateInputReadiness = (
     node: AiNode,
     rawInputs: RuntimePortValues
@@ -975,6 +1137,7 @@ export async function evaluateGraph({
         requiredPorts: [],
         optionalPorts: [],
         waitingOnPorts: [],
+        waitingOnDetails: [],
       };
     }
     const connectedPorts = new Set<string>();
@@ -987,6 +1150,7 @@ export async function evaluateGraph({
         requiredPorts: [],
         optionalPorts: [],
         waitingOnPorts: [],
+        waitingOnDetails: [],
       };
     }
 
@@ -1000,6 +1164,13 @@ export async function evaluateGraph({
       (port: string): boolean => !requiredPortSet.has(port)
     );
     const waitingOnPorts = new Set<string>();
+    const toReadiness = (ready: boolean): NodeInputReadiness => ({
+      ready,
+      requiredPorts,
+      optionalPorts,
+      waitingOnPorts: Array.from(waitingOnPorts),
+      waitingOnDetails: buildWaitingOnDetails(node, waitingOnPorts),
+    });
     if (explicitRequiredPorts.length > 0) {
       explicitRequiredPorts.forEach((port: string): void => {
         const value = rawInputs[port];
@@ -1008,12 +1179,7 @@ export async function evaluateGraph({
         }
       });
       if (waitingOnPorts.size > 0) {
-        return {
-          ready: false,
-          requiredPorts,
-          optionalPorts,
-          waitingOnPorts: Array.from(waitingOnPorts),
-        };
+        return toReadiness(false);
       }
     }
 
@@ -1023,12 +1189,7 @@ export async function evaluateGraph({
           waitingOnPorts.add(port);
         }
       });
-      return {
-        ready: waitingOnPorts.size === 0,
-        requiredPorts,
-        optionalPorts,
-        waitingOnPorts: Array.from(waitingOnPorts),
-      };
+      return toReadiness(waitingOnPorts.size === 0);
     }
 
     const dbConfig = node.config?.database ?? { operation: 'query' };
@@ -1063,27 +1224,15 @@ export async function evaluateGraph({
       if (!allConnectedHaveValues(nonQueryPorts)) {
         markWaitingPorts(nonQueryPorts, true);
       }
-      return {
-        ready: waitingOnPorts.size === 0,
-        requiredPorts,
-        optionalPorts,
-        waitingOnPorts: Array.from(waitingOnPorts),
-      };
+      return toReadiness(waitingOnPorts.size === 0);
     }
 
     if (operation === 'delete') {
       const idPorts = ['entityId', 'productId', 'value'];
-      if (anyConnected(idPorts)) {
-        if (!hasAnyValue(idPorts)) {
-          markWaitingPorts(idPorts, true);
-        }
+      if (anyConnected(idPorts) && !hasAnyValue(idPorts)) {
+        markWaitingPorts(idPorts, true);
       }
-      return {
-        ready: waitingOnPorts.size === 0,
-        requiredPorts,
-        optionalPorts,
-        waitingOnPorts: Array.from(waitingOnPorts),
-      };
+      return toReadiness(waitingOnPorts.size === 0);
     }
 
     if (operation === 'insert') {
@@ -1096,6 +1245,7 @@ export async function evaluateGraph({
           requiredPorts,
           optionalPorts,
           waitingOnPorts: [],
+          waitingOnDetails: [],
         };
       }
       const writeSource = dbConfig.writeSource ?? 'bundle';
@@ -1108,12 +1258,7 @@ export async function evaluateGraph({
       } else if (!hasPayload) {
         markWaitingPorts(insertPorts, false);
       }
-      return {
-        ready: waitingOnPorts.size === 0,
-        requiredPorts,
-        optionalPorts,
-        waitingOnPorts: Array.from(waitingOnPorts),
-      };
+      return toReadiness(waitingOnPorts.size === 0);
     }
 
     if (operation === 'update') {
@@ -1147,12 +1292,7 @@ export async function evaluateGraph({
           markWaitingPorts(queryPorts, true);
         }
       }
-      return {
-        ready: waitingOnPorts.size === 0,
-        requiredPorts,
-        optionalPorts,
-        waitingOnPorts: Array.from(waitingOnPorts),
-      };
+      return toReadiness(waitingOnPorts.size === 0);
     }
 
     return {
@@ -1160,7 +1300,36 @@ export async function evaluateGraph({
       requiredPorts,
       optionalPorts,
       waitingOnPorts: [],
+      waitingOnDetails: [],
     };
+  };
+
+  const buildMissingInputsMessage = (
+    node: AiNode,
+    waitDiagnostics: NodeInputReadiness
+  ): string => {
+    const waitingPorts = waitDiagnostics.waitingOnPorts;
+    const nodeLabel = node.title ?? node.id;
+    if (waitingPorts.length === 0) {
+      return `Node ${nodeLabel} is waiting for required inputs.`;
+    }
+    const portsLabel = waitingPorts.join(', ');
+    const firstDetail = waitDiagnostics.waitingOnDetails[0];
+    if (!firstDetail || firstDetail.upstream.length === 0) {
+      return `Node ${nodeLabel} is waiting for required input port(s): ${portsLabel}. Connect upstream data or mark ports optional in Runtime settings.`;
+    }
+    const sourceSummary = firstDetail.upstream
+      .slice(0, 3)
+      .map((source) => {
+        const sourceLabel = source.nodeTitle ?? source.nodeId;
+        const base = `${sourceLabel} [${source.status}]`;
+        if (source.blockedReason === 'missing_inputs' && source.waitingOnPorts?.length) {
+          return `${base} waiting on ${source.waitingOnPorts.join(', ')}`;
+        }
+        return base;
+      })
+      .join('; ');
+    return `Node ${nodeLabel} is waiting for required input port(s): ${portsLabel}. Upstream status for ${firstDetail.port}: ${sourceSummary}.`;
   };
 
   const pushHistoryEntry = (nodeId: string, entry: RuntimeHistoryEntry): void => {
@@ -1350,6 +1519,31 @@ export async function evaluateGraph({
     });
     return resolved;
   })();
+  const connectedFetcherNodes: AiNode[] = (() => {
+    if (!triggerNodeId) return [];
+    const fetcherNodeById = new Map<string, AiNode>(
+      nodes
+        .filter((node: AiNode): boolean => node.type === 'fetcher')
+        .map((node: AiNode): [string, AiNode] => [node.id, node])
+    );
+    const resolved: AiNode[] = [];
+    const seen = new Set<string>();
+    sanitizedEdges.forEach((edge: Edge): void => {
+      if (edge.from !== triggerNodeId || !edge.to) return;
+      const fromPort = (edge.fromPort?.trim() || '').toLowerCase();
+      const toPort = (edge.toPort?.trim() || '').toLowerCase();
+      if (fromPort && fromPort !== 'trigger') return;
+      if (toPort && toPort !== 'trigger') return;
+      const fetcherNode = fetcherNodeById.get(edge.to);
+      if (!fetcherNode || seen.has(fetcherNode.id)) return;
+      resolved.push(fetcherNode);
+      seen.add(fetcherNode.id);
+    });
+    return resolved;
+  })();
+  const hasSimulationFetcherSource = connectedFetcherNodes.some((node: AiNode): boolean =>
+    isSimulationCapableFetcher(node)
+  );
   const autoSimulationNodes = connectedSimulationNodes.filter(
     (node: AiNode): boolean => resolveSimulationRunBehavior(node) === 'before_connected_trigger'
   );
@@ -1467,7 +1661,12 @@ export async function evaluateGraph({
         for (const [nodeId, output] of Object.entries(outputs)) {
           if (!output || typeof output !== 'object') continue;
           const nodeType = nodeById.get(nodeId)?.type;
-          if (nodeType !== 'trigger' && nodeType !== 'simulation' && nodeType !== 'context') {
+          if (
+            nodeType !== 'trigger' &&
+            nodeType !== 'simulation' &&
+            nodeType !== 'context' &&
+            nodeType !== 'fetcher'
+          ) {
             continue;
           }
           applyRecord(output);
@@ -1671,7 +1870,9 @@ export async function evaluateGraph({
   ensureNotCancelled();
 
   const simulationContextSatisfied =
-    Boolean(simulationEntityId) || hasSimulationContextProvenance(triggerContextRecord);
+    Boolean(simulationEntityId) ||
+    hasSimulationContextProvenance(triggerContextRecord) ||
+    hasSimulationFetcherSource;
   if (
     triggerNode &&
     triggerContextMode === 'simulation_required' &&
@@ -1717,6 +1918,7 @@ export async function evaluateGraph({
     });
 
     let changed = false;
+    const blockedNodeIds = new Set<string>();
     for (const node of orderedNodes) {
       ensureNotCancelled(nextInputs, node.id);
       const nodeInputsSnapshot = nextInputs[node.id] ?? {};
@@ -1733,15 +1935,33 @@ export async function evaluateGraph({
           // Fallback to snapshot if derivation fails.
         }
       }
-      const shouldWaitForInputs = node.config?.runtime?.waitForInputs ?? false;
+      const shouldWaitForInputs = node.config?.runtime?.waitForInputs ?? hasRequiredInputContracts(node);
       if (shouldWaitForInputs) {
         const waitDiagnostics = evaluateInputReadiness(node, nodeInputs);
         if (!waitDiagnostics.ready) {
           nextInputs[node.id] = nodeInputs;
           if (isActiveNode(node)) {
             const prevOutputs = outputs[node.id] ?? {};
-            pushSkipEntry(node, nodeInputs, prevOutputs, {
-              status: 'skipped',
+            const blockedMessage = buildMissingInputsMessage(node, waitDiagnostics);
+            const blockedOutputs: RuntimePortValues = {
+              status: 'blocked',
+              skipReason: 'missing_inputs',
+              blockedReason: 'missing_inputs',
+              requiredPorts: waitDiagnostics.requiredPorts,
+              optionalPorts: waitDiagnostics.optionalPorts,
+              waitingOnPorts: waitDiagnostics.waitingOnPorts,
+              waitingOnDetails: waitDiagnostics.waitingOnDetails,
+              message: blockedMessage,
+            };
+            const didBlockedChange = hashRuntimeValue(prevOutputs) !== hashRuntimeValue(blockedOutputs);
+            if (didBlockedChange) {
+              outputs[node.id] = blockedOutputs;
+              changed = true;
+              refreshDownstreamInputs(node.id, nextInputs);
+            }
+            blockedNodeIds.add(node.id);
+            pushSkipEntry(node, nodeInputs, blockedOutputs, {
+              status: 'blocked',
               reason: 'missing_inputs',
               iteration,
               waitDiagnostics,
@@ -1761,6 +1981,18 @@ export async function evaluateGraph({
               optionalPorts: waitDiagnostics.optionalPorts,
               waitingOnPorts: waitDiagnostics.waitingOnPorts,
             });
+            if (onNodeFinish) {
+              await onNodeFinish({
+                runId: resolvedRunId,
+                runStartedAt: resolvedRunStartedAt,
+                node,
+                nodeInputs,
+                prevOutputs,
+                nextOutputs: blockedOutputs,
+                changed: didBlockedChange,
+                iteration,
+              });
+            }
             if (markStep(node)) {
               break;
             }
@@ -2167,6 +2399,13 @@ export async function evaluateGraph({
           nextOutputs = prevOutputs;
         }
       }
+      const outputStatus =
+        typeof nextOutputs['status'] === 'string'
+          ? nextOutputs['status'].trim().toLowerCase()
+          : '';
+      if (outputStatus === 'blocked') {
+        blockedNodeIds.add(node.id);
+      }
 
       if (recordHistory) {
         const entry: RuntimeHistoryEntry = {
@@ -2203,25 +2442,20 @@ export async function evaluateGraph({
       }
       const didChange = hashRuntimeValue(prevOutputs) !== hashRuntimeValue(nextOutputs);
       if (didChange) {
+        const nextEntityId = readEntityIdFromPorts(nextOutputs);
+        const nextEntityType = readEntityTypeFromPorts(nextOutputs);
+        if (nextEntityId) {
+          simulationEntityId = nextEntityId;
+        }
+        if (nextEntityType) {
+          simulationEntityType = nextEntityType;
+        }
+        if (nextEntityId || nextEntityType) {
+          fallbackEntityId = simulationEntityId ?? triggerEntityId ?? null;
+        }
         outputs[node.id] = nextOutputs;
         changed = true;
-        const outgoing = outgoingEdgesByNode.get(node.id) ?? [];
-        if (outgoing.length > 0) {
-          const touched = new Set<string>();
-          outgoing.forEach((edge: Edge) => {
-            if (edge.to) {
-              touched.add(edge.to);
-            }
-          });
-          touched.forEach((targetId: string) => {
-            let updatedInputs = collectNodeInputs(targetId);
-            const targetNode = nodeById.get(targetId);
-            if (targetNode?.type === 'database') {
-              updatedInputs = deriveDatabaseInputs(updatedInputs);
-            }
-            nextInputs[targetId] = updatedInputs;
-          });
-        }
+        refreshDownstreamInputs(node.id, nextInputs);
       }
       if (handler && onNodeFinish) {
         await onNodeFinish({
@@ -2274,7 +2508,13 @@ export async function evaluateGraph({
     }
     iterationCount += 1;
     if (haltReason === 'step_limit') break;
-    if (!changed) break;
+    if (!changed) {
+      if (blockedNodeIds.size > 0) {
+        haltReason = 'blocked';
+        haltIteration = iteration;
+      }
+      break;
+    }
   }
 
   const result: RuntimeState = {
@@ -2291,12 +2531,14 @@ export async function evaluateGraph({
     hashTimestamps: hashTimestamps.size ? Object.fromEntries(hashTimestamps) : undefined,
     history: recordHistory && history.size ? Object.fromEntries(history) : undefined,
   };
-  if (haltReason === 'step_limit') {
+  if ((haltReason as RuntimeExecutionHaltReason | null) === 'step_limit') {
     emitHalt('step_limit', haltIteration);
+  } else if (haltReason === 'blocked') {
+    emitHalt('blocked', haltIteration);
   } else {
     emitHalt('completed', Math.max(0, iterationCount - 1));
   }
-  if (haltReason !== 'step_limit') {
+  if ((haltReason as RuntimeExecutionHaltReason | null) !== 'step_limit') {
     try {
       if (profile?.onSummary && nodeProfile) {
         const durationMs = nowMs() - profileRunStartMs;

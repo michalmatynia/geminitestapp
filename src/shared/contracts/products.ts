@@ -538,7 +538,16 @@ export type ProductCreateInputDto = z.infer<typeof productCreateInputSchema>;
 export type CreateProductInput = ProductCreateInputDto;
 
 export const productUpdateInputSchema = productCreateInputSchema.partial().extend({
-  sku: z.string().optional(),
+  sku: z.preprocess(
+    (value: unknown): unknown => {
+      if (value === undefined) return undefined;
+      if (value === null) return null;
+      if (typeof value !== 'string') return value;
+      const trimmed = value.trim();
+      return trimmed.length > 0 ? trimmed : null;
+    },
+    z.string().min(1).nullable().optional()
+  ),
 });
 
 export type ProductUpdateInputDto = z.infer<typeof productUpdateInputSchema>;
@@ -607,6 +616,8 @@ export type ProductListPreferencesDto = z.infer<typeof productListPreferencesSch
  * Product Filter Contract
  */
 export const productFilterSchema = commonListQuerySchema.extend({
+  id: z.string().trim().optional(),
+  idMatchMode: z.enum(['exact', 'partial']).optional(),
   sku: z.string().trim().optional(),
   description: z.string().trim().optional(),
   categoryId: z.string().trim().optional(),
@@ -914,6 +925,7 @@ export type DynamicReplacementRecipeDto = z.infer<typeof dynamicReplacementRecip
 
 export const productReplacementModeSchema = z.enum(['static', 'dynamic']);
 export type ProductReplacementModeDto = z.infer<typeof productReplacementModeSchema>;
+export type ReplacementMode = ProductReplacementModeDto;
 
 export const productValidationSequenceGroupDraftSchema = z.object({
   label: z.string(),
@@ -1244,6 +1256,8 @@ export type ProductFilters = Partial<ProductFilterDto> & {
   searchLanguage?: 'name_en' | 'name_pl' | 'name_de' | undefined;
   baseExported?: boolean | undefined;
   search?: string | undefined;
+  id?: string | undefined;
+  idMatchMode?: 'exact' | 'partial' | undefined;
   sku?: string | undefined;
   description?: string | undefined;
   categoryId?: string | undefined;

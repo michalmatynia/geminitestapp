@@ -67,9 +67,6 @@ describe('inspectPathDependencies', () => {
     expect(report.errors).toBeGreaterThan(0);
     expect(report.strictReady).toBe(false);
     expect(
-      report.risks.some((risk) => risk.category === 'trigger_context_fallback')
-    ).toBe(true);
-    expect(
       report.risks.some((risk) => risk.category === 'parser_entity_fallback')
     ).toBe(true);
     expect(
@@ -247,9 +244,6 @@ describe('inspectPathDependencies', () => {
     ];
 
     const report = inspectPathDependencies(nodes, edges);
-    expect(
-      report.risks.some((risk) => risk.category === 'trigger_context_fallback')
-    ).toBe(false);
     expect(
       report.risks.some((risk) => risk.category === 'parser_entity_fallback')
     ).toBe(false);

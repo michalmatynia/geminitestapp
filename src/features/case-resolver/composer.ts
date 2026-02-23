@@ -18,6 +18,19 @@ export type CaseResolverCompiledSegment = CaseResolverCompiledSegmentDto;
 
 export type CaseResolverCompileResult = CaseResolverCompileResultDto;
 
+export type CaseResolverPlainTextTransformInput = {
+  nodeId: string;
+  nodeMeta: CaseResolverNodeMeta;
+  output: 'plainText' | 'content';
+  value: string;
+};
+
+export type CaseResolverCompileOptions = {
+  transformPlainTextOutput?: (
+    input: CaseResolverPlainTextTransformInput
+  ) => string;
+};
+
 const JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
   newline: '\n',
   tab: '\t',
@@ -103,7 +116,9 @@ const resolveNodeText = (node: AiNode): string => {
 
 const wrapByQuoteMode = (value: string, meta: CaseResolverNodeMeta): string => {
   if (!value) return value;
+  const canApplyHtmlColorWrapper = meta.role !== 'explanatory';
   const normalizedColor =
+    canApplyHtmlColorWrapper &&
     typeof meta.textColor === 'string' &&
     /^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(meta.textColor.trim())
       ? meta.textColor.trim()
@@ -194,7 +209,8 @@ const isPlainTextInputPort = (port: string | null | undefined): boolean =>
 
 export const compileCaseResolverPrompt = (
   graph: CaseResolverGraph,
-  selectedNodeId: string | null
+  selectedNodeId: string | null,
+  options: CaseResolverCompileOptions = {}
 ): CaseResolverCompileResult => {
   try {
     const graphNodes = graph.nodes as unknown as AiNode[];
@@ -343,12 +359,37 @@ export const compileCaseResolverPrompt = (
           : incomingText.trim().length > 0
             ? incomingText
             : nodeText;
-      const plainTextOutput = stripHtml(resolvedTextfield);
+      const hasTextfieldOnlyIncoming =
+        hasIncomingTextfield && !hasIncomingContent && !hasIncomingPlainText;
+      const secondaryOutputSeed = hasTextfieldOnlyIncoming ? nodeText : resolvedTextfield;
+      let plainTextOutput = options.transformPlainTextOutput
+        ? secondaryOutputSeed
+        : stripHtml(secondaryOutputSeed);
       const wrappedText = wrapByQuoteMode(resolvedTextfield, meta);
+      const wrappedSecondaryText = wrapByQuoteMode(secondaryOutputSeed, meta);
       let contentOutput = incomingContent.value;
-      if (meta.includeInOutput && wrappedText.trim().length > 0) {
+      if (meta.includeInOutput && wrappedSecondaryText.trim().length > 0) {
         const joinMode = (incomingContent.firstJoinMode || DEFAULT_CASE_RESOLVER_EDGE_META.joinMode) as CaseResolverJoinMode;
-        contentOutput = appendWithJoin(contentOutput, wrappedText, joinMode);
+        contentOutput = appendWithJoin(contentOutput, wrappedSecondaryText, joinMode);
+      }
+      if (meta.role === 'explanatory' && !options.transformPlainTextOutput) {
+        contentOutput = stripHtml(contentOutput);
+      }
+      if (options.transformPlainTextOutput) {
+        plainTextOutput = options.transformPlainTextOutput({
+          nodeId: node.id,
+          nodeMeta: meta,
+          output: 'plainText',
+          value: plainTextOutput,
+        });
+        if (meta.role === 'explanatory') {
+          contentOutput = options.transformPlainTextOutput({
+            nodeId: node.id,
+            nodeMeta: meta,
+            output: 'content',
+            value: contentOutput,
+          });
+        }
       }
 
       outputsByNode[node.id] = {

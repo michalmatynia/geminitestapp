@@ -101,7 +101,7 @@ export function useValidatorSettingsController() {
     const map = new Map<string, string>();
     sequenceGroups.forEach((group, groupId) => {
       if (group.patternIds.length > 0) {
-        map.set(groupId, group.patternIds[0]);
+        map.set(groupId, group.patternIds[0]!);
       }
     });
     return map;

@@ -19,6 +19,8 @@ import {
 
 export interface UseProductsFilters {
   search?: string | undefined;
+  id?: string | undefined;
+  idMatchMode?: 'exact' | 'partial' | undefined;
   sku?: string | undefined;
   description?: string | undefined;
   categoryId?: string | undefined;

@@ -1,6 +1,11 @@
 import 'server-only';
 
-import { compileGraph, normalizeNodes, sanitizeEdges } from '@/features/ai/ai-paths/lib';
+import {
+  compileGraph,
+  migrateTriggerToFetcherGraph,
+  normalizeNodes,
+  sanitizeEdges,
+} from '@/features/ai/ai-paths/lib';
 import {
   evaluateDisabledNodeTypesPolicy,
   formatDisabledNodeTypesPolicyMessage,
@@ -183,8 +188,10 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     }
 
     const rawEdges = input.edges ?? [];
-    const nodes = normalizeNodes(input.nodes ?? []);
-    const edges = sanitizeEdges(nodes, rawEdges);
+    const normalizedNodes = normalizeNodes(input.nodes ?? []);
+    const migratedGraph = migrateTriggerToFetcherGraph(normalizedNodes, rawEdges);
+    const nodes = normalizeNodes(migratedGraph.nodes);
+    const edges = sanitizeEdges(nodes, migratedGraph.edges);
     const compileReport = compileGraph(nodes, edges);
     if (!compileReport.ok) {
       const primaryError = compileReport.findings.find(

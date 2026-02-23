@@ -177,6 +177,8 @@ export const mongoNoteRepository: NoteRepository = {
         if (!relation) return null;
         const sourceId = incoming.id ?? incoming._id;
         return {
+          id: relation.id,
+          type: relation.type,
           sourceNoteId: sourceId,
           targetNoteId: note.id,
           assignedAt: toIsoCreatedAt(relation.assignedAt),
@@ -248,6 +250,8 @@ export const mongoNoteRepository: NoteRepository = {
       relationsFrom = relatedNoteDocs.map((note: NoteDocument): NoteRelationFromEmbedded => {
         const targetId = note.id ?? note._id;
         return {
+          id: randomUUID(),
+          type: 'related',
           sourceNoteId: id,
           targetNoteId: targetId,
           assignedAt: now.toISOString(),
@@ -379,6 +383,8 @@ export const mongoNoteRepository: NoteRepository = {
         relationsFrom = relatedNoteDocs.map((note: NoteDocument): NoteRelationFromEmbedded => {
           const targetId = note.id ?? note._id;
           return {
+            id: randomUUID(),
+            type: 'related',
             sourceNoteId: id,
             targetNoteId: targetId,
             assignedAt: now.toISOString(),

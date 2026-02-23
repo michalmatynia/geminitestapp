@@ -112,18 +112,6 @@ function Loader(): React.JSX.Element {
   );
 }
 
-// Enhanced model component with PBR material optimization
-interface Model3DProps {
-  url: string;
-  onLoad?: () => void;
-  onError?: (error: Error) => void;
-  castShadow?: boolean;
-  receiveShadow?: boolean;
-  position?: [number, number, number];
-  rotation?: [number, number, number];
-  scale?: number | [number, number, number];
-}
-
 function AutoRotateGroup({
   children,
 }: {
@@ -287,7 +275,7 @@ function SceneLighting(): React.JSX.Element {
     },
   };
 
-  const config = lightConfigs[preset as keyof typeof lightConfigs] || lightConfigs.studio;
+  const config = lightConfigs[preset] || lightConfigs.studio;
 
   return (
     <>

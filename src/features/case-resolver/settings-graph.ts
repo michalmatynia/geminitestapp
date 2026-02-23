@@ -36,6 +36,10 @@ const sanitizeNodeMeta = (
         ? meta.quoteMode
         : DEFAULT_CASE_RESOLVER_NODE_META.quoteMode;
     const textColor = normalizeTextColor(meta.textColor);
+    const plainTextValidationStackId =
+      typeof meta.plainTextValidationStackId === 'string'
+        ? meta.plainTextValidationStackId.trim()
+        : DEFAULT_CASE_RESOLVER_NODE_META.plainTextValidationStackId;
     next[nodeId] = {
       role,
       quoteMode,
@@ -55,6 +59,15 @@ const sanitizeNodeMeta = (
         ? { appendTrailingNewline: meta.appendTrailingNewline }
         : {}),
       ...(textColor !== undefined ? { textColor } : {}),
+      plainTextValidationEnabled:
+        typeof meta.plainTextValidationEnabled === 'boolean'
+          ? meta.plainTextValidationEnabled
+          : DEFAULT_CASE_RESOLVER_NODE_META.plainTextValidationEnabled,
+      plainTextFormatterEnabled:
+        typeof meta.plainTextFormatterEnabled === 'boolean'
+          ? meta.plainTextFormatterEnabled
+          : DEFAULT_CASE_RESOLVER_NODE_META.plainTextFormatterEnabled,
+      plainTextValidationStackId: plainTextValidationStackId ?? '',
     };
   });
   return next;

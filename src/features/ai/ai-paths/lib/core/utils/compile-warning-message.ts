@@ -54,6 +54,10 @@ const withActionableContext = (finding: WarningFinding): string | null => {
     if (/Compile Inspector/i.test(withCycleDetails)) return withCycleDetails;
     return `${withCycleDetails} Open Paths Settings -> Compile Inspector to inspect loop edges.`;
   }
+  if (code === 'model_prompt_deadlock_risk') {
+    if (/Compile Inspector/i.test(message)) return message;
+    return `${message} Open Paths Settings -> Compile Inspector to inspect prompt loop dependencies and wait-for-input contracts.`;
+  }
   return appendInspectorHint(message);
 };
 

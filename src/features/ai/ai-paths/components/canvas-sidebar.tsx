@@ -32,7 +32,7 @@ const readPortRuntimeValue = (
 ): unknown => {
   if (!ports) return undefined;
   const normalizedPort = typeof port === 'string' ? port.trim() : '';
-  if (normalizedPort && ports[normalizedPort] !== undefined) {
+  if (normalizedPort) {
     return ports[normalizedPort];
   }
   if (ports['context'] !== undefined) return ports['context'];
@@ -42,7 +42,7 @@ const readPortRuntimeValue = (
 
 const DATA_PALETTE_GROUPS: PaletteGroup[] = [
   { title: 'Triggers', types: ['trigger'], icon: '⚡' },
-  { title: 'Simulation', types: ['simulation'], icon: '🧪' },
+  { title: 'Fetching + Simulation', types: ['fetcher', 'simulation'], icon: '🧪' },
   { title: 'Context + Parsing', types: ['context', 'parser'], icon: '📦' },
   {
     title: 'Transforms',
@@ -66,7 +66,7 @@ const SOUND_PALETTE_GROUPS: PaletteGroup[] = [
   { title: 'Sound Outputs', types: ['audio_speaker', 'viewer'], icon: '🔊' },
   {
     title: 'Signal Control',
-    types: ['trigger', 'simulation', 'constant', 'math', 'gate', 'router', 'delay', 'bundle'],
+    types: ['trigger', 'fetcher', 'simulation', 'constant', 'math', 'gate', 'router', 'delay', 'bundle'],
     icon: '🎛',
   },
 ];

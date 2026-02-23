@@ -22,11 +22,6 @@ import {
   needsDescriptionInferenceLiteConfigUpgrade,
 } from './settings-store-description-inference';
 import {
-  DESCRIPTION_AND_NAME_PATH_ID,
-  needsDescriptionAndNameConfigUpgrade,
-  upgradeDescriptionAndNameConfig,
-} from './settings-store-description-and-name';
-import {
   needsServerExecutionModeConfigUpgrade,
   upgradeServerExecutionModeConfig,
 } from './settings-store-execution-mode-server';
@@ -43,6 +38,10 @@ import {
   TRANSLATION_EN_PL_PATH_ID,
   upgradeTranslationEnPlConfig,
 } from './settings-store-translation-en-pl';
+import {
+  needsRuntimeInputContractsUpgrade,
+  upgradeRuntimeInputContractsConfig,
+} from './settings-store-runtime-input-contracts';
 
 export type AiPathsSettingRecord = SettingRecordDto;
 
@@ -88,7 +87,7 @@ export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
   'ensure_description_inference_defaults',
   'ensure_base_export_defaults',
   'upgrade_translation_en_pl',
-  'upgrade_description_and_name',
+  'upgrade_runtime_input_contracts',
   'upgrade_server_execution_mode',
 ] as const;
 
@@ -1127,7 +1126,7 @@ const ensureTranslationEnPlDefaults = async (
   );
 };
 
-const ensureDescriptionAndNameDefaults = async (
+const ensureRuntimeInputContractsDefaults = async (
   records: AiPathsSettingRecord[]
 ): Promise<AiPathsSettingRecord[]> => {
   if (records.length === 0) return records;
@@ -1137,18 +1136,15 @@ const ensureDescriptionAndNameDefaults = async (
     )
   );
   const updates: AiPathsSettingRecord[] = [];
-  const key = `${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_AND_NAME_PATH_ID}`;
-  const raw = map.get(key);
-  if (!raw || !needsDescriptionAndNameConfigUpgrade(raw)) {
-    return records;
-  }
-
-  const upgraded = upgradeDescriptionAndNameConfig(raw);
-  if (!upgraded || upgraded === raw) {
-    return records;
-  }
-  map.set(key, upgraded);
-  updates.push({ key, value: upgraded });
+  map.forEach((value: string, key: string): void => {
+    if (!key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return;
+    if (!needsRuntimeInputContractsUpgrade(value)) return;
+    const upgraded = upgradeRuntimeInputContractsConfig(value);
+    if (!upgraded || upgraded === value) return;
+    map.set(key, upgraded);
+    updates.push({ key, value: upgraded });
+  });
+  if (updates.length === 0) return records;
   await upsertMongoAiPathsSettingsBatch(updates);
   return Array.from(map.entries()).map(
     ([nextKey, nextValue]): AiPathsSettingRecord => ({
@@ -1406,20 +1402,6 @@ const hasTranslationEnPlDefaults = (records: AiPathsSettingRecord[]): boolean =>
   return !needsTranslationEnPlConfigUpgrade(raw);
 };
 
-const hasDescriptionAndNameDefaults = (
-  records: AiPathsSettingRecord[]
-): boolean => {
-  if (records.length === 0) return true;
-  const map = new Map<string, string>(
-    records.map(
-      (entry: AiPathsSettingRecord): [string, string] => [entry.key, entry.value]
-    )
-  );
-  const raw = map.get(`${AI_PATHS_CONFIG_KEY_PREFIX}${DESCRIPTION_AND_NAME_PATH_ID}`);
-  if (!raw) return true;
-  return !needsDescriptionAndNameConfigUpgrade(raw);
-};
-
 const AI_PATHS_MAINTENANCE_ACTION_DETAILS: Record<
   AiPathsMaintenanceActionId,
   {
@@ -1464,10 +1446,10 @@ const AI_PATHS_MAINTENANCE_ACTION_DETAILS: Record<
       'Applies explicit config upgrades for the EN/PL translation path when required.',
     blocking: false,
   },
-  upgrade_description_and_name: {
-    title: 'Upgrade Name & Description path',
+  upgrade_runtime_input_contracts: {
+    title: 'Normalize runtime input contracts',
     description:
-      'Applies explicit config upgrades for the Name & Description path when required.',
+      'Applies universal runtime input contract migrations (removes legacy prompt deadlocks and normalizes model prompt requirements).',
     blocking: false,
   },
   upgrade_server_execution_mode: {
@@ -1488,6 +1470,16 @@ const countPendingServerExecutionModeUpgrades = (
   }, 0);
 };
 
+const countPendingRuntimeInputContractUpgrades = (
+  records: AiPathsSettingRecord[]
+): number => {
+  if (records.length === 0) return 0;
+  return records.reduce((count: number, entry: AiPathsSettingRecord): number => {
+    if (!entry.key.startsWith(AI_PATHS_CONFIG_KEY_PREFIX)) return count;
+    return needsRuntimeInputContractsUpgrade(entry.value) ? count + 1 : count;
+  }, 0);
+};
+
 const buildAiPathsMaintenanceReport = (
   records: AiPathsSettingRecord[]
 ): AiPathsMaintenanceReport => {
@@ -1500,7 +1492,7 @@ const buildAiPathsMaintenanceReport = (
       : 1,
     ensure_base_export_defaults: hasBaseExportBlwoDefaults(records) ? 0 : 1,
     upgrade_translation_en_pl: hasTranslationEnPlDefaults(records) ? 0 : 1,
-    upgrade_description_and_name: hasDescriptionAndNameDefaults(records) ? 0 : 1,
+    upgrade_runtime_input_contracts: countPendingRuntimeInputContractUpgrades(records),
     upgrade_server_execution_mode: countPendingServerExecutionModeUpgrades(records),
   };
 
@@ -1593,8 +1585,8 @@ export async function applyAiPathsSettingsMaintenance(
       next = await ensureTranslationEnPlDefaults(next);
       continue;
     }
-    if (actionId === 'upgrade_description_and_name') {
-      next = await ensureDescriptionAndNameDefaults(next);
+    if (actionId === 'upgrade_runtime_input_contracts') {
+      next = await ensureRuntimeInputContractsDefaults(next);
       continue;
     }
     if (actionId === 'upgrade_server_execution_mode') {

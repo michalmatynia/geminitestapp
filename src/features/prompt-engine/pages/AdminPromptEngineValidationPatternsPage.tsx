@@ -17,6 +17,7 @@ import {
 import {
   PromptEngineValidationPageProvider,
 } from '../context/PromptEngineValidationPageContext';
+import type { PromptValidationScope } from '../settings';
 
 type AdminPromptEngineValidationPatternsPageProps = {
   embedded?: boolean;
@@ -28,6 +29,8 @@ type AdminPromptEngineValidationPatternsPageProps = {
   initialExploderSubTab?: ExploderPatternSubTab;
   lockedPatternTab?: PatternCollectionTab;
   lockedExploderSubTab?: ExploderPatternSubTab;
+  initialScope?: PromptValidationScope | 'all';
+  lockedScope?: PromptValidationScope | 'all';
 };
 
 function AdminPromptEngineValidationPatternsContent(): React.JSX.Element {
@@ -83,6 +86,8 @@ export function AdminPromptEngineValidationPatternsPage({
   initialExploderSubTab,
   lockedPatternTab,
   lockedExploderSubTab,
+  initialScope,
+  lockedScope,
 }: AdminPromptEngineValidationPatternsPageProps): React.JSX.Element {
   const pageContextValue = React.useMemo(
     () => ({
@@ -95,6 +100,8 @@ export function AdminPromptEngineValidationPatternsPage({
       ...(initialExploderSubTab !== undefined && { initialExploderSubTab }),
       ...(lockedPatternTab !== undefined && { lockedPatternTab }),
       ...(lockedExploderSubTab !== undefined && { lockedExploderSubTab }),
+      ...(initialScope !== undefined && { initialScope }),
+      ...(lockedScope !== undefined && { lockedScope }),
     }),
     [
       backLinkHref,
@@ -103,8 +110,10 @@ export function AdminPromptEngineValidationPatternsPage({
       eyebrow,
       initialExploderSubTab,
       initialPatternTab,
+      initialScope,
       lockedExploderSubTab,
       lockedPatternTab,
+      lockedScope,
       onSaved,
     ]
   );

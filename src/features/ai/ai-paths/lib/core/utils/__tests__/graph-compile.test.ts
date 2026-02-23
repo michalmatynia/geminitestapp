@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { compileGraph } from '@/features/ai/ai-paths/lib/core/utils/graph';
+import { compileGraph, sanitizeEdges } from '@/features/ai/ai-paths/lib/core/utils/graph';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 
 const buildNode = (patch: Partial<AiNode>): AiNode =>
@@ -318,10 +318,14 @@ describe('compileGraph', () => {
     ];
 
     const report = compileGraph(nodes, edges);
+    const cycleFinding = report.findings.find(
+      (finding) => finding.code === 'cycle_detected'
+    );
     expect(report.ok).toBe(true);
-    expect(
-      report.findings.some((finding) => finding.code === 'cycle_detected')
-    ).toBe(true);
+    expect(cycleFinding).toBeDefined();
+    expect(cycleFinding?.message).toContain('Trigger/Simulation handshake loop');
+    expect(cycleFinding?.message).toContain('Trigger -> Fetcher -> Context Filter');
+    expect(cycleFinding?.metadata?.['legacyTriggerSimulationHandshake']).toBe(true);
     expect(
       report.findings.some((finding) => finding.code === 'unsupported_cycle')
     ).toBe(false);
@@ -356,7 +360,7 @@ describe('compileGraph', () => {
     );
     expect(finding).toBeDefined();
     expect(finding?.message).toContain('requires simulation context');
-    expect(finding?.message).toContain('no Simulation context edge');
+    expect(finding?.message).toContain('no simulation-capable source');
   });
 
   it('warns when trigger requires simulation context but simulation source is manual-only', () => {
@@ -458,6 +462,253 @@ describe('compileGraph', () => {
         (finding) => finding.code === 'trigger_context_resolution_risk'
       )
     ).toBe(false);
+  });
+
+  it('does not warn trigger_context_resolution_risk when trigger-required simulation uses fetcher simulation mode', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        inputs: ['context'],
+        outputs: ['trigger', 'context'],
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'simulation_required',
+          },
+        },
+      }),
+      buildNode({
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        inputs: ['trigger'],
+        outputs: ['context'],
+        config: {
+          fetcher: {
+            sourceMode: 'simulation_id',
+            entityType: 'product',
+            entityId: 'product-1',
+          },
+        },
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-fetcher',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+    ];
+
+    const report = compileGraph(nodes, edges);
+    expect(
+      report.findings.some(
+        (finding) => finding.code === 'trigger_context_resolution_risk'
+      )
+    ).toBe(false);
+  });
+
+  it('warns when trigger requires simulation context and only live-context fetcher is connected', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        inputs: ['context'],
+        outputs: ['trigger', 'context'],
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'simulation_required',
+          },
+        },
+      }),
+      buildNode({
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        inputs: ['trigger'],
+        outputs: ['context'],
+        config: {
+          fetcher: {
+            sourceMode: 'live_context',
+          },
+        },
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-fetcher',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+    ];
+
+    const report = compileGraph(nodes, edges);
+    const finding = report.findings.find(
+      (item) =>
+        item.code === 'trigger_context_resolution_risk' &&
+        item.nodeId === 'trigger-1'
+    );
+    expect(finding).toBeDefined();
+    expect(finding?.message).toContain('no simulation-capable source');
+    expect(finding?.message).toContain('Trigger -> Fetcher');
+  });
+
+  it('normalizes legacy Trigger.context -> Fetcher.context wiring to Trigger.trigger -> Fetcher.trigger', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        inputs: ['context'],
+        outputs: ['trigger', 'context', 'meta', 'entityId', 'entityType'],
+      }),
+      buildNode({
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        inputs: ['trigger', 'context', 'meta', 'entityId', 'entityType'],
+        outputs: ['context', 'meta', 'entityId', 'entityType'],
+        inputContracts: {
+          trigger: { required: true },
+          context: { required: false },
+          meta: { required: false },
+          entityId: { required: false },
+          entityType: { required: false },
+        },
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-fetcher-legacy',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+
+    const sanitized = sanitizeEdges(nodes, edges);
+    expect(sanitized).toHaveLength(1);
+    expect(sanitized[0]).toMatchObject({
+      from: 'trigger-1',
+      to: 'fetcher-1',
+      fromPort: 'trigger',
+      toPort: 'trigger',
+    });
+
+    const report = compileGraph(nodes, edges);
+    expect(
+      report.findings.some(
+        (finding) =>
+          finding.code === 'required_input_missing_wiring' &&
+          finding.nodeId === 'fetcher-1' &&
+          finding.port === 'trigger'
+      )
+    ).toBe(false);
+  });
+
+  it('keeps exactly one canonical Trigger.trigger -> Fetcher.trigger edge when duplicate trigger-fetcher links exist', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        inputs: ['context'],
+        outputs: ['trigger', 'context', 'meta', 'entityId', 'entityType'],
+      }),
+      buildNode({
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        inputs: ['trigger', 'context', 'meta', 'entityId', 'entityType'],
+        outputs: ['context', 'meta', 'entityId', 'entityType'],
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-fetcher-explicit',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: 'edge-trigger-fetcher-legacy',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+
+    const sanitized = sanitizeEdges(nodes, edges);
+    expect(sanitized).toHaveLength(1);
+    expect(sanitized[0]).toMatchObject({
+      from: 'trigger-1',
+      to: 'fetcher-1',
+      fromPort: 'trigger',
+      toPort: 'trigger',
+    });
+  });
+
+  it('preserves source port intent when invalid edges can align by either side', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'parser-1',
+        type: 'parser',
+        title: 'Parser',
+        inputs: ['entityJson'],
+        outputs: ['bundle', 'images'],
+      }),
+      buildNode({
+        id: 'prompt-1',
+        type: 'prompt',
+        title: 'Prompt',
+        inputs: ['bundle', 'images'],
+        outputs: ['prompt'],
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-bundle-cross',
+        from: 'parser-1',
+        to: 'prompt-1',
+        fromPort: 'bundle',
+        toPort: 'images',
+      },
+      {
+        id: 'edge-images-cross',
+        from: 'parser-1',
+        to: 'prompt-1',
+        fromPort: 'images',
+        toPort: 'bundle',
+      },
+    ];
+
+    const sanitized = sanitizeEdges(nodes, edges);
+    expect(sanitized).toHaveLength(2);
+    expect(sanitized).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'edge-bundle-cross',
+          fromPort: 'bundle',
+          toPort: 'bundle',
+        }),
+        expect.objectContaining({
+          id: 'edge-images-cross',
+          fromPort: 'images',
+          toPort: 'images',
+        }),
+      ])
+    );
   });
 
   it('warns when a wait-for-inputs cycle has only cycle-internal required dependencies', () => {
@@ -584,5 +835,61 @@ describe('compileGraph', () => {
     expect(
       report.findings.some((finding) => finding.code === 'cycle_wait_deadlock_risk')
     ).toBe(false);
+  });
+
+  it('flags model prompt deadlock risk when model prompt is cycle-internal and required', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'prompt-1',
+        type: 'prompt',
+        inputs: ['result'],
+        outputs: ['prompt'],
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              result: { required: true },
+            },
+          },
+        },
+      }),
+      buildNode({
+        id: 'model-1',
+        type: 'model',
+        inputs: ['prompt'],
+        outputs: ['result', 'jobId'],
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              prompt: { required: true },
+            },
+          },
+        },
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-prompt-model',
+        from: 'prompt-1',
+        to: 'model-1',
+        fromPort: 'prompt',
+        toPort: 'prompt',
+      },
+      {
+        id: 'edge-model-prompt',
+        from: 'model-1',
+        to: 'prompt-1',
+        fromPort: 'result',
+        toPort: 'result',
+      },
+    ];
+
+    const report = compileGraph(nodes, edges);
+    const finding = report.findings.find(
+      (item) => item.code === 'model_prompt_deadlock_risk'
+    );
+    expect(finding).toBeDefined();
+    expect(finding?.message).toContain('Model prompt may never resolve');
   });
 });

@@ -36,6 +36,7 @@ export function PromptEngineFilters(): React.JSX.Element {
     exploderSubTab,
     exploderSubTabLocked,
     setExploderSubTab,
+    scopeLocked,
     includeDisabled,
     setIncludeDisabled,
     filteredDrafts,
@@ -63,18 +64,24 @@ export function PromptEngineFilters(): React.JSX.Element {
         { value: 'info', label: 'Info' },
       ],
     },
-    {
-      key: 'scope',
-      label: 'Scope',
-      type: 'select',
-      options: [
-        { value: 'all', label: 'All scopes' },
-        ...PROMPT_VALIDATION_SCOPE_VALUES.map((value) => ({
-          value,
-          label: PROMPT_VALIDATION_SCOPE_LABELS[value],
-        })),
-      ],
-    },
+    ...(
+      scopeLocked
+        ? []
+        : [
+          {
+            key: 'scope',
+            label: 'Scope',
+            type: 'select',
+            options: [
+              { value: 'all', label: 'All scopes' },
+              ...PROMPT_VALIDATION_SCOPE_VALUES.map((value) => ({
+                value,
+                label: PROMPT_VALIDATION_SCOPE_LABELS[value],
+              })),
+            ],
+          } satisfies FilterField,
+        ]
+    ),
     {
       key: 'includeDisabled',
       label: 'Include Disabled',
@@ -126,6 +133,13 @@ export function PromptEngineFilters(): React.JSX.Element {
         Showing <span className='text-gray-200'>{filteredDrafts.length}</span> pattern(s) in{' '}
         <span className='text-gray-200'>{activeTabLabel}</span>{' '}
         list.
+        {scopeLocked && scope !== 'all' ? (
+          <>
+            {' '}Scope:
+            {' '}
+            <span className='text-gray-200'>{PROMPT_VALIDATION_SCOPE_LABELS[scope]}</span>.
+          </>
+        ) : null}
       </div>
 
       <FilterPanel
@@ -142,7 +156,9 @@ export function PromptEngineFilters(): React.JSX.Element {
         onReset={() => {
           setQuery('');
           setSeverity('all');
-          setScope('all');
+          if (!scopeLocked) {
+            setScope('all');
+          }
           if (!patternTabLocked) {
             setPatternTab('core');
           }

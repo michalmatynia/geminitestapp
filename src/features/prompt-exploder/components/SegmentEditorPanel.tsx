@@ -1005,11 +1005,6 @@ export function SegmentEditorPanel(): React.JSX.Element {
                 {selectedSegment.type === 'sequence' || selectedSegment.type === 'qa_matrix' ? (
                   <SegmentEditorSubsectionsPanel
                     segment={selectedSegment}
-                    listParamOptions={listParamOptions}
-                    listParamEntryByPath={listParamEntryByPath}
-                    onUpdateSegment={(updater) => {
-                      updateSegment(selectedSegment.id, updater);
-                    }}
                     renderListItemLogicalEditor={renderListItemLogicalEditor}
                   />
                 ) : null}

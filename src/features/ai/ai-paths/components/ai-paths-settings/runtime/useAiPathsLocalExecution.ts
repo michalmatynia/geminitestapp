@@ -44,10 +44,12 @@ const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
 
 type TriggerContextMode = 'simulation_required' | 'simulation_preferred' | 'trigger_only';
 type SimulationRunBehavior = 'before_connected_trigger' | 'manual_only';
+type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulation';
 
-const DEFAULT_TRIGGER_CONTEXT_MODE: TriggerContextMode = 'simulation_preferred';
+const DEFAULT_TRIGGER_CONTEXT_MODE: TriggerContextMode = 'trigger_only';
 const DEFAULT_SIMULATION_RUN_BEHAVIOR: SimulationRunBehavior =
   'before_connected_trigger';
+const DEFAULT_FETCHER_SOURCE_MODE: FetcherSourceMode = 'live_context';
 
 const normalizeEntityType = (value?: string | null): string | null => {
   const normalized = value?.trim().toLowerCase();
@@ -120,6 +122,25 @@ const resolveSimulationRunBehavior = (
     return behavior;
   }
   return DEFAULT_SIMULATION_RUN_BEHAVIOR;
+};
+
+const resolveFetcherSourceMode = (
+  fetcherNode: AiNode
+): FetcherSourceMode => {
+  const mode = fetcherNode.config?.fetcher?.sourceMode;
+  if (
+    mode === 'live_context' ||
+    mode === 'simulation_id' ||
+    mode === 'live_then_simulation'
+  ) {
+    return mode;
+  }
+  return DEFAULT_FETCHER_SOURCE_MODE;
+};
+
+const isSimulationCapableFetcher = (fetcherNode: AiNode): boolean => {
+  const mode = resolveFetcherSourceMode(fetcherNode);
+  return mode === 'simulation_id' || mode === 'live_then_simulation';
 };
 
 const buildSimulationOutputsFromContext = (
@@ -455,7 +476,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
             const parsed = Date.parse(runStartedAt);
             args.currentRunStartedAtMsRef.current = Number.isNaN(parsed) ? Date.now() : parsed;
           }
-          const haltRef = { reason: 'completed' as 'completed' | 'step_limit' | 'cancelled' };
+          const haltRef = { reason: 'completed' as 'completed' | 'step_limit' | 'cancelled' | 'blocked' };
           const nextState = await evaluateGraph({
             nodes: args.normalizedNodes,
             edges: args.sanitizedEdges,
@@ -645,6 +666,37 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
           state = nextState;
           args.runtimeStateRef.current = nextState;
           args.setRuntimeState(nextState);
+          if (haltRef.reason === 'blocked') {
+            const firstBlockedNode = args.normalizedNodes.find((node: AiNode): boolean => {
+              const status = nextState.outputs?.[node.id]?.['status'];
+              return typeof status === 'string' && status.trim().toLowerCase() === 'blocked';
+            });
+            const firstBlockedMessage =
+              firstBlockedNode &&
+              typeof nextState.outputs?.[firstBlockedNode.id]?.['message'] === 'string'
+                ? String(nextState.outputs[firstBlockedNode.id]?.['message']).trim()
+                : '';
+            const blockedCount = args.normalizedNodes.reduce((count: number, node: AiNode): number => {
+              const status = nextState.outputs?.[node.id]?.['status'];
+              return typeof status === 'string' && status.trim().toLowerCase() === 'blocked'
+                ? count + 1
+                : count;
+            }, 0);
+            args.appendRuntimeEvent({
+              source: 'local',
+              kind: 'run_blocked',
+              level: 'warn',
+              runId,
+              runStartedAt,
+              timestamp: new Date().toISOString(),
+              message:
+                firstBlockedMessage ||
+                (blockedCount > 0
+                  ? `Run blocked: ${blockedCount} node${blockedCount === 1 ? '' : 's'} waiting for required inputs.`
+                  : 'Run blocked: one or more nodes are waiting for required inputs.'),
+            });
+            break;
+          }
           const iteratorPending = args.hasPendingIteratorAdvance(nextState);
           if (haltRef.reason === 'step_limit') {
             if (mode === 'step' || args.pauseRequestedRef.current) {
@@ -707,6 +759,31 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
         if (!simulationNode || added.has(simulationNode.id)) return;
         connected.push(simulationNode);
         added.add(simulationNode.id);
+      });
+      return connected;
+    },
+    [args.normalizedNodes, args.sanitizedEdges]
+  );
+
+  const getConnectedFetcherNodesForTrigger = useCallback(
+    (triggerNodeId: string): AiNode[] => {
+      const fetcherById = new Map<string, AiNode>(
+        args.normalizedNodes
+          .filter((node: AiNode): boolean => node.type === 'fetcher')
+          .map((node: AiNode): [string, AiNode] => [node.id, node])
+      );
+      const connected: AiNode[] = [];
+      const added = new Set<string>();
+      args.sanitizedEdges.forEach((edge) => {
+        if (edge.from !== triggerNodeId || !edge.to) return;
+        const fromPort = (edge.fromPort?.trim() || '').toLowerCase();
+        const toPort = (edge.toPort?.trim() || '').toLowerCase();
+        if (fromPort && fromPort !== 'trigger') return;
+        if (toPort && toPort !== 'trigger') return;
+        const fetcherNode = fetcherById.get(edge.to);
+        if (!fetcherNode || added.has(fetcherNode.id)) return;
+        connected.push(fetcherNode);
+        added.add(fetcherNode.id);
       });
       return connected;
     },
@@ -802,6 +879,10 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     };
     const triggerContextMode = resolveTriggerContextMode(triggerNode);
     const connectedSimulationNodes = getConnectedSimulationNodesForTrigger(triggerNode.id);
+    const connectedFetcherNodes = getConnectedFetcherNodesForTrigger(triggerNode.id);
+    const hasSimulationFetcherSource = connectedFetcherNodes.some((node: AiNode): boolean =>
+      isSimulationCapableFetcher(node)
+    );
     const baseTriggerContext = buildTriggerContext(triggerContextArgs);
     const simulationSeedOutputs: Record<string, RuntimePortValues> = {};
     let resolvedSimulationContext: Record<string, unknown> | null = null;
@@ -1079,11 +1160,13 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       contextOverride ?? null
     );
     const simulationContextSatisfied =
-      Boolean(resolvedSimulationContext) || simulationSatisfiedFromOverride;
+      Boolean(resolvedSimulationContext) ||
+      simulationSatisfiedFromOverride ||
+      hasSimulationFetcherSource;
     if (triggerContextMode === 'simulation_required' && !simulationContextSatisfied) {
       const timestamp = new Date().toISOString();
       const blockedMessage =
-        'Trigger requires Simulation context. Run Simulation first, or set connected Simulation nodes to "Auto-run before connected Trigger".';
+        'Trigger requires Simulation context. Connect Trigger -> Fetcher with simulated source mode, or set connected Simulation nodes to "Auto-run before connected Trigger".';
       args.appendRuntimeEvent({
         source: 'local',
         kind: 'run_blocked',
@@ -1096,6 +1179,8 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
         metadata: {
           triggerContextMode,
           connectedSimulationNodeIds: connectedSimulationNodes.map((node) => node.id),
+          connectedFetcherNodeIds: connectedFetcherNodes.map((node) => node.id),
+          hasSimulationFetcherSource,
           hasSimulationContextOverride: simulationSatisfiedFromOverride,
         },
       });
@@ -1110,6 +1195,8 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
         message: blockedMessage,
         metadata: {
           triggerContextMode,
+          connectedFetcherNodeIds: connectedFetcherNodes.map((node) => node.id),
+          hasSimulationFetcherSource,
           hasSimulationContextOverride: simulationSatisfiedFromOverride,
         },
       });
@@ -1270,6 +1357,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     runLocalLoop,
     finalizeLocalRunOutcome,
     getConnectedSimulationNodesForTrigger,
+    getConnectedFetcherNodesForTrigger,
     resolveSimulationContextForNode,
   ]);
 

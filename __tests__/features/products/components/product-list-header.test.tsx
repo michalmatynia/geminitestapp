@@ -73,6 +73,10 @@ describe('ProductListHeader Component', () => {
     // Stubs for fields not tested by this component
     search: '',
     setSearch: vi.fn(),
+    productId: '',
+    setProductId: vi.fn(),
+    idMatchMode: 'exact',
+    setIdMatchMode: vi.fn(),
     sku: '',
     setSku: vi.fn(),
     description: '',

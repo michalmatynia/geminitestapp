@@ -485,6 +485,8 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
               args.currentRunStartedAtRef?.current ??
               runStartedAt;
               const iteration = asNumber(nodeUpdate.attempt);
+              const isFailed = status === 'failed';
+              const isWarningStatus = status === 'blocked' || status === 'skipped';
               args.setNodeStatus({
                 nodeId,
                 status,
@@ -494,10 +496,10 @@ export function useAiPathsServerExecution(args: ServerExecutionArgs) {
                 nodeType: runtimeNode?.type ?? nodeUpdate.nodeType,
                 nodeTitle: nodeTitle ?? null,
                 iteration: iteration ?? undefined,
-                kind: status === 'failed' ? 'node_failed' : 'node_status',
-                level: status === 'failed' ? 'error' : 'info',
+                kind: isFailed ? 'node_failed' : 'node_status',
+                level: isFailed ? 'error' : isWarningStatus ? 'warn' : 'info',
                 message:
-                status === 'failed' && errorMessage
+                isFailed && errorMessage
                   ? `Node ${nodeTitle} failed: ${errorMessage}`
                   : `Node ${nodeTitle} ${args.formatStatusLabel(status)}.`,
                 metadata:

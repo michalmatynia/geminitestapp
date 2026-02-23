@@ -1,4 +1,5 @@
-const WAIT_FOR_INPUT_NODE_TYPES = new Set<string>(['prompt', 'model']);
+const WAIT_FOR_INPUT_NODE_TYPES = new Set<string>(['model']);
+const PROMPT_NODE_TYPES = new Set<string>(['prompt']);
 
 const toRecord = (value: unknown): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
@@ -20,6 +21,12 @@ const toStringArray = (value: unknown): string[] =>
         typeof entry === 'string' && entry.trim().length > 0
     )
     : [];
+
+const toRequiredFlag = (value: unknown): boolean | undefined => {
+  if (value === true) return true;
+  if (value === false) return false;
+  return undefined;
+};
 
 const readNodeId = (node: Record<string, unknown>): string | null => {
   const id = node['id'];
@@ -71,18 +78,27 @@ const collectConnectedInputPorts = (
   return ports;
 };
 
-const readMergedInputContracts = (node: Record<string, unknown>): Record<string, Record<string, unknown>> => {
-  const nodeContractsRaw = toRecord(node['inputContracts']) ?? {};
+const readNodeContracts = (
+  node: Record<string, unknown>
+): { nodeContracts: Record<string, unknown>; runtimeContracts: Record<string, unknown> } => {
+  const nodeContracts = toRecord(node['inputContracts']) ?? {};
   const config = toRecord(node['config']) ?? {};
   const runtime = toRecord(config['runtime']) ?? {};
-  const runtimeContractsRaw = toRecord(runtime['inputContracts']) ?? {};
+  const runtimeContracts = toRecord(runtime['inputContracts']) ?? {};
+  return { nodeContracts, runtimeContracts };
+};
+
+const readMergedInputContracts = (
+  node: Record<string, unknown>
+): Record<string, Record<string, unknown>> => {
+  const { nodeContracts, runtimeContracts } = readNodeContracts(node);
   const merged: Record<string, Record<string, unknown>> = {};
-  Object.entries(nodeContractsRaw).forEach(([port, contract]: [string, unknown]): void => {
+  Object.entries(nodeContracts).forEach(([port, contract]: [string, unknown]): void => {
     const record = toRecord(contract);
     if (!record) return;
     merged[port] = { ...record };
   });
-  Object.entries(runtimeContractsRaw).forEach(([port, contract]: [string, unknown]): void => {
+  Object.entries(runtimeContracts).forEach(([port, contract]: [string, unknown]): void => {
     const record = toRecord(contract);
     if (!record) return;
     merged[port] = {
@@ -93,39 +109,122 @@ const readMergedInputContracts = (node: Record<string, unknown>): Record<string,
   return merged;
 };
 
-const hasRequiredConnectedPorts = (
-  mergedContracts: Record<string, Record<string, unknown>>,
-  connectedPorts: Set<string>
-): boolean =>
-  Array.from(connectedPorts).every((port: string): boolean => {
-    const contract = toRecord(mergedContracts[port]);
-    return contract?.['required'] === true;
+const hasMirroredRuntimeContracts = (
+  node: Record<string, unknown>,
+  inputs: string[]
+): boolean => {
+  if (inputs.length === 0) return false;
+  const { nodeContracts, runtimeContracts } = readNodeContracts(node);
+  return inputs.every((port: string): boolean => {
+    const nodeContract = toRecord(nodeContracts[port]);
+    const runtimeContract = toRecord(runtimeContracts[port]);
+    if (!nodeContract || !runtimeContract) return false;
+    const nodeRequired = toRequiredFlag(nodeContract['required']);
+    const runtimeRequired = toRequiredFlag(runtimeContract['required']);
+    if (nodeRequired === undefined || runtimeRequired === undefined) return false;
+    return nodeRequired === runtimeRequired;
   });
+};
+
+const hasLegacyStrictPromptContracts = (
+  node: Record<string, unknown>,
+  connectedPorts: Set<string>
+): boolean => {
+  if (connectedPorts.size === 0) return false;
+  const inputs = toStringArray(node['inputs']);
+  if (!hasMirroredRuntimeContracts(node, inputs)) return false;
+  const config = toRecord(node['config']) ?? {};
+  const runtime = toRecord(config['runtime']) ?? {};
+  if (runtime['waitForInputs'] !== true) return false;
+  const mergedContracts = readMergedInputContracts(node);
+  return Array.from(connectedPorts).some((port: string): boolean => {
+    const contract = toRecord(mergedContracts[port]);
+    return toRequiredFlag(contract?.['required']) === true;
+  });
+};
 
 const shouldUpgradeNodeRuntimeContracts = (
   node: Record<string, unknown>,
   connectedPorts: Set<string>
 ): boolean => {
+  const nodeType = readNodeType(node);
+  if (!nodeType) return false;
+
+  if (PROMPT_NODE_TYPES.has(nodeType)) {
+    return hasLegacyStrictPromptContracts(node, connectedPorts);
+  }
+
+  if (!WAIT_FOR_INPUT_NODE_TYPES.has(nodeType)) return false;
   if (connectedPorts.size === 0) return false;
+
   const config = toRecord(node['config']) ?? {};
   const runtime = toRecord(config['runtime']) ?? {};
-  if (runtime['waitForInputs'] !== true) return true;
   const mergedContracts = readMergedInputContracts(node);
-  return !hasRequiredConnectedPorts(mergedContracts, connectedPorts);
+  const promptRequired = toRequiredFlag(toRecord(mergedContracts['prompt'])?.['required']) === true;
+  if (runtime['waitForInputs'] !== true) return true;
+  if (!promptRequired) return true;
+
+  const inputs = toStringArray(node['inputs']);
+  if (!hasMirroredRuntimeContracts(node, inputs)) return false;
+  return Array.from(connectedPorts).some((port: string): boolean => {
+    if (port === 'prompt') return false;
+    const contract = toRecord(mergedContracts[port]);
+    return toRequiredFlag(contract?.['required']) === true;
+  });
 };
 
 const applyNodeRuntimeContractsUpgrade = (
   node: Record<string, unknown>,
   connectedPorts: Set<string>
 ): Record<string, unknown> => {
+  const nodeType = readNodeType(node);
   const inputs = toStringArray(node['inputs']);
   const mergedContracts = readMergedInputContracts(node);
-  const nextContracts: Record<string, Record<string, unknown>> = {};
 
+  if (nodeType && PROMPT_NODE_TYPES.has(nodeType)) {
+    const nextContracts: Record<string, Record<string, unknown>> = {};
+    inputs.forEach((port: string): void => {
+      nextContracts[port] = {
+        ...(mergedContracts[port] ?? {}),
+        required: false,
+      };
+    });
+    Object.entries(mergedContracts).forEach(([port, contract]: [string, Record<string, unknown>]): void => {
+      if (nextContracts[port] !== undefined) return;
+      nextContracts[port] = {
+        ...contract,
+        ...(toRequiredFlag(contract['required']) === true ? { required: false } : {}),
+      };
+    });
+    const config = toRecord(node['config']) ?? {};
+    const runtime = toRecord(config['runtime']) ?? {};
+    return {
+      ...node,
+      inputContracts: nextContracts,
+      config: {
+        ...config,
+        runtime: {
+          ...runtime,
+          waitForInputs: false,
+          inputContracts: nextContracts,
+        },
+      },
+    };
+  }
+
+  const hasMirroredContracts = hasMirroredRuntimeContracts(node, inputs);
+  const nextContracts: Record<string, Record<string, unknown>> = {};
   inputs.forEach((port: string): void => {
+    const existing = mergedContracts[port] ?? {};
+    const required =
+      port === 'prompt'
+        ? true
+        : hasMirroredContracts && connectedPorts.has(port)
+          ? false
+          : toRequiredFlag(existing['required']) === true;
     nextContracts[port] = {
-      ...(mergedContracts[port] ?? {}),
-      required: connectedPorts.has(port),
+      ...existing,
+      required,
     };
   });
   Object.entries(mergedContracts).forEach(([port, contract]: [string, Record<string, unknown>]): void => {
@@ -163,7 +262,13 @@ export const needsRuntimeInputContractsUpgrade = (
     return nodes.some((node: Record<string, unknown>): boolean => {
       const nodeId = readNodeId(node);
       const nodeType = readNodeType(node);
-      if (!nodeId || !nodeType || !WAIT_FOR_INPUT_NODE_TYPES.has(nodeType)) return false;
+      if (
+        !nodeId ||
+        !nodeType ||
+        (!WAIT_FOR_INPUT_NODE_TYPES.has(nodeType) && !PROMPT_NODE_TYPES.has(nodeType))
+      ) {
+        return false;
+      }
       const connectedPorts = collectConnectedInputPorts(nodeId, edges);
       return shouldUpgradeNodeRuntimeContracts(node, connectedPorts);
     });
@@ -191,7 +296,11 @@ export const upgradeRuntimeInputContractsConfig = (
   const nextNodes = nodes.map((node: Record<string, unknown>): Record<string, unknown> => {
     const nodeId = readNodeId(node);
     const nodeType = readNodeType(node);
-    if (!nodeId || !nodeType || !WAIT_FOR_INPUT_NODE_TYPES.has(nodeType)) {
+    if (
+      !nodeId ||
+      !nodeType ||
+      (!WAIT_FOR_INPUT_NODE_TYPES.has(nodeType) && !PROMPT_NODE_TYPES.has(nodeType))
+    ) {
       return node;
     }
     const connectedPorts = collectConnectedInputPorts(nodeId, edges);

@@ -61,8 +61,32 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     {
       path: 'trigger.contextMode',
       description:
-        'How Trigger reads context: simulation_required, simulation_preferred, or trigger_only.',
-      defaultValue: 'simulation_preferred',
+        'Legacy Trigger context policy: simulation_required, simulation_preferred, or trigger_only. For forward flow, prefer Trigger only + Fetcher node.',
+      defaultValue: 'trigger_only',
+    },
+    ...COMMON_RUNTIME_FIELDS,
+  ],
+  fetcher: [
+    {
+      path: 'fetcher.sourceMode',
+      description:
+        'How to resolve context: live_context, simulation_id, or live_then_simulation.',
+      defaultValue: 'live_context',
+    },
+    {
+      path: 'fetcher.entityType',
+      description: 'Entity type used by simulation fetch modes.',
+      defaultValue: 'product',
+    },
+    {
+      path: 'fetcher.entityId',
+      description:
+        'Entity ID used by simulation fetch modes (preferred over productId alias).',
+    },
+    {
+      path: 'fetcher.productId',
+      description: 'Product ID alias for entityId.',
+      defaultValue: '""',
     },
     ...COMMON_RUNTIME_FIELDS,
   ],
@@ -1068,6 +1092,7 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
 
 const ALL_NODE_TYPES: NodeType[] = [
   'trigger',
+  'fetcher',
   'simulation',
   'audio_oscillator',
   'audio_speaker',

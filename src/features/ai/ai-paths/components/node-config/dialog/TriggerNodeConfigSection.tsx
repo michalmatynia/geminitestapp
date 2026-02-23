@@ -67,7 +67,7 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
 
   const triggerConfig = selectedNode.config?.trigger ?? {
     event: TRIGGER_EVENTS[0]?.id ?? 'manual',
-    contextMode: 'simulation_preferred',
+    contextMode: 'trigger_only',
   };
   const isScheduled = triggerConfig.event === 'scheduled_run';
 
@@ -99,7 +99,7 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
         <Label className='text-xs text-gray-400'>Context Source</Label>
         <SelectSimple
           size='sm'
-          value={triggerConfig.contextMode ?? 'simulation_preferred'}
+          value={triggerConfig.contextMode ?? 'trigger_only'}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
               trigger: {

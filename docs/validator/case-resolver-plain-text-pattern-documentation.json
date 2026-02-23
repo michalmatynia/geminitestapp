@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "name": "Case Resolver Plain Text Pattern Pack",
+  "validatorScope": "case-resolver-plain-text",
+  "promptValidationScope": "case_resolver_plain_text",
+  "purpose": "Transform HTML-rich Case Resolver node connector output into normalized plain text via Validation Patterns only.",
+  "sequenceGroup": {
+    "id": "case_resolver_plain_text",
+    "label": "Case Resolver Plain Text",
+    "executionModel": "ordered",
+    "chainMode": "continue",
+    "maxExecutionsPerRule": 2,
+    "passOutputToNext": true
+  },
+  "semanticIds": [
+    {
+      "id": "case_resolver_plain_text.strip_html_tags",
+      "intent": "Remove HTML tags while preserving block/list semantics."
+    },
+    {
+      "id": "case_resolver_plain_text.decode_html_entities",
+      "intent": "Decode common HTML entities into plain text characters."
+    },
+    {
+      "id": "case_resolver_plain_text.normalize_whitespace",
+      "intent": "Normalize trailing/leading whitespace and excessive blank lines."
+    }
+  ],
+  "fields": [
+    {
+      "name": "kind",
+      "type": "enum",
+      "allowedValues": ["regex"],
+      "description": "Pattern evaluator type."
+    },
+    {
+      "name": "severity",
+      "type": "enum",
+      "allowedValues": ["error", "warning", "info"],
+      "description": "Validation issue severity when pattern check fails."
+    },
+    {
+      "name": "sequence",
+      "type": "number",
+      "description": "Execution order inside sequence group."
+    },
+    {
+      "name": "chainMode",
+      "type": "enum",
+      "allowedValues": ["continue", "stop_on_match", "stop_on_replace"],
+      "description": "How execution proceeds after each rule."
+    },
+    {
+      "name": "autofix.operations[].kind",
+      "type": "enum",
+      "allowedValues": ["replace"],
+      "description": "Replacement operation executed by formatter."
+    },
+    {
+      "name": "autofix.operations[].pattern",
+      "type": "regex",
+      "description": "Pattern to replace when formatter runs."
+    },
+    {
+      "name": "autofix.operations[].flags",
+      "type": "regex_flags",
+      "allowedValues": ["g", "i", "m", "s", "u", "y", "d", "v"],
+      "description": "Regex flags for operation pattern."
+    },
+    {
+      "name": "autofix.operations[].replacement",
+      "type": "string",
+      "description": "Replacement text (supports newline escapes)."
+    },
+    {
+      "name": "appliesToScopes",
+      "type": "array",
+      "allowedValues": ["case_resolver_plain_text"],
+      "description": "Scope binding for runtime selection."
+    }
+  ],
+  "importFile": "docs/validator/case-resolver-plain-text-rules.import.json"
+}

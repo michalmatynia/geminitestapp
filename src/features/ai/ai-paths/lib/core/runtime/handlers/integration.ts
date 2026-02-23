@@ -1,5 +1,6 @@
 export {
   handleAdvancedApi,
+  handleFetcher,
   handleHttp,
   handleNotification,
   handlePoll,

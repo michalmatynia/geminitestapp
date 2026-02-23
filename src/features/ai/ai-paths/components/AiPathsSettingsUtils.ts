@@ -17,6 +17,7 @@ import {
   backfillPathConfigNodeContracts,
   getValueAtMappingPath,
   migratePathConfigCollections,
+  migrateTriggerToFetcherGraph,
   normalizeNodes,
   safeStringify,
   sanitizeEdges,
@@ -251,9 +252,14 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
     };
   });
   const normalizedNodes = normalizeNodes(sanitizedNodes);
-  const normalizedEdges = sanitizeEdges(
+  const migratedTriggerGraph = migrateTriggerToFetcherGraph(
     normalizedNodes,
     Array.isArray(contractBackfilled.edges) ? contractBackfilled.edges : []
+  );
+  const graphNodes = normalizeNodes(migratedTriggerGraph.nodes);
+  const normalizedEdges = sanitizeEdges(
+    graphNodes,
+    migratedTriggerGraph.edges
   );
   const uiState = contractBackfilled.uiState ? { ...contractBackfilled.uiState } : undefined;
   if (uiState && 'configOpen' in uiState) {
@@ -261,12 +267,12 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
   }
   return {
     ...contractBackfilled,
-    nodes: normalizedNodes,
+    nodes: graphNodes,
     edges: normalizedEdges,
     uiState,
     runtimeState: buildPersistedRuntimeState(
       parseRuntimeState(contractBackfilled.runtimeState),
-      normalizedNodes
+      graphNodes
     ),
   };
 };

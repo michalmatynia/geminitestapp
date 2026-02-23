@@ -37,6 +37,8 @@ import {
   ROUTER_OUTPUT_PORTS,
   SIMULATION_INPUT_PORTS,
   SIMULATION_OUTPUT_PORTS,
+  FETCHER_INPUT_PORTS,
+  FETCHER_OUTPUT_PORTS,
   TEMPLATE_INPUT_PORTS,
   TRIGGER_INPUT_PORTS,
   TRIGGER_OUTPUT_PORTS,
@@ -97,6 +99,26 @@ export const palette: NodeDefinition[] = [
     outputs: TRIGGER_OUTPUT_PORTS,
     inputContracts: buildOptionalInputContracts(TRIGGER_INPUT_PORTS),
     config: { trigger: { event: 'scheduled_run' } },
+  },
+  {
+    type: 'fetcher',
+    title: 'Fetcher: Trigger Context',
+    description: 'Resolve live trigger context or fetch simulated entity by ID.',
+    inputs: FETCHER_INPUT_PORTS,
+    outputs: FETCHER_OUTPUT_PORTS,
+    inputContracts: buildRequiredInputContracts(FETCHER_INPUT_PORTS, ['trigger']),
+    config: {
+      fetcher: {
+        sourceMode: 'live_context',
+        entityType: 'product',
+        entityId: '',
+        productId: '',
+      },
+      runtime: {
+        waitForInputs: true,
+        inputContracts: buildRequiredInputContracts(FETCHER_INPUT_PORTS, ['trigger']),
+      },
+    },
   },
   {
     type: 'simulation',

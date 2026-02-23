@@ -3,6 +3,9 @@
 import React from 'react';
 
 import type { ExploderPatternSubTab, PatternCollectionTab } from './PromptEngineContext';
+import type { PromptValidationScope } from '../settings';
+
+type PromptEngineScopeFilter = PromptValidationScope | 'all';
 
 export type PromptEngineValidationPageContextValue = {
   embedded?: boolean;
@@ -14,6 +17,8 @@ export type PromptEngineValidationPageContextValue = {
   initialExploderSubTab?: ExploderPatternSubTab;
   lockedPatternTab?: PatternCollectionTab;
   lockedExploderSubTab?: ExploderPatternSubTab;
+  initialScope?: PromptEngineScopeFilter;
+  lockedScope?: PromptEngineScopeFilter;
 };
 
 const PromptEngineValidationPageContext =

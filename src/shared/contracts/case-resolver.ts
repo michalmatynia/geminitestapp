@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { aiNodeSchema, edgeSchema, type AiNode, type Edge, type NodeDefinition } from './ai-paths';
-import { dtoBaseSchema, namedDtoSchema, type NamedDto } from './base';
+import { dtoBaseSchema, namedDtoSchema, type NamedDto, type DtoBase } from './base';
 import { documentEditorModeSchema } from './document-editor';
 
 export type { AiNode, Edge, NodeDefinition };
@@ -260,6 +260,9 @@ export const caseResolverNodeMetaSchema = z.object({
   surroundSuffix: z.string().optional(),
   appendTrailingNewline: z.boolean().optional(),
   textColor: z.string().optional(),
+  plainTextValidationEnabled: z.boolean().optional(),
+  plainTextFormatterEnabled: z.boolean().optional(),
+  plainTextValidationStackId: z.string().optional(),
 });
 
 export interface CaseResolverNodeMetaDto {
@@ -270,6 +273,9 @@ export interface CaseResolverNodeMetaDto {
   surroundSuffix?: string;
   appendTrailingNewline?: boolean;
   textColor?: string;
+  plainTextValidationEnabled?: boolean;
+  plainTextFormatterEnabled?: boolean;
+  plainTextValidationStackId?: string;
 }
 
 export type CaseResolverNodeMeta = CaseResolverNodeMetaDto;
@@ -908,6 +914,9 @@ export const DEFAULT_CASE_RESOLVER_NODE_META: CaseResolverNodeMeta = {
   surroundSuffix: '',
   appendTrailingNewline: false,
   textColor: '',
+  plainTextValidationEnabled: true,
+  plainTextFormatterEnabled: true,
+  plainTextValidationStackId: '',
 };
 
 export const DEFAULT_CASE_RESOLVER_EDGE_META: CaseResolverEdgeMeta = {

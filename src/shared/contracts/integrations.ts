@@ -7,6 +7,7 @@ import {
   type ProductParameterValueDto,
   type ProducerDto,
   type ProductCategoryDto,
+  type ProductTagDto,
 } from './products';
 
 /**

@@ -98,6 +98,26 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
       );
     }
 
+    if (scope === 'case-resolver-plain-text') {
+      return (
+        <>
+          <FormSection variant='subtle' className='p-4'>
+            <p className='text-sm text-gray-300'>
+              {resolvedDescription}
+            </p>
+          </FormSection>
+          <AdminPromptEngineValidationPatternsPage
+            embedded
+            eyebrow='AI · Case Resolver Plain Text'
+            initialPatternTab='core'
+            lockedPatternTab='core'
+            initialScope='case_resolver_plain_text'
+            lockedScope='case_resolver_plain_text'
+          />
+        </>
+      );
+    }
+
     return (
       <>
         <FormSection variant='subtle' className='p-4'>

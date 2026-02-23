@@ -79,10 +79,11 @@ export const getCategoryTree = async (
           ...nc.note,
           editorType: nc.note.editorType as 'markdown' | 'wysiwyg' | 'code',
           createdAt: nc.note.createdAt.toISOString(),
-          updatedAt: nc.note.updatedAt.toISOString(),
+          updatedAt: nc.note.updatedAt?.toISOString() ?? null,
           tagIds: nc.note.tags.map((t) => t.tagId),
           categoryIds: nc.note.categories.map((c) => c.categoryId),
-          relatedNoteIds: [], // Add if needed, or omit if optional
+          relatedNoteIds: [],
+          relations: [],
           tags: nc.note.tags.map((t: CategoryTreeRecord['notes'][number]['note']['tags'][number]) => ({
             ...t,
             assignedAt: t.assignedAt,
@@ -91,7 +92,7 @@ export const getCategoryTree = async (
               createdAt: t.tag.createdAt.toISOString(),
               updatedAt: t.tag.updatedAt.toISOString(),
             },
-          })),
+          })) as any,
           categories: nc.note.categories.map((c: CategoryTreeRecord['notes'][number]['note']['categories'][number]) => ({
             ...c,
             assignedAt: c.assignedAt,
@@ -100,7 +101,9 @@ export const getCategoryTree = async (
               createdAt: c.category.createdAt.toISOString(),
               updatedAt: c.category.updatedAt.toISOString(),
             },
-          })),
+          })) as any,
+          relationsFrom: [] as any,
+          relationsTo: [] as any,
         })),
         children: buildTree(cat.id),
         _count: { notes: cat.notes.length },

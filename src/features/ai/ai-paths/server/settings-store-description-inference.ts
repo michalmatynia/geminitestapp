@@ -10,7 +10,7 @@ export const buildDescriptionInferenceLitePathConfigValue = (
 ): string =>
   JSON.stringify({
     id: DESCRIPTION_INFERENCE_LITE_PATH_ID,
-    version: 3,
+    version: 4,
     name: DESCRIPTION_INFERENCE_LITE_PATH_NAME,
     description:
       'Single-model, evidence-first ecommerce description workflow optimized for laptop runtime.',
@@ -24,8 +24,8 @@ export const buildDescriptionInferenceLitePathConfigValue = (
         type: 'trigger',
         title: 'Trigger: Infer Description Lite',
         description: `User trigger button (${DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID}).`,
-        inputs: ['context'],
-        outputs: ['trigger', 'triggerName', 'context', 'meta', 'entityId', 'entityType'],
+        inputs: [],
+        outputs: ['trigger', 'triggerName'],
         config: {
           trigger: {
             event: DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID,
@@ -33,6 +33,33 @@ export const buildDescriptionInferenceLitePathConfigValue = (
         },
         id: 'node-trigger-desc-lite',
         position: { x: 24, y: 520 },
+      },
+      {
+        type: 'fetcher',
+        title: 'Fetcher: Trigger Context',
+        description: 'Resolve context, metadata, and entity identity from trigger input.',
+        inputs: ['trigger', 'context', 'meta', 'entityId', 'entityType'],
+        outputs: ['context', 'meta', 'entityId', 'entityType'],
+        id: 'node-fetcher-desc-lite',
+        position: { x: 220, y: 520 },
+        config: {
+          fetcher: {
+            sourceMode: 'live_context',
+            entityType: 'product',
+            entityId: '',
+            productId: '',
+          },
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              trigger: { required: true },
+              context: { required: false },
+              meta: { required: false },
+              entityId: { required: false },
+              entityType: { required: false },
+            },
+          },
+        },
       },
       {
         type: 'parser',
@@ -343,26 +370,27 @@ export const buildDescriptionInferenceLitePathConfigValue = (
       },
     ],
     edges: [
-      { id: 'edge-desc-lite-01', from: 'node-trigger-desc-lite', to: 'node-parser-desc-lite', fromPort: 'context', toPort: 'context' },
+      { id: 'edge-desc-lite-00', from: 'node-trigger-desc-lite', to: 'node-fetcher-desc-lite', fromPort: 'trigger', toPort: 'trigger' },
+      { id: 'edge-desc-lite-01', from: 'node-fetcher-desc-lite', to: 'node-parser-desc-lite', fromPort: 'context', toPort: 'context' },
       { id: 'edge-desc-lite-02', from: 'node-parser-desc-lite', to: 'node-metadata-desc-lite', fromPort: 'bundle', toPort: 'bundle' },
       { id: 'edge-desc-lite-03', from: 'node-parser-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'bundle', toPort: 'bundle' },
       { id: 'edge-desc-lite-04', from: 'node-metadata-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'value', toPort: 'result' },
       { id: 'edge-desc-lite-05', from: 'node-controls-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'value', toPort: 'value' },
-      { id: 'edge-desc-lite-06', from: 'node-trigger-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'meta', toPort: 'meta' },
-      { id: 'edge-desc-lite-07', from: 'node-trigger-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'entityId', toPort: 'entityId' },
-      { id: 'edge-desc-lite-08', from: 'node-trigger-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'entityType', toPort: 'entityType' },
+      { id: 'edge-desc-lite-06', from: 'node-fetcher-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'meta', toPort: 'meta' },
+      { id: 'edge-desc-lite-07', from: 'node-fetcher-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'entityId', toPort: 'entityId' },
+      { id: 'edge-desc-lite-08', from: 'node-fetcher-desc-lite', to: 'node-bundle-desc-lite', fromPort: 'entityType', toPort: 'entityType' },
       { id: 'edge-desc-lite-09', from: 'node-bundle-desc-lite', to: 'node-prompt-desc-lite', fromPort: 'bundle', toPort: 'bundle' },
       { id: 'edge-desc-lite-10', from: 'node-parser-desc-lite', to: 'node-prompt-desc-lite', fromPort: 'images', toPort: 'images' },
       { id: 'edge-desc-lite-11', from: 'node-parser-desc-lite', to: 'node-prompt-desc-lite', fromPort: 'title', toPort: 'title' },
-      { id: 'edge-desc-lite-12', from: 'node-trigger-desc-lite', to: 'node-prompt-desc-lite', fromPort: 'entityId', toPort: 'entityId' },
+      { id: 'edge-desc-lite-12', from: 'node-fetcher-desc-lite', to: 'node-prompt-desc-lite', fromPort: 'entityId', toPort: 'entityId' },
       { id: 'edge-desc-lite-13', from: 'node-prompt-desc-lite', to: 'node-model-desc-lite', fromPort: 'prompt', toPort: 'prompt' },
       { id: 'edge-desc-lite-14', from: 'node-prompt-desc-lite', to: 'node-model-desc-lite', fromPort: 'images', toPort: 'images' },
       { id: 'edge-desc-lite-15', from: 'node-model-desc-lite', to: 'node-regex-desc-lite', fromPort: 'result', toPort: 'value' },
       { id: 'edge-desc-lite-16', from: 'node-regex-desc-lite', to: 'node-mapper-desc-lite', fromPort: 'value', toPort: 'value' },
       { id: 'edge-desc-lite-17', from: 'node-mapper-desc-lite', to: 'node-compare-desc-lite', fromPort: 'value', toPort: 'value' },
       { id: 'edge-desc-lite-18', from: 'node-mapper-desc-lite', to: 'node-update-desc-lite', fromPort: 'result', toPort: 'result' },
-      { id: 'edge-desc-lite-19', from: 'node-trigger-desc-lite', to: 'node-update-desc-lite', fromPort: 'entityId', toPort: 'entityId' },
-      { id: 'edge-desc-lite-20', from: 'node-trigger-desc-lite', to: 'node-update-desc-lite', fromPort: 'entityType', toPort: 'entityType' },
+      { id: 'edge-desc-lite-19', from: 'node-fetcher-desc-lite', to: 'node-update-desc-lite', fromPort: 'entityId', toPort: 'entityId' },
+      { id: 'edge-desc-lite-20', from: 'node-fetcher-desc-lite', to: 'node-update-desc-lite', fromPort: 'entityType', toPort: 'entityType' },
       { id: 'edge-desc-lite-21', from: 'node-regex-desc-lite', to: 'node-view-desc-lite', fromPort: 'value', toPort: 'bundle' },
       { id: 'edge-desc-lite-22', from: 'node-mapper-desc-lite', to: 'node-view-desc-lite', fromPort: 'result', toPort: 'result' },
       { id: 'edge-desc-lite-23', from: 'node-mapper-desc-lite', to: 'node-view-desc-lite', fromPort: 'value', toPort: 'value' },
@@ -385,6 +413,8 @@ export const needsDescriptionInferenceLiteConfigUpgrade = (
   try {
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     if (!parsed || typeof parsed !== 'object') return true;
+    const version = typeof parsed['version'] === 'number' ? parsed['version'] : 0;
+    if (version < 4) return true;
 
     const nodes = Array.isArray(parsed['nodes'])
       ? (parsed['nodes'] as Array<Record<string, unknown>>)
@@ -403,8 +433,10 @@ export const needsDescriptionInferenceLiteConfigUpgrade = (
           : null;
       return trigger?.['event'] === DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID;
     });
-
-    return !hasMatchingTriggerEvent;
+    const hasFetcher = nodes.some((node: Record<string, unknown>): boolean => {
+      return node?.['type'] === 'fetcher';
+    });
+    return !hasMatchingTriggerEvent || !hasFetcher;
   } catch {
     return true;
   }

@@ -312,6 +312,116 @@ describe('case-resolver composer', () => {
     expect(compiled.prompt).toBe('Input text\nInput text\nAdditional note');
   });
 
+  it('keeps explanatory content/plainText outputs as plain text when upstream content is HTML-formatted', () => {
+    const graph: CaseResolverGraph = {
+      nodes: [
+        createPromptNode({ id: 'source', title: 'Source', template: 'Alpha', x: 0, y: 0 }),
+        createPromptNode({ id: 'note', title: 'Explanatory', template: 'Additional note', x: 150, y: 0 }),
+      ],
+      edges: [
+        createEdge({
+          id: 'flow',
+          from: 'source',
+          to: 'note',
+          fromPort: 'content',
+          toPort: 'content',
+        }),
+      ],
+      nodeMeta: {
+        source: {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+          textColor: '#ff0000',
+        },
+        note: {
+          role: 'explanatory',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+          textColor: '#00ff00',
+        },
+      },
+      edgeMeta: {
+        flow: { joinMode: 'newline' },
+      },
+      pdfExtractionPresetId: 'plain_text',
+      documentFileLinksByNode: {},
+      documentDropNodeId: null,
+      documentSourceFileIdByNode: {
+        source: 'file-source',
+        note: 'file-note',
+      },
+    };
+
+    const compiled = compileCaseResolverPrompt(graph, 'source');
+    const noteOutputs = compiled.outputsByNode['note'];
+
+    expect(noteOutputs).toEqual({
+      textfield: '<span style="color: #ff0000;">Alpha</span>\nAdditional note',
+      content: 'Alpha\nAlpha\nAdditional note',
+      plainText: 'Alpha\nAdditional note',
+    });
+    expect(noteOutputs?.content).not.toContain('<');
+    expect(noteOutputs?.plainText).not.toContain('<');
+  });
+
+  it('does not mirror wysiwygText-only input into content/plainText outputs', () => {
+    const graph: CaseResolverGraph = {
+      nodes: [
+        createPromptNode({ id: 'source', title: 'Source', template: 'Input text', x: 0, y: 0 }),
+        createPromptNode({ id: 'note', title: 'Explanatory', template: '', x: 150, y: 0 }),
+      ],
+      edges: [
+        createEdge({
+          id: 'flow',
+          from: 'source',
+          to: 'note',
+          fromPort: 'wysiwygText',
+          toPort: 'wysiwygText',
+        }),
+      ],
+      nodeMeta: {
+        source: {
+          role: 'text_note',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+        note: {
+          role: 'explanatory',
+          includeInOutput: true,
+          quoteMode: 'none',
+          surroundPrefix: '',
+          surroundSuffix: '',
+        },
+      },
+      edgeMeta: {
+        flow: { joinMode: 'newline' },
+      },
+      pdfExtractionPresetId: 'plain_text',
+      documentFileLinksByNode: {},
+      documentDropNodeId: null,
+      documentSourceFileIdByNode: {
+        source: 'file-source',
+        note: 'file-note',
+      },
+    };
+
+    const compiled = compileCaseResolverPrompt(graph, 'source');
+
+    expect(compiled.outputsByNode['note']).toEqual({
+      textfield: 'Input text',
+      content: '',
+      plainText: '',
+    });
+    expect(compiled.prompt).toBe('');
+  });
+
   it('strips escaped HTML entities from plainText output', () => {
     const graph: CaseResolverGraph = {
       nodes: [

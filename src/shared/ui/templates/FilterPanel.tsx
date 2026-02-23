@@ -3,7 +3,7 @@
 import React, { ReactNode } from 'react';
 
 import { PanelFilters } from './panels/PanelFilters';
-import { FilterField } from './panels/types';
+import { FilterField } from '@/shared/contracts/ui';
 
 /**
  * FilterPanel - Enhanced filter container with context integration support

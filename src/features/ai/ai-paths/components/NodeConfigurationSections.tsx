@@ -15,6 +15,7 @@ import { BundleNodeConfigSection } from './node-config/dialog/BundleNodeConfigSe
 import { CompareNodeConfigSection } from './node-config/dialog/CompareNodeConfigSection';
 import { ConstantNodeConfigSection } from './node-config/dialog/ConstantNodeConfigSection';
 import { DelayNodeConfigSection } from './node-config/dialog/DelayNodeConfigSection';
+import { FetcherNodeConfigSection } from './node-config/dialog/FetcherNodeConfigSection';
 import { GateNodeConfigSection } from './node-config/dialog/GateNodeConfigSection';
 import { HttpNodeConfigSection } from './node-config/dialog/HttpNodeConfigSection';
 import { IteratorNodeConfigSection } from './node-config/dialog/IteratorNodeConfigSection';
@@ -46,6 +47,7 @@ export function NodeConfigurationSections(): React.JSX.Element | null {
   return (
     <div className='space-y-6'>
       <TriggerNodeConfigSection />
+      <FetcherNodeConfigSection />
       <SimulationNodeConfigSection />
       <AudioOscillatorNodeConfigSection />
       <AudioSpeakerNodeConfigSection />

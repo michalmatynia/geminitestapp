@@ -52,6 +52,17 @@ describe('prismaProductRepository', () => {
     expect(updated?.name_en).toBe('Updated');
   });
 
+  it('should allow clearing SKU to null on multiple products', async () => {
+    const first = await prismaProductRepository.createProduct({ name_en: 'First', sku: 'SKU-CLEAR-1' });
+    const second = await prismaProductRepository.createProduct({ name_en: 'Second', sku: 'SKU-CLEAR-2' });
+
+    const updatedFirst = await prismaProductRepository.updateProduct(first.id, { sku: null });
+    const updatedSecond = await prismaProductRepository.updateProduct(second.id, { sku: null });
+
+    expect(updatedFirst?.sku).toBeNull();
+    expect(updatedSecond?.sku).toBeNull();
+  });
+
   it('should delete a product', async () => {
     const created = await prismaProductRepository.createProduct({ name_en: 'To Delete', sku: 'SKU-DELETE' });
     await prismaProductRepository.deleteProduct(created.id);
@@ -71,6 +82,27 @@ describe('prismaProductRepository', () => {
     const expensive = await prismaProductRepository.getProducts({ minPrice: 15 });
     expect(expensive.length).toBe(1);
     expect(expensive[0]?.name_en).toBe('Banana');
+  });
+
+  it('should filter products by exact id', async () => {
+    const first = await prismaProductRepository.createProduct({ name_en: 'First ID', sku: 'SKU-ID-1' });
+    await prismaProductRepository.createProduct({ name_en: 'Second ID', sku: 'SKU-ID-2' });
+
+    const byId = await prismaProductRepository.getProducts({ id: first.id });
+    expect(byId.length).toBe(1);
+    expect(byId[0]?.id).toBe(first.id);
+  });
+
+  it('should filter products by partial id when requested', async () => {
+    const first = await prismaProductRepository.createProduct({ name_en: 'First Partial', sku: 'SKU-ID-P1' });
+    await prismaProductRepository.createProduct({ name_en: 'Second Partial', sku: 'SKU-ID-P2' });
+
+    const partialToken = first.id.slice(0, Math.min(6, first.id.length));
+    const byPartialId = await prismaProductRepository.getProducts({
+      id: partialToken,
+      idMatchMode: 'partial',
+    });
+    expect(byPartialId.some((product) => product.id === first.id)).toBe(true);
   });
 
   it('should replace product images in submitted order', async () => {

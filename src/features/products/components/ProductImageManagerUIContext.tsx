@@ -333,8 +333,8 @@ export function ProductImageManagerUIProvider({
     swapImageSlots(fromIndex, toIndex);
     setSlotViewModes(prev => {
       const next = [...prev];
-      const temp = next[fromIndex];
-      next[fromIndex] = next[toIndex];
+      const temp = next[fromIndex]!;
+      next[fromIndex] = next[toIndex]!;
       next[toIndex] = temp;
       return next;
     });

@@ -10,7 +10,7 @@ export const PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME = 'Infer Parameters';
 export const buildParameterInferencePathConfigValue = (timestamp: string): string => {
   const config: PathConfig = {
     id: PARAMETER_INFERENCE_PATH_ID,
-    version: 10,
+    version: 11,
     name: PARAMETER_INFERENCE_PATH_NAME,
     description:
       'Infer product parameter values from name and images, then update product parameters.',
@@ -24,14 +24,10 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         type: 'trigger',
         title: 'Trigger: Infer Parameters',
         description: `User trigger button (${PARAMETER_INFERENCE_TRIGGER_BUTTON_ID}).`,
-        inputs: ['context'],
+        inputs: [],
         outputs: [
           'trigger',
           'triggerName',
-          'context',
-          'meta',
-          'entityId',
-          'entityType',
         ],
         config: {
           trigger: {
@@ -40,6 +36,37 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         },
         id: 'node-trigger-params',
         position: { x: 24, y: 520 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      },
+      {
+        type: 'fetcher',
+        title: 'Fetcher: Trigger Context',
+        description: 'Resolve context, metadata, and entity identity from trigger input.',
+        inputs: ['trigger', 'context', 'meta', 'entityId', 'entityType'],
+        outputs: ['context', 'meta', 'entityId', 'entityType'],
+        config: {
+          fetcher: {
+            sourceMode: 'live_context',
+            entityType: 'product',
+            entityId: '',
+            productId: '',
+          },
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              trigger: { required: true },
+              context: { required: false },
+              meta: { required: false },
+              entityId: { required: false },
+              entityType: { required: false },
+            },
+          },
+        },
+        id: 'node-fetcher-params',
+        position: { x: 280, y: 520 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
       },
       {
         type: 'parser',
@@ -49,6 +76,8 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         outputs: ['bundle', 'images'],
         id: 'node-parser-params',
         position: { x: 540, y: 520 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
         config: {
           parser: {
             mappings: {
@@ -88,6 +117,8 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         outputs: ['result', 'bundle', 'aiPrompt'],
         id: 'node-query-params',
         position: { x: 560, y: 110 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
         config: {
           database: {
             operation: 'query',
@@ -131,6 +162,8 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         outputs: ['prompt'],
         id: 'node-prompt-template-params',
         position: { x: 1040, y: 40 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
         config: {
           prompt: {
             template:
@@ -156,6 +189,8 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         outputs: ['result', 'jobId'],
         id: 'node-model-template-params',
         position: { x: 1460, y: 40 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
         config: {
           model: {
             modelId: 'gemma3:12b',
@@ -174,6 +209,8 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
         id: 'node-regex-template-params',
         position: { x: 1880, y: 40 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
         config: {
           regex: {
             pattern: '\\[[\\s\\S]*\\]',
@@ -213,6 +250,8 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
         id: 'node-seed-params',
         position: { x: 2320, y: 40 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
         config: {
           database: {
             operation: 'update',
@@ -271,6 +310,8 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         outputs: ['prompt', 'images'],
         id: 'node-prompt-params',
         position: { x: 1080, y: 320 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
         config: {
           prompt: {
             template:
@@ -299,6 +340,8 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         outputs: ['result', 'jobId'],
         id: 'node-model-params',
         position: { x: 1540, y: 560 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
         config: {
           model: {
             modelId: 'gemma3:12b',
@@ -317,6 +360,8 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
         id: 'node-regex-params',
         position: { x: 2000, y: 560 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
         config: {
           regex: {
             pattern: '\\[[\\s\\S]*\\]',
@@ -356,6 +401,8 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
         id: 'node-update-params',
         position: { x: 2460, y: 560 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
         config: {
           database: {
             operation: 'update',
@@ -410,6 +457,13 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
     ],
     edges: [
       {
+        id: 'edge-params-trigger-fetcher',
+        from: 'node-trigger-params',
+        to: 'node-fetcher-params',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
         id: 'edge-params-00',
         from: 'node-parser-params',
         to: 'node-query-params',
@@ -418,14 +472,14 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
       },
       {
         id: 'edge-params-01',
-        from: 'node-trigger-params',
+        from: 'node-fetcher-params',
         to: 'node-parser-params',
         fromPort: 'context',
         toPort: 'context',
       },
       {
         id: 'edge-params-02',
-        from: 'node-trigger-params',
+        from: 'node-fetcher-params',
         to: 'node-query-params',
         fromPort: 'context',
         toPort: 'context',
@@ -460,14 +514,14 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
       },
       {
         id: 'edge-params-07',
-        from: 'node-trigger-params',
+        from: 'node-fetcher-params',
         to: 'node-seed-params',
         fromPort: 'entityId',
         toPort: 'entityId',
       },
       {
         id: 'edge-params-08',
-        from: 'node-trigger-params',
+        from: 'node-fetcher-params',
         to: 'node-seed-params',
         fromPort: 'entityType',
         toPort: 'entityType',
@@ -516,14 +570,14 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
       },
       {
         id: 'edge-params-15',
-        from: 'node-trigger-params',
+        from: 'node-fetcher-params',
         to: 'node-update-params',
         fromPort: 'entityId',
         toPort: 'entityId',
       },
       {
         id: 'edge-params-16',
-        from: 'node-trigger-params',
+        from: 'node-fetcher-params',
         to: 'node-update-params',
         fromPort: 'entityType',
         toPort: 'entityType',
@@ -565,10 +619,16 @@ export const needsParameterInferenceConfigUpgrade = (
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     if (!parsed || typeof parsed !== 'object') return true;
 
-    // Version 10+ configs were built with current or newer defaults.
+    // Version 11+ configs were built with current or newer defaults.
     // Skip content checks so users can freely customize without triggering resets.
     const version = typeof parsed['version'] === 'number' ? parsed['version'] : 0;
-    if (version >= 10) return false;
+    if (version >= 11) {
+      const nodes = Array.isArray(parsed['nodes'])
+        ? (parsed['nodes'] as Array<Record<string, unknown>>)
+        : [];
+      const hasFetcher = nodes.some((node) => node?.['type'] === 'fetcher');
+      return !hasFetcher;
+    }
 
     const nodes = Array.isArray(parsed['nodes'])
       ? (parsed['nodes'] as Array<Record<string, unknown>>)

@@ -98,7 +98,10 @@ export const isCaseResolverPromptExploderRule = (
   rule: PromptValidationRule,
 ): boolean => {
   const id = rule.id.toLowerCase();
-  if (id.includes('case_resolver') || id.includes('case-resolver')) {
+  if (
+    id.includes('case_resolver_prompt_exploder') ||
+    id.includes('case-resolver-prompt-exploder')
+  ) {
     return true;
   }
 

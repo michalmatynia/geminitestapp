@@ -6971,6 +6971,28 @@ export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
     ]
   },
   {
+    "id": "node_config_fetcher",
+    "title": "Fetcher: Trigger Context (Configuration)",
+    "summary": "Configuration reference for Fetcher: Trigger Context.",
+    "section": "Node Config",
+    "aliases": [
+      "fetcher",
+      "Fetcher: Trigger Context",
+      "fetcher config"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "node-config.fetcher"
+    ]
+  },
+  {
     "id": "node_config_string_mutator",
     "title": "String Mutator (Configuration)",
     "summary": "Configuration reference for String Mutator.",
@@ -7757,6 +7779,28 @@ export const AI_PATHS_TOOLTIP_CATALOG: AiPathsTooltipDocEntry[] = [
     ],
     "uiTargets": [
       "palette.node.simulation"
+    ]
+  },
+  {
+    "id": "node_palette_fetcher",
+    "title": "Fetcher: Trigger Context (Palette)",
+    "summary": "Resolve live trigger context or fetch simulated entity by ID.",
+    "section": "Node Palette",
+    "aliases": [
+      "fetcher",
+      "Fetcher: Trigger Context",
+      "palette fetcher"
+    ],
+    "docPath": "/docs/ai-paths/semantic-grammar/nodes/simulation.json",
+    "tags": [
+      "ai-paths",
+      "nodes",
+      "palette",
+      "config",
+      "node"
+    ],
+    "uiTargets": [
+      "palette.node.fetcher"
     ]
   },
   {

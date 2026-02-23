@@ -83,6 +83,7 @@ const SCOPE_OPTIONS: Array<{ value: PromptValidationScope; label: string }> = [
   { value: 'image_studio_generation', label: 'Image Studio Generation' },
   { value: 'prompt_exploder', label: 'Prompt Exploder' },
   { value: 'case_resolver_prompt_exploder', label: 'Case Resolver Prompt Exploder' },
+  { value: 'case_resolver_plain_text', label: 'Case Resolver Plain Text' },
 ];
 
 const DEFAULT_CONFIG: ValidationPatternConfigDraft = {
@@ -110,6 +111,7 @@ const VALIDATOR_SCOPE_TO_PROMPT_SCOPE: Record<
   'image-studio': 'image_studio_prompt',
   'prompt-exploder': 'prompt_exploder',
   'case-resolver-prompt-exploder': 'case_resolver_prompt_exploder',
+  'case-resolver-plain-text': 'case_resolver_plain_text',
 };
 
 const parseRuleIdList = (value: string): string[] =>

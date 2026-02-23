@@ -38,7 +38,7 @@ describe('Integration Handlers', () => {
   });
 
   describe('handleTrigger', () => {
-    it('should initialize context on trigger', async () => {
+    it('should emit trigger signal ports only', async () => {
       const ctx = createMockContext({
         node: { id: 't1', title: 'Start' } as any,
         triggerNodeId: 't1',
@@ -47,7 +47,11 @@ describe('Integration Handlers', () => {
       });
       const result = await handleTrigger(ctx);
       expect(result['trigger']).toBe(true);
-      expect((result['context'] as any).entityId).toBe('p1');
+      expect(result['triggerName']).toBe('manual');
+      expect(result['context']).toBeUndefined();
+      expect(result['meta']).toBeUndefined();
+      expect(result['entityId']).toBeUndefined();
+      expect(result['entityType']).toBeUndefined();
     });
   });
 

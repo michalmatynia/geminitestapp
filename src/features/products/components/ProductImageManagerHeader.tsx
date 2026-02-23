@@ -1,7 +1,5 @@
 'use client';
 
-import React from 'react';
-
 import { Button, Alert } from '@/shared/ui';
 
 import { useProductImageManagerUI } from './ProductImageManagerUIContext';

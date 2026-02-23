@@ -97,4 +97,75 @@ describe('sanitizePathConfig', () => {
 
     expect(sanitized.edges).toEqual(config.edges);
   });
+
+  it('migrates legacy Trigger data edges through a Fetcher node', () => {
+    const config = {
+      ...buildConfig([
+        {
+          id: 'edge-trigger-parser-context',
+          from: 'trigger-1',
+          to: 'parser-1',
+          fromPort: 'context',
+          toPort: 'context',
+        },
+        {
+          id: 'edge-trigger-parser-entity',
+          from: 'trigger-1',
+          to: 'parser-1',
+          fromPort: 'entityId',
+          toPort: 'entityId',
+        },
+      ]),
+      nodes: [
+        buildNode({
+          id: 'trigger-1',
+          type: 'trigger',
+          title: 'Trigger',
+          inputs: [],
+          outputs: ['trigger', 'triggerName', 'context', 'meta', 'entityId', 'entityType'],
+        }),
+        buildNode({
+          id: 'parser-1',
+          type: 'parser',
+          title: 'Parser',
+          inputs: ['context', 'entityId'],
+          outputs: ['value'],
+        }),
+      ],
+    } as PathConfig;
+
+    const sanitized = sanitizePathConfig(config);
+    const triggerNode = sanitized.nodes.find((node: AiNode) => node.id === 'trigger-1');
+    const fetcherNode = sanitized.nodes.find((node: AiNode) => node.type === 'fetcher');
+
+    expect(triggerNode?.outputs).toEqual(['trigger', 'triggerName']);
+    expect(fetcherNode).toBeDefined();
+    expect(
+      sanitized.edges.some(
+        (edge: Edge) =>
+          edge.from === 'trigger-1' &&
+          edge.to === fetcherNode?.id &&
+          edge.fromPort === 'trigger' &&
+          edge.toPort === 'trigger'
+      )
+    ).toBe(true);
+    expect(
+      sanitized.edges.some(
+        (edge: Edge) =>
+          edge.from === fetcherNode?.id &&
+          edge.to === 'parser-1' &&
+          edge.fromPort === 'context' &&
+          edge.toPort === 'context'
+      )
+    ).toBe(true);
+    expect(
+      sanitized.edges.some(
+        (edge: Edge) =>
+          edge.from === fetcherNode?.id &&
+          edge.to === 'parser-1' &&
+          edge.fromPort === 'entityId' &&
+          edge.toPort === 'entityId'
+      )
+    ).toBe(true);
+  });
 });

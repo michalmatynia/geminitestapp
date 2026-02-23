@@ -73,7 +73,7 @@ describe('docs registry adapter', () => {
       snapshot.assertions.some(
         (assertion) =>
           assertion.id ===
-            'snippet_wire_rev_docs_wiring_snippet_simulation_trigger_from_trigger_trigger' &&
+            'snippet_wire_rev_docs_wiring_snippet_fetcher_trigger_from_trigger_trigger' &&
           assertion.sourceId === 'docs-snippets',
       ),
     ).toBe(true);

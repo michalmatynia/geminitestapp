@@ -146,6 +146,41 @@ describe('Generation Handlers', () => {
         expect.objectContaining({ variant: 'warning' })
       );
     });
+
+    it('returns blocked status when prompt is missing', async () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'model',
+          inputs: ['prompt'],
+          config: { model: { modelId: 'gpt-4o', waitForResult: false } }
+        } as any,
+        nodeInputs: {},
+      });
+      const result = await handleModel(ctx);
+      expect(result['status']).toBe('blocked');
+      expect(result['skipReason']).toBe('missing_prompt');
+      expect(result['result']).toBe('');
+      expect(api.aiJobsApi.enqueue).not.toHaveBeenCalled();
+    });
+
+    it('returns skipped status when AI jobs are disabled', async () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'model',
+          inputs: ['prompt'],
+          config: { model: { modelId: 'gpt-4o', waitForResult: false } }
+        } as any,
+        nodeInputs: { prompt: 'Do something' },
+        skipAiJobs: true,
+      });
+      const result = await handleModel(ctx);
+      expect(result['status']).toBe('skipped');
+      expect(result['skipReason']).toBe('ai_jobs_disabled');
+      expect(result['result']).toBe('');
+      expect(api.aiJobsApi.enqueue).not.toHaveBeenCalled();
+    });
   });
 
   describe('handleAiDescription', () => {

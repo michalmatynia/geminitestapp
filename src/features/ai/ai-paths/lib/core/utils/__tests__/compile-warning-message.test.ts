@@ -45,4 +45,19 @@ describe('buildCompileWarningMessage', () => {
     expect(message).toContain('Fix: connect Simulation -> Trigger.');
     expect(message).not.toContain('Compile Inspector for details');
   });
+
+  it('adds prompt-loop inspector hint for model prompt deadlock risk', () => {
+    const message = buildCompileWarningMessage({
+      warnings: 1,
+      findings: [
+        {
+          severity: 'warning',
+          code: 'model_prompt_deadlock_risk',
+          message: 'Model prompt may never resolve in this loop.',
+        },
+      ],
+    });
+    expect(message).toContain('Graph compile warning (model_prompt_deadlock_risk)');
+    expect(message).toContain('Compile Inspector');
+  });
 });

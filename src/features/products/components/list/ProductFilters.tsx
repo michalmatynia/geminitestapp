@@ -31,6 +31,10 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
   const {
     search,
     setSearch,
+    productId,
+    setProductId,
+    idMatchMode,
+    setIdMatchMode,
     sku,
     setSku,
     description,
@@ -71,6 +75,18 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
 
   // Filter configuration
   const filterConfig: FilterField[] = useMemo(() => [
+    { key: 'productId', label: 'Product ID', type: 'text', placeholder: 'Search by product ID...', width: '16rem' },
+    {
+      key: 'idMatchMode',
+      label: 'ID Match',
+      type: 'select',
+      placeholder: 'Choose match mode',
+      options: [
+        { value: 'exact', label: 'Exact' },
+        { value: 'partial', label: 'Partial' },
+      ],
+      width: '10rem',
+    },
     { key: 'sku', label: 'SKU', type: 'text', placeholder: 'Search by SKU...', width: '14rem' },
     { key: 'description', label: 'Description', type: 'text', placeholder: 'Search by description...', width: '16rem' },
     { key: 'categoryId', label: 'Category', type: 'select', placeholder: 'All categories', options: categoryOptions, width: '16rem' },
@@ -93,6 +109,8 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
 
   // Filter values (combined date range into single object)
   const filterValues = useMemo(() => ({
+    productId,
+    idMatchMode,
     sku,
     description,
     categoryId,
@@ -100,11 +118,17 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     minPrice,
     maxPrice,
     createdAt: { from: startDate, to: endDate },
-  }), [sku, description, categoryId, baseExported, minPrice, maxPrice, startDate, endDate]);
+  }), [productId, idMatchMode, sku, description, categoryId, baseExported, minPrice, maxPrice, startDate, endDate]);
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: unknown) => {
     switch (key) {
+      case 'productId':
+        setProductId(typeof value === 'string' ? value : '');
+        break;
+      case 'idMatchMode':
+        setIdMatchMode(value === 'partial' ? 'partial' : 'exact');
+        break;
       case 'sku':
         setSku(typeof value === 'string' ? value : '');
         break;
@@ -146,6 +170,8 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
       onSearchChange={setSearch}
       onReset={() => {
         setSearch('');
+        setProductId('');
+        setIdMatchMode('exact');
         setSku('');
         setDescription('');
         setCategoryId('');

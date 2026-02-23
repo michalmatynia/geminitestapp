@@ -5,7 +5,7 @@ import {
   Save,
   Sparkles,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import {
@@ -41,6 +41,7 @@ import {
   type CaseResolverPdfExtractionPresetId,
   type NodeDefinition,
 } from '@/shared/contracts/case-resolver';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
   Button,
   useToast,
@@ -50,6 +51,17 @@ import {
 } from '@/shared/ui';
 
 import { compileCaseResolverPrompt } from '../composer';
+import {
+  VALIDATOR_PATTERN_LISTS_KEY,
+  parseValidatorPatternLists,
+} from '@/features/admin/pages/validator-scope';
+import {
+  PROMPT_ENGINE_SETTINGS_KEY,
+  parsePromptEngineSettings,
+} from '@/features/prompt-engine/settings';
+import {
+  applyCaseResolverPlainTextValidation,
+} from '../plain-text-validation';
 import {
   CaseResolverPageContextValue,
   useCaseResolverPageContext,
@@ -103,6 +115,17 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const availableFiles = useMemo(
     () => workspace.files.filter((file: CaseResolverFile): boolean => file.fileType !== 'case'),
     [workspace.files]
+  );
+  const settingsQuery = useSettingsMap({ scope: 'light' });
+  const rawPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
+  const validatorPatternLists = useMemo(
+    () => parseValidatorPatternLists(rawPatternLists),
+    [rawPatternLists]
+  );
+  const rawPromptEngineSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
+  const promptEngineSettings = useMemo(
+    () => parsePromptEngineSettings(rawPromptEngineSettings),
+    [rawPromptEngineSettings]
   );
   const { toast } = useToast();
   const { viewportRef, canvasRef } = useCanvasRefs();
@@ -211,6 +234,24 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     ] as const,
     []
   );
+  const transformPlainTextOutput = useCallback(
+    (input: {
+      nodeMeta: CaseResolverNodeMeta;
+      output: 'plainText' | 'content';
+      value: string;
+    }): string => {
+      const forceForExplanatoryOutput = input.nodeMeta.role === 'explanatory';
+      return applyCaseResolverPlainTextValidation({
+        input: input.value,
+        nodeMeta: input.nodeMeta,
+        promptEngineSettings,
+        patternLists: validatorPatternLists,
+        forceEnabled: forceForExplanatoryOutput,
+        forceFormatterEnabled: forceForExplanatoryOutput,
+      });
+    },
+    [promptEngineSettings, validatorPatternLists]
+  );
 
   const compiled = useMemo(
     () =>
@@ -225,7 +266,8 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
           documentDropNodeId: normalizedDocumentDropNodeId,
           documentSourceFileIdByNode: normalizedDocumentSourceFileIdByNode,
         },
-        selectedNodeId
+        selectedNodeId,
+        { transformPlainTextOutput }
       ),
     [
       strictEdges,
@@ -237,6 +279,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       normalizedNodeMeta,
       selectedNodeId,
       pdfExtractionPresetId,
+      transformPlainTextOutput,
     ]
   );
 

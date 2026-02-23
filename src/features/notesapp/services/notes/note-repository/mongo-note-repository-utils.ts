@@ -15,7 +15,7 @@ import type {
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
   NoteFileDto as NoteFileRecord,
   NoteFiltersDto as NoteFilters,
-  NoteRecord,
+  NoteWithRelationsDto as NoteRecord,
   NotebookDto as NotebookRecord,
   NoteTagDto as TagRecord,
   NoteThemeDto as ThemeRecord,
@@ -54,13 +54,13 @@ export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
     notebookId: doc.notebookId ?? null,
     createdAt: toIsoCreatedAt(doc.createdAt),
     updatedAt: toIsoUpdatedAt(doc.updatedAt),
-    tags: tags.map((t: NoteTagEmbedded) => t.tagId),
-    categories: categories.map((c: NoteCategoryEmbedded) => c.categoryId),
-    relationsFrom: relationsFrom as unknown as NoteRecord['relationsFrom'],
-    relationsTo: relationsTo as unknown as NoteRecord['relationsTo'],
+    tags: [], // Populated by caller if needed
+    categories: [], // Populated by caller if needed
     tagIds: tags.map((t: NoteTagEmbedded) => t.tagId),
     categoryIds: categories.map((c: NoteCategoryEmbedded) => c.categoryId),
     relatedNoteIds: relationsFrom.map((r: NoteRelationFromEmbedded) => r.targetNoteId),
+    relationsFrom: relationsFrom as any,
+    relationsTo: relationsTo as any,
   } as NoteRecord;
 };
 
@@ -139,7 +139,9 @@ export const buildTree = (
   });
 
   notes.forEach((note: NoteRecord): void => {
-    (note.categories || []).forEach((categoryId: string): void => {
+    const noteCategories = note.categories || [];
+    noteCategories.forEach((c: any): void => {
+      const categoryId = typeof c === 'string' ? c : c.categoryId;
       const category = categoryMap[categoryId];
       if (category) {
         if (!category.notes) {

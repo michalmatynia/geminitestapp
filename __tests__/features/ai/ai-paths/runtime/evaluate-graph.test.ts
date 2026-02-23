@@ -325,7 +325,7 @@ describe('evaluateGraph', () => {
 
     expect(mockFetchEntityByType).toHaveBeenCalledWith('product', 'product-2');
     expect(result.outputs['simulation-1']?.['entityId']).toBe('product-2');
-    expect(result.outputs['trigger-1']?.['entityId']).toBe('product-2');
+    expect(result.outputs['trigger-1']?.['trigger']).toBe(true);
   });
 
   it('ignores stale seeded simulation outputs for manual-only simulation nodes', async () => {
@@ -512,6 +512,573 @@ describe('evaluateGraph', () => {
         },
       })
     ).rejects.toThrow(/requires .*simulation context/i);
+  });
+
+  it('resolves live trigger context through fetcher without backward simulation loop', async () => {
+    const mockProduct = { id: 'product-77', title: 'Floor Lamp' };
+    mockFetchEntityByType.mockResolvedValue(mockProduct);
+
+    const nodes: AiNode[] = [
+      {
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        description: '',
+        inputs: ['context'],
+        outputs: ['trigger', 'context', 'entityId', 'entityType'],
+        position: { x: 0, y: 0 },
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'trigger_only',
+          },
+        },
+      },
+      {
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        description: '',
+        inputs: ['trigger'],
+        outputs: ['context', 'entityId', 'entityType'],
+        position: { x: 220, y: 0 },
+        config: {
+          fetcher: {
+            sourceMode: 'live_context',
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-fetcher',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      triggerNodeId: 'trigger-1',
+      triggerEvent: 'manual',
+      triggerContext: {
+        entityId: 'product-77',
+        entityType: 'product',
+      },
+    });
+
+    expect(mockFetchEntityByType).toHaveBeenCalledWith('product', 'product-77');
+    expect(result.outputs['fetcher-1']?.['entityId']).toBe('product-77');
+    expect(
+      (result.outputs['fetcher-1']?.['context'] as Record<string, unknown>)?.[
+        'contextSource'
+      ]
+    ).toBe('trigger_fetcher');
+  });
+
+  it('resolves simulated context through fetcher and feeds Context node in forward flow', async () => {
+    const mockProduct = { id: 'product-88', title: 'Desk Lamp' };
+    mockFetchEntityByType.mockResolvedValue(mockProduct);
+
+    const nodes: AiNode[] = [
+      {
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        description: '',
+        inputs: ['context'],
+        outputs: ['trigger', 'context', 'entityId', 'entityType'],
+        position: { x: 0, y: 0 },
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'trigger_only',
+          },
+        },
+      },
+      {
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        description: '',
+        inputs: ['trigger'],
+        outputs: ['context', 'entityId', 'entityType'],
+        position: { x: 220, y: 0 },
+        config: {
+          fetcher: {
+            sourceMode: 'simulation_id',
+            entityType: 'product',
+            entityId: 'product-88',
+          },
+        },
+      },
+      {
+        id: 'context-1',
+        type: 'context',
+        title: 'Context',
+        description: '',
+        inputs: ['context'],
+        outputs: ['context', 'entityId', 'entityType', 'entityJson'],
+        position: { x: 460, y: 0 },
+        config: {
+          context: {
+            role: 'product',
+            entityType: 'auto',
+            entityIdSource: 'context',
+            scopeMode: 'full',
+            scopeTarget: 'entity',
+            includePaths: [],
+            excludePaths: [],
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-fetcher',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+      {
+        id: 'edge-fetcher-context',
+        from: 'fetcher-1',
+        to: 'context-1',
+        fromPort: 'context',
+        toPort: 'context',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      triggerNodeId: 'trigger-1',
+      triggerEvent: 'manual',
+      triggerContext: {},
+    });
+
+    expect(mockFetchEntityByType).toHaveBeenCalledWith('product', 'product-88');
+    expect(result.outputs['fetcher-1']?.['entityId']).toBe('product-88');
+    expect(
+      (result.outputs['fetcher-1']?.['context'] as Record<string, unknown>)?.[
+        'contextSource'
+      ]
+    ).toBe('simulation_fetcher');
+    expect(result.outputs['context-1']?.['entityId']).toBe('product-88');
+    expect(result.outputs['context-1']?.['entityJson']).toMatchObject(mockProduct);
+  });
+
+  it('treats simulation-capable fetcher as valid source for trigger simulation_required mode', async () => {
+    const mockProduct = { id: 'product-91', title: 'Chair' };
+    mockFetchEntityByType.mockResolvedValue(mockProduct);
+
+    const nodes: AiNode[] = [
+      {
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        description: '',
+        inputs: ['context'],
+        outputs: ['trigger', 'context', 'entityId', 'entityType'],
+        position: { x: 0, y: 0 },
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'simulation_required',
+          },
+        },
+      },
+      {
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        description: '',
+        inputs: ['trigger'],
+        outputs: ['context', 'entityId', 'entityType'],
+        position: { x: 220, y: 0 },
+        config: {
+          fetcher: {
+            sourceMode: 'simulation_id',
+            entityType: 'product',
+            entityId: 'product-91',
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-fetcher',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      triggerNodeId: 'trigger-1',
+      triggerEvent: 'manual',
+      triggerContext: {},
+    });
+
+    expect(result.outputs['fetcher-1']?.['entityId']).toBe('product-91');
+  });
+
+  it('fails simulation_required when connected fetcher is live-only and no simulation context exists', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        description: '',
+        inputs: ['context'],
+        outputs: ['trigger', 'context', 'entityId', 'entityType'],
+        position: { x: 0, y: 0 },
+        config: {
+          trigger: {
+            event: 'manual',
+            contextMode: 'simulation_required',
+          },
+        },
+      },
+      {
+        id: 'fetcher-1',
+        type: 'fetcher',
+        title: 'Fetcher',
+        description: '',
+        inputs: ['trigger'],
+        outputs: ['context', 'entityId', 'entityType'],
+        position: { x: 220, y: 0 },
+        config: {
+          fetcher: {
+            sourceMode: 'live_context',
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-fetcher',
+        from: 'trigger-1',
+        to: 'fetcher-1',
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      },
+    ];
+
+    await expect(
+      evaluateGraph({
+        ...defaultOptions,
+        nodes,
+        edges,
+        triggerNodeId: 'trigger-1',
+        triggerEvent: 'manual',
+        triggerContext: {},
+      })
+    ).rejects.toThrow(/requires .*simulation context/i);
+  });
+
+  it('emits blocked node status when wait-for-inputs node is missing required inputs', async () => {
+    const onNodeFinish = vi.fn();
+    const nodes: AiNode[] = [
+      {
+        id: 'seed-1',
+        type: 'constant',
+        title: 'Seed',
+        description: '',
+        inputs: [],
+        outputs: ['value'],
+        position: { x: 0, y: 0 },
+        config: {
+          constant: {
+            valueType: 'string',
+            value: 'noop',
+          },
+        },
+      },
+      {
+        id: 'model-1',
+        type: 'model',
+        title: 'Model',
+        description: '',
+        inputs: ['prompt', 'images', 'context'],
+        outputs: ['result', 'jobId'],
+        position: { x: 220, y: 0 },
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              prompt: { required: true },
+              images: { required: false },
+              context: { required: false },
+            },
+          },
+          model: {
+            modelId: 'test-model',
+            waitForResult: true,
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-seed-model-context',
+        from: 'seed-1',
+        to: 'model-1',
+        fromPort: 'value',
+        toPort: 'context',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      onNodeFinish,
+    });
+
+    const blockedCall = onNodeFinish.mock.calls.find((call) => {
+      const payload = call[0] as { node?: { id?: string }; nextOutputs?: Record<string, unknown> };
+      return payload.node?.id === 'model-1' && payload.nextOutputs?.['status'] === 'blocked';
+    });
+    expect(blockedCall).toBeDefined();
+    expect(result.outputs['model-1']?.['skipReason']).toBe('missing_inputs');
+    expect(result.outputs['model-1']?.['waitingOnPorts']).toContain('prompt');
+  });
+
+  it('includes upstream waiting diagnostics when model is blocked on prompt', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'prompt-1',
+        type: 'prompt',
+        title: 'Prompt Builder',
+        description: '',
+        inputs: ['result'],
+        outputs: ['prompt'],
+        position: { x: 0, y: 0 },
+        config: {
+          prompt: {
+            template: 'Name: {{result}}',
+          },
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              result: { required: true },
+            },
+          },
+        },
+      },
+      {
+        id: 'model-1',
+        type: 'model',
+        title: 'Model',
+        description: '',
+        inputs: ['prompt'],
+        outputs: ['result', 'jobId'],
+        position: { x: 220, y: 0 },
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              prompt: { required: true },
+            },
+          },
+          model: {
+            modelId: 'test-model',
+            waitForResult: true,
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-prompt-model',
+        from: 'prompt-1',
+        to: 'model-1',
+        fromPort: 'prompt',
+        toPort: 'prompt',
+      },
+      {
+        id: 'edge-model-prompt',
+        from: 'model-1',
+        to: 'prompt-1',
+        fromPort: 'result',
+        toPort: 'result',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+    });
+
+    expect(result.outputs['model-1']?.['status']).toBe('blocked');
+    expect(result.outputs['model-1']?.['skipReason']).toBe('missing_inputs');
+    expect(result.outputs['model-1']?.['waitingOnPorts']).toContain('prompt');
+    expect(result.outputs['model-1']?.['message']).toContain('Upstream status for prompt');
+    expect(result.outputs['model-1']?.['waitingOnDetails']).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          port: 'prompt',
+          upstream: expect.arrayContaining([
+            expect.objectContaining({
+              nodeId: 'prompt-1',
+              status: 'blocked',
+              waitingOnPorts: expect.arrayContaining(['result']),
+            }),
+          ]),
+        }),
+      ])
+    );
+  });
+
+  it('clears stale model outputs when required inputs are missing', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'seed-1',
+        type: 'constant',
+        title: 'Seed',
+        description: '',
+        inputs: [],
+        outputs: ['value'],
+        position: { x: 0, y: 0 },
+        config: {
+          constant: {
+            valueType: 'string',
+            value: 'noop',
+          },
+        },
+      },
+      {
+        id: 'model-1',
+        type: 'model',
+        title: 'Model',
+        description: '',
+        inputs: ['prompt', 'images', 'context'],
+        outputs: ['result', 'jobId'],
+        position: { x: 220, y: 0 },
+        config: {
+          runtime: {
+            waitForInputs: true,
+            inputContracts: {
+              prompt: { required: true },
+              images: { required: false },
+              context: { required: false },
+            },
+          },
+          model: {
+            modelId: 'test-model',
+            waitForResult: true,
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-seed-model-context',
+        from: 'seed-1',
+        to: 'model-1',
+        fromPort: 'value',
+        toPort: 'context',
+      },
+    ];
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      seedOutputs: {
+        'model-1': {
+          result: 'stale output',
+          jobId: 'job-old',
+          status: 'completed',
+        },
+      },
+    });
+
+    expect(result.outputs['model-1']).toMatchObject({
+      status: 'blocked',
+      skipReason: 'missing_inputs',
+    });
+    expect(result.outputs['model-1']?.['result']).toBeUndefined();
+    expect(result.outputs['model-1']?.['jobId']).toBeUndefined();
+  });
+
+  it('auto-enables wait-for-inputs for nodes with required input contracts', async () => {
+    const nodes: AiNode[] = [
+      {
+        id: 'seed-1',
+        type: 'constant',
+        title: 'Seed',
+        description: '',
+        inputs: [],
+        outputs: ['value'],
+        position: { x: 0, y: 0 },
+        config: {
+          constant: {
+            valueType: 'string',
+            value: 'noop',
+          },
+        },
+      },
+      {
+        id: 'model-1',
+        type: 'model',
+        title: 'Model',
+        description: '',
+        inputs: ['prompt', 'images', 'context'],
+        outputs: ['result', 'jobId'],
+        position: { x: 220, y: 0 },
+        inputContracts: {
+          prompt: { required: true },
+          images: { required: false },
+          context: { required: false },
+        },
+        config: {
+          model: {
+            modelId: 'test-model',
+            waitForResult: true,
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-seed-model-context',
+        from: 'seed-1',
+        to: 'model-1',
+        fromPort: 'value',
+        toPort: 'context',
+      },
+    ];
+    const onHalt = vi.fn();
+
+    const result = await evaluateGraph({
+      ...defaultOptions,
+      nodes,
+      edges,
+      control: {
+        onHalt,
+      },
+    });
+
+    expect(result.outputs['model-1']?.['status']).toBe('blocked');
+    expect(result.outputs['model-1']?.['skipReason']).toBe('missing_inputs');
+    expect(onHalt).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reason: 'blocked',
+      })
+    );
   });
 
   it('should handle complex graph with multiple iterations', async () => {

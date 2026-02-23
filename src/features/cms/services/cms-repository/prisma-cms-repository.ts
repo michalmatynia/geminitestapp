@@ -78,6 +78,8 @@ function mapPrismaPageComponent(c: PrismaPageComponent): PageComponent {
     order: c.order,
     content: c.content as unknown as Record<string, unknown>,
     pageId: c.pageId,
+    createdAt: c.createdAt.toISOString(),
+    updatedAt: c.updatedAt?.toISOString() ?? null,
   };
 }
 

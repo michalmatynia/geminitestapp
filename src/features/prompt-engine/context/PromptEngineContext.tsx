@@ -51,6 +51,8 @@ type PromptEngineProviderProps = {
   initialExploderSubTab?: ExploderPatternSubTab | undefined;
   lockedPatternTab?: PatternCollectionTab | undefined;
   lockedExploderSubTab?: ExploderPatternSubTab | undefined;
+  initialScope?: ScopeFilter | undefined;
+  lockedScope?: ScopeFilter | undefined;
 };
 export type { RuleDraft } from './prompt-engine-context-utils';
 
@@ -64,6 +66,7 @@ interface PromptEngineContextType {
   exploderSubTab: ExploderPatternSubTab;
   patternTabLocked: boolean;
   exploderSubTabLocked: boolean;
+  scopeLocked: boolean;
   includeDisabled: boolean;
   drafts: RuleDraft[];
   learnedDrafts: RuleDraft[];
@@ -115,6 +118,8 @@ export function PromptEngineProvider({
   initialExploderSubTab,
   lockedPatternTab,
   lockedExploderSubTab,
+  initialScope,
+  lockedScope,
 }: PromptEngineProviderProps): React.JSX.Element {
   const { toast } = useToast();
   const settingsQuery = useSettingsMap();
@@ -127,13 +132,17 @@ export function PromptEngineProvider({
   const resolvedLockedPatternTab = lockedPatternTab ?? pageContext?.lockedPatternTab;
   const resolvedLockedExploderSubTab =
     lockedExploderSubTab ?? pageContext?.lockedExploderSubTab;
+  const resolvedInitialScope = initialScope ?? pageContext?.initialScope;
+  const resolvedLockedScope = lockedScope ?? pageContext?.lockedScope;
 
   const rawSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
   const promptEngineSettings = useMemo(() => parsePromptEngineSettings(rawSettings), [rawSettings]);
   
   const [query, setQuery] = useState<string>('');
   const [severity, setSeverity] = useState<SeverityFilter>('all');
-  const [scope, setScope] = useState<ScopeFilter>('all');
+  const [scope, setScope] = useState<ScopeFilter>(
+    resolvedLockedScope ?? resolvedInitialScope ?? 'all'
+  );
   const [patternTab, setPatternTab] = useState<PatternCollectionTab>(
     resolvedLockedPatternTab ?? resolvedInitialPatternTab ?? 'core'
   );
@@ -154,6 +163,7 @@ export function PromptEngineProvider({
   const activeExploderSubTab = resolvedLockedExploderSubTab ?? exploderSubTab;
   const patternTabLocked = Boolean(resolvedLockedPatternTab);
   const exploderSubTabLocked = Boolean(resolvedLockedExploderSubTab);
+  const scopeLocked = Boolean(resolvedLockedScope);
 
   useEffect(() => {
     if (resolvedLockedPatternTab && patternTab !== resolvedLockedPatternTab) {
@@ -166,6 +176,11 @@ export function PromptEngineProvider({
       setExploderSubTab(resolvedLockedExploderSubTab);
     }
   }, [resolvedLockedExploderSubTab, exploderSubTab]);
+  useEffect(() => {
+    if (resolvedLockedScope && scope !== resolvedLockedScope) {
+      setScope(resolvedLockedScope);
+    }
+  }, [resolvedLockedScope, scope]);
 
   // Sync state with settings query
   useEffect(() => {
@@ -528,6 +543,10 @@ export function PromptEngineProvider({
     if (resolvedLockedExploderSubTab) return;
     setExploderSubTab(subTab);
   }, [resolvedLockedExploderSubTab]);
+  const handleSetScope = useCallback((nextScope: ScopeFilter): void => {
+    if (resolvedLockedScope) return;
+    setScope(nextScope);
+  }, [resolvedLockedScope]);
 
   const handleAddRule = useCallback((): void => {
     const preset =
@@ -758,6 +777,7 @@ export function PromptEngineProvider({
       exploderSubTab: activeExploderSubTab,
       patternTabLocked,
       exploderSubTabLocked,
+      scopeLocked,
       includeDisabled,
       drafts,
       learnedDrafts,
@@ -771,7 +791,7 @@ export function PromptEngineProvider({
       filteredLearnedDrafts,
       setQuery,
       setSeverity,
-      setScope,
+      setScope: handleSetScope,
       setPatternTab: handleSetPatternTab,
       setExploderSubTab: handleSetExploderSubTab,
       setIncludeDisabled,
@@ -804,6 +824,7 @@ export function PromptEngineProvider({
       activeExploderSubTab,
       patternTabLocked,
       exploderSubTabLocked,
+      scopeLocked,
       includeDisabled,
       drafts,
       learnedDrafts,
@@ -815,6 +836,7 @@ export function PromptEngineProvider({
       rawSettings,
       filteredDrafts,
       filteredLearnedDrafts,
+      handleSetScope,
       handleSetPatternTab,
       handleSetExploderSubTab,
       handleRuleTextChange,

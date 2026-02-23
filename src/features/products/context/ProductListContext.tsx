@@ -42,6 +42,10 @@ export interface ProductListContextType {
   catalogs: Catalog[];
   search: string;
   setSearch: (value: string) => void;
+  productId: string;
+  setProductId: (value: string) => void;
+  idMatchMode: 'exact' | 'partial';
+  setIdMatchMode: (value: 'exact' | 'partial') => void;
   sku: string;
   setSku: (value: string) => void;
   description: string;
@@ -155,6 +159,10 @@ export interface ProductListFiltersContextType {
   catalogs: Catalog[];
   search: string;
   setSearch: (value: string) => void;
+  productId: string;
+  setProductId: (value: string) => void;
+  idMatchMode: 'exact' | 'partial';
+  setIdMatchMode: (value: 'exact' | 'partial') => void;
   sku: string;
   setSku: (value: string) => void;
   description: string;
@@ -356,6 +364,10 @@ export function ProductListProvider({
       catalogs: value.catalogs,
       search: value.search,
       setSearch: value.setSearch,
+      productId: value.productId,
+      setProductId: value.setProductId,
+      idMatchMode: value.idMatchMode,
+      setIdMatchMode: value.setIdMatchMode,
       sku: value.sku,
       setSku: value.setSku,
       description: value.description,

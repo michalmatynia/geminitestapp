@@ -125,8 +125,8 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                 onValueChange={(value: string): void =>
                   setFormData((prev: PatternFormData) => {
                     const nextTarget = value as PatternFormData['target'];
-                    const allowed = new Set<string>(getReplacementFieldsForTarget(nextTarget).map(f => f.value));
-                    const nextSourceOptions = getSourceFieldOptionsForTarget(nextTarget);
+                    const allowed = new Set<string>(getReplacementFieldsForTarget(nextTarget));
+                    const nextSourceOptions = getSourceFieldOptionsForTarget(nextTarget) as any[];
                     const hasSourceField = nextSourceOptions.some(
                       (option: { value: string }) => option.value === prev.sourceField
                     );
@@ -435,7 +435,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                     }
                     options={[
                       SOURCE_FIELD_PLACEHOLDER_OPTION,
-                      ...sourceFieldOptions,
+                      ...(sourceFieldOptions as any[]),
                     ]}
                   />
                 </FormField>
@@ -536,7 +536,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                     }
                     options={[
                       SOURCE_FIELD_PLACEHOLDER_OPTION,
-                      ...sourceFieldOptions,
+                      ...(sourceFieldOptions as any[]),
                     ]}
                   />
                 </FormField>
@@ -793,7 +793,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
         >
           <ValidatorDocTooltip docId='validator.modal.replacement.toggle'>
             <MultiSelect
-              options={replacementFieldOptions}
+              options={replacementFieldOptions as any}
               selected={formData.replacementFields}
               onChange={(values: string[]) =>
                 setFormData((prev: PatternFormData) => ({

@@ -14,6 +14,7 @@ import {
 
 import { PromptExploderHierarchyTreeProvider } from './PromptExploderHierarchyTreeContext';
 import { PromptExploderHierarchyTreeEditor } from './PromptExploderHierarchyTreeEditor';
+import { useDocumentState, useDocumentActions } from '../context/hooks/useDocument';
 import {
   PROMPT_EXPLODER_LOGICAL_OPERATOR_OPTIONS,
   PROMPT_EXPLODER_LOGICAL_COMPARATOR_OPTIONS,
@@ -34,29 +35,8 @@ import type {
   PromptExploderSubsection,
 } from '../types';
 
-type ParamOption = {
-  value: string;
-  label: string;
-};
-
-type ParamEntry = {
-  spec?: {
-    path?: string | undefined;
-    kind?: string | null | undefined;
-    enumOptions?: string[] | null | undefined;
-    hint?: string | undefined;
-    min?: number | undefined;
-    max?: number | undefined;
-    step?: number | undefined;
-    integer?: boolean | undefined;
-  } | null | undefined;
-};
-
 export function SegmentEditorSubsectionsPanel(args: {
   segment: PromptExploderSegment;
-  listParamOptions: ParamOption[];
-  listParamEntryByPath: ReadonlyMap<string, ParamEntry>;
-  onUpdateSegment: (updater: (current: PromptExploderSegment) => PromptExploderSegment) => void;
   renderListItemLogicalEditor: (args: {
     item: PromptExploderListItem;
     onChange: (updater: (item: PromptExploderListItem) => PromptExploderListItem) => void;
@@ -64,14 +44,19 @@ export function SegmentEditorSubsectionsPanel(args: {
 }): React.JSX.Element | null {
   const {
     segment,
-    listParamOptions,
-    listParamEntryByPath,
-    onUpdateSegment,
     renderListItemLogicalEditor,
   } = args;
+  
+  const { listParamOptions, listParamEntryByPath } = useDocumentState();
+  const { updateSegment } = useDocumentActions();
+
   if (segment.type !== 'sequence' && segment.type !== 'qa_matrix') {
     return null;
   }
+
+  const onUpdateSegment = (updater: (current: PromptExploderSegment) => PromptExploderSegment) => {
+    updateSegment(segment.id, updater);
+  };
 
   return (
     <div className='space-y-3'>

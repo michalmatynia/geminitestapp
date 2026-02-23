@@ -57,9 +57,9 @@ const DOCS_COPY_KEYBOARD_SHORTCUTS_LINES = [
 
 const DOCS_COPY_PORT_RULES_LINES = [
   'Ports must match exactly (e.g. result -> result).',
-  'Context Filter accepts context input or can fetch context if left unconnected.',
+  'Trigger is initiator-only; context/meta/entity ports come from Fetcher.',
+  'Context Filter accepts explicit context input from upstream nodes (typically Fetcher).',
   'Viewer is terminal (no outputs).',
-  'Trigger context input only accepts context from Simulation.',
   'Simulation trigger input only accepts trigger from Trigger.',
   'Multiple wires into the same input are collected as arrays.',
   'Gate expects valid from a Validator or Validation Pattern node.',
@@ -459,17 +459,17 @@ export function DocsTabPanel(): React.JSX.Element {
   ]);
   const showCoreFlow = shouldShow([
     'Core Flow',
-    'Trigger → Context Filter: connect context',
-    'Trigger → Simulation: connect trigger',
-    'Simulation → Trigger: connect context',
-    'Trigger → Viewer: connect context/meta/trigger/triggerName',
+    'Trigger → Fetcher: connect trigger',
+    'Fetcher → Context Filter: connect context',
+    'Fetcher → Viewer: connect context/meta/entityId/entityType',
+    'Trigger → Viewer: connect trigger/triggerName',
   ]);
   const showPortRules = shouldShow([
     'Port Rules',
     'Ports must match exactly (e.g. result → result).',
-    'Context Filter accepts context input or can fetch context if left unconnected.',
+    'Trigger is initiator-only; context/meta/entity ports come from Fetcher.',
+    'Context Filter accepts context input from upstream nodes (typically Fetcher).',
     'Viewer is terminal (no outputs).',
-    'Trigger context input only accepts context from Simulation.',
     'Simulation trigger input only accepts trigger from Trigger.',
     'Multiple wires into the same input are collected as arrays.',
     'Gate expects valid from a Validator or Validation Pattern node.',
@@ -681,24 +681,24 @@ export function DocsTabPanel(): React.JSX.Element {
           <DocumentationSection title='Core Flow'>
             <ul className='space-y-2'>
               <li>
-                <span className='text-white'>Trigger → Context Filter:</span> Connect
-                <span className='text-emerald-200'> context</span> from Trigger to Context Filter
-                <span className='text-emerald-200'> context</span>.
-              </li>
-              <li>
-                <span className='text-white'>Trigger → Simulation:</span> Connect
-                <span className='text-cyan-200'> trigger</span> from Trigger to Simulation
+                <span className='text-white'>Trigger → Fetcher:</span> Connect
+                <span className='text-cyan-200'> trigger</span> from Trigger to Fetcher
                 <span className='text-cyan-200'> trigger</span>.
               </li>
               <li>
-                <span className='text-white'>Simulation → Trigger:</span> Connect
-                <span className='text-cyan-200'> context</span> from Simulation to Trigger
-                <span className='text-cyan-200'> context</span>.
+                <span className='text-white'>Fetcher → Context Filter:</span> Connect
+                <span className='text-emerald-200'> context</span> from Fetcher to Context Filter
+                <span className='text-emerald-200'> context</span>.
+              </li>
+              <li>
+                <span className='text-white'>Fetcher → Viewer:</span> Connect
+                <span className='text-amber-200'> context</span>,
+                <span className='text-amber-200'> meta</span>,
+                <span className='text-amber-200'> entityId</span>, or
+                <span className='text-amber-200'> entityType</span> into Result Viewer.
               </li>
               <li>
                 <span className='text-white'>Trigger → Viewer:</span> Connect
-                <span className='text-amber-200'> context</span>,
-                <span className='text-amber-200'> meta</span>, or
                 <span className='text-amber-200'> trigger</span> /
                 <span className='text-amber-200'> triggerName</span> into Result Viewer.
               </li>
@@ -710,9 +710,9 @@ export function DocsTabPanel(): React.JSX.Element {
           <DocumentationSection title='Port Rules'>
             <ul className='space-y-2'>
               <li>Ports must match exactly (e.g. result → result).</li>
-              <li>Context Filter accepts context input or can fetch context if left unconnected.</li>
+              <li>Trigger is initiator-only; context/meta/entity outputs come from Fetcher.</li>
+              <li>Context Filter accepts explicit context input from upstream nodes.</li>
               <li>Viewer is terminal (no outputs).</li>
-              <li>Trigger context input only accepts context from Simulation.</li>
               <li>Simulation trigger input only accepts trigger from Trigger.</li>
               <li>Multiple wires into the same input are collected as arrays.</li>
               <li>Gate expects valid from a Validator or Validation Pattern node.</li>

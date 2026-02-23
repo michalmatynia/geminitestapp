@@ -12,7 +12,7 @@ export const AI_PATHS_MAINTENANCE_ACTION_IDS = [
   'ensure_description_inference_defaults',
   'ensure_base_export_defaults',
   'upgrade_translation_en_pl',
-  'upgrade_description_and_name',
+  'upgrade_runtime_input_contracts',
   'upgrade_server_execution_mode',
 ] as const;
 export type AiPathsMaintenanceActionId =

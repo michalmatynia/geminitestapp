@@ -4,7 +4,6 @@
 import { 
   PlusIcon, XIcon, GripVertical, MoreVertical } from 'lucide-react';
 import NextImage from 'next/image';
-import React from 'react';
 
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import {
@@ -271,7 +270,7 @@ export function ProductImageSlot({
               })}
             </div>
             <div className='flex items-center gap-1'>
-              <ActionMenu variant='outline' size='sm' triggerClassName='h-6 px-2 text-[10px]' trigger={`View: ${mode.charAt(0).toUpperCase() + mode.slice(1)}`}>
+              <ActionMenu variant='outline' size='sm' triggerClassName='h-6 px-2 text-[10px]' trigger={`View: ${(mode ?? 'upload').charAt(0).toUpperCase() + (mode ?? 'upload').slice(1)}`}>
                 {(['upload', 'link', 'base64'] as const).map((m) => (
                   <DropdownMenuItem key={m} disabled={(m === 'upload' && !hasUpload) || (m === 'link' && !linkValue.trim()) || (m === 'base64' && !base64Value.trim())} onClick={() => setSlotViewMode(index, m)}>
                     {m.charAt(0).toUpperCase() + m.slice(1)}

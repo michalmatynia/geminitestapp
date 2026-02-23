@@ -74,19 +74,7 @@ export const inspectPathDependencies = (
   nodes.forEach((node: AiNode): void => {
     const incomingPorts = getIncomingPorts(node.id, edges);
 
-    if (node.type === 'trigger') {
-      if (!incomingPorts.has('context')) {
-        pushRisk(
-          risks,
-          node,
-          'trigger_context_fallback',
-          'warning',
-          'Trigger has no wired `context` input and may rely on runtime fallback context.',
-          'Wire an explicit context source into the trigger node.',
-        );
-      }
-      return;
-    }
+    if (node.type === 'trigger') return;
 
     if (node.type === 'parser') {
       if (!incomingPorts.has('entityJson') && !incomingPorts.has('context')) {

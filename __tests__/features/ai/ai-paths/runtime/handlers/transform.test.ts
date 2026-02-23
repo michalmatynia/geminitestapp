@@ -65,6 +65,33 @@ describe('Transform Handlers', () => {
       const result = await handleParser(ctx);
       expect(result['title']).toBe('Fallback Name');
     });
+
+    it('normalizes images output to image URL list', async () => {
+      const ctx = createMockContext({
+        node: {
+          id: 'n1',
+          type: 'parser',
+          config: {
+            parser: {
+              mappings: { images: '$.images' }
+            }
+          }
+        } as any,
+        nodeInputs: {
+          entityJson: {
+            images: [
+              { id: 'img-1', url: 'https://cdn.example.com/a.jpg', alt: 'A' },
+              { filePath: '/uploads/b.png', width: 1200 },
+            ],
+          },
+        },
+      });
+      const result = await handleParser(ctx);
+      expect(result['images']).toEqual([
+        'https://cdn.example.com/a.jpg',
+        '/uploads/b.png',
+      ]);
+    });
   });
 
   describe('handleMapper', () => {

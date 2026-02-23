@@ -48,6 +48,12 @@ export const isValidConnection = (
   if (to.type === 'simulation' && toPort === 'trigger') {
     if (from.type !== 'trigger' || fromPort !== 'trigger') return false;
   }
+  if (to.type === 'fetcher' && toPort === 'trigger') {
+    if (from.type !== 'trigger' || fromPort !== 'trigger') return false;
+  }
+  if (to.type === 'fetcher' && from.type === 'trigger' && toPort !== 'trigger') {
+    return false;
+  }
   const fromTypes = getPortDataTypes(fromPort);
   const toTypes = getPortDataTypes(toPort);
   return arePortTypesCompatible(fromTypes, toTypes);
@@ -55,6 +61,21 @@ export const isValidConnection = (
 
 export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
   const nodeMap = new Map(nodes.map((node: AiNode) => [node.id, node]));
+  const triggerFetcherPairKey = (fromNodeId: string, toNodeId: string): string =>
+    `${fromNodeId}::${toNodeId}`;
+  const triggerFetcherPairsWithSignal = new Set<string>();
+  const emittedTriggerFetcherPairs = new Set<string>();
+  edges.forEach((edge: Edge): void => {
+    if (!edge.from || !edge.to) return;
+    const fromNode = nodeMap.get(edge.from);
+    const toNode = nodeMap.get(edge.to);
+    if (fromNode?.type !== 'trigger' || toNode?.type !== 'fetcher') return;
+    const fromPort = edge.fromPort ? normalizePortName(edge.fromPort) : undefined;
+    const toPort = edge.toPort ? normalizePortName(edge.toPort) : undefined;
+    if ((fromPort === 'trigger' || !fromPort) && (toPort === 'trigger' || !toPort)) {
+      triggerFetcherPairsWithSignal.add(triggerFetcherPairKey(edge.from, edge.to));
+    }
+  });
   return edges.flatMap((edge: Edge) => {
     if (!edge.from || !edge.to) return [];
     const from = nodeMap.get(edge.from);
@@ -62,6 +83,31 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
     if (!from || !to) return [];
     const fromPort = edge.fromPort ? normalizePortName(edge.fromPort) : undefined;
     const toPort = edge.toPort ? normalizePortName(edge.toPort) : undefined;
+
+    if (from.type === 'trigger' && to.type === 'fetcher') {
+      const pairKey = triggerFetcherPairKey(from.id, to.id);
+      if (emittedTriggerFetcherPairs.has(pairKey)) return [];
+      const hasExplicitSignal = triggerFetcherPairsWithSignal.has(pairKey);
+      const isExplicitSignalEdge =
+        (fromPort === 'trigger' || !fromPort) &&
+        (toPort === 'trigger' || !toPort);
+      if (hasExplicitSignal && !isExplicitSignalEdge) {
+        return [];
+      }
+      emittedTriggerFetcherPairs.add(pairKey);
+      const canonical: Edge = {
+        ...edge,
+        fromPort: 'trigger',
+        toPort: 'trigger',
+      };
+      if (
+        isValidConnection(from, to, canonical.fromPort ?? undefined, canonical.toPort ?? undefined)
+      ) {
+        return [canonical];
+      }
+      return [];
+    }
+
     if (fromPort && toPort) {
       if (isValidConnection(from, to, fromPort, toPort)) {
         return [
@@ -72,21 +118,27 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
           },
         ];
       }
-      if (from.outputs.includes(toPort) && to.inputs.includes(toPort)) {
-        return [
-          {
-            ...edge,
-            fromPort: toPort,
-            toPort,
-          },
-        ];
-      }
-      if (from.outputs.includes(fromPort) && to.inputs.includes(fromPort)) {
+      const canAlignByFromPort =
+        from.outputs.includes(fromPort) && to.inputs.includes(fromPort);
+      const canAlignByToPort =
+        from.outputs.includes(toPort) && to.inputs.includes(toPort);
+      // Prefer the source port when both alignments are possible. This avoids
+      // accidental output inversions when only the target port drifts.
+      if (canAlignByFromPort) {
         return [
           {
             ...edge,
             fromPort,
             toPort: fromPort,
+          },
+        ];
+      }
+      if (canAlignByToPort) {
+        return [
+          {
+            ...edge,
+            fromPort: toPort,
+            toPort,
           },
         ];
       }
@@ -129,6 +181,7 @@ type GraphIntegrityReport = {
 };
 
 const PROCESSING_NODE_TYPES = new Set<string>([
+  'fetcher',
   'parser',
   'mapper',
   'mutator',
@@ -221,6 +274,7 @@ export type GraphCompileCode =
   | 'trigger_context_resolution_risk'
   | 'cycle_detected'
   | 'cycle_wait_deadlock_risk'
+  | 'model_prompt_deadlock_risk'
   | 'unsupported_cycle'
   | 'unreachable_node';
 
@@ -616,7 +670,7 @@ const resolveTriggerContextMode = (
   ) {
     return mode;
   }
-  return 'simulation_preferred';
+  return 'trigger_only';
 };
 
 const resolveSimulationRunBehavior = (
@@ -627,6 +681,25 @@ const resolveSimulationRunBehavior = (
     return behavior;
   }
   return 'before_connected_trigger';
+};
+
+const resolveFetcherSourceMode = (
+  node: AiNode
+): 'live_context' | 'simulation_id' | 'live_then_simulation' => {
+  const mode = node.config?.fetcher?.sourceMode;
+  if (
+    mode === 'live_context' ||
+    mode === 'simulation_id' ||
+    mode === 'live_then_simulation'
+  ) {
+    return mode;
+  }
+  return 'live_context';
+};
+
+const isSimulationCapableFetcher = (node: AiNode): boolean => {
+  const mode = resolveFetcherSourceMode(node);
+  return mode === 'simulation_id' || mode === 'live_then_simulation';
 };
 
 export const compileGraph = (
@@ -744,31 +817,49 @@ export const compileGraph = (
         (simulationNode: AiNode): boolean =>
           resolveSimulationRunBehavior(simulationNode) === 'before_connected_trigger'
       );
+      const connectedFetcherNodes = sanitized
+        .map((edge: Edge): AiNode | null => {
+          if (edge.from !== triggerNode.id || !edge.to) return null;
+          const fromPort = (edge.fromPort?.trim() || '').toLowerCase();
+          const toPort = (edge.toPort?.trim() || '').toLowerCase();
+          if (fromPort && fromPort !== 'trigger') return null;
+          if (toPort && toPort !== 'trigger') return null;
+          const targetNode = nodeById.get(edge.to);
+          if (targetNode?.type !== 'fetcher') return null;
+          return targetNode;
+        })
+        .filter((node: AiNode | null): node is AiNode => Boolean(node));
+      const hasSimulationFetcherSource = connectedFetcherNodes.some((fetcherNode: AiNode): boolean =>
+        isSimulationCapableFetcher(fetcherNode)
+      );
 
       if (contextMode === 'simulation_required') {
-        if (incomingSimulationNodes.length === 0) {
+        if (incomingSimulationNodes.length === 0 && !hasSimulationFetcherSource) {
           findings.push({
             code: 'trigger_context_resolution_risk',
             severity: 'warning',
             message:
-              `Trigger "${triggerNode.title ?? triggerNode.id}" requires simulation context, but no Simulation context edge is connected. ` +
-              'Fix: connect Simulation -> Trigger (context), or change Trigger Context Source.',
+              `Trigger "${triggerNode.title ?? triggerNode.id}" requires simulation context, but no simulation-capable source is connected. ` +
+              'Fix: connect Trigger -> Fetcher and set Fetcher Source Mode to "Simulated entity by ID" (or "Live then simulated"), or change Trigger Context Source.',
             nodeId: triggerNode.id,
             nodeType: triggerNode.type,
             port: 'context',
             metadata: {
               contextMode,
+              sourceFetcherNodeIds: connectedFetcherNodes.map(
+                (fetcherNode: AiNode): string => fetcherNode.id
+              ),
             },
           });
           return;
         }
-        if (!hasAutoSimulationSource) {
+        if (!hasAutoSimulationSource && !hasSimulationFetcherSource) {
           findings.push({
             code: 'trigger_context_resolution_risk',
             severity: 'warning',
             message:
-              `Trigger "${triggerNode.title ?? triggerNode.id}" requires simulation context, but connected Simulation node(s) are set to manual-only. ` +
-              'Fix: set Simulation Run Behavior to "Auto-run before connected Trigger", or change Trigger Context Source.',
+              `Trigger "${triggerNode.title ?? triggerNode.id}" requires simulation context, but connected Simulation node(s) are set to manual-only and no simulation-capable Fetcher is connected. ` +
+              'Fix: set Simulation Run Behavior to "Auto-run before connected Trigger", or route Trigger -> Fetcher with simulated source mode.',
             nodeId: triggerNode.id,
             nodeType: triggerNode.type,
             port: 'context',
@@ -776,6 +867,9 @@ export const compileGraph = (
               contextMode,
               sourceSimulationNodeIds: incomingSimulationNodes.map(
                 (simulationNode: AiNode): string => simulationNode.id
+              ),
+              sourceFetcherNodeIds: connectedFetcherNodes.map(
+                (fetcherNode: AiNode): string => fetcherNode.id
               ),
             },
           });
@@ -858,17 +952,58 @@ export const compileGraph = (
       } else {
         const cycleNodeIds = Array.from(nonBenignCycleNodeIds);
         const cycleNodeSummary = summarizeNodeLabels(cycleNodeIds, nodeById);
+        const legacyTriggerSimulationHandshake = (() => {
+          if (cycleNodeIds.length !== 2) return null;
+          const triggerNode = cycleNodeIds
+            .map((nodeId: string): AiNode | undefined => nodeById.get(nodeId))
+            .find((node: AiNode | undefined): node is AiNode => node?.type === 'trigger');
+          const simulationNode = cycleNodeIds
+            .map((nodeId: string): AiNode | undefined => nodeById.get(nodeId))
+            .find((node: AiNode | undefined): node is AiNode => node?.type === 'simulation');
+          if (!triggerNode || !simulationNode) return null;
+          const triggerToSimulation = sanitized.some(
+            (edge: Edge): boolean =>
+              edge.from === triggerNode.id &&
+              edge.to === simulationNode.id &&
+              (edge.fromPort === 'trigger' || !edge.fromPort) &&
+              (edge.toPort === 'trigger' || !edge.toPort)
+          );
+          const simulationToTrigger = sanitized.some(
+            (edge: Edge): boolean =>
+              edge.from === simulationNode.id &&
+              edge.to === triggerNode.id &&
+              (edge.fromPort === 'context' || edge.fromPort === 'simulation' || !edge.fromPort) &&
+              (edge.toPort === 'context' || !edge.toPort)
+          );
+          if (!triggerToSimulation || !simulationToTrigger) return null;
+          return {
+            triggerNode,
+            simulationNode,
+          };
+        })();
+
+        const cycleMessage = legacyTriggerSimulationHandshake
+          ? `Detected a legacy Trigger/Simulation handshake loop across ${nonBenignCycleNodeIds.size} node(s): ${cycleNodeSummary}. ` +
+            'This loop sends context backward to Trigger and can execute out of expected order. ' +
+            'Fix: migrate to forward flow Trigger -> Fetcher -> Context Filter. Configure Fetcher source mode (live or simulated ID) and set Trigger Context Source to "Trigger only".'
+          : `Detected a circular loop across ${nonBenignCycleNodeIds.size} node(s): ${cycleNodeSummary}. ` +
+            'This means outputs feed back into earlier nodes. Fix: remove at least one loop edge, or route feedback through Delay/Iterator/Poll/Gate with one external input seed.';
         findings.push({
           code: 'cycle_detected',
           severity: 'warning',
-          message:
-            `Detected a circular loop across ${nonBenignCycleNodeIds.size} node(s): ${cycleNodeSummary}. ` +
-            'This means outputs feed back into earlier nodes. Fix: remove at least one loop edge, or route feedback through Delay/Iterator/Poll/Gate with one external input seed.',
+          message: cycleMessage,
           metadata: {
             nodeIds: cycleNodeIds,
             nodeLabels: cycleNodeIds.map((nodeId: string): string =>
               resolveNodeLabel(nodeById.get(nodeId), nodeId)
             ),
+            ...(legacyTriggerSimulationHandshake
+              ? {
+                legacyTriggerSimulationHandshake: true,
+                triggerNodeId: legacyTriggerSimulationHandshake.triggerNode.id,
+                simulationNodeId: legacyTriggerSimulationHandshake.simulationNode.id,
+              }
+              : {}),
           },
         });
       }
@@ -930,6 +1065,28 @@ export const compileGraph = (
           diagnostics: diagnostics.map((diagnostic) => ({
             nodeId: diagnostic.node.id,
             nodeType: diagnostic.node.type,
+            requiredPorts: diagnostic.requiredPorts,
+            unresolvedRequiredPorts: diagnostic.unresolvedRequiredPorts,
+          })),
+        },
+      });
+
+      const promptDeadlockDiagnostics = diagnostics.filter((diagnostic) =>
+        diagnostic.node.type === 'model' &&
+        diagnostic.unresolvedRequiredPorts.includes('prompt')
+      );
+      if (promptDeadlockDiagnostics.length === 0) return;
+
+      findings.push({
+        code: 'model_prompt_deadlock_risk',
+        severity: 'warning',
+        message:
+          'Model prompt may never resolve: model prompt input depends only on cycle-internal wait-for-inputs nodes. Fix: add one external prompt seed (e.g. Trigger -> Fetcher -> Prompt/Template) or make one cycle prompt dependency optional.',
+        metadata: {
+          nodeIds: componentNodeIds,
+          modelNodeIds: promptDeadlockDiagnostics.map((diagnostic) => diagnostic.node.id),
+          diagnostics: promptDeadlockDiagnostics.map((diagnostic) => ({
+            nodeId: diagnostic.node.id,
             requiredPorts: diagnostic.requiredPorts,
             unresolvedRequiredPorts: diagnostic.unresolvedRequiredPorts,
           })),
@@ -1033,6 +1190,20 @@ export const validateConnection = (
         message: 'Simulation \'trigger\' input must connect from Trigger \'trigger\'.',
       };
     }
+  }
+  if (toNode.type === 'fetcher' && toPort === 'trigger') {
+    if (fromNode.type !== 'trigger' || fromPort !== 'trigger') {
+      return {
+        valid: false,
+        message: 'Fetcher \'trigger\' input must connect from Trigger \'trigger\'.',
+      };
+    }
+  }
+  if (toNode.type === 'fetcher' && fromNode.type === 'trigger' && toPort !== 'trigger') {
+    return {
+      valid: false,
+      message: 'When connecting Trigger to Fetcher, use Trigger \'trigger\' -> Fetcher \'trigger\'.',
+    };
   }
   return { valid: true };
 };

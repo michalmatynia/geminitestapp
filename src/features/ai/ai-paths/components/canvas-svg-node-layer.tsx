@@ -10,13 +10,11 @@ import {
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
   PORT_SIZE,
-  formatRuntimeValue,
   getPortOffsetY,
 } from '@/features/ai/ai-paths/lib';
 
 import {
   buildConnectorInfo,
-  type ConnectorInfo,
 } from './canvas-board-connectors';
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
 import { formatPortLabel } from '../utils/ui-utils';
@@ -29,6 +27,17 @@ const BLOCKER_PROCESSING_STATUSES = new Set<string>([
   'pending',
   'processing',
 ]);
+
+const INPUT_CONNECTOR_COLORS = {
+  fill: 'rgba(56, 189, 248, 0.18)',
+  fillConnected: 'rgba(56, 189, 248, 0.34)',
+  stroke: 'rgba(125, 211, 252, 0.9)',
+};
+
+const OUTPUT_CONNECTOR_COLORS = {
+  fill: 'rgba(251, 191, 36, 0.22)',
+  stroke: 'rgba(252, 211, 77, 0.9)',
+};
 
 const formatRuntimeStatusLabel = (status: string): string =>
   status
@@ -53,6 +62,13 @@ const resolveNodePalette = (
         stroke: 'rgba(45, 212, 191, 0.7)',
         text: '#ccfbf1',
         accent: '#5eead4',
+      };
+    case 'fetcher':
+      return {
+        fill: 'rgba(14, 165, 233, 0.14)',
+        stroke: 'rgba(14, 165, 233, 0.7)',
+        text: '#e0f2fe',
+        accent: '#7dd3fc',
       };
     case 'simulation':
       return {
@@ -137,15 +153,6 @@ const statusPalette = (
   };
 };
 
-const summarizeTitleValue = (value: unknown): string => {
-  if (value === undefined) return 'No data yet.';
-  const formatted = formatRuntimeValue(value)
-    .replace(/\s+/g, ' ')
-    .trim();
-  if (!formatted) return 'No data yet.';
-  return formatted.length > 220 ? `${formatted.slice(0, 220)}...` : formatted;
-};
-
 const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
@@ -163,24 +170,6 @@ const mergeRuntimePayload = (
     ...historical,
     ...current,
   };
-};
-
-const buildConnectorTitle = (info: ConnectorInfo): string => {
-  const label = info.direction === 'input' ? 'Input' : 'Output';
-  return [
-    `${label}: ${formatPortLabel(info.port)}`,
-    `Expected: ${info.expectedLabel}`,
-    info.actualType ? `Actual: ${info.actualType}` : null,
-    info.hasMismatch ? 'Type mismatch detected.' : null,
-    '',
-    `Port value: ${summarizeTitleValue(info.value)}`,
-    `Node inputs: ${summarizeTitleValue(info.nodeInputs)}`,
-    `Node outputs: ${summarizeTitleValue(info.nodeOutputs)}`,
-    '',
-    'Right-click to disconnect.',
-  ]
-    .filter((line): line is string => line !== null)
-    .join('\n');
 };
 
 export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number }): React.JSX.Element {
@@ -609,7 +598,6 @@ export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number
 
                   return (
                     <g key={key} transform={`translate(0 ${y})`}>
-                      <title>{buildConnectorTitle(getConnectorInfo('input', node.id, port))}</title>
                       <circle
                         data-port='input'
                         data-node-id={node.id}
@@ -617,8 +605,12 @@ export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number
                         cx={0}
                         cy={0}
                         r={isHovered || isPinned ? PORT_SIZE / 2 + 1.5 : PORT_SIZE / 2}
-                        fill={isConnected ? palette.accent : palette.fill}
-                        stroke={palette.accent}
+                        fill={
+                          isConnected
+                            ? INPUT_CONNECTOR_COLORS.fillConnected
+                            : INPUT_CONNECTOR_COLORS.fill
+                        }
+                        stroke={INPUT_CONNECTOR_COLORS.stroke}
                         strokeWidth={isHovered || isPinned ? 2 : 1}
                         style={{ cursor: 'crosshair' }}
                         onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
@@ -706,7 +698,6 @@ export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number
 
                   return (
                     <g key={key} transform={`translate(${NODE_WIDTH} ${y})`}>
-                      <title>{buildConnectorTitle(getConnectorInfo('output', node.id, port))}</title>
                       <circle
                         data-port='output'
                         data-node-id={node.id}
@@ -714,8 +705,8 @@ export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number
                         cx={0}
                         cy={0}
                         r={isHovered || isPinned ? PORT_SIZE / 2 + 1.5 : PORT_SIZE / 2}
-                        fill={palette.accent}
-                        stroke={palette.accent}
+                        fill={OUTPUT_CONNECTOR_COLORS.fill}
+                        stroke={OUTPUT_CONNECTOR_COLORS.stroke}
                         strokeWidth={isHovered || isPinned ? 2 : 1}
                         style={{ cursor: 'crosshair' }}
                         onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {

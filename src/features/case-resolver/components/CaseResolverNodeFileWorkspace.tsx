@@ -21,6 +21,14 @@ import {
   stableStringify,
   type Edge,
 } from '@/features/ai/ai-paths/lib';
+import {
+  VALIDATOR_PATTERN_LISTS_KEY,
+  parseValidatorPatternLists,
+} from '@/features/admin/pages/validator-scope';
+import {
+  PROMPT_ENGINE_SETTINGS_KEY,
+  parsePromptEngineSettings,
+} from '@/features/prompt-engine/settings';
 import { type AiNode, type AiEdge, type NodeDefinition } from '@/shared/contracts/case-resolver';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
@@ -35,6 +43,7 @@ import {
   type CaseResolverNodeFileSnapshot,
   type CaseResolverScanSlot,
 } from '@/shared/contracts/case-resolver';
+import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { Button, useToast, Badge, Hint, SelectSimple, EmptyState, Card, SearchInput } from '@/shared/ui';
 import { PanelHeader } from '@/shared/ui/templates/panels';
 
@@ -62,6 +71,7 @@ import {
 } from './case-resolver-canvas-utils';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
 import { compileCaseResolverPrompt } from '../composer';
+import { applyCaseResolverPlainTextValidation } from '../plain-text-validation';
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
 
@@ -313,6 +323,17 @@ function CaseResolverNodeFileWorkspaceInner({
   const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
   const { selectNode, setConfigOpen } = useSelectionActions();
   const { toast } = useToast();
+  const settingsQuery = useSettingsMap({ scope: 'light' });
+  const rawPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
+  const validatorPatternLists = useMemo(
+    () => parseValidatorPatternLists(rawPatternLists),
+    [rawPatternLists]
+  );
+  const rawPromptEngineSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
+  const promptEngineSettings = useMemo(
+    () => parsePromptEngineSettings(rawPromptEngineSettings),
+    [rawPromptEngineSettings]
+  );
   const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database' | 'viewer'>('prompt');
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(true);
   const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
@@ -526,6 +547,24 @@ function CaseResolverNodeFileWorkspaceInner({
         : null,
     [edges, selectedEdgeId]
   );
+  const transformPlainTextOutput = useCallback(
+    (input: {
+      nodeMeta: CaseResolverNodeMeta;
+      output: 'plainText' | 'content';
+      value: string;
+    }): string => {
+      const forceForExplanatoryOutput = input.nodeMeta.role === 'explanatory';
+      return applyCaseResolverPlainTextValidation({
+        input: input.value,
+        nodeMeta: input.nodeMeta,
+        promptEngineSettings,
+        patternLists: validatorPatternLists,
+        forceEnabled: forceForExplanatoryOutput,
+        forceFormatterEnabled: forceForExplanatoryOutput,
+      });
+    },
+    [promptEngineSettings, validatorPatternLists]
+  );
   const compiled = useMemo(
     () =>
       compileCaseResolverPrompt(
@@ -539,9 +578,10 @@ function CaseResolverNodeFileWorkspaceInner({
           documentDropNodeId: null,
           documentSourceFileIdByNode: {},
         },
-        null
+        null,
+        { transformPlainTextOutput }
       ),
-    [nodes, normalizedEdgeMeta, normalizedNodeMeta, strictEdges]
+    [nodes, normalizedEdgeMeta, normalizedNodeMeta, strictEdges, transformPlainTextOutput]
   );
   const nodeById = useMemo(
     (): Map<string, AiNode> =>
@@ -1132,6 +1172,33 @@ function CaseResolverNodeFileWorkspaceInner({
     }
     return stripHtmlToPlainText(selectedPromptSourceFile.documentContent);
   }, [selectedNode, selectedPromptSourceFile]);
+  const hasWysiwygOnlyInputFlow = useCallback(
+    (
+      nodeId: string,
+      outputs: { textfield: string; content: string; plainText: string }
+    ): boolean => {
+      const textfieldInput = resolveStaticInputPreview(
+        nodeId,
+        CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] ?? 'wysiwygText'
+      );
+      const contentInput = resolveStaticInputPreview(
+        nodeId,
+        CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] ?? 'content'
+      );
+      const plainTextInput = resolveStaticInputPreview(
+        nodeId,
+        CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2] ?? 'plainText'
+      );
+      const hasTextfieldOnlyConnectedInputs =
+        textfieldInput.connectedEdgeCount > 0 &&
+        contentInput.connectedEdgeCount === 0 &&
+        plainTextInput.connectedEdgeCount === 0;
+      const hasSecondaryOutputValues =
+        outputs.content.trim().length > 0 || outputs.plainText.trim().length > 0;
+      return hasTextfieldOnlyConnectedInputs && !hasSecondaryOutputValues;
+    },
+    [resolveStaticInputPreview]
+  );
   const selectedPromptOutputPreview = useMemo(() => {
     if (selectedNode?.type !== 'prompt') return null;
     const computedOutputs = compiled.outputsByNode[selectedNode.id];
@@ -1146,6 +1213,11 @@ function CaseResolverNodeFileWorkspaceInner({
       plainText: computedOutputs?.plainText ?? stripHtmlToPlainText(textfieldOutput),
     };
   }, [compiled.outputsByNode, selectedNode, selectedPromptMeta]);
+  const selectedPromptSecondaryOutputHint = useMemo((): boolean => {
+    if (selectedNode?.type !== 'prompt') return false;
+    if (!selectedPromptOutputPreview) return false;
+    return hasWysiwygOnlyInputFlow(selectedNode.id, selectedPromptOutputPreview);
+  }, [hasWysiwygOnlyInputFlow, selectedNode, selectedPromptOutputPreview]);
   const selectedEdgeJoinMode = selectedEdge
     ? (normalizedEdgeMeta[selectedEdge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode
     : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
@@ -1204,6 +1276,9 @@ function CaseResolverNodeFileWorkspaceInner({
         : isContentPort
           ? outputs.content
           : outputs.textfield;
+      const showSecondaryOutputHint =
+        (isContentPort || isPlainTextPort) &&
+        hasWysiwygOnlyInputFlow(input.node.id, outputs);
 
       return {
         maxWidth: '720px',
@@ -1215,6 +1290,20 @@ function CaseResolverNodeFileWorkspaceInner({
                 Source: {sourceFile.name}
               </div>
             ) : null}
+            {showSecondaryOutputHint ? (
+              <div className='rounded border border-amber-500/35 bg-amber-500/10 p-2 text-[10px] text-amber-100'>
+                Only <span className='font-semibold'>wysiwygText</span> input is connected.
+                This output lane stays empty until a matching
+                {' '}
+                <span className='font-semibold'>content</span>
+                {' '}
+                or
+                {' '}
+                <span className='font-semibold'>plainText</span>
+                {' '}
+                input is connected.
+              </div>
+            ) : null}
             <div className='max-h-80 overflow-auto rounded border border-gray-700 bg-white p-3 text-[11px] leading-relaxed text-slate-900 whitespace-pre-wrap'>
               {renderedText || '(empty)'}
             </div>
@@ -1222,7 +1311,7 @@ function CaseResolverNodeFileWorkspaceInner({
         ),
       };
     },
-    [resolvePromptTooltipOutputs, resolveStaticInputPreview]
+    [hasWysiwygOnlyInputFlow, resolvePromptTooltipOutputs, resolveStaticInputPreview]
   );
 
   return (
@@ -1502,6 +1591,7 @@ function CaseResolverNodeFileWorkspaceInner({
         selectedPromptTemplate={selectedPromptTemplate}
         selectedPromptInputText={selectedPromptInputText}
         selectedPromptOutputPreview={selectedPromptOutputPreview}
+        selectedPromptSecondaryOutputHint={selectedPromptSecondaryOutputHint}
         onUpdateSelectedPromptTemplate={updateSelectedPromptTemplate}
         onUpdateSelectedNodeMeta={updateSelectedNodeMeta}
         selectedEdge={selectedEdge}

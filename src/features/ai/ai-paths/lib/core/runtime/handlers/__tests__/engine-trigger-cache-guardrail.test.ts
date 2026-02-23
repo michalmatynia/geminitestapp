@@ -13,8 +13,8 @@ const buildTriggerNode = (): AiNode =>
     description: '',
     position: { x: 100, y: 120 },
     data: {},
-    inputs: ['context'],
-    outputs: ['context', 'entityId', 'entityType'],
+    inputs: [],
+    outputs: ['trigger', 'triggerName'],
     config: {
       trigger: {
         event: 'translation_trigger',
@@ -73,7 +73,7 @@ describe('evaluateGraph trigger cache guardrail', () => {
     expect(firstFinish).toHaveBeenCalled();
     expect(secondFinish).toHaveBeenCalled();
     expect(secondFinish.mock.calls[0]?.[0]?.cached).not.toBe(true);
-    expect(second.outputs?.['trigger-1']?.['entityId']).toBe('product-1');
+    expect(second.outputs?.['trigger-1']?.['trigger']).toBe(true);
     expect(fetchEntityByType).toHaveBeenCalledTimes(2);
   });
 });

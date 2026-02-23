@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { productCreateSchema } from '@/features/products/validations';
+import { productCreateSchema, productUpdateSchema } from '@/features/products/validations';
 
 describe('product validations', () => {
   describe('productCreateSchema', () => {
@@ -77,6 +77,24 @@ describe('product validations', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.parameters).toEqual(params);
+      }
+    });
+  });
+
+  describe('productUpdateSchema', () => {
+    it('should normalize empty SKU values to null', () => {
+      const result = productUpdateSchema.safeParse({ sku: '   ' });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.sku).toBeNull();
+      }
+    });
+
+    it('should keep non-empty SKU values trimmed', () => {
+      const result = productUpdateSchema.safeParse({ sku: '  SKU-123  ' });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.sku).toBe('SKU-123');
       }
     });
   });

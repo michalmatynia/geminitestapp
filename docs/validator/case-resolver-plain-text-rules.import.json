@@ -1,0 +1,205 @@
+[
+  {
+    "kind": "regex",
+    "id": "case_resolver_plain_text.strip_html_tags",
+    "enabled": true,
+    "severity": "warning",
+    "title": "Strip HTML tags",
+    "description": "Converts HTML markup into plain text by normalizing line-break semantics and removing tags.",
+    "pattern": "^(?![\\s\\S]*<[^>]+>)[\\s\\S]*$",
+    "flags": "",
+    "message": "HTML tags detected. Convert output to plain text.",
+    "similar": [],
+    "autofix": {
+      "enabled": true,
+      "operations": [
+        {
+          "kind": "replace",
+          "pattern": "<br\\s*\\/?>",
+          "flags": "gi",
+          "replacement": "\n",
+          "comment": "Map explicit HTML line breaks to newline characters."
+        },
+        {
+          "kind": "replace",
+          "pattern": "<\\/(p|div|h1|h2|h3|h4|h5|h6|li|blockquote|tr)>",
+          "flags": "gi",
+          "replacement": "\n",
+          "comment": "Preserve block boundaries while stripping markup."
+        },
+        {
+          "kind": "replace",
+          "pattern": "<li[^>]*>",
+          "flags": "gi",
+          "replacement": "- ",
+          "comment": "Keep list semantics for list-item tags."
+        },
+        {
+          "kind": "replace",
+          "pattern": "<[^>]+>",
+          "flags": "gi",
+          "replacement": "",
+          "comment": "Remove all remaining HTML tags."
+        }
+      ]
+    },
+    "sequenceGroupId": "case_resolver_plain_text",
+    "sequenceGroupLabel": "Case Resolver Plain Text",
+    "sequenceGroupDebounceMs": 0,
+    "sequence": 10,
+    "chainMode": "continue",
+    "maxExecutions": 2,
+    "passOutputToNext": true,
+    "appliesToScopes": [
+      "case_resolver_plain_text"
+    ],
+    "launchAppliesToScopes": [
+      "case_resolver_plain_text"
+    ],
+    "launchScopeBehavior": "gate",
+    "launchEnabled": false,
+    "launchOperator": "contains",
+    "launchValue": null,
+    "launchFlags": null
+  },
+  {
+    "kind": "regex",
+    "id": "case_resolver_plain_text.decode_html_entities",
+    "enabled": true,
+    "severity": "warning",
+    "title": "Decode HTML entities",
+    "description": "Decodes common HTML entities into text equivalents for plain text connector output.",
+    "pattern": "^(?![\\s\\S]*&(nbsp|apos|#39|quot|gt|lt|amp);)[\\s\\S]*$",
+    "flags": "i",
+    "message": "HTML entities detected. Decode to plain text characters.",
+    "similar": [],
+    "autofix": {
+      "enabled": true,
+      "operations": [
+        {
+          "kind": "replace",
+          "pattern": "&nbsp;",
+          "flags": "gi",
+          "replacement": " ",
+          "comment": null
+        },
+        {
+          "kind": "replace",
+          "pattern": "&apos;|&#39;",
+          "flags": "gi",
+          "replacement": "'",
+          "comment": null
+        },
+        {
+          "kind": "replace",
+          "pattern": "&quot;",
+          "flags": "gi",
+          "replacement": "\"",
+          "comment": null
+        },
+        {
+          "kind": "replace",
+          "pattern": "&gt;",
+          "flags": "gi",
+          "replacement": ">",
+          "comment": null
+        },
+        {
+          "kind": "replace",
+          "pattern": "&lt;",
+          "flags": "gi",
+          "replacement": "<",
+          "comment": null
+        },
+        {
+          "kind": "replace",
+          "pattern": "&amp;",
+          "flags": "gi",
+          "replacement": "&",
+          "comment": null
+        }
+      ]
+    },
+    "sequenceGroupId": "case_resolver_plain_text",
+    "sequenceGroupLabel": "Case Resolver Plain Text",
+    "sequenceGroupDebounceMs": 0,
+    "sequence": 20,
+    "chainMode": "continue",
+    "maxExecutions": 2,
+    "passOutputToNext": true,
+    "appliesToScopes": [
+      "case_resolver_plain_text"
+    ],
+    "launchAppliesToScopes": [
+      "case_resolver_plain_text"
+    ],
+    "launchScopeBehavior": "gate",
+    "launchEnabled": false,
+    "launchOperator": "contains",
+    "launchValue": null,
+    "launchFlags": null
+  },
+  {
+    "kind": "regex",
+    "id": "case_resolver_plain_text.normalize_whitespace",
+    "enabled": true,
+    "severity": "info",
+    "title": "Normalize plain text whitespace",
+    "description": "Cleans redundant spaces/newlines after HTML stripping to keep connector output stable.",
+    "pattern": "^(?!\\s)(?![\\s\\S]*\\n{3,})(?![\\s\\S]*[ \\t]+\\n)(?![\\s\\S]*\\n[ \\t]+)(?![\\s\\S]*\\s$)[\\s\\S]*$|^$",
+    "flags": "",
+    "message": "Whitespace normalization required for plain text output.",
+    "similar": [],
+    "autofix": {
+      "enabled": true,
+      "operations": [
+        {
+          "kind": "replace",
+          "pattern": "[ \\t]+\\n",
+          "flags": "g",
+          "replacement": "\n",
+          "comment": null
+        },
+        {
+          "kind": "replace",
+          "pattern": "\\n[ \\t]+",
+          "flags": "g",
+          "replacement": "\n",
+          "comment": null
+        },
+        {
+          "kind": "replace",
+          "pattern": "\\n{3,}",
+          "flags": "g",
+          "replacement": "\n\n",
+          "comment": null
+        },
+        {
+          "kind": "replace",
+          "pattern": "^\\s+|\\s+$",
+          "flags": "g",
+          "replacement": "",
+          "comment": null
+        }
+      ]
+    },
+    "sequenceGroupId": "case_resolver_plain_text",
+    "sequenceGroupLabel": "Case Resolver Plain Text",
+    "sequenceGroupDebounceMs": 0,
+    "sequence": 30,
+    "chainMode": "continue",
+    "maxExecutions": 2,
+    "passOutputToNext": true,
+    "appliesToScopes": [
+      "case_resolver_plain_text"
+    ],
+    "launchAppliesToScopes": [
+      "case_resolver_plain_text"
+    ],
+    "launchScopeBehavior": "gate",
+    "launchEnabled": false,
+    "launchOperator": "contains",
+    "launchValue": null,
+    "launchFlags": null
+  }
+]

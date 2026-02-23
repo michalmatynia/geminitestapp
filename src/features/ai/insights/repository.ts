@@ -91,12 +91,13 @@ export const listAiInsights = async (
 
 export const appendAiInsight = async (
   type: AiInsightType,
-  input: Omit<AiInsightRecord, 'id' | 'createdAt' | 'type'>
+  input: Omit<AiInsightRecord, 'id' | 'createdAt' | 'type' | 'updatedAt'>
 ): Promise<AiInsightRecord> => {
   const insight: AiInsightRecord = {
     id: randomUUID(),
     type,
     createdAt: new Date().toISOString(),
+    updatedAt: null,
     ...input,
   };
   const history = await listAiInsights(type, 50);

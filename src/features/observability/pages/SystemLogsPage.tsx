@@ -318,10 +318,10 @@ function AiLogInterpreter(): React.JSX.Element {
                 <StatusBadge status={insight.status} />
               </div>
               <p className='text-sm text-gray-200 leading-relaxed'>{insight.summary}</p>
-              {insight.warnings.length > 0 && (
+              {(insight.warnings?.length ?? 0) > 0 && (
                 <Alert variant='warning' className='mt-3 p-2 text-[11px] space-y-1'>
                   <span className='font-bold uppercase text-[9px] block mb-1'>Advisory Warnings</span>
-                  {insight.warnings.map((w, i) => <p key={i}>• {w}</p>)}
+                  {insight.warnings?.map((w, i) => <p key={i}>• {w}</p>)}
                 </Alert>
               )}
             </Card>

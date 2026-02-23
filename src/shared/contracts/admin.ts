@@ -169,6 +169,7 @@ export const validatorScopeSchema = z.enum([
   'image-studio',
   'prompt-exploder',
   'case-resolver-prompt-exploder',
+  'case-resolver-plain-text',
 ]);
 
 export type ValidatorScopeDto = z.infer<typeof validatorScopeSchema>;

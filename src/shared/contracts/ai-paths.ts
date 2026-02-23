@@ -12,6 +12,7 @@ import {
  */
 export const aiNodeTypeSchema = z.enum([
   'trigger',
+  'fetcher',
   'simulation',
   'context',
   'audio_oscillator',
@@ -78,6 +79,19 @@ export const simulationConfigSchema = z.object({
 export type SimulationConfigDto = z.infer<typeof simulationConfigSchema>;
 export type SimulationConfig = SimulationConfigDto;
 export type SimulationRunBehavior = NonNullable<SimulationConfig['runBehavior']>;
+
+export const fetcherConfigSchema = z.object({
+  sourceMode: z
+    .enum(['live_context', 'simulation_id', 'live_then_simulation'])
+    .optional(),
+  entityType: z.string().optional(),
+  entityId: z.string().optional(),
+  productId: z.string().optional(),
+});
+
+export type FetcherConfigDto = z.infer<typeof fetcherConfigSchema>;
+export type FetcherConfig = FetcherConfigDto;
+export type FetcherSourceMode = NonNullable<FetcherConfig['sourceMode']>;
 
 export const viewerConfigSchema = z.object({
   outputs: z.record(z.string(), z.string()),
@@ -796,6 +810,7 @@ export type NodeRuntimeConfigDto = z.infer<typeof nodeRuntimeConfigSchema>;
 
 export const nodeConfigSchema = z.object({
   trigger: triggerConfigSchema.optional(),
+  fetcher: fetcherConfigSchema.optional(),
   simulation: simulationConfigSchema.optional(),
   audioOscillator: audioOscillatorConfigSchema.optional(),
   audioSpeaker: audioSpeakerConfigSchema.optional(),

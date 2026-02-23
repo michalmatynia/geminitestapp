@@ -877,6 +877,8 @@ export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
     assets: [],
     relationGraph,
     activeFileId: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: null,
   };
 };
 
@@ -1142,6 +1144,8 @@ export const normalizeCaseResolverWorkspace = (
     assets: sanitizedAssets,
     relationGraph,
     activeFileId,
+    createdAt: normalizeTimestamp(workspaceRecord['createdAt'], now),
+    updatedAt: normalizeOptionalTimestamp(workspaceRecord['updatedAt']),
   };};
 
 export const parseCaseResolverWorkspace = (

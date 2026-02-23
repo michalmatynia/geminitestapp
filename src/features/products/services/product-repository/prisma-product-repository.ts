@@ -113,6 +113,26 @@ const buildProductWhere = (
   const where: Prisma.ProductWhereInput = {};
   const andConditions: Prisma.ProductWhereInput[] = [];
 
+  if (filters.id) {
+    const normalizedId = filters.id.trim();
+    if (normalizedId.length > 0) {
+      if (filters.idMatchMode === 'partial') {
+        andConditions.push({
+          OR: [
+            {
+              id: {
+                contains: normalizedId,
+                mode: 'insensitive',
+              },
+            },
+          ],
+        });
+      } else {
+        where.id = normalizedId;
+      }
+    }
+  }
+
   if (filters.sku) {
     where.sku = {
       contains: filters.sku,

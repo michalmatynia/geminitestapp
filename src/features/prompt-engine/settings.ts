@@ -36,6 +36,7 @@ export const PROMPT_VALIDATION_SCOPE_VALUES: PromptValidationScope[] = [
   'image_studio_generation',
   'prompt_exploder',
   'case_resolver_prompt_exploder',
+  'case_resolver_plain_text',
   'global',
 ];
 
@@ -73,6 +74,7 @@ export const PROMPT_VALIDATION_SCOPE_LABELS: Record<PromptValidationScope, strin
   image_studio_generation: 'Image Studio Generation',
   prompt_exploder: 'Prompt Exploder',
   case_resolver_prompt_exploder: 'Case Resolver Prompt Exploder',
+  case_resolver_plain_text: 'Case Resolver Plain Text',
   global: 'Global',
 };
 
@@ -254,6 +256,201 @@ export const defaultPromptValidationRules: PromptValidationRule[] = [
     launchValue: null,
     launchFlags: null,
   },
+  {
+    kind: 'regex',
+    id: 'case_resolver_plain_text.strip_html_tags',
+    enabled: true,
+    severity: 'warning',
+    title: 'Strip HTML tags',
+    description:
+      'Converts HTML markup into plain text by normalizing line-break semantics and removing tags.',
+    pattern: '^(?![\\s\\S]*<[^>]+>)[\\s\\S]*$',
+    flags: '',
+    message: 'HTML tags detected. Convert output to plain text.',
+    similar: [],
+    autofix: {
+      enabled: true,
+      operations: [
+        {
+          kind: 'replace',
+          pattern: '<br\\s*\\/?>',
+          flags: 'gi',
+          replacement: '\n',
+          comment: 'Map explicit HTML line breaks to newline characters.',
+        },
+        {
+          kind: 'replace',
+          pattern: '<\\/(p|div|h1|h2|h3|h4|h5|h6|li|blockquote|tr)>',
+          flags: 'gi',
+          replacement: '\n',
+          comment: 'Preserve block boundaries while stripping markup.',
+        },
+        {
+          kind: 'replace',
+          pattern: '<li[^>]*>',
+          flags: 'gi',
+          replacement: '- ',
+          comment: 'Keep list semantics for list-item tags.',
+        },
+        {
+          kind: 'replace',
+          pattern: '<[^>]+>',
+          flags: 'gi',
+          replacement: '',
+          comment: 'Remove all remaining HTML tags.',
+        },
+      ],
+    },
+    sequenceGroupId: 'case_resolver_plain_text',
+    sequenceGroupLabel: 'Case Resolver Plain Text',
+    sequenceGroupDebounceMs: 0,
+    sequence: 10,
+    chainMode: 'continue',
+    maxExecutions: 2,
+    passOutputToNext: true,
+    appliesToScopes: ['case_resolver_plain_text'],
+    launchAppliesToScopes: ['case_resolver_plain_text'],
+    launchScopeBehavior: 'gate',
+    launchEnabled: false,
+    launchOperator: 'contains',
+    launchValue: null,
+    launchFlags: null,
+  },
+  {
+    kind: 'regex',
+    id: 'case_resolver_plain_text.decode_html_entities',
+    enabled: true,
+    severity: 'warning',
+    title: 'Decode HTML entities',
+    description:
+      'Decodes common HTML entities into text equivalents for plain text connector output.',
+    pattern: '^(?![\\s\\S]*&(nbsp|apos|#39|quot|gt|lt|amp);)[\\s\\S]*$',
+    flags: 'i',
+    message: 'HTML entities detected. Decode to plain text characters.',
+    similar: [],
+    autofix: {
+      enabled: true,
+      operations: [
+        {
+          kind: 'replace',
+          pattern: '&nbsp;',
+          flags: 'gi',
+          replacement: ' ',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '&apos;|&#39;',
+          flags: 'gi',
+          replacement: '\'',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '&quot;',
+          flags: 'gi',
+          replacement: '"',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '&gt;',
+          flags: 'gi',
+          replacement: '>',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '&lt;',
+          flags: 'gi',
+          replacement: '<',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '&amp;',
+          flags: 'gi',
+          replacement: '&',
+          comment: null,
+        },
+      ],
+    },
+    sequenceGroupId: 'case_resolver_plain_text',
+    sequenceGroupLabel: 'Case Resolver Plain Text',
+    sequenceGroupDebounceMs: 0,
+    sequence: 20,
+    chainMode: 'continue',
+    maxExecutions: 2,
+    passOutputToNext: true,
+    appliesToScopes: ['case_resolver_plain_text'],
+    launchAppliesToScopes: ['case_resolver_plain_text'],
+    launchScopeBehavior: 'gate',
+    launchEnabled: false,
+    launchOperator: 'contains',
+    launchValue: null,
+    launchFlags: null,
+  },
+  {
+    kind: 'regex',
+    id: 'case_resolver_plain_text.normalize_whitespace',
+    enabled: true,
+    severity: 'info',
+    title: 'Normalize plain text whitespace',
+    description:
+      'Cleans redundant spaces/newlines after HTML stripping to keep connector output stable.',
+    pattern:
+      '^(?!\\s)(?![\\s\\S]*\\n{3,})(?![\\s\\S]*[ \\t]+\\n)(?![\\s\\S]*\\n[ \\t]+)(?![\\s\\S]*\\s$)[\\s\\S]*$|^$',
+    flags: '',
+    message: 'Whitespace normalization required for plain text output.',
+    similar: [],
+    autofix: {
+      enabled: true,
+      operations: [
+        {
+          kind: 'replace',
+          pattern: '[ \\t]+\\n',
+          flags: 'g',
+          replacement: '\n',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '\\n[ \\t]+',
+          flags: 'g',
+          replacement: '\n',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '\\n{3,}',
+          flags: 'g',
+          replacement: '\n\n',
+          comment: null,
+        },
+        {
+          kind: 'replace',
+          pattern: '^\\s+|\\s+$',
+          flags: 'g',
+          replacement: '',
+          comment: null,
+        },
+      ],
+    },
+    sequenceGroupId: 'case_resolver_plain_text',
+    sequenceGroupLabel: 'Case Resolver Plain Text',
+    sequenceGroupDebounceMs: 0,
+    sequence: 30,
+    chainMode: 'continue',
+    maxExecutions: 2,
+    passOutputToNext: true,
+    appliesToScopes: ['case_resolver_plain_text'],
+    launchAppliesToScopes: ['case_resolver_plain_text'],
+    launchScopeBehavior: 'gate',
+    launchEnabled: false,
+    launchOperator: 'contains',
+    launchValue: null,
+    launchFlags: null,
+  },
 ];
 
 export const defaultPromptEngineSettings: PromptEngineSettings = {
@@ -283,24 +480,30 @@ export function parsePromptEngineSettings(raw: string | null | undefined): Promp
       ? rawRulesArray.some((rule: unknown) => Boolean(rule) && typeof rule === 'object' && 'autofix' in (rule as Record<string, unknown>))
       : false;
 
-    if (hadAutofixInStorage) return result.data;
-
     const defaultById = new Map(defaultPromptValidationRules.map((rule: PromptValidationRule) => [rule.id, rule]));
     const mergedRules = result.data.promptValidation.rules.map((rule: PromptValidationRule) => {
       const defaults = defaultById.get(rule.id);
-      if (!defaults?.autofix || defaults.autofix.operations.length === 0) return rule;
+      if (hadAutofixInStorage || !defaults?.autofix || defaults.autofix.operations.length === 0) {
+        return rule;
+      }
       const needsAutofix =
         !rule.autofix ||
         !Array.isArray(rule.autofix.operations) ||
         rule.autofix.operations.length === 0;
       return needsAutofix ? { ...rule, autofix: defaults.autofix } : rule;
     });
+    const existingRuleIds = new Set(mergedRules.map((rule: PromptValidationRule) => rule.id));
+    const missingDefaults = defaultPromptValidationRules.filter(
+      (rule: PromptValidationRule): boolean => !existingRuleIds.has(rule.id)
+    );
+    const mergedWithMissingDefaults =
+      missingDefaults.length > 0 ? [...mergedRules, ...missingDefaults] : mergedRules;
 
     return {
       ...result.data,
       promptValidation: {
         ...result.data.promptValidation,
-        rules: mergedRules,
+        rules: mergedWithMissingDefaults,
         learnedRules: result.data.promptValidation.learnedRules ?? [],
       },
     } as PromptEngineSettings;

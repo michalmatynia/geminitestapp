@@ -24,7 +24,7 @@ import {
   safeStringify,
   setValueAtMappingPath,
 } from '../../utils';
-import { buildFallbackEntity, resolveContextPayload } from '../utils';
+import { buildFallbackEntity, extractImageUrls, resolveContextPayload } from '../utils';
 
 export const handleContext: NodeHandler = async ({
   node,
@@ -70,6 +70,14 @@ export const handleParser: NodeHandler = async ({
   reportAiPathsError,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   try {
+    const normalizeParserOutputValue = (key: string, value: unknown): unknown => {
+      const normalizedKey = key.trim().toLowerCase();
+      if (normalizedKey === 'images' || normalizedKey === 'imageurls') {
+        const urls = extractImageUrls(value);
+        return urls.length > 0 ? urls : value;
+      }
+      return value;
+    };
     const contextInput = coerceInput(nodeInputs['context']);
     const contextEntity =
       contextInput && typeof contextInput === 'object'
@@ -130,7 +138,11 @@ export const handleParser: NodeHandler = async ({
     }
 
     if (!source) {
-      return {};
+      return {
+        status: 'blocked',
+        skipReason: 'missing_source',
+        blockedReason: 'missing_source',
+      };
     }
     const parserConfig = node.config?.parser;
     const mappings = parserConfig?.mappings ?? {};
@@ -198,14 +210,22 @@ export const handleParser: NodeHandler = async ({
       const resolved =
         isEmptyValue(value) ? fallbackForKey(key) ?? value : value;
       if (resolved !== undefined) {
-        parsed[key] = resolved;
+        parsed[key] = normalizeParserOutputValue(key, resolved);
       }
     });
 
     if (outputMode === 'bundle') {
       if (!hasMappings || Object.keys(parsed).length === 0) {
-        const fullBundle =
-          typeof source === 'object' && source !== null ? source : {};
+        const fullBundle: Record<string, unknown> =
+          typeof source === 'object' && source !== null
+            ? { ...source }
+            : {};
+        if (fullBundle['images'] !== undefined) {
+          fullBundle['images'] = normalizeParserOutputValue('images', fullBundle['images']);
+        }
+        if (fullBundle['imageUrls'] !== undefined) {
+          fullBundle['imageUrls'] = normalizeParserOutputValue('imageUrls', fullBundle['imageUrls']);
+        }
         return { bundle: fullBundle };
       }
       const extraOutputs = node.outputs.reduce<Record<string, unknown>>((acc: Record<string, unknown>, output: string): Record<string, unknown> => {

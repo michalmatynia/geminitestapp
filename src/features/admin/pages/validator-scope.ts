@@ -11,6 +11,7 @@ export const VALIDATOR_SCOPE_LABELS: Record<ValidatorScope, string> = {
   'image-studio': 'Image Studio Patterns',
   'prompt-exploder': 'Image Studio - Prompt Exploder',
   'case-resolver-prompt-exploder': 'Case Resolver - Prompt Exploder',
+  'case-resolver-plain-text': 'Case Resolver - Plain Text',
 };
 
 export const VALIDATOR_SCOPE_DESCRIPTIONS: Record<ValidatorScope, string> = {
@@ -21,6 +22,8 @@ export const VALIDATOR_SCOPE_DESCRIPTIONS: Record<ValidatorScope, string> = {
     'Image Studio Prompt Exploder patterns control prompt segmentation, subsection recognition, and parser behavior for exploded prompt editing in Image Studio workflows.',
   'case-resolver-prompt-exploder':
     'Case Resolver Prompt Exploder patterns are isolated for Case Resolver document workflows.',
+  'case-resolver-plain-text':
+    'Case Resolver Plain Text patterns normalize and convert HTML-rich document content into plain text outputs for node connectors.',
 };
 
 const DEFAULT_PATTERN_LIST_DEFS: Array<{
@@ -57,6 +60,12 @@ const DEFAULT_PATTERN_LIST_DEFS: Array<{
       VALIDATOR_SCOPE_DESCRIPTIONS['case-resolver-prompt-exploder'],
     scope: 'case-resolver-prompt-exploder',
   },
+  {
+    id: 'case-resolver-plain-text',
+    name: 'Case Resolver - Plain Text',
+    description: VALIDATOR_SCOPE_DESCRIPTIONS['case-resolver-plain-text'],
+    scope: 'case-resolver-plain-text',
+  },
 ];
 
 const nowIso = (): string => new Date().toISOString();
@@ -87,6 +96,8 @@ export const parseValidatorScope = (value: string | null): ValidatorScope =>
       ? 'prompt-exploder'
       : value === 'case-resolver-prompt-exploder'
         ? 'case-resolver-prompt-exploder'
+        : value === 'case-resolver-plain-text'
+          ? 'case-resolver-plain-text'
         : 'products';
 
 const normalizeString = (value: unknown): string =>
@@ -189,9 +200,17 @@ export const parseValidatorPatternLists = (
   try {
     const parsed = JSON.parse(value) as unknown;
     const defaults = defaultValidatorPatternLists();
+    const rawLists =
+      Array.isArray(parsed)
+        ? parsed
+        : parsed && typeof parsed === 'object'
+          ? (() => {
+              const record = parsed as Record<string, unknown>;
+              return Array.isArray(record['lists']) ? (record['lists'] as unknown[]) : null;
+            })()
+          : null;
 
-    if (Array.isArray(parsed)) {
-      const rawLists = parsed as unknown[];
+    if (Array.isArray(rawLists)) {
       return normalizeValidatorPatternLists(
         rawLists.map((entry: unknown, index: number) =>
           normalizeListRecord(entry, defaults[index] ?? defaults[0]!)

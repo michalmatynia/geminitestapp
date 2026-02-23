@@ -7,6 +7,8 @@ const PRODUCT_WRITE_TIMEOUT_MS = 60_000;
 // This function fetches a list of products from the API.
 export async function getProducts(filters: {
   search?: string | undefined;
+  id?: string | undefined;
+  idMatchMode?: 'exact' | 'partial' | undefined;
   sku?: string | undefined;
   description?: string | undefined;
   categoryId?: string | undefined;
@@ -23,6 +25,8 @@ export async function getProducts(filters: {
   const options: ApiClientOptions = {
     params: {
       search: filters.search,
+      id: filters.id,
+      idMatchMode: filters.idMatchMode,
       sku: filters.sku,
       description: filters.description,
       categoryId: filters.categoryId,
@@ -45,6 +49,8 @@ export async function getProducts(filters: {
 
 export async function countProducts(filters: {
   search?: string | undefined;
+  id?: string | undefined;
+  idMatchMode?: 'exact' | 'partial' | undefined;
   sku?: string | undefined;
   description?: string | undefined;
   categoryId?: string | undefined;
@@ -60,6 +66,8 @@ export async function countProducts(filters: {
     const options: ApiClientOptions = {
       params: {
         search: filters.search,
+        id: filters.id,
+        idMatchMode: filters.idMatchMode,
         sku: filters.sku,
         description: filters.description,
         categoryId: filters.categoryId,
@@ -89,6 +97,8 @@ export type ProductsPagedResult = {
 
 type ProductListFilters = {
   search?: string | undefined;
+  id?: string | undefined;
+  idMatchMode?: 'exact' | 'partial' | undefined;
   sku?: string | undefined;
   description?: string | undefined;
   categoryId?: string | undefined;
@@ -114,6 +124,8 @@ export async function getProductsWithCount(
   const options: ApiClientOptions = {
     params: {
       search: filters.search,
+      id: filters.id,
+      idMatchMode: filters.idMatchMode,
       sku: filters.sku,
       description: filters.description,
       categoryId: filters.categoryId,

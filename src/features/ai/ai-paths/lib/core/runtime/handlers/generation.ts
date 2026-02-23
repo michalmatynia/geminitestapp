@@ -161,6 +161,27 @@ const filterImageUrlsByOutboundPolicy = (input: {
   return allowed;
 };
 
+type ModelTerminalStatus = 'blocked' | 'skipped';
+
+const buildModelTerminalOutputs = (options: {
+  status: ModelTerminalStatus;
+  reason: string;
+  details?: RuntimePortValues;
+}): RuntimePortValues => {
+  const base: RuntimePortValues = {
+    status: options.status,
+    skipReason: options.reason,
+    result: '',
+  };
+  if (options.status === 'blocked') {
+    base['blockedReason'] = options.reason;
+  }
+  return {
+    ...base,
+    ...(options.details ?? {}),
+  };
+};
+
 export const handleModel: NodeHandler = async ({ 
   node,
   nodeInputs,
@@ -198,7 +219,10 @@ export const handleModel: NodeHandler = async ({
   );
 
   if (skipAiJobs) {
-    return prevOutputs;
+    return buildModelTerminalOutputs({
+      status: 'skipped',
+      reason: 'ai_jobs_disabled',
+    });
   }
   const promptInputs = coerceInputArray(nodeInputs['prompt']);
   const promptCandidates = edges
@@ -240,7 +264,13 @@ export const handleModel: NodeHandler = async ({
         hasMeaningfulValue
       );
       if (!hasInputValue) {
-        return prevOutputs;
+        return buildModelTerminalOutputs({
+          status: 'blocked',
+          reason: 'prompt_source_missing_inputs',
+          details: {
+            promptSourceNodeId: promptSourceNode.id,
+          },
+        });
       }
     }
   }
@@ -264,7 +294,10 @@ export const handleModel: NodeHandler = async ({
         return true;
       });
   if (promptInput === undefined || promptInput === null) {
-    return prevOutputs;
+    return buildModelTerminalOutputs({
+      status: 'blocked',
+      reason: 'missing_prompt',
+    });
   }
   if (executed.ai.has(node.id)) return prevOutputs;
   const modelConfig = node.config?.model ?? {
@@ -300,7 +333,10 @@ export const handleModel: NodeHandler = async ({
       ? promptInput.trim()
       : formatRuntimeValue(promptInput);
   if (!prompt || prompt === '—') {
-    return prevOutputs;
+    return buildModelTerminalOutputs({
+      status: 'blocked',
+      reason: 'empty_prompt',
+    });
   }
   const imageEdge = edges
     .filter((edge: Edge): boolean => edge.to === node.id && edge.toPort === 'images')

@@ -1,6 +1,6 @@
 
 
-import { type Filter, type AnyBulkWriteOperation } from 'mongodb';
+import { type AnyBulkWriteOperation } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 

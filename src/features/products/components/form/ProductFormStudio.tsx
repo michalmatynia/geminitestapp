@@ -16,7 +16,7 @@ import {
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
 } from '@/features/products/constants';
 import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
-import { useProductFormImageContext, useProductFormImages } from '@/features/products/context/ProductFormImageContext';
+import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import { useProductFormStudio } from '@/features/products/context/ProductFormStudioContext';
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';

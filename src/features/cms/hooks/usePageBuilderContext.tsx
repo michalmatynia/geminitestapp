@@ -16,6 +16,11 @@ import { pageBuilderReducer } from './page-builder/page-builder-reducer';
 
 export { pageBuilderReducer } from './page-builder/page-builder-reducer';
 
+import { PageStateContext, usePageBuilderState } from './page-builder/PageStateContext';
+import { PageDispatchContext, usePageBuilderDispatch } from './page-builder/PageDispatchContext';
+import { PageSelectionContext, PageSelectionValue, usePageBuilderSelection } from './page-builder/PageSelectionContext';
+import { VectorOverlayContext, VectorOverlayRequest, VectorOverlayValue, useVectorOverlay } from './page-builder/VectorOverlayContext';
+
 // ---------------------------------------------------------------------------
 // Context
 // ---------------------------------------------------------------------------
@@ -46,39 +51,10 @@ export const initialState: PageBuilderState = {
   history: { past: [], future: [] },
 };
 
-export interface VectorOverlayResult {
-  shapes: VectorShape[];
-  path: string;
-  points: Array<{ shapeId: string; points: VectorShape['points'] }>;
-}
-
-export interface VectorOverlayRequest {
-  title: string;
-  description?: string;
-  initialShapes?: VectorShape[];
-  onApply: (result: VectorOverlayResult) => void;
-  onCancel?: () => void;
-}
-
-interface PageBuilderContextValue {
+interface PageBuilderContextValue extends PageSelectionValue, VectorOverlayValue {
   state: PageBuilderState;
   dispatch: React.Dispatch<PageBuilderAction>;
-  selectedSection: SectionInstance | null;
-  selectedBlock: BlockInstance | null;
-  selectedParentSection: SectionInstance | null;
-  selectedColumn: BlockInstance | null;
-  selectedColumnParentSection: SectionInstance | null;
-  selectedParentColumn: BlockInstance | null;
-  selectedParentRow: BlockInstance | null;
-  selectedParentBlock: BlockInstance | null;
-  vectorOverlay: VectorOverlayRequest | null;
-  openVectorOverlay: (request: VectorOverlayRequest) => void;
-  closeVectorOverlay: () => void;
 }
-
-const PageBuilderContext = createContext<PageBuilderContextValue | undefined>(
-  undefined
-);
 
 export function PageBuilderProvider({ 
   children, 
@@ -98,16 +74,16 @@ export function PageBuilderProvider({
     setVectorOverlay(null);
   }, []);
 
-  const { selectedSection, selectedBlock, selectedParentSection, selectedColumn, selectedColumnParentSection, selectedParentColumn, selectedParentRow, selectedParentBlock } = useMemo(() => {
-    const empty = {
-      selectedSection: null as SectionInstance | null,
-      selectedBlock: null as BlockInstance | null,
-      selectedParentSection: null as SectionInstance | null,
-      selectedColumn: null as BlockInstance | null,
-      selectedColumnParentSection: null as SectionInstance | null,
-      selectedParentColumn: null as BlockInstance | null,
-      selectedParentRow: null as BlockInstance | null,
-      selectedParentBlock: null as BlockInstance | null,
+  const selectionValue = useMemo((): PageSelectionValue => {
+    const empty: PageSelectionValue = {
+      selectedSection: null,
+      selectedBlock: null,
+      selectedParentSection: null,
+      selectedColumn: null,
+      selectedColumnParentSection: null,
+      selectedParentColumn: null,
+      selectedParentRow: null,
+      selectedParentBlock: null,
     };
     if (!state.selectedNodeId) return empty;
 
@@ -139,50 +115,35 @@ export function PageBuilderProvider({
     return empty;
   }, [state.sections, state.selectedNodeId]);
 
-  const value = useMemo(
-    () => ({
-      state,
-      dispatch,
-      selectedSection,
-      selectedBlock,
-      selectedParentSection,
-      selectedColumn,
-      selectedColumnParentSection,
-      selectedParentColumn,
-      selectedParentRow,
-      selectedParentBlock,
-      vectorOverlay,
-      openVectorOverlay,
-      closeVectorOverlay,
-    }),
-    [
-      state,
-      dispatch,
-      selectedSection,
-      selectedBlock,
-      selectedParentSection,
-      selectedColumn,
-      selectedColumnParentSection,
-      selectedParentColumn,
-      selectedParentRow,
-      selectedParentBlock,
-      vectorOverlay,
-      openVectorOverlay,
-      closeVectorOverlay,
-    ]
-  );
+  const vectorOverlayValue = useMemo((): VectorOverlayValue => ({
+    vectorOverlay,
+    openVectorOverlay,
+    closeVectorOverlay,
+  }), [vectorOverlay, openVectorOverlay, closeVectorOverlay]);
 
   return (
-    <PageBuilderContext.Provider value={value}>
-      {children}
-    </PageBuilderContext.Provider>
+    <PageStateContext.Provider value={state}>
+      <PageDispatchContext.Provider value={dispatch}>
+        <PageSelectionContext.Provider value={selectionValue}>
+          <VectorOverlayContext.Provider value={vectorOverlayValue}>
+            {children}
+          </VectorOverlayContext.Provider>
+        </PageSelectionContext.Provider>
+      </PageDispatchContext.Provider>
+    </PageStateContext.Provider>
   );
 }
 
 export function usePageBuilder(): PageBuilderContextValue {
-  const ctx = useContext(PageBuilderContext);
-  if (!ctx) {
-    throw new Error('usePageBuilder must be used within PageBuilderProvider');
-  }
-  return ctx;
+  const state = usePageBuilderState();
+  const dispatch = usePageBuilderDispatch();
+  const selection = usePageBuilderSelection();
+  const vectorOverlay = useVectorOverlay();
+
+  return useMemo(() => ({
+    state,
+    dispatch,
+    ...selection,
+    ...vectorOverlay,
+  }), [state, dispatch, selection, vectorOverlay]);
 }

@@ -3,7 +3,7 @@
 import type { DatabaseConfig } from '@/features/ai/ai-paths/lib';
 import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Input, Label, SelectSimple } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useDatabaseConstructorContext } from './DatabaseConstructorContext';
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -15,6 +15,11 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
   const databaseConfig: DatabaseConfig =
     (selectedNode.config?.database as DatabaseConfig) ?? { operation: 'query' };
   const writeSource = databaseConfig.writeSource ?? 'bundle';
+  const guard = databaseConfig.parameterInferenceGuard ?? {};
+  const updateGuard = (patch: Partial<NonNullable<DatabaseConfig['parameterInferenceGuard']>>): void =>
+    updateSelectedNodeConfig({
+      database: { ...databaseConfig, parameterInferenceGuard: { ...guard, ...patch } },
+    });
 
   return (
     <div className='space-y-4'>
@@ -146,6 +151,108 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
               triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
             />
           </div>
+        </div>
+      )}
+
+      {operation === 'update' && (
+        <div className='space-y-3 rounded-md border border-border bg-card/30 p-3'>
+          <div className='flex items-center justify-between'>
+            <Label className='text-xs text-gray-400'>Parameter Inference Guard</Label>
+            <Button
+              type='button'
+              className={`rounded border px-3 py-1 text-xs ${
+                guard.enabled
+                  ? 'border-violet-500/40 text-violet-300 hover:bg-violet-500/10'
+                  : 'border-border text-gray-400 hover:bg-muted/50'
+              }`}
+              onClick={(): void => updateGuard({ enabled: !guard.enabled })}
+            >
+              {guard.enabled ? 'Enabled' : 'Disabled'}
+            </Button>
+          </div>
+
+          {guard.enabled && (
+            <div className='space-y-3'>
+              <div>
+                <Label className='text-xs text-gray-500'>Target field path</Label>
+                <Input
+                  className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                  value={guard.targetPath ?? ''}
+                  placeholder='parameters'
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateGuard({ targetPath: e.target.value || undefined })
+                  }
+                />
+                <p className='mt-1 text-[11px] text-gray-500'>
+                  The field in the database document to write inferred values into, e.g. <code className='text-gray-400'>parameters</code>.
+                </p>
+              </div>
+
+              <div>
+                <Label className='text-xs text-gray-500'>Definitions port</Label>
+                <SelectSimple
+                  size='sm'
+                  value={guard.definitionsPort ?? 'result'}
+                  onValueChange={(value: string): void => updateGuard({ definitionsPort: value })}
+                  options={availablePorts.map((port: string) => ({
+                    value: port,
+                    label: formatPortLabel(port),
+                  }))}
+                  placeholder='Select port'
+                  triggerClassName='mt-1 w-full border-border bg-card/70 text-sm text-white'
+                />
+                <p className='mt-1 text-[11px] text-gray-500'>
+                  Input port that carries the parameter definitions (catalog template).
+                </p>
+              </div>
+
+              <div>
+                <Label className='text-xs text-gray-500'>Definitions path (optional)</Label>
+                <Input
+                  className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                  value={guard.definitionsPath ?? ''}
+                  placeholder='e.g. definitions or data.items'
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+                    updateGuard({ definitionsPath: e.target.value || undefined })
+                  }
+                />
+              </div>
+
+              <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
+                <span>Enforce option labels</span>
+                <Button
+                  type='button'
+                  className={`rounded border px-3 py-1 text-xs ${
+                    guard.enforceOptionLabels
+                      ? 'border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10'
+                      : 'border-border text-gray-400 hover:bg-muted/50'
+                  }`}
+                  onClick={(): void =>
+                    updateGuard({ enforceOptionLabels: !guard.enforceOptionLabels })
+                  }
+                >
+                  {guard.enforceOptionLabels ? 'Enabled' : 'Disabled'}
+                </Button>
+              </div>
+
+              <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
+                <span>Allow unknown parameter IDs</span>
+                <Button
+                  type='button'
+                  className={`rounded border px-3 py-1 text-xs ${
+                    guard.allowUnknownParameterIds
+                      ? 'border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/10'
+                      : 'border-border text-gray-400 hover:bg-muted/50'
+                  }`}
+                  onClick={(): void =>
+                    updateGuard({ allowUnknownParameterIds: !guard.allowUnknownParameterIds })
+                  }
+                >
+                  {guard.allowUnknownParameterIds ? 'Enabled' : 'Disabled'}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

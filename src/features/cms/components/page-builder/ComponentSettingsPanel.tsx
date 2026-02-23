@@ -26,25 +26,14 @@ import { prependManagementFields, groupSettingsFields, renderFieldGroups } from 
 import { PageSettingsTab } from './settings/PageSettingsTab';
 import { SettingsFormProvider } from './settings/SettingsFormContext';
 import { ComponentSettingsProvider, useComponentSettingsContext } from './context/ComponentSettingsContext';
-import { usePageBuilder } from '../../hooks/usePageBuilderContext';
+import { usePageBuilderState, usePageBuilderDispatch, usePageBuilderSelection } from '../../hooks/usePageBuilderContext';
 
 import type { InspectorSettings, BlockInstance } from '../../types/page-builder';
 
-
-
-type TabValue = 'settings' | 'animation' | 'cssAnimation' | 'events' | 'connections' | 'customCss' | 'ai';
-
-export function ComponentSettingsPanel(): React.ReactNode {
-  return (
-    <ComponentSettingsProvider>
-      <ComponentSettingsPanelInner />
-    </ComponentSettingsProvider>
-  );
-}
-
 function ComponentSettingsPanelInner(): React.ReactNode {
+  const state = usePageBuilderState();
+  const dispatch = usePageBuilderDispatch();
   const {
-    state,
     selectedSection,
     selectedBlock,
     selectedColumn,
@@ -52,8 +41,7 @@ function ComponentSettingsPanelInner(): React.ReactNode {
     selectedParentColumn,
     selectedParentRow,
     selectedParentBlock,
-    dispatch,
-  } = usePageBuilder();
+  } = usePageBuilderSelection();
   
   const {
     activeTab,

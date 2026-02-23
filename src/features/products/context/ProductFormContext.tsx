@@ -890,20 +890,32 @@ export function ProductFormProvider({
     }),
     [studioProjectId, studioConfigLoading, studioConfigSaving]
   );
+  const legacyContextValue: ProductFormContextType = useMemo(
+    () => ({
+      ...coreValue,
+      ...metadataValue,
+      ...imageValue,
+      ...parameterValue,
+      ...studioValue,
+    }),
+    [coreValue, imageValue, metadataValue, parameterValue, studioValue]
+  );
 
   return (
     <FormProvider {...methods}>
-      <ProductFormCoreContext.Provider value={coreValue}>
-        <ProductFormMetadataContext.Provider value={metadataValue}>
-          <ProductFormImageContext.Provider value={imageValue}>
-            <ProductFormParameterContext.Provider value={parameterValue}>
-              <ProductFormStudioContext.Provider value={studioValue}>
-                {children}
-              </ProductFormStudioContext.Provider>
-            </ProductFormParameterContext.Provider>
-          </ProductFormImageContext.Provider>
-        </ProductFormMetadataContext.Provider>
-      </ProductFormCoreContext.Provider>
+      <ProductFormContext.Provider value={legacyContextValue}>
+        <ProductFormCoreContext.Provider value={coreValue}>
+          <ProductFormMetadataContext.Provider value={metadataValue}>
+            <ProductFormImageContext.Provider value={imageValue}>
+              <ProductFormParameterContext.Provider value={parameterValue}>
+                <ProductFormStudioContext.Provider value={studioValue}>
+                  {children}
+                </ProductFormStudioContext.Provider>
+              </ProductFormParameterContext.Provider>
+            </ProductFormImageContext.Provider>
+          </ProductFormMetadataContext.Provider>
+        </ProductFormCoreContext.Provider>
+      </ProductFormContext.Provider>
     </FormProvider>
   );
 }

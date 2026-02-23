@@ -151,9 +151,9 @@ export function SegmentEditorPanel(): React.JSX.Element {
     />
   );
 
-      const selectedSegmentIndex = selectedSegmentId
-        ? documentState?.segments.findIndex((segment: PromptExploderSegment) => segment.id === selectedSegmentId) ?? -1
-        : -1;  const canMergeSelectedWithPrevious = selectedSegmentIndex > 0;
+  const selectedSegmentIndex = selectedSegmentId
+    ? documentState?.segments.findIndex((segment: PromptExploderSegment) => segment.id === selectedSegmentId) ?? -1
+    : -1;  const canMergeSelectedWithPrevious = selectedSegmentIndex > 0;
   const canMergeSelectedWithNext =
     selectedSegmentIndex >= 0 &&
     selectedSegmentIndex < (documentState?.segments.length ?? 0) - 1;

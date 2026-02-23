@@ -1,6 +1,6 @@
 
 
-import { type Filter } from 'mongodb';
+import { type Filter, type AnyBulkWriteOperation } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -62,7 +62,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
       });
 
       const collection = mongo.collection<{ _id: string; id: string }>('catalogs');
-      const bulkOps: any[] = [];
+      const bulkOps: AnyBulkWriteOperation<any>[] = [];
       const updatedCatalogs = catalogs.map((catalog: CatalogRecord) => {
         const nextLanguageIds =
           catalog.languageIds?.map(

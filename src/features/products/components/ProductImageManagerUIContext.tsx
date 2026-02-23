@@ -6,7 +6,8 @@ import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL, 
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY 
 } from '@/features/products/constants';
-import { ProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
 import { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import { DebugInfo } from '@/shared/contracts/products';
@@ -71,12 +72,13 @@ export function ProductImageManagerUIProvider({
   showDragHandle?: boolean;
   minimalSingleSlotAlign?: 'left' | 'center';
 }) {
-  const formContext = useContext(ProductFormContext);
+  const formImages = useProductFormImages();
+  const formCore = useProductFormCore();
   const controllerContext = useOptionalProductImageManagerController();
-  const controller = explicitController ?? controllerContext ?? formContext;
+  const controller = explicitController ?? controllerContext ?? formImages;
 
   if (!controller) {
-    throw new Error('ProductImageManagerUIProvider requires ProductFormContext or an explicit controller.');
+    throw new Error('ProductImageManagerUIProvider requires ProductFormImageContext or an explicit controller.');
   }
 
   const {
@@ -250,7 +252,7 @@ export function ProductImageManagerUIProvider({
 
     try {
       setLinkToFileLoadingSlots(prev => ({ ...prev, [index]: true }));
-      const productId = formContext?.product?.id ?? null;
+      const productId = formCore?.product?.id ?? null;
       
       if (productId && handleSlotFileSelect && !linkValue.toLowerCase().startsWith('data:')) {
         const result = await api.post<{ status: 'ok'; imageFile: ImageFileSelection }>(
@@ -276,7 +278,7 @@ export function ProductImageManagerUIProvider({
         return next;
       });
     }
-  }, [imageLinks, formContext?.product?.id, handleSlotFileSelect, handleSlotImageChange, setImageLinkAt, setSlotViewMode, pushDebug]);
+  }, [imageLinks, formCore?.product?.id, handleSlotFileSelect, handleSlotImageChange, setImageLinkAt, setSlotViewMode, pushDebug]);
 
   const clearVisibleImage = useCallback(async (index: number) => {
     if (isSlotImageLocked?.(index)) {

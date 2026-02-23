@@ -4,7 +4,7 @@ import { Link2, Plus, X } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
-import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
 import type { NoteWithRelations, RelatedNote } from '@/shared/contracts/notes';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { api } from '@/shared/lib/api-client';
@@ -61,7 +61,7 @@ function useNotesLookup(noteIds: string[]): { notes: NotesLookupResult; loading:
 }
 
 export default function ProductFormNoteLink(): React.JSX.Element {
-  const { selectedNoteIds, toggleNote, removeNote } = useProductFormContext();
+  const { selectedNoteIds, toggleNote, removeNote } = useProductFormCore();
   const { confirm, ConfirmationModal } = useConfirm();
   const [query, setQuery] = useState('');
 

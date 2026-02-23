@@ -31,6 +31,7 @@ export const aiNodeTypeSchema = z.enum([
   'bundle',
   'gate',
   'compare',
+  'logical_condition',
   'router',
   'delay',
   'poll',
@@ -350,6 +351,43 @@ export const routerConfigSchema = z.object({
 
 export type RouterConfigDto = z.infer<typeof routerConfigSchema>;
 export type RouterConfig = RouterConfigDto;
+
+export const logicalConditionOperatorSchema = z.enum([
+  'truthy',
+  'falsy',
+  'equals',
+  'notEquals',
+  'contains',
+  'notContains',
+  'startsWith',
+  'endsWith',
+  'isEmpty',
+  'notEmpty',
+  'greaterThan',
+  'lessThan',
+  'greaterThanOrEqual',
+  'lessThanOrEqual',
+]);
+export type LogicalConditionOperatorDto = z.infer<typeof logicalConditionOperatorSchema>;
+export type LogicalConditionOperator = LogicalConditionOperatorDto;
+
+export const logicalConditionItemSchema = z.object({
+  id: z.string().optional(),
+  inputPort: z.enum(['value', 'result', 'context', 'bundle']),
+  fieldPath: z.string().optional(),
+  operator: logicalConditionOperatorSchema,
+  compareTo: z.string().optional(),
+  caseSensitive: z.boolean().optional(),
+});
+export type LogicalConditionItemDto = z.infer<typeof logicalConditionItemSchema>;
+export type LogicalConditionItem = LogicalConditionItemDto;
+
+export const logicalConditionConfigSchema = z.object({
+  combinator: z.enum(['and', 'or']),
+  conditions: z.array(logicalConditionItemSchema),
+});
+export type LogicalConditionConfigDto = z.infer<typeof logicalConditionConfigSchema>;
+export type LogicalConditionConfig = LogicalConditionConfigDto;
 
 /**
  * AI Path Node Config DTOs - Complex
@@ -834,6 +872,7 @@ export const nodeConfigSchema = z.object({
   bundle: bundleConfigSchema.optional(),
   gate: gateConfigSchema.optional(),
   compare: compareConfigSchema.optional(),
+  logicalCondition: logicalConditionConfigSchema.optional(),
   router: routerConfigSchema.optional(),
   delay: delayConfigSchema.optional(),
   poll: pollConfigSchema.optional(),

@@ -3,18 +3,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
   createContext,
-  useContext,
   useEffect,
   useMemo,
   useRef,
   useState,
-  BaseSyntheticEvent,
 } from 'react';
 import {
-  UseFormRegister,
-  UseFormSetValue,
-  UseFormGetValues,
-  FieldErrors,
   FormProvider,
   useForm,
   Resolver,
@@ -30,29 +24,46 @@ import {
   productUpdateSchema,
 } from '@/features/products/validations/schemas';
 import type { ImageFileSelectionDto as ImageFileSelection } from '@/shared/contracts/files';
-import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
-import type { ProductImageManagerController } from '@/shared/contracts/product-image-manager';
 import {
   ProductImageSlot,
 } from '@/shared/contracts/products';
 import type {
-  ProductCategory,
-  ProductTag,
-  ProductParameter,
   ProductParameterValue,
-  Producer,
 } from '@/shared/contracts/products';
 import type {
-  CatalogRecord,
   ProductWithImages,
-  PriceGroupWithDetails,
   ProductFormData,
   ProductDraft,
 } from '@/shared/contracts/products';
-import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
+
+import {
+  ProductFormCoreContext,
+  ProductFormCoreContextType,
+  useProductFormCore,
+} from './ProductFormCoreContext';
+import {
+  ProductFormImageContext,
+  ProductFormImageContextType,
+  useProductFormImages,
+} from './ProductFormImageContext';
+import {
+  ProductFormMetadataContext,
+  ProductFormMetadataContextType,
+  useProductFormMetadata,
+} from './ProductFormMetadataContext';
+import {
+  ProductFormParameterContext,
+  ProductFormParameterContextType,
+  useProductFormParameters,
+} from './ProductFormParameterContext';
+import {
+  ProductFormStudioContext,
+  ProductFormStudioContextType,
+  useProductFormStudio,
+} from './ProductFormStudioContext';
 
 const PRODUCT_STUDIO_CONFIG_CACHE_TTL_MS = 30_000;
 
@@ -221,88 +232,34 @@ const toComparableImageSlot = (slot: ProductImageSlot | null): string => {
 const serializeComparableState = (value: NonFormComparableState): string =>
   JSON.stringify(value);
 
-export interface ProductFormContextType extends ProductImageManagerController {
-  register: UseFormRegister<ProductFormData>;
-  handleSubmit: (e?: BaseSyntheticEvent) => Promise<void>;
-  hasUnsavedChanges: boolean;
-  errors: FieldErrors<ProductFormData>;
-  setValue: UseFormSetValue<ProductFormData>;
-  getValues: UseFormGetValues<ProductFormData>;
-  imageSlots: (ProductImageSlot | null)[];
-  imageLinks: string[];
-  imageBase64s: string[];
-  uploading: boolean;
-  uploadError: string | null;
-  uploadSuccess: boolean;
-  showFileManager: boolean;
-  setShowFileManager: (show: boolean) => void;
-  handleSlotImageChange: (file: File | null, index: number) => void;
-  handleSlotFileSelect: (file: ImageFileSelection | null, index: number) => void;
-  handleSlotDisconnectImage: (index: number) => Promise<void>;
-  handleMultiImageChange: (files: File[]) => void;
-  handleMultiFileSelect: (files: ImageFileSelection[]) => void;
-  swapImageSlots: (fromIndex: number, toIndex: number) => void;
-  setImageLinkAt: (index: number, value: string) => void;
-  setImageBase64At: (index: number, value: string) => void;
-  setImagesReordering: (reordering: boolean) => void;
-  catalogs: CatalogRecord[];
-  catalogsLoading: boolean;
-  catalogsError: string | null;
-  selectedCatalogIds: string[];
-  toggleCatalog: (catalogId: string) => void;
-  categories: ProductCategory[];
-  categoriesLoading: boolean;
-  selectedCategoryId: string | null;
-  setCategoryId: (categoryId: string | null) => void;
-  tags: ProductTag[];
-  tagsLoading: boolean;
-  selectedTagIds: string[];
-  toggleTag: (tagId: string) => void;
-  producers: Producer[];
-  producersLoading: boolean;
-  selectedProducerIds: string[];
-  toggleProducer: (producerId: string) => void;
-  selectedNoteIds: string[];
-  toggleNote: (noteId: string) => void;
-  removeNote: (noteId: string) => void;
-  parameters: ProductParameter[];
-  parametersLoading: boolean;
-  parameterValues: ProductParameterValue[];
-  addParameterValue: () => void;
-  updateParameterId: (index: number, parameterId: string) => void;
-  updateParameterValue: (index: number, value: string) => void;
-  updateParameterValueByLanguage: (
-    index: number,
-    languageCode: string,
-    value: string
-  ) => void;
-  removeParameterValue: (index: number) => void;
-  filteredLanguages: Language[];
-  filteredPriceGroups: PriceGroupWithDetails[];
-  generationError: string | null;
-  setGenerationError: (error: string | null) => void;
-  studioProjectId: string | null;
-  setStudioProjectId: (projectId: string | null) => void;
-  studioConfigLoading: boolean;
-  studioConfigSaving: boolean;
-  refreshImagesFromProduct: (savedProduct: ProductWithImages) => void;
-  product?: ProductWithImages | undefined;
-  draft?: ProductDraft | null | undefined;
-  ConfirmationModal: React.ComponentType;
-}
+export interface ProductFormContextType
+  extends ProductFormCoreContextType,
+    ProductFormMetadataContextType,
+    ProductFormImageContextType,
+    ProductFormParameterContextType,
+    ProductFormStudioContextType {}
 
 export const ProductFormContext = createContext<ProductFormContextType | null>(
   null
 );
 
 export const useProductFormContext = (): ProductFormContextType => {
-  const context = useContext(ProductFormContext);
-  if (!context) {
-    throw internalError(
-      'useProductFormContext must be used within a ProductFormProvider'
-    );
-  }
-  return context;
+  const core = useProductFormCore();
+  const metadata = useProductFormMetadata();
+  const images = useProductFormImages();
+  const parameters = useProductFormParameters();
+  const studio = useProductFormStudio();
+
+  return useMemo(
+    () => ({
+      ...core,
+      ...metadata,
+      ...images,
+      ...parameters,
+      ...studio,
+    }),
+    [core, metadata, images, parameters, studio]
+  );
 };
 
 export function ProductFormProvider({
@@ -553,53 +510,6 @@ export function ProductFormProvider({
     setSelectedNoteIds((prev: string[]) => prev.filter((n: string) => n !== id));
   };
 
-  const normalizeParameterValues = (
-    input?: ProductParameterValue[] | null
-  ): ProductParameterValue[] => {
-    if (!Array.isArray(input)) return [];
-    return input.map((entry: ProductParameterValue) => {
-      const valuesByLanguage =
-        entry?.valuesByLanguage &&
-        typeof entry.valuesByLanguage === 'object' &&
-        !Array.isArray(entry.valuesByLanguage)
-          ? Object.entries(entry.valuesByLanguage).reduce(
-            (acc: Record<string, string>, [lang, rawValue]: [string, unknown]) => {
-              const normalizedLang = lang.trim().toLowerCase();
-              if (!normalizedLang) return acc;
-              const normalizedValue =
-                typeof rawValue === 'string' ? rawValue : '';
-              acc[normalizedLang] = normalizedValue;
-              return acc;
-            },
-            {}
-          )
-          : {};
-      const directValue = typeof entry?.value === 'string' ? entry.value : '';
-      const fallbackValue =
-        directValue ||
-        valuesByLanguage['default'] ||
-        valuesByLanguage['en'] ||
-        Object.values(valuesByLanguage).find(
-          (value: string): boolean => typeof value === 'string' && value.length > 0
-        ) ||
-        '';
-
-      return {
-        parameterId: decodeSimpleParameterStorageId(
-          typeof entry?.parameterId === 'string' ? entry.parameterId : ''
-        ),
-        value: fallbackValue,
-        ...(Object.keys(valuesByLanguage).length > 0
-          ? { valuesByLanguage }
-          : {}),
-      };
-    });
-  };
-
-  const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>(
-    () => normalizeParameterValues(product?.parameters ?? draft?.parameters ?? [])
-  );
-
   const trackedToggleCatalog = (catalogId: string): void => {
     markNonFormInteraction();
     toggleCatalog(catalogId);
@@ -662,6 +572,49 @@ export function ProductFormProvider({
     markNonFormInteraction();
     setImageBase64At(index, value);
   };
+
+  const [parameterValues, setParameterValues] = useState<ProductParameterValue[]>(
+    () => {
+      if (!Array.isArray(product?.parameters ?? draft?.parameters)) return [];
+      return (product?.parameters ?? draft?.parameters ?? []).map((entry: ProductParameterValue) => {
+        const valuesByLanguage =
+          entry?.valuesByLanguage &&
+          typeof entry.valuesByLanguage === 'object' &&
+          !Array.isArray(entry.valuesByLanguage)
+            ? Object.entries(entry.valuesByLanguage).reduce(
+              (acc: Record<string, string>, [lang, rawValue]: [string, unknown]) => {
+                const normalizedLang = lang.trim().toLowerCase();
+                if (!normalizedLang) return acc;
+                const normalizedValue =
+                  typeof rawValue === 'string' ? rawValue : '';
+                acc[normalizedLang] = normalizedValue;
+                return acc;
+              },
+              {} as Record<string, string>
+            )
+            : {};
+        const directValue = typeof entry?.value === 'string' ? entry.value : '';
+        const fallbackValue =
+          directValue ||
+          valuesByLanguage['default'] ||
+          valuesByLanguage['en'] ||
+          Object.values(valuesByLanguage).find(
+            (value: string): boolean => typeof value === 'string' && value.length > 0
+          ) ||
+          '';
+
+        return {
+          parameterId: decodeSimpleParameterStorageId(
+            typeof entry?.parameterId === 'string' ? entry.parameterId : ''
+          ),
+          value: fallbackValue,
+          ...(Object.keys(valuesByLanguage).length > 0
+            ? { valuesByLanguage }
+            : {}),
+        };
+      });
+    }
+  );
 
   const addParameterValue = (): void => {
     markNonFormInteraction();
@@ -807,77 +760,150 @@ export function ProductFormProvider({
   const hasNonFormUnsavedChanges = nonFormComparableKey !== nonFormBaselineKey;
   const hasUnsavedChanges = isDirty || hasNonFormUnsavedChanges;
 
+  const coreValue: ProductFormCoreContextType = useMemo(
+    () => ({
+      register,
+      handleSubmit: submitHandler,
+      hasUnsavedChanges,
+      errors,
+      setValue,
+      getValues,
+      selectedNoteIds,
+      toggleNote,
+      removeNote,
+      generationError,
+      setGenerationError,
+      product,
+      draft,
+      ConfirmationModal,
+    }),
+    [
+      register,
+      submitHandler,
+      hasUnsavedChanges,
+      errors,
+      setValue,
+      getValues,
+      selectedNoteIds,
+      generationError,
+      product,
+      draft,
+      ConfirmationModal,
+    ]
+  );
+
+  const metadataValue: ProductFormMetadataContextType = useMemo(
+    () => ({
+      catalogs,
+      catalogsLoading,
+      catalogsError,
+      selectedCatalogIds,
+      toggleCatalog: trackedToggleCatalog,
+      categories,
+      categoriesLoading,
+      selectedCategoryId,
+      setCategoryId: trackedSetCategoryId,
+      tags,
+      tagsLoading,
+      selectedTagIds,
+      toggleTag: trackedToggleTag,
+      producers,
+      producersLoading,
+      selectedProducerIds,
+      toggleProducer: trackedToggleProducer,
+      filteredLanguages,
+      filteredPriceGroups,
+    }),
+    [
+      catalogs,
+      catalogsLoading,
+      catalogsError,
+      selectedCatalogIds,
+      categories,
+      categoriesLoading,
+      selectedCategoryId,
+      tags,
+      tagsLoading,
+      selectedTagIds,
+      producers,
+      producersLoading,
+      selectedProducerIds,
+      filteredLanguages,
+      filteredPriceGroups,
+    ]
+  );
+
+  const imageValue: ProductFormImageContextType = useMemo(
+    () => ({
+      imageSlots,
+      imageLinks,
+      imageBase64s,
+      uploading,
+      uploadError,
+      uploadSuccess,
+      showFileManager,
+      setShowFileManager,
+      handleSlotImageChange: trackedHandleSlotImageChange,
+      handleSlotFileSelect: trackedHandleSlotFileSelect,
+      handleSlotDisconnectImage: trackedHandleSlotDisconnectImage,
+      handleMultiImageChange: trackedHandleMultiImageChange,
+      handleMultiFileSelect: trackedHandleMultiFileSelect,
+      swapImageSlots: trackedSwapImageSlots,
+      setImageLinkAt: trackedSetImageLinkAt,
+      setImageBase64At: trackedSetImageBase64At,
+      setImagesReordering,
+      refreshImagesFromProduct: refreshImages,
+    }),
+    [
+      imageSlots,
+      imageLinks,
+      imageBase64s,
+      uploading,
+      uploadError,
+      uploadSuccess,
+      showFileManager,
+      setImagesReordering,
+      refreshImages,
+    ]
+  );
+
+  const parameterValue: ProductFormParameterContextType = useMemo(
+    () => ({
+      parameters,
+      parametersLoading,
+      parameterValues,
+      addParameterValue,
+      updateParameterId,
+      updateParameterValue,
+      updateParameterValueByLanguage,
+      removeParameterValue,
+    }),
+    [parameters, parametersLoading, parameterValues]
+  );
+
+  const studioValue: ProductFormStudioContextType = useMemo(
+    () => ({
+      studioProjectId,
+      setStudioProjectId,
+      studioConfigLoading,
+      studioConfigSaving,
+    }),
+    [studioProjectId, studioConfigLoading, studioConfigSaving]
+  );
+
   return (
     <FormProvider {...methods}>
-      <ProductFormContext.Provider
-        value={{
-          register,
-          handleSubmit: submitHandler,
-          hasUnsavedChanges,
-          errors,
-          setValue,
-          getValues,
-          imageSlots,
-          imageLinks,
-          imageBase64s,
-          uploading,
-          uploadError,
-          uploadSuccess,
-          showFileManager,
-          setShowFileManager,
-          handleSlotImageChange: trackedHandleSlotImageChange,
-          handleSlotFileSelect: trackedHandleSlotFileSelect,
-          handleSlotDisconnectImage: trackedHandleSlotDisconnectImage,
-          handleMultiImageChange: trackedHandleMultiImageChange,
-          handleMultiFileSelect: trackedHandleMultiFileSelect,
-          swapImageSlots: trackedSwapImageSlots,
-          setImageLinkAt: trackedSetImageLinkAt,
-          setImageBase64At: trackedSetImageBase64At,
-          setImagesReordering,
-          catalogs,
-          catalogsLoading,
-          catalogsError,
-          selectedCatalogIds,
-          toggleCatalog: trackedToggleCatalog,
-          categories,
-          categoriesLoading,
-          selectedCategoryId,
-          setCategoryId: trackedSetCategoryId,
-          tags,
-          tagsLoading,
-          selectedTagIds,
-          toggleTag: trackedToggleTag,
-          producers,
-          producersLoading,
-          selectedProducerIds,
-          toggleProducer: trackedToggleProducer,
-          selectedNoteIds,
-          toggleNote,
-          removeNote,
-          parameters,
-          parametersLoading,
-          parameterValues,
-          addParameterValue,
-          updateParameterId,
-          updateParameterValue,
-          updateParameterValueByLanguage,
-          removeParameterValue,
-          filteredLanguages,
-          filteredPriceGroups,
-          generationError,
-          setGenerationError,
-          studioProjectId,
-          setStudioProjectId,
-          studioConfigLoading,
-          studioConfigSaving,
-          refreshImagesFromProduct: refreshImages,
-          product,
-          draft,
-          ConfirmationModal,
-        }}
-      >
-        {children}
-      </ProductFormContext.Provider>
+      <ProductFormCoreContext.Provider value={coreValue}>
+        <ProductFormMetadataContext.Provider value={metadataValue}>
+          <ProductFormImageContext.Provider value={imageValue}>
+            <ProductFormParameterContext.Provider value={parameterValue}>
+              <ProductFormStudioContext.Provider value={studioValue}>
+                {children}
+              </ProductFormStudioContext.Provider>
+            </ProductFormParameterContext.Provider>
+          </ProductFormImageContext.Provider>
+        </ProductFormMetadataContext.Provider>
+      </ProductFormCoreContext.Provider>
     </FormProvider>
   );
 }

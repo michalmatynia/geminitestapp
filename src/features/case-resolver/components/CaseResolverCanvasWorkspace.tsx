@@ -73,7 +73,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const normalizedNodeMeta = useMemo(
     (): Record<string, CaseResolverNodeMeta> => {
       const value = activeFile?.graph?.nodeMeta;
-      return isObjectRecord(value) ? (value as Record<string, CaseResolverNodeMeta>) : {};
+      return isObjectRecord(value) ? (value) : {};
     },
     [activeFile?.graph?.nodeMeta]
   );
@@ -81,7 +81,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const normalizedEdgeMeta = useMemo(
     (): Record<string, CaseResolverEdgeMeta> => {
       const value = activeFile?.graph?.edgeMeta;
-      return isObjectRecord(value) ? (value as Record<string, CaseResolverEdgeMeta>) : {};
+      return isObjectRecord(value) ? (value) : {};
     },
     [activeFile?.graph?.edgeMeta]
   );
@@ -109,7 +109,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     (): unknown | null => {
       const edges = activeFile?.graph?.edges;
       if (!selectedEdgeId || !Array.isArray(edges)) return null;
-      return (edges as AiEdge[]).find((e) => e.id === selectedEdgeId) ?? null;
+      return (edges).find((e) => e.id === selectedEdgeId) ?? null;
     },
     [activeFile?.graph?.edges, selectedEdgeId]
   );

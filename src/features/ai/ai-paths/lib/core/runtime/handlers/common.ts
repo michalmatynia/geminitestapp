@@ -1,4 +1,5 @@
 import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type { LogicalConditionConfig, LogicalConditionOperator } from '@/shared/contracts/ai-paths';
 
 import { DELAY_OUTPUT_PORTS, ROUTER_OUTPUT_PORTS } from '../../constants';
 import {
@@ -120,6 +121,152 @@ export const handleCompare: NodeHandler = ({ node, nodeInputs }: NodeHandlerCont
     value: currentValue,
     valid,
     errors: valid ? [] : [compareConfig.message ?? 'Comparison failed'],
+  };
+};
+
+const resolveLogicalConditionInput = (
+  inputPort: 'value' | 'result' | 'context' | 'bundle',
+  fieldPath: string | undefined,
+  nodeInputs: RuntimePortValues
+): unknown => {
+  const raw = coerceInput(nodeInputs[inputPort]);
+  if (!fieldPath?.trim()) return raw;
+  const parts = fieldPath.split('.');
+  let cursor: unknown = raw;
+  for (const part of parts) {
+    if (cursor === null || cursor === undefined || typeof cursor !== 'object') {
+      return undefined;
+    }
+    cursor = (cursor as Record<string, unknown>)[part];
+  }
+  return cursor;
+};
+
+const evaluateLogicalConditionItem = (
+  value: unknown,
+  operator: LogicalConditionOperator,
+  compareTo: string | undefined,
+  caseSensitive: boolean | undefined
+): boolean => {
+  const asString = safeStringify(value ?? '');
+  const normalized = caseSensitive ? asString : asString.toLowerCase();
+  const target = caseSensitive
+    ? String(compareTo ?? '')
+    : String(compareTo ?? '').toLowerCase();
+
+  switch (operator) {
+    case 'truthy':
+      return Boolean(value);
+    case 'falsy':
+      return !value;
+    case 'equals':
+      return normalized === target;
+    case 'notEquals':
+      return normalized !== target;
+    case 'contains':
+      return normalized.includes(target);
+    case 'notContains':
+      return !normalized.includes(target);
+    case 'startsWith':
+      return normalized.startsWith(target);
+    case 'endsWith':
+      return normalized.endsWith(target);
+    case 'isEmpty':
+      return (
+        normalized.trim() === '' ||
+        normalized.trim() === '[]' ||
+        normalized.trim() === '{}'
+      );
+    case 'notEmpty':
+      return (
+        normalized.trim() !== '' &&
+        normalized.trim() !== '[]' &&
+        normalized.trim() !== '{}'
+      );
+    case 'greaterThan':
+      return Number(asString) > Number(compareTo ?? 0);
+    case 'lessThan':
+      return Number(asString) < Number(compareTo ?? 0);
+    case 'greaterThanOrEqual':
+      return Number(asString) >= Number(compareTo ?? 0);
+    case 'lessThanOrEqual':
+      return Number(asString) <= Number(compareTo ?? 0);
+    default:
+      return false;
+  }
+};
+
+export const handleLogicalCondition: NodeHandler = ({
+  node,
+  nodeInputs,
+}: NodeHandlerContext): RuntimePortValues => {
+  const config: LogicalConditionConfig = node.config?.logicalCondition ?? {
+    combinator: 'and',
+    conditions: [],
+  };
+  const { combinator, conditions } = config;
+
+  const primaryPort = conditions[0]?.inputPort ?? 'value';
+  const primaryValue = coerceInput(nodeInputs[primaryPort]);
+
+  if (!conditions || conditions.length === 0) {
+    return { value: primaryValue, valid: true, errors: [] };
+  }
+
+  const errors: string[] = [];
+  let valid: boolean;
+
+  if (combinator === 'and') {
+    valid = true;
+    for (const condition of conditions) {
+      const val = resolveLogicalConditionInput(
+        condition.inputPort,
+        condition.fieldPath,
+        nodeInputs
+      );
+      const result = evaluateLogicalConditionItem(
+        val,
+        condition.operator,
+        condition.compareTo,
+        condition.caseSensitive
+      );
+      if (!result) {
+        errors.push(`Condition failed: [${condition.inputPort}] ${condition.operator}`);
+        valid = false;
+        break;
+      }
+    }
+  } else {
+    valid = false;
+    for (const condition of conditions) {
+      const val = resolveLogicalConditionInput(
+        condition.inputPort,
+        condition.fieldPath,
+        nodeInputs
+      );
+      const result = evaluateLogicalConditionItem(
+        val,
+        condition.operator,
+        condition.compareTo,
+        condition.caseSensitive
+      );
+      if (result) {
+        valid = true;
+        break;
+      }
+      errors.push(
+        `Condition did not match: [${condition.inputPort}] ${condition.operator}`
+      );
+    }
+    if (valid) {
+      errors.length = 0;
+    }
+  }
+
+  return {
+    value: primaryValue,
+    valid,
+    errors,
   };
 };
 

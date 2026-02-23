@@ -7,7 +7,8 @@ import { CatalogMultiSelectField } from '@/features/products/components/form/Cat
 import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
 import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';
 import { TagMultiSelectField } from '@/features/products/components/form/TagMultiSelectField';
-import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 import {
   useProductValidationActions,
   useProductValidationState,
@@ -44,7 +45,7 @@ const CategoryIssueHintRow = memo(function CategoryIssueHintRow({
   proposedCategoryLabel,
   selectedCategoryId,
 }: CategoryIssueHintRowProps): React.JSX.Element {
-  const { setCategoryId } = useProductFormContext();
+  const { setCategoryId } = useProductFormMetadata();
   const { acceptIssue, denyIssue, getDenyActionLabel } = useProductValidationActions();
 
   const onReplace = useCallback((): void => {
@@ -87,7 +88,6 @@ const CategoryIssueHintRow = memo(function CategoryIssueHintRow({
 
 export default function ProductFormOther(): React.JSX.Element {
   const {
-    errors,
     catalogs,
     catalogsError,
     selectedCatalogIds,
@@ -95,8 +95,12 @@ export default function ProductFormOther(): React.JSX.Element {
     selectedCategoryId,
     setCategoryId,
     filteredPriceGroups,
+  } = useProductFormMetadata();
+
+  const {
+    errors,
     product,
-  } = useProductFormContext();
+  } = useProductFormCore();
 
   // Subscribe only to the fields this component needs — avoids cascade re-renders
   // triggered by unrelated fields (name, description, etc.).

@@ -10,7 +10,7 @@ export const PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME = 'Infer Parameters';
 export const buildParameterInferencePathConfigValue = (timestamp: string): string => {
   const config: PathConfig = {
     id: PARAMETER_INFERENCE_PATH_ID,
-    version: 11,
+    version: 12,
     name: PARAMETER_INFERENCE_PATH_NAME,
     description:
       'Infer product parameter values from name and images, then update product parameters.',
@@ -202,29 +202,141 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         },
       },
       {
-        type: 'regex',
-        title: 'Regex JSON Extract',
-        description: 'Extract JSON array template from model response.',
-        inputs: ['value', 'prompt', 'regexCallback'],
-        outputs: ['grouped', 'matches', 'value', 'aiPrompt'],
-        id: 'node-regex-template-params',
+        type: 'validation_pattern',
+        title: 'VP: JSON Cleaner',
+        description: 'Clean raw model JSON output by stripping markdown fences and surrounding text.',
+        inputs: ['value', 'prompt', 'result', 'context'],
+        outputs: ['value', 'result', 'context', 'valid', 'errors', 'bundle'],
+        id: 'node-vp-template-params',
         position: { x: 1880, y: 40 },
         createdAt: timestamp,
         updatedAt: timestamp,
         config: {
-          regex: {
-            pattern: '\\[[\\s\\S]*\\]',
-            flags: '',
-            mode: 'extract',
-            matchMode: 'first_overall',
-            groupBy: 'match',
-            outputMode: 'object',
-            includeUnmatched: false,
-            unmatchedKey: '__unmatched__',
-            splitLines: false,
-            sampleText: '',
-            aiPrompt: '',
-            aiAutoRun: false,
+          validationPattern: {
+            source: 'path_local' as const,
+            localListName: 'param-template-json-cleaner',
+            localListDescription: 'Cleans catalog parameter template JSON from model response',
+            runtimeMode: 'validate_and_autofix' as const,
+            failPolicy: 'report_only' as const,
+            inputPort: 'result' as const,
+            outputPort: 'value' as const,
+            maxAutofixPasses: 3,
+            includeRuleIds: [],
+            rules: [
+              {
+                id: 'strip-code-fences',
+                kind: 'regex' as const,
+                enabled: true,
+                severity: 'warning' as const,
+                title: 'Strip markdown code fences',
+                description: null,
+                message: 'Model response contains markdown code fences',
+                similar: [],
+                pattern: '```(?:json)?\\s*',
+                flags: 'gi',
+                autofix: {
+                  enabled: true,
+                  operations: [
+                    {
+                      kind: 'replace' as const,
+                      pattern: '```(?:json)?\\s*',
+                      flags: 'gi',
+                      replacement: '',
+                    },
+                  ],
+                },
+              },
+              {
+                id: 'strip-before-bracket',
+                kind: 'regex' as const,
+                enabled: true,
+                severity: 'warning' as const,
+                title: 'Strip text before opening bracket',
+                description: null,
+                message: 'Response contains text before JSON array',
+                similar: [],
+                pattern: '^[^\\[]+',
+                flags: '',
+                autofix: {
+                  enabled: true,
+                  operations: [
+                    {
+                      kind: 'replace' as const,
+                      pattern: '^[^\\[]+',
+                      flags: '',
+                      replacement: '',
+                    },
+                  ],
+                },
+              },
+              {
+                id: 'strip-after-bracket',
+                kind: 'regex' as const,
+                enabled: true,
+                severity: 'warning' as const,
+                title: 'Strip text after closing bracket',
+                description: null,
+                message: 'Response contains text after JSON array',
+                similar: [],
+                pattern: '\\][^\\]]+$',
+                flags: '',
+                autofix: {
+                  enabled: true,
+                  operations: [
+                    {
+                      kind: 'replace' as const,
+                      pattern: '\\][^\\]]+$',
+                      flags: '',
+                      replacement: ']',
+                    },
+                  ],
+                },
+              },
+            ],
+            learnedRules: [],
+          },
+          runtime: { waitForInputs: true },
+        },
+      },
+      {
+        type: 'logical_condition',
+        title: 'LC: Check Template',
+        description: 'Check that the cleaned template JSON is not empty.',
+        inputs: ['value', 'result', 'context', 'bundle'],
+        outputs: ['value', 'valid', 'errors'],
+        id: 'node-lc-template-params',
+        position: { x: 2100, y: 40 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        config: {
+          logicalCondition: {
+            combinator: 'and' as const,
+            conditions: [
+              {
+                id: 'check-template-not-empty',
+                inputPort: 'value' as const,
+                operator: 'notEmpty' as const,
+              },
+            ],
+          },
+          runtime: { waitForInputs: true },
+        },
+      },
+      {
+        type: 'router',
+        title: 'Router: Seed Gate',
+        description: 'Only pass template JSON to seed when it is non-empty.',
+        inputs: ['context', 'bundle', 'prompt', 'result', 'value', 'valid', 'errors'],
+        outputs: ['context', 'bundle', 'prompt', 'result', 'value', 'valid', 'errors'],
+        id: 'node-router-seed-params',
+        position: { x: 2260, y: 40 },
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        config: {
+          router: {
+            mode: 'valid' as const,
+            matchMode: 'truthy' as const,
+            compareTo: '',
           },
           runtime: { waitForInputs: true },
         },
@@ -249,7 +361,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         ],
         outputs: ['result', 'bundle', 'content_en', 'aiPrompt'],
         id: 'node-seed-params',
-        position: { x: 2320, y: 40 },
+        position: { x: 2480, y: 40 },
         createdAt: timestamp,
         updatedAt: timestamp,
         config: {
@@ -501,13 +613,34 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
       {
         id: 'edge-params-05',
         from: 'node-model-template-params',
-        to: 'node-regex-template-params',
+        to: 'node-vp-template-params',
         fromPort: 'result',
+        toPort: 'result',
+      },
+      {
+        id: 'edge-params-vp-lc',
+        from: 'node-vp-template-params',
+        to: 'node-lc-template-params',
+        fromPort: 'value',
         toPort: 'value',
       },
       {
-        id: 'edge-params-06',
-        from: 'node-regex-template-params',
+        id: 'edge-params-lc-router-valid',
+        from: 'node-lc-template-params',
+        to: 'node-router-seed-params',
+        fromPort: 'valid',
+        toPort: 'valid',
+      },
+      {
+        id: 'edge-params-vp-router-value',
+        from: 'node-vp-template-params',
+        to: 'node-router-seed-params',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+      {
+        id: 'edge-params-router-seed',
+        from: 'node-router-seed-params',
         to: 'node-seed-params',
         fromPort: 'value',
         toPort: 'value',
@@ -590,11 +723,11 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
         toPort: 'result',
       },
       {
-        id: 'edge-params-18',
-        from: 'node-seed-params',
+        id: 'edge-params-fetcher-update-ctx',
+        from: 'node-fetcher-params',
         to: 'node-update-params',
-        fromPort: 'bundle',
-        toPort: 'bundle',
+        fromPort: 'context',
+        toPort: 'context',
       },
     ],
     updatedAt: timestamp,
@@ -619,20 +752,38 @@ export const needsParameterInferenceConfigUpgrade = (
     const parsed = JSON.parse(raw) as Record<string, unknown>;
     if (!parsed || typeof parsed !== 'object') return true;
 
-    // Version 11+ configs were built with current or newer defaults.
-    // Skip content checks so users can freely customize without triggering resets.
     const version = typeof parsed['version'] === 'number' ? parsed['version'] : 0;
-    if (version >= 11) {
-      const nodes = Array.isArray(parsed['nodes'])
-        ? (parsed['nodes'] as Array<Record<string, unknown>>)
-        : [];
+    const nodes = Array.isArray(parsed['nodes'])
+      ? (parsed['nodes'] as Array<Record<string, unknown>>)
+      : [];
+    const edges = Array.isArray(parsed['edges'])
+      ? (parsed['edges'] as Array<Record<string, unknown>>)
+      : [];
+
+    // Version 12+ configs: only check fetcher node presence (allow user customization).
+    if (version >= 12) {
       const hasFetcher = nodes.some((node) => node?.['type'] === 'fetcher');
       return !hasFetcher;
     }
 
-    const nodes = Array.isArray(parsed['nodes'])
-      ? (parsed['nodes'] as Array<Record<string, unknown>>)
-      : [];
+    // Version 11: needs upgrade to 12 if missing the VP node, still has old regex node,
+    // or is missing the bug-fix context edge from fetcher to update.
+    if (version >= 11) {
+      const hasFetcher = nodes.some((node) => node?.['type'] === 'fetcher');
+      if (!hasFetcher) return true;
+      if (nodes.some((node) => node?.['id'] === 'node-regex-template-params')) return true;
+      if (!nodes.some((node) => node?.['id'] === 'node-vp-template-params')) return true;
+      const hasCtxEdge = edges.some(
+        (edge) =>
+          edge?.['from'] === 'node-fetcher-params' &&
+          edge?.['to'] === 'node-update-params' &&
+          edge?.['fromPort'] === 'context' &&
+          edge?.['toPort'] === 'context'
+      );
+      if (!hasCtxEdge) return true;
+      return false;
+    }
+
     if (nodes.some((node) => node?.['id'] === 'node-sim-params')) return true;
 
     const triggerNode = nodes.find(
@@ -919,9 +1070,6 @@ export const needsParameterInferenceConfigUpgrade = (
       return true;
     }
 
-    const edges = Array.isArray(parsed['edges'])
-      ? (parsed['edges'] as Array<Record<string, unknown>>)
-      : [];
     const hasDefinitionsEdgeToUpdater = edges.some((edge) => {
       if (!edge || typeof edge !== 'object') return false;
       return (

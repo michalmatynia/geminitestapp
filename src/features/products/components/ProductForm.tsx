@@ -6,7 +6,8 @@ import { useFormContext } from 'react-hook-form';
 
 import * as productsApi from '@/features/products/api/products';
 import DebugPanel from '@/features/products/components/DebugPanel';
-import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 import { ProductValidationSettingsProvider } from '@/features/products/context/ProductValidationSettingsContext';
 import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
 import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
@@ -103,14 +104,17 @@ export default function ProductForm({
 }: ProductFormProps): React.JSX.Element {
   const {
     handleSubmit,
+    product,
+    draft,
+    ConfirmationModal,
+  } = useProductFormCore();
+
+  const {
     categories,
     selectedCategoryId,
     setCategoryId,
     selectedCatalogIds,
-    product,
-    draft,
-    ConfirmationModal,
-  } = useProductFormContext();
+  } = useProductFormMetadata();
   const { watch, getValues, setValue } = useFormContext<ProductFormData>();
 
   const searchParams = useSearchParams();

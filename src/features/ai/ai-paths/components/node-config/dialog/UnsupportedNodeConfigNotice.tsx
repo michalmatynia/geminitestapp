@@ -23,6 +23,7 @@ const SUPPORTED_NODE_TYPES = new Set<AiNode['type']>([
   'bundle',
   'gate',
   'compare',
+  'logical_condition',
   'router',
   'delay',
   'poll',

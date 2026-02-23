@@ -76,7 +76,7 @@ export function SegmentEditorSubsectionsPanel(args: {
             size='sm'
             onClick={() => {
               onUpdateSegment((current: PromptExploderSegment) => {
-                const typedCurrent = current as PromptExploderSegment;
+                const typedCurrent = current;
                 return {
                   ...typedCurrent,
                   subsections: [...typedCurrent.subsections, promptExploderCreateSubsection()],
@@ -106,7 +106,7 @@ export function SegmentEditorSubsectionsPanel(args: {
                   disabled={subsectionIndex === 0}
                   onClick={() => {
                     onUpdateSegment((current: PromptExploderSegment) => {
-                      const typedCurrent = current as PromptExploderSegment;
+                      const typedCurrent = current;
                       return {
                         ...typedCurrent,
                         subsections: moveByDelta(typedCurrent.subsections, subsectionIndex, -1),
@@ -123,7 +123,7 @@ export function SegmentEditorSubsectionsPanel(args: {
                   disabled={subsectionIndex === (segment.subsections).length - 1}
                   onClick={() => {
                     onUpdateSegment((current: PromptExploderSegment) => {
-                      const typedCurrent = current as PromptExploderSegment;
+                      const typedCurrent = current;
                       return {
                         ...typedCurrent,
                         subsections: moveByDelta(typedCurrent.subsections, subsectionIndex, 1),
@@ -139,7 +139,7 @@ export function SegmentEditorSubsectionsPanel(args: {
                   size='icon'
                   onClick={() => {
                     onUpdateSegment((current: PromptExploderSegment) => {
-                      const typedCurrent = current as PromptExploderSegment;
+                      const typedCurrent = current;
                       return {
                         ...typedCurrent,
                         subsections: typedCurrent.subsections.filter(
@@ -159,7 +159,7 @@ export function SegmentEditorSubsectionsPanel(args: {
               value={subsection.title}
               onChange={(event) => {
                 onUpdateSegment((current: PromptExploderSegment) => {
-                  const typedCurrent = current as PromptExploderSegment;
+                  const typedCurrent = current;
                   const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
                     candidateIndex === subsectionIndex
                       ? {
@@ -180,7 +180,7 @@ export function SegmentEditorSubsectionsPanel(args: {
               value={subsection.code ?? ''}
               onChange={(event) => {
                 onUpdateSegment((current: PromptExploderSegment) => {
-                  const typedCurrent = current as PromptExploderSegment;
+                  const typedCurrent = current;
                   const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
                     candidateIndex === subsectionIndex
                       ? {
@@ -202,7 +202,7 @@ export function SegmentEditorSubsectionsPanel(args: {
             value={subsection.condition ?? ''}
             onChange={(event) => {
               onUpdateSegment((current: PromptExploderSegment) => {
-                const typedCurrent = current as PromptExploderSegment;
+                const typedCurrent = current;
                 const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
                   candidateIndex === subsectionIndex
                     ? {
@@ -263,7 +263,7 @@ export function SegmentEditorSubsectionsPanel(args: {
                 value: nextValue,
               });
               onUpdateSegment((current: PromptExploderSegment) => {
-                const typedCurrent = current as PromptExploderSegment;
+                const typedCurrent = current;
                 const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
                   candidateIndex === subsectionIndex
                     ? {
@@ -287,7 +287,7 @@ export function SegmentEditorSubsectionsPanel(args: {
                     onValueChange={(next: string) => {
                       if (next === 'none') {
                         onUpdateSegment((current: PromptExploderSegment) => {
-                          const typedCurrent = current as PromptExploderSegment;
+                          const typedCurrent = current;
                           const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) =>
                             candidateIndex === subsectionIndex
                               ? {
@@ -389,7 +389,7 @@ export function SegmentEditorSubsectionsPanel(args: {
               items: subsection.items || [],
               onChange: (nextItems) => {
                 onUpdateSegment((current: PromptExploderSegment) => {
-                  const typedCurrent = current as PromptExploderSegment;
+                  const typedCurrent = current;
                   const nextSubsections = typedCurrent.subsections.map((candidate: PromptExploderSubsection, candidateIndex: number) => {
                     if (candidateIndex !== subsectionIndex) return candidate;
                     return {

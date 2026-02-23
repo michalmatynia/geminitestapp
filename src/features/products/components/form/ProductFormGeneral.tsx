@@ -4,7 +4,8 @@ import { ArrowRight } from 'lucide-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 
-import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 import {
   useProductValidationActions,
   useProductValidationState,
@@ -254,8 +255,11 @@ export default function ProductFormGeneral(): React.JSX.Element {
   } = useProductValidationState();
   const {
     filteredLanguages,
+  } = useProductFormMetadata();
+
+  const {
     errors,
-  } = useProductFormContext();
+  } = useProductFormCore();
 
   const { register, getValues, setValue, watch } = useFormContext<ProductFormData>();
   const [activeNameTab, setActiveNameTab] = useState<string>('');

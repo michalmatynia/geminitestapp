@@ -3,7 +3,8 @@
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
+import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
 import type { LanguageDto as Language } from '@/shared/contracts/internationalization';
 import type { ProductParameter, ProductParameterValue } from '@/shared/contracts/products';
 import {
@@ -96,9 +97,12 @@ export default function ProductFormParameters(): React.JSX.Element {
     updateParameterValue,
     updateParameterValueByLanguage,
     removeParameterValue,
+  } = useProductFormParameters();
+
+  const {
     selectedCatalogIds,
     filteredLanguages,
-  } = useProductFormContext();
+  } = useProductFormMetadata();
 
   const catalogLanguages = useMemo((): CatalogLanguageOption[] => {
     const byCode = new Map<string, CatalogLanguageOption>();

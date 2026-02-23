@@ -15,7 +15,9 @@ import {
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
 } from '@/features/products/constants';
-import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormCore } from '@/features/products/context/ProductFormCoreContext';
+import { useProductFormImageContext, useProductFormImages } from '@/features/products/context/ProductFormImageContext';
+import { useProductFormStudio } from '@/features/products/context/ProductFormStudioContext';
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
@@ -223,14 +225,20 @@ const formatTimestamp = (value: string | null): string => {
 
 export default function ProductFormStudio(): React.JSX.Element {
   const {
-    product,
-    imageSlots,
     studioProjectId,
     setStudioProjectId,
     studioConfigLoading,
     studioConfigSaving,
+  } = useProductFormStudio();
+
+  const {
+    product,
     refreshImagesFromProduct,
-  } = useProductFormContext();
+  } = useProductFormCore();
+
+  const {
+    imageSlots,
+  } = useProductFormImages();
   const studioProjectsQuery = useStudioProjects();
   const studioProjectIds = useMemo(
     () =>

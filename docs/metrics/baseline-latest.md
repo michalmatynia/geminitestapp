@@ -1,15 +1,15 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-23T19:21:15.950Z
+Generated at: 2026-02-23T19:54:54.225Z
 
 ## Snapshot
 
-- Source files: 2971
-- Source lines: 552666
+- Source files: 2973
+- Source lines: 552824
 - use client files: 961
 - Files >= 1000 LOC: 61
 - Files >= 1500 LOC: 25
-- Largest file: `src/features/database/services/database-sync.ts` (3339 LOC)
+- Largest file: `src/features/database/services/database-sync.ts` (3249 LOC)
 - API routes: 314
 - API delegated server routes: 15
 - API routes without apiHandler/delegation: 0
@@ -62,7 +62,7 @@ Generated at: 2026-02-23T19:21:15.950Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/database/services/database-sync.ts` | 3339 |
+| `src/features/database/services/database-sync.ts` | 3249 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx` | 3179 |
 | `src/features/filemaker/settings.ts` | 3063 |
 | `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2985 |

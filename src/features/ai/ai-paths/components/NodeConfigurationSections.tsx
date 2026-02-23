@@ -13,6 +13,7 @@ import { AudioOscillatorNodeConfigSection } from './node-config/dialog/AudioOsci
 import { AudioSpeakerNodeConfigSection } from './node-config/dialog/AudioSpeakerNodeConfigSection';
 import { BundleNodeConfigSection } from './node-config/dialog/BundleNodeConfigSection';
 import { CompareNodeConfigSection } from './node-config/dialog/CompareNodeConfigSection';
+import { LogicalConditionNodeConfigSection } from './node-config/dialog/LogicalConditionNodeConfigSection';
 import { ConstantNodeConfigSection } from './node-config/dialog/ConstantNodeConfigSection';
 import { DelayNodeConfigSection } from './node-config/dialog/DelayNodeConfigSection';
 import { FetcherNodeConfigSection } from './node-config/dialog/FetcherNodeConfigSection';
@@ -66,6 +67,7 @@ export function NodeConfigurationSections(): React.JSX.Element | null {
       <BundleNodeConfigSection />
       <GateNodeConfigSection />
       <CompareNodeConfigSection />
+      <LogicalConditionNodeConfigSection />
       <RouterNodeConfigSection />
       <DelayNodeConfigSection />
       <PollNodeConfigSection />

@@ -1,11 +1,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useContext } from 'react';
 
 import ProductImageManager from '@/features/products/components/ProductImageManager';
 import { ProductImageManagerControllerProvider } from '@/features/products/components/ProductImageManagerControllerContext';
-import { ProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormImages } from '@/features/products/context/ProductFormImageContext';
 import { internalError } from '@/shared/errors/app-error';
 import { Button, FormSection } from '@/shared/ui';
 
@@ -16,12 +15,12 @@ const FileManager = dynamic(() => import('@/features/files/components/FileManage
 });
 
 export function ProductImagesTabContent(): React.JSX.Element {
-  const formContext = useContext(ProductFormContext);
+  const formImages = useProductFormImages();
   const imagesTabContext = useOptionalProductImagesTabContext();
   const showFileManager =
-    imagesTabContext?.showFileManager ?? formContext?.showFileManager ?? false;
+    imagesTabContext?.showFileManager ?? formImages?.showFileManager ?? false;
   const onShowFileManager =
-    imagesTabContext?.onShowFileManager ?? formContext?.setShowFileManager ?? null;
+    imagesTabContext?.onShowFileManager ?? formImages?.setShowFileManager ?? null;
   const resolvedOnSelectFiles = imagesTabContext?.onSelectFiles;
   const resolvedImageManagerController = imagesTabContext?.imageManagerController;
   const inlineFileManager = imagesTabContext?.inlineFileManager ?? false;

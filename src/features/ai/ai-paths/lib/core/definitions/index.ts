@@ -33,6 +33,8 @@ import {
   VALIDATION_PATTERN_OUTPUT_PORTS,
   ITERATOR_INPUT_PORTS,
   ITERATOR_OUTPUT_PORTS,
+  LOGICAL_CONDITION_INPUT_PORTS,
+  LOGICAL_CONDITION_OUTPUT_PORTS,
   ROUTER_INPUT_PORTS,
   ROUTER_OUTPUT_PORTS,
   SIMULATION_INPUT_PORTS,
@@ -306,6 +308,20 @@ export const palette: NodeDefinition[] = [
     outputs: ['value', 'valid', 'errors'],
     inputContracts: {
       value: { required: true },
+    },
+  },
+  {
+    type: 'logical_condition',
+    title: 'Logical Condition',
+    description: 'Evaluate multiple conditions with AND/OR combinator.',
+    inputs: LOGICAL_CONDITION_INPUT_PORTS,
+    outputs: LOGICAL_CONDITION_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(LOGICAL_CONDITION_INPUT_PORTS),
+    config: {
+      logicalCondition: {
+        combinator: 'and' as const,
+        conditions: [],
+      },
     },
   },
   {

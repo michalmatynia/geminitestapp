@@ -28,6 +28,7 @@ export const CACHEABLE_NODE_TYPES: NodeType[] = [
   'constant',
   'math',
   'compare',
+  'logical_condition',
   'router',
   'gate',
   'bundle',
@@ -102,6 +103,8 @@ export const ROUTER_OUTPUT_PORTS = [
   'valid',
   'errors',
 ];
+export const LOGICAL_CONDITION_INPUT_PORTS = ['value', 'result', 'context', 'bundle'];
+export const LOGICAL_CONDITION_OUTPUT_PORTS = ['value', 'valid', 'errors'];
 export const DELAY_INPUT_PORTS = ['context', 'bundle', 'prompt', 'result', 'value'];
 export const DELAY_OUTPUT_PORTS = ['context', 'bundle', 'prompt', 'result', 'value'];
 export const HTTP_INPUT_PORTS = [
@@ -744,7 +747,8 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   audio_oscillator: ['audio_speaker', 'viewer', 'bundle', 'delay', 'router'],
   audio_speaker: ['viewer', 'bundle', 'delay', 'notification'],
   constant: ['math', 'template', 'viewer', 'bundle', 'compare', 'router', 'delay', 'poll', 'http', 'api_advanced', 'database', 'audio_oscillator', 'audio_speaker'],
-  compare: ['gate', 'router', 'viewer', 'bundle', 'template', 'poll', 'database'],
+  compare: ['gate', 'logical_condition', 'router', 'viewer', 'bundle', 'template', 'poll', 'database'],
+  logical_condition: ['gate', 'router', 'viewer', 'bundle', 'database'],
   gate: ['validator', 'validation_pattern', 'viewer', 'prompt', 'ai_description', 'description_updater', 'bundle', 'template', 'router', 'delay', 'poll', 'audio_oscillator', 'audio_speaker'],
   router: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'poll', 'database', 'audio_oscillator', 'audio_speaker'],
   regex: ['viewer', 'bundle', 'template', 'prompt', 'model', 'agent', 'learner_agent', 'delay', 'poll', 'database'],
@@ -789,6 +793,7 @@ export const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   bundle: { border: 'border-cyan-400/40', glow: 'shadow-cyan-500/20' },
   template: { border: 'border-lime-500/40', glow: 'shadow-lime-500/20' },
   compare: { border: 'border-amber-300/40', glow: 'shadow-amber-300/20' },
+  logical_condition: { border: 'border-violet-400/40', glow: 'shadow-violet-400/20' },
   router: { border: 'border-pink-500/40', glow: 'shadow-pink-500/20' },
   delay: { border: 'border-indigo-400/40', glow: 'shadow-indigo-400/20' },
   poll: { border: 'border-cyan-300/40', glow: 'shadow-cyan-300/20' },

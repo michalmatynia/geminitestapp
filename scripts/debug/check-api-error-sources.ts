@@ -1,7 +1,9 @@
 import fs from "fs";
 import path from "path";
 
-const apiRoot = path.join(process.cwd(), "app", "api");
+const apiRoot = fs.existsSync(path.join(process.cwd(), "src", "app", "api"))
+  ? path.join(process.cwd(), "src", "app", "api")
+  : path.join(process.cwd(), "app", "api");
 
 const listRouteFiles = (dir: string, acc: string[] = []) => {
   for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {

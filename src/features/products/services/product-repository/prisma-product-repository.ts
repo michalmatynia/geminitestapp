@@ -1381,13 +1381,13 @@ export const prismaProductRepository: ProductRepository = {
       }),
       ...(validCatalogIds.length > 0
         ? [
-            prisma.productCatalog.createMany({
-              data: productIds.flatMap((productId) =>
-                validCatalogIds.map((catalogId) => ({ productId, catalogId })),
-              ),
-              skipDuplicates: true,
-            }),
-          ]
+          prisma.productCatalog.createMany({
+            data: productIds.flatMap((productId) =>
+              validCatalogIds.map((catalogId) => ({ productId, catalogId })),
+            ),
+            skipDuplicates: true,
+          }),
+        ]
         : []),
     ]);
   },

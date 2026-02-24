@@ -46,7 +46,7 @@ export const cacheStrategies = {
 export function useSmartCache(): {
   optimizeCache: () => void;
   getCacheStats: () => { totalQueries: number; activeQueries: number; staleQueries: number; errorQueries: number; totalSize: number; avgSize: number };
-  preloadCriticalData: (criticalQueries: Array<{ queryKey: unknown[]; queryFn: () => Promise<unknown> }>) => Promise<void>;
+  preloadCriticalData: <TData = unknown>(criticalQueries: Array<{ queryKey: unknown[]; queryFn: () => Promise<TData> }>) => Promise<void>;
   } {
   const queryClient = useQueryClient();
 
@@ -67,8 +67,9 @@ export function useSmartCache(): {
       
       // Adjust stale time based on usage
       if (observers > 0) {
-        if (typeof (query as any).setOptions === 'function') {
-          (query as any).setOptions({
+        const queryWithSetOptions = query as Query & { setOptions?: (options: { staleTime: number }) => void };
+        if (typeof queryWithSetOptions.setOptions === 'function') {
+          queryWithSetOptions.setOptions({
             staleTime: observers > 2 ? cacheStrategies.realtime.staleTime : 
               cacheStrategies.standard.staleTime,
           });
@@ -106,9 +107,9 @@ export function useSmartCache(): {
     };
   }, [queryClient]);
 
-  const preloadCriticalData = useCallback(async (criticalQueries: Array<{
+  const preloadCriticalData = useCallback(async <TData = unknown>(criticalQueries: Array<{
     queryKey: unknown[];
-    queryFn: () => Promise<unknown>;
+    queryFn: () => Promise<TData>;
   }>): Promise<void> => {
     const promises = criticalQueries.map(({ queryKey, queryFn }) =>
       queryClient.prefetchQuery({

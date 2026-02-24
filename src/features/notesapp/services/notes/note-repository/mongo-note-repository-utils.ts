@@ -148,7 +148,7 @@ export const buildTree = (
         if (!category.notes) {
           category.notes = [];
         }
-        category.notes.push(note as any);
+        category.notes.push(note);
       }
     });
   });

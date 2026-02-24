@@ -4,7 +4,12 @@ import { z } from 'zod';
 import {
   compileGraph,
   evaluateAiPathsValidationPreflight,
+  migrateTriggerToFetcherGraph,
+  normalizeNodes,
   normalizeAiPathsValidationConfig,
+  palette,
+  repairPathNodeIdentities,
+  sanitizeEdges,
 } from '@/features/ai/ai-paths/lib';
 import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
 import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
@@ -60,8 +65,25 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError('Nodes and edges are required to enqueue a run.');
   }
 
-  const normalizedNodes = nodes as AiNode[];
-  const normalizedEdges = edges as Edge[];
+  const migratedGraph = migrateTriggerToFetcherGraph(
+    normalizeNodes(nodes as AiNode[]),
+    edges as Edge[]
+  );
+  const identityRepair = repairPathNodeIdentities(
+    {
+      id: rest.pathId,
+      version: 1,
+      name: rest.pathName?.trim() || rest.pathId,
+      description: '',
+      trigger: rest.triggerEvent?.trim() || 'manual',
+      nodes: migratedGraph.nodes,
+      edges: migratedGraph.edges,
+      updatedAt: new Date().toISOString(),
+    },
+    { palette }
+  );
+  const normalizedNodes = normalizeNodes(identityRepair.config.nodes);
+  const normalizedEdges = sanitizeEdges(normalizedNodes, identityRepair.config.edges);
   const metaRecord =
     normalizedMeta && typeof normalizedMeta === 'object'
       ? (normalizedMeta as Record<string, unknown>)
@@ -86,6 +108,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
   normalizedMeta = {
     ...metaRecord,
+    ...(identityRepair.warnings.length > 0
+      ? {
+        identityRepair: {
+          warnings: identityRepair.warnings,
+          repairedAt: new Date().toISOString(),
+        },
+      }
+      : {}),
     aiPathsValidation: validationConfig,
     validationPreflight: validationReport,
   };

@@ -3,8 +3,8 @@ import 'server-only';
 import { enqueueProductAiJob } from '@/features/jobs/services/productAiService';
 import { ErrorSystem } from '@/features/observability/server';
 import type {
-  DatabaseEngineBackupSchedulerTickResultDto,
-  DatabaseEngineBackupSchedulerStatusDto,
+  DatabaseEngineBackupSchedulerTickResult,
+  DatabaseEngineBackupSchedulerStatus,
 } from '@/shared/contracts/database';
 import { configurationError } from '@/shared/errors/app-error';
 import {
@@ -25,9 +25,6 @@ type TargetEvaluation = {
   nextDueAt: string | null;
 };
 
-export type DatabaseBackupSchedulerTickResult = DatabaseEngineBackupSchedulerTickResultDto;
-
-export type DatabaseEngineBackupSchedulerStatus = DatabaseEngineBackupSchedulerStatusDto;
 
 const LOG_SOURCE = 'database-backup-scheduler';
 const SETTINGS_COLLECTION = 'settings';

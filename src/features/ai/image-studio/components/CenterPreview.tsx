@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { Camera, Locate } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
@@ -21,6 +21,7 @@ import { Button, useToast, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { FocusModeTogglePortal } from './center-preview/FocusModeTogglePortal';
+import { CenterPreviewProvider, useCenterPreviewContext } from './center-preview/CenterPreviewContext';
 import { SplitVariantPreview } from './center-preview/SplitVariantPreview';
 import { SplitViewControls } from './center-preview/SplitViewControls';
 import { useCenterPreviewVariants } from './center-preview/useCenterPreviewVariants';
@@ -30,7 +31,7 @@ import {
 } from './center-preview/variant-actions';
 import { VariantPanel } from './center-preview/VariantPanel';
 import { VariantPanelProvider, type VariantPanelContextValue } from './center-preview/VariantPanelContext';
-import { VariantTooltipPortal, type VariantTooltipState } from './center-preview/VariantTooltipPortal';
+import { VariantTooltipPortal } from './center-preview/VariantTooltipPortal';
 import { ToggleButtonGroup } from './ToggleButtonGroup';
 import { VersionNodeDetailsModal } from './VersionNodeDetailsModal';
 import { useGenerationActions, useGenerationState } from '../context/GenerationContext';
@@ -42,7 +43,6 @@ import { useVersionGraphState } from '../context/VersionGraphContext';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
 import {
   asObjectRecord,
-  clampSplitZoom,
   type VariantThumbnailInfo,
 } from './center-preview/preview-utils';
 import {
@@ -67,7 +67,7 @@ const PREVIEW_VARIANT_PANEL_HEIGHT = '15rem';
 const REVEAL_IN_TREE_EVENT = 'image-studio:reveal-in-tree';
 const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 
-export function CenterPreview(): React.JSX.Element {
+export function CenterPreviewInner(): React.JSX.Element {
   const {
     isFocusMode,
     maskPreviewEnabled,
@@ -133,12 +133,17 @@ export function CenterPreview(): React.JSX.Element {
     setSelectedPointIndex,
   } = useMaskingActions();
 
-  const [screenshotBusy, setScreenshotBusy] = useState(false);
-  const [singleVariantView, setSingleVariantView] = useState<'variant' | 'source'>('variant');
-  const [splitVariantView, setSplitVariantView] = useState(false);
-  const [leftSplitZoom, setLeftSplitZoom] = useState(1);
-  const [rightSplitZoom, setRightSplitZoom] = useState(1);
-  const [variantLoadingId, setVariantLoadingId] = useState<string | null>(null);
+  const {
+    screenshotBusy, setScreenshotBusy,
+    singleVariantView, setSingleVariantView,
+    splitVariantView, setSplitVariantView,
+    setLeftSplitZoom,
+    setRightSplitZoom,
+    variantLoadingId, setVariantLoadingId,
+    variantTooltip, setVariantTooltip,
+    detailsSlotId, setDetailsSlotId,
+  } = useCenterPreviewContext();
+
   const previewCanvasCropBindingRef = useRef<{
     slotId: string;
     cropRect: VectorCanvasViewCropRect;
@@ -147,8 +152,6 @@ export function CenterPreview(): React.JSX.Element {
     slotId: string;
     frame: VectorCanvasImageContentFrame;
   } | null>(null);
-  const [variantTooltip, setVariantTooltip] = useState<VariantTooltipState | null>(null);
-  const [detailsSlotId, setDetailsSlotId] = useState<string | null>(null);
 
   const productImagesExternalBaseUrl =
     settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
@@ -582,22 +585,6 @@ export function CenterPreview(): React.JSX.Element {
     }
   }, [activeCanvasSlotId, setSelectedSlotId, toast]);
 
-  const adjustSplitZoom = useCallback((pane: 'left' | 'right', delta: number): void => {
-    if (pane === 'left') {
-      setLeftSplitZoom((current) => clampSplitZoom(current + delta));
-      return;
-    }
-    setRightSplitZoom((current) => clampSplitZoom(current + delta));
-  }, []);
-
-  const resetSplitZoom = useCallback((pane: 'left' | 'right'): void => {
-    if (pane === 'left') {
-      setLeftSplitZoom(1);
-      return;
-    }
-    setRightSplitZoom(1);
-  }, []);
-
   const handleVariantTooltipMove = useCallback((
     event: React.MouseEvent<HTMLButtonElement>,
     variant: VariantThumbnailInfo
@@ -827,19 +814,11 @@ export function CenterPreview(): React.JSX.Element {
                 <SplitVariantPreview
                   sourceSlotImageSrc={compareVariantImageA}
                   workingSlotImageSrc={compareVariantImageB}
-                  leftSplitZoom={leftSplitZoom}
-                  rightSplitZoom={rightSplitZoom}
-                  onAdjustSplitZoom={adjustSplitZoom}
-                  onResetSplitZoom={resetSplitZoom}
                 />
               ) : splitVariantView && canCompareWithSource && sourceSlotImageSrc && workingSlotImageSrc ? (
                 <SplitVariantPreview
                   sourceSlotImageSrc={sourceSlotImageSrc}
                   workingSlotImageSrc={workingSlotImageSrc}
-                  leftSplitZoom={leftSplitZoom}
-                  rightSplitZoom={rightSplitZoom}
-                  onAdjustSplitZoom={adjustSplitZoom}
-                  onResetSplitZoom={resetSplitZoom}
                 />
               ) : (
                 <VectorDrawingCanvas
@@ -872,8 +851,6 @@ export function CenterPreview(): React.JSX.Element {
             ) : null}
             {canNavigateToSource ? (
               <SplitViewControls
-                singleVariantView={singleVariantView}
-                splitVariantView={splitVariantView}
                 canCompare={canCompareWithSource}
                 onGoToSourceSlot={handleGoToSourceSlot}
                 onToggleSourceVariantView={handleToggleSourceVariantView}
@@ -911,5 +888,13 @@ export function CenterPreview(): React.JSX.Element {
       />
       <ConfirmationModal />
     </div>
+  );
+}
+
+export function CenterPreview(): React.JSX.Element {
+  return (
+    <CenterPreviewProvider>
+      <CenterPreviewInner />
+    </CenterPreviewProvider>
   );
 }

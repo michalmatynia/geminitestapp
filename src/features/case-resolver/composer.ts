@@ -1,6 +1,6 @@
 import type {
-  CaseResolverCompiledSegmentDto,
-  CaseResolverCompileResultDto,
+  CaseResolverCompiledSegment,
+  CaseResolverCompileResult,
 } from '@/shared/contracts/case-resolver';
 import {
   type AiNode,
@@ -15,10 +15,6 @@ import {
   type CaseResolverJoinMode,
   type CaseResolverNodeMeta,
 } from '@/shared/contracts/case-resolver';
-
-export type CaseResolverCompiledSegment = CaseResolverCompiledSegmentDto;
-
-export type CaseResolverCompileResult = CaseResolverCompileResultDto;
 
 export type CaseResolverPlainTextTransformInput = {
   nodeId: string;

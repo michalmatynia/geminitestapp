@@ -1,13 +1,10 @@
 import type { 
-  AuthUsersResponseDto,
-  AuthUserSecurityProfileDto,
-  AuthUserDto as AuthUserSummary
+  AuthUsersResponse,
+  AuthUserSecurityProfile,
+  AuthUser as AuthUserSummary
 } from '@/shared/contracts/auth';
 import { api } from '@/shared/lib/api-client';
 
-
-export type AuthUsersResponse = AuthUsersResponseDto;
-export type AuthUserSecurityProfile = AuthUserSecurityProfileDto;
 
 export const fetchAuthUsers = async (): Promise<AuthUsersResponse> => {
   return api.get<AuthUsersResponse>('/api/auth/users');

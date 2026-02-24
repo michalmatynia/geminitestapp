@@ -17,6 +17,10 @@ import React from 'react';
 
 import { DocumentWysiwygEditor } from '@/features/document-editor';
 import {
+  encodeFilemakerPartyReference,
+  decodeFilemakerPartyReference,
+} from '@/features/filemaker/settings';
+import {
   type CaseResolverDocumentHistoryEntry,
 } from '@/shared/contracts/case-resolver';
 import {
@@ -76,6 +80,10 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
     handleUnlinkRelatedFile,
     captureApplyDiagnostics,
     activeCaseFile,
+    caseIdentifierOptions,
+    caseCategoryOptions,
+    partyOptions,
+    handleOpenPromptExploderForDraft,
   } = contextValue;
 
   const {
@@ -93,6 +101,9 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
 
   const isEditingDocumentLocked = draft.isLocked;
   const isEditorSaveEnabled = isEditorDraftDirty || canCaseResolverDraftPerformInitialManualSave({ draft, file: activeCaseFile });
+
+  const encodedAddresser = encodeFilemakerPartyReference(draft.addresser ?? null);
+  const encodedAddressee = encodeFilemakerPartyReference(draft.addressee ?? null);
 
   const createdAtLabel = draft.createdAt ? formatHistoryTimestamp(draft.createdAt) : 'Unknown';
   const updatedAtLabel = draft.updatedAt ? formatHistoryTimestamp(draft.updatedAt) : 'Unknown';
@@ -173,6 +184,18 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
         </div>
 
         <div className='flex items-center gap-2'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={handleOpenPromptExploderForDraft}
+            disabled={isEditingDocumentLocked}
+            className='h-8 border-violet-500/40 text-violet-300 hover:bg-violet-500/10'
+            title='Send document text to Prompt Exploder for AI segmentation'
+          >
+            <Terminal className='mr-1.5 size-3.5' />
+            Send to AI
+          </Button>
+
           <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-1'>
             <Button
               variant='ghost'
@@ -389,7 +412,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
           <TabsContent value='metadata' className='m-0'>
             <div className='grid gap-6 lg:grid-cols-2'>
               <FormField label='Document Name'>
-                <Input 
+                <Input
                   value={editingDocumentDraft.name}
                   onChange={(e) => updateEditingDocumentDraft({ name: e.target.value })}
                   disabled={isEditingDocumentLocked}
@@ -401,6 +424,42 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                   value={editingDocumentDraft.tagId ?? '__none__'}
                   onValueChange={(v) => updateEditingDocumentDraft({ tagId: v === '__none__' ? null : v })}
                   options={caseTagOptions}
+                  disabled={isEditingDocumentLocked}
+                  triggerClassName='bg-card/20 border-border/60'
+                />
+              </FormField>
+              <FormField label='Case Identifier'>
+                <SelectSimple
+                  value={editingDocumentDraft.caseIdentifierId ?? '__none__'}
+                  onValueChange={(v) => updateEditingDocumentDraft({ caseIdentifierId: v === '__none__' ? null : v })}
+                  options={caseIdentifierOptions}
+                  disabled={isEditingDocumentLocked}
+                  triggerClassName='bg-card/20 border-border/60'
+                />
+              </FormField>
+              <FormField label='Category'>
+                <SelectSimple
+                  value={editingDocumentDraft.categoryId ?? '__none__'}
+                  onValueChange={(v) => updateEditingDocumentDraft({ categoryId: v === '__none__' ? null : v })}
+                  options={caseCategoryOptions}
+                  disabled={isEditingDocumentLocked}
+                  triggerClassName='bg-card/20 border-border/60'
+                />
+              </FormField>
+              <FormField label='Addresser (From)'>
+                <SelectSimple
+                  value={encodedAddresser}
+                  onValueChange={(v) => updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })}
+                  options={partyOptions}
+                  disabled={isEditingDocumentLocked}
+                  triggerClassName='bg-card/20 border-border/60'
+                />
+              </FormField>
+              <FormField label='Addressee (To)'>
+                <SelectSimple
+                  value={encodedAddressee}
+                  onValueChange={(v) => updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })}
+                  options={partyOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'
                 />
@@ -417,7 +476,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                 </div>
               ) : (
                 <div className='max-h-[600px] overflow-auto'>
-                  {(editingDocumentDraft.documentHistory || []).map((entry: CaseResolverDocumentHistoryEntry) => (
+                  {(editingDocumentDraft.documentHistory || []).map((entry: CaseResolverDocumentHistoryEntry, idx: number) => (
                     <div key={entry.id || idx} className='group flex items-center justify-between p-4 hover:bg-white/5 transition-colors'>
                       <div className='flex items-center gap-4'>
                         <div className='flex size-10 items-center justify-center rounded-full bg-blue-500/10 text-blue-400'>

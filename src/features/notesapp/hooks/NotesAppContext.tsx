@@ -243,7 +243,7 @@ export function NotesAppProvider({
   const operations = useNoteOperations({
     selectedNotebookId: settings.selectedNotebookId ?? null,
     notesRef,
-    folderTreeRef: folderTreeRef as any,
+    folderTreeRef,
     fetchNotes,
     fetchFolderTree,
     setUndoStack,
@@ -258,7 +258,7 @@ export function NotesAppProvider({
   const themeLogic = useNoteTheme({
     themes,
     notebook,
-    folderTree: folderTree as any,
+    folderTree,
     selectedFolderId: settings.selectedFolderId ?? null,
     selectedNotebookId: settings.selectedNotebookId ?? null,
     selectedNote,

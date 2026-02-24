@@ -5,7 +5,7 @@ import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils
 import { getSectionContainerClass, getSectionStyles, getTextAlign } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
 import { useCmsPageContext } from '../CmsPageContext';
-import { useOptionalSectionBlockData } from './SectionBlockContext';
+import { useSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
@@ -31,21 +31,8 @@ const resolveAlignItems = (value: unknown): React.CSSProperties['alignItems'] | 
 const resolveAlignmentToJustify = (alignment: string): React.CSSProperties['justifyContent'] =>
   alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start';
 
-interface FrontendBlockSectionProps {
-  sectionId?: string | undefined;
-  settings?: Record<string, unknown>;
-  blocks?: BlockInstance[];
-}
-
-export function FrontendBlockSection({
-  sectionId: propSectionId,
-  settings: propSettings,
-  blocks: propBlocks,
-}: FrontendBlockSectionProps): React.ReactNode {
-  const sectionBlockData = useOptionalSectionBlockData();
-  const sectionId = propSectionId ?? sectionBlockData?.sectionId;
-  const settings = propSettings ?? sectionBlockData?.settings ?? {};
-  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
+export function FrontendBlockSection(): React.ReactNode {
+  const { sectionId, settings, blocks } = useSectionBlockData();
   const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = {
     ...getSectionStyles(settings, colorSchemes),

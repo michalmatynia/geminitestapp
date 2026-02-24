@@ -3,6 +3,8 @@ import React from 'react';
 
 import { Button, SelectSimple, ToggleRow } from '@/shared/ui';
 
+import { useGenerationToolbarContext, type MaskAttachMode } from './GenerationToolbarContext';
+
 type SelectOption = {
   value: string;
   label: string;
@@ -10,7 +12,6 @@ type SelectOption = {
 
 type GenerationToolbarMaskSectionProps = {
   exportMaskCount: number;
-  maskAttachMode: string;
   maskAttachModeOptions: SelectOption[];
   maskGenerationBusy: boolean;
   maskGenerationLabel: string;
@@ -21,7 +22,6 @@ type GenerationToolbarMaskSectionProps = {
   maskPreviewEnabled: boolean;
   onAttachMasks: () => void;
   onGenerateMask: () => void;
-  onMaskAttachModeChange: (value: string) => void;
   onMaskGenModeChange: (value: string) => void;
   onMaskInvertChange: (checked: boolean) => void;
   onMaskPreviewEnabledChange: (checked: boolean) => void;
@@ -30,7 +30,6 @@ type GenerationToolbarMaskSectionProps = {
 
 export function GenerationToolbarMaskSection({
   exportMaskCount,
-  maskAttachMode,
   maskAttachModeOptions,
   maskGenerationBusy,
   maskGenerationLabel,
@@ -41,12 +40,13 @@ export function GenerationToolbarMaskSection({
   maskPreviewEnabled,
   onAttachMasks,
   onGenerateMask,
-  onMaskAttachModeChange,
   onMaskGenModeChange,
   onMaskInvertChange,
   onMaskPreviewEnabledChange,
   workingSlotPresent,
 }: GenerationToolbarMaskSectionProps): React.JSX.Element {
+  const { maskAttachMode, setMaskAttachMode } = useGenerationToolbarContext();
+
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>
       <div className='mb-2 flex items-center justify-between gap-2'>
@@ -86,7 +86,7 @@ export function GenerationToolbarMaskSection({
         <SelectSimple size='sm'
           className='w-full'
           value={maskAttachMode}
-          onValueChange={onMaskAttachModeChange}
+          onValueChange={(val) => setMaskAttachMode(val as MaskAttachMode)}
           options={maskAttachModeOptions}
           triggerClassName='h-8 text-xs'
           ariaLabel='Mask attach mode'

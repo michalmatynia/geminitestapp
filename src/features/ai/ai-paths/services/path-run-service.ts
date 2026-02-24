@@ -5,6 +5,8 @@ import {
   migrateTriggerToFetcherGraph,
   normalizeNodes,
   normalizeAiPathsValidationConfig,
+  palette,
+  repairPathNodeIdentities,
   sanitizeEdges,
 } from '@/features/ai/ai-paths/lib';
 import {
@@ -31,6 +33,7 @@ import type {
   Edge,
   AiPathRunListOptions,
   AiPathRunRecord,
+  PathConfig,
 } from '@/shared/contracts/ai-paths';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 
@@ -151,6 +154,27 @@ const resolveRequestId = (input: EnqueueRunInput): string | null => {
   return null;
 };
 
+const buildIdentityRepairSeed = (
+  input: EnqueueRunInput,
+  nodes: AiNode[],
+  edges: Edge[]
+): PathConfig => ({
+  id: input.pathId,
+  version: 1,
+  name:
+    (typeof input.pathName === 'string' && input.pathName.trim().length > 0
+      ? input.pathName.trim()
+      : input.pathId),
+  description: '',
+  trigger:
+    (typeof input.triggerEvent === 'string' && input.triggerEvent.trim().length > 0
+      ? input.triggerEvent.trim()
+      : 'manual'),
+  nodes,
+  edges,
+  updatedAt: new Date().toISOString(),
+});
+
 export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunRecord> => {
   const requestId = resolveRequestId(input);
   const lockKey = requestId
@@ -195,8 +219,12 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     const rawEdges = input.edges ?? [];
     const normalizedNodes = normalizeNodes(input.nodes ?? []);
     const migratedGraph = migrateTriggerToFetcherGraph(normalizedNodes, rawEdges);
-    const nodes = normalizeNodes(migratedGraph.nodes);
-    const edges = sanitizeEdges(nodes, migratedGraph.edges);
+    const identityRepair = repairPathNodeIdentities(
+      buildIdentityRepairSeed(input, migratedGraph.nodes, migratedGraph.edges),
+      { palette }
+    );
+    const nodes = normalizeNodes(identityRepair.config.nodes);
+    const edges = sanitizeEdges(nodes, identityRepair.config.edges);
     const validationConfig = normalizeAiPathsValidationConfig(
       (input.meta as Record<string, unknown> | null)?.['aiPathsValidation'] as
         | Record<string, unknown>
@@ -228,6 +256,14 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     const meta = withRuntimeFingerprintMeta({
       ...(input.meta ?? {}),
       ...(requestId ? { requestId } : {}),
+      ...(identityRepair.warnings.length > 0
+        ? {
+          identityRepair: {
+            warnings: identityRepair.warnings,
+            repairedAt: new Date().toISOString(),
+          },
+        }
+        : {}),
       backoffMs: input.backoffMs ?? undefined,
       backoffMaxMs: input.backoffMaxMs ?? undefined,
       nodePolicy:

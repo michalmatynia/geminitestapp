@@ -2,6 +2,9 @@ import React from 'react';
 
 import { Button, SelectSimple } from '@/shared/ui';
 
+import { useGenerationToolbarContext, type UpscaleMode, type UpscaleStrategy } from './GenerationToolbarContext';
+import type { UpscaleSmoothingQuality } from './GenerationToolbarImageUtils';
+
 type SelectOption = {
   value: string;
   label: string;
@@ -11,51 +14,35 @@ type GenerationToolbarUpscaleSectionProps = {
   hasSourceImage: boolean;
   onCancelUpscale: () => void;
   onUpscale: () => void;
-  onUpscaleModeChange: (value: string) => void;
-  onUpscaleScaleChange: (value: string) => void;
-  onUpscaleSmoothingQualityChange: (value: string) => void;
-  onUpscaleStrategyChange: (value: string) => void;
-  onUpscaleTargetHeightChange: (value: string) => void;
-  onUpscaleTargetWidthChange: (value: string) => void;
-  upscaleBusy: boolean;
   upscaleBusyLabel: string;
   upscaleMaxOutputSide: number;
-  upscaleMode: string;
   upscaleModeOptions: SelectOption[];
-  upscaleScale: string;
   upscaleScaleOptions: SelectOption[];
   upscaleSmoothingOptions: SelectOption[];
-  upscaleSmoothingQuality: string;
-  upscaleStrategy: string;
   upscaleStrategyOptions: SelectOption[];
-  upscaleTargetHeight: string;
-  upscaleTargetWidth: string;
 };
 
 export function GenerationToolbarUpscaleSection({
   hasSourceImage,
   onCancelUpscale,
   onUpscale,
-  onUpscaleModeChange,
-  onUpscaleScaleChange,
-  onUpscaleSmoothingQualityChange,
-  onUpscaleStrategyChange,
-  onUpscaleTargetHeightChange,
-  onUpscaleTargetWidthChange,
-  upscaleBusy,
   upscaleBusyLabel,
   upscaleMaxOutputSide,
-  upscaleMode,
   upscaleModeOptions,
-  upscaleScale,
   upscaleScaleOptions,
   upscaleSmoothingOptions,
-  upscaleSmoothingQuality,
-  upscaleStrategy,
   upscaleStrategyOptions,
-  upscaleTargetHeight,
-  upscaleTargetWidth,
 }: GenerationToolbarUpscaleSectionProps): React.JSX.Element {
+  const {
+    upscaleMode, setUpscaleMode,
+    upscaleStrategy, setUpscaleStrategy,
+    upscaleScale, setUpscaleScale,
+    upscaleTargetWidth, setUpscaleTargetWidth,
+    upscaleTargetHeight, setUpscaleTargetHeight,
+    upscaleSmoothingQuality, setUpscaleSmoothingQuality,
+    upscaleBusy,
+  } = useGenerationToolbarContext();
+
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>
       <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Upscale</div>
@@ -63,7 +50,7 @@ export function GenerationToolbarUpscaleSection({
         <SelectSimple size='sm'
           className='w-full'
           value={upscaleMode}
-          onValueChange={onUpscaleModeChange}
+          onValueChange={(val) => setUpscaleMode(val as UpscaleMode)}
           options={upscaleModeOptions}
           triggerClassName='h-8 text-xs'
           ariaLabel='Upscale mode'
@@ -71,7 +58,7 @@ export function GenerationToolbarUpscaleSection({
         <SelectSimple size='sm'
           className='w-full'
           value={upscaleStrategy}
-          onValueChange={onUpscaleStrategyChange}
+          onValueChange={(val) => setUpscaleStrategy(val as UpscaleStrategy)}
           options={upscaleStrategyOptions}
           triggerClassName='h-8 text-xs'
           ariaLabel='Upscale strategy'
@@ -82,7 +69,7 @@ export function GenerationToolbarUpscaleSection({
           <SelectSimple size='sm'
             className='w-full sm:w-[130px]'
             value={upscaleScale}
-            onValueChange={onUpscaleScaleChange}
+            onValueChange={setUpscaleScale}
             options={upscaleScaleOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Upscale multiplier'
@@ -97,7 +84,7 @@ export function GenerationToolbarUpscaleSection({
               inputMode='numeric'
               value={upscaleTargetWidth}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                onUpscaleTargetWidthChange(event.target.value);
+                setUpscaleTargetWidth(event.target.value);
               }}
               placeholder='W'
               className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
@@ -112,7 +99,7 @@ export function GenerationToolbarUpscaleSection({
               inputMode='numeric'
               value={upscaleTargetHeight}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                onUpscaleTargetHeightChange(event.target.value);
+                setUpscaleTargetHeight(event.target.value);
               }}
               placeholder='H'
               className='h-6 w-[68px] border-0 bg-transparent text-xs text-gray-100 outline-none placeholder:text-gray-500'
@@ -126,7 +113,7 @@ export function GenerationToolbarUpscaleSection({
           <SelectSimple size='sm'
             className='w-full sm:w-[180px]'
             value={upscaleSmoothingQuality}
-            onValueChange={onUpscaleSmoothingQualityChange}
+            onValueChange={(val) => setUpscaleSmoothingQuality(val as UpscaleSmoothingQuality)}
             options={upscaleSmoothingOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Upscale smoothing quality'

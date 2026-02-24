@@ -21,10 +21,10 @@ import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { useCreateChatbotSession } from '@/features/ai/chatbot/hooks/useChatbotMutations';
 import { useChatbotSessions } from '@/features/ai/chatbot/hooks/useChatbotQueries';
 import type { 
-  AdminNavItemDto, 
-  AdminMenuCustomNodeDto,
-  AdminNavLeafDto,
-  AdminMenuColorOptionDto
+  AdminNavItem, 
+  AdminMenuCustomNode,
+  AdminNavLeaf,
+  AdminMenuColorOption
 } from '@/shared/contracts/admin';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, SearchInput, Tooltip, TreeContextMenu, TreeHeader } from '@/shared/ui';
@@ -32,18 +32,14 @@ import { cn } from '@/shared/utils';
 
 import { buildAdminNav } from './admin-menu-nav';
 
-export type AdminMenuCustomNode = AdminMenuCustomNodeDto;
-export type AdminNavLeaf = AdminNavLeafDto;
 export { buildAdminNav };
 
-export type NavItem = Omit<AdminNavItemDto, 'children'> & {
+export type NavItem = Omit<AdminNavItem, 'children'> & {
   icon?: React.ReactNode;
   onClick?: React.MouseEventHandler<HTMLAnchorElement>;
   action?: () => void;
   children?: NavItem[];
 };
-
-export type AdminMenuColorOption = AdminMenuColorOptionDto;
 
 export const ADMIN_MENU_COLORS: AdminMenuColorOption[] = [
   { value: 'slate', label: 'Slate', dot: 'bg-slate-400', border: 'border-slate-400/60', text: 'text-slate-200' },

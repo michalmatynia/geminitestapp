@@ -6,10 +6,10 @@ import { namedDtoSchema } from './base';
  * App Embed Contract
  */
 export const appEmbedTypeSchema = z.enum(['iframe', 'widget', 'script']);
-export type AppEmbedTypeDto = z.infer<typeof appEmbedTypeSchema>;
+export type AppEmbedType = z.infer<typeof appEmbedTypeSchema>;
 
 export const appEmbedIdSchema = z.enum(['chatbot', 'ai-paths', 'notes', 'products']);
-export type AppEmbedIdDto = z.infer<typeof appEmbedIdSchema>;
+export type AppEmbedId = z.infer<typeof appEmbedIdSchema>;
 
 export const appEmbedSchema = namedDtoSchema.extend({
   type: appEmbedTypeSchema,
@@ -18,7 +18,7 @@ export const appEmbedSchema = namedDtoSchema.extend({
   enabled: z.boolean(),
 });
 
-export type AppEmbedDto = z.infer<typeof appEmbedSchema>;
+export type AppEmbed = z.infer<typeof appEmbedSchema>;
 
 export const createAppEmbedSchema = appEmbedSchema.omit({
   id: true,
@@ -26,7 +26,7 @@ export const createAppEmbedSchema = appEmbedSchema.omit({
   updatedAt: true,
 });
 
-export type CreateAppEmbedDto = z.infer<typeof createAppEmbedSchema>;
-export type UpdateAppEmbedDto = Partial<CreateAppEmbedDto>;
+export type CreateAppEmbed = z.infer<typeof createAppEmbedSchema>;
+export type UpdateAppEmbed = Partial<CreateAppEmbed>;
 
 export const APP_EMBED_SETTING_KEY = 'cms_app_embeds';

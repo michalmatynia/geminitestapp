@@ -20,10 +20,9 @@ import {
   execFileAsync as pgExecFileAsync,
 } from '@/features/database/utils/postgres';
 import { ErrorSystem } from '@/features/observability/server';
-import type { DatabaseBackupResultDto, FullDatabaseBackupResultDto } from '@/shared/contracts/database';
+import type { DatabaseBackupResult, FullDatabaseBackupResult } from '@/shared/contracts/database';
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
 
-export type DatabaseBackupResult = DatabaseBackupResultDto;
 
 const shouldSkipBackups = (): boolean => process.env['SKIP_DB_BACKUP'] === 'true';
 

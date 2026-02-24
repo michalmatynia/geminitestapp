@@ -10,21 +10,9 @@ import type {
   PromptExtractHistoryEntry,
   PromptDiffLine,
 } from '../studio-modals/prompt-extract-utils';
+import { PromptExtractionHistoryPanel } from '../studio-modals/PromptExtractionHistoryPanel';
 import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
 import type { ColumnDef } from '@tanstack/react-table';
-
-// TODO: These components should be moved to a shared location
-function PromptExtractionHistoryPanel(props: {
-  extractHistory: PromptExtractHistoryEntry[];
-  selectedExtractHistory: PromptExtractHistoryEntry | null;
-  selectedExtractDiffLines: PromptDiffLine[];
-  selectedExtractChanged: boolean;
-  onSelectExtractHistory: (id: string | null) => void;
-  onClearHistory: () => void;
-}): React.JSX.Element {
-  console.log('PromptExtractionHistoryPanel props:', props);
-  return <div>PromptExtractionHistoryPanel</div>;
-}
 
 export function ExtractPromptParamsModal({
   isOpen,

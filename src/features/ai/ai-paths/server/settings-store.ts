@@ -65,6 +65,8 @@ type ParsedPathConfig = {
   name?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+  isActive?: boolean;
+  isLocked?: boolean;
 };
 
 const AI_PATHS_SETTINGS_COLLECTION = 'ai_paths_settings';
@@ -121,6 +123,18 @@ const parsePositiveInt = (value: string | undefined, fallback: number): number =
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 };
 
+const parseBooleanEnv = (value: string | undefined, fallback: boolean): boolean => {
+  if (typeof value !== 'string') return fallback;
+  const normalized = value.trim().toLowerCase();
+  if (normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on') {
+    return true;
+  }
+  if (normalized === '0' || normalized === 'false' || normalized === 'no' || normalized === 'off') {
+    return false;
+  }
+  return fallback;
+};
+
 const AI_PATHS_MONGO_OP_TIMEOUT_MS = parsePositiveInt(
   process.env['AI_PATHS_MONGO_OP_TIMEOUT_MS'],
   30_000
@@ -128,6 +142,10 @@ const AI_PATHS_MONGO_OP_TIMEOUT_MS = parsePositiveInt(
 const AI_PATHS_SETTINGS_CACHE_TTL_MS = parsePositiveInt(
   process.env['AI_PATHS_SETTINGS_CACHE_TTL_MS'],
   300_000
+);
+const AI_PATHS_AUTO_APPLY_DEFAULT_SEEDS_ON_READ = parseBooleanEnv(
+  process.env['AI_PATHS_AUTO_APPLY_DEFAULT_SEEDS_ON_READ'],
+  false
 );
 
 let mongoIndexesEnsured: Promise<void> | null = null;
@@ -560,6 +578,82 @@ const parsePathConfigMeta = (id: string, raw: string): ParsedPathMeta | null => 
   }
 };
 
+const parsePathConfigFlags = (
+  raw: string | undefined
+): { isActive?: boolean; isLocked?: boolean } => {
+  if (!raw) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const parsedRecord = parsed as Record<string, unknown>;
+    return {
+      ...(typeof parsedRecord['isActive'] === 'boolean'
+        ? { isActive: parsedRecord['isActive'] }
+        : {}),
+      ...(typeof parsedRecord['isLocked'] === 'boolean'
+        ? { isLocked: parsedRecord['isLocked'] }
+        : {}),
+    };
+  } catch {
+    return {};
+  }
+};
+
+const preservePathConfigFlagsOnSeed = (
+  seededRaw: string,
+  existingRaw: string | undefined
+): string => {
+  const preservedFlags = parsePathConfigFlags(existingRaw);
+  if (preservedFlags.isActive === undefined && preservedFlags.isLocked === undefined) {
+    return seededRaw;
+  }
+  try {
+    const parsedSeeded = JSON.parse(seededRaw) as unknown;
+    if (!parsedSeeded || typeof parsedSeeded !== 'object' || Array.isArray(parsedSeeded)) {
+      return seededRaw;
+    }
+    const parsedSeededRecord = parsedSeeded as Record<string, unknown>;
+    const merged: Record<string, unknown> = {
+      ...parsedSeededRecord,
+      ...(preservedFlags.isActive !== undefined
+        ? { isActive: preservedFlags.isActive }
+        : {}),
+      ...(preservedFlags.isLocked !== undefined
+        ? { isLocked: preservedFlags.isLocked }
+        : {}),
+    };
+    return JSON.stringify(merged);
+  } catch {
+    return seededRaw;
+  }
+};
+
+const logSeedRewriteFlags = (input: {
+  actionId: 'ensure_parameter_inference_defaults' | 'ensure_description_inference_defaults' | 'ensure_base_export_defaults';
+  pathId: string;
+  previousRaw: string | undefined;
+  nextRaw: string;
+}): void => {
+  const previousFlags = parsePathConfigFlags(input.previousRaw);
+  const nextFlags = parsePathConfigFlags(input.nextRaw);
+  const previousActive = previousFlags.isActive ?? null;
+  const previousLocked = previousFlags.isLocked ?? null;
+  const nextActive = nextFlags.isActive ?? null;
+  const nextLocked = nextFlags.isLocked ?? null;
+  console.info('[ai-paths-settings] Seeded path config rewrite', {
+    actionId: input.actionId,
+    pathId: input.pathId,
+    previousFlags: {
+      isActive: previousActive,
+      isLocked: previousLocked,
+    },
+    nextFlags: {
+      isActive: nextActive,
+      isLocked: nextLocked,
+    },
+  });
+};
+
 const parseTriggerButtons = (
   raw: string | undefined
 ): TriggerButtonSettingRecord[] | null => {
@@ -601,15 +695,23 @@ const ensureParameterInferenceDefaults = async (
   const pathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${PARAMETER_INFERENCE_PATH_ID}`;
   let shouldSeedDefaultButton = false;
   let pathConfigRaw = map.get(pathConfigKey);
+  const existingPathConfigRaw = pathConfigRaw;
 
   const parsedConfigMeta = pathConfigRaw
     ? parsePathConfigMeta(PARAMETER_INFERENCE_PATH_ID, pathConfigRaw)
     : null;
   if (!pathConfigRaw || !parsedConfigMeta || needsParameterInferenceConfigUpgrade(pathConfigRaw)) {
-    pathConfigRaw = buildParameterInferencePathConfigValue(now);
+    const seeded = buildParameterInferencePathConfigValue(now);
+    pathConfigRaw = preservePathConfigFlagsOnSeed(seeded, existingPathConfigRaw);
     shouldSeedDefaultButton = true;
     map.set(pathConfigKey, pathConfigRaw);
     updates.push({ key: pathConfigKey, value: pathConfigRaw });
+    logSeedRewriteFlags({
+      actionId: 'ensure_parameter_inference_defaults',
+      pathId: PARAMETER_INFERENCE_PATH_ID,
+      previousRaw: existingPathConfigRaw,
+      nextRaw: pathConfigRaw,
+    });
   } else {
     // Path does not need a full reset. Silently bump version to 10 so future reads
     // skip content checks, allowing users to freely customize the path.
@@ -783,6 +885,7 @@ const ensureDescriptionInferenceLiteDefaults = async (
   let shouldSeedDefaultButton = false;
 
   let pathConfigRaw = map.get(pathConfigKey);
+  const existingPathConfigRaw = pathConfigRaw;
   const parsedConfigMeta = pathConfigRaw
     ? parsePathConfigMeta(DESCRIPTION_INFERENCE_LITE_PATH_ID, pathConfigRaw)
     : null;
@@ -791,10 +894,17 @@ const ensureDescriptionInferenceLiteDefaults = async (
     !parsedConfigMeta ||
     needsDescriptionInferenceLiteConfigUpgrade(pathConfigRaw)
   ) {
-    pathConfigRaw = buildDescriptionInferenceLitePathConfigValue(now);
+    const seeded = buildDescriptionInferenceLitePathConfigValue(now);
+    pathConfigRaw = preservePathConfigFlagsOnSeed(seeded, existingPathConfigRaw);
     shouldSeedDefaultButton = true;
     map.set(pathConfigKey, pathConfigRaw);
     updates.push({ key: pathConfigKey, value: pathConfigRaw });
+    logSeedRewriteFlags({
+      actionId: 'ensure_description_inference_defaults',
+      pathId: DESCRIPTION_INFERENCE_LITE_PATH_ID,
+      previousRaw: existingPathConfigRaw,
+      nextRaw: pathConfigRaw,
+    });
   }
 
   const currentMetas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
@@ -959,16 +1069,24 @@ const ensureBaseExportBlwoDefaults = async (
   const pathConfigKey = `${AI_PATHS_CONFIG_KEY_PREFIX}${BASE_EXPORT_BLWO_PATH_ID}`;
   let shouldSeedDefaultButton = false;
   let pathConfigRaw = map.get(pathConfigKey);
+  const existingPathConfigRaw = pathConfigRaw;
 
   const parsedConfigMeta = pathConfigRaw
     ? parsePathConfigMeta(BASE_EXPORT_BLWO_PATH_ID, pathConfigRaw)
     : null;
 
   if (!pathConfigRaw || !parsedConfigMeta || needsBaseExportBlwoConfigUpgrade(pathConfigRaw)) {
-    pathConfigRaw = buildBaseExportBlwoPathConfigValue(now);
+    const seeded = buildBaseExportBlwoPathConfigValue(now);
+    pathConfigRaw = preservePathConfigFlagsOnSeed(seeded, existingPathConfigRaw);
     shouldSeedDefaultButton = true;
     map.set(pathConfigKey, pathConfigRaw);
     updates.push({ key: pathConfigKey, value: pathConfigRaw });
+    logSeedRewriteFlags({
+      actionId: 'ensure_base_export_defaults',
+      pathId: BASE_EXPORT_BLWO_PATH_ID,
+      previousRaw: existingPathConfigRaw,
+      nextRaw: pathConfigRaw,
+    });
   }
 
   const currentMetas = parsePathMetas(map.get(AI_PATHS_INDEX_KEY));
@@ -1538,13 +1656,34 @@ const resolveRequestedMaintenanceActionIds = (
   return Array.from(new Set(orderedRequested));
 };
 
+const applyDefaultSeedActions = async (
+  settings: AiPathsSettingRecord[]
+): Promise<AiPathsSettingRecord[]> => {
+  let next = settings;
+  next = await ensureParameterInferenceDefaults(next);
+  next = await ensureDescriptionInferenceLiteDefaults(next);
+  next = await ensureBaseExportBlwoDefaults(next);
+  return next;
+};
+
+const maybeAutoApplyDefaultSeedsOnRead = async (
+  settings: AiPathsSettingRecord[],
+  options?: {
+    autoApply?: boolean;
+    applyDefaultSeeds?: (records: AiPathsSettingRecord[]) => Promise<AiPathsSettingRecord[]>;
+  }
+): Promise<AiPathsSettingRecord[]> => {
+  const autoApply = options?.autoApply ?? AI_PATHS_AUTO_APPLY_DEFAULT_SEEDS_ON_READ;
+  if (!autoApply) return settings;
+  const applyDefaultSeeds = options?.applyDefaultSeeds ?? applyDefaultSeedActions;
+  return await applyDefaultSeeds(settings);
+};
+
 export async function inspectAiPathsSettingsMaintenance(): Promise<AiPathsMaintenanceReport> {
   assertMongoConfigured();
-  let settings = await listMongoAiPathsSettings();
-  // Auto-apply parameter inference upgrade so the cache is never set with stale data.
-  if (!hasParameterInferenceDefaults(settings)) {
-    settings = await ensureParameterInferenceDefaults(settings);
-  }
+  const settings = await maybeAutoApplyDefaultSeedsOnRead(
+    await listMongoAiPathsSettings()
+  );
   setCachedAiPathsSettings(settings);
   return buildAiPathsMaintenanceReport(settings);
 }
@@ -1608,13 +1747,10 @@ export async function applyAiPathsSettingsMaintenance(
 export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   assertMongoConfigured();
   const cached = getCachedAiPathsSettings();
-  // If cache is warm but still needs upgrade, bypass it so the upgrade runs.
-  if (cached && hasParameterInferenceDefaults(cached)) return cached;
-  let settings = await listMongoAiPathsSettings();
-  // Auto-apply built-in path upgrades on every cold or stale read (idempotent once up-to-date).
-  if (!hasParameterInferenceDefaults(settings)) {
-    settings = await ensureParameterInferenceDefaults(settings);
-  }
+  if (cached) return cached;
+  const settings = await maybeAutoApplyDefaultSeedsOnRead(
+    await listMongoAiPathsSettings()
+  );
   setCachedAiPathsSettings(settings);
   return settings;
 }
@@ -1679,3 +1815,12 @@ export async function deleteAiPathsSettings(keys: string[]): Promise<number> {
   deleteCachedAiPathsSettings(normalizedKeys);
   return result.deletedCount ?? 0;
 }
+
+export const __testOnly = {
+  parsePathConfigFlags,
+  preservePathConfigFlagsOnSeed,
+  maybeAutoApplyDefaultSeedsOnRead,
+  resolveAutoApplyDefaultSeedsOnRead: (
+    value: string | undefined
+  ): boolean => parseBooleanEnv(value, false),
+};

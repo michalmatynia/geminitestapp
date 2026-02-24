@@ -143,46 +143,49 @@ export function GenericApiConsole({
 
       {/* Method & Path Inputs */}
       <div className={onSetPath ? 'grid gap-3 md:grid-cols-[120px_1fr]' : ''}>
-        <div>
-          <Label className='text-xs text-gray-400'>Method</Label>
+        <FormField label='Method'>
           {methodType === 'select' ? (
-            <div className='mt-2'>
-              <SelectSimple
-                options={methodOptions}
-                value={method}
-                onValueChange={onSetMethod}
-                placeholder='Method'
-                className='w-full border border-border bg-card px-3 py-2 text-sm text-white'
-              />
-            </div>
+            <SelectSimple
+              options={methodOptions}
+              value={method}
+              onValueChange={onSetMethod}
+              placeholder='Method'
+              variant='subtle'
+              size='sm'
+              triggerClassName='w-full'
+            />
           ) : (
             <Input
-              className='mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+              variant='subtle'
+              size='sm'
               value={method}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSetMethod(e.target.value)}
             />
           )}
-        </div>
+        </FormField>
         {onSetPath && (
-          <div>
-            <Label className='text-xs text-gray-400'>Endpoint path</Label>
+          <FormField label='Endpoint path'>
             <Input
-              className='mt-2 w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+              variant='subtle'
+              size='sm'
               value={path || ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => onSetPath(e.target.value)}
             />
-          </div>
+          </FormField>
         )}
       </div>
 
       {/* Body/Params Textarea */}
       <div className='mt-3'>
-        <Label className='text-xs text-gray-400'>{bodyOrParamsLabel}</Label>
-        <Textarea
-          className='mt-2 h-32 w-full rounded-md border border-border bg-card px-3 py-2 text-xs text-white'
-          value={bodyOrParams}
-          onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onSetBodyOrParams(e.target.value)}
-        />
+        <FormField label={bodyOrParamsLabel}>
+          <Textarea
+            variant='subtle'
+            size='sm'
+            className='h-32 font-mono'
+            value={bodyOrParams}
+            onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => onSetBodyOrParams(e.target.value)}
+          />
+        </FormField>
       </div>
 
       {/* Send Button & Base URL */}

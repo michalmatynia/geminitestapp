@@ -4,29 +4,18 @@ import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils
 
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
-import { useOptionalSectionBlockData } from './SectionBlockContext';
+import { useSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
 import { useCmsPageContext } from '../CmsPageContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
-interface FrontendSlideshowSectionProps {
-  sectionId?: string | undefined;
-  settings?: Record<string, unknown>;
-  blocks?: BlockInstance[];
-  layout?: { fullWidth?: boolean | undefined } | undefined;
-}
-
 export function FrontendSlideshowSection({
-  sectionId: propSectionId,
-  settings: propSettings,
-  blocks: propBlocks,
   layout: propLayout,
-}: FrontendSlideshowSectionProps): React.ReactNode {
-  const sectionBlockData = useOptionalSectionBlockData();
-  const sectionId = propSectionId ?? sectionBlockData?.sectionId;
-  const settings = propSettings ?? sectionBlockData?.settings ?? {};
-  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
+}: {
+  layout?: { fullWidth?: boolean | undefined } | undefined;
+} = {}): React.ReactNode {
+  const { sectionId, settings, blocks } = useSectionBlockData();
   const { colorSchemes, layout: contextLayout } = useCmsPageContext();
   const layout = propLayout ?? contextLayout;
   const sectionStyles = getSectionStyles(settings, colorSchemes);

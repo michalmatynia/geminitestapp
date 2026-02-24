@@ -298,7 +298,7 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     {
       path: 'regex.jsonIntegrityPolicy',
       description:
-        'How extract_json handles malformed JSON-like strings. strict keeps malformed strings unresolved; repair attempts object-boundary repair before parsing.',
+        'How extract_json handles malformed JSON-like strings. strict performs no repair. repair applies staged normalization (code-fence stripping, malformed boundary repair, truncation closure, trailing-comma cleanup) before parsing.',
       defaultValue: 'repair',
     },
     ...COMMON_RUNTIME_FIELDS,
@@ -334,7 +334,7 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
     {
       path: 'mapper.jsonIntegrityPolicy',
       description:
-        'How mapper normalizes JSON-like string inputs before resolving mapping paths. strict keeps malformed strings unresolved; repair attempts normalization first.',
+        'How mapper normalizes JSON-like string inputs before resolving mapping paths. strict performs no repair. repair uses the shared staged JSON normalization pipeline before path resolution.',
       defaultValue: 'repair',
     },
     ...COMMON_RUNTIME_FIELDS,

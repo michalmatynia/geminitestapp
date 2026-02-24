@@ -24,6 +24,9 @@ type WriteTemplateParseDiagnostic = {
   rawType: string;
   parseState: JsonIntegrityParseState;
   repairApplied: boolean;
+  parseError?: string;
+  truncationDetected?: boolean;
+  repairSteps?: string[];
 };
 
 type WriteTemplateTokenDiagnostic = {
@@ -124,6 +127,9 @@ type PathReadResult = {
     rawType: string;
     parseState: JsonIntegrityParseState;
     repairApplied: boolean;
+    parseError?: string;
+    truncationDetected?: boolean;
+    repairSteps?: string[];
   };
 };
 
@@ -154,6 +160,10 @@ const readByPath = (
           rawType: normalizedCursorResult.diagnostic.rawType,
           parseState: normalizedCursorResult.diagnostic.parseState,
           repairApplied: normalizedCursorResult.diagnostic.repairApplied,
+          parseError: normalizedCursorResult.diagnostic.parseError,
+          truncationDetected:
+            normalizedCursorResult.diagnostic.truncationDetected,
+          repairSteps: normalizedCursorResult.diagnostic.repairSteps,
         }
         : undefined;
     if (normalizedCursorResult.state === 'unparseable') {
@@ -248,6 +258,9 @@ const resolveTokenValue = (
             rawType: resolved.parseDiagnostic.rawType,
             parseState: resolved.parseDiagnostic.parseState,
             repairApplied: resolved.parseDiagnostic.repairApplied,
+            parseError: resolved.parseDiagnostic.parseError,
+            truncationDetected: resolved.parseDiagnostic.truncationDetected,
+            repairSteps: resolved.parseDiagnostic.repairSteps,
           },
         }
         : {}),
@@ -271,6 +284,9 @@ const resolveTokenValue = (
           rawType: resolved.parseDiagnostic.rawType,
           parseState: resolved.parseDiagnostic.parseState,
           repairApplied: resolved.parseDiagnostic.repairApplied,
+          parseError: resolved.parseDiagnostic.parseError,
+          truncationDetected: resolved.parseDiagnostic.truncationDetected,
+          repairSteps: resolved.parseDiagnostic.repairSteps,
         },
       }
       : {}),
@@ -358,6 +374,28 @@ const formatTokenList = (diagnostics: WriteTemplateTokenDiagnostic[]): string =>
 
 const dedupeValues = (values: string[]): string[] =>
   Array.from(new Set(values.filter((value: string): boolean => value.trim().length > 0)));
+
+const buildLikelyCauseFragment = (
+  diagnostics: WriteTemplateParseDiagnostic[]
+): string | null => {
+  const truncationRoots = Array.from(
+    new Set(
+      diagnostics
+        .filter((diagnostic: WriteTemplateParseDiagnostic): boolean =>
+          diagnostic.parseState === 'unparseable' &&
+          diagnostic.truncationDetected === true
+        )
+        .map(
+          (diagnostic: WriteTemplateParseDiagnostic): string =>
+            diagnostic.port?.trim() || normalizeTokenRoot(diagnostic.token)
+        )
+        .filter((value: string): boolean => value.length > 0)
+    )
+  );
+  if (truncationRoots.length === 0) return null;
+  const quotedRoots = truncationRoots.map((root: string): string => `"${root}"`);
+  return `likely cause: truncated JSON on root ${quotedRoots.join(', ')}`;
+};
 
 const readNumericField = (
   payload: Record<string, unknown>,
@@ -496,6 +534,10 @@ export const resolveWriteTemplateGuardrail = ({
   if (unparseableTokens.length > 0) {
     fragments.push(`unparseable JSON tokens: ${formatTokenList(inspection.unparseable)}`);
   }
+  const likelyCauseFragment = buildLikelyCauseFragment(inspection.parseDiagnostics);
+  if (likelyCauseFragment) {
+    fragments.push(likelyCauseFragment);
+  }
   const message = `Database write blocked. Template inputs must be connected and non-empty (${fragments.join(
     '; '
   )}).`;
@@ -509,6 +551,9 @@ export const resolveWriteTemplateGuardrail = ({
           diagnostic.rawType,
           diagnostic.parseState,
           diagnostic.repairApplied ? '1' : '0',
+          diagnostic.parseError ?? '',
+          diagnostic.truncationDetected ? '1' : '0',
+          (diagnostic.repairSteps ?? []).join(','),
         ].join('|');
         return [key, diagnostic] as const;
       })

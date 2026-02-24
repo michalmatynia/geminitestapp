@@ -11,7 +11,7 @@ import {
   type AuthRole,
   type AuthUserRoleMap,
 } from '@/features/auth/utils/auth-management';
-import type { AuthUserAccessDetailDto as AuthUserAccess } from '@/shared/contracts/auth';
+import type { AuthUserAccessDetail as AuthUserAccess } from '@/shared/contracts/auth';
 import { MongoSettingRecord } from '@/shared/contracts/base';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

@@ -2,12 +2,12 @@
 
 import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
 
-import type { Asset3dOrderedDitheringPresetKeyDto } from '@/shared/contracts/viewer3d';
+import type { Asset3dOrderedDitheringPresetKey } from '@/shared/contracts/viewer3d';
 import { internalError } from '@/shared/errors/app-error';
 
 import type { LightingPreset, EnvironmentPreset } from '../components/Viewer3D';
 
-export type OrderedDitheringPresetKey = Asset3dOrderedDitheringPresetKeyDto;
+export type OrderedDitheringPresetKey = Asset3dOrderedDitheringPresetKey;
 
 export const orderedDitheringPresets = {
   balanced: {

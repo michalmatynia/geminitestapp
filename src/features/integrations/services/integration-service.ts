@@ -11,27 +11,26 @@ import type {
 } from '../types/integrations';
 
 /**
- * Service that wraps the Integration repository with error handling and logging.
+ * Helper to call the Integration repository with error handling and logging.
  */
-const repoCall = async <K extends keyof IntegrationRepository>(
+async function repoCall<K extends keyof IntegrationRepository>(
   key: K,
   ...args: Parameters<IntegrationRepository[K]>
-): Promise<Awaited<ReturnType<IntegrationRepository[K]>>> => {
+): Promise<Awaited<ReturnType<IntegrationRepository[K]>>> {
   try {
     const repo = await getIntegrationRepository();
-    const fn = repo[key] as (
-      ...args: Parameters<IntegrationRepository[K]>
-    ) => ReturnType<IntegrationRepository[K]>;
-    return await fn(...args) as Promise<Awaited<ReturnType<IntegrationRepository[K]>>>;
+    const fn = repo[key];
+    // @ts-expect-error - Higher order generic function call with spread parameters
+    return await fn(...args);
   } catch (error) {
-    await ErrorSystem.captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'integration-service',
       action: 'repoCall',
       method: key,
     });
     throw error;
   }
-};
+}
 
 export const integrationService: IntegrationRepository = {
   listIntegrations: (): Promise<IntegrationRecord[]> => repoCall('listIntegrations'),

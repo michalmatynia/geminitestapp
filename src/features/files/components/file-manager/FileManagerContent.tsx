@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { Asset3dDto as Asset3DRecord } from '@/shared/contracts/viewer3d';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { Tabs, TabsContent, TabsList, TabsTrigger, Button, Tag, Card } from '@/shared/ui';
 
 import { FileManagerGrid } from './FileManagerGrid';

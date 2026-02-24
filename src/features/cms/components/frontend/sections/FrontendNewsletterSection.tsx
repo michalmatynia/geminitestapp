@@ -2,24 +2,14 @@
 'use client';
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
-import { useOptionalSectionBlockData } from './SectionBlockContext';
+import { useSectionBlockData } from './SectionBlockContext';
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
-interface FrontendNewsletterSectionProps {
-  settings?: Record<string, unknown>;
-  blocks?: BlockInstance[];
-}
-
-export function FrontendNewsletterSection({
-  settings: propSettings,
-  blocks: propBlocks,
-}: FrontendNewsletterSectionProps): React.ReactNode {
-  const sectionBlockData = useOptionalSectionBlockData();
-  const settings = propSettings ?? sectionBlockData?.settings ?? {};
-  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
+export function FrontendNewsletterSection(): React.ReactNode {
+  const { settings, blocks } = useSectionBlockData();
   const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const buttonText = (settings['buttonText'] as string) || 'Subscribe';

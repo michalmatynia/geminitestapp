@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
@@ -29,6 +29,7 @@ import {
 import { createGenerationToolbarActionHandlers } from './generation-toolbar/generation-toolbar-action-handlers';
 import { GenerationToolbarAutoScalerSection } from './generation-toolbar/GenerationToolbarAutoScalerSection';
 import { GenerationToolbarCenterSection } from './generation-toolbar/GenerationToolbarCenterSection';
+import { GenerationToolbarProvider, useGenerationToolbarContext, type CenterMode, type AutoScalerMode } from './generation-toolbar/GenerationToolbarContext';
 import { GenerationToolbarCropSection } from './generation-toolbar/GenerationToolbarCropSection';
 import { GenerationToolbarDefaultsSection } from './generation-toolbar/GenerationToolbarDefaultsSection';
 import {
@@ -58,7 +59,6 @@ import {
   type CropRect,
   type ImageContentFrame,
   type MaskShapeForExport,
-  type UpscaleSmoothingQuality,
 } from './generation-toolbar/GenerationToolbarImageUtils';
 import { GenerationToolbarMaskSection } from './generation-toolbar/GenerationToolbarMaskSection';
 import { GenerationToolbarUpscaleSection } from './generation-toolbar/GenerationToolbarUpscaleSection';
@@ -69,8 +69,6 @@ import {
   IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT,
   loadImageStudioAnalysisApplyIntent,
   loadImageStudioAnalysisPlanSnapshot,
-  type ImageStudioAnalysisApplyTarget,
-  type ImageStudioAnalysisPlanSnapshot,
   type ImageStudioAnalysisSharedLayout,
 } from '../utils/analysis-bridge';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
@@ -85,7 +83,6 @@ import {
   resolveObjectLayoutPresetOptionValue,
   saveObjectLayoutCustomPreset,
   saveObjectLayoutAdvancedDefaults,
-  type ObjectLayoutCustomPreset,
   type ObjectLayoutPresetOptionValue,
 } from '../utils/object-layout-presets';
 import { getImageStudioDocTooltip } from '../utils/studio-docs';
@@ -94,58 +91,11 @@ import { normalizeImageStudioModelPresets } from '../utils/studio-settings';
 import type { ImageStudioAnalysisSummaryChipData } from './ImageStudioAnalysisSummaryChip';
 import type { ImageStudioAutoScalerResponse } from '../contracts/autoscaler';
 import type {
-  ImageStudioCenterDetectionMode,
   ImageStudioCenterResponse,
-  ImageStudioCenterShadowPolicy,
 } from '../contracts/center';
 
-type MaskAttachMode = 'client_canvas_polygon' | 'server_polygon';
-type UpscaleMode = 'client_canvas' | 'server_sharp';
-type UpscaleStrategy = 'scale' | 'target_resolution';
-type CropMode = 'client_bbox' | 'server_bbox';
-type CenterMode =
-  | 'client_alpha_bbox'
-  | 'server_alpha_bbox'
-  | 'client_object_layout_v1'
-  | 'server_object_layout_v1';
-type AutoScalerMode =
-  | 'client_auto_scaler_v1'
-  | 'server_auto_scaler_v1';
-type CenterDetectionMode = ImageStudioCenterDetectionMode;
-type CenterShadowPolicy = ImageStudioCenterShadowPolicy;
 type CenterActionResponse = ImageStudioCenterResponse;
 type AutoScaleActionResponse = ImageStudioAutoScalerResponse;
-
-type CropStatus =
-  | 'idle'
-  | 'resolving'
-  | 'preparing'
-  | 'uploading'
-  | 'processing'
-  | 'persisting';
-
-type CenterStatus =
-  | 'idle'
-  | 'resolving'
-  | 'preparing'
-  | 'uploading'
-  | 'processing'
-  | 'persisting';
-
-type UpscaleStatus =
-  | 'idle'
-  | 'resolving'
-  | 'preparing'
-  | 'uploading'
-  | 'processing'
-  | 'persisting';
-type AutoScaleStatus =
-  | 'idle'
-  | 'resolving'
-  | 'preparing'
-  | 'uploading'
-  | 'processing'
-  | 'persisting';
 
 const UPSCALE_REQUEST_TIMEOUT_MS = 60_000;
 const UPSCALE_MAX_OUTPUT_SIDE = 32_768;
@@ -161,10 +111,6 @@ const CENTER_LAYOUT_MAX_WHITE_THRESHOLD = 80;
 const CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD = 10;
 const CENTER_LAYOUT_MIN_CHROMA_THRESHOLD = 0;
 const CENTER_LAYOUT_MAX_CHROMA_THRESHOLD = 80;
-const sanitizeCenterPaddingInput = (value: string): string =>
-  value.replace(/[^0-9.]/g, '');
-const sanitizeCenterThresholdInput = (value: string): string =>
-  value.replace(/[^0-9]/g, '');
 const normalizeCenterPaddingPercent = (value: string): number => {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return CENTER_LAYOUT_DEFAULT_PADDING_PERCENT;
@@ -246,7 +192,7 @@ const normalizeMaskShapeForExport = (shape: unknown): MaskShapeForExport | null 
   };
 };
 
-export function GenerationToolbar(): React.JSX.Element {
+export function GenerationToolbarInner(): React.JSX.Element {
   const { maskPreviewEnabled, centerGuidesEnabled } = useUiState();
   const {
     setMaskPreviewEnabled,
@@ -278,60 +224,48 @@ export function GenerationToolbar(): React.JSX.Element {
   const { setStudioSettings } = useSettingsActions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [maskAttachMode, setMaskAttachMode] = useState<MaskAttachMode>('client_canvas_polygon');
-  const [upscaleMode, setUpscaleMode] = useState<UpscaleMode>('client_canvas');
-  const [upscaleStrategy, setUpscaleStrategy] = useState<UpscaleStrategy>('scale');
-  const [cropMode, setCropMode] = useState<CropMode>('client_bbox');
-  const [centerMode, setCenterMode] = useState<CenterMode>('client_alpha_bbox');
-  const [autoScaleMode, setAutoScaleMode] = useState<AutoScalerMode>('client_auto_scaler_v1');
-  const [centerLayoutPadding, setCenterLayoutPadding] = useState<string>(
-    String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
-  );
-  const [centerLayoutPaddingX, setCenterLayoutPaddingX] = useState<string>(
-    String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
-  );
-  const [centerLayoutPaddingY, setCenterLayoutPaddingY] = useState<string>(
-    String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
-  );
-  const [centerLayoutSplitAxes, setCenterLayoutSplitAxes] = useState(false);
-  const [centerLayoutAdvancedEnabled, setCenterLayoutAdvancedEnabled] = useState(false);
-  const [centerLayoutDetection, setCenterLayoutDetection] = useState<CenterDetectionMode>('auto');
-  const [centerLayoutWhiteThreshold, setCenterLayoutWhiteThreshold] = useState<string>(
-    String(CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD)
-  );
-  const [centerLayoutChromaThreshold, setCenterLayoutChromaThreshold] = useState<string>(
-    String(CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD)
-  );
-  const [centerLayoutFillMissingCanvasWhite, setCenterLayoutFillMissingCanvasWhite] = useState(false);
-  const [centerLayoutShadowPolicy, setCenterLayoutShadowPolicy] = useState<CenterShadowPolicy>('auto');
-  const [centerLayoutCustomPresets, setCenterLayoutCustomPresets] = useState<ObjectLayoutCustomPreset[]>([]);
-  const [centerLayoutPresetDraftName, setCenterLayoutPresetDraftName] = useState('');
-  const [analysisPlanSnapshot, setAnalysisPlanSnapshot] = useState<ImageStudioAnalysisPlanSnapshot | null>(null);
-  const [queuedAnalysisRunTarget, setQueuedAnalysisRunTarget] = useState<ImageStudioAnalysisApplyTarget | null>(null);
-  const [autoScaleLayoutPadding, setAutoScaleLayoutPadding] = useState<string>(
-    String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
-  );
-  const [autoScaleLayoutPaddingX, setAutoScaleLayoutPaddingX] = useState<string>(
-    String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
-  );
-  const [autoScaleLayoutPaddingY, setAutoScaleLayoutPaddingY] = useState<string>(
-    String(CENTER_LAYOUT_DEFAULT_PADDING_PERCENT)
-  );
-  const [autoScaleLayoutSplitAxes, setAutoScaleLayoutSplitAxes] = useState(false);
-  const [autoScaleLayoutFillMissingCanvasWhite, setAutoScaleLayoutFillMissingCanvasWhite] = useState(false);
-  const [autoScaleLayoutShadowPolicy, setAutoScaleLayoutShadowPolicy] = useState<CenterShadowPolicy>('auto');
-  const [upscaleScale, setUpscaleScale] = useState('2');
-  const [upscaleTargetWidth, setUpscaleTargetWidth] = useState('');
-  const [upscaleTargetHeight, setUpscaleTargetHeight] = useState('');
-  const [upscaleSmoothingQuality, setUpscaleSmoothingQuality] = useState<UpscaleSmoothingQuality>('high');
-  const [upscaleBusy, setUpscaleBusy] = useState(false);
-  const [upscaleStatus, setUpscaleStatus] = useState<UpscaleStatus>('idle');
-  const [cropBusy, setCropBusy] = useState(false);
-  const [cropStatus, setCropStatus] = useState<CropStatus>('idle');
-  const [centerBusy, setCenterBusy] = useState(false);
-  const [centerStatus, setCenterStatus] = useState<CenterStatus>('idle');
-  const [autoScaleBusy, setAutoScaleBusy] = useState(false);
-  const [autoScaleStatus, setAutoScaleStatus] = useState<AutoScaleStatus>('idle');
+
+  const {
+    maskAttachMode,
+    upscaleMode, setUpscaleMode,
+    upscaleStrategy, setUpscaleStrategy,
+    cropMode, setCropMode,
+    centerMode, setCenterMode,
+    autoScaleMode, setAutoScaleMode,
+    centerLayoutPadding, setCenterLayoutPadding,
+    centerLayoutPaddingX, setCenterLayoutPaddingX,
+    centerLayoutPaddingY, setCenterLayoutPaddingY,
+    centerLayoutSplitAxes, setCenterLayoutSplitAxes,
+    centerLayoutAdvancedEnabled, setCenterLayoutAdvancedEnabled,
+    centerLayoutDetection, setCenterLayoutDetection,
+    centerLayoutWhiteThreshold, setCenterLayoutWhiteThreshold,
+    centerLayoutChromaThreshold, setCenterLayoutChromaThreshold,
+    centerLayoutFillMissingCanvasWhite, setCenterLayoutFillMissingCanvasWhite,
+    centerLayoutShadowPolicy, setCenterLayoutShadowPolicy,
+    centerLayoutCustomPresets, setCenterLayoutCustomPresets,
+    centerLayoutPresetDraftName, setCenterLayoutPresetDraftName,
+    analysisPlanSnapshot, setAnalysisPlanSnapshot,
+    queuedAnalysisRunTarget, setQueuedAnalysisRunTarget,
+    autoScaleLayoutPadding, setAutoScaleLayoutPadding,
+    autoScaleLayoutPaddingX, setAutoScaleLayoutPaddingX,
+    autoScaleLayoutPaddingY, setAutoScaleLayoutPaddingY,
+    autoScaleLayoutSplitAxes, setAutoScaleLayoutSplitAxes,
+    autoScaleLayoutFillMissingCanvasWhite, setAutoScaleLayoutFillMissingCanvasWhite,
+    autoScaleLayoutShadowPolicy, setAutoScaleLayoutShadowPolicy,
+    upscaleScale, setUpscaleScale,
+    upscaleTargetWidth, setUpscaleTargetWidth,
+    upscaleTargetHeight, setUpscaleTargetHeight,
+    upscaleSmoothingQuality, setUpscaleSmoothingQuality,
+    upscaleBusy, setUpscaleBusy,
+    upscaleStatus, setUpscaleStatus,
+    cropBusy, setCropBusy,
+    cropStatus, setCropStatus,
+    centerBusy, setCenterBusy,
+    centerStatus, setCenterStatus,
+    autoScaleBusy, setAutoScaleBusy,
+    autoScaleStatus, setAutoScaleStatus,
+  } = useGenerationToolbarContext();
+
   const upscaleRequestInFlightRef = useRef(false);
   const upscaleAbortControllerRef = useRef<AbortController | null>(null);
   const cropRequestInFlightRef = useRef(false);
@@ -439,7 +373,7 @@ export function GenerationToolbar(): React.JSX.Element {
     setCenterLayoutShadowPolicy(persistedDefaults.shadowPolicy);
     setCenterLayoutWhiteThreshold(String(persistedDefaults.whiteThreshold));
     setCenterLayoutChromaThreshold(String(persistedDefaults.chromaThreshold));
-  }, [activeProjectId]);
+  }, [activeProjectId, setCenterLayoutCustomPresets, setCenterLayoutDetection, setCenterLayoutShadowPolicy, setCenterLayoutWhiteThreshold, setCenterLayoutChromaThreshold, setCenterLayoutPresetDraftName]);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const syncCustomPresets = (): void => {
@@ -456,7 +390,7 @@ export function GenerationToolbar(): React.JSX.Element {
       window.removeEventListener(IMAGE_STUDIO_OBJECT_LAYOUT_PRESETS_CHANGED_EVENT, syncCustomPresets);
       window.removeEventListener('storage', handleStorage);
     };
-  }, [activeProjectId]);
+  }, [activeProjectId, setCenterLayoutCustomPresets]);
 
   const applyAnalysisLayoutToCenter = useCallback((
     layout: ImageStudioAnalysisSharedLayout,
@@ -500,7 +434,7 @@ export function GenerationToolbar(): React.JSX.Element {
     } else {
       toast('Applied queued analysis plan to Object Layout controls.', { variant: 'success' });
     }
-  }, [projectCanvasSize, toast]);
+  }, [projectCanvasSize, toast, setCenterMode, setCenterLayoutAdvancedEnabled, setCenterLayoutDetection, setCenterLayoutWhiteThreshold, setCenterLayoutChromaThreshold, setCenterLayoutShadowPolicy, setCenterLayoutSplitAxes, setCenterLayoutPadding, setCenterLayoutPaddingX, setCenterLayoutPaddingY, setCenterLayoutFillMissingCanvasWhite]);
 
   const applyAnalysisLayoutToAutoScaler = useCallback((
     layout: ImageStudioAnalysisSharedLayout,
@@ -542,7 +476,7 @@ export function GenerationToolbar(): React.JSX.Element {
     } else {
       toast('Applied queued analysis plan to Auto Scaler controls.', { variant: 'success' });
     }
-  }, [projectCanvasSize, toast]);
+  }, [projectCanvasSize, toast, setCenterLayoutAdvancedEnabled, setCenterLayoutDetection, setCenterLayoutWhiteThreshold, setCenterLayoutChromaThreshold, setCenterLayoutShadowPolicy, setAutoScaleLayoutShadowPolicy, setAutoScaleLayoutSplitAxes, setAutoScaleLayoutPadding, setAutoScaleLayoutPaddingX, setAutoScaleLayoutPaddingY, setAutoScaleLayoutFillMissingCanvasWhite]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -566,7 +500,7 @@ export function GenerationToolbar(): React.JSX.Element {
       window.removeEventListener(IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT, syncSnapshot);
       window.removeEventListener('storage', handleStorage);
     };
-  }, [activeProjectId]);
+  }, [activeProjectId, setAnalysisPlanSnapshot]);
 
   useEffect(() => {
     const intent = loadImageStudioAnalysisApplyIntent(activeProjectId);
@@ -617,6 +551,7 @@ export function GenerationToolbar(): React.JSX.Element {
     toast,
     workingSourceSignature,
     workingSlot?.id,
+    setQueuedAnalysisRunTarget,
   ]);
 
   const cropDiagnosticsRef = useRef<CropRectResolutionDiagnostics | null>(null);
@@ -627,7 +562,7 @@ export function GenerationToolbar(): React.JSX.Element {
     const frameBinding = getPreviewCanvasImageFrame();
     if (!frameBinding) return null;
     if (frameBinding.slotId !== normalizedWorkingSlotId) return null;
-    return frameBinding.frame;
+    return frameBinding.frame as ImageContentFrame;
   };
   const hasCanvasOverflowBoundary = hasCanvasOverflowFromImageFrame(
     resolveWorkingSlotImageContentFrame()
@@ -700,7 +635,7 @@ export function GenerationToolbar(): React.JSX.Element {
     const overflowCropRect = resolveCanvasOverflowCropRect({
       canvasWidth,
       canvasHeight,
-      imageContentFrame,
+      imageFrame: imageContentFrame,
     });
     if (overflowCropRect) {
       return {
@@ -783,7 +718,7 @@ export function GenerationToolbar(): React.JSX.Element {
       }
 
       const polygons = polygonsFromShapes(shapes, width, height, {
-        imageContentFrame: resolveWorkingSlotImageContentFrame(),
+        imageFrame: resolveWorkingSlotImageContentFrame(),
       });
       if (polygons.length === 0) {
         toast('No closed polygon-compatible shapes are available for mask export.', { variant: 'info' });
@@ -1032,7 +967,7 @@ export function GenerationToolbar(): React.JSX.Element {
     if (selectedCenterCustomPreset?.name) {
       setCenterLayoutPresetDraftName(selectedCenterCustomPreset.name);
     }
-  }, [selectedCenterCustomPreset?.id, selectedCenterCustomPreset?.name]);
+  }, [selectedCenterCustomPreset?.id, selectedCenterCustomPreset?.name, setCenterLayoutPresetDraftName]);
   useEffect(() => {
     if (skipCenterAdvancedDefaultsSaveRef.current) {
       skipCenterAdvancedDefaultsSaveRef.current = false;
@@ -1627,6 +1562,7 @@ export function GenerationToolbar(): React.JSX.Element {
     handleAutoScale,
     handleCenterObject,
     queuedAnalysisRunTarget,
+    setQueuedAnalysisRunTarget,
   ]);
 
   const maskGenerationBusy = maskGenLoading;
@@ -1985,7 +1921,6 @@ export function GenerationToolbar(): React.JSX.Element {
 
       <GenerationToolbarMaskSection
         exportMaskCount={exportMaskCount}
-        maskAttachMode={maskAttachMode}
         maskAttachModeOptions={maskAttachModeOptions}
         maskGenerationBusy={maskGenerationBusy}
         maskGenerationLabel={maskGenerationLabel}
@@ -1998,10 +1933,7 @@ export function GenerationToolbar(): React.JSX.Element {
           void attachMaskVariantsFromSelection();
         }}
         onGenerateMask={() => {
-          handleAiMaskGeneration(maskGenMode);
-        }}
-        onMaskAttachModeChange={(value: string) => {
-          setMaskAttachMode(value as MaskAttachMode);
+          void handleAiMaskGeneration(maskGenMode);
         }}
         onMaskGenModeChange={(value: string) => {
           const mode = value as 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges';
@@ -2017,10 +1949,8 @@ export function GenerationToolbar(): React.JSX.Element {
       />
 
       <GenerationToolbarCropSection
-        cropBusy={cropBusy}
         cropBusyLabel={cropBusyLabel}
         boundaryStatusLabel={cropBoundaryStatusLabel}
-        cropMode={cropMode}
         cropModeOptions={cropModeOptions}
         cropTooltipContent={cropTooltipContent}
         cropTooltipsEnabled={cropTooltipsEnabled}
@@ -2030,9 +1960,6 @@ export function GenerationToolbar(): React.JSX.Element {
         onCreateCropBox={handleCreateCropBox}
         onCrop={() => {
           void handleCrop();
-        }}
-        onCropModeChange={(value: string) => {
-          setCropMode(value as CropMode);
         }}
         onSquareCrop={() => {
           void handleSquareCrop();
@@ -2048,37 +1975,12 @@ export function GenerationToolbar(): React.JSX.Element {
         onUpscale={() => {
           void handleUpscale();
         }}
-        onUpscaleModeChange={(value: string) => {
-          setUpscaleMode(value as UpscaleMode);
-        }}
-        onUpscaleScaleChange={(value: string) => {
-          setUpscaleScale(value);
-        }}
-        onUpscaleSmoothingQualityChange={(value: string) => {
-          setUpscaleSmoothingQuality(value as UpscaleSmoothingQuality);
-        }}
-        onUpscaleStrategyChange={(value: string) => {
-          setUpscaleStrategy(value as UpscaleStrategy);
-        }}
-        onUpscaleTargetHeightChange={(value: string) => {
-          setUpscaleTargetHeight(value.replace(/[^0-9]/g, ''));
-        }}
-        onUpscaleTargetWidthChange={(value: string) => {
-          setUpscaleTargetWidth(value.replace(/[^0-9]/g, ''));
-        }}
-        upscaleBusy={upscaleBusy}
         upscaleBusyLabel={upscaleBusyLabel}
         upscaleMaxOutputSide={UPSCALE_MAX_OUTPUT_SIDE}
-        upscaleMode={upscaleMode}
         upscaleModeOptions={upscaleModeOptions}
-        upscaleScale={upscaleScale}
         upscaleScaleOptions={upscaleScaleOptions}
         upscaleSmoothingOptions={upscaleSmoothingOptions}
-        upscaleSmoothingQuality={upscaleSmoothingQuality}
-        upscaleStrategy={upscaleStrategy}
         upscaleStrategyOptions={upscaleStrategyOptions}
-        upscaleTargetHeight={upscaleTargetHeight}
-        upscaleTargetWidth={upscaleTargetWidth}
       />
 
       <GenerationToolbarCenterSection
@@ -2087,73 +1989,36 @@ export function GenerationToolbar(): React.JSX.Element {
         analysisSummaryData={analysisSummaryData}
         analysisSummaryIsStale={analysisPlanIsStale}
         analysisConfigMismatchMessage={centerAnalysisConfigMismatchMessage}
-        centerBusy={centerBusy}
         centerBusyLabel={centerBusyLabel}
         centerGuidesEnabled={centerGuidesEnabled}
         centerLayoutEnabled={centerIsObjectLayoutMode}
-        centerLayoutPadding={centerLayoutPadding}
-        centerLayoutPaddingX={centerLayoutPaddingX}
-        centerLayoutPaddingY={centerLayoutPaddingY}
-        centerLayoutSplitAxes={centerLayoutSplitAxes}
-        centerLayoutAdvancedEnabled={centerLayoutAdvancedEnabled}
         centerLayoutPreset={centerLayoutPresetOptionValue}
         centerLayoutPresetOptions={centerLayoutPresetOptions}
-        centerLayoutPresetDraftName={centerLayoutPresetDraftName}
         centerLayoutCanDeletePreset={centerLayoutCanDeletePreset}
         centerLayoutCanSavePreset={centerLayoutCanSavePreset}
         centerLayoutSavePresetLabel={centerLayoutSavePresetLabel}
-        centerLayoutDetection={centerLayoutDetection}
         centerLayoutDetectionOptions={detectionModeOptions}
-        centerLayoutWhiteThreshold={centerLayoutWhiteThreshold}
-        centerLayoutChromaThreshold={centerLayoutChromaThreshold}
-        centerLayoutFillMissingCanvasWhite={centerLayoutFillMissingCanvasWhite}
         centerLayoutProjectCanvasSize={projectCanvasSize}
-        centerLayoutShadowPolicy={centerLayoutShadowPolicy}
         centerLayoutShadowPolicyOptions={shadowPolicyOptions}
         centerTooltipContent={centerTooltipContent}
         centerTooltipsEnabled={cropTooltipsEnabled}
-        centerMode={centerMode}
         centerModeOptions={centerModeOptions}
         hasSourceImage={hasSourceImage}
         onCancelCenter={handleCancelCenter}
-        onCenterLayoutPaddingChange={(value: string) => {
-          const normalized = sanitizeCenterPaddingInput(value);
-          setCenterLayoutPadding(normalized);
-          if (!centerLayoutSplitAxes) {
-            setCenterLayoutPaddingX(normalized);
-            setCenterLayoutPaddingY(normalized);
-          }
-        }}
-        onCenterLayoutPaddingXChange={(value: string) => {
-          const normalized = sanitizeCenterPaddingInput(value);
-          setCenterLayoutPaddingX(normalized);
-        }}
-        onCenterLayoutPaddingYChange={(value: string) => {
-          const normalized = sanitizeCenterPaddingInput(value);
-          setCenterLayoutPaddingY(normalized);
-        }}
-        onCenterLayoutDetectionChange={(value: string) => {
-          setCenterLayoutDetection(value as CenterDetectionMode);
-        }}
         onCenterLayoutPresetChange={(value: string) => {
-          const presetValues = getObjectLayoutPresetValuesFromOption(
-            value as ObjectLayoutPresetOptionValue,
-            centerLayoutCustomPresets
-          );
-          if (!presetValues) return;
-          setCenterLayoutDetection(presetValues.detection);
-          setCenterLayoutShadowPolicy(presetValues.shadowPolicy);
-          setCenterLayoutWhiteThreshold(String(presetValues.whiteThreshold));
-          setCenterLayoutChromaThreshold(String(presetValues.chromaThreshold));
+          const values = getObjectLayoutPresetValuesFromOption(value as ObjectLayoutPresetOptionValue, centerLayoutCustomPresets);
+          if (!values) return;
+          setCenterLayoutDetection(values.detection);
+          setCenterLayoutShadowPolicy(values.shadowPolicy);
+          setCenterLayoutWhiteThreshold(String(values.whiteThreshold));
+          setCenterLayoutChromaThreshold(String(values.chromaThreshold));
         }}
-        onCenterLayoutPresetDraftNameChange={(value: string) => {
-          setCenterLayoutPresetDraftName(value);
-        }}
-        onCenterLayoutSavePreset={() => {
+        onCenterLayoutSavePreset={async () => {
+          if (!centerLayoutCanSavePreset) return;
           try {
             const saved = saveObjectLayoutCustomPreset(activeProjectId, {
-              presetId: selectedCenterCustomPresetId,
-              name: centerLayoutPresetDraftName,
+              presetId: selectedCenterCustomPresetId ?? undefined,
+              name: centerLayoutPresetDraftName.trim(),
               values: {
                 detection: centerLayoutDetection,
                 shadowPolicy: centerLayoutShadowPolicy,
@@ -2181,45 +2046,22 @@ export function GenerationToolbar(): React.JSX.Element {
             { variant: 'success' }
           );
         }}
-        onCenterLayoutWhiteThresholdChange={(value: string) => {
-          setCenterLayoutWhiteThreshold(sanitizeCenterThresholdInput(value));
-        }}
-        onCenterLayoutChromaThresholdChange={(value: string) => {
-          setCenterLayoutChromaThreshold(sanitizeCenterThresholdInput(value));
-        }}
-        onCenterLayoutFillMissingCanvasWhiteChange={(checked: boolean) => {
-          setCenterLayoutFillMissingCanvasWhite(checked);
-        }}
-        onCenterLayoutShadowPolicyChange={(value: string) => {
-          setCenterLayoutShadowPolicy(value as CenterShadowPolicy);
-        }}
         onApplyAnalysisPlan={handleApplyAnalysisPlanToCenter}
-        onCenterModeChange={(value: string) => {
-          setCenterMode(value as CenterMode);
-        }}
         onCenterObject={() => {
           void handleCenterObject();
+        }}
+        onToggleCenterLayoutAdvanced={() => {
+          setCenterLayoutAdvancedEnabled(!centerLayoutAdvancedEnabled);
         }}
         onToggleCenterLayoutSplitAxes={() => {
           setCenterLayoutSplitAxes((previous) => {
             const next = !previous;
             if (next) {
-              const normalized = sanitizeCenterPaddingInput(centerLayoutPadding);
-              setCenterLayoutPaddingX(normalized);
-              setCenterLayoutPaddingY(normalized);
-            } else {
-              const mergedPadding = String(
-                Number(((centerLayoutPaddingXPercent + centerLayoutPaddingYPercent) / 2).toFixed(2))
-              );
-              setCenterLayoutPadding(mergedPadding);
-              setCenterLayoutPaddingX(mergedPadding);
-              setCenterLayoutPaddingY(mergedPadding);
+              setCenterLayoutPaddingX(centerLayoutPadding);
+              setCenterLayoutPaddingY(centerLayoutPadding);
             }
             return next;
           });
-        }}
-        onToggleCenterLayoutAdvanced={() => {
-          setCenterLayoutAdvancedEnabled((previous) => !previous);
         }}
         onToggleCenterGuides={() => {
           setCenterGuidesEnabled(!centerGuidesEnabled);
@@ -2232,70 +2074,37 @@ export function GenerationToolbar(): React.JSX.Element {
         analysisSummaryData={analysisSummaryData}
         analysisSummaryIsStale={analysisPlanIsStale}
         analysisConfigMismatchMessage={autoScaleAnalysisConfigMismatchMessage}
-        autoScaleBusy={autoScaleBusy}
         autoScaleBusyLabel={autoScaleBusyLabel}
-        autoScaleLayoutPadding={autoScaleLayoutPadding}
-        autoScaleLayoutPaddingX={autoScaleLayoutPaddingX}
-        autoScaleLayoutPaddingY={autoScaleLayoutPaddingY}
-        autoScaleLayoutSplitAxes={autoScaleLayoutSplitAxes}
-        autoScaleLayoutFillMissingCanvasWhite={autoScaleLayoutFillMissingCanvasWhite}
         autoScaleLayoutProjectCanvasSize={projectCanvasSize}
-        autoScaleShadowPolicy={autoScaleLayoutShadowPolicy}
         autoScaleShadowPolicyOptions={shadowPolicyOptions}
         autoScaleTooltipContent={autoScaleTooltipContent}
         autoScaleTooltipsEnabled={cropTooltipsEnabled}
-        autoScaleMode={autoScaleMode}
         autoScaleModeOptions={autoScaleModeOptions}
         hasSourceImage={hasSourceImage}
         onAutoScale={() => {
           void handleAutoScale();
         }}
-        onCancelAutoScale={handleCancelAutoScale}
-        onAutoScaleLayoutPaddingChange={(value: string) => {
-          const normalized = sanitizeCenterPaddingInput(value);
-          setAutoScaleLayoutPadding(normalized);
-          if (!autoScaleLayoutSplitAxes) {
-            setAutoScaleLayoutPaddingX(normalized);
-            setAutoScaleLayoutPaddingY(normalized);
-          }
-        }}
-        onAutoScaleLayoutPaddingXChange={(value: string) => {
-          const normalized = sanitizeCenterPaddingInput(value);
-          setAutoScaleLayoutPaddingX(normalized);
-        }}
-        onAutoScaleLayoutPaddingYChange={(value: string) => {
-          const normalized = sanitizeCenterPaddingInput(value);
-          setAutoScaleLayoutPaddingY(normalized);
-        }}
-        onAutoScaleLayoutFillMissingCanvasWhiteChange={(checked: boolean) => {
-          setAutoScaleLayoutFillMissingCanvasWhite(checked);
-        }}
-        onAutoScaleShadowPolicyChange={(value: string) => {
-          setAutoScaleLayoutShadowPolicy(value as CenterShadowPolicy);
-        }}
         onApplyAnalysisPlan={handleApplyAnalysisPlanToAutoScaler}
-        onAutoScaleModeChange={(value: string) => {
-          setAutoScaleMode(normalizeAutoScalerMode(value));
-        }}
+        onCancelAutoScale={handleCancelAutoScale}
         onToggleAutoScaleLayoutSplitAxes={() => {
           setAutoScaleLayoutSplitAxes((previous) => {
             const next = !previous;
             if (next) {
-              const normalized = sanitizeCenterPaddingInput(autoScaleLayoutPadding);
-              setAutoScaleLayoutPaddingX(normalized);
-              setAutoScaleLayoutPaddingY(normalized);
-            } else {
-              const mergedPadding = String(
-                Number(((autoScaleLayoutPaddingXPercent + autoScaleLayoutPaddingYPercent) / 2).toFixed(2))
-              );
-              setAutoScaleLayoutPadding(mergedPadding);
-              setAutoScaleLayoutPaddingX(mergedPadding);
-              setAutoScaleLayoutPaddingY(mergedPadding);
+              setAutoScaleLayoutPaddingX(autoScaleLayoutPadding);
+              setAutoScaleLayoutPaddingY(autoScaleLayoutPadding);
             }
             return next;
           });
         }}
       />
     </div>
+  );
+}
+
+export function GenerationToolbar(): React.JSX.Element {
+  return (
+    <GenerationToolbarProvider>
+      <GenerationToolbarInner />
+    </GenerationToolbarProvider>
   );
 }

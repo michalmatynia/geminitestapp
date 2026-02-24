@@ -14,25 +14,16 @@ import {
 import {
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
-import {
-  VALIDATOR_PATTERN_LISTS_KEY,
-  parseValidatorPatternLists,
-} from '@/features/admin/pages/validator-scope';
-import {
-  PROMPT_ENGINE_SETTINGS_KEY,
-  parsePromptEngineSettings,
-} from '@/features/prompt-engine/settings';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 import type { 
-  AiNode, 
-  CaseResolverNodeMeta, 
-  CaseResolverEdgeMeta, 
+  AiNode,
+  CaseResolverNodeMeta,
+  CaseResolverEdgeMeta,
   CaseResolverFile,
   CaseResolverNodeFileSnapshot,
+  CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
   CaseResolverIdentifier,
   CaseResolverCompileResult,
-  Edge
 } from '@/shared/contracts/case-resolver';
 import {
   collectScopedCaseIds,
@@ -46,8 +37,6 @@ import {
   NodeFileDocumentFolderTree,
   NodeFileDocumentFolderNode
 } from '../components/CaseResolverNodeFileUtils';
-import { compileCaseResolverPrompt } from '../composer';
-import { applyCaseResolverPlainTextValidation } from '../plain-text-validation';
 
 export type UseNodeFileWorkspaceStateProps = {
   assetId: string;
@@ -55,6 +44,19 @@ export type UseNodeFileWorkspaceStateProps = {
   snapshot: CaseResolverNodeFileSnapshot;
   onSnapshotChange: (updated: CaseResolverNodeFileSnapshot) => void;
 };
+
+const renderNodeTemplate = (
+  template: string,
+  variables: Record<string, string>
+): string =>
+  template.replace(
+    /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g,
+    (_match: string, curlyToken: string | undefined, bracketToken: string | undefined) => {
+      const token = (curlyToken ?? bracketToken ?? '').trim();
+      if (!token) return '';
+      return variables[token] ?? '';
+    }
+  );
 
 export function useNodeFileWorkspaceState({
   assetId,
@@ -76,18 +78,6 @@ export function useNodeFileWorkspaceState({
   const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
   const { selectNode, setConfigOpen } = useSelectionActions();
   const { toast } = useToast();
-  const settingsMap = useSettingsMap({ scope: 'light' });
-  
-  const rawPatternLists = settingsMap.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
-  const validatorPatternLists = useMemo(
-    () => parseValidatorPatternLists(rawPatternLists),
-    [rawPatternLists]
-  );
-  const rawPromptEngineSettings = settingsMap.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
-  const promptEngineSettings = useMemo(
-    () => parsePromptEngineSettings(rawPromptEngineSettings),
-    [rawPromptEngineSettings]
-  );
 
   const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database' | 'viewer'>('prompt');
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
@@ -107,14 +97,16 @@ export function useNodeFileWorkspaceState({
   );
   const [selectedSearchDocumentId, setSelectedSearchDocumentId] = useState('');
   const [isDocumentSearchOpen, setIsDocumentSearchOpen] = useState(false);
-  const [nodeMetaByNode, setNodeMetaByNode] = useState<Record<string, CaseResolverNodeMeta>>(
+  const [caseSearchQuery, setCaseSearchQuery] = useState('');
+  const [selectedDrillCaseId, setSelectedDrillCaseId] = useState<string | null>(null);
+  const [nodeMetaByNode] = useState<Record<string, CaseResolverNodeMeta>>(
     () => snapshot.nodeMeta ?? {}
   );
-  const [edgeMetaByEdge, setEdgeMetaByEdge] = useState<Record<string, CaseResolverEdgeMeta>>(
+  const [edgeMetaByEdge] = useState<Record<string, CaseResolverEdgeMeta>>(
     () => snapshot.edgeMeta ?? {}
   );
 
-  const nodeFileMetaRef = useRef<Record<string, CaseResolverSnapshotNodeMeta>>(
+  const nodeFileMetaRef = useRef<Record<string, CaseResolverNodeFileMeta>>(
     snapshot.nodeFileMeta ?? {}
   );
   const documentSearchRef = useRef<HTMLDivElement | null>(null);
@@ -253,6 +245,29 @@ export function useNodeFileWorkspaceState({
     return { nodesByPath, childPathsByParent, rootFileCount };
   }, [documentSearchRows]);
 
+  const visibleCaseRows = useMemo(() => {
+    const query = normalizeSearchText(caseSearchQuery);
+    const caseFiles = workspace.files.filter(
+      (f: CaseResolverFile): boolean => f.fileType === 'case'
+    );
+    return caseFiles
+      .map((caseFile: CaseResolverFile) => ({
+        file: caseFile,
+        signatureLabel: resolveIdentifierSearchLabel(
+          caseFile.caseIdentifierId,
+          caseIdentifierLabelById
+        ),
+        docCount: workspace.files.filter(
+          (f: CaseResolverFile): boolean => f.parentCaseId === caseFile.id
+        ).length,
+      }))
+      .filter(
+        (row): boolean =>
+          !query ||
+          normalizeSearchText(row.signatureLabel + ' ' + row.file.name).includes(query)
+      );
+  }, [caseSearchQuery, workspace.files, caseIdentifierLabelById]);
+
   // Compiled graph logic
   const compiled = useMemo((): CaseResolverCompileResult => {
     const nodeResults: Record<string, string> = {};
@@ -262,22 +277,22 @@ export function useNodeFileWorkspaceState({
     const getVariableValue = (nodeId: string): string => {
       const node = nodes.find((n) => n.id === nodeId);
       if (!node) return '';
-      if (nodeResults[nodeId] !== undefined) return nodeResults[nodeId]!;
+      if (nodeResults[nodeId] !== undefined) return nodeResults[nodeId];
 
       if (node.type === 'template' || node.type === 'prompt') {
-        const meta = nodeMetaByNode[node.id];
-        const template = meta?.promptTemplate ?? '';
-        const incoming = edges.filter((e) => e.to === node.id);
+        const template = node.config?.prompt?.template ?? node.config?.template?.template ?? '';
+        const incoming = edges.filter((e) => (e.to ?? e.target) === node.id);
         const variables: Record<string, string> = {};
 
         incoming.forEach((edge) => {
-          const value = getVariableValue(edge.from);
-          if (edge.toPort) {
-            variables[edge.toPort] = value;
+          const value = getVariableValue(edge.from || edge.source || '');
+          const toPort = edge.toPort || edge.targetHandle;
+          if (toPort) {
+            variables[toPort] = value;
           }
         });
 
-        const result = compileCaseResolverPrompt(template, variables);
+        const result = renderNodeTemplate(template, variables);
         nodeResults[nodeId] = result;
         return result;
       }
@@ -290,13 +305,15 @@ export function useNodeFileWorkspaceState({
     });
 
     const finalResult = sortedTextNodes.map((n) => nodeResults[n.id]).join('\n\n').trim();
-    const validation = applyCaseResolverPlainTextValidation(finalResult, validatorPatternLists);
 
     return {
-      content: finalResult,
-      validation,
+      segments: [],
+      combinedContent: finalResult,
+      prompt: finalResult,
+      outputsByNode: {},
+      warnings: [],
     };
-  }, [nodes, edges, nodeMetaByNode, validatorPatternLists]);
+  }, [nodes, edges]);
 
   const selectedNode = useMemo(
     () => (selectedNodeId ? nodes.find((n) => n.id === selectedNodeId) ?? null : null),
@@ -309,13 +326,16 @@ export function useNodeFileWorkspaceState({
   );
 
   const selectedNodeFileMeta = useMemo(
-    () => (selectedNodeId ? nodeFileMetaRef.current[selectedNodeId] ?? null : null),
+    (): CaseResolverNodeFileMeta | null => {
+      if (!selectedNodeId) return null;
+      return (nodeFileMetaRef.current[selectedNodeId] as CaseResolverNodeFileMeta) ?? null;
+    },
     [selectedNodeId]
   );
 
   const selectedFile = useMemo(
-    () => (selectedNodeFileMeta?.fileId ? filesById.get(selectedNodeFileMeta.fileId) ?? null : null),
-    [filesById, selectedNodeFileMeta?.fileId]
+    (): CaseResolverFile | null => (selectedNodeFileMeta?.fileId ? filesById.get(selectedNodeFileMeta.fileId) ?? null : null),
+    [filesById, selectedNodeFileMeta]
   );
 
   // Persistence
@@ -366,6 +386,13 @@ export function useNodeFileWorkspaceState({
     updateNode(nodeId, patch);
   }, [updateNode]);
 
+  const handleSetNodeFileMeta = useCallback(
+    (nodeId: string, meta: CaseResolverNodeFileMeta) => {
+      nodeFileMetaRef.current = { ...nodeFileMetaRef.current, [nodeId]: meta };
+    },
+    []
+  );
+
   return {
     assetId,
     assetName,
@@ -397,6 +424,11 @@ export function useNodeFileWorkspaceState({
     setSelectedSearchDocumentId,
     isDocumentSearchOpen,
     setIsDocumentSearchOpen,
+    caseSearchQuery,
+    setCaseSearchQuery,
+    selectedDrillCaseId,
+    setSelectedDrillCaseId,
+    visibleCaseRows,
     nodeMetaByNode,
     edgeMetaByEdge,
     filesById,
@@ -408,12 +440,14 @@ export function useNodeFileWorkspaceState({
     compiled,
     selectedNode,
     selectedNodeMeta,
+    selectedNodeFileMeta,
     selectedFile,
     handleManualSave,
     selectNode,
     setConfigOpen,
     addNode: handleAddNode,
     updateNode: handleUpdateNode,
+    setNodeFileMeta: handleSetNodeFileMeta,
     setNodes,
     setEdges,
     setView,

@@ -7,62 +7,9 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import { StatusBadge, MetadataItem, FormActions } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
+import { InlineImagePreviewCanvas } from '../studio-modals/InlineImagePreviewCanvas';
 import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
-
-// TODO: These types should be defined in a more central place
-export type LinkedGeneratedVariant = {
-  key: string;
-  runId: string;
-  runCreatedAt: string;
-  outputIndex: number;
-  outputCount: number;
-  imageSrc: string;
-  output: {
-    id: string;
-    filepath: string;
-    filename: string;
-    size: number;
-    width: number | null;
-    height: number | null;
-  };
-};
-
-type InlineImagePreviewCanvasProps = {
-  imageSrc: string | null;
-  imageAlt: string;
-  onImageDimensionsChange: (dimensions: { width: number; height: number } | null) => void;
-};
-
-// TODO: This component should be moved to a shared location
-function InlineImagePreviewCanvas({
-  imageSrc,
-  imageAlt,
-  onImageDimensionsChange,
-}: InlineImagePreviewCanvasProps): React.JSX.Element {
-  // Use props to satisfy TypeScript
-  React.useEffect(() => {
-    if (imageSrc) {
-      console.log(`Previewing: ${imageAlt}`);
-      onImageDimensionsChange({ width: 0, height: 0 });
-    }
-  }, [imageSrc, imageAlt, onImageDimensionsChange]);
-
-  return (
-    <div className='flex h-[400px] items-center justify-center bg-black/40 rounded-lg border border-border/60 overflow-hidden shadow-inner relative'>
-      {imageSrc ? (
-        <Image 
-          src={imageSrc} 
-          alt={imageAlt} 
-          fill
-          className='object-contain'
-          unoptimized
-        />
-      ) : (
-        <span className='text-sm text-muted-foreground italic'>No preview available</span>
-      )}
-    </div>
-  );
-}
+import type { LinkedGeneratedVariantViewModel as LinkedGeneratedVariant } from '../studio-modals/slot-inline-edit-tab-types';
 
 const formatBytes = (value: number | null): string => {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) return 'n/a';
@@ -124,6 +71,7 @@ export function GenerationPreviewModal({
           imageSrc={selectedGenerationPreview?.imageSrc ?? null}
           imageAlt={selectedGenerationPreview?.output.filename || 'Generation preview'}
           onImageDimensionsChange={setGenerationModalPreviewNaturalSize}
+          className='h-[400px]'
         />
         
         {selectedGenerationPreview && (

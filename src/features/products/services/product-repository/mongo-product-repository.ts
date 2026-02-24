@@ -1056,7 +1056,12 @@ export const mongoProductRepository: ProductRepository = {
       .collection<ProductDocument>(productCollectionName)
       .updateMany(
         { id: { $in: productIds } } as Filter<ProductDocument>,
-        { $set: { catalogs: catalogEntries as any, updatedAt: new Date() } }
+        { 
+          $set: { 
+            catalogs: catalogEntries as ProductDocument['catalogs'], 
+            updatedAt: new Date() 
+          } 
+        }
       );
   },
 
@@ -1077,7 +1082,7 @@ export const mongoProductRepository: ProductRepository = {
       .updateMany(
         { id: { $in: productIds } } as Filter<ProductDocument>,
         {
-          $addToSet: { catalogs: { $each: catalogEntries as any } },
+          $addToSet: { catalogs: { $each: catalogEntries as NonNullable<ProductDocument['catalogs']> } },
           $set: { updatedAt: new Date() },
         }
       );
@@ -1091,7 +1096,7 @@ export const mongoProductRepository: ProductRepository = {
       .updateMany(
         { id: { $in: productIds } } as Filter<ProductDocument>,
         {
-          $pull: { catalogs: { catalogId: { $in: catalogIds } } } as any,
+          $pull: { catalogs: { catalogId: { $in: catalogIds } } } as unknown as any, // pull with $in often needs any in mongo types
           $set: { updatedAt: new Date() },
         }
       );

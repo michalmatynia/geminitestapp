@@ -3,23 +3,13 @@
 
 import { getSectionContainerClass, getSectionStyles, getTextAlign } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
-import { useOptionalSectionBlockData } from './SectionBlockContext';
+import { useSectionBlockData } from './SectionBlockContext';
 import { useCmsPageContext } from '../CmsPageContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
-interface FrontendAnnouncementBarSectionProps {
-  settings?: Record<string, unknown>;
-  blocks?: BlockInstance[];
-}
-
-export function FrontendAnnouncementBarSection({
-  settings: propSettings,
-  blocks: propBlocks,
-}: FrontendAnnouncementBarSectionProps): React.ReactNode {
-  const sectionBlockData = useOptionalSectionBlockData();
-  const settings = propSettings ?? sectionBlockData?.settings ?? {};
-  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
+export function FrontendAnnouncementBarSection(): React.ReactNode {
+  const { settings, blocks } = useSectionBlockData();
   const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = {
     ...getSectionStyles(settings, colorSchemes),

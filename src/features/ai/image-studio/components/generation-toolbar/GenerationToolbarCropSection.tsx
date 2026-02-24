@@ -2,6 +2,8 @@ import React from 'react';
 
 import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
+import { useGenerationToolbarContext, type CropMode } from './GenerationToolbarContext';
+
 type SelectOption = {
   value: string;
   label: string;
@@ -17,9 +19,7 @@ type CropTooltipContent = {
 
 type GenerationToolbarCropSectionProps = {
   boundaryStatusLabel: string;
-  cropBusy: boolean;
   cropBusyLabel: string;
-  cropMode: string;
   cropModeOptions: SelectOption[];
   cropTooltipContent: CropTooltipContent;
   cropTooltipsEnabled: boolean;
@@ -28,16 +28,13 @@ type GenerationToolbarCropSectionProps = {
   onCancelCrop: () => void;
   onCreateCropBox: () => void;
   onCrop: () => void;
-  onCropModeChange: (value: string) => void;
   onSquareCrop: () => void;
   onViewCrop: () => void;
 };
 
 export function GenerationToolbarCropSection({
   boundaryStatusLabel,
-  cropBusy,
   cropBusyLabel,
-  cropMode,
   cropModeOptions,
   cropTooltipContent,
   cropTooltipsEnabled,
@@ -46,10 +43,11 @@ export function GenerationToolbarCropSection({
   onCancelCrop,
   onCreateCropBox,
   onCrop,
-  onCropModeChange,
   onSquareCrop,
   onViewCrop,
 }: GenerationToolbarCropSectionProps): React.JSX.Element {
+  const { cropMode, setCropMode, cropBusy } = useGenerationToolbarContext();
+
   const maybeWrapTooltip = (content: string, child: React.JSX.Element): React.JSX.Element => {
     if (!cropTooltipsEnabled) return child;
     return (
@@ -71,7 +69,7 @@ export function GenerationToolbarCropSection({
         <SelectSimple size='sm'
           className='w-full'
           value={cropMode}
-          onValueChange={onCropModeChange}
+          onValueChange={(val) => setCropMode(val as CropMode)}
           options={cropModeOptions}
           triggerClassName='h-8 text-xs'
           ariaLabel='Crop mode'

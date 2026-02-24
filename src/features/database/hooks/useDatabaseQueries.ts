@@ -3,18 +3,18 @@
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 
 import type {
-  DatabaseBackupFileDto as DatabaseInfoResponse,
-  DatabaseBackupOperationResponseDto as DatabaseBackupResponse,
-  DatabaseCollectionCopyResultDto as CollectionCopyResult,
-  DatabaseEngineBackupRunNowResponseDto as DatabaseEngineBackupRunNowResponse,
-  DatabaseEngineBackupSchedulerStatusDto as DatabaseEngineBackupSchedulerStatusResponse,
-  DatabaseEngineBackupSchedulerTickResponseDto as DatabaseEngineBackupSchedulerTickResponse,
-  DatabaseEngineOperationsJobsDto as DatabaseEngineOperationsJobsResponse,
-  DatabaseEngineProviderPreviewDto as DatabaseEngineProviderPreviewResponse,
-  DatabaseEngineStatusDto as DatabaseEngineStatusResponse,
-  DatabaseRestoreOperationResponseDto as DatabaseRestoreResponse,
-  MultiSchemaResponseDto as MultiSchemaResponse,
-  RedisOverviewDto as RedisOverviewResponse,
+  DatabaseBackupFile as DatabaseInfoResponse,
+  DatabaseBackupResponse,
+  CollectionCopyResult,
+  DatabaseEngineBackupRunNowResponse,
+  DatabaseEngineBackupSchedulerStatus as DatabaseEngineBackupSchedulerStatusResponse,
+  DatabaseEngineBackupSchedulerTickResponse,
+  DatabaseEngineOperationsJobs as DatabaseEngineOperationsJobsResponse,
+  DatabaseEngineProviderPreview as DatabaseEngineProviderPreviewResponse,
+  DatabaseEngineStatus as DatabaseEngineStatusResponse,
+  DatabaseRestoreResponse,
+  MultiSchemaResponse,
+  RedisOverview as RedisOverviewResponse,
 } from '@/shared/contracts/database';
 import type {
   CrudRequest,

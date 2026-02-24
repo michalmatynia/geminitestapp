@@ -15,7 +15,8 @@ import {
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import { logClientError } from '@/features/observability';
 import type { 
-  ProductListingWithDetails
+  ProductListingWithDetails,
+  ProductListingExportEventDto as ProductListingExportEvent,
 } from '@/shared/contracts/integrations';
 import type {
   ImageRetryPresetDto as ImageRetryPreset,
@@ -344,7 +345,7 @@ export function ProductListingsProvider({
   const getLatestTemplateId = (listing: ProductListingWithDetails): string | null => {
     const history = listing.exportHistory ?? [];
     if (history.length === 0) return null;
-    const sorted = [...history].sort((a: any, b: any) => {
+    const sorted = [...history].sort((a: ProductListingExportEvent, b: ProductListingExportEvent) => {
       const aTime = a.exportedAt ? new Date(a.exportedAt).getTime() : 0;
       const bTime = b.exportedAt ? new Date(b.exportedAt).getTime() : 0;
       return bTime - aTime;

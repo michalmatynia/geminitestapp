@@ -18,7 +18,7 @@ import { ToneMappingMode, BlendFunction } from 'postprocessing';
 import { Suspense, useEffect, useRef, useMemo, Component, ErrorInfo } from 'react';
 import * as THREE from 'three';
 
-import type { Asset3dLightingPresetDto, Asset3dEnvironmentPresetDto } from '@/shared/contracts/viewer3d';
+import type { Asset3dLightingPreset, Asset3dEnvironmentPreset } from '@/shared/contracts/viewer3d';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getLastUserAction } from '@/shared/utils/observability/user-action-tracker';
 
@@ -305,8 +305,8 @@ function SceneLighting(): React.JSX.Element {
 }
 
 // Camera auto-framing
-export type LightingPreset = Asset3dLightingPresetDto;
-export type EnvironmentPreset = Asset3dEnvironmentPresetDto;
+export type LightingPreset = Asset3dLightingPreset;
+export type EnvironmentPreset = Asset3dEnvironmentPreset;
 
 /**
  * Grouped settings for the 3D viewer.
@@ -585,8 +585,7 @@ export function Viewer3D({
 
         {/* HDR Environment */}
         {environment !== 'none' && environment !== 'gym' && (
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          <Environment preset={environment as any} background={false} />
+          <Environment preset={environment as string} background={false} />
         )}
 
         <Suspense fallback={<Loader />}>

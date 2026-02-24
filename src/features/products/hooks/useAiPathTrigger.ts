@@ -150,7 +150,7 @@ export function useAiPathTrigger(): {
     }
 
     try {
-      const { orderedConfigs, preferredActivePathId } =
+      const { orderedConfigs, preferredActivePathId, uiState } =
         await fetchPathSettings(queryClient);
 
       const resolveTriggerSelection = (

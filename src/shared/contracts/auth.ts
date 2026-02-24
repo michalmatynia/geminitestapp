@@ -15,7 +15,7 @@ export const authUserSchema = dtoBaseSchema.extend({
   password: z.string().optional(),
 });
 
-export type AuthUserDto = z.infer<typeof authUserSchema>;
+export type AuthUser = z.infer<typeof authUserSchema>;
 
 export const createUserSchema = authUserSchema.omit({
   id: true,
@@ -25,10 +25,10 @@ export const createUserSchema = authUserSchema.omit({
   password: z.string(),
 });
 
-export type CreateUserDto = z.infer<typeof createUserSchema>;
-export type AuthUserCreateInput = CreateUserDto;
-export type UpdateUserDto = Partial<CreateUserDto>;
-export type AuthUserUpdateInput = UpdateUserDto;
+export type AuthUserCreateInput = z.infer<typeof createUserSchema>;
+
+export const updateUserSchema = createUserSchema.partial();
+export type AuthUserUpdateInput = z.infer<typeof updateUserSchema>;
 
 export const authUserAccessSchema = dtoBaseSchema.extend({
   userId: z.string(),
@@ -37,7 +37,7 @@ export const authUserAccessSchema = dtoBaseSchema.extend({
   lastLogin: z.string().optional(),
 });
 
-export type AuthUserAccessDto = z.infer<typeof authUserAccessSchema>;
+export type AuthUserAccess = z.infer<typeof authUserAccessSchema>;
 
 export const authPermissionSchema = z.object({
   id: z.string(),
@@ -45,7 +45,7 @@ export const authPermissionSchema = z.object({
   description: z.string().optional(),
 });
 
-export type AuthPermissionDto = z.infer<typeof authPermissionSchema>;
+export type AuthPermission = z.infer<typeof authPermissionSchema>;
 
 export const authRoleSchema = z.object({
   id: z.string(),
@@ -56,10 +56,10 @@ export const authRoleSchema = z.object({
   level: z.number().optional(),
 });
 
-export type AuthRoleDto = z.infer<typeof authRoleSchema>;
+export type AuthRole = z.infer<typeof authRoleSchema>;
 
 export const authUserRoleMapSchema = z.record(z.string(), z.string());
-export type AuthUserRoleMapDto = z.infer<typeof authUserRoleMapSchema>;
+export type AuthUserRoleMap = z.infer<typeof authUserRoleMapSchema>;
 
 export const authUserAccessDetailSchema = z.object({
   roleId: z.string(),
@@ -69,13 +69,13 @@ export const authUserAccessDetailSchema = z.object({
   role: authRoleSchema.optional(),
 });
 
-export type AuthUserAccessDetailDto = z.infer<typeof authUserAccessDetailSchema>;
+export type AuthUserAccessDetail = z.infer<typeof authUserAccessDetailSchema>;
 
 export const authUserSecuritySchema = z.object({
   disabledAt: z.string().nullable().optional(),
 });
 
-export type AuthUserSecurityDto = z.infer<typeof authUserSecuritySchema>;
+export type AuthUserSecurity = z.infer<typeof authUserSecuritySchema>;
 
 export const authSecurityProfileSchema = z.object({
   userId: z.string(),
@@ -89,14 +89,14 @@ export const authSecurityProfileSchema = z.object({
   updatedAt: z.string(), // ISO string
 });
 
-export type AuthSecurityProfileDto = z.infer<typeof authSecurityProfileSchema>;
+export type AuthSecurityProfile = z.infer<typeof authSecurityProfileSchema>;
 
 export const authUsersResponseSchema = z.object({
   provider: z.enum(['mongodb', 'prisma']),
   users: z.array(authUserSchema),
 });
 
-export type AuthUsersResponseDto = z.infer<typeof authUsersResponseSchema>;
+export type AuthUsersResponse = z.infer<typeof authUsersResponseSchema>;
 
 export const authUserSecurityProfileSchema = z.object({
   userId: z.string(),
@@ -106,7 +106,7 @@ export const authUserSecurityProfileSchema = z.object({
   bannedAt: z.string().nullable(),
 });
 
-export type AuthUserSecurityProfileDto = z.infer<typeof authUserSecurityProfileSchema>;
+export type AuthUserSecurityProfile = z.infer<typeof authUserSecurityProfileSchema>;
 
 export const mfaSetupResponseSchema = z.object({
   ok: z.boolean(),
@@ -115,7 +115,7 @@ export const mfaSetupResponseSchema = z.object({
   message: z.string().optional(),
 });
 
-export type MfaSetupResponseDto = z.infer<typeof mfaSetupResponseSchema>;
+export type MfaSetupResponse = z.infer<typeof mfaSetupResponseSchema>;
 
 export const mfaVerifyResponseSchema = z.object({
   ok: z.boolean(),
@@ -123,14 +123,14 @@ export const mfaVerifyResponseSchema = z.object({
   message: z.string().optional(),
 });
 
-export type MfaVerifyResponseDto = z.infer<typeof mfaVerifyResponseSchema>;
+export type MfaVerifyResponse = z.infer<typeof mfaVerifyResponseSchema>;
 
 export const mfaDisableResponseSchema = z.object({
   ok: z.boolean(),
   message: z.string().optional(),
 });
 
-export type MfaDisableResponseDto = z.infer<typeof mfaDisableResponseSchema>;
+export type MfaDisableResponse = z.infer<typeof mfaDisableResponseSchema>;
 
 export const verifyCredentialsResponseSchema = z.object({
   ok: z.boolean(),
@@ -141,7 +141,7 @@ export const verifyCredentialsResponseSchema = z.object({
   message: z.string().optional(),
 });
 
-export type VerifyCredentialsResponseDto = z.infer<typeof verifyCredentialsResponseSchema>;
+export type VerifyCredentialsResponse = z.infer<typeof verifyCredentialsResponseSchema>;
 
 export const registerResponseSchema = z.object({
   id: z.string(),
@@ -149,7 +149,7 @@ export const registerResponseSchema = z.object({
   name: z.string().nullable().optional(),
 });
 
-export type RegisterResponseDto = z.infer<typeof registerResponseSchema>;
+export type RegisterResponse = z.infer<typeof registerResponseSchema>;
 
 export const authUserPageSettingsSchema = z.object({
   allowSignup: z.boolean(),
@@ -158,7 +158,7 @@ export const authUserPageSettingsSchema = z.object({
   requireEmailVerification: z.boolean(),
 });
 
-export type AuthUserPageSettingsDto = z.infer<typeof authUserPageSettingsSchema>;
+export type AuthUserPageSettings = z.infer<typeof authUserPageSettingsSchema>;
 
 export const authSecurityPolicySchema = z.object({
   minPasswordLength: z.number(),
@@ -175,14 +175,14 @@ export const authSecurityPolicySchema = z.object({
   ipRateLimitDurationMinutes: z.number(),
 });
 
-export type AuthSecurityPolicyDto = z.infer<typeof authSecurityPolicySchema>;
+export type AuthSecurityPolicy = z.infer<typeof authSecurityPolicySchema>;
 
 export const loginSchema = z.object({
   email: z.string(),
   password: z.string(),
 });
 
-export type LoginDto = z.infer<typeof loginSchema>;
+export type Login = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
   name: z.string(),
@@ -190,7 +190,7 @@ export const registerSchema = z.object({
   password: z.string(),
 });
 
-export type RegisterDto = z.infer<typeof registerSchema>;
+export type Register = z.infer<typeof registerSchema>;
 
 export type JsonValue =
   | string
@@ -242,8 +242,7 @@ export const userPreferencesSchema = dtoBaseSchema.extend({
   cmsSlideshowPauseOnHoverInEditor: z.boolean().nullable(),
 });
 
-export type UserPreferencesDto = z.infer<typeof userPreferencesSchema>;
-export type UserPreferences = UserPreferencesDto;
+export type UserPreferences = z.infer<typeof userPreferencesSchema>;
 
 export const createUserPreferencesSchema = userPreferencesSchema.omit({
   id: true,
@@ -251,6 +250,6 @@ export const createUserPreferencesSchema = userPreferencesSchema.omit({
   updatedAt: true,
 });
 
-export type CreateUserPreferencesDto = z.infer<typeof createUserPreferencesSchema>;
-export type UpdateUserPreferencesDto = Partial<CreateUserPreferencesDto>;
-export type UserPreferencesUpdate = UpdateUserPreferencesDto;
+export type CreateUserPreferencesInput = z.infer<typeof createUserPreferencesSchema>;
+export type UpdateUserPreferencesInput = Partial<CreateUserPreferencesInput>;
+export type UserPreferencesUpdate = UpdateUserPreferencesInput;

@@ -3,8 +3,6 @@
 import {
   ChevronLeft,
   ChevronRight,
-  Folder,
-  FolderOpen,
   GripVertical,
   Plus,
 } from 'lucide-react';
@@ -14,6 +12,7 @@ import {
   MasterFolderTree,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
+import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import { logClientError } from '@/features/observability';
 import type { ReorderCategoryPayload } from '@/features/products/api/settings';
 import { useProductCategoryTree } from '@/features/products/hooks/useCategoryQueries';
@@ -339,20 +338,8 @@ export function CategoriesSettings(): React.JSX.Element {
     }
   }, [showModal, parentOptions, formData.parentId]);
 
-  const { FolderClosedIcon, FolderOpenIcon, DragHandleIcon } = useMemo(
+  const { DragHandleIcon } = useMemo(
     () => ({
-      FolderClosedIcon: resolveIcon({
-        slot: 'folderClosed',
-        kind: 'category',
-        fallback: Folder,
-        fallbackId: 'Folder',
-      }),
-      FolderOpenIcon: resolveIcon({
-        slot: 'folderOpen',
-        kind: 'category',
-        fallback: FolderOpen,
-        fallbackId: 'FolderOpen',
-      }),
       DragHandleIcon: resolveIcon({
         slot: 'dragHandle',
         fallback: GripVertical,
@@ -360,6 +347,17 @@ export function CategoriesSettings(): React.JSX.Element {
       }),
     }),
     [resolveIcon]
+  );
+
+  const resolveCategoryDropPosition = useCallback(
+    (event: React.DragEvent<HTMLElement>): 'before' | 'after' | 'inside' => {
+      const targetRect = event.currentTarget.getBoundingClientRect();
+      const edge = resolveVerticalDropPosition(event.clientY, targetRect, {
+        thresholdPx: 8,
+      });
+      return edge ?? 'inside';
+    },
+    []
   );
 
   return (
@@ -460,21 +458,19 @@ export function CategoriesSettings(): React.JSX.Element {
                       controller={controller}
                       className='space-y-0.5'
                       rootDropUi={rootDropUi}
+                      resolveDropPosition={resolveCategoryDropPosition}
                       renderNode={({
                         node,
                         depth,
                         hasChildren,
                         isExpanded,
-                        isSelected,
                         dropPosition,
-                        select,
                         toggleExpand,
                       }) => {
                         const categoryId = fromCategoryMasterNodeId(node.id);
                         if (!categoryId) return null;
                         const category = categoryById.get(categoryId);
                         if (!category) return null;
-                        const Icon = isExpanded ? FolderOpenIcon : FolderClosedIcon;
                         const showDropLine = dropPosition === 'before' || dropPosition === 'after';
 
                         return (
@@ -488,25 +484,15 @@ export function CategoriesSettings(): React.JSX.Element {
                               )}
                             />
                             <div
-                              role='button'
-                              tabIndex={0}
-                              onClick={select}
-                              onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
-                                if (event.target !== event.currentTarget) return;
-                                if (event.key === 'Enter' || event.key === ' ') {
-                                  event.preventDefault();
-                                  select();
-                                }
-                              }}
                               className={cn(
-                                'group flex w-full items-center gap-1 rounded px-2 py-1.5 text-left text-sm transition',
-                                isSelected ? 'bg-blue-600 text-white' : 'text-gray-200 hover:bg-muted/40',
-                                dropPosition === 'inside' && !isSelected ? 'bg-blue-500/10 ring-1 ring-inset ring-blue-500/45' : ''
+                                'group flex w-full select-none items-center gap-1 rounded px-2 py-1.5 text-left text-sm transition',
+                                'text-gray-200 hover:bg-muted/40',
+                                dropPosition === 'inside' ? 'bg-blue-500/10 ring-1 ring-inset ring-blue-500/45' : ''
                               )}
                               style={{ paddingLeft: `${depth * 16 + 8}px` }}
                               title={category.name}
                             >
-                              <span className='inline-flex items-center justify-center opacity-0 transition group-hover:opacity-100'>
+                              <span className='inline-flex cursor-grab items-center justify-center opacity-0 transition group-hover:opacity-100 active:cursor-grabbing'>
                                 <DragHandleIcon className='size-3 shrink-0 text-gray-500' />
                               </span>
                               <TreeCaret
@@ -524,7 +510,6 @@ export function CategoriesSettings(): React.JSX.Element {
                                 buttonClassName='hover:bg-gray-700'
                                 iconClassName='size-3.5'
                               />
-                              <Icon className='size-3.5 shrink-0 text-gray-400' />
                               <span className='flex-1 truncate'>{category.name}</span>
 
                               <TreeActionSlot show='hover' align='inline'>

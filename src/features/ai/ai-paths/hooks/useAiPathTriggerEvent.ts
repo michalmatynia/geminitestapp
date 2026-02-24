@@ -13,11 +13,16 @@ import {
   TRIGGER_EVENTS,
 } from '@/features/ai/ai-paths/lib/core/constants';
 import { runsApi } from '@/features/ai/ai-paths/lib/api/client';
+import { palette } from '@/features/ai/ai-paths/lib/core/definitions';
+import {
+  migrateTriggerToFetcherGraph,
+  normalizeNodes,
+} from '@/features/ai/ai-paths/lib/core/normalization';
 import { createDefaultPathConfig } from '@/features/ai/ai-paths/lib/core/utils/factory';
 import { sanitizeEdges } from '@/features/ai/ai-paths/lib/core/utils/graph';
+import { repairPathNodeIdentities } from '@/features/ai/ai-paths/lib/core/utils/node-identity';
 import { safeParseJson } from '@/features/ai/ai-paths/lib/core/utils/runtime';
 import { evaluateRunPreflight } from '@/features/ai/ai-paths/lib/core/utils/run-preflight';
-import { normalizeNodes } from '@/features/ai/ai-paths/lib/core/normalization';
 import { normalizeAiPathsValidationConfig } from '@/features/ai/ai-paths/lib/core/validation-engine/defaults';
 import {
   fetchAiPathsSettingsCached,
@@ -114,6 +119,23 @@ const resolveHistoryRetentionPasses = (
   return normalizeHistoryRetentionPasses(raw);
 };
 
+const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
+  const identityRepair = repairPathNodeIdentities(config, { palette });
+  const repaired = identityRepair.config;
+  const normalized = normalizeNodes(Array.isArray(repaired.nodes) ? repaired.nodes : []);
+  const migrated = migrateTriggerToFetcherGraph(
+    normalized,
+    Array.isArray(repaired.edges) ? repaired.edges : []
+  );
+  const graphNodes = normalizeNodes(migrated.nodes);
+  const graphEdges = sanitizeEdges(graphNodes, migrated.edges);
+  return {
+    ...repaired,
+    nodes: graphNodes,
+    edges: graphEdges,
+  };
+};
+
 export type FireAiPathTriggerEventArgs = {
   triggerEventId: string;
   triggerLabel?: string | null | undefined;
@@ -174,7 +196,7 @@ const loadPathConfigsFromSettings = async (
             }
             try {
               const parsedConfig = JSON.parse(configRaw) as PathConfig;
-              configs[meta.id] = {
+              const mergedConfig: PathConfig = {
                 ...createDefaultPathConfig(meta.id),
                 ...parsedConfig,
                 id: meta.id,
@@ -183,6 +205,7 @@ const loadPathConfigsFromSettings = async (
                   normalizeLoadedPathName(meta.id, meta.name) ||
                   `Path ${meta.id}`,
               };
+              configs[meta.id] = sanitizeLoadedPathConfig(mergedConfig);
             } catch {
               configs[meta.id] = createDefaultPathConfig(meta.id);
             }

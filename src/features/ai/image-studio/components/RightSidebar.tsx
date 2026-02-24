@@ -340,6 +340,7 @@ export function RightSidebar(): React.JSX.Element {
     () => studioSettings.targetAi.openai.model.trim() || 'unknown-model',
     [studioSettings.targetAi.openai.model]
   );
+  const quickModelValue = selectedModelId;
   const estimatedGenerationCost = useMemo(() => {
     const profile = resolveModelCostProfile(studioSettings.targetAi.openai.model);
     const count = Math.max(1, Number(studioSettings.targetAi.openai.image.n ?? 1));
@@ -809,7 +810,7 @@ export function RightSidebar(): React.JSX.Element {
     };
   }, [projectId, sidebarTab]);
 
-  const handleModelChange = useCallback((value: string): void => {
+  const handleQuickModelChange = useCallback((value: string): void => {
     setStudioSettings((prev) => ({
       ...prev,
       targetAi: {
@@ -1108,42 +1109,8 @@ export function RightSidebar(): React.JSX.Element {
   );
 
   const quickActionsPanelContent = useMemo(() => (
-    <RightSidebarQuickActions
-      estimatedGenerationCost={estimatedGenerationCost}
-      estimatedPromptTokens={estimatedPromptTokens}
-      generationBusy={generationBusy}
-      generationLabel={generationLabel}
-      hasExtractedControls={hasExtractedControls}
-      modelSupportsSequenceGeneration={modelSupportsSequenceGeneration}
-      modelValue={studioSettings.targetAi.openai.model}
-      onModelChange={handleModelChange}
-      onOpenControls={handleOpenControls}
-      onOpenPromptControl={handleOpenPromptControl}
-      onOpenRequestPreview={handleOpenRequestPreview}
-      onRunGeneration={handleRunGeneration}
-      onRunSequenceGeneration={handleRunSequenceGeneration}
-      quickModelOptions={quickModelOptions}
-      selectedModelId={selectedModelId}
-      sequenceRunBusy={sequenceRunBusy}
-    />
-  ), [
-    estimatedGenerationCost,
-    estimatedPromptTokens,
-    generationBusy,
-    generationLabel,
-    handleModelChange,
-    handleOpenControls,
-    handleOpenPromptControl,
-    handleOpenRequestPreview,
-    handleRunGeneration,
-    handleRunSequenceGeneration,
-    hasExtractedControls,
-    modelSupportsSequenceGeneration,
-    quickModelOptions,
-    selectedModelId,
-    sequenceRunBusy,
-    studioSettings.targetAi.openai.model,
-  ]);
+    <RightSidebarQuickActions />
+  ), []);
 
   const contextValue = useMemo(
     (): RightSidebarContextValue => ({
@@ -1176,9 +1143,26 @@ export function RightSidebar(): React.JSX.Element {
       activeRequestPreviewJson,
       maskShapeCount: activeRequestPreview.maskShapeCount,
       requestPreviewMode,
-      resolvedPromptLength: activeRequestPreview.resolvedPrompt.length,
       sequenceStepCount: sequenceRequestPreview.stepCount,
       setRequestPreviewMode,
+
+      // Quick Actions
+      estimatedGenerationCost,
+      estimatedPromptTokens,
+      generationBusy,
+      generationLabel,
+      hasExtractedControls,
+      modelSupportsSequenceGeneration,
+      modelValue: quickModelValue,
+      onModelChange: handleQuickModelChange,
+      onOpenControls: () => setControlsOpen(true),
+      onOpenPromptControl: () => setPromptControlOpen(true),
+      onOpenRequestPreview: () => setRequestPreviewOpen(true),
+      onRunGeneration: handleRunGeneration,
+      onRunSequenceGeneration: handleRunSequenceGeneration,
+      quickModelOptions,
+      selectedModelId,
+      sequenceRunBusy,
     }),
     [
       switchToControls,
@@ -1203,6 +1187,19 @@ export function RightSidebar(): React.JSX.Element {
       requestPreviewMode,
       sequenceRequestPreview.stepCount,
       setRequestPreviewMode,
+      estimatedGenerationCost,
+      estimatedPromptTokens,
+      generationBusy,
+      generationLabel,
+      hasExtractedControls,
+      modelSupportsSequenceGeneration,
+      quickModelValue,
+      handleQuickModelChange,
+      handleRunGeneration,
+      handleRunSequenceGeneration,
+      quickModelOptions,
+      selectedModelId,
+      sequenceRunBusy,
     ]
   );
 

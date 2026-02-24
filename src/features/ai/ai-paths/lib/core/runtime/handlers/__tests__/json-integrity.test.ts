@@ -25,6 +25,9 @@ describe('json-integrity helper', () => {
 
     const normalized = normalizeJsonLikeValue(malformed, 'repair');
     expect(normalized.state).toBe('repaired');
+    expect(normalized.diagnostic.repairSteps).toEqual(
+      expect.arrayContaining(['repair_object_boundaries'])
+    );
     expect(normalized.value).toEqual({
       parameters: [
         {
@@ -41,6 +44,39 @@ describe('json-integrity helper', () => {
     });
   });
 
+  it('repairs truncated JSON payloads by appending missing container closers', () => {
+    const truncated =
+      '{"parameters":[{"parameterId":"p1","value":"v1"},{"parameterId":"p2","value":"v2"}';
+
+    const normalized = normalizeJsonLikeValue(truncated, 'repair');
+    expect(normalized.state).toBe('repaired');
+    expect(normalized.diagnostic.truncationDetected).toBe(true);
+    expect(normalized.diagnostic.repairSteps).toEqual(
+      expect.arrayContaining(['append_missing_container_closers'])
+    );
+    expect(normalized.value).toEqual({
+      parameters: [
+        { parameterId: 'p1', value: 'v1' },
+        { parameterId: 'p2', value: 'v2' },
+      ],
+    });
+  });
+
+  it('repairs markdown fenced JSON payloads in repair mode', () => {
+    const fenced = `\`\`\`json
+{"parameters":[{"parameterId":"p1","value":"v1"}]}
+\`\`\``;
+
+    const normalized = normalizeJsonLikeValue(fenced, 'repair');
+    expect(normalized.state).toBe('repaired');
+    expect(normalized.diagnostic.repairSteps).toEqual(
+      expect.arrayContaining(['strip_markdown_code_fences'])
+    );
+    expect(normalized.value).toEqual({
+      parameters: [{ parameterId: 'p1', value: 'v1' }],
+    });
+  });
+
   it('keeps malformed payload unresolved in strict mode', () => {
     const malformed = '{"parameters":[{"parameterId":"p1"},{"parameterId":"p2"}';
     const normalized = normalizeJsonLikeValue(malformed, 'strict');
@@ -49,5 +85,7 @@ describe('json-integrity helper', () => {
     expect(normalized.value).toBe(malformed);
     expect(normalized.diagnostic.parseState).toBe('unparseable');
     expect(normalized.diagnostic.repairApplied).toBe(false);
+    expect(normalized.diagnostic.parseError).toBeDefined();
+    expect(normalized.diagnostic.truncationDetected).toBe(true);
   });
 });

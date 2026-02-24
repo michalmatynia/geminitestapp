@@ -1,8 +1,4 @@
-import type { ValidatorScopeDto, ValidatorPatternListDto } from '@/shared/contracts/admin';
-
-export type ValidatorScope = ValidatorScopeDto;
-
-export type ValidatorPatternList = ValidatorPatternListDto;
+import type { ValidatorScope, ValidatorPatternList } from '@/shared/contracts/admin';
 
 export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
 

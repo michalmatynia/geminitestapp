@@ -1,32 +1,16 @@
 import type {
-  DynamicReplacementSourceModeDto,
-  DynamicReplacementMathOperationDto,
-  DynamicReplacementRoundModeDto,
-  DynamicReplacementResultAssemblyDto,
-  DynamicReplacementTargetApplyDto,
-  DynamicReplacementLogicOperatorDto,
-  DynamicReplacementLogicActionDto,
-  DynamicReplacementRecipeDto,
+  DynamicReplacementSourceMode,
+  DynamicReplacementMathOperation,
+  DynamicReplacementRoundMode,
+  DynamicReplacementResultAssembly,
+  DynamicReplacementTargetApply,
+  DynamicReplacementLogicOperator,
+  DynamicReplacementLogicAction,
+  DynamicReplacementRecipe,
+  ProductValidationPattern
 } from '@/shared/contracts/products';
-import type { ProductValidationPattern } from '@/shared/contracts/products';
 
 export const DYNAMIC_REPLACEMENT_PREFIX = '__recipe__:';
-
-export type DynamicReplacementSourceMode = DynamicReplacementSourceModeDto;
-
-export type DynamicReplacementMathOperation = DynamicReplacementMathOperationDto;
-
-export type DynamicReplacementRoundMode = DynamicReplacementRoundModeDto;
-
-export type DynamicReplacementResultAssembly = DynamicReplacementResultAssemblyDto;
-
-export type DynamicReplacementTargetApply = DynamicReplacementTargetApplyDto;
-
-export type DynamicReplacementLogicOperator = DynamicReplacementLogicOperatorDto;
-
-export type DynamicReplacementLogicAction = DynamicReplacementLogicActionDto;
-
-export type DynamicReplacementRecipe = DynamicReplacementRecipeDto;
 
 type DynamicReplacementContext = {
   pattern: Pick<ProductValidationPattern, 'regex' | 'flags'>;

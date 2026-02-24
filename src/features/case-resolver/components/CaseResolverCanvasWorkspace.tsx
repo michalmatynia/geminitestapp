@@ -29,6 +29,7 @@ import {
 import {
   type CaseResolverNodeMeta,
   type CaseResolverEdgeMeta,
+  type CaseResolverGraph,
   DEFAULT_CASE_RESOLVER_NODE_META,
   DEFAULT_CASE_RESOLVER_EDGE_META,
 } from '@/shared/contracts/case-resolver';
@@ -142,10 +143,14 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const updateSelectedNodeMeta = useCallback((patch: Partial<CaseResolverNodeMeta>): void => {
     if (!selectedNodeId || !activeFile?.graph) return;
     const nextMeta = { ...normalizedNodeMeta, [selectedNodeId]: { ...selectedNodeMeta, ...patch } };
-    onGraphChange({ 
-      ...activeFile.graph, 
-      nodeMeta: nextMeta 
-    } as unknown as any);
+    const { nodes, edges, ...rest } = activeFile.graph;
+    const nextGraph: CaseResolverGraph = {
+      ...rest,
+      nodes,
+      edges,
+      nodeMeta: nextMeta,
+    };
+    onGraphChange(nextGraph);
   }, [selectedNodeId, activeFile, normalizedNodeMeta, selectedNodeMeta, onGraphChange]);
 
   const selectedEdgeJoinMode = useMemo(
@@ -157,19 +162,27 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
     if (!selectedEdgeId || !activeFile?.graph) return;
     const currentMeta = normalizedEdgeMeta[selectedEdgeId] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
     const nextMeta = { ...normalizedEdgeMeta, [selectedEdgeId]: { ...currentMeta, ...patch } };
-    onGraphChange({ 
-      ...activeFile.graph, 
-      edgeMeta: nextMeta 
-    } as unknown as any);
+    const { nodes, edges, ...rest } = activeFile.graph;
+    const nextGraph: CaseResolverGraph = {
+      ...rest,
+      nodes,
+      edges,
+      edgeMeta: nextMeta,
+    };
+    onGraphChange(nextGraph);
   }, [selectedEdgeId, activeFile, normalizedEdgeMeta, onGraphChange]);
 
   const handleManualGraphSave = useCallback((): void => {
     if (!activeFile?.graph) return;
-    onGraphChange({ 
-      ...activeFile.graph, 
-      nodeMeta: normalizedNodeMeta, 
-      edgeMeta: normalizedEdgeMeta 
-    } as unknown as any);
+    const { nodes, edges, ...rest } = activeFile.graph;
+    const nextGraph: CaseResolverGraph = {
+      ...rest,
+      nodes,
+      edges,
+      nodeMeta: normalizedNodeMeta,
+      edgeMeta: normalizedEdgeMeta,
+    };
+    onGraphChange(nextGraph);
   }, [activeFile, normalizedEdgeMeta, normalizedNodeMeta, onGraphChange]);
 
   const handlePersistUiState = useCallback(async (): Promise<void> => {
@@ -209,7 +222,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       assetId: activeFile?.id ?? '',
       assetName: activeFile?.name ?? '',
       nodes,
-      edges: (activeFile?.graph?.edges || []) as any,
+      edges: (activeFile?.graph?.edges || []),
       selectedNodeId,
       selectedEdgeId,
       configOpen,
@@ -235,6 +248,11 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       setSelectedSearchDocumentId: () => {},
       isDocumentSearchOpen: false,
       setIsDocumentSearchOpen: () => {},
+      caseSearchQuery: '',
+      setCaseSearchQuery: () => {},
+      selectedDrillCaseId: null,
+      setSelectedDrillCaseId: () => {},
+      visibleCaseRows: [],
       nodeMetaByNode: normalizedNodeMeta,
       edgeMetaByEdge: normalizedEdgeMeta,
       filesById: new Map(),
@@ -252,12 +270,14 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       },
       selectedNode,
       selectedNodeMeta,
+      selectedNodeFileMeta: null,
       selectedFile: selectedPromptSourceFile,
       handleManualSave: handleManualGraphSave,
       selectNode,
       setConfigOpen,
       addNode: () => {},
       updateNode: () => {},
+      setNodeFileMeta: () => {},
       setNodes: () => {},
       setEdges: () => {},
       setView: () => {},
@@ -277,7 +297,7 @@ function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
       selectedPromptSecondaryOutputHint: undefined,
       updateSelectedPromptTemplate,
       updateSelectedNodeMeta,
-      selectedEdge: selectedEdge as any,
+      selectedEdge: selectedEdge as AiEdge | null,
       selectedEdgeJoinMode,
       updateSelectedEdgeMeta,
       hasPendingSnapshotChanges: false,

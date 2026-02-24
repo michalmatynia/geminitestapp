@@ -18,6 +18,9 @@ export type JsonIntegrityFinding = {
   parseState: string;
   repairApplied: boolean;
   rawType: string | null;
+  parseError: string | null;
+  truncationDetected: boolean;
+  repairSteps: string[];
 };
 
 export type CollectJsonIntegrityFindingsOptions = {
@@ -42,6 +45,13 @@ const normalizeString = (value: unknown): string | null => {
 };
 
 const normalizeBoolean = (value: unknown): boolean => value === true;
+const normalizeStringArray = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value
+        .filter((item: unknown): item is string => typeof item === 'string')
+        .map((item: string): string => item.trim())
+        .filter((item: string): boolean => item.length > 0)
+    : [];
 
 const collectNodeDiagnostics = (
   run: AiPathRunRecord,
@@ -81,6 +91,9 @@ const collectNodeDiagnostics = (
       parseState,
       repairApplied: normalizeBoolean(entry['repairApplied']),
       rawType: normalizeString(entry['rawType']),
+      parseError: normalizeString(entry['parseError']),
+      truncationDetected: normalizeBoolean(entry['truncationDetected']),
+      repairSteps: normalizeStringArray(entry['repairSteps']),
     });
   });
 
@@ -104,6 +117,9 @@ const collectNodeDiagnostics = (
         parseState,
         repairApplied: normalizeBoolean(entry['repairApplied']),
         rawType: normalizeString(entry['rawType']),
+        parseError: normalizeString(entry['parseError']),
+        truncationDetected: normalizeBoolean(entry['truncationDetected']),
+        repairSteps: normalizeStringArray(entry['repairSteps']),
       });
     });
   }

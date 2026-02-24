@@ -2,7 +2,8 @@
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 
-import { ApiConsole, type ApiPreset } from './ApiConsole';
+import { ApiConsole } from './ApiConsole';
+import { ApiConsoleProvider, type ApiPreset } from './ApiConsoleContext';
 
 export function BaseApiConsole(): React.JSX.Element {
   const {
@@ -43,21 +44,27 @@ export function BaseApiConsole(): React.JSX.Element {
   ];
 
   return (
-    <ApiConsole
-      title='Base.com API Console'
-      description='Send Base.com API requests using the active connection token.'
-      presets={baseApiPresets}
-      method={baseApiMethod}
-      setMethod={setBaseApiMethod}
-      bodyOrParams={baseApiParams}
-      setBodyOrParams={setBaseApiParams}
-      bodyOrParamsLabel='Parameters (JSON)'
-      loading={baseApiLoading}
-      error={baseApiError}
-      response={baseApiResponse}
-      onRequest={() => { void handleBaseApiRequest(); }}
-      baseUrl='https://api.baselinker.com/connector.php'
-      methodType='input'
-    />
+    <ApiConsoleProvider
+      value={{
+        method: baseApiMethod,
+        setMethod: setBaseApiMethod,
+        bodyOrParams: baseApiParams,
+        setBodyOrParams: setBaseApiParams,
+        loading: baseApiLoading,
+        error: baseApiError,
+        response: baseApiResponse,
+        onRequest: () => { void handleBaseApiRequest(); },
+        isConnected: true,
+      }}
+    >
+      <ApiConsole
+        title='Base.com API Console'
+        description='Send Base.com API requests using the active connection token.'
+        presets={baseApiPresets}
+        bodyOrParamsLabel='Parameters (JSON)'
+        baseUrl='https://api.baselinker.com/connector.php'
+        methodType='input'
+      />
+    </ApiConsoleProvider>
   );
 }

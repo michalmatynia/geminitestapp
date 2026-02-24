@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import type { JsonValue, UserPreferencesDto } from '@/shared/contracts/auth';
+import type { JsonValue, UserPreferences } from '@/shared/contracts/auth';
 
 export const USER_PREFERENCES_HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
@@ -209,8 +209,8 @@ export const parseUserPreferencesUpdatePayload = (
 
 export const normalizeUserPreferencesResponse = (
   payload: unknown
-): Partial<UserPreferencesDto> => {
+): Partial<UserPreferences> => {
   const parsed = userPreferencesResponseSchema.safeParse(payload);
   if (!parsed.success) return {};
-  return parsed.data as Partial<UserPreferencesDto>;
+  return parsed.data as Partial<UserPreferences>;
 };

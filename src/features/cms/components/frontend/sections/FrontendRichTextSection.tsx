@@ -6,20 +6,10 @@ import type { BlockInstance } from '@/shared/contracts/cms';
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
-import { useOptionalSectionBlockData } from './SectionBlockContext';
+import { useSectionBlockData } from './SectionBlockContext';
 
-interface FrontendRichTextSectionProps {
-  settings?: Record<string, unknown>;
-  blocks?: BlockInstance[];
-}
-
-export function FrontendRichTextSection({
-  settings: propSettings,
-  blocks: propBlocks,
-}: FrontendRichTextSectionProps): React.ReactNode {
-  const sectionBlockData = useOptionalSectionBlockData();
-  const settings = propSettings ?? sectionBlockData?.settings ?? {};
-  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
+export function FrontendRichTextSection(): React.ReactNode {
+  const { settings, blocks } = useSectionBlockData();
   const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
 

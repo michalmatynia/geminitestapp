@@ -125,7 +125,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                   setFormData((prev: PatternFormData) => {
                     const nextTarget = value as PatternFormData['target'];
                     const allowed = new Set<string>(getReplacementFieldsForTarget(nextTarget).map(o => o.value));
-                    const nextSourceOptions = getSourceFieldOptionsForTarget(nextTarget) as Array<{ value: string; label: string }>;
+                    const nextSourceOptions = getSourceFieldOptionsForTarget(nextTarget);
                     const hasSourceField = nextSourceOptions.some(
                       (option) => option.value === prev.sourceField
                     );
@@ -434,7 +434,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                     }
                     options={[
                       SOURCE_FIELD_PLACEHOLDER_OPTION,
-                      ...(sourceFieldOptions as Array<{ value: string; label: string }>),
+                      ...sourceFieldOptions,
                     ]}
                   />
                 </FormField>
@@ -535,7 +535,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
                     }
                     options={[
                       SOURCE_FIELD_PLACEHOLDER_OPTION,
-                      ...(sourceFieldOptions as Array<{ value: string; label: string }>),
+                      ...sourceFieldOptions,
                     ]}
                   />
                 </FormField>
@@ -792,7 +792,7 @@ export function ValidatorPatternModal(): React.JSX.Element | null {
         >
           <ValidatorDocTooltip docId='validator.modal.replacement.toggle'>
             <MultiSelect
-              options={replacementFieldOptions as Array<{ value: string; label: string }>}
+              options={replacementFieldOptions}
               selected={formData.replacementFields}
               onChange={(values: string[]) =>
                 setFormData((prev: PatternFormData) => ({

@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 type InlineImagePreviewCanvasProps = {
   imageSrc: string | null;
   imageAlt: string;
   onImageDimensionsChange: (dimensions: { width: number; height: number } | null) => void;
+  className?: string;
 };
 
 const INLINE_PREVIEW_ZOOM_MIN = 0.35;
@@ -19,6 +21,7 @@ export function InlineImagePreviewCanvas({
   imageSrc,
   imageAlt,
   onImageDimensionsChange,
+  className,
 }: InlineImagePreviewCanvasProps): React.JSX.Element {
   const [zoom, setZoom] = useState(1);
   const [offset, setOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
@@ -89,7 +92,10 @@ export function InlineImagePreviewCanvas({
 
   return (
     <div
-      className='relative h-72 overflow-hidden rounded-lg border border-border/60 bg-black/35 touch-none'
+      className={cn(
+        'relative h-72 overflow-hidden rounded-lg border border-border/60 bg-black/35 touch-none',
+        className
+      )}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerRelease}

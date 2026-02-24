@@ -61,13 +61,15 @@ describe('handleDatabase', () => {
   });
 
   it('throws when a write operation returns an error payload', async () => {
-    handleDatabaseMongoActionMock.mockResolvedValue({
+    const mongoResult = {
       result: null,
       bundle: { error: 'Record not found' },
-    });
+    };
+    handleDatabaseMongoActionMock.mockResolvedValue(mongoResult);
 
-    await expect(
-      handleDatabase({
+    let caughtError: unknown = null;
+    try {
+      await handleDatabase({
         node: {
           id: 'node-db',
           type: 'database',
@@ -97,8 +99,16 @@ describe('handleDatabase', () => {
         fallbackEntityId: null,
         strictFlowMode: true,
         runMeta: null,
-      } as any)
-    ).rejects.toThrow('Record not found');
+      } as any);
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(Error);
+    expect((caughtError as Error).message).toContain('Record not found');
+    expect((caughtError as { nodeOutput?: unknown }).nodeOutput).toEqual(
+      mongoResult
+    );
 
     expect(reportAiPathsError).toHaveBeenCalled();
   });
@@ -148,16 +158,36 @@ describe('handleDatabase', () => {
   });
 
   it('throws when a write operation returns a fatal guardrail-flagged error', async () => {
-    handleDatabaseMongoActionMock.mockResolvedValue({
+    const mongoResult = {
       result: null,
       bundle: {
         error: 'Mapping-based update mode is disabled. Configure an explicit query filter and explicit update document.',
         guardrail: 'update-mode-explicit-only',
+        guardrailMeta: {
+          code: 'write-template-values',
+          severity: 'error',
+          message:
+            'Database write blocked. Template inputs must be connected and non-empty (unparseable JSON tokens: {{result.parameters}}).',
+          unparseableTokens: ['result.parameters'],
+        },
       },
-    });
+      guardrailMeta: {
+        code: 'write-template-values',
+        severity: 'error',
+        message:
+          'Database write blocked. Template inputs must be connected and non-empty (unparseable JSON tokens: {{result.parameters}}).',
+        unparseableTokens: ['result.parameters'],
+      },
+      writeOutcome: {
+        status: 'failed',
+        code: 'write_template_values',
+      },
+    };
+    handleDatabaseMongoActionMock.mockResolvedValue(mongoResult);
 
-    await expect(
-      handleDatabase({
+    let caughtError: unknown = null;
+    try {
+      await handleDatabase({
         node: {
           id: 'node-db-guardrail',
           type: 'database',
@@ -187,8 +217,18 @@ describe('handleDatabase', () => {
         fallbackEntityId: null,
         strictFlowMode: true,
         runMeta: null,
-      } as any)
-    ).rejects.toThrow('Mapping-based update mode is disabled');
+      } as any);
+    } catch (error) {
+      caughtError = error;
+    }
+
+    expect(caughtError).toBeInstanceOf(Error);
+    expect((caughtError as Error).message).toContain(
+      'Mapping-based update mode is disabled'
+    );
+    expect((caughtError as { nodeOutput?: unknown }).nodeOutput).toEqual(
+      mongoResult
+    );
   });
 
   it('does not throw when write outcome is warning only', async () => {

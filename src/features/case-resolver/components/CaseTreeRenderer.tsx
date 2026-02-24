@@ -71,7 +71,7 @@ export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; 
   };
 
   const handleViewCase = (caseId: string): void => {
-    router.push(`/admin/case-resolver/view/${caseId}`);
+    router.push(`/admin/case-resolver?fileId=${encodeURIComponent(caseId)}`);
   };
 
   const handleCopyCaseId = async (caseId: string): Promise<void> => {

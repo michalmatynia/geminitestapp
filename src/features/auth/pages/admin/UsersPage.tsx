@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import type { AuthUserDto as AuthUserSummary } from '@/shared/contracts/auth';
+import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
 import { 
   StandardDataTablePanel, 
   SelectSimple, 

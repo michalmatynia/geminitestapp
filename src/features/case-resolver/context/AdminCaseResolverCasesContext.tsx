@@ -373,6 +373,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
       const mutationId = createCaseResolverWorkspaceMutationId();
       createCaseMutationIdRef.current = mutationId;
       const newFile = createCaseResolverFile({
+        id: createCaseResolverWorkspaceMutationId('file'),
         name: caseDraft.name.trim(),
         folder: caseDraft.folder || '',
         parentCaseId: caseDraft.parentCaseId || null,

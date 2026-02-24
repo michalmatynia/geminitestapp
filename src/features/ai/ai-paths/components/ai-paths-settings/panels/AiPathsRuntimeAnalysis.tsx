@@ -15,7 +15,13 @@ import {
   formatStatusLabel,
   statusToVariant,
 } from '../ai-paths-settings-view-utils';
-import { runsApi } from '@/features/ai/ai-paths/lib';
+import { 
+  runsApi,
+} from '@/features/ai/ai-paths/lib';
+import type { 
+  AiPathRuntimeTraceSlowNode,
+  AiPathRuntimeTraceFailedNode,
+} from '@/shared/contracts/ai-paths';
 
 export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
   const state = useAiPathsSettingsOrchestrator();
@@ -88,11 +94,12 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
         limit: 1,
         offset: 0,
       };
-      const readFirstRunId = (payload: any): string | null => {
+      const readFirstRunId = (payload: { ok: boolean; data?: { runs: unknown[] } }): string | null => {
         if (!payload.ok || !payload.data || !Array.isArray(payload.data.runs)) return null;
-        const firstRun = payload.data.runs[0];
-        return typeof firstRun?.id === 'string' && firstRun.id.trim().length > 0
-          ? firstRun.id.trim()
+        const firstRun = payload.data.runs[0] as Record<string, unknown> | undefined;
+        const firstRunId = firstRun?.['id'];
+        return typeof firstRunId === 'string' && firstRunId.trim().length > 0
+          ? firstRunId.trim()
           : null;
       };
 
@@ -322,7 +329,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
               <div className='mt-1 flex flex-wrap gap-1'>
                 {runtimeAnalyticsQuery.data?.traces.topSlowNodes
                   .slice(0, 2)
-                  .map((entry: any) => (
+                  .map((entry: AiPathRuntimeTraceSlowNode) => (
                     <button
                       key={`slow-${entry.nodeId}-${entry.nodeType}`}
                       type='button'
@@ -345,7 +352,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
               <div className='mt-1 flex flex-wrap gap-1'>
                 {runtimeAnalyticsQuery.data?.traces.topFailedNodes
                   .slice(0, 2)
-                  .map((entry: any) => (
+                  .map((entry: AiPathRuntimeTraceFailedNode) => (
                     <button
                       key={`failed-${entry.nodeId}-${entry.nodeType}`}
                       type='button'

@@ -12,7 +12,6 @@ import type {
 /**
  * Admin Activity DTOs
  */
-// ... (rest of the file)
 
 export const adminActivitySchema = dtoBaseSchema.extend({
   type: z.string(),
@@ -21,7 +20,7 @@ export const adminActivitySchema = dtoBaseSchema.extend({
   metadata: z.record(z.string(), z.unknown()),
 });
 
-export type AdminActivityDto = z.infer<typeof adminActivitySchema>;
+export type AdminActivity = z.infer<typeof adminActivitySchema>;
 
 export const adminDashboardStatsSchema = z.object({
   totalUsers: z.number(),
@@ -31,7 +30,7 @@ export const adminDashboardStatsSchema = z.object({
   recentActivity: z.array(adminActivitySchema),
 });
 
-export type AdminDashboardStatsDto = z.infer<typeof adminDashboardStatsSchema>;
+export type AdminDashboardStats = z.infer<typeof adminDashboardStatsSchema>;
 
 /**
  * Admin System Info DTOs
@@ -46,7 +45,7 @@ export const adminSystemInfoSchema = z.object({
   databaseStatus: z.enum(['healthy', 'warning', 'error']),
 });
 
-export type AdminSystemInfoDto = z.infer<typeof adminSystemInfoSchema>;
+export type AdminSystemInfo = z.infer<typeof adminSystemInfoSchema>;
 
 /**
  * Admin Log DTOs
@@ -59,7 +58,7 @@ export const adminLogSchema = dtoBaseSchema.extend({
   metadata: z.record(z.string(), z.unknown()).nullable(),
 });
 
-export type AdminLogDto = z.infer<typeof adminLogSchema>;
+export type AdminLog = z.infer<typeof adminLogSchema>;
 
 /**
  * Admin Settings DTOs
@@ -80,7 +79,7 @@ export const adminSettingsSchema = dtoBaseSchema.extend({
   }),
 });
 
-export type AdminSettingsDto = z.infer<typeof adminSettingsSchema>;
+export type AdminSettings = z.infer<typeof adminSettingsSchema>;
 
 export const createAdminSettingsSchema = adminSettingsSchema.omit({
   id: true,
@@ -88,24 +87,24 @@ export const createAdminSettingsSchema = adminSettingsSchema.omit({
   updatedAt: true,
 });
 
-export type CreateAdminSettingsDto = z.infer<typeof createAdminSettingsSchema>;
-export type UpdateAdminSettingsDto = Partial<CreateAdminSettingsDto>;
+export type CreateAdminSettings = z.infer<typeof createAdminSettingsSchema>;
+export type UpdateAdminSettings = Partial<CreateAdminSettings>;
 
 /**
  * Admin Navigation DTOs
  */
 
-export interface AdminNavItemDto {
+export interface AdminNavItem {
   id: string;
   label: string;
   href?: string | undefined;
   exact?: boolean | undefined;
   keywords?: string[] | undefined;
   sectionColor?: string | undefined;
-  children?: AdminNavItemDto[] | undefined;
+  children?: AdminNavItem[] | undefined;
 }
 
-export const adminNavItemSchema: z.ZodType<AdminNavItemDto> = z.lazy(() =>
+export const adminNavItemSchema: z.ZodType<AdminNavItem> = z.lazy(() =>
   z.object({
     id: z.string(),
     label: z.string(),
@@ -117,7 +116,7 @@ export const adminNavItemSchema: z.ZodType<AdminNavItemDto> = z.lazy(() =>
   })
 );
 
-export interface AdminMenuColorOptionDto {
+export interface AdminMenuColorOption {
   value: string;
   label: string;
   dot: string;
@@ -133,11 +132,11 @@ export const adminMenuColorOptionSchema = z.object({
   text: z.string(),
 });
 
-export interface AdminMenuCustomNodeDto {
+export interface AdminMenuCustomNode {
   id: string;
   label?: string | undefined;
   href?: string | undefined;
-  children?: AdminMenuCustomNodeDto[] | undefined;
+  children?: AdminMenuCustomNode[] | undefined;
 }
 
 export const adminMenuCustomNodeSchema = z.lazy(() =>
@@ -147,7 +146,7 @@ export const adminMenuCustomNodeSchema = z.lazy(() =>
     href: z.string().optional(),
     children: z.array(adminMenuCustomNodeSchema).optional(),
   })
-) as z.ZodType<AdminMenuCustomNodeDto>;
+) as z.ZodType<AdminMenuCustomNode>;
 
 export const adminNavLeafSchema = z.object({
   id: z.string(),
@@ -158,7 +157,7 @@ export const adminNavLeafSchema = z.object({
   item: adminNavItemSchema,
 });
 
-export type AdminNavLeafDto = z.infer<typeof adminNavLeafSchema>;
+export type AdminNavLeaf = z.infer<typeof adminNavLeafSchema>;
 
 /**
  * Admin Validator DTOs
@@ -173,8 +172,7 @@ export const validatorScopeSchema = z.enum([
   'ai-paths',
 ]);
 
-export type ValidatorScopeDto = z.infer<typeof validatorScopeSchema>;
-export type ValidatorScope = ValidatorScopeDto;
+export type ValidatorScope = z.infer<typeof validatorScopeSchema>;
 
 export const validatorPatternListSchema = dtoBaseSchema.extend({
   name: z.string(),
@@ -183,13 +181,12 @@ export const validatorPatternListSchema = dtoBaseSchema.extend({
   deletionLocked: z.boolean(),
 });
 
-export type ValidatorPatternListDto = z.infer<typeof validatorPatternListSchema>;
-export type ValidatorPatternList = ValidatorPatternListDto;
+export type ValidatorPatternList = z.infer<typeof validatorPatternListSchema>;
 
-export type ValidatorPatternDto = ProductValidationPatternDto;
-export type CreateValidatorPatternDto = CreateProductValidationPatternDto;
-export type UpdateValidatorPatternDto = UpdateProductValidationPatternDto;
-export type ValidatorSettingsDto = ProductValidatorSettingsDto;
-export type UpdateValidatorSettingsDto = Partial<ProductValidatorSettingsDto>;
-export type CreateValidatorPatternListDto = Omit<ValidatorPatternListDto, keyof DtoBase>;
-export type UpdateValidatorPatternListDto = Partial<CreateValidatorPatternListDto>;
+export type ValidatorPattern = ProductValidationPatternDto;
+export type CreateValidatorPattern = CreateProductValidationPatternDto;
+export type UpdateValidatorPattern = UpdateProductValidationPatternDto;
+export type ValidatorSettings = ProductValidatorSettingsDto;
+export type UpdateValidatorSettings = Partial<ProductValidatorSettingsDto>;
+export type CreateValidatorPatternList = Omit<ValidatorPatternList, keyof DtoBase>;
+export type UpdateValidatorPatternList = Partial<CreateValidatorPatternList>;

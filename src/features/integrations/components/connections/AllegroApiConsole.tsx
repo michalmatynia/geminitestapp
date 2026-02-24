@@ -2,7 +2,8 @@
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 
-import { ApiConsole, type ApiPreset } from './ApiConsole';
+import { ApiConsole } from './ApiConsole';
+import { ApiConsoleProvider, type ApiPreset } from './ApiConsoleContext';
 
 export function AllegroApiConsole(): React.JSX.Element {
   const {
@@ -33,21 +34,17 @@ export function AllegroApiConsole(): React.JSX.Element {
   ];
 
   return (
-    <ApiConsole
-      title='Allegro API Console'
-      description='Send requests using the active Allegro connection token.'
-      presets={allegroApiPresets}
-      method={allegroApiMethod}
-      setMethod={setAllegroApiMethod}
-      path={allegroApiPath}
-      setPath={setAllegroApiPath}
-      bodyOrParams={allegroApiBody}
-      setBodyOrParams={setAllegroApiBody}
-      bodyOrParamsLabel='JSON body'
-      loading={allegroApiLoading}
-      error={allegroApiError}
-      response={
-        allegroApiResponse
+    <ApiConsoleProvider
+      value={{
+        method: allegroApiMethod,
+        setMethod: setAllegroApiMethod,
+        path: allegroApiPath,
+        setPath: setAllegroApiPath,
+        bodyOrParams: allegroApiBody,
+        setBodyOrParams: setAllegroApiBody,
+        loading: allegroApiLoading,
+        error: allegroApiError,
+        response: allegroApiResponse
           ? {
             status: allegroApiResponse.status,
             statusText: allegroApiResponse.statusText,
@@ -56,15 +53,22 @@ export function AllegroApiConsole(): React.JSX.Element {
               refreshed: allegroApiResponse.refreshed,
             }),
           }
-          : null
-      }
-      onRequest={() => { void handleAllegroApiRequest(); }}
-      isConnected={isConnected}
-      connectionWarning='Connect Allegro to enable API requests.'
-      baseUrl={activeConnection?.allegroUseSandbox
-        ? 'https://api.allegro.pl.allegrosandbox.pl'
-        : 'https://api.allegro.pl'}
-      methodType='select'
-    />
+          : null,
+        onRequest: () => { void handleAllegroApiRequest(); },
+        isConnected,
+      }}
+    >
+      <ApiConsole
+        title='Allegro API Console'
+        description='Send requests using the active Allegro connection token.'
+        presets={allegroApiPresets}
+        bodyOrParamsLabel='JSON body'
+        connectionWarning='Connect Allegro to enable API requests.'
+        baseUrl={activeConnection?.allegroUseSandbox
+          ? 'https://api.allegro.pl.allegrosandbox.pl'
+          : 'https://api.allegro.pl'}
+        methodType='select'
+      />
+    </ApiConsoleProvider>
   );
 }

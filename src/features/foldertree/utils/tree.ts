@@ -8,7 +8,7 @@ export const findFolderById = (
   foldersToScan: CategoryWithChildren[],
   id: string
 ): CategoryWithChildren | null => {
-  return findTreeNodeById<any>(foldersToScan, id);
+  return findTreeNodeById<CategoryWithChildren>(foldersToScan, id);
 };
 
 export const findFolderParentId = (
@@ -16,5 +16,5 @@ export const findFolderParentId = (
   id: string,
   parentId: string | null = null
 ): string | null => {
-  return findTreeNodeParentId<any>(foldersToScan, id, parentId);
+  return findTreeNodeParentId<CategoryWithChildren>(foldersToScan, id, parentId);
 };

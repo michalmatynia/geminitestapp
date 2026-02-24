@@ -6,6 +6,9 @@ import {
 } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
+import { useGenerationToolbarContext, type AutoScalerMode } from './GenerationToolbarContext';
+import type { ImageStudioCenterShadowPolicy } from '../../contracts/center';
+
 type SelectOption = {
   value: string;
   label: string;
@@ -26,28 +29,14 @@ type GenerationToolbarAutoScalerSectionProps = {
   analysisSummaryData: ImageStudioAnalysisSummaryChipData | null;
   analysisSummaryIsStale: boolean;
   analysisConfigMismatchMessage: string | null;
-  autoScaleBusy: boolean;
   autoScaleBusyLabel: string;
-  autoScaleLayoutPadding: string;
-  autoScaleLayoutPaddingX: string;
-  autoScaleLayoutPaddingY: string;
-  autoScaleLayoutSplitAxes: boolean;
-  autoScaleLayoutFillMissingCanvasWhite: boolean;
   autoScaleLayoutProjectCanvasSize: { width: number; height: number } | null;
-  autoScaleShadowPolicy: string;
   autoScaleShadowPolicyOptions: SelectOption[];
   autoScaleTooltipContent: AutoScaleTooltipContent;
   autoScaleTooltipsEnabled: boolean;
-  autoScaleMode: string;
   autoScaleModeOptions: SelectOption[];
   hasSourceImage: boolean;
   onAutoScale: () => void;
-  onAutoScaleLayoutFillMissingCanvasWhiteChange: (checked: boolean) => void;
-  onAutoScaleLayoutPaddingChange: (value: string) => void;
-  onAutoScaleLayoutPaddingXChange: (value: string) => void;
-  onAutoScaleLayoutPaddingYChange: (value: string) => void;
-  onAutoScaleModeChange: (value: string) => void;
-  onAutoScaleShadowPolicyChange: (value: string) => void;
   onApplyAnalysisPlan: () => void;
   onCancelAutoScale: () => void;
   onToggleAutoScaleLayoutSplitAxes: () => void;
@@ -59,32 +48,29 @@ export function GenerationToolbarAutoScalerSection({
   analysisSummaryData,
   analysisSummaryIsStale,
   analysisConfigMismatchMessage,
-  autoScaleBusy,
   autoScaleBusyLabel,
-  autoScaleLayoutPadding,
-  autoScaleLayoutPaddingX,
-  autoScaleLayoutPaddingY,
-  autoScaleLayoutSplitAxes,
-  autoScaleLayoutFillMissingCanvasWhite,
   autoScaleLayoutProjectCanvasSize,
-  autoScaleShadowPolicy,
   autoScaleShadowPolicyOptions,
   autoScaleTooltipContent,
   autoScaleTooltipsEnabled,
-  autoScaleMode,
   autoScaleModeOptions,
   hasSourceImage,
   onAutoScale,
-  onAutoScaleLayoutFillMissingCanvasWhiteChange,
-  onAutoScaleLayoutPaddingChange,
-  onAutoScaleLayoutPaddingXChange,
-  onAutoScaleLayoutPaddingYChange,
-  onAutoScaleModeChange,
-  onAutoScaleShadowPolicyChange,
   onApplyAnalysisPlan,
   onCancelAutoScale,
   onToggleAutoScaleLayoutSplitAxes,
 }: GenerationToolbarAutoScalerSectionProps): React.JSX.Element {
+  const {
+    autoScaleMode, setAutoScaleMode,
+    autoScaleLayoutShadowPolicy, setAutoScaleLayoutShadowPolicy,
+    autoScaleLayoutPadding, setAutoScaleLayoutPadding,
+    autoScaleLayoutSplitAxes,
+    autoScaleLayoutPaddingX, setAutoScaleLayoutPaddingX,
+    autoScaleLayoutPaddingY, setAutoScaleLayoutPaddingY,
+    autoScaleLayoutFillMissingCanvasWhite, setAutoScaleLayoutFillMissingCanvasWhite,
+    autoScaleBusy,
+  } = useGenerationToolbarContext();
+
   const sliderValue = autoScaleLayoutPadding.trim() === '' ? '0' : autoScaleLayoutPadding;
   const maybeWrapTooltip = (
     content: string,
@@ -122,7 +108,7 @@ export function GenerationToolbarAutoScalerSection({
             size='sm'
             className='w-full'
             value={autoScaleMode}
-            onValueChange={onAutoScaleModeChange}
+            onValueChange={(val) => setAutoScaleMode(val as AutoScalerMode)}
             options={autoScaleModeOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Auto scaler mode'
@@ -148,8 +134,8 @@ export function GenerationToolbarAutoScalerSection({
           <SelectSimple
             size='sm'
             className='w-full'
-            value={autoScaleShadowPolicy}
-            onValueChange={onAutoScaleShadowPolicyChange}
+            value={autoScaleLayoutShadowPolicy}
+            onValueChange={(val) => setAutoScaleLayoutShadowPolicy(val as ImageStudioCenterShadowPolicy)}
             options={autoScaleShadowPolicyOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Auto scaler shadow policy'
@@ -171,7 +157,7 @@ export function GenerationToolbarAutoScalerSection({
               step={0.5}
               value={sliderValue}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                onAutoScaleLayoutPaddingChange(event.target.value);
+                setAutoScaleLayoutPadding(event.target.value);
               }}
               className='w-full accent-gray-300'
               aria-label='Auto scaler padding percent slider'
@@ -185,7 +171,7 @@ export function GenerationToolbarAutoScalerSection({
             step={0.5}
             value={autoScaleLayoutPadding}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              onAutoScaleLayoutPaddingChange(event.target.value);
+              setAutoScaleLayoutPadding(event.target.value);
             }}
             className='h-8 w-full rounded border border-border/60 bg-card/40 px-2 text-xs text-gray-100 outline-none'
             placeholder='Padding %'
@@ -202,7 +188,7 @@ export function GenerationToolbarAutoScalerSection({
                 step={0.5}
                 value={autoScaleLayoutPaddingX}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                  onAutoScaleLayoutPaddingXChange(event.target.value);
+                  setAutoScaleLayoutPaddingX(event.target.value);
                 }}
                 className='h-8 w-full rounded border border-border/60 bg-card/40 px-2 text-xs text-gray-100 outline-none'
                 placeholder='X %'
@@ -218,7 +204,7 @@ export function GenerationToolbarAutoScalerSection({
                 step={0.5}
                 value={autoScaleLayoutPaddingY}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                  onAutoScaleLayoutPaddingYChange(event.target.value);
+                  setAutoScaleLayoutPaddingY(event.target.value);
                 }}
                 className='h-8 w-full rounded border border-border/60 bg-card/40 px-2 text-xs text-gray-100 outline-none'
                 placeholder='Y %'
@@ -235,7 +221,7 @@ export function GenerationToolbarAutoScalerSection({
               type='checkbox'
               checked={autoScaleLayoutFillMissingCanvasWhite}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                onAutoScaleLayoutFillMissingCanvasWhiteChange(Boolean(event.target.checked));
+                setAutoScaleLayoutFillMissingCanvasWhite(Boolean(event.target.checked));
               }}
               disabled={!autoScaleLayoutProjectCanvasSize}
               className='h-3.5 w-3.5 rounded border border-border/60 bg-card/40 accent-gray-200'

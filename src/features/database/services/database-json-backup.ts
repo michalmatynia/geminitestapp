@@ -1,9 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
- 
-/* eslint-disable @typescript-eslint/no-unsafe-return */
- 
 import 'server-only';
 
 import { promises as fs } from 'fs';
@@ -129,14 +123,16 @@ export function getPrismaModelDependencyOrder(): string[] {
   return result;
 }
 
-const getPrismaModel = (modelName: string): {
+interface PrismaModel {
   findMany: (args?: unknown) => Promise<unknown[]>;
   count: (args?: unknown) => Promise<number>;
   createMany: (args: { data: unknown[]; skipDuplicates?: boolean }) => Promise<{ count: number }>;
   deleteMany: (args?: unknown) => Promise<{ count: number }>;
-} | null => {
+}
+
+const getPrismaModel = (modelName: string): PrismaModel | null => {
   const key = modelName.charAt(0).toLowerCase() + modelName.slice(1);
-  const model = (prisma as any)[key];
+  const model = (prisma as unknown as Record<string, PrismaModel>)[key];
   if (!model || typeof model.findMany !== 'function') return null;
   return model;
 };

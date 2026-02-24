@@ -1,6 +1,4 @@
-import type { AuthUserPageSettingsDto } from '@/shared/contracts/auth';
-
-export type AuthUserPageSettings = AuthUserPageSettingsDto;
+import type { AuthUserPageSettings } from '@/shared/contracts/auth';
 
 export const DEFAULT_AUTH_USER_PAGE_SETTINGS: AuthUserPageSettings = {
   allowSignup: true,

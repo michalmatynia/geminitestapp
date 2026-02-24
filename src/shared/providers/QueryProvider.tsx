@@ -1,7 +1,6 @@
-/* eslint-disable */
 "use client";
 
-import { QueryClientContext, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientContext, QueryClientProvider, type QueryClient } from "@tanstack/react-query";
 import React, { useState, useEffect } from "react";
 import { setupOfflineSupport } from "@/shared/lib/offline-support";
 import { createQueryClient } from "@/shared/lib/query-client";
@@ -23,9 +22,9 @@ const enableAdvancedRuntime =
   isDevelopment && process.env["NEXT_PUBLIC_QUERY_ADVANCED_RUNTIME"] === "true";
 const enableWarmup = process.env["NEXT_PUBLIC_QUERY_WARMUP"] === "true";
 
-let browserQueryClient: ReturnType<typeof createQueryClient> | null = null;
+let browserQueryClient: QueryClient | null = null;
 
-const getQueryClient = () => {
+const getQueryClient = (): QueryClient => {
   if (typeof window === 'undefined') {
     return createQueryClient();
   }

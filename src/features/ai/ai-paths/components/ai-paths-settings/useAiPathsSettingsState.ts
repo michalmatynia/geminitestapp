@@ -67,6 +67,7 @@ import { useAiPathsSettingsDocsActions } from './useAiPathsSettingsDocsActions';
 import { useAiPathsSettingsModeActions } from './useAiPathsSettingsModeActions';
 import { useAiPathsSettingsPathActions } from './useAiPathsSettingsPathActions';
 import { useAiPathsSettingsSamples } from './useAiPathsSettingsSamples';
+import { buildRuntimePersistenceConfig } from './useAiPathsSettingsState.runtime';
 import {
   buildPersistedRuntimeState,
 } from '../AiPathsSettingsUtils';
@@ -1036,17 +1037,17 @@ export function useAiPathsSettingsState({
     const timeout = setTimeout((): void => {
       runtimePersistenceKeyRef.current = snapshotKey;
       const updatedAt = new Date().toISOString();
-      const baseConfig =
-        pathConfigs[activePathId] ?? createDefaultPathConfig(activePathId);
-      const nextConfig: PathConfig = {
-        ...baseConfig,
-        id: activePathId,
+      const nextConfig = buildRuntimePersistenceConfig({
+        activePathId,
         updatedAt,
+        pathConfigs,
         runtimeState,
         lastRunAt,
-      };
+      });
+      if (!nextConfig) return;
       setPathConfigs(
         (prev: Record<string, PathConfig>): Record<string, PathConfig> => {
+          if (!prev[activePathId]) return prev;
           return {
             ...prev,
             [activePathId]: nextConfig,

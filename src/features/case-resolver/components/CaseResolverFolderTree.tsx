@@ -1259,7 +1259,11 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                       onDeactivateActiveFile();
                       return;
                     }
-                    onSelectFile(fileId);
+                    if (fileType === 'document' || fileType === 'scanfile') {
+                      onEditFile(fileId);
+                    } else {
+                      onSelectFile(fileId);
+                    }
                     return;
                   }
                   if (assetId) {
@@ -1288,7 +1292,11 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                         onDeactivateActiveFile();
                         return;
                       }
-                      onSelectFile(fileId);
+                      if (fileType === 'document' || fileType === 'scanfile') {
+                        onEditFile(fileId);
+                      } else {
+                        onSelectFile(fileId);
+                      }
                       return;
                     }
                     if (assetId) {

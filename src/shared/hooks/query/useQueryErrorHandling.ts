@@ -1,4 +1,3 @@
-/* eslint-disable */
 "use client";
 
 import { useQueryClient, type UseQueryResult } from "@tanstack/react-query";
@@ -7,6 +6,10 @@ import { createListQueryV2 } from "@/shared/lib/query-factories-v2";
 import { useToast } from "@/shared/ui";
 import { logClientError, isLoggableObject } from "@/shared/utils/observability/client-error-logger";
 import { getTraceId } from "@/shared/utils/observability/trace";
+
+interface LoggableWithErrorFlag {
+  __logged?: boolean;
+}
 
 interface ErrorHandlingConfig {
   showToast?: boolean;
@@ -210,7 +213,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           logErrors &&
           shouldLogError(error) &&
           message &&
-          !(isLoggableObject(error) && error.__logged)
+          !(isLoggableObject(error) && (error as LoggableWithErrorFlag).__logged)
         ) {
           const logPayload: Record<string, unknown> = { message, queryKey, traceId: getTraceId() };
           const loggableError = getLoggableError(error);
@@ -222,7 +225,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           // Mark as logged
           if (isLoggableObject(error)) {
             try {
-              (error as any).__logged = true;
+              (error as LoggableWithErrorFlag).__logged = true;
             } catch {}
           }
         }
@@ -309,7 +312,7 @@ export function useResilientQuery<TData>(
       const baseDelay = options?.retryDelay || 1000;
       return Math.min(baseDelay * Math.pow(2, attemptIndex), 30000);
     },
-    placeholderData: options?.fallbackData as any,
+    placeholderData: options?.fallbackData,
     meta: {
       source: 'shared.hooks.query.useResilientQuery',
       operation: 'list',

@@ -5,24 +5,14 @@ import React, { useState } from 'react';
 import { EmptyState } from '@/shared/ui';
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
-import { useOptionalSectionBlockData } from './SectionBlockContext';
+import { useSectionBlockData } from './SectionBlockContext';
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
-interface FrontendAccordionSectionProps {
-  settings?: Record<string, unknown>;
-  blocks?: BlockInstance[];
-}
-
-export function FrontendAccordionSection({
-  settings: propSettings,
-  blocks: propBlocks,
-}: FrontendAccordionSectionProps): React.ReactNode {
-  const sectionBlockData = useOptionalSectionBlockData();
-  const settings = propSettings ?? sectionBlockData?.settings ?? {};
-  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
+export function FrontendAccordionSection(): React.ReactNode {
+  const { settings, blocks } = useSectionBlockData();
   const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
 

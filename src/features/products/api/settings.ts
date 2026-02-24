@@ -5,8 +5,8 @@ import type {
   ProductValidatorSettings,
 } from '@/shared/contracts/products';
 import type {
-  ProductValidatorImportRequestDto,
-  ProductValidatorImportResultDto,
+  ProductValidatorImportRequest,
+  ProductValidatorImportResult,
 } from '@/shared/contracts/validator-import';
 import { 
   Catalog, 
@@ -208,13 +208,10 @@ export async function reorderValidationPatterns(payload: {
   );
 }
 
-export type ImportValidationPatternsPayload = ProductValidatorImportRequestDto;
-export type ImportValidationPatternsResult = ProductValidatorImportResultDto;
-
 export async function importValidationPatterns(
-  payload: ImportValidationPatternsPayload
-): Promise<ImportValidationPatternsResult> {
-  return api.post<ImportValidationPatternsResult>(
+  payload: ProductValidatorImportRequest
+): Promise<ProductValidatorImportResult> {
+  return api.post<ProductValidatorImportResult>(
     '/api/products/validator-patterns/import',
     payload
   );

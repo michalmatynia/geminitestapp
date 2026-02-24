@@ -5,9 +5,9 @@ import React from 'react';
 
 import { Button } from '@/shared/ui';
 
+import { useCenterPreviewContext } from './CenterPreviewContext';
+
 type SplitViewControlsProps = {
-  singleVariantView: 'variant' | 'source';
-  splitVariantView: boolean;
   canCompare: boolean;
   onGoToSourceSlot: () => void;
   onToggleSourceVariantView: () => void;
@@ -15,13 +15,13 @@ type SplitViewControlsProps = {
 };
 
 export function SplitViewControls({
-  singleVariantView,
-  splitVariantView,
   canCompare,
   onGoToSourceSlot,
   onToggleSourceVariantView,
   onToggleSplitVariantView,
 }: SplitViewControlsProps): React.JSX.Element {
+  const { singleVariantView, splitVariantView } = useCenterPreviewContext();
+
   return (
     <div className='absolute bottom-2 left-2 z-20 flex items-center gap-2'>
       <Button size='xs'

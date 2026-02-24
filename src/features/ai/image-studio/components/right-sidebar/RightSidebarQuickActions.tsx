@@ -3,43 +3,28 @@ import React from 'react';
 
 import { Button, SelectSimple } from '@/shared/ui';
 
-type RightSidebarQuickActionsProps = {
-  estimatedGenerationCost: number;
-  estimatedPromptTokens: number;
-  generationBusy: boolean;
-  generationLabel: string;
-  hasExtractedControls: boolean;
-  modelSupportsSequenceGeneration: boolean;
-  modelValue: string;
-  onModelChange: (value: string) => void;
-  onOpenControls: () => void;
-  onOpenPromptControl: () => void;
-  onOpenRequestPreview: () => void;
-  onRunGeneration: () => void;
-  onRunSequenceGeneration: () => void;
-  quickModelOptions: Array<{ value: string; label: string }>;
-  selectedModelId: string;
-  sequenceRunBusy: boolean;
-};
+import { useRightSidebarContext } from '../RightSidebarContext';
 
-export function RightSidebarQuickActions({
-  estimatedGenerationCost,
-  estimatedPromptTokens,
-  generationBusy,
-  generationLabel,
-  hasExtractedControls,
-  modelSupportsSequenceGeneration,
-  modelValue,
-  onModelChange,
-  onOpenControls,
-  onOpenPromptControl,
-  onOpenRequestPreview,
-  onRunGeneration,
-  onRunSequenceGeneration,
-  quickModelOptions,
-  selectedModelId,
-  sequenceRunBusy,
-}: RightSidebarQuickActionsProps): React.JSX.Element {
+export function RightSidebarQuickActions(): React.JSX.Element {
+  const {
+    estimatedGenerationCost,
+    estimatedPromptTokens,
+    generationBusy,
+    generationLabel,
+    hasExtractedControls,
+    modelSupportsSequenceGeneration,
+    modelValue,
+    onModelChange,
+    onOpenControls,
+    onOpenPromptControl,
+    onOpenRequestPreview,
+    onRunGeneration,
+    onRunSequenceGeneration,
+    quickModelOptions,
+    selectedModelId,
+    sequenceRunBusy,
+  } = useRightSidebarContext();
+
   return (
     <>
       <div className='rounded border border-border/60 bg-card/30 p-2'>

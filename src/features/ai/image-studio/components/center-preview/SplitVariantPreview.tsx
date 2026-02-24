@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/shared/ui';
 
+import { useCenterPreviewContext } from './CenterPreviewContext';
 import {
   SPLIT_WHEEL_MAX_DELTA,
   SPLIT_WHEEL_MIN_DELTA,
@@ -16,20 +17,19 @@ type Pane = 'left' | 'right';
 type SplitVariantPreviewProps = {
   sourceSlotImageSrc: string;
   workingSlotImageSrc: string;
-  leftSplitZoom: number;
-  rightSplitZoom: number;
-  onAdjustSplitZoom: (pane: Pane, delta: number) => void;
-  onResetSplitZoom: (pane: Pane) => void;
 };
 
 export function SplitVariantPreview({
   sourceSlotImageSrc,
   workingSlotImageSrc,
-  leftSplitZoom,
-  rightSplitZoom,
-  onAdjustSplitZoom,
-  onResetSplitZoom,
 }: SplitVariantPreviewProps): React.JSX.Element {
+  const {
+    leftSplitZoom,
+    rightSplitZoom,
+    adjustSplitZoom: onAdjustSplitZoom,
+    resetSplitZoom: onResetSplitZoom,
+  } = useCenterPreviewContext();
+
   const leftPaneRef = useRef<HTMLDivElement | null>(null);
   const rightPaneRef = useRef<HTMLDivElement | null>(null);
   const [leftOffset, setLeftOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });

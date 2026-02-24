@@ -4,8 +4,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useState, useMemo, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability/utils/client-error-logger';
-import type { Asset3dViewModeDto } from '@/shared/contracts/viewer3d';
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+import type { Asset3dViewMode, Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 
@@ -19,7 +18,7 @@ import {
 } from '../hooks/useAsset3dQueries';
 
 
-export type ViewMode = Asset3dViewModeDto;
+export type ViewMode = Asset3dViewMode;
 
 export function useAdmin3DAssetsState() {
   const queryClient = useQueryClient();

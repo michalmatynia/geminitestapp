@@ -6,6 +6,9 @@ import {
 } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
 import { Button, SelectSimple, Tooltip } from '@/shared/ui';
 
+import { useGenerationToolbarContext, type CenterMode } from './GenerationToolbarContext';
+import type { ImageStudioCenterDetectionMode, ImageStudioCenterShadowPolicy } from '../../contracts/center';
+
 type SelectOption = {
   value: string;
   label: string;
@@ -28,50 +31,27 @@ type GenerationToolbarCenterSectionProps = {
   analysisSummaryData: ImageStudioAnalysisSummaryChipData | null;
   analysisSummaryIsStale: boolean;
   analysisConfigMismatchMessage: string | null;
-  centerBusy: boolean;
   centerBusyLabel: string;
   centerGuidesEnabled: boolean;
   centerLayoutEnabled: boolean;
-  centerLayoutPadding: string;
-  centerLayoutPaddingX: string;
-  centerLayoutPaddingY: string;
-  centerLayoutSplitAxes: boolean;
-  centerLayoutAdvancedEnabled: boolean;
   centerLayoutPreset: string;
   centerLayoutPresetOptions: SelectOption[];
-  centerLayoutPresetDraftName: string;
   centerLayoutCanDeletePreset: boolean;
   centerLayoutCanSavePreset: boolean;
   centerLayoutSavePresetLabel: string;
-  centerLayoutDetection: string;
   centerLayoutDetectionOptions: SelectOption[];
-  centerLayoutWhiteThreshold: string;
-  centerLayoutChromaThreshold: string;
-  centerLayoutFillMissingCanvasWhite: boolean;
   centerLayoutProjectCanvasSize: { width: number; height: number } | null;
-  centerLayoutShadowPolicy: string;
   centerLayoutShadowPolicyOptions: SelectOption[];
   centerTooltipContent: CenterTooltipContent;
   centerTooltipsEnabled: boolean;
-  centerMode: string;
   centerModeOptions: SelectOption[];
   hasSourceImage: boolean;
   onCancelCenter: () => void;
-  onCenterLayoutFillMissingCanvasWhiteChange: (checked: boolean) => void;
-  onCenterLayoutPaddingChange: (value: string) => void;
-  onCenterLayoutPaddingXChange: (value: string) => void;
-  onCenterLayoutPaddingYChange: (value: string) => void;
-  onCenterLayoutDetectionChange: (value: string) => void;
   onCenterLayoutPresetChange: (value: string) => void;
-  onCenterLayoutPresetDraftNameChange: (value: string) => void;
   onCenterLayoutSavePreset: () => void;
   onCenterLayoutDeletePreset: () => void;
-  onCenterLayoutWhiteThresholdChange: (value: string) => void;
-  onCenterLayoutChromaThresholdChange: (value: string) => void;
-  onCenterLayoutShadowPolicyChange: (value: string) => void;
   onApplyAnalysisPlan: () => void;
   onCenterObject: () => void;
-  onCenterModeChange: (value: string) => void;
   onToggleCenterLayoutAdvanced: () => void;
   onToggleCenterLayoutSplitAxes: () => void;
   onToggleCenterGuides: () => void;
@@ -83,54 +63,47 @@ export function GenerationToolbarCenterSection({
   analysisSummaryData,
   analysisSummaryIsStale,
   analysisConfigMismatchMessage,
-  centerBusy,
   centerBusyLabel,
   centerGuidesEnabled,
   centerLayoutEnabled,
-  centerLayoutPadding,
-  centerLayoutPaddingX,
-  centerLayoutPaddingY,
-  centerLayoutSplitAxes,
-  centerLayoutAdvancedEnabled,
   centerLayoutPreset,
   centerLayoutPresetOptions,
-  centerLayoutPresetDraftName,
   centerLayoutCanDeletePreset,
   centerLayoutCanSavePreset,
   centerLayoutSavePresetLabel,
-  centerLayoutDetection,
   centerLayoutDetectionOptions,
-  centerLayoutWhiteThreshold,
-  centerLayoutChromaThreshold,
-  centerLayoutFillMissingCanvasWhite,
   centerLayoutProjectCanvasSize,
-  centerLayoutShadowPolicy,
   centerLayoutShadowPolicyOptions,
   centerTooltipContent,
   centerTooltipsEnabled,
-  centerMode,
   centerModeOptions,
   hasSourceImage,
   onCancelCenter,
-  onCenterLayoutFillMissingCanvasWhiteChange,
-  onCenterLayoutPaddingChange,
-  onCenterLayoutPaddingXChange,
-  onCenterLayoutPaddingYChange,
-  onCenterLayoutDetectionChange,
   onCenterLayoutPresetChange,
-  onCenterLayoutPresetDraftNameChange,
   onCenterLayoutSavePreset,
   onCenterLayoutDeletePreset,
-  onCenterLayoutWhiteThresholdChange,
-  onCenterLayoutChromaThresholdChange,
-  onCenterLayoutShadowPolicyChange,
   onApplyAnalysisPlan,
   onCenterObject,
-  onCenterModeChange,
   onToggleCenterLayoutAdvanced,
   onToggleCenterLayoutSplitAxes,
   onToggleCenterGuides,
 }: GenerationToolbarCenterSectionProps): React.JSX.Element {
+  const {
+    centerMode, setCenterMode,
+    centerLayoutShadowPolicy, setCenterLayoutShadowPolicy,
+    centerLayoutPadding, setCenterLayoutPadding,
+    centerLayoutSplitAxes,
+    centerLayoutAdvancedEnabled,
+    centerLayoutDetection, setCenterLayoutDetection,
+    centerLayoutWhiteThreshold, setCenterLayoutWhiteThreshold,
+    centerLayoutChromaThreshold, setCenterLayoutChromaThreshold,
+    centerLayoutPresetDraftName, setCenterLayoutPresetDraftName,
+    centerLayoutPaddingX, setCenterLayoutPaddingX,
+    centerLayoutPaddingY, setCenterLayoutPaddingY,
+    centerLayoutFillMissingCanvasWhite, setCenterLayoutFillMissingCanvasWhite,
+    centerBusy,
+  } = useGenerationToolbarContext();
+
   const sliderValue = centerLayoutPadding.trim() === '' ? '0' : centerLayoutPadding;
   const maybeWrapTooltip = (
     content: string,
@@ -167,7 +140,7 @@ export function GenerationToolbarCenterSection({
           <SelectSimple size='sm'
             className='w-full'
             value={centerMode}
-            onValueChange={onCenterModeChange}
+            onValueChange={(val) => setCenterMode(val as CenterMode)}
             options={centerModeOptions}
             triggerClassName='h-8 text-xs'
             ariaLabel='Center object mode'
@@ -191,7 +164,7 @@ export function GenerationToolbarCenterSection({
               size='sm'
               className='w-full'
               value={centerLayoutShadowPolicy}
-              onValueChange={onCenterLayoutShadowPolicyChange}
+              onValueChange={(val) => setCenterLayoutShadowPolicy(val as ImageStudioCenterShadowPolicy)}
               options={centerLayoutShadowPolicyOptions}
               triggerClassName='h-8 text-xs'
               ariaLabel='Object layout shadow policy'
@@ -209,7 +182,7 @@ export function GenerationToolbarCenterSection({
                   step={0.5}
                   value={sliderValue}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    onCenterLayoutPaddingChange(event.target.value);
+                    setCenterLayoutPadding(event.target.value);
                   }}
                   className='w-full accent-gray-300'
                   aria-label='Object layout padding percent slider'
@@ -221,7 +194,7 @@ export function GenerationToolbarCenterSection({
                   step={0.5}
                   value={centerLayoutPadding}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    onCenterLayoutPaddingChange(event.target.value);
+                    setCenterLayoutPadding(event.target.value);
                   }}
                   className='h-8 w-full rounded border border-border/60 bg-card/40 px-2 text-xs text-gray-100 outline-none'
                   placeholder='Padding %'
@@ -279,7 +252,7 @@ export function GenerationToolbarCenterSection({
                   size='sm'
                   className='w-full'
                   value={centerLayoutDetection}
-                  onValueChange={onCenterLayoutDetectionChange}
+                  onValueChange={(val) => setCenterLayoutDetection(val as ImageStudioCenterDetectionMode)}
                   options={centerLayoutDetectionOptions}
                   triggerClassName='h-8 text-xs'
                   ariaLabel='Object layout detection mode'
@@ -296,7 +269,7 @@ export function GenerationToolbarCenterSection({
                     step={1}
                     value={centerLayoutWhiteThreshold}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      onCenterLayoutWhiteThresholdChange(event.target.value);
+                      setCenterLayoutWhiteThreshold(event.target.value);
                     }}
                     className='h-8 w-full rounded border border-border/60 bg-card/40 px-2 text-xs text-gray-100 outline-none'
                     placeholder='White threshold (1-80)'
@@ -313,7 +286,7 @@ export function GenerationToolbarCenterSection({
                     step={1}
                     value={centerLayoutChromaThreshold}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                      onCenterLayoutChromaThresholdChange(event.target.value);
+                      setCenterLayoutChromaThreshold(event.target.value);
                     }}
                     className='h-8 w-full rounded border border-border/60 bg-card/40 px-2 text-xs text-gray-100 outline-none'
                     placeholder='Chroma threshold (0-80)'
@@ -327,7 +300,7 @@ export function GenerationToolbarCenterSection({
                   type='text'
                   value={centerLayoutPresetDraftName}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    onCenterLayoutPresetDraftNameChange(event.target.value);
+                    setCenterLayoutPresetDraftName(event.target.value);
                   }}
                   className='h-8 w-full rounded border border-border/60 bg-card/40 px-2 text-xs text-gray-100 outline-none'
                   placeholder='Custom preset name'
@@ -366,7 +339,7 @@ export function GenerationToolbarCenterSection({
                   step={0.5}
                   value={centerLayoutPaddingX}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    onCenterLayoutPaddingXChange(event.target.value);
+                    setCenterLayoutPaddingX(event.target.value);
                   }}
                   className='h-8 w-full rounded border border-border/60 bg-card/40 px-2 text-xs text-gray-100 outline-none'
                   placeholder='X %'
@@ -383,7 +356,7 @@ export function GenerationToolbarCenterSection({
                   step={0.5}
                   value={centerLayoutPaddingY}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                    onCenterLayoutPaddingYChange(event.target.value);
+                    setCenterLayoutPaddingY(event.target.value);
                   }}
                   className='h-8 w-full rounded border border-border/60 bg-card/40 px-2 text-xs text-gray-100 outline-none'
                   placeholder='Y %'
@@ -401,7 +374,7 @@ export function GenerationToolbarCenterSection({
                 type='checkbox'
                 checked={centerLayoutFillMissingCanvasWhite}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-                  onCenterLayoutFillMissingCanvasWhiteChange(Boolean(event.target.checked));
+                  setCenterLayoutFillMissingCanvasWhite(Boolean(event.target.checked));
                 }}
                 disabled={!centerLayoutProjectCanvasSize}
                 className='h-3.5 w-3.5 rounded border border-border/60 bg-card/40 accent-gray-200'

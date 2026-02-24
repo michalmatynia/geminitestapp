@@ -18,10 +18,10 @@ import {
   type AuthUserRoleMap,
 } from '@/features/auth/utils/auth-management';
 import type { 
-  RegisterResponseDto as RegisterResponse,
-  AuthUserSecurityProfileDto as AuthUserSecurityProfile,
-  AuthUserDto as AuthUserSummary,
-  AuthRoleDto as AuthRole
+  RegisterResponse,
+  AuthUserSecurityProfile,
+  AuthUser as AuthUserSummary,
+  AuthRole
 } from '@/shared/contracts/auth';
 import { invalidateUsers } from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';

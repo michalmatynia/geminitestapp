@@ -174,8 +174,9 @@ export function BaselinkerSettings(): React.JSX.Element {
                 }))}
                 placeholder='Select default connection...'
                 disabled={connections.length === 0}
-                triggerClassName='w-full bg-card/40 border-border text-xs text-white'
+                variant='subtle'
                 size='sm'
+                triggerClassName='w-full'
               />
               <div className='flex items-center gap-2'>
                 <Button
@@ -214,7 +215,9 @@ export function BaselinkerSettings(): React.JSX.Element {
                     min='1'
                     value={syncIntervalMinutes}
                     onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSyncIntervalMinutes(event.target.value)}
-                    className='w-32 border-border bg-card/40 text-xs text-white'
+                    variant='subtle'
+                    size='sm'
+                    className='w-32'
                   />
                   <Button
                     type='button'

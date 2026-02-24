@@ -4,39 +4,32 @@ import { z } from 'zod';
 import { dtoBaseSchema } from './base';
 
 
-export const databaseTypeSchema = z.enum(['postgresql', 'mongodb']);
-export type DatabaseTypeDto = z.infer<typeof databaseTypeSchema>;
-export type DatabaseType = DatabaseTypeDto;
+export type DatabaseType = z.infer<typeof databaseTypeSchema>;
 
 export const databaseSyncDirectionSchema = z.enum(['mongo_to_prisma', 'prisma_to_mongo']);
-export type DatabaseSyncDirectionDto = z.infer<typeof databaseSyncDirectionSchema>;
-export type DatabaseSyncDirection = DatabaseSyncDirectionDto;
+export type DatabaseSyncDirection = z.infer<typeof databaseSyncDirectionSchema>;
 
 export const databasePreviewModeSchema = z.enum(['full', 'stats', 'tables', 'counts', 'current', 'backup']);
-export type DatabasePreviewModeDto = z.infer<typeof databasePreviewModeSchema>;
-export type DatabasePreviewMode = DatabasePreviewModeDto;
+export type DatabasePreviewMode = z.infer<typeof databasePreviewModeSchema>;
 
 export const databasePreviewGroupSchema = z.object({
   type: z.string(),
   objects: z.array(z.string()),
 });
 
-export type DatabasePreviewGroupDto = z.infer<typeof databasePreviewGroupSchema>;
-export type DatabasePreviewGroup = DatabasePreviewGroupDto;
+export type DatabasePreviewGroup = z.infer<typeof databasePreviewGroupSchema>;
 
 export const databasePreviewTableSchema = z.object({
   name: z.string(),
   rows: z.number(),
 });
 
-export type DatabasePreviewTableDto = z.infer<typeof databasePreviewTableSchema>;
-export type DatabasePreviewTable = DatabasePreviewTableDto;
+export type DatabasePreviewTable = z.infer<typeof databasePreviewTableSchema>;
 
 export const databasePreviewRowSchema = z.record(z.string(), z.unknown());
 
-export type DatabasePreviewRowDto = z.infer<typeof databasePreviewRowSchema>;
-export type DatabasePreviewRow = DatabasePreviewRowDto;
-export type SqlQueryResultRow = DatabasePreviewRowDto;
+export type DatabasePreviewRow = z.infer<typeof databasePreviewRowSchema>;
+export type SqlQueryResultRow = DatabasePreviewRow;
 
 export const databaseTablePreviewDataSchema = z.object({
   name: z.string(),
@@ -44,8 +37,7 @@ export const databaseTablePreviewDataSchema = z.object({
   totalRows: z.number(),
 });
 
-export type DatabaseTablePreviewDataDto = z.infer<typeof databaseTablePreviewDataSchema>;
-export type DatabaseTablePreviewData = DatabaseTablePreviewDataDto;
+export type DatabaseTablePreviewData = z.infer<typeof databaseTablePreviewDataSchema>;
 
 export const databasePreviewPayloadSchema = z.object({
   type: databaseTypeSchema.optional(),
@@ -61,8 +53,7 @@ export const databasePreviewPayloadSchema = z.object({
   total: z.number().optional(),
 });
 
-export type DatabasePreviewPayloadDto = z.infer<typeof databasePreviewPayloadSchema>;
-export type DatabasePreviewPayload = DatabasePreviewPayloadDto;
+export type DatabasePreviewPayload = z.infer<typeof databasePreviewPayloadSchema>;
 
 export const databasePreviewRequestSchema = z.object({
   type: databaseTypeSchema,
@@ -74,8 +65,7 @@ export const databasePreviewRequestSchema = z.object({
   search: z.string().optional(),
 });
 
-export type DatabasePreviewRequestDto = z.infer<typeof databasePreviewRequestSchema>;
-export type DatabasePreviewRequest = DatabasePreviewRequestDto;
+export type DatabasePreviewRequest = z.infer<typeof databasePreviewRequestSchema>;
 
 export const databaseBackupFileSchema = z.object({
   name: z.string(),
@@ -85,7 +75,7 @@ export const databaseBackupFileSchema = z.object({
   lastRestored: z.string().optional(),
 });
 
-export type DatabaseBackupFileDto = z.infer<typeof databaseBackupFileSchema>;
+export type DatabaseBackupFile = z.infer<typeof databaseBackupFileSchema>;
 
 export const databaseBackupResultSchema = z.object({
   message: z.string(),
@@ -94,14 +84,14 @@ export const databaseBackupResultSchema = z.object({
   warning: z.string().optional(),
 });
 
-export type DatabaseBackupResultDto = z.infer<typeof databaseBackupResultSchema>;
+export type DatabaseBackupResult = z.infer<typeof databaseBackupResultSchema>;
 
 export const fullDatabaseBackupResultSchema = z.object({
   mongo: databaseBackupResultSchema,
   postgres: databaseBackupResultSchema,
 });
 
-export type FullDatabaseBackupResultDto = z.infer<typeof fullDatabaseBackupResultSchema>;
+export type FullDatabaseBackupResult = z.infer<typeof fullDatabaseBackupResultSchema>;
 
 export const databaseBrowseParamsSchema = z.object({
   collection: z.string(),
@@ -110,7 +100,7 @@ export const databaseBrowseParamsSchema = z.object({
   query: z.string().optional(),
 });
 
-export type DatabaseBrowseParamsDto = z.infer<typeof databaseBrowseParamsSchema>;
+export type DatabaseBrowseParams = z.infer<typeof databaseBrowseParamsSchema>;
 
 export const databaseBrowseSchema = z.object({
   provider: z.enum(['mongodb', 'postgresql', 'prisma']),
@@ -121,8 +111,8 @@ export const databaseBrowseSchema = z.object({
   skip: z.number(),
 });
 
-export type DatabaseBrowseDto = z.infer<typeof databaseBrowseSchema>;
-export type DatabaseInfo = DatabaseBackupFileDto;
+export type DatabaseBrowse = z.infer<typeof databaseBrowseSchema>;
+export type DatabaseInfo = DatabaseBackupFile;
 
 export const databaseBackupOperationResponseSchema = z.object({
   success: z.boolean(),
@@ -136,8 +126,7 @@ export const databaseBackupOperationResponseSchema = z.object({
   warning: z.string().optional(),
 });
 
-export type DatabaseBackupOperationResponseDto = z.infer<typeof databaseBackupOperationResponseSchema>;
-export type DatabaseBackupResponse = DatabaseBackupOperationResponseDto;
+export type DatabaseBackupResponse = z.infer<typeof databaseBackupOperationResponseSchema>;
 
 export const databaseRestoreOperationResponseSchema = z.object({
   success: z.boolean(),
@@ -149,8 +138,7 @@ export const databaseRestoreOperationResponseSchema = z.object({
   backupName: z.string().optional(),
 });
 
-export type DatabaseRestoreOperationResponseDto = z.infer<typeof databaseRestoreOperationResponseSchema>;
-export type DatabaseRestoreResponse = DatabaseRestoreOperationResponseDto;
+export type DatabaseRestoreResponse = z.infer<typeof databaseRestoreOperationResponseSchema>;
 
 /**
  * Database Sync DTOs
@@ -164,7 +152,7 @@ export const databaseSyncOptionsSchema = z.object({
   verbose: z.boolean().optional(),
 });
 
-export type DatabaseSyncOptionsDto = z.infer<typeof databaseSyncOptionsSchema>;
+export type DatabaseSyncOptions = z.infer<typeof databaseSyncOptionsSchema>;
 
 export const databaseSyncCollectionResultSchema = z.object({
   name: z.string(),
@@ -176,7 +164,7 @@ export const databaseSyncCollectionResultSchema = z.object({
   error: z.string().optional(),
 });
 
-export type DatabaseSyncCollectionResultDto = z.infer<typeof databaseSyncCollectionResultSchema>;
+export type DatabaseSyncCollectionResult = z.infer<typeof databaseSyncCollectionResultSchema>;
 
 export const databaseSyncResultSchema = z.object({
   direction: databaseSyncDirectionSchema,
@@ -186,20 +174,20 @@ export const databaseSyncResultSchema = z.object({
   collections: z.array(databaseSyncCollectionResultSchema),
 });
 
-export type DatabaseSyncResultDto = z.infer<typeof databaseSyncResultSchema>;
+export type DatabaseSyncResult = z.infer<typeof databaseSyncResultSchema>;
 
 /**
  * Database Engine DTOs
  */
 
 export const databaseEngineProviderSchema = z.enum(['mongodb', 'prisma', 'redis']);
-export type DatabaseEngineProviderDto = z.infer<typeof databaseEngineProviderSchema>;
+export type DatabaseEngineProvider = z.infer<typeof databaseEngineProviderSchema>;
 
 export const databaseEnginePrimaryProviderSchema = z.enum(['mongodb', 'prisma']);
-export type DatabaseEnginePrimaryProviderDto = z.infer<typeof databaseEnginePrimaryProviderSchema>;
+export type DatabaseEnginePrimaryProvider = z.infer<typeof databaseEnginePrimaryProviderSchema>;
 
 export const databaseEngineServiceSchema = z.enum(['app', 'auth', 'product', 'integrations', 'cms']);
-export type DatabaseEngineServiceDto = z.infer<typeof databaseEngineServiceSchema>;
+export type DatabaseEngineService = z.infer<typeof databaseEngineServiceSchema>;
 
 export const databaseEnginePolicySchema = z.object({
   requireExplicitServiceRouting: z.boolean(),
@@ -210,7 +198,7 @@ export const databaseEnginePolicySchema = z.object({
   strictProviderAvailability: z.boolean(),
 });
 
-export type DatabaseEnginePolicyDto = z.infer<typeof databaseEnginePolicySchema>;
+export type DatabaseEnginePolicy = z.infer<typeof databaseEnginePolicySchema>;
 
 export const databaseEngineOperationControlsSchema = z.object({
   allowManualFullSync: z.boolean(),
@@ -222,7 +210,7 @@ export const databaseEngineOperationControlsSchema = z.object({
   allowOperationJobCancellation: z.boolean(),
 });
 
-export type DatabaseEngineOperationControlsDto = z.infer<typeof databaseEngineOperationControlsSchema>;
+export type DatabaseEngineOperationControls = z.infer<typeof databaseEngineOperationControlsSchema>;
 
 export const databaseEngineBackupTargetScheduleSchema = z.object({
   enabled: z.boolean(),
@@ -238,7 +226,7 @@ export const databaseEngineBackupTargetScheduleSchema = z.object({
   nextDueAt: z.string().nullable(),
 });
 
-export type DatabaseEngineBackupTargetScheduleDto = z.infer<typeof databaseEngineBackupTargetScheduleSchema>;
+export type DatabaseEngineBackupTargetSchedule = z.infer<typeof databaseEngineBackupTargetScheduleSchema>;
 
 export const databaseEngineBackupScheduleSchema = z.object({
   schedulerEnabled: z.boolean(),
@@ -248,15 +236,14 @@ export const databaseEngineBackupScheduleSchema = z.object({
   postgresql: databaseEngineBackupTargetScheduleSchema,
 });
 
-export type DatabaseEngineBackupScheduleDto = z.infer<typeof databaseEngineBackupScheduleSchema>;
+export type DatabaseEngineBackupSchedule = z.infer<typeof databaseEngineBackupScheduleSchema>;
 
 export const sqlQueryFieldSchema = z.object({
   name: z.string(),
   type: z.string(),
 });
 
-export type SqlQueryFieldDto = z.infer<typeof sqlQueryFieldSchema>;
-export type SqlQueryField = SqlQueryFieldDto;
+export type SqlQueryField = z.infer<typeof sqlQueryFieldSchema>;
 
 export const sqlQueryResultSchema = z.object({
   fields: z.array(sqlQueryFieldSchema),
@@ -266,12 +253,10 @@ export const sqlQueryResultSchema = z.object({
   error: z.string().nullable().optional(),
 });
 
-export type SqlQueryResultDto = z.infer<typeof sqlQueryResultSchema>;
-export type SqlQueryResult = SqlQueryResultDto;
+export type SqlQueryResult = z.infer<typeof sqlQueryResultSchema>;
 
 export const crudOperationSchema = z.enum(['create', 'read', 'update', 'delete']);
-export type CrudOperationDto = z.infer<typeof crudOperationSchema>;
-export type CrudOperation = CrudOperationDto;
+export type CrudOperation = z.infer<typeof crudOperationSchema>;
 
 export const crudRequestSchema = z.object({
   provider: z.enum(['mongodb', 'prisma', 'postgresql']),
@@ -282,8 +267,7 @@ export const crudRequestSchema = z.object({
   id: z.string().optional(),
 });
 
-export type CrudRequestDto = z.infer<typeof crudRequestSchema>;
-export type CrudRequest = CrudRequestDto;
+export type CrudRequest = z.infer<typeof crudRequestSchema>;
 
 export const crudResultSchema = z.object({
   success: z.boolean(),
@@ -291,8 +275,7 @@ export const crudResultSchema = z.object({
   error: z.string().optional(),
 });
 
-export type CrudResultDto = z.infer<typeof crudResultSchema>;
-export type CrudResult = CrudResultDto;
+export type CrudResult = z.infer<typeof crudResultSchema>;
 
 export const databaseColumnInfoSchema = z.object({
   name: z.string(),
@@ -303,8 +286,7 @@ export const databaseColumnInfoSchema = z.object({
   isForeignKey: z.boolean(),
 });
 
-export type DatabaseColumnInfoDto = z.infer<typeof databaseColumnInfoSchema>;
-export type DatabaseColumnInfo = DatabaseColumnInfoDto;
+export type DatabaseColumnInfo = z.infer<typeof databaseColumnInfoSchema>;
 
 export const databaseIndexInfoSchema = z.object({
   name: z.string(),
@@ -313,8 +295,7 @@ export const databaseIndexInfoSchema = z.object({
   definition: z.string().optional(),
 });
 
-export type DatabaseIndexInfoDto = z.infer<typeof databaseIndexInfoSchema>;
-export type DatabaseIndexInfo = DatabaseIndexInfoDto;
+export type DatabaseIndexInfo = z.infer<typeof databaseIndexInfoSchema>;
 
 export const databaseForeignKeyInfoSchema = z.object({
   name: z.string(),
@@ -325,16 +306,14 @@ export const databaseForeignKeyInfoSchema = z.object({
   onUpdate: z.string().optional(),
 });
 
-export type DatabaseForeignKeyInfoDto = z.infer<typeof databaseForeignKeyInfoSchema>;
-export type DatabaseForeignKeyInfo = DatabaseForeignKeyInfoDto;
+export type DatabaseForeignKeyInfo = z.infer<typeof databaseForeignKeyInfoSchema>;
 
 export const databaseEnumInfoDto = z.object({
   name: z.string(),
   values: z.array(z.string()),
 });
 
-export type DatabaseEnumInfoDto = z.infer<typeof databaseEnumInfoDto>;
-export type DatabaseEnumInfo = DatabaseEnumInfoDto;
+export type DatabaseEnumInfo = z.infer<typeof databaseEnumInfoDto>;
 
 export const databaseTableDetailSchema = z.object({
   name: z.string(),
@@ -345,10 +324,9 @@ export const databaseTableDetailSchema = z.object({
   sizeFormatted: z.string().default(''),
 });
 
-export type DatabaseTableDetailDto = z.infer<typeof databaseTableDetailSchema>;
-export type DatabaseTableDetail = DatabaseTableDetailDto;
+export type DatabaseTableDetail = z.infer<typeof databaseTableDetailSchema>;
 
-export interface FieldInfoDto {
+export interface FieldInfo {
   name: string;
   type: string;
   nullable?: boolean;
@@ -361,11 +339,11 @@ export interface FieldInfoDto {
   relationTo?: string | null;
 }
 
-export type FieldSchema = FieldInfoDto;
+export type FieldSchema = FieldInfo;
 
-export interface CollectionSchemaDto {
+export interface CollectionSchema {
   name: string;
-  fields: FieldInfoDto[];
+  fields: FieldInfo[];
   count?: number;
   documentCount?: number;
   provider?: string;
@@ -373,22 +351,17 @@ export interface CollectionSchemaDto {
   [key: string]: unknown;
 }
 
-export type CollectionSchema = CollectionSchemaDto;
-
 export const schemaProviderSchema = z.enum(['prisma', 'mongodb', 'multi']);
-export type SchemaProviderDto = z.infer<typeof schemaProviderSchema>;
-export type SchemaProvider = SchemaProviderDto;
+export type SchemaProvider = z.infer<typeof schemaProviderSchema>;
 
-export interface MultiSchemaResponseDto {
+export interface MultiSchemaResponse {
   provider: string;
-  collections: CollectionSchemaDto[];
+  collections: CollectionSchema[];
   sources?: Record<string, Record<string, unknown>>;
 }
 
-export type SchemaResponseDto = MultiSchemaResponseDto;
-export type SchemaResponsePayloadDto = SchemaResponseDto;
-export type SchemaResponse = SchemaResponseDto;
-export type SchemaData = SchemaResponseDto;
+export type SchemaResponse = MultiSchemaResponse;
+export type SchemaData = SchemaResponse;
 
 export const databaseEngineOperationJobSchema = dtoBaseSchema.extend({
   status: z.enum(['queued', 'running', 'completed', 'failed', 'canceled']),
@@ -406,7 +379,7 @@ export const databaseEngineOperationJobSchema = dtoBaseSchema.extend({
   completedAt: z.string().nullable().optional(),
 });
 
-export type DatabaseEngineOperationJobDto = z.infer<typeof databaseEngineOperationJobSchema>;
+export type DatabaseEngineOperationJob = z.infer<typeof databaseEngineOperationJobSchema>;
 
 export const databaseEngineOperationsJobsSchema = z.object({
   timestamp: z.string(),
@@ -414,11 +387,11 @@ export const databaseEngineOperationsJobsSchema = z.object({
   jobs: z.array(databaseEngineOperationJobSchema),
 });
 
-export type DatabaseEngineOperationsJobsDto = z.infer<typeof databaseEngineOperationsJobsSchema>;
+export type DatabaseEngineOperationsJobs = z.infer<typeof databaseEngineOperationsJobsSchema>;
 
-export type DatabaseEngineWorkspaceViewDto = 'engine' | 'operations' | 'backups' | 'redis' | 'preview' | 'crud';
+export type DatabaseEngineWorkspaceView = 'engine' | 'operations' | 'backups' | 'redis' | 'preview' | 'crud';
 
-export interface UnifiedCollectionDto {
+export interface UnifiedCollection {
   name: string;
   existsInMongo: boolean;
   existsInPrisma: boolean;
@@ -437,7 +410,7 @@ export const databaseEngineCollectionProviderPreviewItemSchema = z.object({
   error: z.string().nullable(),
 });
 
-export type DatabaseEngineCollectionProviderPreviewItemDto = z.infer<typeof databaseEngineCollectionProviderPreviewItemSchema>;
+export type DatabaseEngineCollectionProviderPreviewItem = z.infer<typeof databaseEngineCollectionProviderPreviewItemSchema>;
 
 export const databaseEngineProviderPreviewSchema = z.object({
   timestamp: z.string().optional(),
@@ -457,10 +430,9 @@ export const databaseEngineProviderPreviewSchema = z.object({
   })),
 });
 
-export type DatabaseEngineProviderPreviewDto = z.infer<typeof databaseEngineProviderPreviewSchema>;
+export type DatabaseEngineProviderPreview = z.infer<typeof databaseEngineProviderPreviewSchema>;
 
-export type DatabaseCollectionCopyResultDto = DatabaseSyncCollectionResultDto;
-export type CollectionCopyResult = DatabaseCollectionCopyResultDto;
+export type CollectionCopyResult = DatabaseSyncCollectionResult;
 
 export const databaseEngineBackupRunNowResponseSchema = z.object({
   success: z.boolean(),
@@ -474,7 +446,7 @@ export const databaseEngineBackupRunNowResponseSchema = z.object({
   })),
 });
 
-export type DatabaseEngineBackupRunNowResponseDto = z.infer<typeof databaseEngineBackupRunNowResponseSchema>;
+export type DatabaseEngineBackupRunNowResponse = z.infer<typeof databaseEngineBackupRunNowResponseSchema>;
 
 export const databaseEngineBackupSchedulerStatusSchema = z.object({
   timestamp: z.string().optional(),
@@ -490,7 +462,7 @@ export const databaseEngineBackupSchedulerStatusSchema = z.object({
   targets: z.record(z.string(), z.any()).optional(),
 });
 
-export type DatabaseEngineBackupSchedulerStatusDto = z.infer<typeof databaseEngineBackupSchedulerStatusSchema>;
+export type DatabaseEngineBackupSchedulerStatus = z.infer<typeof databaseEngineBackupSchedulerStatusSchema>;
 
 export const databaseEngineBackupSchedulerTickResultSchema = z.object({
   checkedAt: z.string(),
@@ -505,14 +477,14 @@ export const databaseEngineBackupSchedulerTickResultSchema = z.object({
   })),
 });
 
-export type DatabaseEngineBackupSchedulerTickResultDto = z.infer<typeof databaseEngineBackupSchedulerTickResultSchema>;
+export type DatabaseEngineBackupSchedulerTickResult = z.infer<typeof databaseEngineBackupSchedulerTickResultSchema>;
 
 export const databaseEngineBackupSchedulerTickResponseSchema = z.object({
   executed: z.boolean(),
   jobsQueued: z.number(),
 });
 
-export type DatabaseEngineBackupSchedulerTickResponseDto = z.infer<typeof databaseEngineBackupSchedulerTickResponseSchema>;
+export type DatabaseEngineBackupSchedulerTickResponse = z.infer<typeof databaseEngineBackupSchedulerTickResponseSchema>;
 
 /**
  * Database Engine Status DTOs
@@ -529,7 +501,7 @@ export const databaseEngineCollectionStatusSchema = z.object({
   })),
 });
 
-export type DatabaseEngineCollectionStatusDto = z.infer<typeof databaseEngineCollectionStatusSchema>;
+export type DatabaseEngineCollectionStatus = z.infer<typeof databaseEngineCollectionStatusSchema>;
 
 export const databaseEngineServiceStatusSchema = z.object({
   service: z.string(),
@@ -541,7 +513,7 @@ export const databaseEngineServiceStatusSchema = z.object({
   resolutionError: z.string().nullable(),
 });
 
-export type DatabaseEngineServiceStatusDto = z.infer<typeof databaseEngineServiceStatusSchema>;
+export type DatabaseEngineServiceStatus = z.infer<typeof databaseEngineServiceStatusSchema>;
 
 export const databaseEngineStatusSchema = z.object({
   timestamp: z.string(),
@@ -558,7 +530,7 @@ export const databaseEngineStatusSchema = z.object({
   blockingIssues: z.array(z.string()),
 });
 
-export type DatabaseEngineStatusDto = z.infer<typeof databaseEngineStatusSchema>;
+export type DatabaseEngineStatus = z.infer<typeof databaseEngineStatusSchema>;
 
 export const redisNamespaceSchema = z.object({
   namespace: z.string(),
@@ -583,8 +555,8 @@ export const redisStatusSchema = z.object({
   clients: z.number().optional(),
 });
 
-export type RedisStatusDto = z.infer<typeof redisStatusSchema>;
-export type RedisOverviewDto = RedisStatusDto;
+export type RedisStatus = z.infer<typeof redisStatusSchema>;
+export type RedisOverview = RedisStatus;
 
 export type AiQuery = {
   id: string;
@@ -605,6 +577,5 @@ export const settingsBackfillResultSchema = z.object({
   sampleIds: z.array(z.string()).optional(),
 });
 
-export type SettingsBackfillResultDto = z.infer<typeof settingsBackfillResultSchema>;
-export type SettingsBackfillResult = SettingsBackfillResultDto;
+export type SettingsBackfillResult = z.infer<typeof settingsBackfillResultSchema>;
 

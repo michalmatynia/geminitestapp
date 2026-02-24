@@ -385,7 +385,7 @@ function MasterFolderTreeNode({
 }): React.JSX.Element {
   const {
     controller,
-    enableDnd,
+    enableDnd = true,
     renderNode,
     canStartDrag,
     onNodeDragStart,

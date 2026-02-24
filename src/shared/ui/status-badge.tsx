@@ -20,8 +20,8 @@ interface StatusBadgeProps {
 // Map common statuses to variants
 const statusToVariant = (status: string): StatusVariant => {
   const s = status.toLowerCase();
-  if (s === 'pending' || s === 'queued' || s === 'waiting') return 'pending';
-  if (s === 'active' || s === 'success' || s === 'completed' || s === 'listed' || s === 'healthy') return 'active';
+  if (s === 'pending' || s === 'queued' || s === 'waiting' || s === 'not tested' || s === 'not_tested' || s === 'not connected' || s === 'not_connected' || s === 'disconnected') return 'pending';
+  if (s === 'active' || s === 'success' || s === 'completed' || s === 'listed' || s === 'healthy' || s === 'connected' || s === 'ok') return 'active';
   if (s === 'failed' || s === 'error' || s === 'critical' || s === 'canceled') return 'error';
   if (s === 'removed' || s === 'archived' || s === 'deleted') return 'removed';
   if (s === 'processing' || s === 'in_progress' || s === 'running' || s === 'stepping') return 'processing';

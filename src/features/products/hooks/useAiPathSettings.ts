@@ -6,9 +6,16 @@ import {
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
 } from '@/features/ai/ai-paths/lib/core/constants';
+import { palette } from '@/features/ai/ai-paths/lib/core/definitions';
+import {
+  migrateTriggerToFetcherGraph,
+  normalizeNodes,
+} from '@/features/ai/ai-paths/lib/core/normalization';
 import {
   createDefaultPathConfig,
 } from '@/features/ai/ai-paths/lib/core/utils/factory';
+import { sanitizeEdges } from '@/features/ai/ai-paths/lib/core/utils/graph';
+import { repairPathNodeIdentities } from '@/features/ai/ai-paths/lib/core/utils/node-identity';
 import { safeParseJson } from '@/features/ai/ai-paths/lib/core/utils/runtime';
 import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
 import type {
@@ -45,6 +52,23 @@ export type FindTriggerPathOptions = {
   defaultTriggerEventId?: string;
   preferServerExecution?: boolean;
   requireServerExecution?: boolean;
+};
+
+const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
+  const identityRepair = repairPathNodeIdentities(config, { palette });
+  const repaired = identityRepair.config;
+  const normalized = normalizeNodes(Array.isArray(repaired.nodes) ? repaired.nodes : []);
+  const migrated = migrateTriggerToFetcherGraph(
+    normalized,
+    Array.isArray(repaired.edges) ? repaired.edges : []
+  );
+  const graphNodes = normalizeNodes(migrated.nodes);
+  const graphEdges = sanitizeEdges(graphNodes, migrated.edges);
+  return {
+    ...repaired,
+    nodes: graphNodes,
+    edges: graphEdges,
+  };
 };
 
 export async function fetchPathSettings(
@@ -116,12 +140,13 @@ export async function fetchPathSettings(
           }
           try {
             const parsedConfig = JSON.parse(configRaw) as PathConfig;
-            configs[meta.id] = {
+            const mergedConfig: PathConfig = {
               ...createDefaultPathConfig(meta.id),
               ...parsedConfig,
               id: meta.id,
               name: parsedConfig?.name || meta.name || `Path ${meta.id}`,
             };
+            configs[meta.id] = sanitizeLoadedPathConfig(mergedConfig);
           } catch {
             configs[meta.id] = createDefaultPathConfig(meta.id);
           }

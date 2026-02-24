@@ -9,8 +9,7 @@ export const validatorImportScopeSchema = z.enum([
   'case-resolver-prompt-exploder',
 ]);
 
-export type ValidatorImportScopeDto = z.infer<typeof validatorImportScopeSchema>;
-export type ValidatorImportScope = ValidatorImportScopeDto;
+export type ValidatorImportScope = z.infer<typeof validatorImportScopeSchema>;
 
 export const validatorImportModeSchema = z.enum([
   'append',
@@ -18,8 +17,7 @@ export const validatorImportModeSchema = z.enum([
   'replace_scope',
 ]);
 
-export type ValidatorImportModeDto = z.infer<typeof validatorImportModeSchema>;
-export type ValidatorImportMode = ValidatorImportModeDto;
+export type ValidatorImportMode = z.infer<typeof validatorImportModeSchema>;
 
 export const validatorSemanticCodeSchema = z
   .string()
@@ -27,18 +25,16 @@ export const validatorSemanticCodeSchema = z
   .min(1)
   .regex(/^[a-zA-Z0-9._:-]+$/, 'Semantic code must contain only letters, numbers, dot, underscore, colon, or dash.');
 
-export type ValidatorSemanticCodeDto = z.infer<typeof validatorSemanticCodeSchema>;
-export type ValidatorSemanticCode = ValidatorSemanticCodeDto;
+export type ValidatorSemanticCode = z.infer<typeof validatorSemanticCodeSchema>;
 
 export const productValidatorImportSequenceStepSchema = z.object({
   patternCode: validatorSemanticCodeSchema,
   order: z.number().int().min(0),
 });
 
-export type ProductValidatorImportSequenceStepDto = z.infer<
+export type ProductValidatorImportSequenceStep = z.infer<
   typeof productValidatorImportSequenceStepSchema
 >;
-export type ProductValidatorImportSequenceStep = ProductValidatorImportSequenceStepDto;
 
 export const productValidatorImportSequenceSchema = z.object({
   code: validatorSemanticCodeSchema,
@@ -47,8 +43,7 @@ export const productValidatorImportSequenceSchema = z.object({
   steps: z.array(productValidatorImportSequenceStepSchema).min(1),
 });
 
-export type ProductValidatorImportSequenceDto = z.infer<typeof productValidatorImportSequenceSchema>;
-export type ProductValidatorImportSequence = ProductValidatorImportSequenceDto;
+export type ProductValidatorImportSequence = z.infer<typeof productValidatorImportSequenceSchema>;
 
 export const productValidatorImportPatternSchema = createProductValidationPatternSchema.extend({
   id: z.string().trim().min(1).optional(),
@@ -59,8 +54,7 @@ export const productValidatorImportPatternSchema = createProductValidationPatter
   sequenceDebounceMs: z.number().int().min(0).max(30_000).optional(),
 });
 
-export type ProductValidatorImportPatternDto = z.infer<typeof productValidatorImportPatternSchema>;
-export type ProductValidatorImportPattern = ProductValidatorImportPatternDto;
+export type ProductValidatorImportPattern = z.infer<typeof productValidatorImportPatternSchema>;
 
 export const productValidatorImportMetadataSchema = z.object({
   source: z.string().trim().min(1).optional(),
@@ -69,8 +63,7 @@ export const productValidatorImportMetadataSchema = z.object({
   createdAt: z.string().trim().optional(),
 });
 
-export type ProductValidatorImportMetadataDto = z.infer<typeof productValidatorImportMetadataSchema>;
-export type ProductValidatorImportMetadata = ProductValidatorImportMetadataDto;
+export type ProductValidatorImportMetadata = z.infer<typeof productValidatorImportMetadataSchema>;
 
 export const productValidatorImportRequestSchema = z
   .object({
@@ -145,13 +138,11 @@ export const productValidatorImportRequestSchema = z
     }
   });
 
-export type ProductValidatorImportRequestDto = z.infer<typeof productValidatorImportRequestSchema>;
-export type ProductValidatorImportRequest = ProductValidatorImportRequestDto;
+export type ProductValidatorImportRequest = z.infer<typeof productValidatorImportRequestSchema>;
 
 export const productValidatorImportActionSchema = z.enum(['create', 'update', 'delete', 'skip']);
 
-export type ProductValidatorImportActionDto = z.infer<typeof productValidatorImportActionSchema>;
-export type ProductValidatorImportAction = ProductValidatorImportActionDto;
+export type ProductValidatorImportAction = z.infer<typeof productValidatorImportActionSchema>;
 
 export const productValidatorImportOperationSchema = z.object({
   code: validatorSemanticCodeSchema.optional(),
@@ -161,8 +152,7 @@ export const productValidatorImportOperationSchema = z.object({
   reason: z.string().nullable().optional(),
 });
 
-export type ProductValidatorImportOperationDto = z.infer<typeof productValidatorImportOperationSchema>;
-export type ProductValidatorImportOperation = ProductValidatorImportOperationDto;
+export type ProductValidatorImportOperation = z.infer<typeof productValidatorImportOperationSchema>;
 
 export const productValidatorImportErrorSchema = z.object({
   code: z.string().nullable().optional(),
@@ -170,8 +160,7 @@ export const productValidatorImportErrorSchema = z.object({
   path: z.string().optional(),
 });
 
-export type ProductValidatorImportErrorDto = z.infer<typeof productValidatorImportErrorSchema>;
-export type ProductValidatorImportError = ProductValidatorImportErrorDto;
+export type ProductValidatorImportError = z.infer<typeof productValidatorImportErrorSchema>;
 
 export const productValidatorImportSummarySchema = z.object({
   createCount: z.number().int().min(0),
@@ -180,8 +169,7 @@ export const productValidatorImportSummarySchema = z.object({
   skipCount: z.number().int().min(0),
 });
 
-export type ProductValidatorImportSummaryDto = z.infer<typeof productValidatorImportSummarySchema>;
-export type ProductValidatorImportSummary = ProductValidatorImportSummaryDto;
+export type ProductValidatorImportSummary = z.infer<typeof productValidatorImportSummarySchema>;
 
 export const productValidatorImportResultSchema = z.object({
   ok: z.boolean(),
@@ -193,5 +181,4 @@ export const productValidatorImportResultSchema = z.object({
   errors: z.array(productValidatorImportErrorSchema),
 });
 
-export type ProductValidatorImportResultDto = z.infer<typeof productValidatorImportResultSchema>;
-export type ProductValidatorImportResult = ProductValidatorImportResultDto;
+export type ProductValidatorImportResult = z.infer<typeof productValidatorImportResultSchema>;

@@ -8,6 +8,7 @@ import type {
   Edge,
   CaseResolverEdgeMeta,
   CaseResolverCompileResult,
+  CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
 } from '@/shared/contracts/case-resolver';
 import { 
   NodeFileDocumentSearchScope, 
@@ -46,6 +47,15 @@ export type NodeFileWorkspaceContextValue = {
   setSelectedSearchDocumentId: (id: string) => void;
   isDocumentSearchOpen: boolean;
   setIsDocumentSearchOpen: (open: boolean) => void;
+  caseSearchQuery: string;
+  setCaseSearchQuery: (query: string) => void;
+  selectedDrillCaseId: string | null;
+  setSelectedDrillCaseId: (id: string | null) => void;
+  visibleCaseRows: Array<{
+    file: CaseResolverFile;
+    signatureLabel: string;
+    docCount: number;
+  }>;
   nodeMetaByNode: Record<string, CaseResolverNodeMeta>;
   edgeMetaByEdge: Record<string, CaseResolverEdgeMeta>;
   
@@ -59,6 +69,7 @@ export type NodeFileWorkspaceContextValue = {
   compiled: CaseResolverCompileResult;
   selectedNode: AiNode | null;
   selectedNodeMeta: CaseResolverNodeMeta | null;
+  selectedNodeFileMeta: CaseResolverNodeFileMeta | null;
   selectedFile: CaseResolverFile | null;
   
   // Actions
@@ -67,6 +78,7 @@ export type NodeFileWorkspaceContextValue = {
   setConfigOpen: (open: boolean) => void;
   addNode: (node: AiNode) => void;
   updateNode: (nodeId: string, patch: Partial<AiNode>) => void;
+  setNodeFileMeta: (nodeId: string, meta: CaseResolverNodeFileMeta) => void;
   setNodes: (nodes: AiNode[]) => void;
   setEdges: (edges: Edge[]) => void;
   setView: (view: { x: number; y: number; scale: number }) => void;
@@ -78,7 +90,7 @@ export type NodeFileWorkspaceContextValue = {
 
   // Optional additions for CanvasWorkspace / Inspector
   isSidebarReady?: boolean;
-  selectedPromptMeta?: any;
+  selectedPromptMeta?: CaseResolverNodeMeta | null;
   selectedPromptSourceFile?: CaseResolverFile | null;
   selectedPromptTemplate?: string;
   selectedPromptInputText?: string;

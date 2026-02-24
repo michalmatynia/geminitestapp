@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 import 'server-only';
 
 import { randomUUID } from 'crypto';
@@ -9,10 +7,11 @@ import { NextResponse } from 'next/server';
 import { validationError } from '@/shared/errors/app-error';
 import { resolveError } from '@/shared/errors/resolve-error';
 import { logger } from '@/shared/utils/logger';
+import type { SystemLogLevelDto } from '@/shared/contracts/observability';
 
 // Local type definitions to avoid importing from features layer
 type LogSystemEventParams = {
-  level: string;
+  level: SystemLogLevelDto | string;
   message: string;
   source: string;
   error?: unknown;
@@ -34,10 +33,12 @@ type ErrorFingerprintParams = {
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
     // Dynamically import to avoid circular dependency (shared -> features -> shared)
-     
-    const mod = await import('@/features/observability/server');
-     
-    await mod.logSystemEvent(params as any);
+    const mod = await import('@/features/observability/server') as { 
+      logSystemEvent: (input: LogSystemEventParams) => Promise<void>;
+      getErrorFingerprint: (input: ErrorFingerprintParams) => Promise<string>;
+    };
+    
+    await mod.logSystemEvent(params);
   } catch (error) {
     logger.error('Failed to log system event via observability feature', error, { context: params });
   }
@@ -45,8 +46,9 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
 
 const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
   try {
-     
-    const mod = await import('@/features/observability/server');
+    const mod = await import('@/features/observability/server') as {
+      getErrorFingerprint: (input: ErrorFingerprintParams) => Promise<string>;
+    };
     return mod.getErrorFingerprint(params);
   } catch (error) {
     logger.error('Failed to get error fingerprint via observability feature', error, { context: params });

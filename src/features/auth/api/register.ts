@@ -1,6 +1,4 @@
-import type { RegisterResponseDto } from '@/shared/contracts/auth';
-
-export type RegisterResponse = RegisterResponseDto;
+import type { RegisterResponse, Register } from '@/shared/contracts/auth';
 
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {
@@ -10,12 +8,7 @@ const safeJson = async <T>(res: Response): Promise<T> => {
   }
 };
 
-export const registerUser = async (input: {
-  email: string;
-  password: string;
-  name?: string | undefined;
-  emailVerified?: boolean | undefined;
-}): Promise<{ ok: boolean; payload: RegisterResponse }> => {
+export const registerUser = async (input: Register): Promise<{ ok: boolean; payload: RegisterResponse }> => {
   const res = await fetch('/api/auth/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

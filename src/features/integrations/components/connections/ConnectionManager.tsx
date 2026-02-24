@@ -6,7 +6,7 @@ import {
 } from '@/features/integrations/constants/slugs';
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
 import { IntegrationConnection, TestLogEntry } from '@/shared/contracts/integrations';
-import { Button, Input,  StatusBadge, FormSection, FormField, SimpleSettingsList } from '@/shared/ui';
+import { Button, Input, StatusBadge, FormSection, FormField, SimpleSettingsList, Checkbox, Label } from '@/shared/ui';
 
 const NEW_CONNECTION_DRAFT_ID = '__new_connection__';
 
@@ -99,7 +99,8 @@ export function ConnectionManager(): React.JSX.Element {
         <div className='space-y-3'>
           <FormField label='Connection name'>
             <Input
-              className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+              variant='subtle'
+              size='sm'
               placeholder={connectionNamePlaceholder}
               value={connectionForm.name}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -112,7 +113,8 @@ export function ConnectionManager(): React.JSX.Element {
           </FormField>
           <FormField label={usernameLabel}>
             <Input
-              className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+              variant='subtle'
+              size='sm'
               placeholder={usernamePlaceholder}
               value={connectionForm.username}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -125,7 +127,8 @@ export function ConnectionManager(): React.JSX.Element {
           </FormField>
           <FormField label={passwordLabel}>
             <Input
-              className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+              variant='subtle'
+              size='sm'
               type='password'
               placeholder={passwordPlaceholder}
               value={connectionForm.password}
@@ -141,7 +144,8 @@ export function ConnectionManager(): React.JSX.Element {
             <>
               <FormField label='Default template ID (optional)'>
                 <Input
-                  className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                  variant='subtle'
+                  size='sm'
                   placeholder='tradera-template-1'
                   value={connectionForm.traderaDefaultTemplateId}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -154,7 +158,8 @@ export function ConnectionManager(): React.JSX.Element {
               </FormField>
               <FormField label='Default duration (hours)'>
                 <Input
-                  className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                  variant='subtle'
+                  size='sm'
                   type='number'
                   min={1}
                   max={720}
@@ -172,7 +177,8 @@ export function ConnectionManager(): React.JSX.Element {
               </FormField>
               <FormField label='Auto relist lead (minutes)'>
                 <Input
-                  className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                  variant='subtle'
+                  size='sm'
                   type='number'
                   min={0}
                   max={10080}
@@ -189,24 +195,27 @@ export function ConnectionManager(): React.JSX.Element {
                   }
                 />
               </FormField>
-              <label className='flex items-center gap-2 text-sm text-gray-300'>
-                <input
-                  type='checkbox'
+              <div className='flex items-center gap-3 py-1'>
+                <Checkbox
+                  id='traderaAutoRelistEnabled'
                   checked={connectionForm.traderaAutoRelistEnabled}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  onCheckedChange={(checked: boolean): void =>
                     setConnectionForm((prev) => ({
                       ...prev,
-                      traderaAutoRelistEnabled: event.target.checked,
+                      traderaAutoRelistEnabled: checked,
                     }))
                   }
                 />
-                Enable auto relist by default
-              </label>
+                <Label htmlFor='traderaAutoRelistEnabled' className='text-xs font-medium text-gray-300'>
+                  Enable auto relist by default
+                </Label>
+              </div>
               {isTraderaApi && (
                 <>
                   <FormField label='Tradera API App ID'>
                     <Input
-                      className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                      variant='subtle'
+                      size='sm'
                       placeholder='5683'
                       inputMode='numeric'
                       value={connectionForm.traderaApiAppId}
@@ -220,7 +229,8 @@ export function ConnectionManager(): React.JSX.Element {
                   </FormField>
                   <FormField label='Tradera API App Key'>
                     <Input
-                      className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                      variant='subtle'
+                      size='sm'
                       type='password'
                       placeholder={
                         isCreateMode
@@ -245,7 +255,8 @@ export function ConnectionManager(): React.JSX.Element {
                   </FormField>
                   <FormField label='Tradera API Public Key (optional)'>
                     <Input
-                      className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                      variant='subtle'
+                      size='sm'
                       placeholder='Public key'
                       value={connectionForm.traderaApiPublicKey}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
@@ -258,7 +269,8 @@ export function ConnectionManager(): React.JSX.Element {
                   </FormField>
                   <FormField label='Tradera API User ID'>
                     <Input
-                      className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                      variant='subtle'
+                      size='sm'
                       placeholder='Numeric user ID'
                       inputMode='numeric'
                       value={connectionForm.traderaApiUserId}
@@ -272,7 +284,8 @@ export function ConnectionManager(): React.JSX.Element {
                   </FormField>
                   <FormField label='Tradera API Token'>
                     <Input
-                      className='w-full rounded-md border border-border bg-card px-3 py-2 text-sm text-white'
+                      variant='subtle'
+                      size='sm'
                       type='password'
                       placeholder={
                         isCreateMode
@@ -295,19 +308,21 @@ export function ConnectionManager(): React.JSX.Element {
                       </p>
                     )}
                   </FormField>
-                  <label className='flex items-center gap-2 text-sm text-gray-300'>
-                    <input
-                      type='checkbox'
+                  <div className='flex items-center gap-3 py-1'>
+                    <Checkbox
+                      id='traderaApiSandbox'
                       checked={connectionForm.traderaApiSandbox}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                      onCheckedChange={(checked: boolean): void =>
                         setConnectionForm((prev) => ({
                           ...prev,
-                          traderaApiSandbox: event.target.checked,
+                          traderaApiSandbox: checked,
                         }))
                       }
                     />
-                    Use Tradera sandbox
-                  </label>
+                    <Label htmlFor='traderaApiSandbox' className='text-xs font-medium text-gray-300'>
+                      Use Tradera sandbox
+                    </Label>
+                  </div>
                 </>
               )}
             </>

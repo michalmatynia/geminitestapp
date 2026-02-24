@@ -1,20 +1,10 @@
 import { getBlockTypographyStyles } from '../theme-styles';
-import { useOptionalSectionBlockData } from './SectionBlockContext';
+import { useSectionBlockData } from './SectionBlockContext';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
-interface FrontendTextAtomSectionProps {
-  settings?: Record<string, unknown>;
-  blocks?: BlockInstance[];
-}
-
-export function FrontendTextAtomSection({
-  settings: propSettings,
-  blocks: propBlocks,
-}: FrontendTextAtomSectionProps): React.ReactNode {
-  const sectionBlockData = useOptionalSectionBlockData();
-  const settings = propSettings ?? sectionBlockData?.settings ?? {};
-  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
+export function FrontendTextAtomSection(): React.ReactNode {
+  const { settings, blocks } = useSectionBlockData();
   const text = (settings['text'] as string) || '';
   const alignment = (settings['alignment'] as string) || 'left';
   const letterGap = (settings['letterGap'] as number) || 0;

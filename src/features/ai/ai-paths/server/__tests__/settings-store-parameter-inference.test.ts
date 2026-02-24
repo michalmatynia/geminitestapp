@@ -70,13 +70,21 @@ describe('parameter inference seed config', () => {
     const templatePromptNode = nodes.find(
       (node) => node?.['id'] === 'node-prompt-template-params'
     );
-    const templateRegexNode = nodes.find(
-      (node) => node?.['id'] === 'node-regex-template-params'
+    const templateVpNode = nodes.find(
+      (node) => node?.['id'] === 'node-vp-template-params'
+    );
+    const templateLogicalConditionNode = nodes.find(
+      (node) => node?.['id'] === 'node-lc-template-params'
+    );
+    const templateRouterNode = nodes.find(
+      (node) => node?.['id'] === 'node-router-seed-params'
     );
     const seedNode = nodes.find((node) => node?.['id'] === 'node-seed-params');
 
     expect(templatePromptNode?.['type']).toBe('prompt');
-    expect(templateRegexNode?.['type']).toBe('regex');
+    expect(templateVpNode?.['type']).toBe('validation_pattern');
+    expect(templateLogicalConditionNode?.['type']).toBe('logical_condition');
+    expect(templateRouterNode?.['type']).toBe('router');
     expect(seedNode?.['type']).toBe('database');
 
     const templatePrompt = (
@@ -119,7 +127,7 @@ describe('parameter inference seed config', () => {
     expect(
       edges.some((edge) => {
         return (
-          edge?.['from'] === 'node-regex-template-params' &&
+          edge?.['from'] === 'node-router-seed-params' &&
           edge?.['to'] === 'node-seed-params' &&
           edge?.['fromPort'] === 'value' &&
           edge?.['toPort'] === 'value'
@@ -130,10 +138,10 @@ describe('parameter inference seed config', () => {
     expect(
       edges.some((edge) => {
         return (
-          edge?.['from'] === 'node-seed-params' &&
-          edge?.['to'] === 'node-update-params' &&
-          edge?.['fromPort'] === 'bundle' &&
-          edge?.['toPort'] === 'bundle'
+          edge?.['from'] === 'node-vp-template-params' &&
+          edge?.['to'] === 'node-lc-template-params' &&
+          edge?.['fromPort'] === 'value' &&
+          edge?.['toPort'] === 'value'
         );
       })
     ).toBe(true);
@@ -162,6 +170,13 @@ describe('parameter inference seed config', () => {
   it('marks seeded config as up-to-date', () => {
     const raw = buildParameterInferencePathConfigValue('2026-02-19T00:00:00.000Z');
     expect(needsParameterInferenceConfigUpgrade(raw)).toBe(false);
+  });
+
+  it('keeps seeded config up-to-date when only isActive flag changes', () => {
+    const raw = buildParameterInferencePathConfigValue('2026-02-19T00:00:00.000Z');
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const deactivated = JSON.stringify({ ...parsed, isActive: false });
+    expect(needsParameterInferenceConfigUpgrade(deactivated)).toBe(false);
   });
 
   it('marks legacy http query node configs for upgrade', () => {

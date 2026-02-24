@@ -65,8 +65,7 @@ export function StudioModals(): React.JSX.Element {
     createSlots,
     driveImportMode,
     driveImportTargetId,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-    importFromDriveMutation: importFromDriveMutation as any,
+    importFromDriveMutation: importFromDriveMutation as { mutateAsync: (args: { files: any[]; folder: string | null }) => Promise<any> },
     localUploadMode,
     localUploadTargetId,
     selectedFolder: '', // From SlotsContext normally
@@ -80,15 +79,11 @@ export function StudioModals(): React.JSX.Element {
     setTemporaryObjectUpload,
     slotHasRenderableImage,
     slotsCount: slots.length,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-    temporaryObjectUpload: temporaryObjectUpload as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-    toast: toast as any,
+    temporaryObjectUpload: temporaryObjectUpload as { id: string; filepath: string; filename: string; width: number | null; height: number | null } | null,
+    toast: toast as (message: string, options?: { variant?: any }) => void,
     toSlotName,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-    updateSlotMutation: updateSlotMutation as any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
-    uploadMutation: uploadMutation as any,
+    updateSlotMutation: updateSlotMutation as { mutateAsync: (args: { id: string; data: Record<string, unknown> }) => Promise<unknown> },
+    uploadMutation: uploadMutation as { mutateAsync: (args: { files: File[]; folder: string | null }) => Promise<any>; isPending: boolean },
   });
 
   const handleCreateEmptySlot = async (): Promise<void> => { 

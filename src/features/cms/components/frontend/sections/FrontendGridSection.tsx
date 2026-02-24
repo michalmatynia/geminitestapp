@@ -13,7 +13,7 @@ import { FrontendCarousel } from './FrontendCarousel';
 import { FrontendHeroBlock } from './FrontendHeroBlock';
 import { FrontendImageWithTextBlock } from './FrontendImageWithTextBlock';
 import { FrontendSlideshowSection } from './FrontendSlideshowSection';
-import { SectionBlockProvider, useOptionalSectionBlockData } from './SectionBlockContext';
+import { SectionBlockProvider, useSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider, useSectionData } from './SectionDataContext';
 import { SectionLayoutProvider, useSectionLayout } from './SectionLayoutContext';
 import { useCmsPageContext } from '../CmsPageContext';
@@ -25,12 +25,6 @@ import type { BlockInstance } from '../../../types/page-builder';
 
 // Section-type blocks that need special rendering inside columns
 const SECTION_BLOCK_TYPES = new Set(['ImageWithText', 'Hero', 'RichText', 'Block', 'TextAtom', 'Carousel', 'Slideshow']);
-
-interface FrontendGridSectionProps {
-  sectionId?: string | undefined;
-  settings?: Record<string, unknown>;
-  blocks?: BlockInstance[];
-}
 
 const getGapClass = (gap?: string): string => {
   if (gap === 'none') return 'gap-0';
@@ -254,15 +248,8 @@ function collectBackgroundImages(blocks: BlockInstance[], target: 'grid' | 'row'
   return result;
 }
 
-export function FrontendGridSection({
-  sectionId: propSectionId,
-  settings: propSettings,
-  blocks: propBlocks,
-}: FrontendGridSectionProps): React.ReactNode {
-  const sectionBlockData = useOptionalSectionBlockData();
-  const sectionId = propSectionId ?? sectionBlockData?.sectionId;
-  const settings = propSettings ?? sectionBlockData?.settings ?? {};
-  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
+export function FrontendGridSection(): React.ReactNode {
+  const { sectionId, settings, blocks } = useSectionBlockData();
   const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const sectionSelector = sectionId ? getCustomCssSelector(sectionId) : null;

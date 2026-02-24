@@ -48,6 +48,8 @@ export function PlaywrightTabContent(): React.JSX.Element {
                   })),
                 ]}
                 placeholder='Select persona'
+                variant='subtle'
+                size='sm'
               />
             </FormField>
             <FormSection variant='subtle' className='p-3 text-xs text-gray-400'>

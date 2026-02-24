@@ -740,6 +740,9 @@ export const databaseGuardrailMetaSchema = z
           rawType: z.string(),
           parseState: z.enum(['not_json_like', 'parsed', 'repaired', 'unparseable']),
           repairApplied: z.boolean(),
+          parseError: z.string().optional(),
+          truncationDetected: z.boolean().optional(),
+          repairSteps: z.array(z.string()).optional(),
         })
       )
       .optional(),

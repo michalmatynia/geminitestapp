@@ -4,24 +4,14 @@
 import { EmptyState, Card } from '@/shared/ui';
 
 import { FrontendBlockRenderer } from './FrontendBlockRenderer';
-import { useOptionalSectionBlockData } from './SectionBlockContext';
+import { useSectionBlockData } from './SectionBlockContext';
 import { useCmsPageContext } from '../CmsPageContext';
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 
 import type { BlockInstance } from '../../../types/page-builder';
 
-interface FrontendTestimonialsSectionProps {
-  settings?: Record<string, unknown>;
-  blocks?: BlockInstance[];
-}
-
-export function FrontendTestimonialsSection({
-  settings: propSettings,
-  blocks: propBlocks,
-}: FrontendTestimonialsSectionProps): React.ReactNode {
-  const sectionBlockData = useOptionalSectionBlockData();
-  const settings = propSettings ?? sectionBlockData?.settings ?? {};
-  const blocks = propBlocks ?? sectionBlockData?.blocks ?? [];
+export function FrontendTestimonialsSection(): React.ReactNode {
+  const { settings, blocks } = useSectionBlockData();
   const { colorSchemes, layout } = useCmsPageContext();
   const sectionStyles = getSectionStyles(settings, colorSchemes);
   const columns = (settings['columns'] as number) || 3;

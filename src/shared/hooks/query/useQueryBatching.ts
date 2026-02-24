@@ -12,13 +12,13 @@ interface QueryBatchConfig {
 
 // Hook for batching multiple queries into single requests
 export function useQueryBatching(config: QueryBatchConfig = {}): {
-  batchQuery: (queryKey: unknown[], queryFn: () => Promise<unknown>) => Promise<unknown>;
+  batchQuery: <TData = unknown>(queryKey: unknown[], queryFn: () => Promise<TData>) => Promise<TData>;
 } {
   const queryClient = useQueryClient();
   const batchQueue = useRef<Map<string, {
     queryKey: unknown[];
     queryFn: () => Promise<unknown>;
-    resolve: (data: unknown) => void;
+    resolve: (data: any) => void;
     reject: (error: Error) => void;
       }>>(new Map());
   const batchTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -59,14 +59,14 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ ids, type }),
               });
-              const batchResult = await res.json() as Record<string, any>;
+              const batchResult = await res.json() as Record<string, unknown>;
 
               // Resolve individual queries
               group.forEach((item, index) => {
                 const id = ids[index];
                 if (id) {
                   const data = batchResult[id];
-                  if (data) {
+                  if (data !== undefined) {
                     queryClient.setQueryData(item.queryKey, data);
                     item.resolve(data);
                   } else {
@@ -91,10 +91,10 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
     );
   }, [queryClient]);
 
-  const batchQuery = useCallback((
+  const batchQuery = useCallback(<TData = unknown>(
     queryKey: unknown[],
-    queryFn: () => Promise<unknown>
-  ): Promise<unknown> => {
+    queryFn: () => Promise<TData>
+  ): Promise<TData> => {
     return new Promise((resolve, reject) => {
       const key = JSON.stringify(queryKey);
       batchQueue.current.set(key, { queryKey, queryFn, resolve, reject });
@@ -128,20 +128,20 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
 
 // Hook for query deduplication
 export function useQueryDeduplication(): {
-  deduplicatedQuery: (queryKey: unknown[], queryFn: () => Promise<unknown>) => Promise<unknown>;
+  deduplicatedQuery: <TData = unknown>(queryKey: unknown[], queryFn: () => Promise<TData>) => Promise<TData>;
   } {
   const activeQueries = useRef<Map<string, Promise<unknown>>>(new Map());
 
-  const deduplicatedQuery = useCallback(async (
+  const deduplicatedQuery = useCallback(async <TData = unknown>(
     queryKey: unknown[],
-    queryFn: () => Promise<unknown>
-  ): Promise<unknown> => {
+    queryFn: () => Promise<TData>
+  ): Promise<TData> => {
     const key = JSON.stringify(queryKey);
     
     // Return existing promise if query is already running
     const existing = activeQueries.current.get(key);
     if (existing) {
-      return existing;
+      return existing as Promise<TData>;
     }
 
     // Create new promise and store it

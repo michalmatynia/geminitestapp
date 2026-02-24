@@ -8,7 +8,11 @@ import {
   serializeWorkspaceForUnsavedChangesCheck,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { 
+  CaseResolverFile, 
+  CaseResolverFolderRecord, 
+  CaseResolverWorkspace 
+} from '@/shared/contracts/case-resolver';
 
 const buildFilesById = (files: CaseResolverFile[]): Map<string, CaseResolverFile> =>
   new Map(files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file]));
@@ -89,8 +93,8 @@ describe('case resolver case context resolution', () => {
         targetFolderPath: 'case-a/folder',
         ownerCaseId: 'case-a',
         folderRecords: [
-          { path: 'case-a/folder', ownerCaseId: 'case-a' } as any,
-          { path: 'case-b/folder', ownerCaseId: 'case-b' } as any,
+          { path: 'case-a/folder', ownerCaseId: 'case-a' } as CaseResolverFolderRecord,
+          { path: 'case-b/folder', ownerCaseId: 'case-b' } as CaseResolverFolderRecord,
         ],
       }),
     ).toBe('case-a/folder');
@@ -102,8 +106,8 @@ describe('case resolver case context resolution', () => {
         targetFolderPath: 'case-b/folder',
         ownerCaseId: 'case-a',
         folderRecords: [
-          { path: 'case-a/folder', ownerCaseId: 'case-a' } as any,
-          { path: 'case-b/folder', ownerCaseId: 'case-b' } as any,
+          { path: 'case-a/folder', ownerCaseId: 'case-a' } as CaseResolverFolderRecord,
+          { path: 'case-b/folder', ownerCaseId: 'case-b' } as CaseResolverFolderRecord,
         ],
       }),
     ).toBe('');
@@ -121,7 +125,7 @@ describe('case resolver case context resolution', () => {
       name: 'Doc A',
       parentCaseId: caseFile.id,
     });
-    const baseWorkspace = {
+    const baseWorkspace: Partial<CaseResolverWorkspace> = {
       version: 2 as const,
       workspaceRevision: 0,
       lastMutationId: null,
@@ -139,8 +143,8 @@ describe('case resolver case context resolution', () => {
       activeFileId: documentFile.id,
     };
 
-    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as any)).toBe(
-      serializeWorkspaceForUnsavedChangesCheck(selectedOtherFileWorkspace as any)
+    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as CaseResolverWorkspace)).toBe(
+      serializeWorkspaceForUnsavedChangesCheck(selectedOtherFileWorkspace as CaseResolverWorkspace)
     );
   });
 
@@ -156,7 +160,7 @@ describe('case resolver case context resolution', () => {
       name: 'Doc A',
       parentCaseId: caseFile.id,
     });
-    const baseWorkspace = {
+    const baseWorkspace: Partial<CaseResolverWorkspace> = {
       version: 2 as const,
       workspaceRevision: 1,
       lastMutationId: 'mutation-a',
@@ -176,8 +180,8 @@ describe('case resolver case context resolution', () => {
       lastMutationAt: '2026-02-19T00:05:00.000Z',
     };
 
-    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as any)).toBe(
-      serializeWorkspaceForUnsavedChangesCheck(revisionOnlyWorkspace as any)
+    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as CaseResolverWorkspace)).toBe(
+      serializeWorkspaceForUnsavedChangesCheck(revisionOnlyWorkspace as CaseResolverWorkspace)
     );
   });
 
@@ -195,7 +199,7 @@ describe('case resolver case context resolution', () => {
       createdAt: '2026-02-19T00:01:00.000Z',
       updatedAt: '2026-02-19T00:01:00.000Z',
     };
-    const baseWorkspace = {
+    const baseWorkspace: Partial<CaseResolverWorkspace> = {
       version: 2 as const,
       workspaceRevision: 1,
       lastMutationId: null,
@@ -219,8 +223,8 @@ describe('case resolver case context resolution', () => {
       },
     };
 
-    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as any)).toBe(
-      serializeWorkspaceForUnsavedChangesCheck(reorderedWorkspace as any)
+    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as CaseResolverWorkspace)).toBe(
+      serializeWorkspaceForUnsavedChangesCheck(reorderedWorkspace as CaseResolverWorkspace)
     );
   });
 
@@ -236,7 +240,7 @@ describe('case resolver case context resolution', () => {
       name: 'Doc A',
       parentCaseId: caseFile.id,
     });
-    const baseWorkspace = {
+    const baseWorkspace: Partial<CaseResolverWorkspace> = {
       version: 2 as const,
       workspaceRevision: 0,
       lastMutationId: null,
@@ -260,8 +264,8 @@ describe('case resolver case context resolution', () => {
       ],
     };
 
-    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as any)).not.toBe(
-      serializeWorkspaceForUnsavedChangesCheck(renamedDocumentWorkspace as any)
+    expect(serializeWorkspaceForUnsavedChangesCheck(baseWorkspace as CaseResolverWorkspace)).not.toBe(
+      serializeWorkspaceForUnsavedChangesCheck(renamedDocumentWorkspace as CaseResolverWorkspace)
     );
   });
 });

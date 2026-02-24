@@ -4,14 +4,14 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { useState, useMemo, useCallback, useEffect, Dispatch, SetStateAction } from 'react';
 
 import type { 
-  DatabaseEngineStatusDto, 
-  DatabaseEngineOperationJobDto, 
-  DatabaseEngineOperationsJobsDto,
-  DatabaseEngineBackupSchedulerStatusDto,
-  RedisOverviewDto,
-  DatabaseEngineProviderPreviewDto,
-  DatabaseEngineWorkspaceViewDto,
-  UnifiedCollectionDto
+  DatabaseEngineStatus, 
+  DatabaseEngineOperationJob, 
+  DatabaseEngineOperationsJobs,
+  DatabaseEngineBackupSchedulerStatus,
+  RedisOverview,
+  DatabaseEngineProviderPreview,
+  DatabaseEngineWorkspaceView,
+  UnifiedCollection
 } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
@@ -46,9 +46,9 @@ import {
   useRedisOverview,
 } from '../hooks/useDatabaseQueries';
 
-export type DatabaseEngineWorkspaceView = DatabaseEngineWorkspaceViewDto;
+export type DatabaseEngineWorkspaceView = 'engine' | 'operations' | 'backups' | 'redis' | 'preview' | 'crud';
 
-export type DatabaseCollectionRow = UnifiedCollectionDto;
+export type DatabaseCollectionRow = UnifiedCollection;
 
 const services: DatabaseEngineServiceRoute[] = ['app', 'auth', 'product', 'integrations', 'cms'];
 
@@ -94,12 +94,12 @@ export interface UseDatabaseEngineStateReturn {
   isLoading: boolean;
   isFetching: boolean;
   refetch: () => void;
-  engineStatus: DatabaseEngineStatusDto | undefined;
-  operationJobs: DatabaseEngineOperationJobDto[];
-  operationQueueStatus: DatabaseEngineOperationsJobsDto['queueStatus'] | null;
-  backupSchedulerStatus: DatabaseEngineBackupSchedulerStatusDto | undefined;
-  redisOverview: RedisOverviewDto | undefined;
-  providerPreview: DatabaseEngineProviderPreviewDto | undefined;
+  engineStatus: DatabaseEngineStatus | undefined;
+  operationJobs: DatabaseEngineOperationJob[];
+  operationQueueStatus: DatabaseEngineOperationsJobs['queueStatus'] | null;
+  backupSchedulerStatus: DatabaseEngineBackupSchedulerStatus | undefined;
+  redisOverview: RedisOverview | undefined;
+  providerPreview: DatabaseEngineProviderPreview | undefined;
   saving: boolean;
 }
 

@@ -476,9 +476,10 @@ export function JobQueueProvider({
         setStreamStatuses((prev) => ({ ...prev, [runId]: 'live' }));
       });
 
-      source.addEventListener('run', (event: any) => {
+      source.addEventListener('run', (event: Event) => {
         try {
-          const payload = JSON.parse(event.data);
+          const messageEvent = event as MessageEvent;
+          const payload = JSON.parse(messageEvent.data);
           setRunDetails((prev) => {
             const current = prev[runId];
             if (!current) return prev;
@@ -487,9 +488,10 @@ export function JobQueueProvider({
         } catch {}
       });
 
-      source.addEventListener('nodes', (event: any) => {
+      source.addEventListener('nodes', (event: Event) => {
         try {
-          const payload = JSON.parse(event.data);
+          const messageEvent = event as MessageEvent;
+          const payload = JSON.parse(messageEvent.data);
           setRunDetails((prev) => {
             const current = prev[runId];
             if (!current) return prev;
@@ -498,9 +500,10 @@ export function JobQueueProvider({
         } catch {}
       });
 
-      source.addEventListener('events', (event: any) => {
+      source.addEventListener('events', (event: Event) => {
         try {
-          const payload = JSON.parse(event.data);
+          const messageEvent = event as MessageEvent;
+          const payload = JSON.parse(messageEvent.data);
           const incoming = Array.isArray(payload) ? payload : (payload.events || []);
           const safeIncoming = normalizeRunEvents(incoming);
           if (safeIncoming.length === 0) return;
@@ -530,7 +533,7 @@ export function JobQueueProvider({
     });
   }, [expandedRunIds, pausedStreams, runDetails]);
 
-  const value = {
+  const value: JobQueueContextValue = useMemo((): JobQueueContextValue => ({
     pathFilter, setPathFilter,
     searchQuery, setSearchQuery,
     statusFilter, setStatusFilter,
@@ -563,13 +566,23 @@ export function JobQueueProvider({
     isCancelingRun: (id: string) => cancelRunMutation.isPending && cancelRunMutation.variables === id,
     isDeletingRun: (id: string) => deleteRunMutation.isPending && deleteRunMutation.variables === id,
     refetchQueueData: () => { void runsQuery.refetch(); void queueStatusQuery.refetch(); },
-    handleClearRuns: (scope: 'terminal' | 'all') => clearRunsMutation.mutateAsync(scope),
-    handleCancelRun: (id: string) => cancelRunMutation.mutateAsync(id),
-    handleDeleteRun: (id: string) => deleteRunMutation.mutateAsync(id),
+    handleClearRuns: async (scope: 'terminal' | 'all') => { await clearRunsMutation.mutateAsync(scope); },
+    handleCancelRun: async (id: string) => { await cancelRunMutation.mutateAsync(id); },
+    handleDeleteRun: async (id: string) => { await deleteRunMutation.mutateAsync(id); },
     loadRunDetail,
-  };
+  }), [
+    pathFilter, searchQuery, statusFilter, pageSize, page, expandedRunIds, runDetails,
+    runDetailLoading, runDetailErrors, historySelection, streamStatuses, pausedStreams,
+    autoRefreshEnabled, autoRefreshInterval, showMetricsPanel, queueHistory, clearScope,
+    runToDelete, sourceFilter, sourceMode, heavyMap, runsQuery.data, runsQuery.isLoading,
+    runsQuery.error, queueStatusQuery.data, queueStatusQuery.isLoading,
+    clearRunsMutation.isPending, cancelRunMutation.isPending, cancelRunMutation.variables,
+    deleteRunMutation.isPending, deleteRunMutation.variables, runsQuery.refetch,
+    queueStatusQuery.refetch, clearRunsMutation.mutateAsync, cancelRunMutation.mutateAsync,
+    deleteRunMutation.mutateAsync, loadRunDetail,
+  ]);
 
-  return <JobQueueContext.Provider value={value as any}>{children}</JobQueueContext.Provider>;
+  return <JobQueueContext.Provider value={value}>{children}</JobQueueContext.Provider>;
 }
 
 export function useJobQueueContext() {

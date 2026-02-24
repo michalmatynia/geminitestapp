@@ -1,7 +1,5 @@
-import type { AppEmbedIdDto } from '@/shared/contracts/app-embeds';
+import type { AppEmbedId } from '@/shared/contracts/app-embeds';
 import { APP_EMBED_SETTING_KEY as SETTING_KEY } from '@/shared/contracts/app-embeds';
-
-export type AppEmbedId = AppEmbedIdDto;
 
 export const APP_EMBED_SETTING_KEY = SETTING_KEY;
 

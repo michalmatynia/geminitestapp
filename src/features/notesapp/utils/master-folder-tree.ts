@@ -1,5 +1,6 @@
 import type {
   NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  NoteRecord,
 } from '@/shared/contracts/notes';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
@@ -73,10 +74,10 @@ export const buildMasterNodesFromNotesFolderTree = (
       walkFolder(child, folderNodeId, folderPath, index);
     });
 
-    const sortedNotes = [...(folder.notes ?? [])].sort((a: any, b: any) =>
+    const sortedNotes = [...(folder.notes ?? [])].sort((a: NoteRecord, b: NoteRecord) =>
       a.title.localeCompare(b.title)
     );
-    sortedNotes.forEach((note: any, index: number) => {
+    sortedNotes.forEach((note: NoteRecord, index: number) => {
       nodes.push({
         id: toNoteMasterNodeId(note.id),
         type: 'file',

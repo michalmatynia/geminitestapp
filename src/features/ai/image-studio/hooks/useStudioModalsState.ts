@@ -19,43 +19,10 @@ import { useSettingsState } from '../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../context/SlotsContext';
 import { studioKeys } from '../hooks/useImageStudioQueries';
 
+import type { LinkedGeneratedRunsResponse, LinkedGeneratedVariantViewModel as LinkedGeneratedVariant } from '../components/studio-modals/slot-inline-edit-tab-types';
+import { mapLinkedGeneratedVariants } from '../components/studio-modals/slot-inline-edit-utils';
 import type { PromptExtractHistoryEntry, PromptExtractValidationIssue } from '../components/studio-modals/prompt-extract-utils';
 import type { ParamUiControl } from '../utils/param-ui';
-
-type LinkedGeneratedRunRecord = {
-  id: string;
-  createdAt: string;
-  outputs: Array<{
-    id: string;
-    filepath: string;
-    filename: string;
-    size: number;
-    width: number | null;
-    height: number | null;
-  }>;
-};
-
-type LinkedGeneratedRunsResponse = {
-  runs?: LinkedGeneratedRunRecord[];
-  total?: number;
-};
-
-export type LinkedGeneratedVariant = {
-  key: string;
-  runId: string;
-  runCreatedAt: string;
-  outputIndex: number;
-  outputCount: number;
-  imageSrc: string;
-  output: {
-    id: string;
-    filepath: string;
-    filename: string;
-    size: number;
-    width: number | null;
-    height: number | null;
-  };
-};
 
 export function useStudioModalsState() {
   const { toast } = useToast();
@@ -134,24 +101,10 @@ export function useStudioModalsState() {
     },
   });
 
-  const linkedGeneratedVariants = useMemo((): LinkedGeneratedVariant[] => {
-    const runs = Array.isArray(linkedRunsQuery.data?.runs) ? linkedRunsQuery.data.runs : [];
-    return runs.flatMap((run) => {
-      const outputs = Array.isArray(run.outputs) ? run.outputs : [];
-      return outputs.map((output, idx): LinkedGeneratedVariant | null => {
-        if (!output.id || !output.filepath) return null;
-        return {
-          key: `${run.id}:${output.id}`,
-          runId: run.id,
-          runCreatedAt: run.createdAt,
-          outputIndex: idx + 1,
-          outputCount: outputs.length,
-          imageSrc: resolveProductImageUrl(output.filepath, productImagesExternalBaseUrl) ?? output.filepath,
-          output,
-        };
-      }).filter((v): v is LinkedGeneratedVariant => !!v);
-    });
-  }, [linkedRunsQuery.data?.runs, productImagesExternalBaseUrl]);
+  const linkedGeneratedVariants = useMemo(
+    () => mapLinkedGeneratedVariants(linkedRunsQuery.data?.runs, productImagesExternalBaseUrl),
+    [linkedRunsQuery.data?.runs, productImagesExternalBaseUrl]
+  );
 
   const selectedGenerationPreview = useMemo(() => {
     if (!generationPreviewKey) return linkedGeneratedVariants[0] ?? null;

@@ -2,7 +2,7 @@
 'use client';
 
 import { 
-  PlusIcon, XIcon, GripVertical, MoreVertical } from 'lucide-react';
+  PlusIcon, XIcon, GripVertical, MoreVertical, Eye } from 'lucide-react';
 import NextImage from 'next/image';
 
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
@@ -200,8 +200,24 @@ export function ProductImageSlot({
                 </Button>
               )}
               {!minimalUi && (
-                <div className='absolute bottom-0 left-0 rounded-tr-md bg-gray-900/80 px-1.5 py-0.5 text-[10px] text-gray-400'>
-                  {index + 1}
+                <div className='absolute bottom-0 left-0 flex items-center rounded-tr-md bg-gray-900/80 text-[10px] text-gray-400'>
+                  <span className='px-1.5 py-0.5'>{index + 1}</span>
+                  {displayUrl ? (
+                    <button
+                      type='button'
+                      onClick={(event): void => {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        if (typeof window === 'undefined') return;
+                        window.open(displayUrl, '_blank', 'noopener,noreferrer');
+                      }}
+                      className='inline-flex items-center border-l border-gray-700 px-1.5 py-0.5 text-gray-300 transition-colors hover:text-white'
+                      title='Open full preview in new tab'
+                      aria-label={`Open full preview for image slot ${index + 1} in new tab`}
+                    >
+                      <Eye className='h-3 w-3' />
+                    </button>
+                  ) : null}
                 </div>
               )}
             </>

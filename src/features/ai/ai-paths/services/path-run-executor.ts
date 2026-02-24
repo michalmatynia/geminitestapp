@@ -155,6 +155,15 @@ let sanitizeDropWarningCount = 0;
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
+const extractNodeErrorOutputs = (
+  error: unknown
+): RuntimePortValues | null => {
+  if (!isRecord(error)) return null;
+  const maybeNodeOutput = error['nodeOutput'];
+  if (!isRecord(maybeNodeOutput)) return null;
+  return cloneJsonSafe(maybeNodeOutput) as RuntimePortValues;
+};
+
 const isSerializablePortValue = (value: unknown): boolean =>
   value !== undefined && typeof value !== 'function' && typeof value !== 'symbol';
 
@@ -1505,7 +1514,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         try {
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
           const safePrevOutputs = cloneJsonSafe(prevOutputs ?? {}) as RuntimePortValues;
-          accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'failed' } as RuntimePortValues;
+          const safeErrorOutputs = extractNodeErrorOutputs(error);
+          const failedNodeOutputs = safeErrorOutputs ?? safePrevOutputs;
+          accOutputs[node.id] = {
+            ...(accOutputs[node.id] ?? {}),
+            ...failedNodeOutputs,
+            status: 'failed',
+          } as RuntimePortValues;
           const attempt = nodeAttemptMap.get(node.id) ?? 0;
           const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
           const nodeFinishedAt = new Date().toISOString();
@@ -1529,7 +1544,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               status: 'failed',
               attempt,
               inputs: safeInputs,
-              outputs: safePrevOutputs,
+              outputs: failedNodeOutputs,
               finishedAt: nodeFinishedAt,
               errorMessage,
             }),
@@ -1565,6 +1580,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             nodeTitle: node.title ?? null,
             status: 'failed',
             error: errorMessage,
+            outputs: failedNodeOutputs,
             iteration,
           });
         } catch (dbError) {

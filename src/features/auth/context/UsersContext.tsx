@@ -4,9 +4,9 @@ import React, { createContext, useContext, useMemo } from 'react';
 
 import { useUsersState, type UseUsersStateReturn } from '../hooks/useUsersState';
 import type {
-  AuthUserDto as AuthUserSummary,
-  AuthRoleDto as AuthRole,
-  AuthUserSecurityProfileDto as AuthUserSecurityProfile
+  AuthUser as AuthUserSummary,
+  AuthRole,
+  AuthUserSecurityProfile
 } from '@/shared/contracts/auth';
 import type { AuthUserRoleMap } from '@/features/auth/utils/auth-management';
 

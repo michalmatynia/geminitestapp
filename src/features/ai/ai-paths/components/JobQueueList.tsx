@@ -8,21 +8,6 @@ import {
   Pagination, 
   Alert 
 } from '@/shared/ui';
-import { 
-  normalizeRunDetail, 
-  isRunningStatus, 
-  resolveRunOrigin, 
-  resolveRunExecutionKind, 
-  resolveRunSource, 
-  resolveRunSourceDebug, 
-  normalizeRunNodes, 
-  normalizeRunEvents,
-  type StreamConnectionStatus 
-} from './job-queue-panel-utils';
-import { buildHistoryNodeOptions } from './run-history-utils';
-import type { 
-  RuntimeHistoryEntry 
-} from '@/features/ai/ai-paths/lib';
 
 const PAGE_SIZES = [10, 25, 50];
 
@@ -37,19 +22,6 @@ export function JobQueueList(): React.JSX.Element {
     runsQueryError,
     expandedRunIds,
     runDetails,
-    runDetailLoading,
-    runDetailErrors,
-    pausedStreams,
-    streamStatuses,
-    isCancelingRun,
-    isDeletingRun,
-    toggleRun,
-    toggleStream,
-    loadRunDetail,
-    handleCancelRun,
-    setRunToDelete,
-    setHistorySelection,
-    historySelection,
   } = useJobQueueContext();
 
   const parentRef = useRef<HTMLDivElement>(null);
@@ -66,19 +38,10 @@ export function JobQueueList(): React.JSX.Element {
     rowVirtualizer.measure();
   }, [rowVirtualizer, runs, expandedRunIds, runDetails]);
 
-  const ensureHistorySelection = (runId: string, options: { id: string }[]): string | null => {
-    if (!options.length) return null;
-    const existing = historySelection[runId];
-    if (existing && options.some((option: { id: string }) => option.id === existing)) return existing;
-    return options[0]?.id ?? null;
-  };
-
-  const typedRunsQueryError = runsQueryError as any;
-
-  if (typedRunsQueryError) {
+  if (runsQueryError) {
     return (
       <Alert variant='error' className='text-xs'>
-        {typedRunsQueryError instanceof Error ? typedRunsQueryError.message : 'Failed to load job runs.'}
+        {runsQueryError instanceof Error ? runsQueryError.message : 'Failed to load job runs.'}
       </Alert>
     );
   }
@@ -112,25 +75,6 @@ export function JobQueueList(): React.JSX.Element {
               const run = runs[virtualRow.index];
               if (!run) return null;
 
-              const isExpanded = expandedRunIds.has(run.id);
-              const detail = normalizeRunDetail(runDetails[run.id]);
-              const detailLoading = runDetailLoading.has(run.id);
-              const detailError = runDetailErrors[run.id];
-              const detailRun = detail?.run ?? run;
-              const isRunning = isRunningStatus(detailRun.status);
-              const isScheduledRun = detailRun.triggerEvent === 'scheduled_run';
-              const streamStatus: StreamConnectionStatus = pausedStreams.has(run.id)
-                ? 'paused'
-                : streamStatuses[run.id] ?? 'stopped';
-              const canCancel = ['queued', 'running', 'paused'].includes(detailRun.status);
-              
-              const nodes = normalizeRunNodes(detail?.nodes);
-              const events = normalizeRunEvents(detail?.events);
-              const history = (detailRun.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined)?.history;
-              const historyOptions = buildHistoryNodeOptions(history, nodes, detailRun.graph?.nodes ?? null);
-              const selectedHistoryNodeId = ensureHistorySelection(run.id, historyOptions);
-              const historyEntries = selectedHistoryNodeId && history ? history[selectedHistoryNodeId] ?? [] : [];
-
               return (
                 <div
                   key={virtualRow.key}
@@ -146,33 +90,8 @@ export function JobQueueList(): React.JSX.Element {
                   }}
                 >
                   <JobQueueRunCard
-                    detailRun={detailRun}
-                    detail={detail}
-                    detailLoading={detailLoading}
-                    detailError={detailError}
-                    isExpanded={isExpanded}
-                    isRunning={isRunning}
-                    isScheduledRun={isScheduledRun}
-                    streamStatus={streamStatus}
-                    paused={pausedStreams.has(run.id)}
-                    canCancel={canCancel}
-                    isCancellingThisRun={isCancelingRun(run.id)}
-                    isDeletingThisRun={isDeletingRun(run.id)}
-                    runOrigin={resolveRunOrigin(detailRun)}
-                    runExecution={resolveRunExecutionKind(detailRun)}
-                    runSource={resolveRunSource(detailRun) ?? 'unknown'}
-                    runSourceDebug={resolveRunSourceDebug(detailRun)}
-                    nodes={nodes}
-                    events={events}
-                    historyOptions={historyOptions}
-                    selectedHistoryNodeId={selectedHistoryNodeId}
-                    historyEntries={historyEntries}
-                    onToggleRun={() => toggleRun(run.id)}
-                    onToggleStream={() => toggleStream(run.id)}
-                    onRefreshDetail={() => void loadRunDetail(run.id)}
-                    onCancelRun={() => void handleCancelRun(run.id)}
-                    onDeleteRun={() => setRunToDelete(detailRun)}
-                    onSelectHistoryNode={(val) => setHistorySelection(run.id, val)}
+                    runId={run.id}
+                    run={run}
                   />
                 </div>
               );

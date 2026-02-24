@@ -150,4 +150,41 @@ describe('handleMapper malformed-object repair', () => {
       ]),
     );
   });
+
+  it('repairs truncated JSON-like result strings and resolves nested paths', async () => {
+    const ctx = buildContext({
+      nodeInputs: {
+        result:
+          '{"parameters":[{"parameterId":"p1","value":"v1"},{"parameterId":"p2","value":"v2"}',
+      },
+      node: {
+        ...buildMapperNode(),
+        config: {
+          mapper: {
+            outputs: ['result'],
+            mappings: {
+              result: 'result.parameters',
+            },
+            jsonIntegrityPolicy: 'repair',
+          },
+        },
+      } as AiNode,
+    });
+
+    const output = await handleMapper(ctx);
+    expect(output['result']).toEqual([
+      { parameterId: 'p1', value: 'v1' },
+      { parameterId: 'p2', value: 'v2' },
+    ]);
+    expect(output['jsonIntegrity']).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          port: 'result',
+          parseState: 'repaired',
+          truncationDetected: true,
+          repairApplied: true,
+        }),
+      ]),
+    );
+  });
 });

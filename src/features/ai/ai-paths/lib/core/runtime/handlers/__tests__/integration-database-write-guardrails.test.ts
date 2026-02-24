@@ -109,6 +109,24 @@ describe('resolveWriteTemplateGuardrail', () => {
     expect(result).toEqual({ ok: true });
   });
 
+  it('accepts tokens from truncated JSON strings that are repairable', () => {
+    const result = resolveWriteTemplateGuardrail({
+      templates: [
+        {
+          name: 'updateTemplate',
+          template: '{"parameters": {{result.parameters}}}',
+        },
+      ],
+      templateContext: {
+        result:
+          '{"parameters":[{"parameterId":"p1","value":"v1"},{"parameterId":"p2","value":"v2"}',
+      },
+      currentValue: null,
+    });
+
+    expect(result).toEqual({ ok: true });
+  });
+
   it('reports unparseable json diagnostics when token roots are malformed and unrecoverable', () => {
     const result = resolveWriteTemplateGuardrail({
       templates: [
@@ -118,7 +136,7 @@ describe('resolveWriteTemplateGuardrail', () => {
         },
       ],
       templateContext: {
-        result: '{"parameters":[{"parameterId":"p1","value":"v1"}',
+        result: '{"parameters":[{"parameterId":"p1","value":NaN}]}',
       },
       currentValue: null,
     });
@@ -135,10 +153,42 @@ describe('resolveWriteTemplateGuardrail', () => {
         expect.objectContaining({
           token: 'result.parameters',
           parseState: 'unparseable',
+          truncationDetected: false,
+          parseError: expect.any(String),
         }),
       ])
     );
     expect(result.message).toContain('unparseable JSON tokens');
+  });
+
+  it('includes likely truncation cause when payload is unparseable and structurally truncated', () => {
+    const result = resolveWriteTemplateGuardrail({
+      templates: [
+        {
+          name: 'updateTemplate',
+          template: '{"parameters": {{result.parameters}}}',
+        },
+      ],
+      templateContext: {
+        result: '{"parameters":[{"parameterId":"p1","value":NaN}',
+      },
+      currentValue: null,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error('Expected write template guardrail failure.');
+    }
+    expect(result.guardrailMeta.parseDiagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          token: 'result.parameters',
+          parseState: 'unparseable',
+          truncationDetected: true,
+        }),
+      ])
+    );
+    expect(result.message).toContain('likely cause: truncated JSON on root');
   });
 
   it('resolves repairable malformed payloads consistently with mapping-path reader', () => {

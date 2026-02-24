@@ -10,7 +10,7 @@ import { invalidateAuthSecurityProfileCache } from '@/features/auth/server';
 import { invalidateUserPreferencesCache } from '@/features/auth/server';
 import { AUTH_SETTINGS_KEYS, type AuthUserRoleMap } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import type { AuthUserDto } from '@/shared/contracts/auth';
+import type { AuthUser } from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, conflictError, forbiddenError, internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -192,7 +192,7 @@ export async function patchAuthUserHandler(
     });
 
     const nowIso = new Date().toISOString();
-    const payload: AuthUserDto = {
+    const payload: AuthUser = {
       id: updated.id,
       email: updated.email ?? null,
       name: updated.name ?? null,
@@ -259,7 +259,7 @@ export async function patchAuthUserHandler(
     throw notFoundError('User not found.');
   }
 
-  const payload: AuthUserDto = {
+  const payload: AuthUser = {
     id: updated._id.toString(),
     email: updated.email ?? null,
     name: updated.name ?? null,

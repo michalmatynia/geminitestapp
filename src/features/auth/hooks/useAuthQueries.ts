@@ -14,7 +14,7 @@ import {
   type AuthUsersResponse,
   type AuthUserSecurityProfile,
 } from '@/features/auth/api/users';
-import type { AuthUserDto as AuthUserSummary } from '@/shared/contracts/auth';
+import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
 import type { 
   SingleQuery, 
   UpdateMutation, 

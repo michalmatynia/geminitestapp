@@ -78,6 +78,8 @@ const buildContext = (
 describe('handleRegex json integrity policy', () => {
   const malformed =
     '{"parameters":[{"parameterId":"p1","value":"v1","valuesByLanguage":{"pl":"x"},{"parameterId":"p2","value":"v2","valuesByLanguage":{"pl":"y"}}]}';
+  const truncated =
+    '{"parameters":[{"parameterId":"p1","value":"v1"},{"parameterId":"p2","value":"v2"}';
 
   it('repairs malformed JSON payload in repair mode', async () => {
     const node = buildRegexNode('repair');
@@ -117,6 +119,33 @@ describe('handleRegex json integrity policy', () => {
         expect.objectContaining({
           parseState: 'unparseable',
           repairApplied: false,
+        }),
+      ])
+    );
+  });
+
+  it('repairs truncated JSON payloads in repair mode', async () => {
+    const node = buildRegexNode('repair');
+    const output = await handleRegex(buildContext(node, truncated));
+
+    expect(output['value']).toEqual({
+      parameters: [
+        {
+          parameterId: 'p1',
+          value: 'v1',
+        },
+        {
+          parameterId: 'p2',
+          value: 'v2',
+        },
+      ],
+    });
+    expect(output['jsonIntegrity']).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          parseState: 'repaired',
+          truncationDetected: true,
+          repairApplied: true,
         }),
       ])
     );

@@ -48,6 +48,24 @@ export type RightSidebarContextValue = {
   resolvedPromptLength: number;
   sequenceStepCount: number;
   setRequestPreviewMode: (mode: 'without_sequence' | 'with_sequence') => void;
+
+  // Quick Actions
+  estimatedGenerationCost: number;
+  estimatedPromptTokens: number;
+  generationBusy: boolean;
+  generationLabel: string;
+  hasExtractedControls: boolean;
+  modelSupportsSequenceGeneration: boolean;
+  modelValue: string;
+  onModelChange: (value: string) => void;
+  onOpenControls: () => void;
+  onOpenPromptControl: () => void;
+  onOpenRequestPreview: () => void;
+  onRunGeneration: () => void;
+  onRunSequenceGeneration: () => void;
+  quickModelOptions: Array<{ value: string; label: string }>;
+  selectedModelId: string;
+  sequenceRunBusy: boolean;
 };
 
 const RightSidebarContext = React.createContext<RightSidebarContextValue | null>(null);

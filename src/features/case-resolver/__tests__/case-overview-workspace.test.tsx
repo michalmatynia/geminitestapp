@@ -52,13 +52,13 @@ const BASE_OPTIONS: SelectOption[] = [
   { value: 'case-b', label: 'Case Beta' },
 ];
 
-import { CaseResolverPageProvider } from '../context/CaseResolverPageContext';
+import { CaseResolverPageProvider, type CaseResolverPageContextValue } from '../context/CaseResolverPageContext';
 
 const renderWorkspace = (
   activeCaseFile: CaseResolverFile | null,
-  onUpdateActiveCase: any = vi.fn()
+  onUpdateActiveCase = vi.fn()
 ): ReturnType<typeof render> => {
-  const contextValue: any = {
+  const contextValue: Partial<CaseResolverPageContextValue> = {
     activeFile: activeCaseFile,
     caseTagOptions: BASE_OPTIONS,
     caseIdentifierOptions: BASE_OPTIONS,
@@ -69,7 +69,7 @@ const renderWorkspace = (
   };
 
   return render(
-    <CaseResolverPageProvider value={contextValue}>
+    <CaseResolverPageProvider value={contextValue as CaseResolverPageContextValue}>
       <CaseResolverCaseOverviewWorkspace />
     </CaseResolverPageProvider>
   );

@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
-import type { Asset3dDto as Asset3DRecord } from '@/shared/contracts/viewer3d';
+import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { StatusBadge, MetadataItem, Badge, FormField, Card } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 

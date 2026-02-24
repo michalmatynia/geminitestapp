@@ -4,8 +4,8 @@ import {
   productCreateInputSchema as productCreateSchema,
   productUpdateInputSchema as productUpdateSchema,
   productFilterSchema as productFilterDtoSchema,
-  type ProductCreateInputDto,
-  type ProductUpdateInputDto,
+  type ProductCreateInput,
+  type ProductUpdateInput,
 } from '@/shared/contracts/products';
 
 /**
@@ -17,5 +17,3 @@ export type ProductFiltersParsed = z.infer<typeof productFilterSchema>;
 
 // Type exports
 export { productCreateSchema, productUpdateSchema };
-export type ProductCreateInput = ProductCreateInputDto;
-export type ProductUpdateInput = ProductUpdateInputDto;

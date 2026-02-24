@@ -1,6 +1,4 @@
-import type { AuthSecurityPolicyDto } from '@/shared/contracts/auth';
-
-export type AuthSecurityPolicy = AuthSecurityPolicyDto;
+import type { AuthSecurityPolicy } from '@/shared/contracts/auth';
 
 export const DEFAULT_AUTH_SECURITY_POLICY: AuthSecurityPolicy = {
   minPasswordLength: 10,

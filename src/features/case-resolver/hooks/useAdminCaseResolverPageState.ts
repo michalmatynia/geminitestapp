@@ -2399,6 +2399,7 @@ export function useAdminCaseResolverPageState() {
   }, [editingDocumentDraft, updateWorkspace, setEditingDocumentDraft, toast]);
 
   return {
+    state,
     ...state,
     workspaceView,
     setWorkspaceView,

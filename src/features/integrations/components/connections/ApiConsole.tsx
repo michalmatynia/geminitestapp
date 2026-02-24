@@ -4,60 +4,41 @@ import React from 'react';
 
 import { Button, Input, Textarea, Alert, SelectSimple, StatusBadge, FormField, Card } from '@/shared/ui';
 
-export interface ApiPreset {
-  label: string;
-  method: string;
-  path?: string;
-  params?: Record<string, unknown> | string;
-  body?: string;
-}
+import { useApiConsoleContext, type ApiPreset } from './ApiConsoleContext';
 
 interface ApiConsoleProps {
   title: string;
   description: string;
   presets: ApiPreset[];
-  method: string;
-  setMethod: (value: string) => void;
-  path?: string;
-  setPath?: (value: string) => void;
-  bodyOrParams: string;
-  setBodyOrParams: (value: string) => void;
   bodyOrParamsLabel: string;
-  loading: boolean;
-  error: string | null;
-  response: {
-    status?: number;
-    statusText?: string;
-    data: unknown;
-    refreshed?: boolean;
-  } | null;
-  onRequest: () => void;
-  isConnected?: boolean;
-  connectionWarning?: string;
   baseUrl?: string;
   methodType?: 'select' | 'input';
+  connectionWarning?: string;
 }
 
 export function ApiConsole({
   title,
   description,
   presets,
-  method,
-  setMethod,
-  path,
-  setPath,
-  bodyOrParams,
-  setBodyOrParams,
   bodyOrParamsLabel,
-  loading,
-  error,
-  response,
-  onRequest,
-  isConnected = true,
-  connectionWarning,
   baseUrl,
   methodType = 'select',
+  connectionWarning,
 }: ApiConsoleProps): React.JSX.Element {
+  const {
+    method,
+    setMethod,
+    path,
+    setPath,
+    bodyOrParams,
+    setBodyOrParams,
+    loading,
+    error,
+    response,
+    onRequest,
+    isConnected,
+  } = useApiConsoleContext();
+
   const methodOptions = [
     { value: 'GET', label: 'GET' },
     { value: 'POST', label: 'POST' },
@@ -104,10 +85,12 @@ export function ApiConsole({
               value={method}
               onValueChange={setMethod}
               placeholder='Method'
+              variant='subtle'
               size='sm'
             />
           ) : (
             <Input
+              variant='subtle'
               size='sm'
               value={method}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMethod(e.target.value)}
@@ -117,6 +100,7 @@ export function ApiConsole({
         {setPath && (
           <FormField label='Endpoint path'>
             <Input
+              variant='subtle'
               size='sm'
               value={path || ''}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPath(e.target.value)}
@@ -127,8 +111,9 @@ export function ApiConsole({
       <div className='mt-3'>
         <FormField label={bodyOrParamsLabel}>
           <Textarea
-            className='h-32 font-mono'
+            variant='subtle'
             size='sm'
+            className='h-32 font-mono'
             value={bodyOrParams}
             onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setBodyOrParams(e.target.value)}
           />

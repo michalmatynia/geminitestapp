@@ -44,6 +44,21 @@ const WRITE_ACTIONS = new Set<string>([
   'delete',
 ]);
 
+type DatabaseTerminalError = Error & {
+  nodeOutput?: RuntimePortValues;
+};
+
+const createDatabaseTerminalError = (
+  message: string,
+  nodeOutput?: RuntimePortValues
+): DatabaseTerminalError => {
+  const error = new Error(message) as DatabaseTerminalError;
+  if (nodeOutput) {
+    error.nodeOutput = nodeOutput;
+  }
+  return error;
+};
+
 const isWriteDatabaseOperation = (config: DatabaseConfig): boolean => {
   const operation: DatabaseOperation = config.operation ?? 'query';
   if (operation === 'insert' || operation === 'update' || operation === 'delete') {
@@ -292,7 +307,7 @@ export const handleDatabase: NodeHandler = async ({
           mongoError &&
           shouldTreatWriteErrorAsTerminal(mongoActionResult)
         ) {
-          throw new Error(mongoError);
+          throw createDatabaseTerminalError(mongoError, mongoActionResult);
         }
         return mongoActionResult;
       }
@@ -329,7 +344,7 @@ export const handleDatabase: NodeHandler = async ({
       operationError &&
       shouldTreatWriteErrorAsTerminal(operationResult)
     ) {
-      throw new Error(operationError);
+      throw createDatabaseTerminalError(operationError, operationResult);
     }
     return operationResult;
   } catch (error) {
@@ -342,9 +357,12 @@ export const handleDatabase: NodeHandler = async ({
       'Unexpected database node failure:',
     );
     if (writeOperationDetected) {
-      throw error instanceof Error
-        ? error
-        : new Error(typeof error === 'string' ? error : 'Database write failed');
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw createDatabaseTerminalError(
+        typeof error === 'string' ? error : 'Database write failed'
+      );
     }
     return {
       result: null,

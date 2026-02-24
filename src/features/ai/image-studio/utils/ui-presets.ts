@@ -17,13 +17,27 @@ export type ImageStudioUiPreset = {
   updatedAt: string;
 };
 
+const paramUiControlSchema = z.enum([
+  'auto',
+  'checkbox',
+  'buttons',
+  'select',
+  'slider',
+  'number',
+  'text',
+  'textarea',
+  'json',
+  'rgb',
+  'tuple2',
+]);
+
 const uiPresetSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
   description: z.string().nullable().optional(),
-  params: z.record(z.string(), z.any()),
-  paramSpecs: z.record(z.string(), z.any()).optional(),
-  paramUiOverrides: z.record(z.string(), z.any()).optional(),
+  params: z.record(z.string(), z.unknown()),
+  paramSpecs: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
+  paramUiOverrides: z.record(z.string(), paramUiControlSchema).optional(),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),
 });

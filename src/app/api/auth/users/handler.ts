@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/features/auth/server';
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import type { AuthUserDto } from '@/shared/contracts/auth';
+import type { AuthUser } from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -52,7 +52,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       },
     });
     const nowIso = new Date().toISOString();
-    const users: AuthUserDto[] = rows.map((row) => ({
+    const users: AuthUser[] = rows.map((row) => ({
       id: row.id,
       email: row.email ?? null,
       name: row.name ?? null,
@@ -88,7 +88,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     .limit(500)
     .toArray();
 
-  const users: AuthUserDto[] = docs.map((doc: MongoUserDoc) => ({
+  const users: AuthUser[] = docs.map((doc: MongoUserDoc) => ({
     id: doc._id.toString(),
     email: doc.email ?? null,
     name: doc.name ?? null,

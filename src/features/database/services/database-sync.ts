@@ -14,9 +14,9 @@ import { toObjectIdMaybe, toDate, toJsonValue, normalizeId } from '@/features/da
 import { ErrorSystem } from '@/features/observability/server';
 import type {
   DatabaseSyncDirection,
-  DatabaseSyncCollectionResultDto,
-  DatabaseSyncResultDto,
-  DatabaseSyncOptionsDto,
+  DatabaseSyncCollectionResult,
+  DatabaseSyncResult,
+  DatabaseSyncOptions,
 } from '@/shared/contracts/database';
 import { operationFailedError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -134,9 +134,6 @@ import {
 } from './sync/image-sync';
 import type { SyncHandlerContext } from './sync/types';
 
-export type DatabaseSyncCollectionResult = DatabaseSyncCollectionResultDto;
-export type DatabaseSyncResult = DatabaseSyncResultDto;
-export type DatabaseSyncOptions = DatabaseSyncOptionsDto;
 
 const recordResult = (
   results: DatabaseSyncCollectionResult[],

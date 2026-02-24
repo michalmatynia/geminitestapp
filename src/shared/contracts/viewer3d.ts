@@ -26,8 +26,7 @@ export const asset3DRecordSchema = namedDtoSchema.extend({
   viewerConfig: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type Asset3DRecordDto = z.infer<typeof asset3DRecordSchema>;
-export type Asset3DRecord = Asset3DRecordDto;
+export type Asset3DRecord = z.infer<typeof asset3DRecordSchema>;
 
 export const asset3DCreateInputSchema = asset3DRecordSchema.omit({
   id: true,
@@ -44,13 +43,11 @@ export const asset3DCreateInputSchema = asset3DRecordSchema.omit({
   size: z.number().optional(),
 });
 
-export type Asset3DCreateInputDto = z.infer<typeof asset3DCreateInputSchema>;
-export type Asset3DCreateInput = Asset3DCreateInputDto;
+export type Asset3DCreateInput = z.infer<typeof asset3DCreateInputSchema>;
 
 export const asset3DUpdateInputSchema = asset3DCreateInputSchema.partial();
 
-export type Asset3DUpdateInputDto = z.infer<typeof asset3DUpdateInputSchema>;
-export type Asset3DUpdateInput = Asset3DUpdateInputDto;
+export type Asset3DUpdateInput = z.infer<typeof asset3DUpdateInputSchema>;
 
 export const asset3DListFiltersSchema = z.object({
   categoryId: z.string().nullable().optional(),
@@ -61,8 +58,7 @@ export const asset3DListFiltersSchema = z.object({
   isPublic: z.boolean().optional(),
 });
 
-export type Asset3DListFiltersDto = z.infer<typeof asset3DListFiltersSchema>;
-export type Asset3DListFilters = Asset3DListFiltersDto;
+export type Asset3DListFilters = z.infer<typeof asset3DListFiltersSchema>;
 
 export const asset3dOrderedDitheringPresetKeySchema = z.enum([
   'balanced',
@@ -72,7 +68,7 @@ export const asset3dOrderedDitheringPresetKeySchema = z.enum([
   'custom',
 ]);
 
-export type Asset3dOrderedDitheringPresetKeyDto = z.infer<typeof asset3dOrderedDitheringPresetKeySchema>;
+export type Asset3dOrderedDitheringPresetKey = z.infer<typeof asset3dOrderedDitheringPresetKeySchema>;
 
 export const asset3dLightingPresetSchema = z.enum([
   'studio',
@@ -80,7 +76,7 @@ export const asset3dLightingPresetSchema = z.enum([
   'dramatic',
   'soft',
 ]);
-export type Asset3dLightingPresetDto = z.infer<typeof asset3dLightingPresetSchema>;
+export type Asset3dLightingPreset = z.infer<typeof asset3dLightingPresetSchema>;
 
 export const asset3dEnvironmentPresetSchema = z.enum([
   'none',
@@ -96,12 +92,10 @@ export const asset3dEnvironmentPresetSchema = z.enum([
   'forest',
   'dawn',
 ]);
-export type Asset3dEnvironmentPresetDto = z.infer<typeof asset3dEnvironmentPresetSchema>;
+export type Asset3dEnvironmentPreset = z.infer<typeof asset3dEnvironmentPresetSchema>;
 
 export const asset3dViewModeSchema = z.enum(['grid', 'list']);
-export type Asset3dViewModeDto = z.infer<typeof asset3dViewModeSchema>;
-
-export type Asset3dDto = Asset3DRecordDto;
+export type Asset3dViewMode = z.infer<typeof asset3dViewModeSchema>;
 
 /**
  * 3D Viewer Repository Interface

@@ -25,14 +25,21 @@ import {
   getOriginLabel,
   getOriginVariant,
   safePrettyJson,
-  type RunDetail,
-  type RunExecutionKind,
-  type RunOrigin,
+  normalizeRunDetail,
+  isRunningStatus,
+  resolveRunOrigin,
+  resolveRunExecutionKind,
+  resolveRunSource,
+  resolveRunSourceDebug,
+  normalizeRunNodes,
+  normalizeRunEvents,
   type StreamConnectionStatus,
 } from './job-queue-panel-utils';
 import { RunningIndicator } from './job-queue-running-indicator';
 import { extractPlaywrightArtifactsFromNode } from './playwright-artifacts';
 import { RunHistoryEntries } from './RunHistoryEntries';
+import { useJobQueueContext } from './JobQueueContext';
+import { buildHistoryNodeOptions } from './run-history-utils';
 
 type HistoryOption = {
   id: string;
@@ -40,64 +47,65 @@ type HistoryOption = {
 };
 
 type JobQueueRunCardProps = {
-  detailRun: AiPathRunRecord;
-  detail: RunDetail | null;
-  detailLoading: boolean;
-  detailError: string | undefined;
-  isExpanded: boolean;
-  isRunning: boolean;
-  isScheduledRun: boolean;
-  streamStatus: StreamConnectionStatus;
-  paused: boolean;
-  canCancel: boolean;
-  isCancellingThisRun: boolean;
-  isDeletingThisRun: boolean;
-  runOrigin: RunOrigin;
-  runExecution: RunExecutionKind;
-  runSource: string;
-  runSourceDebug: string;
-  nodes: AiPathRunNodeRecord[];
-  events: AiPathRunEventRecord[];
-  historyOptions: HistoryOption[];
-  selectedHistoryNodeId: string | null;
-  historyEntries: RuntimeHistoryEntry[];
-  onToggleRun: () => void;
-  onToggleStream: () => void;
-  onRefreshDetail: () => void;
-  onCancelRun: () => void;
-  onDeleteRun: () => void;
-  onSelectHistoryNode: (value: string) => void;
+  runId: string;
+  run: AiPathRunRecord;
 };
 
 export function JobQueueRunCard({
-  detailRun,
-  detail,
-  detailLoading,
-  detailError,
-  isExpanded,
-  isRunning,
-  isScheduledRun,
-  streamStatus,
-  paused,
-  canCancel,
-  isCancellingThisRun,
-  isDeletingThisRun,
-  runOrigin,
-  runExecution,
-  runSource,
-  runSourceDebug,
-  nodes,
-  events,
-  historyOptions,
-  selectedHistoryNodeId,
-  historyEntries,
-  onToggleRun,
-  onToggleStream,
-  onRefreshDetail,
-  onCancelRun,
-  onDeleteRun,
-  onSelectHistoryNode,
+  runId,
+  run,
 }: JobQueueRunCardProps): React.JSX.Element {
+  const {
+    expandedRunIds,
+    runDetails,
+    runDetailLoading,
+    runDetailErrors,
+    pausedStreams,
+    streamStatuses,
+    isCancelingRun,
+    isDeletingRun,
+    toggleRun,
+    toggleStream,
+    loadRunDetail,
+    handleCancelRun,
+    setRunToDelete,
+    historySelection,
+    setHistorySelection,
+  } = useJobQueueContext();
+
+  const isExpanded = expandedRunIds.has(runId);
+  const detail = normalizeRunDetail(runDetails[runId]);
+  const detailLoading = runDetailLoading.has(runId);
+  const detailError = runDetailErrors[runId];
+  const detailRun = detail?.run ?? run;
+  const isRunning = isRunningStatus(detailRun.status);
+  const isScheduledRun = detailRun.triggerEvent === 'scheduled_run';
+  const streamStatus: StreamConnectionStatus = pausedStreams.has(runId)
+    ? 'paused'
+    : streamStatuses[runId] ?? 'stopped';
+  const canCancel = ['queued', 'running', 'paused'].includes(detailRun.status);
+  
+  const nodes = normalizeRunNodes(detail?.nodes);
+  const events = normalizeRunEvents(detail?.events);
+  const history = (detailRun.runtimeState as { history?: Record<string, RuntimeHistoryEntry[]> } | undefined)?.history;
+  const historyOptions = buildHistoryNodeOptions(history, nodes, detailRun.graph?.nodes ?? null);
+  
+  const selectedHistoryNodeId = React.useMemo(() => {
+    if (!historyOptions.length) return null;
+    const existing = historySelection[runId];
+    if (existing && historyOptions.some((option: { id: string }) => option.id === existing)) return existing;
+    return historyOptions[0]?.id ?? null;
+  }, [historyOptions, historySelection, runId]);
+
+  const historyEntries = selectedHistoryNodeId && history ? history[selectedHistoryNodeId] ?? [] : [];
+
+  const onToggleRun = () => toggleRun(runId);
+  const onToggleStream = () => toggleStream(runId);
+  const onRefreshDetail = () => void loadRunDetail(runId);
+  const onCancelRun = () => void handleCancelRun(runId);
+  const onDeleteRun = () => setRunToDelete(detailRun);
+  const onSelectHistoryNode = (val: string) => setHistorySelection(runId, val);
+
   const runtimeFingerprint = React.useMemo((): string | null => {
     if (!detailRun.meta || typeof detailRun.meta !== 'object') return null;
     const raw = detailRun.meta['runtimeFingerprint'];
@@ -105,6 +113,14 @@ export function JobQueueRunCard({
     const trimmed = raw.trim();
     return trimmed.length > 0 ? trimmed : null;
   }, [detailRun.meta]);
+
+  const runOrigin = resolveRunOrigin(detailRun);
+  const runExecution = resolveRunExecutionKind(detailRun);
+  const runSource = resolveRunSource(detailRun) ?? 'unknown';
+  const runSourceDebug = resolveRunSourceDebug(detailRun);
+  const isCancellingThisRun = isCancelingRun(runId);
+  const isDeletingThisRun = isDeletingRun(runId);
+  const paused = pausedStreams.has(runId);
 
   return (
     <div className='rounded-md border border-border/60 bg-card/70 p-3 text-xs text-gray-300'>

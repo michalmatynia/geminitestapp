@@ -1387,8 +1387,8 @@ export interface ValidatorSettingsController {
   handleAddPattern: (target?: string) => void;
   handleDragStart: (e: unknown, patternId: string) => void;
   handleDrop: (pattern: ProductValidationPattern, e: unknown) => void;
-  replacementFieldOptions: unknown;
-  sourceFieldOptions: unknown;
+  replacementFieldOptions: Array<{ value: string; label: string }>;
+  sourceFieldOptions: Array<{ value: string; label: string }>;
   createPatternPending: boolean;
   updatePatternPending: boolean;
   isLocaleTarget: (target: string) => boolean;

@@ -42,6 +42,7 @@ import {
   stableStringify,
   sanitizeEdges,
   normalizeAiPathsValidationConfig,
+  derivePaletteNodeTypeId,
   TRIGGER_INPUT_PORTS,
   TRIGGER_OUTPUT_PORTS,
   triggers,
@@ -587,13 +588,19 @@ export function useAiPathsSettingsState({
         suffix += 1;
       }
       usedTitles.add(title);
+      const triggerConfig = { trigger: { event: button.id } };
       derived.push({
         type: 'trigger',
+        nodeTypeId: derivePaletteNodeTypeId({
+          type: 'trigger',
+          title,
+          config: triggerConfig,
+        }),
         title,
         description: `User trigger button: ${label} (${button.id}).`,
         inputs: TRIGGER_INPUT_PORTS,
         outputs: TRIGGER_OUTPUT_PORTS,
-        config: { trigger: { event: button.id } },
+        config: triggerConfig,
       });
     });
 

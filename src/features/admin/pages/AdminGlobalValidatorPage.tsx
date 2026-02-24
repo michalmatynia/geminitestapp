@@ -118,6 +118,26 @@ export function AdminGlobalValidatorPage(): React.JSX.Element {
       );
     }
 
+    if (scope === 'ai-paths') {
+      return (
+        <>
+          <FormSection variant='subtle' className='p-4'>
+            <p className='text-sm text-gray-300'>
+              {resolvedDescription}
+            </p>
+          </FormSection>
+          <AdminPromptEngineValidationPatternsPage
+            embedded
+            eyebrow='AI · AI Paths'
+            initialPatternTab='core'
+            lockedPatternTab='core'
+            initialScope='ai_paths'
+            lockedScope='ai_paths'
+          />
+        </>
+      );
+    }
+
     return (
       <>
         <FormSection variant='subtle' className='p-4'>

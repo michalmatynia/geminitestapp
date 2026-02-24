@@ -62,6 +62,21 @@ export function useCatalogSync(
   { enabled = true }: UseCatalogSyncOptions = {}
 ): UseCatalogSyncResult {
   const catalogFilterInitialized = useRef(false);
+  const [runtimeReady, setRuntimeReady] = useState(
+    process.env['NODE_ENV'] === 'production'
+  );
+
+  useEffect(() => {
+    if (runtimeReady) return;
+    // In React Strict Mode (dev), the first mount is intentionally discarded.
+    // Deferring query enablement avoids start->abort noise for metadata calls.
+    const timer = setTimeout(() => {
+      setRuntimeReady(true);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [runtimeReady]);
+
+  const queriesEnabled = enabled && runtimeReady;
 
   // Parallel queries for all data sources
   const results = useQueries({
@@ -69,7 +84,7 @@ export function useCatalogSync(
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.catalogs()),
         queryFn: ({ signal }): Promise<Catalog[]> => fetchCatalogs(signal),
-        enabled,
+        enabled: queriesEnabled,
         staleTime: 1000 * 60 * 5, // 5 minutes
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -78,7 +93,7 @@ export function useCatalogSync(
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.priceGroups()),
         queryFn: ({ signal }): Promise<PriceGroupWithDetails[]> => fetchPriceGroups(signal),
-        enabled,
+        enabled: queriesEnabled,
         staleTime: 1000 * 60 * 5,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -87,7 +102,7 @@ export function useCatalogSync(
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.products.metadata.languages()),
         queryFn: ({ signal }): Promise<LanguageRecord[]> => fetchLanguages(signal),
-        enabled,
+        enabled: queriesEnabled,
         staleTime: 1000 * 60 * 5,
         refetchOnMount: false,
         refetchOnWindowFocus: false,
@@ -96,7 +111,7 @@ export function useCatalogSync(
       {
         queryKey: normalizeQueryKey(QUERY_KEYS.internationalization.currencies()),
         queryFn: ({ signal }): Promise<CurrencyRecord[]> => fetchCurrencies(signal),
-        enabled,
+        enabled: queriesEnabled,
         staleTime: 1000 * 60 * 5,
         refetchOnMount: false,
         refetchOnWindowFocus: false,

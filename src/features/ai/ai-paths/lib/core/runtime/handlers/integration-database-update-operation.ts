@@ -13,7 +13,10 @@ import {
   buildDbQueryPayload,
   resolveEntityIdFromInputs,
 } from '../utils';
-import { extractMissingTemplatePorts } from './integration-database-mongo-update-plan-helpers';
+import {
+  createWriteTemplateGuardrailOutput,
+  resolveWriteTemplateGuardrail,
+} from './integration-database-write-guardrails';
 import { executeDatabaseUpdate } from './integration-database-update-execution';
 
 export type HandleDatabaseUpdateOperationInput = {
@@ -147,49 +150,43 @@ export async function handleDatabaseUpdateOperation({
     };
   }
 
-  const missingFilterPorts = queryConfig.queryTemplate?.trim()
-    ? extractMissingTemplatePorts(queryConfig.queryTemplate, templateInputs)
-    : [];
-  const missingUpdatePorts = extractMissingTemplatePorts(updateTemplate, templateInputs);
-  const missingTemplatePorts = Array.from(
-    new Set<string>([...missingFilterPorts, ...missingUpdatePorts]),
-  );
-  if (missingTemplatePorts.length > 0) {
-    const error = `Update query/update template is missing connected inputs: ${missingTemplatePorts.join(', ')}.`;
+  const currentValueRaw: unknown = templateInputs['value'] ?? templateInputs['jobId'] ?? '';
+  const currentValue = Array.isArray(currentValueRaw)
+    ? (currentValueRaw as unknown[])[0]
+    : currentValueRaw;
+  const templateGuardrail = resolveWriteTemplateGuardrail({
+    templates: [
+      {
+        name: 'queryTemplate',
+        template: queryConfig.queryTemplate ?? '',
+      },
+      {
+        name: 'updateTemplate',
+        template: updateTemplate,
+      },
+    ],
+    templateContext: templateInputs,
+    currentValue,
+  });
+  if (!templateGuardrail.ok) {
+    const error = templateGuardrail.message;
     reportAiPathsError(
       new Error(error),
       {
         action: 'dbUpdateTemplate',
         nodeId: node.id,
-        missingTemplatePorts,
+        guardrailMeta: templateGuardrail.guardrailMeta,
       },
       'Database update blocked:',
     );
     toast(error, { variant: 'error' });
-    return {
-      result: null,
-      bundle: {
-        error,
-        guardrail: 'update-template-inputs',
-        missingTemplatePorts,
-      },
-      debugPayload: {
-        mode: 'custom',
-        updateStrategy,
-        entityType,
-        collection: configuredCollection || null,
-        idField,
-        entityId,
-        missingTemplatePorts,
-      },
+    return createWriteTemplateGuardrailOutput({
       aiPrompt,
-    };
+      message: error,
+      guardrailMeta: templateGuardrail.guardrailMeta,
+    });
   }
 
-  const currentValueRaw: unknown = templateInputs['value'] ?? templateInputs['jobId'] ?? '';
-  const currentValue = Array.isArray(currentValueRaw)
-    ? (currentValueRaw as unknown[])[0]
-    : currentValueRaw;
   const renderedUpdate = renderJsonTemplate(
     updateTemplate,
     templateInputs,
@@ -307,9 +304,15 @@ export async function handleDatabaseUpdateOperation({
       filter: customFilter,
       update: customUpdateDoc,
       ...(executionResult.executionMeta ?? {}),
+      ...(executionResult.writeOutcome
+        ? { writeOutcome: executionResult.writeOutcome }
+        : {}),
     },
     result: updateResult,
     debugPayload,
+    ...(executionResult.writeOutcome
+      ? { writeOutcome: executionResult.writeOutcome }
+      : {}),
     aiPrompt,
   };
 }

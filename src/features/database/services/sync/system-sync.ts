@@ -79,7 +79,7 @@ export const syncSystemLogs: SyncHandler = async ({ mongo, prisma, normalizeId, 
         level: doc.level ?? 'error',
         message: doc.message ?? '',
         source: doc.source ?? null,
-        context: toJsonValue(doc.context ?? null) as Prisma.InputJsonValue,
+        context: toJsonValue(doc.context ?? null),
         stack: doc.stack ?? null,
         path: doc.path ?? null,
         method: doc.method ?? null,
@@ -121,7 +121,7 @@ export const syncFileUploadEvents: SyncHandler = async ({ mongo, prisma, normali
         errorMessage: doc.errorMessage ?? null,
         requestId: doc.requestId ?? null,
         userId: doc.userId ?? null,
-        meta: toJsonValue(doc.meta ?? null) as Prisma.InputJsonValue,
+        meta: toJsonValue(doc.meta ?? null),
         createdAt: toDate(doc.createdAt) ?? new Date(),
       };
     })

@@ -12,6 +12,7 @@ export const VALIDATOR_SCOPE_LABELS: Record<ValidatorScope, string> = {
   'prompt-exploder': 'Image Studio - Prompt Exploder',
   'case-resolver-prompt-exploder': 'Case Resolver - Prompt Exploder',
   'case-resolver-plain-text': 'Case Resolver - Plain Text',
+  'ai-paths': 'AI Paths Patterns',
 };
 
 export const VALIDATOR_SCOPE_DESCRIPTIONS: Record<ValidatorScope, string> = {
@@ -24,6 +25,8 @@ export const VALIDATOR_SCOPE_DESCRIPTIONS: Record<ValidatorScope, string> = {
     'Case Resolver Prompt Exploder patterns are isolated for Case Resolver document workflows.',
   'case-resolver-plain-text':
     'Case Resolver Plain Text patterns normalize and convert HTML-rich document content into plain text outputs for node connectors.',
+  'ai-paths':
+    'AI Paths patterns validate and format outputs from AI model nodes within visual AI workflow paths.',
 };
 
 const DEFAULT_PATTERN_LIST_DEFS: Array<{
@@ -66,6 +69,12 @@ const DEFAULT_PATTERN_LIST_DEFS: Array<{
     description: VALIDATOR_SCOPE_DESCRIPTIONS['case-resolver-plain-text'],
     scope: 'case-resolver-plain-text',
   },
+  {
+    id: 'ai-paths',
+    name: 'AI Paths Patterns',
+    description: VALIDATOR_SCOPE_DESCRIPTIONS['ai-paths'],
+    scope: 'ai-paths',
+  },
 ];
 
 const nowIso = (): string => new Date().toISOString();
@@ -98,7 +107,9 @@ export const parseValidatorScope = (value: string | null): ValidatorScope =>
         ? 'case-resolver-prompt-exploder'
         : value === 'case-resolver-plain-text'
           ? 'case-resolver-plain-text'
-          : 'products';
+          : value === 'ai-paths'
+            ? 'ai-paths'
+            : 'products';
 
 const normalizeString = (value: unknown): string =>
   typeof value === 'string' ? value.trim() : '';

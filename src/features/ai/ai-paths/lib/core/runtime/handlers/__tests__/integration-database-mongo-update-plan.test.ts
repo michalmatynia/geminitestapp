@@ -336,14 +336,20 @@ describe('buildMongoUpdatePlan', () => {
     const outputBundle = result.output['bundle'] as Record<string, unknown>;
     expect(outputBundle).toEqual(
       expect.objectContaining({
-        guardrail: 'update-template-inputs',
+        guardrail: 'write-template-values',
       })
     );
-    const missingTemplatePorts = outputBundle['missingTemplatePorts'];
-    expect(Array.isArray(missingTemplatePorts)).toBe(true);
-    expect(missingTemplatePorts).toContain('bundle');
+    const guardrailMeta = outputBundle['guardrailMeta'] as Record<string, unknown>;
+    expect(guardrailMeta).toEqual(
+      expect.objectContaining({
+        code: 'write-template-values',
+      }),
+    );
+    const missingTokens = guardrailMeta['missingTokens'];
+    expect(Array.isArray(missingTokens)).toBe(true);
+    expect(missingTokens).toContain('bundle.parameters');
     expect(toast).toHaveBeenCalledWith(
-      expect.stringContaining('Update template is missing connected inputs'),
+      expect.stringContaining('Database write blocked'),
       { variant: 'error' }
     );
     expect(reportAiPathsError).toHaveBeenCalled();

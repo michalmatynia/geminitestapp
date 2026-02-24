@@ -15,9 +15,12 @@ import {
 } from './database-parameter-inference';
 import {
   buildMongoUpdateDebugPayload,
-  extractMissingTemplatePorts,
   resolveMongoUpdateFilter,
 } from './integration-database-mongo-update-plan-helpers';
+import {
+  createWriteTemplateGuardrailOutput,
+  resolveWriteTemplateGuardrail,
+} from './integration-database-write-guardrails';
 
 export type MongoUpdatePlan = {
   resolvedFilter: Record<string, unknown>;
@@ -74,6 +77,10 @@ export async function buildMongoUpdatePlan({
   aiPrompt,
 }: BuildMongoUpdatePlanInput): Promise<BuildMongoUpdatePlanResult> {
   const updatePayloadMode = dbConfig.updatePayloadMode ?? 'custom';
+  const currentValueRaw: unknown = templateInputs['value'] ?? templateInputs['jobId'] ?? '';
+  const currentValue = Array.isArray(currentValueRaw)
+    ? (currentValueRaw as unknown[])[0]
+    : currentValueRaw;
   if (updatePayloadMode !== 'custom') {
     const error =
       'Mapping-based update mode is disabled. Configure explicit filter and update document.';
@@ -149,6 +156,41 @@ export async function buildMongoUpdatePlan({
     };
   }
 
+  const templateGuardrail = resolveWriteTemplateGuardrail({
+    templates: [
+      {
+        name: 'queryTemplate',
+        template: queryConfig.queryTemplate ?? '',
+      },
+      {
+        name: 'updateTemplate',
+        template: updateTemplate,
+      },
+    ],
+    templateContext: templateInputs,
+    currentValue,
+  });
+  if (!templateGuardrail.ok) {
+    const errorMessage = templateGuardrail.message;
+    reportAiPathsError(
+      new Error(errorMessage),
+      {
+        action: 'dbUpdateTemplate',
+        nodeId: node.id,
+        guardrailMeta: templateGuardrail.guardrailMeta,
+      },
+      'Database update blocked:'
+    );
+    toast(errorMessage, { variant: 'error' });
+    return {
+      output: createWriteTemplateGuardrailOutput({
+        aiPrompt,
+        message: errorMessage,
+        guardrailMeta: templateGuardrail.guardrailMeta,
+      }),
+    };
+  }
+
   if (!resolvedFilter || Object.keys(resolvedFilter).length === 0) {
     const error = 'No explicit update filter provided.';
     reportAiPathsError(
@@ -177,40 +219,6 @@ export async function buildMongoUpdatePlan({
     };
   }
 
-  const missingTemplatePorts: string[] = updateTemplate
-    ? extractMissingTemplatePorts(updateTemplate, templateInputs)
-    : [];
-  if (missingTemplatePorts.length > 0) {
-    const errorMessage = `Update template is missing connected inputs: ${missingTemplatePorts.join(
-      ', '
-    )}.`;
-    reportAiPathsError(
-      new Error(errorMessage),
-      {
-        action: 'dbUpdateTemplate',
-        nodeId: node.id,
-        missingTemplatePorts,
-      },
-      'Database update skipped:'
-    );
-    toast(errorMessage, { variant: 'error' });
-    return {
-      output: {
-        result: null,
-        bundle: {
-          error: errorMessage,
-          guardrail: 'update-template-inputs',
-          missingTemplatePorts,
-        },
-        debugPayload: {
-          ...debugPayload,
-          guardrail: 'update-template-inputs',
-          missingTemplatePorts,
-        },
-        aiPrompt,
-      },
-    };
-  }
   const parsedUpdate: unknown = updateTemplate ? parseJsonTemplate(updateTemplate) : null;
   if (
     updateTemplate &&

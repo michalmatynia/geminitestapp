@@ -13,9 +13,12 @@ import {
   VIEW_MARGIN,
   clampScale,
   clampTranslate,
+  createNodeInstanceId,
   getDefaultConfigForType,
   getNodeInputPortCardinality,
   getPortOffsetY,
+  palette,
+  resolveNodeTypeId,
   sanitizeEdges,
   validateConnection,
 } from '@/features/ai/ai-paths/lib';
@@ -692,15 +695,14 @@ export function useAiPathsCanvasInteractions({
         ...payload.config,
       }
       : defaultConfig;
-    const createNodeId = (): string => {
-      if (globalThis.crypto?.randomUUID) {
-        return `node-${globalThis.crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
-      }
-      return `node-${Math.random().toString(36).slice(2, 10)}`;
-    };
+    const createNodeId = (): string =>
+      createNodeInstanceId(new Set(nodes.map((node: AiNode): string => node.id)));
+    const nodeId = createNodeId();
     const newNode: AiNode = {
       ...payload,
-      id: createNodeId(),
+      id: nodeId,
+      instanceId: nodeId,
+      nodeTypeId: resolveNodeTypeId(payload, palette),
       createdAt: new Date().toISOString(),
       updatedAt: null,
       data: {},

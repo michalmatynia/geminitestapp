@@ -4,6 +4,7 @@ import React from 'react';
 
 import type {
   AiNode,
+  DataContractNodeIssueSummary,
   Edge,
 } from '@/features/ai/ai-paths/lib';
 import {
@@ -153,6 +154,29 @@ const statusPalette = (
   };
 };
 
+const resolveNodeDiagnosticsBadgePalette = (
+  summary: DataContractNodeIssueSummary | undefined
+): { fill: string; stroke: string; text: string; label: string } | null => {
+  if (!summary) return null;
+  if (summary.errors > 0) {
+    return {
+      fill: 'rgba(244, 63, 94, 0.2)',
+      stroke: 'rgba(244, 63, 94, 0.7)',
+      text: '#fecdd3',
+      label: `E${summary.errors}`,
+    };
+  }
+  if (summary.warnings > 0) {
+    return {
+      fill: 'rgba(245, 158, 11, 0.2)',
+      stroke: 'rgba(245, 158, 11, 0.72)',
+      text: '#fde68a',
+      label: `W${summary.warnings}`,
+    };
+  }
+  return null;
+};
+
 const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
@@ -197,6 +221,9 @@ export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number
     onFireTrigger,
     onConnectorHover,
     onConnectorLeave,
+    onNodeDiagnosticsHover,
+    onNodeDiagnosticsLeave,
+    onFocusNodeDiagnostics,
     nodes,
     edges,
     view,
@@ -206,6 +233,7 @@ export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number
     runtimeState,
     runtimeNodeStatuses,
     runtimeRunStatus,
+    nodeDiagnosticsById,
   } = useCanvasBoardUI();
 
   const buildConnectorKey = React.useCallback(
@@ -340,6 +368,11 @@ export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number
         const runtimeStatusLabel = runtimeNodeStatus
           ? formatRuntimeStatusLabel(runtimeNodeStatus)
           : null;
+        const nodeDiagnosticsSummary = nodeDiagnosticsById[node.id];
+        const nodeDiagnosticsBadge =
+          resolveNodeDiagnosticsBadgePalette(nodeDiagnosticsSummary);
+        const nodeDiagnosticsBadgeX =
+          node.type === 'trigger' ? NODE_WIDTH - 146 : NODE_WIDTH - 60;
         const isBlockerProcessing =
           (node.type === 'model' ||
             node.type === 'agent' ||
@@ -508,6 +541,63 @@ export function CanvasSvgNodeLayer({ cullPadding = 260 }: { cullPadding?: number
                 )}
               </g>
             )}
+
+            {nodeDiagnosticsBadge && nodeDiagnosticsSummary ? (
+              <g
+                transform={`translate(${nodeDiagnosticsBadgeX} 6)`}
+                data-node-diagnostics-badge={node.id}
+              >
+                <rect
+                  x={0}
+                  y={0}
+                  width={50}
+                  height={16}
+                  rx={5}
+                  fill={nodeDiagnosticsBadge.fill}
+                  stroke={nodeDiagnosticsBadge.stroke}
+                  strokeWidth='1'
+                  style={{ cursor: 'pointer' }}
+                  onPointerDown={(event: React.PointerEvent<SVGRectElement>) => {
+                    event.stopPropagation();
+                  }}
+                  onPointerEnter={(event: React.PointerEvent<SVGRectElement>) => {
+                    onNodeDiagnosticsHover?.({
+                      clientX: event.clientX,
+                      clientY: event.clientY,
+                      nodeId: node.id,
+                      summary: nodeDiagnosticsSummary,
+                    });
+                  }}
+                  onPointerMove={(event: React.PointerEvent<SVGRectElement>) => {
+                    onNodeDiagnosticsHover?.({
+                      clientX: event.clientX,
+                      clientY: event.clientY,
+                      nodeId: node.id,
+                      summary: nodeDiagnosticsSummary,
+                    });
+                  }}
+                  onPointerLeave={() => {
+                    onNodeDiagnosticsLeave?.();
+                  }}
+                  onClick={(event: React.MouseEvent<SVGRectElement>) => {
+                    event.stopPropagation();
+                    onFocusNodeDiagnostics?.(node.id);
+                  }}
+                />
+                <text
+                  x={25}
+                  y={11}
+                  textAnchor='middle'
+                  fill={nodeDiagnosticsBadge.text}
+                  fontSize='8'
+                  fontWeight='600'
+                  pointerEvents='none'
+                  style={{ userSelect: 'none' }}
+                >
+                  {nodeDiagnosticsBadge.label}
+                </text>
+              </g>
+            ) : null}
 
             {/* Keep Fire Trigger always available in SVG mode for trigger nodes, regardless zoom/detail. */}
             {node.type === 'trigger' && (

@@ -119,8 +119,8 @@ export function useListProductForm(productId: string): UseListProductFormResult 
         onSuccess();
       } else {
         const response = await createListingMutation.mutateAsync({
-          integrationId: selectedIntegrationId!,
-          connectionId: selectedConnectionId!,
+          integrationId: selectedIntegrationId,
+          connectionId: selectedConnectionId,
           ...(isTraderaIntegration
             ? {
               durationHours: selectedTraderaDurationHours,

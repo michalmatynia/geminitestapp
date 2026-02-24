@@ -5,6 +5,7 @@ import React, { createContext, useContext } from 'react';
 import type {
   AiNode,
   AiPathRuntimeNodeStatusMap,
+  DataContractNodeIssueSummary,
   Edge,
   PathFlowIntensity,
   RuntimeState,
@@ -38,6 +39,7 @@ export interface CanvasBoardUIContextValue {
   runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
   runtimeRunStatus: RuntimeRunStatus;
   nodeDurations: Record<string, number>;
+  nodeDiagnosticsById: Record<string, DataContractNodeIssueSummary>;
   
   // Pulse & Effects
   inputPulseNodes: Set<string>;
@@ -60,6 +62,14 @@ export interface CanvasBoardUIContextValue {
   setPinnedConnectorKey: (key: string | null) => void;
   onConnectorHover?: (payload: { clientX: number; clientY: number; info: ConnectorInfo }) => void;
   onConnectorLeave?: () => void;
+  onNodeDiagnosticsHover?: (payload: {
+    clientX: number;
+    clientY: number;
+    nodeId: string;
+    summary: DataContractNodeIssueSummary;
+  }) => void;
+  onNodeDiagnosticsLeave?: () => void;
+  onFocusNodeDiagnostics?: (nodeId: string) => void;
 
   // Handlers (Interactions)
   onPointerDownNode: (event: React.PointerEvent<Element>, nodeId: string) => void | Promise<void>;

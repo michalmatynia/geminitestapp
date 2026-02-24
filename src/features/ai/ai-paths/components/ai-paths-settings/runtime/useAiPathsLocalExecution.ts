@@ -13,15 +13,12 @@ import {
   PATH_DEBUG_PREFIX,
   TRIGGER_EVENTS,
   appendLocalRun,
-  compileGraph,
-  evaluateAiPathsValidationPreflight,
-  evaluateGraph,
-  inspectPathDependencies,
+  evaluateGraphClient as evaluateGraph,
+  evaluateRunPreflight,
   stableStringify,
   GraphExecutionError,
   GraphExecutionCancelled,
 } from '@/features/ai/ai-paths/lib';
-import { buildCompileWarningMessage } from '@/features/ai/ai-paths/lib/core/utils/compile-warning-message';
 import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability';
 import {
@@ -937,12 +934,22 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       args.toast(message, { variant: 'error' });
       return;
     }
-    const validationReport = evaluateAiPathsValidationPreflight({
+    const runPreflight = evaluateRunPreflight({
       nodes: args.normalizedNodes,
       edges: args.sanitizedEdges,
-      config: args.aiPathsValidation,
+      aiPathsValidation: args.aiPathsValidation,
+      strictFlowMode: args.strictFlowMode,
+      triggerNodeId: triggerNode.id,
+      runtimeState: args.runtimeStateRef.current,
+      parserSamples: args.parserSamples,
+      updaterSamples: args.updaterSamples,
+      mode: 'full',
     });
-    const nodeValidationEnabled = validationReport.enabled;
+    const validationReport = runPreflight.validationReport;
+    const compileReport = runPreflight.compileReport;
+    const dependencyReport = runPreflight.dependencyReport;
+    const dataContractReport = runPreflight.dataContractReport;
+    const nodeValidationEnabled = runPreflight.nodeValidationEnabled;
     if (nodeValidationEnabled && validationReport.blocked) {
       const timestamp = new Date().toISOString();
       const primaryFinding = validationReport.findings[0];
@@ -1027,117 +1034,201 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       args.onCanonicalEdgesDetected(args.sanitizedEdges);
     }
 
-    if (nodeValidationEnabled) {
-      const compileReport = compileGraph(args.normalizedNodes, args.sanitizedEdges);
-      if (!compileReport.ok) {
-        const timestamp = new Date().toISOString();
-        const primaryError = compileReport.findings.find(
-          (finding): boolean => finding.severity === 'error'
-        );
-        const blockedMessage =
-          primaryError?.message ??
-          `Graph compile blocked run: ${compileReport.errors} issue(s) require fixes.`;
-        args.appendRuntimeEvent({
-          source: 'local',
-          kind: 'run_blocked',
-          level: 'warn',
-          timestamp,
-          message: blockedMessage,
-          nodeId: triggerNode.id,
-          nodeType: triggerNode.type,
-          nodeTitle: triggerNode.title ?? null,
-          metadata: {
-            compile: {
-              errors: compileReport.errors,
-              warnings: compileReport.warnings,
-              findings: compileReport.findings,
-            },
+    if (nodeValidationEnabled && !compileReport.ok) {
+      const timestamp = new Date().toISOString();
+      const primaryError = compileReport.findings.find(
+        (finding): boolean => finding.severity === 'error'
+      );
+      const blockedMessage =
+        primaryError?.message ??
+        `Graph compile blocked run: ${compileReport.errors} issue(s) require fixes.`;
+      args.appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_blocked',
+        level: 'warn',
+        timestamp,
+        message: blockedMessage,
+        nodeId: triggerNode.id,
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        metadata: {
+          compile: {
+            errors: compileReport.errors,
+            warnings: compileReport.warnings,
+            findings: compileReport.findings,
           },
-        });
-        args.setNodeStatus({
-          nodeId: triggerNode.id,
-          status: 'blocked',
-          source: 'local',
-          nodeType: triggerNode.type,
-          nodeTitle: triggerNode.title ?? null,
-          kind: 'node_status',
-          level: 'warn',
-          message: blockedMessage,
-          metadata: {
-            graphCompileBlocked: true,
-            graphCompileErrors: compileReport.errors,
-          },
-        });
-        args.toast(blockedMessage, { variant: 'error' });
-        return;
-      }
-      if (compileReport.warnings > 0) {
-        const timestamp = new Date().toISOString();
-        const warningMessage = buildCompileWarningMessage(compileReport);
-        args.appendRuntimeEvent({
-          source: 'local',
-          kind: 'run_warning',
-          level: 'warn',
-          timestamp,
-          message: warningMessage,
-          nodeId: triggerNode.id,
-          nodeType: triggerNode.type,
-          nodeTitle: triggerNode.title ?? null,
-          metadata: {
-            compile: {
-              errors: compileReport.errors,
-              warnings: compileReport.warnings,
-              findings: compileReport.findings,
-            },
-          },
-        });
-        args.toast(warningMessage, { variant: 'warning' });
-      }
+        },
+      });
+      args.setNodeStatus({
+        nodeId: triggerNode.id,
+        status: 'blocked',
+        source: 'local',
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        kind: 'node_status',
+        level: 'warn',
+        message: blockedMessage,
+        metadata: {
+          graphCompileBlocked: true,
+          graphCompileErrors: compileReport.errors,
+        },
+      });
+      args.toast(blockedMessage, { variant: 'error' });
+      return;
+    }
 
-      if (args.strictFlowMode) {
-        const dependencyReport = inspectPathDependencies(args.normalizedNodes, args.sanitizedEdges);
-        if (dependencyReport.errors > 0) {
-          const timestamp = new Date().toISOString();
-          const blockedMessage = `Strict flow blocked run: ${dependencyReport.errors} dependency error(s) detected.`;
-          args.appendRuntimeEvent({
-            source: 'local',
-            kind: 'run_blocked',
-            level: 'warn',
-            timestamp,
-            message: blockedMessage,
-            nodeId: triggerNode.id,
-            nodeType: triggerNode.type,
-            nodeTitle: triggerNode.title ?? null,
-            metadata: {
-              strictFlowMode: true,
-              dependencyErrors: dependencyReport.errors,
-              dependencyWarnings: dependencyReport.warnings,
-              blockedRiskIds: dependencyReport.risks
-                .filter((risk): boolean => risk.severity === 'error')
-                .map((risk) => risk.id),
-            },
-          });
-          args.setNodeStatus({
-            nodeId: triggerNode.id,
-            status: 'blocked',
-            source: 'local',
-            nodeType: triggerNode.type,
-            nodeTitle: triggerNode.title ?? null,
-            kind: 'node_status',
-            level: 'warn',
-            message: blockedMessage,
-            metadata: {
-              strictFlowMode: true,
-              dependencyErrors: dependencyReport.errors,
-            },
-          });
-          args.toast(
-            'Strict flow blocked run. Fix Dependency Inspector errors in Path Settings.',
-            { variant: 'error' },
-          );
-          return;
-        }
-      }
+    if (compileReport.warnings > 0) {
+      const timestamp = new Date().toISOString();
+      const warningMessage = `Graph compile reported ${compileReport.warnings} warning(s).`;
+      args.appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_warning',
+        level: 'warn',
+        timestamp,
+        message: warningMessage,
+        nodeId: triggerNode.id,
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        metadata: {
+          compile: {
+            errors: compileReport.errors,
+            warnings: compileReport.warnings,
+            findings: compileReport.findings,
+          },
+        },
+      });
+      args.toast(warningMessage, { variant: 'warning' });
+    }
+
+    if (
+      nodeValidationEnabled &&
+      args.strictFlowMode &&
+      dependencyReport &&
+      dependencyReport.errors > 0
+    ) {
+      const timestamp = new Date().toISOString();
+      const blockedMessage = `Strict flow blocked run: ${dependencyReport.errors} dependency error(s) detected.`;
+      args.appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_blocked',
+        level: 'warn',
+        timestamp,
+        message: blockedMessage,
+        nodeId: triggerNode.id,
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        metadata: {
+          strictFlowMode: true,
+          dependencyErrors: dependencyReport.errors,
+          dependencyWarnings: dependencyReport.warnings,
+          blockedRiskIds: dependencyReport.risks
+            .filter((risk): boolean => risk.severity === 'error')
+            .map((risk) => risk.id),
+        },
+      });
+      args.setNodeStatus({
+        nodeId: triggerNode.id,
+        status: 'blocked',
+        source: 'local',
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        kind: 'node_status',
+        level: 'warn',
+        message: blockedMessage,
+        metadata: {
+          strictFlowMode: true,
+          dependencyErrors: dependencyReport.errors,
+        },
+      });
+      args.toast(
+        'Strict flow blocked run. Fix Dependency Inspector errors in Path Settings.',
+        { variant: 'error' },
+      );
+      return;
+    }
+
+    if (nodeValidationEnabled && dataContractReport.errors > 0) {
+      const timestamp = new Date().toISOString();
+      const firstIssue = dataContractReport.issues.find(
+        (issue) => issue.severity === 'error'
+      );
+      const blockedMessage =
+        firstIssue?.message ??
+        `Data contract blocked run: ${dataContractReport.errors} issue(s) detected.`;
+      args.appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_blocked',
+        level: 'warn',
+        timestamp,
+        message: blockedMessage,
+        nodeId: triggerNode.id,
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        metadata: {
+          dataContract: {
+            errors: dataContractReport.errors,
+            warnings: dataContractReport.warnings,
+            issues: dataContractReport.issues.slice(0, 10),
+          },
+        },
+      });
+      args.setNodeStatus({
+        nodeId: triggerNode.id,
+        status: 'blocked',
+        source: 'local',
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        kind: 'node_status',
+        level: 'warn',
+        message: blockedMessage,
+        metadata: {
+          dataContractBlocked: true,
+          dataContractErrors: dataContractReport.errors,
+        },
+      });
+      args.toast(blockedMessage, { variant: 'error' });
+      return;
+    }
+
+    if (
+      dataContractReport.warnings > 0 ||
+      (!nodeValidationEnabled &&
+        (compileReport.errors > 0 ||
+          (dependencyReport?.errors ?? 0) > 0 ||
+          dataContractReport.errors > 0))
+    ) {
+      const timestamp = new Date().toISOString();
+      const warningMessage = !nodeValidationEnabled
+        ? `Node Validation disabled: proceeding with compile/dependency/data-contract findings (compile errors ${compileReport.errors}, dependency errors ${dependencyReport?.errors ?? 0}, data-contract errors ${dataContractReport.errors}).`
+        : `Data contract preflight reported ${dataContractReport.warnings} warning(s).`;
+      args.appendRuntimeEvent({
+        source: 'local',
+        kind: 'run_warning',
+        level: 'warn',
+        timestamp,
+        message: warningMessage,
+        nodeId: triggerNode.id,
+        nodeType: triggerNode.type,
+        nodeTitle: triggerNode.title ?? null,
+        metadata: {
+          compile: {
+            errors: compileReport.errors,
+            warnings: compileReport.warnings,
+          },
+          dependency: dependencyReport
+            ? {
+              errors: dependencyReport.errors,
+              warnings: dependencyReport.warnings,
+            }
+            : undefined,
+          dataContract: {
+            errors: dataContractReport.errors,
+            warnings: dataContractReport.warnings,
+            issues: dataContractReport.issues.slice(0, 10),
+          },
+        },
+      });
+      args.toast(warningMessage, { variant: 'warning' });
     }
 
     if (allowSimulationContext && connectedSimulationNodes.length > 0) {

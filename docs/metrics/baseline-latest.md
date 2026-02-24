@@ -1,15 +1,15 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-23T19:54:54.225Z
+Generated at: 2026-02-23T22:27:07.974Z
 
 ## Snapshot
 
-- Source files: 2973
-- Source lines: 552824
-- use client files: 961
+- Source files: 2996
+- Source lines: 555739
+- use client files: 975
 - Files >= 1000 LOC: 61
-- Files >= 1500 LOC: 25
-- Largest file: `src/features/database/services/database-sync.ts` (3249 LOC)
+- Files >= 1500 LOC: 24
+- Largest file: `src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx` (3179 LOC)
 - API routes: 314
 - API delegated server routes: 15
 - API routes without apiHandler/delegation: 0
@@ -62,10 +62,9 @@ Generated at: 2026-02-23T19:54:54.225Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/database/services/database-sync.ts` | 3249 |
 | `src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx` | 3179 |
 | `src/features/filemaker/settings.ts` | 3063 |
-| `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2985 |
+| `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2987 |
 | `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2966 |
 | `src/features/case-resolver/components/CaseResolverPageView.tsx` | 2657 |
 | `src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts` | 2544 |
@@ -76,9 +75,10 @@ Generated at: 2026-02-23T19:54:54.225Z
 | `src/features/case-resolver/components/CaseResolverNodeFileWorkspace.tsx` | 2262 |
 | `src/features/products/services/product-studio-service.ts` | 2070 |
 | `src/features/ai/ai-paths/lib/core/validation-engine/docs-registry-adapter.ts` | 1816 |
+| `src/shared/contracts/ai-paths.ts` | 1809 |
 | `src/features/ai/ai-paths/pages/AdminAiPathsValidationPage.tsx` | 1729 |
 | `src/features/ai/ai-paths/services/path-run-executor.ts` | 1727 |
-| `src/shared/contracts/ai-paths.ts` | 1721 |
 | `src/features/ai/ai-paths/components/canvas-board.tsx` | 1687 |
-| `src/features/ai/ai-paths/server/settings-store.ts` | 1673 |
+| `src/features/ai/ai-paths/server/settings-store.ts` | 1677 |
 | `src/features/ai/ai-paths/lib/core/normalization/index.ts` | 1642 |
+| `src/features/case-resolver/components/CaseResolverFolderTree.tsx` | 1627 |

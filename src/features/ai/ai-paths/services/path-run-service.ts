@@ -1,7 +1,7 @@
 import 'server-only';
 
 import {
-  compileGraph,
+  evaluateRunPreflight,
   migrateTriggerToFetcherGraph,
   normalizeNodes,
   normalizeAiPathsValidationConfig,
@@ -198,22 +198,22 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         | Record<string, unknown>
         | undefined
     );
-    const nodeValidationEnabled = validationConfig.enabled !== false;
-    const compileReport = nodeValidationEnabled
-      ? compileGraph(nodes, edges)
-      : compileGraph(nodes, edges, {
-        scopeMode: 'reachable_from_roots',
-        ...(input.triggerNodeId ? { scopeRootNodeIds: [input.triggerNodeId] } : {}),
-      });
-    if (nodeValidationEnabled && !compileReport.ok) {
-      const primaryError = compileReport.findings.find(
-        (finding): boolean => finding.severity === 'error'
-      );
+    const strictFlowMode =
+      ((input.meta as Record<string, unknown> | null)?.['strictFlowMode'] as
+        | boolean
+        | undefined) !== false;
+    const runPreflight = evaluateRunPreflight({
+      nodes,
+      edges,
+      aiPathsValidation: validationConfig,
+      strictFlowMode,
+      triggerNodeId: input.triggerNodeId ?? null,
+      mode: 'full',
+    });
+    if (runPreflight.shouldBlock) {
       throw new Error(
-        (primaryError
-          ? `Graph compile failed: ${primaryError.message}`
-          : null) ??
-          `Graph compile failed with ${compileReport.errors} blocking issue(s).`
+        runPreflight.blockMessage ??
+          'Run blocked by preflight validation checks.'
       );
     }
     const policyReport = evaluateDisabledNodeTypesPolicy(nodes);
@@ -233,10 +233,27 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
           }
           : undefined,
       graphCompile: {
-        errors: compileReport.errors,
-        warnings: compileReport.warnings,
-        findings: compileReport.findings,
+        errors: runPreflight.compileReport.errors,
+        warnings: runPreflight.compileReport.warnings,
+        findings: runPreflight.compileReport.findings,
         compiledAt: new Date().toISOString(),
+      },
+      runPreflight: {
+        strictFlowMode,
+        validation: runPreflight.validationReport,
+        dependency: runPreflight.dependencyReport
+          ? {
+            errors: runPreflight.dependencyReport.errors,
+            warnings: runPreflight.dependencyReport.warnings,
+            strictReady: runPreflight.dependencyReport.strictReady,
+          }
+          : null,
+        dataContract: {
+          errors: runPreflight.dataContractReport.errors,
+          warnings: runPreflight.dataContractReport.warnings,
+          issues: runPreflight.dataContractReport.issues.slice(0, 12),
+        },
+        warnings: runPreflight.warnings,
       },
     };
     const run = await repo.createRun({

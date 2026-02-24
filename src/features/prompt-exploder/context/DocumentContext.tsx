@@ -260,7 +260,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
     () =>
       (documentState?.segments ?? []).map((segment: PromptExploderSegment) => ({
         value: segment.id,
-        label: segment.title || `Segment \${segment.id}`,
+        label: segment.title || 'Segment ${segment.id}',
       })),
     [documentState?.segments]
   );
@@ -340,7 +340,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         0.95
       );
       const learnedTemplateSignature = runtimeSelection.runtimeLearnedTemplates
-        .map((template) => `\${template.id}:\${template.state}:\${template.updatedAt}`)
+        .map((template) => `${template.id}:${template.state}:${template.updatedAt}`)
         .join('|');
       const runtimeSignature = [
         trimmed,
@@ -356,7 +356,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         setManualBindings([]);
         setDocumentState(nextDocument);
         setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
-        toast(`Reused \${nextDocument.segments.length} cached segment(s).`, {
+        toast(`Reused ${nextDocument.segments.length} cached segment(s).`, {
           variant: 'info',
         });
         return;
@@ -395,7 +395,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
       setManualBindings([]);
       setDocumentState(nextDocument);
       setSelectedSegmentId(nextDocument.segments[0]?.id ?? null);
-      toast(`Exploded into \${nextDocument.segments.length} segment(s).`, {
+      toast('Exploded into ${nextDocument.segments.length} segment(s).', {
         variant: 'success',
       });
       if (!orchestratorEnabled) {

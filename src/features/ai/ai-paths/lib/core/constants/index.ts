@@ -821,6 +821,8 @@ export const triggers = [
 export const initialNodes = [
   {
     id: 'node-context',
+    instanceId: 'node-context',
+    nodeTypeId: 'context.context_filter',
     type: 'context',
     title: 'Context Filter',
     description: 'Filter Product modal context into scoped fields.',
@@ -835,6 +837,8 @@ export const initialNodes = [
   },
   {
     id: 'node-parser',
+    instanceId: 'node-parser',
+    nodeTypeId: 'parser.json_parser',
     type: 'parser',
     title: 'JSON Parser',
     description: 'Extract [images], [title], [productId], [content_en].',
@@ -854,6 +858,8 @@ export const initialNodes = [
   },
   {
     id: 'node-vision-prompt',
+    instanceId: 'node-vision-prompt',
+    nodeTypeId: 'prompt.prompt',
     type: 'prompt',
     title: 'Vision Prompt',
     description: 'Prompt: Analyze [images] and [title].',
@@ -863,6 +869,8 @@ export const initialNodes = [
   },
   {
     id: 'node-vision-model',
+    instanceId: 'node-vision-model',
+    nodeTypeId: 'model.model',
     type: 'model',
     title: 'Gemma Vision',
     description: 'Image analysis.',
@@ -880,6 +888,8 @@ export const initialNodes = [
   },
   {
     id: 'node-desc-prompt',
+    instanceId: 'node-desc-prompt',
+    nodeTypeId: 'prompt.prompt',
     type: 'prompt',
     title: 'Description Prompt',
     description: 'Prompt: Use [result] and [title].',
@@ -889,6 +899,8 @@ export const initialNodes = [
   },
   {
     id: 'node-desc-model',
+    instanceId: 'node-desc-model',
+    nodeTypeId: 'model.model',
     type: 'model',
     title: 'GPT-4o',
     description: 'Generate description.',
@@ -906,6 +918,8 @@ export const initialNodes = [
   },
   {
     id: 'node-updater',
+    instanceId: 'node-updater',
+    nodeTypeId: 'database.database_query',
     type: 'database',
     title: 'Database Update',
     description: 'Update product fields from AI results.',
@@ -934,6 +948,9 @@ export const initialNodes = [
           single: false,
         },
         writeSource: 'bundle',
+        writeOutcomePolicy: {
+          onZeroAffected: 'fail',
+        },
         aiPrompt: '',
       },
     },

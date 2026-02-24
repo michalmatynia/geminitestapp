@@ -185,7 +185,7 @@ export const syncProductListings: SyncHandler = async ({ mongo, prisma, normaliz
       inventoryId: (doc as { inventoryId?: string | null }).inventoryId ?? null,
       status: (doc as { status?: string }).status ?? 'pending',
       listedAt: toDate((doc as { listedAt?: Date | string | null }).listedAt),
-      exportHistory: toJsonValue((doc as { exportHistory?: unknown }).exportHistory ?? null) as Prisma.InputJsonValue,
+      exportHistory: toJsonValue((doc as { exportHistory?: unknown }).exportHistory ?? null),
       createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
       updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
     };

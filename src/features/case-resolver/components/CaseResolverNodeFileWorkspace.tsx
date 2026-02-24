@@ -1,71 +1,35 @@
 'use client';
 
 import {
-  ChevronDown,
-  ChevronRight,
-  ExternalLink,
   FileCode2,
-  FileText,
-  Folder,
-  FolderOpen,
-  ScanLine,
   Sparkles,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import {
   AiPathsProvider,
-  useCanvasActions,
-  useCanvasRefs,
-  useCanvasState,
-  useGraphActions,
-  useGraphState,
-  useSelectionActions,
-  useSelectionState,
 } from '@/features/ai/ai-paths/context';
 import {
-  NODE_MIN_HEIGHT,
-  NODE_WIDTH,
-  palette,
   stableStringify,
   type Edge,
 } from '@/features/ai/ai-paths/lib';
-import {
-  VALIDATOR_PATTERN_LISTS_KEY,
-  parseValidatorPatternLists,
-} from '@/features/admin/pages/validator-scope';
-import {
-  PROMPT_ENGINE_SETTINGS_KEY,
-  parsePromptEngineSettings,
-} from '@/features/prompt-engine/settings';
-import { type AiNode, type AiEdge, type NodeDefinition } from '@/shared/contracts/case-resolver';
+import { type AiNode } from '@/shared/contracts/case-resolver';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
   CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
-  CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT,
   DEFAULT_CASE_RESOLVER_EDGE_META,
   DEFAULT_CASE_RESOLVER_NODE_META,
-  type CaseResolverEdgeMeta,
-  type CaseResolverIdentifier,
-  type CaseResolverFile,
-  type CaseResolverJoinMode,
   type CaseResolverNodeMeta,
-  type CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
+  type CaseResolverNodeSnapshotMeta as CaseResolverNodeFileMeta,
   type CaseResolverNodeFileSnapshot,
-  type CaseResolverScanSlot,
 } from '@/shared/contracts/case-resolver';
-import { useSettingsMap } from '@/shared/hooks/use-settings';
-import { Button, useToast, Badge, Hint, SelectSimple, EmptyState, Card, SearchInput } from '@/shared/ui';
-import { PanelHeader } from '@/shared/ui/templates/panels';
+import { Button, Badge, SelectSimple, EmptyState, Card, SearchInput } from '@/shared/ui';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
-  CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
-  CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
   parseCaseResolverTreeDropPayload,
   type CaseResolverDropDocumentToCanvasDetail,
-  type CaseResolverShowDocumentInCanvasDetail,
 } from '../drag';
 import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from '../settings';
 import {
@@ -76,2110 +40,197 @@ import {
   ensureDocumentPromptPorts,
   ensureNodeMeta,
   normalizeEdgesForTextNode,
-  renderPromptNodeTextPreview,
   resolvePromptNodeStaticOutputs,
-  resolvePromptConfig,
-  stripHtmlToPlainText,
 } from './case-resolver-canvas-utils';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
-import { compileCaseResolverPrompt } from '../composer';
-import { applyCaseResolverPlainTextValidation } from '../plain-text-validation';
-import { NodeFileWorkspaceProvider, type NodeFileWorkspaceContextValue } from './NodeFileWorkspaceContext';
-
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
-const PREVIEW_MAX_CHARS = 400;
-const SEARCHABLE_CONTENT_MAX_CHARS = 6000;
-const LEGACY_DOCUMENT_TEXTFIELD_PORT = 'textfield';
-const NODEFILE_JOIN_VALUE_MAP: Record<CaseResolverJoinMode, string> = {
-  newline: '\n',
-  tab: '\t',
-  space: ' ',
-  none: '',
-};
-
-type NodeFileDocumentSearchScope = 'case_scope' | 'all_cases';
-
-type NodeFileDocumentSearchRow = {
-  file: CaseResolverFile;
-  signatureLabel: string;
-  addresserLabel: string;
-  addresseeLabel: string;
-  folderPath: string;
-  folderSegments: string[];
-  searchable: string;
-};
-
-type NodeFileDocumentFolderNode = {
-  path: string;
-  name: string;
-  parentPath: string | null;
-  depth: number;
-  directFileCount: number;
-  descendantFileCount: number;
-};
-
-type NodeFileDocumentFolderTree = {
-  nodesByPath: Map<string, NodeFileDocumentFolderNode>;
-  childPathsByParent: Map<string | null, string[]>;
-  rootFileCount: number;
-};
-
-const normalizeSearchText = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
-
-const normalizeFolderPathSegments = (folderPath: string): string[] =>
-  folderPath
-    .split('/')
-    .map((segment: string): string => segment.trim())
-    .filter((segment: string): boolean => segment.length > 0);
-
-const isFolderPathWithinScope = (
-  candidateFolderPath: string,
-  scopeFolderPath: string
-): boolean =>
-  candidateFolderPath === scopeFolderPath ||
-  candidateFolderPath.startsWith(`${scopeFolderPath}/`);
-
-const resolvePartyReferenceSearchLabel = (
-  reference: CaseResolverFile['addresser'] | CaseResolverFile['addressee']
-): string => {
-  if (!reference) return '';
-  const kind = typeof reference.kind === 'string' ? reference.kind.trim() : '';
-  const id = typeof reference.id === 'string' ? reference.id.trim() : '';
-  if (!kind && !id) return '';
-  return [kind, id].filter(Boolean).join(':');
-};
-
-const resolveIdentifierSearchLabel = (
-  identifierId: string | null | undefined,
-  labelsById: Map<string, string>
-): string => {
-  const normalizedIdentifierId = typeof identifierId === 'string' ? identifierId.trim() : '';
-  if (!normalizedIdentifierId) return '';
-  return labelsById.get(normalizedIdentifierId) ?? normalizedIdentifierId;
-};
-
-const resolveContentPreview = (file: CaseResolverFile): string => {
-  if (file.fileType === 'document') {
-    const text = file.documentContentPlainText.trim() || file.documentContentMarkdown.trim();
-    if (!text) return '';
-    return text.length > PREVIEW_MAX_CHARS ? `${text.slice(0, PREVIEW_MAX_CHARS)}…` : text;
-  }
-  if (file.fileType === 'scanfile') {
-    const combined = file.scanSlots
-      .map((slot: CaseResolverScanSlot): string => (slot.ocrText ?? '').trim())
-      .filter(Boolean)
-      .join('\n\n');
-    if (!combined) return '';
-    return combined.length > PREVIEW_MAX_CHARS
-      ? `${combined.slice(0, PREVIEW_MAX_CHARS)}…`
-      : combined;
-  }
-  return '';
-};
-
-const resolveSearchableDocumentContent = (file: CaseResolverFile): string => {
-  if (file.fileType === 'document') {
-    const text =
-      file.documentContentPlainText.trim() ||
-      file.documentContentMarkdown.trim() ||
-      file.documentContent.trim();
-    return text.length > SEARCHABLE_CONTENT_MAX_CHARS
-      ? text.slice(0, SEARCHABLE_CONTENT_MAX_CHARS)
-      : text;
-  }
-  if (file.fileType === 'scanfile') {
-    const combined = file.scanSlots
-      .map((slot: CaseResolverScanSlot): string => (slot.ocrText ?? '').trim())
-      .filter(Boolean)
-      .join('\n');
-    return combined.length > SEARCHABLE_CONTENT_MAX_CHARS
-      ? combined.slice(0, SEARCHABLE_CONTENT_MAX_CHARS)
-      : combined;
-  }
-  return '';
-};
-
-const collectScopedCaseIds = (
-  files: CaseResolverFile[],
-  rootCaseId: string | null
-): Set<string> | null => {
-  if (!rootCaseId) return null;
-  const caseById = new Map(
-    files
-      .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
-      .map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
-  );
-  if (!caseById.has(rootCaseId)) return null;
-
-  const childrenByParent = new Map<string, string[]>();
-  caseById.forEach((file: CaseResolverFile): void => {
-    const parentCaseId = typeof file.parentCaseId === 'string' ? file.parentCaseId.trim() : '';
-    if (!parentCaseId || parentCaseId === file.id || !caseById.has(parentCaseId)) return;
-    const currentChildren = childrenByParent.get(parentCaseId) ?? [];
-    currentChildren.push(file.id);
-    childrenByParent.set(parentCaseId, currentChildren);
-  });
-
-  const scoped = new Set<string>();
-  const visit = (caseId: string): void => {
-    if (!caseId || scoped.has(caseId)) return;
-    if (!caseById.has(caseId)) return;
-    scoped.add(caseId);
-    const children = childrenByParent.get(caseId) ?? [];
-    children.forEach((childCaseId: string): void => visit(childCaseId));
-  };
-  visit(rootCaseId);
-  return scoped.size > 0 ? scoped : null;
-};
-
-const isDocumentTextfieldPort = (port: string | null | undefined): boolean =>
-  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] || port === LEGACY_DOCUMENT_TEXTFIELD_PORT;
-
-const isDocumentPlaintextContentPort = (port: string | null | undefined): boolean =>
-  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] ||
-  port === CASE_RESOLVER_LEGACY_DOCUMENT_CONTENT_PORT ||
-  !port;
-
-const isDocumentPlainTextPort = (port: string | null | undefined): boolean =>
-  port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2];
-
-const isDocumentWysiwygContentPort = (port: string | null | undefined): boolean =>
-  port === CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS[3];
-
-const resolveOutputValueByPort = (
-  outputs:
-    | {
-      textfield: string;
-      plaintextContent: string;
-      plainText: string;
-      wysiwygContent: string;
-    }
-    | null
-    | undefined,
-  fromPort: string | null | undefined,
-  fallback: 'textfield' | 'plaintextContent' | 'plainText' | 'wysiwygContent'
-): string => {
-  if (!outputs) return '';
-  if (isDocumentTextfieldPort(fromPort)) return outputs.textfield;
-  if (isDocumentPlainTextPort(fromPort)) return outputs.plainText;
-  if (isDocumentWysiwygContentPort(fromPort)) return outputs.wysiwygContent;
-  if (isDocumentPlaintextContentPort(fromPort)) return outputs.plaintextContent;
-  if (fallback === 'plainText') return outputs.plainText;
-  if (fallback === 'wysiwygContent') return outputs.wysiwygContent;
-  return fallback === 'textfield' ? outputs.textfield : outputs.plaintextContent;
-};
-
-const appendWithJoinMode = (
-  current: string,
-  value: string,
-  joinMode: CaseResolverJoinMode
-): string => {
-  if (!value) return current;
-  if (!current) return value;
-  return `${current}${NODEFILE_JOIN_VALUE_MAP[joinMode]}${value}`;
-};
-
-// ─── inner component props ────────────────────────────────────────────────────
-
-type NodeFileWorkspaceInnerProps = {
-  assetId: string;
-  assetName: string;
-  snapshot: CaseResolverNodeFileSnapshot;
-  onSnapshotChange: (updated: CaseResolverNodeFileSnapshot) => void;
-};
-
-// ─── selected-node side panel ─────────────────────────────────────────────────
-
-type NodeFilePanelProps = {
-  meta: CaseResolverNodeFileMeta;
-  file: CaseResolverFile | null;
-  onOpen: () => void;
-};
-
-function NodeFilePanel({ meta, file, onOpen }: NodeFilePanelProps): React.JSX.Element {
-  const preview = file ? resolveContentPreview(file) : '';
-  const typeLabel = meta.fileType === 'scanfile' ? 'Scan File' : 'Document';
-  const TypeIcon = meta.fileType === 'scanfile' ? ScanLine : FileText;
-
-  return (
-    <Card
-      variant='glass'
-      padding='none'
-      className='flex w-80 flex-shrink-0 flex-col gap-3 overflow-y-auto border-border/60 bg-card/20 p-4'
-    >
-      <PanelHeader
-        title={meta.fileName}
-        subtitle={typeLabel}
-        icon={<TypeIcon className='size-4 text-gray-400' />}
-        refreshable={false}
-        compact
-      />
-
-      {/* Content preview */}
-      {file ? (
-        <div className='flex flex-col gap-1'>
-          <p className='text-[10px] uppercase tracking-wide text-gray-500'>Content preview</p>
-          {preview ? (
-            <Card
-              variant='subtle-compact'
-              padding='sm'
-              className='max-h-52 overflow-y-auto border-border/60 bg-card/30 text-[11px] leading-relaxed text-gray-300 whitespace-pre-wrap'
-            >
-              {preview}
-            </Card>
-          ) : (
-            <Hint size='xs' italic className='text-[11px]'>No text content yet.</Hint>
-          )}
-        </div>
-      ) : (
-        <p className='text-[11px] text-amber-400'>
-          File no longer exists in this workspace.
-        </p>
-      )}
-
-      {/* Open button */}
-      {file ? (
-        <Button
-          type='button'
-          onClick={onOpen}
-          variant='outline'
-          size='sm'
-          className='h-8 w-full'
-        >
-          <ExternalLink className='mr-1.5 size-3.5' />
-          Open &ldquo;{meta.fileName}&rdquo;
-        </Button>
-      ) : null}
-    </Card>
-  );
-}
+import { NodeFileWorkspaceProvider, useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
+import { useNodeFileWorkspaceState } from '../hooks/useNodeFileWorkspaceState';
+import { NodeFilePanel } from './NodeFilePanel';
+import { NodeFileDocumentSearchRow } from './CaseResolverNodeFileUtils';
 
 // ─── inner canvas component ───────────────────────────────────────────────────
 
-function CaseResolverNodeFileWorkspaceInner({
-  assetId,
-  assetName,
-  snapshot,
-  onSnapshotChange,
-}: NodeFileWorkspaceInnerProps): React.JSX.Element {
+function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
   const {
-    workspace,
-    activeCaseId,
-    caseResolverIdentifiers,
-    onSelectFile,
-  } = useCaseResolverPageContext();
-  const { viewportRef, canvasRef } = useCanvasRefs();
-  const { view } = useCanvasState();
-  const { setView } = useCanvasActions();
-  const { nodes, edges } = useGraphState();
-  const { addNode, setNodes, updateNode, setEdges } = useGraphActions();
-  const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
-  const { selectNode, setConfigOpen } = useSelectionActions();
-  const { toast } = useToast();
-  const settingsQuery = useSettingsMap({ scope: 'light' });
-  const rawPatternLists = settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
-  const validatorPatternLists = useMemo(
-    () => parseValidatorPatternLists(rawPatternLists),
-    [rawPatternLists]
-  );
-  const rawPromptEngineSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
-  const promptEngineSettings = useMemo(
-    () => parsePromptEngineSettings(rawPromptEngineSettings),
-    [rawPromptEngineSettings]
-  );
-  const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database' | 'viewer'>('prompt');
-  const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
-  const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
-  const [isLinkedPreviewOpen, setIsLinkedPreviewOpen] = useState(false);
-  const [showNodeSelectorUnderCanvas, setShowNodeSelectorUnderCanvas] = useState(
-    () => nodes.length > 0
-  );
-  const [documentSearchScope, setDocumentSearchScope] =
-    useState<NodeFileDocumentSearchScope>('case_scope');
-  const [documentSearchQuery, setDocumentSearchQuery] = useState('');
-  const [selectedSearchFolderPath, setSelectedSearchFolderPath] = useState<string | null>(
-    null
-  );
-  const [expandedSearchFolderPaths, setExpandedSearchFolderPaths] = useState<Set<string>>(
-    () => new Set()
-  );
-  const [selectedSearchDocumentId, setSelectedSearchDocumentId] = useState('');
-  const [isDocumentSearchOpen, setIsDocumentSearchOpen] = useState(false);
-  const [nodeMetaByNode, setNodeMetaByNode] = useState<Record<string, CaseResolverNodeMeta>>(
-    () => snapshot.nodeMeta ?? {}
-  );
-  const [edgeMetaByEdge, setEdgeMetaByEdge] = useState<Record<string, CaseResolverEdgeMeta>>(
-    () => snapshot.edgeMeta ?? {}
-  );
-
-  // nodeFileMeta lives in a ref so changes don't trigger re-renders but are
-  // always available synchronously when the save effect fires.
-  const nodeFileMetaRef = useRef<Record<string, CaseResolverNodeFileMeta>>(
-    snapshot.nodeFileMeta
-  );
-  const documentSearchRef = useRef<HTMLDivElement | null>(null);
-
-  const filesById = useMemo(
-    () =>
-      new Map<string, CaseResolverFile>(
-        workspace.files.map((f: CaseResolverFile): [string, CaseResolverFile] => [f.id, f])
-      ),
-    [workspace.files]
-  );
-  const caseIdentifierLabelById = useMemo((): Map<string, string> => {
-    const labelsById = new Map<string, string>();
-    caseResolverIdentifiers.forEach((identifier: CaseResolverIdentifier): void => {
-      const identifierRecord = identifier as unknown as Record<string, unknown>;
-      const id = typeof identifier.id === 'string' ? identifier.id.trim() : '';
-      if (!id) return;
-      const name =
-        typeof identifierRecord['name'] === 'string' ? identifierRecord['name'].trim() : '';
-      const label =
-        typeof identifierRecord['label'] === 'string' ? identifierRecord['label'].trim() : '';
-      const type =
-        typeof identifierRecord['type'] === 'string' ? identifierRecord['type'].trim() : '';
-      const value =
-        typeof identifierRecord['value'] === 'string' ? identifierRecord['value'].trim() : '';
-      const resolvedLabel =
-        label ||
-        name ||
-        [type, value].filter((part: string): boolean => part.length > 0).join(': ') ||
-        id;
-      labelsById.set(id, resolvedLabel);
-    });
-    return labelsById;
-  }, [caseResolverIdentifiers]);
-  const scopedCaseIds = useMemo(
-    (): Set<string> | null => collectScopedCaseIds(workspace.files, activeCaseId),
-    [activeCaseId, workspace.files]
-  );
-  const allSearchableFiles = useMemo(
-    (): CaseResolverFile[] =>
-      workspace.files.filter((file: CaseResolverFile): boolean => file.fileType !== 'case'),
-    [workspace.files]
-  );
-  const caseScopedSearchableFiles = useMemo(
-    (): CaseResolverFile[] => {
-      if (!activeCaseId || !scopedCaseIds || scopedCaseIds.size === 0) {
-        return allSearchableFiles;
-      }
-      return allSearchableFiles.filter((file: CaseResolverFile): boolean =>
-        Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId))
-      );
-    },
-    [activeCaseId, allSearchableFiles, scopedCaseIds]
-  );
-  const activeCaseScopeLabel = useMemo((): string => {
-    if (!activeCaseId) return 'Current case (none selected, showing all)';
-    const activeCase = workspace.files.find(
-      (file: CaseResolverFile): boolean => file.id === activeCaseId && file.fileType === 'case'
-    );
-    return activeCase ? `Current case: ${activeCase.name}` : `Current case: ${activeCaseId}`;
-  }, [activeCaseId, workspace.files]);
-  const documentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    const sourceFiles =
-      documentSearchScope === 'all_cases' ? allSearchableFiles : caseScopedSearchableFiles;
-    return sourceFiles
-      .map((file: CaseResolverFile): NodeFileDocumentSearchRow => {
-        const folderPath = typeof file.folder === 'string' ? file.folder.trim() : '';
-        const folderSegments = normalizeFolderPathSegments(folderPath);
-        const signatureLabel = resolveIdentifierSearchLabel(
-          file.caseIdentifierId,
-          caseIdentifierLabelById
-        );
-        const addresserLabel = resolvePartyReferenceSearchLabel(file.addresser);
-        const addresseeLabel = resolvePartyReferenceSearchLabel(file.addressee);
-        const searchable = normalizeSearchText(
-          [
-            file.name,
-            file.folder,
-            signatureLabel,
-            addresserLabel,
-            addresseeLabel,
-            resolveSearchableDocumentContent(file),
-          ].join('\n')
-        );
-        return {
-          file,
-          signatureLabel,
-          addresserLabel,
-          addresseeLabel,
-          folderPath,
-          folderSegments,
-          searchable,
-        };
-      })
-      .sort((left: NodeFileDocumentSearchRow, right: NodeFileDocumentSearchRow): number => {
-        const leftUpdatedAt = new Date(
-          left.file.updatedAt || left.file.createdAt || 0
-        ).getTime();
-        const rightUpdatedAt = new Date(
-          right.file.updatedAt || right.file.createdAt || 0
-        ).getTime();
-        if (leftUpdatedAt !== rightUpdatedAt) return rightUpdatedAt - leftUpdatedAt;
-        return left.file.name.localeCompare(right.file.name);
-      });
-  }, [
-    allSearchableFiles,
-    caseIdentifierLabelById,
-    caseScopedSearchableFiles,
-    documentSearchScope,
-  ]);
-  const normalizedDocumentSearchQuery = useMemo(
-    (): string => normalizeSearchText(documentSearchQuery),
-    [documentSearchQuery]
-  );
-  const filteredDocumentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    if (!normalizedDocumentSearchQuery) return documentSearchRows;
-    return documentSearchRows.filter((row: NodeFileDocumentSearchRow): boolean =>
-      row.searchable.includes(normalizedDocumentSearchQuery)
-    );
-  }, [documentSearchRows, normalizedDocumentSearchQuery]);
-  const documentSearchFolderTree = useMemo(
-    (): NodeFileDocumentFolderTree => {
-      const nodesByPath = new Map<string, NodeFileDocumentFolderNode>();
-      const childPathsByParent = new Map<string | null, string[]>();
-      const directFileCountByPath = new Map<string, number>();
-      const descendantFileCountByPath = new Map<string, number>();
-      let rootFileCount = 0;
-      const registerChildPath = (parentPath: string | null, childPath: string): void => {
-        const currentChildPaths = childPathsByParent.get(parentPath) ?? [];
-        if (!currentChildPaths.includes(childPath)) {
-          currentChildPaths.push(childPath);
-          childPathsByParent.set(parentPath, currentChildPaths);
-        }
-      };
-
-      filteredDocumentSearchRows.forEach((row: NodeFileDocumentSearchRow): void => {
-        if (row.folderSegments.length === 0) {
-          rootFileCount += 1;
-          return;
-        }
-        row.folderSegments.forEach((segment: string, index: number): void => {
-          const path = row.folderSegments.slice(0, index + 1).join('/');
-          const parentPath =
-            index === 0 ? null : row.folderSegments.slice(0, index).join('/');
-          if (!nodesByPath.has(path)) {
-            nodesByPath.set(path, {
-              path,
-              name: segment,
-              parentPath,
-              depth: index,
-              directFileCount: 0,
-              descendantFileCount: 0,
-            });
-          }
-          registerChildPath(parentPath, path);
-          descendantFileCountByPath.set(path, (descendantFileCountByPath.get(path) ?? 0) + 1);
-        });
-        directFileCountByPath.set(
-          row.folderPath,
-          (directFileCountByPath.get(row.folderPath) ?? 0) + 1
-        );
-      });
-
-      nodesByPath.forEach((node: NodeFileDocumentFolderNode, path: string): void => {
-        node.directFileCount = directFileCountByPath.get(path) ?? 0;
-        node.descendantFileCount = descendantFileCountByPath.get(path) ?? 0;
-      });
-
-      childPathsByParent.forEach((childPaths: string[], parentPath: string | null): void => {
-        childPaths.sort((left: string, right: string): number => {
-          const leftNode = nodesByPath.get(left);
-          const rightNode = nodesByPath.get(right);
-          const leftName = leftNode?.name ?? left;
-          const rightName = rightNode?.name ?? right;
-          return leftName.localeCompare(rightName);
-        });
-        childPathsByParent.set(parentPath, childPaths);
-      });
-
-      return {
-        nodesByPath,
-        childPathsByParent,
-        rootFileCount,
-      };
-    },
-    [filteredDocumentSearchRows]
-  );
-  const rootSearchFolderPaths = useMemo(
-    (): string[] => documentSearchFolderTree.childPathsByParent.get(null) ?? [],
-    [documentSearchFolderTree]
-  );
-  const folderScopedDocumentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    if (documentSearchScope !== 'all_cases') return filteredDocumentSearchRows;
-    if (!selectedSearchFolderPath) return filteredDocumentSearchRows;
-    return filteredDocumentSearchRows.filter((row: NodeFileDocumentSearchRow): boolean =>
-      isFolderPathWithinScope(row.folderPath, selectedSearchFolderPath)
-    );
-  }, [documentSearchScope, filteredDocumentSearchRows, selectedSearchFolderPath]);
-  const visibleDocumentSearchFolderRows = useMemo(
-    (): Array<
-      NodeFileDocumentFolderNode & { hasChildren: boolean; isExpanded: boolean }
-    > => {
-      if (documentSearchScope !== 'all_cases') return [];
-      const forceExpandAll = normalizedDocumentSearchQuery.length > 0;
-      const rows: Array<
-        NodeFileDocumentFolderNode & { hasChildren: boolean; isExpanded: boolean }
-      > = [];
-      const visit = (folderPath: string): void => {
-        const folderNode = documentSearchFolderTree.nodesByPath.get(folderPath);
-        if (!folderNode) return;
-        const childPaths = documentSearchFolderTree.childPathsByParent.get(folderPath) ?? [];
-        const hasChildren = childPaths.length > 0;
-        const isExpanded = forceExpandAll || expandedSearchFolderPaths.has(folderPath);
-        rows.push({
-          ...folderNode,
-          hasChildren,
-          isExpanded,
-        });
-        if (!hasChildren || !isExpanded) return;
-        childPaths.forEach((childPath: string): void => visit(childPath));
-      };
-      rootSearchFolderPaths.forEach((folderPath: string): void => visit(folderPath));
-      return rows;
-    },
-    [
-      documentSearchFolderTree.childPathsByParent,
-      documentSearchFolderTree.nodesByPath,
-      documentSearchScope,
-      expandedSearchFolderPaths,
-      normalizedDocumentSearchQuery.length,
-      rootSearchFolderPaths,
-    ]
-  );
-  const visibleDocumentSearchRows = useMemo(
-    (): NodeFileDocumentSearchRow[] =>
-      documentSearchScope === 'all_cases'
-        ? folderScopedDocumentSearchRows.slice(0, 80)
-        : folderScopedDocumentSearchRows.slice(0, 12),
-    [documentSearchScope, folderScopedDocumentSearchRows]
-  );
-  const activeNodeOptions = useMemo(
-    () =>
-      nodes.map((node: AiNode, index: number) => {
-        const linkedMeta = nodeFileMetaRef.current[node.id] ?? null;
-        const title = node.title?.trim() || `Node ${index + 1}`;
-        return {
-          value: node.id,
-          label: linkedMeta ? `${title} (${linkedMeta.fileName})` : title,
-          description: linkedMeta
-            ? `Type: ${node.type} • Linked file: ${linkedMeta.fileName}`
-            : `Type: ${node.type}`,
-        };
-      }),
-    [nodes]
-  );
-  const promptDefinition = useMemo(
-    (): NodeDefinition | null => palette.find((entry: NodeDefinition) => entry.type === 'prompt') ?? null,
-    []
-  );
-  const toStrictEdges = useCallback((inputEdges: AiEdge[]): CaseResolverNodeFileSnapshot['edges'] => {
-    return inputEdges
-      .map((edge: AiEdge): CaseResolverNodeFileSnapshot['edges'][number] | null => {
-        const from = edge.from ?? edge.source;
-        const to = edge.to ?? edge.target;
-        if (!from || !to) return null;
-        return {
-          id: edge.id,
-          from,
-          to,
-          ...(edge.label ? { label: edge.label } : {}),
-          ...(edge.fromPort ?? edge.sourceHandle
-            ? { fromPort: edge.fromPort ?? edge.sourceHandle ?? undefined }
-            : {}),
-          ...(edge.toPort ?? edge.targetHandle
-            ? { toPort: edge.toPort ?? edge.targetHandle ?? undefined }
-            : {}),
-        };
-      })
-      .filter((edge): edge is CaseResolverNodeFileSnapshot['edges'][number] => edge !== null);
-  }, []);
-  const strictEdges = useMemo((): CaseResolverNodeFileSnapshot['edges'] => {
-    return toStrictEdges(edges);
-  }, [edges, toStrictEdges]);
-  const normalizedNodeMeta = useMemo(
-    () => ensureNodeMeta(nodes, nodeMetaByNode),
-    [nodeMetaByNode, nodes]
-  );
-  const normalizedEdgeMeta = useMemo(
-    () => ensureEdgeMeta(edges as unknown as { id: string }[], edgeMetaByEdge),
-    [edgeMetaByEdge, edges]
-  );
-  const selectedNode = useMemo(
-    () =>
-      selectedNodeId
-        ? nodes.find((node: AiNode): boolean => node.id === selectedNodeId) ?? null
-        : null,
-    [nodes, selectedNodeId]
-  );
-  const selectedEdge = useMemo(
-    () =>
-      selectedEdgeId
-        ? (edges.find((edge: Edge): boolean => edge.id === selectedEdgeId) ?? null)
-        : null,
-    [edges, selectedEdgeId]
-  );
-  const transformPlainTextOutput = useCallback(
-    (input: {
-      nodeMeta: CaseResolverNodeMeta;
-      output: 'plainText' | 'plaintextContent' | 'content';
-      value: string;
-    }): string => {
-      const forceForExplanatoryOutput = input.nodeMeta.role === 'explanatory';
-      return applyCaseResolverPlainTextValidation({
-        input: input.value,
-        nodeMeta: input.nodeMeta,
-        promptEngineSettings,
-        patternLists: validatorPatternLists,
-        forceEnabled: forceForExplanatoryOutput,
-        forceFormatterEnabled: forceForExplanatoryOutput,
-      });
-    },
-    [promptEngineSettings, validatorPatternLists]
-  );
-  const compiled = useMemo(
-    () =>
-      compileCaseResolverPrompt(
-        {
-          nodes,
-          edges: strictEdges,
-          nodeMeta: normalizedNodeMeta,
-          edgeMeta: normalizedEdgeMeta,
-          pdfExtractionPresetId: 'plain_text',
-          documentFileLinksByNode: {},
-          documentDropNodeId: null,
-          documentSourceFileIdByNode: {},
-        },
-        null,
-        { transformPlainTextOutput }
-      ),
-    [nodes, normalizedEdgeMeta, normalizedNodeMeta, strictEdges, transformPlainTextOutput]
-  );
-  const nodeById = useMemo(
-    (): Map<string, AiNode> =>
-      new Map<string, AiNode>(nodes.map((node: AiNode): [string, AiNode] => [node.id, node])),
-    [nodes]
-  );
-  const resolvePromptTooltipOutputs = useCallback(
-    (
-      node: AiNode
-    ): {
-      sourceFile: CaseResolverFile | null;
-      outputs: {
-        textfield: string;
-        plaintextContent: string;
-        plainText: string;
-        wysiwygContent: string;
-      };
-    } => {
-      const linkedMeta = nodeFileMetaRef.current[node.id] ?? null;
-      const sourceFile = linkedMeta ? filesById.get(linkedMeta.fileId) ?? null : null;
-      const nodeMeta = normalizedNodeMeta[node.id] ?? DEFAULT_CASE_RESOLVER_NODE_META;
-      const computedOutputs = compiled.outputsByNode[node.id];
-      const staticOutputNode = (() => {
-        const template = resolvePromptConfig(node).template;
-        if (template.trim().length > 0 || !sourceFile) {
-          return node;
-        }
-        return {
-          ...node,
-          config: {
-            ...(node.config ?? {}),
-            prompt: {
-              ...resolvePromptConfig(node),
-              template: buildPromptTemplateFromDroppedDocumentFile(sourceFile),
-            },
-          },
-        };
-      })();
-      const staticOutputs = resolvePromptNodeStaticOutputs(staticOutputNode, nodeMeta);
-      return {
-        sourceFile,
-        outputs: {
-          textfield: computedOutputs?.textfield ?? staticOutputs.textfield,
-          plaintextContent: computedOutputs?.plaintextContent ?? staticOutputs.plaintextContent,
-          plainText: computedOutputs?.plainText ?? staticOutputs.plainText,
-          wysiwygContent: computedOutputs?.wysiwygContent ?? staticOutputs.wysiwygContent,
-        },
-      };
-    },
-    [compiled.outputsByNode, filesById, normalizedNodeMeta]
-  );
-  const resolveStaticInputPreview = useCallback(
-    (
-      nodeId: string,
-      port: string
-    ): { value: string; sourceLabels: string[]; connectedEdgeCount: number } => {
-      const fallbackType: 'textfield' | 'plaintextContent' | 'plainText' | 'wysiwygContent' = isDocumentTextfieldPort(port)
-        ? 'textfield'
-        : isDocumentPlainTextPort(port)
-          ? 'plainText'
-          : isDocumentWysiwygContentPort(port)
-            ? 'wysiwygContent'
-            : 'plaintextContent';
-      const acceptsTargetPort = (targetPort: string | null | undefined): boolean => {
-        if (fallbackType === 'textfield') return isDocumentTextfieldPort(targetPort);
-        if (fallbackType === 'plainText') return isDocumentPlainTextPort(targetPort);
-        if (fallbackType === 'wysiwygContent') return isDocumentWysiwygContentPort(targetPort);
-        return isDocumentPlaintextContentPort(targetPort);
-      };
-
-      const incomingEdges = edges
-        .filter((edge: Edge): boolean => (edge.to ?? edge.target) === nodeId)
-        .filter((edge: Edge): boolean => acceptsTargetPort(edge.toPort))
-        .sort((left: Edge, right: Edge): number => {
-          const leftFrom = left.from ?? left.source;
-          const rightFrom = right.from ?? right.source;
-          const leftNode = leftFrom ? nodeById.get(leftFrom) : null;
-          const rightNode = rightFrom ? nodeById.get(rightFrom) : null;
-          if (leftNode && rightNode) {
-            if (leftNode.position.y !== rightNode.position.y) {
-              return leftNode.position.y - rightNode.position.y;
-            }
-            if (leftNode.position.x !== rightNode.position.x) {
-              return leftNode.position.x - rightNode.position.x;
-            }
-            if (leftNode.id !== rightNode.id) {
-              return leftNode.id.localeCompare(rightNode.id);
-            }
-          } else if (leftNode || rightNode) {
-            return leftNode ? -1 : 1;
-          }
-          return left.id.localeCompare(right.id);
-        });
-
-      let mergedValue = '';
-      const sourceLabels: string[] = [];
-      incomingEdges.forEach((edge: Edge): void => {
-        const sourceNodeId = edge.from ?? edge.source;
-        if (!sourceNodeId) return;
-        const sourceNode = nodeById.get(sourceNodeId);
-        if (!sourceNode) return;
-        const sourceOutputs =
-          sourceNode.type === 'prompt'
-            ? resolvePromptTooltipOutputs(sourceNode).outputs
-            : compiled.outputsByNode[sourceNodeId];
-        const rawSourceValue = resolveOutputValueByPort(
-          sourceOutputs,
-          edge.fromPort,
-          fallbackType
-        );
-        const sourceValue =
-          fallbackType === 'plainText' ? stripHtmlToPlainText(rawSourceValue) : rawSourceValue;
-        if (!sourceValue) return;
-        const joinMode: CaseResolverJoinMode =
-          (normalizedEdgeMeta[edge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode ||
-          DEFAULT_CASE_RESOLVER_EDGE_META.joinMode ||
-          'newline';
-        mergedValue = appendWithJoinMode(mergedValue, sourceValue, joinMode);
-        sourceLabels.push(sourceNode.title?.trim() || sourceNode.id);
-      });
-
-      return {
-        value: mergedValue,
-        sourceLabels,
-        connectedEdgeCount: incomingEdges.length,
-      };
-    },
-    [compiled.outputsByNode, edges, nodeById, normalizedEdgeMeta, resolvePromptTooltipOutputs]
-  );
-
-  const initialSnapshotHash = useMemo(
-    () =>
-      stableStringify({
-        kind: 'case_resolver_node_file_snapshot_v1',
-        source: 'manual',
-        nodes: snapshot.nodes,
-        edges: snapshot.edges,
-        nodeMeta: snapshot.nodeMeta ?? {},
-        edgeMeta: snapshot.edgeMeta ?? {},
-        nodeFileMeta: snapshot.nodeFileMeta,
-      }),
-    [snapshot.edgeMeta, snapshot.edges, snapshot.nodeFileMeta, snapshot.nodeMeta, snapshot.nodes]
-  );
-  const [savedSnapshotHash, setSavedSnapshotHash] = useState<string>(initialSnapshotHash);
-  const [currentSnapshotHash, setCurrentSnapshotHash] = useState<string>(initialSnapshotHash);
-
-  const buildSnapshotFromState = useCallback((): CaseResolverNodeFileSnapshot => {
-    const existingNodeIds = new Set(nodes.map((n: AiNode) => n.id));
-    const prunedMeta: Record<string, CaseResolverNodeFileMeta> = {};
-    for (const [nodeId, meta] of Object.entries(nodeFileMetaRef.current)) {
-      if (!existingNodeIds.has(nodeId)) continue;
-      const normalizedFileId = typeof meta.fileId === 'string' ? meta.fileId.trim() : '';
-      if (!normalizedFileId || !filesById.has(normalizedFileId)) continue;
-      prunedMeta[nodeId] = meta;
-    }
-    nodeFileMetaRef.current = prunedMeta;
-    return {
-      kind: 'case_resolver_node_file_snapshot_v1',
-      source: 'manual',
-      nodes,
-      edges: strictEdges,
-      nodeMeta: normalizedNodeMeta,
-      edgeMeta: normalizedEdgeMeta,
-      nodeFileMeta: prunedMeta,
-    };
-  }, [
-    filesById,
-    normalizedEdgeMeta,
-    normalizedNodeMeta,
     nodes,
-    strictEdges,
-  ]);
-  useEffect(() => {
-    const hash = stableStringify(buildSnapshotFromState());
-    setCurrentSnapshotHash((previous: string): string =>
-      previous === hash ? previous : hash
-    );
-  }, [buildSnapshotFromState]);
-  const hasPendingSnapshotChanges = currentSnapshotHash !== savedSnapshotHash;
+    newNodeType,
+    setNewNodeType,
+    isSidePanelVisible,
+    setIsNodeInspectorOpen,
+    documentSearchQuery,
+    setDocumentSearchQuery,
+    selectedSearchDocumentId,
+    setSelectedSearchDocumentId,
+    isDocumentSearchOpen,
+    setIsDocumentSearchOpen,
+    visibleDocumentSearchRows,
+    selectedNodeMeta,
+    selectedFile,
+    selectNode,
+    addNode,
+    view,
+    setView,
+    viewportRef,
+    onSelectFile,
+  } = useNodeFileWorkspaceContext();
 
-  // Migrate legacy template-based linked-file nodes to prompt nodes so they expose
-  // Case Resolver document ports (wysiwygText/plaintextContent/plainText).
-  useEffect(() => {
-    if (!promptDefinition) return;
-    setNodes((previousNodes: AiNode[]): AiNode[] => {
-      let changed = false;
-      const nextNodes = previousNodes.map((node: AiNode): AiNode => {
-        const linkedMeta = nodeFileMetaRef.current[node.id];
-        if (!linkedMeta) {
-          return node;
-        }
+  const addSelectedSearchDocument = useCallback(() => {
+    const row = visibleDocumentSearchRows.find((r) => r.file.id === selectedSearchDocumentId);
+    if (!row) return;
 
-        const linkedFile = filesById.get(linkedMeta.fileId) ?? null;
-        const fallbackTemplate = linkedFile
-          ? buildPromptTemplateFromDroppedDocumentFile(linkedFile)
-          : `<p>Document: ${linkedMeta.fileName}</p>`;
-        const promptTemplate = typeof node.config?.prompt?.template === 'string'
-          ? node.config.prompt.template
-          : typeof node.config?.template?.template === 'string'
-            ? node.config.template.template
-            : fallbackTemplate;
-        const hasPromptTemplate = typeof node.config?.prompt?.template === 'string';
-        const currentPromptTemplate = hasPromptTemplate
-          ? node.config?.prompt?.template ?? ''
-          : '';
-        const needsPromptConversion = node.type !== 'prompt';
-        const needsPromptTemplateUpdate = !hasPromptTemplate || currentPromptTemplate !== promptTemplate;
-
-        const promptBase: AiNode =
-          needsPromptConversion || needsPromptTemplateUpdate
-            ? {
-              ...(needsPromptConversion
-                ? {
-                  ...node,
-                  type: 'prompt',
-                }
-                : node),
-              config: {
-                ...(node.config ?? {}),
-                prompt: {
-                  template: promptTemplate,
-                },
-              },
-            }
-            : node;
-        const nodeRole = normalizedNodeMeta[node.id]?.role ?? null;
-        const normalizedPromptNode = ensureDocumentPromptPorts(promptBase, nodeRole);
-        if (normalizedPromptNode === node) return node;
-        changed = true;
-        return normalizedPromptNode;
-      });
-      return changed ? nextNodes : previousNodes;
-    });
-  }, [filesById, normalizedNodeMeta, promptDefinition, setNodes]);
-
-  const placePosition = useMemo(() => {
-    const index = nodes.length;
-    return {
-      x: 180 + (index % 3) * 320,
-      y: 120 + Math.floor(index / 3) * 200,
+    const center = {
+      x: (-view.x + 400) / view.scale,
+      y: (-view.y + 300) / view.scale,
     };
-  }, [nodes.length]);
 
-  const resolveDropPosition = useCallback(
-    (event: React.DragEvent<HTMLDivElement>): { x: number; y: number } => {
-      const viewport = viewportRef.current?.getBoundingClientRect();
-      if (!viewport) return clampCanvasPosition(placePosition);
-      const canvasRect = canvasRef.current?.getBoundingClientRect() ?? null;
-      const localX = canvasRect
-        ? (event.clientX - canvasRect.left) / view.scale
-        : (event.clientX - viewport.left - view.x) / view.scale;
-      const localY = canvasRect
-        ? (event.clientY - canvasRect.top) / view.scale
-        : (event.clientY - viewport.top - view.y) / view.scale;
-      return clampCanvasPosition({ x: localX - NODE_WIDTH / 2, y: localY - NODE_MIN_HEIGHT / 2 });
-    },
-    [canvasRef, placePosition, view, viewportRef]
-  );
+    const node = buildNode({
+      type: row.file.fileType === 'scanfile' ? 'scanfile' : 'document',
+      title: row.file.name,
+      position: center,
+    });
+
+    addNode(node);
+  }, [visibleDocumentSearchRows, selectedSearchDocumentId, view, addNode]);
+
+  const onExplanatoryClick = useCallback(() => {
+    const center = {
+      x: (-view.x + 400) / view.scale,
+      y: (-view.y + 300) / view.scale,
+    };
+    const node = buildNode({
+      type: 'template',
+      title: 'Explanatory Note',
+      position: center,
+    });
+    addNode(node);
+  }, [view, addNode]);
+
   const focusNodeInCanvas = useCallback(
     (nodeId: string): void => {
-      const normalizedNodeId = nodeId.trim();
-      if (!normalizedNodeId) return;
-      const node = nodes.find((entry: AiNode): boolean => entry.id === normalizedNodeId);
-      if (!node) return;
-      selectNode(normalizedNodeId);
-      const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
-      if (!viewport) return;
-      setView({
-        x: viewport.width / 2 - (node.position.x + NODE_WIDTH / 2) * view.scale,
-        y: viewport.height / 2 - (node.position.y + NODE_MIN_HEIGHT / 2) * view.scale,
+      const node = nodes.find((n) => n.id === nodeId);
+      if (!node || !viewportRef.current) return;
+      const rect = viewportRef.current.getBoundingClientRect();
+      const nextView = clampCanvasPosition({
+        x: -node.position.x * view.scale + rect.width / 2,
+        y: -node.position.y * view.scale + rect.height / 2,
         scale: view.scale,
       });
+      setView(nextView);
+      selectNode(nodeId);
     },
-    [nodes, selectNode, setView, view.scale, viewportRef]
-  );
-
-  const addFileReferenceNode = useCallback(
-    (fileId: string, fileName: string, position: { x: number; y: number }): void => {
-      const file = filesById.get(fileId);
-      if (!file || file.fileType === 'case') {
-        toast('Cannot add this file type to the canvas.', { variant: 'warning' });
-        return;
-      }
-
-      if (!promptDefinition) {
-        toast('Prompt node definition is missing.', { variant: 'error' });
-        return;
-      }
-
-      const nodeId = `node-${Math.random().toString(36).slice(2, 10)}`;
-      const promptBase = buildNode(promptDefinition, position, nodeId, `Document: ${fileName}`);
-      const promptConfig = resolvePromptConfig(promptBase);
-      const node = ensureDocumentPromptPorts({
-        ...promptBase,
-        config: {
-          ...(promptBase.config ?? {}),
-          prompt: {
-            ...promptConfig,
-            template: buildPromptTemplateFromDroppedDocumentFile(file),
-          },
-        },
-      }, 'text_note');
-
-      nodeFileMetaRef.current = {
-        ...nodeFileMetaRef.current,
-        [nodeId]: {
-          fileId,
-          fileType: file.fileType,
-          fileName,
-        },
-      };
-
-      addNode(node);
-      setShowNodeSelectorUnderCanvas(true);
-      toast(`Added "${fileName}" to canvas.`, { variant: 'success' });
-    },
-    [addNode, filesById, promptDefinition, toast]
-  );
-
-  const addExplanatoryNode = useCallback((): void => {
-    const promptDefinition = palette.find((entry: NodeDefinition) => entry.type === 'prompt');
-    if (!promptDefinition) return;
-
-    const nodeId = `node-${Math.random().toString(36).slice(2, 10)}`;
-    const promptNode = buildNode(promptDefinition, placePosition, nodeId, 'Explanatory Note');
-    const promptConfig = resolvePromptConfig(promptNode);
-    const node = ensureDocumentPromptPorts({
-      ...promptNode,
-      config: {
-        ...(promptNode.config ?? {}),
-        prompt: {
-          ...promptConfig,
-          template: '',
-        },
-      },
-    }, 'explanatory');
-    addNode(node);
-    setNodeMetaByNode((previous: Record<string, CaseResolverNodeMeta>) => ({
-      ...previous,
-      [nodeId]: {
-        ...DEFAULT_CASE_RESOLVER_NODE_META,
-        role: 'explanatory',
-        includeInOutput: true,
-        quoteMode: 'none',
-        surroundPrefix: '',
-        surroundSuffix: '',
-      },
-    }));
-    selectNode(nodeId);
-    toast('Explanatory node added.', { variant: 'success' });
-  }, [addNode, placePosition, selectNode, toast]);
-
-  const addGenericNode = useCallback((): void => {
-    const definition = palette.find((entry: NodeDefinition) => entry.type === newNodeType);
-    if (!definition) return;
-    const nodeId = `node-${Math.random().toString(36).slice(2, 10)}`;
-    const node = buildNode(definition, placePosition, nodeId, definition.title);
-    addNode(node);
-    selectNode(nodeId);
-  }, [addNode, newNodeType, placePosition, selectNode]);
-
-  // Listen for file drops emitted via the window event (from the folder tree button).
-  useEffect(() => {
-    if (nodes.length > 0) return;
-    setShowNodeSelectorUnderCanvas(false);
-  }, [nodes.length]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const listener = (event: Event): void => {
-      const customEvent = event as CustomEvent<CaseResolverDropDocumentToCanvasDetail>;
-      const detail = customEvent.detail;
-      if (!detail || typeof detail !== 'object') return;
-      const fileId = typeof detail.fileId === 'string' ? detail.fileId.trim() : '';
-      if (!fileId) return;
-      const fileName = typeof detail.name === 'string' ? detail.name : 'File';
-      addFileReferenceNode(fileId, fileName, placePosition);
-    };
-    window.addEventListener(
-      CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
-      listener as EventListener
-    );
-    return (): void => {
-      window.removeEventListener(
-        CASE_RESOLVER_DROP_DOCUMENT_TO_CANVAS_EVENT,
-        listener as EventListener
-      );
-    };
-  }, [addFileReferenceNode, placePosition]);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const listener = (event: Event): void => {
-      const customEvent = event as CustomEvent<CaseResolverShowDocumentInCanvasDetail>;
-      const detail = customEvent.detail;
-      if (!detail || typeof detail !== 'object') return;
-      const fileId = typeof detail.fileId === 'string' ? detail.fileId.trim() : '';
-      if (!fileId) return;
-
-      const relatedNodeFileAssetIds = Array.isArray(detail.relatedNodeFileAssetIds)
-        ? detail.relatedNodeFileAssetIds
-          .filter((entry: unknown): entry is string => typeof entry === 'string')
-          .map((entry: string): string => entry.trim())
-          .filter(Boolean)
-        : [];
-      if (relatedNodeFileAssetIds.length > 0 && !relatedNodeFileAssetIds.includes(assetId)) {
-        return;
-      }
-
-      const preferredNodeId =
-        typeof detail.nodeId === 'string' && detail.nodeId.trim().length > 0
-          ? detail.nodeId.trim()
-          : null;
-      if (preferredNodeId) {
-        const preferredMeta = nodeFileMetaRef.current[preferredNodeId] ?? null;
-        if (preferredMeta?.fileId === fileId) {
-          focusNodeInCanvas(preferredNodeId);
-          return;
-        }
-      }
-
-      const nodeIds = Object.entries(nodeFileMetaRef.current)
-        .filter(([, meta]): boolean => meta.fileId === fileId)
-        .map(([nodeId]: [string, CaseResolverNodeFileMeta]): string => nodeId);
-      if (nodeIds.length === 0) return;
-      focusNodeInCanvas(nodeIds[nodeIds.length - 1] ?? nodeIds[0]!);
-    };
-
-    window.addEventListener(
-      CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
-      listener as EventListener
-    );
-    return (): void => {
-      window.removeEventListener(
-        CASE_RESOLVER_SHOW_DOCUMENT_IN_CANVAS_EVENT,
-        listener as EventListener
-      );
-    };
-  }, [assetId, focusNodeInCanvas]);
-
-  useEffect(() => {
-    if (!configOpen) return;
-    setIsNodeInspectorOpen(true);
-    setConfigOpen(false);
-  }, [configOpen, setConfigOpen]);
-  useEffect(() => {
-    if (documentSearchScope !== 'all_cases') {
-      setSelectedSearchFolderPath(null);
-      setExpandedSearchFolderPaths(new Set<string>());
-      return;
-    }
-    if (rootSearchFolderPaths.length === 0) return;
-    setExpandedSearchFolderPaths((previous: Set<string>): Set<string> => {
-      if (previous.size > 0) return previous;
-      return new Set<string>(rootSearchFolderPaths);
-    });
-  }, [documentSearchScope, rootSearchFolderPaths]);
-  useEffect(() => {
-    if (documentSearchScope !== 'all_cases') return;
-    if (!selectedSearchFolderPath) return;
-    if (documentSearchFolderTree.nodesByPath.has(selectedSearchFolderPath)) return;
-    setSelectedSearchFolderPath(null);
-  }, [
-    documentSearchFolderTree.nodesByPath,
-    documentSearchScope,
-    selectedSearchFolderPath,
-  ]);
-  useEffect(() => {
-    if (documentSearchScope !== 'all_cases') return;
-    const pathsToExpand = new Set<string>();
-    const registerAncestors = (folderPath: string): void => {
-      const segments = normalizeFolderPathSegments(folderPath);
-      segments.forEach((_: string, index: number): void => {
-        pathsToExpand.add(segments.slice(0, index + 1).join('/'));
-      });
-    };
-    if (selectedSearchFolderPath) {
-      registerAncestors(selectedSearchFolderPath);
-    }
-    if (normalizedDocumentSearchQuery.length > 0) {
-      filteredDocumentSearchRows.forEach((row: NodeFileDocumentSearchRow): void => {
-        if (!row.folderPath) return;
-        registerAncestors(row.folderPath);
-      });
-    }
-    if (pathsToExpand.size === 0) return;
-    setExpandedSearchFolderPaths((previous: Set<string>): Set<string> => {
-      const next = new Set<string>(previous);
-      let changed = false;
-      pathsToExpand.forEach((path: string): void => {
-        if (next.has(path)) return;
-        next.add(path);
-        changed = true;
-      });
-      return changed ? next : previous;
-    });
-  }, [
-    documentSearchScope,
-    filteredDocumentSearchRows,
-    normalizedDocumentSearchQuery.length,
-    selectedSearchFolderPath,
-  ]);
-  useEffect(() => {
-    if (!selectedSearchDocumentId) return;
-    const exists = folderScopedDocumentSearchRows.some(
-      (row: NodeFileDocumentSearchRow): boolean => row.file.id === selectedSearchDocumentId
-    );
-    if (!exists) {
-      setSelectedSearchDocumentId('');
-    }
-  }, [folderScopedDocumentSearchRows, selectedSearchDocumentId]);
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent): void => {
-      const container = documentSearchRef.current;
-      if (!container) return;
-      const target = event.target;
-      if (!(target instanceof Node)) return;
-      if (container.contains(target)) return;
-      setIsDocumentSearchOpen(false);
-    };
-    window.addEventListener('pointerdown', handlePointerDown);
-    return (): void => {
-      window.removeEventListener('pointerdown', handlePointerDown);
-    };
-  }, []);
-
-  const handleCanvasDragOverCapture = (event: React.DragEvent<HTMLDivElement>): void => {
-    const payload = parseCaseResolverTreeDropPayload(event.dataTransfer);
-    if (payload?.entity !== 'file') return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.dataTransfer.dropEffect = 'copy';
-  };
-
-  const handleCanvasDropCapture = (event: React.DragEvent<HTMLDivElement>): void => {
-    const payload = parseCaseResolverTreeDropPayload(event.dataTransfer);
-    if (payload?.entity !== 'file') return;
-    event.preventDefault();
-    event.stopPropagation();
-    const position = resolveDropPosition(event);
-    addFileReferenceNode(payload.fileId, payload.name, position);
-  };
-
-  const openSelectedFile = useCallback((): void => {
-    if (!selectedNodeId) return;
-    const meta = nodeFileMetaRef.current[selectedNodeId];
-    if (!meta) {
-      toast('Selected node has no linked file.', { variant: 'warning' });
-      return;
-    }
-    onSelectFile(meta.fileId);
-  }, [onSelectFile, selectedNodeId, toast]);
-
-  const handleManualSave = useCallback((): void => {
-    const updated = buildSnapshotFromState();
-    const hash = stableStringify(updated);
-    if (hash === savedSnapshotHash) {
-      toast('No changes to update.', { variant: 'info' });
-      return;
-    }
-    onSnapshotChange(updated);
-    setSavedSnapshotHash(hash);
-    setCurrentSnapshotHash(hash);
-    toast('Node file updated.', { variant: 'success' });
-  }, [buildSnapshotFromState, onSnapshotChange, savedSnapshotHash, toast]);
-  const toggleSearchFolderExpanded = useCallback((folderPath: string): void => {
-    const normalizedFolderPath = folderPath.trim();
-    if (!normalizedFolderPath) return;
-    setExpandedSearchFolderPaths((previous: Set<string>): Set<string> => {
-      const next = new Set<string>(previous);
-      if (next.has(normalizedFolderPath)) {
-        next.delete(normalizedFolderPath);
-      } else {
-        next.add(normalizedFolderPath);
-      }
-      return next;
-    });
-  }, []);
-  const addSelectedSearchDocument = useCallback((): void => {
-    const selectedDocument = folderScopedDocumentSearchRows.find(
-      (row: NodeFileDocumentSearchRow): boolean => row.file.id === selectedSearchDocumentId
-    );
-    if (!selectedDocument) {
-      toast('Select a document from search results first.', { variant: 'warning' });
-      return;
-    }
-    addFileReferenceNode(selectedDocument.file.id, selectedDocument.file.name, placePosition);
-    setDocumentSearchQuery('');
-    setSelectedSearchDocumentId('');
-    setIsDocumentSearchOpen(false);
-  }, [
-    addFileReferenceNode,
-    folderScopedDocumentSearchRows,
-    placePosition,
-    selectedSearchDocumentId,
-    toast,
-  ]);
-
-  const updateSelectedNodeMeta = useCallback((patch: Partial<CaseResolverNodeMeta>): void => {
-    if (selectedNode?.type !== 'prompt') return;
-    const current = normalizedNodeMeta[selectedNode.id] ?? DEFAULT_CASE_RESOLVER_NODE_META;
-    const nextRole = patch.role ?? current.role;
-    const shouldNormalizeTextPorts =
-      nextRole === 'text_note' || nextRole === 'explanatory';
-    const nextNodes = shouldNormalizeTextPorts
-      ? nodes.map((node: AiNode): AiNode => {
-        return node.id === selectedNode.id ? ensureDocumentPromptPorts(node, nextRole) : node;
-      })
-      : nodes;
-    const nextEdges = shouldNormalizeTextPorts
-      ? normalizeEdgesForTextNode(edges, selectedNode.id, nextRole === 'explanatory')
-      : edges;
-    if (shouldNormalizeTextPorts) {
-      const normalizedSelectedNode = nextNodes.find(
-        (node: AiNode): boolean => node.id === selectedNode.id
-      );
-      if (normalizedSelectedNode) {
-        updateNode(selectedNode.id, {
-          inputs: normalizedSelectedNode.inputs,
-          outputs: normalizedSelectedNode.outputs,
-        });
-      }
-      setEdges(nextEdges as unknown as Edge[]);
-    }
-    setNodeMetaByNode((previous: Record<string, CaseResolverNodeMeta>) => ({
-      ...previous,
-      [selectedNode.id]: {
-        ...current,
-        ...patch,
-      },
-    }));
-  }, [
-    edges,
-    nodes,
-    normalizedNodeMeta,
-    selectedNode,
-    setEdges,
-    updateNode,
-  ]);
-
-  const updateSelectedEdgeMeta = useCallback((patch: Partial<CaseResolverEdgeMeta>): void => {
-    if (!selectedEdge) return;
-    const current = normalizedEdgeMeta[selectedEdge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META;
-    setEdgeMetaByEdge((previous: Record<string, CaseResolverEdgeMeta>) => ({
-      ...previous,
-      [selectedEdge.id]: {
-        ...current,
-        ...patch,
-      },
-    }));
-  }, [normalizedEdgeMeta, selectedEdge]);
-
-  const updateSelectedPromptTemplate = useCallback((template: string): void => {
-    if (selectedNode?.type !== 'prompt') return;
-    updateNode(selectedNode.id, {
-      config: {
-        ...(selectedNode.config ?? {}),
-        prompt: {
-          ...resolvePromptConfig(selectedNode),
-          template,
-        },
-      },
-    });
-  }, [selectedNode, updateNode]);
-
-  // Derived values for the side panel
-  const selectedNodeMeta = selectedNodeId
-    ? (nodeFileMetaRef.current[selectedNodeId] ?? null)
-    : null;
-  const isSidebarReady = Boolean(selectedNodeMeta);
-  const selectedFile = selectedNodeMeta
-    ? (filesById.get(selectedNodeMeta.fileId) ?? null)
-    : null;
-  const selectedPromptMeta =
-    selectedNode?.type === 'prompt'
-      ? normalizedNodeMeta[selectedNode.id] ?? DEFAULT_CASE_RESOLVER_NODE_META
-      : null;
-  const selectedPromptSourceFile = selectedNodeMeta
-    ? (filesById.get(selectedNodeMeta.fileId) ?? null)
-    : null;
-  const selectedPromptTemplate = selectedNode?.type === 'prompt'
-    ? resolvePromptConfig(selectedNode).template
-    : '';
-  const selectedPromptInputText = useMemo((): string => {
-    if (selectedNode?.type !== 'prompt') return '';
-    const incomingTextfield = resolveStaticInputPreview(
-      selectedNode.id,
-      CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] ?? 'wysiwygText'
-    ).value;
-    if (incomingTextfield.trim().length > 0) {
-      return incomingTextfield;
-    }
-    const incomingPlainText = resolveStaticInputPreview(
-      selectedNode.id,
-      CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2] ?? 'plainText'
-    ).value;
-    if (incomingPlainText.trim().length > 0) {
-      return incomingPlainText;
-    }
-    const promptTemplate = resolvePromptConfig(selectedNode).template;
-    const normalizedTemplate = stripHtmlToPlainText(promptTemplate);
-    if (normalizedTemplate) return normalizedTemplate;
-    if (!selectedPromptSourceFile) return '';
-    if (selectedPromptSourceFile.fileType === 'scanfile') {
-      const scanMarkdown = (selectedPromptSourceFile.documentContentMarkdown ?? '').trim();
-      if (scanMarkdown.length > 0) return scanMarkdown;
-      const scanPlainText = (selectedPromptSourceFile.documentContentPlainText ?? '').trim();
-      if (scanPlainText.length > 0) return scanPlainText;
-      const scanSlotText = (selectedPromptSourceFile.scanSlots ?? [])
-        .map((slot: CaseResolverScanSlot): string => (slot.ocrText ?? '').trim())
-        .filter((value: string): boolean => value.length > 0)
-        .join('\n\n');
-      if (scanSlotText.length > 0) return scanSlotText;
-      const topLevelOcrText = (selectedPromptSourceFile.ocrText ?? '').trim();
-      if (topLevelOcrText.length > 0) return topLevelOcrText;
-    }
-    if (selectedPromptSourceFile.documentContentHtml.trim()) {
-      return stripHtmlToPlainText(selectedPromptSourceFile.documentContentHtml);
-    }
-    return stripHtmlToPlainText(selectedPromptSourceFile.documentContent);
-  }, [resolveStaticInputPreview, selectedNode, selectedPromptSourceFile]);
-  const hasWysiwygOnlyInputFlow = useCallback(
-    (
-      nodeId: string,
-      outputs: {
-        textfield: string;
-        plaintextContent: string;
-        plainText: string;
-        wysiwygContent: string;
-      }
-    ): boolean => {
-      const textfieldInput = resolveStaticInputPreview(
-        nodeId,
-        CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[0] ?? 'wysiwygText'
-      );
-      const plaintextContentInput = resolveStaticInputPreview(
-        nodeId,
-        CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1] ?? 'plaintextContent'
-      );
-      const plainTextInput = resolveStaticInputPreview(
-        nodeId,
-        CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[2] ?? 'plainText'
-      );
-      const wysiwygContentInput = resolveStaticInputPreview(
-        nodeId,
-        CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS[3] ?? 'wysiwygContent'
-      );
-      const hasTextfieldOnlyConnectedInputs =
-        textfieldInput.connectedEdgeCount > 0 &&
-        plaintextContentInput.connectedEdgeCount === 0 &&
-        plainTextInput.connectedEdgeCount === 0 &&
-        wysiwygContentInput.connectedEdgeCount === 0;
-      const hasSecondaryOutputValues =
-        outputs.plaintextContent.trim().length > 0 || outputs.plainText.trim().length > 0;
-      return hasTextfieldOnlyConnectedInputs && !hasSecondaryOutputValues;
-    },
-    [resolveStaticInputPreview]
-  );
-  const selectedPromptOutputPreview = useMemo(() => {
-    if (selectedNode?.type !== 'prompt') return null;
-    const computedOutputs = compiled.outputsByNode[selectedNode.id];
-    const nodeMeta = selectedPromptMeta ?? DEFAULT_CASE_RESOLVER_NODE_META;
-    const textfieldOutput =
-      computedOutputs?.textfield ??
-      stripHtmlToPlainText(resolvePromptConfig(selectedNode).template);
-    return {
-      textfield: textfieldOutput,
-      plaintextContent:
-        computedOutputs?.plaintextContent ?? renderPromptNodeTextPreview(selectedNode, nodeMeta),
-      plainText: computedOutputs?.plainText ?? stripHtmlToPlainText(textfieldOutput),
-      wysiwygContent: computedOutputs?.wysiwygContent ?? '',
-    };
-  }, [compiled.outputsByNode, selectedNode, selectedPromptMeta]);
-  const selectedPromptSecondaryOutputHint = useMemo((): boolean => {
-    if (selectedNode?.type !== 'prompt') return false;
-    if (!selectedPromptOutputPreview) return false;
-    return hasWysiwygOnlyInputFlow(selectedNode.id, selectedPromptOutputPreview);
-  }, [hasWysiwygOnlyInputFlow, selectedNode, selectedPromptOutputPreview]);
-  useEffect(() => {
-    if (isSidebarReady || !isSidePanelVisible) return;
-    setIsSidePanelVisible(false);
-  }, [isSidePanelVisible, isSidebarReady]);
-  const selectedEdgeJoinMode = selectedEdge
-    ? (normalizedEdgeMeta[selectedEdge.id] ?? DEFAULT_CASE_RESOLVER_EDGE_META).joinMode
-    : DEFAULT_CASE_RESOLVER_EDGE_META.joinMode;
-  const resolveConnectorTooltip = useCallback(
-    (input: {
-      direction: 'input' | 'output';
-      node: AiNode;
-      port: string;
-    }): { content: React.ReactNode; maxWidth?: string | undefined } | null => {
-      if (
-        !isDocumentTextfieldPort(input.port) &&
-        !isDocumentPlaintextContentPort(input.port) &&
-        !isDocumentPlainTextPort(input.port) &&
-        !isDocumentWysiwygContentPort(input.port)
-      ) {
-        return null;
-      }
-      if (input.node.type !== 'prompt') return null;
-
-      const isPlaintextContentPort = input.port === CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS[1];
-      const isPlainTextPort = isDocumentPlainTextPort(input.port);
-      const isWysiwygContentPort = isDocumentWysiwygContentPort(input.port);
-
-      if (input.direction === 'input') {
-        const staticInput = resolveStaticInputPreview(input.node.id, input.port);
-        if (staticInput.connectedEdgeCount === 0) return null;
-        const inputLabel = isPlainTextPort
-          ? 'Plain text input'
-          : isPlaintextContentPort
-            ? 'plaintextContent input'
-            : isWysiwygContentPort
-              ? 'WYSIWYGContent input'
-              : 'WYSIWYG text input';
-        const dedupedSources = Array.from(new Set(staticInput.sourceLabels));
-        return {
-          maxWidth: '720px',
-          content: (
-            <div className='space-y-2'>
-              <div className='text-[11px] text-gray-400'>{inputLabel}</div>
-              <div className='text-[10px] text-gray-500'>
-                Connected sources: {staticInput.connectedEdgeCount}
-                {dedupedSources.length > 0 ? ` • ${dedupedSources.join(', ')}` : ''}
-              </div>
-              <div className='max-h-80 overflow-auto rounded border border-gray-700 bg-white p-3 text-[11px] leading-relaxed text-slate-900 whitespace-pre-wrap'>
-                {staticInput.value || '(empty)'}
-              </div>
-            </div>
-          ),
-        };
-      }
-
-      const outputLabel = isPlainTextPort
-        ? 'Plain text output'
-        : isPlaintextContentPort
-          ? 'plaintextContent output'
-          : isWysiwygContentPort
-            ? 'WYSIWYGContent output'
-            : 'WYSIWYG text output';
-      const { sourceFile, outputs } = resolvePromptTooltipOutputs(input.node);
-      const renderedText = isPlainTextPort
-        ? outputs.plainText
-        : isPlaintextContentPort
-          ? outputs.plaintextContent
-          : isWysiwygContentPort
-            ? outputs.wysiwygContent
-            : outputs.textfield;
-      const showSecondaryOutputHint =
-        (isPlaintextContentPort || isPlainTextPort) &&
-        hasWysiwygOnlyInputFlow(input.node.id, outputs);
-
-      return {
-        maxWidth: '720px',
-        content: (
-          <div className='space-y-2'>
-            <div className='text-[11px] text-gray-400'>{outputLabel}</div>
-            {sourceFile ? (
-              <div className='text-[10px] text-gray-500'>
-                Source: {sourceFile.name}
-              </div>
-            ) : null}
-            {showSecondaryOutputHint ? (
-              <div className='rounded border border-amber-500/35 bg-amber-500/10 p-2 text-[10px] text-amber-100'>
-                Only <span className='font-semibold'>wysiwygText</span> input is connected.
-                This output lane stays empty until a matching
-                {' '}
-                <span className='font-semibold'>plaintextContent</span>
-                {' '}
-                or
-                {' '}
-                <span className='font-semibold'>plainText</span>
-                {' '}
-                input is connected.
-              </div>
-            ) : null}
-            <div className='max-h-80 overflow-auto rounded border border-gray-700 bg-white p-3 text-[11px] leading-relaxed text-slate-900 whitespace-pre-wrap'>
-              {renderedText || '(empty)'}
-            </div>
-          </div>
-        ),
-      };
-    },
-    [hasWysiwygOnlyInputFlow, resolvePromptTooltipOutputs, resolveStaticInputPreview]
-  );
-
-  const contextValue = useMemo(
-    (): NodeFileWorkspaceContextValue => ({
-      assetId,
-      assetName,
-      handleManualSave,
-      isSidebarReady,
-      compiled,
-      selectedNode,
-      selectedPromptMeta,
-      selectedPromptSourceFile,
-      selectedPromptTemplate,
-      selectedPromptInputText,
-      selectedPromptOutputPreview,
-      selectedPromptSecondaryOutputHint,
-      updateSelectedPromptTemplate,
-      updateSelectedNodeMeta,
-      selectedEdge,
-      selectedEdgeJoinMode,
-      updateSelectedEdgeMeta,
-      isNodeInspectorOpen,
-      setIsNodeInspectorOpen,
-      isLinkedPreviewOpen,
-      setIsLinkedPreviewOpen,
-      hasPendingSnapshotChanges,
-    }),
-    [
-      assetId,
-      assetName,
-      handleManualSave,
-      isSidebarReady,
-      compiled,
-      selectedNode,
-      selectedPromptMeta,
-      selectedPromptSourceFile,
-      selectedPromptTemplate,
-      selectedPromptInputText,
-      selectedPromptOutputPreview,
-      selectedPromptSecondaryOutputHint,
-      updateSelectedPromptTemplate,
-      updateSelectedNodeMeta,
-      selectedEdge,
-      selectedEdgeJoinMode,
-      updateSelectedEdgeMeta,
-      isNodeInspectorOpen,
-      setIsNodeInspectorOpen,
-      isLinkedPreviewOpen,
-      setIsLinkedPreviewOpen,
-      hasPendingSnapshotChanges,
-    ]
+    [nodes, view.scale, viewportRef, setView, selectNode]
   );
 
   return (
-    <NodeFileWorkspaceProvider value={contextValue}>
-      <div className='flex h-[calc(100vh-120px)] min-h-0 w-full gap-3'>
-        {/* ── Main canvas panel ── */}
-        <Card
-          variant='glass'
-          padding='none'
-          className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'
-        >
-          <div className='flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-4 py-3'>
-            <div className='flex min-w-0 items-center gap-2'>
-              <Button
-                type='button'
-                size='sm'
-                onClick={handleManualSave}
-                disabled={!hasPendingSnapshotChanges}
-                className={`h-8 min-w-[100px] flex-shrink-0 rounded-md border text-xs transition-colors ${
-                  hasPendingSnapshotChanges
-                    ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
-                    : 'border-border/60 text-gray-500 hover:bg-transparent'
-                }`}
-              >
-                Update
-              </Button>
-              <h2 className='truncate text-2xl font-bold tracking-tight text-white'>Edit Node File</h2>
-              <Badge variant='outline' className='truncate px-1.5 py-0 text-[10px]'>
-                {assetName}
-              </Badge>
-            </div>
-            <div className='ml-auto flex items-center gap-2'>
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                disabled={!isSidebarReady}
-                className='h-8'
-                onClick={(): void => {
-                  setIsSidePanelVisible((previous) => !previous);
-                }}
-              >
-                {isSidePanelVisible ? 'Hide Sidebar' : 'Show Sidebar'}
-              </Button>
-              <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
-                {nodes.length} node{nodes.length !== 1 ? 's' : ''}
-              </Badge>
-            </div>
-          </div>
-
-          {/* Toolbar */}
-          <div className='flex flex-wrap items-center gap-2 border-b border-border/60 px-4 py-3'>
-            <SelectSimple
-              size='sm'
-              value={selectedNodeId ?? ''}
-              onValueChange={(value: string): void => {
-                const normalized = value.trim();
-                if (!normalized) return;
-                focusNodeInCanvas(normalized);
-              }}
-              options={activeNodeOptions}
-              placeholder='Active nodes on canvas'
-              className='w-[280px]'
-              triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-              disabled={activeNodeOptions.length === 0}
+    <div className='flex h-full min-h-0 w-full gap-4'>
+      <Card
+        variant='subtle'
+        padding='none'
+        className='relative flex min-h-0 flex-1 flex-col overflow-hidden border-border/60 bg-card/20'
+      >
+        {/* Toolbar */}
+        <div className='flex items-center gap-3 border-b border-border/60 bg-card/40 px-4 py-2.5'>
+          <div className='relative flex-1 max-w-md'>
+            <SearchInput
+              value={documentSearchQuery}
+              onChange={(e) => setDocumentSearchQuery(e.target.value)}
+              onClear={() => setDocumentSearchQuery('')}
+              placeholder='Search documents...'
+              onFocus={() => setIsDocumentSearchOpen(true)}
+              className='h-8 border-border bg-card/60 text-xs text-white'
             />
-
-            <SelectSimple
-              size='sm'
-              value={documentSearchScope}
-              onValueChange={(value: string): void => {
-                setDocumentSearchScope(value === 'all_cases' ? 'all_cases' : 'case_scope');
-              }}
-              options={[
-                {
-                  value: 'case_scope',
-                  label: activeCaseScopeLabel,
-                  description: `${caseScopedSearchableFiles.length} documents`,
-                },
-                {
-                  value: 'all_cases',
-                  label: 'All cases',
-                  description: `${allSearchableFiles.length} documents`,
-                },
-              ]}
-              className='w-[220px]'
-              triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-            />
-
-            <div
-              ref={documentSearchRef}
-              className={documentSearchScope === 'all_cases' ? 'relative w-[520px]' : 'relative w-[360px]'}
-            >
-              <SearchInput
-                value={documentSearchQuery}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                  setDocumentSearchQuery(event.target.value);
-                  setIsDocumentSearchOpen(true);
-                }}
-                onFocus={(): void => {
-                  setIsDocumentSearchOpen(true);
-                }}
-                onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>): void => {
-                  if (event.key !== 'Enter') return;
-                  if (selectedSearchDocumentId) {
-                    event.preventDefault();
-                    addSelectedSearchDocument();
-                    return;
-                  }
-                  const firstResult = visibleDocumentSearchRows[0];
-                  if (!firstResult) return;
-                  event.preventDefault();
-                  setSelectedSearchDocumentId(firstResult.file.id);
-                  setDocumentSearchQuery(firstResult.file.name);
-                }}
-                onClear={(): void => {
-                  setDocumentSearchQuery('');
-                  setSelectedSearchDocumentId('');
-                  setIsDocumentSearchOpen(true);
-                }}
-                size='sm'
-                placeholder='Search by name, signature, addresser/addressee, content'
-                containerClassName='w-full'
-                className='h-8 border-border bg-card/60 text-xs text-white'
-              />
-              {isDocumentSearchOpen ? (
-                documentSearchScope === 'all_cases' ? (
-                  <div className='absolute top-full left-0 z-30 mt-1 w-[min(860px,calc(100vw-3rem))] overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-xl backdrop-blur-sm'>
-                    <div className='grid max-h-[420px] min-h-[260px] grid-cols-[minmax(220px,280px)_minmax(0,1fr)]'>
-                      <div className='border-r border-border/60 p-1'>
-                        <div className='mb-1 px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
-                          Folders
-                        </div>
-                        <button
-                          type='button'
-                          className={`mb-1 flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs transition-colors ${
-                            selectedSearchFolderPath === null
-                              ? 'bg-cyan-500/15 text-cyan-100'
-                              : 'text-gray-200 hover:bg-card/70'
-                          }`}
-                          onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                            event.preventDefault();
-                          }}
-                          onClick={(): void => {
-                            setSelectedSearchFolderPath(null);
-                          }}
-                        >
-                          <span className='truncate'>(All folders)</span>
-                          <span className='ml-2 shrink-0 text-[10px] text-gray-400'>
-                            {filteredDocumentSearchRows.length}
-                          </span>
-                        </button>
-                        <div className='max-h-[350px] overflow-auto pr-1'>
-                          {visibleDocumentSearchFolderRows.length === 0 ? (
-                            <div className='px-2 py-2 text-[11px] text-gray-400'>
-                              No folders match this search.
-                            </div>
-                          ) : (
-                            visibleDocumentSearchFolderRows.map(
-                              (
-                                folderRow: NodeFileDocumentFolderNode & {
-                                  hasChildren: boolean;
-                                  isExpanded: boolean;
-                                }
-                              ) => (
-                                <button
-                                  key={folderRow.path}
-                                  type='button'
-                                  className={`flex w-full items-center gap-1 rounded py-1.5 pr-2 text-left text-xs transition-colors ${
-                                    selectedSearchFolderPath === folderRow.path
-                                      ? 'bg-cyan-500/15 text-cyan-100'
-                                      : 'text-gray-200 hover:bg-card/70'
-                                  }`}
-                                  style={{ paddingLeft: `${folderRow.depth * 14 + 8}px` }}
-                                  onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                                    event.preventDefault();
-                                  }}
-                                  onClick={(): void => {
-                                    setSelectedSearchFolderPath(folderRow.path);
-                                  }}
-                                >
-                                  {folderRow.hasChildren ? (
-                                    <button
-                                      type='button'
-                                      className='inline-flex size-4 shrink-0 items-center justify-center rounded hover:bg-card/80'
-                                      aria-label={
-                                        folderRow.isExpanded
-                                          ? `Collapse ${folderRow.name}`
-                                          : `Expand ${folderRow.name}`
-                                      }
-                                      onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                                        event.preventDefault();
-                                        event.stopPropagation();
-                                      }}
-                                      onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                                        event.preventDefault();
-                                        event.stopPropagation();
-                                        toggleSearchFolderExpanded(folderRow.path);
-                                      }}
-                                    >
-                                      {folderRow.isExpanded ? (
-                                        <ChevronDown className='size-3' />
-                                      ) : (
-                                        <ChevronRight className='size-3' />
-                                      )}
-                                    </button>
-                                  ) : (
-                                    <span className='inline-flex size-4 shrink-0 items-center justify-center opacity-40'>
-                                      •
-                                    </span>
-                                  )}
-                                  {folderRow.isExpanded ? (
-                                    <FolderOpen className='size-3.5 shrink-0 text-gray-400' />
-                                  ) : (
-                                    <Folder className='size-3.5 shrink-0 text-gray-400' />
-                                  )}
-                                  <span className='min-w-0 flex-1 truncate'>{folderRow.name}</span>
-                                  <span className='ml-1 shrink-0 text-[10px] text-gray-400'>
-                                    {folderRow.descendantFileCount}
-                                  </span>
-                                </button>
-                              )
-                            )
-                          )}
-                        </div>
-                      </div>
-                      <div className='p-1'>
-                        <div className='mb-1 flex items-center justify-between px-2 py-1'>
-                          <div className='truncate text-[10px] font-semibold uppercase tracking-wide text-gray-400'>
-                            {selectedSearchFolderPath
-                              ? `Folder: ${selectedSearchFolderPath}`
-                              : 'Documents'}
-                          </div>
-                          <div className='text-[10px] text-gray-400'>
-                            {folderScopedDocumentSearchRows.length}
-                          </div>
-                        </div>
-                        {visibleDocumentSearchRows.length === 0 ? (
-                          <div className='px-2 py-2 text-xs text-gray-400'>
-                            No documents match this folder and search.
-                          </div>
-                        ) : (
-                          <div className='max-h-[350px] overflow-auto p-1'>
-                            {visibleDocumentSearchRows.map((row: NodeFileDocumentSearchRow) => {
-                              const metadataParts = [
-                                row.file.fileType === 'scanfile' ? 'Scan file' : 'Document',
-                                row.folderPath ? `Folder: ${row.folderPath}` : 'Folder: (root)',
-                                row.signatureLabel ? `Signature: ${row.signatureLabel}` : null,
-                              ].filter((value: string | null): value is string => Boolean(value));
-                              const isSelected = selectedSearchDocumentId === row.file.id;
-                              return (
-                                <button
-                                  key={row.file.id}
-                                  type='button'
-                                  className={`w-full rounded px-2 py-1.5 text-left transition-colors ${
-                                    isSelected
-                                      ? 'bg-cyan-500/15 text-cyan-100'
-                                      : 'text-gray-200 hover:bg-card/70'
-                                  }`}
-                                  onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                                    event.preventDefault();
-                                  }}
-                                  onClick={(): void => {
-                                    setSelectedSearchDocumentId(row.file.id);
-                                    setDocumentSearchQuery(row.file.name);
-                                    setIsDocumentSearchOpen(false);
-                                  }}
-                                >
-                                  <div className='truncate text-xs font-medium'>{row.file.name}</div>
-                                  <div className='truncate text-[10px] text-gray-400'>
-                                    {metadataParts.join(' • ')}
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+            {isDocumentSearchOpen && (
+              <div className='absolute top-full z-30 mt-1 w-full overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-xl backdrop-blur-sm'>
+                {visibleDocumentSearchRows.length === 0 ? (
+                  <div className='px-3 py-2 text-xs text-gray-400'>No results.</div>
                 ) : (
-                  <div className='absolute top-full z-30 mt-1 w-full overflow-hidden rounded-md border border-border/70 bg-card/95 shadow-xl backdrop-blur-sm'>
-                    {visibleDocumentSearchRows.length === 0 ? (
-                      <div className='px-3 py-2 text-xs text-gray-400'>
-                        No documents match this search.
-                      </div>
-                    ) : (
-                      <div className='max-h-80 overflow-auto p-1'>
-                        {visibleDocumentSearchRows.map((row: NodeFileDocumentSearchRow) => {
-                          const metadataParts = [
-                            row.file.fileType === 'scanfile' ? 'Scan file' : 'Document',
-                            row.file.folder ? `Folder: ${row.file.folder}` : null,
-                            row.signatureLabel ? `Signature: ${row.signatureLabel}` : null,
-                          ].filter((value: string | null): value is string => Boolean(value));
-                          const isSelected = selectedSearchDocumentId === row.file.id;
-                          return (
-                            <button
-                              key={row.file.id}
-                              type='button'
-                              className={`w-full rounded px-2 py-1.5 text-left transition-colors ${
-                                isSelected
-                                  ? 'bg-cyan-500/15 text-cyan-100'
-                                  : 'text-gray-200 hover:bg-card/70'
-                              }`}
-                              onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
-                                event.preventDefault();
-                              }}
-                              onClick={(): void => {
-                                setSelectedSearchDocumentId(row.file.id);
-                                setDocumentSearchQuery(row.file.name);
-                                setIsDocumentSearchOpen(false);
-                              }}
-                            >
-                              <div className='truncate text-xs font-medium'>{row.file.name}</div>
-                              <div className='truncate text-[10px] text-gray-400'>
-                                {metadataParts.join(' • ')}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )
-              ) : null}
-            </div>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={addSelectedSearchDocument}
-              disabled={!selectedSearchDocumentId}
-            >
-              Add Selected
-            </Button>
-
-            <Badge variant='outline' className='px-1.5 py-0 text-[10px]'>
-              {folderScopedDocumentSearchRows.length} result
-              {folderScopedDocumentSearchRows.length !== 1 ? 's' : ''}
-            </Badge>
-
-            <div className='mx-1 h-6 w-px bg-border/60' />
-
-            <Button
-              type='button'
-              onClick={addExplanatoryNode}
-              variant='success'
-              size='sm'
-            >
-              <Sparkles className='mr-1 size-3.5' />
-              Explanatory Node
-            </Button>
-
-            <SelectSimple
-              size='sm'
-              value={newNodeType}
-              onValueChange={(value: string): void => {
-                if (
-                  value === 'prompt' ||
-                  value === 'model' ||
-                  value === 'template' ||
-                  value === 'database' ||
-                  value === 'viewer'
-                ) {
-                  setNewNodeType(value);
-                }
-              }}
-              options={[
-                { value: 'prompt', label: 'Prompt Node' },
-                { value: 'model', label: 'Model Node' },
-                { value: 'template', label: 'Template Node' },
-                { value: 'database', label: 'Database Node' },
-                { value: 'viewer', label: 'Result Viewer Node' },
-              ]}
-              className='w-[170px]'
-              triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
-            />
-
-            <Button
-              type='button'
-              onClick={addGenericNode}
-              variant='outline'
-              size='sm'
-            >
-              Add Node
-            </Button>
-            <Button
-              type='button'
-              onClick={(): void => {
-                setIsNodeInspectorOpen(true);
-              }}
-              variant='outline'
-              size='sm'
-            >
-              Node Inspector
-            </Button>
-          </div>
-
-          {/* Canvas */}
-          <div
-            className='relative min-h-0 flex-1 overflow-hidden'
-            onDragOverCapture={handleCanvasDragOverCapture}
-            onDropCapture={handleCanvasDropCapture}
-          >
-            <CanvasBoard
-              viewportClassName='h-full min-h-0'
-              resolveConnectorTooltip={resolveConnectorTooltip}
-            />
-            {nodes.length === 0 ? (
-              <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
-                <EmptyState
-                  title='Empty canvas'
-                  description='Use the ✦ button next to a file in the tree, or drag a file directly onto this canvas.'
-                  icon={<FileCode2 className='size-12' />}
-                  className='border-none bg-card/60 backdrop-blur-sm px-8 py-6'
-                />
-              </div>
-            ) : null}
-          </div>
-
-          {showNodeSelectorUnderCanvas && activeNodeOptions.length > 0 ? (
-            <div className='shrink-0 border-t border-border/60 bg-card/40 px-4 py-3'>
-              <div className='mb-2 flex items-center justify-between gap-2'>
-                <div>
-                  <div className='text-xs font-medium text-gray-200'>Node Selector</div>
-                  <div className='text-[11px] text-gray-500'>
-                    Click a node to focus it on canvas.
-                  </div>
-                </div>
-                <Button
-                  type='button'
-                  variant='ghost'
-                  size='sm'
-                  className='h-7 px-2 text-[11px] text-gray-400 hover:text-gray-200'
-                  onClick={(): void => {
-                    setShowNodeSelectorUnderCanvas(false);
-                  }}
-                >
-                  Hide
-                </Button>
-              </div>
-              <div className='max-h-[35vh] overflow-x-hidden overflow-y-auto pr-1'>
-                <div className='grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-2'>
-                  {activeNodeOptions.map((option) => {
-                    const isSelected = selectedNodeId === option.value;
-                    return (
+                  <div className='max-h-80 overflow-auto p-1'>
+                    {visibleDocumentSearchRows.map((row: NodeFileDocumentSearchRow) => (
                       <button
-                        key={option.value}
+                        key={row.file.id}
                         type='button'
-                        className={`w-full rounded border px-2 py-2 text-left transition-colors ${
-                          isSelected
-                            ? 'border-cyan-400/60 bg-cyan-500/10'
-                            : 'border-border/60 bg-card/20 hover:border-cyan-500/40 hover:bg-card/40'
-                        }`}
-                        onClick={(): void => {
-                          focusNodeInCanvas(option.value);
+                        className={cn(
+                          'w-full rounded px-2 py-1.5 text-left transition-colors',
+                          selectedSearchDocumentId === row.file.id ? 'bg-cyan-500/15 text-cyan-100' : 'text-gray-200 hover:bg-card/70'
+                        )}
+                        onClick={() => {
+                          setSelectedSearchDocumentId(row.file.id);
+                          setDocumentSearchQuery(row.file.name);
+                          setIsDocumentSearchOpen(false);
                         }}
                       >
-                        <div className='truncate text-xs font-medium text-gray-200'>
-                          {option.label}
-                        </div>
-                        <div className='mt-0.5 truncate text-[10px] text-gray-500'>
-                          {option.description}
-                        </div>
+                        <div className='truncate text-xs font-medium'>{row.file.name}</div>
                       </button>
-                    );
-                  })}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
-          ) : null}
-        </Card>
+            )}
+          </div>
+          
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={addSelectedSearchDocument}
+            disabled={!selectedSearchDocumentId}
+          >
+            Add Selected
+          </Button>
 
-        {/* ── File reference side panel ── */}
-        {isSidePanelVisible && selectedNodeMeta ? (
-          <NodeFilePanel
-            meta={selectedNodeMeta}
-            file={selectedFile}
-            onOpen={openSelectedFile}
+          <div className='mx-1 h-6 w-px bg-border/60' />
+
+          <Button onClick={onExplanatoryClick} variant='success' size='sm'>
+            <Sparkles className='mr-1 size-3.5' />
+            Explanatory Node
+          </Button>
+
+          <SelectSimple
+            size='sm'
+            value={newNodeType}
+            onValueChange={(val: any) => setNewNodeType(val)}
+            options={[
+              { value: 'prompt', label: 'Prompt Node' },
+              { value: 'model', label: 'Model Node' },
+              { value: 'template', label: 'Template Node' },
+              { value: 'database', label: 'Database Node' },
+              { value: 'viewer', label: 'Result Viewer Node' },
+            ]}
+            className='w-[170px]'
+            triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
           />
-        ) : null}
 
-        <CaseResolverNodeInspectorModal />
-      </div>
-    </NodeFileWorkspaceProvider>
+          <Button variant='outline' size='sm' onClick={() => setIsNodeInspectorOpen(true)}>
+            Node Inspector
+          </Button>
+        </div>
+
+        {/* Canvas */}
+        <div ref={viewportRef} className='relative min-h-0 flex-1 overflow-hidden'>
+          <CanvasBoard viewportClassName='h-full min-h-0' />
+          {nodes.length === 0 && (
+            <div className='pointer-events-none absolute inset-0 flex items-center justify-center'>
+              <EmptyState
+                title='Empty canvas'
+                description='Drag files here or use the search above.'
+                icon={<FileCode2 className='size-12' />}
+                className='border-none bg-card/60 backdrop-blur-sm'
+              />
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Side Panel */}
+      {isSidePanelVisible && selectedNodeMeta && (
+        <NodeFilePanel
+          meta={selectedNodeMeta as any}
+          file={selectedFile}
+          onOpen={() => onSelectFile(selectedFile?.id ?? '')}
+        />
+      )}
+
+      <CaseResolverNodeInspectorModal />
+    </div>
   );
 }
 
@@ -2188,8 +239,6 @@ function CaseResolverNodeFileWorkspaceInner({
 export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
   const { selectedAsset, onUpdateSelectedAsset } = useCaseResolverPageContext();
 
-  // Re-parse only when the asset identity changes, not on every textContent save.
-   
   const snapshot = useMemo(
     () => parseNodeFileSnapshot(selectedAsset?.textContent ?? ''),
     [selectedAsset?.id]
@@ -2202,6 +251,13 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
     [onUpdateSelectedAsset]
   );
 
+  const state = useNodeFileWorkspaceState({
+    assetId: selectedAsset?.id ?? '',
+    assetName: selectedAsset?.name ?? '',
+    snapshot,
+    onSnapshotChange: handleSnapshotChange,
+  });
+
   if (selectedAsset?.kind !== 'node_file') {
     return (
       <EmptyState
@@ -2212,26 +268,12 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
     );
   }
 
-  const initialNodes: AiNode[] = snapshot.nodes.map((node: CaseResolverNodeFileSnapshot['nodes'][number]): AiNode => {
-    const nodeRecord = node as Record<string, unknown>;
-    const createdAt =
-      (typeof nodeRecord['createdAt'] === 'string' ? nodeRecord['createdAt'] : undefined) ??
-      new Date().toISOString();
-    const updatedAt =
-      (typeof nodeRecord['updatedAt'] === 'string' ? nodeRecord['updatedAt'] : undefined) ??
-      createdAt;
-    const data = (
-      nodeRecord['data'] && typeof nodeRecord['data'] === 'object'
-        ? nodeRecord['data']
-        : {}
-    ) as Record<string, unknown>;
-    return {
-      ...node,
-      createdAt,
-      updatedAt,
-      data,
-    };
-  });
+  const initialNodes: AiNode[] = snapshot.nodes.map((node: any): AiNode => ({
+    ...node,
+    createdAt: node.createdAt ?? new Date().toISOString(),
+    updatedAt: node.updatedAt ?? new Date().toISOString(),
+    data: node.data ?? {},
+  }));
 
   return (
     <AiPathsProvider
@@ -2250,12 +292,9 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
         history: {},
       }}
     >
-      <CaseResolverNodeFileWorkspaceInner
-        assetId={selectedAsset.id}
-        assetName={selectedAsset.name}
-        snapshot={snapshot}
-        onSnapshotChange={handleSnapshotChange}
-      />
+      <NodeFileWorkspaceProvider value={state}>
+        <CaseResolverNodeFileWorkspaceInner />
+      </NodeFileWorkspaceProvider>
     </AiPathsProvider>
   );
 }

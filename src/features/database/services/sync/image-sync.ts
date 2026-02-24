@@ -74,7 +74,7 @@ export const syncImageStudioSlots: SyncHandler = async ({ mongo, prisma, normali
         imageBase64: doc.imageBase64 ?? null,
         asset3dId: resolvedAsset3dId,
         screenshotFileId: resolvedScreenshotFileId,
-        metadata: toJsonValue(doc.metadata ?? null) as Prisma.InputJsonValue,
+        metadata: toJsonValue(doc.metadata ?? null),
         createdAt: toDate(doc.createdAt) ?? new Date(),
         updatedAt: toDate(doc.updatedAt) ?? new Date(),
       };

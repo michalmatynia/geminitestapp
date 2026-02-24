@@ -1,6 +1,12 @@
 import React from 'react';
 
-import type { AiNode, PathFlowIntensity, Edge } from '@/features/ai/ai-paths/lib';
+import type {
+  AiNode,
+  DataContractNodeIssueSummary,
+  DataContractPreflightIssue,
+  PathFlowIntensity,
+  Edge,
+} from '@/features/ai/ai-paths/lib';
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -65,6 +71,10 @@ type CanvasBoardProps = {
   viewportClassName?: string | undefined;
   confirmNodeSwitch?: ((nodeId: string) => boolean | Promise<boolean>) | undefined;
   openNodeConfigOnSingleClick?: boolean | undefined;
+  nodeDiagnosticsById?:
+    | Record<string, DataContractNodeIssueSummary>
+    | undefined;
+  onFocusNodeDiagnostics?: ((nodeId: string) => void) | undefined;
   resolveConnectorTooltip?:
     | ((
         input: CanvasBoardConnectorTooltipOverrideInput
@@ -76,6 +86,13 @@ type SvgConnectorTooltipState = {
   clientX: number;
   clientY: number;
   info: ConnectorInfo;
+};
+
+type SvgNodeDiagnosticsTooltipState = {
+  clientX: number;
+  clientY: number;
+  nodeId: string;
+  summary: DataContractNodeIssueSummary;
 };
 
 const formatRuntimeStatusLabel = (status: string): string =>
@@ -107,6 +124,78 @@ const runtimeStatusBadgeClassName = (status: string): string => {
     return 'border-sky-500/60 bg-sky-500/15 text-sky-200';
   }
   return 'border-border bg-card/60 text-gray-200';
+};
+
+const resolveNodeDiagnosticsBadgeStyle = (
+  summary: DataContractNodeIssueSummary | undefined
+): { label: string; className: string } | null => {
+  if (!summary) return null;
+  if (summary.errors > 0) {
+    return {
+      label: `${summary.errors} Error${summary.errors === 1 ? '' : 's'}`,
+      className: 'border-rose-500/60 bg-rose-500/15 text-rose-100',
+    };
+  }
+  if (summary.warnings > 0) {
+    return {
+      label: `${summary.warnings} Warning${summary.warnings === 1 ? '' : 's'}`,
+      className: 'border-amber-500/60 bg-amber-500/15 text-amber-100',
+    };
+  }
+  return null;
+};
+
+export const renderNodeDiagnosticsTooltipContent = ({
+  summary,
+  nodeLabel,
+}: {
+  summary: DataContractNodeIssueSummary;
+  nodeLabel: string;
+}): React.JSX.Element => {
+  const topIssues = summary.issues.slice(0, 6);
+  return (
+    <div className='space-y-2'>
+      <div className='text-[11px] text-gray-300'>{nodeLabel}</div>
+      <div className='text-[10px] text-gray-400'>
+        Errors: <span className='text-rose-200'>{summary.errors}</span> · Warnings:{' '}
+        <span className='text-amber-200'>{summary.warnings}</span>
+      </div>
+      <div className='max-h-64 space-y-1 overflow-auto pr-1'>
+        {topIssues.map((issue: DataContractPreflightIssue) => {
+          const scopeParts = [
+            issue.port ? `Port: ${issue.port}` : null,
+            issue.token ? `Token: {{${issue.token}}}` : null,
+          ]
+            .filter((part): part is string => Boolean(part))
+            .join(' · ');
+          return (
+            <div
+              key={issue.id}
+              className='rounded-md border border-border/60 bg-card/70 px-2 py-1 text-[10px]'
+            >
+              <div
+                className={`font-medium ${
+                  issue.severity === 'error' ? 'text-rose-200' : 'text-amber-200'
+                }`}
+              >
+                [{issue.severity.toUpperCase()}] {issue.code}
+              </div>
+              <div className='mt-0.5 text-gray-200'>{issue.message}</div>
+              {scopeParts ? (
+                <div className='mt-0.5 text-gray-400'>{scopeParts}</div>
+              ) : null}
+              <div className='mt-0.5 text-gray-300'>Fix: {issue.recommendation}</div>
+            </div>
+          );
+        })}
+      </div>
+      {summary.issues.length > topIssues.length ? (
+        <div className='text-[10px] text-gray-500'>
+          +{summary.issues.length - topIssues.length} more issue(s)
+        </div>
+      ) : null}
+    </div>
+  );
 };
 
 const BLOCKER_PROCESSING_STATUSES = new Set<string>([
@@ -172,6 +261,8 @@ export function CanvasBoard({
   viewportClassName,
   confirmNodeSwitch,
   openNodeConfigOnSingleClick = false,
+  nodeDiagnosticsById = {},
+  onFocusNodeDiagnostics,
   resolveConnectorTooltip,
 }: CanvasBoardProps): React.JSX.Element {
   // --- Context Hooks ---
@@ -228,6 +319,8 @@ export function CanvasBoard({
   const [pinnedConnectorKey, setPinnedConnectorKey] = React.useState<string | null>(null);
   const [svgConnectorTooltip, setSvgConnectorTooltip] =
     React.useState<SvgConnectorTooltipState | null>(null);
+  const [svgNodeDiagnosticsTooltip, setSvgNodeDiagnosticsTooltip] =
+    React.useState<SvgNodeDiagnosticsTooltipState | null>(null);
   const [rendererMode, setRendererMode] = React.useState<CanvasRendererMode>('svg');
   const [showMinimap, setShowMinimap] = React.useState<boolean>(true);
   const [viewportSize, setViewportSize] = React.useState<{
@@ -288,6 +381,12 @@ export function CanvasBoard({
       setSvgConnectorTooltip(null);
     }
   }, [rendererMode, svgConnectorTooltip]);
+
+  React.useEffect(() => {
+    if (rendererMode !== 'svg' && svgNodeDiagnosticsTooltip !== null) {
+      setSvgNodeDiagnosticsTooltip(null);
+    }
+  }, [rendererMode, svgNodeDiagnosticsTooltip]);
 
   React.useEffect(() => {
     if (!pinnedConnectorKey && !hoveredConnectorKey) {
@@ -484,6 +583,14 @@ export function CanvasBoard({
     [nodes]
   );
 
+  React.useEffect(() => {
+    if (!svgNodeDiagnosticsTooltip) return;
+    const summary = nodeDiagnosticsById[svgNodeDiagnosticsTooltip.nodeId];
+    if (!summary || (summary.errors <= 0 && summary.warnings <= 0)) {
+      setSvgNodeDiagnosticsTooltip(null);
+    }
+  }, [nodeDiagnosticsById, svgNodeDiagnosticsTooltip]);
+
   const getConnectorInfo = React.useCallback(
     (direction: 'input' | 'output', nodeId: string, port: string) =>
       buildConnectorInfo({
@@ -511,6 +618,20 @@ export function CanvasBoard({
       return { left, top };
     },
     [svgConnectorTooltip, viewportRef]
+  );
+  const svgNodeDiagnosticsTooltipPosition = React.useMemo(
+    (): { left: number; top: number } | null => {
+      if (!svgNodeDiagnosticsTooltip || !viewportRef.current) return null;
+      const rect = viewportRef.current.getBoundingClientRect();
+      const localX = svgNodeDiagnosticsTooltip.clientX - rect.left;
+      const localY = svgNodeDiagnosticsTooltip.clientY - rect.top;
+      const maxLeft = Math.max(12, rect.width - 372);
+      const maxTop = Math.max(12, rect.height - 312);
+      const left = Math.min(Math.max(12, localX + 14), maxLeft);
+      const top = Math.min(Math.max(12, localY + 14), maxTop);
+      return { left, top };
+    },
+    [svgNodeDiagnosticsTooltip, viewportRef]
   );
   const svgConnectorTooltipOverride = React.useMemo(() => {
     if (!svgConnectorTooltip) return null;
@@ -835,6 +956,7 @@ export function CanvasBoard({
       runtimeNodeStatuses,
       runtimeRunStatus: runtimeRunStatus as 'idle' | 'running' | 'paused' | 'stepping',
       nodeDurations,
+      nodeDiagnosticsById,
       inputPulseNodes,
       outputPulseNodes,
       activeEdgeIds,
@@ -865,6 +987,15 @@ export function CanvasBoard({
           return null;
         });
       },
+      onNodeDiagnosticsHover: ({ clientX, clientY, nodeId, summary }) => {
+        setSvgNodeDiagnosticsTooltip({ clientX, clientY, nodeId, summary });
+      },
+      onNodeDiagnosticsLeave: () => {
+        setSvgNodeDiagnosticsTooltip(null);
+      },
+      onFocusNodeDiagnostics: onFocusNodeDiagnostics
+        ? (nodeId: string) => onFocusNodeDiagnostics(nodeId)
+        : undefined,
       onPointerDownNode: handlePointerDownNode,
       onPointerMoveNode: handlePointerMoveNode,
       onPointerUpNode: handlePointerUpNode,
@@ -895,6 +1026,7 @@ export function CanvasBoard({
       runtimeNodeStatuses,
       runtimeRunStatus,
       nodeDurations,
+      nodeDiagnosticsById,
       inputPulseNodes,
       outputPulseNodes,
       activeEdgeIds,
@@ -909,6 +1041,8 @@ export function CanvasBoard({
       pinnedConnectorKey,
       setHoveredConnectorKey,
       setPinnedConnectorKey,
+      setSvgNodeDiagnosticsTooltip,
+      onFocusNodeDiagnostics,
       buildConnectorKey,
       handlePointerDownNode,
       handlePointerMoveNode,
@@ -1152,6 +1286,30 @@ export function CanvasBoard({
             {svgConnectorTooltipOverride?.content ?? renderConnectorTooltip(svgConnectorTooltip.info)}
           </div>
         ) : null}
+        {isSvgRenderer &&
+        svgNodeDiagnosticsTooltip &&
+        svgNodeDiagnosticsTooltipPosition ? (
+            <div
+              className='pointer-events-auto absolute z-40 rounded-md border border-border/70 bg-card/95 p-2 shadow-lg backdrop-blur-sm'
+              style={{
+                left: svgNodeDiagnosticsTooltipPosition.left,
+                top: svgNodeDiagnosticsTooltipPosition.top,
+                maxWidth: '360px',
+              }}
+              onPointerDown={(event) => event.stopPropagation()}
+              onPointerMove={(event) => event.stopPropagation()}
+              onPointerUp={(event) => event.stopPropagation()}
+              onWheel={(event) => event.stopPropagation()}
+              onContextMenu={(event) => event.stopPropagation()}
+            >
+              {renderNodeDiagnosticsTooltipContent({
+                summary: svgNodeDiagnosticsTooltip.summary,
+                nodeLabel:
+                  nodeById.get(svgNodeDiagnosticsTooltip.nodeId)?.title ??
+                  svgNodeDiagnosticsTooltip.nodeId,
+              })}
+            </div>
+          ) : null}
         <div
           ref={canvasRef}
           data-doc-id='canvas_drop_zone'
@@ -1291,6 +1449,16 @@ export function CanvasBoard({
               const isInputPulse = inputPulseNodes.has(node.id);
               const isOutputPulse = outputPulseNodes.has(node.id);
               const isDragging = dragState?.nodeId === node.id;
+              const nodeDiagnosticsSummary = nodeDiagnosticsById[node.id];
+              const nodeDiagnosticsBadge =
+            resolveNodeDiagnosticsBadgeStyle(nodeDiagnosticsSummary);
+              const nodeDiagnosticsTooltipContent =
+            nodeDiagnosticsSummary
+              ? renderNodeDiagnosticsTooltipContent({
+                summary: nodeDiagnosticsSummary,
+                nodeLabel: node.title ?? node.id,
+              })
+              : null;
           
               return (
                 <div
@@ -1575,6 +1743,31 @@ export function CanvasBoard({
                     <div className='flex items-center justify-between gap-2'>
                       <span className='text-xs font-semibold text-white'>{node.title}</span>
                       <div className='flex items-center gap-1'>
+                        {nodeDiagnosticsBadge && nodeDiagnosticsTooltipContent ? (
+                          <Tooltip
+                            content={nodeDiagnosticsTooltipContent}
+                            side='top'
+                            maxWidth='360px'
+                          >
+                            <button
+                              type='button'
+                              data-node-diagnostics-badge={node.id}
+                              className='rounded-sm'
+                              onPointerDown={(event) => event.stopPropagation()}
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                onFocusNodeDiagnostics?.(node.id);
+                              }}
+                            >
+                              <Badge
+                                variant='outline'
+                                className={`h-auto border px-2 py-0 text-[9px] uppercase ${nodeDiagnosticsBadge.className}`}
+                              >
+                                {nodeDiagnosticsBadge.label}
+                              </Badge>
+                            </button>
+                          </Tooltip>
+                        ) : null}
                         {isScheduledTrigger ? (
                           <Badge variant='outline' className='h-auto border-amber-400/60 bg-amber-500/15 px-2 py-0 text-[9px] text-amber-200 uppercase'>
                         Scheduled

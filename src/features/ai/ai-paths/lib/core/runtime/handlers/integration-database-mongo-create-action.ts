@@ -8,6 +8,12 @@ import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { dbApi, ApiResponse } from '../../../api';
 import { coerceInput, parseJsonSafe } from '../../utils';
+import {
+  createWriteTemplateGuardrailOutput,
+  evaluateWriteOutcome,
+  resolveWriteTemplateGuardrail,
+  resolveWriteOutcomePolicy,
+} from './integration-database-write-guardrails';
 
 export type HandleDatabaseMongoCreateActionInput = {
   action: DatabaseAction;
@@ -22,6 +28,8 @@ export type HandleDatabaseMongoCreateActionInput = {
   dryRun: boolean;
   collection: string;
   queryPayload: Record<string, unknown>;
+  templateInputs: RuntimePortValues;
+  templateInputValue: unknown;
   parseJsonTemplate: (template: string) => unknown;
   aiPrompt: string;
 };
@@ -39,10 +47,38 @@ export async function handleDatabaseMongoCreateAction({
   dryRun,
   collection,
   queryPayload,
+  templateInputs,
+  templateInputValue,
   parseJsonTemplate,
   aiPrompt,
 }: HandleDatabaseMongoCreateActionInput): Promise<RuntimePortValues> {
   const payloadTemplate: string = queryConfig.queryTemplate?.trim() ?? '';
+  if (payloadTemplate) {
+    const templateGuardrail = resolveWriteTemplateGuardrail({
+      templates: [{ name: 'insertTemplate', template: payloadTemplate }],
+      templateContext: templateInputs,
+      currentValue: templateInputValue,
+    });
+    if (!templateGuardrail.ok) {
+      const errorMessage = templateGuardrail.message;
+      reportAiPathsError(
+        new Error(errorMessage),
+        {
+          action: 'dbInsert',
+          collection,
+          nodeId: node.id,
+          guardrailMeta: templateGuardrail.guardrailMeta,
+        },
+        'Database insert blocked:'
+      );
+      toast(errorMessage, { variant: 'error' });
+      return createWriteTemplateGuardrailOutput({
+        aiPrompt,
+        message: errorMessage,
+        guardrailMeta: templateGuardrail.guardrailMeta,
+      });
+    }
+  }
   const parsedPayload: unknown = payloadTemplate
     ? parseJsonTemplate(payloadTemplate)
     : null;
@@ -132,13 +168,45 @@ export async function handleDatabaseMongoCreateAction({
   typeof (insertResult.data as Record<string, unknown> | null)?.['insertedCount'] === 'number'
     ? ((insertResult.data as Record<string, unknown>)['insertedCount'] as number)
     : 1;
-  toast(
-    `Entity created in ${collection} (${insertedCount} row${insertedCount === 1 ? '' : 's'}).`,
-    { variant: 'success' },
-  );
+  const writeOutcomeEvaluation = evaluateWriteOutcome({
+    operation: 'insert',
+    action,
+    result: insertResult.data,
+    policy: resolveWriteOutcomePolicy(dbConfig),
+  });
+  const writeOutcome = writeOutcomeEvaluation.writeOutcome;
+  if (writeOutcomeEvaluation.isZeroAffected) {
+    const message =
+      writeOutcome.message ??
+      `Database write affected 0 records for insert (${action}).`;
+    if (writeOutcome.status === 'failed') {
+      reportAiPathsError(
+        new Error(message),
+        {
+          action: 'dbWriteOutcome',
+          collection,
+          nodeId: node.id,
+          writeOutcome,
+        },
+        'Database insert failed:',
+      );
+      toast(message, { variant: 'error' });
+      throw new Error(message);
+    }
+    toast(message, { variant: 'warning' });
+  } else {
+    toast(
+      `Entity created in ${collection} (${insertedCount} row${insertedCount === 1 ? '' : 's'}).`,
+      { variant: 'success' },
+    );
+  }
   return {
     result: insertResult.data,
-    bundle: insertResult.data as Record<string, unknown>,
+    bundle: {
+      ...(insertResult.data as Record<string, unknown>),
+      writeOutcome,
+    },
+    writeOutcome,
     aiPrompt,
   };
 }

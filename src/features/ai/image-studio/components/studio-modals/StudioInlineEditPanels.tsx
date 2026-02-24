@@ -23,7 +23,6 @@ export function StudioInlineEditPanels(): React.JSX.Element {
     extractHistory,
     extractReviewOpen,
     generationPreviewModalOpen,
-    onApplyLinkedVariantToCard,
     onCopyCardId,
     onSaveInlineSlot,
     previewControls,
@@ -33,14 +32,11 @@ export function StudioInlineEditPanels(): React.JSX.Element {
     selectedExtractChanged,
     selectedExtractDiffLines,
     selectedExtractHistory,
-    selectedGenerationModalDimensions,
-    selectedGenerationPreview,
     selectedSlot,
     setEditCardTab,
     setExtractDraftPrompt,
     setExtractHistory,
     setExtractReviewOpen,
-    setGenerationModalPreviewNaturalSize,
     setGenerationPreviewModalOpen,
     setSelectedExtractHistoryId,
     slotInlineEditOpen,
@@ -116,11 +112,6 @@ export function StudioInlineEditPanels(): React.JSX.Element {
       <GenerationPreviewModal
         isOpen={generationPreviewModalOpen}
         onClose={() => setGenerationPreviewModalOpen(false)}
-        item={selectedGenerationPreview}
-        selectedGenerationModalDimensions={selectedGenerationModalDimensions}
-        slotUpdateBusy={slotUpdateBusy}
-        handleApplyLinkedVariantToCard={onApplyLinkedVariantToCard}
-        setGenerationModalPreviewNaturalSize={setGenerationModalPreviewNaturalSize}
       />
 
       <ExtractPromptParamsModal

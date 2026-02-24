@@ -2,6 +2,7 @@ import { Brain, Sparkles } from 'lucide-react';
 
 import { palette } from '@/features/ai/ai-paths/lib';
 import { type NodeDefinition } from '@/shared/contracts/case-resolver';
+import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import type React from 'react';
 
@@ -56,3 +57,26 @@ export const parseNullableString = (value: unknown): string | null =>
 
 export const parseNullableNumber = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
+
+export const isCaseResolverDraggableFileNode = (input: {
+  nodeType: MasterTreeNode['type'];
+  fileType: string;
+  isChildStructureNode: boolean;
+}): boolean => {
+  if (input.isChildStructureNode) return false;
+  if (input.nodeType !== 'file') return false;
+  return input.fileType.trim().toLowerCase() !== 'case';
+};
+
+export const canStartCaseResolverTreeNodeDrag = (input: {
+  nodeType: MasterTreeNode['type'];
+  nodeId: string;
+  isChildStructureNode: boolean;
+  fromHandleGesture: boolean;
+  armedNodeId: string | null;
+}): boolean => {
+  if (input.isChildStructureNode) return false;
+  if (input.nodeType !== 'file') return true;
+  if (input.fromHandleGesture) return true;
+  return input.armedNodeId === input.nodeId;
+};

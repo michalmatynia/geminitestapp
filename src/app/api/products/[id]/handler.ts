@@ -30,13 +30,16 @@ const isLikelyPayloadTooLarge = (error: unknown): boolean => {
  * Fetches a single product by its ID.
  */
 export async function GET_handler(
-  _req: NextRequest,
+  req: NextRequest,
   _ctx: ApiHandlerContext,
   params: { id: string }
 ): Promise<Response> {
   const id = params.id;
+  const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
 
-  const product = await CachedProductService.getProductById(id);
+  const product = forceFresh
+    ? await productService.getProductById(id)
+    : await CachedProductService.getProductById(id);
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
@@ -150,4 +153,3 @@ export async function DELETE_handler(
   }
   return new Response(null, { status: 204 });
 }
-

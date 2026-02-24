@@ -1,0 +1,487 @@
+import type { AiNode, NodeDefinition, PathConfig } from '@/shared/contracts/ai-paths';
+
+import { hashString, stableStringify } from './runtime';
+
+type NodeIdentityLike = Pick<AiNode, 'type' | 'title'> &
+  Partial<Pick<AiNode, 'config' | 'nodeTypeId'>>;
+
+export type PathIdentityRepairWarning = {
+  code: 'missing_node_id' | 'duplicate_node_id';
+  message: string;
+  legacyNodeId?: string;
+};
+
+export type PathIdentityRepairResult = {
+  config: PathConfig;
+  changed: boolean;
+  warnings: PathIdentityRepairWarning[];
+};
+
+type PathIdentityRepairOptions = {
+  palette?: NodeDefinition[];
+};
+
+const NODE_INSTANCE_ID_PREFIX = 'node-';
+const NODE_TYPE_ID_PREFIX = 'nt-';
+const HASH_HEX_LENGTH = 24;
+const NODE_INSTANCE_ID_HASH_PATTERN = /^node-[a-f0-9]{24}$/;
+const NODE_TYPE_ID_HASH_PATTERN = /^nt-[a-f0-9]{24}$/;
+
+const asTrimmedString = (value: unknown): string =>
+  typeof value === 'string' ? value.trim() : '';
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const getTriggerEvent = (node: NodeIdentityLike): string =>
+  asTrimmedString((node.config as { trigger?: { event?: unknown } } | undefined)?.trigger?.event);
+
+const composeHashHex = (seed: string): string => {
+  const normalizedSeed = seed.trim().length > 0 ? seed : 'ai_paths';
+  return [
+    hashString(normalizedSeed),
+    hashString(`a:${normalizedSeed}`),
+    hashString(`b:${normalizedSeed}`),
+    hashString(`c:${normalizedSeed}`),
+  ].join('').slice(0, HASH_HEX_LENGTH);
+};
+
+const createHashedIdentifier = (prefix: string, seed: string): string =>
+  `${prefix}${composeHashHex(seed)}`;
+
+const isHashedNodeInstanceId = (value: string): boolean =>
+  NODE_INSTANCE_ID_HASH_PATTERN.test(value);
+
+const isHashedNodeTypeId = (value: string): boolean =>
+  NODE_TYPE_ID_HASH_PATTERN.test(value);
+
+const createNodeTypeHashId = (args: {
+  type: string;
+  title: string;
+  triggerEvent?: string | null;
+  legacyNodeTypeId?: string | null;
+  index?: number;
+  collisionSalt?: number;
+}): string => {
+  const seed = stableStringify({
+    kind: 'ai_paths_node_type',
+    type: asTrimmedString(args.type) || 'unknown',
+    title: asTrimmedString(args.title),
+    triggerEvent: asTrimmedString(args.triggerEvent ?? ''),
+    legacyNodeTypeId: asTrimmedString(args.legacyNodeTypeId ?? ''),
+    index:
+      typeof args.index === 'number' && Number.isFinite(args.index)
+        ? Math.max(0, Math.trunc(args.index))
+        : null,
+    collisionSalt:
+      typeof args.collisionSalt === 'number' && Number.isFinite(args.collisionSalt)
+        ? Math.max(0, Math.trunc(args.collisionSalt))
+        : 0,
+  });
+  return createHashedIdentifier(NODE_TYPE_ID_PREFIX, seed);
+};
+
+const createNodeInstanceIdFromLegacy = (
+  args: {
+    pathId: string;
+    legacyId: string;
+    node: NodeIdentityLike;
+    occurrence: number;
+  },
+  usedIds: Set<string>
+): string => {
+  let collisionSalt = 0;
+  let candidate = '';
+  while (!candidate || usedIds.has(candidate)) {
+    const seed = stableStringify({
+      kind: 'ai_paths_node_instance',
+      pathId: asTrimmedString(args.pathId) || 'path',
+      legacyId: asTrimmedString(args.legacyId) || 'missing',
+      type: asTrimmedString(args.node.type) || 'unknown',
+      title: asTrimmedString(args.node.title),
+      triggerEvent: getTriggerEvent(args.node),
+      occurrence: Math.max(1, Math.trunc(args.occurrence)),
+      collisionSalt,
+    });
+    candidate = createHashedIdentifier(NODE_INSTANCE_ID_PREFIX, seed);
+    collisionSalt += 1;
+  }
+  usedIds.add(candidate);
+  return candidate;
+};
+
+export const derivePaletteNodeTypeId = (
+  definition: Pick<NodeDefinition, 'type' | 'title' | 'config'>,
+  index?: number,
+  collisionSalt = 0
+): string => {
+  return createNodeTypeHashId({
+    type: definition.type,
+    title: definition.title,
+    triggerEvent: definition.type === 'trigger' ? getTriggerEvent(definition) : null,
+    index,
+    collisionSalt,
+  });
+};
+
+export const createNodeInstanceId = (usedIds: Set<string> | Iterable<string>): string => {
+  const used = usedIds instanceof Set ? usedIds : new Set<string>(usedIds);
+  let candidate = '';
+  let attempt = 0;
+  while (!candidate || used.has(candidate)) {
+    const entropy = globalThis.crypto?.randomUUID
+      ? globalThis.crypto.randomUUID()
+      : `${Date.now()}:${Math.random()}:${attempt}`;
+    candidate = createHashedIdentifier(
+      NODE_INSTANCE_ID_PREFIX,
+      `${entropy}:${attempt}`
+    );
+    attempt += 1;
+  }
+  if (usedIds instanceof Set) {
+    usedIds.add(candidate);
+  }
+  return candidate;
+};
+
+const findDefinitionForNode = (
+  node: NodeIdentityLike,
+  palette: NodeDefinition[]
+): NodeDefinition | null => {
+  if (palette.length === 0) return null;
+
+  const exactTitle = palette.find(
+    (definition: NodeDefinition): boolean =>
+      definition.type === node.type && definition.title === node.title
+  );
+  if (exactTitle) return exactTitle;
+
+  const nodeTriggerEvent = getTriggerEvent(node);
+  if (node.type === 'trigger' && nodeTriggerEvent.length > 0) {
+    const byTriggerEvent = palette.find((definition: NodeDefinition): boolean => {
+      if (definition.type !== 'trigger') return false;
+      return getTriggerEvent(definition) === nodeTriggerEvent;
+    });
+    if (byTriggerEvent) return byTriggerEvent;
+  }
+
+  return palette.find(
+    (definition: NodeDefinition): boolean => definition.type === node.type
+  ) ?? null;
+};
+
+export const resolveNodeTypeId = (
+  node: NodeIdentityLike,
+  palette: NodeDefinition[] = []
+): string => {
+  const explicit = asTrimmedString(node.nodeTypeId);
+  if (explicit.length > 0 && isHashedNodeTypeId(explicit)) return explicit;
+
+  const definition = findDefinitionForNode(node, palette);
+  if (definition) {
+    const fromDefinition = asTrimmedString(definition.nodeTypeId);
+    if (fromDefinition.length > 0 && isHashedNodeTypeId(fromDefinition)) {
+      return fromDefinition;
+    }
+    return createNodeTypeHashId({
+      type: definition.type,
+      title: definition.title,
+      triggerEvent: definition.type === 'trigger' ? getTriggerEvent(definition) : null,
+      legacyNodeTypeId: fromDefinition.length > 0 ? fromDefinition : explicit,
+    });
+  }
+
+  const fallbackType = asTrimmedString(node.type);
+  return createNodeTypeHashId({
+    type: fallbackType.length > 0 ? fallbackType : 'unknown',
+    title: asTrimmedString(node.title),
+    triggerEvent: node.type === 'trigger' ? getTriggerEvent(node) : null,
+    legacyNodeTypeId: explicit.length > 0 ? explicit : null,
+  });
+};
+
+const remapNodeKeyedRecord = (
+  value: unknown,
+  remapNodeId: (nodeId: string) => string
+): { value: unknown; changed: boolean } => {
+  if (!isRecord(value)) {
+    return { value, changed: false };
+  }
+
+  let changed = false;
+  const next: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    const remappedKey = remapNodeId(key);
+    if (remappedKey !== key) changed = true;
+
+    if (!(remappedKey in next)) {
+      next[remappedKey] = entry;
+      continue;
+    }
+    changed = true;
+    const existing = next[remappedKey];
+    if (Array.isArray(existing) && Array.isArray(entry)) {
+      const existingArray = existing as unknown[];
+      const incomingArray = entry as unknown[];
+      next[remappedKey] = [...existingArray, ...incomingArray];
+      continue;
+    }
+    if (isRecord(existing) && isRecord(entry)) {
+      next[remappedKey] = {
+        ...existing,
+        ...entry,
+      };
+      continue;
+    }
+  }
+  return changed ? { value: next, changed: true } : { value, changed: false };
+};
+
+const remapRuntimeState = (
+  runtimeState: unknown,
+  remapNodeId: (nodeId: string) => string
+): { runtimeState: unknown; changed: boolean } => {
+  const remapRuntimeObject = (
+    value: Record<string, unknown>
+  ): { runtimeState: Record<string, unknown>; changed: boolean } => {
+    let changed = false;
+    const next = { ...value };
+
+    ([
+      'inputs',
+      'outputs',
+      'history',
+      'hashes',
+      'hashTimestamps',
+      'nodeStatuses',
+      'nodeOutputs',
+    ] as const).forEach((key) => {
+      const remapped = remapNodeKeyedRecord(next[key], remapNodeId);
+      if (!remapped.changed) return;
+      next[key] = remapped.value;
+      changed = true;
+    });
+
+    return { runtimeState: next, changed };
+  };
+
+  if (typeof runtimeState === 'string') {
+    try {
+      const parsed = JSON.parse(runtimeState) as unknown;
+      if (!isRecord(parsed)) {
+        return { runtimeState, changed: false };
+      }
+      const remapped = remapRuntimeObject(parsed);
+      if (!remapped.changed) {
+        return { runtimeState, changed: false };
+      }
+      return {
+        runtimeState: JSON.stringify(remapped.runtimeState),
+        changed: true,
+      };
+    } catch {
+      return { runtimeState, changed: false };
+    }
+  }
+
+  if (!isRecord(runtimeState)) {
+    return { runtimeState, changed: false };
+  }
+
+  const remapped = remapRuntimeObject(runtimeState);
+  return {
+    runtimeState: remapped.runtimeState,
+    changed: remapped.changed,
+  };
+};
+
+export const repairPathNodeIdentities = (
+  pathConfig: PathConfig,
+  options?: PathIdentityRepairOptions
+): PathIdentityRepairResult => {
+  const palette = options?.palette ?? [];
+  const warnings: PathIdentityRepairWarning[] = [];
+  const usedIds = new Set<string>();
+  const firstResolvedByLegacyId = new Map<string, string>();
+  const duplicateCounts = new Map<string, number>();
+  const legacyOccurrenceCounts = new Map<string, number>();
+
+  const remapNodeId = (candidate: string): string => {
+    const direct = firstResolvedByLegacyId.get(candidate);
+    if (direct) return direct;
+    const trimmed = candidate.trim();
+    if (!trimmed) return candidate;
+    return firstResolvedByLegacyId.get(trimmed) ?? candidate;
+  };
+
+  let changed = false;
+  const pathIdSeed = asTrimmedString(pathConfig.id) || 'path';
+  const repairedNodes = (pathConfig.nodes ?? []).map((node: AiNode): AiNode => {
+    const rawLegacyId = typeof node.id === 'string' ? node.id : '';
+    const trimmedLegacyId = rawLegacyId.trim();
+
+    let nextId: string;
+    if (!trimmedLegacyId) {
+      nextId = createNodeInstanceId(usedIds);
+      warnings.push({
+        code: 'missing_node_id',
+        message: `Generated a missing node id for "${node.title || node.type}".`,
+      });
+      changed = true;
+    } else {
+      const occurrence = (legacyOccurrenceCounts.get(trimmedLegacyId) ?? 0) + 1;
+      legacyOccurrenceCounts.set(trimmedLegacyId, occurrence);
+      const isDuplicateLegacy = occurrence > 1;
+      const canReuseHashedLegacyId =
+        occurrence === 1 &&
+        isHashedNodeInstanceId(trimmedLegacyId) &&
+        !usedIds.has(trimmedLegacyId);
+      if (canReuseHashedLegacyId) {
+        nextId = trimmedLegacyId;
+        usedIds.add(nextId);
+      } else {
+        nextId = createNodeInstanceIdFromLegacy(
+          {
+            pathId: pathIdSeed,
+            legacyId: trimmedLegacyId,
+            node,
+            occurrence,
+          },
+          usedIds
+        );
+      }
+      if (isDuplicateLegacy) {
+        duplicateCounts.set(trimmedLegacyId, occurrence);
+        warnings.push({
+          code: 'duplicate_node_id',
+          legacyNodeId: trimmedLegacyId,
+          message: `Duplicate node id "${trimmedLegacyId}" detected; remapped duplicate to "${nextId}".`,
+        });
+      }
+      if (nextId !== rawLegacyId) {
+        changed = true;
+      }
+    }
+
+    if (!firstResolvedByLegacyId.has(rawLegacyId)) {
+      firstResolvedByLegacyId.set(rawLegacyId, nextId);
+    }
+    if (trimmedLegacyId && !firstResolvedByLegacyId.has(trimmedLegacyId)) {
+      firstResolvedByLegacyId.set(trimmedLegacyId, nextId);
+    }
+
+    const nextNodeTypeId = resolveNodeTypeId(node, palette);
+    const nextInstanceId = nextId;
+    if (
+      node.id !== nextId ||
+      node.instanceId !== nextInstanceId ||
+      node.nodeTypeId !== nextNodeTypeId
+    ) {
+      changed = true;
+    }
+
+    return {
+      ...node,
+      id: nextId,
+      instanceId: nextInstanceId,
+      nodeTypeId: nextNodeTypeId,
+    };
+  });
+
+  duplicateCounts.forEach((_count: number, legacyId: string): void => {
+    warnings.push({
+      code: 'duplicate_node_id',
+      legacyNodeId: legacyId,
+      message: `Ambiguous references for duplicate id "${legacyId}" were remapped to the first kept node.`,
+    });
+  });
+
+  const repairedEdges = (pathConfig.edges ?? []).map((edge) => {
+    const nextFrom = typeof edge.from === 'string' ? remapNodeId(edge.from) : edge.from;
+    const nextTo = typeof edge.to === 'string' ? remapNodeId(edge.to) : edge.to;
+    const nextSource =
+      typeof edge.source === 'string'
+        ? remapNodeId(edge.source)
+        : typeof nextFrom === 'string'
+          ? nextFrom
+          : edge.source;
+    const nextTarget =
+      typeof edge.target === 'string'
+        ? remapNodeId(edge.target)
+        : typeof nextTo === 'string'
+          ? nextTo
+          : edge.target;
+    if (
+      nextFrom !== edge.from ||
+      nextTo !== edge.to ||
+      nextSource !== edge.source ||
+      nextTarget !== edge.target
+    ) {
+      changed = true;
+      return {
+        ...edge,
+        ...(typeof nextFrom === 'string' ? { from: nextFrom } : {}),
+        ...(typeof nextTo === 'string' ? { to: nextTo } : {}),
+        ...(typeof nextSource === 'string' ? { source: nextSource } : {}),
+        ...(typeof nextTarget === 'string' ? { target: nextTarget } : {}),
+      };
+    }
+    return edge;
+  });
+
+  const selectedNodeId = pathConfig.uiState?.selectedNodeId;
+  const remappedSelectedNodeId =
+    typeof selectedNodeId === 'string' ? remapNodeId(selectedNodeId) : selectedNodeId;
+  const nextUiState =
+    pathConfig.uiState && remappedSelectedNodeId !== selectedNodeId
+      ? { ...pathConfig.uiState, selectedNodeId: remappedSelectedNodeId }
+      : pathConfig.uiState;
+  if (nextUiState !== pathConfig.uiState) {
+    changed = true;
+  }
+
+  const remappedParserSamples = remapNodeKeyedRecord(
+    pathConfig.parserSamples,
+    remapNodeId
+  );
+  if (remappedParserSamples.changed) {
+    changed = true;
+  }
+
+  const remappedUpdaterSamples = remapNodeKeyedRecord(
+    pathConfig.updaterSamples,
+    remapNodeId
+  );
+  if (remappedUpdaterSamples.changed) {
+    changed = true;
+  }
+
+  const remappedRuntimeState = remapRuntimeState(pathConfig.runtimeState, remapNodeId);
+  if (remappedRuntimeState.changed) {
+    changed = true;
+  }
+
+  const nextConfig: PathConfig = changed
+    ? {
+      ...pathConfig,
+      nodes: repairedNodes,
+      edges: repairedEdges,
+      ...(nextUiState ? { uiState: nextUiState } : {}),
+      ...(remappedParserSamples.changed
+        ? { parserSamples: remappedParserSamples.value as PathConfig['parserSamples'] }
+        : {}),
+      ...(remappedUpdaterSamples.changed
+        ? { updaterSamples: remappedUpdaterSamples.value as PathConfig['updaterSamples'] }
+        : {}),
+      ...(remappedRuntimeState.changed
+        ? { runtimeState: remappedRuntimeState.runtimeState }
+        : {}),
+    }
+    : pathConfig;
+
+  return {
+    config: nextConfig,
+    changed,
+    warnings,
+  };
+};

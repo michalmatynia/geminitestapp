@@ -222,6 +222,10 @@ export function useDatabaseNodeConfigState() {
     writeSource: persistedDatabase?.writeSource ?? 'bundle',
     writeSourcePath: persistedDatabase?.writeSourcePath ?? '',
     dryRun: persistedDatabase?.dryRun ?? false,
+    writeOutcomePolicy: {
+      onZeroAffected:
+        persistedDatabase?.writeOutcomePolicy?.onZeroAffected ?? 'fail',
+    },
     presetId: persistedDatabase?.presetId,
     skipEmpty: persistedDatabase?.skipEmpty ?? false,
     trimStrings: persistedDatabase?.trimStrings ?? false,

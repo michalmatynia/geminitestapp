@@ -9,3 +9,6 @@ export * from './port-types';
 export * from './provider-actions';
 export * from './collection-names';
 export * from './dependency-inspector';
+export * from './node-identity';
+export * from './data-contract-preflight';
+export * from './run-preflight';

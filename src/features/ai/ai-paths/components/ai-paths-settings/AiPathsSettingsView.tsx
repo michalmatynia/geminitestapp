@@ -21,6 +21,7 @@ import {
   compileGraph,
   createAiPathsValidationConditionId,
   createAiPathsValidationRuleId,
+  evaluateDataContractPreflight,
   evaluateAiPathsValidationPreflight,
   inspectPathDependencies,
   normalizeAiPathsValidationConfig,
@@ -42,6 +43,7 @@ import {
   type StatusVariant,
   EmptyState,
 } from '@/shared/ui';
+import { useDebounce } from '@/shared/hooks/ui';
 import { SettingsPanelBuilder } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorContext';
@@ -220,6 +222,7 @@ export function AiPathsSettingsView(): React.JSX.Element {
     validationCollectionMap: string;
     validationRules: string;
     validationPreview: string;
+    dataContractInspector: string;
     compileReport: string;
     dependencyReport: string;
     history: string;
@@ -395,6 +398,8 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const [simulationOpenNodeId, setSimulationOpenNodeId] = useState<
     string | null
   >(null);
+  const [dataContractInspectorNodeId, setDataContractInspectorNodeId] =
+    useState<string | null>(null);
   const simulationNode = useMemo(
     () => nodes.find((n) => n.id === simulationOpenNodeId) ?? null,
     [nodes, simulationOpenNodeId],
@@ -550,6 +555,13 @@ export function AiPathsSettingsView(): React.JSX.Element {
     return map;
   }, [nodes]);
 
+  useEffect((): void => {
+    if (!dataContractInspectorNodeId) return;
+    if (!nodeTitleById.has(dataContractInspectorNodeId)) {
+      setDataContractInspectorNodeId(null);
+    }
+  }, [dataContractInspectorNodeId, nodeTitleById]);
+
   const runtimeNodeStatusEntries = useMemo(
     (): Array<[string, string]> =>
       Object.entries(runtimeNodeStatuses ?? {}).filter(
@@ -674,6 +686,52 @@ export function AiPathsSettingsView(): React.JSX.Element {
   const compileReport = useMemo(
     () => compileGraph(nodes, edges),
     [nodes, edges],
+  );
+  const debouncedNodes = useDebounce(nodes, 220);
+  const debouncedEdges = useDebounce(edges, 220);
+  const nodeValidationEnabled = normalizedAiPathsValidation.enabled !== false;
+  const dataContractLightReport = useMemo(
+    () =>
+      evaluateDataContractPreflight({
+        nodes: debouncedNodes,
+        edges: debouncedEdges,
+        runtimeState,
+        mode: 'light',
+        scopeMode: nodeValidationEnabled ? 'full' : 'reachable_from_roots',
+      }),
+    [
+      debouncedEdges,
+      debouncedNodes,
+      nodeValidationEnabled,
+      runtimeState,
+    ],
+  );
+  const dataContractFullReport = useMemo(
+    () =>
+      evaluateDataContractPreflight({
+        nodes,
+        edges,
+        runtimeState,
+        mode: 'full',
+        scopeMode: nodeValidationEnabled ? 'full' : 'reachable_from_roots',
+      }),
+    [edges, nodeValidationEnabled, nodes, runtimeState],
+  );
+  const hasRuntimeEvidence = useMemo((): boolean => {
+    const hasInputs = Object.keys(runtimeState.inputs ?? {}).length > 0;
+    const hasOutputs = Object.keys(runtimeState.outputs ?? {}).length > 0;
+    const hasHistory = Object.keys(runtimeState.history ?? {}).length > 0;
+    return hasInputs || hasOutputs || hasHistory;
+  }, [runtimeState.history, runtimeState.inputs, runtimeState.outputs]);
+  const dataContractReport = hasRuntimeEvidence
+    ? dataContractFullReport
+    : dataContractLightReport;
+  const filteredDataContractIssues = useMemo(
+    () =>
+      dataContractReport.issues.filter((issue) =>
+        dataContractInspectorNodeId ? issue.nodeId === dataContractInspectorNodeId : true,
+      ),
+    [dataContractInspectorNodeId, dataContractReport.issues],
   );
   const validationPreflightReport = useMemo(
     () =>
@@ -1420,6 +1478,11 @@ export function AiPathsSettingsView(): React.JSX.Element {
                     : undefined
                 }
                 confirmNodeSwitch={state.confirmNodeSwitch}
+                nodeDiagnosticsById={dataContractReport.byNodeId}
+                onFocusNodeDiagnostics={(nodeId: string): void => {
+                  setDataContractInspectorNodeId(nodeId);
+                  setPathSettingsModalOpen(true);
+                }}
               />
             </div>
           </div>
@@ -2936,6 +2999,95 @@ export function AiPathsSettingsView(): React.JSX.Element {
             )
           },
           {
+            key: 'dataContractInspector',
+            label: 'Data Contract Inspector',
+            type: 'custom',
+            render: () => (
+              <div className='space-y-2'>
+                <div className='flex flex-wrap items-center gap-2 text-[11px]'>
+                  <StatusBadge
+                    status={`Errors: ${dataContractReport.errors}`}
+                    variant={dataContractReport.errors > 0 ? 'error' : 'neutral'}
+                    size='sm'
+                  />
+                  <StatusBadge
+                    status={`Warnings: ${dataContractReport.warnings}`}
+                    variant={dataContractReport.warnings > 0 ? 'warning' : 'neutral'}
+                    size='sm'
+                  />
+                  <StatusBadge
+                    status={
+                      dataContractReport.errors > 0
+                        ? 'Blocked (Validation On)'
+                        : dataContractReport.warnings > 0
+                          ? 'Warnings'
+                          : 'Ready'
+                    }
+                    variant={
+                      dataContractReport.errors > 0
+                        ? 'error'
+                        : dataContractReport.warnings > 0
+                          ? 'warning'
+                          : 'success'
+                    }
+                    size='sm'
+                  />
+                  {dataContractInspectorNodeId ? (
+                    <StatusBadge
+                      status={`Node: ${
+                        nodeTitleById.get(dataContractInspectorNodeId) ??
+                        dataContractInspectorNodeId
+                      }`}
+                      variant='neutral'
+                      size='sm'
+                    />
+                  ) : null}
+                </div>
+                {dataContractInspectorNodeId ? (
+                  <div className='flex items-center justify-between rounded-md border border-border/60 bg-card/40 px-2 py-1 text-[11px] text-gray-300'>
+                    <span>
+                      Filtered by node{' '}
+                      {nodeTitleById.get(dataContractInspectorNodeId) ??
+                        dataContractInspectorNodeId}
+                    </span>
+                    <Button
+                      type='button'
+                      className='h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-card/70'
+                      onClick={() => setDataContractInspectorNodeId(null)}
+                      disabled={saving}
+                    >
+                      Clear filter
+                    </Button>
+                  </div>
+                ) : null}
+                {filteredDataContractIssues.length > 0 ? (
+                  <div className='max-h-[220px] space-y-1 overflow-y-auto rounded-md border border-border/60 bg-card/40 p-2'>
+                    {filteredDataContractIssues.slice(0, 20).map((issue) => (
+                      <div
+                        key={issue.id}
+                        className='rounded-md border border-border/50 bg-card/60 px-2 py-1.5 text-[11px]'
+                      >
+                        <div className='font-medium text-gray-100'>
+                          [{issue.severity.toUpperCase()}] {issue.nodeTitle} · {issue.code}
+                        </div>
+                        <div className='mt-0.5 text-gray-300'>{issue.message}</div>
+                        <div className='mt-0.5 text-gray-400'>
+                          {issue.port ? `Port: ${issue.port}` : 'Port: -'}
+                          {issue.token ? ` · Token: {{${issue.token}}}` : ''}
+                        </div>
+                        <div className='mt-0.5 text-gray-300'>Fix: {issue.recommendation}</div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className='text-[11px] text-emerald-200'>
+                    No data-contract issues detected for the current inspector scope.
+                  </div>
+                )}
+              </div>
+            )
+          },
+          {
             key: 'compileReport',
             label: 'Compile Inspector',
             type: 'custom',
@@ -3103,6 +3255,12 @@ export function AiPathsSettingsView(): React.JSX.Element {
             : validationPreflightReport.shouldWarn
               ? 'warn'
               : 'ready',
+          dataContractInspector:
+            dataContractReport.errors > 0
+              ? 'errors'
+              : dataContractReport.warnings > 0
+                ? 'warnings'
+                : 'ready',
           compileReport: compileReport.ok ? 'ready' : 'issues',
           dependencyReport: dependencyReport.strictReady ? 'strict-ready' : 'issues',
           history: String(historyRetentionPasses),

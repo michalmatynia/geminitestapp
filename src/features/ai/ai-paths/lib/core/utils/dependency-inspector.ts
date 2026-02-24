@@ -27,6 +27,11 @@ export type DependencyInspectorOptions = {
   scopeRootNodeIds?: string[] | Set<string>;
 };
 
+const TEMPLATE_TOKEN_REGEX: RegExp =
+  /{{\s*([^}]+)\s*}}|\[\s*([A-Za-z0-9_.$:-]+)\s*\]/g;
+
+const TEMPLATE_SYSTEM_ROOT_PREFIXES = ['Date:', 'DB Provider:', 'Collection:'];
+
 const normalizeNonEmptyString = (value: unknown): string | null => {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -55,6 +60,77 @@ const getIncomingPorts = (nodeId: string, edges: Edge[]): Set<string> => {
 
 const hasAnyPort = (ports: Set<string>, candidates: string[]): boolean =>
   candidates.some((candidate: string): boolean => ports.has(candidate));
+
+const normalizeTemplateRoot = (token: string): string => {
+  const rootCandidate = token.split('.')[0]?.trim() ?? '';
+  return rootCandidate.replace(/\[[^\]]*\]/g, '').trim();
+};
+
+const isSystemTemplateRoot = (root: string): boolean =>
+  root === 'value' ||
+  root === 'current' ||
+  TEMPLATE_SYSTEM_ROOT_PREFIXES.some((prefix: string): boolean => root.startsWith(prefix));
+
+const extractTemplateRoots = (template: string): string[] => {
+  const roots = new Set<string>();
+  TEMPLATE_TOKEN_REGEX.lastIndex = 0;
+  let match: RegExpExecArray | null = TEMPLATE_TOKEN_REGEX.exec(template);
+  while (match) {
+    const token = (match[1] ?? match[2] ?? '').trim();
+    if (token) {
+      const root = normalizeTemplateRoot(token);
+      if (root && !isSystemTemplateRoot(root)) {
+        roots.add(root);
+      }
+    }
+    match = TEMPLATE_TOKEN_REGEX.exec(template);
+  }
+  return Array.from(roots);
+};
+
+const collectDatabaseWriteTemplateRoots = (node: AiNode): {
+  roots: string[];
+  templateLabels: string[];
+} => {
+  const dbConfig = node.config?.database;
+  if (!dbConfig) {
+    return { roots: [], templateLabels: [] };
+  }
+  const operation = dbConfig.operation ?? 'query';
+  const isWriteOperation =
+    operation === 'update' ||
+    operation === 'insert' ||
+    operation === 'delete' ||
+    (dbConfig.useMongoActions &&
+      (dbConfig.actionCategory === 'create' ||
+        dbConfig.actionCategory === 'update' ||
+        dbConfig.actionCategory === 'delete'));
+  if (!isWriteOperation) {
+    return { roots: [], templateLabels: [] };
+  }
+
+  const templateSources: Array<{ label: string; value: string }> = [
+    {
+      label: 'database.query.queryTemplate',
+      value: normalizeNonEmptyString(dbConfig.query?.queryTemplate) ?? '',
+    },
+    {
+      label: 'database.updateTemplate',
+      value: normalizeNonEmptyString(dbConfig.updateTemplate) ?? '',
+    },
+  ].filter((entry: { label: string; value: string }): boolean => entry.value.length > 0);
+
+  const roots = new Set<string>();
+  templateSources.forEach((entry: { label: string; value: string }): void => {
+    extractTemplateRoots(entry.value).forEach((root: string): void => {
+      roots.add(root);
+    });
+  });
+  return {
+    roots: Array.from(roots),
+    templateLabels: templateSources.map((entry: { label: string; value: string }): string => entry.label),
+  };
+};
 
 const pushRisk = (
   risks: DependencyRisk[],
@@ -265,6 +341,36 @@ export const inspectPathDependencies = (
           'error',
           'Write operation has no connected identity inputs and may rely on hidden fallback IDs.',
           'Connect `entityId`/`productId` (or `value`) from explicit upstream outputs.',
+        );
+      }
+    }
+
+    const templateRootAnalysis = collectDatabaseWriteTemplateRoots(node);
+    if (templateRootAnalysis.roots.length > 0) {
+      const nodeInputPorts = new Set(
+        (Array.isArray(node.inputs) ? node.inputs : [])
+          .map((port: string): string => port.trim())
+          .filter((port: string): boolean => port.length > 0)
+      );
+      const missingTemplateRoots = templateRootAnalysis.roots.filter(
+        (root: string): boolean => nodeInputPorts.has(root) && !incomingPorts.has(root)
+      );
+      if (missingTemplateRoots.length > 0) {
+        const templatesLabel =
+          templateRootAnalysis.templateLabels.length > 0
+            ? templateRootAnalysis.templateLabels.join(', ')
+            : 'database templates';
+        pushRisk(
+          risks,
+          node,
+          'database_write_template_missing_wiring',
+          'error',
+          `Write template placeholders depend on unwired inputs: ${missingTemplateRoots.join(
+            ', '
+          )} (${templatesLabel}).`,
+          `Wire incoming edges to ${missingTemplateRoots.join(
+            ', '
+          )}, or rewrite templates to use currently wired ports only.`,
         );
       }
     }

@@ -184,34 +184,59 @@ const requiredMetaFields: Array<keyof Pick<TanstackFactoryMeta, 'source' | 'oper
   'resource',
 ];
 
-const assertFactoryMeta = (meta: TanstackFactoryMeta): void => {
+const toFallbackMeta = (
+  meta: TanstackFactoryMeta | null | undefined
+): TanstackFactoryMeta => ({
+  source: typeof meta?.source === 'string' && meta.source.trim().length > 0
+    ? meta.source
+    : 'tanstack.unknown',
+  operation: meta?.operation ?? 'action',
+  resource: typeof meta?.resource === 'string' && meta.resource.trim().length > 0
+    ? meta.resource
+    : 'unknown-resource',
+  queryKey: meta?.queryKey,
+  mutationKey: meta?.mutationKey,
+  criticality: meta?.criticality,
+  samplingRate: meta?.samplingRate,
+  domain: meta?.domain,
+  tags: meta?.tags,
+});
+
+const assertFactoryMeta = (meta: TanstackFactoryMeta | null | undefined): void => {
+  if (!meta || typeof meta !== 'object') {
+    if (process.env['NODE_ENV'] !== 'production') {
+      console.warn('[tanstack-factory-v2] Missing meta object. Using fallback telemetry metadata.');
+    }
+    return;
+  }
   if (process.env['NODE_ENV'] === 'production') return;
   const missing = requiredMetaFields.filter((field) => {
     const value = meta[field];
     return typeof value !== 'string' || value.trim().length === 0;
   });
   if (missing.length > 0) {
-    throw new Error(
-      `[tanstack-factory-v2] Missing required meta fields: ${missing.join(', ')}`
+    console.warn(
+      `[tanstack-factory-v2] Missing required meta fields: ${missing.join(', ')}. Using fallback values.`
     );
   }
 };
 
 export const resolveTanstackFactoryMeta = (
-  meta: TanstackFactoryMeta,
+  meta: TanstackFactoryMeta | null | undefined,
   options?: { key?: QueryKey | undefined }
 ): TanstackFactoryMetaResolved => {
   assertFactoryMeta(meta);
-  const key = meta.queryKey ?? meta.mutationKey ?? options?.key;
+  const safeMeta = toFallbackMeta(meta);
+  const key = safeMeta.queryKey ?? safeMeta.mutationKey ?? options?.key;
   return {
-    source: clampMetaText(meta.source, 'tanstack.unknown', MAX_META_SOURCE_LENGTH),
-    operation: meta.operation,
-    resource: clampMetaText(meta.resource, 'unknown-resource', MAX_META_RESOURCE_LENGTH),
+    source: clampMetaText(safeMeta.source, 'tanstack.unknown', MAX_META_SOURCE_LENGTH),
+    operation: safeMeta.operation,
+    resource: clampMetaText(safeMeta.resource, 'unknown-resource', MAX_META_RESOURCE_LENGTH),
     key,
-    criticality: meta.criticality ?? 'normal',
-    samplingRate: clampSamplingRate(meta.samplingRate),
-    domain: meta.domain ?? 'global',
-    tags: sanitizeTags(meta.tags),
+    criticality: safeMeta.criticality ?? 'normal',
+    samplingRate: clampSamplingRate(safeMeta.samplingRate),
+    domain: safeMeta.domain ?? 'global',
+    tags: sanitizeTags(safeMeta.tags),
   };
 };
 

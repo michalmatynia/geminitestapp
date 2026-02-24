@@ -683,6 +683,54 @@ export const dbSchemaSnapshotSchema = z.object({
 export type DbSchemaSnapshotDto = z.infer<typeof dbSchemaSnapshotSchema>;
 export type DbSchemaSnapshot = DbSchemaSnapshotDto;
 
+export const databaseWriteZeroAffectedPolicySchema = z.enum(['fail', 'warn']);
+export type DatabaseWriteZeroAffectedPolicyDto = z.infer<
+  typeof databaseWriteZeroAffectedPolicySchema
+>;
+export type DatabaseWriteZeroAffectedPolicy = DatabaseWriteZeroAffectedPolicyDto;
+
+export const databaseWriteOutcomePolicySchema = z.object({
+  onZeroAffected: databaseWriteZeroAffectedPolicySchema.optional(),
+});
+export type DatabaseWriteOutcomePolicyDto = z.infer<
+  typeof databaseWriteOutcomePolicySchema
+>;
+export type DatabaseWriteOutcomePolicy = DatabaseWriteOutcomePolicyDto;
+
+export const databaseWriteOutcomeSchema = z
+  .object({
+    status: z.enum(['success', 'warning', 'failed']),
+    code: z.string().optional(),
+    message: z.string().optional(),
+    policyOnZeroAffected: databaseWriteZeroAffectedPolicySchema.optional(),
+    zeroAffected: z.boolean().optional(),
+    operation: z.string().optional(),
+    action: z.string().optional(),
+    affectedCount: z.number().nullable().optional(),
+    matchedCount: z.number().nullable().optional(),
+    modifiedCount: z.number().nullable().optional(),
+    deletedCount: z.number().nullable().optional(),
+    insertedCount: z.number().nullable().optional(),
+  })
+  .passthrough();
+export type DatabaseWriteOutcomeDto = z.infer<typeof databaseWriteOutcomeSchema>;
+export type DatabaseWriteOutcome = DatabaseWriteOutcomeDto;
+
+export const databaseGuardrailMetaSchema = z
+  .object({
+    code: z.string(),
+    severity: z.enum(['warning', 'error']),
+    message: z.string(),
+    templates: z.array(z.string()).optional(),
+    missingTokens: z.array(z.string()).optional(),
+    emptyTokens: z.array(z.string()).optional(),
+    missingRoots: z.array(z.string()).optional(),
+    emptyRoots: z.array(z.string()).optional(),
+  })
+  .passthrough();
+export type DatabaseGuardrailMetaDto = z.infer<typeof databaseGuardrailMetaSchema>;
+export type DatabaseGuardrailMeta = DatabaseGuardrailMetaDto;
+
 export const databaseConfigSchema = z.object({
   operation: z.enum(['query', 'update', 'insert', 'delete']),
   entityType: z.string().optional(),
@@ -719,6 +767,7 @@ export const databaseConfigSchema = z.object({
   skipEmpty: z.boolean().optional(),
   trimStrings: z.boolean().optional(),
   aiPrompt: z.string().optional(),
+  writeOutcomePolicy: databaseWriteOutcomePolicySchema.optional(),
   validationRuleIds: z.array(z.string()).optional(),
   parameterInferenceGuard: z.object({
     enabled: z.boolean().optional(),
@@ -903,6 +952,8 @@ export type NodeConfig = NodeConfigDto;
  */
 export const aiNodeSchema = dtoBaseSchema.extend({
   type: aiNodeTypeSchema,
+  nodeTypeId: z.string().optional(),
+  instanceId: z.string().optional(),
   title: z.string(),
   description: z.string(),
   position: z.object({ x: z.number(), y: z.number() }),
@@ -1210,6 +1261,7 @@ export type Edge = EdgeDto;
 
 export const nodeDefinitionSchema = z.object({
   type: aiNodeTypeSchema,
+  nodeTypeId: z.string().optional(),
   title: z.string(),
   description: z.string(),
   inputs: z.array(z.string()),

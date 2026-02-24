@@ -11,6 +11,10 @@ import {
   parseJsonSafe,
   renderJsonTemplate,
 } from '../../utils';
+import {
+  createWriteTemplateGuardrailOutput,
+  resolveWriteTemplateGuardrail,
+} from './integration-database-write-guardrails';
 
 export type ResolveDatabaseInsertPayloadInput = {
   node: NodeHandlerContext['node'];
@@ -57,6 +61,33 @@ export function resolveDatabaseInsertPayload({
   // Resolve queryTemplate first (config-based payload with {{placeholder}} support),
   // falling back to the writeSource port value.
   const insertTemplate: string = queryConfig.queryTemplate?.trim() ?? '';
+  if (insertTemplate) {
+    const templateGuardrail = resolveWriteTemplateGuardrail({
+      templates: [{ name: 'insertTemplate', template: insertTemplate }],
+      templateContext,
+      currentValue: templateInputValue,
+    });
+    if (!templateGuardrail.ok) {
+      const errorMessage = templateGuardrail.message;
+      reportAiPathsError(
+        new Error(errorMessage),
+        {
+          action: 'insertEntity',
+          nodeId: node.id,
+          guardrailMeta: templateGuardrail.guardrailMeta,
+        },
+        'Database insert blocked:'
+      );
+      toast(errorMessage, { variant: 'error' });
+      return {
+        output: createWriteTemplateGuardrailOutput({
+          aiPrompt,
+          message: errorMessage,
+          guardrailMeta: templateGuardrail.guardrailMeta,
+        }),
+      };
+    }
+  }
   const parsedTemplatePayload: unknown = insertTemplate
     ? parseJsonSafe(
       renderJsonTemplate(insertTemplate, templateContext, templateInputValue ?? ''),

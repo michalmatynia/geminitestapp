@@ -8,10 +8,9 @@ import { FormModal, Button, Label, Textarea, StandardDataTablePanel, EmptyState 
 
 import type {
   PromptExtractHistoryEntry,
-  PromptExtractValidationIssue,
   PromptDiffLine,
-  ParamUiControl,
 } from '../studio-modals/prompt-extract-utils';
+import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
 import type { ColumnDef } from '@tanstack/react-table';
 
 // TODO: These components should be moved to a shared location
@@ -27,56 +26,33 @@ function PromptExtractionHistoryPanel(props: {
   return <div>PromptExtractionHistoryPanel</div>;
 }
 
-interface ExtractPromptParamsModalProps extends ModalStateProps {
-  extractDraftPrompt: string;
-  setExtractDraftPrompt: (prompt: string) => void;
-  extractBusy: 'none' | 'programmatic' | 'smart' | 'ai' | 'ui';
-  handleSmartExtraction: () => void;
-  handleProgrammaticExtraction: () => void;
-  handleAiExtraction: () => void;
-  handleSuggestUiControls: () => void;
-  handleApplyExtraction: () => void;
-  previewParams: Record<string, unknown> | null;
-  extractError: string | null;
-  extractHistory: PromptExtractHistoryEntry[];
-  selectedExtractHistory: PromptExtractHistoryEntry | null;
-  selectedExtractDiffLines: PromptDiffLine[];
-  selectedExtractChanged: boolean;
-  setSelectedExtractHistoryId: (id: string | null) => void;
-  setExtractHistory: (history: PromptExtractHistoryEntry[]) => void;
-  studioSettings: { promptExtraction: { showValidationSummary: boolean } };
-  previewValidation: {
-    before: PromptExtractValidationIssue[];
-    after: PromptExtractValidationIssue[];
-  } | null;
-  previewLeaves: Array<{ path: string; value: unknown }>;
-  previewControls: Record<string, ParamUiControl>;
-}
-
 export function ExtractPromptParamsModal({
   isOpen,
   onClose,
-  extractDraftPrompt,
-  setExtractDraftPrompt,
-  extractBusy,
-  handleSmartExtraction,
-  handleProgrammaticExtraction,
-  handleAiExtraction,
-  handleSuggestUiControls,
-  handleApplyExtraction,
-  previewParams,
-  extractError,
-  extractHistory,
-  selectedExtractHistory,
-  selectedExtractDiffLines,
-  selectedExtractChanged,
-  setSelectedExtractHistoryId,
-  setExtractHistory,
-  studioSettings,
-  previewValidation,
-  previewLeaves,
-  previewControls,
-}: ExtractPromptParamsModalProps): React.JSX.Element {
+}: ModalStateProps): React.JSX.Element {
+  const {
+    extractDraftPrompt,
+    setExtractDraftPrompt,
+    extractBusy,
+    handleSmartExtraction,
+    handleProgrammaticExtraction,
+    handleAiExtraction,
+    handleSuggestUiControls,
+    handleApplyExtraction,
+    previewParams,
+    extractError,
+    extractHistory,
+    selectedExtractHistory,
+    selectedExtractDiffLines,
+    selectedExtractChanged,
+    setSelectedExtractHistoryId,
+    setExtractHistory,
+    studioSettings,
+    previewValidation,
+    previewLeaves,
+    previewControls,
+  } = useStudioInlineEdit();
+
   const columns = React.useMemo<ColumnDef<{ path: string; value: unknown }>[]>(
     () => [
       {
@@ -112,7 +88,7 @@ export function ExtractPromptParamsModal({
         size='sm'
         variant='outline'
         onClick={() => {
-          handleSmartExtraction();
+          void handleSmartExtraction();
         }}
         disabled={extractBusy !== 'none'}
         className='gap-2'
@@ -124,7 +100,7 @@ export function ExtractPromptParamsModal({
         size='sm'
         variant='outline'
         onClick={() => {
-          handleProgrammaticExtraction();
+          void handleProgrammaticExtraction();
         }}
         disabled={extractBusy !== 'none'}
         className='gap-2'
@@ -140,7 +116,7 @@ export function ExtractPromptParamsModal({
         size='sm'
         variant='outline'
         onClick={() => {
-          handleAiExtraction();
+          void handleAiExtraction();
         }}
         disabled={extractBusy !== 'none'}
         className='gap-2'
@@ -152,7 +128,7 @@ export function ExtractPromptParamsModal({
         size='sm'
         variant='outline'
         onClick={() => {
-          handleSuggestUiControls();
+          void handleSuggestUiControls();
         }}
         disabled={!previewParams || extractBusy !== 'none'}
         className='gap-2'

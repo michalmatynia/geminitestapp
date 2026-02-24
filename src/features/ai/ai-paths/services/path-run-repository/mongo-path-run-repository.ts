@@ -34,6 +34,7 @@ export const AI_PATHS_MONGO_INDEXES: MongoIndexSpec[] = [
   { collection: RUNS_COLLECTION, key: { id: 1 } },
   { collection: RUNS_COLLECTION, key: { userId: 1 } },
   { collection: RUNS_COLLECTION, key: { pathId: 1 } },
+  { collection: RUNS_COLLECTION, key: { createdAt: -1 } },
   { collection: RUNS_COLLECTION, key: { pathId: 1, status: 1, createdAt: -1 } },
   { collection: RUNS_COLLECTION, key: { status: 1, createdAt: -1 } },
   { collection: RUNS_COLLECTION, key: { userId: 1, createdAt: -1 } },
@@ -520,7 +521,8 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const cursor = db
       .collection<RunDocument>(RUNS_COLLECTION)
       .find(filter, { projection: RUN_LIST_PROJECTION })
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .allowDiskUse(true);
     if (typeof options.offset === 'number') {
       cursor.skip(options.offset);
     }

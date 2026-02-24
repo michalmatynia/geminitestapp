@@ -965,6 +965,18 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
         'Optional JSON path within writeSource to write (example: \'result.items[0]\').',
     },
     {
+      path: 'database.writeOutcomePolicy.onZeroAffected',
+      description:
+        'Write outcome policy when execution affects 0 records: `fail` throws terminal node error, `warn` completes with warning metadata.',
+      defaultValue: 'fail',
+    },
+    {
+      path: 'database.writeTemplateGuardrails',
+      description:
+        'Runtime-enforced for writes: all query/update/insert template placeholders must resolve to connected, non-empty values (missing/empty blocks execution).',
+      defaultValue: 'enabled',
+    },
+    {
       path: 'database.dryRun',
       description:
         'When true, does not persist changes; returns computed payload only.',

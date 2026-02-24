@@ -1,11 +1,16 @@
 import type {
   DatabaseConfig,
   DbQueryConfig,
+  DatabaseWriteOutcome,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { dbApi, entityApi, ApiResponse } from '../../../api';
 import { buildDbQueryPayload } from '../utils';
+import {
+  evaluateWriteOutcome,
+  resolveWriteOutcomePolicy,
+} from './integration-database-write-guardrails';
 
 interface DbActionResult {
   items?: unknown[];
@@ -85,6 +90,7 @@ export type ExecuteDatabaseUpdateResult =
     skipped: false;
     updateResult: unknown;
     executionMeta: Record<string, unknown>;
+    writeOutcome: DatabaseWriteOutcome;
   };
 
 const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
@@ -137,10 +143,49 @@ export async function executeDatabaseUpdate({
   customUpdateDoc,
 }: ExecuteDatabaseUpdateInput): Promise<ExecuteDatabaseUpdateResult> {
   const isCustomPayloadMode = updatePayloadMode === 'custom';
+  const zeroAffectedPolicy = resolveWriteOutcomePolicy(dbConfig);
   let updateResult: unknown = updates;
   let executionMeta: Record<string, unknown> = {
     mode: updatePayloadMode,
     strategy: updateStrategy,
+  };
+  let writeOutcome: DatabaseWriteOutcome = {
+    status: 'success',
+    operation: 'update',
+  };
+
+  const applyWriteOutcome = (
+    action: string,
+    resultPayload: unknown,
+    context: Record<string, unknown>,
+  ): void => {
+    const outcome = evaluateWriteOutcome({
+      operation: 'update',
+      action,
+      result: resultPayload,
+      policy: zeroAffectedPolicy,
+    });
+    writeOutcome = outcome.writeOutcome;
+    if (!outcome.isZeroAffected) return;
+    const outcomeMessage =
+      outcome.writeOutcome.message ??
+      `Database write affected 0 records for update (${action}).`;
+    if (outcome.writeOutcome.status === 'failed') {
+      reportAiPathsError(
+        new Error(outcomeMessage),
+        {
+          action: 'dbWriteOutcome',
+          nodeId,
+          policy: zeroAffectedPolicy,
+          ...context,
+          writeOutcome: outcome.writeOutcome,
+        },
+        'Database update failed:',
+      );
+      toast(outcomeMessage, { variant: 'error' });
+      throw new Error(outcomeMessage);
+    }
+    toast(outcomeMessage, { variant: 'warning' });
   };
 
   if (updateStrategy === 'many') {
@@ -262,15 +307,21 @@ export async function executeDatabaseUpdate({
             ...executionMeta,
             ...resolveProviderMeta(dbUpdateResult.data),
           };
+          applyWriteOutcome('updateMany', dbUpdateResult.data, {
+            collection: queryPayload['collection'],
+            strategy: updateStrategy,
+          });
           const modified: number =
             (dbUpdateResult.data as Record<string, unknown>)?.['modifiedCount'] as number ?? 0;
           const matched: number =
             (dbUpdateResult.data as Record<string, unknown>)?.['matchedCount'] as number ?? 0;
           const countLabel = modified || matched;
-          toast(
-            `Updated ${countLabel} document${countLabel === 1 ? '' : 's'} in ${queryPayload['collection']}.`,
-            { variant: 'success' },
-          );
+          if (writeOutcome.status !== 'warning') {
+            toast(
+              `Updated ${countLabel} document${countLabel === 1 ? '' : 's'} in ${queryPayload['collection']}.`,
+              { variant: 'success' },
+            );
+          }
         }
       }
     }
@@ -348,6 +399,7 @@ export async function executeDatabaseUpdate({
           skipped: false,
           updateResult,
           executionMeta,
+          writeOutcome,
         };
       }
       try {
@@ -369,9 +421,16 @@ export async function executeDatabaseUpdate({
           requestedProvider: 'entityApi',
           resolvedProvider: 'entityApi',
         };
+        applyWriteOutcome('entityUpdate', entityUpdateResult.data ?? {}, {
+          entityType,
+          entityId,
+          strategy: updateStrategy,
+        });
         executed.updater.add(nodeId);
         const suffix = entityId ? ` ${entityId}` : '';
-        toast(`Updated ${entityType}${suffix}`, { variant: 'success' });
+        if (writeOutcome.status !== 'warning') {
+          toast(`Updated ${entityType}${suffix}`, { variant: 'success' });
+        }
       } catch (error: unknown) {
         reportAiPathsError(
           error,
@@ -466,13 +525,19 @@ export async function executeDatabaseUpdate({
             ...executionMeta,
             ...resolveProviderMeta(dbUpdateResult.data),
           };
+          applyWriteOutcome('updateOne', dbUpdateResult.data, {
+            collection,
+            strategy: updateStrategy,
+          });
           const modified: number = dbUpdateResult.data?.modifiedCount ?? 0;
           const matched: number = dbUpdateResult.data?.matchedCount ?? 0;
           const countLabel = modified || matched;
-          toast(
-            `Updated ${countLabel} document${countLabel === 1 ? '' : 's'} in ${collection}.`,
-            { variant: 'success' },
-          );
+          if (writeOutcome.status !== 'warning') {
+            toast(
+              `Updated ${countLabel} document${countLabel === 1 ? '' : 's'} in ${collection}.`,
+              { variant: 'success' },
+            );
+          }
         }
       }
     }
@@ -482,5 +547,6 @@ export async function executeDatabaseUpdate({
     skipped: false,
     updateResult,
     executionMeta,
+    writeOutcome,
   };
 }

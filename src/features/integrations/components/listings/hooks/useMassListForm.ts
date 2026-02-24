@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 
+import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import {
   useGenericExportToBaseMutation,
   useGenericCreateListingMutation,
@@ -10,29 +11,24 @@ import { massListProductFormSchema } from '@/features/integrations/validations/l
 import { logClientError } from '@/features/observability';
 import { validateFormData } from '@/shared/validations/form-validation';
 
-export interface UseMassListFormProps {
-  productIds: string[];
-  integrationId: string;
-  connectionId: string;
-  isBaseComIntegration: boolean;
-  selectedConnectionId: string | null;
-  selectedInventoryId: string | null;
-  selectedTemplateId: string | null;
-  allowDuplicateSku: boolean;
-  onSuccess: () => void;
-}
+import { useMassListProductModalViewContext } from '../mass-list-modal/context/MassListProductModalViewContext';
 
-export function useMassListForm({
-  productIds,
-  integrationId,
-  connectionId,
-  isBaseComIntegration,
-  selectedConnectionId,
-  selectedInventoryId,
-  selectedTemplateId,
-  allowDuplicateSku,
-  onSuccess,
-}: UseMassListFormProps) {
+export function useMassListForm() {
+  const {
+    productIds,
+    integrationId,
+    connectionId,
+    onSuccess,
+  } = useMassListProductModalViewContext();
+
+  const {
+    selectedConnectionId,
+    isBaseComIntegration,
+    selectedInventoryId,
+    selectedTemplateId,
+    allowDuplicateSku,
+  } = useListingSettingsContext();
+
   const [error, setError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ current: number; total: number; errors: number } | null>(null);
   const [exportLogs, setExportLogs] = useState<CapturedLog[]>([]);

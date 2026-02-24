@@ -628,7 +628,7 @@ export function PromptEngineProvider({
   const handleExport = useCallback((): void => {
     const invalidJson = drafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
     if (invalidJson.length > 0) {
-      toast(`Fix invalid JSON in \${invalidJson.length} rule(s) before exporting.`, { variant: 'error' });
+      toast(`Fix invalid JSON in ${invalidJson.length} rule(s) before exporting.`, { variant: 'error' });
       return;
     }
     const parsedRules = drafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
@@ -641,7 +641,7 @@ export function PromptEngineProvider({
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `prompt-engine-validation-patterns-\${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.download = `prompt-engine-validation-patterns-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -651,7 +651,7 @@ export function PromptEngineProvider({
   const handleExportLearned = useCallback((): void => {
     const invalidJson = learnedDrafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
     if (invalidJson.length > 0) {
-      toast(`Fix invalid JSON in \${invalidJson.length} learned rule(s) before exporting.`, { variant: 'error' });
+      toast(`Fix invalid JSON in ${invalidJson.length} learned rule(s) before exporting.`, { variant: 'error' });
       return;
     }
     const parsedRules = learnedDrafts.map((draft: RuleDraft) => draft.parsed!).filter(Boolean);
@@ -664,7 +664,7 @@ export function PromptEngineProvider({
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `prompt-engine-learned-patterns-\${new Date().toISOString().slice(0, 10)}.json`;
+    anchor.download = `prompt-engine-learned-patterns-${new Date().toISOString().slice(0, 10)}.json`;
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
@@ -701,7 +701,7 @@ export function PromptEngineProvider({
       toast(result.error, { variant: 'error' });
       return;
     }
-    setDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `\${rule.id}-\${index}`)));
+    setDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
     setIsDirty(true);
     setSaveError(null);
     toast('Validation patterns imported. Review and save to apply.', { variant: 'success' });
@@ -714,7 +714,7 @@ export function PromptEngineProvider({
       toast(result.error, { variant: 'error' });
       return;
     }
-    setLearnedDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `\${rule.id}-\${index}`)));
+    setLearnedDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
     setLearnedDirty(true);
     setSaveError(null);
     toast('Learned patterns imported. Review and save to apply.', { variant: 'success' });
@@ -723,12 +723,12 @@ export function PromptEngineProvider({
   const handleSave = useCallback(async (): Promise<void> => {
     const invalidJson = drafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
     if (invalidJson.length > 0) {
-      toast(`Fix invalid JSON in \${invalidJson.length} rule(s) before saving.`, { variant: 'error' });
+      toast(`Fix invalid JSON in ${invalidJson.length} rule(s) before saving.`, { variant: 'error' });
       return;
     }
     const invalidLearnedJson = learnedDrafts.filter((draft: RuleDraft) => draft.error || !draft.parsed);
     if (invalidLearnedJson.length > 0) {
-      toast(`Fix invalid JSON in \${invalidLearnedJson.length} learned rule(s) before saving.`, { variant: 'error' });
+      toast(`Fix invalid JSON in ${invalidLearnedJson.length} learned rule(s) before saving.`, { variant: 'error' });
       return;
     }
 
@@ -738,20 +738,20 @@ export function PromptEngineProvider({
     const invalidRuleIds: string[] = [];
     parsedRules.forEach((rule, index) => {
       const result = parsePromptValidationRules(JSON.stringify([rule]));
-      if (!result.ok) invalidRuleIds.push(rule.id || `#\${index + 1}`);
+      if (!result.ok) invalidRuleIds.push(rule.id || `#${index + 1}`);
     });
     if (invalidRuleIds.length > 0) {
-      toast(`Invalid rule(s): \${invalidRuleIds.join(', ')}.`, { variant: 'error' });
+      toast(`Invalid rule(s): ${invalidRuleIds.join(', ')}.`, { variant: 'error' });
       return;
     }
 
     const invalidLearnedIds: string[] = [];
     parsedLearnedRules.forEach((rule, index) => {
       const result = parsePromptValidationRules(JSON.stringify([rule]));
-      if (!result.ok) invalidLearnedIds.push(rule.id || `#\${index + 1}`);
+      if (!result.ok) invalidLearnedIds.push(rule.id || `#${index + 1}`);
     });
     if (invalidLearnedIds.length > 0) {
-      toast(`Invalid learned rule(s): \${invalidLearnedIds.join(', ')}.`, { variant: 'error' });
+      toast(`Invalid learned rule(s): ${invalidLearnedIds.join(', ')}.`, { variant: 'error' });
       return;
     }
 
@@ -780,8 +780,8 @@ export function PromptEngineProvider({
         key: PROMPT_ENGINE_SETTINGS_KEY,
         value: serializeSetting(nextSettings),
       });
-      setDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `\${rule.id}-\${index}`)));
-      setLearnedDrafts(learnedResult.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `\${rule.id}-\${index}`)));
+      setDrafts(result.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
+      setLearnedDrafts(learnedResult.rules.map((rule: PromptValidationRule, index: number) => createRuleDraft(rule, `${rule.id}-${index}`)));
       setIsDirty(false);
       setLearnedDirty(false);
       toast('Validation patterns saved.', { variant: 'success' });
@@ -795,7 +795,7 @@ export function PromptEngineProvider({
   const handleCopy = async (value: string, label: string): Promise<void> => {
     try {
       await navigator.clipboard.writeText(value);
-      toast(`\${label} copied.`, { variant: 'success' });
+      toast(`${label} copied.`, { variant: 'success' });
     } catch {
       toast('Failed to copy.', { variant: 'error' });
     }

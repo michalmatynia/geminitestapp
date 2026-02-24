@@ -133,6 +133,8 @@ export async function handleDatabaseMongoAction({
       dryRun,
       collection,
       queryPayload,
+      templateInputs,
+      templateInputValue,
       parseJsonTemplate,
       aiPrompt,
     });
@@ -175,11 +177,15 @@ export async function handleDatabaseMongoAction({
       executed,
       reportAiPathsError,
       toast,
+      dbConfig,
       dryRun,
       collection,
       filter,
       idType,
       queryPayload,
+      queryConfig,
+      templateInputs,
+      templateInputValue,
       aiPrompt,
     });
   }

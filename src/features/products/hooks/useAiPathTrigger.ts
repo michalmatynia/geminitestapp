@@ -2,32 +2,19 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { appendLocalRun, runsApi } from '@/features/ai/ai-paths/lib';
+import { runsApi } from '@/features/ai/ai-paths/lib/api/client';
 import {
-  AI_PATHS_UI_STATE_KEY,
-  PATH_DEBUG_PREFIX,
   TRIGGER_EVENTS,
 } from '@/features/ai/ai-paths/lib/core/constants';
 import {
-  evaluateGraphWithIteratorAutoContinue,
-} from '@/features/ai/ai-paths/lib/core/runtime/engine';
-import {
   sanitizeEdges,
 } from '@/features/ai/ai-paths/lib/core/utils/graph';
-import {
-  invalidateAiPathsSettingsCache,
-  updateAiPathsSetting,
-} from '@/features/ai/ai-paths/lib/settings-store-client';
 import { logClientError } from '@/features/observability/utils/client-error-logger';
 import type {
   AiNode,
   PathConfig,
-  PathDebugSnapshot,
-  PathDebugEntry,
   Edge,
-  RuntimeState,
 } from '@/shared/contracts/ai-paths';
-import { api } from '@/shared/lib/api-client';
 import {
   invalidateAiPathQueue,
   notifyAiPathRunEnqueued,
@@ -35,13 +22,7 @@ import {
 } from '@/shared/lib/query-invalidation';
 import { useToast } from '@/shared/ui';
 
-import {
-  getProductDetailQueryKey,
-  invalidateProductsCountsAndDetail,
-} from './productCache';
 import { fetchPathSettings, findTriggerPath } from './useAiPathSettings';
-
-const AI_PATHS_ENTITY_STALE_MS = 10_000;
 const PRODUCT_TRIGGER_PRIMARY_EVENT_ID = 'path_generate_description';
 const PRODUCT_TRIGGER_FALLBACK_EVENT_ID = (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
 const PRODUCT_TRIGGER_EVENT_IDS = Array.from(
@@ -56,26 +37,6 @@ const normalizeNodes = (nodes: AiNode[]): AiNode[] => {
   }));
 };
 
-const safeJsonStringify = (value: unknown): string => {
-  const seen = new WeakSet();
-  const replacer = (_key: string, val: unknown): unknown => {
-    if (typeof val === 'bigint') return val.toString();
-    if (val instanceof Date) return val.toISOString();
-    if (val instanceof Set) return Array.from(val.values());
-    if (val instanceof Map) return Object.fromEntries(val.entries());
-    if (typeof val === 'function' || typeof val === 'symbol') return undefined;
-    if (val && typeof val === 'object') {
-      if (seen.has(val)) return undefined;
-      seen.add(val);
-    }
-    return val;
-  };
-  try {
-    return JSON.stringify(value, replacer);
-  } catch {
-    return '';
-  }
-};
 
 function buildTriggerContext(
   triggerNode: AiNode,
@@ -168,50 +129,6 @@ function buildTriggerContext(
   };
 }
 
-async function persistRunResults(
-  selectedConfig: PathConfig,
-  nodes: AiNode[],
-  runtimeState: RuntimeState,
-  runAt: string,
-  uiState: Record<string, unknown> | null,
-): Promise<void> {
-  const debugEntries: PathDebugEntry[] = nodes
-    .filter((node: AiNode) => node.type === 'database')
-    .map((node: AiNode): PathDebugEntry | null => {
-      const output = runtimeState.outputs?.[node.id] as
-        | { debugPayload?: unknown }
-        | undefined;
-      const debugPayload = output?.debugPayload;
-      if (debugPayload === undefined || debugPayload === null) return null;
-      return {
-        nodeId: node.id,
-        title: node.title,
-        debug: debugPayload,
-      };
-    })
-    .filter((entry: PathDebugEntry | null): entry is PathDebugEntry => Boolean(entry));
-
-  const debugSnapshot: PathDebugSnapshot | null = debugEntries.length
-    ? {
-      pathId: selectedConfig.id,
-      runAt,
-      entries: debugEntries,
-    }
-    : null;
-
-  const debugValue = debugSnapshot ? safeJsonStringify(debugSnapshot) : '';
-  const nextUiState = {
-    ...(uiState && typeof uiState === 'object' ? uiState : {}),
-    lastTriggeredAt: runAt,
-  };
-
-  if (debugValue) {
-    await updateAiPathsSetting(`${PATH_DEBUG_PREFIX}${selectedConfig.id}`, debugValue);
-  }
-  await updateAiPathsSetting(AI_PATHS_UI_STATE_KEY, JSON.stringify(nextUiState));
-  invalidateAiPathsSettingsCache();
-}
-
 export function useAiPathTrigger(): {
   handlePathGenerateDescription: (
     product: { id: string } | null,
@@ -232,20 +149,8 @@ export function useAiPathTrigger(): {
       return;
     }
 
-    let localRunContext: {
-      pathId?: string | null;
-      pathName?: string | null;
-      triggerEvent?: string | null;
-      triggerLabel?: string | null;
-      entityType?: string | null;
-      entityId?: string | null;
-      nodeCount?: number | null;
-    } | null = null;
-    let startedAt: string | null = null;
-    let startedAtMs: number | null = null;
-
     try {
-      const { orderedConfigs, uiState, preferredActivePathId } =
+      const { orderedConfigs, preferredActivePathId } =
         await fetchPathSettings(queryClient);
 
       const resolveTriggerSelection = (
@@ -331,153 +236,48 @@ export function useAiPathTrigger(): {
 
       const executionMode = selectedConfig.executionMode === 'local' ? 'local' : 'server';
 
-      if (executionMode === 'server') {
-        const enqueueResult = await runsApi.enqueue({
-          pathId: selectedConfig.id ?? 'path',
-          pathName: selectedConfig.name ?? undefined,
-          nodes,
-          edges,
-          triggerEvent,
-          triggerNodeId: triggerNode.id,
-          triggerContext,
-          entityId: product.id,
-          entityType: 'product',
-          meta: {
-            source: 'product_panel',
-            triggerLabel: 'Path Generate Description',
-            strictFlowMode: selectedConfig.strictFlowMode !== false,
-          },
+      if (executionMode === 'local') {
+        toast('This path is in Local mode. Local browser execution is unavailable here, so it will be queued on the server.', {
+          variant: 'warning',
         });
-        if (!enqueueResult.ok) {
-          toast(enqueueResult.error || 'Failed to enqueue AI Path run.', {
-            variant: 'error',
-          });
-          return;
-        }
-        const queuedRun =
-          enqueueResult.data && typeof enqueueResult.data === 'object'
-            ? (enqueueResult.data as { run?: unknown }).run
-            : null;
-        optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRun);
-        void invalidateAiPathQueue(queryClient);
-        notifyAiPathRunEnqueued(
-          queuedRun &&
-            typeof queuedRun === 'object' &&
-            typeof (queuedRun as { id?: unknown }).id === 'string'
-            ? ((queuedRun as { id: string }).id)
-            : null
-        );
-        toast('AI Path run queued.', { variant: 'success' });
-        return;
       }
-
-      toast('This path is in Local mode; local runs do not appear in Job Queue.', {
-        variant: 'warning',
-      });
-
-      // Local execution
-      startedAt = new Date().toISOString();
-      startedAtMs = Date.now();
-      localRunContext = {
-        pathId: selectedConfig.id ?? null,
-        pathName: selectedConfig.name ?? null,
-        triggerEvent,
-        triggerLabel: 'Path Generate Description',
-        entityType: 'product',
-        entityId: product.id,
-        nodeCount: nodes.length,
-      };
-
-      const runtimeState: RuntimeState = await evaluateGraphWithIteratorAutoContinue({
+      const enqueueResult = await runsApi.enqueue({
+        pathId: selectedConfig.id ?? 'path',
+        pathName: selectedConfig.name ?? undefined,
         nodes,
         edges,
-        activePathId: selectedConfig.id ?? 'path',
-        activePathName: selectedConfig.name ?? undefined,
-        triggerNodeId: triggerNode.id,
         triggerEvent,
+        triggerNodeId: triggerNode.id,
         triggerContext,
-        strictFlowMode: selectedConfig.strictFlowMode !== false,
-        deferPoll: false,
-        fetchEntityByType: async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
-          if (entityType !== 'product') return null;
-          return await queryClient.fetchQuery({
-            queryKey: getProductDetailQueryKey(entityId),
-            queryFn: async (): Promise<Record<string, unknown> | null> => {
-              try {
-                return await api.get<Record<string, unknown>>(
-                  `/api/products/${encodeURIComponent(entityId)}`,
-                  { logError: false }
-                );
-              } catch {
-                return null;
-              }
-            },
-            staleTime: AI_PATHS_ENTITY_STALE_MS,
-          });
+        entityId: product.id,
+        entityType: 'product',
+        meta: {
+          source: 'product_panel',
+          triggerLabel: 'Path Generate Description',
+          strictFlowMode: selectedConfig.strictFlowMode !== false,
         },
-        reportAiPathsError: (error: unknown, meta?: Record<string, unknown>, summary?: string): void => {
-          logClientError(error, {
-            context: {
-              source: 'useAiPathTrigger',
-              action: 'reportAiPathsError',
-              summary: summary ?? 'AI Paths trigger failed',
-              ...meta
-            }
-          });
-        },
-        toast,
       });
-
-      const runAt = new Date().toISOString();
-
-      if (localRunContext && startedAt && startedAtMs !== null) {
-        void appendLocalRun({
-          pathId: localRunContext.pathId ?? null,
-          pathName: localRunContext.pathName ?? null,
-          triggerEvent: localRunContext.triggerEvent ?? null,
-          triggerLabel: localRunContext.triggerLabel ?? null,
-          entityType: localRunContext.entityType ?? null,
-          entityId: localRunContext.entityId ?? null,
-          status: 'success',
-          startedAt,
-          finishedAt: runAt,
-          durationMs: Date.now() - startedAtMs,
-          nodeCount: localRunContext.nodeCount ?? null,
-          source: 'product_panel',
+      if (!enqueueResult.ok) {
+        toast(enqueueResult.error || 'Failed to enqueue AI Path run.', {
+          variant: 'error',
         });
+        return;
       }
-
-      await invalidateProductsCountsAndDetail(queryClient, product.id);
-
-      try {
-        await persistRunResults(
-          selectedConfig,
-          nodes,
-          runtimeState,
-          runAt,
-          uiState,
-        );
-      } catch (error) {
-        logClientError(error, { context: { source: 'useAiPathTrigger', action: 'persistRuntimeState', pathId: selectedConfig.id } });
-      }
+      const queuedRun =
+        enqueueResult.data && typeof enqueueResult.data === 'object'
+          ? (enqueueResult.data as { run?: unknown }).run
+          : null;
+      optimisticallyInsertAiPathRunInQueueCache(queryClient, queuedRun);
+      void invalidateAiPathQueue(queryClient);
+      notifyAiPathRunEnqueued(
+        queuedRun &&
+          typeof queuedRun === 'object' &&
+          typeof (queuedRun as { id?: unknown }).id === 'string'
+          ? ((queuedRun as { id: string }).id)
+          : null
+      );
+      toast('AI Path run queued.', { variant: 'success' });
     } catch (error) {
-      if (localRunContext && startedAt && startedAtMs !== null) {
-        void appendLocalRun({
-          pathId: localRunContext.pathId ?? null,
-          pathName: localRunContext.pathName ?? null,
-          triggerEvent: localRunContext.triggerEvent ?? null,
-          triggerLabel: localRunContext.triggerLabel ?? null,
-          entityType: localRunContext.entityType ?? null,
-          entityId: localRunContext.entityId ?? null,
-          status: 'error',
-          startedAt,
-          finishedAt: new Date().toISOString(),
-          durationMs: Date.now() - startedAtMs,
-          nodeCount: localRunContext.nodeCount ?? null,
-          error: error instanceof Error ? error.message : 'Local run failed',
-          source: 'product_panel',
-        });
-      }
       logClientError(error, { context: { source: 'useAiPathTrigger', action: 'runPathTrigger', productId: product.id } });
       toast('Failed to run AI Path trigger.', { variant: 'error' });
     }

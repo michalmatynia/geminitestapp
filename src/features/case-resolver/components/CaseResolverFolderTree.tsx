@@ -70,6 +70,8 @@ import {
 } from '../nodefile-relations';
 import { resolveCaseResolverTreeWorkspace } from './case-resolver-tree-workspace';
 import {
+  canStartCaseResolverTreeNodeDrag,
+  isCaseResolverDraggableFileNode,
   parseNullableNumber,
   parseNullableString,
   parseString,
@@ -173,16 +175,28 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     useState<PendingNodeCanvasAction | null>(null);
   const [showChildCaseFolders, setShowChildCaseFolders] = useState(false);
   const dragHandleNodeIdRef = React.useRef<string | null>(null);
+  const clearDragHandleArming = React.useCallback((): void => {
+    dragHandleNodeIdRef.current = null;
+  }, []);
 
   useEffect((): (() => void) => {
-    const clearDragHandleArming = (): void => {
-      dragHandleNodeIdRef.current = null;
-    };
-    window.addEventListener('dragend', clearDragHandleArming);
+    const events = [
+      'dragend',
+      'drop',
+      'pointerup',
+      'pointercancel',
+      'mouseup',
+      'blur',
+    ] as const;
+    events.forEach((eventName) => {
+      window.addEventListener(eventName, clearDragHandleArming);
+    });
     return (): void => {
-      window.removeEventListener('dragend', clearDragHandleArming);
+      events.forEach((eventName) => {
+        window.removeEventListener(eventName, clearDragHandleArming);
+      });
     };
-  }, []);
+  }, [clearDragHandleArming]);
 
   const treeWorkspace = useMemo(
     (): CaseResolverWorkspace =>
@@ -418,32 +432,42 @@ export function CaseResolverFolderTree(): React.JSX.Element {
   const canStartTreeDrag = React.useCallback<
     NonNullable<MasterFolderTreeProps['canStartDrag']>
   >(({ node, event }): boolean => {
-    if (isChildCaseStructureNode(node)) return false;
-    if (node.type !== 'file') return true;
+    const blockedChildStructureNode = isChildCaseStructureNode(node);
     const eventTarget = event.target;
-    if (eventTarget instanceof Element) {
-      const fromHandle =
-        eventTarget.closest('[data-master-tree-drag-handle="true"]') !== null;
-      if (fromHandle) {
-        dragHandleNodeIdRef.current = node.id;
-        return true;
-      }
-    }
+    const fromEventTargetHandle =
+      eventTarget instanceof Element &&
+      eventTarget.closest('[data-master-tree-drag-handle="true"]') !== null;
+    let fromPointerHandle = false;
     if (typeof document !== 'undefined') {
       const pointerElement = document.elementFromPoint(
         event.clientX,
         event.clientY,
       );
-      const fromPointerHandle =
+      fromPointerHandle =
         pointerElement?.closest('[data-master-tree-drag-handle="true"]') !==
         null;
-      if (fromPointerHandle) {
-        dragHandleNodeIdRef.current = node.id;
-        return true;
-      }
     }
-    return dragHandleNodeIdRef.current === node.id;
+    const fromHandleGesture = fromEventTargetHandle || fromPointerHandle;
+    if (fromHandleGesture) {
+      dragHandleNodeIdRef.current = node.id;
+    }
+
+    return canStartCaseResolverTreeNodeDrag({
+      nodeType: node.type,
+      nodeId: node.id,
+      isChildStructureNode: blockedChildStructureNode,
+      fromHandleGesture,
+      armedNodeId: dragHandleNodeIdRef.current,
+    });
   }, []);
+
+  const armDragHandle = React.useCallback((nodeId: string): void => {
+    dragHandleNodeIdRef.current = nodeId;
+  }, []);
+
+  const releaseDragHandle = React.useCallback((): void => {
+    clearDragHandleArming();
+  }, [clearDragHandleArming]);
 
   const selectedFolderForCreate = useMemo((): string | null => {
     if (!controller.selectedNodeId) return selectedFolderPath;
@@ -1093,6 +1117,12 @@ export function CaseResolverFolderTree(): React.JSX.Element {
             const isCanvasCaseFile = Boolean(fileId) && isCaseFile;
             const isNodeFileAsset =
               Boolean(assetId) && node.kind === 'node_file';
+            const isChildStructureSectionNode = isChildCaseStructureNode(node);
+            const isDraggableFileNode = isCaseResolverDraggableFileNode({
+              nodeType: node.type,
+              fileType,
+              isChildStructureNode: isChildStructureSectionNode,
+            });
             const linkedDocumentNodeIds = fileId
               ? (documentNodeIdsBySourceFileId.get(fileId) ?? [])
               : [];
@@ -1121,7 +1151,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               folderStats.total > 0 &&
               folderStats.total === folderStats.locked,
             );
-            const isChildStructureSectionNode = isChildCaseStructureNode(node);
             const nodeOwnerCaseIds = (() => {
               if (isChildStructureSectionNode) return [];
               if (folderPath !== null) {
@@ -1268,22 +1297,33 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                   }
                 }}
               >
-                <DragHandleIcon
+                <span
                   data-master-tree-drag-handle='true'
                   onPointerDown={(): void => {
-                    dragHandleNodeIdRef.current = node.id;
+                    if (!isDraggableFileNode) return;
+                    armDragHandle(node.id);
                   }}
+                  onPointerUp={releaseDragHandle}
+                  onPointerCancel={releaseDragHandle}
                   onMouseDown={(): void => {
-                    dragHandleNodeIdRef.current = node.id;
+                    if (!isDraggableFileNode) return;
+                    armDragHandle(node.id);
                   }}
-                  className={`size-3 shrink-0 ${
-                    isCanvasCaseFile
-                      ? `cursor-grab text-sky-300/90 transition-opacity active:cursor-grabbing ${hoverOnlyControlClass}`
-                      : isNodeFileAsset
-                        ? `cursor-grab text-violet-400/80 transition-opacity active:cursor-grabbing ${hoverOnlyControlClass}`
-                        : 'cursor-default text-gray-500'
+                  onMouseUp={releaseDragHandle}
+                  className={`inline-flex size-5 shrink-0 items-center justify-center rounded ${
+                    isDraggableFileNode ? `cursor-grab active:cursor-grabbing ${hoverOnlyControlClass}` : 'cursor-default'
                   }`}
-                />
+                >
+                  <DragHandleIcon
+                    className={`size-3 ${
+                      isDraggableFileNode
+                        ? (isNodeFileAsset
+                          ? 'text-violet-400/80'
+                          : 'text-sky-300/90')
+                        : 'text-gray-500'
+                    }`}
+                  />
+                </span>
                 {canToggle ? (
                   <button
                     type='button'

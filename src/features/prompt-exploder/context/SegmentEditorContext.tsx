@@ -20,7 +20,6 @@ import {
 import {
   promptExploderInsertSegmentRelative,
   promptExploderMergeSegment,
-  promptExploderMergeSegmentById,
   promptExploderRemoveSegmentById,
   promptExploderSplitSegmentByRange,
 } from '../helpers/segment-transforms';
@@ -225,7 +224,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
                   sameType: boolean;
                                 normalizedTitle?: string;
                               }>;
-    const sourceText = `${selectedSegment.title || ''} \${promptExploderBuildSegmentSampleText(selectedSegment)}`.trim();
+    const sourceText = `${selectedSegment.title || ''} ${promptExploderBuildSegmentSampleText(selectedSegment)}`.trim();
     const normalizedSelectedTitle = normalizeLearningText(selectedSegment.title || '');    return effectiveLearnedTemplates
       .map((template) => {
         const score = templateSimilarityScore(sourceText, template);
@@ -277,7 +276,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
         .slice(0, 80)
         .map((template) => ({
           value: template.id,
-          label: `\${template.title} (\${template.state}, \${normalizeApprovals(template.approvals)})`,
+          label: `${template.title} (${template.state}, ${normalizeApprovals(template.approvals)})`,
         }));
     },
     [approvalDraft.ruleSegmentType, effectiveLearnedTemplates]
@@ -488,7 +487,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     } catch (error) {
       toast(
         error instanceof Error
-          ? `Invalid regex pattern: \${error.message}`
+          ? `Invalid regex pattern: ${error.message}`
           : 'Invalid regex pattern.',
         { variant: 'error' }
       );
@@ -497,7 +496,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
     try {
       const now = new Date().toISOString();
       const segmentSampleText = promptExploderBuildSegmentSampleText(selectedSegment);
-      const segmentLearningSource = `\${selectedSegment.title || ''} \${segmentSampleText}`.trim();
+      const segmentLearningSource = `${selectedSegment.title || ''} ${segmentSampleText}`.trim();
       const templateUpsert = upsertLearnedTemplate({
         templates: effectiveLearnedTemplates,
         segmentType: approvalDraft.ruleSegmentType,
@@ -510,9 +509,9 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
         targetTemplateId: approvalDraft.templateTargetId,
         now,
         createTemplateId: ({ segmentType, existingTemplateIds }) => {
-          let nextId = `template_\${segmentType}_\${Date.now().toString(36)}`;
+          let nextId = `template_${segmentType}_${Date.now().toString(36)}`;
           while (existingTemplateIds.has(nextId)) {
-            nextId = `\${nextId}_x`;
+            nextId = `${nextId}_x`;
           }
           return nextId;
         },
@@ -523,7 +522,7 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
       }
       const { nextTemplate, nextTemplates, mergeMessage } = templateUpsert;
 
-      const learnedRuleId = `segment.learned.\${approvalDraft.ruleSegmentType}.\${nextTemplate.id}`;
+      const learnedRuleId = `segment.learned.${approvalDraft.ruleSegmentType}.${nextTemplate.id}`;
       const learnedRuleDraft = buildManualLearnedRegexRuleDraft({
         id: learnedRuleId,
         segmentTitle: selectedSegment.title || '',
@@ -620,8 +619,8 @@ export function SegmentEditorProvider({ children }: { children: React.ReactNode 
       }
 
       const messageParts = [
-        `Pattern approved: \${learnedRuleUpsert.nextRule.title}.`,
-        mergeMessage ? `Template: \${mergeMessage}.` : null,
+        `Pattern approved: ${learnedRuleUpsert.nextRule.title}.`,
+        mergeMessage ? `Template: ${mergeMessage}.` : null,
       ].filter(Boolean);
       toast(messageParts.join(' '), { variant: 'success' });
     } catch (error) {

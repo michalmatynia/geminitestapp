@@ -380,13 +380,13 @@ export function useProductListState(): ProductListContextType & {
       .fetchQuery({
         queryKey: normalizeQueryKey(getProductDetailQueryKey(product.id)),
         queryFn: ({ signal }) =>
-          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(product.id)}`, {
+          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(product.id)}?fresh=1`, {
             signal,
             cache: 'no-store',
             logError: false,
             timeout: PRODUCT_DETAIL_TIMEOUT_MS,
           }),
-        staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
+        staleTime: 0,
       })
       .then((freshProduct: ProductWithImages) => {
         setEditingProduct(freshProduct);
@@ -418,13 +418,13 @@ export function useProductListState(): ProductListContextType & {
       .fetchQuery({
         queryKey: normalizeQueryKey(getProductDetailQueryKey(openProductIdFromQuery)),
         queryFn: ({ signal }) =>
-          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(openProductIdFromQuery)}`, {
+          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(openProductIdFromQuery)}?fresh=1`, {
             signal,
             cache: 'no-store',
             logError: false,
             timeout: PRODUCT_DETAIL_TIMEOUT_MS,
           }),
-        staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
+        staleTime: 0,
       })
       .then((freshProduct: ProductWithImages) => {
         setEditingProduct(freshProduct);

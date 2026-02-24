@@ -5,6 +5,7 @@ import { useCallback } from 'react';
 
 import type {
   AiNode,
+  AiPathsValidationConfig,
   Edge,
   RuntimePortValues,
   RuntimeState,
@@ -12,6 +13,7 @@ import type {
 } from '@/features/ai/ai-paths/lib';
 import {
   TRIGGER_EVENTS,
+  evaluateDataContractPreflight,
   entityApi,
 } from '@/features/ai/ai-paths/lib';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
@@ -28,12 +30,81 @@ type SimulationArgs = {
   normalizedNodes: AiNode[];
   sanitizedEdges: Edge[];
   executionMode: PathExecutionMode;
+  aiPathsValidation?: AiPathsValidationConfig | undefined;
   setRuntimeState: React.Dispatch<React.SetStateAction<RuntimeState>>;
   runtimeStateRef: React.MutableRefObject<RuntimeState>;
   reportAiPathsError: (error: unknown, context: Record<string, unknown>, fallbackMessage?: string) => void;
   toast: (message: string, options?: { variant?: 'success' | 'error' | 'info' | 'warning'; duration?: number; error?: unknown }) => void;
   // Local logic callbacks
   runGraphForTrigger: (triggerNode: AiNode, event?: React.MouseEvent, contextOverride?: Record<string, unknown>) => Promise<void>;
+};
+
+const resolveEdgeFromNodeId = (edge: Edge): string | null =>
+  (typeof edge.from === 'string' && edge.from.trim().length > 0
+    ? edge.from.trim()
+    : typeof edge.source === 'string' && edge.source.trim().length > 0
+      ? edge.source.trim()
+      : null);
+
+const resolveEdgeToNodeId = (edge: Edge): string | null =>
+  (typeof edge.to === 'string' && edge.to.trim().length > 0
+    ? edge.to.trim()
+    : typeof edge.target === 'string' && edge.target.trim().length > 0
+      ? edge.target.trim()
+      : null);
+
+const resolveEdgeFromPort = (edge: Edge): string | null =>
+  (typeof edge.fromPort === 'string' && edge.fromPort.trim().length > 0
+    ? edge.fromPort.trim()
+    : typeof edge.sourceHandle === 'string' && edge.sourceHandle.trim().length > 0
+      ? edge.sourceHandle.trim()
+      : null);
+
+const resolveEdgeToPort = (edge: Edge): string | null =>
+  (typeof edge.toPort === 'string' && edge.toPort.trim().length > 0
+    ? edge.toPort.trim()
+    : typeof edge.targetHandle === 'string' && edge.targetHandle.trim().length > 0
+      ? edge.targetHandle.trim()
+      : null);
+
+export const applySimulationPreviewToRuntimeState = (args: {
+  runtimeState: RuntimeState;
+  simulationNode: AiNode;
+  simulationOutputs: RuntimePortValues;
+  edges: Edge[];
+}): RuntimeState => {
+  const nextOutputs: Record<string, RuntimePortValues> = {
+    ...(args.runtimeState.outputs ?? {}),
+    [args.simulationNode.id]: {
+      ...(args.runtimeState.outputs?.[args.simulationNode.id] ?? {}),
+      ...args.simulationOutputs,
+    },
+  };
+
+  const nextInputs: Record<string, RuntimePortValues> = {
+    ...(args.runtimeState.inputs ?? {}),
+  };
+
+  args.edges.forEach((edge: Edge): void => {
+    const fromNodeId = resolveEdgeFromNodeId(edge);
+    if (fromNodeId !== args.simulationNode.id) return;
+    const toNodeId = resolveEdgeToNodeId(edge);
+    const fromPort = resolveEdgeFromPort(edge);
+    const toPort = resolveEdgeToPort(edge);
+    if (!toNodeId || !fromPort || !toPort) return;
+    const previewValue = args.simulationOutputs[fromPort];
+    if (previewValue === undefined) return;
+    nextInputs[toNodeId] = {
+      ...(nextInputs[toNodeId] ?? {}),
+      [toPort]: previewValue,
+    };
+  });
+
+  return {
+    ...args.runtimeState,
+    inputs: nextInputs,
+    outputs: nextOutputs,
+  };
 };
 
 export function useAiPathsSimulation(args: SimulationArgs) {
@@ -113,21 +184,23 @@ export function useAiPathsSimulation(args: SimulationArgs) {
         ...(productId ? { productId } : {}),
         ...(simulationContext['entityJson'] !== undefined ? { entityJson: simulationContext['entityJson'] } : {}),
       };
-      args.setRuntimeState((prev: RuntimeState): RuntimeState => {
-        const nextOutputs = {
-          ...(prev.outputs ?? {}),
-          [simulationNode.id]: {
-            ...((prev.outputs?.[simulationNode.id] ?? {})),
-            ...simulationOutputs,
-          },
-        };
-        // Just merging outputs for simulation start
-        const next: RuntimeState = {
-          ...prev,
-          outputs: nextOutputs,
-        };
-        args.runtimeStateRef.current = next;
-        return next;
+      const nextState = applySimulationPreviewToRuntimeState({
+        runtimeState: args.runtimeStateRef.current,
+        simulationNode,
+        simulationOutputs,
+        edges: args.sanitizedEdges,
+      });
+      args.runtimeStateRef.current = nextState;
+      args.setRuntimeState(nextState);
+
+      const nodeValidationEnabled = args.aiPathsValidation?.enabled !== false;
+      void evaluateDataContractPreflight({
+        nodes: args.normalizedNodes,
+        edges: args.sanitizedEdges,
+        runtimeState: nextState,
+        mode: 'full',
+        scopeMode: nodeValidationEnabled ? 'full' : 'reachable_from_roots',
+        ...(!nodeValidationEnabled ? { scopeRootNodeIds: [simulationNode.id] } : {}),
       });
     },
     [args]

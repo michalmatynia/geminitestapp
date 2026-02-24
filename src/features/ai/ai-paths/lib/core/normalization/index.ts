@@ -56,7 +56,13 @@ import {
   createDefaultPlaywrightConfig,
   normalizePlaywrightConfig,
 } from '../playwright/default-config';
-import { createParserMappings, createViewerOutputs, ensureUniquePorts, normalizePortName } from '../utils';
+import {
+  createParserMappings,
+  createViewerOutputs,
+  ensureUniquePorts,
+  normalizePortName,
+  resolveNodeTypeId,
+} from '../utils';
 
 const DEFAULT_LEGACY_DB_QUERY_TEMPLATE = '{\n  "_id": "{{value}}"\n}';
 
@@ -836,6 +842,10 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
               writeSource: databaseConfig.writeSource ?? 'bundle',
               writeSourcePath: databaseConfig.writeSourcePath ?? '',
               dryRun: databaseConfig.dryRun ?? false,
+              writeOutcomePolicy: {
+                onZeroAffected:
+                  databaseConfig.writeOutcomePolicy?.onZeroAffected ?? 'fail',
+              },
               ...(databaseConfig.presetId ? { presetId: databaseConfig.presetId } : {}),
               skipEmpty: databaseConfig.skipEmpty ?? false,
               trimStrings: databaseConfig.trimStrings ?? false,
@@ -965,7 +975,11 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
       return node;
     })
     .filter((node: AiNode | null): node is AiNode => Boolean(node));
-  return backfillNodePortContracts(normalized).nodes;
+  return backfillNodePortContracts(normalized).nodes.map((node: AiNode): AiNode => ({
+    ...node,
+    instanceId: node.id,
+    nodeTypeId: resolveNodeTypeId(node, palette),
+  }));
 };
 
 type TriggerToFetcherMigrationResult = {
@@ -1622,6 +1636,9 @@ export const getDefaultConfigForType = (
         writeSource: 'bundle',
         writeSourcePath: '',
         dryRun: false,
+        writeOutcomePolicy: {
+          onZeroAffected: 'fail',
+        },
       },
     };
   }

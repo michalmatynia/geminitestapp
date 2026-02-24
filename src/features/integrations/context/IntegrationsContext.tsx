@@ -445,7 +445,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
           slug: def.slug,
         });
       } catch (error: unknown) {
-        toast((error as Error)?.message ?? `Failed to add \${def.name}`, { variant: 'error' });
+        toast((error as Error)?.message ?? 'Failed to add ${def.name}', { variant: 'error' });
         return null;
       }
     };
@@ -617,7 +617,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     setShowTestSuccessModal(false);
     setTestSuccessMessage(null);
 
-    const requestUrl = `/api/integrations/\${activeIntegration.id}/connections/\${connection.id}/\${type}`;
+    const requestUrl = '/api/integrations/${activeIntegration.id}/connections/${connection.id}/${type}';
     const startedAt = performance.now();
 
     try {
@@ -686,7 +686,7 @@ ${errorBody}`;
           connectionId: data['connectionId'] as string,
         });
       } else {
-        setTestLog([{ step: `\${title} failed`, status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }]);
+        setTestLog([{ step: '${title} failed', status: 'failed' as const, timestamp: new Date().toISOString(), detail: errorMessage }]);
       }
 
       setTestError(errorMessage);
@@ -715,7 +715,7 @@ ${errorBody}`;
     const { buildPlaywrightSettings } = await import('@/features/playwright');
     setPlaywrightPersonaId(persona.id);
     setPlaywrightSettings(buildPlaywrightSettings(persona.settings));
-    toast(`Applied persona "\${persona.name}".`, { variant: 'success' });
+    toast('Applied persona "${persona.name}".', { variant: 'success' });
   };
 
   const handleSavePlaywrightSettings = async (): Promise<void> => {
@@ -744,7 +744,7 @@ ${errorBody}`;
       toast('Create an Allegro connection first.', { variant: 'error' });
       return;
     }
-    window.location.href = `/api/integrations/\${activeIntegration.id}/connections/\${activeConnection.id}/allegro/authorize`;
+    window.location.href = '/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize';
   };
 
   const handleAllegroDisconnect = async (): Promise<void> => {
@@ -800,7 +800,7 @@ ${errorBody}`;
           allegroUseSandbox: true,
         },
       });
-      window.location.href = `/api/integrations/\${activeIntegration.id}/connections/\${activeConnection.id}/allegro/authorize`;
+      window.location.href = '/api/integrations/${activeIntegration.id}/connections/${activeConnection.id}/allegro/authorize';
     } catch (error: unknown) {
       toast((error as Error)?.message ?? 'Failed to enable Allegro sandbox.', { variant: 'error' });
     } finally {

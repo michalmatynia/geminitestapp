@@ -37,6 +37,7 @@ export const PROMPT_VALIDATION_SCOPE_VALUES: PromptValidationScope[] = [
   'prompt_exploder',
   'case_resolver_prompt_exploder',
   'case_resolver_plain_text',
+  'ai_paths',
   'global',
 ];
 
@@ -75,6 +76,7 @@ export const PROMPT_VALIDATION_SCOPE_LABELS: Record<PromptValidationScope, strin
   prompt_exploder: 'Prompt Exploder',
   case_resolver_prompt_exploder: 'Case Resolver Prompt Exploder',
   case_resolver_plain_text: 'Case Resolver Plain Text',
+  ai_paths: 'AI Paths',
   global: 'Global',
 };
 

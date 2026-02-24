@@ -4,16 +4,15 @@ import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_MAX,
   AI_PATHS_HISTORY_RETENTION_MIN,
-  compileGraph,
-  evaluateAiPathsValidationPreflight,
-  evaluateGraphWithIteratorAutoContinue,
+  cloneJsonSafe,
+  evaluateRunPreflight,
   GraphExecutionCancelled,
-  inspectPathDependencies,
   migrateTriggerToFetcherGraph,
   normalizeNodes,
   normalizeAiPathsValidationConfig,
   sanitizeEdges,
 } from '@/features/ai/ai-paths/lib';
+import { evaluateGraphWithIteratorAutoContinue } from '@/features/ai/ai-paths/lib/core/runtime/engine-server';
 import { buildCompileWarningMessage } from '@/features/ai/ai-paths/lib/core/utils/compile-warning-message';
 import {
   evaluateDisabledNodeTypesPolicy,
@@ -145,33 +144,79 @@ const parseRuntimeState = (value: unknown): RuntimeState => {
   return EMPTY_RUNTIME_STATE;
 };
 
-const toJsonSafe = (value: unknown): unknown => {
-  const seen = new WeakSet();
-  const replacer = (_key: string, val: unknown): unknown => {
-    if (typeof val === 'bigint') return val.toString();
-    if (val instanceof Date) return val.toISOString();
-    if (val instanceof Set) return Array.from(val.values()) as unknown[];
-    if (val instanceof Map) return Object.fromEntries(val.entries()) as Record<string, unknown>;
-    if (typeof val === 'function' || typeof val === 'symbol') return undefined;
-    if (val && typeof val === 'object') {
-      if (seen.has(val)) return undefined;
-      seen.add(val);
-    }
-    
-    return val;
+const SANITIZE_DROP_WARNING_LIMIT = 20;
+let sanitizeDropWarningCount = 0;
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+
+const isSerializablePortValue = (value: unknown): boolean =>
+  value !== undefined && typeof value !== 'function' && typeof value !== 'symbol';
+
+type RuntimePortDropSample = {
+  bucket: 'inputs' | 'outputs' | 'nodeOutputs';
+  nodeId: string;
+  ports: string[];
+};
+
+type RuntimePortDropSummary = {
+  inputs: number;
+  outputs: number;
+  nodeOutputs: number;
+  total: number;
+  samples: RuntimePortDropSample[];
+};
+
+const collectDroppedRuntimePorts = (
+  original: RuntimeState,
+  sanitized: RuntimeState
+): RuntimePortDropSummary => {
+  const summary: RuntimePortDropSummary = {
+    inputs: 0,
+    outputs: 0,
+    nodeOutputs: 0,
+    total: 0,
+    samples: [],
   };
-  try {
-    return JSON.parse(JSON.stringify(value, replacer)) as unknown;
-  } catch {
-    return null;
-  }
+  const buckets: Array<'inputs' | 'outputs' | 'nodeOutputs'> = [
+    'inputs',
+    'outputs',
+    'nodeOutputs',
+  ];
+
+  buckets.forEach((bucket) => {
+    const sourceByNode = original[bucket];
+    const targetByNode = sanitized[bucket];
+    if (!isRecord(sourceByNode)) return;
+
+    Object.entries(sourceByNode).forEach(([nodeId, sourcePorts]) => {
+      if (!isRecord(sourcePorts)) return;
+      const targetPortsRaw = isRecord(targetByNode) ? targetByNode[nodeId] : undefined;
+      const targetPorts = isRecord(targetPortsRaw) ? targetPortsRaw : {};
+      const droppedPorts = Object.entries(sourcePorts)
+        .filter(
+          ([port, value]) =>
+            isSerializablePortValue(value) &&
+            !Object.prototype.hasOwnProperty.call(targetPorts, port)
+        )
+        .map(([port]) => port);
+      if (droppedPorts.length === 0) return;
+      summary[bucket] += droppedPorts.length;
+      summary.total += droppedPorts.length;
+      if (summary.samples.length < 8) {
+        summary.samples.push({ bucket, nodeId, ports: droppedPorts.slice(0, 10) });
+      }
+    });
+  });
+
+  return summary;
 };
 
 const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
-  const safe = toJsonSafe(state);
+  const safe = cloneJsonSafe(state);
   if (safe && typeof safe === 'object') {
-    const parsed = safe as RuntimeState;
-    return {
+    const parsed = safe;
+    const sanitized: RuntimeState = {
       ...EMPTY_RUNTIME_STATE,
       ...parsed,
       inputs: parsed.inputs ?? {},
@@ -181,6 +226,21 @@ const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
       variables: parsed.variables ?? {},
       events: parsed.events ?? [],
     };
+    const dropSummary = collectDroppedRuntimePorts(state, sanitized);
+    if (dropSummary.total > 0 && sanitizeDropWarningCount < SANITIZE_DROP_WARNING_LIMIT) {
+      sanitizeDropWarningCount += 1;
+      void ErrorSystem.logWarning('sanitizeRuntimeState dropped runtime port keys', {
+        service: 'ai-paths-executor',
+        droppedPortCounts: {
+          inputs: dropSummary.inputs,
+          outputs: dropSummary.outputs,
+          nodeOutputs: dropSummary.nodeOutputs,
+          total: dropSummary.total,
+        },
+        droppedPortSamples: dropSummary.samples,
+      });
+    }
+    return sanitized;
   }
   return EMPTY_RUNTIME_STATE;
 };
@@ -921,29 +981,65 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const toast = (): void => {};
 
   try {
-    const compileReport = nodeValidationEnabled
-      ? compileGraph(nodes, edges)
-      : compileGraph(nodes, edges, {
-        scopeMode: 'reachable_from_roots',
-        ...(triggerNodeId ? { scopeRootNodeIds: [triggerNodeId] } : {}),
-      });
-    if (nodeValidationEnabled && !compileReport.ok) {
+    const runPreflight = evaluateRunPreflight({
+      nodes,
+      edges,
+      aiPathsValidation: validationConfig,
+      strictFlowMode,
+      triggerNodeId,
+      runtimeState,
+      mode: 'full',
+    });
+    const compileReport = runPreflight.compileReport;
+    const dependencyReport = runPreflight.dependencyReport;
+    const validationReport = runPreflight.validationReport;
+    const dataContractReport = runPreflight.dataContractReport;
+    if (runPreflight.shouldBlock) {
+      const blockedMessageByReason: Record<string, string> = {
+        validation: 'Run blocked by AI Paths validation preflight.',
+        compile: 'Run blocked by graph compile validation.',
+        dependency: 'Run blocked by strict flow dependency validation.',
+        data_contract: 'Run blocked by data-contract preflight validation.',
+      };
+      const blockedEventMessage =
+        blockedMessageByReason[runPreflight.blockReason ?? ''] ??
+        'Run blocked by preflight validation.';
       await repo.createRunEvent({
         runId: run.id,
         level: 'error',
-        message: 'Run blocked by graph compile validation.',
+        message: blockedEventMessage,
         metadata: {
-          compile: {
-            errors: compileReport.errors,
-            warnings: compileReport.warnings,
-            findings: compileReport.findings.slice(0, 10),
+          preflight: {
+            reason: runPreflight.blockReason,
+            message: runPreflight.blockMessage,
+            validation: validationReport,
+            compile: {
+              errors: compileReport.errors,
+              warnings: compileReport.warnings,
+              findings: compileReport.findings.slice(0, 10),
+            },
+            dependency: dependencyReport
+              ? {
+                errors: dependencyReport.errors,
+                warnings: dependencyReport.warnings,
+                strictReady: dependencyReport.strictReady,
+                blockedRiskIds: dependencyReport.risks
+                  .filter((risk): boolean => risk.severity === 'error')
+                  .map((risk) => risk.id),
+              }
+              : null,
+            dataContract: {
+              errors: dataContractReport.errors,
+              warnings: dataContractReport.warnings,
+              issues: dataContractReport.issues.slice(0, 10),
+            },
           },
           runStartedAt,
           traceId,
         },
       });
       throw new Error(
-        `Graph compile blocked run: ${compileReport.errors} issue(s) detected.`
+        runPreflight.blockMessage ?? blockedEventMessage
       );
     }
     if (nodeValidationEnabled && compileReport.warnings > 0) {
@@ -979,33 +1075,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       throw new Error(formatDisabledNodeTypesPolicyMessage(policyReport.violations));
     }
 
-    const validationReport = evaluateAiPathsValidationPreflight({
-      nodes,
-      edges,
-      config: validationConfig,
-    });
-    if (validationReport.enabled && validationReport.blocked) {
-      await repo.createRunEvent({
-        runId: run.id,
-        level: 'error',
-        message: 'Run blocked by AI Paths validation preflight.',
-        metadata: {
-          validation: {
-            score: validationReport.score,
-            policy: validationReport.policy,
-            warnThreshold: validationReport.warnThreshold,
-            blockThreshold: validationReport.blockThreshold,
-            failedRules: validationReport.failedRules,
-            findings: validationReport.findings.slice(0, 8),
-          },
-          runStartedAt,
-          traceId,
-        },
-      });
-      throw new Error(
-        `Validation blocked run: score ${validationReport.score} below threshold ${validationReport.blockThreshold}.`
-      );
-    }
     if (validationReport.enabled && validationReport.shouldWarn) {
       await repo.createRunEvent({
         runId: run.id,
@@ -1026,31 +1095,23 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       });
     }
 
-    if (nodeValidationEnabled && strictFlowMode) {
-      const dependencyReport = inspectPathDependencies(nodes, edges);
-      if (dependencyReport.errors > 0) {
-        await repo.createRunEvent({
-          runId: run.id,
-          level: 'error',
-          message: 'Run blocked by strict flow dependency validation.',
-          metadata: {
-            strictFlowMode: true,
-            dependencyErrors: dependencyReport.errors,
-            dependencyWarnings: dependencyReport.warnings,
-            blockedRiskIds: dependencyReport.risks
-              .filter((risk): boolean => risk.severity === 'error')
-              .map((risk) => risk.id),
-            blockedNodeIds: dependencyReport.risks
-              .filter((risk): boolean => risk.severity === 'error')
-              .map((risk) => risk.nodeId),
-            runStartedAt,
-            traceId,
-          },
-        });
-        throw new Error(
-          `Strict flow blocked run: ${dependencyReport.errors} dependency error(s) detected.`,
-        );
-      }
+    const supplementalWarnings = runPreflight.warnings.filter(
+      (warning) => warning.source !== 'compile' && warning.source !== 'validation'
+    );
+    if (supplementalWarnings.length > 0) {
+      const summaryMessage =
+        supplementalWarnings[0]?.message ??
+        'Preflight warnings detected.';
+      await repo.createRunEvent({
+        runId: run.id,
+        level: 'warn',
+        message: summaryMessage,
+        metadata: {
+          preflightWarnings: supplementalWarnings,
+          runStartedAt,
+          traceId,
+        },
+      });
     }
 
     const cancelledBeforeExecution = await startCancellationMonitor();
@@ -1124,8 +1185,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           });
 
           // Track intermediate state so SSE stream can deliver per-node progress
-          const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
-          const safePrevOutputs = toJsonSafe(prevOutputs) as RuntimePortValues;
+          const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
+          const safePrevOutputs = cloneJsonSafe(prevOutputs) as RuntimePortValues;
           accInputs[node.id] = safeInputs;
           accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'running' } as RuntimePortValues;
 
@@ -1206,8 +1267,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       }) => {
         try {
           // Update accumulated state with completed outputs
-          const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
-          const safeOutputs = toJsonSafe(nextOutputs) as RuntimePortValues;
+          const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
+          const safeOutputs = cloneJsonSafe(nextOutputs) as RuntimePortValues;
           const rawOutputStatus =
             typeof safeOutputs?.['status'] === 'string'
               ? safeOutputs['status'].trim().toLowerCase()
@@ -1367,8 +1428,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         runStartedAt: string;
       }) => {
         try {
-          const safeInputs = toJsonSafe(nodeInputs) as RuntimePortValues;
-          const safePrevOutputs = toJsonSafe(prevOutputs) as RuntimePortValues;
+          const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
+          const safePrevOutputs = cloneJsonSafe(prevOutputs) as RuntimePortValues;
           accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'failed' } as RuntimePortValues;
           const attempt = nodeAttemptMap.get(node.id) ?? 0;
           const nodeSpanId = `${node.id}:${attempt}:${iteration}`;

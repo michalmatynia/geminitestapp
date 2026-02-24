@@ -170,6 +170,7 @@ export const validatorScopeSchema = z.enum([
   'prompt-exploder',
   'case-resolver-prompt-exploder',
   'case-resolver-plain-text',
+  'ai-paths',
 ]);
 
 export type ValidatorScopeDto = z.infer<typeof validatorScopeSchema>;

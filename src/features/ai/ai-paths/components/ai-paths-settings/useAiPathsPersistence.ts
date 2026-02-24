@@ -29,9 +29,11 @@ import {
   createPathMeta,
   compileGraph,
   normalizeNodes,
+  palette,
   migrateDatabaseConfigCollections,
   migratePathConfigCollections,
   normalizeAiPathsValidationConfig,
+  repairPathNodeIdentities,
   safeParseJson,
   stableStringify,
   sanitizeEdges,
@@ -515,13 +517,23 @@ export function useAiPathsPersistence({
                 const normalizedAiPathsValidation = normalizeAiPathsValidationConfig(
                   migration.config.aiPathsValidation
                 );
-                const normalizedConfigNodes = normalizeNodes(migration.config.nodes ?? []);
+                const identityRepair = repairPathNodeIdentities(migration.config, {
+                  palette,
+                });
+                if (identityRepair.warnings.length > 0) {
+                  console.warn('[AI Paths] Node identity repair applied during load.', {
+                    pathId: meta.id,
+                    warnings: identityRepair.warnings,
+                  });
+                }
+                const repairedConfig = identityRepair.config;
+                const normalizedConfigNodes = normalizeNodes(repairedConfig.nodes ?? []);
                 const normalizedConfigEdges = sanitizeEdges(
                   normalizedConfigNodes,
-                  Array.isArray(migration.config.edges) ? migration.config.edges : []
+                  Array.isArray(repairedConfig.edges) ? repairedConfig.edges : []
                 );
                 const normalizedConfig: PathConfig = {
-                  ...migration.config,
+                  ...repairedConfig,
                   nodes: normalizedConfigNodes,
                   edges: normalizedConfigEdges,
                   runCount: normalizedRunCount,
@@ -532,6 +544,7 @@ export function useAiPathsPersistence({
                 settingsConfigs[meta.id] = normalizedConfig;
                 if (
                   migration.changed ||
+                  identityRepair.changed ||
                   normalizedRunCountRaw !== normalizedRunCount ||
                   migration.config.strictFlowMode !== normalizedStrictFlowMode ||
                   migration.config.blockedRunPolicy !== normalizedBlockedRunPolicy ||

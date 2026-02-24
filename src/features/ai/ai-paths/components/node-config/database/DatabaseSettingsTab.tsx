@@ -15,6 +15,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
   const databaseConfig: DatabaseConfig =
     (selectedNode.config?.database as DatabaseConfig) ?? { operation: 'query' };
   const writeSource = databaseConfig.writeSource ?? 'bundle';
+  const onZeroAffectedPolicy = databaseConfig.writeOutcomePolicy?.onZeroAffected ?? 'fail';
   const guard = databaseConfig.parameterInferenceGuard ?? {};
   const updateGuard = (patch: Partial<NonNullable<DatabaseConfig['parameterInferenceGuard']>>): void =>
     updateSelectedNodeConfig({
@@ -151,6 +152,34 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
               triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
             />
           </div>
+        </div>
+      )}
+
+      {(operation === 'insert' || operation === 'update' || operation === 'delete') && (
+        <div className='space-y-2'>
+          <Label className='text-xs text-gray-400'>Write Outcome Policy</Label>
+          <SelectSimple
+            size='sm'
+            value={onZeroAffectedPolicy}
+            onValueChange={(value: string): void =>
+              updateSelectedNodeConfig({
+                database: {
+                  ...databaseConfig,
+                  writeOutcomePolicy: {
+                    onZeroAffected: value === 'warn' ? 'warn' : 'fail',
+                  },
+                },
+              })
+            }
+            options={[
+              { value: 'fail', label: 'Fail run when 0 records affected' },
+              { value: 'warn', label: 'Warn only when 0 records affected' },
+            ]}
+            triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+          />
+          <p className='text-[11px] text-gray-500'>
+            Controls behavior when a write executes successfully but changes no records.
+          </p>
         </div>
       )}
 

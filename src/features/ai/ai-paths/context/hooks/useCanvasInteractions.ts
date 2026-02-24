@@ -11,8 +11,11 @@ import {
   VIEW_MARGIN,
   clampScale,
   clampTranslate,
+  palette,
   getDefaultConfigForType,
   getPortOffsetY,
+  createNodeInstanceId,
+  resolveNodeTypeId,
   sanitizeEdges,
   validateConnection,
 } from '@/features/ai/ai-paths/lib';
@@ -738,11 +741,7 @@ export function useCanvasInteractions(args?: {
       const oldToNewNodeId = new Map<string, string>();
 
       const generateNodeId = (): string => {
-        let candidate: string;
-        do {
-          candidate = `node-${Math.random().toString(36).slice(2, 10)}`;
-        } while (existingNodeIdSet.has(candidate));
-        return candidate;
+        return createNodeInstanceId(existingNodeIdSet);
       };
 
       const generateEdgeId = (): string => {
@@ -760,7 +759,6 @@ export function useCanvasInteractions(args?: {
       const pastedNodes = payload.nodes.map((node: AiNode): AiNode => {
         const newNodeId = generateNodeId();
         oldToNewNodeId.set(node.id, newNodeId);
-        existingNodeIdSet.add(newNodeId);
         const relativeX = node.position.x - payload.bounds.minX;
         const relativeY = node.position.y - payload.bounds.minY;
         const nextX = Math.min(
@@ -774,6 +772,8 @@ export function useCanvasInteractions(args?: {
         return {
           ...cloneValue(node),
           id: newNodeId,
+          instanceId: newNodeId,
+          nodeTypeId: resolveNodeTypeId(node, palette),
           position: { x: nextX, y: nextY },
         };
       });
@@ -2320,11 +2320,13 @@ export function useCanvasInteractions(args?: {
     const defaultConfig = getDefaultConfigForType(payload.type, payload.outputs, payload.inputs);
     const mergedConfig = payload.config ? { ...defaultConfig, ...payload.config } : defaultConfig;
     
-    const newNodeId = `node-${Math.random().toString(36).slice(2, 10)}`;
+    const newNodeId = createNodeInstanceId(new Set(nodes.map((node: AiNode): string => node.id)));
     const nowIso = new Date().toISOString();
     const newNode: AiNode = {
       ...payload,
       id: newNodeId,
+      instanceId: newNodeId,
+      nodeTypeId: resolveNodeTypeId(payload, palette),
       createdAt: nowIso,
       updatedAt: null,
       position: { x: nextX, y: nextY },

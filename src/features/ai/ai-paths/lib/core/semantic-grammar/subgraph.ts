@@ -7,6 +7,7 @@ import type {
 } from '@/shared/contracts/ai-paths-semantic-grammar';
 
 import { serializePathConfigToSemanticCanvas } from './serialize';
+import { createNodeInstanceId, resolveNodeTypeId } from '../utils';
 
 export type BuildSemanticSubgraphOptions = {
   selectedNodeIds: string[];
@@ -55,6 +56,22 @@ const resolveUniqueId = (desiredId: string, existingIds: Set<string>): string =>
   const fallback = `${base}_${Date.now().toString(36)}`;
   existingIds.add(fallback);
   return fallback;
+};
+
+const resolveSemanticIdentityValue = (
+  node: SemanticNode,
+  key: 'nodeTypeId' | 'instanceId'
+): string => {
+  const extensions = node.extensions;
+  if (!extensions || typeof extensions !== 'object' || Array.isArray(extensions)) {
+    return '';
+  }
+  const identity = (extensions)['aiPathsIdentity'];
+  if (!identity || typeof identity !== 'object' || Array.isArray(identity)) {
+    return '';
+  }
+  const value = (identity as Record<string, unknown>)[key];
+  return typeof value === 'string' ? value.trim() : '';
 };
 
 export const buildSemanticSubgraphFromPathConfig = (
@@ -154,10 +171,21 @@ export const applySemanticSubgraphToPathConfig = (
   const edgeIdMap: Record<string, string> = {};
 
   const appendedNodes = subgraph.nodes.map((node: SemanticNode): AiNode => {
-    const remappedId = resolveUniqueId(`${idPrefix}${node.id}`, existingNodeIds);
+    const remappedId = createNodeInstanceId(existingNodeIds);
     nodeIdMap[node.id] = remappedId;
+    const semanticNodeTypeId = resolveSemanticIdentityValue(node, 'nodeTypeId');
+    const resolvedNodeTypeId =
+      semanticNodeTypeId.length > 0
+        ? semanticNodeTypeId
+        : resolveNodeTypeId({
+          type: node.type,
+          title: node.title,
+          config: node.config as AiNode['config'] | undefined,
+        });
     return {
       id: remappedId,
+      instanceId: remappedId,
+      nodeTypeId: resolvedNodeTypeId,
       type: node.type,
       title: node.title,
       description: node.description,

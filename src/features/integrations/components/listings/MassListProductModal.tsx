@@ -23,21 +23,14 @@ interface MassListProductModalProps extends EntityModalProps<string[]> {
 function MassListProductModalContent(): React.JSX.Element {
   const {
     productIds,
-    integrationId,
-    connectionId,
     onClose,
-    onSuccess,
   } = useMassListProductModalViewContext();
   const [logsOpen, setLogsOpen] = useState(false);
 
   const {
     loadingIntegrations: loading,
-    selectedConnectionId,
     selectedIntegration,
     isBaseComIntegration,
-    selectedInventoryId,
-    selectedTemplateId,
-    allowDuplicateSku,
   } = useListingSettingsContext();
 
   const {
@@ -46,17 +39,7 @@ function MassListProductModalContent(): React.JSX.Element {
     exportLogs,
     handleSubmit,
     submitting,
-  } = useMassListForm({
-    productIds,
-    integrationId,
-    connectionId,
-    isBaseComIntegration,
-    selectedConnectionId,
-    selectedInventoryId,
-    selectedTemplateId,
-    allowDuplicateSku,
-    onSuccess,
-  });
+  } = useMassListForm();
 
   return (
     <FormModal

@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { sanitizePathConfig } from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
-import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
+import {
+  buildPersistedRuntimeState,
+  sanitizePathConfig,
+} from '@/features/ai/ai-paths/components/AiPathsSettingsUtils';
+import type { AiNode, Edge, PathConfig, RuntimeState } from '@/shared/contracts/ai-paths';
 
 const buildNode = (patch: Partial<AiNode>): AiNode =>
   ({
@@ -95,7 +98,8 @@ describe('sanitizePathConfig', () => {
 
     const sanitized = sanitizePathConfig(config);
 
-    expect(sanitized.edges).toEqual(config.edges);
+    expect(sanitized.edges).toHaveLength(1);
+    expect(sanitized.edges[0]).toMatchObject(config.edges[0] as Edge);
   });
 
   it('migrates legacy Trigger data edges through a Fetcher node', () => {
@@ -167,5 +171,38 @@ describe('sanitizePathConfig', () => {
           edge.toPort === 'entityId'
       )
     ).toBe(true);
+  });
+
+  it('preserves shared object-backed ports when persisting runtime state', () => {
+    const sharedValue = {
+      color: 'red',
+    };
+    const runtimeState = {
+      inputs: {
+        'mapper-1': {
+          value: sharedValue,
+        },
+      },
+      outputs: {
+        'mapper-1': {
+          value: sharedValue,
+        },
+        'compare-1': {
+          value: sharedValue,
+        },
+      },
+    } as RuntimeState;
+
+    const persisted = buildPersistedRuntimeState(runtimeState, [
+      buildNode({ id: 'mapper-1', type: 'mapper', outputs: ['value'] }),
+      buildNode({ id: 'compare-1', type: 'compare', outputs: ['value'] }),
+    ]);
+    const parsed = JSON.parse(persisted) as Record<string, unknown>;
+    const inputs = parsed['inputs'] as Record<string, Record<string, unknown>>;
+    const outputs = parsed['outputs'] as Record<string, Record<string, unknown>>;
+
+    expect(inputs['mapper-1']?.['value']).toEqual(sharedValue);
+    expect(outputs['mapper-1']?.['value']).toEqual(sharedValue);
+    expect(outputs['compare-1']?.['value']).toEqual(sharedValue);
   });
 });

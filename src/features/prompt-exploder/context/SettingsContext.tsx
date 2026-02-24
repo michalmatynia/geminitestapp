@@ -11,6 +11,7 @@ import {
 import { getPromptValidationObservabilitySnapshot } from '@/features/prompt-core/runtime-observability';
 import {
   parsePromptEngineSettings,
+  parsePromptValidationRules,
   PROMPT_ENGINE_SETTINGS_KEY,
   type PromptValidationRule,
 } from '@/features/prompt-engine/settings';
@@ -377,7 +378,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       const snapshot = getPromptValidationObservabilitySnapshot();
       if (snapshot.health.status === 'ok') return;
       logClientError(
-        new Error(`Prompt runtime health \${snapshot.health.status}`),
+        new Error('Prompt runtime health ${snapshot.health.status}'),
         {
           context: {
             source: 'PromptExploderSettingsContext',
@@ -551,7 +552,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         value: serializeSetting(result.nextSettings),
       });
       toast(
-        `Pattern pack synced. Added \${result.addedRuleIds.length}, updated \${result.updatedRuleIds.length}.`,
+        `Pattern pack synced. Added ${result.addedRuleIds.length}, updated ${result.updatedRuleIds.length}.`,
         { variant: 'success' }
       );
     } catch (error) {
@@ -702,7 +703,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       }
       setSnapshotDraftName('');
       setSelectedSnapshotId(snapshot.id);
-      toast(`Snapshot saved (\${snapshot.ruleCount} rules).`, { variant: 'success' });
+      toast(`Snapshot saved (${snapshot.ruleCount} rules).`, { variant: 'success' });
     } catch (error) {
       toast(
         error instanceof Error
@@ -727,7 +728,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     }
     const parsed = parsePromptValidationRules(selectedSnapshot.rulesJson || '[]');
     if (!parsed.ok) {
-      toast(`Snapshot is invalid: \${parsed.error}`, { variant: 'error' });
+      toast(`Snapshot is invalid: ${parsed.error}`, { variant: 'error' });
       return;
     }
     try {
@@ -754,7 +755,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         return;
       }
       toast(
-        `Snapshot restored: \${selectedSnapshot.name} (\${parsed.rules.length} rules).`,
+        `Snapshot restored: ${selectedSnapshot.name} (${parsed.rules.length} rules).`,
         { variant: 'success' }
       );
     } catch (error) {
@@ -788,7 +789,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         toast('Snapshot was already deleted.', { variant: 'info' });
         return;
       }
-      toast(`Deleted snapshot: \${selectedSnapshot.name}`, { variant: 'success' });
+      toast(`Deleted snapshot: ${selectedSnapshot.name}`, { variant: 'success' });
     } catch (error) {
       toast(
         error instanceof Error ? error.message : 'Failed to delete snapshot.',
@@ -824,7 +825,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
               : template
           )
         );
-        toast(`Template state changed to \${nextState}.`, { variant: 'success' });
+        toast(`Template state changed to ${nextState}.`, { variant: 'success' });
       } catch (error) {
         toast(
           error instanceof Error ? error.message : 'Failed to update template state.',

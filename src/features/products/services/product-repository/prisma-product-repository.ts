@@ -840,6 +840,56 @@ const createTransactionalRepository = (
     });
   },
 
+  bulkReplaceProductCatalogs: async (productIds, catalogIds) => {
+    if (productIds.length === 0) return;
+    const uniqueCatalogIds = Array.from(new Set(catalogIds));
+    const existing = await tx.catalog.findMany({
+      where: { id: { in: uniqueCatalogIds } },
+      select: { id: true },
+    });
+    const validCatalogIds = existing.map((entry: { id: string }) => entry.id);
+
+    await tx.productCatalog.deleteMany({
+      where: { productId: { in: productIds } },
+    });
+    if (validCatalogIds.length > 0) {
+      await tx.productCatalog.createMany({
+        data: productIds.flatMap((productId) =>
+          validCatalogIds.map((catalogId) => ({ productId, catalogId })),
+        ),
+        skipDuplicates: true,
+      });
+    }
+  },
+
+  bulkAddProductCatalogs: async (productIds, catalogIds) => {
+    if (productIds.length === 0 || catalogIds.length === 0) return;
+    const uniqueCatalogIds = Array.from(new Set(catalogIds));
+    const existing = await tx.catalog.findMany({
+      where: { id: { in: uniqueCatalogIds } },
+      select: { id: true },
+    });
+    const validCatalogIds = existing.map((entry: { id: string }) => entry.id);
+    if (validCatalogIds.length === 0) return;
+
+    await tx.productCatalog.createMany({
+      data: productIds.flatMap((productId) =>
+        validCatalogIds.map((catalogId) => ({ productId, catalogId })),
+      ),
+      skipDuplicates: true,
+    });
+  },
+
+  bulkRemoveProductCatalogs: async (productIds, catalogIds) => {
+    if (productIds.length === 0 || catalogIds.length === 0) return;
+    await tx.productCatalog.deleteMany({
+      where: {
+        productId: { in: productIds },
+        catalogId: { in: catalogIds },
+      },
+    });
+  },
+
   removeProductImage: async (productId, imageFileId) => {
     await tx.productImage.deleteMany({
       where: { productId, imageFileId },

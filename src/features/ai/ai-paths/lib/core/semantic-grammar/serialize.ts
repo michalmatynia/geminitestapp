@@ -1,4 +1,4 @@
-import type { Edge, PathConfig } from '@/shared/contracts/ai-paths';
+import type { AiNode, Edge, PathConfig } from '@/shared/contracts/ai-paths';
 import type {
   CanvasSemanticDocumentDto as CanvasSemanticDocument,
   SemanticEdgeDto as SemanticEdge,
@@ -130,24 +130,40 @@ export const serializePathConfigToSemanticCanvas = (
     semanticEdges,
   );
 
-  const semanticNodesRaw = (pathConfig.nodes ?? []).map((node): SemanticNode => ({
-    id: node.id,
-    type: node.type,
-    title: node.title,
-    description: node.description,
-    position: node.position,
-    inputs: node.inputs,
-    outputs: node.outputs,
-    ...(node.config && typeof node.config === 'object' ? { config: node.config } : {}),
-    ...(node.data && typeof node.data === 'object' ? { data: node.data } : {}),
-    ...(typeof node.createdAt === 'string' ? { createdAt: node.createdAt } : {}),
-    ...(typeof node.updatedAt === 'string' || node.updatedAt === null
-      ? { updatedAt: node.updatedAt }
-      : {}),
-    ...(includeConnections
-      ? { connections: nodeConnections.get(node.id) ?? { incoming: [], outgoing: [] } }
-      : {}),
-  }));
+  const semanticNodesRaw = (pathConfig.nodes ?? []).map((node: AiNode): SemanticNode => {
+    const nodeTypeId =
+      typeof node.nodeTypeId === 'string' ? node.nodeTypeId.trim() : '';
+    const instanceId =
+      typeof node.instanceId === 'string' ? node.instanceId.trim() : '';
+    const identityExtension =
+      nodeTypeId.length > 0 || instanceId.length > 0
+        ? {
+          aiPathsIdentity: {
+            ...(nodeTypeId.length > 0 ? { nodeTypeId } : {}),
+            instanceId: instanceId.length > 0 ? instanceId : node.id,
+          },
+        }
+        : null;
+    return {
+      id: node.id,
+      type: node.type,
+      title: node.title,
+      description: node.description,
+      position: node.position,
+      inputs: node.inputs,
+      outputs: node.outputs,
+      ...(node.config && typeof node.config === 'object' ? { config: node.config } : {}),
+      ...(node.data && typeof node.data === 'object' ? { data: node.data } : {}),
+      ...(typeof node.createdAt === 'string' ? { createdAt: node.createdAt } : {}),
+      ...(typeof node.updatedAt === 'string' || node.updatedAt === null
+        ? { updatedAt: node.updatedAt }
+        : {}),
+      ...(includeConnections
+        ? { connections: nodeConnections.get(node.id) ?? { incoming: [], outgoing: [] } }
+        : {}),
+      ...(identityExtension ? { extensions: identityExtension } : {}),
+    };
+  });
   const semanticNodes = sortById
     ? sortSemanticNodes(semanticNodesRaw)
     : semanticNodesRaw;

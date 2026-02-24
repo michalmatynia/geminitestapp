@@ -58,6 +58,10 @@ const scopeOptions: Array<{ value: ValidatorScope; label: string }> = [
     value: 'case-resolver-plain-text',
     label: VALIDATOR_SCOPE_LABELS['case-resolver-plain-text'],
   },
+  {
+    value: 'ai-paths',
+    label: VALIDATOR_SCOPE_LABELS['ai-paths'],
+  },
 ];
 
 const createListId = (): string => {

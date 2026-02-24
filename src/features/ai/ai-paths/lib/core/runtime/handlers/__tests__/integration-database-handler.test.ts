@@ -147,7 +147,7 @@ describe('handleDatabase', () => {
     );
   });
 
-  it('does not throw when a write operation returns a guardrail-flagged error', async () => {
+  it('throws when a write operation returns a fatal guardrail-flagged error', async () => {
     handleDatabaseMongoActionMock.mockResolvedValue({
       result: null,
       bundle: {
@@ -156,11 +156,60 @@ describe('handleDatabase', () => {
       },
     });
 
+    await expect(
+      handleDatabase({
+        node: {
+          id: 'node-db-guardrail',
+          type: 'database',
+          title: 'Database Update',
+          inputs: [],
+          outputs: [],
+          description: '',
+          position: { x: 0, y: 0 },
+          config: {
+            database: {
+              operation: 'update',
+              useMongoActions: true,
+              actionCategory: 'update',
+              action: 'updateOne',
+            },
+          },
+        } as any,
+        nodeInputs: {},
+        prevOutputs: {},
+        executed: {} as any,
+        reportAiPathsError,
+        toast,
+        fetchEntityCached: vi.fn(),
+        simulationEntityType: null,
+        simulationEntityId: null,
+        triggerContext: {},
+        fallbackEntityId: null,
+        strictFlowMode: true,
+        runMeta: null,
+      } as any)
+    ).rejects.toThrow('Mapping-based update mode is disabled');
+  });
+
+  it('does not throw when write outcome is warning only', async () => {
+    handleDatabaseMongoActionMock.mockResolvedValue({
+      result: { matchedCount: 0, modifiedCount: 0 },
+      bundle: {
+        error: '0 rows affected',
+        guardrail: 'zero-affected',
+      },
+      writeOutcome: {
+        status: 'warning',
+        code: 'zero_affected',
+        message: '0 rows affected',
+      },
+    });
+
     const result = await handleDatabase({
       node: {
-        id: 'node-db-guardrail',
+        id: 'node-db-warning',
         type: 'database',
-        title: 'Database Update',
+        title: 'Database Update Warning',
         inputs: [],
         outputs: [],
         description: '',
@@ -190,10 +239,10 @@ describe('handleDatabase', () => {
 
     expect(result).toEqual(
       expect.objectContaining({
-        bundle: expect.objectContaining({
-          guardrail: 'update-mode-explicit-only',
+        writeOutcome: expect.objectContaining({
+          status: 'warning',
         }),
-      })
+      }),
     );
   });
 

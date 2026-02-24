@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { evaluateGraph } from '@/features/ai/ai-paths/lib/core/runtime/engine';
+import { evaluateGraphServer as evaluateGraph } from '@/features/ai/ai-paths/lib/core/runtime/engine-server';
 import type { AiNode } from '@/shared/contracts/ai-paths';
 import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 

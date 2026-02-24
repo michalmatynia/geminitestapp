@@ -1,11 +1,16 @@
 import type {
   DatabaseAction,
+  DatabaseConfig,
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 import type { NodeHandlerContext } from '@/shared/contracts/ai-paths-runtime';
 
 import { coerceArrayLike } from './database-parameter-inference';
 import { dbApi, ApiResponse } from '../../../api';
+import {
+  evaluateWriteOutcome,
+  resolveWriteOutcomePolicy,
+} from './integration-database-write-guardrails';
 
 export type ExecuteMongoCollectionUpdateInput = {
   action: DatabaseAction;
@@ -14,6 +19,7 @@ export type ExecuteMongoCollectionUpdateInput = {
   executed: NodeHandlerContext['executed'];
   reportAiPathsError: NodeHandlerContext['reportAiPathsError'];
   toast: NodeHandlerContext['toast'];
+  dbConfig: DatabaseConfig;
   queryPayload: Record<string, unknown>;
   collection: string;
   idType: unknown;
@@ -33,6 +39,7 @@ export async function executeMongoCollectionUpdate({
   executed,
   reportAiPathsError,
   toast,
+  dbConfig,
   queryPayload,
   collection,
   idType,
@@ -95,6 +102,34 @@ export async function executeMongoCollectionUpdate({
     };
   }
 
+  const writeOutcomeEvaluation = evaluateWriteOutcome({
+    operation: 'update',
+    action,
+    result: updateResult.data,
+    policy: resolveWriteOutcomePolicy(dbConfig),
+  });
+  const writeOutcome = writeOutcomeEvaluation.writeOutcome;
+  if (writeOutcomeEvaluation.isZeroAffected) {
+    const message =
+      writeOutcome.message ??
+      `Database write affected 0 records for update (${action}).`;
+    if (writeOutcome.status === 'failed') {
+      reportAiPathsError(
+        new Error(message),
+        {
+          action: 'dbWriteOutcome',
+          collection,
+          nodeId: node.id,
+          writeOutcome,
+        },
+        'Database update failed:',
+      );
+      toast(message, { variant: 'error' });
+      throw new Error(message);
+    }
+    toast(message, { variant: 'warning' });
+  }
+
   const modifiedCount: number =
     typeof (updateResult.data as Record<string, unknown> | null)?.['modifiedCount'] === 'number'
       ? ((updateResult.data as Record<string, unknown>)['modifiedCount'] as number)
@@ -109,10 +144,12 @@ export async function executeMongoCollectionUpdate({
       modifiedCount,
     };
   }
-  toast(
-    `Entity updated in ${collection} (${modifiedCount} row${modifiedCount === 1 ? '' : 's'}).`,
-    { variant: 'success' },
-  );
+  if (writeOutcome.status !== 'warning') {
+    toast(
+      `Entity updated in ${collection} (${modifiedCount} row${modifiedCount === 1 ? '' : 's'}).`,
+      { variant: 'success' },
+    );
+  }
   const primaryValue: unknown = updates[primaryTarget];
   return {
     content_en:
@@ -121,8 +158,12 @@ export async function executeMongoCollectionUpdate({
           (nodeInputs['content_en'] as string | undefined))
         : (nodeInputs['content_en'] as string | undefined),
     result: updateResult.data,
-    bundle: updateResult.data as Record<string, unknown>,
+    bundle: {
+      ...(updateResult.data as Record<string, unknown>),
+      writeOutcome,
+    },
     debugPayload,
+    writeOutcome,
     aiPrompt,
   };
 }

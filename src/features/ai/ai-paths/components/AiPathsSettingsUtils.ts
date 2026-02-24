@@ -10,6 +10,8 @@ import type {
 import {
   safeParseJson,
   parseJsonSafe,
+  palette,
+  cloneJsonSafe,
   coerceInput,
   renderTemplate,
   dbApi,
@@ -20,7 +22,9 @@ import {
   migrateTriggerToFetcherGraph,
   normalizeNodes,
   safeStringify,
+  safeJsonStringify as sharedSafeJsonStringify,
   sanitizeEdges,
+  repairPathNodeIdentities,
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
 import type { DbQueryPayload } from '@/features/ai/ai-paths/lib/api/client';
@@ -68,49 +72,10 @@ const sleep = (ms: number, signal?: AbortSignal): Promise<void> =>
     signal.addEventListener('abort', onAbort, { once: true });
   });
 
-export const toJsonSafe = (value: unknown): unknown => {
-  const seen = new WeakSet();
-  const replacer = (_key: string, val: unknown): unknown => {
-    if (typeof val === 'bigint') return val.toString();
-    if (val instanceof Date) return val.toISOString();
-    if (val instanceof Set) return Array.from(val.values()) as unknown[];
-    if (val instanceof Map) return Object.fromEntries(val.entries()) as Record<string, unknown>;
-    if (typeof val === 'function' || typeof val === 'symbol') return undefined;
-    if (val && typeof val === 'object') {
-      if (seen.has(val)) return undefined;
-      seen.add(val);
-    }
-    
-    return val;
-  };
-  try {
-    return JSON.parse(JSON.stringify(value, replacer)) as unknown;
-  } catch {
-    return null;
-  }
-};
+export const toJsonSafe = (value: unknown): unknown => cloneJsonSafe(value);
 
-export const safeJsonStringify = (value: unknown): string => {
-  const seen = new WeakSet();
-  const replacer = (_key: string, val: unknown): unknown => {
-    if (typeof val === 'bigint') return val.toString();
-    if (val instanceof Date) return val.toISOString();
-    if (val instanceof Set) return Array.from(val.values()) as unknown[];
-    if (val instanceof Map) return Object.fromEntries(val.entries()) as Record<string, unknown>;
-    if (typeof val === 'function' || typeof val === 'symbol') return undefined;
-    if (val && typeof val === 'object') {
-      if (seen.has(val)) return undefined;
-      seen.add(val);
-    }
-    
-    return val;
-  };
-  try {
-    return JSON.stringify(value, replacer);
-  } catch {
-    return '';
-  }
-};
+export const safeJsonStringify = (value: unknown): string =>
+  sharedSafeJsonStringify(value);
 
 const EMPTY_RUNTIME_STATE: RuntimeState = { inputs: {}, outputs: {} } as unknown as RuntimeState;
 
@@ -241,6 +206,11 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
     const nextDatabaseConfig = {
       ...(databaseConfig as Partial<DatabaseConfig>),
       operation: isDatabaseOperation(operation) ? operation : 'query',
+      writeOutcomePolicy: {
+        onZeroAffected:
+          (databaseConfig as Partial<DatabaseConfig>).writeOutcomePolicy
+            ?.onZeroAffected ?? 'fail',
+      },
     } as DatabaseConfig;
     delete (nextDatabaseConfig as { schemaSnapshot?: unknown })['schemaSnapshot'];
     return {
@@ -251,27 +221,41 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
       },
     };
   });
-  const normalizedNodes = normalizeNodes(sanitizedNodes);
+  const identityRepair = repairPathNodeIdentities(
+    {
+      ...contractBackfilled,
+      nodes: sanitizedNodes,
+    },
+    { palette }
+  );
+  if (identityRepair.warnings.length > 0) {
+    console.warn('[AI Paths] Node identity repair applied.', {
+      pathId: config.id,
+      warnings: identityRepair.warnings,
+    });
+  }
+  const repairedConfig = identityRepair.config;
+  const normalizedNodes = normalizeNodes(repairedConfig.nodes);
   const migratedTriggerGraph = migrateTriggerToFetcherGraph(
     normalizedNodes,
-    Array.isArray(contractBackfilled.edges) ? contractBackfilled.edges : []
+    Array.isArray(repairedConfig.edges) ? repairedConfig.edges : []
   );
   const graphNodes = normalizeNodes(migratedTriggerGraph.nodes);
   const normalizedEdges = sanitizeEdges(
     graphNodes,
     migratedTriggerGraph.edges
   );
-  const uiState = contractBackfilled.uiState ? { ...contractBackfilled.uiState } : undefined;
+  const uiState = repairedConfig.uiState ? { ...repairedConfig.uiState } : undefined;
   if (uiState && 'configOpen' in uiState) {
     delete (uiState as { configOpen?: boolean }).configOpen;
   }
   return {
-    ...contractBackfilled,
+    ...repairedConfig,
     nodes: graphNodes,
     edges: normalizedEdges,
     uiState,
     runtimeState: buildPersistedRuntimeState(
-      parseRuntimeState(contractBackfilled.runtimeState),
+      parseRuntimeState(repairedConfig.runtimeState),
       graphNodes
     ),
   };

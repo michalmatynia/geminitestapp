@@ -59,6 +59,7 @@ export async function handleDatabaseInsertOperation({
     executed,
     reportAiPathsError,
     toast,
+    dbConfig,
     queryConfig,
     templateContext,
     dryRun,
@@ -67,10 +68,15 @@ export async function handleDatabaseInsertOperation({
     configuredCollection: resolution.configuredCollection,
     forceCollectionInsert: resolution.forceCollectionInsert,
   });
+  const writeOutcome =
+    insertResult && typeof insertResult === 'object' && !Array.isArray(insertResult)
+      ? (insertResult as Record<string, unknown>)['writeOutcome']
+      : undefined;
 
   return {
     result: insertResult,
     bundle: insertResult as Record<string, unknown>,
+    ...(writeOutcome !== undefined ? { writeOutcome } : {}),
     content_en:
       typeof (insertResult as Record<string, unknown>)?.['content_en'] ===
       'string'

@@ -9,7 +9,8 @@ import type {
   CaseResolverRelationGraph,
   CaseResolverFileEditDraft,
   CaseResolverNodeMeta,
-  CaseResolverDocumentHistoryEntry
+  CaseResolverDocumentHistoryEntry,
+  CaseResolverFile
 } from '@/shared/contracts/case-resolver';
 import type { 
   CaseResolverCaptureProposalState,
@@ -120,6 +121,17 @@ export type CaseResolverViewContextValue = {
     mutationDurationMs?: number | null;
     totalDurationMs?: number | null;
   } | null;
+  handleUpdateActiveFileParties: (patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee' | 'referenceCaseIds'>>) => void;
+  handleLinkRelatedFiles: (fileIdA: string, fileIdB: string) => void;
+  handleUnlinkRelatedFile: (sourceFileId: string, targetFileId: string) => void;
+  handleSaveFileEditor: () => void;
+  handleDiscardFileEditorDraft: () => void;
+  handleDeactivateActiveFile: () => void;
+  handleCreateDocumentFromSearch: () => void;
+  handleOpenFileFromSearch: (id: string) => void;
+  handleEditFileFromSearch: (id: string) => void;
+  handleUpdateActiveCaseMetadata: (patch: Partial<Pick<CaseResolverFile, 'name' | 'parentCaseId' | 'referenceCaseIds' | 'tagId' | 'caseIdentifierId' | 'categoryId' | 'caseStatus'>>) => void;
+  activeCaseFile: CaseResolverFile | null;
 };
 
 const CaseResolverViewContext = createContext<CaseResolverViewContextValue | null>(null);

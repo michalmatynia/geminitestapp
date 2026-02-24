@@ -152,6 +152,7 @@ export async function handleDatabaseMongoUpdateAction({
     executed,
     reportAiPathsError,
     toast,
+    dbConfig,
     queryPayload,
     collection,
     idType,

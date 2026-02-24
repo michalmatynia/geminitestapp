@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
 import {
   useExportToBaseMutation,
   useCreateListingMutation,
@@ -8,15 +9,6 @@ import {
 import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
 import { logClientError } from '@/features/observability';
 import { validateFormData } from '@/shared/validations/form-validation';
-
-type UseProductSelectionFormProps = {
-  selectedIntegrationId: string | null;
-  selectedConnectionId: string | null;
-  isBaseComIntegration: boolean;
-  selectedInventoryId: string | null;
-  selectedTemplateId: string | null;
-  allowDuplicateSku: boolean;
-};
 
 type UseProductSelectionFormResult = {
   productSearch: string;
@@ -29,17 +21,19 @@ type UseProductSelectionFormResult = {
   handleSubmit: (onSuccess: () => void) => Promise<void>;
 };
 
-export function useProductSelectionForm({
-  selectedIntegrationId,
-  selectedConnectionId,
-  isBaseComIntegration,
-  selectedInventoryId,
-  selectedTemplateId,
-  allowDuplicateSku,
-}: UseProductSelectionFormProps): UseProductSelectionFormResult {
+export function useProductSelectionForm(): UseProductSelectionFormResult {
   const [productSearch, setProductSearch] = useState('');
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const {
+    selectedIntegrationId,
+    selectedConnectionId,
+    isBaseComIntegration,
+    selectedInventoryId,
+    selectedTemplateId,
+    allowDuplicateSku,
+  } = useListingSettingsContext();
 
   const exportToBaseMutation = useExportToBaseMutation(selectedProductId || '');
   const createListingMutation = useCreateListingMutation(selectedProductId || '');
@@ -69,8 +63,8 @@ export function useProductSelectionForm({
       setError(null);
       if (isBaseComIntegration) {
         const exportData: ExportToBaseVariables = {
-          connectionId: selectedConnectionId!,
-          inventoryId: selectedInventoryId!,
+          connectionId: selectedConnectionId,
+          inventoryId: selectedInventoryId,
           allowDuplicateSku,
           requestId: createExportRequestId(),
         };
@@ -80,8 +74,8 @@ export function useProductSelectionForm({
         await exportToBaseMutation.mutateAsync(exportData);
       } else {
         await createListingMutation.mutateAsync({
-          integrationId: selectedIntegrationId!,
-          connectionId: selectedConnectionId!,
+          integrationId: selectedIntegrationId,
+          connectionId: selectedConnectionId,
         });
       }
       onSuccess();

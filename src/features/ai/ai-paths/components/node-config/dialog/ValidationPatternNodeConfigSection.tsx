@@ -84,6 +84,7 @@ const SCOPE_OPTIONS: Array<{ value: PromptValidationScope; label: string }> = [
   { value: 'prompt_exploder', label: 'Prompt Exploder' },
   { value: 'case_resolver_prompt_exploder', label: 'Case Resolver Prompt Exploder' },
   { value: 'case_resolver_plain_text', label: 'Case Resolver Plain Text' },
+  { value: 'ai_paths', label: 'AI Paths' },
 ];
 
 const DEFAULT_CONFIG: ValidationPatternConfigDraft = {
@@ -112,6 +113,7 @@ const VALIDATOR_SCOPE_TO_PROMPT_SCOPE: Record<
   'prompt-exploder': 'prompt_exploder',
   'case-resolver-prompt-exploder': 'case_resolver_prompt_exploder',
   'case-resolver-plain-text': 'case_resolver_plain_text',
+  'ai-paths': 'ai_paths',
 };
 
 const parseRuleIdList = (value: string): string[] =>

@@ -20,6 +20,43 @@ export function safeStringify(value: unknown): string {
   return String(value as string);
 }
 
+const normalizeForJsonClone = (value: unknown): unknown => {
+  const ancestors: object[] = [];
+  const replacer = function (this: unknown, _key: string, val: unknown): unknown {
+    if (typeof val === 'bigint') return val.toString();
+    if (val instanceof Date) return val.toISOString();
+    if (val instanceof Set) return Array.from(val.values()) as unknown[];
+    if (val instanceof Map) return Object.fromEntries(val.entries()) as Record<string, unknown>;
+    if (typeof val === 'function' || typeof val === 'symbol') return undefined;
+    if (!val || typeof val !== 'object') return val;
+
+    while (ancestors.length > 0 && ancestors[ancestors.length - 1] !== this) {
+      ancestors.pop();
+    }
+    if (ancestors.includes(val)) return undefined;
+    ancestors.push(val);
+    return val;
+  };
+
+  return JSON.parse(JSON.stringify(value, replacer)) as unknown;
+};
+
+export const cloneJsonSafe = <T>(value: T): T | null => {
+  try {
+    return normalizeForJsonClone(value) as T;
+  } catch {
+    return null;
+  }
+};
+
+export const safeJsonStringify = (value: unknown): string => {
+  try {
+    return JSON.stringify(normalizeForJsonClone(value)) ?? '';
+  } catch {
+    return '';
+  }
+};
+
 const normalizeForHash = (value: unknown, seen: WeakSet<object>): unknown => {
   if (value === undefined) return undefined;
   if (value === null) return null;

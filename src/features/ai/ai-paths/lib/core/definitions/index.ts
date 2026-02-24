@@ -47,6 +47,7 @@ import {
   VIEWER_INPUT_PORTS,
 } from '../constants';
 import { createDefaultPlaywrightConfig } from '../playwright/default-config';
+import { derivePaletteNodeTypeId } from '../utils/node-identity';
 
 const buildOptionalInputContracts = (
   inputs: string[]
@@ -68,7 +69,7 @@ const buildRequiredInputContracts = (
   );
 };
 
-export const palette: NodeDefinition[] = [
+const basePalette: NodeDefinition[] = [
   {
     type: 'trigger',
     title: 'Trigger: Product Modal',
@@ -480,3 +481,37 @@ export const palette: NodeDefinition[] = [
     },
   },
 ];
+
+const ensurePaletteNodeTypeIds = (
+  definitions: NodeDefinition[]
+): NodeDefinition[] => {
+  const usedNodeTypeIds = new Set<string>();
+  return definitions.map(
+    (definition: NodeDefinition, index: number): NodeDefinition => {
+      let collisionSalt = 0;
+      let candidate = derivePaletteNodeTypeId(
+        definition,
+        index,
+        collisionSalt,
+      );
+      while (usedNodeTypeIds.has(candidate)) {
+        collisionSalt += 1;
+        candidate = derivePaletteNodeTypeId(
+          definition,
+          index,
+          collisionSalt,
+        );
+      }
+      usedNodeTypeIds.add(candidate);
+      if (definition.nodeTypeId === candidate) {
+        return definition;
+      }
+      return {
+        ...definition,
+        nodeTypeId: candidate,
+      };
+    }
+  );
+};
+
+export const palette: NodeDefinition[] = ensurePaletteNodeTypeIds(basePalette);

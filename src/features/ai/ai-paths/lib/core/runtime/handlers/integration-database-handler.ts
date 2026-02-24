@@ -1,5 +1,6 @@
 import type {
   DatabaseConfig,
+  DatabaseWriteOutcome,
   DbQueryConfig,
   RuntimePortValues,
   DatabaseOperation,
@@ -118,6 +119,50 @@ const extractDatabaseError = (result: RuntimePortValues): string | null => {
   return null;
 };
 
+const extractWriteOutcome = (result: RuntimePortValues): DatabaseWriteOutcome | null => {
+  const direct = result['writeOutcome'];
+  if (isPlainRecord(direct)) {
+    return direct as DatabaseWriteOutcome;
+  }
+  const bundle = result['bundle'];
+  if (isPlainRecord(bundle) && isPlainRecord(bundle['writeOutcome'])) {
+    return bundle['writeOutcome'] as DatabaseWriteOutcome;
+  }
+  return null;
+};
+
+const extractGuardrailSeverity = (
+  result: RuntimePortValues
+): 'warning' | 'error' | null => {
+  const directMeta = result['guardrailMeta'];
+  if (isPlainRecord(directMeta)) {
+    const severity = directMeta['severity'];
+    if (severity === 'warning' || severity === 'error') {
+      return severity;
+    }
+  }
+  const bundle = result['bundle'];
+  if (isPlainRecord(bundle) && isPlainRecord(bundle['guardrailMeta'])) {
+    const severity = (bundle['guardrailMeta'])['severity'];
+    if (severity === 'warning' || severity === 'error') {
+      return severity;
+    }
+  }
+  return null;
+};
+
+const shouldTreatWriteErrorAsTerminal = (
+  result: RuntimePortValues,
+): boolean => {
+  const writeOutcome = extractWriteOutcome(result);
+  if (writeOutcome?.status === 'failed') return true;
+  if (writeOutcome?.status === 'warning') return false;
+  const guardrailSeverity = extractGuardrailSeverity(result);
+  if (guardrailSeverity === 'error') return true;
+  if (guardrailSeverity === 'warning') return false;
+  return true;
+};
+
 export const handleDatabase: NodeHandler = async ({
   node,
   nodeInputs,
@@ -144,6 +189,9 @@ export const handleDatabase: NodeHandler = async ({
     writeSource: 'bundle',
     writeSourcePath: '',
     dryRun: false,
+    writeOutcomePolicy: {
+      onZeroAffected: 'fail',
+    },
   };
   let writeOperationDetected = isWriteDatabaseOperation(dbConfig);
 
@@ -239,8 +287,11 @@ export const handleDatabase: NodeHandler = async ({
         writeOperationDetected =
           writeOperationDetected || isWriteResultOperation(dbConfig, mongoActionResult);
         const mongoError = extractDatabaseError(mongoActionResult);
-        const isGuardrail = isPlainRecord(mongoActionResult['bundle']) && !!mongoActionResult['bundle']['guardrail'];
-        if (writeOperationDetected && mongoError && !isGuardrail) {
+        if (
+          writeOperationDetected &&
+          mongoError &&
+          shouldTreatWriteErrorAsTerminal(mongoActionResult)
+        ) {
           throw new Error(mongoError);
         }
         return mongoActionResult;
@@ -273,8 +324,11 @@ export const handleDatabase: NodeHandler = async ({
     writeOperationDetected =
       writeOperationDetected || isWriteResultOperation(dbConfig, operationResult);
     const operationError = extractDatabaseError(operationResult);
-    const isGuardrail = isPlainRecord(operationResult['bundle']) && !!operationResult['bundle']['guardrail'];
-    if (writeOperationDetected && operationError && !isGuardrail) {
+    if (
+      writeOperationDetected &&
+      operationError &&
+      shouldTreatWriteErrorAsTerminal(operationResult)
+    ) {
       throw new Error(operationError);
     }
     return operationResult;

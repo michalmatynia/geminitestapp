@@ -42,29 +42,6 @@ type PatternRowProps = {
   pattern: ProductValidationPattern;
   isDragging: boolean;
   isDragTarget: boolean;
-  patternActionsPending: boolean;
-  updatePatternPending: boolean;
-  createPatternPending: boolean;
-  reorderPending: boolean;
-  groupId: string | null;
-  group: { id: string; label: string; debounceMs: number; patternIds: string[] } | null;
-  isGroupFirst: boolean;
-  groupDraft: SequenceGroupDraft | null;
-  dynamicRecipe: ReturnType<typeof parseDynamicReplacementRecipe>;
-  staticReplacement: string | null;
-  onSaveSequenceGroup: (groupId: string) => void;
-  onUngroup: (groupId: string) => void;
-  onPatternDrop: (pattern: ProductValidationPattern, event: React.DragEvent<HTMLDivElement>) => void;
-  onTogglePattern: (pattern: ProductValidationPattern) => void;
-  onDuplicatePattern: (pattern: ProductValidationPattern) => void;
-  onEditPattern: (pattern: ProductValidationPattern) => void;
-  onDeletePattern: (pattern: ProductValidationPattern) => void;
-  setDraggedPatternId: (id: string | null) => void;
-  setDragOverPatternId: (id: string | null) => void;
-  dragOverPatternId: string | null;
-  draggedPatternId: string | null;
-  setGroupDrafts: React.Dispatch<React.SetStateAction<Record<string, SequenceGroupDraft>>>;
-  formatReplacementFields: (fields: unknown) => string;
   isPatternCollapsed: boolean;
   isGroupCollapsed: boolean;
   onTogglePatternCollapse: (patternId: string) => void;
@@ -75,33 +52,66 @@ const PatternRow = memo(function PatternRow({
   pattern,
   isDragging,
   isDragTarget,
-  patternActionsPending,
-  updatePatternPending,
-  createPatternPending,
-  reorderPending,
-  groupId,
-  group,
-  isGroupFirst,
-  groupDraft,
-  dynamicRecipe,
-  staticReplacement,
-  onSaveSequenceGroup,
-  onUngroup,
-  onPatternDrop,
-  onTogglePattern,
-  onDuplicatePattern,
-  onEditPattern,
-  onDeletePattern,
-  setDraggedPatternId,
-  setDragOverPatternId,
-  dragOverPatternId,
-  setGroupDrafts,
-  formatReplacementFields,
   isPatternCollapsed,
   isGroupCollapsed,
   onTogglePatternCollapse,
   onToggleGroupCollapse,
 }: PatternRowProps): React.JSX.Element {
+  const {
+    patternActionsPending,
+    updatePatternPending,
+    createPatternPending,
+    reorderPending,
+    sequenceGroups,
+    firstPatternIdByGroup,
+    getGroupDraft,
+    setGroupDrafts,
+    getSequenceGroupId,
+    formatReplacementFields,
+    handleSaveSequenceGroup,
+    handleUngroup,
+    handlePatternDrop,
+    handleTogglePattern,
+    handleDuplicatePattern,
+    openEdit,
+    setPatternToDelete,
+    dragOverPatternId,
+    setDragOverPatternId,
+    setDraggedPatternId,
+  } = useValidatorSettingsContext();
+
+  const dynamicRecipe = parseDynamicReplacementRecipe(pattern.replacementValue);
+  const staticReplacement = getStaticReplacementValue(pattern.replacementValue);
+  const groupId = getSequenceGroupId(pattern);
+  const group = groupId ? sequenceGroups.get(groupId) ?? null : null;
+  const isGroupFirst = Boolean(groupId && firstPatternIdByGroup.get(groupId) === pattern.id);
+  const groupDraft = groupId ? getGroupDraft(groupId) : null;
+
+  const onSaveSequenceGroup = (gid: string): void => {
+    void handleSaveSequenceGroup(gid);
+  };
+  const onUngroup = (gid: string): void => {
+    void handleUngroup(gid);
+  };
+  const onPatternDrop = (
+    p: ProductValidationPattern,
+    event: React.DragEvent<HTMLDivElement>
+  ): void => {
+    handlePatternDrop(p, event);
+  };
+  const onTogglePattern = (p: ProductValidationPattern): void => {
+    void handleTogglePattern(p);
+  };
+  const onDuplicatePattern = (p: ProductValidationPattern): void => {
+    handleDuplicatePattern(p);
+  };
+  const onEditPattern = (p: ProductValidationPattern): void => {
+    openEdit(p);
+  };
+  const onDeletePattern = (p: ProductValidationPattern): void => {
+    setPatternToDelete(p);
+  };
+
   const hidePatternCard = Boolean(groupId && isGroupCollapsed);
 
   return (
@@ -472,16 +482,8 @@ const PatternRow = memo(function PatternRow({
   prev.pattern === next.pattern &&
   prev.isDragging === next.isDragging &&
   prev.isDragTarget === next.isDragTarget &&
-  prev.patternActionsPending === next.patternActionsPending &&
-  prev.updatePatternPending === next.updatePatternPending &&
-  prev.createPatternPending === next.createPatternPending &&
-  prev.reorderPending === next.reorderPending &&
-  prev.groupDraft === next.groupDraft &&
-  prev.group === next.group &&
-  prev.isGroupFirst === next.isGroupFirst &&
   prev.isPatternCollapsed === next.isPatternCollapsed &&
-  prev.isGroupCollapsed === next.isGroupCollapsed &&
-  prev.dragOverPatternId === next.dragOverPatternId
+  prev.isGroupCollapsed === next.isGroupCollapsed
 );
 
 /**
@@ -495,32 +497,16 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
     patterns,
     orderedPatterns,
     patternActionsPending,
-    reorderPending,
-    createPatternPending,
-    updatePatternPending,
     draggedPatternId,
     dragOverPatternId,
-    setDraggedPatternId,
-    setDragOverPatternId,
     sequenceGroups,
-    firstPatternIdByGroup,
-    getGroupDraft,
-    setGroupDrafts,
     getSequenceGroupId,
-    formatReplacementFields,
     openCreate,
     onCreateSkuAutoIncrementSequence,
     onCreateLatestPriceStockSequence,
     handleCreateNameLengthMirrorPattern,
     handleCreateNameCategoryMirrorPattern,
     handleCreateNameMirrorPolishSequence,
-    handleSaveSequenceGroup,
-    handleUngroup,
-    handlePatternDrop,
-    handleTogglePattern,
-    handleDuplicatePattern,
-    openEdit,
-    setPatternToDelete,
   } = useValidatorSettingsContext();
 
   const handleCreateSkuAutoIncrement = (): void => {
@@ -537,30 +523,6 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
   };
   const handleCreateNameMirrorPolish = (): void => {
     void handleCreateNameMirrorPolishSequence();
-  };
-  const onSaveSequenceGroup = (groupId: string): void => {
-    void handleSaveSequenceGroup(groupId);
-  };
-  const onUngroup = (groupId: string): void => {
-    void handleUngroup(groupId);
-  };
-  const onPatternDrop = (
-    pattern: ProductValidationPattern,
-    event: React.DragEvent<HTMLDivElement>
-  ): void => {
-    handlePatternDrop(pattern, event);
-  };
-  const onTogglePattern = (pattern: ProductValidationPattern): void => {
-    void handleTogglePattern(pattern);
-  };
-  const onDuplicatePattern = (pattern: ProductValidationPattern): void => {
-    handleDuplicatePattern(pattern);
-  };
-  const onEditPattern = (pattern: ProductValidationPattern): void => {
-    openEdit(pattern);
-  };
-  const onDeletePattern = (pattern: ProductValidationPattern): void => {
-    setPatternToDelete(pattern);
   };
   const handleCopyFullDocumentation = async (): Promise<void> => {
     if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
@@ -746,12 +708,7 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
         ) : (
           <div className='space-y-4'>
             {orderedPatterns.map((pattern: ProductValidationPattern) => {
-              const dynamicRecipe = parseDynamicReplacementRecipe(pattern.replacementValue);
-              const staticReplacement = getStaticReplacementValue(pattern.replacementValue);
               const groupId = getSequenceGroupId(pattern);
-              const group = groupId ? sequenceGroups.get(groupId) ?? null : null;
-              const isGroupFirst = Boolean(groupId && firstPatternIdByGroup.get(groupId) === pattern.id);
-              const groupDraft = groupId ? getGroupDraft(groupId) : null;
               const isDragging = draggedPatternId === pattern.id;
               const isDragTarget = dragOverPatternId === pattern.id && draggedPatternId !== pattern.id;
               return (
@@ -760,29 +717,6 @@ export function ValidatorPatternTablePanel(): React.JSX.Element {
                   pattern={pattern}
                   isDragging={isDragging}
                   isDragTarget={isDragTarget}
-                  patternActionsPending={patternActionsPending}
-                  updatePatternPending={updatePatternPending}
-                  createPatternPending={createPatternPending}
-                  reorderPending={reorderPending}
-                  groupId={groupId}
-                  group={group}
-                  isGroupFirst={isGroupFirst}
-                  groupDraft={groupDraft}
-                  dynamicRecipe={dynamicRecipe}
-                  staticReplacement={staticReplacement}
-                  onSaveSequenceGroup={onSaveSequenceGroup}
-                  onUngroup={onUngroup}
-                  onPatternDrop={onPatternDrop}
-                  onTogglePattern={onTogglePattern}
-                  onDuplicatePattern={onDuplicatePattern}
-                  onEditPattern={onEditPattern}
-                  onDeletePattern={onDeletePattern}
-                  setDraggedPatternId={setDraggedPatternId}
-                  setDragOverPatternId={setDragOverPatternId}
-                  dragOverPatternId={dragOverPatternId}
-                  draggedPatternId={draggedPatternId}
-                  setGroupDrafts={setGroupDrafts}
-                  formatReplacementFields={formatReplacementFields}
                   isPatternCollapsed={collapsedPatternIds.has(pattern.id)}
                   isGroupCollapsed={groupId ? collapsedGroupIds.has(groupId) : false}
                   onTogglePatternCollapse={togglePatternCollapse}

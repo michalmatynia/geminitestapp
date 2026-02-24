@@ -7,23 +7,18 @@ import {
   AI_PATHS_HISTORY_RETENTION_KEY,
   AI_PATHS_HISTORY_RETENTION_MAX,
   AI_PATHS_HISTORY_RETENTION_MIN,
-  normalizeNodes,
-  sanitizeEdges,
-  createDefaultPathConfig,
-  safeParseJson,
   AI_PATHS_UI_STATE_KEY,
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
-  appendLocalRun,
-  compileGraph,
-  entityApi,
-  evaluateAiPathsValidationPreflight,
-  evaluateGraphWithIteratorAutoContinue,
-  inspectPathDependencies,
-  normalizeAiPathsValidationConfig,
-  runsApi,
-} from '@/features/ai/ai-paths/lib';
+} from '@/features/ai/ai-paths/lib/core/constants';
+import { runsApi } from '@/features/ai/ai-paths/lib/api/client';
+import { createDefaultPathConfig } from '@/features/ai/ai-paths/lib/core/utils/factory';
+import { sanitizeEdges } from '@/features/ai/ai-paths/lib/core/utils/graph';
+import { safeParseJson } from '@/features/ai/ai-paths/lib/core/utils/runtime';
+import { evaluateRunPreflight } from '@/features/ai/ai-paths/lib/core/utils/run-preflight';
+import { normalizeNodes } from '@/features/ai/ai-paths/lib/core/normalization';
+import { normalizeAiPathsValidationConfig } from '@/features/ai/ai-paths/lib/core/validation-engine/defaults';
 import {
   fetchAiPathsSettingsCached,
   invalidateAiPathsSettingsCache,
@@ -207,6 +202,57 @@ const loadPathConfigsFromSettings = async (
   return { configs, settingsPathOrder };
 };
 
+type TriggerSelectionCandidate = Pick<PathConfig, 'id' | 'isActive'>;
+
+export const selectTriggerCandidates = <T extends TriggerSelectionCandidate>(args: {
+  triggerCandidates: T[];
+  preferredPathId: string | null;
+  activePathId: string | null;
+}): {
+  activeTriggerCandidates: T[];
+  selectedConfig: T | null;
+} => {
+  const { triggerCandidates, preferredPathId, activePathId } = args;
+  const activeTriggerCandidates: T[] = triggerCandidates.filter(
+    (config: T): boolean => config.isActive !== false
+  );
+
+  const preferredByButton = preferredPathId
+    ? triggerCandidates.find(
+      (config: T): boolean => config.id === preferredPathId
+    ) ?? null
+    : null;
+
+  if (preferredPathId) {
+    return {
+      activeTriggerCandidates,
+      selectedConfig: preferredByButton,
+    };
+  }
+
+  const preferredByActivePath = activePathId
+    ? activeTriggerCandidates.find(
+      (config: T): boolean => config.id === activePathId
+    ) ?? null
+    : null;
+
+  if (activeTriggerCandidates.length > 1 && !preferredByActivePath) {
+    return {
+      activeTriggerCandidates,
+      selectedConfig: null,
+    };
+  }
+
+  return {
+    activeTriggerCandidates,
+    selectedConfig:
+      preferredByActivePath ??
+      activeTriggerCandidates[0] ??
+      triggerCandidates[0] ??
+      null,
+  };
+};
+
 const resolveTriggerSelection = async (
   settingsData: Array<{ key: string; value: string }>,
   triggerEventId: string,
@@ -216,6 +262,7 @@ const resolveTriggerSelection = async (
   }
 ): Promise<{
   triggerCandidates: PathConfig[];
+  activeTriggerCandidates: PathConfig[];
   selectedConfig: PathConfig | null;
   uiState: Record<string, unknown> | null;
 }> => {
@@ -263,35 +310,18 @@ const resolveTriggerSelection = async (
       ? uiState['activePathId'].trim()
       : null);
 
-  const preferredByButton = preferredPathId
-    ? triggerCandidates.find(
-      (config: PathConfig): boolean => config.id === preferredPathId
-    )
-    : null;
-  const preferredByActivePath = activePathId
-    ? triggerCandidates.find(
-      (config: PathConfig): boolean => config.id === activePathId
-    )
-    : null;
-  if (!preferredPathId && triggerCandidates.length > 1 && !preferredByActivePath) {
-    return { triggerCandidates, selectedConfig: null, uiState };
-  }
-  const preferredConfig: PathConfig | null =
-    (preferredPathId ? preferredByButton : null) ??
-    preferredByActivePath ??
-    triggerCandidates[0] ??
-    null;
+  const selection = selectTriggerCandidates<PathConfig>({
+    triggerCandidates,
+    preferredPathId,
+    activePathId,
+  });
 
-  if (preferredPathId && !preferredByButton) {
-    return { triggerCandidates, selectedConfig: null, uiState };
-  }
-
-  const selectedConfig =
-    preferredConfig?.isActive === false
-      ? triggerCandidates.find((candidate: PathConfig): boolean => candidate.isActive !== false) ?? preferredConfig
-      : preferredConfig;
-
-  return { triggerCandidates, selectedConfig, uiState };
+  return {
+    triggerCandidates,
+    activeTriggerCandidates: selection.activeTriggerCandidates,
+    selectedConfig: selection.selectedConfig,
+    uiState,
+  };
 };
 
 const buildTriggerContext = (args: {
@@ -473,6 +503,8 @@ export function useAiPathTriggerEvent(): {
         }
       );
       const triggerCandidates: PathConfig[] = selection.triggerCandidates;
+      const activeTriggerCandidates: PathConfig[] =
+        selection.activeTriggerCandidates;
 
       if (triggerCandidates.length === 0) {
         toast(
@@ -492,7 +524,7 @@ export function useAiPathTriggerEvent(): {
           );
           return;
         }
-        if (triggerCandidates.length > 1) {
+        if (activeTriggerCandidates.length > 1) {
           toast(
             `Trigger "${args.triggerLabel ?? triggerEventId}" matches multiple AI Paths. Set an active path in AI Paths settings or bind this trigger button to a specific path.`,
             { variant: 'error' }
@@ -646,51 +678,26 @@ export function useAiPathTriggerEvent(): {
       const validationConfig = normalizeAiPathsValidationConfig(
         selectedConfig.aiPathsValidation
       );
-      const validationReport = evaluateAiPathsValidationPreflight({
+      const runPreflight = evaluateRunPreflight({
         nodes,
         edges,
-        config: validationConfig,
+        aiPathsValidation: validationConfig,
+        strictFlowMode: selectedConfig.strictFlowMode !== false,
+        triggerNodeId: triggerNode.id,
+        mode: 'full',
       });
-      if (validationReport.enabled && validationReport.blocked) {
+      if (runPreflight.shouldBlock) {
         reportProgress({ status: 'error', progress: 0 });
         toast(
-          `Validation blocked run (score ${validationReport.score}). Fix Path Settings validation findings.`,
+          runPreflight.blockMessage ?? 'Run blocked by preflight validation.',
           { variant: 'error' }
         );
         return;
       }
-      if (validationReport.enabled && validationReport.shouldWarn) {
-        toast(
-          `Validation warning: score ${validationReport.score} with ${validationReport.failedRules} failed rule(s).`,
-          { variant: 'warning' }
-        );
-      }
-      if (validationReport.enabled) {
-        const compileReport = compileGraph(nodes, edges);
-        if (!compileReport.ok) {
-          reportProgress({ status: 'error', progress: 0 });
-          const primaryError = compileReport.findings.find(
-            (finding): boolean => finding.severity === 'error'
-          );
-          toast(
-            (primaryError ? `Graph compile failed: ${primaryError.message}` : null) ??
-              `Graph compile failed with ${compileReport.errors} blocking issue(s).`,
-            { variant: 'error' }
-          );
-          return;
-        }
-
-        if (selectedConfig.strictFlowMode !== false) {
-          const dependencyReport = inspectPathDependencies(nodes, edges);
-          if (dependencyReport.errors > 0) {
-            reportProgress({ status: 'error', progress: 0 });
-            toast(
-              `Strict flow blocked run: ${dependencyReport.errors} dependency error(s) detected.`,
-              { variant: 'error' }
-            );
-            return;
-          }
-        }
+      if (runPreflight.warnings.length > 0) {
+        toast(runPreflight.warnings[0]?.message ?? 'Preflight warning.', {
+          variant: 'warning',
+        });
       }
 
       const persistRunSnapshot = async (runAt: string): Promise<void> => {
@@ -712,7 +719,6 @@ export function useAiPathTriggerEvent(): {
 
       const executionMode = selectedConfig.executionMode ?? 'server';
       const startedAt = new Date().toISOString();
-      const startedAtMs = Date.now();
       const runId =
         typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
           ? crypto.randomUUID()
@@ -737,87 +743,9 @@ export function useAiPathTriggerEvent(): {
 
       if (executionMode === 'local') {
         toast(
-          'Path Execution is Local: this run executes in-browser and will not appear in Job Queue. Set Execution mode to Server to enqueue runs.',
+          'Path Execution is Local, but local browser execution is unavailable in this view. Queuing a server run instead.',
           { variant: 'info' }
         );
-        try {
-          await evaluateGraphWithIteratorAutoContinue({
-            nodes,
-            edges,
-            activePathId: selectedConfig.id ?? null,
-            activePathName: selectedConfig.name ?? null,
-            runId,
-            runStartedAt: startedAt,
-            triggerNodeId: triggerNode.id,
-            triggerEvent: triggerEventId,
-            triggerContext,
-            strictFlowMode: selectedConfig.strictFlowMode !== false,
-            deferPoll: true,
-            recordHistory: true,
-            historyLimit: historyRetentionPasses,
-            fetchEntityByType: async (entityType: string, entityId: string) => {
-              const result = await entityApi.getByType(entityType, entityId);
-              return result.ok ? result.data : null;
-            },
-            reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {
-              logClientError(error, { context: { source: 'useAiPathTriggerEvent', action: 'reportAiPathsError', summary: summary ?? 'AI Paths run error', ...meta } });
-            },
-            toast,
-            onNodeFinish: ({ node }: { node: AiNode }) => {
-              if (!completed.has(node.id)) {
-                completed.add(node.id);
-              }
-              reportProgress({
-                status: 'running',
-                progress: completed.size / totalNodes,
-                node,
-              });
-            },
-          });
-          const runAt = new Date().toISOString();
-          reportProgress({ status: 'success', progress: 1 });
-          toast('AI Path run completed locally (not queued).', { variant: 'success' });
-          void appendLocalRun({
-            pathId: selectedConfig.id ?? null,
-            pathName: selectedConfig.name ?? null,
-            triggerEvent: triggerEventId,
-            triggerLabel: args.triggerLabel ?? null,
-            entityType: args.entityType,
-            entityId: args.entityId ?? null,
-            status: 'success',
-            startedAt,
-            finishedAt: runAt,
-            durationMs: Date.now() - startedAtMs,
-            nodeCount: totalNodes,
-            source: 'trigger_button',
-          });
-          if (args.entityType === 'product') {
-            invalidateProductQueries(args.entityId);
-          }
-          if (args.entityType === 'note') {
-            void invalidateNotes(queryClient);
-          }
-          await persistRunSnapshot(runAt);
-        } catch (error) {
-          reportProgress({ status: 'error', progress: 0 });
-          toast('AI Path run failed.', { variant: 'error' });
-          void appendLocalRun({
-            pathId: selectedConfig.id ?? null,
-            pathName: selectedConfig.name ?? null,
-            triggerEvent: triggerEventId,
-            triggerLabel: args.triggerLabel ?? null,
-            entityType: args.entityType,
-            entityId: args.entityId ?? null,
-            status: 'error',
-            startedAt,
-            finishedAt: new Date().toISOString(),
-            durationMs: Date.now() - startedAtMs,
-            nodeCount: totalNodes,
-            error: error instanceof Error ? error.message : 'Local run failed',
-            source: 'trigger_button',
-          });
-        }
-        return;
       }
 
       const enqueueResult = await runsApi.enqueue({
@@ -841,7 +769,27 @@ export function useAiPathTriggerEvent(): {
               ? 'complete_with_warning'
               : 'fail_run',
           aiPathsValidation: validationConfig,
-          validationPreflight: validationReport,
+          validationPreflight: runPreflight.validationReport,
+          runPreflight: {
+            compile: {
+              errors: runPreflight.compileReport.errors,
+              warnings: runPreflight.compileReport.warnings,
+              findings: runPreflight.compileReport.findings,
+            },
+            dependency:
+              runPreflight.dependencyReport
+                ? {
+                  errors: runPreflight.dependencyReport.errors,
+                  warnings: runPreflight.dependencyReport.warnings,
+                  strictReady: runPreflight.dependencyReport.strictReady,
+                }
+                : null,
+            dataContract: {
+              errors: runPreflight.dataContractReport.errors,
+              warnings: runPreflight.dataContractReport.warnings,
+              issues: runPreflight.dataContractReport.issues.slice(0, 12),
+            },
+          },
           ...(args.source ? { sourceInfo: args.source } : {}),
           ...(args.extras ?? {}),
         },

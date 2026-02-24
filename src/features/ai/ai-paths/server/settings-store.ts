@@ -1540,7 +1540,11 @@ const resolveRequestedMaintenanceActionIds = (
 
 export async function inspectAiPathsSettingsMaintenance(): Promise<AiPathsMaintenanceReport> {
   assertMongoConfigured();
-  const settings = await listMongoAiPathsSettings();
+  let settings = await listMongoAiPathsSettings();
+  // Auto-apply parameter inference upgrade so the cache is never set with stale data.
+  if (!hasParameterInferenceDefaults(settings)) {
+    settings = await ensureParameterInferenceDefaults(settings);
+  }
   setCachedAiPathsSettings(settings);
   return buildAiPathsMaintenanceReport(settings);
 }
@@ -1604,9 +1608,10 @@ export async function applyAiPathsSettingsMaintenance(
 export async function listAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   assertMongoConfigured();
   const cached = getCachedAiPathsSettings();
-  if (cached) return cached;
+  // If cache is warm but still needs upgrade, bypass it so the upgrade runs.
+  if (cached && hasParameterInferenceDefaults(cached)) return cached;
   let settings = await listMongoAiPathsSettings();
-  // Auto-apply built-in path upgrades on cold reads (idempotent once up-to-date).
+  // Auto-apply built-in path upgrades on every cold or stale read (idempotent once up-to-date).
   if (!hasParameterInferenceDefaults(settings)) {
     settings = await ensureParameterInferenceDefaults(settings);
   }

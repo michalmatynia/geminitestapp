@@ -760,10 +760,13 @@ export const needsParameterInferenceConfigUpgrade = (
       ? (parsed['edges'] as Array<Record<string, unknown>>)
       : [];
 
-    // Version 12+ configs: only check fetcher node presence (allow user customization).
+    // Version 12+ configs: verify the key structural nodes are present.
     if (version >= 12) {
       const hasFetcher = nodes.some((node) => node?.['type'] === 'fetcher');
-      return !hasFetcher;
+      if (!hasFetcher) return true;
+      // VP node must be present (replaced the old regex template node at v12).
+      if (!nodes.some((node) => node?.['id'] === 'node-vp-template-params')) return true;
+      return false;
     }
 
     // Version 11: needs upgrade to 12 if missing the VP node, still has old regex node,

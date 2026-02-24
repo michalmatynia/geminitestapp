@@ -35,16 +35,9 @@ function ListProductModalContent(): React.JSX.Element {
   const {
     integrations,
     loadingIntegrations: loading,
-    selectedIntegrationId,
     selectedConnectionId,
     isBaseComIntegration,
-    selectedInventoryId,
-    selectedTemplateId,
     isTraderaIntegration,
-    selectedTraderaDurationHours,
-    selectedTraderaAutoRelistEnabled,
-    selectedTraderaAutoRelistLeadMinutes,
-    selectedTraderaTemplateId,
   } = useListingSettingsContext();
 
   const {
@@ -65,10 +58,6 @@ function ListProductModalContent(): React.JSX.Element {
   const retryImageExport = (preset: ImageRetryPreset): void => {
     void handleImageRetry(
       preset,
-      isBaseComIntegration,
-      selectedConnectionId,
-      selectedInventoryId || null,
-      product.id,
       onSuccess
     );
   };
@@ -80,17 +69,6 @@ function ListProductModalContent(): React.JSX.Element {
       title={`List Product - ${productName}`}
       onSave={() => {
         void handleSubmit(
-          selectedIntegrationId,
-          selectedConnectionId,
-          isBaseComIntegration,
-          isTraderaIntegration,
-          selectedInventoryId || null,
-          selectedTemplateId || null,
-          selectedTraderaDurationHours,
-          selectedTraderaAutoRelistEnabled,
-          selectedTraderaAutoRelistLeadMinutes,
-          selectedTraderaTemplateId,
-          product.id,
           onSuccess
         );
       }}

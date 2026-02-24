@@ -110,6 +110,16 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
   }, [configOpen, draftNode, setNodeConfigDraft]);
 
   const draftSelectedNode = draftNode ?? selectedNodeSafe;
+  const resolvedNodeTypeId =
+    typeof draftSelectedNode.nodeTypeId === 'string' &&
+      draftSelectedNode.nodeTypeId.trim().length > 0
+      ? draftSelectedNode.nodeTypeId
+      : draftSelectedNode.type;
+  const resolvedInstanceId =
+    typeof draftSelectedNode.instanceId === 'string' &&
+      draftSelectedNode.instanceId.trim().length > 0
+      ? draftSelectedNode.instanceId
+      : draftSelectedNode.id;
   const nodesForConfig = useMemo((): AiNode[] => {
     if (!draftNode) return nodes;
     return nodes.map((node: AiNode): AiNode =>
@@ -258,25 +268,47 @@ function NodeConfigDialogContent(): React.JSX.Element | null {
             </TabsContent>
           </Tabs>
         </AiPathConfigProviderWithContext>
-        <div className='mt-4 flex items-center justify-end gap-2 text-xs text-gray-400'>
-          <span className='text-[11px] uppercase tracking-wide text-gray-500'>Node ID</span>
-          <span className='max-w-[260px] truncate font-mono text-xs text-gray-300'>
-            {selectedNodeSafe.id}
-          </span>
-          <Button
-            data-doc-id='node_config_copy_id'
-            type='button'
-            size='sm'
-            className='rounded border border-border px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/50'
-            onClick={() => {
-              void navigator.clipboard.writeText(selectedNodeSafe.id).then(
-                () => toast('Node ID copied.', { variant: 'success' }),
-                () => toast('Failed to copy Node ID.', { variant: 'error' })
-              );
-            }}
-          >
-              Copy
-          </Button>
+        <div className='mt-4 space-y-2 text-xs text-gray-400'>
+          <div className='flex items-center justify-end gap-2'>
+            <span className='text-[11px] uppercase tracking-wide text-gray-500'>Type ID</span>
+            <span className='max-w-[260px] truncate font-mono text-xs text-gray-300'>
+              {resolvedNodeTypeId}
+            </span>
+            <Button
+              data-doc-id='node_config_copy_type_id'
+              type='button'
+              size='sm'
+              className='rounded border border-border px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/50'
+              onClick={() => {
+                void navigator.clipboard.writeText(resolvedNodeTypeId).then(
+                  () => toast('Type ID copied.', { variant: 'success' }),
+                  () => toast('Failed to copy Type ID.', { variant: 'error' })
+                );
+              }}
+            >
+                Copy
+            </Button>
+          </div>
+          <div className='flex items-center justify-end gap-2'>
+            <span className='text-[11px] uppercase tracking-wide text-gray-500'>Instance ID</span>
+            <span className='max-w-[260px] truncate font-mono text-xs text-gray-300'>
+              {resolvedInstanceId}
+            </span>
+            <Button
+              data-doc-id='node_config_copy_instance_id'
+              type='button'
+              size='sm'
+              className='rounded border border-border px-2 py-1 text-[11px] text-gray-200 hover:bg-muted/50'
+              onClick={() => {
+                void navigator.clipboard.writeText(resolvedInstanceId).then(
+                  () => toast('Instance ID copied.', { variant: 'success' }),
+                  () => toast('Failed to copy Instance ID.', { variant: 'error' })
+                );
+              }}
+            >
+                Copy
+            </Button>
+          </div>
         </div>
       </DetailModal>      <ConfirmModal
         isOpen={closePromptOpen}

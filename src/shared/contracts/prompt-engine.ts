@@ -28,6 +28,7 @@ export const promptValidationScopeSchema = z.enum([
   'prompt_exploder',
   'case_resolver_prompt_exploder',
   'case_resolver_plain_text',
+  'ai_paths',
   'global',
 ]);
 export type PromptValidationScopeDto = z.infer<typeof promptValidationScopeSchema>;

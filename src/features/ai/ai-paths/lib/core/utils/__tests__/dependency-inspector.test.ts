@@ -400,4 +400,97 @@ describe('inspectPathDependencies', () => {
       )
     ).toBe(true);
   });
+
+  it('flags write template roots that are not wired to incoming inputs', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'trigger-1',
+        type: 'trigger',
+        title: 'Trigger',
+        outputs: ['trigger'],
+      }),
+      buildNode({
+        id: 'db-1',
+        type: 'database',
+        title: 'Database',
+        inputs: ['entityId', 'value', 'bundle'],
+        config: {
+          runtime: { waitForInputs: true },
+          database: {
+            operation: 'update',
+            updatePayloadMode: 'custom',
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '{"id":"{{entityId}}"}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+            updateTemplate: '{"$set":{"title":"{{value.title}}"}}',
+          },
+        },
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-trigger-db',
+        from: 'trigger-1',
+        to: 'db-1',
+        fromPort: 'trigger',
+        toPort: 'value',
+      },
+    ];
+
+    const report = inspectPathDependencies(nodes, edges);
+    expect(
+      report.risks.some(
+        (risk) => risk.category === 'database_write_template_missing_wiring',
+      )
+    ).toBe(true);
+  });
+
+  it('does not flag system placeholders as missing template wiring', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'db-1',
+        type: 'database',
+        title: 'Database',
+        inputs: ['value'],
+        config: {
+          runtime: { waitForInputs: true },
+          database: {
+            operation: 'insert',
+            updatePayloadMode: 'custom',
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate:
+                '{"schema":"{{Collection: Products}}","date":"{{Date: Current}}","provider":"{{DB Provider: mongodb}}"}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+          },
+        },
+      }),
+    ];
+
+    const report = inspectPathDependencies(nodes, []);
+    expect(
+      report.risks.some(
+        (risk) => risk.category === 'database_write_template_missing_wiring',
+      )
+    ).toBe(false);
+  });
 });

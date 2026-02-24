@@ -9,10 +9,12 @@ import {
   initialNodes,
   triggers,
 } from '../constants';
+import { palette } from '../definitions';
 import {
   DEFAULT_AI_PATHS_VALIDATION_CONFIG,
   normalizeAiPathsValidationConfig,
 } from '../validation-engine';
+import { repairPathNodeIdentities } from './node-identity';
 
 export const createPathId = (): string =>
   `path_${Math.random().toString(36).slice(2, 8)}`;
@@ -22,7 +24,7 @@ export const createPresetId = (): string =>
 
 export const createDefaultPathConfig = (id: string): PathConfig => {
   const now = new Date().toISOString();
-  return {
+  const config: PathConfig = {
     id,
     version: STORAGE_VERSION,
     name: 'AI Description Path',
@@ -51,6 +53,7 @@ export const createDefaultPathConfig = (id: string): PathConfig => {
       configOpen: false,
     },
   };
+  return repairPathNodeIdentities(config, { palette }).config;
 };
 
 export const createPathMeta = (config: PathConfig): PathMeta => {
@@ -214,7 +217,7 @@ export const createAiDescriptionPath = (id: string): PathConfig => {
     },
   ];
 
-  return {
+  const config: PathConfig = {
     id,
     version: STORAGE_VERSION,
     name: 'AI Description Path',
@@ -243,4 +246,5 @@ export const createAiDescriptionPath = (id: string): PathConfig => {
       configOpen: false,
     },
   };
+  return repairPathNodeIdentities(config, { palette }).config;
 };

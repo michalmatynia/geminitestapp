@@ -2,10 +2,6 @@
 
 import React from 'react';
 
-import {
-  ListingSettingsProvider,
-  useListingSettingsContext,
-} from '@/features/integrations/context/ListingSettingsContext';
 import { useProductsWithCount } from '@/features/products/hooks/useProductsQuery';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal } from '@/shared/ui';
@@ -15,6 +11,7 @@ import { SelectProductForListingModalProvider } from './select-product-modal/con
 import { SelectProductForListingModalViewProvider, useSelectProductForListingModalView } from './select-product-modal/context/SelectProductForListingModalViewContext';
 import { IntegrationSettingsSection } from './select-product-modal/IntegrationSettingsSection';
 import { ProductListSection } from './select-product-modal/ProductListSection';
+import { ListingSettingsProvider } from '../../context/ListingSettingsContext';
 
 interface SelectProductForListingModalProps extends EntityModalProps<never> {
   initialIntegrationId?: string | null;
@@ -23,14 +20,6 @@ interface SelectProductForListingModalProps extends EntityModalProps<never> {
 
 function SelectProductForListingModalContent(): React.JSX.Element {
   const { onClose, onSuccess } = useSelectProductForListingModalView();
-  const {
-    selectedIntegrationId,
-    selectedConnectionId,
-    isBaseComIntegration,
-    selectedInventoryId,
-    selectedTemplateId,
-    allowDuplicateSku,
-  } = useListingSettingsContext();
 
   const {
     productSearch,
@@ -40,14 +29,7 @@ function SelectProductForListingModalContent(): React.JSX.Element {
     error,
     submitting,
     handleSubmit,
-  } = useProductSelectionForm({
-    selectedIntegrationId,
-    selectedConnectionId,
-    isBaseComIntegration,
-    selectedInventoryId,
-    selectedTemplateId,
-    allowDuplicateSku,
-  });
+  } = useProductSelectionForm();
 
   const productsQuery = useProductsWithCount({
     pageSize: 10,

@@ -8,36 +8,74 @@ import type {
   Edge,
   CaseResolverEdgeMeta,
   CaseResolverCompileResult,
+  CaseResolverNodeFileSnapshot,
 } from '@/shared/contracts/case-resolver';
+import { 
+  NodeFileDocumentSearchScope, 
+  NodeFileDocumentSearchRow, 
+  NodeFileDocumentFolderTree 
+} from './CaseResolverNodeFileUtils';
 
 export type NodeFileWorkspaceContextValue = {
+  // State from useNodeFileWorkspaceState
   assetId: string;
   assetName: string;
-  handleManualSave: () => void;
-  isSidebarReady: boolean;
-  compiled: CaseResolverCompileResult;
-  selectedNode: AiNode | null;
-  selectedPromptMeta: CaseResolverNodeMeta | null;
-  selectedPromptSourceFile: CaseResolverFile | null;
-  selectedPromptTemplate: string;
-  selectedPromptInputText: string;
-  selectedPromptOutputPreview: {
-    textfield: string;
-    plaintextContent: string;
-    plainText: string;
-    wysiwygContent: string;
-  } | null;
-  selectedPromptSecondaryOutputHint: boolean;
-  updateSelectedPromptTemplate: (template: string) => void;
-  updateSelectedNodeMeta: (patch: Partial<CaseResolverNodeMeta>) => void;
-  selectedEdge: Edge | unknown | null;
-  selectedEdgeJoinMode: CaseResolverEdgeMeta['joinMode'];
-  updateSelectedEdgeMeta: (patch: Partial<CaseResolverEdgeMeta>) => void;
+  nodes: AiNode[];
+  edges: Edge[];
+  selectedNodeId: string | null;
+  selectedEdgeId: string | null;
+  configOpen: boolean;
+  newNodeType: 'prompt' | 'model' | 'template' | 'database' | 'viewer';
+  setNewNodeType: (type: 'prompt' | 'model' | 'template' | 'database' | 'viewer') => void;
+  isSidePanelVisible: boolean;
+  setIsSidePanelVisible: (visible: boolean) => void;
   isNodeInspectorOpen: boolean;
   setIsNodeInspectorOpen: (open: boolean) => void;
   isLinkedPreviewOpen: boolean;
   setIsLinkedPreviewOpen: (open: boolean) => void;
-  hasPendingSnapshotChanges: boolean;
+  showNodeSelectorUnderCanvas: boolean;
+  setShowNodeSelectorUnderCanvas: (show: boolean) => void;
+  documentSearchScope: NodeFileDocumentSearchScope;
+  setDocumentSearchScope: (scope: NodeFileDocumentSearchScope) => void;
+  documentSearchQuery: string;
+  setDocumentSearchQuery: (query: string) => void;
+  selectedSearchFolderPath: string | null;
+  setSelectedSearchFolderPath: (path: string | null) => void;
+  expandedSearchFolderPaths: Set<string>;
+  setExpandedSearchFolderPaths: (paths: Set<string>) => void;
+  selectedSearchDocumentId: string;
+  setSelectedSearchDocumentId: (id: string) => void;
+  isDocumentSearchOpen: boolean;
+  setIsDocumentSearchOpen: (open: boolean) => void;
+  nodeMetaByNode: Record<string, CaseResolverNodeMeta>;
+  edgeMetaByEdge: Record<string, CaseResolverEdgeMeta>;
+  
+  // Derived / Logic
+  filesById: Map<string, CaseResolverFile>;
+  caseIdentifierLabelById: Map<string, string>;
+  documentSearchRows: NodeFileDocumentSearchRow[];
+  folderScopedDocumentSearchRows: NodeFileDocumentSearchRow[];
+  visibleDocumentSearchRows: NodeFileDocumentSearchRow[];
+  folderTree: NodeFileDocumentFolderTree;
+  compiled: CaseResolverCompileResult;
+  selectedNode: AiNode | null;
+  selectedNodeMeta: CaseResolverNodeMeta | null;
+  selectedFile: CaseResolverFile | null;
+  
+  // Actions
+  handleManualSave: () => void;
+  selectNode: (nodeId: string | null, options?: { toggle?: boolean }) => void;
+  setConfigOpen: (open: boolean) => void;
+  addNode: (node: AiNode) => void;
+  updateNode: (nodeId: string, patch: Partial<AiNode>) => void;
+  setNodes: (nodes: AiNode[]) => void;
+  setEdges: (edges: Edge[]) => void;
+  setView: (view: { x: number; y: number; scale: number }) => void;
+  view: { x: number; y: number; scale: number };
+  viewportRef: React.RefObject<HTMLDivElement | null>;
+  canvasRef: React.RefObject<HTMLDivElement | null>;
+  onSelectFile: (fileId: string) => void;
+  documentSearchRef: React.RefObject<HTMLDivElement | null>;
 };
 
 const NodeFileWorkspaceContext = createContext<NodeFileWorkspaceContextValue | null>(null);

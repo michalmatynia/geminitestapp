@@ -1,18 +1,18 @@
 'use client';
 
 import React, { createContext, useContext } from 'react';
+import type { UseAiPathsSettingsStateReturn } from './useAiPathsSettingsState';
 
-export type AiPathsSettingsPageContextValue = {
+export type AiPathsSettingsPageContextValue = UseAiPathsSettingsStateReturn & {
   activeTab: 'canvas' | 'paths' | 'docs';
   renderActions?: ((actions: React.ReactNode) => React.ReactNode) | undefined;
   onTabChange?: ((tab: 'canvas' | 'paths' | 'docs') => void) | undefined;
   isFocusMode?: boolean | undefined;
   onFocusModeChange?: ((next: boolean) => void) | undefined;
-};
-
-type AiPathsSettingsPageProviderProps = {
-  value: AiPathsSettingsPageContextValue;
-  children: React.ReactNode;
+  pathSettingsModalOpen: boolean;
+  setPathSettingsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  simulationModalOpen: boolean;
+  setSimulationModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const AiPathsSettingsPageContext = createContext<AiPathsSettingsPageContextValue | null>(null);
@@ -20,7 +20,10 @@ const AiPathsSettingsPageContext = createContext<AiPathsSettingsPageContextValue
 export function AiPathsSettingsPageProvider({
   value,
   children,
-}: AiPathsSettingsPageProviderProps): React.JSX.Element {
+}: {
+  value: AiPathsSettingsPageContextValue;
+  children: React.ReactNode;
+}): React.JSX.Element {
   return (
     <AiPathsSettingsPageContext.Provider value={value}>
       {children}

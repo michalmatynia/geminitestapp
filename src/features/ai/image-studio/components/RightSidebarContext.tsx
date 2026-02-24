@@ -2,6 +2,19 @@
 
 import React from 'react';
 
+import type { RequestPreviewImage } from '../utils/run-request-preview';
+
+export interface ActionHistoryEntrySummary {
+  id: string;
+  label: string;
+  createdAt: string;
+}
+
+export interface ActionHistoryItem {
+  entry: ActionHistoryEntrySummary;
+  index: number;
+}
+
 type RightSidebarContextValue = {
   switchToControls: () => void;
   canvasSizePresetOptions: Array<{ value: string; label: string; description?: string }>;
@@ -15,6 +28,26 @@ type RightSidebarContextValue = {
   quickActionsHostEl: HTMLElement | null;
   quickActionsPanelContent: React.ReactNode;
   resizeCanvasDisabled: boolean;
+
+  // Action History
+  actionHistoryEntriesLength: number;
+  actionHistoryItems: ActionHistoryItem[];
+  actionHistoryMaxSteps: number;
+  activeActionHistoryIndex: number;
+  historyMode: 'actions' | 'runs';
+  setHistoryMode: (mode: 'actions' | 'runs') => void;
+  onRestoreActionStep: (targetIndex: number) => void;
+
+  // Request Preview
+  activeErrors: string[];
+  activeImages: RequestPreviewImage[];
+  activeRequestPreviewEndpoint: string;
+  activeRequestPreviewJson: string;
+  maskShapeCount: number;
+  requestPreviewMode: 'without_sequence' | 'with_sequence';
+  resolvedPromptLength: number;
+  sequenceStepCount: number;
+  setRequestPreviewMode: (mode: 'without_sequence' | 'with_sequence') => void;
 };
 
 const RightSidebarContext = React.createContext<RightSidebarContextValue | null>(null);

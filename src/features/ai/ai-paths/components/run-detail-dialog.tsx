@@ -134,6 +134,14 @@ export function RunDetailDialog({
     return runtimeTraceRaw as RuntimeTraceSnapshot;
   }, [runDetail]);
 
+  const runtimeFingerprint = useMemo((): string | null => {
+    if (!runDetail?.run?.meta || typeof runDetail.run.meta !== 'object') return null;
+    const raw = runDetail.run.meta['runtimeFingerprint'];
+    if (typeof raw !== 'string') return null;
+    const trimmed = raw.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }, [runDetail]);
+
   const slowestRuntimeNodeSpan = useMemo(() => {
     const spans = runtimeTrace?.profile?.nodeSpans;
     if (!Array.isArray(spans) || spans.length === 0) return null;
@@ -203,6 +211,12 @@ export function RunDetailDialog({
             <div>
               <span className='text-[10px] uppercase text-gray-500'>Run ID</span>
               <div className='font-mono text-[11px]'>{runDetail.run.id}</div>
+            </div>
+            <div>
+              <span className='text-[10px] uppercase text-gray-500'>Runtime Fingerprint</span>
+              <div className='font-mono text-[11px]'>
+                {runtimeFingerprint ?? 'n/a'}
+              </div>
             </div>
             <div>
               <span className='text-[10px] uppercase text-gray-500'>Created</span>

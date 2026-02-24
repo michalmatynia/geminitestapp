@@ -2,7 +2,7 @@
 
 import { createParserMappings, formatRuntimeValue, getValueAtMappingPath, parsePathList } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Input, Label, Textarea } from '@/shared/ui';
+import { Input, Label, SelectSimple, Textarea } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -86,6 +86,7 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
     mappings: createParserMappings(
       selectedNode.outputs.length ? selectedNode.outputs : ['value']
     ),
+    jsonIntegrityPolicy: 'repair',
   };
   const outputs = mapperConfig.outputs.length
     ? mapperConfig.outputs
@@ -131,6 +132,32 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
         </div>
       </div>
       <div>
+        <Label className='text-xs text-gray-400'>JSON Integrity Policy</Label>
+        <SelectSimple size='sm'
+          value={mapperConfig.jsonIntegrityPolicy ?? 'repair'}
+          onValueChange={(value: string): void => {
+            const jsonIntegrityPolicy = value === 'strict' ? 'strict' : 'repair';
+            updateSelectedNodeConfig({
+              mapper: {
+                outputs,
+                mappings: mapperConfig.mappings ?? createParserMappings(outputs),
+                jsonIntegrityPolicy,
+              },
+            });
+          }}
+          placeholder='Select policy'
+          triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
+          contentClassName='border-border bg-gray-900'
+          options={[
+            { value: 'strict', label: 'Strict (no repair)' },
+            { value: 'repair', label: 'Repair malformed JSON' },
+          ]}
+        />
+        <p className='mt-2 text-[11px] text-gray-500'>
+          Controls how string inputs are normalized before path mapping.
+        </p>
+      </div>
+      <div>
         <Label className='text-xs text-gray-400'>
           Outputs (one per line)
         </Label>
@@ -153,6 +180,7 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
                 mapper: {
                   outputs: nextOutputs,
                   mappings: nextMappings,
+                  jsonIntegrityPolicy: mapperConfig.jsonIntegrityPolicy ?? 'repair',
                 },
               },
             });
@@ -176,7 +204,11 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
                 [output]: event.target.value,
               };
               updateSelectedNodeConfig({
-                mapper: { outputs, mappings: nextMappings },
+                mapper: {
+                  outputs,
+                  mappings: nextMappings,
+                  jsonIntegrityPolicy: mapperConfig.jsonIntegrityPolicy ?? 'repair',
+                },
               });
             }}
           />

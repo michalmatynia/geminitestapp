@@ -98,6 +98,14 @@ export function JobQueueRunCard({
   onDeleteRun,
   onSelectHistoryNode,
 }: JobQueueRunCardProps): React.JSX.Element {
+  const runtimeFingerprint = React.useMemo((): string | null => {
+    if (!detailRun.meta || typeof detailRun.meta !== 'object') return null;
+    const raw = detailRun.meta['runtimeFingerprint'];
+    if (typeof raw !== 'string') return null;
+    const trimmed = raw.trim();
+    return trimmed.length > 0 ? trimmed : null;
+  }, [detailRun.meta]);
+
   return (
     <div className='rounded-md border border-border/60 bg-card/70 p-3 text-xs text-gray-300'>
       <div className='flex flex-wrap items-start justify-between gap-3'>
@@ -251,6 +259,10 @@ export function JobQueueRunCard({
                 <div className='sm:col-span-2 lg:col-span-3'>
                   <span className='uppercase text-gray-500'>Source debug</span>
                   <div className='font-mono text-sky-200'>{runSourceDebug}</div>
+                </div>
+                <div className='sm:col-span-2 lg:col-span-3'>
+                  <span className='uppercase text-gray-500'>Runtime fingerprint</span>
+                  <div className='font-mono text-sky-200'>{runtimeFingerprint ?? 'n/a'}</div>
                 </div>
                 <div>
                   <span className='uppercase text-gray-500'>Started</span>

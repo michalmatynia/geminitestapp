@@ -25,6 +25,12 @@ import {
   setValueAtMappingPath,
 } from '../../utils';
 import { extractImageUrls, resolveContextPayload } from '../utils';
+import {
+  normalizeJsonIntegrityPolicy,
+  normalizeJsonLikeValue,
+  type JsonIntegrityDiagnostic,
+  type JsonIntegrityPolicy,
+} from './json-integrity';
 
 export const handleContext: NodeHandler = async ({
   node,
@@ -271,38 +277,39 @@ export const handleMapper: NodeHandler = ({
   reportAiPathsError,
 }: NodeHandlerContext): RuntimePortValues => {
   try {
-    const normalizeMapperInputValue = (value: unknown): unknown => {
-      if (typeof value !== 'string') return value;
-      const trimmed = value.trim();
-      if (!trimmed) return value;
-      const startsLikeJson =
-        (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-        (trimmed.startsWith('[') && trimmed.endsWith(']'));
-      if (!startsLikeJson) return value;
-
-      const parsedDirect = parseJsonSafe(trimmed);
-      if (parsedDirect && typeof parsedDirect === 'object') {
-        return parsedDirect;
+    const mapperConfig = node.config?.mapper ?? {
+      outputs: node.outputs,
+      mappings: {},
+      jsonIntegrityPolicy: 'repair',
+    };
+    const jsonIntegrityPolicy = normalizeJsonIntegrityPolicy(
+      mapperConfig.jsonIntegrityPolicy
+    );
+    const jsonIntegrityDiagnostics: Array<
+      JsonIntegrityDiagnostic & { port: string }
+    > = [];
+    const normalizeMapperInputValue = (
+      port: string,
+      value: unknown,
+    ): unknown => {
+      const normalized = normalizeJsonLikeValue(value, jsonIntegrityPolicy);
+      if (
+        normalized.state === 'repaired' ||
+        normalized.state === 'unparseable'
+      ) {
+        jsonIntegrityDiagnostics.push({
+          ...normalized.diagnostic,
+          port,
+        });
       }
-
-      const repaired = trimmed.replace(
-        /(:\s*\{[^{}]*\})(\s*,\s*\{)/g,
-        '$1}$2'
-      );
-      if (repaired !== trimmed) {
-        const parsedRepaired = parseJsonSafe(repaired);
-        if (parsedRepaired && typeof parsedRepaired === 'object') {
-          return parsedRepaired;
-        }
-      }
-      return value;
+      return normalized.value;
     };
 
     const sources = {
-      context: normalizeMapperInputValue(coerceInput(nodeInputs['context'])),
-      result: normalizeMapperInputValue(coerceInput(nodeInputs['result'])),
-      bundle: normalizeMapperInputValue(coerceInput(nodeInputs['bundle'])),
-      value: normalizeMapperInputValue(coerceInput(nodeInputs['value'])),
+      context: normalizeMapperInputValue('context', coerceInput(nodeInputs['context'])),
+      result: normalizeMapperInputValue('result', coerceInput(nodeInputs['result'])),
+      bundle: normalizeMapperInputValue('bundle', coerceInput(nodeInputs['bundle'])),
+      value: normalizeMapperInputValue('value', coerceInput(nodeInputs['value'])),
     };
     const contextValue =
       sources['context'] ??
@@ -315,17 +322,19 @@ export const handleMapper: NodeHandler = ({
     const resolveMappedValue = (path: string): unknown => {
       if (!path) return undefined;
       if (sourcePathPattern.test(path)) {
-        return getValueAtMappingPath(sources, path);
+        return getValueAtMappingPath(sources, path, {
+          jsonIntegrityPolicy,
+        });
       }
-      const fromContext = getValueAtMappingPath(contextValue, path);
+      const fromContext = getValueAtMappingPath(contextValue, path, {
+        jsonIntegrityPolicy,
+      });
       if (fromContext !== undefined) return fromContext;
-      return getValueAtMappingPath(sources, path);
+      return getValueAtMappingPath(sources, path, {
+        jsonIntegrityPolicy,
+      });
     };
 
-    const mapperConfig = node.config?.mapper ?? {
-      outputs: node.outputs,
-      mappings: {},
-    };
     const mapped: RuntimePortValues = {};
     const unresolvedMappings: string[] = [];
     const connectedOutputPorts = new Set<string>(
@@ -362,6 +371,24 @@ export const handleMapper: NodeHandler = ({
             : '';
         toast(
           `JSON Mapper "${node.title ?? node.id}" could not resolve mapping(s): ${preview}${suffix}.`,
+          { variant: 'info' }
+        );
+      }
+    }
+    if (jsonIntegrityDiagnostics.length > 0) {
+      mapped['jsonIntegrity'] = jsonIntegrityDiagnostics;
+      if (
+        jsonIntegrityPolicy === 'strict' &&
+        jsonIntegrityDiagnostics.some(
+          (diagnostic) => diagnostic.parseState === 'unparseable'
+        )
+      ) {
+        const unresolvedPorts = jsonIntegrityDiagnostics
+          .filter((diagnostic) => diagnostic.parseState === 'unparseable')
+          .map((diagnostic) => diagnostic.port);
+        const uniquePorts = Array.from(new Set(unresolvedPorts));
+        toast(
+          `JSON Mapper "${node.title ?? node.id}" received unparseable JSON on ${uniquePorts.join(', ')} (strict mode).`,
           { variant: 'info' }
         );
       }
@@ -831,6 +858,11 @@ type RegexMatchRecord = {
   extracted: unknown;
 };
 
+type RegexJsonIntegrityDiagnostic = JsonIntegrityDiagnostic & {
+  key: string;
+  index: number | null;
+};
+
 const normalizeRegexFlags = (flags: string | undefined): string => {
   if (!flags) return '';
   const allowed = new Set(['d', 'g', 'i', 'm', 's', 'u', 'v', 'y']);
@@ -900,14 +932,28 @@ const resolveRegexSelection = (
   return safeStringify(candidate);
 };
 
-const parseRegexExtractedJson = (value: unknown): unknown => {
-  if (Array.isArray(value)) return value.map(parseRegexExtractedJson);
-  if (value && typeof value === 'object') return value;
-  if (typeof value !== 'string') return value;
-  const trimmed = value.trim();
-  if (!trimmed) return value;
-  const parsed = parseJsonSafe(trimmed);
-  return parsed === undefined ? value : parsed;
+const parseRegexExtractedJson = (
+  value: unknown,
+  policy: JsonIntegrityPolicy
+): { value: unknown; diagnostics: JsonIntegrityDiagnostic[] } => {
+  if (Array.isArray(value)) {
+    const diagnostics: JsonIntegrityDiagnostic[] = [];
+    const parsed = value.map((entry: unknown): unknown => {
+      const next = parseRegexExtractedJson(entry, policy);
+      diagnostics.push(...next.diagnostics);
+      return next.value;
+    });
+    return { value: parsed, diagnostics };
+  }
+  const normalized = normalizeJsonLikeValue(value, policy);
+  const diagnostics =
+    normalized.state === 'repaired' || normalized.state === 'unparseable'
+      ? [normalized.diagnostic]
+      : [];
+  return {
+    value: normalized.value,
+    diagnostics,
+  };
 };
 
 const resolveGroupKey = (
@@ -947,6 +993,10 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
   const groupBy = regexConfig.groupBy ?? 'match';
   const includeUnmatched = regexConfig.includeUnmatched ?? true;
   const unmatchedKey = (regexConfig.unmatchedKey ?? '__unmatched__').trim() || '__unmatched__';
+  const jsonIntegrityPolicy = normalizeJsonIntegrityPolicy(
+    regexConfig.jsonIntegrityPolicy
+  );
+  const jsonIntegrityDiagnostics: RegexJsonIntegrityDiagnostic[] = [];
 
   const textForPrompt =
     typeof rawInput === 'string' ? rawInput : items.join('\n');
@@ -997,6 +1047,26 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
     current.push(record);
     groupedMap.set(key, current);
   };
+  const resolveExtractedValue = (
+    selectedValue: unknown,
+    context: {
+      key: string;
+      index: number | null;
+    }
+  ): unknown => {
+    if (mode !== 'extract_json') return selectedValue;
+    const parsed = parseRegexExtractedJson(selectedValue, jsonIntegrityPolicy);
+    if (parsed.diagnostics.length > 0) {
+      parsed.diagnostics.forEach((diagnostic: JsonIntegrityDiagnostic): void => {
+        jsonIntegrityDiagnostics.push({
+          ...diagnostic,
+          key: context.key,
+          index: context.index,
+        });
+      });
+    }
+    return parsed.value;
+  };
 
   if (matchMode === 'first_overall') {
     let found = false;
@@ -1012,10 +1082,11 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
             Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
           ) as Record<string, string>)
           : null;
-      const extracted =
-        mode === 'extract_json'
-          ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
-          : resolveRegexSelection(match, groupBy);
+      const selectedValue = resolveRegexSelection(match, groupBy);
+      const extracted = resolveExtractedValue(selectedValue, {
+        key,
+        index: typeof match.index === 'number' ? match.index : null,
+      });
       const record: RegexMatchRecord = {
         input,
         match: match[0] ?? null,
@@ -1059,10 +1130,11 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
                 Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
               ) as Record<string, string>)
               : null;
-          const extracted =
-            mode === 'extract_json'
-              ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
-              : resolveRegexSelection(match, groupBy);
+          const selectedValue = resolveRegexSelection(match, groupBy);
+          const extracted = resolveExtractedValue(selectedValue, {
+            key,
+            index: typeof match.index === 'number' ? match.index : null,
+          });
           const record: RegexMatchRecord = {
             input,
             match: match[0] ?? null,
@@ -1120,10 +1192,11 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
             Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
           ) as Record<string, string>)
           : null;
-      const extracted =
-        mode === 'extract_json'
-          ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
-          : resolveRegexSelection(match, groupBy);
+      const selectedValue = resolveRegexSelection(match, groupBy);
+      const extracted = resolveExtractedValue(selectedValue, {
+        key,
+        index: typeof match.index === 'number' ? match.index : null,
+      });
       const record: RegexMatchRecord = {
         input,
         match: match[0] ?? null,
@@ -1153,6 +1226,9 @@ export const handleRegex: NodeHandler = ({ node, nodeInputs }: NodeHandlerContex
     grouped,
     matches,
     value: isExtractMode ? extractedValue : grouped,
+    ...(jsonIntegrityDiagnostics.length > 0
+      ? { jsonIntegrity: jsonIntegrityDiagnostics }
+      : {}),
     ...(aiAutoRun && aiPrompt ? { aiPrompt } : {}),
   };
 };

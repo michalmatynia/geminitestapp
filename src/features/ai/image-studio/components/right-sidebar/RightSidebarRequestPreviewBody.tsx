@@ -3,31 +3,21 @@ import Image from 'next/image';
 
 import { SelectSimple } from '@/shared/ui';
 
-import type { RequestPreviewImage } from '../../utils/run-request-preview';
+import { useRightSidebarContext } from '../RightSidebarContext';
 
-type RightSidebarRequestPreviewBodyProps = {
-  activeErrors: string[];
-  activeImages: RequestPreviewImage[];
-  activeRequestPreviewEndpoint: string;
-  activeRequestPreviewJson: string;
-  maskShapeCount: number;
-  requestPreviewMode: 'without_sequence' | 'with_sequence';
-  resolvedPromptLength: number;
-  sequenceStepCount: number;
-  setRequestPreviewMode: (mode: 'without_sequence' | 'with_sequence') => void;
-};
+export function RightSidebarRequestPreviewBody(): React.JSX.Element {
+  const {
+    activeErrors,
+    activeImages,
+    activeRequestPreviewEndpoint,
+    activeRequestPreviewJson,
+    maskShapeCount,
+    requestPreviewMode,
+    resolvedPromptLength,
+    sequenceStepCount,
+    setRequestPreviewMode,
+  } = useRightSidebarContext();
 
-export function RightSidebarRequestPreviewBody({
-  activeErrors,
-  activeImages,
-  activeRequestPreviewEndpoint,
-  activeRequestPreviewJson,
-  maskShapeCount,
-  requestPreviewMode,
-  resolvedPromptLength,
-  sequenceStepCount,
-  setRequestPreviewMode,
-}: RightSidebarRequestPreviewBodyProps): React.JSX.Element {
   return (
     <div className='space-y-4 text-xs text-gray-200'>
       <div className='flex flex-wrap items-center gap-2'>

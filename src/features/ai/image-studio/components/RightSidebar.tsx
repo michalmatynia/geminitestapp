@@ -1145,174 +1145,212 @@ export function RightSidebar(): React.JSX.Element {
     studioSettings.targetAi.openai.model,
   ]);
 
+  const contextValue = useMemo(
+    (): RightSidebarContextValue => ({
+      switchToControls,
+      canvasSizePresetOptions,
+      canvasSizePresetValue,
+      setCanvasSizePresetValue,
+      canvasSizeLabel: projectCanvasSizeLabel,
+      canApplyCanvasSizePreset,
+      canRecenterCanvasImage,
+      onApplyCanvasSizePreset: handleApplyCanvasSizePresetClick,
+      onOpenResizeCanvasModal: handleOpenResizeCanvasModal,
+      quickActionsHostEl,
+      quickActionsPanelContent,
+      resizeCanvasDisabled,
+
+      // Action History
+      actionHistoryEntriesLength: actionHistoryEntries.length,
+      actionHistoryItems,
+      actionHistoryMaxSteps: ACTION_HISTORY_MAX_STEPS,
+      activeActionHistoryIndex,
+      historyMode,
+      setHistoryMode,
+      onRestoreActionStep: handleRestoreActionStep,
+
+      // Request Preview
+      activeErrors: activeRequestPreview.errors,
+      activeImages: activeRequestPreview.images,
+      activeRequestPreviewEndpoint,
+      activeRequestPreviewJson,
+      maskShapeCount: activeRequestPreview.maskShapeCount,
+      requestPreviewMode,
+      resolvedPromptLength: activeRequestPreview.resolvedPrompt.length,
+      sequenceStepCount: sequenceRequestPreview.stepCount,
+      setRequestPreviewMode,
+    }),
+    [
+      switchToControls,
+      canvasSizePresetOptions,
+      canvasSizePresetValue,
+      projectCanvasSizeLabel,
+      canApplyCanvasSizePreset,
+      canRecenterCanvasImage,
+      handleApplyCanvasSizePresetClick,
+      handleOpenResizeCanvasModal,
+      quickActionsHostEl,
+      quickActionsPanelContent,
+      resizeCanvasDisabled,
+      actionHistoryEntries.length,
+      actionHistoryItems,
+      activeActionHistoryIndex,
+      historyMode,
+      handleRestoreActionStep,
+      activeRequestPreview,
+      activeRequestPreviewEndpoint,
+      activeRequestPreviewJson,
+      requestPreviewMode,
+      sequenceRequestPreview.stepCount,
+      setRequestPreviewMode,
+    ]
+  );
+
   return (
-    <>
-      <RightSidebarProvider value={{ 
-        switchToControls,
-        canvasSizePresetOptions,
-        canvasSizePresetValue,
-        setCanvasSizePresetValue,
-        canvasSizeLabel: projectCanvasSizeLabel,
-        canApplyCanvasSizePreset,
-        canRecenterCanvasImage,
-        onApplyCanvasSizePreset: handleApplyCanvasSizePresetClick,
-        onOpenResizeCanvasModal: handleOpenResizeCanvasModal,
-        quickActionsHostEl,
-        quickActionsPanelContent,
-        resizeCanvasDisabled,
-      }}>
-        <div
-          className={cn(
-            'order-3 flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 transition-all duration-300 ease-in-out',
-            isFocusMode && 'pointer-events-none opacity-0 translate-x-2'
-          )}
-          aria-hidden={isFocusMode}
-        >
-          {/* Tab toggle */}
-          <div className='grid grid-cols-5 border-b border-border/40'>
-            <Button size='xs'
-              type='button'
-              variant='ghost'
-              className={cn(
-                'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
-                sidebarTab === 'controls'
-                  ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
-                  : 'text-gray-500 hover:text-gray-300'
-              )}
-              onClick={() => setSidebarTab('controls')}
-            >
-            Controls
-            </Button>
-            <Button size='xs'
-              type='button'
-              variant='ghost'
-              className={cn(
-                'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
-                sidebarTab === 'analysis'
-                  ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
-                  : 'text-gray-500 hover:text-gray-300'
-              )}
-              onClick={() => setSidebarTab('analysis')}
-            >
-              <Sparkles className='mr-1 inline size-3' />
-            Analysis
-            </Button>
-            <Button size='xs'
-              type='button'
-              variant='ghost'
-              className={cn(
-                'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
-                sidebarTab === 'graph'
-                  ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
-                  : 'text-gray-500 hover:text-gray-300'
-              )}
-              onClick={() => setSidebarTab('graph')}
-            >
-              <GitBranch className='mr-1 inline size-3' />
-            Version Graph
-            </Button>
-            <Button size='xs'
-              type='button'
-              variant='ghost'
-              className={cn(
-                'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
-                sidebarTab === 'sequencing'
-                  ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
-                  : 'text-gray-500 hover:text-gray-300'
-              )}
-              onClick={() => setSidebarTab('sequencing')}
-            >
-              <Workflow className='mr-1 inline size-3' />
-            Sequencing
-            </Button>
-            <Button size='xs'
-              type='button'
-              variant='ghost'
-              className={cn(
-                'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
-                sidebarTab === 'history'
-                  ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
-                  : 'text-gray-500 hover:text-gray-300'
-              )}
-              onClick={() => setSidebarTab('history')}
-            >
-              <Clock3 className='mr-1 inline size-3' />
-            History
-            </Button>
-          </div>
-
-          <div className='flex items-center justify-between border-b border-border/30 bg-card/30 px-3 py-1.5'>
-            <div className='text-[10px] uppercase tracking-wide text-gray-500'>
-              Action History {activeActionHistoryIndex >= 0 ? `${activeActionHistoryIndex + 1}/${actionHistoryEntries.length}` : '0/0'}
-            </div>
-            <div className='flex items-center gap-1.5'>
-              <Button
-                size='xs'
-                type='button'
-                variant='outline'
-                className='h-6 px-2 text-[10px]'
-                onClick={handleUndoAction}
-                disabled={!canUndoAction}
-                title='Undo last action'
-                aria-label='Undo last action'
-              >
-                <Undo2 className='mr-1 size-3' />
-                Undo
-              </Button>
-              <Button
-                size='xs'
-                type='button'
-                variant='outline'
-                className='h-6 px-2 text-[10px]'
-                onClick={handleRedoAction}
-                disabled={!canRedoAction}
-                title='Redo last action'
-                aria-label='Redo last action'
-              >
-                <Redo2 className='mr-1 size-3' />
-                Redo
-              </Button>
-            </div>
-          </div>
-
-          {quickActionsHostEl
-            ? createPortal(
-              <div className='space-y-2 pb-2'>
-                {quickActionsPanelContent}
-              </div>,
-              quickActionsHostEl
-            )
-            : null}
-
-          {sidebarTab === 'analysis' ? (
-            <div className='min-h-0 flex flex-1 overflow-y-auto'>
-              <ImageStudioAnalysisTab />
-            </div>
-          ) : sidebarTab === 'graph' ? (
-            selectedSlotId ? (
-              <VersionNodeMapPanel />
-            ) : (
-              <div className='min-h-0 flex flex-1 items-center justify-center px-4 text-center text-xs text-gray-500'>
-                Select a card to view its version graph.
-              </div>
-            )
-          ) : sidebarTab === 'sequencing' ? (
-            <SequencingPanel />
-          ) : sidebarTab === 'history' ? (
-            <RightSidebarHistoryTab
-              actionHistoryEntriesLength={actionHistoryEntries.length}
-              actionHistoryItems={actionHistoryItems}
-              actionHistoryMaxSteps={ACTION_HISTORY_MAX_STEPS}
-              activeActionHistoryIndex={activeActionHistoryIndex}
-              historyMode={historyMode}
-              onHistoryModeChange={setHistoryMode}
-              onRestoreActionStep={handleRestoreActionStep}
-            />
-          ) : (
-            <RightSidebarControlsTab />
-          )}
+    <RightSidebarProvider value={contextValue}>
+      <div
+        className={cn(
+          'order-3 flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/40 p-0 transition-all duration-300 ease-in-out',
+          isFocusMode && 'pointer-events-none opacity-0 translate-x-2'
+        )}
+        aria-hidden={isFocusMode}
+      >
+        {/* Tab toggle */}
+        <div className='grid grid-cols-5 border-b border-border/40'>
+          <Button size='xs'
+            type='button'
+            variant='ghost'
+            className={cn(
+              'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
+              sidebarTab === 'controls'
+                ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
+                : 'text-gray-500 hover:text-gray-300'
+            )}
+            onClick={() => setSidebarTab('controls')}
+          >
+          Controls
+          </Button>
+          <Button size='xs'
+            type='button'
+            variant='ghost'
+            className={cn(
+              'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
+              sidebarTab === 'analysis'
+                ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
+                : 'text-gray-500 hover:text-gray-300'
+            )}
+            onClick={() => setSidebarTab('analysis')}
+          >
+            <Sparkles className='mr-1 inline size-3' />
+          Analysis
+          </Button>
+          <Button size='xs'
+            type='button'
+            variant='ghost'
+            className={cn(
+              'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
+              sidebarTab === 'graph'
+                ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
+                : 'text-gray-500 hover:text-gray-300'
+            )}
+            onClick={() => setSidebarTab('graph')}
+          >
+            <GitBranch className='mr-1 inline size-3' />
+          Version Graph
+          </Button>
+          <Button size='xs'
+            type='button'
+            variant='ghost'
+            className={cn(
+              'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
+              sidebarTab === 'sequencing'
+                ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
+                : 'text-gray-500 hover:text-gray-300'
+            )}
+            onClick={() => setSidebarTab('sequencing')}
+          >
+            <Workflow className='mr-1 inline size-3' />
+          Sequencing
+          </Button>
+          <Button size='xs'
+            type='button'
+            variant='ghost'
+            className={cn(
+              'h-auto flex-1 rounded-none px-3 py-1.5 text-[11px] font-medium transition-colors',
+              sidebarTab === 'history'
+                ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
+                : 'text-gray-500 hover:text-gray-300'
+            )}
+            onClick={() => setSidebarTab('history')}
+          >
+            <Clock3 className='mr-1 inline size-3' />
+          History
+          </Button>
         </div>
-      </RightSidebarProvider>
+
+        <div className='flex items-center justify-between border-b border-border/30 bg-card/30 px-3 py-1.5'>
+          <div className='text-[10px] uppercase tracking-wide text-gray-500'>
+            Action History {activeActionHistoryIndex >= 0 ? `${activeActionHistoryIndex + 1}/${actionHistoryEntries.length}` : '0/0'}
+          </div>
+          <div className='flex items-center gap-1.5'>
+            <Button
+              size='xs'
+              type='button'
+              variant='outline'
+              className='h-6 px-2 text-[10px]'
+              onClick={handleUndoAction}
+              disabled={!canUndoAction}
+              title='Undo last action'
+              aria-label='Undo last action'
+            >
+              <Undo2 className='mr-1 size-3' />
+              Undo
+            </Button>
+            <Button
+              size='xs'
+              type='button'
+              variant='outline'
+              className='h-6 px-2 text-[10px]'
+              onClick={handleRedoAction}
+              disabled={!canRedoAction}
+              title='Redo last action'
+              aria-label='Redo last action'
+            >
+              <Redo2 className='mr-1 size-3' />
+              Redo
+            </Button>
+          </div>
+        </div>
+
+        {quickActionsHostEl
+          ? createPortal(
+            <div className='space-y-2 pb-2'>
+              {quickActionsPanelContent}
+            </div>,
+            quickActionsHostEl
+          )
+          : null}
+
+        {sidebarTab === 'analysis' ? (
+          <div className='min-h-0 flex flex-1 overflow-y-auto'>
+            <ImageStudioAnalysisTab />
+          </div>
+        ) : sidebarTab === 'graph' ? (
+          selectedSlotId ? (
+            <VersionNodeMapPanel />
+          ) : (
+            <div className='min-h-0 flex flex-1 items-center justify-center px-4 text-center text-xs text-gray-500'>
+              Select a card to view its version graph.
+            </div>
+          )
+        ) : sidebarTab === 'sequencing' ? (
+          <SequencingPanel />
+        ) : sidebarTab === 'history' ? (
+          <RightSidebarHistoryTab />
+        ) : (
+          <RightSidebarControlsTab />
+        )}
+      </div>
 
       <DetailModal
         isOpen={promptControlOpen}
@@ -1544,18 +1582,8 @@ export function RightSidebar(): React.JSX.Element {
         title='Generation Request Preview'
         size='xl'
       >
-        <RightSidebarRequestPreviewBody
-          activeErrors={activeRequestPreview.errors}
-          activeImages={activeRequestPreview.images}
-          activeRequestPreviewEndpoint={activeRequestPreviewEndpoint}
-          activeRequestPreviewJson={activeRequestPreviewJson}
-          maskShapeCount={activeRequestPreview.maskShapeCount}
-          requestPreviewMode={requestPreviewMode}
-          resolvedPromptLength={activeRequestPreview.resolvedPrompt.length}
-          sequenceStepCount={sequenceRequestPreview.stepCount}
-          setRequestPreviewMode={setRequestPreviewMode}
-        />
+        <RightSidebarRequestPreviewBody />
       </DetailModal>
-    </>
+    </RightSidebarProvider>
   );
 }

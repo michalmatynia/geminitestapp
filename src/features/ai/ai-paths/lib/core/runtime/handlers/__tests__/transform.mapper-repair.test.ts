@@ -71,7 +71,7 @@ const buildContext = (
   }) as NodeHandlerContext;
 
 describe('handleMapper malformed-object repair', () => {
-  it('repairs malformed JSON-like result strings before mapping nested paths', () => {
+  it('repairs malformed JSON-like result strings before mapping nested paths', async () => {
     const ctx = buildContext({
       nodeInputs: {
         result:
@@ -80,7 +80,7 @@ describe('handleMapper malformed-object repair', () => {
       },
     });
 
-    const output = handleMapper(ctx);
+    const output = await handleMapper(ctx);
     expect(output['result']).toEqual([
       {
         parameterId: 'p1',
@@ -96,7 +96,7 @@ describe('handleMapper malformed-object repair', () => {
     expect(output['value']).toBe('Opis PL');
   });
 
-  it('keeps plain text sources unchanged when repair is not applicable', () => {
+  it('keeps plain text sources unchanged when repair is not applicable', async () => {
     const ctx = buildContext({
       nodeInputs: {
         result: 'plain text',
@@ -114,7 +114,40 @@ describe('handleMapper malformed-object repair', () => {
       } as AiNode,
     });
 
-    const output = handleMapper(ctx);
+    const output = await handleMapper(ctx);
     expect(output['result']).toBe('plain text');
+  });
+
+  it('keeps malformed JSON unresolved in strict mode and emits diagnostics', async () => {
+    const ctx = buildContext({
+      nodeInputs: {
+        result:
+          '{"parameters":[{"parameterId":"p1","value":"v1","valuesByLanguage":{"pl":"x"},{"parameterId":"p2","value":"v2","valuesByLanguage":{"pl":"y"}}]}',
+      },
+      node: {
+        ...buildMapperNode(),
+        config: {
+          mapper: {
+            outputs: ['result'],
+            mappings: {
+              result: 'result.parameters',
+            },
+            jsonIntegrityPolicy: 'strict',
+          },
+        },
+      } as AiNode,
+    });
+
+    const output = await handleMapper(ctx);
+    expect(output['result']).toBeUndefined();
+    expect(output['jsonIntegrity']).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          port: 'result',
+          parseState: 'unparseable',
+          repairApplied: false,
+        }),
+      ]),
+    );
   });
 });

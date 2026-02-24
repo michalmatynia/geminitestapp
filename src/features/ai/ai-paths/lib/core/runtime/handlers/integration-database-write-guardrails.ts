@@ -7,21 +7,37 @@ import type {
   RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
 
+import {
+  normalizeJsonLikeValue,
+  type JsonIntegrityParseState,
+  type JsonIntegrityPolicy,
+} from './json-integrity';
+
 type WriteTemplateSource = {
   name: string;
   template: string;
+};
+
+type WriteTemplateParseDiagnostic = {
+  port?: string;
+  token: string;
+  rawType: string;
+  parseState: JsonIntegrityParseState;
+  repairApplied: boolean;
 };
 
 type WriteTemplateTokenDiagnostic = {
   template: string;
   token: string;
   root: string;
-  reason: 'missing' | 'empty';
+  reason: 'missing' | 'empty' | 'unparseable';
 };
 
 type WriteTemplateInspection = {
   missing: WriteTemplateTokenDiagnostic[];
   empty: WriteTemplateTokenDiagnostic[];
+  unparseable: WriteTemplateTokenDiagnostic[];
+  parseDiagnostics: WriteTemplateParseDiagnostic[];
 };
 
 type ResolveWriteTemplateGuardrailInput = {
@@ -102,97 +118,163 @@ const isEmptyTemplateValue = (value: unknown): boolean => {
   return false;
 };
 
-const parseStructuredJsonString = (value: unknown): unknown => {
-  if (typeof value !== 'string') return value;
-  const trimmed = value.trim();
-  if (!trimmed) return value;
-  const startsLikeJson =
-    (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-    (trimmed.startsWith('[') && trimmed.endsWith(']'));
-  if (!startsLikeJson) return value;
-  try {
-    const parsed: unknown = JSON.parse(trimmed);
-    if (parsed && typeof parsed === 'object') return parsed;
-  } catch {
-    const repaired = trimmed.replace(
-      /(:\s*\{[^{}]*\})(\s*,\s*\{)/g,
-      '$1}$2'
-    );
-    if (repaired !== trimmed) {
-      try {
-        const parsedRepaired: unknown = JSON.parse(repaired);
-        if (parsedRepaired && typeof parsedRepaired === 'object') {
-          return parsedRepaired;
-        }
-      } catch {
-        // Keep original when repaired parsing fails.
-      }
-    }
-  }
-  return value;
+type PathReadResult = {
+  value: unknown;
+  parseDiagnostic?: {
+    rawType: string;
+    parseState: JsonIntegrityParseState;
+    repairApplied: boolean;
+  };
 };
 
-const readByPath = (source: unknown, path: string): unknown => {
+const readByPath = (
+  source: unknown,
+  path: string,
+  policy: JsonIntegrityPolicy
+): PathReadResult => {
   const normalized = path
     .replace(/\[(['"]?)([A-Za-z0-9_$-]+)\1\]/g, '.$2')
     .replace(/\[(\d+)\]/g, '.$1')
     .split('.')
     .map((segment: string): string => segment.trim())
     .filter(Boolean);
-  if (normalized.length === 0) return source;
+  if (normalized.length === 0) return { value: source };
 
-  const readBySegments = (cursor: unknown, index: number): unknown => {
-    if (cursor === null || cursor === undefined) return undefined;
-    if (index >= normalized.length) return cursor;
+  const readBySegments = (cursor: unknown, index: number): PathReadResult => {
+    if (cursor === null || cursor === undefined) return { value: undefined };
+    if (index >= normalized.length) return { value: cursor };
     const segment = normalized[index];
-    const normalizedCursor =
-      typeof cursor === 'string' ? parseStructuredJsonString(cursor) : cursor;
+    if (segment === undefined) return { value: undefined };
+    const normalizedCursorResult = normalizeJsonLikeValue(cursor, policy);
+    const normalizedCursor = normalizedCursorResult.value;
+    const parseDiagnostic =
+      normalizedCursorResult.state === 'repaired' ||
+      normalizedCursorResult.state === 'unparseable'
+        ? {
+          rawType: normalizedCursorResult.diagnostic.rawType,
+          parseState: normalizedCursorResult.diagnostic.parseState,
+          repairApplied: normalizedCursorResult.diagnostic.repairApplied,
+        }
+        : undefined;
+    if (normalizedCursorResult.state === 'unparseable') {
+      return {
+        value: undefined,
+        ...(parseDiagnostic ? { parseDiagnostic } : {}),
+      };
+    }
 
     if (Array.isArray(normalizedCursor)) {
       const numericIndex = Number(segment);
       if (Number.isInteger(numericIndex)) {
         if (numericIndex < 0 || numericIndex >= normalizedCursor.length) {
-          return undefined;
+          return { value: undefined };
         }
-        return readBySegments(normalizedCursor[numericIndex], index + 1);
+        const indexed = readBySegments(normalizedCursor[numericIndex], index + 1);
+        if (indexed.parseDiagnostic) return indexed;
+        return parseDiagnostic
+          ? { ...indexed, parseDiagnostic }
+          : indexed;
       }
+      let firstDiagnostic: PathReadResult['parseDiagnostic'] | undefined;
       for (const item of normalizedCursor) {
         const candidate = readBySegments(item, index);
-        if (candidate !== undefined) return candidate;
+        if (candidate.value !== undefined) {
+          if (candidate.parseDiagnostic) return candidate;
+          return parseDiagnostic
+            ? { ...candidate, parseDiagnostic }
+            : candidate;
+        }
+        if (!firstDiagnostic && candidate.parseDiagnostic) {
+          firstDiagnostic = candidate.parseDiagnostic;
+        }
       }
-      return undefined;
+      return firstDiagnostic
+        ? { value: undefined, parseDiagnostic: firstDiagnostic }
+        : parseDiagnostic
+          ? { value: undefined, parseDiagnostic }
+          : { value: undefined };
     }
 
     const record = toRecord(normalizedCursor);
-    if (!record) return undefined;
-    return readBySegments(record[segment], index + 1);
+    if (!record) {
+      return parseDiagnostic
+        ? { value: undefined, parseDiagnostic }
+        : { value: undefined };
+    }
+    const nested = readBySegments(record[segment], index + 1);
+    if (nested.parseDiagnostic) return nested;
+    return parseDiagnostic
+      ? { ...nested, parseDiagnostic }
+      : nested;
   };
 
   return readBySegments(source, 0);
+};
+
+type ResolvedTokenValue = {
+  value: unknown;
+  parseDiagnostic?: WriteTemplateParseDiagnostic;
 };
 
 const resolveTokenValue = (
   token: string,
   templateContext: Record<string, unknown>,
   currentValue: unknown,
-): unknown => {
+  policy: JsonIntegrityPolicy
+): ResolvedTokenValue => {
   const trimmedToken = token.trim();
-  if (!trimmedToken) return undefined;
-  if (trimmedToken === 'current') return currentValue;
+  if (!trimmedToken) return { value: undefined };
+  if (trimmedToken === 'current') return { value: currentValue };
   if (trimmedToken === 'value') {
-    return templateContext['value'] !== undefined
-      ? templateContext['value']
-      : currentValue;
+    return {
+      value:
+        templateContext['value'] !== undefined
+          ? templateContext['value']
+          : currentValue,
+    };
   }
   if (trimmedToken.startsWith('current.')) {
-    return readByPath(currentValue, trimmedToken.slice('current.'.length));
+    const resolved = readByPath(
+      currentValue,
+      trimmedToken.slice('current.'.length),
+      policy
+    );
+    return {
+      value: resolved.value,
+      ...(resolved.parseDiagnostic
+        ? {
+          parseDiagnostic: {
+            token: trimmedToken,
+            rawType: resolved.parseDiagnostic.rawType,
+            parseState: resolved.parseDiagnostic.parseState,
+            repairApplied: resolved.parseDiagnostic.repairApplied,
+          },
+        }
+        : {}),
+    };
   }
   if (
     Object.prototype.hasOwnProperty.call(templateContext, trimmedToken)
   ) {
-    return templateContext[trimmedToken];
+    return {
+      value: templateContext[trimmedToken],
+    };
   }
-  return readByPath(templateContext, trimmedToken);
+  const resolved = readByPath(templateContext, trimmedToken, policy);
+  return {
+    value: resolved.value,
+    ...(resolved.parseDiagnostic
+      ? {
+        parseDiagnostic: {
+          port: normalizeTokenRoot(trimmedToken) || undefined,
+          token: trimmedToken,
+          rawType: resolved.parseDiagnostic.rawType,
+          parseState: resolved.parseDiagnostic.parseState,
+          repairApplied: resolved.parseDiagnostic.repairApplied,
+        },
+      }
+      : {}),
+  };
 };
 
 const extractTemplateTokens = (template: string): string[] => {
@@ -216,6 +298,9 @@ const inspectWriteTemplates = ({
 }: ResolveWriteTemplateGuardrailInput): WriteTemplateInspection => {
   const missing: WriteTemplateTokenDiagnostic[] = [];
   const empty: WriteTemplateTokenDiagnostic[] = [];
+  const unparseable: WriteTemplateTokenDiagnostic[] = [];
+  const parseDiagnostics: WriteTemplateParseDiagnostic[] = [];
+  const policy: JsonIntegrityPolicy = 'repair';
 
   templates.forEach(({ name, template }: WriteTemplateSource): void => {
     if (!template.trim()) return;
@@ -227,7 +312,24 @@ const inspectWriteTemplates = ({
       seen.add(key);
       const root = normalizeTokenRoot(token);
       if (!root || isSystemRoot(root)) return;
-      const value = resolveTokenValue(token, templateContext, currentValue);
+      const resolved = resolveTokenValue(token, templateContext, currentValue, policy);
+      const value = resolved.value;
+      if (resolved.parseDiagnostic) {
+        parseDiagnostics.push({
+          ...resolved.parseDiagnostic,
+          token,
+          ...(resolved.parseDiagnostic.port ? {} : { port: root }),
+        });
+      }
+      if (resolved.parseDiagnostic?.parseState === 'unparseable') {
+        unparseable.push({
+          template: name,
+          token,
+          root,
+          reason: 'unparseable',
+        });
+        return;
+      }
       if (value === undefined) {
         missing.push({
           template: name,
@@ -248,7 +350,7 @@ const inspectWriteTemplates = ({
     });
   });
 
-  return { missing, empty };
+  return { missing, empty, unparseable, parseDiagnostics };
 };
 
 const formatTokenList = (diagnostics: WriteTemplateTokenDiagnostic[]): string =>
@@ -352,7 +454,11 @@ export const resolveWriteTemplateGuardrail = ({
     templateContext,
     currentValue,
   });
-  if (inspection.missing.length === 0 && inspection.empty.length === 0) {
+  if (
+    inspection.missing.length === 0 &&
+    inspection.empty.length === 0 &&
+    inspection.unparseable.length === 0
+  ) {
     return { ok: true };
   }
 
@@ -362,14 +468,20 @@ export const resolveWriteTemplateGuardrail = ({
   const emptyTokens = dedupeValues(
     inspection.empty.map((entry: WriteTemplateTokenDiagnostic): string => entry.token)
   );
+  const unparseableTokens = dedupeValues(
+    inspection.unparseable.map((entry: WriteTemplateTokenDiagnostic): string => entry.token)
+  );
   const missingRoots = dedupeValues(
     inspection.missing.map((entry: WriteTemplateTokenDiagnostic): string => entry.root)
   );
   const emptyRoots = dedupeValues(
     inspection.empty.map((entry: WriteTemplateTokenDiagnostic): string => entry.root)
   );
+  const unparseableRoots = dedupeValues(
+    inspection.unparseable.map((entry: WriteTemplateTokenDiagnostic): string => entry.root)
+  );
   const templateNames = dedupeValues(
-    [...inspection.missing, ...inspection.empty].map(
+    [...inspection.missing, ...inspection.empty, ...inspection.unparseable].map(
       (entry: WriteTemplateTokenDiagnostic): string => entry.template
     )
   );
@@ -381,9 +493,27 @@ export const resolveWriteTemplateGuardrail = ({
   if (emptyTokens.length > 0) {
     fragments.push(`empty tokens: ${formatTokenList(inspection.empty)}`);
   }
+  if (unparseableTokens.length > 0) {
+    fragments.push(`unparseable JSON tokens: ${formatTokenList(inspection.unparseable)}`);
+  }
   const message = `Database write blocked. Template inputs must be connected and non-empty (${fragments.join(
     '; '
   )}).`;
+
+  const parseDiagnostics = Array.from(
+    new Map(
+      inspection.parseDiagnostics.map((diagnostic: WriteTemplateParseDiagnostic) => {
+        const key = [
+          diagnostic.token,
+          diagnostic.port ?? '',
+          diagnostic.rawType,
+          diagnostic.parseState,
+          diagnostic.repairApplied ? '1' : '0',
+        ].join('|');
+        return [key, diagnostic] as const;
+      })
+    ).values()
+  );
 
   return {
     ok: false,
@@ -397,7 +527,10 @@ export const resolveWriteTemplateGuardrail = ({
       emptyTokens,
       missingRoots,
       emptyRoots,
-      details: [...inspection.missing, ...inspection.empty],
+      unparseableTokens,
+      unparseableRoots,
+      parseDiagnostics,
+      details: [...inspection.missing, ...inspection.empty, ...inspection.unparseable],
     },
   };
 };

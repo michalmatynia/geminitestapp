@@ -1,10 +1,6 @@
 import 'dotenv/config';
 
 import {
-  collectNoopWriteFindings,
-  dedupeRunIds,
-} from './path-write-noop-utils';
-import {
   collectJsonIntegrityFindings,
   dedupeRunIdsFromJsonIntegrityFindings,
 } from './path-json-integrity-utils';
@@ -15,7 +11,6 @@ type CliOptions = {
   limit: number;
   maxApply: number;
   apply: boolean;
-  mode: 'noop-write' | 'json-integrity';
 };
 
 const parseArgs = (argv: string[]): CliOptions => {
@@ -23,7 +18,6 @@ const parseArgs = (argv: string[]): CliOptions => {
     limit: 200,
     maxApply: 50,
     apply: false,
-    mode: 'noop-write',
   };
 
   argv.forEach((arg: string): void => {
@@ -53,12 +47,6 @@ const parseArgs = (argv: string[]): CliOptions => {
       if (Number.isFinite(parsed) && parsed > 0) {
         options.maxApply = parsed;
       }
-      return;
-    }
-    if (arg.startsWith('--mode=')) {
-      const mode = arg.slice('--mode='.length).trim().toLowerCase();
-      options.mode =
-        mode === 'json-integrity' ? 'json-integrity' : 'noop-write';
     }
   });
 
@@ -67,37 +55,14 @@ const parseArgs = (argv: string[]): CliOptions => {
 
 async function main(): Promise<void> {
   const options = parseArgs(process.argv.slice(2));
-  let scannedRuns = 0;
-  let scannedNodes = 0;
-  let findingCount = 0;
-  let candidateRunIds: string[] = [];
-
-  if (options.mode === 'json-integrity') {
-    const diagnostics = await collectJsonIntegrityFindings({
-      ...(options.runId ? { runId: options.runId } : {}),
-      ...(options.pathId ? { pathId: options.pathId } : {}),
-      limit: options.limit,
-    });
-    scannedRuns = diagnostics.scannedRuns;
-    scannedNodes = diagnostics.scannedNodes;
-    findingCount = diagnostics.findings.length;
-    candidateRunIds = dedupeRunIdsFromJsonIntegrityFindings(
-      diagnostics.findings
-    ).slice(0, options.maxApply);
-  } else {
-    const diagnostics = await collectNoopWriteFindings({
-      ...(options.runId ? { runId: options.runId } : {}),
-      ...(options.pathId ? { pathId: options.pathId } : {}),
-      limit: options.limit,
-    });
-    scannedRuns = diagnostics.scannedRuns;
-    scannedNodes = diagnostics.scannedNodes;
-    findingCount = diagnostics.findings.length;
-    candidateRunIds = dedupeRunIds(diagnostics.findings).slice(
-      0,
-      options.maxApply
-    );
-  }
+  const diagnostics = await collectJsonIntegrityFindings({
+    ...(options.runId ? { runId: options.runId } : {}),
+    ...(options.pathId ? { pathId: options.pathId } : {}),
+    limit: options.limit,
+  });
+  const candidateRunIds = dedupeRunIdsFromJsonIntegrityFindings(
+    diagnostics.findings
+  ).slice(0, options.maxApply);
 
   const requeued: string[] = [];
   const failed: Array<{ runId: string; error: string }> = [];
@@ -124,28 +89,28 @@ async function main(): Promise<void> {
       {
         mode: options.apply ? 'apply' : 'dry-run',
         filters: {
-          mode: options.mode,
           runId: options.runId ?? null,
           pathId: options.pathId ?? null,
           limit: options.limit,
           maxApply: options.maxApply,
         },
-        scannedRuns,
-        scannedNodes,
-        findingCount,
+        scannedRuns: diagnostics.scannedRuns,
+        scannedNodes: diagnostics.scannedNodes,
+        findingCount: diagnostics.findings.length,
         candidateRunIds,
         requeuedCount: requeued.length,
         requeued,
         failedCount: failed.length,
         failed,
+        findings: diagnostics.findings,
       },
       null,
-      2,
-    ),
+      2
+    )
   );
 }
 
 void main().catch((error) => {
-  console.error('path-write-noop-repair failed:', error);
+  console.error('path-run-diagnose-json-integrity failed:', error);
   process.exit(1);
 });

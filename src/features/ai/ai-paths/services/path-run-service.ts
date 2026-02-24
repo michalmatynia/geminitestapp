@@ -14,6 +14,10 @@ import {
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import {
+  getAiPathsRuntimeFingerprint,
+  withRuntimeFingerprintMeta,
+} from '@/features/ai/ai-paths/services/runtime-fingerprint';
+import {
   recordRuntimeRunFinished,
   recordRuntimeRunQueued,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
@@ -220,7 +224,8 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     if (policyReport.violations.length > 0) {
       throw new Error(formatDisabledNodeTypesPolicyMessage(policyReport.violations));
     }
-    const meta = {
+    const runtimeFingerprint = getAiPathsRuntimeFingerprint();
+    const meta = withRuntimeFingerprintMeta({
       ...(input.meta ?? {}),
       ...(requestId ? { requestId } : {}),
       backoffMs: input.backoffMs ?? undefined,
@@ -255,7 +260,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         },
         warnings: runPreflight.warnings,
       },
-    };
+    });
     const run = await repo.createRun({
       userId: input.userId ?? null,
       pathId: input.pathId,
@@ -289,6 +294,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         metadata: {
           pathId: run.pathId,
           runStartedAt: resolveRunStartedAt(run),
+          runtimeFingerprint,
           traceId: run.id,
         },
       });
@@ -310,6 +316,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
           metadata: {
             pathId: run.pathId,
             runStartedAt: resolveRunStartedAt(run),
+            runtimeFingerprint,
             traceId: run.id,
           },
         }),
@@ -357,11 +364,12 @@ export const resumePathRun = async (
       }
       return run;
     }
-    const meta = {
+    const runtimeFingerprint = getAiPathsRuntimeFingerprint();
+    const meta = withRuntimeFingerprintMeta({
       ...(run.meta ?? {}),
       resumeMode: mode,
       retryNodeIds: [],
-    };
+    });
     const updated = await repo.updateRunIfStatus(runId, [run.status], {
       status: 'queued',
       errorMessage: null,
@@ -385,7 +393,11 @@ export const resumePathRun = async (
           runId,
           level: 'info',
           message: `Run resumed (${mode}).`,
-          metadata: { runStartedAt: resolveRunStartedAt(updated), traceId: runId },
+          metadata: {
+            runStartedAt: resolveRunStartedAt(updated),
+            runtimeFingerprint,
+            traceId: runId,
+          },
         }),
         recordRuntimeRunQueued({ runId: updated.id }),
       ]);
@@ -424,11 +436,12 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
     }
     const nodeInfo =
       run.graph?.nodes?.find((node: AiNode) => node.id === nodeId) ?? null;
-    const meta = {
+    const runtimeFingerprint = getAiPathsRuntimeFingerprint();
+    const meta = withRuntimeFingerprintMeta({
       ...(run.meta ?? {}),
       resumeMode: 'retry',
       retryNodeIds: [nodeId],
-    };
+    });
     const updated = await repo.updateRunIfStatus(runId, [run.status], {
       status: 'queued',
       errorMessage: null,
@@ -464,7 +477,11 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
           runId,
           level: 'info',
           message: `Retry node ${nodeId}.`,
-          metadata: { runStartedAt: resolveRunStartedAt(updated), traceId: runId },
+          metadata: {
+            runStartedAt: resolveRunStartedAt(updated),
+            runtimeFingerprint,
+            traceId: runId,
+          },
         }),
         recordRuntimeRunQueued({ runId: updated.id }),
       ]);
@@ -595,6 +612,7 @@ export const cancelPathRunWithRepository = async (
             runStartedAt: resolveRunStartedAt(updated),
             cancellationRequestedAt: finishedAt.toISOString(),
             cancellationPhase: wasInFlight ? 'requested' : 'completed',
+            runtimeFingerprint: getAiPathsRuntimeFingerprint(),
             traceId: runId,
           },
         }),

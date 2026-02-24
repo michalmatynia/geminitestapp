@@ -130,7 +130,7 @@ export type EvaluateGraphOptions = {
   cache?: Map<string, RuntimePortValues> | undefined;
   onNodeStart?: (event: {
     runId: string;
-    runStartedAt: number;
+    runStartedAt: string;
     node: AiNode;
     nodeInputs: RuntimePortValues;
     prevOutputs: RuntimePortValues | null;
@@ -138,7 +138,7 @@ export type EvaluateGraphOptions = {
   }) => Promise<void> | void;
   onNodeFinish?: (event: {
     runId: string;
-    runStartedAt: number;
+    runStartedAt: string;
     node: AiNode;
     nodeInputs: RuntimePortValues;
     prevOutputs: RuntimePortValues | null;
@@ -147,6 +147,15 @@ export type EvaluateGraphOptions = {
     iteration: number;
     cached?: boolean;
     error?: string;
+  }) => Promise<void> | void;
+  onNodeError?: (event: {
+    runId: string;
+    runStartedAt: string;
+    node: AiNode;
+    nodeInputs: RuntimePortValues;
+    prevOutputs: RuntimePortValues | null;
+    error: unknown;
+    iteration: number;
   }) => Promise<void> | void;
   onNodeBlocked?: (event: {
     runId: string;
@@ -258,18 +267,42 @@ export async function evaluateGraphInternal(
 
   const buildRuntimeStateSnapshot = (
     inputsSnapshot: Record<string, RuntimePortValues>
-  ): RuntimeState => ({
-    status: errorNodes.size > 0 ? 'failed' : finishedNodes.size === nodes.length ? 'completed' : 'running',
-    activeNodes: Array.from(activeNodes),
-    finishedNodes: Array.from(finishedNodes),
-    errorNodes: Array.from(errorNodes),
-    blockedNodes: Array.from(blockedNodes),
-    inputs: cloneValue(inputsSnapshot),
-    outputs: cloneValue(outputs),
-    history: history.size
-      ? (cloneValue(Object.fromEntries(history)) as Record<string, RuntimeHistoryEntry[]>)
-      : undefined,
-  });
+  ): RuntimeState => {
+    const nodeStatuses = nodes.reduce<Record<string, RuntimeState['nodeStatuses'][string]>>(
+      (acc, node) => {
+        if (errorNodes.has(node.id)) {
+          acc[node.id] = 'failed';
+        } else if (finishedNodes.has(node.id)) {
+          acc[node.id] = 'completed';
+        } else if (blockedNodes.has(node.id)) {
+          acc[node.id] = 'blocked';
+        } else if (activeNodes.has(node.id)) {
+          acc[node.id] = 'running';
+        } else {
+          acc[node.id] = 'pending';
+        }
+        return acc;
+      },
+      {}
+    );
+
+    const outputsSnapshot = cloneValue(outputs);
+    return {
+      status:
+        errorNodes.size > 0 || finishedNodes.size === nodes.length ? 'idle' : 'running',
+      nodeStatuses,
+      nodeOutputs: outputsSnapshot,
+      variables: {},
+      events: [],
+      runId: resolvedRunId,
+      runStartedAt: resolvedRunStartedAt,
+      inputs: cloneValue(inputsSnapshot),
+      outputs: outputsSnapshot,
+      history: history.size
+        ? (cloneValue(Object.fromEntries(history)) as Record<string, RuntimeHistoryEntry[]>)
+        : undefined,
+    };
+  };
 
   const collectNodeInputs = (nodeId: string): RuntimePortValues => {
     const incoming = incomingEdgesByNode.get(nodeId) ?? [];
@@ -480,7 +513,7 @@ export async function evaluateGraphInternal(
         if (options.onNodeFinish) {
           await options.onNodeFinish({
             runId: resolvedRunId,
-            runStartedAt: resolvedRunStartedAtMs,
+            runStartedAt: resolvedRunStartedAt,
             node,
             nodeInputs,
             prevOutputs,
@@ -496,11 +529,23 @@ export async function evaluateGraphInternal(
       const handler = options.resolveHandler ? options.resolveHandler(node.type) : null;
       if (!handler) {
         errorNodes.add(node.id);
-        throw new GraphExecutionError(
+        const handlerMissingError = new GraphExecutionError(
           `No handler found for node type: ${node.type}`,
           buildRuntimeStateSnapshot(inputs),
           node.id
         );
+        if (options.onNodeError) {
+          await options.onNodeError({
+            runId: resolvedRunId,
+            runStartedAt: resolvedRunStartedAt,
+            node,
+            nodeInputs,
+            prevOutputs,
+            error: handlerMissingError,
+            iteration,
+          });
+        }
+        throw handlerMissingError;
       }
 
       const stats = getOrCreateNodeStats(node);
@@ -511,7 +556,7 @@ export async function evaluateGraphInternal(
         if (options.onNodeStart) {
           await options.onNodeStart({
             runId: resolvedRunId,
-            runStartedAt: resolvedRunStartedAtMs,
+            runStartedAt: resolvedRunStartedAt,
             node,
             nodeInputs,
             prevOutputs,
@@ -563,8 +608,9 @@ export async function evaluateGraphInternal(
         };
 
         const result = await withTimeout(
-          handler(handlerContext),
-          timeoutMs
+          Promise.resolve(handler(handlerContext)),
+          timeoutMs,
+          `${node.type}:${node.id}`
         );
 
         const nodeFinishedAt = nowMs();
@@ -582,7 +628,7 @@ export async function evaluateGraphInternal(
         if (options.onNodeFinish) {
           await options.onNodeFinish({
             runId: resolvedRunId,
-            runStartedAt: resolvedRunStartedAtMs,
+            runStartedAt: resolvedRunStartedAt,
             node,
             nodeInputs,
             prevOutputs,
@@ -594,17 +640,15 @@ export async function evaluateGraphInternal(
       } catch (error) {
         errorNodes.add(node.id);
         stats.errorCount += 1;
-        if (options.onNodeFinish) {
-          await options.onNodeFinish({
+        if (options.onNodeError) {
+          await options.onNodeError({
             runId: resolvedRunId,
-            runStartedAt: resolvedRunStartedAtMs,
+            runStartedAt: resolvedRunStartedAt,
             node,
             nodeInputs,
             prevOutputs,
-            nextOutputs: {},
-            changed: false,
+            error,
             iteration,
-            error: error instanceof Error ? error.message : String(error),
           });
         }
         throw error;
@@ -615,11 +659,21 @@ export async function evaluateGraphInternal(
   const finalState = buildRuntimeStateSnapshot(inputs);
   
   if (options.profile?.onSummary) {
+    const profileNodes = Array.from(nodeStats.values()).map((stats) => ({
+      ...stats,
+      avgMs: stats.count > 0 ? stats.totalMs / stats.count : 0,
+      hashAvgMs: stats.hashCount > 0 ? stats.hashTotalMs / stats.hashCount : 0,
+    }));
     const summary: RuntimeProfileSummary = {
       runId: resolvedRunId,
-      totalMs: nowMs() - resolvedRunStartedAtMs,
-      iterations: iteration,
-      nodeStats: Array.from(nodeStats.values()),
+      durationMs: nowMs() - resolvedRunStartedAtMs,
+      iterationCount: iteration,
+      nodeCount: nodes.length,
+      edgeCount: sanitizedEdges.length,
+      nodes: profileNodes,
+      hottestNodes: [...profileNodes]
+        .sort((a, b) => b.totalMs - a.totalMs || b.maxMs - a.maxMs)
+        .slice(0, 10),
     };
     options.profile.onSummary(summary);
   }

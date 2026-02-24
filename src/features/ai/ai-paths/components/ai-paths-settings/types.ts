@@ -28,7 +28,6 @@ import type {
   DbNodePreset,
   ClusterPreset,
 } from '@/features/ai/ai-paths/lib';
-import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 import type { RunHistoryFilter } from '../run-history-panel';
 import type { HistoryNodeOption } from '../run-history-utils';

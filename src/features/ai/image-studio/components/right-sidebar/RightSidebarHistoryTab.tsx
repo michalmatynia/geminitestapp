@@ -4,37 +4,19 @@ import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
 import { ProjectGenerationHistoryTab } from '../ProjectGenerationHistoryTab';
+import { useRightSidebarContext } from '../RightSidebarContext';
 
-type ActionHistoryEntrySummary = {
-  id: string;
-  label: string;
-  createdAt: string;
-};
+export const RightSidebarHistoryTab = React.memo(function RightSidebarHistoryTab(): React.JSX.Element {
+  const {
+    actionHistoryEntriesLength,
+    actionHistoryItems,
+    actionHistoryMaxSteps,
+    activeActionHistoryIndex,
+    historyMode,
+    setHistoryMode,
+    onRestoreActionStep,
+  } = useRightSidebarContext();
 
-type ActionHistoryItem = {
-  entry: ActionHistoryEntrySummary;
-  index: number;
-};
-
-type RightSidebarHistoryTabProps = {
-  actionHistoryEntriesLength: number;
-  actionHistoryItems: ActionHistoryItem[];
-  actionHistoryMaxSteps: number;
-  activeActionHistoryIndex: number;
-  historyMode: 'actions' | 'runs';
-  onHistoryModeChange: (mode: 'actions' | 'runs') => void;
-  onRestoreActionStep: (targetIndex: number) => void;
-};
-
-export const RightSidebarHistoryTab = React.memo(function RightSidebarHistoryTab({
-  actionHistoryEntriesLength,
-  actionHistoryItems,
-  actionHistoryMaxSteps,
-  activeActionHistoryIndex,
-  historyMode,
-  onHistoryModeChange,
-  onRestoreActionStep,
-}: RightSidebarHistoryTabProps): React.JSX.Element {
   return (
     <div className='min-h-0 flex flex-1 flex-col overflow-hidden px-4 py-3'>
       <div className='mb-3 grid grid-cols-2 gap-2'>
@@ -48,7 +30,7 @@ export const RightSidebarHistoryTab = React.memo(function RightSidebarHistoryTab
               ? 'border-blue-400/70 bg-blue-500/10 text-blue-200 hover:bg-blue-500/10'
               : 'text-gray-400 hover:text-gray-200',
           )}
-          onClick={() => onHistoryModeChange('actions')}
+          onClick={() => setHistoryMode('actions')}
         >
           Action Steps
         </Button>
@@ -62,7 +44,7 @@ export const RightSidebarHistoryTab = React.memo(function RightSidebarHistoryTab
               ? 'border-blue-400/70 bg-blue-500/10 text-blue-200 hover:bg-blue-500/10'
               : 'text-gray-400 hover:text-gray-200',
           )}
-          onClick={() => onHistoryModeChange('runs')}
+          onClick={() => setHistoryMode('runs')}
         >
           Generation Runs
         </Button>

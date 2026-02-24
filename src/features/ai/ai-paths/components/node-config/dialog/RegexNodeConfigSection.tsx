@@ -77,6 +77,7 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
       splitLines: true,
       sampleText: '',
       aiPrompt: '',
+      jsonIntegrityPolicy: 'repair',
     };
   }, [isRegexNode, selectedNode.config?.regex]);
 
@@ -758,6 +759,29 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
               ]}
             />
           </div>
+        </div>
+
+        <div>
+          <Label className='text-xs text-gray-400'>JSON Integrity Policy</Label>
+          <SelectSimple size='sm'
+            value={regexConfig.jsonIntegrityPolicy ?? 'repair'}
+            onValueChange={(value: string): void =>
+              updateRegex({
+                jsonIntegrityPolicy:
+                  value === 'strict' ? 'strict' : 'repair',
+              })
+            }
+            placeholder='Select policy'
+            triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white md:w-[280px]'
+            contentClassName='border-border bg-gray-900'
+            options={[
+              { value: 'strict', label: 'Strict (no repair)' },
+              { value: 'repair', label: 'Repair malformed JSON' },
+            ]}
+          />
+          <p className='mt-1 text-[11px] text-gray-500'>
+            Applies in <span className='text-gray-300'>extract_json</span> mode.
+          </p>
         </div>
 
         <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>

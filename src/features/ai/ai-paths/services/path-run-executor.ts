@@ -20,6 +20,10 @@ import {
 } from '@/features/ai/ai-paths/services/path-run-policy';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
+import {
+  getAiPathsRuntimeFingerprint,
+  withRuntimeFingerprintMeta,
+} from '@/features/ai/ai-paths/services/runtime-fingerprint';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import {
   recordRuntimeNodeStatus,
@@ -725,6 +729,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       ? run.startedAt
       : new Date().toISOString();
   const traceId = run.id;
+  const runtimeFingerprint = getAiPathsRuntimeFingerprint();
   let runtimeProfileEventCount = 0;
   const runtimeProfileHighlights: RuntimeProfileHighlight[] = [];
   let runtimeProfileSummary: RuntimeProfileSummaryDto | null = null;
@@ -1006,6 +1011,9 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     run.meta && typeof run.meta === 'object'
       ? run.meta
       : null;
+  const runMetaWithRuntimeFingerprint = withRuntimeFingerprintMeta(
+    runMetaRecord
+  );
   const metaHistoryLimit = parseHistoryRetentionPasses(
     runMetaRecord?.['historyRetentionPasses']
   );
@@ -1039,6 +1047,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       metadata: {
         error: error instanceof Error ? error.message : String(error),
         runStartedAt,
+        runtimeFingerprint,
         traceId,
         ...meta,
       },
@@ -1047,6 +1056,12 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const toast = (): void => {};
 
   try {
+    if (runMetaRecord?.['runtimeFingerprint'] !== runtimeFingerprint) {
+      await updateRunSnapshot({
+        meta: runMetaWithRuntimeFingerprint,
+      });
+    }
+
     const runPreflight = evaluateRunPreflight({
       nodes,
       edges,
@@ -1226,12 +1241,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         prevOutputs,
         iteration,
         runStartedAt: cbRunStartedAt,
-      }: {
-        node: AiNode;
-        nodeInputs: RuntimePortValues;
-        prevOutputs: RuntimePortValues;
-        iteration: number;
-        runStartedAt: string;
       }) => {
         try {
           resolvedRunId = run.id;
@@ -1252,7 +1261,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
 
           // Track intermediate state so SSE stream can deliver per-node progress
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
-          const safePrevOutputs = cloneJsonSafe(prevOutputs) as RuntimePortValues;
+          const safePrevOutputs = cloneJsonSafe(prevOutputs ?? {}) as RuntimePortValues;
           accInputs[node.id] = safeInputs;
           accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'running' } as RuntimePortValues;
 
@@ -1488,14 +1497,14 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       }: {
         node: AiNode;
         nodeInputs: RuntimePortValues;
-        prevOutputs: RuntimePortValues;
+        prevOutputs: RuntimePortValues | null;
         error: unknown;
         iteration: number;
         runStartedAt: string;
       }) => {
         try {
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
-          const safePrevOutputs = cloneJsonSafe(prevOutputs) as RuntimePortValues;
+          const safePrevOutputs = cloneJsonSafe(prevOutputs ?? {}) as RuntimePortValues;
           accOutputs[node.id] = { ...(accOutputs[node.id] ?? {}), status: 'failed' } as RuntimePortValues;
           const attempt = nodeAttemptMap.get(node.id) ?? 0;
           const nodeSpanId = `${node.id}:${attempt}:${iteration}`;
@@ -1664,24 +1673,24 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             runtimeState: terminalRuntimeState,
             finishedAt: finishedAt.toISOString(),
             errorMessage: blockedFailureMessage,
-            meta: {
-              ...(run.meta ?? {}),
+            meta: withRuntimeFingerprintMeta({
+              ...(run.meta as Record<string, unknown> ?? {}),
               runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
               resumeMode: 'replay',
               retryNodeIds: [],
-            },
+            }),
           })
           : await updateRunSnapshot({
             status: 'completed',
             runtimeState: terminalRuntimeState,
             finishedAt: finishedAt.toISOString(),
             errorMessage: null,
-            meta: {
-              ...(run.meta ?? {}),
+            meta: withRuntimeFingerprintMeta({
+              ...(run.meta as Record<string, unknown> ?? {}),
               runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
               resumeMode: 'replay',
               retryNodeIds: [],
-            },
+            }),
           });
         if (updated) {
           await repo.createRunEvent({
@@ -1700,6 +1709,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
                   : 'Run completed successfully.',
             metadata: {
               runStartedAt,
+              runtimeFingerprint,
               traceId,
               ...(runBlocked
                 ? {
@@ -1809,10 +1819,10 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         runtimeState: failedRuntimeState,
         finishedAt: finishedAt.toISOString(),
         errorMessage,
-        meta: {
-          ...(run.meta ?? {}),
+        meta: withRuntimeFingerprintMeta({
+          ...(run.meta as Record<string, unknown> ?? {}),
           runtimeTrace: buildTraceMeta(runtimeProfileSnapshot),
-        },
+        }),
       });
     } catch (dbUpdateError) {
       void ErrorSystem.logWarning('Failed to update run status to failed in DB', {
@@ -1831,6 +1841,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           metadata: {
             error: errorMessage,
             runStartedAt,
+            runtimeFingerprint,
             traceId,
           },
         });

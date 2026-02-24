@@ -1,5 +1,9 @@
 import type { JsonPathEntry } from '@/shared/contracts/ai-paths';
 
+import {
+  normalizeJsonLikeValue,
+  type JsonIntegrityPolicy,
+} from '../runtime/handlers/json-integrity';
 import { cloneValue } from './runtime';
 
 export const extractJsonPathEntries = (value: unknown, maxDepth: number = 2): JsonPathEntry[] => {
@@ -84,47 +88,26 @@ export const parsePathTokens = (path: string): Array<string | number> => {
   return tokens;
 };
 
-const parseStructuredJsonString = (value: unknown): unknown => {
-  if (typeof value !== 'string') return value;
-  const trimmed = value.trim();
-  if (!trimmed) return value;
-  const startsLikeJson =
-    (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
-    (trimmed.startsWith('[') && trimmed.endsWith(']'));
-  if (!startsLikeJson) return value;
-  try {
-    const parsed: unknown = JSON.parse(trimmed);
-    if (parsed && typeof parsed === 'object') return parsed;
-  } catch {
-    const repaired = trimmed.replace(
-      /(:\s*\{[^{}]*\})(\s*,\s*\{)/g,
-      '$1}$2'
-    );
-    if (repaired !== trimmed) {
-      try {
-        const parsedRepaired: unknown = JSON.parse(repaired);
-        if (parsedRepaired && typeof parsedRepaired === 'object') {
-          return parsedRepaired;
-        }
-      } catch {
-        // Keep original when repaired parsing fails.
-      }
-    }
-  }
-  return value;
-};
-
-export const getValueAtMappingPath = (obj: unknown, path: string): unknown => {
+export const getValueAtMappingPath = (
+  obj: unknown,
+  path: string,
+  options?: { jsonIntegrityPolicy?: JsonIntegrityPolicy }
+): unknown => {
   const normalized = normalizeMappingPath(path, obj);
   if (!normalized) return undefined;
+  const jsonIntegrityPolicy: JsonIntegrityPolicy =
+    options?.jsonIntegrityPolicy === 'strict' ? 'strict' : 'repair';
   const tokens = parsePathTokens(normalized);
   const readByTokens = (source: unknown, index: number): unknown => {
     if (source === null || source === undefined) return undefined;
     if (index >= tokens.length) return source;
 
-    const normalizedSource =
-      typeof source === 'string' ? parseStructuredJsonString(source) : source;
+    const normalizedSource = normalizeJsonLikeValue(
+      source,
+      jsonIntegrityPolicy
+    ).value;
     const token = tokens[index];
+    if (token === undefined) return undefined;
 
     if (Array.isArray(normalizedSource)) {
       if (typeof token === 'number') {

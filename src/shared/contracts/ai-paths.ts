@@ -162,6 +162,7 @@ export type DescriptionConfig = DescriptionConfigDto;
 export const mapperConfigSchema = z.object({
   outputs: z.array(z.string()),
   mappings: z.record(z.string(), z.string()),
+  jsonIntegrityPolicy: z.enum(['strict', 'repair']).optional(),
 });
 
 export type MapperConfigDto = z.infer<typeof mapperConfigSchema>;
@@ -434,6 +435,7 @@ export const regexConfigSchema = z.object({
   aiProposal: z.object({ pattern: z.string(), flags: z.string().optional(), groupBy: z.string().optional() }).optional(),
   aiProposals: z.array(z.object({ pattern: z.string(), flags: z.string().optional(), groupBy: z.string().optional(), createdAt: z.string() })).optional(),
   templates: z.array(regexTemplateSchema).optional(),
+  jsonIntegrityPolicy: z.enum(['strict', 'repair']).optional(),
 });
 
 export type RegexConfigDto = z.infer<typeof regexConfigSchema>;
@@ -726,6 +728,19 @@ export const databaseGuardrailMetaSchema = z
     emptyTokens: z.array(z.string()).optional(),
     missingRoots: z.array(z.string()).optional(),
     emptyRoots: z.array(z.string()).optional(),
+    unparseableTokens: z.array(z.string()).optional(),
+    unparseableRoots: z.array(z.string()).optional(),
+    parseDiagnostics: z
+      .array(
+        z.object({
+          port: z.string().optional(),
+          token: z.string(),
+          rawType: z.string(),
+          parseState: z.enum(['not_json_like', 'parsed', 'repaired', 'unparseable']),
+          repairApplied: z.boolean(),
+        })
+      )
+      .optional(),
   })
   .passthrough();
 export type DatabaseGuardrailMetaDto = z.infer<typeof databaseGuardrailMetaSchema>;

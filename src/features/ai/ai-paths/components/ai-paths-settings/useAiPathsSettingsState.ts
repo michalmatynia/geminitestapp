@@ -1,5 +1,5 @@
 'use client';
-import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import type {
@@ -18,15 +18,6 @@ import type {
   PathMeta,
   RuntimeState,
   UpdaterSampleState,
-  AiPathRunRecord,
-  AiPathRunNodeRecord,
-  AiPathRunEventRecord,
-  AiPathRuntimeEvent,
-  AiPathRuntimeNodeStatusMap,
-  RuntimeHistoryEntry,
-  ClusterPreset,
-  DbQueryPreset,
-  DbNodePreset,
 } from '@/features/ai/ai-paths/lib';
 import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
@@ -80,16 +71,11 @@ import {
   buildPersistedRuntimeState,
 } from '../AiPathsSettingsUtils';
 
-import type { ClusterPresetDraft } from '../cluster-presets-panel';
-import type { RunHistoryFilter } from '../run-history-panel';
-import type { HistoryNodeOption } from '../run-history-utils';
-
 type AiPathsSettingsStateOptions = {
   activeTab: 'canvas' | 'paths' | 'docs';
 };
 
 import type { UseAiPathsSettingsStateReturn } from "./types";
-export type AiPathsSettingsState = UseAiPathsSettingsStateReturn;
 
 export function useAiPathsSettingsState({
   activeTab,

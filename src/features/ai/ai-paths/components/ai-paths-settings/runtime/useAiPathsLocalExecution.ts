@@ -613,7 +613,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
               runStartedAt: string;
               node: AiNode;
               nodeInputs: RuntimePortValues;
-              prevOutputs?: RuntimePortValues;
+              prevOutputs?: RuntimePortValues | null;
               error: unknown;
               iteration: number;
             }) => {

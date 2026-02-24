@@ -356,6 +356,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
             mapper: {
               outputs,
               mappings: mapperConfig?.mappings ?? createParserMappings(outputs),
+              jsonIntegrityPolicy: mapperConfig?.jsonIntegrityPolicy ?? 'repair',
             },
           },
         };
@@ -432,6 +433,7 @@ export const normalizeNodes = (items: AiNode[]): AiNode[] => {
               aiPrompt: config?.aiPrompt ?? '',
               aiAutoRun: config?.aiAutoRun ?? false,
               activeVariant: config?.activeVariant ?? 'manual',
+              jsonIntegrityPolicy: config?.jsonIntegrityPolicy ?? 'repair',
               ...(config?.manual ? { manual: config.manual } : {}),
               ...(config?.aiProposal ? { aiProposal: config.aiProposal } : {}),
               ...(config?.aiProposals ? { aiProposals: config.aiProposals } : {}),
@@ -1344,6 +1346,7 @@ export const getDefaultConfigForType = (
       mapper: {
         outputs: outputs.length ? outputs : ['value'],
         mappings: createParserMappings(outputs.length ? outputs : ['value']),
+        jsonIntegrityPolicy: 'repair',
       },
     };
   }
@@ -1570,6 +1573,7 @@ export const getDefaultConfigForType = (
         aiPrompt: '',
         aiAutoRun: false,
         activeVariant: 'manual',
+        jsonIntegrityPolicy: 'repair',
       },
     };
   }

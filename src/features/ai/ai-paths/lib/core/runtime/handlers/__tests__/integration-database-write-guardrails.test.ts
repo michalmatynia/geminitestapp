@@ -4,6 +4,7 @@ import {
   evaluateWriteOutcome,
   resolveWriteTemplateGuardrail,
 } from '@/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-write-guardrails';
+import { getValueAtMappingPath } from '@/features/ai/ai-paths/lib/core/utils/json';
 
 describe('resolveWriteTemplateGuardrail', () => {
   it('detects missing and empty template values for nested, value, and current tokens', () => {
@@ -106,6 +107,74 @@ describe('resolveWriteTemplateGuardrail', () => {
     });
 
     expect(result).toEqual({ ok: true });
+  });
+
+  it('reports unparseable json diagnostics when token roots are malformed and unrecoverable', () => {
+    const result = resolveWriteTemplateGuardrail({
+      templates: [
+        {
+          name: 'updateTemplate',
+          template: '{"parameters": {{result.parameters}}}',
+        },
+      ],
+      templateContext: {
+        result: '{"parameters":[{"parameterId":"p1","value":"v1"}',
+      },
+      currentValue: null,
+    });
+
+    expect(result.ok).toBe(false);
+    if (result.ok) {
+      throw new Error('Expected write template guardrail failure.');
+    }
+    expect(result.guardrailMeta.unparseableTokens).toEqual(
+      expect.arrayContaining(['result.parameters'])
+    );
+    expect(result.guardrailMeta.parseDiagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          token: 'result.parameters',
+          parseState: 'unparseable',
+        }),
+      ])
+    );
+    expect(result.message).toContain('unparseable JSON tokens');
+  });
+
+  it('resolves repairable malformed payloads consistently with mapping-path reader', () => {
+    const malformed =
+      '{"parameters":[{"parameterId":"p1","value":"v1","valuesByLanguage":{"pl":"x"},{"parameterId":"p2","value":"v2","valuesByLanguage":{"pl":"y"}}]}';
+    const valueAtPath = getValueAtMappingPath(
+      { result: malformed },
+      'result.parameters'
+    );
+
+    expect(valueAtPath).toEqual([
+      {
+        parameterId: 'p1',
+        value: 'v1',
+        valuesByLanguage: { pl: 'x' },
+      },
+      {
+        parameterId: 'p2',
+        value: 'v2',
+        valuesByLanguage: { pl: 'y' },
+      },
+    ]);
+
+    const guardrailResult = resolveWriteTemplateGuardrail({
+      templates: [
+        {
+          name: 'updateTemplate',
+          template: '{"parameters": {{result.parameters}}}',
+        },
+      ],
+      templateContext: {
+        result: malformed,
+      },
+      currentValue: null,
+    });
+    expect(guardrailResult).toEqual({ ok: true });
   });
 });
 

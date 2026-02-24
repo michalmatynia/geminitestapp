@@ -1,6 +1,9 @@
 'use client';
 
+import { useEffect } from 'react';
+
 import { FormSection, StatusToggle } from '@/shared/ui';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 
 import { useValidatorSettingsController } from './validator-settings/useValidatorSettingsController';
 import {
@@ -17,6 +20,31 @@ import { ValidatorSettingsProvider } from './validator-settings/ValidatorSetting
  */
 export function ValidatorSettings(): React.JSX.Element {
   const controller = useValidatorSettingsController();
+  const { confirm, ConfirmationModal } = useConfirm();
+  const {
+    patternToDelete,
+    setPatternToDelete,
+    handleDeletePattern,
+  } = controller;
+
+  useEffect(() => {
+    if (!patternToDelete) return;
+
+    const { id, label } = patternToDelete;
+    confirm({
+      title: 'Delete Pattern',
+      message: `Are you sure you want to delete "${label}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      isDangerous: true,
+      onConfirm: async () => {
+        await handleDeletePattern(id);
+        setPatternToDelete(null);
+      },
+      onCancel: () => {
+        setPatternToDelete(null);
+      },
+    });
+  }, [confirm, handleDeletePattern, patternToDelete, setPatternToDelete]);
 
   return (
     <ValidatorSettingsProvider value={controller}>
@@ -25,6 +53,7 @@ export function ValidatorSettings(): React.JSX.Element {
         <ValidatorInstanceBehaviorPanel />
         <ValidatorPatternTablePanel />
         <ValidatorPatternModal />
+        <ConfirmationModal />
       </div>
     </ValidatorSettingsProvider>
   );

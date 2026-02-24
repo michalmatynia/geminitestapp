@@ -295,6 +295,12 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
       description: 'Optional AI prompt template used to propose a regex.',
       defaultValue: '""',
     },
+    {
+      path: 'regex.jsonIntegrityPolicy',
+      description:
+        'How extract_json handles malformed JSON-like strings. strict keeps malformed strings unresolved; repair attempts object-boundary repair before parsing.',
+      defaultValue: 'repair',
+    },
     ...COMMON_RUNTIME_FIELDS,
   ],
   iterator: [
@@ -324,6 +330,12 @@ const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>> = {
       description:
         'Map output port name -> JSON path (relative to context).',
       defaultValue: '{}',
+    },
+    {
+      path: 'mapper.jsonIntegrityPolicy',
+      description:
+        'How mapper normalizes JSON-like string inputs before resolving mapping paths. strict keeps malformed strings unresolved; repair attempts normalization first.',
+      defaultValue: 'repair',
     },
     ...COMMON_RUNTIME_FIELDS,
   ],

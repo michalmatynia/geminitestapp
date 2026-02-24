@@ -1,4 +1,8 @@
-import { parseJsonSafe } from '@/features/ai/ai-paths/lib';
+import {
+  normalizeJsonIntegrityPolicy,
+  normalizeJsonLikeValue,
+  type JsonIntegrityPolicy,
+} from '@/features/ai/ai-paths/lib/core/runtime/handlers/json-integrity';
 import type { RegexConfig } from '@/features/ai/ai-paths/lib';
 
 export type RegexCandidate = {
@@ -199,14 +203,14 @@ const resolveGroupKey = (match: RegExpExecArray, groupBy: string | undefined): s
   return stringifyRegexSelection(selected);
 };
 
-const parseRegexExtractedJson = (value: unknown): unknown => {
-  if (Array.isArray(value)) return value.map(parseRegexExtractedJson);
-  if (value && typeof value === 'object') return value;
-  if (typeof value !== 'string') return value;
-  const trimmed = value.trim();
-  if (!trimmed) return value;
-  const parsed = parseJsonSafe(trimmed);
-  return parsed === undefined ? value : parsed;
+const parseRegexExtractedJson = (
+  value: unknown,
+  policy: JsonIntegrityPolicy
+): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((entry: unknown) => parseRegexExtractedJson(entry, policy));
+  }
+  return normalizeJsonLikeValue(value, policy).value;
 };
 
 export const buildRegexPreview = (
@@ -217,6 +221,9 @@ export const buildRegexPreview = (
   const mode = regexConfig.mode ?? 'group';
   const isExtractMode = mode === 'extract' || mode === 'extract_json';
   const shouldParse = mode === 'extract_json';
+  const jsonIntegrityPolicy = normalizeJsonIntegrityPolicy(
+    regexConfig.jsonIntegrityPolicy
+  );
   const includeUnmatched = regexConfig.includeUnmatched ?? true;
   const unmatchedKey = (regexConfig.unmatchedKey ?? '__unmatched__').trim() || '__unmatched__';
   const matchMode = regexConfig.matchMode ?? 'first';
@@ -260,7 +267,10 @@ export const buildRegexPreview = (
           ) as Record<string, string>)
           : null;
       const extracted = shouldParse
-        ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
+        ? parseRegexExtractedJson(
+          resolveRegexSelection(match, groupBy),
+          jsonIntegrityPolicy
+        )
         : resolveRegexSelection(match, groupBy);
       const record: RegexPreviewRecord = {
         input,
@@ -306,7 +316,10 @@ export const buildRegexPreview = (
               ) as Record<string, string>)
               : null;
           const extracted = shouldParse
-            ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
+            ? parseRegexExtractedJson(
+              resolveRegexSelection(match, groupBy),
+              jsonIntegrityPolicy
+            )
             : resolveRegexSelection(match, groupBy);
           const record: RegexPreviewRecord = {
             input,
@@ -366,7 +379,10 @@ export const buildRegexPreview = (
           ) as Record<string, string>)
           : null;
       const extracted = shouldParse
-        ? parseRegexExtractedJson(resolveRegexSelection(match, groupBy))
+        ? parseRegexExtractedJson(
+          resolveRegexSelection(match, groupBy),
+          jsonIntegrityPolicy
+        )
         : resolveRegexSelection(match, groupBy);
       const record: RegexPreviewRecord = {
         input,

@@ -165,6 +165,66 @@ describe('evaluateDataContractPreflight', () => {
     ).toBe(true);
   });
 
+  it('does not flag template token missing when upstream root is connected but unresolved', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'mapper-1',
+        type: 'mapper',
+        outputs: ['value'],
+      }),
+      buildNode({
+        id: 'db-1',
+        type: 'database',
+        inputs: ['value'],
+        outputs: ['result'],
+        config: {
+          database: {
+            operation: 'update',
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '{"id":"{{entityId}}"}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+            updateTemplate: '{"$set":{"description_pl":"{{value.description_pl}}"}}',
+          },
+        },
+      }),
+    ];
+    const edges: Edge[] = [
+      {
+        id: 'edge-mapper-db-value',
+        from: 'mapper-1',
+        to: 'db-1',
+        fromPort: 'value',
+        toPort: 'value',
+      },
+    ];
+
+    const report = evaluateDataContractPreflight({
+      nodes,
+      edges,
+      runtimeState: buildRuntimeState({}),
+      mode: 'full',
+    });
+
+    expect(
+      report.issues.some(
+        (issue) =>
+          issue.code === 'database_template_token_missing' &&
+          issue.token === 'value.description_pl' &&
+          issue.nodeId === 'db-1'
+      )
+    ).toBe(false);
+  });
+
   it('flags runtime type mismatch on non-database connected inputs', () => {
     const nodes: AiNode[] = [
       buildNode({

@@ -24,7 +24,7 @@ import {
   safeStringify,
   setValueAtMappingPath,
 } from '../../utils';
-import { buildFallbackEntity, extractImageUrls, resolveContextPayload } from '../utils';
+import { extractImageUrls, resolveContextPayload } from '../utils';
 
 export const handleContext: NodeHandler = async ({
   node,
@@ -33,6 +33,7 @@ export const handleContext: NodeHandler = async ({
   now,
   simulationEntityId,
   simulationEntityType,
+  toast,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   const rawContext = coerceInput(nodeInputs['context']);
   const inputContext =
@@ -47,6 +48,11 @@ export const handleContext: NodeHandler = async ({
     now,
     fetchEntityCached
   );
+  if (payload.missingFetchedEntity && payload.entityId) {
+    toast(`No ${payload.entityType} data found for ID ${payload.entityId}.`, {
+      variant: 'error',
+    });
+  }
   const resolvedContext = {
     ...payload.context,
     source: (payload.context?.['source'] as string | undefined) ?? node.title,
@@ -65,8 +71,6 @@ export const handleParser: NodeHandler = async ({
   fetchEntityCached,
   simulationEntityType,
   resolvedEntity,
-  fallbackEntityId,
-  strictFlowMode = true,
   reportAiPathsError,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   try {
@@ -94,10 +98,7 @@ export const handleParser: NodeHandler = async ({
     let source =
       (coerceInput(nodeInputs['entityJson']) as Record<string, unknown> | undefined) ??
       contextEntity ??
-      (!strictFlowMode
-        ? (resolvedEntity as Record<string, unknown> | undefined) ??
-          (fallbackEntityId ? buildFallbackEntity(fallbackEntityId) : undefined)
-        : undefined);
+      (resolvedEntity as Record<string, unknown> | undefined);
 
     // In strict mode, hydration by explicit context identity is allowed (not a hidden fallback).
     if (!source && contextInput && typeof contextInput === 'object') {

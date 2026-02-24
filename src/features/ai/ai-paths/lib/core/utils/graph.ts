@@ -70,28 +70,62 @@ export const isValidConnection = (
 
 export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
   const nodeMap = new Map(nodes.map((node: AiNode) => [node.id, node]));
+  const resolveNodeId = (primary: string | undefined, fallback: string | undefined): string | null => {
+    const first = typeof primary === 'string' ? primary.trim() : '';
+    if (first.length > 0) return first;
+    const second = typeof fallback === 'string' ? fallback.trim() : '';
+    return second.length > 0 ? second : null;
+  };
+  const resolvePort = (
+    primary: string | null | undefined,
+    fallback: string | null | undefined
+  ): string | null => {
+    const first = typeof primary === 'string' ? normalizePortName(primary) : '';
+    if (first.length > 0) return first;
+    const second = typeof fallback === 'string' ? normalizePortName(fallback) : '';
+    return second.length > 0 ? second : null;
+  };
+  const toCanonicalEdge = (
+    edge: Edge,
+    fromNodeId: string,
+    toNodeId: string,
+    fromPort?: string,
+    toPort?: string
+  ): Edge => ({
+    ...edge,
+    from: fromNodeId,
+    to: toNodeId,
+    source: fromNodeId,
+    target: toNodeId,
+    ...(fromPort ? { fromPort, sourceHandle: fromPort } : {}),
+    ...(toPort ? { toPort, targetHandle: toPort } : {}),
+  });
   const triggerFetcherPairKey = (fromNodeId: string, toNodeId: string): string =>
     `${fromNodeId}::${toNodeId}`;
   const triggerFetcherPairsWithSignal = new Set<string>();
   const emittedTriggerFetcherPairs = new Set<string>();
   edges.forEach((edge: Edge): void => {
-    if (!edge.from || !edge.to) return;
-    const fromNode = nodeMap.get(edge.from);
-    const toNode = nodeMap.get(edge.to);
+    const fromNodeId = resolveNodeId(edge.from, edge.source);
+    const toNodeId = resolveNodeId(edge.to, edge.target);
+    if (!fromNodeId || !toNodeId) return;
+    const fromNode = nodeMap.get(fromNodeId);
+    const toNode = nodeMap.get(toNodeId);
     if (fromNode?.type !== 'trigger' || toNode?.type !== 'fetcher') return;
-    const fromPort = edge.fromPort ? normalizePortName(edge.fromPort) : undefined;
-    const toPort = edge.toPort ? normalizePortName(edge.toPort) : undefined;
+    const fromPort = resolvePort(edge.fromPort, edge.sourceHandle);
+    const toPort = resolvePort(edge.toPort, edge.targetHandle);
     if ((fromPort === 'trigger' || !fromPort) && (toPort === 'trigger' || !toPort)) {
-      triggerFetcherPairsWithSignal.add(triggerFetcherPairKey(edge.from, edge.to));
+      triggerFetcherPairsWithSignal.add(triggerFetcherPairKey(fromNodeId, toNodeId));
     }
   });
   return edges.flatMap((edge: Edge) => {
-    if (!edge.from || !edge.to) return [];
-    const from = nodeMap.get(edge.from);
-    const to = nodeMap.get(edge.to);
+    const fromNodeId = resolveNodeId(edge.from, edge.source);
+    const toNodeId = resolveNodeId(edge.to, edge.target);
+    if (!fromNodeId || !toNodeId) return [];
+    const from = nodeMap.get(fromNodeId);
+    const to = nodeMap.get(toNodeId);
     if (!from || !to) return [];
-    const fromPort = edge.fromPort ? normalizePortName(edge.fromPort) : undefined;
-    const toPort = edge.toPort ? normalizePortName(edge.toPort) : undefined;
+    const fromPort = resolvePort(edge.fromPort, edge.sourceHandle) ?? undefined;
+    const toPort = resolvePort(edge.toPort, edge.targetHandle) ?? undefined;
 
     if (from.type === 'trigger' && to.type === 'fetcher') {
       const pairKey = triggerFetcherPairKey(from.id, to.id);
@@ -104,11 +138,7 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
         return [];
       }
       emittedTriggerFetcherPairs.add(pairKey);
-      const canonical: Edge = {
-        ...edge,
-        fromPort: 'trigger',
-        toPort: 'trigger',
-      };
+      const canonical = toCanonicalEdge(edge, fromNodeId, toNodeId, 'trigger', 'trigger');
       if (
         isValidConnection(from, to, canonical.fromPort ?? undefined, canonical.toPort ?? undefined)
       ) {
@@ -119,13 +149,7 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
 
     if (fromPort && toPort) {
       if (isValidConnection(from, to, fromPort, toPort)) {
-        return [
-          {
-            ...edge,
-            fromPort,
-            toPort,
-          },
-        ];
+        return [toCanonicalEdge(edge, fromNodeId, toNodeId, fromPort, toPort)];
       }
       const canAlignByFromPort =
         from.outputs.includes(fromPort) && to.inputs.includes(fromPort);
@@ -134,22 +158,10 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
       // Prefer the source port when both alignments are possible. This avoids
       // accidental output inversions when only the target port drifts.
       if (canAlignByFromPort) {
-        return [
-          {
-            ...edge,
-            fromPort,
-            toPort: fromPort,
-          },
-        ];
+        return [toCanonicalEdge(edge, fromNodeId, toNodeId, fromPort, fromPort)];
       }
       if (canAlignByToPort) {
-        return [
-          {
-            ...edge,
-            fromPort: toPort,
-            toPort,
-          },
-        ];
+        return [toCanonicalEdge(edge, fromNodeId, toNodeId, toPort, toPort)];
       }
       return [];
     }
@@ -157,13 +169,7 @@ export const sanitizeEdges = (nodes: AiNode[], edges: Edge[]): Edge[] => {
     if (matches.length !== 1) return [];
     const port = matches[0];
     if (!port) return [];
-    return [
-      {
-        ...edge,
-        fromPort: port,
-        toPort: port,
-      },
-    ];
+    return [toCanonicalEdge(edge, fromNodeId, toNodeId, port, port)];
   });
 };
 

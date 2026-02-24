@@ -1548,9 +1548,15 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       },
       control: {
         signal: runAbortController.signal,
-        onHalt: ({ reason, iteration }): void => {
+        onHalt: ({
+          reason,
+          iteration,
+        }: {
+          reason: 'step_limit' | 'completed' | 'cancelled' | 'blocked';
+          iteration?: number;
+        }): void => {
           runtimeHaltReason = reason;
-          runtimeHaltIteration = iteration;
+          runtimeHaltIteration = typeof iteration === 'number' ? iteration : null;
         },
       },
     });

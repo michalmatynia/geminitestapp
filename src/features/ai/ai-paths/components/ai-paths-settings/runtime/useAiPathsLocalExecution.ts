@@ -608,6 +608,14 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
               prevOutputs,
               error,
               iteration,
+            }: {
+              runId: string;
+              runStartedAt: string;
+              node: AiNode;
+              nodeInputs: RuntimePortValues;
+              prevOutputs?: RuntimePortValues;
+              error: unknown;
+              iteration: number;
             }) => {
               const message = error instanceof Error ? error.message : String(error);
               args.setNodeStatus({
@@ -658,7 +666,10 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
               mode,
               stepLimit,
               signal: args.abortControllerRef.current?.signal,
-              onHalt: (payload) => {
+              onHalt: (payload: {
+                reason: 'completed' | 'step_limit' | 'cancelled' | 'blocked';
+                iteration?: number;
+              }) => {
                 haltRef.reason = payload.reason;
               },
             },
@@ -820,36 +831,12 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
       if (!entityId) {
         return null;
       }
-
-      const fallbackEntity =
-        isPlainRecord(contextFallback?.['entity'])
-          ? contextFallback?.['entity']
-          : isPlainRecord(contextFallback?.['entityJson'])
-            ? contextFallback?.['entityJson']
-            : isPlainRecord(contextFallback?.['product'])
-              ? contextFallback?.['product']
-              : null;
-
-      if (fallbackEntity) {
-        return {
-          ...contextFallback,
-          contextSource: 'simulation_manual',
-          source:
-            typeof contextFallback?.['source'] === 'string'
-              ? contextFallback['source']
-              : 'simulation',
-          simulationNodeId: simulationNode.id,
-          simulationNodeTitle: simulationNode.title ?? simulationNode.id,
-          entityId,
-          entityType,
-          ...(entityType === 'product' ? { productId: entityId } : {}),
-          entity: fallbackEntity,
-          entityJson: fallbackEntity,
-          ...(entityType === 'product' ? { product: fallbackEntity } : {}),
-        };
-      }
-
       const entity = await args.fetchEntityByType(entityType, entityId);
+      if (!entity) {
+        args.toast(`No ${entityType} data found for ID ${entityId}.`, {
+          variant: 'error',
+        });
+      }
       return {
         contextSource: 'simulation',
         source: 'simulation',
@@ -1392,10 +1379,7 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
     args.triggerContextRef.current = triggerContext;
     if (args.executionMode === 'local') {
       const previousState = args.runtimeStateRef.current;
-      const nextOutputs = { ...(previousState.outputs ?? {}) };
-      connectedSimulationNodes.forEach((simulationNode) => {
-        delete nextOutputs[simulationNode.id];
-      });
+      const nextOutputs: Record<string, RuntimePortValues> = {};
       Object.entries(simulationSeedOutputs).forEach(([nodeId, output]) => {
         nextOutputs[nodeId] = {
           ...(nextOutputs[nodeId] ?? {}),
@@ -1406,7 +1390,12 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
         ...previousState,
         runId,
         runStartedAt: startedAt,
+        inputs: {},
         outputs: nextOutputs,
+        history: {},
+        hashes: {},
+        hashTimestamps: {},
+        nodeOutputs: {},
       };
       args.runtimeStateRef.current = nextState;
       args.setRuntimeState(nextState);

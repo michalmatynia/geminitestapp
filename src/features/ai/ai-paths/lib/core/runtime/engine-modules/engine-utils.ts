@@ -3,11 +3,63 @@ import type {
   Edge,
   RuntimeHistoryLink,
 } from '@/shared/contracts/ai-paths';
-import type { NodeInputReadiness, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
+import type { RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 import {
   getNodeInputPortContract,
   coerceInput,
+  normalizePortName,
 } from '../../utils';
+
+type NodeInputReadiness = {
+  ready: boolean;
+  requiredPorts: string[];
+  optionalPorts: string[];
+  waitingOnPorts: string[];
+  waitingOnDetails: Array<{
+    port: string;
+    upstream: Array<{
+      nodeId: string;
+      nodeType: string | null;
+      nodeTitle: string | null;
+      sourcePort: string | null;
+      status: string;
+      blockedReason?: string;
+      waitingOnPorts?: string[];
+    }>;
+  }>;
+};
+
+const resolveEdgeNodeId = (
+  primary: string | undefined,
+  fallback: string | undefined
+): string | null => {
+  const first = typeof primary === 'string' ? primary.trim() : '';
+  if (first.length > 0) return first;
+  const second = typeof fallback === 'string' ? fallback.trim() : '';
+  return second.length > 0 ? second : null;
+};
+
+const resolveEdgeFromNodeId = (edge: Edge): string | null =>
+  resolveEdgeNodeId(edge.from, edge.source);
+
+const resolveEdgeToNodeId = (edge: Edge): string | null =>
+  resolveEdgeNodeId(edge.to, edge.target);
+
+const resolveEdgePort = (
+  primary: string | null | undefined,
+  fallback: string | null | undefined
+): string | null => {
+  const first = typeof primary === 'string' ? normalizePortName(primary) : '';
+  if (first.length > 0) return first;
+  const second = typeof fallback === 'string' ? normalizePortName(fallback) : '';
+  return second.length > 0 ? second : null;
+};
+
+const resolveEdgeFromPort = (edge: Edge): string | null =>
+  resolveEdgePort(edge.fromPort, edge.sourceHandle);
+
+const resolveEdgeToPort = (edge: Edge): string | null =>
+  resolveEdgePort(edge.toPort, edge.targetHandle);
 
 export const hasMeaningfulValue = (value: unknown): boolean => {
   if (value === undefined || value === null) return false;
@@ -28,9 +80,12 @@ export const orderNodesByDependencies = (nodes: AiNode[], edges: Edge[]): AiNode
   });
 
   edges.forEach((e) => {
-    if (nodeById.has(e.source) && nodeById.has(e.target)) {
-      adj.get(e.source)?.push(e.target);
-      inDegree.set(e.target, (inDegree.get(e.target) ?? 0) + 1);
+    const fromNodeId = resolveEdgeFromNodeId(e);
+    const toNodeId = resolveEdgeToNodeId(e);
+    if (!fromNodeId || !toNodeId) return;
+    if (nodeById.has(fromNodeId) && nodeById.has(toNodeId)) {
+      adj.get(fromNodeId)?.push(toNodeId);
+      inDegree.set(toNodeId, (inDegree.get(toNodeId) ?? 0) + 1);
     }
   });
 
@@ -66,13 +121,13 @@ export const buildInputLinks = (
   nodeById: Map<string, AiNode>,
   nodeInputs: Record<string, unknown>
 ): RuntimeHistoryLink[] => {
-  const incoming = edges.filter((e) => e.target === nodeId);
+  const incoming = edges.filter((e) => resolveEdgeToNodeId(e) === nodeId);
   const hasInputs = Object.keys(nodeInputs).length > 0;
   return incoming
     .map((edge: Edge): RuntimeHistoryLink | null => {
-      const fromNodeId = edge.from;
+      const fromNodeId = resolveEdgeFromNodeId(edge);
       if (!fromNodeId) return null;
-      const toPort = edge.toPort ?? null;
+      const toPort = resolveEdgeToPort(edge);
       const isPresent = toPort ? (nodeInputs)[toPort] !== undefined : hasInputs;
       if (!isPresent) return null;
       const fromNode = nodeById.get(fromNodeId);
@@ -93,13 +148,13 @@ export const buildOutputLinks = (
   nodeById: Map<string, AiNode>,
   nodeOutputs: Record<string, unknown>
 ): RuntimeHistoryLink[] => {
-  const outgoing = edges.filter((e) => e.source === nodeId);
+  const outgoing = edges.filter((e) => resolveEdgeFromNodeId(e) === nodeId);
   const hasOutputs = Object.keys(nodeOutputs).length > 0;
   return outgoing
     .map((edge: Edge): RuntimeHistoryLink | null => {
-      const toNodeId = edge.to;
+      const toNodeId = resolveEdgeToNodeId(edge);
       if (!toNodeId) return null;
-      const fromPort = edge.fromPort ?? null;
+      const fromPort = resolveEdgeFromPort(edge);
       const isPresent = fromPort ? (nodeOutputs)[fromPort] !== undefined : hasOutputs;
       if (!isPresent) return null;
       const toNode = nodeById.get(toNodeId);
@@ -162,21 +217,23 @@ export const buildWaitingOnDetails = (
   });
 
   incomingEdges.forEach((edge) => {
-    const port = edge.toPort;
+    const port = resolveEdgeToPort(edge);
     if (!port || !waitingPorts.has(port)) return;
     const detail = detailsByPort.get(port);
     if (!detail) return;
 
-    const sourceNode = nodeById.get(edge.from);
-    const status = nodeStatusGetter(edge.from);
-    const sourceOutputs = nodeOutputsGetter(edge.from);
+    const sourceNodeId = resolveEdgeFromNodeId(edge);
+    if (!sourceNodeId) return;
+    const sourceNode = nodeById.get(sourceNodeId);
+    const status = nodeStatusGetter(sourceNodeId);
+    const sourceOutputs = nodeOutputsGetter(sourceNodeId);
     const rawWaitingOnPorts = sourceOutputs['waitingOnPorts'];
     
     detail.upstream.push({
-      nodeId: edge.from,
+      nodeId: sourceNodeId,
       nodeType: sourceNode?.type ?? null,
       nodeTitle: sourceNode?.title ?? null,
-      sourcePort: edge.fromPort ?? null,
+      sourcePort: resolveEdgeFromPort(edge),
       status,
       ...(typeof sourceOutputs['blockedReason'] === 'string'
         ? { blockedReason: sourceOutputs['blockedReason'] }
@@ -234,7 +291,8 @@ export const evaluateInputReadiness = (
 
   const connectedPorts = new Set<string>();
   incomingEdges.forEach((edge: Edge) => {
-    if (edge.toPort) connectedPorts.add(edge.toPort);
+    const port = resolveEdgeToPort(edge);
+    if (port) connectedPorts.add(port);
   });
 
   if (connectedPorts.size === 0) {

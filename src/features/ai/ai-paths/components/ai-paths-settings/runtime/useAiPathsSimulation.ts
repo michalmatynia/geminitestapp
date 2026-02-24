@@ -17,9 +17,6 @@ import {
   entityApi,
 } from '@/features/ai/ai-paths/lib';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
-import {
-  AI_PATHS_ENTITY_STALE_MS,
-} from '@/shared/contracts/ai-paths-runtime';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import { 
@@ -119,7 +116,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
             const result = await entityApi.getProduct(productId);
             return result.ok ? result.data : null;
           },
-          staleTime: AI_PATHS_ENTITY_STALE_MS,
+          staleTime: 0,
         });
       } catch (error) {
         args.reportAiPathsError(error, { action: 'fetchProduct', productId }, 'Failed to fetch product:');
@@ -138,7 +135,7 @@ export function useAiPathsSimulation(args: SimulationArgs) {
             const result = await entityApi.getNote(noteId);
             return result.ok ? result.data : null;
           },
-          staleTime: AI_PATHS_ENTITY_STALE_MS,
+          staleTime: 0,
         });
       } catch (error) {
         args.reportAiPathsError(error, { action: 'fetchNote', noteId }, 'Failed to fetch note:');
@@ -308,13 +305,18 @@ export function useAiPathsSimulation(args: SimulationArgs) {
         await args.runGraphForTrigger(triggerNode, undefined, simulationContext);
         dispatchTrigger(eventName, entityId, entityType);
         if (!enrichedContext) {
-          args.toast(`No entity found for ${entityType} ${entityId}. Using fallback context.`, {
-            variant: 'info',
+          args.toast(`No ${entityType} data found for ID ${entityId}.`, {
+            variant: 'error',
           });
         }
       } else {
         // Implementation for manual event trigger
         const enrichedContext = await fetchEntityByType(entityType, entityId);
+        if (!enrichedContext) {
+          args.toast(`No ${entityType} data found for ID ${entityId}.`, {
+            variant: 'error',
+          });
+        }
         const simulationContext = enrichedContext 
           ? buildSimulationContext({ entityId, entityType, entity: enrichedContext })
           : initialContext;

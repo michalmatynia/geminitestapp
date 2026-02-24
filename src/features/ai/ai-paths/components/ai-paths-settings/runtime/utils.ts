@@ -19,7 +19,7 @@ import type {
 import {
   STORAGE_VERSION,
 } from '@/features/ai/ai-paths/lib';
-import { buildFallbackEntity, extractImageUrls } from '@/features/ai/ai-paths/lib/core/runtime/utils';
+import { extractImageUrls } from '@/features/ai/ai-paths/lib/core/runtime/utils';
 
 /**
  * Generate a unique run ID
@@ -351,15 +351,8 @@ export const buildSimulationContext = (args: {
   entityType: string;
   entity?: Record<string, unknown> | null;
 }): Record<string, unknown> => {
-  const fallbackEntity: Record<string, unknown> = {
-    ...buildFallbackEntity(args.entityId),
-    id: args.entityId,
-    entityId: args.entityId,
-    entityType: args.entityType,
-    ...(args.entityType === 'product' ? { productId: args.entityId } : {}),
-  };
-  const scopedEntity = args.entity ?? fallbackEntity;
-  const imageUrls = extractImageUrls(scopedEntity);
+  const scopedEntity = args.entity ?? null;
+  const imageUrls = scopedEntity ? extractImageUrls(scopedEntity) : [];
   return {
     contextSource: 'simulation_manual',
     source: 'simulation',
@@ -367,9 +360,8 @@ export const buildSimulationContext = (args: {
     entityType: args.entityType,
     ...(args.entityType === 'product' ? { productId: args.entityId } : {}),
     ...(imageUrls.length ? { images: imageUrls, imageUrls } : {}),
-    entity: scopedEntity,
-    entityJson: scopedEntity,
-    ...(args.entityType === 'product' ? { product: scopedEntity } : {}),
+    ...(scopedEntity ? { entity: scopedEntity, entityJson: scopedEntity } : {}),
+    ...(args.entityType === 'product' && scopedEntity ? { product: scopedEntity } : {}),
   };
 };
 

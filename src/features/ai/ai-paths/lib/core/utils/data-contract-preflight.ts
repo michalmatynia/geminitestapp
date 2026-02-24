@@ -343,13 +343,6 @@ const resolvePortRuntimeValue = (args: {
     }
   }
 
-  if (args.node.type === 'database') {
-    const sampleValue = parseSampleJson(args.updaterSamples[args.node.id]);
-    if (sampleValue !== undefined) {
-      return sampleValue;
-    }
-  }
-
   return undefined;
 };
 
@@ -416,6 +409,62 @@ const buildNodeTemplateContext = (args: {
     context['current'] = context['value'];
   }
   return context;
+};
+
+const resolveTokenRootCandidates = (token: string): string[] => {
+  const root = normalizeTemplateRoot(token);
+  if (!root) return [];
+  if (root === 'value' || root === 'current') {
+    return ['value', 'result', 'current'];
+  }
+  return [root];
+};
+
+const hasNodeInputPort = (node: AiNode, port: string): boolean =>
+  node.inputs.some(
+    (inputPort: string): boolean =>
+      normalizePortName(inputPort) === normalizePortName(port)
+  );
+
+const shouldDeferMissingTemplateTokenIssue = (args: {
+  node: AiNode;
+  token: string;
+  nodeTemplateContext: Record<string, unknown>;
+  runtimeState: RuntimeState;
+  incomingEdgesByPortKey: Map<string, Edge[]>;
+  parserSamples: Record<string, ParserSampleState>;
+  updaterSamples: Record<string, UpdaterSampleState>;
+}): boolean => {
+  const rootCandidates = resolveTokenRootCandidates(args.token);
+  if (rootCandidates.length === 0) return false;
+
+  const hasRootContext = rootCandidates.some(
+    (root: string): boolean => args.nodeTemplateContext[root] !== undefined
+  );
+  if (hasRootContext) return false;
+
+  for (const root of rootCandidates) {
+    if (!hasNodeInputPort(args.node, root)) continue;
+    const normalizedPort = normalizePortName(root);
+    const hasIncomingEdge = Boolean(
+      args.incomingEdgesByPortKey.get(`${args.node.id}::${normalizedPort}`)?.length
+    );
+    if (!hasIncomingEdge) continue;
+    const runtimeValue = resolvePortRuntimeValue({
+      runtimeState: args.runtimeState,
+      node: args.node,
+      port: normalizedPort,
+      incomingEdgesByPortKey: args.incomingEdgesByPortKey,
+      parserSamples: args.parserSamples,
+      updaterSamples: args.updaterSamples,
+    });
+    if (runtimeValue === undefined) {
+      // Upstream is wired, but there is no concrete runtime/sample evidence yet.
+      return true;
+    }
+  }
+
+  return false;
 };
 
 export const evaluateDataContractPreflight = (
@@ -691,6 +740,19 @@ export const evaluateDataContractPreflight = (
       tokens.forEach((token: string): void => {
         const value = resolveTemplateTokenValue(token, nodeTemplateContext);
         if (value === undefined) {
+          if (
+            shouldDeferMissingTemplateTokenIssue({
+              node,
+              token,
+              nodeTemplateContext,
+              runtimeState,
+              incomingEdgesByPortKey,
+              parserSamples,
+              updaterSamples,
+            })
+          ) {
+            return;
+          }
           pushIssue(issuesByKey, {
             nodeId: node.id,
             nodeType: node.type,

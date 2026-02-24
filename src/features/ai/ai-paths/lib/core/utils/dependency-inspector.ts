@@ -271,7 +271,7 @@ export const inspectPathDependencies = (
           node,
           'parser_entity_fallback',
           'warning',
-          'Parser has no `entityJson` or `context` input and may parse fallback entity data.',
+          'Parser has no `entityJson` or `context` input and may run with empty source data.',
           'Connect `entityJson` or `context` from upstream nodes.',
         );
       }

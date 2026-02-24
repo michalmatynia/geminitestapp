@@ -72,6 +72,37 @@ const readEntityTypeFromContext = (context: Record<string, unknown>): string | n
 const readEntityIdFromContext = (context: Record<string, unknown>): string | null =>
   pickString(context['productId']) ?? pickString(context['entityId']) ?? null;
 
+const resolveEdgeNodeId = (
+  primary: string | undefined,
+  fallback: string | undefined
+): string | null => {
+  const first = pickString(primary);
+  if (first) return first;
+  return pickString(fallback) ?? null;
+};
+
+const resolveEdgeFromNodeId = (edge: Edge): string | null =>
+  resolveEdgeNodeId(edge.from, edge.source);
+
+const resolveEdgeToNodeId = (edge: Edge): string | null =>
+  resolveEdgeNodeId(edge.to, edge.target);
+
+const resolveEdgePort = (
+  primary: string | null | undefined,
+  fallback: string | null | undefined
+): string | null => {
+  const first = typeof primary === 'string' ? primary.trim() : '';
+  if (first.length > 0) return first;
+  const second = typeof fallback === 'string' ? fallback.trim() : '';
+  return second.length > 0 ? second : null;
+};
+
+const resolveEdgeFromPort = (edge: Edge): string | null =>
+  resolveEdgePort(edge.fromPort, edge.sourceHandle);
+
+const resolveEdgeToPort = (edge: Edge): string | null =>
+  resolveEdgePort(edge.toPort, edge.targetHandle);
+
 const checkContextMatchesSimulation = (context: Record<string, unknown>): boolean => {
   const contextSource = context['contextSource'];
   if (typeof contextSource === 'string' && contextSource.trim().toLowerCase().startsWith('simulation')) {
@@ -122,7 +153,7 @@ export type EvaluateGraphOptions = {
     node: AiNode;
     reason: 'missing_inputs' | 'flow_control' | 'error';
     waitingOnPorts?: string[];
-    waitingOnDetails?: any;
+    waitingOnDetails?: Array<Record<string, unknown>>;
     message?: string;
   }) => Promise<void> | void;
   onIteration?: (event: {
@@ -138,10 +169,11 @@ export type EvaluateGraphOptions = {
   resolveHandler?: (type: string) => NodeHandler | null;
   // Services
   fetchEntityCached?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
+  fetchEntityByType?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
   services?: {
-    prisma?: any;
-    mongo?: any;
-    [key: string]: any;
+    prisma?: unknown;
+    mongo?: unknown;
+    [key: string]: unknown;
   };
   [key: string]: unknown;
 };
@@ -190,10 +222,13 @@ export async function evaluateGraphInternal(
   const outgoingEdgesByNode = new Map<string, Edge[]>();
 
   sanitizedEdges.forEach((edge) => {
-    if (!incomingEdgesByNode.has(edge.target)) incomingEdgesByNode.set(edge.target, []);
-    incomingEdgesByNode.get(edge.target)!.push(edge);
-    if (!outgoingEdgesByNode.has(edge.source)) outgoingEdgesByNode.set(edge.source, []);
-    outgoingEdgesByNode.get(edge.source)!.push(edge);
+    const fromNodeId = resolveEdgeFromNodeId(edge);
+    const toNodeId = resolveEdgeToNodeId(edge);
+    if (!fromNodeId || !toNodeId) return;
+    if (!incomingEdgesByNode.has(toNodeId)) incomingEdgesByNode.set(toNodeId, []);
+    incomingEdgesByNode.get(toNodeId)!.push(edge);
+    if (!outgoingEdgesByNode.has(fromNodeId)) outgoingEdgesByNode.set(fromNodeId, []);
+    outgoingEdgesByNode.get(fromNodeId)!.push(edge);
   });
 
   const inputs: Record<string, RuntimePortValues> = options.seedOutputs
@@ -241,17 +276,19 @@ export async function evaluateGraphInternal(
     if (incoming.length === 0) return {};
     const collected: RuntimePortValues = {};
     incoming.forEach((edge: Edge) => {
-      const fromNodeId = edge.from;
+      const fromNodeId = resolveEdgeFromNodeId(edge);
       if (!fromNodeId) return;
       if (!isNodeActiveById(fromNodeId)) return;
       const fromOutput = outputs[fromNodeId];
-      if (!fromOutput || !edge.fromPort || !edge.toPort) return;
-      const value = (fromOutput)[edge.fromPort];
+      const fromPort = resolveEdgeFromPort(edge);
+      const toPort = resolveEdgeToPort(edge);
+      if (!fromOutput || !fromPort || !toPort) return;
+      const value = (fromOutput)[fromPort];
       if (value === undefined) return;
-      const expectedTypes = getPortDataTypes(edge.toPort);
+      const expectedTypes = getPortDataTypes(toPort);
       if (!isValueCompatibleWithTypes(value, expectedTypes)) return;
-      const existing = (collected)[edge.toPort];
-      (collected)[edge.toPort] = appendInputValue(existing, value);
+      const existing = (collected)[toPort];
+      (collected)[toPort] = appendInputValue(existing, value);
     });
     return collected;
   };
@@ -264,9 +301,8 @@ export async function evaluateGraphInternal(
     if (outgoing.length === 0) return;
     const touched = new Set<string>();
     outgoing.forEach((edge: Edge) => {
-      if (edge.to) {
-        touched.add(edge.to);
-      }
+      const toNodeId = resolveEdgeToNodeId(edge);
+      if (toNodeId) touched.add(toNodeId);
     });
     touched.forEach((targetId: string) => {
       const updatedInputs = collectNodeInputs(targetId);
@@ -301,7 +337,8 @@ export async function evaluateGraphInternal(
       reachable.add(currentId);
       const outgoing = outgoingEdgesByNode.get(currentId) ?? [];
       outgoing.forEach((e) => {
-        if (e.to) stack.push(e.to);
+        const toNodeId = resolveEdgeToNodeId(e);
+        if (toNodeId) stack.push(toNodeId);
       });
     }
     return Array.from(reachable)
@@ -422,16 +459,14 @@ export async function evaluateGraphInternal(
       const cacheScope = resolveNodeCacheScope(node);
       const cacheScopeFingerprint = cacheScope === 'run' ? { runId: resolvedRunId } : undefined;
       
-      let nodeHash: string | null = null;
-      if (node.type === 'database') {
-        nodeHash = buildDatabaseInputHash(node, nodeInputs, cacheScopeFingerprint);
-      } else if (node.type === 'model') {
-        nodeHash = buildModelInputHash(node, nodeInputs, cacheScopeFingerprint);
-      } else if (node.type === 'prompt') {
-        nodeHash = buildPromptInputHash(node, nodeInputs, cacheScopeFingerprint);
-      } else {
-        nodeHash = buildNodeInputHash(node, nodeInputs, cacheScopeFingerprint);
-      }
+      const nodeHash =
+        node.type === 'database'
+          ? buildDatabaseInputHash(node, nodeInputs, cacheScopeFingerprint)
+          : node.type === 'model'
+            ? buildModelInputHash(node, nodeInputs, cacheScopeFingerprint)
+            : node.type === 'prompt'
+              ? buildPromptInputHash(node, nodeInputs, cacheScopeFingerprint)
+              : buildNodeInputHash(node, nodeInputs, cacheScopeFingerprint);
 
       const prevOutputs = outputs[node.id] ?? null;
       const cachedOutputs = nodeHash ? options.cache?.get(nodeHash) : null;
@@ -487,12 +522,16 @@ export async function evaluateGraphInternal(
         const timeoutMs = resolveNodeTimeoutMs(node);
         const resolvedEntityType = readEntityTypeFromContext(nodeInputs) ?? triggerContext?.['entityType'];
         const resolvedEntityId = readEntityIdFromContext(nodeInputs) ?? triggerContext?.['entityId'];
+        const fetchEntityResolver =
+          options.fetchEntityCached ??
+          options.fetchEntityByType ??
+          (async (): Promise<Record<string, unknown> | null> => null);
 
         const handlerContext: NodeHandlerContext = {
           node,
           nodeInputs,
           prevOutputs: prevOutputs ?? {},
-          edges,
+          edges: sanitizedEdges,
           nodes,
           nodeById,
           runId: resolvedRunId,
@@ -508,12 +547,12 @@ export async function evaluateGraphInternal(
           abortSignal: options.abortSignal,
           allOutputs: outputs,
           allInputs: inputs,
-          fetchEntityCached: options.fetchEntityCached ?? (async () => null),
+          fetchEntityCached: fetchEntityResolver,
           reportAiPathsError: options.reportAiPathsError,
           toast: (msg: string, opts?: unknown) => {
-             if (options.toast && typeof options.toast === 'function') {
-                options.toast(msg, opts as Record<string, unknown>);
-             }
+            if (options.toast && typeof options.toast === 'function') {
+              options.toast(msg, opts as Record<string, unknown>);
+            }
           },
           simulationEntityType: typeof resolvedEntityType === 'string' ? resolvedEntityType : null,
           simulationEntityId: typeof resolvedEntityId === 'string' ? resolvedEntityId : null,

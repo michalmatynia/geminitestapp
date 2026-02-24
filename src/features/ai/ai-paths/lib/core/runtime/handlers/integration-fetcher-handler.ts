@@ -1,7 +1,6 @@
 import type { NodeHandler, NodeHandlerContext, RuntimePortValues } from '@/shared/contracts/ai-paths-runtime';
 
 import { coerceInput } from '../../utils';
-import { buildFallbackEntity } from '../utils';
 
 type FetcherSourceMode = 'live_context' | 'simulation_id' | 'live_then_simulation';
 
@@ -103,8 +102,8 @@ export const handleFetcher: NodeHandler = async ({
   triggerContext,
   fetchEntityCached,
   reportAiPathsError,
+  toast,
   activePathId,
-  strictFlowMode = true,
   now,
 }: NodeHandlerContext): Promise<RuntimePortValues> => {
   const triggerSignal = coerceInput(nodeInputs['trigger']);
@@ -139,6 +138,9 @@ export const handleFetcher: NodeHandler = async ({
   if (!liveEntity && liveEntityId && liveEntityType) {
     try {
       liveEntity = await fetchEntityCached(liveEntityType, liveEntityId);
+      if (!liveEntity) {
+        toast(`No ${liveEntityType} data found for ID ${liveEntityId}.`, { variant: 'error' });
+      }
     } catch (error) {
       reportAiPathsError(
         error,
@@ -177,6 +179,11 @@ export const handleFetcher: NodeHandler = async ({
     }
     try {
       const entity = await fetchEntityCached(simulationEntityType, simulationEntityId);
+      if (!entity) {
+        toast(`No ${simulationEntityType} data found for ID ${simulationEntityId}.`, {
+          variant: 'error',
+        });
+      }
       return {
         entityId: simulationEntityId,
         entityType: simulationEntityType,
@@ -227,14 +234,6 @@ export const handleFetcher: NodeHandler = async ({
       resolvedEntityType = simulated.entityType;
       resolvedEntity = simulated.entity;
       sourceTag = 'simulation_fetcher';
-    }
-  }
-
-  if (!resolvedEntity && resolvedEntityId && !strictFlowMode) {
-    try {
-      resolvedEntity = buildFallbackEntity(resolvedEntityId);
-    } catch {
-      resolvedEntity = { id: resolvedEntityId };
     }
   }
 

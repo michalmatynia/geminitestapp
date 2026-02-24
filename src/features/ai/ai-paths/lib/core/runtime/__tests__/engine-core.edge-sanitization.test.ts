@@ -19,17 +19,15 @@ const buildNodes = (): AiNode[] => [
     position: { x: 0, y: 0 },
   },
   {
-    id: 'node-viewer',
-    type: 'viewer',
-    title: 'Viewer',
+    id: 'node-delay',
+    type: 'delay',
+    title: 'Delay',
     description: '',
     inputs: ['value'],
     outputs: ['value'],
     config: {
-      viewer: {
-        outputs: {
-          value: 'value',
-        },
+      delay: {
+        ms: 0,
       },
     },
     position: { x: 140, y: 0 },
@@ -37,13 +35,13 @@ const buildNodes = (): AiNode[] => [
 ];
 
 describe('engine-core edge sanitization', () => {
-  it('evaluates graphs without crashing when edges are provided in from/to format', async () => {
+  it('forwards data when edges are provided in from/to format', async () => {
     const nodes = buildNodes();
     const edges: Edge[] = [
       {
         id: 'edge-1',
         from: 'node-constant',
-        to: 'node-viewer',
+        to: 'node-delay',
         fromPort: 'value',
         toPort: 'value',
       },
@@ -57,5 +55,28 @@ describe('engine-core edge sanitization', () => {
 
     expect(result.status).toBe('completed');
     expect(result.outputs?.['node-constant']?.['value']).toBe('hello');
+    expect(result.outputs?.['node-delay']?.['value']).toBe('hello');
+  });
+
+  it('forwards data when edges are provided in source/target format', async () => {
+    const nodes = buildNodes();
+    const edges: Edge[] = [
+      {
+        id: 'edge-1',
+        source: 'node-constant',
+        target: 'node-delay',
+        sourceHandle: 'value',
+        targetHandle: 'value',
+      },
+    ];
+
+    const result = await evaluateGraphClient({
+      nodes,
+      edges,
+      reportAiPathsError: (): void => {},
+    });
+
+    expect(result.status).toBe('completed');
+    expect(result.outputs?.['node-delay']?.['value']).toBe('hello');
   });
 });

@@ -718,11 +718,6 @@ export function useAiPathTriggerEvent(): {
       };
 
       const executionMode = selectedConfig.executionMode ?? 'server';
-      const startedAt = new Date().toISOString();
-      const runId =
-        typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-          ? crypto.randomUUID()
-          : `run_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`;
       const invalidateProductQueries = (productId?: string | null): void => {
         if (productId) {
           void invalidateProductsCountsAndDetail(queryClient, productId);

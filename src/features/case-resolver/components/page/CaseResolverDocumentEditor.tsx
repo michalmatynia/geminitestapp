@@ -17,9 +17,6 @@ import React from 'react';
 
 import { DocumentWysiwygEditor } from '@/features/document-editor';
 import {
-  decodeFilemakerPartyReference,
-} from '@/features/filemaker/settings';
-import {
   type CaseResolverDocumentHistoryEntry,
 } from '@/shared/contracts/case-resolver';
 import {
@@ -112,7 +109,8 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
 
   const pendingPromptTransferId = pendingPromptExploderPayload?.transferId ?? '';
 
-  const draftRelatedFileIds = (draft as any).relatedFileIds as string[] | undefined;
+  const originalFile = workspace.files.find((f) => f.id === draft.id);
+  const draftRelatedFileIds = originalFile?.relatedFileIds;
   const relatedFiles = workspace.files.filter((file) =>
     (draftRelatedFileIds ?? []).includes(file.id)
   );

@@ -35,31 +35,6 @@ describe('simulation preflight preview', () => {
       type: 'simulation',
       outputs: ['context', 'entityId', 'entityType', 'entityJson'],
     });
-    const dbNode = buildNode({
-      id: 'db-1',
-      type: 'database',
-      inputs: ['entityId'],
-      outputs: ['result'],
-      config: {
-        database: {
-          operation: 'query',
-          query: {
-            provider: 'auto',
-            collection: 'products',
-            mode: 'custom',
-            preset: 'by_id',
-            field: 'id',
-            idType: 'string',
-            queryTemplate: '{"id":"{{entityId}}"}',
-            limit: 1,
-            sort: '',
-            projection: '',
-            single: true,
-          },
-        },
-      },
-    });
-
     const edges: Edge[] = [
       {
         id: 'edge-simulation-db-entity-id',

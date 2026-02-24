@@ -51,7 +51,7 @@ const DATA_PALETTE_GROUPS: PaletteGroup[] = [
   },
   {
     title: 'Signals + Logic',
-    types: ['constant', 'math', 'compare', 'gate', 'router', 'delay', 'poll'],
+    types: ['constant', 'math', 'compare', 'logical_condition', 'gate', 'router', 'delay', 'poll'],
     icon: '🧪',
   },
   { title: 'Bundles + Templates', types: ['bundle', 'template'], icon: '🧩' },

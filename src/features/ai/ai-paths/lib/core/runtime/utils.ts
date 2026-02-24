@@ -98,12 +98,7 @@ export function extractImageUrls(value: unknown, seen: Set<object> = new Set<obj
   return [];
 }
 
-export const buildFallbackEntity = (entityId?: string | null): Record<string, unknown> => ({
-  id: entityId ?? 'demo-entity',
-  title: 'Sample entity',
-  images: [],
-  content_en: 'Sample content',
-});
+export const buildFallbackEntity = (): Record<string, unknown> => ({});
 
 export const coercePayloadObject = (value: unknown): Record<string, unknown> | null => {
   if (!value) return null;
@@ -612,6 +607,7 @@ export const resolveContextPayload = async (
   rawEntity: Record<string, unknown>;
   scopedEntity: Record<string, unknown>;
   context: Record<string, unknown>;
+  missingFetchedEntity: boolean;
 }> => {
   const contextConfig = config;
   const fallbackRole = contextConfig.role ?? DEFAULT_CONTEXT_ROLE;
@@ -643,9 +639,18 @@ export const resolveContextPayload = async (
     (baseContext?.['entityJson'] as Record<string, unknown> | undefined) ??
     (baseContext?.['product'] as Record<string, unknown> | undefined) ??
     null;
+  const fetchRequested = !baseEntity && Boolean(entityId && entityType);
   const fetched =
-    baseEntity ?? (entityId && entityType ? await fetchEntityCached(entityType, entityId) : null);
-  const rawEntity = fetched ?? buildFallbackEntity(entityId);
+    baseEntity ?? (fetchRequested && entityId && entityType
+      ? await fetchEntityCached(entityType, entityId)
+      : null);
+  const fetchedIsEmptyRecord =
+    fetched &&
+    typeof fetched === 'object' &&
+    !Array.isArray(fetched) &&
+    Object.keys(fetched).length === 0;
+  const missingFetchedEntity = Boolean(fetchRequested && (!fetched || fetchedIsEmptyRecord));
+  const rawEntity = fetched ?? {};
   const scopeTarget = contextConfig.scopeTarget ?? 'entity';
   const scopedEntity =
     scopeTarget === 'entity' ? applyContextScope(rawEntity, contextConfig) : rawEntity;
@@ -700,5 +705,6 @@ export const resolveContextPayload = async (
     rawEntity,
     scopedEntity: scopedContextEntity,
     context: scopedContext,
+    missingFetchedEntity,
   };
 };

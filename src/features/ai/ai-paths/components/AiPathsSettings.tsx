@@ -18,6 +18,7 @@ import {
   evaluateAiPathsValidationPreflight,
   normalizeAiPathsValidationConfig,
   sortPathMetas,
+  runsApi,
 } from '../lib';
 import { buildSwitchPathOptions } from './ai-paths-settings/ai-paths-settings-view-utils';
 
@@ -88,6 +89,39 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
     }
   }, [state.autoSaveStatus]);
 
+  const handleInspectTraceNode = React.useCallback(async (nodeId: string, focus: 'all' | 'failed'): Promise<void> => {
+    const targetNodeId = nodeId.trim();
+    if (!targetNodeId) return;
+    
+    const baseOptions = {
+      ...(state.activePathId ? { pathId: state.activePathId } : {}),
+      nodeId: targetNodeId,
+      limit: 1,
+      offset: 0,
+    };
+
+    let runId: string | null = null;
+    if (focus === 'failed') {
+      const result = await runsApi.list({ ...baseOptions, status: 'failed' });
+      if (result.ok && result.data?.runs?.[0]?.id) {
+        runId = result.data.runs[0].id;
+      }
+    }
+
+    if (!runId) {
+      const result = await runsApi.list(baseOptions);
+      if (result.ok && result.data?.runs?.[0]?.id) {
+        runId = result.data.runs[0].id;
+      }
+    }
+
+    if (runId) {
+      state.setRunHistoryNodeId(targetNodeId);
+      state.setRunFilter(focus);
+      void state.handleOpenRunDetail(runId);
+    }
+  }, [state]);
+
   const pageContextValue = React.useMemo<AiPathsSettingsPageContextValue>(
     () => ({
       ...props,
@@ -104,7 +138,7 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
       setSelectionScopeMode,
       dataContractReport,
       setDataContractInspectorNodeId,
-      autoSaveVariant,
+      autoSaveVariant: autoSaveVariant as any,
       isPathNameEditing,
       renameDraft,
       setRenameDraft,
@@ -124,9 +158,9 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
       },
       pathSwitchOptions,
       hasHistory: state.runtimeEvents.length > 0,
-      handleInspectTraceNode: async () => {}, // Simplified for now
+      handleInspectTraceNode,
     }),
-    [props, state, pathSettingsModalOpen, simulationModalOpen, selectionScopeMode, validationPreflightReport, dataContractReport, autoSaveVariant, isPathNameEditing, renameDraft, pathSwitchOptions]
+    [props, state, pathSettingsModalOpen, simulationModalOpen, selectionScopeMode, validationPreflightReport, dataContractReport, autoSaveVariant, isPathNameEditing, renameDraft, pathSwitchOptions, handleInspectTraceNode]
   );
 
   // Sync state to domain contexts

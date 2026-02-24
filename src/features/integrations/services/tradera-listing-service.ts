@@ -780,10 +780,12 @@ const findDueRelistsInPrisma = async (limit: number): Promise<string[]> => {
 export const findDueTraderaRelistListingIds = async (
   limit = 20
 ): Promise<string[]> => {
-  const [mongoIds, prismaIds] = await Promise.all([
+  const [mongoResult, prismaResult] = await Promise.allSettled([
     findDueRelistsInMongo(limit),
     findDueRelistsInPrisma(limit),
   ]);
+  const mongoIds = mongoResult.status === 'fulfilled' ? mongoResult.value : [];
+  const prismaIds = prismaResult.status === 'fulfilled' ? prismaResult.value : [];
   return Array.from(new Set([...mongoIds, ...prismaIds])).slice(0, limit);
 };
 

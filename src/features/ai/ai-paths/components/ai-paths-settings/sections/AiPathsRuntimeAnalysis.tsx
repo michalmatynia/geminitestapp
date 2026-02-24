@@ -6,6 +6,7 @@ import {
   StatusBadge,
   Card,
 } from '@/shared/ui';
+import { useAiPathsSettingsOrchestrator } from '../AiPathsSettingsOrchestratorContext';
 import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
 import {
   formatDurationMs,
@@ -19,8 +20,9 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element {
     runtimeAnalyticsQuery,
     runtimeRunStatus,
     runtimeNodeStatuses,
-    handleInspectTraceNode,
-  } = useAiPathsSettingsPageContext();
+  } = useAiPathsSettingsOrchestrator();
+
+  const { handleInspectTraceNode } = useAiPathsSettingsPageContext();
 
   const runtimeNodeStatusEntries = useMemo(
     (): Array<[string, string]> =>
@@ -48,6 +50,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element {
         .map(([nodeId, status]: [string, string]) => ({
           nodeId,
           status: status.trim().toLowerCase(),
+          title: nodeId, // Simplified for now
         }))
         .filter(
           (entry) =>
@@ -76,7 +79,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element {
           type='button'
           className='rounded-md border border-border px-2 py-1 text-[10px] text-gray-200 hover:bg-card/70'
           onClick={() => {
-            runtimeAnalyticsQuery.refetch().catch(() => {});
+            void runtimeAnalyticsQuery.refetch();
           }}
           disabled={runtimeAnalyticsQuery.isFetching}
         >
@@ -126,8 +129,42 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element {
           </div>
         </Card>
       </div>
+
+      {runtimeNodeLiveStates.length > 0 && (
+        <div className='space-y-1'>
+          <div className='text-[10px] uppercase text-gray-500'>Active Node States</div>
+          <div className='flex flex-wrap gap-1.5'>
+            {runtimeNodeLiveStates.map((entry) => (
+              <StatusBadge
+                key={entry.nodeId}
+                status={`${entry.title} · ${formatStatusLabel(entry.status)}`}
+                variant={statusToVariant(entry.status)}
+                size='sm'
+                className='font-medium'
+              />
+            ))}
+          </div>
+        </div>
+      )}
       
-      {/* Top slow/failed nodes logic would go here if needed */}
+      {(runtimeAnalyticsQuery.data?.traces.topSlowNodes.length ?? 0) > 0 && (
+        <div className='space-y-1 pt-2'>
+          <div className='text-[10px] uppercase text-gray-500'>Top slow nodes</div>
+          <div className='flex flex-wrap gap-1.5'>
+            {runtimeAnalyticsQuery.data?.traces.topSlowNodes.slice(0, 3).map((node: any) => (
+              <Button
+                key={node.nodeId}
+                variant='outline'
+                size='sm'
+                className='h-6 text-[10px] px-2'
+                onClick={() => { void handleInspectTraceNode(node.nodeId, 'all'); }}
+              >
+                {node.nodeId} ({formatDurationMs(node.avgDurationMs)})
+              </Button>
+            ))}
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

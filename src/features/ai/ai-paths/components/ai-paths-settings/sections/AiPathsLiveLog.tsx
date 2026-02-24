@@ -5,10 +5,10 @@ import {
   StatusBadge,
   EmptyState,
 } from '@/shared/ui';
-import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
+import { useAiPathsSettingsOrchestrator } from '../AiPathsSettingsOrchestratorContext';
 
 export function AiPathsLiveLog(): React.JSX.Element {
-  const { runtimeEvents } = useAiPathsSettingsPageContext();
+  const { runtimeEvents } = useAiPathsSettingsOrchestrator();
 
   const runtimeLogEvents = useMemo(
     () => runtimeEvents.slice(Math.max(0, runtimeEvents.length - 80)).reverse(),

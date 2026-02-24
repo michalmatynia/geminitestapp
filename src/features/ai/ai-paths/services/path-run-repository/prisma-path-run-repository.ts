@@ -308,7 +308,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
         id: runId,
         status: { in: statuses },
       },
-      data: data as Record<string, unknown>,
+      data: { ...(data as Record<string, unknown>), updatedAt: new Date() },
     });
     if (!updated.count) {
       return null;
@@ -330,6 +330,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       data: {
         status: 'running',
         startedAt,
+        updatedAt: now,
       },
     });
     if (!updated.count) return null;

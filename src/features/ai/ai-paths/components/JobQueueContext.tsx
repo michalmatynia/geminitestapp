@@ -4,7 +4,6 @@ import React, { createContext, useContext, useCallback, useEffect, useMemo, useR
 import { usePathname } from 'next/navigation';
 import { runsApi } from '@/features/ai/ai-paths/lib';
 import type {
-  AiPathRunEventRecord,
   AiPathRunRecord,
 } from '@/features/ai/ai-paths/lib';
 import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
@@ -98,14 +97,6 @@ const ACTIVE_RUN_STATUSES = new Set(['queued', 'running', 'paused']);
 const POLLING_JITTER_MS = 500;
 const QUEUE_LAG_THRESHOLD_KEY = 'ai_paths_queue_lag_threshold_ms';
 
-type RequestGuard<T> = {
-  key?: string | null;
-  inFlight?: Promise<T> | null;
-  lastCompletedAt?: number;
-  lastData?: T | null;
-  lastErrorMessage?: string | null;
-};
-
 const JobQueueContext = createContext<JobQueueContextValue | null>(null);
 
 export function JobQueueProvider({
@@ -147,10 +138,6 @@ export function JobQueueProvider({
   const [runToDelete, setRunToDelete] = useState<AiPathRunRecord | null>(null);
   const [queueHistory, setQueueHistory] = useState<QueueHistoryEntry[]>([]);
   const [showMetricsPanel, setShowMetricsPanel] = useState(false);
-
-  // Guard refs
-  const runsRequestGuardRef = useRef<RequestGuard<{ runs: AiPathRunRecord[]; total: number }>>({});
-  const queueStatusRequestGuardRef = useRef<RequestGuard<{ status: QueueStatus }>>({});
 
   // Settings
   const aiPathsSettingsQuery = createListQueryV2<
@@ -339,7 +326,7 @@ export function JobQueueProvider({
       const res = await runsApi.remove(id);
       if (!res.ok) throw new Error(res.error);
     },
-    onSuccess: (_, runId) => {
+    onSuccess: (_, _runId) => {
       setRunToDelete(null);
       toast('Run deleted.', { variant: 'success' });
       void runsQuery.refetch();

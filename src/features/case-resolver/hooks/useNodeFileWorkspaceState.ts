@@ -114,7 +114,7 @@ export function useNodeFileWorkspaceState({
     () => snapshot.edgeMeta ?? {}
   );
 
-  const nodeFileMetaRef = useRef<Record<string, any>>(
+  const nodeFileMetaRef = useRef<Record<string, CaseResolverSnapshotNodeMeta>>(
     snapshot.nodeFileMeta ?? {}
   );
   const documentSearchRef = useRef<HTMLDivElement | null>(null);
@@ -308,9 +308,14 @@ export function useNodeFileWorkspaceState({
     [nodeMetaByNode, selectedNodeId]
   );
 
+  const selectedNodeFileMeta = useMemo(
+    () => (selectedNodeId ? nodeFileMetaRef.current[selectedNodeId] ?? null : null),
+    [selectedNodeId]
+  );
+
   const selectedFile = useMemo(
-    () => (selectedNodeMeta?.fileId ? filesById.get(selectedNodeMeta.fileId) ?? null : null),
-    [filesById, selectedNodeMeta?.fileId]
+    () => (selectedNodeFileMeta?.fileId ? filesById.get(selectedNodeFileMeta.fileId) ?? null : null),
+    [filesById, selectedNodeFileMeta?.fileId]
   );
 
   // Persistence
@@ -319,6 +324,7 @@ export function useNodeFileWorkspaceState({
 
   useEffect(() => {
     const currentSnapshot: CaseResolverNodeFileSnapshot = {
+      kind: 'case_resolver_node_file_snapshot_v1',
       nodes,
       edges,
       nodeMeta: nodeMetaByNode,
@@ -340,6 +346,7 @@ export function useNodeFileWorkspaceState({
 
   const handleManualSave = useCallback(() => {
     const currentSnapshot: CaseResolverNodeFileSnapshot = {
+      kind: 'case_resolver_node_file_snapshot_v1',
       nodes,
       edges,
       nodeMeta: nodeMetaByNode,

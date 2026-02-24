@@ -225,7 +225,7 @@ export function JobQueueRunCard({
             </div>
           ) : null}
 
-          {!detail && !detailLoading ? (
+          {!detail && detailLoading ? (
             <LoadingState message='Loading run details...' size='sm' className='py-4' />
           ) : null}
 

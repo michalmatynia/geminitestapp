@@ -43,7 +43,7 @@ import { RightSidebarQuickActions } from './right-sidebar/RightSidebarQuickActio
 import { RightSidebarRequestPreviewBody } from './right-sidebar/RightSidebarRequestPreviewBody';
 import { useRightSidebarActionHistory } from './right-sidebar/useRightSidebarActionHistory';
 import { useRightSidebarSequence } from './right-sidebar/useRightSidebarSequence';
-import { RightSidebarProvider } from './RightSidebarContext';
+import { RightSidebarProvider, type RightSidebarContextValue } from './RightSidebarContext';
 import { SequencingPanel } from './SequencingPanel';
 import { UIPresetsPanel } from './UIPresetsPanel';
 import { VersionNodeMapPanel } from './VersionNodeMapPanel';

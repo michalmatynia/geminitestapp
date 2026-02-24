@@ -187,7 +187,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                     value={selectedPromptMeta.role}
                     onValueChange={(value: string): void => {
                       if (value === 'text_note' || value === 'explanatory' || value === 'ai_prompt') {
-                        onUpdateSelectedNodeMeta({ role: value });
+                        onUpdateSelectedNodeMeta?.({ role: value });
                       }
                     }}
                     options={CASE_RESOLVER_NODE_ROLE_OPTIONS}
@@ -200,7 +200,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                     value={selectedPromptMeta.quoteMode}
                     onValueChange={(value: string): void => {
                       if (value === 'none' || value === 'double' || value === 'single') {
-                        onUpdateSelectedNodeMeta({ quoteMode: value });
+                        onUpdateSelectedNodeMeta?.({ quoteMode: value });
                       }
                     }}
                     options={CASE_RESOLVER_QUOTE_MODE_OPTIONS}
@@ -213,7 +213,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                     <Input
                       value={selectedPromptMeta.surroundPrefix}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                        onUpdateSelectedNodeMeta({ surroundPrefix: event.target.value });
+                        onUpdateSelectedNodeMeta?.({ surroundPrefix: event.target.value });
                       }}
                       className='h-8 border-border bg-card/60 text-xs text-white'
                       placeholder='e.g. <<'
@@ -223,7 +223,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                     <Input
                       value={selectedPromptMeta.surroundSuffix}
                       onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-                        onUpdateSelectedNodeMeta({ surroundSuffix: event.target.value });
+                        onUpdateSelectedNodeMeta?.({ surroundSuffix: event.target.value });
                       }}
                       className='h-8 border-border bg-card/60 text-xs text-white'
                       placeholder='e.g. >>'
@@ -235,7 +235,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                   <Checkbox
                     checked={!!selectedPromptMeta.includeInOutput}
                     onCheckedChange={(checked: boolean): void => {
-                      onUpdateSelectedNodeMeta({ includeInOutput: checked });
+                      onUpdateSelectedNodeMeta?.({ includeInOutput: checked });
                     }}
                   />
                 </div>
@@ -244,7 +244,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                   <Checkbox
                     checked={selectedPromptMeta.appendTrailingNewline === true}
                     onCheckedChange={(checked: boolean): void => {
-                      onUpdateSelectedNodeMeta({ appendTrailingNewline: checked });
+                      onUpdateSelectedNodeMeta?.({ appendTrailingNewline: checked });
                     }}
                   />
                 </div>
@@ -260,7 +260,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                       onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                         const nextColor = event.target.value.trim();
                         if (!CASE_RESOLVER_NODE_TEXT_COLOR_PATTERN.test(nextColor)) return;
-                        onUpdateSelectedNodeMeta({ textColor: nextColor });
+                        onUpdateSelectedNodeMeta?.({ textColor: nextColor });
                       }}
                       className='h-9 w-14 p-1'
                     />
@@ -271,7 +271,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                       className='h-7 px-2 text-[11px] text-gray-400 hover:text-gray-200'
                       disabled={!selectedPromptMeta.textColor}
                       onClick={(): void => {
-                        onUpdateSelectedNodeMeta({ textColor: '' });
+                        onUpdateSelectedNodeMeta?.({ textColor: '' });
                       }}
                     >
                       Clear
@@ -294,7 +294,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                       const currentStackId =
                         selectedPromptMeta.plainTextValidationStackId?.trim() ?? '';
                       const fallbackStackId = currentStackId || defaultPlainTextStackId;
-                      onUpdateSelectedNodeMeta({
+                      onUpdateSelectedNodeMeta?.({
                         plainTextValidationEnabled: next,
                         plainTextFormatterEnabled:
                           next ? (selectedPromptMeta.plainTextFormatterEnabled ?? true) : false,
@@ -304,7 +304,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                       });
                     }}
                     onFormatterChange={(next: boolean): void => {
-                      onUpdateSelectedNodeMeta({ plainTextFormatterEnabled: next });
+                      onUpdateSelectedNodeMeta?.({ plainTextFormatterEnabled: next });
                     }}
                   />
                   {(selectedPromptMeta.plainTextValidationEnabled ?? true) ? (
@@ -318,7 +318,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                             defaultPlainTextStackId
                           }
                           onValueChange={(value: string): void => {
-                            onUpdateSelectedNodeMeta({ plainTextValidationStackId: value });
+                            onUpdateSelectedNodeMeta?.({ plainTextValidationStackId: value });
                           }}
                           options={plainTextPatternStackOptions}
                           triggerClassName='h-8 border-border bg-card/60 text-xs text-white'
@@ -353,17 +353,17 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                     {selectedPromptMeta.role === 'explanatory' ? (
                       <div className='rounded border border-border/70 bg-card/40 p-2'>
                         <CaseResolverRichTextEditor
-                          value={selectedPromptTemplate}
-                          onChange={onUpdateSelectedPromptTemplate}
+                          value={selectedPromptTemplate || ''}
+                          onChange={onUpdateSelectedPromptTemplate || (() => {})}
                           placeholder='Write explanatory rich text to append to incoming WYSIWYG content.'
                           appearance='document-preview'
                         />
                       </div>
                     ) : (
                       <Textarea
-                        value={selectedPromptTemplate}
+                        value={selectedPromptTemplate || ''}
                         onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-                          onUpdateSelectedPromptTemplate(event.target.value);
+                          onUpdateSelectedPromptTemplate?.(event.target.value);
                         }}
                         rows={5}
                         className='border-border bg-card/60 text-xs text-white'
@@ -469,7 +469,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
                 value={selectedEdgeJoinMode}
                 onValueChange={(value: string): void => {
                   if (value === 'newline' || value === 'tab' || value === 'space' || value === 'none') {
-                    onUpdateSelectedEdgeMeta({ joinMode: value });
+                    onUpdateSelectedEdgeMeta?.({ joinMode: value });
                   }
                 }}
                 options={CASE_RESOLVER_JOIN_MODE_OPTIONS}

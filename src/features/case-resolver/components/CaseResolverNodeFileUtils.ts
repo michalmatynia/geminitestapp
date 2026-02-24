@@ -2,7 +2,6 @@ import type {
   CaseResolverFile, 
   CaseResolverJoinMode, 
   CaseResolverScanSlot,
-  CaseResolverNodeSnapshotMeta as CaseResolverNodeFileMeta
 } from '@/shared/contracts/case-resolver';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,

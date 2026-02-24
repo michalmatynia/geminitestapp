@@ -18,7 +18,6 @@ import {
 import {
   handleConstant,
   handleMath,
-  handleCompare,
   handleLogicalCondition,
   handleRouter,
   handleGate,

@@ -47,10 +47,10 @@ export type ModelCapabilities = {
   supportsOutputCompression: boolean;
   supportsPartialImages: boolean;
   supportsStream: boolean;
-  sizeOptions: string[];
-  qualityOptions: string[];
-  backgroundOptions: string[];
-  formatOptions: string[];
+  sizeOptions: readonly string[];
+  qualityOptions: readonly string[];
+  backgroundOptions: readonly string[];
+  formatOptions: readonly string[];
 };
 
 type CardBackfillProjectResult = {

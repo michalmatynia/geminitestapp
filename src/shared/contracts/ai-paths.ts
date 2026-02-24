@@ -44,6 +44,8 @@ export const aiNodeTypeSchema = z.enum([
   'learner_agent',
   'database',
   'db_schema',
+  'document',
+  'scanfile',
   'viewer',
   'notification',
   'ai_description',
@@ -747,7 +749,7 @@ export type DatabaseGuardrailMetaDto = z.infer<typeof databaseGuardrailMetaSchem
 export type DatabaseGuardrailMeta = DatabaseGuardrailMetaDto;
 
 export const databaseConfigSchema = z.object({
-  operation: z.enum(['query', 'update', 'insert', 'delete']),
+  operation: z.enum(['query', 'update', 'insert', 'delete', 'action', 'distinct']),
   entityType: z.string().optional(),
   idField: z.string().optional(),
   mode: z.enum(['replace', 'append']).optional(),

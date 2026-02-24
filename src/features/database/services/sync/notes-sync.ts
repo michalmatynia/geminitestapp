@@ -207,6 +207,21 @@ export const syncNotes: SyncHandler = async ({ mongo, prisma }) => {
       .map((entry: { id: string }) => entry.id)
   );
   
+  interface MongoNoteTag {
+    tagId: string;
+    assignedAt?: Date | string;
+  }
+
+  interface MongoNoteCategory {
+    categoryId: string;
+    assignedAt?: Date | string;
+  }
+
+  interface MongoNoteRelation {
+    targetNoteId: string;
+    assignedAt?: Date | string;
+  }
+
   interface MongoNoteDoc {
     _id?: ObjectId;
     id?: string;
@@ -220,18 +235,18 @@ export const syncNotes: SyncHandler = async ({ mongo, prisma }) => {
     notebookId?: string | null;
     createdAt?: Date | string;
     updatedAt?: Date | string;
-    tags?: Array<{ tagId: string; assignedAt?: Date | string }>;
-    categories?: Array<{ categoryId: string; assignedAt?: Date | string }>;
-    relationsFrom?: Array<{ targetNoteId: string; assignedAt?: Date | string }>;
+    tags?: MongoNoteTag[];
+    categories?: MongoNoteCategory[];
+    relationsFrom?: MongoNoteRelation[];
   }
 
-  const data = (docs as unknown as MongoNoteDoc[]).map((doc): Prisma.NoteCreateManyInput & { tags: any[], categories: any[], relationsFrom: any[] } => {
+  const data = (docs as unknown as MongoNoteDoc[]).map((doc): Prisma.NoteCreateManyInput & { tags: MongoNoteTag[], categories: MongoNoteCategory[], relationsFrom: MongoNoteRelation[] } => {
     const id = doc.id || doc._id?.toString() || '';
     return {
       id,
       title: doc.title ?? '',
       content: doc.content ?? '',
-      editorType: (doc.editorType as any) ?? 'markdown',
+      editorType: doc.editorType ?? 'markdown',
       color: doc.color ?? null,
       isPinned: Boolean(doc.isPinned),
       isArchived: Boolean(doc.isArchived),

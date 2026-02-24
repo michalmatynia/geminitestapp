@@ -51,7 +51,9 @@ export async function PATCH_handler(
     name: nextName,
     ...(parsed.data.iconId !== undefined ? { iconId: parsed.data.iconId ? parsed.data.iconId.trim() : null } : {}),
     ...(parsed.data.pathId !== undefined ? { pathId: parsed.data.pathId ? parsed.data.pathId.trim() : null } : {}),
-    ...(parsed.data.enabled !== undefined ? { enabled: parsed.data.enabled } : {}),
+    ...(parsed.data.enabled !== undefined
+      ? { enabled: parsed.data.enabled, isActive: parsed.data.enabled }
+      : {}),
     ...(parsed.data.locations ? { locations: parsed.data.locations } : {}),
     ...(parsed.data.mode ? { mode: parsed.data.mode } : {}),
     display: buildCanonicalTriggerButtonDisplay(nextName, nextDisplayMode),

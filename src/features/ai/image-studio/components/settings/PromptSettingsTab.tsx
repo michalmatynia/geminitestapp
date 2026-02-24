@@ -11,6 +11,7 @@ import {
   SelectSimple,
   StatusBadge,
   ToggleRow,
+  Switch,
   Card,
   Hint,
 } from '@/shared/ui';
@@ -193,11 +194,9 @@ export function PromptSettingsTab(): React.JSX.Element {
                         </Button>
                       </div>
                     )}
-                    <ToggleRow
-                      type='switch'
+                    <Switch
                       checked={enabled}
                       onCheckedChange={(checked) => toggleProjectSequencingOperation(op, checked)}
-                      className='m-0'
                     />
                   </div>
                 </Card>

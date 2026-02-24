@@ -3,11 +3,9 @@
 import { useMemo } from 'react';
 
 import type {
-  AiPathRunDetail,
   AiPathRunNodeRecord,
   RuntimeHistoryEntry,
 } from '@/shared/contracts/ai-paths';
-import type { ModalStateProps } from '@/shared/contracts/ui';
 import {
   Button,
   Label,
@@ -18,23 +16,12 @@ import {
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
+import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import { normalizeRunEvents, normalizeRunNodes } from './job-queue-panel-utils';
 import { collectPlaywrightArtifacts } from './playwright-artifacts';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import { RunTimeline } from './run-timeline';
 import { RunHistoryEntries } from './RunHistoryEntries';
-
-interface RunDetailDialogProps extends ModalStateProps {
-  loading: boolean;
-  runDetail: AiPathRunDetail | null;
-  runStreamStatus: string;
-  runStreamPaused: boolean;
-  runEventsOverflow: boolean;
-  runEventsBatchLimit: number | null;
-  runHistoryNodeId: string | null;
-  onStreamPauseToggle: (paused: boolean) => void;
-  onHistoryNodeSelect: (nodeId: string) => void;
-}
 
 type RuntimeTraceSnapshot = {
   traceId?: string;
@@ -71,19 +58,23 @@ type RuntimeTraceSnapshot = {
   } | null;
 };
 
-export function RunDetailDialog({
-  isOpen,
-  onClose,
-  loading: runDetailLoading,
-  runDetail,
-  runStreamStatus,
-  runStreamPaused,
-  runEventsOverflow,
-  runEventsBatchLimit,
-  runHistoryNodeId,
-  onStreamPauseToggle,
-  onHistoryNodeSelect,
-}: RunDetailDialogProps): React.JSX.Element {
+export function RunDetailDialog(): React.JSX.Element {
+  const {
+    runDetailOpen: isOpen,
+    setRunDetailOpen,
+    runDetailLoading,
+    runDetail,
+    runStreamStatus,
+    runStreamPaused,
+    runEventsOverflow,
+    runEventsBatchLimit,
+    runDetailSelectedHistoryNodeId: runHistoryNodeId,
+    setRunStreamPaused: onStreamPauseToggle,
+    setRunHistoryNodeId: onHistoryNodeSelect,
+  } = useAiPathsSettingsOrchestrator();
+
+  const onClose = () => setRunDetailOpen(false);
+
   const runNodes = useMemo(
     () => normalizeRunNodes(runDetail?.nodes),
     [runDetail?.nodes]

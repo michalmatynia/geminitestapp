@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useCallback } from 'react';
 
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 import type { EntityModalProps } from '@/shared/contracts/ui';
@@ -12,20 +12,67 @@ import {
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
-interface SimulationDialogProps extends EntityModalProps<AiNode> {
+import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
+
+export interface SimulationDialogProps extends EntityModalProps<AiNode> {
   isPathLocked: boolean;
   onSimulate: (node: AiNode, entityId: string) => Promise<void>;
   onConfigChange: (nodeId: string, entityId: string) => Promise<void>;
 }
 
-export function SimulationDialog({
-  isOpen,
-  onClose,
-  item: simulationNode,
-  isPathLocked,
-  onSimulate,
-  onConfigChange,
-}: SimulationDialogProps): React.JSX.Element | null {
+const applySimulationEntityId = (node: AiNode, entityId: string): AiNode => ({
+  ...node,
+  config: {
+    ...(node.config ?? {}),
+    simulation: {
+      ...(node.config?.simulation ?? {}),
+      entityId,
+      productId: entityId,
+    },
+  },
+});
+
+export function SimulationDialog(): React.JSX.Element | null {
+  const {
+    simulationOpenNodeId,
+    setSimulationOpenNodeId,
+    nodes,
+    setNodes,
+    isPathLocked,
+    handleRunSimulation,
+  } = useAiPathsSettingsOrchestrator();
+
+  const simulationNode = useMemo(
+    (): AiNode | null =>
+      simulationOpenNodeId
+        ? nodes.find((node: AiNode): boolean => node.id === simulationOpenNodeId) ?? null
+        : null,
+    [nodes, simulationOpenNodeId]
+  );
+
+  const isOpen = Boolean(simulationNode);
+  const onClose = () => setSimulationOpenNodeId(null);
+
+  const handleConfigChange = useCallback(
+    async (nodeId: string, entityId: string): Promise<void> => {
+      setNodes((prev: AiNode[]): AiNode[] =>
+        prev.map((node: AiNode): AiNode =>
+          node.id === nodeId ? applySimulationEntityId(node, entityId) : node
+        )
+      );
+    },
+    [setNodes]
+  );
+
+  const handleSimulate = useCallback(
+    async (node: AiNode, entityId: string): Promise<void> => {
+      const nextNode = applySimulationEntityId(node, entityId);
+      await handleConfigChange(node.id, entityId);
+      handleRunSimulation(nextNode);
+    },
+    [handleConfigChange, handleRunSimulation]
+  );
+
   const simulationConfig = simulationNode?.config?.simulation ?? { productId: '' };
   const simulationEntityValue =
     simulationConfig.entityId?.trim()
@@ -43,7 +90,7 @@ export function SimulationDialog({
     <DetailModal
       isOpen={isOpen}
       onClose={() => {
-        void onConfigChange(simulationNode.id, draftEntityId);
+        void handleConfigChange(simulationNode.id, draftEntityId);
         onClose();
       }}
       title='Simulation'
@@ -55,7 +102,7 @@ export function SimulationDialog({
           variant='default'
           type='button'
           onClick={(): void => {
-            void onSimulate(simulationNode, draftEntityId);
+            void handleSimulate(simulationNode, draftEntityId);
           }}
         >
           Simulate Trigger

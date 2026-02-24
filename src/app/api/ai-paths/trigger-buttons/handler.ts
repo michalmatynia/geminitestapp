@@ -66,6 +66,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
 
   const now = new Date().toISOString();
+  const isVisible = enabled ?? true;
   const id =
     typeof crypto !== 'undefined' && 'randomUUID' in crypto
       ? crypto.randomUUID()
@@ -77,7 +78,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     icon: iconId ? iconId.trim() : null,
     iconId: iconId ? iconId.trim() : null,
     pathId: pathId ? pathId.trim() : null,
-    enabled: enabled ?? true,
+    enabled: isVisible,
+    isActive: isVisible,
     locations,
     mode,
     display: buildCanonicalTriggerButtonDisplay(normalizedName, display),

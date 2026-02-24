@@ -1,5 +1,7 @@
 'use client';
 
+import React, { useCallback } from 'react';
+
 import type { ClusterPreset } from '@/shared/contracts/ai-paths';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import {
@@ -8,7 +10,9 @@ import {
 } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
 
-interface PresetsDialogProps extends ModalStateProps {
+import { useAiPathsSettingsOrchestrator } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
+
+export interface PresetsDialogProps extends ModalStateProps {
   presetsJson: string;
   setPresetsJson: (value: string) => void;
   clusterPresets: ClusterPreset[];
@@ -16,15 +20,38 @@ interface PresetsDialogProps extends ModalStateProps {
   onCopyJson: (value: string) => void;
 }
 
-export function PresetsDialog({
-  isOpen,
-  onClose,
-  presetsJson,
-  setPresetsJson,
-  clusterPresets,
-  onImport,
-  onCopyJson,
-}: PresetsDialogProps): React.JSX.Element {
+export function PresetsDialog(): React.JSX.Element {
+  const {
+    presetsModalOpen: isOpen,
+    setPresetsModalOpen,
+    presetsJson,
+    setPresetsJson,
+    clusterPresets,
+    handleImportPresets: onImport,
+    toast,
+  } = useAiPathsSettingsOrchestrator();
+
+  const onClose = () => setPresetsModalOpen(false);
+
+  const handleCopyJson = useCallback(
+    (value: string): void => {
+      const text = value.trim();
+      if (!text) {
+        toast('Nothing to copy.', { variant: 'info' });
+        return;
+      }
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        void navigator.clipboard.writeText(text).then(
+          () => toast('Presets JSON copied.', { variant: 'success' }),
+          () => toast('Failed to copy presets JSON.', { variant: 'error' })
+        );
+        return;
+      }
+      toast('Clipboard API unavailable.', { variant: 'warning' });
+    },
+    [toast]
+  );
+
   return (
     <DetailModal
       isOpen={isOpen}
@@ -68,7 +95,7 @@ export function PresetsDialog({
             variant='outline'
             onClick={() => {
               const value = presetsJson || JSON.stringify(clusterPresets, null, 2);
-              onCopyJson(value);
+              handleCopyJson(value);
             }}
           >
             Copy JSON

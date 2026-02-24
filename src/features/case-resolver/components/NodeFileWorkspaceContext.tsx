@@ -8,7 +8,6 @@ import type {
   Edge,
   CaseResolverEdgeMeta,
   CaseResolverCompileResult,
-  CaseResolverNodeFileSnapshot,
 } from '@/shared/contracts/case-resolver';
 import { 
   NodeFileDocumentSearchScope, 
@@ -76,6 +75,26 @@ export type NodeFileWorkspaceContextValue = {
   canvasRef: React.RefObject<HTMLDivElement | null>;
   onSelectFile: (fileId: string) => void;
   documentSearchRef: React.RefObject<HTMLDivElement | null>;
+
+  // Optional additions for CanvasWorkspace / Inspector
+  isSidebarReady?: boolean;
+  selectedPromptMeta?: any;
+  selectedPromptSourceFile?: CaseResolverFile | null;
+  selectedPromptTemplate?: string;
+  selectedPromptInputText?: string;
+  selectedPromptOutputPreview?: {
+    textfield: string;
+    plaintextContent: string;
+    plainText: string;
+    wysiwygContent: string;
+  };
+  selectedPromptSecondaryOutputHint?: string;
+  updateSelectedPromptTemplate?: (template: string) => void;
+  updateSelectedNodeMeta?: (patch: Partial<CaseResolverNodeMeta>) => void;
+  selectedEdge?: Edge | null;
+  selectedEdgeJoinMode?: string;
+  updateSelectedEdgeMeta?: (patch: Partial<CaseResolverEdgeMeta>) => void;
+  hasPendingSnapshotChanges?: boolean;
 };
 
 const NodeFileWorkspaceContext = createContext<NodeFileWorkspaceContextValue | null>(null);

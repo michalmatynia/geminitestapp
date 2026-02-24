@@ -91,11 +91,11 @@ export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; 
   const handleStartEditCase = (file: CaseResolverFile): void => {
     setEditingCaseId(file.id);
     setEditingCaseName(file.name);
-    setEditingCaseParentId(file.parentCaseId);
+    setEditingCaseParentId(file.parentCaseId ?? null);
     setEditingCaseReferenceCaseIds(file.referenceCaseIds);
-    setEditingCaseTagId(file.tagId);
-    setEditingCaseCaseIdentifierId(file.caseIdentifierId);
-    setEditingCaseCategoryId(file.categoryId);
+    setEditingCaseTagId(file.tagId ?? null);
+    setEditingCaseCaseIdentifierId(file.caseIdentifierId ?? null);
+    setEditingCaseCategoryId(file.categoryId ?? null);
   };
 
   const handleSaveCase = (): void => {

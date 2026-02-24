@@ -75,6 +75,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
     handleLinkRelatedFiles,
     handleUnlinkRelatedFile,
     captureApplyDiagnostics,
+    activeCaseFile,
   } = contextValue;
 
   const {
@@ -87,11 +88,11 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
 
   const [relateSearchQuery, setRelateSearchQuery] = React.useState('');
 
-  if (!editingDocumentDraft || editingDocumentDraft.fileType === 'scanfile') return null;
+  if (!editingDocumentDraft || editingDocumentDraft.fileType === 'scanfile' || !activeCaseFile) return null;
   const draft = editingDocumentDraft;
 
   const isEditingDocumentLocked = draft.isLocked;
-  const isEditorSaveEnabled = isEditorDraftDirty || canCaseResolverDraftPerformInitialManualSave({ draft });
+  const isEditorSaveEnabled = isEditorDraftDirty || canCaseResolverDraftPerformInitialManualSave({ draft, file: activeCaseFile });
 
   const createdAtLabel = draft.createdAt ? formatHistoryTimestamp(draft.createdAt) : 'Unknown';
   const updatedAtLabel = draft.updatedAt ? formatHistoryTimestamp(draft.updatedAt) : 'Unknown';
@@ -104,8 +105,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
     resolvePromptExploderTransferStatusLabel(promptTransferStatus as PromptExploderTransferUiStatus);
 
   const showPromptExploderApplyAction =
-    canApplyPendingPromptOutput &&
-    captureApplyDiagnostics?.status !== 'expired';
+    canApplyPendingPromptOutput;
 
   const pendingPromptTransferId = pendingPromptExploderPayload?.transferId ?? '';
 
@@ -410,14 +410,14 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
 
           <TabsContent value='revisions' className='m-0'>
             <div className='rounded-lg border border-border/40 bg-card/20 overflow-hidden'>
-              {editingDocumentDraft.documentHistory.length === 0 ? (
+              {(editingDocumentDraft.documentHistory || []).length === 0 ? (
                 <div className='p-12 text-center'>
                   <History className='mx-auto mb-3 size-8 text-gray-700' />
                   <div className='text-xs text-gray-500'>No version history available.</div>
                 </div>
               ) : (
-                <div className='divide-y divide-border/40'>
-                  {editingDocumentDraft.documentHistory.map((entry: CaseResolverDocumentHistoryEntry, idx: number) => (
+                <div className='max-h-[600px] overflow-auto'>
+                  {(editingDocumentDraft.documentHistory || []).map((entry: CaseResolverDocumentHistoryEntry) => (
                     <div key={entry.id || idx} className='group flex items-center justify-between p-4 hover:bg-white/5 transition-colors'>
                       <div className='flex items-center gap-4'>
                         <div className='flex size-10 items-center justify-center rounded-full bg-blue-500/10 text-blue-400'>

@@ -5,12 +5,12 @@ import React from 'react';
 
 import {
   Button,
+  Badge,
   FormField,
   FormSection,
   Input,
   Label,
   SelectSimple,
-  StatusBadge,
   Textarea,
   Hint,
 } from '@/shared/ui';
@@ -122,12 +122,10 @@ export function GenerationSettingsTab(): React.JSX.Element {
                 <Label className='text-xs font-semibold uppercase tracking-wider text-gray-400'>Quick Switch Models</Label>
                 <div className='flex flex-wrap gap-2'>
                   {quickSwitchModels.map((modelId) => (
-                    <StatusBadge
+                    <Badge
                       key={modelId}
-                      status={modelId}
                       variant={modelId === studioSettings.targetAi.openai.model ? 'info' : 'neutral'}
-                      size='md'
-                      className='group relative pr-8 cursor-pointer'
+                      className='group relative pr-8 cursor-pointer uppercase tracking-wider text-[10px] px-2 py-0.5 h-5'
                       onClick={() => setGenerationModelAndPresets(modelId, quickSwitchModels)}
                     >
                       {modelId}
@@ -145,7 +143,7 @@ export function GenerationSettingsTab(): React.JSX.Element {
                       >
                         <X className='size-3' />
                       </button>
-                    </StatusBadge>
+                    </Badge>
                   ))}
                   {addableGenerationModelOptions.length > 0 && (
                     <div className='flex items-center gap-2'>

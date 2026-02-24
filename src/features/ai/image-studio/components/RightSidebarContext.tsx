@@ -15,7 +15,7 @@ export interface ActionHistoryItem {
   index: number;
 }
 
-type RightSidebarContextValue = {
+export type RightSidebarContextValue = {
   switchToControls: () => void;
   canvasSizePresetOptions: Array<{ value: string; label: string; description?: string }>;
   canvasSizePresetValue: string;

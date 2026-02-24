@@ -4,43 +4,24 @@ import {
   FileCode2,
   Sparkles,
 } from 'lucide-react';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import {
   AiPathsProvider,
 } from '@/features/ai/ai-paths/context';
-import {
-  stableStringify,
-  type Edge,
-} from '@/features/ai/ai-paths/lib';
 import { type AiNode } from '@/shared/contracts/case-resolver';
 import {
-  CASE_RESOLVER_DOCUMENT_NODE_OUTPUT_PORTS,
-  CASE_RESOLVER_EXPLANATORY_NODE_OUTPUT_PORTS,
-  DEFAULT_CASE_RESOLVER_EDGE_META,
-  DEFAULT_CASE_RESOLVER_NODE_META,
-  type CaseResolverNodeMeta,
-  type CaseResolverNodeSnapshotMeta as CaseResolverNodeFileMeta,
   type CaseResolverNodeFileSnapshot,
 } from '@/shared/contracts/case-resolver';
-import { Button, Badge, SelectSimple, EmptyState, Card, SearchInput } from '@/shared/ui';
+import { Button, SelectSimple, EmptyState, Card, SearchInput } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
-import {
-  parseCaseResolverTreeDropPayload,
-  type CaseResolverDropDocumentToCanvasDetail,
-} from '../drag';
 import { parseNodeFileSnapshot, serializeNodeFileSnapshot } from '../settings';
 import {
   buildNode,
-  buildPromptTemplateFromDroppedDocumentFile,
-  clampCanvasPosition,
-  ensureEdgeMeta,
-  ensureDocumentPromptPorts,
-  ensureNodeMeta,
-  normalizeEdgesForTextNode,
-  resolvePromptNodeStaticOutputs,
+  createNodeId,
 } from './case-resolver-canvas-utils';
 import { CaseResolverNodeInspectorModal } from './CaseResolverNodeInspectorModal';
 import { NodeFileWorkspaceProvider, useNodeFileWorkspaceContext } from './NodeFileWorkspaceContext';
@@ -66,10 +47,8 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
     visibleDocumentSearchRows,
     selectedNodeMeta,
     selectedFile,
-    selectNode,
     addNode,
     view,
-    setView,
     viewportRef,
     onSelectFile,
   } = useNodeFileWorkspaceContext();
@@ -83,11 +62,18 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
       y: (-view.y + 300) / view.scale,
     };
 
-    const node = buildNode({
-      type: row.file.fileType === 'scanfile' ? 'scanfile' : 'document',
-      title: row.file.name,
-      position: center,
-    });
+    const node = buildNode(
+      {
+        type: row.file.fileType === 'scanfile' ? 'scanfile' : 'document',
+        title: row.file.name,
+        description: '',
+        outputs: [],
+        inputs: [],
+      },
+      center,
+      createNodeId(),
+      row.file.name
+    );
 
     addNode(node);
   }, [visibleDocumentSearchRows, selectedSearchDocumentId, view, addNode]);
@@ -97,29 +83,20 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
       x: (-view.x + 400) / view.scale,
       y: (-view.y + 300) / view.scale,
     };
-    const node = buildNode({
-      type: 'template',
-      title: 'Explanatory Note',
-      position: center,
-    });
+    const node = buildNode(
+      {
+        type: 'template',
+        title: 'Explanatory Note',
+        description: '',
+        outputs: [],
+        inputs: [],
+      },
+      center,
+      createNodeId(),
+      'Explanatory Note'
+    );
     addNode(node);
   }, [view, addNode]);
-
-  const focusNodeInCanvas = useCallback(
-    (nodeId: string): void => {
-      const node = nodes.find((n) => n.id === nodeId);
-      if (!node || !viewportRef.current) return;
-      const rect = viewportRef.current.getBoundingClientRect();
-      const nextView = clampCanvasPosition({
-        x: -node.position.x * view.scale + rect.width / 2,
-        y: -node.position.y * view.scale + rect.height / 2,
-        scale: view.scale,
-      });
-      setView(nextView);
-      selectNode(nodeId);
-    },
-    [nodes, view.scale, viewportRef, setView, selectNode]
-  );
 
   return (
     <div className='flex h-full min-h-0 w-full gap-4'>
@@ -268,7 +245,7 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
     );
   }
 
-  const initialNodes: AiNode[] = snapshot.nodes.map((node: any): AiNode => ({
+  const initialNodes: AiNode[] = snapshot.nodes.map((node: AiNode): AiNode => ({
     ...node,
     createdAt: node.createdAt ?? new Date().toISOString(),
     updatedAt: node.updatedAt ?? new Date().toISOString(),

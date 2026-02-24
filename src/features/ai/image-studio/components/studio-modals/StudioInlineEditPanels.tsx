@@ -17,37 +17,17 @@ import { SlotInlineEditModal } from '../modals/SlotInlineEditModal';
 export function StudioInlineEditPanels(): React.JSX.Element {
   const {
     editCardTab,
-    extractBusy,
-    extractDraftPrompt,
-    extractError,
-    extractHistory,
     extractReviewOpen,
     generationPreviewModalOpen,
     onCopyCardId,
     onSaveInlineSlot,
-    previewControls,
-    previewLeaves,
-    previewParams,
-    previewValidation,
-    selectedExtractChanged,
-    selectedExtractDiffLines,
-    selectedExtractHistory,
     selectedSlot,
     setEditCardTab,
-    setExtractDraftPrompt,
-    setExtractHistory,
     setExtractReviewOpen,
     setGenerationPreviewModalOpen,
-    setSelectedExtractHistoryId,
     slotInlineEditOpen,
     setSlotInlineEditOpen,
     slotUpdateBusy,
-    studioSettings,
-    handleAiExtraction,
-    handleApplyExtraction,
-    handleProgrammaticExtraction,
-    handleSmartExtraction,
-    handleSuggestUiControls,
   } = useStudioInlineEdit();
 
   const editCardModalHeader = (
@@ -117,26 +97,6 @@ export function StudioInlineEditPanels(): React.JSX.Element {
       <ExtractPromptParamsModal
         isOpen={extractReviewOpen}
         onClose={() => setExtractReviewOpen(false)}
-        extractDraftPrompt={extractDraftPrompt}
-        setExtractDraftPrompt={setExtractDraftPrompt}
-        extractBusy={extractBusy}
-        handleSmartExtraction={() => { void handleSmartExtraction(); }}
-        handleProgrammaticExtraction={() => { void handleProgrammaticExtraction(); }}
-        handleAiExtraction={() => { void handleAiExtraction(); }}
-        handleSuggestUiControls={() => { void handleSuggestUiControls(); }}
-        handleApplyExtraction={handleApplyExtraction}
-        previewParams={previewParams}
-        extractError={extractError}
-        extractHistory={extractHistory}
-        selectedExtractHistory={selectedExtractHistory}
-        selectedExtractDiffLines={selectedExtractDiffLines}
-        selectedExtractChanged={selectedExtractChanged}
-        setSelectedExtractHistoryId={setSelectedExtractHistoryId}
-        setExtractHistory={setExtractHistory}
-        studioSettings={studioSettings}
-        previewValidation={previewValidation}
-        previewLeaves={previewLeaves}
-        previewControls={previewControls}
       />
     </>
   );

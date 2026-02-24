@@ -66,6 +66,21 @@ describe('trigger button validation', () => {
     expect(parsed[0]?.enabled).toBe(true);
   });
 
+  it('falls back to legacy isActive=false when enabled is missing', () => {
+    const parsed = parseAiTriggerButtonsRaw(
+      JSON.stringify([
+        {
+          id: 'btn-legacy-inactive',
+          name: 'Legacy Inactive',
+          isActive: false,
+        },
+      ])
+    );
+
+    expect(parsed[0]?.enabled).toBe(false);
+    expect(parsed[0]?.isActive).toBe(false);
+  });
+
   it('preserves enabled=false when reading stored buttons', () => {
     const parsed = parseAiTriggerButtonsRaw(
       JSON.stringify([
@@ -79,6 +94,23 @@ describe('trigger button validation', () => {
     );
 
     expect(parsed[0]?.enabled).toBe(false);
+  });
+
+  it('treats conflicting enabled/isActive flags as hidden', () => {
+    const parsed = parseAiTriggerButtonsRaw(
+      JSON.stringify([
+        {
+          id: 'btn-conflict',
+          name: 'Conflicting Flags',
+          enabled: false,
+          isActive: true,
+          locations: ['product_modal'],
+        },
+      ])
+    );
+
+    expect(parsed[0]?.enabled).toBe(false);
+    expect(parsed[0]?.isActive).toBe(false);
   });
 
   it('maps legacy icon field to iconId for backward compatibility', () => {

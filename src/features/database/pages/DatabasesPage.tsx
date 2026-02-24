@@ -21,185 +21,33 @@ import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { getDatabaseColumns } from '../components/DatabaseColumns';
 import { LogModal } from '../components/LogModal';
 import { RestoreModal } from '../components/RestoreModal';
-import { DatabaseProvider, useDatabase } from '../context/DatabaseContext';
-import {
-  useDatabaseBackups,
-  useCreateBackupMutation,
-  useRestoreBackupMutation,
-  useUploadBackupMutation,
-  useDeleteBackupMutation,
-} from '../hooks/useDatabaseQueries';
+import { DatabaseBackupsProvider, useDatabaseBackupsContext } from '../context/DatabaseBackupsContext';
+import { DatabaseProvider } from '../context/DatabaseContext';
 
 
 
-function DatabasesContent(): React.JSX.Element {
-  const dbKeys = QUERY_KEYS.system.databases;
-  const { dbType: activeTab, setDbType: setActiveTab } = useDatabase();
-  const [isLogModalOpen, setIsLogModalOpen] = useState(false);
-  const [logModalContent, setLogModalContent] = useState('');
-  const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
-  const [selectedBackupForRestore, setSelectedBackupForRestore] = useState<string | null>(null);
-  const [backupToDelete, setBackupToDelete] = useState<string | null>(null);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const isProd = process.env['NODE_ENV'] === 'production';
-
-  const backupsQuery = useDatabaseBackups(activeTab);
-  const data = backupsQuery.data ?? [];
-
-  const createBackup = useCreateBackupMutation();
-  const restoreBackup = useRestoreBackupMutation();
-  const uploadBackup = useUploadBackupMutation();
-  const deleteBackup = useDeleteBackupMutation();
-
-  const openLogModal = useCallback((content: string): void => {
-    setLogModalContent(content);
-    setIsLogModalOpen(true);
-  }, []);
-
-  const closeLogModal = useCallback((): void => {
-    setIsLogModalOpen(false);
-    setLogModalContent('');
-    void queryClient.invalidateQueries({ queryKey: dbKeys.backups(activeTab) });
-  }, [queryClient, dbKeys, activeTab]);
-
-
-  const handleRestoreRequest = useCallback((backup: DatabaseInfo): void => {
-    setSelectedBackupForRestore(backup.name);
-    setIsRestoreModalOpen(true);
-  }, []);
-
-  const handleRestoreConfirm = async (truncate: boolean): Promise<void> => {
-    const backupName = selectedBackupForRestore;
-    setIsRestoreModalOpen(false);
-    setSelectedBackupForRestore(null);
-
-    if (!backupName) return;
-
-    try {
-      const result = await restoreBackup.mutateAsync({
-        dbType: activeTab,
-        backupName,
-        truncateBeforeRestore: truncate,
-      });
-      const { ok, payload } = result;
-      const log = payload.log ?? 'No log available.';
-
-      if (ok) {
-        openLogModal(
-          `${payload.message ?? 'Backup restored successfully.'}\n\n---LOG---\n${log}`
-        );
-      } else {
-        const meta = [
-          payload.errorId ? `Error ID: ${payload.errorId}` : null,
-          payload.stage ? `Stage: ${payload.stage}` : null,
-          payload.backupName ? `Backup: ${payload.backupName}` : null,
-        ]
-          .filter(Boolean)
-          .join('\n');
-
-        openLogModal(
-          `${payload.error ?? 'Failed to restore backup.'}${ 
-            meta ? `\n\n${meta}` : '' 
-          }\n\n---LOG---\n${log}`
-        );
-      }
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'DatabasesPage', action: 'restoreBackup', backupName, dbType: activeTab } });
-      openLogModal(`An error occurred during restoration.\n\n${String(error)}`);
-    }
-  };
-
-  const handleBackup = async (): Promise<void> => {
-    try {
-      const result = await createBackup.mutateAsync(activeTab);
-      const { ok, payload } = result;
-      const log = payload.log ?? 'No log available.';
-      if (ok) {
-        if (payload.jobId) {
-          toast(
-            payload.message ?? `Database backup job queued (job: ${payload.jobId}).`,
-            { variant: 'success' }
-          );
-          return;
-        }
-
-        if (payload.warning) {
-          openLogModal(
-            `${payload.message ?? 'Backup created'}: ${ 
-              payload.warning 
-            }\n\n---LOG---\n${log}`
-          );
-        } else {
-          openLogModal(
-            `${
-              payload.message ?? 'Backup created successfully.'
-            }\n\n---LOG---\n${log}`
-          );
-        }
-      } else {
-        openLogModal(
-          `${payload.error ?? 'Failed to create backup.'}\n\n---LOG---\n${log}`
-        );
-      }
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'DatabasesPage', action: 'createBackup', dbType: activeTab } });
-      openLogModal(`An error occurred during backup.\n\n${String(error)}`);
-    }
-  };
-
-  const handleDeleteRequest = useCallback((backupName: string): void => {
-    setBackupToDelete(backupName);
-  }, []);
-
-  const handleConfirmDelete = async (): Promise<void> => {
-    if (!backupToDelete) return;
-    try {
-      const result = await deleteBackup.mutateAsync({ dbType: activeTab, backupName: backupToDelete });
-      if (result.ok) {
-        toast('Backup deleted successfully.', { variant: 'success' });
-      } else {
-        toast('Failed to delete backup.', { variant: 'error' });
-      }
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'DatabasesPage', action: 'deleteBackup', backupName: backupToDelete, dbType: activeTab } });
-      toast('An error occurred during deletion.', { variant: 'error' });
-    } finally {
-      setBackupToDelete(null);
-    }
-  };
-
-  const handleUpload = async (files: File[], helpers?: FileUploadHelpers): Promise<void> => {
-    const file = files[0];
-    if (!file) return;
-
-    try {
-      const result = await uploadBackup.mutateAsync({
-        dbType: activeTab,
-        file,
-        onProgress: (loaded: number, total?: number) => helpers?.reportProgress(loaded, total),
-      });
-      if (result.ok) {
-        toast('Backup uploaded successfully.', { variant: 'success' });
-      } else {
-        toast('Failed to upload backup.', { variant: 'error' });
-      }
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'DatabasesPage', action: 'uploadBackup', filename: file.name, dbType: activeTab } });
-      toast('An error occurred during upload.', { variant: 'error' });
-    }
-  };
-
-  const handlePreview = (backupName: string): void => {
-    const url = `/admin/databases/preview?backup=${encodeURIComponent(
-      backupName
-    )}&type=${activeTab}`;
-    window.location.assign(url);
-  };
-
-  const handlePreviewCurrent = (): void => {
-    window.location.assign(`/admin/databases/preview?mode=current&type=${activeTab}`);
-  };
+function DatabasesContentInner(): React.JSX.Element {
+  const {
+    activeTab,
+    setActiveTab,
+    isLogModalOpen,
+    logModalContent,
+    isRestoreModalOpen,
+    selectedBackupForRestore,
+    backupToDelete,
+    setBackupToDelete,
+    setIsRestoreModalOpen,
+    setSelectedBackupForRestore,
+    data,
+    isLoading,
+    isProd,
+    closeLogModal,
+    handleBackup,
+    handleUpload,
+    handleRestoreConfirm,
+    handleConfirmDelete,
+    handlePreviewCurrent,
+  } = useDatabaseBackupsContext();
 
   return (
     <PageLayout
@@ -270,7 +118,7 @@ function DatabasesContent(): React.JSX.Element {
             setIsRestoreModalOpen(false);
             setSelectedBackupForRestore(null);
           }}
-          onConfirm={(t: boolean): void => { handleRestoreConfirm(t).catch(() => {}); }}
+          onConfirm={(t: boolean): void => { void handleRestoreConfirm(t).catch(() => {}); }}
         />
       )}
 
@@ -291,18 +139,22 @@ function DatabasesContent(): React.JSX.Element {
       )}
       
       <StandardDataTablePanel
-        columns={getDatabaseColumns({
-          onPreview: handlePreview,
-          onRestoreRequest: handleRestoreRequest,
-          onDeleteRequest: (name: string): void => { handleDeleteRequest(name); },
-        })}
+        columns={getDatabaseColumns()}
         data={data}
-        isLoading={backupsQuery.isLoading}
+        isLoading={isLoading}
         initialSorting={[{ id: 'lastModifiedAt', desc: true }]}
         sortingStorageKey={`stardb:database-backups:${activeTab}:sorting`}
         variant='flat'
       />
     </PageLayout>
+  );
+}
+
+function DatabasesContent(): React.JSX.Element {
+  return (
+    <DatabaseBackupsProvider>
+      <DatabasesContentInner />
+    </DatabaseBackupsProvider>
   );
 }
 

@@ -1,5 +1,4 @@
 import type {
-  AiPathsValidationConfig,
   AiPathsValidationRule,
   PathConfig,
   PathMeta,

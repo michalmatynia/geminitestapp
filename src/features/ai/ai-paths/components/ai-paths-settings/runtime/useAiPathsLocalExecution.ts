@@ -608,14 +608,6 @@ export function useAiPathsLocalExecution(args: LocalExecutionArgs) {
               prevOutputs,
               error,
               iteration,
-            }: {
-              runId: string;
-              runStartedAt: string;
-              node: AiNode;
-              nodeInputs: RuntimePortValues;
-              prevOutputs?: RuntimePortValues | null;
-              error: unknown;
-              iteration: number;
             }) => {
               const message = error instanceof Error ? error.message : String(error);
               args.setNodeStatus({

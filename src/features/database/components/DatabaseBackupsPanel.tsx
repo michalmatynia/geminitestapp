@@ -27,7 +27,7 @@ import { cn } from '@/shared/utils';
 import { getDatabaseColumns } from './DatabaseColumns';
 import { LogModal } from './LogModal';
 import { RestoreModal } from './RestoreModal';
-import { useDatabaseBackupsState } from '../hooks/useDatabaseBackupsState';
+import { DatabaseBackupsProvider, useDatabaseBackupsContext } from '../context/DatabaseBackupsContext';
 
 
 type BackupDatabaseOption = {
@@ -55,7 +55,7 @@ const BACKUP_DATABASE_OPTIONS: BackupDatabaseOption[] = [
   },
 ];
 
-export function DatabaseBackupsPanel(): React.JSX.Element {
+function DatabaseBackupsPanelInner(): React.JSX.Element {
   const {
     activeTab,
     setActiveTab,
@@ -78,14 +78,11 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
     closeLogModal,
     handleBackup,
     handleUpload,
-    handleRestoreRequest,
     handleRestoreConfirm,
-    handleDeleteRequest,
     handleConfirmDelete,
-    handlePreview,
     handlePreviewCurrent,
     handleRepeatSchedulerTickToggle,
-  } = useDatabaseBackupsState();
+  } = useDatabaseBackupsContext();
 
   const selectedDatabase =
     BACKUP_DATABASE_OPTIONS.find((option) => option.value === activeTab) ??
@@ -234,17 +231,7 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
         alerts={alerts}
         filters={filters}
         actions={actions}
-        columns={getDatabaseColumns({
-          onPreview: handlePreview,
-          onRestoreRequest: handleRestoreRequest,
-          onDeleteRequest: (name: string): void => {
-            handleDeleteRequest(name);
-          },
-          disableRestore: !backupMaintenanceAllowed,
-          disableDelete: !backupMaintenanceAllowed,
-          restoreDisabledReason: 'Disabled by Database Engine operation controls',
-          deleteDisabledReason: 'Disabled by Database Engine operation controls',
-        })}
+        columns={getDatabaseColumns()}
         data={data}
         isLoading={isLoading}
         maxHeight='60vh'
@@ -277,5 +264,13 @@ export function DatabaseBackupsPanel(): React.JSX.Element {
         isDangerous={true}
       />
     </div>
+  );
+}
+
+export function DatabaseBackupsPanel(): React.JSX.Element {
+  return (
+    <DatabaseBackupsProvider>
+      <DatabaseBackupsPanelInner />
+    </DatabaseBackupsProvider>
   );
 }

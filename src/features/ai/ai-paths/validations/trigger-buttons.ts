@@ -262,6 +262,9 @@ const normalizeAiTriggerButtonRecord = (
   record: z.infer<typeof aiTriggerButtonRecordSchema>
 ): AiTriggerButtonRecord => {
   const now = new Date().toISOString();
+  const resolvedEnabled = record.enabled ?? true;
+  const resolvedIsActive = record.isActive ?? true;
+  const isVisible = resolvedEnabled !== false && resolvedIsActive !== false;
   const locations =
     Array.isArray(record.locations) && record.locations.length > 0
       ? record.locations
@@ -272,7 +275,7 @@ const normalizeAiTriggerButtonRecord = (
     name: record.name,
     iconId: record.iconId ?? record.icon ?? null,
     pathId: record.pathId ?? null,
-    enabled: record.enabled ?? true,
+    enabled: isVisible,
     locations: [...locations],
     mode: record.mode ?? 'click',
     display: buildCanonicalTriggerButtonDisplay(
@@ -281,7 +284,7 @@ const normalizeAiTriggerButtonRecord = (
     ),
     createdAt: record.createdAt ?? now,
     updatedAt: record.updatedAt ?? record.createdAt ?? now,
-    isActive: record.isActive ?? true,
+    isActive: isVisible,
     sortIndex: record.sortIndex ?? 0,
   };
 };

@@ -75,7 +75,7 @@ type AiPathsSettingsStateOptions = {
   activeTab: 'canvas' | 'paths' | 'docs';
 };
 
-import type { UseAiPathsSettingsStateReturn } from "./types";
+import type { UseAiPathsSettingsStateReturn } from './types';
 
 export function useAiPathsSettingsState({
   activeTab,
@@ -246,7 +246,10 @@ export function useAiPathsSettingsState({
 
   const paletteWithTriggerButtons = useMemo<NodeDefinition[]>(() => {
     const buttons = (triggerButtonsQuery.data ?? [])
-      .filter((button: AiTriggerButtonRecord): boolean => button.enabled !== false)
+      .filter(
+        (button: AiTriggerButtonRecord): boolean =>
+          button.enabled !== false && button.isActive !== false
+      )
       .reduce((acc: AiTriggerButtonRecord[], button: AiTriggerButtonRecord) => {
         if (!button.id || acc.some((item: AiTriggerButtonRecord) => item.id === button.id)) {
           return acc;

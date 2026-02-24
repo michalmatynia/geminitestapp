@@ -188,7 +188,7 @@ export const resolveConfiguredRequiredInputPorts = (
 };
 
 export const buildWaitingOnDetails = (
-  node: AiNode,
+  _node: AiNode,
   waitingPorts: Set<string>,
   incomingEdges: Edge[],
   nodeById: Map<string, AiNode>,

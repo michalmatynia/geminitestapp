@@ -296,9 +296,14 @@ export function useAiPathsSettingsModeActions({
     const nextLocked = !isPathLocked;
     setIsPathLocked(nextLocked);
     const updatedAt = new Date().toISOString();
+    const currentVersion = pathConfigs[activePathId]?.version;
+    const resolvedVersion =
+      typeof currentVersion === 'number' && Number.isFinite(currentVersion)
+        ? Math.max(STORAGE_VERSION, Math.trunc(currentVersion))
+        : STORAGE_VERSION;
     const nextConfig: PathConfig = {
       id: activePathId,
-      version: STORAGE_VERSION,
+      version: resolvedVersion,
       name: pathName,
       description: pathDescription,
       trigger: activeTrigger,
@@ -384,9 +389,14 @@ export function useAiPathsSettingsModeActions({
     const nextActive = !isPathActive;
     setIsPathActive(nextActive);
     const updatedAt = new Date().toISOString();
+    const currentVersion = pathConfigs[activePathId]?.version;
+    const resolvedVersion =
+      typeof currentVersion === 'number' && Number.isFinite(currentVersion)
+        ? Math.max(STORAGE_VERSION, Math.trunc(currentVersion))
+        : STORAGE_VERSION;
     const nextConfig: PathConfig = {
       id: activePathId,
-      version: STORAGE_VERSION,
+      version: resolvedVersion,
       name: pathName,
       description: pathDescription,
       trigger: activeTrigger,

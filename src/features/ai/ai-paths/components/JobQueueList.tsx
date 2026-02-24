@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useJobQueueContext } from './JobQueueContext';
 import { JobQueueRunCard } from './job-queue-run-card';
@@ -16,12 +16,12 @@ import {
   resolveRunSource, 
   resolveRunSourceDebug, 
   normalizeRunNodes, 
-  normalizeRunEvents 
+  normalizeRunEvents,
+  type StreamConnectionStatus 
 } from './job-queue-panel-utils';
 import { buildHistoryNodeOptions } from './run-history-utils';
 import type { 
-  RuntimeHistoryEntry, 
-  StreamConnectionStatus 
+  RuntimeHistoryEntry 
 } from '@/features/ai/ai-paths/lib';
 
 const PAGE_SIZES = [10, 25, 50];
@@ -57,9 +57,14 @@ export function JobQueueList(): React.JSX.Element {
   const rowVirtualizer = useVirtualizer({
     count: runs.length,
     getScrollElement: () => parentRef.current,
+    getItemKey: (index) => runs[index]?.id ?? index,
     estimateSize: () => 140,
     overscan: 5,
   });
+
+  useEffect(() => {
+    rowVirtualizer.measure();
+  }, [rowVirtualizer, runs, expandedRunIds, runDetails]);
 
   const ensureHistorySelection = (runId: string, options: { id: string }[]): string | null => {
     if (!options.length) return null;
@@ -128,7 +133,9 @@ export function JobQueueList(): React.JSX.Element {
 
               return (
                 <div
-                  key={run.id}
+                  key={virtualRow.key}
+                  data-index={virtualRow.index}
+                  ref={rowVirtualizer.measureElement}
                   style={{
                     position: 'absolute',
                     top: 0,

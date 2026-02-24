@@ -10,7 +10,7 @@ import {
 } from '@/shared/ui';
 import type { 
   CaseResolverFile, 
-  CaseResolverNodeSnapshotMeta as CaseResolverNodeFileMeta 
+  CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta 
 } from '@/shared/contracts/case-resolver';
 import { resolveContentPreview } from './CaseResolverNodeFileUtils';
 

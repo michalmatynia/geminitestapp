@@ -10,7 +10,7 @@ import {
 import React, { useMemo, Suspense } from 'react';
 
 import type { DatabaseEngineOperationJobDto } from '@/shared/contracts/database';
-import type { DatabaseEngineProvider, DatabaseEnginePolicy } from '@/shared/lib/db/database-engine-constants';
+import type { DatabaseEngineProvider as DatabaseEngineProviderType, DatabaseEnginePolicy } from '@/shared/lib/db/database-engine-constants';
 import { 
   Button, 
   FormSection, 
@@ -31,29 +31,23 @@ import {
 
 import { DatabaseBackupsPanel } from '../components/DatabaseBackupsPanel';
 import { DatabaseOperationsPanel } from '../components/DatabaseOperationsPanel';
-import { useDatabaseEngineState, type DatabaseEngineWorkspaceView, type DatabaseCollectionRow } from '../hooks/useDatabaseEngineState';
+import { DatabaseEngineProvider, useDatabaseEngineContext } from '../context/DatabaseEngineContext';
+import { type DatabaseEngineWorkspaceView, type DatabaseCollectionRow } from '../hooks/useDatabaseEngineState';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-
-function DatabaseEngineContent(): React.JSX.Element {
+function DatabaseEngineSettingsTab(): React.JSX.Element {
   const {
-    workspaceView,
-    setView,
     policyDraft,
     setPolicyDraft,
     collectionRouteMapDraft,
     setCollectionRouteMapDraft,
     rows,
-    validationErrors,
-    saveConfiguration,
     isFetching,
-    refetch,
     engineStatus,
     operationJobs,
     redisOverview,
-    saving,
-  } = useDatabaseEngineState();
+  } = useDatabaseEngineContext();
 
   const collectionColumns = useMemo<ColumnDef<DatabaseCollectionRow>[]>(() => [
     {
@@ -87,10 +81,10 @@ function DatabaseEngineContent(): React.JSX.Element {
           size='xs'
           value={collectionRouteMapDraft[row.original.name] ?? 'auto'}
           onValueChange={(val) => {
-            setCollectionRouteMapDraft((prev: Record<string, DatabaseEngineProvider>) => {
+            setCollectionRouteMapDraft((prev: Record<string, DatabaseEngineProviderType>) => {
               const next = { ...prev };
               if (val === 'auto') delete next[row.original.name];
-              else next[row.original.name] = val as DatabaseEngineProvider;
+              else next[row.original.name] = val as DatabaseEngineProviderType;
               return next;
             });
           }}
@@ -127,6 +121,135 @@ function DatabaseEngineContent(): React.JSX.Element {
       cell: ({ row }) => <span className='text-[10px] text-gray-500'>{row.original.createdAt ? new Date(row.original.createdAt).toLocaleString() : '—'}</span>,
     },
   ], []);
+
+  return (
+    <div className='space-y-6'>
+      <div className='grid gap-6 lg:grid-cols-3'>
+        <FormSection title='Engine Policy' className='lg:col-span-2 p-6'>
+          <div className='grid gap-4 md:grid-cols-2'>
+            <ToggleRow
+              label='Strict Service Routing'
+              description='Require explicit provider per service'
+              checked={policyDraft.requireExplicitServiceRouting}
+              onCheckedChange={(checked) => {
+                setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, requireExplicitServiceRouting: checked }));
+              }}
+              className='bg-white/5 border-white/5'
+            />
+            <ToggleRow
+              label='Strict Collection Routing'
+              description='Require explicit provider per collection'
+              checked={policyDraft.requireExplicitCollectionRouting}
+              onCheckedChange={(checked) => {
+                setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, requireExplicitCollectionRouting: checked }));
+              }}
+              className='bg-white/5 border-white/5'
+            />
+            <ToggleRow
+              label='Auto Fallback'
+              description='Switch providers on failure'
+              checked={policyDraft.allowAutomaticFallback}
+              onCheckedChange={(checked) => {
+                setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, allowAutomaticFallback: checked }));
+              }}
+              className='bg-white/5 border-white/5'
+            />
+            <ToggleRow
+              label='Strict Availability'
+              description='Throw on unconfigured envs'
+              checked={policyDraft.strictProviderAvailability}
+              onCheckedChange={(checked) => {
+                setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, strictProviderAvailability: checked }));
+              }}
+              className='bg-white/5 border-white/5'
+            />
+          </div>
+        </FormSection>
+
+        <FormSection title='Resource Health' className='p-6'>
+          <div className='space-y-3'>
+            <MetadataItem
+              variant='minimal'
+              label='Prisma (SQL)'
+              value={<StatusBadge status={engineStatus?.providers.prismaConfigured ? 'success' : 'error'} />}
+              className='flex items-center justify-between'
+            />
+            <MetadataItem
+              variant='minimal'
+              label='MongoDB'
+              value={<StatusBadge status={engineStatus?.providers.mongodbConfigured ? 'success' : 'error'} />}
+              className='flex items-center justify-between'
+            />
+            <MetadataItem
+              variant='minimal'
+              label='Redis'
+              value={<StatusBadge status={engineStatus?.providers.redisConfigured ? 'success' : 'error'} />}
+              className='flex items-center justify-between'
+            />
+          </div>
+        </FormSection>
+      </div>
+
+      <StandardDataTablePanel
+        title='Collection Routing'
+        columns={collectionColumns}
+        data={rows}
+        isLoading={isFetching}
+        variant='flat'
+      />
+
+      <div className='grid gap-6 md:grid-cols-2'>
+        <FormSection title='Redis Overview' className='p-6'>
+          {redisOverview ? (
+            <div className='space-y-4'>
+              <div className='grid grid-cols-2 gap-4'>
+                <MetadataItem
+                  label='Memory Usage'
+                  value={redisOverview.usedMemory}
+                  mono
+                />
+                <MetadataItem
+                  label='Total Keys'
+                  value={redisOverview.dbSize}
+                  mono
+                />
+              </div>
+              <div className='max-h-40 overflow-y-auto space-y-1 pr-2'>
+                {redisOverview.namespaces.map(ns => (
+                  <div key={ns.namespace} className='flex justify-between text-[11px] p-1.5 rounded bg-white/5 border border-white/5'>
+                    <span className='font-mono text-gray-300'>{ns.namespace}</span>
+                    <span className='text-sky-400'>{ns.keyCount}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className='py-12 text-center text-xs text-gray-600 uppercase tracking-widest'>Redis disabled or unreachable</div>
+          )}
+        </FormSection>
+
+        <StandardDataTablePanel
+          title='Recent Activity'
+          columns={jobColumns}
+          data={operationJobs.slice(0, 5)}
+          isLoading={isFetching}
+          variant='flat'
+        />
+      </div>
+    </div>
+  );
+}
+
+function DatabaseEngineContent(): React.JSX.Element {
+  const {
+    workspaceView,
+    setView,
+    validationErrors,
+    saveConfiguration,
+    isFetching,
+    refetch,
+    saving,
+  } = useDatabaseEngineContext();
 
   const activeViewLabel =
     workspaceView === 'engine'
@@ -171,119 +294,8 @@ function DatabaseEngineContent(): React.JSX.Element {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value='engine' className='space-y-6 mt-6'>
-          <div className='grid gap-6 lg:grid-cols-3'>
-            <FormSection title='Engine Policy' className='lg:col-span-2 p-6'>
-              <div className='grid gap-4 md:grid-cols-2'>
-                <ToggleRow
-                  label='Strict Service Routing'
-                  description='Require explicit provider per service'
-                  checked={policyDraft.requireExplicitServiceRouting}
-                  onCheckedChange={(checked) => {
-                    setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, requireExplicitServiceRouting: checked }));
-                  }}
-                  className='bg-white/5 border-white/5'
-                />
-                <ToggleRow
-                  label='Strict Collection Routing'
-                  description='Require explicit provider per collection'
-                  checked={policyDraft.requireExplicitCollectionRouting}
-                  onCheckedChange={(checked) => {
-                    setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, requireExplicitCollectionRouting: checked }));
-                  }}
-                  className='bg-white/5 border-white/5'
-                />
-                <ToggleRow
-                  label='Auto Fallback'
-                  description='Switch providers on failure'
-                  checked={policyDraft.allowAutomaticFallback}
-                  onCheckedChange={(checked) => {
-                    setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, allowAutomaticFallback: checked }));
-                  }}
-                  className='bg-white/5 border-white/5'
-                />
-                <ToggleRow
-                  label='Strict Availability'
-                  description='Throw on unconfigured envs'
-                  checked={policyDraft.strictProviderAvailability}
-                  onCheckedChange={(checked) => {
-                    setPolicyDraft((p: DatabaseEnginePolicy): DatabaseEnginePolicy => ({ ...p, strictProviderAvailability: checked }));
-                  }}
-                  className='bg-white/5 border-white/5'
-                />
-              </div>
-            </FormSection>
-
-            <FormSection title='Resource Health' className='p-6'>
-              <div className='space-y-3'>
-                <MetadataItem
-                  variant='minimal'
-                  label='Prisma (SQL)'
-                  value={<StatusBadge status={engineStatus?.providers.prismaConfigured ? 'success' : 'error'} />}
-                  className='flex items-center justify-between'
-                />
-                <MetadataItem
-                  variant='minimal'
-                  label='MongoDB'
-                  value={<StatusBadge status={engineStatus?.providers.mongodbConfigured ? 'success' : 'error'} />}
-                  className='flex items-center justify-between'
-                />
-                <MetadataItem
-                  variant='minimal'
-                  label='Redis'
-                  value={<StatusBadge status={engineStatus?.providers.redisConfigured ? 'success' : 'error'} />}
-                  className='flex items-center justify-between'
-                />
-              </div>
-            </FormSection>
-          </div>
-
-          <StandardDataTablePanel
-            title='Collection Routing'
-            columns={collectionColumns}
-            data={rows}
-            isLoading={isFetching}
-            variant='flat'
-          />
-
-          <div className='grid gap-6 md:grid-cols-2'>
-            <FormSection title='Redis Overview' className='p-6'>
-              {redisOverview ? (
-                <div className='space-y-4'>
-                  <div className='grid grid-cols-2 gap-4'>
-                    <MetadataItem
-                      label='Memory Usage'
-                      value={redisOverview.usedMemory}
-                      mono
-                    />
-                    <MetadataItem
-                      label='Total Keys'
-                      value={redisOverview.dbSize}
-                      mono
-                    />
-                  </div>
-                  <div className='max-h-40 overflow-y-auto space-y-1 pr-2'>
-                    {redisOverview.namespaces.map(ns => (
-                      <div key={ns.namespace} className='flex justify-between text-[11px] p-1.5 rounded bg-white/5 border border-white/5'>
-                        <span className='font-mono text-gray-300'>{ns.namespace}</span>
-                        <span className='text-sky-400'>{ns.keyCount}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className='py-12 text-center text-xs text-gray-600 uppercase tracking-widest'>Redis disabled or unreachable</div>
-              )}
-            </FormSection>
-
-            <StandardDataTablePanel
-              title='Recent Activity'
-              columns={jobColumns}
-              data={operationJobs.slice(0, 5)}
-              isLoading={isFetching}
-              variant='flat'
-            />
-          </div>
+        <TabsContent value='engine' className='mt-6'>
+          <DatabaseEngineSettingsTab />
         </TabsContent>
 
         <TabsContent value='backups' className='mt-6'>
@@ -313,7 +325,9 @@ function DatabaseEngineContent(): React.JSX.Element {
 export default function DatabaseEnginePage(): React.JSX.Element {
   return (
     <Suspense fallback={<LoadingState message='Loading database engine...' />}>
-      <DatabaseEngineContent />
+      <DatabaseEngineProvider>
+        <DatabaseEngineContent />
+      </DatabaseEngineProvider>
     </Suspense>
   );
 }

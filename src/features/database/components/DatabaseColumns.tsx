@@ -3,6 +3,8 @@
 import type { DatabaseInfo } from '@/shared/contracts/database';
 import { ActionMenu, DataTableSortableHeader, DropdownMenuItem, DropdownMenuSeparator } from '@/shared/ui';
 
+import { useDatabaseBackupsContext } from '../context/DatabaseBackupsContext';
+
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
 const toTimestamp = (value: string | null | undefined): number => {
@@ -28,16 +30,42 @@ const toSizeNumber = (value: unknown): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+function DatabaseActionsCell({ backup }: { backup: DatabaseInfo }): React.JSX.Element {
+  const {
+    handlePreview,
+    handleRestoreRequest,
+    handleDeleteRequest,
+    backupMaintenanceAllowed,
+  } = useDatabaseBackupsContext();
 
-export const getDatabaseColumns = (options?: {
-  onPreview?: (backupName: string) => void;
-  onRestoreRequest?: (backup: DatabaseInfo) => void;
-  onDeleteRequest?: (backupName: string) => void;
-  disableRestore?: boolean;
-  disableDelete?: boolean;
-  restoreDisabledReason?: string;
-  deleteDisabledReason?: string;
-}): ColumnDef<DatabaseInfo>[] => [
+  return (
+    <div className='flex justify-end'>
+      <ActionMenu>
+        <DropdownMenuItem onClick={() => handlePreview(backup.name)}>
+          Preview
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          disabled={!backupMaintenanceAllowed}
+          title={!backupMaintenanceAllowed ? 'Disabled by Database Engine operation controls' : undefined}
+          onClick={() => handleRestoreRequest(backup)}
+        >
+          Restore
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className='text-destructive focus:text-destructive'
+          disabled={!backupMaintenanceAllowed}
+          title={!backupMaintenanceAllowed ? 'Disabled by Database Engine operation controls' : undefined}
+          onClick={() => handleDeleteRequest(backup.name)}
+        >
+          Delete
+        </DropdownMenuItem>
+      </ActionMenu>
+    </div>
+  );
+}
+
+export const getDatabaseColumns = (): ColumnDef<DatabaseInfo>[] => [
   {
     accessorKey: 'name',
     header: ({ column }) => (
@@ -78,35 +106,9 @@ export const getDatabaseColumns = (options?: {
   },
   {
     id: 'actions',
-    cell: ({ row }: { row: { original: DatabaseInfo } }): React.JSX.Element => {
-      const backup = row.original;
-      return (
-        <div className='flex justify-end'>
-          <ActionMenu>
-            {options?.onPreview && (
-              <DropdownMenuItem onClick={() => options.onPreview?.(backup.name)}>
-                Preview
-              </DropdownMenuItem>
-            )}
-            <DropdownMenuItem
-              disabled={Boolean(options?.disableRestore)}
-              title={options?.disableRestore ? options.restoreDisabledReason : undefined}
-              onClick={() => options?.onRestoreRequest?.(backup)}
-            >
-              Restore
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              className='text-destructive focus:text-destructive'
-              disabled={Boolean(options?.disableDelete)}
-              title={options?.disableDelete ? options.deleteDisabledReason : undefined}
-              onClick={() => options?.onDeleteRequest?.(backup.name)}
-            >
-              Delete
-            </DropdownMenuItem>
-          </ActionMenu>
-        </div>
-      );
-    },
+    cell: ({ row }: { row: { original: DatabaseInfo } }): React.JSX.Element => (
+      <DatabaseActionsCell backup={row.original} />
+    ),
   },
 ];
+

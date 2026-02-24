@@ -56,7 +56,12 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
     });
     (triggerButtonsQuery.data ?? []).forEach((button: AiTriggerButtonRecord) => {
       if (!button?.id) return;
-      if (button.enabled === false && button.id !== selectedTriggerEvent) return;
+      if (
+        (button.enabled === false || button.isActive === false) &&
+        button.id !== selectedTriggerEvent
+      ) {
+        return;
+      }
       if (byId.has(button.id)) return;
       byId.set(button.id, { id: button.id, label: button.name });
     });

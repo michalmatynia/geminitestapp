@@ -167,10 +167,14 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
 
   const handleVisibilityToggle = useCallback((record: AiTriggerButtonRecord, enabled: boolean): void => {
     setLocalRows((prev) =>
-      prev.map((row) => (row.id === record.id ? { ...row, enabled } : row))
+      prev.map((row) => (row.id === record.id ? { ...row, enabled, isActive: enabled } : row))
     );
     onToggleVisibility(record, enabled);
   }, [onToggleVisibility]);
+
+  const isVisible = useCallback((record: AiTriggerButtonRecord): boolean => {
+    return record.enabled !== false && record.isActive !== false;
+  }, []);
 
   const getRowClassName = useCallback(
     (row: Row<AiTriggerButtonRecord>): string | undefined =>
@@ -235,11 +239,11 @@ export const TriggerButtonListManager: React.FC<TriggerButtonListManagerProps> =
           }}
         >
           <Switch
-            checked={row.original.enabled !== false}
+            checked={isVisible(row.original)}
             onCheckedChange={(checked: boolean) => handleVisibilityToggle(row.original, checked)}
           />
           <span className='text-xs text-gray-400'>
-            {row.original.enabled === false ? 'Hidden' : 'Visible'}
+            {isVisible(row.original) ? 'Visible' : 'Hidden'}
           </span>
         </div>
       ),

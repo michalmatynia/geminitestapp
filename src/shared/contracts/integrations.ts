@@ -25,10 +25,10 @@ export const imageTransformOptionsSchema = z.object({
   height: z.number().optional(),
 });
 
-export type ImageTransformOptionsDto = z.infer<typeof imageTransformOptionsSchema>;
+export type ImageTransformOptions = z.infer<typeof imageTransformOptionsSchema>;
 
 export const imageBase64ModeSchema = z.enum(['base-only', 'full-data-uri']);
-export type ImageBase64ModeDto = z.infer<typeof imageBase64ModeSchema>;
+export type ImageBase64Mode = z.infer<typeof imageBase64ModeSchema>;
 
 export const imageRetryPresetSchema = z.object({
   id: z.string(),
@@ -39,7 +39,7 @@ export const imageRetryPresetSchema = z.object({
   transform: imageTransformOptionsSchema,
 });
 
-export type ImageRetryPresetDto = z.infer<typeof imageRetryPresetSchema>;
+export type ImageRetryPreset = z.infer<typeof imageRetryPresetSchema>;
 
 /**
  * Integration DTOs
@@ -49,7 +49,7 @@ export const integrationSchema = namedDtoSchema.extend({
   slug: z.string(),
 });
 
-export type IntegrationDto = z.infer<typeof integrationSchema>;
+export type Integration = z.infer<typeof integrationSchema>;
 
 export const createIntegrationSchema = integrationSchema.omit({
   id: true,
@@ -57,8 +57,8 @@ export const createIntegrationSchema = integrationSchema.omit({
   updatedAt: true,
 });
 
-export type CreateIntegrationDto = z.infer<typeof createIntegrationSchema>;
-export type UpdateIntegrationDto = Partial<CreateIntegrationDto>;
+export type CreateIntegration = z.infer<typeof createIntegrationSchema>;
+export type UpdateIntegration = Partial<CreateIntegration>;
 
 export const integrationConnectionSchema = namedDtoSchema.extend({
   integrationId: z.string(),
@@ -112,7 +112,7 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
   traderaApiTokenUpdatedAt: z.string().nullable().optional(),
 });
 
-export type IntegrationConnectionDto = z.infer<typeof integrationConnectionSchema>;
+export type IntegrationConnection = z.infer<typeof integrationConnectionSchema>;
 
 export const createIntegrationConnectionSchema = integrationConnectionSchema.omit({
   id: true,
@@ -120,8 +120,8 @@ export const createIntegrationConnectionSchema = integrationConnectionSchema.omi
   updatedAt: true,
 });
 
-export type CreateIntegrationConnectionDto = z.infer<typeof createIntegrationConnectionSchema>;
-export type UpdateIntegrationConnectionDto = Partial<CreateIntegrationConnectionDto>;
+export type CreateIntegrationConnection = z.infer<typeof createIntegrationConnectionSchema>;
+export type UpdateIntegrationConnection = Partial<CreateIntegrationConnection>;
 
 /**
  * Product Listing DTOs
@@ -141,7 +141,7 @@ export const productListingExportEventSchema = z.object({
   requestId: z.string().nullable().optional(),
 });
 
-export interface ProductListingExportEventDto {
+export interface ProductListingExportEvent {
   exportedAt: string;
   status?: string | null;
   inventoryId?: string | null;
@@ -163,7 +163,7 @@ export const productListingRelistPolicySchema = z.object({
   templateId: z.string().nullable().optional(),
 });
 
-export interface ProductListingRelistPolicyDto {
+export interface ProductListingRelistPolicy {
   enabled?: boolean;
   leadMinutes?: number;
   maxAttempts?: number;
@@ -190,7 +190,7 @@ export const productListingSchema = dtoBaseSchema.extend({
   exportHistory: z.array(productListingExportEventSchema).nullable(),
 });
 
-export interface ProductListingDto {
+export interface ProductListing {
   id: string;
   productId: string;
   integrationId: string;
@@ -201,13 +201,13 @@ export interface ProductListingDto {
   listedAt: string | null;
   expiresAt: string | null;
   nextRelistAt: string | null;
-  relistPolicy?: ProductListingRelistPolicyDto | null;
+  relistPolicy?: ProductListingRelistPolicy | null;
   relistAttempts?: number;
   lastRelistedAt: string | null;
   lastStatusCheckAt: string | null;
   marketplaceData: Record<string, unknown> | null;
   failureReason: string | null;
-  exportHistory: ProductListingExportEventDto[] | null;
+  exportHistory: ProductListingExportEvent[] | null;
   createdAt: string;
   updatedAt: string | null;}
 
@@ -223,7 +223,7 @@ export const productListingWithDetailsSchema = productListingSchema.extend({
   }),
 });
 
-export interface ProductListingWithDetailsDto extends ProductListingDto {
+export interface ProductListingWithDetails extends ProductListing {
   integration: {
     id: string;
     name: string;
@@ -254,7 +254,7 @@ export const createProductListingSchema = z.object({
   exportHistory: z.array(productListingExportEventSchema).nullable().optional(),
 });
 
-export type CreateProductListingDto = z.infer<typeof createProductListingSchema>;
+export type CreateProductListing = z.infer<typeof createProductListingSchema>;
 
 /**
  * Category Mapping DTOs

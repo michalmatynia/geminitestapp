@@ -25,6 +25,7 @@ import {
   useToast,
   SectionHeader,
   LoadingState,
+  FormField,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -272,10 +273,8 @@ function AuthPermissionsForm({
 
             <div className='rounded-md border border-border bg-card/40 p-4 space-y-3'>
               <div className='text-sm font-semibold text-white'>Add Permission</div>
-              <div className='space-y-2'>
-                <Label htmlFor='permission-name' className='text-xs text-gray-300'>
-                  Name
-                </Label>
+              
+              <FormField label='Name'>
                 <Input
                   id='permission-name'
                   value={newPermissionName}
@@ -283,13 +282,12 @@ function AuthPermissionsForm({
                     setNewPermissionName(event.target.value)
                   }
                   placeholder='Manage products'
-                  className='bg-gray-900 border text-white'
+                  variant='subtle'
+                  size='sm'
                 />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='permission-id' className='text-xs text-gray-300'>
-                  Permission ID
-                </Label>
+              </FormField>
+
+              <FormField label='Permission ID'>
                 <Input
                   id='permission-id'
                   value={newPermissionId}
@@ -297,13 +295,12 @@ function AuthPermissionsForm({
                     setNewPermissionId(event.target.value)
                   }
                   placeholder='products.manage'
-                  className='bg-gray-900 border text-white'
+                  variant='subtle'
+                  size='sm'
                 />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='permission-description' className='text-xs text-gray-300'>
-                  Description
-                </Label>
+              </FormField>
+
+              <FormField label='Description'>
                 <Input
                   id='permission-description'
                   value={newPermissionDescription}
@@ -311,12 +308,16 @@ function AuthPermissionsForm({
                     setNewPermissionDescription(event.target.value)
                   }
                   placeholder='Create and edit product listings'
-                  className='bg-gray-900 border text-white'
+                  variant='subtle'
+                  size='sm'
                 />
-              </div>
+              </FormField>
+
               <Button
                 onClick={handleAddPermission}
                 variant='default'
+                size='sm'
+                className='w-full'
               >
                 Add Permission
               </Button>
@@ -335,62 +336,71 @@ function AuthPermissionsForm({
             {roles.map((role: AuthRole) => (
               <div key={role.id} className='rounded-md border border-border bg-card/40 p-4 space-y-3'>
                 <div className='flex items-start justify-between gap-3'>
-                  <div className='space-y-2 flex-1'>
-                    <Label className='text-xs text-gray-400'>Role name</Label>
-                    <Input
-                      value={role.name}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        handleRoleFieldChange(role.id, 'name', event.target.value)
-                      }
-                      className='bg-gray-900 border text-white'
-                    />
-                    <Label className='text-xs text-gray-400'>Description</Label>
-                    <Input
-                      value={role.description ?? ''}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        handleRoleFieldChange(role.id, 'description', event.target.value)
-                      }
-                      className='bg-gray-900 border text-white'
-                    />
-                    <Label className='text-xs text-gray-400'>Role level</Label>
-                    <Input
-                      type='number'
-                      min={0}
-                      max={100}
-                      value={role.level ?? 0}
-                      onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                        handleRoleFieldChange(role.id, 'level', event.target.value)
-                      }
-                      className='bg-gray-900 border text-white'
-                    />
-                    <div className='text-xs text-gray-500'>
-                      Levels ≥ 90 are treated as elevated access.
-                    </div>
-                    <div className='text-xs text-gray-500'>ID: {role.id}</div>
+                  <div className='space-y-3 flex-1'>
+                    <FormField label='Role name'>
+                      <Input
+                        value={role.name}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                          handleRoleFieldChange(role.id, 'name', event.target.value)
+                        }
+                        variant='subtle'
+                        size='sm'
+                      />
+                    </FormField>
+                    
+                    <FormField label='Description'>
+                      <Input
+                        value={role.description ?? ''}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                          handleRoleFieldChange(role.id, 'description', event.target.value)
+                        }
+                        variant='subtle'
+                        size='sm'
+                      />
+                    </FormField>
+
+                    <FormField 
+                      label='Role level' 
+                      description='Levels ≥ 90 are treated as elevated access.'
+                    >
+                      <Input
+                        type='number'
+                        min={0}
+                        max={100}
+                        value={role.level ?? 0}
+                        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                          handleRoleFieldChange(role.id, 'level', event.target.value)
+                        }
+                        variant='subtle'
+                        size='sm'
+                      />
+                    </FormField>
+                    
+                    <div className='text-[10px] text-gray-500 font-mono uppercase tracking-widest'>ID: {role.id}</div>
                   </div>
                   <Button
                     variant='ghost'
-                    size='sm'
+                    size='xs'
                     onClick={() => handleRemoveRole(role.id)}
-                    className='text-xs text-red-200 hover:bg-red-500/10'
+                    className='text-red-400 hover:text-red-300 hover:bg-red-500/10'
                   >
                     Remove
                   </Button>
                 </div>
-                <div className='grid gap-2 sm:grid-cols-2'>
+                <div className='grid gap-2 sm:grid-cols-2 pt-2 border-t border-border/20'>
                   {permissions.map((permission: AuthPermission) => (
                     <Label
                       key={permission.id}
-                      className='flex items-start gap-2 text-xs text-gray-300'
+                      className='flex items-start gap-2 text-xs text-gray-300 cursor-pointer hover:text-white transition-colors'
                     >
                       <Checkbox
                         checked={role.permissions.includes(permission.id)}
                         onCheckedChange={() => handleTogglePermission(role.id, permission.id)}
                       />
-                      <span>
+                      <div className='flex flex-col'>
                         <span className='font-semibold text-gray-200'>{permission.name}</span>
-                        <span className='block text-gray-500'>{permission.id}</span>
-                      </span>
+                        <span className='text-[10px] text-gray-500 font-mono'>{permission.id}</span>
+                      </div>
                     </Label>
                   ))}
                 </div>
@@ -399,10 +409,8 @@ function AuthPermissionsForm({
 
             <div className='rounded-md border border-border bg-card/40 p-4 space-y-3'>
               <div className='text-sm font-semibold text-white'>Add Role</div>
-              <div className='space-y-2'>
-                <Label htmlFor='role-name' className='text-xs text-gray-300'>
-                  Role name
-                </Label>
+              
+              <FormField label='Role name'>
                 <Input
                   id='role-name'
                   value={newRoleName}
@@ -410,13 +418,12 @@ function AuthPermissionsForm({
                     setNewRoleName(event.target.value)
                   }
                   placeholder='Editor'
-                  className='bg-gray-900 border text-white'
+                  variant='subtle'
+                  size='sm'
                 />
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='role-description' className='text-xs text-gray-300'>
-                  Description
-                </Label>
+              </FormField>
+
+              <FormField label='Description'>
                 <Input
                   id='role-description'
                   value={newRoleDescription}
@@ -424,10 +431,17 @@ function AuthPermissionsForm({
                     setNewRoleDescription(event.target.value)
                   }
                   placeholder='Manage content and products'
-                  className='bg-gray-900 border text-white'
+                  variant='subtle'
+                  size='sm'
                 />
-              </div>
-              <Button onClick={handleAddRole} variant='default'>
+              </FormField>
+
+              <Button 
+                onClick={handleAddRole} 
+                variant='default'
+                size='sm'
+                className='w-full'
+              >
                 Add Role
               </Button>
             </div>
@@ -435,15 +449,18 @@ function AuthPermissionsForm({
         </Card>
       </div>
 
-      <div className='flex items-center justify-end gap-3'>
-        <Button variant='outline' onClick={handleReset}>
+      <div className='flex items-center justify-end gap-3 pt-6'>
+        <Button variant='outline' size='sm' onClick={handleReset}>
           Reset defaults
         </Button>
         <Button
+          size='sm'
           onClick={() => void handleSave()}
           disabled={!dirty || saveSettingsMutation.isPending}
+          loading={saveSettingsMutation.isPending}
+          loadingText='Saving...'
         >
-          {saveSettingsMutation.isPending ? 'Saving...' : 'Save permissions'}
+          Save permissions
         </Button>
       </div>
     </div>

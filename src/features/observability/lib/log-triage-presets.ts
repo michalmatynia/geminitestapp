@@ -1,11 +1,9 @@
 import type { 
-  SystemLogFilterFormValuesDto,
-  LogTriagePresetDto
+  SystemLogFilterFormValues,
+  LogTriagePreset as LogTriagePresetBase
 } from '@/shared/contracts/observability';
 
-export type SystemLogFilterFormValues = SystemLogFilterFormValuesDto;
-
-export type LogTriagePreset = LogTriagePresetDto & {
+export type LogTriagePreset = LogTriagePresetBase & {
   resolve: (now: Date) => Partial<SystemLogFilterFormValues>;
 };
 

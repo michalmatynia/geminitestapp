@@ -13,6 +13,25 @@ export type AiPathsSettingsPageContextValue = UseAiPathsSettingsStateReturn & {
   setPathSettingsModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
   simulationModalOpen: boolean;
   setSimulationModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  // Added derived/missing fields
+  savePathConfig: UseAiPathsSettingsStateReturn['handleSave'];
+  validationPreflightReport: any;
+  nodeConfigDirty: boolean;
+  selectedNodeIds: string[];
+  selectionScopeMode: 'portion' | 'wiring';
+  setSelectionScopeMode: React.Dispatch<React.SetStateAction<'portion' | 'wiring'>>;
+  dataContractReport: any;
+  setDataContractInspectorNodeId: React.Dispatch<React.SetStateAction<string | null>>;
+  autoSaveVariant: any;
+  isPathNameEditing: boolean;
+  renameDraft: string;
+  setRenameDraft: React.Dispatch<React.SetStateAction<string>>;
+  commitPathNameEdit: () => void;
+  cancelPathNameEdit: () => void;
+  startPathNameEdit: () => void;
+  pathSwitchOptions: any[];
+  hasHistory: boolean;
+  handleInspectTraceNode: (nodeId: string, focus: 'all' | 'failed') => Promise<void>;
 };
 
 const AiPathsSettingsPageContext = createContext<AiPathsSettingsPageContextValue | null>(null);

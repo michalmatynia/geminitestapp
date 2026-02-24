@@ -12,7 +12,14 @@ import {
   type AiPathsSettingsPageContextValue,
 } from './ai-paths-settings/AiPathsSettingsPageContext';
 import { AiPathsSettingsView } from './ai-paths-settings/AiPathsSettingsView';
-import { useAiPathsSettingsState, type AiPathsSettingsState } from './ai-paths-settings/useAiPathsSettingsState';
+import { useAiPathsSettingsState } from './ai-paths-settings/useAiPathsSettingsState';
+import { 
+  evaluateDataContractPreflight, 
+  evaluateAiPathsValidationPreflight,
+  normalizeAiPathsValidationConfig,
+  sortPathMetas,
+} from '../lib';
+import { buildSwitchPathOptions } from './ai-paths-settings/ai-paths-settings-view-utils';
 
 export type AiPathsSettingsProps = {
   activeTab: 'canvas' | 'paths' | 'docs';
@@ -22,75 +29,123 @@ export type AiPathsSettingsProps = {
   onFocusModeChange?: ((next: boolean) => void) | undefined;
 };
 
-/**
- * Root component for AI-Paths settings.
- * Wraps the entire tree with AiPathsProvider to enable context-based state management.
- *
- * Migration note: Currently uses useAiPathsSettingsState as orchestrator state.
- * Child components can progressively migrate to use context hooks (useGraph, useSelection, etc.)
- */
-export function AiPathsSettings({
-  activeTab,
-  renderActions,
-  onTabChange,
-  isFocusMode,
-  onFocusModeChange,
-}: AiPathsSettingsProps): React.JSX.Element {
-  const pageContextValue = React.useMemo<AiPathsSettingsPageContextValue>(
-    () => ({
-      activeTab,
-      renderActions,
-      onTabChange,
-      isFocusMode,
-      onFocusModeChange,
-    }),
-    [activeTab, isFocusMode, onFocusModeChange, onTabChange, renderActions]
-  );
-
+export function AiPathsSettings(props: AiPathsSettingsProps): React.JSX.Element {
   return (
     <AppErrorBoundary source='AiPathsSettings'>
       <AiPathsProvider>
-        <AiPathsSettingsPageProvider value={pageContextValue}>
-          <AiPathsSettingsInner />
-        </AiPathsSettingsPageProvider>
+        <AiPathsSettingsInnerOrchestrator {...props} />
       </AiPathsProvider>
     </AppErrorBoundary>
   );
 }
 
-/**
- * Inner component that uses the orchestrator state hook and syncs to contexts.
- * This allows child components to consume state via context hooks while
- * domain contexts remain the runtime source.
- */
-function AiPathsSettingsInner(): React.JSX.Element {
-  const { activeTab } = useAiPathsSettingsPageContext();
-  const state: AiPathsSettingsState = useAiPathsSettingsState({ activeTab });
+function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JSX.Element {
+  const state = useAiPathsSettingsState({ activeTab: props.activeTab });
+  
+  const [pathSettingsModalOpen, setPathSettingsModalOpen] = React.useState(false);
+  const [simulationModalOpen, setSimulationModalOpen] = React.useState(false);
+  const [selectionScopeMode, setSelectionScopeMode] = React.useState<'portion' | 'wiring'>('portion');
+  const [dataContractInspectorNodeId, setDataContractInspectorNodeId] = React.useState<string | null>(null);
+  const [isPathNameEditing, setIsPathNameEditing] = React.useState(false);
+  const [renameDraft, setRenameDraft] = React.useState('');
 
-  // Sync orchestrator state to domain contexts for child components.
+  const normalizedAiPathsValidation = React.useMemo(
+    () => normalizeAiPathsValidationConfig(state.aiPathsValidation),
+    [state.aiPathsValidation]
+  );
+
+  const validationPreflightReport = React.useMemo(
+    () => evaluateAiPathsValidationPreflight({
+      nodes: state.nodes,
+      edges: state.edges,
+      config: normalizedAiPathsValidation,
+    }),
+    [state.nodes, state.edges, normalizedAiPathsValidation]
+  );
+
+  const dataContractReport = React.useMemo(
+    () => evaluateDataContractPreflight({
+      nodes: state.nodes,
+      edges: state.edges,
+      runtimeState: state.runtimeState,
+      mode: 'light',
+      scopeMode: normalizedAiPathsValidation.enabled !== false ? 'full' : 'reachable_from_roots',
+    }),
+    [state.nodes, state.edges, state.runtimeState, normalizedAiPathsValidation.enabled]
+  );
+
+  const pathSwitchOptions = React.useMemo(
+    () => buildSwitchPathOptions(sortPathMetas(state.paths)),
+    [state.paths]
+  );
+
+  const autoSaveVariant = React.useMemo(() => {
+    switch (state.autoSaveStatus) {
+      case 'saved': return 'success';
+      case 'saving': return 'processing';
+      case 'error': return 'error';
+      default: return 'neutral';
+    }
+  }, [state.autoSaveStatus]);
+
+  const pageContextValue = React.useMemo<AiPathsSettingsPageContextValue>(
+    () => ({
+      ...props,
+      ...state,
+      pathSettingsModalOpen,
+      setPathSettingsModalOpen,
+      simulationModalOpen,
+      setSimulationModalOpen,
+      savePathConfig: state.handleSave,
+      validationPreflightReport,
+      nodeConfigDirty: state.nodeConfigDirty,
+      selectedNodeIds: state.selectedNodeId ? [state.selectedNodeId] : [],
+      selectionScopeMode,
+      setSelectionScopeMode,
+      dataContractReport,
+      setDataContractInspectorNodeId,
+      autoSaveVariant,
+      isPathNameEditing,
+      renameDraft,
+      setRenameDraft,
+      commitPathNameEdit: () => {
+        if (!state.activePathId) return;
+        state.setPathName(renameDraft);
+        void state.handleSave({ pathNameOverride: renameDraft });
+        setIsPathNameEditing(false);
+      },
+      cancelPathNameEdit: () => {
+        setRenameDraft(state.pathName);
+        setIsPathNameEditing(false);
+      },
+      startPathNameEdit: () => {
+        setRenameDraft(state.pathName);
+        setIsPathNameEditing(true);
+      },
+      pathSwitchOptions,
+      hasHistory: state.runtimeEvents.length > 0,
+      handleInspectTraceNode: async () => {}, // Simplified for now
+    }),
+    [props, state, pathSettingsModalOpen, simulationModalOpen, selectionScopeMode, validationPreflightReport, dataContractReport, autoSaveVariant, isPathNameEditing, renameDraft, pathSwitchOptions]
+  );
+
+  // Sync state to domain contexts
   useStateBridgeAll({
-    // Selection
     selectedNodeId: state.selectedNodeId,
     selectedEdgeId: state.selectedEdgeId,
     configOpen: state.configOpen,
     nodeConfigDirty: state.nodeConfigDirty,
     simulationOpenNodeId: state.simulationOpenNodeId,
-    // Canvas
     view: state.view,
     panState: state.panState,
     dragState: state.dragState,
     connecting: state.connecting,
     connectingPos: state.connectingPos,
     lastDrop: state.lastDrop,
-    // Graph
     nodes: state.nodes,
     edges: state.edges,
-    onNodesChangeFromContext: (nextNodes: AiPathsSettingsState['nodes']) => {
-      state.setNodes(nextNodes);
-    },
-    onEdgesChangeFromContext: (nextEdges: AiPathsSettingsState['edges']) => {
-      state.setEdges(nextEdges);
-    },
+    onNodesChangeFromContext: state.setNodes,
+    onEdgesChangeFromContext: state.setEdges,
     activePathId: state.activePathId,
     pathName: state.pathName,
     isPathLocked: state.isPathLocked,
@@ -102,7 +157,6 @@ function AiPathsSettingsInner(): React.JSX.Element {
     strictFlowMode: state.strictFlowMode,
     paths: state.paths,
     pathConfigs: state.pathConfigs,
-    // Runtime
     runtimeState: state.runtimeState,
     lastRunAt: state.lastRunAt,
     lastError: state.lastError,
@@ -121,13 +175,11 @@ function AiPathsSettingsInner(): React.JSX.Element {
     nodeDurations: state.nodeDurations,
     runtimeNodeStatuses: state.runtimeNodeStatuses,
     runtimeEvents: state.runtimeEvents,
-    // Persistence
     loading: state.loading,
     saving: state.saving,
     autoSaveStatus: state.autoSaveStatus,
     autoSaveAt: state.autoSaveAt,
     savePathConfig: (options) => state.handleSave(options),
-    // Presets
     clusterPresets: state.clusterPresets,
     presetDraft: state.presetDraft,
     editingPresetId: state.editingPresetId,
@@ -135,15 +187,16 @@ function AiPathsSettingsInner(): React.JSX.Element {
     expandedPaletteGroups: state.expandedPaletteGroups,
     saveDbQueryPresets: state.saveDbQueryPresets,
     saveDbNodePresets: state.saveDbNodePresets,
-    // Run History
     runFilter: state.runFilter,
     expandedRunHistory: state.expandedRunHistory,
     runHistorySelection: state.runHistorySelection,
   });
 
   return (
-    <AiPathsSettingsOrchestratorProvider value={state}>
-      <AiPathsSettingsView />
-    </AiPathsSettingsOrchestratorProvider>
+    <AiPathsSettingsPageProvider value={pageContextValue}>
+      <AiPathsSettingsOrchestratorProvider value={state}>
+        <AiPathsSettingsView />
+      </AiPathsSettingsOrchestratorProvider>
+    </AiPathsSettingsPageProvider>
   );
 }

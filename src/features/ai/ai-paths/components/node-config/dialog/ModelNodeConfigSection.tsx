@@ -6,7 +6,7 @@ import type { AiNode, Edge, ModelConfig } from '@/features/ai/ai-paths/lib';
 import { DEFAULT_MODELS, toNumber } from '@/features/ai/ai-paths/lib';
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Input, Label, SelectSimple, Card } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple, Card, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -88,8 +88,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>Model</Label>
+      <FormField label='Model'>
         <SelectSimple size='sm'
           value={modelConfig.modelId}
           onValueChange={(value: string): void =>
@@ -99,16 +98,16 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
           }
           options={mergedModelOptions.map((model: string) => ({ value: model, label: model }))}
           placeholder='Select model'
-          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+          variant='subtle'
         />
-      </div>
+      </FormField>
       <div className='grid gap-3 sm:grid-cols-2'>
-        <div>
-          <Label className='text-xs text-gray-400'>Temperature</Label>
+        <FormField label='Temperature'>
           <Input
             type='number'
             step='0.1'
-            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+            variant='subtle'
+            size='sm'
             value={modelConfig.temperature}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updateSelectedNodeConfig({
@@ -122,13 +121,13 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
               })
             }
           />
-        </div>
-        <div>
-          <Label className='text-xs text-gray-400'>Max Tokens</Label>
+        </FormField>
+        <FormField label='Max Tokens'>
           <Input
             type='number'
             step='50'
-            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+            variant='subtle'
+            size='sm'
             value={modelConfig.maxTokens}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updateSelectedNodeConfig({
@@ -142,7 +141,7 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
               })
             }
           />
-        </div>
+        </FormField>
       </div>
       <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/60 bg-card/30 text-xs text-gray-300'>
         <span>Accepts Images</span>

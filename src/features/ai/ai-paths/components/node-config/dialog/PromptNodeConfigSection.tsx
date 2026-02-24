@@ -8,7 +8,7 @@ import React from 'react';
 import type { AiNode, Edge, PromptConfig } from '@/features/ai/ai-paths/lib';
 import { buildPromptOutput, createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Button, Label, Textarea, Alert } from '@/shared/ui';
+import { Button, Label, Textarea, Alert, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 import {
@@ -191,10 +191,22 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>Prompt Template</Label>
+      <FormField 
+        label='Prompt Template' 
+        description={(
+          <>
+            Images are passed separately via the Prompt{' '}
+            <span className='text-gray-300'>images</span> output and the Model{' '}
+            <span className='text-gray-300'>images</span> input. You don&apos;t
+            need an <span className='text-gray-300'>images</span> placeholder
+            inside the prompt text.
+          </>
+        )}
+      >
         <Textarea
-          className='mt-2 min-h-[140px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
+          className='min-h-[140px]'
           ref={promptTemplateRef}
           value={promptConfig.template}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
@@ -204,14 +216,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
           }
           placeholder='Describe the product: {{title}}'
         />
-        <p className='mt-2 text-[11px] text-gray-500'>
-          Images are passed separately via the Prompt{' '}
-          <span className='text-gray-300'>images</span> output and the Model{' '}
-          <span className='text-gray-300'>images</span> input. You don&apos;t
-          need an <span className='text-gray-300'>images</span> placeholder
-          inside the prompt text.
-        </p>
-      </div>
+      </FormField>
       <div className='rounded-md border border-border bg-card/50 p-3 text-[11px] text-gray-400'>
         <div className='flex items-center justify-between gap-2 text-gray-300'>
           <span>Available placeholders</span>
@@ -343,38 +348,45 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
       })()}
 
       <div className='mt-4'>
-        <div className='flex items-center justify-between gap-2'>
-          <Label className='text-xs text-gray-400'>Resolved Prompt</Label>
-          <Button
-            type='button'
-            className='h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/50 disabled:opacity-50'
-            onClick={() => {
-              if (!resolvedPrompt.trim()) {
-                toast('Resolved prompt is empty.', { variant: 'error' });
-                return;
-              }
-              void navigator.clipboard
-                .writeText(resolvedPrompt)
-                .then(() => toast('Resolved prompt copied.', { variant: 'success' }))
-                .catch(() => toast('Failed to copy.', { variant: 'error' }));
-            }}
-            disabled={!resolvedPrompt.trim()}
-            title='Copy the resolved prompt (after placeholder substitution)'
-          >
-            Copy Resolved
-          </Button>
-        </div>
-        <Textarea
-          className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
-          value={resolvedPrompt}
-          readOnly
-          placeholder='Run the graph to resolve placeholders.'
-        />
-        <p className='mt-1 text-[11px] text-gray-500'>
-          Uses incoming ports (including <span className='text-gray-300'>result</span>) to substitute placeholders.
-          Use <span className='text-gray-300'>{'{{value}}'}</span> or{' '}
-          <span className='text-gray-300'>{'{{result}}'}</span>.
-        </p>
+        <FormField 
+          label='Resolved Prompt'
+          description={(
+            <>
+              Uses incoming ports (including <span className='text-gray-300'>result</span>) to substitute placeholders.
+              Use <span className='text-gray-300'>{'{{value}}'}</span> or{' '}
+              <span className='text-gray-300'>{'{{result}}'}</span>.
+            </>
+          )}
+          actions={
+            <Button
+              type='button'
+              className='h-7 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/50 disabled:opacity-50'
+              onClick={() => {
+                if (!resolvedPrompt.trim()) {
+                  toast('Resolved prompt is empty.', { variant: 'error' });
+                  return;
+                }
+                void navigator.clipboard
+                  .writeText(resolvedPrompt)
+                  .then(() => toast('Resolved prompt copied.', { variant: 'success' }))
+                  .catch(() => toast('Failed to copy.', { variant: 'error' }));
+              }}
+              disabled={!resolvedPrompt.trim()}
+              title='Copy the resolved prompt (after placeholder substitution)'
+            >
+              Copy Resolved
+            </Button>
+          }
+        >
+          <Textarea
+            variant='subtle'
+            size='sm'
+            className='min-h-[120px]'
+            value={resolvedPrompt}
+            readOnly
+            placeholder='Run the graph to resolve placeholders.'
+          />
+        </FormField>
       </div>
 
       {(() : React.JSX.Element => {
@@ -411,13 +423,19 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
 
         return (
           <div className='mt-4'>
-            <Label className='text-xs text-gray-400'>Result Input</Label>
-            <Textarea
-              className='mt-2 min-h-[100px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
-              value={displayValue}
-              readOnly
-              placeholder='No result received yet. Connect a node to the result input and run the graph.'
-            />
+            <FormField 
+              label='Result Input'
+              description='Shows the value passed through the result input port.'
+            >
+              <Textarea
+                variant='subtle'
+                size='sm'
+                className='min-h-[100px]'
+                value={displayValue}
+                readOnly
+                placeholder='No result received yet. Connect a node to the result input and run the graph.'
+              />
+            </FormField>
             {!hasResult && resultSourceNode?.type === 'model' && resultSourceModelHasPoll && !resultSourceModelWaits && resultSourcePort === 'result' && (
               <Alert variant='warning' className='mt-2 py-2 text-[11px]'>
                 This Prompt is connected to <span className='text-amber-200'>Model.result</span>, but that Model has a{' '}
@@ -438,9 +456,6 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
                 Poll failed. Check the Poll node output for an error, or verify the job/database query configuration.
               </Alert>
             )}
-            <p className='mt-1 text-[11px] text-gray-500'>
-              Shows the value passed through the <span className='text-gray-300'>result</span> input port.
-            </p>
           </div>
         );
       })()}

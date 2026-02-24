@@ -144,7 +144,6 @@ export function CategoryMapperTable(): React.JSX.Element {
         
         return (
           <SelectSimple
-            size='sm'
             value={currentMapping ?? '__unmapped__'}
             onValueChange={(value: string): void =>
               handleMappingChange(row.original.id, value === '__unmapped__' ? null : value)
@@ -155,7 +154,9 @@ export function CategoryMapperTable(): React.JSX.Element {
               ...internalCategoryOptions
             ]}
             placeholder='— Not mapped —'
-            triggerClassName='w-full max-w-md h-8 text-xs'
+            variant='subtle'
+            size='sm'
+            triggerClassName='w-full max-w-md'
           />
         );
       },

@@ -14,7 +14,7 @@ import type {
   CaseResolverDocumentDateProposal,
   CaseResolverWorkspace,
   CaseResolverEditorNodeContext,
-  CaseResolverSettingsDto,
+  CaseResolverSettings,
   CaseResolverAssetKind,
   CaseResolverFileEditDraft,
 } from '@/shared/contracts/case-resolver';
@@ -116,7 +116,7 @@ export type CaseResolverStateValue = {
   caseResolverTags: CaseResolverTag[];
   caseResolverIdentifiers: CaseResolverIdentifier[];
   caseResolverCategories: CaseResolverCategory[];
-  caseResolverSettings: CaseResolverSettingsDto;
+  caseResolverSettings: CaseResolverSettings;
   countries: CountryOption[];
   isMenuCollapsed: boolean;
   setIsMenuCollapsed: (collapsed: boolean) => void;

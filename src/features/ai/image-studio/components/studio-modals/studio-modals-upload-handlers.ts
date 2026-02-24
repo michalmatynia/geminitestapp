@@ -1,10 +1,11 @@
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { StudioAssetImportResult } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
+import type { SlotsActions } from '../../context/SlotsContext';
 
 import { setImageStudioSlotImageLocked } from '../../utils/slot-image-lock';
 
 import type { EnvironmentReferenceDraftViewModel } from './slot-inline-edit-tab-types';
-
 
 type Toast = (
   message: string,
@@ -22,39 +23,16 @@ type UploadAssetRecord = {
   updatedAt?: string | Date | null;
 };
 
-type UploadResult = {
-  uploaded?: UploadAssetRecord[];
-  failures?: Array<{ error?: string }>;
-};
-
-type UploadMutationLike = {
-  mutateAsync: (args: { files: File[]; folder: string | null }) => Promise<UploadResult>;
-  isPending: boolean;
-};
-
-type ImportMutationLike = {
-  mutateAsync: (args: { files: ImageFileSelection[]; folder: string | null }) => Promise<UploadResult>;
-};
-
-type UpdateSlotMutationLike = {
-  mutateAsync: (args: {
-    id: string;
-    data: Record<string, unknown>;
-  }) => Promise<unknown>;
-};
-
 type LocalUploadMode = 'create' | 'replace' | 'temporary-object' | 'environment';
 type DriveImportMode = LocalUploadMode;
-
-type CreateSlotsFn = (drafts: Array<Record<string, unknown>>) => Promise<ImageStudioSlotRecord[]>;
 
 type CreateUploadHandlersDeps = {
   applyEnvironmentReferenceDraft: (asset: UploadAssetRecord) => void;
   clearTemporaryUpload: (asset: { id: string; filepath: string }) => Promise<void>;
-  createSlots: CreateSlotsFn;
+  createSlots: SlotsActions['createSlots'];
   driveImportMode: DriveImportMode;
   driveImportTargetId: string | null;
-  importFromDriveMutation: ImportMutationLike;
+  importFromDriveMutation: SlotsActions['importFromDriveMutation'];
   localUploadMode: LocalUploadMode;
   localUploadTargetId: string | null;
   selectedFolder: string | null;
@@ -65,26 +43,14 @@ type CreateUploadHandlersDeps = {
   setLocalUploadMode: (mode: LocalUploadMode) => void;
   setLocalUploadTargetId: (targetId: string | null) => void;
   setSelectedSlotId: (slotId: string | null) => void;
-  setTemporaryObjectUpload: (value: {
-    id: string;
-    filepath: string;
-    filename: string;
-    width: number | null;
-    height: number | null;
-  } | null) => void;
+  setTemporaryObjectUpload: SlotsActions['setTemporaryObjectUpload'];
   slotHasRenderableImage: (slot: ImageStudioSlotRecord | null | undefined) => boolean;
   slotsCount: number;
-  temporaryObjectUpload: {
-    id: string;
-    filepath: string;
-    filename: string;
-    width: number | null;
-    height: number | null;
-  } | null;
+  temporaryObjectUpload: SlotsActions['setTemporaryObjectUpload'] extends (arg: infer T) => void ? T : never;
   toast: Toast;
   toSlotName: (filename: string, index: number) => string;
-  updateSlotMutation: UpdateSlotMutationLike;
-  uploadMutation: UploadMutationLike;
+  updateSlotMutation: SlotsActions['updateSlotMutation'];
+  uploadMutation: SlotsActions['uploadMutation'];
 };
 
 type UploadHandlers = {

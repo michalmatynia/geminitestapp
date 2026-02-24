@@ -62,7 +62,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
       });
 
       const collection = mongo.collection<{ _id: string; id: string }>('catalogs');
-      const bulkOps: AnyBulkWriteOperation<any>[] = [];
+      const bulkOps: AnyBulkWriteOperation<{ _id: string; id: string }>[] = [];
       const updatedCatalogs = catalogs.map((catalog: CatalogRecord) => {
         const nextLanguageIds =
           catalog.languageIds?.map(

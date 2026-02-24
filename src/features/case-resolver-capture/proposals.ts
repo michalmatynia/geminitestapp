@@ -5,7 +5,7 @@ import {
   normalizeCaseResolverComparable,
 } from '@/features/case-resolver/party-matching';
 import { extractCaseResolverDocumentDate } from '@/features/case-resolver/settings';
-import type { CaseResolverPartyReferenceDto as CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
+import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
 import type { FilemakerDatabaseDto as FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type {
   PromptExploderCaseResolverMetadataDto as PromptExploderCaseResolverMetadata,

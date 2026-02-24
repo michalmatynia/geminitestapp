@@ -65,7 +65,7 @@ export function StudioModals(): React.JSX.Element {
     createSlots,
     driveImportMode,
     driveImportTargetId,
-    importFromDriveMutation: importFromDriveMutation as { mutateAsync: (args: { files: any[]; folder: string | null }) => Promise<any> },
+    importFromDriveMutation,
     localUploadMode,
     localUploadTargetId,
     selectedFolder: '', // From SlotsContext normally
@@ -79,11 +79,11 @@ export function StudioModals(): React.JSX.Element {
     setTemporaryObjectUpload,
     slotHasRenderableImage,
     slotsCount: slots.length,
-    temporaryObjectUpload: temporaryObjectUpload as { id: string; filepath: string; filename: string; width: number | null; height: number | null } | null,
-    toast: toast as (message: string, options?: { variant?: any }) => void,
+    temporaryObjectUpload,
+    toast,
     toSlotName,
-    updateSlotMutation: updateSlotMutation as { mutateAsync: (args: { id: string; data: Record<string, unknown> }) => Promise<unknown> },
-    uploadMutation: uploadMutation as { mutateAsync: (args: { files: File[]; folder: string | null }) => Promise<any>; isPending: boolean },
+    updateSlotMutation,
+    uploadMutation,
   });
 
   const handleCreateEmptySlot = async (): Promise<void> => { 

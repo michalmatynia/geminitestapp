@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { dtoBaseSchema } from './base';
 
 
+export const databaseTypeSchema = z.enum(['postgresql', 'mongodb']);
 export type DatabaseType = z.infer<typeof databaseTypeSchema>;
 
 export const databaseSyncDirectionSchema = z.enum(['mongo_to_prisma', 'prisma_to_mongo']);
@@ -578,4 +579,3 @@ export const settingsBackfillResultSchema = z.object({
 });
 
 export type SettingsBackfillResult = z.infer<typeof settingsBackfillResultSchema>;
-

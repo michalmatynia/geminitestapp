@@ -2294,10 +2294,9 @@ export function useAdminCaseResolverPageState() {
         documentContentHtml: editingDocumentDraft.documentContentHtml,
         documentContentPlainText: editingDocumentDraft.documentContentPlainText,
       });
-      const nextHistory = [currentSnapshot, ...editingDocumentDraft.documentHistory].slice(
-        0,
-        CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT
-      );
+      const nextHistory = [currentSnapshot, ...(editingDocumentDraft.documentHistory ?? [])]
+        .filter((e): e is CaseResolverDocumentHistoryEntry => e !== null)
+        .slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT);
       updateEditingDocumentDraft({
         activeDocumentVersion: entry.activeDocumentVersion,
         editorType: entry.editorType,
@@ -2379,13 +2378,15 @@ export function useAdminCaseResolverPageState() {
       const fileIndex = current.files.findIndex((f) => f.id === editingDocumentDraft.id);
       if (fileIndex < 0) return current;
       const file = current.files[fileIndex];
-      if (file.isLocked) return current;
+      if (!file || file.isLocked) return current;
       const now = new Date().toISOString();
-      const nextFile: CaseResolverFile = {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { content: _content, ...draftWithoutContent } = editingDocumentDraft;
+      const nextFile = {
         ...file,
-        ...editingDocumentDraft,
+        ...draftWithoutContent,
         updatedAt: now,
-      };
+      } as unknown as CaseResolverFile;
       return {
         ...current,
         files: current.files.map((f, index) =>

@@ -18,7 +18,7 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
   const batchQueue = useRef<Map<string, {
     queryKey: unknown[];
     queryFn: () => Promise<unknown>;
-    resolve: (data: any) => void;
+    resolve: (data: unknown) => void;
     reject: (error: Error) => void;
       }>>(new Map());
   const batchTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -95,9 +95,14 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
     queryKey: unknown[],
     queryFn: () => Promise<TData>
   ): Promise<TData> => {
-    return new Promise((resolve, reject) => {
+    return new Promise<TData>((resolve, reject) => {
       const key = JSON.stringify(queryKey);
-      batchQueue.current.set(key, { queryKey, queryFn, resolve, reject });
+      batchQueue.current.set(key, { 
+        queryKey, 
+        queryFn, 
+        resolve: resolve as (data: unknown) => void, 
+        reject 
+      });
 
       // Clear existing timeout
       if (batchTimeout.current) {

@@ -4,10 +4,10 @@ import { dtoBaseSchema, namedDtoSchema } from './base';
 import {
   productParameterValueSchema,
   type ParameterRepository,
-  type ProductParameterValueDto,
-  type ProducerDto,
-  type ProductCategoryDto,
-  type ProductTagDto,
+  type ProductParameterValue,
+  type Producer,
+  type ProductCategory,
+  type ProductTag,
 } from './products';
 
 /**
@@ -268,7 +268,7 @@ export const categoryMappingSchema = dtoBaseSchema.extend({
   isActive: z.boolean(),
 });
 
-export interface CategoryMappingDto {
+export interface CategoryMapping {
   id: string;
   connectionId: string;
   externalCategoryId: string;
@@ -291,7 +291,7 @@ export const externalCategorySchema = dtoBaseSchema.extend({
   fetchedAt: z.string(),
 });
 
-export interface ExternalCategoryDto {
+export interface ExternalCategory {
   id: string;
   connectionId: string;
   externalId: string;
@@ -306,11 +306,11 @@ export interface ExternalCategoryDto {
   updatedAt?: string | null;
 }
 
-export interface ExternalCategoryWithChildrenDto extends ExternalCategoryDto {
-  children: ExternalCategoryWithChildrenDto[];
+export interface ExternalCategoryWithChildren extends ExternalCategory {
+  children: ExternalCategoryWithChildren[];
 }
 
-export const externalCategoryWithChildrenSchema: z.ZodType<ExternalCategoryWithChildrenDto> = externalCategorySchema.extend({
+export const externalCategoryWithChildrenSchema: z.ZodType<ExternalCategoryWithChildren> = externalCategorySchema.extend({
   children: z.array(z.lazy(() => externalCategoryWithChildrenSchema)),
 });
 
@@ -320,7 +320,7 @@ export const baseCategoryFromApiSchema = z.object({
   parent_id: z.union([z.number(), z.string()]).nullable(),
 });
 
-export type BaseCategoryFromApiDto = z.infer<typeof baseCategoryFromApiSchema>;
+export type BaseCategoryFromApi = z.infer<typeof baseCategoryFromApiSchema>;
 
 export const baseCategorySchema = z.object({
   id: z.string(),
@@ -328,7 +328,7 @@ export const baseCategorySchema = z.object({
   parentId: z.string().nullable(),
 });
 
-export type BaseCategoryDto = z.infer<typeof baseCategorySchema>;
+export type BaseCategory = z.infer<typeof baseCategorySchema>;
 
 export const externalCategorySyncInputSchema = z.object({
   connectionId: z.string(),
@@ -341,7 +341,7 @@ export const externalCategorySyncInputSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export interface ExternalCategorySyncInputDto {
+export interface ExternalCategorySyncInput {
   connectionId: string;
   externalId: string;
   name: string;
@@ -352,8 +352,6 @@ export interface ExternalCategorySyncInputDto {
   metadata?: Record<string, unknown> | null;
 }
 
-export type ExternalCategorySyncInput = ExternalCategorySyncInputDto;
-
 export const categoryMappingCreateInputSchema = z.object({
   connectionId: z.string(),
   externalCategoryId: z.string(),
@@ -361,35 +359,31 @@ export const categoryMappingCreateInputSchema = z.object({
   catalogId: z.string(),
 });
 
-export interface CategoryMappingCreateInputDto {
+export interface CategoryMappingCreateInput {
   connectionId: string;
   externalCategoryId: string;
   internalCategoryId: string;
   catalogId: string;
 }
 
-export type CategoryMappingCreateInput = CategoryMappingCreateInputDto;
-
 export const categoryMappingUpdateInputSchema = z.object({
   internalCategoryId: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 
-export interface CategoryMappingUpdateInputDto {
+export interface CategoryMappingUpdateInput {
   internalCategoryId?: string;
   isActive?: boolean;
 }
 
-export type CategoryMappingUpdateInput = CategoryMappingUpdateInputDto;
-
 export const categoryMappingWithDetailsSchema = categoryMappingSchema.extend({
   externalCategory: externalCategorySchema,
-  internalCategory: z.any(), // ProductCategoryDto
+  internalCategory: z.any(), // ProductCategory
 });
 
-export interface CategoryMappingWithDetailsDto extends CategoryMappingDto {
-  externalCategory: ExternalCategoryDto;
-  internalCategory: ProductCategoryDto | null;
+export interface CategoryMappingWithDetails extends CategoryMapping {
+  externalCategory: ExternalCategory;
+  internalCategory: ProductCategory | null;
 }
 
 export const externalTagSchema = dtoBaseSchema.extend({
@@ -400,7 +394,7 @@ export const externalTagSchema = dtoBaseSchema.extend({
   fetchedAt: z.string(),
 });
 
-export type ExternalTagDto = z.infer<typeof externalTagSchema>;
+export type ExternalTag = z.infer<typeof externalTagSchema>;
 
 export const tagMappingSchema = dtoBaseSchema.extend({
   connectionId: z.string(),
@@ -409,7 +403,7 @@ export const tagMappingSchema = dtoBaseSchema.extend({
   isActive: z.boolean(),
 });
 
-export interface TagMappingDto {
+export interface TagMapping {
   id: string;
   connectionId: string;
   externalTagId: string;
@@ -421,29 +415,25 @@ export interface TagMappingDto {
 
 export const tagMappingWithDetailsSchema = tagMappingSchema.extend({
   externalTag: externalTagSchema,
-  internalTag: z.any(), // ProductTagDto
+  internalTag: z.any(), // ProductTag
 });
 
-export interface TagMappingWithDetailsDto extends TagMappingDto {
-  externalTag: ExternalTagDto;
-  internalTag: ProductTagDto | null;
+export interface TagMappingWithDetails extends TagMapping {
+  externalTag: ExternalTag;
+  internalTag: ProductTag | null;
 }
 
-export interface BaseTagDto {
+export interface BaseTag {
   id: string;
   name: string;
 }
 
-export type BaseTag = BaseTagDto;
-
-export interface ExternalTagSyncInputDto {
+export interface ExternalTagSyncInput {
   connectionId: string;
   externalId: string;
   name: string;
   metadata?: Record<string, unknown> | null;
 }
-
-export type ExternalTagSyncInput = ExternalTagSyncInputDto;
 
 export const tagMappingCreateInputSchema = z.object({
   connectionId: z.string(),
@@ -451,25 +441,21 @@ export const tagMappingCreateInputSchema = z.object({
   internalTagId: z.string(),
 });
 
-export interface TagMappingCreateInputDto {
+export interface TagMappingCreateInput {
   connectionId: string;
   externalTagId: string;
   internalTagId: string;
 }
-
-export type TagMappingCreateInput = TagMappingCreateInputDto;
 
 export const tagMappingUpdateInputSchema = z.object({
   externalTagId: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 
-export interface TagMappingUpdateInputDto {
+export interface TagMappingUpdateInput {
   externalTagId?: string;
   isActive?: boolean;
 }
-
-export type TagMappingUpdateInput = TagMappingUpdateInputDto;
 
 export const externalProducerSchema = dtoBaseSchema.extend({
   connectionId: z.string(),
@@ -479,7 +465,7 @@ export const externalProducerSchema = dtoBaseSchema.extend({
   fetchedAt: z.string(),
 });
 
-export interface ExternalProducerDto {
+export interface ExternalProducer {
   id: string;
   connectionId: string;
   externalId: string;
@@ -497,7 +483,7 @@ export const producerMappingSchema = dtoBaseSchema.extend({
   isActive: z.boolean(),
 });
 
-export interface ProducerMappingDto {
+export interface ProducerMapping {
   id: string;
   connectionId: string;
   externalProducerId: string;
@@ -509,12 +495,12 @@ export interface ProducerMappingDto {
 
 export const producerMappingWithDetailsSchema = producerMappingSchema.extend({
   externalProducer: externalProducerSchema,
-  internalProducer: z.any(), // ProducerDto
+  internalProducer: z.any(), // Producer
 });
 
-export interface ProducerMappingWithDetailsDto extends ProducerMappingDto {
-  externalProducer: ExternalProducerDto;
-  internalProducer: ProducerDto | null;
+export interface ProducerMappingWithDetails extends ProducerMapping {
+  externalProducer: ExternalProducer;
+  internalProducer: Producer | null;
 }
 
 export const baseProducerFromApiSchema = z.object({
@@ -524,23 +510,19 @@ export const baseProducerFromApiSchema = z.object({
   name: z.string().optional(),
 });
 
-export type BaseProducerFromApiDto = z.infer<typeof baseProducerFromApiSchema>;
+export type BaseProducerFromApi = z.infer<typeof baseProducerFromApiSchema>;
 
-export interface BaseProducerDto {
+export interface BaseProducer {
   id: string;
   name: string;
 }
 
-export type BaseProducer = BaseProducerDto;
-
-export interface ExternalProducerSyncInputDto {
+export interface ExternalProducerSyncInput {
   connectionId: string;
   externalId: string;
   name: string;
   metadata?: Record<string, unknown> | null;
 }
-
-export type ExternalProducerSyncInput = ExternalProducerSyncInputDto;
 
 export const producerMappingCreateInputSchema = z.object({
   connectionId: z.string(),
@@ -548,25 +530,21 @@ export const producerMappingCreateInputSchema = z.object({
   internalProducerId: z.string(),
 });
 
-export interface ProducerMappingCreateInputDto {
+export interface ProducerMappingCreateInput {
   connectionId: string;
   externalProducerId: string;
   internalProducerId: string;
 }
-
-export type ProducerMappingCreateInput = ProducerMappingCreateInputDto;
 
 export const producerMappingUpdateInputSchema = z.object({
   externalProducerId: z.string().optional(),
   isActive: z.boolean().optional(),
 });
 
-export interface ProducerMappingUpdateInputDto {
+export interface ProducerMappingUpdateInput {
   externalProducerId?: string;
   isActive?: boolean;
 }
-
-export type ProducerMappingUpdateInput = ProducerMappingUpdateInputDto;
 
 /**
  * Template DTOs
@@ -578,7 +556,7 @@ export const templateMappingSchema = z.object({
   transform: z.string().optional(),
 });
 
-export type TemplateMappingDto = z.infer<typeof templateMappingSchema>;
+export type TemplateMapping = z.infer<typeof templateMappingSchema>;
 
 export const templateSchema = namedDtoSchema.extend({
   provider: z.string(),
@@ -588,7 +566,7 @@ export const templateSchema = namedDtoSchema.extend({
   exportImagesAsBase64: z.boolean().optional(),
 });
 
-export type TemplateDto = z.infer<typeof templateSchema>;
+export type Template = z.infer<typeof templateSchema>;
 
 export const createTemplateSchema = templateSchema.omit({
   id: true,
@@ -596,8 +574,8 @@ export const createTemplateSchema = templateSchema.omit({
   updatedAt: true,
 });
 
-export type CreateTemplateDto = z.infer<typeof createTemplateSchema>;
-export type UpdateTemplateDto = Partial<CreateTemplateDto>;
+export type CreateTemplate = z.infer<typeof createTemplateSchema>;
+export type UpdateTemplate = Partial<CreateTemplate>;
 
 /**
  * Base.com Metadata DTOs
@@ -609,7 +587,7 @@ export const baseInventorySchema = z.object({
   is_default: z.boolean(),
 });
 
-export type BaseInventoryDto = z.infer<typeof baseInventorySchema>;
+export type BaseInventory = z.infer<typeof baseInventorySchema>;
 
 export const baseWarehouseSchema = z.object({
   id: z.string(),
@@ -618,13 +596,13 @@ export const baseWarehouseSchema = z.object({
   typedId: z.string().optional(),
 });
 
-export type BaseWarehouseDto = z.infer<typeof baseWarehouseSchema>;
+export type BaseWarehouse = z.infer<typeof baseWarehouseSchema>;
 
 export const fetchMarketplaceCategoriesRequestSchema = z.object({
   connectionId: z.string(),
 });
 
-export type FetchMarketplaceCategoriesRequestDto = z.infer<typeof fetchMarketplaceCategoriesRequestSchema>;
+export type FetchMarketplaceCategoriesRequest = z.infer<typeof fetchMarketplaceCategoriesRequestSchema>;
 
 export const bulkCategoryMappingRequestSchema = z.object({
   connectionId: z.string(),
@@ -635,7 +613,7 @@ export const bulkCategoryMappingRequestSchema = z.object({
   })),
 });
 
-export type BulkCategoryMappingRequestDto = z.infer<typeof bulkCategoryMappingRequestSchema>;
+export type BulkCategoryMappingRequest = z.infer<typeof bulkCategoryMappingRequestSchema>;
 
 /**
  * Base.com Import DTOs
@@ -649,7 +627,7 @@ export const baseImportRunStatusSchema = z.enum([
   'failed',
   'canceled',
 ]);
-export type BaseImportRunStatusDto = z.infer<typeof baseImportRunStatusSchema>;
+export type BaseImportRunStatus = z.infer<typeof baseImportRunStatusSchema>;
 
 export const baseImportItemStatusSchema = z.enum([
   'pending',
@@ -659,7 +637,7 @@ export const baseImportItemStatusSchema = z.enum([
   'skipped',
   'failed',
 ]);
-export type BaseImportItemStatusDto = z.infer<typeof baseImportItemStatusSchema>;
+export type BaseImportItemStatus = z.infer<typeof baseImportItemStatusSchema>;
 
 export const baseImportItemActionSchema = z.enum([
   'pending',
@@ -670,14 +648,14 @@ export const baseImportItemActionSchema = z.enum([
   'failed',
   'dry_run',
 ]);
-export type BaseImportItemActionDto = z.infer<typeof baseImportItemActionSchema>;
+export type BaseImportItemAction = z.infer<typeof baseImportItemActionSchema>;
 
 export const baseImportModeSchema = z.enum([
   'create_only',
   'upsert_on_base_id',
   'upsert_on_sku',
 ]);
-export type BaseImportModeDto = z.infer<typeof baseImportModeSchema>;
+export type BaseImportMode = z.infer<typeof baseImportModeSchema>;
 
 export const baseImportErrorCodeSchema = z.enum([
   'VALIDATION_ERROR',
@@ -698,7 +676,7 @@ export const baseImportErrorCodeSchema = z.enum([
   'TIMEOUT',
   'NETWORK_ERROR',
 ]);
-export type BaseImportErrorCodeDto = z.infer<typeof baseImportErrorCodeSchema>;
+export type BaseImportErrorCode = z.infer<typeof baseImportErrorCodeSchema>;
 
 export const baseImportErrorClassSchema = z.enum([
   'transient',
@@ -706,7 +684,7 @@ export const baseImportErrorClassSchema = z.enum([
   'configuration',
   'canceled',
 ]);
-export type BaseImportErrorClassDto = z.infer<typeof baseImportErrorClassSchema>;
+export type BaseImportErrorClass = z.infer<typeof baseImportErrorClassSchema>;
 
 export const baseImportParameterImportSummarySchema = z.object({
   extracted: z.number(),
@@ -714,12 +692,12 @@ export const baseImportParameterImportSummarySchema = z.object({
   created: z.number(),
   written: z.number(),
 });
-export type BaseImportParameterImportSummaryDto = z.infer<typeof baseImportParameterImportSummarySchema>;
+export type BaseImportParameterImportSummary = z.infer<typeof baseImportParameterImportSummarySchema>;
 
 export const baseImportRunParameterImportSummarySchema = baseImportParameterImportSummarySchema.extend({
   itemsApplied: z.number(),
 });
-export type BaseImportRunParameterImportSummaryDto = z.infer<typeof baseImportRunParameterImportSummarySchema>;
+export type BaseImportRunParameterImportSummary = z.infer<typeof baseImportRunParameterImportSummarySchema>;
 
 export const baseImportRunStatsSchema = z.object({
   total: z.number(),
@@ -731,7 +709,7 @@ export const baseImportRunStatsSchema = z.object({
   failed: z.number(),
   parameterImportSummary: baseImportRunParameterImportSummarySchema.optional(),
 });
-export type BaseImportRunStatsDto = z.infer<typeof baseImportRunStatsSchema>;
+export type BaseImportRunStats = z.infer<typeof baseImportRunStatsSchema>;
 
 export const baseImportRunParamsSchema = z.object({
   connectionId: z.string().optional(),
@@ -747,21 +725,21 @@ export const baseImportRunParamsSchema = z.object({
   mode: baseImportModeSchema.optional(),
   requestId: z.string().optional(),
 });
-export type BaseImportRunParamsDto = z.infer<typeof baseImportRunParamsSchema>;
+export type BaseImportRunParams = z.infer<typeof baseImportRunParamsSchema>;
 
 export const baseImportPreflightIssueSchema = z.object({
   code: baseImportErrorCodeSchema,
   message: z.string(),
   severity: z.enum(['error', 'warning']),
 });
-export type BaseImportPreflightIssueDto = z.infer<typeof baseImportPreflightIssueSchema>;
+export type BaseImportPreflightIssue = z.infer<typeof baseImportPreflightIssueSchema>;
 
 export const baseImportPreflightSchema = z.object({
   ok: z.boolean(),
   issues: z.array(baseImportPreflightIssueSchema),
   checkedAt: z.string(),
 });
-export type BaseImportPreflightDto = z.infer<typeof baseImportPreflightSchema>;
+export type BaseImportPreflight = z.infer<typeof baseImportPreflightSchema>;
 
 export const baseImportRunRecordSchema = z.object({
   id: z.string(),
@@ -784,7 +762,7 @@ export const baseImportRunRecordSchema = z.object({
   updatedAt: z.string(),
   summaryMessage: z.string().nullable().optional(),
 });
-export type BaseImportRunRecordDto = z.infer<typeof baseImportRunRecordSchema>;
+export type BaseImportRunRecord = z.infer<typeof baseImportRunRecordSchema>;
 
 export const baseImportItemRecordSchema = z.object({
   runId: z.string(),
@@ -809,7 +787,7 @@ export const baseImportItemRecordSchema = z.object({
   startedAt: z.string().nullable().optional(),
   finishedAt: z.string().nullable().optional(),
 });
-export type BaseImportItemRecordDto = z.infer<typeof baseImportItemRecordSchema>;
+export type BaseImportItemRecord = z.infer<typeof baseImportItemRecordSchema>;
 
 export const baseImportStartResponseSchema = z.object({
   runId: z.string(),
@@ -818,7 +796,7 @@ export const baseImportStartResponseSchema = z.object({
   queueJobId: z.string().nullable().optional(),
   summaryMessage: z.string().nullable().optional(),
 });
-export type BaseImportStartResponseDto = z.infer<typeof baseImportStartResponseSchema>;
+export type BaseImportStartResponse = z.infer<typeof baseImportStartResponseSchema>;
 
 export const baseImportRunDetailResponseSchema = z.object({
   run: baseImportRunRecordSchema,
@@ -830,7 +808,7 @@ export const baseImportRunDetailResponseSchema = z.object({
     totalPages: z.number(),
   }).optional(),
 });
-export type BaseImportRunDetailResponseDto = z.infer<typeof baseImportRunDetailResponseSchema>;
+export type BaseImportRunDetailResponse = z.infer<typeof baseImportRunDetailResponseSchema>;
 
 /**
  * Base.com Parameter Import DTOs
@@ -843,14 +821,12 @@ export const extractedBaseParameterSchema = z.object({
   valuesByLanguage: z.record(z.string(), z.string()),
 });
 
-export interface ExtractedBaseParameterDto {
+export interface ExtractedBaseParameter {
   key: string;
   baseParameterId: string | null;
   namesByLanguage: Record<string, string>;
   valuesByLanguage: Record<string, string>;
 }
-
-export type ExtractedBaseParameter = ExtractedBaseParameterDto;
 
 export const baseParameterImportSummarySchema = z.object({
   extracted: z.number(),
@@ -859,24 +835,20 @@ export const baseParameterImportSummarySchema = z.object({
   written: z.number(),
 });
 
-export type BaseParameterImportSummaryDto = z.infer<typeof baseParameterImportSummarySchema>;
-export type BaseParameterImportSummary = BaseParameterImportSummaryDto;
+export type BaseParameterImportSummary = z.infer<typeof baseParameterImportSummarySchema>;
 
 /**
  * Base.com Parameter Import Settings DTOs
  */
 
 export const baseImportParameterImportModeSchema = z.enum(['all', 'mapped']);
-export type BaseImportParameterImportModeDto = z.infer<typeof baseImportParameterImportModeSchema>;
-export type BaseImportParameterImportMode = BaseImportParameterImportModeDto;
+export type BaseImportParameterImportMode = z.infer<typeof baseImportParameterImportModeSchema>;
 
 export const baseImportParameterLanguageScopeSchema = z.enum(['catalog_languages', 'default_only']);
-export type BaseImportParameterLanguageScopeDto = z.infer<typeof baseImportParameterLanguageScopeSchema>;
-export type BaseImportParameterLanguageScope = BaseImportParameterLanguageScopeDto;
+export type BaseImportParameterLanguageScope = z.infer<typeof baseImportParameterLanguageScopeSchema>;
 
 export const baseImportParameterMatchBySchema = z.enum(['base_id_then_name', 'name_only']);
-export type BaseImportParameterMatchByDto = z.infer<typeof baseImportParameterMatchBySchema>;
-export type BaseImportParameterMatchBy = BaseImportParameterMatchByDto;
+export type BaseImportParameterMatchBy = z.infer<typeof baseImportParameterMatchBySchema>;
 
 export const baseImportParameterImportSettingsSchema = z.object({
   enabled: z.boolean(),
@@ -887,10 +859,9 @@ export const baseImportParameterImportSettingsSchema = z.object({
   matchBy: baseImportParameterMatchBySchema,
 });
 
-export type BaseImportParameterImportSettingsDto = z.infer<typeof baseImportParameterImportSettingsSchema>;
-export type BaseImportParameterImportSettings = BaseImportParameterImportSettingsDto;
+export type BaseImportParameterImportSettings = z.infer<typeof baseImportParameterImportSettingsSchema>;
 
-export const DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS: BaseImportParameterImportSettingsDto =
+export const DEFAULT_BASE_IMPORT_PARAMETER_IMPORT_SETTINGS: BaseImportParameterImportSettings =
   {
     enabled: false,
     mode: 'all',
@@ -929,20 +900,18 @@ export const applyBaseParameterImportInputSchema = z.object({
   templateMappings: z.array(z.object({ sourceKey: z.string(), targetField: z.string() })),
 });
 
-export interface ApplyBaseParameterImportInputDto {
+export interface ApplyBaseParameterImportInput {
   record: Record<string, unknown>;
   catalogId: string;
   parameterRepository: ParameterRepository;
   connectionId?: string | null | undefined;
   inventoryId?: string | null | undefined;
-  existingValues: ProductParameterValueDto[];
+  existingValues: ProductParameterValue[];
   catalogLanguageCodes: string[];
   defaultLanguageCode?: string | null | undefined;
-  settings: BaseImportParameterImportSettingsDto;
+  settings: BaseImportParameterImportSettings;
   templateMappings: { sourceKey: string; targetField: string }[];
 }
-
-export type ApplyBaseParameterImportInput = ApplyBaseParameterImportInputDto;
 
 export const applyBaseParameterImportResultSchema = z.object({
   applied: z.boolean(),
@@ -950,20 +919,18 @@ export const applyBaseParameterImportResultSchema = z.object({
   summary: baseParameterImportSummarySchema,
 });
 
-export interface ApplyBaseParameterImportResultDto {
+export interface ApplyBaseParameterImportResult {
   applied: boolean;
-  parameters: ProductParameterValueDto[];
-  summary: BaseParameterImportSummaryDto;
+  parameters: ProductParameterValue[];
+  summary: BaseParameterImportSummary;
 }
-
-export type ApplyBaseParameterImportResult = ApplyBaseParameterImportResultDto;
 
 /**
  * Integration Test DTOs
  */
 
 export const testStatusSchema = z.enum(['pending', 'ok', 'failed']);
-export type TestStatusDto = z.infer<typeof testStatusSchema>;
+export type TestStatus = z.infer<typeof testStatusSchema>;
 
 export const TEST_STATUSES = ['pending', 'ok', 'failed'] as const;
 
@@ -974,7 +941,7 @@ export const testLogEntrySchema = z.object({
   detail: z.string().optional(),
 });
 
-export type TestLogEntryDto = z.infer<typeof testLogEntrySchema>;
+export type TestLogEntry = z.infer<typeof testLogEntrySchema>;
 
 export const testConnectionResponseSchema = z.object({
   error: z.string().optional(),
@@ -985,7 +952,7 @@ export const testConnectionResponseSchema = z.object({
   profile: z.unknown().optional(),
 });
 
-export type TestConnectionResponseDto = z.infer<typeof testConnectionResponseSchema>;
+export type TestConnectionResponse = z.infer<typeof testConnectionResponseSchema>;
 
 export const sessionCookieSchema = z.object({
   name: z.string().optional(),
@@ -998,7 +965,7 @@ export const sessionCookieSchema = z.object({
   sameSite: z.string().optional(),
 });
 
-export type SessionCookieDto = z.infer<typeof sessionCookieSchema>;
+export type SessionCookie = z.infer<typeof sessionCookieSchema>;
 
 /**
  * Image Export Diagnostics DTOs
@@ -1020,7 +987,7 @@ export const imageUrlDiagnosticSchema = z.object({
   error: z.string().optional(), // For compatibility
 });
 
-export type ImageUrlDiagnosticDto = z.infer<typeof imageUrlDiagnosticSchema>;
+export type ImageUrlDiagnostic = z.infer<typeof imageUrlDiagnosticSchema>;
 
 export const imageExportDiagnosticsSchema = z.object({
   total: z.number(),
@@ -1033,7 +1000,7 @@ export const imageExportDiagnosticsSchema = z.object({
   })),
 });
 
-export type ImageExportDiagnosticsDto = z.infer<typeof imageExportDiagnosticsSchema>;
+export type ImageExportDiagnostics = z.infer<typeof imageExportDiagnosticsSchema>;
 
 /**
  * Operation Logging DTOs
@@ -1046,7 +1013,7 @@ export const capturedLogSchema = z.object({
   context: z.record(z.string(), z.unknown()).nullable().optional(),
 });
 
-export type CapturedLogDto = z.infer<typeof capturedLogSchema>;
+export type CapturedLog = z.infer<typeof capturedLogSchema>;
 
 /**
  * Integration Domain DTOs
@@ -1066,14 +1033,14 @@ export const integrationConnectionBasicSchema = z.object({
   traderaApiSandbox: z.boolean().nullable().optional(),
 });
 
-export type IntegrationConnectionBasicDto = z.infer<typeof integrationConnectionBasicSchema>;
+export type IntegrationConnectionBasic = z.infer<typeof integrationConnectionBasicSchema>;
 
 export const integrationWithConnectionsSchema = namedDtoSchema.extend({
   slug: z.string(),
   connections: z.array(integrationConnectionBasicSchema),
 });
 
-export type IntegrationWithConnectionsDto = z.infer<typeof integrationWithConnectionsSchema>;
+export type IntegrationWithConnections = z.infer<typeof integrationWithConnectionsSchema>;
 
 export const listingJobSchema = productListingSchema.extend({
   integrationName: z.string(),
@@ -1081,7 +1048,7 @@ export const listingJobSchema = productListingSchema.extend({
   connectionName: z.string(),
 });
 
-export type ListingJobDto = z.infer<typeof listingJobSchema>;
+export type ListingJob = z.infer<typeof listingJobSchema>;
 
 export const productJobSchema = z.object({
   productId: z.string(),
@@ -1090,27 +1057,27 @@ export const productJobSchema = z.object({
   listings: z.array(listingJobSchema),
 });
 
-export type ProductJobDto = z.infer<typeof productJobSchema>;
+export type ProductJob = z.infer<typeof productJobSchema>;
 
 export const exportJobDetailSchema = z.object({
   job: productJobSchema,
   listing: listingJobSchema,
 });
 
-export type ExportJobDetailDto = z.infer<typeof exportJobDetailSchema>;
+export type ExportJobDetail = z.infer<typeof exportJobDetailSchema>;
 
 /**
  * Base.com API DTOs
  */
 
 export const baseProductRecordSchema = z.record(z.string(), z.unknown());
-export type BaseProductRecordDto = z.infer<typeof baseProductRecordSchema>;
+export type BaseProductRecord = z.infer<typeof baseProductRecordSchema>;
 
 export const baseApiRawResultSchema = z.object({
   status: z.string(),
 }).catchall(z.unknown());
 
-export type BaseApiRawResultDto = z.infer<typeof baseApiRawResultSchema>;
+export type BaseApiRawResult = z.infer<typeof baseApiRawResultSchema>;
 
 export const importParameterCacheSchema = z.object({
   key: z.string(),
@@ -1118,7 +1085,7 @@ export const importParameterCacheSchema = z.object({
   expiresAt: z.number(),
 });
 
-export type ImportParameterCacheDto = z.infer<typeof importParameterCacheSchema>;
+export type ImportParameterCache = z.infer<typeof importParameterCacheSchema>;
 
 export const baseApiResponseSchema = z.object({
   status: z.string().optional(),
@@ -1126,7 +1093,7 @@ export const baseApiResponseSchema = z.object({
   error_message: z.string().optional(),
 }).catchall(z.unknown());
 
-export type BaseApiResponseDto = z.infer<typeof baseApiResponseSchema>;
+export type BaseApiResponse = z.infer<typeof baseApiResponseSchema>;
 
 export const priceGroupLookupSchema = z.object({
   id: z.string(),
@@ -1136,7 +1103,7 @@ export const priceGroupLookupSchema = z.object({
   isDefault: z.boolean().optional(),
 });
 
-export type PriceGroupLookupDto = z.infer<typeof priceGroupLookupSchema>;
+export type PriceGroupLookup = z.infer<typeof priceGroupLookupSchema>;
 
 export const baseConnectionContextSchema = z.object({
   baseIntegrationId: z.string().nullable(),
@@ -1145,7 +1112,7 @@ export const baseConnectionContextSchema = z.object({
   issue: baseImportPreflightIssueSchema.nullable(),
 });
 
-export type BaseConnectionContextDto = z.infer<typeof baseConnectionContextSchema>;
+export type BaseConnectionContext = z.infer<typeof baseConnectionContextSchema>;
 
 /**
  * Tradera API DTOs
@@ -1160,7 +1127,7 @@ export const traderaApiCredentialsSchema = z.object({
   maxResultAgeSeconds: z.number().optional(),
 });
 
-export type TraderaApiCredentialsDto = z.infer<typeof traderaApiCredentialsSchema>;
+export type TraderaApiCredentials = z.infer<typeof traderaApiCredentialsSchema>;
 
 export const traderaApiUserInfoSchema = z.object({
   userId: z.number(),
@@ -1170,7 +1137,7 @@ export const traderaApiUserInfoSchema = z.object({
   lastName: z.string().nullable(),
 });
 
-export type TraderaApiUserInfoDto = z.infer<typeof traderaApiUserInfoSchema>;
+export type TraderaApiUserInfo = z.infer<typeof traderaApiUserInfoSchema>;
 
 export const traderaAddShopItemInputSchema = z.object({
   title: z.string(),
@@ -1183,7 +1150,7 @@ export const traderaAddShopItemInputSchema = z.object({
   acceptedBuyerId: z.number().optional(),
 });
 
-export type TraderaAddShopItemInputDto = z.infer<typeof traderaAddShopItemInputSchema>;
+export type TraderaAddShopItemInput = z.infer<typeof traderaAddShopItemInputSchema>;
 
 export const traderaAddShopItemResultSchema = z.object({
   itemId: z.number(),
@@ -1192,7 +1159,7 @@ export const traderaAddShopItemResultSchema = z.object({
   resultMessage: z.string().nullable(),
 });
 
-export type TraderaAddShopItemResultDto = z.infer<typeof traderaAddShopItemResultSchema>;
+export type TraderaAddShopItemResult = z.infer<typeof traderaAddShopItemResultSchema>;
 
 /**
  * Session & Payload DTOs
@@ -1205,7 +1172,7 @@ export const sessionPayloadSchema = z.object({
   error: z.string().optional(),
 });
 
-export type SessionPayloadDto = z.infer<typeof sessionPayloadSchema>;
+export type SessionPayload = z.infer<typeof sessionPayloadSchema>;
 
 /**
  * Tradera System Settings DTO
@@ -1222,7 +1189,7 @@ export const traderaSystemSettingsSchema = z.object({
   selectorProfile: z.string(),
 });
 
-export type TraderaSystemSettingsDto = z.infer<typeof traderaSystemSettingsSchema>;
+export type TraderaSystemSettings = z.infer<typeof traderaSystemSettingsSchema>;
 
 export const traderaListingJobInputSchema = z.object({
   listingId: z.string(),
@@ -1231,7 +1198,7 @@ export const traderaListingJobInputSchema = z.object({
   jobId: z.string().optional(),
 });
 
-export type TraderaListingJobInputDto = z.infer<typeof traderaListingJobInputSchema>;
+export type TraderaListingJobInput = z.infer<typeof traderaListingJobInputSchema>;
 
 export const traderaCategoryRecordSchema = z.object({
   id: z.string(),
@@ -1239,7 +1206,7 @@ export const traderaCategoryRecordSchema = z.object({
   parentId: z.string(),
 });
 
-export type TraderaCategoryRecordDto = z.infer<typeof traderaCategoryRecordSchema>;
+export type TraderaCategoryRecord = z.infer<typeof traderaCategoryRecordSchema>;
 
 export const importParameterCacheResponseSchema = z.object({
   inventoryId: z.string().nullable().optional(),
@@ -1249,18 +1216,18 @@ export const importParameterCacheResponseSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export type ImportParameterCacheResponseDto = z.infer<typeof importParameterCacheResponseSchema>;
+export type ImportParameterCacheResponse = z.infer<typeof importParameterCacheResponseSchema>;
 
 /**
  * Integration Repository Interfaces
  */
 
-export type IntegrationRecord = Omit<IntegrationDto, 'createdAt' | 'updatedAt'> & {
+export type IntegrationRecord = Omit<Integration, 'createdAt' | 'updatedAt'> & {
   createdAt: string | Date;
   updatedAt: string | Date | null;
 };
 
-export type IntegrationConnectionRecord = Omit<IntegrationConnectionDto, 'createdAt' | 'updatedAt' | 'playwrightStorageStateUpdatedAt' | 'traderaApiTokenUpdatedAt'> & {
+export type IntegrationConnectionRecord = Omit<IntegrationConnection, 'createdAt' | 'updatedAt' | 'playwrightStorageStateUpdatedAt' | 'traderaApiTokenUpdatedAt'> & {
   createdAt: string | Date;
   updatedAt: string | Date | null;
   playwrightStorageStateUpdatedAt?: string | Date | null;
@@ -1289,7 +1256,7 @@ export type CategoryMappingRepository = {
   saveMapping: (categoryId: string, integrationId: string, externalId: string) => Promise<void>;
 };
 
-export type CreateProductListingInput = Omit<CreateProductListingDto, 'listedAt' | 'expiresAt' | 'nextRelistAt' | 'lastRelistedAt' | 'lastStatusCheckAt'> & {
+export type CreateProductListingInput = Omit<CreateProductListing, 'listedAt' | 'expiresAt' | 'nextRelistAt' | 'lastRelistedAt' | 'lastStatusCheckAt'> & {
   listedAt?: string | Date | null;
   expiresAt?: string | Date | null;
   nextRelistAt?: string | Date | null;
@@ -1297,14 +1264,14 @@ export type CreateProductListingInput = Omit<CreateProductListingDto, 'listedAt'
   lastStatusCheckAt?: string | Date | null;
 };
 
-export type ProductListingExportEvent = Omit<ProductListingExportEventDto, 'exportedAt' | 'expiresAt'> & {
+export type ProductListingExportEvent = Omit<ProductListingExportEvent, 'exportedAt' | 'expiresAt'> & {
   exportedAt: string | Date;
   expiresAt?: string | Date | null | undefined;
 };
 
 export type ProductListingRepository = {
   getListingsByProductId: (productId: string) => Promise<ProductListingWithDetails[]>;
-  getListingById: (id: string) => Promise<ProductListingDto | null>;
+  getListingById: (id: string) => Promise<ProductListing | null>;
   createListing: (input: CreateProductListingInput) => Promise<ProductListingWithDetails>;
   updateListingExternalId: (id: string, externalListingId: string | null) => Promise<void>;
   updateListingStatus: (id: string, status: string) => Promise<void>;
@@ -1313,7 +1280,7 @@ export type ProductListingRepository = {
   appendExportHistory: (id: string, event: ProductListingExportEvent) => Promise<void>;
   deleteListing: (id: string) => Promise<void>;
   listingExists: (productId: string, connectionId: string) => Promise<boolean>;
-  listAllListings: () => Promise<Array<Pick<ProductListingDto, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>>;
+  listAllListings: () => Promise<Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>>;
 };
 
 /**
@@ -1328,59 +1295,7 @@ export const integrationDefinitions = [
 ] as const;
 
 /**
- * Legacy Integration Type Aliases
+ * Legacy Integration Type Aliases (Standardized names already defined above)
  */
-export type Integration = IntegrationDto;
-export type IntegrationConnection = IntegrationConnectionDto;
-export type ProductListing = ProductListingDto;
-export type ProductListingRecord = ProductListingDto;
-export type Template = TemplateDto;
-export type TemplateMapping = TemplateMappingDto;
-export type BaseInventory = BaseInventoryDto;
-export type BaseWarehouse = BaseWarehouseDto;
-export type BaseCategory = BaseCategoryDto;
-export type ListingJob = ListingJobDto;
-export type ListingAttempt = NonNullable<ProductListingDto['exportHistory']>[number];
-export type ProductJob = ProductJobDto;
-export type ExportJobDetail = ExportJobDetailDto;
-export type IntegrationConnectionBasic = IntegrationConnectionBasicDto;
-export type IntegrationWithConnections = IntegrationWithConnectionsDto;
+export type ProductListingRecord = ProductListing;
 export type IntegrationWithConnectionsBasic = IntegrationWithConnections;
-export type ProductListingWithDetails = ProductListingWithDetailsDto;
-export type CategoryMapping = CategoryMappingDto;
-export type CategoryMappingWithDetails = CategoryMappingWithDetailsDto;
-export type ExternalCategory = ExternalCategoryDto;
-export type ExternalCategoryWithChildren = ExternalCategoryWithChildrenDto;
-export type TagMapping = TagMappingDto;
-export type TagMappingWithDetails = TagMappingWithDetailsDto;
-export type ExternalTag = ExternalTagDto;
-export type ProducerMapping = ProducerMappingDto;
-export type ProducerMappingWithDetails = ProducerMappingWithDetailsDto;
-export type ExternalProducer = ExternalProducerDto;
-export type ImageBase64Mode = ImageBase64ModeDto;
-export type ImageTransformOptions = ImageTransformOptionsDto;
-export type ImageRetryPreset = ImageRetryPresetDto;
-
-export type BaseImportRunStatus = BaseImportRunStatusDto;
-export type BaseImportItemStatus = BaseImportItemStatusDto;
-export type BaseImportItemAction = BaseImportItemActionDto;
-export type BaseImportMode = BaseImportModeDto;
-export type BaseImportErrorCode = BaseImportErrorCodeDto;
-export type BaseImportErrorClass = BaseImportErrorClassDto;
-export type BaseImportParameterImportSummary = BaseImportParameterImportSummaryDto;
-export type BaseImportRunParameterImportSummary = BaseImportRunParameterImportSummaryDto;
-export type BaseImportRunStats = BaseImportRunStatsDto;
-export type BaseImportRunParams = BaseImportRunParamsDto;
-export type BaseImportPreflightIssue = BaseImportPreflightIssueDto;
-export type BaseImportPreflight = BaseImportPreflightDto;
-export type BaseImportRunRecord = BaseImportRunRecordDto;
-export type BaseImportItemRecord = BaseImportItemRecordDto;
-export type BaseImportStartResponse = BaseImportStartResponseDto;
-export type BaseImportRunDetailResponse = BaseImportRunDetailResponseDto;
-
-
-
-export type TestStatus = TestStatusDto;
-export type TestLogEntry = TestLogEntryDto;
-export type TestConnectionResponse = TestConnectionResponseDto;
-export type SessionCookie = SessionCookieDto;

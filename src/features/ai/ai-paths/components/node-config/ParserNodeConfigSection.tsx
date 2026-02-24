@@ -24,7 +24,7 @@ import {
   normalizePortName,
   safeParseJson,
 } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea, SelectSimple } from '@/shared/ui';
+import { Button, Input, Label, Textarea, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 
@@ -397,8 +397,8 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
         <div className='text-gray-400'>Input source</div>
         <div className='mt-1 text-sm text-gray-200'>{parserSourceLabel}</div>
       </div>
-      <div>
-        <Label className='text-xs text-gray-400'>Preset</Label>
+      
+      <FormField label='Preset'>
         <SelectSimple size='sm'
           value={presetId}
           onValueChange={(value: string) =>
@@ -406,29 +406,30 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           }
           options={presetOptions.map((p: { id: string; label: string; description?: string }) => ({ value: p.id, label: p.label, description: (p as { description?: string }).description }))}
           placeholder='Select preset'
-          className='mt-2'
+          variant='subtle'
         />
         <div className='mt-3 flex flex-wrap gap-2'>
           <Button
             type='button'
-            className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
+            variant='outline'
+            className='h-7 text-[10px]'
             onClick={() => applyPreset('replace')}
           >
             Replace mappings
           </Button>
           <Button
             type='button'
-            className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
+            variant='outline'
+            className='h-7 text-[10px]'
             onClick={() => applyPreset('merge')}
           >
             Add missing fields
           </Button>
         </div>
-      </div>
+      </FormField>
 
-      <div>
-        <Label className='text-xs text-gray-400'>Sample JSON</Label>
-        <div className='mt-2 grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center'>
+      <FormField label='Sample JSON'>
+        <div className='grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center'>
           <SelectSimple size='sm'
             value={sampleState.entityType}
             onValueChange={(value: string) =>
@@ -446,10 +447,12 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
               { value: 'custom', label: 'Custom' },
             ]}
             placeholder='Entity type'
+            variant='subtle'
           />
           <div className='space-y-2'>
             <Input
-              className='w-full rounded-md border border-border bg-card/70 text-sm text-white'
+              variant='subtle'
+              size='sm'
               value={sampleState.entityId}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -483,13 +486,15 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 }}
                 options={simulationOptions.map((opt: { id: string; label: string }) => ({ value: opt.id, label: opt.label }))}
                 placeholder='Use simulation ID'
-                triggerClassName='text-[10px] h-8'
+                variant='subtle'
+                triggerClassName='h-8 text-[10px]'
               />
             )}
           </div>
           <Button
             type='button'
-            className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60'
+            variant='outline'
+            className='h-8 text-[10px]'
             disabled={parserSampleLoading}
             onClick={() =>
               void handleFetchParserSample(
@@ -503,7 +508,9 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
           </Button>
         </div>
         <Textarea
-          className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
+          className='mt-2 min-h-[120px]'
           value={sampleState.json}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
             setParserSamples((prev: Record<string, ParserSampleState>) => ({
@@ -619,10 +626,12 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             Detect images
           </Button>
         </div>
-      </div>
+      </FormField>
 
-      <div>
-        <Label className='text-xs text-gray-400'>Output Mode</Label>
+      <FormField 
+        label='Output Mode' 
+        description='Bundle mode emits a single bundle port and uses mapping keys as placeholders for Prompt templates.'
+      >
         <SelectSimple size='sm'
           value={outputMode}
           onValueChange={(value: string) =>
@@ -635,13 +644,9 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             { value: 'individual', label: 'Individual outputs' },
             { value: 'bundle', label: 'Single bundle output' },
           ]}
-          className='mt-2'
+          variant='subtle'
         />
-        <p className='mt-2 text-[11px] text-gray-500'>
-          Bundle mode emits a single <span className='text-gray-300'>bundle</span>{' '}
-          port and uses mapping keys as placeholders for Prompt templates.
-        </p>
-      </div>
+      </FormField>
 
       <div className='flex flex-wrap gap-2'>
         <Button
@@ -688,7 +693,8 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             className='grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-start'
           >
             <Input
-              className='w-full rounded-md border border-border bg-card/70 text-sm text-white'
+              variant='subtle'
+              size='sm'
               value={key}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 updateMappingKey(index, event.target.value)
@@ -697,7 +703,8 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
             />
             <div className='space-y-2'>
               <Input
-                className='w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                variant='subtle'
+                size='sm'
                 value={path}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                   updateMappingPath(index, event.target.value)
@@ -708,14 +715,16 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
                 onValueChange={(value: string) => updateMappingPath(index, value)}
                 options={uniqueSuggestedPathOptions}
                 placeholder='Pick a suggested path'
-                triggerClassName='text-[10px] h-8'
+                variant='subtle'
+                triggerClassName='h-8 text-[10px]'
                 value=''
               />
             </div>
             <Button
               type='button'
+              variant='outline'
               disabled={entries.length <= 1}
-              className='rounded-md border text-[10px] text-gray-200 hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50'
+              className='h-8 px-2 text-[10px]'
               onClick={() => removeMapping(index)}
             >
               Remove

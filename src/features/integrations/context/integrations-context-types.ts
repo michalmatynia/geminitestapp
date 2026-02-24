@@ -1,14 +1,14 @@
 import { integrationDefinitions } from '@/shared/contracts/integrations';
 import type { 
-  IntegrationDto as Integration, 
-  IntegrationConnectionDto as IntegrationConnection, 
-  SessionCookieDto as SessionCookie, 
-  TestLogEntryDto as TestLogEntry,
-  SessionPayloadDto
+  Integration, 
+  IntegrationConnection, 
+  SessionCookie, 
+  TestLogEntry,
+  SessionPayload
 } from '@/shared/contracts/integrations';
 import type { 
-  PlaywrightPersonaDto as PlaywrightPersona, 
-  PlaywrightSettingsDto as PlaywrightSettings 
+  PlaywrightPersona, 
+  PlaywrightSettings 
 } from '@/shared/contracts/playwright';
 
 import type { Dispatch, SetStateAction } from 'react';

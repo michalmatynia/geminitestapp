@@ -79,7 +79,6 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
     handleLinkRelatedFiles,
     handleUnlinkRelatedFile,
     captureApplyDiagnostics,
-    activeCaseFile,
     caseIdentifierOptions,
     caseCategoryOptions,
     partyOptions,
@@ -96,11 +95,14 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
 
   const [relateSearchQuery, setRelateSearchQuery] = React.useState('');
 
-  if (!editingDocumentDraft || editingDocumentDraft.fileType === 'scanfile' || !activeCaseFile) return null;
+  if (!editingDocumentDraft || editingDocumentDraft.fileType === 'scanfile') return null;
   const draft = editingDocumentDraft;
 
+  const originalFile = workspace.files.find((f) => f.id === draft.id);
   const isEditingDocumentLocked = draft.isLocked;
-  const isEditorSaveEnabled = isEditorDraftDirty || canCaseResolverDraftPerformInitialManualSave({ draft, file: activeCaseFile });
+  const isEditorSaveEnabled = isEditorDraftDirty || (
+    originalFile ? canCaseResolverDraftPerformInitialManualSave({ draft, file: originalFile }) : false
+  );
 
   const encodedAddresser = encodeFilemakerPartyReference(draft.addresser ?? null);
   const encodedAddressee = encodeFilemakerPartyReference(draft.addressee ?? null);
@@ -120,7 +122,6 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
 
   const pendingPromptTransferId = pendingPromptExploderPayload?.transferId ?? '';
 
-  const originalFile = workspace.files.find((f) => f.id === draft.id);
   const draftRelatedFileIds = originalFile?.relatedFileIds;
   const relatedFiles = workspace.files.filter((file) =>
     (draftRelatedFileIds ?? []).includes(file.id)
@@ -312,6 +313,52 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                 editorContentClassName='[&_.ProseMirror]:!min-h-[400px]'
               />
 
+              <div className='grid grid-cols-2 gap-4 border-t border-border/40 pt-4 lg:grid-cols-4'>
+                <FormField label='Addresser (From)'>
+                  <SelectSimple
+                    value={encodedAddresser}
+                    onValueChange={(v) => updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })}
+                    options={partyOptions}
+                    disabled={isEditingDocumentLocked}
+                    triggerClassName='bg-card/20 border-border/60'
+                  />
+                </FormField>
+                <FormField label='Addressee (To)'>
+                  <SelectSimple
+                    value={encodedAddressee}
+                    onValueChange={(v) => updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })}
+                    options={partyOptions}
+                    disabled={isEditingDocumentLocked}
+                    triggerClassName='bg-card/20 border-border/60'
+                  />
+                </FormField>
+                <FormField label='Document Date'>
+                  <Input
+                    type='date'
+                    value={draft.documentDate?.isoDate ?? ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      updateEditingDocumentDraft({
+                        documentDate: val
+                          ? { source: 'metadata', sourceLine: null, cityHint: null, action: 'useDetectedDate', ...draft.documentDate, isoDate: val }
+                          : null,
+                      });
+                    }}
+                    disabled={isEditingDocumentLocked}
+                    className='bg-card/20 border-border/60'
+                  />
+                </FormField>
+                <FormField label='Document City'>
+                  <Input
+                    value={draft.documentCity ?? ''}
+                    onChange={(e) => updateEditingDocumentDraft({ documentCity: e.target.value || null })}
+                    placeholder='City...'
+                    disabled={isEditingDocumentLocked}
+                    className='bg-card/20 border-border/60'
+                  />
+                </FormField>
+              </div>
+
               <div className='flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border/40'>
                 <div className='flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-gray-500'>
                   <div className='flex items-center gap-2'>
@@ -411,14 +458,6 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
 
           <TabsContent value='metadata' className='m-0'>
             <div className='grid gap-6 lg:grid-cols-2'>
-              <FormField label='Document Name'>
-                <Input
-                  value={editingDocumentDraft.name}
-                  onChange={(e) => updateEditingDocumentDraft({ name: e.target.value })}
-                  disabled={isEditingDocumentLocked}
-                  className='bg-card/20 border-border/60'
-                />
-              </FormField>
               <FormField label='Document Tag'>
                 <SelectSimple
                   value={editingDocumentDraft.tagId ?? '__none__'}
@@ -442,24 +481,6 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                   value={editingDocumentDraft.categoryId ?? '__none__'}
                   onValueChange={(v) => updateEditingDocumentDraft({ categoryId: v === '__none__' ? null : v })}
                   options={caseCategoryOptions}
-                  disabled={isEditingDocumentLocked}
-                  triggerClassName='bg-card/20 border-border/60'
-                />
-              </FormField>
-              <FormField label='Addresser (From)'>
-                <SelectSimple
-                  value={encodedAddresser}
-                  onValueChange={(v) => updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })}
-                  options={partyOptions}
-                  disabled={isEditingDocumentLocked}
-                  triggerClassName='bg-card/20 border-border/60'
-                />
-              </FormField>
-              <FormField label='Addressee (To)'>
-                <SelectSimple
-                  value={encodedAddressee}
-                  onValueChange={(v) => updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })}
-                  options={partyOptions}
                   disabled={isEditingDocumentLocked}
                   triggerClassName='bg-card/20 border-border/60'
                 />

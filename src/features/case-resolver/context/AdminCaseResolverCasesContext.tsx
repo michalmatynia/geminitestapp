@@ -11,7 +11,7 @@ import type {
   CaseResolverTag,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { internalError } from '@/shared/errors/app-error';
@@ -178,7 +178,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
   const searchParams = useSearchParams();
   const preferencesQuery = useUserPreferences();
   const settingsStore = useSettingsStore();
-  const updateSetting = useUpdateSetting();
+  const updateSetting = useUpdateSettingsBulk();
   const { toast } = useToast();
 
   const caseListViewDefaults = useMemo(
@@ -387,14 +387,14 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
         ...workspace,
         files: [...workspace.files, newFile],
       };
-      stampCaseResolverWorkspaceMutation(nextWorkspace, mutationId);
-      
+      stampCaseResolverWorkspaceMutation(nextWorkspace, { baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace), mutationId });
+
       const revision = getCaseResolverWorkspaceRevision(nextWorkspace);
       lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
       lastPersistedWorkspaceRevisionRef.current = revision;
       setWorkspace(nextWorkspace);
 
-      await persistCaseResolverWorkspaceSnapshot(nextWorkspace, 'cases_page_create');
+      await persistCaseResolverWorkspaceSnapshot({ workspace: nextWorkspace, expectedRevision: revision, mutationId, source: 'cases_page_create' });
       
       setIsCreateCaseModalOpen(false);
       setCaseDraft({});
@@ -433,14 +433,14 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
             : file
         ),
       };
-      stampCaseResolverWorkspaceMutation(nextWorkspace, mutationId);
-      
+      stampCaseResolverWorkspaceMutation(nextWorkspace, { baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace), mutationId });
+
       const revision = getCaseResolverWorkspaceRevision(nextWorkspace);
       lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
       lastPersistedWorkspaceRevisionRef.current = revision;
       setWorkspace(nextWorkspace);
 
-      await persistCaseResolverWorkspaceSnapshot(nextWorkspace, 'cases_page_update');
+      await persistCaseResolverWorkspaceSnapshot({ workspace: nextWorkspace, expectedRevision: revision, mutationId, source: 'cases_page_update' });
       
       setEditingCaseId(null);
       toast('Case updated successfully.', { variant: 'success' });
@@ -463,14 +463,14 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
             ...workspace,
             files: workspace.files.filter((file) => file.id !== caseId),
           };
-          stampCaseResolverWorkspaceMutation(nextWorkspace, mutationId);
-          
+          stampCaseResolverWorkspaceMutation(nextWorkspace, { baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace), mutationId });
+
           const revision = getCaseResolverWorkspaceRevision(nextWorkspace);
           lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
           lastPersistedWorkspaceRevisionRef.current = revision;
           setWorkspace(nextWorkspace);
 
-          await persistCaseResolverWorkspaceSnapshot(nextWorkspace, 'cases_page_delete');
+          await persistCaseResolverWorkspaceSnapshot({ workspace: nextWorkspace, expectedRevision: revision, mutationId, source: 'cases_page_delete' });
           toast('Case deleted successfully.', { variant: 'success' });
         } catch (error) {
           logClientError(error, { context: { source: 'AdminCaseResolverCasesPage', action: 'deleteCase' } });

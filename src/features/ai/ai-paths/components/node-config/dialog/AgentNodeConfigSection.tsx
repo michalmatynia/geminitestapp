@@ -10,6 +10,7 @@ import {
   SelectSimple,
   Textarea,
   LoadingState,
+  FormField,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -45,32 +46,32 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div className='flex items-start justify-between gap-4'>
-        <div className='space-y-1'>
-          <Label className='text-xs text-gray-400'>Agent Persona</Label>
-          <div className='text-[11px] text-gray-500'>
-            Choose a persona to apply the multi-step model settings.
-          </div>
-        </div>
-        <Button
-          asChild
-          variant='outline'
-          size='sm'
-          className='border-border text-xs text-gray-200'
-        >
-          <Link href='/admin/agentcreator/personas'>Manage Personas</Link>
-        </Button>
-      </div>
-      <SelectSimple size='sm'
-        value={agentConfig.personaId ? agentConfig.personaId : RUNTIME_PERSONA_VALUE}
-        onValueChange={(value: string): void =>
-          updateSelectedNodeConfig({
-            agent: { ...agentConfig, personaId: value === RUNTIME_PERSONA_VALUE ? '' : value },
-          })
+      <FormField 
+        label='Agent Persona' 
+        description='Choose a persona to apply the multi-step model settings.'
+        actions={
+          <Button
+            asChild
+            variant='outline'
+            size='xs'
+            className='h-7'
+          >
+            <Link href='/admin/agentcreator/personas'>Manage Personas</Link>
+          </Button>
         }
-        options={personaOptions}
-        placeholder='Select persona'
-      />
+      >
+        <SelectSimple size='sm'
+          variant='subtle'
+          value={agentConfig.personaId ? agentConfig.personaId : RUNTIME_PERSONA_VALUE}
+          onValueChange={(value: string): void =>
+            updateSelectedNodeConfig({
+              agent: { ...agentConfig, personaId: value === RUNTIME_PERSONA_VALUE ? '' : value },
+            })
+          }
+          options={personaOptions}
+          placeholder='Select persona'
+        />
+      </FormField>
       {personasQuery.isLoading && (
         <LoadingState message='Loading personas...' size='sm' className='py-2' />
       )}

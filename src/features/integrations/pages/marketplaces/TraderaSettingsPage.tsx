@@ -173,6 +173,8 @@ export default function TraderaSettingsPage(): React.JSX.Element {
           <div className='grid gap-4 md:grid-cols-2'>
             <FormField label='Default Duration (Hours)' description='Maximum time a listing remains active.'>
               <Input
+                variant='subtle'
+                size='sm'
                 type='number'
                 min={1}
                 max={720}
@@ -183,6 +185,8 @@ export default function TraderaSettingsPage(): React.JSX.Element {
 
             <FormField label='Relist Lead (Minutes)' description='Buffer time before relisting expires.'>
               <Input
+                variant='subtle'
+                size='sm'
                 type='number'
                 min={0}
                 max={10080}
@@ -197,6 +201,8 @@ export default function TraderaSettingsPage(): React.JSX.Element {
           <div className='space-y-4'>
             <FormField label='Scheduler Interval (ms)' description='Frequency of background relist checks.'>
               <Input
+                variant='subtle'
+                size='sm'
                 type='number'
                 min={30000}
                 max={3600000}
@@ -234,6 +240,8 @@ export default function TraderaSettingsPage(): React.JSX.Element {
           <div className='space-y-4'>
             <FormField label='Listing Form URL'>
               <Input
+                variant='subtle'
+                size='sm'
                 value={listingFormUrl}
                 onChange={(e) => setListingFormUrl(e.target.value)}
                 placeholder='https://www.tradera.com/...'
@@ -242,6 +250,8 @@ export default function TraderaSettingsPage(): React.JSX.Element {
 
             <FormField label='Selector Profile'>
               <Input
+                variant='subtle'
+                size='sm'
                 value={selectorProfile}
                 onChange={(e) => setSelectorProfile(e.target.value)}
                 placeholder='default'

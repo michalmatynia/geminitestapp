@@ -10,7 +10,7 @@ import {
   createFilemakerOrganization,
   createFilemakerPerson,
 } from '@/features/filemaker/settings';
-import type { CaseResolverPartyReferenceDto as CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
+import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
 import type {
   FilemakerAddressDto as FilemakerAddress,
   FilemakerDatabaseDto as FilemakerDatabase,

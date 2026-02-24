@@ -1,4 +1,4 @@
-import { type ValidatorPatternList } from '@/features/admin/pages/validator-scope';
+import { type ValidatorPatternList } from '@/shared/contracts/admin';
 import { formatProgrammaticPrompt } from '@/features/prompt-engine/prompt-formatter';
 import { type PromptEngineSettings, type PromptValidationRule } from '@/features/prompt-engine/settings';
 import {

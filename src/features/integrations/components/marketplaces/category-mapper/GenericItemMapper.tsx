@@ -194,7 +194,9 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
             }
             disabled={isLoadingExternal}
             options={externalOptions}
-            className='h-8 w-full'
+            variant='subtle'
+            size='sm'
+            triggerClassName='w-full max-w-md'
           />
         );
       },

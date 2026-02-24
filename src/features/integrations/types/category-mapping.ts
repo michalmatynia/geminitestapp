@@ -1,22 +1,21 @@
 import type {
   BaseCategory,
   CategoryMapping,
-  CategoryMappingCreateInputDto,
-  CategoryMappingUpdateInputDto,
+  CategoryMappingCreateInput,
+  CategoryMappingUpdateInput,
   CategoryMappingWithDetails,
   ExternalCategory,
-  ExternalCategorySyncInputDto,
+  ExternalCategorySyncInput,
   ExternalCategoryWithChildren,
 } from '@/shared/contracts/integrations';
 
 export type {
   BaseCategory,
   CategoryMapping,
+  CategoryMappingCreateInput,
+  CategoryMappingUpdateInput,
   CategoryMappingWithDetails,
   ExternalCategory,
+  ExternalCategorySyncInput,
   ExternalCategoryWithChildren,
 };
-
-export type CategoryMappingCreateInput = CategoryMappingCreateInputDto;
-export type CategoryMappingUpdateInput = CategoryMappingUpdateInputDto;
-export type ExternalCategorySyncInput = ExternalCategorySyncInputDto;

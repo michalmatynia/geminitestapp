@@ -1,18 +1,17 @@
 import type {
   ExternalTag,
-  ExternalTagSyncInputDto,
+  ExternalTagSyncInput,
   TagMapping,
-  TagMappingCreateInputDto,
-  TagMappingUpdateInputDto,
+  TagMappingCreateInput,
+  TagMappingUpdateInput,
   TagMappingWithDetails,
 } from '@/shared/contracts/integrations';
 
 export type {
   ExternalTag,
+  ExternalTagSyncInput,
   TagMapping,
+  TagMappingCreateInput,
+  TagMappingUpdateInput,
   TagMappingWithDetails,
 };
-
-export type TagMappingCreateInput = TagMappingCreateInputDto;
-export type TagMappingUpdateInput = TagMappingUpdateInputDto;
-export type ExternalTagSyncInput = ExternalTagSyncInputDto;

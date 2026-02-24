@@ -33,6 +33,7 @@ interface SelectSimpleProps {
   disabled?: boolean | undefined;
   ariaLabel?: string | undefined;
   size?: 'default' | 'sm' | 'xs';
+  variant?: 'default' | 'subtle';
   dataDocId?: string | undefined;
   dataDocAlias?: string | undefined;
 }
@@ -48,6 +49,7 @@ export function SelectSimple({
   disabled = false,
   ariaLabel,
   size = 'default',
+  variant = 'default',
   dataDocId,
   dataDocAlias,
 }: SelectSimpleProps): React.JSX.Element {
@@ -94,6 +96,7 @@ export function SelectSimple({
             'w-full [&>span]:max-w-[calc(100%-1.5rem)] [&>span]:truncate [&>span]:text-left',
             size === 'sm' && 'h-8 text-xs',
             size === 'xs' && 'h-7 text-[10px]',
+            variant === 'subtle' && 'border-border/40 bg-card/40 hover:bg-card/60 hover:border-border/60',
             triggerClassName
           )}
           aria-label={ariaLabel}

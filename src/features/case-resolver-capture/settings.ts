@@ -1,19 +1,14 @@
 import type {
-  CaseResolverCaptureActionDto,
-  CaseResolverCaptureRoleDto,
-  CaseResolverCaptureRoleMappingDto,
-  CaseResolverCaptureSettingsDto,
+  CaseResolverCaptureAction,
+  CaseResolverCaptureRole,
+  CaseResolverCaptureRoleMapping,
+  CaseResolverCaptureSettings,
 } from '@/shared/contracts/case-resolver';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export const CASE_RESOLVER_CAPTURE_SETTINGS_KEY = 'case_resolver_capture_settings_v1';
 
-export type CaseResolverCaptureAction = CaseResolverCaptureActionDto;
-export type CaseResolverCaptureRole = CaseResolverCaptureRoleDto;
-
-export type CaseResolverCaptureRoleMapping = CaseResolverCaptureRoleMappingDto;
-
-export type CaseResolverCaptureSettings = CaseResolverCaptureSettingsDto;
+export type { CaseResolverCaptureAction, CaseResolverCaptureRole, CaseResolverCaptureRoleMapping, CaseResolverCaptureSettings };
 
 export const CASE_RESOLVER_CAPTURE_ACTION_OPTIONS: Array<{
   value: CaseResolverCaptureAction;

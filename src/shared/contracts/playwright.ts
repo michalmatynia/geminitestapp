@@ -27,15 +27,13 @@ export const playwrightSettingsSchema = z.object({
   deviceName: z.string().optional(),
 });
 
-export type PlaywrightSettingsDto = z.infer<typeof playwrightSettingsSchema>;
-export type PlaywrightSettings = PlaywrightSettingsDto;
+export type PlaywrightSettings = z.infer<typeof playwrightSettingsSchema>;
 
 export const playwrightPersonaSchema = namedDtoSchema.extend({
   settings: playwrightSettingsSchema,
 });
 
-export type PlaywrightPersonaDto = z.infer<typeof playwrightPersonaSchema>;
-export type PlaywrightPersona = PlaywrightPersonaDto;
+export type PlaywrightPersona = z.infer<typeof playwrightPersonaSchema>;
 
 export const createPlaywrightPersonaSchema = playwrightPersonaSchema.omit({
   id: true,
@@ -43,8 +41,8 @@ export const createPlaywrightPersonaSchema = playwrightPersonaSchema.omit({
   updatedAt: true,
 });
 
-export type CreatePlaywrightPersonaDto = z.infer<typeof createPlaywrightPersonaSchema>;
-export type UpdatePlaywrightPersonaDto = Partial<CreatePlaywrightPersonaDto>;
+export type CreatePlaywrightPersona = z.infer<typeof createPlaywrightPersonaSchema>;
+export type UpdatePlaywrightPersona = Partial<CreatePlaywrightPersona>;
 
 export const playwrightTestSchema = namedDtoSchema.extend({
   script: z.string(),
@@ -52,7 +50,7 @@ export const playwrightTestSchema = namedDtoSchema.extend({
   enabled: z.boolean(),
 });
 
-export type PlaywrightTestDto = z.infer<typeof playwrightTestSchema>;
+export type PlaywrightTest = z.infer<typeof playwrightTestSchema>;
 
 export const createPlaywrightTestSchema = playwrightTestSchema.omit({
   id: true,
@@ -60,8 +58,8 @@ export const createPlaywrightTestSchema = playwrightTestSchema.omit({
   updatedAt: true,
 });
 
-export type CreatePlaywrightTestDto = z.infer<typeof createPlaywrightTestSchema>;
-export type UpdatePlaywrightTestDto = Partial<CreatePlaywrightTestDto>;
+export type CreatePlaywrightTest = z.infer<typeof createPlaywrightTestSchema>;
+export type UpdatePlaywrightTest = Partial<CreatePlaywrightTest>;
 
 export const playwrightTestRunSchema = dtoBaseSchema.extend({
   testId: z.string(),
@@ -73,7 +71,7 @@ export const playwrightTestRunSchema = dtoBaseSchema.extend({
   completedAt: z.string().nullable(),
 });
 
-export type PlaywrightTestRunDto = z.infer<typeof playwrightTestRunSchema>;
+export type PlaywrightTestRun = z.infer<typeof playwrightTestRunSchema>;
 
 export const createPlaywrightTestRunSchema = playwrightTestRunSchema.omit({
   id: true,
@@ -81,12 +79,12 @@ export const createPlaywrightTestRunSchema = playwrightTestRunSchema.omit({
   updatedAt: true,
 });
 
-export type CreatePlaywrightTestRunDto = z.infer<typeof createPlaywrightTestRunSchema>;
-export type UpdatePlaywrightTestRunDto = Partial<CreatePlaywrightTestRunDto>;
+export type CreatePlaywrightTestRun = z.infer<typeof createPlaywrightTestRunSchema>;
+export type UpdatePlaywrightTestRun = Partial<CreatePlaywrightTestRun>;
 
 export const executePlaywrightTestSchema = z.object({
   testId: z.string(),
   config: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type ExecutePlaywrightTestDto = z.infer<typeof executePlaywrightTestSchema>;
+export type ExecutePlaywrightTest = z.infer<typeof executePlaywrightTestSchema>;

@@ -11,7 +11,7 @@ import {
   safeStringify,
   toggleContextTarget,
 } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Textarea, SelectSimple, CopyButton, Label, Card } from '@/shared/ui';
+import { Button, Input, Textarea, SelectSimple, CopyButton, Label, Card, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 
@@ -313,10 +313,14 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
           )}
         </Card>
       )}
-      <div>
-        <Label className='text-xs text-gray-400'>Filter Role</Label>
+      
+      <FormField 
+        label='Filter Role' 
+        description='Optional label attached to the filtered context output.'
+      >
         <Input
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={contextConfig.role}
           onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
             updateSelectedNodeConfig({
@@ -324,10 +328,8 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-        <p className='mt-2 text-[11px] text-gray-500'>
-          Optional label attached to the filtered context output.
-        </p>
-      </div>
+      </FormField>
+
       <div>
         <Label className='text-xs text-gray-400'>Context Scope Presets</Label>
         <div className='mt-2 flex flex-wrap gap-2'>
@@ -367,8 +369,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
         </p>
       </div>
       <div className='grid gap-3 sm:grid-cols-2'>
-        <div>
-          <Label className='text-xs text-gray-400'>Collection Type</Label>
+        <FormField label='Collection Type'>
           <SelectSimple
             size='sm'
             value={contextConfig.entityType ?? 'auto'}
@@ -384,11 +385,14 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               { value: 'chat', label: 'Chat' },
               { value: 'log', label: 'Log Entry' },
             ]}
-            triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+            variant='subtle'
           />
-        </div>
-        <div>
-          <Label className='text-xs text-gray-400'>Scope Target</Label>
+        </FormField>
+        
+        <FormField 
+          label='Scope Target' 
+          description='Choose whether scope filters apply to the entity payload or the full context object.'
+        >
           <SelectSimple
             size='sm'
             value={contextConfig.scopeTarget ?? 'entity'}
@@ -404,15 +408,11 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               { value: 'entity', label: 'Entity only' },
               { value: 'context', label: 'Full context' },
             ]}
-            triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+            variant='subtle'
           />
-          <p className='mt-2 text-[11px] text-gray-500'>
-            Choose whether scope filters apply to the entity payload or the
-            full context object.
-          </p>
-        </div>
-        <div>
-          <Label className='text-xs text-gray-400'>Entity ID Source</Label>
+        </FormField>
+
+        <FormField label='Entity ID Source'>
           <SelectSimple
             size='sm'
             value={contextConfig.entityIdSource ?? 'simulation'}
@@ -429,9 +429,9 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               { value: 'context', label: 'Context payload' },
               { value: 'manual', label: 'Manual ID' },
             ]}
-            triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+            variant='subtle'
           />
-        </div>
+        </FormField>
       </div>
       <div>
         <Label className='text-xs text-gray-400'>Target Fields</Label>
@@ -479,10 +479,10 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
         </p>
       </div>
       {contextConfig.entityIdSource === 'manual' && (
-        <div>
-          <Label className='text-xs text-gray-400'>Entity ID</Label>
+        <FormField label='Entity ID'>
           <Input
-            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+            variant='subtle'
+            size='sm'
             value={contextConfig.entityId ?? ''}
             onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
               updateSelectedNodeConfig({
@@ -490,10 +490,13 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               })
             }
           />
-        </div>
+        </FormField>
       )}
-      <div>
-        <Label className='text-xs text-gray-400'>Data Scope</Label>
+      
+      <FormField 
+        label='Data Scope' 
+        description='Use dot paths (e.g. priceGroups.default).'
+      >
         <SelectSimple
           size='sm'
           value={contextConfig.scopeMode ?? 'full'}
@@ -510,22 +513,20 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
             { value: 'include', label: 'Include only listed paths' },
             { value: 'exclude', label: 'Exclude listed paths' },
           ]}
-          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
+          variant='subtle'
         />
-        <p className='mt-2 text-[11px] text-gray-500'>
-          Use dot paths (e.g. <span className='text-gray-300'>priceGroups.default</span>).
-        </p>
-      </div>
+      </FormField>
       {(contextConfig.scopeMode === 'include' ||
         contextConfig.scopeMode === 'exclude') && (
-        <div>
-          <Label className='text-xs text-gray-400'>
-            {contextConfig.scopeMode === 'include'
-              ? 'Include paths (one per line)'
-              : 'Exclude paths (one per line)'}
-          </Label>
+        <FormField 
+          label={contextConfig.scopeMode === 'include'
+            ? 'Include paths (one per line)'
+            : 'Exclude paths (one per line)'}
+        >
           <Textarea
-            className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
+            variant='subtle'
+            size='sm'
+            className='min-h-[120px]'
             value={
               contextConfig.scopeMode === 'include'
                 ? (contextConfig.includePaths ?? []).join('\n')
@@ -548,7 +549,7 @@ export function ContextNodeConfigSection(): React.JSX.Element | null {
               });
             }}
           />
-        </div>
+        </FormField>
       )}
     </div>
   );

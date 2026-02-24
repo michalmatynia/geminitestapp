@@ -1,19 +1,57 @@
 'use client';
 
-import { FileText } from 'lucide-react';
+import {
+  Copy,
+  FileText,
+  History,
+  Network,
+  ScanLine,
+  Save,
+  Settings2,
+  X,
+} from 'lucide-react';
 import React from 'react';
 
+import {
+  encodeFilemakerPartyReference,
+  decodeFilemakerPartyReference,
+} from '@/features/filemaker/settings';
+import type { CaseResolverDocumentHistoryEntry } from '@/shared/contracts/case-resolver';
 import {
   Badge,
   Button,
   Card,
   EmptyState,
+  FormField,
+  Input,
+  SearchInput,
+  SelectSimple,
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
 } from '@/shared/ui';
 import { useCaseResolverViewContext } from '../CaseResolverViewContext';
+import type { EditorDetailsTab } from './CaseResolverDocumentEditor';
+
+const formatHistoryTimestamp = (value: string): string => {
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return value;
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  }).format(parsed);
+};
 
 export function CaseResolverScanFileEditor(): React.JSX.Element | null {
   const {
     state,
+    editorDetailsTab,
+    setEditorDetailsTab,
     handleSaveFileEditor,
     handleDiscardFileEditorDraft,
     handleTriggerScanDraftUpload,
@@ -27,174 +65,473 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
     handleScanDraftUploadInputChange,
     scanDraftUploadInputRef,
     updateEditingDocumentDraft,
+    isEditorDraftDirty,
+    handleCopyDraftFileId,
+    handleLinkRelatedFiles,
+    handleUnlinkRelatedFile,
+    handleUseHistoryEntry,
+    caseTagOptions,
+    caseIdentifierOptions,
+    caseCategoryOptions,
+    partyOptions,
   } = useCaseResolverViewContext();
 
   const {
+    workspace,
     editingDocumentDraft,
     isUploadingScanDraftFiles,
   } = state;
+
+  const [relateSearchQuery, setRelateSearchQuery] = React.useState('');
 
   if (editingDocumentDraft?.fileType !== 'scanfile') return null;
   const draft = editingDocumentDraft;
 
   const isEditingDocumentLocked = draft.isLocked;
-  const isEditorSaveEnabled = (draft.scanSlots ?? []).length > 0;
+  const isEditorSaveEnabled = isEditorDraftDirty || (draft.scanSlots ?? []).length > 0;
+
+  const encodedAddresser = encodeFilemakerPartyReference(draft.addresser ?? null);
+  const encodedAddressee = encodeFilemakerPartyReference(draft.addressee ?? null);
+
+  const createdAtLabel = draft.createdAt ? formatHistoryTimestamp(draft.createdAt) : 'Unknown';
+  const updatedAtLabel = draft.updatedAt ? formatHistoryTimestamp(draft.updatedAt) : 'Unknown';
+
+  const originalFile = workspace.files.find((f) => f.id === draft.id);
+  const draftRelatedFileIds = originalFile?.relatedFileIds;
+  const relatedFiles = workspace.files.filter((file) =>
+    (draftRelatedFileIds ?? []).includes(file.id)
+  );
+
+  const relateSearchResults = relateSearchQuery.trim()
+    ? workspace.files
+      .filter((file) => {
+        if (file.id === draft.id) return false;
+        if ((draftRelatedFileIds ?? []).includes(file.id)) return false;
+        const query = relateSearchQuery.toLowerCase();
+        return (
+          file.name.toLowerCase().includes(query) ||
+          (file.folder ?? '').toLowerCase().includes(query)
+        );
+      })
+      .slice(0, 10)
+    : [];
 
   return (
-    <div className='flex min-h-0 flex-1 flex-col gap-4 overflow-auto pr-1'>
-      <div className='flex flex-wrap items-center justify-between gap-3'>
-        <div className='flex min-w-0 items-center gap-2'>
-          <Button
-            type='button'
-            size='sm'
-            onClick={handleSaveFileEditor}
-            disabled={!isEditorSaveEnabled || isEditingDocumentLocked}
-            className={`h-8 min-w-[100px] flex-shrink-0 rounded-md border text-xs transition-colors ${
-              isEditorSaveEnabled
-                ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10'
-                : 'border-border/60 text-gray-500 hover:bg-transparent'
-            }`}
-          >
-            Update
-          </Button>
-          <Button
-            type='button'
-            variant='ghost'
-            size='sm'
-            onClick={handleDiscardFileEditorDraft}
-            className='h-8 text-xs text-gray-400 hover:text-gray-100'
-          >
-            Discard Changes
-          </Button>
-          <div className='h-4 w-px bg-border/40 mx-1' />
-          <div className='min-w-0 flex-1 truncate text-xs font-medium text-gray-400'>
-            {editingDocumentDraft.folder ? `${editingDocumentDraft.folder} / ` : ''}
-            <span className='text-gray-200'>{editingDocumentDraft.name}</span>
+    <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-auto pr-1'>
+      {/* ── Header ── */}
+      <div className='flex flex-wrap items-center justify-between gap-4 border-b border-border/40 pb-4'>
+        <div className='flex min-w-0 flex-1 items-center gap-3'>
+          <div className='flex items-center gap-2'>
+            <Button
+              type='button'
+              size='sm'
+              onClick={handleSaveFileEditor}
+              disabled={!isEditorSaveEnabled || isEditingDocumentLocked}
+              className={`h-9 min-w-[120px] rounded-md border shadow-sm transition-all ${
+                isEditorSaveEnabled
+                  ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                  : 'border-border/60 text-gray-500 hover:bg-transparent'
+              }`}
+            >
+              <Save className='mr-2 size-4' />
+              Update
+            </Button>
+            <Button
+              type='button'
+              variant='ghost'
+              size='sm'
+              onClick={handleDiscardFileEditorDraft}
+              className='h-9 text-gray-400 hover:text-gray-100 hover:bg-white/5'
+            >
+              <X className='mr-2 size-4' />
+              Discard
+            </Button>
+          </div>
+          <div className='h-6 w-px bg-border/40' />
+          <div className='min-w-0 flex-1'>
+            <div className='flex items-center gap-2 text-[10px] uppercase tracking-wider text-gray-500'>
+              <span className='truncate'>{draft.folder || 'Root'}</span>
+              <span className='text-gray-700'>/</span>
+              <span className='text-blue-400/80'>{draft.fileType}</span>
+            </div>
+            <div className='truncate text-sm font-semibold text-gray-100'>
+              {draft.name}
+            </div>
           </div>
         </div>
+
         {isEditingDocumentLocked && (
-          <Badge variant='outline' className='border-amber-500/40 text-amber-500 bg-amber-500/5 text-[10px] h-5'>
+          <Badge variant='outline' className='h-7 border-amber-500/40 bg-amber-500/5 px-2 text-[10px] font-bold text-amber-500'>
             LOCKED
           </Badge>
         )}
       </div>
 
-      <div className='grid gap-4 lg:grid-cols-2'>
-        <div className='flex flex-col gap-3'>
-          <div className='flex items-center justify-between'>
-            <div className='text-xs font-semibold uppercase tracking-wider text-gray-500'>
-              Scan Images / PDF Pages
-            </div>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={handleTriggerScanDraftUpload}
-              disabled={isUploadingScanDraftFiles || isEditingDocumentLocked}
-              className='h-7 text-[11px]'
-            >
-              {isUploadingScanDraftFiles ? 'Uploading...' : 'Add Pages'}
-            </Button>
-            <input
-              type='file'
-              ref={scanDraftUploadInputRef}
-              onChange={handleScanDraftUploadInputChange}
-              className='hidden'
-              multiple
-              accept='image/*,application/pdf'
-            />
-          </div>
+      {/* ── Tabs ── */}
+      <Tabs
+        value={editorDetailsTab}
+        onValueChange={(v) => setEditorDetailsTab(v as EditorDetailsTab)}
+        className='flex flex-1 flex-col min-h-0'
+      >
+        <div className='flex items-center justify-between gap-4'>
+          <TabsList className='h-9 w-fit border border-border/40 bg-card/40 p-1'>
+            <TabsTrigger value='document' className='h-7 px-4 text-xs data-[state=active]:bg-blue-600/20 data-[state=active]:text-blue-400'>
+              <ScanLine className='mr-2 size-3.5' />
+              Scans
+            </TabsTrigger>
+            <TabsTrigger value='relations' className='h-7 px-4 text-xs data-[state=active]:bg-purple-600/20 data-[state=active]:text-purple-400'>
+              <Network className='mr-2 size-3.5' />
+              Relations
+            </TabsTrigger>
+            <TabsTrigger value='metadata' className='h-7 px-4 text-xs data-[state=active]:bg-amber-600/20 data-[state=active]:text-amber-400'>
+              <Settings2 className='mr-2 size-3.5' />
+              Metadata
+            </TabsTrigger>
+            <TabsTrigger value='revisions' className='h-7 px-4 text-xs data-[state=active]:bg-emerald-600/20 data-[state=active]:text-emerald-400'>
+              <History className='mr-2 size-3.5' />
+              History
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
-          <div
-            className={`flex min-h-[400px] flex-col gap-3 rounded-lg border-2 border-dashed p-4 transition-colors ${
-              isScanDraftDropActive
-                ? 'border-blue-500/50 bg-blue-500/5'
-                : 'border-border/40 bg-card/10'
-            }`}
-            onDragEnter={handleScanDraftDragEnter}
-            onDragOver={handleScanDraftDragOver}
-            onDragLeave={handleScanDraftDragLeave}
-            onDrop={handleScanDraftDrop}
-          >
-            {(editingDocumentDraft.scanSlots ?? []).length === 0 ? (
-              <EmptyState
-                icon={<FileText className='size-10 text-gray-700' />}
-                title='No pages yet'
-                description='Drag and drop images or PDF files here, or use the "Add Pages" button.'
-                className='flex-1 border-none bg-transparent'
-              />
-            ) : (
-              <div className='grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4'>
-                {(editingDocumentDraft.scanSlots ?? []).map((slot) => (
-                  <Card
-                    key={slot.id}
-                    className='group relative aspect-[3/4] overflow-hidden border-border/60 bg-black/40'
+        <div className='flex-1 overflow-auto mt-4'>
+
+          {/* ── Scans Tab ── */}
+          <TabsContent value='document' className='m-0 flex flex-col gap-4'>
+
+            {/* Upload section — compact, above the text field */}
+            <div className='flex flex-col gap-2 rounded-lg border border-border/60 bg-card/10 p-3'>
+              <div className='flex items-center justify-between gap-2'>
+                <div className='text-xs font-semibold uppercase tracking-wider text-gray-500'>
+                  Scan Images / PDF Pages
+                </div>
+                <div className='flex items-center gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={handleTriggerScanDraftUpload}
+                    disabled={isUploadingScanDraftFiles || isEditingDocumentLocked}
+                    className='h-7 text-[11px]'
                   >
-                    {slot.filepath ? (
-                      <img
-                        src={`/api/files/download?path=${encodeURIComponent(
-                          slot.filepath
-                        )}`}
-                        alt={slot.name || 'Scan page'}
-                        className='h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100'
-                      />
-                    ) : (
-                      <div className='flex h-full flex-col items-center justify-center p-2 text-center'>
-                        <FileText className='mb-2 size-8 text-gray-600' />
-                        <div className='truncate text-[10px] text-gray-500'>
-                          {slot.name || 'Uploading...'}
+                    {isUploadingScanDraftFiles ? 'Uploading...' : 'Add Pages'}
+                  </Button>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={handleRunScanDraftOcr}
+                    disabled={
+                      (draft.scanSlots ?? []).length === 0 ||
+                      isEditingDocumentLocked
+                    }
+                    className='h-7 text-[11px]'
+                  >
+                    Run OCR
+                  </Button>
+                </div>
+                <input
+                  type='file'
+                  ref={scanDraftUploadInputRef}
+                  onChange={handleScanDraftUploadInputChange}
+                  className='hidden'
+                  multiple
+                  accept='image/*,application/pdf'
+                />
+              </div>
+
+              <div
+                className={`min-h-[140px] rounded-md border-2 border-dashed p-3 transition-colors ${
+                  isScanDraftDropActive
+                    ? 'border-blue-500/50 bg-blue-500/5'
+                    : 'border-border/30 bg-transparent'
+                }`}
+                onDragEnter={handleScanDraftDragEnter}
+                onDragOver={handleScanDraftDragOver}
+                onDragLeave={handleScanDraftDragLeave}
+                onDrop={handleScanDraftDrop}
+              >
+                {(draft.scanSlots ?? []).length === 0 ? (
+                  <EmptyState
+                    icon={<FileText className='size-8 text-gray-700' />}
+                    title='No pages yet'
+                    description='Drag and drop images or PDF files here, or use the "Add Pages" button.'
+                    className='border-none bg-transparent py-2'
+                  />
+                ) : (
+                  <div className='max-h-[200px] overflow-auto'>
+                    <div className='grid grid-cols-4 gap-2 sm:grid-cols-6 xl:grid-cols-8'>
+                      {(draft.scanSlots ?? []).map((slot) => (
+                        <Card
+                          key={slot.id}
+                          className='group relative aspect-[3/4] overflow-hidden border-border/60 bg-black/40'
+                        >
+                          {slot.filepath ? (
+                            <img
+                              src={`/api/files/download?path=${encodeURIComponent(slot.filepath)}`}
+                              alt={slot.name || 'Scan page'}
+                              className='h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100'
+                            />
+                          ) : (
+                            <div className='flex h-full flex-col items-center justify-center p-1 text-center'>
+                              <FileText className='mb-1 size-5 text-gray-600' />
+                              <div className='truncate text-[9px] text-gray-500'>
+                                {slot.name || 'Uploading...'}
+                              </div>
+                            </div>
+                          )}
+                          <div className='absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100'>
+                            <Button
+                              type='button'
+                              variant='destructive'
+                              size='sm'
+                              onClick={() => handleDeleteScanDraftSlot(slot.id)}
+                              disabled={isEditingDocumentLocked}
+                              className='h-6 px-2 text-[10px]'
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        </Card>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* OCR / Markdown text area — main content */}
+            <div className='flex flex-col gap-2'>
+              <div className='text-xs font-semibold uppercase tracking-wider text-gray-500'>
+                OCR Results / Markdown Content
+              </div>
+              <div className='flex flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/10'>
+                <textarea
+                  className='min-h-[400px] flex-1 resize-none bg-transparent p-4 text-sm font-mono text-gray-300 focus:outline-none'
+                  placeholder='OCR results will appear here after running OCR, or type/paste markdown content...'
+                  value={draft.documentContent ?? ''}
+                  onChange={(e) => updateEditingDocumentDraft({ documentContent: e.target.value })}
+                  readOnly={isEditingDocumentLocked}
+                />
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className='flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-border/40'>
+              <div className='flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-gray-500'>
+                <div className='flex items-center gap-2'>
+                  <span className='uppercase tracking-wider opacity-60'>Created:</span>
+                  <span className='text-gray-300'>{createdAtLabel}</span>
+                </div>
+                <div className='flex items-center gap-2'>
+                  <span className='uppercase tracking-wider opacity-60'>Modified:</span>
+                  <span className='text-gray-300'>{updatedAtLabel}</span>
+                </div>
+              </div>
+              <Button
+                type='button'
+                variant='ghost'
+                size='sm'
+                className='h-8 gap-2 px-2 text-[11px] text-gray-400 hover:bg-white/5 hover:text-gray-200'
+                onClick={() => { void handleCopyDraftFileId(); }}
+              >
+                <span className='opacity-60'>ID:</span>
+                <span className='font-mono'>{draft.id}</span>
+                <Copy className='size-3 opacity-60' />
+              </Button>
+            </div>
+          </TabsContent>
+
+          {/* ── Relations Tab ── */}
+          <TabsContent value='relations' className='m-0'>
+            <div className='grid gap-6 md:grid-cols-2'>
+              <FormField label='Related Documents'>
+                <div className='flex flex-col gap-2'>
+                  {relatedFiles.length === 0 ? (
+                    <div className='rounded border border-dashed border-border/40 p-8 text-center text-xs text-gray-500'>
+                      No related documents linked yet.
+                    </div>
+                  ) : (
+                    <div className='grid gap-2'>
+                      {relatedFiles.map(file => (
+                        <div key={file.id} className='flex items-center justify-between gap-3 rounded border border-border/60 bg-card/20 px-3 py-2'>
+                          <div className='flex items-center gap-3 min-w-0'>
+                            <FileText className='size-4 text-gray-500' />
+                            <span className='truncate text-xs font-medium text-gray-200'>{file.name}</span>
+                          </div>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            className='h-7 w-7 p-0 text-gray-500 hover:text-red-400'
+                            onClick={() => handleUnlinkRelatedFile(draft.id, file.id)}
+                            disabled={isEditingDocumentLocked}
+                          >
+                            <X className='size-4' />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </FormField>
+
+              <FormField label='Link a Document'>
+                <div className='space-y-3'>
+                  <SearchInput
+                    size='sm'
+                    value={relateSearchQuery}
+                    onChange={(e) => setRelateSearchQuery(e.target.value)}
+                    onClear={() => setRelateSearchQuery('')}
+                    placeholder='Search by name or folder...'
+                    disabled={isEditingDocumentLocked}
+                  />
+                  {relateSearchQuery.trim() && (
+                    <div className='rounded border border-border/60 bg-card/40 overflow-hidden shadow-xl'>
+                      {relateSearchResults.length === 0 ? (
+                        <div className='p-4 text-center text-xs text-gray-500'>No documents found.</div>
+                      ) : (
+                        relateSearchResults.map(result => (
+                          <button
+                            key={result.id}
+                            className='flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-white/10 transition-colors'
+                            onClick={() => {
+                              handleLinkRelatedFiles(draft.id, result.id);
+                              setRelateSearchQuery('');
+                            }}
+                          >
+                            <FileText className='size-4 text-gray-500' />
+                            <div className='min-w-0'>
+                              <div className='text-xs text-gray-200 truncate'>{result.name}</div>
+                              <div className='text-[10px] text-gray-500 truncate'>{result.folder || 'Root'}</div>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              </FormField>
+            </div>
+          </TabsContent>
+
+          {/* ── Metadata Tab ── */}
+          <TabsContent value='metadata' className='m-0'>
+            <div className='grid gap-6 lg:grid-cols-2'>
+              <FormField label='File Name'>
+                <Input
+                  value={draft.name}
+                  onChange={(e) => updateEditingDocumentDraft({ name: e.target.value })}
+                  disabled={isEditingDocumentLocked}
+                  className='bg-card/20 border-border/60'
+                />
+              </FormField>
+              <FormField label='Tag'>
+                <SelectSimple
+                  value={draft.tagId ?? '__none__'}
+                  onValueChange={(v) => updateEditingDocumentDraft({ tagId: v === '__none__' ? null : v })}
+                  options={caseTagOptions}
+                  disabled={isEditingDocumentLocked}
+                  triggerClassName='bg-card/20 border-border/60'
+                />
+              </FormField>
+              <FormField label='Case Identifier'>
+                <SelectSimple
+                  value={draft.caseIdentifierId ?? '__none__'}
+                  onValueChange={(v) => updateEditingDocumentDraft({ caseIdentifierId: v === '__none__' ? null : v })}
+                  options={caseIdentifierOptions}
+                  disabled={isEditingDocumentLocked}
+                  triggerClassName='bg-card/20 border-border/60'
+                />
+              </FormField>
+              <FormField label='Category'>
+                <SelectSimple
+                  value={draft.categoryId ?? '__none__'}
+                  onValueChange={(v) => updateEditingDocumentDraft({ categoryId: v === '__none__' ? null : v })}
+                  options={caseCategoryOptions}
+                  disabled={isEditingDocumentLocked}
+                  triggerClassName='bg-card/20 border-border/60'
+                />
+              </FormField>
+              <FormField label='Addresser (From)'>
+                <SelectSimple
+                  value={encodedAddresser}
+                  onValueChange={(v) => updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })}
+                  options={partyOptions}
+                  disabled={isEditingDocumentLocked}
+                  triggerClassName='bg-card/20 border-border/60'
+                />
+              </FormField>
+              <FormField label='Addressee (To)'>
+                <SelectSimple
+                  value={encodedAddressee}
+                  onValueChange={(v) => updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })}
+                  options={partyOptions}
+                  disabled={isEditingDocumentLocked}
+                  triggerClassName='bg-card/20 border-border/60'
+                />
+              </FormField>
+              <FormField label='OCR Model'>
+                <Input
+                  value={draft.scanOcrModel ?? ''}
+                  onChange={(e) => updateEditingDocumentDraft({ scanOcrModel: e.target.value })}
+                  disabled={isEditingDocumentLocked}
+                  placeholder='e.g. gpt-4o'
+                  className='bg-card/20 border-border/60'
+                />
+              </FormField>
+              <FormField label='OCR Prompt'>
+                <Input
+                  value={draft.scanOcrPrompt ?? ''}
+                  onChange={(e) => updateEditingDocumentDraft({ scanOcrPrompt: e.target.value })}
+                  disabled={isEditingDocumentLocked}
+                  placeholder='Custom OCR instruction...'
+                  className='bg-card/20 border-border/60'
+                />
+              </FormField>
+            </div>
+          </TabsContent>
+
+          {/* ── History Tab ── */}
+          <TabsContent value='revisions' className='m-0'>
+            <div className='rounded-lg border border-border/40 bg-card/20 overflow-hidden'>
+              {(draft.documentHistory ?? []).length === 0 ? (
+                <div className='p-12 text-center'>
+                  <History className='mx-auto mb-3 size-8 text-gray-700' />
+                  <div className='text-xs text-gray-500'>No version history available.</div>
+                </div>
+              ) : (
+                <div className='max-h-[600px] overflow-auto'>
+                  {(draft.documentHistory ?? []).map((entry: CaseResolverDocumentHistoryEntry, idx: number) => (
+                    <div key={entry.id || idx} className='group flex items-center justify-between p-4 hover:bg-white/5 transition-colors'>
+                      <div className='flex items-center gap-4'>
+                        <div className='flex size-10 items-center justify-center rounded-full bg-blue-500/10 text-blue-400'>
+                          <History className='size-5' />
+                        </div>
+                        <div>
+                          <div className='text-sm font-medium text-gray-200'>{formatHistoryTimestamp(entry.savedAt)}</div>
+                          <div className='text-[11px] text-gray-500 uppercase tracking-wider'>
+                            {entry.editorType} <span className='mx-1 opacity-30'>•</span> Version {entry.documentContentVersion}
+                          </div>
                         </div>
                       </div>
-                    )}
-                    <div className='absolute inset-0 flex items-center justify-center bg-black/60 opacity-0 transition-opacity group-hover:opacity-100'>
                       <Button
-                        type='button'
-                        variant='destructive'
+                        variant='outline'
                         size='sm'
-                        onClick={() => handleDeleteScanDraftSlot(slot.id)}
+                        className='h-8 opacity-0 group-hover:opacity-100 transition-opacity'
+                        onClick={() => handleUseHistoryEntry(entry)}
                         disabled={isEditingDocumentLocked}
-                        className='h-7 text-[10px]'
                       >
-                        Remove
+                        Restore
                       </Button>
                     </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className='flex flex-col gap-3'>
-          <div className='flex items-center justify-between'>
-            <div className='text-xs font-semibold uppercase tracking-wider text-gray-500'>
-              OCR Results / Reassembled Content
+                  ))}
+                </div>
+              )}
             </div>
-            <Button
-              type='button'
-              variant='outline'
-              size='sm'
-              onClick={handleRunScanDraftOcr}
-              disabled={
-                (editingDocumentDraft.scanSlots ?? []).length === 0 ||
-                isEditingDocumentLocked
-              }
-              className='h-7 text-[11px]'
-            >
-              Run OCR
-            </Button>
-          </div>
-          <div className='flex flex-1 flex-col overflow-hidden rounded-lg border border-border/60 bg-card/10'>
-            <textarea
-              className='flex-1 resize-none bg-transparent p-4 text-sm font-mono text-gray-300 focus:outline-none'
-              placeholder='OCR results will appear here...'
-              value={editingDocumentDraft.documentContent}
-              onChange={(e) => updateEditingDocumentDraft({ documentContent: e.target.value })}
-              readOnly={isEditingDocumentLocked}
-            />
-          </div>
+          </TabsContent>
+
         </div>
-      </div>
+      </Tabs>
     </div>
   );
 }

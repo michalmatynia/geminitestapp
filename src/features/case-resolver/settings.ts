@@ -8,6 +8,7 @@ import type {
   CaseResolverDefaultDocumentFormat,
   CaseResolverSettings,
 } from '@/shared/contracts/case-resolver';
+export type { CaseResolverSettings };
 import {
   type CaseResolverAssetFile,
   type CaseResolverDocumentDateProposal,

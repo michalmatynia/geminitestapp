@@ -1,18 +1,17 @@
 import type {
   ExternalProducer,
-  ExternalProducerSyncInputDto,
+  ExternalProducerSyncInput,
   ProducerMapping,
-  ProducerMappingCreateInputDto,
-  ProducerMappingUpdateInputDto,
+  ProducerMappingCreateInput,
+  ProducerMappingUpdateInput,
   ProducerMappingWithDetails,
 } from '@/shared/contracts/integrations';
 
 export type {
   ExternalProducer,
+  ExternalProducerSyncInput,
   ProducerMapping,
+  ProducerMappingCreateInput,
+  ProducerMappingUpdateInput,
   ProducerMappingWithDetails,
 };
-
-export type ProducerMappingCreateInput = ProducerMappingCreateInputDto;
-export type ProducerMappingUpdateInput = ProducerMappingUpdateInputDto;
-export type ExternalProducerSyncInput = ExternalProducerSyncInputDto;

@@ -403,6 +403,8 @@ export function ProductSyncSettings(): React.JSX.Element {
             <div className='grid gap-3 md:grid-cols-2'>
               <FormField label='Name'>
                 <Input
+                  variant='subtle'
+                  size='sm'
                   value={draft.name}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                     setDraft((prev: ProductSyncProfileDraft) => ({
@@ -414,6 +416,7 @@ export function ProductSyncSettings(): React.JSX.Element {
               </FormField>
               <FormField label='Base Connection'>
                 <SelectSimple
+                  variant='subtle'
                   size='sm'
                   value={draft.connectionId || '__none__'}
                   onValueChange={(value: string): void =>
@@ -437,6 +440,8 @@ export function ProductSyncSettings(): React.JSX.Element {
             <div className='grid gap-3 md:grid-cols-4'>
               <FormField label='Inventory ID'>
                 <Input
+                  variant='subtle'
+                  size='sm'
                   value={draft.inventoryId}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                     setDraft((prev: ProductSyncProfileDraft) => ({
@@ -448,6 +453,8 @@ export function ProductSyncSettings(): React.JSX.Element {
               </FormField>
               <FormField label='Catalog Filter'>
                 <Input
+                  variant='subtle'
+                  size='sm'
                   value={draft.catalogId}
                   onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                     setDraft((prev: ProductSyncProfileDraft) => ({
@@ -460,6 +467,8 @@ export function ProductSyncSettings(): React.JSX.Element {
               </FormField>
               <FormField label='Interval (min)'>
                 <Input
+                  variant='subtle'
+                  size='sm'
                   type='number'
                   min={1}
                   max={24 * 60}
@@ -477,6 +486,8 @@ export function ProductSyncSettings(): React.JSX.Element {
               </FormField>
               <FormField label='Batch Size'>
                 <Input
+                  variant='subtle'
+                  size='sm'
                   type='number'
                   min={1}
                   max={500}
@@ -568,6 +579,7 @@ export function ProductSyncSettings(): React.JSX.Element {
               className='grid gap-2 rounded-md border border-border/60 bg-card/40 p-2 md:grid-cols-[180px_1fr_180px_auto]'
             >
               <SelectSimple
+                variant='subtle'
                 size='sm'
                 value={rule.appField}
                 onValueChange={(value: string): void =>
@@ -581,6 +593,8 @@ export function ProductSyncSettings(): React.JSX.Element {
               />
 
               <Input
+                variant='subtle'
+                size='sm'
                 value={rule.baseField}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updateRule(rule.id, { baseField: event.target.value })
@@ -589,6 +603,7 @@ export function ProductSyncSettings(): React.JSX.Element {
               />
 
               <SelectSimple
+                variant='subtle'
                 size='sm'
                 value={rule.direction}
                 onValueChange={(value: string): void =>

@@ -1,13 +1,15 @@
 export * from '@/shared/contracts/image-studio';
 
 import type {
-  ImageStudioAutoScalerErrorCode as ImageStudioAutoScalerErrorCodeDto,
-  ImageStudioAutoScalerModeDto,
-  ImageStudioAutoScalerRequestDto,
-  ImageStudioAutoScalerResponseDto,
+  ImageStudioAutoScalerErrorCode,
+  ImageStudioAutoScalerMode,
+  ImageStudioAutoScalerRequest,
+  ImageStudioAutoScalerResponse,
 } from '@/shared/contracts/image-studio';
 
-export type ImageStudioAutoScalerMode = ImageStudioAutoScalerModeDto;
-export type ImageStudioAutoScalerRequest = ImageStudioAutoScalerRequestDto;
-export type ImageStudioAutoScalerErrorCode = ImageStudioAutoScalerErrorCodeDto;
-export type ImageStudioAutoScalerResponse = ImageStudioAutoScalerResponseDto;
+export type {
+  ImageStudioAutoScalerErrorCode,
+  ImageStudioAutoScalerMode,
+  ImageStudioAutoScalerRequest,
+  ImageStudioAutoScalerResponse,
+};

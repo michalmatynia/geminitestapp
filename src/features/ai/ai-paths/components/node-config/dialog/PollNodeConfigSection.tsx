@@ -16,6 +16,7 @@ import {
   Label,
   Textarea,
   SelectSimple,
+  FormField,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -115,9 +116,9 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>Mode</Label>
+      <FormField label='Mode'>
         <SelectSimple size='sm'
+          variant='subtle'
           value={resolvedPollConfig.mode || ''}
           onValueChange={(value: string): void =>
             updatePollConfig({ mode: value as 'job' | 'database' })
@@ -127,17 +128,15 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             { value: 'database', label: 'Database Query' },
           ]}
           placeholder='Select mode'
-          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
-          contentClassName='border-border bg-gray-900'
         />
-      </div>
+      </FormField>
       <div className='grid gap-3 sm:grid-cols-2'>
-        <div>
-          <Label className='text-xs text-gray-400'>Interval (ms)</Label>
+        <FormField label='Interval (ms)'>
           <Input
             type='number'
             step='100'
-            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+            variant='subtle'
+            size='sm'
             value={resolvedPollConfig.intervalMs}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updatePollConfig({
@@ -148,13 +147,13 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
               })
             }
           />
-        </div>
-        <div>
-          <Label className='text-xs text-gray-400'>Max Attempts</Label>
+        </FormField>
+        <FormField label='Max Attempts'>
           <Input
             type='number'
             step='1'
-            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+            variant='subtle'
+            size='sm'
             value={resolvedPollConfig.maxAttempts}
             onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
               updatePollConfig({
@@ -165,7 +164,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
               })
             }
           />
-        </div>
+        </FormField>
       </div>
       {resolvedPollConfig.mode === 'job' && (
         <p className='text-[11px] text-gray-500'>
@@ -174,11 +173,11 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
         </p>
       )}
       {resolvedPollConfig.mode === 'database' && (
-        <div className='space-y-4'>
+        <div className='space-y-4 pt-2 border-t border-border/20'>
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div>
-              <Label className='text-xs text-gray-400'>Provider</Label>
+            <FormField label='Provider'>
               <SelectSimple size='sm'
+                variant='subtle'
                 value={queryConfig.provider}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -194,13 +193,11 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   { value: 'prisma', label: 'Prisma' },
                 ]}
                 placeholder='Select provider'
-                triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
-                contentClassName='border-border bg-gray-900'
               />
-            </div>
-            <div>
-              <Label className='text-xs text-gray-400'>Collection</Label>
+            </FormField>
+            <FormField label='Collection'>
               <SelectSimple size='sm'
+                variant='subtle'
                 value={collectionOption}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -219,16 +216,14 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   { value: 'custom', label: 'Custom' },
                 ]}
                 placeholder='Select collection'
-                triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
-                contentClassName='border-border bg-gray-900'
               />
-            </div>
+            </FormField>
           </div>
           {collectionOption === 'custom' && (
-            <div>
-              <Label className='text-xs text-gray-400'>Custom collection</Label>
+            <FormField label='Custom collection'>
               <Input
-                className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                variant='subtle'
+                size='sm'
                 value={queryConfig.collection}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({
@@ -239,11 +234,11 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   })
                 }
               />
-            </div>
+            </FormField>
           )}
           <div className='rounded-md border border-border bg-card/60 p-3'>
-            <div className='text-[11px] text-gray-400'>Query preview</div>
-            <pre className='mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200'>
+            <div className='text-[11px] text-gray-400 font-semibold uppercase tracking-wider'>Query preview</div>
+            <pre className='mt-2 max-h-60 overflow-auto whitespace-pre-wrap text-[11px] text-gray-200 font-mono'>
               {queryPreviewText}
             </pre>
             <p className='mt-2 text-[11px] text-gray-500'>
@@ -251,9 +246,9 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             </p>
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div>
-              <Label className='text-xs text-gray-400'>Query mode</Label>
+            <FormField label='Query mode'>
               <SelectSimple size='sm'
+                variant='subtle'
                 value={queryConfig.mode}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -268,13 +263,11 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   { value: 'custom', label: 'Custom' },
                 ]}
                 placeholder='Select mode'
-                triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
-                contentClassName='border-border bg-gray-900'
               />
-            </div>
-            <div>
-              <Label className='text-xs text-gray-400'>ID type</Label>
+            </FormField>
+            <FormField label='ID type'>
               <SelectSimple size='sm'
+                variant='subtle'
                 value={queryConfig.idType}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -289,16 +282,14 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   { value: 'objectId', label: 'ObjectId' },
                 ]}
                 placeholder='Select ID type'
-                triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
-                contentClassName='border-border bg-gray-900'
               />
-            </div>
+            </FormField>
           </div>
           {queryConfig.mode === 'preset' && (
             <div className='grid gap-3 sm:grid-cols-2'>
-              <div>
-                <Label className='text-xs text-gray-400'>Preset</Label>
+              <FormField label='Preset'>
                 <SelectSimple size='sm'
+                  variant='subtle'
                   value={queryConfig.preset}
                   onValueChange={(value: string): void =>
                     updatePollConfig({
@@ -315,14 +306,12 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     { value: 'by_field', label: 'By custom field' },
                   ]}
                   placeholder='Select preset'
-                  triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
-                  contentClassName='border-border bg-gray-900'
                 />
-              </div>
-              <div>
-                <Label className='text-xs text-gray-400'>Custom field</Label>
+              </FormField>
+              <FormField label='Custom field'>
                 <Input
-                  className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                  variant='subtle'
+                  size='sm'
                   value={queryConfig.field}
                   disabled={queryConfig.preset !== 'by_field'}
                   onChange={(
@@ -336,14 +325,18 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                     })
                   }
                 />
-              </div>
+              </FormField>
             </div>
           )}
           {queryConfig.mode === 'custom' && (
-            <div>
-              <Label className='text-xs text-gray-400'>Query template</Label>
+            <FormField 
+              label='Query template'
+              description="Supports placeholders like {{value}}, {{entityId}}, {{jobId}}."
+            >
               <Textarea
-                className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                variant='subtle'
+                size='sm'
+                className='min-h-[120px]'
                 value={queryConfig.queryTemplate}
                 onChange={(
                   event: React.ChangeEvent<HTMLTextAreaElement>,
@@ -356,19 +349,15 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   })
                 }
               />
-              <p className='mt-2 text-[11px] text-gray-500'>
-                Supports placeholders like {'{{value}}'}, {'{{entityId}}'},{' '}
-                {'{{jobId}}'}.
-              </p>
-            </div>
+            </FormField>
           )}
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div>
-              <Label className='text-xs text-gray-400'>Limit</Label>
+            <FormField label='Limit'>
               <Input
                 type='number'
                 step='1'
-                className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                variant='subtle'
+                size='sm'
                 value={queryConfig.limit}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({
@@ -379,16 +368,13 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   })
                 }
               />
-            </div>
+            </FormField>
             <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
               <span>Single result</span>
               <Button
                 type='button'
-                className={`rounded border px-3 py-1 text-xs ${
-                  queryConfig.single
-                    ? 'text-emerald-200 hover:bg-emerald-500/10'
-                    : 'text-gray-300 hover:bg-muted/50'
-                }`}
+                variant={queryConfig.single ? 'success' : 'default'}
+                size='xs'
                 onClick={(): void =>
                   updatePollConfig({
                     dbQuery: {
@@ -403,10 +389,11 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
             </div>
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div>
-              <Label className='text-xs text-gray-400'>Sort JSON</Label>
+            <FormField label='Sort JSON'>
               <Textarea
-                className='mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                variant='subtle'
+                size='sm'
+                className='min-h-[80px] font-mono'
                 value={queryConfig.sort}
                 onChange={(
                   event: React.ChangeEvent<HTMLTextAreaElement>,
@@ -419,11 +406,12 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   })
                 }
               />
-            </div>
-            <div>
-              <Label className='text-xs text-gray-400'>Projection JSON</Label>
+            </FormField>
+            <FormField label='Projection JSON'>
               <Textarea
-                className='mt-2 min-h-[80px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                variant='subtle'
+                size='sm'
+                className='min-h-[80px] font-mono'
                 value={queryConfig.projection}
                 onChange={(
                   event: React.ChangeEvent<HTMLTextAreaElement>,
@@ -436,22 +424,22 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   })
                 }
               />
-            </div>
+            </FormField>
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div>
-              <Label className='text-xs text-gray-400'>Success path</Label>
+            <FormField label='Success path'>
               <Input
-                className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                variant='subtle'
+                size='sm'
                 value={resolvedPollConfig.successPath}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({ successPath: event.target.value })
                 }
               />
-            </div>
-            <div>
-              <Label className='text-xs text-gray-400'>Success operator</Label>
+            </FormField>
+            <FormField label='Success operator'>
               <SelectSimple size='sm'
+                variant='subtle'
                 value={resolvedPollConfig.successOperator ?? 'equals'}
                 onValueChange={(value: string): void =>
                   updatePollConfig({
@@ -469,32 +457,30 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
                   { value: 'contains', label: 'Contains' },
                 ]}
                 placeholder='Select operator'
-                triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
-                contentClassName='border-border bg-gray-900'
               />
-            </div>
+            </FormField>
           </div>
           <div className='grid gap-3 sm:grid-cols-2'>
-            <div>
-              <Label className='text-xs text-gray-400'>Success value</Label>
+            <FormField label='Success value'>
               <Input
-                className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                variant='subtle'
+                size='sm'
                 value={resolvedPollConfig.successValue}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({ successValue: event.target.value })
                 }
               />
-            </div>
-            <div>
-              <Label className='text-xs text-gray-400'>Result path</Label>
+            </FormField>
+            <FormField label='Result path'>
               <Input
-                className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                variant='subtle'
+                size='sm'
                 value={resolvedPollConfig.resultPath}
                 onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                   updatePollConfig({ resultPath: event.target.value })
                 }
               />
-            </div>
+            </FormField>
           </div>
           <p className='text-[11px] text-gray-500'>
             Polls the selected provider using the query settings. Use Success path/value to

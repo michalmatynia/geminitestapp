@@ -10,7 +10,7 @@ import {
   ensureMongoBackupsDir,
 } from '@/features/database/server';
 import { assertDatabaseEngineManageAccess } from '@/features/database/services/database-engine-access';
-import type { DatabaseBackupFileDto, DatabaseBackupFileDto as DatabaseInfo } from '@/shared/contracts/database';
+import type { DatabaseBackupFile as DatabaseInfo } from '@/shared/contracts/database';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const isValidDate = (value: unknown): value is Date =>
@@ -27,7 +27,7 @@ async function getBackups(type: 'postgresql' | 'mongodb'): Promise<DatabaseInfo[
   const files = await fs.readdir(backupsDir);
   const backupFiles = files.filter((file: string) => file.endsWith(extension));
 
-  const backups: DatabaseBackupFileDto[] = await Promise.all(
+  const backups: DatabaseInfo[] = await Promise.all(
     backupFiles.map(async (file) => {
       const filePath = join(backupsDir, file);
       const stats = await fs.stat(filePath);

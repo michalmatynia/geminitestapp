@@ -1,7 +1,7 @@
 'use client';
 
 import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, SelectSimple, Card } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple, Card, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -36,9 +36,9 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>Collection Type</Label>
+      <FormField label='Collection Type'>
         <SelectSimple size='sm'
+          variant='subtle'
           value={simulationConfig.entityType ?? 'products'}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -50,13 +50,13 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
           }
           options={collectionOptions}
           placeholder='Select collection'
-          className='mt-2'
         />
-      </div>
-      <div>
-        <Label className='text-xs text-gray-400'>Document ID</Label>
+      </FormField>
+      
+      <FormField label='Document ID'>
         <Input
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={simulationEntityValue}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -73,11 +73,12 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
             This looks like a UUID, but its length is {idLength}. UUIDs should be 36 characters.
           </Card>
         ) : null}
-      </div>
-      <div>
-        <Label className='text-xs text-gray-400'>Run Behavior</Label>
+      </FormField>
+
+      <FormField label='Run Behavior'>
         <SelectSimple
           size='sm'
+          variant='subtle'
           value={simulationConfig.runBehavior ?? 'before_connected_trigger'}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -98,14 +99,16 @@ export function SimulationNodeConfigSection(): React.JSX.Element | null {
             },
           ]}
           placeholder='Select run behavior'
-          className='mt-2'
         />
-      </div>
-      <p className='text-[11px] text-gray-500'>
+      </FormField>
+      
+      <p className='text-[11px] text-gray-500 italic'>
         Used to simulate {simulationConfig.entityType ?? 'products'} collection context.
       </p>
+      
       <Button
-        className='w-full rounded-md border border-cyan-500/40 text-sm text-cyan-200 hover:bg-cyan-500/10'
+        className='w-full'
+        variant='outline'
         type='button'
         onClick={() => { void handleRunSimulation(selectedNode); }}
       >

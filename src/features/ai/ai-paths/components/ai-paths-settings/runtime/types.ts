@@ -13,11 +13,11 @@ import type {
   PathExecutionMode,
   PathRunMode,
   ParserSampleState,
-  QueuedRunDto,
-  RuntimeEventInputDto,
+  QueuedRun,
+  RuntimeEventInput,
   RuntimeState,
-  RunStatusDto,
-  SetNodeStatusInputDto,
+  RunStatus,
+  SetNodeStatusInput,
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
 
@@ -33,8 +33,6 @@ export type UiToastFn = (
   message: string,
   options?: { variant?: 'success' | 'error' | 'info' | 'warning'; duration?: number; error?: unknown }
 ) => void;
-
-export type QueuedRun = QueuedRunDto;
 
 /**
  * Args required by useAiPathsServerExecution
@@ -58,8 +56,8 @@ export interface ServerExecutionArgs {
   setRuntimeState: Dispatch<SetStateAction<RuntimeState>>;
   setRuntimeEvents: Dispatch<SetStateAction<AiPathRuntimeEvent[]>>;
   setPathConfigs: Dispatch<SetStateAction<Record<string, PathConfig>>>;
-  appendRuntimeEvent: (input: RuntimeEventInputDto) => void;
-  setNodeStatus: (input: SetNodeStatusInputDto) => void;
+  appendRuntimeEvent: (input: RuntimeEventInput) => void;
+  setNodeStatus: (input: SetNodeStatusInput) => void;
   normalizeNodeStatus: (value: unknown) => AiPathRuntimeNodeStatus | null;
   formatStatusLabel: (status: AiPathRuntimeNodeStatus) => string;
   settleTransientNodeStatuses: (
@@ -106,11 +104,11 @@ export interface LocalExecutionArgs {
   runInFlightRef: MutableRefObject<boolean>;
   abortControllerRef: MutableRefObject<AbortController | null>;
   pauseRequestedRef: MutableRefObject<boolean>;
-  queuedRunsRef: MutableRefObject<QueuedRunDto[]>;
+  queuedRunsRef: MutableRefObject<QueuedRun[]>;
   serverRunActiveRef: MutableRefObject<boolean>;
-  setRunStatus: (status: RunStatusDto) => void;
-  appendRuntimeEvent: (input: RuntimeEventInputDto) => void;
-  setNodeStatus: (input: SetNodeStatusInputDto) => void;
+  setRunStatus: (status: RunStatus) => void;
+  appendRuntimeEvent: (input: RuntimeEventInput) => void;
+  setNodeStatus: (input: SetNodeStatusInput) => void;
   setRuntimeState: Dispatch<SetStateAction<RuntimeState>>;
   setPathConfigs: Dispatch<SetStateAction<Record<string, PathConfig>>>;
   setPathDebugSnapshots: Dispatch<SetStateAction<Record<string, PathDebugSnapshot>>>;
@@ -170,7 +168,7 @@ export interface UseAiPathsRuntimeResult {
   handleResumeRun: () => void;
   handleStepRun: (triggerNode?: AiNode) => void;
   handleCancelRun: () => void;
-  runStatus: RunStatusDto;
+  runStatus: RunStatus;
   handleSendToAi: (sourceNodeId: string, prompt: string) => Promise<void>;
   sendingToAi: boolean;
   runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;

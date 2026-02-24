@@ -7,7 +7,7 @@ import { TRIGGER_EVENTS, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Label, SelectSimple, Card } from '@/shared/ui';
+import { Label, SelectSimple, Card, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -80,9 +80,9 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>Trigger Action</Label>
+      <FormField label='Trigger Action'>
         <SelectSimple size='sm'
+          variant='subtle'
           value={triggerConfig.event}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -97,13 +97,13 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
             label: event.label
           }))}
           placeholder='Select action'
-          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
         />
-      </div>
-      <div>
-        <Label className='text-xs text-gray-400'>Context Source</Label>
+      </FormField>
+      
+      <FormField label='Context Source'>
         <SelectSimple
           size='sm'
+          variant='subtle'
           value={triggerConfig.contextMode ?? 'trigger_only'}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -131,9 +131,9 @@ export function TriggerNodeConfigSection(): React.JSX.Element | null {
             },
           ]}
           placeholder='Select context source'
-          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
         />
-      </div>
+      </FormField>
+
       {isScheduled ? (
         <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
           <div className='text-[10px] font-semibold uppercase tracking-wide text-amber-200'>

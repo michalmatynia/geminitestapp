@@ -16,7 +16,7 @@ import {
 } from '@/features/ai/ai-paths/lib/core/playwright/script-templates';
 import { usePlaywrightPersonas } from '@/features/playwright/hooks/usePlaywrightPersonas';
 import { playwrightSettingsSchema } from '@/shared/contracts/playwright';
-import { Button, Input, Label, LoadingState, SelectSimple, Textarea } from '@/shared/ui';
+import { Button, Input, Label, LoadingState, SelectSimple, Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -214,36 +214,35 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4' data-testid='playwright-node-config'>
-      <div className='flex items-start justify-between gap-4'>
-        <div className='space-y-1'>
-          <Label className='text-xs text-gray-400'>Playwright Persona</Label>
-          <div className='text-[11px] text-gray-500'>
-            Choose an existing persona to steer browser fidelity and behavior defaults.
-          </div>
-        </div>
-        <Button
-          asChild
-          variant='outline'
-          size='sm'
-          className='border-border text-xs text-gray-200'
-        >
-          <Link href='/admin/settings/playwright'>Manage Personas</Link>
-        </Button>
-      </div>
-
-      <SelectSimple
-        size='sm'
-        value={playwrightConfig.personaId ? playwrightConfig.personaId : RUNTIME_PERSONA_VALUE}
-        onValueChange={(value: string): void =>
-          updateConfig({
-            personaId: value === RUNTIME_PERSONA_VALUE ? '' : value,
-          })
+      <FormField 
+        label='Playwright Persona' 
+        description='Choose an existing persona to steer browser fidelity and behavior defaults.'
+        actions={
+          <Button
+            asChild
+            variant='outline'
+            size='xs'
+            className='h-7'
+          >
+            <Link href='/admin/settings/playwright'>Manage Personas</Link>
+          </Button>
         }
-        options={personaOptions}
-        placeholder='Select persona'
-        dataDocId='playwright_persona_select'
-        ariaLabel='Playwright persona'
-      />
+      >
+        <SelectSimple
+          size='sm'
+          variant='subtle'
+          value={playwrightConfig.personaId ? playwrightConfig.personaId : RUNTIME_PERSONA_VALUE}
+          onValueChange={(value: string): void =>
+            updateConfig({
+              personaId: value === RUNTIME_PERSONA_VALUE ? '' : value,
+            })
+          }
+          options={personaOptions}
+          placeholder='Select persona'
+          dataDocId='playwright_persona_select'
+          ariaLabel='Playwright persona'
+        />
+      </FormField>
 
       {personasQuery.isLoading ? (
         <LoadingState message='Loading personas...' size='sm' className='py-2' />
@@ -263,8 +262,8 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
           className='rounded-md border border-sky-500/30 bg-sky-500/10 px-3 py-2'
           data-testid='playwright-persona-fidelity'
         >
-          <div className='text-[10px] uppercase tracking-wide text-sky-200'>Persona Fidelity</div>
-          <div className='mt-1 flex flex-wrap gap-2 text-[11px] text-sky-100'>
+          <div className='text-[10px] uppercase tracking-wide font-semibold text-sky-200'>Persona Fidelity</div>
+          <div className='mt-1.5 flex flex-wrap gap-2 text-[11px] text-sky-100'>
             {selectedPersonaFidelity.map((entry) => (
               <span key={entry} className='rounded border border-sky-400/40 bg-sky-500/10 px-2 py-0.5'>
                 {entry}
@@ -275,22 +274,21 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
       ) : null}
 
       <div className='grid gap-3 sm:grid-cols-2'>
-        <div>
-          <Label className='text-xs text-gray-400'>Browser Engine</Label>
+        <FormField label='Browser Engine'>
           <SelectSimple
             size='sm'
+            variant='subtle'
             value={playwrightConfig.browserEngine ?? 'chromium'}
             onValueChange={(value: string): void =>
               updateConfig({ browserEngine: value as PlaywrightConfig['browserEngine'] })
             }
             options={BROWSER_ENGINE_OPTIONS}
-            className='mt-2'
           />
-        </div>
-        <div>
-          <Label className='text-xs text-gray-400'>Timeout (ms)</Label>
+        </FormField>
+        <FormField label='Timeout (ms)'>
           <Input
-            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+            variant='subtle'
+            size='sm'
             type='number'
             min={1000}
             step={1000}
@@ -305,30 +303,27 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
               });
             }}
           />
-        </div>
+        </FormField>
       </div>
 
-      <div>
-        <Label className='text-xs text-gray-400'>Start URL Template (optional)</Label>
+      <FormField label='Start URL Template (optional)'>
         <Input
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={playwrightConfig.startUrlTemplate ?? ''}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateConfig({ startUrlTemplate: event.target.value })
           }
           placeholder='https://example.com/{{entityId}}'
         />
-      </div>
+      </FormField>
 
       <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
         <span>Wait for result</span>
         <Button
           type='button'
-          className={`rounded border px-3 py-1 text-xs ${
-            playwrightConfig.waitForResult !== false
-              ? 'text-emerald-200 hover:bg-emerald-500/10'
-              : 'text-gray-300 hover:bg-muted/50'
-          }`}
+          variant={playwrightConfig.waitForResult !== false ? 'success' : 'default'}
+          size='xs'
           onClick={(): void =>
             updateConfig({ waitForResult: playwrightConfig.waitForResult === false })
           }
@@ -337,30 +332,27 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
         </Button>
       </div>
 
-      <div>
-        <div className='rounded-md border border-border/70 bg-card/40 px-3 py-3'>
-          <div className='flex items-start justify-between gap-2'>
-            <div>
-              <Label className='text-xs text-gray-300'>Script Template</Label>
-              <p className='mt-1 text-[11px] text-gray-500'>
-                Start from a tested automation pattern and customize it.
-              </p>
-            </div>
+      <div className='rounded-md border border-border/70 bg-card/40 p-3'>
+        <FormField 
+          label='Script Template'
+          description='Start from a tested automation pattern and customize it.'
+          actions={
             <Button
               type='button'
-              size='sm'
+              size='xs'
               variant='outline'
-              className='border-border text-[11px] text-gray-200'
+              className='h-7'
               onClick={applyScriptTemplate}
               disabled={!selectedTemplate}
               data-doc-id='playwright_script_template_apply'
             >
-              Apply Script Template
+              Apply Template
             </Button>
-          </div>
+          }
+        >
           <SelectSimple
-            className='mt-2'
             size='sm'
+            variant='subtle'
             value={selectedTemplateId}
             onValueChange={setSelectedTemplateId}
             options={scriptTemplateOptions}
@@ -368,100 +360,96 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
             dataDocId='playwright_script_template_select'
             ariaLabel='Playwright script template'
           />
-          {selectedTemplate ? (
-            <p
-              className='mt-2 text-[11px] text-gray-400'
-              data-testid='playwright-script-template-description'
-            >
-              {selectedTemplate.description}
-            </p>
-          ) : (
-            <p className='mt-2 text-[11px] text-gray-500'>
-              Current script does not match a built-in template.
-            </p>
-          )}
-        </div>
+        </FormField>
+        {selectedTemplate ? (
+          <p
+            className='mt-2 text-[11px] text-gray-400 italic'
+            data-testid='playwright-script-template-description'
+          >
+            {selectedTemplate.description}
+          </p>
+        ) : (
+          <p className='mt-2 text-[11px] text-gray-500 italic'>
+            Current script does not match a built-in template.
+          </p>
+        )}
       </div>
 
-      <div>
-        <Label className='text-xs text-gray-400'>Script</Label>
+      <FormField 
+        label='Script' 
+        description='Script must export a default async function. Use emit("result", value) to publish outputs.'
+      >
         <Textarea
+          variant='subtle'
+          size='sm'
           data-testid='playwright-script-editor'
-          className='mt-2 min-h-[220px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
+          className='min-h-[220px] font-mono'
           value={playwrightConfig.script}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateConfig({ script: event.target.value })
           }
           placeholder='export default async function run({ page, input, emit, artifacts, log }) { ... }'
         />
-        <p className='mt-1 text-[11px] text-gray-500'>
-          Script must export a default async function. Use `emit("result", value)` to publish outputs.
-        </p>
-      </div>
+      </FormField>
 
       <div className='grid gap-3 sm:grid-cols-2'>
-        <div>
-          <Label className='text-xs text-gray-400'>Launch Options (JSON)</Label>
+        <FormField label='Launch Options (JSON)' error={launchJsonError ?? undefined}>
           <Textarea
-            className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
+            variant='subtle'
+            size='xs'
+            className='min-h-[120px] font-mono'
             value={playwrightConfig.launchOptionsJson ?? '{}'}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
               updateConfig({ launchOptionsJson: event.target.value })
             }
           />
-          {launchJsonError ? (
-            <p className='mt-1 text-[11px] text-rose-300'>{launchJsonError}</p>
-          ) : null}
-        </div>
-        <div>
-          <Label className='text-xs text-gray-400'>Context Options (JSON)</Label>
+        </FormField>
+        <FormField label='Context Options (JSON)' error={contextJsonError ?? undefined}>
           <Textarea
-            className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
+            variant='subtle'
+            size='xs'
+            className='min-h-[120px] font-mono'
             value={playwrightConfig.contextOptionsJson ?? '{}'}
             onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
               updateConfig({ contextOptionsJson: event.target.value })
             }
           />
-          {contextJsonError ? (
-            <p className='mt-1 text-[11px] text-rose-300'>{contextJsonError}</p>
-          ) : null}
-        </div>
+        </FormField>
       </div>
 
-      <div>
-        <div className='flex items-center justify-between gap-2'>
-          <Label className='text-xs text-gray-400'>Settings Overrides (JSON)</Label>
+      <FormField 
+        label='Settings Overrides (JSON)' 
+        description='Merges into selected persona settings at runtime.'
+        error={parsedSettingsOverrides.error ?? undefined}
+        actions={
           <Button
             type='button'
-            size='sm'
+            size='xs'
             variant='outline'
-            className='border-border text-[11px] text-gray-200'
+            className='h-7'
             onClick={applySettingsOverrides}
             disabled={Boolean(parsedSettingsOverrides.error)}
           >
             Apply overrides
           </Button>
-        </div>
+        }
+      >
         <Textarea
+          variant='subtle'
+          size='xs'
           data-testid='playwright-settings-overrides-editor'
-          className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
+          className='min-h-[120px] font-mono'
           value={settingsOverridesDraft}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             setSettingsOverridesDraft(event.target.value)
           }
           onBlur={applySettingsOverrides}
         />
-        <p className='mt-1 text-[11px] text-gray-500'>
-          Merges into selected persona settings at runtime.
-        </p>
-        {parsedSettingsOverrides.error ? (
-          <p className='mt-1 text-[11px] text-rose-300'>{parsedSettingsOverrides.error}</p>
-        ) : null}
-      </div>
+      </FormField>
 
-      <div>
-        <Label className='text-xs text-gray-400'>Capture Artifacts</Label>
-        <div className='mt-2 grid gap-2 sm:grid-cols-2'>
+      <div className='space-y-3 pt-2 border-t border-border/20'>
+        <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider'>Capture Artifacts</div>
+        <div className='grid gap-2 sm:grid-cols-2'>
           {CAPTURE_OPTIONS.map((option) => {
             const enabled = captureConfig[option.key] === true;
             return (
@@ -481,7 +469,7 @@ export function PlaywrightNodeConfigSection(): React.JSX.Element | null {
                   <span className='block font-medium'>{option.label}</span>
                   <span className='block text-[10px] text-gray-400'>{option.description}</span>
                 </span>
-                <span className='text-[10px] uppercase tracking-wide'>
+                <span className='text-[10px] uppercase font-bold tracking-wide'>
                   {enabled ? 'On' : 'Off'}
                 </span>
               </Button>

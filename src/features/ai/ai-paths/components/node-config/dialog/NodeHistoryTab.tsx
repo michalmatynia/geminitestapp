@@ -18,7 +18,8 @@ export function NodeHistoryTab(): React.JSX.Element | null {
         </div>
         <Button
           type='button'
-          className='rounded-md border border-border px-3 py-1 text-xs text-gray-300 hover:bg-card/60'
+          variant='outline'
+          size='sm'
           onClick={() => {
             void clearNodeHistory(selectedNode.id);
           }}

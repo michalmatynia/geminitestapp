@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import { Input, Label, Textarea } from '@/shared/ui';
+import { Input, Label, Textarea, Checkbox, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -40,38 +40,40 @@ export function NodeNotesTab(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div className='space-y-2'>
-        <Label className='text-xs text-gray-400'>Node Notes</Label>
+      <FormField label='Node Notes'>
         <Textarea
+          variant='subtle'
+          size='sm'
           value={noteText}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => {
             updateSelectedNodeConfig({ notes: { text: event.target.value } });
           }}
           placeholder='Add notes about this node...'
-          className='min-h-[140px] text-xs'
+          className='min-h-[140px]'
         />
-      </div>
+      </FormField>
 
-      <label className='flex items-center gap-2 text-xs text-gray-300'>
-        <input
-          type='checkbox'
+      <div className='flex items-center gap-3 py-1'>
+        <Checkbox
+          id='showNoteOnCanvas'
           checked={showOnCanvas}
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            updateSelectedNodeConfig({ notes: { showOnCanvas: event.target.checked } });
+          onCheckedChange={(checked: boolean) => {
+            updateSelectedNodeConfig({ notes: { showOnCanvas: checked } });
           }}
         />
-        Show note on canvas
-      </label>
+        <Label htmlFor='showNoteOnCanvas' className='text-xs font-medium text-gray-300'>
+          Show note on canvas
+        </Label>
+      </div>
 
-      <div className='space-y-2'>
-        <div className='text-xs text-gray-400'>Note color</div>
+      <FormField label='Note color'>
         <div className='flex flex-wrap items-center gap-2'>
           {NOTE_COLOR_SWATCHES.map((swatch: string) => (
             <button
               key={swatch}
               type='button'
-              className={`h-7 w-7 rounded border ${
-                noteColor === swatch ? 'border-white/70 ring-2 ring-white/40' : 'border-border'
+              className={`h-7 w-7 rounded border transition-all ${
+                noteColor === swatch ? 'border-white ring-2 ring-white/20' : 'border-border/60 hover:border-white/40'
               }`}
               style={{ backgroundColor: swatch }}
               onClick={() => updateSelectedNodeConfig({ notes: { color: swatch } })}
@@ -82,18 +84,21 @@ export function NodeNotesTab(): React.JSX.Element | null {
           <div className='flex items-center gap-2'>
             <Input
               type='color'
+              variant='subtle'
+              size='sm'
               value={noteColor}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                 updateSelectedNodeConfig({ notes: { color: event.target.value } });
               }}
-              className='h-8 w-10 cursor-pointer border-border bg-transparent p-1'
+              className='h-8 w-10 cursor-pointer p-1'
             />
-            <span className='text-[11px] text-gray-400'>{noteColor}</span>
+            <span className='text-[11px] text-gray-400 font-mono'>{noteColor}</span>
           </div>
         </div>
-        <div className='rounded border border-border px-3 py-2 text-[11px] text-gray-900' style={previewStyle}>
-          {noteText.trim() ? noteText : 'Preview: your note will appear here.'}
-        </div>
+      </FormField>
+      
+      <div className='rounded border border-border/60 px-3 py-2 text-[11px] text-gray-900 shadow-sm' style={previewStyle}>
+        {noteText.trim() ? noteText : 'Preview: your note will appear here.'}
       </div>
     </div>
   );

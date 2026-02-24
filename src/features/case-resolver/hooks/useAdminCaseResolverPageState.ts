@@ -45,6 +45,7 @@ import type {
   CaseResolverFile,
   CaseResolverGraph,
   CaseResolverIdentifier,
+  CaseResolverPartyReference,
   CaseResolverRelationGraph,
   CaseResolverTag,
   CaseResolverWorkspace,
@@ -106,23 +107,44 @@ const sanitizeDocumentExportBaseName = (value: string): string => {
     .trim() || 'Document';
 };
 
+const buildPartyAddressBlock = (
+  filemakerDatabase: FilemakerDatabase,
+  reference: CaseResolverPartyReference | null | undefined,
+): string => {
+  if (!reference) return '';
+  const lines: string[] = [];
+  if (reference.kind === 'person') {
+    const person = filemakerDatabase.persons.find((p) => p.id === reference.id);
+    if (!person) return '';
+    const name = `${person.firstName} ${person.lastName}`.trim();
+    if (name) lines.push(name);
+    const streetLine = `${person.street} ${person.streetNumber}`.trim();
+    if (streetLine) lines.push(streetLine);
+    const cityLine = `${person.postalCode} ${person.city}`.trim();
+    if (cityLine) lines.push(cityLine);
+    if (person.country.trim()) lines.push(person.country.trim());
+  } else if (reference.kind === 'organization') {
+    const org = filemakerDatabase.organizations.find((o) => o.id === reference.id);
+    if (!org) return '';
+    if (org.name.trim()) lines.push(org.name.trim());
+    const streetLine = `${org.street} ${org.streetNumber}`.trim();
+    if (streetLine) lines.push(streetLine);
+    const cityLine = `${org.postalCode} ${org.city}`.trim();
+    if (cityLine) lines.push(cityLine);
+    if (org.country.trim()) lines.push(org.country.trim());
+  }
+  return lines.join('\n');
+};
+
 const buildDraftPdfPreviewMarkup = (
   draft: CaseResolverFileEditDraft,
   filemakerDatabase: FilemakerDatabase,
 ): string => {
-  const addresserLabel =
-    resolveFilemakerPartyLabel(filemakerDatabase, draft.addresser
-      ? { ...draft.addresser, kind: draft.addresser.kind as FilemakerPartyKind }
-      : null) ?? '';
-  const addresseeLabel =
-    resolveFilemakerPartyLabel(filemakerDatabase, draft.addressee
-      ? { ...draft.addressee, kind: draft.addressee.kind as FilemakerPartyKind }
-      : null) ?? '';
   return buildDocumentPdfMarkup({
     documentDate: draft.documentDate?.isoDate ?? '',
     documentPlace: draft.documentCity ?? null,
-    addresserLabel,
-    addresseeLabel,
+    addresserLabel: buildPartyAddressBlock(filemakerDatabase, draft.addresser),
+    addresseeLabel: buildPartyAddressBlock(filemakerDatabase, draft.addressee),
     documentContent: draft.documentContentHtml ?? draft.documentContent ?? '',
   });
 };

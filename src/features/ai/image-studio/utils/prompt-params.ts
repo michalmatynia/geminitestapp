@@ -1,16 +1,10 @@
 import type { 
-  ExtractParamsResultDto,
-  ParamSpecDto,
-  ParamSpecKindDto,
-  ParamIssueDto,
-  ParamIssueSeverityDto
+  ExtractParamsResult,
+  ParamSpec,
+  ParamSpecKind,
+  ParamIssue,
+  ParamIssueSeverity
 } from '@/shared/contracts/prompt-engine';
-
-export type ExtractParamsResult = ExtractParamsResultDto;
-export type ParamSpec = ParamSpecDto;
-export type ParamSpecKind = ParamSpecKindDto;
-export type ParamIssue = ParamIssueDto;
-export type ParamIssueSeverity = ParamIssueSeverityDto;
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);

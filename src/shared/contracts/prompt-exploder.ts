@@ -8,10 +8,9 @@ import { validatorScopeSchema } from './admin';
  */
 
 export const promptExploderSegmentTypeSchema = z.enum(['static', 'dynamic', 'conditional', 'list', 'parameter_block', 'metadata', 'sequence', 'qa_matrix', 'hierarchical_list', 'referential_list', 'conditional_list', 'assigned_text', 'prompt_exploder']);
-export type PromptExploderSegmentTypeDto = z.infer<typeof promptExploderSegmentTypeSchema>;
-export type PromptExploderSegmentType = PromptExploderSegmentTypeDto;
+export type PromptExploderSegmentType = z.infer<typeof promptExploderSegmentTypeSchema>;
 
-export const promptExploderListItemSchema: z.ZodType<PromptExploderListItemDto> = z.lazy(() => z.object({
+export const promptExploderListItemSchema: z.ZodType<PromptExploderListItem> = z.lazy(() => z.object({
   id: z.string(),
   label: z.string().optional(),
   value: z.string().optional(),
@@ -25,7 +24,7 @@ export const promptExploderListItemSchema: z.ZodType<PromptExploderListItemDto> 
   children: z.array(promptExploderListItemSchema).default([]),
 }));
 
-export interface PromptExploderListItemDto {
+export interface PromptExploderListItem {
   id: string;
   label?: string;
   value?: string;
@@ -36,26 +35,21 @@ export interface PromptExploderListItemDto {
   referencedParamPath?: string | null;
   referencedComparator?: PromptExploderLogicalComparator | null;
   referencedValue?: unknown | null;
-  children: PromptExploderListItemDto[];
+  children: PromptExploderListItem[];
 }
-
-export type PromptExploderListItem = PromptExploderListItemDto;
 
 /**
  * Prompt Exploder Logical DTOs
  */
 
 export const promptExploderLogicalOperatorSchema = z.enum(['if', 'only_if', 'unless', 'when']);
-export type PromptExploderLogicalOperatorDto = z.infer<typeof promptExploderLogicalOperatorSchema>;
-export type PromptExploderLogicalOperator = PromptExploderLogicalOperatorDto;
+export type PromptExploderLogicalOperator = z.infer<typeof promptExploderLogicalOperatorSchema>;
 
 export const promptExploderLogicalComparatorSchema = z.enum(['truthy', 'falsy', 'equals', 'not_equals', 'gt', 'gte', 'lt', 'lte', 'contains']);
-export type PromptExploderLogicalComparatorDto = z.infer<typeof promptExploderLogicalComparatorSchema>;
-export type PromptExploderLogicalComparator = PromptExploderLogicalComparatorDto;
+export type PromptExploderLogicalComparator = z.infer<typeof promptExploderLogicalComparatorSchema>;
 
 export const promptExploderLogicalJoinSchema = z.enum(['and', 'or']);
-export type PromptExploderLogicalJoinDto = z.infer<typeof promptExploderLogicalJoinSchema>;
-export type PromptExploderLogicalJoin = PromptExploderLogicalJoinDto;
+export type PromptExploderLogicalJoin = z.infer<typeof promptExploderLogicalJoinSchema>;
 
 export const promptExploderLogicalConditionSchema = z.object({
   id: z.string(),
@@ -65,22 +59,20 @@ export const promptExploderLogicalConditionSchema = z.object({
   joinWithPrevious: promptExploderLogicalJoinSchema.nullable().optional(),
 });
 
-export type PromptExploderLogicalConditionDto = z.infer<typeof promptExploderLogicalConditionSchema>;
-export type PromptExploderLogicalCondition = PromptExploderLogicalConditionDto;
+export type PromptExploderLogicalCondition = z.infer<typeof promptExploderLogicalConditionSchema>;
 
 export const promptExploderLogicalJoinGroupSchema = z.object({
   type: z.enum(['AND', 'OR']), // Legacy if needed, but implementation uses PromptExploderLogicalJoin
   conditions: z.array(z.any()),
 });
 
-export type PromptExploderLogicalJoinGroupDto = z.infer<typeof promptExploderLogicalJoinGroupSchema>;
-export type PromptExploderLogicalJoinGroup = PromptExploderLogicalJoinGroupDto;
+export type PromptExploderLogicalJoinGroup = z.infer<typeof promptExploderLogicalJoinGroupSchema>;
 
 /**
  * Prompt Exploder Document Structure DTOs
  */
 
-export const promptExploderSubsectionSchema: z.ZodType<PromptExploderSubsectionDto> = z.lazy(() => z.object({
+export const promptExploderSubsectionSchema: z.ZodType<PromptExploderSubsection> = z.lazy(() => z.object({
   id: z.string(),
   title: z.string(),
   segments: z.array(z.lazy(() => promptExploderSegmentSchema)).optional(),
@@ -90,24 +82,21 @@ export const promptExploderSubsectionSchema: z.ZodType<PromptExploderSubsectionD
   guidance: z.string().nullable().optional(),
 }));
 
-export type PromptExploderSubsectionDto = {
+export interface PromptExploderSubsection {
   id: string;
   title: string;
-  segments?: PromptExploderSegmentDto[];
+  segments?: PromptExploderSegment[];
   code?: string | null;
-  items?: PromptExploderListItemDto[];
+  items?: PromptExploderListItem[];
   condition?: string | null;
   guidance?: string | null;
-};
-export type PromptExploderSubsection = PromptExploderSubsectionDto;
+}
 
 export const promptExploderBindingTypeSchema = z.enum(['text', 'number', 'boolean', 'json', 'list', 'depends_on', 'references']);
-export type PromptExploderBindingTypeDto = z.infer<typeof promptExploderBindingTypeSchema>;
-export type PromptExploderBindingType = PromptExploderBindingTypeDto;
+export type PromptExploderBindingType = z.infer<typeof promptExploderBindingTypeSchema>;
 
 export const promptExploderBindingOriginSchema = z.enum(['user', 'system', 'learned', 'inferred', 'manual', 'auto']);
-export type PromptExploderBindingOriginDto = z.infer<typeof promptExploderBindingOriginSchema>;
-export type PromptExploderBindingOrigin = PromptExploderBindingOriginDto;
+export type PromptExploderBindingOrigin = z.infer<typeof promptExploderBindingOriginSchema>;
 
 export const promptExploderParamUiControlSchema = z.enum([
   'text',
@@ -123,8 +112,7 @@ export const promptExploderParamUiControlSchema = z.enum([
   'rgb',
   'tuple2',
 ]);
-export type PromptExploderParamUiControlDto = z.infer<typeof promptExploderParamUiControlSchema>;
-export type PromptExploderParamUiControl = PromptExploderParamUiControlDto;
+export type PromptExploderParamUiControl = z.infer<typeof promptExploderParamUiControlSchema>;
 
 export const promptExploderBindingSchema = z.object({
   key: z.string().optional(),
@@ -144,10 +132,9 @@ export const promptExploderBindingSchema = z.object({
   targetLabel: z.string().optional(),
 });
 
-export type PromptExploderBindingDto = z.infer<typeof promptExploderBindingSchema>;
-export type PromptExploderBinding = PromptExploderBindingDto;
+export type PromptExploderBinding = z.infer<typeof promptExploderBindingSchema>;
 
-export const promptExploderSegmentSchema: z.ZodType<PromptExploderSegmentDto> = z.lazy(() => z.object({
+export const promptExploderSegmentSchema: z.ZodType<PromptExploderSegment> = z.lazy(() => z.object({
   id: z.string(),
   type: promptExploderSegmentTypeSchema,
   title: z.string().nullable().optional(),
@@ -180,15 +167,15 @@ export const promptExploderSegmentSchema: z.ZodType<PromptExploderSegmentDto> = 
   segments: z.array(promptExploderSegmentSchema).default([]),
 }));
 
-export interface PromptExploderSegmentDto {
+export interface PromptExploderSegment {
   id: string;
   type: PromptExploderSegmentType;
   title?: string | null;
   content?: string;
   condition?: string | null;
-  items: PromptExploderListItemDto[];
-  listItems: PromptExploderListItemDto[];
-  subsections: PromptExploderSubsectionDto[];
+  items: PromptExploderListItem[];
+  listItems: PromptExploderListItem[];
+  subsections: PromptExploderSubsection[];
   bindingKey?: string | null;
   text?: string | null;
   raw?: string | null;
@@ -210,10 +197,8 @@ export interface PromptExploderSegmentDto {
   ruleStack?: Record<string, unknown>;
   validationResults: string[];
   bindings?: Record<string, unknown>;
-  segments: PromptExploderSegmentDto[];
+  segments: PromptExploderSegment[];
 }
-
-export type PromptExploderSegment = PromptExploderSegmentDto;
 
 export const promptExploderDocumentSchema = dtoBaseSchema.extend({
   id: z.string().optional(),
@@ -240,16 +225,14 @@ export const promptExploderDocumentSchema = dtoBaseSchema.extend({
   lastReassembledAt: z.string().optional(),
 });
 
-export type PromptExploderDocumentDto = z.infer<typeof promptExploderDocumentSchema>;
-export type PromptExploderDocument = PromptExploderDocumentDto;
+export type PromptExploderDocument = z.infer<typeof promptExploderDocumentSchema>;
 
 /**
  * Prompt Exploder Pattern & Template DTOs
  */
 
 export const promptExploderPatternRuleMapSchema = z.record(z.string(), z.array(z.string()));
-export type PromptExploderPatternRuleMapDto = z.infer<typeof promptExploderPatternRuleMapSchema>;
-export type PromptExploderPatternRuleMap = PromptExploderPatternRuleMapDto;
+export type PromptExploderPatternRuleMap = z.infer<typeof promptExploderPatternRuleMapSchema>;
 
 export const promptExploderLearnedTemplateSchema = z.object({
   id: z.string(),
@@ -267,8 +250,7 @@ export const promptExploderLearnedTemplateSchema = z.object({
   updatedAt: z.string().optional(),
 });
 
-export type PromptExploderLearnedTemplateDto = z.infer<typeof promptExploderLearnedTemplateSchema>;
-export type PromptExploderLearnedTemplate = PromptExploderLearnedTemplateDto;
+export type PromptExploderLearnedTemplate = z.infer<typeof promptExploderLearnedTemplateSchema>;
 
 export const promptExploderPatternSnapshotSchema = z.object({
   id: z.string(),
@@ -281,8 +263,7 @@ export const promptExploderPatternSnapshotSchema = z.object({
   createdAt: z.string().optional(),
 });
 
-export type PromptExploderPatternSnapshotDto = z.infer<typeof promptExploderPatternSnapshotSchema>;
-export type PromptExploderPatternSnapshot = PromptExploderPatternSnapshotDto;
+export type PromptExploderPatternSnapshot = z.infer<typeof promptExploderPatternSnapshotSchema>;
 
 /**
  * Prompt Exploder Benchmark DTOs
@@ -296,16 +277,14 @@ export const promptExploderBenchmarkCaseConfigSchema = z.object({
   maxTokens: z.number().optional(),
 });
 
-export type PromptExploderBenchmarkCaseConfigDto = z.infer<typeof promptExploderBenchmarkCaseConfigSchema>;
-export type PromptExploderBenchmarkCaseConfig = PromptExploderBenchmarkCaseConfigDto;
+export type PromptExploderBenchmarkCaseConfig = z.infer<typeof promptExploderBenchmarkCaseConfigSchema>;
 
 export const promptExploderBenchmarkSuiteSchema = namedDtoSchema.extend({
   documentId: z.string(),
   cases: z.array(promptExploderBenchmarkCaseConfigSchema),
 });
 
-export type PromptExploderBenchmarkSuiteDto = z.infer<typeof promptExploderBenchmarkSuiteSchema>;
-export type PromptExploderBenchmarkSuite = PromptExploderBenchmarkSuiteDto;
+export type PromptExploderBenchmarkSuite = z.infer<typeof promptExploderBenchmarkSuiteSchema>;
 
 export const promptExploderBenchmarkSuggestionSchema = z.object({
   id: z.string().optional(),
@@ -328,7 +307,6 @@ export const promptExploderBenchmarkSuggestionSchema = z.object({
   matchedSequenceLabels: z.array(z.string()).optional(),
 });
 
-export type PromptExploderBenchmarkSuggestionDto = z.input<typeof promptExploderBenchmarkSuggestionSchema>;
 export type PromptExploderBenchmarkSuggestion = z.infer<typeof promptExploderBenchmarkSuggestionSchema>;
 
 /**
@@ -336,16 +314,13 @@ export type PromptExploderBenchmarkSuggestion = z.infer<typeof promptExploderBen
  */
 
 export const promptExploderOperationModeSchema = z.enum(['rules_only', 'hybrid', 'ai_assisted', 'manual', 'semi-auto', 'automatic']);
-export type PromptExploderOperationModeDto = z.infer<typeof promptExploderOperationModeSchema>;
-export type PromptExploderOperationMode = PromptExploderOperationModeDto;
+export type PromptExploderOperationMode = z.infer<typeof promptExploderOperationModeSchema>;
 
 export const promptExploderAiProviderSchema = z.enum(['auto', 'openai', 'anthropic', 'google', 'gemini', 'ollama']);
-export type PromptExploderAiProviderDto = z.infer<typeof promptExploderAiProviderSchema>;
-export type PromptExploderAiProvider = PromptExploderAiProviderDto;
+export type PromptExploderAiProvider = z.infer<typeof promptExploderAiProviderSchema>;
 
 export const promptExploderCaseResolverCaptureModeSchema = z.enum(['manual', 'assisted', 'fully-auto']);
-export type PromptExploderCaseResolverCaptureModeDto = z.infer<typeof promptExploderCaseResolverCaptureModeSchema>;
-export type PromptExploderCaseResolverCaptureMode = PromptExploderCaseResolverCaptureModeDto;
+export type PromptExploderCaseResolverCaptureMode = z.infer<typeof promptExploderCaseResolverCaptureModeSchema>;
 
 export const promptExploderValidationRuleStackSchema = z.union([
   z.string(),
@@ -356,16 +331,13 @@ export const promptExploderValidationRuleStackSchema = z.union([
   }),
 ]);
 
-export type PromptExploderValidationRuleStackDto = z.infer<typeof promptExploderValidationRuleStackSchema>;
-export type PromptExploderValidationRuleStack = string | PromptExploderValidationRuleStackDto;
+export type PromptExploderValidationRuleStack = string | z.infer<typeof promptExploderValidationRuleStackSchema>;
 
 export const promptExploderRuntimeValidationScopeSchema = z.enum(['segment', 'document', 'global', 'case_resolver_prompt_exploder', 'prompt_exploder']);
-export type PromptExploderRuntimeValidationScopeDto = z.infer<typeof promptExploderRuntimeValidationScopeSchema>;
-export type PromptExploderRuntimeValidationScope = PromptExploderRuntimeValidationScopeDto;
+export type PromptExploderRuntimeValidationScope = z.infer<typeof promptExploderRuntimeValidationScopeSchema>;
 
 export const promptExploderValidationStackResolutionReasonSchema = z.enum(['rule_passed', 'rule_failed', 'rule_skipped', 'exact_match', 'default_scope', 'scope_fallback', 'invalid_stack']);
-export type PromptExploderValidationStackResolutionReasonDto = z.infer<typeof promptExploderValidationStackResolutionReasonSchema>;
-export type PromptExploderValidationStackResolutionReason = PromptExploderValidationStackResolutionReasonDto;
+export type PromptExploderValidationStackResolutionReason = z.infer<typeof promptExploderValidationStackResolutionReasonSchema>;
 
 export const promptExploderValidationStackResolutionSchema = z.object({
   stack: z.union([z.string(), promptExploderValidationRuleStackSchema]).optional(),
@@ -384,16 +356,13 @@ export const promptExploderValidationStackResolutionSchema = z.object({
   list: z.any().optional(),
 });
 
-export type PromptExploderValidationStackResolutionDto = z.infer<typeof promptExploderValidationStackResolutionSchema>;
-export type PromptExploderValidationStackResolution = PromptExploderValidationStackResolutionDto;
+export type PromptExploderValidationStackResolution = z.infer<typeof promptExploderValidationStackResolutionSchema>;
 
 export const promptExploderRuntimeRuleProfileSchema = z.enum(['all', 'pattern_pack', 'learned_only']);
-export type PromptExploderRuntimeRuleProfileDto = z.infer<typeof promptExploderRuntimeRuleProfileSchema>;
-export type PromptExploderRuntimeRuleProfile = PromptExploderRuntimeRuleProfileDto;
+export type PromptExploderRuntimeRuleProfile = z.infer<typeof promptExploderRuntimeRuleProfileSchema>;
 
 export const promptExploderCaseResolverExtractionModeSchema = z.enum(['rules_only', 'rules_with_heuristics']);
-export type PromptExploderCaseResolverExtractionModeDto = z.infer<typeof promptExploderCaseResolverExtractionModeSchema>;
-export type PromptExploderCaseResolverExtractionMode = PromptExploderCaseResolverExtractionModeDto;
+export type PromptExploderCaseResolverExtractionMode = z.infer<typeof promptExploderCaseResolverExtractionModeSchema>;
 
 export const promptExploderSettingsSchema = z.object({
   version: z.number(),
@@ -429,7 +398,7 @@ export const promptExploderSettingsSchema = z.object({
   patternSnapshots: z.array(z.lazy(() => promptExploderPatternSnapshotSchema)).optional(),
 });
 
-export interface PromptExploderSettingsDto {
+export interface PromptExploderSettings {
   version: number;
   runtime: {
     ruleProfile: PromptExploderRuntimeRuleProfile;
@@ -450,7 +419,7 @@ export interface PromptExploderSettingsDto {
     minApprovalsForMatching: number;
     maxTemplates: number;
     autoActivateLearnedTemplates: boolean;
-    templates: PromptExploderLearnedTemplateDto[];
+    templates: PromptExploderLearnedTemplate[];
   };
   ai: {
     operationMode: PromptExploderOperationMode;
@@ -460,9 +429,8 @@ export interface PromptExploderSettingsDto {
     temperature: number;
     maxTokens: number;
   };
-  patternSnapshots?: PromptExploderPatternSnapshotDto[];
+  patternSnapshots?: PromptExploderPatternSnapshot[];
 }
-export type PromptExploderSettings = PromptExploderSettingsDto;
 
 /**
  * Case Resolver Capture DTOs
@@ -493,8 +461,7 @@ export const promptExploderCaseResolverPartyCandidateSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export type PromptExploderCaseResolverPartyCandidateDto = z.input<typeof promptExploderCaseResolverPartyCandidateSchema>;
-export type PromptExploderCaseResolverPartyCandidate = PromptExploderCaseResolverPartyCandidateDto;
+export type PromptExploderCaseResolverPartyCandidate = z.infer<typeof promptExploderCaseResolverPartyCandidateSchema>;
 
 export const promptExploderCaseResolverPartyConfigSchema = z.object({
   role: z.enum(['other', 'reference', 'addresser', 'addressee', 'subject']),
@@ -508,7 +475,7 @@ export const promptExploderCaseResolverPartyConfigSchema = z.object({
   candidates: z.array(promptExploderCaseResolverPartyCandidateSchema).optional(),
 });
 
-export type PromptExploderCaseResolverPartyConfigDto = z.infer<typeof promptExploderCaseResolverPartyConfigSchema>;
+export type PromptExploderCaseResolverPartyConfig = z.infer<typeof promptExploderCaseResolverPartyConfigSchema>;
 
 export const promptExploderCaseResolverPartyBundleSchema = z.object({
   addresser: promptExploderCaseResolverPartyCandidateSchema.optional(),
@@ -518,7 +485,7 @@ export const promptExploderCaseResolverPartyBundleSchema = z.object({
   other: promptExploderCaseResolverPartyCandidateSchema.optional(),
 });
 
-export type PromptExploderCaseResolverPartyBundleDto = z.infer<typeof promptExploderCaseResolverPartyBundleSchema>;
+export type PromptExploderCaseResolverPartyBundle = z.infer<typeof promptExploderCaseResolverPartyBundleSchema>;
 
 export const promptExploderCaseResolverPlaceDateSchema = z.object({
   city: z.string().optional(),
@@ -531,7 +498,7 @@ export const promptExploderCaseResolverPlaceDateSchema = z.object({
   sourceSequenceLabels: z.array(z.string()).optional(),
 });
 
-export interface PromptExploderCaseResolverPlaceDateDto {
+export interface PromptExploderCaseResolverPlaceDate {
   city?: string | undefined;
   day?: string | undefined;
   month?: string | undefined;
@@ -549,11 +516,11 @@ export const promptExploderCaseResolverMetadataSchema = z.object({
   placeDate: promptExploderCaseResolverPlaceDateSchema.optional(),
 });
 
-export interface PromptExploderCaseResolverMetadataDto {
-  parties?: PromptExploderCaseResolverPartyBundleDto | undefined;
+export interface PromptExploderCaseResolverMetadata {
+  parties?: PromptExploderCaseResolverPartyBundle | undefined;
   caseId?: string | undefined;
   documentType?: string | undefined;
-  placeDate?: PromptExploderCaseResolverPlaceDateDto | undefined;
+  placeDate?: PromptExploderCaseResolverPlaceDate | undefined;
 }
 
 /**
@@ -561,7 +528,7 @@ export interface PromptExploderCaseResolverMetadataDto {
  */
 
 export const promptExploderBridgePayloadStatusSchema = z.enum(['pending', 'applied', 'dismissed', 'failed']);
-export type PromptExploderBridgePayloadStatusDto = z.infer<typeof promptExploderBridgePayloadStatusSchema>;
+export type PromptExploderBridgePayloadStatus = z.infer<typeof promptExploderBridgePayloadStatusSchema>;
 
 export const promptExploderBridgeSourceSchema = z.enum([
   'manual',
@@ -576,7 +543,7 @@ export const promptExploderBridgeSourceSchema = z.enum([
   'image-studio',
   'case-resolver',
 ]);
-export type PromptExploderBridgeSourceDto = z.infer<typeof promptExploderBridgeSourceSchema>;
+export type PromptExploderBridgeSource = z.infer<typeof promptExploderBridgeSourceSchema>;
 
 export const promptExploderBridgeTargetSchema = z.enum([
   'studio',
@@ -588,7 +555,7 @@ export const promptExploderBridgeTargetSchema = z.enum([
   'prompt_exploder',
   'prompt-exploder',
 ]);
-export type PromptExploderBridgeTargetDto = z.infer<typeof promptExploderBridgeTargetSchema>;
+export type PromptExploderBridgeTarget = z.infer<typeof promptExploderBridgeTargetSchema>;
 
 export const promptExploderCaseResolverContextSchema = z.object({
   fileId: z.string().optional(),
@@ -597,7 +564,7 @@ export const promptExploderCaseResolverContextSchema = z.object({
   documentVersionAtStart: z.number().optional(),
 });
 
-export interface PromptExploderCaseResolverContextDto {
+export interface PromptExploderCaseResolverContext {
   fileId?: string | undefined;
   fileName?: string | undefined;
   sessionId?: string | undefined;
@@ -620,21 +587,21 @@ export const promptExploderBridgePayloadSchema = z.object({
   caseResolverMetadata: promptExploderCaseResolverMetadataSchema.optional(),
 });
 
-export interface PromptExploderBridgePayloadDto {
+export interface PromptExploderBridgePayload {
   prompt: string;
-  source: PromptExploderBridgeSourceDto;
-  target: PromptExploderBridgeTargetDto;
+  source: PromptExploderBridgeSource;
+  target: PromptExploderBridgeTarget;
   createdAt: string;
   transferId?: string | undefined;
   payloadVersion?: number | undefined;
   expiresAt?: string | undefined;
-  status?: PromptExploderBridgePayloadStatusDto | undefined;
+  status?: PromptExploderBridgePayloadStatus | undefined;
   appliedAt?: string | undefined;
   checksum?: string | undefined;
-  caseResolverContext?: PromptExploderCaseResolverContextDto | undefined;
-  caseResolverParties?: PromptExploderCaseResolverPartyBundleDto | undefined;
-  caseResolverMetadata?: PromptExploderCaseResolverMetadataDto | undefined;
+  caseResolverContext?: PromptExploderCaseResolverContext | undefined;
+  caseResolverParties?: PromptExploderCaseResolverPartyBundle | undefined;
+  caseResolverMetadata?: PromptExploderCaseResolverMetadata | undefined;
 }
 
-export type PromptExploderCaseResolverPartyKindDto = 'person' | 'organization';
-export type PromptExploderCaseResolverPartyRoleDto = 'addresser' | 'addressee' | 'subject' | 'reference' | 'other';
+export type PromptExploderCaseResolverPartyKind = 'person' | 'organization';
+export type PromptExploderCaseResolverPartyRole = 'addresser' | 'addressee' | 'subject' | 'reference' | 'other';

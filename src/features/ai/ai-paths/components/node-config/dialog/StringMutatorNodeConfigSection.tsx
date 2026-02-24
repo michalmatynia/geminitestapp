@@ -111,6 +111,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                   <div className='flex items-center gap-2'>
                     <FormField label={`Operation ${index + 1}`} className='flex-row items-center gap-2 space-y-0'>
                       <SelectSimple size='sm'
+                        variant='subtle'
                         value={operation.type}
                         onValueChange={(value: string): void =>
                           replaceOperation(index, value as StringMutatorOperation['type'])
@@ -119,14 +120,15 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           value,
                           label,
                         }))}
-                        triggerClassName='h-8 w-[160px] border-border bg-card/70 text-xs text-white'
-                        contentClassName='border-border bg-gray-900'
+                        triggerClassName='w-[160px]'
                       />
                     </FormField>
                   </div>
                   <Button
                     type='button'
-                    className='rounded-md border border-rose-500/40 px-2 py-1 text-[11px] text-rose-200 hover:bg-rose-500/10'
+                    variant='ghost'
+                    size='xs'
+                    className='h-7 text-red-400 hover:text-red-300 hover:bg-red-500/10'
                     onClick={() => removeOperation(index)}
                   >
                     Remove
@@ -137,6 +139,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                   <div className='mt-3'>
                     <FormField label='Trim Mode'>
                       <SelectSimple size='sm'
+                        variant='subtle'
                         value={operation.mode ?? 'both'}
                         onValueChange={(value: string): void =>
                           updateOperation(index, { mode: value as 'both' | 'start' | 'end' })
@@ -146,8 +149,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           { value: 'start', label: 'Start' },
                           { value: 'end', label: 'End' },
                         ]}
-                        triggerClassName='h-8 w-[200px] border-border bg-card/70 text-xs text-white'
-                        contentClassName='border-border bg-gray-900'
+                        triggerClassName='w-[200px]'
                       />
                     </FormField>
                   </div>
@@ -157,7 +159,8 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                   <div className='mt-3 grid gap-3 md:grid-cols-2'>
                     <FormField label={operation.type === 'remove' ? 'Search' : 'Find'}>
                       <Input
-                        className='h-8 w-full border-border bg-card/70 text-xs text-white'
+                        variant='subtle'
+                        size='sm'
                         value={operation.search ?? ''}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                           updateOperation(index, { search: event.target.value })
@@ -168,7 +171,8 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                     {operation.type === 'replace' && (
                       <FormField label='Replace With'>
                         <Input
-                          className='h-8 w-full border-border bg-card/70 text-xs text-white'
+                          variant='subtle'
+                          size='sm'
                           value={operation.replace ?? ''}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             updateOperation(index, { replace: event.target.value })
@@ -179,6 +183,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                     )}
                     <FormField label='Match Mode'>
                       <SelectSimple size='sm'
+                        variant='subtle'
                         value={operation.matchMode ?? 'all'}
                         onValueChange={(value: string): void =>
                           updateOperation(index, { matchMode: value as 'first' | 'all' })
@@ -187,8 +192,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           { value: 'first', label: 'First Match' },
                           { value: 'all', label: 'All Matches' },
                         ]}
-                        triggerClassName='h-8 w-full border-border bg-card/70 text-xs text-white'
-                        contentClassName='border-border bg-gray-900'
+                        triggerClassName='w-full'
                       />
                     </FormField>
                     
@@ -199,18 +203,20 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                       onCheckedChange={(checked: boolean): void =>
                         updateOperation(index, { useRegex: checked })
                       }
-                      className='bg-card/70'
+                      className='bg-card/70 border-border/40'
                     />
 
                     {operation.useRegex && (
                       <FormField label='Regex Flags'>
                         <Input
-                          className='h-8 w-full border-border bg-card/70 text-xs text-white'
+                          variant='subtle'
+                          size='sm'
                           value={operation.flags ?? ''}
                           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                             updateOperation(index, { flags: event.target.value })
                           }
                           placeholder='gim'
+                          className='font-mono'
                         />
                       </FormField>
                     )}
@@ -221,6 +227,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                   <div className='mt-3'>
                     <FormField label='Case Mode'>
                       <SelectSimple size='sm'
+                        variant='subtle'
                         value={operation.mode ?? 'lower'}
                         onValueChange={(value: string): void =>
                           updateOperation(index, { mode: value as 'upper' | 'lower' | 'title' })
@@ -230,8 +237,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           { value: 'upper', label: 'Uppercase' },
                           { value: 'title', label: 'Title Case' },
                         ]}
-                        triggerClassName='h-8 w-[200px] border-border bg-card/70 text-xs text-white'
-                        contentClassName='border-border bg-gray-900'
+                        triggerClassName='w-[200px]'
                       />
                     </FormField>
                   </div>
@@ -241,7 +247,8 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                   <div className='mt-3 grid gap-3 md:grid-cols-2'>
                     <FormField label='Append Value'>
                       <Input
-                        className='h-8 w-full border-border bg-card/70 text-xs text-white'
+                        variant='subtle'
+                        size='sm'
                         value={operation.value ?? ''}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                           updateOperation(index, { value: event.target.value })
@@ -251,6 +258,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                     </FormField>
                     <FormField label='Position'>
                       <SelectSimple size='sm'
+                        variant='subtle'
                         value={operation.position ?? 'suffix'}
                         onValueChange={(value: string): void =>
                           updateOperation(index, { position: value as 'prefix' | 'suffix' })
@@ -259,8 +267,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                           { value: 'prefix', label: 'Prefix' },
                           { value: 'suffix', label: 'Suffix' },
                         ]}
-                        triggerClassName='h-8 w-full border-border bg-card/70 text-xs text-white'
-                        contentClassName='border-border bg-gray-900'
+                        triggerClassName='w-full'
                       />
                     </FormField>
                   </div>
@@ -270,7 +277,8 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                   <div className='mt-3 grid gap-3 md:grid-cols-2'>
                     <FormField label='Start Index'>
                       <Input
-                        className='h-8 w-full border-border bg-card/70 text-xs text-white'
+                        variant='subtle'
+                        size='sm'
                         value={operation.start ?? ''}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                           const val = parseOptionalNumber(event.target.value);
@@ -281,7 +289,8 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
                     </FormField>
                     <FormField label='End Index'>
                       <Input
-                        className='h-8 w-full border-border bg-card/70 text-xs text-white'
+                        variant='subtle'
+                        size='sm'
                         value={operation.end ?? ''}
                         onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
                           const val = parseOptionalNumber(event.target.value);
@@ -299,6 +308,7 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
 
         <div className='mt-4 flex flex-wrap items-center gap-2'>
           <SelectSimple size='sm'
+            variant='subtle'
             value={newType}
             onValueChange={(value: string): void =>
               setNewType(value as StringMutatorOperation['type'])
@@ -307,12 +317,12 @@ export function StringMutatorNodeConfigSection(): React.JSX.Element | null {
               value,
               label,
             }))}
-            triggerClassName='h-8 w-[180px] border-border bg-card/70 text-xs text-white'
-            contentClassName='border-border bg-gray-900'
+            triggerClassName='w-[180px]'
           />
           <Button
             type='button'
-            className='rounded-md border text-xs text-white hover:bg-muted/60'
+            variant='outline'
+            size='sm'
             onClick={() => updateOperations([...operations, createOperation(newType)])}
           >
             Add Operation

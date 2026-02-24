@@ -2,7 +2,7 @@ import 'server-only';
 
 import { ObjectId } from 'mongodb';
 
-import type { SettingRecordDto } from '@/shared/contracts/settings';
+import type { SettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import {
@@ -42,8 +42,6 @@ import {
   needsRuntimeInputContractsUpgrade,
   upgradeRuntimeInputContractsConfig,
 } from './settings-store-runtime-input-contracts';
-
-export type AiPathsSettingRecord = SettingRecordDto;
 
 type MongoAiPathsSettingDoc = {
   _id?: string | ObjectId;

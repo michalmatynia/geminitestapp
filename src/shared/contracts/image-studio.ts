@@ -378,8 +378,7 @@ export const compositeLayerConfigSchema = z.object({
   blendMode: z.enum(['normal', 'multiply', 'screen', 'overlay']).optional(),
 });
 
-export type CompositeLayerConfigDto = z.infer<typeof compositeLayerConfigSchema>;
-export type CompositeLayerConfig = CompositeLayerConfigDto;
+export type CompositeLayerConfig = z.infer<typeof compositeLayerConfigSchema>;
 
 export const slotGenerationMetadataSchema = z.object({
   role: z.enum(['generation', 'merge', 'base', 'import', 'composite']).optional(),
@@ -451,8 +450,7 @@ export const slotGenerationMetadataSchema = z.object({
   }).optional(),
 });
 
-export type SlotGenerationMetadataDto = z.infer<typeof slotGenerationMetadataSchema>;
-export type SlotGenerationMetadata = SlotGenerationMetadataDto;
+export type SlotGenerationMetadata = z.infer<typeof slotGenerationMetadataSchema>;
 
 export const imageStudioSlotSchema = dtoBaseSchema.extend({
   projectId: z.string(),
@@ -477,33 +475,31 @@ export const imageStudioSlotSchema = dtoBaseSchema.extend({
   asset3d: asset3DRecordSchema.nullable().optional(),
 });
 
-export type ImageStudioSlotDto = z.infer<typeof imageStudioSlotSchema>;
-export type ImageStudioSlotRecord = ImageStudioSlotDto;
+export type ImageStudioSlot = z.infer<typeof imageStudioSlotSchema>;
+export type ImageStudioSlotRecord = ImageStudioSlot;
 
 export const imageStudioProjectSchema = dtoBaseSchema.extend({
   canvasWidthPx: z.number().nullable(),
   canvasHeightPx: z.number().nullable(),
 });
 
-export type ImageStudioProjectDto = z.infer<typeof imageStudioProjectSchema>;
-export type ImageStudioProjectRecord = ImageStudioProjectDto;
+export type ImageStudioProject = z.infer<typeof imageStudioProjectSchema>;
+export type ImageStudioProjectRecord = ImageStudioProject;
 
 export const imageStudioRunDispatchModeSchema = z.enum(['queued', 'inline']);
-export type ImageStudioRunDispatchModeDto = z.infer<typeof imageStudioRunDispatchModeSchema>;
+export type ImageStudioRunDispatchMode = z.infer<typeof imageStudioRunDispatchModeSchema>;
 
 export const studioProjectsResponseSchema = z.object({
   projects: z.array(imageStudioProjectSchema),
 });
 
-export type StudioProjectsResponseDto = z.infer<typeof studioProjectsResponseSchema>;
-export type StudioProjectsResponse = StudioProjectsResponseDto;
+export type StudioProjectsResponse = z.infer<typeof studioProjectsResponseSchema>;
 
 export const studioSlotsResponseSchema = z.object({
   slots: z.array(imageStudioSlotSchema),
 });
 
-export type StudioSlotsResponseDto = z.infer<typeof studioSlotsResponseSchema>;
-export type StudioSlotsResponse = StudioSlotsResponseDto;
+export type StudioSlotsResponse = z.infer<typeof studioSlotsResponseSchema>;
 
 const imageStudioObjectDetectionUsedSchema = z.enum([
   'alpha_bbox',
@@ -525,8 +521,7 @@ export const imageStudioWhitespaceMetricsSchema = z.object({
   }),
 });
 
-export type ImageStudioWhitespaceMetricsDto = z.infer<typeof imageStudioWhitespaceMetricsSchema>;
-export type ImageStudioWhitespaceMetrics = ImageStudioWhitespaceMetricsDto;
+export type ImageStudioWhitespaceMetrics = z.infer<typeof imageStudioWhitespaceMetricsSchema>;
 
 export const imageStudioNormalizedCenterLayoutSchema = z.object({
   paddingPercent: z.number().finite(),
@@ -541,8 +536,7 @@ export const imageStudioNormalizedCenterLayoutSchema = z.object({
   detection: imageStudioCenterDetectionModeSchema,
 });
 
-export type ImageStudioNormalizedCenterLayoutDto = z.infer<typeof imageStudioNormalizedCenterLayoutSchema>;
-export type ImageStudioNormalizedCenterLayout = ImageStudioNormalizedCenterLayoutDto;
+export type ImageStudioNormalizedCenterLayout = z.infer<typeof imageStudioNormalizedCenterLayoutSchema>;
 
 export const imageStudioCenterLayoutMetadataSchema = z.object({
   paddingPercent: z.number().finite(),
@@ -560,8 +554,7 @@ export const imageStudioCenterLayoutMetadataSchema = z.object({
   scale: z.number().finite().nullable().optional(),
 });
 
-export type ImageStudioCenterLayoutMetadataDto = z.infer<typeof imageStudioCenterLayoutMetadataSchema>;
-export type ImageStudioCenterLayoutMetadata = ImageStudioCenterLayoutMetadataDto;
+export type ImageStudioCenterLayoutMetadata = z.infer<typeof imageStudioCenterLayoutMetadataSchema>;
 
 export const imageStudioAutoScalerLayoutMetadataSchema = z.object({
   paddingPercent: z.number().finite(),
@@ -577,32 +570,28 @@ export const imageStudioAutoScalerLayoutMetadataSchema = z.object({
   detectionPolicyDecision: z.string().trim().min(1).nullable().optional(),
 });
 
-export type ImageStudioAutoScalerLayoutMetadataDto = z.infer<typeof imageStudioAutoScalerLayoutMetadataSchema>;
-export type ImageStudioAutoScalerLayoutMetadata = ImageStudioAutoScalerLayoutMetadataDto;
+export type ImageStudioAutoScalerLayoutMetadata = z.infer<typeof imageStudioAutoScalerLayoutMetadataSchema>;
 
 export const imageStudioOperationLifecycleSchema = z.object({
   state: z.enum(['analyzed', 'persisted']),
   durationMs: z.number().int().nonnegative(),
 });
 
-export type ImageStudioOperationLifecycleDto = z.infer<typeof imageStudioOperationLifecycleSchema>;
-export type ImageStudioOperationLifecycle = ImageStudioOperationLifecycleDto;
+export type ImageStudioOperationLifecycle = z.infer<typeof imageStudioOperationLifecycleSchema>;
 
 export const imageStudioDetectionCandidateScoreSchema = z.object({
   confidence: z.number().finite().min(0).max(1),
   area: z.number().int().positive(),
 });
 
-export type ImageStudioDetectionCandidateScoreDto = z.infer<typeof imageStudioDetectionCandidateScoreSchema>;
-export type ImageStudioDetectionCandidateScore = ImageStudioDetectionCandidateScoreDto;
+export type ImageStudioDetectionCandidateScore = z.infer<typeof imageStudioDetectionCandidateScoreSchema>;
 
 export const imageStudioDetectionCandidateSummarySchema = z.object({
   alpha_bbox: imageStudioDetectionCandidateScoreSchema.nullable(),
   white_bg_first_colored_pixel: imageStudioDetectionCandidateScoreSchema.nullable(),
 });
 
-export type ImageStudioDetectionCandidateSummaryDto = z.infer<typeof imageStudioDetectionCandidateSummarySchema>;
-export type ImageStudioDetectionCandidateSummary = ImageStudioDetectionCandidateSummaryDto;
+export type ImageStudioDetectionCandidateSummary = z.infer<typeof imageStudioDetectionCandidateSummarySchema>;
 
 export const imageStudioDetectionDetailsSchema = z.object({
   shadowPolicyRequested: imageStudioCenterShadowPolicySchema,
@@ -621,8 +610,7 @@ export const imageStudioDetectionDetailsSchema = z.object({
   candidateDetections: imageStudioDetectionCandidateSummarySchema.optional(),
 });
 
-export type ImageStudioDetectionDetailsDto = z.infer<typeof imageStudioDetectionDetailsSchema>;
-export type ImageStudioDetectionDetails = ImageStudioDetectionDetailsDto;
+export type ImageStudioDetectionDetails = z.infer<typeof imageStudioDetectionDetailsSchema>;
 
 export const imageStudioAnalysisSummarySchema = z.object({
   width: z.number().int().positive(),
@@ -647,8 +635,7 @@ export const imageStudioAnalysisSummarySchema = z.object({
   }),
 });
 
-export type ImageStudioAnalysisSummaryDto = z.infer<typeof imageStudioAnalysisSummarySchema>;
-export type ImageStudioAnalysisSummary = ImageStudioAnalysisSummaryDto;
+export type ImageStudioAnalysisSummary = z.infer<typeof imageStudioAnalysisSummarySchema>;
 
 export const imageStudioAnalysisResponseSchema = z.object({
   sourceSlotId: z.string(),
@@ -661,8 +648,7 @@ export const imageStudioAnalysisResponseSchema = z.object({
   pipelineVersion: z.string().trim().min(1),
 });
 
-export type ImageStudioAnalysisResponseDto = z.infer<typeof imageStudioAnalysisResponseSchema>;
-export type ImageStudioAnalysisResponse = ImageStudioAnalysisResponseDto;
+export type ImageStudioAnalysisResponse = z.infer<typeof imageStudioAnalysisResponseSchema>;
 
 const imageStudioOutputImageSchema = z.object({
   id: z.string(),
@@ -690,8 +676,7 @@ export const imageStudioCropResponseSchema = z.object({
   pipelineVersion: z.string().trim().min(1),
 });
 
-export type ImageStudioCropResponseDto = z.infer<typeof imageStudioCropResponseSchema>;
-export type ImageStudioCropResponse = ImageStudioCropResponseDto;
+export type ImageStudioCropResponse = z.infer<typeof imageStudioCropResponseSchema>;
 
 export const imageStudioUpscaleResponseSchema = z.object({
   sourceSlotId: z.string().optional(),
@@ -712,8 +697,7 @@ export const imageStudioUpscaleResponseSchema = z.object({
   pipelineVersion: z.string().trim().min(1),
 });
 
-export type ImageStudioUpscaleResponseDto = z.infer<typeof imageStudioUpscaleResponseSchema>;
-export type ImageStudioUpscaleResponse = ImageStudioUpscaleResponseDto;
+export type ImageStudioUpscaleResponse = z.infer<typeof imageStudioUpscaleResponseSchema>;
 
 export const imageStudioCenterResponseSchema = z.object({
   sourceSlotId: z.string().optional(),
@@ -736,8 +720,7 @@ export const imageStudioCenterResponseSchema = z.object({
   pipelineVersion: z.string().trim().min(1),
 });
 
-export type ImageStudioCenterResponseDto = z.infer<typeof imageStudioCenterResponseSchema>;
-export type ImageStudioCenterResponse = ImageStudioCenterResponseDto;
+export type ImageStudioCenterResponse = z.infer<typeof imageStudioCenterResponseSchema>;
 
 export const imageStudioAutoScalerResponseSchema = z.object({
   sourceSlotId: z.string().optional(),
@@ -764,5 +747,4 @@ export const imageStudioAutoScalerResponseSchema = z.object({
   pipelineVersion: z.string().trim().min(1),
 });
 
-export type ImageStudioAutoScalerResponseDto = z.infer<typeof imageStudioAutoScalerResponseSchema>;
-export type ImageStudioAutoScalerResponse = ImageStudioAutoScalerResponseDto;
+export type ImageStudioAutoScalerResponse = z.infer<typeof imageStudioAutoScalerResponseSchema>;

@@ -84,22 +84,69 @@ export const parsePathTokens = (path: string): Array<string | number> => {
   return tokens;
 };
 
+const parseStructuredJsonString = (value: unknown): unknown => {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+  const startsLikeJson =
+    (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+    (trimmed.startsWith('[') && trimmed.endsWith(']'));
+  if (!startsLikeJson) return value;
+  try {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (parsed && typeof parsed === 'object') return parsed;
+  } catch {
+    const repaired = trimmed.replace(
+      /(:\s*\{[^{}]*\})(\s*,\s*\{)/g,
+      '$1}$2'
+    );
+    if (repaired !== trimmed) {
+      try {
+        const parsedRepaired: unknown = JSON.parse(repaired);
+        if (parsedRepaired && typeof parsedRepaired === 'object') {
+          return parsedRepaired;
+        }
+      } catch {
+        // Keep original when repaired parsing fails.
+      }
+    }
+  }
+  return value;
+};
+
 export const getValueAtMappingPath = (obj: unknown, path: string): unknown => {
   const normalized = normalizeMappingPath(path, obj);
   if (!normalized) return undefined;
   const tokens = parsePathTokens(normalized);
-  let current: unknown = obj;
-  for (const token of tokens) {
-    if (current === null || current === undefined) return undefined;
-    if (typeof token === 'number') {
-      if (!Array.isArray(current)) return undefined;
-      current = current[token];
-      continue;
+  const readByTokens = (source: unknown, index: number): unknown => {
+    if (source === null || source === undefined) return undefined;
+    if (index >= tokens.length) return source;
+
+    const normalizedSource =
+      typeof source === 'string' ? parseStructuredJsonString(source) : source;
+    const token = tokens[index];
+
+    if (Array.isArray(normalizedSource)) {
+      if (typeof token === 'number') {
+        if (token < 0 || token >= normalizedSource.length) return undefined;
+        return readByTokens(normalizedSource[token], index + 1);
+      }
+      for (const item of normalizedSource) {
+        const candidate = readByTokens(item, index);
+        if (candidate !== undefined) return candidate;
+      }
+      return undefined;
     }
-    if (typeof current !== 'object') return undefined;
-    current = (current as Record<string, unknown>)[token];
-  }
-  return current;
+
+    if (typeof token === 'number') return undefined;
+    if (typeof normalizedSource !== 'object') return undefined;
+    return readByTokens(
+      (normalizedSource as Record<string, unknown>)[token],
+      index + 1
+    );
+  };
+
+  return readByTokens(obj, 0);
 };
 
 export const buildFlattenedMappings = (

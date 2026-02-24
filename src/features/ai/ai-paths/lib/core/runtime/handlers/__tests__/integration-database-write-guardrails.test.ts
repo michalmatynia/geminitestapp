@@ -51,6 +51,62 @@ describe('resolveWriteTemplateGuardrail', () => {
 
     expect(result).toEqual({ ok: true });
   });
+
+  it('resolves nested tokens from JSON-string context values', () => {
+    const result = resolveWriteTemplateGuardrail({
+      templates: [
+        {
+          name: 'updateTemplate',
+          template: '{"parameters": {{result.parameters}}, "description_pl": "{{value.description_pl}}"}',
+        },
+      ],
+      templateContext: {
+        result: '{"parameters":[{"parameterId":"param-1","value":"metal"}]}',
+        value: { description_pl: 'Opis PL' },
+      },
+      currentValue: null,
+    });
+
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('resolves nested tokens when context token root is an array of candidates', () => {
+    const result = resolveWriteTemplateGuardrail({
+      templates: [
+        {
+          name: 'updateTemplate',
+          template: '{"parameters": {{result.parameters}}}',
+        },
+      ],
+      templateContext: {
+        result: [
+          'not-json',
+          '{"parameters":[{"parameterId":"param-3","value":"steel"}]}',
+        ],
+      },
+      currentValue: null,
+    });
+
+    expect(result).toEqual({ ok: true });
+  });
+
+  it('accepts tokens from malformed JSON strings that are repairable', () => {
+    const result = resolveWriteTemplateGuardrail({
+      templates: [
+        {
+          name: 'updateTemplate',
+          template: '{"parameters": {{result.parameters}}}',
+        },
+      ],
+      templateContext: {
+        result:
+          '{"parameters":[{"parameterId":"p1","value":"v1","valuesByLanguage":{"pl":"x"},{"parameterId":"p2","value":"v2","valuesByLanguage":{"pl":"y"}}]}',
+      },
+      currentValue: null,
+    });
+
+    expect(result).toEqual({ ok: true });
+  });
 });
 
 describe('evaluateWriteOutcome', () => {
@@ -88,4 +144,3 @@ describe('evaluateWriteOutcome', () => {
     );
   });
 });
-

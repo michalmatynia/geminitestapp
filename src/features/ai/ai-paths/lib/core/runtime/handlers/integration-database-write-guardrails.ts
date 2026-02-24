@@ -102,6 +102,36 @@ const isEmptyTemplateValue = (value: unknown): boolean => {
   return false;
 };
 
+const parseStructuredJsonString = (value: unknown): unknown => {
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  if (!trimmed) return value;
+  const startsLikeJson =
+    (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+    (trimmed.startsWith('[') && trimmed.endsWith(']'));
+  if (!startsLikeJson) return value;
+  try {
+    const parsed: unknown = JSON.parse(trimmed);
+    if (parsed && typeof parsed === 'object') return parsed;
+  } catch {
+    const repaired = trimmed.replace(
+      /(:\s*\{[^{}]*\})(\s*,\s*\{)/g,
+      '$1}$2'
+    );
+    if (repaired !== trimmed) {
+      try {
+        const parsedRepaired: unknown = JSON.parse(repaired);
+        if (parsedRepaired && typeof parsedRepaired === 'object') {
+          return parsedRepaired;
+        }
+      } catch {
+        // Keep original when repaired parsing fails.
+      }
+    }
+  }
+  return value;
+};
+
 const readByPath = (source: unknown, path: string): unknown => {
   const normalized = path
     .replace(/\[(['"]?)([A-Za-z0-9_$-]+)\1\]/g, '.$2')
@@ -110,21 +140,35 @@ const readByPath = (source: unknown, path: string): unknown => {
     .map((segment: string): string => segment.trim())
     .filter(Boolean);
   if (normalized.length === 0) return source;
-  let cursor: unknown = source;
-  for (const segment of normalized) {
-    if (Array.isArray(cursor)) {
-      const index = Number(segment);
-      if (!Number.isInteger(index) || index < 0 || index >= cursor.length) {
-        return undefined;
+
+  const readBySegments = (cursor: unknown, index: number): unknown => {
+    if (cursor === null || cursor === undefined) return undefined;
+    if (index >= normalized.length) return cursor;
+    const segment = normalized[index];
+    const normalizedCursor =
+      typeof cursor === 'string' ? parseStructuredJsonString(cursor) : cursor;
+
+    if (Array.isArray(normalizedCursor)) {
+      const numericIndex = Number(segment);
+      if (Number.isInteger(numericIndex)) {
+        if (numericIndex < 0 || numericIndex >= normalizedCursor.length) {
+          return undefined;
+        }
+        return readBySegments(normalizedCursor[numericIndex], index + 1);
       }
-      cursor = cursor[index];
-      continue;
+      for (const item of normalizedCursor) {
+        const candidate = readBySegments(item, index);
+        if (candidate !== undefined) return candidate;
+      }
+      return undefined;
     }
-    const record = toRecord(cursor);
+
+    const record = toRecord(normalizedCursor);
     if (!record) return undefined;
-    cursor = record[segment];
-  }
-  return cursor;
+    return readBySegments(record[segment], index + 1);
+  };
+
+  return readBySegments(source, 0);
 };
 
 const resolveTokenValue = (
@@ -429,4 +473,3 @@ export const evaluateWriteOutcome = ({
     },
   };
 };
-

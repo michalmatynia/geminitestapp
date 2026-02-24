@@ -638,9 +638,6 @@ export function PagePreviewPanel(): React.ReactNode {
                                   <PreviewSection
                                     key={section.id}
                                     section={section}
-                                    layout={previewLayout}
-                                    colorSchemes={colorSchemes || {}}
-                                    mediaStyles={mediaStyles}
                                   />
                                 ))}
                               </div>

@@ -539,25 +539,63 @@ export function CanvasBoard({
 
   const getPortValue = React.useCallback(
     (direction: 'input' | 'output', nodeId: string, port: string): unknown => {
-      const source = direction === 'input' ? runtimeState.inputs : runtimeState.outputs;
-      const nodeValues = source?.[nodeId] ?? {};
-      const directValue = nodeValues[port];
+      const readRuntimePortValue = (
+        bucket: 'inputs' | 'outputs',
+        targetNodeId: string,
+        targetPort: string
+      ): unknown => {
+        const source = bucket === 'inputs' ? runtimeState.inputs : runtimeState.outputs;
+        const nodeValues = source?.[targetNodeId] ?? {};
+        const direct = nodeValues[targetPort];
+        if (direct !== undefined) return direct;
+        const history = runtimeState.history?.[targetNodeId];
+        if (!Array.isArray(history) || history.length === 0) return undefined;
+        const lastEntry = history[history.length - 1];
+        const fallbackSource =
+          bucket === 'inputs' ? lastEntry?.['inputs'] : lastEntry?.['outputs'];
+        if (
+          !fallbackSource ||
+          typeof fallbackSource !== 'object' ||
+          Array.isArray(fallbackSource)
+        ) {
+          return undefined;
+        }
+        return fallbackSource?.[targetPort];
+      };
+
+      const bucket = direction === 'input' ? 'inputs' : 'outputs';
+      const directValue = readRuntimePortValue(bucket, nodeId, port);
       if (directValue !== undefined) return directValue;
-      const history = runtimeState.history?.[nodeId];
-      if (!Array.isArray(history) || history.length === 0) return directValue;
-      const lastEntry = history[history.length - 1];
-      const fallbackSource =
-        direction === 'input' ? lastEntry?.['inputs'] : lastEntry?.['outputs'];
-      if (
-        !fallbackSource ||
-        typeof fallbackSource !== 'object' ||
-        Array.isArray(fallbackSource)
-      ) {
-        return directValue;
+
+      if (direction === 'input') {
+        const incomingValues: unknown[] = [];
+        edges.forEach((edge) => {
+          const toNodeId = typeof edge.to === 'string' ? edge.to : null;
+          const toPort = typeof edge.toPort === 'string' && edge.toPort.trim().length > 0
+            ? edge.toPort
+            : typeof edge.targetHandle === 'string' && edge.targetHandle.trim().length > 0
+              ? edge.targetHandle
+              : null;
+          if (toNodeId !== nodeId || toPort !== port) return;
+          const fromNodeId = typeof edge.from === 'string' ? edge.from : null;
+          const fromPort =
+            typeof edge.fromPort === 'string' && edge.fromPort.trim().length > 0
+              ? edge.fromPort
+              : typeof edge.sourceHandle === 'string' && edge.sourceHandle.trim().length > 0
+                ? edge.sourceHandle
+                : null;
+          if (!fromNodeId || !fromPort) return;
+          const upstreamValue = readRuntimePortValue('outputs', fromNodeId, fromPort);
+          if (upstreamValue !== undefined) {
+            incomingValues.push(upstreamValue);
+          }
+        });
+        if (incomingValues.length === 1) return incomingValues[0];
+        if (incomingValues.length > 1) return incomingValues;
       }
-      return fallbackSource?.[port];
+      return directValue;
     },
-    [runtimeState]
+    [edges, runtimeState]
   );
 
   const getNodeRuntimeData = React.useCallback(

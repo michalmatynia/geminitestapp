@@ -271,11 +271,38 @@ export const handleMapper: NodeHandler = ({
   reportAiPathsError,
 }: NodeHandlerContext): RuntimePortValues => {
   try {
+    const normalizeMapperInputValue = (value: unknown): unknown => {
+      if (typeof value !== 'string') return value;
+      const trimmed = value.trim();
+      if (!trimmed) return value;
+      const startsLikeJson =
+        (trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+        (trimmed.startsWith('[') && trimmed.endsWith(']'));
+      if (!startsLikeJson) return value;
+
+      const parsedDirect = parseJsonSafe(trimmed);
+      if (parsedDirect && typeof parsedDirect === 'object') {
+        return parsedDirect;
+      }
+
+      const repaired = trimmed.replace(
+        /(:\s*\{[^{}]*\})(\s*,\s*\{)/g,
+        '$1}$2'
+      );
+      if (repaired !== trimmed) {
+        const parsedRepaired = parseJsonSafe(repaired);
+        if (parsedRepaired && typeof parsedRepaired === 'object') {
+          return parsedRepaired;
+        }
+      }
+      return value;
+    };
+
     const sources = {
-      context: coerceInput(nodeInputs['context']),
-      result: coerceInput(nodeInputs['result']),
-      bundle: coerceInput(nodeInputs['bundle']),
-      value: coerceInput(nodeInputs['value']),
+      context: normalizeMapperInputValue(coerceInput(nodeInputs['context'])),
+      result: normalizeMapperInputValue(coerceInput(nodeInputs['result'])),
+      bundle: normalizeMapperInputValue(coerceInput(nodeInputs['bundle'])),
+      value: normalizeMapperInputValue(coerceInput(nodeInputs['value'])),
     };
     const contextValue =
       sources['context'] ??

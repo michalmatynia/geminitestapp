@@ -20,11 +20,8 @@ export function AiDescriptionNodeConfigSection(): React.JSX.Element | null {
         <span>Include vision analysis</span>
         <Button
           type='button'
-          className={`rounded border px-3 py-1 text-xs ${
-            descriptionConfig.visionOutputEnabled
-              ? 'text-emerald-200 hover:bg-emerald-500/10'
-              : 'text-gray-300 hover:bg-muted/50'
-          }`}
+          variant={descriptionConfig.visionOutputEnabled ? 'success' : 'default'}
+          size='xs'
           onClick={(): void =>
             updateSelectedNodeConfig({
               description: {
@@ -41,11 +38,8 @@ export function AiDescriptionNodeConfigSection(): React.JSX.Element | null {
         <span>Include generation output</span>
         <Button
           type='button'
-          className={`rounded border px-3 py-1 text-xs ${
-            descriptionConfig.generationOutputEnabled
-              ? 'text-emerald-200 hover:bg-emerald-500/10'
-              : 'text-gray-300 hover:bg-muted/50'
-          }`}
+          variant={descriptionConfig.generationOutputEnabled ? 'success' : 'default'}
+          size='xs'
           onClick={(): void =>
             updateSelectedNodeConfig({
               description: {

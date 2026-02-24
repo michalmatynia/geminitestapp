@@ -1,7 +1,7 @@
 'use client';
 
 import type { CompareConfig } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, SelectSimple } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -33,9 +33,9 @@ export function CompareNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>Operator</Label>
+      <FormField label='Operator'>
         <SelectSimple size='sm'
+          variant='subtle'
           value={compareConfig.operator}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -47,13 +47,12 @@ export function CompareNodeConfigSection(): React.JSX.Element | null {
           }
           options={operatorOptions}
           placeholder='Select operator'
-          className='mt-2'
         />
-      </div>
-      <div>
-        <Label className='text-xs text-gray-400'>Compare To</Label>
+      </FormField>
+      <FormField label='Compare To'>
         <Input
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={compareConfig.compareTo}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -64,16 +63,13 @@ export function CompareNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-      </div>
+      </FormField>
       <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
         <span>Case Sensitive</span>
         <Button
           type='button'
-          className={`rounded border px-3 py-1 text-xs ${
-            compareConfig.caseSensitive
-              ? 'text-emerald-200 hover:bg-emerald-500/10'
-              : 'text-gray-300 hover:bg-muted/50'
-          }`}
+          variant={compareConfig.caseSensitive ? 'success' : 'default'}
+          size='xs'
           onClick={(): void =>
             updateSelectedNodeConfig({
               compare: {
@@ -86,10 +82,10 @@ export function CompareNodeConfigSection(): React.JSX.Element | null {
           {compareConfig.caseSensitive ? 'Enabled' : 'Disabled'}
         </Button>
       </div>
-      <div>
-        <Label className='text-xs text-gray-400'>Error Message</Label>
+      <FormField label='Error Message'>
         <Input
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={compareConfig.message ?? 'Comparison failed'}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -100,7 +96,7 @@ export function CompareNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-      </div>
+      </FormField>
     </div>
   );
 }

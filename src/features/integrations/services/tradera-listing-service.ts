@@ -39,18 +39,15 @@ import {
 } from '@/features/integrations/services/tradera-system-settings';
 import { ErrorSystem } from '@/features/observability/server';
 import { getProductRepository, getSettingValue } from '@/features/products/server';
-import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations';
-import type { ProductListingRecord } from '@/shared/contracts/integrations';
 import type { 
-  TraderaListingJobInputDto,
-  TraderaCategoryRecordDto 
+  IntegrationConnectionRecord,
+  ProductListing,
+  TraderaListingJobInput,
+  TraderaCategoryRecord 
 } from '@/shared/contracts/integrations';
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-
-export type TraderaListingJobInput = TraderaListingJobInputDto;
-export type TraderaCategoryRecord = TraderaCategoryRecordDto;
 
 type TraderaListingResult = {
   externalListingId: string;
@@ -178,7 +175,7 @@ const buildRelistPolicy = (settings: {
 });
 
 const toPolicyRecord = (
-  value: ProductListingRecord['relistPolicy']
+  value: ProductListing['relistPolicy']
 ): Record<string, unknown> | null => {
   if (!value || typeof value !== 'object') return null;
   return value as Record<string, unknown>;
@@ -210,7 +207,7 @@ const parsePolicyTemplateId = (
 };
 
 const resolveEffectiveListingSettings = (
-  listing: ProductListingRecord,
+  listing: ProductListing,
   connection: IntegrationConnectionRecord,
   systemSettings: TraderaSystemSettings
 ): {
@@ -358,7 +355,7 @@ const runTraderaBrowserListing = async ({
   source,
   action,
 }: {
-  listing: ProductListingRecord;
+  listing: ProductListing;
   connection: IntegrationConnectionRecord;
   systemSettings: TraderaSystemSettings;
   source: 'manual' | 'scheduler' | 'api';
@@ -553,7 +550,7 @@ const resolveTraderaApiCredentials = (
 };
 
 const resolveTraderaApiCategoryId = (
-  listing: ProductListingRecord,
+  listing: ProductListing,
   product: { categoryId?: string | null | undefined }
 ): number => {
   const listingData = toRecord(listing.marketplaceData);
@@ -572,7 +569,7 @@ const runTraderaApiListing = async ({
   listing,
   connection,
 }: {
-  listing: ProductListingRecord;
+  listing: ProductListing;
   connection: IntegrationConnectionRecord;
 }): Promise<TraderaListingResult> => {
   const productRepository = await getProductRepository();

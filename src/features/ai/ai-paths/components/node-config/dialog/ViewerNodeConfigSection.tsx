@@ -8,7 +8,7 @@ import Image from 'next/image';
 import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 import { createViewerOutputs, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
 import { extractImageUrls, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Button, Label, Textarea } from '@/shared/ui';
+import { Button, Label, Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -97,39 +97,45 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div className='flex items-center justify-between'>
+      <div className='flex items-center justify-between gap-3'>
         <div className='text-xs text-gray-400'>
-          Store and review outputs that flow into this node.
+          Review outputs that flow into this node.
         </div>
-        <Button
-          type='button'
-          className='rounded-md border text-xs text-gray-200 hover:bg-muted/60'
-          onClick={(): void => {
-            updateSelectedNodeConfig({
-              viewer: {
-                outputs: createViewerOutputs(selectedNode.inputs),
-                showImagesAsJson,
-              },
-            });
-            clearRuntimeForNode?.(selectedNode.id);
-          }}
-        >
-          Clear
-        </Button>
-        <Button
-          type='button'
-          className='rounded-md border text-xs text-gray-200 hover:bg-muted/60'
-          onClick={(): void =>
-            updateSelectedNodeConfig({
-              viewer: {
-                ...viewerConfig,
-                showImagesAsJson: !showImagesAsJson,
-              },
-            })
-          }
-        >
-          {showImagesAsJson ? 'Images: JSON' : 'Images: Thumbnails'}
-        </Button>
+        <div className='flex items-center gap-2'>
+          <Button
+            type='button'
+            variant='outline'
+            size='xs'
+            className='h-7'
+            onClick={(): void => {
+              updateSelectedNodeConfig({
+                viewer: {
+                  outputs: createViewerOutputs(selectedNode.inputs),
+                  showImagesAsJson,
+                },
+              });
+              clearRuntimeForNode?.(selectedNode.id);
+            }}
+          >
+            Clear
+          </Button>
+          <Button
+            type='button'
+            variant='outline'
+            size='xs'
+            className='h-7'
+            onClick={(): void =>
+              updateSelectedNodeConfig({
+                viewer: {
+                  ...viewerConfig,
+                  showImagesAsJson: !showImagesAsJson,
+                },
+              })
+            }
+          >
+            {showImagesAsJson ? 'Images: JSON' : 'Images: Thumbnails'}
+          </Button>
+        </div>
       </div>
       {!isConnectedToTrigger && (
         <div className='rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-100'>
@@ -154,21 +160,19 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
         const hasImagePreview =
           input === 'images' && imageUrls.length > 0 && !showImagesAsJson;
         return (
-          <div key={input} className='space-y-2'>
-            <div className='flex items-center justify-between text-xs text-gray-400'>
-              <Label className='text-xs text-gray-400'>
-                {formatPortLabel(input)}
-              </Label>
-              {connectedSources && (
-                <span className='text-[10px] text-gray-500'>
-                  Connected: {connectedSources}
-                </span>
-              )}
-            </div>
+          <FormField 
+            key={input} 
+            label={formatPortLabel(input)}
+            actions={connectedSources ? (
+              <span className='text-[10px] text-gray-500 font-mono'>
+                Connected: {connectedSources}
+              </span>
+            ) : undefined}
+          >
             {runtimeValue !== undefined && (
-              <div className='rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-[11px] text-emerald-100'>
-                <div className='mb-1 text-[9px] uppercase text-emerald-300'>
-                  Runtime
+              <div className='mb-2 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2 text-[11px] text-emerald-100'>
+                <div className='mb-1 text-[9px] uppercase font-bold text-emerald-300'>
+                  Latest Runtime Value
                 </div>
                 {hasImagePreview ? (
                   <>
@@ -195,14 +199,16 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
                     </div>
                   </>
                 ) : (
-                  <pre className='whitespace-pre-wrap'>
+                  <pre className='whitespace-pre-wrap font-mono'>
                     {formatRuntimeValue(runtimeValue)}
                   </pre>
                 )}
               </div>
             )}
             <Textarea
-              className='min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
+              variant='subtle'
+              size='sm'
+              className='min-h-[90px]'
               value={outputValues[input] ?? ''}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                 updateSelectedNodeConfig({
@@ -216,7 +222,7 @@ export function ViewerNodeConfigSection(): React.JSX.Element | null {
                 })
               }
             />
-          </div>
+          </FormField>
         );
       })}
     </div>

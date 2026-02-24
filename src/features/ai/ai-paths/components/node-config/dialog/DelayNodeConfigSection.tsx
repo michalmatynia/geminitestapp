@@ -3,7 +3,7 @@
 
 
 import { toNumber } from '@/features/ai/ai-paths/lib';
-import { Input, Label } from '@/shared/ui';
+import { Input, Label, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -16,12 +16,12 @@ export function DelayNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>Delay (ms)</Label>
+      <FormField label='Delay (ms)'>
         <Input
           type='number'
           step='50'
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={delayConfig.ms}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -31,7 +31,7 @@ export function DelayNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-      </div>
+      </FormField>
       <p className='text-[11px] text-gray-500'>
         Adds a pause before passing inputs downstream.
       </p>

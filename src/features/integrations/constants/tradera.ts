@@ -1,4 +1,4 @@
-import type { TraderaSystemSettingsDto } from '@/shared/contracts/integrations';
+import type { TraderaSystemSettings } from '@/shared/contracts/integrations';
 
 export const TRADERA_SETTINGS_KEYS = {
   defaultDurationHours: 'tradera_default_duration_hours',
@@ -10,8 +10,6 @@ export const TRADERA_SETTINGS_KEYS = {
   listingFormUrl: 'tradera_listing_form_url',
   selectorProfile: 'tradera_selector_profile',
 } as const;
-
-export type TraderaSystemSettings = TraderaSystemSettingsDto;
 
 export const DEFAULT_TRADERA_SYSTEM_SETTINGS: TraderaSystemSettings = {
   defaultDurationHours: 72,

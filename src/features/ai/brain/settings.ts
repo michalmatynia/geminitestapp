@@ -1,9 +1,9 @@
 import {
-  type AiBrainProviderDto,
-  type AiBrainFeatureDto,
-  type AiBrainAssignmentDto,
-  type AiBrainSettingsDto,
-  type AiBrainProviderCatalogDto,
+  type AiBrainProvider,
+  type AiBrainFeature,
+  type AiBrainAssignment,
+  type AiBrainSettings,
+  type AiBrainProviderCatalog,
   aiBrainSettingsSchema as settingsSchema,
   aiBrainProviderCatalogSchema as providerCatalogSchema,
   AI_BRAIN_SETTINGS_KEY as SETTINGS_KEY,
@@ -13,15 +13,6 @@ import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export const AI_BRAIN_SETTINGS_KEY = SETTINGS_KEY;
 export const AI_BRAIN_PROVIDER_CATALOG_KEY = CATALOG_KEY;
-
-export type AiBrainProvider = AiBrainProviderDto;
-export type AiBrainFeature = AiBrainFeatureDto;
-
-export type AiBrainAssignment = AiBrainAssignmentDto;
-
-export type AiBrainSettings = AiBrainSettingsDto;
-
-export type AiBrainProviderCatalog = AiBrainProviderCatalogDto;
 
 const BRAIN_FEATURE_KEYS: AiBrainFeature[] = [
   'image_studio',

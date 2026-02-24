@@ -33,16 +33,13 @@ export type ImageStudioCropErrorCode =
   (typeof IMAGE_STUDIO_CROP_ERROR_CODES)[keyof typeof IMAGE_STUDIO_CROP_ERROR_CODES];
 
 export const imageStudioCropModeSchema = z.enum(['client_bbox', 'server_bbox', 'server_polygon']);
-
-export type ImageStudioCropModeDto = z.infer<typeof imageStudioCropModeSchema>;
-export type ImageStudioCropMode = ImageStudioCropModeDto;
+export type ImageStudioCropMode = z.infer<typeof imageStudioCropModeSchema>;
 
 export const imageStudioCropPointSchema = z.object({
   x: z.number().finite().min(0).max(1),
   y: z.number().finite().min(0).max(1),
 });
-export type ImageStudioCropPointDto = z.infer<typeof imageStudioCropPointSchema>;
-export type ImageStudioCropPoint = ImageStudioCropPointDto;
+export type ImageStudioCropPoint = z.infer<typeof imageStudioCropPointSchema>;
 
 export const imageStudioCropRectSchema = z.object({
   x: z.number().finite().min(0),
@@ -50,8 +47,7 @@ export const imageStudioCropRectSchema = z.object({
   width: z.number().finite().positive(),
   height: z.number().finite().positive(),
 });
-export type ImageStudioCropRectDto = z.infer<typeof imageStudioCropRectSchema>;
-export type ImageStudioCropRect = ImageStudioCropRectDto;
+export type ImageStudioCropRect = z.infer<typeof imageStudioCropRectSchema>;
 
 export const imageStudioCropCanvasFrameSchema = z.object({
   x: z.number().finite(),
@@ -59,16 +55,14 @@ export const imageStudioCropCanvasFrameSchema = z.object({
   width: z.number().finite().positive(),
   height: z.number().finite().positive(),
 });
-export type ImageStudioCropCanvasFrameDto = z.infer<typeof imageStudioCropCanvasFrameSchema>;
-export type ImageStudioCropCanvasFrame = ImageStudioCropCanvasFrameDto;
+export type ImageStudioCropCanvasFrame = z.infer<typeof imageStudioCropCanvasFrameSchema>;
 
 export const imageStudioCropCanvasContextSchema = z.object({
   canvasWidth: z.number().int().min(1).max(32_768),
   canvasHeight: z.number().int().min(1).max(32_768),
   imageFrame: imageStudioCropCanvasFrameSchema,
 });
-export type ImageStudioCropCanvasContextDto = z.infer<typeof imageStudioCropCanvasContextSchema>;
-export type ImageStudioCropCanvasContext = ImageStudioCropCanvasContextDto;
+export type ImageStudioCropCanvasContext = z.infer<typeof imageStudioCropCanvasContextSchema>;
 
 export const imageStudioCropDiagnosticsSchema = z.object({
   rawCanvasBounds: imageStudioCropRectSchema.nullable().optional(),
@@ -81,8 +75,7 @@ export const imageStudioCropDiagnosticsSchema = z.object({
   }).nullable().optional(),
   usedImageContentFrameMapping: z.boolean().optional(),
 });
-export type ImageStudioCropDiagnosticsDto = z.infer<typeof imageStudioCropDiagnosticsSchema>;
-export type ImageStudioCropDiagnostics = ImageStudioCropDiagnosticsDto;
+export type ImageStudioCropDiagnostics = z.infer<typeof imageStudioCropDiagnosticsSchema>;
 
 export const imageStudioCropRequestSchema = z
   .object({
@@ -112,8 +105,7 @@ export const imageStudioCropRequestSchema = z
     }
   });
 
-export type ImageStudioCropRequestDto = z.infer<typeof imageStudioCropRequestSchema>;
-export type ImageStudioCropRequest = ImageStudioCropRequestDto;
+export type ImageStudioCropRequest = z.infer<typeof imageStudioCropRequestSchema>;
 
 // --- Upscale ---
 
@@ -143,16 +135,13 @@ export type ImageStudioUpscaleErrorCode =
   (typeof IMAGE_STUDIO_UPSCALE_ERROR_CODES)[keyof typeof IMAGE_STUDIO_UPSCALE_ERROR_CODES];
 
 export const imageStudioUpscaleModeSchema = z.enum(['client_data_url', 'server_sharp']);
-export type ImageStudioUpscaleModeDto = z.infer<typeof imageStudioUpscaleModeSchema>;
-export type ImageStudioUpscaleMode = ImageStudioUpscaleModeDto;
+export type ImageStudioUpscaleMode = z.infer<typeof imageStudioUpscaleModeSchema>;
 
 export const imageStudioUpscaleStrategySchema = z.enum(['scale', 'target_resolution']);
-export type ImageStudioUpscaleStrategyDto = z.infer<typeof imageStudioUpscaleStrategySchema>;
-export type ImageStudioUpscaleStrategy = ImageStudioUpscaleStrategyDto;
+export type ImageStudioUpscaleStrategy = z.infer<typeof imageStudioUpscaleStrategySchema>;
 
 export const imageStudioUpscaleSmoothingQualitySchema = z.enum(['low', 'medium', 'high']);
-export type ImageStudioUpscaleSmoothingQualityDto = z.infer<typeof imageStudioUpscaleSmoothingQualitySchema>;
-export type ImageStudioUpscaleSmoothingQuality = ImageStudioUpscaleSmoothingQualityDto;
+export type ImageStudioUpscaleSmoothingQuality = z.infer<typeof imageStudioUpscaleSmoothingQualitySchema>;
 
 
 export const imageStudioUpscaleRequestSchema = z.object({
@@ -190,8 +179,7 @@ export const imageStudioUpscaleRequestSchema = z.object({
   }
 });
 
-export type ImageStudioUpscaleRequestDto = z.infer<typeof imageStudioUpscaleRequestSchema>;
-export type ImageStudioUpscaleRequest = ImageStudioUpscaleRequestDto;
+export type ImageStudioUpscaleRequest = z.infer<typeof imageStudioUpscaleRequestSchema>;
 
 // --- Center ---
 
@@ -236,21 +224,21 @@ export const imageStudioCenterModeSchema = z.enum([
   'server_object_layout_v1',
 ]);
 
-export type ImageStudioCenterModeDto = z.infer<typeof imageStudioCenterModeSchema>;
+export type ImageStudioCenterMode = z.infer<typeof imageStudioCenterModeSchema>;
 
 export const imageStudioCenterDetectionModeSchema = z.enum([
   'auto',
   'alpha_bbox',
   'white_bg_first_colored_pixel',
 ]);
-export type ImageStudioCenterDetectionModeDto = z.infer<typeof imageStudioCenterDetectionModeSchema>;
+export type ImageStudioCenterDetectionMode = z.infer<typeof imageStudioCenterDetectionModeSchema>;
 
 export const imageStudioCenterShadowPolicySchema = z.enum([
   'auto',
   'include_shadow',
   'exclude_shadow',
 ]);
-export type ImageStudioCenterShadowPolicyDto = z.infer<typeof imageStudioCenterShadowPolicySchema>;
+export type ImageStudioCenterShadowPolicy = z.infer<typeof imageStudioCenterShadowPolicySchema>;
 
 export const imageStudioCenterObjectBoundsSchema = z.object({
   left: z.number().int().min(0),
@@ -258,7 +246,7 @@ export const imageStudioCenterObjectBoundsSchema = z.object({
   width: z.number().int().positive(),
   height: z.number().int().positive(),
 });
-export type ImageStudioCenterObjectBoundsDto = z.infer<typeof imageStudioCenterObjectBoundsSchema>;
+export type ImageStudioCenterObjectBounds = z.infer<typeof imageStudioCenterObjectBoundsSchema>;
 
 export const imageStudioCenterLayoutConfigSchema = z.object({
   paddingPercent: z
@@ -307,7 +295,7 @@ export const imageStudioCenterLayoutConfigSchema = z.object({
   shadowPolicy: imageStudioCenterShadowPolicySchema.optional(),
   detection: imageStudioCenterDetectionModeSchema.optional(),
 });
-export type ImageStudioCenterLayoutConfigDto = z.infer<typeof imageStudioCenterLayoutConfigSchema>;
+export type ImageStudioCenterLayoutConfig = z.infer<typeof imageStudioCenterLayoutConfigSchema>;
 
 export const imageStudioCenterRequestSchema = z.object({
   mode: imageStudioCenterModeSchema,
@@ -317,8 +305,7 @@ export const imageStudioCenterRequestSchema = z.object({
   layout: imageStudioCenterLayoutConfigSchema.optional(),
 });
 
-export type ImageStudioCenterRequestDto = z.infer<typeof imageStudioCenterRequestSchema>;
-export type ImageStudioCenterRequest = ImageStudioCenterRequestDto;
+export type ImageStudioCenterRequest = z.infer<typeof imageStudioCenterRequestSchema>;
 
 export const IMAGE_STUDIO_ANALYSIS_ERROR_CODES = {
   INVALID_PAYLOAD: 'IMAGE_STUDIO_ANALYSIS_INVALID_PAYLOAD',
@@ -337,7 +324,7 @@ export const imageStudioAnalysisModeSchema = z.enum([
   'client_analysis_v1',
   'server_analysis_v1',
 ]);
-export type ImageStudioAnalysisModeDto = z.infer<typeof imageStudioAnalysisModeSchema>;
+export type ImageStudioAnalysisMode = z.infer<typeof imageStudioAnalysisModeSchema>;
 
 export const imageStudioAnalysisRequestSchema = z.object({
   mode: imageStudioAnalysisModeSchema.optional().default('server_analysis_v1'),
@@ -347,8 +334,7 @@ export const imageStudioAnalysisRequestSchema = z.object({
   layout: imageStudioCenterLayoutConfigSchema.optional(),
 });
 
-export type ImageStudioAnalysisRequestDto = z.infer<typeof imageStudioAnalysisRequestSchema>;
-export type ImageStudioAnalysisRequest = ImageStudioAnalysisRequestDto;
+export type ImageStudioAnalysisRequest = z.infer<typeof imageStudioAnalysisRequestSchema>;
 
 export const IMAGE_STUDIO_AUTOSCALER_ERROR_CODES = {
   INVALID_PAYLOAD: 'IMAGE_STUDIO_AUTOSCALER_INVALID_PAYLOAD',
@@ -371,7 +357,7 @@ export const imageStudioAutoScalerModeSchema = z.enum([
   'client_auto_scaler_v1',
   'server_auto_scaler_v1',
 ]);
-export type ImageStudioAutoScalerModeDto = z.infer<typeof imageStudioAutoScalerModeSchema>;
+export type ImageStudioAutoScalerMode = z.infer<typeof imageStudioAutoScalerModeSchema>;
 
 export const imageStudioAutoScalerRequestSchema = z.object({
   mode: imageStudioAutoScalerModeSchema,
@@ -381,8 +367,7 @@ export const imageStudioAutoScalerRequestSchema = z.object({
   layout: imageStudioCenterLayoutConfigSchema.optional(),
 });
 
-export type ImageStudioAutoScalerRequestDto = z.infer<typeof imageStudioAutoScalerRequestSchema>;
-export type ImageStudioAutoScalerRequest = ImageStudioAutoScalerRequestDto;
+export type ImageStudioAutoScalerRequest = z.infer<typeof imageStudioAutoScalerRequestSchema>;
 
 // --- Composite ---
 

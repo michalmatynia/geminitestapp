@@ -85,10 +85,14 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
           {selectedPersona.description}
         </div>
       )}
-      <div>
-        <Label className='text-xs text-gray-400'>Prompt Template</Label>
+      <FormField 
+        label='Prompt Template' 
+        description='Leave empty to use the incoming prompt or value input directly.'
+      >
         <Textarea
-          className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
+          variant='subtle'
+          size='sm'
+          className='min-h-[120px]'
           value={agentConfig.promptTemplate ?? ''}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
@@ -97,20 +101,13 @@ export function AgentNodeConfigSection(): React.JSX.Element | null {
           }
           placeholder='Use {{bundle}} or {{context}} placeholders to build the agent prompt.'
         />
-        <div className='mt-1 text-[11px] text-gray-500'>
-          Leave empty to use the incoming <span className='text-gray-300'>prompt</span> or{' '}
-          <span className='text-gray-300'>value</span> input directly.
-        </div>
-      </div>
+      </FormField>
       <div className='flex items-center justify-between rounded-md border border-border bg-card/50 px-3 py-2 text-xs text-gray-300'>
         <span>Wait for result</span>
         <Button
           type='button'
-          className={`rounded border px-3 py-1 text-xs ${
-            agentConfig.waitForResult !== false
-              ? 'text-emerald-200 hover:bg-emerald-500/10'
-              : 'text-gray-300 hover:bg-muted/50'
-          }`}
+          variant={agentConfig.waitForResult !== false ? 'success' : 'default'}
+          size='xs'
           onClick={(): void =>
             updateSelectedNodeConfig({
               agent: {

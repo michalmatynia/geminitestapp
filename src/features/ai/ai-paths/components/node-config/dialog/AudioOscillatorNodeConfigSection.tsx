@@ -6,6 +6,7 @@ import {
   Input,
   Label,
   SelectSimple,
+  FormField,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -27,9 +28,9 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>Waveform</Label>
+      <FormField label='Waveform'>
         <SelectSimple size='sm'
+          variant='subtle'
           value={oscillatorConfig.waveform}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -41,18 +42,17 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
           }
           options={waveformOptions}
           placeholder='Select waveform'
-          className='mt-2'
         />
-      </div>
+      </FormField>
 
-      <div>
-        <Label className='text-xs text-gray-400'>Frequency (Hz)</Label>
+      <FormField label='Frequency (Hz)'>
         <Input
           type='number'
           min='20'
           max='20000'
           step='1'
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={oscillatorConfig.frequencyHz}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -63,16 +63,16 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-      </div>
+      </FormField>
 
-      <div>
-        <Label className='text-xs text-gray-400'>Gain (0-1)</Label>
+      <FormField label='Gain (0-1)'>
         <Input
           type='number'
           min='0'
           max='1'
           step='0.01'
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={oscillatorConfig.gain}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -83,16 +83,16 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-      </div>
+      </FormField>
 
-      <div>
-        <Label className='text-xs text-gray-400'>Duration (ms)</Label>
+      <FormField label='Duration (ms)'>
         <Input
           type='number'
           min='30'
           max='10000'
           step='10'
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={oscillatorConfig.durationMs}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -103,7 +103,7 @@ export function AudioOscillatorNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-      </div>
+      </FormField>
 
       <p className='text-[11px] text-gray-500'>
         Emits audioSignal payloads that can be connected to Audio Speaker nodes.

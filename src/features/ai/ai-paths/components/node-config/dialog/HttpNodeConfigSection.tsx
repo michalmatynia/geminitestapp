@@ -1,7 +1,7 @@
 'use client';
 
 import type { HttpConfig } from '@/features/ai/ai-paths/lib';
-import { Input, Label, Textarea, SelectSimple } from '@/shared/ui';
+import { Input, Label, Textarea, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -35,10 +35,10 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>URL</Label>
+      <FormField label='URL'>
         <Input
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={httpConfig.url}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -46,11 +46,11 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-      </div>
+      </FormField>
       <div className='grid gap-3 sm:grid-cols-2'>
-        <div>
-          <Label className='text-xs text-gray-400'>Method</Label>
+        <FormField label='Method'>
           <SelectSimple size='sm'
+            variant='subtle'
             value={httpConfig.method}
             onValueChange={(value: string): void =>
               updateSelectedNodeConfig({
@@ -59,12 +59,11 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
             }
             options={methodOptions}
             placeholder='Select method'
-            className='mt-2'
           />
-        </div>
-        <div>
-          <Label className='text-xs text-gray-400'>Response Mode</Label>
+        </FormField>
+        <FormField label='Response Mode'>
           <SelectSimple size='sm'
+            variant='subtle'
             value={httpConfig.responseMode}
             onValueChange={(value: string): void =>
               updateSelectedNodeConfig({
@@ -76,14 +75,14 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
             }
             options={responseModeOptions}
             placeholder='Select mode'
-            className='mt-2'
           />
-        </div>
+        </FormField>
       </div>
-      <div>
-        <Label className='text-xs text-gray-400'>Headers (JSON)</Label>
+      <FormField label='Headers (JSON)'>
         <Textarea
-          className='mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
+          className='min-h-[90px]'
           value={httpConfig.headers}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
@@ -91,11 +90,12 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-      </div>
-      <div>
-        <Label className='text-xs text-gray-400'>Body Template</Label>
+      </FormField>
+      <FormField label='Body Template'>
         <Textarea
-          className='mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
+          className='min-h-[110px]'
           value={httpConfig.bodyTemplate}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
@@ -103,11 +103,14 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-      </div>
-      <div>
-        <Label className='text-xs text-gray-400'>Response Path</Label>
+      </FormField>
+      <FormField 
+        label='Response Path' 
+        description='Optional JSON path to extract a field from the response.'
+      >
         <Input
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={httpConfig.responsePath}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -115,10 +118,7 @@ export function HttpNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-        <p className='mt-2 text-[11px] text-gray-500'>
-          Optional JSON path to extract a field from the response.
-        </p>
-      </div>
+      </FormField>
     </div>
   );
 }

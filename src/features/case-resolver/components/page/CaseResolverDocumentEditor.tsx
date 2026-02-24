@@ -1,17 +1,18 @@
 'use client';
 
-import { 
-  FileText, 
-  History, 
-  Network, 
-  Settings2, 
-  Save, 
-  X, 
-  ExternalLink, 
-  Printer, 
+import {
+  FileText,
+  History,
+  Network,
+  Pencil,
+  Settings2,
+  Save,
+  X,
+  ExternalLink,
+  Printer,
   Download,
   Terminal,
-  Copy
+  Copy,
 } from 'lucide-react';
 import React from 'react';
 
@@ -41,7 +42,6 @@ import {
   resolvePromptExploderTransferStatusLabel,
   type PromptExploderTransferUiStatus 
 } from '../../hooks/prompt-exploder-transfer-lifecycle';
-import { canCaseResolverDraftPerformInitialManualSave } from '../../hooks/useCaseResolverState.helpers';
 
 export type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
 
@@ -75,7 +75,6 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
     handlePrintDraftDocument,
     handleExportDraftPdf,
     handleSaveFileEditor,
-    handleDiscardFileEditorDraft,
     handleLinkRelatedFiles,
     handleUnlinkRelatedFile,
     captureApplyDiagnostics,
@@ -94,15 +93,16 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
   } = state;
 
   const [relateSearchQuery, setRelateSearchQuery] = React.useState('');
+  const [isRenamingName, setIsRenamingName] = React.useState(false);
+  const [nameInputValue, setNameInputValue] = React.useState('');
+  const nameInputRef = React.useRef<HTMLInputElement>(null);
 
   if (!editingDocumentDraft || editingDocumentDraft.fileType === 'scanfile') return null;
   const draft = editingDocumentDraft;
 
   const originalFile = workspace.files.find((f) => f.id === draft.id);
   const isEditingDocumentLocked = draft.isLocked;
-  const isEditorSaveEnabled = isEditorDraftDirty || (
-    originalFile ? canCaseResolverDraftPerformInitialManualSave({ draft, file: originalFile }) : false
-  );
+  const isEditorSaveEnabled = isEditorDraftDirty;
 
   const encodedAddresser = encodeFilemakerPartyReference(draft.addresser ?? null);
   const encodedAddressee = encodeFilemakerPartyReference(draft.addressee ?? null);
@@ -160,16 +160,6 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
               <Save className='mr-2 size-4' />
               Update
             </Button>
-            <Button
-              type='button'
-              variant='ghost'
-              size='sm'
-              onClick={handleDiscardFileEditorDraft}
-              className='h-9 text-gray-400 hover:text-gray-100 hover:bg-white/5'
-            >
-              <X className='mr-2 size-4' />
-              Discard
-            </Button>
           </div>
           <div className='h-6 w-px bg-border/40' />
           <div className='min-w-0 flex-1'>
@@ -178,9 +168,46 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
               <span className='text-gray-700'>/</span>
               <span className='text-blue-400/80'>{editingDocumentDraft.fileType}</span>
             </div>
-            <div className='truncate text-sm font-semibold text-gray-100'>
-              {editingDocumentDraft.name}
-            </div>
+
+            {isRenamingName ? (
+              <input
+                ref={nameInputRef}
+                autoFocus
+                value={nameInputValue}
+                onChange={(e) => setNameInputValue(e.target.value)}
+                onBlur={() => {
+                  const trimmed = nameInputValue.trim();
+                  if (trimmed && trimmed !== draft.name) {
+                    updateEditingDocumentDraft({ name: trimmed });
+                  }
+                  setIsRenamingName(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur();
+                  } else if (e.key === 'Escape') {
+                    setIsRenamingName(false);
+                  }
+                }}
+                className='w-full rounded border border-border/60 bg-card/30 px-1.5 py-0.5 text-sm font-semibold text-gray-100 outline-none focus:border-blue-500/60 focus:ring-0'
+              />
+            ) : (
+              <button
+                type='button'
+                disabled={isEditingDocumentLocked}
+                onClick={() => {
+                  setNameInputValue(draft.name);
+                  setIsRenamingName(true);
+                }}
+                className='group flex min-w-0 items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-white/5 disabled:pointer-events-none'
+                title='Click to rename'
+              >
+                <span className='truncate text-sm font-semibold text-gray-100'>
+                  {draft.name}
+                </span>
+                <Pencil className='size-3 shrink-0 text-gray-600 opacity-0 transition-opacity group-hover:opacity-100' />
+              </button>
+            )}
           </div>
         </div>
 
@@ -301,6 +328,46 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                 </Card>
               )}
 
+              <div className='grid grid-cols-2 gap-4'>
+                <Input
+                  value={draft.documentCity ?? ''}
+                  onChange={(e) => updateEditingDocumentDraft({ documentCity: e.target.value || null })}
+                  placeholder='City...'
+                  disabled={isEditingDocumentLocked}
+                  className='bg-card/20 border-border/60'
+                />
+                <Input
+                  type='date'
+                  value={draft.documentDate?.isoDate ?? ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    updateEditingDocumentDraft({
+                      documentDate: val
+                        ? { source: 'metadata', sourceLine: null, cityHint: null, action: 'useDetectedDate', ...draft.documentDate, isoDate: val }
+                        : null,
+                    });
+                  }}
+                  disabled={isEditingDocumentLocked}
+                  className='bg-card/20 border-border/60'
+                />
+                <SelectSimple
+                  value={encodedAddresser === 'none' ? '' : encodedAddresser}
+                  onValueChange={(v) => updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })}
+                  options={partyOptions}
+                  placeholder='From...'
+                  disabled={isEditingDocumentLocked}
+                  triggerClassName='bg-card/20 border-border/60'
+                />
+                <SelectSimple
+                  value={encodedAddressee === 'none' ? '' : encodedAddressee}
+                  onValueChange={(v) => updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })}
+                  options={partyOptions}
+                  placeholder='To...'
+                  disabled={isEditingDocumentLocked}
+                  triggerClassName='bg-card/20 border-border/60'
+                />
+              </div>
+
               <DocumentWysiwygEditor
                 key={`case-resolver-wysiwyg-${editorContentRevisionSeed}`}
                 value={editingDocumentDraft.documentContentHtml ?? ''}
@@ -312,52 +379,6 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
                 surfaceClassName='min-h-[400px]'
                 editorContentClassName='[&_.ProseMirror]:!min-h-[400px]'
               />
-
-              <div className='grid grid-cols-2 gap-4 border-t border-border/40 pt-4 lg:grid-cols-4'>
-                <FormField label='Addresser (From)'>
-                  <SelectSimple
-                    value={encodedAddresser}
-                    onValueChange={(v) => updateEditingDocumentDraft({ addresser: decodeFilemakerPartyReference(v) })}
-                    options={partyOptions}
-                    disabled={isEditingDocumentLocked}
-                    triggerClassName='bg-card/20 border-border/60'
-                  />
-                </FormField>
-                <FormField label='Addressee (To)'>
-                  <SelectSimple
-                    value={encodedAddressee}
-                    onValueChange={(v) => updateEditingDocumentDraft({ addressee: decodeFilemakerPartyReference(v) })}
-                    options={partyOptions}
-                    disabled={isEditingDocumentLocked}
-                    triggerClassName='bg-card/20 border-border/60'
-                  />
-                </FormField>
-                <FormField label='Document Date'>
-                  <Input
-                    type='date'
-                    value={draft.documentDate?.isoDate ?? ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      updateEditingDocumentDraft({
-                        documentDate: val
-                          ? { source: 'metadata', sourceLine: null, cityHint: null, action: 'useDetectedDate', ...draft.documentDate, isoDate: val }
-                          : null,
-                      });
-                    }}
-                    disabled={isEditingDocumentLocked}
-                    className='bg-card/20 border-border/60'
-                  />
-                </FormField>
-                <FormField label='Document City'>
-                  <Input
-                    value={draft.documentCity ?? ''}
-                    onChange={(e) => updateEditingDocumentDraft({ documentCity: e.target.value || null })}
-                    placeholder='City...'
-                    disabled={isEditingDocumentLocked}
-                    className='bg-card/20 border-border/60'
-                  />
-                </FormField>
-              </div>
 
               <div className='flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border/40'>
                 <div className='flex flex-wrap items-center gap-x-6 gap-y-2 text-[11px] text-gray-500'>

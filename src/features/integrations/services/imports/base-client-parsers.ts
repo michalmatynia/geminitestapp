@@ -1,26 +1,12 @@
 import type {
-  BaseApiResponseDto,
-  BaseInventoryDto,
-  BaseWarehouseDto,
-  BaseProducerDto,
-  BaseTagDto,
-  BaseProductRecordDto,
-  BaseCategoryDto,
+  BaseApiResponse,
+  BaseInventory,
+  BaseWarehouse,
+  BaseProducer,
+  BaseTag,
+  BaseProductRecord,
+  BaseCategory,
 } from '@/shared/contracts/integrations';
-
-export type BaseApiResponse = BaseApiResponseDto;
-
-export type BaseInventory = BaseInventoryDto;
-
-export type BaseWarehouse = BaseWarehouseDto;
-
-export type BaseProducer = BaseProducerDto;
-
-export type BaseTag = BaseTagDto;
-
-export type BaseProductRecord = BaseProductRecordDto;
-
-export type BaseCategory = BaseCategoryDto;
 
 const toArray = (value: unknown): unknown[] => {
   if (Array.isArray(value)) return value;

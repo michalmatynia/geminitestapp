@@ -25,6 +25,7 @@ import {
   type DocumentContentCanonical,
 } from '@/features/document-editor';
 import type { FilemakerPartyKind } from '@/features/filemaker';
+import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import {
   FILEMAKER_DATABASE_KEY,
   buildFilemakerPartyOptions,
@@ -74,6 +75,7 @@ import {
   type CaseResolverStateValue,
 } from '../types';
 import {
+  buildDocumentPdfMarkup,
   createCaseResolverHistorySnapshotEntry,
   buildFileEditDraft,
   createId,
@@ -104,8 +106,25 @@ const sanitizeDocumentExportBaseName = (value: string): string => {
     .trim() || 'Document';
 };
 
-const buildDraftPdfPreviewMarkup = (draft: CaseResolverFileEditDraft): string => {
-  return `<html><body><h1>${draft.name}</h1><p>${draft.documentContent}</p></body></html>`;
+const buildDraftPdfPreviewMarkup = (
+  draft: CaseResolverFileEditDraft,
+  filemakerDatabase: FilemakerDatabase,
+): string => {
+  const addresserLabel =
+    resolveFilemakerPartyLabel(filemakerDatabase, draft.addresser
+      ? { ...draft.addresser, kind: draft.addresser.kind as FilemakerPartyKind }
+      : null) ?? '';
+  const addresseeLabel =
+    resolveFilemakerPartyLabel(filemakerDatabase, draft.addressee
+      ? { ...draft.addressee, kind: draft.addressee.kind as FilemakerPartyKind }
+      : null) ?? '';
+  return buildDocumentPdfMarkup({
+    documentDate: draft.documentDate?.isoDate ?? '',
+    documentPlace: draft.documentCity ?? null,
+    addresserLabel,
+    addresseeLabel,
+    documentContent: draft.documentContentHtml ?? draft.documentContent ?? '',
+  });
 };
 
 export type WorkspaceView = 'document' | 'relations';
@@ -1459,7 +1478,7 @@ export function useAdminCaseResolverPageState() {
   const handlePreviewDraftPdf = useCallback((): void => {
     if (!editingDocumentDraft) return;
     try {
-      const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
+      const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft, filemakerDatabase);
       if (typeof window === 'undefined') return;
       const previewBlob = new Blob([markup], { type: 'text/html;charset=utf-8' });
       const previewUrl = URL.createObjectURL(previewBlob);
@@ -1533,7 +1552,7 @@ export function useAdminCaseResolverPageState() {
   const handlePrintDraftDocument = useCallback((): void => {
     if (!editingDocumentDraft) return;
     try {
-      const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
+      const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft, filemakerDatabase);
       printDocumentMarkup(markup);
     } catch (_error: unknown) {
       toast(
@@ -1546,7 +1565,7 @@ export function useAdminCaseResolverPageState() {
   const handleExportDraftPdf = useCallback(async (): Promise<void> => {
     if (!editingDocumentDraft) return;
     try {
-      const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft);
+      const markup = buildDraftPdfPreviewMarkup(editingDocumentDraft, filemakerDatabase);
       const documentBaseName = sanitizeDocumentExportBaseName(
         editingDocumentDraft.name || 'Case Resolver Document'
       );

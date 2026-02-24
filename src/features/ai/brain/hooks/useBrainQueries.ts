@@ -3,23 +3,19 @@
 import type { 
   AiInsightRecord, 
   AiPathRuntimeAnalyticsSummary, 
-  AnalyticsSummaryDto, 
+  AnalyticsSummary, 
 } from '@/shared/contracts';
 import type { 
-  ChatbotModelsResponseDto, 
-  InsightsSnapshotDto 
+  ChatbotModelsResponse, 
+  InsightsSnapshot 
 } from '@/shared/contracts/ai-brain';
-import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
+import type { SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { brainKeys } from '@/shared/lib/query-key-exports';
 
 export { brainKeys };
-
-export type ChatbotModelsResponse = ChatbotModelsResponseDto;
-
-export type InsightsSnapshot = InsightsSnapshotDto;
 
 export function useOllamaModels(): SingleQuery<ChatbotModelsResponse> {
   const queryKey = brainKeys.ollamaModels();
@@ -40,11 +36,11 @@ export function useOllamaModels(): SingleQuery<ChatbotModelsResponse> {
   });
 }
 
-export function useBrainAnalyticsSummary(): SingleQuery<AnalyticsSummaryDto> {
+export function useBrainAnalyticsSummary(): SingleQuery<AnalyticsSummary> {
   const queryKey = brainKeys.analyticsSummary();
-  return createSingleQueryV2<AnalyticsSummaryDto>({
+  return createSingleQueryV2<AnalyticsSummary>({
     queryKey,
-    queryFn: () => api.get<AnalyticsSummaryDto>('/api/analytics/summary', {
+    queryFn: () => api.get<AnalyticsSummary>('/api/analytics/summary', {
       params: { range: '24h', scope: 'all' }
     }),
     id: 'analytics-summary',

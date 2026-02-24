@@ -3,7 +3,7 @@
 import React from 'react';
 
 import type { LogicalConditionConfig, LogicalConditionItem, LogicalConditionOperator } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, SelectSimple } from '@/shared/ui';
+import { Button, Input, Label, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -92,19 +92,18 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>Combinator</Label>
+      <FormField label='Combinator'>
         <SelectSimple
           size='sm'
+          variant='subtle'
           value={config.combinator}
           onValueChange={(value: string): void =>
             updateConfig({ combinator: value as LogicalConditionConfig['combinator'] })
           }
           options={combinatorOptions}
           placeholder='Select combinator'
-          className='mt-2'
         />
-      </div>
+      </FormField>
 
       <div className='space-y-3'>
         <Label className='text-xs text-gray-400'>Conditions</Label>
@@ -119,25 +118,27 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
           return (
             <div
               key={condition.id ?? index}
-              className='rounded-md border border-border bg-card/40 p-3 space-y-2'
+              className='rounded-md border border-border bg-card/40 p-3 space-y-3'
             >
               <div className='flex items-center justify-between gap-2'>
-                <span className='text-xs font-medium text-gray-400'>
+                <span className='text-xs font-semibold text-white'>
                   Condition {index + 1}
                 </span>
                 <Button
                   type='button'
-                  className='rounded border border-red-500/30 px-2 py-0.5 text-xs text-red-400 hover:bg-red-500/10'
+                  variant='ghost'
+                  size='xs'
+                  className='h-7 text-red-400 hover:text-red-300 hover:bg-red-500/10'
                   onClick={(): void => removeCondition(index)}
                 >
                   Remove
                 </Button>
               </div>
 
-              <div>
-                <Label className='text-xs text-gray-500'>Input port</Label>
+              <FormField label='Input port'>
                 <SelectSimple
                   size='sm'
+                  variant='subtle'
                   value={condition.inputPort}
                   onValueChange={(value: string): void =>
                     updateCondition(index, {
@@ -146,47 +147,45 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
                   }
                   options={inputPortOptions}
                   placeholder='Select input port'
-                  className='mt-1'
                 />
-              </div>
+              </FormField>
 
-              <div>
-                <Label className='text-xs text-gray-500'>Field path (optional)</Label>
+              <FormField label='Field path (optional)'>
                 <Input
-                  className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                  variant='subtle'
+                  size='sm'
                   placeholder='e.g. parameters or data.count'
                   value={condition.fieldPath ?? ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                     updateCondition(index, { fieldPath: e.target.value || undefined })
                   }
                 />
-              </div>
+              </FormField>
 
-              <div>
-                <Label className='text-xs text-gray-500'>Operator</Label>
+              <FormField label='Operator'>
                 <SelectSimple
                   size='sm'
+                  variant='subtle'
                   value={condition.operator}
                   onValueChange={(value: string): void =>
                     updateCondition(index, { operator: value as LogicalConditionOperator })
                   }
                   options={operatorOptions}
                   placeholder='Select operator'
-                  className='mt-1'
                 />
-              </div>
+              </FormField>
 
               {showCompareTo && (
-                <div>
-                  <Label className='text-xs text-gray-500'>Compare to</Label>
+                <FormField label='Compare to'>
                   <Input
-                    className='mt-1 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+                    variant='subtle'
+                    size='sm'
                     value={condition.compareTo ?? ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
                       updateCondition(index, { compareTo: e.target.value })
                     }
                   />
-                </div>
+                </FormField>
               )}
 
               {showCaseSensitive && (
@@ -194,11 +193,8 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
                   <span>Case sensitive</span>
                   <Button
                     type='button'
-                    className={`rounded border px-3 py-1 text-xs ${
-                      condition.caseSensitive
-                        ? 'text-emerald-200 hover:bg-emerald-500/10'
-                        : 'text-gray-300 hover:bg-muted/50'
-                    }`}
+                    variant={condition.caseSensitive ? 'success' : 'default'}
+                    size='xs'
                     onClick={(): void =>
                       updateCondition(index, {
                         caseSensitive: !condition.caseSensitive,
@@ -215,7 +211,9 @@ export function LogicalConditionNodeConfigSection(): React.JSX.Element | null {
 
         <Button
           type='button'
-          className='w-full rounded-md border border-border px-3 py-1.5 text-xs text-gray-300 hover:bg-muted/50'
+          variant='outline'
+          size='sm'
+          className='w-full border-dashed'
           onClick={addCondition}
         >
           + Add Condition

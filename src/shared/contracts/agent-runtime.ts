@@ -7,8 +7,7 @@ import { dtoBaseSchema } from './base';
  */
 
 export const agentDecisionActionSchema = z.enum(['respond', 'tool', 'wait_human']);
-export type AgentDecisionActionDto = z.infer<typeof agentDecisionActionSchema>;
-export type AgentDecisionAction = AgentDecisionActionDto;
+export type AgentDecisionAction = z.infer<typeof agentDecisionActionSchema>;
 
 export const agentDecisionSchema = z.object({
   action: agentDecisionActionSchema,
@@ -16,14 +15,13 @@ export const agentDecisionSchema = z.object({
   toolName: z.string().optional(),
 });
 
-export type AgentDecisionDto = z.infer<typeof agentDecisionSchema>;
-export type AgentDecision = AgentDecisionDto;
+export type AgentDecision = z.infer<typeof agentDecisionSchema>;
 
 export const planStepStatusSchema = z.enum(['pending', 'running', 'completed', 'failed']);
-export type PlanStepStatusDto = z.infer<typeof planStepStatusSchema>;
+export type PlanStepStatus = z.infer<typeof planStepStatusSchema>;
 
 export const planStepPhaseSchema = z.enum(['observe', 'act', 'verify', 'recover']);
-export type PlanStepPhaseDto = z.infer<typeof planStepPhaseSchema>;
+export type PlanStepPhase = z.infer<typeof planStepPhaseSchema>;
 
 export const planStepSchema = z.object({
   id: z.string(),
@@ -43,8 +41,7 @@ export const planStepSchema = z.object({
   logCount: z.number().nullable().optional(),
 });
 
-export type PlanStepDto = z.infer<typeof planStepSchema>;
-export type PlanStep = PlanStepDto;
+export type PlanStep = z.infer<typeof planStepSchema>;
 
 export const plannerCritiqueSchema = z.object({
   assumptions: z.array(z.string()).optional(),
@@ -54,8 +51,7 @@ export const plannerCritiqueSchema = z.object({
   questions: z.array(z.string()).optional(),
 });
 
-export type PlannerCritiqueDto = z.infer<typeof plannerCritiqueSchema>;
-export type PlannerCritique = PlannerCritiqueDto;
+export type PlannerCritique = z.infer<typeof plannerCritiqueSchema>;
 
 export const plannerAlternativeSchema = z.object({
   title: z.string(),
@@ -71,8 +67,7 @@ export const plannerAlternativeSchema = z.object({
   })),
 });
 
-export type PlannerAlternativeDto = z.infer<typeof plannerAlternativeSchema>;
-export type PlannerAlternative = PlannerAlternativeDto;
+export type PlannerAlternative = z.infer<typeof plannerAlternativeSchema>;
 
 export const plannerMetaSchema = z.object({
   critique: plannerCritiqueSchema.nullable().optional(),
@@ -85,11 +80,9 @@ export const plannerMetaSchema = z.object({
   successSignals: z.array(z.string()).optional(),
 });
 
-export type PlannerMetaDto = z.infer<typeof plannerMetaSchema>;
-export type PlannerMeta = PlannerMetaDto;
+export type PlannerMeta = z.infer<typeof plannerMetaSchema>;
 
-export type PlannerTaskTypeDto = 'web_task' | 'extract_info';
-export type PlannerTaskType = PlannerTaskTypeDto;
+export type PlannerTaskType = 'web_task' | 'extract_info';
 
 export const agentPlanSettingsSchema = z.object({
   maxSteps: z.number(),
@@ -102,8 +95,7 @@ export const agentPlanSettingsSchema = z.object({
   loopBackoffMaxMs: z.number(),
 });
 
-export type AgentPlanSettingsDto = z.infer<typeof agentPlanSettingsSchema>;
-export type AgentPlanSettings = AgentPlanSettingsDto;
+export type AgentPlanSettings = z.infer<typeof agentPlanSettingsSchema>;
 
 export const agentPlanPreferencesSchema = z.object({
   ignoreRobotsTxt: z.boolean().optional(),
@@ -120,8 +112,7 @@ export const agentPlanPreferencesSchema = z.object({
   outputNormalizationModel: z.string().optional(),
 });
 
-export type AgentPlanPreferencesDto = z.infer<typeof agentPlanPreferencesSchema>;
-export type AgentPlanPreferences = AgentPlanPreferencesDto;
+export type AgentPlanPreferences = z.infer<typeof agentPlanPreferencesSchema>;
 
 export const agentCheckpointSchema = z.object({
   steps: z.array(planStepSchema),
@@ -143,8 +134,7 @@ export const agentCheckpointSchema = z.object({
   updatedAt: z.string(),
 });
 
-export type AgentCheckpointDto = z.infer<typeof agentCheckpointSchema>;
-export type AgentCheckpoint = AgentCheckpointDto;
+export type AgentCheckpoint = z.infer<typeof agentCheckpointSchema>;
 
 export const loopSignalSchema = z.object({
   reason: z.string(),
@@ -154,8 +144,7 @@ export const loopSignalSchema = z.object({
   statuses: z.array(planStepStatusSchema),
 });
 
-export type LoopSignalDto = z.infer<typeof loopSignalSchema>;
-export type LoopSignal = LoopSignalDto;
+export type LoopSignal = z.infer<typeof loopSignalSchema>;
 
 export const extractionPlanSchema = z.object({
   target: z.string().nullable(),
@@ -165,7 +154,7 @@ export const extractionPlanSchema = z.object({
   notes: z.string().nullable(),
 });
 
-export type ExtractionPlanDto = z.infer<typeof extractionPlanSchema>;
+export type ExtractionPlan = z.infer<typeof extractionPlanSchema>;
 
 export const failureRecoveryPlanSchema = z.object({
   reason: z.string().nullable(),
@@ -179,7 +168,7 @@ export const failureRecoveryPlanSchema = z.object({
   notes: z.string().nullable(),
 });
 
-export type FailureRecoveryPlanDto = z.infer<typeof failureRecoveryPlanSchema>;
+export type FailureRecoveryPlan = z.infer<typeof failureRecoveryPlanSchema>;
 
 export const approvalRequestSchema = z.object({
   id: z.string(),
@@ -192,17 +181,25 @@ export const approvalRequestSchema = z.object({
   decidedAt: z.string().optional(),
 });
 
-export type ApprovalRequestDto = z.infer<typeof approvalRequestSchema>;
-export type ApprovalRequest = Omit<ApprovalRequestDto, 'requestedAt' | 'decidedAt'> & {
+export interface ApprovalRequestBase {
+  id: string;
+  runId: string;
+  stepId: string;
+  action: string;
+  context?: Record<string, unknown> | undefined;
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: string;
+  decidedAt?: string | undefined;
+}
+
+export type ApprovalRequest = Omit<ApprovalRequestBase, 'requestedAt' | 'decidedAt'> & {
   requestedAt: Date;
   decidedAt?: Date;
 };
 
-export type AuditLevelDto = 'info' | 'warning' | 'error';
-export type AuditLevel = AuditLevelDto;
+export type AuditLevel = 'info' | 'warning' | 'error';
 
-export type MemoryScopeDto = 'session' | 'longterm';
-export type MemoryScope = MemoryScopeDto;
+export type MemoryScope = 'session' | 'longterm';
 
 export const planHierarchySchema = z.object({
   goals: z.array(z.object({
@@ -218,8 +215,7 @@ export const planHierarchySchema = z.object({
   })),
 });
 
-export type PlanHierarchyDto = z.infer<typeof planHierarchySchema>;
-export type PlanHierarchy = PlanHierarchyDto;
+export type PlanHierarchy = z.infer<typeof planHierarchySchema>;
 
 export const agentToolRequestSchema = z.object({
   tool: z.string(),
@@ -228,8 +224,7 @@ export const agentToolRequestSchema = z.object({
   stepId: z.string(),
 });
 
-export type AgentToolRequestDto = z.infer<typeof agentToolRequestSchema>;
-export type AgentToolRequest = AgentToolRequestDto;
+export type AgentToolRequest = z.infer<typeof agentToolRequestSchema>;
 
 export const agentToolResultSchema = z.object({
   success: z.boolean(),
@@ -238,12 +233,10 @@ export const agentToolResultSchema = z.object({
   observation: z.string().optional(),
 });
 
-export type AgentToolResultDto = z.infer<typeof agentToolResultSchema>;
-export type AgentToolResult = AgentToolResultDto;
+export type AgentToolResult = z.infer<typeof agentToolResultSchema>;
 
 export const agentRunStatusTypeSchema = z.enum(['queued', 'running', 'waiting_human', 'stopped', 'failed', 'completed']);
-export type AgentRunStatusTypeDto = z.infer<typeof agentRunStatusTypeSchema>;
-export type AgentRunStatusType = AgentRunStatusTypeDto;
+export type AgentRunStatusType = z.infer<typeof agentRunStatusTypeSchema>;
 
 export const agentAuditLogRecordSchema = dtoBaseSchema.extend({
   runId: z.string().nullable(),
@@ -252,8 +245,17 @@ export const agentAuditLogRecordSchema = dtoBaseSchema.extend({
   metadata: z.unknown(),
 });
 
-export type AgentAuditLogRecordDto = z.infer<typeof agentAuditLogRecordSchema>;
-export type AgentAuditLogRecord = Omit<AgentAuditLogRecordDto, 'createdAt'> & {
+export interface AgentAuditLogRecordDtoBase {
+  id: string;
+  runId: string | null;
+  level: string;
+  message: string;
+  metadata: unknown;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export type AgentAuditLogRecord = Omit<AgentAuditLogRecordDtoBase, 'createdAt'> & {
   createdAt: Date;
 };
 
@@ -284,5 +286,4 @@ export const agentExecutionContextSchema = z.object({
   }).nullable(),
 });
 
-export type AgentExecutionContextDto = z.infer<typeof agentExecutionContextSchema>;
-export type AgentExecutionContext = AgentExecutionContextDto;
+export type AgentExecutionContext = z.infer<typeof agentExecutionContextSchema>;

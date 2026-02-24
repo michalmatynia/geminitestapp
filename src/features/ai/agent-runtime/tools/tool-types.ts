@@ -1,4 +1,4 @@
-import type { ExtractionPlanDto, FailureRecoveryPlanDto } from '@/shared/contracts/agent-runtime';
+import type { ExtractionPlan, FailureRecoveryPlan } from '@/shared/contracts/agent-runtime';
 
 export type AgentToolRequest = {
   name: 'playwright';
@@ -32,10 +32,6 @@ export type AgentToolResult = {
 };
 
 export type AgentControlAction = 'goto' | 'reload' | 'snapshot';
-
-export type ExtractionPlan = ExtractionPlanDto;
-
-export type FailureRecoveryPlan = FailureRecoveryPlanDto;
 
 export type AgentToolLog = (
   level: string,

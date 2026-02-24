@@ -69,6 +69,8 @@ export function AudioSpeakerNodeConfigSection(): React.JSX.Element | null {
           min='0'
           max='1'
           step='0.01'
+          variant='subtle'
+          size='sm'
           value={speakerConfig.gain}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({

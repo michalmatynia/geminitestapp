@@ -2,6 +2,15 @@
 
 import React from 'react';
 
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/shared/ui';
 import { useCaseResolverViewContext } from './CaseResolverViewContext';
 import { CaseResolverPageProvider } from '../context/CaseResolverPageContext';
 import { CaseResolverFolderTree } from './CaseResolverFolderTree';
@@ -11,7 +20,7 @@ import { CaseResolverCaptureMappingModal } from './page/CaseResolverCaptureMappi
 export function CaseResolverPageView(): React.JSX.Element {
   const contextValue = useCaseResolverViewContext();
   const { state } = contextValue;
-  const { 
+  const {
     workspace,
     activeCaseId,
     requestedCaseStatus,
@@ -37,10 +46,13 @@ export function CaseResolverPageView(): React.JSX.Element {
     handleAttachAssetFile,
     handleDeleteFolder,
     handleOpenFileEditor,
+    editingDocumentDraft,
     caseResolverTags,
     caseResolverIdentifiers,
     caseResolverCategories,
     handleUpdateSelectedAsset,
+    handleSaveFileEditor,
+    handleDiscardFileEditorDraft,
     ConfirmationModal,
     PromptInputModal,
   } = state;
@@ -65,7 +77,29 @@ export function CaseResolverPageView(): React.JSX.Element {
     partyOptions,
     setWorkspaceView,
     handleMoveFolder,
+    isEditorDraftDirty,
   } = contextValue;
+
+  // Pending navigation stored as a callback so we can execute it after user confirms
+  const [pendingNavigation, setPendingNavigation] = React.useState<(() => void) | null>(null);
+
+  // Only guard document files — scan files don't have a text editor worth guarding
+  const isDirtyDocumentDraft =
+    isEditorDraftDirty &&
+    editingDocumentDraft !== null &&
+    editingDocumentDraft?.fileType !== 'scanfile';
+
+  const guardNavigation = React.useCallback(
+    (action: () => void): void => {
+      if (isDirtyDocumentDraft) {
+        // Wrap in an extra arrow so React doesn't treat `action` as a state-updater function
+        setPendingNavigation(() => action);
+        return;
+      }
+      action();
+    },
+    [isDirtyDocumentDraft]
+  );
 
   return (
     <CaseResolverPageProvider
@@ -82,7 +116,7 @@ export function CaseResolverPageView(): React.JSX.Element {
         panelCollapsed: folderPanelCollapsed,
         onPanelCollapsedChange: setFolderPanelCollapsed,
         onDeactivateActiveFile: handleDeactivateActiveFile,
-        onSelectFile: handleSelectFile,
+        onSelectFile: (fileId) => guardNavigation(() => handleSelectFile(fileId)),
         onSelectAsset: handleSelectAsset,
         onSelectFolder: handleSelectFolder,
         onCreateFile: handleCreateFile,
@@ -108,13 +142,13 @@ export function CaseResolverPageView(): React.JSX.Element {
         onDeleteFile: handleDeleteFile,
         onDeleteAsset: handleDeleteAsset,
         onToggleFileLock: handleToggleFileLock,
-        onEditFile: handleOpenFileEditor,
+        onEditFile: (fileId, options) => guardNavigation(() => handleOpenFileEditor(fileId, options)),
         caseResolverTags,
         caseResolverIdentifiers,
         caseResolverCategories,
         onCreateDocumentFromSearch: handleCreateDocumentFromSearch,
-        onOpenFileFromSearch: handleOpenFileFromSearch,
-        onEditFileFromSearch: handleEditFileFromSearch,
+        onOpenFileFromSearch: (id) => guardNavigation(() => handleOpenFileFromSearch(id)),
+        onEditFileFromSearch: (id) => guardNavigation(() => handleEditFileFromSearch(id)),
         onUpdateSelectedAsset: handleUpdateSelectedAsset,
         onGraphChange: handleGraphChange,
         onRelationGraphChange: handleRelationGraphChange,
@@ -144,6 +178,52 @@ export function CaseResolverPageView(): React.JSX.Element {
 
         <ConfirmationModal />
         <PromptInputModal />
+
+        {/* Unsaved-changes guard dialog */}
+        <Dialog
+          open={pendingNavigation !== null}
+          onOpenChange={(open) => { if (!open) setPendingNavigation(null); }}
+        >
+          <DialogContent className='max-w-md'>
+            <DialogHeader>
+              <DialogTitle>Unsaved Changes</DialogTitle>
+              <DialogDescription>
+                You have unsaved changes in this document. What would you like to do?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className='flex-col gap-2 sm:flex-col'>
+              <Button
+                onClick={() => {
+                  handleSaveFileEditor();
+                  pendingNavigation?.();
+                  setPendingNavigation(null);
+                }}
+                className='w-full border-emerald-500/50 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                variant='outline'
+              >
+                Save &amp; Continue
+              </Button>
+              <Button
+                onClick={() => {
+                  handleDiscardFileEditorDraft();
+                  pendingNavigation?.();
+                  setPendingNavigation(null);
+                }}
+                variant='outline'
+                className='w-full border-red-500/40 text-red-400 hover:bg-red-500/10'
+              >
+                Discard Changes
+              </Button>
+              <Button
+                variant='ghost'
+                className='w-full'
+                onClick={() => setPendingNavigation(null)}
+              >
+                Cancel
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </CaseResolverPageProvider>
   );

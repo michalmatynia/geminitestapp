@@ -14,6 +14,7 @@ import {
   LoadingState,
   Card,
   Alert,
+  FormField,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -49,36 +50,35 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div className='flex items-start justify-between gap-4'>
-        <div className='space-y-1'>
-          <Label className='text-xs text-gray-400'>Learner Agent</Label>
-          <div className='text-[11px] text-gray-500'>
-            Answer using your embedding school (RAG).
-          </div>
-        </div>
-        <Button
-          asChild
-          variant='outline'
-          size='sm'
-          className='border-border text-xs text-gray-200'
-        >
-          <Link href='/admin/agentcreator/teaching/agents'>Manage Learner Agents</Link>
-        </Button>
-      </div>
-
-      <SelectSimple size='sm'
-        value={learnerConfig.agentId ? learnerConfig.agentId : NO_AGENT_VALUE}
-        onValueChange={(value: string): void =>
-          updateSelectedNodeConfig({
-            learnerAgent: {
-              ...learnerConfig,
-              agentId: value === NO_AGENT_VALUE ? '' : value,
-            },
-          })
+      <FormField 
+        label='Learner Agent' 
+        description='Answer using your embedding school (RAG).'
+        actions={
+          <Button
+            asChild
+            variant='outline'
+            size='xs'
+            className='h-7'
+          >
+            <Link href='/admin/agentcreator/teaching/agents'>Manage Learner Agents</Link>
+          </Button>
         }
-        options={agentOptions}
-        placeholder='Select learner agent'
-      />
+      >
+        <SelectSimple size='sm'
+          variant='subtle'
+          value={learnerConfig.agentId ? learnerConfig.agentId : NO_AGENT_VALUE}
+          onValueChange={(value: string): void =>
+            updateSelectedNodeConfig({
+              learnerAgent: {
+                ...learnerConfig,
+                agentId: value === NO_AGENT_VALUE ? '' : value,
+              },
+            })
+          }
+          options={agentOptions}
+          placeholder='Select learner agent'
+        />
+      </FormField>
 
       {agentsQuery.isLoading && (
         <LoadingState message='Loading learner agents...' size='sm' className='py-2' />
@@ -99,10 +99,14 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
         </Card>
       ) : null}
 
-      <div>
-        <Label className='text-xs text-gray-400'>Prompt Template</Label>
+      <FormField 
+        label='Prompt Template' 
+        description='Leave empty to use the incoming prompt or value input directly.'
+      >
         <Textarea
-          className='mt-2 min-h-[120px] w-full rounded-md border border-border bg-card/70 text-xs text-white'
+          variant='subtle'
+          size='sm'
+          className='min-h-[120px]'
           value={learnerConfig.promptTemplate ?? ''}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateSelectedNodeConfig({
@@ -114,11 +118,7 @@ export function LearnerAgentNodeConfigSection(): React.JSX.Element | null {
           }
           placeholder='Use {{context}} / {{bundle}} placeholders to build the question.'
         />
-        <div className='mt-1 text-[11px] text-gray-500'>
-          Leave empty to use the incoming <span className='text-gray-300'>prompt</span> or{' '}
-          <span className='text-gray-300'>value</span> input directly.
-        </div>
-      </div>
+      </FormField>
 
       <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border bg-card/50 text-xs text-gray-300'>
         <span>Include sources</span>

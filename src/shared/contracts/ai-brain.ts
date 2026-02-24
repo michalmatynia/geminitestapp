@@ -20,7 +20,7 @@ const numberField = (min: number, max: number): z.ZodType<number | undefined> =>
   );
 
 export const aiBrainProviderSchema = z.enum(['model', 'agent']);
-export type AiBrainProviderDto = z.infer<typeof aiBrainProviderSchema>;
+export type AiBrainProvider = z.infer<typeof aiBrainProviderSchema>;
 
 export const aiBrainFeatureSchema = z.enum([
   'cms_builder',
@@ -32,7 +32,7 @@ export const aiBrainFeatureSchema = z.enum([
   'ai_paths',
   'prompt_engine',
 ]);
-export type AiBrainFeatureDto = z.infer<typeof aiBrainFeatureSchema>;
+export type AiBrainFeature = z.infer<typeof aiBrainFeatureSchema>;
 
 export const aiBrainAssignmentSchema = z.object({
   enabled: z.boolean().default(true),
@@ -44,15 +44,15 @@ export const aiBrainAssignmentSchema = z.object({
   notes: z.string().trim().nullable().optional().default(null),
 });
 
-export type AiBrainAssignmentDto = z.infer<typeof aiBrainAssignmentSchema>;
+export type AiBrainAssignment = z.infer<typeof aiBrainAssignmentSchema>;
 
 export const aiBrainSettingsSchema = z.object({
   defaults: aiBrainAssignmentSchema,
-  assignments: z.record(aiBrainFeatureSchema, aiBrainAssignmentSchema.optional()).optional().default({} as Record<AiBrainFeatureDto, AiBrainAssignmentDto>),
+  assignments: z.record(aiBrainFeatureSchema, aiBrainAssignmentSchema.optional()).optional().default({} as Record<AiBrainFeature, AiBrainAssignment>),
 });
 
-export type AiBrainSettingsDto = z.infer<typeof aiBrainSettingsSchema>;
-export type UpdateAiBrainSettingsDto = Partial<AiBrainSettingsDto>;
+export type AiBrainSettings = z.infer<typeof aiBrainSettingsSchema>;
+export type UpdateAiBrainSettings = Partial<AiBrainSettings>;
 
 export const aiBrainMemorySchema = z.object({
   id: z.string(),
@@ -62,9 +62,9 @@ export const aiBrainMemorySchema = z.object({
   updatedAt: z.string().nullable(),
 });
 
-export type AiBrainMemoryDto = z.infer<typeof aiBrainMemorySchema>;
-export type CreateAiBrainMemoryDto = Omit<AiBrainMemoryDto, 'id' | 'createdAt' | 'updatedAt'>;
-export type UpdateAiBrainMemoryDto = Partial<CreateAiBrainMemoryDto>;
+export type AiBrainMemory = z.infer<typeof aiBrainMemorySchema>;
+export type CreateAiBrainMemory = Omit<AiBrainMemory, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdateAiBrainMemory = Partial<CreateAiBrainMemory>;
 
 const providerListSchema = z.array(z.string().trim().min(1)).default([]);
 
@@ -77,7 +77,7 @@ export const aiBrainProviderCatalogSchema = z.object({
   playwrightPersonas: providerListSchema,
 });
 
-export type AiBrainProviderCatalogDto = z.infer<typeof aiBrainProviderCatalogSchema>;
+export type AiBrainProviderCatalog = z.infer<typeof aiBrainProviderCatalogSchema>;
 
 /**
  * AI Brain Query Response DTOs
@@ -91,16 +91,16 @@ export const chatbotModelsResponseSchema = z.object({
   }).optional(),
 });
 
-export type ChatbotModelsResponseDto = z.infer<typeof chatbotModelsResponseSchema>;
+export type ChatbotModelsResponse = z.infer<typeof chatbotModelsResponseSchema>;
 
 const insightsSnapshotSchema = z.object({
   analytics: z.array(aiInsightRecordSchema).default([]),
   logs: z.array(aiInsightRecordSchema).default([]),
 });
 
-export const InsightsSnapshotDtoSchema = insightsSnapshotSchema;
+export const InsightsSnapshotSchema = insightsSnapshotSchema;
 
-export type InsightsSnapshotDto = z.infer<typeof insightsSnapshotSchema>;
+export type InsightsSnapshot = z.infer<typeof insightsSnapshotSchema>;
 
 export const AI_BRAIN_SETTINGS_KEY = 'ai_brain_settings';
 export const AI_BRAIN_PROVIDER_CATALOG_KEY = 'ai_brain_provider_catalog';

@@ -27,6 +27,7 @@ import {
   SelectSimple,
   Textarea,
   ToggleRow,
+  FormField,
 } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
@@ -370,10 +371,10 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
         </Badge>
       </div>
 
-      <div>
-        <Label className='text-xs text-gray-400'>Source</Label>
+      <FormField label='Source'>
         <SelectSimple
           size='sm'
+          variant='subtle'
           value={config.source}
           onValueChange={(value: string): void =>
             updateConfig({
@@ -384,16 +385,15 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             })
           }
           options={SOURCE_OPTIONS}
-          className='mt-2'
         />
-      </div>
+      </FormField>
 
       {config.source === 'global_stack' ? (
         <div className='space-y-3 rounded-md border border-border/60 bg-card/40 p-3'>
-          <div>
-            <Label className='text-xs text-gray-400'>Validation Stack</Label>
+          <FormField label='Validation Stack'>
             <SelectSimple
               size='sm'
+              variant='subtle'
               value={config.stackId}
               onValueChange={(value: string): void => {
                 const list = patternLists.find(
@@ -408,14 +408,13 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               }}
               options={stackOptions}
               placeholder='Select global validation stack'
-              className='mt-2'
             />
-          </div>
+          </FormField>
           <div className='flex flex-wrap items-center gap-2'>
             <Button
               type='button'
               variant='outline'
-              size='sm'
+              size='xs'
               onClick={syncRulesFromGlobalStack}
             >
               Sync Rules From Global Stack
@@ -423,7 +422,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             <Button
               type='button'
               variant='outline'
-              size='sm'
+              size='xs'
               onClick={handleOpenValidatorPatterns}
             >
               Open AI-Paths Node Validator
@@ -435,31 +434,32 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
         </div>
       ) : (
         <div className='space-y-3 rounded-md border border-border/60 bg-card/40 p-3'>
-          <div>
-            <Label className='text-xs text-gray-400'>Path-Local List Name</Label>
+          <FormField label='Path-Local List Name'>
             <Input
-              className='mt-2 h-9'
+              variant='subtle'
+              size='sm'
               value={config.localListName}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 updateConfig({ localListName: event.target.value })
               }
             />
-          </div>
-          <div>
-            <Label className='text-xs text-gray-400'>Description</Label>
+          </FormField>
+          <FormField label='Description'>
             <Textarea
-              className='mt-2 min-h-[72px]'
+              variant='subtle'
+              size='sm'
+              className='min-h-[72px]'
               value={config.localListDescription}
               onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
                 updateConfig({ localListDescription: event.target.value })
               }
             />
-          </div>
+          </FormField>
           <div className='flex items-center gap-2'>
             <Button
               type='button'
               variant='outline'
-              size='sm'
+              size='xs'
               onClick={(): void => {
                 const nextRule = buildLocalRegexRule(config.scope, config.rules.length);
                 updateConfig({ rules: [...config.rules, nextRule] });
@@ -470,7 +470,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
             <Button
               type='button'
               variant='outline'
-              size='sm'
+              size='xs'
               onClick={handleOpenValidatorPatterns}
             >
               Open AI-Paths Node Validator
@@ -480,10 +480,10 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
       )}
 
       <div className='grid gap-3 md:grid-cols-2'>
-        <div>
-          <Label className='text-xs text-gray-400'>Rule Scope</Label>
+        <FormField label='Rule Scope'>
           <SelectSimple
             size='sm'
+            variant='subtle'
             value={config.scope}
             onValueChange={(value: string): void =>
               updateConfig({
@@ -493,13 +493,12 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               })
             }
             options={SCOPE_OPTIONS}
-            className='mt-2'
           />
-        </div>
-        <div>
-          <Label className='text-xs text-gray-400'>Runtime Mode</Label>
+        </FormField>
+        <FormField label='Runtime Mode'>
           <SelectSimple
             size='sm'
+            variant='subtle'
             value={config.runtimeMode}
             onValueChange={(value: string): void =>
               updateConfig({
@@ -510,13 +509,12 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               })
             }
             options={RUNTIME_MODE_OPTIONS}
-            className='mt-2'
           />
-        </div>
-        <div>
-          <Label className='text-xs text-gray-400'>Fail Policy</Label>
+        </FormField>
+        <FormField label='Fail Policy'>
           <SelectSimple
             size='sm'
+            variant='subtle'
             value={config.failPolicy}
             onValueChange={(value: string): void =>
               updateConfig({
@@ -525,13 +523,12 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               })
             }
             options={FAIL_POLICY_OPTIONS}
-            className='mt-2'
           />
-        </div>
-        <div>
-          <Label className='text-xs text-gray-400'>Input Port</Label>
+        </FormField>
+        <FormField label='Input Port'>
           <SelectSimple
             size='sm'
+            variant='subtle'
             value={config.inputPort}
             onValueChange={(value: string): void =>
               updateConfig({
@@ -541,13 +538,12 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               })
             }
             options={INPUT_PORT_OPTIONS}
-            className='mt-2'
           />
-        </div>
-        <div>
-          <Label className='text-xs text-gray-400'>Output Port</Label>
+        </FormField>
+        <FormField label='Output Port'>
           <SelectSimple
             size='sm'
+            variant='subtle'
             value={config.outputPort}
             onValueChange={(value: string): void =>
               updateConfig({
@@ -557,14 +553,13 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               })
             }
             options={OUTPUT_PORT_OPTIONS}
-            className='mt-2'
           />
-        </div>
-        <div>
-          <Label className='text-xs text-gray-400'>Max Autofix Passes</Label>
+        </FormField>
+        <FormField label='Max Autofix Passes'>
           <Input
-            className='mt-2 h-9'
             type='number'
+            variant='subtle'
+            size='sm'
             min={1}
             max={10}
             value={String(config.maxAutofixPasses)}
@@ -578,7 +573,7 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
               });
             }}
           />
-        </div>
+        </FormField>
       </div>
 
       <ToggleRow
@@ -591,55 +586,54 @@ export function ValidationPatternNodeConfigSection(): React.JSX.Element | null {
         }
       />
 
-      <div>
-        <Label className='text-xs text-gray-400'>Rule ID Allowlist (optional)</Label>
+      <FormField 
+        label='Rule ID Allowlist (optional)' 
+        description='One rule ID per line. Leave empty to run all configured rules.'
+      >
         <Textarea
-          className='mt-2 min-h-[72px]'
+          variant='subtle'
+          size='sm'
+          className='min-h-[72px]'
           value={includeRuleIdsText}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             updateConfig({ includeRuleIds: parseRuleIdList(event.target.value) })
           }
-          placeholder='One rule ID per line. Leave empty to run all configured rules.'
         />
-      </div>
+      </FormField>
 
-      <div>
-        <Label className='text-xs text-gray-400'>Rules JSON</Label>
+      <FormField 
+        label='Rules JSON' 
+        description={rulesDraftError ? undefined : 'Edit on-canvas rule list directly in this path node.'}
+        error={rulesDraftError ?? undefined}
+      >
         <Textarea
-          className='mt-2 min-h-[160px] font-mono text-[11px]'
+          variant='subtle'
+          size='xs'
+          className='min-h-[160px] font-mono'
           value={rulesDraft}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             setRulesDraft(event.target.value)
           }
           onBlur={commitRulesDraft}
         />
-        {rulesDraftError ? (
-          <p className='mt-1 text-[11px] text-rose-300'>{rulesDraftError}</p>
-        ) : (
-          <p className='mt-1 text-[11px] text-gray-500'>
-            Edit on-canvas rule list directly in this path node.
-          </p>
-        )}
-      </div>
+      </FormField>
 
-      <div>
-        <Label className='text-xs text-gray-400'>Learned Rules JSON</Label>
+      <FormField 
+        label='Learned Rules JSON' 
+        description={learnedRulesDraftError ? undefined : 'Optional learned rules that can be merged at runtime.'}
+        error={learnedRulesDraftError ?? undefined}
+      >
         <Textarea
-          className='mt-2 min-h-[120px] font-mono text-[11px]'
+          variant='subtle'
+          size='xs'
+          className='min-h-[120px] font-mono'
           value={learnedRulesDraft}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void =>
             setLearnedRulesDraft(event.target.value)
           }
           onBlur={commitLearnedRulesDraft}
         />
-        {learnedRulesDraftError ? (
-          <p className='mt-1 text-[11px] text-rose-300'>{learnedRulesDraftError}</p>
-        ) : (
-          <p className='mt-1 text-[11px] text-gray-500'>
-            Optional learned rules that can be merged at runtime.
-          </p>
-        )}
-      </div>
+      </FormField>
     </div>
   );
 }

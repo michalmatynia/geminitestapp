@@ -62,7 +62,9 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
         <div className='mt-3 grid grid-cols-1 gap-3 md:grid-cols-2'>
           <FormField label='Current Item (value)'>
             <Textarea
-              className='mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
+              variant='subtle'
+              size='sm'
+              className='min-h-[110px] font-mono'
               value={value !== undefined ? formatRuntimeValue(value) : ''}
               readOnly
               placeholder='No item emitted yet.'
@@ -70,7 +72,9 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
           </FormField>
           <FormField label='Callback Input'>
             <Textarea
-              className='mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
+              variant='subtle'
+              size='sm'
+              className='min-h-[110px] font-mono'
               value={callbackValue !== undefined ? formatRuntimeValue(callbackValue) : ''}
               readOnly
               placeholder='Connect a downstream output to the callback input to advance.'
@@ -107,7 +111,9 @@ export function IteratorNodeConfigSection(): React.JSX.Element | null {
             description='Safety cap for automatic continuation loops.'
           >
             <Input
-              className='mt-2 h-8 w-[140px] border-border bg-card/70 text-xs text-white'
+              variant='subtle'
+              size='sm'
+              className='w-[140px]'
               value={String(iteratorConfig.maxSteps ?? 50)}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
                 const next = Number.parseInt(event.target.value || '0', 10);

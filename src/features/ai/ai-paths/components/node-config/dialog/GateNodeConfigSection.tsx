@@ -4,7 +4,7 @@
 
 
 import type { GateConfig } from '@/features/ai/ai-paths/lib';
-import { Input, Label, SelectSimple } from '@/shared/ui';
+import { Input, Label, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -20,9 +20,9 @@ export function GateNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>Mode</Label>
+      <FormField label='Mode'>
         <SelectSimple size='sm'
+          variant='subtle'
           value={gateConfig.mode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -37,13 +37,13 @@ export function GateNodeConfigSection(): React.JSX.Element | null {
             { value: 'pass', label: 'Pass-through' }
           ]}
           placeholder='Select mode'
-          triggerClassName='mt-2 w-full border-border bg-card/70 text-sm text-white'
         />
-      </div>
-      <div>
-        <Label className='text-xs text-gray-400'>Fail Message</Label>
+      </FormField>
+      
+      <FormField label='Fail Message'>
         <Input
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={gateConfig.failMessage ?? ''}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -51,7 +51,7 @@ export function GateNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-      </div>
+      </FormField>
     </div>
   );
 }

@@ -10,13 +10,10 @@ import type {
   BaseImportMode,
   BaseImportRunParams,
   BaseImportRunStatus,
+  PriceGroupLookup,
+  BaseConnectionContext,
 } from '@/shared/contracts/integrations';
-import type {
-  PriceGroupLookupDto,
-  BaseImportRunParamsDto,
-  BaseConnectionContextDto,
-} from '@/shared/contracts/integrations';
-import type { ProductDto as ProductRecord, CreateProductDto as ProductCreateInput } from '@/shared/contracts/products';
+import type { Product as ProductRecord, CreateProduct as ProductCreateInput } from '@/shared/contracts/products';
 
 export const BASE_DETAILS_BATCH_SIZE = 100;
 export const BASE_INTEGRATION_SLUGS = new Set(['baselinker', 'base-com', 'base']);
@@ -28,11 +25,7 @@ const DEFAULT_BASE_IMPORT_RETRY_MAX_DELAY_MS = 60_000;
 const DEFAULT_BASE_IMPORT_LEASE_MS = 60_000;
 const DEFAULT_BASE_IMPORT_HEARTBEAT_EVERY_ITEMS = 10;
 
-export type PriceGroupLookup = PriceGroupLookupDto;
-
-export type StartBaseImportRunInput = BaseImportRunParamsDto;
-
-export type BaseConnectionContext = BaseConnectionContextDto;
+export type StartBaseImportRunInput = BaseImportRunParams;
 
 export type ProductLookupMaps = {
   producerIdSet: Set<string>;

@@ -2,7 +2,7 @@
 
 import { createParserMappings, formatRuntimeValue, getValueAtMappingPath, parsePathList } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Input, Label, SelectSimple, Textarea } from '@/shared/ui';
+import { Input, Label, SelectSimple, Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -105,21 +105,23 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
   return (
     <div className='space-y-4'>
       <div className='rounded-md border border-border bg-card/50 p-3'>
-        <div className='text-[11px] text-gray-400'>Live Preview</div>
-        <div className='mt-3 grid grid-cols-1 gap-3 md:grid-cols-2'>
-          <div>
-            <Label className='text-xs text-gray-400'>Context Input</Label>
+        <div className='text-[11px] text-gray-400 font-semibold mb-3 uppercase tracking-wider'>Live Preview</div>
+        <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
+          <FormField label='Context Input'>
             <Textarea
-              className='mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
+              variant='subtle'
+              size='sm'
+              className='min-h-[110px] font-mono'
               value={contextInput !== null && contextInput !== undefined ? formatRuntimeValue(contextInput) : ''}
               readOnly
               placeholder='Run the path or simulation to see the latest context input.'
             />
-          </div>
-          <div>
-            <Label className='text-xs text-gray-400'>Mapped Output (Current Mappings)</Label>
+          </FormField>
+          <FormField label='Mapped Output'>
             <Textarea
-              className='mt-2 min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
+              variant='subtle'
+              size='sm'
+              className='min-h-[110px] font-mono'
               value={hasLivePreview ? formatRuntimeValue(livePreview) : ''}
               readOnly
               placeholder={
@@ -128,12 +130,15 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
                   : 'No mapped output yet.'
               }
             />
-          </div>
+          </FormField>
         </div>
       </div>
-      <div>
-        <Label className='text-xs text-gray-400'>JSON Integrity Policy</Label>
+      <FormField 
+        label='JSON Integrity Policy' 
+        description='Controls how string inputs are normalized before path mapping.'
+      >
         <SelectSimple size='sm'
+          variant='subtle'
           value={mapperConfig.jsonIntegrityPolicy ?? 'repair'}
           onValueChange={(value: string): void => {
             const jsonIntegrityPolicy = value === 'strict' ? 'strict' : 'repair';
@@ -146,23 +151,21 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
             });
           }}
           placeholder='Select policy'
-          triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
-          contentClassName='border-border bg-gray-900'
           options={[
             { value: 'strict', label: 'Strict (no repair)' },
             { value: 'repair', label: 'Repair malformed JSON' },
           ]}
         />
-        <p className='mt-2 text-[11px] text-gray-500'>
-          Controls how string inputs are normalized before path mapping.
-        </p>
-      </div>
-      <div>
-        <Label className='text-xs text-gray-400'>
-          Outputs (one per line)
-        </Label>
+      </FormField>
+
+      <FormField 
+        label='Outputs (one per line)' 
+        description='Outputs must match downstream input ports exactly.'
+      >
         <Textarea
-          className='mt-2 min-h-[90px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
+          className='min-h-[90px]'
           value={outputs.join('\n')}
           onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
             const list = parsePathList(event.target.value);
@@ -186,39 +189,40 @@ export function MapperNodeConfigSection(): React.JSX.Element | null {
             });
           }}
         />
-        <p className='mt-2 text-[11px] text-gray-500'>
-          Outputs must match downstream input ports exactly.
-        </p>
+      </FormField>
+      <div className='space-y-3 pt-2 border-t border-border/20'>
+        <div className='text-xs font-semibold text-gray-400 uppercase tracking-wider'>Field Mappings</div>
+        {outputs.map((output: string): React.JSX.Element => (
+          <FormField 
+            key={output} 
+            label={`${formatPortLabel(output)} Mapping Path`}
+          >
+            <Input
+              variant='subtle'
+              size='sm'
+              value={mapperConfig.mappings?.[output] ?? ''}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
+                const nextMappings = {
+                  ...mapperConfig.mappings,
+                  [output]: event.target.value,
+                };
+                updateSelectedNodeConfig({
+                  mapper: {
+                    outputs,
+                    mappings: nextMappings,
+                    jsonIntegrityPolicy: mapperConfig.jsonIntegrityPolicy ?? 'repair',
+                  },
+                });
+              }}
+            />
+            {preview?.unresolved[output] ? (
+              <p className='mt-1 text-[10px] text-amber-400 font-mono'>
+                Unresolved: {preview.unresolved[output]}
+              </p>
+            ) : null}
+          </FormField>
+        ))}
       </div>
-      {outputs.map((output: string): React.JSX.Element => (
-        <div key={output}>
-          <Label className='text-xs text-gray-400'>
-            {formatPortLabel(output)} Mapping Path
-          </Label>
-          <Input
-            className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
-            value={mapperConfig.mappings?.[output] ?? ''}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void => {
-              const nextMappings = {
-                ...mapperConfig.mappings,
-                [output]: event.target.value,
-              };
-              updateSelectedNodeConfig({
-                mapper: {
-                  outputs,
-                  mappings: nextMappings,
-                  jsonIntegrityPolicy: mapperConfig.jsonIntegrityPolicy ?? 'repair',
-                },
-              });
-            }}
-          />
-          {preview?.unresolved[output] ? (
-            <p className='mt-1 text-[11px] text-amber-300'>
-              Unresolved for current input: <code>{preview.unresolved[output]}</code>
-            </p>
-          ) : null}
-        </div>
-      ))}
     </div>
   );
 }

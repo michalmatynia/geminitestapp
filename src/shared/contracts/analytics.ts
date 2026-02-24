@@ -13,7 +13,7 @@ export const analyticsUtmSchema = z.object({
   content: z.string().nullable().optional(),
 });
 
-export type AnalyticsUtmDto = z.infer<typeof analyticsUtmSchema>;
+export type AnalyticsUtm = z.infer<typeof analyticsUtmSchema>;
 
 /**
  * Analytics Viewport/Screen Contract
@@ -23,7 +23,7 @@ export const analyticsViewportSchema = z.object({
   height: z.number(),
 });
 
-export type AnalyticsViewportDto = z.infer<typeof analyticsViewportSchema>;
+export type AnalyticsViewport = z.infer<typeof analyticsViewportSchema>;
 
 export const analyticsScreenSchema = z.object({
   width: z.number(),
@@ -31,7 +31,7 @@ export const analyticsScreenSchema = z.object({
   dpr: z.number(),
 });
 
-export type AnalyticsScreenDto = z.infer<typeof analyticsScreenSchema>;
+export type AnalyticsScreen = z.infer<typeof analyticsScreenSchema>;
 
 /**
  * Analytics Connection Contract
@@ -43,17 +43,16 @@ export const analyticsConnectionInfoSchema = z.object({
   saveData: z.boolean().nullable().optional(),
 });
 
-export type AnalyticsConnectionInfoDto = z.infer<typeof analyticsConnectionInfoSchema>;
+export type AnalyticsConnectionInfo = z.infer<typeof analyticsConnectionInfoSchema>;
 
 /**
  * Analytics Event Contract
  */
 export const analyticsScopeSchema = z.enum(['public', 'admin']);
-export type AnalyticsScopeDto = z.infer<typeof analyticsScopeSchema>;
-export type AnalyticsScope = AnalyticsScopeDto;
+export type AnalyticsScope = z.infer<typeof analyticsScopeSchema>;
 
 export const analyticsEventTypeSchema = z.enum(['pageview', 'event']);
-export type AnalyticsEventTypeDto = z.infer<typeof analyticsEventTypeSchema>;
+export type AnalyticsEventType = z.infer<typeof analyticsEventTypeSchema>;
 
 export const analyticsEventSchema = dtoBaseSchema.extend({
   type: analyticsEventTypeSchema,
@@ -93,7 +92,7 @@ export const analyticsEventSchema = dtoBaseSchema.extend({
   city: z.string().nullable().optional(),
 });
 
-export type AnalyticsEventDto = z.infer<typeof analyticsEventSchema>;
+export type AnalyticsEvent = z.infer<typeof analyticsEventSchema>;
 
 export const createAnalyticsEventSchema = analyticsEventSchema.omit({
   id: true,
@@ -102,8 +101,7 @@ export const createAnalyticsEventSchema = analyticsEventSchema.omit({
   ts: true,
 });
 
-export type CreateAnalyticsEventDto = z.infer<typeof createAnalyticsEventSchema>;
-export type AnalyticsEventCreateInput = CreateAnalyticsEventDto;
+export type AnalyticsEventCreateInput = z.infer<typeof createAnalyticsEventSchema>;
 
 /**
  * Analytics Summary Contract
@@ -118,7 +116,7 @@ export const analyticsSummaryMetricSchema = z.object({
   count: z.number(),
 });
 
-export const analyticsSummaryDtoSchema = z.object({
+export const analyticsSummarySchema = z.object({
   from: z.string(),
   to: z.string(),
   scope: z.union([analyticsScopeSchema, z.literal('all')]),
@@ -144,4 +142,4 @@ export const analyticsSummaryDtoSchema = z.object({
   recent: z.array(analyticsEventSchema),
 });
 
-export type AnalyticsSummaryDto = z.infer<typeof analyticsSummaryDtoSchema>;
+export type AnalyticsSummary = z.infer<typeof analyticsSummarySchema>;

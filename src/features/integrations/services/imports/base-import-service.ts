@@ -62,7 +62,7 @@ import type {
   BaseImportRunRecord,
 } from '@/shared/contracts/integrations';
 import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations';
-import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
 export type { StartBaseImportRunInput };

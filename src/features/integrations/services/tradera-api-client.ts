@@ -1,22 +1,14 @@
 import 'server-only';
 
 import type {
-  TraderaApiCredentialsDto,
-  TraderaApiUserInfoDto,
-  TraderaAddShopItemInputDto,
-  TraderaAddShopItemResultDto,
+  TraderaApiCredentials,
+  TraderaApiUserInfo,
+  TraderaAddShopItemInput,
+  TraderaAddShopItemResult,
 } from '@/shared/contracts/integrations';
 import { configurationError, externalServiceError } from '@/shared/errors/app-error';
 
 type TraderaSoapService = 'public' | 'restricted';
-
-export type TraderaApiCredentials = TraderaApiCredentialsDto;
-
-export type TraderaApiUserInfo = TraderaApiUserInfoDto;
-
-export type TraderaAddShopItemInput = TraderaAddShopItemInputDto;
-
-export type TraderaAddShopItemResult = TraderaAddShopItemResultDto;
 
 const DEFAULT_API_BASE_URL = 'https://api.tradera.com/v3';
 const DEFAULT_TIMEOUT_MS = 25_000;

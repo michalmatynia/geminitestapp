@@ -2,7 +2,7 @@
 
 import type { MathConfig } from '@/features/ai/ai-paths/lib';
 import { toNumber } from '@/features/ai/ai-paths/lib';
-import { Input, Label, SelectSimple } from '@/shared/ui';
+import { Input, Label, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -28,9 +28,9 @@ export function MathNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>Operation</Label>
+      <FormField label='Operation'>
         <SelectSimple size='sm'
+          variant='subtle'
           value={mathConfig.operation}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -42,15 +42,14 @@ export function MathNodeConfigSection(): React.JSX.Element | null {
           }
           options={operationOptions}
           placeholder='Select operation'
-          className='mt-2'
         />
-      </div>
-      <div>
-        <Label className='text-xs text-gray-400'>Operand</Label>
+      </FormField>
+      <FormField label='Operand'>
         <Input
           type='number'
           step='0.1'
-          className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+          variant='subtle'
+          size='sm'
           value={mathConfig.operand}
           onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
             updateSelectedNodeConfig({
@@ -61,7 +60,7 @@ export function MathNodeConfigSection(): React.JSX.Element | null {
             })
           }
         />
-      </div>
+      </FormField>
     </div>
   );
 }

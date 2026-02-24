@@ -50,8 +50,6 @@ export type IntegrationDefinition = (typeof integrationDefinitions)[number];
 
 export type StepWithResult = TestLogEntry & { status: 'ok' | 'failed' };
 
-export type SessionPayload = SessionPayloadDto;
-
 export interface IntegrationsContextType {
   integrations: Integration[];
   integrationsLoading: boolean;

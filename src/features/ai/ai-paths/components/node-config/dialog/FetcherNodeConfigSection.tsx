@@ -1,7 +1,7 @@
 'use client';
 
 import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
-import { Card, Input, Label, SelectSimple } from '@/shared/ui';
+import { Card, Input, Label, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -50,10 +50,10 @@ export function FetcherNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <div>
-        <Label className='text-xs text-gray-400'>Source Mode</Label>
+      <FormField label='Source Mode'>
         <SelectSimple
           size='sm'
+          variant='subtle'
           value={sourceMode}
           onValueChange={(value: string): void =>
             updateSelectedNodeConfig({
@@ -65,16 +65,15 @@ export function FetcherNodeConfigSection(): React.JSX.Element | null {
           }
           options={FETCHER_SOURCE_OPTIONS}
           placeholder='Select source mode'
-          className='mt-2'
         />
-      </div>
+      </FormField>
 
       {needsSimulationTarget ? (
         <>
-          <div>
-            <Label className='text-xs text-gray-400'>Collection Type</Label>
+          <FormField label='Collection Type'>
             <SelectSimple
               size='sm'
+              variant='subtle'
               value={fetcherConfig.entityType ?? 'products'}
               onValueChange={(value: string): void =>
                 updateSelectedNodeConfig({
@@ -86,13 +85,12 @@ export function FetcherNodeConfigSection(): React.JSX.Element | null {
               }
               options={collectionOptions}
               placeholder='Select collection'
-              className='mt-2'
             />
-          </div>
-          <div>
-            <Label className='text-xs text-gray-400'>Document ID</Label>
+          </FormField>
+          <FormField label='Document ID'>
             <Input
-              className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
+              variant='subtle'
+              size='sm'
               value={entityId}
               onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
                 updateSelectedNodeConfig({
@@ -104,7 +102,7 @@ export function FetcherNodeConfigSection(): React.JSX.Element | null {
                 })
               }
             />
-          </div>
+          </FormField>
         </>
       ) : null}
 

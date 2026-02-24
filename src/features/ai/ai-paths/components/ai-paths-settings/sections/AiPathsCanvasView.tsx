@@ -3,15 +3,12 @@
 import React from 'react';
 import { createPortal } from 'react-dom';
 
-import { evaluateAiPathsValidationPreflight } from '@/features/ai/ai-paths/lib/core/validation-engine/evaluator';
-import { normalizeAiPathsValidationConfig } from '@/features/ai/ai-paths/lib/core/validation-engine/defaults';
-import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
 import {
   Button,
   StatusBadge,
+  SelectSimple,
 } from '@/shared/ui';
 import { useAiPathsSettingsPageContext } from '../AiPathsSettingsPageContext';
-import { useAiPathsSettingsOrchestrator } from '../AiPathsSettingsOrchestratorContext';
 import {
   useSelectionActions,
   useSelectionState,
@@ -22,123 +19,95 @@ import { ClusterPresetsPanel } from '../../cluster-presets-panel';
 import { GraphModelDebugPanel } from '../../graph-model-debug-panel';
 import { RunHistoryPanel } from '../../run-history-panel';
 import { RuntimeEventLogPanel } from '../../runtime-event-log-panel';
-import { AiPathsRuntimeLog as AiPathsLiveLog } from '../panels/AiPathsRuntimeLog';
 import { AiPathsRuntimeAnalysis } from './AiPathsRuntimeAnalysis';
+import { AiPathsLiveLog } from './AiPathsLiveLog';
 
 export function AiPathsCanvasView(): React.JSX.Element | null {
   const {
     activeTab,
     isFocusMode,
-    renderActions,
-    onTabChange,
     onFocusModeChange,
+    renderActions,
+    confirmNodeSwitch,
+    nodeConfigDirty,
+    savePathConfig,
+    saving,
+    setPathSettingsModalOpen,
+    activePathId,
+    nodeValidationEnabled: nodeValidationEnabledFromContext,
+    updateAiPathsValidation,
+    validationPreflightReport,
+    handleOpenNodeValidator,
+    docsTooltipsEnabled,
+    setDocsTooltipsEnabled,
+    handleTogglePathLock,
+    isPathLocked,
+    handleRunNodeValidationCheck,
+    toast,
+    autoSaveLabel,
+    autoSaveVariant,
+    lastRunAt,
+    isPathNameEditing,
+    renameDraft,
+    setRenameDraft,
+    commitPathNameEdit,
+    cancelPathNameEdit,
+    startPathNameEdit,
+    pathName,
+    pathSwitchOptions,
+    handleSwitchPath,
+    lastError,
+    setLastError,
+    persistLastError,
+    incrementLoadNonce,
+    handleClearConnectorData,
+    handleClearHistory,
+    isPathActive,
+    handleTogglePathActive,
+    hasHistory,
+    selectedNodeIds,
+    selectionScopeMode,
+    setSelectionScopeMode,
+    dataContractReport,
+    setDataContractInspectorNodeId,
   } = useAiPathsSettingsPageContext();
-
-  const state = useAiPathsSettingsOrchestrator();
   const canvasContainerRef = React.useRef<HTMLDivElement | null>(null);
   const isRightSidebarCollapsed = false;
-  const setIsFocusMode = React.useCallback(
-    (next: boolean): void => {
-      onFocusModeChange?.(next);
-    },
-    [onFocusModeChange]
-  );
+  const setIsFocusMode = onFocusModeChange ?? (() => undefined);
 
-  const { docsTooltipsEnabled, setDocsTooltipsEnabled } = useAiPathsDocsTooltips();
+  const { selectionToolMode } = useSelectionState();
+  const { setSelectionToolMode } = useSelectionActions();
 
-  const { selectionToolMode, selectedNodeIds, selectionScopeMode } = useSelectionState();
-  const { setSelectionToolMode, setSelectionScopeMode } = useSelectionActions();
-
-  const normalizedAiPathsValidation = React.useMemo(
-    () => normalizeAiPathsValidationConfig(state.aiPathsValidation),
-    [state.aiPathsValidation]
-  );
-
-  const validationPreflightReport = React.useMemo(
-    () =>
-      evaluateAiPathsValidationPreflight({
-        nodes: state.nodes,
-        edges: state.edges,
-        config: normalizedAiPathsValidation,
-      }),
-    [normalizedAiPathsValidation, state.edges, state.nodes]
-  );
-
-  const handleRunNodeValidationCheck = React.useCallback((): void => {
-    if (validationPreflightReport.blocked) {
-      state.toast(
-        `Node validation blocked (score ${validationPreflightReport.score}).`,
-        { variant: 'error' }
-      );
-      return;
-    }
-    if (validationPreflightReport.shouldWarn) {
-      state.toast(
-        `Node validation warning (score ${validationPreflightReport.score}, failed rules ${validationPreflightReport.failedRules}).`,
-        { variant: 'warning' }
-      );
-      return;
-    }
-    state.toast('Node validation passed.', { variant: 'success' });
-  }, [state, validationPreflightReport]);
-
-  const handleOpenNodeValidator = React.useCallback((): void => {
-    if (typeof window !== 'undefined') {
-      window.location.assign('/admin/ai-paths/validation');
-      return;
-    }
-    onTabChange?.('docs');
-  }, [onTabChange]);
-
-  const autoSaveVariant = React.useMemo(() => {
-    if (state.autoSaveStatus === 'saved') return 'success';
-    if (state.autoSaveStatus === 'error') return 'error';
-    if (state.autoSaveStatus === 'saving') return 'processing';
-    return 'neutral';
-  }, [state.autoSaveStatus]);
-
-  const hasHistory = React.useMemo(
-    (): boolean =>
-      Object.values(state.runtimeState.history ?? {}).some(
-        (entries) => Array.isArray(entries) && entries.length > 0
-      ),
-    [state.runtimeState.history]
-  );
-
-  const [isPathNameEditing, setIsPathNameEditing] = React.useState<boolean>(false);
-  const [renameDraft, setRenameDraft] = React.useState<string>(state.pathName);
-
-  React.useEffect((): void => {
-    if (!isPathNameEditing) {
-      setRenameDraft(state.pathName);
-    }
-  }, [isPathNameEditing, state.pathName]);
-
-  const commitPathNameEdit = React.useCallback((): void => {
-    const nextName = renameDraft.trim();
-    if (nextName.length > 0) {
-      state.setPathName(nextName);
-      state.updateActivePathMeta(nextName);
-    } else {
-      setRenameDraft(state.pathName);
-    }
-    setIsPathNameEditing(false);
-  }, [renameDraft, state]);
-
-  const cancelPathNameEdit = React.useCallback((): void => {
-    setRenameDraft(state.pathName);
-    setIsPathNameEditing(false);
-  }, [state.pathName]);
-
-  const startPathNameEdit = React.useCallback((): void => {
-    if (!state.activePathId) return;
-    setRenameDraft(state.pathName);
-    setIsPathNameEditing(true);
-  }, [state.activePathId, state.pathName]);
-
-  const incrementLoadNonce = React.useCallback((): void => {
-    state.setLoadNonce((value: number): number => value + 1);
-  }, [state]);
+  const notify = toast ?? (() => undefined);
+  const savePath = savePathConfig ?? (async (): Promise<boolean> => false);
+  const openPathSettings = setPathSettingsModalOpen ?? (() => undefined);
+  const toggleDocsTooltips = setDocsTooltipsEnabled ?? (() => undefined);
+  const togglePathLock = handleTogglePathLock ?? (() => undefined);
+  const runNodeValidationCheck = handleRunNodeValidationCheck ?? (() => undefined);
+  const openNodeValidator = handleOpenNodeValidator ?? (() => undefined);
+  const patchAiPathsValidation = updateAiPathsValidation ?? (() => undefined);
+  const clearConnectorData = handleClearConnectorData ?? (async (): Promise<void> => undefined);
+  const clearHistory = handleClearHistory ?? (async (): Promise<void> => undefined);
+  const togglePathActive = handleTogglePathActive ?? (() => undefined);
+  const clearLastError = setLastError ?? (() => undefined);
+  const persistLastErrorSafe = persistLastError ?? (async (): Promise<void> => undefined);
+  const bumpLoadNonce = incrementLoadNonce ?? (() => undefined);
+  const confirmNodeSwitchSafe =
+    confirmNodeSwitch ?? (async (): Promise<boolean> => true);
+  const nodeValidationEnabled = nodeValidationEnabledFromContext !== false;
+  const validationBlocked = Boolean(validationPreflightReport?.blocked);
+  const validationWarn = Boolean(validationPreflightReport?.shouldWarn);
+  const validationScore = validationPreflightReport?.score ?? 0;
+  const validationFailedRules = validationPreflightReport?.failedRules ?? 0;
+  const selectedCount = Array.isArray(selectedNodeIds) ? selectedNodeIds.length : 0;
+  const scopeMode = selectionScopeMode === 'wiring' ? 'wiring' : 'portion';
+  const setScopeMode = setSelectionScopeMode ?? (() => undefined);
+  const docsTooltipsOn = Boolean(docsTooltipsEnabled);
+  const activePath = activePathId ?? null;
+  const switchPath = handleSwitchPath ?? (() => undefined);
+  const pathOptions = Array.isArray(pathSwitchOptions) ? pathSwitchOptions : [];
+  const nodeDiagnosticsById = dataContractReport?.byNodeId ?? {};
+  const focusDataContractNode = setDataContractInspectorNodeId ?? (() => undefined);
 
   if (activeTab !== 'canvas') return null;
 
@@ -154,41 +123,38 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     data-doc-id='canvas_save_path'
                     className='rounded-md border text-sm text-white hover:bg-muted/60'
                     onClick={() => {
-                      if (state.nodeConfigDirty) {
-                        state.toast(
+                      if (nodeConfigDirty) {
+                        notify(
                           'Unsaved node-config dialog changes are not included. Click "Update Node" first, then "Save Path".',
                           { variant: 'info' },
                         );
                       }
-                      void state.handleSave();
+                      void savePath();
                     }}
-                    disabled={state.saving}
+                    disabled={saving}
                   >
-                    {state.saving ? 'Saving...' : 'Save Path'}
+                    {saving ? 'Saving...' : 'Save Path'}
                   </Button>
                   <Button
                     data-doc-id='canvas_paths_settings'
                     type='button'
                     className='rounded-md border border-border text-sm text-gray-200 hover:bg-card/60'
                     onClick={() => {
-                      onTabChange?.('paths');
-                      state.toast('Open Path Settings from the Paths tab.', {
-                        variant: 'info',
-                      });
+                      openPathSettings(true);
                     }}
-                    disabled={!state.activePathId}
+                    disabled={!activePath}
                   >
                     Paths Settings
                   </Button>
                   <Button
                     data-doc-id='canvas_enable_node_validation'
                     type='button'
-                    variant={normalizedAiPathsValidation.enabled === false ? 'warning' : 'success'}
+                    variant={!nodeValidationEnabled ? 'warning' : 'success'}
                     className='rounded-md text-sm'
                     onClick={() => {
-                      const nextEnabled = normalizedAiPathsValidation.enabled === false;
-                      state.updateAiPathsValidation({ enabled: nextEnabled });
-                      state.toast(
+                      const nextEnabled = !nodeValidationEnabled;
+                      patchAiPathsValidation({ enabled: nextEnabled });
+                      notify(
                         nextEnabled
                           ? 'AI Paths node validation enabled.'
                           : 'AI Paths node validation disabled.',
@@ -197,14 +163,14 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                         },
                       );
                     }}
-                    disabled={!state.activePathId || state.isPathLocked}
+                    disabled={!activePath || isPathLocked}
                     title={
-                      normalizedAiPathsValidation.enabled === false
+                      !nodeValidationEnabled
                         ? 'Enable AI Paths node validation'
                         : 'Disable AI Paths node validation'
                     }
                   >
-                    {normalizedAiPathsValidation.enabled === false
+                    {!nodeValidationEnabled
                       ? 'Enable Node Validation'
                       : 'Disable Node Validation'}
                   </Button>
@@ -213,9 +179,9 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     type='button'
                     variant='info'
                     className='rounded-md text-sm'
-                    onClick={handleRunNodeValidationCheck}
+                    onClick={runNodeValidationCheck}
                     disabled={
-                      !state.activePathId || normalizedAiPathsValidation.enabled === false
+                      !activePath || !nodeValidationEnabled
                     }
                     title='Run node validation check now'
                   >
@@ -226,28 +192,28 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     type='button'
                     variant='secondary'
                     className='rounded-md text-sm border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/10'
-                    onClick={handleOpenNodeValidator}
-                    disabled={!state.activePathId}
+                    onClick={openNodeValidator}
+                    disabled={!activePath}
                     title='Open AI-Paths Node Validator patterns and sequences'
                   >
                     Node Validator
                   </Button>
                   <StatusBadge
                     status={
-                      normalizedAiPathsValidation.enabled === false
+                      !nodeValidationEnabled
                         ? 'Validation: off'
-                        : validationPreflightReport.blocked
+                        : validationBlocked
                           ? 'Validation: blocked'
-                          : validationPreflightReport.shouldWarn
+                          : validationWarn
                             ? 'Validation: warning'
                             : 'Validation: ready'
                     }
                     variant={
-                      normalizedAiPathsValidation.enabled === false
+                      !nodeValidationEnabled
                         ? 'neutral'
-                        : validationPreflightReport.blocked
+                        : validationBlocked
                           ? 'error'
-                          : validationPreflightReport.shouldWarn
+                          : validationWarn
                             ? 'warning'
                             : 'success'
                     }
@@ -255,15 +221,15 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     className='font-medium'
                   />
                   <StatusBadge
-                    status={`Validation score: ${validationPreflightReport.score}`}
+                    status={`Validation score: ${validationScore}`}
                     variant='neutral'
                     size='sm'
                     className='font-medium'
                   />
                   <StatusBadge
-                    status={`Failed rules: ${validationPreflightReport.failedRules}`}
+                    status={`Failed rules: ${validationFailedRules}`}
                     variant={
-                      validationPreflightReport.failedRules > 0
+                      validationFailedRules > 0
                         ? 'warning'
                         : 'success'
                     }
@@ -274,23 +240,23 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     data-doc-id='docs_tooltips_toggle'
                     type='button'
                     className='rounded-md border border-violet-500/40 text-sm text-violet-200 hover:bg-violet-500/10'
-                    onClick={() => setDocsTooltipsEnabled(!docsTooltipsEnabled)}
+                    onClick={() => toggleDocsTooltips(!docsTooltipsOn)}
                   >
-                    {docsTooltipsEnabled ? 'Docs Tooltips: On' : 'Docs Tooltips: Off'}
+                    {docsTooltipsOn ? 'Docs Tooltips: On' : 'Docs Tooltips: Off'}
                   </Button>
                   <Button
                     data-doc-id='canvas_toggle_path_lock'
                     type='button'
                     className='rounded-md border border-border text-sm text-gray-300 hover:bg-card/60'
-                    onClick={state.handleTogglePathLock}
-                    disabled={!state.activePathId}
+                    onClick={togglePathLock}
+                    disabled={!activePath}
                     title={
-                      state.isPathLocked
+                      isPathLocked
                         ? 'Unlock to edit nodes and connections'
                         : 'Lock to prevent edits'
                     }
                   >
-                    {state.isPathLocked ? 'Unlock Path' : 'Lock Path'}
+                    {isPathLocked ? 'Unlock Path' : 'Lock Path'}
                   </Button>
                   <div className='flex items-center rounded-md border border-border/60 bg-card/40 p-0.5'>
                     <Button
@@ -323,11 +289,11 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                       <Button
                         type='button'
                         className={`h-8 rounded-md px-2 text-xs ${
-                          selectionScopeMode === 'portion'
+                          scopeMode === 'portion'
                             ? 'bg-sky-500/20 text-sky-200'
                             : 'text-gray-300 hover:bg-card/60'
                         }`}
-                        onClick={() => setSelectionScopeMode('portion')}
+                        onClick={() => setScopeMode('portion')}
                         title='Select only nodes inside the rectangle'
                       >
                         Portion
@@ -335,11 +301,11 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                       <Button
                         type='button'
                         className={`h-8 rounded-md px-2 text-xs ${
-                          selectionScopeMode === 'wiring'
+                          scopeMode === 'wiring'
                             ? 'bg-sky-500/20 text-sky-200'
                             : 'text-gray-300 hover:bg-card/60'
                         }`}
-                        onClick={() => setSelectionScopeMode('wiring')}
+                        onClick={() => setScopeMode('wiring')}
                         title='Expand marquee selection to connected wiring'
                       >
                         With Wiring
@@ -347,7 +313,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     </div>
                   ) : null}
                   <StatusBadge
-                    status={`Selected: ${selectedNodeIds.length}`}
+                    status={`Selected: ${selectedCount}`}
                     variant='neutral'
                     size='sm'
                     className='font-medium'
@@ -355,7 +321,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                   />
                   {selectionToolMode === 'select' ? (
                     <div className='text-[11px] text-gray-400'>
-                      {selectionScopeMode === 'wiring'
+                      {scopeMode === 'wiring'
                         ? 'Drag to select connected subgraphs. Shift add, Alt subtract.'
                         : 'Drag to select node portions only. Shift add, Alt subtract.'}
                     </div>
@@ -364,70 +330,71 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                     data-doc-id='canvas_clear_connector_data'
                     className='rounded-md border border-amber-500/40 text-sm text-amber-200 hover:bg-amber-500/10'
                     onClick={() => {
-                      void state.handleClearConnectorData();
+                      void clearConnectorData();
                     }}
                     type='button'
-                    disabled={!state.activePathId}
+                    disabled={!activePath}
                   >
-                    Clear Connector Data
+                      Clear Connector Data
                   </Button>
                   <Button
                     data-doc-id='canvas_toggle_path_active'
                     type='button'
-                    className={`rounded-md border text-sm ${state.isPathActive ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10' : 'border-rose-500/40 text-rose-200 hover:bg-rose-500/10'}`}
-                    onClick={state.handleTogglePathActive}
-                    disabled={!state.activePathId}
+                    className={`rounded-md border text-sm ${isPathActive ? 'border-emerald-500/40 text-emerald-200 hover:bg-emerald-500/10' : 'border-rose-500/40 text-rose-200 hover:bg-rose-500/10'}`}
+                    onClick={togglePathActive}
+                    disabled={!activePath}
                     title={
-                      state.isPathActive
+                      isPathActive
                         ? 'Deactivate to stop runs'
                         : 'Activate to allow runs'
                     }
                   >
-                    {state.isPathActive ? 'Deactivate' : 'Activate'}
+                    {isPathActive ? 'Deactivate' : 'Activate'}
                   </Button>
                   <Button
                     data-doc-id='canvas_clear_history'
                     className='rounded-md border border-sky-500/40 text-sm text-sky-200 hover:bg-sky-500/10'
                     onClick={() => {
-                      void state.handleClearHistory();
+                      void clearHistory();
                     }}
                     type='button'
-                    disabled={!state.activePathId}
+                    disabled={!activePath}
                     title={
                       hasHistory
                         ? 'Clear history for all nodes in this path'
                         : 'No history recorded yet'
                     }
                   >
-                    Clear History
+                      Clear History
                   </Button>
                 </div>
-                {state.lastError && (
+                {lastError && (
                   <div className='flex items-center gap-2 rounded-md border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-200'>
                     <span className='max-w-[220px] truncate'>
-                      Last error: {state.lastError.message}
+                        Last error: {lastError.message}
                     </span>
                     <Button
                       type='button'
                       className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
                       onClick={() => {
-                        state.setLastError(null);
-                        void state.persistLastError(null);
+                        clearLastError(null);
+                        void persistLastErrorSafe(null);
                       }}
                     >
-                      Clear
+                        Clear
                     </Button>
-                    {state.lastError.message === 'Failed to load AI Paths settings' && (
+                    {lastError.message ===
+                        'Failed to load AI Paths settings' && (
                       <Button
                         type='button'
                         className='rounded-md border border-rose-400/50 px-2 py-1 text-[10px] text-rose-100 hover:bg-rose-500/20'
                         onClick={() => {
-                          state.setLastError(null);
-                          void state.persistLastError(null);
-                          incrementLoadNonce();
+                          clearLastError(null);
+                          void persistLastErrorSafe(null);
+                          bumpLoadNonce();
                         }}
                       >
-                        Retry
+                          Retry
                       </Button>
                     )}
                     <Button
@@ -441,7 +408,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                         )
                       }
                     >
-                      View logs
+                        View logs
                     </Button>
                   </div>
                 )}
@@ -452,20 +419,22 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
         )
         : null}
 
-      {!isFocusMode && typeof document !== 'undefined' && state.activePathId
+      {!isFocusMode && typeof document !== 'undefined' && activePath
         ? createPortal(
           <div className='flex items-center justify-end gap-2'>
-            {state.autoSaveLabel ? (
+            {autoSaveLabel ? (
               <StatusBadge
-                status={state.autoSaveLabel}
+                status={autoSaveLabel}
                 variant={autoSaveVariant}
                 size='sm'
                 className='font-medium'
               />
             ) : null}
-            {state.lastRunAt && (
+            {lastRunAt && (
               <StatusBadge
-                status={'Last run: ' + new Date(state.lastRunAt).toLocaleTimeString()}
+                status={
+                  'Last run: ' + new Date(lastRunAt).toLocaleTimeString()
+                }
                 variant='active'
                 size='sm'
                 className='font-medium'
@@ -495,7 +464,7 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                   autoFocus
                   className='h-9 w-[320px] rounded-md border border-border bg-card/60 px-3 text-sm text-white outline-none ring-offset-background focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
                   placeholder='Path name'
-                  disabled={!state.activePathId}
+                  disabled={!activePath}
                 />
               ) : (
                 <button
@@ -503,18 +472,33 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
                   type='button'
                   className='h-9 w-[320px] rounded-md border border-border bg-card/60 px-3 text-left text-sm text-gray-200 hover:bg-card/70 disabled:cursor-not-allowed disabled:opacity-60'
                   onDoubleClick={startPathNameEdit}
-                  disabled={!state.activePathId}
+                  disabled={!activePath}
                   title={
-                    state.activePathId
+                    activePath
                       ? 'Double-click to rename this path'
                       : 'No active path selected'
                   }
                 >
                   <span className='block truncate'>
-                    {state.pathName || 'Untitled path'}
+                    {pathName || 'Untitled path'}
                   </span>
                 </button>
               )}
+              <SelectSimple
+                dataDocId='canvas_path_selector'
+                size='sm'
+                value={activePath ?? undefined}
+                onValueChange={(value: string): void => {
+                  if (value !== activePath) {
+                    switchPath(value);
+                  }
+                }}
+                options={pathOptions}
+                placeholder='Select path'
+                className='w-[240px]'
+                triggerClassName='h-9 border-border bg-card/60 px-3 text-xs text-white'
+                disabled={pathOptions.length === 0}
+              />
             </div>
           </div>,
           document.getElementById('ai-paths-name') ?? document.body,
@@ -528,7 +512,14 @@ export function AiPathsCanvasView(): React.JSX.Element | null {
       >
         <div className='relative flex flex-1 flex-col overflow-hidden'>
           <div ref={canvasContainerRef} className='flex-1'>
-            <CanvasBoard />
+            <CanvasBoard
+              confirmNodeSwitch={confirmNodeSwitchSafe}
+              nodeDiagnosticsById={nodeDiagnosticsById}
+              onFocusNodeDiagnostics={(nodeId: string): void => {
+                focusDataContractNode(nodeId);
+                openPathSettings(true);
+              }}
+            />
           </div>
           {isFocusMode && (
             <div className='absolute bottom-4 right-4 flex items-center gap-2'>

@@ -6,6 +6,8 @@ import {
   getSectionContainerClass,
   getSectionStyles,
 } from '@/features/cms/components/frontend/theme-styles';
+import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
+import { useMediaStyles } from '@/features/cms/components/frontend/media-styles-context';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
@@ -13,17 +15,16 @@ import type { BlockInstance } from '@/shared/contracts/cms';
 import { EmptyState } from '@/shared/ui';
 
 export function PreviewHeroSection() {
+  const { colorSchemes, layout } = useCmsPageContext();
+  const mediaStyles = useMediaStyles();
   const { 
     section,
-    colorSchemes,
-    mediaStyles,
     selectedRing,
     renderSectionActions,
     divider,
     wrapInspector,
     handleSelect,
     PreviewBlockItem,
-    layout,
   } = usePreviewSectionContext();
 
   const { 

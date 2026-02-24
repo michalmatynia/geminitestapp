@@ -8,19 +8,18 @@ import { AiPathsProvider, useStateBridgeAll } from '../context';
 import { AiPathsSettingsOrchestratorProvider } from './ai-paths-settings/AiPathsSettingsOrchestratorContext';
 import {
   AiPathsSettingsPageProvider,
-  useAiPathsSettingsPageContext,
   type AiPathsSettingsPageContextValue,
 } from './ai-paths-settings/AiPathsSettingsPageContext';
 import { AiPathsSettingsView } from './ai-paths-settings/AiPathsSettingsView';
 import { useAiPathsSettingsState } from './ai-paths-settings/useAiPathsSettingsState';
+import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
 import { 
   evaluateDataContractPreflight, 
   evaluateAiPathsValidationPreflight,
   normalizeAiPathsValidationConfig,
-  sortPathMetas,
   runsApi,
 } from '../lib';
-import { buildSwitchPathOptions } from './ai-paths-settings/ai-paths-settings-view-utils';
+import { buildSwitchPathOptions, sortPathMetas } from './ai-paths-settings/ai-paths-settings-view-utils';
 
 export type AiPathsSettingsProps = {
   activeTab: 'canvas' | 'paths' | 'docs';
@@ -46,22 +45,31 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
   const [pathSettingsModalOpen, setPathSettingsModalOpen] = React.useState(false);
   const [simulationModalOpen, setSimulationModalOpen] = React.useState(false);
   const [selectionScopeMode, setSelectionScopeMode] = React.useState<'portion' | 'wiring'>('portion');
-  const [dataContractInspectorNodeId, setDataContractInspectorNodeId] = React.useState<string | null>(null);
+  const [, setDataContractInspectorNodeId] = React.useState<string | null>(null);
   const [isPathNameEditing, setIsPathNameEditing] = React.useState(false);
   const [renameDraft, setRenameDraft] = React.useState('');
+  const { docsTooltipsEnabled, setDocsTooltipsEnabled } = useAiPathsDocsTooltips();
 
   const normalizedAiPathsValidation = React.useMemo(
     () => normalizeAiPathsValidationConfig(state.aiPathsValidation),
     [state.aiPathsValidation]
   );
+  const effectiveAiPathsValidation = React.useMemo(
+    () =>
+      normalizedAiPathsValidation && typeof normalizedAiPathsValidation === 'object'
+        ? normalizedAiPathsValidation
+        : normalizeAiPathsValidationConfig(undefined),
+    [normalizedAiPathsValidation],
+  );
+  const isNodeValidationEnabled = effectiveAiPathsValidation.enabled !== false;
 
   const validationPreflightReport = React.useMemo(
     () => evaluateAiPathsValidationPreflight({
       nodes: state.nodes,
       edges: state.edges,
-      config: normalizedAiPathsValidation,
+      config: effectiveAiPathsValidation,
     }),
-    [state.nodes, state.edges, normalizedAiPathsValidation]
+    [state.nodes, state.edges, effectiveAiPathsValidation]
   );
 
   const dataContractReport = React.useMemo(
@@ -70,9 +78,9 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
       edges: state.edges,
       runtimeState: state.runtimeState,
       mode: 'light',
-      scopeMode: normalizedAiPathsValidation.enabled !== false ? 'full' : 'reachable_from_roots',
+      scopeMode: isNodeValidationEnabled ? 'full' : 'reachable_from_roots',
     }),
-    [state.nodes, state.edges, state.runtimeState, normalizedAiPathsValidation.enabled]
+    [state.nodes, state.edges, state.runtimeState, isNodeValidationEnabled]
   );
 
   const pathSwitchOptions = React.useMemo(
@@ -100,19 +108,27 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
       offset: 0,
     };
 
+    const readFirstRunId = (
+      result: Awaited<ReturnType<typeof runsApi.list>>,
+    ): string | null => {
+      if (!result.ok) return null;
+      const payload = result.data as { runs?: Array<{ id?: unknown }> } | undefined;
+      if (!Array.isArray(payload?.runs)) return null;
+      const firstRunId = payload.runs[0]?.id;
+      return typeof firstRunId === 'string' && firstRunId.trim().length > 0
+        ? firstRunId
+        : null;
+    };
+
     let runId: string | null = null;
     if (focus === 'failed') {
       const result = await runsApi.list({ ...baseOptions, status: 'failed' });
-      if (result.ok && result.data?.runs?.[0]?.id) {
-        runId = result.data.runs[0].id;
-      }
+      runId = readFirstRunId(result);
     }
 
     if (!runId) {
       const result = await runsApi.list(baseOptions);
-      if (result.ok && result.data?.runs?.[0]?.id) {
-        runId = result.data.runs[0].id;
-      }
+      runId = readFirstRunId(result);
     }
 
     if (runId) {
@@ -121,6 +137,30 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
       void state.handleOpenRunDetail(runId);
     }
   }, [state]);
+
+  const handleOpenNodeValidator = React.useCallback((): void => {
+    if (typeof window !== 'undefined') {
+      window.location.assign('/admin/ai-paths/validation');
+    }
+  }, []);
+
+  const handleRunNodeValidationCheck = React.useCallback((): void => {
+    if (validationPreflightReport.blocked) {
+      state.toast(
+        `Node validation blocked (score ${validationPreflightReport.score}).`,
+        { variant: 'error' },
+      );
+      return;
+    }
+    if (validationPreflightReport.shouldWarn) {
+      state.toast(
+        `Node validation warning (score ${validationPreflightReport.score}, failed rules ${validationPreflightReport.failedRules}).`,
+        { variant: 'warning' },
+      );
+      return;
+    }
+    state.toast('Node validation passed.', { variant: 'success' });
+  }, [state, validationPreflightReport]);
 
   const pageContextValue = React.useMemo<AiPathsSettingsPageContextValue>(
     () => ({
@@ -131,14 +171,20 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
       simulationModalOpen,
       setSimulationModalOpen,
       savePathConfig: state.handleSave,
+      normalizedAiPathsValidation: effectiveAiPathsValidation,
+      nodeValidationEnabled: isNodeValidationEnabled,
       validationPreflightReport,
+      handleOpenNodeValidator,
+      handleRunNodeValidationCheck,
+      docsTooltipsEnabled,
+      setDocsTooltipsEnabled,
       nodeConfigDirty: state.nodeConfigDirty,
       selectedNodeIds: state.selectedNodeId ? [state.selectedNodeId] : [],
       selectionScopeMode,
       setSelectionScopeMode,
       dataContractReport,
       setDataContractInspectorNodeId,
-      autoSaveVariant: autoSaveVariant as any,
+      autoSaveVariant,
       isPathNameEditing,
       renameDraft,
       setRenameDraft,
@@ -159,8 +205,29 @@ function AiPathsSettingsInnerOrchestrator(props: AiPathsSettingsProps): React.JS
       pathSwitchOptions,
       hasHistory: state.runtimeEvents.length > 0,
       handleInspectTraceNode,
+      incrementLoadNonce: () => {
+        state.setLoadNonce((previous: number): number => previous + 1);
+      },
     }),
-    [props, state, pathSettingsModalOpen, simulationModalOpen, selectionScopeMode, validationPreflightReport, dataContractReport, autoSaveVariant, isPathNameEditing, renameDraft, pathSwitchOptions, handleInspectTraceNode]
+    [
+      props,
+      state,
+      pathSettingsModalOpen,
+      simulationModalOpen,
+      selectionScopeMode,
+      effectiveAiPathsValidation,
+      validationPreflightReport,
+      handleOpenNodeValidator,
+      handleRunNodeValidationCheck,
+      docsTooltipsEnabled,
+      setDocsTooltipsEnabled,
+      dataContractReport,
+      autoSaveVariant,
+      isPathNameEditing,
+      renameDraft,
+      pathSwitchOptions,
+      handleInspectTraceNode,
+    ]
   );
 
   // Sync state to domain contexts

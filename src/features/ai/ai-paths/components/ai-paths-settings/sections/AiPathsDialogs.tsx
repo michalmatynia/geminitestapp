@@ -23,6 +23,7 @@ const applySimulationEntityId = (node: AiNode, entityId: string): AiNode => ({
 
 export function AiPathsDialogs(): React.JSX.Element {
   const state = useAiPathsSettingsOrchestrator();
+  const ConfirmationModal = state.ConfirmationModal;
 
   const simulationNode = React.useMemo(
     (): AiNode | null =>
@@ -108,7 +109,7 @@ export function AiPathsDialogs(): React.JSX.Element {
         onConfigChange={handleSimulationConfigChange}
       />
 
-      <state.ConfirmationModal />
+      <ConfirmationModal />
     </>
   );
 }

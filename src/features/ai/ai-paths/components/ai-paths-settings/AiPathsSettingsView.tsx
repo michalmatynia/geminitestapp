@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useAiPathsSettingsPageContext } from './AiPathsSettingsPageContext';
+import { useAiPathsSettingsOrchestrator } from './AiPathsSettingsOrchestratorContext';
 import { AiPathsCanvasView } from './sections/AiPathsCanvasView';
 import { AiPathsListView } from './sections/AiPathsListView';
 import { AiPathsDocsView } from './sections/AiPathsDocsView';
@@ -11,11 +12,8 @@ import { DocsTooltipEnhancer } from '../DocsTooltipEnhancer';
 import { useAiPathsDocsTooltips } from '@/features/ai/ai-paths/hooks/useAiPathsDocsTooltips';
 
 export function AiPathsSettingsView(): React.JSX.Element {
-  const {
-    activeTab,
-    loading,
-    isFocusMode,
-  } = useAiPathsSettingsPageContext();
+  const { isFocusMode } = useAiPathsSettingsPageContext();
+  const { loading } = useAiPathsSettingsOrchestrator();
 
   const { docsTooltipsEnabled } = useAiPathsDocsTooltips();
 

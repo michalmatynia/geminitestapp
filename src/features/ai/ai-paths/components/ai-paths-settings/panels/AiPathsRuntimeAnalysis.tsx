@@ -322,7 +322,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
               <div className='mt-1 flex flex-wrap gap-1'>
                 {runtimeAnalyticsQuery.data?.traces.topSlowNodes
                   .slice(0, 2)
-                  .map((entry) => (
+                  .map((entry: any) => (
                     <button
                       key={`slow-${entry.nodeId}-${entry.nodeType}`}
                       type='button'
@@ -345,7 +345,7 @@ export function AiPathsRuntimeAnalysis(): React.JSX.Element | null {
               <div className='mt-1 flex flex-wrap gap-1'>
                 {runtimeAnalyticsQuery.data?.traces.topFailedNodes
                   .slice(0, 2)
-                  .map((entry) => (
+                  .map((entry: any) => (
                     <button
                       key={`failed-${entry.nodeId}-${entry.nodeType}`}
                       type='button'

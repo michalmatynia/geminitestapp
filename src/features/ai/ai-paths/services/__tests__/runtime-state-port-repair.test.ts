@@ -136,4 +136,41 @@ describe('repairRuntimeStatePorts', () => {
     expect(second.counts.total).toBe(0);
     expect(stableStringify(second.runtimeState)).toBe(stableStringify(first.runtimeState));
   });
+
+  it('recovers missing input ports from run nodes when snapshot inputs are empty', () => {
+    const state = {
+      status: 'running',
+      inputs: {},
+      outputs: {},
+      nodeOutputs: {},
+    } as RuntimeState;
+
+    const nodes = [
+      buildRunNode({
+        nodeId: 'node-db-write',
+        inputs: {
+          entityId: '75fd29f3-8155-437d-af98-f5ee85e78c37',
+          value: { description_pl: 'Opis PL' },
+          result: { parameters: [{ key: 'material', value: 'metal' }] },
+        },
+        outputs: { status: 'failed' },
+      }),
+    ];
+
+    const result = repairRuntimeStatePorts({
+      runtimeState: state,
+      runNodes: nodes,
+    });
+
+    const repairedInputs = result.runtimeState.inputs?.['node-db-write'] as
+      | Record<string, unknown>
+      | undefined;
+    expect(result.changed).toBe(true);
+    expect(result.counts.inputs).toBeGreaterThan(0);
+    expect(repairedInputs?.['entityId']).toBe('75fd29f3-8155-437d-af98-f5ee85e78c37');
+    expect(repairedInputs?.['value']).toEqual({ description_pl: 'Opis PL' });
+    expect(repairedInputs?.['result']).toEqual({
+      parameters: [{ key: 'material', value: 'metal' }],
+    });
+  });
 });

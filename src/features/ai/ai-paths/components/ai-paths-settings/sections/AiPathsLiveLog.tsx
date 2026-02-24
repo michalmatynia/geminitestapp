@@ -6,12 +6,13 @@ import {
   EmptyState,
 } from '@/shared/ui';
 import { useAiPathsSettingsOrchestrator } from '../AiPathsSettingsOrchestratorContext';
+import type { AiPathRuntimeEvent } from '@/features/ai/ai-paths/lib';
 
 export function AiPathsLiveLog(): React.JSX.Element {
   const { runtimeEvents } = useAiPathsSettingsOrchestrator();
 
   const runtimeLogEvents = useMemo(
-    () => runtimeEvents.slice(Math.max(0, runtimeEvents.length - 80)).reverse(),
+    (): AiPathRuntimeEvent[] => (runtimeEvents as AiPathRuntimeEvent[]).slice(Math.max(0, runtimeEvents.length - 80)).reverse(),
     [runtimeEvents],
   );
 
@@ -25,7 +26,7 @@ export function AiPathsLiveLog(): React.JSX.Element {
       </div>
       <div className='max-h-[280px] space-y-2 overflow-y-auto pr-1'>
         {runtimeLogEvents.length > 0 ? (
-          runtimeLogEvents.map((event) => (
+          runtimeLogEvents.map((event: AiPathRuntimeEvent) => (
             <div
               key={event.id}
               className='rounded-md border border-border/60 bg-card/60 px-2 py-1.5 text-[11px] text-gray-300'

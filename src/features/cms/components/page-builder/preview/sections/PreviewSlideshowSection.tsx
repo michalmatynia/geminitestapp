@@ -6,6 +6,7 @@ import {
   getSectionContainerClass, 
   getSectionStyles,
 } from '@/features/cms/components/frontend/theme-styles';
+import { useCmsPageContext } from '@/features/cms/components/frontend/CmsPageContext';
 import { BlockContextProvider } from '@/features/cms/components/page-builder/preview/context/BlockContext';
 import { usePreviewEditor } from '@/features/cms/components/page-builder/preview/context/PreviewEditorContext';
 import { usePreviewSectionContext } from '@/features/cms/components/page-builder/preview/context/PreviewSectionContext';
@@ -16,9 +17,9 @@ import type { BlockInstance } from '@/shared/contracts/cms';
 import { EmptyState } from '@/shared/ui';
 
 export function PreviewSlideshowSection() {
+  const { colorSchemes } = useCmsPageContext();
   const { 
     section,
-    colorSchemes,
     selectedRing,
     renderSectionActions,
     divider,

@@ -7,11 +7,8 @@ import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 
 export interface PreviewSectionContextValue {
   section: SectionInstance;
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  mediaStyles?: React.CSSProperties | null;
   selectedRing: string;
   divider: React.ReactNode;
-  layout?: { fullWidth?: boolean };
   renderSectionActions: () => React.ReactNode;
   wrapInspector: (node: React.ReactNode) => React.ReactNode;
   handleSelect: () => void;

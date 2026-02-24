@@ -19,6 +19,7 @@ import {
   formatDisabledNodeTypesPolicyMessage,
 } from '@/features/ai/ai-paths/services/path-run-policy';
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
+import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import {
   recordRuntimeNodeStatus,
@@ -243,6 +244,29 @@ const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
     return sanitized;
   }
   return EMPTY_RUNTIME_STATE;
+};
+
+const toRuntimeLifecycleStatus = (runStatus: AiPathRunStatus): RuntimeState['status'] => {
+  if (runStatus === 'running' || runStatus === 'queued') return 'running';
+  if (runStatus === 'paused') return 'paused';
+  return 'idle';
+};
+
+const mergeRuntimePortMaps = (
+  ...maps: Array<Record<string, RuntimePortValues> | undefined>
+): Record<string, RuntimePortValues> => {
+  const merged: Record<string, RuntimePortValues> = {};
+  maps.forEach((map) => {
+    if (!isRecord(map)) return;
+    Object.entries(map).forEach(([nodeId, nodePorts]) => {
+      if (!isRecord(nodePorts)) return;
+      merged[nodeId] = {
+        ...(merged[nodeId] ?? {}),
+        ...nodePorts,
+      } as RuntimePortValues;
+    });
+  });
+  return merged;
 };
 
 type RuntimeProfileHighlight = {
@@ -896,6 +920,48 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const accOutputs: Record<string, RuntimePortValues> = { ...(runtimeState.outputs ?? {}) };
   let resolvedRunId = run.id;
   let resolvedRunStartedAt = runStartedAt;
+  let runtimeRepairNodes: AiPathRunNodeRecord[] | null = null;
+
+  const loadRunNodesForRuntimeRepair = async (): Promise<AiPathRunNodeRecord[]> => {
+    if (runtimeRepairNodes) return runtimeRepairNodes;
+    if (dbRunMissing) return [];
+    try {
+      runtimeRepairNodes = await repo.listRunNodes(run.id);
+      return runtimeRepairNodes;
+    } catch (error) {
+      void ErrorSystem.logWarning('Failed to load run nodes for runtime state repair', {
+        service: 'ai-paths-executor',
+        error,
+        runId: run.id,
+      });
+      return [];
+    }
+  };
+
+  const buildPersistedRuntimeState = async (
+    baseState: unknown,
+    runStatus: AiPathRunStatus,
+  ): Promise<RuntimeState> => {
+    const parsedBase = parseRuntimeState(baseState);
+    const mergedInputs = mergeRuntimePortMaps(accInputs, parsedBase.inputs);
+    const mergedOutputs = mergeRuntimePortMaps(accOutputs, parsedBase.outputs);
+    const mergedNodeOutputs = mergeRuntimePortMaps(parsedBase.nodeOutputs, mergedOutputs);
+    const candidate: RuntimeState = {
+      ...EMPTY_RUNTIME_STATE,
+      ...parsedBase,
+      status: toRuntimeLifecycleStatus(runStatus),
+      runId: resolvedRunId,
+      runStartedAt: resolvedRunStartedAt,
+      inputs: mergedInputs,
+      outputs: mergedOutputs,
+      nodeOutputs: mergedNodeOutputs,
+    };
+    const repaired = repairRuntimeStatePorts({
+      runtimeState: candidate,
+      runNodes: await loadRunNodesForRuntimeRepair(),
+    });
+    return sanitizeRuntimeState(repaired.runtimeState);
+  };
 
   const saveIntermediateState = async (): Promise<void> => {
     try {
@@ -1581,15 +1647,21 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     try {
       const latestRun = await repo.findRunById(run.id);
       if (latestRun?.status === 'canceled') {
+        const canceledRuntimeState = await buildPersistedRuntimeState(resultState, 'canceled');
         await updateRunSnapshot({
-          runtimeState: sanitizeRuntimeState(resultState),
+          runtimeState: canceledRuntimeState,
           ...(latestRun.finishedAt ? {} : { finishedAt: finishedAt.toISOString() }),
         });
       } else if (!latestRun || !TERMINAL_RUN_STATUSES.has(latestRun.status)) {
+        const terminalRunStatus: AiPathRunStatus = shouldFailOnBlocked ? 'failed' : 'completed';
+        const terminalRuntimeState = await buildPersistedRuntimeState(
+          resultState,
+          terminalRunStatus
+        );
         const updated = shouldFailOnBlocked
           ? await updateRunSnapshot({
             status: 'failed',
-            runtimeState: sanitizeRuntimeState(resultState),
+            runtimeState: terminalRuntimeState,
             finishedAt: finishedAt.toISOString(),
             errorMessage: blockedFailureMessage,
             meta: {
@@ -1601,7 +1673,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           })
           : await updateRunSnapshot({
             status: 'completed',
-            runtimeState: sanitizeRuntimeState(resultState),
+            runtimeState: terminalRuntimeState,
             finishedAt: finishedAt.toISOString(),
             errorMessage: null,
             meta: {
@@ -1692,10 +1764,10 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         try {
           const cancelledRuntimeState =
             error instanceof GraphExecutionCancelled
-              ? sanitizeRuntimeState(error.state)
-              : undefined;
+              ? await buildPersistedRuntimeState(error.state, 'canceled')
+              : await buildPersistedRuntimeState(runtimeState, 'canceled');
           await updateRunSnapshot({
-            ...(cancelledRuntimeState ? { runtimeState: cancelledRuntimeState } : {}),
+            runtimeState: cancelledRuntimeState,
             ...(latestRun.finishedAt ? {} : { finishedAt }),
           });
         } catch (cancelUpdateError) {
@@ -1728,8 +1800,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     );
     
     try {
+      const failedRuntimeState =
+        error instanceof Error && error.name === 'GraphExecutionError' && 'state' in error
+          ? await buildPersistedRuntimeState((error as { state: unknown }).state, 'failed')
+          : await buildPersistedRuntimeState(runtimeState, 'failed');
       await updateRunSnapshot({
         status: 'failed',
+        runtimeState: failedRuntimeState,
         finishedAt: finishedAt.toISOString(),
         errorMessage,
         meta: {

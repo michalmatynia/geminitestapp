@@ -33,6 +33,8 @@ import {
   getBlockTypographyStyles,
   type ColorSchemeColors,
 } from '../frontend/theme-styles';
+import { useCmsPageContext } from '../frontend/CmsPageContext';
+import { useMediaStyles } from '../frontend/media-styles-context';
 import { BlockContextProvider, useBlockContext } from './preview/context/BlockContext';
 import { usePreviewEditor } from './preview/context/PreviewEditorContext';
 import {
@@ -80,17 +82,13 @@ const FRONTEND_PREVIEW_SECTION_TYPES = new Set<string>([
 
 interface PreviewSectionProps {
   section: SectionInstance;
-  colorSchemes?: Record<string, ColorSchemeColors>;
-  mediaStyles?: React.CSSProperties | null;
-  layout?: { fullWidth?: boolean };
 }
 
 export function PreviewSection({
   section,
-  colorSchemes,
-  mediaStyles,
-  layout,
 }: PreviewSectionProps): React.ReactNode {
+  const { colorSchemes, layout } = useCmsPageContext();
+  const mediaStyles = useMediaStyles();
   const {
     selectedNodeId,
     isInspecting = false,
@@ -195,11 +193,8 @@ export function PreviewSection({
 
   const sectionContextValue: PreviewSectionContextValue = {
     section,
-    colorSchemes,
-    mediaStyles,
     selectedRing,
     divider,
-    layout,
     renderSectionActions,
     wrapInspector,
     handleSelect,

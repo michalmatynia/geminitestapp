@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { useFormState } from 'react-hook-form';
 
 import { useProductFormSubmit } from '@/features/products/hooks/useProductFormSubmit';
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
@@ -333,7 +334,7 @@ function ProductFormSubmitController({
     setNonFormBaselineKey(nonFormComparableKey);
   }, [methods, nonFormComparableKey, uploadSuccess]);
 
-  const isDirty = methods.formState.isDirty;
+  const { isDirty } = useFormState({ control: methods.control });
   const hasNonFormUnsavedChanges = nonFormComparableKey !== nonFormBaselineKey;
   const hasUnsavedChanges = isDirty || hasNonFormUnsavedChanges;
 

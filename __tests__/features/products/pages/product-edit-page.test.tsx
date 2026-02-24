@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
@@ -115,5 +115,21 @@ describe('EditProductForm', () => {
     expect(screen.getByRole('tab', { name: /Parameters/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Images/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Import Info/i })).toBeInTheDocument();
+  });
+
+  it('enables Update after SKU value changes', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<EditProductPage product={mockProduct} />);
+
+    const updateButton = await screen.findByRole('button', { name: /^Update$/i });
+    expect(updateButton).toBeDisabled();
+
+    const skuInput = screen.getByLabelText(/SKU/i);
+    await user.clear(skuInput);
+    await user.type(skuInput, 'TEST-123-NEW');
+
+    await waitFor(() => {
+      expect(updateButton).toBeEnabled();
+    });
   });
 });

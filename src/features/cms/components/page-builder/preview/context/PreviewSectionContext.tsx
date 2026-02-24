@@ -3,7 +3,6 @@
 import React, { createContext, useContext } from 'react';
 
 import type { BlockInstance, SectionInstance } from '@/shared/contracts/cms';
-import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';
 
 export interface PreviewSectionContextValue {
   section: SectionInstance;

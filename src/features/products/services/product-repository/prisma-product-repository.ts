@@ -11,14 +11,16 @@ import {
 
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type {
+import {
+  productAdvancedFilterGroupSchema,
   CatalogRecord,
+  type CreateProductInput,
+  type ProductAdvancedFilterCondition,
+  type ProductAdvancedFilterGroup,
+  type ProductAdvancedFilterRule,
   ProductWithImages,
   ProductImageRecord,
-} from '@/shared/contracts/products';
-import type { ProductParameterValue } from '@/shared/contracts/products';
-import type {
-  CreateProductInput,
+  type ProductParameterValue,
   ProductFilters,
   ProductRepository,
   UpdateProductInput,
@@ -106,6 +108,368 @@ const normalizeProductParameterValues = (
 };
 
 const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com', 'base'] as const;
+
+const parseAdvancedFilterGroup = (
+  payload: string | undefined
+): ProductAdvancedFilterGroup | null => {
+  if (!payload) return null;
+  try {
+    const parsed = JSON.parse(payload);
+    const validated = productAdvancedFilterGroupSchema.safeParse(parsed);
+    return validated.success ? validated.data : null;
+  } catch {
+    return null;
+  }
+};
+
+const toAdvancedStringValue = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const toAdvancedNumberValue = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    if (!normalized) return null;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const toAdvancedDateValue = (value: unknown): Date | null => {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  return null;
+};
+
+const buildPrismaSingleStringCondition = (
+  field: string,
+  condition: ProductAdvancedFilterCondition,
+  options: { nullable?: boolean } = {}
+): Prisma.ProductWhereInput | null => {
+  const nullable = options.nullable ?? true;
+
+  if (condition.operator === 'isEmpty') {
+    if (nullable) {
+      return {
+        OR: [
+          { [field]: null },
+          { [field]: '' },
+        ],
+      } as Prisma.ProductWhereInput;
+    }
+    return { [field]: '' } as Prisma.ProductWhereInput;
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    if (nullable) {
+      return {
+        AND: [
+          { [field]: { not: null } },
+          { [field]: { not: '' } },
+        ],
+      } as Prisma.ProductWhereInput;
+    }
+    return { [field]: { not: '' } } as Prisma.ProductWhereInput;
+  }
+
+  const value = toAdvancedStringValue(condition.value);
+  if (!value) return null;
+
+  if (condition.operator === 'contains') {
+    return {
+      [field]: {
+        contains: value,
+        mode: 'insensitive',
+      },
+    } as Prisma.ProductWhereInput;
+  }
+
+  if (condition.operator === 'eq') {
+    return {
+      [field]: {
+        equals: value,
+        mode: 'insensitive',
+      },
+    } as Prisma.ProductWhereInput;
+  }
+
+  if (condition.operator === 'neq') {
+    return {
+      NOT: [
+        {
+          [field]: {
+            equals: value,
+            mode: 'insensitive',
+          },
+        },
+      ],
+    } as Prisma.ProductWhereInput;
+  }
+
+  return null;
+};
+
+const buildPrismaMultiStringCondition = (
+  fields: string[],
+  condition: ProductAdvancedFilterCondition
+): Prisma.ProductWhereInput | null => {
+  if (fields.length === 0) return null;
+
+  if (condition.operator === 'isEmpty') {
+    const emptyConditions = fields
+      .map((field: string) =>
+        buildPrismaSingleStringCondition(field, condition, { nullable: true })
+      )
+      .filter((entry): entry is Prisma.ProductWhereInput => entry !== null);
+    if (emptyConditions.length === 0) return null;
+    return {
+      AND: emptyConditions,
+    };
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    const nonEmptyConditions = fields
+      .map((field: string) =>
+        buildPrismaSingleStringCondition(field, condition, { nullable: true })
+      )
+      .filter((entry): entry is Prisma.ProductWhereInput => entry !== null);
+    if (nonEmptyConditions.length === 0) return null;
+    return {
+      OR: nonEmptyConditions,
+    };
+  }
+
+  const leafConditions = fields
+    .map((field: string) =>
+      buildPrismaSingleStringCondition(field, condition, { nullable: true })
+    )
+    .filter((entry): entry is Prisma.ProductWhereInput => entry !== null);
+  if (leafConditions.length === 0) return null;
+
+  const orCondition: Prisma.ProductWhereInput = { OR: leafConditions };
+  if (condition.operator === 'neq') {
+    return {
+      NOT: [orCondition],
+    };
+  }
+  return orCondition;
+};
+
+const buildPrismaCategoryCondition = (
+  condition: ProductAdvancedFilterCondition
+): Prisma.ProductWhereInput | null => {
+  if (condition.operator === 'isEmpty') {
+    return { categories: { is: null } };
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    return { categories: { isNot: null } };
+  }
+
+  const value = toAdvancedStringValue(condition.value);
+  if (!value) return null;
+
+  const eqCondition: Prisma.ProductWhereInput = {
+    categories: { is: { categoryId: value } },
+  };
+
+  if (condition.operator === 'eq') return eqCondition;
+  if (condition.operator === 'neq') {
+    return { NOT: [eqCondition] };
+  }
+  if (condition.operator === 'contains') {
+    return {
+      categories: {
+        is: {
+          categoryId: {
+            contains: value,
+            mode: 'insensitive',
+          },
+        },
+      },
+    };
+  }
+
+  return null;
+};
+
+const buildPrismaNumericCondition = (
+  field: 'price' | 'stock',
+  condition: ProductAdvancedFilterCondition
+): Prisma.ProductWhereInput | null => {
+  if (condition.operator === 'isEmpty') {
+    return { [field]: null } as Prisma.ProductWhereInput;
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    return { [field]: { not: null } } as Prisma.ProductWhereInput;
+  }
+
+  if (condition.operator === 'between') {
+    const left = toAdvancedNumberValue(condition.value);
+    const right = toAdvancedNumberValue(condition.valueTo);
+    if (left === null || right === null) return null;
+    const [min, max] = left <= right ? [left, right] : [right, left];
+    return {
+      AND: [
+        { [field]: { gte: min } },
+        { [field]: { lte: max } },
+      ],
+    } as Prisma.ProductWhereInput;
+  }
+
+  const value = toAdvancedNumberValue(condition.value);
+  if (value === null) return null;
+
+  if (condition.operator === 'eq') {
+    return { [field]: { equals: value } } as Prisma.ProductWhereInput;
+  }
+  if (condition.operator === 'neq') {
+    return { NOT: [{ [field]: { equals: value } }] } as Prisma.ProductWhereInput;
+  }
+  if (condition.operator === 'gt') {
+    return { [field]: { gt: value } } as Prisma.ProductWhereInput;
+  }
+  if (condition.operator === 'gte') {
+    return { [field]: { gte: value } } as Prisma.ProductWhereInput;
+  }
+  if (condition.operator === 'lt') {
+    return { [field]: { lt: value } } as Prisma.ProductWhereInput;
+  }
+  if (condition.operator === 'lte') {
+    return { [field]: { lte: value } } as Prisma.ProductWhereInput;
+  }
+
+  return null;
+};
+
+const buildPrismaCreatedAtCondition = (
+  condition: ProductAdvancedFilterCondition
+): Prisma.ProductWhereInput | null => {
+  if (condition.operator === 'isEmpty') {
+    // createdAt is non-null in schema; force empty-result predicate.
+    return { id: '__advanced_filter_createdAt_empty__' };
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    return null;
+  }
+
+  if (condition.operator === 'between') {
+    const left = toAdvancedDateValue(condition.value);
+    const right = toAdvancedDateValue(condition.valueTo);
+    if (!left || !right) return null;
+    const [min, max] = left <= right ? [left, right] : [right, left];
+    return {
+      AND: [
+        { createdAt: { gte: min } },
+        { createdAt: { lte: max } },
+      ],
+    };
+  }
+
+  const value = toAdvancedDateValue(condition.value);
+  if (!value) return null;
+
+  if (condition.operator === 'eq') {
+    return { createdAt: { equals: value } };
+  }
+  if (condition.operator === 'neq') {
+    return { NOT: [{ createdAt: { equals: value } }] };
+  }
+  if (condition.operator === 'gt') {
+    return { createdAt: { gt: value } };
+  }
+  if (condition.operator === 'gte') {
+    return { createdAt: { gte: value } };
+  }
+  if (condition.operator === 'lt') {
+    return { createdAt: { lt: value } };
+  }
+  if (condition.operator === 'lte') {
+    return { createdAt: { lte: value } };
+  }
+
+  return null;
+};
+
+const compileAdvancedPrismaCondition = (
+  condition: ProductAdvancedFilterCondition
+): Prisma.ProductWhereInput | null => {
+  if (condition.field === 'id') {
+    return buildPrismaSingleStringCondition('id', condition, { nullable: false });
+  }
+  if (condition.field === 'sku') {
+    return buildPrismaSingleStringCondition('sku', condition, { nullable: true });
+  }
+  if (condition.field === 'name') {
+    return buildPrismaMultiStringCondition(
+      ['name_en', 'name_pl', 'name_de'],
+      condition
+    );
+  }
+  if (condition.field === 'description') {
+    return buildPrismaMultiStringCondition(
+      ['description_en', 'description_pl', 'description_de'],
+      condition
+    );
+  }
+  if (condition.field === 'categoryId') {
+    return buildPrismaCategoryCondition(condition);
+  }
+  if (condition.field === 'price') {
+    return buildPrismaNumericCondition('price', condition);
+  }
+  if (condition.field === 'stock') {
+    return buildPrismaNumericCondition('stock', condition);
+  }
+  if (condition.field === 'createdAt') {
+    return buildPrismaCreatedAtCondition(condition);
+  }
+  return null;
+};
+
+const compileAdvancedPrismaRule = (
+  rule: ProductAdvancedFilterRule
+): Prisma.ProductWhereInput | null => {
+  if (rule.type === 'condition') {
+    return compileAdvancedPrismaCondition(rule);
+  }
+
+  const compiledRules = rule.rules
+    .map((nestedRule: ProductAdvancedFilterRule) => compileAdvancedPrismaRule(nestedRule))
+    .filter((nestedRule): nestedRule is Prisma.ProductWhereInput => nestedRule !== null);
+
+  if (compiledRules.length === 0) return null;
+
+  const combined =
+    compiledRules.length === 1
+      ? compiledRules[0]!
+      : ({
+        [rule.combinator === 'and' ? 'AND' : 'OR']: compiledRules,
+      } as Prisma.ProductWhereInput);
+
+  if (!rule.not) return combined;
+
+  return {
+    NOT: [combined],
+  };
+};
+
+const buildAdvancedPrismaWhere = (
+  payload: string | undefined
+): Prisma.ProductWhereInput | null => {
+  const parsedGroup = parseAdvancedFilterGroup(payload);
+  if (!parsedGroup) return null;
+  return compileAdvancedPrismaRule(parsedGroup);
+};
 
 const buildProductWhere = (
   filters: ProductFilters,
@@ -203,6 +567,27 @@ const buildProductWhere = (
       lte: filters.maxPrice,
     };
   }
+  if (filters.stockValue !== undefined) {
+    const operator = filters.stockOperator ?? 'eq';
+    const stockFilter = where.stock as Prisma.IntNullableFilter | undefined;
+    const nextStockFilter: Prisma.IntNullableFilter = {
+      ...(stockFilter ?? {}),
+    };
+
+    if (operator === 'gt') {
+      nextStockFilter.gt = filters.stockValue;
+    } else if (operator === 'gte') {
+      nextStockFilter.gte = filters.stockValue;
+    } else if (operator === 'lt') {
+      nextStockFilter.lt = filters.stockValue;
+    } else if (operator === 'lte') {
+      nextStockFilter.lte = filters.stockValue;
+    } else {
+      nextStockFilter.equals = filters.stockValue;
+    }
+
+    where.stock = nextStockFilter;
+  }
   if (filters.startDate) {
     where.createdAt = {
       ...(where.createdAt as Prisma.DateTimeFilter),
@@ -270,6 +655,11 @@ const buildProductWhere = (
         ],
       });
     }
+  }
+
+  const advancedWhere = buildAdvancedPrismaWhere(filters.advancedFilter);
+  if (advancedWhere) {
+    andConditions.push(advancedWhere);
   }
 
   if (andConditions.length > 0) {

@@ -2,7 +2,7 @@
 
 import { createParserMappings, formatRuntimeValue, getValueAtMappingPath, parsePathList } from '@/features/ai/ai-paths/lib';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Input, Label, SelectSimple, Textarea, FormField } from '@/shared/ui';
+import { Input,  SelectSimple, Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 

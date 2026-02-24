@@ -3,6 +3,7 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 import { canMoveTreePath, normalizeTreePath } from '@/shared/utils/tree-operations';
 
 import {
+  decodeCaseResolverCaseMasterNodeId,
   decodeCaseResolverMasterNodeId,
   resolveCaseResolverFolderTargetForNode,
 } from './master-tree';
@@ -14,6 +15,20 @@ export type CaseResolverMasterTreeAdapterOperations = {
   renameFile: (fileId: string, nextName: string) => Promise<void>;
   renameAsset: (assetId: string, nextName: string) => Promise<void>;
   renameFolder: (folderPath: string, nextFolderPath: string) => Promise<void>;
+};
+
+export type CaseResolverCasesMasterTreeAdapterOperations = {
+  moveCase: (
+    caseId: string,
+    targetParentCaseId: string | null,
+    targetIndex?: number
+  ) => Promise<void>;
+  reorderCase: (
+    caseId: string,
+    targetCaseId: string,
+    position: 'before' | 'after'
+  ) => Promise<void>;
+  renameCase: (caseId: string, nextName: string) => Promise<void>;
 };
 
 export const createCaseResolverMasterTreeAdapter = (
@@ -83,6 +98,35 @@ export const createCaseResolverMasterTreeAdapter = (
         );
         if (!canMoveTreePath(node.id, nextPath)) return;
         await operations.renameFolder(node.id, nextPath);
+        return context.nextNodes;
+      },
+    },
+  });
+
+export const createCaseResolverCasesMasterTreeAdapter = (
+  operations: CaseResolverCasesMasterTreeAdapterOperations
+) =>
+  createMasterFolderTreeAdapter({
+    decodeNodeId: decodeCaseResolverCaseMasterNodeId,
+    handlers: {
+      onMove: async ({ operation, context, node, targetParent }): Promise<MasterTreeNode[] | void> => {
+        const targetParentCaseId =
+          targetParent?.entity === 'case'
+            ? targetParent.id
+            : operation.targetParentId
+              ? decodeCaseResolverCaseMasterNodeId(operation.targetParentId)?.id ?? null
+              : null;
+        await operations.moveCase(node.id, targetParentCaseId, operation.targetIndex);
+        return context.nextNodes;
+      },
+      onReorder: async ({ operation, context, node, target }): Promise<MasterTreeNode[] | void> => {
+        await operations.reorderCase(node.id, target.id, operation.position);
+        return context.nextNodes;
+      },
+      onRename: async ({ context, node, nextName }): Promise<MasterTreeNode[] | void> => {
+        const normalizedName = nextName.replace(/[\\/]+/g, ' ').trim();
+        if (!normalizedName) return;
+        await operations.renameCase(node.id, normalizedName);
         return context.nextNodes;
       },
     },

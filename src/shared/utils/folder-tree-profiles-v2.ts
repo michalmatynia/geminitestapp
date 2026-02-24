@@ -34,6 +34,7 @@ export const folderTreeInstanceValues = [
   'product_categories',
   'cms_page_builder',
   'case_resolver',
+  'case_resolver_cases',
 ] as const;
 
 export type FolderTreeInstance = (typeof folderTreeInstanceValues)[number];
@@ -531,6 +532,51 @@ export const defaultFolderTreeProfilesV2: FolderTreeProfilesV2Map = {
       selectionBehavior: 'click_away',
     },
   },
+  case_resolver_cases: {
+    version: 2,
+    placeholders: {
+      preset: 'classic',
+      style: 'line',
+      emphasis: 'balanced',
+      rootDropLabel: 'Move case to root',
+      inlineDropLabel: 'Drop case',
+    },
+    icons: {
+      slots: {
+        folderClosed: 'Folder',
+        folderOpen: 'FolderOpen',
+        file: 'Folder',
+        root: 'Folder',
+        dragHandle: 'GripVertical',
+      },
+      byKind: {
+        case_entry: 'Folder',
+      },
+    },
+    nesting: {
+      defaultAllow: false,
+      blockedTargetKinds: [],
+      rules: [
+        {
+          childType: 'folder',
+          childKinds: ['case_entry'],
+          targetType: 'folder',
+          targetKinds: ['case_entry'],
+          allow: true,
+        },
+        {
+          childType: 'folder',
+          childKinds: ['case_entry'],
+          targetType: 'root',
+          targetKinds: ['root'],
+          allow: true,
+        },
+      ],
+    },
+    interactions: {
+      selectionBehavior: 'click_away',
+    },
+  },
 };
 
 export const createDefaultFolderTreeProfilesV2 = (): FolderTreeProfilesV2Map => ({
@@ -539,6 +585,7 @@ export const createDefaultFolderTreeProfilesV2 = (): FolderTreeProfilesV2Map => 
   product_categories: cloneProfileV2(defaultFolderTreeProfilesV2.product_categories),
   cms_page_builder: cloneProfileV2(defaultFolderTreeProfilesV2.cms_page_builder),
   case_resolver: cloneProfileV2(defaultFolderTreeProfilesV2.case_resolver),
+  case_resolver_cases: cloneProfileV2(defaultFolderTreeProfilesV2.case_resolver_cases),
 });
 
 const normalizeByKindIcons = (
@@ -634,6 +681,10 @@ export const parseFolderTreeProfilesV2 = (
     case_resolver: coerceProfileV2(
       candidate.case_resolver,
       defaultFolderTreeProfilesV2.case_resolver
+    ),
+    case_resolver_cases: coerceProfileV2(
+      candidate.case_resolver_cases,
+      defaultFolderTreeProfilesV2.case_resolver_cases
     ),
   };
 };

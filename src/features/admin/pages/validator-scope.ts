@@ -1,5 +1,7 @@
 import type { ValidatorScope, ValidatorPatternList } from '@/shared/contracts/admin';
 
+export type { ValidatorScope, ValidatorPatternList };
+
 export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
 
 export const VALIDATOR_SCOPE_LABELS: Record<ValidatorScope, string> = {

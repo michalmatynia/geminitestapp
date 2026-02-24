@@ -17,9 +17,11 @@ import {
 
 export const promptValidationSeveritySchema = z.enum(['error', 'warning', 'info']);
 export type PromptValidationSeverity = z.infer<typeof promptValidationSeveritySchema>;
+export type PromptValidationSeverityDto = PromptValidationSeverity;
 
 export const promptValidationChainModeSchema = z.enum(['continue', 'stop_on_match', 'stop_on_replace']);
 export type PromptValidationChainMode = z.infer<typeof promptValidationChainModeSchema>;
+export type PromptValidationChainModeDto = PromptValidationChainMode;
 
 export const promptValidationScopeSchema = z.enum([
   'image_studio_prompt',
@@ -32,9 +34,11 @@ export const promptValidationScopeSchema = z.enum([
   'global',
 ]);
 export type PromptValidationScope = z.infer<typeof promptValidationScopeSchema>;
+export type PromptValidationScopeDto = PromptValidationScope;
 
 export const promptValidationLaunchScopeBehaviorSchema = z.enum(['gate', 'bypass']);
 export type PromptValidationLaunchScopeBehavior = z.infer<typeof promptValidationLaunchScopeBehaviorSchema>;
+export type PromptValidationLaunchScopeBehaviorDto = PromptValidationLaunchScopeBehavior;
 
 export const promptValidationLaunchOperatorSchema = z.enum([
   'equals',
@@ -51,9 +55,11 @@ export const promptValidationLaunchOperatorSchema = z.enum([
   'is_not_empty',
 ]);
 export type PromptValidationLaunchOperator = z.infer<typeof promptValidationLaunchOperatorSchema>;
+export type PromptValidationLaunchOperatorDto = PromptValidationLaunchOperator;
 
 export const promptExploderCaptureApplyToSchema = z.enum(['segment', 'line']);
 export type PromptExploderCaptureApplyTo = z.infer<typeof promptExploderCaptureApplyToSchema>;
+export type PromptExploderCaptureApplyToDto = PromptExploderCaptureApplyTo;
 
 export const promptExploderCaptureNormalizeSchema = z.enum([
   'trim',
@@ -65,6 +71,7 @@ export const promptExploderCaptureNormalizeSchema = z.enum([
   'year',
 ]);
 export type PromptExploderCaptureNormalize = z.infer<typeof promptExploderCaptureNormalizeSchema>;
+export type PromptExploderCaptureNormalizeDto = PromptExploderCaptureNormalize;
 
 export const promptValidationSimilarSchema = z.object({
   pattern: z.string(),
@@ -74,6 +81,7 @@ export const promptValidationSimilarSchema = z.object({
 });
 
 export type PromptValidationSimilar = z.infer<typeof promptValidationSimilarSchema>;
+export type PromptValidationSimilarDto = PromptValidationSimilar;
 
 export const promptAutofixOperationSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -90,6 +98,7 @@ export const promptAutofixOperationSchema = z.discriminatedUnion('kind', [
 ]);
 
 export type PromptAutofixOperation = z.infer<typeof promptAutofixOperationSchema>;
+export type PromptAutofixOperationDto = PromptAutofixOperation;
 
 export const promptAutofixSchema = z.object({
   enabled: z.boolean(),
@@ -97,6 +106,7 @@ export const promptAutofixSchema = z.object({
 });
 
 export type PromptAutofix = z.infer<typeof promptAutofixSchema>;
+export type PromptAutofixDto = PromptAutofix;
 
 export const promptValidationRuleBaseSchema = z.object({
   id: z.string(),
@@ -146,6 +156,7 @@ export const promptValidationRuleSchema = z.discriminatedUnion('kind', [
 ]);
 
 export type PromptValidationRule = z.infer<typeof promptValidationRuleSchema>;
+export type PromptValidationRuleDto = PromptValidationRule;
 
 export const promptValidationSettingsSchema = z.object({
   enabled: z.boolean(),
@@ -154,6 +165,7 @@ export const promptValidationSettingsSchema = z.object({
 });
 
 export type PromptValidationSettings = z.infer<typeof promptValidationSettingsSchema>;
+export type PromptValidationSettingsDto = PromptValidationSettings;
 
 export const promptEngineSettingsSchema = z.object({
   version: z.literal(1),
@@ -161,6 +173,7 @@ export const promptEngineSettingsSchema = z.object({
 });
 
 export type PromptEngineSettings = z.infer<typeof promptEngineSettingsSchema>;
+export type PromptEngineSettingsDto = PromptEngineSettings;
 
 /**
  * Prompt Validation Runtime DTOs

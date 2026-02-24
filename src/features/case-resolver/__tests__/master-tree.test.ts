@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildMasterNodesFromCaseResolverWorkspace } from '@/features/case-resolver/master-tree';
+import {
+  buildMasterCaseNodesFromCaseResolverWorkspace,
+  buildMasterNodesFromCaseResolverWorkspace,
+  toCaseResolverCaseNodeId,
+} from '@/features/case-resolver/master-tree';
 import {
   createCaseResolverAssetFile,
   createCaseResolverFile,
@@ -97,5 +101,68 @@ describe('case-resolver master tree', () => {
     const alphaNode = tree.roots.find((node) => node.name === 'alpha');
 
     expect(alphaNode?.children.map((node) => node.name)).toEqual(['uploaded.png']);
+  });
+
+  it('builds case hierarchy nodes with persistent sibling order', () => {
+    const workspace: CaseResolverWorkspace = {
+      id: 'case-tree-workspace',
+      name: 'Case Tree Workspace',
+      ownerId: 'owner-1',
+      isPublic: false,
+      version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
+      folders: [],
+      folderRecords: [],
+      folderTimestamps: {},
+      files: [
+        createCaseResolverFile({
+          id: 'case-root-b',
+          name: 'Root B',
+          fileType: 'case',
+          folder: '',
+          caseTreeOrder: 1,
+        }),
+        createCaseResolverFile({
+          id: 'case-root-a',
+          name: 'Root A',
+          fileType: 'case',
+          folder: '',
+          caseTreeOrder: 0,
+        }),
+        createCaseResolverFile({
+          id: 'case-child-a1',
+          name: 'Child A1',
+          fileType: 'case',
+          folder: '',
+          parentCaseId: 'case-root-a',
+          caseTreeOrder: 0,
+        }),
+        createCaseResolverFile({
+          id: 'doc-hidden',
+          name: 'Hidden document',
+          fileType: 'document',
+          folder: '',
+          parentCaseId: 'case-root-a',
+        }),
+      ],
+      assets: [],
+      relationGraph: createEmptyCaseResolverRelationGraph(),
+      activeFileId: 'case-root-a',
+    };
+
+    const caseNodes = buildMasterCaseNodesFromCaseResolverWorkspace(workspace);
+    const tree = buildMasterTree(caseNodes);
+
+    expect(tree.roots.map((node) => node.id)).toEqual([
+      toCaseResolverCaseNodeId('case-root-a'),
+      toCaseResolverCaseNodeId('case-root-b'),
+    ]);
+    expect(tree.roots[0]?.children.map((node) => node.id)).toEqual([
+      toCaseResolverCaseNodeId('case-child-a1'),
+    ]);
+    expect(caseNodes.every((node) => node.kind === 'case_entry')).toBe(true);
+    expect(caseNodes.every((node) => node.type === 'folder')).toBe(true);
   });
 });

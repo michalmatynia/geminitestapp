@@ -1,7 +1,7 @@
 'use client';
 
 import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, SelectSimple, Card, FormField } from '@/shared/ui';
+import { Button, Input,  SelectSimple, Card, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 

@@ -14,8 +14,11 @@ export async function getProducts(filters: {
   categoryId?: string | undefined;
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
+  stockValue?: number | undefined;
+  stockOperator?: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | undefined;
   startDate?: string | undefined;
   endDate?: string | undefined;
+  advancedFilter?: string | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
   catalogId?: string | undefined;
@@ -32,8 +35,11 @@ export async function getProducts(filters: {
       categoryId: filters.categoryId,
       minPrice: filters.minPrice,
       maxPrice: filters.maxPrice,
+      stockValue: filters.stockValue,
+      stockOperator: filters.stockOperator,
       startDate: filters.startDate,
       endDate: filters.endDate,
+      advancedFilter: filters.advancedFilter,
       page: filters.page,
       pageSize: filters.pageSize,
       catalogId: filters.catalogId,
@@ -56,8 +62,11 @@ export async function countProducts(filters: {
   categoryId?: string | undefined;
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
+  stockValue?: number | undefined;
+  stockOperator?: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | undefined;
   startDate?: string | undefined;
   endDate?: string | undefined;
+  advancedFilter?: string | undefined;
   catalogId?: string | undefined;
   searchLanguage?: string | undefined;
   baseExported?: boolean | undefined;
@@ -73,8 +82,11 @@ export async function countProducts(filters: {
         categoryId: filters.categoryId,
         minPrice: filters.minPrice,
         maxPrice: filters.maxPrice,
+        stockValue: filters.stockValue,
+        stockOperator: filters.stockOperator,
         startDate: filters.startDate,
         endDate: filters.endDate,
+        advancedFilter: filters.advancedFilter,
         catalogId: filters.catalogId,
         searchLanguage: filters.searchLanguage,
         baseExported: filters.baseExported,
@@ -104,8 +116,11 @@ type ProductListFilters = {
   categoryId?: string | undefined;
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
+  stockValue?: number | undefined;
+  stockOperator?: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | undefined;
   startDate?: string | undefined;
   endDate?: string | undefined;
+  advancedFilter?: string | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
   catalogId?: string | undefined;
@@ -131,8 +146,11 @@ export async function getProductsWithCount(
       categoryId: filters.categoryId,
       minPrice: filters.minPrice,
       maxPrice: filters.maxPrice,
+      stockValue: filters.stockValue,
+      stockOperator: filters.stockOperator,
       startDate: filters.startDate,
       endDate: filters.endDate,
+      advancedFilter: filters.advancedFilter,
       page: filters.page,
       pageSize: filters.pageSize,
       catalogId: filters.catalogId,

@@ -274,10 +274,16 @@ export interface ProductDataHookResult {
   setMinPrice: (p: number | undefined) => void;
   maxPrice: number | undefined;
   setMaxPrice: (p: number | undefined) => void;
+  stockValue: number | undefined;
+  setStockValue: (value: number | undefined) => void;
+  stockOperator: '' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq';
+  setStockOperator: (value: '' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq') => void;
   startDate: string | undefined;
   setStartDate: (s: string | undefined) => void;
   endDate: string | undefined;
   setEndDate: (s: string | undefined) => void;
+  advancedFilter: string;
+  setAdvancedFilter: (value: string) => void;
   catalogFilter: string;
   setCatalogFilter: (f: string) => void;
   baseExported: '' | 'true' | 'false';
@@ -307,8 +313,13 @@ export function useProductData({
   const [categoryId, setCategoryId] = useState('');
   const [minPrice, setMinPrice] = useState<number | undefined>(undefined);
   const [maxPrice, setMaxPrice] = useState<number | undefined>(undefined);
+  const [stockValue, setStockValue] = useState<number | undefined>(undefined);
+  const [stockOperator, setStockOperator] = useState<
+    '' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq'
+  >('');
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
+  const [advancedFilter, setAdvancedFilter] = useState('');
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || 'all');
   const [baseExported, setBaseExported] = useState<'' | 'true' | 'false'>('');
   const hasInitialized = useRef(false);
@@ -341,8 +352,13 @@ export function useProductData({
     categoryId: categoryId || undefined,
     minPrice,
     maxPrice,
+    stockValue,
+    stockOperator: stockValue !== undefined
+      ? (stockOperator || 'eq')
+      : undefined,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
+    advancedFilter: advancedFilter || undefined,
     page,
     pageSize,
     catalogId: catalogFilter === 'all' ? undefined : catalogFilter,
@@ -353,7 +369,7 @@ export function useProductData({
         : baseExported === 'false'
           ? false
           : undefined,
-  }), [search, productId, idMatchMode, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, page, pageSize, catalogFilter, searchLanguage, baseExported]);
+  }), [search, productId, idMatchMode, sku, description, categoryId, minPrice, maxPrice, stockValue, stockOperator, startDate, endDate, advancedFilter, page, pageSize, catalogFilter, searchLanguage, baseExported]);
 
   // Use parallel queries
   const results = useQueries({
@@ -390,7 +406,7 @@ export function useProductData({
   // Keep pagination valid when filters change.
   useEffect(() => {
     setPage(1);
-  }, [search, productId, idMatchMode, sku, description, categoryId, minPrice, maxPrice, startDate, endDate, catalogFilter, baseExported, pageSize]);
+  }, [search, productId, idMatchMode, sku, description, categoryId, minPrice, maxPrice, stockValue, stockOperator, startDate, endDate, advancedFilter, catalogFilter, baseExported, pageSize]);
 
   // Clamp page when current page no longer exists after count change.
   useEffect(() => {
@@ -420,8 +436,14 @@ export function useProductData({
   const handleSetCategoryId = useCallback((id: string) => setCategoryId(id), []);
   const handleSetMinPrice = useCallback((p: number | undefined) => setMinPrice(p), []);
   const handleSetMaxPrice = useCallback((p: number | undefined) => setMaxPrice(p), []);
+  const handleSetStockValue = useCallback((value: number | undefined) => setStockValue(value), []);
+  const handleSetStockOperator = useCallback(
+    (value: '' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq') => setStockOperator(value),
+    []
+  );
   const handleSetStartDate = useCallback((s: string | undefined) => setStartDate(s), []);
   const handleSetEndDate = useCallback((s: string | undefined) => setEndDate(s), []);
+  const handleSetAdvancedFilter = useCallback((value: string) => setAdvancedFilter(value), []);
   const handleSetCatalogFilter = useCallback((f: string) => setCatalogFilter(f), []);
   const handleSetBaseExported = useCallback(
     (value: '' | 'true' | 'false') => setBaseExported(value),
@@ -451,10 +473,16 @@ export function useProductData({
     setMinPrice: handleSetMinPrice,
     maxPrice,
     setMaxPrice: handleSetMaxPrice,
+    stockValue,
+    setStockValue: handleSetStockValue,
+    stockOperator,
+    setStockOperator: handleSetStockOperator,
     startDate,
     setStartDate: handleSetStartDate,
     endDate,
     setEndDate: handleSetEndDate,
+    advancedFilter,
+    setAdvancedFilter: handleSetAdvancedFilter,
     catalogFilter,
     setCatalogFilter: handleSetCatalogFilter,
     baseExported,

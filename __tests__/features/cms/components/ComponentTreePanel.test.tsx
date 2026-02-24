@@ -4,12 +4,21 @@ import { vi } from 'vitest';
 import { render } from '@/__tests__/test-utils';
 import { ComponentTreePanel } from '@/features/cms/components/page-builder/ComponentTreePanel';
 import { useCmsPages, useCmsPage } from '@/features/cms/hooks/useCmsQueries';
-import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { usePageBuilderState, usePageBuilderDispatch } from '@/features/cms/hooks/usePageBuilderContext';
 
 // Mock the hooks
-vi.mock('@/features/cms/hooks/usePageBuilderContext', () => ({
-  usePageBuilder: vi.fn(),
-}));
+vi.mock('@/features/cms/hooks/usePageBuilderContext', () => {
+  const usePageBuilderStateMock = vi.fn();
+  const usePageBuilderDispatchMock = vi.fn();
+  return {
+    usePageBuilderState: usePageBuilderStateMock,
+    usePageBuilderDispatch: usePageBuilderDispatchMock,
+    usePageBuilder: () => ({
+      state: usePageBuilderStateMock(),
+      dispatch: usePageBuilderDispatchMock(),
+    }),
+  };
+});
 
 vi.mock('@/features/cms/hooks/useCmsQueries', () => ({
   useCmsPages: vi.fn(),
@@ -38,14 +47,27 @@ vi.mock('@/features/cms/hooks/useDragStateContext', () => ({
 }));
 
 // Mock the child components to simplify testing
+vi.mock('@/shared/ui', async (importOriginal) => {
+  const actual = await importOriginal<any>();
+  return {
+    ...actual,
+    FolderTreePanel: ({ children, header }: any) => (
+      <div>
+        {header}
+        {children}
+      </div>
+    ),
+    TreeHeader: ({ title, subtitle, actions }: any) => (
+      <div>
+        <h1>{title}</h1>
+        <h2>{subtitle}</h2>
+        {actions}
+      </div>
+    ),
+  };
+});
 vi.mock('@/features/cms/components/page-builder/tree', () => ({
   SectionNodeItem: ({ section }: any) => <div data-testid='section-item'>{section.type}</div>,
-}));
-vi.mock('@/features/cms/components/page-builder/SectionPicker', () => ({
-  SectionPicker: () => <button>Add Section</button>,
-}));
-vi.mock('@/features/cms/components/page-builder/SectionTemplatePicker', () => ({
-  SectionTemplatePicker: () => <button>Templates</button>,
 }));
 
 describe('ComponentTreePanel Component', () => {
@@ -62,14 +84,11 @@ describe('ComponentTreePanel Component', () => {
   });
 
   it('should render empty when no page is selected', () => {
-    (usePageBuilder as any).mockReturnValue({
-      state: { pages: mockPages, currentPage: null, sections: [] },
-      dispatch: mockDispatch,
-    });
+    (usePageBuilderState as any).mockReturnValue({ pages: mockPages, currentPage: null, sections: [] });
+    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
 
-    const { container } = render(<ComponentTreePanel />);
-    // According to ComponentTreePanel.tsx: {!state.currentPage ? (<div className="p-4" />) : (...)}
-    expect(container.querySelector('.p-4')).toBeInTheDocument();
+    render(<ComponentTreePanel />);
+    expect(screen.getByTestId('empty-page-state')).toBeInTheDocument();
   });
 
   it('should render zones and sections when a page is selected', () => {
@@ -79,16 +98,14 @@ describe('ComponentTreePanel Component', () => {
       { id: 's2', type: 'RichText', zone: 'footer', blocks: [] },
     ];
 
-    (usePageBuilder as any).mockReturnValue({
-      state: { 
-        pages: mockPages, 
-        currentPage: mockCurrentPage, 
-        sections: mockSections,
-        selectedNodeId: null,
-        collapsedZones: new Set()
-      },
-      dispatch: mockDispatch,
+    (usePageBuilderState as any).mockReturnValue({ 
+      pages: mockPages, 
+      currentPage: mockCurrentPage, 
+      sections: mockSections,
+      selectedNodeId: null,
+      collapsedZones: new Set()
     });
+    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
 
     render(<ComponentTreePanel />);
 
@@ -108,15 +125,13 @@ describe('ComponentTreePanel Component', () => {
     const mockCurrentPage = { id: '1', name: 'Home' };
     const mockSections = [{ id: 's1', type: 'Hero', zone: 'header', blocks: [] }];
 
-    (usePageBuilder as any).mockReturnValue({
-      state: { 
-        pages: mockPages, 
-        currentPage: mockCurrentPage, 
-        sections: mockSections,
-        selectedNodeId: null
-      },
-      dispatch: mockDispatch,
+    (usePageBuilderState as any).mockReturnValue({ 
+      pages: mockPages, 
+      currentPage: mockCurrentPage, 
+      sections: mockSections,
+      selectedNodeId: null
     });
+    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
 
     render(<ComponentTreePanel />);
 

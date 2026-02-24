@@ -479,32 +479,36 @@ export function JobQueueProvider({
       source.addEventListener('run', (event: Event) => {
         try {
           const messageEvent = event as MessageEvent;
-          const payload = JSON.parse(messageEvent.data);
+          const payload = JSON.parse(messageEvent.data as string) as AiPathRunRecord;
           setRunDetails((prev) => {
             const current = prev[runId];
             if (!current) return prev;
             return { ...prev, [runId]: { ...current, run: payload } };
           });
-        } catch {}
+        } catch (error) {
+          console.error('[JobQueueContext] Failed to parse run stream payload:', error);
+        }
       });
 
       source.addEventListener('nodes', (event: Event) => {
         try {
           const messageEvent = event as MessageEvent;
-          const payload = JSON.parse(messageEvent.data);
+          const payload = JSON.parse(messageEvent.data as string) as unknown;
           setRunDetails((prev) => {
             const current = prev[runId];
             if (!current) return prev;
             return { ...prev, [runId]: { ...current, nodes: normalizeRunNodes(payload) } };
           });
-        } catch {}
+        } catch (error) {
+          console.error('[JobQueueContext] Failed to parse nodes stream payload:', error);
+        }
       });
 
       source.addEventListener('events', (event: Event) => {
         try {
           const messageEvent = event as MessageEvent;
-          const payload = JSON.parse(messageEvent.data);
-          const incoming = Array.isArray(payload) ? payload : (payload.events || []);
+          const payload = JSON.parse(messageEvent.data as string) as unknown;
+          const incoming = Array.isArray(payload) ? payload : ((payload as Record<string, unknown>).events || []);
           const safeIncoming = normalizeRunEvents(incoming);
           if (safeIncoming.length === 0) return;
 
@@ -519,7 +523,9 @@ export function JobQueueProvider({
             merged.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
             return { ...prev, [runId]: { ...current, events: merged } };
           });
-        } catch {}
+        } catch (error) {
+          console.error('[JobQueueContext] Failed to parse events stream payload:', error);
+        }
       });
 
       const cleanup = () => {
@@ -539,7 +545,7 @@ export function JobQueueProvider({
     statusFilter, setStatusFilter,
     pageSize, setPageSize,
     page, setPage,
-    expandedRunIds, toggleRun: handleToggleRun,
+    expandedRunIds, toggleRun: (runId: string) => { void handleToggleRun(runId); },
     runDetails, runDetailLoading, runDetailErrors,
     historySelection, setHistorySelection: (runId: string, nodeId: string) => setHistorySelection(prev => ({ ...prev, [runId]: nodeId })),
     streamStatuses, pausedStreams,

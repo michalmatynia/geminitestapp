@@ -12,7 +12,7 @@ export function AiPathsLiveLog(): React.JSX.Element {
   const { runtimeEvents } = useAiPathsSettingsOrchestrator();
 
   const runtimeLogEvents = useMemo(
-    (): AiPathRuntimeEvent[] => (runtimeEvents as AiPathRuntimeEvent[]).slice(Math.max(0, runtimeEvents.length - 80)).reverse(),
+    (): AiPathRuntimeEvent[] => runtimeEvents.slice(Math.max(0, runtimeEvents.length - 80)).reverse(),
     [runtimeEvents],
   );
 

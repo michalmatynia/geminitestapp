@@ -6,7 +6,7 @@ import type { AiNode, Edge, ModelConfig } from '@/features/ai/ai-paths/lib';
 import { DEFAULT_MODELS, toNumber } from '@/features/ai/ai-paths/lib';
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Input, Label, SelectSimple, Card, FormField } from '@/shared/ui';
+import { Button, Input,  SelectSimple, Card, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 

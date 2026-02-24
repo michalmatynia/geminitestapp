@@ -2,7 +2,7 @@
 
 import type { MathConfig } from '@/features/ai/ai-paths/lib';
 import { toNumber } from '@/features/ai/ai-paths/lib';
-import { Input, Label, SelectSimple, FormField } from '@/shared/ui';
+import { Input,  SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 

@@ -4,30 +4,30 @@ import { Upload, Plus, X } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
-import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import { Button, Input, FileUploadTrigger, Textarea, Checkbox, Tag, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
 import { uploadAsset3DFile } from '../api';
 import { validate3DFileAsync, SUPPORTED_3D_FORMATS } from '../utils/validateAsset3d';
 
 
-
 export interface Asset3DUploaderProps {
-  onUpload: (asset: Asset3DRecord) => void;
-  onCancel?: () => void;
-  existingCategories?: string[];
-  existingTags?: string[];
   className?: string;
 }
 
 export function Asset3DUploader({
-  onUpload,
-  onCancel,
-  existingCategories = [],
-  existingTags = [],
   className,
 }: Asset3DUploaderProps): React.JSX.Element {
+  const {
+    handleUpload: onUpload,
+    setShowUploader,
+    categories: existingCategories = [],
+    allTags: existingTags = [],
+  } = useAdmin3DAssetsContext();
+
+  const onCancel = () => setShowUploader(false);
+
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -298,11 +298,9 @@ export function Asset3DUploader({
       {/* Actions */}
       {file && (
         <div className='flex justify-end gap-2 mt-4'>
-          {onCancel && (
-            <Button variant='ghost' onClick={onCancel} disabled={isUploading}>
-              Cancel
-            </Button>
-          )}
+          <Button variant='ghost' onClick={onCancel} disabled={isUploading}>
+            Cancel
+          </Button>
           <Button onClick={() => void handleUpload()} disabled={isUploading} loading={isUploading}>
             <Upload className='h-4 w-4 mr-2' />
             Upload Asset

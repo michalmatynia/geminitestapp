@@ -31,6 +31,10 @@ describe('ProductFilters Component', () => {
     setMinPrice: vi.fn(),
     maxPrice: undefined,
     setMaxPrice: vi.fn(),
+    stockValue: undefined,
+    setStockValue: vi.fn(),
+    stockOperator: '',
+    setStockOperator: vi.fn(),
     startDate: '',
     setStartDate: vi.fn(),
     endDate: '',
@@ -59,8 +63,8 @@ describe('ProductFilters Component', () => {
     expect(screen.getByPlaceholderText('Search by SKU...')).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/min price/i)).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/max price/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/from/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/to/i)).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('From')).toBeInTheDocument();
+    expect(screen.getByPlaceholderText('To')).toBeInTheDocument();
   });
 
   it('calls setProductId when Product ID input changes', () => {

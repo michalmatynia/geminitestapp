@@ -394,6 +394,7 @@ export const caseResolverFileSchema = dtoBaseSchema.extend({
   name: z.string(),
   fileType: caseResolverFileTypeSchema,
   caseStatus: z.enum(['pending', 'completed']).optional(),
+  caseTreeOrder: z.number().int().optional(),
   documentContent: z.string(),
   version: caseResolverDocumentVersionSchema,
   graph: caseResolverGraphSchema.optional(),
@@ -418,6 +419,7 @@ export interface CaseResolverFile extends DtoBase {
   name: string;
   fileType: CaseResolverFileType;
   caseStatus?: 'pending' | 'completed' | undefined;
+  caseTreeOrder?: number | undefined;
   folder: string;
   parentCaseId?: string | null | undefined;
   referenceCaseIds: string[];
@@ -461,6 +463,7 @@ export const caseResolverFileEditDraftSchema = z.object({
   content: z.string(),
   fileType: caseResolverFileTypeSchema,
   folder: z.string(),
+  caseTreeOrder: z.number().int().optional(),
   parentCaseId: z.string().nullable().optional(),
   referenceCaseIds: z.array(z.string()).optional(),
   createdAt: z.string().optional(),
@@ -500,6 +503,7 @@ export interface CaseResolverFileEditDraft {
   content: string;
   fileType: CaseResolverFileType;
   folder: string;
+  caseTreeOrder?: number | undefined;
   parentCaseId?: string | null | undefined;
   referenceCaseIds?: string[] | undefined;
   createdAt?: string | undefined;

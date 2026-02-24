@@ -120,6 +120,17 @@ export type AdminCaseResolverCasesContextValue = {
   handleUpdateCase: () => Promise<void>;
   handleDeleteCase: (caseId: string) => void;
   handleToggleCaseCollapse: (caseId: string) => void;
+  handleMoveCase: (
+    caseId: string,
+    targetParentCaseId: string | null,
+    targetIndex?: number
+  ) => Promise<void>;
+  handleReorderCase: (
+    caseId: string,
+    targetCaseId: string,
+    position: 'before' | 'after'
+  ) => Promise<void>;
+  handleRenameCase: (caseId: string, nextName: string) => Promise<void>;
   handleRefreshWorkspace: () => Promise<void>;
   handleSaveListViewDefaults: () => Promise<void>;
 
@@ -147,6 +158,81 @@ const DEFAULT_CASE_LIST_VIEW_DEFAULTS: CaseListViewDefaults = {
   sortOrder: 'desc',
   searchScope: 'all',
   filtersCollapsedByDefault: true,
+};
+
+const resolveCaseTreeOrderValue = (file: CaseResolverFile): number =>
+  typeof file.caseTreeOrder === 'number' && Number.isFinite(file.caseTreeOrder)
+    ? Math.max(0, Math.floor(file.caseTreeOrder))
+    : Number.MAX_SAFE_INTEGER;
+
+const compareCaseSiblings = (left: CaseResolverFile, right: CaseResolverFile): number => {
+  const orderDelta = resolveCaseTreeOrderValue(left) - resolveCaseTreeOrderValue(right);
+  if (orderDelta !== 0) return orderDelta;
+  const nameDelta = left.name.localeCompare(right.name);
+  if (nameDelta !== 0) return nameDelta;
+  return left.id.localeCompare(right.id);
+};
+
+const normalizeCaseParentId = (
+  file: CaseResolverFile,
+  caseFilesById: Map<string, CaseResolverFile>
+): string | null => {
+  const rawParentCaseId = file.parentCaseId?.trim() ?? '';
+  if (!rawParentCaseId) return null;
+  if (rawParentCaseId === file.id) return null;
+  if (!caseFilesById.has(rawParentCaseId)) return null;
+  return rawParentCaseId;
+};
+
+const getSortedSiblingIds = (
+  caseFilesById: Map<string, CaseResolverFile>,
+  parentCaseId: string | null,
+  options?: {
+    excludeCaseId?: string | null;
+    parentOverrideByCaseId?: Map<string, string | null>;
+  }
+): string[] => {
+  const excludedCaseId = options?.excludeCaseId ?? null;
+  const parentOverrides = options?.parentOverrideByCaseId ?? null;
+  return Array.from(caseFilesById.values())
+    .filter((file: CaseResolverFile): boolean => {
+      if (excludedCaseId && file.id === excludedCaseId) return false;
+      const resolvedParentCaseId = parentOverrides?.has(file.id)
+        ? (parentOverrides.get(file.id) ?? null)
+        : normalizeCaseParentId(file, caseFilesById);
+      return resolvedParentCaseId === parentCaseId;
+    })
+    .sort(compareCaseSiblings)
+    .map((file: CaseResolverFile): string => file.id);
+};
+
+const assignSiblingCaseOrder = (
+  caseFilesById: Map<string, CaseResolverFile>,
+  orderedCaseIds: string[]
+): void => {
+  orderedCaseIds.forEach((caseId: string, index: number): void => {
+    const candidate = caseFilesById.get(caseId);
+    if (!candidate) return;
+    candidate.caseTreeOrder = index;
+  });
+};
+
+const isDescendantCaseId = (
+  caseFilesById: Map<string, CaseResolverFile>,
+  candidateCaseId: string,
+  ancestorCaseId: string
+): boolean => {
+  let currentCaseId: string | null = candidateCaseId;
+  const seen = new Set<string>();
+
+  while (currentCaseId && !seen.has(currentCaseId)) {
+    seen.add(currentCaseId);
+    if (currentCaseId === ancestorCaseId) return true;
+    const currentCase = caseFilesById.get(currentCaseId);
+    if (!currentCase) return false;
+    currentCaseId = normalizeCaseParentId(currentCase, caseFilesById);
+  }
+  return false;
 };
 
 const normalizeCaseListViewDefaults = (
@@ -372,11 +458,26 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     try {
       const mutationId = createCaseResolverWorkspaceMutationId();
       createCaseMutationIdRef.current = mutationId;
+      const parentCaseId = caseDraft.parentCaseId?.trim() || null;
+      const siblingCaseOrders = workspace.files
+        .filter(
+          (file: CaseResolverFile): boolean =>
+            file.fileType === 'case' &&
+            (file.parentCaseId?.trim() || null) === parentCaseId
+        )
+        .map((file: CaseResolverFile): number =>
+          typeof file.caseTreeOrder === 'number' && Number.isFinite(file.caseTreeOrder)
+            ? Math.max(0, Math.floor(file.caseTreeOrder))
+            : -1
+        );
+      const nextCaseTreeOrder =
+        siblingCaseOrders.length > 0 ? Math.max(...siblingCaseOrders) + 1 : 0;
       const newFile = createCaseResolverFile({
         id: createCaseResolverWorkspaceMutationId('file'),
         name: caseDraft.name.trim(),
         folder: caseDraft.folder || '',
-        parentCaseId: caseDraft.parentCaseId || null,
+        parentCaseId,
+        caseTreeOrder: nextCaseTreeOrder,
         referenceCaseIds: caseDraft.referenceCaseIds || [],
         tagId: caseDraft.tagId || null,
         caseIdentifierId: caseDraft.caseIdentifierId || null,
@@ -481,6 +582,281 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
       },
     });
   }, [toast, workspace]);
+
+  const handleMoveCase = useCallback(
+    async (
+      caseId: string,
+      targetParentCaseId: string | null,
+      targetIndex?: number
+    ): Promise<void> => {
+      try {
+        const caseFilesById = new Map<string, CaseResolverFile>(
+          workspace.files
+            .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
+            .map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, { ...file }])
+        );
+        const movingCase = caseFilesById.get(caseId);
+        if (!movingCase || movingCase.isLocked) return;
+
+        const sourceParentCaseId = normalizeCaseParentId(movingCase, caseFilesById);
+        const requestedParentCaseId = targetParentCaseId?.trim() ?? '';
+        const normalizedTargetParentCaseId =
+          requestedParentCaseId.length > 0 &&
+          requestedParentCaseId !== caseId &&
+          caseFilesById.has(requestedParentCaseId)
+            ? requestedParentCaseId
+            : null;
+
+        if (
+          normalizedTargetParentCaseId &&
+          isDescendantCaseId(caseFilesById, normalizedTargetParentCaseId, caseId)
+        ) {
+          return;
+        }
+
+        movingCase.parentCaseId = normalizedTargetParentCaseId;
+        const targetSiblingIds = getSortedSiblingIds(caseFilesById, normalizedTargetParentCaseId, {
+          excludeCaseId: caseId,
+        });
+        const normalizedTargetIndex =
+          typeof targetIndex === 'number' && Number.isFinite(targetIndex)
+            ? Math.max(0, Math.min(Math.floor(targetIndex), targetSiblingIds.length))
+            : targetSiblingIds.length;
+        const nextTargetSiblingIds = [...targetSiblingIds];
+        nextTargetSiblingIds.splice(normalizedTargetIndex, 0, caseId);
+        assignSiblingCaseOrder(caseFilesById, nextTargetSiblingIds);
+
+        if (sourceParentCaseId !== normalizedTargetParentCaseId) {
+          const sourceSiblingIds = getSortedSiblingIds(caseFilesById, sourceParentCaseId, {
+            excludeCaseId: caseId,
+          });
+          assignSiblingCaseOrder(caseFilesById, sourceSiblingIds);
+        }
+
+        const now = new Date().toISOString();
+        const nextFiles = workspace.files.map((file: CaseResolverFile): CaseResolverFile => {
+          if (file.fileType !== 'case') return file;
+          const nextCase = caseFilesById.get(file.id);
+          if (!nextCase) return file;
+
+          const previousParentCaseId = file.parentCaseId?.trim() ?? null;
+          const nextParentCaseId = normalizeCaseParentId(nextCase, caseFilesById);
+          const previousCaseTreeOrder =
+            typeof file.caseTreeOrder === 'number' && Number.isFinite(file.caseTreeOrder)
+              ? Math.max(0, Math.floor(file.caseTreeOrder))
+              : null;
+          const nextCaseTreeOrder =
+            typeof nextCase.caseTreeOrder === 'number' && Number.isFinite(nextCase.caseTreeOrder)
+              ? Math.max(0, Math.floor(nextCase.caseTreeOrder))
+              : null;
+
+          const didChangeParent = previousParentCaseId !== nextParentCaseId;
+          const didChangeOrder = previousCaseTreeOrder !== nextCaseTreeOrder;
+          if (!didChangeParent && !didChangeOrder) return file;
+
+          return {
+            ...file,
+            parentCaseId: nextParentCaseId,
+            caseTreeOrder: nextCaseTreeOrder ?? undefined,
+            updatedAt: now,
+          };
+        });
+
+        const mutationId = createCaseResolverWorkspaceMutationId();
+        const nextWorkspace: CaseResolverWorkspace = {
+          ...workspace,
+          files: nextFiles,
+        };
+        stampCaseResolverWorkspaceMutation(nextWorkspace, {
+          baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
+          mutationId,
+        });
+
+        const revision = getCaseResolverWorkspaceRevision(nextWorkspace);
+        lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
+        lastPersistedWorkspaceRevisionRef.current = revision;
+        setWorkspace(nextWorkspace);
+
+        await persistCaseResolverWorkspaceSnapshot({
+          workspace: nextWorkspace,
+          expectedRevision: revision,
+          mutationId,
+          source: 'cases_page_move_case',
+        });
+      } catch (error) {
+        logClientError(error, {
+          context: {
+            source: 'AdminCaseResolverCasesPage',
+            action: 'moveCase',
+            caseId,
+            targetParentCaseId,
+          },
+        });
+        throw error;
+      }
+    },
+    [workspace]
+  );
+
+  const handleReorderCase = useCallback(
+    async (caseId: string, targetCaseId: string, position: 'before' | 'after'): Promise<void> => {
+      try {
+        if (caseId === targetCaseId) return;
+
+        const caseFilesById = new Map<string, CaseResolverFile>(
+          workspace.files
+            .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
+            .map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, { ...file }])
+        );
+        const movingCase = caseFilesById.get(caseId);
+        const targetCase = caseFilesById.get(targetCaseId);
+        if (!movingCase || !targetCase || movingCase.isLocked) return;
+
+        const sourceParentCaseId = normalizeCaseParentId(movingCase, caseFilesById);
+        const targetParentCaseId = normalizeCaseParentId(targetCase, caseFilesById);
+        if (targetParentCaseId && isDescendantCaseId(caseFilesById, targetParentCaseId, caseId)) {
+          return;
+        }
+
+        movingCase.parentCaseId = targetParentCaseId;
+        const targetSiblingIds = getSortedSiblingIds(caseFilesById, targetParentCaseId, {
+          excludeCaseId: caseId,
+        });
+        const targetIndex = targetSiblingIds.indexOf(targetCaseId);
+        if (targetIndex < 0) return;
+        const insertIndex = position === 'after' ? targetIndex + 1 : targetIndex;
+        const nextTargetSiblingIds = [...targetSiblingIds];
+        nextTargetSiblingIds.splice(insertIndex, 0, caseId);
+        assignSiblingCaseOrder(caseFilesById, nextTargetSiblingIds);
+
+        if (sourceParentCaseId !== targetParentCaseId) {
+          const sourceSiblingIds = getSortedSiblingIds(caseFilesById, sourceParentCaseId, {
+            excludeCaseId: caseId,
+          });
+          assignSiblingCaseOrder(caseFilesById, sourceSiblingIds);
+        }
+
+        const now = new Date().toISOString();
+        const nextFiles = workspace.files.map((file: CaseResolverFile): CaseResolverFile => {
+          if (file.fileType !== 'case') return file;
+          const nextCase = caseFilesById.get(file.id);
+          if (!nextCase) return file;
+
+          const previousParentCaseId = file.parentCaseId?.trim() ?? null;
+          const nextParentCaseId = normalizeCaseParentId(nextCase, caseFilesById);
+          const previousCaseTreeOrder =
+            typeof file.caseTreeOrder === 'number' && Number.isFinite(file.caseTreeOrder)
+              ? Math.max(0, Math.floor(file.caseTreeOrder))
+              : null;
+          const nextCaseTreeOrder =
+            typeof nextCase.caseTreeOrder === 'number' && Number.isFinite(nextCase.caseTreeOrder)
+              ? Math.max(0, Math.floor(nextCase.caseTreeOrder))
+              : null;
+
+          const didChangeParent = previousParentCaseId !== nextParentCaseId;
+          const didChangeOrder = previousCaseTreeOrder !== nextCaseTreeOrder;
+          if (!didChangeParent && !didChangeOrder) return file;
+
+          return {
+            ...file,
+            parentCaseId: nextParentCaseId,
+            caseTreeOrder: nextCaseTreeOrder ?? undefined,
+            updatedAt: now,
+          };
+        });
+
+        const mutationId = createCaseResolverWorkspaceMutationId();
+        const nextWorkspace: CaseResolverWorkspace = {
+          ...workspace,
+          files: nextFiles,
+        };
+        stampCaseResolverWorkspaceMutation(nextWorkspace, {
+          baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
+          mutationId,
+        });
+
+        const revision = getCaseResolverWorkspaceRevision(nextWorkspace);
+        lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
+        lastPersistedWorkspaceRevisionRef.current = revision;
+        setWorkspace(nextWorkspace);
+
+        await persistCaseResolverWorkspaceSnapshot({
+          workspace: nextWorkspace,
+          expectedRevision: revision,
+          mutationId,
+          source: 'cases_page_reorder_case',
+        });
+      } catch (error) {
+        logClientError(error, {
+          context: {
+            source: 'AdminCaseResolverCasesPage',
+            action: 'reorderCase',
+            caseId,
+            targetCaseId,
+            position,
+          },
+        });
+        throw error;
+      }
+    },
+    [workspace]
+  );
+
+  const handleRenameCase = useCallback(
+    async (caseId: string, nextName: string): Promise<void> => {
+      const normalizedName = nextName.trim();
+      if (!normalizedName) return;
+
+      const targetCase = workspace.files.find(
+        (file: CaseResolverFile): boolean => file.id === caseId && file.fileType === 'case'
+      );
+      if (!targetCase || targetCase.isLocked || targetCase.name === normalizedName) return;
+
+      try {
+        const now = new Date().toISOString();
+        const nextWorkspace: CaseResolverWorkspace = {
+          ...workspace,
+          files: workspace.files.map((file: CaseResolverFile): CaseResolverFile =>
+            file.id === caseId
+              ? {
+                ...file,
+                name: normalizedName,
+                updatedAt: now,
+              }
+              : file
+          ),
+        };
+
+        const mutationId = createCaseResolverWorkspaceMutationId();
+        stampCaseResolverWorkspaceMutation(nextWorkspace, {
+          baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
+          mutationId,
+        });
+
+        const revision = getCaseResolverWorkspaceRevision(nextWorkspace);
+        lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
+        lastPersistedWorkspaceRevisionRef.current = revision;
+        setWorkspace(nextWorkspace);
+
+        await persistCaseResolverWorkspaceSnapshot({
+          workspace: nextWorkspace,
+          expectedRevision: revision,
+          mutationId,
+          source: 'cases_page_rename_case',
+        });
+      } catch (error) {
+        logClientError(error, {
+          context: {
+            source: 'AdminCaseResolverCasesPage',
+            action: 'renameCase',
+            caseId,
+          },
+        });
+        throw error;
+      }
+    },
+    [workspace]
+  );
 
   const handleToggleCaseCollapse = useCallback((caseId: string): void => {
     setCollapsedCaseIds((prev) => {
@@ -677,6 +1053,9 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     handleUpdateCase,
     handleDeleteCase,
     handleToggleCaseCollapse,
+    handleMoveCase,
+    handleReorderCase,
+    handleRenameCase,
     handleRefreshWorkspace,
     handleSaveListViewDefaults,
     caseResolverTags,

@@ -52,6 +52,7 @@ async function cleanupMongo() {
 async function main() {
   await cleanupPrisma();
   await cleanupMongo();
+  process.exit(0);
 }
 
 main().catch((error) => {

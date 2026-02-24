@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useContext } from 'react';
 
 import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils/custom-css';
 import {
@@ -12,8 +12,10 @@ import {
 import type { CmsEventEffectsConfig } from '@/shared/contracts/cms';
 import { cn } from '@/shared/utils';
 
+import { BlockRenderContext, BlockSettingsContext } from '../frontend/blocks/BlockContext';
+
 interface EventEffectsWrapperProps {
-  settings: Record<string, unknown>;
+  settings?: Record<string, unknown>;
   disableClick?: boolean;
   nodeId?: string;
   customCss?: unknown;
@@ -39,12 +41,19 @@ const normalizeScrollTarget = (value: string): string => {
 };
 
 export function EventEffectsWrapper({
-  settings,
+  settings: settingsProp,
   disableClick = false,
-  nodeId,
-  customCss,
+  nodeId: nodeIdProp,
+  customCss: customCssProp,
   children,
 }: EventEffectsWrapperProps): React.ReactNode {
+  const blockSettings = useContext(BlockSettingsContext);
+  const blockRender = useContext(BlockRenderContext);
+
+  const settings = settingsProp ?? blockSettings ?? {};
+  const nodeId = nodeIdProp ?? blockRender?.block.id;
+  const customCss = customCssProp ?? settings['customCss'];
+
   const config = useMemo<CmsEventEffectsConfig>(
     () => getEventEffectsConfig(settings),
     [settings]

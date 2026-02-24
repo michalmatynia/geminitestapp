@@ -74,6 +74,14 @@ const INSTANCE_META: Array<{
     fileHint: 'Example: case_file, node_file, asset_image, asset_pdf',
     folderHint: 'Example: folder',
   },
+  {
+    id: 'case_resolver_cases',
+    title: 'Case Resolver Cases',
+    description:
+      'Controls hierarchy placeholders and drag/drop behavior on the Cases list page.',
+    fileHint: 'Not used (case hierarchy nodes are folder-type entries).',
+    folderHint: 'Example: case_entry',
+  },
 ];
 
 type NestingRuleKey = 'folder_to_folder' | 'file_to_folder' | 'folder_to_root' | 'file_to_root';

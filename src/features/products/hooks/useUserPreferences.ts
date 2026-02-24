@@ -4,7 +4,10 @@ import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useCallback } from 'react';
 
 import type { UserPreferences as SharedUserPreferences } from '@/shared/contracts/auth';
-import type { ProductListPreferences } from '@/shared/contracts/products';
+import type {
+  ProductAdvancedFilterPreset,
+  ProductListPreferences,
+} from '@/shared/contracts/products';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api, ApiError } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -23,6 +26,7 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   pageSize: 12,
   thumbnailSource: 'file',
   filtersCollapsedByDefault: false,
+  advancedFilterPresets: [],
 };
 
 const userPreferencesQueryKey = QUERY_KEYS.userPreferences.all;
@@ -36,6 +40,7 @@ const mapProductListPreferences = (
   pageSize: data?.productListPageSize || 12,
   thumbnailSource: data?.productListThumbnailSource || 'file',
   filtersCollapsedByDefault: data?.productListFiltersCollapsedByDefault ?? false,
+  advancedFilterPresets: data?.productListAdvancedFilterPresets ?? [],
 });
 
 async function fetchUserPreferences(signal?: AbortSignal): Promise<SharedUserPreferences> {
@@ -102,6 +107,9 @@ export interface UserPreferencesHookResult {
   setCatalogFilter: (filter: string) => Promise<void>;
   setCurrencyCode: (code: string) => Promise<void>;
   setPageSize: (size: number) => Promise<void>;
+  setAdvancedFilterPresets: (
+    presets: ProductAdvancedFilterPreset[]
+  ) => Promise<void>;
 }
 
 export function useUserPreferences(): UserPreferencesHookResult {
@@ -168,6 +176,13 @@ export function useUserPreferences(): UserPreferencesHookResult {
     [setPreference]
   );
 
+  const setAdvancedFilterPresets = useCallback(
+    async (presets: ProductAdvancedFilterPreset[]) => {
+      await setPreference({ advancedFilterPresets: presets });
+    },
+    [setPreference]
+  );
+
   return {
     preferences,
     loading: isLoading,
@@ -175,5 +190,6 @@ export function useUserPreferences(): UserPreferencesHookResult {
     setCatalogFilter,
     setCurrencyCode,
     setPageSize,
+    setAdvancedFilterPresets,
   };
 }

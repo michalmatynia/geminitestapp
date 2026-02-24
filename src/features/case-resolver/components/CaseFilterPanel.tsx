@@ -87,7 +87,7 @@ export function CaseFilterPanel(): React.JSX.Element {
         label: 'Search Scope',
         type: 'select',
         options: [
-          { value: 'all', label: 'Name + Folder + Content' },
+          { value: 'all', label: 'All fields + Descendant content' },
           { value: 'name', label: 'Name only' },
           { value: 'folder', label: 'Folder only' },
           { value: 'content', label: 'Content only' },
@@ -164,7 +164,7 @@ export function CaseFilterPanel(): React.JSX.Element {
       filters={caseFilterConfig}
       values={caseFilterValues}
       search={caseSearchQuery}
-      searchPlaceholder='Search cases by name, folder, tag, case identifier, category, or content...'
+      searchPlaceholder='Search (supports quotes and field prefixes: name:, folder:, tag:, identifier:, category:, status:, text:).'
       onFilterChange={handleCaseFilterChange}
       onSearchChange={setCaseSearchQuery}
       onReset={handleResetCaseFilters}

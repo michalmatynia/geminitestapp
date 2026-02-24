@@ -1,15 +1,15 @@
 # Architecture & Performance Baseline
 
-Generated at: 2026-02-23T22:27:07.974Z
+Generated at: 2026-02-24T21:31:45.591Z
 
 ## Snapshot
 
-- Source files: 2996
-- Source lines: 555739
-- use client files: 975
-- Files >= 1000 LOC: 61
-- Files >= 1500 LOC: 24
-- Largest file: `src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx` (3179 LOC)
+- Source files: 3099
+- Source lines: 556538
+- use client files: 1038
+- Files >= 1000 LOC: 52
+- Files >= 1500 LOC: 18
+- Largest file: `src/features/filemaker/settings.ts` (3063 LOC)
 - API routes: 314
 - API delegated server routes: 15
 - API routes without apiHandler/delegation: 0
@@ -47,11 +47,11 @@ Generated at: 2026-02-23T22:27:07.974Z
 | `jobs -> observability` | 30 |
 | `jobs -> ai` | 29 |
 | `prompt-exploder -> prompt-engine` | 28 |
-| `products -> ai` | 25 |
+| `products -> ai` | 27 |
 | `integrations -> products` | 24 |
 | `ai -> products` | 23 |
+| `case-resolver -> ai` | 19 |
 | `integrations -> observability` | 19 |
-| `case-resolver -> ai` | 18 |
 | `ai -> prompt-engine` | 16 |
 | `cms -> gsap` | 16 |
 | `drafter -> products` | 16 |
@@ -62,23 +62,23 @@ Generated at: 2026-02-23T22:27:07.974Z
 
 | File | LOC |
 | --- | ---: |
-| `src/features/ai/ai-paths/components/ai-paths-settings/AiPathsSettingsView.tsx` | 3179 |
 | `src/features/filemaker/settings.ts` | 3063 |
-| `src/features/ai/ai-paths/lib/core/runtime/engine.ts` | 2987 |
-| `src/features/case-resolver/pages/AdminCaseResolverCasesPage.tsx` | 2966 |
-| `src/features/case-resolver/components/CaseResolverPageView.tsx` | 2657 |
-| `src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts` | 2544 |
+| `src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts` | 2546 |
+| `src/features/case-resolver/hooks/useAdminCaseResolverPageState.ts` | 2519 |
 | `src/shared/ui/vector-canvas.tsx` | 2498 |
-| `src/features/case-resolver/pages/AdminCaseResolverPage.tsx` | 2460 |
-| `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 2302 |
 | `src/features/case-resolver/hooks/useCaseResolverState.ts` | 2285 |
-| `src/features/case-resolver/components/CaseResolverNodeFileWorkspace.tsx` | 2262 |
+| `src/features/ai/image-studio/components/GenerationToolbar.tsx` | 2111 |
 | `src/features/products/services/product-studio-service.ts` | 2070 |
+| `src/features/ai/ai-paths/components/canvas-board.tsx` | 1918 |
+| `src/features/ai/ai-paths/services/path-run-executor.ts` | 1898 |
+| `src/shared/contracts/ai-paths.ts` | 1832 |
+| `src/features/ai/ai-paths/server/settings-store.ts` | 1825 |
 | `src/features/ai/ai-paths/lib/core/validation-engine/docs-registry-adapter.ts` | 1816 |
-| `src/shared/contracts/ai-paths.ts` | 1809 |
-| `src/features/ai/ai-paths/pages/AdminAiPathsValidationPage.tsx` | 1729 |
-| `src/features/ai/ai-paths/services/path-run-executor.ts` | 1727 |
-| `src/features/ai/ai-paths/components/canvas-board.tsx` | 1687 |
-| `src/features/ai/ai-paths/server/settings-store.ts` | 1677 |
-| `src/features/ai/ai-paths/lib/core/normalization/index.ts` | 1642 |
-| `src/features/case-resolver/components/CaseResolverFolderTree.tsx` | 1627 |
+| `src/features/case-resolver/components/CaseResolverFolderTree.tsx` | 1675 |
+| `src/features/ai/ai-paths/lib/core/normalization/index.ts` | 1663 |
+| `src/features/ai/image-studio/components/RightSidebar.tsx` | 1587 |
+| `src/features/case-resolver/__tests__/settings.test.ts` | 1549 |
+| `src/features/products/components/form/ProductFormStudio.tsx` | 1529 |
+| `src/features/products/services/product-repository/prisma-product-repository.ts` | 1517 |
+| `src/shared/contracts/products.ts` | 1490 |
+| `src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.ts` | 1455 |

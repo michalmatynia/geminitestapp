@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema } from './base';
+import { productAdvancedFilterPresetSchema } from './products';
 
 /**
  * Auth User DTOs
@@ -219,6 +220,7 @@ export const userPreferencesSchema = dtoBaseSchema.extend({
   productListPageSize: z.number(),
   productListThumbnailSource: z.enum(['file', 'link', 'base64']),
   productListFiltersCollapsedByDefault: z.boolean(),
+  productListAdvancedFilterPresets: z.array(productAdvancedFilterPresetSchema),
   productListDraftIconColorMode: z.enum(['theme', 'custom']),
   productListDraftIconColor: z.string().nullable(),
   aiPathsActivePathId: z.string().nullable(),

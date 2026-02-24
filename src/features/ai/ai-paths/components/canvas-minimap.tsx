@@ -12,16 +12,7 @@ import {
 } from '@/features/ai/ai-paths/lib';
 
 import type { EdgePath } from '../context/hooks/useEdgePaths';
-
-type CanvasMinimapProps = {
-  nodes: AiNode[];
-  edgePaths: EdgePath[];
-  selectedNodeIdSet: Set<string>;
-  view: { x: number; y: number; scale: number };
-  viewportSize: { width: number; height: number } | null;
-  onNavigate: (canvasX: number, canvasY: number) => void;
-  onZoomTo: (targetScale: number) => void;
-};
+import { useCanvasBoardUI } from './CanvasBoardUIContext';
 
 const MINIMAP_WIDTH_PX = 220;
 const MINIMAP_HEIGHT_PX = 132;
@@ -30,15 +21,17 @@ const MAX_MINIMAP_EDGE_RENDER_COUNT = 1400;
 const clamp = (value: number, min: number, max: number): number =>
   Math.min(max, Math.max(min, value));
 
-export const CanvasMinimap = React.memo(function CanvasMinimap({
-  nodes,
-  edgePaths,
-  selectedNodeIdSet,
-  view,
-  viewportSize,
-  onNavigate,
-  onZoomTo,
-}: CanvasMinimapProps): React.JSX.Element {
+export const CanvasMinimap = React.memo(function CanvasMinimap(): React.JSX.Element {
+  const {
+    nodes,
+    edgePaths,
+    selectedNodeIdSet,
+    view,
+    viewportSize,
+    centerOnCanvasPoint: onNavigate,
+    zoomTo: onZoomTo,
+  } = useCanvasBoardUI();
+
   const svgRef = React.useRef<SVGSVGElement | null>(null);
   const [dragState, setDragState] = React.useState<
     | {

@@ -601,6 +601,96 @@ export const productMigrationBatchResultSchema = z.object({
 export type ProductMigrationBatchResultDto = z.infer<typeof productMigrationBatchResultSchema>;
 export type ProductMigrationBatchResult = ProductMigrationBatchResultDto;
 
+export const productAdvancedFilterFieldSchema = z.enum([
+  'id',
+  'sku',
+  'name',
+  'description',
+  'categoryId',
+  'price',
+  'stock',
+  'createdAt',
+]);
+
+export type ProductAdvancedFilterFieldDto = z.infer<typeof productAdvancedFilterFieldSchema>;
+export type ProductAdvancedFilterField = ProductAdvancedFilterFieldDto;
+
+export const productAdvancedFilterOperatorSchema = z.enum([
+  'contains',
+  'eq',
+  'neq',
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+  'between',
+  'isEmpty',
+  'isNotEmpty',
+]);
+
+export type ProductAdvancedFilterOperatorDto = z.infer<typeof productAdvancedFilterOperatorSchema>;
+export type ProductAdvancedFilterOperator = ProductAdvancedFilterOperatorDto;
+
+export const productAdvancedFilterCombinatorSchema = z.enum(['and', 'or']);
+
+export type ProductAdvancedFilterCombinatorDto = z.infer<typeof productAdvancedFilterCombinatorSchema>;
+export type ProductAdvancedFilterCombinator = ProductAdvancedFilterCombinatorDto;
+
+const productAdvancedFilterValueSchema = z.union([z.string(), z.number(), z.boolean(), z.null()]);
+
+export const productAdvancedFilterConditionSchema = z.object({
+  type: z.literal('condition'),
+  id: z.string().trim().min(1),
+  field: productAdvancedFilterFieldSchema,
+  operator: productAdvancedFilterOperatorSchema,
+  value: productAdvancedFilterValueSchema.optional(),
+  valueTo: productAdvancedFilterValueSchema.optional(),
+});
+
+export type ProductAdvancedFilterConditionDto = z.infer<typeof productAdvancedFilterConditionSchema>;
+export type ProductAdvancedFilterCondition = ProductAdvancedFilterConditionDto;
+
+export interface ProductAdvancedFilterGroupDto {
+  type: 'group';
+  id: string;
+  combinator: ProductAdvancedFilterCombinator;
+  not: boolean;
+  rules: Array<ProductAdvancedFilterConditionDto | ProductAdvancedFilterGroupDto>;
+}
+
+export type ProductAdvancedFilterGroup = ProductAdvancedFilterGroupDto;
+
+export const productAdvancedFilterGroupSchema: z.ZodType<ProductAdvancedFilterGroupDto> =
+  z.object({
+    type: z.literal('group'),
+    id: z.string().trim().min(1),
+    combinator: productAdvancedFilterCombinatorSchema,
+    not: z.boolean().default(false),
+    rules: z
+      .array(
+        z.union([
+          productAdvancedFilterConditionSchema,
+          z.lazy(() => productAdvancedFilterGroupSchema),
+        ])
+      )
+      .min(1),
+  });
+
+export type ProductAdvancedFilterRuleDto =
+  ProductAdvancedFilterConditionDto | ProductAdvancedFilterGroupDto;
+export type ProductAdvancedFilterRule = ProductAdvancedFilterRuleDto;
+
+export const productAdvancedFilterPresetSchema = z.object({
+  id: z.string().trim().min(1),
+  name: z.string().trim().min(1).max(80),
+  filter: productAdvancedFilterGroupSchema,
+  createdAt: z.string().optional(),
+  updatedAt: z.string().optional(),
+});
+
+export type ProductAdvancedFilterPresetDto = z.infer<typeof productAdvancedFilterPresetSchema>;
+export type ProductAdvancedFilterPreset = ProductAdvancedFilterPresetDto;
+
 export const productListPreferencesSchema = z.object({
   nameLocale: z.enum(['name_en', 'name_pl', 'name_de']),
   catalogFilter: z.string(),
@@ -608,6 +698,7 @@ export const productListPreferencesSchema = z.object({
   pageSize: z.number(),
   thumbnailSource: z.enum(['file', 'link', 'base64']),
   filtersCollapsedByDefault: z.boolean(),
+  advancedFilterPresets: z.array(productAdvancedFilterPresetSchema),
 });
 
 export type ProductListPreferencesDto = z.infer<typeof productListPreferencesSchema>;
@@ -615,6 +706,26 @@ export type ProductListPreferencesDto = z.infer<typeof productListPreferencesSch
 /**
  * Product Filter Contract
  */
+export const productStockOperatorSchema = z.enum([
+  'gt',
+  'gte',
+  'lt',
+  'lte',
+  'eq',
+]);
+
+export type ProductStockOperatorDto = z.infer<typeof productStockOperatorSchema>;
+export type ProductStockOperator = ProductStockOperatorDto;
+
+const isValidAdvancedFilterPayload = (value: string): boolean => {
+  try {
+    const parsed = JSON.parse(value);
+    return productAdvancedFilterGroupSchema.safeParse(parsed).success;
+  } catch {
+    return false;
+  }
+};
+
 export const productFilterSchema = commonListQuerySchema.extend({
   id: z.string().trim().optional(),
   idMatchMode: z.enum(['exact', 'partial']).optional(),
@@ -623,8 +734,25 @@ export const productFilterSchema = commonListQuerySchema.extend({
   categoryId: z.string().trim().optional(),
   minPrice: z.coerce.number().min(0).optional(),
   maxPrice: z.coerce.number().min(0).optional(),
+  stockValue: z.coerce.number().int().min(0).optional(),
+  stockOperator: productStockOperatorSchema.optional(),
   catalogId: z.string().trim().optional(),
   searchLanguage: z.enum(['name_en', 'name_pl', 'name_de']).optional(),
+  advancedFilter: z.preprocess(
+    (value: unknown) => {
+      if (value === undefined || value === null) return undefined;
+      if (typeof value !== 'string') return value;
+      const normalized = value.trim();
+      return normalized.length > 0 ? normalized : undefined;
+    },
+    z
+      .string()
+      .refine(
+        (value: string) => isValidAdvancedFilterPayload(value),
+        'Invalid advancedFilter payload'
+      )
+      .optional()
+  ),
   baseExported: z.preprocess((value: unknown) => {
     if (value === undefined || value === null) return undefined;
     if (typeof value === 'boolean') return value;
@@ -1253,6 +1381,8 @@ export type ProductFilters = Partial<ProductFilterDto> & {
   priceGroupIds?: string[] | undefined;
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
+  stockValue?: number | undefined;
+  stockOperator?: ProductStockOperator | undefined;
   searchLanguage?: 'name_en' | 'name_pl' | 'name_de' | undefined;
   baseExported?: boolean | undefined;
   search?: string | undefined;
@@ -1262,6 +1392,7 @@ export type ProductFilters = Partial<ProductFilterDto> & {
   description?: string | undefined;
   categoryId?: string | undefined;
   catalogId?: string | undefined;
+  advancedFilter?: string | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
   startDate?: string | undefined;

@@ -16,9 +16,9 @@ import React from 'react';
 import {
   ADMIN_MENU_COLOR_MAP,
   ADMIN_MENU_COLORS,
-  AdminNavLeaf,
   type NavItem,
 } from '@/features/admin/components/Menu';
+import type { AdminNavLeaf } from '@/shared/contracts/admin';
 import { 
   Button, 
   Checkbox, 
@@ -69,49 +69,53 @@ function FavoritesSection(): React.JSX.Element {
           </div>
         ) : (
           <div className='space-y-2'>
-            {favoritesList.map((entry: AdminNavLeaf | undefined, index: number) => (
-              <div key={entry?.id} className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'>
-                <SectionHeader
-                  title={entry?.label}
-                  subtitle={entry?.parents?.length ? entry.parents.join(' / ') : undefined}
-                  size='xs'
-                  className='flex-1'
-                  actions={
-                    <div className='flex items-center gap-1'>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-7 w-7 p-0'
-                        disabled={index === 0}
-                        onClick={() => entry?.id && moveFavorite(entry.id, 'up')}
-                      >
-                        <ArrowUp className='size-3' />
-                      </Button>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-7 w-7 p-0'
-                        disabled={index === favoritesList.length - 1}
-                        onClick={() => entry?.id && moveFavorite(entry.id, 'down')}
-                      >
-                        <ArrowDown className='size-3' />
-                      </Button>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        size='sm'
-                        className='h-7 px-2 text-[11px]'
-                        onClick={() => entry?.id && handleToggleFavorite(entry.id, false)}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  }
-                />
-              </div>
-            ))}
+            {favoritesList.map((entry: AdminNavLeaf | undefined, index: number) => {
+              if (!entry) return null;
+              const { id, label, parents } = entry;
+              return (
+                <div key={id} className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'>
+                  <SectionHeader
+                    title={label}
+                    subtitle={parents.length ? parents.join(' / ') : undefined}
+                    size='xs'
+                    className='flex-1'
+                    actions={
+                      <div className='flex items-center gap-1'>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='h-7 w-7 p-0'
+                          disabled={index === 0}
+                          onClick={() => moveFavorite(id, 'up')}
+                        >
+                          <ArrowUp className='size-3' />
+                        </Button>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='h-7 w-7 p-0'
+                          disabled={index === favoritesList.length - 1}
+                          onClick={() => moveFavorite(id, 'down')}
+                        >
+                          <ArrowDown className='size-3' />
+                        </Button>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          size='sm'
+                          className='h-7 px-2 text-[11px]'
+                          onClick={() => handleToggleFavorite(id, false)}
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    }
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -173,21 +177,23 @@ function SectionColorsSection(): React.JSX.Element {
     >
       <div className='space-y-4'>
         {sections.map((section: NavItem) => {
-          const current = sectionColors[section.id] ?? 'none';
+          const sectionId = section.id;
+          const sectionLabel = section.label;
+          const current = sectionColors[sectionId] ?? 'none';
           const colorStyle = current !== 'none' ? ADMIN_MENU_COLOR_MAP[current] : null;
           return (
-            <div key={section.id} className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'>
+            <div key={sectionId} className='flex items-center justify-between gap-3 rounded-md border border-border/40 bg-gray-900/40 p-3'>
               <div className='flex items-center gap-2'>
                 {colorStyle ? (
                   <span className={cn('h-2.5 w-2.5 rounded-full', colorStyle.dot)} />
                 ) : (
                   <span className='h-2.5 w-2.5 rounded-full border border-dashed border-gray-500' />
                 )}
-                <span className='text-sm text-gray-200'>{section.label}</span>
+                <span className='text-sm text-gray-200'>{sectionLabel}</span>
               </div>
               <SelectSimple size='sm'
                 value={current}
-                onValueChange={(value: string) => updateSectionColor(section.id, value)}
+                onValueChange={(value: string) => updateSectionColor(sectionId, value)}
                 options={[
                   { value: 'none', label: 'None' },
                   ...ADMIN_MENU_COLORS.map((option: ColorOption) => ({
@@ -310,7 +316,7 @@ function MenuBuilderSection(): React.JSX.Element {
                       if (raw) {
                         try {
                           const parsed = JSON.parse(raw) as unknown;
-                          if (Array.isArray(parsed) && parsed.every((value: unknown) => Number.isInteger(value))) {
+                          if (Array.isArray(parsed) && parsed.every((val: unknown) => Number.isInteger(val))) {
                             dragged = parsed as number[];
                           }
                         } catch {

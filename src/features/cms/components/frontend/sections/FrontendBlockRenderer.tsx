@@ -48,11 +48,7 @@ export function FrontendBlockRenderer({ block }: FrontendBlockRendererProps): Re
       <BlockSettingsContext.Provider value={block.settings}>
         <GsapAnimationWrapper>
           <CssAnimationWrapper>
-            <EventEffectsWrapper
-              settings={block.settings}
-              nodeId={block.id}
-              customCss={block.settings['customCss']}
-            >
+            <EventEffectsWrapper>
               <BlockContent />
             </EventEffectsWrapper>
           </CssAnimationWrapper>

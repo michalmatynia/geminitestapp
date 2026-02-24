@@ -22,6 +22,7 @@ interface SelectionBarProps<T> {
   onSelectAllGlobal?: () => Promise<void>;
   loadingGlobal?: boolean | undefined;
   actions?: React.ReactNode | undefined;
+  rightActions?: React.ReactNode | undefined;
   onDeleteSelected?: () => Promise<void> | undefined;
   className?: string | undefined;
   label?: string | undefined;
@@ -35,6 +36,7 @@ export function SelectionBar<T>({
   onSelectAllGlobal,
   loadingGlobal,
   actions,
+  rightActions,
   onDeleteSelected,
   className,
   label = 'Selection',
@@ -112,6 +114,12 @@ export function SelectionBar<T>({
           )}
         </ActionMenu>
       )}
+
+      {rightActions ? (
+        <div className='ml-auto flex items-center gap-2'>
+          {rightActions}
+        </div>
+      ) : null}
     </div>
   );
 }

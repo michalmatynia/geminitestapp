@@ -12,21 +12,21 @@ import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Tabs, TabsList, TabsTrigger, TabsContent, StatusBadge, LogList, Card } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
-export interface AgentRunDetailModalProps extends EntityModalProps<AiPathRunRecord> {
-  agentSnapshots: AgentSnapshot[];
-  agentBrowserLogs: AgentBrowserLog[];
-  agentAuditLogs: AgentAuditLog[];
-  agentStreamStatus: string;
-}
+import { useAgentRunsContext } from '../context/AgentRunsContext';
+
+export interface AgentRunDetailModalProps extends EntityModalProps<AiPathRunRecord> {}
 
 export function AgentRunDetailModal({
   isOpen,
   onClose,
-  item: selectedAgentRun,
-  agentSnapshots,
-  agentBrowserLogs,
-  agentAuditLogs,
 }: AgentRunDetailModalProps): React.JSX.Element | null {
+  const {
+    selectedAgentRun,
+    agentSnapshots,
+    agentBrowserLogs,
+    agentAuditLogs,
+  } = useAgentRunsContext();
+
   if (!isOpen || !selectedAgentRun) return null;
 
   return (

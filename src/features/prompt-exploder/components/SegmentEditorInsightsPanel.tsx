@@ -12,6 +12,7 @@ import {
   Card,
 } from '@/shared/ui';
 
+import { useDocumentActions, useDocumentState } from '../context/hooks/useDocument';
 import {
   useSegmentEditorActions,
   useSegmentEditorState,
@@ -21,14 +22,9 @@ import { promptExploderClampNumber } from '../helpers/formatting';
 import { promptExploderCreateApprovalDraftFromSegment } from '../helpers/segment-helpers';
 
 import type { TemplateMergeMode } from '../template-learning';
-import type {
-  PromptExploderSegment,
-} from '../types';
 
-export function SegmentEditorInsightsPanel(args: {
-  selectedSegment: PromptExploderSegment;
-}): React.JSX.Element {
-  const { selectedSegment } = args;
+export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
+  const { selectedSegment } = useDocumentState();
 
   const {
     effectiveLearnedTemplates,
@@ -45,6 +41,8 @@ export function SegmentEditorInsightsPanel(args: {
     setApprovalDraft,
     handleApproveSelectedSegmentPattern,
   } = useSegmentEditorActions();
+
+  if (!selectedSegment) return null;
 
   const onApprovePattern = () => {
     void handleApproveSelectedSegmentPattern();

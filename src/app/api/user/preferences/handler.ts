@@ -51,6 +51,8 @@ const buildUserPreferencesResponse = (
   productListPageSize: preferences?.productListPageSize ?? 12,
   productListThumbnailSource: preferences?.productListThumbnailSource ?? 'file',
   productListFiltersCollapsedByDefault: preferences?.productListFiltersCollapsedByDefault ?? false,
+  productListAdvancedFilterPresets:
+    preferences?.productListAdvancedFilterPresets ?? [],
   productListDraftIconColorMode: preferences?.productListDraftIconColorMode ?? 'theme',
   productListDraftIconColor: preferences?.productListDraftIconColor ?? '#60a5fa',
   aiPathsActivePathId: preferences?.aiPathsActivePathId ?? null,

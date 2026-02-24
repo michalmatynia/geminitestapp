@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { JsonValue, UserPreferences } from '@/shared/contracts/auth';
+import { productAdvancedFilterPresetSchema } from '@/shared/contracts/products';
 
 export const USER_PREFERENCES_HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{6}$/;
 
@@ -26,6 +27,10 @@ export const userPreferencesUpdateSchema = z.object({
   productListPageSize: z.number().int().min(10).max(200).optional().nullable(),
   productListThumbnailSource: z.enum(['file', 'link', 'base64']).optional().nullable(),
   productListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
+  productListAdvancedFilterPresets: z
+    .array(productAdvancedFilterPresetSchema)
+    .optional()
+    .nullable(),
   productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
   productListDraftIconColor: z
     .string()
@@ -63,6 +68,9 @@ export const userPreferencesResponseSchema = z
     productListPageSize: z.number().int().optional().nullable(),
     productListThumbnailSource: z.enum(['file', 'link', 'base64']).optional().nullable(),
     productListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
+    productListAdvancedFilterPresets: z
+      .array(productAdvancedFilterPresetSchema)
+      .optional(),
     productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
     productListDraftIconColor: z.string().regex(USER_PREFERENCES_HEX_COLOR_PATTERN).optional().nullable(),
     aiPathsActivePathId: z.string().optional().nullable(),
@@ -127,6 +135,10 @@ export const normalizeUserPreferencesUpdatePayload = (
   }
   if (payload.productListFiltersCollapsedByDefault !== undefined) {
     normalized.productListFiltersCollapsedByDefault = payload.productListFiltersCollapsedByDefault;
+  }
+  if (payload.productListAdvancedFilterPresets !== undefined) {
+    normalized.productListAdvancedFilterPresets =
+      payload.productListAdvancedFilterPresets ?? [];
   }
   if (payload.productListDraftIconColorMode !== undefined) {
     normalized.productListDraftIconColorMode = payload.productListDraftIconColorMode;

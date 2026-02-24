@@ -8,7 +8,7 @@ import Image from 'next/image';
 import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 import { createViewerOutputs, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
 import { extractImageUrls, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Button, Label, Textarea, FormField } from '@/shared/ui';
+import { Button,  Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 

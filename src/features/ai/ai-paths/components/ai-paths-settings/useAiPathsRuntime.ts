@@ -174,7 +174,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       };
 
       const res = await aiJobsApi.enqueue({
-        productId: (sourceOutputs as Record<string, unknown>)['productId'] as string ?? 'direct',
+        productId: (sourceOutputs['productId'] as string) ?? 'direct',
         type: 'direct_prompt',
         payload,
       });
@@ -210,7 +210,7 @@ export function useAiPathsRuntime(args: UseAiPathsRuntimeArgs): UseAiPathsRuntim
       const resolvedRunStartedAt = startedAt;
 
       args.setRuntimeState((prev: RuntimeState): RuntimeState => {
-        const aiOutputs = (prev.outputs?.[aiNode.id] ?? {}) as Record<string, unknown>;
+        const aiOutputs = prev.outputs?.[aiNode.id] ?? {};
 
         return {
           ...prev,

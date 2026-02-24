@@ -16,7 +16,7 @@ import {
 } from '@/features/ai/ai-paths/lib/core/playwright/script-templates';
 import { usePlaywrightPersonas } from '@/features/playwright/hooks/usePlaywrightPersonas';
 import { playwrightSettingsSchema } from '@/shared/contracts/playwright';
-import { Button, Input, Label, LoadingState, SelectSimple, Textarea, FormField } from '@/shared/ui';
+import { Button, Input,  LoadingState, SelectSimple, Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 

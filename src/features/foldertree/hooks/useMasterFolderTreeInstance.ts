@@ -55,6 +55,7 @@ const shouldNotifyMasterTreePersistSuccessByInstance: Record<FolderTreeInstance,
   product_categories: true,
   cms_page_builder: true,
   case_resolver: true,
+  case_resolver_cases: true,
 };
 
 const shouldNotifyMasterTreePersistErrorByInstance: Record<FolderTreeInstance, boolean> = {
@@ -63,6 +64,7 @@ const shouldNotifyMasterTreePersistErrorByInstance: Record<FolderTreeInstance, b
   product_categories: true,
   cms_page_builder: true,
   case_resolver: true,
+  case_resolver_cases: true,
 };
 
 const masterTreePersistSuccessMessageByInstance: Record<FolderTreeInstance, string> = {
@@ -71,6 +73,7 @@ const masterTreePersistSuccessMessageByInstance: Record<FolderTreeInstance, stri
   product_categories: 'Category tree updated.',
   cms_page_builder: 'Component tree updated.',
   case_resolver: 'Case resolver tree updated.',
+  case_resolver_cases: 'Case hierarchy updated.',
 };
 
 const normalizeExpandedNodeIds = (

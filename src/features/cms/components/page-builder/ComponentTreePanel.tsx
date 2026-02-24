@@ -270,7 +270,7 @@ export function ComponentTreePanel(): React.ReactNode {
           )}
         >
           {!state.currentPage ? (
-            <div className='p-4' />
+            <div className='p-4' data-testid='empty-page-state' />
           ) : panelCollapsed ? (
             <div className='p-4'>
               <EmptyState

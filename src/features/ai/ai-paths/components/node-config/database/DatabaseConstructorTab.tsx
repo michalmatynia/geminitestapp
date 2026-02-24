@@ -60,10 +60,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
     setUpdaterSamples,
     handleFetchUpdaterSample: onFetchUpdaterSample,
     updateSelectedNodeConfig,
-    nodes,
-    edges,
     selectedNode,
-    runtimeState,
     onSendToAi,
     sendingToAi,
     updaterSampleLoading,
@@ -248,13 +245,7 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
             placeholder={`Write a ${providerLabel} query that finds products where... (Ctrl+Enter to send)`}
           />
           <DatabaseAiPromptConnectionStatus
-            edges={edges}
-            nodes={nodes}
-            selectedNodeId={selectedNodeId}
-            runtimeState={runtimeState}
             aiPrompt={databaseConfig.aiPrompt ?? ''}
-            sendingToAi={sendingToAi}
-            onSendToAi={onSendToAi}
             updateQueryConfig={(patch) => {
               updateSelectedNodeConfig({
                 database: {
@@ -266,7 +257,6 @@ export function DatabaseConstructorTab(): React.JSX.Element | null {
                 },
               });
             }}
-            toast={toast}
           />
         </div>
 

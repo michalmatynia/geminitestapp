@@ -13,10 +13,16 @@ import {
 } from '@/features/products/services/product-repository/mongo-product-repository-mappers';
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import type { ImageFileRecord } from '@/shared/contracts/files';
-import type { ProductImageRecord, CatalogRecord, ProductWithImages } from '@/shared/contracts/products';
-import type {
+import {
+  productAdvancedFilterGroupSchema,
+  type CatalogRecord,
   CreateProductInput,
+  type ProductAdvancedFilterCondition,
+  type ProductAdvancedFilterGroup,
+  type ProductAdvancedFilterRule,
+  type ProductImageRecord,
   ProductFilters,
+  type ProductWithImages,
   ProductRepository,
   TransactionalProductRepository,
   UpdateProductInput,
@@ -373,6 +379,410 @@ const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
 const escapeRegex = (value: string): string =>
   value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const parseAdvancedFilterGroup = (
+  payload: string | undefined
+): ProductAdvancedFilterGroup | null => {
+  if (!payload) return null;
+  try {
+    const parsed = JSON.parse(payload);
+    const validated = productAdvancedFilterGroupSchema.safeParse(parsed);
+    return validated.success ? validated.data : null;
+  } catch {
+    return null;
+  }
+};
+
+const toAdvancedStringValue = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
+
+const toAdvancedNumberValue = (value: unknown): number | null => {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim();
+    if (!normalized) return null;
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+};
+
+const toAdvancedDateValue = (value: unknown): Date | null => {
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+  return null;
+};
+
+const buildEmptyStringPathCondition = (path: string): Filter<ProductDocument> =>
+  ({
+    $or: [
+      { [path]: { $exists: false } },
+      { [path]: null },
+      { [path]: '' },
+    ],
+  }) as Filter<ProductDocument>;
+
+const buildNonEmptyStringPathCondition = (path: string): Filter<ProductDocument> =>
+  ({
+    [path]: { $exists: true, $nin: [null, ''] },
+  }) as Filter<ProductDocument>;
+
+const buildMongoStringFieldCondition = (
+  paths: string[],
+  condition: ProductAdvancedFilterCondition
+): Filter<ProductDocument> | null => {
+  if (paths.length === 0) return null;
+
+  if (condition.operator === 'isEmpty') {
+    if (paths.length === 1) return buildEmptyStringPathCondition(paths[0]!);
+    return {
+      $and: paths.map((path: string) => buildEmptyStringPathCondition(path)),
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    if (paths.length === 1) return buildNonEmptyStringPathCondition(paths[0]!);
+    return {
+      $or: paths.map((path: string) => buildNonEmptyStringPathCondition(path)),
+    } as Filter<ProductDocument>;
+  }
+
+  const value = toAdvancedStringValue(condition.value);
+  if (!value) return null;
+
+  if (condition.operator === 'contains') {
+    const regex = { $regex: escapeRegex(value), $options: 'i' };
+    if (paths.length === 1) {
+      return { [paths[0]!]: regex } as Filter<ProductDocument>;
+    }
+    return {
+      $or: paths.map((path: string) => ({ [path]: regex })),
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'eq') {
+    if (paths.length === 1) {
+      return { [paths[0]!]: value } as Filter<ProductDocument>;
+    }
+    return {
+      $or: paths.map((path: string) => ({ [path]: value })),
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'neq') {
+    const equalCondition = buildMongoStringFieldCondition(paths, {
+      ...condition,
+      operator: 'eq',
+    });
+    if (!equalCondition) return null;
+    return { $nor: [equalCondition] } as Filter<ProductDocument>;
+  }
+
+  return null;
+};
+
+const buildMongoIdCondition = (
+  condition: ProductAdvancedFilterCondition
+): Filter<ProductDocument> | null => {
+  if (condition.operator === 'isEmpty') {
+    return {
+      $or: [
+        { id: { $exists: false } },
+        { id: null },
+        { id: '' },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    return {
+      id: { $exists: true, $nin: [null, ''] },
+    } as Filter<ProductDocument>;
+  }
+
+  const value = toAdvancedStringValue(condition.value);
+  if (!value) return null;
+
+  if (condition.operator === 'eq') {
+    return buildProductIdFilter(value);
+  }
+
+  if (condition.operator === 'neq') {
+    return {
+      $nor: [buildProductIdFilter(value)],
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'contains') {
+    const escapedId = escapeRegex(value);
+    return {
+      $or: [
+        { id: { $regex: escapedId, $options: 'i' } },
+        {
+          $expr: {
+            $regexMatch: {
+              input: { $toString: '$_id' },
+              regex: escapedId,
+              options: 'i',
+            },
+          },
+        },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  return null;
+};
+
+const buildMongoCategoryCondition = (
+  condition: ProductAdvancedFilterCondition
+): Filter<ProductDocument> | null => {
+  if (condition.operator === 'isEmpty') {
+    return {
+      $or: [
+        { categoryId: { $exists: false } },
+        { categoryId: null },
+        { categoryId: '' },
+        { categories: { $exists: false } },
+        { categories: { $size: 0 } },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    return {
+      $or: [
+        { categoryId: { $exists: true, $nin: [null, ''] } },
+        { 'categories.0': { $exists: true } },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  const value = toAdvancedStringValue(condition.value);
+  if (!value) return null;
+
+  if (condition.operator === 'contains') {
+    const regex = { $regex: escapeRegex(value), $options: 'i' };
+    return {
+      $or: [
+        { categoryId: regex },
+        { 'categories.categoryId': regex },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'eq') {
+    return {
+      $or: [
+        { categoryId: value },
+        { 'categories.categoryId': value },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'neq') {
+    const eqCondition = buildMongoCategoryCondition({
+      ...condition,
+      operator: 'eq',
+    });
+    if (!eqCondition) return null;
+    return { $nor: [eqCondition] } as Filter<ProductDocument>;
+  }
+
+  return null;
+};
+
+const buildMongoNumericCondition = (
+  field: 'price' | 'stock',
+  condition: ProductAdvancedFilterCondition
+): Filter<ProductDocument> | null => {
+  if (condition.operator === 'isEmpty') {
+    return {
+      $or: [
+        { [field]: { $exists: false } },
+        { [field]: null },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    return {
+      [field]: { $exists: true, $ne: null },
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'between') {
+    const left = toAdvancedNumberValue(condition.value);
+    const right = toAdvancedNumberValue(condition.valueTo);
+    if (left === null || right === null) return null;
+    const [min, max] = left <= right ? [left, right] : [right, left];
+    return {
+      [field]: {
+        $gte: min,
+        $lte: max,
+      },
+    } as Filter<ProductDocument>;
+  }
+
+  const value = toAdvancedNumberValue(condition.value);
+  if (value === null) return null;
+
+  if (condition.operator === 'eq') {
+    return { [field]: { $eq: value } } as Filter<ProductDocument>;
+  }
+  if (condition.operator === 'neq') {
+    return { [field]: { $ne: value } } as Filter<ProductDocument>;
+  }
+  if (condition.operator === 'gt') {
+    return { [field]: { $gt: value } } as Filter<ProductDocument>;
+  }
+  if (condition.operator === 'gte') {
+    return { [field]: { $gte: value } } as Filter<ProductDocument>;
+  }
+  if (condition.operator === 'lt') {
+    return { [field]: { $lt: value } } as Filter<ProductDocument>;
+  }
+  if (condition.operator === 'lte') {
+    return { [field]: { $lte: value } } as Filter<ProductDocument>;
+  }
+
+  return null;
+};
+
+const buildMongoDateCondition = (
+  condition: ProductAdvancedFilterCondition
+): Filter<ProductDocument> | null => {
+  const field = 'createdAt';
+
+  if (condition.operator === 'isEmpty') {
+    return {
+      $or: [
+        { [field]: { $exists: false } },
+        { [field]: null },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    return {
+      [field]: { $exists: true, $ne: null },
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'between') {
+    const left = toAdvancedDateValue(condition.value);
+    const right = toAdvancedDateValue(condition.valueTo);
+    if (!left || !right) return null;
+    const [min, max] = left <= right ? [left, right] : [right, left];
+    return {
+      [field]: {
+        $gte: min,
+        $lte: max,
+      },
+    } as Filter<ProductDocument>;
+  }
+
+  const value = toAdvancedDateValue(condition.value);
+  if (!value) return null;
+
+  if (condition.operator === 'eq') {
+    return { [field]: { $eq: value } } as Filter<ProductDocument>;
+  }
+  if (condition.operator === 'neq') {
+    return { [field]: { $ne: value } } as Filter<ProductDocument>;
+  }
+  if (condition.operator === 'gt') {
+    return { [field]: { $gt: value } } as Filter<ProductDocument>;
+  }
+  if (condition.operator === 'gte') {
+    return { [field]: { $gte: value } } as Filter<ProductDocument>;
+  }
+  if (condition.operator === 'lt') {
+    return { [field]: { $lt: value } } as Filter<ProductDocument>;
+  }
+  if (condition.operator === 'lte') {
+    return { [field]: { $lte: value } } as Filter<ProductDocument>;
+  }
+
+  return null;
+};
+
+const compileAdvancedMongoCondition = (
+  condition: ProductAdvancedFilterCondition
+): Filter<ProductDocument> | null => {
+  if (condition.field === 'id') {
+    return buildMongoIdCondition(condition);
+  }
+  if (condition.field === 'sku') {
+    return buildMongoStringFieldCondition(['sku'], condition);
+  }
+  if (condition.field === 'name') {
+    return buildMongoStringFieldCondition(['name_en', 'name_pl', 'name_de'], condition);
+  }
+  if (condition.field === 'description') {
+    return buildMongoStringFieldCondition(
+      ['description_en', 'description_pl', 'description_de'],
+      condition
+    );
+  }
+  if (condition.field === 'categoryId') {
+    return buildMongoCategoryCondition(condition);
+  }
+  if (condition.field === 'price') {
+    return buildMongoNumericCondition('price', condition);
+  }
+  if (condition.field === 'stock') {
+    return buildMongoNumericCondition('stock', condition);
+  }
+  if (condition.field === 'createdAt') {
+    return buildMongoDateCondition(condition);
+  }
+  return null;
+};
+
+const compileAdvancedMongoRule = (
+  rule: ProductAdvancedFilterRule
+): Filter<ProductDocument> | null => {
+  if (rule.type === 'condition') {
+    return compileAdvancedMongoCondition(rule);
+  }
+
+  const compiledRules = rule.rules
+    .map((nestedRule: ProductAdvancedFilterRule) => compileAdvancedMongoRule(nestedRule))
+    .filter((nestedRule): nestedRule is Filter<ProductDocument> => nestedRule !== null);
+
+  if (compiledRules.length === 0) return null;
+
+  const combined =
+    compiledRules.length === 1
+      ? compiledRules[0]!
+      : ({
+        [rule.combinator === 'and' ? '$and' : '$or']: compiledRules,
+      } as Filter<ProductDocument>);
+
+  if (!rule.not) return combined;
+
+  return {
+    $nor: [combined],
+  } as Filter<ProductDocument>;
+};
+
+const applyAdvancedFilterCondition = (
+  filter: Filter<ProductDocument>,
+  advancedFilterPayload: string | undefined
+): Filter<ProductDocument> => {
+  const parsedGroup = parseAdvancedFilterGroup(advancedFilterPayload);
+  if (!parsedGroup) return filter;
+  const compiled = compileAdvancedMongoRule(parsedGroup);
+  if (!compiled) return filter;
+  return appendAndCondition(filter, compiled);
+};
+
 const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => {
   const filter: Filter<ProductDocument> = {};
   const andConditions: Filter<ProductDocument>[] = [];
@@ -448,6 +858,22 @@ const buildSearchFilter = (filters: ProductFilters): Filter<ProductDocument> => 
     }
   }
 
+  if (filters.stockValue !== undefined) {
+    const operator = filters.stockOperator ?? 'eq';
+    filter.stock = {};
+    if (operator === 'gt') {
+      filter.stock.$gt = filters.stockValue;
+    } else if (operator === 'gte') {
+      filter.stock.$gte = filters.stockValue;
+    } else if (operator === 'lt') {
+      filter.stock.$lt = filters.stockValue;
+    } else if (operator === 'lte') {
+      filter.stock.$lte = filters.stockValue;
+    } else {
+      filter.stock.$eq = filters.stockValue;
+    }
+  }
+
   if (filters.startDate || filters.endDate) {
     filter.createdAt = {};
     if (filters.startDate) {
@@ -500,9 +926,13 @@ export const mongoProductRepository: ProductRepository = {
     const pageSize = filters.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
     const limit = pageSize;
-    const searchFilter = await applyBaseExportedFilter(
+    const basicSearchFilter = await applyBaseExportedFilter(
       buildSearchFilter(filters),
       filters.baseExported
+    );
+    const searchFilter = applyAdvancedFilterCondition(
+      basicSearchFilter,
+      filters.advancedFilter
     );
     const projectStage = buildListProjectStage(filters);
 
@@ -534,9 +964,13 @@ export const mongoProductRepository: ProductRepository = {
 
   async countProducts(filters: ProductFilters) {
     const collection = await getProductCollection();
-    const searchFilter = await applyBaseExportedFilter(
+    const basicSearchFilter = await applyBaseExportedFilter(
       buildSearchFilter(filters),
       filters.baseExported
+    );
+    const searchFilter = applyAdvancedFilterCondition(
+      basicSearchFilter,
+      filters.advancedFilter
     );
     if (isEmptyFilter(searchFilter)) {
       return collection.estimatedDocumentCount();
@@ -549,9 +983,13 @@ export const mongoProductRepository: ProductRepository = {
     const page = filters.page ?? 1;
     const pageSize = filters.pageSize ?? 20;
     const skip = (page - 1) * pageSize;
-    const searchFilter = await applyBaseExportedFilter(
+    const basicSearchFilter = await applyBaseExportedFilter(
       buildSearchFilter(filters),
       filters.baseExported
+    );
+    const searchFilter = applyAdvancedFilterCondition(
+      basicSearchFilter,
+      filters.advancedFilter
     );
     const projectStage = buildListProjectStage(filters);
 
@@ -1096,7 +1534,9 @@ export const mongoProductRepository: ProductRepository = {
       .updateMany(
         { id: { $in: productIds } } as Filter<ProductDocument>,
         {
-          $pull: { catalogs: { catalogId: { $in: catalogIds } } } as unknown as any, // pull with $in often needs any in mongo types
+          $pull: {
+            catalogs: { catalogId: { $in: catalogIds } },
+          } as unknown as import('mongodb').UpdateFilter<ProductDocument>['$pull'],
           $set: { updatedAt: new Date() },
         }
       );

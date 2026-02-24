@@ -998,9 +998,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
 
                 {/* ── Sequence / QA matrix subsections ────────────────────── */}
                 {selectedSegment.type === 'sequence' || selectedSegment.type === 'qa_matrix' ? (
-                  <SegmentEditorSubsectionsPanel
-                    segment={selectedSegment}
-                  />
+                  <SegmentEditorSubsectionsPanel />
                 ) : null}
 
                 {/* ── Assigned text body ───────────────────────────────────── */}
@@ -1041,9 +1039,7 @@ export function SegmentEditorPanel(): React.JSX.Element {
                 ) : null}
 
                 {/* ── Matched rules + template + approval ─────────────────── */}
-                <SegmentEditorInsightsPanel
-                  selectedSegment={selectedSegment}
-                />
+                <SegmentEditorInsightsPanel />
               </>
             )}
           </Card>

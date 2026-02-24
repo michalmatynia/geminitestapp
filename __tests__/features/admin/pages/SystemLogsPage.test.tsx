@@ -77,6 +77,20 @@ vi.mock('@/shared/ui', async (importOriginal) => {
         {children}
       </div>
     ),
+    StandardDataTablePanel: ({ data, columns }: any) => (
+      <div>
+        {data.map((row: any, i: number) => (
+          <div key={i}>
+            {columns.map((col: any) => {
+              if (col.cell && typeof col.cell === 'function') {
+                return <div key={col.accessorKey || col.id}>{col.cell({ row: { original: row } })}</div>;
+              }
+              return <div key={col.accessorKey || col.id}>{row[col.accessorKey]}</div>;
+            })}
+          </div>
+        ))}
+      </div>
+    ),
   };
 });
 

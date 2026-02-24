@@ -31,6 +31,8 @@ type UserPreferencesDocument = {
   productListPageSize: number | null;
   productListThumbnailSource: 'file' | 'link' | 'base64' | null;
   productListFiltersCollapsedByDefault: boolean | null;
+  productListAdvancedFilterPresets:
+    UserPreferences['productListAdvancedFilterPresets'] | null;
   productListDraftIconColorMode: 'theme' | 'custom' | null;
   productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
@@ -137,6 +139,7 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord 
   productListPageSize: doc.productListPageSize ?? 12,
   productListThumbnailSource: doc.productListThumbnailSource ?? 'file',
   productListFiltersCollapsedByDefault: doc.productListFiltersCollapsedByDefault ?? false,
+  productListAdvancedFilterPresets: doc.productListAdvancedFilterPresets ?? [],
   productListDraftIconColorMode: doc.productListDraftIconColorMode ?? 'theme',
   productListDraftIconColor: doc.productListDraftIconColor ?? '#60a5fa',
   aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
@@ -173,6 +176,7 @@ const defaultPreferences = (
   productListPageSize: 12,
   productListThumbnailSource: 'file',
   productListFiltersCollapsedByDefault: false,
+  productListAdvancedFilterPresets: [],
   productListDraftIconColorMode: 'theme',
   productListDraftIconColor: '#60a5fa',
   aiPathsActivePathId: null,

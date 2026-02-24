@@ -18,39 +18,22 @@ import {
 } from '@/shared/ui';
 
 import { AgentRunDetailModal } from '../components/AgentRunDetailModal';
-import { useAgentAudits, useAgentLogs, useAgentRuns, useAgentSnapshots } from '../hooks/useAgentRunsQueries';
+import { AgentRunsProvider, useAgentRunsContext } from '../context/AgentRunsContext';
 
-export default function AgentRunsPage(): React.JSX.Element {
+function AgentRunsContent(): React.JSX.Element {
   const queryClient = useQueryClient();
-  const [selectedAgentRunId, setSelectedAgentRunId] = useState<string | null>(null);
-
-  const agentRunsQuery = useAgentRuns();
-  const agentRuns = agentRunsQuery.data ?? [];
-
   const {
-    isLoading: isAgentRunsLoading,
-    isFetching: isAgentRunsFetching,
-    refetch: refetchAgentRuns,
-  } = agentRunsQuery;
-
-  const selectedAgentRun = useMemo(
-    () => agentRuns.find((run: AiPathRunRecord) => run.id === selectedAgentRunId) ?? null,
-    [agentRuns, selectedAgentRunId]
-  );
-  const snapshotsQuery = useAgentSnapshots(selectedAgentRunId);
-  const agentSnapshots = useMemo(() => snapshotsQuery.data ?? [], [snapshotsQuery.data]);
-
-  const logsQuery = useAgentLogs(selectedAgentRunId);
-  const agentBrowserLogs = useMemo(() => logsQuery.data ?? [], [logsQuery.data]);
-
-  const auditsQuery = useAgentAudits(selectedAgentRunId);
-  const agentAuditLogs = useMemo(() => auditsQuery.data ?? [], [auditsQuery.data]);
-
-  const agentStreamStatus = 'idle';
+    agentRuns,
+    isAgentRunsLoading,
+    isAgentRunsFetching,
+    refetchAgentRuns,
+    selectedAgentRunId,
+    setSelectedAgentRunId,
+  } = useAgentRunsContext();
 
   const closeAgentModal = useCallback(() => {
     setSelectedAgentRunId(null);
-  }, []);
+  }, [setSelectedAgentRunId]);
 
   return (
     <div className='mx-auto w-full max-w-7xl py-10'>
@@ -137,12 +120,15 @@ export default function AgentRunsPage(): React.JSX.Element {
         isOpen={Boolean(selectedAgentRunId)}
         onClose={closeAgentModal}
         onSuccess={() => {}}
-        item={selectedAgentRun}
-        agentSnapshots={agentSnapshots}
-        agentBrowserLogs={agentBrowserLogs}
-        agentAuditLogs={agentAuditLogs}
-        agentStreamStatus={agentStreamStatus}
       />
     </div>
+  );
+}
+
+export default function AgentRunsPage(): React.JSX.Element {
+  return (
+    <AgentRunsProvider>
+      <AgentRunsContent />
+    </AgentRunsProvider>
   );
 }

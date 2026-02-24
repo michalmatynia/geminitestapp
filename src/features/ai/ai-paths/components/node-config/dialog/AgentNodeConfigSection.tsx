@@ -6,7 +6,7 @@ import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPerso
 import type { AgentConfig } from '@/features/ai/ai-paths/lib';
 import {
   Button,
-  Label,
+  
   SelectSimple,
   Textarea,
   LoadingState,

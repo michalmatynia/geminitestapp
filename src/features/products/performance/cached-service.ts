@@ -63,8 +63,11 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
   const sku = toOptionalString(filters['sku']);
   const minPrice = toOptionalNumber(filters['minPrice']);
   const maxPrice = toOptionalNumber(filters['maxPrice']);
+  const stockValue = toOptionalNumber(filters['stockValue']);
+  const stockOperatorRaw = toOptionalString(filters['stockOperator']);
   const startDate = toOptionalString(filters['startDate']);
   const endDate = toOptionalString(filters['endDate']);
+  const advancedFilter = toOptionalString(filters['advancedFilter']);
   const catalogId = toOptionalString(filters['catalogId']);
   const searchLanguage = toOptionalString(filters['searchLanguage']);
   const baseExported = toOptionalBoolean(filters['baseExported']);
@@ -77,8 +80,19 @@ function normalizeFilters(filters: ProductFilterInput = {}): ProductFilters {
   if (sku !== undefined) normalized.sku = sku;
   if (minPrice !== undefined) normalized.minPrice = minPrice;
   if (maxPrice !== undefined) normalized.maxPrice = maxPrice;
+  if (stockValue !== undefined) normalized.stockValue = stockValue;
+  if (
+    stockOperatorRaw === 'gt' ||
+    stockOperatorRaw === 'gte' ||
+    stockOperatorRaw === 'lt' ||
+    stockOperatorRaw === 'lte' ||
+    stockOperatorRaw === 'eq'
+  ) {
+    normalized.stockOperator = stockOperatorRaw;
+  }
   if (startDate !== undefined) normalized.startDate = startDate;
   if (endDate !== undefined) normalized.endDate = endDate;
+  if (advancedFilter !== undefined) normalized.advancedFilter = advancedFilter;
   if (page !== undefined) normalized.page = page;
   if (pageSize !== undefined) normalized.pageSize = pageSize;
   if (catalogId !== undefined) normalized.catalogId = catalogId;

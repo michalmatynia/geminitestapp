@@ -26,8 +26,11 @@ export interface UseProductsFilters {
   categoryId?: string | undefined;
   minPrice?: number | undefined;
   maxPrice?: number | undefined;
+  stockValue?: number | undefined;
+  stockOperator?: 'gt' | 'gte' | 'lt' | 'lte' | 'eq' | undefined;
   startDate?: string | undefined;
   endDate?: string | undefined;
+  advancedFilter?: string | undefined;
   page?: number | undefined;
   pageSize?: number | undefined;
   catalogId?: string | undefined;

@@ -2,11 +2,11 @@
 
 import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { 
-  NavItem, 
   AdminMenuCustomNode,
   AdminNavLeaf,
-} from '@/features/admin/components/Menu';
+} from '@/shared/contracts/admin';
 import {
+  NavItem,
   buildAdminMenuFromCustomNav,
   buildAdminNav,
   adminNavToCustomNav,
@@ -66,15 +66,16 @@ const cloneCustomNav = (items: AdminMenuCustomNode[]): AdminMenuCustomNode[] => 
 
 const flattenCustomNav = (
   items: AdminMenuCustomNode[],
-  depth: number = 0,
+  depth = 0,
   pathPrefix: number[] = []
 ): FlattenedCustomNode[] => {
   const entries: FlattenedCustomNode[] = [];
   items.forEach((node: AdminMenuCustomNode, index: number) => {
     const path = [...pathPrefix, index];
     entries.push({ node, path, depth, index, siblingCount: items.length });
-    if (node.children && node.children.length > 0) {
-      entries.push(...flattenCustomNav(node.children, depth + 1, path));
+    const children = node.children;
+    if (children && children.length > 0) {
+      entries.push(...flattenCustomNav(children, depth + 1, path));
     }
   });
   return entries;
@@ -90,8 +91,9 @@ const flattenAdminNavNodes = (items: NavItem[], parents: string[] = []): AdminNa
       item,
       ...(item.href ? { href: item.href } : {})
     });
-    if (item.children && item.children.length > 0) {
-      entries.push(...flattenAdminNavNodes(item.children, [...parents, item.label]));
+    const children = item.children;
+    if (children && children.length > 0) {
+      entries.push(...flattenAdminNavNodes(children, [...parents, item.label]));
     }
   });
   return entries;
@@ -103,8 +105,9 @@ const collectCustomIds = (
 ): Set<string> => {
   items.forEach((node: AdminMenuCustomNode) => {
     ids.add(node.id);
-    if (node.children && node.children.length > 0) {
-      collectCustomIds(node.children, ids);
+    const children = node.children;
+    if (children && children.length > 0) {
+      collectCustomIds(children, ids);
     }
   });
   return ids;
@@ -139,8 +142,9 @@ const stripUsedIds = (
 ): AdminMenuCustomNode | null => {
   if (usedIds.has(node.id)) return null;
   usedIds.add(node.id);
-  const children = node.children
-    ? node.children
+  const nodeChildren = node.children;
+  const children = nodeChildren
+    ? nodeChildren
       .map((child: AdminMenuCustomNode) => stripUsedIds(child, usedIds))
       .filter((child: AdminMenuCustomNode | null): child is AdminMenuCustomNode => Boolean(child))
     : undefined;
@@ -238,7 +242,14 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
     return normalized.length > 0 ? normalized : defaultCustomNav;
   }, [customNav, defaultCustomNav]);
 
-  const settingsValues = useMemo(() => {
+  interface SettingsValues {
+    favorites: string[];
+    sectionColors: Record<string, string>;
+    customEnabled: boolean;
+    customNav: AdminMenuCustomNode[];
+  }
+
+  const settingsValues = useMemo((): SettingsValues => {
     const map = settingsQuery.data ?? new Map<string, string>();
     const favoritesRaw = parseAdminMenuJson<unknown[]>(map.get(ADMIN_MENU_FAVORITES_KEY), []);
     const sectionColorsRaw = parseAdminMenuJson<Record<string, string> | null>(
@@ -298,16 +309,20 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
   const flattened = useMemo(() => flattenAdminNav(menuNav), [menuNav]);
   const favoritesSet = useMemo(() => new Set(favorites), [favorites]);
   const favoritesList = useMemo(
-    () => favorites.map((id: string) => flattened.find((item: AdminNavLeaf) => item.id === id)).filter(Boolean),
+    () => favorites
+      .map((id: string) => flattened.find((item: AdminNavLeaf) => item.id === id))
+      .filter((item: AdminNavLeaf | undefined): item is AdminNavLeaf => item !== undefined),
     [favorites, flattened]
   );
 
   const filteredItems = useMemo(() => {
     const normalizedQuery = normalize(query);
-    const items = flattened.filter((item: AdminNavLeaf) =>
-      normalize([item.label, item.href ?? '', ...(item.keywords ?? []), ...item.parents].join(' '))
-        .includes(normalizedQuery)
-    );
+    const items = flattened.filter((item: AdminNavLeaf) => {
+      const keywords = item.keywords ?? [];
+      const href = item.href ?? '';
+      const searchable = [item.label, href, ...keywords, ...item.parents].join(' ');
+      return normalize(searchable).includes(normalizedQuery);
+    });
     return items.sort((a: AdminNavLeaf, b: AdminNavLeaf) => a.label.localeCompare(b.label));
   }, [flattened, query]);
 
@@ -320,9 +335,11 @@ export function AdminMenuSettingsProvider({ children }: { children: React.ReactN
   const customIds = useMemo(() => collectCustomIds(customNav), [customNav]);
   const filteredLibraryItems = useMemo(() => {
     const normalizedQuery = normalize(libraryQuery);
-    const items = libraryItems.filter((item: AdminNavNodeEntry) =>
-      normalize([item.label, item.href ?? '', ...item.parents].join(' ')).includes(normalizedQuery)
-    );
+    const items = libraryItems.filter((item: AdminNavNodeEntry) => {
+      const href = item.href ?? '';
+      const searchable = [item.label, href, ...item.parents].join(' ');
+      return normalize(searchable).includes(normalizedQuery);
+    });
     return items.sort((a: AdminNavNodeEntry, b: AdminNavNodeEntry) => a.label.localeCompare(b.label));
   }, [libraryItems, libraryQuery]);
 

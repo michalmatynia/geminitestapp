@@ -449,6 +449,12 @@ const normalizeCaseResolverCaseStatus = (
   value: unknown
 ): 'pending' | 'completed' => (value === 'completed' ? 'completed' : 'pending');
 
+const normalizeCaseTreeOrder = (value: unknown): number | undefined => {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return undefined;
+  const normalized = Math.floor(value);
+  return normalized >= 0 ? normalized : undefined;
+};
+
 const normalizeDocumentContentVersion = (value: unknown): number => {
   if (typeof value !== 'number' || !Number.isFinite(value)) return 1;
   const normalized = Math.floor(value);
@@ -696,6 +702,7 @@ export const createCaseResolverFile = (input: {
   fileType?: CaseResolverFileType | null | undefined;
   name: string;
   caseStatus?: 'pending' | 'completed' | null | undefined;
+  caseTreeOrder?: number | null | undefined;
   folder?: string;
   parentCaseId?: string | null | undefined;
   referenceCaseIds?: string[] | null | undefined;
@@ -750,6 +757,8 @@ export const createCaseResolverFile = (input: {
   const fileType = normalizeCaseResolverFileType(input.fileType);
   const caseStatus =
     fileType === 'case' ? normalizeCaseResolverCaseStatus(input.caseStatus) : undefined;
+  const caseTreeOrder =
+    fileType === 'case' ? normalizeCaseTreeOrder(input.caseTreeOrder) : undefined;
   const resolvedEditorType: CaseResolverEditorType =
     fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
   const resolvedCanonicalSource = (() => {
@@ -818,6 +827,7 @@ export const createCaseResolverFile = (input: {
     version: input.version ?? 'original',
     fileType,
     caseStatus,
+    caseTreeOrder,
     name: input.name.trim() || 'Untitled Case',
     folder: normalizeFolderPath(input.folder ?? ''),
     parentCaseId,
@@ -942,6 +952,7 @@ export const normalizeCaseResolverWorkspace = (
         fileType: normalizedFileType,
         name: file.name,
         caseStatus: fileRecord['caseStatus'] as 'pending' | 'completed' | null | undefined,
+        caseTreeOrder: fileRecord['caseTreeOrder'] as number | null | undefined,
         folder: file.folder,
         parentCaseId: file.parentCaseId,
         referenceCaseIds: file.referenceCaseIds,

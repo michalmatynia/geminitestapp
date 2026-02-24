@@ -13,7 +13,7 @@ import {
 import {
   Button,
   Input,
-  Label,
+  
   Textarea,
   SelectSimple,
   FormField,
@@ -331,7 +331,7 @@ export function PollNodeConfigSection(): React.JSX.Element | null {
           {queryConfig.mode === 'custom' && (
             <FormField 
               label='Query template'
-              description="Supports placeholders like {{value}}, {{entityId}}, {{jobId}}."
+              description='Supports placeholders like {{value}}, {{entityId}}, {{jobId}}.'
             >
               <Textarea
                 variant='subtle'

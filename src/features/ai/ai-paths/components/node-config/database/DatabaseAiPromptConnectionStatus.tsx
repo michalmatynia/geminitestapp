@@ -1,34 +1,33 @@
+'use client';
+
 import React from 'react';
 
-import type { AiNode, Edge, RuntimeState } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
 import { Button } from '@/shared/ui';
+import { useAiPathConfig } from '../../AiPathConfigContext';
 
 type DatabaseAiPromptConnectionStatusProps = {
-  edges: Edge[];
-  nodes: AiNode[];
-  selectedNodeId: string;
-  runtimeState: RuntimeState;
   aiPrompt: string;
-  sendingToAi: boolean;
-  onSendToAi?: ((nodeId: string, prompt: string) => Promise<void>) | null;
   updateQueryConfig: (patch: { mode?: 'preset' | 'custom'; queryTemplate?: string }) => void;
-  toast: (
-    message: string,
-    options?: { variant?: 'success' | 'error' | 'info' | 'warning' }
-  ) => void;
 };
 
 export function DatabaseAiPromptConnectionStatus({
-  edges,
-  nodes,
-  selectedNodeId,
-  runtimeState,
   aiPrompt,
-  sendingToAi,
-  onSendToAi,
   updateQueryConfig,
-  toast,
 }: DatabaseAiPromptConnectionStatusProps): React.JSX.Element {
+  const {
+    edges,
+    nodes,
+    selectedNode,
+    runtimeState,
+    sendingToAi,
+    onSendToAi,
+    toast,
+  } = useAiPathConfig();
+
+  if (!selectedNode) return <></>;
+  const selectedNodeId = selectedNode.id;
+
   const aiPromptEdges = edges.filter(
     (edge: Edge): boolean => edge.from === selectedNodeId && edge.fromPort === 'aiPrompt'
   );

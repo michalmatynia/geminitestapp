@@ -56,10 +56,16 @@ export interface ProductListContextType {
   setMinPrice: (value: number | undefined) => void;
   maxPrice: number | undefined;
   setMaxPrice: (value: number | undefined) => void;
+  stockValue: number | undefined;
+  setStockValue: (value: number | undefined) => void;
+  stockOperator: '' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq';
+  setStockOperator: (value: '' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq') => void;
   startDate: string;
   setStartDate: (value: string) => void;
   endDate: string;
   setEndDate: (value: string) => void;
+  advancedFilter: string;
+  setAdvancedFilter: (value: string) => void;
   baseExported: '' | 'true' | 'false';
   setBaseExported: (value: '' | 'true' | 'false') => void;
   
@@ -173,10 +179,16 @@ export interface ProductListFiltersContextType {
   setMinPrice: (value: number | undefined) => void;
   maxPrice: number | undefined;
   setMaxPrice: (value: number | undefined) => void;
+  stockValue: number | undefined;
+  setStockValue: (value: number | undefined) => void;
+  stockOperator: '' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq';
+  setStockOperator: (value: '' | 'gt' | 'gte' | 'lt' | 'lte' | 'eq') => void;
   startDate: string;
   setStartDate: (value: string) => void;
   endDate: string;
   setEndDate: (value: string) => void;
+  advancedFilter: string;
+  setAdvancedFilter: (value: string) => void;
   baseExported: '' | 'true' | 'false';
   setBaseExported: (value: '' | 'true' | 'false') => void;
 }
@@ -378,10 +390,16 @@ export function ProductListProvider({
       setMinPrice: value.setMinPrice,
       maxPrice: value.maxPrice,
       setMaxPrice: value.setMaxPrice,
+      stockValue: value.stockValue,
+      setStockValue: value.setStockValue,
+      stockOperator: value.stockOperator,
+      setStockOperator: value.setStockOperator,
       startDate: value.startDate,
       setStartDate: value.setStartDate,
       endDate: value.endDate,
       setEndDate: value.setEndDate,
+      advancedFilter: value.advancedFilter,
+      setAdvancedFilter: value.setAdvancedFilter,
       baseExported: value.baseExported,
       setBaseExported: value.setBaseExported,
     }),

@@ -14,14 +14,11 @@ import {
 } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
+import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
 import { useAsset3DForm } from '../hooks/useAsset3DForm';
 
 
-interface Asset3DEditModalProps extends EntityModalProps<Asset3DRecord> {
-  onSave: (updated: Asset3DRecord) => void;
-  existingCategories?: string[];
-  existingTags?: string[];
-}
+interface Asset3DEditModalProps extends EntityModalProps<Asset3DRecord> {}
 
 const formatFileSize = (bytes: number): string => {
   if (bytes < 1024) return `${bytes} B`;
@@ -40,11 +37,14 @@ export function Asset3DEditModal({
   isOpen,
   onClose,
   item: asset,
-  onSave,
-  existingCategories = [],
-  existingTags = [],
 }: Asset3DEditModalProps): React.JSX.Element | null {
   if (!asset) return null;
+
+  const {
+    handleEdit: onSave,
+    categories: existingCategories = [],
+    allTags: existingTags = [],
+  } = useAdmin3DAssetsContext();
 
   const {
     name,

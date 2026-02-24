@@ -2,10 +2,13 @@
 
 import {
   Copy,
+  File,
   FileText,
   History,
+  Lock,
   Network,
   ScanLine,
+  ScanText,
   Save,
   Settings2,
   X,
@@ -24,7 +27,6 @@ import {
   EmptyState,
   FormField,
   Input,
-  SearchInput,
   SelectSimple,
   Tabs,
   TabsContent,
@@ -32,6 +34,7 @@ import {
   TabsTrigger,
 } from '@/shared/ui';
 import { useCaseResolverViewContext } from '../CaseResolverViewContext';
+import { DocumentRelationSearchPanel } from '../../relation-search';
 import type { EditorDetailsTab } from './CaseResolverDocumentEditor';
 
 const formatHistoryTimestamp = (value: string): string => {
@@ -46,6 +49,19 @@ const formatHistoryTimestamp = (value: string): string => {
     second: '2-digit',
   }).format(parsed);
 };
+
+const formatShortDate = (isoDate: string | null | undefined): string => {
+  if (!isoDate) return '';
+  const d = new Date(isoDate);
+  if (isNaN(d.getTime())) return '';
+  return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+};
+
+function LinkedFileTypeIcon({ fileType }: { fileType: string }): React.JSX.Element {
+  if (fileType === 'document') return <FileText className='size-4 text-blue-400/70' />;
+  if (fileType === 'scanfile') return <ScanText className='size-4 text-amber-400/70' />;
+  return <File className='size-4 text-gray-500' />;
+}
 
 export function CaseResolverScanFileEditor(): React.JSX.Element | null {
   const {
@@ -82,8 +98,6 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
     isUploadingScanDraftFiles,
   } = state;
 
-  const [relateSearchQuery, setRelateSearchQuery] = React.useState('');
-
   if (editingDocumentDraft?.fileType !== 'scanfile') return null;
   const draft = editingDocumentDraft;
 
@@ -101,20 +115,6 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
   const relatedFiles = workspace.files.filter((file) =>
     (draftRelatedFileIds ?? []).includes(file.id)
   );
-
-  const relateSearchResults = relateSearchQuery.trim()
-    ? workspace.files
-      .filter((file) => {
-        if (file.id === draft.id) return false;
-        if ((draftRelatedFileIds ?? []).includes(file.id)) return false;
-        const query = relateSearchQuery.toLowerCase();
-        return (
-          file.name.toLowerCase().includes(query) ||
-          (file.folder ?? '').toLowerCase().includes(query)
-        );
-      })
-      .slice(0, 10)
-    : [];
 
   return (
     <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-auto pr-1'>
@@ -343,74 +343,90 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
           </TabsContent>
 
           {/* ── Relations Tab ── */}
-          <TabsContent value='relations' className='m-0'>
-            <div className='grid gap-6 md:grid-cols-2'>
-              <FormField label='Related Documents'>
-                <div className='flex flex-col gap-2'>
-                  {relatedFiles.length === 0 ? (
-                    <div className='rounded border border-dashed border-border/40 p-8 text-center text-xs text-gray-500'>
-                      No related documents linked yet.
-                    </div>
-                  ) : (
-                    <div className='grid gap-2'>
-                      {relatedFiles.map(file => (
-                        <div key={file.id} className='flex items-center justify-between gap-3 rounded border border-border/60 bg-card/20 px-3 py-2'>
-                          <div className='flex items-center gap-3 min-w-0'>
-                            <FileText className='size-4 text-gray-500' />
-                            <span className='truncate text-xs font-medium text-gray-200'>{file.name}</span>
-                          </div>
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            className='h-7 w-7 p-0 text-gray-500 hover:text-red-400'
-                            onClick={() => handleUnlinkRelatedFile(draft.id, file.id)}
-                            disabled={isEditingDocumentLocked}
-                          >
-                            <X className='size-4' />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </FormField>
+          <TabsContent value='relations' className='m-0 flex flex-col gap-6'>
+            {/* Advanced document search panel */}
+            <DocumentRelationSearchPanel
+              draftFileId={draft.id}
+              isLocked={isEditingDocumentLocked ?? false}
+              onLinkFile={(fileId) => handleLinkRelatedFiles(draft.id, fileId)}
+            />
 
-              <FormField label='Link a Document'>
-                <div className='space-y-3'>
-                  <SearchInput
-                    size='sm'
-                    value={relateSearchQuery}
-                    onChange={(e) => setRelateSearchQuery(e.target.value)}
-                    onClear={() => setRelateSearchQuery('')}
-                    placeholder='Search by name or folder...'
-                    disabled={isEditingDocumentLocked}
-                  />
-                  {relateSearchQuery.trim() && (
-                    <div className='rounded border border-border/60 bg-card/40 overflow-hidden shadow-xl'>
-                      {relateSearchResults.length === 0 ? (
-                        <div className='p-4 text-center text-xs text-gray-500'>No documents found.</div>
-                      ) : (
-                        relateSearchResults.map(result => (
-                          <button
-                            key={result.id}
-                            className='flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-white/10 transition-colors'
-                            onClick={() => {
-                              handleLinkRelatedFiles(draft.id, result.id);
-                              setRelateSearchQuery('');
-                            }}
-                          >
-                            <FileText className='size-4 text-gray-500' />
-                            <div className='min-w-0'>
-                              <div className='text-xs text-gray-200 truncate'>{result.name}</div>
-                              <div className='text-[10px] text-gray-500 truncate'>{result.folder || 'Root'}</div>
-                            </div>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
+            {/* Linked documents list */}
+            <div>
+              <div className='mb-2 flex items-center justify-between'>
+                <div className='text-xs font-semibold uppercase tracking-wider text-gray-500'>
+                  Linked Documents
                 </div>
-              </FormField>
+                {relatedFiles.length > 0 && (
+                  <span className='rounded-full border border-border/40 bg-card/60 px-2 py-0.5 text-[10px] text-gray-500'>
+                    {relatedFiles.length}
+                  </span>
+                )}
+              </div>
+              {relatedFiles.length === 0 ? (
+                <div className='rounded border border-dashed border-border/40 p-8 text-center text-xs text-gray-500'>
+                  No related documents linked yet.
+                </div>
+              ) : (
+                <div className='grid gap-2'>
+                  {relatedFiles.map(file => {
+                    const dateLabel = formatShortDate(file.documentDate?.isoDate);
+                    return (
+                      <div
+                        key={file.id}
+                        className='flex items-start gap-3 rounded border border-border/60 bg-card/20 px-3 py-2'
+                      >
+                        {/* Type icon */}
+                        <div className='mt-0.5 shrink-0'>
+                          <LinkedFileTypeIcon fileType={file.fileType} />
+                        </div>
+
+                        {/* Name + meta row */}
+                        <div className='min-w-0 flex-1'>
+                          <div className='flex items-center gap-1.5'>
+                            <span className='truncate text-xs font-medium text-gray-200'>
+                              {file.name}
+                            </span>
+                            {file.isLocked && (
+                              <Lock className='size-3 shrink-0 text-amber-400/70' />
+                            )}
+                          </div>
+                          <div className='mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-gray-500'>
+                            {file.fileType && (
+                              <span
+                                className={
+                                  file.fileType === 'document'
+                                    ? 'text-blue-400/70'
+                                    : file.fileType === 'scanfile'
+                                      ? 'text-amber-400/70'
+                                      : 'text-gray-500'
+                                }
+                              >
+                                {file.fileType}
+                              </span>
+                            )}
+                            {dateLabel && <span>{dateLabel}</span>}
+                            {file.folder && (
+                              <span className='truncate opacity-70'>{file.folder}</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Unlink button */}
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          className='mt-0.5 h-7 w-7 shrink-0 p-0 text-gray-500 hover:text-red-400'
+                          onClick={() => handleUnlinkRelatedFile(draft.id, file.id)}
+                          disabled={isEditingDocumentLocked}
+                        >
+                          <X className='size-4' />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </TabsContent>
 

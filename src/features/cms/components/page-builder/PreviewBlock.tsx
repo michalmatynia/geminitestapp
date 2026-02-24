@@ -31,7 +31,6 @@ import {
   getSectionStyles,
   getTextAlign,
   getBlockTypographyStyles,
-  type ColorSchemeColors,
 } from '../frontend/theme-styles';
 import { useCmsPageContext } from '../frontend/CmsPageContext';
 import { useMediaStyles } from '../frontend/media-styles-context';

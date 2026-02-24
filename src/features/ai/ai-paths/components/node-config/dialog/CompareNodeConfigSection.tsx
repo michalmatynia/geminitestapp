@@ -1,7 +1,7 @@
 'use client';
 
 import type { CompareConfig } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, SelectSimple, FormField } from '@/shared/ui';
+import { Button, Input,  SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 

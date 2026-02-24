@@ -7,7 +7,7 @@ import { TRIGGER_EVENTS, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { Label, SelectSimple, Card, FormField } from '@/shared/ui';
+import {  SelectSimple, Card, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 

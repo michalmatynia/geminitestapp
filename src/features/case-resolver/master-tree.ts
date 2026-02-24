@@ -9,11 +9,18 @@ import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-
 const FOLDER_NODE_PREFIX = 'folder:';
 const FILE_NODE_PREFIX = 'file:';
 const ASSET_NODE_PREFIX = 'asset:';
+const CASE_NODE_PREFIX = 'case:';
 
 export type CaseResolverMasterNodeRef =
   | { entity: 'folder'; id: string; nodeId: string }
   | { entity: 'file'; id: string; nodeId: string }
   | { entity: 'asset'; id: string; nodeId: string };
+
+export type CaseResolverCaseMasterNodeRef = {
+  entity: 'case';
+  id: string;
+  nodeId: string;
+};
 
 export const toCaseResolverFolderNodeId = (folderPath: string): string =>
   `${FOLDER_NODE_PREFIX}${folderPath}`;
@@ -24,6 +31,9 @@ export const toCaseResolverFileNodeId = (fileId: string): string =>
 export const toCaseResolverAssetNodeId = (assetId: string): string =>
   `${ASSET_NODE_PREFIX}${assetId}`;
 
+export const toCaseResolverCaseNodeId = (caseId: string): string =>
+  `${CASE_NODE_PREFIX}${caseId}`;
+
 export const fromCaseResolverFolderNodeId = (value: string): string | null =>
   value.startsWith(FOLDER_NODE_PREFIX) ? value.slice(FOLDER_NODE_PREFIX.length) : null;
 
@@ -32,6 +42,9 @@ export const fromCaseResolverFileNodeId = (value: string): string | null =>
 
 export const fromCaseResolverAssetNodeId = (value: string): string | null =>
   value.startsWith(ASSET_NODE_PREFIX) ? value.slice(ASSET_NODE_PREFIX.length) : null;
+
+export const fromCaseResolverCaseNodeId = (value: string): string | null =>
+  value.startsWith(CASE_NODE_PREFIX) ? value.slice(CASE_NODE_PREFIX.length) : null;
 
 export const decodeCaseResolverMasterNodeId = (
   value: string
@@ -43,6 +56,14 @@ export const decodeCaseResolverMasterNodeId = (
   const assetId = fromCaseResolverAssetNodeId(value);
   if (assetId !== null) return { entity: 'asset', id: assetId, nodeId: value };
   return null;
+};
+
+export const decodeCaseResolverCaseMasterNodeId = (
+  value: string
+): CaseResolverCaseMasterNodeRef | null => {
+  const caseId = fromCaseResolverCaseNodeId(value);
+  if (caseId === null) return null;
+  return { entity: 'case', id: caseId, nodeId: value };
 };
 
 const parentFolderPath = (folderPath: string): string | null => {
@@ -215,4 +236,120 @@ export const buildMasterNodesFromCaseResolverWorkspace = (
   });
 
   return nodes;
+};
+
+const resolveNormalizedCaseParentId = (
+  file: CaseResolverFile,
+  caseFilesById: Map<string, CaseResolverFile>
+): string | null => {
+  const parentCaseId = file.parentCaseId?.trim() ?? '';
+  if (!parentCaseId) return null;
+  if (parentCaseId === file.id) return null;
+  if (!caseFilesById.has(parentCaseId)) return null;
+  return parentCaseId;
+};
+
+const resolveCaseSortOrderValue = (file: CaseResolverFile): number =>
+  typeof file.caseTreeOrder === 'number' && Number.isFinite(file.caseTreeOrder)
+    ? Math.max(0, Math.floor(file.caseTreeOrder))
+    : Number.MAX_SAFE_INTEGER;
+
+const compareCaseSiblings = (left: CaseResolverFile, right: CaseResolverFile): number => {
+  const orderDelta = resolveCaseSortOrderValue(left) - resolveCaseSortOrderValue(right);
+  if (orderDelta !== 0) return orderDelta;
+  const nameDelta = left.name.localeCompare(right.name);
+  if (nameDelta !== 0) return nameDelta;
+  return left.id.localeCompare(right.id);
+};
+
+export const buildMasterCaseNodesFromCaseResolverWorkspace = (
+  workspace: CaseResolverWorkspace
+): MasterTreeNode[] => {
+  const caseFiles = workspace.files.filter(
+    (file: CaseResolverFile): boolean => file.fileType === 'case'
+  );
+  if (caseFiles.length === 0) return [];
+
+  const caseFilesById = new Map<string, CaseResolverFile>(
+    caseFiles.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+  );
+  const parentCaseIdByCaseId = new Map<string, string | null>();
+  caseFiles.forEach((file: CaseResolverFile): void => {
+    parentCaseIdByCaseId.set(file.id, resolveNormalizedCaseParentId(file, caseFilesById));
+  });
+
+  const siblingCaseIdsByParentId = new Map<string | null, string[]>();
+  caseFiles.forEach((file: CaseResolverFile): void => {
+    const parentCaseId = parentCaseIdByCaseId.get(file.id) ?? null;
+    const current = siblingCaseIdsByParentId.get(parentCaseId) ?? [];
+    current.push(file.id);
+    siblingCaseIdsByParentId.set(parentCaseId, current);
+  });
+
+  const normalizedSortOrderByCaseId = new Map<string, number>();
+  siblingCaseIdsByParentId.forEach((siblingCaseIds: string[]): void => {
+    const sortedSiblings = siblingCaseIds
+      .map((caseId: string): CaseResolverFile | null => caseFilesById.get(caseId) ?? null)
+      .filter((file: CaseResolverFile | null): file is CaseResolverFile => Boolean(file))
+      .sort(compareCaseSiblings);
+
+    sortedSiblings.forEach((file: CaseResolverFile, index: number): void => {
+      normalizedSortOrderByCaseId.set(file.id, index);
+    });
+  });
+
+  const pathByCaseId = new Map<string, string>();
+  const resolveCaseLabel = (file: CaseResolverFile): string => {
+    const normalized = file.name.trim();
+    return normalized.length > 0 ? normalized : file.id;
+  };
+  const resolveCasePath = (caseId: string, stack: Set<string>): string => {
+    const cached = pathByCaseId.get(caseId);
+    if (cached !== undefined) return cached;
+    const file = caseFilesById.get(caseId);
+    if (!file) return caseId;
+    const caseLabel = resolveCaseLabel(file);
+    if (stack.has(caseId)) return caseLabel;
+    const parentCaseId = parentCaseIdByCaseId.get(caseId) ?? null;
+    if (!parentCaseId) {
+      pathByCaseId.set(caseId, caseLabel);
+      return caseLabel;
+    }
+    stack.add(caseId);
+    const parentPath = resolveCasePath(parentCaseId, stack);
+    stack.delete(caseId);
+    const resolvedPath = `${parentPath}/${caseLabel}`;
+    pathByCaseId.set(caseId, resolvedPath);
+    return resolvedPath;
+  };
+
+  return caseFiles.map((file: CaseResolverFile): MasterTreeNode => {
+    const parentCaseId = parentCaseIdByCaseId.get(file.id) ?? null;
+    return {
+      id: toCaseResolverCaseNodeId(file.id),
+      type: 'folder',
+      kind: 'case_entry',
+      parentId: parentCaseId ? toCaseResolverCaseNodeId(parentCaseId) : null,
+      name: resolveCaseLabel(file),
+      path: resolveCasePath(file.id, new Set<string>()),
+      sortOrder: normalizedSortOrderByCaseId.get(file.id) ?? 0,
+      metadata: {
+        entity: 'case',
+        rawId: file.id,
+        parentCaseId,
+        folder: file.folder,
+        caseStatus: file.caseStatus ?? 'pending',
+        caseTreeOrder:
+          typeof file.caseTreeOrder === 'number' && Number.isFinite(file.caseTreeOrder)
+            ? Math.max(0, Math.floor(file.caseTreeOrder))
+            : null,
+        isLocked: file.isLocked === true,
+        tagId: file.tagId ?? null,
+        caseIdentifierId: file.caseIdentifierId ?? null,
+        categoryId: file.categoryId ?? null,
+        createdAt: file.createdAt,
+        updatedAt: file.updatedAt,
+      },
+    };
+  });
 };

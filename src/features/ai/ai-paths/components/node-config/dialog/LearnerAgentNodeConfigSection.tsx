@@ -8,7 +8,7 @@ import type { LearnerAgentConfig } from '@/features/ai/ai-paths/lib';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 import {
   Button,
-  Label,
+  
   SelectSimple,
   Textarea,
   LoadingState,

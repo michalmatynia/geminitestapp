@@ -43,7 +43,7 @@ import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from './CanvasB
 import { NodeProcessingDots } from './NodeProcessingDots';
 import { formatPortLabel } from '../utils/ui-utils';
 
-import type { EdgePath, EdgeRoutingMode } from '../context/hooks/useEdgePaths';
+import type { EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 
 const DEFAULT_NODE_NOTE_COLOR = '#f5e7c3';
 type CanvasRendererMode = 'legacy' | 'svg';
@@ -777,84 +777,10 @@ export function CanvasBoard({
     flowAnimationMs: FLOW_ANIMATION_MS,
     nodePulseMs: NODE_PULSE_MS,
   });
-  const svgWorldViewport = React.useMemo(() => {
-    if (!viewportSize) return null;
-    const minX = (-view.x) / view.scale - SVG_CULL_PADDING;
-    const minY = (-view.y) / view.scale - SVG_CULL_PADDING;
-    const maxX = (-view.x + viewportSize.width) / view.scale + SVG_CULL_PADDING;
-    const maxY = (-view.y + viewportSize.height) / view.scale + SVG_CULL_PADDING;
-    return { minX, minY, maxX, maxY };
-  }, [view.scale, view.x, view.y, viewportSize]);
-  const svgEdgeViewport = React.useMemo(() => {
-    if (!svgWorldViewport) return null;
-    return {
-      minX: svgWorldViewport.minX - SVG_EDGE_CULL_PADDING,
-      minY: svgWorldViewport.minY - SVG_EDGE_CULL_PADDING,
-      maxX: svgWorldViewport.maxX + SVG_EDGE_CULL_PADDING,
-      maxY: svgWorldViewport.maxY + SVG_EDGE_CULL_PADDING,
-    };
-  }, [svgWorldViewport]);
-  const svgVisibleNodeIdSet = React.useMemo(() => {
-    if (!svgWorldViewport) return new Set(nodes.map((node: AiNode) => node.id));
-    const visible = new Set<string>();
-    nodes.forEach((node: AiNode) => {
-      const left = node.position.x;
-      const top = node.position.y;
-      const right = node.position.x + NODE_WIDTH;
-      const bottom = node.position.y + NODE_MIN_HEIGHT;
-      if (
-        right >= svgWorldViewport.minX &&
-        left <= svgWorldViewport.maxX &&
-        bottom >= svgWorldViewport.minY &&
-        top <= svgWorldViewport.maxY
-      ) {
-        visible.add(node.id);
-      }
-    });
-    selectedNodeIdSet.forEach((nodeId: string) => {
-      visible.add(nodeId);
-    });
-    return visible;
-  }, [nodes, selectedNodeIdSet, svgWorldViewport]);
-  const renderedEdgePaths = React.useMemo((): EdgePath[] => {
-    if (!isSvgRenderer) return edgePaths;
-    return (edgePaths).filter((edgePath: EdgePath): boolean => {
-      if (!edgeMetaMap.has(edgePath.id)) return true;
-      const fromNodeId = edgePath.fromNodeId;
-      const toNodeId = edgePath.toNodeId;
-      if (selectedEdgeId === edgePath.id) return true;
-      if (selectedNodeIdSet.has(fromNodeId) || selectedNodeIdSet.has(toNodeId)) return true;
-      if (activeEdgeIds.has(edgePath.id)) return true;
-      if (svgEdgeViewport) {
-        const bounds = edgePath.bounds;
-        if (
-          bounds.maxX >= svgEdgeViewport.minX &&
-          bounds.minX <= svgEdgeViewport.maxX &&
-          bounds.maxY >= svgEdgeViewport.minY &&
-          bounds.minY <= svgEdgeViewport.maxY
-        ) {
-          return true;
-        }
-      }
-      const fromVisible = svgVisibleNodeIdSet.has(fromNodeId);
-      const toVisible = svgVisibleNodeIdSet.has(toNodeId);
-      if (fromVisible && toVisible) return true;
-      return false;
-    });
-  }, [
-    activeEdgeIds,
-    edgeMetaMap,
-    edgePaths,
-    selectedEdgeId,
-    selectedNodeIdSet,
-    svgEdgeViewport,
-    svgVisibleNodeIdSet,
-    isSvgRenderer,
-  ]);
   const svgDetailLevel = React.useMemo((): SvgDetailLevel => {
     let next: SvgDetailLevel =
       view.scale < 0.52 ? 'skeleton' : view.scale < 0.8 ? 'compact' : 'full';
-    if (svgVisibleNodeIdSet.size > 220 || renderedEdgePaths.length > 720) {
+    if (nodes.length > 220 || edges.length > 720) {
       next = downgradeDetailLevel(next);
     }
     if (svgPerf.fps > 0 && (svgPerf.fps < 46 || svgPerf.slowFrameRatio > 0.35)) {
@@ -862,10 +788,10 @@ export function CanvasBoard({
     }
     return next;
   }, [
-    renderedEdgePaths.length,
+    edges.length,
+    nodes.length,
     svgPerf.fps,
     svgPerf.slowFrameRatio,
-    svgVisibleNodeIdSet.size,
     view.scale,
   ]);
   const wireFlowEnabled = React.useMemo((): boolean => {
@@ -885,12 +811,12 @@ export function CanvasBoard({
   const svgReduceEdgeEffects = React.useMemo((): boolean => {
     if (!isSvgRenderer) return false;
     if (svgDetailLevel === 'skeleton') return true;
-    if (renderedEdgePaths.length > 780) return true;
+    if (edges.length > 780) return true;
     if (svgPerf.fps > 0 && svgPerf.fps < 40) return true;
     if (svgPerf.slowFrameRatio > 0.42) return true;
     return false;
   }, [
-    renderedEdgePaths.length,
+    edges.length,
     svgDetailLevel,
     svgPerf.fps,
     svgPerf.slowFrameRatio,
@@ -916,12 +842,6 @@ export function CanvasBoard({
     if (view.scale < 0.72) return 18;
     return 14;
   }, [svgDetailLevel, isSvgRenderer, view.scale]);
-  const svgCulledNodeCount = isSvgRenderer
-    ? Math.max(0, nodes.length - svgVisibleNodeIdSet.size)
-    : 0;
-  const svgCulledEdgeCount = isSvgRenderer
-    ? Math.max(0, edges.length - renderedEdgePaths.length)
-    : 0;
   const flowModeLabel = (() => {
     if (wireFlowEnabled) return effectiveFlowIntensity;
     if (isSvgRenderer && flowEnabled) return 'adaptive-off';
@@ -936,12 +856,6 @@ export function CanvasBoard({
         : null,
       `View: ${Math.round(view.x)}, ${Math.round(view.y)} @ ${Math.round(view.scale * 100)}%`,
       `Renderer: ${isSvgRenderer ? 'SVG' : 'Legacy'}`,
-      isSvgRenderer
-        ? `Visible: ${svgVisibleNodeIdSet.size} nodes / ${renderedEdgePaths.length} wires`
-        : null,
-      isSvgRenderer
-        ? `Culled: ${svgCulledNodeCount} nodes / ${svgCulledEdgeCount} wires`
-        : null,
       isSvgRenderer ? `Detail: ${svgDetailLevel}` : null,
       isSvgRenderer && svgPerf.fps > 0
         ? `FPS: ${svgPerf.fps} (${svgPerf.avgFrameMs.toFixed(1)}ms)`
@@ -957,13 +871,9 @@ export function CanvasBoard({
     isSvgRenderer,
     lastDrop,
     nodes.length,
-    renderedEdgePaths.length,
-    svgCulledEdgeCount,
-    svgCulledNodeCount,
     svgDetailLevel,
     svgPerf.avgFrameMs,
     svgPerf.fps,
-    svgVisibleNodeIdSet.size,
     view.scale,
     view.x,
     view.y,
@@ -985,6 +895,7 @@ export function CanvasBoard({
       detailLevel: svgDetailLevel,
       nodes,
       edges,
+      edgePaths,
       edgeMetaMap,
       nodeById,
       selectedNodeId,
@@ -1048,6 +959,11 @@ export function CanvasBoard({
       },
       onRemoveEdge: handleRemoveEdge,
       onSelectEdge: (edgeId: string) => selectEdge(edgeId),
+      zoomTo,
+      fitToNodes,
+      fitToSelection,
+      resetView,
+      centerOnCanvasPoint,
     }),
     [
       view,
@@ -1055,6 +971,7 @@ export function CanvasBoard({
       svgDetailLevel,
       nodes,
       edges,
+      edgePaths,
       edgeMetaMap,
       nodeById,
       selectedNodeId,
@@ -1094,6 +1011,11 @@ export function CanvasBoard({
       selectEdge,
       setConfigOpen,
       fireTrigger,
+      zoomTo,
+      fitToNodes,
+      fitToSelection,
+      resetView,
+      centerOnCanvasPoint,
     ]
   );
 
@@ -1248,15 +1170,7 @@ export function CanvasBoard({
           </div>
         </div>
         {isSvgRenderer && showMinimap ? (
-          <CanvasMinimap
-            nodes={nodes}
-            edgePaths={edgePaths}
-            selectedNodeIdSet={selectedNodeIdSet}
-            view={view}
-            viewportSize={viewportSize}
-            onNavigate={centerOnCanvasPoint}
-            onZoomTo={zoomTo}
-          />
+          <CanvasMinimap />
         ) : null}
         {selectionMarqueeRect ? (
           <div
@@ -1385,7 +1299,7 @@ export function CanvasBoard({
             style={{ pointerEvents: 'auto' }}
           >
             <CanvasSvgEdgeLayer
-              edgePaths={renderedEdgePaths}
+              cullPadding={SVG_EDGE_CULL_PADDING}
             />
             {connecting && connectingPos ? ((): React.JSX.Element => {
               const fromX = connecting.start.x;

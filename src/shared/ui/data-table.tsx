@@ -196,15 +196,21 @@ export const DataTable = memo(function DataTable<TData>({
         ref={parentRef}
         className={cn('flex-1 min-h-0', maxHeight && 'overflow-auto')}
       >
-        <Table className='border-collapse'>
-          <TableHeader className={cn(stickyHeader && 'sticky top-0 z-10 bg-background')}>
+        <Table
+          className='border-collapse'
+          wrapperClassName={cn(maxHeight && 'overflow-visible')}
+        >
+          <TableHeader className={cn(stickyHeader && 'z-10 bg-background')}>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className='border-border'>
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead 
                       key={header.id} 
-                      className={cn('text-foreground', stickyHeader && 'bg-background')}
+                      className={cn(
+                        'text-foreground',
+                        stickyHeader && 'sticky top-0 z-20 bg-background'
+                      )}
                     >
                       {header.isPlaceholder
                         ? null

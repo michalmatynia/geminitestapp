@@ -8,23 +8,26 @@ import { cn } from '@/shared/utils';
 
 
 
+import { useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
+
 export interface Asset3DCardProps {
   asset: Asset3DRecord;
-  onPreview: (asset: Asset3DRecord) => void;
-  onEdit: (asset: Asset3DRecord) => void;
-  onDelete: (asset: Asset3DRecord) => void;
-  isDeleting?: boolean;
   className?: string;
 }
 
 export function Asset3DCard({
   asset,
-  onPreview,
-  onEdit,
-  onDelete,
-  isDeleting = false,
   className,
 }: Asset3DCardProps): React.JSX.Element {
+  const {
+    setPreviewAsset,
+    setEditAsset,
+    handleDelete,
+    isDeleting: checkIsDeleting,
+  } = useAdmin3DAssetsContext();
+
+  const isDeleting = checkIsDeleting(asset.id);
+
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -46,7 +49,7 @@ export function Asset3DCard({
       title={displayName}
       description={asset.description ?? ''}
       {...(className ? { className } : {})}
-      onClick={(): void => onPreview(asset)}
+      onClick={(): void => setPreviewAsset(asset)}
       actions={
         <div className='flex items-center gap-1'>
           <Button
@@ -55,7 +58,7 @@ export function Asset3DCard({
             className='h-7 w-7 text-muted-foreground hover:text-blue-400'
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
-              onEdit(asset);
+              setEditAsset(asset);
             }}
           >
             <Edit2 className='h-4 w-4' />
@@ -66,7 +69,7 @@ export function Asset3DCard({
             className='h-7 w-7 text-muted-foreground hover:text-red-400'
             onClick={(e: React.MouseEvent): void => {
               e.stopPropagation();
-              onDelete(asset);
+              void handleDelete(asset);
             }}
             disabled={isDeleting}
             loading={isDeleting}

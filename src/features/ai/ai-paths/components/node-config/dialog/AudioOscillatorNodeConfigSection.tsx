@@ -4,7 +4,7 @@ import type { AudioWaveform } from '@/features/ai/ai-paths/lib';
 import { toNumber } from '@/features/ai/ai-paths/lib';
 import {
   Input,
-  Label,
+  
   SelectSimple,
   FormField,
 } from '@/shared/ui';

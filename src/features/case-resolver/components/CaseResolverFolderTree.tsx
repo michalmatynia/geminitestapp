@@ -7,15 +7,12 @@ import {
   FileImage,
   FilePlus,
   FileText,
-  Eye,
   Folder,
   FolderOpen,
   FolderPlus,
   GitBranch,
   GripVertical,
   Lock,
-  Pencil,
-  Sparkles,
   Trash2,
   Unlock,
 } from 'lucide-react';
@@ -652,12 +649,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
     });
   }, [treeWorkspace.assets, treeWorkspace.files]);
 
-  const documentNodeIdsBySourceFileId = useMemo((): Map<string, string[]> => {
-    return new Map<string, string[]>(
-      Object.entries(nodeFileRelations.nodeIdsByDocumentFileId),
-    );
-  }, [nodeFileRelations.nodeIdsByDocumentFileId]);
-
   const nodeFileAssetIdsBySourceFileId = useMemo((): Map<string, string[]> => {
     return new Map<string, string[]>(
       Object.entries(nodeFileRelations.nodeFileAssetIdsByDocumentFileId),
@@ -1123,13 +1114,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
               fileType,
               isChildStructureNode: isChildStructureSectionNode,
             });
-            const linkedDocumentNodeIds = fileId
-              ? (documentNodeIdsBySourceFileId.get(fileId) ?? [])
-              : [];
-            const linkedNodeFileAssetIds = fileId
-              ? (nodeFileAssetIdsBySourceFileId.get(fileId) ?? [])
-              : [];
-            const hasDocumentNodeInCanvas = linkedDocumentNodeIds.length > 0;
             const isHighlightedNodeFile = Boolean(
               assetId && highlightedNodeFileAssetIdSet.has(assetId),
             );
@@ -1440,27 +1424,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                           Link →
                         </span>
                       ) : null}
-                      {isCaseFile && fileId ? (
-                        <button
-                          type='button'
-                          className={`inline-flex size-4 shrink-0 items-center justify-center rounded text-gray-300/80 transition hover:bg-muted/60 hover:text-white ${
-                            hoverOnlyControlClass
-                          }`}
-                          title={
-                            isScanCaseFile ? 'Edit scan file' : 'Edit document'
-                          }
-                          aria-label={
-                            isScanCaseFile ? 'Edit scan file' : 'Edit document'
-                          }
-                          onClick={(event): void => {
-                            event.preventDefault();
-                            event.stopPropagation();
-                            onEditFile(fileId);
-                          }}
-                        >
-                          <Pencil className='size-3' />
-                        </button>
-                      ) : null}
                     </>
                   )}
                 </div>
@@ -1529,78 +1492,6 @@ export function CaseResolverFolderTree(): React.JSX.Element {
                       hoverOnlyControlClass
                     }`}
                   >
-                    {isCanvasCaseFile ? (
-                      <button
-                        type='button'
-                        className='inline-flex size-6 items-center justify-center rounded border border-sky-500/40 bg-sky-500/10 text-sky-200 transition hover:bg-sky-500/20 hover:text-sky-100'
-                        title={
-                          isNodeFileCanvasActive
-                            ? 'Add file to node canvas'
-                            : hasDocumentNodeInCanvas
-                              ? 'Show file in node file canvas'
-                              : 'Add file to a node file canvas'
-                        }
-                        aria-label={
-                          isNodeFileCanvasActive
-                            ? 'Add file to node canvas'
-                            : hasDocumentNodeInCanvas
-                              ? 'Show file in node file canvas'
-                              : 'Add file to a node file canvas'
-                        }
-                        onClick={(event): void => {
-                          event.preventDefault();
-                          event.stopPropagation();
-                          if (
-                            !isNodeFileCanvasActive &&
-                            hasDocumentNodeInCanvas
-                          ) {
-                            const targetNodeFileAssetId =
-                              linkedNodeFileAssetIds[0] ?? null;
-                            if (targetNodeFileAssetId) {
-                              onSelectAsset(targetNodeFileAssetId);
-                            }
-                            setPendingNodeCanvasAction({
-                              kind: 'show',
-                              fileId,
-                              name: node.name,
-                              folder: parseString(node.metadata?.['folder']),
-                              nodeId:
-                                linkedDocumentNodeIds[
-                                  linkedDocumentNodeIds.length - 1
-                                ] ?? null,
-                              relatedNodeFileAssetIds: linkedNodeFileAssetIds,
-                              targetNodeFileAssetId,
-                            });
-                            return;
-                          }
-                          if (!isNodeFileCanvasActive) {
-                            onCreateNodeFile(
-                              parseString(node.metadata?.['folder']),
-                            );
-                            setPendingNodeCanvasAction({
-                              kind: 'drop',
-                              fileId,
-                              name: node.name,
-                              folder: parseString(node.metadata?.['folder']),
-                              relatedNodeFileAssetIds: [],
-                            });
-                            return;
-                          }
-                          setHighlightedNodeFileAssetIds([]);
-                          emitCaseResolverDropDocumentToCanvas({
-                            fileId,
-                            name: node.name,
-                            folder: parseString(node.metadata?.['folder']),
-                          });
-                        }}
-                      >
-                        {!isNodeFileCanvasActive && hasDocumentNodeInCanvas ? (
-                          <Eye className='size-3.5' />
-                        ) : (
-                          <Sparkles className='size-3.5' />
-                        )}
-                      </button>
-                    ) : null}
                     <button
                       type='button'
                       className={`inline-flex size-6 items-center justify-center rounded border transition ${

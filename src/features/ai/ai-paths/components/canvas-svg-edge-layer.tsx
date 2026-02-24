@@ -5,14 +5,15 @@ import React from 'react';
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
 import { SignalDots } from './SignalDots';
 
-import type { EdgePath } from '../context/hooks/useEdgePaths';
-
 export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
-  edgePaths,
+  cullPadding = 160,
 }: {
-  edgePaths: EdgePath[];
+  cullPadding?: number;
 }): React.JSX.Element {
   const {
+    edgePaths,
+    view,
+    viewportSize,
     edgeMetaMap,
     nodeById,
     selectedEdgeId,
@@ -26,9 +27,41 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
     onSelectEdge,
   } = useCanvasBoardUI();
 
+  const worldViewport = React.useMemo(() => {
+    if (!viewportSize) return null;
+    return {
+      minX: (-view.x) / view.scale - cullPadding,
+      minY: (-view.y) / view.scale - cullPadding,
+      maxX: (-view.x + viewportSize.width) / view.scale + cullPadding,
+      maxY: (-view.y + viewportSize.height) / view.scale + cullPadding,
+    };
+  }, [cullPadding, view.scale, view.x, view.y, viewportSize]);
+
+  const renderEdgePaths = React.useMemo(() => {
+    return edgePaths.filter((edgePath) => {
+      const fromNodeId = edgePath.fromNodeId;
+      const toNodeId = edgePath.toNodeId;
+      if (selectedEdgeId === edgePath.id) return true;
+      if (selectedNodeIdSet.has(fromNodeId) || selectedNodeIdSet.has(toNodeId)) return true;
+      if (activeEdgeIds.has(edgePath.id)) return true;
+      if (worldViewport) {
+        const bounds = edgePath.bounds;
+        if (
+          bounds.maxX >= worldViewport.minX &&
+          bounds.minX <= worldViewport.maxX &&
+          bounds.maxY >= worldViewport.minY &&
+          bounds.minY <= worldViewport.maxY
+        ) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }, [activeEdgeIds, edgePaths, selectedEdgeId, selectedNodeIdSet, worldViewport]);
+
   return (
     <>
-      {edgePaths.map((edge: EdgePath): React.JSX.Element => {
+      {renderEdgePaths.map((edge) => {
         const edgeMeta = edgeMetaMap.get(edge.id);
         const fromNodeId = edgeMeta?.from ?? edge.fromNodeId;
         const toNodeId = edgeMeta?.to ?? edge.toNodeId;

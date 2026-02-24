@@ -32,7 +32,7 @@ import { Asset3DCard } from '../components/Asset3DCard';
 import { Asset3DEditModal } from '../components/Asset3DEditModal';
 import { Asset3DPreviewModal } from '../components/Asset3DPreviewModal';
 import { Asset3DUploader } from '../components/Asset3DUploader';
-import { useAdmin3DAssetsState } from '../hooks/useAdmin3DAssetsState';
+import { Admin3DAssetsProvider, useAdmin3DAssetsContext } from '../context/Admin3DAssetsContext';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -50,7 +50,7 @@ const formatDate = (date: Date | string): string => {
   });
 };
 
-export function Admin3DAssetsPage(): React.JSX.Element {
+function Admin3DAssetsContent(): React.JSX.Element {
   const {
     showUploader, setShowUploader,
     previewAsset, setPreviewAsset,
@@ -65,8 +65,6 @@ export function Admin3DAssetsPage(): React.JSX.Element {
     error,
     categories,
     allTags,
-    handleUpload,
-    handleEdit,
     handleDelete,
     handleReindex,
     clearFilters,
@@ -76,7 +74,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
     isReindexing,
     refetch,
     isFetching,
-  } = useAdmin3DAssetsState();
+  } = useAdmin3DAssetsContext();
 
   const columns = useMemo<ColumnDef<Asset3DRecord>[]>(() => [
     {
@@ -313,12 +311,7 @@ export function Admin3DAssetsPage(): React.JSX.Element {
           variant='glass'
         >
           <div className='mt-4'>
-            <Asset3DUploader
-              onUpload={handleUpload}
-              onCancel={() => setShowUploader(false)}
-              existingCategories={categories}
-              existingTags={allTags}
-            />
+            <Asset3DUploader />
           </div>
         </FormSection>
       )}
@@ -356,10 +349,6 @@ export function Admin3DAssetsPage(): React.JSX.Element {
             <Asset3DCard
               key={asset.id}
               asset={asset}
-              onPreview={setPreviewAsset}
-              onEdit={setEditAsset}
-              onDelete={(a) => void handleDelete(a)}
-              isDeleting={isDeleting(asset.id)}
             />
           ))}
         </div>
@@ -380,13 +369,18 @@ export function Admin3DAssetsPage(): React.JSX.Element {
           isOpen={true}
           onClose={() => setEditAsset(null)}
           item={editAsset}
-          onSave={handleEdit}
-          existingCategories={categories}
-          existingTags={allTags}
         />
       )}
 
       <ConfirmationModal />
     </StandardDataTablePanel>
+  );
+}
+
+export function Admin3DAssetsPage(): React.JSX.Element {
+  return (
+    <Admin3DAssetsProvider>
+      <Admin3DAssetsContent />
+    </Admin3DAssetsProvider>
   );
 }

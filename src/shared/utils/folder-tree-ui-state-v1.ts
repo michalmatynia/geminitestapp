@@ -38,6 +38,7 @@ const mapSchema: z.ZodType<FolderTreeUiStateV1Map> = z.object({
   product_categories: entrySchema,
   cms_page_builder: entrySchema,
   case_resolver: entrySchema,
+  case_resolver_cases: entrySchema,
 });
 
 const createDefaultEntry = (): FolderTreeUiStateV1Entry => ({
@@ -51,6 +52,7 @@ export const createDefaultFolderTreeUiStateV1 = (): FolderTreeUiStateV1Map => ({
   product_categories: createDefaultEntry(),
   cms_page_builder: createDefaultEntry(),
   case_resolver: createDefaultEntry(),
+  case_resolver_cases: createDefaultEntry(),
 });
 
 const coerceEntry = (

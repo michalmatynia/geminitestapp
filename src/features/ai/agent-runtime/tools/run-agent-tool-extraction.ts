@@ -125,7 +125,7 @@ export async function runExtractionRequest({
       log,
       activeStepId ?? undefined
     );
-    const extractionPlan = await buildExtractionPlan(
+    const extractionPlan: ExtractionPlan | null = await buildExtractionPlan(
       llmContext,
       {
         type: extractionRequest.type,
@@ -478,7 +478,7 @@ export async function runExtractionRequest({
       );
         
       // Try plans selectors first
-      const planSelectors = (extractionPlan as ExtractionPlan | null)?.primarySelectors ?? [];
+      const planSelectors = extractionPlan?.primarySelectors ?? [];
       if (planSelectors.length > 0 && extractedNames.length === 0) {
         extractedNames = cleanProductNames(
           await extractProductNamesFromSelectors(page, planSelectors)
@@ -499,12 +499,12 @@ export async function runExtractionRequest({
       // Try fallback selectors
       if (
         extractedNames.length === 0 &&
-            ((extractionPlan as ExtractionPlan | null)?.fallbackSelectors ?? []).length > 0
+            (extractionPlan?.fallbackSelectors ?? []).length > 0
       ) {
         extractedNames = cleanProductNames(
           await extractProductNamesFromSelectors(
             page,
-            ((extractionPlan as ExtractionPlan | null)?.fallbackSelectors ?? [])
+            (extractionPlan?.fallbackSelectors ?? [])
           )
         );
       }
@@ -540,8 +540,8 @@ export async function runExtractionRequest({
         activeStepId ?? undefined
       );
       const recoveryType =
-            ((extractionPlan as ExtractionPlan | null)?.primarySelectors ?? []).length > 0 ||
-            ((extractionPlan as ExtractionPlan | null)?.fallbackSelectors ?? []).length > 0
+            (extractionPlan?.primarySelectors ?? []).length > 0 ||
+            (extractionPlan?.fallbackSelectors ?? []).length > 0
               ? 'bad_selectors'
               : 'missing_extraction';
         

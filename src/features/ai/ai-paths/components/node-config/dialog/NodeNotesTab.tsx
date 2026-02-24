@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import { Input, Label, Textarea, Checkbox, FormField } from '@/shared/ui';
+import { Input,  Textarea, Checkbox, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 

@@ -17,6 +17,7 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   pageSize: 50,
   thumbnailSource: 'file',
   filtersCollapsedByDefault: false,
+  advancedFilterPresets: [],
 };
 
 export function ProductPreferencesPage(): React.JSX.Element {

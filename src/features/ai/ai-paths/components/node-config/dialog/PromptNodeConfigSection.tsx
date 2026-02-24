@@ -8,7 +8,7 @@ import React from 'react';
 import type { AiNode, Edge, PromptConfig } from '@/features/ai/ai-paths/lib';
 import { buildPromptOutput, createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
 import { formatPlaceholderLabel, formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
-import { Button, Label, Textarea, Alert, FormField } from '@/shared/ui';
+import { Button, Textarea, Alert, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 import {

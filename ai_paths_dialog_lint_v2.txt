@@ -1,0 +1,9 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/PromptNodeConfigSection.tsx
+  10:27  error  Parsing error: ',' expected
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/TemplateNodeConfigSection.tsx
+  8:29  warning  'FormField' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 2 problems (1 error, 1 warning)
+

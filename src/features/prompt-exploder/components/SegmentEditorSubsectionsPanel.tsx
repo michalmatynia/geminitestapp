@@ -36,17 +36,11 @@ import type {
   PromptExploderSubsection,
 } from '../types';
 
-export function SegmentEditorSubsectionsPanel(args: {
-  segment: PromptExploderSegment;
-}): React.JSX.Element | null {
-  const {
-    segment,
-  } = args;
-  
-  const { listParamOptions, listParamEntryByPath } = useDocumentState();
+export function SegmentEditorSubsectionsPanel(): React.JSX.Element | null {
+  const { selectedSegment: segment, listParamOptions, listParamEntryByPath } = useDocumentState();
   const { updateSegment } = useDocumentActions();
 
-  if (segment.type !== 'sequence' && segment.type !== 'qa_matrix') {
+  if (!segment || (segment.type !== 'sequence' && segment.type !== 'qa_matrix')) {
     return null;
   }
 

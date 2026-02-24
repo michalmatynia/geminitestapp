@@ -1,5 +1,7 @@
 import type { ExtractionPlan, FailureRecoveryPlan } from '@/shared/contracts/agent-runtime';
 
+export type { ExtractionPlan, FailureRecoveryPlan };
+
 export type AgentToolRequest = {
   name: 'playwright';
   input: {
@@ -21,7 +23,8 @@ type ToolOutput = {
   extractedTotal?: number;
   extractedItems?: string[];
   extractionType?: 'product_names' | 'emails';
-  extractionPlan?: unknown;
+  extractionPlan?: ExtractionPlan | null;
+  recoveryPlan?: FailureRecoveryPlan | null;
 };
 
 export type AgentToolResult = {

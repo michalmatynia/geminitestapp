@@ -14,8 +14,8 @@ import {
   parsePromptEngineSettings,
 } from '@/features/prompt-engine/settings';
 import type {
-  PromptValidationRuleDto as PromptValidationRule,
-  PromptValidationScopeDto as PromptValidationScope,
+  PromptValidationRule,
+  PromptValidationScope,
 } from '@/shared/contracts/prompt-engine';
 import { promptValidationRuleSchema } from '@/shared/contracts/prompt-engine';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
@@ -23,7 +23,6 @@ import {
   Badge,
   Button,
   Input,
-  Label,
   SelectSimple,
   Textarea,
   ToggleRow,

@@ -13,6 +13,8 @@ import type {
 
 import type { ConnectorInfo } from './canvas-board-connectors';
 
+import type { EdgePath } from '../context/hooks/useEdgePaths';
+
 export type CanvasRendererMode = 'legacy' | 'svg';
 export type SvgDetailLevel = 'full' | 'compact' | 'skeleton';
 export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping';
@@ -26,6 +28,7 @@ export interface CanvasBoardUIContextValue {
   // Graph Data
   nodes: AiNode[];
   edges: Edge[];
+  edgePaths: EdgePath[];
   edgeMetaMap: Map<string, Edge>;
   nodeById: Map<string, AiNode>;
   
@@ -54,6 +57,13 @@ export interface CanvasBoardUIContextValue {
   enableNodeAnimations: boolean;
   connectorHitTargetPx: number;
   openNodeConfigOnSingleClick: boolean;
+  
+  // Viewport Control
+  zoomTo: (targetScale: number) => void;
+  fitToNodes: () => void;
+  fitToSelection: () => void;
+  resetView: () => void;
+  centerOnCanvasPoint: (canvasX: number, canvasY: number) => void;
   
   // Connector Tooltip State
   hoveredConnectorKey: string | null;

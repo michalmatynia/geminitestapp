@@ -13,6 +13,7 @@ import {
 import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/admin';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {
@@ -40,8 +41,6 @@ import {
   VALIDATOR_PATTERN_LISTS_KEY,
   VALIDATOR_SCOPE_DESCRIPTIONS,
   VALIDATOR_SCOPE_LABELS,
-  type ValidatorPatternList,
-  type ValidatorScope,
 } from './validator-scope';
 
 import type { ColumnDef } from '@tanstack/react-table';

@@ -8,7 +8,7 @@ import {
 } from '@/features/ai/agentcreator';
 import { AgentCreatorSettingsSection } from '@/features/ai/agentcreator/components/AgentCreatorSettingsSection';
 import { logClientError } from '@/features/observability';
-import type { PlaywrightPersonaDto as PlaywrightPersona } from '@/shared/contracts/playwright';
+import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { Button, SelectSimple, useToast, FormSection, FormField, ToggleRow, FormActions } from '@/shared/ui';
 
 import { useChatbotSettings } from '../context/ChatbotContext';

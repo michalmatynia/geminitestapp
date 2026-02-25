@@ -106,6 +106,30 @@ const ensureEdge = (
   ];
 };
 
+export const buildTranslationEnPlPathConfigValue = (): string => {
+  const config = {
+    id: TRANSLATION_EN_PL_PATH_ID,
+    name: TRANSLATION_EN_PL_PATH_NAME,
+    version: 1,
+    nodes: [
+      { id: PARSER_NODE_ID, type: 'parser', position: { x: 100, y: 100 } },
+      { id: REGEX_DESCRIPTION_NODE_ID, type: 'regex', position: { x: 400, y: 100 } },
+      { id: REGEX_PARAMETERS_NODE_ID, type: 'regex', position: { x: 400, y: 300 } },
+      { id: UPDATE_NODE_ID, type: 'database', position: { x: 700, y: 200 } },
+    ],
+    edges: [
+      { id: 'edge-1', from: PARSER_NODE_ID, to: REGEX_DESCRIPTION_NODE_ID, fromPort: 'description_en', toPort: 'text' },
+      { id: 'edge-2', from: PARSER_NODE_ID, to: REGEX_PARAMETERS_NODE_ID, fromPort: 'parameters', toPort: 'text' },
+      { id: 'edge-3', from: PARSER_NODE_ID, to: UPDATE_NODE_ID, fromPort: 'bundle', toPort: 'bundle' },
+      { id: 'edge-4', from: REGEX_DESCRIPTION_NODE_ID, to: UPDATE_NODE_ID, fromPort: 'value', toPort: 'value' },
+      { id: 'edge-5', from: REGEX_PARAMETERS_NODE_ID, to: UPDATE_NODE_ID, fromPort: 'value', toPort: 'result' },
+    ],
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  return JSON.stringify(config);
+};
+
 export const needsTranslationEnPlConfigUpgrade = (
   raw: string | undefined,
 ): boolean => {

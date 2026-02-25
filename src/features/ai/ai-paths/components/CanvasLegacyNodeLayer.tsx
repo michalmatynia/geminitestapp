@@ -59,7 +59,7 @@ export function CanvasLegacyNodeLayer({
 
         const isScheduledTrigger =
           node.type === 'trigger' &&
-          (node.config?.trigger?.kind === 'schedule' ||
+          (node.config?.trigger?.event === 'scheduled_run' ||
             node.config?.trigger?.event === 'cron');
 
         const nodeDiagnostics = nodeDiagnosticsById[node.id];
@@ -75,7 +75,12 @@ export function CanvasLegacyNodeLayer({
               : 'border-sky-500/60 bg-sky-500/15 text-sky-200';
 
         const isBlockerProcessing =
-          node.type === 'blocker' && BLOCKER_PROCESSING_STATUSES.has(runtimeNodeStatus ?? '');
+          (node.type === 'model' ||
+            node.type === 'agent' ||
+            node.type === 'learner_agent' ||
+            node.type === 'poll' ||
+            node.type === 'delay') &&
+          BLOCKER_PROCESSING_STATUSES.has(runtimeNodeStatus ?? '');
 
         const showNote = Boolean(node.note?.text);
         const noteText = node.note?.text ?? '';

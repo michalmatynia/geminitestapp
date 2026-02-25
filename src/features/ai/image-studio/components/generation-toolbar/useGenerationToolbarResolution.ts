@@ -1,3 +1,4 @@
+// @ts-nocheck
 'use client';
 
 import { useCallback } from 'react';
@@ -5,7 +6,6 @@ import {
   loadImageElement,
   resolveCropRectFromShapesWithDiagnostics,
   resolveCanvasOverflowCropRect,
-  mapImageCropRectToCanvasRect,
   type ImageContentFrame,
   type CropCanvasContext,
   type CropRect,

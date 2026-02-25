@@ -1,15 +1,13 @@
 'use client';
 
+import type { AiPathRuntimeAnalyticsSummaryDto as AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+import type { AnalyticsSummaryDto as AnalyticsSummary } from '@/shared/contracts/analytics';
+import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type { 
-  AiInsightRecord, 
-  AiPathRuntimeAnalyticsSummary, 
-  AnalyticsSummary, 
-} from '@/shared/contracts';
-import type { 
-  ChatbotModelsResponse, 
-  InsightsSnapshot 
+  ChatbotModelsResponseDto as ChatbotModelsResponse, 
+  InsightsSnapshotDto as InsightsSnapshot 
 } from '@/shared/contracts/ai-brain';
-import type { SystemLogMetrics } from '@/shared/contracts/observability';
+import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -90,8 +88,8 @@ export function useBrainInsights(): SingleQuery<InsightsSnapshot> {
         api.get<{ insights?: AiInsightRecord[] }>('/api/system/logs/insights', { params: { limit: 5 } }),
       ]);
       return {
-        analytics: analyticsData.insights ?? [],
-        logs: logsData.insights ?? [],
+        analytics: (analyticsData.insights as AiInsightRecord[]) ?? [],
+        logs: (logsData.insights as AiInsightRecord[]) ?? [],
       };
     },
     id: 'insights',

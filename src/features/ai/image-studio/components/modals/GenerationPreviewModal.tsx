@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { StatusBadge, MetadataItem, FormActions } from '@/shared/ui';

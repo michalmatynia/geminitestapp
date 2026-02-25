@@ -11,7 +11,8 @@ import {
   type UiExtractorSuggestion,
 } from './prompt-extract-utils';
 import { isParamUiControl, type ParamUiControl } from '../../utils/param-ui';
-import { flattenParams, inferParamSpecs, type ParamSpec } from '../../utils/prompt-params';
+import { flattenParams, inferParamSpecs } from '../../utils/prompt-params';
+import { type ParamSpec } from '@/shared/contracts/prompt-engine';
 
 import type { Dispatch, SetStateAction } from 'react';
 

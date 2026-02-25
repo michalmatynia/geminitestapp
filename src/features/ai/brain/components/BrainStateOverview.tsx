@@ -5,6 +5,7 @@ import { Card } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { AI_BRAIN_SETTINGS_KEY } from '../settings';
+import type { InsightsSnapshot } from '@/shared/contracts/ai-brain';
 
 const formatDate = (value: string | Date | null | undefined): string => {
   if (!value) return 'never';
@@ -14,18 +15,11 @@ const formatDate = (value: string | Date | null | undefined): string => {
 };
 
 export function BrainStateOverview(): React.JSX.Element {
-  const {
-    analyticsScheduleEnabled,
-    analyticsScheduleMinutes,
-    runtimeAnalyticsScheduleEnabled,
-    runtimeAnalyticsScheduleMinutes,
-    logsScheduleEnabled,
-    logsScheduleMinutes,
-    insightsQuery,
-  } = useBrain();
+  const brain = useBrain();
   const settingsQuery = useSettingsMap();
 
-  const latestLogsInsight = insightsQuery.data?.logs?.[0] ?? null;
+  const insightsData = brain.insightsQuery.data as InsightsSnapshot | undefined;
+  const latestLogsInsight = insightsData?.logs?.[0];
 
   return (
     <Card variant='subtle' padding='md' className='border-border/60 bg-gradient-to-r from-emerald-500/10 via-cyan-500/5 to-blue-500/10'>
@@ -39,13 +33,13 @@ export function BrainStateOverview(): React.JSX.Element {
         <div>
           <div className='text-[11px] uppercase tracking-wide text-cyan-300'>Report cadence</div>
           <div className='mt-1 text-gray-200'>
-            Analytics {analyticsScheduleEnabled ? `every ${analyticsScheduleMinutes}m` : 'paused'} · Runtime {runtimeAnalyticsScheduleEnabled ? `every ${runtimeAnalyticsScheduleMinutes}m` : 'paused'} · Logs {logsScheduleEnabled ? `every ${logsScheduleMinutes}m` : 'paused'}
+            Analytics {brain.analyticsScheduleEnabled ? `every ${brain.analyticsScheduleMinutes}m` : 'paused'} · Runtime {brain.runtimeAnalyticsScheduleEnabled ? `every ${brain.runtimeAnalyticsScheduleMinutes}m` : 'paused'} · Logs {brain.logsScheduleEnabled ? `every ${brain.logsScheduleMinutes}m` : 'paused'}
           </div>
         </div>
         <div>
           <div className='text-[11px] uppercase tracking-wide text-blue-300'>Latest insight</div>
           <div className='mt-1 text-gray-200'>
-            {latestLogsInsight ? formatDate(latestLogsInsight.createdAt) : 'No insight runs yet'}
+            {latestLogsInsight ? formatDate((latestLogsInsight).createdAt) : 'No insight runs yet'}
           </div>
         </div>
       </div>

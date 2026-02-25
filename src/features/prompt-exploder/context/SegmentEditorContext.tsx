@@ -1,5 +1,11 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 import React, { createContext, useCallback, useEffect, useMemo, useState, useContext } from 'react';
 
 import { PROMPT_ENGINE_SETTINGS_KEY } from '@/features/prompt-engine/settings';

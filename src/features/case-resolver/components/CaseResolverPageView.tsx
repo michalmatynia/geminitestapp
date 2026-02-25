@@ -24,6 +24,7 @@ export function CaseResolverPageView(): React.JSX.Element {
     workspace,
     activeCaseId,
     requestedCaseStatus,
+    requestedCaseIssue,
     canCreateInActiveCase,
     selectedFileId,
     selectedAssetId,
@@ -53,6 +54,7 @@ export function CaseResolverPageView(): React.JSX.Element {
     handleUpdateSelectedAsset,
     handleSaveFileEditor,
     handleDiscardFileEditorDraft,
+    handleRetryCaseContext,
     ConfirmationModal,
     PromptInputModal,
   } = state;
@@ -78,6 +80,7 @@ export function CaseResolverPageView(): React.JSX.Element {
     setWorkspaceView,
     handleMoveFolder,
     isEditorDraftDirty,
+    handleResetCaseContext,
   } = contextValue;
 
   // Pending navigation stored as a callback so we can execute it after user confirms
@@ -107,7 +110,10 @@ export function CaseResolverPageView(): React.JSX.Element {
         workspace,
         activeCaseId,
         requestedCaseStatus,
+        requestedCaseIssue,
         canCreateInActiveCase,
+        onRetryCaseContext: handleRetryCaseContext,
+        onResetCaseContext: handleResetCaseContext as () => void,
         selectedFileId,
         selectedAssetId,
         selectedFolderPath,

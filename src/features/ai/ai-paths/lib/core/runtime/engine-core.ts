@@ -30,7 +30,6 @@ import {
   GraphExecutionError, 
   GraphExecutionCancelled,
   type RuntimeProfileOptions, 
-  type RuntimeProfileEvent, 
   type RuntimeProfileNodeStats, 
   type RuntimeProfileSummary 
 } from './engine-modules/engine-types';

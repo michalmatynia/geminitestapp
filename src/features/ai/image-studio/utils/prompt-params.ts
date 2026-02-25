@@ -1,9 +1,7 @@
 import type { 
   ExtractParamsResult,
   ParamSpec,
-  ParamSpecKind,
   ParamIssue,
-  ParamIssueSeverity
 } from '@/shared/contracts/prompt-engine';
 
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>

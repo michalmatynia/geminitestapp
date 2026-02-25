@@ -5,8 +5,8 @@
 import React, { useState } from 'react';
 import type { PageZone } from '@/shared/contracts/cms';
 import { useComponentTreePanelContext } from './ComponentTreePanelContext';
-import { useDragState } from '../../hooks/useDragStateContext';
-import { useTreeActions } from '../../hooks/useTreeActionsContext';
+import { useDragState } from '../../../hooks/useDragStateContext';
+import { useTreeActions } from '../../../hooks/useTreeActionsContext';
 import { SectionPicker } from '../SectionPicker';
 import { SectionDropTarget } from './SectionDropTarget';
 

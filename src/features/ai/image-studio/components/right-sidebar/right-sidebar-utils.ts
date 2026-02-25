@@ -1,3 +1,4 @@
+import { type CanvasResizeDirection } from '../utils/canvas-resize';
 import type { VectorShape, VectorTool } from '@/features/vector-drawing';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
@@ -15,7 +16,148 @@ import type {
 } from '../../utils/studio-settings';
 
 export const CHARS_PER_TOKEN_ESTIMATE = 4;
-export const ACTION_HISTORY_MAX_STEPS = 10;
+export const ACTION_HISTORY_MAX_STEPS = 50;
+export const CANVAS_RESIZE_MIN_PX = 64;
+export const CANVAS_RESIZE_MAX_PX = 32_768;
+
+export const parseCanvasDimensionInput = (value: string): number | null => {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) return null;
+  const normalized = Math.floor(parsed);
+  if (normalized < CANVAS_RESIZE_MIN_PX || normalized > CANVAS_RESIZE_MAX_PX) {
+    return null;
+  }
+  return normalized;
+};
+
+export const formatCanvasSizeLabel = (
+  width: number | null,
+  height: number | null
+): string => {
+  if (
+    typeof width !== 'number' ||
+    !Number.isFinite(width) ||
+    typeof height !== 'number' ||
+    !Number.isFinite(height)
+  ) {
+    return 'Auto';
+  }
+  return `${Math.floor(width)} x ${Math.floor(height)}`;
+};
+
+export type CanvasSizePresetOption = {
+  value: string;
+  label: string;
+  description: string;
+};
+
+export const CANVAS_SIZE_PRESET_OPTIONS: CanvasSizePresetOption[] = [
+  {
+    value: '1024x1024',
+    label: 'Square 1024 x 1024',
+    description: 'Balanced square canvas.',
+  },
+  {
+    value: '1536x1024',
+    label: 'Landscape 1536 x 1024',
+    description: 'Wider layout for horizontal compositions.',
+  },
+  {
+    value: '1024x1536',
+    label: 'Portrait 1024 x 1536',
+    description: 'Taller layout for vertical compositions.',
+  },
+  {
+    value: '2048x2048',
+    label: 'Square 2048 x 2048',
+    description: 'High-resolution square output.',
+  },
+  {
+    value: '2048x1536',
+    label: 'Landscape 2048 x 1536',
+    description: 'High-resolution horizontal output.',
+  },
+  {
+    value: '1536x2048',
+    label: 'Portrait 1536 x 2048',
+    description: 'High-resolution vertical output.',
+  },
+];
+
+export const parseCanvasSizePresetValue = (
+  value: string
+): { width: number; height: number } | null => {
+  const [widthRaw, heightRaw] = value.split('x');
+  if (!widthRaw || !heightRaw) return null;
+  const width = parseCanvasDimensionInput(widthRaw);
+  const height = parseCanvasDimensionInput(heightRaw);
+  if (width === null || height === null) return null;
+  return { width, height };
+};
+
+export const CANVAS_RESIZE_DIRECTION_OPTIONS: Array<{
+  value: CanvasResizeDirection;
+  arrow: string;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'up-left',
+    arrow: '^<',
+    label: 'Extend Up + Left',
+    description: 'Adds new canvas area above and left of current content.',
+  },
+  {
+    value: 'up',
+    arrow: '^',
+    label: 'Extend Up',
+    description: 'Adds new canvas area above current content.',
+  },
+  {
+    value: 'up-right',
+    arrow: '^>',
+    label: 'Extend Up + Right',
+    description: 'Adds new canvas area above and right of current content.',
+  },
+  {
+    value: 'left',
+    arrow: '<',
+    label: 'Extend Left',
+    description: 'Adds new canvas area left of current content.',
+  },
+  {
+    value: 'center',
+    arrow: '+',
+    label: 'Extend From Center',
+    description: 'Splits extension evenly around current content.',
+  },
+  {
+    value: 'right',
+    arrow: '>',
+    label: 'Extend Right',
+    description: 'Adds new canvas area right of current content.',
+  },
+  {
+    value: 'down-left',
+    arrow: 'v<',
+    label: 'Extend Down + Left',
+    description: 'Adds new canvas area below and left of current content.',
+  },
+  {
+    value: 'down',
+    arrow: 'v',
+    label: 'Extend Down',
+    description: 'Adds new canvas area below current content.',
+  },
+  {
+    value: 'down-right',
+    arrow: 'v>',
+    label: 'Extend Down + Right',
+    description: 'Adds new canvas area below and right of current content.',
+  },
+];
 
 type ModelCostProfile = {
   imageUsdPerImage: number;

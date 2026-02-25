@@ -18,7 +18,10 @@ export function CaseResolverTreeHeader(): React.JSX.Element {
   const {
     activeCaseId,
     requestedCaseStatus,
+    requestedCaseIssue,
     canCreateInActiveCase,
+    onRetryCaseContext,
+    onResetCaseContext,
     onCreateFolder,
     onCreateFile,
     onCreateScanFile,
@@ -40,14 +43,22 @@ export function CaseResolverTreeHeader(): React.JSX.Element {
   const createContextTooltip = React.useMemo((): string | null => {
     if (canCreateInActiveCase) return null;
     if (requestedCaseStatus === 'loading') return 'Loading case context...';
-    if (requestedCaseStatus === 'missing')
-      return 'Case context unavailable. Click to retry.';
+    if (requestedCaseStatus === 'missing') return 'Case context unavailable.';
     if (!activeCaseId) return 'Select a case first.';
     return 'Case context is not ready.';
   }, [activeCaseId, canCreateInActiveCase, requestedCaseStatus]);
 
-  const disableCreateActions =
-    !canCreateInActiveCase && requestedCaseStatus !== 'missing';
+  const requestedCaseIssueMessage = React.useMemo((): string => {
+    if (requestedCaseIssue === 'workspace_unavailable') {
+      return 'Could not load workspace context. Retry or reset context.';
+    }
+    if (requestedCaseIssue === 'requested_file_missing') {
+      return 'Requested case context was not found. Retry or reset context.';
+    }
+    return 'Case context is unavailable. Retry or reset context.';
+  }, [requestedCaseIssue]);
+
+  const disableCreateActions = !canCreateInActiveCase;
 
   const activeCaseIdentifierLabel = React.useMemo((): string | null => {
     const identifierId = activeCaseFile?.caseIdentifierId ?? null;
@@ -100,7 +111,31 @@ export function CaseResolverTreeHeader(): React.JSX.Element {
           />
         </div>
       ) : null}
-      {createContextTooltip ? (
+      {requestedCaseStatus === 'missing' ? (
+        <div className='rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1.5'>
+          <div className='text-[11px] text-amber-200'>{requestedCaseIssueMessage}</div>
+          <div className='mt-1.5 flex items-center gap-1'>
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              className='h-6 border-amber-400/50 px-2 text-[11px] text-amber-100 hover:bg-amber-500/15'
+              onClick={onRetryCaseContext}
+            >
+              Retry
+            </Button>
+            <Button
+              type='button'
+              size='sm'
+              variant='outline'
+              className='h-6 border-amber-400/40 px-2 text-[11px] text-amber-100 hover:bg-amber-500/10'
+              onClick={onResetCaseContext}
+            >
+              Reset context
+            </Button>
+          </div>
+        </div>
+      ) : createContextTooltip ? (
         <div className='rounded border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200'>
           {createContextTooltip}
         </div>

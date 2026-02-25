@@ -8,7 +8,8 @@ import { cn } from '@/shared/utils';
 
 import { usePromptState, usePromptActions } from '../context/PromptContext';
 import { isParamUiControl, paramUiControlLabel, recommendParamUiControl, type ParamUiControl } from '../utils/param-ui';
-import { type ParamLeaf, type ParamSpec } from '../utils/prompt-params';
+import { type ParamLeaf } from '../utils/prompt-params';
+import { type ParamSpec } from '@/shared/contracts/prompt-engine';
 
 function safeJsonStringify(value: unknown): string {
   try {
@@ -25,7 +26,7 @@ export const ParamRow = React.memo(function ParamRow({ leaf }: { leaf: ParamLeaf
   const spec = paramSpecs?.[leaf.path];
   const uiControl = paramUiOverrides[leaf.path] ?? 'auto';
   const flipped = Boolean(paramFlipMap[leaf.path]);
-  const issues = issuesByPath[leaf.path] ?? [];
+  const issues = (issuesByPath[leaf.path] ?? []);
   const onChange = useCallback((value: unknown): void => onParamChange(leaf.path, value), [onParamChange, leaf.path]);
   const onFlip = useCallback((): void => onParamFlip(leaf.path), [onParamFlip, leaf.path]);
   const onUiControlChange = useCallback((control: ParamUiControl): void => onParamUiControlChange(leaf.path, control), [onParamUiControlChange, leaf.path]);
@@ -54,17 +55,10 @@ export const ParamRow = React.memo(function ParamRow({ leaf }: { leaf: ParamLeaf
 
   let recommendationSpec: ParamSpec | undefined;
   if (spec) {
-    const nextSpec: ParamSpec = {
+    recommendationSpec = {
+      ...spec,
       kind: uiKind,
-      path: spec.path,
     };
-    if (typeof spec.hint === 'string') nextSpec.hint = spec.hint;
-    if (Array.isArray(spec.enumOptions)) nextSpec.enumOptions = spec.enumOptions;
-    if (typeof spec.min === 'number') nextSpec.min = spec.min;
-    if (typeof spec.max === 'number') nextSpec.max = spec.max;
-    if (typeof spec.step === 'number') nextSpec.step = spec.step;
-    if (typeof spec.integer === 'boolean') nextSpec.integer = spec.integer;
-    recommendationSpec = nextSpec;
   }
   const recommendation = recommendParamUiControl(value, recommendationSpec);
   const selectedUiControl = uiControl;
@@ -208,7 +202,7 @@ export const ParamRow = React.memo(function ParamRow({ leaf }: { leaf: ParamLeaf
                   min={spec?.min ?? 0}
                   max={spec?.max ?? 1}
                   step={spec?.step ?? 0.01}
-                  value={Math.min(spec?.max ?? Number(value), Math.max(spec?.min ?? Number(value), Number(value)))}
+                  value={Math.min(spec?.max ?? (value), Math.max(spec?.min ?? (value), (value)))}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                     const next = Number(e.target.value);
                     if (!Number.isFinite(next)) return;
@@ -240,7 +234,7 @@ export const ParamRow = React.memo(function ParamRow({ leaf }: { leaf: ParamLeaf
                   <div className='text-[10px] text-gray-500'>{label}</div>
                   <Input size='sm'
                     type='number'
-                    value={String(value[index] ?? '')}
+                    value={String((value as unknown[])[index] ?? '')}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const next = Number(e.target.value);
                       if (!Number.isFinite(next)) return;
@@ -265,7 +259,7 @@ export const ParamRow = React.memo(function ParamRow({ leaf }: { leaf: ParamLeaf
                   <div className='text-[10px] text-gray-500'>{label}</div>
                   <Input size='sm'
                     type='number'
-                    value={String(value[index] ?? '')}
+                    value={String((value as unknown[])[index] ?? '')}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                       const next = Number(e.target.value);
                       if (!Number.isFinite(next)) return;

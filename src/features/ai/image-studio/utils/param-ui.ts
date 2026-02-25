@@ -1,4 +1,4 @@
-import type { ParamSpec, ParamSpecKind } from './prompt-params';
+import { type ParamSpec, type ParamSpecKind } from '@/shared/contracts/prompt-engine';
 
 export type ParamUiControl =
   | 'auto'

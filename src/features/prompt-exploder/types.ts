@@ -1,3 +1,4 @@
+import type { PromptValidationRule } from '@/features/prompt-engine/settings';
 import type {
   PromptExploderAiProviderDto,
   PromptExploderBindingDto,
@@ -39,7 +40,9 @@ export type PromptExploderLogicalOperator = PromptExploderLogicalOperatorDto;
 export type PromptExploderOperationMode = PromptExploderOperationModeDto;
 export type PromptExploderParamUiControl = PromptExploderParamUiControlDto;
 export type PromptExploderPatternRuleMap = PromptExploderPatternRuleMapDto;
-export type PromptExploderPatternSnapshot = PromptExploderPatternSnapshotDto;
+export type PromptExploderPatternSnapshot = PromptExploderPatternSnapshotDto & {
+  rules?: PromptValidationRule[];
+};
 export type PromptExploderSegment = PromptExploderSegmentDto;
 export type PromptExploderSegmentType = PromptExploderSegmentTypeDto;
 export type PromptExploderSettings = PromptExploderSettingsDto;

@@ -1,6 +1,5 @@
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import type { StudioAssetImportResult } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import type { SlotsActions } from '../../context/SlotsContext';
 
 import { setImageStudioSlotImageLocked } from '../../utils/slot-image-lock';

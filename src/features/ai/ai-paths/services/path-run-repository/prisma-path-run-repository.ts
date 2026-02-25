@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { Prisma, AiPathRunEventLevel, AiPathRun, AiPathRunNode, AiPathRunEvent } from '@prisma/client';
+import { Prisma, AiPathRunEventLevel } from '@prisma/client';
 
 import {
   AI_PATHS_RUN_SOURCE_TABS,

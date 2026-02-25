@@ -73,7 +73,32 @@ export const upsertMongoAiPathsSetting = async (
   return { key, value };
 };
 
-export const upsertMongoAiPathsSettingsBatch = async (
+export const fetchMongoAiPathsSettings = async (
+  keys: string[],
+  timeoutMs: number
+): Promise<AiPathsSettingRecord[]> => {
+  if (keys.length === 0) return [];
+  await ensureMongoIndexes(timeoutMs);
+  const mongo = await withMongoOperationTimeout(getMongoDb(), timeoutMs);
+  const docs = await withMongoOperationTimeout(
+    mongo
+      .collection<MongoAiPathsSettingDoc>(AI_PATHS_SETTINGS_COLLECTION)
+      .find({ key: { $in: keys } }, { projection: { key: 1, value: 1 } })
+      .toArray(),
+    timeoutMs
+  );
+
+  return docs
+    .map((doc: MongoAiPathsSettingDoc): AiPathsSettingRecord | null => {
+      const key = typeof doc.key === 'string' ? doc.key : null;
+      const value = typeof doc.value === 'string' ? doc.value : null;
+      if (!key || value === null) return null;
+      return { key, value };
+    })
+    .filter((item: AiPathsSettingRecord | null): item is AiPathsSettingRecord => Boolean(item));
+};
+
+export const upsertMongoAiPathsSettings = async (
   items: AiPathsSettingRecord[],
   timeoutMs: number
 ): Promise<void> => {

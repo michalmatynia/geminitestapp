@@ -10,7 +10,10 @@ import {
   useState,
 } from 'react';
 
-import type { Toast, ToastVariant } from '@/shared/contracts/ui';
+import type { Toast, ToastVariant, ToastOptions } from '@/shared/contracts/ui';
+
+export type { Toast, ToastVariant, ToastOptions };
+
 import { classifyError, getSuggestedActions } from '@/shared/errors/error-classifier';
 import { Button } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';

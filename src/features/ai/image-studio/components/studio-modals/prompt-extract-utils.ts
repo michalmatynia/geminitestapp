@@ -1,5 +1,6 @@
 import { recommendParamUiControl, type ParamUiControl } from '../../utils/param-ui';
-import { flattenParams, type ParamSpec } from '../../utils/prompt-params';
+import { flattenParams } from '../../utils/prompt-params';
+import { type ParamSpec } from '@/shared/contracts/prompt-engine';
 
 
 export type { ParamUiControl };

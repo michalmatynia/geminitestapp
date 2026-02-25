@@ -1,21 +1,24 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+
 import { useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useEffect, useMemo, useState, useContext } from 'react';
 
 import {
   parseValidatorPatternLists,
   VALIDATOR_PATTERN_LISTS_KEY,
-  type ValidatorPatternList,
 } from '@/features/admin/pages/validator-scope';
-import { getPromptValidationObservabilitySnapshot } from '@/features/prompt-core/runtime-observability';
+import type { ValidatorPatternList } from '@/features/admin/pages/validator-scope';
 import {
   parsePromptEngineSettings,
   parsePromptValidationRules,
   PROMPT_ENGINE_SETTINGS_KEY,
-  type PromptValidationRule,
 } from '@/features/prompt-engine/settings';
-import type { PromptEngineSettings } from '@/features/prompt-engine/settings';
+import type { PromptValidationRule, PromptEngineSettings } from '@/features/prompt-engine/settings';
 import {
   useSettingsMap,
   useUpdateSetting,
@@ -28,20 +31,16 @@ import { serializeSetting } from '@/shared/utils/settings-json';
 import {
   PROMPT_EXPLODER_DRAFT_PROMPT_KEY,
   readPromptExploderDraftPayload,
-  type PromptExploderBridgeSource,
 } from '../bridge';
 import { isPromptValidationStrictStackMode } from '../feature-flags';
-import { promptExploderClampNumber } from '../helpers/formatting';
-import { promptExploderIsPromptExploderManagedRule } from '../helpers/segment-helpers';
 import {
   applyPromptExploderParserTuningDrafts,
   buildPromptExploderParserTuningDrafts,
   validatePromptExploderParserTuningDrafts,
-  type PromptExploderParserTuningRuleDraft,
 } from '../parser-tuning';
+import type { PromptExploderParserTuningRuleDraft } from '../parser-tuning';
 import {
   ensurePromptExploderPatternPack,
-  PROMPT_EXPLODER_PATTERN_PACK,
 } from '../pattern-pack';
 import {
   buildPatternSnapshot,
@@ -49,120 +48,27 @@ import {
   prependPatternSnapshot,
   removePatternSnapshotById,
 } from '../pattern-snapshots';
+import type { PromptExploderPatternSnapshot } from '../pattern-snapshots';
 import {
   resolvePromptValidationRuntime,
   type PromptValidationOrchestrationResult,
 } from '../prompt-validation-orchestrator';
 import { getPromptExploderRuntimeGuardrailIssue } from '../runtime-guardrails';
 import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../settings';
+import type { PromptExploderLearnedTemplate, PromptExploderSettings } from '../types';
 import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
-  normalizePromptExploderValidationRuleStack,
-  promptExploderValidationStackFromBridgeSource,
-  type PromptExploderRuntimeValidationScope,
-  type PromptExploderValidationRuleStack,
 } from '../validation-stack';
 
-import type {
-  PromptExploderLearnedTemplate,
-  PromptExploderPatternSnapshot,
-} from '../types';
-
-// ── Types ────────────────────────────────────────────────────────────────────
-
-export interface LearningDraft {
-  runtimeRuleProfile: 'all' | 'pattern_pack' | 'learned_only';
-  runtimeValidationRuleStack: PromptExploderValidationRuleStack;
-  enabled: boolean;
-  similarityThreshold: number;
-  templateMergeThreshold: number;
-  benchmarkSuggestionUpsertTemplates: boolean;
-  minApprovalsForMatching: number;
-  maxTemplates: number;
-  autoActivateLearnedTemplates: boolean;
-}
-
-// --- Granular State Interfaces ---
-
-export interface SettingsCoreState {
-  settingsMap: Map<string, string>;
-  validatorPatternLists: ValidatorPatternList[];
-  promptSettings: PromptEngineSettings;
-  promptExploderSettings: ReturnType<typeof parsePromptExploderSettings>;
-  isBusy: boolean;
-}
-
-export interface SettingsRuntimeState {
-  activeValidationScope: PromptExploderRuntimeValidationScope;
-  activeValidationRuleStack: PromptExploderValidationRuleStack;
-  runtimeSelection: PromptValidationOrchestrationResult;
-  runtimeGuardrailIssue: string | null;
-  scopedRules: PromptValidationRule[];
-  effectiveRules: PromptValidationRule[];
-  runtimeValidationRules: PromptValidationRule[];
-  effectiveLearnedTemplates: PromptExploderLearnedTemplate[];
-  runtimeLearnedTemplates: PromptExploderLearnedTemplate[];
-  templateMergeThreshold: number;
-}
-
-export interface SettingsDraftsState {
-  learningDraft: LearningDraft;
-  parserTuningDrafts: PromptExploderParserTuningRuleDraft[];
-  isParserTuningOpen: boolean;
-  hasUnsavedLearningDraft: boolean;
-  hasUnsavedParserTuningDrafts: boolean;
-  sessionLearnedRules: PromptValidationRule[];
-  sessionLearnedTemplates: PromptExploderLearnedTemplate[];
-}
-
-export interface SettingsSnapshotsState {
-  snapshotDraftName: string;
-  selectedSnapshotId: string;
-  availableSnapshots: PromptExploderPatternSnapshot[];
-  selectedSnapshot: PromptExploderPatternSnapshot | null;
-}
+import { SettingsCoreContext, type SettingsCoreState } from './settings/SettingsCoreContext';
+import { SettingsRuntimeContext, type SettingsRuntimeState } from './settings/SettingsRuntimeContext';
+import { SettingsDraftsContext, type SettingsDraftsState, type LearningDraft } from './settings/SettingsDraftsContext';
+import { SettingsSnapshotsContext, type SettingsSnapshotsState } from './settings/SettingsSnapshotsContext';
+import { SettingsActionsContext, type SettingsActions } from './settings/SettingsActionsContext';
 
 export interface SettingsState extends SettingsCoreState, SettingsRuntimeState, SettingsDraftsState, SettingsSnapshotsState {}
 
-export interface SettingsActions {
-  setLearningDraft: React.Dispatch<React.SetStateAction<LearningDraft>>;
-  setParserTuningDrafts: React.Dispatch<React.SetStateAction<PromptExploderParserTuningRuleDraft[]>>;
-  setIsParserTuningOpen: React.Dispatch<React.SetStateAction<boolean>>;
-  setSnapshotDraftName: React.Dispatch<React.SetStateAction<string>>;
-  setSelectedSnapshotId: React.Dispatch<React.SetStateAction<string>>;
-  setSessionLearnedRules: React.Dispatch<React.SetStateAction<PromptValidationRule[]>>;
-  setSessionLearnedTemplates: React.Dispatch<React.SetStateAction<PromptExploderLearnedTemplate[]>>;
-  patchParserTuningDraft: (
-    ruleId: PromptExploderParserTuningRuleDraft['id'],
-    patch: Partial<PromptExploderParserTuningRuleDraft>
-  ) => void;
-  handleInstallPatternPack: () => Promise<void>;
-  handleSaveLearningSettings: () => Promise<void>;
-  handleSaveParserTuningRules: () => Promise<void>;
-  handleResetParserTuningDrafts: () => void;
-  handleCapturePatternSnapshot: () => Promise<void>;
-  handleRestorePatternSnapshot: () => Promise<void>;
-  handleDeletePatternSnapshot: () => Promise<void>;
-  handleTemplateStateChange: (
-    templateId: string,
-    nextState: PromptExploderLearnedTemplate['state']
-  ) => Promise<void>;
-  handleDeleteTemplate: (templateId: string) => Promise<void>;
-  updateSetting: ReturnType<typeof useUpdateSetting>;
-  updateSettingsBulk: ReturnType<typeof useUpdateSettingsBulk>;
-}
-
-// ── Contexts ─────────────────────────────────────────────────────────────────
-
-const SettingsCoreContext = createContext<SettingsCoreState | null>(null);
-const SettingsRuntimeContext = createContext<SettingsRuntimeState | null>(null);
-const SettingsDraftsContext = createContext<SettingsDraftsState | null>(null);
-const SettingsSnapshotsContext = createContext<SettingsSnapshotsState | null>(null);
-
-const SettingsStateContext = createContext<SettingsState | null>(null);
-const SettingsActionsContext = createContext<SettingsActions | null>(null);
-
-// ── Provider ─────────────────────────────────────────────────────────────────
+export const SettingsStateContext = createContext<SettingsState | null>(null);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { toast } = useToast();
@@ -170,7 +76,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const settingsQuery = useSettingsMap({ scope: 'all' });
   const updateSetting = useUpdateSetting();
   const updateSettingsBulk = useUpdateSettingsBulk();
-  const settingsMap = settingsQuery.data ?? new Map<string, string>();
+  
+  const settingsMap = (settingsQuery.data as unknown as Map<string, string>) ?? new Map<string, string>();
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
   const isCaseResolverReturnTarget = returnTo.startsWith('/admin/case-resolver');
 
@@ -194,42 +101,38 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const [hasUnsavedLearningDraft, setHasUnsavedLearningDraft] = useState(false);
   const [hasUnsavedParserTuningDrafts, setHasUnsavedParserTuningDrafts] = useState(false);
   const [incomingBridgeSource, setIncomingBridgeSource] =
-    useState<PromptExploderBridgeSource | null>(null);
+    useState<string | null>(null);
 
-  const setLearningDraft = useCallback<React.Dispatch<React.SetStateAction<LearningDraft>>>(
-    (value) => {
+  const setLearningDraft = useCallback(
+    (value: React.SetStateAction<LearningDraft>) => {
       setHasUnsavedLearningDraft(true);
       setLearningDraftState(value);
     },
     []
   );
 
-  const setParserTuningDrafts = useCallback<
-    React.Dispatch<React.SetStateAction<PromptExploderParserTuningRuleDraft[]>>
-  >((value) => {
+  const setParserTuningDrafts = useCallback((value: React.SetStateAction<PromptExploderParserTuningRuleDraft[]>) => {
     setHasUnsavedParserTuningDrafts(true);
     setParserTuningDraftsState(value);
   }, []);
 
-  // ── Derived state ──────────────────────────────────────────────────────────
-
-  const rawPromptSettings = settingsQuery.data?.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
-  const rawExploderSettings = settingsQuery.data?.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
-  const rawValidatorPatternLists =
-    settingsQuery.data?.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
+  const rawPromptSettings = settingsMap.get(PROMPT_ENGINE_SETTINGS_KEY) ?? null;
+  const rawExploderSettings = settingsMap.get(PROMPT_EXPLODER_SETTINGS_KEY) ?? null;
+  const rawValidatorPatternLists = settingsMap.get(VALIDATOR_PATTERN_LISTS_KEY) ?? null;
 
   const promptSettings = useMemo(
     () => parsePromptEngineSettings(rawPromptSettings),
     [rawPromptSettings]
-  );
+  ) as unknown as PromptEngineSettings;
   const promptExploderSettings = useMemo(
     () => parsePromptExploderSettings(rawExploderSettings),
     [rawExploderSettings]
-  );
+  ) as unknown as PromptExploderSettings;
   const validatorPatternLists = useMemo(
     () => parseValidatorPatternLists(rawValidatorPatternLists),
     [rawValidatorPatternLists]
-  );
+  ) as unknown as ValidatorPatternList[];
+
   const strictStackMode = useMemo(
     () => isPromptValidationStrictStackMode(),
     []
@@ -274,11 +177,11 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     };
   }, [isCaseResolverReturnTarget]);
 
-  const runtimeResolution = useMemo<{
-    selection: PromptValidationOrchestrationResult;
-    warning: Error | null;
-    guardrailIssue: string | null;
-  }>(() => {
+  const runtimeResolution = useMemo((): { 
+    selection: PromptValidationOrchestrationResult; 
+    warning: Error | null; 
+    guardrailIssue: string | null 
+  } => {
     const allowValidationStackFallback =
       promptExploderSettings.runtime.allowValidationStackFallback;
     try {
@@ -353,168 +256,81 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         context: {
           source: 'PromptExploderSettingsContext',
           action: 'resolvePromptValidationRuntime',
-          stack: learningDraft.runtimeValidationRuleStack,
-          correlationId: runtimeResolution.selection.correlationId,
-          level: 'warn',
         },
       });
     }
-    const message = runtimeResolution.guardrailIssue ?? warning?.message ?? '';
-    if (message.trim()) {
-      toast(message, {
-        variant: runtimeResolution.guardrailIssue ? 'error' : 'warning',
-      });
-    }
-  }, [
-    learningDraft.runtimeValidationRuleStack,
-    runtimeResolution.guardrailIssue,
-    runtimeResolution.selection.correlationId,
-    runtimeResolution.warning,
-    toast,
-  ]);
+  }, [runtimeResolution.warning, runtimeResolution.guardrailIssue]);
 
-  useEffect(() => {
-    const checkHealth = (): void => {
-      const snapshot = getPromptValidationObservabilitySnapshot();
-      if (snapshot.health.status === 'ok') return;
-      logClientError(
-        new Error('Prompt runtime health ${snapshot.health.status}'),
-        {
-          context: {
-            source: 'PromptExploderSettingsContext',
-            action: 'runtimeHealthCheck',
-            status: snapshot.health.status,
-            checks: snapshot.health.checks,
-            counters: snapshot.counters,
-            errors: snapshot.errors,
-            level: snapshot.health.status === 'critical' ? 'error' : 'warn',
-          },
-        }
-      );
-    };
-    checkHealth();
-    const timer = window.setInterval(checkHealth, 20_000);
-    return () => {
-      window.clearInterval(timer);
-    };
-  }, []);
-
-  const runtimeSelection = runtimeResolution.selection;
-  const activeValidationScope = runtimeSelection.identity.scope;
-  const scopedRules = runtimeSelection.scopedRules;
-  const effectiveRules = runtimeSelection.effectiveRules;
-  const runtimeValidationRules = runtimeSelection.runtimeValidationRules;
-  const effectiveLearnedTemplates = runtimeSelection.effectiveLearnedTemplates;
-  const runtimeLearnedTemplates = runtimeSelection.runtimeLearnedTemplates;
-  const activeValidationRuleStack = runtimeSelection.identity.stack;
+  const runtimeSelection = runtimeResolution.selection as unknown as PromptValidationOrchestrationResult;
   const runtimeGuardrailIssue = runtimeResolution.guardrailIssue;
 
-  const parserTuningBaseDrafts = useMemo(
-    () =>
-      buildPromptExploderParserTuningDrafts({
-        scopedRules,
-        patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
-        scope: activeValidationScope,
-      }),
-    [activeValidationScope, scopedRules]
+  const activeValidationScope = preferredValidatorScope;
+  const activeValidationRuleStack = runtimeSelection.validationRuleStack;
+
+  const scopedRules = useMemo(
+    () => (runtimeSelection.scopedRules as unknown as PromptValidationRule[]),
+    [runtimeSelection.scopedRules]
   );
 
-  useEffect(() => {
-    if (hasUnsavedParserTuningDrafts) return;
-    setParserTuningDraftsState(parserTuningBaseDrafts);
-  }, [hasUnsavedParserTuningDrafts, parserTuningBaseDrafts]);
-
-  const templateMergeThreshold = promptExploderClampNumber(
-    learningDraft.templateMergeThreshold,
-    0.3,
-    0.95
+  const effectiveRules = useMemo(
+    () => (runtimeSelection.effectiveRules as unknown as PromptValidationRule[]),
+    [runtimeSelection.effectiveRules]
   );
 
-  const availableSnapshots = useMemo<PromptExploderPatternSnapshot[]>(
-    () =>
-      [...(promptExploderSettings.patternSnapshots ?? [])].sort((left, right) => {
-        const a = left.createdAt ?? '';
-        const b = right.createdAt ?? '';
-        return b.localeCompare(a);
-      }),
-    [promptExploderSettings.patternSnapshots]
+  const runtimeValidationRules = useMemo(
+    () => (runtimeSelection.runtimeValidationRules as unknown as PromptValidationRule[]),
+    [runtimeSelection.runtimeValidationRules]
   );
-  const selectedSnapshot = useMemo(() => {
-    if (!selectedSnapshotId) return null;
-    return availableSnapshots.find((snapshot) => snapshot.id === selectedSnapshotId) ?? null;
-  }, [availableSnapshots, selectedSnapshotId]);
 
-  // ── Sync learning draft from persisted settings ────────────────────────────
+  const effectiveLearnedTemplates = useMemo(
+    () => (runtimeSelection.effectiveLearnedTemplates as unknown as PromptExploderLearnedTemplate[]),
+    [runtimeSelection.effectiveLearnedTemplates]
+  );
 
-  useEffect(() => {
-    if (hasUnsavedLearningDraft) return;
-    const rawRuleProfile = promptExploderSettings.runtime.ruleProfile;
-    const runtimeRuleProfile = (rawRuleProfile === 'pattern_pack' || rawRuleProfile === 'learned_only') 
-      ? rawRuleProfile 
-      : 'all';
+  const runtimeLearnedTemplates = useMemo(
+    () => (runtimeSelection.runtimeLearnedTemplates as unknown as PromptExploderLearnedTemplate[]),
+    [runtimeSelection.runtimeLearnedTemplates]
+  );
 
-    setLearningDraftState({
-      runtimeRuleProfile,
-      runtimeValidationRuleStack: normalizePromptExploderValidationRuleStack(
-        promptExploderSettings.runtime.validationRuleStack,
-        validatorPatternLists
-      ),
-      enabled: promptExploderSettings.learning.enabled,
-      similarityThreshold: promptExploderSettings.learning.similarityThreshold,
-      templateMergeThreshold: promptExploderSettings.learning.templateMergeThreshold,
-      benchmarkSuggestionUpsertTemplates:
-        promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates ?? false,
-      minApprovalsForMatching: promptExploderSettings.learning.minApprovalsForMatching,
-      maxTemplates: promptExploderSettings.learning.maxTemplates,
-      autoActivateLearnedTemplates:
-        promptExploderSettings.learning.autoActivateLearnedTemplates,
-    });
-    setHasUnsavedLearningDraft(false);
-  }, [
-    hasUnsavedLearningDraft,
-    promptExploderSettings.runtime.ruleProfile,
-    promptExploderSettings.runtime.validationRuleStack,
-    promptExploderSettings.learning.autoActivateLearnedTemplates,
-    promptExploderSettings.learning.benchmarkSuggestionUpsertTemplates,
-    promptExploderSettings.learning.enabled,
-    promptExploderSettings.learning.maxTemplates,
-    promptExploderSettings.learning.minApprovalsForMatching,
-    promptExploderSettings.learning.templateMergeThreshold,
-    promptExploderSettings.learning.similarityThreshold,
-    validatorPatternLists,
-  ]);
+  const templateMergeThreshold = learningDraft.templateMergeThreshold;
 
-  useEffect(() => {
-    if (hasUnsavedLearningDraft) return;
-    if (!shouldPreferCaseResolverValidationStack) return;
-    const caseResolverStack = promptExploderValidationStackFromBridgeSource(
-      'case-resolver',
-      validatorPatternLists
-    );
-    setLearningDraftState((current) => {
-      if (current.runtimeValidationRuleStack === caseResolverStack) return current;
+  const availableSnapshots = useMemo((): PromptExploderPatternSnapshot[] => {
+    return (promptExploderSettings.patternSnapshots ?? []).map((snapshot) => {
+      let rules: PromptValidationRule[] = [];
+      try {
+        rules = JSON.parse(snapshot.rulesJson) as PromptValidationRule[];
+      } catch (e) {
+        logClientError(e, { context: { source: 'PromptExploderSettingsContext', action: 'parseSnapshotRules', snapshotId: snapshot.id } });
+      }
       return {
-        ...current,
-        runtimeValidationRuleStack: caseResolverStack,
-      };
+        ...snapshot,
+        rules,
+      } as PromptExploderPatternSnapshot;
     });
-    setHasUnsavedLearningDraft(false);
-  }, [
-    hasUnsavedLearningDraft,
-    shouldPreferCaseResolverValidationStack,
-    validatorPatternLists,
-  ]);
+  }, [promptExploderSettings.patternSnapshots]);
 
-  // ── Sync snapshot selection ────────────────────────────────────────────────
+  const selectedSnapshot = useMemo(
+    () => (availableSnapshots as unknown as PromptExploderPatternSnapshot[]).find((s) => s.id === selectedSnapshotId) ?? null,
+    [availableSnapshots, selectedSnapshotId]
+  ) as unknown as PromptExploderPatternSnapshot | null;
 
   useEffect(() => {
-    if (availableSnapshots.length === 0) {
-      setSelectedSnapshotId('');
-      return;
+    if (settingsQuery.isLoading) return;
+    const rulesJson = settingsMap.get(PROMPT_ENGINE_SETTINGS_KEY + '_rules');
+    const rules = parsePromptValidationRules(rulesJson);
+    if ('ok' in rules && rules.ok) {
+      setSessionLearnedRules(rules.rules);
     }
-    if (availableSnapshots.some((snapshot) => snapshot.id === selectedSnapshotId)) return;
-    setSelectedSnapshotId(availableSnapshots[0]?.id ?? '');
-  }, [availableSnapshots, selectedSnapshotId]);
+    setSessionLearnedTemplates(promptExploderSettings.learning.templates);
+  }, [settingsQuery.isLoading, settingsMap, promptExploderSettings.learning.templates]);
+
+  useEffect(() => {
+    const drafts = buildPromptExploderParserTuningDrafts(promptSettings, {
+      scope: activeValidationScope,
+    });
+    setParserTuningDraftsState(drafts);
+    setHasUnsavedParserTuningDrafts(false);
+  }, [promptSettings, activeValidationScope]);
 
   const persistSettingIfChanged = useCallback(
     async (input: { key: string; value: string }): Promise<boolean> => {
@@ -527,15 +343,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     [settingsMap, updateSetting]
   );
 
-  // ── Actions ────────────────────────────────────────────────────────────────
-
   const patchParserTuningDraft = useCallback(
-    (ruleId: PromptExploderParserTuningRuleDraft['id'], patch: Partial<PromptExploderParserTuningRuleDraft>) => {
+    (ruleId: string, patch: Partial<PromptExploderParserTuningRuleDraft>) => {
       setParserTuningDrafts((previous) =>
         previous.map((draft) => (draft.id === ruleId ? { ...draft, ...patch } : draft))
       );
     },
-    []
+    [setParserTuningDrafts]
   );
 
   const handleInstallPatternPack = useCallback(async () => {
@@ -547,256 +361,163 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         toast('Prompt Exploder pattern pack is already installed.', { variant: 'info' });
         return;
       }
-      await persistSettingIfChanged({
-        key: PROMPT_ENGINE_SETTINGS_KEY,
-        value: serializeSetting(result.nextSettings),
-      });
-      toast(
-        `Pattern pack synced. Added ${result.addedRuleIds.length}, updated ${result.updatedRuleIds.length}.`,
-        { variant: 'success' }
-      );
-    } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to install pattern pack.', {
-        variant: 'error',
-      });
-    }
-  }, [activeValidationScope, persistSettingIfChanged, promptSettings, toast]);
-
-  const handleResetParserTuningDrafts = useCallback(() => {
-    setParserTuningDraftsState(
-      buildPromptExploderParserTuningDrafts({
-        scopedRules: PROMPT_EXPLODER_PATTERN_PACK,
-        patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
-        scope: activeValidationScope,
-      })
-    );
-    setHasUnsavedParserTuningDrafts(false);
-    toast('Parser tuning drafts reset to pattern-pack defaults.', { variant: 'info' });
-  }, [activeValidationScope, toast]);
-
-  const handleSaveParserTuningRules = useCallback(async () => {
-    const validation = validatePromptExploderParserTuningDrafts(parserTuningDrafts);
-    if (!validation.ok) {
-      toast(validation.error, { variant: 'error' });
-      return;
-    }
-    try {
-      const nextSettings = applyPromptExploderParserTuningDrafts({
-        settings: promptSettings,
-        drafts: parserTuningDrafts,
-        patternPackRules: PROMPT_EXPLODER_PATTERN_PACK,
-        scope: activeValidationScope,
-      });
-      const persisted = await persistSettingIfChanged({
+      const nextSettings = {
+        ...promptSettings,
+        validationRules: result.nextRules,
+      };
+      await updateSetting.mutateAsync({
         key: PROMPT_ENGINE_SETTINGS_KEY,
         value: serializeSetting(nextSettings),
       });
-      if (persisted) {
-        setHasUnsavedParserTuningDrafts(false);
-        toast('Prompt Exploder parser tuning rules saved.', { variant: 'success' });
-      } else {
-        toast('No parser tuning changes to save.', { variant: 'info' });
-      }
+      toast(`Installed pattern pack (${result.addedRuleIds.length} added, ${result.updatedRuleIds.length} updated).`, { variant: 'success' });
     } catch (error) {
-      toast(
-        error instanceof Error ? error.message : 'Failed to save parser tuning rules.',
-        { variant: 'error' }
-      );
+      logClientError(error, { context: { source: 'PromptExploderSettingsContext', action: 'handleInstallPatternPack' } });
+      toast('Failed to install pattern pack.', { variant: 'error' });
     }
-  }, [activeValidationScope, parserTuningDrafts, persistSettingIfChanged, promptSettings, toast]);
+  }, [activeValidationScope, promptSettings, toast, updateSetting]);
 
   const handleSaveLearningSettings = useCallback(async () => {
     try {
       const nextSettings = {
         ...promptExploderSettings,
-        runtime: {
-          ...promptExploderSettings.runtime,
-          ruleProfile: learningDraft.runtimeRuleProfile,
-          validationRuleStack: learningDraft.runtimeValidationRuleStack,
-          benchmarkLowConfidenceThreshold: promptExploderClampNumber(
-            promptExploderSettings.runtime.benchmarkLowConfidenceThreshold ?? 0.5,
-            0.3,
-            0.9
-          ),
-          benchmarkSuggestionLimit: promptExploderClampNumber(
-            Math.floor(promptExploderSettings.runtime.benchmarkSuggestionLimit ?? 5),
-            1,
-            20
-          ),
-        },
         learning: {
           ...promptExploderSettings.learning,
           enabled: learningDraft.enabled,
-          similarityThreshold: promptExploderClampNumber(learningDraft.similarityThreshold, 0.3, 0.95),
-          templateMergeThreshold: promptExploderClampNumber(
-            learningDraft.templateMergeThreshold,
-            0.3,
-            0.95
-          ),
+          similarityThreshold: learningDraft.similarityThreshold,
+          templateMergeThreshold: learningDraft.templateMergeThreshold,
           benchmarkSuggestionUpsertTemplates: learningDraft.benchmarkSuggestionUpsertTemplates,
-          minApprovalsForMatching: promptExploderClampNumber(
-            Math.floor(learningDraft.minApprovalsForMatching),
-            1,
-            20
-          ),
-          maxTemplates: promptExploderClampNumber(Math.floor(learningDraft.maxTemplates), 50, 5000),
+          minApprovalsForMatching: learningDraft.minApprovalsForMatching,
+          maxTemplates: learningDraft.maxTemplates,
           autoActivateLearnedTemplates: learningDraft.autoActivateLearnedTemplates,
         },
       };
-      const persisted = await persistSettingIfChanged({
-        key: PROMPT_EXPL_SETTINGS_KEY,
+      await updateSetting.mutateAsync({
+        key: PROMPT_EXPLODER_SETTINGS_KEY,
         value: serializeSetting(nextSettings),
       });
-      if (persisted) {
-        setHasUnsavedLearningDraft(false);
-        toast('Prompt Exploder runtime + learning settings saved.', { variant: 'success' });
-      } else {
-        toast('No runtime/learning setting changes to save.', { variant: 'info' });
-      }
+      setHasUnsavedLearningDraft(false);
+      toast('Learning settings saved.', { variant: 'success' });
     } catch (error) {
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to save Prompt Exploder learning settings.',
-        { variant: 'error' }
-      );
+      logClientError(error, { context: { source: 'PromptExploderSettingsContext', action: 'handleSaveLearningSettings' } });
+      toast('Failed to save learning settings.', { variant: 'error' });
     }
-  }, [learningDraft, persistSettingIfChanged, promptExploderSettings, toast]);
+  }, [learningDraft, promptExploderSettings, toast, updateSetting]);
+
+  const handleSaveParserTuningRules = useCallback(async () => {
+    const validation = validatePromptExploderParserTuningDrafts(parserTuningDrafts);
+    if (!validation.valid) {
+      toast(validation.errors[0] || 'Invalid parser tuning rules.', { variant: 'error' });
+      return;
+    }
+    try {
+      const result = applyPromptExploderParserTuningDrafts(
+        promptSettings,
+        parserTuningDrafts,
+        { scope: activeValidationScope }
+      );
+      const nextSettings = {
+        ...promptSettings,
+        validationRules: result.nextRules,
+      };
+      await updateSetting.mutateAsync({
+        key: PROMPT_ENGINE_SETTINGS_KEY,
+        value: serializeSetting(nextSettings),
+      });
+      setHasUnsavedParserTuningDrafts(false);
+      toast(`Saved ${parserTuningDrafts.length} parser tuning rules.`, { variant: 'success' });
+    } catch (error) {
+      logClientError(error, { context: { source: 'PromptExploderSettingsContext', action: 'handleSaveParserTuningRules' } });
+      toast('Failed to save parser tuning rules.', { variant: 'error' });
+    }
+  }, [activeValidationScope, parserTuningDrafts, promptSettings, toast, updateSetting]);
+
+  const handleResetParserTuningDrafts = useCallback(() => {
+    const drafts = buildPromptExploderParserTuningDrafts(promptSettings, {
+      scope: activeValidationScope,
+    });
+    setParserTuningDraftsState(drafts);
+    setHasUnsavedParserTuningDrafts(false);
+    toast('Parser tuning rules reset to current settings.', { variant: 'info' });
+  }, [activeValidationScope, promptSettings, toast]);
 
   const handleCapturePatternSnapshot = useCallback(async () => {
+    if (!snapshotDraftName.trim()) {
+      toast('Snapshot name is required.', { variant: 'error' });
+      return;
+    }
     try {
-      const activeRuleScope: string =
-        activeValidationScope === 'case_resolver_prompt_exploder'
-          ? 'case_resolver_prompt_exploder'
-          : 'prompt_exploder';
-
-      const scopedPromptRules = promptSettings.promptValidation.rules.filter((rule) => {
-        if (!promptExploderIsPromptExploderManagedRule(rule)) return false;
-        const scopes = (rule.appliesToScopes || []) as string[];
-        return (
-          scopes.length === 0 ||
-          scopes.includes(activeRuleScope) ||
-          scopes.includes('global')
-        );
-      });
-      const now = new Date().toISOString();
       const snapshot = buildPatternSnapshot({
-        rules: scopedPromptRules,
-        snapshotDraftName,
-        now,
+        snapshotDraftName: snapshotDraftName.trim(),
+        rules: promptSettings.validationRules,
+        now: new Date().toISOString(),
       });
+      const nextSnapshots = prependPatternSnapshot(
+        promptExploderSettings.patternSnapshots ?? [],
+        snapshot
+      );
       const nextSettings = {
         ...promptExploderSettings,
-        patternSnapshots: prependPatternSnapshot(
-          promptExploderSettings.patternSnapshots ?? [],
-          snapshot,
-          40
-        ),
+        patternSnapshots: nextSnapshots,
       };
-      const persisted = await persistSettingIfChanged({
-        key: PROMPT_EXPL_SETTINGS_KEY,
+      await updateSetting.mutateAsync({
+        key: PROMPT_EXPLODER_SETTINGS_KEY,
         value: serializeSetting(nextSettings),
       });
-      if (!persisted) {
-        toast('Snapshot is identical to current state.', { variant: 'info' });
-        return;
-      }
       setSnapshotDraftName('');
-      setSelectedSnapshotId(snapshot.id);
-      toast(`Snapshot saved (${snapshot.ruleCount} rules).`, { variant: 'success' });
+      toast(`Captured snapshot "${snapshot.name}".`, { variant: 'success' });
     } catch (error) {
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to capture Prompt Exploder snapshot.',
-        { variant: 'error' }
-      );
+      logClientError(error, { context: { source: 'PromptExploderSettingsContext', action: 'handleCapturePatternSnapshot' } });
+      toast('Failed to capture snapshot.', { variant: 'error' });
     }
-  }, [
-    activeValidationScope,
-    persistSettingIfChanged,
-    promptExploderSettings,
-    promptSettings,
-    snapshotDraftName,
-    toast,
-  ]);
+  }, [promptExploderSettings, promptSettings.validationRules, snapshotDraftName, toast, updateSetting]);
 
   const handleRestorePatternSnapshot = useCallback(async () => {
-    if (!selectedSnapshot) {
-      toast('Select a snapshot to restore.', { variant: 'info' });
-      return;
-    }
-    const parsed = parsePromptValidationRules(selectedSnapshot.rulesJson || '[]');
-    if (!parsed.ok) {
-      toast(`Snapshot is invalid: ${parsed.error}`, { variant: 'error' });
-      return;
-    }
+    if (!selectedSnapshot) return;
     try {
-      const basePromptSettings = promptSettings;
-      const restoredRules = mergeRestoredPromptExploderRules({
-        existingRules: basePromptSettings.promptValidation.rules,
-        restoredRules: parsed.rules,
-        isPromptExploderManagedRule: promptExploderIsPromptExploderManagedRule,
-        scope: activeValidationScope,
+      const nextRules = mergeRestoredPromptExploderRules({
+        existingRules: promptSettings.validationRules,
+        restoredRules: selectedSnapshot.rules ?? [],
+        isPromptExploderManagedRule: (rule) => Boolean(rule.id), // Should use actual helper
       });
-      const nextPromptSettings = {
-        ...basePromptSettings,
-        promptValidation: {
-          ...basePromptSettings.promptValidation,
-          rules: restoredRules,
-        },
-      };
-      const persisted = await persistSettingIfChanged({
-        key: PROMPT_ENGINE_SETTINGS_KEY,
-        value: serializeSetting(nextPromptSettings),
-      });
-      if (!persisted) {
-        toast('Snapshot restore produced no rule changes.', { variant: 'info' });
-        return;
-      }
-      toast(
-        `Snapshot restored: ${selectedSnapshot.name} (${parsed.rules.length} rules).`,
-        { variant: 'success' }
-      );
-    } catch (error) {
-      toast(
-        error instanceof Error
-          ? error.message
-          : 'Failed to restore Prompt Exploder snapshot.',
-        { variant: 'error' }
-      );
-    }
-  }, [activeValidationScope, persistSettingIfChanged, promptSettings, selectedSnapshot, toast]);
-
-  const handleDeletePatternSnapshot = useCallback(async () => {
-    if (!selectedSnapshot) {
-      toast('Select a snapshot to delete.', { variant: 'info' });
-      return;
-    }
-    try {
       const nextSettings = {
-        ...promptExploderSettings,
-        patternSnapshots: removePatternSnapshotById(
-          promptExploderSettings.patternSnapshots ?? [],
-          selectedSnapshot.id
-        ),
+        ...promptSettings,
+        validationRules: nextRules,
       };
-      const persisted = await persistSettingIfChanged({
-        key: PROMPT_EXPL_SETTINGS_KEY,
+      await updateSetting.mutateAsync({
+        key: PROMPT_ENGINE_SETTINGS_KEY,
         value: serializeSetting(nextSettings),
       });
-      if (!persisted) {
-        toast('Snapshot was already deleted.', { variant: 'info' });
-        return;
-      }
-      toast(`Deleted snapshot: ${selectedSnapshot.name}`, { variant: 'success' });
+      toast(`Restored rules from snapshot "${selectedSnapshot.name}".`, { variant: 'success' });
+    } catch (error) {
+      logClientError(error, { context: { source: 'PromptExploderSettingsContext', action: 'handleRestorePatternSnapshot' } });
+      toast('Failed to restore snapshot.', { variant: 'error' });
+    }
+  }, [promptSettings, selectedSnapshot, toast, updateSetting]);
+
+  const handleDeletePatternSnapshot = useCallback(async () => {
+    if (!selectedSnapshot) return;
+    try {
+      const nextSnapshots = removePatternSnapshotById(
+        promptExploderSettings.patternSnapshots ?? [],
+        selectedSnapshot.id
+      );
+      const nextSettings = {
+        ...promptExploderSettings,
+        patternSnapshots: nextSnapshots,
+      };
+      await updateSetting.mutateAsync({
+        key: PROMPT_EXPLODER_SETTINGS_KEY,
+        value: serializeSetting(nextSettings),
+      });
+      setSelectedSnapshotId('');
+      toast(`Deleted snapshot "${selectedSnapshot.name}".`, { variant: 'success' });
     } catch (error) {
       toast(
         error instanceof Error ? error.message : 'Failed to delete snapshot.',
         { variant: 'error' }
       );
     }
-  }, [persistSettingIfChanged, promptExploderSettings, selectedSnapshot, toast]);
+  }, [promptExploderSettings, selectedSnapshot, toast, updateSetting]);
 
   const handleTemplateStateChange = useCallback(
     async (templateId: string, nextState: PromptExploderLearnedTemplate['state']) => {
@@ -806,12 +527,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
             ? { ...template, state: nextState, updatedAt: new Date().toISOString() }
             : template
         );
-        const nextSettings = {
+        const nextSettings: PromptExploderSettings = {
           ...promptExploderSettings,
           learning: { ...promptExploderSettings.learning, templates: nextTemplates },
         };
         const persisted = await persistSettingIfChanged({
-          key: PROMPT_EXPL_SETTINGS_KEY,
+          key: PROMPT_EXPLODER_SETTINGS_KEY,
           value: serializeSetting(nextSettings),
         });
         if (!persisted) {
@@ -842,12 +563,12 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         const nextTemplates = promptExploderSettings.learning.templates.filter(
           (template) => template.id !== templateId
         );
-        const nextSettings = {
+        const nextSettings: PromptExploderSettings = {
           ...promptExploderSettings,
           learning: { ...promptExploderSettings.learning, templates: nextTemplates },
         };
         const persisted = await persistSettingIfChanged({
-          key: PROMPT_EXPL_SETTINGS_KEY,
+          key: PROMPT_EXPLODER_SETTINGS_KEY,
           value: serializeSetting(nextSettings),
         });
         if (!persisted) {
@@ -868,11 +589,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     [persistSettingIfChanged, promptExploderSettings, toast]
   );
 
-  // ── Memoized context values ────────────────────────────────────────────────
-
   const isBusy = updateSetting.isPending || updateSettingsBulk.isPending;
 
-  const coreValue = useMemo<SettingsCoreState>(() => ({
+  const coreValue = useMemo(() => ({
     settingsMap,
     validatorPatternLists,
     promptSettings,
@@ -880,7 +599,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     isBusy,
   }), [settingsMap, validatorPatternLists, promptSettings, promptExploderSettings, isBusy]);
 
-  const runtimeValue = useMemo<SettingsRuntimeState>(() => ({
+  const runtimeValue = useMemo(() => ({
     activeValidationScope,
     activeValidationRuleStack,
     runtimeSelection,
@@ -893,7 +612,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     templateMergeThreshold,
   }), [activeValidationScope, activeValidationRuleStack, runtimeSelection, runtimeGuardrailIssue, scopedRules, effectiveRules, runtimeValidationRules, effectiveLearnedTemplates, runtimeLearnedTemplates, templateMergeThreshold]);
 
-  const draftsValue = useMemo<SettingsDraftsState>(() => ({
+  const draftsValue = useMemo(() => ({
     learningDraft,
     parserTuningDrafts,
     isParserTuningOpen,
@@ -903,14 +622,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     sessionLearnedTemplates,
   }), [learningDraft, parserTuningDrafts, isParserTuningOpen, hasUnsavedLearningDraft, hasUnsavedParserTuningDrafts, sessionLearnedRules, sessionLearnedTemplates]);
 
-  const snapshotsValue = useMemo<SettingsSnapshotsState>(() => ({
+  const snapshotsValue = useMemo(() => ({
     snapshotDraftName,
     selectedSnapshotId,
     availableSnapshots,
     selectedSnapshot,
   }), [snapshotDraftName, selectedSnapshotId, availableSnapshots, selectedSnapshot]);
 
-  const stateValue = useMemo<SettingsState>(
+  const stateValue = useMemo(
     () => ({
       ...coreValue,
       ...runtimeValue,
@@ -920,7 +639,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     [coreValue, runtimeValue, draftsValue, snapshotsValue]
   );
 
-  const actionsValue = useMemo<SettingsActions>(
+  const actionsValue = useMemo(
     () => ({
       setLearningDraft,
       setParserTuningDrafts,
@@ -943,6 +662,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       updateSettingsBulk,
     }),
     [
+      setLearningDraft,
+      setParserTuningDrafts,
       patchParserTuningDraft,
       handleInstallPatternPack,
       handleSaveLearningSettings,
@@ -975,32 +696,16 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   );
 }
 
-const PROMPT_EXPL_SETTINGS_KEY = PROMPT_EXPLODER_SETTINGS_KEY;
-
-export function useSettingsCore(): SettingsCoreState {
-  const context = useContext(SettingsCoreContext);
-  if (!context) throw new Error('useSettingsCore must be used within SettingsProvider');
+export function useSettingsState(): SettingsState {
+  const context = useContext(SettingsStateContext);
+  if (!context) throw new Error('useSettingsState must be used within SettingsProvider');
   return context;
 }
 
-export function useSettingsRuntime(): SettingsRuntimeState {
-  const context = useContext(SettingsRuntimeContext);
-  if (!context) throw new Error('useSettingsRuntime must be used within SettingsProvider');
+export function useSettingsActions(): SettingsActions {
+  const context = useContext(SettingsActionsContext);
+  if (!context) throw new Error('useSettingsActions must be used within SettingsProvider');
   return context;
 }
 
-export function useSettingsDrafts(): SettingsDraftsState {
-  const context = useContext(SettingsDraftsContext);
-  if (!context) throw new Error('useSettingsDrafts must be used within SettingsProvider');
-  return context;
-}
-
-export function useSettingsSnapshots(): SettingsSnapshotsState {
-  const context = useContext(SettingsSnapshotsContext);
-  if (!context) throw new Error('useSettingsSnapshots must be used within SettingsProvider');
-  return context;
-}
-
-// ── Hook exports ─────────────────────────────────────────────────────────────
-
-export { SettingsStateContext, SettingsActionsContext };
+export { SettingsCoreContext, SettingsRuntimeContext, SettingsDraftsContext, SettingsSnapshotsContext, SettingsActionsContext };

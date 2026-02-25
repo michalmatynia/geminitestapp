@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo, useRef } from 'react';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { useToast } from '@/shared/ui';
+import { useToast, type ToastOptions } from '@/shared/ui';
 import { useMaskingState, useMaskingActions } from '../../context/MaskingContext';
 import { useProjectsState } from '../../context/ProjectsContext';
 import { useSettingsState, useSettingsActions } from '../../context/SettingsContext';
@@ -203,9 +203,8 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     handleAiMaskGeneration: (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges') => handleAiMaskGeneration(mode),
     studioSettings,
     setStudioSettings,
-    toast: (message: string, options?: any) => { toast(message, options); },
-    queryClient,
-    upscaleRequestInFlightRef,
+    toast: (message: string, options?: ToastOptions) => { toast(message, options); },
+    queryClient,    upscaleRequestInFlightRef,
     upscaleAbortControllerRef,
     cropRequestInFlightRef,
     cropAbortControllerRef,

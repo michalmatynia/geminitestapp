@@ -6,6 +6,7 @@ import type {
   RuntimeState,
   AiPathRuntimeNodeStatusMap,
   AiPathRuntimeEvent,
+  DataContractNodeIssueSummary,
 } from '@/features/ai/ai-paths/lib';
 import type { EdgeRoutingMode, EdgePath } from '../context/hooks/useEdgePaths';
 import {

@@ -1,0 +1,138 @@
+import type {
+  CaseResolverCategory,
+  CaseResolverFile,
+  CaseResolverIdentifier,
+  CaseResolverTag,
+  CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
+
+export type CaseViewMode = 'list' | 'hierarchy';
+export type CaseSortKey =
+  | 'updated'
+  | 'created'
+  | 'name'
+  | 'status'
+  | 'signature'
+  | 'locked'
+  | 'sent';
+export type CaseSortOrder = 'asc' | 'desc';
+export type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';
+export type CaseFileTypeFilter = 'all' | 'case' | 'document' | 'scanfile' | 'note';
+export type CaseStatusFilter = 'all' | 'pending' | 'completed';
+export type CaseLockedFilter = 'all' | 'locked' | 'unlocked';
+export type CaseSentFilter = 'all' | 'sent' | 'not_sent';
+export type CaseHierarchyFilter = 'all' | 'root' | 'child';
+export type CaseReferencesFilter = 'all' | 'with_references' | 'without_references';
+
+export type CaseListViewDefaults = {
+  viewMode: CaseViewMode;
+  sortBy: CaseSortKey;
+  sortOrder: CaseSortOrder;
+  searchScope: CaseSearchScope;
+  filtersCollapsedByDefault: boolean;
+};
+
+export type AdminCaseResolverCasesContextValue = {
+  // State
+  workspace: CaseResolverWorkspace;
+  caseDraft: Partial<CaseResolverFile>;
+  isCreatingCase: boolean;
+  isCreateCaseModalOpen: boolean;
+  editingCaseId: string | null;
+  editingCaseName: string;
+  editingCaseParentId: string | null;
+  editingCaseReferenceCaseIds: string[];
+  editingCaseTagId: string | null;
+  editingCaseCaseIdentifierId: string | null;
+  editingCaseCategoryId: string | null;
+  pendingCaseIdentifierIds: string[];
+  collapsedCaseIds: Set<string>;
+  caseSearchQuery: string;
+  caseSearchScope: CaseSearchScope;
+  caseFileTypeFilter: CaseFileTypeFilter;
+  caseFilterTagIds: string[];
+  caseFilterCaseIdentifierIds: string[];
+  caseFilterCategoryIds: string[];
+  caseFilterFolder: string;
+  caseFilterStatus: CaseStatusFilter;
+  caseFilterLocked: CaseLockedFilter;
+  caseFilterSent: CaseSentFilter;
+  caseFilterHierarchy: CaseHierarchyFilter;
+  caseFilterReferences: CaseReferencesFilter;
+  caseSortBy: CaseSortKey;
+  caseSortOrder: CaseSortOrder;
+  caseViewMode: CaseViewMode;
+  caseFilterPanelDefaultExpanded: boolean;
+  didHydrateCaseListViewDefaults: boolean;
+  confirmation: {
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+  } | null;
+
+  // Actions
+  setWorkspace: React.Dispatch<React.SetStateAction<CaseResolverWorkspace>>;
+  setCaseDraft: React.Dispatch<React.SetStateAction<Partial<CaseResolverFile>>>;
+  setIsCreateCaseModalOpen: (open: boolean) => void;
+  setEditingCaseId: (id: string | null) => void;
+  setEditingCaseName: (name: string) => void;
+  setEditingCaseParentId: (id: string | null) => void;
+  setEditingCaseReferenceCaseIds: (ids: string[]) => void;
+  setEditingCaseTagId: (id: string | null) => void;
+  setEditingCaseCaseIdentifierId: (id: string | null) => void;
+  setEditingCaseCategoryId: (id: string | null) => void;
+  setPendingCaseIdentifierIds: (ids: string[]) => void;
+  setCollapsedCaseIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  setCaseSearchQuery: (query: string) => void;
+  setCaseSearchScope: (scope: CaseSearchScope) => void;
+  setCaseFileTypeFilter: (filter: CaseFileTypeFilter) => void;
+  setCaseFilterTagIds: (ids: string[]) => void;
+  setCaseFilterCaseIdentifierIds: (ids: string[]) => void;
+  setCaseFilterCategoryIds: (ids: string[]) => void;
+  setCaseFilterFolder: (folder: string) => void;
+  setCaseFilterStatus: (status: CaseStatusFilter) => void;
+  setCaseFilterLocked: (locked: CaseLockedFilter) => void;
+  setCaseFilterSent: (sent: CaseSentFilter) => void;
+  setCaseFilterHierarchy: (hierarchy: CaseHierarchyFilter) => void;
+  setCaseFilterReferences: (references: CaseReferencesFilter) => void;
+  setCaseSortBy: (sortBy: CaseSortKey) => void;
+  setCaseSortOrder: (order: CaseSortOrder) => void;
+  setCaseViewMode: (mode: CaseViewMode) => void;
+  setCaseFilterPanelDefaultExpanded: (expanded: boolean) => void;
+  setConfirmation: React.Dispatch<React.SetStateAction<AdminCaseResolverCasesContextValue['confirmation']>>;
+  
+  // High-level Actions
+  handleCreateCase: () => Promise<void>;
+  handleUpdateCase: () => Promise<void>;
+  handleDeleteCase: (caseId: string) => void;
+  handleToggleCaseCollapse: (caseId: string) => void;
+  handleMoveCase: (
+    caseId: string,
+    targetParentCaseId: string | null,
+    targetIndex?: number
+  ) => Promise<void>;
+  handleReorderCase: (
+    caseId: string,
+    targetCaseId: string,
+    position: 'before' | 'after'
+  ) => Promise<void>;
+  handleRenameCase: (caseId: string, nextName: string) => Promise<void>;
+  handleToggleCaseStatus: (caseId: string) => Promise<void>;
+  handleSaveCaseDraft: () => Promise<void>;
+  handleRefreshWorkspace: () => Promise<void>;
+  handleSaveListViewDefaults: () => Promise<void>;
+
+  // Derived / Constant
+  caseResolverTags: CaseResolverTag[];
+  caseResolverIdentifiers: CaseResolverIdentifier[];
+  caseResolverCategories: CaseResolverCategory[];
+  caseResolverTagOptions: Array<{ value: string; label: string }>;
+  caseResolverCategoryOptions: Array<{ value: string; label: string }>;
+  parentCaseOptions: Array<{ value: string; label: string }>;
+  caseReferenceOptions: Array<{ value: string; label: string }>;
+  caseIdentifierOptions: Array<{ value: string; label: string }>;
+  folderOptions: Array<{ value: string; label: string }>;
+  isLoading: boolean;
+};

@@ -920,6 +920,10 @@ export const isClientAutoScalerCrossOriginError = (error: unknown): boolean =>
 export const isAutoScalerAbortError = (error: unknown): boolean =>
   error instanceof DOMException && error.name === 'AbortError';
 
+export const shouldFallbackToServerAutoScaler = (error: unknown): boolean => {
+  return isClientAutoScalerCrossOriginError(error);
+};
+
 export const isRetryableAutoScalerError = (error: unknown): boolean => {
   if (isAutoScalerAbortError(error)) return false;
   if (error instanceof ApiError) {

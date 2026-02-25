@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import React, { useCallback, useMemo, useRef, useEffect } from 'react';
 
 import {
@@ -25,6 +25,7 @@ import { useCaseResolverState } from './useCaseResolverState';
 import {
   hasCaseResolverDraftMeaningfulChanges,
 } from './useCaseResolverState.helpers';
+import { stripCaseContextQueryParams } from './useCaseResolverState.helpers.requested-context';
 import {
   type CaseResolverFileEditDraft,
   type CaseResolverStateValue,
@@ -42,6 +43,7 @@ import { useAdminCaseResolverMetadataActions } from './useAdminCaseResolverMetad
 export function useAdminCaseResolverPageState() {
   const state: CaseResolverStateValue = useCaseResolverState();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
   
   const {
@@ -62,6 +64,7 @@ export function useAdminCaseResolverPageState() {
     caseResolverSettings,
     filemakerDatabase,
     requestedFileId,
+    handleResetCaseContext: resetCaseContextState,
     shouldOpenEditorFromQuery,
     handleUploadScanFiles,
     handleRunScanFileOcr,
@@ -630,6 +633,12 @@ export function useAdminCaseResolverPageState() {
     [documentActions]
   );
 
+  const handleResetCaseContext = useCallback((): void => {
+    resetCaseContextState();
+    const nextQuery = stripCaseContextQueryParams(searchParams.toString());
+    router.replace(nextQuery ? `/admin/case-resolver?${nextQuery}` : '/admin/case-resolver');
+  }, [resetCaseContextState, router, searchParams]);
+
   return {
     state,
     ...state,
@@ -662,6 +671,7 @@ export function useAdminCaseResolverPageState() {
     handleCreateDocumentFromSearch,
     handleOpenFileFromSearch,
     handleEditFileFromSearch,
+    handleResetCaseContext,
     activeCaseFile,
   };
 }

@@ -47,6 +47,7 @@ import {
 } from '../settings';
 import {
   type CaseResolverFileEditDraft,
+  type CaseResolverRequestedCaseIssue,
   type CaseResolverRequestedCaseStatus,
   type CaseResolverStateValue,
 } from '../types';
@@ -63,6 +64,10 @@ import {
   collectCaseScopeIds,
   serializeWorkspaceForUnsavedChangesCheck,
 } from './useCaseResolverState.helpers';
+import {
+  hasRequestedCaseFile,
+  resolveRequestedCaseIssueAfterRefresh,
+} from './useCaseResolverState.helpers.requested-context';
 import { useCaseResolverStateSelectionActions } from './useCaseResolverState.selection-actions';
 import { useCaseResolverPersistence, type UseCaseResolverPersistenceValue } from './useCaseResolverState.persistence-actions';
 import { useCaseResolverPromptExploder, type UseCaseResolverPromptExploderValue } from './useCaseResolverState.prompt-exploder-actions';
@@ -168,6 +173,9 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const workspaceRef = useRef<CaseResolverWorkspace>(initialWorkspaceState);
   const [requestedCaseStatus, setRequestedCaseStatus] =
     useState<CaseResolverRequestedCaseStatus>(requestedFileId ? 'loading' : 'ready');
+  const [requestedCaseIssue, setRequestedCaseIssue] =
+    useState<CaseResolverRequestedCaseIssue | null>(null);
+  const [requestedContextRetryTick, setRequestedContextRetryTick] = useState(0);
   const [editingDocumentDraft, setEditingDocumentDraft] = useState<CaseResolverFileEditDraft | null>(null);
   const [editingDocumentNodeContext, setEditingDocumentNodeContext] =
     useState<CaseResolverEditorNodeContext | null>(null);
@@ -188,8 +196,13 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const requestedCaseStatusRef = useRef<CaseResolverRequestedCaseStatus>(
     requestedFileId ? 'loading' : 'ready'
   );
+  const requestedCaseIssueRef = useRef<CaseResolverRequestedCaseIssue | null>(null);
+  const requestedContextAttemptByFileIdRef = useRef<Map<string, number>>(new Map());
+  const requestedContextResolveRunIdRef = useRef(0);
+  const requestedContextRetryNonceRef = useRef(0);
   const unresolvedOwnershipWarningShownRef = useRef(false);
   const lastLoggedOwnershipDiagnosticsSignatureRef = useRef<string>('');
+  const lastLoggedRequestedContextSignatureRef = useRef<string>('');
 
   const setRequestedCaseStatusSafe = useCallback(
     (nextStatus: CaseResolverRequestedCaseStatus): void => {
@@ -198,6 +211,43 @@ export function useCaseResolverState(): CaseResolverStateValue {
       setRequestedCaseStatus(nextStatus);
     },
     []
+  );
+
+  const setRequestedCaseIssueSafe = useCallback(
+    (nextIssue: CaseResolverRequestedCaseIssue | null): void => {
+      if (requestedCaseIssueRef.current === nextIssue) return;
+      requestedCaseIssueRef.current = nextIssue;
+      setRequestedCaseIssue(nextIssue);
+    },
+    [],
+  );
+
+  const logRequestedContextTransition = useCallback(
+    (action: string, message?: string): void => {
+      const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
+      const signature = [
+        action,
+        normalizedRequestedFileId,
+        requestedCaseStatusRef.current,
+        requestedCaseIssueRef.current ?? 'none',
+        message ?? '',
+      ].join('|');
+      if (lastLoggedRequestedContextSignatureRef.current === signature) return;
+      lastLoggedRequestedContextSignatureRef.current = signature;
+      logCaseResolverWorkspaceEvent({
+        source: 'case_view',
+        action,
+        message: [
+          normalizedRequestedFileId
+            ? `requested_file_id=${normalizedRequestedFileId}`
+            : 'requested_file_id=<none>',
+          `requested_case_status=${requestedCaseStatusRef.current}`,
+          `requested_case_issue=${requestedCaseIssueRef.current ?? 'none'}`,
+          message ?? '',
+        ].filter(Boolean).join(' '),
+      });
+    },
+    [requestedFileId],
   );
 
   const persistence: UseCaseResolverPersistenceValue = useCaseResolverPersistence({
@@ -213,7 +263,6 @@ export function useCaseResolverState(): CaseResolverStateValue {
     setWorkspace,
     requestedFileId,
     requestedCaseStatus,
-    setRequestedCaseStatusSafe,
     initialWorkspaceState,
     syncPersistedWorkspaceTracking: persistence.syncPersistedWorkspaceTracking,
     queuedSerializedWorkspaceRef: persistence.queuedSerializedWorkspaceRef,
@@ -223,6 +272,11 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedWorkspaceRefreshFileIdRef,
     requestedWorkspaceMissingFileIdRef,
   });
+  const {
+    setSelectedFileId,
+    setSelectedAssetId,
+    setSelectedFolderPath,
+  } = viewState;
 
   const updateWorkspace = useCallback(
     (
@@ -323,12 +377,19 @@ export function useCaseResolverState(): CaseResolverStateValue {
   }, [requestedCaseStatus]);
 
   useEffect(() => {
+    requestedCaseIssueRef.current = requestedCaseIssue;
+  }, [requestedCaseIssue]);
+
+  useEffect(() => {
+    requestedContextRetryNonceRef.current = requestedContextRetryTick;
+  }, [requestedContextRetryTick]);
+
+  useEffect(() => {
     workspaceRef.current = workspace;
   }, [workspace]);
 
   useEffect(() => {
     if (canHydrateWorkspaceFromStore) return;
-    if (requestedFileId) return;
     let isCancelled = false;
     void (async (): Promise<void> => {
       const snapshot = await fetchCaseResolverWorkspaceSnapshot('case_view_bootstrap');
@@ -348,7 +409,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     return (): void => {
       isCancelled = true;
     };
-  }, [canHydrateWorkspaceFromStore, requestedFileId, persistence, settingsStoreRef]);
+  }, [canHydrateWorkspaceFromStore, persistence, settingsStoreRef]);
 
   // Sync with store
   useEffect(() => {
@@ -387,6 +448,142 @@ export function useCaseResolverState(): CaseResolverStateValue {
     parsedWorkspace,
     requestedFileId,
     persistence,
+  ]);
+
+  useEffect(() => {
+    const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
+    if (!normalizedRequestedFileId) {
+      requestedContextResolveRunIdRef.current += 1;
+      requestedWorkspaceRefreshFileIdRef.current = null;
+      requestedWorkspaceMissingFileIdRef.current = null;
+      requestedContextAttemptByFileIdRef.current.clear();
+      handledRequestedFileIdRef.current = null;
+      setRequestedCaseIssueSafe(null);
+      setRequestedCaseStatusSafe('ready');
+      logRequestedContextTransition('requested_context_ready', 'No requested file in query.');
+      return;
+    }
+
+    const hasRequestedFileInWorkspace = hasRequestedCaseFile(
+      workspace.files,
+      normalizedRequestedFileId,
+    );
+    if (hasRequestedFileInWorkspace) {
+      requestedContextResolveRunIdRef.current += 1;
+      requestedWorkspaceRefreshFileIdRef.current = null;
+      requestedWorkspaceMissingFileIdRef.current = null;
+      setRequestedCaseIssueSafe(null);
+      setRequestedCaseStatusSafe('ready');
+      logRequestedContextTransition('requested_context_ready', 'Requested file resolved in workspace.');
+      return;
+    }
+
+    const retryNonce = requestedContextRetryNonceRef.current;
+    const attemptedRetryNonce = requestedContextAttemptByFileIdRef.current.get(
+      normalizedRequestedFileId,
+    );
+    if (attemptedRetryNonce === retryNonce) {
+      return;
+    }
+
+    requestedContextAttemptByFileIdRef.current.set(normalizedRequestedFileId, retryNonce);
+    requestedWorkspaceRefreshFileIdRef.current = normalizedRequestedFileId;
+    requestedWorkspaceMissingFileIdRef.current = null;
+    handledRequestedFileIdRef.current = null;
+    setRequestedCaseIssueSafe(null);
+    setRequestedCaseStatusSafe('loading');
+    logRequestedContextTransition('requested_context_loading', 'Refreshing workspace for requested file.');
+
+    const resolveRunId = requestedContextResolveRunIdRef.current + 1;
+    requestedContextResolveRunIdRef.current = resolveRunId;
+    let isCancelled = false;
+
+    void (async (): Promise<void> => {
+      const refreshedWorkspace = await fetchCaseResolverWorkspaceSnapshot(
+        'case_view_requested_context_resolve',
+      );
+      if (isCancelled) return;
+      if (requestedContextResolveRunIdRef.current !== resolveRunId) return;
+      const latestRequestedFileId = requestedFileId?.trim() ?? '';
+      if (!latestRequestedFileId || latestRequestedFileId !== normalizedRequestedFileId) return;
+
+      if (!refreshedWorkspace) {
+        const requestedIssueAfterRefresh = resolveRequestedCaseIssueAfterRefresh({
+          refreshSucceeded: false,
+          hasRequestedFileAfterRefresh: false,
+        });
+        requestedWorkspaceMissingFileIdRef.current = normalizedRequestedFileId;
+        requestedWorkspaceRefreshFileIdRef.current = null;
+        handledRequestedFileIdRef.current = null;
+        setRequestedCaseIssueSafe(requestedIssueAfterRefresh);
+        setRequestedCaseStatusSafe('missing');
+        logRequestedContextTransition(
+          'requested_context_missing_fetch_failed',
+          'Workspace refresh failed while resolving requested file.',
+        );
+        return;
+      }
+
+      const refreshedHasRequestedFile = hasRequestedCaseFile(
+        refreshedWorkspace.files,
+        normalizedRequestedFileId,
+      );
+      const requestedIssueAfterRefresh = resolveRequestedCaseIssueAfterRefresh({
+        refreshSucceeded: true,
+        hasRequestedFileAfterRefresh: refreshedHasRequestedFile,
+      });
+
+      if (requestedIssueAfterRefresh === null) {
+        setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
+          const currentRevision = getCaseResolverWorkspaceRevision(current);
+          const incomingRevision = getCaseResolverWorkspaceRevision(refreshedWorkspace);
+          const currentHasRequestedFile = current.files.some(
+            (file: CaseResolverFile): boolean => file.id === normalizedRequestedFileId,
+          );
+          if (incomingRevision <= currentRevision && currentHasRequestedFile) {
+            return current;
+          }
+          persistence.syncPersistedWorkspaceTracking(refreshedWorkspace);
+          persistence.queuedSerializedWorkspaceRef.current = null;
+          persistence.queuedExpectedRevisionRef.current = null;
+          persistence.queuedMutationIdRef.current = null;
+          return refreshedWorkspace;
+        });
+        settingsStoreRef.current.refetch();
+        requestedWorkspaceRefreshFileIdRef.current = null;
+        requestedWorkspaceMissingFileIdRef.current = null;
+        handledRequestedFileIdRef.current = null;
+        setRequestedCaseIssueSafe(null);
+        setRequestedCaseStatusSafe('ready');
+        logRequestedContextTransition(
+          'requested_context_ready',
+          'Requested file resolved after workspace refresh.',
+        );
+        return;
+      }
+
+      requestedWorkspaceMissingFileIdRef.current = normalizedRequestedFileId;
+      requestedWorkspaceRefreshFileIdRef.current = null;
+      handledRequestedFileIdRef.current = null;
+      setRequestedCaseIssueSafe(requestedIssueAfterRefresh);
+      setRequestedCaseStatusSafe('missing');
+      logRequestedContextTransition(
+        'requested_context_missing_not_found',
+        'Requested file not found after workspace refresh.',
+      );
+    })();
+
+    return (): void => {
+      isCancelled = true;
+    };
+  }, [
+    logRequestedContextTransition,
+    persistence,
+    requestedContextRetryTick,
+    requestedFileId,
+    setRequestedCaseIssueSafe,
+    setRequestedCaseStatusSafe,
+    workspace.files,
   ]);
 
   useEffect(() => {
@@ -441,6 +638,65 @@ export function useCaseResolverState(): CaseResolverStateValue {
     settingsStoreRef,
     toast,
   });
+
+  const handleRetryCaseContext = useCallback((): void => {
+    const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
+    if (!normalizedRequestedFileId) {
+      setRequestedCaseIssueSafe(null);
+      setRequestedCaseStatusSafe('ready');
+      return;
+    }
+    requestedContextAttemptByFileIdRef.current.delete(normalizedRequestedFileId);
+    requestedWorkspaceMissingFileIdRef.current = null;
+    requestedWorkspaceRefreshFileIdRef.current = normalizedRequestedFileId;
+    handledRequestedFileIdRef.current = null;
+    setRequestedCaseIssueSafe(null);
+    setRequestedCaseStatusSafe('loading');
+    setRequestedContextRetryTick((current: number): number => {
+      const next = current + 1;
+      requestedContextRetryNonceRef.current = next;
+      return next;
+    });
+    logRequestedContextTransition('requested_context_loading', 'Manual retry requested.');
+  }, [
+    logRequestedContextTransition,
+    requestedFileId,
+    setRequestedCaseIssueSafe,
+    setRequestedCaseStatusSafe,
+  ]);
+
+  const handleResetCaseContext = useCallback((): void => {
+    requestedContextResolveRunIdRef.current += 1;
+    requestedWorkspaceRefreshFileIdRef.current = null;
+    requestedWorkspaceMissingFileIdRef.current = null;
+    requestedContextAttemptByFileIdRef.current.clear();
+    handledRequestedFileIdRef.current = null;
+    setRequestedCaseIssueSafe(null);
+    setRequestedCaseStatusSafe('ready');
+    setSelectedFileId(null);
+    setSelectedAssetId(null);
+    setSelectedFolderPath(null);
+    setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace =>
+      current.activeFileId === null
+        ? current
+        : {
+          ...current,
+          activeFileId: null,
+        },
+    );
+    logRequestedContextTransition(
+      'requested_context_reset',
+      'Case context reset requested.',
+    );
+  }, [
+    logRequestedContextTransition,
+    setWorkspace,
+    setSelectedAssetId,
+    setSelectedFileId,
+    setSelectedFolderPath,
+    setRequestedCaseIssueSafe,
+    setRequestedCaseStatusSafe,
+  ]);
 
   const selectedCaseScopeIds = useMemo(
     (): Set<string> | null => collectCaseScopeIds(workspace.files, viewState.activeCaseId),
@@ -519,8 +775,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
     handledRequestedFileIdRef.current = null;
     requestedWorkspaceRefreshFileIdRef.current = null;
     requestedWorkspaceMissingFileIdRef.current = null;
+    requestedContextAttemptByFileIdRef.current.clear();
+    setRequestedCaseIssueSafe(null);
     setRequestedCaseStatusSafe('ready');
-  }, [requestedFileId, setRequestedCaseStatusSafe]);
+  }, [requestedFileId, setRequestedCaseIssueSafe, setRequestedCaseStatusSafe]);
 
   const folderActions = useCaseResolverStateFolderActions({
     confirm,
@@ -567,7 +825,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedFileId,
     requestedPromptExploderSessionId,
     requestedCaseStatus,
+    requestedCaseIssue,
     shouldOpenEditorFromQuery,
+    handleRetryCaseContext,
+    handleResetCaseContext,
     handleCreateFolder: creationActions.handleCreateFolder,
     handleCreateFile: creationActions.handleCreateFile,
     handleCreateScanFile: assetActions.handleCreateScanFile,

@@ -1,9 +1,6 @@
 import {
-  AI_PATHS_CONFIG_COMPACTION_THRESHOLD,
-  AI_PATHS_CONFIG_KEY_PREFIX,
   type AiPathsSettingRecord,
 } from './settings-store.constants';
-import { cloneJsonSafe } from '@/features/ai/ai-paths/lib';
 
 export const trimLargeString = (value: string, maxLen: number = 1000): string =>
   value.length > maxLen ? `${value.slice(0, maxLen)}…` : value;
@@ -175,3 +172,5 @@ export const compactPathConfigValue = (raw: string): string | null => {
   }
   return compacted;
 };
+
+export type { AiPathsSettingRecord };

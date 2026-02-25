@@ -1,6 +1,5 @@
 'use client';
 
-import { type UseQueryResult } from '@tanstack/react-query';
 import { createContext, useContext, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { 
@@ -12,6 +11,9 @@ import {
   type ChatbotModelsResponse,
   type InsightsSnapshot
 } from '@/features/ai/brain/hooks/useBrainQueries';
+
+export type { ChatbotModelsResponse, InsightsSnapshot };
+
 import {
   AI_INSIGHTS_SETTINGS_KEYS,
   DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
@@ -25,6 +27,7 @@ import type {
   AnalyticsSummaryDto,
 } from '@/shared/contracts';
 import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
+import type { SingleQuery } from '@/shared/contracts/ui';
 import { useSettingsMap, useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useToast, type SelectSimpleOption } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
@@ -155,11 +158,11 @@ interface BrainContextType {
   setLogsPromptSystem: (prompt: string) => void;
 
   // Queries
-  ollamaModelsQuery: UseQueryResult<ChatbotModelsResponse>;
-  analyticsSummaryQuery: UseQueryResult<AnalyticsSummaryDto>;
-  logMetricsQuery: UseQueryResult<SystemLogMetrics>;
-  insightsQuery: UseQueryResult<InsightsSnapshot>;
-  runtimeAnalyticsQuery: UseQueryResult<AiPathRuntimeAnalyticsSummary>;
+  ollamaModelsQuery: SingleQuery<ChatbotModelsResponse>;
+  analyticsSummaryQuery: SingleQuery<AnalyticsSummaryDto>;
+  logMetricsQuery: SingleQuery<SystemLogMetrics>;
+  insightsQuery: SingleQuery<InsightsSnapshot>;
+  runtimeAnalyticsQuery: SingleQuery<AiPathRuntimeAnalyticsSummary>;
   
   // Computed
   modelQuickPicks: SelectSimpleOption[];

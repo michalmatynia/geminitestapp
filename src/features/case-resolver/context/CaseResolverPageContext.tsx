@@ -23,7 +23,10 @@ export type CaseResolverPageContextValue = {
   workspace: CaseResolverWorkspace;
   activeCaseId: string | null;
   requestedCaseStatus: 'loading' | 'ready' | 'missing';
+  requestedCaseIssue: 'requested_file_missing' | 'workspace_unavailable' | null;
   canCreateInActiveCase: boolean;
+  onRetryCaseContext: () => void;
+  onResetCaseContext: () => void;
   selectedFileId: string | null;
   selectedAssetId: string | null;
   selectedFolderPath: string | null;

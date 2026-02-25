@@ -45,6 +45,7 @@ export const aiBrainAssignmentSchema = z.object({
 });
 
 export type AiBrainAssignment = z.infer<typeof aiBrainAssignmentSchema>;
+export type AiBrainAssignmentDto = AiBrainAssignment;
 
 export const aiBrainSettingsSchema = z.object({
   defaults: aiBrainAssignmentSchema,
@@ -52,6 +53,7 @@ export const aiBrainSettingsSchema = z.object({
 });
 
 export type AiBrainSettings = z.infer<typeof aiBrainSettingsSchema>;
+export type AiBrainSettingsDto = AiBrainSettings;
 export type UpdateAiBrainSettings = Partial<AiBrainSettings>;
 
 export const aiBrainMemorySchema = z.object({
@@ -63,6 +65,7 @@ export const aiBrainMemorySchema = z.object({
 });
 
 export type AiBrainMemory = z.infer<typeof aiBrainMemorySchema>;
+export type AiBrainMemoryDto = AiBrainMemory;
 export type CreateAiBrainMemory = Omit<AiBrainMemory, 'id' | 'createdAt' | 'updatedAt'>;
 export type UpdateAiBrainMemory = Partial<CreateAiBrainMemory>;
 
@@ -78,6 +81,7 @@ export const aiBrainProviderCatalogSchema = z.object({
 });
 
 export type AiBrainProviderCatalog = z.infer<typeof aiBrainProviderCatalogSchema>;
+export type AiBrainProviderCatalogDto = AiBrainProviderCatalog;
 
 /**
  * AI Brain Query Response DTOs
@@ -92,6 +96,7 @@ export const chatbotModelsResponseSchema = z.object({
 });
 
 export type ChatbotModelsResponse = z.infer<typeof chatbotModelsResponseSchema>;
+export type ChatbotModelsResponseDto = ChatbotModelsResponse;
 
 const insightsSnapshotSchema = z.object({
   analytics: z.array(aiInsightRecordSchema).default([]),
@@ -101,6 +106,7 @@ const insightsSnapshotSchema = z.object({
 export const InsightsSnapshotSchema = insightsSnapshotSchema;
 
 export type InsightsSnapshot = z.infer<typeof insightsSnapshotSchema>;
+export type InsightsSnapshotDto = InsightsSnapshot;
 
 export const AI_BRAIN_SETTINGS_KEY = 'ai_brain_settings';
 export const AI_BRAIN_PROVIDER_CATALOG_KEY = 'ai_brain_provider_catalog';

@@ -7,6 +7,11 @@ import {
   resolveCaseResolverActiveCaseId,
   serializeWorkspaceForUnsavedChangesCheck,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
+import {
+  hasRequestedCaseFile,
+  resolveRequestedCaseIssueAfterRefresh,
+  stripCaseContextQueryParams,
+} from '@/features/case-resolver/hooks/useCaseResolverState.helpers.requested-context';
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
 import type { 
   CaseResolverFile, 
@@ -85,6 +90,43 @@ describe('case resolver case context resolution', () => {
         requestedCaseStatus: 'ready',
       }),
     ).toBe(true);
+  });
+
+  it('detects requested file presence in workspace files', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-a',
+      fileType: 'case',
+      name: 'Case A',
+    });
+    const files = [caseFile];
+    expect(hasRequestedCaseFile(files, 'case-a')).toBe(true);
+    expect(hasRequestedCaseFile(files, 'case-missing')).toBe(false);
+  });
+
+  it('resolves requested context issue when refresh cannot find requested file', () => {
+    expect(
+      resolveRequestedCaseIssueAfterRefresh({
+        refreshSucceeded: true,
+        hasRequestedFileAfterRefresh: false,
+      }),
+    ).toBe('requested_file_missing');
+  });
+
+  it('resolves requested context issue when refresh fails', () => {
+    expect(
+      resolveRequestedCaseIssueAfterRefresh({
+        refreshSucceeded: false,
+        hasRequestedFileAfterRefresh: false,
+      }),
+    ).toBe('workspace_unavailable');
+  });
+
+  it('strips case-context query parameters and preserves unrelated params', () => {
+    expect(
+      stripCaseContextQueryParams(
+        'fileId=case-a&openEditor=1&promptExploderSessionId=session-1&tab=tree&view=documents',
+      ),
+    ).toBe('tab=tree&view=documents');
   });
 
   it('keeps folder target when it belongs to the active case', () => {

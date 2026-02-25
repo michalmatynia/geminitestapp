@@ -1,0 +1,68 @@
+'use client';
+
+import React from 'react';
+import { Input, SelectSimple } from '@/shared/ui';
+import { useCompositeFieldContext } from '../CompositeFieldContext';
+import { BORDER_STYLE_OPTIONS } from '../settings-field-constants';
+
+export function BorderField(): React.ReactNode {
+  const { value, onChange } = useCompositeFieldContext();
+  const border = (value as Record<string, unknown>) ?? { width: 0, style: 'solid', color: '#4b5563', radius: 0 };
+  const update = (key: string, v: unknown): void => {
+    onChange({ ...border, [key]: v });
+  };
+  return (
+    <div className='space-y-2'>
+      <div className='grid grid-cols-2 gap-2'>
+        <div className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>Width</span>
+          <Input
+            type='number'
+            value={(border['width'] as number) ?? 0}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('width', Number(e.target.value))}
+            className='text-xs h-7'
+            min={0}
+          />
+        </div>
+        <div className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>Radius</span>
+          <Input
+            type='number'
+            value={(border['radius'] as number) ?? 0}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('radius', Number(e.target.value))}
+            className='text-xs h-7'
+            min={0}
+          />
+        </div>
+      </div>
+      <div className='grid grid-cols-2 gap-2'>
+        <div className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>Style</span>
+          <SelectSimple size='sm'
+            value={(border['style'] as string) ?? 'solid'}
+            onValueChange={(v: string): void => update('style', v)}
+            options={BORDER_STYLE_OPTIONS}
+            triggerClassName='text-xs h-7'
+          />
+        </div>
+        <div className='space-y-0.5'>
+          <span className='text-[10px] text-gray-500 uppercase'>Color</span>
+          <div className='flex items-center gap-1'>
+            <input
+              type='color'
+              value={(border['color'] as string) ?? '#4b5563'}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('color', e.target.value)}
+              className='h-7 w-7 cursor-pointer rounded border border-border/50 bg-transparent p-0.5'
+            />
+            <Input
+              value={(border['color'] as string) ?? '#4b5563'}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>): void => update('color', e.target.value)}
+              className='text-xs h-7 font-mono flex-1'
+              maxLength={7}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

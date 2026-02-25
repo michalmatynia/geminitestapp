@@ -15,7 +15,7 @@ export type RegexAiProposalSectionProps = {
 };
 
 export function RegexAiProposalSection({
-  regexConfig,
+  regexConfig: _regexConfig,
   hasAiProposal,
   activeVariant,
   onApplyVariant,

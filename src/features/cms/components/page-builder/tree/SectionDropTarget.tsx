@@ -6,9 +6,9 @@ import React, { useState } from 'react';
 import type { PageZone } from '@/shared/contracts/cms';
 import { cn } from '@/shared/utils';
 import { useComponentTreePanelContext } from './ComponentTreePanelContext';
-import { useDragState } from '../../hooks/useDragStateContext';
-import { useTreeActions } from '../../hooks/useTreeActionsContext';
-import { readSectionDragData } from '../../utils/page-builder-dnd';
+import { useDragState } from '../../../hooks/useDragStateContext';
+import { useTreeActions } from '../../../hooks/useTreeActionsContext';
+import { readSectionDragData } from '../../../utils/page-builder-dnd';
 import { isCmsSectionSamePositionDrop } from '../utils/cms-tree-external-drop';
 
 const PROMOTABLE_BLOCK_TYPES = [

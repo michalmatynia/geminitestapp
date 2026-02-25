@@ -44,117 +44,22 @@
   3:50  warning  'AiPathRunNode' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
   3:65  warning  'AiPathRunEvent' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/BrainStateOverview.tsx
-  28:9   error  Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
-  28:49  error  Unsafe member access .logs on a type that cannot be resolved                                            @typescript-eslint/no-unsafe-member-access
-  48:45  error  Unsafe argument of type error typed assigned to a parameter of type `string | Date | null | undefined`  @typescript-eslint/no-unsafe-argument
-  48:63  error  Unsafe member access .createdAt on a type that cannot be resolved                                       @typescript-eslint/no-unsafe-member-access
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/MetricsTab.tsx
-   43:9   error  Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
-   43:54  error  Unsafe member access .analytics on a type that cannot be resolved                                       @typescript-eslint/no-unsafe-member-access
-   44:9   error  Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
-   44:49  error  Unsafe member access .logs on a type that cannot be resolved                                            @typescript-eslint/no-unsafe-member-access
-  155:53  error  Unsafe argument of type error typed assigned to a parameter of type `string | Date | null | undefined`  @typescript-eslint/no-unsafe-argument
-  155:76  error  Unsafe member access .createdAt on a type that cannot be resolved                                       @typescript-eslint/no-unsafe-member-access
-  159:38  error  Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
-  159:61  error  Unsafe member access .status on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
-  160:80  error  Unsafe member access .summary on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
-  176:48  error  Unsafe argument of type error typed assigned to a parameter of type `string | Date | null | undefined`  @typescript-eslint/no-unsafe-argument
-  176:66  error  Unsafe member access .createdAt on a type that cannot be resolved                                       @typescript-eslint/no-unsafe-member-access
-  180:38  error  Unsafe assignment of an error typed value                                                               @typescript-eslint/no-unsafe-assignment
-  180:56  error  Unsafe member access .status on a type that cannot be resolved                                          @typescript-eslint/no-unsafe-member-access
-  181:75  error  Unsafe member access .summary on a type that cannot be resolved                                         @typescript-eslint/no-unsafe-member-access
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/components/ProvidersTab.tsx
-  65:34  error  Unsafe member access .warning on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  67:37  error  Unsafe member access .warning on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/brain/context/BrainContext.tsx
+  3:15  warning  'UseQueryResult' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/ParamRow.tsx
-  45:9   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
-  58:7   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
-  61:49  error  Unsafe member access .hint on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-  62:51  error  Unsafe member access .enumOptions on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  63:48  error  Unsafe member access .min on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
-  64:48  error  Unsafe member access .max on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
-  65:49  error  Unsafe member access .step on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-  66:53  error  Unsafe member access .integer on a type that cannot be resolved      @typescript-eslint/no-unsafe-member-access
-  67:5   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
+  12:31  warning  'ParamIssue' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/RightSidebar.tsx
-  827:9  warning  'handleOpenControls' is assigned a value but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
-  831:9  warning  'handleOpenPromptControl' is assigned a value but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
-  835:9  warning  'handleOpenRequestPreview' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/analysis/sections/AnalysisResultSection.tsx
+  139:21  error  Strings must use singlequote  quotes
+  141:21  error  Strings must use singlequote  quotes
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/generation-toolbar/GenerationToolbar.hooks.ts
-  206:40  error  Unexpected any. Specify a different type                                                  @typescript-eslint/no-explicit-any
-  206:65  error  Unsafe argument of type `any` assigned to a parameter of type `ToastOptions | undefined`  @typescript-eslint/no-unsafe-argument
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/analysis/sections/AnalysisSettingsSection.tsx
+  116:20  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
+  298:19  error  Strings must use singlequote               quotes
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/generation-toolbar/GenerationToolbar.types.ts
-  21:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/generation-toolbar/GenerationToolbarInner.tsx
-    91:5   warning  'maskShapes' is assigned a value but never used. Allowed unused vars must match /^_/u                                @typescript-eslint/no-unused-vars
-   107:18  warning  'setUpscaleMode' is assigned a value but never used. Allowed unused vars must match /^_/u                            @typescript-eslint/no-unused-vars
-   108:22  warning  'setUpscaleStrategy' is assigned a value but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
-   109:15  warning  'setCropMode' is assigned a value but never used. Allowed unused vars must match /^_/u                               @typescript-eslint/no-unused-vars
-   110:17  warning  'setCenterMode' is assigned a value but never used. Allowed unused vars must match /^_/u                             @typescript-eslint/no-unused-vars
-   111:20  warning  'setAutoScaleMode' is assigned a value but never used. Allowed unused vars must match /^_/u                          @typescript-eslint/no-unused-vars
-   112:26  warning  'setCenterLayoutPadding' is assigned a value but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
-   113:27  warning  'setCenterLayoutPaddingX' is assigned a value but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
-   114:27  warning  'setCenterLayoutPaddingY' is assigned a value but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
-   120:41  warning  'setCenterLayoutFillMissingCanvasWhite' is assigned a value but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
-   124:27  warning  'setAnalysisPlanSnapshot' is assigned a value but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
-   126:29  warning  'setAutoScaleLayoutPadding' is assigned a value but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
-   127:30  warning  'setAutoScaleLayoutPaddingX' is assigned a value but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
-   128:30  warning  'setAutoScaleLayoutPaddingY' is assigned a value but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
-   130:44  warning  'setAutoScaleLayoutFillMissingCanvasWhite' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-   131:34  warning  'setAutoScaleLayoutShadowPolicy' is assigned a value but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
-   132:19  warning  'setUpscaleScale' is assigned a value but never used. Allowed unused vars must match /^_/u                           @typescript-eslint/no-unused-vars
-   133:25  warning  'setUpscaleTargetWidth' is assigned a value but never used. Allowed unused vars must match /^_/u                     @typescript-eslint/no-unused-vars
-   134:26  warning  'setUpscaleTargetHeight' is assigned a value but never used. Allowed unused vars must match /^_/u                    @typescript-eslint/no-unused-vars
-   135:30  warning  'setUpscaleSmoothingQuality' is assigned a value but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
-   154:5   warning  'lastConsumedAnalysisIntentRef' is assigned a value but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
-   155:5   warning  'maskShapesForExport' is assigned a value but never used. Allowed unused vars must match /^_/u                       @typescript-eslint/no-unused-vars
-   156:5   warning  'eligibleMaskShapes' is assigned a value but never used. Allowed unused vars must match /^_/u                        @typescript-eslint/no-unused-vars
-   178:9   error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-   178:37  error    Unsafe call of a type that could not be resolved                                                                     @typescript-eslint/no-unsafe-call
-   181:9   error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-   408:5   error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-   549:9   error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-   551:7   error    Unsafe return of a value of type error                                                                               @typescript-eslint/no-unsafe-return
-   551:7   error    Unsafe call of a type that could not be resolved                                                                     @typescript-eslint/no-unsafe-call
-   568:9   error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-   569:11  error    Unsafe return of a value of type error                                                                               @typescript-eslint/no-unsafe-return
-   569:11  error    Unsafe call of a type that could not be resolved                                                                     @typescript-eslint/no-unsafe-call
-   597:7   error    Unexpected `await` of a non-Promise (non-"Thenable") value                                                           @typescript-eslint/await-thenable
-   597:13  error    Placing a void expression inside another expression is forbidden. Move it to its own statement instead               @typescript-eslint/no-confusing-void-expression
-   707:49  error    Unsafe call of a type that could not be resolved                                                                     @typescript-eslint/no-unsafe-call
-   720:38  error    This assertion is unnecessary since it does not change the type of the expression                                    @typescript-eslint/no-unnecessary-type-assertion
-   967:54  error    Unsafe call of a type that could not be resolved                                                                     @typescript-eslint/no-unsafe-call
-   980:42  error    This assertion is unnecessary since it does not change the type of the expression                                    @typescript-eslint/no-unnecessary-type-assertion
-  1031:17  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1031:47  error    Unsafe call of a type that could not be resolved                                                                     @typescript-eslint/no-unsafe-call
-  1404:9   error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1405:9   error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1406:9   error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1407:9   error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1408:9   error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1525:26  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1555:32  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1556:41  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1557:30  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1558:33  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1559:40  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1563:29  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1584:34  error    Promise-returning function provided to attribute where a void return was expected                                    @typescript-eslint/no-misused-promises
-  1588:15  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1607:79  error    Unsafe argument of type error typed assigned to a parameter of type `string`                                         @typescript-eslint/no-unsafe-argument
-  1633:32  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1634:41  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1635:30  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1636:33  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
-  1637:40  error    Unsafe assignment of an error typed value                                                                            @typescript-eslint/no-unsafe-assignment
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/generation-toolbar/useGenerationToolbarResolution.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/modals/ExtractPromptParamsModal.tsx
   10:3  warning  'PromptExtractHistoryEntry' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
@@ -163,35 +68,11 @@
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/modals/GenerationPreviewModal.tsx
   4:8  warning  'Image' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/studio-modals/prompt-extract-utils.ts
-  121:11  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/studio-modals/studio-modals-prompt-handlers.ts
-  292:15  error  Unsafe assignment of an error typed value  @typescript-eslint/no-unsafe-assignment
-
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/studio-modals/studio-modals-upload-handlers.ts
   3:15  warning  'StudioAssetImportResult' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/hooks/useStudioModalsState.ts
   6:10  warning  'resolveProductImageUrl' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/param-ui.ts
-   43:13  error  Unsafe member access .kind on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-   43:31  error  Unsafe member access .kind on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-   53:13  error  Unsafe member access .min on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
-   53:40  error  Unsafe member access .max on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
-   87:9   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
-   92:7   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
-  103:7   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
-  114:7   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
-  124:11  error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
-  124:25  error  Unsafe member access .enumOptions on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
-  127:7   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
-  138:7   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
-  141:25  error  Unsafe member access .min on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
-  141:52  error  Unsafe member access .max on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
-  150:7   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
-  160:5   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/utils/prompt-params.ts
   4:3  warning  'ParamSpecKind' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
@@ -245,6 +126,87 @@
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/filemaker/settings.ts
   35:3  warning  'sanitizePhoneCandidate' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/connections/SessionModal.tsx
+  30:9    error  Unsafe assignment of an error typed value                                                     @typescript-eslint/no-unsafe-assignment
+  30:19   error  Unsafe call of a type that could not be resolved                                              @typescript-eslint/no-unsafe-call
+  32:40   error  Unsafe member access .showSessionModal on a type that cannot be resolved                      @typescript-eslint/no-unsafe-member-access
+  33:41   error  Unsafe return of a value of type error                                                        @typescript-eslint/no-unsafe-return
+  33:41   error  Unsafe call of a type that could not be resolved                                              @typescript-eslint/no-unsafe-call
+  33:49   error  Unsafe member access .setShowSessionModal on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  34:9    error  Unsafe assignment of an error typed value                                                     @typescript-eslint/no-unsafe-assignment
+  34:42   error  Unsafe member access .sessionLoading on a type that cannot be resolved                        @typescript-eslint/no-unsafe-member-access
+  35:9    error  Unsafe assignment of an error typed value                                                     @typescript-eslint/no-unsafe-assignment
+  35:38   error  Unsafe member access .sessionError on a type that cannot be resolved                          @typescript-eslint/no-unsafe-member-access
+  36:9    error  Unsafe assignment of an error typed value                                                     @typescript-eslint/no-unsafe-assignment
+  36:42   error  Unsafe member access .sessionCookies on a type that cannot be resolved                        @typescript-eslint/no-unsafe-member-access
+  37:9    error  Unsafe assignment of an error typed value                                                     @typescript-eslint/no-unsafe-assignment
+  37:42   error  Unsafe member access .sessionOrigins on a type that cannot be resolved                        @typescript-eslint/no-unsafe-member-access
+  38:9    error  Unsafe assignment of an error typed value                                                     @typescript-eslint/no-unsafe-assignment
+  38:46   error  Unsafe member access .sessionUpdatedAt on a type that cannot be resolved                      @typescript-eslint/no-unsafe-member-access
+  45:55   error  Unsafe argument of type error typed assigned to a parameter of type `string | number | Date`  @typescript-eslint/no-unsafe-argument
+  58:102  error  Unsafe member access .length on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  59:24   error  Unsafe member access .length on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  60:49   error  Unsafe member access .length on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  64:22   error  Unsafe member access .length on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  70:18   error  Unsafe call of a type that could not be resolved                                              @typescript-eslint/no-unsafe-call
+  70:26   error  Unsafe member access .map on a type that cannot be resolved                                   @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/connections/TestLogModal.tsx
+  25:9   error  Unsafe assignment of an error typed value                                                     @typescript-eslint/no-unsafe-assignment
+  25:19  error  Unsafe call of a type that could not be resolved                                              @typescript-eslint/no-unsafe-call
+  27:40  error  Unsafe member access .showTestLogModal on a type that cannot be resolved                      @typescript-eslint/no-unsafe-member-access
+  28:41  error  Unsafe return of a value of type error                                                        @typescript-eslint/no-unsafe-return
+  28:41  error  Unsafe call of a type that could not be resolved                                              @typescript-eslint/no-unsafe-call
+  28:49  error  Unsafe member access .setShowTestLogModal on a type that cannot be resolved                   @typescript-eslint/no-unsafe-member-access
+  29:9   error  Unsafe assignment of an error typed value                                                     @typescript-eslint/no-unsafe-assignment
+  29:52  error  Unsafe member access .selectedStep on a type that cannot be resolved                          @typescript-eslint/no-unsafe-member-access
+  38:45  error  Unsafe member access .timestamp on a type that cannot be resolved                             @typescript-eslint/no-unsafe-member-access
+  38:66  error  Unsafe argument of type error typed assigned to a parameter of type `string | number | Date`  @typescript-eslint/no-unsafe-argument
+  38:79  error  Unsafe member access .timestamp on a type that cannot be resolved                             @typescript-eslint/no-unsafe-member-access
+  45:20  error  Unsafe assignment of an error typed value                                                     @typescript-eslint/no-unsafe-assignment
+  45:33  error  Unsafe member access .step on a type that cannot be resolved                                  @typescript-eslint/no-unsafe-member-access
+  51:38  error  Unsafe member access .status on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  52:39  error  Unsafe member access .status on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  60:23  error  Unsafe member access .detail on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  63:29  error  Unsafe member access .detail on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+  69:25  error  Unsafe member access .status on a type that cannot be resolved                                @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/integrations/components/connections/TestResultModal.tsx
+  28:9    error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  28:19   error  Unsafe call of a type that could not be resolved                                 @typescript-eslint/no-unsafe-call
+  30:41   error  Unsafe member access .showTestErrorModal on a type that cannot be resolved       @typescript-eslint/no-unsafe-member-access
+  30:71   error  Unsafe member access .showTestSuccessModal on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
+  32:17   error  Unsafe member access .showTestSuccessModal on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
+  32:39   error  Unsafe call of a type that could not be resolved                                 @typescript-eslint/no-unsafe-call
+  32:47   error  Unsafe member access .setShowTestSuccessModal on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  33:10   error  Unsafe call of a type that could not be resolved                                 @typescript-eslint/no-unsafe-call
+  33:18   error  Unsafe member access .setShowTestErrorModal on a type that cannot be resolved    @typescript-eslint/no-unsafe-member-access
+  35:9    error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  35:42   error  Unsafe member access .showTestSuccessModal on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
+  36:9    error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  36:43   error  Unsafe member access .showTestSuccessModal on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
+  36:74   error  Unsafe member access .testSuccessMessage on a type that cannot be resolved       @typescript-eslint/no-unsafe-member-access
+  36:103  error  Unsafe member access .testError on a type that cannot be resolved                @typescript-eslint/no-unsafe-member-access
+  37:9    error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  37:36   error  Unsafe member access .testErrorMeta on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  42:11   error  Unsafe member access .errorId on a type that cannot be resolved                  @typescript-eslint/no-unsafe-member-access
+  42:39   error  Unsafe member access .errorId on a type that cannot be resolved                  @typescript-eslint/no-unsafe-member-access
+  43:11   error  Unsafe member access .integrationId on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  43:51   error  Unsafe member access .integrationId on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  44:11   error  Unsafe member access .connectionId on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+  44:49   error  Unsafe member access .connectionId on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+  49:9    error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  53:14   error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  74:17   error  Unsafe member access .errorId on a type that cannot be resolved                  @typescript-eslint/no-unsafe-member-access
+  74:34   error  Unsafe member access .integrationId on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  74:57   error  Unsafe member access .connectionId on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+  78:22   error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  78:28   error  Unsafe member access .errorId on a type that cannot be resolved                  @typescript-eslint/no-unsafe-member-access
+  83:22   error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  83:28   error  Unsafe member access .integrationId on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  88:22   error  Unsafe assignment of an error typed value                                        @typescript-eslint/no-unsafe-assignment
+  88:28   error  Unsafe member access .connectionId on a type that cannot be resolved             @typescript-eslint/no-unsafe-member-access
+
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/internationalization/components/language-modal/hooks/useLanguageForm.ts
   5:15  warning  'Language' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
@@ -284,6 +246,88 @@
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/services/product-repository/prisma-product-repository.filters.ts
   5:8  warning  'ProductAdvancedFilterGroup' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-✖ 205 problems (106 errors, 99 warnings)
-  2 errors and 0 warnings potentially fixable with the `--fix` option.
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/prompt-exploder/components/ParserTuningSection.tsx
+  13:9   error  Unsafe assignment of an error typed value         @typescript-eslint/no-unsafe-assignment
+  29:13  error  Unsafe call of a type that could not be resolved  @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/prompt-exploder/components/PatternRuntimePanel.tsx
+   55:9   error  Unsafe assignment of an error typed value                                   @typescript-eslint/no-unsafe-assignment
+  197:15  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  197:47  error  Unsafe return of a value of type `any`                                      @typescript-eslint/no-unsafe-return
+  278:15  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  278:47  error  Unsafe return of a value of type `any`                                      @typescript-eslint/no-unsafe-return
+  293:15  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  293:47  error  Unsafe return of a value of type `any`                                      @typescript-eslint/no-unsafe-return
+  311:17  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  311:49  error  Unsafe return of a value of type `any`                                      @typescript-eslint/no-unsafe-return
+  313:38  error  Unsafe member access .enabled on an `any` value                             @typescript-eslint/no-unsafe-member-access
+  330:15  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  330:47  error  Unsafe return of a value of type `any`                                      @typescript-eslint/no-unsafe-return
+  348:15  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  348:47  error  Unsafe return of a value of type `any`                                      @typescript-eslint/no-unsafe-return
+  366:15  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  366:47  error  Unsafe return of a value of type `any`                                      @typescript-eslint/no-unsafe-return
+  384:15  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  384:47  error  Unsafe return of a value of type `any`                                      @typescript-eslint/no-unsafe-return
+  397:17  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  397:49  error  Unsafe return of a value of type `any`                                      @typescript-eslint/no-unsafe-return
+  399:59  error  Unsafe member access .autoActivateLearnedTemplates on an `any` value        @typescript-eslint/no-unsafe-member-access
+  411:17  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  411:49  error  Unsafe return of a value of type `any`                                      @typescript-eslint/no-unsafe-return
+  414:31  error  Unsafe member access .benchmarkSuggestionUpsertTemplates on an `any` value  @typescript-eslint/no-unsafe-member-access
+  426:18  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  507:34  error  Unsafe return of a value of type error                                      @typescript-eslint/no-unsafe-return
+  507:34  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  512:28  error  Unsafe assignment of an error typed value                                   @typescript-eslint/no-unsafe-assignment
+  527:22  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  537:22  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  547:22  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  591:28  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+  608:28  error  Unsafe call of a type that could not be resolved                            @typescript-eslint/no-unsafe-call
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/prompt-exploder/context/BenchmarkContext.tsx
+  100:9   error  Unsafe assignment of an error typed value                                                                                 @typescript-eslint/no-unsafe-assignment
+  331:17  error  Unsafe call of a type that could not be resolved                                                                          @typescript-eslint/no-unsafe-call
+  331:31  error  Unsafe member access .mutateAsync on a type that cannot be resolved                                                       @typescript-eslint/no-unsafe-member-access
+  333:17  error  Unsafe call of a type that could not be resolved                                                                          @typescript-eslint/no-unsafe-call
+  333:36  error  Unsafe member access .mutateAsync on a type that cannot be resolved                                                       @typescript-eslint/no-unsafe-member-access
+  336:9   error  Unsafe call of a type that could not be resolved                                                                          @typescript-eslint/no-unsafe-call
+  337:32  error  Unsafe argument of type `any` assigned to a parameter of type `Iterable<readonly [unknown, unknown]> | null | undefined`  @typescript-eslint/no-unsafe-argument
+  337:32  error  Unsafe call of an `any` typed value                                                                                       @typescript-eslint/no-unsafe-call
+  337:41  error  Unsafe member access .map on an `any` value                                                                               @typescript-eslint/no-unsafe-member-access
+  337:55  error  Unsafe return of a value of type `any[]`                                                                                  @typescript-eslint/no-unsafe-return
+  337:61  error  Unsafe member access .id on an `any` value                                                                                @typescript-eslint/no-unsafe-member-access
+  344:11  error  Unsafe call of a type that could not be resolved                                                                          @typescript-eslint/no-unsafe-call
+  345:34  error  Unsafe argument of type `any` assigned to a parameter of type `Iterable<readonly [unknown, unknown]> | null | undefined`  @typescript-eslint/no-unsafe-argument
+  345:34  error  Unsafe call of an `any` typed value                                                                                       @typescript-eslint/no-unsafe-call
+  345:43  error  Unsafe member access .map on an `any` value                                                                               @typescript-eslint/no-unsafe-member-access
+  345:61  error  Unsafe return of a value of type `any[]`                                                                                  @typescript-eslint/no-unsafe-return
+  345:71  error  Unsafe member access .id on an `any` value                                                                                @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/prompt-exploder/context/LibraryContext.tsx
+   54:9   error  Unsafe assignment of an error typed value                            @typescript-eslint/no-unsafe-assignment
+  106:13  error  Unsafe call of a type that could not be resolved                     @typescript-eslint/no-unsafe-call
+  106:27  error  Unsafe member access .mutateAsync on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/prompt-exploder/context/SegmentEditorContext.tsx
+  135:9   error  Unsafe assignment of an error typed value                                                                                 @typescript-eslint/no-unsafe-assignment
+  573:15  error  Unsafe call of a type that could not be resolved                                                                          @typescript-eslint/no-unsafe-call
+  573:29  error  Unsafe member access .mutateAsync on a type that cannot be resolved                                                       @typescript-eslint/no-unsafe-member-access
+  575:15  error  Unsafe call of a type that could not be resolved                                                                          @typescript-eslint/no-unsafe-call
+  575:34  error  Unsafe member access .mutateAsync on a type that cannot be resolved                                                       @typescript-eslint/no-unsafe-member-access
+  578:7   error  Unsafe call of a type that could not be resolved                                                                          @typescript-eslint/no-unsafe-call
+  579:30  error  Unsafe argument of type `any` assigned to a parameter of type `Iterable<readonly [unknown, unknown]> | null | undefined`  @typescript-eslint/no-unsafe-argument
+  579:30  error  Unsafe call of an `any` typed value                                                                                       @typescript-eslint/no-unsafe-call
+  579:39  error  Unsafe member access .map on an `any` value                                                                               @typescript-eslint/no-unsafe-member-access
+  579:53  error  Unsafe return of a value of type `any[]`                                                                                  @typescript-eslint/no-unsafe-return
+  579:59  error  Unsafe member access .id on an `any` value                                                                                @typescript-eslint/no-unsafe-member-access
+  583:7   error  Unsafe call of a type that could not be resolved                                                                          @typescript-eslint/no-unsafe-call
+  584:30  error  Unsafe argument of type `any` assigned to a parameter of type `Iterable<readonly [unknown, unknown]> | null | undefined`  @typescript-eslint/no-unsafe-argument
+  584:30  error  Unsafe call of an `any` typed value                                                                                       @typescript-eslint/no-unsafe-call
+  584:39  error  Unsafe member access .map on an `any` value                                                                               @typescript-eslint/no-unsafe-member-access
+  584:57  error  Unsafe return of a value of type `any[]`                                                                                  @typescript-eslint/no-unsafe-return
+  584:67  error  Unsafe member access .id on an `any` value                                                                                @typescript-eslint/no-unsafe-member-access
+
+✖ 245 problems (169 errors, 76 warnings)
+  3 errors and 1 warning potentially fixable with the `--fix` option.
 

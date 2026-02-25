@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   CaseResolverFile,
   CaseResolverWorkspace,
@@ -40,21 +40,19 @@ export function useCaseResolverStateViewState({
   setWorkspace,
   requestedFileId,
   requestedCaseStatus,
-  setRequestedCaseStatusSafe,
   initialWorkspaceState,
   syncPersistedWorkspaceTracking,
   queuedSerializedWorkspaceRef,
   queuedExpectedRevisionRef,
   queuedMutationIdRef,
   handledRequestedFileIdRef,
-  requestedWorkspaceRefreshFileIdRef,
-  requestedWorkspaceMissingFileIdRef,
+  requestedWorkspaceRefreshFileIdRef: _requestedWorkspaceRefreshFileIdRef,
+  requestedWorkspaceMissingFileIdRef: _requestedWorkspaceMissingFileIdRef,
 }: {
   workspace: CaseResolverWorkspace;
   setWorkspace: React.Dispatch<React.SetStateAction<CaseResolverWorkspace>>;
   requestedFileId: string | null;
   requestedCaseStatus: CaseResolverRequestedCaseStatus;
-  setRequestedCaseStatusSafe: (status: CaseResolverRequestedCaseStatus) => void;
   initialWorkspaceState: CaseResolverWorkspace;
   syncPersistedWorkspaceTracking: (workspace: CaseResolverWorkspace) => void;
   queuedSerializedWorkspaceRef: React.MutableRefObject<string | null>;
@@ -193,7 +191,6 @@ export function useCaseResolverStateViewState({
     if (handledRequestedFileIdRef.current === requestedFileId) return;
 
     handledRequestedFileIdRef.current = requestedFileId;
-    setRequestedCaseStatusSafe('ready');
     if (selectedFileId !== requestedFileId) {
       setSelectedFileId(requestedFileId);
     }
@@ -223,7 +220,6 @@ export function useCaseResolverStateViewState({
     selectedAssetId,
     selectedFileId,
     selectedFolderPath,
-    setRequestedCaseStatusSafe,
     syncPersistedWorkspaceTracking,
     workspace.activeFileId,
     setWorkspace,

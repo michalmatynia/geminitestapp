@@ -10,6 +10,7 @@ import {
   type CropRect,
 } from './GenerationToolbarImageUtils';
 import { type ImageStudioAnalysisSharedLayout } from '../../utils/analysis-bridge';
+import { type PreviewCanvasImageFrameBinding } from '../../context/UiContext';
 
 export interface GenerationToolbarState extends GenerationToolbarContextValue {
   maskPreviewEnabled: boolean;
@@ -18,7 +19,7 @@ export interface GenerationToolbarState extends GenerationToolbarContextValue {
   setCenterGuidesEnabled: (enabled: boolean) => void;
   setCanvasSelectionEnabled: (enabled: boolean) => void;
   getPreviewCanvasViewportCrop: () => { slotId: string; cropRect: CropRect } | null;
-  getPreviewCanvasImageFrame: () => { slotId: string; frame: any } | null;
+  getPreviewCanvasImageFrame: () => PreviewCanvasImageFrameBinding | null;
   projectId: string | null;
   workingSlot: ImageStudioSlotRecord | null;
   setSelectedSlotId: (id: string | null) => void;

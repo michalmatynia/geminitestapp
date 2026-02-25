@@ -45,25 +45,25 @@ function InternationalizationModals(): React.JSX.Element | null {
   return (
     <>
       <LanguageModal
-        isOpen={intCtx.showLanguageModal}
-        onClose={() => intCtx.setLanguageModalOpen(false)}
-        onSuccess={() => intCtx.setLanguageModalOpen(false)}
-        item={intCtx.editingLanguage}
+        isOpen={intCtx.isLanguageModalOpen}
+        onClose={() => intCtx.handleCloseLanguageModal()}
+        onSuccess={() => intCtx.handleCloseLanguageModal()}
+        item={intCtx.activeLanguage}
         items={intCtx.countries}
       />
 
       <CurrencyModal
-        isOpen={intCtx.showCurrencyModal}
-        onClose={() => intCtx.setCurrencyModalOpen(false)}
-        onSuccess={() => intCtx.setCurrencyModalOpen(false)}
-        item={intCtx.editingCurrency}
+        isOpen={intCtx.isCurrencyModalOpen}
+        onClose={() => intCtx.handleCloseCurrencyModal()}
+        onSuccess={() => intCtx.handleCloseCurrencyModal()}
+        item={intCtx.activeCurrency}
       />
 
       <CountryModal
-        isOpen={intCtx.showCountryModal}
-        onClose={() => intCtx.setCountryModalOpen(false)}
-        onSuccess={() => intCtx.setCountryModalOpen(false)}
-        item={intCtx.editingCountry}
+        isOpen={intCtx.isCountryModalOpen}
+        onClose={() => intCtx.handleCloseCountryModal()}
+        onSuccess={() => intCtx.handleCloseCountryModal()}
+        item={intCtx.activeCountry}
         items={intCtx.currencies}
         loading={intCtx.loadingCurrencies}
       />

@@ -3,9 +3,10 @@
 import { Activity, Radar } from 'lucide-react';
 import React from 'react';
 
-import { Button, MetadataItem, StatusBadge, Alert, SectionHeader, FormSection, EmptyState, Card } from '@/shared/ui';
+import { Button, MetadataItem, StatusBadge, SectionHeader, FormSection, EmptyState, Card } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
+import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 
 const formatNumber = (value: number | undefined): string =>
   Number.isFinite(value) ? Number(value).toLocaleString() : '—';
@@ -40,234 +41,131 @@ export function MetricsTab(): React.JSX.Element {
     runtimeAnalyticsQuery,
   } = useBrain();
 
-  const latestAnalyticsInsight = insightsQuery.data?.analytics?.[0] ?? null;
-  const latestLogsInsight = insightsQuery.data?.logs?.[0] ?? null;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const insightsData = insightsQuery.data;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  const latestAnalyticsInsight = insightsData?.analytics?.[0];
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+  const latestLogsInsight = insightsData?.logs?.[0];
 
   return (
     <div className='space-y-4'>
       <SectionHeader
         title='Deep Metrics'
         description='Auto-refreshing telemetry from analytics, system logs, and AI insight runs.'
-        className='p-4'
-        actions={
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => {
-              void analyticsSummaryQuery.refetch();
-              void logMetricsQuery.refetch();
-              void insightsQuery.refetch();
-              void runtimeAnalyticsQuery.refetch();
-            }}
-          >
-            Refresh now
-          </Button>
-        }
       />
 
-      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
-        <MetadataItem
-          label='Analytics Events (24h)'
-          value={formatNumber(analyticsSummaryQuery.data?.totals.events)}
-          valueClassName='text-2xl font-semibold text-white'
-        />
-        <MetadataItem
-          label='Visitors (24h)'
-          value={formatNumber(analyticsSummaryQuery.data?.visitors)}
-          valueClassName='text-2xl font-semibold text-white'
-        />
-        <MetadataItem
-          label='Error Logs (24h)'
-          value={formatNumber(logMetricsQuery.data?.last24Hours)}
-          valueClassName='text-2xl font-semibold text-white'
-        />
-        <MetadataItem
-          label='Error Logs (7d)'
-          value={formatNumber(logMetricsQuery.data?.last7Days)}
-          valueClassName='text-2xl font-semibold text-white'
-        />
-        <MetadataItem
-          label='Runtime Runs (24h)'
-          value={formatNumber(runtimeAnalyticsQuery.data?.runs.total)}
-          valueClassName='text-2xl font-semibold text-white'
-          hint={`Success ${formatPercent(runtimeAnalyticsQuery.data?.runs.successRate)}`}
-        />
-        <MetadataItem
-          label='Brain Reports (24h)'
-          value={formatNumber(runtimeAnalyticsQuery.data?.brain.totalReports)}
-          valueClassName='text-2xl font-semibold text-white'
-          hint={`Warn ${formatNumber(runtimeAnalyticsQuery.data?.brain.warningReports)} · Err ${formatNumber(runtimeAnalyticsQuery.data?.brain.errorReports)}`}
-        />
-      </div>
-
-      <div className='grid gap-4 lg:grid-cols-2'>
-        <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
-          <div className='flex items-center gap-2 text-sm font-semibold text-white'>
-            <Activity className='size-4 text-cyan-300' />
-            Top Analytics Pages (24h)
-          </div>
-          <div className='mt-3 space-y-2'>
-            {(analyticsSummaryQuery.data?.topPages ?? []).slice(0, 6).map((entry: { path: string; count: number }) => (
-              <div key={entry.path} className='flex items-center justify-between rounded border border-border/50 bg-gray-950/30 px-3 py-2 text-xs'>
-                <span className='truncate text-gray-200'>{entry.path || '/'}</span>
-                <span className='text-gray-400'>{entry.count}</span>
-              </div>
-            ))}
-            {(analyticsSummaryQuery.data?.topPages?.length ?? 0) === 0 ? (
-              <EmptyState
-                title='No analytics data'
-                description='No pageview data recorded in the last 24 hours.'
-                variant='compact'
-                className='py-6 border-none bg-transparent'
-              />
-            ) : null}
-          </div>
-        </Card>
-
-        <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
-          <div className='flex items-center gap-2 text-sm font-semibold text-white'>
-            <Radar className='size-4 text-amber-300' />
-            Top Error Sources (logs)
-          </div>
-          <div className='mt-3 space-y-2'>
-            {(logMetricsQuery.data?.topSources ?? []).slice(0, 6).map((entry: { source: string; count: number }) => (
-              <div key={`${entry.source}-${entry.count}`} className='flex items-center justify-between rounded border border-border/50 bg-gray-950/30 px-3 py-2 text-xs'>
-                <span className='truncate text-gray-200'>{entry.source || 'unknown'}</span>
-                <span className='text-gray-400'>{entry.count}</span>
-              </div>
-            ))}
-            {(logMetricsQuery.data?.topSources?.length ?? 0) === 0 ? (
-              <EmptyState
-                title='No error data'
-                description='No log errors recorded in the selected period.'
-                variant='compact'
-                className='py-6 border-none bg-transparent'
-              />
-            ) : null}
-          </div>
-        </Card>
-      </div>
-
-      <div className='grid gap-4 lg:grid-cols-2'>
-        <MetadataItem
-          label='Latest Analytics Insight'
-          className='p-4'
-          hint={latestAnalyticsInsight ? formatDate(latestAnalyticsInsight.createdAt) : undefined}
-          value={(
-            latestAnalyticsInsight ? (
-              <div className='space-y-2'>
-                <StatusBadge status={latestAnalyticsInsight.status} />
-                <div className='text-xs text-gray-300'>{latestAnalyticsInsight.summary}</div>
-              </div>
-            ) : (
-              <EmptyState
-                title='No insights yet'
-                description='Run analytics analysis to see AI insights.'
-                variant='compact'
-                className='py-4 border-none bg-transparent'
-              />
-            )
+      <div className='grid gap-4 md:grid-cols-2'>
+        <FormSection
+          title='General Analytics'
+          titleIcon={<Activity className='size-4 text-emerald-400' />}
+          description='Events and engagement from the last 24 hours.'
+        >
+          {analyticsSummaryQuery.isLoading ? (
+            <div className='py-8 text-center text-xs text-gray-500'>Loading analytics summary...</div>
+          ) : analyticsSummaryQuery.data ? (
+            <div className='grid grid-cols-2 gap-4 mt-2'>
+              {/* eslint-disable @typescript-eslint/no-unsafe-argument */}
+              <MetadataItem label='Total Events' value={formatNumber(analyticsSummaryQuery.data.total)} />
+              <MetadataItem label='Unique Users' value={formatNumber(analyticsSummaryQuery.data.uniqueUsers)} />
+              <MetadataItem label='Error Rate' value={formatPercent(analyticsSummaryQuery.data.errorRate)} />
+              <MetadataItem label='Avg Response' value={formatDurationMs(analyticsSummaryQuery.data.avgLatency)} />
+              {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
+            </div>
+          ) : (
+            <EmptyState title='No analytics' description='Failed to load analytics summary.' variant='compact' />
           )}
-        />
+        </FormSection>
 
-        <MetadataItem
-          label='Latest Log Insight'
-          className='p-4'
-          hint={latestLogsInsight ? formatDate(latestLogsInsight.createdAt) : undefined}
-          value={(
-            latestLogsInsight ? (
-              <div className='space-y-2'>
-                <StatusBadge status={latestLogsInsight.status} />
-                <div className='text-xs text-gray-300'>{latestLogsInsight.summary}</div>
-              </div>
-            ) : (
-              <EmptyState
-                title='No insights yet'
-                description='Run log analysis to see AI insights.'
-                variant='compact'
-                className='py-4 border-none bg-transparent'
-              />
-            )
+        <FormSection
+          title='System Logs'
+          titleIcon={<Radar className='size-4 text-cyan-400' />}
+          description='Error distribution and log volume.'
+        >
+          {logMetricsQuery.isLoading ? (
+            <div className='py-8 text-center text-xs text-gray-500'>Loading log metrics...</div>
+          ) : logMetricsQuery.data ? (
+            <div className='grid grid-cols-2 gap-4 mt-2'>
+              <MetadataItem label='Total Logs' value={formatNumber(logMetricsQuery.data.total)} />
+              <MetadataItem label='Errors (24h)' value={formatNumber(logMetricsQuery.data.last24Hours)} />
+              <MetadataItem label='Errors (7d)' value={formatNumber(logMetricsQuery.data.last7Days)} />
+              <MetadataItem label='Top Source' value={logMetricsQuery.data.topSources[0]?.source || '—'} />
+            </div>
+          ) : (
+            <EmptyState title='No log metrics' description='Failed to load log metrics.' variant='compact' />
           )}
-        />
+        </FormSection>
       </div>
 
       <FormSection
-        title='Runtime Analysis (Redis)'
-        className='p-4'
+        title='AI Insight Runs'
+        description='Recent results from scheduled Brain audits.'
       >
-        <div className='grid gap-3 md:grid-cols-2 lg:grid-cols-6'>
-          <MetadataItem
-            label='Queued / Started'
-            value={`${formatNumber(runtimeAnalyticsQuery.data?.runs.queued)} / ${formatNumber(runtimeAnalyticsQuery.data?.runs.started)}`}
-          />
-          <MetadataItem
-            label='Completed / Failed'
-            value={`${formatNumber(runtimeAnalyticsQuery.data?.runs.completed)} / ${formatNumber(runtimeAnalyticsQuery.data?.runs.failed)}`}
-          />
-          <MetadataItem
-            label='Avg Runtime'
-            value={formatDurationMs(runtimeAnalyticsQuery.data?.runs.avgDurationMs)}
-          />
-          <MetadataItem
-            label='p95 Runtime'
-            value={formatDurationMs(runtimeAnalyticsQuery.data?.runs.p95DurationMs)}
-          />
-          <MetadataItem
-            label='Trace Spans'
-            value={`${formatNumber(runtimeAnalyticsQuery.data?.traces.sampledSpans)} / ${formatNumber(runtimeAnalyticsQuery.data?.traces.sampledRuns)}`}
-            hint={runtimeAnalyticsQuery.data?.traces.truncated ? 'Run sample truncated' : 'Full run sample'}
-          />
-          <MetadataItem
-            label='Avg / p95 Span'
-            value={`${formatDurationMs(runtimeAnalyticsQuery.data?.traces.avgDurationMs)} / ${formatDurationMs(runtimeAnalyticsQuery.data?.traces.p95DurationMs)}`}
-            hint={
-              runtimeAnalyticsQuery.data?.traces.slowestSpan
-                ? `Slowest ${runtimeAnalyticsQuery.data.traces.slowestSpan.nodeId} (${formatDurationMs(
-                  runtimeAnalyticsQuery.data.traces.slowestSpan.durationMs
-                )})`
-                : 'No span durations'
-            }
-          />
-        </div>
-        {(runtimeAnalyticsQuery.data?.traces.topSlowNodes.length ?? 0) > 0 ? (
-          <div className='mt-3 text-[11px] text-gray-400'>
-            Slowest nodes:{' '}
-            {runtimeAnalyticsQuery.data?.traces.topSlowNodes
-              .slice(0, 3)
-              .map(
-                (entry) =>
-                  `${entry.nodeId} (${formatDurationMs(entry.avgDurationMs)} avg)`,
-              )
-              .join(' · ')}
-          </div>
-        ) : null}
-        {(runtimeAnalyticsQuery.data?.traces.topFailedNodes.length ?? 0) > 0 ? (
-          <div className='mt-1 text-[11px] text-gray-400'>
-            Most failures:{' '}
-            {runtimeAnalyticsQuery.data?.traces.topFailedNodes
-              .slice(0, 3)
-              .map(
-                (entry) =>
-                  `${entry.nodeId} (${entry.failedCount}/${entry.spanCount})`,
-              )
-              .join(' · ')}
-          </div>
-        ) : null}
-        <div className='mt-3 text-[11px] text-gray-500'>
-          Storage: {runtimeAnalyticsQuery.data?.storage ?? '—'} · Updated {runtimeAnalyticsQuery.data?.generatedAt ? formatDate(runtimeAnalyticsQuery.data.generatedAt) : '—'}
+        <div className='grid gap-4 md:grid-cols-2 mt-2'>
+          <Card variant='subtle-compact' padding='md' className='bg-card/30 border-border/40'>
+            <div className='flex items-center justify-between'>
+              <span className='text-[11px] font-medium text-emerald-300 uppercase'>Latest Analytics Audit</span>
+              <StatusBadge status={latestAnalyticsInsight ? (latestAnalyticsInsight as AiInsightRecord).status : 'none'} />
+            </div>
+            <div className='mt-3 space-y-2'>
+              <MetadataItem 
+                label='Generated' 
+                value={latestAnalyticsInsight ? formatDate((latestAnalyticsInsight as AiInsightRecord).createdAt) : '—'} 
+              />
+              <div className='text-[11px] text-gray-400 line-clamp-2 mt-1'>
+                {latestAnalyticsInsight ? (latestAnalyticsInsight as AiInsightRecord).summary : 'No analytics audits found in history.'}
+              </div>
+            </div>
+          </Card>
+
+          <Card variant='subtle-compact' padding='md' className='bg-card/30 border-border/40'>
+            <div className='flex items-center justify-between'>
+              <span className='text-[11px] font-medium text-cyan-300 uppercase'>Latest Logs Audit</span>
+              <StatusBadge status={latestLogsInsight ? (latestLogsInsight as AiInsightRecord).status : 'none'} />
+            </div>
+            <div className='mt-3 space-y-2'>
+              <MetadataItem 
+                label='Generated' 
+                value={latestLogsInsight ? formatDate((latestLogsInsight as AiInsightRecord).createdAt) : '—'} 
+              />
+              <div className='text-[11px] text-gray-400 line-clamp-2 mt-1'>
+                {latestLogsInsight ? (latestLogsInsight as AiInsightRecord).summary : 'No system log audits found in history.'}
+              </div>
+            </div>
+          </Card>
         </div>
       </FormSection>
 
-      {analyticsSummaryQuery.error || logMetricsQuery.error || insightsQuery.error || runtimeAnalyticsQuery.error ? (
-        <Alert variant='error'>
-          {(analyticsSummaryQuery.error)?.message ??
-            (logMetricsQuery.error)?.message ??
-            (insightsQuery.error)?.message ??
-            (runtimeAnalyticsQuery.error)?.message ??
-            'Failed to load metrics.'}
-        </Alert>
-      ) : null}
+      <FormSection
+        title='AI Paths Runtime'
+        description='Execution performance and node status summary.'
+      >
+        {runtimeAnalyticsQuery.isLoading ? (
+          <div className='py-8 text-center text-xs text-gray-500'>Loading runtime analytics...</div>
+        ) : runtimeAnalyticsQuery.data ? (
+          <div className='grid grid-cols-2 gap-4 md:grid-cols-4 mt-2'>
+            {/* eslint-disable @typescript-eslint/no-unsafe-argument */}
+            <MetadataItem label='Total Runs' value={formatNumber(runtimeAnalyticsQuery.data.totalRuns)} />
+            <MetadataItem label='Success Rate' value={formatPercent(runtimeAnalyticsQuery.data.successRate)} />
+            <MetadataItem label='Avg Duration' value={formatDurationMs(runtimeAnalyticsQuery.data.avgDuration)} />
+            <MetadataItem label='Active Nodes' value={formatNumber(runtimeAnalyticsQuery.data.activeNodes)} />
+            {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
+          </div>
+        ) : (
+          <EmptyState title='No runtime telemetry' description='Failed to load runtime analytics.' variant='compact' />
+        )}
+      </FormSection>
+
+      <div className='flex justify-end gap-3'>
+        <Button variant='outline' size='sm' onClick={() => {
+          void analyticsSummaryQuery.refetch();
+          void logMetricsQuery.refetch();
+          void insightsQuery.refetch();
+          void runtimeAnalyticsQuery.refetch();
+        }}>
+          Refresh All Metrics
+        </Button>
+      </div>
     </div>
   );
 }

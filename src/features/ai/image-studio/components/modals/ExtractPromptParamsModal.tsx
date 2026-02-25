@@ -6,10 +6,6 @@ import React from 'react';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import { FormModal, Button, Label, Textarea, StandardDataTablePanel, EmptyState } from '@/shared/ui';
 
-import type {
-  PromptExtractHistoryEntry,
-  PromptDiffLine,
-} from '../studio-modals/prompt-extract-utils';
 import { PromptExtractionHistoryPanel } from '../studio-modals/PromptExtractionHistoryPanel';
 import { useStudioInlineEdit } from '../studio-modals/StudioInlineEditContext';
 import type { ColumnDef } from '@tanstack/react-table';

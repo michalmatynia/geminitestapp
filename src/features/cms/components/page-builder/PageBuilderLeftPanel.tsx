@@ -4,10 +4,10 @@ import React from 'react';
 import { ArrowLeft, Menu, AppWindow, Settings, PanelLeftClose } from 'lucide-react';
 import { Button, SectionHeader } from '@/shared/ui';
 import { usePageBuilder } from '../../hooks/usePageBuilderContext';
-import { ComponentTreePanel } from '../ComponentTreePanel';
-import { ThemeSettingsPanel } from '../ThemeSettingsPanel';
-import { MenuSettingsPanel } from '../MenuSettingsPanel';
-import { AppEmbedsPanel } from '../AppEmbedsPanel';
+import { ComponentTreePanel } from './ComponentTreePanel';
+import { ThemeSettingsPanel } from './ThemeSettingsPanel';
+import { MenuSettingsPanel } from './MenuSettingsPanel';
+import { AppEmbedsPanel } from './AppEmbedsPanel';
 
 export type LeftPanelMode = 'sections' | 'theme' | 'menu' | 'app-embeds';
 

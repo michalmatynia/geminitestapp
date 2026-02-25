@@ -1,0 +1,63 @@
+/* eslint-disable */
+// @ts-nocheck
+'use client';
+
+import React from 'react';
+import { Button, Input, SelectSimple } from '@/shared/ui';
+
+export function ParserMappingList({
+  entries,
+  updateMappingKey,
+  updateMappingPath,
+  uniqueSuggestedPathOptions,
+  removeMapping,
+}) {
+  return (
+    <div className='space-y-3'>
+      {entries.map(([key, path], index) => (
+        <div
+          key={`\${key}-\${index}`}
+          className='grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-start'
+        >
+          <Input
+            variant='subtle'
+            size='sm'
+            value={key}
+            onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              updateMappingKey(index, event.target.value)
+            }
+            placeholder='output key'
+          />
+          <div className='space-y-2'>
+            <Input
+              variant='subtle'
+              size='sm'
+              value={path}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                updateMappingPath(index, event.target.value)
+              }
+              placeholder='$.path.to.value'
+            />
+            <SelectSimple size='sm'
+              onValueChange={(value: string) => updateMappingPath(index, value)}
+              options={uniqueSuggestedPathOptions}
+              placeholder='Pick a suggested path'
+              variant='subtle'
+              triggerClassName='h-8 text-[10px]'
+              value=''
+            />
+          </div>
+          <Button
+            type='button'
+            variant='outline'
+            disabled={entries.length <= 1}
+            className='h-8 px-2 text-[10px]'
+            onClick={() => removeMapping(index)}
+          >
+            Remove
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}

@@ -1,0 +1,302 @@
+'use client';
+
+import React, { useState, useCallback } from 'react';
+import { Play, Sparkles, Workflow } from 'lucide-react';
+import { Button, Label, Textarea, ValidatorFormatterToggle, useToast } from '@/shared/ui';
+import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';
+import { RightSidebarPromptControlHeader } from './RightSidebarPromptControlHeader';
+import { UIPresetsPanel } from '../UIPresetsPanel';
+import { usePromptState, usePromptActions } from '../../context/PromptContext';
+import { useUiState, useUiActions } from '../../context/UiContext';
+import { useProjectsState } from '../../context/ProjectsContext';
+import { useSlotsState } from '../../context/SlotsContext';
+import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { cloneSerializableValue } from './right-sidebar-utils';
+import { 
+  serializeImageStudioProjectSession, 
+  getImageStudioProjectSessionKey, 
+  saveImageStudioProjectSessionLocal,
+  type ImageStudioProjectSession
+} from '../../utils/project-session';
+import { 
+  parsePromptEngineSettings, 
+  PROMPT_ENGINE_SETTINGS_KEY 
+} from '@/features/prompt-engine/settings';
+import { validateProgrammaticPrompt } from '@/features/prompt-engine/prompt-validator';
+import { formatProgrammaticPrompt } from '@/features/prompt-engine/prompt-formatter';
+import { logClientError } from '@/features/observability';
+import { savePromptExploderDraftPrompt } from '@/features/prompt-exploder/bridge';
+import { useRouter } from 'next/navigation';
+import { useRightSidebarContext } from '../RightSidebarContext';
+
+export function ControlPromptModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}): React.JSX.Element {
+  const router = useRouter();
+  const { toast } = useToast();
+  const { projectId } = useProjectsState();
+  const { promptText, paramsState, paramSpecs, paramUiOverrides } = usePromptState();
+  const { setPromptText, setExtractReviewOpen, setExtractDraftPrompt } = usePromptActions();
+  const { validatorEnabled, formatterEnabled } = useUiState();
+  const { setValidatorEnabled, setFormatterEnabled } = useUiActions();
+  const { generationBusy, sequenceRunBusy, modelSupportsSequenceGeneration, onRunGeneration, onRunSequenceGeneration } = useRightSidebarContext();
+  const { selectedFolder, selectedSlotId, workingSlotId, compositeAssetIds, previewMode } = useSlotsState();
+  const updateSetting = useUpdateSetting();
+  const settingsStore = useSettingsStore();
+  const [promptSaveBusy, setPromptSaveBusy] = useState(false);
+
+  const promptValidationSettings = React.useMemo(
+    () => parsePromptEngineSettings(settingsStore.get(PROMPT_ENGINE_SETTINGS_KEY)).promptValidation,
+    [settingsStore]
+  );
+
+  const handleSavePromptToProject = useCallback((): void => {
+    const normalizedProjectId = projectId.trim();
+    if (!normalizedProjectId) {
+      toast('Select a project first.', { variant: 'info' });
+      return;
+    }
+    const projectSessionKey = getImageStudioProjectSessionKey(normalizedProjectId);
+    if (!projectSessionKey) {
+      toast('Invalid project id.', { variant: 'error' });
+      return;
+    }
+    if (promptSaveBusy) return;
+
+    const projectSession: ImageStudioProjectSession = {
+      version: 1,
+      projectId: normalizedProjectId,
+      savedAt: new Date().toISOString(),
+      selectedFolder,
+      selectedSlotId,
+      workingSlotId,
+      compositeAssetIds: cloneSerializableValue(compositeAssetIds),
+      previewMode,
+      promptText,
+      paramsState: cloneSerializableValue(paramsState),
+      paramSpecs: cloneSerializableValue((paramSpecs ?? null) as Record<string, unknown> | null),
+      paramUiOverrides: cloneSerializableValue((paramUiOverrides ?? {}) as Record<string, unknown>),
+    };
+
+    setPromptSaveBusy(true);
+    void (async (): Promise<void> => {
+      let serializedSession: string;
+      try {
+        serializedSession = serializeImageStudioProjectSession(projectSession);
+      } catch (error: unknown) {
+        throw new Error(
+          error instanceof Error
+            ? `Failed to serialize prompt session: ${error.message}`
+            : 'Failed to serialize prompt session.',
+          { cause: error }
+        );
+      }
+      try {
+        saveImageStudioProjectSessionLocal(normalizedProjectId, projectSession);
+      } catch {
+        // Local cache is best-effort.
+      }
+
+      await updateSetting.mutateAsync({
+        key: projectSessionKey,
+        value: serializedSession,
+      });
+
+      toast(`Prompt saved to project "${normalizedProjectId}".`, { variant: 'success' });
+    })()
+      .catch((error: unknown) => {
+        let localFallbackSaved: boolean;
+        try {
+          saveImageStudioProjectSessionLocal(normalizedProjectId, projectSession);
+          localFallbackSaved = true;
+        } catch {
+          localFallbackSaved = false;
+        }
+        if (localFallbackSaved) {
+          toast(
+            error instanceof Error
+              ? `Cloud save failed. Prompt saved locally: ${error.message}`
+              : 'Cloud save failed. Prompt saved locally.',
+            { variant: 'warning' }
+          );
+          return;
+        }
+        toast(
+          error instanceof Error
+            ? `Failed to save prompt: ${error.message}`
+            : 'Failed to save prompt.',
+          { variant: 'error' }
+        );
+      })
+      .finally(() => {
+        setPromptSaveBusy(false);
+      });
+  }, [projectId, promptSaveBusy, selectedFolder, selectedSlotId, workingSlotId, compositeAssetIds, previewMode, promptText, paramsState, paramSpecs, paramUiOverrides, updateSetting, toast]);
+
+  const preparePromptForExtraction = (): string => {
+    const trimmedPrompt = promptText.trim();
+    if (!trimmedPrompt) return promptText;
+    if (!validatorEnabled) return promptText;
+
+    let nextPrompt = promptText;
+    try {
+      const beforeIssues = validateProgrammaticPrompt(
+        nextPrompt,
+        promptValidationSettings,
+        { scope: 'image_studio_prompt' }
+      );
+      if (!formatterEnabled) {
+        if (beforeIssues.length === 0) {
+          toast('Prompt validation passed.', { variant: 'success' });
+        } else {
+          toast(`Prompt validation found ${beforeIssues.length} issue(s).`, { variant: 'warning' });
+        }
+        return nextPrompt;
+      }
+
+      const result = formatProgrammaticPrompt(
+        nextPrompt,
+        promptValidationSettings,
+        { scope: 'image_studio_prompt' },
+        { precomputedIssuesBefore: beforeIssues }
+      );
+      if (result.changed) {
+        nextPrompt = result.prompt;
+        setPromptText(result.prompt);
+      }
+      toast(
+        result.changed
+          ? `Formatted prompt. Validation issues: ${beforeIssues.length} -> ${result.issuesAfter}.`
+          : `No formatter changes applied. Validation issues: ${beforeIssues.length}.`,
+        { variant: result.changed ? 'success' : 'info' }
+      );
+      return nextPrompt;
+    } catch (error) {
+      logClientError(error, {
+        context: { source: 'ControlPromptModal', action: 'preparePromptForExtraction', level: 'error' },
+      });
+      toast(
+        error instanceof Error
+          ? error.message
+          : formatterEnabled
+            ? 'Failed to format prompt.'
+            : 'Failed to validate prompt.',
+        { variant: 'error' }
+      );
+      return promptText;
+    }
+  };
+
+  const handleExtractReviewOpen = (): void => {
+    if (!promptText.trim()) {
+      toast('Enter prompt text first.', { variant: 'info' });
+      return;
+    }
+    const preparedPrompt = preparePromptForExtraction();
+    setExtractDraftPrompt(preparedPrompt);
+    setExtractReviewOpen(true);
+  };
+
+  const handleOpenPromptExploder = (): void => {
+    if (!promptText.trim()) {
+      toast('Enter prompt text first.', { variant: 'info' });
+      return;
+    }
+    savePromptExploderDraftPrompt(promptText);
+    router.push('/admin/prompt-exploder?source=image-studio&returnTo=%2Fadmin%2Fimage-studio');
+  };
+
+  const promptControlHeader = (
+    <RightSidebarPromptControlHeader
+      onClose={onClose}
+      onOpenPromptExploder={() => {
+        onClose();
+        handleOpenPromptExploder();
+      }}
+      onSave={handleSavePromptToProject}
+      projectId={projectId}
+      promptSaveBusy={promptSaveBusy}
+      promptText={promptText}
+    />
+  );
+
+  return (
+    <DetailModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title='Control Prompt'
+      size='md'
+      header={promptControlHeader}
+      className='md:min-w-[63rem] max-w-[66rem] [&>div:first-child]:border-b-0'
+    >
+      <div className='space-y-4 text-sm text-gray-200'>
+        <div className='space-y-2'>
+          <Label className='text-xs text-gray-400'>Prompt</Label>
+          <Textarea size='sm'
+            value={promptText}
+            onChange={(event) => setPromptText(event.target.value)}
+            className='h-44 font-mono text-[11px]'
+            placeholder='Paste prompt here...'
+          />
+        </div>
+
+        <UIPresetsPanel />
+
+        <div className='rounded border border-border/60 bg-card/30 p-3'>
+          <ValidatorFormatterToggle
+            validatorLabel='Validate'
+            formatterLabel='Format'
+            validatorEnabled={validatorEnabled}
+            formatterEnabled={formatterEnabled}
+            onValidatorChange={setValidatorEnabled}
+            onFormatterChange={setFormatterEnabled}
+          />
+        </div>
+
+        <div className='flex items-center justify-end gap-2'>
+          {modelSupportsSequenceGeneration ? (
+            <Button
+              size='xs'
+              type='button'
+              variant='outline'
+              onClick={onRunSequenceGeneration}
+              disabled={generationBusy || sequenceRunBusy}
+              loading={sequenceRunBusy}
+            >
+              <Workflow className='mr-2 size-4' />
+              {sequenceRunBusy ? 'Starting Sequence...' : 'Generate Sequence'}
+            </Button>
+          ) : null}
+          <Button
+            size='xs'
+            type='button'
+            onClick={onRunGeneration}
+            disabled={!promptText.trim() || generationBusy || sequenceRunBusy}
+            loading={generationBusy}
+          >
+            <Play className='mr-2 size-4' />
+            Generate From Prompt
+          </Button>
+          <Button size='xs'
+            variant='outline'
+            title='Extract functions and selectors from prompt'
+            aria-label='Extract functions and selectors from prompt'
+            disabled={!promptText.trim()}
+            onClick={() => {
+              onClose();
+              handleExtractReviewOpen();
+            }}
+          >
+            <Sparkles className='mr-2 size-4' />
+            Extract
+          </Button>
+        </div>
+      </div>
+    </DetailModal>
+  );
+}

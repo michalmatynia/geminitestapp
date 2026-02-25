@@ -26,24 +26,24 @@ interface InternationalizationContextType {
   filteredCountries: CountryOption[];
   
   // Modal State
-  showLanguageModal: boolean;
-  editingLanguage: Language | null;
-  showCurrencyModal: boolean;
-  editingCurrency: CurrencyOption | null;
-  showCountryModal: boolean;
-  editingCountry: CountryOption | null;
+  isLanguageModalOpen: boolean;
+  activeLanguage: Language | null;
+  isCurrencyModalOpen: boolean;
+  activeCurrency: CurrencyOption | null;
+  isCountryModalOpen: boolean;
+  activeCountry: CountryOption | null;
   
   // Handlers
   handleOpenLanguageModal: (language?: Language | null) => void;
-  setLanguageModalOpen: (open: boolean) => void;
+  handleCloseLanguageModal: () => void;
   handleDeleteLanguage: (language: Language) => Promise<void>;
   
   handleOpenCurrencyModal: (currency?: CurrencyOption | null) => void;
-  setCurrencyModalOpen: (open: boolean) => void;
+  handleCloseCurrencyModal: () => void;
   handleDeleteCurrency: (currency: CurrencyOption) => Promise<void>;
   
   handleOpenCountryModal: (country?: CountryOption | null) => void;
-  setCountryModalOpen: (open: boolean) => void;
+  handleCloseCountryModal: () => void;
   handleDeleteCountry: (country: CountryOption) => Promise<void>;
 
   // Confirmation
@@ -205,23 +205,23 @@ export function InternationalizationProvider({ children }: { children: ReactNode
     setCountrySearch,
     filteredCountries,
     
-    showLanguageModal,
-    editingLanguage,
-    showCurrencyModal,
-    editingCurrency,
-    showCountryModal,
-    editingCountry,
+    isLanguageModalOpen: showLanguageModal,
+    activeLanguage: editingLanguage,
+    isCurrencyModalOpen: showCurrencyModal,
+    activeCurrency: editingCurrency,
+    isCountryModalOpen: showCountryModal,
+    activeCountry: editingCountry,
     
     handleOpenLanguageModal,
-    setLanguageModalOpen: setShowLanguageModal,
+    handleCloseLanguageModal: () => setShowLanguageModal(false),
     handleDeleteLanguage,
     
     handleOpenCurrencyModal,
-    setCurrencyModalOpen: setShowCurrencyModal,
+    handleCloseCurrencyModal: () => setShowCurrencyModal(false),
     handleDeleteCurrency,
     
     handleOpenCountryModal,
-    setCountryModalOpen: setShowCountryModal,
+    handleCloseCountryModal: () => setShowCountryModal(false),
     handleDeleteCountry,
 
     confirmation,

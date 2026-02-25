@@ -15,20 +15,15 @@ import {
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
 import { useToast } from '@/shared/ui';
-import type { 
+import type {
   AiNode,
   CaseResolverNodeMeta,
   CaseResolverEdgeMeta,
   CaseResolverFile,
   CaseResolverNodeFileSnapshot,
   CaseResolverSnapshotNodeMeta as CaseResolverNodeFileMeta,
-  CaseResolverIdentifier,
   CaseResolverCompileResult,
 } from '@/shared/contracts/case-resolver';
-import type {
-  NodeFileDocumentSearchRow,
-  NodeFileDocumentFolderTree,
-} from '../components/CaseResolverNodeFileUtils';
 import { useDocumentRelationSearch } from '../relation-search/hooks/useDocumentRelationSearch';
 
 export type UseNodeFileWorkspaceStateProps = {
@@ -79,19 +74,11 @@ export function useNodeFileWorkspaceState({
   const [showNodeSelectorUnderCanvas, setShowNodeSelectorUnderCanvas] = useState(
     () => nodes.length > 0
   );
-  const [documentSearchScope, setDocumentSearchScope] =
-    useState<NodeFileDocumentSearchScope>('case_scope');
-  const [documentSearchQuery, setDocumentSearchQuery] = useState('');
-  const [selectedSearchFolderPath, setSelectedSearchFolderPath] = useState<string | null>(
-    null
-  );
   const [expandedSearchFolderPaths, setExpandedSearchFolderPaths] = useState<Set<string>>(
     () => new Set()
   );
   const [selectedSearchDocumentId, setSelectedSearchDocumentId] = useState('');
   const [isDocumentSearchOpen, setIsDocumentSearchOpen] = useState(false);
-  const [caseSearchQuery, setCaseSearchQuery] = useState('');
-  const [selectedDrillCaseId, setSelectedDrillCaseId] = useState<string | null>(null);
   const [nodeMetaByNode] = useState<Record<string, CaseResolverNodeMeta>>(
     () => snapshot.nodeMeta ?? {}
   );
@@ -104,6 +91,31 @@ export function useNodeFileWorkspaceState({
   );
   const documentSearchRef = useRef<HTMLDivElement | null>(null);
 
+  // ── Document search (delegates to shared relation-search hook) ──────────────
+  const {
+    documentSearchScope,
+    setDocumentSearchScope,
+    documentSearchQuery,
+    setDocumentSearchQuery,
+    selectedSearchFolderPath,
+    setSelectedSearchFolderPath,
+    caseSearchQuery,
+    setCaseSearchQuery,
+    selectedDrillCaseId,
+    setSelectedDrillCaseId,
+    caseIdentifierLabelById,
+    documentSearchRows,
+    folderScopedDocumentSearchRows,
+    visibleDocumentSearchRows,
+    folderTree,
+    visibleCaseRows,
+  } = useDocumentRelationSearch({
+    workspace,
+    activeCaseId,
+    caseResolverIdentifiers,
+    excludeFileIds: [],
+  });
+
   const filesById = useMemo(
     () =>
       new Map<string, CaseResolverFile>(
@@ -111,155 +123,6 @@ export function useNodeFileWorkspaceState({
       ),
     [workspace.files]
   );
-
-  const caseIdentifierLabelById = useMemo((): Map<string, string> => {
-    const labelsById = new Map<string, string>();
-    caseResolverIdentifiers.forEach((identifier: CaseResolverIdentifier): void => {
-      const id = identifier.id;
-      const resolvedLabel = identifier.label || identifier.name || id;
-      labelsById.set(id, resolvedLabel);
-    });
-    return labelsById;
-  }, [caseResolverIdentifiers]);
-
-  const scopedCaseIds = useMemo(
-    (): Set<string> | null => collectScopedCaseIds(workspace.files, activeCaseId),
-    [activeCaseId, workspace.files]
-  );
-
-  const allSearchableFiles = useMemo(
-    (): CaseResolverFile[] =>
-      workspace.files.filter((file: CaseResolverFile): boolean => file.fileType !== 'case'),
-    [workspace.files]
-  );
-
-  const caseScopedSearchableFiles = useMemo(
-    (): CaseResolverFile[] => {
-      if (!activeCaseId || !scopedCaseIds || scopedCaseIds.size === 0) {
-        return allSearchableFiles;
-      }
-      return allSearchableFiles.filter((file: CaseResolverFile): boolean =>
-        Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId))
-      );
-    },
-    [activeCaseId, allSearchableFiles, scopedCaseIds]
-  );
-
-  const documentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    const sourceFiles =
-      documentSearchScope === 'all_cases' ? allSearchableFiles : caseScopedSearchableFiles;
-    return sourceFiles
-      .map((file: CaseResolverFile): NodeFileDocumentSearchRow => {
-        const folderPath = typeof file.folder === 'string' ? file.folder.trim() : '';
-        const folderSegments = normalizeFolderPathSegments(folderPath);
-        const signatureLabel = resolveIdentifierSearchLabel(
-          file.caseIdentifierId,
-          caseIdentifierLabelById
-        );
-        const addresserLabel = resolvePartyReferenceSearchLabel(file.addresser);
-        const addresseeLabel = resolvePartyReferenceSearchLabel(file.addressee);
-        const searchable = normalizeSearchText(
-          [
-            file.name,
-            file.folder,
-            signatureLabel,
-            addresserLabel,
-            addresseeLabel,
-          ].join(' ')
-        );
-        return {
-          file,
-          signatureLabel,
-          addresserLabel,
-          addresseeLabel,
-          folderPath,
-          folderSegments,
-          searchable,
-        };
-      });
-  }, [allSearchableFiles, caseIdentifierLabelById, caseScopedSearchableFiles, documentSearchScope]);
-
-  const folderScopedDocumentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    if (selectedSearchFolderPath === null) return documentSearchRows;
-    return documentSearchRows.filter((row: NodeFileDocumentSearchRow): boolean =>
-      isFolderPathWithinScope(row.folderPath, selectedSearchFolderPath)
-    );
-  }, [documentSearchRows, selectedSearchFolderPath]);
-
-  const visibleDocumentSearchRows = useMemo((): NodeFileDocumentSearchRow[] => {
-    const query = normalizeSearchText(documentSearchQuery);
-    if (!query) return folderScopedDocumentSearchRows;
-    return folderScopedDocumentSearchRows.filter((row: NodeFileDocumentSearchRow): boolean =>
-      row.searchable.includes(query)
-    );
-  }, [documentSearchQuery, folderScopedDocumentSearchRows]);
-
-  const folderTree = useMemo((): NodeFileDocumentFolderTree => {
-    const nodesByPath = new Map<string, NodeFileDocumentFolderNode>();
-    const childPathsByParent = new Map<string | null, string[]>();
-    let rootFileCount = 0;
-
-    documentSearchRows.forEach((row: NodeFileDocumentSearchRow): void => {
-      if (!row.folderPath) {
-        rootFileCount += 1;
-        return;
-      }
-      let currentPath = '';
-      row.folderSegments.forEach((segment: string, index: number): void => {
-        const parentPath = currentPath || null;
-        currentPath = currentPath ? `${currentPath}/${segment}` : segment;
-        if (!nodesByPath.has(currentPath)) {
-          nodesByPath.set(currentPath, {
-            path: currentPath,
-            name: segment,
-            parentPath,
-            depth: index,
-            directFileCount: 0,
-            descendantFileCount: 0,
-          });
-          const siblings = childPathsByParent.get(parentPath) ?? [];
-          siblings.push(currentPath);
-          childPathsByParent.set(parentPath, siblings);
-        }
-        const node = nodesByPath.get(currentPath)!;
-        node.descendantFileCount += 1;
-        if (index === row.folderSegments.length - 1) {
-          node.directFileCount += 1;
-        }
-      });
-    });
-
-    childPathsByParent.forEach((paths: string[]): void => {
-      paths.sort((a: string, b: string): number =>
-        nodesByPath.get(a)!.name.localeCompare(nodesByPath.get(b)!.name)
-      );
-    });
-
-    return { nodesByPath, childPathsByParent, rootFileCount };
-  }, [documentSearchRows]);
-
-  const visibleCaseRows = useMemo(() => {
-    const query = normalizeSearchText(caseSearchQuery);
-    const caseFiles = workspace.files.filter(
-      (f: CaseResolverFile): boolean => f.fileType === 'case'
-    );
-    return caseFiles
-      .map((caseFile: CaseResolverFile) => ({
-        file: caseFile,
-        signatureLabel: resolveIdentifierSearchLabel(
-          caseFile.caseIdentifierId,
-          caseIdentifierLabelById
-        ),
-        docCount: workspace.files.filter(
-          (f: CaseResolverFile): boolean => f.parentCaseId === caseFile.id
-        ).length,
-      }))
-      .filter(
-        (row): boolean =>
-          !query ||
-          normalizeSearchText(row.signatureLabel + ' ' + row.file.name).includes(query)
-      );
-  }, [caseSearchQuery, workspace.files, caseIdentifierLabelById]);
 
   // Compiled graph logic
   const compiled = useMemo((): CaseResolverCompileResult => {

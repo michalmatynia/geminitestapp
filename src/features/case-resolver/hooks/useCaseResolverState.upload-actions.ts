@@ -122,8 +122,7 @@ export function useCaseResolverStateUploadActions({
         }
         try {
           const uploadBaseFolder = resolveUploadBaseFolder(normalizedFolder, inferredKind);
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          const uploaded = await (uploadSourceFileToCaseResolver as any)(sourceFile, uploadBaseFolder) as CaseResolverUploadedFile;
+          const uploaded = await uploadSourceFileToCaseResolver(sourceFile, uploadBaseFolder);
           createdSlots.push({
             id: createId('scan-slot'),
             fileId: uploaded.id || '',
@@ -228,8 +227,7 @@ export function useCaseResolverStateUploadActions({
             name: sourceFile.name,
           });
           const uploadBaseFolder = resolveUploadBaseFolder(normalizedFolder, inferredKind);
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-          const uploaded = await (uploadSourceFileToCaseResolver as any)(sourceFile, uploadBaseFolder) as CaseResolverUploadedFile;
+          const uploaded = await uploadSourceFileToCaseResolver(sourceFile, uploadBaseFolder);
           const fallbackName = sourceFile.name.trim() || `File ${createdAssets.length + 1}`;
           const assetName = uploaded.originalName.trim() || fallbackName;
           
@@ -301,8 +299,7 @@ export function useCaseResolverStateUploadActions({
 
       const uploadFolder = normalizeFolderPath(currentAsset.folder);
       const uploadBaseFolder = resolveUploadBaseFolder(uploadFolder, expectedKind);
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-      const uploaded = await (uploadSourceFileToCaseResolver as any)(file, uploadBaseFolder) as CaseResolverUploadedFile;
+      const uploaded = await uploadSourceFileToCaseResolver(file, uploadBaseFolder);
       const uploadedKind = inferCaseResolverAssetKind({
         kind: uploaded.kind,
         mimeType: uploaded.mimetype,

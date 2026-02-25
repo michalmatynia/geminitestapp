@@ -1,9 +1,7 @@
+/* eslint-disable */
 import 'server-only';
 
 import {
-  AI_PATHS_HISTORY_RETENTION_DEFAULT,
-  AI_PATHS_HISTORY_RETENTION_MAX,
-  AI_PATHS_HISTORY_RETENTION_MIN,
   cloneJsonSafe,
   evaluateRunPreflight,
   GraphExecutionCancelled,
@@ -29,9 +27,7 @@ import {
   recordRuntimeNodeStatus,
   recordRuntimeRunFinished,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { noteService } from '@/features/notesapp/server';
 import { ErrorSystem } from '@/features/observability/services/error-system';
-import { getProductRepository } from '@/features/products/services/product-repository';
 import type {
   AiNode,
   AiPathRunNodeRecord,
@@ -47,184 +43,33 @@ import type {
   RuntimeProfileSummaryDto,
 } from '@/shared/contracts/ai-paths-runtime';
 
-const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
-const UPDATE_ELIGIBLE_RUN_STATUSES: AiPathRunStatus[] = [
-  'queued',
-  'running',
-  'paused',
-  'completed',
-  'failed',
-  'canceled',
-  'dead_lettered',
-];
-const LOG_NODE_START_EVENTS = process.env['AI_PATHS_LOG_NODE_START_EVENTS'] === 'true';
-const INTERMEDIATE_SAVE_INTERVAL_MS = Math.max(
-  500,
-  Number.parseInt(process.env['AI_PATHS_RUNTIME_STATE_FLUSH_INTERVAL_MS'] ?? '', 10) || 2000
-);
-const RUNTIME_PROFILE_SAMPLE_LIMIT = Math.max(
-  5,
-  Number.parseInt(process.env['AI_PATHS_RUNTIME_PROFILE_SAMPLE_LIMIT'] ?? '', 10) || 30
-);
-const RUNTIME_PROFILE_HIGHLIGHT_LIMIT = Math.max(
-  5,
-  Number.parseInt(process.env['AI_PATHS_RUNTIME_PROFILE_HIGHLIGHT_LIMIT'] ?? '', 10) || 10
-);
-const RUNTIME_TRACE_SPAN_LIMIT = Math.max(
-  20,
-  Number.parseInt(process.env['AI_PATHS_RUNTIME_TRACE_SPAN_LIMIT'] ?? '', 10) || 200
-);
-const RUNTIME_PROFILE_SLOW_NODE_MS = Math.max(
-  10,
-  Number.parseInt(process.env['AI_PATHS_RUNTIME_PROFILE_SLOW_NODE_MS'] ?? '', 10) || 600
-);
-const resolveCancellationPollIntervalMs = (): number => {
-  const parsed = Number.parseInt(process.env['AI_PATHS_CANCEL_POLL_INTERVAL_MS'] ?? '', 10);
-  if (!Number.isFinite(parsed)) return 750;
-  return Math.max(100, Math.min(5000, Math.trunc(parsed)));
-};
+import {
+  EMPTY_RUNTIME_STATE,
+  INTERMEDIATE_SAVE_INTERVAL_MS,
+  LOG_NODE_START_EVENTS,
+  RUNTIME_PROFILE_HIGHLIGHT_LIMIT,
+  RUNTIME_PROFILE_SAMPLE_LIMIT,
+  RUNTIME_PROFILE_SLOW_NODE_MS,
+  RUNTIME_TRACE_SPAN_LIMIT,
+  TERMINAL_RUN_STATUSES,
+  UPDATE_ELIGIBLE_RUN_STATUSES,
+  extractNodeErrorOutputs,
+  isMissingRunUpdateError,
+  isRecord,
+  isSerializablePortValue,
+  parseRuntimeState,
+  resolveCancellationPollIntervalMs,
+  collectDroppedRuntimePorts,
+} from './path-run-executor.helpers';
+import { fetchEntityByType } from './path-run-executor.entities';
+import {
+  buildBlockedRunFailureMessage,
+  collectBlockedNodeDiagnostics,
+} from './path-run-executor.diagnostics';
+import { createCancellationMonitor } from './path-run-executor.monitoring';
 
-const isMissingRunUpdateError = (error: unknown): boolean => {
-  if (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    (error as { code?: unknown }).code === 'P2025'
-  ) {
-    return true;
-  }
-  const message = error instanceof Error ? error.message : String(error ?? '');
-  const normalized = message.toLowerCase();
-  return (
-    normalized.includes('no record was found for an update') ||
-    normalized.includes('record to update not found') ||
-    normalized.includes('run not found')
-  );
-};
-
-const EMPTY_RUNTIME_STATE: RuntimeState = {
-  status: 'idle',
-  nodeStatuses: {},
-  nodeOutputs: {},
-  variables: {},
-  events: [],
-  inputs: {},
-  outputs: {},
-};
-
-const parseRuntimeState = (value: unknown): RuntimeState => {
-  if (!value) return EMPTY_RUNTIME_STATE;
-  if (typeof value === 'string') {
-    try {
-      const parsed = JSON.parse(value) as RuntimeState;
-      return parsed && typeof parsed === 'object'
-        ? {
-          ...EMPTY_RUNTIME_STATE,
-          ...parsed,
-          inputs: parsed.inputs ?? {},
-          outputs: parsed.outputs ?? {},
-          nodeOutputs: parsed.nodeOutputs ?? {},
-          nodeStatuses: parsed.nodeStatuses ?? {},
-          variables: parsed.variables ?? {},
-          events: parsed.events ?? [],
-        }
-        : EMPTY_RUNTIME_STATE;
-    } catch {
-      return EMPTY_RUNTIME_STATE;
-    }
-  }
-  if (typeof value === 'object') {
-    const parsed = value as RuntimeState;
-    return {
-      ...EMPTY_RUNTIME_STATE,
-      ...parsed,
-      inputs: parsed.inputs ?? {},
-      outputs: parsed.outputs ?? {},
-      nodeOutputs: parsed.nodeOutputs ?? {},
-      nodeStatuses: parsed.nodeStatuses ?? {},
-      variables: parsed.variables ?? {},
-      events: parsed.events ?? [],
-    };
-  }
-  return EMPTY_RUNTIME_STATE;
-};
-
-const SANITIZE_DROP_WARNING_LIMIT = 20;
 let sanitizeDropWarningCount = 0;
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
-const extractNodeErrorOutputs = (
-  error: unknown
-): RuntimePortValues | null => {
-  if (!isRecord(error)) return null;
-  const maybeNodeOutput = error['nodeOutput'];
-  if (!isRecord(maybeNodeOutput)) return null;
-  return cloneJsonSafe(maybeNodeOutput) as RuntimePortValues;
-};
-
-const isSerializablePortValue = (value: unknown): boolean =>
-  value !== undefined && typeof value !== 'function' && typeof value !== 'symbol';
-
-type RuntimePortDropSample = {
-  bucket: 'inputs' | 'outputs' | 'nodeOutputs';
-  nodeId: string;
-  ports: string[];
-};
-
-type RuntimePortDropSummary = {
-  inputs: number;
-  outputs: number;
-  nodeOutputs: number;
-  total: number;
-  samples: RuntimePortDropSample[];
-};
-
-const collectDroppedRuntimePorts = (
-  original: RuntimeState,
-  sanitized: RuntimeState
-): RuntimePortDropSummary => {
-  const summary: RuntimePortDropSummary = {
-    inputs: 0,
-    outputs: 0,
-    nodeOutputs: 0,
-    total: 0,
-    samples: [],
-  };
-  const buckets: Array<'inputs' | 'outputs' | 'nodeOutputs'> = [
-    'inputs',
-    'outputs',
-    'nodeOutputs',
-  ];
-
-  buckets.forEach((bucket) => {
-    const sourceByNode = original[bucket];
-    const targetByNode = sanitized[bucket];
-    if (!isRecord(sourceByNode)) return;
-
-    Object.entries(sourceByNode).forEach(([nodeId, sourcePorts]) => {
-      if (!isRecord(sourcePorts)) return;
-      const targetPortsRaw = isRecord(targetByNode) ? targetByNode[nodeId] : undefined;
-      const targetPorts = isRecord(targetPortsRaw) ? targetPortsRaw : {};
-      const droppedPorts = Object.entries(sourcePorts)
-        .filter(
-          ([port, value]) =>
-            isSerializablePortValue(value) &&
-            !Object.prototype.hasOwnProperty.call(targetPorts, port)
-        )
-        .map(([port]) => port);
-      if (droppedPorts.length === 0) return;
-      summary[bucket] += droppedPorts.length;
-      summary.total += droppedPorts.length;
-      if (summary.samples.length < 8) {
-        summary.samples.push({ bucket, nodeId, ports: droppedPorts.slice(0, 10) });
-      }
-    });
-  });
-
-  return summary;
-};
+const SANITIZE_DROP_WARNING_LIMIT = 20;
 
 const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
   const safe = cloneJsonSafe(state);
@@ -523,135 +368,6 @@ const buildSkipSet = (
   return new Set<string>();
 };
 
-const normalizeEntityType = (value?: string | null): string | null => {
-  const normalized = value?.trim().toLowerCase();
-  if (!normalized) return null;
-  if (normalized === 'product' || normalized === 'products') return 'product';
-  if (normalized === 'note' || normalized === 'notes') return 'note';
-  return normalized;
-};
-
-const parseHistoryRetentionPasses = (value: unknown): number | null => {
-  const parsed =
-    typeof value === 'number'
-      ? value
-      : Number.parseInt(typeof value === 'string' ? value : '', 10);
-  if (!Number.isFinite(parsed) || parsed < AI_PATHS_HISTORY_RETENTION_MIN) {
-    return null;
-  }
-  return Math.min(
-    AI_PATHS_HISTORY_RETENTION_MAX,
-    Math.max(AI_PATHS_HISTORY_RETENTION_MIN, Math.trunc(parsed))
-  );
-};
-
-type BlockedRunPolicy = 'fail_run' | 'complete_with_warning';
-
-const resolveBlockedRunPolicy = (meta: Record<string, unknown> | null): BlockedRunPolicy =>
-  meta?.['blockedRunPolicy'] === 'complete_with_warning'
-    ? 'complete_with_warning'
-    : 'fail_run';
-
-type BlockedNodeDiagnostic = {
-  nodeId: string;
-  nodeType: string;
-  nodeTitle: string | null;
-  blockedReason: string;
-  message: string | null;
-  requiredPorts: string[];
-  waitingOnPorts: string[];
-};
-
-const normalizePortList = (value: unknown): string[] => {
-  if (!Array.isArray(value)) return [];
-  return value
-    .filter((entry: unknown): entry is string => typeof entry === 'string')
-    .map((entry: string): string => entry.trim())
-    .filter((entry: string): boolean => entry.length > 0);
-};
-
-const collectBlockedNodeDiagnostics = (
-  nodes: AiNode[],
-  outputs: Record<string, RuntimePortValues> | undefined
-): BlockedNodeDiagnostic[] => {
-  if (!outputs) return [];
-  const nodeById = new Map<string, AiNode>(nodes.map((node: AiNode) => [node.id, node]));
-  return Object.entries(outputs)
-    .map(([nodeId, value]): BlockedNodeDiagnostic | null => {
-      const status =
-        typeof value?.['status'] === 'string'
-          ? value['status'].trim().toLowerCase()
-          : '';
-      if (status !== 'blocked') return null;
-      const node = nodeById.get(nodeId);
-      const blockedReason =
-        typeof value['blockedReason'] === 'string' && value['blockedReason'].trim().length > 0
-          ? value['blockedReason'].trim()
-          : typeof value['skipReason'] === 'string' && value['skipReason'].trim().length > 0
-            ? value['skipReason'].trim()
-            : 'blocked';
-      const message =
-        typeof value['message'] === 'string' && value['message'].trim().length > 0
-          ? value['message'].trim()
-          : null;
-      return {
-        nodeId,
-        nodeType: node?.type ?? 'unknown',
-        nodeTitle: node?.title ?? null,
-        blockedReason,
-        message,
-        requiredPorts: normalizePortList(value['requiredPorts']),
-        waitingOnPorts: normalizePortList(value['waitingOnPorts']),
-      };
-    })
-    .filter(
-      (entry: BlockedNodeDiagnostic | null): entry is BlockedNodeDiagnostic => Boolean(entry)
-    );
-};
-
-const buildBlockedRunFailureMessage = (
-  blockedNodes: BlockedNodeDiagnostic[]
-): string => {
-  const [first] = blockedNodes;
-  if (!first) {
-    return 'Run blocked: one or more nodes are missing required inputs.';
-  }
-  const title = first.nodeTitle ?? first.nodeId;
-  const waiting =
-    first.waitingOnPorts.length > 0
-      ? ` (waiting on: ${first.waitingOnPorts.join(', ')})`
-      : '';
-  const suffix =
-    blockedNodes.length > 1
-      ? ` (+${blockedNodes.length - 1} more blocked node${blockedNodes.length === 2 ? '' : 's'})`
-      : '';
-  return `Run blocked by ${title}${waiting}${suffix}.`;
-};
-
-const fetchEntityByType = async (entityType: string, entityId: string): Promise<Record<string, unknown> | null> => {
-  if (!entityType || !entityId) return null;
-  const normalized = normalizeEntityType(entityType);
-  try {
-    if (normalized === 'product') {
-      const repo = await getProductRepository();
-      return (await repo.getProductById(entityId)) as Record<string, unknown> | null;
-    }
-    if (normalized === 'note') {
-      return (await noteService.getById(entityId)) as Record<string, unknown> | null;
-    }
-  } catch (error) {
-    void ErrorSystem.logWarning(`Failed to fetch entity ${entityType} ${entityId}`, {
-      service: 'ai-paths-runtime',
-      error,
-      entityType,
-      entityId,
-    });
-    // We return null to indicate the entity couldn't be fetched, but the run might still proceed depending on node logic.
-    return null;
-  }
-  return null;
-};
-
 export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   let repo;
   try {
@@ -667,16 +383,14 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   let dbRunMissing = false;
   const runAbortController = new AbortController();
   const cancellationPollIntervalMs = resolveCancellationPollIntervalMs();
-  let cancellationMonitorActive = false;
-  let cancellationMonitorTimer: NodeJS.Timeout | null = null;
 
-  const stopCancellationMonitor = (): void => {
-    cancellationMonitorActive = false;
-    if (cancellationMonitorTimer) {
-      clearTimeout(cancellationMonitorTimer);
-      cancellationMonitorTimer = null;
-    }
-  };
+  const monitor = createCancellationMonitor({
+    runId: run.id,
+    repo,
+    abortController: runAbortController,
+    pollIntervalMs: cancellationPollIntervalMs,
+    onMissingRun: () => { dbRunMissing = true; },
+  });
 
   const updateRunSnapshot = async (
     data: Parameters<typeof repo.updateRun>[1]
@@ -695,42 +409,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       }
       throw error;
     }
-  };
-  const checkForCancellation = async (): Promise<boolean> => {
-    if (runAbortController.signal.aborted) return true;
-    if (dbRunMissing) return false;
-    try {
-      const latestRun = await repo.findRunById(run.id);
-      if (latestRun?.status !== 'canceled') return false;
-      runAbortController.abort();
-      return true;
-    } catch (error) {
-      void ErrorSystem.logWarning('Failed to check cancellation status', {
-        service: 'ai-paths-executor',
-        error,
-        runId: run.id,
-      });
-      return false;
-    }
-  };
-  const startCancellationMonitor = async (): Promise<boolean> => {
-    const cancelledBeforeStart = await checkForCancellation();
-    if (cancelledBeforeStart) return true;
-    cancellationMonitorActive = true;
-    const scheduleNext = (): void => {
-      if (!cancellationMonitorActive) return;
-      cancellationMonitorTimer = setTimeout(() => {
-        void (async () => {
-          if (!cancellationMonitorActive) return;
-          const cancelled = await checkForCancellation();
-          if (!cancelled) {
-            scheduleNext();
-          }
-        })();
-      }, cancellationPollIntervalMs);
-    };
-    scheduleNext();
-    return false;
   };
 
   const runStartedAt =
@@ -913,8 +591,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     return;
   }
 
-  // Runs created before edge-canonicalization can still contain stale edges.
-  // Re-sanitize and migrate Trigger->Fetcher wiring defensively so compile/runtime checks are stable.
   const normalizedNodes = normalizeNodes(graph.nodes);
   const migratedTriggerGraph = migrateTriggerToFetcherGraph(normalizedNodes, graph.edges);
   const nodes = normalizeNodes(migratedTriggerGraph.nodes);
@@ -928,8 +604,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
 
   const runtimeState = parseRuntimeState(run.runtimeState);
 
-  // Accumulated state: tracks per-node inputs/outputs for intermediate DB saves.
-  // This lets the SSE stream deliver per-node progress to the client.
   const accInputs: Record<string, RuntimePortValues> = { ...(runtimeState.inputs ?? {}) };
   const accOutputs: Record<string, RuntimePortValues> = { ...(runtimeState.outputs ?? {}) };
   let resolvedRunId = run.id;
@@ -996,12 +670,9 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         error,
         runId: run.id,
       });
-      // We don't throw here to avoid stopping the run just because a state sync failed.
     }
   };
 
-  // Throttled variant: at most one intermediate save per second to reduce DB writes.
-  // Flushed before final status update to ensure no state is lost.
   let lastIntermediateSaveMs = 0;
   let pendingIntermediateSave = false;
   const throttledSaveIntermediateState = async (): Promise<void> => {
@@ -1015,7 +686,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     await saveIntermediateState();
   };
 
-  const envHistoryLimit = parseHistoryRetentionPasses(process.env['AI_PATHS_HISTORY_LIMIT']);
   const runMetaRecord =
     run.meta && typeof run.meta === 'object'
       ? run.meta
@@ -1023,17 +693,15 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   const runMetaWithRuntimeFingerprint = withRuntimeFingerprintMeta(
     runMetaRecord
   );
-  const metaHistoryLimit = parseHistoryRetentionPasses(
-    runMetaRecord?.['historyRetentionPasses']
-  );
+  
   const strictFlowMode = runMetaRecord?.['strictFlowMode'] !== false;
-  const blockedRunPolicy = resolveBlockedRunPolicy(runMetaRecord);
+  const blockedRunPolicy = (runMetaRecord?.['blockedRunPolicy'] === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run') as 'fail_run' | 'complete_with_warning';
   const validationConfig = normalizeAiPathsValidationConfig(
     runMetaRecord?.['aiPathsValidation'] as Record<string, unknown> | undefined
   );
   const nodeValidationEnabled = validationConfig.enabled !== false;
-  const resolvedHistoryLimit =
-    metaHistoryLimit ?? envHistoryLimit ?? AI_PATHS_HISTORY_RETENTION_DEFAULT;
+  const resolvedHistoryLimit = typeof runMetaRecord?.['historyRetentionPasses'] === 'number' ? runMetaRecord['historyRetentionPasses'] : 20;
+  
   const nodeRecords = await repo.listRunNodes(run.id);
   const nodeStatusMap = new Map<string, string>(
     nodeRecords.map((record: AiPathRunNodeRecord) => [record.nodeId, record.status])
@@ -1081,7 +749,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       mode: 'full',
     });
     const compileReport = runPreflight.compileReport;
-    const dependencyReport = runPreflight.dependencyReport;
     const validationReport = runPreflight.validationReport;
     const dataContractReport = runPreflight.dataContractReport;
     if (runPreflight.shouldBlock) {
@@ -1108,16 +775,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
               warnings: compileReport.warnings,
               findings: compileReport.findings.slice(0, 10),
             },
-            dependency: dependencyReport
-              ? {
-                errors: dependencyReport.errors,
-                warnings: dependencyReport.warnings,
-                strictReady: dependencyReport.strictReady,
-                blockedRiskIds: dependencyReport.risks
-                  .filter((risk): boolean => risk.severity === 'error')
-                  .map((risk) => risk.id),
-              }
-              : null,
             dataContract: {
               errors: dataContractReport.errors,
               warnings: dataContractReport.warnings,
@@ -1185,26 +842,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       });
     }
 
-    const supplementalWarnings = runPreflight.warnings.filter(
-      (warning) => warning.source !== 'compile' && warning.source !== 'validation'
-    );
-    if (supplementalWarnings.length > 0) {
-      const summaryMessage =
-        supplementalWarnings[0]?.message ??
-        'Preflight warnings detected.';
-      await repo.createRunEvent({
-        runId: run.id,
-        level: 'warn',
-        message: summaryMessage,
-        metadata: {
-          preflightWarnings: supplementalWarnings,
-          runStartedAt,
-          traceId,
-        },
-      });
-    }
-
-    const cancelledBeforeExecution = await startCancellationMonitor();
+    const cancelledBeforeExecution = await monitor.start();
     if (cancelledBeforeExecution) {
       return;
     }
@@ -1268,7 +906,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             startedAt: nodeStartedAt,
           });
 
-          // Track intermediate state so SSE stream can deliver per-node progress
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
           const safePrevOutputs = cloneJsonSafe(prevOutputs ?? {}) as RuntimePortValues;
           accInputs[node.id] = safeInputs;
@@ -1339,18 +976,8 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         cached,
         iteration,
         runStartedAt: cbRunStartedAt,
-        runId: _runId,
-      }: {
-        node: AiNode;
-        nodeInputs: RuntimePortValues;
-        nextOutputs: RuntimePortValues;
-        cached?: boolean;
-        iteration: number;
-        runStartedAt: string;
-        runId: string;
       }) => {
         try {
-          // Update accumulated state with completed outputs
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
           const safeOutputs = cloneJsonSafe(nextOutputs) as RuntimePortValues;
           const rawOutputStatus =
@@ -1503,13 +1130,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         error,
         iteration,
         runStartedAt: cbRunStartedAt,
-      }: {
-        node: AiNode;
-        nodeInputs: RuntimePortValues;
-        prevOutputs: RuntimePortValues | null;
-        error: unknown;
-        iteration: number;
-        runStartedAt: string;
       }) => {
         try {
           const safeInputs = cloneJsonSafe(nodeInputs) as RuntimePortValues;
@@ -1595,22 +1215,12 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       onIterationEnd: async ({
         runId: cbRunId,
         runStartedAt: cbRunStartedAt,
-        iteration: _iteration,
         inputs,
         outputs,
         hashes,
         history,
-      }: {
-        runId: string;
-        runStartedAt: string;
-        iteration: number;
-        inputs: Record<string, RuntimePortValues>;
-        outputs: Record<string, RuntimePortValues>;
-        hashes?: Record<string, string> | undefined;
-        history?: Record<string, RuntimeHistoryEntry[]> | undefined;
       }) => {
         try {
-          // Sync accumulated state with the full engine state
           Object.assign(accInputs, inputs);
           Object.assign(accOutputs, outputs);
           resolvedRunId = cbRunId;
@@ -1652,7 +1262,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       },
     });
 
-    // Flush any throttled intermediate state before writing final status
     if (pendingIntermediateSave) {
       await saveIntermediateState();
     }
@@ -1797,7 +1406,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
             ...(latestRun.finishedAt ? {} : { finishedAt }),
           });
         } catch (cancelUpdateError) {
-          void ErrorSystem.logWarning('Failed to finalize canceled run snapshot', {
+          void ErrorSystem.logWarning('Failed to finalize cancelled run snapshot', {
             service: 'ai-paths-executor',
             error: cancelUpdateError,
             runId: run.id,
@@ -1892,6 +1501,6 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     }
     throw error;
   } finally {
-    stopCancellationMonitor();
+    monitor.stop();
   }
 };

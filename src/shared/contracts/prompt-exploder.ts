@@ -459,6 +459,7 @@ export const promptExploderCaseResolverPartyCandidateSchema = z.object({
 });
 
 export type PromptExploderCaseResolverPartyCandidate = z.infer<typeof promptExploderCaseResolverPartyCandidateSchema>;
+export type PromptExploderCaseResolverPartyCandidateDto = PromptExploderCaseResolverPartyCandidate;
 
 export const promptExploderCaseResolverPartyConfigSchema = z.object({
   role: z.enum(['other', 'reference', 'addresser', 'addressee', 'subject']),

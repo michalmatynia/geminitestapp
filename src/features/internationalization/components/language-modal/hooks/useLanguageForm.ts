@@ -20,7 +20,7 @@ type UseLanguageFormResult = {
 
 export function useLanguageForm(): UseLanguageFormResult {
   const context = useInternationalizationContext();
-  const language = context.activeLanguage as Language | null;
+  const language = context.activeLanguage;
   const { toast } = useToast();
   const saveMutation = useSaveLanguageMutation();
 

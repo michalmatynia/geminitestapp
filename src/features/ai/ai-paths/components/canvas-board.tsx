@@ -1,287 +1,58 @@
+'use client';
+
 import React from 'react';
-
-import type {
-  AiNode,
-  DataContractNodeIssueSummary,
-  DataContractPreflightIssue,
-  PathFlowIntensity,
-  Edge,
-} from '@/features/ai/ai-paths/lib';
-import {
-  CANVAS_HEIGHT,
-  CANVAS_WIDTH,
-  NODE_MIN_HEIGHT,
-  NODE_WIDTH,
-  PORT_SIZE,
-  getPortOffsetY,
-  formatDurationMs,
-  typeStyles,
-  validateConnection,
-} from '@/features/ai/ai-paths/lib';
-import { Button, Tooltip, Badge, Card } from '@/shared/ui';
-
-import {
-  useCanvasState,
-  useCanvasRefs,
-  useCanvasInteractions,
-  useGraphState,
-  useRuntimeState,
-  useRuntimeActions,
-  useSelectionState,
-  useSelectionActions,
-} from '../context';
-import {
-  buildConnectorInfo,
-  type ConnectorInfo,
-  renderConnectorTooltip,
-} from './canvas-board-connectors';
-import { useCanvasPulseEffects } from './canvas-board-pulse-effects';
+import { Card } from '@/shared/ui';
+import { cn } from '@/shared/utils';
 import { CanvasMinimap } from './canvas-minimap';
 import { CanvasSvgEdgeLayer } from './canvas-svg-edge-layer';
 import { CanvasSvgNodeLayer } from './canvas-svg-node-layer';
-import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from './CanvasBoardUIContext';
-import { NodeProcessingDots } from './NodeProcessingDots';
-import { formatPortLabel } from '../utils/ui-utils';
+import { CanvasBoardUIProvider } from './CanvasBoardUIContext';
+import {
+  type CanvasBoardConnectorTooltipOverrideInput,
+  type CanvasBoardConnectorTooltipOverride,
+  renderNodeDiagnosticsTooltipContent,
+} from './CanvasBoard.utils';
+import { useCanvasBoardState } from './useCanvasBoardState';
+import { CanvasControlPanel } from './CanvasControlPanel';
+import { CanvasLegacyNodeLayer } from './CanvasLegacyNodeLayer';
+import { renderConnectorTooltip } from './canvas-board-connectors';
+import { type DataContractNodeIssueSummary } from '@/features/ai/ai-paths/lib';
 
-import type { EdgeRoutingMode } from '../context/hooks/useEdgePaths';
-
-const DEFAULT_NODE_NOTE_COLOR = '#f5e7c3';
-type CanvasRendererMode = 'legacy' | 'svg';
-type SvgDetailLevel = 'full' | 'compact' | 'skeleton';
-const RENDERER_MODE_STORAGE_KEY = 'ai-paths:canvas-renderer-mode';
-const EDGE_ROUTING_MODE_STORAGE_KEY = 'ai-paths:canvas-edge-routing-mode';
-const MINIMAP_VISIBILITY_STORAGE_KEY = 'ai-paths:canvas-minimap-visible';
-const SVG_CULL_PADDING = 260;
-const SVG_EDGE_CULL_PADDING = 160;
-const SVG_PERF_SAMPLE_WINDOW_MS = 1200;
-
-export type CanvasBoardConnectorTooltipOverrideInput = {
-  direction: 'input' | 'output';
-  node: AiNode;
-  port: string;
-};
-
-export type CanvasBoardConnectorTooltipOverride = {
-  content: React.ReactNode;
-  maxWidth?: string | undefined;
-};
-
-type CanvasBoardProps = {
-  /** Optional class name for the viewport container */
+export interface CanvasBoardProps {
   viewportClassName?: string | undefined;
   confirmNodeSwitch?: ((nodeId: string) => boolean | Promise<boolean>) | undefined;
   openNodeConfigOnSingleClick?: boolean | undefined;
-  nodeDiagnosticsById?:
-    | Record<string, DataContractNodeIssueSummary>
-    | undefined;
+  nodeDiagnosticsById?: Record<string, DataContractNodeIssueSummary> | undefined;
   onFocusNodeDiagnostics?: ((nodeId: string) => void) | undefined;
-  resolveConnectorTooltip?:
-    | ((
-        input: CanvasBoardConnectorTooltipOverrideInput
-      ) => CanvasBoardConnectorTooltipOverride | null | undefined)
-    | undefined;
-};
-
-type SvgConnectorTooltipState = {
-  clientX: number;
-  clientY: number;
-  info: ConnectorInfo;
-};
-
-type SvgNodeDiagnosticsTooltipState = {
-  clientX: number;
-  clientY: number;
-  nodeId: string;
-  summary: DataContractNodeIssueSummary;
-};
-
-const formatRuntimeStatusLabel = (status: string): string =>
-  status
-    .split('_')
-    .map((part: string) => (part ? `${part[0]!.toUpperCase()}${part.slice(1)}` : part))
-    .join(' ');
-
-const runtimeStatusBadgeClassName = (status: string): string => {
-  if (status === 'completed') {
-    return 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200';
-  }
-  if (status === 'cached') {
-    return 'border-teal-400/60 bg-teal-500/15 text-teal-200';
-  }
-  if (status === 'failed' || status === 'canceled' || status === 'timeout') {
-    return 'border-rose-500/60 bg-rose-500/15 text-rose-200';
-  }
-  if (status === 'queued') {
-    return 'border-amber-500/60 bg-amber-500/15 text-amber-200';
-  }
-  if (
-    status === 'running' ||
-    status === 'polling' ||
-    status === 'paused' ||
-    status === 'waiting_callback' ||
-    status === 'advance_pending'
-  ) {
-    return 'border-sky-500/60 bg-sky-500/15 text-sky-200';
-  }
-  return 'border-border bg-card/60 text-gray-200';
-};
-
-const resolveNodeDiagnosticsBadgeStyle = (
-  summary: DataContractNodeIssueSummary | undefined
-): { label: string; className: string } | null => {
-  if (!summary) return null;
-  if (summary.errors > 0) {
-    return {
-      label: `${summary.errors} Error${summary.errors === 1 ? '' : 's'}`,
-      className: 'border-rose-500/60 bg-rose-500/15 text-rose-100',
-    };
-  }
-  if (summary.warnings > 0) {
-    return {
-      label: `${summary.warnings} Warning${summary.warnings === 1 ? '' : 's'}`,
-      className: 'border-amber-500/60 bg-amber-500/15 text-amber-100',
-    };
-  }
-  return null;
-};
-
-export const renderNodeDiagnosticsTooltipContent = ({
-  summary,
-  nodeLabel,
-}: {
-  summary: DataContractNodeIssueSummary;
-  nodeLabel: string;
-}): React.JSX.Element => {
-  const topIssues = summary.issues.slice(0, 6);
-  return (
-    <div className='space-y-2'>
-      <div className='text-[11px] text-gray-300'>{nodeLabel}</div>
-      <div className='text-[10px] text-gray-400'>
-        Errors: <span className='text-rose-200'>{summary.errors}</span> · Warnings:{' '}
-        <span className='text-amber-200'>{summary.warnings}</span>
-      </div>
-      <div className='max-h-64 space-y-1 overflow-auto pr-1'>
-        {topIssues.map((issue: DataContractPreflightIssue) => {
-          const scopeParts = [
-            issue.port ? `Port: ${issue.port}` : null,
-            issue.token ? `Token: {{${issue.token}}}` : null,
-          ]
-            .filter((part): part is string => Boolean(part))
-            .join(' · ');
-          return (
-            <div
-              key={issue.id}
-              className='rounded-md border border-border/60 bg-card/70 px-2 py-1 text-[10px]'
-            >
-              <div
-                className={`font-medium ${
-                  issue.severity === 'error' ? 'text-rose-200' : 'text-amber-200'
-                }`}
-              >
-                [{issue.severity.toUpperCase()}] {issue.code}
-              </div>
-              <div className='mt-0.5 text-gray-200'>{issue.message}</div>
-              {scopeParts ? (
-                <div className='mt-0.5 text-gray-400'>{scopeParts}</div>
-              ) : null}
-              <div className='mt-0.5 text-gray-300'>Fix: {issue.recommendation}</div>
-            </div>
-          );
-        })}
-      </div>
-      {summary.issues.length > topIssues.length ? (
-        <div className='text-[10px] text-gray-500'>
-          +{summary.issues.length - topIssues.length} more issue(s)
-        </div>
-      ) : null}
-    </div>
-  );
-};
-
-const BLOCKER_PROCESSING_STATUSES = new Set<string>([
-  'running',
-  'polling',
-  'waiting_callback',
-  'advance_pending',
-  'pending',
-  'processing',
-]);
-
-const downgradeDetailLevel = (level: SvgDetailLevel): SvgDetailLevel => {
-  if (level === 'full') return 'compact';
-  if (level === 'compact') return 'skeleton';
-  return 'skeleton';
-};
-
-const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
-
-const mergeRuntimePayload = (
-  current: Record<string, unknown> | undefined,
-  historyValue: unknown
-): Record<string, unknown> | undefined => {
-  const historical = isPlainRecord(historyValue)
-    ? historyValue
-    : undefined;
-  if (!historical && !current) return undefined;
-  if (!historical) return current;
-  if (!current) return historical;
-  return {
-    ...historical,
-    ...current,
-  };
-};
-
-const buildConnectingPreviewPath = (
-  fromX: number,
-  fromY: number,
-  toX: number,
-  toY: number,
-  routingMode: EdgeRoutingMode
-): string => {
-  if (routingMode === 'orthogonal') {
-    const dx = toX - fromX;
-    const dy = toY - fromY;
-    const absDx = Math.abs(dx);
-    const absDy = Math.abs(dy);
-    if (absDx < 28) {
-      const directionY = dy >= 0 ? 1 : -1;
-      const bendY = fromY + (absDy < 56 ? 24 * directionY : dy * 0.5);
-      return `M ${fromX} ${fromY} L ${fromX} ${bendY} L ${toX} ${bendY} L ${toX} ${toY}`;
-    }
-    const directionX = dx >= 0 ? 1 : -1;
-    const bendX = fromX + (absDx < 84 ? 34 * directionX : dx * 0.5);
-    return `M ${fromX} ${fromY} L ${bendX} ${fromY} L ${bendX} ${toY} L ${toX} ${toY}`;
-  }
-  const midX = fromX + (toX - fromX) * 0.5;
-  return `M ${fromX} ${fromY} C ${midX} ${fromY}, ${midX} ${toY}, ${toX} ${toY}`;
-};
+  resolveConnectorTooltip?: (input: CanvasBoardConnectorTooltipOverrideInput) => CanvasBoardConnectorTooltipOverride | null | undefined;
+}
 
 export function CanvasBoard({
   viewportClassName,
   confirmNodeSwitch,
-  openNodeConfigOnSingleClick = false,
   nodeDiagnosticsById = {},
   onFocusNodeDiagnostics,
   resolveConnectorTooltip,
 }: CanvasBoardProps): React.JSX.Element {
-  // --- Context Hooks ---
-  const { view, panState, dragState, lastDrop, connecting, connectingPos } = useCanvasState();
-  const { viewportRef, canvasRef } = useCanvasRefs();
-  const { nodes, edges, flowIntensity } = useGraphState();
+  const state = useCanvasBoardState({
+    confirmNodeSwitch,
+    nodeDiagnosticsById,
+  });
+
   const {
-    runtimeState,
+    view,
+    viewportRef,
+    canvasRef,
+    nodes,
+    edges,
     runtimeNodeStatuses,
-    runtimeEvents,
-    runtimeRunStatus,
     nodeDurations,
-  } = useRuntimeState();
-  const { fireTrigger } = useRuntimeActions();
-  const { selectedNodeId, selectedNodeIds, selectedEdgeId, selectionToolMode } = useSelectionState();
-  const { selectEdge, setConfigOpen } = useSelectionActions();
-  const [edgeRoutingMode, setEdgeRoutingMode] =
-    React.useState<EdgeRoutingMode>('bezier');
-  const {
+    fireTrigger,
+    selectedEdgeId,
+    selectionToolMode,
+    selectEdge,
+    edgeRoutingMode,
+    setEdgeRoutingMode,
     edgePaths,
     handlePointerDownNode,
     handlePointerMoveNode,
@@ -301,386 +72,29 @@ export function CanvasBoard({
     fitToNodes,
     fitToSelection,
     resetView,
-    centerOnCanvasPoint,
     selectionMarqueeRect,
     touchLongPressIndicator,
     ConfirmationModal,
-  } = useCanvasInteractions({
-    confirmNodeSwitch,
-    edgeRoutingMode,
-  });
-  const selectedNodeIdSet = React.useMemo(
-    (): Set<string> => new Set(selectedNodeIds),
-    [selectedNodeIds]
-  );
-
-  // --- Local State & Refs ---
-  const [hoveredConnectorKey, setHoveredConnectorKey] = React.useState<string | null>(null);
-  const [pinnedConnectorKey, setPinnedConnectorKey] = React.useState<string | null>(null);
-  const [svgConnectorTooltip, setSvgConnectorTooltip] =
-    React.useState<SvgConnectorTooltipState | null>(null);
-  const [svgNodeDiagnosticsTooltip, setSvgNodeDiagnosticsTooltip] =
-    React.useState<SvgNodeDiagnosticsTooltipState | null>(null);
-  const [rendererMode, setRendererMode] = React.useState<CanvasRendererMode>('svg');
-  const [showMinimap, setShowMinimap] = React.useState<boolean>(true);
-  const [viewportSize, setViewportSize] = React.useState<{
-    width: number;
-    height: number;
-  } | null>(null);
-  const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
-  const [svgPerf, setSvgPerf] = React.useState<{
-    fps: number;
-    avgFrameMs: number;
-    slowFrameRatio: number;
-  }>({
-    fps: 0,
-    avgFrameMs: 0,
-    slowFrameRatio: 0,
-  });
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const storedMode = window.localStorage.getItem(RENDERER_MODE_STORAGE_KEY);
-    if (storedMode === 'legacy' || storedMode === 'svg') {
-      setRendererMode(storedMode);
-    }
-    const storedRoutingMode = window.localStorage.getItem(
-      EDGE_ROUTING_MODE_STORAGE_KEY
-    );
-    if (storedRoutingMode === 'bezier' || storedRoutingMode === 'orthogonal') {
-      setEdgeRoutingMode(storedRoutingMode);
-    }
-    const storedMinimapVisibility = window.localStorage.getItem(
-      MINIMAP_VISIBILITY_STORAGE_KEY
-    );
-    if (storedMinimapVisibility === '0') {
-      setShowMinimap(false);
-    }
-  }, []);
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(RENDERER_MODE_STORAGE_KEY, rendererMode);
-  }, [rendererMode]);
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(EDGE_ROUTING_MODE_STORAGE_KEY, edgeRoutingMode);
-  }, [edgeRoutingMode]);
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(
-      MINIMAP_VISIBILITY_STORAGE_KEY,
-      showMinimap ? '1' : '0'
-    );
-  }, [showMinimap]);
-
-  React.useEffect(() => {
-    if (rendererMode !== 'svg' && svgConnectorTooltip !== null) {
-      setSvgConnectorTooltip(null);
-    }
-  }, [rendererMode, svgConnectorTooltip]);
-
-  React.useEffect(() => {
-    if (rendererMode !== 'svg' && svgNodeDiagnosticsTooltip !== null) {
-      setSvgNodeDiagnosticsTooltip(null);
-    }
-  }, [rendererMode, svgNodeDiagnosticsTooltip]);
-
-  React.useEffect(() => {
-    if (!pinnedConnectorKey && !hoveredConnectorKey) {
-      setSvgConnectorTooltip(null);
-    }
-  }, [hoveredConnectorKey, pinnedConnectorKey]);
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const apply = (): void => setPrefersReducedMotion(query.matches);
-    apply();
-    query.addEventListener('change', apply);
-    return (): void => query.removeEventListener('change', apply);
-  }, []);
-
-  React.useEffect(() => {
-    const viewportElement = viewportRef.current;
-    if (!viewportElement) return;
-    const measure = (): void => {
-      setViewportSize({
-        width: viewportElement.clientWidth,
-        height: viewportElement.clientHeight,
-      });
-    };
-    measure();
-    const observer = new ResizeObserver(() => measure());
-    observer.observe(viewportElement);
-    return (): void => observer.disconnect();
-  }, [viewportRef]);
-
-  // --- Constants & Derived ---
-  const FLOW_ANIMATION_MS = 1600; const NODE_PULSE_MS = 1400;
-  const configuredFlowIntensity: PathFlowIntensity = flowIntensity ?? 'medium';
-  const effectiveFlowIntensity = React.useMemo<PathFlowIntensity>(() => {
-    if (prefersReducedMotion) return 'off';
-    if (configuredFlowIntensity === 'off') return 'off';
-    const edgeCount = edges.length;
-    if (edgeCount > 1800) return 'off';
-    if (edgeCount > 900) return 'low';
-    if (edgeCount > 500 && configuredFlowIntensity === 'high') return 'medium';
-    return configuredFlowIntensity;
-  }, [configuredFlowIntensity, edges.length, prefersReducedMotion]);
-  const flowEnabled = effectiveFlowIntensity !== 'off';
-  const flowingIntensity =
-    effectiveFlowIntensity === 'off' ? 'low' : effectiveFlowIntensity;
-  const isSvgRenderer = rendererMode === 'svg';
-
-  React.useEffect(() => {
-    if (!isSvgRenderer || typeof window === 'undefined' || prefersReducedMotion) {
-      setSvgPerf({ fps: 0, avgFrameMs: 0, slowFrameRatio: 0 });
-      return;
-    }
-    let frameCount = 0;
-    let frameMsSum = 0;
-    let slowFrameCount = 0;
-    let lastSampleAt = performance.now();
-    let lastFrameAt = lastSampleAt;
-    let rafId = 0;
-    const tick = (now: number): void => {
-      const deltaMs = now - lastFrameAt;
-      lastFrameAt = now;
-      frameCount += 1;
-      frameMsSum += deltaMs;
-      if (deltaMs > 19) slowFrameCount += 1;
-
-      const sampleElapsedMs = now - lastSampleAt;
-      if (sampleElapsedMs >= SVG_PERF_SAMPLE_WINDOW_MS) {
-        const measuredFps = Math.round((frameCount * 1000) / sampleElapsedMs);
-        const measuredAvgFrameMs = frameCount > 0 ? frameMsSum / frameCount : 0;
-        const measuredSlowFrameRatio =
-          frameCount > 0 ? slowFrameCount / frameCount : 0;
-        setSvgPerf((previous) => {
-          if (
-            previous.fps === measuredFps &&
-            Math.abs(previous.avgFrameMs - measuredAvgFrameMs) < 0.35 &&
-            Math.abs(previous.slowFrameRatio - measuredSlowFrameRatio) < 0.02
-          ) {
-            return previous;
-          }
-          return {
-            fps: measuredFps,
-            avgFrameMs: measuredAvgFrameMs,
-            slowFrameRatio: measuredSlowFrameRatio,
-          };
-        });
-        frameCount = 0;
-        frameMsSum = 0;
-        slowFrameCount = 0;
-        lastSampleAt = now;
-      }
-      rafId = window.requestAnimationFrame(tick);
-    };
-    rafId = window.requestAnimationFrame(tick);
-    return (): void => window.cancelAnimationFrame(rafId);
-  }, [prefersReducedMotion, isSvgRenderer]);
-
-  // --- Derived from Context ---
-  const connectingFromNode = React.useMemo<AiNode | null>(() => {
-    if (!connecting?.fromNodeId) return null;
-    return nodes.find((node) => node.id === connecting.fromNodeId) ?? null;
-  }, [nodes, connecting?.fromNodeId]);
-
-  const flowStyle = React.useMemo<React.CSSProperties>(() => {
-    switch (effectiveFlowIntensity) {
-      case 'off':
-        return {
-          '--ai-paths-flow-duration': '0s',
-          '--ai-paths-flow-opacity': '0',
-          '--ai-paths-flow-dash': '0 0',
-          '--ai-paths-flow-glow': '0px',
-        };
-      case 'low':
-        return {
-          '--ai-paths-flow-duration': '1.6s',
-          '--ai-paths-flow-opacity': '0.45',
-          '--ai-paths-flow-dash': '8 10',
-          '--ai-paths-flow-glow': '2px',
-        };
-      case 'high':
-        return {
-          '--ai-paths-flow-duration': '0.55s',
-          '--ai-paths-flow-opacity': '1',
-          '--ai-paths-flow-dash': '4 4',
-          '--ai-paths-flow-glow': '10px',
-        };
-      case 'medium':
-      default:
-        return {
-          '--ai-paths-flow-duration': '0.9s',
-          '--ai-paths-flow-opacity': '0.9',
-          '--ai-paths-flow-dash': '6 6',
-          '--ai-paths-flow-glow': '6px',
-        };
-    }
-  }, [effectiveFlowIntensity]);
-
-  const buildConnectorKey = React.useCallback(
-    (
-      direction: 'input' | 'output',
-      nodeId: string,
-      port: string
-    ): string => `${direction}:${nodeId}:${port}`,
-    []
-  );
-  const buildEdgePortKey = React.useCallback(
-    (nodeId: string, port: string): string => `${nodeId}:${port}`,
-    []
-  );
-
-  const getPortValue = React.useCallback(
-    (direction: 'input' | 'output', nodeId: string, port: string): unknown => {
-      const readRuntimePortValue = (
-        bucket: 'inputs' | 'outputs',
-        targetNodeId: string,
-        targetPort: string
-      ): unknown => {
-        const source = bucket === 'inputs' ? runtimeState.inputs : runtimeState.outputs;
-        const nodeValues = source?.[targetNodeId] ?? {};
-        const direct = nodeValues[targetPort];
-        if (direct !== undefined) return direct;
-        const history = runtimeState.history?.[targetNodeId];
-        if (!Array.isArray(history) || history.length === 0) return undefined;
-        const lastEntry = history[history.length - 1];
-        const fallbackSource =
-          bucket === 'inputs' ? lastEntry?.['inputs'] : lastEntry?.['outputs'];
-        if (
-          !fallbackSource ||
-          typeof fallbackSource !== 'object' ||
-          Array.isArray(fallbackSource)
-        ) {
-          return undefined;
-        }
-        return fallbackSource?.[targetPort];
-      };
-
-      const bucket = direction === 'input' ? 'inputs' : 'outputs';
-      const directValue = readRuntimePortValue(bucket, nodeId, port);
-      if (directValue !== undefined) return directValue;
-
-      if (direction === 'input') {
-        const incomingValues: unknown[] = [];
-        edges.forEach((edge) => {
-          const toNodeId = typeof edge.to === 'string' ? edge.to : null;
-          const toPort = typeof edge.toPort === 'string' && edge.toPort.trim().length > 0
-            ? edge.toPort
-            : typeof edge.targetHandle === 'string' && edge.targetHandle.trim().length > 0
-              ? edge.targetHandle
-              : null;
-          if (toNodeId !== nodeId || toPort !== port) return;
-          const fromNodeId = typeof edge.from === 'string' ? edge.from : null;
-          const fromPort =
-            typeof edge.fromPort === 'string' && edge.fromPort.trim().length > 0
-              ? edge.fromPort
-              : typeof edge.sourceHandle === 'string' && edge.sourceHandle.trim().length > 0
-                ? edge.sourceHandle
-                : null;
-          if (!fromNodeId || !fromPort) return;
-          const upstreamValue = readRuntimePortValue('outputs', fromNodeId, fromPort);
-          if (upstreamValue !== undefined) {
-            incomingValues.push(upstreamValue);
-          }
-        });
-        if (incomingValues.length === 1) return incomingValues[0];
-        if (incomingValues.length > 1) return incomingValues;
-      }
-      return directValue;
-    },
-    [edges, runtimeState]
-  );
-
-  const getNodeRuntimeData = React.useCallback(
-    (nodeId: string): {
-      inputs: Record<string, unknown> | undefined;
-      outputs: Record<string, unknown> | undefined;
-    } => {
-      const history = runtimeState.history?.[nodeId];
-      const lastEntry =
-        Array.isArray(history) && history.length > 0
-          ? history[history.length - 1]
-          : null;
-      return {
-        inputs: mergeRuntimePayload(runtimeState.inputs?.[nodeId], lastEntry?.['inputs']),
-        outputs: mergeRuntimePayload(runtimeState.outputs?.[nodeId], lastEntry?.['outputs']),
-      };
-    },
-    [runtimeState.history, runtimeState.inputs, runtimeState.outputs]
-  );
-
-  const nodeById = React.useMemo(
-    () => new Map(nodes.map((node: AiNode) => [node.id, node])),
-    [nodes]
-  );
-
-  React.useEffect(() => {
-    if (!svgNodeDiagnosticsTooltip) return;
-    const summary = nodeDiagnosticsById[svgNodeDiagnosticsTooltip.nodeId];
-    if (!summary || (summary.errors <= 0 && summary.warnings <= 0)) {
-      setSvgNodeDiagnosticsTooltip(null);
-    }
-  }, [nodeDiagnosticsById, svgNodeDiagnosticsTooltip]);
-
-  const getConnectorInfo = React.useCallback(
-    (direction: 'input' | 'output', nodeId: string, port: string) =>
-      buildConnectorInfo({
-        direction,
-        nodeId,
-        port,
-        edges,
-        nodeById,
-        getPortValue,
-        getNodeRuntimeData,
-      }),
-    [edges, getNodeRuntimeData, getPortValue, nodeById]
-  );
-
-  const svgConnectorTooltipPosition = React.useMemo(
-    (): { left: number; top: number } | null => {
-      if (!svgConnectorTooltip || !viewportRef.current) return null;
-      const rect = viewportRef.current.getBoundingClientRect();
-      const localX = svgConnectorTooltip.clientX - rect.left;
-      const localY = svgConnectorTooltip.clientY - rect.top;
-      const maxLeft = Math.max(12, rect.width - 332);
-      const maxTop = Math.max(12, rect.height - 272);
-      const left = Math.min(Math.max(12, localX + 14), maxLeft);
-      const top = Math.min(Math.max(12, localY + 14), maxTop);
-      return { left, top };
-    },
-    [svgConnectorTooltip, viewportRef]
-  );
-  const svgNodeDiagnosticsTooltipPosition = React.useMemo(
-    (): { left: number; top: number } | null => {
-      if (!svgNodeDiagnosticsTooltip || !viewportRef.current) return null;
-      const rect = viewportRef.current.getBoundingClientRect();
-      const localX = svgNodeDiagnosticsTooltip.clientX - rect.left;
-      const localY = svgNodeDiagnosticsTooltip.clientY - rect.top;
-      const maxLeft = Math.max(12, rect.width - 372);
-      const maxTop = Math.max(12, rect.height - 312);
-      const left = Math.min(Math.max(12, localX + 14), maxLeft);
-      const top = Math.min(Math.max(12, localY + 14), maxTop);
-      return { left, top };
-    },
-    [svgNodeDiagnosticsTooltip, viewportRef]
-  );
-  const svgConnectorTooltipOverride = React.useMemo(() => {
-    if (!svgConnectorTooltip) return null;
-    const hoveredNode = nodeById.get(svgConnectorTooltip.info.nodeId);
-    if (!hoveredNode) return null;
-    return resolveConnectorTooltip?.({
-      direction: svgConnectorTooltip.info.direction,
-      node: hoveredNode,
-      port: svgConnectorTooltip.info.port,
-    }) ?? null;
-  }, [nodeById, resolveConnectorTooltip, svgConnectorTooltip]);
+    selectedNodeIdSet,
+    hoveredConnectorKey,
+    setHoveredConnectorKey,
+    pinnedConnectorKey,
+    setPinnedConnectorKey,
+    svgConnectorTooltip,
+    setSvgConnectorTooltip,
+    svgNodeDiagnosticsTooltip,
+    setSvgNodeDiagnosticsTooltip,
+    rendererMode,
+    setRendererMode,
+    showMinimap,
+    setShowMinimap,
+    viewportSize,
+    svgPerf,
+    effectiveFlowIntensity,
+    isSvgRenderer,
+    nodeById,
+    getConnectorInfo,
+  } = state;
 
   const triggerConnected = React.useMemo((): Set<string> => {
     const triggerIds = nodes.filter((node) => node.type === 'trigger').map((node) => node.id);
@@ -698,1131 +112,235 @@ export function CanvasBoard({
     const visited = new Set<string>();
     const queue = [...triggerIds];
     triggerIds.forEach((id) => visited.add(id));
-    while (queue.length) {
+    while (queue.length > 0) {
       const current = queue.shift();
       if (!current) continue;
-      const neighbors = adjacency.get(current);
-      if (!neighbors) continue;
-      neighbors.forEach((neighbor) => {
-        if (visited.has(neighbor)) return;
-        visited.add(neighbor);
-        queue.push(neighbor);
+      const next = adjacency.get(current);
+      if (!next) continue;
+      next.forEach((id) => {
+        if (!visited.has(id)) {
+          visited.add(id);
+          queue.push(id);
+        }
       });
     }
     return visited;
-  }, [nodes, edges]);
+  }, [edges, nodes]);
 
-  const edgeMetaMap = React.useMemo(
-    (): Map<string, Edge> => new Map(edges.map((edge) => [edge.id, edge])),
-    [edges]
-  );
-  const edgesByFromPort = React.useMemo(() => {
-    const map = new Map<string, Edge[]>();
-    edges.forEach((edge) => {
-      if (!edge.from || !edge.fromPort) return;
-      const key = buildEdgePortKey(edge.from, edge.fromPort);
-      const list = map.get(key) ?? [];
-      list.push(edge);
-      map.set(key, list);
-    });
-    return map;
-  }, [edges, buildEdgePortKey]);
-  const edgesByToPort = React.useMemo(() => {
-    const map = new Map<string, Edge[]>();
-    edges.forEach((edge) => {
-      if (!edge.to || !edge.toPort) return;
-      const key = buildEdgePortKey(edge.to, edge.toPort);
-      const list = map.get(key) ?? [];
-      list.push(edge);
-      map.set(key, list);
-    });
-    return map;
-  }, [edges, buildEdgePortKey]);
-  const incomingEdgeIdsByNode = React.useMemo((): Map<string, string[]> => {
-    const map = new Map<string, string[]>();
-    edges.forEach((edge) => {
-      if (!edge.to) return;
-      const list = map.get(edge.to) ?? [];
-      list.push(edge.id);
-      map.set(edge.to, list);
-    });
-    return map;
-  }, [edges]);
-  const outgoingEdgeIdsByNode = React.useMemo((): Map<string, string[]> => {
-    const map = new Map<string, string[]>();
-    edges.forEach((edge) => {
-      if (!edge.from) return;
-      const list = map.get(edge.from) ?? [];
-      list.push(edge.id);
-      map.set(edge.from, list);
-    });
-    return map;
-  }, [edges]);
-
-  const { activeEdgeIds, inputPulseNodes, outputPulseNodes } = useCanvasPulseEffects({
-    nodes,
-    edges,
-    runtimeEvents,
-    runtimeState: {
-      inputs: runtimeState.inputs ?? {},
-      outputs: runtimeState.outputs ?? {},
+  const svgConnectorTooltipPosition = React.useMemo(
+    (): { left: number; top: number } | null => {
+      if (!svgConnectorTooltip || !viewportRef.current) return null;
+      const rect = viewportRef.current.getBoundingClientRect();
+      const localX = svgConnectorTooltip.clientX - rect.left;
+      const localY = svgConnectorTooltip.clientY - rect.top;
+      const maxLeft = Math.max(12, rect.width - 332);
+      const maxTop = Math.max(12, rect.height - 272);
+      const left = Math.min(Math.max(12, localX + 14), maxLeft);
+      const top = Math.min(Math.max(12, localY + 14), maxTop);
+      return { left, top };
     },
-    getPortValue,
-    edgesByFromPort,
-    edgesByToPort,
-    incomingEdgeIdsByNode,
-    outgoingEdgeIdsByNode,
-    buildEdgePortKey,
-    nodeById,
-    flowAnimationMs: FLOW_ANIMATION_MS,
-    nodePulseMs: NODE_PULSE_MS,
-  });
-  const svgDetailLevel = React.useMemo((): SvgDetailLevel => {
-    let next: SvgDetailLevel =
-      view.scale < 0.52 ? 'skeleton' : view.scale < 0.8 ? 'compact' : 'full';
-    if (nodes.length > 220 || edges.length > 720) {
-      next = downgradeDetailLevel(next);
-    }
-    if (svgPerf.fps > 0 && (svgPerf.fps < 46 || svgPerf.slowFrameRatio > 0.35)) {
-      next = downgradeDetailLevel(next);
-    }
-    return next;
-  }, [
-    edges.length,
-    nodes.length,
-    svgPerf.fps,
-    svgPerf.slowFrameRatio,
-    view.scale,
-  ]);
-  const wireFlowEnabled = React.useMemo((): boolean => {
-    if (!flowEnabled) return false;
-    if (!isSvgRenderer) return true;
-    if (svgDetailLevel === 'skeleton') return false;
-    if (svgPerf.fps > 0 && svgPerf.fps < 34) return false;
-    if (svgPerf.slowFrameRatio > 0.55) return false;
-    return true;
-  }, [
-    flowEnabled,
-    svgDetailLevel,
-    svgPerf.fps,
-    svgPerf.slowFrameRatio,
-    isSvgRenderer,
-  ]);
-  const svgReduceEdgeEffects = React.useMemo((): boolean => {
-    if (!isSvgRenderer) return false;
-    if (svgDetailLevel === 'skeleton') return true;
-    if (edges.length > 780) return true;
-    if (svgPerf.fps > 0 && svgPerf.fps < 40) return true;
-    if (svgPerf.slowFrameRatio > 0.42) return true;
-    return false;
-  }, [
-    edges.length,
-    svgDetailLevel,
-    svgPerf.fps,
-    svgPerf.slowFrameRatio,
-    isSvgRenderer,
-  ]);
-  const svgEnableNodeAnimations = React.useMemo((): boolean => {
-    if (!isSvgRenderer) return true;
-    if (prefersReducedMotion) return false;
-    if (svgDetailLevel === 'skeleton') return false;
-    if (svgPerf.fps > 0 && svgPerf.fps < 38) return false;
-    if (svgPerf.slowFrameRatio > 0.45) return false;
-    return true;
-  }, [
-    prefersReducedMotion,
-    svgDetailLevel,
-    svgPerf.fps,
-    svgPerf.slowFrameRatio,
-    isSvgRenderer,
-  ]);
-  const svgConnectorHitTargetPx = React.useMemo((): number => {
-    if (!isSvgRenderer) return 14;
-    if (svgDetailLevel === 'skeleton') return 22;
-    if (view.scale < 0.72) return 18;
-    return 14;
-  }, [svgDetailLevel, isSvgRenderer, view.scale]);
-  const flowModeLabel = (() => {
-    if (wireFlowEnabled) return effectiveFlowIntensity;
-    if (isSvgRenderer && flowEnabled) return 'adaptive-off';
-    return 'off';
-  })();
-  const canvasInfoItems = React.useMemo((): string[] => {
-    const items = [
-      `Nodes: ${nodes.length}`,
-      `Edges: ${edges.length}`,
-      lastDrop
-        ? `Last drop: ${Math.round(lastDrop.x)}, ${Math.round(lastDrop.y)}`
-        : null,
-      `View: ${Math.round(view.x)}, ${Math.round(view.y)} @ ${Math.round(view.scale * 100)}%`,
-      `Renderer: ${isSvgRenderer ? 'SVG' : 'Legacy'}`,
-      isSvgRenderer ? `Detail: ${svgDetailLevel}` : null,
-      isSvgRenderer && svgPerf.fps > 0
-        ? `FPS: ${svgPerf.fps} (${svgPerf.avgFrameMs.toFixed(1)}ms)`
-        : null,
-      `Routing: ${edgeRoutingMode}`,
-      `Flow: ${flowModeLabel}`,
-    ];
-    return items.filter((item): item is string => Boolean(item));
-  }, [
-    edgeRoutingMode,
-    edges.length,
-    flowModeLabel,
-    isSvgRenderer,
-    lastDrop,
-    nodes.length,
-    svgDetailLevel,
-    svgPerf.avgFrameMs,
-    svgPerf.fps,
-    view.scale,
-    view.x,
-    view.y,
-  ]);
-  const touchLongPressProgressDegrees = touchLongPressIndicator
-    ? Math.round(Math.max(0, Math.min(1, touchLongPressIndicator.progress)) * 360)
-    : 0;
-  const hasNodeSelection = selectedNodeIdSet.size > 0 || Boolean(selectedNodeId);
-  const canvasCursorClass = panState
-    ? 'cursor-grabbing'
-    : selectionToolMode === 'select'
-      ? 'cursor-crosshair'
-      : 'cursor-grab';
+    [svgConnectorTooltip, viewportRef]
+  );
 
-  const uiContextValue = React.useMemo<CanvasBoardUIContextValue>(
+  const svgNodeDiagnosticsTooltipPosition = React.useMemo(
+    (): { left: number; top: number } | null => {
+      if (!svgNodeDiagnosticsTooltip || !viewportRef.current) return null;
+      const rect = viewportRef.current.getBoundingClientRect();
+      const localX = svgNodeDiagnosticsTooltip.clientX - rect.left;
+      const localY = svgNodeDiagnosticsTooltip.clientY - rect.top;
+      const maxLeft = Math.max(12, rect.width - 372);
+      const maxTop = Math.max(12, rect.height - 312);
+      const left = Math.min(Math.max(12, localX + 14), maxLeft);
+      const top = Math.min(Math.max(12, localY + 14), maxTop);
+      return { left, top };
+    },
+    [svgNodeDiagnosticsTooltip, viewportRef]
+  );
+
+  const svgConnectorTooltipOverride = React.useMemo(() => {
+    if (!svgConnectorTooltip) return null;
+    const hoveredNode = nodeById.get(svgConnectorTooltip.info.nodeId);
+    if (!hoveredNode) return null;
+    return resolveConnectorTooltip?.({
+      direction: svgConnectorTooltip.info.direction,
+      node: hoveredNode,
+      port: svgConnectorTooltip.info.port,
+    }) ?? null;
+  }, [nodeById, resolveConnectorTooltip, svgConnectorTooltip]);
+
+  const canvasContextValue = React.useMemo(
     () => ({
-      view,
+      rendererMode,
+      edgeRoutingMode,
       viewportSize,
-      detailLevel: svgDetailLevel,
-      nodes,
-      edges,
-      edgePaths,
-      edgeMetaMap,
-      nodeById,
-      selectedNodeId,
-      selectedNodeIdSet,
-      selectedEdgeId,
-      runtimeState,
-      runtimeNodeStatuses,
-      runtimeRunStatus: runtimeRunStatus as 'idle' | 'running' | 'paused' | 'stepping',
-      nodeDurations,
-      nodeDiagnosticsById,
-      inputPulseNodes,
-      outputPulseNodes,
-      activeEdgeIds,
-      triggerConnected,
-      wireFlowEnabled,
-      flowingIntensity,
-      reduceVisualEffects: svgReduceEdgeEffects,
-      enableNodeAnimations: svgEnableNodeAnimations,
-      connectorHitTargetPx: svgConnectorHitTargetPx,
-      openNodeConfigOnSingleClick: Boolean(openNodeConfigOnSingleClick),
-      hoveredConnectorKey,
-      pinnedConnectorKey,
-      setHoveredConnectorKey,
-      setPinnedConnectorKey,
-      onConnectorHover: ({ clientX, clientY, info }) => {
-        setSvgConnectorTooltip({ clientX, clientY, info });
-      },
-      onConnectorLeave: () => {
-        setSvgConnectorTooltip((current) => {
-          if (!current) return null;
-          const tooltipKey = buildConnectorKey(
-            current.info.direction,
-            current.info.nodeId,
-            current.info.port
-          );
-          if (tooltipKey === pinnedConnectorKey) return current;
-          if (tooltipKey === hoveredConnectorKey) return current;
-          return null;
-        });
-      },
-      onNodeDiagnosticsHover: ({ clientX, clientY, nodeId, summary }) => {
-        setSvgNodeDiagnosticsTooltip({ clientX, clientY, nodeId, summary });
-      },
-      onNodeDiagnosticsLeave: () => {
-        setSvgNodeDiagnosticsTooltip(null);
-      },
-      onFocusNodeDiagnostics: onFocusNodeDiagnostics
-        ? (nodeId: string) => onFocusNodeDiagnostics(nodeId)
-        : undefined,
-      onPointerDownNode: handlePointerDownNode,
-      onPointerMoveNode: handlePointerMoveNode,
-      onPointerUpNode: handlePointerUpNode,
-      onSelectNode: handleSelectNode,
-      onOpenNodeConfig: () => setConfigOpen(true),
-      onStartConnection: handleStartConnection,
-      onCompleteConnection: handleCompleteConnection,
-      onReconnectInput: handleReconnectInput,
-      onDisconnectPort: handleDisconnectPort,
-      onFireTrigger: (node: AiNode) => {
-        void fireTrigger(node);
-      },
-      onRemoveEdge: handleRemoveEdge,
-      onSelectEdge: (edgeId: string) => selectEdge(edgeId),
-      zoomTo,
-      fitToNodes,
-      fitToSelection,
-      resetView,
-      centerOnCanvasPoint,
+      isPanning: state.isPanning,
+      isDraggingNode: Boolean(state.dragState),
+      isConnecting: Boolean(state.connecting),
+      flowIntensity: effectiveFlowIntensity,
     }),
-    [
-      view,
-      viewportSize,
-      svgDetailLevel,
-      nodes,
-      edges,
-      edgePaths,
-      edgeMetaMap,
-      nodeById,
-      selectedNodeId,
-      selectedNodeIdSet,
-      selectedEdgeId,
-      runtimeState,
-      runtimeNodeStatuses,
-      runtimeRunStatus,
-      nodeDurations,
-      nodeDiagnosticsById,
-      inputPulseNodes,
-      outputPulseNodes,
-      activeEdgeIds,
-      triggerConnected,
-      wireFlowEnabled,
-      flowingIntensity,
-      svgReduceEdgeEffects,
-      svgEnableNodeAnimations,
-      svgConnectorHitTargetPx,
-      openNodeConfigOnSingleClick,
-      hoveredConnectorKey,
-      pinnedConnectorKey,
-      setHoveredConnectorKey,
-      setPinnedConnectorKey,
-      setSvgNodeDiagnosticsTooltip,
-      onFocusNodeDiagnostics,
-      buildConnectorKey,
-      handlePointerDownNode,
-      handlePointerMoveNode,
-      handlePointerUpNode,
-      handleSelectNode,
-      handleStartConnection,
-      handleCompleteConnection,
-      handleReconnectInput,
-      handleDisconnectPort,
-      handleRemoveEdge,
-      selectEdge,
-      setConfigOpen,
-      fireTrigger,
-      zoomTo,
-      fitToNodes,
-      fitToSelection,
-      resetView,
-      centerOnCanvasPoint,
-    ]
+    [rendererMode, edgeRoutingMode, viewportSize, state.isPanning, state.dragState, state.connecting, effectiveFlowIntensity]
   );
 
   return (
-    <Card
-      ref={viewportRef}
-      variant='subtle'
-      padding='none'
-      className={`relative min-h-[672px] backdrop-blur overflow-hidden overscroll-contain ${
-        canvasCursorClass
-      } ${viewportClassName ?? ''}`}
-      style={flowStyle}
-      onDrop={handleDrop}
-      onDragOver={handleDragOver}
-      onPointerDown={handlePanStart}
-      onPointerMove={handlePanMove}
-      onPointerUp={handlePanEnd}
-      onPointerLeave={handlePanEnd}
-      onPointerCancel={handlePanEnd}
-    >
-      <CanvasBoardUIProvider value={uiContextValue}>
-        <div className='absolute bottom-3 left-3 z-10 max-w-[min(58vw,56rem)] rounded-md border border-border/60 bg-card/35 p-2 text-[11px] text-gray-400'>
-          <div className='flex flex-wrap gap-1'>
-            {canvasInfoItems.map((item, index) => (
-              <span
-                key={`${index}:${item}`}
-                className='rounded border border-border/50 bg-card/50 px-1.5 py-0.5 text-[10px] leading-4 text-gray-300'
-              >
-                {item}
-              </span>
-            ))}
-          </div>
-        </div>
-        <div className='absolute bottom-3 right-3 z-10 max-w-[min(92vw,48rem)] rounded-md border border-border/60 bg-card/30 p-2 text-xs text-gray-300'>
-          <div className='mb-2 text-[11px] uppercase text-gray-500'>View Controls</div>
-          <div className='flex flex-wrap items-center justify-end gap-2'>
-            <Button
-              className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
-              type='button'
-              variant='ghost'
-              size='xs'
-              onClick={() => zoomTo(view.scale - 0.1)}
-            >
-              -
-            </Button>
-            <span className='min-w-[56px] text-center text-[11px] text-gray-300'>
-              {Math.round(view.scale * 100)}%
-            </span>
-            <Button
-              className='h-7 w-7 rounded-full border text-xs text-white hover:bg-muted/60'
-              type='button'
-              variant='ghost'
-              size='xs'
-              onClick={() => zoomTo(view.scale + 0.1)}
-            >
-              +
-            </Button>
-            <Button
-              className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60'
-              type='button'
-              variant='ghost'
-              size='xs'
-              onClick={fitToNodes}
-            >
-              Fit
-            </Button>
-            <Button
-              className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60 disabled:opacity-40 disabled:hover:bg-transparent'
-              type='button'
-              variant='ghost'
-              size='xs'
-              onClick={fitToSelection}
-              disabled={!hasNodeSelection}
-            >
-              Sel
-            </Button>
-            <Button
-              className='h-7 rounded-full border px-2 text-[11px] text-white hover:bg-muted/60'
-              type='button'
-              variant='ghost'
-              size='xs'
-              onClick={resetView}
-            >
-              Reset
-            </Button>
-            {isSvgRenderer ? (
-              <Button
-                className={`h-7 rounded-full border px-2 text-[11px] ${
-                  showMinimap ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
-                } hover:bg-muted/60`}
-                type='button'
-                variant='ghost'
-                size='xs'
-                aria-pressed={showMinimap}
-                onClick={() => setShowMinimap((current) => !current)}
-              >
-                Minimap
-              </Button>
-            ) : null}
-            <div className='ml-2 flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-1 py-1'>
-              <Button
-                className={`h-6 rounded-full px-2 text-[10px] ${
-                  isSvgRenderer ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
-                }`}
-                type='button'
-                variant='ghost'
-                size='xs'
-                onClick={() => setRendererMode('svg')}
-              >
-                SVG
-              </Button>
-              <Button
-                className={`h-6 rounded-full px-2 text-[10px] ${
-                  !isSvgRenderer ? 'border-sky-400/70 text-sky-200' : 'text-gray-300'
-                }`}
-                type='button'
-                variant='ghost'
-                size='xs'
-                onClick={() => setRendererMode('legacy')}
-              >
-                Legacy
-              </Button>
-            </div>
-            <div className='ml-1 flex items-center gap-1 rounded-full border border-border/60 bg-card/70 px-1 py-1'>
-              <Button
-                className={`h-6 rounded-full px-2 text-[10px] ${
-                  edgeRoutingMode === 'bezier'
-                    ? 'border-emerald-400/70 text-emerald-200'
-                    : 'text-gray-300'
-                }`}
-                type='button'
-                variant='ghost'
-                size='xs'
-                onClick={() => setEdgeRoutingMode('bezier')}
-              >
-                Curve
-              </Button>
-              <Button
-                className={`h-6 rounded-full px-2 text-[10px] ${
-                  edgeRoutingMode === 'orthogonal'
-                    ? 'border-emerald-400/70 text-emerald-200'
-                    : 'text-gray-300'
-                }`}
-                type='button'
-                variant='ghost'
-                size='xs'
-                onClick={() => setEdgeRoutingMode('orthogonal')}
-              >
-                Ortho
-              </Button>
-            </div>
-          </div>
-        </div>
-        {isSvgRenderer && showMinimap ? (
-          <CanvasMinimap />
-        ) : null}
-        {selectionMarqueeRect ? (
-          <div
-            className='pointer-events-none absolute z-30 rounded-md border border-sky-300/80 bg-sky-500/15'
-            style={{
-              left: selectionMarqueeRect.x,
-              top: selectionMarqueeRect.y,
-              width: selectionMarqueeRect.width,
-              height: selectionMarqueeRect.height,
-            }}
+    <Card className='relative flex h-full w-full flex-col overflow-hidden border-none bg-background shadow-none'>
+      <CanvasBoardUIProvider value={canvasContextValue as any}>
+        <div
+          ref={viewportRef}
+          className={cn(
+            'relative h-full w-full overflow-hidden outline-none',
+            viewportClassName
+          )}
+          tabIndex={0}
+          onPointerDown={(e) => { handlePanStart(e); }}
+          onPointerMove={(e) => { handlePanMove(e); }}
+          onPointerUp={(e) => { handlePanEnd(e); }}
+          onPointerLeave={(e) => { handlePanEnd(e); }}
+          onDragOver={(e) => { handleDragOver(e); }}
+          onDrop={(e) => { handleDrop(e); }}
+        >
+          {showMinimap && (
+            <CanvasMinimap
+              nodes={nodes}
+              view={view}
+              onFitToNodes={fitToNodes}
+              onResetView={resetView}
+            />
+          )}
+
+          <CanvasControlPanel
+            rendererMode={rendererMode}
+            onRendererModeChange={setRendererMode}
+            edgeRoutingMode={edgeRoutingMode}
+            onEdgeRoutingModeChange={setEdgeRoutingMode}
+            showMinimap={showMinimap}
+            onToggleMinimap={() => setShowMinimap(!showMinimap)}
+            selectionToolMode={selectionToolMode}
+            onZoomIn={() => { zoomTo(view.scale * 1.2); }}
+            onZoomOut={() => { zoomTo(view.scale / 1.2); }}
+            onFitToNodes={() => { fitToNodes(); }}
+            onFitToSelection={() => { fitToSelection(); }}
+            onResetView={() => { resetView(); }}
+            viewScale={view.scale}
+            svgPerf={svgPerf}
           />
-        ) : null}
-        {touchLongPressIndicator ? (
+
           <div
-            className='pointer-events-none absolute z-40 -translate-x-1/2 -translate-y-1/2'
+            ref={canvasRef}
+            className='absolute inset-0'
             style={{
-              left: touchLongPressIndicator.x,
-              top: touchLongPressIndicator.y,
+              transform: `translate(${view.panX}px, ${view.panY}px) scale(${view.scale})`,
+              transformOrigin: '0 0',
+              transition: state.isPanning ? 'none' : 'transform 150ms cubic-bezier(0.2, 0, 0, 1)',
             }}
           >
-            <span
-              className='relative block h-11 w-11 rounded-full'
+            {isSvgRenderer ? (
+              <svg className='absolute inset-0 h-full w-full overflow-visible pointer-events-none'>
+                <CanvasSvgEdgeLayer
+                  edges={edges}
+                  edgePaths={edgePaths}
+                  selectedEdgeId={selectedEdgeId}
+                  onSelectEdge={selectEdge}
+                  onRemoveEdge={handleRemoveEdge}
+                  flowEnabled={effectiveFlowIntensity !== 'off'}
+                  flowIntensity={effectiveFlowIntensity}
+                />
+                <CanvasSvgNodeLayer
+                  nodes={nodes}
+                  selectedNodeIdSet={selectedNodeIdSet}
+                  runtimeNodeStatuses={runtimeNodeStatuses}
+                  nodeDiagnosticsById={nodeDiagnosticsById}
+                  onPointerDownNode={handlePointerDownNode}
+                  onSelectNode={handleSelectNode}
+                  onFocusNodeDiagnostics={onFocusNodeDiagnostics}
+                  onFireTrigger={fireTrigger}
+                  getConnectorInfo={getConnectorInfo}
+                  hoveredConnectorKey={hoveredConnectorKey}
+                  pinnedConnectorKey={pinnedConnectorKey}
+                  onConnectorHover={setHoveredConnectorKey}
+                  onConnectorPin={setPinnedConnectorKey}
+                  onConnectorTooltip={setSvgConnectorTooltip}
+                  onNodeDiagnosticsTooltip={setSvgNodeDiagnosticsTooltip}
+                  onDisconnectPort={handleDisconnectPort}
+                  onStartConnection={handleStartConnection}
+                  onCompleteConnection={handleCompleteConnection}
+                  onReconnectInput={handleReconnectInput}
+                  viewportSize={viewportSize}
+                  viewScale={view.scale}
+                />
+              </svg>
+            ) : (
+              <CanvasLegacyNodeLayer
+                nodes={nodes as any}
+                selectedNodeIdSet={selectedNodeIdSet}
+                activeShapeId={state.activeShapeId ?? null}
+                runtimeNodeStatuses={runtimeNodeStatuses}
+                nodeDurations={nodeDurations}
+                nodeDiagnosticsById={nodeDiagnosticsById}
+                triggerConnected={triggerConnected}
+                onPointerDownNode={handlePointerDownNode}
+                onSelectNode={handleSelectNode}
+                onFocusNodeDiagnostics={onFocusNodeDiagnostics}
+                onFireTrigger={fireTrigger as any}
+                getPortValue={state.getPortValue}
+              />
+            )}
+          </div>
+
+          {selectionMarqueeRect && (
+            <div
+              className='absolute border border-blue-500 bg-blue-500/10 pointer-events-none z-[60]'
               style={{
-                background: `conic-gradient(${
-                  touchLongPressIndicator.phase === 'activated'
-                    ? 'rgba(52,211,153,0.96)'
-                    : 'rgba(56,189,248,0.94)'
-                } ${touchLongPressProgressDegrees}deg, rgba(15,23,42,0.3) 0deg)`,
+                left: selectionMarqueeRect.x,
+                top: selectionMarqueeRect.y,
+                width: selectionMarqueeRect.width,
+                height: selectionMarqueeRect.height,
+              }}
+            />
+          )}
+
+          {touchLongPressIndicator && (
+            <div
+              className='absolute z-[70] h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white/40 bg-white/10 pointer-events-none'
+              style={{
+                left: touchLongPressIndicator.clientX,
+                top: touchLongPressIndicator.clientY,
+                transform: `translate(-50%, -50%) scale(${touchLongPressIndicator.progress})`,
+                opacity: 1 - touchLongPressIndicator.progress,
+              }}
+            />
+          )}
+
+          {svgConnectorTooltip && svgConnectorTooltipPosition && (
+            <div
+              className='fixed z-[100] pointer-events-none transition-transform duration-75'
+              style={{
+                left: svgConnectorTooltipPosition.left,
+                top: svgConnectorTooltipPosition.top,
               }}
             >
-              {touchLongPressIndicator.phase === 'activated' ? (
-                <span className='absolute inset-0 rounded-full border border-emerald-300/60 animate-ping' />
-              ) : null}
-              <span
-                className={`absolute inset-[4px] rounded-full border ${
-                  touchLongPressIndicator.phase === 'activated'
-                    ? 'border-emerald-200/90 bg-emerald-400/20'
-                    : 'border-sky-200/80 bg-sky-500/15'
-                }`}
-              />
-              <span
-                className={`absolute left-1/2 top-1/2 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full ${
-                  touchLongPressIndicator.phase === 'activated'
-                    ? 'bg-emerald-200 shadow-[0_0_10px_rgba(52,211,153,0.75)]'
-                    : 'bg-sky-200 shadow-[0_0_8px_rgba(56,189,248,0.7)]'
-                }`}
-              />
-            </span>
-          </div>
-        ) : null}
-        {isSvgRenderer && svgConnectorTooltip && svgConnectorTooltipPosition ? (
-          <div
-            className='pointer-events-auto absolute z-40 rounded-md border border-border/70 bg-card/95 p-2 shadow-lg backdrop-blur-sm'
-            style={{
-              left: svgConnectorTooltipPosition.left,
-              top: svgConnectorTooltipPosition.top,
-              maxWidth: svgConnectorTooltipOverride?.maxWidth ?? '320px',
-            }}
-            onPointerDown={(event) => event.stopPropagation()}
-            onPointerMove={(event) => event.stopPropagation()}
-            onPointerUp={(event) => event.stopPropagation()}
-            onWheel={(event) => event.stopPropagation()}
-            onContextMenu={(event) => event.stopPropagation()}
-          >
-            {svgConnectorTooltipOverride?.content ?? renderConnectorTooltip(svgConnectorTooltip.info)}
-          </div>
-        ) : null}
-        {isSvgRenderer &&
-        svgNodeDiagnosticsTooltip &&
-        svgNodeDiagnosticsTooltipPosition ? (
+              {renderConnectorTooltip({
+                info: svgConnectorTooltip.info,
+                override: svgConnectorTooltipOverride,
+              })}
+            </div>
+          )}
+
+          {svgNodeDiagnosticsTooltip && svgNodeDiagnosticsTooltipPosition && (
             <div
-              className='pointer-events-auto absolute z-40 rounded-md border border-border/70 bg-card/95 p-2 shadow-lg backdrop-blur-sm'
+              className='fixed z-[100] pointer-events-none transition-transform duration-75'
               style={{
                 left: svgNodeDiagnosticsTooltipPosition.left,
                 top: svgNodeDiagnosticsTooltipPosition.top,
-                maxWidth: '360px',
-              }}
-              onPointerDown={(event) => event.stopPropagation()}
-              onPointerMove={(event) => event.stopPropagation()}
-              onPointerUp={(event) => event.stopPropagation()}
-              onWheel={(event) => event.stopPropagation()}
-              onContextMenu={(event) => event.stopPropagation()}
-            >
-              {renderNodeDiagnosticsTooltipContent({
-                summary: svgNodeDiagnosticsTooltip.summary,
-                nodeLabel:
-                  nodeById.get(svgNodeDiagnosticsTooltip.nodeId)?.title ??
-                  svgNodeDiagnosticsTooltip.nodeId,
-              })}
-            </div>
-          ) : null}
-        <div
-          ref={canvasRef}
-          data-doc-id='canvas_drop_zone'
-          className='absolute left-0 top-0'
-          onDrop={handleDrop}
-          onDragOver={handleDragOver}
-          style={{
-            width: CANVAS_WIDTH,
-            height: CANVAS_HEIGHT,
-            transform: `translate3d(${view.x}px, ${view.y}px, 0) scale(${view.scale})`,
-            transformOrigin: '0 0',
-            willChange: isSvgRenderer ? 'transform' : undefined,
-            backgroundImage:
-              'radial-gradient(circle at 1px 1px, rgba(148,163,184,0.18) 1px, transparent 0)',
-            backgroundSize: '24px 24px',
-          }}
-        >
-          {lastDrop ? (
-            <div
-              className='absolute pointer-events-none'
-              style={{
-                width: 10,
-                height: 10,
-                transform: `translate(${lastDrop.x}px, ${lastDrop.y}px)`,
               }}
             >
-              <span className='absolute inset-0 rounded-full bg-sky-400/40 animate-ping' />
-              <div className='absolute inset-0 rounded-full border border-sky-300/70 bg-sky-500/60 shadow-[0_0_8px_rgba(56,189,248,0.5)]' />
+              <Card className='w-80 border-rose-500/30 bg-card/95 p-3 shadow-2xl backdrop-blur-sm'>
+                {renderNodeDiagnosticsTooltipContent({
+                  summary: svgNodeDiagnosticsTooltip.summary,
+                  nodeLabel: nodeById.get(svgNodeDiagnosticsTooltip.nodeId)?.title || svgNodeDiagnosticsTooltip.nodeId,
+                })}
+              </Card>
             </div>
-          ) : null}
-          <svg
-            className='absolute inset-0'
-            width={CANVAS_WIDTH}
-            height={CANVAS_HEIGHT}
-            style={{ pointerEvents: 'auto' }}
-          >
-            <CanvasSvgEdgeLayer
-              cullPadding={SVG_EDGE_CULL_PADDING}
-            />
-            {connecting && connectingPos ? ((): React.JSX.Element => {
-              const fromX = connecting.start.x;
-              const fromY = connecting.start.y;
-              const toX = connectingPos.x;
-              const toY = connectingPos.y;
-              const path = buildConnectingPreviewPath(
-                fromX,
-                fromY,
-                toX,
-                toY,
-                edgeRoutingMode
-              );
-              return (
-                <path
-                  d={path}
-                  stroke='rgba(56,189,248,0.55)'
-                  strokeWidth='1.6'
-                  fill='none'
-                />
-              );
-            })() : null}
-            {isSvgRenderer ? (
-              <CanvasSvgNodeLayer
-                cullPadding={SVG_CULL_PADDING}
-              />
-            ) : null}
-          </svg>
-
-          {!isSvgRenderer
-            ? nodes.map((node) => {
-              const isSelected = selectedNodeIdSet.has(node.id);
-              const isPrimarySelected = node.id === selectedNodeId;
-              const style = typeStyles[node.type] ?? typeStyles.template;
-              const nodeHistoryEntries = runtimeState.history?.[node.id];
-              const canUsePersistedStatusFallback =
-              runtimeRunStatus === 'idle' &&
-              Array.isArray(nodeHistoryEntries) &&
-              nodeHistoryEntries.length > 0;
-              const statusFromRuntimeState = runtimeState.outputs?.[node.id]?.['status'];
-              const runtimeNodeStatusRaw =
-            runtimeNodeStatuses?.[node.id] ??
-            (canUsePersistedStatusFallback && typeof statusFromRuntimeState === 'string'
-              ? statusFromRuntimeState
-              : null);
-              const runtimeNodeStatus =
-            typeof runtimeNodeStatusRaw === 'string' && runtimeNodeStatusRaw.trim().length > 0
-              ? runtimeNodeStatusRaw.trim().toLowerCase()
-              : null;
-              const runtimeNodeStatusLabel = runtimeNodeStatus
-                ? formatRuntimeStatusLabel(runtimeNodeStatus)
-                : null;
-              const iteratorOutput =
-            node.type === 'iterator'
-              ? runtimeState.outputs?.[node.id]
-              : undefined;
-              const iteratorStatus = (iteratorOutput?.['status'] as string | undefined) ?? null;
-              const iteratorIndex =
-            typeof iteratorOutput?.['index'] === 'number' ? (iteratorOutput?.['index']) : null;
-              const iteratorTotal =
-            typeof iteratorOutput?.['total'] === 'number' ? (iteratorOutput?.['total']) : null;
-              const iteratorDone =
-            typeof iteratorOutput?.['done'] === 'boolean' ? (iteratorOutput?.['done']) : null;
-              const iteratorProgressLabel =
-            iteratorIndex !== null && iteratorTotal !== null && iteratorTotal > 0
-              ? `${Math.min(iteratorIndex + 1, iteratorTotal)}/${iteratorTotal}`
-              : iteratorTotal !== null && iteratorTotal === 0
-                ? '0/0'
-                : null;
-              const iteratorStatusClasses =
-            iteratorStatus === 'completed' || iteratorDone
-              ? 'border-emerald-400/60 bg-emerald-500/15 text-emerald-200'
-              : iteratorStatus === 'advance_pending'
-                ? 'border-amber-400/60 bg-amber-500/15 text-amber-200'
-                : iteratorStatus === 'waiting_callback'
-                  ? 'border-sky-500/60 bg-sky-500/15 text-sky-200'
-                  : 'border-border bg-card/60 text-gray-200';
-              const blockerNodeStatus =
-            node.type === 'model' ||
-            node.type === 'agent' ||
-            node.type === 'learner_agent' ||
-            node.type === 'poll' ||
-            node.type === 'delay'
-              ? runtimeNodeStatus
-              : undefined;
-              const isBlockerProcessing =
-            flowEnabled &&
-            !!blockerNodeStatus &&
-            BLOCKER_PROCESSING_STATUSES.has(blockerNodeStatus);
-              const noteConfig = node.config?.notes;
-              const noteText = typeof noteConfig?.text === 'string' ? noteConfig.text.trim() : '';
-              const noteColor =
-            typeof noteConfig?.color === 'string' && noteConfig.color.trim()
-              ? noteConfig.color.trim()
-              : DEFAULT_NODE_NOTE_COLOR;
-              const showNote = Boolean(noteConfig?.showOnCanvas && noteText);
-              const isScheduledTrigger =
-            node.type === 'trigger' && node.config?.trigger?.event === 'scheduled_run';
-              const isInputPulse = inputPulseNodes.has(node.id);
-              const isOutputPulse = outputPulseNodes.has(node.id);
-              const isDragging = dragState?.nodeId === node.id;
-              const nodeDiagnosticsSummary = nodeDiagnosticsById[node.id];
-              const nodeDiagnosticsBadge =
-            resolveNodeDiagnosticsBadgeStyle(nodeDiagnosticsSummary);
-              const nodeDiagnosticsTooltipContent =
-            nodeDiagnosticsSummary
-              ? renderNodeDiagnosticsTooltipContent({
-                summary: nodeDiagnosticsSummary,
-                nodeLabel: node.title ?? node.id,
-              })
-              : null;
-          
-              return (
-                <div
-                  key={node.id}
-                  className={`absolute ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
-                  style={{
-                    width: NODE_WIDTH,
-                    transform: `translate(${node.position.x}px, ${node.position.y}px)`,
-                  }}
-                  onPointerDown={(event) => {
-                    void handlePointerDownNode(event, node.id);
-                  }}
-                  onPointerMove={(event) => {
-                    handlePointerMoveNode(event, node.id);
-                  }}
-                  onPointerUp={(event) => {
-                    handlePointerUpNode(event, node.id);
-                  }}
-                  onClick={(event) => {
-                    void handleSelectNode(node.id, {
-                      toggle: event.shiftKey || event.metaKey || event.ctrlKey,
-                    });
-                    if (
-                      openNodeConfigOnSingleClick &&
-                    !event.shiftKey &&
-                    !event.metaKey &&
-                    !event.ctrlKey
-                    ) {
-                      setConfigOpen(true);
-                    }
-                  }}
-                  onDoubleClick={(event) => {
-                    event.stopPropagation();
-                    void handleSelectNode(node.id);
-                    setConfigOpen(true);
-                  }}
-                >
-                  <div
-                    className={`relative flex flex-col gap-1.5 rounded-xl border bg-card/80 p-2 pb-3 text-[11px] text-gray-200 shadow-lg backdrop-blur ${
-                      style.border
-                    } ${style.glow} ${
-                      isBlockerProcessing ? 'ai-paths-node-halo' : ''
-                    } ${
-                      isPrimarySelected
-                        ? 'ring-2 ring-sky-200/60'
-                        : isSelected
-                          ? 'ring-1 ring-sky-200/40'
-                          : ''
-                    }`}
-                    style={{ minHeight: NODE_MIN_HEIGHT }}
-                  >
-                    {isInputPulse || isOutputPulse ? (
-                      <div className='absolute -top-2 right-2 flex items-center gap-1'>
-                        {isInputPulse ? (
-                          <span
-                            className='relative inline-flex h-2.5 w-2.5'
-                            title='Input loaded'
-                          >
-                            <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-sky-400/70' />
-                            <span className='relative inline-flex h-2.5 w-2.5 rounded-full bg-sky-300 shadow-[0_0_6px_rgba(56,189,248,0.75)]' />
-                          </span>
-                        ) : null}
-                        {isOutputPulse ? (
-                          <span
-                            className='relative inline-flex h-2.5 w-2.5'
-                            title='Output sent'
-                          >
-                            <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-400/70' />
-                            <span className='relative inline-flex h-2.5 w-2.5 rounded-full bg-amber-300 shadow-[0_0_6px_rgba(251,191,36,0.75)]' />
-                          </span>
-                        ) : null}
-                      </div>
-                    ) : null}
-                    <div
-                      className='pointer-events-none absolute bottom-1 right-2 w-[90%] break-all text-right text-[8px] font-mono text-gray-400/80'
-                    >
-                      {node.id}
-                    </div>
-                    {node.inputs.map((input, index) => (
-                      <div
-                        key={`input-${node.id}-${input}`}
-                        className='absolute flex items-center'
-                        style={{
-                          left: -(PORT_SIZE / 2) - 4,
-                          top: getPortOffsetY(index, node.inputs.length) - PORT_SIZE / 2,
-                        }}
-                        onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey('input', node.id, input))}
-                        onMouseLeave={() =>
-                          setHoveredConnectorKey((prev) =>
-                            prev === buildConnectorKey('input', node.id, input) ? null : prev
-                          )
-                        }
-                      >
-                        {(() : React.JSX.Element => {
-                          const isConnecting = Boolean(connecting && connectingFromNode);
-                          const isConnectable = isConnecting
-                            ? validateConnection(
-                            connectingFromNode as AiNode,
-                            node,
-                            connecting?.fromPort ?? '',
-                            input
-                            ).valid
-                            : false;
-                          const connectorInfo = getConnectorInfo('input', node.id, input);
-                          const hasIncomingEdge = edges.some(
-                            (edge): boolean =>
-                              edge.to === node.id && edge.toPort === input
-                          );
-                          const connectorKey = buildConnectorKey('input', node.id, input);
-                          const isPinned = pinnedConnectorKey === connectorKey;
-                          const isHovered = hoveredConnectorKey === connectorKey;
-                          const isTooltipOpen = isPinned || isHovered;
-                          const hasMismatch = connectorInfo.hasMismatch;
-                          const tooltipOverride = resolveConnectorTooltip?.({
-                            direction: 'input',
-                            node,
-                            port: input,
-                          }) ?? null;
-                          return (
-                            <>
-                              <Tooltip
-                                content={tooltipOverride?.content ?? renderConnectorTooltip(connectorInfo)}
-                                side='right'
-                                maxWidth={tooltipOverride?.maxWidth ?? '360px'}
-                                open={isTooltipOpen}
-                                disableHover
-                              >
-                                <div className='relative'>
-                                  <button
-                                    type='button'
-                                    data-port='input'
-                                    className={`cursor-pointer rounded-full border bg-sky-500/20 shadow-[0_0_8px_rgba(56,189,248,0.35)] hover:border-sky-200 ${
-                                      isConnecting
-                                        ? isConnectable
-                                          ? 'border-emerald-300/80 bg-emerald-500/30 shadow-[0_0_14px_rgba(52,211,153,0.55)] ring-2 ring-emerald-400/60'
-                                          : 'border-border/60 bg-card/20 opacity-40 shadow-none'
-                                        : isPinned
-                                          ? 'border-amber-300/80 ring-2 ring-amber-300/70'
-                                          : 'border-sky-400/60'
-                                    }`}
-                                    style={{
-                                      width: PORT_SIZE + 2,
-                                      height: PORT_SIZE + 2,
-                                    }}
-                                    onPointerUp={(event) => {
-                                      event.stopPropagation();
-                                      if (connecting) {
-                                        handleCompleteConnection(event, node, input);
-                                        return;
-                                      }
-                                    }}
-                                    onPointerDown={(event) => {
-                                      event.stopPropagation();
-                                      if (hasIncomingEdge) {
-                                        void handleReconnectInput(event, node.id, input);
-                                      }
-                                    }}
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      if (isPinned) {
-                                        setPinnedConnectorKey(null);
-                                        setHoveredConnectorKey(null);
-                                        return;
-                                      }
-                                      setPinnedConnectorKey(connectorKey);
-                                    }}
-                                    onContextMenu={(event) => {
-                                      event.preventDefault();
-                                      event.stopPropagation();
-                                      handleDisconnectPort('input', node.id, input);
-                                    }}
-                                    aria-label={`Connect to ${formatPortLabel(input)}`}
-                                  />
-                                  {hasMismatch ? (
-                                    <span className='absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60' />
-                                  ) : null}
-                                </div>
-                              </Tooltip>
-                              <span
-                                className={`ml-1.5 rounded px-1 py-0.5 text-[8px] font-medium ${
-                                  isConnecting
-                                    ? isConnectable
-                                      ? 'bg-emerald-500/15 text-emerald-200'
-                                      : 'bg-muted/60 text-gray-500'
-                                    : hasMismatch
-                                      ? 'bg-rose-500/15 text-rose-200'
-                                      : 'bg-sky-500/10 text-sky-300'
-                                }`}
-                              >
-                                {formatPortLabel(input)}
-                              </span>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    ))}
-                    {node.outputs.map((output, index) => (
-                      <div
-                        key={`output-${node.id}-${output}`}
-                        className='absolute flex items-center'
-                        style={{
-                          right: -(PORT_SIZE / 2) - 4,
-                          top: getPortOffsetY(index, node.outputs.length) - PORT_SIZE / 2,
-                        }}
-                        onMouseEnter={() => setHoveredConnectorKey(buildConnectorKey('output', node.id, output))}
-                        onMouseLeave={() =>
-                          setHoveredConnectorKey((prev) =>
-                            prev === buildConnectorKey('output', node.id, output) ? null : prev
-                          )
-                        }
-                      >
-                        {((): React.JSX.Element => {
-                          const connectorInfo = getConnectorInfo('output', node.id, output);
-                          const connectorKey = buildConnectorKey('output', node.id, output);
-                          const isPinned = pinnedConnectorKey === connectorKey;
-                          const isHovered = hoveredConnectorKey === connectorKey;
-                          const isTooltipOpen = isPinned || isHovered;
-                          const hasMismatch = connectorInfo.hasMismatch;
-                          const tooltipOverride = resolveConnectorTooltip?.({
-                            direction: 'output',
-                            node,
-                            port: output,
-                          }) ?? null;
-                          return (
-                            <>
-                              <span
-                                className={`mr-1.5 rounded px-1 py-0.5 text-[8px] font-medium ${
-                                  hasMismatch
-                                    ? 'bg-rose-500/15 text-rose-200'
-                                    : 'bg-amber-500/10 text-amber-300'
-                                }`}
-                              >
-                                {formatPortLabel(output)}
-                              </span>
-                              <Tooltip
-                                content={tooltipOverride?.content ?? renderConnectorTooltip(connectorInfo)}
-                                side='left'
-                                maxWidth={tooltipOverride?.maxWidth ?? '360px'}
-                                open={isTooltipOpen}
-                                disableHover
-                              >
-                                <div className='relative'>
-                                  <button
-                                    type='button'
-                                    data-port='output'
-                                    className={`cursor-pointer rounded-full border bg-amber-500/20 shadow-[0_0_8px_rgba(251,191,36,0.35)] hover:border-amber-200 ${
-                                      isPinned ? 'border-amber-300/80 ring-2 ring-amber-300/70' : 'border-amber-400/60'
-                                    }`}
-                                    style={{
-                                      width: PORT_SIZE + 2,
-                                      height: PORT_SIZE + 2,
-                                    }}
-                                    onPointerDown={(event) =>
-                                    { void handleStartConnection(event, node, output); }
-                                    }
-                                    onClick={(event) => {
-                                      event.stopPropagation();
-                                      if (isPinned) {
-                                        setPinnedConnectorKey(null);
-                                        setHoveredConnectorKey(null);
-                                        return;
-                                      }
-                                      setPinnedConnectorKey(connectorKey);
-                                    }}
-                                    onContextMenu={(event) => {
-                                      event.preventDefault();
-                                      event.stopPropagation();
-                                      handleDisconnectPort('output', node.id, output);
-                                    }}
-                                    aria-label={`Start connection from ${formatPortLabel(output)}`}
-                                  />
-                                  {hasMismatch ? (
-                                    <span className='absolute -right-1 -top-1 h-2 w-2 rounded-full bg-rose-500 ring-2 ring-black/60' />
-                                  ) : null}
-                                </div>
-                              </Tooltip>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    ))}
-                    <div className='flex items-center justify-between gap-2'>
-                      <span className='text-xs font-semibold text-white'>{node.title}</span>
-                      <div className='flex items-center gap-1'>
-                        {nodeDiagnosticsBadge && nodeDiagnosticsTooltipContent ? (
-                          <Tooltip
-                            content={nodeDiagnosticsTooltipContent}
-                            side='top'
-                            maxWidth='360px'
-                          >
-                            <button
-                              type='button'
-                              data-node-diagnostics-badge={node.id}
-                              className='rounded-sm'
-                              onPointerDown={(event) => event.stopPropagation()}
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                onFocusNodeDiagnostics?.(node.id);
-                              }}
-                            >
-                              <Badge
-                                variant='outline'
-                                className={`h-auto border px-2 py-0 text-[9px] uppercase ${nodeDiagnosticsBadge.className}`}
-                              >
-                                {nodeDiagnosticsBadge.label}
-                              </Badge>
-                            </button>
-                          </Tooltip>
-                        ) : null}
-                        {isScheduledTrigger ? (
-                          <Badge variant='outline' className='h-auto border-amber-400/60 bg-amber-500/15 px-2 py-0 text-[9px] text-amber-200 uppercase'>
-                        Scheduled
-                          </Badge>
-                        ) : null}
-                        <Badge variant='outline' className='h-auto px-2 py-0 text-[10px] text-gray-400 uppercase'>
-                          {node.type}
-                        </Badge>
-                      </div>
-                    </div>
-                    {runtimeNodeStatusLabel && (
-                      <div className='inline-flex w-fit items-center gap-1'>
-                        <Badge
-                          variant='outline'
-                          className={`h-auto flex items-center gap-1 px-2 py-0.5 text-[9px] uppercase tracking-wide ${runtimeStatusBadgeClassName(runtimeNodeStatus ?? '')}`}
-                        >
-                          {runtimeNodeStatus === 'cached' && (
-                            <svg className='h-2.5 w-2.5 shrink-0' viewBox='0 0 16 16' fill='currentColor'>
-                              <path d='M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2m3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2' />
-                            </svg>
-                          )}
-                          {runtimeNodeStatusLabel}
-                        </Badge>
-                        {nodeDurations[node.id] != null && (
-                          <span className='text-[9px] text-gray-400'>
-                            {formatDurationMs(nodeDurations[node.id] ?? null)}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                    {node.type === 'iterator' && (iteratorStatus || iteratorProgressLabel) ? (
-                      <Badge
-                        variant='outline'
-                        className={`h-auto inline-flex w-fit items-center gap-1 px-2 py-0.5 text-[9px] uppercase tracking-wide ${iteratorStatusClasses}`}
-                        title={
-                          iteratorProgressLabel && iteratorStatus
-                            ? `${iteratorProgressLabel} • ${iteratorStatus}`
-                            : iteratorStatus ?? iteratorProgressLabel ?? undefined
-                        }
-                      >
-                        {iteratorProgressLabel ? <span>{iteratorProgressLabel}</span> : null}
-                        {iteratorStatus ? <span>{iteratorStatus}</span> : null}
-                      </Badge>
-                    ) : null}
-                    {isBlockerProcessing && (
-                      <Badge
-                        variant='outline'
-                        className='h-auto inline-flex w-fit items-center gap-1 border-sky-500/40 bg-sky-500/10 px-2 py-0.5 text-[9px] uppercase tracking-wide text-sky-200'
-                      >
-                    Processing
-                        <NodeProcessingDots active />
-                      </Badge>
-                    )}
-                    {node.type === 'viewer' && !triggerConnected.has(node.id) && (
-                      <Badge variant='outline' className='h-auto border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[9px] text-amber-200'>
-                    Not wired to a Trigger
-                      </Badge>
-                    )}
-                    {node.type === 'trigger' && (
-                      <Button
-                        className='self-start rounded-md border border-emerald-500/40 px-2 py-1 text-[10px] text-emerald-200 hover:bg-emerald-500/10'
-                        type='button'
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onClick={(event) => { void fireTrigger(node, event); }}
-                      >
-                    Fire Trigger
-                      </Button>
-                    )}
-                    {node.type === 'trigger' && (
-                      <div className='text-[10px] uppercase text-lime-200/80'>
-                        {isScheduledTrigger
-                          ? 'Server scheduled trigger'
-                          : 'Accepts context input'}
-                      </div>
-                    )}
-                    {node.type === 'context' && (
-                      <span className='text-[10px] uppercase text-emerald-300/80'>
-                    Role output can feed any Trigger
-                      </span>
-                    )}
-                    {node.type === 'simulation' && (
-                      <span className='text-[10px] uppercase text-cyan-300/80'>
-                    Wire Trigger ↔ Simulation
-                      </span>
-                    )}
-                    {node.type === 'viewer' && (
-                      <Badge variant='outline' className='h-auto border-border bg-card/60 px-2 py-1 text-[10px] text-gray-400'>
-                    Open node to view results
-                      </Badge>
-                    )}
-                  </div>
-                  {showNote ? (
-                    <div
-                      className='mt-2 w-full rounded-lg border border-black/10 px-3 py-2 text-[11px] text-gray-900 shadow-sm'
-                      style={{ backgroundColor: noteColor }}
-                    >
-                      <div className='whitespace-pre-wrap break-words'>{noteText}</div>
-                    </div>
-                  ) : null}
-                </div>
-              );
-            })
-            : null}
+          )}
         </div>
         <ConfirmationModal />
       </CanvasBoardUIProvider>

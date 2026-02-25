@@ -24,22 +24,11 @@
   17:3  warning  'isCaseResolverCreateContextReady' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
   37:3  warning  'workspace' is defined but never used. Allowed unused args must match /^_/u                         @typescript-eslint/no-unused-vars
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/case-resolver/hooks/useCaseResolverState.ocr-actions.ts
-  264:15  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment')
-  265:59  error    Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
-  318:15  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unsafe-assignment')
-  319:59  error    Unexpected any. Specify a different type                                                                    @typescript-eslint/no-explicit-any
-
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/case-resolver/hooks/useCaseResolverState.upload-actions.ts
-  126:69  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  232:69  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-  305:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
-
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/case-resolver/hooks/useCaseResolverState.view-state.ts
    1:43  warning  'useRef' is defined but never used. Allowed unused vars must match /^_/u                              @typescript-eslint/no-unused-vars
   50:3   warning  'requestedWorkspaceRefreshFileIdRef' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
   51:3   warning  'requestedWorkspaceMissingFileIdRef' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
 
-✖ 25 problems (5 errors, 20 warnings)
-  0 errors and 7 warnings potentially fixable with the `--fix` option.
+✖ 18 problems (0 errors, 18 warnings)
+  0 errors and 5 warnings potentially fixable with the `--fix` option.
 

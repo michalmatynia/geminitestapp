@@ -3,6 +3,8 @@
 import React from 'react';
 
 import { Textarea, LoadingState } from '@/shared/ui';
+import { useMarkdownSplitResizer } from '../hooks/useMarkdownSplitResizer';
+import { useMarkdownPreviewDebounce } from '../hooks/useMarkdownPreviewDebounce';
 
 export interface MarkdownSplitEditorProps {
   value: string;
@@ -30,107 +32,58 @@ export interface MarkdownSplitEditorProps {
   textareaClassName?: string | undefined;
 }
 
-export function MarkdownSplitEditor({
-  value,
-  onChange,
-  readOnly = false,
-  showPreview,
-  renderPreviewHtml,
-  sanitizePreviewHtml,
-  isCodeMode = false,
-  isPasting = false,
-  onPaste,
-  textareaRef,
-  splitRef,
-  editorWidth = null,
-  onEditorWidthChange,
-  isDraggingSplitter = false,
-  onDraggingSplitterChange,
-  contentBackground,
-  contentTextColor,
-  previewTypographyStyle,
-  onPreviewImageClick,
-  onCopyCodeFailure,
-  placeholder,
-  debounceMs = 150,
-  textareaClassName,
-}: MarkdownSplitEditorProps): React.JSX.Element {
-  const [debouncedContentHtml, setDebouncedContentHtml] = React.useState<string>('');
+export function MarkdownSplitEditor(props: MarkdownSplitEditorProps): React.JSX.Element {
+  const {
+    value,
+    onChange,
+    readOnly = false,
+    showPreview,
+    renderPreviewHtml,
+    sanitizePreviewHtml,
+    isCodeMode = false,
+    isPasting = false,
+    onPaste,
+    textareaRef,
+    splitRef,
+    editorWidth = null,
+    onEditorWidthChange,
+    isDraggingSplitter = false,
+    onDraggingSplitterChange,
+    contentBackground,
+    contentTextColor,
+    previewTypographyStyle,
+    onPreviewImageClick,
+    onCopyCodeFailure,
+    placeholder,
+    debounceMs = 150,
+    textareaClassName,
+  } = props;
+
   const localSplitRef = React.useRef<HTMLDivElement | null>(null);
   const localTextareaRef = React.useRef<HTMLTextAreaElement | null>(null);
-  const [localIsDragging, setLocalIsDragging] = React.useState(false);
-  const [localEditorWidth, setLocalEditorWidth] = React.useState<number | null>(null);
-
+  
   const effectiveSplitRef = splitRef ?? localSplitRef;
   const effectiveTextareaRef = textareaRef ?? localTextareaRef;
-  const effectiveEditorWidth = onEditorWidthChange ? editorWidth : localEditorWidth;
-  const effectiveIsDragging = onDraggingSplitterChange ? isDraggingSplitter : localIsDragging;
 
-  const updateEditorWidth = React.useCallback(
-    (next: number | null | ((prev: number | null) => number | null)): void => {
-      if (onEditorWidthChange) {
-        onEditorWidthChange(next);
-        return;
-      }
-      if (typeof next === 'function') {
-        setLocalEditorWidth((prev) => next(prev));
-        return;
-      }
-      setLocalEditorWidth(next);
-    },
-    [onEditorWidthChange]
-  );
+  const debouncedContentHtml = useMarkdownPreviewDebounce({
+    value,
+    showPreview,
+    renderPreviewHtml,
+    sanitizePreviewHtml,
+    debounceMs,
+  });
 
-  const updateDragging = React.useCallback(
-    (next: boolean): void => {
-      if (onDraggingSplitterChange) {
-        onDraggingSplitterChange(next);
-        return;
-      }
-      setLocalIsDragging(next);
-    },
-    [onDraggingSplitterChange]
-  );
-
-  React.useEffect((): void | (() => void) => {
-    if (!showPreview) return;
-    const timer = window.setTimeout((): void => {
-      const nextHtml = renderPreviewHtml(value);
-      setDebouncedContentHtml(sanitizePreviewHtml ? sanitizePreviewHtml(nextHtml) : nextHtml);
-    }, debounceMs);
-    return (): void => window.clearTimeout(timer);
-  }, [debounceMs, renderPreviewHtml, sanitizePreviewHtml, showPreview, value]);
-
-  React.useEffect((): void => {
-    if (!showPreview) return;
-    const container = effectiveSplitRef.current;
-    if (!container) return;
-    updateEditorWidth((prev: number | null): number | null =>
-      prev ?? Math.round(container.getBoundingClientRect().width / 2)
-    );
-  }, [effectiveSplitRef, showPreview, updateEditorWidth]);
-
-  React.useEffect((): void | (() => void) => {
-    if (!effectiveIsDragging) return;
-    const handlePointerMove = (event: PointerEvent): void => {
-      const container = effectiveSplitRef.current;
-      if (!container) return;
-      const rect = container.getBoundingClientRect();
-      const minWidth = 260;
-      const maxWidth = rect.width - 260;
-      const nextWidth = Math.min(maxWidth, Math.max(minWidth, event.clientX - rect.left));
-      updateEditorWidth(nextWidth);
-    };
-    const handlePointerUp = (): void => {
-      updateDragging(false);
-    };
-    window.addEventListener('pointermove', handlePointerMove);
-    window.addEventListener('pointerup', handlePointerUp);
-    return (): void => {
-      window.removeEventListener('pointermove', handlePointerMove);
-      window.removeEventListener('pointerup', handlePointerUp);
-    };
-  }, [effectiveIsDragging, effectiveSplitRef, updateDragging, updateEditorWidth]);
+  const {
+    editorWidth: effectiveEditorWidth,
+    updateDragging,
+  } = useMarkdownSplitResizer({
+    splitRef: effectiveSplitRef,
+    editorWidth,
+    onEditorWidthChange,
+    isDraggingSplitter,
+    onDraggingSplitterChange,
+    showPreview,
+  });
 
   return (
     <div ref={effectiveSplitRef} className={`flex ${showPreview ? 'gap-0' : ''}`}>

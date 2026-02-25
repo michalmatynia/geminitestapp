@@ -261,8 +261,7 @@ export function useCaseResolverStateOcrActions({
                 return file;
               }
               didUpdate = true;
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-              const mergedText = (buildCombinedOcrText as any)(nextSlots) as string;
+              const mergedText = buildCombinedOcrText(nextSlots);
               const canonicalDocument = deriveDocumentContentSync({
                 mode: 'wysiwyg',
                 value: ensureSafeDocumentHtml(mergedText),
@@ -315,8 +314,7 @@ export function useCaseResolverStateOcrActions({
               if (current?.id !== fileId || current?.fileType !== 'scanfile') return current;
               if (current.isLocked) return current;
               const now = new Date().toISOString();
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
-              const mergedText = (buildCombinedOcrText as any)(nextSlots) as string;
+              const mergedText = buildCombinedOcrText(nextSlots);
               const canonicalDocument = deriveDocumentContentSync({
                 mode: 'wysiwyg',
                 value: ensureSafeDocumentHtml(mergedText),

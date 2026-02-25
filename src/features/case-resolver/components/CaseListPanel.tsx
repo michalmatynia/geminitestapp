@@ -13,10 +13,8 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createCaseResolverCasesMasterTreeAdapter } from '@/features/case-resolver/adapter';
 import {
   buildMasterCaseNodesFromCaseResolverWorkspace,
-  buildMasterNodesFromCaseResolverWorkspace,
   decodeCaseResolverCaseMasterNodeId,
   fromCaseResolverCaseNodeId,
-  fromCaseResolverFileNodeId,
   toCaseResolverCaseNodeId,
 } from '@/features/case-resolver/master-tree';
 import { useMasterFolderTreeInstance } from '@/features/foldertree';
@@ -24,10 +22,7 @@ import {
   FolderTreeViewportV2,
   applyInternalMasterTreeDrop,
 } from '@/features/foldertree/v2';
-import {
-  useMasterFolderTreeSearch,
-  MasterFolderTreeSearchResults,
-} from '@/features/foldertree/v2/search';
+import { CaseListSearchPanel } from './list/search';
 import {
   Button,
   Card,
@@ -108,34 +103,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     [caseIdentifierPathById, caseSortBy, caseSortOrder, filesById, workspace]
   );
 
-  const searchNodes = useMemo((): MasterTreeNode[] => {
-    if (!treeSearchQuery.trim()) return [];
-    return [
-      ...baseCaseNodes,
-      ...buildMasterNodesFromCaseResolverWorkspace(workspace),
-    ];
-  }, [treeSearchQuery, baseCaseNodes, workspace]);
-
-  const { results: searchResults, isActive: isSearchActive } =
-    useMasterFolderTreeSearch(searchNodes, treeSearchQuery);
-
-  const handleSearchSelect = useCallback(
-    (node: MasterTreeNode): void => {
-      const caseId = fromCaseResolverCaseNodeId(node.id);
-      if (caseId) {
-        router.push(buildCaseResolverCaseHref(caseId));
-        return;
-      }
-      const fileId = fromCaseResolverFileNodeId(node.id);
-      if (fileId) {
-        const file = workspace.files.find((f) => f.id === fileId);
-        if (file?.parentCaseId) {
-          router.push(buildCaseResolverCaseHref(file.parentCaseId));
-        }
-      }
-    },
-    [router, workspace.files]
-  );
+  const isSearchActive = treeSearchQuery.trim().length > 0;
 
   const totalPages = useMemo((): number => {
     if (filteredCases.length === 0) return 1;
@@ -442,10 +410,15 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       contentClassName='space-y-3'
     >
       {isSearchActive ? (
-        <MasterFolderTreeSearchResults
-          results={searchResults}
-          onSelect={handleSearchSelect}
+        <CaseListSearchPanel
+          workspace={workspace}
+          identifierLabelById={caseIdentifierPathById}
           query={treeSearchQuery}
+          onOpenCase={(caseId) => router.push(buildCaseResolverCaseHref(caseId))}
+          onOpenFile={(file) => {
+            const targetId = file.parentCaseId ?? file.id;
+            router.push(buildCaseResolverCaseHref(targetId));
+          }}
         />
       ) : isLoading ? (
         <div className='py-20 text-center text-sm text-gray-500'>Loading cases...</div>

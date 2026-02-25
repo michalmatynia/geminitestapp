@@ -213,7 +213,7 @@ const buildNestedCaseWorkspaceFixture = (): CaseResolverWorkspace => {
 };
 
 describe('resolveCaseResolverTreeWorkspace', () => {
-  it('returns an empty scoped workspace when URL requested file is missing', () => {
+  it('falls back to current workspace when URL requested file is missing', () => {
     const workspace = buildWorkspaceFixture();
     const scoped = resolveCaseResolverTreeWorkspace({
       selectedFileId: 'case-a',
@@ -221,11 +221,15 @@ describe('resolveCaseResolverTreeWorkspace', () => {
       workspace,
     });
 
-    expect(scoped.files).toEqual([]);
-    expect(scoped.assets).toEqual([]);
-    expect(scoped.folders).toEqual([]);
-    expect(scoped.folderRecords).toEqual([]);
-    expect(scoped.activeFileId).toBeNull();
+    expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual(
+      workspace.files.map((file: CaseResolverFile) => file.id).sort(),
+    );
+    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual(
+      workspace.assets.map((asset: CaseResolverAssetFile) => asset.id).sort(),
+    );
+    expect(scoped.folders).toEqual(workspace.folders);
+    expect(scoped.folderRecords).toEqual(workspace.folderRecords);
+    expect(scoped.activeFileId).toBe(workspace.activeFileId);
   });
 
   it('prioritizes URL requested case scope over stale selected file state', () => {
@@ -243,7 +247,7 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     expect(scoped.activeFileId).toBe('case-b');
   });
 
-  it('clears folders as well when selected file is missing from workspace', () => {
+  it('falls back to current workspace when selected file is missing from workspace', () => {
     const workspace = buildWorkspaceFixture();
     const scoped = resolveCaseResolverTreeWorkspace({
       selectedFileId: 'case-missing',
@@ -251,10 +255,15 @@ describe('resolveCaseResolverTreeWorkspace', () => {
       workspace,
     });
 
-    expect(scoped.files).toEqual([]);
-    expect(scoped.assets).toEqual([]);
-    expect(scoped.folders).toEqual([]);
-    expect(scoped.folderRecords).toEqual([]);
+    expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual(
+      workspace.files.map((file: CaseResolverFile) => file.id).sort(),
+    );
+    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual(
+      workspace.assets.map((asset: CaseResolverAssetFile) => asset.id).sort(),
+    );
+    expect(scoped.folders).toEqual(workspace.folders);
+    expect(scoped.folderRecords).toEqual(workspace.folderRecords);
+    expect(scoped.activeFileId).toBe(workspace.activeFileId);
   });
 
   it('includes descendant case scope by default', () => {

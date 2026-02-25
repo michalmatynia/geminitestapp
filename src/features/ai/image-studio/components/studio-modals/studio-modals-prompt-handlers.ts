@@ -18,7 +18,7 @@ import type { Dispatch, SetStateAction } from 'react';
 
 type StudioPromptExtractionSettings = {
   promptExtraction: {
-    mode: string;
+    mode: 'programmatic' | 'gpt' | 'hybrid';
     applyAutofix: boolean;
     autoApplyFormattedPrompt: boolean;
     showValidationSummary: boolean;

@@ -9,29 +9,36 @@ process.env['APP_DB_PROVIDER'] = "prisma";
 process.env['MONGODB_URI'] = "mongodb://localhost:27017/test";
 process.env['MONGODB_DB'] = "test";
 
-vi.mock("@/shared/lib/db/mongo-client", () => {
-  const mockDb = {
-    collection: vi.fn().mockReturnThis(),
-    findOne: vi.fn().mockResolvedValue(null),
-    find: vi.fn().mockReturnThis(),
-    toArray: vi.fn().mockResolvedValue([]),
-    insertOne: vi.fn().mockResolvedValue({ acknowledged: true }),
-    updateOne: vi.fn().mockResolvedValue({ acknowledged: true }),
-    deleteMany: vi.fn().mockResolvedValue({ acknowledged: true }),
-    createIndex: vi.fn().mockResolvedValue('index-name'),
+// Define mock models inside vi.mock factory to avoid hoisting issues
+vi.mock("@/shared/lib/db/prisma", () => {
+  const mockPrismaModel = {
+    findUnique: vi.fn().mockResolvedValue(null),
+    findMany: vi.fn().mockResolvedValue([]),
+    findFirst: vi.fn().mockResolvedValue(null),
+    create: vi.fn().mockImplementation((args) => Promise.resolve({ id: 'mock-id', createdAt: new Date(), updatedAt: new Date(), ...args.data })),
+    update: vi.fn().mockImplementation((args) => Promise.resolve({ id: args.where.id || 'mock-id', ...args.data })),
+    updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+    delete: vi.fn().mockResolvedValue({ id: 'mock-id' }),
+    deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+    upsert: vi.fn().mockImplementation((args) => Promise.resolve({ id: args.where.id || 'mock-id', ...args.update })),
+    count: vi.fn().mockResolvedValue(0),
   };
-  const mockClient = {
-    connect: vi.fn().mockReturnThis(),
-    db: vi.fn().mockReturnValue(mockDb),
-    close: vi.fn().mockResolvedValue(undefined),
+  
+  const prismaMock = {
+    setting: mockPrismaModel,
+    aiPathRun: mockPrismaModel,
+    aiPathRunNode: mockPrismaModel,
+    aiPathRunEvent: mockPrismaModel,
+    product: mockPrismaModel,
+    productDraft: mockPrismaModel,
+    $transaction: vi.fn().mockImplementation((cb) => cb(prismaMock)),
   };
+
   return {
-    getMongoClient: vi.fn().mockResolvedValue(mockClient),
-    getMongoDb: vi.fn().mockResolvedValue(mockDb),
+    default: prismaMock,
+    __esModule: true,
   };
 });
-
-vi.mock("@/shared/lib/db/prisma");
 
 vi.mock("@/shared/lib/db/app-db-provider", () => ({
   getAppDbProvider: vi.fn().mockResolvedValue("prisma"),
@@ -46,6 +53,28 @@ vi.mock("@/shared/lib/db/collection-provider-map", () => ({
   resolveCollectionProviderForRequest: vi.fn().mockResolvedValue("prisma"),
   invalidateCollectionProviderMapCache: vi.fn(),
 }));
+
+vi.mock("@/shared/lib/db/mongo-client", () => {
+  const mockMongoDb = {
+    collection: vi.fn().mockReturnThis(),
+    findOne: vi.fn().mockResolvedValue(null),
+    find: vi.fn().mockReturnThis(),
+    toArray: vi.fn().mockResolvedValue([]),
+    insertOne: vi.fn().mockResolvedValue({ acknowledged: true }),
+    updateOne: vi.fn().mockResolvedValue({ acknowledged: true }),
+    deleteMany: vi.fn().mockResolvedValue({ acknowledged: true }),
+    createIndex: vi.fn().mockResolvedValue('index-name'),
+  };
+  const mockClient = {
+    connect: vi.fn().mockReturnThis(),
+    db: vi.fn().mockReturnValue(mockMongoDb),
+    close: vi.fn().mockResolvedValue(undefined),
+  };
+  return {
+    getMongoClient: vi.fn().mockResolvedValue(mockClient),
+    getMongoDb: vi.fn().mockResolvedValue(mockMongoDb),
+  };
+});
 
 // Mock observability server module
 vi.mock('@/features/observability/server', async (importOriginal) => {
@@ -106,38 +135,6 @@ vi.mock("next/server", () => {
           ...(init?.headers || {}),
         },
       });
-      console.log('[DEBUG] MockResponse.json status:', res.status);
-      return res;
-    }
-  }
-  return {
-    NextRequest: MockRequest,
-    NextResponse: MockResponse,
-  };
-});
-
-vi.mock("next/server.js", () => {
-  class MockRequest extends Request {
-    constructor(input: RequestInfo, init?: RequestInit) {
-      const url = typeof input === 'string' ? `http://localhost${input}` : input;
-      super(url, init);
-      this.headers.set('origin', 'http://localhost');
-    }
-    get nextUrl() {
-      return new URL(this.url);
-    }
-  }
-
-  class MockResponse extends Response {
-    static override json(data: any, init?: ResponseInit) {
-      const res = new MockResponse(JSON.stringify(data), {
-        ...init,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(init?.headers || {}),
-        },
-      });
-      console.log('[DEBUG] MockResponse.json status:', res.status);
       return res;
     }
   }
@@ -163,7 +160,6 @@ vi.mock('@/shared/lib/api/api-handler', () => {
 
         return await handler(req, { requestId: 'global-test-id', body, query, getElapsedMs: () => 0 });
       } catch (error: any) {
-        console.log('[DEBUG] apiHandler mock caught error:', { name: error.name, code: error.code, message: error.message });
         const status = 
           (error.name === 'AppError' && error.code === 'NOT_FOUND') || 
           (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2025')
@@ -204,7 +200,6 @@ vi.mock('@/shared/lib/api/api-handler', () => {
 
         return await handler(req, context, resolvedParams);
       } catch (error: any) {
-        console.log('[DEBUG] apiHandlerWithParams mock caught error:', { name: error.name, code: error.code, message: error.message });
         const status = 
           (error.name === 'AppError' && error.code === 'NOT_FOUND') || 
           (error.name === 'PrismaClientKnownRequestError' && error.code === 'P2025')
@@ -234,13 +229,6 @@ vi.mock('@/shared/lib/api/api-handler', () => {
   };
 });
 
-vi.mock('next-auth/react', () => ({
-  SessionProvider: ({ children }: any) => children,
-  useSession: vi.fn(() => ({ data: null, status: 'unauthenticated' })),
-  signIn: vi.fn(),
-  signOut: vi.fn(),
-}));
-
 // Polyfill fetch to handle relative URLs in tests
 const originalFetch = global.fetch;
 global.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
@@ -249,13 +237,6 @@ global.fetch = function (input: RequestInfo | URL, init?: RequestInit) {
   }
   return originalFetch(input, init);
 };
-
-vi.mock('next-auth/react', () => ({
-  SessionProvider: ({ children }: any) => children,
-  useSession: vi.fn(() => ({ data: null, status: 'unauthenticated' })),
-  signIn: vi.fn(),
-  signOut: vi.fn(),
-}));
 
 // Mock ResizeObserver
 global.ResizeObserver = class ResizeObserver {

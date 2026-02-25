@@ -2,6 +2,7 @@ import { z } from 'zod';
 
 import type { ParamUiControl } from './param-ui';
 import type { ParamSpec } from './prompt-params';
+import { paramSpecSchema } from '@/shared/contracts/prompt-engine';
 
 export const IMAGE_STUDIO_UI_PRESETS_KEY = 'image_studio_ui_presets';
 export const IMAGE_STUDIO_UI_ACTIVE_KEY = 'image_studio_ui_active_preset';
@@ -36,7 +37,7 @@ const uiPresetSchema = z.object({
   name: z.string().min(1),
   description: z.string().nullable().optional(),
   params: z.record(z.string(), z.unknown()),
-  paramSpecs: z.record(z.string(), z.record(z.string(), z.unknown())).optional(),
+  paramSpecs: z.record(z.string(), paramSpecSchema).optional(),
   paramUiOverrides: z.record(z.string(), paramUiControlSchema).optional(),
   createdAt: z.string().min(1),
   updatedAt: z.string().min(1),

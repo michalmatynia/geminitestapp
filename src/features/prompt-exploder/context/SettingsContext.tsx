@@ -325,12 +325,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   }, [settingsQuery.isLoading, settingsMap, promptExploderSettings.learning.templates]);
 
   useEffect(() => {
-    const drafts = buildPromptExploderParserTuningDrafts(promptSettings, {
+    const drafts = buildPromptExploderParserTuningDrafts({
+      scopedRules,
+      patternPackRules: effectiveRules,
       scope: activeValidationScope,
     });
     setParserTuningDraftsState(drafts);
     setHasUnsavedParserTuningDrafts(false);
-  }, [promptSettings, activeValidationScope]);
+  }, [activeValidationScope, effectiveRules, scopedRules]);
 
   const persistSettingIfChanged = useCallback(
     async (input: { key: string; value: string }): Promise<boolean> => {
@@ -361,13 +363,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
         toast('Prompt Exploder pattern pack is already installed.', { variant: 'info' });
         return;
       }
-      const nextSettings = {
-        ...promptSettings,
-        validationRules: result.nextRules,
-      };
       await updateSetting.mutateAsync({
         key: PROMPT_ENGINE_SETTINGS_KEY,
-        value: serializeSetting(nextSettings),
+        value: serializeSetting(result.nextSettings),
       });
       toast(`Installed pattern pack (${result.addedRuleIds.length} added, ${result.updatedRuleIds.length} updated).`, { variant: 'success' });
     } catch (error) {
@@ -405,20 +403,17 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
 
   const handleSaveParserTuningRules = useCallback(async () => {
     const validation = validatePromptExploderParserTuningDrafts(parserTuningDrafts);
-    if (!validation.valid) {
-      toast(validation.errors[0] || 'Invalid parser tuning rules.', { variant: 'error' });
+    if (!validation.ok) {
+      toast(validation.error || 'Invalid parser tuning rules.', { variant: 'error' });
       return;
     }
     try {
-      const result = applyPromptExploderParserTuningDrafts(
-        promptSettings,
-        parserTuningDrafts,
-        { scope: activeValidationScope }
-      );
-      const nextSettings = {
-        ...promptSettings,
-        validationRules: result.nextRules,
-      };
+      const nextSettings = applyPromptExploderParserTuningDrafts({
+        settings: promptSettings,
+        drafts: parserTuningDrafts,
+        patternPackRules: effectiveRules,
+        scope: activeValidationScope,
+      });
       await updateSetting.mutateAsync({
         key: PROMPT_ENGINE_SETTINGS_KEY,
         value: serializeSetting(nextSettings),
@@ -429,16 +424,18 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       logClientError(error, { context: { source: 'PromptExploderSettingsContext', action: 'handleSaveParserTuningRules' } });
       toast('Failed to save parser tuning rules.', { variant: 'error' });
     }
-  }, [activeValidationScope, parserTuningDrafts, promptSettings, toast, updateSetting]);
+  }, [activeValidationScope, effectiveRules, parserTuningDrafts, promptSettings, toast, updateSetting]);
 
   const handleResetParserTuningDrafts = useCallback(() => {
-    const drafts = buildPromptExploderParserTuningDrafts(promptSettings, {
+    const drafts = buildPromptExploderParserTuningDrafts({
+      scopedRules,
+      patternPackRules: effectiveRules,
       scope: activeValidationScope,
     });
     setParserTuningDraftsState(drafts);
     setHasUnsavedParserTuningDrafts(false);
     toast('Parser tuning rules reset to current settings.', { variant: 'info' });
-  }, [activeValidationScope, promptSettings, toast]);
+  }, [activeValidationScope, effectiveRules, scopedRules, toast]);
 
   const handleCapturePatternSnapshot = useCallback(async () => {
     if (!snapshotDraftName.trim()) {
@@ -448,7 +445,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     try {
       const snapshot = buildPatternSnapshot({
         snapshotDraftName: snapshotDraftName.trim(),
-        rules: promptSettings.validationRules,
+        rules: promptSettings.promptValidation.rules,
         now: new Date().toISOString(),
       });
       const nextSnapshots = prependPatternSnapshot(
@@ -469,19 +466,22 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
       logClientError(error, { context: { source: 'PromptExploderSettingsContext', action: 'handleCapturePatternSnapshot' } });
       toast('Failed to capture snapshot.', { variant: 'error' });
     }
-  }, [promptExploderSettings, promptSettings.validationRules, snapshotDraftName, toast, updateSetting]);
+  }, [promptExploderSettings, promptSettings.promptValidation.rules, snapshotDraftName, toast, updateSetting]);
 
   const handleRestorePatternSnapshot = useCallback(async () => {
     if (!selectedSnapshot) return;
     try {
       const nextRules = mergeRestoredPromptExploderRules({
-        existingRules: promptSettings.validationRules,
+        existingRules: promptSettings.promptValidation.rules,
         restoredRules: selectedSnapshot.rules ?? [],
         isPromptExploderManagedRule: (rule) => Boolean(rule.id), // Should use actual helper
       });
       const nextSettings = {
         ...promptSettings,
-        validationRules: nextRules,
+        promptValidation: {
+          ...promptSettings.promptValidation,
+          rules: nextRules,
+        },
       };
       await updateSetting.mutateAsync({
         key: PROMPT_ENGINE_SETTINGS_KEY,

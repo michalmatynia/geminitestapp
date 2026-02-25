@@ -154,9 +154,24 @@ export function CaseListNodeItem({
         ) : (
           <>
             <div className='min-w-0 flex flex-1 flex-col'>
-              <span className='min-w-0 truncate font-medium'>
-                {caseFile?.name ?? node.name}
-              </span>
+              {caseFile ? (
+                <button
+                  type='button'
+                  className='min-w-0 truncate text-left font-medium text-inherit hover:underline focus:outline-none focus:underline'
+                  onClick={(event): void => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    handleOpenCase(caseFile.id);
+                  }}
+                  title={`Open case: ${caseFile.name}`}
+                >
+                  {caseFile.name}
+                </button>
+              ) : (
+                <span className='min-w-0 truncate font-medium'>
+                  {node.name}
+                </span>
+              )}
               <span className='min-w-0 truncate text-[10px] opacity-70'>
               Created: {createdAtLabel} · Modified: {modifiedAtLabel}
               </span>

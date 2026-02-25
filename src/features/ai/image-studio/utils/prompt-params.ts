@@ -4,6 +4,8 @@ import type {
   ParamIssue,
 } from '@/shared/contracts/prompt-engine';
 
+export type { ExtractParamsResult, ParamSpec, ParamIssue };
+
 const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 

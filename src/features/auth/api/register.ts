@@ -1,5 +1,7 @@
 import type { RegisterResponse, Register } from '@/shared/contracts/auth';
 
+export type { RegisterResponse };
+
 const safeJson = async <T>(res: Response): Promise<T> => {
   try {
     return (await res.json()) as T;

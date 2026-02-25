@@ -1,6 +1,6 @@
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import type { SlotsActions } from '../../context/SlotsContext';
+import type { SlotsActions, SlotsState } from '../../context/SlotsContext';
 
 import { setImageStudioSlotImageLocked } from '../../utils/slot-image-lock';
 
@@ -45,7 +45,7 @@ type CreateUploadHandlersDeps = {
   setTemporaryObjectUpload: SlotsActions['setTemporaryObjectUpload'];
   slotHasRenderableImage: (slot: ImageStudioSlotRecord | null | undefined) => boolean;
   slotsCount: number;
-  temporaryObjectUpload: SlotsActions['setTemporaryObjectUpload'] extends (arg: infer T) => void ? T : never;
+  temporaryObjectUpload: SlotsState['temporaryObjectUpload'];
   toast: Toast;
   toSlotName: (filename: string, index: number) => string;
   updateSlotMutation: SlotsActions['updateSlotMutation'];
@@ -85,7 +85,7 @@ export const createUploadHandlers = (
       const previousTemporary = deps.temporaryObjectUpload;
       const result = await deps.importFromDriveMutation.mutateAsync({
         files,
-        folder: deps.selectedFolder,
+        folder: deps.selectedFolder ?? '',
       });
       const imported = result.uploaded ?? [];
       if (imported.length === 0) {
@@ -192,7 +192,7 @@ export const createUploadHandlers = (
       const previousTemporary = deps.temporaryObjectUpload;
       const result = await deps.uploadMutation.mutateAsync({
         files,
-        folder: deps.selectedFolder,
+        folder: deps.selectedFolder ?? '',
       });
       const uploaded = result.uploaded ?? [];
       if (uploaded.length === 0) {

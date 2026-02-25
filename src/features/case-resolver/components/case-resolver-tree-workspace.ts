@@ -31,15 +31,6 @@ export const resolveCaseResolverTreeWorkspace = ({
   const filesById = new Map<string, CaseResolverFile>(
     workspace.files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
   );
-  const buildEmptyScopedWorkspace = (): CaseResolverWorkspace => ({
-    ...workspace,
-    folders: [],
-    folderRecords: [],
-    folderTimestamps: {},
-    files: [],
-    assets: [],
-    activeFileId: null,
-  });
   const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
   const forcedContextFileId = normalizedRequestedFileId.length > 0 ? normalizedRequestedFileId : null;
   const fallbackCaseId =
@@ -52,11 +43,7 @@ export const resolveCaseResolverTreeWorkspace = ({
   if (!contextFileId) return workspace;
   const contextFile = filesById.get(contextFileId) ?? null;
   if (!contextFile) {
-    if (forcedContextFileId) {
-      return buildEmptyScopedWorkspace();
-    }
-    if (!selectedFileId || selectedFileId !== contextFileId) return workspace;
-    return buildEmptyScopedWorkspace();
+    return workspace;
   }
 
   const scopedRootCaseId =
@@ -96,7 +83,6 @@ export const resolveCaseResolverTreeWorkspace = ({
   };
   visitCase(scopedRootCaseId);
   if (scopedCaseIds.size === 0) {
-    if (forcedContextFileId) return buildEmptyScopedWorkspace();
     return workspace;
   }
 
@@ -165,7 +151,6 @@ export const resolveCaseResolverTreeWorkspace = ({
     scopedFileIds.has(file.id),
   );
   if (scopedFiles.length === 0) {
-    if (forcedContextFileId) return buildEmptyScopedWorkspace();
     return workspace;
   }
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getCategoryMappingRepository } from '@/features/integrations/server';
-import type { BulkCategoryMappingRequestDto as BulkMappingRequest } from '@/shared/contracts/integrations';
+import type { BulkCategoryMappingRequest as BulkMappingRequest } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, validationError } from '@/shared/errors/app-error';
 

@@ -4,9 +4,9 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import React, { useMemo, useState } from 'react';
 
 import {
-  MasterFolderTree,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
+import { FolderTreeViewportV2 } from '@/features/foldertree/v2';
 import type { 
   PageZone, 
   SectionInstance,
@@ -281,7 +281,7 @@ export function ComponentTreePanel(): React.ReactNode {
               />
             </div>
           ) : (
-            <MasterFolderTree
+            <FolderTreeViewportV2
               controller={structureController}
               enableDnd={false}
               className='space-y-0.5'

@@ -5,11 +5,16 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { ChatInterface } from '@/features/ai/chatbot/components/ChatInterface';
-import { useChatbot } from '@/features/ai/chatbot/context/ChatbotContext';
+import { useChatbot, useChatbotMessages } from '@/features/ai/chatbot/context/ChatbotContext';
 
-vi.mock('@/features/ai/chatbot/context/ChatbotContext', () => ({
-  useChatbot: vi.fn(),
-}));
+vi.mock('@/features/ai/chatbot/context/ChatbotContext', () => {
+  const useChatbotMock = vi.fn();
+  const useChatbotMessagesMock = vi.fn();
+  return {
+    useChatbot: useChatbotMock,
+    useChatbotMessages: useChatbotMessagesMock,
+  };
+});
 
 describe('ChatInterface', () => {
   beforeEach(() => {
@@ -118,13 +123,13 @@ describe('ChatInterface', () => {
   };
 
   it('renders \'Start a conversation\' when no messages', () => {
-    vi.mocked(useChatbot).mockReturnValue(defaultMockValue);
+    vi.mocked(useChatbotMessages).mockReturnValue(defaultMockValue);
     render(<ChatInterface />);
     expect(screen.getByText('Start a conversation...')).toBeInTheDocument();
   });
 
   it('renders messages correctly', () => {
-    vi.mocked(useChatbot).mockReturnValue({
+    vi.mocked(useChatbotMessages).mockReturnValue({
       ...defaultMockValue,
       messages: mockMessages,
     });
@@ -135,7 +140,7 @@ describe('ChatInterface', () => {
 
   it('calls setInput on input change', () => {
     const setInput = vi.fn();
-    vi.mocked(useChatbot).mockReturnValue({
+    vi.mocked(useChatbotMessages).mockReturnValue({
       ...defaultMockValue,
       setInput,
     });
@@ -147,7 +152,7 @@ describe('ChatInterface', () => {
 
   it('calls sendMessage on form submit', () => {
     const sendMessage = vi.fn();
-    vi.mocked(useChatbot).mockReturnValue({
+    vi.mocked(useChatbotMessages).mockReturnValue({
       ...defaultMockValue,
       input: 'Hello',
       sendMessage,
@@ -159,7 +164,7 @@ describe('ChatInterface', () => {
   });
 
   it('disables input and button while sending', () => {
-    vi.mocked(useChatbot).mockReturnValue({
+    vi.mocked(useChatbotMessages).mockReturnValue({
       ...defaultMockValue,
       isSending: true,
       input: 'Hello',
@@ -170,7 +175,7 @@ describe('ChatInterface', () => {
   });
 
   it('disables send button when input is empty', () => {
-    vi.mocked(useChatbot).mockReturnValue({
+    vi.mocked(useChatbotMessages).mockReturnValue({
       ...defaultMockValue,
       input: '',
     });

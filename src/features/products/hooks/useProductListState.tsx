@@ -156,6 +156,7 @@ export function useProductListState(): ProductListContextType & {
     setCatalogFilter: updateCatalogFilter,
     setCurrencyCode: updateCurrencyCode,
     setPageSize: updatePageSize,
+    setAppliedAdvancedFilterState: persistAppliedAdvancedFilterState,
   } = useUserPreferences();
 
   // Load catalog and currency data first
@@ -203,7 +204,8 @@ export function useProductListState(): ProductListContextType & {
     endDate,
     setEndDate,
     advancedFilter,
-    setAdvancedFilter,
+    activeAdvancedFilterPresetId,
+    setAdvancedFilterState,
     catalogFilter,
     setCatalogFilter,
     baseExported,
@@ -216,6 +218,9 @@ export function useProductListState(): ProductListContextType & {
     refreshTrigger,
     initialCatalogFilter: preferences.catalogFilter,
     initialPageSize: preferences.pageSize,
+    initialAppliedAdvancedFilter: preferences.appliedAdvancedFilter,
+    initialAppliedAdvancedFilterPresetId:
+      preferences.appliedAdvancedFilterPresetId,
     preferencesLoaded: !preferencesLoading,
     currencyCode,
     priceGroups,
@@ -507,6 +512,20 @@ export function useProductListState(): ProductListContextType & {
     setCatalogFilter(filter);
     void updateCatalogFilter(filter);
   }, [setCatalogFilter, updateCatalogFilter]);
+
+  const handleSetAdvancedFilterState = useCallback((value: string, presetId: string | null) => {
+    const normalizedValue = value.trim();
+    const normalizedPresetId = normalizedValue.length > 0 ? presetId : null;
+    setAdvancedFilterState(normalizedValue, normalizedPresetId);
+    void persistAppliedAdvancedFilterState({
+      advancedFilter: normalizedValue,
+      presetId: normalizedPresetId,
+    });
+  }, [persistAppliedAdvancedFilterState, setAdvancedFilterState]);
+
+  const handleSetAdvancedFilter = useCallback((value: string) => {
+    handleSetAdvancedFilterState(value, null);
+  }, [handleSetAdvancedFilterState]);
 
   const triggerJobCompletionHighlight = useCallback((productId: string): void => {
     if (!productId) return;
@@ -880,7 +899,9 @@ export function useProductListState(): ProductListContextType & {
     endDate: endDate || '',
     setEndDate,
     advancedFilter,
-    setAdvancedFilter,
+    activeAdvancedFilterPresetId,
+    setAdvancedFilter: handleSetAdvancedFilter,
+    setAdvancedFilterState: handleSetAdvancedFilterState,
     data: isMounted ? data : [],
     rowSelection,
     setRowSelection,
@@ -1031,6 +1052,7 @@ export function useProductListState(): ProductListContextType & {
     stockOperator,
     stockValue,
     advancedFilter,
+    activeAdvancedFilterPresetId,
     page,
     pageSize,
     preferences.nameLocale,
@@ -1051,7 +1073,8 @@ export function useProductListState(): ProductListContextType & {
     setIdMatchMode,
     setStockOperator,
     setStockValue,
-    setAdvancedFilter,
+    handleSetAdvancedFilter,
+    handleSetAdvancedFilterState,
     sku,
     description,
     categoryId,

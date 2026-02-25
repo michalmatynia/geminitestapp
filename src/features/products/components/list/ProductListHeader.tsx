@@ -1,12 +1,15 @@
 'use client';
 
 import {
+  Eye,
+  EyeOff,
   PlusIcon,
   Package,
 } from 'lucide-react';
-import { memo, type ReactNode } from 'react';
+import { memo, useEffect, type ReactNode } from 'react';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
+import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
 import { ICON_LIBRARY_MAP } from '@/features/icons';
 import {
   useProductListActionsContext,
@@ -35,6 +38,7 @@ export const ProductListHeader = memo(function ProductListHeader({
   showHeader = true,
   filtersContent,
 }: ProductListHeaderProps) {
+  const { isMenuHidden, setIsMenuHidden } = useAdminLayout();
   const {
     onCreateProduct,
     onCreateFromDraft,
@@ -56,6 +60,12 @@ export const ProductListHeader = memo(function ProductListHeader({
     setCatalogFilter,
     catalogs,
   } = useProductListFiltersContext();
+
+  useEffect(() => {
+    return (): void => {
+      setIsMenuHidden(false);
+    };
+  }, [setIsMenuHidden]);
 
   const renderHeaderBreadcrumb = (): React.JSX.Element => (
     <Breadcrumbs
@@ -148,6 +158,18 @@ export const ProductListHeader = memo(function ProductListHeader({
         entityType='product'
         className='shrink-0 flex-nowrap'
       />
+
+      <Button
+        type='button'
+        size='sm'
+        variant='outline'
+        onClick={() => setIsMenuHidden(!isMenuHidden)}
+        className='h-8 w-8 shrink-0 p-0'
+        aria-label={isMenuHidden ? 'Show admin menu' : 'Hide admin menu'}
+        title={isMenuHidden ? 'Show admin menu' : 'Hide admin menu'}
+      >
+        {isMenuHidden ? <EyeOff className='h-4 w-4' /> : <Eye className='h-4 w-4' />}
+      </Button>
     </>
   );
 

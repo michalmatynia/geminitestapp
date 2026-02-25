@@ -1,5 +1,6 @@
 import {
   productAdvancedFilterGroupSchema,
+  productAdvancedFilterPresetBundleSchema,
   type ProductAdvancedFilterCondition,
   type ProductAdvancedFilterField,
   type ProductAdvancedFilterGroup,
@@ -7,7 +8,7 @@ import {
   type ProductAdvancedFilterPreset,
 } from '@/shared/contracts/products';
 
-export type AdvancedFieldKind = 'string' | 'number' | 'date';
+export type AdvancedFieldKind = 'string' | 'number' | 'date' | 'boolean';
 
 export type AdvancedFilterFieldConfig = {
   field: ProductAdvancedFilterField;
@@ -48,6 +49,24 @@ export const ADVANCED_FILTER_FIELD_CONFIGS: readonly AdvancedFilterFieldConfig[]
     operators: ['contains', 'eq', 'neq', 'isEmpty', 'isNotEmpty'],
   },
   {
+    field: 'catalogId',
+    label: 'Catalog ID',
+    kind: 'string',
+    operators: ['eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
+  },
+  {
+    field: 'tagId',
+    label: 'Tag ID',
+    kind: 'string',
+    operators: ['eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
+  },
+  {
+    field: 'producerId',
+    label: 'Producer ID',
+    kind: 'string',
+    operators: ['eq', 'neq', 'in', 'notIn', 'isEmpty', 'isNotEmpty'],
+  },
+  {
     field: 'price',
     label: 'Price',
     kind: 'number',
@@ -58,6 +77,24 @@ export const ADVANCED_FILTER_FIELD_CONFIGS: readonly AdvancedFilterFieldConfig[]
     label: 'Stock',
     kind: 'number',
     operators: ['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'between', 'isEmpty', 'isNotEmpty'],
+  },
+  {
+    field: 'published',
+    label: 'Published',
+    kind: 'boolean',
+    operators: ['eq', 'neq'],
+  },
+  {
+    field: 'baseExported',
+    label: 'Base Exported',
+    kind: 'boolean',
+    operators: ['eq', 'neq'],
+  },
+  {
+    field: 'baseProductId',
+    label: 'Base Product ID',
+    kind: 'string',
+    operators: ['contains', 'eq', 'neq', 'isEmpty', 'isNotEmpty'],
   },
   {
     field: 'createdAt',
@@ -71,6 +108,8 @@ export const ADVANCED_OPERATOR_LABELS: Record<ProductAdvancedFilterOperator, str
   contains: 'Contains',
   eq: 'Equals',
   neq: 'Not Equal',
+  in: 'In',
+  notIn: 'Not In',
   gt: 'Greater Than',
   gte: 'Greater Than or Equal',
   lt: 'Less Than',
@@ -79,6 +118,11 @@ export const ADVANCED_OPERATOR_LABELS: Record<ProductAdvancedFilterOperator, str
   isEmpty: 'Is Empty',
   isNotEmpty: 'Is Not Empty',
 };
+
+export const ADVANCED_BOOLEAN_OPTIONS = [
+  { value: 'true', label: 'True' },
+  { value: 'false', label: 'False' },
+] as const;
 
 const DEFAULT_FIELD: ProductAdvancedFilterField = 'name';
 
@@ -126,7 +170,7 @@ export const parseAdvancedFilterPayload = (
 ): ProductAdvancedFilterGroup | null => {
   if (!payload) return null;
   try {
-    const parsed = JSON.parse(payload);
+    const parsed: unknown = JSON.parse(payload);
     const validated = productAdvancedFilterGroupSchema.safeParse(parsed);
     return validated.success ? validated.data : null;
   } catch {
@@ -161,15 +205,57 @@ export const isSecondValueRequired = (
   operator: ProductAdvancedFilterOperator
 ): boolean => operator === 'between';
 
+export const isMultiValueOperator = (
+  operator: ProductAdvancedFilterOperator
+): boolean => operator === 'in' || operator === 'notIn';
+
 export const normalizeConditionValue = (
   kind: AdvancedFieldKind,
   value: string
-): string | number => {
+): string | number | boolean => {
   if (kind === 'number') {
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : value;
   }
+  if (kind === 'boolean') {
+    return value.trim().toLowerCase() === 'true';
+  }
   return value;
+};
+
+export const serializeMultiValue = (
+  values: Array<string | number | boolean | null> | undefined
+): string => {
+  if (!Array.isArray(values)) return '';
+  return values
+    .map((value) => (value === null ? '' : String(value).trim()))
+    .filter((value) => value.length > 0)
+    .join(', ');
+};
+
+export const normalizeMultiValueInput = (
+  kind: AdvancedFieldKind,
+  rawValue: string
+): Array<string | number | boolean> => {
+  return rawValue
+    .split(',')
+    .map((part: string) => part.trim())
+    .filter((part: string) => part.length > 0)
+    .map((part: string) => normalizeConditionValue(kind, part));
+};
+
+export const readAdvancedPresetBundle = (
+  payload: unknown
+): ProductAdvancedFilterPreset[] | null => {
+  const bundleResult = productAdvancedFilterPresetBundleSchema.safeParse(payload);
+  if (bundleResult.success) {
+    return bundleResult.data.presets;
+  }
+  if (Array.isArray(payload)) {
+    const presetsResult = productAdvancedFilterPresetBundleSchema.shape.presets.safeParse(payload);
+    return presetsResult.success ? presetsResult.data : null;
+  }
+  return null;
 };
 
 export const findPresetById = (

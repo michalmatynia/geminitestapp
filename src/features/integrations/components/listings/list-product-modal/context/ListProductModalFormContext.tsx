@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 
 type ListProductModalFormContextValue = {
   error: string | null;

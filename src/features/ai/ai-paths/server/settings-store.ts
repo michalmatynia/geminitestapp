@@ -2,7 +2,6 @@ import 'server-only';
 
 import { ObjectId } from 'mongodb';
 
-import type { SettingRecord } from '@/shared/contracts/settings';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
 import {
@@ -42,6 +41,11 @@ import {
   needsRuntimeInputContractsUpgrade,
   upgradeRuntimeInputContractsConfig,
 } from './settings-store-runtime-input-contracts';
+
+export type AiPathsSettingRecord = {
+  key: string;
+  value: string;
+};
 
 type MongoAiPathsSettingDoc = {
   _id?: string | ObjectId;
@@ -213,7 +217,7 @@ const upsertCachedAiPathsSettings = (items: AiPathsSettingRecord[]): void => {
     map.set(item.key, item.value);
   });
   setCachedAiPathsSettings(
-    Array.from(map.entries()).map(([key, value]): AiPathsSettingRecord => ({
+    Array.from(map.entries()).map(([key, value]: [string, string]): AiPathsSettingRecord => ({
       key,
       value,
     }))
@@ -867,7 +871,7 @@ const ensureParameterInferenceDefaults = async (
   if (updates.length === 0) return records;
   await upsertMongoAiPathsSettingsBatch(updates);
   return Array.from(map.entries()).map(
-    ([key, value]): AiPathsSettingRecord => ({ key, value })
+    ([key, value]: [string, string]): AiPathsSettingRecord => ({ key, value })
   );
 };
 
@@ -1052,7 +1056,7 @@ const ensureDescriptionInferenceLiteDefaults = async (
   if (updates.length === 0) return records;
   await upsertMongoAiPathsSettingsBatch(updates);
   return Array.from(map.entries()).map(
-    ([key, value]): AiPathsSettingRecord => ({ key, value })
+    ([key, value]: [string, string]): AiPathsSettingRecord => ({ key, value })
   );
 };
 
@@ -1207,7 +1211,7 @@ const ensureBaseExportBlwoDefaults = async (
   if (updates.length === 0) return records;
   await upsertMongoAiPathsSettingsBatch(updates);
   return Array.from(map.entries()).map(
-    ([key, value]): AiPathsSettingRecord => ({ key, value })
+    ([key, value]: [string, string]): AiPathsSettingRecord => ({ key, value })
   );
 };
 
@@ -1398,7 +1402,7 @@ const ensurePathIndexConsistency = async (
   map.set(AI_PATHS_INDEX_KEY, nextIndexValue);
   await upsertMongoAiPathsSetting(AI_PATHS_INDEX_KEY, nextIndexValue);
   return Array.from(map.entries()).map(
-    ([key, value]): AiPathsSettingRecord => ({ key, value })
+    ([key, value]: [string, string]): AiPathsSettingRecord => ({ key, value })
   );
 };
 

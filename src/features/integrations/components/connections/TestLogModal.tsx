@@ -2,13 +2,14 @@
 
 import React from 'react';
 
+import { useIntegrationsTesting } from '@/features/integrations/context/IntegrationsContext';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import { StatusBadge, MetadataItem, Hint, FormField, Card } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 interface TestLogModalProps extends Omit<ModalStateProps, 'onSuccess'> {
   onSuccess?: () => void;
-  selectedStep: {
+  selectedStep?: {
     step: string | undefined;
     status: string | undefined;
     timestamp: string | undefined;
@@ -17,10 +18,16 @@ interface TestLogModalProps extends Omit<ModalStateProps, 'onSuccess'> {
 }
 
 export function TestLogModal({
-  isOpen,
-  onClose,
-  selectedStep,
+  isOpen: isOpenProp,
+  onClose: onCloseProp,
+  selectedStep: selectedStepProp,
 }: TestLogModalProps): React.JSX.Element | null {
+  const testing = useIntegrationsTesting();
+
+  const isOpen = isOpenProp ?? testing.showTestLogModal;
+  const onClose = onCloseProp ?? (() => testing.setShowTestLogModal(false));
+  const selectedStep = selectedStepProp ?? testing.selectedStep;
+
   if (!selectedStep) return null;
 
   return (

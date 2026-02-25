@@ -20,19 +20,19 @@ import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
-  SelectSimple,
   Button,
+  FormField,
+  Hint,
   Input,
+  Label,
+  SelectSimple,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
   Textarea,
-  Tooltip,
   ToggleRow,
-  FormField,
-  Hint,
-  
+  Tooltip,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

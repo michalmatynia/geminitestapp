@@ -221,6 +221,8 @@ export const userPreferencesSchema = dtoBaseSchema.extend({
   productListThumbnailSource: z.enum(['file', 'link', 'base64']),
   productListFiltersCollapsedByDefault: z.boolean(),
   productListAdvancedFilterPresets: z.array(productAdvancedFilterPresetSchema),
+  productListAppliedAdvancedFilter: z.string().nullable(),
+  productListAppliedAdvancedFilterPresetId: z.string().nullable(),
   productListDraftIconColorMode: z.enum(['theme', 'custom']),
   productListDraftIconColor: z.string().nullable(),
   aiPathsActivePathId: z.string().nullable(),

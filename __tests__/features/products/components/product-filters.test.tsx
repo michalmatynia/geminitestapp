@@ -1,15 +1,71 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { vi, describe, it, expect } from 'vitest';
+import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-import { ProductFilters } from '@/features/products/components/list/ProductFilters';
+import {
+  ProductFilters,
+  ProductSelectionActions,
+} from '@/features/products/components/list/ProductFilters';
 import { ProductListProvider, type ProductListContextType } from '@/features/products/context/ProductListContext';
+import type { ProductListPreferences } from '@/shared/contracts/products';
+import { ToastProvider } from '@/shared/ui/toast';
+
+let mockPreferences: ProductListPreferences = {
+  nameLocale: 'name_en',
+  catalogFilter: 'all',
+  currencyCode: 'PLN',
+  pageSize: 12,
+  thumbnailSource: 'file',
+  filtersCollapsedByDefault: false,
+  advancedFilterPresets: [],
+  appliedAdvancedFilter: '',
+  appliedAdvancedFilterPresetId: null,
+};
+const setAdvancedFilterPresetsMock = vi.fn(async () => undefined);
+const setAppliedAdvancedFilterStateMock = vi.fn(async () => undefined);
+
+vi.mock('@/features/products/hooks/useUserPreferences', () => ({
+  useUserPreferences: () => ({
+    preferences: mockPreferences,
+    loading: false,
+    setNameLocale: vi.fn(),
+    setCatalogFilter: vi.fn(),
+    setCurrencyCode: vi.fn(),
+    setPageSize: vi.fn(),
+    setAdvancedFilterPresets: setAdvancedFilterPresetsMock,
+    setAppliedAdvancedFilterState: setAppliedAdvancedFilterStateMock,
+  }),
+}));
+
+vi.mock('@/features/products/hooks/useProductMetadataQueries', () => ({
+  useCategories: () => ({ data: [] }),
+  useCatalogs: () => ({ data: [] }),
+  useMultiTags: () => [],
+  useTags: () => ({ data: [] }),
+  useProducers: () => ({ data: [] }),
+}));
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } }
 });
 
 describe('ProductFilters Component', () => {
+  beforeEach(() => {
+    mockPreferences = {
+      nameLocale: 'name_en',
+      catalogFilter: 'all',
+      currencyCode: 'PLN',
+      pageSize: 12,
+      thumbnailSource: 'file',
+      filtersCollapsedByDefault: false,
+      advancedFilterPresets: [],
+      appliedAdvancedFilter: '',
+      appliedAdvancedFilterPresetId: null,
+    };
+    setAdvancedFilterPresetsMock.mockClear();
+    setAppliedAdvancedFilterStateMock.mockClear();
+  });
+
   const mockContextValue: Partial<ProductListContextType> = {
     search: '',
     setSearch: vi.fn(),
@@ -39,8 +95,19 @@ describe('ProductFilters Component', () => {
     setStartDate: vi.fn(),
     endDate: '',
     setEndDate: vi.fn(),
+    advancedFilter: '',
+    activeAdvancedFilterPresetId: null,
+    setAdvancedFilter: vi.fn(),
+    setAdvancedFilterState: vi.fn(),
     filtersCollapsedByDefault: false,
     catalogs: [],
+    data: [],
+    rowSelection: {},
+    setRowSelection: vi.fn(),
+    onSelectAllGlobal: vi.fn(async () => undefined),
+    loadingGlobal: false,
+    onDeleteSelected: vi.fn(async () => undefined),
+    onAddToMarketplace: vi.fn(),
   };
 
   const renderWithProviders = (contextValue: Partial<ProductListContextType>) => {
@@ -86,5 +153,57 @@ describe('ProductFilters Component', () => {
     const input = screen.getByPlaceholderText('Search by SKU...');
     fireEvent.change(input, { target: { value: 'ABC' } });
     expect(mockContextValue.setSku).toHaveBeenCalledWith('ABC');
+  });
+
+  it('shows active preset pill and clears it on close click', () => {
+    const setAdvancedFilterState = vi.fn();
+    mockPreferences = {
+      ...mockPreferences,
+      advancedFilterPresets: [
+        {
+          id: 'preset-1',
+          name: 'Price + Stock',
+          filter: {
+            type: 'group',
+            id: 'group-1',
+            combinator: 'and',
+            not: false,
+            rules: [
+              {
+                type: 'condition',
+                id: 'condition-1',
+                field: 'name',
+                operator: 'contains',
+                value: 'alpha',
+              },
+            ],
+          },
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      appliedAdvancedFilter: '',
+      appliedAdvancedFilterPresetId: 'preset-1',
+    };
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <ProductListProvider
+            value={{
+              ...(mockContextValue as ProductListContextType),
+              activeAdvancedFilterPresetId: 'preset-1',
+              setAdvancedFilterState,
+            }}
+          >
+            <ProductSelectionActions />
+          </ProductListProvider>
+        </ToastProvider>
+      </QueryClientProvider>
+    );
+
+    expect(screen.getByText('Price + Stock')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear applied preset Price + Stock' }));
+    expect(setAdvancedFilterState).toHaveBeenCalledWith('', null);
   });
 });

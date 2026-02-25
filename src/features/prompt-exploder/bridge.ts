@@ -1,15 +1,15 @@
 import type {
-  PromptExploderBridgePayloadDto as PromptExploderBridgePayload,
-  PromptExploderBridgePayloadStatusDto as PromptExploderBridgePayloadStatus,
-  PromptExploderBridgeSourceDto as PromptExploderBridgeSource,
-  PromptExploderBridgeTargetDto as PromptExploderBridgeTarget,
-  PromptExploderCaseResolverContextDto as PromptExploderCaseResolverContext,
-  PromptExploderCaseResolverMetadataDto as PromptExploderCaseResolverMetadata,
-  PromptExploderCaseResolverPartyBundleDto as PromptExploderCaseResolverPartyBundle,
-  PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate,
-  PromptExploderCaseResolverPartyKindDto as PromptExploderCaseResolverPartyKind,
-  PromptExploderCaseResolverPartyRoleDto as PromptExploderCaseResolverPartyRole,
-  PromptExploderCaseResolverPlaceDateDto as PromptExploderCaseResolverPlaceDate,
+  PromptExploderBridgePayload,
+  PromptExploderBridgePayloadStatus,
+  PromptExploderBridgeSource,
+  PromptExploderBridgeTarget,
+  PromptExploderCaseResolverContext,
+  PromptExploderCaseResolverMetadata,
+  PromptExploderCaseResolverPartyBundle,
+  PromptExploderCaseResolverPartyCandidate,
+  PromptExploderCaseResolverPartyKind,
+  PromptExploderCaseResolverPartyRole,
+  PromptExploderCaseResolverPlaceDate,
 } from '@/shared/contracts/prompt-exploder';
 
 export const PROMPT_EXPLODER_DRAFT_PROMPT_KEY = 'prompt_exploder:draft_prompt';

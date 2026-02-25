@@ -86,6 +86,7 @@ export type AiPathRuntimeEvent = z.infer<typeof aiPathRuntimeEventSchema>;
 
 export const runStatusSchema = z.enum(['idle', 'running', 'paused', 'stepping']);
 export type RunStatus = z.infer<typeof runStatusSchema>;
+export type RunStatusDto = RunStatus;
 
 export const runtimeEventInputSchema = z.object({
   id: z.string().optional(),
@@ -105,6 +106,7 @@ export const runtimeEventInputSchema = z.object({
 });
 
 export type RuntimeEventInput = z.infer<typeof runtimeEventInputSchema>;
+export type RuntimeEventInputDto = RuntimeEventInput;
 
 export const setNodeStatusInputSchema = z.object({
   nodeId: z.string(),
@@ -122,6 +124,7 @@ export const setNodeStatusInputSchema = z.object({
 });
 
 export type SetNodeStatusInput = z.infer<typeof setNodeStatusInputSchema>;
+export type SetNodeStatusInputDto = SetNodeStatusInput;
 
 export const pathExecutionModeSchema = z.enum(['local', 'server']);
 export type PathExecutionMode = z.infer<typeof pathExecutionModeSchema>;
@@ -204,6 +207,7 @@ export const queuedRunSchema = z.object({
 });
 
 export type QueuedRun = z.infer<typeof queuedRunSchema>;
+export type QueuedRunDto = QueuedRun;
 
 export const aiPathRuntimeProfileEventSchema = z.discriminatedUnion('type', [
   z.object({
@@ -286,6 +290,9 @@ export const runtimeProfileSummarySchema = z.object({
 });
 
 export type RuntimeProfileSummary = z.infer<typeof runtimeProfileSummarySchema>;
+export type AiPathRuntimeProfileEventDto = AiPathRuntimeProfileEvent;
+export type RuntimeProfileNodeStatsDto = RuntimeProfileNodeStats;
+export type RuntimeProfileSummaryDto = RuntimeProfileSummary;
 
 export const runtimeProfileOptionsSchema = z.object({
   onEvent: z
@@ -370,6 +377,9 @@ export const aiPathRunQueueSloStatusSchema = z.object({
   ),
 });
 export type AiPathRunQueueSloStatus = z.infer<typeof aiPathRunQueueSloStatusSchema>;
+export type SloLevelDto = SloLevel;
+export type QueueSloThresholdsDto = QueueSloThresholds;
+export type AiPathRunQueueSloStatusDto = AiPathRunQueueSloStatus;
 
 /**
  * AI Path Runtime UI and Constants

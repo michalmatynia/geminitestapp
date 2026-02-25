@@ -12,7 +12,7 @@ import {
   Card,
 } from '@/shared/ui';
 
-import { useDocumentActions, useDocumentState } from '../context/hooks/useDocument';
+import { useDocumentState } from '../context/hooks/useDocument';
 import {
   useSegmentEditorActions,
   useSegmentEditorState,
@@ -22,6 +22,7 @@ import { promptExploderClampNumber } from '../helpers/formatting';
 import { promptExploderCreateApprovalDraftFromSegment } from '../helpers/segment-helpers';
 
 import type { TemplateMergeMode } from '../template-learning';
+import type { PromptExploderSegment } from '../types';
 
 export function SegmentEditorInsightsPanel(): React.JSX.Element | null {
   const { selectedSegment } = useDocumentState();

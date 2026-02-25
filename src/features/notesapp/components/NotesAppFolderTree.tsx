@@ -17,11 +17,13 @@ import {
 import React, { useEffect, useMemo, useRef } from 'react';
 
 import {
-  applyInternalMasterTreeDrop,
-  isInternalMasterTreeNode,
-  MasterFolderTree,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
+import {
+  FolderTreeViewportV2,
+  applyInternalMasterTreeDrop,
+  isInternalMasterTreeNode,
+} from '@/features/foldertree/v2';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { Button, FolderTreePanel, TreeHeader } from '@/shared/ui';
 import {
@@ -274,7 +276,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
       )}
     >
       <div className='min-h-0 flex-1 overflow-auto p-2'>
-        <MasterFolderTree
+        <FolderTreeViewportV2
           controller={controller}
           rootDropUi={rootDropUi}
           resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): string | null => {

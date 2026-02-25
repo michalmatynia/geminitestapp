@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { CaseResolverWorkspace, CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { 
+  CaseResolverWorkspace, 
+  CaseResolverFile,
+  CaseResolverCaptureSettings,
+} from '@/shared/contracts/case-resolver';
 import type { CaseResolverCaptureProposalState } from '@/features/case-resolver-capture/proposals';
 import {
   discardPendingCaseResolverPromptExploderPayload,
@@ -17,9 +21,29 @@ import {
 import { resolveCaseResolverFileById } from './useCaseResolverState.helpers';
 import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 import { applyPromptExploderTransferLifecycleUpdate, type PromptExploderTransferUiStatus } from './prompt-exploder-transfer-lifecycle';
+import type { CaseResolverFileEditDraft } from '../types';
+import type { FilemakerDatabaseDto as FilemakerDatabase } from '@/shared/contracts/filemaker';
+import { type Toast } from '@/shared/contracts/ui';
 
 const CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_KEY = 'case_resolver:applied_prompt_exploder_transfer_ids';
 const CASE_RESOLVER_APPLIED_PROMPT_TRANSFER_IDS_LIMIT = 80;
+
+export interface UseCaseResolverPromptExploderValue {
+  pendingPromptExploderPayload: CaseResolverPromptExploderPendingPayload | null;
+  promptExploderPartyProposal: CaseResolverCaptureProposalState | null;
+  setPromptExploderPartyProposal: React.Dispatch<React.SetStateAction<CaseResolverCaptureProposalState | null>>;
+  isPromptExploderPartyProposalOpen: boolean;
+  setIsPromptExploderPartyProposalOpen: React.Dispatch<React.SetStateAction<boolean>>;
+  isApplyingPromptExploderPartyProposal: boolean;
+  setIsApplyingPromptExploderPartyProposal: (value: boolean | ((current: boolean) => boolean)) => void;
+  promptExploderPayloadRefreshVersion: number;
+  promptExploderApplyDiagnostics: CaseResolverPromptExploderApplyUiDiagnostics | null;
+  setPromptExploderApplyDiagnostics: React.Dispatch<React.SetStateAction<CaseResolverPromptExploderApplyUiDiagnostics | null>>;
+  refreshPendingPromptExploderPayload: () => void;
+  handleDiscardPendingPromptExploderPayload: () => void;
+  handleApplyPendingPromptExploderPayload: () => Promise<boolean>;
+  transitionPromptExploderApplyDiagnostics: (input: { nextStatus: PromptExploderTransferUiStatus; reason?: string | null; force?: boolean; patch?: Partial<CaseResolverPromptExploderApplyUiDiagnostics>; }) => void;
+}
 
 export function useCaseResolverPromptExploder({
   workspace,
@@ -36,16 +60,19 @@ export function useCaseResolverPromptExploder({
 }: {
   workspace: CaseResolverWorkspace;
   workspaceRef: React.MutableRefObject<CaseResolverWorkspace>;
-  updateWorkspace: any;
-  setEditingDocumentDraft: any;
-  filemakerDatabase: any;
-  caseResolverCaptureSettings: any;
+  updateWorkspace: (
+    updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
+    options?: { persistToast?: string; persistNow?: boolean; mutationId?: string; source?: string; skipNormalization?: boolean }
+  ) => void;
+  setEditingDocumentDraft: React.Dispatch<React.SetStateAction<CaseResolverFileEditDraft | null>>;
+  filemakerDatabase: FilemakerDatabase;
+  caseResolverCaptureSettings: CaseResolverCaptureSettings;
   requestedFileId: string | null;
   shouldOpenEditorFromQuery: boolean;
   requestedPromptExploderSessionId: string;
-  toast: any;
+  toast: Toast;
   flushWorkspacePersist: () => void;
-}) {
+}): UseCaseResolverPromptExploderValue {
   const [promptExploderPartyProposal, setPromptExploderPartyProposal] = useState<CaseResolverCaptureProposalState | null>(null);
   const [isPromptExploderPartyProposalOpen, setIsPromptExploderPartyProposalOpen] = useState(false);
   const [isApplyingPromptExploderPartyProposal, setIsApplyingPromptExploderPartyProposalState] = useState(false);
@@ -310,7 +337,7 @@ export function useCaseResolverPromptExploder({
     setPromptExploderApplyDiagnostics(diagnostics);
     refreshPendingPromptExploderPayload();
     toast('Prompt Exploder output discarded.', { variant: 'info' });
-  }, [caseResolverCaptureSettings.enabled, refreshPendingPromptExploderPayload, toast, workspace.files]);
+  }, [caseResolverCaptureSettings.enabled, refreshPendingPromptExploderPayload, toast, workspace.files, setIsApplyingPromptExploderPartyProposal]);
 
   const handleApplyPendingPromptExploderPayload = useCallback(
     async (): Promise<boolean> => {
@@ -447,6 +474,7 @@ export function useCaseResolverPromptExploder({
   );
 
   return {
+    pendingPromptExploderPayload,
     promptExploderPartyProposal,
     setPromptExploderPartyProposal,
     isPromptExploderPartyProposalOpen,

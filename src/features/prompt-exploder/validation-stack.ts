@@ -1,11 +1,10 @@
 import {
   VALIDATOR_SCOPE_DESCRIPTIONS,
   VALIDATOR_SCOPE_LABELS,
-  type ValidatorPatternList,
-  type ValidatorScope,
 } from '@/features/admin/pages/validator-scope';
 import { PromptValidationScopeResolutionError } from '@/features/prompt-core/errors';
 import type { PromptValidationScope } from '@/features/prompt-engine/settings';
+import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/admin';
 import type {
   PromptExploderRuntimeValidationScopeDto,
   PromptExploderValidationStackResolutionReasonDto,

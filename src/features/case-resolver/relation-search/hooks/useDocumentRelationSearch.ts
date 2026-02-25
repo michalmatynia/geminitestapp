@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import type {
   CaseResolverFile,
   CaseResolverIdentifier,
@@ -50,6 +50,10 @@ export function useDocumentRelationSearch({
   const [selectedDrillCaseId, setSelectedDrillCaseId] = useState<string | null>(null);
   const [fileTypeFilter, setFileTypeFilter] = useState<DocumentRelationFileTypeFilter>('all');
   const [sortMode, setSortMode] = useState<DocumentRelationSortMode>(initialSort);
+  const [dateFrom, setDateFrom] = useState<string | null>(null);
+  const [dateTo, setDateTo] = useState<string | null>(null);
+  const [tagIdFilter, setTagIdFilter] = useState<string | null>(null);
+  const [categoryIdFilter, setCategoryIdFilter] = useState<string | null>(null);
 
   const excludeSet = useMemo(() => new Set(excludeFileIds), [excludeFileIds]);
 
@@ -75,9 +79,17 @@ export function useDocumentRelationSearch({
         if (excludeSet.has(file.id)) return false;
         if (fileTypeFilter === 'document') return file.fileType === 'document';
         if (fileTypeFilter === 'scanfile') return file.fileType === 'scanfile';
+        if (dateFrom !== null && file.documentDate?.isoDate) {
+          if (file.documentDate.isoDate < dateFrom) return false;
+        }
+        if (dateTo !== null && file.documentDate?.isoDate) {
+          if (file.documentDate.isoDate > dateTo) return false;
+        }
+        if (tagIdFilter !== null && (file.tagId ?? null) !== tagIdFilter) return false;
+        if (categoryIdFilter !== null && (file.categoryId ?? null) !== categoryIdFilter) return false;
         return true;
       }),
-    [workspace.files, excludeSet, fileTypeFilter]
+    [workspace.files, excludeSet, fileTypeFilter, dateFrom, dateTo, tagIdFilter, categoryIdFilter]
   );
 
   const caseScopedSearchableFiles = useMemo(
@@ -222,6 +234,14 @@ export function useDocumentRelationSearch({
       );
   }, [caseSearchQuery, workspace.files, caseIdentifierLabelById, excludeSet]);
 
+  const resetFilters = useCallback((): void => {
+    setFileTypeFilter('all');
+    setDateFrom(null);
+    setDateTo(null);
+    setTagIdFilter(null);
+    setCategoryIdFilter(null);
+  }, []);
+
   return {
     // State
     documentSearchScope,
@@ -238,10 +258,20 @@ export function useDocumentRelationSearch({
     setFileTypeFilter,
     sortMode,
     setSortMode,
+    dateFrom,
+    setDateFrom,
+    dateTo,
+    setDateTo,
+    tagIdFilter,
+    setTagIdFilter,
+    categoryIdFilter,
+    setCategoryIdFilter,
+    resetFilters,
     // Computed
     documentSearchRows,
     visibleDocumentSearchRows,
     folderTree,
     visibleCaseRows,
+    totalRowCount: documentSearchRows.length,
   };
 }

@@ -65,7 +65,9 @@ export interface ProductListContextType {
   endDate: string;
   setEndDate: (value: string) => void;
   advancedFilter: string;
+  activeAdvancedFilterPresetId: string | null;
   setAdvancedFilter: (value: string) => void;
+  setAdvancedFilterState: (value: string, presetId: string | null) => void;
   baseExported: '' | 'true' | 'false';
   setBaseExported: (value: '' | 'true' | 'false') => void;
   
@@ -188,7 +190,9 @@ export interface ProductListFiltersContextType {
   endDate: string;
   setEndDate: (value: string) => void;
   advancedFilter: string;
+  activeAdvancedFilterPresetId: string | null;
   setAdvancedFilter: (value: string) => void;
+  setAdvancedFilterState: (value: string, presetId: string | null) => void;
   baseExported: '' | 'true' | 'false';
   setBaseExported: (value: '' | 'true' | 'false') => void;
 }
@@ -399,7 +403,9 @@ export function ProductListProvider({
       endDate: value.endDate,
       setEndDate: value.setEndDate,
       advancedFilter: value.advancedFilter,
+      activeAdvancedFilterPresetId: value.activeAdvancedFilterPresetId,
       setAdvancedFilter: value.setAdvancedFilter,
+      setAdvancedFilterState: value.setAdvancedFilterState,
       baseExported: value.baseExported,
       setBaseExported: value.setBaseExported,
     }),

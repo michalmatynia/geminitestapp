@@ -6,7 +6,7 @@ import { useLiteSettingsMap, useSettingsMap } from '@/shared/hooks/use-settings'
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 
-type SettingsStoreValue = {
+export type SettingsStoreValue = {
   map: Map<string, string>;
   isLoading: boolean;
   isFetching: boolean;

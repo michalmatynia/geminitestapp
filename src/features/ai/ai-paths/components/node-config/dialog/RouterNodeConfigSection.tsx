@@ -4,7 +4,7 @@
 
 
 import type { RouterConfig } from '@/features/ai/ai-paths/lib';
-import { Input,  SelectSimple } from '@/shared/ui';
+import { Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 

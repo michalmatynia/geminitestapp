@@ -77,6 +77,9 @@ export type CaseResolverEditorMode = 'wysiwyg' | 'markdown' | 'code';
 
 export type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
 
+export type WorkspaceView = 'document' | 'relations';
+export type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
+
 export type CaseResolverStateValue = {
   workspace: CaseResolverWorkspace;
   workspaceRef: React.MutableRefObject<CaseResolverWorkspace>;

@@ -53,6 +53,10 @@ const buildUserPreferencesResponse = (
   productListFiltersCollapsedByDefault: preferences?.productListFiltersCollapsedByDefault ?? false,
   productListAdvancedFilterPresets:
     preferences?.productListAdvancedFilterPresets ?? [],
+  productListAppliedAdvancedFilter:
+    preferences?.productListAppliedAdvancedFilter ?? null,
+  productListAppliedAdvancedFilterPresetId:
+    preferences?.productListAppliedAdvancedFilterPresetId ?? null,
   productListDraftIconColorMode: preferences?.productListDraftIconColorMode ?? 'theme',
   productListDraftIconColor: preferences?.productListDraftIconColor ?? '#60a5fa',
   aiPathsActivePathId: preferences?.aiPathsActivePathId ?? null,

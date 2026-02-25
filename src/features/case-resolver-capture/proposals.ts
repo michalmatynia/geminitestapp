@@ -8,9 +8,9 @@ import { extractCaseResolverDocumentDate } from '@/features/case-resolver/settin
 import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
 import type { FilemakerDatabaseDto as FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type {
-  PromptExploderCaseResolverMetadataDto as PromptExploderCaseResolverMetadata,
-  PromptExploderCaseResolverPartyBundleDto as PromptExploderCaseResolverPartyBundle,
-  PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate,
+  PromptExploderCaseResolverMetadata,
+  PromptExploderCaseResolverPartyBundle,
+  PromptExploderCaseResolverPartyCandidate,
 } from '@/shared/contracts/prompt-exploder';
 
 import type {

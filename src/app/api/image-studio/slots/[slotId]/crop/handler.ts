@@ -9,9 +9,9 @@ import {
   imageStudioCropRequestSchema,
   imageStudioCropResponseSchema,
   type ImageStudioCropErrorCode,
-  type ImageStudioCropPointDto as ImageStudioCropPoint,
-  type ImageStudioCropRectDto as ImageStudioCropRect,
-  type ImageStudioCropRequestDto as ImageStudioCropRequest,
+  type ImageStudioCropPoint,
+  type ImageStudioCropRect,
+  type ImageStudioCropRequest,
 } from '@/features/ai/image-studio/contracts/crop';
 import {
   buildCropFingerprint,

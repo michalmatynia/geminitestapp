@@ -1,0 +1,11 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/drafter/components/DraftCreatorModal.tsx
+  5:15  warning  'ProductDraftDto' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  6:15  warning  'EntityModalProps' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/drafter/pages/AdminDraftsPage.tsx
+   9:27  warning  'useDrafterContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  10:10  warning  'useDraftQueries' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+
+✖ 4 problems (0 errors, 4 warnings)
+

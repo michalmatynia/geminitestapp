@@ -203,20 +203,18 @@ const toFallbackMeta = (
 });
 
 const assertFactoryMeta = (meta: TanstackFactoryMeta | null | undefined): void => {
-  if (!meta || typeof meta !== 'object') {
-    if (process.env['NODE_ENV'] !== 'production') {
-      console.warn('[tanstack-factory-v2] Missing meta object. Using fallback telemetry metadata.');
-    }
-    return;
-  }
   if (process.env['NODE_ENV'] === 'production') return;
+
+  if (!meta || typeof meta !== 'object') {
+    throw new Error('[tanstack-factory-v2] Missing meta object.');
+  }
   const missing = requiredMetaFields.filter((field) => {
     const value = meta[field];
     return typeof value !== 'string' || value.trim().length === 0;
   });
   if (missing.length > 0) {
-    console.warn(
-      `[tanstack-factory-v2] Missing required meta fields: ${missing.join(', ')}. Using fallback values.`
+    throw new Error(
+      `[tanstack-factory-v2] Missing required meta fields: ${missing.join(', ')}`
     );
   }
 };

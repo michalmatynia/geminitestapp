@@ -18,6 +18,8 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   thumbnailSource: 'file',
   filtersCollapsedByDefault: false,
   advancedFilterPresets: [],
+  appliedAdvancedFilter: '',
+  appliedAdvancedFilterPresetId: null,
 };
 
 export function ProductPreferencesPage(): React.JSX.Element {

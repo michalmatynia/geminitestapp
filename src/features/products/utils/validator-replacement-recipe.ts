@@ -10,6 +10,17 @@ import type {
   ProductValidationPattern
 } from '@/shared/contracts/products';
 
+export type {
+  DynamicReplacementSourceMode,
+  DynamicReplacementMathOperation,
+  DynamicReplacementRoundMode,
+  DynamicReplacementResultAssembly,
+  DynamicReplacementTargetApply,
+  DynamicReplacementLogicOperator,
+  DynamicReplacementLogicAction,
+  DynamicReplacementRecipe,
+};
+
 export const DYNAMIC_REPLACEMENT_PREFIX = '__recipe__:';
 
 type DynamicReplacementContext = {

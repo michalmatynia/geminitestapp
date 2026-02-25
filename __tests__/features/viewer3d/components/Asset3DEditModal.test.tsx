@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { updateAsset3D } from '@/features/viewer3d/api';
 import { Asset3DEditModal } from '@/features/viewer3d/components/Asset3DEditModal';
+import { useAdmin3DAssetsContext } from '@/features/viewer3d/context/Admin3DAssetsContext';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 
 const { logClientErrorMock } = vi.hoisted(() => ({
@@ -15,6 +16,10 @@ vi.mock('@/features/viewer3d/api', () => ({
 
 vi.mock('@/features/observability', () => ({
   logClientError: logClientErrorMock,
+}));
+
+vi.mock('@/features/viewer3d/context/Admin3DAssetsContext', () => ({
+  useAdmin3DAssetsContext: vi.fn(),
 }));
 
 const mockAsset: Asset3DRecord = {
@@ -50,6 +55,15 @@ describe('Asset3DEditModal', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useAdmin3DAssetsContext).mockReturnValue({
+      handleEdit: vi.fn(),
+      categories: ['Cat A', 'Cat B'],
+      allTags: ['tag A', 'tag B'],
+      handleDelete: vi.fn(),
+      setPreviewAsset: vi.fn(),
+      setEditAsset: vi.fn(),
+      isDeleting: vi.fn(() => false),
+    } as any);
   });
 
   it('should render with initial asset data', () => {
@@ -92,7 +106,7 @@ describe('Asset3DEditModal', () => {
     expect(updateAsset3D).toHaveBeenCalledWith(mockAsset.id, expect.objectContaining({
       name: 'Updated Name',
     }));
-    expect(defaultProps.onSave).toHaveBeenCalledWith(updatedAsset);
+    expect(vi.mocked(useAdmin3DAssetsContext)().handleEdit).toHaveBeenCalledWith(updatedAsset);
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
 

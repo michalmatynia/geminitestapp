@@ -4,4 +4,3 @@ export * from './generation';
 export * from './integration';
 export * from './agent';
 export * from './audio';
-export * from '@/shared/contracts/ai-paths-runtime';

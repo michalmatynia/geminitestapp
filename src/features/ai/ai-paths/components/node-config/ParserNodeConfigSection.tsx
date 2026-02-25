@@ -24,7 +24,7 @@ import {
   normalizePortName,
   safeParseJson,
 } from '@/features/ai/ai-paths/lib';
-import { Button, Input, Label, Textarea, SelectSimple, FormField } from '@/shared/ui';
+import { Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';
 

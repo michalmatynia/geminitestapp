@@ -1,8 +1,13 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { Asset3DCard } from '@/features/viewer3d/components/Asset3DCard';
+import { useAdmin3DAssetsContext } from '@/features/viewer3d/context/Admin3DAssetsContext';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
+
+vi.mock('@/features/viewer3d/context/Admin3DAssetsContext', () => ({
+  useAdmin3DAssetsContext: vi.fn(),
+}));
 
 const mockAsset: Asset3DRecord = {
   id: '1',
@@ -27,10 +32,19 @@ const mockAsset: Asset3DRecord = {
 describe('Asset3DCard', () => {
   const defaultProps = {
     asset: mockAsset,
-    onPreview: vi.fn(),
-    onEdit: vi.fn(),
-    onDelete: vi.fn(),
   };
+
+  const mockContext = {
+    setPreviewAsset: vi.fn(),
+    setEditAsset: vi.fn(),
+    handleDelete: vi.fn(),
+    isDeleting: vi.fn(() => false),
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(useAdmin3DAssetsContext).mockReturnValue(mockContext as any);
+  });
 
   it('should render asset information correctly', () => {
     render(<Asset3DCard {...defaultProps} />);
@@ -58,7 +72,7 @@ describe('Asset3DCard', () => {
     const previewArea = screen.getByText('Click to preview').closest('div');
     fireEvent.click(previewArea!);
 
-    expect(defaultProps.onPreview).toHaveBeenCalledWith(mockAsset);
+    expect(mockContext.setPreviewAsset).toHaveBeenCalledWith(mockAsset);
   });
 
   it('should call onEdit when clicking the edit button', () => {
@@ -67,7 +81,7 @@ describe('Asset3DCard', () => {
     const editButton = screen.getAllByRole('button')[0]; // Edit is first
     fireEvent.click(editButton!);
 
-    expect(defaultProps.onEdit).toHaveBeenCalledWith(mockAsset);
+    expect(mockContext.setEditAsset).toHaveBeenCalledWith(mockAsset);
   });
 
   it('should call onDelete when clicking the delete button', () => {
@@ -76,11 +90,12 @@ describe('Asset3DCard', () => {
     const deleteButton = screen.getAllByRole('button')[1]; // Delete is second
     fireEvent.click(deleteButton!);
 
-    expect(defaultProps.onDelete).toHaveBeenCalledWith(mockAsset);
+    expect(mockContext.handleDelete).toHaveBeenCalledWith(mockAsset);
   });
 
   it('should disable delete button and show loader when isDeleting is true', () => {
-    render(<Asset3DCard {...defaultProps} isDeleting={true} />);
+    mockContext.isDeleting.mockReturnValue(true);
+    render(<Asset3DCard {...defaultProps} />);
 
     const deleteButton = screen.getAllByRole('button')[1];
     expect(deleteButton).toBeDisabled();

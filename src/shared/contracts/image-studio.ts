@@ -40,6 +40,7 @@ export const imageStudioCropPointSchema = z.object({
   y: z.number().finite().min(0).max(1),
 });
 export type ImageStudioCropPoint = z.infer<typeof imageStudioCropPointSchema>;
+export type ImageStudioCropPointDto = ImageStudioCropPoint;
 
 export const imageStudioCropRectSchema = z.object({
   x: z.number().finite().min(0),
@@ -48,6 +49,7 @@ export const imageStudioCropRectSchema = z.object({
   height: z.number().finite().positive(),
 });
 export type ImageStudioCropRect = z.infer<typeof imageStudioCropRectSchema>;
+export type ImageStudioCropRectDto = ImageStudioCropRect;
 
 export const imageStudioCropCanvasFrameSchema = z.object({
   x: z.number().finite(),
@@ -106,6 +108,7 @@ export const imageStudioCropRequestSchema = z
   });
 
 export type ImageStudioCropRequest = z.infer<typeof imageStudioCropRequestSchema>;
+export type ImageStudioCropRequestDto = ImageStudioCropRequest;
 
 // --- Upscale ---
 
@@ -136,12 +139,15 @@ export type ImageStudioUpscaleErrorCode =
 
 export const imageStudioUpscaleModeSchema = z.enum(['client_data_url', 'server_sharp']);
 export type ImageStudioUpscaleMode = z.infer<typeof imageStudioUpscaleModeSchema>;
+export type ImageStudioUpscaleModeDto = ImageStudioUpscaleMode;
 
 export const imageStudioUpscaleStrategySchema = z.enum(['scale', 'target_resolution']);
 export type ImageStudioUpscaleStrategy = z.infer<typeof imageStudioUpscaleStrategySchema>;
+export type ImageStudioUpscaleStrategyDto = ImageStudioUpscaleStrategy;
 
 export const imageStudioUpscaleSmoothingQualitySchema = z.enum(['low', 'medium', 'high']);
 export type ImageStudioUpscaleSmoothingQuality = z.infer<typeof imageStudioUpscaleSmoothingQualitySchema>;
+export type ImageStudioUpscaleSmoothingQualityDto = ImageStudioUpscaleSmoothingQuality;
 
 
 export const imageStudioUpscaleRequestSchema = z.object({
@@ -180,6 +186,7 @@ export const imageStudioUpscaleRequestSchema = z.object({
 });
 
 export type ImageStudioUpscaleRequest = z.infer<typeof imageStudioUpscaleRequestSchema>;
+export type ImageStudioUpscaleRequestDto = ImageStudioUpscaleRequest;
 
 // --- Center ---
 
@@ -477,6 +484,7 @@ export const imageStudioSlotSchema = dtoBaseSchema.extend({
 
 export type ImageStudioSlot = z.infer<typeof imageStudioSlotSchema>;
 export type ImageStudioSlotRecord = ImageStudioSlot;
+export type ImageStudioSlotDto = ImageStudioSlot;
 
 export const imageStudioProjectSchema = dtoBaseSchema.extend({
   canvasWidthPx: z.number().nullable(),
@@ -488,6 +496,7 @@ export type ImageStudioProjectRecord = ImageStudioProject;
 
 export const imageStudioRunDispatchModeSchema = z.enum(['queued', 'inline']);
 export type ImageStudioRunDispatchMode = z.infer<typeof imageStudioRunDispatchModeSchema>;
+export type ImageStudioRunDispatchModeDto = ImageStudioRunDispatchMode;
 
 export const studioProjectsResponseSchema = z.object({
   projects: z.array(imageStudioProjectSchema),

@@ -2,14 +2,11 @@
 
 import React from 'react';
 
-import type { CountryOption, Language } from '@/shared/contracts/internationalization';
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { Checkbox, Label, Hint } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useLanguageForm } from './hooks/useLanguageForm';
-
-interface LanguageModalProps extends EntityModalProps<Language, CountryOption> {}
 
 type LanguageFormState = {
   code: string;
@@ -17,13 +14,14 @@ type LanguageFormState = {
   nativeName: string;
 };
 
-export function LanguageModal({
-  isOpen,
-  onClose,
-  onSuccess,
-  item: language,
-  items: countries = [],
-}: LanguageModalProps): React.JSX.Element {
+export function LanguageModal(): React.JSX.Element | null {
+  const { 
+    isLanguageModalOpen, 
+    handleCloseLanguageModal, 
+    activeLanguage, 
+    filteredCountries: countries 
+  } = useInternationalizationContext();
+
   const {
     form,
     setForm,
@@ -33,9 +31,11 @@ export function LanguageModal({
     handleSubmit,
   } = useLanguageForm();
 
+  if (!isLanguageModalOpen) return null;
+
   const handleSaveClick = async (): Promise<void> => {
     await handleSubmit();
-    onSuccess?.();
+    handleCloseLanguageModal();
   };
 
   const fields: SettingsField<LanguageFormState>[] = [
@@ -96,9 +96,9 @@ export function LanguageModal({
 
   return (
     <SettingsPanelBuilder
-      open={isOpen}
-      onClose={onClose}
-      title={language ? 'Edit Language' : 'Add Language'}
+      open={isLanguageModalOpen}
+      onClose={handleCloseLanguageModal}
+      title={activeLanguage ? 'Edit Language' : 'Add Language'}
       onSave={handleSaveClick}
       isSaving={isSaving}
       fields={fields}

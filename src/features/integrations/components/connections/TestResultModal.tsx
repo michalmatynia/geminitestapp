@@ -2,14 +2,15 @@
 
 import React from 'react';
 
+import { useIntegrationsTesting } from '@/features/integrations/context/IntegrationsContext';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import { MetadataItem, Hint, Alert, CopyButton } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
 
 interface TestResultModalProps extends Omit<ModalStateProps, 'onSuccess'> {
   onSuccess?: () => void;
-  success: boolean;
-  message: string | null;
+  success?: boolean;
+  message?: string | null;
   meta?: {
     errorId?: string;
     integrationId?: string | null;
@@ -18,12 +19,23 @@ interface TestResultModalProps extends Omit<ModalStateProps, 'onSuccess'> {
 }
 
 export function TestResultModal({
-  isOpen,
-  onClose,
-  success,
-  message,
-  meta,
+  isOpen: isOpenProp,
+  onClose: onCloseProp,
+  success: successProp,
+  message: messageProp,
+  meta: metaProp,
 }: TestResultModalProps): React.JSX.Element | null {
+  const testing = useIntegrationsTesting();
+
+  const isOpen = isOpenProp ?? (testing.showTestErrorModal || testing.showTestSuccessModal);
+  const onClose = onCloseProp ?? (() => {
+    if (testing.showTestSuccessModal) testing.setShowTestSuccessModal(false);
+    else testing.setShowTestErrorModal(false);
+  });
+  const success = successProp ?? testing.showTestSuccessModal;
+  const message = messageProp ?? (testing.showTestSuccessModal ? testing.testSuccessMessage : testing.testError);
+  const meta = metaProp ?? testing.testErrorMeta;
+
   if (!message) return null;
 
   const metaLines = [

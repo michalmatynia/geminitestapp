@@ -196,11 +196,7 @@ export function DatabaseSettingsTab(): React.JSX.Element | null {
             <div className='space-y-3'>
               <FormField 
                 label='Target field path' 
-                description={(
-                  <>
-                    The field in the database document to write inferred values into, e.g. <code className='text-gray-400'>parameters</code>.
-                  </>
-                )}
+                description='The field in the database document to write inferred values into, e.g. parameters.'
               >
                 <Input
                   variant='subtle'

@@ -2,842 +2,32 @@ import 'server-only';
 
 import {
   Prisma,
-  Product as PrismaProduct,
-  ProductImage as PrismaProductImage,
-  ImageFile as PrismaImageFile,
-  Catalog as PrismaCatalog,
-  ProductCatalog as PrismaProductCatalog,
 } from '@prisma/client';
 
-import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
-import type { ImageFileRecord } from '@/shared/contracts/files';
 import {
-  productAdvancedFilterGroupSchema,
-  CatalogRecord,
   type CreateProductInput,
-  type ProductAdvancedFilterCondition,
-  type ProductAdvancedFilterGroup,
-  type ProductAdvancedFilterRule,
-  ProductWithImages,
-  ProductImageRecord,
-  type ProductParameterValue,
   ProductFilters,
   ProductRepository,
   UpdateProductInput,
+  ProductImageRecord,
 } from '@/shared/contracts/products';
 import { conflictError, internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
+import {
+  removeUndefined,
+  normalizeImageFileIds,
+  normalizeProductParameterValues,
+} from './prisma-product-repository.helpers';
+import {
+  buildProductWhere,
+} from './prisma-product-repository.filters';
+import {
+  toProductRecord,
+  toProductImageRecord,
+  type FullPrismaProduct,
+} from './prisma-product-repository.mappers';
 
-function removeUndefined<T extends object>(obj: T): T {
-  const newObj = { ...obj };
-  Object.keys(newObj).forEach((key: string) => {
-    if (newObj[key as keyof T] === undefined) {
-      delete newObj[key as keyof T];
-    }
-  });
-  return newObj;
-}
-
-const normalizeImageFileIds = (imageFileIds: string[]): string[] => {
-  const unique = new Set<string>();
-  for (const rawId of imageFileIds) {
-    const trimmed = rawId.trim();
-    if (!trimmed || unique.has(trimmed)) continue;
-    unique.add(trimmed);
-  }
-  return Array.from(unique);
-};
-
-const normalizeProductParameterValues = (
-  input: unknown,
-): ProductParameterValue[] => {
-  if (!Array.isArray(input)) return [];
-  const byParameterId = new Map<string, ProductParameterValue>();
-  input.forEach((entry: unknown) => {
-    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return;
-    const record = entry as Record<string, unknown>;
-    const parameterId = decodeSimpleParameterStorageId(
-      typeof record['parameterId'] === 'string' ? record['parameterId'] : '',
-    );
-    if (!parameterId) return;
-    const value = typeof record['value'] === 'string' ? record['value'] : '';
-    const valuesByLanguageRaw = record['valuesByLanguage'];
-    const valuesByLanguage =
-      valuesByLanguageRaw &&
-      typeof valuesByLanguageRaw === 'object' &&
-      !Array.isArray(valuesByLanguageRaw)
-        ? Object.entries(valuesByLanguageRaw as Record<string, unknown>).reduce(
-          (acc: Record<string, string>, [languageCode, languageValue]) => {
-            const normalizedCode = languageCode.trim().toLowerCase();
-            if (!normalizedCode || typeof languageValue !== 'string')
-              return acc;
-            acc[normalizedCode] = languageValue;
-            return acc;
-          },
-          {},
-        )
-        : {};
-    const current = byParameterId.get(parameterId);
-    if (!current) {
-      byParameterId.set(parameterId, {
-        parameterId,
-        value,
-        ...(Object.keys(valuesByLanguage).length > 0
-          ? { valuesByLanguage }
-          : {}),
-      });
-      return;
-    }
-    const mergedValuesByLanguage = {
-      ...(current.valuesByLanguage ?? {}),
-      ...valuesByLanguage,
-    };
-    byParameterId.set(parameterId, {
-      parameterId,
-      value: current.value || value,
-      ...(Object.keys(mergedValuesByLanguage).length > 0
-        ? { valuesByLanguage: mergedValuesByLanguage }
-        : {}),
-    });
-  });
-  return Array.from(byParameterId.values());
-};
-
-const BASE_INTEGRATION_SLUGS = ['baselinker', 'base-com', 'base'] as const;
-
-const parseAdvancedFilterGroup = (
-  payload: string | undefined
-): ProductAdvancedFilterGroup | null => {
-  if (!payload) return null;
-  try {
-    const parsed = JSON.parse(payload);
-    const validated = productAdvancedFilterGroupSchema.safeParse(parsed);
-    return validated.success ? validated.data : null;
-  } catch {
-    return null;
-  }
-};
-
-const toAdvancedStringValue = (value: unknown): string | null => {
-  if (typeof value !== 'string') return null;
-  const normalized = value.trim();
-  return normalized.length > 0 ? normalized : null;
-};
-
-const toAdvancedNumberValue = (value: unknown): number | null => {
-  if (typeof value === 'number' && Number.isFinite(value)) return value;
-  if (typeof value === 'string') {
-    const normalized = value.trim();
-    if (!normalized) return null;
-    const parsed = Number(normalized);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
-};
-
-const toAdvancedDateValue = (value: unknown): Date | null => {
-  if (value instanceof Date && !Number.isNaN(value.getTime())) return value;
-  if (typeof value === 'string' || typeof value === 'number') {
-    const parsed = new Date(value);
-    if (!Number.isNaN(parsed.getTime())) return parsed;
-  }
-  return null;
-};
-
-const buildPrismaSingleStringCondition = (
-  field: string,
-  condition: ProductAdvancedFilterCondition,
-  options: { nullable?: boolean } = {}
-): Prisma.ProductWhereInput | null => {
-  const nullable = options.nullable ?? true;
-
-  if (condition.operator === 'isEmpty') {
-    if (nullable) {
-      return {
-        OR: [
-          { [field]: null },
-          { [field]: '' },
-        ],
-      } as Prisma.ProductWhereInput;
-    }
-    return { [field]: '' } as Prisma.ProductWhereInput;
-  }
-
-  if (condition.operator === 'isNotEmpty') {
-    if (nullable) {
-      return {
-        AND: [
-          { [field]: { not: null } },
-          { [field]: { not: '' } },
-        ],
-      } as Prisma.ProductWhereInput;
-    }
-    return { [field]: { not: '' } } as Prisma.ProductWhereInput;
-  }
-
-  const value = toAdvancedStringValue(condition.value);
-  if (!value) return null;
-
-  if (condition.operator === 'contains') {
-    return {
-      [field]: {
-        contains: value,
-        mode: 'insensitive',
-      },
-    } as Prisma.ProductWhereInput;
-  }
-
-  if (condition.operator === 'eq') {
-    return {
-      [field]: {
-        equals: value,
-        mode: 'insensitive',
-      },
-    } as Prisma.ProductWhereInput;
-  }
-
-  if (condition.operator === 'neq') {
-    return {
-      NOT: [
-        {
-          [field]: {
-            equals: value,
-            mode: 'insensitive',
-          },
-        },
-      ],
-    } as Prisma.ProductWhereInput;
-  }
-
-  return null;
-};
-
-const buildPrismaMultiStringCondition = (
-  fields: string[],
-  condition: ProductAdvancedFilterCondition
-): Prisma.ProductWhereInput | null => {
-  if (fields.length === 0) return null;
-
-  if (condition.operator === 'isEmpty') {
-    const emptyConditions = fields
-      .map((field: string) =>
-        buildPrismaSingleStringCondition(field, condition, { nullable: true })
-      )
-      .filter((entry): entry is Prisma.ProductWhereInput => entry !== null);
-    if (emptyConditions.length === 0) return null;
-    return {
-      AND: emptyConditions,
-    };
-  }
-
-  if (condition.operator === 'isNotEmpty') {
-    const nonEmptyConditions = fields
-      .map((field: string) =>
-        buildPrismaSingleStringCondition(field, condition, { nullable: true })
-      )
-      .filter((entry): entry is Prisma.ProductWhereInput => entry !== null);
-    if (nonEmptyConditions.length === 0) return null;
-    return {
-      OR: nonEmptyConditions,
-    };
-  }
-
-  const leafConditions = fields
-    .map((field: string) =>
-      buildPrismaSingleStringCondition(field, condition, { nullable: true })
-    )
-    .filter((entry): entry is Prisma.ProductWhereInput => entry !== null);
-  if (leafConditions.length === 0) return null;
-
-  const orCondition: Prisma.ProductWhereInput = { OR: leafConditions };
-  if (condition.operator === 'neq') {
-    return {
-      NOT: [orCondition],
-    };
-  }
-  return orCondition;
-};
-
-const buildPrismaCategoryCondition = (
-  condition: ProductAdvancedFilterCondition
-): Prisma.ProductWhereInput | null => {
-  if (condition.operator === 'isEmpty') {
-    return { categories: { is: null } };
-  }
-
-  if (condition.operator === 'isNotEmpty') {
-    return { categories: { isNot: null } };
-  }
-
-  const value = toAdvancedStringValue(condition.value);
-  if (!value) return null;
-
-  const eqCondition: Prisma.ProductWhereInput = {
-    categories: { is: { categoryId: value } },
-  };
-
-  if (condition.operator === 'eq') return eqCondition;
-  if (condition.operator === 'neq') {
-    return { NOT: [eqCondition] };
-  }
-  if (condition.operator === 'contains') {
-    return {
-      categories: {
-        is: {
-          categoryId: {
-            contains: value,
-            mode: 'insensitive',
-          },
-        },
-      },
-    };
-  }
-
-  return null;
-};
-
-const buildPrismaNumericCondition = (
-  field: 'price' | 'stock',
-  condition: ProductAdvancedFilterCondition
-): Prisma.ProductWhereInput | null => {
-  if (condition.operator === 'isEmpty') {
-    return { [field]: null } as Prisma.ProductWhereInput;
-  }
-
-  if (condition.operator === 'isNotEmpty') {
-    return { [field]: { not: null } } as Prisma.ProductWhereInput;
-  }
-
-  if (condition.operator === 'between') {
-    const left = toAdvancedNumberValue(condition.value);
-    const right = toAdvancedNumberValue(condition.valueTo);
-    if (left === null || right === null) return null;
-    const [min, max] = left <= right ? [left, right] : [right, left];
-    return {
-      AND: [
-        { [field]: { gte: min } },
-        { [field]: { lte: max } },
-      ],
-    } as Prisma.ProductWhereInput;
-  }
-
-  const value = toAdvancedNumberValue(condition.value);
-  if (value === null) return null;
-
-  if (condition.operator === 'eq') {
-    return { [field]: { equals: value } } as Prisma.ProductWhereInput;
-  }
-  if (condition.operator === 'neq') {
-    return { NOT: [{ [field]: { equals: value } }] } as Prisma.ProductWhereInput;
-  }
-  if (condition.operator === 'gt') {
-    return { [field]: { gt: value } } as Prisma.ProductWhereInput;
-  }
-  if (condition.operator === 'gte') {
-    return { [field]: { gte: value } } as Prisma.ProductWhereInput;
-  }
-  if (condition.operator === 'lt') {
-    return { [field]: { lt: value } } as Prisma.ProductWhereInput;
-  }
-  if (condition.operator === 'lte') {
-    return { [field]: { lte: value } } as Prisma.ProductWhereInput;
-  }
-
-  return null;
-};
-
-const buildPrismaCreatedAtCondition = (
-  condition: ProductAdvancedFilterCondition
-): Prisma.ProductWhereInput | null => {
-  if (condition.operator === 'isEmpty') {
-    // createdAt is non-null in schema; force empty-result predicate.
-    return { id: '__advanced_filter_createdAt_empty__' };
-  }
-
-  if (condition.operator === 'isNotEmpty') {
-    return null;
-  }
-
-  if (condition.operator === 'between') {
-    const left = toAdvancedDateValue(condition.value);
-    const right = toAdvancedDateValue(condition.valueTo);
-    if (!left || !right) return null;
-    const [min, max] = left <= right ? [left, right] : [right, left];
-    return {
-      AND: [
-        { createdAt: { gte: min } },
-        { createdAt: { lte: max } },
-      ],
-    };
-  }
-
-  const value = toAdvancedDateValue(condition.value);
-  if (!value) return null;
-
-  if (condition.operator === 'eq') {
-    return { createdAt: { equals: value } };
-  }
-  if (condition.operator === 'neq') {
-    return { NOT: [{ createdAt: { equals: value } }] };
-  }
-  if (condition.operator === 'gt') {
-    return { createdAt: { gt: value } };
-  }
-  if (condition.operator === 'gte') {
-    return { createdAt: { gte: value } };
-  }
-  if (condition.operator === 'lt') {
-    return { createdAt: { lt: value } };
-  }
-  if (condition.operator === 'lte') {
-    return { createdAt: { lte: value } };
-  }
-
-  return null;
-};
-
-const compileAdvancedPrismaCondition = (
-  condition: ProductAdvancedFilterCondition
-): Prisma.ProductWhereInput | null => {
-  if (condition.field === 'id') {
-    return buildPrismaSingleStringCondition('id', condition, { nullable: false });
-  }
-  if (condition.field === 'sku') {
-    return buildPrismaSingleStringCondition('sku', condition, { nullable: true });
-  }
-  if (condition.field === 'name') {
-    return buildPrismaMultiStringCondition(
-      ['name_en', 'name_pl', 'name_de'],
-      condition
-    );
-  }
-  if (condition.field === 'description') {
-    return buildPrismaMultiStringCondition(
-      ['description_en', 'description_pl', 'description_de'],
-      condition
-    );
-  }
-  if (condition.field === 'categoryId') {
-    return buildPrismaCategoryCondition(condition);
-  }
-  if (condition.field === 'price') {
-    return buildPrismaNumericCondition('price', condition);
-  }
-  if (condition.field === 'stock') {
-    return buildPrismaNumericCondition('stock', condition);
-  }
-  if (condition.field === 'createdAt') {
-    return buildPrismaCreatedAtCondition(condition);
-  }
-  return null;
-};
-
-const compileAdvancedPrismaRule = (
-  rule: ProductAdvancedFilterRule
-): Prisma.ProductWhereInput | null => {
-  if (rule.type === 'condition') {
-    return compileAdvancedPrismaCondition(rule);
-  }
-
-  const compiledRules = rule.rules
-    .map((nestedRule: ProductAdvancedFilterRule) => compileAdvancedPrismaRule(nestedRule))
-    .filter((nestedRule): nestedRule is Prisma.ProductWhereInput => nestedRule !== null);
-
-  if (compiledRules.length === 0) return null;
-
-  const combined =
-    compiledRules.length === 1
-      ? compiledRules[0]!
-      : ({
-        [rule.combinator === 'and' ? 'AND' : 'OR']: compiledRules,
-      } as Prisma.ProductWhereInput);
-
-  if (!rule.not) return combined;
-
-  return {
-    NOT: [combined],
-  };
-};
-
-const buildAdvancedPrismaWhere = (
-  payload: string | undefined
-): Prisma.ProductWhereInput | null => {
-  const parsedGroup = parseAdvancedFilterGroup(payload);
-  if (!parsedGroup) return null;
-  return compileAdvancedPrismaRule(parsedGroup);
-};
-
-const buildProductWhere = (
-  filters: ProductFilters,
-): Prisma.ProductWhereInput => {
-  const where: Prisma.ProductWhereInput = {};
-  const andConditions: Prisma.ProductWhereInput[] = [];
-
-  if (filters.id) {
-    const normalizedId = filters.id.trim();
-    if (normalizedId.length > 0) {
-      if (filters.idMatchMode === 'partial') {
-        andConditions.push({
-          OR: [
-            {
-              id: {
-                contains: normalizedId,
-                mode: 'insensitive',
-              },
-            },
-          ],
-        });
-      } else {
-        where.id = normalizedId;
-      }
-    }
-  }
-
-  if (filters.sku) {
-    where.sku = {
-      contains: filters.sku,
-      mode: 'insensitive',
-    };
-  }
-
-  if (filters.search) {
-    if (filters.searchLanguage) {
-      andConditions.push({
-        OR: [
-          {
-            [filters.searchLanguage]: {
-              contains: filters.search,
-              mode: 'insensitive',
-            },
-          },
-        ],
-      });
-    } else {
-      andConditions.push({
-        OR: [
-          { name_en: { contains: filters.search, mode: 'insensitive' } },
-          { name_pl: { contains: filters.search, mode: 'insensitive' } },
-          { name_de: { contains: filters.search, mode: 'insensitive' } },
-          { description_en: { contains: filters.search, mode: 'insensitive' } },
-          { description_pl: { contains: filters.search, mode: 'insensitive' } },
-          { description_de: { contains: filters.search, mode: 'insensitive' } },
-        ],
-      });
-    }
-  }
-
-  if (filters.description) {
-    andConditions.push({
-      OR: [
-        {
-          description_en: {
-            contains: filters.description,
-            mode: 'insensitive',
-          },
-        },
-        {
-          description_pl: {
-            contains: filters.description,
-            mode: 'insensitive',
-          },
-        },
-        {
-          description_de: {
-            contains: filters.description,
-            mode: 'insensitive',
-          },
-        },
-      ],
-    });
-  }
-
-  if (filters.minPrice !== undefined) {
-    where.price = {
-      ...(where.price as Prisma.IntFilter),
-      gte: filters.minPrice,
-    };
-  }
-  if (filters.maxPrice !== undefined) {
-    where.price = {
-      ...(where.price as Prisma.IntFilter),
-      lte: filters.maxPrice,
-    };
-  }
-  if (filters.stockValue !== undefined) {
-    const operator = filters.stockOperator ?? 'eq';
-    const stockFilter = where.stock as Prisma.IntNullableFilter | undefined;
-    const nextStockFilter: Prisma.IntNullableFilter = {
-      ...(stockFilter ?? {}),
-    };
-
-    if (operator === 'gt') {
-      nextStockFilter.gt = filters.stockValue;
-    } else if (operator === 'gte') {
-      nextStockFilter.gte = filters.stockValue;
-    } else if (operator === 'lt') {
-      nextStockFilter.lt = filters.stockValue;
-    } else if (operator === 'lte') {
-      nextStockFilter.lte = filters.stockValue;
-    } else {
-      nextStockFilter.equals = filters.stockValue;
-    }
-
-    where.stock = nextStockFilter;
-  }
-  if (filters.startDate) {
-    where.createdAt = {
-      ...(where.createdAt as Prisma.DateTimeFilter),
-      gte: new Date(filters.startDate),
-    };
-  }
-  if (filters.endDate) {
-    where.createdAt = {
-      ...(where.createdAt as Prisma.DateTimeFilter),
-      lte: new Date(filters.endDate),
-    };
-  }
-
-  if (filters.catalogId) {
-    if (filters.catalogId === 'unassigned') {
-      where.catalogs = { none: {} };
-    } else {
-      where.catalogs = { some: { catalogId: filters.catalogId } };
-    }
-  }
-
-  if (filters.categoryId) {
-    andConditions.push({
-      categories: {
-        is: { categoryId: filters.categoryId },
-      },
-    });
-  }
-
-  if (filters.baseExported !== undefined) {
-    const exportedByListing: Prisma.ProductWhereInput = {
-      listings: {
-        some: {
-          integration: {
-            slug: { in: [...BASE_INTEGRATION_SLUGS] },
-          },
-          externalListingId: { not: null },
-        },
-      },
-    };
-    const exportedByBaseProductId: Prisma.ProductWhereInput = {
-      AND: [{ baseProductId: { not: null } }, { baseProductId: { not: '' } }],
-    };
-
-    if (filters.baseExported === true) {
-      andConditions.push({
-        OR: [exportedByListing, exportedByBaseProductId],
-      });
-    } else {
-      andConditions.push({
-        AND: [
-          {
-            OR: [{ baseProductId: null }, { baseProductId: '' }],
-          },
-          {
-            listings: {
-              none: {
-                integration: {
-                  slug: { in: [...BASE_INTEGRATION_SLUGS] },
-                },
-                externalListingId: { not: null },
-              },
-            },
-          },
-        ],
-      });
-    }
-  }
-
-  const advancedWhere = buildAdvancedPrismaWhere(filters.advancedFilter);
-  if (advancedWhere) {
-    andConditions.push(advancedWhere);
-  }
-
-  if (andConditions.length > 0) {
-    where.AND = andConditions;
-  }
-
-  return where;
-};
-
-// ---------------------------------------------------------------------------
-// Mappers
-// ---------------------------------------------------------------------------
-
-const toImageFileRecord = (imageFile: PrismaImageFile): ImageFileRecord => ({
-  id: imageFile.id,
-  filename: imageFile.filename,
-  filepath: imageFile.filepath,
-  mimetype: imageFile.mimetype,
-  size: imageFile.size,
-  width: imageFile.width,
-  height: imageFile.height,
-  tags: imageFile.tags ?? [],
-  createdAt: imageFile.createdAt.toISOString(),
-  updatedAt: imageFile.updatedAt.toISOString(),
-});
-
-const toCatalogRecord = (
-  catalog: PrismaCatalog & { languages?: { languageId: string }[] },
-): CatalogRecord => ({
-  id: catalog.id,
-  name: catalog.name,
-  description: catalog.description,
-  isDefault: catalog.isDefault,
-  defaultLanguageId: catalog.defaultLanguageId,
-  defaultPriceGroupId: catalog.defaultPriceGroupId,
-  createdAt: catalog.createdAt.toISOString(),
-  updatedAt: catalog.updatedAt.toISOString(),
-  languageIds: catalog.languages?.map((l) => l.languageId) ?? [],
-  priceGroupIds: catalog.priceGroupIds ?? [],
-});
-
-const toProductImageRecord = (
-  image: PrismaProductImage & { imageFile?: PrismaImageFile | null },
-): ProductImageRecord | null => {
-  if (!image.imageFile) return null;
-
-  return {
-    productId: image.productId,
-    imageFileId: image.imageFileId,
-    assignedAt: image.assignedAt.toISOString(),
-    imageFile: toImageFileRecord(image.imageFile),
-  };
-};
-
-type FullPrismaProduct = PrismaProduct & {
-  images?: (PrismaProductImage & { imageFile: PrismaImageFile | null })[];
-  catalogs?: (PrismaProductCatalog & {
-    catalog: PrismaCatalog & { languages?: { languageId: string }[] };
-  })[];
-  categories?: { categoryId: string } | { categoryId: string }[] | null;
-  tags?: Prisma.ProductTagAssignmentGetPayload<{}>[];
-  producers?: Prisma.ProductProducerAssignmentGetPayload<{}>[];
-};
-
-const toTrimmedString = (value: unknown): string => {
-  if (typeof value !== 'string') return '';
-  return value.trim();
-};
-
-const resolveCategoryId = (product: FullPrismaProduct): string | null => {
-  const direct = toTrimmedString(
-    (product as FullPrismaProduct & { categoryId?: unknown }).categoryId,
-  );
-  if (direct) return direct;
-
-  const relation = (product as FullPrismaProduct & { categories?: unknown })
-    .categories;
-  if (Array.isArray(relation)) {
-    for (const entry of relation) {
-      if (!entry || typeof entry !== 'object') continue;
-      const record = entry as Record<string, unknown>;
-      const categoryId =
-        toTrimmedString(record['categoryId']) ||
-        toTrimmedString(record['category_id']) ||
-        toTrimmedString(record['id']) ||
-        toTrimmedString(record['value']);
-      if (categoryId) return categoryId;
-    }
-    return null;
-  }
-
-  if (relation && typeof relation === 'object') {
-    const record = relation as Record<string, unknown>;
-    const categoryId =
-      toTrimmedString(record['categoryId']) ||
-      toTrimmedString(record['category_id']) ||
-      toTrimmedString(record['id']) ||
-      toTrimmedString(record['value']);
-    return categoryId || null;
-  }
-
-  return null;
-};
-
-const toProductRecord = (product: FullPrismaProduct): ProductWithImages => {
-  const catalogs =
-
-    product.catalogs?.map((pc) => ({
-      productId: pc.productId,
-      catalogId: pc.catalogId,
-      assignedAt: pc.assignedAt.toISOString(),
-      catalog: toCatalogRecord(pc.catalog),
-    })) ?? [];
-
-  return {
-    id: product.id,
-    sku: product.sku ?? null,
-    baseProductId: product.baseProductId ?? null,
-    defaultPriceGroupId: product.defaultPriceGroupId ?? null,
-    ean: product.ean ?? null,
-    gtin: product.gtin ?? null,
-    asin: product.asin ?? null,
-    name: {
-      en: product.name_en ?? '',
-      pl: product.name_pl ?? null,
-      de: product.name_de ?? null,
-    },
-    description: {
-      en: product.description_en ?? '',
-      pl: product.description_pl ?? null,
-      de: product.description_de ?? null,
-    },
-    name_en: product.name_en ?? null,
-    name_pl: product.name_pl ?? null,
-    name_de: product.name_de ?? null,
-    description_en: product.description_en ?? null,
-    description_pl: product.description_pl ?? null,
-    description_de: product.description_de ?? null,
-    supplierName: product.supplierName ?? null,
-    supplierLink: product.supplierLink ?? null,
-    priceComment: product.priceComment ?? null,
-    stock: product.stock ?? null,
-    price: product.price ?? null,
-    sizeLength: product.sizeLength ?? null,
-    sizeWidth: product.sizeWidth ?? null,
-    weight: product.weight ?? null,
-    length: product.length ?? null,
-    published: (product.published as boolean | null | undefined) ?? true,
-    catalogId:
-      (product.catalogId as string | null | undefined) ??
-      catalogs[0]?.catalogId ??
-      '',
-    parameters: normalizeProductParameterValues(product.parameters),
-    imageLinks: product.imageLinks ?? [],
-    imageBase64s: [],
-    noteIds: product.noteIds ?? [],
-    createdAt: product.createdAt.toISOString(),
-    updatedAt: product.updatedAt.toISOString(),
-    categoryId: resolveCategoryId(product) ?? null,
-    tags:
-      product.tags?.map((t) => ({
-        productId: t.productId,
-        tagId: t.tagId,
-        assignedAt: t.assignedAt.toISOString(),
-      })) ?? [],
-    producers:
-      product.producers?.map((p) => ({
-        productId: p.productId,
-        producerId: p.producerId,
-        assignedAt: p.assignedAt.toISOString(),
-      })) ?? [],
-    images: (product.images
-      ?.map(toProductImageRecord)
-      .filter((i): i is ProductImageRecord => i !== null) ??
-      []),
-    catalogs,
-  };
-};
 // ---------------------------------------------------------------------------
 // Repository Implementation
 // ---------------------------------------------------------------------------
@@ -866,8 +56,8 @@ const createTransactionalRepository = (
           },
         },
         categories: { select: { categoryId: true } },
-        tags: { select: { tagId: true } },
-        producers: { select: { producerId: true } },
+        tags: { select: { productId: true, tagId: true, assignedAt: true } },
+        producers: { select: { productId: true, producerId: true, assignedAt: true } },
       },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * pageSize,
@@ -900,8 +90,8 @@ const createTransactionalRepository = (
             },
           },
           categories: { select: { categoryId: true } },
-          tags: { select: { tagId: true } },
-          producers: { select: { producerId: true } },
+          tags: { select: { productId: true, tagId: true, assignedAt: true } },
+          producers: { select: { productId: true, producerId: true, assignedAt: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
@@ -931,8 +121,8 @@ const createTransactionalRepository = (
           },
         },
         categories: { select: { categoryId: true } },
-        tags: { select: { tagId: true } },
-        producers: { select: { producerId: true } },
+        tags: { select: { productId: true, tagId: true, assignedAt: true } },
+        producers: { select: { productId: true, producerId: true, assignedAt: true } },
       },
     });
     return product ? toProductRecord(product as FullPrismaProduct) : null;
@@ -1036,175 +226,163 @@ const createTransactionalRepository = (
     const product = await tx.product.update({
       where: { id },
       data: cleanData,
-      include: {
-        images: { include: { imageFile: true } },
-        catalogs: { include: { catalog: true } },
-        categories: true,
-        tags: true,
-        producers: true,
-      },
     });
-    return toProductRecord(product as FullPrismaProduct);
+    return getProductByIdInternal(tx, product.id);
   },
 
   deleteProduct: async (id) => {
-    const productExists = await tx.product.findUnique({ where: { id } });
-    if (!productExists) return null;
-    const product = await tx.product.delete({
+    await tx.product.delete({ where: { id } });
+  },
+
+  duplicateProduct: async (id, sku) => {
+    const source = await tx.product.findUnique({
       where: { id },
       include: {
-        images: { include: { imageFile: true } },
-        catalogs: { include: { catalog: true } },
+        images: true,
+        catalogs: true,
         categories: true,
         tags: true,
         producers: true,
       },
     });
-    return toProductRecord(product as FullPrismaProduct);
-  },
+    if (!source) throw internalError('Source product not found');
 
-  duplicateProduct: async (id, sku) => {
-    const product = await tx.product.findUnique({ where: { id } });
-    if (!product) return null;
+    const {
+      id: _sid,
+      sku: _sku,
+      createdAt: _c,
+      updatedAt: _u,
+      images,
+      catalogs,
+      categories,
+      tags,
+      producers,
+      ...rest
+    } = source;
 
-    const existingSku = await tx.product.findUnique({
-      where: { sku },
-      select: { id: true },
-    });
-    if (existingSku) {
-      throw conflictError('A product with this SKU already exists.', {
+    const product = await tx.product.create({
+      data: {
+        ...rest,
         sku,
-        productId: existingSku.id,
+        published: false,
+      },
+    });
+
+    if (images && images.length > 0) {
+      await tx.productImage.createMany({
+        data: images.map((img) => ({
+          productId: product.id,
+          imageFileId: img.imageFileId,
+          assignedAt: img.assignedAt,
+        })),
       });
     }
 
-    const duplicated = await tx.product.create({
-      data: {
-        name_en: product.name_en,
-        name_pl: product.name_pl,
-        name_de: product.name_de,
-        description_en: product.description_en,
-        description_pl: product.description_pl,
-        description_de: product.description_de,
-        supplierName: product.supplierName,
-        supplierLink: product.supplierLink,
-        priceComment: product.priceComment,
-        stock: product.stock,
-        price: product.price,
-        sizeLength: product.sizeLength,
-        sizeWidth: product.sizeWidth,
-        weight: product.weight,
-        length: product.length,
-        parameters:
-          (normalizeProductParameterValues(
-            product.parameters,
-          ) as unknown as Prisma.InputJsonValue) || [],
-        imageLinks: product.imageLinks || [],
-        defaultPriceGroupId: product.defaultPriceGroupId ?? null,
-        ean: product.ean ?? null,
-        gtin: product.gtin ?? null,
-        asin: product.asin ?? null,
-        sku,
-      },
-    });
-    return toProductRecord(duplicated as FullPrismaProduct);
+    if (catalogs && catalogs.length > 0) {
+      await tx.productCatalog.createMany({
+        data: catalogs.map((cat) => ({
+          productId: product.id,
+          catalogId: cat.catalogId,
+          assignedAt: cat.assignedAt,
+        })),
+      });
+    }
+
+    if (categories) {
+      // Logic for categories relation if needed
+    }
+
+    if (tags && tags.length > 0) {
+      await tx.productTagAssignment.createMany({
+        data: tags.map((t) => ({
+          productId: product.id,
+          tagId: t.tagId,
+          assignedAt: t.assignedAt,
+        })),
+      });
+    }
+
+    if (producers && producers.length > 0) {
+      await tx.productProducerAssignment.createMany({
+        data: producers.map((p) => ({
+          productId: product.id,
+          producerId: p.producerId,
+          assignedAt: p.assignedAt,
+        })),
+      });
+    }
+
+    return getProductByIdInternal(tx, product.id);
   },
 
   getProductImages: async (productId) => {
     const images = await tx.productImage.findMany({
       where: { productId },
       include: { imageFile: true },
-      orderBy: { assignedAt: 'desc' },
+      orderBy: { assignedAt: 'asc' },
     });
     return images
       .map(toProductImageRecord)
-      .filter(
-        (i): i is ProductImageRecord => i !== null,
-      );
+      .filter((i): i is ProductImageRecord => i !== null);
   },
-  addProductImages: async (productId, imageFileIds) => {
-    const normalizedIds = normalizeImageFileIds(imageFileIds);
 
-    if (normalizedIds.length === 0) return;
-    const now = Date.now();
+  addProductImages: async (productId, imageFileIds) => {
+    const uniqueIds = normalizeImageFileIds(imageFileIds);
+    if (uniqueIds.length === 0) return;
+
     await tx.productImage.createMany({
-      data: normalizedIds.map((imageFileId: string, index: number) => ({
+      data: uniqueIds.map((imageFileId) => ({
         productId,
         imageFileId,
-        assignedAt: new Date(now - index),
       })),
       skipDuplicates: true,
     });
   },
 
   replaceProductImages: async (productId, imageFileIds) => {
-    const normalizedIds = normalizeImageFileIds(imageFileIds);
+    const uniqueIds = normalizeImageFileIds(imageFileIds);
     await tx.productImage.deleteMany({ where: { productId } });
-    if (normalizedIds.length === 0) return;
-
-    const now = Date.now();
-    await tx.productImage.createMany({
-      data: normalizedIds.map((imageFileId: string, index: number) => ({
-        productId,
-        imageFileId,
-        assignedAt: new Date(now - index),
-      })),
-    });
+    if (uniqueIds.length > 0) {
+      await tx.productImage.createMany({
+        data: uniqueIds.map((imageFileId) => ({
+          productId,
+          imageFileId,
+        })),
+      });
+    }
   },
 
   replaceProductCatalogs: async (productId, catalogIds) => {
-    await tx.productCatalog.deleteMany({ where: { productId } });
-    if (catalogIds.length === 0) return;
     const uniqueIds = Array.from(new Set(catalogIds));
-    const existing = await tx.catalog.findMany({
-      where: { id: { in: uniqueIds } },
-      select: { id: true },
-    });
-    const existingIds = new Set(
-      existing.map((entry: { id: string }) => entry.id),
-    );
-    const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
-    if (validIds.length === 0) return;
-    await tx.productCatalog.createMany({
-      data: validIds.map((catalogId: string) => ({ productId, catalogId })),
-    });
+    await tx.productCatalog.deleteMany({ where: { productId } });
+    if (uniqueIds.length > 0) {
+      await tx.productCatalog.createMany({
+        data: uniqueIds.map((catalogId) => ({ productId, catalogId })),
+      });
+    }
   },
 
   replaceProductCategory: async (productId, categoryId) => {
     await tx.productCategoryAssignment.deleteMany({ where: { productId } });
-    const normalized = typeof categoryId === 'string' ? categoryId.trim() : '';
-    if (!normalized) return;
-    const existing = await tx.productCategory.findUnique({
-      where: { id: normalized },
-      select: { id: true },
-    });
-    if (!existing) return;
-    await tx.productCategoryAssignment.create({
-      data: { productId, categoryId: normalized },
-    });
+    if (categoryId) {
+      await tx.productCategoryAssignment.create({
+        data: { productId, categoryId },
+      });
+    }
   },
 
   replaceProductTags: async (productId, tagIds) => {
-    await tx.productTagAssignment.deleteMany({ where: { productId } });
-    if (tagIds.length === 0) return;
     const uniqueIds = Array.from(new Set(tagIds));
-    const existing = await tx.productTag.findMany({
-      where: { id: { in: uniqueIds } },
-      select: { id: true },
-    });
-    const existingIds = new Set(
-      existing.map((entry: { id: string }) => entry.id),
-    );
-    const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
-    if (validIds.length === 0) return;
-    await tx.productTagAssignment.createMany({
-      data: validIds.map((tagId: string) => ({ productId, tagId })),
-    });
+    await tx.productTagAssignment.deleteMany({ where: { productId } });
+    if (uniqueIds.length > 0) {
+      await tx.productTagAssignment.createMany({
+        data: uniqueIds.map((tagId) => ({ productId, tagId })),
+      });
+    }
   },
 
   replaceProductProducers: async (productId, producerIds) => {
     await tx.productProducerAssignment.deleteMany({ where: { productId } });
-    if (producerIds.length === 0) return;
     const uniqueIds = Array.from(new Set(producerIds));
     const existing = await tx.producer.findMany({
       where: { id: { in: uniqueIds } },
@@ -1301,585 +479,129 @@ const createTransactionalRepository = (
   },
 });
 
-export const prismaProductRepository: ProductRepository = {
-  async getProducts(filters: ProductFilters) {
-    const where = buildProductWhere(filters);
-    const page = filters.page ?? 1;
-    const pageSize = filters.pageSize ?? 20;
-
-    const products = await prisma.product.findMany({
-      where,
-      include: {
-        images: {
-          include: { imageFile: true },
-          orderBy: { assignedAt: 'asc' },
-        },
-        catalogs: {
-          include: {
-            catalog: {
-              include: { languages: { select: { languageId: true } } },
-            },
+async function getProductByIdInternal(tx: Prisma.TransactionClient, id: string) {
+  const product = await tx.product.findUnique({
+    where: { id },
+    include: {
+      images: {
+        include: { imageFile: true },
+        orderBy: { assignedAt: 'asc' },
+      },
+      catalogs: {
+        include: {
+          catalog: {
+            include: { languages: { select: { languageId: true } } },
           },
         },
-        categories: { select: { categoryId: true } },
-        tags: { select: { tagId: true } },
-        producers: { select: { producerId: true } },
       },
-      orderBy: { createdAt: 'desc' },
-      skip: (page - 1) * pageSize,
-      take: pageSize,
-    });
+      categories: { select: { categoryId: true } },
+      tags: { select: { productId: true, tagId: true, assignedAt: true } },
+      producers: { select: { productId: true, producerId: true, assignedAt: true } },
+    },
+  });
+  return product ? toProductRecord(product as FullPrismaProduct) : null;
+}
 
-    return products.map((p) => toProductRecord(p as FullPrismaProduct));
+export const prismaProductRepository: ProductRepository = {
+  async getProducts(filters: ProductFilters) {
+    return createTransactionalRepository(prisma).getProducts(filters);
   },
 
   async countProducts(filters: ProductFilters) {
-    const where = buildProductWhere(filters);
-    return prisma.product.count({ where });
+    return createTransactionalRepository(prisma).countProducts(filters);
   },
 
-  async getProductsWithCount(
-    filters: ProductFilters,
-  ): Promise<{ products: ProductWithImages[]; total: number }> {
-    const where = buildProductWhere(filters);
-    const page = filters.page ?? 1;
-    const pageSize = filters.pageSize ?? 20;
-
-    const [rawProducts, total] = await Promise.all([
-      prisma.product.findMany({
-        where,
-        include: {
-          images: {
-            include: { imageFile: true },
-            orderBy: { assignedAt: 'desc' },
-          },
-          catalogs: {
-            include: {
-              catalog: {
-                include: { languages: { select: { languageId: true } } },
-              },
-            },
-          },
-          categories: { select: { categoryId: true } },
-          tags: { select: { tagId: true } },
-          producers: { select: { producerId: true } },
-        },
-        orderBy: { createdAt: 'desc' },
-        skip: (page - 1) * pageSize,
-        take: pageSize,
-      }),
-      prisma.product.count({ where }),
-    ]);
-
-    return {
-      products: rawProducts.map((p) => toProductRecord(p as FullPrismaProduct)),
-      total,
-    };
+  async getProductsWithCount(filters: ProductFilters) {
+    return createTransactionalRepository(prisma).getProductsWithCount(filters);
   },
 
   async getProductById(id: string) {
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: {
-        images: {
-          include: { imageFile: true },
-          orderBy: { assignedAt: 'asc' },
-        },
-        catalogs: {
-          include: {
-            catalog: {
-              include: { languages: { select: { languageId: true } } },
-            },
-          },
-        },
-        categories: { select: { categoryId: true } },
-        tags: { select: { tagId: true } },
-        producers: { select: { producerId: true } },
-      },
-    });
-    return product ? toProductRecord(product as FullPrismaProduct) : null;
+    return createTransactionalRepository(prisma).getProductById(id);
   },
 
   async getProductBySku(sku: string) {
-    const product = await prisma.product.findUnique({
-      where: { sku },
-      include: {
-        images: { include: { imageFile: true } },
-        catalogs: { include: { catalog: true } },
-        categories: true,
-        tags: true,
-        producers: true,
-      },
-    });
-    return product ? toProductRecord(product as FullPrismaProduct) : null;
+    return createTransactionalRepository(prisma).getProductBySku(sku);
   },
 
   async findProductByBaseId(baseProductId: string) {
-    const product = await prisma.product.findFirst({
-      where: { baseProductId },
-      include: {
-        images: { include: { imageFile: true } },
-        catalogs: { include: { catalog: true } },
-        categories: true,
-        tags: true,
-        producers: true,
-      },
-    });
-    return product ? toProductRecord(product as FullPrismaProduct) : null;
+    return createTransactionalRepository(prisma).findProductByBaseId(baseProductId);
   },
 
   async createProduct(data: CreateProductInput) {
-    if (data.sku) {
-      const existing = await prisma.product.findUnique({
-        where: { sku: data.sku },
-        select: { id: true },
-      });
-      if (existing) {
-        throw conflictError('A product with this SKU already exists.', {
-          sku: data.sku,
-          productId: existing.id,
-        });
-      }
-    }
-
-    const { categoryId: _cat, id, catalogIds: _cats, tagIds: _tags, producerIds: _prods, studioProjectId: _studio, imageFileIds: _imgIds, ...rest } = data;
-    const normalizedParameters =
-      rest.parameters !== undefined
-        ? normalizeProductParameterValues(rest.parameters)
-        : undefined;
-    const cleanData = removeUndefined({
-      ...rest,
-      ...(normalizedParameters !== undefined
-        ? {
-          parameters:
-              normalizedParameters as unknown as Prisma.InputJsonValue,
-        }
-        : {}),
-      ...(id ? { id } : {}),
-    }) as Prisma.ProductCreateInput;
-
-    try {
-      const product = await prisma.product.create({
-        data: cleanData,
-        include: {
-          images: {
-            include: { imageFile: true },
-            orderBy: { assignedAt: 'asc' },
-          },
-          catalogs: { include: { catalog: true } },
-          categories: true,
-          tags: true,
-          producers: true,
-        },
-      });
-      return toProductRecord(product as FullPrismaProduct);
-    } catch (error) {
-    
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2002' &&
-        Array.isArray(error.meta?.['target']) &&
-        (error.meta?.['target'] as string[]).includes('sku')
-      ) {
-        throw conflictError('A product with this SKU already exists.', {
-          sku: data.sku ?? null,
-        });
-      }
-      throw error;
-    }
+    return createTransactionalRepository(prisma).createProduct(data);
   },
 
   async updateProduct(id: string, data: UpdateProductInput) {
-    const productExists = await prisma.product.findUnique({ where: { id } });
-    if (!productExists) return null;
-
-    const { categoryId, id: _id, imageFileIds, catalogIds, tagIds, producerIds, studioProjectId: _studio, ...rest } = data;
-    const normalizedParameters =
-      rest.parameters !== undefined
-        ? normalizeProductParameterValues(rest.parameters)
-        : undefined;
-    const cleanData = removeUndefined({
-      ...rest,
-      ...(normalizedParameters !== undefined
-        ? {
-          parameters:
-              normalizedParameters as unknown as Prisma.InputJsonValue,
-        }
-        : {}),
-    }) as Prisma.ProductUpdateInput;
-
-    const product = await prisma.$transaction(async (tx) => {
-      if (imageFileIds !== undefined) {
-        await tx.productImage.deleteMany({ where: { productId: id } });
-        if (imageFileIds.length > 0) {
-          const now = Date.now();
-          for (let i = 0; i < imageFileIds.length; i++) {
-            await tx.productImage.create({
-              data: {
-                productId: id,
-                imageFileId: imageFileIds[i]!,
-                assignedAt: new Date(now + i * 1000),
-              },
-            });
-          }
-        }
-      }
-
-      if (catalogIds !== undefined) {
-        await tx.productCatalog.deleteMany({ where: { productId: id } });
-        if (catalogIds.length > 0) {
-          const uniqueIds = Array.from(new Set(catalogIds));
-          const existing = await tx.catalog.findMany({
-            where: { id: { in: uniqueIds } },
-            select: { id: true },
-          });
-          const existingIds = new Set(existing.map((e: { id: string }) => e.id));
-          const validIds = uniqueIds.filter((cid: string) => existingIds.has(cid));
-          if (validIds.length > 0) {
-            await tx.productCatalog.createMany({
-              data: validIds.map((catalogId: string) => ({ productId: id, catalogId })),
-            });
-          }
-        }
-      }
-
-      if (tagIds !== undefined) {
-        await tx.productTagAssignment.deleteMany({ where: { productId: id } });
-        if (tagIds.length > 0) {
-          const uniqueIds = Array.from(new Set(tagIds));
-          const existing = await tx.productTag.findMany({
-            where: { id: { in: uniqueIds } },
-            select: { id: true },
-          });
-          const existingIds = new Set(existing.map((e: { id: string }) => e.id));
-          const validIds = uniqueIds.filter((tid: string) => existingIds.has(tid));
-          if (validIds.length > 0) {
-            await tx.productTagAssignment.createMany({
-              data: validIds.map((tagId: string) => ({ productId: id, tagId })),
-            });
-          }
-        }
-      }
-
-      if (producerIds !== undefined) {
-        await tx.productProducerAssignment.deleteMany({ where: { productId: id } });
-        if (producerIds.length > 0) {
-          const uniqueIds = Array.from(new Set(producerIds));
-          const existing = await tx.producer.findMany({
-            where: { id: { in: uniqueIds } },
-            select: { id: true },
-          });
-          const existingIds = new Set(existing.map((e: { id: string }) => e.id));
-          const validIds = uniqueIds.filter((pid: string) => existingIds.has(pid));
-          if (validIds.length > 0) {
-            await tx.productProducerAssignment.createMany({
-              data: validIds.map((producerId: string) => ({ productId: id, producerId })),
-            });
-          }
-        }
-      }
-
-      if (categoryId !== undefined) {
-        await tx.productCategoryAssignment.deleteMany({ where: { productId: id } });
-        const normalized = typeof categoryId === 'string' ? categoryId.trim() : '';
-        if (normalized) {
-          const existing = await tx.productCategory.findUnique({
-            where: { id: normalized },
-            select: { id: true },
-          });
-          if (existing) {
-            await tx.productCategoryAssignment.create({
-              data: { productId: id, categoryId: normalized },
-            });
-          }
-        }
-      }
-
-      await tx.product.update({
-        where: { id },
-        data: cleanData,
-      });
-
-      return tx.product.findUniqueOrThrow({
-        where: { id },
-        include: {
-          images: {
-            include: { imageFile: true },
-            orderBy: { assignedAt: 'asc' },
-          },
-          catalogs: { include: { catalog: true } },
-          categories: true,
-          tags: true,
-          producers: true,
-        },
-      });
-    });
-
-    return toProductRecord(product as FullPrismaProduct);
+    return createTransactionalRepository(prisma).updateProduct(id, data);
   },
 
   async deleteProduct(id: string) {
-    const productExists = await prisma.product.findUnique({ where: { id } });
-    if (!productExists) return null;
-    const product = await prisma.product.delete({
-      where: { id },
-      include: {
-        images: { include: { imageFile: true } },
-        catalogs: { include: { catalog: true } },
-        categories: true,
-        tags: true,
-        producers: true,
-      },
-    });
-    return toProductRecord(product as FullPrismaProduct);
+    return createTransactionalRepository(prisma).deleteProduct(id);
   },
 
   async duplicateProduct(id: string, sku: string) {
-    const product = await prisma.product.findUnique({ where: { id } });
-    if (!product) return null;
-
-    const existingSku = await prisma.product.findUnique({
-      where: { sku },
-      select: { id: true },
-    });
-    if (existingSku) {
-      throw conflictError('A product with this SKU already exists.', {
-        sku,
-        productId: existingSku.id,
-      });
-    }
-
-    const duplicated = await prisma.product.create({
-      data: {
-        name_en: product.name_en,
-        name_pl: product.name_pl,
-        name_de: product.name_de,
-        description_en: product.description_en,
-        description_pl: product.description_pl,
-        description_de: product.description_de,
-        supplierName: product.supplierName,
-        supplierLink: product.supplierLink,
-        priceComment: product.priceComment,
-        stock: product.stock,
-        price: product.price,
-        sizeLength: product.sizeLength,
-        sizeWidth: product.sizeWidth,
-        weight: product.weight,
-        length: product.length,
-        parameters:
-          (normalizeProductParameterValues(
-            product.parameters,
-          ) as unknown as Prisma.InputJsonValue) || [],
-        imageLinks: product.imageLinks || [],
-        defaultPriceGroupId: product.defaultPriceGroupId ?? null,
-        ean: product.ean ?? null,
-        gtin: product.gtin ?? null,
-        asin: product.asin ?? null,
-        sku,
-      },
-    });
-    return toProductRecord(duplicated as FullPrismaProduct);
+    return createTransactionalRepository(prisma).duplicateProduct(id, sku);
   },
 
   async getProductImages(productId: string) {
-    const images = await prisma.productImage.findMany({
-      where: { productId },
-      include: { imageFile: true },
-      orderBy: { assignedAt: 'asc' },
-    });
-    return images
-      .map(toProductImageRecord)
-      .filter(
-        (i): i is ProductImageRecord => i !== null,
-      );
+    return createTransactionalRepository(prisma).getProductImages(productId);
   },
 
   async addProductImages(productId: string, imageFileIds: string[]) {
-    const normalizedIds = normalizeImageFileIds(imageFileIds);
-
-    if (normalizedIds.length === 0) return;
-    const now = Date.now();
-    await prisma.productImage.createMany({
-      data: normalizedIds.map((imageFileId: string, index: number) => ({
-        productId,
-        imageFileId,
-        assignedAt: new Date(now + index),
-      })),
-      skipDuplicates: true,
-    });
+    return createTransactionalRepository(prisma).addProductImages(productId, imageFileIds);
   },
 
   async replaceProductImages(productId: string, imageFileIds: string[]) {
-    const normalizedIds = normalizeImageFileIds(imageFileIds);
-    await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      await tx.productImage.deleteMany({ where: { productId } });
-      if (normalizedIds.length === 0) return;
-
-      const now = Date.now();
-      for (let i = 0; i < normalizedIds.length; i++) {
-        await tx.productImage.create({
-          data: {
-            productId,
-            imageFileId: normalizedIds[i]!,
-            assignedAt: new Date(now + i * 1000),
-          },
-        });
-      }
-    });
+    return createTransactionalRepository(prisma).replaceProductImages(productId, imageFileIds);
   },
 
   async replaceProductCatalogs(productId: string, catalogIds: string[]) {
-    await prisma.productCatalog.deleteMany({ where: { productId } });
-    if (catalogIds.length === 0) return;
-    const uniqueIds = Array.from(new Set(catalogIds));
-    const existing = await prisma.catalog.findMany({
-      where: { id: { in: uniqueIds } },
-      select: { id: true },
-    });
-    const existingIds = new Set(
-      existing.map((entry: { id: string }) => entry.id),
-    );
-    const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
-    if (validIds.length === 0) return;
-    await prisma.productCatalog.createMany({
-      data: validIds.map((catalogId: string) => ({ productId, catalogId })),
-    });
+    return createTransactionalRepository(prisma).replaceProductCatalogs(productId, catalogIds);
   },
 
   async replaceProductCategory(productId: string, categoryId: string | null) {
-    await prisma.productCategoryAssignment.deleteMany({ where: { productId } });
-    const normalized = typeof categoryId === 'string' ? categoryId.trim() : '';
-    if (!normalized) return;
-    const existing = await prisma.productCategory.findUnique({
-      where: { id: normalized },
-      select: { id: true },
-    });
-    if (!existing) return;
-    await prisma.productCategoryAssignment.create({
-      data: { productId, categoryId: normalized },
-    });
+    return createTransactionalRepository(prisma).replaceProductCategory(productId, categoryId);
   },
 
   async replaceProductTags(productId: string, tagIds: string[]) {
-    await prisma.productTagAssignment.deleteMany({ where: { productId } });
-    if (tagIds.length === 0) return;
-    const uniqueIds = Array.from(new Set(tagIds));
-    const existing = await prisma.productTag.findMany({
-      where: { id: { in: uniqueIds } },
-      select: { id: true },
-    });
-    const existingIds = new Set(
-      existing.map((entry: { id: string }) => entry.id),
-    );
-    const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
-    if (validIds.length === 0) return;
-    await prisma.productTagAssignment.createMany({
-      data: validIds.map((tagId: string) => ({ productId, tagId })),
-    });
+    return createTransactionalRepository(prisma).replaceProductTags(productId, tagIds);
   },
 
   async replaceProductProducers(productId: string, producerIds: string[]) {
-    await prisma.productProducerAssignment.deleteMany({ where: { productId } });
-    if (producerIds.length === 0) return;
-    const uniqueIds = Array.from(new Set(producerIds));
-    const existing = await prisma.producer.findMany({
-      where: { id: { in: uniqueIds } },
-      select: { id: true },
-    });
-    const existingIds = new Set(
-      existing.map((entry: { id: string }) => entry.id),
-    );
-    const validIds = uniqueIds.filter((id: string) => existingIds.has(id));
-    if (validIds.length === 0) return;
-    await prisma.productProducerAssignment.createMany({
-      data: validIds.map((producerId: string) => ({ productId, producerId })),
-    });
+    return createTransactionalRepository(prisma).replaceProductProducers(productId, producerIds);
   },
 
   async replaceProductNotes(productId: string, noteIds: string[]) {
-    const uniqueIds = Array.from(
-      new Set(noteIds.filter((id: string) => id?.trim())),
-    ).map((id: string) => id.trim());
-    await prisma.product.update({
-      where: { id: productId },
-      data: { noteIds: uniqueIds },
-    });
+    return createTransactionalRepository(prisma).replaceProductNotes(productId, noteIds);
   },
 
   async bulkReplaceProductCatalogs(productIds: string[], catalogIds: string[]) {
-    if (productIds.length === 0) return;
-    const uniqueCatalogIds = Array.from(new Set(catalogIds));
-    const existing = await prisma.catalog.findMany({
-      where: { id: { in: uniqueCatalogIds } },
-      select: { id: true },
-    });
-    const validCatalogIds = existing.map((entry: { id: string }) => entry.id);
-
-    await prisma.$transaction([
-      prisma.productCatalog.deleteMany({
-        where: { productId: { in: productIds } },
-      }),
-      ...(validCatalogIds.length > 0
-        ? [
-          prisma.productCatalog.createMany({
-            data: productIds.flatMap((productId) =>
-              validCatalogIds.map((catalogId) => ({ productId, catalogId })),
-            ),
-            skipDuplicates: true,
-          }),
-        ]
-        : []),
-    ]);
+    return createTransactionalRepository(prisma).bulkReplaceProductCatalogs(productIds, catalogIds);
   },
 
   async bulkAddProductCatalogs(productIds: string[], catalogIds: string[]) {
-    if (productIds.length === 0 || catalogIds.length === 0) return;
-    const uniqueCatalogIds = Array.from(new Set(catalogIds));
-    const existing = await prisma.catalog.findMany({
-      where: { id: { in: uniqueCatalogIds } },
-      select: { id: true },
-    });
-    const validCatalogIds = existing.map((entry: { id: string }) => entry.id);
-    if (validCatalogIds.length === 0) return;
-
-    await prisma.productCatalog.createMany({
-      data: productIds.flatMap((productId) =>
-        validCatalogIds.map((catalogId) => ({ productId, catalogId })),
-      ),
-      skipDuplicates: true,
-    });
+    return createTransactionalRepository(prisma).bulkAddProductCatalogs(productIds, catalogIds);
   },
 
   async bulkRemoveProductCatalogs(productIds: string[], catalogIds: string[]) {
-    if (productIds.length === 0 || catalogIds.length === 0) return;
-    await prisma.productCatalog.deleteMany({
-      where: {
-        productId: { in: productIds },
-        catalogId: { in: catalogIds },
-      },
-    });
+    return createTransactionalRepository(prisma).bulkRemoveProductCatalogs(productIds, catalogIds);
   },
 
   async removeProductImage(productId: string, imageFileId: string) {
-    await prisma.productImage.deleteMany({
-      where: { productId, imageFileId },
-    });
+    return createTransactionalRepository(prisma).removeProductImage(productId, imageFileId);
   },
 
   async countProductsByImageFileId(imageFileId: string) {
-    return prisma.productImage.count({ where: { imageFileId } });
+    return createTransactionalRepository(prisma).countProductsByImageFileId(imageFileId);
   },
 
   async createProductInTransaction<T>(
-    callback: (
-      txClient: ProductRepository & Prisma.TransactionClient,
-    ) => Promise<T>,
+    callback: (txClient: ProductRepository & Prisma.TransactionClient) => Promise<T>,
   ): Promise<T> {
-    return prisma.$transaction(async (tx) => {
-      const transactionalRepo = createTransactionalRepository(tx);
-      return callback(
-        transactionalRepo as ProductRepository & Prisma.TransactionClient,
-      );
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const txRepo = createTransactionalRepository(tx);
+      const txClient = Object.assign(tx, txRepo);
+      return callback(txClient as ProductRepository & Prisma.TransactionClient);
     });
   },
 };

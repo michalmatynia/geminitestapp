@@ -15,6 +15,10 @@ import {
   Hint
 } from '@/shared/ui';
 
+import { CountryModal } from './country-modal/CountryModal';
+import { CurrencyModal } from './currency-modal/CurrencyModal';
+import { LanguageModal } from './language-modal/LanguageModal';
+
 export function InternationalizationSettings(): React.JSX.Element {
   const {
     loadingCurrencies,
@@ -189,6 +193,10 @@ export function InternationalizationSettings(): React.JSX.Element {
           )}
         />
       </FormSection>
+
+      <CurrencyModal />
+      <CountryModal />
+      <LanguageModal />
     </div>
   );
 }

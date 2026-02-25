@@ -31,6 +31,24 @@ export const createId = (prefix: string): string => {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 };
 
+const IMAGE_FILE_EXTENSION_PATTERN = /\.(avif|bmp|gif|heic|heif|jpe?g|png|svg|tiff?|webp)$/i;
+const PDF_FILE_EXTENSION_PATTERN = /\.pdf$/i;
+
+export const isLikelyImageFile = (file: File): boolean => {
+  const mimeType = file.type.trim().toLowerCase();
+  if (mimeType.startsWith('image/')) return true;
+  return IMAGE_FILE_EXTENSION_PATTERN.test(file.name.trim());
+};
+
+export const isLikelyPdfFile = (file: File): boolean => {
+  const mimeType = file.type.trim().toLowerCase();
+  if (mimeType === 'application/pdf') return true;
+  return PDF_FILE_EXTENSION_PATTERN.test(file.name.trim());
+};
+
+export const isLikelyScanInputFile = (file: File): boolean =>
+  isLikelyImageFile(file) || isLikelyPdfFile(file);
+
 export const folderBaseName = (path: string): string => {
   const normalized = normalizeFolderPath(path);
   if (!normalized) return '';

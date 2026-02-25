@@ -178,13 +178,77 @@ export interface MasterFolderTreePersistContext {
   profile?: FolderTreeProfileV2 | undefined;
 }
 
-export interface MasterFolderTreeAdapter {
+export type MasterFolderTreeTransaction = {
+  id: string;
+  instanceId?: string | undefined;
+  version: number;
+  createdAt: number;
+  operation: MasterFolderTreePersistOperation;
+  previousNodes: MasterTreeNode[];
+  nextNodes: MasterTreeNode[];
+};
+
+export type MasterFolderTreePreparedTransaction = {
+  tx: MasterFolderTreeTransaction;
+  preparedAt: number;
+  context?: Record<string, unknown> | undefined;
+};
+
+export type MasterFolderTreeAppliedTransaction = {
+  tx: MasterFolderTreeTransaction;
+  appliedAt: number;
+  nodes?: MasterTreeNode[] | undefined;
+  version?: number | undefined;
+  metadata?: Record<string, unknown> | undefined;
+};
+
+export interface MasterFolderTreeLegacyAdapter {
   loadNodes?: () => Promise<MasterTreeNode[]>;
   applyOperation: (
     operation: MasterFolderTreePersistOperation,
     context: MasterFolderTreePersistContext
   ) => Promise<MasterTreeNode[] | void>;
 }
+
+export interface MasterFolderTreeAdapterV3 {
+  /**
+   * @deprecated Transitional alias while adapters are migrating to fetchState.
+   */
+  loadNodes?: () => Promise<MasterTreeNode[]>;
+  /**
+   * @deprecated Transitional alias while adapters are migrating to apply/prepare/commit.
+   */
+  applyOperation?: (
+    operation: MasterFolderTreePersistOperation,
+    context: MasterFolderTreePersistContext
+  ) => Promise<MasterTreeNode[] | void>;
+  fetchState?: (
+    instanceId?: string
+  ) => Promise<{
+    nodes: MasterTreeNode[];
+    version?: number | undefined;
+  }>;
+  prepare?: (
+    tx: MasterFolderTreeTransaction
+  ) => Promise<MasterFolderTreePreparedTransaction>;
+  apply: (
+    tx: MasterFolderTreeTransaction,
+    prepared: MasterFolderTreePreparedTransaction
+  ) => Promise<MasterFolderTreeAppliedTransaction | void>;
+  commit?: (
+    tx: MasterFolderTreeTransaction,
+    applied: MasterFolderTreeAppliedTransaction
+  ) => Promise<void>;
+  rollback?: (
+    tx: MasterFolderTreeTransaction,
+    stage: 'prepare' | 'apply' | 'commit',
+    reason: unknown
+  ) => Promise<void>;
+}
+
+export type MasterFolderTreeAdapter =
+  | MasterFolderTreeAdapterV3
+  | MasterFolderTreeLegacyAdapter;
 
 export const masterFolderTreeActionOkSchema = z.object({
   ok: z.literal(true),
@@ -252,6 +316,7 @@ export type FolderTreeProfileV2 = {
 };
 
 export const useMasterFolderTreeOptionsSchema = z.object({
+  instanceId: z.string().optional(),
   initialNodes: z.array(masterTreeNodeSchema),
   initialSelectedNodeId: z.string().nullable().optional(),
   initiallyExpandedNodeIds: z.array(z.string()).optional(),
@@ -261,6 +326,7 @@ export const useMasterFolderTreeOptionsSchema = z.object({
 
 export type UseMasterFolderTreeOptionsDto = z.infer<typeof useMasterFolderTreeOptionsSchema>;
 export interface UseMasterFolderTreeOptions {
+  instanceId?: string | undefined;
   profile?: FolderTreeProfileV2 | undefined;
   adapter?: MasterFolderTreeAdapter | undefined;
   initialNodes: MasterTreeNode[];

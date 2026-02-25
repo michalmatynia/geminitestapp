@@ -4,6 +4,7 @@ import { vi } from 'vitest';
 import { ProductListHeader } from '@/features/products/components/list/ProductListHeader';
 import { ProductListProvider } from '@/features/products/context/ProductListContext';
 import type { ProductListContextType } from '@/features/products/context/ProductListContext';
+import { AdminLayoutProvider } from '@/features/admin/context/AdminLayoutContext';
 
 import { render, screen, fireEvent } from '../../../test-utils';
 
@@ -162,9 +163,11 @@ describe('ProductListHeader Component', () => {
 
   const renderWithContext = (ui: React.ReactNode, contextValue = mockContextValue) => {
     return render(
-      <ProductListProvider value={contextValue}>
-        {ui}
-      </ProductListProvider>
+      <AdminLayoutProvider>
+        <ProductListProvider value={contextValue}>
+          {ui}
+        </ProductListProvider>
+      </AdminLayoutProvider>
     );
   };
 
@@ -209,5 +212,15 @@ describe('ProductListHeader Component', () => {
     }
     fireEvent.click(nextButton);
     expect(mockContextValue.setPage).toHaveBeenCalledWith(3);
+  });
+
+  it('toggles admin menu visibility button label', () => {
+    renderWithContext(<ProductListHeader />);
+    const hideButton = screen.getAllByLabelText('Hide admin menu')[0];
+    if (!hideButton) {
+      throw new Error('Expected hide admin menu button');
+    }
+    fireEvent.click(hideButton);
+    expect(screen.getAllByLabelText('Show admin menu').length).toBeGreaterThan(0);
   });
 });

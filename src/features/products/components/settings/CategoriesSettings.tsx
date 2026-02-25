@@ -9,9 +9,9 @@ import {
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
 import {
-  MasterFolderTree,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
+import { FolderTreeViewportV2 } from '@/features/foldertree/v2';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
 import { logClientError } from '@/features/observability';
 import type { ReorderCategoryPayload } from '@/features/products/api/settings';
@@ -454,7 +454,7 @@ export function CategoriesSettings(): React.JSX.Element {
                       className='bg-card/30 border-dashed border-border/70 py-4'
                     />
                   ) : (
-                    <MasterFolderTree
+                    <FolderTreeViewportV2
                       controller={controller}
                       className='space-y-0.5'
                       rootDropUi={rootDropUi}

@@ -60,8 +60,6 @@ function ProductListingsModalContent(): React.JSX.Element {
     isLoading,
     error,
     exportLogs,
-    logsOpen,
-    setLogsOpen,
     onClose,
     onStartListing,
     filterIntegrationSlug,
@@ -127,11 +125,7 @@ function ProductListingsModalContent(): React.JSX.Element {
         
         {exportLogs.length > 0 && (
           <div className='mt-4 border-t border pt-4'>
-            <ExportLogViewer
-              logs={exportLogs}
-              isOpen={logsOpen}
-              onToggle={setLogsOpen}
-            />
+            <ExportLogViewer />
           </div>
         )}
       </div>

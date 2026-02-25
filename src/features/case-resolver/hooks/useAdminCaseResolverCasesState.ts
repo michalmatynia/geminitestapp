@@ -13,7 +13,39 @@ const resolveCaseSortOrderValue = (file: CaseResolverFile): number =>
     ? Math.max(0, Math.floor(file.caseTreeOrder))
     : Number.MAX_SAFE_INTEGER;
 
-const compareCaseRows = (left: CaseResolverFile, right: CaseResolverFile): number => {
+const resolveTimestampMs = (value: string | null | undefined): number => {
+  if (!value) return 0;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+
+const compareCaseRows = (
+  left: CaseResolverFile,
+  right: CaseResolverFile,
+  sortBy: 'updated' | 'created' | 'name',
+  sortOrder: 'asc' | 'desc'
+): number => {
+  const resolveDirectionalDelta = (value: number): number =>
+    sortOrder === 'asc' ? value : -value;
+
+  if (sortBy === 'name') {
+    const nameDelta = left.name.localeCompare(right.name);
+    if (nameDelta !== 0) return resolveDirectionalDelta(nameDelta);
+  }
+
+  if (sortBy === 'created') {
+    const createdDelta =
+      resolveTimestampMs(left.createdAt) - resolveTimestampMs(right.createdAt);
+    if (createdDelta !== 0) return resolveDirectionalDelta(createdDelta);
+  }
+
+  if (sortBy === 'updated') {
+    const updatedDelta =
+      resolveTimestampMs(left.updatedAt ?? left.createdAt) -
+      resolveTimestampMs(right.updatedAt ?? right.createdAt);
+    if (updatedDelta !== 0) return resolveDirectionalDelta(updatedDelta);
+  }
+
   const orderDelta = resolveCaseSortOrderValue(left) - resolveCaseSortOrderValue(right);
   if (orderDelta !== 0) return orderDelta;
   const nameDelta = left.name.localeCompare(right.name);
@@ -35,14 +67,18 @@ export function useAdminCaseResolverCasesState() {
     caseFilterCaseIdentifierIds,
     caseFilterCategoryIds,
     caseFilterFolder,
+    caseSortBy,
+    caseSortOrder,
   } = context;
 
   const files = useMemo(
     (): CaseResolverFile[] =>
       workspace.files
         .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
-        .sort(compareCaseRows),
-    [workspace.files]
+        .sort((left: CaseResolverFile, right: CaseResolverFile): number =>
+          compareCaseRows(left, right, caseSortBy, caseSortOrder)
+        ),
+    [caseSortBy, caseSortOrder, workspace.files]
   );
 
   const filesById = useMemo(

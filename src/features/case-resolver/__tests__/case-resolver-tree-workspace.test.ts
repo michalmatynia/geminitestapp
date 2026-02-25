@@ -298,4 +298,39 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     expect(scoped.folders).toEqual(['parent-folder']);
     expect(scoped.folderRecords).toEqual([{ path: 'parent-folder', ownerCaseId: 'case-parent' }]);
   });
+
+  it('includes legacy documents in scoped case when folder ownership matches but parentCaseId is missing', () => {
+    const workspace = buildWorkspaceFixture();
+    const legacyDoc = createCaseResolverFile({
+      id: 'doc-legacy',
+      name: 'Legacy Doc',
+      folder: 'old-folder/legacy',
+      parentCaseId: null,
+    });
+    const legacyAsset = createCaseResolverAssetFile({
+      id: 'asset-legacy',
+      name: 'legacy.pdf',
+      folder: 'old-folder/legacy',
+      kind: 'pdf',
+      filepath: '/uploads/legacy.pdf',
+      sourceFileId: 'doc-legacy',
+    });
+
+    const scoped = resolveCaseResolverTreeWorkspace({
+      selectedFileId: 'case-a',
+      requestedFileId: null,
+      workspace: {
+        ...workspace,
+        folderRecords: [
+          ...(workspace.folderRecords ?? []),
+          { path: 'old-folder/legacy', ownerCaseId: 'case-a' },
+        ],
+        files: [...workspace.files, legacyDoc],
+        assets: [...workspace.assets, legacyAsset],
+      },
+    });
+
+    expect(scoped.files.map((file: CaseResolverFile) => file.id)).toContain('doc-legacy');
+    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id)).toContain('asset-legacy');
+  });
 });

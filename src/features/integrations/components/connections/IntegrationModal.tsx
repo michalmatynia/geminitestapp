@@ -28,24 +28,7 @@ export function IntegrationModal(): React.JSX.Element {
   const {
     activeIntegration,
     onCloseModal,
-    showTestLogModal,
-    selectedStep,
-    showTestErrorModal,
-    testError,
-    testErrorMeta,
-    showTestSuccessModal,
-    testSuccessMessage,
-    setShowTestSuccessModal,
-    setShowTestErrorModal,
-    setShowTestLogModal,
-    showSessionModal,
-    setShowSessionModal,
     onOpenSessionModal,
-    sessionLoading,
-    sessionError,
-    sessionCookies,
-    sessionOrigins,
-    sessionUpdatedAt,
   } = useIntegrationsContext();
 
   const {
@@ -141,31 +124,11 @@ export function IntegrationModal(): React.JSX.Element {
           )}
         </Tabs>
 
-        <TestLogModal
-          isOpen={showTestLogModal}
-          onClose={() => setShowTestLogModal(false)}
-          selectedStep={selectedStep!}
-        />
+        <TestLogModal />
 
-        <TestResultModal
-          isOpen={showTestErrorModal || showTestSuccessModal}
-          onClose={showTestSuccessModal ? () => setShowTestSuccessModal(false) : () => setShowTestErrorModal(false)}
-          onSuccess={() => {}}
-          success={showTestSuccessModal}
-          message={showTestSuccessModal ? testSuccessMessage : testError}
-          meta={testErrorMeta ?? undefined}
-        />
+        <TestResultModal />
 
-        <SessionModal
-          isOpen={showSessionModal}
-          onClose={() => setShowSessionModal(false)}
-          onSuccess={() => {}}
-          loading={sessionLoading}
-          error={sessionError}
-          cookies={sessionCookies}
-          origins={(sessionOrigins || []) as string[]}
-          updatedAt={sessionUpdatedAt}
-        />
+        <SessionModal />
       </DetailModal>
     </IntegrationModalViewProvider>
   );

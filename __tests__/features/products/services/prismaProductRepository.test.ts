@@ -5,6 +5,28 @@ vi.unmock('@/shared/lib/db/prisma');
 import { prismaProductRepository } from '@/features/products/services/product-repository/prisma-product-repository';
 import prisma from '@/shared/lib/db/prisma';
 
+const createAdvancedFilterGroup = (
+  rules: Array<Record<string, unknown>>,
+): Record<string, unknown> => ({
+  type: 'group',
+  id: `group-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+  combinator: 'and',
+  not: false,
+  rules,
+});
+
+const createAdvancedFilterCondition = (
+  field: string,
+  operator: string,
+  value?: unknown,
+): Record<string, unknown> => ({
+  type: 'condition',
+  id: `condition-${Math.random().toString(36).slice(2, 8)}`,
+  field,
+  operator,
+  ...(value !== undefined ? { value } : {}),
+});
+
 describe('prismaProductRepository', () => {
   beforeEach(async () => {
     await prisma.productCategoryAssignment.deleteMany({});
@@ -134,5 +156,138 @@ describe('prismaProductRepository', () => {
       imageB.id,
       imageA.id,
     ]);
+  });
+
+  it('supports advanced relation and boolean filter fields', async () => {
+    const suffix = Date.now().toString(36);
+
+    const catalogA = await prisma.catalog.create({
+      data: { name: `Catalog A ${suffix}` },
+    });
+    const catalogB = await prisma.catalog.create({
+      data: { name: `Catalog B ${suffix}` },
+    });
+
+    const tagA = await prisma.productTag.create({
+      data: {
+        name: `Tag A ${suffix}`,
+        catalogId: catalogA.id,
+      },
+    });
+    const tagB = await prisma.productTag.create({
+      data: {
+        name: `Tag B ${suffix}`,
+        catalogId: catalogB.id,
+      },
+    });
+
+    const producerA = await prisma.producer.create({
+      data: { name: `Producer A ${suffix}` },
+    });
+    const producerB = await prisma.producer.create({
+      data: { name: `Producer B ${suffix}` },
+    });
+
+    const productA = await prismaProductRepository.createProduct({
+      name_en: 'Advanced A',
+      sku: `ADV-${suffix}-A`,
+      published: true,
+      baseProductId: 'base-advanced-a',
+    });
+    const productB = await prismaProductRepository.createProduct({
+      name_en: 'Advanced B',
+      sku: `ADV-${suffix}-B`,
+      published: false,
+      baseProductId: null,
+    });
+
+    await prismaProductRepository.replaceProductCatalogs(productA.id, [catalogA.id]);
+    await prismaProductRepository.replaceProductCatalogs(productB.id, [catalogB.id]);
+    await prismaProductRepository.replaceProductTags(productA.id, [tagA.id]);
+    await prismaProductRepository.replaceProductTags(productB.id, [tagB.id]);
+    await prismaProductRepository.replaceProductProducers(productA.id, [producerA.id]);
+    await prismaProductRepository.replaceProductProducers(productB.id, [producerB.id]);
+
+    const advancedFilterPayload = JSON.stringify(
+      createAdvancedFilterGroup([
+        createAdvancedFilterCondition('catalogId', 'in', [catalogA.id]),
+        createAdvancedFilterCondition('tagId', 'eq', tagA.id),
+        createAdvancedFilterCondition('producerId', 'neq', producerB.id),
+        createAdvancedFilterCondition('published', 'eq', true),
+        createAdvancedFilterCondition('baseProductId', 'contains', 'base-advanced'),
+      ])
+    );
+
+    const result = await prismaProductRepository.getProducts({
+      advancedFilter: advancedFilterPayload,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.id).toBe(productA.id);
+  });
+
+  it('supports advanced baseExported conditions', async () => {
+    const suffix = Date.now().toString(36);
+
+    const exportedProduct = await prismaProductRepository.createProduct({
+      name_en: 'Exported Product',
+      sku: `BASE-EXP-${suffix}-A`,
+      baseProductId: null,
+    });
+    const unexportedProduct = await prismaProductRepository.createProduct({
+      name_en: 'Unexported Product',
+      sku: `BASE-EXP-${suffix}-B`,
+      baseProductId: null,
+    });
+
+    const baseIntegration = await prisma.integration.upsert({
+      where: { slug: 'base-com' },
+      update: { name: 'Base.com' },
+      create: {
+        name: 'Base.com',
+        slug: 'base-com',
+      },
+    });
+
+    const connection = await prisma.integrationConnection.create({
+      data: {
+        integrationId: baseIntegration.id,
+        name: `Base Connection ${suffix}`,
+        username: `base-user-${suffix}`,
+        password: 'test-password',
+      },
+    });
+
+    await prisma.productListing.create({
+      data: {
+        productId: exportedProduct.id,
+        integrationId: baseIntegration.id,
+        connectionId: connection.id,
+        externalListingId: `listing-${suffix}`,
+      },
+    });
+
+    const exportedFilterPayload = JSON.stringify(
+      createAdvancedFilterGroup([
+        createAdvancedFilterCondition('baseExported', 'eq', true),
+      ])
+    );
+    const unexportedFilterPayload = JSON.stringify(
+      createAdvancedFilterGroup([
+        createAdvancedFilterCondition('baseExported', 'eq', false),
+      ])
+    );
+
+    const exported = await prismaProductRepository.getProducts({
+      advancedFilter: exportedFilterPayload,
+    });
+    const unexported = await prismaProductRepository.getProducts({
+      advancedFilter: unexportedFilterPayload,
+    });
+
+    expect(exported.some((product) => product.id === exportedProduct.id)).toBe(true);
+    expect(exported.some((product) => product.id === unexportedProduct.id)).toBe(false);
+    expect(unexported.some((product) => product.id === unexportedProduct.id)).toBe(true);
+    expect(unexported.some((product) => product.id === exportedProduct.id)).toBe(false);
   });
 });

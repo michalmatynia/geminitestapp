@@ -16,4 +16,9 @@ export const productFilterSchema = productFilterDtoSchema;
 export type ProductFiltersParsed = z.infer<typeof productFilterSchema>;
 
 // Type exports
-export { productCreateSchema, productUpdateSchema };
+export {
+  productCreateSchema,
+  productUpdateSchema,
+  type ProductCreateInput,
+  type ProductUpdateInput,
+};

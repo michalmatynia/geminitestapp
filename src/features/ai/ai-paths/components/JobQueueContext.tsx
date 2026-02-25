@@ -508,7 +508,9 @@ export function JobQueueProvider({
         try {
           const messageEvent = event as MessageEvent;
           const payload = JSON.parse(messageEvent.data as string) as unknown;
-          const incoming = Array.isArray(payload) ? payload : ((payload as Record<string, unknown>).events || []);
+          const incoming = Array.isArray(payload)
+            ? payload
+            : ((payload as Record<string, unknown>)['events'] || []);
           const safeIncoming = normalizeRunEvents(incoming);
           if (safeIncoming.length === 0) return;
 

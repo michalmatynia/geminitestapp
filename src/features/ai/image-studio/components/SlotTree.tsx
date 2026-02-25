@@ -4,11 +4,13 @@ import { Folder, FolderOpen, GripVertical, LayoutGrid, Trash2 } from 'lucide-rea
 import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
-  applyInternalMasterTreeDrop,
-  isInternalMasterTreeNode,
-  MasterFolderTree,
   useMasterFolderTreeInstance,
 } from '@/features/foldertree';
+import {
+  FolderTreeViewportV2,
+  applyInternalMasterTreeDrop,
+  isInternalMasterTreeNode,
+} from '@/features/foldertree/v2';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { TreeCaret, TreeContextMenu, TreeRow, useToast } from '@/shared/ui';
@@ -403,7 +405,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
         clearSelection();
       }}
     >
-      <MasterFolderTree
+      <FolderTreeViewportV2
         controller={controller}
         className='space-y-0.5'
         emptyLabel='No folders yet. Create a folder or add cards here.'

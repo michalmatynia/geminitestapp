@@ -16,11 +16,11 @@ import type { CapturedLog } from '@/features/integrations/services/exports/log-c
 import { logClientError } from '@/features/observability';
 import type { 
   ProductListingWithDetails,
-  ProductListingExportEventDto as ProductListingExportEvent,
+  ProductListingExportEvent,
 } from '@/shared/contracts/integrations';
 import type {
-  ImageRetryPresetDto as ImageRetryPreset,
-  ImageTransformOptionsDto as ImageTransformOptions,
+  ImageRetryPreset,
+  ImageTransformOptions,
 } from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import { badRequestError, internalError } from '@/shared/errors/app-error';

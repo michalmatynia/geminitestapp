@@ -1,14 +1,19 @@
 'use client';
 
 import {
+  Copy,
+  Download,
+  FileUp,
   Image as ImageIcon,
   Pencil,
   Save,
   SlidersHorizontal,
   Store,
   Trash2,
+  Upload,
+  X,
 } from 'lucide-react';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import {
   useProductListFiltersContext,
@@ -19,15 +24,27 @@ import {
   createRuleId,
   findPresetById,
   parseAdvancedFilterPayload,
+  readAdvancedPresetBundle,
 } from '@/features/products/components/list/advanced-filter';
 import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
+import {
+  useCatalogs,
+  useMultiTags,
+  useProducers,
+  useTags,
+} from '@/features/products/hooks/useProductMetadataQueries';
 import { useBulkConvertImagesToBase64 } from '@/features/products/hooks/useProductsMutations';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import type {
+  ProductAdvancedFilterField,
   ProductAdvancedFilterGroup,
   ProductAdvancedFilterPreset,
   ProductCategory,
   ProductWithImages,
+} from '@/shared/contracts/products';
+import {
+  productAdvancedFilterPresetBundleSchema,
+  productAdvancedFilterPresetSchema,
 } from '@/shared/contracts/products';
 import {
   ActionMenu,
@@ -40,6 +57,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   Input,
+  Textarea,
   SelectionBar,
   useToast,
 } from '@/shared/ui';
@@ -89,6 +107,89 @@ const createAdvancedPreset = (
   };
 };
 
+const buildPresetBundle = (
+  presets: ProductAdvancedFilterPreset[]
+) => ({
+  version: 1 as const,
+  exportedAt: new Date().toISOString(),
+  presets,
+});
+
+const parsePresetImportPayload = (
+  payload: unknown
+): ProductAdvancedFilterPreset[] | null => {
+  const single = productAdvancedFilterPresetSchema.safeParse(payload);
+  if (single.success) return [single.data];
+
+  const bundle = productAdvancedFilterPresetBundleSchema.safeParse(payload);
+  if (bundle.success) return bundle.data.presets;
+
+  return readAdvancedPresetBundle(payload);
+};
+
+const resolveImportedPresetName = (
+  desiredName: string,
+  usedLowercaseNames: Set<string>
+): string => {
+  const baseName = normalizePresetName(desiredName) || 'Imported Preset';
+  let copyIndex = 1;
+  let candidate = baseName;
+
+  while (usedLowercaseNames.has(candidate.toLowerCase())) {
+    candidate = `${baseName} (copy ${copyIndex})`;
+    copyIndex += 1;
+  }
+
+  usedLowercaseNames.add(candidate.toLowerCase());
+  return candidate;
+};
+
+const mapImportedPresets = (
+  currentPresets: ProductAdvancedFilterPreset[],
+  importedPresets: ProductAdvancedFilterPreset[]
+): ProductAdvancedFilterPreset[] => {
+  const now = new Date().toISOString();
+  const usedNames = new Set<string>(
+    currentPresets.map((preset: ProductAdvancedFilterPreset) => preset.name.trim().toLowerCase())
+  );
+
+  return importedPresets.map((preset: ProductAdvancedFilterPreset) => ({
+    ...preset,
+    id: createRuleId(),
+    name: resolveImportedPresetName(preset.name, usedNames),
+    filter: JSON.parse(JSON.stringify(preset.filter)) as ProductAdvancedFilterGroup,
+    createdAt: now,
+    updatedAt: now,
+  }));
+};
+
+const downloadJsonFile = (filename: string, payload: unknown): void => {
+  if (typeof window === 'undefined') return;
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+};
+
+const slugifyPresetFilename = (name: string): string => {
+  const normalized = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return normalized || 'preset';
+};
+
+const writeToClipboard = async (value: string): Promise<void> => {
+  if (!navigator.clipboard?.writeText) {
+    throw new Error('Clipboard API is not available in this browser.');
+  }
+  await navigator.clipboard.writeText(value);
+};
+
 export const ProductFilters = memo(function ProductFilters(): React.JSX.Element {
   const {
     search,
@@ -118,12 +219,11 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     endDate,
     setEndDate,
     advancedFilter,
-    setAdvancedFilter,
+    setAdvancedFilterState,
     baseExported,
     setBaseExported,
     filtersCollapsedByDefault,
   } = useProductListFiltersContext();
-  const { toast } = useToast();
   const { preferences, setAdvancedFilterPresets } = useUserPreferences();
   const [isAdvancedFilterOpen, setIsAdvancedFilterOpen] = useState(false);
   const advancedFilterPresets = preferences.advancedFilterPresets;
@@ -132,6 +232,14 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
   const selectedCatalogId =
     catalogFilter !== 'all' && catalogFilter !== 'unassigned' ? catalogFilter : undefined;
   const { data: categories = [] } = useProductCategories(selectedCatalogId);
+  const { data: catalogs = [] } = useCatalogs();
+  const { data: tags = [] } = useTags(selectedCatalogId);
+  const catalogIds = useMemo(
+    () => catalogs.map((catalog) => catalog.id).filter((id) => id.trim().length > 0),
+    [catalogs]
+  );
+  const multiTagQueries = useMultiTags(selectedCatalogId ? [] : catalogIds);
+  const { data: producers = [] } = useProducers();
 
   const categoryOptions = useMemo(() => {
     const options = [{ value: '__all__', label: 'All categories' }];
@@ -145,6 +253,40 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
     });
     return options;
   }, [categories, nameLocale]);
+
+  const fallbackTagOptions = useMemo(() => {
+    if (selectedCatalogId) return tags;
+
+    const unique = new Map<string, { id: string; name: string }>();
+    multiTagQueries.forEach((query) => {
+      const entries = query.data ?? [];
+      entries.forEach((tag) => {
+        if (!tag.id || unique.has(tag.id)) return;
+        unique.set(tag.id, {
+          id: tag.id,
+          name: tag.name || tag.id,
+        });
+      });
+    });
+    return Array.from(unique.values());
+  }, [multiTagQueries, selectedCatalogId, tags]);
+
+  const advancedFieldValueOptions = useMemo<
+    Partial<Record<ProductAdvancedFilterField, Array<{ value: string; label: string }>>>
+  >(() => ({
+    catalogId: catalogs.map((catalog) => ({
+      value: catalog.id,
+      label: catalog.name || catalog.id,
+    })),
+    tagId: fallbackTagOptions.map((tag) => ({
+      value: tag.id,
+      label: tag.name || tag.id,
+    })),
+    producerId: producers.map((producer) => ({
+      value: producer.id,
+      label: producer.name || producer.id,
+    })),
+  }), [catalogs, fallbackTagOptions, producers]);
 
   // Filter configuration
   const filterConfig: FilterField[] = useMemo(() => [
@@ -285,18 +427,14 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
   ): Promise<void> => {
     const trimmedName = normalizePresetName(name);
     if (!trimmedName) {
-      toast('Preset name is required.', { variant: 'error' });
-      return;
+      throw new Error('Preset name is required.');
     }
     if (hasPresetNameConflict(advancedFilterPresets, trimmedName)) {
-      toast('Preset name already exists. Choose a unique name.', {
-        variant: 'error',
-      });
-      return;
+      throw new Error('Preset name already exists. Choose a unique name.');
     }
     const preset = createAdvancedPreset(trimmedName, filter);
     await setAdvancedFilterPresets([...advancedFilterPresets, preset]);
-  }, [advancedFilterPresets, setAdvancedFilterPresets, toast]);
+  }, [advancedFilterPresets, setAdvancedFilterPresets]);
 
   return (
     <>
@@ -321,7 +459,7 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
           setStockValue(undefined);
           setStartDate('');
           setEndDate('');
-          setAdvancedFilter('');
+          setAdvancedFilterState('', null);
         }}
         actions={
           <Button
@@ -339,14 +477,17 @@ export const ProductFilters = memo(function ProductFilters(): React.JSX.Element 
         showHeader={false}
       />
 
-      <AdvancedFilterModal
-        open={isAdvancedFilterOpen}
-        value={advancedFilter}
-        onClose={() => setIsAdvancedFilterOpen(false)}
-        onApply={setAdvancedFilter}
-        onClear={() => setAdvancedFilter('')}
-        onSavePreset={handleSavePresetFromModal}
-      />
+      {isAdvancedFilterOpen ? (
+        <AdvancedFilterModal
+          open={isAdvancedFilterOpen}
+          value={advancedFilter}
+          onClose={() => setIsAdvancedFilterOpen(false)}
+          onApply={(value) => setAdvancedFilterState(value, null)}
+          onClear={() => setAdvancedFilterState('', null)}
+          onSavePreset={handleSavePresetFromModal}
+          fieldValueOptions={advancedFieldValueOptions}
+        />
+      ) : null}
     </>
   );
 });
@@ -364,7 +505,11 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     onDeleteSelected,
     onAddToMarketplace,
   } = useProductListSelectionContext();
-  const { advancedFilter, setAdvancedFilter } = useProductListFiltersContext();
+  const {
+    advancedFilter,
+    activeAdvancedFilterPresetId,
+    setAdvancedFilterState,
+  } = useProductListFiltersContext();
   const { toast } = useToast();
   const { preferences, setAdvancedFilterPresets } = useUserPreferences();
   const [isPresetDialogOpen, setIsPresetDialogOpen] = useState(false);
@@ -372,6 +517,10 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
   const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
   const [presetName, setPresetName] = useState('');
   const [savingPreset, setSavingPreset] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importJsonText, setImportJsonText] = useState('');
+  const [importingPresets, setImportingPresets] = useState(false);
+  const importFileInputRef = useRef<HTMLInputElement>(null);
   const {
     mutateAsync: convertSelectedToBase64,
     isPending: isConvertingSelected,
@@ -381,6 +530,10 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     () => parseAdvancedFilterPayload(advancedFilter),
     [advancedFilter]
   );
+  const activePreset = useMemo(() => {
+    if (!activeAdvancedFilterPresetId) return null;
+    return findPresetById(advancedFilterPresets, activeAdvancedFilterPresetId);
+  }, [activeAdvancedFilterPresetId, advancedFilterPresets]);
 
   const getRowId = useCallback((p: ProductWithImages) => p.id, []);
   const handleConvertSelected = useCallback(async (): Promise<void> => {
@@ -448,7 +601,7 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
   };
 
   const handleApplyPreset = (preset: ProductAdvancedFilterPreset): void => {
-    setAdvancedFilter(JSON.stringify(preset.filter));
+    setAdvancedFilterState(JSON.stringify(preset.filter), preset.id);
     toast(`Applied preset "${preset.name}".`, { variant: 'success' });
   };
 
@@ -459,8 +612,119 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
       (entry: ProductAdvancedFilterPreset) => entry.id !== preset.id
     );
     await setAdvancedFilterPresets(nextPresets);
+    if (activeAdvancedFilterPresetId === preset.id) {
+      setAdvancedFilterState('', null);
+    }
     toast(`Deleted preset "${preset.name}".`, { variant: 'success' });
+  }, [
+    activeAdvancedFilterPresetId,
+    advancedFilterPresets,
+    setAdvancedFilterPresets,
+    setAdvancedFilterState,
+    toast,
+  ]);
+
+  const closeImportDialog = (): void => {
+    setIsImportDialogOpen(false);
+    setImportJsonText('');
+    setImportingPresets(false);
+  };
+
+  const importPresets = useCallback(async (
+    payload: unknown
+  ): Promise<void> => {
+    const parsedPresets = parsePresetImportPayload(payload);
+    if (!parsedPresets || parsedPresets.length === 0) {
+      throw new Error('Invalid preset payload. Provide a preset object, preset list, or bundle JSON.');
+    }
+
+    const mergedImportedPresets = mapImportedPresets(advancedFilterPresets, parsedPresets);
+    const nextPresets = [...advancedFilterPresets, ...mergedImportedPresets];
+    await setAdvancedFilterPresets(nextPresets);
+    toast(`Imported ${mergedImportedPresets.length} preset(s).`, { variant: 'success' });
   }, [advancedFilterPresets, setAdvancedFilterPresets, toast]);
+
+  const handleExportAllPresets = (): void => {
+    if (advancedFilterPresets.length === 0) {
+      toast('No presets to export.', { variant: 'error' });
+      return;
+    }
+    downloadJsonFile('advanced-filter-presets.bundle.json', buildPresetBundle(advancedFilterPresets));
+  };
+
+  const handleExportSinglePreset = (preset: ProductAdvancedFilterPreset): void => {
+    downloadJsonFile(
+      `advanced-filter-preset-${slugifyPresetFilename(preset.name)}.json`,
+      preset
+    );
+  };
+
+  const handleCopyAllPresets = useCallback(async (): Promise<void> => {
+    if (advancedFilterPresets.length === 0) {
+      toast('No presets to copy.', { variant: 'error' });
+      return;
+    }
+    try {
+      await writeToClipboard(JSON.stringify(buildPresetBundle(advancedFilterPresets), null, 2));
+      toast('Copied all presets JSON to clipboard.', { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to copy presets JSON.', {
+        variant: 'error',
+      });
+    }
+  }, [advancedFilterPresets, toast]);
+
+  const handleCopyPreset = useCallback(async (
+    preset: ProductAdvancedFilterPreset
+  ): Promise<void> => {
+    try {
+      await writeToClipboard(JSON.stringify(preset, null, 2));
+      toast(`Copied preset "${preset.name}" JSON to clipboard.`, { variant: 'success' });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to copy preset JSON.', {
+        variant: 'error',
+      });
+    }
+  }, [toast]);
+
+  const handleImportFromDialog = async (): Promise<void> => {
+    if (!importJsonText.trim()) {
+      toast('Paste JSON to import.', { variant: 'error' });
+      return;
+    }
+
+    try {
+      setImportingPresets(true);
+      const parsedPayload: unknown = JSON.parse(importJsonText);
+      await importPresets(parsedPayload);
+      closeImportDialog();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to import presets.', {
+        variant: 'error',
+      });
+    } finally {
+      setImportingPresets(false);
+    }
+  };
+
+  const handleImportFromFile = useCallback(async (
+    event: ChangeEvent<HTMLInputElement>
+  ): Promise<void> => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const content = await file.text();
+      const parsedPayload: unknown = JSON.parse(content);
+      await importPresets(parsedPayload);
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to import presets from file.', {
+        variant: 'error',
+      });
+    } finally {
+      event.target.value = '';
+    }
+  }, [importPresets, toast]);
 
   const handleSavePresetDialog = async (): Promise<void> => {
     const trimmedName = normalizePresetName(presetName);
@@ -557,63 +821,124 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
           </>
         }
         rightActions={
-          <ActionMenu
-            align='end'
-            className='w-64'
-            trigger={
-              <div className='flex items-center gap-2'>
-                <SlidersHorizontal className='h-3.5 w-3.5' />
-                <span className='text-xs font-medium'>Filter Presets</span>
-              </div>
-            }
-            triggerClassName='h-8 px-3 border border-border/60 bg-card/30 hover:bg-card/50 text-gray-300 hover:text-white'
-            variant='outline'
-            size='sm'
-          >
-            <DropdownMenuLabel>Advanced Filter Presets</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={openCreatePresetDialog}
-              disabled={!currentAdvancedFilterGroup}
-              className='cursor-pointer gap-2'
+          <div className='flex items-center gap-2'>
+            {activePreset ? (
+              <button
+                type='button'
+                onClick={() => setAdvancedFilterState('', null)}
+                className='inline-flex h-8 items-center gap-1.5 rounded-full border border-primary/40 bg-primary/10 px-3 text-xs font-medium text-primary hover:bg-primary/20'
+                aria-label={`Clear applied preset ${activePreset.name}`}
+              >
+                <span className='max-w-[180px] truncate'>{activePreset.name}</span>
+                <X className='h-3.5 w-3.5' />
+              </button>
+            ) : null}
+            <ActionMenu
+              align='end'
+              className='w-64'
+              trigger={
+                <div className='flex items-center gap-2'>
+                  <SlidersHorizontal className='h-3.5 w-3.5' />
+                  <span className='text-xs font-medium'>Filter Presets</span>
+                </div>
+              }
+              triggerClassName='h-8 px-3 border border-border/60 bg-card/30 hover:bg-card/50 text-gray-300 hover:text-white'
+              variant='outline'
+              size='sm'
             >
-              <Save className='h-4 w-4' />
-              Save Current Filter
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {advancedFilterPresets.length === 0 ? (
-              <DropdownMenuItem disabled>No presets saved</DropdownMenuItem>
-            ) : (
-              advancedFilterPresets.map((preset: ProductAdvancedFilterPreset) => (
-                <DropdownMenuSub key={preset.id}>
-                  <DropdownMenuSubTrigger>{preset.name}</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent className='w-56'>
-                    <DropdownMenuItem
-                      onClick={() => handleApplyPreset(preset)}
-                      className='cursor-pointer'
-                    >
-                      Apply
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => openRenamePresetDialog(preset)}
-                      className='cursor-pointer gap-2'
-                    >
-                      <Pencil className='h-3.5 w-3.5' />
-                      Rename
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => {
-                        void handleDeletePreset(preset);
-                      }}
-                      className='cursor-pointer gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive'
-                    >
-                      <Trash2 className='h-3.5 w-3.5' />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
-              ))
-            )}
-          </ActionMenu>
+              <DropdownMenuLabel>Advanced Filter Presets</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={openCreatePresetDialog}
+                disabled={!currentAdvancedFilterGroup}
+                className='cursor-pointer gap-2'
+              >
+                <Save className='h-4 w-4' />
+                Save Current Filter
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleExportAllPresets}
+                disabled={advancedFilterPresets.length === 0}
+                className='cursor-pointer gap-2'
+              >
+                <Download className='h-4 w-4' />
+                Export All Presets
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  void handleCopyAllPresets();
+                }}
+                disabled={advancedFilterPresets.length === 0}
+                className='cursor-pointer gap-2'
+              >
+                <Copy className='h-4 w-4' />
+                Copy All Presets JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setIsImportDialogOpen(true)}
+                className='cursor-pointer gap-2'
+              >
+                <Upload className='h-4 w-4' />
+                Import From Pasted JSON
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => importFileInputRef.current?.click()}
+                className='cursor-pointer gap-2'
+              >
+                <FileUp className='h-4 w-4' />
+                Import From File
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              {advancedFilterPresets.length === 0 ? (
+                <DropdownMenuItem disabled>No presets saved</DropdownMenuItem>
+              ) : (
+                advancedFilterPresets.map((preset: ProductAdvancedFilterPreset) => (
+                  <DropdownMenuSub key={preset.id}>
+                    <DropdownMenuSubTrigger>{preset.name}</DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className='w-56'>
+                      <DropdownMenuItem
+                        onClick={() => handleApplyPreset(preset)}
+                        className='cursor-pointer'
+                      >
+                        Apply
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleExportSinglePreset(preset)}
+                        className='cursor-pointer gap-2'
+                      >
+                        <Download className='h-3.5 w-3.5' />
+                        Export JSON
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          void handleCopyPreset(preset);
+                        }}
+                        className='cursor-pointer gap-2'
+                      >
+                        <Copy className='h-3.5 w-3.5' />
+                        Copy JSON
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => openRenamePresetDialog(preset)}
+                        className='cursor-pointer gap-2'
+                      >
+                        <Pencil className='h-3.5 w-3.5' />
+                        Rename
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          void handleDeletePreset(preset);
+                        }}
+                        className='cursor-pointer gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive'
+                      >
+                        <Trash2 className='h-3.5 w-3.5' />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                ))
+              )}
+            </ActionMenu>
+          </div>
         }
       />
 
@@ -649,6 +974,49 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
           />
         </div>
       </AppModal>
+
+      <AppModal
+        isOpen={isImportDialogOpen}
+        onClose={closeImportDialog}
+        title='Import Filter Presets'
+        subtitle='Paste preset JSON or a preset bundle to merge into your saved presets.'
+        size='md'
+        footer={
+          <>
+            <Button type='button' variant='outline' onClick={closeImportDialog}>
+              Cancel
+            </Button>
+            <Button
+              type='button'
+              onClick={() => {
+                void handleImportFromDialog();
+              }}
+              disabled={importingPresets}
+            >
+              {importingPresets ? 'Importing...' : 'Import Presets'}
+            </Button>
+          </>
+        }
+      >
+        <div className='space-y-2'>
+          <Textarea
+            value={importJsonText}
+            onChange={(event) => setImportJsonText(event.target.value)}
+            placeholder='Paste preset JSON here...'
+            className='min-h-[180px] font-mono text-xs'
+          />
+        </div>
+      </AppModal>
+
+      <input
+        ref={importFileInputRef}
+        type='file'
+        accept='application/json,.json'
+        className='hidden'
+        onChange={(event) => {
+          void handleImportFromFile(event);
+        }}
+      />
     </>
   );
 });

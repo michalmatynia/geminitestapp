@@ -20,6 +20,76 @@ vi.mock('next/navigation', () => ({
     prefetch: vi.fn(),
   }),
 }));
+
+vi.mock('@/features/foldertree', () => ({
+  MasterFolderTree: ({ controller, renderNode }: any) => (
+    <div>
+      {controller.roots.map((node: any) => (
+        <div key={node.id}>
+          {renderNode({
+            node,
+            isExpanded: true,
+            toggleExpand: vi.fn(),
+            depth: 0,
+            hasChildren: node.children?.length > 0,
+            isSelected: false,
+            isRenaming: false,
+            isDragging: false,
+            isDropTarget: false,
+            dropPosition: null,
+            select: vi.fn(),
+            startRename: vi.fn(),
+          })}
+          {node.children?.map((child: any) => (
+             <div key={child.id}>
+               {renderNode({
+                 node: child,
+                 isExpanded: true,
+                 toggleExpand: vi.fn(),
+                 depth: 1,
+                 hasChildren: false,
+                 isSelected: false,
+                 isRenaming: false,
+                 isDragging: false,
+                 isDropTarget: false,
+                 dropPosition: null,
+                 select: vi.fn(),
+                 startRename: vi.fn(),
+               })}
+             </div>
+          ))}
+        </div>
+      ))}
+    </div>
+  ),
+  useMasterFolderTreeInstance: ({ nodes, initiallyExpandedNodeIds }: any) => {
+    const roots = nodes.filter((n: any) => !n.parentId).map((root: any) => ({
+      ...root,
+      children: nodes.filter((n: any) => n.parentId === root.id)
+    }));
+    return {
+      profile: {
+        placeholders: { inlineDropLabel: 'Drop here' },
+        nesting: { rules: [] },
+      },
+      appearance: { placeholderClasses: {}, rootDropUi: { label: 'Drop to root' } },
+      controller: {
+        nodes,
+        roots,
+        expandedNodeIds: new Set(initiallyExpandedNodeIds),
+        selectNode: vi.fn(),
+        toggleNodeExpanded: vi.fn(),
+        moveNode: vi.fn(),
+        startDrag: vi.fn(),
+        clearDrag: vi.fn(),
+      },
+      panelCollapsed: false,
+      setPanelCollapsed: vi.fn(),
+    };
+  },
+  createMasterFolderTreeAdapter: vi.fn(() => ({})),
+}));
+
 vi.mock('@/features/admin/context/AdminLayoutContext', async (importOriginal) => {
   const actual = await importOriginal() as any;
   return {
@@ -46,6 +116,23 @@ vi.mock('@/features/cms/hooks/useCmsQueries', async (importOriginal) => {
     }),
   };
 });
+
+vi.mock('@/features/cms/hooks/useDragStateContext', () => ({
+  DragStateProvider: ({ children }: any) => <div>{children}</div>,
+  useDragState: vi.fn(() => ({
+    state: {
+      block: { id: null, type: null, fromSectionId: null, fromColumnId: null, fromParentBlockId: null },
+      section: { id: null, type: null, index: null, zone: null },
+    },
+    isDraggingBlock: false,
+    isDraggingSection: false,
+    startBlockDrag: vi.fn(),
+    endBlockDrag: vi.fn(),
+    startSectionDrag: vi.fn(),
+    endSectionDrag: vi.fn(),
+    clearAll: vi.fn(),
+  })),
+}));
 
 vi.mock('@/shared/hooks/useUserPreferences', () => ({
   useUserPreferences: () => ({ data: {} }),

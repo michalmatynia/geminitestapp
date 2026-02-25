@@ -11,6 +11,14 @@ import {
 } from '@/shared/contracts/ai-brain';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
+export type {
+  AiBrainProvider,
+  AiBrainFeature,
+  AiBrainAssignment,
+  AiBrainSettings,
+  AiBrainProviderCatalog,
+};
+
 export const AI_BRAIN_SETTINGS_KEY = SETTINGS_KEY;
 export const AI_BRAIN_PROVIDER_CATALOG_KEY = CATALOG_KEY;
 

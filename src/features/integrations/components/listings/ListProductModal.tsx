@@ -5,7 +5,7 @@ import {
   useListingSettingsContext,
 } from '@/features/integrations/context/ListingSettingsContext';
 import type { IntegrationWithConnections } from '@/shared/contracts/integrations';
-import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal } from '@/shared/ui';
@@ -43,8 +43,6 @@ function ListProductModalContent(): React.JSX.Element {
   const {
     error,
     exportLogs,
-    logsOpen,
-    setLogsOpen,
     submitting,
     handleSubmit,
     handleImageRetry,
@@ -112,7 +110,7 @@ function ListProductModalContent(): React.JSX.Element {
 
           {exportLogs.length > 0 && (
             <div className='mt-4 border-t border pt-4'>
-              <ExportLogViewer isOpen={logsOpen} onToggle={setLogsOpen} logs={exportLogs} />
+              <ExportLogViewer />
             </div>
           )}
         </div>

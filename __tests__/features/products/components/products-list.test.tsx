@@ -10,6 +10,7 @@ import { vi } from 'vitest';
 
 import AdminProductsPage from '@/app/(admin)/admin/products/page';
 import { getProductColumns } from '@/features/products/components/list/ProductColumns';
+import { AdminLayoutProvider } from '@/features/admin/context/AdminLayoutContext';
 import {
   ProductListProvider,
   type ProductListContextType,
@@ -314,7 +315,9 @@ describe('Admin Products List UI', () => {
     render(
       <QueryClientProvider client={queryClient}>
         <ToastProvider>
-          <AdminProductsPage />
+          <AdminLayoutProvider>
+            <AdminProductsPage />
+          </AdminLayoutProvider>
         </ToastProvider>
       </QueryClientProvider>
     );

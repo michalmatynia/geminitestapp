@@ -10,12 +10,12 @@ import type {
   WarehouseOption,
 } from '@/shared/contracts/data-import-export';
 import type { 
-  IntegrationWithConnectionsDto as IntegrationWithConnections,
-  BaseImportRunDetailResponseDto as BaseImportRunDetailResponse,
-  BaseImportRunRecordDto as BaseImportRunRecord,
-  BaseImportStartResponseDto as BaseImportStartResponse,
-  BaseImportModeDto as BaseImportMode,
-  ImportParameterCacheResponseDto,
+  IntegrationWithConnections,
+  BaseImportRunDetailResponse,
+  BaseImportRunRecord,
+  BaseImportStartResponse,
+  BaseImportMode,
+  ImportParameterCacheResponse as IntegrationImportParameterCacheResponse,
   BaseInventory,
   ImageRetryPreset,
 } from '@/shared/contracts/integrations';
@@ -35,7 +35,7 @@ import {
 } from '@/shared/lib/query-factories-v2';
 import { importExportKeys, integrationKeys, productMetadataKeys } from '@/shared/lib/query-key-exports';
 
-export type ImportParameterCacheResponse = ImportParameterCacheResponseDto;
+export type ImportParameterCacheResponse = IntegrationImportParameterCacheResponse;
 export type { CatalogRecord };
 
 // --- Queries ---

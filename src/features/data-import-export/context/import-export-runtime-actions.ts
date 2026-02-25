@@ -2,7 +2,7 @@ import type {
   ImportResponse,
 } from '@/shared/contracts/data-import-export';
 import type { 
-  BaseImportModeDto as BaseImportMode,
+  BaseImportMode,
   ImageRetryPreset,
 } from '@/shared/contracts/integrations';
 

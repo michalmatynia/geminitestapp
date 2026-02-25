@@ -117,6 +117,7 @@ const renderWithContext = (props: any) => {
     reduceVisualEffects: false,
     selectedEdgeId: null,
     detailLevel: props.detailLevel || 'full',
+    nodeDiagnosticsById: {},
   };
 
   return render(
@@ -227,6 +228,7 @@ describe('CanvasSvgNodeLayer', () => {
       reduceVisualEffects: false,
       selectedEdgeId: null,
       detailLevel: (updatedProps as any).detailLevel || 'full',
+      nodeDiagnosticsById: {},
     };
 
     rerender(
@@ -272,7 +274,9 @@ describe('CanvasSvgNodeLayer', () => {
           status: 'cached',
         },
       },
-      history: {},
+      history: {
+        'node-db-1': [createHistoryEntry()],
+      },
     };
     const props = baseProps(runtimeState);
     const { rerender } = renderWithContext({
@@ -298,6 +302,7 @@ describe('CanvasSvgNodeLayer', () => {
       reduceVisualEffects: false,
       selectedEdgeId: null,
       detailLevel: (nextProps as any).detailLevel || 'full',
+      nodeDiagnosticsById: {},
     };
 
     rerender(
@@ -354,6 +359,7 @@ describe('CanvasSvgNodeLayer', () => {
       selectedEdgeId: null,
       detailLevel: 'compact',
       view: { x: 0, y: 0, scale: 0.7 },
+      nodeDiagnosticsById: {},
     };
 
     rerender(
@@ -376,6 +382,7 @@ describe('CanvasSvgNodeLayer', () => {
       selectedEdgeId: null,
       detailLevel: 'skeleton',
       view: { x: 0, y: 0, scale: 0.45 },
+      nodeDiagnosticsById: {},
     };
 
     rerender(

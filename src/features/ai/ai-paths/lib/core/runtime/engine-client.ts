@@ -78,9 +78,9 @@ export async function evaluateGraphClient(
   options?: EvaluateGraphOptions
 ): Promise<RuntimeState> {
   const isArgsObject = !Array.isArray(argsOrNodes);
-  const nodes = isArgsObject ? (argsOrNodes as EvaluateGraphArgs).nodes : argsOrNodes;
-  const resolvedEdges = isArgsObject ? (argsOrNodes as EvaluateGraphArgs).edges : edges ?? [];
-  const resolvedOptions = isArgsObject ? (argsOrNodes as EvaluateGraphArgs) : options ?? { reportAiPathsError: () => {} };
+  const nodes = isArgsObject ? (argsOrNodes).nodes : argsOrNodes;
+  const resolvedEdges = isArgsObject ? (argsOrNodes).edges : edges ?? [];
+  const resolvedOptions = isArgsObject ? (argsOrNodes) : options ?? { reportAiPathsError: () => {} };
 
   return evaluateGraphInternal(nodes, resolvedEdges, {
     ...resolvedOptions,

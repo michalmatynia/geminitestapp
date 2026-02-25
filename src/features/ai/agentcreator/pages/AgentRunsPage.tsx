@@ -1,7 +1,7 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import { 
@@ -43,8 +43,8 @@ function AgentRunsContent(): React.JSX.Element {
         headerClassName='mb-8'
         refresh={{
           onRefresh: () => {
-            void queryClient.invalidateQueries();
-            void refetchAgentRuns();
+            queryClient.invalidateQueries().catch(() => {});
+            refetchAgentRuns();
           },
           isRefreshing: isAgentRunsFetching,
         }}

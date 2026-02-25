@@ -6,10 +6,14 @@ const mocks = vi.hoisted(() => ({
   productCreateIndex: vi.fn(),
   productUpdateOne: vi.fn(),
   productFindOne: vi.fn(),
+  productFind: vi.fn(),
+  productAggregate: vi.fn(),
   categoryFindOne: vi.fn(),
   tagToArray: vi.fn(),
   producerToArray: vi.fn(),
   imageFilesToArray: vi.fn(),
+  integrationToArray: vi.fn(),
+  listingDistinct: vi.fn(),
 }));
 
 vi.mock('@/shared/lib/db/mongo-client', () => ({
@@ -29,6 +33,18 @@ describe('mongoProductRepository.replaceProductCategory', () => {
             createIndex: mocks.productCreateIndex.mockResolvedValue(undefined),
             updateOne: mocks.productUpdateOne,
             findOne: mocks.productFindOne,
+            find: mocks.productFind.mockReturnValue({
+              sort: vi.fn().mockReturnValue({
+                skip: vi.fn().mockReturnValue({
+                  limit: vi.fn().mockReturnValue({
+                    toArray: vi.fn().mockResolvedValue([]),
+                  }),
+                }),
+              }),
+            }),
+            aggregate: mocks.productAggregate.mockReturnValue({
+              toArray: vi.fn().mockResolvedValue([]),
+            }),
           };
         }
         if (name === 'product_categories') {
@@ -59,6 +75,18 @@ describe('mongoProductRepository.replaceProductCategory', () => {
             find: vi.fn().mockReturnValue({
               toArray: mocks.imageFilesToArray,
             }),
+          };
+        }
+        if (name === 'integrations') {
+          return {
+            find: vi.fn().mockReturnValue({
+              toArray: mocks.integrationToArray,
+            }),
+          };
+        }
+        if (name === 'product_listings') {
+          return {
+            distinct: mocks.listingDistinct,
           };
         }
         return {};
@@ -224,5 +252,58 @@ describe('mongoProductRepository.replaceProductCategory', () => {
     });
     expect(images[0]?.assignedAt).toBe('2026-02-22T03:04:05.000Z');
     expect(mocks.imageFilesToArray).toHaveBeenCalledOnce();
+  });
+
+  it('compiles advanced relation and boolean filters for getProducts', async () => {
+    const advancedFilter = JSON.stringify({
+      type: 'group',
+      id: 'root',
+      combinator: 'and',
+      not: false,
+      rules: [
+        { type: 'condition', id: 'c1', field: 'catalogId', operator: 'in', value: ['cat-1'] },
+        { type: 'condition', id: 'c2', field: 'tagId', operator: 'eq', value: 'tag-1' },
+        { type: 'condition', id: 'c3', field: 'producerId', operator: 'notIn', value: ['prod-2'] },
+        { type: 'condition', id: 'c4', field: 'published', operator: 'eq', value: true },
+      ],
+    });
+
+    await mongoProductRepository.getProducts({ advancedFilter });
+
+    expect(mocks.productAggregate).toHaveBeenCalledOnce();
+    const pipeline = mocks.productAggregate.mock.calls[0]?.[0] as Array<Record<string, unknown>>;
+    const match = pipeline?.find((stage) => '$match' in stage)?.$match as Record<string, unknown>;
+    const serializedMatch = JSON.stringify(match);
+
+    expect(serializedMatch).toContain('catalogs.catalogId');
+    expect(serializedMatch).toContain('tag-1');
+    expect(serializedMatch).toContain('producers.producerId');
+    expect(serializedMatch).toContain('published');
+  });
+
+  it('compiles advanced baseExported filter using Base listing lookup context', async () => {
+    mocks.integrationToArray.mockResolvedValue([{ _id: 'integration-base', slug: 'base-com' }]);
+    mocks.listingDistinct.mockResolvedValue(['product-exported']);
+
+    const advancedFilter = JSON.stringify({
+      type: 'group',
+      id: 'root',
+      combinator: 'and',
+      not: false,
+      rules: [
+        { type: 'condition', id: 'c1', field: 'baseExported', operator: 'eq', value: true },
+      ],
+    });
+
+    await mongoProductRepository.getProducts({ advancedFilter });
+
+    expect(mocks.integrationToArray).toHaveBeenCalledOnce();
+    expect(mocks.listingDistinct).toHaveBeenCalledOnce();
+    const pipeline = mocks.productAggregate.mock.calls[0]?.[0] as Array<Record<string, unknown>>;
+    const match = pipeline?.find((stage) => '$match' in stage)?.$match as Record<string, unknown>;
+    const serializedMatch = JSON.stringify(match);
+
+    expect(serializedMatch).toContain('baseProductId');
+    expect(serializedMatch).toContain('product-exported');
   });
 });

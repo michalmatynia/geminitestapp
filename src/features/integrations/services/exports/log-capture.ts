@@ -1,4 +1,4 @@
-import type { CapturedLogDto as CapturedLog } from '@/shared/contracts/integrations';
+import type { CapturedLog } from '@/shared/contracts/integrations';
 
 export type { CapturedLog };
 

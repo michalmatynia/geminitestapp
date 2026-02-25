@@ -5,7 +5,7 @@ import React from 'react';
 import { useImageRetryPresets } from '@/features/integrations/components/listings/useImageRetryPresets';
 import { isImageExportError } from '@/features/integrations/components/listings/utils';
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
-import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import { ImageRetryDropdown, Alert } from '@/shared/ui';
 
 export function ProductListingsError(): React.JSX.Element {

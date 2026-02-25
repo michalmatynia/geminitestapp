@@ -14,6 +14,30 @@ const CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT = 5;
 
 export type WorkspaceSaveStatus = 'idle' | 'dirty' | 'saving' | 'saved' | 'conflict' | 'error';
 
+export interface UseCaseResolverPersistenceValue {
+  isWorkspaceSaving: boolean;
+  workspaceSaveStatus: WorkspaceSaveStatus;
+  workspaceSaveError: string | null;
+  setWorkspaceSaveStatus: React.Dispatch<React.SetStateAction<WorkspaceSaveStatus>>;
+  setWorkspaceSaveError: React.Dispatch<React.SetStateAction<string | null>>;
+  lastPersistedValueRef: React.MutableRefObject<string>;
+  lastPersistedRevisionRef: React.MutableRefObject<number>;
+  pendingSaveToastRef: React.MutableRefObject<string | null>;
+  queuedSerializedWorkspaceRef: React.MutableRefObject<string | null>;
+  queuedExpectedRevisionRef: React.MutableRefObject<number | null>;
+  queuedMutationIdRef: React.MutableRefObject<string | null>;
+  conflictRetryTimerRef: React.MutableRefObject<number | null>;
+  persistWorkspaceTimerRef: React.MutableRefObject<number | null>;
+  persistWorkspaceInFlightRef: React.MutableRefObject<boolean>;
+  workspaceConflictAutoRetryCountRef: React.MutableRefObject<number>;
+  syncPersistedWorkspaceTracking: (nextWorkspace: CaseResolverWorkspace) => void;
+  clearConflictRetryTimer: () => void;
+  flushWorkspacePersist: () => void;
+}
+
+import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
+import { type Toast } from '@/shared/contracts/ui';
+
 export function useCaseResolverPersistence({
   initialWorkspaceState,
   settingsStoreRef,
@@ -22,11 +46,11 @@ export function useCaseResolverPersistence({
   setPersistedWorkspaceComparableSnapshot,
 }: {
   initialWorkspaceState: CaseResolverWorkspace;
-  settingsStoreRef: React.MutableRefObject<any>;
-  toast: any;
+  settingsStoreRef: React.MutableRefObject<SettingsStoreValue>;
+  toast: Toast;
   setPersistedWorkspaceSnapshot: (val: string) => void;
   setPersistedWorkspaceComparableSnapshot: (val: string) => void;
-}) {
+}): UseCaseResolverPersistenceValue {
   const [isWorkspaceSaving, setIsWorkspaceSaving] = useState(false);
   const [workspaceSaveStatus, setWorkspaceSaveStatus] = useState<WorkspaceSaveStatus>('idle');
   const [workspaceSaveError, setWorkspaceSaveError] = useState<string | null>(null);
@@ -237,3 +261,4 @@ export function useCaseResolverPersistence({
     flushWorkspacePersist,
   };
 }
+

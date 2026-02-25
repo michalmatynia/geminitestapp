@@ -5,7 +5,7 @@ import { fetchTraderaCategoriesForConnection } from '@/features/integrations/ser
 import { getExternalCategoryRepository } from '@/features/integrations/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
-import type { FetchMarketplaceCategoriesRequestDto as FetchCategoriesRequest } from '@/shared/contracts/integrations';
+import type { FetchMarketplaceCategoriesRequest as FetchCategoriesRequest } from '@/shared/contracts/integrations';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 

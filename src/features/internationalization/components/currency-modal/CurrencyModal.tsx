@@ -2,13 +2,10 @@
 
 import React from 'react';
 
-import type { CurrencyOption } from '@/shared/contracts/internationalization';
-import type { EntityModalProps } from '@/shared/contracts/ui';
+import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useCurrencyForm } from './hooks/useCurrencyForm';
-
-interface CurrencyModalProps extends EntityModalProps<CurrencyOption> {}
 
 type CurrencyFormState = {
   code: string;
@@ -40,18 +37,21 @@ const FIELDS: SettingsField<CurrencyFormState>[] = [
   },
 ];
 
-export function CurrencyModal({
-  isOpen,
-  onClose,
-  onSuccess,
-  item: currency,
-}: CurrencyModalProps): React.JSX.Element {
+export function CurrencyModal(): React.JSX.Element | null {
+  const { 
+    isCurrencyModalOpen, 
+    handleCloseCurrencyModal, 
+    activeCurrency 
+  } = useInternationalizationContext();
+
   const { form, setForm, saveMutation, handleSubmit: handleFormSubmit } =
-    useCurrencyForm({ currency: currency ?? null });
+    useCurrencyForm({ currency: activeCurrency ?? null });
+
+  if (!isCurrencyModalOpen) return null;
 
   const handleSave = async (): Promise<void> => {
     await handleFormSubmit();
-    onSuccess?.();
+    handleCloseCurrencyModal();
   };
 
   const handleChange = (values: Partial<CurrencyFormState>) => {
@@ -64,9 +64,9 @@ export function CurrencyModal({
 
   return (
     <SettingsPanelBuilder
-      open={isOpen}
-      onClose={onClose}
-      title={currency ? 'Edit Currency' : 'Add Currency'}
+      open={isCurrencyModalOpen}
+      onClose={handleCloseCurrencyModal}
+      title={activeCurrency ? 'Edit Currency' : 'Add Currency'}
       fields={FIELDS}
       values={form}
       onChange={handleChange}

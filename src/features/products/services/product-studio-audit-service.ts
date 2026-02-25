@@ -2,7 +2,7 @@ import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import type { ImageStudioRunDispatchModeDto as ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio';
+import type { ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio';
 import type {
   ProductStudioExecutionRoute,
   ProductStudioSequenceGenerationMode,

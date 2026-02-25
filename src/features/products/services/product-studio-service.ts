@@ -1459,14 +1459,13 @@ export async function sendProductImageToStudio(params: {
   projectId?: string | null | undefined;
   rotateBeforeSendDeg?: 90 | null | undefined;
   sequenceGenerationMode?: ProductStudioSequenceGenerationMode | null | undefined;
-}): Promise<ProductStudioSendResult> {
+  }): Promise<ProductStudioSendResult> {
   const startedAtMs = Date.now();
   let importMs = 0;
   let sourceSlotUpsertMs = 0;
-  let routeDecisionMs = 0;
+  let routeDecisionMs: number;
   let dispatchMs = 0;
-  const resolved = await resolveProductAndStudioTarget(params);
-  const {
+  const resolved = await resolveProductAndStudioTarget(params);  const {
     parsedStudioSettings,
     studioSettings,
     sequencing,

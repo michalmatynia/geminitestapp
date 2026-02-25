@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 
 import { Alert, CopyButton, CollapsibleSection } from '@/shared/ui';
+import { useProductListingsLogs } from '@/features/integrations/context/ProductListingsContext';
 
 interface ExportLog {
   timestamp: string;
@@ -12,172 +13,90 @@ interface ExportLog {
 }
 
 interface ExportLogViewerProps {
-  logs: ExportLog[];
+  logs?: ExportLog[];
   isOpen?: boolean;
   onToggle?: (open: boolean) => void;
 }
 
 export function ExportLogViewer({
-  logs,
-  isOpen = true,
-  onToggle,
+  logs: logsProp,
+  isOpen: isOpenProp,
+  onToggle: onToggleProp,
 }: ExportLogViewerProps): React.JSX.Element | null {
-  const logText = useMemo(() => logs
-    .map((log: ExportLog) => {
-      const contextStr = log.context
-        ? `\n    ${JSON.stringify(log.context, null, 2)}`
-        : '';
-      return `[${log.timestamp}] [${log.level.toUpperCase()}] ${log.message}${contextStr}`;
-    })
-    .join('\n'), [logs]);
+  const contextLogs = useProductListingsLogs();
 
-  const imagePayloadSummary = useMemo(() => {
-    const entries = logs
-      .map((log: ExportLog) => log.context)
-      .filter((context: Record<string, unknown> | null | undefined): context is Record<string, unknown> => !!context)
-      .filter((context: Record<string, unknown>) => typeof context['outputBytes'] === 'number' || typeof context['originalBytes'] === 'number' || typeof context['base64Length'] === 'number');
-    if (entries.length === 0) return null;
-    const sum = (key: 'outputBytes' | 'originalBytes' | 'base64Length'): number =>
-      entries.reduce(
-        (total: number, entry: Record<string, unknown>): number => {
-          const val = entry[key];
-          return total + (typeof val === 'number' ? val : 0);
-        },
-        0
-      );
-    const outputModes = new Set(
-      entries
-        .map((entry: Record<string, unknown>): string | null =>
-          typeof entry['outputMode'] === 'string' ? (entry['outputMode']) : null
-        )
-        .filter((mode: string | null): mode is string => !!mode)
-    );
-    const outputFormats = new Set(
-      entries
-        .map((entry: Record<string, unknown>): string | null =>
-          typeof entry['outputFormat'] === 'string' ? (entry['outputFormat']) : null
-        )
-        .filter((format: string | null): format is string => !!format)
-    );
-    const convertedCount = entries.filter((entry: Record<string, unknown>): boolean => entry['converted'] === true).length;
-    const resizedCount = entries.filter((entry: Record<string, unknown>): boolean => entry['resized'] === true).length;
-    return {
-      count: entries.length,
-      totalOriginalBytes: sum('originalBytes'),
-      totalOutputBytes: sum('outputBytes'),
-      totalBase64Length: sum('base64Length'),
-      mode:
-        outputModes.size === 1 ? Array.from(outputModes)[0] ?? null : 'mixed',
-      format:
-        outputFormats.size === 1
-          ? Array.from(outputFormats)[0] ?? null
-          : outputFormats.size > 1
-            ? 'mixed'
-            : null,
-      convertedCount,
-      resizedCount,
-    };
-  }, [logs]);
+  const logs = logsProp ?? contextLogs.exportLogs ?? [];
+  const isOpen = isOpenProp ?? contextLogs.logsOpen ?? true;
+  const onToggle = onToggleProp ?? contextLogs.setLogsOpen;
 
-  if (logs.length === 0) {
-    return null;
-  }
+  const logsJson = useMemo(() => JSON.stringify(logs, null, 2), [logs]);
 
-  const formatBytes = (bytes: number): string => {
-    if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB'];
-    let value = bytes;
-    let index = 0;
-    while (value >= 1024 && index < units.length - 1) {
-      value /= 1024;
-      index += 1;
+  if (logs.length === 0) return null;
+
+  const getLevelColor = (level: string) => {
+    switch (level) {
+      case 'error': return 'text-red-400 border-red-500/20 bg-red-500/5';
+      case 'warn': return 'text-amber-400 border-amber-500/20 bg-amber-500/5';
+      case 'debug': return 'text-purple-400 border-purple-500/20 bg-purple-500/5';
+      default: return 'text-sky-400 border-sky-500/20 bg-sky-500/5';
     }
-    const precision = value >= 10 || index === 0 ? 0 : 1;
-    return `${value.toFixed(precision)} ${units[index]}`;
   };
 
   return (
     <CollapsibleSection
-      open={isOpen}
-      onOpenChange={onToggle}
       title={(
-        <div className='flex items-center gap-2'>
-          <span className='font-semibold text-sm text-gray-200'>
-            Export Logs ({logs.length})
+        <div className='flex items-center gap-3'>
+          <span className='font-semibold'>Export Telemetry</span>
+          <span className='rounded-full bg-black/30 px-2 py-0.5 text-[10px] text-gray-400'>
+            {logs.length} events
           </span>
         </div>
       )}
-      actions={(
-        <CopyButton
-          value={logText}
-          variant='ghost'
-          size='sm'
-          showText
-        />
-      )}
-      variant='card'
-      className='bg-card/40'
-      headerClassName='px-4 py-3'
+      isOpen={isOpen}
+      onToggle={onToggle}
+      className='bg-card/20 border border-border/40 rounded-lg overflow-hidden'
     >
-      <div className='border-t border-border/60 px-4 py-3 bg-card/50 max-h-96 overflow-y-auto'>
-        {imagePayloadSummary && (
-          <div className='mb-3 rounded-md border border-border/60 bg-card/30 p-2 text-[11px] text-gray-300'>
-            <div className='text-[10px] uppercase tracking-wide text-gray-500'>
-              Image payload summary
-            </div>
-            <div className='mt-1 flex flex-wrap gap-3'>
-              <span>Images: {imagePayloadSummary.count}</span>
-              <span>
-                Original: {formatBytes(imagePayloadSummary.totalOriginalBytes)}
-              </span>
-              <span>
-                Output: {formatBytes(imagePayloadSummary.totalOutputBytes)}
-              </span>
-              <span>
-                Base64: {formatBytes(imagePayloadSummary.totalBase64Length)}
-              </span>
-              {imagePayloadSummary.mode ? (
-                <span>Mode: {imagePayloadSummary.mode}</span>
-              ) : null}
-              {imagePayloadSummary.format ? (
-                <span>Format: {imagePayloadSummary.format}</span>
-              ) : null}
-              {imagePayloadSummary.convertedCount > 0 ? (
-                <span>Converted: {imagePayloadSummary.convertedCount}</span>
-              ) : null}
-              {imagePayloadSummary.resizedCount > 0 ? (
-                <span>Resized: {imagePayloadSummary.resizedCount}</span>
-              ) : null}
-            </div>
-          </div>
-        )}
-        <div className='space-y-2 font-mono text-xs'>
-          {logs.map((log: ExportLog, index: number) => {
-            const variant =
-              log.level === 'error'
-                ? 'error'
-                : log.level === 'warn'
-                  ? 'warning'
-                  : 'info';
+      <div className='p-4 space-y-4'>
+        <div className='flex justify-end'>
+          <CopyButton
+            value={logsJson}
+            variant='outline'
+            size='sm'
+            showText
+            className='h-7 text-[10px]'
+          />
+        </div>
 
+        <div className='space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar'>
+          {logs.map((log, index) => {
+            const levelClass = getLevelColor(log.level);
             return (
-              <Alert key={index} variant={variant} className='p-2 font-mono text-[11px] border-none bg-card/40'>
-                <div className='flex justify-between items-start gap-2'>
-                  <div className='flex-1'>
-                    <div className='text-gray-500 opacity-70'>
-                      [{log.timestamp}] <span className='font-bold'>[{log.level.toUpperCase()}]</span>
-                    </div>
-                    <div className='mt-1 break-words whitespace-pre-wrap text-gray-200'>
-                      {log.message}
-                    </div>
-                    {log.context && (
+              <Alert 
+                key={index}
+                variant='subtle'
+                className={`py-2 px-3 border ${levelClass}`}
+              >
+                <div className='flex flex-col gap-1'>
+                  <div className='flex items-center justify-between gap-4'>
+                    <span className='font-mono text-[10px] opacity-60'>
+                      {new Date(log.timestamp).toLocaleTimeString()}
+                    </span>
+                    <span className='text-[9px] font-bold uppercase tracking-wider opacity-80'>
+                      {log.level}
+                    </span>
+                  </div>
+                  <div className='text-xs leading-relaxed font-medium break-words'>
+                    {log.message}
+                  </div>
+                  <div className='mt-1'>
+                    {log.context && Object.keys(log.context).length > 0 && (
                       <CollapsibleSection
-                        title={<span className='text-[10px] hover:text-gray-300 transition'>Context Details</span>}
-                        className='mt-2 p-0'
-                        triggerClassName='p-0 hover:bg-transparent'
-                        contentClassName='p-0'
+                        title='Context Data'
+                        variant='minimal'
+                        className='mt-1'
+                        titleClassName='text-[10px] text-gray-500'
                       >
-                        <pre className='mt-2 p-2 bg-black/40 rounded text-[10px] overflow-x-auto text-gray-300'>
+                        <pre className='mt-1 overflow-x-auto rounded bg-black/40 p-2 font-mono text-[10px] text-gray-300'>
                           {JSON.stringify(log.context, null, 2)}
                         </pre>
                       </CollapsibleSection>

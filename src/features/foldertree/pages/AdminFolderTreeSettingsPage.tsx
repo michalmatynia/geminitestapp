@@ -4,8 +4,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { IconSelector, ICON_LIBRARY, type IconLibraryItem } from '@/features/icons';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
-import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import {
+  getFolderTreeProfileV2Key,
+  serializeFolderTreeProfileV2Entry,
+} from '@/features/foldertree/v2/settings';
+import { useFolderTreeProfiles } from '@/shared/hooks/use-folder-tree-profile';
+import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
   Button,
   Checkbox,
@@ -20,13 +24,11 @@ import {
 } from '@/shared/ui';
 import {
   createDefaultFolderTreeProfilesV2,
-  FOLDER_TREE_PROFILES_V2_SETTING_KEY,
   type FolderTreeInstance,
   folderTreePlaceholderEmphasisValues,
   folderTreePlaceholderPresetOptions,
   folderTreeSelectionBehaviorValues,
   folderTreePlaceholderStyleValues,
-  parseFolderTreeProfilesV2,
   type FolderTreeNestingRuleV2,
   type FolderTreeProfileV2,
   type FolderTreeProfilesV2Map,
@@ -266,15 +268,11 @@ const folderTreeSelectionBehaviorOptions = folderTreeSelectionBehaviorValues.map
 }));
 
 export function AdminFolderTreeSettingsPage(): React.JSX.Element {
-  const settingsStore = useSettingsStore();
-  const updateSetting = useUpdateSetting();
+  const parsedProfiles = useFolderTreeProfiles();
+  const updateSettingsBulk = useUpdateSettingsBulk();
   const { toast } = useToast();
-
-  const rawProfiles = settingsStore.get(FOLDER_TREE_PROFILES_V2_SETTING_KEY);
-  const parsedProfiles = useMemo(
-    (): FolderTreeProfilesV2Map => parseFolderTreeProfilesV2(rawProfiles),
-    [rawProfiles]
-  );
+  const mutationState = updateSettingsBulk as { isPending?: boolean };
+  const isSaving = mutationState.isPending === true;
 
   const [draftProfiles, setDraftProfiles] = useState<FolderTreeProfilesV2Map>(parsedProfiles);
 
@@ -299,17 +297,19 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
 
   const handleSave = useCallback(async (): Promise<void> => {
     try {
-      await updateSetting.mutateAsync({
-        key: FOLDER_TREE_PROFILES_V2_SETTING_KEY,
-        value: JSON.stringify(draftProfiles),
-      });
+      await updateSettingsBulk.mutateAsync(
+        INSTANCE_META.map((meta) => ({
+          key: getFolderTreeProfileV2Key(meta.id),
+          value: serializeFolderTreeProfileV2Entry(draftProfiles[meta.id]),
+        }))
+      );
       toast('Folder tree profiles saved.', { variant: 'success' });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to save folder tree profiles.', {
         variant: 'error',
       });
     }
-  }, [draftProfiles, toast, updateSetting]);
+  }, [draftProfiles, toast, updateSettingsBulk]);
 
   const handleResetToDefaults = useCallback((): void => {
     setDraftProfiles(createDefaultFolderTreeProfilesV2());
@@ -332,15 +332,15 @@ export function AdminFolderTreeSettingsPage(): React.JSX.Element {
         onSave={() => { void handleSave(); }}
         saveText='Save Profiles'
         cancelText='Revert Changes'
-        isDisabled={!isDirty || updateSetting.isPending}
-        isSaving={updateSetting.isPending}
+        isDisabled={!isDirty || isSaving}
+        isSaving={isSaving}
         className='mb-4 flex-wrap justify-start'
       >
         <Button
           type='button'
           variant='outline'
           onClick={handleResetToDefaults}
-          disabled={updateSetting.isPending}
+          disabled={isSaving}
         >
           Reset To Defaults
         </Button>

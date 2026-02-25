@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { 
+import {
   useAdminCaseResolverCases,
   type CaseFileTypeFilter,
-  type CaseSearchScope,
-  type CaseSortKey
+  type CaseSearchScope
 } from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
 import { FilterPanel } from '@/shared/ui';
@@ -27,8 +26,6 @@ export function CaseFilterPanel(): React.JSX.Element {
     setCaseFilterCategoryIds,
     caseSearchScope,
     setCaseSearchScope,
-    caseSortBy,
-    setCaseSortBy,
     caseFilterPanelDefaultExpanded,
   } = useAdminCaseResolverCases();
 
@@ -94,17 +91,6 @@ export function CaseFilterPanel(): React.JSX.Element {
         ],
         width: '220px',
       },
-      {
-        key: 'sortBy',
-        label: 'Sort By',
-        type: 'select',
-        options: [
-          { value: 'updated', label: 'Date modified' },
-          { value: 'created', label: 'Date created' },
-          { value: 'name', label: 'Name' },
-        ],
-        width: '180px',
-      },
     ],
     [
       caseCategoryFilterOptions,
@@ -122,7 +108,6 @@ export function CaseFilterPanel(): React.JSX.Element {
       caseIdentifierIds: caseFilterCaseIdentifierIds,
       categoryIds: caseFilterCategoryIds,
       searchScope: caseSearchScope,
-      sortBy: caseSortBy,
     }),
     [
       caseFileTypeFilter,
@@ -131,7 +116,6 @@ export function CaseFilterPanel(): React.JSX.Element {
       caseFilterTagIds,
       caseFilterCategoryIds,
       caseSearchScope,
-      caseSortBy,
     ],
   );
 
@@ -143,7 +127,6 @@ export function CaseFilterPanel(): React.JSX.Element {
       case 'caseIdentifierIds': setCaseFilterCaseIdentifierIds(value as string[]); break;
       case 'categoryIds': setCaseFilterCategoryIds(value as string[]); break;
       case 'searchScope': setCaseSearchScope(value as CaseSearchScope); break;
-      case 'sortBy': setCaseSortBy(value as CaseSortKey); break;
     }
   };
 
@@ -155,7 +138,6 @@ export function CaseFilterPanel(): React.JSX.Element {
     setCaseFilterCaseIdentifierIds([]);
     setCaseFilterCategoryIds([]);
     setCaseSearchScope('all');
-    setCaseSortBy('updated');
   };
 
   return (

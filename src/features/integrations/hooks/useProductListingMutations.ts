@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import { invalidateProducts } from '@/features/products/hooks/productCache';
 import type { ProductListingWithDetails } from '@/shared/contracts/integrations';
-import type { ImageTransformOptionsDto as ImageTransformOptions } from '@/shared/contracts/integrations';
+import type { ImageTransformOptions } from '@/shared/contracts/integrations';
 import type { ProductJob } from '@/shared/contracts/integrations';
 import type { CreateMutation, UpdateMutation, DeleteMutation } from '@/shared/contracts/ui';
 import { api, ApiError } from '@/shared/lib/api-client';

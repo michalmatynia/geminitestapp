@@ -2,6 +2,7 @@ import React from 'react';
 
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { useSaveLanguageMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
+import type { Language } from '@/shared/contracts/internationalization';
 import { useToast } from '@/shared/ui';
 
 type UseLanguageFormResult = {
@@ -18,7 +19,8 @@ type UseLanguageFormResult = {
 };
 
 export function useLanguageForm(): UseLanguageFormResult {
-  const { editingLanguage: language } = useInternationalizationContext();
+  const context = useInternationalizationContext();
+  const language = context.activeLanguage as Language | null;
   const { toast } = useToast();
   const saveMutation = useSaveLanguageMutation();
 
@@ -36,7 +38,7 @@ export function useLanguageForm(): UseLanguageFormResult {
         name: language.name,
         nativeName: language.nativeName ?? '',
       });
-      setSelectedCountryIds(language.countries?.map((c) => c.id) ?? []);
+      setSelectedCountryIds(language.countries?.map((c: { id: string }) => c.id) ?? []);
     } else {
       setForm({ code: '', name: '', nativeName: '' });
       setSelectedCountryIds([]);

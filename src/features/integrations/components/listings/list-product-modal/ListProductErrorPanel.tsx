@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import { ActionMenu, DropdownMenuItem, Alert } from '@/shared/ui';
 
 import { useImageRetryPresets } from '../useImageRetryPresets';

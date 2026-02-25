@@ -10,7 +10,11 @@ import {
 } from '@/features/data-import-export/utils/image-retry-presets';
 import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
 import { getProductDataProvider } from '@/features/products/server';
-import type { ImageRetryPresetDto as ImageRetryPreset, TemplateDto as DomainImportExportTemplate, TemplateMappingDto as DomainImportExportTemplateMapping } from '@/shared/contracts/integrations';
+import type {
+  ImageRetryPreset,
+  Template as DomainImportExportTemplate,
+  TemplateMapping as DomainImportExportTemplateMapping,
+} from '@/shared/contracts/integrations';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 

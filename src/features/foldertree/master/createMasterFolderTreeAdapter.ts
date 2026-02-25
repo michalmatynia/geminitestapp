@@ -1,9 +1,11 @@
 import type {
-  MasterFolderTreeAdapter,
+  MasterFolderTreeAdapterV3,
   MasterFolderTreePersistContext,
   MasterFolderTreePersistOperation,
 } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+
+import { createMasterFolderTreeAdapterV3 } from '../v2/adapter/createMasterFolderTreeAdapterV3';
 
 
 type MoveOperation = Extract<MasterFolderTreePersistOperation, { type: 'move' }>;
@@ -19,6 +21,9 @@ export type DecodedMasterTreeNode<TEntity extends string = string> = {
 
 export type CreateMasterFolderTreeAdapterOptions<TEntity extends string> = {
   decodeNodeId: (nodeId: MasterTreeId) => DecodedMasterTreeNode<TEntity> | null;
+  fetchState?:
+    | ((instanceId?: string) => Promise<{ nodes: MasterTreeNode[]; version?: number | undefined }>)
+    | undefined;
   loadNodes?: (() => Promise<MasterTreeNode[]>) | undefined;
   handlers?: {
     onMove?:
@@ -64,61 +69,68 @@ export type CreateMasterFolderTreeAdapterOptions<TEntity extends string> = {
 
 export function createMasterFolderTreeAdapter<TEntity extends string>({
   decodeNodeId,
+  fetchState,
   loadNodes,
   handlers,
-}: CreateMasterFolderTreeAdapterOptions<TEntity>): MasterFolderTreeAdapter {
-  return {
-    ...(loadNodes ? { loadNodes } : {}),
-    applyOperation: async (
-      operation: MasterFolderTreePersistOperation,
-      context: MasterFolderTreePersistContext
-    ): Promise<MasterTreeNode[] | void> => {
-      if (operation.type === 'move') {
-        const node = decodeNodeId(operation.nodeId);
-        if (!node || !handlers?.onMove) return;
-        const targetParent = operation.targetParentId
-          ? decodeNodeId(operation.targetParentId)
-          : null;
-        return await handlers.onMove({
+}: CreateMasterFolderTreeAdapterOptions<TEntity>): MasterFolderTreeAdapterV3 {
+  const resolvedFetchState =
+    fetchState ??
+    (loadNodes
+      ? async (): Promise<{ nodes: MasterTreeNode[] }> => ({
+        nodes: await loadNodes(),
+      })
+      : undefined);
+
+  return createMasterFolderTreeAdapterV3({
+    decodeNodeId,
+    ...(resolvedFetchState ? { fetchState: resolvedFetchState } : {}),
+    handlers: handlers
+      ? {
+        onMove: async ({
           operation,
           context,
           node,
           targetParent,
-        });
-      }
-
-      if (operation.type === 'reorder') {
-        const node = decodeNodeId(operation.nodeId);
-        const target = decodeNodeId(operation.targetId);
-        if (!node || !target || !handlers?.onReorder) return;
-        return await handlers.onReorder({
+        }): Promise<MasterTreeNode[] | void> =>
+          await handlers.onMove?.({
+            operation,
+            context: context,
+            node,
+            targetParent,
+          }),
+        onReorder: async ({
           operation,
           context,
           node,
           target,
-        });
-      }
-
-      if (operation.type === 'rename') {
-        const node = decodeNodeId(operation.nodeId);
-        if (!node || !handlers?.onRename) return;
-        const nextName = operation.name.trim();
-        if (!nextName) return;
-        return await handlers.onRename({
+        }): Promise<MasterTreeNode[] | void> =>
+          await handlers.onReorder?.({
+            operation,
+            context: context,
+            node,
+            target,
+          }),
+        onRename: async ({
           operation,
           context,
           node,
           nextName,
-        });
-      }
-
-      if (operation.type === 'replace_nodes') {
-        if (!handlers?.onReplaceNodes) return;
-        return await handlers.onReplaceNodes({
+        }): Promise<MasterTreeNode[] | void> =>
+          await handlers.onRename?.({
+            operation,
+            context: context,
+            node,
+            nextName,
+          }),
+        onReplaceNodes: async ({
           operation,
           context,
-        });
+        }): Promise<MasterTreeNode[] | void> =>
+          await handlers.onReplaceNodes?.({
+            operation,
+            context: context,
+          }),
       }
-    },
-  };
+      : undefined,
+  });
 }

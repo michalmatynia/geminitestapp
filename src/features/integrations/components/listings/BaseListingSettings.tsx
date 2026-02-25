@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useListingSettingsContext } from '@/features/integrations/context/ListingSettingsContext';
-import type { BaseInventoryDto as BaseInventory, TemplateDto as Template } from '@/shared/contracts/integrations';
+import type { BaseInventory, Template } from '@/shared/contracts/integrations';
 import { SelectSimple, FormField, Alert, ToggleRow } from '@/shared/ui';
 
 export function BaseListingSettings(): React.JSX.Element {
@@ -22,7 +22,7 @@ export function BaseListingSettings(): React.JSX.Element {
   return (
     <div className='space-y-4'>
       <FormField 
-        label={'Base.com Inventory ${loadingInventories ? \'(Loading...)\' : \'\'}'}
+        label={`Base.com Inventory ${loadingInventories ? '(Loading...)' : ''}`}
         id='inventory'
       >
         <SelectSimple

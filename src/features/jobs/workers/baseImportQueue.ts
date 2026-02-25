@@ -2,7 +2,7 @@ import 'server-only';
 
 import { processBaseImportRun } from '@/features/integrations/services/imports/base-import-service';
 import { ErrorSystem } from '@/features/observability/server';
-import type { BaseImportItemStatusDto as BaseImportItemStatus } from '@/shared/contracts/integrations';
+import type { BaseImportItemStatus } from '@/shared/contracts/integrations';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 type BaseImportQueueJobData = {

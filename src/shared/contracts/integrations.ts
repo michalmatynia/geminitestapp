@@ -50,6 +50,7 @@ export const integrationSchema = namedDtoSchema.extend({
 });
 
 export type Integration = z.infer<typeof integrationSchema>;
+export type IntegrationDto = Integration;
 
 export const createIntegrationSchema = integrationSchema.omit({
   id: true,
@@ -113,6 +114,7 @@ export const integrationConnectionSchema = namedDtoSchema.extend({
 });
 
 export type IntegrationConnection = z.infer<typeof integrationConnectionSchema>;
+export type IntegrationConnectionDto = IntegrationConnection;
 
 export const createIntegrationConnectionSchema = integrationConnectionSchema.omit({
   id: true,
@@ -1264,7 +1266,7 @@ export type CreateProductListingInput = Omit<CreateProductListing, 'listedAt' | 
   lastStatusCheckAt?: string | Date | null;
 };
 
-export type ProductListingExportEvent = Omit<ProductListingExportEvent, 'exportedAt' | 'expiresAt'> & {
+export type ProductListingExportEventRecord = Omit<ProductListingExportEvent, 'exportedAt' | 'expiresAt'> & {
   exportedAt: string | Date;
   expiresAt?: string | Date | null | undefined;
 };
@@ -1277,7 +1279,7 @@ export type ProductListingRepository = {
   updateListingStatus: (id: string, status: string) => Promise<void>;
   updateListing: (id: string, input: Partial<CreateProductListingInput>) => Promise<void>;
   updateListingInventoryId: (id: string, inventoryId: string | null) => Promise<void>;
-  appendExportHistory: (id: string, event: ProductListingExportEvent) => Promise<void>;
+  appendExportHistory: (id: string, event: ProductListingExportEventRecord) => Promise<void>;
   deleteListing: (id: string) => Promise<void>;
   listingExists: (productId: string, connectionId: string) => Promise<boolean>;
   listAllListings: () => Promise<Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>>;
@@ -1299,3 +1301,26 @@ export const integrationDefinitions = [
  */
 export type ProductListingRecord = ProductListing;
 export type IntegrationWithConnectionsBasic = IntegrationWithConnections;
+
+// Backward-compatible aliases for modules that still import *Dto names.
+export type ImageTransformOptionsDto = ImageTransformOptions;
+export type ImageRetryPresetDto = ImageRetryPreset;
+export type TemplateMappingDto = TemplateMapping;
+export type TemplateDto = Template;
+export type BaseInventoryDto = BaseInventory;
+export type FetchMarketplaceCategoriesRequestDto = FetchMarketplaceCategoriesRequest;
+export type BulkCategoryMappingRequestDto = BulkCategoryMappingRequest;
+export type BaseImportItemStatusDto = BaseImportItemStatus;
+export type BaseImportModeDto = BaseImportMode;
+export type BaseImportRunRecordDto = BaseImportRunRecord;
+export type BaseImportStartResponseDto = BaseImportStartResponse;
+export type BaseImportRunDetailResponseDto = BaseImportRunDetailResponse;
+export type BaseImportParameterImportSettingsDto = BaseImportParameterImportSettings;
+export type SessionCookieDto = SessionCookie;
+export type ImageUrlDiagnosticDto = ImageUrlDiagnostic;
+export type ImageExportDiagnosticsDto = ImageExportDiagnostics;
+export type CapturedLogDto = CapturedLog;
+export type IntegrationConnectionBasicDto = IntegrationConnectionBasic;
+export type IntegrationWithConnectionsDto = IntegrationWithConnections;
+export type ImportParameterCacheResponseDto = ImportParameterCacheResponse;
+export type ProductListingExportEventDto = ProductListingExportEvent;

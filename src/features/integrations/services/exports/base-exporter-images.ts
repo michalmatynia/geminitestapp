@@ -6,7 +6,7 @@ import path from 'path';
 import sharp from 'sharp';
 
 import { getDiskPathFromPublicPath } from '@/features/files/server';
-import type { ImageUrlDiagnosticDto as ImageUrlDiagnostic } from '@/shared/contracts/integrations';
+import type { ImageUrlDiagnostic } from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 
 const IMAGE_BASE_URL =

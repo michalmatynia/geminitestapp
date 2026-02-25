@@ -11,10 +11,10 @@ import type {
   CatalogOption,
 } from '@/shared/contracts/data-import-export';
 import type { 
-  BaseImportParameterImportSettingsDto as BaseImportParameterImportSettings,
-  BaseImportModeDto as BaseImportMode,
-  IntegrationConnectionBasicDto as IntegrationConnectionBasic,
-  IntegrationWithConnectionsDto as IntegrationWithConnections,
+  BaseImportParameterImportSettings,
+  BaseImportMode,
+  IntegrationConnectionBasic,
+  IntegrationWithConnections,
   ImageRetryPreset,
 } from '@/shared/contracts/integrations';
 

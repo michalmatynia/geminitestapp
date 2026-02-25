@@ -10,7 +10,7 @@ import {
 } from '@/features/integrations/constants/slugs';
 import { useProductListingsContext } from '@/features/integrations/context/ProductListingsContext';
 import type { ProductListingWithDetails, ProductListingExportEvent } from '@/shared/contracts/integrations';
-import type { ImageRetryPresetDto as ImageRetryPreset } from '@/shared/contracts/integrations';
+import type { ImageRetryPreset } from '@/shared/contracts/integrations';
 import {
   Button,
   Input,

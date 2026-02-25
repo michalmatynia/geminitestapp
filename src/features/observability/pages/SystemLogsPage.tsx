@@ -66,15 +66,54 @@ const triagePresetIcons: Record<LogTriagePreset['id'], React.ComponentType<{ cla
   'auth-anomalies-last3d': Shield,
 };
 
-function LogTriagePresets({
-  values,
-  onApplyPreset,
-  onClearPreset,
-}: {
-  values: SystemLogFilterFormValues;
-  onApplyPreset: (preset: LogTriagePreset) => void;
-  onClearPreset: () => void;
-}): React.JSX.Element {
+function LogTriagePresets(): React.JSX.Element {
+  const {
+    level,
+    query,
+    source,
+    method,
+    statusCode,
+    requestId,
+    userId,
+    fingerprint,
+    category,
+    fromDate,
+    toDate,
+    handleFilterChange,
+    handleResetFilters: onClearPreset,
+  } = useSystemLogsContext();
+
+  const values: SystemLogFilterFormValues = {
+    level,
+    query,
+    source,
+    method,
+    statusCode,
+    requestId,
+    userId,
+    fingerprint,
+    category,
+    fromDate,
+    toDate,
+  };
+
+  const applyFilterValues = (nextValues: SystemLogFilterFormValues): void => {
+    (Object.entries(nextValues) as Array<[keyof SystemLogFilterFormValues, string]>).forEach(
+      ([key, value]) => {
+        handleFilterChange(key, value);
+      }
+    );
+  };
+
+  const onApplyPreset = (preset: LogTriagePreset): void => {
+    const resolvedPresetValues = resolveSystemLogPresetFilters(preset);
+    const nextValues: SystemLogFilterFormValues = {
+      ...SYSTEM_LOG_FILTER_DEFAULTS,
+      ...resolvedPresetValues,
+    };
+    applyFilterValues(nextValues);
+  };
+
   const now = new Date();
   const resolvedPresets = SYSTEM_LOG_TRIAGE_PRESETS.map((preset) => ({
     preset,
@@ -563,6 +602,10 @@ function SystemLogsContent(): React.JSX.Element {
     clearLogsMutation,
   } = useSystemLogsContext();
 
+  const handleDynamicFilterChange = (key: string, value: string | string[]): void => {
+    handleFilterChange(key, Array.isArray(value) ? (value[0] ?? '') : value);
+  };
+
   const currentFilterValues: SystemLogFilterFormValues = {
     level,
     query,
@@ -575,27 +618,6 @@ function SystemLogsContent(): React.JSX.Element {
     category,
     fromDate,
     toDate,
-  };
-
-  const applyFilterValues = (nextValues: SystemLogFilterFormValues): void => {
-    (Object.entries(nextValues) as Array<[keyof SystemLogFilterFormValues, string]>).forEach(
-      ([key, value]) => {
-        handleFilterChange(key, value);
-      }
-    );
-  };
-
-  const handleDynamicFilterChange = (key: string, value: string | string[]): void => {
-    handleFilterChange(key, Array.isArray(value) ? (value[0] ?? '') : value);
-  };
-
-  const handleApplyPreset = (preset: LogTriagePreset): void => {
-    const resolvedPresetValues = resolveSystemLogPresetFilters(preset);
-    const nextValues: SystemLogFilterFormValues = {
-      ...SYSTEM_LOG_FILTER_DEFAULTS,
-      ...resolvedPresetValues,
-    };
-    applyFilterValues(nextValues);
   };
 
   return (
@@ -660,11 +682,7 @@ function SystemLogsContent(): React.JSX.Element {
       }
     >
       <div className='space-y-6'>
-        <LogTriagePresets
-          values={currentFilterValues}
-          onApplyPreset={handleApplyPreset}
-          onClearPreset={handleResetFilters}
-        />
+        <LogTriagePresets />
 
         <Card variant='glass' padding='lg'>
           <div className='flex items-center gap-2 mb-6 text-xs font-bold uppercase text-gray-500'>

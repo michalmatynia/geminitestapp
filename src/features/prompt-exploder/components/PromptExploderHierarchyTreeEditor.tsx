@@ -2,8 +2,10 @@
 
 import React, { useEffect, useMemo, useRef } from 'react';
 
-import { MasterFolderTree } from '@/features/foldertree';
-import { useMasterFolderTree } from '@/features/foldertree/master/useMasterFolderTree';
+import {
+  FolderTreeViewportV2,
+  useFolderTreeInstanceV2,
+} from '@/features/foldertree/v2';
 import { Button, Input, Label } from '@/shared/ui';
 
 import { usePromptExploderHierarchyTreeContext } from './PromptExploderHierarchyTreeContext';
@@ -88,17 +90,22 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
     [masterNodes]
   );
 
-  const controller = useMasterFolderTree({
+  const controller = useFolderTreeInstanceV2({
+    instanceId: 'prompt_exploder_hierarchy',
     initialNodes: masterNodes,
     initiallyExpandedNodeIds: expandedNodeIds,
     externalRevision: treeRevision,
     adapter: {
-      applyOperation: async (_operation, context) => {
+      apply: async (tx) => {
         const nextItems = rebuildPromptExploderListFromMasterNodes({
-          nodes: context.nextNodes,
+          nodes: tx.nextNodes,
           previousItems: itemsRef.current,
         });
         onChange(nextItems);
+        return {
+          tx,
+          appliedAt: Date.now(),
+        };
       },
     },
   });
@@ -198,7 +205,7 @@ export function PromptExploderHierarchyTreeEditor(): React.JSX.Element {
       </div>
 
       <div className='max-h-[260px] overflow-y-auto rounded border border-border/60 bg-card/30 p-2'>
-        <MasterFolderTree
+        <FolderTreeViewportV2
           controller={controller}
           enableDnd
           className='space-y-0.5'

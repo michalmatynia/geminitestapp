@@ -10,16 +10,6 @@ import { DrafterProvider, useDrafterContext } from '../context/DrafterContext';
 import { useDraftQueries } from '../hooks/useDraftQueries';
 
 function AdminDraftsPageContent(): React.JSX.Element {
-  const { 
-    isCreatorOpen, 
-    editingDraftId, 
-    closeCreator, 
-    formRef 
-  } = useDrafterContext();
-
-  const { data: drafts = [] } = useDraftQueries();
-  const editingDraft = drafts.find(d => d.id === editingDraftId) ?? null;
-
   return (
     <div className='container mx-auto py-10'>
       <SectionHeader
@@ -30,13 +20,7 @@ function AdminDraftsPageContent(): React.JSX.Element {
 
       <DraftList />
 
-      <DraftCreatorModal
-        isOpen={isCreatorOpen}
-        onClose={closeCreator}
-        onSuccess={() => {}}
-        item={editingDraft}
-        formRef={formRef}
-      />
+      <DraftCreatorModal />
     </div>
   );
 }

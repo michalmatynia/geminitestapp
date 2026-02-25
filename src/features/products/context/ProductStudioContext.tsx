@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -113,7 +113,7 @@ export type ProductImageSlotPreview = {
   src: string;
 };
 
-interface ProductStudioContextValue {
+export interface ProductStudioContextValue {
   // Global / Setting Data
   studioProjectId: string | null;
   setStudioProjectId: (id: string | null) => void;
@@ -138,14 +138,6 @@ interface ProductStudioContextValue {
   sourceImageSrc: string | null;
   variantImageSrc: string | null;
   canCompareWithSource: boolean;
-  singleVariantView: 'variant' | 'source';
-  setSingleVariantView: (view: 'variant' | 'source') => void;
-  splitVariantView: boolean;
-  setSplitVariantView: (view: boolean) => void;
-  leftSplitZoom: number;
-  setLeftSplitZoom: (zoom: number | ((prev: number) => number)) => void;
-  rightSplitZoom: number;
-  setRightSplitZoom: (zoom: number | ((prev: number) => number)) => void;
   
   // Sequencing & Diagnostics
   variantsData: ProductStudioVariantsResponse | null;
@@ -181,7 +173,6 @@ interface ProductStudioContextValue {
 
 const ProductStudioContext = createContext<ProductStudioContextValue | null>(null);
 
-const SPLIT_ZOOM_RESET = 1;
 const STUDIO_PROJECT_NOT_CONNECTED = '__product_studio_not_connected__';
 
 export function ProductStudioProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -192,8 +183,12 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     studioConfigSaving,
   } = useProductFormStudio();
 
-  const { product } = useProductFormCore();
-  const { imageSlots, refreshImagesFromProduct } = useProductFormImages();
+  const core = useProductFormCore();
+  const product = core.product;
+  
+  const images = useProductFormImages();
+  const imageSlots = images.imageSlots;
+  const refreshImagesFromProduct = images.refreshImagesFromProduct;
   
   const studioProjectsQuery = useStudioProjects();
   const studioProjectIds = useMemo(
@@ -211,7 +206,7 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const searchParams = useSearchParams();
+  const _searchParams = useSearchParams();
   const settingsStore = useSettingsStore();
   
   const configuredDefaultStudioProjectId = settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY)?.trim() ?? '';
@@ -231,17 +226,12 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
-  const [activeRunKind, setActiveRunKind] = useState<'generation' | 'sequence' | null>(null);
+  const [runStatus, setRunStatus] = useState<'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | null>(null);
   const [activeRunBaselineVariantIds, setActiveRunBaselineVariantIds] = useState<string[]>([]);
   const [pendingExpectedOutputs, setPendingExpectedOutputs] = useState<number>(0);
-  const [runStatus, setRunStatus] = useState<'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | null>(null);
-  const [singleVariantView, setSingleVariantView] = useState<'variant' | 'source'>('variant');
-  const [splitVariantView, setSplitVariantView] = useState(false);
-  const [leftSplitZoom, setLeftSplitZoom] = useState(SPLIT_ZOOM_RESET);
-  const [rightSplitZoom, setRightSplitZoom] = useState(SPLIT_ZOOM_RESET);
 
   const imageSlotPreviews = useMemo((): ProductImageSlotPreview[] => {
-    return imageSlots
+    return (imageSlots || [])
       .map((slot, index): ProductImageSlotPreview | null => {
         if (!slot) return null;
         const src =
@@ -334,14 +324,18 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     if (!product?.id || !studioProjectId || selectedImageIndex === null) return;
     setSending(true);
     setStudioActionError(null);
-    const baselineIds = (variantsData?.variants ?? []).map(s => s.id).filter(id => !!id);
+    const baselineIds = (variantsData?.variants ?? []).map(s => s.id).filter((id): id is string => !!id);
     try {
-      const result = await api.post<any>(`/api/products/${encodeURIComponent(product.id)}/studio/send`, {
+      const result = await api.post<{ 
+        runId: string; 
+        runKind: 'generation' | 'sequence'; 
+        runStatus: ProductStudioContextValue['runStatus']; 
+        expectedOutputs: number 
+      }>(`/api/products/${encodeURIComponent(product.id)}/studio/send`, {
         imageSlotIndex: selectedImageIndex,
         projectId: studioProjectId,
       });
       setActiveRunId(result.runId);
-      setActiveRunKind(result.runKind);
       setActiveRunBaselineVariantIds(baselineIds);
       setRunStatus(result.runStatus);
       setPendingExpectedOutputs(Math.max(0, Math.floor(result.expectedOutputs ?? 0)));
@@ -360,7 +354,7 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     if (!product?.id || !studioProjectId || selectedImageIndex === null) return;
     setOpeningInImageStudio(true);
     try {
-      const response = await api.post<any>(`/api/products/${encodeURIComponent(product.id)}/studio/link`, {
+      const response = await api.post<{ projectId: string; sourceSlot: { id: string } }>(`/api/products/${encodeURIComponent(product.id)}/studio/link`, {
         imageSlotIndex: selectedImageIndex,
         projectId: studioProjectId,
       });
@@ -378,7 +372,7 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     if (!product?.id || !studioProjectId || !selectedVariantSlotId) return;
     setAccepting(true);
     try {
-      const response = await api.post<any>(`/api/products/${encodeURIComponent(product.id)}/studio/accept`, {
+      const response = await api.post<{ product: ProductWithImages }>(`/api/products/${encodeURIComponent(product.id)}/studio/accept`, {
         imageSlotIndex: selectedImageIndex,
         generationSlotId: selectedVariantSlotId,
         projectId: studioProjectId,
@@ -416,7 +410,7 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     if (!product?.id || selectedImageIndex === null) return;
     setRotatingDirection(direction);
     try {
-      const response = await api.post<any>(`/api/products/${encodeURIComponent(product.id)}/studio/rotate`, {
+      const response = await api.post<{ product: ProductWithImages }>(`/api/products/${encodeURIComponent(product.id)}/studio/rotate`, {
         imageSlotIndex: selectedImageIndex,
         direction,
       });
@@ -443,9 +437,7 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
   const blockSendForSequenceReadiness = Boolean(sequenceReadinessMessage);
 
   const activeRunBaselineVariantIdSet = useMemo(() => new Set(activeRunBaselineVariantIds), [activeRunBaselineVariantIds]);
-  const variantsProducedForActiveRun = useMemo(() => variants.filter(s => !activeRunBaselineVariantIdSet.has(s.id)).length, [activeRunBaselineVariantIdSet, variants]);
-  const pendingVariantPlaceholderCount = activeRunId && (runStatus === 'queued' || runStatus === 'running')
-    ? Math.max(0, pendingExpectedOutputs - variantsProducedForActiveRun) : 0;
+  const variantsProducedForActiveRun = useMemo(() => variants.filter(s => s.id && !activeRunBaselineVariantIdSet.has(s.id)).length, [activeRunBaselineVariantIdSet, variants]);
 
   const contextValue: ProductStudioContextValue = {
     studioProjectId,
@@ -461,18 +453,11 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
     selectedVariantSlotId,
     setSelectedVariantSlotId,
     selectedVariant,
-    pendingVariantPlaceholderCount,
+    pendingVariantPlaceholderCount: activeRunId && (runStatus === 'queued' || runStatus === 'running')
+      ? Math.max(0, pendingExpectedOutputs - variantsProducedForActiveRun) : 0,
     sourceImageSrc,
     variantImageSrc,
     canCompareWithSource,
-    singleVariantView,
-    setSingleVariantView,
-    splitVariantView,
-    setSplitVariantView,
-    leftSplitZoom,
-    setLeftSplitZoom,
-    rightSplitZoom,
-    setRightSplitZoom,
     variantsData,
     sequenceReadinessMessage,
     blockSendForSequenceReadiness,

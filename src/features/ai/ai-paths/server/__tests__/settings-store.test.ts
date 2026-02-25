@@ -66,7 +66,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
 
   it('can explicitly enable read-time default seeds through policy toggle', async () => {
     const records = [{ key: 'ai_paths_index', value: '[]' }];
-    const seeded = [{ key: 'ai_paths_index', value: '[{\"id\":\"path_seeded\"}]' }];
+    const seeded = [{ key: 'ai_paths_index', value: '[{"id":"path_seeded"}]' }];
     const applyDefaultSeeds = vi
       .fn<(items: Array<{ key: string; value: string }>) => Promise<Array<{ key: string; value: string }>>>()
       .mockResolvedValue(seeded);

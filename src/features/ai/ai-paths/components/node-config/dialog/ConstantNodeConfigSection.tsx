@@ -1,7 +1,7 @@
 'use client';
 
 import type { ConstantConfig } from '@/features/ai/ai-paths/lib';
-import { Input,  Textarea, SelectSimple } from '@/shared/ui';
+import { Input, Label, SelectSimple, Textarea } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 

@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto';
 
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
-import type { TemplateMappingDto as TemplateMapping } from '@/shared/contracts/integrations';
+import type { TemplateMapping } from '@/shared/contracts/integrations';
 import type { ProductCreateInputDto as ProductCreateInput } from '@/shared/contracts/products';
 
 const toTrimmedString = (value: unknown): string | null => {

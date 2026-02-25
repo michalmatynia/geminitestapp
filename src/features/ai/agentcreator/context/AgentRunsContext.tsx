@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo, useCallback } from 'react';
+import React, { createContext, useContext, useState, useMemo } from 'react';
 
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type {
@@ -64,7 +64,9 @@ export function AgentRunsProvider({ children }: { children: React.ReactNode }): 
       agentRuns,
       isAgentRunsLoading,
       isAgentRunsFetching,
-      refetchAgentRuns: () => void refetchAgentRuns(),
+      refetchAgentRuns: () => {
+        void refetchAgentRuns();
+      },
       selectedAgentRunId,
       setSelectedAgentRunId,
       selectedAgentRun,

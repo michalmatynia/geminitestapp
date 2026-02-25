@@ -193,15 +193,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
     <div className='space-y-4'>
       <FormField 
         label='Prompt Template' 
-        description={(
-          <>
-            Images are passed separately via the Prompt{' '}
-            <span className='text-gray-300'>images</span> output and the Model{' '}
-            <span className='text-gray-300'>images</span> input. You don&apos;t
-            need an <span className='text-gray-300'>images</span> placeholder
-            inside the prompt text.
-          </>
-        )}
+        description='Images are passed separately via the Prompt images output and the Model images input, so no images placeholder is needed in the prompt text.'
       >
         <Textarea
           variant='subtle'
@@ -350,13 +342,7 @@ export function PromptNodeConfigSection(): React.JSX.Element | null {
       <div className='mt-4'>
         <FormField 
           label='Resolved Prompt'
-          description={(
-            <>
-              Uses incoming ports (including <span className='text-gray-300'>result</span>) to substitute placeholders.
-              Use <span className='text-gray-300'>{'{{value}}'}</span> or{' '}
-              <span className='text-gray-300'>{'{{result}}'}</span>.
-            </>
-          )}
+          description='Uses incoming ports (including result) to substitute placeholders. Use {{value}} or {{result}}.'
           actions={
             <Button
               type='button'

@@ -2,7 +2,7 @@ import {
   isInternalMasterTreeNode,
   resolveRootTopReorderAnchor,
   type MasterTreeRootDropZone,
-} from '@/features/foldertree';
+} from '@/features/foldertree/v2';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
 
 import {

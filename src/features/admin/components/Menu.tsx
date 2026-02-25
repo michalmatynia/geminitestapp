@@ -33,6 +33,7 @@ import { cn } from '@/shared/utils';
 import { buildAdminNav } from './admin-menu-nav';
 
 export { buildAdminNav };
+export type { AdminMenuCustomNode };
 
 export type NavItem = Omit<AdminNavItem, 'children'> & {
   icon?: React.ReactNode;

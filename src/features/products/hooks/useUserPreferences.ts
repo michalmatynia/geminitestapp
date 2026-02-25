@@ -27,6 +27,8 @@ const DEFAULT_PREFERENCES: ProductListPreferences = {
   thumbnailSource: 'file',
   filtersCollapsedByDefault: false,
   advancedFilterPresets: [],
+  appliedAdvancedFilter: '',
+  appliedAdvancedFilterPresetId: null,
 };
 
 const userPreferencesQueryKey = QUERY_KEYS.userPreferences.all;
@@ -41,6 +43,8 @@ const mapProductListPreferences = (
   thumbnailSource: data?.productListThumbnailSource || 'file',
   filtersCollapsedByDefault: data?.productListFiltersCollapsedByDefault ?? false,
   advancedFilterPresets: data?.productListAdvancedFilterPresets ?? [],
+  appliedAdvancedFilter: data?.productListAppliedAdvancedFilter ?? '',
+  appliedAdvancedFilterPresetId: data?.productListAppliedAdvancedFilterPresetId ?? null,
 });
 
 async function fetchUserPreferences(signal?: AbortSignal): Promise<SharedUserPreferences> {
@@ -109,6 +113,9 @@ export interface UserPreferencesHookResult {
   setPageSize: (size: number) => Promise<void>;
   setAdvancedFilterPresets: (
     presets: ProductAdvancedFilterPreset[]
+  ) => Promise<void>;
+  setAppliedAdvancedFilterState: (
+    state: { advancedFilter: string; presetId: string | null }
   ) => Promise<void>;
 }
 
@@ -183,6 +190,16 @@ export function useUserPreferences(): UserPreferencesHookResult {
     [setPreference]
   );
 
+  const setAppliedAdvancedFilterState = useCallback(
+    async (state: { advancedFilter: string; presetId: string | null }) => {
+      await setPreference({
+        appliedAdvancedFilter: state.advancedFilter,
+        appliedAdvancedFilterPresetId: state.presetId,
+      });
+    },
+    [setPreference]
+  );
+
   return {
     preferences,
     loading: isLoading,
@@ -191,5 +208,6 @@ export function useUserPreferences(): UserPreferencesHookResult {
     setCurrencyCode,
     setPageSize,
     setAdvancedFilterPresets,
+    setAppliedAdvancedFilterState,
   };
 }

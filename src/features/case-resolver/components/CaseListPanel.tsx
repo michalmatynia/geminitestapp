@@ -1,8 +1,8 @@
 'use client';
 
-import { Folder, FolderOpen, GitBranch, Lock, Plus } from 'lucide-react';
+import { Folder, FolderOpen, GitBranch, Lock, PlusIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { memo, useCallback, useMemo, useRef } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createCaseResolverCasesMasterTreeAdapter } from '@/features/case-resolver/adapter';
 import {
@@ -12,11 +12,12 @@ import {
   toCaseResolverCaseNodeId,
 } from '@/features/case-resolver/master-tree';
 import { useMasterFolderTreeInstance } from '@/features/foldertree';
-import { applyInternalMasterTreeDrop } from '@/features/foldertree/master/internal-drop';
 import {
-  MasterFolderTree,
-  type MasterFolderTreeProps,
-} from '@/features/foldertree/master/MasterFolderTree';
+  FolderTreeViewportV2,
+  type FolderTreeViewportV2Props,
+  applyInternalMasterTreeDrop,
+} from '@/features/foldertree/v2';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import {
   Badge,
   Button,
@@ -31,6 +32,122 @@ import { CaseFilterPanel } from './CaseFilterPanel';
 import { CaseListHeader } from './list/CaseListHeader';
 
 const parseBoolean = (value: unknown): boolean => value === true;
+const parseTimestampMs = (value: string | null | undefined): number => {
+  if (!value) return 0;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+};
+const resolveCaseTreeOrderValue = (file: CaseResolverFile | null): number =>
+  file && typeof file.caseTreeOrder === 'number' && Number.isFinite(file.caseTreeOrder)
+    ? Math.max(0, Math.floor(file.caseTreeOrder))
+    : Number.MAX_SAFE_INTEGER;
+const CASE_ROW_TIMESTAMP_FORMATTER = new Intl.DateTimeFormat(undefined, {
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+});
+const formatCaseTimestamp = (value: string | null | undefined): string => {
+  if (!value) return 'Unknown';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return 'Unknown';
+  return CASE_ROW_TIMESTAMP_FORMATTER.format(parsed);
+};
+const sortCaseTreeNodes = ({
+  nodes,
+  filesById,
+  sortBy,
+  sortOrder,
+}: {
+  nodes: MasterTreeNode[];
+  filesById: Map<string, CaseResolverFile>;
+  sortBy: 'updated' | 'created' | 'name';
+  sortOrder: 'asc' | 'desc';
+}): MasterTreeNode[] => {
+  const resolveNodeTimestamp = (
+    node: MasterTreeNode,
+    key: 'created' | 'updated'
+  ): number => {
+    const caseId = fromCaseResolverCaseNodeId(node.id);
+    const caseFile = caseId ? (filesById.get(caseId) ?? null) : null;
+    if (caseFile) {
+      return key === 'updated'
+        ? parseTimestampMs(caseFile.updatedAt ?? caseFile.createdAt)
+        : parseTimestampMs(caseFile.createdAt);
+    }
+    const metadata =
+      node.metadata && typeof node.metadata === 'object'
+        ? node.metadata
+        : null;
+    const createdAt =
+      typeof metadata?.['createdAt'] === 'string'
+        ? metadata['createdAt']
+        : null;
+    const updatedAt =
+      typeof metadata?.['updatedAt'] === 'string'
+        ? metadata['updatedAt']
+        : null;
+    return key === 'updated'
+      ? parseTimestampMs(updatedAt ?? createdAt)
+      : parseTimestampMs(createdAt);
+  };
+
+  const sortedIndexByNodeId = new Map<string, number>();
+  const nodesByParentId = new Map<string | null, MasterTreeNode[]>();
+  nodes.forEach((node: MasterTreeNode): void => {
+    const parentId = node.parentId ?? null;
+    const current = nodesByParentId.get(parentId) ?? [];
+    current.push(node);
+    nodesByParentId.set(parentId, current);
+  });
+
+  const direction = sortOrder === 'asc' ? 1 : -1;
+  nodesByParentId.forEach((siblings: MasterTreeNode[]): void => {
+    const orderedSiblings = [...siblings].sort(
+      (left: MasterTreeNode, right: MasterTreeNode): number => {
+        if (sortBy === 'name') {
+          const nameDelta = left.name.localeCompare(right.name);
+          if (nameDelta !== 0) return nameDelta * direction;
+        } else if (sortBy === 'created') {
+          const createdDelta =
+            resolveNodeTimestamp(left, 'created') -
+            resolveNodeTimestamp(right, 'created');
+          if (createdDelta !== 0) return createdDelta * direction;
+        } else {
+          const updatedDelta =
+            resolveNodeTimestamp(left, 'updated') -
+            resolveNodeTimestamp(right, 'updated');
+          if (updatedDelta !== 0) return updatedDelta * direction;
+        }
+
+        const leftCaseId = fromCaseResolverCaseNodeId(left.id);
+        const rightCaseId = fromCaseResolverCaseNodeId(right.id);
+        const leftCaseFile = leftCaseId ? (filesById.get(leftCaseId) ?? null) : null;
+        const rightCaseFile = rightCaseId ? (filesById.get(rightCaseId) ?? null) : null;
+        const orderDelta =
+          resolveCaseTreeOrderValue(leftCaseFile) -
+          resolveCaseTreeOrderValue(rightCaseFile);
+        if (orderDelta !== 0) return orderDelta;
+        const nameDelta = left.name.localeCompare(right.name);
+        if (nameDelta !== 0) return nameDelta;
+        return left.id.localeCompare(right.id);
+      }
+    );
+    orderedSiblings.forEach((node: MasterTreeNode, index: number): void => {
+      sortedIndexByNodeId.set(node.id, index);
+    });
+  });
+
+  return nodes.map((node: MasterTreeNode): MasterTreeNode => {
+    const sortIndex = sortedIndexByNodeId.get(node.id);
+    if (sortIndex === undefined || sortIndex === node.sortOrder) return node;
+    return {
+      ...node,
+      sortOrder: sortIndex,
+    };
+  });
+};
 
 export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const router = useRouter();
@@ -43,38 +160,104 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     handleMoveCase,
     handleReorderCase,
     handleRenameCase,
+    caseSortBy,
+    caseSortOrder,
   } = useAdminCaseResolverCases();
   const {
     files,
     filesById,
     filteredCases,
-    visibleCaseIds,
     caseTagPathById,
     caseIdentifierPathById,
     caseCategoryPathById,
   } = useAdminCaseResolverCasesState();
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(24);
 
   const baseCaseNodes = useMemo(
-    (): MasterTreeNode[] => buildMasterCaseNodesFromCaseResolverWorkspace(workspace),
-    [workspace]
+    (): MasterTreeNode[] =>
+      sortCaseTreeNodes({
+        nodes: buildMasterCaseNodesFromCaseResolverWorkspace(workspace),
+        filesById,
+        sortBy: caseSortBy,
+        sortOrder: caseSortOrder,
+      }),
+    [caseSortBy, caseSortOrder, filesById, workspace]
   );
 
-  const visibleCaseNodeIdSet = useMemo((): Set<string> => {
-    if (filteredCases.length === files.length) return new Set<string>();
-    return new Set<string>(
-      Array.from(visibleCaseIds).map((caseId: string): string => toCaseResolverCaseNodeId(caseId))
-    );
-  }, [files.length, filteredCases.length, visibleCaseIds]);
+  const totalPages = useMemo((): number => {
+    if (filteredCases.length === 0) return 1;
+    return Math.max(1, Math.ceil(filteredCases.length / pageSize));
+  }, [filteredCases.length, pageSize]);
+
+  useEffect((): void => {
+    setPage((currentPage: number): number => {
+      if (currentPage < 1) return 1;
+      if (currentPage > totalPages) return totalPages;
+      return currentPage;
+    });
+  }, [totalPages]);
+
+  const pagedCaseIds = useMemo((): string[] => {
+    if (filteredCases.length === 0) return [];
+    const startIndex = (page - 1) * pageSize;
+    if (startIndex >= filteredCases.length) return [];
+    return filteredCases
+      .slice(startIndex, startIndex + pageSize)
+      .map((file) => file.id);
+  }, [filteredCases, page, pageSize]);
+
+  const parentCaseIdByCaseId = useMemo((): Map<string, string | null> => {
+    const map = new Map<string, string | null>();
+    files.forEach((file): void => {
+      const parentCaseId = file.parentCaseId?.trim() ?? '';
+      map.set(file.id, parentCaseId.length > 0 ? parentCaseId : null);
+    });
+    return map;
+  }, [files]);
+
+  const visibleCaseIdSet = useMemo((): Set<string> => {
+    if (pagedCaseIds.length === 0) return new Set<string>();
+    const scoped = new Set<string>();
+    const visited = new Set<string>();
+    const includeWithAncestors = (caseId: string): void => {
+      let currentCaseId: string | null = caseId;
+      while (currentCaseId && !visited.has(currentCaseId)) {
+        visited.add(currentCaseId);
+        scoped.add(currentCaseId);
+        currentCaseId = parentCaseIdByCaseId.get(currentCaseId) ?? null;
+      }
+    };
+    pagedCaseIds.forEach((caseId: string): void => {
+      includeWithAncestors(caseId);
+    });
+    return scoped;
+  }, [pagedCaseIds, parentCaseIdByCaseId]);
+
+  const visibleCaseNodeIdSet = useMemo(
+    (): Set<string> =>
+      new Set<string>(
+        Array.from(visibleCaseIdSet).map((caseId: string): string =>
+          toCaseResolverCaseNodeId(caseId)
+        )
+      ),
+    [visibleCaseIdSet]
+  );
+
+  const isCaseSubsetVisible = useMemo(
+    (): boolean => visibleCaseIdSet.size !== files.length,
+    [files.length, visibleCaseIdSet]
+  );
 
   const masterNodes = useMemo((): MasterTreeNode[] => {
-    if (filteredCases.length === files.length) return baseCaseNodes;
+    if (!isCaseSubsetVisible) return baseCaseNodes;
     return baseCaseNodes.filter((node: MasterTreeNode): boolean => visibleCaseNodeIdSet.has(node.id));
-  }, [baseCaseNodes, files.length, filteredCases.length, visibleCaseNodeIdSet]);
+  }, [baseCaseNodes, isCaseSubsetVisible, visibleCaseNodeIdSet]);
 
   const autoExpandedNodeIds = useMemo((): string[] | undefined => {
-    if (filteredCases.length === files.length) return undefined;
+    if (!isCaseSubsetVisible) return undefined;
     return masterNodes.filter((node: MasterTreeNode): boolean => node.type === 'folder').map((node) => node.id);
-  }, [files.length, filteredCases.length, masterNodes]);
+  }, [isCaseSubsetVisible, masterNodes]);
 
   const adapterOperationsRef = useRef({
     handleMoveCase,
@@ -118,7 +301,9 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     instance: 'case_resolver_cases',
     nodes: masterNodes,
     adapter,
-    ...(autoExpandedNodeIds ? { expandedNodeIds: autoExpandedNodeIds } : {}),
+    ...(autoExpandedNodeIds
+      ? { initiallyExpandedNodeIds: autoExpandedNodeIds }
+      : {}),
   });
 
   const FolderClosedIcon = useMemo(
@@ -160,14 +345,14 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     [setCaseDraft, setIsCreateCaseModalOpen]
   );
 
-  const canStartDrag = useCallback<NonNullable<MasterFolderTreeProps['canStartDrag']>>(
+  const canStartDrag = useCallback<NonNullable<FolderTreeViewportV2Props['canStartDrag']>>(
     ({ node }): boolean => {
       return !parseBoolean(node.metadata?.['isLocked']);
     },
     []
   );
 
-  const canDrop = useCallback<NonNullable<MasterFolderTreeProps['canDrop']>>(
+  const canDrop = useCallback<NonNullable<FolderTreeViewportV2Props['canDrop']>>(
     ({ draggedNodeId, targetId, defaultAllowed }): boolean => {
       if (!defaultAllowed) return false;
       const dragged = decodeCaseResolverCaseMasterNodeId(draggedNodeId);
@@ -188,6 +373,11 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           filtersContent={<CaseFilterPanel />}
           filteredCount={filteredCases.length}
           totalCount={files.length}
+          page={page}
+          totalPages={totalPages}
+          onPageChange={setPage}
+          pageSize={pageSize}
+          onPageSizeChange={setPageSize}
         />
       }
       columns={[]}
@@ -207,13 +397,14 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           <p className='text-sm text-muted-foreground'>No cases found. Create your first case.</p>
           <Button
             variant='outline'
-            size='sm'
+            size='icon-lg'
             className='mt-4'
+            aria-label='Create new case'
             onClick={() => {
               handleCreateCase(null);
             }}
           >
-            <Plus className='mr-2 size-4' /> Add Case
+            <PlusIcon className='h-6 w-6' />
           </Button>
         </Card>
       ) : filteredCases.length === 0 ? (
@@ -225,7 +416,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           <p className='text-sm font-medium text-muted-foreground'>No cases match your current filters.</p>
         </Card>
       ) : (
-        <MasterFolderTree
+        <FolderTreeViewportV2
           controller={controller}
           canStartDrag={canStartDrag}
           canDrop={canDrop}
@@ -256,6 +447,10 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
             const caseId = fromCaseResolverCaseNodeId(node.id) ?? '';
             const caseFile = caseId ? (filesById.get(caseId) ?? null) : null;
             const caseStatus = caseFile?.caseStatus ?? 'pending';
+            const createdAtLabel = formatCaseTimestamp(caseFile?.createdAt);
+            const modifiedAtLabel = formatCaseTimestamp(
+              caseFile?.updatedAt ?? caseFile?.createdAt
+            );
             const isLocked = parseBoolean(node.metadata?.['isLocked']);
             const stateClassName = isSelected
               ? 'bg-blue-600 text-white'
@@ -339,9 +534,14 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
                     />
                   ) : (
                     <>
-                      <span className='min-w-0 flex-1 truncate font-medium'>
-                        {caseFile?.name ?? node.name}
-                      </span>
+                      <div className='min-w-0 flex flex-1 flex-col'>
+                        <span className='min-w-0 truncate font-medium'>
+                          {caseFile?.name ?? node.name}
+                        </span>
+                        <span className='min-w-0 truncate text-[10px] opacity-70'>
+                          Created: {createdAtLabel} · Modified: {modifiedAtLabel}
+                        </span>
+                      </div>
                       <Badge
                         variant='neutral'
                         className={

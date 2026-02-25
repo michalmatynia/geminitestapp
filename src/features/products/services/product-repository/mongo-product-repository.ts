@@ -14,6 +14,7 @@ import {
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import {
+  getProductAdvancedFilterMetrics,
   productAdvancedFilterGroupSchema,
   type CatalogRecord,
   CreateProductInput,
@@ -29,6 +30,7 @@ import {
 } from '@/shared/contracts/products';
 import { conflictError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
+import { logger } from '@/shared/utils/logger';
 
 import type { Prisma } from '@prisma/client';
 
@@ -46,6 +48,12 @@ type ProductListingFilterDocument = {
   productId: string | ObjectId;
   integrationId: string | ObjectId;
   externalListingId?: string | null;
+};
+
+type BaseExportLookupContext = {
+  integrationLookupValues: Array<string | ObjectId>;
+  exportedProductIds: string[];
+  exportedProductLookupValues: Array<string | ObjectId>;
 };
 
 let productIndexesEnsured: Promise<void> | null = null;
@@ -202,22 +210,21 @@ const normalizeProductParameterValues = (
   );
 };
 
-const applyBaseExportedFilter = async (
-  filter: Filter<ProductDocument>,
-  baseExported: boolean | undefined
-): Promise<Filter<ProductDocument>> => {
-  if (baseExported === undefined) return filter;
-  const exportedByBaseProductId: Filter<ProductDocument> = {
+const buildMongoExportedByBaseProductIdCondition = (): Filter<ProductDocument> =>
+  ({
     baseProductId: { $exists: true, $nin: [null, ''] },
-  };
-  const unexportedByBaseProductId: Filter<ProductDocument> = {
+  }) as Filter<ProductDocument>;
+
+const buildMongoUnexportedByBaseProductIdCondition = (): Filter<ProductDocument> =>
+  ({
     $or: [
       { baseProductId: { $exists: false } },
       { baseProductId: null },
       { baseProductId: '' },
     ],
-  } as Filter<ProductDocument>;
+  }) as Filter<ProductDocument>;
 
+const loadMongoBaseExportLookupContext = async (): Promise<BaseExportLookupContext> => {
   const db = await getMongoDb();
   const integrations = await db
     .collection<IntegrationSlugDocument>(integrationCollectionName)
@@ -233,12 +240,11 @@ const applyBaseExportedFilter = async (
   const integrationLookupValues = buildLookupValues(integrationIds);
 
   if (integrationLookupValues.length === 0) {
-    if (baseExported) {
-      return appendAndCondition(filter, {
-        id: '__no_base_exported_products__',
-      } as Filter<ProductDocument>);
-    }
-    return filter;
+    return {
+      integrationLookupValues,
+      exportedProductIds: [],
+      exportedProductLookupValues: [],
+    };
   }
 
   const exportedProductIdsRaw = await db
@@ -253,30 +259,64 @@ const applyBaseExportedFilter = async (
     .filter((id: string) => id.length > 0);
   const exportedProductLookupValues = buildLookupValues(exportedProductIds);
 
-  if (baseExported) {
-    if (exportedProductIds.length === 0) {
-      return appendAndCondition(filter, exportedByBaseProductId);
+  return {
+    integrationLookupValues,
+    exportedProductIds,
+    exportedProductLookupValues,
+  };
+};
+
+const buildMongoBaseExportedCondition = (
+  baseExported: boolean,
+  context: BaseExportLookupContext
+): Filter<ProductDocument> | null => {
+  const exportedByBaseProductId = buildMongoExportedByBaseProductIdCondition();
+  const unexportedByBaseProductId = buildMongoUnexportedByBaseProductIdCondition();
+
+  if (context.integrationLookupValues.length === 0) {
+    if (baseExported) {
+      return {
+        id: '__no_base_exported_products__',
+      } as Filter<ProductDocument>;
     }
-    return appendAndCondition(filter, {
+    return null;
+  }
+
+  if (baseExported) {
+    if (context.exportedProductIds.length === 0) {
+      return exportedByBaseProductId;
+    }
+    return {
       $or: [
         exportedByBaseProductId,
-        { id: { $in: exportedProductIds } },
-        { _id: { $in: exportedProductLookupValues } },
+        { id: { $in: context.exportedProductIds } },
+        { _id: { $in: context.exportedProductLookupValues } },
       ],
-    } as Filter<ProductDocument>);
+    } as Filter<ProductDocument>;
   }
 
-  if (exportedProductIds.length === 0) {
-    return appendAndCondition(filter, unexportedByBaseProductId);
+  if (context.exportedProductIds.length === 0) {
+    return unexportedByBaseProductId;
   }
 
-  return appendAndCondition(filter, {
+  return {
     $and: [
       unexportedByBaseProductId,
-      { id: { $nin: exportedProductIds } },
-      { _id: { $nin: exportedProductLookupValues } },
+      { id: { $nin: context.exportedProductIds } },
+      { _id: { $nin: context.exportedProductLookupValues } },
     ],
-  } as Filter<ProductDocument>);
+  } as Filter<ProductDocument>;
+};
+
+const applyBaseExportedFilter = async (
+  filter: Filter<ProductDocument>,
+  baseExported: boolean | undefined
+): Promise<Filter<ProductDocument>> => {
+  if (baseExported === undefined) return filter;
+  const context = await loadMongoBaseExportLookupContext();
+  const baseCondition = buildMongoBaseExportedCondition(baseExported, context);
+  if (!baseCondition) return filter;
+  return appendAndCondition(filter, baseCondition);
 };
 
 const buildListProjectStage = (filters: ProductFilters): Document | null => {
@@ -384,10 +424,15 @@ const parseAdvancedFilterGroup = (
 ): ProductAdvancedFilterGroup | null => {
   if (!payload) return null;
   try {
-    const parsed = JSON.parse(payload);
+    const parsed: unknown = JSON.parse(payload);
     const validated = productAdvancedFilterGroupSchema.safeParse(parsed);
-    return validated.success ? validated.data : null;
+    if (validated.success) return validated.data;
+    logger.warn('[products.advanced-filter.mongo] validation failed', {
+      issues: validated.error.issues.slice(0, 5).map((issue) => issue.message),
+    });
+    return null;
   } catch {
+    logger.warn('[products.advanced-filter.mongo] invalid JSON payload');
     return null;
   }
 };
@@ -416,6 +461,24 @@ const toAdvancedDateValue = (value: unknown): Date | null => {
     if (!Number.isNaN(parsed.getTime())) return parsed;
   }
   return null;
+};
+
+const toAdvancedBooleanValue = (value: unknown): boolean | null => {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase();
+    if (normalized === 'true' || normalized === '1') return true;
+    if (normalized === 'false' || normalized === '0') return false;
+  }
+  return null;
+};
+
+const toAdvancedStringArrayValues = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return [];
+  const normalizedValues = value
+    .map((entry: unknown) => toAdvancedStringValue(entry))
+    .filter((entry: string | null): entry is string => entry !== null);
+  return Array.from(new Set(normalizedValues));
 };
 
 const buildEmptyStringPathCondition = (path: string): Filter<ProductDocument> =>
@@ -472,6 +535,26 @@ const buildMongoStringFieldCondition = (
     return {
       $or: paths.map((path: string) => ({ [path]: value })),
     } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'in') {
+    const values = toAdvancedStringArrayValues(condition.value);
+    if (values.length === 0) return null;
+    if (paths.length === 1) {
+      return { [paths[0]!]: { $in: values } } as Filter<ProductDocument>;
+    }
+    return {
+      $or: paths.map((path: string) => ({ [path]: { $in: values } })),
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'notIn') {
+    const inCondition = buildMongoStringFieldCondition(paths, {
+      ...condition,
+      operator: 'in',
+    });
+    if (!inCondition) return null;
+    return { $nor: [inCondition] } as Filter<ProductDocument>;
   }
 
   if (condition.operator === 'neq') {
@@ -597,6 +680,86 @@ const buildMongoCategoryCondition = (
   return null;
 };
 
+const buildMongoNestedIdArrayCondition = (
+  fieldPath: 'catalogs.catalogId' | 'tags.tagId' | 'producers.producerId',
+  arrayPath: 'catalogs' | 'tags' | 'producers',
+  condition: ProductAdvancedFilterCondition
+): Filter<ProductDocument> | null => {
+  if (condition.operator === 'isEmpty') {
+    return {
+      $or: [
+        { [fieldPath]: { $exists: false } },
+        { [fieldPath]: null },
+        { [arrayPath]: { $exists: false } },
+        { [arrayPath]: { $size: 0 } },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'isNotEmpty') {
+    return {
+      $or: [
+        { [fieldPath]: { $exists: true, $nin: [null, ''] } },
+        { [`${arrayPath}.0`]: { $exists: true } },
+      ],
+    } as Filter<ProductDocument>;
+  }
+
+  const value = toAdvancedStringValue(condition.value);
+  if (condition.operator === 'eq') {
+    if (!value) return null;
+    return {
+      [fieldPath]: value,
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'neq') {
+    if (!value) return null;
+    return {
+      $nor: [{ [fieldPath]: value }],
+    } as Filter<ProductDocument>;
+  }
+
+  const values = toAdvancedStringArrayValues(condition.value);
+  if (condition.operator === 'in') {
+    if (values.length === 0) return null;
+    return {
+      [fieldPath]: { $in: values },
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'notIn') {
+    if (values.length === 0) return null;
+    return {
+      $nor: [{ [fieldPath]: { $in: values } }],
+    } as Filter<ProductDocument>;
+  }
+
+  return null;
+};
+
+const buildMongoBooleanCondition = (
+  field: 'published',
+  condition: ProductAdvancedFilterCondition
+): Filter<ProductDocument> | null => {
+  const value = toAdvancedBooleanValue(condition.value);
+  if (value === null) return null;
+
+  if (condition.operator === 'eq') {
+    return {
+      [field]: value,
+    } as Filter<ProductDocument>;
+  }
+
+  if (condition.operator === 'neq') {
+    return {
+      [field]: { $ne: value },
+    } as Filter<ProductDocument>;
+  }
+
+  return null;
+};
+
 const buildMongoNumericCondition = (
   field: 'price' | 'stock',
   condition: ProductAdvancedFilterCondition
@@ -612,7 +775,7 @@ const buildMongoNumericCondition = (
 
   if (condition.operator === 'isNotEmpty') {
     return {
-      [field]: { $exists: true, $ne: null },
+      [field]: { $exists: true },
     } as Filter<ProductDocument>;
   }
 
@@ -712,8 +875,32 @@ const buildMongoDateCondition = (
   return null;
 };
 
+type AdvancedMongoCompileContext = {
+  baseExportLookup: BaseExportLookupContext | null;
+};
+
+const buildMongoBaseExportedAdvancedCondition = (
+  condition: ProductAdvancedFilterCondition,
+  context: AdvancedMongoCompileContext
+): Filter<ProductDocument> | null => {
+  if (!context.baseExportLookup) return null;
+  const value = toAdvancedBooleanValue(condition.value);
+  if (value === null) return null;
+
+  if (condition.operator === 'eq') {
+    return buildMongoBaseExportedCondition(value, context.baseExportLookup);
+  }
+
+  if (condition.operator === 'neq') {
+    return buildMongoBaseExportedCondition(!value, context.baseExportLookup);
+  }
+
+  return null;
+};
+
 const compileAdvancedMongoCondition = (
-  condition: ProductAdvancedFilterCondition
+  condition: ProductAdvancedFilterCondition,
+  context: AdvancedMongoCompileContext
 ): Filter<ProductDocument> | null => {
   if (condition.field === 'id') {
     return buildMongoIdCondition(condition);
@@ -733,11 +920,29 @@ const compileAdvancedMongoCondition = (
   if (condition.field === 'categoryId') {
     return buildMongoCategoryCondition(condition);
   }
+  if (condition.field === 'catalogId') {
+    return buildMongoNestedIdArrayCondition('catalogs.catalogId', 'catalogs', condition);
+  }
+  if (condition.field === 'tagId') {
+    return buildMongoNestedIdArrayCondition('tags.tagId', 'tags', condition);
+  }
+  if (condition.field === 'producerId') {
+    return buildMongoNestedIdArrayCondition('producers.producerId', 'producers', condition);
+  }
   if (condition.field === 'price') {
     return buildMongoNumericCondition('price', condition);
   }
   if (condition.field === 'stock') {
     return buildMongoNumericCondition('stock', condition);
+  }
+  if (condition.field === 'published') {
+    return buildMongoBooleanCondition('published', condition);
+  }
+  if (condition.field === 'baseExported') {
+    return buildMongoBaseExportedAdvancedCondition(condition, context);
+  }
+  if (condition.field === 'baseProductId') {
+    return buildMongoStringFieldCondition(['baseProductId'], condition);
   }
   if (condition.field === 'createdAt') {
     return buildMongoDateCondition(condition);
@@ -746,14 +951,15 @@ const compileAdvancedMongoCondition = (
 };
 
 const compileAdvancedMongoRule = (
-  rule: ProductAdvancedFilterRule
+  rule: ProductAdvancedFilterRule,
+  context: AdvancedMongoCompileContext
 ): Filter<ProductDocument> | null => {
   if (rule.type === 'condition') {
-    return compileAdvancedMongoCondition(rule);
+    return compileAdvancedMongoCondition(rule, context);
   }
 
   const compiledRules = rule.rules
-    .map((nestedRule: ProductAdvancedFilterRule) => compileAdvancedMongoRule(nestedRule))
+    .map((nestedRule: ProductAdvancedFilterRule) => compileAdvancedMongoRule(nestedRule, context))
     .filter((nestedRule): nestedRule is Filter<ProductDocument> => nestedRule !== null);
 
   if (compiledRules.length === 0) return null;
@@ -772,13 +978,41 @@ const compileAdvancedMongoRule = (
   } as Filter<ProductDocument>;
 };
 
-const applyAdvancedFilterCondition = (
+const advancedFilterNeedsBaseExportContext = (
+  rule: ProductAdvancedFilterRule
+): boolean => {
+  if (rule.type === 'condition') {
+    return rule.field === 'baseExported';
+  }
+  return rule.rules.some((nestedRule: ProductAdvancedFilterRule) =>
+    advancedFilterNeedsBaseExportContext(nestedRule)
+  );
+};
+
+const applyAdvancedFilterCondition = async (
   filter: Filter<ProductDocument>,
   advancedFilterPayload: string | undefined
-): Filter<ProductDocument> => {
+): Promise<Filter<ProductDocument>> => {
   const parsedGroup = parseAdvancedFilterGroup(advancedFilterPayload);
   if (!parsedGroup) return filter;
-  const compiled = compileAdvancedMongoRule(parsedGroup);
+  const metrics = getProductAdvancedFilterMetrics(parsedGroup);
+  const compileStart = Date.now();
+  const compileContext: AdvancedMongoCompileContext = {
+    baseExportLookup: advancedFilterNeedsBaseExportContext(parsedGroup)
+      ? await loadMongoBaseExportLookupContext()
+      : null,
+  };
+
+  const compiled = compileAdvancedMongoRule(parsedGroup, compileContext);
+  const compileDurationMs = Date.now() - compileStart;
+  logger.info('[products.advanced-filter.mongo] compiled', {
+    rules: metrics.rules,
+    depth: metrics.depth,
+    setItems: metrics.setItems,
+    compileDurationMs,
+    compiled: Boolean(compiled),
+  });
+
   if (!compiled) return filter;
   return appendAndCondition(filter, compiled);
 };
@@ -930,7 +1164,7 @@ export const mongoProductRepository: ProductRepository = {
       buildSearchFilter(filters),
       filters.baseExported
     );
-    const searchFilter = applyAdvancedFilterCondition(
+    const searchFilter = await applyAdvancedFilterCondition(
       basicSearchFilter,
       filters.advancedFilter
     );
@@ -968,7 +1202,7 @@ export const mongoProductRepository: ProductRepository = {
       buildSearchFilter(filters),
       filters.baseExported
     );
-    const searchFilter = applyAdvancedFilterCondition(
+    const searchFilter = await applyAdvancedFilterCondition(
       basicSearchFilter,
       filters.advancedFilter
     );
@@ -987,7 +1221,7 @@ export const mongoProductRepository: ProductRepository = {
       buildSearchFilter(filters),
       filters.baseExported
     );
-    const searchFilter = applyAdvancedFilterCondition(
+    const searchFilter = await applyAdvancedFilterCondition(
       basicSearchFilter,
       filters.advancedFilter
     );

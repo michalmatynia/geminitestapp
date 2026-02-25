@@ -11,6 +11,16 @@ import type {
   PlaywrightSettings 
 } from '@/shared/contracts/playwright';
 
+export type {
+  Integration,
+  IntegrationConnection,
+  SessionCookie,
+  TestLogEntry,
+  SessionPayload,
+  PlaywrightPersona,
+  PlaywrightSettings,
+};
+
 import type { Dispatch, SetStateAction } from 'react';
 
 

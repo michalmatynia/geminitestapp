@@ -6,27 +6,32 @@ import type { ProductDraftDto } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal, Button } from '@/shared/ui';
 
+import { useDrafterContext } from '../context/DrafterContext';
+import { useDraftQueries } from '../hooks/useDraftQueries';
 import { DraftCreator } from './DraftCreator';
 
-export interface DraftCreatorModalProps extends EntityModalProps<ProductDraftDto, string> {
-  formRef: React.RefObject<HTMLFormElement | null>;
-}
+export function DraftCreatorModal(): React.JSX.Element | null {
+  const { 
+    isCreatorOpen: isOpen, 
+    closeCreator: onClose, 
+    editingDraftId, 
+    formRef 
+  } = useDrafterContext();
 
-export function DraftCreatorModal({
-  isOpen,
-  onClose,
-  item: editingDraft,
-  formRef,
-}: DraftCreatorModalProps): React.JSX.Element | null {
+  const { data: drafts = [] } = useDraftQueries();
+  const editingDraft = drafts.find(d => d.id === editingDraftId) ?? null;
+
   const [isDraftActive, setIsDraftActive] = useState<boolean>(true);
 
   useEffect((): void => {
     if (isOpen && !editingDraft) {
       setIsDraftActive(true);
-    } else if (isOpen && editingDraft && typeof editingDraft !== 'string') {
+    } else if (isOpen && editingDraft) {
       setIsDraftActive(editingDraft.active ?? true);
     }
   }, [isOpen, editingDraft]);
+
+  if (!isOpen) return null;
 
   const title = editingDraft ? 'Edit Draft' : 'Create Draft';
   const submitText = editingDraft ? 'Update Draft' : 'Create Draft';

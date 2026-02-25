@@ -40,10 +40,10 @@ import type {
   DebugWarehouses,
 } from '@/shared/contracts/data-import-export';
 import type { 
-  IntegrationConnectionBasicDto as IntegrationConnectionBasic,
-  IntegrationWithConnectionsDto as IntegrationWithConnections,
-  BaseImportParameterImportSettingsDto as BaseImportParameterImportSettings,
-  BaseImportModeDto as BaseImportMode,
+  IntegrationConnectionBasic,
+  IntegrationWithConnections,
+  BaseImportParameterImportSettings,
+  BaseImportMode,
   ImageRetryPreset,
 } from '@/shared/contracts/integrations';
 import {

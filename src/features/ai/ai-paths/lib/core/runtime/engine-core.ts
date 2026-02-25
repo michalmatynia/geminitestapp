@@ -46,7 +46,6 @@ import {
 } from './engine-modules/engine-utils';
 
 export { GraphExecutionError, GraphExecutionCancelled };
-export type { RuntimeProfileOptions, RuntimeProfileEvent, RuntimeProfileNodeStats, RuntimeProfileSummary };
 
 const MAX_ITERATIONS = 500;
 const DEFAULT_NODE_CACHE_SCOPE: NodeCacheScope = 'run';

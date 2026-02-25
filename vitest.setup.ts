@@ -6,7 +6,8 @@ import { server } from "./src/mocks/server";
 
 // Force Prisma as the database provider for tests to ensure consistency with cleanup logic
 process.env['APP_DB_PROVIDER'] = "prisma";
-delete process.env['MONGODB_URI'];
+process.env['MONGODB_URI'] = "mongodb://localhost:27017/test";
+process.env['MONGODB_DB'] = "test";
 
 vi.mock("@/shared/lib/db/prisma");
 

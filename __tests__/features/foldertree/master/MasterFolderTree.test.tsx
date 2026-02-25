@@ -1,7 +1,7 @@
 /**
  * @vitest-environment jsdom
  */
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -60,6 +60,14 @@ const dataTransferStub = () => {
     getData: vi.fn((key) => store[key] || ''),
     types: [],
   } as unknown as DataTransfer;
+};
+
+const flushDragLifecycle = async (): Promise<void> => {
+  await Promise.resolve();
+  await new Promise<void>((resolve) => {
+    window.setTimeout(() => resolve(), 0);
+  });
+  await Promise.resolve();
 };
 
 function MasterTreeHarness({
@@ -144,9 +152,12 @@ describe('MasterFolderTree', () => {
     if (!dragged || !target) return;
 
     const dataTransfer = dataTransferStub();
-    fireEvent.dragStart(dragged, { dataTransfer });
-    fireEvent.dragOver(target, { dataTransfer, clientY: 40 });
-    fireEvent.drop(target, { dataTransfer, clientY: 40 });
+    await act(async () => {
+      fireEvent.dragStart(dragged, { dataTransfer });
+      fireEvent.dragOver(target, { dataTransfer, clientY: 40 });
+      fireEvent.drop(target, { dataTransfer, clientY: 40 });
+      await flushDragLifecycle();
+    });
 
     expect(onNodeDrop).toHaveBeenCalledWith({
       draggedNodeId: 'file-1',
@@ -173,9 +184,12 @@ describe('MasterFolderTree', () => {
     if (!dragged || !target) return;
 
     const dataTransfer = dataTransferStub();
-    fireEvent.dragStart(dragged, { dataTransfer });
-    fireEvent.dragOver(target, { dataTransfer });
-    fireEvent.drop(target, { dataTransfer });
+    await act(async () => {
+      fireEvent.dragStart(dragged, { dataTransfer });
+      fireEvent.dragOver(target, { dataTransfer });
+      fireEvent.drop(target, { dataTransfer });
+      await flushDragLifecycle();
+    });
 
     expect(onNodeDrop).toHaveBeenCalledWith({
       draggedNodeId: 'folder-b',
@@ -193,7 +207,10 @@ describe('MasterFolderTree', () => {
     if (!dragged) return;
 
     const dataTransfer = dataTransferStub();
-    fireEvent.dragStart(dragged, { dataTransfer });
+    await act(async () => {
+      fireEvent.dragStart(dragged, { dataTransfer });
+      await flushDragLifecycle();
+    });
 
     await waitFor(() => {
       const topRootDropZone = document.querySelector('[data-master-tree-root-drop="top"]');
@@ -203,8 +220,11 @@ describe('MasterFolderTree', () => {
     const topRootDropZone = document.querySelector('[data-master-tree-root-drop="top"]');
     if (!topRootDropZone) return;
 
-    fireEvent.dragOver(topRootDropZone, { dataTransfer });
-    fireEvent.drop(topRootDropZone, { dataTransfer });
+    await act(async () => {
+      fireEvent.dragOver(topRootDropZone, { dataTransfer });
+      fireEvent.drop(topRootDropZone, { dataTransfer });
+      await flushDragLifecycle();
+    });
 
     expect(onNodeDrop).toHaveBeenCalledWith({
       draggedNodeId: 'file-1',

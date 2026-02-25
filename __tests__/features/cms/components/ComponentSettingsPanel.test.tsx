@@ -6,7 +6,7 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { ComponentSettingsPanel } from '@/features/cms/components/page-builder/ComponentSettingsPanel';
 import { ComponentSettingsProvider } from '@/features/cms/components/page-builder/context/ComponentSettingsContext';
 import { useCmsThemes, useCmsDomains, useCmsSlugs, useCmsAllSlugs } from '@/features/cms/hooks/useCmsQueries';
-import { usePageBuilder } from '@/features/cms/hooks/usePageBuilderContext';
+import { usePageBuilderState, usePageBuilderDispatch, usePageBuilderSelection } from '@/features/cms/hooks/usePageBuilderContext';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 
 // Create a new QueryClient for each test
@@ -19,9 +19,21 @@ const createTestQueryClient = () => new QueryClient({
 });
 
 // Mock hooks
-vi.mock('@/features/cms/hooks/usePageBuilderContext', () => ({
-  usePageBuilder: vi.fn(),
-}));
+vi.mock('@/features/cms/hooks/usePageBuilderContext', () => {
+  const usePageBuilderStateMock = vi.fn();
+  const usePageBuilderDispatchMock = vi.fn();
+  const usePageBuilderSelectionMock = vi.fn();
+  return {
+    usePageBuilderState: usePageBuilderStateMock,
+    usePageBuilderDispatch: usePageBuilderDispatchMock,
+    usePageBuilderSelection: usePageBuilderSelectionMock,
+    usePageBuilder: () => ({
+      state: usePageBuilderStateMock(),
+      dispatch: usePageBuilderDispatchMock(),
+      ...usePageBuilderSelectionMock(),
+    }),
+  };
+});
 
 vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
   useSettingsStore: vi.fn(),
@@ -178,23 +190,18 @@ describe('ComponentSettingsPanel Component', () => {
   };
 
   it('should show \'Select a page\' message when no page is set', () => {
-    (usePageBuilder as any).mockReturnValue({
-      state: { currentPage: null, inspectorSettings: { showEditorChrome: true }, sections: [] },
-      dispatch: mockDispatch,
-    });
+    (usePageBuilderState as any).mockReturnValue({ currentPage: null, inspectorSettings: { showEditorChrome: true }, sections: [] });
+    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
+    (usePageBuilderSelection as any).mockReturnValue({ selectedSection: null, selectedBlock: null, selectedColumn: null });
 
     renderWithProviders(<ComponentSettingsPanel />);
     expect(screen.getByText(/Select a page first/i)).toBeInTheDocument();
   });
 
   it('should show page settings when nothing is selected', () => {
-    (usePageBuilder as any).mockReturnValue({
-      state: { currentPage: mockPage, inspectorSettings: { showEditorChrome: true }, sections: [] },
-      selectedSection: null,
-      selectedBlock: null,
-      selectedColumn: null,
-      dispatch: mockDispatch,
-    });
+    (usePageBuilderState as any).mockReturnValue({ currentPage: mockPage, inspectorSettings: { showEditorChrome: true }, sections: [] });
+    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
+    (usePageBuilderSelection as any).mockReturnValue({ selectedSection: null, selectedBlock: null, selectedColumn: null });
 
     renderWithProviders(<ComponentSettingsPanel />);
     expect(screen.getAllByText('Test Page').length).toBeGreaterThan(0);
@@ -211,13 +218,9 @@ describe('ComponentSettingsPanel Component', () => {
       settings: { imageHeight: 'large' },
     };
 
-    (usePageBuilder as any).mockReturnValue({
-      state: { currentPage: mockPage, inspectorSettings: { showEditorChrome: true }, sections: [mockSection] },
-      selectedSection: mockSection,
-      selectedBlock: null,
-      selectedColumn: null,
-      dispatch: mockDispatch,
-    });
+    (usePageBuilderState as any).mockReturnValue({ currentPage: mockPage, inspectorSettings: { showEditorChrome: true }, sections: [mockSection] });
+    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
+    (usePageBuilderSelection as any).mockReturnValue({ selectedSection: mockSection, selectedBlock: null, selectedColumn: null });
 
     renderWithProviders(<ComponentSettingsPanel />);
     
@@ -228,13 +231,9 @@ describe('ComponentSettingsPanel Component', () => {
   it('should handle removing a section', () => {
     const mockSection = { id: 'sec-1', type: 'Hero', settings: {} };
 
-    (usePageBuilder as any).mockReturnValue({
-      state: { currentPage: mockPage, inspectorSettings: { showEditorChrome: true }, sections: [mockSection] },
-      selectedSection: mockSection,
-      selectedBlock: null,
-      selectedColumn: null,
-      dispatch: mockDispatch,
-    });
+    (usePageBuilderState as any).mockReturnValue({ currentPage: mockPage, inspectorSettings: { showEditorChrome: true }, sections: [mockSection] });
+    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
+    (usePageBuilderSelection as any).mockReturnValue({ selectedSection: mockSection, selectedBlock: null, selectedColumn: null });
 
     renderWithProviders(<ComponentSettingsPanel />);
     
@@ -248,13 +247,9 @@ describe('ComponentSettingsPanel Component', () => {
   });
 
   it('should update SEO settings', async () => {
-    (usePageBuilder as any).mockReturnValue({
-      state: { currentPage: mockPage, inspectorSettings: { showEditorChrome: true }, sections: [] },
-      selectedSection: null,
-      selectedBlock: null,
-      selectedColumn: null,
-      dispatch: mockDispatch,
-    });
+    (usePageBuilderState as any).mockReturnValue({ currentPage: mockPage, inspectorSettings: { showEditorChrome: true }, sections: [] });
+    (usePageBuilderDispatch as any).mockReturnValue(mockDispatch);
+    (usePageBuilderSelection as any).mockReturnValue({ selectedSection: null, selectedBlock: null, selectedColumn: null });
 
     renderWithProviders(<ComponentSettingsPanel />);
     

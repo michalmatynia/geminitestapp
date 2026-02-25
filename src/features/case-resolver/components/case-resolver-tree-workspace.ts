@@ -10,6 +10,18 @@ type ResolveCaseResolverTreeWorkspaceArgs = {
   includeDescendantCaseScope?: boolean;
 };
 
+const forEachFolderPathAncestor = (
+  folderPath: string,
+  callback: (path: string) => void,
+): void => {
+  const normalizedFolder = folderPath.trim();
+  if (!normalizedFolder) return;
+  const parts = normalizedFolder.split('/').filter(Boolean);
+  for (let index = 0; index < parts.length; index += 1) {
+    callback(parts.slice(0, index + 1).join('/'));
+  }
+};
+
 export const resolveCaseResolverTreeWorkspace = ({
   selectedFileId,
   requestedFileId,
@@ -88,11 +100,39 @@ export const resolveCaseResolverTreeWorkspace = ({
     return workspace;
   }
 
+  const ownerCaseIdsByFolderPath = new Map<string, Set<string>>();
+  (workspace.folderRecords ?? []).forEach((record: CaseResolverFolderRecord): void => {
+    const ownerCaseId = record.ownerCaseId?.trim() ?? '';
+    const folderPath = record.path.trim();
+    if (!ownerCaseId || !folderPath) return;
+    const currentOwners = ownerCaseIdsByFolderPath.get(folderPath) ?? new Set<string>();
+    currentOwners.add(ownerCaseId);
+    ownerCaseIdsByFolderPath.set(folderPath, currentOwners);
+  });
+
+  const folderOwnedByScopedCase = (folderPath: string): boolean => {
+    let isOwned = false;
+    forEachFolderPathAncestor(folderPath, (ancestorPath: string): void => {
+      if (isOwned) return;
+      const ownerCaseIds = ownerCaseIdsByFolderPath.get(ancestorPath);
+      if (!ownerCaseIds || ownerCaseIds.size === 0) return;
+      isOwned = Array.from(ownerCaseIds).some((ownerCaseId: string): boolean =>
+        scopedCaseIds.has(ownerCaseId)
+      );
+    });
+    return isOwned;
+  };
+
   const scopedFiles = workspace.files.filter((file: CaseResolverFile): boolean => {
     if (file.fileType === 'case') {
       return scopedCaseIds.has(file.id);
     }
-    return Boolean(file.parentCaseId && scopedCaseIds.has(file.parentCaseId));
+    const ownerCaseId = file.parentCaseId?.trim() ?? '';
+    if (ownerCaseId) {
+      return scopedCaseIds.has(ownerCaseId);
+    }
+    // Legacy fallback: allow case-scoped folders to recover documents missing parentCaseId.
+    return folderOwnedByScopedCase(file.folder);
   });
   if (scopedFiles.length === 0) {
     if (forcedContextFileId) return buildEmptyScopedWorkspace();

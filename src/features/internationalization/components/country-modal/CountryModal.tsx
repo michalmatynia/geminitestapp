@@ -1,41 +1,41 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React from 'react';
 
+import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { countryCodeOptions } from '@/shared/constants/internationalization';
-import type { CountryOption, CurrencyOption } from '@/shared/contracts/internationalization';
-import type { EntityModalProps } from '@/shared/contracts/ui';
 import { Checkbox, Label, LoadingState, Hint } from '@/shared/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useCountryForm } from './hooks/useCountryForm';
-
-interface CountryModalProps extends EntityModalProps<CountryOption, CurrencyOption> {}
 
 type CountryFormState = {
   code: string;
   name: string;
 };
 
-export function CountryModal({
-  isOpen,
-  onClose,
-  onSuccess,
-  item: country,
-  items: currencyOptions = [],
-  loading: loadingCurrencies = false,
-}: CountryModalProps): React.JSX.Element {
+export function CountryModal(): React.JSX.Element | null {
+  const { 
+    isCountryModalOpen, 
+    handleCloseCountryModal, 
+    activeCountry,
+    currencies: currencyOptions,
+    loadingCurrencies 
+  } = useInternationalizationContext();
+
   const defaultOption = countryCodeOptions[0];
   const { form, setForm, selectedCurrencyIds, setSelectedCurrencyIds, saveMutation, handleSubmit } =
     useCountryForm({
-      country: country ?? null,
+      country: activeCountry ?? null,
       defaultCountryCode: defaultOption?.code ?? '',
       defaultCountryName: defaultOption?.name ?? '',
     });
 
+  if (!isCountryModalOpen) return null;
+
   const handleSave = async (): Promise<void> => {
     await handleSubmit(currencyOptions);
-    onSuccess?.();
+    handleCloseCountryModal();
   };
 
   const toggleCurrency = (id: string): void => {
@@ -44,7 +44,7 @@ export function CountryModal({
     );
   };
 
-  const fields: SettingsField<CountryFormState>[] = useMemo(() => [
+  const fields: SettingsField<CountryFormState>[] = [
     {
       key: 'code',
       label: 'Code',
@@ -92,22 +92,22 @@ export function CountryModal({
         </div>
       )
     }
-  ], [currencyOptions, selectedCurrencyIds, loadingCurrencies]);
+  ];
 
   const handleChange = (values: Partial<CountryFormState>) => {
     if (values.code) {
       const sel = countryCodeOptions.find((o) => o.code === values.code);
       setForm({ code: values.code, name: sel?.name ?? '' });
     } else {
-      setForm(prev => ({ ...prev, ...values }));
+      setForm((prev) => ({ ...prev, ...values }));
     }
   };
 
   return (
     <SettingsPanelBuilder
-      open={isOpen}
-      onClose={onClose}
-      title={country ? 'Edit Country' : 'Add Country'}
+      open={isCountryModalOpen}
+      onClose={handleCloseCountryModal}
+      title={activeCountry ? 'Edit Country' : 'Add Country'}
       onSave={handleSave}
       isSaving={saveMutation.isPending}
       fields={fields}

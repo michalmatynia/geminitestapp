@@ -33,6 +33,8 @@ type UserPreferencesDocument = {
   productListFiltersCollapsedByDefault: boolean | null;
   productListAdvancedFilterPresets:
     UserPreferences['productListAdvancedFilterPresets'] | null;
+  productListAppliedAdvancedFilter: string | null;
+  productListAppliedAdvancedFilterPresetId: string | null;
   productListDraftIconColorMode: 'theme' | 'custom' | null;
   productListDraftIconColor: string | null;
   aiPathsActivePathId: string | null;
@@ -140,6 +142,8 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord 
   productListThumbnailSource: doc.productListThumbnailSource ?? 'file',
   productListFiltersCollapsedByDefault: doc.productListFiltersCollapsedByDefault ?? false,
   productListAdvancedFilterPresets: doc.productListAdvancedFilterPresets ?? [],
+  productListAppliedAdvancedFilter: doc.productListAppliedAdvancedFilter ?? null,
+  productListAppliedAdvancedFilterPresetId: doc.productListAppliedAdvancedFilterPresetId ?? null,
   productListDraftIconColorMode: doc.productListDraftIconColorMode ?? 'theme',
   productListDraftIconColor: doc.productListDraftIconColor ?? '#60a5fa',
   aiPathsActivePathId: doc.aiPathsActivePathId ?? null,
@@ -177,6 +181,8 @@ const defaultPreferences = (
   productListThumbnailSource: 'file',
   productListFiltersCollapsedByDefault: false,
   productListAdvancedFilterPresets: [],
+  productListAppliedAdvancedFilter: null,
+  productListAppliedAdvancedFilterPresetId: null,
   productListDraftIconColorMode: 'theme',
   productListDraftIconColor: '#60a5fa',
   aiPathsActivePathId: null,

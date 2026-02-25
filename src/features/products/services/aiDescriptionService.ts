@@ -314,10 +314,9 @@ export async function generateProductDescription(params: {
     );
   }
 
-  let analysisInitial = '';
-  let analysisFinal = '';
-  const { openai: visionClient, isOllama: isVisionOllama } = getClient(
-    visionModel,
+  let analysisInitial: string;
+  let analysisFinal: string = '';
+  const { openai: visionClient, isOllama: isVisionOllama } = getClient(    visionModel,
     apiKey,
   );
 
@@ -387,42 +386,41 @@ export async function generateProductDescription(params: {
     generationModel,
     apiKey,
   );
-  let descriptionInitial = '';
-  let descriptionFinal = '';
-
-  try {
-    const prompt2_1 = processPrompt(
-      generationInputPrompt,
-      visionResultForNext,
-      visionResultForNext,
-    );
-    const content2_1: ChatCompletionContentPart[] = [
-      { type: 'text', text: prompt2_1.text },
-    ];
-    if (prompt2_1.attachImages) content2_1.push(...processedImages);
-    const genCompletion = await generationClient.chat.completions.create({
-      model: generationModel,
-      messages: [
-        { role: 'system', content: 'You are a helpful assistant.' },
-        { role: 'user', content: content2_1 },
-      ],
-      max_tokens: 1000,
-    });
-    descriptionInitial =
+  let descriptionInitial: string;
+  let descriptionFinal: string = '';
+  
+  try {    const prompt2_1 = processPrompt(
+    generationInputPrompt,
+    visionResultForNext,
+    visionResultForNext,
+  );
+  const content2_1: ChatCompletionContentPart[] = [
+    { type: 'text', text: prompt2_1.text },
+  ];
+  if (prompt2_1.attachImages) content2_1.push(...processedImages);
+  const genCompletion = await generationClient.chat.completions.create({
+    model: generationModel,
+    messages: [
+      { role: 'system', content: 'You are a helpful assistant.' },
+      { role: 'user', content: content2_1 },
+    ],
+    max_tokens: 1000,
+  });
+  descriptionInitial =
       genCompletion.choices[0]?.message.content?.trim() || '';
 
-    if (isGenerationOutputEnabled && generationOutputPrompt) {
-      const prompt2_2 = processPrompt(
-        generationOutputPrompt,
-        descriptionInitial,
-        visionResultForNext,
-        descriptionInitial,
-      );
-      const content2_2: ChatCompletionContentPart[] = [
-        { type: 'text', text: prompt2_2.text },
-      ];
-      if (prompt2_2.attachImages) content2_2.push(...processedImages);
-      const refineGenCompletion =
+  if (isGenerationOutputEnabled && generationOutputPrompt) {
+    const prompt2_2 = processPrompt(
+      generationOutputPrompt,
+      descriptionInitial,
+      visionResultForNext,
+      descriptionInitial,
+    );
+    const content2_2: ChatCompletionContentPart[] = [
+      { type: 'text', text: prompt2_2.text },
+    ];
+    if (prompt2_2.attachImages) content2_2.push(...processedImages);
+    const refineGenCompletion =
         await generationClient.chat.completions.create({
           model: generationModel,
           messages: [
@@ -431,9 +429,9 @@ export async function generateProductDescription(params: {
           ],
           max_tokens: 1000,
         });
-      descriptionFinal =
+    descriptionFinal =
         refineGenCompletion.choices[0]?.message.content?.trim() || '';
-    }
+  }
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error';

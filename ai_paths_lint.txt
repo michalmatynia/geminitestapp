@@ -1,0 +1,49 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/server/__tests__/settings-store.test.ts
+  69:56  error  Unnecessary escape character: \"  no-useless-escape
+  69:60  error  Unnecessary escape character: \"  no-useless-escape
+  69:63  error  Unnecessary escape character: \"  no-useless-escape
+  69:76  error  Unnecessary escape character: \"  no-useless-escape
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/server/settings-store.ts
+  5:15  warning  'SettingRecord' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts
+  3:39  warning  'AiPathRun' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  3:50  warning  'AiPathRunNode' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  3:65  warning  'AiPathRunEvent' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/playwright-node-runner.ts
+  210:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  214:37  error  Unsafe member access .settings on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
+  219:17  error  Unsafe member access .settings on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
+  239:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  239:24  error  Unsafe member access .headless on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
+  240:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  240:22  error  Unsafe member access .slowMo on a type that cannot be resolved                @typescript-eslint/no-unsafe-member-access
+  242:16  error  Unsafe member access .proxyEnabled on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
+  242:41  error  Unsafe member access .proxyServer on a type that cannot be resolved           @typescript-eslint/no-unsafe-member-access
+  244:7   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  244:24  error  Unsafe member access .proxyServer on a type that cannot be resolved           @typescript-eslint/no-unsafe-member-access
+  245:20  error  Unsafe member access .proxyUsername on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  245:38  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  245:57  error  Unsafe member access .proxyUsername on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  246:20  error  Unsafe member access .proxyPassword on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  246:38  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  246:57  error  Unsafe member access .proxyPassword on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  269:14  error  Unsafe member access .emulateDevice on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
+  269:40  error  Unsafe member access .deviceName on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  270:30  error  The type of computed name [settings.deviceName] cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  270:39  error  Unsafe member access .deviceName on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
+  405:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  406:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  407:9   error  Unsafe assignment of an `any` value                                           @typescript-eslint/no-unsafe-assignment
+  433:31  error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  433:49  error  Unsafe member access .timeout on a type that cannot be resolved               @typescript-eslint/no-unsafe-member-access
+  434:41  error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  434:59  error  Unsafe member access .navigationTimeout on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
+  458:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
+  458:36  error  Unsafe member access .navigationTimeout on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
+
+✖ 38 problems (34 errors, 4 warnings)
+

@@ -44,7 +44,7 @@ import {
 import { normalizeSteps } from '@/features/integrations/utils/connections';
 import { logClientError } from '@/features/observability';
 import { defaultPlaywrightSettings } from '@/features/playwright';
-import {
+import type {
   Integration,
   IntegrationConnection,
   TestLogEntry,

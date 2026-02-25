@@ -1,4 +1,9 @@
 import { CLIENT_LOGGING_KEYS } from '@/features/observability/constants/client-logging';
+import {
+  FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
+  FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
+  FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
+} from '@/features/foldertree/v2/settings';
 import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/features/products/constants';
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { FOLDER_TREE_PROFILES_V2_SETTING_KEY } from '@/shared/utils/folder-tree-profiles-v2';
@@ -15,6 +20,19 @@ export const LITE_SETTINGS_KEYS = [
   'noteSettings:editorMode',
   'case_resolver_default_document_format_v1',
   'case_resolver_settings_v1',
+  `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}notes`,
+  `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}image_studio`,
+  `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}product_categories`,
+  `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}cms_page_builder`,
+  `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}case_resolver`,
+  `${FOLDER_TREE_UI_STATE_V2_KEY_PREFIX}case_resolver_cases`,
+  `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}notes`,
+  `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}image_studio`,
+  `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}product_categories`,
+  `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}cms_page_builder`,
+  `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}case_resolver`,
+  `${FOLDER_TREE_PROFILE_V2_KEY_PREFIX}case_resolver_cases`,
+  FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
   FOLDER_TREE_PROFILES_V2_SETTING_KEY,
   CLIENT_LOGGING_KEYS.featureFlags,

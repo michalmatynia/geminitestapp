@@ -1,6 +1,6 @@
 'use client';
 
-import { Input,  Textarea } from '@/shared/ui';
+import { Input, Label, Textarea } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import {
   productAdvancedFilterGroupSchema,
+  type ProductAdvancedFilterField,
   type ProductAdvancedFilterGroup,
 } from '@/shared/contracts/products';
 import { AppModal, Button, Input, Label, useToast } from '@/shared/ui';
@@ -22,6 +23,9 @@ interface AdvancedFilterModalProps {
   onApply: (payload: string) => void;
   onClear: () => void;
   onSavePreset?: (name: string, filter: ProductAdvancedFilterGroup) => Promise<void> | void;
+  fieldValueOptions?: Partial<
+    Record<ProductAdvancedFilterField, Array<{ value: string; label: string }>>
+  > | undefined;
 }
 
 export function AdvancedFilterModal({
@@ -31,6 +35,7 @@ export function AdvancedFilterModal({
   onApply,
   onClear,
   onSavePreset,
+  fieldValueOptions,
 }: AdvancedFilterModalProps): React.JSX.Element {
   const { toast } = useToast();
   const [group, setGroup] = useState<ProductAdvancedFilterGroup>(createEmptyGroup());
@@ -46,9 +51,8 @@ export function AdvancedFilterModal({
   const handleApply = (): void => {
     const parsed = productAdvancedFilterGroupSchema.safeParse(group);
     if (!parsed.success) {
-      toast('Advanced filter has invalid rules. Please review the inputs.', {
-        variant: 'error',
-      });
+      const message = parsed.error.issues[0]?.message ?? 'Advanced filter has invalid rules.';
+      toast(message, { variant: 'error' });
       return;
     }
     onApply(serializeAdvancedFilterPayload(parsed.data));
@@ -71,9 +75,8 @@ export function AdvancedFilterModal({
     }
     const parsed = productAdvancedFilterGroupSchema.safeParse(group);
     if (!parsed.success) {
-      toast('Cannot save preset because the filter is invalid.', {
-        variant: 'error',
-      });
+      const message = parsed.error.issues[0]?.message ?? 'Cannot save preset because the filter is invalid.';
+      toast(message, { variant: 'error' });
       return;
     }
 
@@ -113,7 +116,11 @@ export function AdvancedFilterModal({
       }
     >
       <div className='space-y-4'>
-        <AdvancedFilterBuilder group={group} onChange={setGroup} />
+        <AdvancedFilterBuilder
+          group={group}
+          onChange={setGroup}
+          fieldValueOptions={fieldValueOptions}
+        />
 
         {onSavePreset ? (
           <div className='rounded-md border border-border/50 bg-card/30 p-3'>

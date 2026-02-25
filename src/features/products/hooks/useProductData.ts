@@ -17,8 +17,9 @@ import {
   useProductsCount as useProductsCountQuery,
 } from '@/features/products/hooks/useProductsQuery';
 import { addQueuedProductId, removeQueuedProductId } from '@/features/products/state/queued-product-ops';
-import type { 
-  ProductWithImages, 
+import {
+  productAdvancedFilterGroupSchema,
+  type ProductWithImages,
 } from '@/shared/contracts/products';
 import type { DeleteResponse } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
@@ -37,6 +38,15 @@ import {
 } from './productCache';
 
 const PRODUCT_UPDATE_FORM_TIMEOUT_MS = 60_000;
+
+const isValidAdvancedFilterPayload = (payload: string): boolean => {
+  try {
+    const parsed: unknown = JSON.parse(payload);
+    return productAdvancedFilterGroupSchema.safeParse(parsed).success;
+  } catch {
+    return false;
+  }
+};
 
 // --- Queries ---
 
@@ -245,6 +255,8 @@ export interface UseProductDataProps {
   refreshTrigger?: number;
   initialCatalogFilter?: string | null;
   initialPageSize?: number | null;
+  initialAppliedAdvancedFilter?: string | null;
+  initialAppliedAdvancedFilterPresetId?: string | null;
   preferencesLoaded: boolean;
   currencyCode?: string | null;
   priceGroups?: unknown[];
@@ -284,6 +296,8 @@ export interface ProductDataHookResult {
   setEndDate: (s: string | undefined) => void;
   advancedFilter: string;
   setAdvancedFilter: (value: string) => void;
+  activeAdvancedFilterPresetId: string | null;
+  setAdvancedFilterState: (value: string, presetId: string | null) => void;
   catalogFilter: string;
   setCatalogFilter: (f: string) => void;
   baseExported: '' | 'true' | 'false';
@@ -298,6 +312,8 @@ export function useProductData({
   refreshTrigger,
   initialCatalogFilter,
   initialPageSize,
+  initialAppliedAdvancedFilter,
+  initialAppliedAdvancedFilterPresetId,
   preferencesLoaded,
   searchLanguage,
 }: UseProductDataProps): ProductDataHookResult {
@@ -320,6 +336,8 @@ export function useProductData({
   const [startDate, setStartDate] = useState<string | undefined>(undefined);
   const [endDate, setEndDate] = useState<string | undefined>(undefined);
   const [advancedFilter, setAdvancedFilter] = useState('');
+  const [activeAdvancedFilterPresetId, setActiveAdvancedFilterPresetId] =
+    useState<string | null>(null);
   const [catalogFilter, setCatalogFilter] = useState(initialCatalogFilter || 'all');
   const [baseExported, setBaseExported] = useState<'' | 'true' | 'false'>('');
   const hasInitialized = useRef(false);
@@ -331,9 +349,26 @@ export function useProductData({
 
     if (initialCatalogFilter) setCatalogFilter(initialCatalogFilter);
     if (initialPageSize) setPageSize(initialPageSize);
+    const normalizedAdvancedFilter = initialAppliedAdvancedFilter?.trim() ?? '';
+    if (
+      normalizedAdvancedFilter.length > 0 &&
+      isValidAdvancedFilterPayload(normalizedAdvancedFilter)
+    ) {
+      setAdvancedFilter(normalizedAdvancedFilter);
+      setActiveAdvancedFilterPresetId(initialAppliedAdvancedFilterPresetId ?? null);
+    } else {
+      setAdvancedFilter('');
+      setActiveAdvancedFilterPresetId(null);
+    }
     hasInitialized.current = true;
     setFiltersInitialized(true);
-  }, [preferencesLoaded, initialCatalogFilter, initialPageSize]);
+  }, [
+    preferencesLoaded,
+    initialCatalogFilter,
+    initialPageSize,
+    initialAppliedAdvancedFilter,
+    initialAppliedAdvancedFilterPresetId,
+  ]);
 
   useEffect(() => {
     if (!preferencesLoaded) {
@@ -443,7 +478,14 @@ export function useProductData({
   );
   const handleSetStartDate = useCallback((s: string | undefined) => setStartDate(s), []);
   const handleSetEndDate = useCallback((s: string | undefined) => setEndDate(s), []);
-  const handleSetAdvancedFilter = useCallback((value: string) => setAdvancedFilter(value), []);
+  const handleSetAdvancedFilterState = useCallback((value: string, presetId: string | null) => {
+    const normalizedValue = value.trim();
+    setAdvancedFilter(normalizedValue);
+    setActiveAdvancedFilterPresetId(normalizedValue.length > 0 ? presetId : null);
+  }, []);
+  const handleSetAdvancedFilter = useCallback((value: string) => {
+    handleSetAdvancedFilterState(value, null);
+  }, [handleSetAdvancedFilterState]);
   const handleSetCatalogFilter = useCallback((f: string) => setCatalogFilter(f), []);
   const handleSetBaseExported = useCallback(
     (value: '' | 'true' | 'false') => setBaseExported(value),
@@ -483,6 +525,8 @@ export function useProductData({
     setEndDate: handleSetEndDate,
     advancedFilter,
     setAdvancedFilter: handleSetAdvancedFilter,
+    activeAdvancedFilterPresetId,
+    setAdvancedFilterState: handleSetAdvancedFilterState,
     catalogFilter,
     setCatalogFilter: handleSetCatalogFilter,
     baseExported,

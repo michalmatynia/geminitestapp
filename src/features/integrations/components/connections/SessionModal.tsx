@@ -1,10 +1,9 @@
 'use client';
 
-
-
 import React from 'react';
 
-import type { SessionCookieDto as SessionCookie } from '@/shared/contracts/integrations';
+import { useIntegrationsSession } from '@/features/integrations/context/IntegrationsContext';
+import type { SessionCookie } from '@/shared/contracts/integrations';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import { Badge, StatusBadge, LoadingState, Card, Alert } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';
@@ -12,22 +11,32 @@ import { cn } from '@/shared/utils';
 
 interface SessionModalProps extends Omit<ModalStateProps, 'onSuccess'> {
   onSuccess?: () => void;
-  loading: boolean;
-  error: string | null;
-  cookies: SessionCookie[];
-  origins: string[];
-  updatedAt: string | null;
+  loading?: boolean;
+  error?: string | null;
+  cookies?: SessionCookie[];
+  origins?: string[];
+  updatedAt?: string | null;
 }
 
 export function SessionModal({
-  isOpen,
-  onClose,
-  loading,
-  error,
-  cookies,
-  origins,
-  updatedAt,
+  isOpen: isOpenProp,
+  onClose: onCloseProp,
+  loading: loadingProp,
+  error: errorProp,
+  cookies: cookiesProp,
+  origins: originsProp,
+  updatedAt: updatedAtProp,
 }: SessionModalProps): React.JSX.Element | null {
+  const session = useIntegrationsSession();
+
+  const isOpen = isOpenProp ?? session.showSessionModal;
+  const onClose = onCloseProp ?? (() => session.setShowSessionModal(false));
+  const loading = loadingProp ?? session.sessionLoading;
+  const error = errorProp ?? session.sessionError;
+  const cookies = cookiesProp ?? session.sessionCookies ?? [];
+  const origins = originsProp ?? session.sessionOrigins ?? [];
+  const updatedAt = updatedAtProp ?? session.sessionUpdatedAt;
+
   return (
     <DetailModal
       isOpen={isOpen}

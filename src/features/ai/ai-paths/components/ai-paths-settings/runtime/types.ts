@@ -20,6 +20,7 @@ import type {
   SetNodeStatusInput,
   UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
+export type { QueuedRun } from '@/features/ai/ai-paths/lib';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 

@@ -8,6 +8,10 @@ import type {
   ProductValidatorImportRequest,
   ProductValidatorImportResult,
 } from '@/shared/contracts/validator-import';
+
+export type ImportValidationPatternsPayload = ProductValidatorImportRequest;
+export type ImportValidationPatternsResult = ProductValidatorImportResult;
+
 import { 
   Catalog, 
   CatalogRecord,

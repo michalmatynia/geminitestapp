@@ -31,6 +31,8 @@ export const userPreferencesUpdateSchema = z.object({
     .array(productAdvancedFilterPresetSchema)
     .optional()
     .nullable(),
+  productListAppliedAdvancedFilter: nullableTrimmedStringSchema,
+  productListAppliedAdvancedFilterPresetId: nullableTrimmedStringSchema,
   productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
   productListDraftIconColor: z
     .string()
@@ -71,6 +73,8 @@ export const userPreferencesResponseSchema = z
     productListAdvancedFilterPresets: z
       .array(productAdvancedFilterPresetSchema)
       .optional(),
+    productListAppliedAdvancedFilter: z.string().optional().nullable(),
+    productListAppliedAdvancedFilterPresetId: z.string().optional().nullable(),
     productListDraftIconColorMode: z.enum(['theme', 'custom']).optional().nullable(),
     productListDraftIconColor: z.string().regex(USER_PREFERENCES_HEX_COLOR_PATTERN).optional().nullable(),
     aiPathsActivePathId: z.string().optional().nullable(),
@@ -139,6 +143,16 @@ export const normalizeUserPreferencesUpdatePayload = (
   if (payload.productListAdvancedFilterPresets !== undefined) {
     normalized.productListAdvancedFilterPresets =
       payload.productListAdvancedFilterPresets ?? [];
+  }
+  if (payload.productListAppliedAdvancedFilter !== undefined) {
+    normalized.productListAppliedAdvancedFilter = normalizeNullableString(
+      payload.productListAppliedAdvancedFilter
+    );
+  }
+  if (payload.productListAppliedAdvancedFilterPresetId !== undefined) {
+    normalized.productListAppliedAdvancedFilterPresetId = normalizeNullableString(
+      payload.productListAppliedAdvancedFilterPresetId
+    );
   }
   if (payload.productListDraftIconColorMode !== undefined) {
     normalized.productListDraftIconColorMode = payload.productListDraftIconColorMode;

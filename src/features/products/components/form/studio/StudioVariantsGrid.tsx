@@ -8,14 +8,10 @@ import { useProductStudioContext } from '../../../context/ProductStudioContext';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import { DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL, PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY } from '../../../constants';
-
-const formatTimestamp = (value: string | null): string => {
-  if (!value) return 'n/a';
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
-};
+import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export function StudioVariantsGrid(): React.JSX.Element {
+  const context = useProductStudioContext();
   const { 
     variants, 
     variantsLoading, 
@@ -26,7 +22,7 @@ export function StudioVariantsGrid(): React.JSX.Element {
     pendingVariantPlaceholderCount,
     sending,
     accepting
-  } = useProductStudioContext();
+  } = context;
   
   const settingsStore = useSettingsStore();
   const productImagesExternalBaseUrl = settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ?? DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
@@ -48,7 +44,9 @@ export function StudioVariantsGrid(): React.JSX.Element {
               <div key={slot.id} className='space-y-1'>
                 <button
                   type='button'
-                  onClick={() => setSelectedVariantSlotId(slot.id)}
+                  onClick={() => {
+                    if (slot.id) setSelectedVariantSlotId(slot.id);
+                  }}
                   className={cn(
                     'group w-full rounded border p-1 text-left transition',
                     isSelected ? 'border-blue-400/80 bg-blue-500/10' : 'border-border/60 hover:border-blue-400/40'

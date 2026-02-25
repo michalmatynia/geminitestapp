@@ -14,6 +14,7 @@ import { ExportLogViewer } from './ExportLogViewer';
 import { useMassListForm } from './hooks/useMassListForm';
 import { IntegrationAccountSummary } from './IntegrationAccountSummary';
 import { MassListProductModalViewProvider, useMassListProductModalViewContext } from './mass-list-modal/context/MassListProductModalViewContext';
+import { MassListProgressPanel } from './mass-list-modal/MassListProgressPanel';
 
 interface MassListProductModalProps extends EntityModalProps<string[]> {
   integrationId: string;
@@ -60,19 +61,11 @@ function MassListProductModalContent(): React.JSX.Element {
         )}
 
         {submitting && progress && (
-          <div className='space-y-4'>
-            <div className='flex items-center justify-between gap-2'>
-              <p className='text-sm text-gray-300'>Processing {progress.current} of {progress.total}...</p>
-              <LoadingState size='sm' className='p-0' />
-            </div>
-            <div className='h-2 w-full rounded-full bg-card/40'>
-              <div
-                className='h-full rounded-full bg-primary transition-all duration-300'
-                style={{ width: `${(progress.current / progress.total) * 100}%` }}
-              />
-            </div>
-            {progress.errors > 0 && <p className='text-xs text-red-400'>{progress.errors} failures so far</p>}
-          </div>
+          <MassListProgressPanel
+            current={progress.current}
+            total={progress.total}
+            errors={progress.errors}
+          />
         )}
 
         {!submitting && (

@@ -15,19 +15,16 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Button, FolderTreePanel, TreeHeader, EmptyState } from '@/shared/ui';
 import {
   canNestTreeNodeV2,
-  cn,
   type MasterTreeNode,
 } from '@/shared/utils';
 
-import { SectionPicker } from './SectionPicker';
 import {
   PAGE_BUILDER_SHOW_EXTRACT_PLACEHOLDER_KEY,
   PAGE_BUILDER_SHOW_SECTION_DROP_PLACEHOLDER_KEY,
 } from './settings/PageBuilderSettingsPage';
-import { SectionNodeItem } from './tree';
+import { SectionNodeItem, ZoneFooterNode, SectionDropTarget } from './tree';
 import {
   ComponentTreePanelProvider,
-  useComponentTreePanelContext,
   type ComponentTreePanelContextValue,
 } from './tree/ComponentTreePanelContext';
 import {
@@ -41,22 +38,9 @@ import {
   toCmsZoneNodeId,
 } from './utils/cms-master-tree';
 import { createCmsMasterTreeAdapter } from './utils/cms-master-tree-adapter';
-import { isCmsSectionSamePositionDrop } from './utils/cms-tree-external-drop';
 import { useDragState } from '../../hooks/useDragStateContext';
 import { usePageBuilderState, usePageBuilderDispatch } from '../../hooks/usePageBuilderContext';
-import { TreeActionsProvider, useTreeActions } from '../../hooks/useTreeActionsContext';
-import { readSectionDragData } from '../../utils/page-builder-dnd';
-
-// Block types that can be promoted to standalone sections
-const PROMOTABLE_BLOCK_TYPES = [
-  'ImageElement',
-  'TextElement',
-  'ButtonElement',
-  'Block',
-  'TextAtom',
-  'Model3DElement',
-  'Slideshow',
-];
+import { TreeActionsProvider } from '../../hooks/useTreeActionsContext';
 
 export function ComponentTreePanel(): React.ReactNode {
   const state = usePageBuilderState();
@@ -342,232 +326,5 @@ export function ComponentTreePanel(): React.ReactNode {
         </FolderTreePanel>
       </ComponentTreePanelProvider>
     </TreeActionsProvider>
-  );
-}
-
-function ZoneFooterNode({
-  zone,
-  sectionCount,
-}: {
-  zone: PageZone;
-  sectionCount: number;
-}): React.ReactNode {
-  const {
-    currentPage,
-    clipboard,
-    canDropSectionsAtRoot,
-    treePlaceholderClasses,
-    treeRootDropLabel,
-    draggedMasterSectionId,
-    moveSectionByMaster,
-  } = useComponentTreePanelContext();
-  const [isZoneDragOver, setIsZoneDragOver] = useState(false);
-  const { state: dragState, endSectionDrag } = useDragState();
-  const { sectionActions } = useTreeActions();
-
-  const draggedSectionId = dragState.section.id ?? draggedMasterSectionId;
-  const hasSections = sectionCount > 0;
-
-  return (
-    <>
-      {hasSections ? (
-        <SectionDropTarget zone={zone} toIndex={sectionCount} />
-      ) : (
-        <div
-          onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-            if (!draggedSectionId) return;
-            if (!canDropSectionsAtRoot) return;
-            event.preventDefault();
-            event.stopPropagation();
-            setIsZoneDragOver(true);
-          }}
-          onDragLeave={(): void => {
-            setIsZoneDragOver(false);
-          }}
-          onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
-            event.preventDefault();
-            event.stopPropagation();
-            setIsZoneDragOver(false);
-            if (!draggedSectionId) return;
-            if (!canDropSectionsAtRoot) return;
-            void moveSectionByMaster(draggedSectionId, zone, 0).finally(() => {
-              endSectionDrag();
-            });
-          }}
-          className={`rounded border border-dashed px-3 py-3 text-center text-xs transition ${
-            isZoneDragOver
-              ? treePlaceholderClasses.rootActive
-              : treePlaceholderClasses.rootIdle
-          }`}
-        >
-          {isZoneDragOver ? treeRootDropLabel : 'No sections'}
-        </div>
-      )}
-
-      <div className='mt-2 flex flex-wrap items-center gap-1'>
-        {clipboard?.type === 'section' ? (
-          <button
-            type='button'
-            onClick={(): void => sectionActions.paste(zone)}
-            className='rounded px-1.5 py-0.5 text-[10px] text-gray-400 transition hover:bg-foreground/10 hover:text-gray-200'
-            title='Paste section'
-          >
-            Paste
-          </button>
-        ) : null}
-        <SectionPicker
-          disabled={!currentPage}
-          zone={zone}
-          onSelect={(sectionType: string): void => sectionActions.add(sectionType, zone)}
-        />
-      </div>
-    </>
-  );
-}
-
-interface SectionDropTargetProps {
-  zone: PageZone;
-  toIndex: number;
-}
-
-function SectionDropTarget({
-  zone,
-  toIndex,
-}: SectionDropTargetProps): React.ReactNode {
-  const {
-    showExtractPlaceholder,
-    showSectionDropPlaceholder,
-    canDropSectionsAtRoot,
-    canDropBlocksAtRoot,
-    treePlaceholderClasses,
-    treeInlineDropLabel,
-    draggedMasterSectionId,
-    moveSectionByMaster,
-  } = useComponentTreePanelContext();
-  const [isOver, setIsOver] = useState(false);
-  const { state: dragState, endBlockDrag, endSectionDrag } = useDragState();
-  const { sectionActions } = useTreeActions();
-
-  const draggedBlockId = dragState.block.id;
-  const draggedBlockType = dragState.block.type;
-  const draggedFromSectionId = dragState.block.fromSectionId;
-  const draggedFromColumnId = dragState.block.fromColumnId;
-  const draggedFromParentBlockId = dragState.block.fromParentBlockId;
-  const draggedSectionId = dragState.section.id ?? draggedMasterSectionId;
-  const draggedSectionZone = dragState.section.zone;
-  const draggedSectionIndex = dragState.section.index;
-
-  const isDraggingBlock = Boolean(draggedBlockId);
-  const isDraggingSection = showSectionDropPlaceholder && canDropSectionsAtRoot && Boolean(draggedSectionId);
-  const canPromoteBlock =
-    showExtractPlaceholder &&
-    canDropBlocksAtRoot &&
-    isDraggingBlock &&
-    PROMOTABLE_BLOCK_TYPES.includes(draggedBlockType ?? '');
-  const isDragging = isDraggingSection || canPromoteBlock;
-
-  if (!isDragging) return null;
-
-  return (
-    <div
-      onDragOver={(event: React.DragEvent<HTMLDivElement>): void => {
-        if (isDraggingSection) {
-          const sectionDrag = readSectionDragData(event.dataTransfer, {
-            id: draggedSectionId,
-            zone: draggedSectionZone,
-            index: draggedSectionIndex,
-          });
-          const dragSectionId = sectionDrag.id;
-          if (!dragSectionId) return;
-          const dragZone = (sectionDrag.zone as PageZone | null) ?? null;
-          const dragIndex = sectionDrag.index;
-          const isSamePosition = isCmsSectionSamePositionDrop({
-            draggedZone: dragZone,
-            draggedIndex: dragIndex,
-            targetZone: zone,
-            targetIndex: toIndex,
-          });
-          if (isSamePosition) return;
-        }
-        event.preventDefault();
-        event.stopPropagation();
-        setIsOver(true);
-      }}
-      onDragLeave={(event: React.DragEvent<HTMLDivElement>): void => {
-        if (event.currentTarget.contains(event.relatedTarget as Node)) return;
-        setIsOver(false);
-      }}
-      onDrop={(event: React.DragEvent<HTMLDivElement>): void => {
-        event.preventDefault();
-        event.stopPropagation();
-        setIsOver(false);
-
-        if (isDraggingSection) {
-          const sectionDrag = readSectionDragData(event.dataTransfer, {
-            id: draggedSectionId,
-            zone: draggedSectionZone,
-            index: draggedSectionIndex,
-          });
-          const dragSectionId = sectionDrag.id;
-          if (!dragSectionId) return;
-          const dragZone = (sectionDrag.zone as PageZone | null) ?? null;
-          const dragIndex = sectionDrag.index;
-          const isSamePosition = isCmsSectionSamePositionDrop({
-            draggedZone: dragZone,
-            draggedIndex: dragIndex,
-            targetZone: zone,
-            targetIndex: toIndex,
-          });
-          if (isSamePosition) return;
-          void moveSectionByMaster(dragSectionId, zone, toIndex).finally(() => {
-            endSectionDrag();
-          });
-          return;
-        }
-
-        if (canPromoteBlock && draggedBlockId && draggedFromSectionId) {
-          sectionActions.promoteBlockToSection(
-            draggedBlockId,
-            draggedFromSectionId,
-            draggedFromColumnId ?? undefined,
-            draggedFromParentBlockId ?? undefined,
-            zone,
-            toIndex
-          );
-          endBlockDrag();
-        }
-      }}
-      className={`relative z-10 overflow-hidden transition-[height] ${
-        isDragging ? 'h-8' : 'h-0'
-      }`}
-    >
-      <div
-        className={`absolute inset-x-1 top-1/2 flex -translate-y-1/2 items-center justify-center rounded border-2 border-dashed transition ${
-          isOver
-            ? canPromoteBlock
-              ? 'border-emerald-500 bg-emerald-600/40 h-6'
-              : `${treePlaceholderClasses.rootActive} h-6`
-            : canPromoteBlock
-              ? 'border-emerald-500/50 bg-emerald-600/20 h-5'
-              : `${treePlaceholderClasses.rootIdle} h-5`
-        }`}
-      >
-        {canPromoteBlock ? (
-          <span className={`text-[9px] font-medium ${isOver ? 'text-emerald-200' : 'text-emerald-400'}`}>
-            {isOver ? 'Release to extract' : 'Drop here to extract'}
-          </span>
-        ) : null}
-        {isDraggingSection && !canPromoteBlock ? (
-          <span
-            className={cn(
-              'text-[9px] font-medium',
-              isOver ? treePlaceholderClasses.badgeActive : treePlaceholderClasses.badgeIdle
-            )}
-          >
-            {isOver ? 'Release to move' : treeInlineDropLabel}
-          </span>
-        ) : null}
-      </div>
-    </div>
   );
 }

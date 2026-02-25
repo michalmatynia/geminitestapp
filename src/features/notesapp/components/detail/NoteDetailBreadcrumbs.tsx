@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { Button } from '@/shared/ui';
-import { buildBreadcrumbPath } from '../utils';
+import { buildBreadcrumbPath } from '../../utils';
 
 import type { NoteCategoryRecordWithChildrenDto as CategoryWithChildren } from '@/shared/contracts/notes';
 

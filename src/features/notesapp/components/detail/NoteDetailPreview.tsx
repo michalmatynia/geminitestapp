@@ -5,7 +5,7 @@ import React, { useMemo } from 'react';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { sanitizeHtml } from '@/shared/utils';
 import { useToast } from '@/shared/ui';
-import { renderMarkdownToHtml } from '../utils';
+import { renderMarkdownToHtml } from '../../utils';
 import { NoteDetailRelatedNotes } from './NoteDetailRelatedNotes';
 
 export function NoteDetailPreview(): React.JSX.Element | null {

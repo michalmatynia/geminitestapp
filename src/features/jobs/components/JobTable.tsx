@@ -1,15 +1,16 @@
 'use client';
 
-import { Eye, XCircle, Loader2, Trash2, Clock, CheckCircle } from 'lucide-react';
 import { ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 
 import { useJobsContext } from '@/features/jobs/context/JobsContext';
-import { StandardDataTablePanel, StatusBadge } from '@/shared/ui';
-import { Button } from '@/shared/ui';
+import { StandardDataTablePanel } from '@/shared/ui';
 
 import { type JobRowData } from '../types';
+import { JobStatusCell } from './job-table/JobStatusCell';
+import { JobTimingCell } from './job-table/JobTimingCell';
+import { JobActionsCell } from './job-table/JobActionsCell';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -28,34 +29,6 @@ interface JobTableProps {
   filters?: React.ReactNode;
   footer?: React.ReactNode;
 }
-
-const getStatusIcon = (status: string): React.JSX.Element => {
-  switch (status) {
-    case 'pending':
-    case 'queued':
-    case 'queued_relist':
-      return <Clock className='size-3' />;
-    case 'completed':
-    case 'success':
-    case 'listed':
-      return <CheckCircle className='size-3' />;
-    case 'deleted':
-    case 'removed':
-    case 'failed':
-    case 'needs_login':
-    case 'auth_required':
-    case 'error':
-    case 'canceled':
-    case 'cancelled':
-      return <XCircle className='size-3' />;
-    case 'processing':
-    case 'running':
-    case 'in_progress':
-      return <Loader2 className='size-3 animate-spin' />;
-    default:
-      return <Clock className='size-3' />;
-  }
-};
 
 export function JobTable({
   data,
@@ -135,16 +108,7 @@ export function JobTable({
         header: 'Status',
         cell: ({ row }: { row: { original: JobRowData } }): React.JSX.Element => {
           const job = row.original;
-          return (
-            <div className='flex flex-col gap-1'>
-              <StatusBadge status={job.status} icon={getStatusIcon(job.status)} />
-              {job.errorMessage && (
-                <div className='max-w-[200px] truncate text-[10px] text-red-400' title={job.errorMessage}>
-                  {job.errorMessage}
-                </div>
-              )}
-            </div>
-          );
+          return <JobStatusCell status={job.status} errorMessage={job.errorMessage} />;
         },
       },
       {
@@ -152,19 +116,7 @@ export function JobTable({
         header: 'Timing',
         cell: ({ row }: { row: { original: JobRowData } }): React.JSX.Element => {
           const job = row.original;
-          const formatTime = (value: string | Date | null | undefined): string => {
-            if (!value) return '—';
-            const date = new Date(value);
-            return date.toLocaleTimeString();
-          };
-          return (
-            <div className='text-xs'>
-              <div>Created: {formatTime(job.createdAt)}</div>
-              {job.finishedAt && (
-                <div className='text-gray-500'>Finished: {formatTime(job.finishedAt)}</div>
-              )}
-            </div>
-          );
+          return <JobTimingCell createdAt={job.createdAt} finishedAt={job.finishedAt} />;
         },
       },
       {
@@ -173,44 +125,15 @@ export function JobTable({
         cell: ({ row }: { row: { original: JobRowData } }): React.JSX.Element => {
           const job = row.original;
           return (
-            <div className='flex justify-end gap-2'>
-              <Button
-                variant='ghost'
-                size='icon'
-                className='h-8 w-8 text-blue-500 hover:text-blue-400'
-                onClick={() => handleViewDetails(job.id)}
-                aria-label='View details'
-              >
-                <Eye className='h-4 w-4' />
-              </Button>
-              {(job.status === 'pending' ||
-                job.status === 'queued' ||
-                job.status === 'queued_relist' ||
-                job.status === 'running') && (
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='h-8 w-8 text-yellow-500 hover:text-yellow-400'
-                  onClick={() => handleCancel(job.id)}
-                  loading={isCancelling?.(job.id) ?? false}
-                  aria-label='Cancel job'
-                >
-                  <XCircle className='h-4 w-4' />
-                </Button>
-              )}
-              {onDelete && (
-                <Button
-                  variant='ghost'
-                  size='icon'
-                  className='h-8 w-8 text-red-500 hover:text-red-400'
-                  onClick={() => onDelete(job.id)}
-                  loading={isDeleting?.(job.id) ?? false}
-                  aria-label='Delete job'
-                >
-                  <Trash2 className='h-4 w-4' />
-                </Button>
-              )}
-            </div>
+            <JobActionsCell
+              jobId={job.id}
+              status={job.status}
+              onViewDetails={handleViewDetails}
+              onCancel={handleCancel}
+              onDelete={onDelete}
+              isCancelling={isCancelling?.(job.id) ?? false}
+              isDeleting={isDeleting?.(job.id) ?? false}
+            />
           );
         },
       },

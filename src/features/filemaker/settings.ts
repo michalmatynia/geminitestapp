@@ -23,6 +23,7 @@ import type {
 import {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_REFERENCE_NONE,
+  FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY,
   FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
   FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
 } from './settings-constants';
@@ -62,6 +63,7 @@ import {
 
 import {
   extractFilemakerEmailsFromText,
+  parseFilemakerEmailParserRulesFromPromptSettings,
   validateFilemakerPhoneNumber,
 } from './filemaker-settings.validation';
 
@@ -80,6 +82,7 @@ import {
 export {
   FILEMAKER_DATABASE_KEY,
   FILEMAKER_REFERENCE_NONE,
+  FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY,
   FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
   FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
 };
@@ -929,5 +932,6 @@ export {
   createFilemakerPhoneNumberLink,
   formatFilemakerAddress,
   extractFilemakerEmailsFromText,
+  parseFilemakerEmailParserRulesFromPromptSettings,
   validateFilemakerPhoneNumber,
 };

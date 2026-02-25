@@ -1,14 +1,16 @@
 'use client';
 
-import { Download, Save } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
 import { logClientError } from '@/features/observability';
-import { Button, SelectSimple, StandardDataTablePanel, MetadataItem, EmptyState } from '@/shared/ui';
+import { StandardDataTablePanel, EmptyState } from '@/shared/ui';
 import { useToast } from '@/shared/ui/toast';
 
 import { usePendingExternalMappings } from './usePendingExternalMappings';
+import { GenericMapperHeaderActions } from './generic-mapper/GenericMapperHeaderActions';
+import { GenericMapperStats } from './generic-mapper/GenericMapperStats';
+import { GenericMapperExternalCell } from './generic-mapper/GenericMapperExternalCell';
 
 import type { ColumnDef, Row } from '@tanstack/react-table';
 
@@ -184,19 +186,11 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
         const currentMapping = getCurrentMapping(internalId);
         
         return (
-          <SelectSimple
-            value={currentMapping ?? '__unmapped__'}
-            onValueChange={(value) =>
-              handleMappingChange(
-                internalId,
-                value === '__unmapped__' ? null : value
-              )
-            }
-            disabled={isLoadingExternal}
+          <GenericMapperExternalCell
+            value={currentMapping}
+            onChange={(value) => handleMappingChange(internalId, value)}
             options={externalOptions}
-            variant='subtle'
-            size='sm'
-            triggerClassName='w-full max-w-md'
+            disabled={isLoadingExternal}
           />
         );
       },
@@ -216,44 +210,27 @@ export function GenericItemMapper<TInternal, TExternal, TMapping>({
     externalOptions
   ]);
 
-  const alerts = (
-    <div className='flex gap-4 mb-4'>
-      <MetadataItem label='Total' value={stats.total} variant='minimal' />
-      <MetadataItem label='Mapped' value={stats.mapped} variant='minimal' valueClassName='text-emerald-400 font-bold' />
-      {stats.pending > 0 && (
-        <MetadataItem label='Pending' value={stats.pending} variant='minimal' valueClassName='text-yellow-400 font-bold' />
-      )}
-    </div>
-  );
-
   return (
     <div className='space-y-4 border-t border-border/60 pt-6'>
       <StandardDataTablePanel
         title={title}
         description={`Connection: ${connectionName}`}
-        headerActions={
-          <div className='flex items-center gap-3'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => void handleFetch()}
-              loading={isFetching}
-            >
-              <Download className='mr-2 h-3.5 w-3.5' />
-              Fetch
-            </Button>
-            <Button
-              size='sm'
-              onClick={() => void handleSave()}
-              loading={isSaving}
-              disabled={pendingMappings.size === 0}
-            >
-              <Save className='mr-2 h-3.5 w-3.5' />
-              Save {pendingMappings.size > 0 ? `(${pendingMappings.size})` : ''}
-            </Button>
-          </div>
-        }
-        alerts={alerts}
+        headerActions={(
+          <GenericMapperHeaderActions
+            onFetch={() => void handleFetch()}
+            isFetching={isFetching}
+            onSave={() => void handleSave()}
+            isSaving={isSaving}
+            pendingCount={pendingMappings.size}
+          />
+        )}
+        alerts={(
+          <GenericMapperStats
+            total={stats.total}
+            mapped={stats.mapped}
+            pending={stats.pending}
+          />
+        )}
         columns={columns}
         data={sortedInternalItems}
         isLoading={loading}

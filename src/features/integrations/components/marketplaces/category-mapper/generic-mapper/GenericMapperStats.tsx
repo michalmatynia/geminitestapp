@@ -1,0 +1,26 @@
+'use client';
+
+import React from 'react';
+import { MetadataItem } from '@/shared/ui';
+
+export type GenericMapperStatsProps = {
+  total: number;
+  mapped: number;
+  pending: number;
+};
+
+export function GenericMapperStats({
+  total,
+  mapped,
+  pending,
+}: GenericMapperStatsProps): React.JSX.Element {
+  return (
+    <div className='flex gap-4 mb-4'>
+      <MetadataItem label='Total' value={total} variant='minimal' />
+      <MetadataItem label='Mapped' value={mapped} variant='minimal' valueClassName='text-emerald-400 font-bold' />
+      {pending > 0 && (
+        <MetadataItem label='Pending' value={pending} variant='minimal' valueClassName='text-yellow-400 font-bold' />
+      )}
+    </div>
+  );
+}

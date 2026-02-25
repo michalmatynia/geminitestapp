@@ -1,10 +1,6 @@
 import { useCallback, useRef } from 'react';
 import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/features/ai/ai-paths/lib';
 import {
-  CANVAS_HEIGHT,
-  CANVAS_WIDTH,
-  NODE_MIN_HEIGHT,
-  NODE_WIDTH,
   createNodeInstanceId,
   getDefaultConfigForType,
   palette,

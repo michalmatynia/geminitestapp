@@ -2,12 +2,10 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { AiNode, NodeDefinition, RuntimeState, Edge } from '@/features/ai/ai-paths/lib';
+import type { AiNode, RuntimeState, Edge } from '@/features/ai/ai-paths/lib';
 import {
-  VIEW_MARGIN,
   clampScale,
   clampTranslate,
-  sanitizeEdges,
 } from '@/features/ai/ai-paths/lib';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
@@ -238,16 +236,10 @@ export function useCanvasInteractions(args?: {
     touchLongPressIndicatorHideTimerRef,
     viewportRef,
     latestViewRef,
-    setViewClamped: nav.setViewClamped,
-    resolveViewportPointFromClient,
     setTouchLongPressIndicator,
     setNodeSelection,
     selectEdge,
     setMarqueeSelection,
-    startPan,
-    panState,
-    endPan,
-    endConnection,
   });
 
   const maybeStartTouchPanInertia = useCallback(
@@ -392,7 +384,7 @@ export function useCanvasInteractions(args?: {
     setRuntimeState,
     pruneRuntimeInputsInternal,
     viewportRef,
-    canvasRef,
+    canvasRef: canvasRef as React.RefObject<SVGSVGElement | null>,
     view,
     setLastDrop,
     ensureNodeVisible: nav.ensureNodeVisible,
@@ -817,6 +809,8 @@ export function useCanvasInteractions(args?: {
     };
   }, [marqueeSelection]);
 
+  const isPanning = Boolean(panState);
+
   return {
     viewportRef,
     canvasRef,
@@ -839,5 +833,6 @@ export function useCanvasInteractions(args?: {
     handleWheel,
     ConfirmationModal,
     pruneRuntimeInputs: pruneRuntimeInputsInternal,
+    isPanning,
   };
 }

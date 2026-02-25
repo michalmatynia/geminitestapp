@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useQueryClient, type UseQueryResult } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
-import { createListQueryV2 } from "@/shared/lib/query-factories-v2";
-import { useToast } from "@/shared/ui";
-import { logClientError, isLoggableObject } from "@/shared/utils/observability/client-error-logger";
-import { getTraceId } from "@/shared/utils/observability/trace";
+import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef } from 'react';
+import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
+import { useToast } from '@/shared/ui';
+import { logClientError, isLoggableObject } from '@/shared/utils/observability/client-error-logger';
+import { getTraceId } from '@/shared/utils/observability/trace';
 
 interface LoggableWithErrorFlag {
   __logged?: boolean;
@@ -21,7 +21,7 @@ interface ErrorHandlingConfig {
   onError?: (error: Error, queryKey: unknown[]) => void;
 }
 
-const NOISE_MESSAGES = new Set(["{}", "[]", "[object Object]"]);
+const NOISE_MESSAGES = new Set(['{}', '[]', '[object Object]']);
 const DEFAULT_TOAST_DEDUPE_WINDOW_MS = 20_000;
 const DEFAULT_AUTO_RETRY_DELAY_MS = 5_000;
 const DEFAULT_MAX_AUTO_RETRIES_PER_QUERY = 1;
@@ -34,30 +34,30 @@ const isMeaningfulMessage = (message: string): boolean => {
 };
 
 const getErrorMessage = (error: unknown): string => {
-  if (error instanceof Error) return error.message?.trim() || "";
-  if (typeof error === "string") return error.trim();
-  if (error && typeof error === "object") {
+  if (error instanceof Error) return error.message?.trim() || '';
+  if (typeof error === 'string') return error.trim();
+  if (error && typeof error === 'object') {
     const entries = Object.entries(error as Record<string, unknown>).filter(([, value]) => {
       if (value === null || value === undefined) return false;
-      if (typeof value === "string") return value.trim().length > 0;
+      if (typeof value === 'string') return value.trim().length > 0;
       return true;
     });
     if (entries.length > 0) {
       return entries
         .map(([key, value]) => `${key}: ${String(value)}`)
-        .join(", ");
+        .join(', ');
     }
   }
-  return "";
+  return '';
 };
 
 const shouldLogError = (error: unknown): boolean => {
   if (!error) return false;
-  if (error instanceof Error) return isMeaningfulMessage(error.message || "");
-  if (typeof error === "object") {
+  if (error instanceof Error) return isMeaningfulMessage(error.message || '');
+  if (typeof error === 'object') {
     const entries = Object.entries(error as Record<string, unknown>).filter(([, value]) => {
       if (value === null || value === undefined) return false;
-      if (typeof value === "string") return value.trim().length > 0;
+      if (typeof value === 'string') return value.trim().length > 0;
       return true;
     });
     return entries.length > 0;
@@ -67,8 +67,8 @@ const shouldLogError = (error: unknown): boolean => {
 
 const isEmptyError = (error: unknown): boolean => {
   if (!error) return true;
-  if (error instanceof Error) return !isMeaningfulMessage(error.message || "");
-  if (typeof error === "object") {
+  if (error instanceof Error) return !isMeaningfulMessage(error.message || '');
+  if (typeof error === 'object') {
     return Object.keys(error as Record<string, unknown>).length === 0;
   }
   return false;
@@ -76,9 +76,9 @@ const isEmptyError = (error: unknown): boolean => {
 
 const hasMeaningfulError = (error: unknown): boolean => {
   if (!error) return false;
-  if (error instanceof Error) return isMeaningfulMessage(error.message || "");
-  if (typeof error === "string") return isMeaningfulMessage(error);
-  if (typeof error === "object") {
+  if (error instanceof Error) return isMeaningfulMessage(error.message || '');
+  if (typeof error === 'string') return isMeaningfulMessage(error);
+  if (typeof error === 'object') {
     return shouldLogError(error);
   }
   return true;
@@ -87,12 +87,12 @@ const hasMeaningfulError = (error: unknown): boolean => {
 const getLoggableError = (error: unknown): unknown => {
   if (!error) return undefined;
   if (error instanceof Error) {
-    return isMeaningfulMessage(error.message || "") ? error : undefined;
+    return isMeaningfulMessage(error.message || '') ? error : undefined;
   }
-  if (typeof error === "string") {
+  if (typeof error === 'string') {
     return isMeaningfulMessage(error) ? error : undefined;
   }
-  if (typeof error === "object") {
+  if (typeof error === 'object') {
     const keys = Object.keys(error as Record<string, unknown>);
     return keys.length > 0 ? error : undefined;
   }
@@ -145,7 +145,7 @@ export const shouldEmitDedupedErrorToast = (args: {
 
   pruneErrorToastSignatures(lastShownAtBySignature, nowMs, normalizedWindowMs);
   const lastShownAt = lastShownAtBySignature.get(signature);
-  if (typeof lastShownAt === "number" && nowMs - lastShownAt < normalizedWindowMs) {
+  if (typeof lastShownAt === 'number' && nowMs - lastShownAt < normalizedWindowMs) {
     return false;
   }
   lastShownAtBySignature.set(signature, nowMs);
@@ -187,7 +187,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
 
         if (
           !error ||
-          (typeof error === "object" &&
+          (typeof error === 'object' &&
             !Array.isArray(error) &&
             Object.keys(error as Record<string, unknown>).length === 0)
         ) {
@@ -201,10 +201,10 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
         }
         const isErrorLike =
           error instanceof Error ||
-          typeof error === "string" ||
+          typeof error === 'string' ||
           (error &&
-            typeof error === "object" &&
-            typeof (error as { message?: unknown }).message === "string" &&
+            typeof error === 'object' &&
+            typeof (error as { message?: unknown }).message === 'string' &&
             Boolean((error as { message?: string }).message?.trim()));
         if (!message || !isErrorLike || !hasMeaningfulError(error) || isEmptyError(error)) {
           return;
@@ -240,7 +240,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           });
           if (shouldShowToast) {
             toast(message, {
-              variant: "error",
+              variant: 'error',
               error: isErrorLike ? error : new Error(message),
             });
           }
@@ -249,7 +249,7 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
         // Custom error handler
         onError?.(
           error instanceof Error ? error : new Error(message),
-          queryKey as unknown[]
+          queryKey
         );
 
         // Optional additional retry hook for stubborn transient network errors.
@@ -326,7 +326,7 @@ export function useResilientQuery<TData>(
     if (query.isError) {
       logClientError(query.error, { context: { queryKey } });
       if (toast) {
-        toast(query.error.message, { variant: "error", error: query.error });
+        toast(query.error.message, { variant: 'error', error: query.error });
       }
       options?.onError?.(query.error);
     }

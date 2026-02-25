@@ -5,6 +5,8 @@ export { RowNodeItem } from './RowNodeItem';
 export { ColumnNodeItem } from './ColumnNodeItem';
 export { SectionBlockNodeItem } from './SectionBlockNodeItem';
 export { BlockNodeItem } from './BlockNodeItem';
+export { ZoneFooterNode } from './ZoneFooterNode';
+export { SectionDropTarget } from './SectionDropTarget';
 
 // Constants and utilities
 export * from './tree-constants';

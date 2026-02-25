@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 import {
   type FilemakerDatabase,
   type FilemakerAddressOwnerKind,
@@ -24,7 +24,7 @@ import {
   createFilemakerEmailLink,
   createFilemakerEventOrganizationLink,
   createFilemakerPhoneNumberLink,
-} from './filemaker-settings.mappers';
+} from './filemaker-settings.entities';
 import { normalizeFilemakerDatabase } from './filemaker-settings.database';
 
 const defaultAddressLinkIdForValues = (

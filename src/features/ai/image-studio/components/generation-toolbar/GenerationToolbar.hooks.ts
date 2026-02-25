@@ -1,68 +1,55 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { api } from '@/shared/lib/api-client';
+import { useEffect, useMemo, useRef } from 'react';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { useMaskingState, useMaskingActions } from '../../context/MaskingContext';
 import { useProjectsState } from '../../context/ProjectsContext';
 import { useSettingsState, useSettingsActions } from '../../context/SettingsContext';
 import { useSlotsState, useSlotsActions } from '../../context/SlotsContext';
-import { useUiActions, useUiState } from '../../context/UiContext';
+import { useUiActions, useUiState, type PreviewCanvasViewportCrop, type PreviewCanvasImageFrameBinding } from '../../context/UiContext';
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
   PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
 } from '@/features/products/constants';
 import {
   buildImageStudioAnalysisSourceSignature,
-  clearImageStudioAnalysisApplyIntent,
-  IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT,
-  loadImageStudioAnalysisApplyIntent,
-  loadImageStudioAnalysisPlanSnapshot,
-  type ImageStudioAnalysisSharedLayout,
 } from '../../utils/analysis-bridge';
 import { getImageStudioSlotImageSrc } from '../../utils/image-src';
 import {
-  IMAGE_STUDIO_OBJECT_LAYOUT_PRESETS_CHANGED_EVENT,
   loadObjectLayoutAdvancedDefaults,
   loadObjectLayoutCustomPresets,
 } from '../../utils/object-layout-presets';
 import {
-  hasCanvasOverflowFromImageFrame,
-  loadImageElement,
   resolveClientProcessingImageSrc,
   shapeHasUsableCropGeometry,
-  type CropCanvasContext,
-  type CropRectResolutionDiagnostics,
-  type CropRect,
-  type ImageContentFrame,
   type MaskShapeForExport,
+  type CropRectResolutionDiagnostics,
 } from './GenerationToolbarImageUtils';
 import { useGenerationToolbarContext } from './GenerationToolbarContext';
-import { normalizeMaskShapeForExport, formatLayoutPercent } from './GenerationToolbar.utils';
-import { PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY } from '@/features/products/constants';
-import { getSettingValue } from '@/features/products/services/aiDescriptionService';
-import { normalizeProductStudioSequenceGenerationMode } from '@/shared/contracts/products';
+import { normalizeMaskShapeForExport } from './GenerationToolbar.utils';
+import { type GenerationToolbarState } from './GenerationToolbar.types';
 
-export function useGenerationToolbarState() {
+export function useGenerationToolbarState(): GenerationToolbarState {
   const { maskPreviewEnabled, centerGuidesEnabled } = useUiState();
+  const uiActions = useUiActions();
   const {
     setMaskPreviewEnabled,
     setCenterGuidesEnabled,
     setCanvasSelectionEnabled,
-    getPreviewCanvasViewportCrop,
-    getPreviewCanvasImageFrame,
-  } = useUiActions();
+  } = uiActions;
   const { projectId, projectsQuery } = useProjectsState();
   const { workingSlot } = useSlotsState();
   const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
   const settingsStore = useSettingsStore();
+  const maskingState = useMaskingState();
   const {
     maskShapes,
     activeMaskId,
     maskInvert,
     maskGenLoading,
     maskGenMode,
-  } = useMaskingState();
+  } = maskingState;
+  const maskingActions = useMaskingActions();
   const {
     setTool,
     setMaskShapes,
@@ -70,7 +57,7 @@ export function useGenerationToolbarState() {
     setMaskInvert,
     setMaskGenMode,
     handleAiMaskGeneration,
-  } = useMaskingActions();
+  } = maskingActions;
   const { studioSettings } = useSettingsState();
   const { setStudioSettings } = useSettingsActions();
   const { toast } = useToast();
@@ -89,6 +76,7 @@ export function useGenerationToolbarState() {
   const skipCenterAdvancedDefaultsSaveRef = useRef(true);
   const selectedCenterCustomPresetIdRef = useRef<string | null>(null);
   const lastConsumedAnalysisIntentRef = useRef<string | null>(null);
+  const cropDiagnosticsRef = useRef<CropRectResolutionDiagnostics | null>(null);
 
   const maskShapesForExport = useMemo<MaskShapeForExport[]>(
     () =>
@@ -188,13 +176,14 @@ export function useGenerationToolbarState() {
   }, [activeProjectId, toolbarContext]);
 
   return {
+    ...toolbarContext,
     maskPreviewEnabled,
     centerGuidesEnabled,
     setMaskPreviewEnabled,
     setCenterGuidesEnabled,
     setCanvasSelectionEnabled,
-    getPreviewCanvasViewportCrop,
-    getPreviewCanvasImageFrame,
+    getPreviewCanvasViewportCrop: (): PreviewCanvasViewportCrop | null => uiActions.getPreviewCanvasViewportCrop(),
+    getPreviewCanvasImageFrame: (): PreviewCanvasImageFrameBinding | null => uiActions.getPreviewCanvasImageFrame(),
     projectId,
     projectsQuery,
     workingSlot,
@@ -205,18 +194,17 @@ export function useGenerationToolbarState() {
     activeMaskId,
     maskInvert,
     maskGenLoading,
-    maskGenMode,
+    maskGenMode: maskGenMode as 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges',
     setTool,
     setMaskShapes,
     setActiveMaskId,
     setMaskInvert,
-    setMaskGenMode,
-    handleAiMaskGeneration,
+    setMaskGenMode: (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges') => setMaskGenMode(mode),
+    handleAiMaskGeneration: (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges') => handleAiMaskGeneration(mode),
     studioSettings,
     setStudioSettings,
-    toast,
+    toast: (message: string, options?: any) => { toast(message, options); },
     queryClient,
-    ...toolbarContext,
     upscaleRequestInFlightRef,
     upscaleAbortControllerRef,
     cropRequestInFlightRef,
@@ -228,6 +216,7 @@ export function useGenerationToolbarState() {
     skipCenterAdvancedDefaultsSaveRef,
     selectedCenterCustomPresetIdRef,
     lastConsumedAnalysisIntentRef,
+    cropDiagnosticsRef,
     maskShapesForExport,
     eligibleMaskShapes,
     exportMaskShapes,

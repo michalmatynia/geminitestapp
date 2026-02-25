@@ -5,6 +5,7 @@ import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { type StudioSlotsResponse, type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { useGenerationToolbarState } from './GenerationToolbar.hooks';
+import { type GenerationToolbarState } from './GenerationToolbar.types';
 import {
   CROP_REQUEST_TIMEOUT_MS,
   UPSCALE_MAX_OUTPUT_SIDE,
@@ -17,9 +18,6 @@ import {
   CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
   CENTER_LAYOUT_MAX_CHROMA_THRESHOLD,
   CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD,
-  formatLayoutPercent,
-  shouldFallbackToServerAutoScaler,
-  describeSchemaValidationIssue,
 } from './GenerationToolbar.utils';
 import {
   polygonsFromShapes,
@@ -58,20 +56,8 @@ import { GenerationToolbarMaskSection } from './GenerationToolbarMaskSection';
 import { GenerationToolbarUpscaleSection } from './GenerationToolbarUpscaleSection';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
 import {
-  IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT,
-  loadImageStudioAnalysisPlanSnapshot,
-  loadImageStudioAnalysisApplyIntent,
-  clearImageStudioAnalysisApplyIntent,
-  type ImageStudioAnalysisSharedLayout,
-} from '../../utils/analysis-bridge';
-import {
   buildObjectLayoutPresetOptions,
   getObjectLayoutPresetValuesFromOption,
-  IMAGE_STUDIO_OBJECT_LAYOUT_PRESETS_CHANGED_EVENT,
-  loadObjectLayoutCustomPresets,
-  loadObjectLayoutAdvancedDefaults,
-  resolveObjectLayoutPresetOptionValue,
-  resolveCustomPresetIdFromOptionValue,
   saveObjectLayoutCustomPreset,
   saveObjectLayoutAdvancedDefaults,
   deleteObjectLayoutCustomPreset,
@@ -83,12 +69,13 @@ import { type CenterMode, type AutoScalerMode } from './GenerationToolbarContext
 import { type ImageStudioCenterResponse } from '../../contracts/center';
 import { type ImageStudioAutoScalerResponse } from '../../contracts/autoscaler';
 import { type CropRect, type CropRectResolutionDiagnostics, type ImageContentFrame, type CropCanvasContext } from './GenerationToolbarImageUtils';
+import { type VectorShape } from '@/shared/contracts/vector';
 
 type CenterActionResponse = ImageStudioCenterResponse;
 type AutoScaleActionResponse = ImageStudioAutoScalerResponse;
 
 export function GenerationToolbarInner(): React.JSX.Element {
-  const state = useGenerationToolbarState();
+  const state: GenerationToolbarState = useGenerationToolbarState();
   const {
     maskPreviewEnabled,
     centerGuidesEnabled,
@@ -177,7 +164,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
     projectCanvasSize,
   } = state;
 
-  const cropDiagnosticsRef = state.cropDiagnosticsRef || { current: null };
+  const cropDiagnosticsRef = state.cropDiagnosticsRef;
 
   const resolveWorkingSlotImageContentFrame = useCallback((): ImageContentFrame | null => {
     const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
@@ -269,7 +256,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
     }
 
     throw new Error('Set a valid crop boundary or move image outside canvas first.');
-  }, [activeMaskId, exportMaskShapes, projectCanvasSize?.height, projectCanvasSize?.width, resolveWorkingSlotImageContentFrame, resolveWorkingSourceDimensions]);
+  }, [activeMaskId, exportMaskShapes, projectCanvasSize?.height, projectCanvasSize?.width, resolveWorkingSlotImageContentFrame, resolveWorkingSourceDimensions, cropDiagnosticsRef]);
 
   const resolveCenteredSquareCropRect = useCallback(async (): Promise<CropRect> => {
     const { width: sourceWidth, height: sourceHeight } = await resolveWorkingSourceDimensions();
@@ -288,16 +275,18 @@ export function GenerationToolbarInner(): React.JSX.Element {
 
   const handleCreateCropBox = useCallback((): void => {
     const shapeId = `crop_${Date.now().toString(36)}`;
-    setMaskShapes((previous) => [
+    setMaskShapes((previous: VectorShape[]) => [
       ...previous,
       {
         id: shapeId,
         name: `Crop Box ${previous.length + 1}`,
-        type: 'rect',
+        type: 'rect' as const,
         points: [{ x: 0.1, y: 0.1 }, { x: 0.9, y: 0.9 }],
         closed: true,
         visible: true,
-      } as unknown as (typeof previous)[number],
+        role: 'custom' as const,
+        style: {},
+      },
     ]);
     setActiveMaskId(shapeId);
     setTool('select');
@@ -408,7 +397,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
     return resolveWorkingSourceDimensions();
   }, [resolveWorkingSourceDimensions]);
 
-  const { handleUpscale, handleCrop } = createGenerationToolbarActionHandlers({
+  const actionHandlers = useMemo(() => createGenerationToolbarActionHandlers({
     clientProcessingImageSrc,
     cropAbortControllerRef,
     cropMode,
@@ -441,7 +430,9 @@ export function GenerationToolbarInner(): React.JSX.Element {
     upscaleTargetWidth,
     workingSlot,
     workingSlotImageSrc,
-  });
+  }), [clientProcessingImageSrc, cropAbortControllerRef, cropMode, cropRequestInFlightRef, fetchProjectSlots, hasCropBoundary, projectId, queryClient, resolveCropRect, resolveWorkingCropCanvasContext, resolveUpscaleSourceDimensions, setCropBusy, setCropStatus, setSelectedSlotId, setUpscaleBusy, setUpscaleStatus, setWorkingSlotId, toast, upscaleAbortControllerRef, upscaleMode, upscaleRequestInFlightRef, upscaleScale, upscaleSmoothingQuality, upscaleStrategy, upscaleTargetHeight, upscaleTargetWidth, workingSlot, workingSlotImageSrc, cropDiagnosticsRef]);
+
+  const { handleUpscale, handleCrop } = actionHandlers;
 
   const handleCancelUpscale = useCallback((): void => {
     const controller = upscaleAbortControllerRef.current;
@@ -467,11 +458,11 @@ export function GenerationToolbarInner(): React.JSX.Element {
     try {
       const squareCropRect = await resolveCenteredSquareCropRect();
       cropDiagnosticsRef.current = null;
-      await handleCrop(squareCropRect, { includeCanvasContext: false });
+      void handleCrop(squareCropRect, { includeCanvasContext: false });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to prepare square crop.', { variant: 'error' });
     }
-  }, [handleCrop, resolveCenteredSquareCropRect, toast, workingSlot?.id, workingSlotImageSrc]);
+  }, [handleCrop, resolveCenteredSquareCropRect, toast, workingSlot?.id, workingSlotImageSrc, cropDiagnosticsRef]);
 
   const handlePreviewViewCrop = useCallback(async (): Promise<void> => {
     const activeSlotId = workingSlot?.id?.trim() ?? '';
@@ -510,16 +501,16 @@ export function GenerationToolbarInner(): React.JSX.Element {
           cropCanvasContext
         );
         if (canvasCropRect) {
-          await handleCrop(canvasCropRect, { includeCanvasContext: true });
+          void handleCrop(canvasCropRect, { includeCanvasContext: true });
           return;
         }
       }
 
-      await handleCrop(previewCrop.cropRect, { includeCanvasContext: false });
+      void handleCrop(previewCrop.cropRect, { includeCanvasContext: false });
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to prepare crop from preview view.', { variant: 'error' });
     }
-  }, [getPreviewCanvasViewportCrop, handleCrop, resolveWorkingCropCanvasContext, resolveWorkingSourceDimensions, toast, workingSlot?.id, workingSlotImageSrc]);
+  }, [getPreviewCanvasViewportCrop, handleCrop, resolveWorkingCropCanvasContext, resolveWorkingSourceDimensions, toast, workingSlot?.id, workingSlotImageSrc, cropDiagnosticsRef]);
 
   const centerIsObjectLayoutMode =
     centerMode === 'client_alpha_bbox' || centerMode === 'server_alpha_bbox'
@@ -602,12 +593,14 @@ export function GenerationToolbarInner(): React.JSX.Element {
       skipCenterAdvancedDefaultsSaveRef.current = false;
       return;
     }
-    saveObjectLayoutAdvancedDefaults(activeProjectId, {
-      detection: centerLayoutDetection,
-      shadowPolicy: centerLayoutShadowPolicy,
-      whiteThreshold: centerLayoutWhiteThresholdValue,
-      chromaThreshold: centerLayoutChromaThresholdValue,
-    });
+    void (async () => {
+      await saveObjectLayoutAdvancedDefaults(activeProjectId, {
+        detection: centerLayoutDetection,
+        shadowPolicy: centerLayoutShadowPolicy,
+        whiteThreshold: centerLayoutWhiteThresholdValue,
+        chromaThreshold: centerLayoutChromaThresholdValue,
+      });
+    })();
   }, [
     activeProjectId,
     centerLayoutChromaThresholdValue,
@@ -724,7 +717,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
     centerAbortControllerRef.current = abortController;
     try {
       let response: CenterActionResponse;
-      let resolvedMode: CenterMode = centerMode;
+      let resolvedMode: CenterMode = centerMode as CenterMode;
       if (isClientCenterMode) {
         const sourceForClientCenter = clientProcessingImageSrc || workingSlotImageSrc;
         if (!sourceForClientCenter) {
@@ -748,7 +741,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
           }
 
           setCenterStatus('uploading');
-          const centerRequestPayload = buildValidatedCenterRequestPayload(centerMode);
+          const centerRequestPayload = buildValidatedCenterRequestPayload(centerMode as CenterMode);
           response = await withCenterRetry(
             () => {
               const formData = new FormData();
@@ -769,7 +762,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
                   formData,
                   {
                     signal: abortController.signal,
-                    timeout: state.CENTER_REQUEST_TIMEOUT_MS || 60000,
+                    timeout: 60000,
                     headers: {
                       'x-idempotency-key': centerRequestId,
                     },
@@ -797,7 +790,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
                   fallbackRequestPayload,
                   {
                     signal: abortController.signal,
-                    timeout: state.CENTER_REQUEST_TIMEOUT_MS || 60000,
+                    timeout: 60000,
                     headers: {
                       'x-idempotency-key': centerRequestId,
                     },
@@ -816,7 +809,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
         }
       } else {
         setCenterStatus('processing');
-        const centerRequestPayload = buildValidatedCenterRequestPayload(centerMode);
+        const centerRequestPayload = buildValidatedCenterRequestPayload(centerMode as CenterMode);
         response = await withCenterRetry(
           () =>
             api
@@ -825,7 +818,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
                 centerRequestPayload,
                 {
                   signal: abortController.signal,
-                  timeout: state.CENTER_REQUEST_TIMEOUT_MS || 60000,
+                  timeout: 60000,
                   headers: {
                     'x-idempotency-key': centerRequestId,
                   },
@@ -839,7 +832,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
       const normalizedProjectId = projectId?.trim() ?? '';
       if (normalizedProjectId) {
         setCenterStatus('persisting');
-        await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+        void invalidateImageStudioSlots(queryClient, normalizedProjectId);
         const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
         const createdSlotId = response.slot?.id ?? '';
         const mergedSlots =
@@ -928,7 +921,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
       setCenterBusy(false);
       setCenterStatus('idle');
     }
-  }, [centerLayoutPayload, centerMode, clientProcessingImageSrc, fetchProjectSlots, projectId, queryClient, centerIsObjectLayoutMode, setCenterBusy, setCenterStatus, setSelectedSlotId, setWorkingSlotId, state.CENTER_REQUEST_TIMEOUT_MS, toast, workingSlot?.id, workingSlotImageSrc, centerAbortControllerRef, centerRequestInFlightRef]);
+  }, [centerLayoutPayload, centerMode, clientProcessingImageSrc, fetchProjectSlots, projectId, queryClient, centerIsObjectLayoutMode, setCenterBusy, setCenterStatus, setSelectedSlotId, setWorkingSlotId, toast, workingSlot?.id, workingSlotImageSrc, centerAbortControllerRef, centerRequestInFlightRef]);
 
   const handleCancelCenter = useCallback((): void => {
     const controller = centerAbortControllerRef.current;
@@ -984,7 +977,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
     autoScaleAbortControllerRef.current = abortController;
     try {
       let response: AutoScaleActionResponse;
-      let resolvedMode: AutoScalerMode = requestedMode;
+      let resolvedMode: AutoScalerMode = requestedMode as AutoScalerMode;
       if (isClientAutoMode) {
         const sourceForClientAutoScale = clientProcessingImageSrc || workingSlotImageSrc;
         if (!sourceForClientAutoScale) {
@@ -1007,7 +1000,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
           }
 
           setAutoScaleStatus('uploading');
-          const autoScaleRequestPayload = buildValidatedAutoScaleRequestPayload(requestedMode);
+          const autoScaleRequestPayload = buildValidatedAutoScaleRequestPayload(requestedMode as AutoScalerMode);
           response = await withAutoScalerRetry(
             () => {
               const formData = new FormData();
@@ -1023,7 +1016,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
                   formData,
                   {
                     signal: abortController.signal,
-                    timeout: state.AUTOSCALER_REQUEST_TIMEOUT_MS || 60000,
+                    timeout: 60000,
                     headers: {
                       'x-idempotency-key': autoScaleRequestId,
                     },
@@ -1050,7 +1043,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
                   fallbackRequestPayload,
                   {
                     signal: abortController.signal,
-                    timeout: state.AUTOSCALER_REQUEST_TIMEOUT_MS || 60000,
+                    timeout: 60000,
                     headers: {
                       'x-idempotency-key': autoScaleRequestId,
                     },
@@ -1069,7 +1062,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
         }
       } else {
         setAutoScaleStatus('processing');
-        const autoScaleRequestPayload = buildValidatedAutoScaleRequestPayload(requestedMode);
+        const autoScaleRequestPayload = buildValidatedAutoScaleRequestPayload(requestedMode as AutoScalerMode);
         response = await withAutoScalerRetry(
           () =>
             api
@@ -1078,7 +1071,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
                 autoScaleRequestPayload,
                 {
                   signal: abortController.signal,
-                  timeout: state.AUTOSCALER_REQUEST_TIMEOUT_MS || 60000,
+                  timeout: 60000,
                   headers: {
                     'x-idempotency-key': autoScaleRequestId,
                   },
@@ -1092,7 +1085,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
       const normalizedProjectId = projectId?.trim() ?? '';
       if (normalizedProjectId) {
         setAutoScaleStatus('persisting');
-        await invalidateImageStudioSlots(queryClient, normalizedProjectId);
+        void invalidateImageStudioSlots(queryClient, normalizedProjectId);
         const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
         const createdSlotId = response.slot?.id ?? '';
         const mergedSlots =
@@ -1169,7 +1162,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
       setAutoScaleBusy(false);
       setAutoScaleStatus('idle');
     }
-  }, [autoScaleLayoutPayload, autoScaleMode, clientProcessingImageSrc, fetchProjectSlots, projectId, queryClient, setAutoScaleBusy, setAutoScaleStatus, setSelectedSlotId, setWorkingSlotId, state.AUTOSCALER_REQUEST_TIMEOUT_MS, toast, workingSlot?.id, workingSlotImageSrc, autoScaleAbortControllerRef, autoScaleRequestInFlightRef]);
+  }, [autoScaleLayoutPayload, autoScaleMode, clientProcessingImageSrc, fetchProjectSlots, projectId, queryClient, setAutoScaleBusy, setAutoScaleStatus, setSelectedSlotId, setWorkingSlotId, toast, workingSlot?.id, workingSlotImageSrc, autoScaleAbortControllerRef, autoScaleRequestInFlightRef]);
 
   const handleCancelAutoScale = useCallback((): void => {
     const controller = autoScaleAbortControllerRef.current;
@@ -1182,12 +1175,12 @@ export function GenerationToolbarInner(): React.JSX.Element {
     if (queuedAnalysisRunTarget === 'object_layout') {
       if (centerBusy || centerRequestInFlightRef.current) return;
       setQueuedAnalysisRunTarget(null);
-      void handleCenterObject();
+      void (async () => { await handleCenterObject(); })();
       return;
     }
     if (autoScaleBusy || autoScaleRequestInFlightRef.current) return;
     setQueuedAnalysisRunTarget(null);
-    void handleAutoScale();
+    void (async () => { await handleAutoScale(); })();
   }, [
     autoScaleBusy,
     centerBusy,
@@ -1505,10 +1498,10 @@ export function GenerationToolbarInner(): React.JSX.Element {
         maskModeOptions={maskModeOptions}
         maskPreviewEnabled={maskPreviewEnabled}
         onAttachMasks={() => {
-          void attachMaskVariantsFromSelection();
+          void (async () => { await attachMaskVariantsFromSelection(); })();
         }}
         onGenerateMask={() => {
-          void handleAiMaskGeneration(maskGenMode);
+          void (async () => { await handleAiMaskGeneration(maskGenMode); })();
         }}
         onMaskGenModeChange={(value: string) => {
           const mode = value as 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges';
@@ -1534,13 +1527,13 @@ export function GenerationToolbarInner(): React.JSX.Element {
         onCancelCrop={handleCancelCrop}
         onCreateCropBox={handleCreateCropBox}
         onCrop={() => {
-          void handleCrop();
+          void (async () => { await handleCrop(); })();
         }}
         onSquareCrop={() => {
-          void handleSquareCrop();
+          void (async () => { await handleSquareCrop(); })();
         }}
         onViewCrop={() => {
-          void handlePreviewViewCrop();
+          void (async () => { await handlePreviewViewCrop(); })();
         }}
       />
 
@@ -1548,7 +1541,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
         hasSourceImage={hasSourceImage}
         onCancelUpscale={handleCancelUpscale}
         onUpscale={() => {
-          void handleUpscale();
+          void (async () => { await handleUpscale(); })();
         }}
         upscaleBusyLabel={upscaleBusyLabel}
         upscaleMaxOutputSide={UPSCALE_MAX_OUTPUT_SIDE}
@@ -1623,20 +1616,13 @@ export function GenerationToolbarInner(): React.JSX.Element {
         }}
         onApplyAnalysisPlan={handleApplyAnalysisPlanToCenter}
         onCenterObject={() => {
-          void handleCenterObject();
+          void (async () => { await handleCenterObject(); })();
         }}
         onToggleCenterLayoutAdvanced={() => {
           setCenterLayoutAdvancedEnabled(!centerLayoutAdvancedEnabled);
         }}
         onToggleCenterLayoutSplitAxes={() => {
-          setCenterLayoutSplitAxes((previous) => {
-            const next = !previous;
-            if (next) {
-              setCenterLayoutPaddingX(centerLayoutPadding);
-              setCenterLayoutPaddingY(centerLayoutPadding);
-            }
-            return next;
-          });
+          setCenterLayoutSplitAxes(!centerLayoutSplitAxes);
         }}
         onToggleCenterGuides={() => {
           setCenterGuidesEnabled(!centerGuidesEnabled);
@@ -1657,19 +1643,12 @@ export function GenerationToolbarInner(): React.JSX.Element {
         autoScaleModeOptions={autoScaleModeOptions}
         hasSourceImage={hasSourceImage}
         onAutoScale={() => {
-          void handleAutoScale();
+          void (async () => { await handleAutoScale(); })();
         }}
         onApplyAnalysisPlan={handleApplyAnalysisPlanToAutoScaler}
         onCancelAutoScale={handleCancelAutoScale}
         onToggleAutoScaleLayoutSplitAxes={() => {
-          setAutoScaleLayoutSplitAxes((previous) => {
-            const next = !previous;
-            if (next) {
-              setAutoScaleLayoutPaddingX(autoScaleLayoutPadding);
-              setAutoScaleLayoutPaddingY(autoScaleLayoutPadding);
-            }
-            return next;
-          });
+          setAutoScaleLayoutSplitAxes(!autoScaleLayoutSplitAxes);
         }}
       />
     </div>

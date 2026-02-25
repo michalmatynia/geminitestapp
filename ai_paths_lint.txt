@@ -1,49 +1,48 @@
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/server/__tests__/settings-store.test.ts
-  69:56  error  Unnecessary escape character: \"  no-useless-escape
-  69:60  error  Unnecessary escape character: \"  no-useless-escape
-  69:63  error  Unnecessary escape character: \"  no-useless-escape
-  69:76  error  Unnecessary escape character: \"  no-useless-escape
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/regex/RegexAiProposalSection.tsx
+  18:3  warning  'regexConfig' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/lib/core/runtime/engine-core.ts
+  33:8  warning  'RuntimeProfileEvent' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/server/settings-store.compaction.ts
+  2:3   warning  'AI_PATHS_CONFIG_COMPACTION_THRESHOLD' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  3:3   warning  'AI_PATHS_CONFIG_KEY_PREFIX' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  4:8   warning  'AiPathsSettingRecord' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+  6:10  warning  'cloneJsonSafe' is defined but never used. Allowed unused vars must match /^_/u                         @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/server/settings-store.maintenance.ts
+   7:3  warning  'INFER_FIELDS_TRIGGER_BUTTON_ID' is defined but never used. Allowed unused vars must match /^_/u                  @typescript-eslint/no-unused-vars
+  13:8  warning  'TriggerButtonSettingRecord' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+  23:3  warning  'preservePathConfigFlagsOnSeed' is defined but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
+  27:3  warning  'BASE_EXPORT_BLWO_PATH_NAME' is defined but never used. Allowed unused vars must match /^_/u                      @typescript-eslint/no-unused-vars
+  28:3  warning  'BASE_EXPORT_BLWO_TRIGGER_BUTTON_ID' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  29:3  warning  'BASE_EXPORT_BLWO_TRIGGER_BUTTON_NAME' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  30:3  warning  'buildBaseExportBlwoPathConfigValue' is defined but never used. Allowed unused vars must match /^_/u              @typescript-eslint/no-unused-vars
+  34:3  warning  'buildDescriptionInferenceLitePathConfigValue' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  36:3  warning  'DESCRIPTION_INFERENCE_LITE_PATH_NAME' is defined but never used. Allowed unused vars must match /^_/u            @typescript-eslint/no-unused-vars
+  37:3  warning  'DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_ID' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+  38:3  warning  'DESCRIPTION_INFERENCE_LITE_TRIGGER_BUTTON_NAME' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  45:3  warning  'buildParameterInferencePathConfigValue' is defined but never used. Allowed unused vars must match /^_/u          @typescript-eslint/no-unused-vars
+  48:3  warning  'PARAMETER_INFERENCE_PATH_NAME' is defined but never used. Allowed unused vars must match /^_/u                   @typescript-eslint/no-unused-vars
+  49:3  warning  'PARAMETER_INFERENCE_TRIGGER_BUTTON_ID' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
+  50:3  warning  'PARAMETER_INFERENCE_TRIGGER_BUTTON_NAME' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/server/settings-store.ts
-  5:15  warning  'SettingRecord' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  21:3  warning  'withMongoOperationTimeout' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+  36:3  warning  'countPendingPathConfigCompactions' is defined but never used. Allowed unused vars must match /^_/u         @typescript-eslint/no-unused-vars
+  37:3  warning  'countPendingRuntimeInputContractUpgrades' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  38:3  warning  'countPendingServerExecutionModeUpgrades' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
+  39:3  warning  'hasBaseExportBlwoDefaults' is defined but never used. Allowed unused vars must match /^_/u                 @typescript-eslint/no-unused-vars
+  40:3  warning  'hasDescriptionInferenceLiteDefaults' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
+  41:3  warning  'hasParameterInferenceDefaults' is defined but never used. Allowed unused vars must match /^_/u             @typescript-eslint/no-unused-vars
+  42:3  warning  'hasTranslationEnPlDefaults' is defined but never used. Allowed unused vars must match /^_/u                @typescript-eslint/no-unused-vars
+  44:3  warning  'needsPathIndexConsistencyRepair' is defined but never used. Allowed unused vars must match /^_/u           @typescript-eslint/no-unused-vars
 
 /Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository.ts
   3:39  warning  'AiPathRun' is defined but never used. Allowed unused vars must match /^_/u       @typescript-eslint/no-unused-vars
   3:50  warning  'AiPathRunNode' is defined but never used. Allowed unused vars must match /^_/u   @typescript-eslint/no-unused-vars
   3:65  warning  'AiPathRunEvent' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
 
-/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/services/playwright-node-runner.ts
-  210:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  214:37  error  Unsafe member access .settings on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
-  219:17  error  Unsafe member access .settings on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
-  239:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  239:24  error  Unsafe member access .headless on a type that cannot be resolved              @typescript-eslint/no-unsafe-member-access
-  240:5   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  240:22  error  Unsafe member access .slowMo on a type that cannot be resolved                @typescript-eslint/no-unsafe-member-access
-  242:16  error  Unsafe member access .proxyEnabled on a type that cannot be resolved          @typescript-eslint/no-unsafe-member-access
-  242:41  error  Unsafe member access .proxyServer on a type that cannot be resolved           @typescript-eslint/no-unsafe-member-access
-  244:7   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  244:24  error  Unsafe member access .proxyServer on a type that cannot be resolved           @typescript-eslint/no-unsafe-member-access
-  245:20  error  Unsafe member access .proxyUsername on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-  245:38  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  245:57  error  Unsafe member access .proxyUsername on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-  246:20  error  Unsafe member access .proxyPassword on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-  246:38  error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  246:57  error  Unsafe member access .proxyPassword on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-  269:14  error  Unsafe member access .emulateDevice on a type that cannot be resolved         @typescript-eslint/no-unsafe-member-access
-  269:40  error  Unsafe member access .deviceName on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
-  270:30  error  The type of computed name [settings.deviceName] cannot be resolved            @typescript-eslint/no-unsafe-member-access
-  270:39  error  Unsafe member access .deviceName on a type that cannot be resolved            @typescript-eslint/no-unsafe-member-access
-  405:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  406:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  407:9   error  Unsafe assignment of an `any` value                                           @typescript-eslint/no-unsafe-assignment
-  433:31  error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
-  433:49  error  Unsafe member access .timeout on a type that cannot be resolved               @typescript-eslint/no-unsafe-member-access
-  434:41  error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
-  434:59  error  Unsafe member access .navigationTimeout on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
-  458:9   error  Unsafe assignment of an error typed value                                     @typescript-eslint/no-unsafe-assignment
-  458:36  error  Unsafe member access .navigationTimeout on a type that cannot be resolved     @typescript-eslint/no-unsafe-member-access
-
-✖ 38 problems (34 errors, 4 warnings)
+✖ 33 problems (0 errors, 33 warnings)
 

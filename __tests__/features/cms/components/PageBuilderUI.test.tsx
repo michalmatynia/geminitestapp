@@ -41,22 +41,22 @@ vi.mock('@/features/foldertree', () => ({
             startRename: vi.fn(),
           })}
           {node.children?.map((child: any) => (
-             <div key={child.id}>
-               {renderNode({
-                 node: child,
-                 isExpanded: true,
-                 toggleExpand: vi.fn(),
-                 depth: 1,
-                 hasChildren: false,
-                 isSelected: false,
-                 isRenaming: false,
-                 isDragging: false,
-                 isDropTarget: false,
-                 dropPosition: null,
-                 select: vi.fn(),
-                 startRename: vi.fn(),
-               })}
-             </div>
+            <div key={child.id}>
+              {renderNode({
+                node: child,
+                isExpanded: true,
+                toggleExpand: vi.fn(),
+                depth: 1,
+                hasChildren: false,
+                isSelected: false,
+                isRenaming: false,
+                isDragging: false,
+                isDropTarget: false,
+                dropPosition: null,
+                select: vi.fn(),
+                startRename: vi.fn(),
+              })}
+            </div>
           ))}
         </div>
       ))}

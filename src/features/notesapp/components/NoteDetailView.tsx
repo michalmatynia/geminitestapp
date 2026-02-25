@@ -3,7 +3,7 @@
 import React from 'react';
 
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import { NoteForm } from '../NoteForm';
+import { NoteForm } from './NoteForm';
 import { NoteDetailBreadcrumbs } from './detail/NoteDetailBreadcrumbs';
 import { NoteDetailActions } from './detail/NoteDetailActions';
 import { NoteDetailPreview } from './detail/NoteDetailPreview';

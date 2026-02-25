@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { clampScale, clampTranslate } from '@/features/ai/ai-paths/lib';
 import {
   TOUCH_PINCH_MIN_DISTANCE,
   TOUCH_LONG_PRESS_SELECTION_DELAY_MS,
@@ -30,16 +29,10 @@ export function useCanvasInteractionsTouch({
   touchLongPressIndicatorHideTimerRef,
   viewportRef,
   latestViewRef,
-  setViewClamped,
-  resolveViewportPointFromClient,
   setTouchLongPressIndicator,
   setNodeSelection,
   selectEdge,
   setMarqueeSelection,
-  startPan,
-  panState,
-  endPan,
-  endConnection,
 }: {
   activeTouchPointersRef: React.MutableRefObject<Map<number, TouchPointSample>>;
   touchGestureRef: React.MutableRefObject<TouchGestureState | null>;
@@ -48,84 +41,66 @@ export function useCanvasInteractionsTouch({
   touchLongPressIndicatorHideTimerRef: React.MutableRefObject<number | null>;
   viewportRef: React.RefObject<HTMLDivElement | null>;
   latestViewRef: React.MutableRefObject<{ x: number; y: number; scale: number }>;
-  setViewClamped: (view: { x: number; y: number; scale: number }) => void;
-  resolveViewportPointFromClient: (clientX: number, clientY: number) => { x: number; y: number } | null;
   setTouchLongPressIndicator: React.Dispatch<React.SetStateAction<TouchLongPressIndicatorState | null>>;
   setNodeSelection: (nodeIds: string[]) => void;
   selectEdge: (edgeId: string | null) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setMarqueeSelection: React.Dispatch<React.SetStateAction<any>>;
-  startPan: (clientX: number, clientY: number) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  panState: any;
-  endPan: () => void;
-  endConnection: () => void;
 }): UseCanvasInteractionsTouchValue {
   const clearTouchLongPressIndicator = useCallback((): void => {
     if (touchLongPressIndicatorRafRef.current !== null) {
       cancelAnimationFrame(touchLongPressIndicatorRafRef.current);
       touchLongPressIndicatorRafRef.current = null;
     }
-    if (touchLongPressIndicatorHideTimerRef.current !== null) {
-      window.clearTimeout(touchLongPressIndicatorHideTimerRef.current);
-      touchLongPressIndicatorHideTimerRef.current = null;
-    }
     setTouchLongPressIndicator(null);
-  }, [setTouchLongPressIndicator, touchLongPressIndicatorRafRef, touchLongPressIndicatorHideTimerRef]);
+  }, [setTouchLongPressIndicator, touchLongPressIndicatorRafRef]);
 
   const startTouchLongPressIndicatorLoop = useCallback((): void => {
     if (touchLongPressIndicatorRafRef.current !== null) return;
-    const tick = (now: number): void => {
-      touchLongPressIndicatorRafRef.current = null;
-      const pending = touchLongPressSelectionRef.current;
-      if (pending?.timerId == null) return;
-      const progress = Math.max(
-        0,
-        Math.min(1, (now - pending.startedAt) / TOUCH_LONG_PRESS_SELECTION_DELAY_MS)
-      );
+    const loop = (now: number): void => {
+      const state = touchLongPressSelectionRef.current;
+      if (!state) {
+        touchLongPressIndicatorRafRef.current = null;
+        return;
+      }
+      const elapsed = now - state.startedAt;
+      const progress = Math.min(1, elapsed / TOUCH_LONG_PRESS_SELECTION_DELAY_MS);
       setTouchLongPressIndicator({
-        x: pending.indicatorViewportX,
-        y: pending.indicatorViewportY,
+        x: state.indicatorViewportX,
+        y: state.indicatorViewportY,
         progress,
         phase: 'pending',
       });
-      touchLongPressIndicatorRafRef.current = requestAnimationFrame(tick);
-    };
-    touchLongPressIndicatorRafRef.current = requestAnimationFrame(tick);
-  }, [setTouchLongPressIndicator, touchLongPressIndicatorRafRef, touchLongPressSelectionRef]);
-
-  const triggerTouchLongPressActivatedFeedback = useCallback(
-    (x: number, y: number): void => {
-      if (
-        typeof navigator !== 'undefined' &&
-        typeof navigator.vibrate === 'function'
-      ) {
-        navigator.vibrate(TOUCH_LONG_PRESS_HAPTIC_MS);
-      }
-      if (touchLongPressIndicatorRafRef.current !== null) {
-        cancelAnimationFrame(touchLongPressIndicatorRafRef.current);
+      if (progress < 1) {
+        touchLongPressIndicatorRafRef.current = requestAnimationFrame(loop);
+      } else {
         touchLongPressIndicatorRafRef.current = null;
       }
-      setTouchLongPressIndicator({
-        x,
-        y,
-        progress: 1,
-        phase: 'activated',
-      });
-      if (touchLongPressIndicatorHideTimerRef.current !== null) {
-        window.clearTimeout(touchLongPressIndicatorHideTimerRef.current);
+    };
+    touchLongPressIndicatorRafRef.current = requestAnimationFrame(loop);
+  }, [setTouchLongPressIndicator, touchLongPressIndicatorRafRef, touchLongPressSelectionRef]);
+
+  const triggerTouchLongPressActivatedFeedback = useCallback((x: number, y: number): void => {
+    if (typeof window !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate(TOUCH_LONG_PRESS_HAPTIC_MS);
+      } catch {
+        // Ignore vibration errors
       }
-      touchLongPressIndicatorHideTimerRef.current = window.setTimeout(() => {
-        touchLongPressIndicatorHideTimerRef.current = null;
-        setTouchLongPressIndicator(null);
-      }, TOUCH_LONG_PRESS_ACTIVATED_VISIBLE_MS);
-    },
-    [setTouchLongPressIndicator, touchLongPressIndicatorRafRef, touchLongPressIndicatorHideTimerRef]
-  );
+    }
+    setTouchLongPressIndicator({ x, y, progress: 1, phase: 'activated' });
+    if (touchLongPressIndicatorHideTimerRef.current !== null) {
+      window.clearTimeout(touchLongPressIndicatorHideTimerRef.current);
+    }
+    touchLongPressIndicatorHideTimerRef.current = window.setTimeout(() => {
+      setTouchLongPressIndicator(null);
+      touchLongPressIndicatorHideTimerRef.current = null;
+    }, TOUCH_LONG_PRESS_ACTIVATED_VISIBLE_MS);
+  }, [setTouchLongPressIndicator, touchLongPressIndicatorHideTimerRef]);
 
   const cancelTouchLongPressSelection = useCallback((): void => {
     const pending = touchLongPressSelectionRef.current;
-    if (pending?.timerId != null) {
+    if (pending?.timerId !== null && pending?.timerId !== undefined) {
       window.clearTimeout(pending.timerId);
     }
     touchLongPressSelectionRef.current = null;
@@ -133,88 +108,66 @@ export function useCanvasInteractionsTouch({
   }, [clearTouchLongPressIndicator, touchLongPressSelectionRef]);
 
   const startPinchGestureFromActivePointers = useCallback((): boolean => {
-    const activePointers = activeTouchPointersRef.current;
-    const pointerIds = Array.from(activePointers.keys());
-    if (pointerIds.length < 2) return false;
-    const firstId = pointerIds[0];
-    const secondId = pointerIds[1];
-    if (firstId == null || secondId == null) return false;
-    const first = activePointers.get(firstId);
-    const second = activePointers.get(secondId);
-    if (!first || !second) return false;
+    const entries = Array.from(activeTouchPointersRef.current.entries());
+    if (entries.length < 2) return false;
+    const firstEntry = entries[0];
+    const secondEntry = entries[1];
+    if (!firstEntry || !secondEntry) return false;
+    const [id1, p1] = firstEntry;
+    const [id2, p2] = secondEntry;
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
     if (!viewport) return false;
-    const centerClientX = (first.x + second.x) / 2;
-    const centerClientY = (first.y + second.y) / 2;
-    const centerViewportX = centerClientX - viewport.left;
-    const centerViewportY = centerClientY - viewport.top;
+    const midViewportX = (p1.x + p2.x) / 2 - viewport.left;
+    const midViewportY = (p1.y + p2.y) / 2 - viewport.top;
     const currentView = latestViewRef.current;
     const anchorCanvas = {
-      x: (centerViewportX - currentView.x) / currentView.scale,
-      y: (centerViewportY - currentView.y) / currentView.scale,
+      x: (midViewportX - currentView.x) / currentView.scale,
+      y: (midViewportY - currentView.y) / currentView.scale,
     };
-    const distance = Math.hypot(second.x - first.x, second.y - first.y);
     touchGestureRef.current = {
       mode: 'pinch',
-      pointerIds: [firstId, secondId],
-      startDistance: Math.max(TOUCH_PINCH_MIN_DISTANCE, distance),
+      pointerIds: [id1, id2],
+      startDistance: Math.max(TOUCH_PINCH_MIN_DISTANCE, Math.hypot(p2.x - p1.x, p2.y - p1.y)),
       startScale: currentView.scale,
       anchorCanvas,
     };
     return true;
-  }, [viewportRef, latestViewRef, activeTouchPointersRef, touchGestureRef]);
+  }, [activeTouchPointersRef, latestViewRef, touchGestureRef, viewportRef]);
 
-  const beginMarqueeSelectionFromClient = useCallback(
-    (
-      clientX: number,
-      clientY: number,
-      mode: MarqueeMode,
-      baseNodeIds: string[]
-    ): boolean => {
-      const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
-      if (!viewport) return false;
-      const startX = clientX - viewport.left;
-      const startY = clientY - viewport.top;
-      if (mode === 'replace') {
-        setNodeSelection([]);
-      }
-      selectEdge(null);
-      setMarqueeSelection({
-        startX,
-        startY,
-        currentX: startX,
-        currentY: startY,
-        mode,
-        baseNodeIds,
-      });
-      return true;
-    },
-    [selectEdge, setNodeSelection, viewportRef, setMarqueeSelection]
-  );
+  const beginMarqueeSelectionFromClient = useCallback((clientX: number, clientY: number, mode: MarqueeMode, baseNodeIds: string[]): boolean => {
+    const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+    if (!viewport) return false;
+    const viewportX = clientX - viewport.left;
+    const viewportY = clientY - viewport.top;
+    setMarqueeSelection({
+      mode,
+      startX: viewportX,
+      startY: viewportY,
+      currentX: viewportX,
+      currentY: viewportY,
+      baseNodeIds,
+    });
+    setNodeSelection(baseNodeIds);
+    selectEdge(null);
+    return true;
+  }, [selectEdge, setMarqueeSelection, setNodeSelection, viewportRef]);
 
-  const appendTouchPanSample = useCallback(
-    (pointerId: number, x: number, y: number, time: number): void => {
-      const existing = touchGestureRef.current;
-      if (existing?.mode !== 'pan' || existing.pointerId !== pointerId) {
-        touchGestureRef.current = {
-          mode: 'pan',
-          pointerId,
-          recentSamples: [{ x, y, time }],
-        };
-        return;
-      }
-      const recentSamples = [...existing.recentSamples, { x, y, time }].filter(
-        (sample: TouchPointSample): boolean =>
-          time - sample.time <= 140 // TOUCH_PAN_INERTIA_SAMPLE_WINDOW_MS
-      );
+  const appendTouchPanSample = useCallback((pointerId: number, x: number, y: number, time: number): void => {
+    const gesture = touchGestureRef.current;
+    if (gesture?.mode !== 'pan' || gesture.pointerId !== pointerId) {
       touchGestureRef.current = {
         mode: 'pan',
         pointerId,
-        recentSamples,
+        recentSamples: [{ x, y, time }],
       };
-    },
-    [touchGestureRef]
-  );
+      return;
+    }
+    const samples = gesture.recentSamples;
+    samples.push({ x, y, time });
+    if (samples.length > 5) {
+      samples.shift();
+    }
+  }, [touchGestureRef]);
 
   return {
     clearTouchLongPressIndicator,

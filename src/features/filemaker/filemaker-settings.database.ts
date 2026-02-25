@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 import {
   type FilemakerAddress,
   type FilemakerAddressLink,
@@ -31,7 +31,7 @@ import {
   createFilemakerPerson,
   createFilemakerPhoneNumber,
   createFilemakerPhoneNumberLink,
-} from './filemaker-settings.mappers';
+} from './filemaker-settings.entities';
 import {
   validateFilemakerPhoneNumber,
 } from './filemaker-settings.validation';

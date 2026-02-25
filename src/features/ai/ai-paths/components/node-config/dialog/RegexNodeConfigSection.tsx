@@ -10,7 +10,7 @@ import {
   parseRegexTemplatesStore,
   renderTemplate,
 } from '@/features/ai/ai-paths/lib';
-import type { AiNode, Edge, RegexConfig, RegexTemplate } from '@/features/ai/ai-paths/lib';
+import type { RegexConfig, RegexTemplate } from '@/features/ai/ai-paths/lib';
 import {
   fetchAiPathsSettingsCached,
   updateAiPathsSetting,
@@ -20,19 +20,10 @@ import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {
-  Button,
-  FormField,
-  Hint,
-  Input,
-  Label,
-  SelectSimple,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
-  Textarea,
-  ToggleRow,
-  Tooltip,
 } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
@@ -40,13 +31,17 @@ import {
   buildRegexItems,
   buildRegexPreview,
   extractCodeSnippets,
-  extractRegexLiteral,
   normalizeRegexFlags,
   parseRegexCandidate,
 } from './regex-node-config-preview';
 import { RegexPendingAiProposal } from './RegexPendingAiProposal';
 import { RegexTemplatesTabContent } from './RegexTemplatesTabContent';
 import { useAiPathConfig } from '../../AiPathConfigContext';
+
+import { RegexConfigBasicTab } from './regex/RegexConfigBasicTab';
+import { RegexAiProposalSection } from './regex/RegexAiProposalSection';
+import { RegexPreviewSection } from './regex/RegexPreviewSection';
+import { RegexAiPromptSection } from './regex/RegexAiPromptSection';
 
 export function RegexNodeConfigSection(): React.JSX.Element | null {
   const {
@@ -511,12 +506,12 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   ) : null;
 
   const connectedModel = React.useMemo(() => {
-    const outgoing = edges.filter((edge: Edge) => edge.from === selectedNode.id);
-    const aiEdge = outgoing.find((edge: Edge) => {
-      const targetNode = nodes.find((n: AiNode) => n.id === edge.to);
+    const outgoing = edges.filter((edge) => edge.from === selectedNode.id);
+    const aiEdge = outgoing.find((edge) => {
+      const targetNode = nodes.find((n) => n.id === edge.to);
       return targetNode?.type === 'model';
     });
-    const modelNode = aiEdge ? nodes.find((n: AiNode) => n.id === aiEdge.to && n.type === 'model') : null;
+    const modelNode = aiEdge ? nodes.find((n) => n.id === aiEdge.to && n.type === 'model') : null;
     return {
       aiEdge,
       modelNode,
@@ -553,431 +548,71 @@ export function RegexNodeConfigSection(): React.JSX.Element | null {
   const configContent = (
     <div className='space-y-6'>
       <div className='space-y-4'>
-        <div className='flex items-start justify-between gap-3'>
-          <div className='flex-1'>
-            <FormField label='Regex Pattern'>
-              {hasAiProposal ? (
-                <div className='mt-2 flex items-center gap-2'>
-                  <SelectSimple size='sm'
-                    value={activeVariant}
-                    onValueChange={(value: string): void => {
-                      if (value === 'ai' || value === 'manual') {
-                        applyVariant(value);
-                      }
-                    }}
-                    placeholder='Select variant'
-                    triggerClassName='h-8 w-[180px] border-border bg-card/70 text-xs text-white'
-                    contentClassName='border-border bg-gray-900'
-                    options={[
-                      { value: 'manual', label: 'Manual' },
-                      { value: 'ai', label: 'AI Proposal' },
-                    ]}
-                  />
-                  <div className='text-[11px] text-gray-500'>
-                    Switch between manual and AI proposal.
-                  </div>
-                </div>
-              ) : null}
-              <Input
-                className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
-                value={regexConfig.pattern ?? ''}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  updateVariantField('pattern', event.target.value)
-                }
-                placeholder='Example: ^(?<prefix>[A-Z]+)-(?<id>\\d+)$'
-              />
-              <p className='mt-2 text-[11px] text-gray-500'>
-                Pattern is stored without / delimiters. You can paste /pattern/flags and click Normalize.
-              </p>
-            </FormField>
-            {aiProposals.length > 0 ? (
-              <div className='mt-3 rounded-md border border-border bg-card/50 p-2'>
-                <div className='mb-2 text-[11px] text-gray-300'>AI Proposal History</div>
-                <div className='space-y-2'>
-                  {aiProposals.map((proposal: { pattern: string; flags?: string | undefined; groupBy?: string | undefined; createdAt: string }, index: number) => (
-                    <div key={`${proposal.pattern}-${proposal.createdAt}-${index}`} className='rounded border border-border/60 bg-card/60 p-2'>
-                      <div className='flex items-center justify-between gap-2'>
-                        <div className='text-[11px] text-gray-200 truncate'>{proposal.pattern}</div>
-                        <Button
-                          type='button'
-                          className='h-6 rounded-md border border-emerald-700 bg-emerald-500/10 px-2 text-[10px] text-emerald-200 hover:bg-emerald-500/20'
-                          onClick={() => {
-                            const nextManual = regexConfig.manual?.pattern
-                              ? regexConfig.manual
-                              : {
-                                pattern: regexConfig.pattern ?? '',
-                                flags: regexConfig.flags ?? '',
-                                groupBy: regexConfig.groupBy ?? 'match',
-                              };
-                            updateRegex({
-                              pattern: proposal.pattern,
-                              ...(proposal.flags ?? normalizedFlags ? { flags: proposal.flags ?? normalizedFlags } : {}),
-                              ...(proposal.groupBy ?? regexConfig.groupBy ? { groupBy: proposal.groupBy ?? regexConfig.groupBy } : {}),
-                              activeVariant: 'ai',
-                              manual: nextManual,
-                              aiProposal: {
-                                pattern: proposal.pattern,
-                                flags: proposal.flags ?? normalizedFlags,
-                                groupBy: proposal.groupBy ?? regexConfig.groupBy ?? 'match',
-                              },
-                            });
-                          }}
-                        >
-                          Use
-                        </Button>
-                      </div>
-                      <div className='mt-1 flex flex-wrap gap-2 text-[10px] text-gray-400'>
-                        <span>flags: {proposal.flags ?? normalizedFlags}</span>
-                        <span>groupBy: {proposal.groupBy ?? 'match'}</span>
-                        <span>{new Date(proposal.createdAt).toLocaleString()}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </div>
-          <div className='w-[140px]'>
-            <FormField label='Flags'>
-              <Input
-                className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
-                value={regexConfig.flags ?? ''}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                  updateVariantField('flags', event.target.value)
-                }
-                placeholder='gim'
-              />
-              <div className='mt-2 flex gap-2'>
-                <Button
-                  type='button'
-                  className='h-7 flex-1 rounded-md border border-border px-2 text-[10px] text-gray-200 hover:bg-muted/50'
-                  onClick={() => {
-                    const combined = (regexConfig.pattern ?? '').trim();
-                    const extracted = extractRegexLiteral(combined);
-                    if (!extracted) {
-                      updateVariantField('flags', normalizedFlags);
-                      return;
-                    }
-                    updateVariantField('pattern', extracted.pattern);
-                    updateVariantField('flags', normalizeRegexFlags(extracted.flags));
-                  }}
-                  title='Normalize flags / parse /pattern/flags if pasted into the Pattern field'
-                >
-                  Normalize
-                </Button>
-              </div>
-            </FormField>
-          </div>
-        </div>
-
-        <div className='rounded-md border border-border bg-card/50 p-3'>
-          <div className='flex flex-wrap items-end gap-2'>
-            <div className='flex-1 min-w-[200px]'>
-              <FormField label='Save Regex Template'>
-                <Input
-                  className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
-                  value={templateName}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setTemplateName(event.target.value)}
-                  placeholder='Template name'
-                />
-              </FormField>
-            </div>
-            <div className='flex gap-2 mb-0.5'>
-              <Button
-                type='button'
-                className='h-8 rounded-md border border-emerald-600/50 bg-emerald-500/10 px-3 text-[11px] text-emerald-200 hover:bg-emerald-500/20'
-                onClick={saveRegexTemplate}
-              >
-                Save Node
-              </Button>
-              <Button
-                type='button'
-                className='h-8 rounded-md border border-sky-600/50 bg-sky-500/10 px-3 text-[11px] text-sky-200 hover:bg-sky-500/20 disabled:opacity-60'
-                onClick={saveGlobalRegexTemplate}
-                disabled={updateSettingMutation.isPending}
-              >
-                {updateSettingMutation.isPending ? 'Saving...' : 'Save Global'}
-              </Button>
-            </div>
-          </div>
-          <Hint className='mt-2'>
-            Saved templates can be managed in the Templates tab. Global templates are shared across nodes/paths.
-          </Hint>
-        </div>
-
-        <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
-          <div>
-            <Label className='text-xs text-gray-400'>Mode</Label>
-            <SelectSimple size='sm'
-              value={regexMode}
-              onValueChange={(value: string): void =>
-                updateRegex({ mode: value as NonNullable<RegexConfig['mode']> })
-              }
-              placeholder='Select mode'
-              triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
-              contentClassName='border-border bg-gray-900'
-              options={[
-                { value: 'group', label: 'Group matches' },
-                { value: 'extract', label: 'Extract value' },
-                { value: 'extract_json', label: 'Extract JSON/object' },
-              ]}
-            />
-          </div>
-          <div>
-            <Label className='text-xs text-gray-400'>Match Mode</Label>
-            <SelectSimple size='sm'
-              value={regexConfig.matchMode ?? 'first'}
-              onValueChange={(value: string): void =>
-                updateRegex({ matchMode: value as NonNullable<RegexConfig['matchMode']> })
-              }
-              placeholder='Select mode'
-              triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
-              contentClassName='border-border bg-gray-900'
-              options={[
-                { value: 'first', label: 'First match' },
-                { value: 'first_overall', label: 'First overall' },
-                { value: 'all', label: 'All matches' },
-              ]}
-            />
-            <p className='mt-1 text-[11px] text-gray-500'>
-              First overall stops after the first match across all inputs.
-            </p>
-          </div>
-          <div>
-            <Label className='text-xs text-gray-400'>Grouped Output Mode</Label>
-            <SelectSimple size='sm'
-              value={regexConfig.outputMode ?? 'object'}
-              onValueChange={(value: string): void =>
-                updateRegex({ outputMode: value as NonNullable<RegexConfig['outputMode']> })
-              }
-              placeholder='Select output'
-              triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white'
-              contentClassName='border-border bg-gray-900'
-              options={[
-                { value: 'object', label: 'Object (Record)' },
-                { value: 'array', label: 'Array (Groups list)' },
-              ]}
-            />
-          </div>
-        </div>
-
-        <div>
-          <Label className='text-xs text-gray-400'>JSON Integrity Policy</Label>
-          <SelectSimple size='sm'
-            value={regexConfig.jsonIntegrityPolicy ?? 'repair'}
-            onValueChange={(value: string): void =>
-              updateRegex({
-                jsonIntegrityPolicy:
-                  value === 'strict' ? 'strict' : 'repair',
-              })
-            }
-            placeholder='Select policy'
-            triggerClassName='mt-2 h-8 w-full border-border bg-card/70 text-xs text-white md:w-[280px]'
-            contentClassName='border-border bg-gray-900'
-            options={[
-              { value: 'strict', label: 'Strict (no repair)' },
-              { value: 'repair', label: 'Repair malformed JSON' },
-            ]}
-          />
-          <p className='mt-1 text-[11px] text-gray-500'>
-            Applies in <span className='text-gray-300'>extract_json</span> mode.
-          </p>
-        </div>
-
-        <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-          <div>
-            <Label className='text-xs text-gray-400'>
-              {isExtractMode ? 'Extract By' : 'Group By'}
-            </Label>
-            <Input
-              className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
-              value={regexConfig.groupBy ?? 'match'}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                updateVariantField('groupBy', event.target.value)
-              }
-              placeholder={isExtractMode ? 'match | 1 | amount | groups | captures' : 'match | 1 | prefix'}
-            />
-            <p className='mt-1 text-[11px] text-gray-500'>
-              {isExtractMode ? (
-                <>
-                  Use <span className='text-gray-300'>match</span>, a capture index, a named group,{' '}
-                  <span className='text-gray-300'>groups</span> (named-group object), or{' '}
-                  <span className='text-gray-300'>captures</span> (captures array).
-                  {regexMode === 'extract_json' ? (
-                    <span className='mt-1 block text-gray-400'>
-                      Extract JSON parses the selected value when possible.
-                    </span>
-                  ) : null}
-                </>
-              ) : (
-                <>
-                  Use <span className='text-gray-300'>match</span>, a capture index (1,2,...) or a named group.
-                </>
-              )}
-            </p>
-          </div>
-          <div className='flex flex-col justify-between gap-2'>
-            <ToggleRow
-              type='switch'
-              label='Split lines'
-              description='Treat each line as an input item.'
-              checked={regexConfig.splitLines ?? true}
-              onCheckedChange={(checked: boolean) => updateRegex({ splitLines: checked })}
-              className='flex-1'
-            />
-            <ToggleRow
-              type='switch'
-              label='Include unmatched'
-              description={isExtractMode
-                ? 'Keep non-matching inputs in matches with the fallback key.'
-                : 'Keep non-matching inputs under a group key.'}
-              checked={regexConfig.includeUnmatched ?? true}
-              onCheckedChange={(checked: boolean) => updateRegex({ includeUnmatched: checked })}
-              className='flex-1'
-            />
-          </div>
-        </div>
-
-        <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-          <div>
-            <Label className='text-xs text-gray-400'>Unmatched Key</Label>
-            <Input
-              className='mt-2 w-full rounded-md border border-border bg-card/70 text-sm text-white'
-              value={regexConfig.unmatchedKey ?? '__unmatched__'}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-                updateRegex({ unmatchedKey: event.target.value })
-              }
-              placeholder='__unmatched__'
-            />
-          </div>
-          <div className='rounded-md border border-border bg-card/50 px-3 py-2'>
-            <div className='text-[11px] text-gray-300'>Validation</div>
-            <div className={`mt-1 text-[11px] ${regexValidation.ok ? 'text-emerald-200' : 'text-rose-200'}`}>
-              {regexValidation.ok ? 'Regex compiles' : regexValidation.error}
-            </div>
-            {!regexValidation.ok ? (
-              <div className='mt-1 text-[11px] text-gray-500'>
-                Tip: use <span className='text-gray-300'>\\\\</span> to escape backslashes in string patterns.
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </div>
-
-      <div className='space-y-3'>
-        <div className='flex items-center justify-between'>
-          <Label className='text-xs text-gray-400'>Preview Sample</Label>
-          <div className='text-[11px] text-gray-500'>
-            {sampleLines.length} item{sampleLines.length === 1 ? '' : 's'}
-          </div>
-        </div>
-        <Textarea
-          className='min-h-[110px] w-full rounded-md border border-border bg-card/70 font-mono text-xs text-white'
-          value={typeof sampleSource === 'string' ? sampleSource : ''}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) => updateRegex({ sampleText: event.target.value })}
-          placeholder='Paste example strings here (one per line). Leave empty to use runtime inputs.'
+        <RegexAiProposalSection
+          regexConfig={regexConfig}
+          hasAiProposal={hasAiProposal}
+          activeVariant={activeVariant}
+          onApplyVariant={applyVariant}
+          aiProposals={aiProposals}
+          onUseProposal={(proposal) => {
+            const nextManual = regexConfig.manual?.pattern
+              ? regexConfig.manual
+              : {
+                pattern: regexConfig.pattern ?? '',
+                flags: regexConfig.flags ?? '',
+                groupBy: regexConfig.groupBy ?? 'match',
+              };
+            updateRegex({
+              pattern: proposal.pattern,
+              ...(proposal.flags ?? normalizedFlags ? { flags: proposal.flags ?? normalizedFlags } : {}),
+              ...(proposal.groupBy ?? regexConfig.groupBy ? { groupBy: proposal.groupBy ?? regexConfig.groupBy } : {}),
+              activeVariant: 'ai',
+              manual: nextManual,
+              aiProposal: {
+                pattern: proposal.pattern,
+                flags: proposal.flags ?? normalizedFlags,
+                groupBy: proposal.groupBy ?? regexConfig.groupBy ?? 'match',
+              },
+            });
+          }}
+          normalizedFlags={normalizedFlags}
         />
-        <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
-          <div className='rounded-md border border-border bg-card/50 p-3'>
-            <div className='text-[11px] text-gray-300'>Matches</div>
-            <pre className='mt-2 max-h-48 overflow-auto rounded bg-card/70 p-2 text-[11px] text-gray-200 whitespace-pre-wrap break-all'>
-              {JSON.stringify(preview.matches, null, 2)}
-            </pre>
-          </div>
-          <div className='rounded-md border border-border bg-card/50 p-3'>
-            <div className='text-[11px] text-gray-300'>
-              {isExtractMode ? 'Extracted Value (value port)' : 'Grouped Output'}
-            </div>
-            <pre className='mt-2 max-h-48 overflow-auto rounded bg-card/70 p-2 text-[11px] text-gray-200 whitespace-pre-wrap break-all'>
-              {JSON.stringify(isExtractMode ? preview.extracted : preview.grouped, null, 2)}
-            </pre>
-          </div>
-        </div>
+
+        <RegexConfigBasicTab
+          regexConfig={regexConfig}
+          onUpdateVariantField={updateVariantField}
+          onUpdateRegex={updateRegex}
+          templateName={templateName}
+          onTemplateNameChange={setTemplateName}
+          onSaveNodeTemplate={saveRegexTemplate}
+          onSaveGlobalTemplate={saveGlobalRegexTemplate}
+          isSavingGlobal={updateSettingMutation.isPending}
+          isExtractMode={isExtractMode}
+          regexMode={regexMode}
+          regexValidation={regexValidation}
+        />
       </div>
+
+      <RegexPreviewSection
+        sampleLines={sampleLines}
+        sampleSource={typeof sampleSource === 'string' ? sampleSource : ''}
+        onSampleChange={(val) => updateRegex({ sampleText: val })}
+        isExtractMode={isExtractMode}
+        preview={preview}
+      />
 
       {pendingAiRegexSection}
 
-      <div className='space-y-3'>
-        <div className='flex items-center justify-between'>
-          <Label className='text-xs text-gray-400'>AI Prompt (Output to AI Model)</Label>
-          {connectedModel.modelNode ? (
-            <div className='text-[11px] text-emerald-200'>
-              Connected: <span className='text-emerald-100'>{connectedModel.modelId || 'Model'}</span>
-            </div>
-          ) : (
-            <div className='text-[11px] text-amber-200'>Not connected to AI Model</div>
-          )}
-        </div>
-        <ToggleRow
-          type='switch'
-          label='Auto-run AI prompt'
-          description="When off, Regex won't auto-trigger the model during path runs."
-          checked={regexConfig.aiAutoRun ?? false}
-          onCheckedChange={(checked: boolean) => updateRegex({ aiAutoRun: checked })}
-        />
-
-        <Textarea
-          className='min-h-[120px] w-full rounded-md border border-border bg-card/70 text-sm text-white'
-          value={regexConfig.aiPrompt ?? ''}
-          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => updateRegex({ aiPrompt: event.target.value })}
-          onKeyDown={(event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
-            if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
-              event.preventDefault();
-              if (!onSendToAi || !resolvedAiPrompt.trim() || sendingToAi) return;
-              void onSendToAi(selectedNode.id, resolvedAiPrompt);
-            }
-          }}
-          placeholder='Ask the model to propose a regex. Use {{text}} / {{lines}} placeholders. (Ctrl+Enter to send)'
-        />
-
-        <div className='flex flex-wrap items-center gap-2 text-[11px] text-gray-400'>
-          <span>Placeholders:</span>
-          <Tooltip content={placeholderTooltips.text} side='bottom'>
-            <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>{'{{text}}'}</span>
-          </Tooltip>
-          <Tooltip content={placeholderTooltips.lines} side='bottom'>
-            <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>{'{{lines}}'}</span>
-          </Tooltip>
-          <Tooltip content={placeholderTooltips.value} side='bottom'>
-            <span className='rounded-full border px-2 py-0.5 text-[10px] text-gray-200'>{'{{value}}'}</span>
-          </Tooltip>
-        </div>
-
-        <div className='flex flex-wrap gap-2'>
-          {onSendToAi ? (
-            <Button
-              type='button'
-              className='h-8 rounded-md border border-sky-500/40 bg-sky-500/10 px-3 text-[11px] text-sky-200 hover:bg-sky-500/20 disabled:opacity-50'
-              disabled={sendingToAi || !resolvedAiPrompt.trim()}
-              onClick={() => {
-                if (!resolvedAiPrompt.trim()) {
-                  toast('AI prompt is empty.', { variant: 'error' });
-                  return;
-                }
-                void onSendToAi(selectedNode.id, resolvedAiPrompt);
-              }}
-            >
-              {sendingToAi ? 'Sending...' : 'Send to AI Model'}
-            </Button>
-          ) : null}
-          <Button
-            type='button'
-            className='h-8 rounded-md border border-border px-3 text-[11px] text-gray-200 hover:bg-muted/50'
-            onClick={() => {
-              try {
-                void navigator.clipboard.writeText(resolvedAiPrompt);
-                toast('Resolved AI prompt copied.', { variant: 'success' });
-              } catch {
-                toast('Failed to copy.', { variant: 'error' });
-              }
-            }}
-            disabled={!resolvedAiPrompt.trim()}
-            title='Copy the resolved prompt (after placeholder substitution)'
-          >
-            Copy Resolved
-          </Button>
-        </div>
-      </div>
+      <RegexAiPromptSection
+        regexConfig={regexConfig}
+        onUpdateRegex={updateRegex}
+        connectedModel={connectedModel}
+        onSendToAi={onSendToAi}
+        sendingToAi={sendingToAi}
+        resolvedAiPrompt={resolvedAiPrompt}
+        nodeId={selectedNode.id}
+        placeholderTooltips={placeholderTooltips}
+      />
     </div>
   );
 

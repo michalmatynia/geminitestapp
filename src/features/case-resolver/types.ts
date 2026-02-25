@@ -76,6 +76,9 @@ export interface CaseResolverCompileResult {
 export type CaseResolverEditorMode = 'wysiwyg' | 'markdown' | 'code';
 
 export type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
+export type CaseResolverRequestedCaseIssue =
+  | 'requested_file_missing'
+  | 'workspace_unavailable';
 
 export type WorkspaceView = 'document' | 'relations';
 export type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
@@ -127,8 +130,11 @@ export type CaseResolverStateValue = {
   requestedPromptExploderSessionId: string;
   activeCaseId: string | null;
   requestedCaseStatus: CaseResolverRequestedCaseStatus;
+  requestedCaseIssue: CaseResolverRequestedCaseIssue | null;
   canCreateInActiveCase: boolean;
   shouldOpenEditorFromQuery: boolean;
+  handleRetryCaseContext: () => void;
+  handleResetCaseContext: () => void;
   handleSelectFile: (fileId: string) => void;
   handleSelectAsset: (assetId: string) => void;
   handleSelectFolder: (folderPath: string | null) => void;

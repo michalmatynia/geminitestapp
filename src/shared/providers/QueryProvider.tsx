@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { QueryClientContext, QueryClientProvider, type QueryClient } from "@tanstack/react-query";
-import React, { useState, useEffect } from "react";
-import { setupOfflineSupport } from "@/shared/lib/offline-support";
-import { createQueryClient } from "@/shared/lib/query-client";
-import { QUERY_KEYS } from "@/shared/lib/query-keys";
-import { useGlobalQueryErrorHandler } from "@/shared/hooks/query/useQueryErrorHandling";
-import { usePerformanceMonitor } from "@/shared/hooks/useQueryAnalytics";
-import { useQueryPersistence } from "@/shared/hooks/query/useQueryPersistence";
-import { useQueryMiddleware, developmentMiddlewares, productionMiddlewares } from "@/shared/hooks/query/useQueryMiddleware";
-import { useSmartCache, useCacheWarming } from "@/shared/hooks/query/useSmartCache";
-import { useQueryLifecycle } from "@/shared/hooks/query/useQueryLifecycle";
-import { useQueryBatching } from "@/shared/hooks/query/useQueryBatching";
+import { QueryClientContext, QueryClientProvider, type QueryClient } from '@tanstack/react-query';
+import React, { useState, useEffect } from 'react';
+import { setupOfflineSupport } from '@/shared/lib/offline-support';
+import { createQueryClient } from '@/shared/lib/query-client';
+import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { useGlobalQueryErrorHandler } from '@/shared/hooks/query/useQueryErrorHandling';
+import { usePerformanceMonitor } from '@/shared/hooks/useQueryAnalytics';
+import { useQueryPersistence } from '@/shared/hooks/query/useQueryPersistence';
+import { useQueryMiddleware, developmentMiddlewares, productionMiddlewares } from '@/shared/hooks/query/useQueryMiddleware';
+import { useSmartCache, useCacheWarming } from '@/shared/hooks/query/useSmartCache';
+import { useQueryLifecycle } from '@/shared/hooks/query/useQueryLifecycle';
+import { useQueryBatching } from '@/shared/hooks/query/useQueryBatching';
 
 type QueryProviderProps = {
   children: React.ReactNode;
 };
 
-const isDevelopment = process.env["NODE_ENV"] === "development";
+const isDevelopment = process.env['NODE_ENV'] === 'development';
 const enableAdvancedRuntime =
-  isDevelopment && process.env["NEXT_PUBLIC_QUERY_ADVANCED_RUNTIME"] === "true";
-const enableWarmup = process.env["NEXT_PUBLIC_QUERY_WARMUP"] === "true";
+  isDevelopment && process.env['NEXT_PUBLIC_QUERY_ADVANCED_RUNTIME'] === 'true';
+const enableWarmup = process.env['NEXT_PUBLIC_QUERY_WARMUP'] === 'true';
 
 let browserQueryClient: QueryClient | null = null;
 

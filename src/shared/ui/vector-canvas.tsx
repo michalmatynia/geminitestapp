@@ -22,6 +22,13 @@ import { VectorToolbar, VectorShapeOverlay } from './vector-canvas.rendering';
 
 export { type VectorPoint, type VectorShape, type VectorShapeType, type VectorToolMode };
 export type { VectorCanvasImageContentFrame, VectorCanvasViewCropRect };
+export {
+  DEFAULT_VECTOR_VIEWBOX,
+  vectorShapeToPath,
+  vectorShapesToPath,
+  vectorShapeToPathWithBounds,
+  vectorShapesToPathWithBounds,
+} from './vector-canvas.geometry';
 
 export interface VectorCanvasProps {
   src?: string | null;

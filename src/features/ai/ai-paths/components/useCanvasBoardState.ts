@@ -10,7 +10,6 @@ import {
   useSelectionActions,
 } from '../context';
 import type {
-  DataContractNodeIssueSummary,
   AiNode,
   PathFlowIntensity,
 } from '@/features/ai/ai-paths/lib';
@@ -25,67 +24,33 @@ import {
   SVG_PERF_SAMPLE_WINDOW_MS,
   mergeRuntimePayload,
 } from './CanvasBoard.utils';
-import { buildConnectorInfo } from './canvas-board-connectors';
-
-export interface UseCanvasBoardStateProps {
-  confirmNodeSwitch?: ((nodeId: string) => boolean | Promise<boolean>) | undefined;
-  nodeDiagnosticsById?: Record<string, DataContractNodeIssueSummary> | undefined;
-}
+import { buildConnectorInfo, type ConnectorInfo } from './canvas-board-connectors';
+import { type CanvasBoardState, type UseCanvasBoardStateProps } from './CanvasBoard.types';
 
 export function useCanvasBoardState({
   confirmNodeSwitch,
   nodeDiagnosticsById = {},
-}: UseCanvasBoardStateProps) {
+}: UseCanvasBoardStateProps): CanvasBoardState {
   // --- Context Hooks ---
-  const { view, panState, dragState, lastDrop, connecting, connectingPos } = useCanvasState();
-  const { viewportRef, canvasRef } = useCanvasRefs();
-  const { nodes, edges, flowIntensity } = useGraphState();
-  const {
-    runtimeState,
-    runtimeNodeStatuses,
-    runtimeEvents,
-    runtimeRunStatus,
-    nodeDurations,
-  } = useRuntimeState();
-  const { fireTrigger } = useRuntimeActions();
-  const { selectedNodeId, selectedNodeIds, selectedEdgeId, selectionToolMode } = useSelectionState();
-  const { selectEdge, setConfigOpen } = useSelectionActions();
+  const canvasState = useCanvasState();
+  const canvasRefs = useCanvasRefs();
+  const graphState = useGraphState();
+  const runtimeStateContext = useRuntimeState();
+  const runtimeActions = useRuntimeActions();
+  const selectionState = useSelectionState();
+  const selectionActions = useSelectionActions();
   
   const [edgeRoutingMode, setEdgeRoutingMode] =
     React.useState<EdgeRoutingMode>('bezier');
   
-  const {
-    edgePaths,
-    handlePointerDownNode,
-    handlePointerMoveNode,
-    handlePointerUpNode,
-    handlePanStart,
-    handlePanMove,
-    handlePanEnd,
-    handleRemoveEdge,
-    handleDisconnectPort,
-    handleStartConnection,
-    handleCompleteConnection,
-    handleReconnectInput,
-    handleSelectNode,
-    handleDrop,
-    handleDragOver,
-    zoomTo,
-    fitToNodes,
-    fitToSelection,
-    resetView,
-    centerOnCanvasPoint,
-    selectionMarqueeRect,
-    touchLongPressIndicator,
-    ConfirmationModal,
-  } = useCanvasInteractions({
+  const canvasInteractions = useCanvasInteractions({
     confirmNodeSwitch,
     edgeRoutingMode,
   });
 
   const selectedNodeIdSet = React.useMemo(
-    (): Set<string> => new Set(selectedNodeIds),
-    [selectedNodeIds]
+    (): Set<string> => new Set(selectionState.selectedNodeIds),
+    [selectionState.selectedNodeIds]
   );
 
   // --- Local State ---
@@ -179,7 +144,7 @@ export function useCanvasBoardState({
   }, []);
 
   React.useEffect(() => {
-    const viewportElement = viewportRef.current;
+    const viewportElement = canvasRefs.viewportRef.current;
     if (!viewportElement) return;
     const measure = (): void => {
       setViewportSize({
@@ -191,7 +156,7 @@ export function useCanvasBoardState({
     const observer = new ResizeObserver(() => measure());
     observer.observe(viewportElement);
     return (): void => observer.disconnect();
-  }, [viewportRef]);
+  }, [canvasRefs.viewportRef]);
 
   const isSvgRenderer = rendererMode === 'svg';
 
@@ -245,20 +210,20 @@ export function useCanvasBoardState({
   }, [prefersReducedMotion, isSvgRenderer]);
 
   // --- Derived ---
-  const configuredFlowIntensity: PathFlowIntensity = flowIntensity ?? 'medium';
+  const configuredFlowIntensity: PathFlowIntensity = graphState.flowIntensity ?? 'medium';
   const effectiveFlowIntensity = React.useMemo<PathFlowIntensity>(() => {
     if (prefersReducedMotion) return 'off';
     if (configuredFlowIntensity === 'off') return 'off';
-    const edgeCount = edges.length;
+    const edgeCount = graphState.edges.length;
     if (edgeCount > 1800) return 'off';
     if (edgeCount > 900) return 'low';
     if (edgeCount > 500 && configuredFlowIntensity === 'high') return 'medium';
     return configuredFlowIntensity;
-  }, [configuredFlowIntensity, edges.length, prefersReducedMotion]);
+  }, [configuredFlowIntensity, graphState.edges.length, prefersReducedMotion]);
 
   const nodeById = React.useMemo(
-    () => new Map(nodes.map((node: AiNode) => [node.id, node])),
-    [nodes]
+    () => new Map(graphState.nodes.map((node: AiNode) => [node.id, node])),
+    [graphState.nodes]
   );
 
   const getPortValue = React.useCallback(
@@ -268,11 +233,11 @@ export function useCanvasBoardState({
         targetNodeId: string,
         targetPort: string
       ): unknown => {
-        const source = bucket === 'inputs' ? runtimeState.inputs : runtimeState.outputs;
+        const source = bucket === 'inputs' ? runtimeStateContext.runtimeState.inputs : runtimeStateContext.runtimeState.outputs;
         const nodeValues = source?.[targetNodeId] ?? {};
         const direct = nodeValues[targetPort];
         if (direct !== undefined) return direct;
-        const history = runtimeState.history?.[targetNodeId];
+        const history = runtimeStateContext.runtimeState.history?.[targetNodeId];
         if (!Array.isArray(history) || history.length === 0) return undefined;
         const lastEntry = history[history.length - 1];
         const fallbackSource =
@@ -284,7 +249,7 @@ export function useCanvasBoardState({
         ) {
           return undefined;
         }
-        return fallbackSource?.[targetPort];
+        return fallbackSource[targetPort];
       };
 
       const bucket = direction === 'input' ? 'inputs' : 'outputs';
@@ -293,7 +258,7 @@ export function useCanvasBoardState({
 
       if (direction === 'input') {
         const incomingValues: unknown[] = [];
-        edges.forEach((edge) => {
+        graphState.edges.forEach((edge) => {
           const toNodeId = typeof edge.to === 'string' ? edge.to : null;
           const toPort = typeof edge.toPort === 'string' && edge.toPort.trim().length > 0
             ? edge.toPort
@@ -319,7 +284,7 @@ export function useCanvasBoardState({
       }
       return directValue;
     },
-    [edges, runtimeState]
+    [graphState.edges, runtimeStateContext.runtimeState]
   );
 
   const getNodeRuntimeData = React.useCallback(
@@ -327,72 +292,108 @@ export function useCanvasBoardState({
       inputs: Record<string, unknown> | undefined;
       outputs: Record<string, unknown> | undefined;
     } => {
-      const history = runtimeState.history?.[nodeId];
+      const history = runtimeStateContext.runtimeState.history?.[nodeId];
       const lastEntry =
         Array.isArray(history) && history.length > 0
           ? history[history.length - 1]
           : null;
       return {
-        inputs: mergeRuntimePayload(runtimeState.inputs?.[nodeId], lastEntry?.['inputs']),
-        outputs: mergeRuntimePayload(runtimeState.outputs?.[nodeId], lastEntry?.['outputs']),
+        inputs: mergeRuntimePayload(runtimeStateContext.runtimeState.inputs?.[nodeId], lastEntry?.['inputs']),
+        outputs: mergeRuntimePayload(runtimeStateContext.runtimeState.outputs?.[nodeId], lastEntry?.['outputs']),
       };
     },
-    [runtimeState.history, runtimeState.inputs, runtimeState.outputs]
+    [runtimeStateContext.runtimeState]
   );
 
   const getConnectorInfo = React.useCallback(
-    (direction: 'input' | 'output', nodeId: string, port: string) =>
+    (direction: 'input' | 'output', nodeId: string, port: string): ConnectorInfo =>
       buildConnectorInfo({
         direction,
         nodeId,
         port,
-        edges,
+        edges: graphState.edges,
         nodeById,
         getPortValue,
         getNodeRuntimeData,
       }),
-    [edges, getNodeRuntimeData, getPortValue, nodeById]
+    [graphState.edges, getNodeRuntimeData, getPortValue, nodeById]
   );
 
   return {
-    view, panState, dragState, lastDrop, connecting, connectingPos,
-    viewportRef, canvasRef,
-    nodes, edges, flowIntensity,
-    runtimeState, runtimeNodeStatuses, runtimeEvents, runtimeRunStatus, nodeDurations,
-    fireTrigger,
-    selectedNodeId, selectedNodeIds, selectedEdgeId, selectionToolMode,
-    selectEdge, setConfigOpen,
-    edgeRoutingMode, setEdgeRoutingMode,
-    edgePaths,
-    handlePointerDownNode,
-    handlePointerMoveNode,
-    handlePointerUpNode,
-    handlePanStart,
-    handlePanMove,
-    handlePanEnd,
-    handleRemoveEdge,
-    handleDisconnectPort,
-    handleStartConnection,
-    handleCompleteConnection,
-    handleReconnectInput,
-    handleSelectNode,
-    handleDrop,
-    handleDragOver,
-    zoomTo,
-    fitToNodes,
-    fitToSelection,
-    resetView,
-    centerOnCanvasPoint,
-    selectionMarqueeRect,
-    touchLongPressIndicator,
-    ConfirmationModal,
+    view: canvasState.view,
+    panState: canvasState.panState,
+    dragState: canvasState.dragState,
+    lastDrop: canvasState.lastDrop,
+    connecting: canvasState.connecting,
+    connectingPos: canvasState.connectingPos,
+    viewportRef: canvasRefs.viewportRef,
+    canvasRef: canvasRefs.canvasRef,
+    nodes: graphState.nodes,
+    edges: graphState.edges,
+    flowIntensity: configuredFlowIntensity,
+    runtimeState: runtimeStateContext.runtimeState,
+    runtimeNodeStatuses: runtimeStateContext.runtimeNodeStatuses,
+    runtimeEvents: runtimeStateContext.runtimeEvents,
+    runtimeRunStatus: runtimeStateContext.runtimeRunStatus,
+    nodeDurations: runtimeStateContext.nodeDurations,
+    fireTrigger: runtimeActions.fireTrigger,
+    selectedNodeId: selectionState.selectedNodeId,
+    selectedNodeIds: selectionState.selectedNodeIds,
+    selectedEdgeId: selectionState.selectedEdgeId,
+    selectionToolMode: selectionState.selectionToolMode,
+    selectEdge: selectionActions.selectEdge,
+    setConfigOpen: selectionActions.setConfigOpen,
+    edgeRoutingMode,
+    setEdgeRoutingMode,
+    edgePaths: canvasInteractions.edgePaths,
+    handlePointerDownNode: (nodeId, event) => { void canvasInteractions.handlePointerDownNode(event, nodeId); },
+    handlePointerMoveNode: (nodeId, event) => { canvasInteractions.handlePointerMoveNode(event, nodeId); },
+    handlePointerUpNode: (nodeId, event) => { canvasInteractions.handlePointerUpNode(event, nodeId); },
+    handlePanStart: (event) => { canvasInteractions.handlePanStart(event); },
+    handlePanMove: (event) => { canvasInteractions.handlePanMove(event); },
+    handlePanEnd: (event) => { canvasInteractions.handlePanEnd(event); },
+    handleRemoveEdge: (edgeId) => { canvasInteractions.handleRemoveEdge(edgeId); },
+    handleDisconnectPort: (direction, nodeId, port) => { canvasInteractions.handleDisconnectPort(direction, nodeId, port); },
+    handleStartConnection: (nodeId, port, _pos) => { 
+      const node = graphState.nodes.find(n => n.id === nodeId);
+      if (!node) return;
+      const event = new PointerEvent('pointerdown') as unknown as React.PointerEvent<Element>;
+      void canvasInteractions.handleStartConnection(event, node, port);
+    },
+    handleCompleteConnection: (nodeId, port) => {
+      const node = graphState.nodes.find(n => n.id === nodeId);
+      if (!node) return;
+      const event = new PointerEvent('pointerup') as unknown as React.PointerEvent<Element>;
+      canvasInteractions.handleCompleteConnection(event, node, port);
+    },
+    handleReconnectInput: (edgeId, nodeId, port) => {
+      const event = new PointerEvent('pointerdown') as unknown as React.PointerEvent<Element>;
+      void canvasInteractions.handleReconnectInput(event, nodeId, port);
+    },
+    handleSelectNode: (nodeId, options) => { void canvasInteractions.handleSelectNode(nodeId, options); },
+    handleDrop: (event) => { canvasInteractions.handleDrop(event); },
+    handleDragOver: (event) => { canvasInteractions.handleDragOver(event); },
+    zoomTo: (targetScale) => { canvasInteractions.zoomTo(targetScale); },
+    fitToNodes: () => { canvasInteractions.fitToNodes(); },
+    fitToSelection: () => { canvasInteractions.fitToSelection(); },
+    resetView: () => { canvasInteractions.resetView(); },
+    centerOnCanvasPoint: (canvasX, canvasY) => { canvasInteractions.centerOnCanvasPoint(canvasX, canvasY); },
+    selectionMarqueeRect: canvasInteractions.selectionMarqueeRect,
+    touchLongPressIndicator: canvasInteractions.touchLongPressIndicator,
+    ConfirmationModal: canvasInteractions.ConfirmationModal,
     selectedNodeIdSet,
-    hoveredConnectorKey, setHoveredConnectorKey,
-    pinnedConnectorKey, setPinnedConnectorKey,
-    svgConnectorTooltip, setSvgConnectorTooltip,
-    svgNodeDiagnosticsTooltip, setSvgNodeDiagnosticsTooltip,
-    rendererMode, setRendererMode,
-    showMinimap, setShowMinimap,
+    hoveredConnectorKey,
+    setHoveredConnectorKey,
+    pinnedConnectorKey,
+    setPinnedConnectorKey,
+    svgConnectorTooltip,
+    setSvgConnectorTooltip,
+    svgNodeDiagnosticsTooltip,
+    setSvgNodeDiagnosticsTooltip,
+    rendererMode,
+    setRendererMode,
+    showMinimap,
+    setShowMinimap,
     viewportSize,
     prefersReducedMotion,
     svgPerf,
@@ -400,5 +401,11 @@ export function useCanvasBoardState({
     isSvgRenderer,
     nodeById,
     getConnectorInfo,
+    getPortValue,
+    isPanning: Boolean(canvasState.panState),
+    isDraggingNode: Boolean(canvasState.dragState),
+    isConnecting: Boolean(canvasState.connecting),
+    activeShapeId: selectionState.selectedNodeId ?? null,
+    nodeDiagnosticsById,
   };
 }

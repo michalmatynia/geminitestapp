@@ -4,6 +4,7 @@ import React from 'react';
 import {
   type DataContractNodeIssueSummary,
   formatDurationMs,
+  type AiNode,
 } from '@/features/ai/ai-paths/lib';
 import { Badge, Button, Tooltip } from '@/shared/ui';
 import { NodeProcessingDots } from './NodeProcessingDots';
@@ -28,7 +29,7 @@ export interface CanvasLegacyNodeLayerProps {
   onPointerDownNode: (id: string, event: React.PointerEvent) => void;
   onSelectNode: (id: string) => void;
   onFocusNodeDiagnostics?: (id: string) => void;
-  onFireTrigger: (node: CanvasNode, event: React.MouseEvent | React.PointerEvent) => void;
+  onFireTrigger: (node: AiNode, event: React.MouseEvent | React.PointerEvent) => void;
   getPortValue: (direction: 'input' | 'output', nodeId: string, port: string) => unknown;
 }
 
@@ -76,9 +77,9 @@ export function CanvasLegacyNodeLayer({
         const isBlockerProcessing =
           node.type === 'blocker' && BLOCKER_PROCESSING_STATUSES.has(runtimeNodeStatus ?? '');
 
-        const showNote = Boolean((node as any).note?.text);
-        const noteText = (node as any).note?.text ?? '';
-        const noteColor = (node as any).note?.color || DEFAULT_NODE_NOTE_COLOR;
+        const showNote = Boolean(node.note?.text);
+        const noteText = node.note?.text ?? '';
+        const noteColor = node.note?.color || DEFAULT_NODE_NOTE_COLOR;
 
         return (
           <div
@@ -94,10 +95,10 @@ export function CanvasLegacyNodeLayer({
             style={{
               left: node.position.x,
               top: node.position.y,
-              width: (node as any).width ?? 280,
-              minHeight: (node as any).height ?? 120,
+              width: node.width ?? 280,
+              minHeight: node.height ?? 120,
             }}
-            onPointerDown={(event) => onPointerDownNode(node.id, event)}
+            onPointerDown={(event) => { onPointerDownNode(node.id, event); }}
             onClick={(event) => {
               event.stopPropagation();
               onSelectNode(node.id);

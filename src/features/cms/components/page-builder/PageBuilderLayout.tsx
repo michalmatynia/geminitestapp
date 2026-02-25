@@ -1,42 +1,30 @@
 'use client';
 
-import { ArrowLeft, PanelLeftClose, PanelRightClose, Settings, Menu, AppWindow } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import { PanelLeftClose, PanelRightClose } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
 
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
-import { Button, SectionHeader } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 
-import { AppEmbedsPanel } from './AppEmbedsPanel';
-import { ComponentSettingsPanel } from './ComponentSettingsPanel';
-import { ComponentTreePanel } from './ComponentTreePanel';
-import { MenuSettingsPanel } from './MenuSettingsPanel';
 import { PagePreviewPanel } from './PagePreviewPanel';
 import { ThemeSettingsProvider } from './ThemeSettingsContext';
-import { ThemeSettingsPanel } from './ThemeSettingsPanel';
 import { useBuilderKeyboardShortcuts } from '../../hooks/useBuilderKeyboardShortcuts';
 import { DragStateProvider } from '../../hooks/useDragStateContext';
 import { PageBuilderProvider, usePageBuilder } from '../../hooks/usePageBuilderContext';
 
+import { PageBuilderLeftPanel } from './PageBuilderLeftPanel';
+import { PageBuilderRightPanel } from './PageBuilderRightPanel';
+
 import type { PageBuilderState } from '../../types/page-builder';
 
-function PageBuilderInner(): React.ReactNode {
+function PageBuilderInner(): React.JSX.Element {
   const { state, dispatch } = usePageBuilder();
   const { setIsProgrammaticallyCollapsed } = useAdminLayout();
   useBuilderKeyboardShortcuts();
+  
   const isViewing = state.leftPanelCollapsed && state.rightPanelCollapsed;
-  const leftPanelRef = useRef<HTMLDivElement | null>(null);
-  const rightPanelRef = useRef<HTMLDivElement | null>(null);
   const autoCollapsedRightRef = useRef(false);
   const wasNarrowRef = useRef<boolean | null>(null);
-  const [leftPanelMode, setLeftPanelMode] = useState<'sections' | 'theme' | 'menu' | 'app-embeds'>('sections');
-  const leftPanelLabel =
-    leftPanelMode === 'sections'
-      ? 'Sections'
-      : leftPanelMode === 'theme'
-        ? 'Theme settings'
-        : leftPanelMode === 'menu'
-          ? 'Menu settings'
-          : 'App embeds';
 
   useEffect((): (() => void) => {
     setIsProgrammaticallyCollapsed(true);
@@ -76,24 +64,6 @@ function PageBuilderInner(): React.ReactNode {
     };
   }, [dispatch, state.rightPanelCollapsed]);
 
-  useEffect((): (() => void) | void => {
-    if (typeof window === 'undefined') return undefined;
-    const handler = (event: Event): void => {
-      const detail = (event as CustomEvent<Record<string, unknown>>).detail ?? {};
-      if (state.leftPanelCollapsed) {
-        dispatch({ type: 'TOGGLE_LEFT_PANEL' });
-      }
-      setLeftPanelMode('theme');
-      window.requestAnimationFrame((): void => {
-        window.dispatchEvent(new CustomEvent('cms-theme-open', { detail }));
-      });
-    };
-    window.addEventListener('cms-builder-open-theme', handler as EventListener);
-    return (): void => {
-      window.removeEventListener('cms-builder-open-theme', handler as EventListener);
-    };
-  }, [dispatch, state.leftPanelCollapsed]);
-
   return (
     <div className='flex h-[calc(100vh-64px)] flex-col bg-background text-white'>
       <div className='relative flex flex-1 overflow-hidden'>
@@ -110,97 +80,8 @@ function PageBuilderInner(): React.ReactNode {
           </Button>
         )}
 
-        {/* Left panel: Component tree / Theme settings */}
-        <div
-          ref={leftPanelRef}
-          className={`relative flex flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
-            state.leftPanelCollapsed ? 'w-0 opacity-0 -translate-x-2 pointer-events-none' : 'w-72 opacity-100 translate-x-0'
-          }`}
-        >
-          <div className='flex w-72 min-h-0 flex-col border-r border-border bg-card'>
-            <SectionHeader
-              title={leftPanelLabel}
-              size='xs'
-              className='p-3 border-b border-border'
-              actions={(
-                <div className='flex items-center gap-1'>
-                  <Button
-                    onClick={() => setLeftPanelMode('sections')}
-                    size='icon'
-                    variant='ghost'
-                    className={`h-6 w-6 p-0 ${
-                      leftPanelMode === 'sections'
-                        ? 'text-gray-500/70'
-                        : 'text-blue-300 hover:text-blue-200'
-                    }`}
-                    title='Back to sections'
-                    aria-label='Back to sections'
-                    disabled={leftPanelMode === 'sections'}
-                  >
-                    <ArrowLeft className='size-3.5' />
-                  </Button>
-                  <Button
-                    onClick={() => setLeftPanelMode('menu')}
-                    size='icon'
-                    variant='ghost'
-                    className={`h-6 w-6 p-0 ${
-                      leftPanelMode === 'menu'
-                        ? 'text-blue-300 hover:text-blue-200'
-                        : 'text-gray-500 hover:text-gray-300'
-                    }`}
-                    title='Menu settings'
-                    aria-label='Menu settings'
-                  >
-                    <Menu className='size-3.5' />
-                  </Button>
-                  <Button
-                    onClick={() => setLeftPanelMode('app-embeds')}
-                    size='icon'
-                    variant='ghost'
-                    className={`h-6 w-6 p-0 ${
-                      leftPanelMode === 'app-embeds'
-                        ? 'text-blue-300 hover:text-blue-200'
-                        : 'text-gray-500 hover:text-gray-300'
-                    }`}
-                    title='App embeds'
-                    aria-label='App embeds'
-                  >
-                    <AppWindow className='size-3.5' />
-                  </Button>
-                  <Button
-                    onClick={() => setLeftPanelMode('theme')}
-                    size='icon'
-                    variant='ghost'
-                    className={`h-6 w-6 p-0 ${
-                      leftPanelMode === 'theme'
-                        ? 'text-blue-300 hover:text-blue-200'
-                        : 'text-gray-500 hover:text-gray-300'
-                    }`}
-                    title='Theme settings'
-                    aria-label='Theme settings'
-                  >
-                    <Settings className='size-3.5' />
-                  </Button>
-                  <Button
-                    onClick={() => dispatch({ type: 'TOGGLE_LEFT_PANEL' })}
-                    size='icon'
-                    variant='ghost'
-                    className='h-6 w-6 p-0 text-gray-500 hover:text-gray-300'
-                    aria-label='Hide left panel'
-                  >
-                    <PanelLeftClose className='size-3.5' />
-                  </Button>
-                </div>
-              )}
-            />
-            {leftPanelMode === 'sections' && <ComponentTreePanel />}
-            {leftPanelMode === 'theme' && <ThemeSettingsPanel showHeader={false} />}
-            {leftPanelMode === 'menu' && <MenuSettingsPanel showHeader={false} />}
-            {leftPanelMode === 'app-embeds' && <AppEmbedsPanel showHeader={false} />}
-          </div>
-        </div>
+        <PageBuilderLeftPanel />
 
-        {/* Center panel: Preview */}
         <PagePreviewPanel />
 
         {/* Right panel toggle (shown when collapsed) */}
@@ -216,21 +97,13 @@ function PageBuilderInner(): React.ReactNode {
           </Button>
         )}
 
-        {/* Right panel: Settings */}
-        <div
-          ref={rightPanelRef}
-          className={`relative flex flex-shrink-0 overflow-hidden transition-all duration-300 ease-in-out ${
-            state.rightPanelCollapsed ? 'w-0 opacity-0 translate-x-2 pointer-events-none' : 'w-80 opacity-100 translate-x-0'
-          }`}
-        >
-          <ComponentSettingsPanel />
-        </div>
+        <PageBuilderRightPanel />
       </div>
     </div>
   );
 }
 
-export function PageBuilderLayout({ initialState }: { initialState?: PageBuilderState | undefined }): React.ReactNode {
+export function PageBuilderLayout({ initialState }: { initialState?: PageBuilderState | undefined }): React.JSX.Element {
   return (
     <PageBuilderProvider {...(initialState ? { initialState } : {})}>
       <DragStateProvider>

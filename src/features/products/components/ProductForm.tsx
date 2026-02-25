@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import DebugPanel from '@/features/products/components/DebugPanel';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
@@ -11,7 +11,7 @@ import {
   type ProductDraftOpenFormTab,
 } from '@/shared/contracts/products';
 import type { ProductValidationDenyBehavior } from '@/shared/contracts/products';
-import { Tabs, TabsList, TabsTrigger, TabsContent, SelectSimple, ValidatorFormatterToggle } from '@/shared/ui';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/shared/ui';
 
 import ProductFormGeneral from './form/ProductFormGeneral';
 import ProductFormOther from './form/ProductFormOther';
@@ -20,6 +20,8 @@ import ProductFormImages from './form/ProductFormImages';
 import ProductFormStudio from './form/ProductFormStudio';
 import ProductFormImportInfo from './form/ProductFormImportInfo';
 import ProductFormNoteLink from './form/ProductFormNoteLink';
+import { ProductFormValidationTab } from './form/ProductFormValidationTab';
+import { ProductFormFooter } from './form/ProductFormFooter';
 import { useProductFormValidator } from '../hooks/useProductFormValidator';
 
 interface ProductFormProps {
@@ -69,14 +71,6 @@ export default function ProductForm({
   const validator = useProductFormValidator();
 
   const footerEntityId = product?.id?.trim() || draft?.id?.trim() || '';
-  const handleCopyProductId = useCallback(async (): Promise<void> => {
-    if (!footerEntityId || typeof navigator === 'undefined' || !navigator.clipboard) return;
-    try {
-      await navigator.clipboard.writeText(footerEntityId);
-    } catch {
-      // Ignore clipboard failures to keep form interactions non-blocking.
-    }
-  }, [footerEntityId]);
 
   useEffect(() => {
     setIsDebugOpen(searchParams.get('debug') === 'true');
@@ -169,55 +163,11 @@ export default function ProductForm({
             {mountedTabs.has('note-link') && <ProductFormNoteLink />}
           </TabsContent>
           <TabsContent value='validation' className='mt-4 space-y-4'>
-            <div className='rounded-md border border-border bg-gray-900/70 p-4'>
-              <p className='text-sm font-semibold text-white'>Validation Controls</p>
-              <p className='mt-1 text-xs text-gray-400'>
-                `Validator` enables validation rules. `Formatter` auto-applies rules configured for formatter mode.
-              </p>
-              <ValidatorFormatterToggle
-                className='mt-4'
-                validatorEnabled={validator.validatorEnabled}
-                formatterEnabled={validator.formatterEnabled}
-                onValidatorChange={(next: boolean): void => {
-                  validator.setValidatorManuallyChanged(true);
-                  validator.setValidatorEnabled(next);
-                }}
-                onFormatterChange={(next: boolean): void => validator.setFormatterEnabled(next)}
-              />
-              <div className='mt-4 grid gap-2 md:max-w-sm'>
-                <p className='text-xs font-medium text-white'>When a correction is denied</p>
-                <SelectSimple size='sm'
-                  value={validator.validationDenyBehavior}
-                  onValueChange={(value: string): void =>
-                    validator.setValidationDenyBehavior(
-                      value === 'ask_again' ? 'ask_again' : 'mute_session'
-                    )
-                  }
-                  options={[
-                    { value: 'mute_session', label: 'Stop For This Session' },
-                    { value: 'ask_again', label: 'Ask Again Next Validation' },
-                  ]}
-                />
-                <p className='text-[11px] text-gray-400'>
-                  Current context: <span className='font-medium text-gray-300'>{validator.validationInstanceScope}</span>
-                </p>
-              </div>
-            </div>
+            <ProductFormValidationTab />
           </TabsContent>
         </Tabs>
       </ProductValidationSettingsProvider>
-      {footerEntityId && (
-        <button
-          type='button'
-          className='absolute bottom-0 right-0 text-[10px] font-mono text-muted-foreground/50 hover:text-muted-foreground transition-colors'
-          title='Click to copy ID'
-          onClick={() => {
-            void handleCopyProductId();
-          }}
-        >
-          {footerEntityId}
-        </button>
-      )}
+      <ProductFormFooter entityId={footerEntityId} />
       <ConfirmationModal />
     </form>
   );

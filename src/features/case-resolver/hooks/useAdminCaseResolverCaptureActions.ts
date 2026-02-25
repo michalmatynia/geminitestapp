@@ -281,7 +281,7 @@ export function useAdminCaseResolverCaptureActions({
         const requestedTargetFileId = promptExploderProposalDraft.targetFileId;
         const workspaceSnapshot = workspaceRef.current;
         
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+         
         const targetResolution = resolveCaptureTargetFile({
           workspaceFiles: workspaceSnapshot.files,
           proposalTargetFileId: requestedTargetFileId,
@@ -289,7 +289,7 @@ export function useAdminCaseResolverCaptureActions({
           editingDraftFileId: null,
         });
         
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+         
         const resolvedTargetFile = targetResolution.file;
         if (!resolvedTargetFile) {
           const precheckRevision = getCaseResolverWorkspaceRevision(workspaceSnapshot);
@@ -756,17 +756,17 @@ export function useAdminCaseResolverCaptureActions({
 
           if (!mutationResult.ok && mutationResult.stage === 'mutation') {
             const retryWorkspaceSnapshot = workspaceRef.current;
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+             
             const retryTargetResolution = resolveCaptureTargetFile({
               workspaceFiles: retryWorkspaceSnapshot.files,
               proposalTargetFileId: mutationTargetFileId,
               contextFileId: null,
               editingDraftFileId: null,
             });
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+             
             if (retryTargetResolution.file) {
               captureApplyAttempts = 2;
-              // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+               
               mutationTargetFileId = retryTargetResolution.file.id;
               mutationResult = runCaptureMutation({
                 mutationTargetFileId,

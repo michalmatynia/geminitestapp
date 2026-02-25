@@ -140,7 +140,7 @@ export const mongoProductRepository: ProductRepository = {
       const docs = await collection
         .aggregate<ProductDocument>(pipeline, aggregateOptions)
         .toArray();
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+       
       return docs.map((doc) => toProductResponse(doc as any));
     }
 
@@ -150,7 +150,7 @@ export const mongoProductRepository: ProductRepository = {
     }
     cursor = cursor.skip(skip).limit(limit);
     const docs = await cursor.toArray();
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+     
     return docs.map((doc) => toProductResponse(doc as any));
   },
 
@@ -203,7 +203,7 @@ export const mongoProductRepository: ProductRepository = {
       .toArray();
 
     return {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+       
       products: (result?.products ?? []).map((p) => toProductResponse(p as any)),
       total: result?.total?.[0]?.count ?? 0,
     };
@@ -223,7 +223,7 @@ export const mongoProductRepository: ProductRepository = {
       return [];
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+     
     const fallbackProductId = normalizeLookupId((doc as any).id ?? (doc as any)._id) || productId;
     const fallbackAssignedAt =
       doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : new Date().toISOString();
@@ -239,7 +239,7 @@ export const mongoProductRepository: ProductRepository = {
       (acc: ParsedImageEntry[], rawImage: unknown) => {
         if (!rawImage || typeof rawImage !== 'object') return acc;
         const imageRecord = rawImage as Record<string, unknown>;
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+         
         const imageFileId = normalizeLookupId(
           imageRecord['imageFileId'] ??
             (imageRecord['imageFile'] as { id?: unknown } | null | undefined)?.id
@@ -255,7 +255,7 @@ export const mongoProductRepository: ProductRepository = {
               : fallbackAssignedAt;
 
         const rawProductId = imageRecord['productId'];
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+         
         const entryProductId =
           normalizeLookupId(rawProductId) ||
           fallbackProductId;
@@ -320,14 +320,14 @@ export const mongoProductRepository: ProductRepository = {
   async getProductById(id: string) {
     const collection = await getProductCollection();
     const doc = await collection.findOne(buildProductIdFilter(id));
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+     
     return doc ? toProductResponse(doc as any) : null;
   },
 
   async getProductBySku(sku: string) {
     const collection = await getProductCollection();
     const doc = await collection.findOne({ sku });
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+     
     return doc ? toProductBase(doc as any) : null;
   },
 
@@ -336,7 +336,7 @@ export const mongoProductRepository: ProductRepository = {
     const doc = await db
       .collection<ProductDocument>(productCollectionName)
       .findOne({ baseProductId });
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+     
     return doc ? toProductBase(doc as any) : null;
   },
 
@@ -351,7 +351,7 @@ export const mongoProductRepository: ProductRepository = {
       if (existing) {
         throw conflictError('A product with this SKU already exists.', {
           sku: data.sku,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+           
           productId: (existing as any).id ?? (existing as any)._id,
         });
       }
@@ -480,9 +480,9 @@ export const mongoProductRepository: ProductRepository = {
       );
     if (!result) return null;
     return toProductBase({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+       
       ...(result as any as ProductDocument),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+       
       id: (result as any).id ?? id,
     });
   },
@@ -494,9 +494,9 @@ export const mongoProductRepository: ProductRepository = {
       .findOneAndDelete(buildProductIdFilter(id));
     if (!result) return null;
     return toProductBase({
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
+       
       ...(result as any as ProductDocument),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+       
       id: (result as any).id ?? id,
     });
   },
@@ -514,7 +514,7 @@ export const mongoProductRepository: ProductRepository = {
     if (skuExists) {
       throw conflictError('A product with this SKU already exists.', {
         sku,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+         
         productId: (skuExists as any).id ?? skuExists._id,
       });
     }
@@ -546,11 +546,11 @@ export const mongoProductRepository: ProductRepository = {
       sizeWidth: existing.sizeWidth ?? null,
       weight: existing.weight ?? null,
       length: existing.length ?? null,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+       
       parameters: Array.isArray(existing.parameters) ? (existing.parameters as any) : [],
       imageLinks: Array.isArray(existing.imageLinks) ? existing.imageLinks : [],
       imageBase64s: Array.isArray(existing.imageBase64s) ? existing.imageBase64s : [],
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+       
       noteIds: Array.isArray((existing as unknown as { noteIds?: unknown }).noteIds)
         ? ((existing as unknown as { noteIds: string[] }).noteIds)
         : [],
@@ -900,7 +900,7 @@ export const mongoProductRepository: ProductRepository = {
   async createProductInTransaction<T>(
     callback: (tx: TransactionalProductRepository & Prisma.TransactionClient) => Promise<T>
   ): Promise<T> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+     
     return callback(this as any);
   },
 };

@@ -105,15 +105,15 @@ export function MetricsTab(): React.JSX.Element {
           <Card variant='subtle-compact' padding='md' className='bg-card/30 border-border/40'>
             <div className='flex items-center justify-between'>
               <span className='text-[11px] font-medium text-emerald-300 uppercase'>Latest Analytics Audit</span>
-              <StatusBadge status={latestAnalyticsInsight ? (latestAnalyticsInsight as AiInsightRecord).status : 'none'} />
+              <StatusBadge status={latestAnalyticsInsight ? (latestAnalyticsInsight).status : 'none'} />
             </div>
             <div className='mt-3 space-y-2'>
               <MetadataItem 
                 label='Generated' 
-                value={latestAnalyticsInsight ? formatDate((latestAnalyticsInsight as AiInsightRecord).createdAt) : '—'} 
+                value={latestAnalyticsInsight ? formatDate((latestAnalyticsInsight).createdAt) : '—'} 
               />
               <div className='text-[11px] text-gray-400 line-clamp-2 mt-1'>
-                {latestAnalyticsInsight ? (latestAnalyticsInsight as AiInsightRecord).summary : 'No analytics audits found in history.'}
+                {latestAnalyticsInsight ? (latestAnalyticsInsight).summary : 'No analytics audits found in history.'}
               </div>
             </div>
           </Card>
@@ -121,15 +121,15 @@ export function MetricsTab(): React.JSX.Element {
           <Card variant='subtle-compact' padding='md' className='bg-card/30 border-border/40'>
             <div className='flex items-center justify-between'>
               <span className='text-[11px] font-medium text-cyan-300 uppercase'>Latest Logs Audit</span>
-              <StatusBadge status={latestLogsInsight ? (latestLogsInsight as AiInsightRecord).status : 'none'} />
+              <StatusBadge status={latestLogsInsight ? (latestLogsInsight).status : 'none'} />
             </div>
             <div className='mt-3 space-y-2'>
               <MetadataItem 
                 label='Generated' 
-                value={latestLogsInsight ? formatDate((latestLogsInsight as AiInsightRecord).createdAt) : '—'} 
+                value={latestLogsInsight ? formatDate((latestLogsInsight).createdAt) : '—'} 
               />
               <div className='text-[11px] text-gray-400 line-clamp-2 mt-1'>
-                {latestLogsInsight ? (latestLogsInsight as AiInsightRecord).summary : 'No system log audits found in history.'}
+                {latestLogsInsight ? (latestLogsInsight).summary : 'No system log audits found in history.'}
               </div>
             </div>
           </Card>

@@ -310,159 +310,159 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
           />
         </div>
       ) : (
-      <div className='min-h-0 flex-1 overflow-auto p-2'>
-        <FolderTreeViewportV2
-          controller={controller}
-          canStartDrag={canStartTreeDrag}
-          rootDropUi={rootDropUi}
-          canDrop={({
-            draggedNodeId,
-            targetId,
-            position,
-            defaultAllowed,
-          }): boolean => {
-            const draggedNode = controller.nodes.find(
-              (candidate: MasterTreeNode): boolean => candidate.id === draggedNodeId,
-            );
-            if (draggedNode && isCaseResolverVirtualSectionNode(draggedNode)) return false;
-            const targetNode = targetId
-              ? controller.nodes.find(
-                (candidate: MasterTreeNode): boolean => candidate.id === targetId,
-              )
-              : null;
-            if (targetNode && isCaseResolverVirtualSectionNode(targetNode)) return false;
-            if (defaultAllowed) return true;
-            const dragged = decodeCaseResolverMasterNodeId(draggedNodeId);
-            if (!dragged) return false;
-            if (dragged.entity !== 'file' && dragged.entity !== 'asset')
-              return false;
-
-            if (position === 'inside') {
-              if (targetId === null) return true;
-              if (fromCaseResolverFolderNodeId(targetId) !== null) return true;
-              // Allow file-on-file center drop for relation linking
-              const targetFileId = fromCaseResolverFileNodeId(targetId);
-              const draggedFileId = fromCaseResolverFileNodeId(draggedNodeId);
-              return !!(targetFileId && draggedFileId && targetFileId !== draggedFileId);
-            }
-
-            return targetId !== null;
-          }}
-          resolveDropPosition={(event, { draggedNodeId, targetId }, ctlr) => {
-            const targetNode = ctlr.nodes.find(
-              (candidate: MasterTreeNode): boolean => candidate.id === targetId,
-            );
-            if (targetNode?.type === 'folder') {
-              return 'inside';
-            }
-            // File-on-file: whole row is a link drop zone
-            const draggedFileId = fromCaseResolverFileNodeId(draggedNodeId);
-            const targetFileId = fromCaseResolverFileNodeId(targetId);
-            if (draggedFileId && targetFileId && draggedFileId !== targetFileId) {
-              return 'inside';
-            }
-            const targetRect = event.currentTarget.getBoundingClientRect();
-            const edgePosition = resolveVerticalDropPosition(
-              event.clientY,
-              targetRect,
-              {
-                thresholdRatio: 0.34,
-              },
-            );
-            return edgePosition ?? 'after';
-          }}
-          onNodeDragStart={({ node, event }): void => {
-            const metadata = node.metadata;
-            if (!metadata || typeof metadata !== 'object') return;
-
-            let payload: CaseResolverTreeDragPayload | null = null;
-            if (metadata['entity'] === 'asset') {
-              const assetId = parseString(metadata['rawId']);
-              if (!assetId) return;
-              payload = {
-                source: 'case_resolver_tree',
-                entity: 'asset',
-                assetId,
-                assetKind: resolveAssetKind(metadata['assetKind']),
-                name: node.name,
-                folder: parseString(metadata['folder']),
-                filepath: parseNullableString(metadata['filepath']),
-                mimeType: parseNullableString(metadata['mimeType']),
-                size: parseNullableNumber(metadata['size']),
-                textContent: parseString(metadata['textContent']),
-                description: parseString(metadata['description']),
-              };
-            }
-
-            if (metadata['entity'] === 'file') {
-              const fileId = parseString(metadata['rawId']);
-              if (!fileId) return;
-              payload = {
-                source: 'case_resolver_tree',
-                entity: 'file',
-                fileId,
-                name: node.name,
-                folder: parseString(metadata['folder']),
-              };
-            }
-
-            if (!payload) return;
-
-            setDragData(
-              event.dataTransfer,
-              { [DRAG_KEYS.CASE_RESOLVER_ITEM]: JSON.stringify(payload) },
-              { text: payload.name, effectAllowed: 'copyMove' },
-            );
-          }}
-          onNodeDrop={async (
-            { draggedNodeId, targetId, position, rootDropZone },
-            ctlr,
-          ): Promise<void> => {
-            const isInternal = isInternalMasterTreeNode(
-              ctlr.nodes,
-              draggedNodeId,
-            );
-            if (!isInternal) return;
-
-            // File-on-file center drop → link as related documents
-            if (position === 'inside' && targetId !== null) {
-              const draggedFileId = fromCaseResolverFileNodeId(draggedNodeId);
-              const targetFileId = fromCaseResolverFileNodeId(targetId);
-              if (draggedFileId && targetFileId) {
-                onLinkRelatedFiles(draggedFileId, targetFileId);
-                return;
-              }
-            }
-
-            await applyInternalMasterTreeDrop({
-              controller: ctlr,
+        <div className='min-h-0 flex-1 overflow-auto p-2'>
+          <FolderTreeViewportV2
+            controller={controller}
+            canStartDrag={canStartTreeDrag}
+            rootDropUi={rootDropUi}
+            canDrop={({
               draggedNodeId,
               targetId,
               position,
-              rootDropZone,
-            });
-          }}
-          renderNode={(nodeProps: FolderTreeViewportRenderNodeInput) => (
-            <CaseResolverTreeNode 
-              {...nodeProps}
-              armDragHandle={armDragHandle}
-              releaseDragHandle={releaseDragHandle}
-              renameDraft={controller.renameDraft}
-              onUpdateRenameDraft={(v: string) => controller.updateRenameDraft(v)}
-              onCommitRename={() => void controller.commitRename()}
-              onCancelRename={() => controller.cancelRename()}
-              FolderClosedIcon={FolderClosedIcon}
-              FolderOpenIcon={FolderOpenIcon}
-              DefaultFileIcon={DefaultFileIcon}
-              ScanCaseFileIcon={ScanCaseFileIcon}
-              NodeFileIcon={NodeFileIcon}
-              ImageFileIcon={ImageFileIcon}
-              PdfFileIcon={PdfFileIcon}
-              DragHandleIcon={DragHandleIcon}
-            />
-          )}
-        />
-      </div>
+              defaultAllowed,
+            }): boolean => {
+              const draggedNode = controller.nodes.find(
+                (candidate: MasterTreeNode): boolean => candidate.id === draggedNodeId,
+              );
+              if (draggedNode && isCaseResolverVirtualSectionNode(draggedNode)) return false;
+              const targetNode = targetId
+                ? controller.nodes.find(
+                  (candidate: MasterTreeNode): boolean => candidate.id === targetId,
+                )
+                : null;
+              if (targetNode && isCaseResolverVirtualSectionNode(targetNode)) return false;
+              if (defaultAllowed) return true;
+              const dragged = decodeCaseResolverMasterNodeId(draggedNodeId);
+              if (!dragged) return false;
+              if (dragged.entity !== 'file' && dragged.entity !== 'asset')
+                return false;
+
+              if (position === 'inside') {
+                if (targetId === null) return true;
+                if (fromCaseResolverFolderNodeId(targetId) !== null) return true;
+                // Allow file-on-file center drop for relation linking
+                const targetFileId = fromCaseResolverFileNodeId(targetId);
+                const draggedFileId = fromCaseResolverFileNodeId(draggedNodeId);
+                return !!(targetFileId && draggedFileId && targetFileId !== draggedFileId);
+              }
+
+              return targetId !== null;
+            }}
+            resolveDropPosition={(event, { draggedNodeId, targetId }, ctlr) => {
+              const targetNode = ctlr.nodes.find(
+                (candidate: MasterTreeNode): boolean => candidate.id === targetId,
+              );
+              if (targetNode?.type === 'folder') {
+                return 'inside';
+              }
+              // File-on-file: whole row is a link drop zone
+              const draggedFileId = fromCaseResolverFileNodeId(draggedNodeId);
+              const targetFileId = fromCaseResolverFileNodeId(targetId);
+              if (draggedFileId && targetFileId && draggedFileId !== targetFileId) {
+                return 'inside';
+              }
+              const targetRect = event.currentTarget.getBoundingClientRect();
+              const edgePosition = resolveVerticalDropPosition(
+                event.clientY,
+                targetRect,
+                {
+                  thresholdRatio: 0.34,
+                },
+              );
+              return edgePosition ?? 'after';
+            }}
+            onNodeDragStart={({ node, event }): void => {
+              const metadata = node.metadata;
+              if (!metadata || typeof metadata !== 'object') return;
+
+              let payload: CaseResolverTreeDragPayload | null = null;
+              if (metadata['entity'] === 'asset') {
+                const assetId = parseString(metadata['rawId']);
+                if (!assetId) return;
+                payload = {
+                  source: 'case_resolver_tree',
+                  entity: 'asset',
+                  assetId,
+                  assetKind: resolveAssetKind(metadata['assetKind']),
+                  name: node.name,
+                  folder: parseString(metadata['folder']),
+                  filepath: parseNullableString(metadata['filepath']),
+                  mimeType: parseNullableString(metadata['mimeType']),
+                  size: parseNullableNumber(metadata['size']),
+                  textContent: parseString(metadata['textContent']),
+                  description: parseString(metadata['description']),
+                };
+              }
+
+              if (metadata['entity'] === 'file') {
+                const fileId = parseString(metadata['rawId']);
+                if (!fileId) return;
+                payload = {
+                  source: 'case_resolver_tree',
+                  entity: 'file',
+                  fileId,
+                  name: node.name,
+                  folder: parseString(metadata['folder']),
+                };
+              }
+
+              if (!payload) return;
+
+              setDragData(
+                event.dataTransfer,
+                { [DRAG_KEYS.CASE_RESOLVER_ITEM]: JSON.stringify(payload) },
+                { text: payload.name, effectAllowed: 'copyMove' },
+              );
+            }}
+            onNodeDrop={async (
+              { draggedNodeId, targetId, position, rootDropZone },
+              ctlr,
+            ): Promise<void> => {
+              const isInternal = isInternalMasterTreeNode(
+                ctlr.nodes,
+                draggedNodeId,
+              );
+              if (!isInternal) return;
+
+              // File-on-file center drop → link as related documents
+              if (position === 'inside' && targetId !== null) {
+                const draggedFileId = fromCaseResolverFileNodeId(draggedNodeId);
+                const targetFileId = fromCaseResolverFileNodeId(targetId);
+                if (draggedFileId && targetFileId) {
+                  onLinkRelatedFiles(draggedFileId, targetFileId);
+                  return;
+                }
+              }
+
+              await applyInternalMasterTreeDrop({
+                controller: ctlr,
+                draggedNodeId,
+                targetId,
+                position,
+                rootDropZone,
+              });
+            }}
+            renderNode={(nodeProps: FolderTreeViewportRenderNodeInput) => (
+              <CaseResolverTreeNode 
+                {...nodeProps}
+                armDragHandle={armDragHandle}
+                releaseDragHandle={releaseDragHandle}
+                renameDraft={controller.renameDraft}
+                onUpdateRenameDraft={(v: string) => controller.updateRenameDraft(v)}
+                onCommitRename={() => void controller.commitRename()}
+                onCancelRename={() => controller.cancelRename()}
+                FolderClosedIcon={FolderClosedIcon}
+                FolderOpenIcon={FolderOpenIcon}
+                DefaultFileIcon={DefaultFileIcon}
+                ScanCaseFileIcon={ScanCaseFileIcon}
+                NodeFileIcon={NodeFileIcon}
+                ImageFileIcon={ImageFileIcon}
+                PdfFileIcon={PdfFileIcon}
+                DragHandleIcon={DragHandleIcon}
+              />
+            )}
+          />
+        </div>
       )}
       <ConfirmationModal />
     </FolderTreePanel>

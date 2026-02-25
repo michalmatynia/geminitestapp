@@ -66,7 +66,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
   const rawDefaultDocumentFormat =
     settingsQuery.data?.get(CASE_RESOLVER_DEFAULT_DOCUMENT_FORMAT_KEY) ?? null;
   const openaiModelFallback = (settingsQuery.data?.get('openai_model') ?? '').trim();
-  const parsedSettings = useMemo(() => {
+  const parsedSettings = useMemo((): CaseResolverSettings => {
     const parsedBase = parseCaseResolverSettings(rawSettings);
     const defaultDocumentFormat = parseCaseResolverDefaultDocumentFormat(
       rawDefaultDocumentFormat,
@@ -119,7 +119,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     append(modelsQuery.data?.ollamaModels ?? [], 'local Ollama OCR models', 'Ollama models');
     append(modelsQuery.data?.otherModels ?? [], 'OCR models from API providers', 'Other models');
     append([openaiModelFallback], 'system openai_model');
-    append([draft?.ocrModel ?? ''], 'current OCR model');
+    append([(draft as CaseResolverSettings | null)?.ocrModel ?? ''], 'current OCR model');
 
     return options;
   }, [draft?.ocrModel, modelsQuery.data?.ollamaModels, modelsQuery.data?.otherModels, openaiModelFallback]);
@@ -138,10 +138,10 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     }
   }, [modelsQuery.data?.keySource]);
   const detectedOcrProviderLabel = useMemo((): string => {
-    const model = draft?.ocrModel.trim() ?? '';
+    const model = (draft as CaseResolverSettings | null)?.ocrModel.trim() ?? '';
     if (!model) return 'Not set';
     return resolveCaseResolverOcrProviderLabel(model);
-  }, [draft?.ocrModel]);
+  }, [draft]);
 
   const saveDisabled =
     !draft ||

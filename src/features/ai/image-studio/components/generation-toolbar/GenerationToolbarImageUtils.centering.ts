@@ -5,6 +5,17 @@ import {
   type ClientImageObjectAnalysisResult,
 } from './GenerationToolbarImageUtils.types';
 import {
+  CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD,
+  CENTER_LAYOUT_DEFAULT_PADDING_PERCENT,
+  CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD,
+  CENTER_LAYOUT_MAX_CHROMA_THRESHOLD,
+  CENTER_LAYOUT_MAX_PADDING_PERCENT,
+  CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE,
+  CENTER_LAYOUT_MAX_WHITE_THRESHOLD,
+  CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
+  CENTER_LAYOUT_MIN_PADDING_PERCENT,
+  CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE,
+  CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
   loadImageElement,
   sleep,
 } from './GenerationToolbarImageUtils.helpers';
@@ -224,22 +235,71 @@ const loadSourceCanvasWithImageData = async (
   }
 };
 
-const normalizeLayoutForEngine = (config?: CenterLayoutConfig | null): NormalizedImageStudioAnalysisLayoutConfig => {
+const clampNumber = (value: number, min: number, max: number): number =>
+  Math.max(min, Math.min(max, value));
+
+const normalizeTargetCanvasSide = (value: number | null | undefined): number | null => {
+  if (value === null || value === undefined) return null;
+  if (!Number.isFinite(value)) return null;
+  const normalized = Math.trunc(value);
+  if (!Number.isFinite(normalized)) return null;
+  return clampNumber(
+    normalized,
+    CENTER_LAYOUT_MIN_TARGET_CANVAS_SIDE,
+    CENTER_LAYOUT_MAX_TARGET_CANVAS_SIDE
+  );
+};
+
+const normalizeShadowPolicy = (value: CenterLayoutConfig['shadowPolicy']): 'auto' | 'include_shadow' | 'exclude_shadow' => {
+  if (value === 'include_shadow' || value === 'exclude_shadow') return value;
+  return 'auto';
+};
+
+const normalizeDetectionMode = (value: CenterLayoutConfig['detection']): 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel' => {
+  if (value === 'alpha_bbox' || value === 'white_bg_first_colored_pixel') return value;
+  return 'auto';
+};
+
+export const normalizeCenterLayoutConfig = (
+  config?: CenterLayoutConfig | null
+): CenterLayoutResult['layout'] => {
   const raw = config ?? {};
   return {
-    paddingPercent: raw.paddingPercent ?? 8,
-    paddingXPercent: raw.paddingXPercent ?? 8,
-    paddingYPercent: raw.paddingYPercent ?? 8,
+    paddingPercent: clampNumber(
+      raw.paddingPercent ?? CENTER_LAYOUT_DEFAULT_PADDING_PERCENT,
+      CENTER_LAYOUT_MIN_PADDING_PERCENT,
+      CENTER_LAYOUT_MAX_PADDING_PERCENT
+    ),
+    paddingXPercent: clampNumber(
+      raw.paddingXPercent ?? CENTER_LAYOUT_DEFAULT_PADDING_PERCENT,
+      CENTER_LAYOUT_MIN_PADDING_PERCENT,
+      CENTER_LAYOUT_MAX_PADDING_PERCENT
+    ),
+    paddingYPercent: clampNumber(
+      raw.paddingYPercent ?? CENTER_LAYOUT_DEFAULT_PADDING_PERCENT,
+      CENTER_LAYOUT_MIN_PADDING_PERCENT,
+      CENTER_LAYOUT_MAX_PADDING_PERCENT
+    ),
     fillMissingCanvasWhite: raw.fillMissingCanvasWhite ?? false,
-    targetCanvasWidth: raw.targetCanvasWidth ?? null,
-    targetCanvasHeight: raw.targetCanvasHeight ?? null,
-    whiteThreshold: raw.whiteThreshold ?? 16,
-    chromaThreshold: raw.chromaThreshold ?? 10,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    shadowPolicy: (raw.shadowPolicy as any) ?? 'auto',
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    detection: (raw.detection as any) ?? 'auto',
+    targetCanvasWidth: normalizeTargetCanvasSide(raw.targetCanvasWidth),
+    targetCanvasHeight: normalizeTargetCanvasSide(raw.targetCanvasHeight),
+    whiteThreshold: clampNumber(
+      raw.whiteThreshold ?? CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD,
+      CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
+      CENTER_LAYOUT_MAX_WHITE_THRESHOLD
+    ),
+    chromaThreshold: clampNumber(
+      raw.chromaThreshold ?? CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD,
+      CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
+      CENTER_LAYOUT_MAX_CHROMA_THRESHOLD
+    ),
+    shadowPolicy: normalizeShadowPolicy(raw.shadowPolicy),
+    detection: normalizeDetectionMode(raw.detection),
   };
+};
+
+const normalizeLayoutForEngine = (config?: CenterLayoutConfig | null): NormalizedImageStudioAnalysisLayoutConfig => {
+  return normalizeCenterLayoutConfig(config);
 };
 
 export const layoutCanvasImageObject = async (

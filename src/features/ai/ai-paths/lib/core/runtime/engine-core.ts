@@ -285,14 +285,14 @@ export async function evaluateGraphInternal(
     );
 
     const outputsSnapshot = cloneValue(outputs);
-          return {
-            status:
+    return {
+      status:
               errorNodes.size > 0
                 ? 'failed'
                 : finishedNodes.size === nodes.length
                   ? 'completed'
                   : 'running',
-            nodeStatuses,      nodeOutputs: outputsSnapshot,
+      nodeStatuses,      nodeOutputs: outputsSnapshot,
       variables: {},
       events: [],
       runId: resolvedRunId,

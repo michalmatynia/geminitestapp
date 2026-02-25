@@ -17,7 +17,7 @@ import {
   Terminal,
   Copy,
 } from 'lucide-react';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { DocumentWysiwygEditor } from '@/features/document-editor';
 import {
@@ -110,10 +110,20 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
   const [nameInputValue, setNameInputValue] = React.useState('');
   const nameInputRef = React.useRef<HTMLInputElement>(null);
 
+  const draftId = editingDocumentDraft?.id ?? null;
+  const originalFile = useMemo(
+    () => (draftId ? (workspace.files.find((f) => f.id === draftId) ?? null) : null),
+    [workspace.files, draftId]
+  );
+  const relatedFiles = useMemo(() => {
+    const ids = new Set(originalFile?.relatedFileIds ?? []);
+    if (ids.size === 0) return [];
+    return workspace.files.filter((file) => ids.has(file.id));
+  }, [originalFile?.relatedFileIds, workspace.files]);
+
   if (!editingDocumentDraft || editingDocumentDraft.fileType === 'scanfile') return null;
   const draft = editingDocumentDraft;
 
-  const originalFile = workspace.files.find((f) => f.id === draft.id);
   const isEditingDocumentLocked = draft.isLocked;
   const isEditorSaveEnabled = isEditorDraftDirty;
 
@@ -134,11 +144,6 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
     canApplyPendingPromptOutput;
 
   const pendingPromptTransferId = pendingPromptExploderPayload?.transferId ?? '';
-
-  const draftRelatedFileIds = originalFile?.relatedFileIds;
-  const relatedFiles = workspace.files.filter((file) =>
-    (draftRelatedFileIds ?? []).includes(file.id)
-  );
 
   return (
     <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-auto pr-1'>

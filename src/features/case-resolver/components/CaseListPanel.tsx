@@ -45,6 +45,37 @@ import { CaseListSorting } from './list/sections/CaseListSorting';
 import { CaseListNodeItem } from './list/sections/CaseListNodeItem';
 import { CaseListHeldDock } from './list/sections/CaseListHeldDock';
 
+/** Thin wrapper that computes per-node derived values so CaseListNodeItem can be memo'd. */
+const CaseListNodeItemWrapper = memo(function CaseListNodeItemWrapper(props) {
+  const targetCaseId = fromCaseResolverCaseNodeId(props.node.id) ?? '';
+  const canShowNestHeldAction =
+    Boolean(props.heldCaseId) &&
+    targetCaseId.length > 0 &&
+    props.heldCaseId !== targetCaseId;
+  const canNestHeldHere =
+    canShowNestHeldAction &&
+    !props.isHierarchyLocked &&
+    Boolean(props.heldCaseFile) &&
+    props.heldCaseFile?.isLocked !== true &&
+    !props.isHeldCaseAncestorOf(targetCaseId);
+  const nestHeldDisabledReason = (() => {
+    if (!canShowNestHeldAction) return null;
+    if (props.isHierarchyLocked) return 'Unlock hierarchy to move held case.';
+    if (!props.heldCaseFile) return 'Held case is no longer available.';
+    if (props.heldCaseFile.isLocked === true) return 'Held case is locked.';
+    if (props.isHeldCaseAncestorOf(targetCaseId)) return 'Cannot nest held case under its descendant.';
+    return null;
+  })();
+  return (
+    <CaseListNodeItem
+      {...props}
+      canShowNestHeldAction={canShowNestHeldAction}
+      canNestHeldHere={canNestHeldHere}
+      nestHeldDisabledReason={nestHeldDisabledReason}
+    />
+  );
+});
+
 export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const router = useRouter();
   const {
@@ -385,6 +416,53 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     [isHierarchyLocked]
   );
 
+  const handleNodeDrop = useCallback(
+    async ({ draggedNodeId, targetId, position, rootDropZone }, ctlr) => {
+      if (isHierarchyLocked) return;
+      await applyInternalMasterTreeDrop({ controller: ctlr, draggedNodeId, targetId, position, rootDropZone });
+    },
+    [isHierarchyLocked]
+  );
+
+  const handleNestHeldCaseVoid = useCallback(
+    (caseId: string): void => { void handleNestHeldCase(caseId); },
+    [handleNestHeldCase]
+  );
+
+  const handleRenderNode = useCallback(
+    (props) => (
+      <CaseListNodeItemWrapper
+        {...props}
+        filesById={filesById}
+        caseTagPathById={caseTagPathById}
+        caseIdentifierPathById={caseIdentifierPathById}
+        caseCategoryPathById={caseCategoryPathById}
+        controller={controller}
+        handleToggleCaseStatus={handleToggleCaseStatus}
+        heldCaseId={heldCaseId}
+        heldCaseFile={heldCaseFile}
+        isHierarchyLocked={isHierarchyLocked}
+        isHeldCaseAncestorOf={isHeldCaseAncestorOf}
+        handleToggleHeldCase={handleToggleHeldCase}
+        handleNestHeldCase={handleNestHeldCaseVoid}
+        handleOpenCase={handleOpenCase}
+        handleEditCase={handleEditCaseLocal}
+        handleCreateCase={handleCreateCaseLocal}
+        handleDeleteCase={handleDeleteCase}
+        FolderClosedIcon={FolderClosedIcon}
+        FolderOpenIcon={FolderOpenIcon}
+      />
+    ),
+    [
+      filesById, caseTagPathById, caseIdentifierPathById, caseCategoryPathById,
+      controller, handleToggleCaseStatus, heldCaseId, heldCaseFile,
+      isHierarchyLocked, isHeldCaseAncestorOf,
+      handleToggleHeldCase, handleNestHeldCaseVoid, handleOpenCase,
+      handleEditCaseLocal, handleCreateCaseLocal, handleDeleteCase,
+      FolderClosedIcon, FolderOpenIcon,
+    ]
+  );
+
   return (
     <StandardDataTablePanel
       header={
@@ -492,64 +570,8 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
             canStartDrag={canStartDrag}
             canDrop={canDrop}
             rootDropUi={rootDropUi}
-            onNodeDrop={async ({ draggedNodeId, targetId, position, rootDropZone }, ctlr): Promise<void> => {
-              if (isHierarchyLocked) return;
-              await applyInternalMasterTreeDrop({
-                controller: ctlr,
-                draggedNodeId,
-                targetId,
-                position,
-                rootDropZone,
-              });
-            }}
-            renderNode={(props) => (
-              (() => {
-                const targetCaseId = fromCaseResolverCaseNodeId(props.node.id) ?? '';
-                const canShowNestHeldAction =
-                  Boolean(heldCaseId) &&
-                  targetCaseId.length > 0 &&
-                  heldCaseId !== targetCaseId;
-                const canNestHeldHere =
-                  canShowNestHeldAction &&
-                  !isHierarchyLocked &&
-                  Boolean(heldCaseFile) &&
-                  heldCaseFile.isLocked !== true &&
-                  !isHeldCaseAncestorOf(targetCaseId);
-                const nestHeldDisabledReason = (() => {
-                  if (!canShowNestHeldAction) return null;
-                  if (isHierarchyLocked) return 'Unlock hierarchy to move held case.';
-                  if (!heldCaseFile) return 'Held case is no longer available.';
-                  if (heldCaseFile.isLocked === true) return 'Held case is locked.';
-                  if (isHeldCaseAncestorOf(targetCaseId)) return 'Cannot nest held case under its descendant.';
-                  return null;
-                })();
-                return (
-                  <CaseListNodeItem
-                    {...props}
-                    filesById={filesById}
-                    caseTagPathById={caseTagPathById}
-                    caseIdentifierPathById={caseIdentifierPathById}
-                    caseCategoryPathById={caseCategoryPathById}
-                    controller={controller}
-                    handleToggleCaseStatus={handleToggleCaseStatus}
-                    heldCaseId={heldCaseId}
-                    canShowNestHeldAction={canShowNestHeldAction}
-                    canNestHeldHere={canNestHeldHere}
-                    nestHeldDisabledReason={nestHeldDisabledReason}
-                    handleToggleHeldCase={handleToggleHeldCase}
-                    handleNestHeldCase={(caseId: string): void => {
-                      void handleNestHeldCase(caseId);
-                    }}
-                    handleOpenCase={handleOpenCase}
-                    handleEditCase={handleEditCaseLocal}
-                    handleCreateCase={handleCreateCaseLocal}
-                    handleDeleteCase={handleDeleteCase}
-                    FolderClosedIcon={FolderClosedIcon}
-                    FolderOpenIcon={FolderOpenIcon}
-                  />
-                );
-              })()
-            )}
+            onNodeDrop={handleNodeDrop}
+            renderNode={handleRenderNode}
           />
           <button
             type='button'

@@ -29,7 +29,6 @@ import {
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { ErrorSystem } from '@/features/observability/services/error-system';
 import type {
-  AiNode,
   AiPathRunNodeRecord,
   AiPathRunRecord,
   AiPathRunStatus,
@@ -65,306 +64,23 @@ import {
   collectBlockedNodeDiagnostics,
 } from './path-run-executor.diagnostics';
 import { createCancellationMonitor } from './path-run-executor.monitoring';
-
-let sanitizeDropWarningCount = 0;
-const SANITIZE_DROP_WARNING_LIMIT = 20;
-
-const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
-  const safe = cloneJsonSafe(state);
-  if (safe && typeof safe === 'object') {
-    const parsed = safe;
-    const sanitized: RuntimeState = {
-      ...EMPTY_RUNTIME_STATE,
-      ...parsed,
-      inputs: parsed.inputs ?? {},
-      outputs: parsed.outputs ?? {},
-      nodeOutputs: parsed.nodeOutputs ?? {},
-      nodeStatuses: parsed.nodeStatuses ?? {},
-      variables: parsed.variables ?? {},
-      events: parsed.events ?? [],
-    };
-    const dropSummary = collectDroppedRuntimePorts(state, sanitized);
-    if (dropSummary.total > 0 && sanitizeDropWarningCount < SANITIZE_DROP_WARNING_LIMIT) {
-      sanitizeDropWarningCount += 1;
-      void ErrorSystem.logWarning('sanitizeRuntimeState dropped runtime port keys', {
-        service: 'ai-paths-executor',
-        droppedPortCounts: {
-          inputs: dropSummary.inputs,
-          outputs: dropSummary.outputs,
-          nodeOutputs: dropSummary.nodeOutputs,
-          total: dropSummary.total,
-        },
-        droppedPortSamples: dropSummary.samples,
-      });
-    }
-    return sanitized;
-  }
-  return EMPTY_RUNTIME_STATE;
-};
-
-const toRuntimeLifecycleStatus = (runStatus: AiPathRunStatus): RuntimeState['status'] => {
-  if (runStatus === 'running' || runStatus === 'queued') return 'running';
-  if (runStatus === 'paused') return 'paused';
-  return 'idle';
-};
-
-const mergeRuntimePortMaps = (
-  ...maps: Array<Record<string, RuntimePortValues> | undefined>
-): Record<string, RuntimePortValues> => {
-  const merged: Record<string, RuntimePortValues> = {};
-  maps.forEach((map) => {
-    if (!isRecord(map)) return;
-    Object.entries(map).forEach(([nodeId, nodePorts]) => {
-      if (!isRecord(nodePorts)) return;
-      merged[nodeId] = {
-        ...(merged[nodeId] ?? {}),
-        ...nodePorts,
-      } as RuntimePortValues;
-    });
-  });
-  return merged;
-};
-
-type RuntimeProfileHighlight = {
-  type: 'run' | 'iteration' | 'node';
-  phase?: 'start' | 'end' | undefined;
-  nodeId?: string | undefined;
-  nodeType?: string | undefined;
-  status?: string | undefined;
-  reason?: string | undefined;
-  iteration?: number | undefined;
-  durationMs?: number | undefined;
-  hashMs?: number | undefined;
-};
-
-type RuntimeProfileNodeSpanStatus =
-  | 'running'
-  | 'completed'
-  | 'failed'
-  | 'cached'
-  | 'skipped'
-  | 'blocked';
-
-type RuntimeProfileNodeSpan = {
-  spanId: string;
-  nodeId: string;
-  nodeType: string;
-  nodeTitle: string | null;
-  iteration: number;
-  attempt: number;
-  status: RuntimeProfileNodeSpanStatus;
-  startedAt: string | null;
-  finishedAt: string | null;
-  durationMs: number | null;
-  error: string | null;
-  cached: boolean;
-};
-
-type RuntimeProfileSnapshot = {
-  traceId: string;
-  recordedAt: string;
-  eventCount: number;
-  sampledEventCount: number;
-  droppedEventCount: number;
-  summary: {
-    durationMs: number;
-    iterationCount: number;
-    nodeCount: number;
-    edgeCount: number;
-    hottestNodes: Array<{
-      nodeId: string;
-      nodeType: string;
-      count: number;
-      totalMs: number;
-      maxMs: number;
-      avgMs: number;
-      errorCount: number;
-      cachedCount: number;
-      skippedCount: number;
-    }>;
-  } | null;
-  highlights: RuntimeProfileHighlight[];
-  nodeSpans: RuntimeProfileNodeSpan[];
-};
-
-const computeDurationMs = (
-  startedAt: string | null | undefined,
-  finishedAt: string | null | undefined
-): number | null => {
-  if (!startedAt || !finishedAt) return null;
-  const startMs = Date.parse(startedAt);
-  const finishMs = Date.parse(finishedAt);
-  if (!Number.isFinite(startMs) || !Number.isFinite(finishMs)) return null;
-  return Math.max(0, finishMs - startMs);
-};
-
-const shouldCaptureRuntimeProfileHighlight = (
-  event: AiPathRuntimeProfileEventDto
-): boolean => {
-  if (event.type !== 'node') {
-    return event.type === 'run' && event.phase === 'end';
-  }
-  if (event.status === 'error' || event.status === 'skipped') return true;
-  if ((event.durationMs ?? 0) >= RUNTIME_PROFILE_SLOW_NODE_MS) return true;
-  if (event.sideEffectDecision === 'skipped_duplicate') return true;
-  if (event.reason === 'missing_inputs') return true;
-  return false;
-};
-
-const toRuntimeProfileHighlight = (
-  event: AiPathRuntimeProfileEventDto
-): RuntimeProfileHighlight => {
-  if (event.type === 'run') {
-    return {
-      type: 'run',
-      phase: event.phase,
-      durationMs: event.durationMs,
-    };
-  }
-  if (event.type === 'iteration') {
-    return {
-      type: 'iteration',
-      iteration: event.iteration,
-      durationMs: event.durationMs,
-    };
-  }
-  return {
-    type: 'node',
-    nodeId: event.nodeId,
-    nodeType: event.nodeType,
-    status: event.status,
-    reason: event.reason,
-    iteration: event.iteration,
-    durationMs: event.durationMs,
-    hashMs: event.hashMs,
-  };
-};
-
-const buildRuntimeProfileSnapshot = (input: {
-  traceId: string;
-  eventCount: number;
-  sampledHighlights: RuntimeProfileHighlight[];
-  summary: RuntimeProfileSummaryDto | null;
-  nodeSpans: RuntimeProfileNodeSpan[];
-}): RuntimeProfileSnapshot => {
-  const hottestNodes = input.summary?.hottestNodes.slice(0, 5).map((node) => ({
-    nodeId: node.nodeId,
-    nodeType: node.nodeType,
-    count: node.count,
-    totalMs: node.totalMs,
-    maxMs: node.maxMs,
-    avgMs: node.avgMs,
-    errorCount: node.errorCount,
-    cachedCount: node.cachedCount,
-    skippedCount: node.skippedCount,
-  })) ?? [];
-  return {
-    traceId: input.traceId,
-    recordedAt: new Date().toISOString(),
-    eventCount: input.eventCount,
-    sampledEventCount: input.sampledHighlights.length,
-    droppedEventCount: Math.max(input.eventCount - input.sampledHighlights.length, 0),
-    summary: input.summary
-      ? {
-        durationMs: input.summary.durationMs,
-        iterationCount: input.summary.iterationCount,
-        nodeCount: input.summary.nodeCount,
-        edgeCount: input.summary.edgeCount,
-        hottestNodes,
-      }
-      : null,
-    highlights: input.sampledHighlights.slice(0, RUNTIME_PROFILE_HIGHLIGHT_LIMIT),
-    nodeSpans: input.nodeSpans,
-  };
-};
-
-const computeDownstreamNodes = (
-  edges: Edge[],
-  startNodes: Set<string>
-): Set<string> => {
-  const adjacency = new Map<string, Set<string>>();
-  edges.forEach((edge: Edge) => {
-    if (!edge.from || !edge.to) return;
-    const set = adjacency.get(edge.from) ?? new Set<string>();
-    set.add(edge.to);
-    adjacency.set(edge.from, set);
-  });
-  const queue = Array.from(startNodes);
-  const visited = new Set<string>(startNodes);
-  while (queue.length > 0) {
-    const current = queue.shift();
-    if (!current) continue;
-    const next = adjacency.get(current);
-    if (!next) continue;
-    next.forEach((nodeId: string) => {
-      if (visited.has(nodeId)) return;
-      visited.add(nodeId);
-      queue.push(nodeId);
-    });
-  }
-  return visited;
-};
-
-const resolveTriggerNodeId = (
-  nodes: AiNode[],
-  edges: Edge[],
-  triggerEvent?: string | null,
-  explicit?: string | null
-): string | undefined => {
-  if (explicit && nodes.some((node: AiNode) => node.id === explicit)) return explicit;
-  const triggerNodes = nodes.filter((node: AiNode) => node.type === 'trigger');
-  if (triggerNodes.length === 0) return undefined;
-  const matching = triggerEvent
-    ? triggerNodes.filter(
-      (node: AiNode) => (node.config?.trigger?.event ?? '').trim() === triggerEvent
-    )
-    : triggerNodes;
-  const candidates = matching.length > 0 ? matching : triggerNodes;
-  const connected = candidates.find((node: AiNode) =>
-    edges.some((edge: Edge) => edge.from === node.id || edge.to === node.id)
-  );
-  return connected?.id ?? candidates[0]?.id;
-};
-
-const buildSkipSet = (
-  run: AiPathRunRecord,
-  edges: Edge[],
-  nodeStatusMap: Map<string, string>
-): Set<string> => {
-  const meta = (run.meta ?? {}) as {
-    resumeMode?: string;
-    retryNodeIds?: string[];
-  };
-  const mode = meta.resumeMode ?? 'replay';
-  if (mode === 'replay') return new Set<string>();
-
-  const completed = new Set(
-    Array.from(nodeStatusMap.entries())
-      .filter(
-        ([, status]: [string, string]) =>
-          status === 'completed' || status === 'cached'
-      )
-      .map(([nodeId]: [string, string]) => nodeId)
-  );
-  if (mode === 'resume') {
-    const failedNodes = new Set(
-      Array.from(nodeStatusMap.entries())
-        .filter(([, status]: [string, string]) => status === 'failed')
-        .map(([nodeId]: [string, string]) => nodeId)
-    );
-    if (failedNodes.size === 0) {
-      return completed;
-    }
-    const affected = computeDownstreamNodes(edges, failedNodes);
-    return new Set(Array.from(completed).filter((nodeId: string) => !affected.has(nodeId)));
-  }
-  if (mode === 'retry') {
-    const retryNodes = new Set(meta.retryNodeIds ?? []);
-    const affected = computeDownstreamNodes(edges, retryNodes);
-    return new Set(Array.from(completed).filter((nodeId: string) => !affected.has(nodeId)));
-  }
-  return new Set<string>();
-};
+import {
+  buildRuntimeProfileSnapshot,
+  buildSkipSet,
+  computeDurationMs,
+  mergeRuntimePortMaps,
+  resolveTriggerNodeId,
+  sanitizeRuntimeState,
+  shouldCaptureRuntimeProfileHighlight,
+  toRuntimeLifecycleStatus,
+  toRuntimeProfileHighlight,
+} from './path-run-executor.logic';
+import type {
+  RuntimeProfileHighlight,
+  RuntimeProfileNodeSpan,
+  RuntimeProfileNodeSpanStatus,
+  RuntimeProfileSnapshot,
+} from './path-run-executor.types';
 
 export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
   let repo;
@@ -686,7 +402,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
 
   const runMetaRecord =
     run.meta && typeof run.meta === 'object'
-      ? run.meta
+      ? run.meta as any
       : null;
   const runMetaWithRuntimeFingerprint = withRuntimeFingerprintMeta(
     runMetaRecord
@@ -865,8 +581,7 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       seedHistory: runtimeState.history,
       seedRunId: runtimeState.runId ?? undefined,
       seedRunStartedAt: runtimeState.runStartedAt ?? undefined,
-      recordHistory: true,      historyLimit: resolvedHistoryLimit,
-      skipNodeIds: skipNodes,
+      recordHistory: true,      historyLimit: resolvedHistoryLimit,      skipNodeIds: skipNodes,
       fetchEntityByType,
       reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {
         void reportAiPathsError(error, meta, summary);
@@ -1114,6 +829,60 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           });
         } catch (error) {
           void ErrorSystem.logWarning(`onNodeFinish failed for node ${node.id}`, {
+            service: 'ai-paths-executor',
+            error,
+            runId: run.id,
+            nodeId: node.id,
+          });
+        }
+      },
+      onNodeBlocked: async ({ node, reason, waitingOnPorts }) => {
+        try {
+          const attempt = nodeAttemptMap.get(node.id) ?? 0;
+          const nodeSpanId = `${node.id}:${attempt}:blocked`;
+          
+          await Promise.all([
+            repo.upsertRunNode(run.id, node.id, {
+              nodeType: node.type,
+              nodeTitle: node.title ?? null,
+              status: 'blocked',
+              attempt,
+              errorMessage: `Node blocked: ${reason}`,
+            }),
+            repo.createRunEvent({
+              runId: run.id,
+              level: 'warn',
+              message: `Node ${node.title ?? node.id} blocked: ${reason}.`,
+              metadata: {
+                traceId,
+                spanId: nodeSpanId,
+                nodeId: node.id,
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                status: 'blocked',
+                reason,
+                waitingOnPorts,
+                attempt,
+              },
+            }),
+          ]);
+          await recordRuntimeNodeStatus({
+            runId: run.id,
+            nodeId: node.id,
+            status: 'blocked',
+          });
+          publishRunUpdate(run.id, 'nodes', {
+            traceId,
+            spanId: nodeSpanId,
+            nodeId: node.id,
+            nodeType: node.type,
+            nodeTitle: node.title ?? null,
+            status: 'blocked',
+            reason,
+            waitingOnPorts,
+          });
+        } catch (error) {
+          void ErrorSystem.logWarning(`onNodeBlocked failed for node ${node.id}`, {
             service: 'ai-paths-executor',
             error,
             runId: run.id,

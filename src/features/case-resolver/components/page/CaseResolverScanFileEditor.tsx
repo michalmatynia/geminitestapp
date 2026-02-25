@@ -14,7 +14,7 @@ import {
   Settings2,
   X,
 } from 'lucide-react';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import {
   encodeFilemakerPartyReference,
@@ -99,6 +99,17 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
     isUploadingScanDraftFiles,
   } = state;
 
+  const draftId = editingDocumentDraft?.id ?? null;
+  const originalFile = useMemo(
+    () => (draftId ? (workspace.files.find((f) => f.id === draftId) ?? null) : null),
+    [workspace.files, draftId]
+  );
+  const relatedFiles = useMemo(() => {
+    const ids = new Set(originalFile?.relatedFileIds ?? []);
+    if (ids.size === 0) return [];
+    return workspace.files.filter((file) => ids.has(file.id));
+  }, [originalFile?.relatedFileIds, workspace.files]);
+
   if (editingDocumentDraft?.fileType !== 'scanfile') return null;
   const draft = editingDocumentDraft;
 
@@ -110,12 +121,6 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
 
   const createdAtLabel = draft.createdAt ? formatHistoryTimestamp(draft.createdAt) : 'Unknown';
   const updatedAtLabel = draft.updatedAt ? formatHistoryTimestamp(draft.updatedAt) : 'Unknown';
-
-  const originalFile = workspace.files.find((f) => f.id === draft.id);
-  const draftRelatedFileIds = originalFile?.relatedFileIds;
-  const relatedFiles = workspace.files.filter((file) =>
-    (draftRelatedFileIds ?? []).includes(file.id)
-  );
 
   return (
     <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-auto pr-1'>

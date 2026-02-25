@@ -280,9 +280,6 @@ const buildRunWhere = (options: AiPathRunListOptions = {}): Prisma.AiPathRunWher
 
 export const prismaPathRunRepository: AiPathRunRepository = {
   async createRun(input: AiPathRunCreateInput): Promise<AiPathRunRecord> {
-    if (!prisma?.aiPathRun) {
-      console.error('[DEBUG] PRISMA MOCK IS INVALID:', { prisma: typeof prisma, aiPathRun: prisma ? typeof (prisma as any).aiPathRun : 'n/a' });
-    }
     const run = await prisma.aiPathRun.create({
       data: {
         userId: input.userId ?? null,

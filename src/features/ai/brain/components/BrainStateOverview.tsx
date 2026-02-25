@@ -18,7 +18,7 @@ export function BrainStateOverview(): React.JSX.Element {
   const brain = useBrain();
   const settingsQuery = useSettingsMap();
 
-  const insightsData = brain.insightsQuery.data as InsightsSnapshot | undefined;
+  const insightsData = brain.insightsQuery.data;
   const latestLogsInsight = insightsData?.logs?.[0];
 
   return (

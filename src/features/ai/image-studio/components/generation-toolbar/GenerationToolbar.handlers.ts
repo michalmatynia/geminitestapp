@@ -25,6 +25,7 @@ import {
   withAutoScalerRetry,
   isClientCenterCrossOriginError,
   isCenterAbortError,
+  isAutoScalerAbortError,
   autoScaleCanvasImageObject,
   hasCanvasOverflowFromImageFrame,
   type ImageContentFrame,
@@ -39,10 +40,8 @@ import {
   type ImageStudioCenterMode,
 } from '../../contracts/center';
 import {
-  imageStudioAutoScalerRequestSchema,
   imageStudioAutoScalerResponseSchema,
   type ImageStudioAutoScalerResponse,
-  type ImageStudioAutoScalerMode,
 } from '../../contracts/autoscaler';
 import { createGenerationToolbarActionHandlers } from './generation-toolbar-action-handlers';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
@@ -73,7 +72,9 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     setSelectedSlotId,
     setWorkingSlotId,
     setMaskShapes,
+    setTool,
     setActiveMaskId,
+    activeMaskId,
     setCanvasSelectionEnabled,
     toast,
     queryClient,
@@ -83,8 +84,6 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     cropMode,
     centerMode,
     autoScaleMode,
-    setCenterLayoutPresetDraftName,
-    setCenterLayoutCustomPresets,
     queuedAnalysisRunTarget,
     setQueuedAnalysisRunTarget,
     upscaleScale,
@@ -95,11 +94,9 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     setUpscaleStatus,
     centerBusy,
     setCenterBusy,
-    centerStatus,
     setCenterStatus,
     autoScaleBusy,
     setAutoScaleBusy,
-    autoScaleStatus,
     setAutoScaleStatus,
     setCropBusy,
     setCropStatus,
@@ -117,13 +114,13 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     workingSlotImageSrc,
     clientProcessingImageSrc,
     workingSourceSignature,
-    activeProjectId,
     projectCanvasSize,
     getPreviewCanvasViewportCrop,
     getPreviewCanvasImageFrame,
-    centerLayoutPayload,
-    autoScaleLayoutPayload,
   } = state;
+
+  const centerLayoutPayload = undefined;
+  const autoScaleLayoutPayload = undefined;
 
   const resolveWorkingSlotImageContentFrame = useCallback((): ImageContentFrame | null => {
     const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
@@ -323,7 +320,10 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
         masks: payloadMasks,
       });
 
-      void invalidateImageStudioSlots(queryClient, projectId);
+      const normalizedProjectId = projectId?.trim() ?? '';
+      if (normalizedProjectId) {
+        void invalidateImageStudioSlots(queryClient, normalizedProjectId);
+      }
 
       toast('Attached linked mask slots.', { variant: 'success' });
     } catch (error) {

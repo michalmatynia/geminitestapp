@@ -41,7 +41,7 @@ export interface CaseListNodeItemProps {
   FolderOpenIcon: any;
 }
 
-export function CaseListNodeItem({
+export const CaseListNodeItem = React.memo(function CaseListNodeItem({
   node,
   depth,
   hasChildren,
@@ -313,4 +313,4 @@ export function CaseListNodeItem({
       ) : null}
     </div>
   );
-}
+});

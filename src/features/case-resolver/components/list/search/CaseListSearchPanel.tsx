@@ -10,7 +10,7 @@ import {
   Lock,
   ScanText,
 } from 'lucide-react';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
@@ -188,6 +188,9 @@ export function CaseListSearchPanel({
     query,
   );
 
+  const entriesRef = useRef(entries);
+  entriesRef.current = entries;
+
   const [expandedCaseIds, setExpandedCaseIds] = useState<Set<string>>(
     () => new Set(),
   );
@@ -205,8 +208,8 @@ export function CaseListSearchPanel({
   }, []);
 
   const expandAll = useCallback((): void => {
-    setExpandedCaseIds(new Set(entries.map((e) => e.caseFile.id)));
-  }, [entries]);
+    setExpandedCaseIds(new Set(entriesRef.current.map((e) => e.caseFile.id)));
+  }, []);
 
   const collapseAll = useCallback((): void => {
     setExpandedCaseIds(new Set());

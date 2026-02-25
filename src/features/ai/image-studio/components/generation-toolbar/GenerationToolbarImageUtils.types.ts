@@ -37,6 +37,7 @@ export type CropCanvasContext = {
   canvasWidth: number;
   canvasHeight: number;
   imageFrame: ImageContentFrame;
+  imageContentFrame?: ImageContentFrame;
 };
 
 export type CropRectResolutionDiagnostics = {

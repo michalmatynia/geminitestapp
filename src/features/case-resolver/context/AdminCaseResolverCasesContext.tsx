@@ -388,7 +388,8 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
       .map((folder) => ({ value: folder, label: folder }));
   }, [workspace.files]);
 
-  const value: AdminCaseResolverCasesContextValue = {
+  const isLoading = settingsStore.isLoading;
+  const value = useMemo((): AdminCaseResolverCasesContextValue => ({
     workspace,
     caseDraft,
     isCreatingCase,
@@ -473,8 +474,38 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     caseReferenceOptions,
     caseIdentifierOptions,
     folderOptions,
-    isLoading: settingsStore.isLoading,
-  };
+    isLoading,
+  }), [
+    workspace, caseDraft, isCreatingCase, isCreateCaseModalOpen, editingCaseId,
+    editingCaseName, editingCaseParentId, editingCaseReferenceCaseIds,
+    editingCaseTagId, editingCaseCaseIdentifierId, editingCaseCategoryId,
+    pendingCaseIdentifierIds, collapsedCaseIds, heldCaseId,
+    caseSearchQuery, caseSearchScope, caseFileTypeFilter,
+    caseFilterTagIds, caseFilterCaseIdentifierIds, caseFilterCategoryIds,
+    caseFilterFolder, caseFilterStatus, caseFilterLocked, caseFilterSent,
+    caseFilterHierarchy, caseFilterReferences,
+    caseSortBy, caseSortOrder, caseViewMode, caseFilterPanelDefaultExpanded,
+    didHydrateCaseListViewDefaults, confirmation,
+    setWorkspace, setCaseDraft, setIsCreateCaseModalOpen, setEditingCaseId,
+    setEditingCaseName, setEditingCaseParentId, setEditingCaseReferenceCaseIds,
+    setEditingCaseTagId, setEditingCaseCaseIdentifierId, setEditingCaseCategoryId,
+    setPendingCaseIdentifierIds, setCollapsedCaseIds, setHeldCaseId,
+    setCaseSearchQuery, setCaseSearchScope, setCaseFileTypeFilter,
+    setCaseFilterTagIds, setCaseFilterCaseIdentifierIds, setCaseFilterCategoryIds,
+    setCaseFilterFolder, setCaseFilterStatus, setCaseFilterLocked, setCaseFilterSent,
+    setCaseFilterHierarchy, setCaseFilterReferences,
+    setCaseSortBy, setCaseSortOrder, setCaseViewMode, setCaseFilterPanelDefaultExpanded,
+    setConfirmation,
+    handleCreateCase, handleUpdateCase, handleDeleteCase,
+    handleToggleCaseCollapse, handleToggleHeldCase, handleClearHeldCase,
+    handleMoveCase, handleReorderCase, handleRenameCase,
+    handleToggleCaseStatus, handleSaveCaseDraft, handleRefreshWorkspace,
+    handleSaveListViewDefaults,
+    caseResolverTags, caseResolverIdentifiers, caseResolverCategories,
+    caseResolverTagOptions, caseResolverCategoryOptions,
+    parentCaseOptions, caseReferenceOptions, caseIdentifierOptions, folderOptions,
+    isLoading,
+  ]);
 
   return (
     <AdminCaseResolverCasesContext.Provider value={value}>

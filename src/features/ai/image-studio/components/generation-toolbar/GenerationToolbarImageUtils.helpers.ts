@@ -1,3 +1,4 @@
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   type ImageContentFrame,
 } from './GenerationToolbarImageUtils.types';
@@ -47,6 +48,36 @@ export const normalizeImageContentFrame = (
   }
   if (frame.width <= 0 || frame.height <= 0) return null;
   return frame;
+};
+
+const normalizeLocalImageSource = (value: string | null | undefined): string | null => {
+  const normalized = value?.trim() ?? '';
+  if (!normalized) return null;
+  if (
+    normalized.startsWith('data:') ||
+    normalized.startsWith('blob:') ||
+    /^https?:\/\//i.test(normalized)
+  ) {
+    return normalized;
+  }
+  const normalizedPath = normalized.replace(/\\/g, '/').replace(/^\/+/, '');
+  return normalizedPath ? `/${normalizedPath}` : null;
+};
+
+export const resolveClientProcessingImageSrc = (
+  slot: ImageStudioSlotRecord | null | undefined,
+  fallbackSrc: string | null
+): string | null => {
+  const inlineBase64 = normalizeLocalImageSource(slot?.imageBase64 ?? null);
+  if (inlineBase64) return inlineBase64;
+
+  const localFilepath = normalizeLocalImageSource(slot?.imageFile?.filepath ?? null);
+  if (localFilepath) return localFilepath;
+
+  const localUrl = normalizeLocalImageSource(slot?.imageUrl ?? null);
+  if (localUrl) return localUrl;
+
+  return fallbackSrc;
 };
 
 export const loadImageElement = (src: string): Promise<HTMLImageElement> =>

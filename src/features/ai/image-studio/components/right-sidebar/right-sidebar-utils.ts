@@ -1,4 +1,4 @@
-import { type CanvasResizeDirection } from '../utils/canvas-resize';
+import { type CanvasResizeDirection } from '../../utils/canvas-resize';
 import type { VectorShape, VectorTool } from '@/features/vector-drawing';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 

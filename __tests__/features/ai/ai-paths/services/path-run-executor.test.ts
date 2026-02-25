@@ -26,12 +26,12 @@ describe('PathRunExecutor', () => {
     await prisma.aiPathRunEvent.deleteMany();
     await prisma.aiPathRunNode.deleteMany();
     await prisma.aiPathRun.deleteMany();
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   const mockNodes: AiNode[] = [
     {
-      id: 'node-1',
+      id: 'node-111111111111111111111111',
       type: 'constant',
       title: 'Const',
       description: '',

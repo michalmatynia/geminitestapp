@@ -154,6 +154,10 @@ export function useAdminCaseResolverCasesActions({
           typeof caseDraft.documentDate === 'string'
             ? caseDraft.documentDate
             : caseDraft.documentDate ?? null,
+        happeningDate:
+          typeof caseDraft.happeningDate === 'string'
+            ? caseDraft.happeningDate
+            : null,
         activeDocumentVersion:
           caseDraft.activeDocumentVersion === 'exploded'
             ? 'exploded'
@@ -331,6 +335,12 @@ export function useAdminCaseResolverCasesActions({
           ? caseDraft.documentDate
           : caseDraft.documentDate ?? null
         : existingCase.documentDate ?? null;
+    const resolvedHappeningDate =
+      caseDraft.happeningDate !== undefined
+        ? typeof caseDraft.happeningDate === 'string'
+          ? caseDraft.happeningDate
+          : null
+        : existingCase.happeningDate ?? null;
     const resolvedDocumentVersion =
       caseDraft.activeDocumentVersion === 'exploded' ||
       caseDraft.activeDocumentVersion === 'original'
@@ -379,6 +389,7 @@ export function useAdminCaseResolverCasesActions({
             documentContent: resolvedDocumentContent,
             documentCity: resolvedDocumentCity,
             documentDate: resolvedDocumentDate,
+            happeningDate: resolvedHappeningDate,
             activeDocumentVersion: resolvedDocumentVersion,
             isLocked: resolvedIsLocked,
             isSent: resolvedIsSent,

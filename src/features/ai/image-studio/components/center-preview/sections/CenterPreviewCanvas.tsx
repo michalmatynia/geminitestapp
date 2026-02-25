@@ -31,8 +31,8 @@ export interface CenterPreviewCanvasProps {
   isCompositeSlot: boolean;
   canNavigateToSource: boolean;
   canRevealLoadedCardInTree: boolean;
-  handlePreviewCanvasCropRectChange: (rect: PreviewCanvasCropRect) => void;
-  handlePreviewCanvasImageFrameChange: (frame: PreviewCanvasImageContentFrame) => void;
+  handlePreviewCanvasCropRectChange: (rect: PreviewCanvasCropRect | null) => void;
+  handlePreviewCanvasImageFrameChange: (frame: PreviewCanvasImageContentFrame | null) => void;
   handleGoToSourceSlot: () => void;
   handleToggleSourceVariantView: () => void;
   handleToggleSplitVariantView: () => void;
@@ -101,30 +101,31 @@ export function CenterPreviewCanvas({
           <div className={previewCanvasClassName}>
             <VectorDrawingCanvas
               shapes={liveMaskShapes}
-              imageSrc={activeCanvasImageSrc}
-              canvasSize={projectCanvasSize ?? { width: 1024, height: 1024 }}
+              src={activeCanvasImageSrc}
+              baseCanvasWidthPx={projectCanvasSize?.width ?? 1024}
+              baseCanvasHeightPx={projectCanvasSize?.height ?? 1024}
               maskPreviewEnabled={maskPreviewEnabled}
-              maskInvert={maskInvert}
-              maskFeather={maskFeather}
-              centerGuidesEnabled={centerGuidesEnabled}
+              maskPreviewInvert={maskInvert}
+              maskPreviewFeather={maskFeather}
+              showCenterGuides={centerGuidesEnabled}
               selectionEnabled={canvasSelectionEnabled}
-              transformMode={imageTransformMode}
+              imageMoveEnabled={imageTransformMode === 'move'}
               imageOffset={canvasImageOffset}
               onImageOffsetChange={(offset) => { setCanvasImageOffset(offset); }}
               backgroundLayerEnabled={canvasBackgroundLayerEnabled}
               backgroundColor={canvasBackgroundColor}
-              onCropRectChange={handlePreviewCanvasCropRectChange}
-              onImageFrameChange={handlePreviewCanvasImageFrameChange}
+              onViewCropRectChange={handlePreviewCanvasCropRectChange}
+              onImageContentFrameChange={handlePreviewCanvasImageFrameChange}
             />
           </div>
         )}
 
         <div className='absolute bottom-4 left-4 z-30'>
           <SplitViewControls
-            splitView={splitVariantView}
             canCompare={canCompareSelectedVariants || canCompareWithSource}
-            onToggleSplit={handleToggleSplitVariantView}
-            onToggleSource={handleToggleSourceVariantView}
+            onGoToSourceSlot={handleGoToSourceSlot}
+            onToggleSourceVariantView={handleToggleSourceVariantView}
+            onToggleSplitVariantView={handleToggleSplitVariantView}
           />
         </div>
 
@@ -155,7 +156,7 @@ export function CenterPreviewCanvas({
         {isCompositeSlot && compositeLoading && (
           <div className='absolute inset-0 z-40 flex items-center justify-center bg-black/20 backdrop-blur-[2px]'>
             <div className='flex flex-col items-center gap-3 rounded-lg bg-slate-900/80 p-6 border border-white/10 shadow-2xl'>
-              <LoadingState size='md' color='emerald' />
+              <LoadingState size='md' message='' className='p-0' />
               <div className='text-xs font-medium text-emerald-200 uppercase tracking-widest'>Compositing...</div>
             </div>
           </div>

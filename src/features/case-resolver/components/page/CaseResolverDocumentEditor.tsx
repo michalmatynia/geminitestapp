@@ -25,9 +25,6 @@ import {
   decodeFilemakerPartyReference,
 } from '@/features/filemaker/settings';
 import {
-  type CaseResolverDocumentHistoryEntry,
-} from '@/shared/contracts/case-resolver';
-import {
   Badge,
   Button,
   Card,
@@ -45,6 +42,7 @@ import {
   resolvePromptExploderTransferStatusLabel,
   type PromptExploderTransferUiStatus
 } from '../../hooks/prompt-exploder-transfer-lifecycle';
+import { CaseResolverHistoryEntries } from './CaseResolverHistoryEntries';
 
 export type EditorDetailsTab = 'document' | 'relations' | 'metadata' | 'revisions';
 
@@ -527,41 +525,12 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
           </TabsContent>
 
           <TabsContent value='revisions' className='m-0'>
-            <div className='rounded-lg border border-border/40 bg-card/20 overflow-hidden'>
-              {(editingDocumentDraft.documentHistory || []).length === 0 ? (
-                <div className='p-12 text-center'>
-                  <History className='mx-auto mb-3 size-8 text-gray-700' />
-                  <div className='text-xs text-gray-500'>No version history available.</div>
-                </div>
-              ) : (
-                <div className='max-h-[600px] overflow-auto'>
-                  {(editingDocumentDraft.documentHistory || []).map((entry: CaseResolverDocumentHistoryEntry, idx: number) => (
-                    <div key={entry.id || idx} className='group flex items-center justify-between p-4 hover:bg-white/5 transition-colors'>
-                      <div className='flex items-center gap-4'>
-                        <div className='flex size-10 items-center justify-center rounded-full bg-blue-500/10 text-blue-400'>
-                          <History className='size-5' />
-                        </div>
-                        <div>
-                          <div className='text-sm font-medium text-gray-200'>{formatHistoryTimestamp(entry.savedAt)}</div>
-                          <div className='text-[11px] text-gray-500 uppercase tracking-wider'>
-                            {entry.editorType} <span className='mx-1 opacity-30'>•</span> Version {entry.documentContentVersion}
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        className='h-8 opacity-0 group-hover:opacity-100 transition-opacity'
-                        onClick={() => handleUseHistoryEntry(entry)}
-                        disabled={isEditingDocumentLocked}
-                      >
-                        Restore
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            <CaseResolverHistoryEntries
+              entries={editingDocumentDraft.documentHistory || []}
+              formatTimestamp={formatHistoryTimestamp}
+              onRestore={handleUseHistoryEntry}
+              isRestoreDisabled={isEditingDocumentLocked}
+            />
           </TabsContent>
         </div>
       </Tabs>

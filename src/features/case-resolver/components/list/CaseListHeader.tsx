@@ -4,6 +4,7 @@ import { PlusIcon } from 'lucide-react';
 import { memo, type ReactNode } from 'react';
 
 import { Breadcrumbs, Button, Pagination } from '@/shared/ui';
+import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
 
 type CaseListHeaderProps = {
   filtersContent: ReactNode;
@@ -15,6 +16,8 @@ type CaseListHeaderProps = {
   onPageChange: (page: number) => void;
   pageSize: number;
   onPageSizeChange: (pageSize: number) => void;
+  searchQuery?: string | undefined;
+  onSearchChange?: ((q: string) => void) | undefined;
 };
 
 export const CaseListHeader = memo(function CaseListHeader({
@@ -27,6 +30,8 @@ export const CaseListHeader = memo(function CaseListHeader({
   onPageChange,
   pageSize,
   onPageSizeChange,
+  searchQuery,
+  onSearchChange,
 }: CaseListHeaderProps): React.JSX.Element {
   const renderCreateActions = (): React.JSX.Element => (
     <div className='flex flex-wrap items-center gap-2'>
@@ -58,6 +63,17 @@ export const CaseListHeader = memo(function CaseListHeader({
     />
   );
 
+  const renderSearchBar = (): React.JSX.Element | null => {
+    if (!onSearchChange) return null;
+    return (
+      <FolderTreeSearchBar
+        value={searchQuery ?? ''}
+        onChange={onSearchChange}
+        placeholder='Search cases & files…'
+      />
+    );
+  };
+
   return (
     <div className='space-y-4'>
       <div className='space-y-3 lg:hidden'>
@@ -77,6 +93,7 @@ export const CaseListHeader = memo(function CaseListHeader({
           <div className='flex justify-center'>
             {renderPaginationControl()}
           </div>
+          {renderSearchBar()}
           <div className='w-full'>
             {filtersContent}
           </div>
@@ -100,6 +117,7 @@ export const CaseListHeader = memo(function CaseListHeader({
           {renderPaginationControl()}
         </div>
         <div className='flex w-full flex-col gap-3 pt-1'>
+          {renderSearchBar()}
           <div className='w-full'>
             {filtersContent}
           </div>

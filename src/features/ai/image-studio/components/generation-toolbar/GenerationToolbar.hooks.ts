@@ -13,6 +13,7 @@ import {
 } from '@/features/products/constants';
 import {
   buildImageStudioAnalysisSourceSignature,
+  type ImageStudioAnalysisSharedLayout,
 } from '../../utils/analysis-bridge';
 import { getImageStudioSlotImageSrc } from '../../utils/image-src';
 import {
@@ -175,6 +176,62 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     toolbarContext.setCenterLayoutChromaThreshold(String(persistedDefaults.chromaThreshold));
   }, [activeProjectId, toolbarContext]);
 
+  const normalizeAnalysisPercentString = (value: number, fallback: number): string => {
+    const numeric = Number.isFinite(value) ? value : fallback;
+    const clamped = Math.max(0, Math.min(40, numeric));
+    const rounded = Number(clamped.toFixed(2));
+    return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+  };
+
+  const applyAnalysisLayoutToCenter = (
+    layout: ImageStudioAnalysisSharedLayout,
+    mode: 'auto' | 'manual'
+  ): void => {
+    toolbarContext.setCenterLayoutSplitAxes(Boolean(layout.splitAxes));
+    toolbarContext.setCenterLayoutPadding(
+      normalizeAnalysisPercentString(layout.paddingPercent, 8)
+    );
+    toolbarContext.setCenterLayoutPaddingX(
+      normalizeAnalysisPercentString(layout.paddingXPercent, layout.paddingPercent)
+    );
+    toolbarContext.setCenterLayoutPaddingY(
+      normalizeAnalysisPercentString(layout.paddingYPercent, layout.paddingPercent)
+    );
+    toolbarContext.setCenterLayoutFillMissingCanvasWhite(Boolean(layout.fillMissingCanvasWhite));
+    toolbarContext.setCenterLayoutShadowPolicy(layout.shadowPolicy);
+    toolbarContext.setCenterLayoutDetection(layout.detection);
+    toolbarContext.setCenterLayoutWhiteThreshold(
+      String(Math.round(Number.isFinite(layout.whiteThreshold) ? layout.whiteThreshold : 16))
+    );
+    toolbarContext.setCenterLayoutChromaThreshold(
+      String(Math.round(Number.isFinite(layout.chromaThreshold) ? layout.chromaThreshold : 10))
+    );
+    if (mode === 'auto') {
+      toolbarContext.setQueuedAnalysisRunTarget('object_layout');
+    }
+  };
+
+  const applyAnalysisLayoutToAutoScaler = (
+    layout: ImageStudioAnalysisSharedLayout,
+    mode: 'auto' | 'manual'
+  ): void => {
+    toolbarContext.setAutoScaleLayoutSplitAxes(Boolean(layout.splitAxes));
+    toolbarContext.setAutoScaleLayoutPadding(
+      normalizeAnalysisPercentString(layout.paddingPercent, 8)
+    );
+    toolbarContext.setAutoScaleLayoutPaddingX(
+      normalizeAnalysisPercentString(layout.paddingXPercent, layout.paddingPercent)
+    );
+    toolbarContext.setAutoScaleLayoutPaddingY(
+      normalizeAnalysisPercentString(layout.paddingYPercent, layout.paddingPercent)
+    );
+    toolbarContext.setAutoScaleLayoutFillMissingCanvasWhite(Boolean(layout.fillMissingCanvasWhite));
+    toolbarContext.setAutoScaleLayoutShadowPolicy(layout.shadowPolicy);
+    if (mode === 'auto') {
+      toolbarContext.setQueuedAnalysisRunTarget('auto_scaler');
+    }
+  };
+
   return {
     ...toolbarContext,
     maskPreviewEnabled,
@@ -200,7 +257,9 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     setActiveMaskId,
     setMaskInvert,
     setMaskGenMode: (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges') => setMaskGenMode(mode),
-    handleAiMaskGeneration: (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges') => handleAiMaskGeneration(mode),
+    handleAiMaskGeneration: async (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges'): Promise<void> => {
+      handleAiMaskGeneration(mode);
+    },
     studioSettings,
     setStudioSettings,
     toast: (message: string, options?: ToastOptions) => { toast(message, options); },
@@ -226,5 +285,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     workingSourceSignature,
     activeProjectId,
     projectCanvasSize,
+    applyAnalysisLayoutToCenter,
+    applyAnalysisLayoutToAutoScaler,
   };
 }

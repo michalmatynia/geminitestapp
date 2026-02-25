@@ -9,6 +9,28 @@ process.env['APP_DB_PROVIDER'] = "prisma";
 process.env['MONGODB_URI'] = "mongodb://localhost:27017/test";
 process.env['MONGODB_DB'] = "test";
 
+vi.mock("@/shared/lib/db/mongo-client", () => {
+  const mockDb = {
+    collection: vi.fn().mockReturnThis(),
+    findOne: vi.fn().mockResolvedValue(null),
+    find: vi.fn().mockReturnThis(),
+    toArray: vi.fn().mockResolvedValue([]),
+    insertOne: vi.fn().mockResolvedValue({ acknowledged: true }),
+    updateOne: vi.fn().mockResolvedValue({ acknowledged: true }),
+    deleteMany: vi.fn().mockResolvedValue({ acknowledged: true }),
+    createIndex: vi.fn().mockResolvedValue('index-name'),
+  };
+  const mockClient = {
+    connect: vi.fn().mockReturnThis(),
+    db: vi.fn().mockReturnValue(mockDb),
+    close: vi.fn().mockResolvedValue(undefined),
+  };
+  return {
+    getMongoClient: vi.fn().mockResolvedValue(mockClient),
+    getMongoDb: vi.fn().mockResolvedValue(mockDb),
+  };
+});
+
 vi.mock("@/shared/lib/db/prisma");
 
 vi.mock("@/shared/lib/db/app-db-provider", () => ({

@@ -178,6 +178,12 @@ function AdminCaseResolverCasesInner(): React.JSX.Element {
         },
       },
       {
+        key: 'happeningDate',
+        label: 'Happening Date',
+        type: 'text',
+        placeholder: 'Optional happening date (e.g. 2026-02-25)',
+      },
+      {
         key: 'isLocked',
         label: 'Lock Case',
         type: 'switch',
@@ -241,6 +247,7 @@ function AdminCaseResolverCasesInner(): React.JSX.Element {
           documentContent: caseDraft.documentContent ?? '',
           documentCity: caseDraft.documentCity ?? '',
           documentDate: caseDraft.documentDate ?? null,
+          happeningDate: caseDraft.happeningDate ?? '',
           isLocked: caseDraft.isLocked === true,
           isSent: caseDraft.isSent === true,
           activeDocumentVersion: caseDraft.activeDocumentVersion ?? 'original',

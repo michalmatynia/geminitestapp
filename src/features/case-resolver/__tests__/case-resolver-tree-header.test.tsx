@@ -77,7 +77,7 @@ describe('CaseResolverTreeHeader', () => {
   });
 
   it('shows nested folders/files switch in active case and toggles child scope visibility', () => {
-    render(<CaseResolverTreeHeader />);
+    render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
     expect(screen.getByText('Show nested folders and files')).toBeInTheDocument();
     expect(screen.getByText('2 child cases')).toBeInTheDocument();
@@ -91,7 +91,7 @@ describe('CaseResolverTreeHeader', () => {
     folderTreeContext.activeCaseChildCount = 0;
     pageContext.activeCaseId = 'case-a';
 
-    render(<CaseResolverTreeHeader />);
+    render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
     expect(screen.getByText('Show nested folders and files')).toBeInTheDocument();
   });
@@ -101,7 +101,7 @@ describe('CaseResolverTreeHeader', () => {
     pageContext.requestedCaseIssue = 'requested_file_missing';
     pageContext.canCreateInActiveCase = false;
 
-    render(<CaseResolverTreeHeader />);
+    render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
     expect(
       screen.getByText('Requested case context was not found. Retry or reset context.'),
@@ -119,7 +119,7 @@ describe('CaseResolverTreeHeader', () => {
     pageContext.requestedCaseIssue = 'workspace_unavailable';
     pageContext.canCreateInActiveCase = false;
 
-    render(<CaseResolverTreeHeader />);
+    render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
     const createButtons = screen.getAllByTitle('Case context unavailable.');
     expect(createButtons).toHaveLength(4);
@@ -133,7 +133,7 @@ describe('CaseResolverTreeHeader', () => {
     pageContext.requestedCaseIssue = null;
     pageContext.canCreateInActiveCase = false;
 
-    render(<CaseResolverTreeHeader />);
+    render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);
 
     const createButtons = screen.getAllByTitle('Loading case context...');
     expect(createButtons).toHaveLength(4);

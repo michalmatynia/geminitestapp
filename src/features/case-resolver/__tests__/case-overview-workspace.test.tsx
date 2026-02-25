@@ -58,7 +58,14 @@ const renderWorkspace = (
   activeCaseFile: CaseResolverFile | null,
   onUpdateActiveCase = vi.fn()
 ): ReturnType<typeof render> => {
+  const workspaceFiles = activeCaseFile ? [activeCaseFile] : [];
   const contextValue: Partial<CaseResolverPageContextValue> = {
+    workspace: {
+      id: 'workspace-1',
+      files: workspaceFiles,
+      assets: [],
+    } as CaseResolverPageContextValue['workspace'],
+    activeCaseId: activeCaseFile?.id ?? null,
     activeFile: activeCaseFile,
     caseTagOptions: BASE_OPTIONS,
     caseIdentifierOptions: BASE_OPTIONS,
@@ -81,18 +88,31 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
 
     expect(screen.getByText('No case context')).toBeInTheDocument();
     expect(
-      screen.getByText('Select a case in the folder tree to see case-specific options and relations.')
+      screen.getByText('Select a case in the folder tree to see case-specific options.')
     ).toBeInTheDocument();
   });
 
-  it('renders case-specific options and focuses relations graph on the active case', () => {
+  it('renders case-specific options with relations hidden by default', () => {
     const caseFile = buildCaseFile();
 
     renderWorkspace(caseFile);
 
     expect(screen.getByText('Case-specific options')).toBeInTheDocument();
     expect(screen.getByDisplayValue('Case Alpha')).toBeInTheDocument();
+    expect(screen.queryByTestId('relations-workspace')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show Relations' })).toBeInTheDocument();
+  });
+
+  it('toggles relations panel visibility from explicit controls', () => {
+    const caseFile = buildCaseFile();
+
+    renderWorkspace(caseFile);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show Relations' }));
     expect(screen.getByTestId('relations-workspace')).toHaveTextContent(caseFile.id);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Hide Relations' }));
+    expect(screen.queryByTestId('relations-workspace')).not.toBeInTheDocument();
   });
 
   it('updates case name when value changes and input blurs', () => {
@@ -128,5 +148,18 @@ describe('CaseResolverCaseOverviewWorkspace', () => {
 
     expect(screen.getByText('Case Status')).toBeInTheDocument();
     expect(screen.getByText('Pending')).toBeInTheDocument();
+  });
+
+  it('updates happening date when value changes and input blurs', () => {
+    const caseFile = buildCaseFile();
+    const onUpdateActiveCase = vi.fn();
+
+    renderWorkspace(caseFile, onUpdateActiveCase);
+
+    const happeningDateInput = screen.getByPlaceholderText('YYYY-MM-DD or custom date');
+    fireEvent.change(happeningDateInput, { target: { value: '2026-03-12' } });
+    fireEvent.blur(happeningDateInput);
+
+    expect(onUpdateActiveCase).toHaveBeenCalledWith({ happeningDate: '2026-03-12' });
   });
 });

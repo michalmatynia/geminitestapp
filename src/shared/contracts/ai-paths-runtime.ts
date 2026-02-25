@@ -84,7 +84,7 @@ export const aiPathRuntimeEventSchema = z.object({
 
 export type AiPathRuntimeEvent = z.infer<typeof aiPathRuntimeEventSchema>;
 
-export const runStatusSchema = z.enum(['idle', 'running', 'paused', 'stepping']);
+export const runStatusSchema = z.enum(['idle', 'running', 'paused', 'stepping', 'completed', 'failed']);
 export type RunStatus = z.infer<typeof runStatusSchema>;
 export type RunStatusDto = RunStatus;
 

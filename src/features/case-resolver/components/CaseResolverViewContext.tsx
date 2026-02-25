@@ -130,7 +130,7 @@ export type CaseResolverViewContextValue = {
   handleCreateDocumentFromSearch: () => void;
   handleOpenFileFromSearch: (id: string) => void;
   handleEditFileFromSearch: (id: string) => void;
-  handleUpdateActiveCaseMetadata: (patch: Partial<Pick<CaseResolverFile, 'name' | 'parentCaseId' | 'referenceCaseIds' | 'tagId' | 'caseIdentifierId' | 'categoryId' | 'caseStatus'>>) => void;
+  handleUpdateActiveCaseMetadata: (patch: Partial<Pick<CaseResolverFile, 'name' | 'parentCaseId' | 'referenceCaseIds' | 'tagId' | 'caseIdentifierId' | 'categoryId' | 'caseStatus' | 'happeningDate'>>) => void;
   activeCaseFile: CaseResolverFile | null;
 };
 

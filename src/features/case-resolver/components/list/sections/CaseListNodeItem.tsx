@@ -3,7 +3,7 @@
 'use client';
 
 import React from 'react';
-import { GitBranch, Lock } from 'lucide-react';
+import { GitBranch, Lock, Pin } from 'lucide-react';
 import { Button } from '@/shared/ui';
 import { fromCaseResolverCaseNodeId } from '@/features/case-resolver/master-tree';
 import { 
@@ -27,6 +27,12 @@ export interface CaseListNodeItemProps {
   caseCategoryPathById: Map<string, string>;
   controller: any;
   handleToggleCaseStatus: (id: string) => void;
+  heldCaseId: string | null;
+  canNestHeldHere: boolean;
+  canShowNestHeldAction: boolean;
+  nestHeldDisabledReason?: string | null;
+  handleToggleHeldCase: (caseId: string) => void;
+  handleNestHeldCase: (targetCaseId: string) => void;
   handleOpenCase: (id: string) => void;
   handleEditCase: (caseFile: any) => void;
   handleCreateCase: (parentId: string | null) => void;
@@ -51,6 +57,12 @@ export function CaseListNodeItem({
   caseCategoryPathById,
   controller,
   handleToggleCaseStatus,
+  heldCaseId,
+  canNestHeldHere,
+  canShowNestHeldAction,
+  nestHeldDisabledReason,
+  handleToggleHeldCase,
+  handleNestHeldCase,
   handleOpenCase,
   handleEditCase,
   handleCreateCase,
@@ -69,6 +81,7 @@ export function CaseListNodeItem({
     ? (caseIdentifierPathById.get(caseFile.caseIdentifierId) ??
       caseFile.caseIdentifierId)
     : null;
+  const isHeldCase = Boolean(caseFile) && heldCaseId === caseFile.id;
   const isLocked =
     caseFile?.isLocked === true || parseBoolean(node.metadata?.['isLocked']);
   const isStatusToggleDisabled = !caseFile || isLocked;
@@ -170,6 +183,44 @@ export function CaseListNodeItem({
             >
               {caseStatus}
             </button>
+            <button
+              type='button'
+              className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-medium transition ${
+                isHeldCase
+                  ? 'border-cyan-400/60 bg-cyan-500/20 text-cyan-100'
+                  : 'border-cyan-500/30 bg-cyan-500/10 text-cyan-200 hover:border-cyan-400/50 hover:text-cyan-100'
+              }`}
+              onClick={(event): void => {
+                event.preventDefault();
+                event.stopPropagation();
+                if (!caseFile) return;
+                handleToggleHeldCase(caseFile.id);
+              }}
+              title={isHeldCase ? 'Unhold case' : 'Hold case at top'}
+            >
+              <Pin className='size-3' />
+              {isHeldCase ? 'Held' : 'Hold'}
+            </button>
+            {canShowNestHeldAction ? (
+              <button
+                type='button'
+                className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium transition ${
+                  canNestHeldHere
+                    ? 'border-blue-500/40 bg-blue-500/15 text-blue-100 hover:brightness-110'
+                    : 'cursor-not-allowed border-blue-500/20 bg-blue-500/5 text-blue-200/50'
+                }`}
+                disabled={!canNestHeldHere}
+                title={canNestHeldHere ? 'Nest held case here' : (nestHeldDisabledReason ?? 'Cannot nest held case here')}
+                onClick={(event): void => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  if (!caseFile || !canNestHeldHere) return;
+                  handleNestHeldCase(caseFile.id);
+                }}
+              >
+                Nest held here
+              </button>
+            ) : null}
             {caseFile?.tagId ? (
               <span className='max-w-[220px] truncate text-[10px] text-cyan-200/80'>
                 {caseTagPathById.get(caseFile.tagId) ?? caseFile.tagId}

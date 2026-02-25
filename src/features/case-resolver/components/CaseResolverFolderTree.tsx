@@ -8,7 +8,7 @@ import {
   FolderOpen,
   GripVertical,
 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   useMasterFolderTreeInstance,
@@ -19,6 +19,10 @@ import {
   isInternalMasterTreeNode,
   type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
+import {
+  useMasterFolderTreeSearch,
+  MasterFolderTreeSearchResults,
+} from '@/features/foldertree/v2/search';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { FolderTreePanel } from '@/shared/ui';
 import {
@@ -83,6 +87,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
   const { ConfirmationModal } = useConfirm();
   const [pendingNodeCanvasAction, setPendingNodeCanvasAction] =
     useState<PendingNodeCanvasAction | null>(null);
+  const [treeSearchQuery, setTreeSearchQuery] = useState('');
   
   const dragHandleNodeIdRef = React.useRef<string | null>(null);
   const clearDragHandleArming = React.useCallback((): void => {
@@ -118,6 +123,18 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     initiallyExpandedNodeIds: initialExpandedFolderNodeIds,
     adapter,
   });
+
+  const { results: searchResults, isActive: isSearchActive } = useMasterFolderTreeSearch(
+    masterNodes,
+    treeSearchQuery
+  );
+
+  const handleSearchSelect = useCallback(
+    (node: MasterTreeNode): void => {
+      controller.selectNode(node.id);
+    },
+    [controller]
+  );
 
   const canStartTreeDrag = React.useCallback(({ node, event }: { node: MasterTreeNode; event: React.DragEvent<HTMLDivElement> }): boolean => {
     const blockedVirtualSectionNode = isCaseResolverVirtualSectionNode(node);
@@ -277,8 +294,22 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
       className='border-border bg-gray-900'
       bodyClassName='flex min-h-0 flex-1 flex-col'
       masterInstance='case_resolver'
-      header={<CaseResolverTreeHeader />}
+      header={
+        <CaseResolverTreeHeader
+          searchQuery={treeSearchQuery}
+          onSearchChange={setTreeSearchQuery}
+        />
+      }
     >
+      {isSearchActive ? (
+        <div className='min-h-0 flex-1 overflow-auto'>
+          <MasterFolderTreeSearchResults
+            results={searchResults}
+            onSelect={handleSearchSelect}
+            query={treeSearchQuery}
+          />
+        </div>
+      ) : (
       <div className='min-h-0 flex-1 overflow-auto p-2'>
         <FolderTreeViewportV2
           controller={controller}
@@ -432,6 +463,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
           )}
         />
       </div>
+      )}
       <ConfirmationModal />
     </FolderTreePanel>
   );

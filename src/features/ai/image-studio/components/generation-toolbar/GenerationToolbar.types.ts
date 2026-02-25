@@ -1,7 +1,8 @@
-import { type QueryClient } from '@tanstack/react-query';
+import { type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 import React from 'react';
-import { type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import { type ImageStudioProjectRecord, type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { type VectorShape, type VectorToolMode } from '@/shared/contracts/vector';
+import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 import { type ImageStudioSettings } from '../../utils/studio-settings';
 import { type GenerationToolbarContextValue } from './GenerationToolbarContext';
 import {
@@ -21,9 +22,11 @@ export interface GenerationToolbarState extends GenerationToolbarContextValue {
   getPreviewCanvasViewportCrop: () => { slotId: string; cropRect: CropRect } | null;
   getPreviewCanvasImageFrame: () => PreviewCanvasImageFrameBinding | null;
   projectId: string | null;
+  projectsQuery: UseQueryResult<ImageStudioProjectRecord[]>;
   workingSlot: ImageStudioSlotRecord | null;
   setSelectedSlotId: (id: string | null) => void;
   setWorkingSlotId: (id: string | null) => void;
+  settingsStore: SettingsStoreValue;
   maskShapes: VectorShape[];
   activeMaskId: string | null;
   maskInvert: boolean;

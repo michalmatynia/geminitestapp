@@ -206,6 +206,32 @@ describe('case-resolver settings', () => {
     ).toBe('case-a');
   });
 
+  it('normalizes and preserves happening date for case files', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 1,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: [],
+        files: [
+          {
+            id: 'case-happening-date',
+            fileType: 'case',
+            name: 'Case Date',
+            folder: '',
+            happeningDate: ' 2026-03-11T16:20:00.000Z ',
+            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+          },
+        ],
+        assets: [],
+        activeFileId: 'case-happening-date',
+      })
+    );
+
+    expect(workspace.files[0]?.happeningDate).toBe('2026-03-11');
+  });
+
   it('detects whether raw workspace payload includes a files array', () => {
     expect(hasCaseResolverWorkspaceFilesArray(null)).toBe(false);
     expect(hasCaseResolverWorkspaceFilesArray('')).toBe(false);

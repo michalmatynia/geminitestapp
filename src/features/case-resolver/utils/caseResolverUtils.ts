@@ -199,6 +199,114 @@ const stripHtmlToComparablePlainText = (value: string): string => value
   .replace(/\s+/g, ' ')
   .trim();
 
+const HISTORY_PREVIEW_ENTITY_MAP: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: '\'',
+  nbsp: ' ',
+};
+
+const decodeHistoryPreviewEntities = (value: string): string =>
+  value.replace(/&(#x?[0-9a-fA-F]+|[a-zA-Z]+);/g, (fullMatch: string, entity: string): string => {
+    const normalized = entity.trim();
+    if (!normalized) return fullMatch;
+    if (normalized.startsWith('#')) {
+      const isHex = normalized[1]?.toLowerCase() === 'x';
+      const rawCodePoint = isHex ? normalized.slice(2) : normalized.slice(1);
+      const parsedCodePoint = Number.parseInt(rawCodePoint, isHex ? 16 : 10);
+      if (!Number.isFinite(parsedCodePoint) || parsedCodePoint <= 0) {
+        return fullMatch;
+      }
+      try {
+        return String.fromCodePoint(parsedCodePoint);
+      } catch {
+        return fullMatch;
+      }
+    }
+    return HISTORY_PREVIEW_ENTITY_MAP[normalized.toLowerCase()] ?? fullMatch;
+  });
+
+const normalizeHistoryPreviewWhitespace = (value: string): string =>
+  value
+    .replace(/\r\n?/g, '\n')
+    .replace(/[ \t\f\v]+/g, ' ')
+    .replace(/[ \t]*\n[ \t]*/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+
+const stripHtmlForHistoryPreview = (value: string): string =>
+  normalizeHistoryPreviewWhitespace(
+    decodeHistoryPreviewEntities(
+      value
+        .replace(/<style[\s\S]*?<\/style>/gi, '\n')
+        .replace(/<script[\s\S]*?<\/script>/gi, '\n')
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<\/(p|div|li|h1|h2|h3|h4|h5|h6|tr|td|th)>/gi, '\n')
+        .replace(/<li[^>]*>/gi, '- ')
+        .replace(/<[^>]+>/g, ' ')
+    )
+  );
+
+const truncateHistoryPreview = (value: string, maxChars: number): string => {
+  if (value.length <= maxChars) return value;
+  if (maxChars <= 0) return '';
+  if (maxChars <= 3) return '.'.repeat(maxChars);
+  return `${value.slice(0, maxChars - 3).trimEnd()}...`;
+};
+
+const resolveHistoryPreviewFromCandidate = (
+  value: string,
+  candidateType: 'plainText' | 'markdown' | 'html' | 'content',
+): string => {
+  const normalizedValue = value.trim();
+  if (!normalizedValue) return '';
+
+  if (candidateType === 'plainText') {
+    return normalizeHistoryPreviewWhitespace(decodeHistoryPreviewEntities(normalizedValue));
+  }
+  if (candidateType === 'markdown') {
+    const markdownHtml = ensureHtmlForPreview(normalizedValue, 'markdown');
+    return stripHtmlForHistoryPreview(markdownHtml);
+  }
+  if (candidateType === 'html') {
+    return stripHtmlForHistoryPreview(normalizedValue);
+  }
+  if (/<[^>]+>/.test(normalizedValue)) {
+    return stripHtmlForHistoryPreview(normalizedValue);
+  }
+  return normalizeHistoryPreviewWhitespace(decodeHistoryPreviewEntities(normalizedValue));
+};
+
+export const resolveCaseResolverHistoryEntryPreview = (
+  entry: CaseResolverDocumentHistoryEntry | null | undefined,
+  maxChars = 240,
+): string => {
+  if (!entry) return '';
+  const normalizedMaxChars = Number.isFinite(maxChars)
+    ? Math.max(1, Math.floor(maxChars))
+    : 240;
+
+  const candidates: Array<{
+    value: string | null | undefined;
+    type: 'plainText' | 'markdown' | 'html' | 'content';
+  }> = [
+    { value: entry.documentContentPlainText, type: 'plainText' },
+    { value: entry.documentContentMarkdown, type: 'markdown' },
+    { value: entry.documentContentHtml, type: 'html' },
+    { value: entry.documentContent, type: 'content' },
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate.value !== 'string') continue;
+    const previewText = resolveHistoryPreviewFromCandidate(candidate.value, candidate.type);
+    if (!previewText) continue;
+    return truncateHistoryPreview(previewText, normalizedMaxChars);
+  }
+  return '';
+};
+
 const hasMeaningfulComparableHistoryPayload = (
   payload: ReturnType<typeof toComparableHistoryPayload>
 ): boolean => {

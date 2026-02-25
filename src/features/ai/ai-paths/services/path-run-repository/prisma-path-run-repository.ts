@@ -27,6 +27,13 @@ const toIsoString = (date: Date | null | undefined): string | null => {
   return null;
 };
 
+const toNullableJsonInput = (
+  value: unknown
+): Prisma.InputJsonValue | Prisma.NullableJsonNullValueInput | undefined => {
+  if (value === null || value === undefined) return undefined;
+  return value as Prisma.InputJsonValue;
+};
+
 interface MapRunInput {
   id: string | number;
   userId?: string | null;
@@ -276,15 +283,15 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     const run = await prisma.aiPathRun.create({
       data: {
         userId: input.userId ?? null,
-        pathId: input.pathId ?? null,
+        pathId: input.pathId ?? '',
         pathName: input.pathName ?? null,
         status: input.status ?? 'queued',
         triggerEvent: input.triggerEvent ?? null,
         triggerNodeId: input.triggerNodeId ?? null,
-        triggerContext: input.triggerContext ?? null,
-        graph: input.graph ?? null,
-        runtimeState: input.runtimeState ?? null,
-        meta: input.meta ?? null,
+        triggerContext: toNullableJsonInput(input.triggerContext),
+        graph: toNullableJsonInput(input.graph),
+        runtimeState: toNullableJsonInput(input.runtimeState),
+        meta: toNullableJsonInput(input.meta),
         entityId: input.entityId ?? null,
         entityType: input.entityType ?? null,
         retryCount: input.retryCount ?? 0,
@@ -407,7 +414,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
 
   async getQueueStats(): Promise<{ queuedCount: number; oldestQueuedAt: Date | null }> {
     const now = new Date();
-    const where = {
+    const where: Prisma.AiPathRunWhereInput = {
       status: 'queued',
       OR: [{ nextRetryAt: null }, { nextRetryAt: { lte: now } }],
     };
@@ -441,7 +448,9 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     nodeData: AiPathRunNodeUpdate & { nodeType: string; nodeTitle?: string | null }
   ): Promise<AiPathRunNodeRecord> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    const status = (nodeData.status as unknown as Prisma.AiPathNodeStatus) ?? 'pending';
+    const status = (
+      nodeData.status as unknown as Prisma.AiPathRunNodeCreateInput['status']
+    ) ?? 'pending';
     const node = await prisma.aiPathRunNode.upsert({
       where: { runId_nodeId: { runId, nodeId } },
       update: nodeData as Prisma.AiPathRunNodeUpdateInput,
@@ -453,8 +462,8 @@ export const prismaPathRunRepository: AiPathRunRepository = {
         // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         status,
         attempt: nodeData.attempt ?? 0,
-        inputs: (nodeData.inputs as Prisma.InputJsonValue) ?? null,
-        outputs: (nodeData.outputs as Prisma.InputJsonValue) ?? null,
+        inputs: toNullableJsonInput(nodeData.inputs),
+        outputs: toNullableJsonInput(nodeData.outputs),
         errorMessage: nodeData.errorMessage ?? null,
         startedAt: nodeData.startedAt ?? null,
         finishedAt: nodeData.finishedAt ?? null,
@@ -507,16 +516,16 @@ export const prismaPathRunRepository: AiPathRunRepository = {
         runId: input.runId,
         level: prismaLevel as AiPathRunEventLevel,
         message: input.message,
-        metadata: (input.metadata || input.nodeId || input.nodeType || input.nodeTitle || input.status || input.iteration) 
-          ? {
+        metadata: (input.metadata || input.nodeId || input.nodeType || input.nodeTitle || input.status || input.iteration)
+          ? toNullableJsonInput({
             ...(input.metadata as Record<string, unknown> || {}),
             ...(input.nodeId ? { nodeId: input.nodeId } : {}),
             ...(input.nodeType ? { nodeType: input.nodeType } : {}),
             ...(input.nodeTitle ? { nodeTitle: input.nodeTitle } : {}),
             ...(input.status ? { status: input.status } : {}),
             ...(input.iteration !== undefined && input.iteration !== null ? { iteration: input.iteration } : {}),
-          } 
-          : null,
+          })
+          : undefined,
       },
     });
     return mapEvent(event);

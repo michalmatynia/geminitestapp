@@ -179,6 +179,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     pendingCaseIdentifierIds, setPendingCaseIdentifierIds,
     editingCaseCategoryId, setEditingCaseCategoryId,
     collapsedCaseIds, setCollapsedCaseIds,
+    heldCaseId, setHeldCaseId,
     caseSearchQuery, setCaseSearchQuery,
     caseSearchScope, setCaseSearchScope,
     caseFileTypeFilter, setCaseFileTypeFilter,
@@ -243,6 +244,18 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
       return next;
     });
   }, [setCollapsedCaseIds]);
+
+  const handleToggleHeldCase = useCallback((caseId: string): void => {
+    const normalizedCaseId = caseId.trim();
+    if (!normalizedCaseId) return;
+    setHeldCaseId((current: string | null): string | null =>
+      current === normalizedCaseId ? null : normalizedCaseId
+    );
+  }, [setHeldCaseId]);
+
+  const handleClearHeldCase = useCallback((): void => {
+    setHeldCaseId(null);
+  }, [setHeldCaseId]);
 
   const handleRefreshWorkspace = useCallback(async (): Promise<void> => {
     settingsStoreRefetchRef.current();
@@ -389,6 +402,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     editingCaseCategoryId,
     pendingCaseIdentifierIds,
     collapsedCaseIds,
+    heldCaseId,
     caseSearchQuery,
     caseSearchScope,
     caseFileTypeFilter,
@@ -419,6 +433,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     setEditingCaseCategoryId,
     setPendingCaseIdentifierIds,
     setCollapsedCaseIds,
+    setHeldCaseId,
     setCaseSearchQuery,
     setCaseSearchScope,
     setCaseFileTypeFilter,
@@ -440,6 +455,8 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     handleUpdateCase,
     handleDeleteCase,
     handleToggleCaseCollapse,
+    handleToggleHeldCase,
+    handleClearHeldCase,
     handleMoveCase,
     handleReorderCase,
     handleRenameCase,

@@ -186,10 +186,7 @@ export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; 
 
                     <div className='min-w-0 flex-1 space-y-1'>
                       <div className='flex flex-wrap items-center gap-2'>
-                        <span
-                          className='cursor-pointer text-sm font-semibold text-white hover:text-cyan-300'
-                          onClick={() => handleViewCase(file.id)}
-                        >
+                        <span className='text-sm font-semibold text-white'>
                           {file.name}
                         </span>
                         {file.isLocked && <Lock className='size-3 text-amber-400/80' />}

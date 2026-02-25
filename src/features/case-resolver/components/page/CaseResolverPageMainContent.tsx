@@ -23,25 +23,48 @@ export function CaseResolverPageMainContent(): React.JSX.Element {
   } = useCaseResolverViewContext();
 
   const {
+    workspace,
     activeCaseId,
+    selectedFileId,
     selectedAssetId,
     editingDocumentDraft,
     activeFile,
     selectedAsset,
   } = state;
-
-  const showCaseOverviewWorkspace = !selectedAssetId && !editingDocumentDraft && !activeFile;
+  const selectedFile = selectedFileId
+    ? workspace.files.find((file): boolean => file.id === selectedFileId) ?? null
+    : null;
+  const selectedCaseFile =
+    selectedFile?.fileType === 'case' ? selectedFile : null;
+  const activeCaseFile =
+    activeFile?.fileType === 'case' ? activeFile : null;
+  const resolvedCaseContextFile =
+    selectedCaseFile ??
+    activeCaseFile ??
+    (activeCaseId
+      ? workspace.files.find(
+        (file): boolean => file.id === activeCaseId && file.fileType === 'case'
+      ) ?? null
+      : null);
+  const showCaseOverviewWorkspace = Boolean(
+    resolvedCaseContextFile &&
+      !selectedAssetId &&
+      !editingDocumentDraft &&
+      (selectedFile?.fileType === 'case' ||
+        activeFile?.fileType === 'case' ||
+        (!selectedFile && !activeFile))
+  );
 
   return (
     <div className='flex flex-1 flex-col overflow-hidden p-6'>
       {selectedAsset?.kind === 'node_file' ? (
         <CaseResolverNodeFileWorkspace />
+      ) : showCaseOverviewWorkspace ? (
+        <CaseResolverCaseOverviewWorkspace />
       ) : workspaceView === 'relations' ? (
         <CaseResolverRelationsWorkspace
           focusCaseId={activeFile?.id ?? activeCaseId}
         />
-      ) : showCaseOverviewWorkspace ? (
-        <CaseResolverCaseOverviewWorkspace />
       ) : selectedAsset ? (
         <CaseResolverFileViewer />
       ) : editingDocumentDraft?.fileType === 'scanfile' ? (

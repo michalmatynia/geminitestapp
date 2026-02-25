@@ -66,10 +66,10 @@ export function MetricsTab(): React.JSX.Element {
           ) : analyticsSummaryQuery.data ? (
             <div className='grid grid-cols-2 gap-4 mt-2'>
               {/* eslint-disable @typescript-eslint/no-unsafe-argument */}
-              <MetadataItem label='Total Events' value={formatNumber(analyticsSummaryQuery.data.total)} />
-              <MetadataItem label='Unique Users' value={formatNumber(analyticsSummaryQuery.data.uniqueUsers)} />
-              <MetadataItem label='Error Rate' value={formatPercent(analyticsSummaryQuery.data.errorRate)} />
-              <MetadataItem label='Avg Response' value={formatDurationMs(analyticsSummaryQuery.data.avgLatency)} />
+              <MetadataItem label='Total Events' value={formatNumber(analyticsSummaryQuery.data.totals.events)} />
+              <MetadataItem label='Pageviews' value={formatNumber(analyticsSummaryQuery.data.totals.pageviews)} />
+              <MetadataItem label='Visitors' value={formatNumber(analyticsSummaryQuery.data.visitors)} />
+              <MetadataItem label='Sessions' value={formatNumber(analyticsSummaryQuery.data.sessions)} />
               {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
             </div>
           ) : (
@@ -145,10 +145,10 @@ export function MetricsTab(): React.JSX.Element {
         ) : runtimeAnalyticsQuery.data ? (
           <div className='grid grid-cols-2 gap-4 md:grid-cols-4 mt-2'>
             {/* eslint-disable @typescript-eslint/no-unsafe-argument */}
-            <MetadataItem label='Total Runs' value={formatNumber(runtimeAnalyticsQuery.data.totalRuns)} />
-            <MetadataItem label='Success Rate' value={formatPercent(runtimeAnalyticsQuery.data.successRate)} />
-            <MetadataItem label='Avg Duration' value={formatDurationMs(runtimeAnalyticsQuery.data.avgDuration)} />
-            <MetadataItem label='Active Nodes' value={formatNumber(runtimeAnalyticsQuery.data.activeNodes)} />
+            <MetadataItem label='Total Runs' value={formatNumber(runtimeAnalyticsQuery.data.runs.total)} />
+            <MetadataItem label='Success Rate' value={formatPercent(runtimeAnalyticsQuery.data.runs.successRate)} />
+            <MetadataItem label='Avg Duration' value={formatDurationMs(runtimeAnalyticsQuery.data.runs.avgDurationMs)} />
+            <MetadataItem label='Active Nodes' value={formatNumber(runtimeAnalyticsQuery.data.nodes.running)} />
             {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
           </div>
         ) : (

@@ -14,6 +14,7 @@ import {
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
+import { logger } from '@/shared/utils/logger';
 
 const AI_PATHS_TRIGGER_BUTTONS_KEY = 'ai_paths_trigger_buttons';
 const readTriggerButtonsRaw = async (): Promise<string | null> =>
@@ -41,13 +42,25 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     }
     throw error;
   }
-  const raw = await readTriggerButtonsRaw();
-  const triggerButtons = parseAiTriggerButtonsRaw(raw);
-  return NextResponse.json(triggerButtons, {
-    headers: {
-      'Cache-Control': 'no-store',
-    },
-  });
+
+  try {
+    const raw = await readTriggerButtonsRaw();
+    const triggerButtons = parseAiTriggerButtonsRaw(raw);
+    return NextResponse.json(triggerButtons, {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
+  } catch (error) {
+    logger.warn('[ai-paths.trigger-buttons.GET] Falling back to empty trigger-buttons list.', {
+      error,
+    });
+    return NextResponse.json([], {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
 }
 
 export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

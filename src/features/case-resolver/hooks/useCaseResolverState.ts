@@ -285,6 +285,16 @@ export function useCaseResolverState(): CaseResolverStateValue {
     setPersistedWorkspaceSnapshot,
     setPersistedWorkspaceComparableSnapshot,
   });
+  const syncPersistedWorkspaceTracking = persistence.syncPersistedWorkspaceTracking;
+  const queuedSerializedWorkspaceRef = persistence.queuedSerializedWorkspaceRef;
+  const queuedExpectedRevisionRef = persistence.queuedExpectedRevisionRef;
+  const queuedMutationIdRef = persistence.queuedMutationIdRef;
+  const clearConflictRetryTimer = persistence.clearConflictRetryTimer;
+  const persistWorkspaceTimerRef = persistence.persistWorkspaceTimerRef;
+  const isWorkspaceSaving = persistence.isWorkspaceSaving;
+  const setWorkspaceSaveStatus = persistence.setWorkspaceSaveStatus;
+  const setWorkspaceSaveError = persistence.setWorkspaceSaveError;
+  const isMountedRef = useRef(true);
 
   const viewState = useCaseResolverStateViewState({
     workspace,
@@ -409,31 +419,40 @@ export function useCaseResolverState(): CaseResolverStateValue {
   }, [requestedCaseIssue]);
 
   useEffect(() => {
+    return (): void => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
     workspaceRef.current = workspace;
   }, [workspace]);
 
   useEffect(() => {
     if (canHydrateWorkspaceFromStore) return;
-    let isCancelled = false;
     void (async (): Promise<void> => {
       const snapshot = await fetchCaseResolverWorkspaceSnapshot('case_view_bootstrap');
-      if (!snapshot || isCancelled) return;
+      if (!snapshot || !isMountedRef.current) return;
       const snapshotRevision = getCaseResolverWorkspaceRevision(snapshot);
       setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
         const currentRevision = getCaseResolverWorkspaceRevision(current);
         if (snapshotRevision <= currentRevision) return current;
-        persistence.syncPersistedWorkspaceTracking(snapshot);
-        persistence.queuedSerializedWorkspaceRef.current = null;
-        persistence.queuedExpectedRevisionRef.current = null;
-        persistence.queuedMutationIdRef.current = null;
+        syncPersistedWorkspaceTracking(snapshot);
+        queuedSerializedWorkspaceRef.current = null;
+        queuedExpectedRevisionRef.current = null;
+        queuedMutationIdRef.current = null;
         return snapshot;
       });
       settingsStoreRef.current.refetch();
     })();
-    return (): void => {
-      isCancelled = true;
-    };
-  }, [canHydrateWorkspaceFromStore, persistence, settingsStoreRef]);
+  }, [
+    canHydrateWorkspaceFromStore,
+    queuedExpectedRevisionRef,
+    queuedMutationIdRef,
+    queuedSerializedWorkspaceRef,
+    settingsStoreRef,
+    syncPersistedWorkspaceTracking,
+  ]);
 
   // Sync with store
   useEffect(() => {
@@ -449,10 +468,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
           (file: CaseResolverFile): boolean => file.id === requestedFileId
         );
         if (!currentHasRequestedFile && incomingHasRequestedFile) {
-          persistence.syncPersistedWorkspaceTracking(parsedWorkspace);
-          persistence.queuedSerializedWorkspaceRef.current = null;
-          persistence.queuedExpectedRevisionRef.current = null;
-          persistence.queuedMutationIdRef.current = null;
+          syncPersistedWorkspaceTracking(parsedWorkspace);
+          queuedSerializedWorkspaceRef.current = null;
+          queuedExpectedRevisionRef.current = null;
+          queuedMutationIdRef.current = null;
           return parsedWorkspace;
         }
       }
@@ -460,18 +479,21 @@ export function useCaseResolverState(): CaseResolverStateValue {
       const currentRevision = getCaseResolverWorkspaceRevision(current);
       if (incomingRevision <= currentRevision) return current;
 
-      persistence.syncPersistedWorkspaceTracking(parsedWorkspace);
-      persistence.queuedSerializedWorkspaceRef.current = null;
-      persistence.queuedExpectedRevisionRef.current = null;
-      persistence.queuedMutationIdRef.current = null;
+      syncPersistedWorkspaceTracking(parsedWorkspace);
+      queuedSerializedWorkspaceRef.current = null;
+      queuedExpectedRevisionRef.current = null;
+      queuedMutationIdRef.current = null;
       return parsedWorkspace;
     });
   }, [
     canHydrateWorkspaceFromStore,
     promptExploder.isApplyingPromptExploderPartyProposal,
     parsedWorkspace,
+    queuedExpectedRevisionRef,
+    queuedMutationIdRef,
+    queuedSerializedWorkspaceRef,
     requestedFileId,
-    persistence,
+    syncPersistedWorkspaceTracking,
   ]);
 
   useEffect(() => {
@@ -556,13 +578,11 @@ export function useCaseResolverState(): CaseResolverStateValue {
       resolvedVia: 'snapshot_fetch',
     });
 
-    let isCancelled = false;
-
     void (async (): Promise<void> => {
       const refreshedWorkspace = await fetchCaseResolverWorkspaceSnapshot(
         'case_view_requested_context_resolve',
       );
-      if (isCancelled) return;
+      if (!isMountedRef.current) return;
       const currentInFlight = requestedContextInFlightRef.current;
       if (currentInFlight?.requestKey !== requestKey) return;
 
@@ -610,10 +630,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
           if (incomingRevision <= currentRevision && currentHasRequestedFile) {
             return current;
           }
-          persistence.syncPersistedWorkspaceTracking(refreshedWorkspace);
-          persistence.queuedSerializedWorkspaceRef.current = null;
-          persistence.queuedExpectedRevisionRef.current = null;
-          persistence.queuedMutationIdRef.current = null;
+          syncPersistedWorkspaceTracking(refreshedWorkspace);
+          queuedSerializedWorkspaceRef.current = null;
+          queuedExpectedRevisionRef.current = null;
+          queuedMutationIdRef.current = null;
           return refreshedWorkspace;
         });
         settingsStoreRef.current.refetch();
@@ -641,21 +661,16 @@ export function useCaseResolverState(): CaseResolverStateValue {
         resolvedVia: 'snapshot_fetch',
       });
     })();
-
-    return (): void => {
-      isCancelled = true;
-      if (requestedContextInFlightRef.current?.requestKey === requestKey) {
-        requestedContextInFlightRef.current = null;
-        requestedContextStartedAtRef.current = null;
-      }
-    };
   }, [
     logRequestedContextTransition,
-    persistence,
+    queuedExpectedRevisionRef,
+    queuedMutationIdRef,
+    queuedSerializedWorkspaceRef,
     requestedContextRetryTick,
     requestedFileId,
     setRequestedCaseIssueSafe,
     setRequestedCaseStatusSafe,
+    syncPersistedWorkspaceTracking,
   ]);
 
   useEffect(() => {
@@ -667,7 +682,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
       requestedContextRetryTick,
     );
 
-    const watchdogTimer = window.setTimeout((): void => {
+    const watchdogTimer = window.setInterval((): void => {
       const currentStatus = requestedCaseStatusRef.current;
       if (currentStatus !== 'loading') return;
       const hasValidInFlightRequest = hasValidRequestedContextInFlight({
@@ -691,10 +706,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
         requestKey,
         resolvedVia: 'watchdog',
       });
-    }, CASE_RESOLVER_REQUESTED_CONTEXT_LOADING_WATCHDOG_MS + 250);
+    }, 500);
 
     return (): void => {
-      window.clearTimeout(watchdogTimer);
+      window.clearInterval(watchdogTimer);
     };
   }, [
     logRequestedContextTransition,
@@ -706,14 +721,74 @@ export function useCaseResolverState(): CaseResolverStateValue {
   ]);
 
   useEffect(() => {
+    if (requestedCaseStatus !== 'loading') return;
+    const deadlockGuardTimer = window.setTimeout((): void => {
+      if (requestedCaseStatusRef.current !== 'loading') return;
+      const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
+      if (!normalizedRequestedFileId) {
+        requestedWorkspaceRefreshFileIdRef.current = null;
+        requestedWorkspaceMissingFileIdRef.current = null;
+        requestedContextInFlightRef.current = null;
+        requestedContextAttemptKeyRef.current = null;
+        requestedContextStartedAtRef.current = null;
+        handledRequestedFileIdRef.current = null;
+        setRequestedCaseIssueSafe(null);
+        setRequestedCaseStatusSafe('ready');
+        logRequestedContextTransition('requested_context_ready', {
+          message: 'Deadlock guard resolved loading state with no requested file.',
+          resolvedVia: 'watchdog',
+        });
+        return;
+      }
+      if (hasRequestedCaseFile(workspaceRef.current.files, normalizedRequestedFileId)) {
+        requestedWorkspaceRefreshFileIdRef.current = null;
+        requestedWorkspaceMissingFileIdRef.current = null;
+        requestedContextInFlightRef.current = null;
+        requestedContextAttemptKeyRef.current = null;
+        requestedContextStartedAtRef.current = null;
+        handledRequestedFileIdRef.current = null;
+        setRequestedCaseIssueSafe(null);
+        setRequestedCaseStatusSafe('ready');
+        logRequestedContextTransition('requested_context_ready', {
+          message: 'Deadlock guard resolved loading state from workspace presence.',
+          resolvedVia: 'watchdog',
+        });
+        return;
+      }
+      if (requestedContextInFlightRef.current !== null) return;
+      requestedWorkspaceRefreshFileIdRef.current = null;
+      requestedWorkspaceMissingFileIdRef.current = normalizedRequestedFileId;
+      requestedContextStartedAtRef.current = null;
+      handledRequestedFileIdRef.current = null;
+      setRequestedCaseIssueSafe('workspace_unavailable');
+      setRequestedCaseStatusSafe('missing');
+      logRequestedContextTransition('requested_context_missing_fetch_failed', {
+        message: 'Deadlock guard forced missing state (loading without in-flight request).',
+        requestKey: requestedContextAttemptKeyRef.current,
+        resolvedVia: 'watchdog',
+      });
+    }, 1500);
+
     return (): void => {
-      persistence.clearConflictRetryTimer();
-      if (persistence.persistWorkspaceTimerRef.current) {
-        window.clearTimeout(persistence.persistWorkspaceTimerRef.current);
-        persistence.persistWorkspaceTimerRef.current = null;
+      window.clearTimeout(deadlockGuardTimer);
+    };
+  }, [
+    logRequestedContextTransition,
+    requestedCaseStatus,
+    requestedFileId,
+    setRequestedCaseIssueSafe,
+    setRequestedCaseStatusSafe,
+  ]);
+
+  useEffect(() => {
+    return (): void => {
+      clearConflictRetryTimer();
+      if (persistWorkspaceTimerRef.current) {
+        window.clearTimeout(persistWorkspaceTimerRef.current);
+        persistWorkspaceTimerRef.current = null;
       }
     };
-  }, [persistence]);
+  }, [clearConflictRetryTimer, persistWorkspaceTimerRef]);
 
   const workspaceComparableSnapshot = useMemo(
     (): string => serializeWorkspaceForUnsavedChangesCheck(workspace),
@@ -726,16 +801,16 @@ export function useCaseResolverState(): CaseResolverStateValue {
   );
 
   useEffect(() => {
-    if (persistence.isWorkspaceSaving) return;
+    if (isWorkspaceSaving) return;
     if (isWorkspaceDirty) {
-      persistence.setWorkspaceSaveStatus((current) =>
+      setWorkspaceSaveStatus((current) =>
         current === 'conflict' || current === 'error' ? current : 'dirty'
       );
       return;
     }
-    persistence.setWorkspaceSaveStatus('saved');
-    persistence.setWorkspaceSaveError(null);
-  }, [isWorkspaceDirty, persistence]);
+    setWorkspaceSaveStatus('saved');
+    setWorkspaceSaveError(null);
+  }, [isWorkspaceDirty, isWorkspaceSaving, setWorkspaceSaveError, setWorkspaceSaveStatus]);
 
   const creationActions = useCaseResolverStateCreationActions({
     workspace,

@@ -47,6 +47,7 @@ export type AdminCaseResolverCasesContextValue = {
   editingCaseCategoryId: string | null;
   pendingCaseIdentifierIds: string[];
   collapsedCaseIds: Set<string>;
+  heldCaseId: string | null;
   caseSearchQuery: string;
   caseSearchScope: CaseSearchScope;
   caseFileTypeFilter: CaseFileTypeFilter;
@@ -85,6 +86,7 @@ export type AdminCaseResolverCasesContextValue = {
   setEditingCaseCategoryId: (id: string | null) => void;
   setPendingCaseIdentifierIds: (ids: string[]) => void;
   setCollapsedCaseIds: React.Dispatch<React.SetStateAction<Set<string>>>;
+  setHeldCaseId: React.Dispatch<React.SetStateAction<string | null>>;
   setCaseSearchQuery: (query: string) => void;
   setCaseSearchScope: (scope: CaseSearchScope) => void;
   setCaseFileTypeFilter: (filter: CaseFileTypeFilter) => void;
@@ -108,6 +110,8 @@ export type AdminCaseResolverCasesContextValue = {
   handleUpdateCase: () => Promise<void>;
   handleDeleteCase: (caseId: string) => void;
   handleToggleCaseCollapse: (caseId: string) => void;
+  handleToggleHeldCase: (caseId: string) => void;
+  handleClearHeldCase: () => void;
   handleMoveCase: (
     caseId: string,
     targetParentCaseId: string | null,

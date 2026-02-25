@@ -99,8 +99,8 @@ export const getValueAtMappingPath = (
     options?.jsonIntegrityPolicy === 'strict' ? 'strict' : 'repair';
   const tokens = parsePathTokens(normalized);
   const readByTokens = (source: unknown, index: number): unknown => {
-    if (source === null || source === undefined) return undefined;
     if (index >= tokens.length) return source;
+    if (source === null || source === undefined) return undefined;
 
     const normalizedSource = normalizeJsonLikeValue(
       source,

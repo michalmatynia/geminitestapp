@@ -5,6 +5,7 @@ import React from 'react';
 
 import {
   Badge,
+  Button,
   Card,
   EmptyState,
   FormField,
@@ -31,7 +32,9 @@ const CASE_STATUS_OPTIONS = [
 
 export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
   const {
-    activeFile: activeCaseFile,
+    workspace,
+    activeCaseId,
+    activeFile,
     caseTagOptions,
     caseIdentifierOptions,
     caseCategoryOptions,
@@ -39,12 +42,36 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
     parentCaseOptions,
     onUpdateActiveCase,
   } = useCaseResolverPageContext();
+  const activeCaseFile = React.useMemo(
+    (): (typeof activeFile) | null => {
+      if (activeFile?.fileType === 'case') return activeFile;
+      if (!activeCaseId) return null;
+      return (
+        workspace.files.find(
+          (file): boolean => file.id === activeCaseId && file.fileType === 'case'
+        ) ?? null
+      );
+    },
+    [activeCaseId, activeFile, workspace.files]
+  );
 
   const [caseNameDraft, setCaseNameDraft] = React.useState(activeCaseFile?.name ?? '');
+  const [happeningDateDraft, setHappeningDateDraft] = React.useState(
+    activeCaseFile?.happeningDate ?? '',
+  );
+  const [isRelationsVisible, setIsRelationsVisible] = React.useState(false);
 
   React.useEffect(() => {
     setCaseNameDraft(activeCaseFile?.name ?? '');
   }, [activeCaseFile?.id, activeCaseFile?.name]);
+
+  React.useEffect(() => {
+    setHappeningDateDraft(activeCaseFile?.happeningDate ?? '');
+  }, [activeCaseFile?.happeningDate, activeCaseFile?.id]);
+
+  React.useEffect(() => {
+    setIsRelationsVisible(false);
+  }, [activeCaseFile?.id]);
 
   const commitCaseName = React.useCallback((): void => {
     if (!activeCaseFile || activeCaseFile.isLocked) return;
@@ -54,13 +81,21 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
     onUpdateActiveCase({ name: nextName });
   }, [activeCaseFile, caseNameDraft, onUpdateActiveCase]);
 
+  const commitHappeningDate = React.useCallback((): void => {
+    if (!activeCaseFile || activeCaseFile.isLocked) return;
+    const nextHappeningDate = happeningDateDraft.trim() || null;
+    const currentHappeningDate = activeCaseFile.happeningDate?.trim() || null;
+    if (nextHappeningDate === currentHappeningDate) return;
+    onUpdateActiveCase({ happeningDate: nextHappeningDate });
+  }, [activeCaseFile, happeningDateDraft, onUpdateActiveCase]);
+
   if (!activeCaseFile) {
     return (
       <Card variant='subtle' padding='lg' className='flex flex-1 items-center justify-center border-dashed'>
         <EmptyState
           icon={<Network className='size-12 text-gray-600' />}
           title='No case context'
-          description='Select a case in the folder tree to see case-specific options and relations.'
+          description='Select a case in the folder tree to see case-specific options.'
           variant='compact'
           className='border-none p-0'
         />
@@ -80,17 +115,34 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
   );
 
   return (
-    <div className='grid h-full min-h-0 gap-3 xl:grid-cols-[380px_minmax(0,1fr)]'>
+    <div className={`grid h-full min-h-0 gap-3 ${isRelationsVisible ? 'xl:grid-cols-[380px_minmax(0,1fr)]' : 'grid-cols-1'}`}>
       <Card variant='subtle' padding='md' className='min-h-0 overflow-auto border-border/60 bg-card/25'>
         <div className='space-y-3'>
           <div className='flex items-center justify-between gap-2'>
-            <div className='text-sm font-semibold text-gray-100'>Case-specific options</div>
-            {isCaseLocked ? (
-              <Badge variant='outline' className='border-amber-500/40 text-amber-200'>
-                Locked
-              </Badge>
-            ) : null}
+            <div className='text-sm font-semibold text-gray-100'>
+              Case-specific options
+            </div>
+            <div className='flex items-center gap-2'>
+              {isCaseLocked ? (
+                <Badge variant='outline' className='border-amber-500/40 text-amber-200'>
+                  Locked
+                </Badge>
+              ) : null}
+              <Button
+                variant='outline'
+                size='sm'
+                className='h-8'
+                onClick={(): void => {
+                  setIsRelationsVisible((current): boolean => !current);
+                }}
+              >
+                {isRelationsVisible ? 'Hide Relations' : 'Show Relations'}
+              </Button>
+            </div>
           </div>
+          <p className='text-xs text-gray-400'>
+            Relations are optional in case view. Use Show Relations to inspect the case graph.
+          </p>
 
           <FormField label='Case Name'>
             <Input
@@ -139,6 +191,25 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
               options={CASE_STATUS_OPTIONS}
               placeholder='Select case status'
               triggerClassName='h-9'
+            />
+          </FormField>
+
+          <FormField label='Happening Date'>
+            <Input
+              value={happeningDateDraft}
+              disabled={isCaseLocked}
+              placeholder='YYYY-MM-DD or custom date'
+              onChange={(event): void => {
+                setHappeningDateDraft(event.target.value);
+              }}
+              onBlur={(): void => {
+                commitHappeningDate();
+              }}
+              onKeyDown={(event): void => {
+                if (event.key !== 'Enter') return;
+                event.preventDefault();
+                commitHappeningDate();
+              }}
             />
           </FormField>
 
@@ -211,7 +282,9 @@ export function CaseResolverCaseOverviewWorkspace(): React.JSX.Element {
         </div>
       </Card>
 
-      <CaseResolverRelationsWorkspace focusCaseId={activeCaseFile.id} />
+      {isRelationsVisible ? (
+        <CaseResolverRelationsWorkspace focusCaseId={activeCaseFile.id} />
+      ) : null}
     </div>
   );
 }

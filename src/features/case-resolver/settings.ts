@@ -283,6 +283,13 @@ const normalizeIsoDocumentDate = (value: string): string | null => {
   return null;
 };
 
+const normalizeCaseHappeningDate = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  if (!normalized) return null;
+  return normalizeIsoDocumentDate(normalized) ?? normalized;
+};
+
 const normalizeDocumentDateAction = (
   value: unknown
 ): CaseResolverDocumentDateProposal['action'] => {
@@ -709,6 +716,7 @@ export const createCaseResolverFile = (input: {
   relatedFileIds?: string[] | null | undefined;
   documentDate?: CaseResolverDocumentDateProposal | string | null | undefined;
   documentCity?: string | null | undefined;
+  happeningDate?: string | null | undefined;
   originalDocumentContent?: string | null | undefined;
   explodedDocumentContent?: string | null | undefined;
   activeDocumentVersion?: CaseResolverDocumentVersion | null | undefined;
@@ -759,6 +767,8 @@ export const createCaseResolverFile = (input: {
     fileType === 'case' ? normalizeCaseResolverCaseStatus(input.caseStatus) : undefined;
   const caseTreeOrder =
     fileType === 'case' ? normalizeCaseTreeOrder(input.caseTreeOrder) : undefined;
+  const happeningDate =
+    fileType === 'case' ? normalizeCaseHappeningDate(input.happeningDate) : null;
   const resolvedEditorType: CaseResolverEditorType =
     fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
   const resolvedCanonicalSource = (() => {
@@ -835,6 +845,7 @@ export const createCaseResolverFile = (input: {
     relatedFileIds: relatedFileIds.length > 0 ? relatedFileIds : undefined,
     documentDate: normalizeDocumentDate(input.documentDate),
     documentCity: normalizeDocumentCity(input.documentCity),
+    happeningDate,
     originalDocumentContent,
     explodedDocumentContent,
     activeDocumentVersion,
@@ -1056,6 +1067,7 @@ export const normalizeCaseResolverWorkspaceWithDiagnostics = (
         relatedFileIds: file.relatedFileIds,
         documentDate: file.documentDate,
         documentCity: (fileRecord['documentCity'] as string | null | undefined) ?? null,
+        happeningDate: (fileRecord['happeningDate'] as string | null | undefined) ?? null,
         originalDocumentContent: file.originalDocumentContent,
         explodedDocumentContent: file.explodedDocumentContent,
         activeDocumentVersion: file.activeDocumentVersion,

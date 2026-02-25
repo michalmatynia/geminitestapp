@@ -14,6 +14,7 @@ import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { brainKeys } from '@/shared/lib/query-key-exports';
 
 export { brainKeys };
+export type { ChatbotModelsResponse, InsightsSnapshot };
 
 export function useOllamaModels(): SingleQuery<ChatbotModelsResponse> {
   const queryKey = brainKeys.ollamaModels();

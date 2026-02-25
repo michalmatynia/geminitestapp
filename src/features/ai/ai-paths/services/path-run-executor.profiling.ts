@@ -3,52 +3,81 @@ import {
   type RuntimeState,
 } from '@/shared/contracts/ai-paths';
 import {
-  type AiPathRuntimeProfileEventDto,
   type RuntimeProfileSummaryDto,
 } from '@/shared/contracts/ai-paths-runtime';
 import {
   RUNTIME_PROFILE_HIGHLIGHT_LIMIT,
-  RUNTIME_PROFILE_SAMPLE_LIMIT,
-  RUNTIME_PROFILE_SLOW_NODE_MS,
-  RUNTIME_TRACE_SPAN_LIMIT,
 } from './path-run-executor.helpers';
 
 export const buildRunProfileSummary = (
   runId: string,
-  runtimeState: RuntimeState,
+  _runtimeState: RuntimeState,
   nodeRecords: AiPathRunNodeRecord[]
 ): RuntimeProfileSummaryDto => {
-  const events = runtimeState.events || [];
-  const totalEvents = events.length;
-  
-  const nodeExecutionTimes = new Map<string, number>();
+  const nodeStatsMap = new Map<string, {
+    nodeId: string;
+    nodeType: string;
+    count: number;
+    totalMs: number;
+    maxMs: number;
+    cachedCount: number;
+    skippedCount: number;
+    errorCount: number;
+    hashCount: number;
+    hashTotalMs: number;
+    hashMaxMs: number;
+  }>();
+
   nodeRecords.forEach((record) => {
-    if (record.finishedAt && record.startedAt) {
-      const duration = new Date(record.finishedAt).getTime() - new Date(record.startedAt).getTime();
-      nodeExecutionTimes.set(record.nodeId, duration);
+    const key = `${record.nodeId}:${record.nodeType}`;
+    const existing = nodeStatsMap.get(key) ?? {
+      nodeId: record.nodeId,
+      nodeType: record.nodeType,
+      count: 0,
+      totalMs: 0,
+      maxMs: 0,
+      cachedCount: 0,
+      skippedCount: 0,
+      errorCount: 0,
+      hashCount: 0,
+      hashTotalMs: 0,
+      hashMaxMs: 0,
+    };
+    existing.count += 1;
+    if (record.status === 'cached') existing.cachedCount += 1;
+    if (record.status === 'skipped') existing.skippedCount += 1;
+    if (record.status === 'failed') existing.errorCount += 1;
+
+    const finishedAt = record.finishedAt ?? record.completedAt ?? null;
+    if (record.startedAt && finishedAt) {
+      const duration = Math.max(
+        0,
+        new Date(finishedAt).getTime() - new Date(record.startedAt).getTime()
+      );
+      existing.totalMs += duration;
+      existing.maxMs = Math.max(existing.maxMs, duration);
     }
+
+    nodeStatsMap.set(key, existing);
   });
 
-  const slowNodes = Array.from(nodeExecutionTimes.entries())
-    .filter(([_, duration]) => duration >= RUNTIME_PROFILE_SLOW_NODE_MS)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, RUNTIME_PROFILE_HIGHLIGHT_LIMIT)
-    .map(([nodeId, duration]) => ({ nodeId, durationMs: duration }));
-
-  const samples = events
-    .slice(-RUNTIME_PROFILE_SAMPLE_LIMIT)
-    .map((event): AiPathRuntimeProfileEventDto => ({
-      type: event.type,
-      nodeId: event.nodeId,
-      timestamp: event.timestamp,
-      metadata: event.metadata,
-    }));
+  const nodes = Array.from(nodeStatsMap.values()).map((item) => ({
+    ...item,
+    avgMs: item.count > 0 ? item.totalMs / item.count : 0,
+    hashAvgMs: item.hashCount > 0 ? item.hashTotalMs / item.hashCount : 0,
+  }));
+  const hottestNodes = [...nodes]
+    .sort((left, right) => right.totalMs - left.totalMs)
+    .slice(0, RUNTIME_PROFILE_HIGHLIGHT_LIMIT);
+  const durationMs = nodes.reduce((sum, item) => sum + item.totalMs, 0);
 
   return {
     runId,
-    totalEvents,
-    slowNodes,
-    samples,
-    traceSpanLimit: RUNTIME_TRACE_SPAN_LIMIT,
+    durationMs,
+    iterationCount: 0,
+    nodeCount: nodeStatsMap.size,
+    edgeCount: 0,
+    nodes,
+    hottestNodes,
   };
 };

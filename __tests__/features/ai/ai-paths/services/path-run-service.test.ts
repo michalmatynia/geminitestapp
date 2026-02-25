@@ -44,7 +44,7 @@ describe('PathRunService', () => {
 
   const mockNodes: AiNode[] = [
     {
-      id: 'node-1',
+      id: 'node-111111111111111111111111',
       type: 'trigger',
       title: 'Trigger',
       description: '',
@@ -116,7 +116,7 @@ describe('PathRunService', () => {
 
       const nodes = await repo.listRunNodes(run.id);
       expect(nodes.length).toBe(1);
-      expect(nodes[0].nodeId).toBe('node-1');
+      expect(nodes[0].nodeId).toBe('node-111111111111111111111111');
       expect(nodes[0].status).toBe('pending');
 
       const events = await repo.listRunEvents(run.id);

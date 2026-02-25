@@ -115,6 +115,7 @@ export function useAdminCaseResolverMetadataActions({
           | 'caseIdentifierId'
           | 'categoryId'
           | 'caseStatus'
+          | 'happeningDate'
         >
       >,
     ): void => {
@@ -157,6 +158,10 @@ export function useAdminCaseResolverMetadataActions({
             patch,
             'caseStatus',
           );
+          const hasHappeningDatePatch = Object.prototype.hasOwnProperty.call(
+            patch,
+            'happeningDate',
+          );
 
           const nextName = hasNamePatch
             ? patch.name?.trim() || currentCase.name || 'Untitled Case'
@@ -194,6 +199,9 @@ export function useAdminCaseResolverMetadataActions({
           const nextCaseStatus = hasCaseStatusPatch
             ? patch.caseStatus
             : currentCase.caseStatus;
+          const nextHappeningDate = hasHappeningDatePatch
+            ? patch.happeningDate?.trim() || null
+            : currentCase.happeningDate ?? null;
 
           const now = new Date().toISOString();
           const nextCase: CaseResolverFile = {
@@ -205,6 +213,7 @@ export function useAdminCaseResolverMetadataActions({
             caseIdentifierId: nextCaseIdentifierId,
             categoryId: nextCategoryId,
             caseStatus: nextCaseStatus,
+            happeningDate: nextHappeningDate,
             updatedAt: now,
           };
 

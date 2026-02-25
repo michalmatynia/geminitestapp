@@ -713,6 +713,22 @@ export function useFolderTreeInstanceV2(
         return toActionOk();
       }
 
+      // External prop sync should never persist back through adapter.
+      // It mirrors source-of-truth updates and must not produce mutation toasts.
+      if (reason === 'external_sync') {
+        store.patchState((prev: FolderTreeState) => ({
+          ...prev,
+          nodes: normalizedNodes,
+          isApplying: false,
+          lastError: null,
+          version:
+            persistedVersion !== undefined && Number.isFinite(persistedVersion)
+              ? persistedVersion
+              : prev.version + 1,
+        }));
+        return toActionOk();
+      }
+
       return await applyPersistedOperation({
         operation: {
           type: 'replace_nodes',

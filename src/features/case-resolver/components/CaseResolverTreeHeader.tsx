@@ -2,18 +2,27 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import { 
-  FolderPlus, 
-  FilePlus, 
-  FileImage, 
-  FileCode2 
+import {
+  FolderPlus,
+  FilePlus,
+  FileImage,
+  FileCode2
 } from 'lucide-react';
 
 import { Button, Switch } from '@/shared/ui';
+import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import { useCaseResolverFolderTreeContext } from '../context/CaseResolverFolderTreeContext';
 
-export function CaseResolverTreeHeader(): React.JSX.Element {
+type CaseResolverTreeHeaderProps = {
+  searchQuery: string;
+  onSearchChange: (q: string) => void;
+};
+
+export function CaseResolverTreeHeader({
+  searchQuery,
+  onSearchChange,
+}: CaseResolverTreeHeaderProps): React.JSX.Element {
   const router = useRouter();
   const {
     activeCaseId,
@@ -145,6 +154,11 @@ export function CaseResolverTreeHeader(): React.JSX.Element {
           {createContextTooltip}
         </div>
       ) : null}
+      <FolderTreeSearchBar
+        value={searchQuery}
+        onChange={onSearchChange}
+        placeholder='Search files & folders…'
+      />
       <div className='flex flex-wrap items-center gap-1'>
         <Button
           type='button'

@@ -80,6 +80,12 @@ const nextConfig = {
   },
   images: {
     qualities: [75, 90],
+    localPatterns: [
+      // Allow signed/download-style local image URLs that use query params.
+      { pathname: '/api/files/download' },
+      // Keep the secure default for all other local paths: no query string.
+      { pathname: '/**', search: '' },
+    ],
     remotePatterns: [
       {
         protocol: 'https',

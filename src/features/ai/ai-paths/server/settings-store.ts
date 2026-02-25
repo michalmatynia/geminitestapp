@@ -19,6 +19,7 @@ import {
 } from './settings-store.helpers';
 import {
   parsePathMetas,
+  preservePathConfigFlagsOnSeed,
 } from './settings-store.parsing';
 import {
   buildAiPathsMaintenanceReport,

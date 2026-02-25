@@ -408,6 +408,7 @@ export const caseResolverFileSchema = dtoBaseSchema.extend({
   originalDocumentContent: z.string().optional(),
   documentCity: z.string().nullable().optional(),
   documentDate: caseResolverDocumentDateProposalSchema.nullable().optional(),
+  happeningDate: z.string().nullable().optional(),
   isSent: z.boolean().optional(),
   relatedFileIds: z.array(z.string()).nullable().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
@@ -440,6 +441,7 @@ export interface CaseResolverFile extends DtoBase {
   explodedDocumentContent?: string | undefined;
   documentCity?: string | null | undefined;
   documentDate?: CaseResolverDocumentDateProposal | null | undefined;
+  happeningDate?: string | null | undefined;
   isSent?: boolean | undefined;
   documentHistory: CaseResolverDocumentHistoryEntry[];
   documentConversionWarnings: string[];
@@ -470,6 +472,7 @@ export const caseResolverFileEditDraftSchema = z.object({
   updatedAt: z.string().optional(),
   documentDate: caseResolverDocumentDateProposalSchema.nullable().optional(),
   documentCity: z.string().nullable().optional(),
+  happeningDate: z.string().nullable().optional(),
   isSent: z.boolean().optional(),
   originalDocumentContent: z.string().optional(),
   explodedDocumentContent: z.string().optional(),
@@ -510,6 +513,7 @@ export interface CaseResolverFileEditDraft {
   updatedAt?: string | undefined;
   documentDate?: CaseResolverDocumentDateProposal | null | undefined;
   documentCity?: string | null | undefined;
+  happeningDate?: string | null | undefined;
   isSent?: boolean | undefined;
   originalDocumentContent?: string | undefined;
   explodedDocumentContent?: string | undefined;

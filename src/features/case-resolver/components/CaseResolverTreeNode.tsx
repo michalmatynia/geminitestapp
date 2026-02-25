@@ -100,7 +100,10 @@ export function CaseResolverTreeNode({
   const fileId = fromCaseResolverFileNodeId(node.id);
   const assetId = fromCaseResolverAssetNodeId(node.id);
   const fileType = parseString(node.metadata?.['fileType']);
+  const nodeEntity = parseString(node.metadata?.['entity']);
   const isCaseFileKind = node.kind.startsWith('case_file');
+  const isCaseEntryNode =
+    node.kind === 'case_entry' || nodeEntity === 'case';
   const isCaseFile =
     Boolean(fileId) &&
     (isCaseFileKind ||
@@ -225,6 +228,7 @@ export function CaseResolverTreeNode({
                   : 'text-gray-300 hover:bg-muted/50';
 
   const handleClick = (): void => {
+    if (isCaseEntryNode) return;
     if (!isSelected) {
       select();
     }
@@ -255,7 +259,7 @@ export function CaseResolverTreeNode({
 
   return (
     <div
-      className={`group flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-sm ${stateClassName}`}
+      className={`group flex items-center gap-1 rounded px-2 py-1.5 text-sm ${isCaseEntryNode ? 'cursor-default' : 'cursor-pointer'} ${stateClassName}`}
       style={{ paddingLeft: `${depth * 16 + 8}px` }}
       role='button'
       tabIndex={0}
@@ -280,6 +284,7 @@ export function CaseResolverTreeNode({
       onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
         if (event.key === 'Enter' || event.key === ' ') {
           event.preventDefault();
+          if (isCaseEntryNode) return;
           handleClick();
         }
       }}

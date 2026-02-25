@@ -34,7 +34,6 @@ import type {
   AiPathRunRecord,
   AiPathRunStatus,
   Edge,
-  RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
@@ -56,7 +55,6 @@ import {
   extractNodeErrorOutputs,
   isMissingRunUpdateError,
   isRecord,
-  isSerializablePortValue,
   parseRuntimeState,
   resolveCancellationPollIntervalMs,
   collectDroppedRuntimePorts,
@@ -1219,6 +1217,13 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
         outputs,
         hashes,
         history,
+      }: {
+        runId: string;
+        runStartedAt: string;
+        inputs: Record<string, RuntimePortValues>;
+        outputs: Record<string, RuntimePortValues>;
+        hashes?: RuntimeState['hashes'];
+        history?: RuntimeState['history'];
       }) => {
         try {
           Object.assign(accInputs, inputs);

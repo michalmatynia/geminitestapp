@@ -43,6 +43,7 @@ export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWork
   const [pendingCaseIdentifierIds, setPendingCaseIdentifierIds] = useState<string[]>([]);
   const [editingCaseCategoryId, setEditingCaseCategoryId] = useState<string | null>(null);
   const [collapsedCaseIds, setCollapsedCaseIds] = useState<Set<string>>(new Set<string>());
+  const [heldCaseId, setHeldCaseId] = useState<string | null>(null);
   const [caseSearchQuery, setCaseSearchQuery] = useState('');
   const [caseSearchScope, setCaseSearchScope] = useState<CaseSearchScope>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.searchScope);
   const [caseFileTypeFilter, setCaseFileTypeFilter] = useState<CaseFileTypeFilter>('all');
@@ -89,6 +90,7 @@ export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWork
     pendingCaseIdentifierIds, setPendingCaseIdentifierIds,
     editingCaseCategoryId, setEditingCaseCategoryId,
     collapsedCaseIds, setCollapsedCaseIds,
+    heldCaseId, setHeldCaseId,
     caseSearchQuery, setCaseSearchQuery,
     caseSearchScope, setCaseSearchScope,
     caseFileTypeFilter, setCaseFileTypeFilter,

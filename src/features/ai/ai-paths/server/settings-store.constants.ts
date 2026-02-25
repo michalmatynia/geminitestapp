@@ -25,6 +25,7 @@ export type MongoAiPathsSettingDoc = {
 export type ParsedPathMeta = {
   id: string;
   name: string;
+  version?: number;
   createdAt: string;
   updatedAt: string;
 };

@@ -11,9 +11,8 @@ import { RuleList } from '../components/RuleList';
 import {
   PromptEngineProvider,
   usePromptEngine,
-  type ExploderPatternSubTab,
-  type PatternCollectionTab,
 } from '../context/PromptEngineContext';
+import { type ExploderPatternSubTab, type PatternCollectionTab } from '../context/prompt-engine/PromptEngineConfigContext';
 import {
   PromptEngineValidationPageProvider,
 } from '../context/PromptEngineValidationPageContext';

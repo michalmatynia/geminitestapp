@@ -14,7 +14,6 @@ import {
   deriveDocumentContentSync,
   toStorageDocumentValue,
 } from '@/features/document-editor';
-import type { FilemakerPartyKind } from '@/features/filemaker';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import {
   FILEMAKER_DATABASE_KEY,
@@ -43,7 +42,6 @@ import {
 import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/filemaker-upsert';
 import { resolveCaptureMappingApplyGuardReason } from '../capture-mapping-apply-guard';
 import { type CaseResolverFileEditDraft } from '../types';
-import { type Toast } from '@/shared/contracts/ui';
 
 const readCaptureApplyNowMs = (): number => (
   typeof performance !== 'undefined' && typeof performance.now === 'function'
@@ -487,12 +485,6 @@ export function useAdminCaseResolverCaptureActions({
         const nextAddresseeReference = acceptedAddressee
           ? normalizeRolePatchReference(rolePatches.addressee ?? null)
           : null;
-        const precheckShouldPatchAddresser =
-          acceptedAddresser &&
-          !areRolePatchReferencesEqual(targetFile.addresser, nextAddresserReference);
-        const precheckShouldPatchAddressee =
-          acceptedAddressee &&
-          !areRolePatchReferencesEqual(targetFile.addressee, nextAddresseeReference);
         let appliedAddresserReferencePatch = false;
         let appliedAddresseeReferencePatch = false;
         let appliedDocumentDatePatch = false;

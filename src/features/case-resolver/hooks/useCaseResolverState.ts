@@ -65,8 +65,11 @@ import {
   serializeWorkspaceForUnsavedChangesCheck,
 } from './useCaseResolverState.helpers';
 import {
+  buildRequestedContextRequestKey,
   hasRequestedCaseFile,
+  hasValidRequestedContextInFlight,
   resolveRequestedCaseIssueAfterRefresh,
+  shouldStartRequestedContextFetch,
 } from './useCaseResolverState.helpers.requested-context';
 import { useCaseResolverStateSelectionActions } from './useCaseResolverState.selection-actions';
 import { useCaseResolverPersistence, type UseCaseResolverPersistenceValue } from './useCaseResolverState.persistence-actions';
@@ -78,6 +81,13 @@ import { useCaseResolverStateViewState } from './useCaseResolverState.view-state
 import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
+const CASE_RESOLVER_REQUESTED_CONTEXT_LOADING_WATCHDOG_MS = 10_000;
+
+type RequestedContextInFlightState = {
+  requestKey: string;
+  requestedFileId: string;
+  startedAtMs: number;
+};
 
 /**
  * Custom hook to manage the complex state and logic of the Case Resolver page.
@@ -197,9 +207,9 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedFileId ? 'loading' : 'ready'
   );
   const requestedCaseIssueRef = useRef<CaseResolverRequestedCaseIssue | null>(null);
-  const requestedContextAttemptByFileIdRef = useRef<Map<string, number>>(new Map());
-  const requestedContextResolveRunIdRef = useRef(0);
-  const requestedContextRetryNonceRef = useRef(0);
+  const requestedContextInFlightRef = useRef<RequestedContextInFlightState | null>(null);
+  const requestedContextAttemptKeyRef = useRef<string | null>(null);
+  const requestedContextStartedAtRef = useRef<number | null>(null);
   const unresolvedOwnershipWarningShownRef = useRef(false);
   const lastLoggedOwnershipDiagnosticsSignatureRef = useRef<string>('');
   const lastLoggedRequestedContextSignatureRef = useRef<string>('');
@@ -223,13 +233,27 @@ export function useCaseResolverState(): CaseResolverStateValue {
   );
 
   const logRequestedContextTransition = useCallback(
-    (action: string, message?: string): void => {
+    (
+      action: string,
+      input?: {
+        message?: string;
+        requestKey?: string | null;
+        resolvedVia?: 'workspace_presence' | 'snapshot_fetch' | 'watchdog' | 'manual' | 'none';
+      },
+    ): void => {
+      const message = input?.message;
+      const requestKey = input?.requestKey ?? null;
+      const resolvedVia = input?.resolvedVia ?? 'none';
       const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
       const signature = [
         action,
         normalizedRequestedFileId,
         requestedCaseStatusRef.current,
         requestedCaseIssueRef.current ?? 'none',
+        requestKey ?? 'none',
+        resolvedVia,
+        requestedContextInFlightRef.current?.requestKey ?? 'none',
+        requestedContextAttemptKeyRef.current ?? 'none',
         message ?? '',
       ].join('|');
       if (lastLoggedRequestedContextSignatureRef.current === signature) return;
@@ -241,6 +265,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
           normalizedRequestedFileId
             ? `requested_file_id=${normalizedRequestedFileId}`
             : 'requested_file_id=<none>',
+          `request_key=${requestKey ?? 'none'}`,
+          `in_flight=${requestedContextInFlightRef.current?.requestKey ?? 'none'}`,
+          `attempted_key=${requestedContextAttemptKeyRef.current ?? 'none'}`,
+          `resolved_via=${resolvedVia}`,
           `requested_case_status=${requestedCaseStatusRef.current}`,
           `requested_case_issue=${requestedCaseIssueRef.current ?? 'none'}`,
           message ?? '',
@@ -381,10 +409,6 @@ export function useCaseResolverState(): CaseResolverStateValue {
   }, [requestedCaseIssue]);
 
   useEffect(() => {
-    requestedContextRetryNonceRef.current = requestedContextRetryTick;
-  }, [requestedContextRetryTick]);
-
-  useEffect(() => {
     workspaceRef.current = workspace;
   }, [workspace]);
 
@@ -453,14 +477,18 @@ export function useCaseResolverState(): CaseResolverStateValue {
   useEffect(() => {
     const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
     if (!normalizedRequestedFileId) {
-      requestedContextResolveRunIdRef.current += 1;
       requestedWorkspaceRefreshFileIdRef.current = null;
       requestedWorkspaceMissingFileIdRef.current = null;
-      requestedContextAttemptByFileIdRef.current.clear();
+      requestedContextInFlightRef.current = null;
+      requestedContextAttemptKeyRef.current = null;
+      requestedContextStartedAtRef.current = null;
       handledRequestedFileIdRef.current = null;
       setRequestedCaseIssueSafe(null);
       setRequestedCaseStatusSafe('ready');
-      logRequestedContextTransition('requested_context_ready', 'No requested file in query.');
+      logRequestedContextTransition('requested_context_ready', {
+        message: 'No requested file in query.',
+        resolvedVia: 'none',
+      });
       return;
     }
 
@@ -468,34 +496,66 @@ export function useCaseResolverState(): CaseResolverStateValue {
       workspace.files,
       normalizedRequestedFileId,
     );
-    if (hasRequestedFileInWorkspace) {
-      requestedContextResolveRunIdRef.current += 1;
-      requestedWorkspaceRefreshFileIdRef.current = null;
-      requestedWorkspaceMissingFileIdRef.current = null;
-      setRequestedCaseIssueSafe(null);
-      setRequestedCaseStatusSafe('ready');
-      logRequestedContextTransition('requested_context_ready', 'Requested file resolved in workspace.');
-      return;
-    }
+    if (!hasRequestedFileInWorkspace) return;
 
-    const retryNonce = requestedContextRetryNonceRef.current;
-    const attemptedRetryNonce = requestedContextAttemptByFileIdRef.current.get(
+    requestedWorkspaceRefreshFileIdRef.current = null;
+    requestedWorkspaceMissingFileIdRef.current = null;
+    requestedContextInFlightRef.current = null;
+    requestedContextAttemptKeyRef.current = null;
+    requestedContextStartedAtRef.current = null;
+    handledRequestedFileIdRef.current = null;
+    setRequestedCaseIssueSafe(null);
+    setRequestedCaseStatusSafe('ready');
+    logRequestedContextTransition('requested_context_ready', {
+      message: 'Requested file resolved in workspace.',
+      resolvedVia: 'workspace_presence',
+    });
+  }, [
+    logRequestedContextTransition,
+    requestedFileId,
+    setRequestedCaseIssueSafe,
+    setRequestedCaseStatusSafe,
+    workspace.files,
+  ]);
+
+  useEffect(() => {
+    const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
+    if (!normalizedRequestedFileId) return;
+    if (hasRequestedCaseFile(workspaceRef.current.files, normalizedRequestedFileId)) return;
+
+    const requestKey = buildRequestedContextRequestKey(
       normalizedRequestedFileId,
+      requestedContextRetryTick,
     );
-    if (attemptedRetryNonce === retryNonce) {
+    const shouldStartFetch = shouldStartRequestedContextFetch({
+      currentRequestKey: requestKey,
+      attemptedRequestKey: requestedContextAttemptKeyRef.current,
+      inFlightRequestKey: requestedContextInFlightRef.current?.requestKey ?? null,
+      currentStatus: requestedCaseStatusRef.current,
+    });
+    if (!shouldStartFetch) {
       return;
     }
 
-    requestedContextAttemptByFileIdRef.current.set(normalizedRequestedFileId, retryNonce);
+    const startedAtMs = Date.now();
+    requestedContextAttemptKeyRef.current = requestKey;
+    requestedContextInFlightRef.current = {
+      requestKey,
+      requestedFileId: normalizedRequestedFileId,
+      startedAtMs,
+    };
+    requestedContextStartedAtRef.current = startedAtMs;
     requestedWorkspaceRefreshFileIdRef.current = normalizedRequestedFileId;
     requestedWorkspaceMissingFileIdRef.current = null;
     handledRequestedFileIdRef.current = null;
     setRequestedCaseIssueSafe(null);
     setRequestedCaseStatusSafe('loading');
-    logRequestedContextTransition('requested_context_loading', 'Refreshing workspace for requested file.');
+    logRequestedContextTransition('requested_context_loading', {
+      message: 'Refreshing workspace for requested file.',
+      requestKey,
+      resolvedVia: 'snapshot_fetch',
+    });
 
-    const resolveRunId = requestedContextResolveRunIdRef.current + 1;
-    requestedContextResolveRunIdRef.current = resolveRunId;
     let isCancelled = false;
 
     void (async (): Promise<void> => {
@@ -503,7 +563,12 @@ export function useCaseResolverState(): CaseResolverStateValue {
         'case_view_requested_context_resolve',
       );
       if (isCancelled) return;
-      if (requestedContextResolveRunIdRef.current !== resolveRunId) return;
+      const currentInFlight = requestedContextInFlightRef.current;
+      if (currentInFlight?.requestKey !== requestKey) return;
+
+      requestedContextInFlightRef.current = null;
+      requestedContextStartedAtRef.current = null;
+
       const latestRequestedFileId = requestedFileId?.trim() ?? '';
       if (!latestRequestedFileId || latestRequestedFileId !== normalizedRequestedFileId) return;
 
@@ -517,10 +582,11 @@ export function useCaseResolverState(): CaseResolverStateValue {
         handledRequestedFileIdRef.current = null;
         setRequestedCaseIssueSafe(requestedIssueAfterRefresh);
         setRequestedCaseStatusSafe('missing');
-        logRequestedContextTransition(
-          'requested_context_missing_fetch_failed',
-          'Workspace refresh failed while resolving requested file.',
-        );
+        logRequestedContextTransition('requested_context_missing_fetch_failed', {
+          message: 'Workspace refresh failed while resolving requested file.',
+          requestKey,
+          resolvedVia: 'snapshot_fetch',
+        });
         return;
       }
 
@@ -537,8 +603,9 @@ export function useCaseResolverState(): CaseResolverStateValue {
         setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
           const currentRevision = getCaseResolverWorkspaceRevision(current);
           const incomingRevision = getCaseResolverWorkspaceRevision(refreshedWorkspace);
-          const currentHasRequestedFile = current.files.some(
-            (file: CaseResolverFile): boolean => file.id === normalizedRequestedFileId,
+          const currentHasRequestedFile = hasRequestedCaseFile(
+            current.files,
+            normalizedRequestedFileId,
           );
           if (incomingRevision <= currentRevision && currentHasRequestedFile) {
             return current;
@@ -555,10 +622,11 @@ export function useCaseResolverState(): CaseResolverStateValue {
         handledRequestedFileIdRef.current = null;
         setRequestedCaseIssueSafe(null);
         setRequestedCaseStatusSafe('ready');
-        logRequestedContextTransition(
-          'requested_context_ready',
-          'Requested file resolved after workspace refresh.',
-        );
+        logRequestedContextTransition('requested_context_ready', {
+          message: 'Requested file resolved after workspace refresh.',
+          requestKey,
+          resolvedVia: 'snapshot_fetch',
+        });
         return;
       }
 
@@ -567,14 +635,19 @@ export function useCaseResolverState(): CaseResolverStateValue {
       handledRequestedFileIdRef.current = null;
       setRequestedCaseIssueSafe(requestedIssueAfterRefresh);
       setRequestedCaseStatusSafe('missing');
-      logRequestedContextTransition(
-        'requested_context_missing_not_found',
-        'Requested file not found after workspace refresh.',
-      );
+      logRequestedContextTransition('requested_context_missing_not_found', {
+        message: 'Requested file not found after workspace refresh.',
+        requestKey,
+        resolvedVia: 'snapshot_fetch',
+      });
     })();
 
     return (): void => {
       isCancelled = true;
+      if (requestedContextInFlightRef.current?.requestKey === requestKey) {
+        requestedContextInFlightRef.current = null;
+        requestedContextStartedAtRef.current = null;
+      }
     };
   }, [
     logRequestedContextTransition,
@@ -583,7 +656,53 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedFileId,
     setRequestedCaseIssueSafe,
     setRequestedCaseStatusSafe,
-    workspace.files,
+  ]);
+
+  useEffect(() => {
+    if (requestedCaseStatus !== 'loading') return;
+    const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
+    if (!normalizedRequestedFileId) return;
+    const requestKey = buildRequestedContextRequestKey(
+      normalizedRequestedFileId,
+      requestedContextRetryTick,
+    );
+
+    const watchdogTimer = window.setTimeout((): void => {
+      const currentStatus = requestedCaseStatusRef.current;
+      if (currentStatus !== 'loading') return;
+      const hasValidInFlightRequest = hasValidRequestedContextInFlight({
+        currentRequestKey: requestKey,
+        inFlightRequestKey: requestedContextInFlightRef.current?.requestKey ?? null,
+        startedAtMs: requestedContextStartedAtRef.current,
+        nowMs: Date.now(),
+        watchdogMs: CASE_RESOLVER_REQUESTED_CONTEXT_LOADING_WATCHDOG_MS,
+      });
+      if (hasValidInFlightRequest) return;
+
+      requestedContextInFlightRef.current = null;
+      requestedContextStartedAtRef.current = null;
+      requestedWorkspaceRefreshFileIdRef.current = null;
+      requestedWorkspaceMissingFileIdRef.current = normalizedRequestedFileId;
+      handledRequestedFileIdRef.current = null;
+      setRequestedCaseIssueSafe('workspace_unavailable');
+      setRequestedCaseStatusSafe('missing');
+      logRequestedContextTransition('requested_context_missing_fetch_failed', {
+        message: 'Loading watchdog forced missing state after stalled context load.',
+        requestKey,
+        resolvedVia: 'watchdog',
+      });
+    }, CASE_RESOLVER_REQUESTED_CONTEXT_LOADING_WATCHDOG_MS + 250);
+
+    return (): void => {
+      window.clearTimeout(watchdogTimer);
+    };
+  }, [
+    logRequestedContextTransition,
+    requestedCaseStatus,
+    requestedContextRetryTick,
+    requestedFileId,
+    setRequestedCaseIssueSafe,
+    setRequestedCaseStatusSafe,
   ]);
 
   useEffect(() => {
@@ -646,33 +765,43 @@ export function useCaseResolverState(): CaseResolverStateValue {
       setRequestedCaseStatusSafe('ready');
       return;
     }
-    requestedContextAttemptByFileIdRef.current.delete(normalizedRequestedFileId);
+    const nextRetryTick = requestedContextRetryTick + 1;
+    const nextRequestKey = buildRequestedContextRequestKey(
+      normalizedRequestedFileId,
+      nextRetryTick,
+    );
+    requestedContextInFlightRef.current = null;
+    requestedContextAttemptKeyRef.current = null;
+    requestedContextStartedAtRef.current = null;
     requestedWorkspaceMissingFileIdRef.current = null;
     requestedWorkspaceRefreshFileIdRef.current = normalizedRequestedFileId;
     handledRequestedFileIdRef.current = null;
     setRequestedCaseIssueSafe(null);
     setRequestedCaseStatusSafe('loading');
-    setRequestedContextRetryTick((current: number): number => {
-      const next = current + 1;
-      requestedContextRetryNonceRef.current = next;
-      return next;
+    setRequestedContextRetryTick(nextRetryTick);
+    logRequestedContextTransition('requested_context_loading', {
+      message: 'Manual retry requested.',
+      requestKey: nextRequestKey,
+      resolvedVia: 'manual',
     });
-    logRequestedContextTransition('requested_context_loading', 'Manual retry requested.');
   }, [
     logRequestedContextTransition,
     requestedFileId,
+    requestedContextRetryTick,
     setRequestedCaseIssueSafe,
     setRequestedCaseStatusSafe,
   ]);
 
   const handleResetCaseContext = useCallback((): void => {
-    requestedContextResolveRunIdRef.current += 1;
     requestedWorkspaceRefreshFileIdRef.current = null;
     requestedWorkspaceMissingFileIdRef.current = null;
-    requestedContextAttemptByFileIdRef.current.clear();
+    requestedContextInFlightRef.current = null;
+    requestedContextAttemptKeyRef.current = null;
+    requestedContextStartedAtRef.current = null;
     handledRequestedFileIdRef.current = null;
     setRequestedCaseIssueSafe(null);
     setRequestedCaseStatusSafe('ready');
+    setRequestedContextRetryTick(0);
     setSelectedFileId(null);
     setSelectedAssetId(null);
     setSelectedFolderPath(null);
@@ -684,10 +813,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
           activeFileId: null,
         },
     );
-    logRequestedContextTransition(
-      'requested_context_reset',
-      'Case context reset requested.',
-    );
+    logRequestedContextTransition('requested_context_reset', {
+      message: 'Case context reset requested.',
+      resolvedVia: 'manual',
+    });
   }, [
     logRequestedContextTransition,
     setWorkspace,
@@ -775,7 +904,9 @@ export function useCaseResolverState(): CaseResolverStateValue {
     handledRequestedFileIdRef.current = null;
     requestedWorkspaceRefreshFileIdRef.current = null;
     requestedWorkspaceMissingFileIdRef.current = null;
-    requestedContextAttemptByFileIdRef.current.clear();
+    requestedContextInFlightRef.current = null;
+    requestedContextAttemptKeyRef.current = null;
+    requestedContextStartedAtRef.current = null;
     setRequestedCaseIssueSafe(null);
     setRequestedCaseStatusSafe('ready');
   }, [requestedFileId, setRequestedCaseIssueSafe, setRequestedCaseStatusSafe]);

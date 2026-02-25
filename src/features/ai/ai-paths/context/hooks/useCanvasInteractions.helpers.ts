@@ -59,6 +59,10 @@ export type TouchLongPressIndicatorState = {
   phase: 'pending' | 'activated';
 };
 
+export interface HandleSelectNodeOptions {
+  toggle?: boolean;
+}
+
 export const SUBGRAPH_CLIPBOARD_VERSION = 1 as const;
 export const SUBGRAPH_CLIPBOARD_STORAGE_KEY = 'ai-paths:canvas-subgraph-clipboard:v1';
 export const PASTE_OFFSET_STEP = 28;

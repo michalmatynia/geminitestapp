@@ -299,7 +299,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
         <Button variant='ghost' onClick={(): void => column.toggleSorting()}>
           Price{' '}
           <span className='ml-1 text-xs text-muted-foreground' suppressHydrationWarning>
-            {currencyCode ? `(\${currencyCode})` : ''}
+            {currencyCode ? `(${currencyCode})` : ''}
           </span>
           <ArrowUpDown className='ml-2 size-4' />
         </Button>
@@ -372,7 +372,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
             }}
           />
           {showCurrencyIndicator && displayPrice !== product.price && (
-            <Tooltip content={`Converted: \${displayPrice?.toFixed(2)} \${actualCurrency}`}>
+            <Tooltip content={`Converted: ${displayPrice?.toFixed(2)} ${actualCurrency}`}>
               <span className='text-xs text-muted-foreground'>
                 →{displayPrice?.toFixed(2)}
               </span>

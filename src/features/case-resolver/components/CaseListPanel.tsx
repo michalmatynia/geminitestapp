@@ -35,6 +35,7 @@ import { CaseListHeader } from './list/CaseListHeader';
 
 import { 
   CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF,
+  buildCaseResolverCaseHref,
   sortCaseTreeNodes,
   parseBoolean,
 } from './list/case-list-utils';
@@ -238,7 +239,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
 
   const handleOpenCase = useCallback(
     (caseId: string): void => {
-      router.push(`/admin/case-resolver?fileId=\${encodeURIComponent(caseId)}`);
+      router.push(buildCaseResolverCaseHref(caseId));
     },
     [router]
   );

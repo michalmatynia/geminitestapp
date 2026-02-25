@@ -7,6 +7,8 @@ import {
 export const parseBoolean = (value: unknown): boolean => value === true;
 export const CASE_RESOLVER_CASES_MASTER_SETTINGS_HREF =
   '/admin/settings/folder-trees#folder-tree-instance-case_resolver_cases';
+export const buildCaseResolverCaseHref = (caseId: string): string =>
+  `/admin/case-resolver?fileId=${encodeURIComponent(caseId)}`;
 
 export const parseTimestampMs = (value: string | null | undefined): number => {
   if (!value) return 0;

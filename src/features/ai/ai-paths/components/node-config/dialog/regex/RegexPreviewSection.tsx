@@ -11,7 +11,7 @@ export type RegexPreviewSectionProps = {
   preview: {
     matches: unknown[];
     extracted: unknown;
-    grouped: Record<string, unknown>;
+    grouped: unknown;
   };
 };
 

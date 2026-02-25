@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useCallback, useMemo } from 'react';
-import type { RuleDraft } from '../../context/PromptEngineContext';
+import type { RuleDraft } from '../../context/prompt-engine-context-utils';
 import type { 
   PromptValidationRule, 
   PromptValidationSimilarPattern, 

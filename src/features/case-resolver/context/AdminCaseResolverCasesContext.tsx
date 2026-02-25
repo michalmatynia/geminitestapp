@@ -15,6 +15,7 @@ import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { internalError } from '@/shared/errors/app-error';
+import { logClientError } from '@/features/observability';
 
 import {
   CASE_RESOLVER_CATEGORIES_KEY,
@@ -163,9 +164,11 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     workspace, setWorkspace,
     lastPersistedWorkspaceValueRef,
     lastPersistedWorkspaceRevisionRef,
+    isCreatingCase,
     setIsCreatingCase,
     createCaseMutationIdRef,
     caseDraft, setCaseDraft,
+    isCreateCaseModalOpen,
     setIsCreateCaseModalOpen,
     editingCaseId, setEditingCaseId,
     editingCaseName, setEditingCaseName,

@@ -48,7 +48,7 @@ export interface CanvasBoardState {
   nodeDurations: Record<string, number>;
   
   // Actions
-  fireTrigger: (node: AiNode, event?: React.MouseEvent | React.PointerEvent) => Promise<void>;
+  fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
   
   // Selection
   selectedNodeId: string | null;
@@ -75,8 +75,8 @@ export interface CanvasBoardState {
   handleCompleteConnection: (nodeId: string, port: string) => void;
   handleReconnectInput: (edgeId: string, nodeId: string, port: string) => void;
   handleSelectNode: (nodeId: string, options?: { toggle?: boolean }) => void;
-  handleDrop: (event: React.DragEvent) => void;
-  handleDragOver: (event: React.DragEvent) => void;
+  handleDrop: (event: React.DragEvent<HTMLDivElement>) => void;
+  handleDragOver: (event: React.DragEvent<HTMLDivElement>) => void;
   
   // Navigation
   zoomTo: (targetScale: number) => void;
@@ -114,6 +114,7 @@ export interface CanvasBoardState {
   getPortValue: (direction: 'input' | 'output', nodeId: string, port: string) => unknown;
   activeShapeId: string | null;
   edgeRoutingMode: EdgeRoutingMode;
+  nodeDiagnosticsById: Record<string, DataContractNodeIssueSummary>;
 }
 
 export interface UseCanvasBoardStateProps {

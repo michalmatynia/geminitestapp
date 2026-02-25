@@ -6,13 +6,9 @@ import { Tabs, TabsList, TabsTrigger } from '@/shared/ui';
 import { FilterPanel } from '@/shared/ui/templates/FilterPanel';
 import type { FilterField } from '@/shared/ui/templates/panels';
 
-import {
-  type ExploderPatternSubTab,
-  type PatternCollectionTab,
-  usePromptEngine,
-  type ScopeFilter,
-  type SeverityFilter,
-} from '../context/PromptEngineContext';
+import { usePromptEngine } from '../context/PromptEngineContext';
+import { type ExploderPatternSubTab, type PatternCollectionTab } from '../context/prompt-engine/PromptEngineConfigContext';
+import { type ScopeFilter, type SeverityFilter } from '../context/prompt-engine/PromptEngineFiltersContext';
 import { PROMPT_VALIDATION_SCOPE_LABELS, PROMPT_VALIDATION_SCOPE_VALUES } from '../settings';
 
 /**

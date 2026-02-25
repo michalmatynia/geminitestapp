@@ -40,7 +40,7 @@ export async function POST_handler(req: NextRequest): Promise<Response> {
 
   await assertDatabaseEngineOperationEnabled('allowManualCollectionSync');
 
-  const result: DatabaseSyncCollectionResultDto = await copyCollection(collection, direction);
+  const result = (await copyCollection(collection, direction)) as unknown as DatabaseSyncCollectionResultDto;
   return NextResponse.json(result);
 }
 

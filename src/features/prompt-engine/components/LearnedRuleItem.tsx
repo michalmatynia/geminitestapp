@@ -12,8 +12,9 @@ import {
   StatusBadge,
 } from '@/shared/ui';
 
-import { usePromptEngine, type RuleDraft } from '../context/PromptEngineContext';
-import { PromptValidationSeverity } from '../settings';
+import { usePromptEngine } from '../context/PromptEngineContext';
+import { type RuleDraft } from '../context/prompt-engine-context-utils';
+import { type PromptValidationSeverity } from '../settings';
 
 const formatSeverityLabel = (severity: PromptValidationSeverity): string => {
   if (severity === 'error') return 'Error';

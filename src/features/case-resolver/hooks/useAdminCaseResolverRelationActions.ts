@@ -1,7 +1,6 @@
 import { useCallback } from 'react';
 import type {
   CaseResolverAssetFile,
-  CaseResolverFile,
   CaseResolverGraph,
   CaseResolverRelationGraph,
   CaseResolverWorkspace,
@@ -19,7 +18,7 @@ import {
 } from '../utils/caseResolverUtils';
 
 export function useAdminCaseResolverRelationActions({
-  workspace,
+  workspace: _workspace,
   updateWorkspace,
 }: {
   workspace: CaseResolverWorkspace;

@@ -833,8 +833,8 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   const mutationId = parsed.data.mutationId;
   let value = parsed.data.value;
   if (isAiPathsSettingKey(key)) {
-    const migrated = await upsertAiPathsSetting(key, value);
-    return NextResponse.json(migrated);
+    await upsertAiPathsSetting(key, value);
+    return NextResponse.json({ success: true });
   }
   if (shouldLog()) {
     await ErrorSystem.logInfo('[settings] upserting', { service: 'api/settings', key, valuePreview: value.slice(0, 40) });

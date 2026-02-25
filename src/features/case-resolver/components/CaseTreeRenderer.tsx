@@ -22,6 +22,7 @@ import {
   SelectSimple,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
+import { buildCaseResolverCaseHref } from './list/case-list-utils';
 import { useAdminCaseResolverCases } from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
 import { CaseTreeNode } from '../pages/AdminCaseResolverCasesUtils';
@@ -71,7 +72,7 @@ export function CaseTreeRenderer({ nodes, depth = 0 }: { nodes: CaseTreeNode[]; 
   };
 
   const handleViewCase = (caseId: string): void => {
-    router.push(`/admin/case-resolver?fileId=${encodeURIComponent(caseId)}`);
+    router.push(buildCaseResolverCaseHref(caseId));
   };
 
   const handleCopyCaseId = async (caseId: string): Promise<void> => {

@@ -87,6 +87,7 @@ export interface CaseResolverFolderTreeContextValue {
   
   // Active State
   activeCaseFile: CaseResolverFile | null;
+  activeCaseChildCount: number;
   isNodeFileCanvasActive: boolean;
   
   // Helpers
@@ -229,6 +230,38 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
     }
     return null;
   }, [activeCaseId, activeFile, workspace.files]);
+
+  const activeCaseChildCount = useMemo((): number => {
+    const rootCaseId = activeCaseFile?.id?.trim() ?? '';
+    if (!rootCaseId) return 0;
+
+    const childCaseIdsByParentId = new Map<string, string[]>();
+    workspace.files.forEach((file: CaseResolverFile): void => {
+      if (file.fileType !== 'case') return;
+      const parentCaseId = file.parentCaseId?.trim() ?? '';
+      if (!parentCaseId || parentCaseId === file.id) return;
+      const currentChildren = childCaseIdsByParentId.get(parentCaseId) ?? [];
+      currentChildren.push(file.id);
+      childCaseIdsByParentId.set(parentCaseId, currentChildren);
+    });
+
+    let count = 0;
+    const visitedCaseIds = new Set<string>();
+    const queue = [...(childCaseIdsByParentId.get(rootCaseId) ?? [])];
+    while (queue.length > 0) {
+      const caseId = queue.shift();
+      if (!caseId || visitedCaseIds.has(caseId)) continue;
+      visitedCaseIds.add(caseId);
+      count += 1;
+      const children = childCaseIdsByParentId.get(caseId) ?? [];
+      children.forEach((childCaseId: string): void => {
+        if (visitedCaseIds.has(childCaseId)) return;
+        queue.push(childCaseId);
+      });
+    }
+
+    return count;
+  }, [activeCaseFile?.id, workspace.files]);
 
   useEffect((): void => {
     setShowChildCaseFolders(true);
@@ -620,6 +653,7 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
     assetOwnerCaseIdById,
     folderOwnerCaseIdsByPath,
     activeCaseFile,
+    activeCaseChildCount,
     isNodeFileCanvasActive,
     selectedFolderForCreate,
     selectedFolderForFolderCreate,
@@ -642,6 +676,7 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
     assetOwnerCaseIdById,
     folderOwnerCaseIdsByPath,
     activeCaseFile,
+    activeCaseChildCount,
     isNodeFileCanvasActive,
     selectedFolderForCreate,
     selectedFolderForFolderCreate,

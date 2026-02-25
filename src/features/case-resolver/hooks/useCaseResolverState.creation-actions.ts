@@ -14,7 +14,6 @@ import {
 import {
   appendOwnedFolderRecords,
   createUniqueCaseFileName,
-  isCaseResolverCreateContextReady,
   normalizeFolderRecords,
   resolveCaseScopedFolderTarget,
   resolveCaseContainerIdForFileId,

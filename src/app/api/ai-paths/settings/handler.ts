@@ -53,17 +53,17 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const parsedBulk = settingsBulkPayloadSchema.safeParse(body);
   if (parsedBulk.success) {
-    const updated = await upsertAiPathsSettingsBulk(parsedBulk.data.items);
-    return NextResponse.json(updated);
+    await upsertAiPathsSettingsBulk(parsedBulk.data.items);
+    return NextResponse.json({ success: true });
   }
 
   const parsedSingle = settingPayloadSchema.safeParse(body);
   if (parsedSingle.success) {
-    const updated = await upsertAiPathsSetting(
+    await upsertAiPathsSetting(
       parsedSingle.data.key,
       parsedSingle.data.value
     );
-    return NextResponse.json(updated);
+    return NextResponse.json({ success: true });
   }
   throw badRequestError('Invalid AI Paths settings payload.');
 }

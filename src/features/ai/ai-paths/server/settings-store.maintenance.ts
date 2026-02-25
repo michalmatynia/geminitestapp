@@ -1,9 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
 import {
   AI_PATHS_CONFIG_COMPACTION_THRESHOLD,
   AI_PATHS_CONFIG_KEY_PREFIX,
@@ -31,6 +25,7 @@ import {
 } from './settings-store-description-inference';
 import {
   needsServerExecutionModeConfigUpgrade,
+  upgradeServerExecutionModeConfig,
 } from './settings-store-execution-mode-server';
 import {
   needsParameterInferenceConfigUpgrade,
@@ -42,6 +37,7 @@ import {
 } from './settings-store-translation-en-pl';
 import {
   needsRuntimeInputContractsUpgrade,
+  upgradeRuntimeInputContractsConfig,
 } from './settings-store-runtime-input-contracts';
 
 export const buildTriggerButtonDisplay = (name: string): Record<string, unknown> => ({
@@ -312,8 +308,8 @@ export const runMaintenanceAction = (args: {
           nextRecords.push(entry);
           return;
         }
-        const upgraded = needsRuntimeInputContractsUpgrade(entry.value);
-        if (upgraded) {
+        const upgraded = upgradeRuntimeInputContractsConfig(entry.value);
+        if (upgraded && upgraded !== entry.value) {
           nextRecords.push({ ...entry, value: upgraded });
           affectedCount++;
         } else {
@@ -328,8 +324,8 @@ export const runMaintenanceAction = (args: {
           nextRecords.push(entry);
           return;
         }
-        const upgraded = needsServerExecutionModeConfigUpgrade(entry.value);
-        if (upgraded) {
+        const upgraded = upgradeServerExecutionModeConfig(entry.value);
+        if (upgraded && upgraded !== entry.value) {
           nextRecords.push({ ...entry, value: upgraded });
           affectedCount++;
         } else {
@@ -430,7 +426,6 @@ export const runMaintenanceAction = (args: {
 };
 
 export const runFullMaintenance = (records: AiPathsSettingRecord[]): AiPathsMaintenanceReport => {
-  const _startedAt = Date.now();
   const reports: MaintenanceActionApplyResult[] = [];
   let currentRecords = [...records];
 

@@ -13,7 +13,8 @@ import {
   normalizeRuleScopes,
 } from './rule-item-utils';
 import { RuleItemSimilarPatternsSection } from './RuleItemSimilarPatternsSection';
-import { usePromptEngine, type RuleDraft } from '../context/PromptEngineContext';
+import { usePromptEngine } from '../context/PromptEngineContext';
+import { type RuleDraft } from '../context/prompt-engine-context-utils';
 import { RuleItemProvider, useRuleItemContext } from './context/RuleItemContext';
 
 import { RuleItemHeader } from './rule-item/RuleItemHeader';

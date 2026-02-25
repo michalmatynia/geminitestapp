@@ -12,7 +12,7 @@ export async function POST_handler(_req: NextRequest, _ctx: ApiHandlerContext): 
   await assertDatabaseEngineManageAccess();
   await assertDatabaseEngineOperationEnabled('allowManualBackupRunNow');
 
-  const result = await createPrismaJsonBackup();
+  const result = (await createPrismaJsonBackup()) as unknown;
   return NextResponse.json(result);
 }
 

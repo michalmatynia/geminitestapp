@@ -366,7 +366,7 @@ export function useCanvasBoardState({
       const event = new PointerEvent('pointerup') as unknown as React.PointerEvent<Element>;
       canvasInteractions.handleCompleteConnection(event, node, port);
     },
-    handleReconnectInput: (edgeId, nodeId, port) => {
+    handleReconnectInput: (_edgeId, nodeId, port) => {
       const event = new PointerEvent('pointerdown') as unknown as React.PointerEvent<Element>;
       void canvasInteractions.handleReconnectInput(event, nodeId, port);
     },

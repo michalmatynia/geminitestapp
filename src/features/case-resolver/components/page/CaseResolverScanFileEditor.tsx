@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import {
   Copy,
   File,
@@ -267,9 +268,10 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                           className='group relative aspect-[3/4] overflow-hidden border-border/60 bg-black/40'
                         >
                           {slot.filepath ? (
-                            <img
+                            <Image
                               src={`/api/files/download?path=${encodeURIComponent(slot.filepath)}`}
                               alt={slot.name || 'Scan page'}
+                              fill
                               className='h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100'
                             />
                           ) : (

@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import type {
-  CaseResolverAssetFile,
   CaseResolverFile,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';

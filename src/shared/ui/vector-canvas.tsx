@@ -13,7 +13,6 @@ import {
   resolveRectResizePoints,
   screenPointToWorld,
   worldPointToScreen,
-  vectorShapeToPath,
   type VectorCanvasImageContentFrame,
   type VectorCanvasViewCropRect,
 } from './vector-canvas.geometry';
@@ -77,14 +76,14 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
     onSelectPoint,
     brushRadius,
     allowWithoutImage = false,
-    showEmptyState = true,
-    emptyStateLabel = 'Select an image slot to preview.',
+    showEmptyState: _showEmptyState = true,
+    emptyStateLabel: _emptyStateLabel = 'Select an image slot to preview.',
     maskPreviewEnabled = false,
     maskPreviewShapes = [],
     maskPreviewInvert = false,
     maskPreviewOpacity = 0.48,
     maskPreviewFeather = 0,
-    showCenterGuides = false,
+    showCenterGuides: _showCenterGuides = false,
     enableTwoFingerRotate = false,
     baseCanvasWidthPx = null,
     baseCanvasHeightPx = null,
@@ -853,7 +852,7 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
     setViewTransform({ scale: 1, panX: 0, panY: 0, rotateDeg: 0 });
   }, [stopPan, setViewTransform]);
 
-  const handleResetHorizonLevel = useCallback(() => {
+  const _handleResetHorizonLevel = useCallback(() => {
     const container = containerRef.current;
     if (!container) {
       setViewTransform((prev) => ({ ...prev, rotateDeg: 0 }));

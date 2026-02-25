@@ -8,7 +8,8 @@ import { cn } from '@/shared/utils';
 
 import { RuleListDragProvider } from './context/RuleListDragContext';
 import { RuleItem } from './RuleItem';
-import { usePromptEngine, type RuleDraft } from '../context/PromptEngineContext';
+import { usePromptEngine } from '../context/PromptEngineContext';
+import { type RuleDraft } from '../context/prompt-engine-context-utils';
 
 import type { PromptValidationRule } from '../settings';
 

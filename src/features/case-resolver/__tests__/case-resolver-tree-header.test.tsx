@@ -66,6 +66,23 @@ describe('CaseResolverTreeHeader', () => {
     pageContext.requestedCaseStatus = 'ready';
     pageContext.requestedCaseIssue = null;
     pageContext.canCreateInActiveCase = true;
+    folderTreeContext.activeCaseFile = {
+      id: 'case-a',
+      name: 'Case A',
+      caseIdentifierId: null,
+    };
+    folderTreeContext.activeCaseChildCount = 2;
+    folderTreeContext.showChildCaseFolders = true;
+  });
+
+  it('shows nested folders/files switch in active case and toggles child scope visibility', () => {
+    render(<CaseResolverTreeHeader />);
+
+    expect(screen.getByText('Show nested folders and files')).toBeInTheDocument();
+    expect(screen.getByText('2 child cases')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByLabelText('Show nested folders and files'));
+    expect(setShowChildCaseFoldersMock).toHaveBeenCalledWith(false);
   });
 
   it('shows recoverable missing-context banner and actions', () => {
@@ -94,6 +111,20 @@ describe('CaseResolverTreeHeader', () => {
     render(<CaseResolverTreeHeader />);
 
     const createButtons = screen.getAllByTitle('Case context unavailable.');
+    expect(createButtons).toHaveLength(4);
+    createButtons.forEach((button) => {
+      expect(button).toBeDisabled();
+    });
+  });
+
+  it('keeps create actions disabled while context is loading', () => {
+    pageContext.requestedCaseStatus = 'loading';
+    pageContext.requestedCaseIssue = null;
+    pageContext.canCreateInActiveCase = false;
+
+    render(<CaseResolverTreeHeader />);
+
+    const createButtons = screen.getAllByTitle('Loading case context...');
     expect(createButtons).toHaveLength(4);
     createButtons.forEach((button) => {
       expect(button).toBeDisabled();

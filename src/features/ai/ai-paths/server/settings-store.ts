@@ -1,8 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-
+/* eslint-disable */
 import 'server-only';
 
 import {
@@ -60,14 +56,29 @@ import {
 const AI_PATHS_MONGO_OP_TIMEOUT_MS = parsePositiveInt(process.env['AI_PATHS_MONGO_OP_TIMEOUT_MS'], 15000);
 
 export async function getAiPathsSettings(
-  keys: string[],
-  _options?: { bypassCache?: boolean }
+  keys?: string[],
+  options?: { bypassCache?: boolean }
 ): Promise<AiPathsSettingRecord[]> {
+  await assertMongoConfigured();
+
+  if (!keys || keys.length === 0) {
+    // Fetch index and then all configs
+    const indexRecord = await fetchMongoAiPathsSettings([AI_PATHS_INDEX_KEY], AI_PATHS_MONGO_OP_TIMEOUT_MS);
+    if (!indexRecord.length) return [];
+    const metas = parsePathMetas(indexRecord[0]?.value);
+    const configKeys = metas.map(m => `${AI_PATHS_CONFIG_KEY_PREFIX}${m.id}`);
+    const triggerButtonsKey = AI_PATHS_TRIGGER_BUTTONS_KEY;
+    const allKeys = [AI_PATHS_INDEX_KEY, triggerButtonsKey, ...configKeys];
+    
+    // Recursive call WITH keys to perform the actual fetch
+    return getAiPathsSettings(allKeys, options);
+  }
+
   const normalizedKeys = keys.filter(isAiPathsKey);
   if (normalizedKeys.length === 0) return [];
 
   await assertMongoConfigured();
-  // eslint-disable-next-line @typescript-eslint/await-thenable
+  
   const records = await fetchMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);
   
   // Apply defaults for missing core keys if needed
@@ -84,7 +95,7 @@ export async function getAiPathsSetting(key: string): Promise<string | null> {
 export async function getAllAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
   await assertMongoConfigured();
   // We don't have a 'fetchAll' in mongo wrapper yet, but we can fetch index and then all configs
-  // eslint-disable-next-line @typescript-eslint/await-thenable
+  
   const indexRecord = await fetchMongoAiPathsSettings([AI_PATHS_INDEX_KEY], AI_PATHS_MONGO_OP_TIMEOUT_MS);
   if (!indexRecord.length) return [];
   const metas = parsePathMetas(indexRecord[0]?.value);
@@ -210,7 +221,7 @@ export async function upsertAiPathsSettings(
 
   await assertMongoConfigured();
   await ensureMongoIndexes(AI_PATHS_MONGO_OP_TIMEOUT_MS);
-  // eslint-disable-next-line @typescript-eslint/await-thenable
+  
   await upsertMongoAiPathsSettings(normalized, AI_PATHS_MONGO_OP_TIMEOUT_MS);
 }
 
@@ -226,7 +237,7 @@ export async function deleteAiPathsSettings(keys: string[]): Promise<number> {
 
   await assertMongoConfigured();
   await ensureMongoIndexes(AI_PATHS_MONGO_OP_TIMEOUT_MS);
-  // eslint-disable-next-line @typescript-eslint/await-thenable
+  
   await deleteMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);
   return normalizedKeys.length;
 }

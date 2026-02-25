@@ -8,7 +8,7 @@ export type RegexAiPromptSectionProps = {
   regexConfig: RegexConfig;
   onUpdateRegex: (patch: Partial<RegexConfig>) => void;
   connectedModel: {
-    modelNode: AiNode | null;
+    modelNode: AiNode | null | undefined;
     modelId?: string;
   };
   onSendToAi?: (nodeId: string, prompt: string) => void | Promise<void>;

@@ -8,8 +8,11 @@ import {
   serializeWorkspaceForUnsavedChangesCheck,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers';
 import {
+  buildRequestedContextRequestKey,
   hasRequestedCaseFile,
+  hasValidRequestedContextInFlight,
   resolveRequestedCaseIssueAfterRefresh,
+  shouldStartRequestedContextFetch,
   stripCaseContextQueryParams,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers.requested-context';
 import { createCaseResolverFile } from '@/features/case-resolver/settings';
@@ -127,6 +130,77 @@ describe('case resolver case context resolution', () => {
         'fileId=case-a&openEditor=1&promptExploderSessionId=session-1&tab=tree&view=documents',
       ),
     ).toBe('tab=tree&view=documents');
+  });
+
+  it('builds deterministic request key from file id and retry tick', () => {
+    expect(buildRequestedContextRequestKey('case-a', 0)).toBe('case-a|0');
+    expect(buildRequestedContextRequestKey(' case-a ', 2)).toBe('case-a|2');
+  });
+
+  it('allows re-attempt when prior attempt was canceled and loading is still active', () => {
+    const requestKey = buildRequestedContextRequestKey('case-missing', 0);
+    expect(
+      shouldStartRequestedContextFetch({
+        currentRequestKey: requestKey,
+        attemptedRequestKey: requestKey,
+        inFlightRequestKey: null,
+        currentStatus: 'loading',
+      }),
+    ).toBe(true);
+  });
+
+  it('prevents duplicate fetch while matching request key is already in flight', () => {
+    const requestKey = buildRequestedContextRequestKey('case-missing', 1);
+    expect(
+      shouldStartRequestedContextFetch({
+        currentRequestKey: requestKey,
+        attemptedRequestKey: requestKey,
+        inFlightRequestKey: requestKey,
+        currentStatus: 'loading',
+      }),
+    ).toBe(false);
+  });
+
+  it('requires explicit retry key change after terminal missing state', () => {
+    const requestKey = buildRequestedContextRequestKey('case-missing', 1);
+    expect(
+      shouldStartRequestedContextFetch({
+        currentRequestKey: requestKey,
+        attemptedRequestKey: requestKey,
+        inFlightRequestKey: null,
+        currentStatus: 'missing',
+      }),
+    ).toBe(false);
+  });
+
+  it('treats watchdog in-flight request validity based on key and age', () => {
+    expect(
+      hasValidRequestedContextInFlight({
+        currentRequestKey: 'case-a|1',
+        inFlightRequestKey: 'case-a|1',
+        startedAtMs: 10_000,
+        nowMs: 14_000,
+        watchdogMs: 5_000,
+      }),
+    ).toBe(true);
+    expect(
+      hasValidRequestedContextInFlight({
+        currentRequestKey: 'case-a|1',
+        inFlightRequestKey: 'case-a|1',
+        startedAtMs: 10_000,
+        nowMs: 16_500,
+        watchdogMs: 5_000,
+      }),
+    ).toBe(false);
+    expect(
+      hasValidRequestedContextInFlight({
+        currentRequestKey: 'case-a|1',
+        inFlightRequestKey: 'case-b|1',
+        startedAtMs: 10_000,
+        nowMs: 12_000,
+        watchdogMs: 5_000,
+      }),
+    ).toBe(false);
   });
 
   it('keeps folder target when it belongs to the active case', () => {

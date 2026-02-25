@@ -1,16 +1,7 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { type VectorPoint, type VectorShape, type VectorShapeType, type VectorToolMode } from '@/shared/contracts/vector';
 import {
-  MIN_VECTOR_VIEW_SCALE,
-  MAX_VECTOR_VIEW_SCALE,
-  resolveRectDragPoints,
-  resolveRectResizePoints,
-  screenPointToWorld,
-  worldPointToScreen,
-  normalizeAngleDelta,
   type VectorViewTransform,
-  type VectorCanvasViewCropRect,
-  type VectorCanvasImageContentFrame,
 } from './vector-canvas.geometry';
 
 export interface UseVectorCanvasInteractionsProps {
@@ -34,23 +25,23 @@ export interface UseVectorCanvasInteractionsProps {
 }
 
 export function useVectorCanvasInteractions({
-  tool,
-  selectionEnabled,
+  tool: _tool,
+  selectionEnabled: _selectionEnabled,
   shapes,
-  activeShapeId,
-  selectedPointIndex,
-  onChange,
-  onSelectShape,
-  onSelectPoint,
-  brushRadius,
-  src,
-  allowWithoutImage,
-  enableTwoFingerRotate,
-  imageMoveEnabled,
-  imageOffset,
-  onImageOffsetChange,
-  canvasRenderSize,
-  syncCanvasSize,
+  activeShapeId: _activeShapeId,
+  selectedPointIndex: _selectedPointIndex,
+  onChange: _onChange,
+  onSelectShape: _onSelectShape,
+  onSelectPoint: _onSelectPoint,
+  brushRadius: _brushRadius,
+  src: _src,
+  allowWithoutImage: _allowWithoutImage,
+  enableTwoFingerRotate: _enableTwoFingerRotate,
+  imageMoveEnabled: _imageMoveEnabled,
+  imageOffset: _imageOffset,
+  onImageOffsetChange: _onImageOffsetChange,
+  canvasRenderSize: _canvasRenderSize,
+  syncCanvasSize: _syncCanvasSize,
 }: UseVectorCanvasInteractionsProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);

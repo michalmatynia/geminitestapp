@@ -237,7 +237,7 @@ export function useProductListState(): ProductListContextType & {
     queryFn: ({ signal }): Promise<Record<string, ProductCategory[]>> => {
       if (categoryLookupCatalogIds.length === 0) return Promise.resolve({});
       return api.get<Record<string, ProductCategory[]>>(
-        `/api/products/categories/batch?catalogIds=\${categoryLookupCatalogIds.map(encodeURIComponent).join(',')}`,
+        `/api/products/categories/batch?catalogIds=${categoryLookupCatalogIds.map(encodeURIComponent).join(',')}`,
         {
           signal,
           timeout: PRODUCT_CATEGORY_BATCH_TIMEOUT_MS,
@@ -376,7 +376,7 @@ export function useProductListState(): ProductListContextType & {
         ? QUERY_KEYS.products.detail(id)
         : [...QUERY_KEYS.products.details(), 'inactive'],
     queryFn: () =>
-      api.get<ProductWithImages>(`/api/products/\${editingProduct?.id}`, {
+      api.get<ProductWithImages>(`/api/products/${editingProduct?.id}`, {
         timeout: PRODUCT_DETAIL_TIMEOUT_MS,
       }),
     staleTime: EDIT_PRODUCT_DETAIL_STALE_TIME_MS,
@@ -398,11 +398,11 @@ export function useProductListState(): ProductListContextType & {
     for (const product of data) {
       const baseStatus = normalizeListingStatus(integrationBadgeStatuses.get(product.id));
       if (baseStatus) {
-        statuses.set(`\${product.id}:base`, baseStatus);
+        statuses.set(`${product.id}:base`, baseStatus);
       }
       const traderaStatus = normalizeListingStatus(traderaBadgeStatuses.get(product.id));
       if (traderaStatus) {
-        statuses.set(`\${product.id}:tradera`, traderaStatus);
+        statuses.set(`${product.id}:tradera`, traderaStatus);
       }
     }
     return statuses;
@@ -429,7 +429,7 @@ export function useProductListState(): ProductListContextType & {
       .fetchQuery({
         queryKey: normalizeQueryKey(getProductDetailQueryKey(product.id)),
         queryFn: ({ signal }) =>
-          api.get<ProductWithImages>(`/api/products/\${encodeURIComponent(product.id)}?fresh=1`, {
+          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(product.id)}?fresh=1`, {
             signal,
             cache: 'no-store',
             logError: false,
@@ -467,7 +467,7 @@ export function useProductListState(): ProductListContextType & {
       .fetchQuery({
         queryKey: normalizeQueryKey(getProductDetailQueryKey(openProductIdFromQuery)),
         queryFn: ({ signal }) =>
-          api.get<ProductWithImages>(`/api/products/\${encodeURIComponent(openProductIdFromQuery)}?fresh=1`, {
+          api.get<ProductWithImages>(`/api/products/${encodeURIComponent(openProductIdFromQuery)}?fresh=1`, {
             signal,
             cache: 'no-store',
             logError: false,
@@ -560,13 +560,13 @@ export function useProductListState(): ProductListContextType & {
         const draft = await queryClient.fetchQuery({
           queryKey: normalizeQueryKey(draftKeys.detail(draftId)),
           queryFn: () =>
-            api.get<ProductDraftDto>(`/api/drafts/\${draftId}`, {
+            api.get<ProductDraftDto>(`/api/drafts/${draftId}`, {
               timeout: DRAFT_DETAIL_TIMEOUT_MS,
             }),
         });
         setCreateDraft(draft);
         handleOpenCreateFromDraft(draft);
-        toast(`Creating product from draft: \${draft.name}`, { variant: 'success' });
+        toast(`Creating product from draft: ${draft.name}`, { variant: 'success' });
       } catch (error) {
         logClientError(error, { context: { source: 'useProductListState', action: 'createFromDraft', draftId } });
         toast('Failed to load draft template', { variant: 'error' });

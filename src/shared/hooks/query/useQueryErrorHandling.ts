@@ -226,7 +226,9 @@ export function useGlobalQueryErrorHandler(config: ErrorHandlingConfig = {}): vo
           if (isLoggableObject(error)) {
             try {
               (error as LoggableWithErrorFlag).__logged = true;
-            } catch {}
+            } catch {
+              // ignore
+            }
           }
         }
 

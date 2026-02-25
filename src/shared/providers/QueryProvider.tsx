@@ -54,7 +54,7 @@ function QueryProviderAdvancedRuntime({ shouldWarmup }: { shouldWarmup: boolean 
     }, 5 * 60 * 1000);
 
     const cleanupInterval = setInterval((): void => {
-      void cleanupStaleQueries();
+      cleanupStaleQueries();
     }, 10 * 60 * 1000);
 
     return (): void => {

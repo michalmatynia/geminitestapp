@@ -35,3 +35,44 @@ export const stripCaseContextQueryParams = (search: string): string => {
   params.delete('promptExploderSessionId');
   return params.toString();
 };
+
+export const buildRequestedContextRequestKey = (
+  requestedFileId: string,
+  retryTick: number,
+): string => `${requestedFileId.trim()}|${retryTick}`;
+
+export const shouldStartRequestedContextFetch = ({
+  currentRequestKey,
+  attemptedRequestKey,
+  inFlightRequestKey,
+  currentStatus,
+}: {
+  currentRequestKey: string;
+  attemptedRequestKey: string | null;
+  inFlightRequestKey: string | null;
+  currentStatus: 'loading' | 'ready' | 'missing';
+}): boolean => {
+  if (!currentRequestKey.trim()) return false;
+  if (attemptedRequestKey !== currentRequestKey) return true;
+  if (inFlightRequestKey === currentRequestKey) return false;
+  return currentStatus === 'loading';
+};
+
+export const hasValidRequestedContextInFlight = ({
+  currentRequestKey,
+  inFlightRequestKey,
+  startedAtMs,
+  nowMs,
+  watchdogMs,
+}: {
+  currentRequestKey: string;
+  inFlightRequestKey: string | null;
+  startedAtMs: number | null;
+  nowMs: number;
+  watchdogMs: number;
+}): boolean => {
+  if (inFlightRequestKey !== currentRequestKey) return false;
+  if (typeof startedAtMs !== 'number' || !Number.isFinite(startedAtMs)) return false;
+  if (startedAtMs <= 0) return false;
+  return nowMs - startedAtMs <= watchdogMs;
+};

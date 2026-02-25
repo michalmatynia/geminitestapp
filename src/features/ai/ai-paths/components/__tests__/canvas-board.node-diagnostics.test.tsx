@@ -11,7 +11,7 @@ import {
   CanvasBoardUIProvider,
   type CanvasBoardUIContextValue,
 } from '../CanvasBoardUIContext';
-import { renderNodeDiagnosticsTooltipContent } from '../canvas-board';
+import { renderNodeDiagnosticsTooltipContent } from '../CanvasBoard.utils';
 import { CanvasSvgNodeLayer } from '../canvas-svg-node-layer';
 
 const baseRuntimeState: RuntimeState = {

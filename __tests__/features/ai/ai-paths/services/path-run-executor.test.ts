@@ -626,12 +626,12 @@ describe('PathRunExecutor', () => {
     } as any);
     await repo.createRunNodes(run.id, disconnectedCompileNodes);
 
-    await expect(executePathRun(run)).rejects.toThrow('Graph compile blocked run');
+    await expect(executePathRun(run)).rejects.toThrow('Required input "prompt" on node "Model" has no incoming edge');
     expect(evaluateGraphWithIteratorAutoContinue).not.toHaveBeenCalled();
 
     const updatedRun = await repo.findRunById(run.id);
     expect(updatedRun.status).toBe('failed');
-    expect(updatedRun.errorMessage).toContain('Graph compile blocked run');
+    expect(updatedRun.errorMessage).toContain('Required input "prompt" on node "Model" has no incoming edge');
   });
 
   it('should block run when AI Paths validation preflight policy fails', async () => {

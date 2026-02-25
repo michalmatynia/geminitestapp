@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { Trash2 } from 'lucide-react';
 import { Button, FormSection, LoadingState, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -8,7 +9,6 @@ import { useProductStudioContext } from '../../../context/ProductStudioContext';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import { DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL, PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY } from '../../../constants';
-import type { ImageStudioSlotDto as ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 export function StudioVariantsGrid(): React.JSX.Element {
   const context = useProductStudioContext();
@@ -48,23 +48,22 @@ export function StudioVariantsGrid(): React.JSX.Element {
                     if (slot.id) setSelectedVariantSlotId(slot.id);
                   }}
                   className={cn(
-                    'group w-full rounded border p-1 text-left transition',
+                    'group relative w-full rounded border p-1 text-left transition h-32',
                     isSelected ? 'border-blue-400/80 bg-blue-500/10' : 'border-border/60 hover:border-blue-400/40'
                   )}
                 >
                   {src ? (
-                    <img src={src} alt={slot.name ?? 'Variant'} className='h-24 w-full rounded object-contain bg-black/20' />
+                    <Image src={src} alt={slot.name ?? 'Variant'} fill className='rounded object-contain bg-black/20' />
                   ) : (
                     <div className='flex h-24 w-full items-center justify-center rounded bg-black/20 text-xs text-gray-500'>No preview</div>
                   )}
-                  <div className='mt-1 space-y-0.5 text-[11px] text-gray-300'>
+                  <div className='absolute bottom-0 left-0 right-0 p-1 space-y-0.5 text-[11px] text-gray-300 z-10'>
                     <div className='flex items-center justify-between'>
-                      <span className='truncate'>{slot.name ?? 'Variant'}</span>
+                      <span className='truncate bg-black/50 px-1 rounded'>{slot.name ?? 'Variant'}</span>
                       {isSelected && <StatusBadge status='Selected' variant='info' size='sm' />}
                     </div>
                   </div>
-                </button>
-                <Button size='xs' variant='outline' className='h-6 w-full border-red-500/40 text-[10px] text-red-200 hover:bg-red-500/10' onClick={() => void handleDeleteVariant(slot)} disabled={deletingVariantId !== null || sending || accepting} loading={isDeleting}>
+                </button>                <Button size='xs' variant='outline' className='h-6 w-full border-red-500/40 text-[10px] text-red-200 hover:bg-red-500/10' onClick={() => void handleDeleteVariant(slot)} disabled={deletingVariantId !== null || sending || accepting} loading={isDeleting}>
                   <Trash2 className='mr-1 size-3' /> Delete
                 </Button>
               </div>

@@ -110,10 +110,21 @@ export const listAiPathsSettings = getAiPathsSettings;
 
 async function maybeAutoApplyDefaultSeedsOnRead(
   requestedKeys: string[],
-  existingRecords: AiPathsSettingRecord[]
+  existingRecords: AiPathsSettingRecord[],
+  testOptions?: {
+    autoApply?: boolean;
+    applyDefaultSeeds?: (items: AiPathsSettingRecord[]) => Promise<AiPathsSettingRecord[]>;
+  }
 ): Promise<AiPathsSettingRecord[]> {
-  const envAutoApply = parseBooleanEnv(process.env['AI_PATHS_AUTO_APPLY_DEFAULTS'], true);
+  const envAutoApply = testOptions?.autoApply !== undefined
+    ? testOptions.autoApply
+    : parseBooleanEnv(process.env['AI_PATHS_AUTO_APPLY_DEFAULTS'], true);
+  
   if (!envAutoApply) return existingRecords;
+
+  if (testOptions?.applyDefaultSeeds) {
+    return testOptions.applyDefaultSeeds(existingRecords);
+  }
 
   const result = [...existingRecords];
   let changed = false;
@@ -282,6 +293,7 @@ export const applyAiPathsSettingsMaintenance = async (actionIds?: AiPathsMainten
 
 export const __testOnly = {
   maybeAutoApplyDefaultSeedsOnRead,
+  preservePathConfigFlagsOnSeed,
   resolveAutoApplyDefaultSeedsOnRead: (
     value: string | undefined
   ): boolean => parseBooleanEnv(value, false),

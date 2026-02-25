@@ -17,6 +17,14 @@ vi.mock("@/shared/lib/db/app-db-provider", () => ({
   APP_DB_PROVIDER_SETTING_KEY: "app_db_provider",
 }));
 
+vi.mock("@/shared/lib/db/collection-provider-map", () => ({
+  getCollectionProvider: vi.fn().mockResolvedValue("prisma"),
+  getCollectionProviderMap: vi.fn().mockResolvedValue({}),
+  getCollectionRouteMap: vi.fn().mockResolvedValue({}),
+  resolveCollectionProviderForRequest: vi.fn().mockResolvedValue("prisma"),
+  invalidateCollectionProviderMapCache: vi.fn(),
+}));
+
 // Mock observability server module
 vi.mock('@/features/observability/server', async (importOriginal) => {
   const actual = await importOriginal() as any;

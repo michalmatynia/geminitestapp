@@ -66,6 +66,7 @@ describe('CaseResolverTreeHeader', () => {
     pageContext.requestedCaseStatus = 'ready';
     pageContext.requestedCaseIssue = null;
     pageContext.canCreateInActiveCase = true;
+    pageContext.activeCaseId = 'case-a';
     folderTreeContext.activeCaseFile = {
       id: 'case-a',
       name: 'Case A',
@@ -83,6 +84,16 @@ describe('CaseResolverTreeHeader', () => {
 
     fireEvent.click(screen.getByLabelText('Show nested folders and files'));
     expect(setShowChildCaseFoldersMock).toHaveBeenCalledWith(false);
+  });
+
+  it('shows nested switch when case context exists even if activeCaseFile is unresolved', () => {
+    folderTreeContext.activeCaseFile = null;
+    folderTreeContext.activeCaseChildCount = 0;
+    pageContext.activeCaseId = 'case-a';
+
+    render(<CaseResolverTreeHeader />);
+
+    expect(screen.getByText('Show nested folders and files')).toBeInTheDocument();
   });
 
   it('shows recoverable missing-context banner and actions', () => {

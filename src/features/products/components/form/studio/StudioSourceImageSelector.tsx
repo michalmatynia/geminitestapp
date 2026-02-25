@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Image from 'next/image';
 import { FormSection, StatusBadge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { useProductStudioContext } from '../../../context/ProductStudioContext';
@@ -22,13 +23,18 @@ export function StudioSourceImageSelector(): React.JSX.Element {
                 type='button'
                 onClick={() => setSelectedImageIndex(preview.index)}
                 className={cn(
-                  'group relative overflow-hidden rounded border p-1 text-left transition',
+                  'group relative overflow-hidden rounded border p-1 text-left transition h-32',
                   isSelected ? 'border-emerald-400/80 bg-emerald-500/10' : 'border-border/60 hover:border-emerald-400/40'
                 )}
               >
-                <img src={preview.src} alt={preview.label} className='h-24 w-full rounded object-contain bg-black/20' />
-                <div className='mt-1 flex items-center justify-between text-[11px] text-gray-300'>
-                  <span>{preview.label}</span>
+                <Image
+                  src={preview.src}
+                  alt={preview.label}
+                  fill
+                  className='rounded object-contain bg-black/20'
+                />
+                <div className='absolute bottom-0 left-0 right-0 p-1 flex items-center justify-between text-[11px] text-gray-300 z-10'>
+                  <span className='bg-black/50 px-1 rounded'>{preview.label}</span>
                   {isSelected && <StatusBadge status='Selected' variant='active' size='sm' />}
                 </div>
               </button>

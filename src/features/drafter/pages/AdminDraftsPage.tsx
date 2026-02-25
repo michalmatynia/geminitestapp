@@ -6,8 +6,7 @@ import { SectionHeader } from '@/shared/ui';
 
 import { DraftCreatorModal } from '../components/DraftCreatorModal';
 import { DraftList } from '../components/DraftList';
-import { DrafterProvider, useDrafterContext } from '../context/DrafterContext';
-import { useDraftQueries } from '../hooks/useDraftQueries';
+import { DrafterProvider } from '../context/DrafterContext';
 
 function AdminDraftsPageContent(): React.JSX.Element {
   return (

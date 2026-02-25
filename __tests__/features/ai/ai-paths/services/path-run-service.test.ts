@@ -189,7 +189,7 @@ describe('PathRunService', () => {
             aiPathsValidation: { enabled: true },
           },
         })
-      ).rejects.toThrow('Graph compile failed');
+      ).rejects.toThrow('Required input "prompt" on node "Model" has no incoming edge');
     });
 
     it('should dedupe active runs by requestId', async () => {

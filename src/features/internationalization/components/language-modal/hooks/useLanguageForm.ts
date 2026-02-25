@@ -2,7 +2,6 @@ import React from 'react';
 
 import { useInternationalizationContext } from '@/features/internationalization/context/InternationalizationContext';
 import { useSaveLanguageMutation } from '@/features/internationalization/hooks/useInternationalizationMutations';
-import type { Language } from '@/shared/contracts/internationalization';
 import { useToast } from '@/shared/ui';
 
 type UseLanguageFormResult = {

@@ -259,6 +259,7 @@ export function useCanvasInteractionsNodes({
 
   const handleSelectNode = useCallback(
     async (nodeId: string, options?: HandleSelectNodeOptions): Promise<void> => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
       const shouldToggle = options && typeof options === 'object' && (options as any).toggle === true;
 
       if (shouldToggle) {

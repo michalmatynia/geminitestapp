@@ -3,41 +3,55 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ProductMetadataMultiSelectField } from '@/features/products/components/form/ProductMetadataMultiSelectField';
 import {
-  ProductFormContext,
-  type ProductFormContextType,
-} from '@/features/products/context/ProductFormContext';
+  ProductFormMetadataContext,
+  type ProductFormMetadataContextType,
+} from '@/features/products/context/ProductFormMetadataContext';
 
 const multiSelectSpy = vi.fn();
 
 vi.mock('@/shared/ui', () => ({
-  MultiSelect: (props: unknown) => {
+  MultiSelect: (props: any) => {
     multiSelectSpy(props);
     return null;
   },
 }));
 
-const buildFormContext = (
-  overrides: Partial<ProductFormContextType> = {},
-): ProductFormContextType =>
+const buildMetadataContext = (
+  overrides: Partial<ProductFormMetadataContextType> = {},
+): ProductFormMetadataContextType =>
   ({
     categories: [{ id: 'cat-dice', name: 'Dice' }],
     selectedCategoryId: null,
     categoriesLoading: false,
     setCategoryId: vi.fn(),
+    catalogs: [],
+    catalogsLoading: false,
+    selectedCatalogIds: [],
+    toggleCatalog: vi.fn(),
+    tags: [],
+    tagsLoading: false,
+    selectedTagIds: [],
+    toggleTag: vi.fn(),
+    producers: [],
+    producersLoading: false,
+    selectedProducerIds: [],
+    toggleProducer: vi.fn(),
+    filteredLanguages: [],
+    filteredPriceGroups: [],
     ...overrides,
-  }) as unknown as ProductFormContextType;
+  }) as unknown as ProductFormMetadataContextType;
 
 describe('ProductMetadataMultiSelectField', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('uses ProductFormContext.setCategoryId for single category selection', () => {
+  it('uses ProductFormMetadataContext.setCategoryId for single category selection', () => {
     const setCategoryId = vi.fn();
-    const context = buildFormContext({ setCategoryId });
+    const context = buildMetadataContext({ setCategoryId });
 
     render(
-      <ProductFormContext.Provider value={context}>
+      <ProductFormMetadataContext.Provider value={context}>
         <ProductMetadataMultiSelectField
           label='Categories'
           contextItemsKey='categories'
@@ -46,7 +60,7 @@ describe('ProductMetadataMultiSelectField', () => {
           contextOnChangeKey='onCategoryChange'
           single
         />
-      </ProductFormContext.Provider>,
+      </ProductFormMetadataContext.Provider>,
     );
 
     expect(multiSelectSpy).toHaveBeenCalledTimes(1);

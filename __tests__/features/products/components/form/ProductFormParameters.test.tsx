@@ -3,10 +3,15 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import ProductFormParameters from '@/features/products/components/form/ProductFormParameters';
-import { useProductFormContext } from '@/features/products/context/ProductFormContext';
+import { useProductFormParameters } from '@/features/products/context/ProductFormParameterContext';
+import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
 
-vi.mock('@/features/products/context/ProductFormContext', () => ({
-  useProductFormContext: vi.fn(),
+vi.mock('@/features/products/context/ProductFormParameterContext', () => ({
+  useProductFormParameters: vi.fn(),
+}));
+
+vi.mock('@/features/products/context/ProductFormMetadataContext', () => ({
+  useProductFormMetadata: vi.fn(),
 }));
 
 vi.mock('@/shared/ui', () => ({
@@ -133,7 +138,7 @@ describe('ProductFormParameters multilingual values', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(useProductFormContext).mockReturnValue({
+    vi.mocked(useProductFormParameters).mockReturnValue({
       parameters: [
         {
           id: 'param-1',
@@ -160,6 +165,9 @@ describe('ProductFormParameters multilingual values', () => {
       updateParameterValue,
       updateParameterValueByLanguage,
       removeParameterValue: vi.fn(),
+    } as any);
+
+    vi.mocked(useProductFormMetadata).mockReturnValue({
       selectedCatalogIds: ['catalog-1'],
       filteredLanguages: [
         {
@@ -179,7 +187,7 @@ describe('ProductFormParameters multilingual values', () => {
           enabled: true,
         },
       ],
-    } as never);
+    } as any);
   });
 
   it('switches parameter input by language tab and syncs primary language to base value', () => {

@@ -2,7 +2,6 @@ import { Prisma } from '@prisma/client';
 import {
   getProductAdvancedFilterMetrics,
   type ProductAdvancedFilterCondition,
-  type ProductAdvancedFilterGroup,
   type ProductAdvancedFilterRule,
   type ProductFilters,
 } from '@/shared/contracts/products';

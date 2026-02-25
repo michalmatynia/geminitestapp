@@ -33,7 +33,7 @@ import { type SettingsStoreValue } from '@/shared/providers/SettingsStoreProvide
 import { type Toast } from '@/shared/contracts/ui';
 
 export function useCaseResolverStateCreationActions({
-  workspace,
+  workspace: _workspace,
   updateWorkspace,
   setWorkspace,
   syncPersistedWorkspaceTracking,

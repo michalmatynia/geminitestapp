@@ -2,8 +2,6 @@
 
 import React, { useEffect, useState } from 'react';
 
-import type { ProductDraftDto } from '@/shared/contracts/products';
-import type { EntityModalProps } from '@/shared/contracts/ui';
 import { FormModal, Button } from '@/shared/ui';
 
 import { useDrafterContext } from '../context/DrafterContext';

@@ -13,7 +13,7 @@ import { StudioPreviewCanvas } from './studio/StudioPreviewCanvas';
 import { StudioAuditHistory } from './studio/StudioAuditHistory';
 
 function ProductFormStudioInner(): React.JSX.Element {
-  const { studioProjectId, studioActionError } = useProductStudioContext();
+  const { studioProjectId, studioActionError: _studioActionError } = useProductStudioContext();
   const { product } = useProductFormCore();
 
   if (!studioProjectId) {

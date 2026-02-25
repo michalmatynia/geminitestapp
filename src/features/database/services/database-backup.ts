@@ -22,7 +22,6 @@ import {
 import { ErrorSystem } from '@/features/observability/server';
 import type { 
   DatabaseBackupResult, 
-  FullDatabaseBackupResult,
   FullDatabaseBackupResultDto 
 } from '@/shared/contracts/database';
 

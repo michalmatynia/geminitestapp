@@ -38,7 +38,7 @@ export function CaseResolverTreeHeader(): React.JSX.Element {
     selectedFolderForCreate,
   } = useCaseResolverFolderTreeContext();
 
-  const hasActiveCase = Boolean(activeCaseFile);
+  const hasCaseContext = Boolean(activeCaseId || activeCaseFile);
 
   const createContextTooltip = React.useMemo((): string | null => {
     if (canCreateInActiveCase) return null;
@@ -96,7 +96,7 @@ export function CaseResolverTreeHeader(): React.JSX.Element {
           </Button>
         </div>
       </div>
-      {hasActiveCase ? (
+      {hasCaseContext ? (
         <div className='flex items-center justify-between rounded border border-border/60 bg-card/35 px-2 py-1.5'>
           <div className='min-w-0'>
             <div className='text-[11px] text-gray-300'>Show nested folders and files</div>

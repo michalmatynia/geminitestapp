@@ -2,7 +2,6 @@ import { type Filter } from 'mongodb';
 import {
   getProductAdvancedFilterMetrics,
   type ProductAdvancedFilterCondition,
-  type ProductAdvancedFilterGroup,
   type ProductAdvancedFilterRule,
   type ProductFilters,
 } from '@/shared/contracts/products';

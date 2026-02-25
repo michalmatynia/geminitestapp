@@ -12,6 +12,7 @@ import {
 import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
 import {
   fetchProductListings,
+  productListingsQueryKey,
 } from '@/features/integrations/hooks/useListingQueries';
 import { ProductImageCell } from '@/features/products/components/cells/ProductImageCell';
 import { EditableCell } from '@/features/products/components/EditableCell';

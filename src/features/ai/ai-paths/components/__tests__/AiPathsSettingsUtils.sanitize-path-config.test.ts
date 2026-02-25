@@ -29,14 +29,14 @@ const buildConfig = (edges: Edge[]): PathConfig =>
     updatedAt: new Date().toISOString(),
     nodes: [
       buildNode({
-        id: 'mapper-1',
+        id: 'node-6bb64bd12ced85746705fc69',
         type: 'mapper',
         title: 'Mapper',
         inputs: ['context'],
         outputs: ['value'],
       }),
       buildNode({
-        id: 'compare-1',
+        id: 'node-837e17bdcefe87fe18d92cd5',
         type: 'compare',
         title: 'Compare',
         inputs: ['value'],
@@ -51,22 +51,22 @@ describe('sanitizePathConfig', () => {
     const config = buildConfig([
       {
         id: 'edge-valid',
-        from: 'mapper-1',
-        to: 'compare-1',
+        from: 'node-6bb64bd12ced85746705fc69',
+        to: 'node-837e17bdcefe87fe18d92cd5',
         fromPort: 'value',
         toPort: 'value',
       },
       {
         id: 'edge-dangling',
-        from: 'mapper-1',
+        from: 'node-6bb64bd12ced85746705fc69',
         to: 'missing-node',
         fromPort: 'value',
         toPort: 'value',
       },
       {
         id: 'edge-rewire',
-        from: 'mapper-1',
-        to: 'compare-1',
+        from: 'node-6bb64bd12ced85746705fc69',
+        to: 'node-837e17bdcefe87fe18d92cd5',
         fromPort: 'unknown',
         toPort: 'value',
       },
@@ -89,8 +89,8 @@ describe('sanitizePathConfig', () => {
     const config = buildConfig([
       {
         id: 'edge-valid',
-        from: 'mapper-1',
-        to: 'compare-1',
+        from: 'node-6bb64bd12ced85746705fc69',
+        to: 'node-837e17bdcefe87fe18d92cd5',
         fromPort: 'value',
         toPort: 'value',
       },
@@ -107,29 +107,29 @@ describe('sanitizePathConfig', () => {
       ...buildConfig([
         {
           id: 'edge-trigger-parser-context',
-          from: 'trigger-1',
-          to: 'parser-1',
+          from: 'node-trigger-111111111111111111111111',
+          to: 'node-parser-111111111111111111111111',
           fromPort: 'context',
           toPort: 'context',
         },
         {
           id: 'edge-trigger-parser-entity',
-          from: 'trigger-1',
-          to: 'parser-1',
+          from: 'node-trigger-111111111111111111111111',
+          to: 'node-parser-111111111111111111111111',
           fromPort: 'entityId',
           toPort: 'entityId',
         },
       ]),
       nodes: [
         buildNode({
-          id: 'trigger-1',
+          id: 'node-trigger-111111111111111111111111',
           type: 'trigger',
           title: 'Trigger',
           inputs: [],
           outputs: ['trigger', 'triggerName', 'context', 'meta', 'entityId', 'entityType'],
         }),
         buildNode({
-          id: 'parser-1',
+          id: 'node-parser-111111111111111111111111',
           type: 'parser',
           title: 'Parser',
           inputs: ['context', 'entityId'],
@@ -139,7 +139,8 @@ describe('sanitizePathConfig', () => {
     } as PathConfig;
 
     const sanitized = sanitizePathConfig(config);
-    const triggerNode = sanitized.nodes.find((node: AiNode) => node.id === 'trigger-1');
+    const triggerNode = sanitized.nodes.find((node: AiNode) => node.type === 'trigger');
+    const parserNode = sanitized.nodes.find((node: AiNode) => node.type === 'parser');
     const fetcherNode = sanitized.nodes.find((node: AiNode) => node.type === 'fetcher');
 
     expect(triggerNode?.outputs).toEqual(['trigger', 'triggerName']);
@@ -147,7 +148,7 @@ describe('sanitizePathConfig', () => {
     expect(
       sanitized.edges.some(
         (edge: Edge) =>
-          edge.from === 'trigger-1' &&
+          edge.from === triggerNode?.id &&
           edge.to === fetcherNode?.id &&
           edge.fromPort === 'trigger' &&
           edge.toPort === 'trigger'
@@ -157,18 +158,18 @@ describe('sanitizePathConfig', () => {
       sanitized.edges.some(
         (edge: Edge) =>
           edge.from === fetcherNode?.id &&
-          edge.to === 'parser-1' &&
-          edge.fromPort === 'context' &&
-          edge.toPort === 'context'
+          edge.to === parserNode?.id &&
+          (edge.fromPort === 'context' || edge.sourceHandle === 'context') &&
+          (edge.toPort === 'context' || edge.targetHandle === 'context')
       )
     ).toBe(true);
     expect(
       sanitized.edges.some(
         (edge: Edge) =>
           edge.from === fetcherNode?.id &&
-          edge.to === 'parser-1' &&
-          edge.fromPort === 'entityId' &&
-          edge.toPort === 'entityId'
+          edge.to === parserNode?.id &&
+          (edge.fromPort === 'entityId' || edge.sourceHandle === 'entityId') &&
+          (edge.toPort === 'entityId' || edge.targetHandle === 'entityId')
       )
     ).toBe(true);
   });
@@ -179,30 +180,30 @@ describe('sanitizePathConfig', () => {
     };
     const runtimeState = {
       inputs: {
-        'mapper-1': {
+        'node-6bb64bd12ced85746705fc69': {
           value: sharedValue,
         },
       },
       outputs: {
-        'mapper-1': {
+        'node-6bb64bd12ced85746705fc69': {
           value: sharedValue,
         },
-        'compare-1': {
+        'node-837e17bdcefe87fe18d92cd5': {
           value: sharedValue,
         },
       },
     } as RuntimeState;
 
     const persisted = buildPersistedRuntimeState(runtimeState, [
-      buildNode({ id: 'mapper-1', type: 'mapper', outputs: ['value'] }),
-      buildNode({ id: 'compare-1', type: 'compare', outputs: ['value'] }),
+      buildNode({ id: 'node-6bb64bd12ced85746705fc69', type: 'mapper', outputs: ['value'] }),
+      buildNode({ id: 'node-837e17bdcefe87fe18d92cd5', type: 'compare', outputs: ['value'] }),
     ]);
     const parsed = JSON.parse(persisted) as Record<string, unknown>;
     const inputs = parsed['inputs'] as Record<string, Record<string, unknown>>;
     const outputs = parsed['outputs'] as Record<string, Record<string, unknown>>;
 
-    expect(inputs['mapper-1']?.['value']).toEqual(sharedValue);
-    expect(outputs['mapper-1']?.['value']).toEqual(sharedValue);
-    expect(outputs['compare-1']?.['value']).toEqual(sharedValue);
+    expect(inputs['node-6bb64bd12ced85746705fc69']?.['value']).toEqual(sharedValue);
+    expect(outputs['node-6bb64bd12ced85746705fc69']?.['value']).toEqual(sharedValue);
+    expect(outputs['node-837e17bdcefe87fe18d92cd5']?.['value']).toEqual(sharedValue);
   });
 });

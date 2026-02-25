@@ -55,7 +55,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
       .mockResolvedValue([]);
 
     const records = [{ key: 'ai_paths_index', value: '[]' }];
-    const next = await __testOnly.maybeAutoApplyDefaultSeedsOnRead(records, {
+    const next = await __testOnly.maybeAutoApplyDefaultSeedsOnRead(['ai_paths_index'], records, {
       autoApply: false,
       applyDefaultSeeds,
     });
@@ -71,7 +71,7 @@ describe('settings-store flag preservation and read-time seeding policy', () => 
       .fn<(items: Array<{ key: string; value: string }>) => Promise<Array<{ key: string; value: string }>>>()
       .mockResolvedValue(seeded);
 
-    const next = await __testOnly.maybeAutoApplyDefaultSeedsOnRead(records, {
+    const next = await __testOnly.maybeAutoApplyDefaultSeedsOnRead(['ai_paths_index'], records, {
       autoApply: true,
       applyDefaultSeeds,
     });

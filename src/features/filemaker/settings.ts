@@ -32,7 +32,6 @@ import {
   ensureUniqueId,
   normalizeString,
   toIdToken,
-  sanitizePhoneCandidate,
 } from './filemaker-settings.helpers';
 
 import {

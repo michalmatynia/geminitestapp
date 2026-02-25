@@ -1,5 +1,4 @@
 import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
-import { NODE_MIN_HEIGHT, NODE_WIDTH } from '@/features/ai/ai-paths/lib';
 
 export type MarqueeMode = 'replace' | 'add' | 'subtract';
 

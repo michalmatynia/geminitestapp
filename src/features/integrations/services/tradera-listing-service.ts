@@ -45,6 +45,9 @@ import type {
   TraderaListingJobInput,
   TraderaCategoryRecord 
 } from '@/shared/contracts/integrations';
+
+export type { TraderaListingJobInput };
+
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

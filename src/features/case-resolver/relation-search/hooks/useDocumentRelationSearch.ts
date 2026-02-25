@@ -268,7 +268,9 @@ export function useDocumentRelationSearch({
     setCategoryIdFilter,
     resetFilters,
     // Computed
+    caseIdentifierLabelById,
     documentSearchRows,
+    folderScopedDocumentSearchRows,
     visibleDocumentSearchRows,
     folderTree,
     visibleCaseRows,

@@ -4,6 +4,9 @@ import {
   DEFAULT_AUTH_USER_PAGE_SETTINGS,
   type AuthUserPageSettings,
 } from '@/features/auth/utils/auth-user-pages';
+
+export type { AuthUserPageSettings };
+
 import { MongoSettingRecord } from '@/shared/contracts/base';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

@@ -32,6 +32,7 @@ export type LogEntry = z.infer<typeof logEntrySchema>;
  */
 export const systemLogLevelSchema = z.enum(['info', 'warn', 'error']);
 export type SystemLogLevel = z.infer<typeof systemLogLevelSchema>;
+export type SystemLogLevelDto = SystemLogLevel;
 
 export const systemLogRecordSchema = dtoBaseSchema.extend({
   level: systemLogLevelSchema,
@@ -48,6 +49,7 @@ export const systemLogRecordSchema = dtoBaseSchema.extend({
 });
 
 export type SystemLogRecord = z.infer<typeof systemLogRecordSchema>;
+export type SystemLogRecordDto = SystemLogRecord;
 
 export const createSystemLogInputSchema = z.object({
   level: systemLogLevelSchema.optional(),
@@ -65,6 +67,7 @@ export const createSystemLogInputSchema = z.object({
 });
 
 export type CreateSystemLogInput = z.infer<typeof createSystemLogInputSchema>;
+export type CreateSystemLogInputDto = CreateSystemLogInput;
 
 export const listSystemLogsInputSchema = z.object({
   page: z.number().optional(),
@@ -83,6 +86,7 @@ export const listSystemLogsInputSchema = z.object({
 });
 
 export type ListSystemLogsInput = z.infer<typeof listSystemLogsInputSchema>;
+export type ListSystemLogsInputDto = ListSystemLogsInput;
 
 export const listSystemLogsResultSchema = z.object({
   logs: z.array(systemLogRecordSchema),
@@ -92,6 +96,7 @@ export const listSystemLogsResultSchema = z.object({
 });
 
 export type ListSystemLogsResult = z.infer<typeof listSystemLogsResultSchema>;
+export type ListSystemLogsResultDto = ListSystemLogsResult;
 
 export const systemLogMetricsSchema = z.object({
   total: z.number(),
@@ -104,6 +109,7 @@ export const systemLogMetricsSchema = z.object({
 });
 
 export type SystemLogMetrics = z.infer<typeof systemLogMetricsSchema>;
+export type SystemLogMetricsDto = SystemLogMetrics;
 
 export const systemLogsResponseSchema = z.object({
   logs: z.array(systemLogRecordSchema).optional(),
@@ -113,6 +119,7 @@ export const systemLogsResponseSchema = z.object({
 });
 
 export type SystemLogsResponse = z.infer<typeof systemLogsResponseSchema>;
+export type SystemLogsResponseDto = SystemLogsResponse;
 
 export const systemActivityResponseSchema = z.object({
   data: z.array(z.any()), // activityLogSchema reference can be circular or complex, use any for now or import properly
@@ -122,12 +129,14 @@ export const systemActivityResponseSchema = z.object({
 });
 
 export type SystemActivityResponse = z.infer<typeof systemActivityResponseSchema>;
+export type SystemActivityResponseDto = SystemActivityResponse;
 
 export const systemLogMetricsResponseSchema = z.object({
   metrics: systemLogMetricsSchema.optional(),
 });
 
 export type SystemLogMetricsResponse = z.infer<typeof systemLogMetricsResponseSchema>;
+export type SystemLogMetricsResponseDto = SystemLogMetricsResponse;
 
 export const clientLoggingSettingsSchema = z.object({
   featureFlags: z.record(z.string(), z.unknown()).nullable(),
@@ -166,6 +175,7 @@ export const mongoIndexInfoSchema = z.object({
 });
 
 export type MongoIndexInfo = z.infer<typeof mongoIndexInfoSchema>;
+export type MongoIndexInfoDto = MongoIndexInfo;
 
 export const mongoCollectionIndexStatusSchema = z.object({
   name: z.string(),
@@ -177,12 +187,14 @@ export const mongoCollectionIndexStatusSchema = z.object({
 });
 
 export type MongoCollectionIndexStatus = z.infer<typeof mongoCollectionIndexStatusSchema>;
+export type MongoCollectionIndexStatusDto = MongoCollectionIndexStatus;
 
 export const clearLogsResponseSchema = z.object({
   deleted: z.number(),
 });
 
 export type ClearLogsResponse = z.infer<typeof clearLogsResponseSchema>;
+export type ClearLogsResponseDto = ClearLogsResponse;
 
 /**
  * Trace & Span DTOs

@@ -3,6 +3,8 @@ import type {
   LogTriagePreset as LogTriagePresetBase
 } from '@/shared/contracts/observability';
 
+export type { SystemLogFilterFormValues };
+
 export type LogTriagePreset = LogTriagePresetBase & {
   resolve: (now: Date) => Partial<SystemLogFilterFormValues>;
 };

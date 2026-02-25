@@ -42,7 +42,18 @@ export const userPreferencesUpdateSchema = z.object({
   aiPathsActivePathId: nullableIdSchema,
   imageStudioLastProjectId: nullableIdSchema,
   caseResolverCaseListViewMode: z.enum(['hierarchy', 'list']).optional().nullable(),
-  caseResolverCaseListSortBy: z.enum(['updated', 'created', 'name']).optional().nullable(),
+  caseResolverCaseListSortBy: z
+    .enum([
+      'updated',
+      'created',
+      'name',
+      'status',
+      'signature',
+      'locked',
+      'sent',
+    ])
+    .optional()
+    .nullable(),
   caseResolverCaseListSortOrder: z.enum(['asc', 'desc']).optional().nullable(),
   caseResolverCaseListSearchScope: z.enum(['all', 'name', 'folder', 'content']).optional().nullable(),
   caseResolverCaseListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
@@ -80,7 +91,18 @@ export const userPreferencesResponseSchema = z
     aiPathsActivePathId: z.string().optional().nullable(),
     imageStudioLastProjectId: z.string().optional().nullable(),
     caseResolverCaseListViewMode: z.enum(['hierarchy', 'list']).optional().nullable(),
-    caseResolverCaseListSortBy: z.enum(['updated', 'created', 'name']).optional().nullable(),
+    caseResolverCaseListSortBy: z
+      .enum([
+        'updated',
+        'created',
+        'name',
+        'status',
+        'signature',
+        'locked',
+        'sent',
+      ])
+      .optional()
+      .nullable(),
     caseResolverCaseListSortOrder: z.enum(['asc', 'desc']).optional().nullable(),
     caseResolverCaseListSearchScope: z.enum(['all', 'name', 'folder', 'content']).optional().nullable(),
     caseResolverCaseListFiltersCollapsedByDefault: z.boolean().optional().nullable(),

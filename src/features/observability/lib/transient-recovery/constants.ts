@@ -1,4 +1,5 @@
 import type { TransientRecoverySettings } from '@/shared/contracts/observability';
+export type { TransientRecoverySettings };
 import { TRANSIENT_RECOVERY_KEYS as KEYS } from '@/shared/contracts/observability';
 
 export const TRANSIENT_RECOVERY_KEYS = KEYS;

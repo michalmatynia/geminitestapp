@@ -79,7 +79,7 @@ describe('case-resolver settings', () => {
     expect(workspace.lastMutationAt).toBe('2026-02-17T17:00:00.000Z');
   });
 
-  it('removes detached non-case files that are outside a case container', () => {
+  it('keeps detached non-case files even when ownership is unresolved', () => {
     const workspace = parseCaseResolverWorkspace(
       JSON.stringify({
         version: 2,
@@ -112,8 +112,98 @@ describe('case-resolver settings', () => {
       })
     );
 
-    expect(workspace.files.map((file: CaseResolverFile) => file.id)).toEqual(['case-a']);
-    expect(workspace.activeFileId).toBe('case-a');
+    expect(workspace.files.map((file: CaseResolverFile) => file.id)).toEqual([
+      'case-a',
+      'detached-doc-root',
+    ]);
+    expect(
+      workspace.files.find((file: CaseResolverFile): boolean => file.id === 'detached-doc-root')?.parentCaseId
+    ).toBeNull();
+    expect(workspace.activeFileId).toBe('detached-doc-root');
+  });
+
+  it('repairs missing document ownership from uniquely-owned folder records', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 3,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: ['Case_A/Incoming'],
+        folderRecords: [
+          { path: 'Case_A', ownerCaseId: 'case-a' },
+          { path: 'Case_A/Incoming', ownerCaseId: 'case-a' },
+        ],
+        files: [
+          {
+            id: 'case-a',
+            fileType: 'case',
+            name: 'Case A',
+            folder: '',
+            parentCaseId: null,
+            referenceCaseIds: [],
+            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+          },
+          {
+            id: 'doc-a',
+            fileType: 'document',
+            name: 'Doc A',
+            folder: 'Case_A/Incoming',
+            parentCaseId: null,
+            referenceCaseIds: [],
+            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+          },
+        ],
+        assets: [],
+        activeFileId: 'doc-a',
+      }),
+    );
+
+    const doc = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-a');
+    expect(doc?.parentCaseId).toBe('case-a');
+  });
+
+  it('keeps case-owned documents when unrelated case metadata changes', () => {
+    const workspace = parseCaseResolverWorkspace(
+      JSON.stringify({
+        version: 2,
+        workspaceRevision: 4,
+        lastMutationId: null,
+        lastMutationAt: null,
+        folders: [],
+        files: [
+          {
+            id: 'case-a',
+            fileType: 'case',
+            name: 'Case A',
+            caseStatus: 'completed',
+            caseTreeOrder: 10,
+            folder: '',
+            parentCaseId: null,
+            referenceCaseIds: [],
+            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+          },
+          {
+            id: 'doc-owned',
+            fileType: 'document',
+            name: 'Owned Doc',
+            folder: '',
+            parentCaseId: 'case-a',
+            referenceCaseIds: [],
+            graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
+          },
+        ],
+        assets: [],
+        activeFileId: 'case-a',
+      }),
+    );
+
+    expect(
+      workspace.files.map((file: CaseResolverFile): string => file.id).sort(),
+    ).toEqual(['case-a', 'doc-owned']);
+    expect(
+      workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-owned')?.parentCaseId,
+    ).toBe('case-a');
   });
 
   it('detects whether raw workspace payload includes a files array', () => {
@@ -837,7 +927,7 @@ describe('case-resolver settings', () => {
     expect(docC?.relatedFileIds).toEqual(['doc-b']);
   });
 
-  it('removes stale related links when linked files are dropped during normalization', () => {
+  it('removes stale related links while keeping unresolved documents', () => {
     const raw = JSON.stringify({
       version: 2,
       workspaceRevision: 0,
@@ -861,7 +951,7 @@ describe('case-resolver settings', () => {
           folder: '',
           parentCaseId: 'case-a',
           referenceCaseIds: [],
-          relatedFileIds: ['doc-orphan'],
+          relatedFileIds: ['doc-missing'],
           graph: { nodes: [], edges: [], nodeMeta: {}, edgeMeta: {} },
         },
         {
@@ -881,7 +971,7 @@ describe('case-resolver settings', () => {
     const workspace = parseCaseResolverWorkspace(raw);
     const keptDoc = workspace.files.find((file: CaseResolverFile): boolean => file.id === 'doc-kept');
 
-    expect(workspace.files.some((file: CaseResolverFile): boolean => file.id === 'doc-orphan')).toBe(false);
+    expect(workspace.files.some((file: CaseResolverFile): boolean => file.id === 'doc-orphan')).toBe(true);
     expect(keptDoc?.relatedFileIds).toBeUndefined();
   });
 

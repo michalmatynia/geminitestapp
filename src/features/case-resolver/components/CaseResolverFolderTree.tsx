@@ -17,6 +17,7 @@ import {
   FolderTreeViewportV2,
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,
+  type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { FolderTreePanel } from '@/shared/ui';
@@ -31,7 +32,7 @@ import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
   CaseResolverFolderTreeProvider,
   useCaseResolverFolderTreeContext,
-  isChildCaseStructureNode,
+  isCaseResolverVirtualSectionNode,
 } from '../context/CaseResolverFolderTreeContext';
 import {
   emitCaseResolverDropDocumentToCanvas,
@@ -65,7 +66,6 @@ type PendingNodeCanvasAction = {
 
 function CaseResolverFolderTreeInner(): React.JSX.Element {
   const {
-    selectedFileId,
     selectedAssetId,
     onLinkRelatedFiles,
   } = useCaseResolverPageContext();
@@ -120,7 +120,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
   });
 
   const canStartTreeDrag = React.useCallback(({ node, event }: { node: MasterTreeNode; event: React.DragEvent<HTMLDivElement> }): boolean => {
-    const blockedChildStructureNode = isChildCaseStructureNode(node);
+    const blockedVirtualSectionNode = isCaseResolverVirtualSectionNode(node);
     const eventTarget = event.target;
     const fromEventTargetHandle =
       eventTarget instanceof Element &&
@@ -143,7 +143,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     return canStartCaseResolverTreeNodeDrag({
       nodeType: node.type,
       nodeId: node.id,
-      isChildStructureNode: blockedChildStructureNode,
+      isVirtualSectionNode: blockedVirtualSectionNode,
       fromHandleGesture,
       armedNodeId: dragHandleNodeIdRef.current,
     });
@@ -276,6 +276,7 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     <FolderTreePanel
       className='border-border bg-gray-900'
       bodyClassName='flex min-h-0 flex-1 flex-col'
+      masterInstance='case_resolver'
       header={<CaseResolverTreeHeader />}
     >
       <div className='min-h-0 flex-1 overflow-auto p-2'>
@@ -292,13 +293,13 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
             const draggedNode = controller.nodes.find(
               (candidate: MasterTreeNode): boolean => candidate.id === draggedNodeId,
             );
-            if (draggedNode && isChildCaseStructureNode(draggedNode)) return false;
+            if (draggedNode && isCaseResolverVirtualSectionNode(draggedNode)) return false;
             const targetNode = targetId
               ? controller.nodes.find(
                 (candidate: MasterTreeNode): boolean => candidate.id === targetId,
               )
               : null;
-            if (targetNode && isChildCaseStructureNode(targetNode)) return false;
+            if (targetNode && isCaseResolverVirtualSectionNode(targetNode)) return false;
             if (defaultAllowed) return true;
             const dragged = decodeCaseResolverMasterNodeId(draggedNodeId);
             if (!dragged) return false;
@@ -410,13 +411,13 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
               rootDropZone,
             });
           }}
-          renderNode={(nodeProps) => (
+          renderNode={(nodeProps: FolderTreeViewportRenderNodeInput) => (
             <CaseResolverTreeNode 
               {...nodeProps}
               armDragHandle={armDragHandle}
               releaseDragHandle={releaseDragHandle}
               renameDraft={controller.renameDraft}
-              onUpdateRenameDraft={(v) => controller.updateRenameDraft(v)}
+              onUpdateRenameDraft={(v: string) => controller.updateRenameDraft(v)}
               onCommitRename={() => void controller.commitRename()}
               onCancelRename={() => controller.cancelRename()}
               FolderClosedIcon={FolderClosedIcon}

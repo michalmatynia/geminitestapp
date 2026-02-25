@@ -126,6 +126,34 @@ type CaseResolverEditingDraftUpdater = React.Dispatch<
   React.SetStateAction<CaseResolverFileEditDraft | null>
 >;
 
+const applyCaseResolverFilePatch = ({
+  baseFile,
+  patch,
+}: {
+  baseFile: CaseResolverFile;
+  patch: Partial<CaseResolverFile>;
+}): CaseResolverFile =>
+  createCaseResolverFile({
+    ...baseFile,
+    ...patch,
+    parentCaseId:
+      patch.parentCaseId === undefined
+        ? baseFile.parentCaseId
+        : patch.parentCaseId,
+    createdAt:
+      typeof patch.createdAt === 'string'
+        ? patch.createdAt
+        : (baseFile.createdAt || new Date().toISOString()),
+    updatedAt:
+      typeof patch.updatedAt === 'string'
+        ? patch.updatedAt
+        : (
+          typeof baseFile.updatedAt === 'string'
+            ? baseFile.updatedAt
+            : (baseFile.createdAt || new Date().toISOString())
+        ),
+  });
+
 export const applyCaseResolverFileMutationAndRebaseDraft = ({
   fileId,
   updateWorkspace,
@@ -198,21 +226,9 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
       localFileFound = true;
       const patch = mutate(mutationTarget);
       if (patch) {
-        const normalizedNextFile = createCaseResolverFile({
-          ...mutationTarget,
-          ...patch,
-          createdAt:
-            typeof patch.createdAt === 'string'
-              ? patch.createdAt
-              : (mutationTarget.createdAt || new Date().toISOString()),
-          updatedAt:
-            typeof patch.updatedAt === 'string'
-              ? patch.updatedAt
-              : (
-                typeof mutationTarget.updatedAt === 'string'
-                  ? mutationTarget.updatedAt
-                  : (mutationTarget.createdAt || new Date().toISOString())
-              ),
+        const normalizedNextFile = applyCaseResolverFilePatch({
+          baseFile: mutationTarget,
+          patch,
         });
         if (
           buildCaseResolverFileComparableFingerprint(mutationTarget) !==
@@ -237,21 +253,9 @@ export const applyCaseResolverFileMutationAndRebaseDraft = ({
       matchedFileId = fallbackFileOnMissing.id;
       const patch = mutate(fallbackFileOnMissing);
       if (patch) {
-        const normalizedNextFile = createCaseResolverFile({
-          ...fallbackFileOnMissing,
-          ...patch,
-          createdAt:
-            typeof patch.createdAt === 'string'
-              ? patch.createdAt
-              : (fallbackFileOnMissing.createdAt || new Date().toISOString()),
-          updatedAt:
-            typeof patch.updatedAt === 'string'
-              ? patch.updatedAt
-              : (
-                typeof fallbackFileOnMissing.updatedAt === 'string'
-                  ? fallbackFileOnMissing.updatedAt
-                  : (fallbackFileOnMissing.createdAt || new Date().toISOString())
-              ),
+        const normalizedNextFile = applyCaseResolverFilePatch({
+          baseFile: fallbackFileOnMissing,
+          patch,
         });
         localChanged = true;
         localNextFile = normalizedNextFile;

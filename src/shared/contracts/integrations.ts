@@ -157,6 +157,8 @@ export interface ProductListingExportEvent {
   requestId?: string | null;
 }
 
+export type ListingAttempt = ProductListingExportEvent;
+
 export const productListingRelistPolicySchema = z.object({
   enabled: z.boolean().optional(),
   leadMinutes: z.number().optional(),
@@ -1324,3 +1326,4 @@ export type IntegrationConnectionBasicDto = IntegrationConnectionBasic;
 export type IntegrationWithConnectionsDto = IntegrationWithConnections;
 export type ImportParameterCacheResponseDto = ImportParameterCacheResponse;
 export type ProductListingExportEventDto = ProductListingExportEvent;
+export type ListingAttemptDto = ListingAttempt;

@@ -13,31 +13,26 @@ import {
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { AgentTeachingCollectionModal } from '../components/AgentTeachingCollectionModal';
-import { useAgentTeachingQueriesCollectionsState } from '../hooks/useAgentTeachingQueriesCollectionsState';
-
+import { 
+  AgentTeachingCollectionsProvider, 
+  useAgentTeachingCollectionsContext 
+} from '../context/AgentTeachingCollectionsContext';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
-export function AgentTeachingCollectionsPage(): React.JSX.Element {
+function AgentTeachingCollectionsContent(): React.JSX.Element {
   const {
     collections,
-    embeddingModels,
     isLoading,
-    saving,
-    deleting,
-    modalOpen,
-    editing,
-    draft,
-    setDraft,
+    isSaving,
+    isDeleting,
     itemToDelete,
     setItemToDelete,
     openCreate,
     openEdit,
-    closeModal,
-    handleSave,
     handleDelete,
-    usedByCount,
-  } = useAgentTeachingQueriesCollectionsState();
+    getUsedByCount,
+  } = useAgentTeachingCollectionsContext();
 
   const columns = useMemo<ColumnDef<AgentTeachingEmbeddingCollectionRecord>[]>(() => [
     {
@@ -67,7 +62,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
     {
       id: 'usage',
       header: 'Usage',
-      cell: ({ row }) => <span className='text-xs text-gray-400'>{usedByCount(row.original.id)} learners</span>,
+      cell: ({ row }) => <span className='text-xs text-gray-400'>{getUsedByCount(row.original.id)} learners</span>,
     },
     {
       accessorKey: 'updatedAt',
@@ -84,7 +79,7 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
             size='xs'
             className='h-7 w-7 p-0'
             onClick={() => openEdit(row.original)}
-            disabled={saving || deleting}
+            disabled={isSaving || isDeleting}
           >
             <Pencil className='size-3.5' />
           </Button>
@@ -93,14 +88,14 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
             size='xs'
             className='h-7 w-7 p-0 text-rose-400 hover:text-rose-300'
             onClick={() => setItemToDelete(row.original)}
-            disabled={saving || deleting}
+            disabled={isSaving || isDeleting}
           >
             <Trash2 className='size-3.5' />
           </Button>
         </div>
       ),
     },
-  ], [openEdit, saving, deleting, usedByCount, setItemToDelete]);
+  ], [openEdit, isSaving, isDeleting, getUsedByCount, setItemToDelete]);
 
   return (
     <div className='mx-auto w-full max-w-none py-10 space-y-6'>
@@ -135,17 +130,15 @@ export function AgentTeachingCollectionsPage(): React.JSX.Element {
         onConfirm={handleDelete}
       />
 
-      <AgentTeachingCollectionModal
-        isOpen={modalOpen}
-        onClose={closeModal}
-        onSuccess={() => {}}
-        item={editing}
-        items={embeddingModels}
-        draft={draft}
-        setDraft={setDraft}
-        isSaving={saving}
-        onSave={() => void handleSave()}
-      />
+      <AgentTeachingCollectionModal />
     </div>
+  );
+}
+
+export function AgentTeachingCollectionsPage(): React.JSX.Element {
+  return (
+    <AgentTeachingCollectionsProvider>
+      <AgentTeachingCollectionsContent />
+    </AgentTeachingCollectionsProvider>
   );
 }

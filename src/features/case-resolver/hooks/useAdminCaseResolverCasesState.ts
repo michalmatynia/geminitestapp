@@ -4,7 +4,10 @@ import { useMemo } from 'react';
 
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
-import { useAdminCaseResolverCases } from '../context/AdminCaseResolverCasesContext';
+import {
+  type CaseSortKey,
+  useAdminCaseResolverCases,
+} from '../context/AdminCaseResolverCasesContext';
 import { buildPathLabelMap } from '../pages/AdminCaseResolverCasesUtils';
 import { useCaseResolverCaseSearchIndex } from './useCaseResolverCaseSearchIndex';
 
@@ -19,11 +22,28 @@ const resolveTimestampMs = (value: string | null | undefined): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const resolveCaseStatusRank = (
+  status: CaseResolverFile['caseStatus'] | null | undefined
+): number => (status === 'completed' ? 1 : 0);
+
+const resolveBinaryRank = (value: boolean | null | undefined): number =>
+  value === true ? 1 : 0;
+
+const resolveCaseIdentifierLabel = (
+  file: CaseResolverFile,
+  caseIdentifierPathById: Map<string, string>
+): string => {
+  const identifierId = file.caseIdentifierId?.trim() ?? '';
+  if (!identifierId) return '';
+  return caseIdentifierPathById.get(identifierId)?.trim() ?? '';
+};
+
 const compareCaseRows = (
   left: CaseResolverFile,
   right: CaseResolverFile,
-  sortBy: 'updated' | 'created' | 'name',
-  sortOrder: 'asc' | 'desc'
+  sortBy: CaseSortKey,
+  sortOrder: 'asc' | 'desc',
+  caseIdentifierPathById: Map<string, string>
 ): number => {
   const resolveDirectionalDelta = (value: number): number =>
     sortOrder === 'asc' ? value : -value;
@@ -44,6 +64,39 @@ const compareCaseRows = (
       resolveTimestampMs(left.updatedAt ?? left.createdAt) -
       resolveTimestampMs(right.updatedAt ?? right.createdAt);
     if (updatedDelta !== 0) return resolveDirectionalDelta(updatedDelta);
+  }
+
+  if (sortBy === 'status') {
+    const statusDelta =
+      resolveCaseStatusRank(left.caseStatus) -
+      resolveCaseStatusRank(right.caseStatus);
+    if (statusDelta !== 0) return resolveDirectionalDelta(statusDelta);
+  }
+
+  if (sortBy === 'signature') {
+    const leftLabel = resolveCaseIdentifierLabel(left, caseIdentifierPathById);
+    const rightLabel = resolveCaseIdentifierLabel(right, caseIdentifierPathById);
+    const leftIsEmpty = leftLabel.length === 0;
+    const rightIsEmpty = rightLabel.length === 0;
+    if (leftIsEmpty !== rightIsEmpty) {
+      if (sortOrder === 'asc') return leftIsEmpty ? 1 : -1;
+      return leftIsEmpty ? -1 : 1;
+    }
+    if (!leftIsEmpty && !rightIsEmpty) {
+      const labelDelta = leftLabel.localeCompare(rightLabel);
+      if (labelDelta !== 0) return resolveDirectionalDelta(labelDelta);
+    }
+  }
+
+  if (sortBy === 'locked') {
+    const lockedDelta =
+      resolveBinaryRank(left.isLocked) - resolveBinaryRank(right.isLocked);
+    if (lockedDelta !== 0) return resolveDirectionalDelta(lockedDelta);
+  }
+
+  if (sortBy === 'sent') {
+    const sentDelta = resolveBinaryRank(left.isSent) - resolveBinaryRank(right.isSent);
+    if (sentDelta !== 0) return resolveDirectionalDelta(sentDelta);
   }
 
   const orderDelta = resolveCaseSortOrderValue(left) - resolveCaseSortOrderValue(right);
@@ -67,27 +120,14 @@ export function useAdminCaseResolverCasesState() {
     caseFilterCaseIdentifierIds,
     caseFilterCategoryIds,
     caseFilterFolder,
+    caseFilterStatus,
+    caseFilterLocked,
+    caseFilterSent,
+    caseFilterHierarchy,
+    caseFilterReferences,
     caseSortBy,
     caseSortOrder,
   } = context;
-
-  const files = useMemo(
-    (): CaseResolverFile[] =>
-      workspace.files
-        .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
-        .sort((left: CaseResolverFile, right: CaseResolverFile): number =>
-          compareCaseRows(left, right, caseSortBy, caseSortOrder)
-        ),
-    [caseSortBy, caseSortOrder, workspace.files]
-  );
-
-  const filesById = useMemo(
-    () =>
-      new Map<string, CaseResolverFile>(
-        files.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
-      ),
-    [files]
-  );
 
   const caseTagById = useMemo(
     (): Map<string, (typeof caseResolverTags)[number]> =>
@@ -145,6 +185,33 @@ export function useAdminCaseResolverCasesState() {
     [caseResolverCategories]
   );
 
+  const files = useMemo(
+    (): CaseResolverFile[] =>
+      workspace.files
+        .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
+        .sort((left: CaseResolverFile, right: CaseResolverFile): number =>
+          compareCaseRows(
+            left,
+            right,
+            caseSortBy,
+            caseSortOrder,
+            caseIdentifierPathById,
+          ),
+        ),
+    [caseIdentifierPathById, caseSortBy, caseSortOrder, workspace.files],
+  );
+
+  const filesById = useMemo(
+    () =>
+      new Map<string, CaseResolverFile>(
+        files.map((file: CaseResolverFile): [string, CaseResolverFile] => [
+          file.id,
+          file,
+        ]),
+      ),
+    [files],
+  );
+
   const caseTagFilterOptions = useMemo(
     () =>
       caseResolverTags.map((tag) => ({
@@ -198,6 +265,11 @@ export function useAdminCaseResolverCasesState() {
     caseFilterCaseIdentifierIds,
     caseFilterCategoryIds,
     caseFilterFolder,
+    caseFilterStatus,
+    caseFilterLocked,
+    caseFilterSent,
+    caseFilterHierarchy,
+    caseFilterReferences,
     caseTagPathById,
     caseIdentifierPathById,
     caseCategoryPathById,

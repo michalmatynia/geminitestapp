@@ -20,7 +20,14 @@ import {
   execFileAsync as pgExecFileAsync,
 } from '@/features/database/utils/postgres';
 import { ErrorSystem } from '@/features/observability/server';
-import type { DatabaseBackupResult, FullDatabaseBackupResult } from '@/shared/contracts/database';
+import type { 
+  DatabaseBackupResult, 
+  FullDatabaseBackupResult,
+  FullDatabaseBackupResultDto 
+} from '@/shared/contracts/database';
+
+export type { FullDatabaseBackupResultDto };
+
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
 
 

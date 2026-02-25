@@ -25,18 +25,11 @@ import type {
   CaseResolverIdentifier,
   CaseResolverCompileResult,
 } from '@/shared/contracts/case-resolver';
-import {
-  collectScopedCaseIds,
-  normalizeFolderPathSegments,
-  resolveIdentifierSearchLabel,
-  resolvePartyReferenceSearchLabel,
-  normalizeSearchText,
-  isFolderPathWithinScope,
-  NodeFileDocumentSearchScope,
+import type {
   NodeFileDocumentSearchRow,
   NodeFileDocumentFolderTree,
-  NodeFileDocumentFolderNode
 } from '../components/CaseResolverNodeFileUtils';
+import { useDocumentRelationSearch } from '../relation-search/hooks/useDocumentRelationSearch';
 
 export type UseNodeFileWorkspaceStateProps = {
   assetId: string;

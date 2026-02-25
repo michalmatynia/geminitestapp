@@ -35,6 +35,7 @@ import {
   CASE_RESOLVER_SETTINGS_KEY,
   CASE_RESOLVER_TAGS_KEY,
   CASE_RESOLVER_WORKSPACE_KEY,
+  getCaseResolverWorkspaceNormalizationDiagnostics,
   hasCaseResolverWorkspaceFilesArray,
   parseCaseResolverCategories,
   parseCaseResolverDefaultDocumentFormat,
@@ -69,6 +70,7 @@ import { useCaseResolverStateEditorActions } from './useCaseResolverState.editor
 import { useCaseResolverStateRelatedFilesActions } from './useCaseResolverState.related-files-actions';
 import { useCaseResolverStateCreationActions } from './useCaseResolverState.creation-actions';
 import { useCaseResolverStateViewState } from './useCaseResolverState.view-state';
+import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
 
@@ -186,6 +188,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const requestedCaseStatusRef = useRef<CaseResolverRequestedCaseStatus>(
     requestedFileId ? 'loading' : 'ready'
   );
+  const unresolvedOwnershipWarningShownRef = useRef(false);
+  const lastLoggedOwnershipDiagnosticsSignatureRef = useRef<string>('');
 
   const setRequestedCaseStatusSafe = useCallback(
     (nextStatus: CaseResolverRequestedCaseStatus): void => {
@@ -442,6 +446,53 @@ export function useCaseResolverState(): CaseResolverStateValue {
     (): Set<string> | null => collectCaseScopeIds(workspace.files, viewState.activeCaseId),
     [viewState.activeCaseId, workspace.files]
   );
+  const workspaceNormalizationDiagnostics = useMemo(
+    () => getCaseResolverWorkspaceNormalizationDiagnostics(workspace),
+    [workspace],
+  );
+  const unresolvedOwnershipInActiveScopeCount = useMemo((): number => {
+    if (!viewState.activeCaseId) return 0;
+    const scopedWorkspace = resolveCaseResolverTreeWorkspace({
+      selectedFileId: viewState.activeCaseId,
+      requestedFileId: null,
+      workspace,
+      includeDescendantCaseScope: true,
+    });
+    return scopedWorkspace.files.filter(
+      (file: CaseResolverFile): boolean =>
+        file.fileType !== 'case' && !file.parentCaseId,
+    ).length;
+  }, [viewState.activeCaseId, workspace]);
+
+  useEffect((): void => {
+    const diagnosticsSignature = [
+      getCaseResolverWorkspaceRevision(workspace),
+      workspaceNormalizationDiagnostics.ownershipRepairedCount,
+      workspaceNormalizationDiagnostics.ownershipUnresolvedCount,
+      workspaceNormalizationDiagnostics.droppedDuplicateCount,
+    ].join(':');
+    if (lastLoggedOwnershipDiagnosticsSignatureRef.current === diagnosticsSignature) return;
+    lastLoggedOwnershipDiagnosticsSignatureRef.current = diagnosticsSignature;
+    logCaseResolverWorkspaceEvent({
+      source: 'case_view',
+      action: 'ownership_normalization_state',
+      workspaceRevision: getCaseResolverWorkspaceRevision(workspace),
+      message: [
+        `ownership_repaired_count=${workspaceNormalizationDiagnostics.ownershipRepairedCount}`,
+        `ownership_unresolved_count=${workspaceNormalizationDiagnostics.ownershipUnresolvedCount}`,
+        `dropped_duplicate_count=${workspaceNormalizationDiagnostics.droppedDuplicateCount}`,
+      ].join(' '),
+    });
+  }, [workspace, workspaceNormalizationDiagnostics]);
+
+  useEffect((): void => {
+    if (unresolvedOwnershipInActiveScopeCount <= 0) return;
+    if (unresolvedOwnershipWarningShownRef.current) return;
+    unresolvedOwnershipWarningShownRef.current = true;
+    toast('Some documents have unresolved ownership and appear under Unassigned.', {
+      variant: 'warning',
+    });
+  }, [toast, unresolvedOwnershipInActiveScopeCount]);
 
   const assetActions = useCaseResolverStateAssetActions({
     settingsStore,

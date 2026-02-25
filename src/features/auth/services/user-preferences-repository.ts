@@ -40,7 +40,15 @@ type UserPreferencesDocument = {
   aiPathsActivePathId: string | null;
   imageStudioLastProjectId: string | null;
   caseResolverCaseListViewMode: 'hierarchy' | 'list' | null;
-  caseResolverCaseListSortBy: 'updated' | 'created' | 'name' | null;
+  caseResolverCaseListSortBy:
+    | 'updated'
+    | 'created'
+    | 'name'
+    | 'status'
+    | 'signature'
+    | 'locked'
+    | 'sent'
+    | null;
   caseResolverCaseListSortOrder: 'asc' | 'desc' | null;
   caseResolverCaseListSearchScope: 'all' | 'name' | 'folder' | 'content' | null;
   caseResolverCaseListFiltersCollapsedByDefault: boolean | null;

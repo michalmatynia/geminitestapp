@@ -2,6 +2,7 @@ import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 
 import {
   CASE_RESOLVER_WORKSPACE_KEY,
+  getCaseResolverWorkspaceNormalizationDiagnostics,
   normalizeCaseResolverWorkspace,
   parseCaseResolverWorkspace,
 } from './settings';
@@ -425,6 +426,19 @@ export const persistCaseResolverWorkspaceSnapshot = async (
 ): Promise<PersistCaseResolverWorkspaceResult> => {
   const startedAt = Date.now();
   const normalizedWorkspace = normalizeCaseResolverWorkspace(input.workspace);
+  const normalizationDiagnostics =
+    getCaseResolverWorkspaceNormalizationDiagnostics(normalizedWorkspace);
+  logCaseResolverWorkspaceEvent({
+    source: input.source,
+    action: 'ownership_normalization',
+    mutationId: input.mutationId,
+    workspaceRevision: getCaseResolverWorkspaceRevision(normalizedWorkspace),
+    message: [
+      `ownership_repaired_count=${normalizationDiagnostics.ownershipRepairedCount}`,
+      `ownership_unresolved_count=${normalizationDiagnostics.ownershipUnresolvedCount}`,
+      `dropped_duplicate_count=${normalizationDiagnostics.droppedDuplicateCount}`,
+    ].join(' '),
+  });
   const workspaceForPersist = compactWorkspaceForPersist(normalizedWorkspace);
   const serializedWorkspace = JSON.stringify(workspaceForPersist);
   const payloadBytes = serializedWorkspace.length;

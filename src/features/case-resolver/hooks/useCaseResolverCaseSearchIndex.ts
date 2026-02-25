@@ -15,6 +15,11 @@ export type UseCaseResolverCaseSearchIndexInput = {
   caseFilterCaseIdentifierIds: string[];
   caseFilterCategoryIds: string[];
   caseFilterFolder: string;
+  caseFilterStatus: 'all' | 'pending' | 'completed';
+  caseFilterLocked: 'all' | 'locked' | 'unlocked';
+  caseFilterSent: 'all' | 'sent' | 'not_sent';
+  caseFilterHierarchy: 'all' | 'root' | 'child';
+  caseFilterReferences: 'all' | 'with_references' | 'without_references';
   caseTagPathById: Map<string, string>;
   caseIdentifierPathById: Map<string, string>;
   caseCategoryPathById: Map<string, string>;
@@ -36,6 +41,10 @@ type ParsedCaseSearchToken = {
     | 'identifier'
     | 'category'
     | 'status'
+    | 'locked'
+    | 'sent'
+    | 'parent'
+    | 'refs'
     | 'text'
     | 'id';
   value: string;
@@ -49,6 +58,10 @@ type IndexedCaseSearchRow = {
   normalizedIdentifier: string;
   normalizedCategory: string;
   normalizedStatus: string;
+  normalizedLocked: string;
+  normalizedSent: string;
+  normalizedParent: string;
+  normalizedRefs: string;
   normalizedId: string;
   normalizedText: string;
 };
@@ -93,10 +106,21 @@ const parseCaseSearchQuery = (query: string): ParsedCaseSearchToken[] => {
           rawField === 'identifier' ||
           rawField === 'category' ||
           rawField === 'status' ||
+          rawField === 'locked' ||
+          rawField === 'sent' ||
+          rawField === 'parent' ||
+          rawField === 'refs' ||
+          rawField === 'references' ||
           rawField === 'text' ||
           rawField === 'content' ||
           rawField === 'id'
-            ? (rawField === 'content' ? 'text' : rawField)
+            ? (
+              rawField === 'content'
+                ? 'text'
+                : rawField === 'references'
+                  ? 'refs'
+                  : rawField
+            )
             : 'any';
 
         if (rawValue.length > 0) {
@@ -141,6 +165,10 @@ const resolveCaseRowMatchesToken = (
   if (token.field === 'identifier') return includes(row.normalizedIdentifier);
   if (token.field === 'category') return includes(row.normalizedCategory);
   if (token.field === 'status') return includes(row.normalizedStatus);
+  if (token.field === 'locked') return includes(row.normalizedLocked);
+  if (token.field === 'sent') return includes(row.normalizedSent);
+  if (token.field === 'parent') return includes(row.normalizedParent);
+  if (token.field === 'refs') return includes(row.normalizedRefs);
   if (token.field === 'id') return includes(row.normalizedId);
   if (token.field === 'text') return includes(row.normalizedText);
 
@@ -155,6 +183,10 @@ const resolveCaseRowMatchesToken = (
     includes(row.normalizedIdentifier) ||
     includes(row.normalizedCategory) ||
     includes(row.normalizedStatus) ||
+    includes(row.normalizedLocked) ||
+    includes(row.normalizedSent) ||
+    includes(row.normalizedParent) ||
+    includes(row.normalizedRefs) ||
     includes(row.normalizedId) ||
     includes(row.normalizedText)
   );
@@ -169,6 +201,11 @@ export function useCaseResolverCaseSearchIndex({
   caseFilterCaseIdentifierIds,
   caseFilterCategoryIds,
   caseFilterFolder,
+  caseFilterStatus,
+  caseFilterLocked,
+  caseFilterSent,
+  caseFilterHierarchy,
+  caseFilterReferences,
   caseTagPathById,
   caseIdentifierPathById,
   caseCategoryPathById,
@@ -281,6 +318,13 @@ export function useCaseResolverCaseSearchIndex({
         });
       });
 
+      const hasParentCase = (parentCaseIdByCaseId.get(caseFile.id) ?? null) !== null;
+      const hasReferences =
+        Array.isArray(caseFile.referenceCaseIds) &&
+        caseFile.referenceCaseIds.some(
+          (referenceCaseId: string): boolean => referenceCaseId.trim().length > 0,
+        );
+
       return {
         file: caseFile,
         normalizedName: toSearchText(caseFile.name),
@@ -297,6 +341,16 @@ export function useCaseResolverCaseSearchIndex({
           caseFile.categoryId ? (caseCategoryPathById.get(caseFile.categoryId) ?? '') : ''
         ),
         normalizedStatus: toSearchText(caseFile.caseStatus ?? 'pending'),
+        normalizedLocked: toSearchText(
+          caseFile.isLocked === true ? 'locked true yes' : 'unlocked false no',
+        ),
+        normalizedSent: toSearchText(
+          caseFile.isSent === true ? 'sent true yes' : 'not_sent unsent false no',
+        ),
+        normalizedParent: toSearchText(hasParentCase ? 'child with_parent' : 'root'),
+        normalizedRefs: toSearchText(
+          hasReferences ? 'with_references with_refs has yes true' : 'without_references no_refs no false',
+        ),
         normalizedId: toSearchText(caseFile.id),
         normalizedText: toSearchText(textFragments.join(' ')),
       };
@@ -313,6 +367,47 @@ export function useCaseResolverCaseSearchIndex({
         return;
       }
       if (caseFilterFolder !== '__all__' && row.file.folder !== caseFilterFolder) {
+        return;
+      }
+      if (
+        caseFilterStatus !== 'all' &&
+        (row.file.caseStatus ?? 'pending') !== caseFilterStatus
+      ) {
+        return;
+      }
+      if (caseFilterLocked === 'locked' && row.file.isLocked !== true) {
+        return;
+      }
+      if (caseFilterLocked === 'unlocked' && row.file.isLocked === true) {
+        return;
+      }
+      if (caseFilterSent === 'sent' && row.file.isSent !== true) {
+        return;
+      }
+      if (caseFilterSent === 'not_sent' && row.file.isSent === true) {
+        return;
+      }
+      if (
+        caseFilterHierarchy === 'root' &&
+        (parentCaseIdByCaseId.get(row.file.id) ?? null) !== null
+      ) {
+        return;
+      }
+      if (
+        caseFilterHierarchy === 'child' &&
+        (parentCaseIdByCaseId.get(row.file.id) ?? null) === null
+      ) {
+        return;
+      }
+      const hasReferences =
+        Array.isArray(row.file.referenceCaseIds) &&
+        row.file.referenceCaseIds.some(
+          (referenceCaseId: string): boolean => referenceCaseId.trim().length > 0,
+        );
+      if (caseFilterReferences === 'with_references' && !hasReferences) {
+        return;
+      }
+      if (caseFilterReferences === 'without_references' && hasReferences) {
         return;
       }
       if (tagFilterSet.size > 0 && (!row.file.tagId || !tagFilterSet.has(row.file.tagId))) {
@@ -364,6 +459,11 @@ export function useCaseResolverCaseSearchIndex({
     caseFilterCaseIdentifierIds,
     caseFilterCategoryIds,
     caseFilterFolder,
+    caseFilterHierarchy,
+    caseFilterLocked,
+    caseFilterReferences,
+    caseFilterSent,
+    caseFilterStatus,
     caseFilterTagIds,
     caseIdentifierPathById,
     caseSearchQuery,

@@ -20,33 +20,75 @@ import type {
   FilemakerPerson,
 } from './types';
 
-export const FILEMAKER_DATABASE_KEY = 'filemaker_database_v1';
-export const FILEMAKER_REFERENCE_NONE = 'none';
-export const FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY = 'prompt_engine_settings';
-export const FILEMAKER_EMAIL_PARSER_RULE_PREFIX = 'segment.filemaker.email_parser.';
-export const FILEMAKER_PHONE_VALIDATION_RULE_PREFIX = 'segment.filemaker.phone_number.';
+import {
+  FILEMAKER_DATABASE_KEY,
+  FILEMAKER_REFERENCE_NONE,
+  FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
+  FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
+} from './settings-constants';
 
-const FILEMAKER_EMAIL_STATUSES: FilemakerEmailStatus[] = [
-  'active',
-  'inactive',
-  'bounced',
-  'unverified',
-];
+import {
+  ensureUniqueId,
+  normalizeString,
+  toIdToken,
+  sanitizePhoneCandidate,
+} from './filemaker-settings.helpers';
 
-const FILEMAKER_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import {
+  type FilemakerEmailParserRule,
+  type FilemakerEmailExtractionResult,
+  type FilemakerPhoneValidationRule,
+  type FilemakerPhoneValidationResult,
+} from './filemaker-settings.extraction';
 
-export type FilemakerEmailParserRule = {
-  id: string;
-  pattern: string;
-  flags?: string | null;
-  sequence?: number | null;
+import {
+  createFilemakerAddress,
+  createFilemakerAddressLink,
+  createFilemakerEmail,
+  createFilemakerEmailLink,
+  createFilemakerEvent,
+  createFilemakerEventOrganizationLink,
+  createFilemakerOrganization,
+  createFilemakerPerson,
+  createFilemakerPhoneNumber,
+  createFilemakerPhoneNumberLink,
+  formatFilemakerAddress,
+} from './filemaker-settings.entities';
+
+import {
+  normalizeFilemakerDatabase,
+  createDefaultFilemakerDatabase,
+} from './filemaker-settings.database';
+
+import {
+  extractFilemakerEmailsFromText,
+  validateFilemakerPhoneNumber,
+} from './filemaker-settings.validation';
+
+import {
+  linkFilemakerAddressToOwner,
+  linkFilemakerEmailToParty,
+  linkFilemakerEventToOrganization,
+  linkFilemakerPhoneNumberToParty,
+  setFilemakerDefaultAddressForOwner,
+  unlinkFilemakerAddressFromOwner,
+  unlinkFilemakerEmailFromParty,
+  unlinkFilemakerEventFromOrganization,
+  unlinkFilemakerPhoneNumberFromParty,
+} from './filemaker-settings.links';
+
+export {
+  FILEMAKER_DATABASE_KEY,
+  FILEMAKER_REFERENCE_NONE,
+  FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
+  FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
 };
 
-export type FilemakerEmailExtractionResult = {
-  emails: string[];
-  totalMatches: number;
-  invalidMatches: number;
-  usedDefaultRules: boolean;
+export type {
+  FilemakerEmailParserRule,
+  FilemakerEmailExtractionResult,
+  FilemakerPhoneValidationRule,
+  FilemakerPhoneValidationResult,
 };
 
 export type UpsertFilemakerPartyEmailsResult = {
@@ -59,20 +101,6 @@ export type UpsertFilemakerPartyEmailsResult = {
   appliedEmails: string[];
 };
 
-export type FilemakerPhoneValidationRule = {
-  id: string;
-  pattern: string;
-  flags?: string | null;
-  sequence?: number | null;
-};
-
-export type FilemakerPhoneValidationResult = {
-  isValid: boolean;
-  normalizedPhoneNumber: string;
-  matchedRuleId: string | null;
-  usedDefaultRules: boolean;
-};
-
 export type UpsertFilemakerPartyPhoneNumbersResult = {
   database: FilemakerDatabase;
   partyFound: boolean;
@@ -81,1739 +109,6 @@ export type UpsertFilemakerPartyPhoneNumbersResult = {
   existingPhoneNumberCount: number;
   invalidPhoneNumberCount: number;
   appliedPhoneNumbers: string[];
-};
-
-const DEFAULT_FILEMAKER_EMAIL_PARSER_RULES: FilemakerEmailParserRule[] = [
-  {
-    id: `${FILEMAKER_EMAIL_PARSER_RULE_PREFIX}mailto`,
-    pattern: 'mailto:\\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})',
-    flags: 'gi',
-    sequence: 10,
-  },
-  {
-    id: `${FILEMAKER_EMAIL_PARSER_RULE_PREFIX}angle`,
-    pattern: '<\\s*([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})\\s*>',
-    flags: 'gi',
-    sequence: 20,
-  },
-  {
-    id: `${FILEMAKER_EMAIL_PARSER_RULE_PREFIX}quoted`,
-    pattern: '["\']([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})["\']',
-    flags: 'gi',
-    sequence: 30,
-  },
-  {
-    id: `${FILEMAKER_EMAIL_PARSER_RULE_PREFIX}plain`,
-    pattern:
-      '(?:^|[^A-Z0-9._%+-])([A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,})(?=$|[^A-Z0-9._%+-])',
-    flags: 'gi',
-    sequence: 40,
-  },
-];
-
-const DEFAULT_FILEMAKER_PHONE_VALIDATION_RULES: FilemakerPhoneValidationRule[] = [
-  {
-    id: `${FILEMAKER_PHONE_VALIDATION_RULE_PREFIX}e164_plus`,
-    pattern: '^\\+[1-9]\\d{6,14}$',
-    sequence: 10,
-  },
-  {
-    id: `${FILEMAKER_PHONE_VALIDATION_RULE_PREFIX}national_nonzero`,
-    pattern: '^[1-9]\\d{6,14}$',
-    sequence: 20,
-  },
-  {
-    id: `${FILEMAKER_PHONE_VALIDATION_RULE_PREFIX}national_leading_zero`,
-    pattern: '^0\\d{6,14}$',
-    sequence: 30,
-  },
-];
-
-const normalizeString = (value: unknown, fallback = ''): string =>
-  typeof value === 'string' ? value.trim() : fallback;
-
-const toIdToken = (value: string): string =>
-  value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+/g, '')
-    .replace(/-+$/g, '');
-
-const ensureUniqueId = (
-  candidate: string,
-  usedIds: Set<string>,
-  fallbackPrefix: string
-): string => {
-  const normalizedCandidate = normalizeString(candidate);
-  const base = normalizedCandidate || fallbackPrefix;
-  if (!usedIds.has(base)) return base;
-  let index = 2;
-  while (usedIds.has(`${base}-${index}`)) {
-    index += 1;
-  }
-  return `${base}-${index}`;
-};
-
-const normalizePhoneNumbers = (value: unknown): string[] => {
-  const unique = new Set<string>();
-
-  if (Array.isArray(value)) {
-    value.forEach((entry: unknown) => {
-      const normalized = normalizeString(entry);
-      if (!normalized) return;
-      unique.add(normalized);
-    });
-    return Array.from(unique);
-  }
-
-  if (typeof value === 'string') {
-    value
-      .split(',')
-      .map((entry: string) => entry.trim())
-      .forEach((entry: string): void => {
-        if (!entry) return;
-        unique.add(entry);
-      });
-    return Array.from(unique);
-  }
-
-  return [];
-};
-
-const sanitizePhoneCandidate = (value: string): string => {
-  let current = value.trim().replace(/^tel:\s*/i, '');
-  if (!current) return '';
-
-  current = current.replace(/(?:ext\.?|extension|x)\s*[:.]?\s*\d+$/i, '').trim();
-  if (!current) return '';
-
-  const hasInternationalPrefix = current.startsWith('+') || current.startsWith('00');
-  const digits = current.replace(/\D+/g, '');
-  if (!digits) return '';
-
-  if (hasInternationalPrefix) {
-    const withoutPrefix = current.startsWith('00')
-      ? digits.replace(/^00/, '')
-      : digits;
-    return withoutPrefix ? `+${withoutPrefix}` : '';
-  }
-
-  return digits;
-};
-
-const normalizePhoneNumberValue = (value: unknown): string =>
-  sanitizePhoneCandidate(normalizeString(value));
-
-const normalizeEmailAddress = (value: unknown): string =>
-  normalizeString(value).toLowerCase();
-
-const isValidEmailAddress = (value: string): boolean =>
-  Boolean(value) && FILEMAKER_EMAIL_RE.test(value);
-
-const normalizeEmailStatus = (
-  value: unknown,
-  fallback: FilemakerEmailStatus = 'unverified'
-): FilemakerEmailStatus => {
-  const normalized = normalizeString(value).toLowerCase();
-  if (!normalized) return fallback;
-  return FILEMAKER_EMAIL_STATUSES.find(
-    (status: FilemakerEmailStatus): boolean => status === normalized
-  ) ?? fallback;
-};
-
-type FilemakerEmailParserRuntimeRule = {
-  id: string;
-  regex: RegExp;
-  sequence: number;
-};
-
-type FilemakerPhoneValidationRuntimeRule = {
-  id: string;
-  regex: RegExp;
-  sequence: number;
-};
-
-const normalizeRegexFlags = (
-  value: unknown,
-  options?: {
-    forceGlobal?: boolean;
-  }
-): string => {
-  const raw = normalizeString(value);
-  const unique = new Set<string>();
-  raw.split('').forEach((flag: string): void => {
-    if (
-      flag === 'i' ||
-      flag === 'm' ||
-      flag === 's' ||
-      flag === 'u' ||
-      flag === 'd'
-    ) {
-      unique.add(flag);
-    }
-  });
-  if (options?.forceGlobal) {
-    unique.add('g');
-  }
-  return Array.from(unique).join('');
-};
-
-const normalizeEmailParserFlags = (value: unknown): string =>
-  normalizeRegexFlags(value, { forceGlobal: true });
-
-const normalizePhoneValidationFlags = (value: unknown): string =>
-  normalizeRegexFlags(value, { forceGlobal: false });
-
-const sanitizeEmailCandidate = (value: string): string => {
-  let current = value.trim().replace(/^mailto:\s*/i, '');
-  if (!current) return '';
-
-  const leadingWrapperRe = /^[<([{'"`]+/;
-  const trailingWrapperRe = /[>\])}"'`.,;:!?]+$/;
-  let previous = '';
-  while (previous !== current) {
-    previous = current;
-    current = current
-      .replace(leadingWrapperRe, '')
-      .replace(trailingWrapperRe, '')
-      .trim();
-  }
-  return current;
-};
-
-const toParserRuleSequence = (value: unknown): number => {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return 0;
-  return Math.max(0, Math.floor(value));
-};
-
-const sortFilemakerEmailParserRules = (
-  rules: FilemakerEmailParserRule[]
-): FilemakerEmailParserRule[] =>
-  [...rules].sort((left: FilemakerEmailParserRule, right: FilemakerEmailParserRule) => {
-    const leftSequence = toParserRuleSequence(left.sequence);
-    const rightSequence = toParserRuleSequence(right.sequence);
-    if (leftSequence !== rightSequence) return leftSequence - rightSequence;
-    return left.id.localeCompare(right.id);
-  });
-
-const sortFilemakerPhoneValidationRules = (
-  rules: FilemakerPhoneValidationRule[]
-): FilemakerPhoneValidationRule[] =>
-  [...rules].sort(
-    (left: FilemakerPhoneValidationRule, right: FilemakerPhoneValidationRule) => {
-      const leftSequence = toParserRuleSequence(left.sequence);
-      const rightSequence = toParserRuleSequence(right.sequence);
-      if (leftSequence !== rightSequence) return leftSequence - rightSequence;
-      return left.id.localeCompare(right.id);
-    }
-  );
-
-const compileFilemakerEmailParserRules = (
-  rules: FilemakerEmailParserRule[]
-): FilemakerEmailParserRuntimeRule[] =>
-  sortFilemakerEmailParserRules(rules)
-    .map((rule: FilemakerEmailParserRule): FilemakerEmailParserRuntimeRule | null => {
-      const pattern = normalizeString(rule.pattern);
-      if (!pattern) return null;
-      try {
-        return {
-          id: normalizeString(rule.id) || FILEMAKER_EMAIL_PARSER_RULE_PREFIX,
-          regex: new RegExp(pattern, normalizeEmailParserFlags(rule.flags)),
-          sequence: toParserRuleSequence(rule.sequence),
-        };
-      } catch {
-        return null;
-      }
-    })
-    .filter(
-      (entry: FilemakerEmailParserRuntimeRule | null): entry is FilemakerEmailParserRuntimeRule =>
-        Boolean(entry)
-    );
-
-const compileFilemakerPhoneValidationRules = (
-  rules: FilemakerPhoneValidationRule[]
-): FilemakerPhoneValidationRuntimeRule[] =>
-  sortFilemakerPhoneValidationRules(rules)
-    .map(
-      (
-        rule: FilemakerPhoneValidationRule
-      ): FilemakerPhoneValidationRuntimeRule | null => {
-        const pattern = normalizeString(rule.pattern);
-        if (!pattern) return null;
-        try {
-          return {
-            id: normalizeString(rule.id) || FILEMAKER_PHONE_VALIDATION_RULE_PREFIX,
-            regex: new RegExp(pattern, normalizePhoneValidationFlags(rule.flags)),
-            sequence: toParserRuleSequence(rule.sequence),
-          };
-        } catch {
-          return null;
-        }
-      }
-    )
-    .filter(
-      (
-        entry: FilemakerPhoneValidationRuntimeRule | null
-      ): entry is FilemakerPhoneValidationRuntimeRule => Boolean(entry)
-    );
-
-const parseRegexRulesFromPromptSettings = (
-  rawPromptSettings: string | null | undefined,
-  rulePrefix: string
-): Array<{
-  id: string;
-  pattern: string;
-  flags: string;
-  sequence: number;
-}> => {
-  const parsed = parseJsonSetting<Record<string, unknown> | null>(
-    rawPromptSettings,
-    null
-  );
-  if (!parsed || typeof parsed !== 'object') return [];
-
-  const promptValidation =
-    parsed['promptValidation'] &&
-    typeof parsed['promptValidation'] === 'object' &&
-    !Array.isArray(parsed['promptValidation'])
-      ? (parsed['promptValidation'] as Record<string, unknown>)
-      : null;
-  if (!promptValidation) return [];
-
-  const rawRules = Array.isArray(promptValidation['rules'])
-    ? (promptValidation['rules'] as unknown[])
-    : [];
-  return rawRules
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
-    )
-    .map(
-      (
-        entry: Record<string, unknown>
-      ): { id: string; pattern: string; flags: string; sequence: number } | null => {
-        const id = normalizeString(entry['id']);
-        if (!id.startsWith(rulePrefix)) return null;
-        if (normalizeString(entry['kind']).toLowerCase() !== 'regex') return null;
-        if (entry['enabled'] === false) return null;
-
-        const pattern = normalizeString(entry['pattern']);
-        if (!pattern) return null;
-
-        return {
-          id,
-          pattern,
-          flags: normalizeString(entry['flags']),
-          sequence: typeof entry['sequence'] === 'number' ? entry['sequence'] : 0,
-        };
-      }
-    )
-    .filter(
-      (
-        entry:
-          | { id: string; pattern: string; flags: string; sequence: number }
-          | null
-      ): entry is { id: string; pattern: string; flags: string; sequence: number } =>
-        Boolean(entry)
-    );
-};
-
-export const parseFilemakerEmailParserRulesFromPromptSettings = (
-  rawPromptSettings: string | null | undefined
-): FilemakerEmailParserRule[] => {
-  return sortFilemakerEmailParserRules(
-    parseRegexRulesFromPromptSettings(
-      rawPromptSettings,
-      FILEMAKER_EMAIL_PARSER_RULE_PREFIX
-    )
-  );
-};
-
-export const parseFilemakerPhoneValidationRulesFromPromptSettings = (
-  rawPromptSettings: string | null | undefined
-): FilemakerPhoneValidationRule[] => {
-  return sortFilemakerPhoneValidationRules(
-    parseRegexRulesFromPromptSettings(
-      rawPromptSettings,
-      FILEMAKER_PHONE_VALIDATION_RULE_PREFIX
-    )
-  );
-};
-
-export const validateFilemakerPhoneNumber = (
-  rawPhoneNumber: string,
-  options?: {
-    validationRules?: FilemakerPhoneValidationRule[] | null | undefined;
-  }
-): FilemakerPhoneValidationResult => {
-  const normalizedPhoneNumber = normalizePhoneNumberValue(rawPhoneNumber);
-  const customRules = sortFilemakerPhoneValidationRules(
-    options?.validationRules ?? []
-  );
-  const fallbackRules =
-    customRules.length > 0
-      ? customRules
-      : DEFAULT_FILEMAKER_PHONE_VALIDATION_RULES;
-  const runtimeRules = compileFilemakerPhoneValidationRules(fallbackRules);
-  if (!normalizedPhoneNumber || runtimeRules.length === 0) {
-    return {
-      isValid: false,
-      normalizedPhoneNumber,
-      matchedRuleId: null,
-      usedDefaultRules: customRules.length === 0,
-    };
-  }
-
-  const matchedRule =
-    runtimeRules.find((rule: FilemakerPhoneValidationRuntimeRule): boolean => {
-      rule.regex.lastIndex = 0;
-      return rule.regex.test(normalizedPhoneNumber);
-    }) ?? null;
-
-  return {
-    isValid: Boolean(matchedRule),
-    normalizedPhoneNumber,
-    matchedRuleId: matchedRule?.id ?? null,
-    usedDefaultRules: customRules.length === 0,
-  };
-};
-
-export const extractFilemakerEmailsFromText = (
-  rawText: string,
-  options?: {
-    parserRules?: FilemakerEmailParserRule[] | null | undefined;
-  }
-): FilemakerEmailExtractionResult => {
-  const source = normalizeString(rawText);
-  const customRules = sortFilemakerEmailParserRules(options?.parserRules ?? []);
-  const fallbackRules =
-    customRules.length > 0 ? customRules : DEFAULT_FILEMAKER_EMAIL_PARSER_RULES;
-  const runtimeRules = compileFilemakerEmailParserRules(fallbackRules);
-  if (!source || runtimeRules.length === 0) {
-    return {
-      emails: [],
-      totalMatches: 0,
-      invalidMatches: 0,
-      usedDefaultRules: customRules.length === 0,
-    };
-  }
-
-  const extracted: string[] = [];
-  const uniqueEmails = new Set<string>();
-  let totalMatches = 0;
-  let invalidMatches = 0;
-
-  runtimeRules.forEach((rule: FilemakerEmailParserRuntimeRule): void => {
-    const regex = new RegExp(rule.regex.source, rule.regex.flags);
-    let match: RegExpExecArray | null = regex.exec(source);
-    while (match) {
-      totalMatches += 1;
-
-      const captured =
-        match
-          .slice(1)
-          .find((entry: string | undefined): entry is string =>
-            typeof entry === 'string' && entry.trim().length > 0
-          ) ?? match[0] ?? '';
-
-      const normalizedEmail = normalizeEmailAddress(
-        sanitizeEmailCandidate(captured)
-      );
-
-      if (!isValidEmailAddress(normalizedEmail)) {
-        invalidMatches += 1;
-      } else if (!uniqueEmails.has(normalizedEmail)) {
-        uniqueEmails.add(normalizedEmail);
-        extracted.push(normalizedEmail);
-      }
-
-      if ((match[0] ?? '').length === 0) {
-        regex.lastIndex += 1;
-      }
-      match = regex.exec(source);
-    }
-  });
-
-  return {
-    emails: extracted,
-    totalMatches,
-    invalidMatches,
-    usedDefaultRules: customRules.length === 0,
-  };
-};
-
-type FilemakerAddressFields = {
-  street: string;
-  streetNumber: string;
-  city: string;
-  postalCode: string;
-  country: string;
-  countryId: string;
-};
-
-const normalizeAddressFields = (value: {
-  street?: unknown;
-  streetNumber?: unknown;
-  city?: unknown;
-  postalCode?: unknown;
-  country?: unknown;
-  countryId?: unknown;
-}): FilemakerAddressFields => {
-  return {
-    street: normalizeString(value.street),
-    streetNumber: normalizeString(value.streetNumber),
-    city: normalizeString(value.city),
-    postalCode: normalizeString(value.postalCode),
-    country: normalizeString(value.country),
-    countryId: normalizeString(value.countryId),
-  };
-};
-
-export const formatFilemakerAddress = (
-  value: Pick<
-    FilemakerAddressFields,
-    'street' | 'streetNumber' | 'city' | 'postalCode' | 'country'
-  >
-): string =>
-  [
-    [value.street, value.streetNumber]
-      .map((entry: string) => normalizeString(entry))
-      .filter(Boolean)
-      .join(' '),
-    value.city,
-    value.postalCode,
-    value.country,
-  ]
-    .map((entry: string) => normalizeString(entry))
-    .filter(Boolean)
-    .join(', ');
-
-const sanitizeReference = (value: unknown): FilemakerPartyReference | null => {
-  if (!value || typeof value !== 'object') return null;
-  const record = value as Record<string, unknown>;
-  const kind = normalizeString(record['kind']) as FilemakerEntityKind;
-  if (kind !== 'person' && kind !== 'organization') return null;
-  const id = normalizeString(record['id']);
-  if (!id) return null;
-  return { kind, id };
-};
-
-const hasAnyAddressData = (value: FilemakerAddressFields): boolean =>
-  Boolean(
-    value.street ||
-      value.streetNumber ||
-      value.city ||
-      value.postalCode ||
-      value.country ||
-      value.countryId
-  );
-
-export const createFilemakerAddress = (input: {
-  id: string;
-  street?: unknown;
-  streetNumber?: unknown;
-  city?: unknown;
-  postalCode?: unknown;
-  country?: unknown;
-  countryId?: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerAddress => {
-  const now = new Date().toISOString();
-  const address = normalizeAddressFields({
-    street: input.street,
-    streetNumber: input.streetNumber,
-    city: input.city,
-    postalCode: input.postalCode,
-    country: input.country,
-    countryId: input.countryId,
-  });
-  return {
-    id: normalizeString(input.id),
-    street: address.street,
-    streetNumber: address.streetNumber,
-    city: address.city,
-    postalCode: address.postalCode,
-    country: address.country,
-    countryId: address.countryId,
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
-
-export const createFilemakerAddressLink = (input: {
-  id: string;
-  ownerKind: unknown;
-  ownerId: unknown;
-  addressId: unknown;
-  isDefault?: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerAddressLink => {
-  const now = new Date().toISOString();
-  const rawOwnerKind = normalizeString(input.ownerKind).toLowerCase();
-  const ownerKind: FilemakerAddressOwnerKind =
-    rawOwnerKind === 'person' || rawOwnerKind === 'organization' || rawOwnerKind === 'event'
-      ? rawOwnerKind
-      : 'person';
-  return {
-    id: normalizeString(input.id),
-    ownerKind,
-    ownerId: normalizeString(input.ownerId),
-    addressId: normalizeString(input.addressId),
-    isDefault: Boolean(input.isDefault),
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
-
-export const createFilemakerPerson = (input: {
-  id: string;
-  firstName: unknown;
-  lastName: unknown;
-  addressId?: unknown;
-  street?: unknown;
-  streetNumber?: unknown;
-  city?: unknown;
-  postalCode?: unknown;
-  country?: unknown;
-  countryId?: unknown;
-  nip?: unknown;
-  regon?: unknown;
-  phoneNumbers?: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerPerson => {
-  const now = new Date().toISOString();
-  const address = normalizeAddressFields({
-    street: input.street,
-    streetNumber: input.streetNumber,
-    city: input.city,
-    postalCode: input.postalCode,
-    country: input.country,
-    countryId: input.countryId,
-  });
-  return {
-    id: normalizeString(input.id),
-    firstName: normalizeString(input.firstName),
-    lastName: normalizeString(input.lastName),
-    addressId: normalizeString(input.addressId),
-    street: address.street,
-    streetNumber: address.streetNumber,
-    city: address.city,
-    postalCode: address.postalCode,
-    country: address.country,
-    countryId: address.countryId,
-    nip: normalizeString(input.nip),
-    regon: normalizeString(input.regon),
-    phoneNumbers: normalizePhoneNumbers(input.phoneNumbers),
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
-
-export const createFilemakerOrganization = (input: {
-  id: string;
-  name: unknown;
-  addressId?: unknown;
-  street?: unknown;
-  streetNumber?: unknown;
-  city?: unknown;
-  postalCode?: unknown;
-  country?: unknown;
-  countryId?: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerOrganization => {
-  const now = new Date().toISOString();
-  const address = normalizeAddressFields({
-    street: input.street,
-    streetNumber: input.streetNumber,
-    city: input.city,
-    postalCode: input.postalCode,
-    country: input.country,
-    countryId: input.countryId,
-  });
-  return {
-    id: normalizeString(input.id),
-    name: normalizeString(input.name),
-    addressId: normalizeString(input.addressId),
-    street: address.street,
-    streetNumber: address.streetNumber,
-    city: address.city,
-    postalCode: address.postalCode,
-    country: address.country,
-    countryId: address.countryId,
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
-
-export const createFilemakerEvent = (input: {
-  id: string;
-  eventName: unknown;
-  addressId?: unknown;
-  street?: unknown;
-  streetNumber?: unknown;
-  city?: unknown;
-  postalCode?: unknown;
-  country?: unknown;
-  countryId?: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerEvent => {
-  const now = new Date().toISOString();
-  const address = normalizeAddressFields({
-    street: input.street,
-    streetNumber: input.streetNumber,
-    city: input.city,
-    postalCode: input.postalCode,
-    country: input.country,
-    countryId: input.countryId,
-  });
-  return {
-    id: normalizeString(input.id),
-    eventName: normalizeString(input.eventName),
-    addressId: normalizeString(input.addressId),
-    street: address.street,
-    streetNumber: address.streetNumber,
-    city: address.city,
-    postalCode: address.postalCode,
-    country: address.country,
-    countryId: address.countryId,
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
-
-export const createFilemakerPhoneNumber = (input: {
-  id: string;
-  phoneNumber: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerPhoneNumber => {
-  const now = new Date().toISOString();
-  return {
-    id: normalizeString(input.id),
-    phoneNumber: normalizePhoneNumberValue(input.phoneNumber),
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
-
-export const createFilemakerPhoneNumberLink = (input: {
-  id: string;
-  phoneNumberId: unknown;
-  partyKind: unknown;
-  partyId: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerPhoneNumberLink => {
-  const now = new Date().toISOString();
-  const rawPartyKind = normalizeString(input.partyKind).toLowerCase();
-  const partyKind: FilemakerPartyKind =
-    rawPartyKind === 'organization' ? 'organization' : 'person';
-  return {
-    id: normalizeString(input.id),
-    phoneNumberId: normalizeString(input.phoneNumberId),
-    partyKind,
-    partyId: normalizeString(input.partyId),
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
-
-export const createFilemakerEmail = (input: {
-  id: string;
-  email: unknown;
-  status?: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerEmail => {
-  const now = new Date().toISOString();
-  return {
-    id: normalizeString(input.id),
-    email: normalizeEmailAddress(input.email),
-    status: normalizeEmailStatus(input.status),
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
-
-export const createFilemakerEmailLink = (input: {
-  id: string;
-  emailId: unknown;
-  partyKind: unknown;
-  partyId: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerEmailLink => {
-  const now = new Date().toISOString();
-  const rawPartyKind = normalizeString(input.partyKind).toLowerCase();
-  const partyKind: FilemakerPartyKind =
-    rawPartyKind === 'organization' ? 'organization' : 'person';
-
-  return {
-    id: normalizeString(input.id),
-    emailId: normalizeString(input.emailId),
-    partyKind,
-    partyId: normalizeString(input.partyId),
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
-
-export const createFilemakerEventOrganizationLink = (input: {
-  id: string;
-  eventId: unknown;
-  organizationId: unknown;
-  createdAt?: string | null | undefined;
-  updatedAt?: string | null | undefined;
-}): FilemakerEventOrganizationLink => {
-  const now = new Date().toISOString();
-  return {
-    id: normalizeString(input.id),
-    eventId: normalizeString(input.eventId),
-    organizationId: normalizeString(input.organizationId),
-    createdAt: input.createdAt ?? now,
-    updatedAt: input.updatedAt ?? now,
-  };
-};
-
-export const createDefaultFilemakerDatabase = (): FilemakerDatabase => ({
-  version: 2,
-  persons: [],
-  organizations: [],
-  events: [],
-  addresses: [],
-  addressLinks: [],
-  phoneNumbers: [],
-  phoneNumberLinks: [],
-  emails: [],
-  emailLinks: [],
-  eventOrganizationLinks: [],
-});
-
-const defaultAddressIdForEntity = (
-  kind: 'person' | 'organization' | 'event',
-  entityId: string
-): string => `${kind}-address-${entityId}`;
-
-const defaultAddressLinkIdForValues = (
-  ownerKind: FilemakerAddressOwnerKind,
-  ownerId: string,
-  addressId: string
-): string => {
-  const joined = `${ownerKind}-${ownerId}-${addressId}`;
-  return `filemaker-address-link-${toIdToken(joined) || 'entry'}`;
-};
-
-const defaultEmailIdForValue = (email: string): string => {
-  const token = toIdToken(email);
-  return `filemaker-email-${token || 'entry'}`;
-};
-
-const defaultPhoneNumberIdForValue = (phoneNumber: string): string => {
-  const token = toIdToken(phoneNumber);
-  return `filemaker-phone-number-${token || 'entry'}`;
-};
-
-const defaultPhoneNumberLinkIdForValues = (
-  phoneNumberId: string,
-  partyKind: FilemakerPartyKind,
-  partyId: string
-): string => {
-  const joined = `${phoneNumberId}-${partyKind}-${partyId}`;
-  return `filemaker-phone-number-link-${toIdToken(joined) || 'entry'}`;
-};
-
-const defaultEmailLinkIdForValues = (
-  emailId: string,
-  partyKind: FilemakerPartyKind,
-  partyId: string
-): string => {
-  const joined = `${emailId}-${partyKind}-${partyId}`;
-  return `filemaker-email-link-${toIdToken(joined) || 'entry'}`;
-};
-
-const defaultEventOrganizationLinkIdForValues = (
-  eventId: string,
-  organizationId: string
-): string => {
-  const joined = `${eventId}-${organizationId}`;
-  return `filemaker-event-organization-link-${toIdToken(joined) || 'entry'}`;
-};
-
-const attachAddressToPerson = (
-  person: FilemakerPerson,
-  addressesById: Map<string, FilemakerAddress>
-): FilemakerPerson => {
-  const addressId =
-    normalizeString(person.addressId) ||
-    defaultAddressIdForEntity('person', person.id);
-  const existing = addressesById.get(addressId);
-  const fromPerson = createFilemakerAddress({
-    id: addressId,
-    street: person.street,
-    streetNumber: person.streetNumber,
-    city: person.city,
-    postalCode: person.postalCode,
-    country: person.country,
-    countryId: person.countryId,
-    createdAt: existing?.createdAt ?? person.createdAt,
-    updatedAt: person.updatedAt,
-  });
-  if (hasAnyAddressData(fromPerson)) {
-    addressesById.set(addressId, fromPerson);
-  }
-  const resolvedAddress = addressesById.get(addressId);
-  if (!resolvedAddress) {
-    return {
-      ...person,
-      addressId,
-    };
-  }
-  return {
-    ...person,
-    addressId,
-    street: resolvedAddress.street,
-    streetNumber: resolvedAddress.streetNumber,
-    city: resolvedAddress.city,
-    postalCode: resolvedAddress.postalCode,
-    country: resolvedAddress.country,
-    countryId: resolvedAddress.countryId,
-  };
-};
-
-const attachAddressToOrganization = (
-  organization: FilemakerOrganization,
-  addressesById: Map<string, FilemakerAddress>
-): FilemakerOrganization => {
-  const addressId =
-    normalizeString(organization.addressId) ||
-    defaultAddressIdForEntity('organization', organization.id);
-  const existing = addressesById.get(addressId);
-  const fromOrganization = createFilemakerAddress({
-    id: addressId,
-    street: organization.street,
-    streetNumber: organization.streetNumber,
-    city: organization.city,
-    postalCode: organization.postalCode,
-    country: organization.country,
-    countryId: organization.countryId,
-    createdAt: existing?.createdAt ?? organization.createdAt,
-    updatedAt: organization.updatedAt,
-  });
-  if (hasAnyAddressData(fromOrganization)) {
-    addressesById.set(addressId, fromOrganization);
-  }
-  const resolvedAddress = addressesById.get(addressId);
-  if (!resolvedAddress) {
-    return {
-      ...organization,
-      addressId,
-    };
-  }
-  return {
-    ...organization,
-    addressId,
-    street: resolvedAddress.street,
-    streetNumber: resolvedAddress.streetNumber,
-    city: resolvedAddress.city,
-    postalCode: resolvedAddress.postalCode,
-    country: resolvedAddress.country,
-    countryId: resolvedAddress.countryId,
-  };
-};
-
-const attachAddressToEvent = (
-  event: FilemakerEvent,
-  addressesById: Map<string, FilemakerAddress>
-): FilemakerEvent => {
-  const addressId =
-    normalizeString(event.addressId) || defaultAddressIdForEntity('event', event.id);
-  const existing = addressesById.get(addressId);
-  const fromEvent = createFilemakerAddress({
-    id: addressId,
-    street: event.street,
-    streetNumber: event.streetNumber,
-    city: event.city,
-    postalCode: event.postalCode,
-    country: event.country,
-    countryId: event.countryId,
-    createdAt: existing?.createdAt ?? event.createdAt,
-    updatedAt: event.updatedAt,
-  });
-  if (hasAnyAddressData(fromEvent)) {
-    addressesById.set(addressId, fromEvent);
-  }
-  const resolvedAddress = addressesById.get(addressId);
-  if (!resolvedAddress) {
-    return {
-      ...event,
-      addressId,
-    };
-  }
-  return {
-    ...event,
-    addressId,
-    street: resolvedAddress.street,
-    streetNumber: resolvedAddress.streetNumber,
-    city: resolvedAddress.city,
-    postalCode: resolvedAddress.postalCode,
-    country: resolvedAddress.country,
-    countryId: resolvedAddress.countryId,
-  };
-};
-
-const isPartyPresent = (
-  personIds: Set<string>,
-  organizationIds: Set<string>,
-  partyKind: FilemakerPartyKind,
-  partyId: string
-): boolean => {
-  if (partyKind === 'person') {
-    return personIds.has(partyId);
-  }
-  return organizationIds.has(partyId);
-};
-
-const isOrganizationPresent = (
-  organizationIds: Set<string>,
-  organizationId: string
-): boolean => organizationIds.has(organizationId);
-
-const isAddressOwnerPresent = (
-  personIds: Set<string>,
-  organizationIds: Set<string>,
-  eventIds: Set<string>,
-  ownerKind: FilemakerAddressOwnerKind,
-  ownerId: string
-): boolean => {
-  if (ownerKind === 'person') return personIds.has(ownerId);
-  if (ownerKind === 'organization') return organizationIds.has(ownerId);
-  return eventIds.has(ownerId);
-};
-
-export const normalizeFilemakerDatabase = (
-  value: FilemakerDatabase | null | undefined
-): FilemakerDatabase => {
-  if (!value || typeof value !== 'object') {
-    return createDefaultFilemakerDatabase();
-  }
-
-  const valueRecord = value as Record<string, unknown>;
-
-  const rawAddresses: unknown[] = Array.isArray(valueRecord['addresses'])
-    ? (valueRecord['addresses'] as unknown[])
-    : [];
-  const addressesById = new Map<string, FilemakerAddress>();
-  rawAddresses
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
-    .forEach((entry: Record<string, unknown>) => {
-      const id = normalizeString(entry['id']);
-      if (!id || addressesById.has(id)) return;
-      addressesById.set(
-        id,
-        createFilemakerAddress({
-          id,
-          street: normalizeString(entry['street']),
-          streetNumber: normalizeString(entry['streetNumber']),
-          city: normalizeString(entry['city']),
-          postalCode: normalizeString(entry['postalCode']),
-          country: normalizeString(entry['country']),
-          countryId: normalizeString(entry['countryId']),
-          createdAt: normalizeString(entry['createdAt']) || undefined,
-          updatedAt: normalizeString(entry['updatedAt']) || undefined,
-        })
-      );
-    });
-
-  const rawPersons: unknown[] = Array.isArray(valueRecord['persons'])
-    ? (valueRecord['persons'] as unknown[])
-    : [];
-  const personIds = new Set<string>();
-  const persons: FilemakerPerson[] = rawPersons
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
-    .map((entry: Record<string, unknown>): FilemakerPerson | null => {
-      const id = normalizeString(entry['id']);
-      if (!id || personIds.has(id)) return null;
-      personIds.add(id);
-      return createFilemakerPerson({
-        id,
-        firstName: normalizeString(entry['firstName']),
-        lastName: normalizeString(entry['lastName']),
-        addressId: normalizeString(entry['addressId']),
-        street: normalizeString(entry['street']),
-        streetNumber: normalizeString(entry['streetNumber']),
-        city: normalizeString(entry['city']),
-        postalCode: normalizeString(entry['postalCode']),
-        country: normalizeString(entry['country']),
-        countryId: normalizeString(entry['countryId']),
-        nip: normalizeString(entry['nip']),
-        regon: normalizeString(entry['regon']),
-        phoneNumbers: entry['phoneNumbers'],
-        createdAt: normalizeString(entry['createdAt']) || undefined,
-        updatedAt: normalizeString(entry['updatedAt']) || undefined,
-      });
-    })
-    .filter(
-      (entry: FilemakerPerson | null): entry is FilemakerPerson => Boolean(entry)
-    )
-    .map((entry: FilemakerPerson) => attachAddressToPerson(entry, addressesById));
-
-  const rawOrganizations: unknown[] = Array.isArray(valueRecord['organizations'])
-    ? (valueRecord['organizations'] as unknown[])
-    : [];
-  const organizationIds = new Set<string>();
-  const organizations: FilemakerOrganization[] = rawOrganizations
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
-    .map((entry: Record<string, unknown>): FilemakerOrganization | null => {
-      const id = normalizeString(entry['id']);
-      if (!id || organizationIds.has(id)) return null;
-      organizationIds.add(id);
-      return createFilemakerOrganization({
-        id,
-        name: normalizeString(entry['name']),
-        addressId: normalizeString(entry['addressId']),
-        street: normalizeString(entry['street']),
-        streetNumber: normalizeString(entry['streetNumber']),
-        city: normalizeString(entry['city']),
-        postalCode: normalizeString(entry['postalCode']),
-        country: normalizeString(entry['country']),
-        countryId: normalizeString(entry['countryId']),
-        createdAt: normalizeString(entry['createdAt']) || undefined,
-        updatedAt: normalizeString(entry['updatedAt']) || undefined,
-      });
-    })
-    .filter(
-      (entry: FilemakerOrganization | null): entry is FilemakerOrganization =>
-        Boolean(entry)
-    )
-    .map((entry: FilemakerOrganization) =>
-      attachAddressToOrganization(entry, addressesById)
-    );
-
-  const rawEvents: unknown[] = Array.isArray(valueRecord['events'])
-    ? (valueRecord['events'] as unknown[])
-    : [];
-  const eventIds = new Set<string>();
-  const events: FilemakerEvent[] = rawEvents
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
-    .map((entry: Record<string, unknown>): FilemakerEvent | null => {
-      const id = normalizeString(entry['id']);
-      if (!id || eventIds.has(id)) return null;
-      eventIds.add(id);
-      return createFilemakerEvent({
-        id,
-        eventName: normalizeString(entry['eventName']),
-        addressId: normalizeString(entry['addressId']),
-        street: normalizeString(entry['street']),
-        streetNumber: normalizeString(entry['streetNumber']),
-        city: normalizeString(entry['city']),
-        postalCode: normalizeString(entry['postalCode']),
-        country: normalizeString(entry['country']),
-        countryId: normalizeString(entry['countryId']),
-        createdAt: normalizeString(entry['createdAt']) || undefined,
-        updatedAt: normalizeString(entry['updatedAt']) || undefined,
-      });
-    })
-    .filter((entry: FilemakerEvent | null): entry is FilemakerEvent => Boolean(entry))
-    .map((entry: FilemakerEvent) => attachAddressToEvent(entry, addressesById));
-
-  const legacyAddressLinks: Array<{
-    id: string;
-    ownerKind: FilemakerAddressOwnerKind;
-    ownerId: string;
-    addressId: string;
-    isDefault: boolean;
-    createdAt?: string | null | undefined;
-    updatedAt?: string | null | undefined;
-  }> = [];
-
-  persons.forEach((person: FilemakerPerson): void => {
-    const addressId = normalizeString(person.addressId);
-    if (!addressId || !addressesById.has(addressId)) return;
-    legacyAddressLinks.push({
-      id: defaultAddressLinkIdForValues('person', person.id, addressId),
-      ownerKind: 'person',
-      ownerId: person.id,
-      addressId,
-      isDefault: true,
-      createdAt: person.createdAt,
-      updatedAt: person.updatedAt,
-    });
-  });
-
-  organizations.forEach((organization: FilemakerOrganization): void => {
-    const addressId = normalizeString(organization.addressId);
-    if (!addressId || !addressesById.has(addressId)) return;
-    legacyAddressLinks.push({
-      id: defaultAddressLinkIdForValues('organization', organization.id, addressId),
-      ownerKind: 'organization',
-      ownerId: organization.id,
-      addressId,
-      isDefault: true,
-      createdAt: organization.createdAt,
-      updatedAt: organization.updatedAt,
-    });
-  });
-
-  events.forEach((event: FilemakerEvent): void => {
-    const addressId = normalizeString(event.addressId);
-    if (!addressId || !addressesById.has(addressId)) return;
-    legacyAddressLinks.push({
-      id: defaultAddressLinkIdForValues('event', event.id, addressId),
-      ownerKind: 'event',
-      ownerId: event.id,
-      addressId,
-      isDefault: true,
-      createdAt: event.createdAt,
-      updatedAt: event.updatedAt,
-    });
-  });
-
-  const rawAddressLinks: unknown[] = Array.isArray(valueRecord['addressLinks'])
-    ? (valueRecord['addressLinks'] as unknown[])
-    : [];
-  const addressLinkIds = new Set<string>();
-  const addressRelationKeys = new Set<string>();
-  const ownersWithRawLinks = new Set<string>();
-  const groupedAddressLinks = new Map<string, FilemakerAddressLink[]>();
-
-  const pushAddressLink = (
-    input: {
-      id?: unknown;
-      ownerKind: unknown;
-      ownerId: unknown;
-      addressId: unknown;
-      isDefault?: unknown;
-      createdAt?: string | null | undefined;
-      updatedAt?: string | null | undefined;
-    },
-    source: 'raw' | 'legacy'
-  ): void => {
-    const ownerKindRaw = normalizeString(input.ownerKind).toLowerCase();
-    if (
-      ownerKindRaw !== 'person' &&
-      ownerKindRaw !== 'organization' &&
-      ownerKindRaw !== 'event'
-    ) {
-      return;
-    }
-    const ownerKind = ownerKindRaw;
-    const ownerId = normalizeString(input.ownerId);
-    const addressId = normalizeString(input.addressId);
-    if (!ownerId || !addressId) return;
-    if (!addressesById.has(addressId)) return;
-    if (
-      !isAddressOwnerPresent(
-        personIds,
-        organizationIds,
-        eventIds,
-        ownerKind,
-        ownerId
-      )
-    ) {
-      return;
-    }
-
-    const ownerKey = `${ownerKind}:${ownerId}`;
-    if (source === 'legacy' && ownersWithRawLinks.has(ownerKey)) return;
-
-    const relationKey = `${ownerKind}:${ownerId}:${addressId}`;
-    if (addressRelationKeys.has(relationKey)) return;
-
-    const baseId = defaultAddressLinkIdForValues(ownerKind, ownerId, addressId);
-    const id = ensureUniqueId(normalizeString(input.id) || baseId, addressLinkIds, baseId);
-    addressLinkIds.add(id);
-    addressRelationKeys.add(relationKey);
-    if (source === 'raw') {
-      ownersWithRawLinks.add(ownerKey);
-    }
-
-    const link = createFilemakerAddressLink({
-      id,
-      ownerKind,
-      ownerId,
-      addressId,
-      isDefault: input.isDefault,
-      createdAt: input.createdAt,
-      updatedAt: input.updatedAt,
-    });
-    const list = groupedAddressLinks.get(ownerKey) ?? [];
-    list.push(link);
-    groupedAddressLinks.set(ownerKey, list);
-  };
-
-  rawAddressLinks
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
-    .forEach((entry: Record<string, unknown>) => {
-      pushAddressLink(
-        {
-          id: entry['id'],
-          ownerKind: entry['ownerKind'],
-          ownerId: entry['ownerId'],
-          addressId: entry['addressId'],
-          isDefault: entry['isDefault'],
-          createdAt: normalizeString(entry['createdAt']) || undefined,
-          updatedAt: normalizeString(entry['updatedAt']) || undefined,
-        },
-        'raw'
-      );
-    });
-
-  legacyAddressLinks.forEach((entry) => {
-    pushAddressLink(entry, 'legacy');
-  });
-
-  const addressLinks: FilemakerAddressLink[] = [];
-  groupedAddressLinks.forEach((links: FilemakerAddressLink[]) => {
-    if (links.length === 0) return;
-    const defaultIndex = links.findIndex((link) => link.isDefault);
-    const normalizedDefaultIndex = defaultIndex >= 0 ? defaultIndex : 0;
-    links.forEach((link: FilemakerAddressLink, index: number): void => {
-      addressLinks.push({
-        ...link,
-        isDefault: index === normalizedDefaultIndex,
-      });
-    });
-  });
-
-  const defaultAddressIdByOwner = new Map<string, string>();
-  addressLinks.forEach((link: FilemakerAddressLink): void => {
-    if (!link.isDefault) return;
-    defaultAddressIdByOwner.set(`${link.ownerKind}:${link.ownerId}`, link.addressId);
-  });
-
-  const resolvedPersons = persons.map((person: FilemakerPerson): FilemakerPerson => {
-    const defaultAddressId =
-      defaultAddressIdByOwner.get(`person:${person.id}`) ?? normalizeString(person.addressId);
-    const resolvedAddress = addressesById.get(defaultAddressId);
-    if (!resolvedAddress) {
-      return {
-        ...person,
-        addressId: defaultAddressId,
-      };
-    }
-    return {
-      ...person,
-      addressId: resolvedAddress.id,
-      street: resolvedAddress.street,
-      streetNumber: resolvedAddress.streetNumber,
-      city: resolvedAddress.city,
-      postalCode: resolvedAddress.postalCode,
-      country: resolvedAddress.country,
-      countryId: resolvedAddress.countryId,
-    };
-  });
-
-  const resolvedOrganizations = organizations.map(
-    (organization: FilemakerOrganization): FilemakerOrganization => {
-      const defaultAddressId =
-        defaultAddressIdByOwner.get(`organization:${organization.id}`) ??
-        normalizeString(organization.addressId);
-      const resolvedAddress = addressesById.get(defaultAddressId);
-      if (!resolvedAddress) {
-        return {
-          ...organization,
-          addressId: defaultAddressId,
-        };
-      }
-      return {
-        ...organization,
-        addressId: resolvedAddress.id,
-        street: resolvedAddress.street,
-        streetNumber: resolvedAddress.streetNumber,
-        city: resolvedAddress.city,
-        postalCode: resolvedAddress.postalCode,
-        country: resolvedAddress.country,
-        countryId: resolvedAddress.countryId,
-      };
-    }
-  );
-
-  const resolvedEvents = events.map((event: FilemakerEvent): FilemakerEvent => {
-    const defaultAddressId =
-      defaultAddressIdByOwner.get(`event:${event.id}`) ?? normalizeString(event.addressId);
-    const resolvedAddress = addressesById.get(defaultAddressId);
-    if (!resolvedAddress) {
-      return {
-        ...event,
-        addressId: defaultAddressId,
-      };
-    }
-    return {
-      ...event,
-      addressId: resolvedAddress.id,
-      street: resolvedAddress.street,
-      streetNumber: resolvedAddress.streetNumber,
-      city: resolvedAddress.city,
-      postalCode: resolvedAddress.postalCode,
-      country: resolvedAddress.country,
-      countryId: resolvedAddress.countryId,
-    };
-  });
-
-  const rawPhoneNumbers: unknown[] = Array.isArray(valueRecord['phoneNumbers'])
-    ? (valueRecord['phoneNumbers'] as unknown[])
-    : [];
-  const phoneNumbers: FilemakerPhoneNumber[] = [];
-  const phoneNumberIds = new Set<string>();
-  const phoneNumberIdByValue = new Map<string, string>();
-
-  const ensurePhoneNumberId = (input: {
-    phoneNumber: unknown;
-    id?: unknown;
-    createdAt?: string | null | undefined;
-    updatedAt?: string | null | undefined;
-  }): string | null => {
-    const validation = validateFilemakerPhoneNumber(
-      normalizeString(input.phoneNumber)
-    );
-    if (!validation.isValid) return null;
-
-    const existingId = phoneNumberIdByValue.get(validation.normalizedPhoneNumber);
-    if (existingId) return existingId;
-
-    const baseId = defaultPhoneNumberIdForValue(validation.normalizedPhoneNumber);
-    const id = ensureUniqueId(
-      normalizeString(input.id) || baseId,
-      phoneNumberIds,
-      baseId
-    );
-    phoneNumberIds.add(id);
-    phoneNumberIdByValue.set(validation.normalizedPhoneNumber, id);
-    phoneNumbers.push(
-      createFilemakerPhoneNumber({
-        id,
-        phoneNumber: validation.normalizedPhoneNumber,
-        createdAt: input.createdAt,
-        updatedAt: input.updatedAt,
-      })
-    );
-    return id;
-  };
-
-  rawPhoneNumbers.forEach((entry: unknown): void => {
-    if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
-      const record = entry as Record<string, unknown>;
-      ensurePhoneNumberId({
-        phoneNumber: record['phoneNumber'],
-        id: record['id'],
-        createdAt: normalizeString(record['createdAt']) || undefined,
-        updatedAt: normalizeString(record['updatedAt']) || undefined,
-      });
-      return;
-    }
-    ensurePhoneNumberId({ phoneNumber: entry });
-  });
-
-  const hasRawPhoneNumberLinks = Array.isArray(valueRecord['phoneNumberLinks']);
-  const rawPhoneNumberLinks: unknown[] = hasRawPhoneNumberLinks
-    ? (valueRecord['phoneNumberLinks'] as unknown[])
-    : [];
-  const phoneNumberLinkIds = new Set<string>();
-  const phoneNumberRelationKeys = new Set<string>();
-  const partiesWithRawPhoneLinks = new Set<string>();
-  const phoneNumberLinks: FilemakerPhoneNumberLink[] = [];
-
-  const pushPhoneNumberLink = (input: {
-    phoneNumberId: unknown;
-    partyKind: unknown;
-    partyId: unknown;
-    id?: unknown;
-    createdAt?: string | null | undefined;
-    updatedAt?: string | null | undefined;
-  },
-  source: 'raw' | 'legacy'
-  ): void => {
-    const phoneNumberId = normalizeString(input.phoneNumberId);
-    if (!phoneNumberId || !phoneNumberIds.has(phoneNumberId)) return;
-
-    const partyKindRaw = normalizeString(input.partyKind).toLowerCase();
-    if (partyKindRaw !== 'person' && partyKindRaw !== 'organization') return;
-    const partyKind = partyKindRaw;
-
-    const partyId = normalizeString(input.partyId);
-    if (!partyId || !isPartyPresent(personIds, organizationIds, partyKind, partyId)) {
-      return;
-    }
-
-    const partyKey = `${partyKind}:${partyId}`;
-    if (source === 'legacy' && partiesWithRawPhoneLinks.has(partyKey)) return;
-
-    const relationKey = `${phoneNumberId}:${partyKind}:${partyId}`;
-    if (phoneNumberRelationKeys.has(relationKey)) return;
-
-    const baseId = defaultPhoneNumberLinkIdForValues(
-      phoneNumberId,
-      partyKind,
-      partyId
-    );
-    const id = ensureUniqueId(
-      normalizeString(input.id) || baseId,
-      phoneNumberLinkIds,
-      baseId
-    );
-    phoneNumberLinkIds.add(id);
-    phoneNumberRelationKeys.add(relationKey);
-    if (source === 'raw') {
-      partiesWithRawPhoneLinks.add(partyKey);
-    }
-    phoneNumberLinks.push(
-      createFilemakerPhoneNumberLink({
-        id,
-        phoneNumberId,
-        partyKind,
-        partyId,
-        createdAt: input.createdAt,
-        updatedAt: input.updatedAt,
-      })
-    );
-  };
-
-  rawPhoneNumberLinks
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
-    )
-    .forEach((entry: Record<string, unknown>) => {
-      pushPhoneNumberLink({
-        phoneNumberId: entry['phoneNumberId'],
-        partyKind: entry['partyKind'],
-        partyId: entry['partyId'],
-        id: entry['id'],
-        createdAt: normalizeString(entry['createdAt']) || undefined,
-        updatedAt: normalizeString(entry['updatedAt']) || undefined,
-      }, 'raw');
-    });
-
-  if (!hasRawPhoneNumberLinks) {
-    resolvedPersons.forEach((person: FilemakerPerson): void => {
-      person.phoneNumbers.forEach((legacyPhoneNumber: string): void => {
-        const phoneNumberId = ensurePhoneNumberId({
-          phoneNumber: legacyPhoneNumber,
-          createdAt: person.createdAt,
-          updatedAt: person.updatedAt,
-        });
-        if (!phoneNumberId) return;
-        pushPhoneNumberLink({
-          phoneNumberId,
-          partyKind: 'person',
-          partyId: person.id,
-        }, 'legacy');
-      });
-    });
-
-    rawOrganizations
-      .filter(
-        (entry: unknown): entry is Record<string, unknown> =>
-          Boolean(entry) && typeof entry === 'object' && !Array.isArray(entry)
-      )
-      .forEach((entry: Record<string, unknown>): void => {
-        const organizationId = normalizeString(entry['id']);
-        if (!organizationId || !organizationIds.has(organizationId)) return;
-
-        normalizePhoneNumbers(entry['phoneNumbers']).forEach(
-          (legacyPhoneNumber: string): void => {
-            const phoneNumberId = ensurePhoneNumberId({
-              phoneNumber: legacyPhoneNumber,
-            });
-            if (!phoneNumberId) return;
-            pushPhoneNumberLink({
-              phoneNumberId,
-              partyKind: 'organization',
-              partyId: organizationId,
-            }, 'legacy');
-          }
-        );
-      });
-  }
-
-  const phoneNumberById = new Map<string, string>();
-  phoneNumbers.forEach((entry: FilemakerPhoneNumber): void => {
-    phoneNumberById.set(entry.id, entry.phoneNumber);
-  });
-
-  const phoneNumbersByParty = new Map<string, string[]>();
-  phoneNumberLinks.forEach((link: FilemakerPhoneNumberLink): void => {
-    const phoneNumber = phoneNumberById.get(link.phoneNumberId);
-    if (!phoneNumber) return;
-    const partyKey = `${link.partyKind}:${link.partyId}`;
-    const existing = phoneNumbersByParty.get(partyKey) ?? [];
-    if (!existing.includes(phoneNumber)) {
-      existing.push(phoneNumber);
-      phoneNumbersByParty.set(partyKey, existing);
-    }
-  });
-
-  const syncedPersons = resolvedPersons.map(
-    (person: FilemakerPerson): FilemakerPerson => ({
-      ...person,
-      phoneNumbers: phoneNumbersByParty.get(`person:${person.id}`) ?? [],
-    })
-  );
-
-  const rawEmails: unknown[] = Array.isArray(valueRecord['emails'])
-    ? (valueRecord['emails'] as unknown[])
-    : [];
-  const emailIds = new Set<string>();
-  const emailValues = new Set<string>();
-  const emails: FilemakerEmail[] = [];
-
-  rawEmails
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
-    .forEach((entry: Record<string, unknown>) => {
-      const normalizedEmail = normalizeEmailAddress(entry['email']);
-      if (!isValidEmailAddress(normalizedEmail)) return;
-      if (emailValues.has(normalizedEmail)) return;
-
-      const id = ensureUniqueId(
-        normalizeString(entry['id']) || defaultEmailIdForValue(normalizedEmail),
-        emailIds,
-        defaultEmailIdForValue(normalizedEmail)
-      );
-
-      emailIds.add(id);
-      emailValues.add(normalizedEmail);
-      emails.push(
-        createFilemakerEmail({
-          id,
-          email: normalizedEmail,
-          status: normalizeEmailStatus(entry['status']),
-          createdAt: normalizeString(entry['createdAt']) || undefined,
-          updatedAt: normalizeString(entry['updatedAt']) || undefined,
-        })
-      );
-    });
-
-  const rawEmailLinks: unknown[] = Array.isArray(valueRecord['emailLinks'])
-    ? (valueRecord['emailLinks'] as unknown[])
-    : [];
-  const emailLinkIds = new Set<string>();
-  const relationKeys = new Set<string>();
-  const emailLinks: FilemakerEmailLink[] = [];
-
-  rawEmailLinks
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
-    .forEach((entry: Record<string, unknown>) => {
-      const emailId = normalizeString(entry['emailId']);
-      if (!emailId || !emailIds.has(emailId)) return;
-
-      const partyKindRaw = normalizeString(entry['partyKind']).toLowerCase();
-      if (partyKindRaw !== 'person' && partyKindRaw !== 'organization') return;
-      const partyKind = partyKindRaw;
-
-      const partyId = normalizeString(entry['partyId']);
-      if (!partyId || !isPartyPresent(personIds, organizationIds, partyKind, partyId)) {
-        return;
-      }
-
-      const relationKey = `${emailId}:${partyKind}:${partyId}`;
-      if (relationKeys.has(relationKey)) return;
-
-      const id = ensureUniqueId(
-        normalizeString(entry['id']) ||
-          defaultEmailLinkIdForValues(emailId, partyKind, partyId),
-        emailLinkIds,
-        defaultEmailLinkIdForValues(emailId, partyKind, partyId)
-      );
-
-      relationKeys.add(relationKey);
-      emailLinkIds.add(id);
-      emailLinks.push(
-        createFilemakerEmailLink({
-          id,
-          emailId,
-          partyKind,
-          partyId,
-          createdAt: normalizeString(entry['createdAt']) || undefined,
-          updatedAt: normalizeString(entry['updatedAt']) || undefined,
-        })
-      );
-    });
-
-  const rawEventOrganizationLinks: unknown[] = Array.isArray(
-    valueRecord['eventOrganizationLinks']
-  )
-    ? (valueRecord['eventOrganizationLinks'] as unknown[])
-    : [];
-  const eventOrganizationLinkIds = new Set<string>();
-  const eventOrganizationRelationKeys = new Set<string>();
-  const eventOrganizationLinks: FilemakerEventOrganizationLink[] = [];
-
-  rawEventOrganizationLinks
-    .filter(
-      (entry: unknown): entry is Record<string, unknown> =>
-        Boolean(entry) && typeof entry === 'object'
-    )
-    .forEach((entry: Record<string, unknown>) => {
-      const eventId = normalizeString(entry['eventId']);
-      if (!eventId || !eventIds.has(eventId)) return;
-
-      const organizationId = normalizeString(entry['organizationId']);
-      if (!organizationId || !isOrganizationPresent(organizationIds, organizationId)) {
-        return;
-      }
-
-      const relationKey = `${eventId}:${organizationId}`;
-      if (eventOrganizationRelationKeys.has(relationKey)) return;
-
-      const id = ensureUniqueId(
-        normalizeString(entry['id']) ||
-          defaultEventOrganizationLinkIdForValues(eventId, organizationId),
-        eventOrganizationLinkIds,
-        defaultEventOrganizationLinkIdForValues(eventId, organizationId)
-      );
-
-      eventOrganizationRelationKeys.add(relationKey);
-      eventOrganizationLinkIds.add(id);
-      eventOrganizationLinks.push(
-        createFilemakerEventOrganizationLink({
-          id,
-          eventId,
-          organizationId,
-          createdAt: normalizeString(entry['createdAt']) || undefined,
-          updatedAt: normalizeString(entry['updatedAt']) || undefined,
-        })
-      );
-    });
-
-  return {
-    version: 2,
-    persons: syncedPersons,
-    organizations: resolvedOrganizations,
-    events: resolvedEvents,
-    addresses: Array.from(addressesById.values()),
-    addressLinks,
-    phoneNumbers,
-    phoneNumberLinks,
-    emails,
-    emailLinks,
-    eventOrganizationLinks,
-  };
 };
 
 export const parseFilemakerDatabase = (
@@ -1884,164 +179,6 @@ export const getFilemakerDefaultAddressForOwner = (
     links.find((link: FilemakerAddressLink): boolean => link.isDefault) ?? links[0];
   if (!defaultLink) return null;
   return getFilemakerAddressById(database, defaultLink.addressId);
-};
-
-const isAddressOwnerPresentInDatabase = (
-  database: FilemakerDatabase,
-  ownerKind: FilemakerAddressOwnerKind,
-  ownerId: string
-): boolean => {
-  if (ownerKind === 'person') {
-    return database.persons.some((person: FilemakerPerson): boolean => person.id === ownerId);
-  }
-  if (ownerKind === 'organization') {
-    return database.organizations.some(
-      (organization: FilemakerOrganization): boolean => organization.id === ownerId
-    );
-  }
-  return database.events.some((event: FilemakerEvent): boolean => event.id === ownerId);
-};
-
-export const linkFilemakerAddressToOwner = (
-  database: FilemakerDatabase,
-  input: {
-    ownerKind: FilemakerAddressOwnerKind;
-    ownerId: string;
-    addressId: string;
-    isDefault?: boolean;
-  }
-): { database: FilemakerDatabase; created: boolean } => {
-  const ownerId = normalizeString(input.ownerId);
-  const addressId = normalizeString(input.addressId);
-  if (!ownerId || !addressId) {
-    return { database, created: false };
-  }
-  if (!isAddressOwnerPresentInDatabase(database, input.ownerKind, ownerId)) {
-    return { database, created: false };
-  }
-  const hasAddress = database.addresses.some(
-    (address: FilemakerAddress): boolean => address.id === addressId
-  );
-  if (!hasAddress) return { database, created: false };
-
-  const alreadyLinked = database.addressLinks.some(
-    (link: FilemakerAddressLink): boolean =>
-      link.ownerKind === input.ownerKind &&
-      link.ownerId === ownerId &&
-      link.addressId === addressId
-  );
-  if (alreadyLinked) {
-    if (!input.isDefault) return { database, created: false };
-    return {
-      database: setFilemakerDefaultAddressForOwner(database, {
-        ownerKind: input.ownerKind,
-        ownerId,
-        addressId,
-      }),
-      created: false,
-    };
-  }
-
-  const usedIds = new Set<string>(
-    database.addressLinks.map((link: FilemakerAddressLink): string => link.id)
-  );
-  const baseId = defaultAddressLinkIdForValues(input.ownerKind, ownerId, addressId);
-  const id = ensureUniqueId(baseId, usedIds, baseId);
-  const hasExistingOwnerLinks = database.addressLinks.some(
-    (link: FilemakerAddressLink): boolean =>
-      link.ownerKind === input.ownerKind && link.ownerId === ownerId
-  );
-  const shouldBeDefault = input.isDefault === true || !hasExistingOwnerLinks;
-
-  let nextDatabase = normalizeFilemakerDatabase({
-    ...database,
-    addressLinks: [
-      ...database.addressLinks,
-      createFilemakerAddressLink({
-        id,
-        ownerKind: input.ownerKind,
-        ownerId,
-        addressId,
-        isDefault: shouldBeDefault,
-      }),
-    ],
-  });
-
-  if (input.isDefault === true) {
-    nextDatabase = setFilemakerDefaultAddressForOwner(nextDatabase, {
-      ownerKind: input.ownerKind,
-      ownerId,
-      addressId,
-    });
-  }
-
-  return {
-    database: nextDatabase,
-    created: true,
-  };
-};
-
-export const setFilemakerDefaultAddressForOwner = (
-  database: FilemakerDatabase,
-  input: {
-    ownerKind: FilemakerAddressOwnerKind;
-    ownerId: string;
-    addressId: string;
-  }
-): FilemakerDatabase => {
-  const ownerId = normalizeString(input.ownerId);
-  const addressId = normalizeString(input.addressId);
-  if (!ownerId || !addressId) return database;
-
-  const hasLink = database.addressLinks.some(
-    (link: FilemakerAddressLink): boolean =>
-      link.ownerKind === input.ownerKind &&
-      link.ownerId === ownerId &&
-      link.addressId === addressId
-  );
-  if (!hasLink) return database;
-
-  const nextLinks = database.addressLinks.map((link: FilemakerAddressLink): FilemakerAddressLink => {
-    if (link.ownerKind !== input.ownerKind || link.ownerId !== ownerId) return link;
-    return {
-      ...link,
-      isDefault: link.addressId === addressId,
-      updatedAt: new Date().toISOString(),
-    };
-  });
-
-  return normalizeFilemakerDatabase({
-    ...database,
-    addressLinks: nextLinks,
-  });
-};
-
-export const unlinkFilemakerAddressFromOwner = (
-  database: FilemakerDatabase,
-  input: {
-    ownerKind: FilemakerAddressOwnerKind;
-    ownerId: string;
-    addressId: string;
-  }
-): FilemakerDatabase => {
-  const ownerId = normalizeString(input.ownerId);
-  const addressId = normalizeString(input.addressId);
-  if (!ownerId || !addressId) return database;
-
-  const nextLinks = database.addressLinks.filter(
-    (link: FilemakerAddressLink): boolean =>
-      !(
-        link.ownerKind === input.ownerKind &&
-        link.ownerId === ownerId &&
-        link.addressId === addressId
-      )
-  );
-  if (nextLinks.length === database.addressLinks.length) return database;
-
-  return normalizeFilemakerDatabase({
-    ...database,
-    addressLinks: nextLinks,
-  });
 };
 
 export const getFilemakerPhoneNumberById = (
@@ -2118,102 +255,6 @@ export const getFilemakerPartiesForPhoneNumber = (
   };
 };
 
-export const linkFilemakerPhoneNumberToParty = (
-  database: FilemakerDatabase,
-  input: {
-    phoneNumberId: string;
-    partyKind: FilemakerPartyKind;
-    partyId: string;
-  }
-): { database: FilemakerDatabase; created: boolean } => {
-  const phoneNumberId = normalizeString(input.phoneNumberId);
-  const partyId = normalizeString(input.partyId);
-  if (!phoneNumberId || !partyId) {
-    return { database, created: false };
-  }
-
-  const hasPhoneNumber = database.phoneNumbers.some(
-    (phoneNumber: FilemakerPhoneNumber): boolean => phoneNumber.id === phoneNumberId
-  );
-  if (!hasPhoneNumber) return { database, created: false };
-
-  const hasParty =
-    input.partyKind === 'person'
-      ? database.persons.some(
-        (person: FilemakerPerson): boolean => person.id === partyId
-      )
-      : database.organizations.some(
-        (organization: FilemakerOrganization): boolean =>
-          organization.id === partyId
-      );
-  if (!hasParty) return { database, created: false };
-
-  const alreadyLinked = database.phoneNumberLinks.some(
-    (link: FilemakerPhoneNumberLink): boolean =>
-      link.phoneNumberId === phoneNumberId &&
-      link.partyKind === input.partyKind &&
-      link.partyId === partyId
-  );
-  if (alreadyLinked) {
-    return { database, created: false };
-  }
-
-  const usedIds = new Set<string>(
-    database.phoneNumberLinks.map(
-      (link: FilemakerPhoneNumberLink): string => link.id
-    )
-  );
-  const id = ensureUniqueId(
-    defaultPhoneNumberLinkIdForValues(phoneNumberId, input.partyKind, partyId),
-    usedIds,
-    defaultPhoneNumberLinkIdForValues(phoneNumberId, input.partyKind, partyId)
-  );
-
-  const nextDatabase = normalizeFilemakerDatabase({
-    ...database,
-    phoneNumberLinks: [
-      ...database.phoneNumberLinks,
-      createFilemakerPhoneNumberLink({
-        id,
-        phoneNumberId,
-        partyKind: input.partyKind,
-        partyId,
-      }),
-    ],
-  });
-
-  return {
-    database: nextDatabase,
-    created: true,
-  };
-};
-
-const normalizeUniquePhoneNumberValues = (
-  values: string[],
-  options?: {
-    validationRules?: FilemakerPhoneValidationRule[] | null | undefined;
-  }
-): { phoneNumbers: string[]; invalidPhoneNumberCount: number } => {
-  const unique = new Set<string>();
-  const normalized: string[] = [];
-  let invalidPhoneNumberCount = 0;
-
-  values.forEach((value: string): void => {
-    const validation = validateFilemakerPhoneNumber(value, {
-      validationRules: options?.validationRules,
-    });
-    if (!validation.isValid) {
-      invalidPhoneNumberCount += 1;
-      return;
-    }
-    if (unique.has(validation.normalizedPhoneNumber)) return;
-    unique.add(validation.normalizedPhoneNumber);
-    normalized.push(validation.normalizedPhoneNumber);
-  });
-
-  return { phoneNumbers: normalized, invalidPhoneNumberCount };
-};
-
 export const upsertFilemakerPhoneNumbersForParty = (
   database: FilemakerDatabase,
   input: {
@@ -2258,11 +299,24 @@ export const upsertFilemakerPhoneNumbersForParty = (
     };
   }
 
-  const { phoneNumbers, invalidPhoneNumberCount } = normalizeUniquePhoneNumberValues(
-    input.phoneNumbers,
-    { validationRules: input.validationRules }
-  );
-  if (phoneNumbers.length === 0) {
+  const unique = new Set<string>();
+  const normalizedValues: string[] = [];
+  let invalidPhoneNumberCount = 0;
+
+  input.phoneNumbers.forEach((value: string): void => {
+    const validation = validateFilemakerPhoneNumber(value, {
+      validationRules: input.validationRules,
+    });
+    if (!validation.isValid) {
+      invalidPhoneNumberCount += 1;
+      return;
+    }
+    if (unique.has(validation.normalizedPhoneNumber)) return;
+    unique.add(validation.normalizedPhoneNumber);
+    normalizedValues.push(validation.normalizedPhoneNumber);
+  });
+
+  if (normalizedValues.length === 0) {
     return {
       database: normalizedDatabase,
       partyFound: true,
@@ -2287,14 +341,14 @@ export const upsertFilemakerPhoneNumbersForParty = (
   let createdPhoneNumberCount = 0;
   let existingPhoneNumberCount = 0;
 
-  phoneNumbers.forEach((phoneNumberValue: string): void => {
+  normalizedValues.forEach((phoneNumberValue: string): void => {
     const existingId = phoneNumberIdByValue.get(phoneNumberValue);
     if (existingId) {
       existingPhoneNumberCount += 1;
       return;
     }
 
-    const baseId = defaultPhoneNumberIdForValue(phoneNumberValue);
+    const baseId = `filemaker-phone-number-${toIdToken(phoneNumberValue) || 'entry'}`;
     const id = ensureUniqueId(baseId, usedPhoneNumberIds, baseId);
     usedPhoneNumberIds.add(id);
     phoneNumberIdByValue.set(phoneNumberValue, id);
@@ -2316,7 +370,7 @@ export const upsertFilemakerPhoneNumbersForParty = (
   }
   let linkedPhoneNumberCount = 0;
 
-  phoneNumbers.forEach((phoneNumberValue: string): void => {
+  normalizedValues.forEach((phoneNumberValue: string): void => {
     const phoneNumberId = phoneNumberIdByValue.get(phoneNumberValue);
     if (!phoneNumberId) return;
     const result = linkFilemakerPhoneNumberToParty(nextDatabase, {
@@ -2337,38 +391,8 @@ export const upsertFilemakerPhoneNumbersForParty = (
     linkedPhoneNumberCount,
     existingPhoneNumberCount,
     invalidPhoneNumberCount,
-    appliedPhoneNumbers: phoneNumbers,
+    appliedPhoneNumbers: normalizedValues,
   };
-};
-
-export const unlinkFilemakerPhoneNumberFromParty = (
-  database: FilemakerDatabase,
-  input: {
-    phoneNumberId: string;
-    partyKind: FilemakerPartyKind;
-    partyId: string;
-  }
-): FilemakerDatabase => {
-  const phoneNumberId = normalizeString(input.phoneNumberId);
-  const partyId = normalizeString(input.partyId);
-  if (!phoneNumberId || !partyId) return database;
-
-  const nextPhoneNumberLinks = database.phoneNumberLinks.filter(
-    (link: FilemakerPhoneNumberLink): boolean =>
-      !(
-        link.phoneNumberId === phoneNumberId &&
-        link.partyKind === input.partyKind &&
-        link.partyId === partyId
-      )
-  );
-  if (nextPhoneNumberLinks.length === database.phoneNumberLinks.length) {
-    return database;
-  }
-
-  return normalizeFilemakerDatabase({
-    ...database,
-    phoneNumberLinks: nextPhoneNumberLinks,
-  });
 };
 
 export const removeFilemakerPhoneNumber = (
@@ -2523,180 +547,6 @@ export const getFilemakerEventsForOrganization = (
   return database.events.filter((event: FilemakerEvent): boolean => eventIds.has(event.id));
 };
 
-export const linkFilemakerEventToOrganization = (
-  database: FilemakerDatabase,
-  input: {
-    eventId: string;
-    organizationId: string;
-  }
-): { database: FilemakerDatabase; created: boolean } => {
-  const eventId = normalizeString(input.eventId);
-  const organizationId = normalizeString(input.organizationId);
-  if (!eventId || !organizationId) {
-    return { database, created: false };
-  }
-
-  const hasEvent = database.events.some(
-    (event: FilemakerEvent): boolean => event.id === eventId
-  );
-  if (!hasEvent) return { database, created: false };
-
-  const hasOrganization = database.organizations.some(
-    (organization: FilemakerOrganization): boolean => organization.id === organizationId
-  );
-  if (!hasOrganization) return { database, created: false };
-
-  const alreadyLinked = database.eventOrganizationLinks.some(
-    (link: FilemakerEventOrganizationLink): boolean =>
-      link.eventId === eventId && link.organizationId === organizationId
-  );
-  if (alreadyLinked) {
-    return { database, created: false };
-  }
-
-  const usedIds = new Set<string>(
-    database.eventOrganizationLinks.map(
-      (link: FilemakerEventOrganizationLink): string => link.id
-    )
-  );
-  const id = ensureUniqueId(
-    defaultEventOrganizationLinkIdForValues(eventId, organizationId),
-    usedIds,
-    defaultEventOrganizationLinkIdForValues(eventId, organizationId)
-  );
-
-  const nextDatabase = normalizeFilemakerDatabase({
-    ...database,
-    eventOrganizationLinks: [
-      ...database.eventOrganizationLinks,
-      createFilemakerEventOrganizationLink({
-        id,
-        eventId,
-        organizationId,
-      }),
-    ],
-  });
-
-  return {
-    database: nextDatabase,
-    created: true,
-  };
-};
-
-export const unlinkFilemakerEventFromOrganization = (
-  database: FilemakerDatabase,
-  input: {
-    eventId: string;
-    organizationId: string;
-  }
-): FilemakerDatabase => {
-  const eventId = normalizeString(input.eventId);
-  const organizationId = normalizeString(input.organizationId);
-  if (!eventId || !organizationId) return database;
-
-  const nextLinks = database.eventOrganizationLinks.filter(
-    (link: FilemakerEventOrganizationLink): boolean =>
-      !(link.eventId === eventId && link.organizationId === organizationId)
-  );
-  if (nextLinks.length === database.eventOrganizationLinks.length) return database;
-
-  return normalizeFilemakerDatabase({
-    ...database,
-    eventOrganizationLinks: nextLinks,
-  });
-};
-
-export const linkFilemakerEmailToParty = (
-  database: FilemakerDatabase,
-  input: {
-    emailId: string;
-    partyKind: FilemakerPartyKind;
-    partyId: string;
-  }
-): { database: FilemakerDatabase; created: boolean } => {
-  const emailId = normalizeString(input.emailId);
-  const partyId = normalizeString(input.partyId);
-  if (!emailId || !partyId) {
-    return { database, created: false };
-  }
-
-  const hasEmail = database.emails.some(
-    (email: FilemakerEmail): boolean => email.id === emailId
-  );
-  if (!hasEmail) return { database, created: false };
-
-  const hasParty =
-    input.partyKind === 'person'
-      ? database.persons.some(
-        (person: FilemakerPerson): boolean => person.id === partyId
-      )
-      : database.organizations.some(
-        (organization: FilemakerOrganization): boolean =>
-          organization.id === partyId
-      );
-  if (!hasParty) return { database, created: false };
-
-  const alreadyLinked = database.emailLinks.some(
-    (link: FilemakerEmailLink): boolean =>
-      link.emailId === emailId &&
-      link.partyKind === input.partyKind &&
-      link.partyId === partyId
-  );
-  if (alreadyLinked) {
-    return { database, created: false };
-  }
-
-  const usedIds = new Set<string>(
-    database.emailLinks.map((link: FilemakerEmailLink): string => link.id)
-  );
-  const id = ensureUniqueId(
-    defaultEmailLinkIdForValues(emailId, input.partyKind, partyId),
-    usedIds,
-    defaultEmailLinkIdForValues(emailId, input.partyKind, partyId)
-  );
-
-  const nextDatabase = normalizeFilemakerDatabase({
-    ...database,
-    emailLinks: [
-      ...database.emailLinks,
-      createFilemakerEmailLink({
-        id,
-        emailId,
-        partyKind: input.partyKind,
-        partyId,
-      }),
-    ],
-  });
-
-  return {
-    database: nextDatabase,
-    created: true,
-  };
-};
-
-const normalizeUniqueEmailValues = (
-  values: string[]
-): { emails: string[]; invalidEmailCount: number } => {
-  const unique = new Set<string>();
-  const normalized: string[] = [];
-  let invalidEmailCount = 0;
-
-  values.forEach((value: string): void => {
-    const normalizedEmail = normalizeEmailAddress(
-      sanitizeEmailCandidate(value)
-    );
-    if (!isValidEmailAddress(normalizedEmail)) {
-      invalidEmailCount += 1;
-      return;
-    }
-    if (unique.has(normalizedEmail)) return;
-    unique.add(normalizedEmail);
-    normalized.push(normalizedEmail);
-  });
-
-  return { emails: normalized, invalidEmailCount };
-};
-
 export const upsertFilemakerEmailsForParty = (
   database: FilemakerDatabase,
   input: {
@@ -2741,8 +591,22 @@ export const upsertFilemakerEmailsForParty = (
     };
   }
 
-  const { emails, invalidEmailCount } = normalizeUniqueEmailValues(input.emails);
-  if (emails.length === 0) {
+  const unique = new Set<string>();
+  const normalizedValues: string[] = [];
+  let invalidEmailCount = 0;
+
+  input.emails.forEach((value: string): void => {
+    const normalizedEmail = normalizeString(value).toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      invalidEmailCount += 1;
+      return;
+    }
+    if (unique.has(normalizedEmail)) return;
+    unique.add(normalizedEmail);
+    normalizedValues.push(normalizedEmail);
+  });
+
+  if (normalizedValues.length === 0) {
     return {
       database: normalizedDatabase,
       partyFound: true,
@@ -2756,24 +620,24 @@ export const upsertFilemakerEmailsForParty = (
 
   const emailIdByValue = new Map<string, string>();
   normalizedDatabase.emails.forEach((email: FilemakerEmail): void => {
-    emailIdByValue.set(normalizeEmailAddress(email.email), email.id);
+    emailIdByValue.set(email.email.toLowerCase(), email.id);
   });
   const usedEmailIds = new Set<string>(
     normalizedDatabase.emails.map((email: FilemakerEmail): string => email.id)
   );
   const nextEmails = [...normalizedDatabase.emails];
-  const normalizedStatus = normalizeEmailStatus(input.status, 'unverified');
+  const normalizedStatus = (normalizeString(input.status).toLowerCase() || 'unverified') as FilemakerEmailStatus;
   let createdEmailCount = 0;
   let existingEmailCount = 0;
 
-  emails.forEach((emailValue: string): void => {
+  normalizedValues.forEach((emailValue: string): void => {
     const existingId = emailIdByValue.get(emailValue);
     if (existingId) {
       existingEmailCount += 1;
       return;
     }
 
-    const baseId = defaultEmailIdForValue(emailValue);
+    const baseId = `filemaker-email-${toIdToken(emailValue) || 'entry'}`;
     const id = ensureUniqueId(baseId, usedEmailIds, baseId);
     usedEmailIds.add(id);
     emailIdByValue.set(emailValue, id);
@@ -2796,7 +660,7 @@ export const upsertFilemakerEmailsForParty = (
   }
   let linkedEmailCount = 0;
 
-  emails.forEach((emailValue: string): void => {
+  normalizedValues.forEach((emailValue: string): void => {
     const emailId = emailIdByValue.get(emailValue);
     if (!emailId) return;
     const result = linkFilemakerEmailToParty(nextDatabase, {
@@ -2817,7 +681,7 @@ export const upsertFilemakerEmailsForParty = (
     linkedEmailCount,
     existingEmailCount,
     invalidEmailCount,
-    appliedEmails: emails,
+    appliedEmails: normalizedValues,
   };
 };
 
@@ -2844,36 +708,6 @@ export const parseAndUpsertFilemakerEmailsForParty = (
     ...extraction,
     ...upsert,
   };
-};
-
-export const unlinkFilemakerEmailFromParty = (
-  database: FilemakerDatabase,
-  input: {
-    emailId: string;
-    partyKind: FilemakerPartyKind;
-    partyId: string;
-  }
-): FilemakerDatabase => {
-  const emailId = normalizeString(input.emailId);
-  const partyId = normalizeString(input.partyId);
-
-  if (!emailId || !partyId) return database;
-
-  const nextEmailLinks = database.emailLinks.filter(
-    (link: FilemakerEmailLink): boolean =>
-      !(
-        link.emailId === emailId &&
-        link.partyKind === input.partyKind &&
-        link.partyId === partyId
-      )
-  );
-
-  if (nextEmailLinks.length === database.emailLinks.length) return database;
-
-  return normalizeFilemakerDatabase({
-    ...database,
-    emailLinks: nextEmailLinks,
-  });
 };
 
 export const removeFilemakerEmail = (
@@ -2971,6 +805,16 @@ export const removeFilemakerOrganizationEventLinks = (
   });
 };
 
+const sanitizeReference = (value: unknown): FilemakerPartyReference | null => {
+  if (!value || typeof value !== 'object') return null;
+  const record = value as Record<string, unknown>;
+  const kind = normalizeString(record['kind']) as FilemakerEntityKind;
+  if (kind !== 'person' && kind !== 'organization') return null;
+  const id = normalizeString(record['id']);
+  if (!id) return null;
+  return { kind, id };
+};
+
 export const encodeFilemakerPartyReference = (
   value: FilemakerPartyReference | null | undefined
 ): string => {
@@ -3059,4 +903,31 @@ export const buildFilemakerPartyOptions = (
     ...personOptions,
     ...organizationOptions,
   ];
+};
+
+export {
+  linkFilemakerAddressToOwner,
+  linkFilemakerEmailToParty,
+  linkFilemakerEventToOrganization,
+  linkFilemakerPhoneNumberToParty,
+  setFilemakerDefaultAddressForOwner,
+  unlinkFilemakerAddressFromOwner,
+  unlinkFilemakerEmailFromParty,
+  unlinkFilemakerEventFromOrganization,
+  unlinkFilemakerPhoneNumberFromParty,
+  normalizeFilemakerDatabase,
+  createDefaultFilemakerDatabase,
+  createFilemakerAddress,
+  createFilemakerAddressLink,
+  createFilemakerEmail,
+  createFilemakerEmailLink,
+  createFilemakerEvent,
+  createFilemakerEventOrganizationLink,
+  createFilemakerOrganization,
+  createFilemakerPerson,
+  createFilemakerPhoneNumber,
+  createFilemakerPhoneNumberLink,
+  formatFilemakerAddress,
+  extractFilemakerEmailsFromText,
+  validateFilemakerPhoneNumber,
 };

@@ -479,6 +479,7 @@ export const databaseEngineBackupSchedulerTickResultSchema = z.object({
 });
 
 export type DatabaseEngineBackupSchedulerTickResult = z.infer<typeof databaseEngineBackupSchedulerTickResultSchema>;
+export type DatabaseBackupSchedulerTickResult = DatabaseEngineBackupSchedulerTickResult;
 
 export const databaseEngineBackupSchedulerTickResponseSchema = z.object({
   executed: z.boolean(),

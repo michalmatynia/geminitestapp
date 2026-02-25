@@ -123,23 +123,53 @@ export const resolveCaseResolverTreeWorkspace = ({
     return isOwned;
   };
 
-  const scopedFiles = workspace.files.filter((file: CaseResolverFile): boolean => {
+  const scopedFileIds = new Set<string>();
+  workspace.files.forEach((file: CaseResolverFile): void => {
     if (file.fileType === 'case') {
-      return scopedCaseIds.has(file.id);
+      if (scopedCaseIds.has(file.id)) {
+        scopedFileIds.add(file.id);
+      }
+      return;
     }
     const ownerCaseId = file.parentCaseId?.trim() ?? '';
-    if (ownerCaseId) {
-      return scopedCaseIds.has(ownerCaseId);
-    }
-    // Legacy fallback: allow case-scoped folders to recover documents missing parentCaseId.
-    return folderOwnedByScopedCase(file.folder);
+    if (!ownerCaseId || !scopedCaseIds.has(ownerCaseId)) return;
+    scopedFileIds.add(file.id);
   });
+  workspace.files.forEach((file: CaseResolverFile): void => {
+    if (file.fileType === 'case') return;
+    if (scopedFileIds.has(file.id)) return;
+    const ownerCaseId = file.parentCaseId?.trim() ?? '';
+    if (ownerCaseId) return;
+    if (!folderOwnedByScopedCase(file.folder)) return;
+    scopedFileIds.add(file.id);
+  });
+
+  let relationRecovered = true;
+  while (relationRecovered) {
+    relationRecovered = false;
+    workspace.files.forEach((file: CaseResolverFile): void => {
+      if (file.fileType === 'case') return;
+      if (scopedFileIds.has(file.id)) return;
+      const ownerCaseId = file.parentCaseId?.trim() ?? '';
+      if (ownerCaseId) return;
+      const hasScopedRelation = (file.relatedFileIds ?? []).some(
+        (relatedFileId: string): boolean => scopedFileIds.has(relatedFileId),
+      );
+      if (!hasScopedRelation) return;
+      scopedFileIds.add(file.id);
+      relationRecovered = true;
+    });
+  }
+
+  const scopedFiles = workspace.files.filter((file: CaseResolverFile): boolean =>
+    scopedFileIds.has(file.id),
+  );
   if (scopedFiles.length === 0) {
     if (forcedContextFileId) return buildEmptyScopedWorkspace();
     return workspace;
   }
 
-  const scopedFileIds = new Set<string>(
+  const scopedFileIdSet = new Set<string>(
     scopedFiles.map((file: CaseResolverFile): string => file.id)
   );
   const scopedNodeFileAssetIds = new Set<string>();
@@ -155,7 +185,7 @@ export const resolveCaseResolverTreeWorkspace = ({
   });
   const scopedAssets = workspace.assets.filter((asset): boolean =>
     Boolean(
-      (asset.sourceFileId && scopedFileIds.has(asset.sourceFileId)) ||
+      (asset.sourceFileId && scopedFileIdSet.has(asset.sourceFileId)) ||
       (asset.kind === 'node_file' && scopedNodeFileAssetIds.has(asset.id))
     )
   );
@@ -181,7 +211,7 @@ export const resolveCaseResolverTreeWorkspace = ({
   ];
   const nextActiveFileId =
     activeCandidates.find((candidate: string | null): candidate is string =>
-      typeof candidate === 'string' && scopedFileIds.has(candidate)
+      typeof candidate === 'string' && scopedFileIdSet.has(candidate)
     ) ?? null;
 
   return {

@@ -1,0 +1,15 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/pages/DatabasesPage.tsx
+   3:10  warning  'useQueryClient' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   4:10  warning  'useState' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+   4:20  warning  'useCallback' is defined but never used. Allowed unused vars must match /^_/u     @typescript-eslint/no-unused-vars
+   6:10  warning  'logClientError' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   7:15  warning  'DatabaseInfo' is defined but never used. Allowed unused vars must match /^_/u    @typescript-eslint/no-unused-vars
+   8:10  warning  'QUERY_KEYS' is defined but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+  11:3   warning  'useToast' is defined but never used. Allowed unused vars must match /^_/u        @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/database/services/database-backup.ts
+  25:3  warning  'FullDatabaseBackupResult' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+✖ 8 problems (0 errors, 8 warnings)
+

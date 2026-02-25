@@ -169,4 +169,32 @@ export const SHARED_TOOLTIP_DOCUMENTATION_CATALOG: DocumentationEntry[] = [
     content: 'Marks products that originated from external import flows.',
     keywords: ['imported product'],
   },
+  {
+    id: 'case_resolver_advanced_filters',
+    moduleId: DOCUMENTATION_MODULE_IDS.caseResolver,
+    title: 'Advanced Filters',
+    content: 'Opens extended filtering options for document attributes.',
+    keywords: ['filters', 'search'],
+  },
+  {
+    id: 'case_resolver_locked_indicator',
+    moduleId: DOCUMENTATION_MODULE_IDS.caseResolver,
+    title: 'Document Locked',
+    content: 'Indicates this document is locked and cannot be edited.',
+    keywords: ['locked', 'security'],
+  },
+  {
+    id: 'case_resolver_link_document',
+    moduleId: DOCUMENTATION_MODULE_IDS.caseResolver,
+    title: 'Link Document',
+    content: 'Creates a relationship link to the target document.',
+    keywords: ['link', 'relation'],
+  },
+  {
+    id: 'case_resolver_browse_case_docs',
+    moduleId: DOCUMENTATION_MODULE_IDS.caseResolver,
+    title: 'Browse Case Documents',
+    content: 'Drills down into the document list for this specific case.',
+    keywords: ['browse', 'drill'],
+  },
 ];

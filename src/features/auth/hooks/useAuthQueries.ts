@@ -14,6 +14,13 @@ import {
   type AuthUsersResponse,
   type AuthUserSecurityProfile,
 } from '@/features/auth/api/users';
+
+export type {
+  AuthUsersResponse,
+  AuthUserSecurityProfile,
+  VerifyCredentialsResponse,
+};
+
 import type { AuthUser as AuthUserSummary } from '@/shared/contracts/auth';
 import type { 
   SingleQuery, 

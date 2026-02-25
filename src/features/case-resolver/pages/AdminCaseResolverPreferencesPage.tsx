@@ -21,7 +21,14 @@ import {
 } from '@/shared/ui';
 
 type CaseResolverCaseListViewMode = 'hierarchy' | 'list';
-type CaseResolverCaseListSortBy = 'updated' | 'created' | 'name';
+type CaseResolverCaseListSortBy =
+  | 'updated'
+  | 'created'
+  | 'name'
+  | 'status'
+  | 'signature'
+  | 'locked'
+  | 'sent';
 type CaseResolverCaseListSortOrder = 'asc' | 'desc';
 type CaseResolverCaseListSearchScope = 'all' | 'name' | 'folder' | 'content';
 
@@ -48,7 +55,11 @@ const normalizeCaseResolverCaseListPreferences = (
     preferences?.caseResolverCaseListViewMode === 'list' ? 'list' : 'hierarchy',
   caseResolverCaseListSortBy:
     preferences?.caseResolverCaseListSortBy === 'created' ||
-    preferences?.caseResolverCaseListSortBy === 'name'
+    preferences?.caseResolverCaseListSortBy === 'name' ||
+    preferences?.caseResolverCaseListSortBy === 'status' ||
+    preferences?.caseResolverCaseListSortBy === 'signature' ||
+    preferences?.caseResolverCaseListSortBy === 'locked' ||
+    preferences?.caseResolverCaseListSortBy === 'sent'
       ? preferences.caseResolverCaseListSortBy
       : 'updated',
   caseResolverCaseListSortOrder:
@@ -194,13 +205,24 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                 setDraft((current: CaseResolverCaseListPreferences) => ({
                   ...current,
                   caseResolverCaseListSortBy:
-                    value === 'created' || value === 'name' ? value : 'updated',
+                    value === 'created' ||
+                    value === 'name' ||
+                    value === 'status' ||
+                    value === 'signature' ||
+                    value === 'locked' ||
+                    value === 'sent'
+                      ? value
+                      : 'updated',
                 }));
               }}
               options={[
                 { value: 'updated', label: 'Date modified' },
                 { value: 'created', label: 'Date created' },
                 { value: 'name', label: 'Name' },
+                { value: 'status', label: 'Status' },
+                { value: 'signature', label: 'Signature' },
+                { value: 'locked', label: 'Lock state' },
+                { value: 'sent', label: 'Sent state' },
               ]}
             />
           </FormField>

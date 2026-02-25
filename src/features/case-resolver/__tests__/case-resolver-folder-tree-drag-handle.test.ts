@@ -11,7 +11,7 @@ describe('case resolver folder tree drag handle', () => {
       canStartCaseResolverTreeNodeDrag({
         nodeType: 'file',
         nodeId: 'file-a',
-        isChildStructureNode: false,
+        isVirtualSectionNode: false,
         fromHandleGesture: false,
         armedNodeId: null,
       })
@@ -23,7 +23,7 @@ describe('case resolver folder tree drag handle', () => {
       canStartCaseResolverTreeNodeDrag({
         nodeType: 'file',
         nodeId: 'file-a',
-        isChildStructureNode: false,
+        isVirtualSectionNode: false,
         fromHandleGesture: true,
         armedNodeId: null,
       })
@@ -35,7 +35,7 @@ describe('case resolver folder tree drag handle', () => {
       canStartCaseResolverTreeNodeDrag({
         nodeType: 'file',
         nodeId: 'file-a',
-        isChildStructureNode: false,
+        isVirtualSectionNode: false,
         fromHandleGesture: false,
         armedNodeId: 'file-a',
       })
@@ -44,7 +44,7 @@ describe('case resolver folder tree drag handle', () => {
       canStartCaseResolverTreeNodeDrag({
         nodeType: 'file',
         nodeId: 'file-a',
-        isChildStructureNode: false,
+        isVirtualSectionNode: false,
         fromHandleGesture: false,
         armedNodeId: 'file-b',
       })
@@ -56,7 +56,7 @@ describe('case resolver folder tree drag handle', () => {
       canStartCaseResolverTreeNodeDrag({
         nodeType: 'folder',
         nodeId: 'folder-a',
-        isChildStructureNode: false,
+        isVirtualSectionNode: false,
         fromHandleGesture: false,
         armedNodeId: null,
       })
@@ -68,7 +68,7 @@ describe('case resolver folder tree drag handle', () => {
       canStartCaseResolverTreeNodeDrag({
         nodeType: 'file',
         nodeId: 'file-a',
-        isChildStructureNode: true,
+        isVirtualSectionNode: true,
         fromHandleGesture: true,
         armedNodeId: 'file-a',
       })
@@ -77,7 +77,7 @@ describe('case resolver folder tree drag handle', () => {
       canStartCaseResolverTreeNodeDrag({
         nodeType: 'folder',
         nodeId: 'folder-a',
-        isChildStructureNode: true,
+        isVirtualSectionNode: true,
         fromHandleGesture: true,
         armedNodeId: 'folder-a',
       })
@@ -89,37 +89,36 @@ describe('case resolver folder tree drag handle', () => {
       isCaseResolverDraggableFileNode({
         nodeType: 'file',
         fileType: 'document',
-        isChildStructureNode: false,
+        isVirtualSectionNode: false,
       })
     ).toBe(true);
     expect(
       isCaseResolverDraggableFileNode({
         nodeType: 'file',
         fileType: 'scanfile',
-        isChildStructureNode: false,
+        isVirtualSectionNode: false,
       })
     ).toBe(true);
     expect(
       isCaseResolverDraggableFileNode({
         nodeType: 'file',
         fileType: '',
-        isChildStructureNode: false,
+        isVirtualSectionNode: false,
       })
     ).toBe(true);
     expect(
       isCaseResolverDraggableFileNode({
         nodeType: 'file',
         fileType: 'case',
-        isChildStructureNode: false,
+        isVirtualSectionNode: false,
       })
     ).toBe(false);
     expect(
       isCaseResolverDraggableFileNode({
         nodeType: 'folder',
         fileType: '',
-        isChildStructureNode: false,
+        isVirtualSectionNode: false,
       })
     ).toBe(false);
   });
 });
-

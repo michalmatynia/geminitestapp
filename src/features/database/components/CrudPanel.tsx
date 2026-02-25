@@ -2,18 +2,14 @@
 
 import {
   EditIcon,
-  PlusIcon,
   Trash2Icon
 } from 'lucide-react';
 import React, { useMemo, useRef, useState } from 'react';
 
 import type { DatabaseColumnInfo, DatabaseTableDetail, DatabaseType } from '@/shared/contracts/database';
 import {
-  Button,
   Input,
-  Pagination,
   FormModal,
-  SelectSimple,
   FormField,
   StatusBadge,
   Alert,
@@ -24,6 +20,8 @@ import {
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 import { useCrudPanelState, type UseCrudPanelStateReturn } from '../hooks/useCrudPanelState';
+import { DatabaseTableSelector } from './crud/DatabaseTableSelector';
+import { DatabasePagination } from './crud/DatabasePagination';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -225,69 +223,28 @@ export function CrudPanel(props: {
   );
 
   const filters = (
-    <div className='flex flex-wrap items-center gap-3'>
-      <SelectSimple 
-        size='sm'
-        value={selectedTable}
-        onValueChange={(v) => {
-          setSelectedTable(v);
-          setPage(1);
-          setMutationError(null);
-          setSuccessMessage(null);
-        }}
-        options={tableDetails.map((t) => ({
-          value: t.name,
-          label: `${t.name} (~${t.rowEstimate} rows)`,
-        }))}
-        placeholder='Select a table to manage...'
-        triggerClassName='h-8 min-w-[240px] text-xs'
-      />
-
-      {selectedTable && (
-        <>
-          <div className='h-4 w-px bg-border/60 mx-1' />
-          <Button
-            variant='outline'
-            size='xs'
-            onClick={fetchRows}
-            disabled={rowsQuery.isFetching}
-            className='h-8'
-            loading={rowsQuery.isFetching}
-          >
-            Refresh
-          </Button>
-          <Button
-            size='xs'
-            onClick={() => setShowAddModal(true)}
-            className='h-8'
-          >
-            <PlusIcon className='size-3.5 mr-2' />
-            Add Row
-          </Button>
-        </>
-      )}
-    </div>
+    <DatabaseTableSelector 
+      selectedTable={selectedTable}
+      setSelectedTable={setSelectedTable}
+      tableDetails={tableDetails}
+      onRefresh={fetchRows}
+      onAddRow={() => setShowAddModal(true)}
+      isFetching={rowsQuery.isFetching}
+      setPage={setPage}
+      setMutationError={setMutationError}
+      setSuccessMessage={setSuccessMessage}
+    />
   );
 
   const footer = selectedTable && !isLoadingRows && rows.length > 0 ? (
-    <div className='flex items-center justify-between border-t border-border px-4 py-2 bg-card/20'>
-      <span className='text-xs text-gray-500 font-mono'>
-        {totalRows.toLocaleString()} total rows
-      </span>
-      <Pagination
-        page={page}
-        totalPages={maxPage}
-        onPageChange={setPage}
-        pageSize={pageSize}
-        onPageSizeChange={(size) => {
-          setPage(1);
-          setPageSize(size);
-        }}
-        pageSizeOptions={[10, 20, 50, 100]}
-        showPageSize
-        variant='compact'
-      />
-    </div>
+    <DatabasePagination 
+      totalRows={totalRows}
+      page={page}
+      maxPage={maxPage}
+      setPage={setPage}
+      pageSize={pageSize}
+      setPageSize={setPageSize}
+    />
   ) : null;
 
   return (

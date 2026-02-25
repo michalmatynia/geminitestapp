@@ -9,3 +9,12 @@ export {
   type DocumentRelationSortMode,
   type UseDocumentRelationSearchProps,
 } from './hooks/useDocumentRelationSearch';
+
+export {
+  DocumentRelationSearchProvider,
+  useDocumentRelationSearchContext,
+  type DocumentRelationSearchContextValue,
+  type DocumentRelationSearchProviderProps,
+  type ResultHeight,
+  type CaseRow,
+} from './context/DocumentRelationSearchContext';

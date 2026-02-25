@@ -41,10 +41,22 @@ import {
 // ─── types ───────────────────────────────────────────────────────────────────
 
 export type CaseViewMode = 'list' | 'hierarchy';
-export type CaseSortKey = 'updated' | 'created' | 'name';
+export type CaseSortKey =
+  | 'updated'
+  | 'created'
+  | 'name'
+  | 'status'
+  | 'signature'
+  | 'locked'
+  | 'sent';
 export type CaseSortOrder = 'asc' | 'desc';
 export type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';
 export type CaseFileTypeFilter = 'all' | 'case' | 'document' | 'scanfile' | 'note';
+export type CaseStatusFilter = 'all' | 'pending' | 'completed';
+export type CaseLockedFilter = 'all' | 'locked' | 'unlocked';
+export type CaseSentFilter = 'all' | 'sent' | 'not_sent';
+export type CaseHierarchyFilter = 'all' | 'root' | 'child';
+export type CaseReferencesFilter = 'all' | 'with_references' | 'without_references';
 
 export type CaseListViewDefaults = {
   viewMode: CaseViewMode;
@@ -76,6 +88,11 @@ export type AdminCaseResolverCasesContextValue = {
   caseFilterCaseIdentifierIds: string[];
   caseFilterCategoryIds: string[];
   caseFilterFolder: string;
+  caseFilterStatus: CaseStatusFilter;
+  caseFilterLocked: CaseLockedFilter;
+  caseFilterSent: CaseSentFilter;
+  caseFilterHierarchy: CaseHierarchyFilter;
+  caseFilterReferences: CaseReferencesFilter;
   caseSortBy: CaseSortKey;
   caseSortOrder: CaseSortOrder;
   caseViewMode: CaseViewMode;
@@ -109,6 +126,11 @@ export type AdminCaseResolverCasesContextValue = {
   setCaseFilterCaseIdentifierIds: (ids: string[]) => void;
   setCaseFilterCategoryIds: (ids: string[]) => void;
   setCaseFilterFolder: (folder: string) => void;
+  setCaseFilterStatus: (status: CaseStatusFilter) => void;
+  setCaseFilterLocked: (locked: CaseLockedFilter) => void;
+  setCaseFilterSent: (sent: CaseSentFilter) => void;
+  setCaseFilterHierarchy: (hierarchy: CaseHierarchyFilter) => void;
+  setCaseFilterReferences: (references: CaseReferencesFilter) => void;
   setCaseSortBy: (sortBy: CaseSortKey) => void;
   setCaseSortOrder: (order: CaseSortOrder) => void;
   setCaseViewMode: (mode: CaseViewMode) => void;
@@ -131,6 +153,8 @@ export type AdminCaseResolverCasesContextValue = {
     position: 'before' | 'after'
   ) => Promise<void>;
   handleRenameCase: (caseId: string, nextName: string) => Promise<void>;
+  handleToggleCaseStatus: (caseId: string) => Promise<void>;
+  handleSaveCaseDraft: () => Promise<void>;
   handleRefreshWorkspace: () => Promise<void>;
   handleSaveListViewDefaults: () => Promise<void>;
 
@@ -242,7 +266,11 @@ const normalizeCaseListViewDefaults = (
     preferences?.caseResolverCaseListViewMode === 'list' ? 'list' : 'hierarchy',
   sortBy:
     preferences?.caseResolverCaseListSortBy === 'created' ||
-    preferences?.caseResolverCaseListSortBy === 'name'
+    preferences?.caseResolverCaseListSortBy === 'name' ||
+    preferences?.caseResolverCaseListSortBy === 'status' ||
+    preferences?.caseResolverCaseListSortBy === 'signature' ||
+    preferences?.caseResolverCaseListSortBy === 'locked' ||
+    preferences?.caseResolverCaseListSortBy === 'sent'
       ? preferences.caseResolverCaseListSortBy
       : 'updated',
   sortOrder:
@@ -372,6 +400,13 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
   const [caseFilterCaseIdentifierIds, setCaseFilterCaseIdentifierIds] = useState<string[]>([]);
   const [caseFilterCategoryIds, setCaseFilterCategoryIds] = useState<string[]>([]);
   const [caseFilterFolder, setCaseFilterFolder] = useState('__all__');
+  const [caseFilterStatus, setCaseFilterStatus] = useState<CaseStatusFilter>('all');
+  const [caseFilterLocked, setCaseFilterLocked] = useState<CaseLockedFilter>('all');
+  const [caseFilterSent, setCaseFilterSent] = useState<CaseSentFilter>('all');
+  const [caseFilterHierarchy, setCaseFilterHierarchy] =
+    useState<CaseHierarchyFilter>('all');
+  const [caseFilterReferences, setCaseFilterReferences] =
+    useState<CaseReferencesFilter>('all');
   const [caseSortBy, setCaseSortBy] = useState<CaseSortKey>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortBy);
   const [caseSortOrder, setCaseSortOrder] = useState<CaseSortOrder>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortOrder);
   const [caseViewMode, setCaseViewMode] = useState<CaseViewMode>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.viewMode);
@@ -474,11 +509,31 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
         siblingCaseOrders.length > 0 ? Math.max(...siblingCaseOrders) + 1 : 0;
       const newFile = createCaseResolverFile({
         id: createCaseResolverWorkspaceMutationId('file'),
+        fileType: 'case',
         name: caseDraft.name.trim(),
         folder: caseDraft.folder || '',
         parentCaseId,
+        caseStatus: caseDraft.caseStatus === 'completed' ? 'completed' : 'pending',
         caseTreeOrder: nextCaseTreeOrder,
         referenceCaseIds: caseDraft.referenceCaseIds || [],
+        documentContent:
+          typeof caseDraft.documentContent === 'string'
+            ? caseDraft.documentContent
+            : '',
+        documentCity:
+          typeof caseDraft.documentCity === 'string'
+            ? caseDraft.documentCity
+            : null,
+        documentDate:
+          typeof caseDraft.documentDate === 'string'
+            ? caseDraft.documentDate
+            : caseDraft.documentDate ?? null,
+        activeDocumentVersion:
+          caseDraft.activeDocumentVersion === 'exploded'
+            ? 'exploded'
+            : 'original',
+        isLocked: caseDraft.isLocked === true,
+        isSent: caseDraft.isSent === true,
         tagId: caseDraft.tagId || null,
         caseIdentifierId: caseDraft.caseIdentifierId || null,
         categoryId: caseDraft.categoryId || null,
@@ -499,6 +554,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
       
       setIsCreateCaseModalOpen(false);
       setCaseDraft({});
+      setEditingCaseId(null);
       toast('Case created successfully.', { variant: 'success' });
       
       void waitForCaseAvailability(newFile.id, { source: 'cases_page_create_sync' });
@@ -550,6 +606,194 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
       toast('Failed to update case.', { variant: 'error' });
     }
   }, [editingCaseId, editingCaseName, editingCaseParentId, editingCaseReferenceCaseIds, editingCaseTagId, editingCaseCaseIdentifierId, editingCaseCategoryId, toast, workspace]);
+
+  const handleSaveCaseDraft = useCallback(async (): Promise<void> => {
+    if (!editingCaseId) {
+      await handleCreateCase();
+      return;
+    }
+
+    const existingCase = workspace.files.find(
+      (file: CaseResolverFile): boolean =>
+        file.id === editingCaseId && file.fileType === 'case',
+    );
+    if (!existingCase) {
+      toast('Selected case no longer exists.', { variant: 'error' });
+      return;
+    }
+
+    const resolvedName =
+      typeof caseDraft.name === 'string'
+        ? caseDraft.name.trim()
+        : existingCase.name.trim();
+    if (!resolvedName) {
+      toast('Case name is required.', { variant: 'error' });
+      return;
+    }
+
+    const caseFiles = workspace.files.filter(
+      (file: CaseResolverFile): boolean => file.fileType === 'case',
+    );
+    const caseFilesById = new Map<string, CaseResolverFile>(
+      caseFiles.map((file: CaseResolverFile): [string, CaseResolverFile] => [
+        file.id,
+        file,
+      ]),
+    );
+    const normalizeOptionalCaseId = (value: unknown): string | null => {
+      if (typeof value !== 'string') return null;
+      const normalized = value.trim();
+      return normalized.length > 0 ? normalized : null;
+    };
+
+    const requestedParentCaseId =
+      caseDraft.parentCaseId !== undefined
+        ? normalizeOptionalCaseId(caseDraft.parentCaseId)
+        : normalizeOptionalCaseId(existingCase.parentCaseId);
+    const normalizedParentCaseId =
+      requestedParentCaseId &&
+      requestedParentCaseId !== editingCaseId &&
+      caseFilesById.has(requestedParentCaseId)
+        ? requestedParentCaseId
+        : null;
+    if (
+      normalizedParentCaseId &&
+      isDescendantCaseId(caseFilesById, normalizedParentCaseId, editingCaseId)
+    ) {
+      toast('A case cannot be moved under one of its descendants.', {
+        variant: 'error',
+      });
+      return;
+    }
+
+    const sourceReferenceCaseIds = Array.isArray(caseDraft.referenceCaseIds)
+      ? caseDraft.referenceCaseIds
+      : existingCase.referenceCaseIds;
+    const normalizedReferenceCaseIds = Array.from(
+      new Set(
+        sourceReferenceCaseIds
+          .map((referenceCaseId: string): string => referenceCaseId.trim())
+          .filter((referenceCaseId: string): boolean => referenceCaseId.length > 0)
+          .filter(
+            (referenceCaseId: string): boolean =>
+              referenceCaseId !== editingCaseId && caseFilesById.has(referenceCaseId),
+          ),
+      ),
+    );
+
+    const resolvedCaseStatus =
+      caseDraft.caseStatus === 'completed' || caseDraft.caseStatus === 'pending'
+        ? caseDraft.caseStatus
+        : existingCase.caseStatus === 'completed'
+          ? 'completed'
+          : 'pending';
+    const resolvedFolder =
+      typeof caseDraft.folder === 'string'
+        ? caseDraft.folder
+        : existingCase.folder ?? '';
+    const resolvedDocumentContent =
+      typeof caseDraft.documentContent === 'string'
+        ? caseDraft.documentContent
+        : existingCase.documentContent ?? '';
+    const resolvedDocumentCity =
+      typeof caseDraft.documentCity === 'string'
+        ? caseDraft.documentCity
+        : existingCase.documentCity ?? null;
+    const resolvedDocumentDate =
+      caseDraft.documentDate !== undefined
+        ? typeof caseDraft.documentDate === 'string'
+          ? caseDraft.documentDate
+          : caseDraft.documentDate ?? null
+        : existingCase.documentDate ?? null;
+    const resolvedDocumentVersion =
+      caseDraft.activeDocumentVersion === 'exploded' ||
+      caseDraft.activeDocumentVersion === 'original'
+        ? caseDraft.activeDocumentVersion
+        : existingCase.activeDocumentVersion === 'exploded'
+          ? 'exploded'
+          : 'original';
+    const resolvedTagId =
+      caseDraft.tagId !== undefined
+        ? normalizeOptionalCaseId(caseDraft.tagId)
+        : normalizeOptionalCaseId(existingCase.tagId);
+    const resolvedCaseIdentifierId =
+      caseDraft.caseIdentifierId !== undefined
+        ? normalizeOptionalCaseId(caseDraft.caseIdentifierId)
+        : normalizeOptionalCaseId(existingCase.caseIdentifierId);
+    const resolvedCategoryId =
+      caseDraft.categoryId !== undefined
+        ? normalizeOptionalCaseId(caseDraft.categoryId)
+        : normalizeOptionalCaseId(existingCase.categoryId);
+    const resolvedIsLocked =
+      caseDraft.isLocked !== undefined
+        ? caseDraft.isLocked === true
+        : existingCase.isLocked === true;
+    const resolvedIsSent =
+      caseDraft.isSent !== undefined
+        ? caseDraft.isSent === true
+        : existingCase.isSent === true;
+
+    setIsCreatingCase(true);
+    try {
+      const mutationId = createCaseResolverWorkspaceMutationId();
+      const now = new Date().toISOString();
+      const nextWorkspace: CaseResolverWorkspace = {
+        ...workspace,
+        files: workspace.files.map((file: CaseResolverFile): CaseResolverFile => {
+          if (file.id !== editingCaseId || file.fileType !== 'case') return file;
+          return createCaseResolverFile({
+            ...file,
+            id: file.id,
+            fileType: 'case',
+            name: resolvedName,
+            folder: resolvedFolder,
+            parentCaseId: normalizedParentCaseId,
+            caseStatus: resolvedCaseStatus,
+            referenceCaseIds: normalizedReferenceCaseIds,
+            documentContent: resolvedDocumentContent,
+            documentCity: resolvedDocumentCity,
+            documentDate: resolvedDocumentDate,
+            activeDocumentVersion: resolvedDocumentVersion,
+            isLocked: resolvedIsLocked,
+            isSent: resolvedIsSent,
+            tagId: resolvedTagId,
+            caseIdentifierId: resolvedCaseIdentifierId,
+            categoryId: resolvedCategoryId,
+            createdAt: file.createdAt,
+            updatedAt: now,
+          });
+        }),
+      };
+      stampCaseResolverWorkspaceMutation(nextWorkspace, {
+        baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
+        mutationId,
+      });
+
+      const revision = getCaseResolverWorkspaceRevision(nextWorkspace);
+      lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
+      lastPersistedWorkspaceRevisionRef.current = revision;
+      setWorkspace(nextWorkspace);
+
+      await persistCaseResolverWorkspaceSnapshot({
+        workspace: nextWorkspace,
+        expectedRevision: revision,
+        mutationId,
+        source: 'cases_page_update',
+      });
+
+      setIsCreateCaseModalOpen(false);
+      setCaseDraft({});
+      setEditingCaseId(null);
+      toast('Case updated successfully.', { variant: 'success' });
+    } catch (error) {
+      logClientError(error, {
+        context: { source: 'AdminCaseResolverCasesPage', action: 'saveCaseDraft' },
+      });
+      toast('Failed to save case.', { variant: 'error' });
+    } finally {
+      setIsCreatingCase(false);
+    }
+  }, [caseDraft, editingCaseId, handleCreateCase, toast, workspace]);
 
   const handleDeleteCase = useCallback((caseId: string): void => {
     setConfirmation({
@@ -858,6 +1102,62 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     [workspace]
   );
 
+  const handleToggleCaseStatus = useCallback(
+    async (caseId: string): Promise<void> => {
+      const targetCase = workspace.files.find(
+        (file: CaseResolverFile): boolean =>
+          file.id === caseId && file.fileType === 'case',
+      );
+      if (!targetCase || targetCase.isLocked) return;
+
+      const nextStatus =
+        targetCase.caseStatus === 'completed' ? 'pending' : 'completed';
+      const now = new Date().toISOString();
+
+      try {
+        const mutationId = createCaseResolverWorkspaceMutationId();
+        const nextWorkspace: CaseResolverWorkspace = {
+          ...workspace,
+          files: workspace.files.map((file: CaseResolverFile): CaseResolverFile =>
+            file.id === caseId && file.fileType === 'case'
+              ? {
+                ...file,
+                caseStatus: nextStatus,
+                updatedAt: now,
+              }
+              : file,
+          ),
+        };
+        stampCaseResolverWorkspaceMutation(nextWorkspace, {
+          baseRevision: getCaseResolverWorkspaceRevision(nextWorkspace),
+          mutationId,
+        });
+
+        const revision = getCaseResolverWorkspaceRevision(nextWorkspace);
+        lastPersistedWorkspaceValueRef.current = JSON.stringify(nextWorkspace);
+        lastPersistedWorkspaceRevisionRef.current = revision;
+        setWorkspace(nextWorkspace);
+
+        await persistCaseResolverWorkspaceSnapshot({
+          workspace: nextWorkspace,
+          expectedRevision: revision,
+          mutationId,
+          source: 'cases_page_toggle_status',
+        });
+      } catch (error) {
+        logClientError(error, {
+          context: {
+            source: 'AdminCaseResolverCasesPage',
+            action: 'toggleCaseStatus',
+            caseId,
+          },
+        });
+        toast('Failed to update case status.', { variant: 'error' });
+      }
+    },
+    [toast, workspace],
+  );
+
   const handleToggleCaseCollapse = useCallback((caseId: string): void => {
     setCollapsedCaseIds((prev) => {
       const next = new Set(prev);
@@ -1019,6 +1319,11 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     caseFilterCaseIdentifierIds,
     caseFilterCategoryIds,
     caseFilterFolder,
+    caseFilterStatus,
+    caseFilterLocked,
+    caseFilterSent,
+    caseFilterHierarchy,
+    caseFilterReferences,
     caseSortBy,
     caseSortOrder,
     caseViewMode,
@@ -1044,6 +1349,11 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     setCaseFilterCaseIdentifierIds,
     setCaseFilterCategoryIds,
     setCaseFilterFolder,
+    setCaseFilterStatus,
+    setCaseFilterLocked,
+    setCaseFilterSent,
+    setCaseFilterHierarchy,
+    setCaseFilterReferences,
     setCaseSortBy,
     setCaseSortOrder,
     setCaseViewMode,
@@ -1056,6 +1366,8 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     handleMoveCase,
     handleReorderCase,
     handleRenameCase,
+    handleToggleCaseStatus,
+    handleSaveCaseDraft,
     handleRefreshWorkspace,
     handleSaveListViewDefaults,
     caseResolverTags,

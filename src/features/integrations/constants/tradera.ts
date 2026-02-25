@@ -1,5 +1,7 @@
 import type { TraderaSystemSettings } from '@/shared/contracts/integrations';
 
+export type { TraderaSystemSettings };
+
 export const TRADERA_SETTINGS_KEYS = {
   defaultDurationHours: 'tradera_default_duration_hours',
   autoRelistEnabled: 'tradera_auto_relist_enabled',

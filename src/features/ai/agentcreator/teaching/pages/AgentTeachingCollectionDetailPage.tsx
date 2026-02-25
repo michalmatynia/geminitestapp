@@ -1,25 +1,21 @@
 'use client';
 
-import { Trash2, BookOpen, Plus, Search } from 'lucide-react';
+import { Trash2, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import React, { useMemo } from 'react';
 
-import type { AgentTeachingChatSource, AgentTeachingEmbeddingDocumentListItem } from '@/shared/contracts/agent-teaching';
+import type { AgentTeachingEmbeddingDocumentListItem } from '@/shared/contracts/agent-teaching';
 import { 
   Button, 
-  Input, 
   StandardDataTablePanel, 
-  Textarea, 
-  FormSection, 
-  FormField,
   Badge,
   ConfirmModal,
-  Alert,
   PanelHeader,
-  Card,
 } from '@/shared/ui';
 
 import { useAgentTeachingQueriesCollectionDetailState } from '../hooks/useAgentTeachingQueriesCollectionDetailState';
+import { DocumentAddForm } from '../components/DocumentAddForm';
+import { SearchSimulator } from '../components/SearchSimulator';
 
 import type { ColumnDef } from '@tanstack/react-table';
 
@@ -128,121 +124,27 @@ export function AgentTeachingCollectionDetailPage(): React.JSX.Element {
       />
 
       <div className='grid gap-6 lg:grid-cols-2'>
-        <FormSection title='Add Document' variant='subtle' className='p-6'>
-          <div className='space-y-4'>
-            <div className='grid gap-4 md:grid-cols-2'>
-              <FormField label='Title (optional)'>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder='e.g. Product naming rules' />
-              </FormField>
-              <FormField label='Source (optional)'>
-                <Input value={source} onChange={(e) => setSource(e.target.value)} placeholder='e.g. internal wiki' />
-              </FormField>
-            </div>
-            <FormField label='Tags (comma separated)'>
-              <Input value={tags} onChange={(e) => setTags(e.target.value)} placeholder='pricing, listings, seo' />
-            </FormField>
-            <FormField
-              label='Text Content'
-              description='Raw text to be vectorized and stored.'
-            >
-              <Textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                placeholder='Paste knowledge content here...'
-                className='min-h-[120px] font-mono text-xs'
-              />
-            </FormField>
-            <div className='flex justify-end'>
-              <Button onClick={() => void handleAdd()} loading={adding} disabled={deleting || !collectionId || !text.trim()}>
-                <Plus className='mr-2 size-4' />
-                Add Document
-              </Button>
-            </div>
-          </div>
-        </FormSection>
+        <DocumentAddForm 
+          title={title} setTitle={setTitle}
+          source={source} setSource={setSource}
+          tags={tags} setTags={setTags}
+          text={text} setText={setText}
+          onAdd={() => void handleAdd()}
+          isAdding={adding}
+          isDeleting={deleting}
+          collectionId={collectionId}
+        />
 
-        <FormSection
-          title='Semantic Search Simulator'
-          description='Test retrieval relevance by running queries against this collection.'
-          variant='subtle'
-          actions={
-            <Button
-              variant='outline'
-              size='xs'
-              onClick={() => void handleSearch()}
-              loading={searching}
-              disabled={!collectionId || !searchQuery.trim()}
-              className='gap-2'
-            >
-              <Search className='size-3' />
-              Run Search
-            </Button>
-          }
-          className='p-6'
-        >
-          <div className='space-y-4'>
-            <FormField label='Test Query'>
-              <Textarea
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder='Ask a question...'
-                className='min-h-[80px]'
-                disabled={searching || !collectionId}
-              />
-            </FormField>
-            
-            <div className='grid grid-cols-2 gap-4'>
-              <FormField label='Top K'>
-                <Input
-                  type='number'
-                  min={1}
-                  max={50}
-                  value={String(searchTopK)}
-                  onChange={(e) => setSearchTopK(Number(e.target.value))}
-                  disabled={searching || !collectionId}
-                />
-              </FormField>
-              <FormField label='Min Score'>
-                <Input
-                  type='number'
-                  min={-1}
-                  max={1}
-                  step={0.01}
-                  value={String(searchMinScore)}
-                  onChange={(e) => setSearchMinScore(Number(e.target.value))}
-                  disabled={searching || !collectionId}
-                />
-              </FormField>
-            </div>
-
-            {searchError && (
-              <Alert variant='error' className='p-3 text-xs'>
-                {searchError}
-              </Alert>
-            )}
-
-            <Card variant='subtle-compact' padding='none' className='border-border bg-black/20 overflow-hidden'>
-              <div className='px-3 py-2 border-b border-border/40 text-xs font-semibold text-gray-400'>Results</div>
-              <div className='max-h-[200px] overflow-y-auto p-2 space-y-2'>
-                {searchResults.length === 0 ? (
-                  <div className='text-center py-4 text-xs text-gray-600'>
-                    {searching ? ' analyzing vectors...' : 'No results to display.'}
-                  </div>
-                ) : (
-                  searchResults.map((src: AgentTeachingChatSource) => (
-                    <Card key={src.documentId} variant='subtle-compact' padding='sm' className='text-xs bg-white/5 border-white/5'>
-                      <div className='flex justify-between mb-1 text-gray-400'>
-                        <span>Score: {src.score.toFixed(3)}</span>
-                        <span>{src.metadata?.title}</span>
-                      </div>
-                      <p className='text-gray-300 line-clamp-3'>{src.text}</p>
-                    </Card>
-                  ))
-                )}
-              </div>
-            </Card>
-          </div>
-        </FormSection>
+        <SearchSimulator 
+          query={searchQuery} setQuery={setSearchQuery}
+          topK={searchTopK} setTopK={setSearchTopK}
+          minScore={searchMinScore} setMinScore={setSearchMinScore}
+          onSearch={() => void handleSearch()}
+          isSearching={searching}
+          collectionId={collectionId}
+          results={searchResults}
+          error={searchError}
+        />
       </div>
 
       <StandardDataTablePanel

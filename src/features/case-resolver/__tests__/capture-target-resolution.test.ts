@@ -100,4 +100,46 @@ describe('case resolver capture target resolution', () => {
     expect(result.resolvedTargetFileId).toBe(documentFile.id);
     expect(workspace.files).toHaveLength(0);
   });
+
+  it('preserves parentCaseId when mutation patch passes parentCaseId as undefined', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-1',
+      fileType: 'case',
+      name: 'Case 1',
+    });
+    const documentFile = createCaseResolverFile({
+      id: 'doc-1',
+      fileType: 'document',
+      name: 'Document',
+      parentCaseId: caseFile.id,
+    });
+    let workspace: CaseResolverWorkspace = {
+      ...parseCaseResolverWorkspace(null),
+      files: [caseFile, documentFile],
+      activeFileId: documentFile.id,
+    };
+    const updateWorkspace = (
+      updater: (current: CaseResolverWorkspace) => CaseResolverWorkspace,
+    ): void => {
+      workspace = updater(workspace);
+    };
+    const setEditingDocumentDraft: Dispatch<SetStateAction<CaseResolverFileEditDraft | null>> = () => {};
+
+    const result = applyCaseResolverFileMutationAndRebaseDraft({
+      fileId: documentFile.id,
+      updateWorkspace,
+      setEditingDocumentDraft,
+      source: 'capture_mapping_apply_test',
+      mutate: () => ({
+        name: 'Document Renamed',
+        parentCaseId: undefined,
+      }),
+    });
+
+    expect(result.ok).toBe(true);
+    expect(result.nextFile?.parentCaseId).toBe(caseFile.id);
+    expect(
+      workspace.files.find((file) => file.id === documentFile.id)?.parentCaseId,
+    ).toBe(caseFile.id);
+  });
 });

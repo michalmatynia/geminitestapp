@@ -1,5 +1,6 @@
 import type { AuthPermission, AuthRole } from '@/shared/contracts/auth';
 
+export type { AuthPermission, AuthRole };
 
 export type AuthUserRoleMap = Record<string, string>;
 

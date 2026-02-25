@@ -46,7 +46,7 @@ import {
   useRedisOverview,
 } from '../hooks/useDatabaseQueries';
 
-export type DatabaseEngineWorkspaceView = 'engine' | 'operations' | 'backups' | 'redis' | 'preview' | 'crud';
+export type { DatabaseEngineWorkspaceView };
 
 export type DatabaseCollectionRow = UnifiedCollection;
 

@@ -1,5 +1,5 @@
 import { useCallback, useRef } from 'react';
-import type { AiNode, Edge, RuntimeState } from '@/features/ai/ai-paths/lib';
+import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
   clampScale,
   clampTranslate,

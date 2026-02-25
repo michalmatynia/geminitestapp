@@ -61,9 +61,9 @@ export const parseNullableNumber = (value: unknown): number | null =>
 export const isCaseResolverDraggableFileNode = (input: {
   nodeType: MasterTreeNode['type'];
   fileType: string;
-  isChildStructureNode: boolean;
+  isVirtualSectionNode: boolean;
 }): boolean => {
-  if (input.isChildStructureNode) return false;
+  if (input.isVirtualSectionNode) return false;
   if (input.nodeType !== 'file') return false;
   return input.fileType.trim().toLowerCase() !== 'case';
 };
@@ -71,11 +71,11 @@ export const isCaseResolverDraggableFileNode = (input: {
 export const canStartCaseResolverTreeNodeDrag = (input: {
   nodeType: MasterTreeNode['type'];
   nodeId: string;
-  isChildStructureNode: boolean;
+  isVirtualSectionNode: boolean;
   fromHandleGesture: boolean;
   armedNodeId: string | null;
 }): boolean => {
-  if (input.isChildStructureNode) return false;
+  if (input.isVirtualSectionNode) return false;
   if (input.nodeType !== 'file') return true;
   if (input.fromHandleGesture) return true;
   return input.armedNodeId === input.nodeId;

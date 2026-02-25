@@ -874,6 +874,94 @@ export const createCaseResolverFile = (input: {
   };
 };
 
+export type CaseResolverWorkspaceNormalizationDiagnostics = {
+  ownershipRepairedCount: number;
+  ownershipUnresolvedCount: number;
+  droppedDuplicateCount: number;
+};
+
+const CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY: CaseResolverWorkspaceNormalizationDiagnostics = {
+  ownershipRepairedCount: 0,
+  ownershipUnresolvedCount: 0,
+  droppedDuplicateCount: 0,
+};
+
+const caseResolverWorkspaceNormalizationDiagnosticsByWorkspace = new WeakMap<
+  CaseResolverWorkspace,
+  CaseResolverWorkspaceNormalizationDiagnostics
+>();
+
+const normalizeCaseResolverWorkspaceDiagnostics = (
+  diagnostics: Partial<CaseResolverWorkspaceNormalizationDiagnostics> | null | undefined,
+): CaseResolverWorkspaceNormalizationDiagnostics => ({
+  ownershipRepairedCount: Math.max(
+    0,
+    Math.floor(diagnostics?.ownershipRepairedCount ?? 0),
+  ),
+  ownershipUnresolvedCount: Math.max(
+    0,
+    Math.floor(diagnostics?.ownershipUnresolvedCount ?? 0),
+  ),
+  droppedDuplicateCount: Math.max(
+    0,
+    Math.floor(diagnostics?.droppedDuplicateCount ?? 0),
+  ),
+});
+
+const attachCaseResolverWorkspaceNormalizationDiagnostics = (
+  workspace: CaseResolverWorkspace,
+  diagnostics: Partial<CaseResolverWorkspaceNormalizationDiagnostics> | null | undefined,
+): CaseResolverWorkspace => {
+  caseResolverWorkspaceNormalizationDiagnosticsByWorkspace.set(
+    workspace,
+    normalizeCaseResolverWorkspaceDiagnostics(diagnostics),
+  );
+  return workspace;
+};
+
+const buildFolderOwnerCaseIdsByPath = (
+  folderRecords: CaseResolverFolderRecord[],
+): Map<string, Set<string>> => {
+  const ownerCaseIdsByPath = new Map<string, Set<string>>();
+  folderRecords.forEach((record: CaseResolverFolderRecord): void => {
+    const ownerCaseId = record.ownerCaseId?.trim() ?? '';
+    if (!ownerCaseId) return;
+    const folderPath = normalizeFolderPath(record.path);
+    if (!folderPath) return;
+    const currentOwners = ownerCaseIdsByPath.get(folderPath) ?? new Set<string>();
+    currentOwners.add(ownerCaseId);
+    ownerCaseIdsByPath.set(folderPath, currentOwners);
+  });
+  return ownerCaseIdsByPath;
+};
+
+const inferOwnerCaseIdFromFolderAncestors = (
+  folderPath: string,
+  ownerCaseIdsByPath: Map<string, Set<string>>,
+): string | null => {
+  const normalizedFolderPath = normalizeFolderPath(folderPath);
+  if (!normalizedFolderPath) return null;
+  const segments = normalizedFolderPath.split('/').filter(Boolean);
+  for (let index = segments.length; index >= 1; index -= 1) {
+    const ancestorPath = segments.slice(0, index).join('/');
+    const ownerCaseIds = ownerCaseIdsByPath.get(ancestorPath);
+    if (!ownerCaseIds || ownerCaseIds.size === 0) continue;
+    if (ownerCaseIds.size !== 1) continue;
+    return Array.from(ownerCaseIds)[0] ?? null;
+  }
+  return null;
+};
+
+export const getCaseResolverWorkspaceNormalizationDiagnostics = (
+  workspace: CaseResolverWorkspace | null | undefined,
+): CaseResolverWorkspaceNormalizationDiagnostics =>
+  workspace
+    ? (
+      caseResolverWorkspaceNormalizationDiagnosticsByWorkspace.get(workspace) ??
+      CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY
+    )
+    : CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY;
+
 export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
   const relationGraph = buildCaseResolverRelationGraph({
     source: null,
@@ -881,7 +969,7 @@ export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
     files: [],
     assets: [],
   });
-  return {
+  return attachCaseResolverWorkspaceNormalizationDiagnostics({
     id: 'empty',
     ownerId: 'system',
     isPublic: false,
@@ -899,20 +987,28 @@ export const createDefaultCaseResolverWorkspace = (): CaseResolverWorkspace => {
     activeFileId: null,
     createdAt: new Date().toISOString(),
     updatedAt: null,
-  };
+  }, CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY);
 };
 
-export const normalizeCaseResolverWorkspace = (
+export const normalizeCaseResolverWorkspaceWithDiagnostics = (
   workspace: CaseResolverWorkspace | null | undefined
-): CaseResolverWorkspace => {
+): {
+  workspace: CaseResolverWorkspace;
+  diagnostics: CaseResolverWorkspaceNormalizationDiagnostics;
+} => {
   if (!workspace || typeof workspace !== 'object') {
-    return createDefaultCaseResolverWorkspace();
+    return {
+      workspace: createDefaultCaseResolverWorkspace(),
+      diagnostics: CASE_RESOLVER_WORKSPACE_NORMALIZATION_DIAGNOSTICS_EMPTY,
+    };
   }
   const workspaceRecord = workspace as unknown as Record<string, unknown>;
   const now = new Date().toISOString();
   const workspaceRevision = normalizeWorkspaceRevision(workspaceRecord['workspaceRevision']);
   const lastMutationId = sanitizeOptionalId(workspaceRecord['lastMutationId']);
   const lastMutationAt = normalizeOptionalTimestamp(workspaceRecord['lastMutationAt']);
+  let droppedDuplicateCount = 0;
+  let ownershipRepairedCount = 0;
 
   const rawFiles = Array.isArray(workspace.files) ? workspace.files : [];
   const rawChildParentIds = new Set<string>();
@@ -930,6 +1026,7 @@ export const normalizeCaseResolverWorkspace = (
     .map((file: CaseResolverFile): CaseResolverFile | null => {
       const id = typeof file.id === 'string' && file.id.trim() ? file.id : '';
       if (!id || fileIds.has(id)) {
+        droppedDuplicateCount += 1;
         return null;
       }
       fileIds.add(id);
@@ -944,7 +1041,7 @@ export const normalizeCaseResolverWorkspace = (
           : normalizedRawFileType;
       const normalizedCreatedAt = normalizeTimestamp(
         file.createdAt,
-        CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP
+        CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP,
       );
       const normalizedUpdatedAt = normalizeTimestamp(file.updatedAt, normalizedCreatedAt);
       return createCaseResolverFile({
@@ -993,7 +1090,14 @@ export const normalizeCaseResolverWorkspace = (
   const caseFilesById = new Map<string, CaseResolverFile>(
     normalizedFilesBase
       .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
-      .map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
+      .map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file]),
+  );
+  const sourceFolderRecordsForInference = parseCaseResolverFolderRecords(
+    workspaceRecord['folderRecords'],
+    new Set<string>(caseFilesById.keys()),
+  );
+  const folderOwnerCaseIdsByPath = buildFolderOwnerCaseIdsByPath(
+    sourceFolderRecordsForInference,
   );
   const validReferenceCaseIds = new Set<string>(caseFilesById.keys());
   const normalizedFilesWithCaseRelations = normalizedFilesBase.map((file: CaseResolverFile): CaseResolverFile => {
@@ -1001,8 +1105,9 @@ export const normalizeCaseResolverWorkspace = (
       file.id,
       file.fileType,
       file.parentCaseId ?? null,
-      caseFilesById
-    );    const referenceCaseIds = file.referenceCaseIds
+      caseFilesById,
+    );
+    const referenceCaseIds = file.referenceCaseIds
       .filter((referenceId: string): boolean => referenceId !== file.id && validReferenceCaseIds.has(referenceId));
     const uniqueReferenceCaseIds = Array.from(new Set(referenceCaseIds));
     return {
@@ -1011,37 +1116,22 @@ export const normalizeCaseResolverWorkspace = (
       referenceCaseIds: uniqueReferenceCaseIds,
     };
   });
-  const normalizedFilesWithoutOrphans =
-    caseFilesById.size > 0
-      ? normalizedFilesWithCaseRelations.filter(
-        (file: CaseResolverFile): boolean =>
-          file.fileType === 'case' || Boolean(file.parentCaseId)
-      )
-      : normalizedFilesWithCaseRelations;
-  const normalizedFileIds = new Set<string>(
-    normalizedFilesWithoutOrphans.map((file: CaseResolverFile): string => file.id)
+  const normalizedFiles = normalizedFilesWithCaseRelations.map(
+    (file: CaseResolverFile): CaseResolverFile => {
+      if (file.fileType === 'case') return file;
+      if (file.parentCaseId) return file;
+      const inferredOwnerCaseId = inferOwnerCaseIdFromFolderAncestors(
+        file.folder,
+        folderOwnerCaseIdsByPath,
+      );
+      if (!inferredOwnerCaseId) return file;
+      ownershipRepairedCount += 1;
+      return {
+        ...file,
+        parentCaseId: inferredOwnerCaseId,
+      };
+    },
   );
-  const removedFileIds = new Set<string>(
-    normalizedFilesWithCaseRelations
-      .filter((file: CaseResolverFile): boolean =>
-        !normalizedFileIds.has(file.id)
-      )
-      .map((file: CaseResolverFile): string => file.id)
-  );
-  const normalizedFiles =
-    removedFileIds.size > 0
-      ? normalizedFilesWithoutOrphans.map((file: CaseResolverFile): CaseResolverFile => {
-        if (file.fileType !== 'case') return file;
-        const nextReferenceCaseIds = file.referenceCaseIds.filter(
-          (referenceCaseId: string): boolean => !removedFileIds.has(referenceCaseId)
-        );
-        if (nextReferenceCaseIds.length === file.referenceCaseIds.length) return file;
-        return {
-          ...file,
-          referenceCaseIds: nextReferenceCaseIds,
-        };
-      })
-      : normalizedFilesWithoutOrphans;
   const rawAssets = Array.isArray(workspaceRecord['assets'])
     ? (workspaceRecord['assets'] as CaseResolverAssetFile[])
     : [];
@@ -1051,12 +1141,13 @@ export const normalizeCaseResolverWorkspace = (
     .map((asset: CaseResolverAssetFile): CaseResolverAssetFile | null => {
       const id = typeof asset.id === 'string' && asset.id.trim() ? asset.id : '';
       if (!id || assetIds.has(id)) {
+        droppedDuplicateCount += 1;
         return null;
       }
       assetIds.add(id);
       const normalizedCreatedAt = normalizeTimestamp(
         asset.createdAt,
-        CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP
+        CASE_RESOLVER_NORMALIZATION_FALLBACK_TIMESTAMP,
       );
       const normalizedUpdatedAt = normalizeTimestamp(asset.updatedAt, normalizedCreatedAt);
       return createCaseResolverAssetFile({
@@ -1109,12 +1200,12 @@ export const normalizeCaseResolverWorkspace = (
   const validCaseIds = new Set<string>(
     normalizedFilesWithRelatedLinks
       .filter((file: CaseResolverFile): boolean => file.fileType === 'case')
-      .map((file: CaseResolverFile): string => file.id)
+      .map((file: CaseResolverFile): string => file.id),
   );
 
   const sourceFolderRecords = parseCaseResolverFolderRecords(
     workspaceRecord['folderRecords'],
-    validCaseIds
+    validCaseIds,
   );
   const folderRecords = buildCaseResolverFolderRecords({
     sourceRecords: sourceFolderRecords,
@@ -1151,7 +1242,16 @@ export const normalizeCaseResolverWorkspace = (
       ? activeCandidate
       : normalizedFilesWithRelatedLinks[0]?.id ?? null;
 
-  return {
+  const ownershipUnresolvedCount = normalizedFilesWithRelatedLinks.filter(
+    (file: CaseResolverFile): boolean =>
+      file.fileType !== 'case' && !file.parentCaseId,
+  ).length;
+  const diagnostics: CaseResolverWorkspaceNormalizationDiagnostics = {
+    ownershipRepairedCount,
+    ownershipUnresolvedCount,
+    droppedDuplicateCount,
+  };
+  const normalizedWorkspace: CaseResolverWorkspace = {
     id: typeof workspaceRecord['id'] === 'string' ? workspaceRecord['id'] : 'default',
     ownerId: typeof workspaceRecord['ownerId'] === 'string' ? workspaceRecord['ownerId'] : 'system',
     isPublic: workspaceRecord['isPublic'] === true,
@@ -1169,7 +1269,20 @@ export const normalizeCaseResolverWorkspace = (
     activeFileId,
     createdAt: normalizeTimestamp(workspaceRecord['createdAt'], now),
     updatedAt: normalizeOptionalTimestamp(workspaceRecord['updatedAt']),
-  };};
+  };
+  return {
+    workspace: attachCaseResolverWorkspaceNormalizationDiagnostics(
+      normalizedWorkspace,
+      diagnostics,
+    ),
+    diagnostics,
+  };
+};
+
+export const normalizeCaseResolverWorkspace = (
+  workspace: CaseResolverWorkspace | null | undefined
+): CaseResolverWorkspace =>
+  normalizeCaseResolverWorkspaceWithDiagnostics(workspace).workspace;
 
 export const parseCaseResolverWorkspace = (
   raw: string | null | undefined

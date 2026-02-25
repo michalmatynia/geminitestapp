@@ -7,6 +7,7 @@ import {
   Package,
 } from 'lucide-react';
 import { memo, useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
@@ -66,6 +67,23 @@ export const ProductListHeader = memo(function ProductListHeader({
       setIsMenuHidden(false);
     };
   }, [setIsMenuHidden]);
+
+  const menuToggleButton = typeof document === 'undefined'
+    ? null
+    : createPortal(
+      <Button
+        size='xs'
+        type='button'
+        variant='outline'
+        onClick={() => setIsMenuHidden(!isMenuHidden)}
+        title={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
+        aria-label={isMenuHidden ? 'Show side panels' : 'Show canvas only'}
+        className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
+      >
+        {isMenuHidden ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
+      </Button>,
+      document.body,
+    );
 
   const renderHeaderBreadcrumb = (): React.JSX.Element => (
     <Breadcrumbs
@@ -158,18 +176,6 @@ export const ProductListHeader = memo(function ProductListHeader({
         entityType='product'
         className='shrink-0 flex-nowrap'
       />
-
-      <Button
-        type='button'
-        size='sm'
-        variant='outline'
-        onClick={() => setIsMenuHidden(!isMenuHidden)}
-        className='h-8 w-8 shrink-0 p-0'
-        aria-label={isMenuHidden ? 'Show admin menu' : 'Hide admin menu'}
-        title={isMenuHidden ? 'Show admin menu' : 'Hide admin menu'}
-      >
-        {isMenuHidden ? <EyeOff className='h-4 w-4' /> : <Eye className='h-4 w-4' />}
-      </Button>
     </>
   );
 
@@ -189,6 +195,7 @@ export const ProductListHeader = memo(function ProductListHeader({
 
   return (
     <div className='space-y-4'>
+      {showHeader ? menuToggleButton : null}
       {showHeader && (
         <div className='space-y-3'>
           <div className='space-y-3 lg:hidden'>

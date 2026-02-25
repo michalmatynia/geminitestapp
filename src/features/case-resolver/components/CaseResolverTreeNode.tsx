@@ -14,7 +14,8 @@ import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import { 
   useCaseResolverFolderTreeContext,
-  isChildCaseStructureNode 
+  isCaseResolverVirtualSectionNode,
+  isUnassignedNode,
 } from '../context/CaseResolverFolderTreeContext';
 import { 
   fromCaseResolverFolderNodeId,
@@ -111,11 +112,12 @@ export function CaseResolverTreeNode({
   const isCanvasCaseFile = Boolean(fileId) && isCaseFile;
   const isNodeFileAsset =
     Boolean(assetId) && node.kind === 'node_file';
-  const isChildStructureSectionNode = isChildCaseStructureNode(node);
+  const isVirtualSectionNode = isCaseResolverVirtualSectionNode(node);
+  const isUnassignedSectionNode = isUnassignedNode(node);
   const isDraggableFileNode = isCaseResolverDraggableFileNode({
     nodeType: node.type,
     fileType,
-    isChildStructureNode: isChildStructureSectionNode,
+    isVirtualSectionNode,
   });
   const isHighlightedNodeFile = Boolean(
     assetId && highlightedNodeFileAssetIdSet.has(assetId),
@@ -140,7 +142,7 @@ export function CaseResolverTreeNode({
   );
   
   const nodeOwnerCaseIds = (() => {
-    if (isChildStructureSectionNode) return [];
+    if (isVirtualSectionNode) return [];
     if (folderPath !== null) {
       return folderOwnerCaseIdsByPath.get(folderPath) ?? [];
     }
@@ -202,7 +204,7 @@ export function CaseResolverTreeNode({
   })();
 
   const isLinkDropTarget = isDropTarget && dropPosition === 'inside' && fileId !== null;
-  const stateClassName = isChildStructureSectionNode
+  const stateClassName = isVirtualSectionNode
     ? isSelected
       ? 'bg-cyan-600/30 text-cyan-50 ring-1 ring-inset ring-cyan-400/70'
       : 'bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/15'
@@ -226,7 +228,7 @@ export function CaseResolverTreeNode({
     if (!isSelected) {
       select();
     }
-    if (isChildStructureSectionNode) return;
+    if (isVirtualSectionNode) return;
     if (folderPath !== null) {
       onSelectFolder(folderPath);
       return;
@@ -258,8 +260,12 @@ export function CaseResolverTreeNode({
       role='button'
       tabIndex={0}
       title={
-        isChildStructureSectionNode
-          ? 'Children cases folder structure'
+        isVirtualSectionNode
+          ? (
+            isUnassignedSectionNode
+              ? 'Unassigned ownership'
+              : 'Children cases folder structure'
+          )
           : isNodeFileAsset
             ? 'Canvas file — click to open'
             : isCanvasCaseFile
@@ -268,7 +274,7 @@ export function CaseResolverTreeNode({
       }
       onClick={handleClick}
       onDoubleClick={(): void => {
-        if (isChildStructureSectionNode) return;
+        if (isVirtualSectionNode) return;
         startRename();
       }}
       onKeyDown={(event: React.KeyboardEvent<HTMLDivElement>): void => {
@@ -329,7 +335,7 @@ export function CaseResolverTreeNode({
         </span>
       )}
       <Icon className='size-4 shrink-0' />
-      {isFolder && isFolderLocked && !isChildStructureSectionNode ? (
+      {isFolder && isFolderLocked && !isVirtualSectionNode ? (
         <Lock className='size-3.5 shrink-0 text-amber-300' aria-hidden='true' />
       ) : null}
       {isChildOwnedStructureNode ? (
@@ -392,7 +398,7 @@ export function CaseResolverTreeNode({
         )}
       </div>
       
-      {!isRenaming && isFolder && folderPath !== null && !isChildStructureSectionNode ? (
+      {!isRenaming && isFolder && folderPath !== null && !isVirtualSectionNode ? (
         <div className={`flex shrink-0 items-center gap-1 transition ${hoverOnlyControlClass}`}>
           <button
             type='button'

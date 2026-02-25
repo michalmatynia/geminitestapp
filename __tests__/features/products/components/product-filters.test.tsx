@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 import {
@@ -205,5 +206,67 @@ describe('ProductFilters Component', () => {
     expect(screen.getByText('Price + Stock')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Clear applied preset Price + Stock' }));
     expect(setAdvancedFilterState).toHaveBeenCalledWith('', null);
+  });
+
+  it('applies preset when preset name is clicked from Filter Presets menu', async () => {
+    const setAdvancedFilterState = vi.fn();
+    const user = userEvent.setup();
+    const presetFilter = {
+      type: 'group' as const,
+      id: 'group-apply',
+      combinator: 'and' as const,
+      not: false,
+      rules: [
+        {
+          type: 'condition' as const,
+          id: 'condition-apply',
+          field: 'stock' as const,
+          operator: 'gt' as const,
+          value: 5,
+        },
+      ],
+    };
+
+    mockPreferences = {
+      ...mockPreferences,
+      advancedFilterPresets: [
+        {
+          id: 'preset-apply',
+          name: 'Stock > 5',
+          filter: presetFilter,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+    };
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <ToastProvider>
+          <ProductListProvider
+            value={{
+              ...(mockContextValue as ProductListContextType),
+              setAdvancedFilterState,
+            }}
+          >
+            <ProductSelectionActions />
+          </ProductListProvider>
+        </ToastProvider>
+      </QueryClientProvider>
+    );
+
+    const filterPresetsTrigger = screen
+      .getAllByText('Filter Presets')[0]
+      ?.closest('button');
+    if (!filterPresetsTrigger) {
+      throw new Error('Expected Filter Presets trigger button');
+    }
+    await user.click(filterPresetsTrigger);
+
+    await user.click(await screen.findByText('Stock > 5'));
+    expect(setAdvancedFilterState).toHaveBeenCalledWith(
+      JSON.stringify(presetFilter),
+      'preset-apply'
+    );
   });
 });

@@ -13,6 +13,20 @@ import type {
   PriceGroupLookup,
   BaseConnectionContext,
 } from '@/shared/contracts/integrations';
+
+export type {
+  BaseImportErrorClass,
+  BaseImportErrorCode,
+  BaseImportItemRecord,
+  BaseImportParameterImportSummary,
+  BaseImportItemStatus,
+  BaseImportMode,
+  BaseImportRunParams,
+  BaseImportRunStatus,
+  PriceGroupLookup,
+  BaseConnectionContext,
+};
+
 import type { Product as ProductRecord, CreateProduct as ProductCreateInput } from '@/shared/contracts/products';
 
 export const BASE_DETAILS_BATCH_SIZE = 100;

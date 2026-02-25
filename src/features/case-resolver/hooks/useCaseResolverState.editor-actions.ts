@@ -10,7 +10,6 @@ import {
 import {
   buildFileEditDraft,
   createCaseResolverHistorySnapshotEntry,
-  createId,
 } from '../utils/caseResolverUtils';
 import {
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
@@ -211,9 +210,14 @@ export function useCaseResolverStateEditorActions({
     const nextDocumentHistory = currentSnapshot
       ? [currentSnapshot, ...currentFile.documentHistory].slice(0, CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT)
       : currentFile.documentHistory;
+    const nextParentCaseId =
+      editingDocumentDraft.parentCaseId === undefined
+        ? currentFile.parentCaseId
+        : editingDocumentDraft.parentCaseId;
     const nextSavedFile = createCaseResolverFile({
       ...currentFile,
       ...editingDocumentDraft,
+      parentCaseId: nextParentCaseId,
       editorType: canonicalState.mode,
       documentContentFormatVersion: 1,
       documentContentVersion: nextDocumentContentVersion,

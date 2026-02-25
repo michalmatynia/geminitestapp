@@ -6,6 +6,7 @@ import { z } from 'zod';
 
 export const documentationModuleIdsSchema = z.enum([
   'ai-paths',
+  'case-resolver',
   'cms',
   'data-import-export',
   'image-studio',
@@ -22,6 +23,7 @@ export type DocumentationModuleId = DocumentationModuleIdDto;
 
 export const DOCUMENTATION_MODULE_IDS = {
   aiPaths: 'ai-paths',
+  caseResolver: 'case-resolver',
   cms: 'cms',
   dataImportExport: 'data-import-export',
   imageStudio: 'image-studio',

@@ -600,10 +600,22 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
     setIsPresetDialogOpen(true);
   };
 
-  const handleApplyPreset = (preset: ProductAdvancedFilterPreset): void => {
-    setAdvancedFilterState(JSON.stringify(preset.filter), preset.id);
-    toast(`Applied preset "${preset.name}".`, { variant: 'success' });
-  };
+  const applyPreset = useCallback(
+    (preset: ProductAdvancedFilterPreset, notify = true): void => {
+      setAdvancedFilterState(JSON.stringify(preset.filter), preset.id);
+      if (notify) {
+        toast(`Applied preset "${preset.name}".`, { variant: 'success' });
+      }
+    },
+    [setAdvancedFilterState, toast]
+  );
+
+  const handleApplyPreset = useCallback(
+    (preset: ProductAdvancedFilterPreset): void => {
+      applyPreset(preset, true);
+    },
+    [applyPreset]
+  );
 
   const handleDeletePreset = useCallback(async (
     preset: ProductAdvancedFilterPreset
@@ -893,7 +905,17 @@ export const ProductSelectionActions = memo(function ProductSelectionActions() {
               ) : (
                 advancedFilterPresets.map((preset: ProductAdvancedFilterPreset) => (
                   <DropdownMenuSub key={preset.id}>
-                    <DropdownMenuSubTrigger>{preset.name}</DropdownMenuSubTrigger>
+                    <DropdownMenuSubTrigger
+                      className='cursor-pointer'
+                      onClick={() => applyPreset(preset, false)}
+                    >
+                      <span className='truncate'>{preset.name}</span>
+                      {activeAdvancedFilterPresetId === preset.id ? (
+                        <span className='ml-2 rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary'>
+                          Applied
+                        </span>
+                      ) : null}
+                    </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent className='w-56'>
                       <DropdownMenuItem
                         onClick={() => handleApplyPreset(preset)}

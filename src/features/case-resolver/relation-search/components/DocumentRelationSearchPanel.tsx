@@ -14,9 +14,8 @@ import {
   SlidersHorizontal,
   X,
 } from 'lucide-react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
-import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import {
   Checkbox,
   Dialog,
@@ -40,13 +39,6 @@ import {
 import { cn } from '@/shared/utils';
 
 import {
-  normalizeSearchText,
-  type NodeFileDocumentSearchRow,
-  type NodeFileDocumentSearchScope,
-} from '../../components/CaseResolverNodeFileUtils';
-import { useCaseResolverViewContext } from '../../components/CaseResolverViewContext';
-import {
-  useDocumentRelationSearch,
   type DocumentRelationFileTypeFilter,
   type DocumentRelationSortMode,
 } from '../hooks/useDocumentRelationSearch';
@@ -54,7 +46,12 @@ import {
   DocumentRelationSearchProvider,
   useDocumentRelationSearchContext,
   type ResultHeight,
+  type CaseRow,
 } from '../context/DocumentRelationSearchContext';
+import { getCaseResolverDocTooltip } from '../utils/docs';
+import {
+  type NodeFileDocumentSearchScope,
+} from '../../components/CaseResolverNodeFileUtils';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -181,7 +178,7 @@ function ScopeBar({
       )}
 
       {/* Advanced filters toggle */}
-      <Tooltip content='Advanced filters' side='bottom'>
+      <Tooltip content={getCaseResolverDocTooltip('advancedFilters')} side='bottom'>
         <button
           type='button'
           onClick={() => setShowFiltersBar((p) => !p)}
@@ -249,8 +246,9 @@ function ScopeBar({
 // ─── FilterBar ────────────────────────────────────────────────────────────────
 
 function FilterBar(): React.JSX.Element {
-  const { caseTagOptions, caseCategoryOptions } = useCaseResolverViewContext();
   const {
+    caseTagOptions,
+    caseCategoryOptions,
     dateFrom,
     setDateFrom,
     dateTo,
@@ -626,7 +624,7 @@ function DocumentTableBody(): React.JSX.Element {
               {/* Lock indicator */}
               <TableCell className='h-9 w-6 px-1 py-1'>
                 {row.file.isLocked && (
-                  <Tooltip content='Locked' side='left'>
+                  <Tooltip content={getCaseResolverDocTooltip('lockedIndicator')} side='left'>
                     <Lock className='size-3 text-amber-400/70' />
                   </Tooltip>
                 )}
@@ -634,18 +632,19 @@ function DocumentTableBody(): React.JSX.Element {
 
               {/* Link button */}
               <TableCell className='h-9 py-1 pl-2 pr-3'>
-                <button
-                  type='button'
-                  title='Link this document'
-                  disabled={isLocked}
-                  className='flex items-center justify-center rounded p-1 text-gray-400 transition-colors hover:bg-cyan-500/15 hover:text-cyan-300 disabled:pointer-events-none disabled:opacity-40'
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onLinkFile(row.file.id);
-                  }}
-                >
-                  <Plus className='size-3.5' />
-                </button>
+                <Tooltip content={getCaseResolverDocTooltip('linkDocument')} side='left'>
+                  <button
+                    type='button'
+                    disabled={isLocked}
+                    className='flex items-center justify-center rounded p-1 text-gray-400 transition-colors hover:bg-cyan-500/15 hover:text-cyan-300 disabled:pointer-events-none disabled:opacity-40'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onLinkFile(row.file.id);
+                    }}
+                  >
+                    <Plus className='size-3.5' />
+                  </button>
+                </Tooltip>
               </TableCell>
             </TableRow>
           ))
@@ -690,7 +689,7 @@ function CaseTableBody(): React.JSX.Element {
             </TableCell>
           </TableRow>
         ) : (
-          rows.map((row) => (
+          rows.map((row: CaseRow) => (
             <TableRow
               key={row.file.id}
               className='border-border/20 transition-colors hover:bg-card/50'
@@ -724,14 +723,15 @@ function CaseTableBody(): React.JSX.Element {
                 </span>
               </TableCell>
               <TableCell className='h-9 py-1 pl-2 pr-3'>
-                <button
-                  type='button'
-                  title='Browse documents in this case'
-                  className='flex items-center justify-center rounded p-1 text-gray-400 transition-colors hover:bg-cyan-500/15 hover:text-cyan-300'
-                  onClick={() => onDrillInto(row.file.id)}
-                >
-                  <ChevronRight className='size-3.5' />
-                </button>
+                <Tooltip content={getCaseResolverDocTooltip('browseCaseDocs')} side='left'>
+                  <button
+                    type='button'
+                    className='flex items-center justify-center rounded p-1 text-gray-400 transition-colors hover:bg-cyan-500/15 hover:text-cyan-300'
+                    onClick={() => onDrillInto(row.file.id)}
+                  >
+                    <ChevronRight className='size-3.5' />
+                  </button>
+                </Tooltip>
               </TableCell>
             </TableRow>
           ))
@@ -892,8 +892,6 @@ function DocumentRelationSearchInner({
     </>
   );
 }
-
-// ─── DocumentRelationSearchPanel ─────────────────────────────────────────────
 
 export type DocumentRelationSearchPanelProps = {
   draftFileId: string;

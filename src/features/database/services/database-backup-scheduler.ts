@@ -3,7 +3,7 @@ import 'server-only';
 import { enqueueProductAiJob } from '@/features/jobs/services/productAiService';
 import { ErrorSystem } from '@/features/observability/server';
 import type {
-  DatabaseEngineBackupSchedulerTickResult,
+  DatabaseBackupSchedulerTickResult,
   DatabaseEngineBackupSchedulerStatus,
 } from '@/shared/contracts/database';
 import { configurationError } from '@/shared/errors/app-error';

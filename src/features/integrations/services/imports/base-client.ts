@@ -15,14 +15,16 @@ import {
   extractWarehouseList,
   fetchBaseCategoriesFromPayload,
   toStringId,
-  type BaseApiResponse,
-  type BaseCategory,
-  type BaseInventory,
-  type BaseProducer,
-  type BaseProductRecord,
-  type BaseTag,
-  type BaseWarehouse,
 } from './base-client-parsers';
+import type { 
+  BaseApiResponse,
+  BaseCategory,
+  BaseInventory,
+  BaseProducer,
+  BaseProductRecord,
+  BaseTag,
+  BaseWarehouse,
+} from '@/shared/contracts/integrations';
 
 export type {
   BaseCategory,
@@ -31,7 +33,8 @@ export type {
   BaseProductRecord,
   BaseTag,
   BaseWarehouse,
-} from './base-client-parsers';
+  BaseApiResponse,
+};
 
 export type BaseApiRawResult = {
   ok: boolean;

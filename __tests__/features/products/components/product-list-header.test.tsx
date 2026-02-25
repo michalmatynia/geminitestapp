@@ -214,13 +214,13 @@ describe('ProductListHeader Component', () => {
     expect(mockContextValue.setPage).toHaveBeenCalledWith(3);
   });
 
-  it('toggles admin menu visibility button label', () => {
+  it('toggles side panel visibility button label', () => {
     renderWithContext(<ProductListHeader />);
-    const hideButton = screen.getAllByLabelText('Hide admin menu')[0];
-    if (!hideButton) {
-      throw new Error('Expected hide admin menu button');
+    const toggleButton = screen.getByLabelText('Show canvas only');
+    if (!toggleButton) {
+      throw new Error('Expected side panel visibility toggle button');
     }
-    fireEvent.click(hideButton);
-    expect(screen.getAllByLabelText('Show admin menu').length).toBeGreaterThan(0);
+    fireEvent.click(toggleButton);
+    expect(screen.getByLabelText('Show side panels')).toBeInTheDocument();
   });
 });

@@ -410,6 +410,7 @@ export const productSchema = dtoBaseSchema.extend({
 
 export type ProductDto = z.infer<typeof productSchema>;
 export type ProductRecord = ProductDto;
+export type Product = ProductDto;
 
 /**
  * Product With Images Contract
@@ -562,6 +563,7 @@ export const createProductSchema = productSchema.omit({
 });
 
 export type CreateProductDto = z.infer<typeof createProductSchema>;
+export type CreateProduct = CreateProductDto;
 
 export const updateProductSchema = createProductSchema.partial();
 

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Button, Input, Textarea, Label, Alert, SelectSimple, StatusBadge, Badge, Card } from '@/shared/ui';
+import { Button, Input, Textarea, Alert, SelectSimple, StatusBadge, Badge, Card } from '@/shared/ui';
 
 export interface ApiPreset {
   label: string;

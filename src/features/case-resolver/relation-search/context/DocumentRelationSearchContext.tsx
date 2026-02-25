@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useMemo, useEffect } from '
 
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import type { NodeFileDocumentSearchRow, NodeFileDocumentSearchScope } from '../../components/CaseResolverNodeFileUtils';
-import { useCaseResolverViewContext } from '../../components/CaseResolverViewContext';
+import { useCaseResolverViewContext, type SelectOption } from '../../components/CaseResolverViewContext';
 import {
   useDocumentRelationSearch,
   type DocumentRelationFileTypeFilter,
@@ -42,6 +42,10 @@ export interface DocumentRelationSearchContextValue {
   sortMode: DocumentRelationSortMode;
   setSortMode: (m: DocumentRelationSortMode) => void;
   
+  // Filter options (from workspace context)
+  caseTagOptions: SelectOption[];
+  caseCategoryOptions: SelectOption[];
+
   // Advanced Filter State
   dateFrom: string | null;
   setDateFrom: (v: string | null) => void;
@@ -115,7 +119,7 @@ export function DocumentRelationSearchProvider({
   defaultScope = 'case_scope',
   defaultSort = 'name_asc',
 }: DocumentRelationSearchProviderProps): React.JSX.Element {
-  const { state } = useCaseResolverViewContext();
+  const { state, caseTagOptions, caseCategoryOptions } = useCaseResolverViewContext();
   const { workspace, activeCaseId, caseResolverIdentifiers } = state;
 
   // ── Persisted preferences (SSR-safe, read-once on mount) ────────────────────
@@ -290,6 +294,8 @@ export function DocumentRelationSearchProvider({
     draftFileId,
     isLocked,
     onLinkFile,
+    caseTagOptions,
+    caseCategoryOptions,
     ...search,
     showFiltersBar,
     setShowFiltersBar,
@@ -320,6 +326,8 @@ export function DocumentRelationSearchProvider({
     draftFileId,
     isLocked,
     onLinkFile,
+    caseTagOptions,
+    caseCategoryOptions,
     search,
     showFiltersBar,
     filtersActiveCount,

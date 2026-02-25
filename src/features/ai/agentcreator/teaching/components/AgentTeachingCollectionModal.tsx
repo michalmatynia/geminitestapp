@@ -3,26 +3,21 @@
 import React, { useMemo } from 'react';
 
 import type { AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
-import type { EntityModalProps } from '@/shared/contracts/ui';
 import { SettingsPanelBuilder, type SettingsField } from '@/shared/ui/templates/SettingsPanelBuilder';
+import { useAgentTeachingCollectionsContext } from '../context/AgentTeachingCollectionsContext';
 
-interface AgentTeachingCollectionModalProps extends EntityModalProps<AgentTeachingEmbeddingCollectionRecord, string> {
-  draft: Partial<AgentTeachingEmbeddingCollectionRecord>;
-  setDraft: React.Dispatch<React.SetStateAction<Partial<AgentTeachingEmbeddingCollectionRecord>>>;
-  isSaving: boolean;
-  onSave: () => void;
-}
+export function AgentTeachingCollectionModal(): React.JSX.Element | null {
+  const {
+    isModalOpen,
+    closeModal,
+    editingItem,
+    embeddingModels,
+    draft,
+    setDraft,
+    isSaving,
+    handleSave,
+  } = useAgentTeachingCollectionsContext();
 
-export function AgentTeachingCollectionModal({
-  isOpen,
-  onClose,
-  item: editing,
-  items: embeddingModels = [],
-  draft,
-  setDraft,
-  isSaving,
-  onSave,
-}: AgentTeachingCollectionModalProps): React.JSX.Element | null {
   const fields: SettingsField<Partial<AgentTeachingEmbeddingCollectionRecord>>[] = useMemo(() => [
     {
       key: 'name',
@@ -44,25 +39,27 @@ export function AgentTeachingCollectionModal({
       options: embeddingModels.map(m => ({ value: m, label: m })),
       placeholder: 'Select model',
       helperText: 'Determines the vector space for semantic search. Cannot be changed after creation.',
-      disabled: !!editing,
+      disabled: !!editingItem,
       required: true,
     }
-  ], [embeddingModels, editing]);
+  ], [embeddingModels, editingItem]);
 
   const handleChange = (vals: Partial<Partial<AgentTeachingEmbeddingCollectionRecord>>) => {
     setDraft(prev => ({ ...prev, ...vals }));
   };
 
+  if (!isModalOpen) return null;
+
   return (
     <SettingsPanelBuilder
-      open={isOpen}
-      onClose={onClose}
+      open={isModalOpen}
+      onClose={closeModal}
       size='sm'
-      title={editing ? 'Edit Collection' : 'New Collection'}
+      title={editingItem ? 'Edit Collection' : 'New Collection'}
       fields={fields}
       values={draft}
       onChange={handleChange}
-      onSave={async () => onSave()}
+      onSave={handleSave}
       isSaving={isSaving}
     />
   );

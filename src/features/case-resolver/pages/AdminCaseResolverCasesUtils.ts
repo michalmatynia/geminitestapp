@@ -5,7 +5,14 @@ export type CaseTreeNode = {
   children: CaseTreeNode[];
 };
 
-export type CaseSortKey = 'updated' | 'created' | 'name';
+export type CaseSortKey =
+  | 'updated'
+  | 'created'
+  | 'name'
+  | 'status'
+  | 'signature'
+  | 'locked'
+  | 'sent';
 export type CaseSortOrder = 'asc' | 'desc';
 export type CaseViewMode = 'hierarchy' | 'list';
 export type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';

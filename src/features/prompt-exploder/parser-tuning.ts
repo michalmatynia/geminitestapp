@@ -173,18 +173,22 @@ const normalizeScopes = (
 };
 
 export const buildPromptExploderParserTuningDrafts = (args: {
-  scopedRules: PromptValidationRule[];
-  patternPackRules: PromptValidationRule[];
+  scopedRules?: PromptValidationRule[] | null;
+  patternPackRules?: PromptValidationRule[] | null;
   scope?: PromptExploderRuntimeValidationScope;
 }): PromptExploderParserTuningRuleDraft[] => {
   const scope = args.scope ?? 'prompt_exploder';
+  const scopedRules = Array.isArray(args.scopedRules) ? args.scopedRules : [];
+  const patternPackRules = Array.isArray(args.patternPackRules)
+    ? args.patternPackRules
+    : [];
   const scopedById = new Map(
-    args.scopedRules
+    scopedRules
       .filter(isRegexRule)
       .map((rule): [string, Extract<PromptValidationRule, { kind: 'regex' }>] => [rule.id, rule])
   );
   const packById = new Map(
-    args.patternPackRules
+    patternPackRules
       .filter(isRegexRule)
       .map((rule): [string, Extract<PromptValidationRule, { kind: 'regex' }>] => [rule.id, rule])
   );
@@ -239,8 +243,8 @@ export const validatePromptExploderParserTuningDrafts = (
 
 export const applyPromptExploderParserTuningDrafts = (args: {
   settings: PromptEngineSettings;
-  drafts: PromptExploderParserTuningRuleDraft[];
-  patternPackRules: PromptValidationRule[];
+  drafts?: PromptExploderParserTuningRuleDraft[] | null;
+  patternPackRules?: PromptValidationRule[] | null;
   scope?: PromptExploderRuntimeValidationScope;
 }): PromptEngineSettings => {
   const scope = args.scope ?? 'prompt_exploder';
@@ -248,13 +252,17 @@ export const applyPromptExploderParserTuningDrafts = (args: {
     ? args.settings
     : defaultPromptEngineSettings;
   const nextRules = [...baseSettings.promptValidation.rules];
+  const drafts = Array.isArray(args.drafts) ? args.drafts : [];
+  const patternPackRules = Array.isArray(args.patternPackRules)
+    ? args.patternPackRules
+    : [];
   const packById = new Map(
-    args.patternPackRules
+    patternPackRules
       .filter(isRegexRule)
       .map((rule): [string, Extract<PromptValidationRule, { kind: 'regex' }>] => [rule.id, rule])
   );
 
-  args.drafts.forEach((draft) => {
+  drafts.forEach((draft) => {
     const ruleId = coerceRuleId(draft.id);
     if (!ruleId) return;
     const existingIndex = nextRules.findIndex((rule) => rule.id === ruleId);

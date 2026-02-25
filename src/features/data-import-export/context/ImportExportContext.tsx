@@ -117,10 +117,10 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     normalizedSelectedBaseConnectionId.length > 0 &&
     normalizedExportInventoryId.length > 0;
   const importTemplateScopeKey = importTemplateScopeReady
-    ? `\${normalizedSelectedBaseConnectionId}:\${normalizedImportInventoryId}`
+    ? `${normalizedSelectedBaseConnectionId}:${normalizedImportInventoryId}`
     : '';
   const exportTemplateScopeKey = exportTemplateScopeReady
-    ? `\${normalizedSelectedBaseConnectionId}:\${normalizedExportInventoryId}`
+    ? `${normalizedSelectedBaseConnectionId}:${normalizedExportInventoryId}`
     : '';
 
   const buildScopedTemplatePreferenceEndpoint = (
@@ -132,7 +132,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       connectionId,
       inventoryId,
     });
-    return `\${endpoint}?\${params.toString()}`;
+    return `${endpoint}?${params.toString()}`;
   };
 
   // Sync connections
@@ -188,7 +188,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     '/api/integrations/imports/base/last-template'
   );
   const { data: activeImportTemplatePref, isFetched: hasFetchedActiveImportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
-    `active-template:\${importTemplateScopeKey || 'none'}`,
+    `active-template:${importTemplateScopeKey || 'none'}`,
     importTemplateScopeReady
       ? buildScopedTemplatePreferenceEndpoint(
         '/api/integrations/imports/base/active-template',
@@ -199,7 +199,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     { enabled: importTemplateScopeReady }
   );
   const { data: activeExportTemplatePref, isFetched: hasFetchedActiveExportTemplatePref } = useImportPreference<{ templateId?: string | null }>(
-    `export-active-template:\${exportTemplateScopeKey || 'none'}`,
+    `export-active-template:${exportTemplateScopeKey || 'none'}`,
     exportTemplateScopeReady
       ? buildScopedTemplatePreferenceEndpoint(
         '/api/integrations/exports/base/active-template',
@@ -416,7 +416,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     const normalized = templates.importActiveTemplateId.trim() || null;
     const persisted = activeImportTemplatePref?.templateId?.trim() || null;
     if (persisted === normalized) return;
-    const saveSignature = `\${importTemplateScopeKey}:\${normalized ?? ''}`;
+    const saveSignature = `${importTemplateScopeKey}:${normalized ?? ''}`;
     if (lastSavedImportActiveTemplateId.current === saveSignature) return;
     lastSavedImportActiveTemplateId.current = saveSignature;
     savePreferenceMutation.mutate({
@@ -449,7 +449,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     const normalized = templates.exportActiveTemplateId.trim() || null;
     const persisted = activeExportTemplatePref?.templateId?.trim() || null;
     if (persisted === normalized) return;
-    const saveSignature = `\${exportTemplateScopeKey}:\${normalized ?? ''}`;
+    const saveSignature = `${exportTemplateScopeKey}:${normalized ?? ''}`;
     if (lastSavedExportActiveTemplateId.current === saveSignature) return;
     lastSavedExportActiveTemplateId.current = saveSignature;
     savePreferenceMutation.mutate({
@@ -477,7 +477,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     if (!normalizedInventoryId || !normalizedConnectionId || !isBaseConnected) {
       return;
     }
-    const schemaCacheKey = `\${normalizedConnectionId}:\${normalizedInventoryId}`;
+    const schemaCacheKey = `${normalizedConnectionId}:${normalizedInventoryId}`;
     const cachedInventoryId =
       typeof importParameterCache?.inventoryId === 'string'
         ? importParameterCache.inventoryId.trim()

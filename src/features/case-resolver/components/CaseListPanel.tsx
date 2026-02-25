@@ -28,6 +28,7 @@ import {
   Card,
   StandardDataTablePanel,
 } from '@/shared/ui';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 import { useAdminCaseResolverCases } from '../context/AdminCaseResolverCasesContext';
@@ -44,6 +45,7 @@ import {
 import { CaseListSorting } from './list/sections/CaseListSorting';
 import { CaseListNodeItem } from './list/sections/CaseListNodeItem';
 import { CaseListHeldDock } from './list/sections/CaseListHeldDock';
+import { useCaseListAutoExpandBootstrap } from './list/hooks/useCaseListAutoExpandBootstrap';
 
 /** Thin wrapper that computes per-node derived values so CaseListNodeItem can be memo'd. */
 const CaseListNodeItemWrapper = memo(function CaseListNodeItemWrapper(props) {
@@ -78,6 +80,7 @@ const CaseListNodeItemWrapper = memo(function CaseListNodeItemWrapper(props) {
 
 export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const router = useRouter();
+  const settingsStore = useSettingsStore();
   const {
     workspace,
     isLoading,
@@ -251,11 +254,6 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       .filter((node: MasterTreeNode): boolean => node.type === 'folder')
       .map((node: MasterTreeNode): string => node.id);
   }, [isCaseSubsetVisible, masterNodes]);
-  const autoExpandSignature = useMemo(
-    (): string => autoExpandedNodeIds.join('|'),
-    [autoExpandedNodeIds],
-  );
-  const lastAutoExpandSignatureRef = useRef<string>('');
 
   const adapterOperationsRef = useRef({
     handleMoveCase,
@@ -295,28 +293,20 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const {
     appearance: { resolveIcon, rootDropUi },
     controller,
+    hasPersistedUiState,
   } = useMasterFolderTreeInstance({
     instance: 'case_resolver_cases',
     nodes: masterNodes,
     adapter,
   });
 
-  useEffect((): void => {
-    if (!isCaseSubsetVisible) {
-      lastAutoExpandSignatureRef.current = '';
-      return;
-    }
-    if (!autoExpandSignature || lastAutoExpandSignatureRef.current === autoExpandSignature) {
-      return;
-    }
-    lastAutoExpandSignatureRef.current = autoExpandSignature;
-    controller.setExpandedNodeIds(autoExpandedNodeIds);
-  }, [
-    autoExpandSignature,
-    autoExpandedNodeIds,
-    controller,
+  useCaseListAutoExpandBootstrap({
+    isUiStateReady: !settingsStore.isLoading && !settingsStore.isFetching,
+    hasPersistedUiState,
     isCaseSubsetVisible,
-  ]);
+    autoExpandedNodeIds,
+    setExpandedNodeIds: controller.setExpandedNodeIds,
+  });
 
   const FolderClosedIcon = useMemo(
     () =>

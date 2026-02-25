@@ -122,6 +122,7 @@ export function useMasterFolderTreeInstance({
   controller: MasterFolderTreeController;
   panelCollapsed: boolean;
   setPanelCollapsed: (collapsed: boolean) => void;
+  hasPersistedUiState: boolean;
 } {
   const { toast } = useToast();
   const runtime = useMasterFolderTreeRuntime();
@@ -209,11 +210,21 @@ export function useMasterFolderTreeInstance({
     };
   }, [legacyUiEntry.expandedNodeIds, legacyUiEntry.panelCollapsed, migrationMarker, rawUiStateV2]);
 
-  const resolvedExpandedNodeIds =
-    uiEntry.expandedNodeIds.length > 0 ? uiEntry.expandedNodeIds : fallbackExpandedNodeIds;
-  const resolvedInitialExpandedNodeIds =
-    uiEntry.expandedNodeIds.length > 0
+  const hasPersistedUiStateV2 = rawUiStateV2 !== undefined;
+  const hasPersistedUiStateLegacy = shouldReadLegacyState && rawUiStateV1 !== undefined;
+  const hasPersistedUiState = hasPersistedUiStateV2 || hasPersistedUiStateLegacy;
+  const isExpandedNodeIdsControlled = fallbackExpandedNodeIds !== undefined;
+  const persistedExpandedNodeIds =
+    hasPersistedUiStateV2
       ? uiEntry.expandedNodeIds
+      : uiEntry.expandedNodeIds.length > 0
+        ? uiEntry.expandedNodeIds
+        : undefined;
+  const resolvedExpandedNodeIds =
+    persistedExpandedNodeIds ?? fallbackExpandedNodeIds;
+  const resolvedInitialExpandedNodeIds =
+    persistedExpandedNodeIds !== undefined
+      ? persistedExpandedNodeIds
       : fallbackInitiallyExpandedNodeIds ?? fallbackExpandedNodeIds;
 
   const panelCollapsed = uiEntry.panelCollapsed;
@@ -310,10 +321,29 @@ export function useMasterFolderTreeInstance({
     controller.selectNode(selectedNodeId ?? null);
   }, [controller.selectNode, selectedNodeId]);
 
+  const hasHydratedExpandedStateRef = useRef<boolean>(false);
   useEffect(() => {
+    hasHydratedExpandedStateRef.current = false;
+  }, [instance]);
+
+  useEffect(() => {
+    if (isExpandedNodeIdsControlled) {
+      if (resolvedExpandedNodeIds === undefined) return;
+      controller.setExpandedNodeIds(resolvedExpandedNodeIds);
+      return;
+    }
+    if (hasHydratedExpandedStateRef.current) return;
+    if (settingsStore.isLoading || settingsStore.isFetching) return;
     if (resolvedExpandedNodeIds === undefined) return;
+    hasHydratedExpandedStateRef.current = true;
     controller.setExpandedNodeIds(resolvedExpandedNodeIds);
-  }, [controller.setExpandedNodeIds, resolvedExpandedNodeIds]);
+  }, [
+    controller.setExpandedNodeIds,
+    isExpandedNodeIdsControlled,
+    resolvedExpandedNodeIds,
+    settingsStore.isFetching,
+    settingsStore.isLoading,
+  ]);
 
   const expandedNodeIds = useMemo(
     () => normalizeNodeIds(controller.expandedNodeIds),
@@ -362,5 +392,6 @@ export function useMasterFolderTreeInstance({
     controller,
     panelCollapsed,
     setPanelCollapsed,
+    hasPersistedUiState,
   };
 }

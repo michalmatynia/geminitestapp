@@ -31,10 +31,11 @@ async function main(): Promise<void> {
         executionMode: parsed['executionMode'],
         runMode: parsed['runMode'],
         compile: {
-          ok: compile.ok,
-          errors: compile.errors,
-          warnings: compile.warnings,
-          findings: compile.findings,
+          hasTrigger: compile.triggerNodeId !== null,
+          nodeCount: compile.nodes.length,
+          edgeCount: compile.edges.length,
+          processingNodeCount: compile.processingNodeIds.length,
+          terminalNodeCount: compile.terminalNodeIds.length,
         },
         dependency: {
           errors: dep.errors,

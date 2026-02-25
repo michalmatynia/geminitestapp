@@ -198,11 +198,12 @@ const shouldFallbackToServerUpscale = (error: unknown): boolean => {
 };
 
 export const createGenerationToolbarActionHandlers = (
-  deps: CreateGenerationToolbarActionHandlersDeps
+  rawDeps: CreateGenerationToolbarActionHandlersDeps
 ): {
   handleUpscale: () => Promise<void>;
   handleCrop: (cropRectOverride?: CropRect, options?: { includeCanvasContext?: boolean }) => Promise<void>;
 } => {
+  const deps = rawDeps as unknown as CreateGenerationToolbarActionHandlersDeps;
   const handleUpscale = async (): Promise<void> => {
     if (!deps.workingSlot?.id) {
       deps.toast('No active source slot selected.', { variant: 'info' });

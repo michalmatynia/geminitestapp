@@ -65,7 +65,8 @@ export interface GenerationToolbarHandlers {
   handleApplyAnalysisPlanToAutoScaler: () => void;
 }
 
-export function useGenerationToolbarHandlers(state: GenerationToolbarState): GenerationToolbarHandlers {
+export function useGenerationToolbarHandlers(rawState: GenerationToolbarState): GenerationToolbarHandlers {
+  const state = rawState as unknown as GenerationToolbarState;
   const {
     projectId,
     workingSlot,
@@ -493,8 +494,7 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
           `Center request payload is invalid (${describeSchemaValidationIssue(validation.error.issues)}).`
         );
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return validation.data as any;
+      return validation.data as unknown as ImageStudioCenterResponse;
     };
     const abortController = new AbortController();
     centerAbortControllerRef.current = abortController;

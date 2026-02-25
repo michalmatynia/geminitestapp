@@ -23,7 +23,8 @@ import { GenerationToolbarMaskSection } from './GenerationToolbarMaskSection';
 import { GenerationToolbarUpscaleSection } from './GenerationToolbarUpscaleSection';
 
 export function GenerationToolbarInner(): React.JSX.Element {
-  const state: GenerationToolbarState = useGenerationToolbarState();
+  const rawState = useGenerationToolbarState();
+  const state = rawState as unknown as GenerationToolbarState;
   const {
     maskPreviewEnabled,
     centerGuidesEnabled,
@@ -394,27 +395,28 @@ export function GenerationToolbarInner(): React.JSX.Element {
           state.setCenterLayoutWhiteThreshold(String(values.whiteThreshold));
           state.setCenterLayoutChromaThreshold(String(values.chromaThreshold));
         }}
-        onCenterLayoutSavePreset={async () => {
-          if (!state.centerLayoutPresetDraftName.trim().length) return;
-          try {
-            const saved = saveObjectLayoutCustomPreset(activeProjectId, {
-              presetId: state.selectedCenterCustomPresetId ?? undefined,
-              name: centerLayoutPresetDraftName.trim(),
-              values: {
-                detection: state.centerLayoutDetection,
-                shadowPolicy: state.centerLayoutShadowPolicy,
-                whiteThreshold: state.centerLayoutWhiteThresholdValue,
-                chromaThreshold: state.centerLayoutChromaThresholdValue,
-              },
-            });
-            setCenterLayoutCustomPresets(saved.presets);
-            setCenterLayoutPresetDraftName(saved.savedPreset.name);
-            toast(`Saved preset "${saved.savedPreset.name}".`, { variant: 'success' });
-          } catch (error) {
-            toast(error instanceof Error ? error.message : 'Failed to save custom preset.', { variant: 'error' });
-          }
-        }}
-        onCenterLayoutDeletePreset={() => {
+        onCenterLayoutSavePreset={(): void => {
+          void (async (): Promise<void> => {
+            if (!state.centerLayoutPresetDraftName.trim().length) return;
+            try {
+              const saved = saveObjectLayoutCustomPreset(activeProjectId, {
+                presetId: state.selectedCenterCustomPresetId ?? undefined,
+                name: centerLayoutPresetDraftName.trim(),
+                values: {
+                  detection: state.centerLayoutDetection,
+                  shadowPolicy: state.centerLayoutShadowPolicy,
+                  whiteThreshold: state.centerLayoutWhiteThresholdValue,
+                  chromaThreshold: state.centerLayoutChromaThresholdValue,
+                },
+              });
+              setCenterLayoutCustomPresets(saved.presets);
+              setCenterLayoutPresetDraftName(saved.savedPreset.name);
+              toast(`Saved preset "${saved.savedPreset.name}".`, { variant: 'success' });
+            } catch (error) {
+              toast(error instanceof Error ? error.message : 'Failed to save custom preset.', { variant: 'error' });
+            }
+          })();
+        }}        onCenterLayoutDeletePreset={() => {
           if (!state.selectedCenterCustomPresetId) return;
           const deletedName = state.selectedCenterCustomPreset?.name?.trim() ?? '';
           const nextPresets = deleteObjectLayoutCustomPreset(activeProjectId, state.selectedCenterCustomPresetId);

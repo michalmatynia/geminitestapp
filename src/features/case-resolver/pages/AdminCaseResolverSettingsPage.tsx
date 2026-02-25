@@ -119,7 +119,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     append(modelsQuery.data?.ollamaModels ?? [], 'local Ollama OCR models', 'Ollama models');
     append(modelsQuery.data?.otherModels ?? [], 'OCR models from API providers', 'Other models');
     append([openaiModelFallback], 'system openai_model');
-    append([(draft as CaseResolverSettings | null)?.ocrModel ?? ''], 'current OCR model');
+    append([(draft as unknown as CaseResolverSettings | null)?.ocrModel ?? ''], 'current OCR model');
 
     return options;
   }, [draft?.ocrModel, modelsQuery.data?.ollamaModels, modelsQuery.data?.otherModels, openaiModelFallback]);
@@ -138,7 +138,7 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     }
   }, [modelsQuery.data?.keySource]);
   const detectedOcrProviderLabel = useMemo((): string => {
-    const model = (draft as CaseResolverSettings | null)?.ocrModel.trim() ?? '';
+    const model = (draft as unknown as CaseResolverSettings | null)?.ocrModel.trim() ?? '';
     if (!model) return 'Not set';
     return resolveCaseResolverOcrProviderLabel(model);
   }, [draft]);
@@ -160,17 +160,17 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
     />
   );
 
-  const handleSave = async (): Promise<void> => {
-    if (!draft) return;
-    const nextSettings: CaseResolverSettings = {
-      ocrModel: draft.ocrModel.trim(),
-      ocrPrompt: draft.ocrPrompt.trim(),
-      defaultDocumentFormat: 'wysiwyg',
-      confirmDeleteDocument: draft.confirmDeleteDocument !== false,
-      defaultAddresserPartyKind: draft.defaultAddresserPartyKind,
-      defaultAddresseePartyKind: draft.defaultAddresseePartyKind,
-    };
-
+      const handleSave = async (): Promise<void> => {
+        if (!draft) return;
+        const settings = draft as unknown as CaseResolverSettings;
+        const nextSettings: CaseResolverSettings = {
+          ocrModel: settings.ocrModel.trim(),
+          ocrPrompt: settings.ocrPrompt.trim(),
+          defaultDocumentFormat: 'wysiwyg',
+          confirmDeleteDocument: settings.confirmDeleteDocument !== false,
+          defaultAddresserPartyKind: settings.defaultAddresserPartyKind,
+          defaultAddresseePartyKind: settings.defaultAddresseePartyKind,
+        };
     try {
       await updateSettingsBulk.mutateAsync([
         {
@@ -259,23 +259,22 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
               </Badge>
             )}
             description={`OpenAI OCR calls use the Image Studio API key first. Key source: ${ocrKeySourceLabel}`}
-          >
-            <SelectSimple
-              value={draft.ocrModel}
-              onValueChange={(value: string): void => {
-                setDraft((previous: CaseResolverSettings | null) =>
-                  previous
-                    ? {
-                      ...previous,
-                      ocrModel: value,
-                    }
-                    : previous
-                );
-              }}
-              options={modelOptions}
-              placeholder='Select OCR model'
-            />
-            {modelsQuery.data?.warning?.message ? (
+                      >
+                        <SelectSimple
+                          value={(draft as unknown as CaseResolverSettings).ocrModel}
+                          onValueChange={(value: string): void => {
+                            setDraft((previous: CaseResolverSettings | null) =>
+                              previous
+                                ? {
+                                  ...previous,
+                                  ocrModel: value,
+                                }
+                                : previous
+                            );
+                          }}
+                          options={modelOptions}
+                          placeholder='Select OCR model'
+                        />            {modelsQuery.data?.warning?.message ? (
               <div className='mt-1 text-[11px] text-amber-300'>
                 {modelsQuery.data.warning.message}
               </div>
@@ -308,11 +307,10 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
             label='OCR Prompt Template'
             description='Edit the default OCR instruction sent with uploaded scan images.'
             className='md:col-span-2'
-          >
-            <Textarea
-              value={draft.ocrPrompt}
-              onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-                const value = event.target.value;
+                      >
+                        <Textarea
+                          value={(draft as unknown as CaseResolverSettings).ocrPrompt}
+                          onChange={(event: React.ChangeEvent<HTMLTextAreaElement>): void => {                const value = event.target.value;
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
@@ -339,11 +337,10 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
           <FormField
             label='Default Document Format'
             description='Legacy markdown content is migrated to WYSIWYG HTML automatically.'
-          >
-            <SelectSimple
-              value={draft.defaultDocumentFormat}
-              onValueChange={(value: string): void => {
-                if (value !== 'wysiwyg') return;
+                      >
+                        <SelectSimple
+                          value={(draft as unknown as CaseResolverSettings).defaultDocumentFormat}
+                          onValueChange={(value: string): void => {                if (value !== 'wysiwyg') return;
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
@@ -381,11 +378,10 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
           <FormField
             label='Default Addresser Lookup'
             description='Choose whether addresser dropdown starts in Persons or Organizations mode.'
-          >
-            <SelectSimple
-              value={draft.defaultAddresserPartyKind}
-              onValueChange={(value: string): void => {
-                if (value !== 'person' && value !== 'organization') return;
+                      >
+                        <SelectSimple
+                          value={(draft as unknown as CaseResolverSettings).defaultAddresserPartyKind}
+                          onValueChange={(value: string): void => {                if (value !== 'person' && value !== 'organization') return;
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {
@@ -402,11 +398,10 @@ export function AdminCaseResolverSettingsPage(): React.JSX.Element {
           <FormField
             label='Default Addressee Lookup'
             description='Choose whether addressee dropdown starts in Persons or Organizations mode.'
-          >
-            <SelectSimple
-              value={draft.defaultAddresseePartyKind}
-              onValueChange={(value: string): void => {
-                if (value !== 'person' && value !== 'organization') return;
+                      >
+                        <SelectSimple
+                          value={(draft as unknown as CaseResolverSettings).defaultAddresseePartyKind}
+                          onValueChange={(value: string): void => {                if (value !== 'person' && value !== 'organization') return;
                 setDraft((previous: CaseResolverSettings | null) =>
                   previous
                     ? {

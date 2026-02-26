@@ -55,6 +55,71 @@ describe('case resolver meaningful draft changes', () => {
     ).toBe(false);
   });
 
+  it('treats null and undefined parties as equivalent in dirty fingerprint', () => {
+    const file = createCaseResolverFile({
+      id: 'legacy-parties-nullish',
+      fileType: 'document',
+      name: 'Legacy Parties Nullish',
+      documentContent: 'Body',
+    });
+    const legacyFile = {
+      ...file,
+      addresser: undefined,
+      addressee: undefined,
+    } as unknown as CaseResolverFile;
+    const draft = buildFileEditDraft(legacyFile);
+    const normalizedDraft = {
+      ...draft,
+      addresser: null,
+      addressee: null,
+    };
+
+    expect(
+      hasCaseResolverDraftMeaningfulChanges({
+        draft: normalizedDraft,
+        file: legacyFile,
+      })
+    ).toBe(false);
+  });
+
+  it('ignores extra legacy keys on party references in dirty fingerprint', () => {
+    const file = createCaseResolverFile({
+      id: 'legacy-parties-extra-keys',
+      fileType: 'document',
+      name: 'Legacy Parties Extra Keys',
+      documentContent: 'Body',
+      addresser: {
+        kind: 'person',
+        id: 'person-1',
+      },
+      addressee: {
+        kind: 'organization',
+        id: 'org-1',
+      },
+    });
+    const legacyFile = {
+      ...file,
+      addresser: {
+        kind: 'person',
+        id: 'person-1',
+        label: 'Legacy Person',
+      },
+      addressee: {
+        kind: 'organization',
+        id: 'org-1',
+        label: 'Legacy Organization',
+      },
+    } as unknown as CaseResolverFile;
+    const draft = buildFileEditDraft(file);
+
+    expect(
+      hasCaseResolverDraftMeaningfulChanges({
+        draft,
+        file: legacyFile,
+      })
+    ).toBe(false);
+  });
+
   it('treats sent flag updates as meaningful changes', () => {
     const file = createCaseResolverFile({
       id: 'sent-flag',

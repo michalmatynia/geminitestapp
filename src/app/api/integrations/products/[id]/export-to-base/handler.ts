@@ -236,6 +236,15 @@ export async function postExportToBaseHandler(
       ['baselinker', 'base-com', 'base'].includes(i.slug)
     );
     const baseIntegrationId = baseIntegration?.id ?? connection.integrationId ?? null;
+    const token = (baseIntegration as any)?.credentials?.token
+      ? decryptSecret((baseIntegration as any).credentials.token)
+      : '';
+
+    let imageDiagnosticsContext: Record<string, unknown> = {
+      productId,
+      connectionId: data.connectionId,
+    };
+
     if (!baseIntegration && baseIntegrationId) {
       await ErrorSystem.logWarning(
         '[export-to-base] Base integration slug not found while resolving listing badge integration; falling back to connection.integrationId.',

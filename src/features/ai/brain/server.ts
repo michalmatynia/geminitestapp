@@ -35,49 +35,38 @@ const readMongoSettingValue = async (key: string): Promise<string | null> => {
   return typeof doc?.value === 'string' ? doc.value : null;
 };
 
+let cachedBrainSettingsValue: string | null = null;
+let lastBrainSettingsFetchAt = 0;
+const BRAIN_SETTINGS_TTL_MS = 30000; // 30 seconds
+
 const readBrainSettingValue = async (key: string): Promise<string | null> => {
+  const now = Date.now();
+  if (key === AI_BRAIN_SETTINGS_KEY && cachedBrainSettingsValue !== null && now - lastBrainSettingsFetchAt < BRAIN_SETTINGS_TTL_MS) {
+    return cachedBrainSettingsValue;
+  }
+
   const provider = await getAppDbProvider().catch(() => null);
+  let value: string | null = null;
+
+  const tryPrisma = async () => {
+    try { return await readPrismaSettingValue(key); } catch { return null; }
+  };
+  const tryMongo = async () => {
+    try { return await readMongoSettingValue(key); } catch { return null; }
+  };
 
   if (provider === 'mongodb') {
-    try {
-      const mongoValue = await readMongoSettingValue(key);
-      if (mongoValue !== null) return mongoValue;
-    } catch {
-      // Continue with fallback if settings storage is unavailable.
-    }
-    try {
-      return await readPrismaSettingValue(key);
-    } catch {
-      return null;
-    }
+    value = await tryMongo() || await tryPrisma();
+  } else {
+    value = await tryPrisma() || await tryMongo();
   }
 
-  if (provider === 'prisma') {
-    try {
-      const prismaValue = await readPrismaSettingValue(key);
-      if (prismaValue !== null) return prismaValue;
-    } catch {
-      // Continue with fallback if settings storage is unavailable.
-    }
-    try {
-      return await readMongoSettingValue(key);
-    } catch {
-      return null;
-    }
+  if (key === AI_BRAIN_SETTINGS_KEY) {
+    cachedBrainSettingsValue = value;
+    lastBrainSettingsFetchAt = now;
   }
 
-  try {
-    const prismaValue = await readPrismaSettingValue(key);
-    if (prismaValue !== null) return prismaValue;
-  } catch {
-    // Continue with defaults if settings storage is unavailable.
-  }
-
-  try {
-    return await readMongoSettingValue(key);
-  } catch {
-    return null;
-  }
+  return value;
 };
 
 export const getBrainAssignmentForFeature = async (

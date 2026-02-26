@@ -27,6 +27,7 @@ import {
   fromCaseResolverFileNodeId,
   fromCaseResolverAssetNodeId,
 } from '../master-tree';
+import { createMasterFolderTreeAdapterV3 } from '../../foldertree/v2';
 import { 
   buildCaseResolverNodeFileRelationIndexFromAssets,
 } from '../nodefile-relations';
@@ -206,25 +207,38 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
   };
 
   const adapter = useMemo(
-    (): MasterFolderTreeAdapter => ({
-      moveFile: async (fileId: string, targetFolder: string): Promise<void> => {
-        await adapterOperationsRef.current.moveFile(fileId, targetFolder);
+    (): MasterFolderTreeAdapter => createMasterFolderTreeAdapterV3({
+      handlers: {
+        onMove: async ({ node, targetParent }) => {
+          const targetPath = targetParent?.id ?? '';
+          if (node.entity === 'file') {
+            await adapterOperationsRef.current.moveFile(node.id, targetPath);
+          } else if (node.entity === 'asset') {
+            await adapterOperationsRef.current.moveAsset(node.id, targetPath);
+          } else {
+            await adapterOperationsRef.current.moveFolder(node.id, targetPath);
+          }
+        },
+        onRename: async ({ node, nextName }) => {
+          if (node.entity === 'file') {
+            await adapterOperationsRef.current.renameFile(node.id, nextName);
+          } else if (node.entity === 'asset') {
+            await adapterOperationsRef.current.renameAsset(node.id, nextName);
+          } else {
+            await adapterOperationsRef.current.renameFolder(node.id, nextName);
+          }
+        }
       },
-      moveAsset: async (assetId: string, targetFolder: string): Promise<void> => {
-        await adapterOperationsRef.current.moveAsset(assetId, targetFolder);
-      },
-      moveFolder: async (folderPath: string, targetFolder: string): Promise<void> => {
-        await adapterOperationsRef.current.moveFolder(folderPath, targetFolder);
-      },
-      renameFile: async (fileId: string, nextName: string): Promise<void> => {
-        await adapterOperationsRef.current.renameFile(fileId, nextName);
-      },
-      renameAsset: async (assetId: string, nextName: string): Promise<void> => {
-        await adapterOperationsRef.current.renameAsset(assetId, nextName);
-      },
-      renameFolder: async (folderPath: string, nextFolderPath: string): Promise<void> => {
-        await adapterOperationsRef.current.renameFolder(folderPath, nextFolderPath);
-      },
+      decodeNodeId: (nodeId: string) => {
+        const fileId = fromCaseResolverFileNodeId(nodeId);
+        if (fileId) return { entity: 'file', id: fileId, nodeId };
+        const assetId = fromCaseResolverAssetNodeId(nodeId);
+        if (assetId) return { entity: 'asset', id: assetId, nodeId };
+        const caseId = fromCaseResolverCaseNodeId(nodeId);
+        if (caseId) return { entity: 'folder', id: caseId, nodeId };
+        const folderPath = fromCaseResolverFolderNodeId(nodeId);
+        return { entity: 'folder', id: folderPath || nodeId, nodeId };
+      }
     }),
     [],
   );

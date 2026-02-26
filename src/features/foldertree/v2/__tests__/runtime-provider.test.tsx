@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import { describe, expect, it } from 'vitest';
 import { fireEvent, render, waitFor } from '@testing-library/react';
 
@@ -43,8 +43,8 @@ describe('MasterFolderTreeRuntimeProvider', () => {
 
     await waitFor(() => {
       expect(snapshot).not.toBeNull();
-      expect((snapshot?.row_rerender ?? 0) >= 2).toBe(true);
-      expect((snapshot?.frame_budget_miss ?? 0) >= 1).toBe(true);
+      expect((snapshot?.['row_rerender'] ?? 0) >= 2).toBe(true);
+      expect((snapshot?.['frame_budget_miss'] ?? 0) >= 1).toBe(true);
     });
   });
 

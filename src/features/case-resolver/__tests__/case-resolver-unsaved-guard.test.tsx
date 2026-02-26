@@ -151,6 +151,18 @@ describe('CaseResolverPageView unsaved guard', () => {
     expect(screen.queryByText('Unsaved Changes')).not.toBeInTheDocument();
   });
 
+  it('keeps navigation unblocked for clean drafts across repeated switches', () => {
+    viewContextMock = createViewContextMock({ isEditorDraftDirty: false });
+
+    render(<CaseResolverPageView />);
+    const switchButton = screen.getByRole('button', { name: 'Switch File' });
+    fireEvent.click(switchButton);
+    fireEvent.click(switchButton);
+
+    expect(handleOpenFileEditorMock).toHaveBeenCalledTimes(2);
+    expect(screen.queryByText('Unsaved Changes')).not.toBeInTheDocument();
+  });
+
   it('opens unsaved prompt when draft is dirty before switching files', () => {
     viewContextMock = createViewContextMock({ isEditorDraftDirty: true });
 

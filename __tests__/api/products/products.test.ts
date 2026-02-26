@@ -55,8 +55,15 @@ vi.mock('@/shared/lib/db/prisma', () => {
       findMany: vi.fn(),
       findUnique: vi.fn(),
     },
+    producer: {
+      findMany: vi.fn(),
+      findUnique: vi.fn(),
+    },
     systemLog: {
       create: vi.fn().mockResolvedValue({}),
+    },
+    setting: {
+      findUnique: vi.fn().mockResolvedValue(null),
     },
     $disconnect: vi.fn(),
     $transaction: vi.fn().mockImplementation(async (callback: unknown) => {
@@ -73,6 +80,7 @@ import { POST as POST_DUPLICATE } from '@/app/api/products/[id]/duplicate/route'
 import { PUT, DELETE } from '@/app/api/products/[id]/route';
 import { GET as GET_LIST, POST } from '@/app/api/products/route';
 import { GET as GET_PUBLIC } from '@/app/api/public/products/[id]/route';
+import { queryCache } from '@/features/products/performance/query-cache';
 import prisma from '@/shared/lib/db/prisma';
 
 // Helper to create mock product data
@@ -107,6 +115,7 @@ const createMockProductData = (overrides: Record<string, unknown> = {}) => ({
 describe('Products API', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    queryCache.clear();
 
     // Default mock implementations
     vi.mocked(prisma.product.findMany).mockResolvedValue([]);
@@ -162,6 +171,13 @@ describe('Products API', () => {
     vi.mocked(prisma.productCategoryAssignment.createMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.productTagAssignment.deleteMany).mockResolvedValue({ count: 0 });
     vi.mocked(prisma.productTagAssignment.createMany).mockResolvedValue({ count: 0 });
+    vi.mocked(prisma.catalog.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.catalog.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.producer.findMany).mockResolvedValue([]);
+    vi.mocked(prisma.producer.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.setting.findUnique).mockResolvedValue(null);
+    vi.mocked(prisma.productProducerAssignment.deleteMany).mockResolvedValue({ count: 0 });
+    vi.mocked(prisma.productProducerAssignment.createMany).mockResolvedValue({ count: 0 });
   });
 
   afterAll(() => {
@@ -264,7 +280,8 @@ describe('Products API', () => {
         .mockResolvedValue(mockCreatedProduct as any); // getProductById
 
       const res = await POST(req);
-      const product = (await res.json()) as Product;
+      const json = await res.json();
+      const product = json as Product;
 
       expect(res.status).toEqual(200);
       expect(product.name_en).toEqual('New Product (EN)');
@@ -307,6 +324,9 @@ describe('Products API', () => {
       const res = await DELETE(req, {
         params: Promise.resolve({ id: 'non-existent-id' }),
       });
+      if (res.status === 500) {
+        console.error('DELETE /api/products/[id] 500 error:', await res.json());
+      }
       expect(res.status).toEqual(404);
     });
   });
@@ -346,6 +366,9 @@ describe('Products API', () => {
       const res = await POST_DUPLICATE(req, {
         params: Promise.resolve({ id: 'non-existent-id' }),
       });
+      if (res.status === 500) {
+        console.error('POST /api/products/[id]/duplicate 500 error:', await res.json());
+      }
       expect(res.status).toEqual(404);
     });
   });

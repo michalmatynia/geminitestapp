@@ -480,13 +480,12 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
 };
 
 /**
- * Strip re-derivable derived content fields before persisting to reduce payload size.
- * `documentContentMarkdown` and `documentContentPlainText` are always regenerated from
- * `documentContentHtml` by `createCaseResolverFile` on load, so storing them is redundant.
- * History entries are compacted the same way. Achieves ~30–50% size reduction for
- * text-heavy workspaces without any data loss.
+ * Strip re-derivable content fields before persisting to reduce payload size.
+ * For `document` files we keep html as the canonical source and omit markdown/plaintext.
+ * For `scanfile` files we keep markdown as canonical and omit duplicated html/plain/version mirrors.
+ * History entries are compacted with the same per-file strategy.
  */
-const compactWorkspaceForPersist = (
+export const compactCaseResolverWorkspaceForPersist = (
   workspace: CaseResolverWorkspace
 ): CaseResolverWorkspace => {
   if (!Array.isArray(workspace.files) || workspace.files.length === 0) {
@@ -494,16 +493,43 @@ const compactWorkspaceForPersist = (
   }
   const compactedFiles = workspace.files.map((file): CaseResolverWorkspace['files'][number] => {
     const fileRecord = file as unknown as Record<string, unknown>;
+    const isScanFile = file.fileType === 'scanfile';
     const rawHistory = fileRecord['documentHistory'];
     const compactedHistory = Array.isArray(rawHistory)
       ? rawHistory.map((entry: unknown) => {
         if (!entry || typeof entry !== 'object') return entry;
-        const { documentContentMarkdown: _md, documentContentPlainText: _pt, ...rest } =
-            entry as Record<string, unknown>;
+        const entryRecord = entry as Record<string, unknown>;
+        const rest = { ...entryRecord };
+        if (isScanFile) {
+          delete rest['documentContent'];
+          delete rest['documentContentHtml'];
+          delete rest['documentContentPlainText'];
+        } else {
+          delete rest['documentContentMarkdown'];
+          delete rest['documentContentPlainText'];
+        }
         return rest;
       })
       : rawHistory;
-    const { documentContentMarkdown: _fmd, documentContentPlainText: _fpt, ...fileRest } = file;
+    if (isScanFile) {
+      const {
+        documentContent: _content,
+        documentContentHtml: _html,
+        documentContentPlainText: _plainText,
+        originalDocumentContent: _original,
+        explodedDocumentContent: _exploded,
+        ...fileRest
+      } = file;
+      return {
+        ...fileRest,
+        documentHistory: compactedHistory,
+      } as CaseResolverWorkspace['files'][number];
+    }
+    const {
+      documentContentMarkdown: _markdown,
+      documentContentPlainText: _plainText,
+      ...fileRest
+    } = file;
     return {
       ...fileRest,
       documentHistory: compactedHistory,
@@ -530,7 +556,7 @@ export const persistCaseResolverWorkspaceSnapshot = async (
       `dropped_duplicate_count=${normalizationDiagnostics.droppedDuplicateCount}`,
     ].join(' '),
   });
-  const workspaceForPersist = compactWorkspaceForPersist(normalizedWorkspace);
+  const workspaceForPersist = compactCaseResolverWorkspaceForPersist(normalizedWorkspace);
   const serializedWorkspace = JSON.stringify(workspaceForPersist);
   const payloadBytes = serializedWorkspace.length;
   logCaseResolverWorkspaceEvent({

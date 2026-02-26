@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { randomUUID } from 'crypto';
+import { AnyBulkWriteOperation, Document } from 'mongodb';
 
 import {
   AI_PATHS_RUN_SOURCE_TABS,
@@ -17,6 +18,7 @@ import type {
   AiPathRunNodeUpdate,
   AiPathRunRecord,
   AiPathRunRepository,
+  AiPathRunStatus,
   AiPathRunUpdate,
 } from '@/shared/contracts/ai-paths';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
@@ -617,7 +619,6 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const db = await getMongoDb();
     const now = new Date();
     const docs: NodeDocument[] = nodes.map((node: AiNode) => ({
-      _id: randomUUID(),
       runId,
       nodeId: node.id,
       nodeType: node.type,
@@ -654,7 +655,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       .collection<NodeDocument>(NODES_COLLECTION)
       .findOneAndUpdate(
         { runId, nodeId },
-        { $set: updateData, $setOnInsert: { _id: randomUUID(), runId, nodeId, createdAt: now } },
+        { $set: updateData, $setOnInsert: { runId, nodeId, createdAt: now } },
         { returnDocument: 'after', upsert: true }
       );
     if (!result) {
@@ -711,7 +712,6 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     await ensureIndexes();
     const db = await getMongoDb();
     const document: EventDocument = {
-      _id: randomUUID(),
       runId: input.runId,
       nodeId: input.nodeId ?? null,
       nodeType: input.nodeType ?? null,
@@ -786,4 +786,51 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       );
     return { count: result.modifiedCount ?? 0 };
   },
+
+  async finalizeRun(
+    runId: string,
+    status: AiPathRunStatus,
+    options?: {
+      errorMessage?: string | null;
+      event?: Omit<AiPathRunEventCreateInput, 'runId'>;
+      finishedAt?: string | null;
+    }
+  ) {
+    await ensureIndexes();
+    const db = await getMongoDb();
+    const finishedAt = options?.finishedAt ? new Date(options.finishedAt) : new Date();
+    
+    const bulkOps: any[] = [
+      {
+        updateOne: {
+          filter: buildRunFilter({ runId }),
+          update: {
+            $set: {
+              status,
+              errorMessage: options?.errorMessage ?? null,
+              finishedAt,
+              updatedAt: new Date(),
+            },
+          },
+        },
+      },
+    ];
+
+    if (options?.event) {
+      bulkOps.push({
+        insertOne: {
+          document: {
+            runId,
+            level: options.event.level,
+            message: options.event.message,
+            metadata: options.event.metadata ?? null,
+            createdAt: new Date(),
+          },
+        },
+      });
+    }
+
+    await db.collection(RUNS_COLLECTION).bulkWrite(bulkOps);
+  },
+
 };

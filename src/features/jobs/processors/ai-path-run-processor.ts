@@ -147,27 +147,23 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
     }
     if (isNonRetryableRunError(error)) {
       const finishedAt = new Date();
-      const failed = await repo.updateRunIfStatus(run.id, ['running', 'queued'], {
-        status: 'failed',
-        retryCount: latest?.retryCount ?? run.retryCount ?? 0,
-        finishedAt: finishedAt.toISOString(),
+      await repo.finalizeRun(run.id, 'failed', {
         errorMessage: message,
-      });
-      if (failed) {
-        await repo.createRunEvent({
-          runId: run.id,
+        finishedAt: finishedAt.toISOString(),
+        event: {
           level: 'error',
           message: `Run stopped: non-retryable error — ${message}`,
           metadata: { nonRetryable: true, reason: 'non_retryable_error' },
-        });
-        await recordRuntimeRunFinished({
-          runId: run.id,
-          status: 'failed',
-          durationMs: resolveDurationMs(latest?.startedAt ?? run.startedAt, finishedAt),
-          timestamp: finishedAt,
-        });
-        publishRunUpdate(run.id, 'error', { error: message, nonRetryable: true });
-      }
+        },
+      });
+
+      await recordRuntimeRunFinished({
+        runId: run.id,
+        status: 'failed',
+        durationMs: resolveDurationMs(latest?.startedAt ?? run.startedAt, finishedAt),
+        timestamp: finishedAt,
+      });
+      publishRunUpdate(run.id, 'error', { error: message, nonRetryable: true });
       return;
     }
     const retrySource = latest ?? run;
@@ -199,33 +195,28 @@ export const processRun = async (run: AiPathRunRecord): Promise<ProcessRunResult
       return { requeueDelayMs: delayMs };
     } else {
       const finishedAt = new Date();
-      const deadLettered = await repo.updateRunIfStatus(run.id, ['running', 'queued'], {
-        status: 'dead_lettered',
-        retryCount,
-        finishedAt: finishedAt.toISOString(),
-        deadLetteredAt: finishedAt.toISOString(),
+      await repo.finalizeRun(run.id, 'dead_lettered', {
         errorMessage: message,
-      });
-      if (deadLettered) {
-        await repo.createRunEvent({
-          runId: run.id,
+        finishedAt: finishedAt.toISOString(),
+        event: {
           level: 'error',
           message: 'Run moved to dead-letter after max retries.',
           metadata: { retryCount, maxAttempts },
-        });
-        await recordRuntimeRunFinished({
-          runId: run.id,
-          status: 'dead_lettered',
-          durationMs: resolveDurationMs(latest?.startedAt ?? run.startedAt, finishedAt),
-          timestamp: finishedAt,
-        });
-        publishRunUpdate(run.id, 'error', {
-          error: 'Max retries exceeded',
-          status: 'dead_lettered',
-          retryCount,
-          maxAttempts,
-        });
-      }
+        },
+      });
+
+      await recordRuntimeRunFinished({
+        runId: run.id,
+        status: 'dead_lettered',
+        durationMs: resolveDurationMs(latest?.startedAt ?? run.startedAt, finishedAt),
+        timestamp: finishedAt,
+      });
+      publishRunUpdate(run.id, 'error', {
+        error: 'Max retries exceeded',
+        status: 'dead_lettered',
+        retryCount,
+        maxAttempts,
+      });
       return;
     }
   }

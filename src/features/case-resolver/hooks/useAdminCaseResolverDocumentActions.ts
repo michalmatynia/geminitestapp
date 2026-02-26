@@ -138,6 +138,50 @@ export const applyCaseResolverWysiwygDraftContentChange = ({
   return nextDraft;
 };
 
+export const applyCaseResolverScanDraftContentChange = ({
+  current,
+  nextMarkdown,
+}: {
+  current: CaseResolverFileEditDraft;
+  nextMarkdown: string;
+}): CaseResolverFileEditDraft => {
+  const canonical = normalizeSemanticallyEmptyCanonicalContent(
+    deriveDocumentContentSync({
+      mode: 'markdown',
+      value: nextMarkdown,
+      previousMarkdown: current.documentContentMarkdown ?? '',
+      previousHtml: current.documentContentHtml ?? '',
+    })
+  );
+  const nextWarnings = canonical.warnings;
+  const nextStoredContent = toStorageDocumentValue(canonical);
+  const now = new Date().toISOString();
+  const nextDraft: CaseResolverFileEditDraft = {
+    ...current,
+    editorType: 'markdown',
+    documentContentFormatVersion: 1,
+    documentContent: nextStoredContent,
+    documentContentMarkdown: canonical.markdown,
+    documentContentHtml: canonical.html,
+    documentContentPlainText: canonical.plainText,
+    documentConversionWarnings: nextWarnings,
+    lastContentConversionAt: now,
+  };
+  const currentFingerprint = buildCaseResolverDraftComparableFingerprint(current);
+  const nextFingerprint = buildCaseResolverDraftComparableFingerprint(nextDraft);
+  if (currentFingerprint === nextFingerprint) {
+    if (nextMarkdown !== (current.documentContentMarkdown ?? '')) {
+      logCaseResolverWorkspaceEvent({
+        source: 'case_view_scan_editor',
+        action: 'scan_editor_onchange_semantic_noop',
+        message: `file_id=${current.id}`,
+      });
+    }
+    return current;
+  }
+  return nextDraft;
+};
+
 export function useAdminCaseResolverDocumentActions({
   editingDocumentDraft,
   setEditingDocumentDraft,
@@ -446,7 +490,12 @@ export function useAdminCaseResolverDocumentActions({
       setEditingDocumentDraft((current) => {
         if (!current) return current;
         if (current.isLocked) return current;
-        if (current.fileType === 'scanfile') return current;
+        if (current.fileType === 'scanfile') {
+          return applyCaseResolverScanDraftContentChange({
+            current,
+            nextMarkdown: next,
+          });
+        }
         return applyCaseResolverWysiwygDraftContentChange({
           current,
           nextHtml: next,

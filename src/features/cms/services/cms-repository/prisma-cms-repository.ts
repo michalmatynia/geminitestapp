@@ -207,18 +207,38 @@ export const prismaCmsRepository: CmsRepository = {
       showMenu: data.showMenu,
     });
 
-    if (Object.keys(cleanData).length > 0) {
-      await prisma.page.update({
+    const updated = await prisma.$transaction(async (tx) => {
+      if (Object.keys(cleanData).length > 0) {
+        await tx.page.update({
+          where: { id },
+          data: cleanData as Prisma.PageUpdateInput,
+        });
+      }
+
+      if (data.components) {
+        await tx.pageComponent.deleteMany({ where: { pageId: id } });
+        if (data.components.length > 0) {
+          await tx.pageComponent.createMany({
+            data: data.components.map((component: PageComponent, index: number) => ({
+              pageId: id,
+              type: component.type,
+              content: component.content as Prisma.InputJsonValue,
+              order: index,
+            })),
+          });
+        }
+      }
+
+      return tx.page.findUnique({
         where: { id },
-        data: cleanData as Prisma.PageUpdateInput,
+        include: {
+          slugs: { include: { slug: true } },
+          components: { orderBy: { order: 'asc' } },
+        },
       });
-    }
+    });
 
-    if (data.components) {
-      await this.replacePageComponents(id, data.components);
-    }
-
-    return this.getPageById(id);
+    return updated ? mapPrismaPage(updated as any) : null;
   },
 
   async deletePage(id: string): Promise<Page | null> {

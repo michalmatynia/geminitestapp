@@ -21,7 +21,9 @@ import {
 import {
   deriveDocumentContentSync,
   ensureHtmlForPreview,
+  hasHtmlMarkup,
   ensureSafeDocumentHtml,
+  stripHtmlToPlainText,
   toStorageDocumentValue,
 } from '@/features/document-editor/content-format';
 import { createCaseResolverFile } from '../settings';
@@ -80,30 +82,68 @@ export function useCaseResolverStateEditorActions({
       ...baseDraft,
       documentHistory: baseDraft.documentHistory ?? [],
     };
-    const resolvedDraftHtml = (() => {
-      if (
-        typeof mergedDraft.documentContentHtml === 'string' &&
-        mergedDraft.documentContentHtml.trim().length > 0
-      ) {
-        return mergedDraft.documentContentHtml;
+    const canonicalDraft = (() => {
+      if (mergedDraft.fileType === 'scanfile') {
+        const resolvedDraftMarkdown = (() => {
+          if (
+            typeof mergedDraft.documentContentMarkdown === 'string' &&
+            mergedDraft.documentContentMarkdown.trim().length > 0
+          ) {
+            return mergedDraft.documentContentMarkdown;
+          }
+          if (
+            typeof mergedDraft.documentContentPlainText === 'string' &&
+            mergedDraft.documentContentPlainText.trim().length > 0
+          ) {
+            return mergedDraft.documentContentPlainText;
+          }
+          const fallbackContent = mergedDraft.documentContent ?? '';
+          if (fallbackContent.trim().length > 0) {
+            return hasHtmlMarkup(fallbackContent)
+              ? stripHtmlToPlainText(fallbackContent)
+              : fallbackContent;
+          }
+          if (
+            typeof mergedDraft.documentContentHtml === 'string' &&
+            mergedDraft.documentContentHtml.trim().length > 0
+          ) {
+            return stripHtmlToPlainText(mergedDraft.documentContentHtml);
+          }
+          return '';
+        })();
+        return deriveDocumentContentSync({
+          mode: 'markdown',
+          value: resolvedDraftMarkdown,
+          previousHtml: mergedDraft.documentContentHtml,
+          previousMarkdown: mergedDraft.documentContentMarkdown,
+        });
       }
-      if (
-        typeof mergedDraft.documentContentMarkdown === 'string' &&
-        mergedDraft.documentContentMarkdown.trim().length > 0
-      ) {
-        return ensureHtmlForPreview(mergedDraft.documentContentMarkdown, 'markdown');
-      }
-      return ensureSafeDocumentHtml(mergedDraft.documentContent ?? '');
+
+      const resolvedDraftHtml = (() => {
+        if (
+          typeof mergedDraft.documentContentHtml === 'string' &&
+          mergedDraft.documentContentHtml.trim().length > 0
+        ) {
+          return mergedDraft.documentContentHtml;
+        }
+        if (
+          typeof mergedDraft.documentContentMarkdown === 'string' &&
+          mergedDraft.documentContentMarkdown.trim().length > 0
+        ) {
+          return ensureHtmlForPreview(mergedDraft.documentContentMarkdown, 'markdown');
+        }
+        return ensureSafeDocumentHtml(mergedDraft.documentContent ?? '');
+      })();
+      return deriveDocumentContentSync({
+        mode: 'wysiwyg',
+        value: resolvedDraftHtml,
+        previousHtml: mergedDraft.documentContentHtml,
+        previousMarkdown: mergedDraft.documentContentMarkdown,
+      });
     })();
-    const canonicalDraft = deriveDocumentContentSync({
-      mode: 'wysiwyg',
-      value: resolvedDraftHtml,
-      previousHtml: mergedDraft.documentContentHtml,
-      previousMarkdown: mergedDraft.documentContentMarkdown,
-    });
     const nextDraft: CaseResolverFileEditDraft = {
       ...mergedDraft,
-      editorType: 'wysiwyg',
+      editorType: mergedDraft.fileType === 'scanfile' ? 'markdown' : 'wysiwyg',
       documentContentFormatVersion: 1,
       documentContent: toStorageDocumentValue(canonicalDraft),
       documentContentMarkdown: canonicalDraft.markdown,

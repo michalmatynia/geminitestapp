@@ -191,13 +191,11 @@ describe('prismaProductRepository', () => {
     const productA = await prismaProductRepository.createProduct({
       name_en: 'Advanced A',
       sku: `ADV-${suffix}-A`,
-      published: true,
       baseProductId: 'base-advanced-a',
     });
     const productB = await prismaProductRepository.createProduct({
       name_en: 'Advanced B',
       sku: `ADV-${suffix}-B`,
-      published: false,
       baseProductId: null,
     });
 

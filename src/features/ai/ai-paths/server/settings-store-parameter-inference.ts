@@ -1,6 +1,6 @@
 import { normalizeNodes } from '@/features/ai/ai-paths/lib/core/normalization';
 import { sanitizeEdges } from '@/features/ai/ai-paths/lib/core/utils/graph';
-import type { PathConfig } from '@/shared/contracts/ai-paths';
+import type { PathConfig, AiNode } from '@/shared/contracts/ai-paths';
 
 export const PARAMETER_INFERENCE_PATH_ID = 'path_syr8f4';
 export const PARAMETER_INFERENCE_PATH_NAME = 'Parameter Inference';

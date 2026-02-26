@@ -69,6 +69,9 @@ describe('createMasterFolderTreeAdapterV3', () => {
       }),
     });
 
-    await expect(adapter.loadNodes?.()).resolves.toEqual(nodes);
+    await expect(adapter.fetchState?.('')).resolves.toEqual({
+      nodes,
+      version: 2,
+    });
   });
 });

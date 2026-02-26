@@ -534,6 +534,79 @@ describe('case-resolver settings', () => {
     expect(file?.documentContentPlainText).toContain('World');
   });
 
+  it('keeps scan markdown authoritative when both markdown and html are present', () => {
+    const raw = JSON.stringify({
+      version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
+      folders: [],
+      files: [
+        {
+          id: 'scan-markdown',
+          fileType: 'scanfile',
+          name: 'Scan Markdown',
+          folder: '',
+          documentContentMarkdown: '## Heading\n\n- one\n- two',
+          documentContentHtml: '<p>Legacy HTML should not override markdown.</p>',
+          graph: {
+            nodes: [],
+            edges: [],
+            nodeMeta: {},
+            edgeMeta: {},
+          },
+        },
+      ],
+      assets: [],
+      activeFileId: 'scan-markdown',
+    });
+
+    const workspace = parseCaseResolverWorkspace(raw);
+    const file = workspace.files[0];
+
+    expect(file?.editorType).toBe('markdown');
+    expect(file?.documentContentMarkdown).toContain('## Heading');
+    expect(file?.documentContentMarkdown).not.toContain('<p>');
+    expect(file?.documentContent).toContain('## Heading');
+  });
+
+  it('strips legacy scan html-only content into plain markdown text', () => {
+    const raw = JSON.stringify({
+      version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
+      folders: [],
+      files: [
+        {
+          id: 'scan-legacy-html',
+          fileType: 'scanfile',
+          name: 'Legacy Scan',
+          folder: '',
+          documentContent: '<p>Hello <strong>world</strong></p><p>Second line</p>',
+          documentContentHtml: '<p>Hello <strong>world</strong></p><p>Second line</p>',
+          graph: {
+            nodes: [],
+            edges: [],
+            nodeMeta: {},
+            edgeMeta: {},
+          },
+        },
+      ],
+      assets: [],
+      activeFileId: 'scan-legacy-html',
+    });
+
+    const workspace = parseCaseResolverWorkspace(raw);
+    const file = workspace.files[0];
+
+    expect(file?.editorType).toBe('markdown');
+    expect(file?.documentContentMarkdown).toContain('Hello world');
+    expect(file?.documentContentMarkdown).toContain('Second line');
+    expect(file?.documentContentMarkdown).not.toContain('<strong>');
+    expect(file?.documentContentPlainText).toContain('Hello world');
+  });
+
   it('normalizes and preserves document history snapshots', () => {
     const raw = JSON.stringify({
       version: 2,

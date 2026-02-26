@@ -239,4 +239,59 @@ describe('case resolver asset actions lock races', () => {
       { variant: 'warning' }
     );
   });
+
+  it('applies OCR output as markdown-authoritative content when document is unlocked', async () => {
+    const scanfile = createCaseResolverFile({
+      id: 'scan-ocr-success',
+      fileType: 'scanfile',
+      name: 'Scan OCR Success',
+      scanSlots: [
+        {
+          id: 'slot-1',
+          fileId: 'asset-scan-ocr-success',
+          status: 'completed',
+          progress: 100,
+          name: 'scan-success.png',
+          filepath: '/uploads/case-resolver/images/scan-success.png',
+          sourceFileId: 'asset-scan-ocr-success',
+          mimeType: 'image/png',
+          size: 64,
+          ocrText: '',
+          ocrError: null,
+        },
+      ],
+      isLocked: false,
+    });
+    const harness = buildHarness(scanfile);
+    const fetchMock = vi.fn((url: string | URL): Promise<Response> => {
+      const resolvedUrl = typeof url === 'string' ? url : url.toString();
+      if (resolvedUrl === '/api/case-resolver/ocr/jobs') {
+        return Promise.resolve(createJsonResponse({ job: { id: 'job-success' } }));
+      }
+      if (resolvedUrl === '/api/case-resolver/ocr/jobs/job-success') {
+        return Promise.resolve(
+          createJsonResponse({
+            job: {
+              status: 'completed',
+              resultText: 'Recognized text from OCR.',
+            },
+          })
+        );
+      }
+      throw new Error(`Unexpected fetch URL: ${resolvedUrl}`);
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    await harness.result.current.handleRunScanFileOcr('scan-ocr-success');
+
+    const after = harness.getWorkspace().files?.find((file: CaseResolverFile) => file.id === 'scan-ocr-success');
+    expect(after?.isLocked).toBe(false);
+    expect(after?.editorType).toBe('markdown');
+    expect(after?.documentContent).toBe('Recognized text from OCR.');
+    expect(after?.documentContentMarkdown).toBe('Recognized text from OCR.');
+    expect(after?.documentContentPlainText).toBe('Recognized text from OCR.');
+    expect(after?.documentContentHtml).toContain('<p>Recognized text from OCR.</p>');
+    expect(after?.scanSlots?.[0]?.ocrText).toBe('Recognized text from OCR.');
+    expect(harness.toast).toHaveBeenCalledWith('OCR finished.', { variant: 'success' });
+  });
 });

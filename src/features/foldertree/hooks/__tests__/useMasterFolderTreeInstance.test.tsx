@@ -93,7 +93,7 @@ const createSettingsStore = ({
 
 const buildNode = (id: string) => ({
   id,
-  type: 'folder',
+  type: 'folder' as const,
   kind: 'folder',
   parentId: null,
   name: id,
@@ -171,7 +171,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
       useMasterFolderTreeInstance({
         instance: 'case_resolver_cases',
         nodes: [buildNode('folder-a')],
-        adapter: null,
+        adapter: undefined,
       }),
     );
 
@@ -229,7 +229,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
       useMasterFolderTreeInstance({
         instance: 'case_resolver_cases',
         nodes: [buildNode('folder-a')],
-        adapter: null,
+        adapter: undefined,
       }),
     );
 
@@ -259,7 +259,7 @@ describe('useMasterFolderTreeInstance expansion sync', () => {
         useMasterFolderTreeInstance({
           instance,
           nodes: [buildNode('folder-a')],
-          adapter: null,
+          adapter: undefined,
           expandedNodeIds: props.externalExpanded,
         }),
       {

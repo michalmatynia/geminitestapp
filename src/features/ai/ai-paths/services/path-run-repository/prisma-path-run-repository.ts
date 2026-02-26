@@ -16,6 +16,7 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRepository,
   AiPathRunRecord,
+  AiPathRunStatus,
   AiPathRunUpdate,
   AiPathRunNodeUpdate,
 } from '@/shared/contracts/ai-paths';
@@ -579,5 +580,39 @@ export const prismaPathRunRepository: AiPathRunRepository = {
       },
     });
     return { count: result.count ?? 0 };
+  },
+
+  async finalizeRun(
+    runId: string,
+    status: AiPathRunStatus,
+    options?: {
+      errorMessage?: string | null;
+      event?: Omit<AiPathRunEventCreateInput, 'runId'>;
+      finishedAt?: string | null;
+    }
+  ): Promise<void> {
+    const finishedAtDate = options?.finishedAt ? new Date(options.finishedAt) : new Date();
+    
+    await prisma.$transaction(async (tx) => {
+      await tx.aiPathRun.update({
+        where: { id: runId },
+        data: {
+          status,
+          errorMessage: options?.errorMessage ?? null,
+          finishedAt: finishedAtDate,
+        },
+      });
+
+      if (options?.event) {
+        await tx.aiPathRunEvent.create({
+          data: {
+            runId,
+            level: options.event.level as AiPathRunEventLevel,
+            message: options.event.message,
+            metadata: toNullableJsonInput(options.event.metadata),
+          },
+        });
+      }
+    });
   },
 };

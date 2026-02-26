@@ -35,7 +35,8 @@ import type {
   ProductRecord,
   ProductFilters,
   ProductRepository,
-  CreateProductDto as ProductCreateInput,
+  CreateProductDto,
+  ProductCreateInputDto,
 } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 
@@ -65,8 +66,8 @@ const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
 const normalizeProductPayloadForStorage = <
   TData extends Record<string, unknown>,
 >(
-  data: TData,
-): TData => {
+    data: TData,
+  ): TData => {
   const payload = data as TData & {
     parameters?: ProductParameterValue[] | null;
     imageFileIds?: string[] | null;
@@ -352,18 +353,20 @@ async function createProduct(
 }
 
 async function bulkCreateProducts(
-  data: ProductCreateInput[],
+  data: CreateProductDto[],
   options?: { provider?: ProductDbProvider; userId?: string },
 ): Promise<number> {
   if (data.length === 0) return 0;
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
 
-  const validatedData: any[] = [];
+  const validatedData: ProductCreateInputDto[] = [];
   for (const item of data) {
     const validation = await validateProductCreate(item);
     if (validation.success) {
-      validatedData.push(normalizeProductPayloadForStorage(validation.data));
+      validatedData.push(
+        normalizeProductPayloadForStorage(validation.data),
+      );
     }
   }
 

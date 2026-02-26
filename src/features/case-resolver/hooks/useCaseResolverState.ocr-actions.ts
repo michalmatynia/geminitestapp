@@ -13,7 +13,6 @@ import {
 import {
   CASE_RESOLVER_OCR_JOB_POLL_INTERVAL_MS,
   CASE_RESOLVER_OCR_JOB_TIMEOUT_MS,
-  ensureSafeDocumentHtml,
   sleep,
 } from './useCaseResolverState.helpers';
 import {
@@ -263,8 +262,8 @@ export function useCaseResolverStateOcrActions({
               didUpdate = true;
               const mergedText = buildCombinedOcrText(nextSlots);
               const canonicalDocument = deriveDocumentContentSync({
-                mode: 'wysiwyg',
-                value: ensureSafeDocumentHtml(mergedText),
+                mode: 'markdown',
+                value: mergedText,
               });
               const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
               const nextOriginalDocumentContent =
@@ -316,8 +315,8 @@ export function useCaseResolverStateOcrActions({
               const now = new Date().toISOString();
               const mergedText = buildCombinedOcrText(nextSlots);
               const canonicalDocument = deriveDocumentContentSync({
-                mode: 'wysiwyg',
-                value: ensureSafeDocumentHtml(mergedText),
+                mode: 'markdown',
+                value: mergedText,
               });
               const storedDocumentContent = toStorageDocumentValue(canonicalDocument);
               const nextOriginalDocumentContent: string =

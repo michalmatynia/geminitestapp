@@ -182,6 +182,12 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
     const cropRect = resolveCanvasOverflowCropRect({
       canvasWidth: 1600,
       canvasHeight: 1200,
+      imageFrame: {
+        x: -0.2,
+        y: 0,
+        width: 1,
+        height: 1,
+      },
       imageContentFrame: {
         x: -0.2,
         y: 0,

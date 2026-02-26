@@ -130,8 +130,8 @@ const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => (
   failureReason: doc.failureReason ?? null,
   exportHistory: ((doc.exportHistory as unknown as Record<string, unknown>[]) ?? []).map((event) => ({
     ...event,
-    exportedAt: normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? undefined,
-    expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? undefined,
+    exportedAt: normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? new Date().toISOString(),
+    expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? null,
   })),
   createdAt: doc.createdAt.toISOString(),
   updatedAt: doc.updatedAt.toISOString(),
@@ -167,8 +167,8 @@ const toDetailsRecord = (listing: EnrichedPrismaListing): ProductListingWithDeta
     (listing.exportHistory as unknown as Record<string, unknown>[] | null) ?? []
   ).map((event: Record<string, unknown>) => ({
     ...event,
-    exportedAt: normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? undefined,
-    expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? undefined,
+    exportedAt: normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? new Date().toISOString(),
+    expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? null,
   })),
   createdAt: listing.createdAt.toISOString(),
   updatedAt: listing.updatedAt.toISOString(),
@@ -289,8 +289,8 @@ const prismaRepository: ProductListingRepository = {
     
     const normalizedEvent: ProductListingExportEvent = {
       ...event,
-      exportedAt: normalizeIsoDate(event.exportedAt) ?? '',
-      expiresAt: normalizeIsoDate(event.expiresAt),
+      exportedAt: normalizeIsoDate(event.exportedAt) ?? new Date().toISOString(),
+      expiresAt: normalizeIsoDate(event.expiresAt) ?? null,
     };
 
     await prisma.productListing.update({
@@ -494,8 +494,8 @@ const mongoRepository: ProductListingRepository = {
     
     const normalizedEvent: ProductListingExportEvent = {
       ...event,
-      exportedAt: normalizeIsoDate(event.exportedAt) ?? '',
-      expiresAt: normalizeIsoDate(event.expiresAt),
+      exportedAt: normalizeIsoDate(event.exportedAt) ?? new Date().toISOString(),
+      expiresAt: normalizeIsoDate(event.expiresAt) ?? null,
     };
 
     await db.collection<ProductListingDocument>(LISTING_COLLECTION).updateOne(

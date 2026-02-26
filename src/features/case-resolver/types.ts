@@ -90,6 +90,8 @@ export type CaseResolverStateValue = {
   selectedFileId: string | null;
   selectedAssetId: string | null;
   selectedFolderPath: string | null;
+  workspaceIndexes: Record<string, any>; // Using any for now to resolve type error quickly
+  workspaceNormalizationDiagnostics: Record<string, any>;
   setSelectedFileId: React.Dispatch<React.SetStateAction<string | null>>;
   setSelectedAssetId: React.Dispatch<React.SetStateAction<string | null>>;
   setSelectedFolderPath: React.Dispatch<React.SetStateAction<string | null>>;

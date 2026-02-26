@@ -26,7 +26,7 @@ const pageContext = {
   caseResolverIdentifiers: [] as Array<{ id: string; name: string }>,
 };
 
-const folderTreeContext = {
+const folderTreeContext: any = {
   activeCaseFile: {
     id: 'case-a',
     name: 'Case A',

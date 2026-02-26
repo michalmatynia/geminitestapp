@@ -307,7 +307,8 @@ export const syncRelatedNotesBatch = async (
         create: {
           sourceNoteId: relatedId,
           targetNoteId: noteId,
-              },
+          assignedAt: new Date(),
+        },
         update: {},
       });
     }

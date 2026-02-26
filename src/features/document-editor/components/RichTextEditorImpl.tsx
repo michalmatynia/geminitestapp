@@ -94,6 +94,7 @@ export default function RichTextEditorImpl({
 }: RichTextEditorProps): React.JSX.Element {
   const { prompt, PromptInputModal } = usePrompt();
   const lastValueRef = useRef(value);
+  const hasAcceptedFocusedUpdateRef = useRef(false);
   const headingLevelsSignature = headingLevels.join(',');
   const normalizedFontFamilyOptions = useMemo<RichTextEditorFontOption[]>(
     () => {
@@ -186,6 +187,15 @@ export default function RichTextEditorImpl({
     onUpdate: ({ editor: instance }: { editor: Editor }): void => {
       const next = instance.getHTML();
       if (next === lastValueRef.current) return;
+      // Ignore pre-focus normalization churn from editor mount so we don't mark
+      // untouched drafts as dirty before the user actually edits content.
+      if (!instance.isFocused && !hasAcceptedFocusedUpdateRef.current) {
+        lastValueRef.current = next;
+        return;
+      }
+      if (instance.isFocused) {
+        hasAcceptedFocusedUpdateRef.current = true;
+      }
       lastValueRef.current = next;
       onChange(next);
     },

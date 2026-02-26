@@ -1672,6 +1672,7 @@ export type ParameterRepository = {
   listParameters(filters: ParameterFilters): Promise<ProductParameter[]>;
   getParameterById(id: string): Promise<ProductParameter | null>;
   createParameter(data: ParameterCreateInput): Promise<ProductParameter>;
+  bulkCreateParameters(data: ParameterCreateInput[]): Promise<ProductParameter[]>;
   updateParameter(id: string, data: ParameterUpdateInput): Promise<ProductParameter>;
   deleteParameter(id: string): Promise<void>;
   findByName(catalogId: string, name_en: string): Promise<ProductParameter | null>;

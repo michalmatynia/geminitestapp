@@ -108,7 +108,22 @@ const hasImagePayload = (parameters: Record<string, unknown>): boolean => {
 
 const estimatePayloadSizeBytes = (parameters: Record<string, unknown>): number => {
   try {
-    return Buffer.byteLength(JSON.stringify(parameters), 'utf8');
+    // Faster estimation: sum lengths of string values and counts of keys
+    // This is a heuristic but much faster than JSON.stringify for large objects
+    let total = 0;
+    for (const key in parameters) {
+      if (!Object.prototype.hasOwnProperty.call(parameters, key)) continue;
+      total += key.length + 4; // overhead for key
+      const val = parameters[key];
+      if (typeof val === 'string') total += val.length;
+      else if (typeof val === 'number') total += 8;
+      else if (typeof val === 'boolean') total += 4;
+      else if (val && typeof val === 'object') {
+        // Fallback for complex nested objects, but keep it shallow or limited
+        total += 100; 
+      }
+    }
+    return total;
   } catch {
     return 0;
   }
@@ -432,6 +447,15 @@ export async function fetchBaseProductDetails(
   inventoryId: string,
   productIds: string[]
 ): Promise<BaseProductRecord[]> {
+  if (productIds.length === 0) return [];
+
+  const BATCH_SIZE = 100;
+  const CONCURRENCY = 3;
+  const chunks: string[][] = [];
+  for (let i = 0; i < productIds.length; i += BATCH_SIZE) {
+    chunks.push(productIds.slice(i, i + BATCH_SIZE));
+  }
+
   const candidates = [
     {
       method: 'getInventoryProductsData',
@@ -443,19 +467,32 @@ export async function fetchBaseProductDetails(
     },
   ];
 
-  for (const candidate of candidates) {
-    try {
-      const payload = await callBaseApi(token, candidate.method, {
-        [candidate.paramKey]: inventoryId,
-        products: productIds,
-      });
-      const products = extractProducts(payload);
-      if (products.length > 0) return products;
-    } catch {
-      // Continue
-    }
+  const results: BaseProductRecord[] = [];
+  
+  // Process chunks with limited concurrency
+  for (let i = 0; i < chunks.length; i += CONCURRENCY) {
+    const batch = chunks.slice(i, i + CONCURRENCY);
+    const chunkResults = await Promise.all(
+      batch.map(async (chunk) => {
+        for (const candidate of candidates) {
+          try {
+            const payload = await callBaseApi(token, candidate.method, {
+              [candidate.paramKey]: inventoryId,
+              products: chunk,
+            });
+            const products = extractProducts(payload);
+            if (products.length > 0) return products;
+          } catch {
+            // Continue
+          }
+        }
+        return [];
+      })
+    );
+    results.push(...chunkResults.flat());
   }
-  return [];
+
+  return results;
 }
 
 export async function fetchBaseProducts(

@@ -93,9 +93,19 @@ export const getAppDbProviderSetting = async (): Promise<AppDbProvider | null> =
   return value;
 };
 
+let resolvedProviderCache: { value: AppDbProvider; ts: number } | null = null;
+const RESOLVED_PROVIDER_TTL_MS = 10000; // 10 seconds
+
 export const getAppDbProvider = async (): Promise<AppDbProvider> => {
+  const now = Date.now();
+  if (resolvedProviderCache && now - resolvedProviderCache.ts < RESOLVED_PROVIDER_TTL_MS) {
+    return resolvedProviderCache.value;
+  }
+
   const policy = await getDatabaseEnginePolicy();
   const routeProvider = await getDatabaseEngineServiceProvider('app');
+  let result: AppDbProvider;
+
   if (routeProvider) {
     if (routeProvider === 'redis') {
       throw internalError(
@@ -107,37 +117,40 @@ export const getAppDbProvider = async (): Promise<AppDbProvider> => {
         `Database Engine route "app" targets "${routeProvider}" but it is not configured in environment variables.`
       );
     }
-    return routeProvider;
-  }
-
-  if (policy.requireExplicitServiceRouting) {
+    result = routeProvider;
+  } else if (policy.requireExplicitServiceRouting) {
     throw internalError(
       'Database Engine requires explicit service routing for "app". Configure it in Workflow Database -> Database Engine.'
     );
+  } else {
+    const setting = await getAppDbProviderSetting();
+    if (setting === 'mongodb') {
+      if (!process.env['MONGODB_URI']) {
+        throw internalError('App provider is set to MongoDB but MONGODB_URI is missing.');
+      }
+      result = 'mongodb';
+    } else if (setting === 'prisma') {
+      if (!process.env['DATABASE_URL']) {
+        throw internalError('App provider is set to Prisma but DATABASE_URL is missing.');
+      }
+      result = 'prisma';
+    } else if (process.env['DATABASE_URL'] && process.env['MONGODB_URI']) {
+      result = 'mongodb';
+    } else if (process.env['DATABASE_URL']) {
+      result = 'prisma';
+    } else if (process.env['MONGODB_URI']) {
+      result = 'mongodb';
+    } else {
+      throw internalError('No database provider is configured. Set DATABASE_URL or MONGODB_URI.');
+    }
   }
 
-  const setting = await getAppDbProviderSetting();
-  if (setting === 'mongodb') {
-    if (process.env['MONGODB_URI']) return 'mongodb';
-    throw internalError(
-      'App provider is set to MongoDB but MONGODB_URI is missing.'
-    );
-  }
-  if (setting === 'prisma') {
-    if (process.env['DATABASE_URL']) return 'prisma';
-    throw internalError(
-      'App provider is set to Prisma but DATABASE_URL is missing.'
-    );
-  }
-  if (process.env['DATABASE_URL'] && process.env['MONGODB_URI']) return 'mongodb';
-  if (process.env['DATABASE_URL']) return 'prisma';
-  if (process.env['MONGODB_URI']) return 'mongodb';
-  throw internalError(
-    'No database provider is configured. Set DATABASE_URL or MONGODB_URI.'
-  );
+  resolvedProviderCache = { value: result, ts: now };
+  return result;
 };
 
 export const invalidateAppDbProviderCache = (): void => {
   providerCache = null;
   providerInflight = null;
+  resolvedProviderCache = null;
 };

@@ -78,4 +78,15 @@ describe('Case Resolver runtime requested-context FSM', () => {
     ]);
     expect(nextState).toEqual(createInitialState());
   });
+
+  it('resets retry tick on query change', () => {
+    const nextState = dispatchMany([
+      { type: 'query_changed', requestedFileId: 'case-1' },
+      { type: 'retry' },
+      { type: 'query_changed', requestedFileId: 'case-2' },
+    ]);
+    expect(nextState.requestedFileId).toBe('case-2');
+    expect(nextState.retryTick).toBe(0);
+    expect(nextState.status).toBe('loading');
+  });
 });

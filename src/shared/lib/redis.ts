@@ -4,7 +4,11 @@ import { Redis } from 'ioredis';
 
 const REDIS_URL = process.env['REDIS_URL'];
 
-let redis: Redis | null = null;
+const globalForRedis = global as unknown as {
+  redis: Redis | undefined;
+};
+
+let redis: Redis | null = globalForRedis.redis ?? null;
 
 const TRANSIENT_REDIS_ERROR_CODES = new Set([
   'EPIPE',
@@ -41,7 +45,7 @@ const captureException = async (error: unknown, context: { service: string; acti
   }
 };
 
-if (REDIS_URL) {
+if (REDIS_URL && !redis) {
   try {
     redis = new Redis(REDIS_URL, {
       maxRetriesPerRequest: null,
@@ -52,6 +56,10 @@ if (REDIS_URL) {
       if (isTransientRedisTransportError(err)) return;
       void captureException(err, { service: 'redis', action: 'connection_error' });
     });
+
+    if (process.env.NODE_ENV !== 'production') {
+      globalForRedis.redis = redis;
+    }
   } catch (error) {
     void captureException(error, { service: 'redis', action: 'initialize_failed' });
   }

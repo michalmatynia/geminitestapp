@@ -377,7 +377,7 @@ export const putBaseImportRunItems = async (
         upsert: true,
       },
     }));
-    const result = await mongo.collection<SettingDoc>('settings').bulkWrite(bulkOps as unknown as unknown[]);
+    const result = await mongo.collection<SettingDoc>('settings').bulkWrite(bulkOps as any);
     return (result.modifiedCount || 0) + (result.upsertedCount || 0);
   }
 

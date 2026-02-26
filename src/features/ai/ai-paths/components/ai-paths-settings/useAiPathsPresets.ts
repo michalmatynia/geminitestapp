@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-import type { AiNode, ClusterPreset, DbNodePreset, DbQueryPreset, Edge } from '@/features/ai/ai-paths/lib';
+import type { AiNode, ClusterPreset, DatabaseConfig, DbNodePreset, DbQueryPreset, Edge } from '@/features/ai/ai-paths/lib';
 import {
   BUNDLE_INPUT_PORTS,
   CLUSTER_PRESETS_KEY,

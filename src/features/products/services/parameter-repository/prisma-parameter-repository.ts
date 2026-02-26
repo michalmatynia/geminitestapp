@@ -99,6 +99,32 @@ export const prismaParameterRepository: ParameterRepository = {
     return toParameterDomain(param);
   },
 
+  async bulkCreateParameters(data: ParameterCreateInput[]): Promise<ProductParameter[]> {
+    if (data.length === 0) return [];
+
+    // Prisma createMany doesn't return the created records with their IDs easily,
+    // so we use a transaction with multiple create calls for this specific repository
+    // since parameters often need their generated IDs for immediate linking.
+    const results = await prisma.$transaction(
+      data.map((item) => {
+        const selectorType = normalizeSelectorType(item.selectorType);
+        const optionLabels = normalizeOptionLabels(item.optionLabels ?? []);
+        return prisma.productParameter.create({
+          data: {
+            name_en: item.name_en,
+            catalog: { connect: { id: item.catalogId } },
+            ...(item.name_pl !== undefined && { name_pl: item.name_pl }),
+            ...(item.name_de !== undefined && { name_de: item.name_de }),
+            selectorType,
+            optionLabels,
+          } as Prisma.ProductParameterCreateInput,
+        });
+      })
+    );
+
+    return results.map(toParameterDomain);
+  },
+
   async updateParameter(id: string, data: ParameterUpdateInput): Promise<ProductParameter> {
     const updateData = {
       ...(data.name_en !== undefined && { name_en: data.name_en }),

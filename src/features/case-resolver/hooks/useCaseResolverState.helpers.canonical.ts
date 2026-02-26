@@ -1,7 +1,9 @@
 import {
   deriveDocumentContentSync,
   ensureHtmlForPreview,
+  hasHtmlMarkup,
   ensureSafeDocumentHtml,
+  stripHtmlToPlainText,
   toStorageDocumentValue,
   type DocumentContentCanonical,
 } from '@/features/document-editor/content-format';
@@ -21,6 +23,20 @@ export type CaseResolverDraftCanonicalState = {
   warnings: string[];
   originalDocumentContent: string;
   explodedDocumentContent: string;
+};
+
+const toComparableCanonicalState = (
+  fileType: CaseResolverFile['fileType'] | CaseResolverFileEditDraft['fileType'],
+  canonicalState: CaseResolverDraftCanonicalState
+): CaseResolverDraftCanonicalState => {
+  if (fileType !== 'scanfile') return canonicalState;
+  return {
+    ...canonicalState,
+    // Scan files are markdown-authoritative. HTML and version mirrors are derived views.
+    html: '',
+    originalDocumentContent: '',
+    explodedDocumentContent: '',
+  };
 };
 
 const normalizeSemanticallyEmptyCanonicalContent = (
@@ -61,7 +77,19 @@ export const buildCaseResolverDraftCanonicalState = (
       ) {
         return draft.documentContentPlainText;
       }
-      return draft.documentContent ?? '';
+      const fallbackContent = draft.documentContent ?? '';
+      if (fallbackContent.trim().length > 0) {
+        return hasHtmlMarkup(fallbackContent)
+          ? stripHtmlToPlainText(fallbackContent)
+          : fallbackContent;
+      }
+      if (
+        typeof draft.documentContentHtml === 'string' &&
+        draft.documentContentHtml.trim().length > 0
+      ) {
+        return stripHtmlToPlainText(draft.documentContentHtml);
+      }
+      return '';
     }
     if (
       typeof draft.documentContentHtml === 'string' &&
@@ -114,6 +142,20 @@ const normalizeComparableWarnings = (
   value: string[] | null | undefined
 ): string[] => [...(value ?? [])];
 
+const normalizeComparablePartyReference = (
+  value: CaseResolverFileEditDraft['addresser'] | null | undefined
+): { kind: 'person' | 'organization'; id: string } | null => {
+  if (!value || typeof value !== 'object') return null;
+  const normalizedKind =
+    value.kind === 'person' || value.kind === 'organization' ? value.kind : null;
+  const normalizedId = typeof value.id === 'string' ? value.id.trim() : '';
+  if (!normalizedKind || !normalizedId) return null;
+  return {
+    kind: normalizedKind,
+    id: normalizedId,
+  };
+};
+
 type CaseResolverComparableDocumentSnapshot = {
   id: string;
   name: string;
@@ -146,7 +188,10 @@ const buildCaseResolverFileComparableSnapshot = (
   file: CaseResolverFile
 ): CaseResolverComparableDocumentSnapshot => {
   const canonicalDraft = buildFileEditDraft(file);
-  const canonicalState = buildCaseResolverDraftCanonicalState(canonicalDraft);
+  const canonicalState = toComparableCanonicalState(
+    file.fileType,
+    buildCaseResolverDraftCanonicalState(canonicalDraft)
+  );
   return {
     id: file.id,
     name: file.name,
@@ -164,8 +209,8 @@ const buildCaseResolverFileComparableSnapshot = (
     categoryId: file.categoryId ?? null,
     scanOcrModel: file.scanOcrModel ?? '',
     scanOcrPrompt: file.scanOcrPrompt ?? '',
-    addresser: file.addresser,
-    addressee: file.addressee,
+    addresser: normalizeComparablePartyReference(file.addresser),
+    addressee: normalizeComparablePartyReference(file.addressee),
     activeDocumentVersion: canonicalDraft.activeDocumentVersion,
     editorType: canonicalState.mode,
     documentContentFormatVersion: 1,
@@ -182,7 +227,9 @@ const buildCaseResolverFileComparableSnapshot = (
 const buildCaseResolverDraftComparableSnapshot = (
   draft: CaseResolverFileEditDraft,
   canonicalState: CaseResolverDraftCanonicalState
-): CaseResolverComparableDocumentSnapshot => ({
+): CaseResolverComparableDocumentSnapshot => {
+  const comparableCanonicalState = toComparableCanonicalState(draft.fileType, canonicalState);
+  return ({
   id: draft.id,
   name: draft.name,
   folder: draft.folder,
@@ -196,19 +243,20 @@ const buildCaseResolverDraftComparableSnapshot = (
   categoryId: draft.categoryId ?? null,
   scanOcrModel: draft.scanOcrModel ?? '',
   scanOcrPrompt: draft.scanOcrPrompt ?? '',
-  addresser: draft.addresser,
-  addressee: draft.addressee,
+  addresser: normalizeComparablePartyReference(draft.addresser),
+  addressee: normalizeComparablePartyReference(draft.addressee),
   activeDocumentVersion: draft.activeDocumentVersion,
-  editorType: canonicalState.mode,
+  editorType: comparableCanonicalState.mode,
   documentContentFormatVersion: 1,
-  documentContent: canonicalState.storedContent,
-  documentContentMarkdown: canonicalState.markdown,
-  documentContentHtml: canonicalState.html,
-  documentContentPlainText: canonicalState.plainText,
-  documentConversionWarnings: normalizeComparableWarnings(canonicalState.warnings),
-  originalDocumentContent: canonicalState.originalDocumentContent ?? '',
-  explodedDocumentContent: canonicalState.explodedDocumentContent ?? '',
+  documentContent: comparableCanonicalState.storedContent,
+  documentContentMarkdown: comparableCanonicalState.markdown,
+  documentContentHtml: comparableCanonicalState.html,
+  documentContentPlainText: comparableCanonicalState.plainText,
+  documentConversionWarnings: normalizeComparableWarnings(comparableCanonicalState.warnings),
+  originalDocumentContent: comparableCanonicalState.originalDocumentContent ?? '',
+  explodedDocumentContent: comparableCanonicalState.explodedDocumentContent ?? '',
 });
+};
 
 export const buildCaseResolverFileComparableFingerprint = (
   file: CaseResolverFile

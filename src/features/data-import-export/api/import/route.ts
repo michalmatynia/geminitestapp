@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import Papa from 'papaparse';
 
 import { ErrorSystem } from '@/features/observability/server';
-import { getProductRepository, productCreateSchema } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { apiHandler } from '@/shared/lib/api/api-handler';

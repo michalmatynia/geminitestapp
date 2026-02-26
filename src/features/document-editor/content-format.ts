@@ -24,24 +24,32 @@ const MAX_DOCUMENT_INPUT_CHARS = 400_000;
 const MAX_PLAIN_TEXT_CHARS = 300_000;
 const LINE_BREAK_TOKEN = '__CR_BR__';
 
-const decodeBasicHtmlEntities = (value: string): string =>
-  value
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&apos;|&#39;/gi, '\'')
-    .replace(/&quot;/gi, '"')
-    .replace(/&gt;/gi, '>')
-    .replace(/&lt;/gi, '<')
-    .replace(/&amp;/gi, '&');
+const ENTITY_MAP: Record<string, string> = {
+  '&nbsp;': ' ',
+  '&amp;': '&',
+  '&lt;': '<',
+  '&gt;': '>',
+  '&quot;': '"',
+  '&apos;': "'",
+  '&#39;': "'",
+};
 
 const decodeHtmlEntity = (value: string): string => {
-  const basicDecoded = decodeBasicHtmlEntities(value);
+  if (!value || !value.includes('&')) return value;
+  
+  // Fast path for common entities
+  let result = value.replace(/&[a-z0-9#]+;/gi, (match) => ENTITY_MAP[match.toLowerCase()] || match);
+  
+  if (!result.includes('&')) return result;
+
+  // Fallback to DOM only if there are still potential entities and we're in browser
   try {
-    if (typeof window === 'undefined' || typeof document === 'undefined') return basicDecoded;
+    if (typeof window === 'undefined' || typeof document === 'undefined') return result;
     const textarea = document.createElement('textarea');
-    textarea.innerHTML = basicDecoded;
-    return decodeBasicHtmlEntities(textarea.value);
+    textarea.innerHTML = result;
+    return textarea.value;
   } catch {
-    return basicDecoded;
+    return result;
   }
 };
 

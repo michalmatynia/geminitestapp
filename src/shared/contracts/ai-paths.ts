@@ -480,7 +480,7 @@ export const pathConfigSchema = z.object({
   runMode: z.string().optional(),
   strictFlowMode: z.boolean().optional(),
   blockedRunPolicy: pathBlockedRunPolicySchema.optional(),
-  nodes: z.array(z.any()), // aiNodeSchema
+  nodes: z.array(aiNodeSchema),
   edges: z.array(edgeSchema),
   updatedAt: z.string(),
   isLocked: z.boolean().optional(),
@@ -677,6 +677,15 @@ export type AiPathRunRepository = {
   createRunEvent(input: AiPathRunEventCreateInput): Promise<AiPathRunEventRecord>;
   listRunEvents(runId: string, options?: AiPathRunEventListOptions): Promise<AiPathRunEventRecord[]>;
   markStaleRunningRuns(maxAgeMs: number): Promise<{ count: number }>;
+  finalizeRun(
+    runId: string,
+    status: AiPathRunStatus,
+    options?: {
+      errorMessage?: string | null;
+      event?: Omit<AiPathRunEventCreateInput, 'runId'>;
+      finishedAt?: string | null;
+    }
+  ): Promise<void>;
 };
 
 /**

@@ -44,8 +44,6 @@ export function useCaseResolverStateViewState({
   syncPersistedWorkspaceTracking,
   clearQueuedWorkspacePersistMutation,
   handledRequestedFileIdRef,
-  requestedWorkspaceRefreshFileIdRef: _requestedWorkspaceRefreshFileIdRef,
-  requestedWorkspaceMissingFileIdRef: _requestedWorkspaceMissingFileIdRef,
 }: {
   workspace: CaseResolverWorkspace;
   setWorkspace: React.Dispatch<React.SetStateAction<CaseResolverWorkspace>>;
@@ -55,8 +53,6 @@ export function useCaseResolverStateViewState({
   syncPersistedWorkspaceTracking: (workspace: CaseResolverWorkspace) => void;
   clearQueuedWorkspacePersistMutation: () => void;
   handledRequestedFileIdRef: React.MutableRefObject<string | null>;
-  requestedWorkspaceRefreshFileIdRef: React.MutableRefObject<string | null>;
-  requestedWorkspaceMissingFileIdRef: React.MutableRefObject<string | null>;
 }): UseCaseResolverStateViewStateValue {
   const [selectedFileId, setSelectedFileId] = useState<string | null>(
     requestedFileId ?? initialWorkspaceState.activeFileId

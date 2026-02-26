@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
 
 import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -42,7 +42,7 @@ export function AppEmbedsProvider({ children }: { children: React.ReactNode }): 
     setUserEnabled(null);
   }, [initialEnabled]);
 
-  const toggleOption = (id: AppEmbedId, checked: boolean): void => {
+  const toggleOption = useCallback((id: AppEmbedId, checked: boolean): void => {
     setUserEnabled((prev) => {
       const current = prev ?? initialEnabled;
       const next = new Set(current);
@@ -53,9 +53,9 @@ export function AppEmbedsProvider({ children }: { children: React.ReactNode }): 
       }
       return next;
     });
-  };
+  }, [initialEnabled]);
 
-  const save = async (): Promise<void> => {
+  const save = useCallback(async (): Promise<void> => {
     try {
       await updateSetting.mutateAsync({
         key: APP_EMBED_SETTING_KEY,
@@ -68,7 +68,7 @@ export function AppEmbedsProvider({ children }: { children: React.ReactNode }): 
       toast('Failed to save app embed settings.', { variant: 'error' });
       throw error;
     }
-  };
+  }, [enabled, updateSetting, toast]);
 
   const value = useMemo(() => ({
     enabled,

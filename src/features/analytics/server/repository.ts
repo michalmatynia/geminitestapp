@@ -202,7 +202,21 @@ const getAnalyticsCacheVersion = async (): Promise<string> => {
 const bumpAnalyticsCacheVersion = async (): Promise<void> => {
   const redis = getRedisConnection();
   if (!redis) return;
-  await redis.incr(ANALYTICS_CACHE_VERSION_KEY);
+  
+  // Use a last-bumped timestamp to throttle version increments to at most once every 10 seconds.
+  // This prevents immediate cache invalidation on every single event while still keeping charts relatively fresh.
+  const lastBumpKey = `${ANALYTICS_CACHE_PREFIX}:last_bump`;
+  const now = Date.now();
+  const lastBump = await redis.get(lastBumpKey);
+  
+  if (lastBump && now - Number(lastBump) < 10000) {
+    return;
+  }
+  
+  await Promise.all([
+    redis.incr(ANALYTICS_CACHE_VERSION_KEY),
+    redis.set(lastBumpKey, now.toString(), 'EX', 60)
+  ]);
 };
 
 export async function insertAnalyticsEvent(

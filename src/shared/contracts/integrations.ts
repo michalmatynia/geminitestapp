@@ -47,6 +47,7 @@ export type ImageRetryPreset = z.infer<typeof imageRetryPresetSchema>;
 
 export const integrationSchema = namedDtoSchema.extend({
   slug: z.string(),
+  credentials: z.record(z.string(), z.any()).optional(),
 });
 
 export type Integration = z.infer<typeof integrationSchema>;

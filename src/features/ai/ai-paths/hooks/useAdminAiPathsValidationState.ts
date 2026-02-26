@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAiPathsSettingsQuery } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
-import type { AiNode } from '@/shared/contracts/ai-paths';
+import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type {
   AiPathsValidationConfig,
   AiPathsValidationRule,

@@ -1,7 +1,9 @@
 import {
   deriveDocumentContentSync,
   ensureHtmlForPreview,
+  hasHtmlMarkup,
   ensureSafeDocumentHtml,
+  stripHtmlToPlainText,
   toStorageDocumentValue,
 } from '@/features/document-editor/content-format';
 import {
@@ -107,7 +109,8 @@ export const normalizeCaseResolverRelatedFileLinks = (
 
 export const normalizeCaseResolverDocumentHistory = (
   input: unknown,
-  fallbackTimestamp: string
+  fallbackTimestamp: string,
+  mode: 'markdown' | 'wysiwyg'
 ): CaseResolverDocumentHistoryEntry[] => {
   if (!Array.isArray(input)) return [];
 
@@ -138,21 +141,52 @@ export const normalizeCaseResolverDocumentHistory = (
     const activeDocumentVersion = normalizeCaseResolverDocumentVersion(
       record['activeDocumentVersion']
     );
-    const resolvedHtmlContent = (() => {
-      if (typeof rawHtml === 'string' && rawHtml.trim().length > 0) {
-        return rawHtml;
+    const canonical = (() => {
+      if (mode === 'markdown') {
+        const resolvedMarkdownContent = (() => {
+          if (typeof rawMarkdown === 'string' && rawMarkdown.trim().length > 0) {
+            return rawMarkdown;
+          }
+          if (
+            typeof record['documentContentPlainText'] === 'string' &&
+            record['documentContentPlainText'].trim().length > 0
+          ) {
+            return record['documentContentPlainText'];
+          }
+          if (fallbackContent.trim().length > 0) {
+            return hasHtmlMarkup(fallbackContent)
+              ? stripHtmlToPlainText(fallbackContent)
+              : fallbackContent;
+          }
+          if (typeof rawHtml === 'string' && rawHtml.trim().length > 0) {
+            return stripHtmlToPlainText(rawHtml);
+          }
+          return '';
+        })();
+        return deriveDocumentContentSync({
+          mode: 'markdown',
+          value: resolvedMarkdownContent,
+          previousHtml: rawHtml,
+          previousMarkdown: rawMarkdown,
+        });
       }
-      if (typeof rawMarkdown === 'string' && rawMarkdown.trim().length > 0) {
-        return ensureHtmlForPreview(rawMarkdown, 'markdown');
-      }
-      return ensureSafeDocumentHtml(fallbackContent);
+
+      const resolvedHtmlContent = (() => {
+        if (typeof rawHtml === 'string' && rawHtml.trim().length > 0) {
+          return rawHtml;
+        }
+        if (typeof rawMarkdown === 'string' && rawMarkdown.trim().length > 0) {
+          return ensureHtmlForPreview(rawMarkdown, 'markdown');
+        }
+        return ensureSafeDocumentHtml(fallbackContent);
+      })();
+      return deriveDocumentContentSync({
+        mode: 'wysiwyg',
+        value: resolvedHtmlContent,
+        previousHtml: rawHtml,
+        previousMarkdown: rawMarkdown,
+      });
     })();
-    const canonical = deriveDocumentContentSync({
-      mode: 'wysiwyg',
-      value: resolvedHtmlContent,
-      previousHtml: rawHtml,
-      previousMarkdown: rawMarkdown,
-    });
 
     entries.push({
       id: rawId,
@@ -297,7 +331,7 @@ export const createCaseResolverFile = (input: CreateCaseResolverFileInput): Case
     fileType === 'case' ? normalizeCaseTreeOrder(input.caseTreeOrder) : undefined;
   const happeningDate =
     fileType === 'case' ? normalizeCaseHappeningDate(input.happeningDate) : null;
-  const resolvedEditorType: CaseResolverEditorType =
+  const resolvedEditorType: 'markdown' | 'wysiwyg' =
     fileType === 'scanfile' ? 'markdown' : 'wysiwyg';
   const resolvedCanonicalSource = (() => {
     if (resolvedEditorType === 'markdown') {
@@ -313,7 +347,18 @@ export const createCaseResolverFile = (input: CreateCaseResolverFileInput): Case
       ) {
         return input.documentContentPlainText;
       }
-      return activeDocumentContent;
+      if (activeDocumentContent.trim().length > 0) {
+        return hasHtmlMarkup(activeDocumentContent)
+          ? stripHtmlToPlainText(activeDocumentContent)
+          : activeDocumentContent;
+      }
+      if (
+        typeof input.documentContentHtml === 'string' &&
+        input.documentContentHtml.trim().length > 0
+      ) {
+        return stripHtmlToPlainText(input.documentContentHtml);
+      }
+      return '';
     }
     if (typeof input.documentContentHtml === 'string' && input.documentContentHtml.trim().length > 0) {
       return input.documentContentHtml;
@@ -384,7 +429,11 @@ export const createCaseResolverFile = (input: CreateCaseResolverFileInput): Case
     documentContentMarkdown: canonicalDocument.markdown,
     documentContentHtml: canonicalDocument.html,
     documentContentPlainText: canonicalDocument.plainText,
-    documentHistory: normalizeCaseResolverDocumentHistory(input.documentHistory, updatedAt),
+    documentHistory: normalizeCaseResolverDocumentHistory(
+      input.documentHistory,
+      updatedAt,
+      resolvedEditorType
+    ),
     documentConversionWarnings,
     lastContentConversionAt,
     scanSlots: normalizeCaseResolverScanSlots(input.scanSlots, input.id),

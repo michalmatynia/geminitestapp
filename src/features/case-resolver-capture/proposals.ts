@@ -247,7 +247,8 @@ const buildCaseResolverCaptureProposal = (args: {
         id: String(existingReference.id),
         name: existingReference.displayName,
       }
-      : null,    existingAddressId,
+      : null,
+    existingAddressId,
     matchKind,
     hasAddressCandidate,
     action,

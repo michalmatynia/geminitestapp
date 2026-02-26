@@ -34,6 +34,7 @@ const DRAG_FILE_ID_TYPE = 'application/case-resolver-file-id';
 function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
   const {
     nodes,
+    selectedNodeId,
     newNodeType,
     setNewNodeType,
     isSidePanelVisible,
@@ -43,16 +44,24 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
     addNode,
     setNodeFileMeta,
     filesById,
+    selectNode,
     view,
     viewportRef,
     onSelectFile,
   } = useNodeFileWorkspaceContext();
 
-  const onExplanatoryClick = useCallback(() => {
-    const center = {
-      x: (-view.x + 400) / view.scale,
-      y: (-view.y + 300) / view.scale,
+  const resolveCanvasCenter = useCallback((): { x: number; y: number } => {
+    const rect = viewportRef.current?.getBoundingClientRect();
+    const centerX = rect ? rect.width / 2 : 400;
+    const centerY = rect ? rect.height / 2 : 300;
+    const safeScale = view.scale || 1;
+    return {
+      x: (centerX - view.x) / safeScale,
+      y: (centerY - view.y) / safeScale,
     };
+  }, [viewportRef, view]);
+
+  const onExplanatoryClick = useCallback(() => {
     const node = buildNode(
       {
         type: 'template',
@@ -61,12 +70,31 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
         outputs: [],
         inputs: [],
       },
-      center,
+      resolveCanvasCenter(),
       createNodeId(),
       'Explanatory Note'
     );
     addNode(node);
-  }, [view, addNode]);
+  }, [addNode, resolveCanvasCenter]);
+
+  const orderedNodes = useMemo((): AiNode[] => {
+    return nodes
+      .map((node, index): { node: AiNode; index: number } => ({ node, index }))
+      .sort((left, right): number => {
+        const leftStamp = Date.parse(left.node.updatedAt ?? left.node.createdAt ?? '');
+        const rightStamp = Date.parse(right.node.updatedAt ?? right.node.createdAt ?? '');
+        const leftHasStamp = Number.isFinite(leftStamp);
+        const rightHasStamp = Number.isFinite(rightStamp);
+        if (leftHasStamp && rightHasStamp && leftStamp !== rightStamp) {
+          return rightStamp - leftStamp;
+        }
+        if (leftHasStamp !== rightHasStamp) {
+          return rightHasStamp ? 1 : -1;
+        }
+        return right.index - left.index;
+      })
+      .map((entry) => entry.node);
+  }, [nodes]);
 
   // Drop handler: accept file IDs dragged from the search panel
   const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -119,9 +147,8 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
       <Card
         variant='subtle'
         padding='none'
-        className='relative flex min-h-0 flex-1 flex-col border-border/60 bg-card/20'
+        className='relative flex min-h-[55vh] flex-1 flex-col border-border/60 bg-card/20 md:min-h-[65vh]'
       >
-        {/* Search panel — shrink-0 so it never pushes canvas to 0 */}
         <NodeFileDocumentSearchPanel
           newNodeType={newNodeType}
           setNewNodeType={setNewNodeType}
@@ -129,10 +156,9 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
           onNodeInspectorClick={() => setIsNodeInspectorOpen(true)}
         />
 
-        {/* Canvas — flex-1 means it always fills remaining space */}
         <div
           ref={viewportRef}
-          className='relative min-h-0 flex-1 overflow-hidden'
+          className='relative min-h-[55vh] flex-1 overflow-hidden md:min-h-[65vh]'
           onDragOver={handleDragOver}
           onDrop={handleDrop}
         >
@@ -145,6 +171,43 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
                 icon={<FileCode2 className='size-12' />}
                 className='border-none bg-card/60 backdrop-blur-sm'
               />
+            </div>
+          )}
+        </div>
+
+        <div className='shrink-0 border-t border-border/40 bg-card/30 px-3 py-2'>
+          <div className='mb-2 flex items-center justify-between'>
+            <span className='text-[10px] font-semibold uppercase tracking-wide text-gray-500'>
+              Added Nodes
+            </span>
+            <span className='text-[10px] text-gray-500'>{orderedNodes.length}</span>
+          </div>
+          {orderedNodes.length === 0 ? (
+            <div className='rounded border border-dashed border-border/40 px-2 py-1.5 text-xs text-gray-500'>
+              No nodes on this canvas yet.
+            </div>
+          ) : (
+            <div className='flex max-h-24 flex-wrap gap-1.5 overflow-y-auto pr-1'>
+              {orderedNodes.map((node) => {
+                const isSelected = selectedNodeId === node.id;
+                return (
+                  <button
+                    key={node.id}
+                    type='button'
+                    onClick={() => selectNode(node.id)}
+                    className={
+                      isSelected
+                        ? 'inline-flex max-w-full items-center gap-2 rounded border border-cyan-500/50 bg-cyan-500/15 px-2 py-1 text-xs text-cyan-100'
+                        : 'inline-flex max-w-full items-center gap-2 rounded border border-border/50 bg-card/50 px-2 py-1 text-xs text-gray-300 transition-colors hover:border-border hover:bg-card/70'
+                    }
+                  >
+                    <span className='max-w-[200px] truncate'>{node.title || 'Untitled Node'}</span>
+                    <span className='rounded bg-card/70 px-1 py-0.5 text-[10px] uppercase tracking-wide text-gray-500'>
+                      {node.type}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

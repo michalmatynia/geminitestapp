@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import {
   Copy,
   File,
@@ -64,6 +63,31 @@ function LinkedFileTypeIcon({ fileType }: { fileType: string }): React.JSX.Eleme
   return <File className='size-4 text-gray-500' />;
 }
 
+const IMAGE_PATH_PATTERN = /\.(avif|bmp|gif|heic|heif|jpe?g|png|svg|tiff?|webp)(\?.*)?$/i;
+const PDF_PATH_PATTERN = /\.pdf(\?.*)?$/i;
+
+const resolveScanSlotPreviewPath = (filepath: string | null | undefined): string | null => {
+  if (typeof filepath !== 'string') return null;
+  const trimmed = filepath.trim();
+  if (!trimmed) return null;
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
+    return encodeURI(trimmed);
+  }
+  return encodeURI(`/${trimmed}`);
+};
+
+const resolveScanSlotPreviewKind = (
+  slot: { filepath?: string | null; mimeType?: string | undefined }
+): 'image' | 'pdf' | 'other' => {
+  const mimeType = slot.mimeType?.trim().toLowerCase() ?? '';
+  if (mimeType.startsWith('image/')) return 'image';
+  if (mimeType === 'application/pdf') return 'pdf';
+  const filepath = slot.filepath?.trim() ?? '';
+  if (IMAGE_PATH_PATTERN.test(filepath)) return 'image';
+  if (PDF_PATH_PATTERN.test(filepath)) return 'pdf';
+  return 'other';
+};
+
 export function CaseResolverScanFileEditor(): React.JSX.Element | null {
   const {
     state,
@@ -81,6 +105,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
     handleScanDraftDrop,
     handleScanDraftUploadInputChange,
     scanDraftUploadInputRef,
+    handleUpdateDraftDocumentContent,
     updateEditingDocumentDraft,
     isEditorDraftDirty,
     handleCopyDraftFileId,
@@ -272,14 +297,47 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                           key={slot.id}
                           className='group relative aspect-[3/4] overflow-hidden border-border/60 bg-black/40'
                         >
-                          {slot.filepath ? (
-                            <Image
-                              src={`/api/files/download?path=${encodeURIComponent(slot.filepath)}`}
-                              alt={slot.name || 'Scan page'}
-                              fill
-                              className='h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100'
-                            />
-                          ) : (
+                          {slot.filepath ? (() => {
+                            const previewPath = resolveScanSlotPreviewPath(slot.filepath);
+                            const previewKind = resolveScanSlotPreviewKind(slot);
+                            if (previewKind === 'image' && previewPath) {
+                              return (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={previewPath}
+                                  alt={slot.name || 'Scan page'}
+                                  loading='lazy'
+                                  className='h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100'
+                                />
+                              );
+                            }
+                            if (previewKind === 'pdf' && previewPath) {
+                              return (
+                                <div className='flex h-full w-full flex-col items-center justify-center gap-2 bg-gradient-to-b from-slate-900/70 to-slate-950/90 p-2 text-center'>
+                                  <FileText className='size-6 text-rose-300/80' />
+                                  <span className='rounded border border-rose-400/40 bg-rose-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-rose-200/90'>
+                                    PDF
+                                  </span>
+                                  <a
+                                    href={previewPath}
+                                    target='_blank'
+                                    rel='noreferrer'
+                                    className='text-[9px] text-blue-300 underline-offset-2 hover:underline'
+                                  >
+                                    Open
+                                  </a>
+                                </div>
+                              );
+                            }
+                            return (
+                              <div className='flex h-full flex-col items-center justify-center p-1 text-center'>
+                                <FileText className='mb-1 size-5 text-gray-600' />
+                                <div className='truncate text-[9px] text-gray-500'>
+                                  {slot.name || 'File'}
+                                </div>
+                              </div>
+                            );
+                          })() : (
                             <div className='flex h-full flex-col items-center justify-center p-1 text-center'>
                               <FileText className='mb-1 size-5 text-gray-600' />
                               <div className='truncate text-[9px] text-gray-500'>
@@ -317,7 +375,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
                   className='min-h-[400px] flex-1 resize-none bg-transparent p-4 text-sm font-mono text-gray-300 focus:outline-none'
                   placeholder='OCR results will appear here after running OCR, or type/paste markdown content...'
                   value={draft.documentContent ?? ''}
-                  onChange={(e) => updateEditingDocumentDraft({ documentContent: e.target.value })}
+                  onChange={(e) => handleUpdateDraftDocumentContent(e.target.value)}
                   readOnly={isEditingDocumentLocked}
                 />
               </div>

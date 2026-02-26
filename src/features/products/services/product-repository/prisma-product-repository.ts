@@ -12,7 +12,7 @@ import {
   UpdateProductInput,
   ProductImageRecord,
 } from '@/shared/contracts/products';
-import { conflictError, internalError } from '@/shared/errors/app-error';
+import { conflictError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 
 import {
@@ -277,7 +277,7 @@ const createTransactionalRepository = (
       ...(normalizedParameters !== undefined
         ? {
           parameters:
-              normalizedParameters as Prisma.JsonValue,
+              normalizedParameters as Prisma.InputJsonValue,
         }
         : {}),
     }) as Prisma.ProductUpdateInput;
@@ -290,36 +290,29 @@ const createTransactionalRepository = (
   },
 
   deleteProduct: async (id) => {
-    try {
-      const product = await tx.product.delete({
-        where: { id },
-        include: {
-          images: {
-            include: { imageFile: true },
-            orderBy: { assignedAt: 'asc' },
-          },
-          catalogs: {
-            include: {
-              catalog: {
-                include: { languages: { select: { languageId: true } } },
-              },
+    const product = await tx.product.findUnique({
+      where: { id },
+      include: {
+        images: {
+          include: { imageFile: true },
+          orderBy: { assignedAt: 'asc' },
+        },
+        catalogs: {
+          include: {
+            catalog: {
+              include: { languages: { select: { languageId: true } } },
             },
           },
-          categories: { select: { categoryId: true } },
-          tags: { select: { productId: true, tagId: true, assignedAt: true } },
-          producers: { select: { productId: true, producerId: true, assignedAt: true } },
         },
-      });
-      return toProductRecord(product as FullPrismaProduct);
-    } catch (error) {
-      if (
-        error instanceof Prisma.PrismaClientKnownRequestError &&
-        error.code === 'P2025'
-      ) {
-        return null;
-      }
-      throw error;
-    }
+        categories: { select: { categoryId: true } },
+        tags: { select: { productId: true, tagId: true, assignedAt: true } },
+        producers: { select: { productId: true, producerId: true, assignedAt: true } },
+      },
+    });
+    if (!product) return null;
+
+    await tx.product.delete({ where: { id } });
+    return toProductRecord(product as FullPrismaProduct);
   },
 
   duplicateProduct: async (id, sku) => {
@@ -333,7 +326,7 @@ const createTransactionalRepository = (
         producers: true,
       },
     });
-    if (!source) throw internalError('Source product not found');
+    if (!source) return null;
 
     const {
       id: _sid,

@@ -223,13 +223,17 @@ export const mongoCmsRepository: CmsRepository = {
       updatedAt: new Date(),
     }) as Partial<PageDocument>;
 
-    const result = await db.collection<PageDocument>(pagesCollection).findOneAndUpdate(
-      buildIdFilter<PageDocument>(id),
-      { $set: update },
-      { returnDocument: 'after' }
-    );
+    const [result, slugLinks] = await Promise.all([
+      db.collection<PageDocument>(pagesCollection).findOneAndUpdate(
+        buildIdFilter<PageDocument>(id),
+        { $set: update },
+        { returnDocument: 'after' }
+      ),
+      db.collection<PageSlugDocument>('cms_page_slugs').find({ pageId: id }).toArray()
+    ]);
+
     if (!result) return null;
-    return this.getPageById(id);
+    return mapPageDocumentToPage(result, slugLinks);
   },
 
   async deletePage(id: string): Promise<Page | null> {

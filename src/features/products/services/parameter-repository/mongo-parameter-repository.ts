@@ -1,4 +1,5 @@
 import { ObjectId } from 'mongodb';
+import { randomUUID } from 'crypto';
 
 
 import type { 
@@ -146,5 +147,28 @@ export const mongoParameterRepository: ParameterRepository = {
     const db = await getMongoDb();
     const doc = await db.collection<ProductParameterDoc>(COLLECTION).findOne({ catalogId, name_en });
     return doc ? toParameterDomain(doc) : null;
+  },
+
+  async bulkCreateParameters(data: ParameterCreateInput[]): Promise<ProductParameter[]> {
+    const db = await getMongoDb();
+    const now = new Date();
+    const docs: ProductParameterDoc[] = data.map(item => ({
+      _id: new ObjectId(),
+      id: randomUUID(),
+      catalogId: item.catalogId,
+      name_en: item.name,
+      name_pl: null,
+      name_de: null,
+      description: null,
+      selectorType: item.selectorType ?? 'text',
+      optionLabels: item.optionLabels ?? [],
+      createdAt: now,
+      updatedAt: now,
+    }));
+
+    if (docs.length === 0) return [];
+
+    await db.collection<ProductParameterDoc>(COLLECTION).insertMany(docs);
+    return docs.map(toParameterDomain);
   },
 };

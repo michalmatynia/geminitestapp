@@ -220,7 +220,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     editingCaseCaseIdentifierId,
     editingCaseCategoryId,
     setConfirmation,
-    toast,
+    toast: toast as any,
     settingsStoreRefetchRef,
   });
 

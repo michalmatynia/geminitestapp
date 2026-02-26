@@ -38,6 +38,7 @@ export const reduceRequestedContextState = (
       return {
         ...currentState,
         requestedFileId: null,
+        retryTick: 0,
         status: 'idle',
         issue: null,
         inFlightRequestKey: null,
@@ -49,6 +50,7 @@ export const reduceRequestedContextState = (
     return {
       ...currentState,
       requestedFileId: normalizedRequestedFileId,
+      retryTick: 0,
       status: 'loading',
       issue: null,
       inFlightRequestKey: null,

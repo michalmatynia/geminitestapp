@@ -54,10 +54,17 @@ export function CaseResolverPageMainContent(): React.JSX.Element {
         activeFile?.fileType === 'case' ||
         (!selectedFile && !activeFile))
   );
+  const isNodeFileMode = selectedAsset?.kind === 'node_file';
 
   return (
-    <div className='flex flex-1 flex-col overflow-hidden p-6'>
-      {selectedAsset?.kind === 'node_file' ? (
+    <div
+      className={
+        isNodeFileMode
+          ? 'flex flex-1 flex-col overflow-hidden p-3 md:p-4'
+          : 'flex flex-1 flex-col overflow-hidden p-6'
+      }
+    >
+      {isNodeFileMode ? (
         <CaseResolverNodeFileWorkspace />
       ) : showCaseOverviewWorkspace ? (
         <CaseResolverCaseOverviewWorkspace />

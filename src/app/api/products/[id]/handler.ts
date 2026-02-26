@@ -3,10 +3,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { ActivityTypes, logActivity } from '@/features/observability/services/activityService';
 import { parseJsonBody } from '@/features/products/server';
 import { CachedProductService } from '@/features/products/performance/cached-service';
-import { getProductRepository } from '@/features/products/services/product-repository';
 import { productService } from '@/features/products/services/productService'; // Direct import
 import { validateProductUpdateMiddleware } from '@/features/products/validations/middleware';
 import type { ProductRecord, ProductWithImages } from '@/shared/contracts/products';

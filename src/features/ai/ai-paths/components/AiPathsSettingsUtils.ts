@@ -6,6 +6,7 @@ import type {
   RuntimePortValues,
   RuntimeState,
   AiNode,
+  EdgeDto,
 } from '@/features/ai/ai-paths/lib';
 import {
   safeParseJson,

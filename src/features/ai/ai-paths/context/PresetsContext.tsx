@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import type { ClusterPreset, DbQueryPreset, DbNodePreset } from '@/features/ai/ai-paths/lib';
+import type { ClusterPreset, DbQueryPreset, DbNodePreset, DatabaseConfig } from '@/features/ai/ai-paths/lib';
 import { createPresetId, migrateDatabaseConfigCollections } from '@/features/ai/ai-paths/lib';
 
 // ---------------------------------------------------------------------------

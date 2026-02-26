@@ -13,8 +13,8 @@ import {
 } from '@/features/case-resolver-capture/settings';
 import type { FilemakerDatabase } from '@/features/filemaker/types';
 import type {
-  PromptExploderCaseResolverPartyBundleDto as PromptExploderCaseResolverPartyBundle,
-  PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate,
+  PromptExploderCaseResolverPartyBundle,
+  PromptExploderCaseResolverPartyCandidate,
 } from '@/shared/contracts/prompt-exploder';
 
 const createDatabase = (): FilemakerDatabase => ({

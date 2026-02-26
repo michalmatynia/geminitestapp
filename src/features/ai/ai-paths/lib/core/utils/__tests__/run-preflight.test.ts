@@ -138,6 +138,68 @@ describe('evaluateRunPreflight', () => {
     ).toBe(true);
   });
 
+  it('ignores optional node-level value/prompt ports when validation is disabled', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'trigger-1',
+        type: 'trigger',
+        inputs: ['context'],
+        outputs: ['trigger'],
+      }),
+      buildNode({
+        id: 'db-1',
+        type: 'database',
+        inputs: ['value', 'prompt', 'entityId'],
+        outputs: ['result'],
+        inputContracts: {
+          value: { required: false },
+          prompt: { required: false },
+          entityId: { required: false },
+        },
+        config: {
+          database: {
+            operation: 'query',
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '{"id":"{{entityId}}"}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+          },
+        },
+      }),
+    ];
+
+    const report = evaluateRunPreflight({
+      nodes,
+      edges: [],
+      runtimeState: buildRuntimeState({}),
+      aiPathsValidation: { enabled: false },
+      strictFlowMode: true,
+      triggerNodeId: 'trigger-1',
+      mode: 'full',
+    });
+
+    expect(report.nodeValidationEnabled).toBe(false);
+    expect(report.shouldBlock).toBe(false);
+    expect(report.compileReport.errors).toBe(0);
+    expect(report.dataContractReport.errors).toBe(0);
+    expect(
+      report.warnings.some(
+        (warning) =>
+          warning.code === 'compile_errors_non_blocking' ||
+          warning.code === 'data_contract_errors_non_blocking'
+      )
+    ).toBe(false);
+  });
+
   it('keeps strict-flow dependency behavior consistent with validation toggle', () => {
     const nodes: AiNode[] = [
       buildNode({

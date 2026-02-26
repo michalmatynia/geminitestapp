@@ -124,43 +124,77 @@ export function useNodeFileWorkspaceState({
     [workspace.files]
   );
 
+  const graphCompileIndex = useMemo(() => {
+    const nodesById = new Map<string, AiNode>(
+      nodes.map((node: AiNode): [string, AiNode] => [node.id, node]),
+    );
+    const incomingEdgesByNodeId = new Map<string, typeof edges>();
+    edges.forEach((edge): void => {
+      const targetNodeId = (edge.to ?? edge.target ?? '').trim();
+      if (!targetNodeId) return;
+      const incomingEdges = incomingEdgesByNodeId.get(targetNodeId) ?? [];
+      incomingEdges.push(edge);
+      incomingEdgesByNodeId.set(targetNodeId, incomingEdges);
+    });
+    const orderedTextNodeIds = nodes
+      .filter((node: AiNode): boolean => node.type === 'template' || node.type === 'prompt')
+      .sort((left: AiNode, right: AiNode): number => left.position.y - right.position.y)
+      .map((node: AiNode): string => node.id);
+    return {
+      nodesById,
+      incomingEdgesByNodeId,
+      orderedTextNodeIds,
+    };
+  }, [edges, nodes]);
+
   // Compiled graph logic
   const compiled = useMemo((): CaseResolverCompileResult => {
     const nodeResults: Record<string, string> = {};
-    const textNodes = nodes.filter((n) => n.type === 'template' || n.type === 'prompt');
-    const sortedTextNodes = [...textNodes].sort((a, b) => a.position.y - b.position.y);
+    const resolvingNodeIds = new Set<string>();
 
-    const getVariableValue = (nodeId: string): string => {
-      const node = nodes.find((n) => n.id === nodeId);
-      if (!node) return '';
-      if (nodeResults[nodeId] !== undefined) return nodeResults[nodeId];
-
-      if (node.type === 'template' || node.type === 'prompt') {
-        const template = node.config?.prompt?.template ?? node.config?.template?.template ?? '';
-        const incoming = edges.filter((e) => (e.to ?? e.target) === node.id);
-        const variables: Record<string, string> = {};
-
-        incoming.forEach((edge) => {
-          const value = getVariableValue(edge.from || edge.source || '');
-          const toPort = edge.toPort || edge.targetHandle;
-          if (toPort) {
-            variables[toPort] = value;
-          }
-        });
-
-        const result = renderNodeTemplate(template, variables);
-        nodeResults[nodeId] = result;
-        return result;
+    const resolveNodeValue = (nodeId: string): string => {
+      const normalizedNodeId = nodeId.trim();
+      if (!normalizedNodeId) return '';
+      if (nodeResults[normalizedNodeId] !== undefined) {
+        return nodeResults[normalizedNodeId] ?? '';
+      }
+      if (resolvingNodeIds.has(normalizedNodeId)) {
+        return '';
       }
 
-      return '';
+      const node = graphCompileIndex.nodesById.get(normalizedNodeId);
+      if (!node) return '';
+
+      if (node.type !== 'template' && node.type !== 'prompt') {
+        nodeResults[normalizedNodeId] = '';
+        return '';
+      }
+
+      resolvingNodeIds.add(normalizedNodeId);
+      const template = node.config?.prompt?.template ?? node.config?.template?.template ?? '';
+      const incomingEdges = graphCompileIndex.incomingEdgesByNodeId.get(normalizedNodeId) ?? [];
+      const variables: Record<string, string> = {};
+      incomingEdges.forEach((edge): void => {
+        const sourceNodeId = (edge.from || edge.source || '').trim();
+        if (!sourceNodeId) return;
+        const toPort = edge.toPort || edge.targetHandle;
+        if (!toPort) return;
+        variables[toPort] = resolveNodeValue(sourceNodeId);
+      });
+      const result = renderNodeTemplate(template, variables);
+      resolvingNodeIds.delete(normalizedNodeId);
+      nodeResults[normalizedNodeId] = result;
+      return result;
     };
 
-    sortedTextNodes.forEach((node) => {
-      getVariableValue(node.id);
+    graphCompileIndex.orderedTextNodeIds.forEach((nodeId: string): void => {
+      resolveNodeValue(nodeId);
     });
 
-    const finalResult = sortedTextNodes.map((n) => nodeResults[n.id]).join('\n\n').trim();
+    const finalResult = graphCompileIndex.orderedTextNodeIds
+      .map((nodeId: string): string => nodeResults[nodeId] ?? '')
+      .join('\n\n')
+      .trim();
 
     return {
       segments: [],
@@ -169,7 +203,7 @@ export function useNodeFileWorkspaceState({
       outputsByNode: {},
       warnings: [],
     };
-  }, [nodes, edges]);
+  }, [graphCompileIndex]);
 
   const selectedNode = useMemo(
     () => (selectedNodeId ? nodes.find((n) => n.id === selectedNodeId) ?? null : null),

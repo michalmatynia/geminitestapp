@@ -209,6 +209,9 @@ export const noteService: NoteRepository = {
     return success;
   },
 
+  syncRelatedNotesBatch: (noteId: string, addedIds: string[], removedIds: string[]): Promise<void> => 
+    repoCall('syncRelatedNotesBatch', noteId, addedIds, removedIds),
+
   // Pass-through methods
   getAllTags: (notebookId?: string | null): Promise<TagRecord[]> => repoCall('getAllTags', notebookId),
   getTagById: (id: string): Promise<TagRecord | null> => repoCall('getTagById', id),

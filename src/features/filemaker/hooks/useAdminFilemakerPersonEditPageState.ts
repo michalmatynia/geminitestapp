@@ -162,7 +162,12 @@ export function useAdminFilemakerPersonEditPageState(): AdminFilemakerPersonEdit
     const rules = parseFilemakerEmailParserRulesFromPromptSettings(promptSettings);
 
     const { database: nextDatabase, createdEmailCount, linkedEmailCount } = 
-      parseAndUpsertFilemakerEmailsForParty(database, 'person', person.id, emailExtractionText, rules);
+      parseAndUpsertFilemakerEmailsForParty(database, {
+        partyKind: 'person',
+        partyId: person.id,
+        text: emailExtractionText,
+        parserRules: rules,
+      });
 
     await persistDatabase(nextDatabase, `Extracted ${createdEmailCount} new emails and linked ${linkedEmailCount} total.`);
     setEmailExtractionText('');

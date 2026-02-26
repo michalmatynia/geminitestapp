@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef } from 'react';

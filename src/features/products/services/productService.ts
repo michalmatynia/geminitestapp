@@ -257,6 +257,26 @@ async function getProductBySku(
   return product as ProductWithImages;
 }
 
+async function getProductsBySkus(
+  skus: string[],
+  options?: { provider?: ProductDbProvider },
+): Promise<ProductWithImages[]> {
+  const provider = options?.provider ?? (await getProductDataProvider());
+  const productRepository = await resolveProductRepository(provider);
+  const products = await productRepository.getProductsBySkus(skus);
+  return products as ProductWithImages[];
+}
+
+async function findProductsByBaseIds(
+  baseIds: string[],
+  options?: { provider?: ProductDbProvider },
+): Promise<ProductWithImages[]> {
+  const provider = options?.provider ?? (await getProductDataProvider());
+  const productRepository = await resolveProductRepository(provider);
+  const products = await productRepository.findProductsByBaseIds(baseIds);
+  return products as ProductWithImages[];
+}
+
 async function createProduct(
   data: unknown,
   options?: { provider?: ProductDbProvider; userId?: string },
@@ -335,12 +355,12 @@ async function bulkCreateProducts(
   for (const item of data) {
     const validation = await validateProductCreate(item);
     if (validation.success) {
-      validatedData.push(normalizeProductPayloadForStorage(validation.data) as any);
+      validatedData.push(normalizeProductPayloadForStorage(validation.data));
     }
   }
 
   if (validatedData.length === 0) return 0;
-  return productRepository.bulkCreateProducts(validatedData as any);
+  return productRepository.bulkCreateProducts(validatedData);
 }
 
 async function updateProduct(

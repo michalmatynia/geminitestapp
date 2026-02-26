@@ -160,6 +160,75 @@ describe('compileGraph', () => {
     ).toBe(true);
   });
 
+  it('respects node-level optional input contracts before legacy required-port fallback', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'db-1',
+        type: 'database',
+        inputs: ['value', 'prompt', 'entityId'],
+        outputs: ['result'],
+        inputContracts: {
+          value: { required: false },
+          prompt: { required: false },
+          entityId: { required: false },
+        },
+      }),
+    ];
+
+    const report = compileGraph(nodes, []);
+    expect(report.ok).toBe(true);
+    expect(
+      report.findings.some(
+        (finding) =>
+          finding.code === 'required_input_missing_wiring' &&
+          finding.nodeId === 'db-1' &&
+          (finding.port === 'value' || finding.port === 'prompt')
+      )
+    ).toBe(false);
+  });
+
+  it('keeps runtime input contracts as highest precedence over node-level contracts', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'db-1',
+        type: 'database',
+        inputs: ['value', 'prompt'],
+        outputs: ['result'],
+        inputContracts: {
+          value: { required: false },
+          prompt: { required: false },
+        },
+        config: {
+          runtime: {
+            inputContracts: {
+              value: { required: true },
+              prompt: { required: false },
+            },
+          },
+        },
+      }),
+    ];
+
+    const report = compileGraph(nodes, []);
+    expect(report.ok).toBe(false);
+    expect(
+      report.findings.some(
+        (finding) =>
+          finding.code === 'required_input_missing_wiring' &&
+          finding.nodeId === 'db-1' &&
+          finding.port === 'value'
+      )
+    ).toBe(true);
+    expect(
+      report.findings.some(
+        (finding) =>
+          finding.code === 'required_input_missing_wiring' &&
+          finding.nodeId === 'db-1' &&
+          finding.port === 'prompt'
+      )
+    ).toBe(false);
+  });
+
   it('warns when context-bound nodes use session cache scope', () => {
     const nodes: AiNode[] = [
       buildNode({

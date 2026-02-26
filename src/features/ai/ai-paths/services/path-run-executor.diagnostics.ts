@@ -78,3 +78,12 @@ export const buildBlockedRunFailureMessage = (
       : '';
   return `Run blocked by ${title}${waiting}${suffix}.`;
 };
+
+export const shouldFailBlockedRun = (args: {
+  runBlocked: boolean;
+  blockedRunPolicy: 'fail_run' | 'complete_with_warning';
+  nodeValidationEnabled: boolean;
+}): boolean =>
+  args.runBlocked &&
+  args.nodeValidationEnabled &&
+  args.blockedRunPolicy === 'fail_run';

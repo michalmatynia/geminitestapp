@@ -94,6 +94,8 @@ export const filemakerOrganizationSchema = dtoBaseSchema.extend({
   postalCode: z.string(),
   country: z.string(),
   countryId: z.string(),
+  taxId: z.string().optional(),
+  krs: z.string().optional(),
 });
 
 export type FilemakerOrganizationDto = z.infer<typeof filemakerOrganizationSchema>;

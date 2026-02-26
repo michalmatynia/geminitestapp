@@ -180,7 +180,7 @@ const createTransactionalRepository = (
       ...(normalizedParameters !== undefined
         ? {
           parameters:
-              normalizedParameters as any,
+              normalizedParameters as Prisma.JsonValue,
         }
         : {}),
       ...(id ? { id } : {}),
@@ -218,7 +218,7 @@ const createTransactionalRepository = (
         ...(normalizedParameters !== undefined
           ? {
             parameters:
-                normalizedParameters as any,
+                normalizedParameters as Prisma.JsonValue,
           }
           : {}),
         ...(id ? { id } : {}),
@@ -246,7 +246,7 @@ const createTransactionalRepository = (
       ...(normalizedParameters !== undefined
         ? {
           parameters:
-              normalizedParameters as any,
+              normalizedParameters as Prisma.JsonValue,
         }
         : {}),
     }) as Prisma.ProductUpdateInput;
@@ -320,7 +320,7 @@ const createTransactionalRepository = (
     const product = await tx.product.create({
       data: {
         ...rest,
-        parameters: rest.parameters as any,
+        parameters: rest.parameters,
         sku,
         published: false,
       },

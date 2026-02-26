@@ -238,12 +238,37 @@ export async function evaluateGraphInternal(
     outgoingEdgesByNode.get(fromNodeId)!.push(edge);
   });
 
-  const inputs: Record<string, RuntimePortValues> = options.seedOutputs
-    ? cloneValue(options.seedOutputs)
-    : {};
+  const scopedNodeIds = (() => {
+    if (!options.triggerNodeId || !nodeById.has(options.triggerNodeId)) {
+      return new Set(nodes.map((node) => node.id));
+    }
+    const reachable = new Set<string>();
+    const stack = [options.triggerNodeId];
+    while (stack.length > 0) {
+      const current = stack.pop();
+      if (!current || reachable.has(current)) continue;
+      reachable.add(current);
+      const outgoing = outgoingEdgesByNode.get(current) ?? [];
+      outgoing.forEach((edge) => {
+        const toNodeId = resolveEdgeToNodeId(edge);
+        if (toNodeId && !reachable.has(toNodeId)) {
+          stack.push(toNodeId);
+        }
+      });
+    }
+    return reachable;
+  })();
+  const executableNodeCount = scopedNodeIds.size;
+
+  const inputs: Record<string, RuntimePortValues> = {};
   const outputs: Record<string, RuntimePortValues> = options.seedOutputs
     ? cloneValue(options.seedOutputs)
     : {};
+  Object.keys(outputs).forEach((nodeId) => {
+    if (!scopedNodeIds.has(nodeId)) {
+      delete outputs[nodeId];
+    }
+  });
   const history = new Map<string, RuntimeHistoryEntry[]>();
   const activeNodes = new Set<string>();
   const finishedNodes = new Set<string>();
@@ -289,7 +314,7 @@ export async function evaluateGraphInternal(
       status:
               errorNodes.size > 0
                 ? 'failed'
-                : finishedNodes.size === nodes.length
+                : finishedNodes.size >= executableNodeCount
                   ? 'completed'
                   : 'running',
       nodeStatuses,      nodeOutputs: outputsSnapshot,
@@ -456,6 +481,7 @@ export async function evaluateGraphInternal(
     }
 
     for (const node of orderedNodes) {
+      if (!scopedNodeIds.has(node.id)) continue;
       throwAbortIfCancelled(inputs, node.id);
       if (finishedNodes.has(node.id) || errorNodes.has(node.id)) continue;
 

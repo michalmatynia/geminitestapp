@@ -169,7 +169,7 @@ export function useAiPathsPresets({
       raw.config && typeof raw.config === 'object'
         ? raw.config
         : ({ operation: 'query' } as DbNodePreset['config']);
-    const migratedConfig = migrateDatabaseConfigCollections(baseConfig).databaseConfig ?? baseConfig;
+    const migratedConfig = migrateDatabaseConfigCollections(baseConfig as DatabaseConfig).databaseConfig ?? baseConfig;
     return {
       id: raw.id && typeof raw.id === 'string' ? raw.id : createPresetId(),
       name:

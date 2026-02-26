@@ -736,7 +736,7 @@ export const buildParameterInferencePathConfigValue = (timestamp: string): strin
     parserSamples: {},
     updaterSamples: {},
   };
-  const normalizedNodes = normalizeNodes(config.nodes);
+  const normalizedNodes = normalizeNodes(config.nodes as AiNode[]);
   return JSON.stringify({
     ...config,
     nodes: normalizedNodes,

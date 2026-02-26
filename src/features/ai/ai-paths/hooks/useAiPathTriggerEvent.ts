@@ -127,7 +127,7 @@ const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
     normalized,
     Array.isArray(repaired.edges) ? repaired.edges : []
   );
-  const graphNodes = normalizeNodes(migrated.nodes);
+  const graphNodes = normalizeNodes(migrated.nodes as AiNode[]);
   const graphEdges = sanitizeEdges(graphNodes, migrated.edges);
   return {
     ...repaired,
@@ -585,7 +585,7 @@ export function useAiPathTriggerEvent(): {
         uiState = selection.uiState;
       }
 
-      const nodes: AiNode[] = normalizeNodes(Array.isArray(selectedConfig.nodes) ? selectedConfig.nodes : []);
+      const nodes: AiNode[] = normalizeNodes((selectedConfig.nodes as AiNode[]) ?? []);
       const edges: Edge[] = sanitizeEdges(nodes, Array.isArray(selectedConfig.edges) ? selectedConfig.edges : []);
       const fallbackTriggerEventId = (TRIGGER_EVENTS[0]?.id as string) ?? 'manual';
 

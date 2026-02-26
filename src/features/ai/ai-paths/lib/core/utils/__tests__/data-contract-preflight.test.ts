@@ -165,6 +165,56 @@ describe('evaluateDataContractPreflight', () => {
     ).toBe(true);
   });
 
+  it('does not flag optional value/prompt ports as unresolved when unwired', () => {
+    const nodes: AiNode[] = [
+      buildNode({
+        id: 'db-1',
+        type: 'database',
+        title: 'DB',
+        inputs: ['value', 'prompt'],
+        outputs: ['result'],
+        inputContracts: {
+          value: { required: false },
+          prompt: { required: false },
+        },
+        config: {
+          database: {
+            operation: 'query',
+            query: {
+              provider: 'auto',
+              collection: 'products',
+              mode: 'custom',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '{"id":"{{entityId}}"}',
+              limit: 1,
+              sort: '',
+              projection: '',
+              single: true,
+            },
+          },
+        },
+      }),
+    ];
+
+    const report = evaluateDataContractPreflight({
+      nodes,
+      edges: [],
+      runtimeState: buildRuntimeState({}),
+      mode: 'full',
+    });
+
+    expect(
+      report.issues.some(
+        (issue) =>
+          issue.code === 'required_input_unresolved' &&
+          issue.nodeId === 'db-1' &&
+          (issue.port === 'value' || issue.port === 'prompt')
+      )
+    ).toBe(false);
+  });
+
   it('does not flag template token missing when upstream root is connected but unresolved', () => {
     const nodes: AiNode[] = [
       buildNode({

@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import {
@@ -22,6 +20,7 @@ import { useMasterFolderTreeInstance } from '@/features/foldertree';
 import {
   FolderTreeViewportV2,
   applyInternalMasterTreeDrop,
+  type FolderTreeViewportRenderNodeInput,
 } from '@/features/foldertree/v2';
 import { CaseListSearchPanel } from './list/search';
 import {
@@ -31,6 +30,8 @@ import {
 } from '@/shared/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
+import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 import { useAdminCaseResolverCases } from '../context/AdminCaseResolverCasesContext';
 import { useAdminCaseResolverCasesState } from '../hooks/useAdminCaseResolverCasesState';
@@ -49,7 +50,28 @@ import { CaseListHeldDock } from './list/sections/CaseListHeldDock';
 import { useCaseListAutoExpandBootstrap } from './list/hooks/useCaseListAutoExpandBootstrap';
 
 /** Thin wrapper that computes per-node derived values so CaseListNodeItem can be memo'd. */
-const CaseListNodeItemWrapper = memo(function CaseListNodeItemWrapper(props) {
+type CaseListNodeItemWrapperProps = FolderTreeViewportRenderNodeInput & {
+  filesById: Map<string, CaseResolverFile>;
+  caseTagPathById: Map<string, string>;
+  caseIdentifierPathById: Map<string, string>;
+  caseCategoryPathById: Map<string, string>;
+  controller: MasterFolderTreeController;
+  handleToggleCaseStatus: (id: string) => Promise<void>;
+  heldCaseId: string | null;
+  heldCaseFile: CaseResolverFile | null;
+  isHierarchyLocked: boolean;
+  isHeldCaseAncestorOf: (candidateCaseId: string) => boolean;
+  handleToggleHeldCase: (caseId: string) => void;
+  handleNestHeldCase: (targetCaseId: string) => void;
+  handleOpenCase: (id: string) => void;
+  handleOpenFile: (id: string) => void;
+  handleCreateCase: (parentId: string | null) => void;
+  handleDeleteCase: (id: string) => void;
+  FolderClosedIcon: React.ComponentType<{ className?: string }>;
+  FolderOpenIcon: React.ComponentType<{ className?: string }>;
+};
+
+const CaseListNodeItemWrapper = memo(function CaseListNodeItemWrapper(props: CaseListNodeItemWrapperProps) {
   const targetCaseId = fromCaseResolverCaseNodeId(props.node.id) ?? '';
   const canShowNestHeldAction =
     Boolean(props.heldCaseId) &&
@@ -384,33 +406,8 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     [setCaseDraft, setEditingCaseId, setIsCreateCaseModalOpen]
   );
 
-  const handleEditCaseLocal = useCallback(
-    (caseFile: any): void => {
-      setEditingCaseId(caseFile.id);
-      setCaseDraft({
-        name: caseFile.name,
-        folder: caseFile.folder ?? '',
-        parentCaseId: caseFile.parentCaseId ?? '',
-        caseStatus: caseFile.caseStatus ?? 'pending',
-        caseIdentifierId: caseFile.caseIdentifierId ?? '',
-        tagId: caseFile.tagId ?? '',
-        categoryId: caseFile.categoryId ?? '',
-        referenceCaseIds: caseFile.referenceCaseIds ?? [],
-        documentContent: caseFile.documentContent ?? '',
-        documentCity: caseFile.documentCity ?? '',
-        documentDate: caseFile.documentDate ?? null,
-        happeningDate: caseFile.happeningDate ?? '',
-        isLocked: caseFile.isLocked === true,
-        isSent: caseFile.isSent === true,
-        activeDocumentVersion: caseFile.activeDocumentVersion ?? 'original',
-      });
-      setIsCreateCaseModalOpen(true);
-    },
-    [setCaseDraft, setEditingCaseId, setIsCreateCaseModalOpen],
-  );
-
   const canStartDrag = useCallback(
-    ({ node }): boolean => {
+    ({ node }: { node: FolderTreeViewportRenderNodeInput['node'] }): boolean => {
       if (isHierarchyLocked) return false;
       if (!decodeCaseResolverCaseMasterNodeId(node.id)) return false;
       return !parseBoolean(node.metadata?.['isLocked']);
@@ -419,7 +416,15 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   );
 
   const canDrop = useCallback(
-    ({ draggedNodeId, targetId, defaultAllowed }): boolean => {
+    ({
+      draggedNodeId,
+      targetId,
+      defaultAllowed,
+    }: {
+      draggedNodeId: string;
+      targetId: string | null;
+      defaultAllowed: boolean;
+    }): boolean => {
       if (isHierarchyLocked) return false;
       if (!defaultAllowed) return false;
       const dragged = decodeCaseResolverCaseMasterNodeId(draggedNodeId);
@@ -431,7 +436,20 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   );
 
   const handleNodeDrop = useCallback(
-    async ({ draggedNodeId, targetId, position, rootDropZone }, ctlr) => {
+    async (
+      {
+        draggedNodeId,
+        targetId,
+        position,
+        rootDropZone,
+      }: {
+        draggedNodeId: string;
+        targetId: string | null;
+        position: 'inside' | 'before' | 'after';
+        rootDropZone?: 'top' | 'bottom';
+      },
+      ctlr: MasterFolderTreeController,
+    ): Promise<void> => {
       if (isHierarchyLocked) return;
       await applyInternalMasterTreeDrop({ controller: ctlr, draggedNodeId, targetId, position, rootDropZone });
     },
@@ -444,7 +462,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   );
 
   const handleRenderNode = useCallback(
-    (props) => (
+    (props: FolderTreeViewportRenderNodeInput): React.JSX.Element => (
       <CaseListNodeItemWrapper
         {...props}
         filesById={filesById}
@@ -461,7 +479,6 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
         handleNestHeldCase={handleNestHeldCaseVoid}
         handleOpenCase={handleOpenCase}
         handleOpenFile={handleOpenFile}
-        handleEditCase={handleEditCaseLocal}
         handleCreateCase={handleCreateCaseLocal}
         handleDeleteCase={handleDeleteCase}
         FolderClosedIcon={FolderClosedIcon}
@@ -473,7 +490,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       controller, handleToggleCaseStatus, heldCaseId, heldCaseFile,
       isHierarchyLocked, isHeldCaseAncestorOf,
       handleToggleHeldCase, handleNestHeldCaseVoid, handleOpenCase, handleOpenFile,
-      handleEditCaseLocal, handleCreateCaseLocal, handleDeleteCase,
+      handleCreateCaseLocal, handleDeleteCase,
       FolderClosedIcon, FolderOpenIcon,
     ]
   );
@@ -588,7 +605,9 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
             canStartDrag={canStartDrag}
             canDrop={canDrop}
             rootDropUi={rootDropUi}
-            onNodeDrop={handleNodeDrop}
+            onNodeDrop={(input, treeController): void => {
+              void handleNodeDrop(input, treeController);
+            }}
             renderNode={handleRenderNode}
           />
           <button

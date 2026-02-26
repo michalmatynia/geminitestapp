@@ -126,7 +126,7 @@ export const serializePathConfigToSemanticCanvas = (
     : semanticEdgesRaw;
 
   const nodeConnections = buildNodeConnections(
-    (pathConfig.nodes ?? []).map((node) => node.id),
+    (pathConfig.nodes as AiNode[] ?? []).map((node: AiNode) => node.id),
     semanticEdges,
   );
 

@@ -57,6 +57,7 @@ import { fetchEntityByType } from './path-run-executor.entities';
 import {
   buildBlockedRunFailureMessage,
   collectBlockedNodeDiagnostics,
+  shouldFailBlockedRun,
 } from './path-run-executor.diagnostics';
 import { createCancellationMonitor } from './path-run-executor.monitoring';
 import {
@@ -1043,7 +1044,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
     const blockedNodeDiagnostics = collectBlockedNodeDiagnostics(nodes, resultState.outputs);
     const haltedAsBlocked = runtimeHaltReason === 'blocked';
     const runBlocked = haltedAsBlocked || blockedNodeDiagnostics.length > 0;
-    const shouldFailOnBlocked = runBlocked && blockedRunPolicy === 'fail_run';
+    const shouldFailOnBlocked = shouldFailBlockedRun({
+      runBlocked,
+      blockedRunPolicy,
+      nodeValidationEnabled,
+    });
     const blockedFailureMessage = buildBlockedRunFailureMessage(blockedNodeDiagnostics);
     let finalizedTerminalStatus: AiPathRunStatus | null = null;
     let finalizedErrorMessage: string | null = null;

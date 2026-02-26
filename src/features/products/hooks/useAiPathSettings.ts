@@ -62,7 +62,7 @@ const sanitizeLoadedPathConfig = (config: PathConfig): PathConfig => {
     normalized,
     Array.isArray(repaired.edges) ? repaired.edges : []
   );
-  const graphNodes = normalizeNodes(migrated.nodes);
+  const graphNodes = normalizeNodes(migrated.nodes as AiNode[]);
   const graphEdges = sanitizeEdges(graphNodes, migrated.edges);
   return {
     ...repaired,

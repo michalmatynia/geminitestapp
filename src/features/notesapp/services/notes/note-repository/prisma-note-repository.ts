@@ -22,6 +22,7 @@ export const prismaNoteRepository: NoteRepository = {
   create: noteImpl.create,
   update: noteImpl.update,
   delete: noteImpl.deleteNote,
+  syncRelatedNotesBatch: noteImpl.syncRelatedNotesBatch,
 
   // Tags
   getAllTags: tagImpl.getAllTags,

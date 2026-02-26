@@ -12,7 +12,18 @@ export const createDefaultFilemakerPerson = (id: string, name?: string): Filemak
   const now = new Date().toISOString();
   return {
     id,
-    name: normalizeString(name),
+    firstName: normalizeString(name),
+    lastName: '',
+    addressId: '',
+    street: '',
+    streetNumber: '',
+    city: '',
+    postalCode: '',
+    country: '',
+    countryId: '',
+    nip: '',
+    regon: '',
+    phoneNumbers: [],
     createdAt: now,
     updatedAt: now,
   };
@@ -23,6 +34,13 @@ export const createDefaultFilemakerOrganization = (id: string, name?: string): F
   return {
     id,
     name: normalizeString(name),
+    addressId: '',
+    street: '',
+    streetNumber: '',
+    city: '',
+    postalCode: '',
+    country: '',
+    countryId: '',
     createdAt: now,
     updatedAt: now,
   };
@@ -32,11 +50,12 @@ export const createDefaultFilemakerAddress = (id: string): FilemakerAddress => {
   const now = new Date().toISOString();
   return {
     id,
-    rawAddress: '',
-    street: null,
-    city: null,
-    postalCode: null,
-    country: null,
+    street: '',
+    streetNumber: '',
+    city: '',
+    postalCode: '',
+    country: '',
+    countryId: '',
     createdAt: now,
     updatedAt: now,
   };
@@ -45,6 +64,7 @@ export const createDefaultFilemakerAddress = (id: string): FilemakerAddress => {
 export const createDefaultFilemakerEmail = (email: string): FilemakerEmail => {
   const now = new Date().toISOString();
   return {
+    id: `email-${Math.random().toString(36).substr(2, 9)}`,
     email: email.trim().toLowerCase(),
     status: 'unverified',
     createdAt: now,
@@ -55,8 +75,8 @@ export const createDefaultFilemakerEmail = (email: string): FilemakerEmail => {
 export const createDefaultFilemakerPhoneNumber = (phoneNumber: string): FilemakerPhoneNumber => {
   const now = new Date().toISOString();
   return {
+    id: `phone-${Math.random().toString(36).substr(2, 9)}`,
     phoneNumber: phoneNumber.trim(),
-    isValid: true,
     createdAt: now,
     updatedAt: now,
   };
@@ -66,8 +86,14 @@ export const createDefaultFilemakerEvent = (id: string, title?: string): Filemak
   const now = new Date().toISOString();
   return {
     id,
-    title: normalizeString(title),
-    eventDate: null,
+    eventName: normalizeString(title),
+    addressId: '',
+    street: '',
+    streetNumber: '',
+    city: '',
+    postalCode: '',
+    country: '',
+    countryId: '',
     createdAt: now,
     updatedAt: now,
   };

@@ -1,8 +1,6 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
-import { useCallback } from 'react';
+import { useCallback, type Dispatch, type MutableRefObject, type SetStateAction } from 'react';
 import type { 
   CaseResolverWorkspace, 
   CaseResolverFile 
@@ -25,6 +23,32 @@ import {
 } from './utils';
 import { createCaseResolverFile } from '../../settings';
 import { logClientError } from '@/features/observability';
+import type { CaseResolverCaseListConfirmationState } from './types';
+
+type ToastFn = (message: string, options?: { variant?: string }) => void;
+
+type UseAdminCaseResolverCasesActionsArgs = {
+  workspace: CaseResolverWorkspace;
+  setWorkspace: Dispatch<SetStateAction<CaseResolverWorkspace>>;
+  lastPersistedWorkspaceValueRef: MutableRefObject<string>;
+  lastPersistedWorkspaceRevisionRef: MutableRefObject<number>;
+  setIsCreatingCase: Dispatch<SetStateAction<boolean>>;
+  createCaseMutationIdRef: MutableRefObject<string | null>;
+  caseDraft: Partial<CaseResolverFile>;
+  setCaseDraft: Dispatch<SetStateAction<Partial<CaseResolverFile>>>;
+  setIsCreateCaseModalOpen: (open: boolean) => void;
+  editingCaseId: string | null;
+  setEditingCaseId: (id: string | null) => void;
+  editingCaseName: string;
+  editingCaseParentId: string | null;
+  editingCaseReferenceCaseIds: string[];
+  editingCaseTagId: string | null;
+  editingCaseCaseIdentifierId: string | null;
+  editingCaseCategoryId: string | null;
+  setConfirmation: Dispatch<SetStateAction<CaseResolverCaseListConfirmationState>>;
+  toast: ToastFn;
+  settingsStoreRefetchRef: MutableRefObject<() => void>;
+};
 
 export function useAdminCaseResolverCasesActions({
   workspace,
@@ -47,7 +71,7 @@ export function useAdminCaseResolverCasesActions({
   setConfirmation,
   toast,
   settingsStoreRefetchRef,
-}) {
+}: UseAdminCaseResolverCasesActionsArgs) {
   const waitForCaseAvailability = useCallback(
     async (
       caseId: string,
@@ -103,7 +127,7 @@ export function useAdminCaseResolverCasesActions({
       logCaseResolverWorkspaceEvent({
         source,
         action: 'case_availability_missing',
-        message: `Case was not visible after sync attempts: \${caseId}`,
+        message: `Case was not visible after sync attempts: ${caseId}`,
       });
       return false;
     },

@@ -25,7 +25,7 @@ import type {
   FullDatabaseBackupResultDto 
 } from '@/shared/contracts/database';
 
-export type { FullDatabaseBackupResultDto };
+export type { DatabaseBackupResult, FullDatabaseBackupResultDto };
 
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
 

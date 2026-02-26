@@ -12,6 +12,7 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 import type { MasterFolderTreeAdapter } from '@/shared/contracts/master-folder-tree';
 import { useCaseResolverPageContext } from './CaseResolverPageContext';
 import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
+import { buildCaseResolverRuntimeIndexes } from '../runtime';
 import {
   buildMasterNodesFromCaseResolverWorkspace,
   fromCaseResolverCaseNodeId,
@@ -161,6 +162,11 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
   const [showChildCaseFolders, setShowChildCaseFolders] = useState(true);
   const [highlightedNodeFileAssetIds, setHighlightedNodeFileAssetIds] = useState<string[]>([]);
 
+  const workspaceIndexes = useMemo(
+    () => buildCaseResolverRuntimeIndexes(workspace),
+    [workspace.assets, workspace.files, workspace.folderRecords, workspace.folders],
+  );
+
   // ── Adapter ─────────────────────────────────────────────────────────────────
   const adapterOperationsRef = React.useRef({
     moveFile: onMoveFile,
@@ -211,6 +217,7 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
         activeCaseId,
         workspace,
         includeDescendantCaseScope: showChildCaseFolders,
+        indexes: workspaceIndexes,
       });
       // If no explicit case context is active, never collapse a non-empty workspace to an empty tree.
       const hasExplicitCaseContext = Boolean(
@@ -230,7 +237,14 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
       }
       return scopedWorkspace;
     },
-    [activeCaseId, requestedFileId, selectedFileId, showChildCaseFolders, workspace],
+    [
+      activeCaseId,
+      requestedFileId,
+      selectedFileId,
+      showChildCaseFolders,
+      workspace,
+      workspaceIndexes,
+    ],
   );
 
   const isNodeFileCanvasActive = useMemo(

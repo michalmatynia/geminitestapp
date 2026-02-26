@@ -223,7 +223,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
       buildIdentityRepairSeed(input, migratedGraph.nodes, migratedGraph.edges),
       { palette }
     );
-    const nodes = normalizeNodes(identityRepair.config.nodes);
+    const nodes = normalizeNodes(identityRepair.config.nodes as AiNode[]);
     const edges = sanitizeEdges(nodes, identityRepair.config.edges);
     const validationConfig = normalizeAiPathsValidationConfig(
       (input.meta as Record<string, unknown> | null)?.['aiPathsValidation'] as

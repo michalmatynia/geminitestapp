@@ -200,7 +200,7 @@ export function useAdminFilemakerPageState() {
       return;
     }
 
-    const nextDatabase = createFilemakerEvent(database, {
+    const newEvent = createFilemakerEvent({
       eventName: eventDraft.eventName,
       id: createId('event'),
       addressId: createId('addr'),
@@ -211,6 +211,11 @@ export function useAdminFilemakerPageState() {
       country: '',
       countryId: '',
     });
+
+    const nextDatabase: FilemakerDatabase = {
+      ...database,
+      events: [...database.events, newEvent],
+    };
 
     await persistDatabase(nextDatabase, 'Event created.');
     setIsEventModalOpen(false);

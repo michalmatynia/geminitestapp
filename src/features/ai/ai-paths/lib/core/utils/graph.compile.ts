@@ -5,6 +5,7 @@ import type {
 } from './graph.types';
 import { sanitizeEdges } from './graph.edges';
 import { getNodeInputPortCardinality, getNodeInputPortContract } from './graph.nodes';
+import { normalizePortName } from './graph.ports';
 import { arePortTypesCompatible, getPortDataTypes } from './port-types';
 
 export type CompileGraphOptions = {
@@ -24,6 +25,7 @@ export const compileGraph = (
   const adjacency = new Map<string, string[]>();
   const inverseAdjacency = new Map<string, string[]>();
   const edgeMap = new Map<string, Edge[]>(); // toNodeId -> edges
+  const outgoingEdgeMap = new Map<string, Edge[]>(); // fromNodeId -> edges
 
   normalizedEdges.forEach((edge: Edge) => {
     if (!edge.from || !edge.to) return;
@@ -39,6 +41,10 @@ export const compileGraph = (
     const nodeEdges = edgeMap.get(edge.to) ?? [];
     nodeEdges.push(edge);
     edgeMap.set(edge.to, nodeEdges);
+
+    const outgoingEdges = outgoingEdgeMap.get(edge.from) ?? [];
+    outgoingEdges.push(edge);
+    outgoingEdgeMap.set(edge.from, outgoingEdges);
   });
 
   const triggerNode = nodes.find((node: AiNode) => node.type === 'trigger');
@@ -205,54 +211,128 @@ export const compileGraph = (
   });
 
   // 4. Incompatible wiring
-  normalizedEdges.forEach(edge => {
-    if (!edge.from || !edge.to || !edge.fromPort || !edge.toPort) return;
-    if (!reachableNodeIds.has(edge.from) || !reachableNodeIds.has(edge.to)) return;
+  const resolveNodeId = (primary?: string, fallback?: string): string | null => {
+    const first = typeof primary === 'string' ? primary.trim() : '';
+    if (first.length > 0) return first;
+    const second = typeof fallback === 'string' ? fallback.trim() : '';
+    return second.length > 0 ? second : null;
+  };
+  const resolvePort = (
+    primary?: string | null,
+    fallback?: string | null
+  ): string | null => {
+    const first = typeof primary === 'string' ? normalizePortName(primary) : '';
+    if (first.length > 0) return first;
+    const second = typeof fallback === 'string' ? normalizePortName(fallback) : '';
+    return second.length > 0 ? second : null;
+  };
+  const compatibilityCheckedEdges = new Set<string>();
+  edges.forEach((edge, edgeIndex) => {
+    const fromId = resolveNodeId(edge.from, edge.source);
+    const toId = resolveNodeId(edge.to, edge.target);
+    const fromPort = resolvePort(edge.fromPort, edge.sourceHandle);
+    const toPort = resolvePort(edge.toPort, edge.targetHandle);
+    if (!fromId || !toId || !fromPort || !toPort) return;
+    if (!reachableNodeIds.has(fromId) || !reachableNodeIds.has(toId)) return;
+    const edgeKey = edge.id || `${fromId}:${fromPort}->${toId}:${toPort}:${edgeIndex}`;
+    if (compatibilityCheckedEdges.has(edgeKey)) return;
+    compatibilityCheckedEdges.add(edgeKey);
 
-    const fromNode = nodeMap.get(edge.from);
-    const toNode = nodeMap.get(edge.to);
+    const fromNode = nodeMap.get(fromId);
+    const toNode = nodeMap.get(toId);
     if (!fromNode || !toNode) return;
+    if (!fromNode.outputs.includes(fromPort) || !toNode.inputs.includes(toPort)) return;
 
-    const fromTypes = getPortDataTypes(edge.fromPort);
-    const toTypes = getPortDataTypes(edge.toPort);
+    const fromTypes = getPortDataTypes(fromPort);
+    const toTypes = getPortDataTypes(toPort);
     if (!arePortTypesCompatible(fromTypes, toTypes)) {
-      const contract = getNodeInputPortContract(toNode, edge.toPort);
+      const contract = getNodeInputPortContract(toNode, toPort);
       findings.push({
         code: contract.required ? 'incompatible_wiring' : 'optional_input_incompatible_wiring',
         severity: contract.required ? 'error' : 'warning',
-        message: `Incompatible wiring: ${edge.fromPort} -> ${edge.toPort}`,
+        message: `Incompatible wiring: ${fromPort} -> ${toPort}`,
         edgeId: edge.id,
       });
     }
   });
 
-  // 5. Trigger context resolution risk
+  // 5. Context cache scope risk
+  const contextBoundPorts = new Set(['context', 'entityid', 'entitytype', 'entityjson', 'productid']);
+  nodes.forEach((node) => {
+    if (!reachableNodeIds.has(node.id)) return;
+    const cacheScope = node.config?.runtime?.cache?.scope;
+    if (cacheScope !== 'session') return;
+    const nodeHasContextInputs = (node.inputs || []).some((port) =>
+      contextBoundPorts.has(normalizePortName(port).trim().toLowerCase())
+    );
+    if (node.type === 'fetcher' || node.type === 'context' || node.type === 'simulation' || nodeHasContextInputs) {
+      findings.push({
+        code: 'context_cache_scope_risk',
+        severity: 'warning',
+        message: `Node "${node.title || node.id}" uses session cache scope with context-bound inputs. Consider run-scoped cache to avoid stale context reuse.`,
+        nodeId: node.id,
+      });
+    }
+  });
+
+  // 6. Trigger context resolution risk
   nodes.forEach(node => {
     if (node.type === 'trigger' && node.config?.trigger?.contextMode === 'simulation_required') {
       const incomingEdges = edgeMap.get(node.id) ?? [];
-      const hasSimulationSource = incomingEdges.some(e => {
+      const outgoingEdges = outgoingEdgeMap.get(node.id) ?? [];
+
+      let hasSimulationSource = false;
+      let hasManualOnlySimulation = false;
+      let hasTriggerFetcherPath = false;
+      let hasTriggerFetcherSimulationMode = false;
+
+      incomingEdges.forEach((e) => {
         const source = nodeMap.get(e.from!);
         if (source?.type === 'simulation') {
-          return source.config?.simulation?.runBehavior !== 'manual_only';
+          if (source.config?.simulation?.runBehavior !== 'manual_only') {
+            hasSimulationSource = true;
+            return;
+          }
+          hasManualOnlySimulation = true;
         }
         if (source?.type === 'fetcher') {
-          return source.config?.fetcher?.sourceMode === 'simulation_id';
+          hasTriggerFetcherPath = true;
+          if (source.config?.fetcher?.sourceMode === 'simulation_id') {
+            hasSimulationSource = true;
+            hasTriggerFetcherSimulationMode = true;
+          }
         }
-        return false;
+      });
+
+      outgoingEdges.forEach((e) => {
+        if (e.fromPort !== 'trigger' || e.toPort !== 'trigger') return;
+        const target = nodeMap.get(e.to!);
+        if (target?.type !== 'fetcher') return;
+        hasTriggerFetcherPath = true;
+        if (target.config?.fetcher?.sourceMode === 'simulation_id') {
+          hasSimulationSource = true;
+          hasTriggerFetcherSimulationMode = true;
+        }
       });
 
       if (!hasSimulationSource) {
+        let message = `Trigger "${node.title || node.id}" requires simulation context but no simulation-capable source is connected, or source is manual-only.`;
+        if (hasManualOnlySimulation) {
+          message = `Trigger "${node.title || node.id}" requires simulation context, but connected Simulation is manual-only. Set Simulation run behavior to Auto-run before connected Trigger.`;
+        } else if (hasTriggerFetcherPath && !hasTriggerFetcherSimulationMode) {
+          message = `Trigger "${node.title || node.id}" requires simulation context but no simulation-capable source is connected via Trigger -> Fetcher.`;
+        }
         findings.push({
           code: 'trigger_context_resolution_risk',
           severity: 'warning',
-          message: `Trigger "${node.title || node.id}" requires simulation context but no simulation-capable source is connected, or source is manual-only.`,
+          message,
           nodeId: node.id
         });
       }
     }
   });
 
-  // 6. Model prompt deadlock risk
+  // 7. Model prompt deadlock risk
   nodes.forEach(node => {
     if (node.type === 'model') {
       const isPromptRequired = getNodeInputPortContract(node, 'prompt').required;

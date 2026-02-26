@@ -83,17 +83,28 @@ export const resolveProductCategoryId = (product: ProductWithImages): string => 
   const direct = toTrimmedString(product.categoryId);
   if (direct) return direct;
 
-  const categories = (product as any).categories;
+  const categories = (product as unknown as Record<string, unknown>)['categories'];
   if (!categories) return '';
 
   if (Array.isArray(categories)) {
-    const first = categories[0];
+    const first = categories[0] as Record<string, unknown> | undefined;
     if (!first) return '';
-    return toTrimmedString(first.categoryId || first.category_id || first.id || first.value);
+    return toTrimmedString(
+      (first['categoryId'] as string | undefined) ||
+      (first['category_id'] as string | undefined) ||
+      (first['id'] as string | undefined) ||
+      (first['value'] as string | undefined)
+    );
   }
-  
-  if (typeof categories === 'object') {
-    return toTrimmedString(categories.categoryId || categories.category_id || categories.id || categories.value);
+
+  if (typeof categories === 'object' && categories !== null) {
+    const obj = categories as Record<string, unknown>;
+    return toTrimmedString(
+      (obj['categoryId'] as string | undefined) ||
+      (obj['category_id'] as string | undefined) ||
+      (obj['id'] as string | undefined) ||
+      (obj['value'] as string | undefined)
+    );
   }
 
   return '';
@@ -105,9 +116,13 @@ export const resolveProductCatalogId = (product: ProductWithImages): string => {
 
   const catalogs = product.catalogs;
   if (!Array.isArray(catalogs)) return '';
-  
-  const first = catalogs[0] as any;
+
+  const first = catalogs[0] as Record<string, unknown> | undefined;
   if (!first) return '';
 
-  return toTrimmedString(first.catalogId || first.catalog?.id || first.id);
+  return toTrimmedString(
+    (first['catalogId'] as string | undefined) ||
+    ((first['catalog'] as Record<string, unknown> | undefined)?.['id'] as string | undefined) ||
+    (first['id'] as string | undefined)
+  );
 };

@@ -11,6 +11,7 @@ import {
   buildSemanticNodesCatalogSourcePayload,
   buildSnippetSourcePayload,
   buildTooltipDocsCatalogSourcePayload,
+  extractAiPathsAssertionsFromMarkdown,
   readAiPathsDocsManifest,
 } from './docs-registry-adapter.loaders';
 import {
@@ -213,6 +214,8 @@ export const buildAiPathsValidationDocsSnapshot = async (): Promise<AiPathsDocsS
     assertions,
   };
 };
+
+export { extractAiPathsAssertionsFromMarkdown };
 
 export type {
   AiPathsDocAssertion,

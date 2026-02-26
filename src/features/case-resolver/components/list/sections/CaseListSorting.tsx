@@ -1,14 +1,13 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
 import { ArrowDown, ArrowUp, Lock, Save, Unlock } from 'lucide-react';
 import { Button, SelectSimple, Switch } from '@/shared/ui';
+import type { CaseSortKey } from '@/features/case-resolver/context/admin-cases/types';
 
 export interface CaseListSortingProps {
-  caseSortBy: string;
-  setCaseSortBy: (v: any) => void;
+  caseSortBy: CaseSortKey;
+  setCaseSortBy: (value: CaseSortKey) => void;
   caseSortOrder: 'asc' | 'desc';
   setCaseSortOrder: (v: 'asc' | 'desc') => void;
   isHierarchyLocked: boolean;
@@ -41,7 +40,9 @@ export function CaseListSorting({
         <SelectSimple
           size='sm'
           value={caseSortBy}
-          onValueChange={setCaseSortBy}
+          onValueChange={(value): void => {
+            setCaseSortBy(value as CaseSortKey);
+          }}
           options={[
             { value: 'updated', label: 'Date modified' },
             { value: 'created', label: 'Date created' },

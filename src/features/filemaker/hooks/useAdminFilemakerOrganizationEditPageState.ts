@@ -78,7 +78,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
 
   const countriesQuery = useCountries();
   const countries = countriesQuery.data ?? [];
-  
+
   const rawDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const database = useMemo(
     () => parseFilemakerDatabase(rawDatabase),
@@ -99,7 +99,7 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
   useEffect(() => {
     if (organization) {
       setOrgDraft(organization);
-      
+
       const addressLinks = getFilemakerAddressLinksForOwner(database, 'organization', organization.id);
       const addresses = addressLinks.map((link) => {
         const addr = getFilemakerAddressById(database, link.addressId);
@@ -168,8 +168,13 @@ export function useAdminFilemakerOrganizationEditPageState(): AdminFilemakerOrga
     const promptSettings = settingsStore.get(FILEMAKER_EMAIL_PARSER_PROMPT_SETTINGS_KEY);
     const rules = parseFilemakerEmailParserRulesFromPromptSettings(promptSettings);
 
-    const { database: nextDatabase, createdEmailCount, linkedEmailCount } = 
-      parseAndUpsertFilemakerEmailsForParty(database, 'organization', organization.id, emailExtractionText, rules);
+    const { database: nextDatabase, createdEmailCount, linkedEmailCount } =
+      parseAndUpsertFilemakerEmailsForParty(database, {
+        partyKind: 'organization',
+        partyId: organization.id,
+        text: emailExtractionText,
+        parserRules: rules,
+      });
 
     await persistDatabase(nextDatabase, `Extracted ${createdEmailCount} new emails and linked ${linkedEmailCount} total.`);
     setEmailExtractionText('');

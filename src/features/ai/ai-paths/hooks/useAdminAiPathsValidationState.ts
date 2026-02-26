@@ -330,7 +330,7 @@ export function useAdminAiPathsValidationState() {
     if (!selectedPathConfig) return null;
     return evaluateAiPathsValidationPreflight({
       nodes: (selectedPathConfig.nodes as AiNode[]) ?? [],
-      edges: (selectedPathConfig.edges as any[]) ?? [],
+      edges: (selectedPathConfig.edges as Edge[]) ?? [],
       config: validationDraft,
     });
   }, [selectedPathConfig, validationDraft]);

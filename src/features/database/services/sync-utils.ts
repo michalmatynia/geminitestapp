@@ -20,7 +20,7 @@ export const toDate = (value: unknown): Date | null => {
   return null;
 };
 
-export const toJsonValue = (value: unknown): unknown => {
+export const toJsonValue = (value: unknown): any => {
   if (value === undefined || value === null) return null;
   if (value instanceof Date) return value.toISOString();
   if (value instanceof ObjectId) return value.toString();

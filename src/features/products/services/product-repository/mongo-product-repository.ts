@@ -16,6 +16,7 @@ import type { ImageFileRecord } from '@/features/files';
 import {
   type CatalogRecord,
   CreateProductInput,
+  type ProductCreateInputDto,
   type ProductImageRecord,
   ProductFilters,
   type ProductWithImages,
@@ -331,6 +332,13 @@ export const mongoProductRepository: ProductRepository = {
     return doc ? toProductBase(doc as any) : null;
   },
 
+  async getProductsBySkus(skus: string[]) {
+    if (skus.length === 0) return [];
+    const collection = await getProductCollection();
+    const docs = await collection.find({ sku: { $in: skus } }).toArray();
+    return docs.map(doc => toProductBase(doc as any));
+  },
+
   async findProductByBaseId(baseProductId: string) {
     const db = await getMongoDb();
     const doc = await db
@@ -338,6 +346,73 @@ export const mongoProductRepository: ProductRepository = {
       .findOne({ baseProductId });
      
     return doc ? toProductBase(doc as any) : null;
+  },
+
+  async findProductsByBaseIds(baseIds: string[]) {
+    if (baseIds.length === 0) return [];
+    const db = await getMongoDb();
+    const docs = await db
+      .collection<ProductDocument>(productCollectionName)
+      .find({ baseProductId: { $in: baseIds } })
+      .toArray();
+    return docs.map(doc => toProductBase(doc as any));
+  },
+
+  async bulkCreateProducts(data: ProductCreateInputDto[]) {
+    if (data.length === 0) return 0;
+    const db = await getMongoDb();
+    const now = new Date();
+    const docs = data.map((item) => {
+      const id = item.id || randomUUID();
+      return {
+        _id: id,
+        id,
+        sku: typeof item.sku === 'string' ? item.sku : null,
+        baseProductId:
+          typeof item.baseProductId === 'string' ? item.baseProductId : null,
+        defaultPriceGroupId:
+          typeof item.defaultPriceGroupId === 'string'
+            ? item.defaultPriceGroupId
+            : null,
+        ean: typeof item.ean === 'string' ? item.ean : null,
+        gtin: typeof item.gtin === 'string' ? item.gtin : null,
+        asin: typeof item.asin === 'string' ? item.asin : null,
+        name_en: typeof item.name_en === 'string' ? item.name_en : null,
+        name_pl: typeof item.name_pl === 'string' ? item.name_pl : null,
+        name_de: typeof item.name_de === 'string' ? item.name_de : null,
+        description_en:
+          typeof item.description_en === 'string' ? item.description_en : null,
+        description_pl:
+          typeof item.description_pl === 'string' ? item.description_pl : null,
+        description_de:
+          typeof item.description_de === 'string' ? item.description_de : null,
+        supplierName:
+          typeof item.supplierName === 'string' ? item.supplierName : null,
+        supplierLink:
+          typeof item.supplierLink === 'string' ? item.supplierLink : null,
+        priceComment:
+          typeof item.priceComment === 'string' ? item.priceComment : null,
+        stock: typeof item.stock === 'number' ? item.stock : null,
+        price: typeof item.price === 'number' ? item.price : null,
+        categoryId: typeof item.categoryId === 'string' ? item.categoryId : null,
+        sizeLength: typeof item.sizeLength === 'number' ? item.sizeLength : null,
+        sizeWidth: typeof item.sizeWidth === 'number' ? item.sizeWidth : null,
+        weight: typeof item.weight === 'number' ? item.weight : null,
+        length: typeof item.length === 'number' ? item.length : null,
+        parameters: normalizeProductParameterValues(item.parameters),
+        imageLinks: Array.isArray(item.imageLinks) ? item.imageLinks : [],
+        imageBase64s: Array.isArray(item.imageBase64s) ? item.imageBase64s : [],
+        noteIds: [],
+        createdAt: now,
+        updatedAt: now,
+        images: [],
+        catalogs: [],
+      };
+    });
+    const result = await db
+      .collection<ProductDocument>(productCollectionName)
+      .insertMany(docs, { ordered: false });
+    return result.insertedCount;
   },
 
   async createProduct(data: CreateProductInput) {

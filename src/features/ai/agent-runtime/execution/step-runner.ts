@@ -315,7 +315,7 @@ export async function runPlanStepLoop(
       ).length;
 
       void (async () => {
-        const tasks: Promise<any>[] = [];
+        const tasks: Promise<unknown>[] = [];
         
         // Task 1: Checkpoint Brief
         tasks.push(maybeUpdateCheckpointBrief(step.id));
@@ -497,7 +497,7 @@ export async function runPlanStepLoop(
       : step.id;
 
     void (async () => {
-      const tasks: Promise<any>[] = [];
+      const tasks: Promise<unknown>[] = [];
       
       // Task 1: Checkpoint Brief (only on change)
       if (activeStepIdForBrief && (checkpointBriefStepId !== activeStepIdForBrief || checkpointBriefError !== (lastError ?? null))) {

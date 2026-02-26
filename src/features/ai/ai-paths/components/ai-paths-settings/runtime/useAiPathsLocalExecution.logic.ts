@@ -277,6 +277,8 @@ export function useAiPathsLocalExecutionLogic(args: LocalExecutionArgs) {
       }
       args.runLoopActiveRef.current = true;
       const stepLimit = mode === 'step' ? 1 : LOCAL_RUN_STEP_CHUNK;
+      const nodeValidationEnabledForBlockedPolicy =
+        args.aiPathsValidation?.enabled !== false;
       let outcome: 'completed' | 'paused' | 'canceled' | 'error' = 'completed';
       let capturedError: unknown = undefined;
       try {
@@ -501,7 +503,9 @@ export function useAiPathsLocalExecutionLogic(args: LocalExecutionArgs) {
           args.runtimeStateRef.current = nextState;
           args.setRuntimeState(nextState);
           if (haltRef.reason === 'blocked') {
-            const failOnBlocked = args.blockedRunPolicy !== 'complete_with_warning';
+            const failOnBlocked =
+              nodeValidationEnabledForBlockedPolicy &&
+              args.blockedRunPolicy !== 'complete_with_warning';
             const firstBlockedNode = args.normalizedNodes.find((node: AiNode): boolean => {
               const status = nextState.outputs?.[node.id]?.['status'];
               return typeof status === 'string' && status.trim().toLowerCase() === 'blocked';

@@ -34,6 +34,14 @@ export type CaseListViewDefaults = {
   showNestedContent: boolean;
 };
 
+export type CaseResolverCaseListConfirmationState = {
+  title: string;
+  message: string;
+  onConfirm: () => void | Promise<void>;
+  confirmText?: string;
+  isDangerous?: boolean;
+} | null;
+
 export type AdminCaseResolverCasesContextValue = {
   // State
   workspace: CaseResolverWorkspace;
@@ -68,13 +76,7 @@ export type AdminCaseResolverCasesContextValue = {
   caseShowNestedContent: boolean;
   caseFilterPanelDefaultExpanded: boolean;
   didHydrateCaseListViewDefaults: boolean;
-  confirmation: {
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-  } | null;
+  confirmation: CaseResolverCaseListConfirmationState;
 
   // Actions
   setWorkspace: React.Dispatch<React.SetStateAction<CaseResolverWorkspace>>;
@@ -107,7 +109,7 @@ export type AdminCaseResolverCasesContextValue = {
   setCaseViewMode: (mode: CaseViewMode) => void;
   setCaseShowNestedContent: (showNested: boolean) => void;
   setCaseFilterPanelDefaultExpanded: (expanded: boolean) => void;
-  setConfirmation: React.Dispatch<React.SetStateAction<AdminCaseResolverCasesContextValue['confirmation']>>;
+  setConfirmation: React.Dispatch<React.SetStateAction<CaseResolverCaseListConfirmationState>>;
   
   // High-level Actions
   handleCreateCase: () => Promise<void>;

@@ -1,12 +1,13 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
+import type {
+  CaseResolverWorkspace,
+  CaseResolverFile,
+} from '@/shared/contracts/case-resolver';
 import { 
-  type CaseResolverWorkspace, 
-  type CaseResolverFile, 
+  type CaseResolverCaseListConfirmationState,
   type CaseSearchScope,
   type CaseFileTypeFilter,
   type CaseStatusFilter,
@@ -65,7 +66,8 @@ export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWork
     useState<boolean>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.showNestedContent);
   const [caseFilterPanelDefaultExpanded, setCaseFilterPanelDefaultExpanded] = useState<boolean>(!DEFAULT_CASE_LIST_VIEW_DEFAULTS.filtersCollapsedByDefault);
   const [didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults] = useState(false);
-  const [confirmation, setConfirmation] = useState<any>(null);
+  const [confirmation, setConfirmation] =
+    useState<CaseResolverCaseListConfirmationState>(null);
 
   const requestedCaseIdentifierFilterFromQuery = useMemo((): string | null => {
     const rawCaseIdentifierId = searchParams.get('caseIdentifierId');

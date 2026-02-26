@@ -20,7 +20,6 @@ import {
   linkFilemakerEventToOrganization,
   linkFilemakerPhoneNumberToParty,
   parseFilemakerEmailParserRulesFromPromptSettings,
-  parseFilemakerPhoneValidationRulesFromPromptSettings,
   parseFilemakerDatabase,
   parseAndUpsertFilemakerEmailsForParty,
   removeFilemakerEmail,
@@ -39,6 +38,7 @@ import {
   upsertFilemakerPhoneNumbersForParty,
   validateFilemakerPhoneNumber,
 } from '@/features/filemaker/settings';
+import { parseFilemakerPhoneValidationRulesFromPromptSettings } from '@/features/filemaker/filemaker-settings.validation';
 
 describe('filemaker settings', () => {
   it('normalizes and deduplicates database entries', () => {

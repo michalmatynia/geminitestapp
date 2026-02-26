@@ -1,8 +1,16 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useDeferredValue, useMemo } from 'react';
 
-import type { CaseResolverAssetFile, CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
+import type {
+  CaseResolverAssetFile,
+  CaseResolverFile,
+  CaseResolverWorkspace,
+} from '@/shared/contracts/case-resolver';
+import {
+  buildCaseResolverRuntimeIndexes,
+  getCaseSubtreeIds,
+} from '../runtime';
 
 export type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';
 
@@ -66,6 +74,13 @@ type IndexedCaseSearchRow = {
   normalizedText: string;
 };
 
+type BuiltSearchIndex = {
+  caseFiles: CaseResolverFile[];
+  caseFilesById: Map<string, CaseResolverFile>;
+  parentCaseIdByCaseId: Map<string, string | null>;
+  indexedRows: IndexedCaseSearchRow[];
+};
+
 const SEARCH_TOKEN_PATTERN = /"([^"]+)"|(\S+)/g;
 
 const normalizeCaseSearchText = (value: string): string =>
@@ -76,24 +91,15 @@ const normalizeCaseSearchText = (value: string): string =>
     .replace(/\s+/g, ' ')
     .trim();
 
-const stripHtml = (value: string): string =>
-  value
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/\s+/g, ' ')
-    .trim();
-
 const parseCaseSearchQuery = (query: string): ParsedCaseSearchToken[] => {
-  const tokens: ParsedCaseSearchToken[] = [];
+  const parsedTokens: ParsedCaseSearchToken[] = [];
   const normalizedQuery = query.trim();
-  if (!normalizedQuery) return tokens;
+  if (!normalizedQuery) return parsedTokens;
 
-  let match: RegExpExecArray | null = SEARCH_TOKEN_PATTERN.exec(normalizedQuery);
-  while (match) {
-    const rawToken = (match[1] ?? match[2] ?? '').trim();
+  SEARCH_TOKEN_PATTERN.lastIndex = 0;
+  let tokenMatch: RegExpExecArray | null = SEARCH_TOKEN_PATTERN.exec(normalizedQuery);
+  while (tokenMatch) {
+    const rawToken = (tokenMatch[1] ?? tokenMatch[2] ?? '').trim();
     if (rawToken.length > 0) {
       const separatorIndex = rawToken.indexOf(':');
       if (separatorIndex > 0) {
@@ -124,38 +130,28 @@ const parseCaseSearchQuery = (query: string): ParsedCaseSearchToken[] => {
             : 'any';
 
         if (rawValue.length > 0) {
-          tokens.push({ field, value: rawValue });
+          parsedTokens.push({ field, value: rawValue });
         }
       } else {
         const normalizedToken = normalizeCaseSearchText(rawToken);
         if (normalizedToken.length > 0) {
-          tokens.push({ field: 'any', value: normalizedToken });
+          parsedTokens.push({ field: 'any', value: normalizedToken });
         }
       }
     }
-    match = SEARCH_TOKEN_PATTERN.exec(normalizedQuery);
+    tokenMatch = SEARCH_TOKEN_PATTERN.exec(normalizedQuery);
   }
 
-  return tokens;
+  return parsedTokens;
 };
 
 const toSearchText = (value: string | null | undefined): string =>
   normalizeCaseSearchText(typeof value === 'string' ? value : '');
 
-const resolvePlainText = (file: CaseResolverFile): string => {
-  if (file.documentContentPlainText.trim().length > 0) {
-    return file.documentContentPlainText;
-  }
-  if (file.documentContentMarkdown.trim().length > 0) {
-    return file.documentContentMarkdown;
-  }
-  return stripHtml(file.documentContent);
-};
-
 const resolveCaseRowMatchesToken = (
   row: IndexedCaseSearchRow,
   token: ParsedCaseSearchToken,
-  scope: CaseSearchScope
+  scope: CaseSearchScope,
 ): boolean => {
   const includes = (value: string): boolean => value.includes(token.value);
 
@@ -192,6 +188,105 @@ const resolveCaseRowMatchesToken = (
   );
 };
 
+const buildSearchIndex = ({
+  workspace,
+  caseTagPathById,
+  caseIdentifierPathById,
+  caseCategoryPathById,
+}: {
+  workspace: CaseResolverWorkspace;
+  caseTagPathById: Map<string, string>;
+  caseIdentifierPathById: Map<string, string>;
+  caseCategoryPathById: Map<string, string>;
+}): BuiltSearchIndex => {
+  const indexes = buildCaseResolverRuntimeIndexes(workspace);
+  const caseFiles = workspace.files.filter(
+    (file: CaseResolverFile): boolean => file.fileType === 'case',
+  );
+  const caseFilesById = new Map<string, CaseResolverFile>(
+    caseFiles.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file]),
+  );
+
+  const indexedRows = caseFiles.map((caseFile: CaseResolverFile): IndexedCaseSearchRow => {
+    const subtreeCaseIds = getCaseSubtreeIds(indexes, caseFile.id);
+    const textFragments: string[] = [];
+
+    subtreeCaseIds.forEach((subtreeCaseId: string): void => {
+      const subtreeCaseFile = indexes.caseFilesById.get(subtreeCaseId) ?? null;
+      if (subtreeCaseFile) {
+        const subtreeCaseText = indexes.plainTextByFileId.get(subtreeCaseId) ?? '';
+        if (subtreeCaseText.length > 0) textFragments.push(subtreeCaseText);
+      }
+
+      const subtreeFiles = indexes.nonCaseFilesByOwnerCaseId.get(subtreeCaseId) ?? [];
+      subtreeFiles.forEach((file: CaseResolverFile): void => {
+        const fileText = indexes.plainTextByFileId.get(file.id) ?? '';
+        if (fileText.length > 0) textFragments.push(fileText);
+      });
+
+      const subtreeAssets = indexes.assetsByOwnerCaseId.get(subtreeCaseId) ?? [];
+      subtreeAssets.forEach((asset: CaseResolverAssetFile): void => {
+        const assetTextContent =
+          typeof asset.textContent === 'string' ? asset.textContent : '';
+        if (assetTextContent.trim().length > 0) {
+          textFragments.push(assetTextContent);
+        }
+        const assetDescription =
+          typeof asset.description === 'string' ? asset.description : '';
+        if (assetDescription.trim().length > 0) {
+          textFragments.push(assetDescription);
+        }
+      });
+    });
+
+    const hasParentCase = (indexes.parentCaseIdByCaseId.get(caseFile.id) ?? null) !== null;
+    const hasReferences =
+      Array.isArray(caseFile.referenceCaseIds) &&
+      caseFile.referenceCaseIds.some(
+        (referenceCaseId: string): boolean => referenceCaseId.trim().length > 0,
+      );
+
+    return {
+      file: caseFile,
+      normalizedName: toSearchText(caseFile.name),
+      normalizedFolder: toSearchText(caseFile.folder),
+      normalizedTag: toSearchText(
+        caseFile.tagId ? (caseTagPathById.get(caseFile.tagId) ?? '') : '',
+      ),
+      normalizedIdentifier: toSearchText(
+        caseFile.caseIdentifierId
+          ? (caseIdentifierPathById.get(caseFile.caseIdentifierId) ?? '')
+          : '',
+      ),
+      normalizedCategory: toSearchText(
+        caseFile.categoryId ? (caseCategoryPathById.get(caseFile.categoryId) ?? '') : '',
+      ),
+      normalizedStatus: toSearchText(caseFile.caseStatus ?? 'pending'),
+      normalizedLocked: toSearchText(
+        caseFile.isLocked === true ? 'locked true yes' : 'unlocked false no',
+      ),
+      normalizedSent: toSearchText(
+        caseFile.isSent === true ? 'sent true yes' : 'not_sent unsent false no',
+      ),
+      normalizedParent: toSearchText(hasParentCase ? 'child with_parent' : 'root'),
+      normalizedRefs: toSearchText(
+        hasReferences
+          ? 'with_references with_refs has yes true'
+          : 'without_references no_refs no false',
+      ),
+      normalizedId: toSearchText(caseFile.id),
+      normalizedText: toSearchText(textFragments.join(' ')),
+    };
+  });
+
+  return {
+    caseFiles,
+    caseFilesById,
+    parentCaseIdByCaseId: indexes.parentCaseIdByCaseId,
+    indexedRows,
+  };
+};
+
 export function useCaseResolverCaseSearchIndex({
   workspace,
   caseSearchQuery,
@@ -210,159 +305,37 @@ export function useCaseResolverCaseSearchIndex({
   caseIdentifierPathById,
   caseCategoryPathById,
 }: UseCaseResolverCaseSearchIndexInput): UseCaseResolverCaseSearchIndexResult {
-  return useMemo((): UseCaseResolverCaseSearchIndexResult => {
-    const caseFiles = workspace.files.filter(
-      (file: CaseResolverFile): boolean => file.fileType === 'case'
-    );
-    const caseFilesById = new Map<string, CaseResolverFile>(
-      caseFiles.map((file: CaseResolverFile): [string, CaseResolverFile] => [file.id, file])
-    );
+  const deferredCaseSearchQuery = useDeferredValue(caseSearchQuery);
 
-    const parentCaseIdByCaseId = new Map<string, string | null>();
-    const childCaseIdsByParentId = new Map<string, string[]>();
-    caseFiles.forEach((file: CaseResolverFile): void => {
-      const rawParentCaseId = file.parentCaseId?.trim() ?? '';
-      const parentCaseId =
-        rawParentCaseId.length > 0 &&
-        rawParentCaseId !== file.id &&
-        caseFilesById.has(rawParentCaseId)
-          ? rawParentCaseId
-          : null;
-      parentCaseIdByCaseId.set(file.id, parentCaseId);
-      if (!parentCaseId) return;
-      const currentChildren = childCaseIdsByParentId.get(parentCaseId) ?? [];
-      currentChildren.push(file.id);
-      childCaseIdsByParentId.set(parentCaseId, currentChildren);
-    });
+  const builtSearchIndex = useMemo(
+    (): BuiltSearchIndex =>
+      buildSearchIndex({
+        workspace,
+        caseTagPathById,
+        caseIdentifierPathById,
+        caseCategoryPathById,
+      }),
+    [caseCategoryPathById, caseIdentifierPathById, caseTagPathById, workspace],
+  );
 
-    const nonCaseFilesByOwnerCaseId = new Map<string, CaseResolverFile[]>();
-    workspace.files.forEach((file: CaseResolverFile): void => {
-      if (file.fileType === 'case') return;
-      const ownerCaseId = file.parentCaseId?.trim() ?? '';
-      if (!ownerCaseId || !caseFilesById.has(ownerCaseId)) return;
-      const current = nonCaseFilesByOwnerCaseId.get(ownerCaseId) ?? [];
-      current.push(file);
-      nonCaseFilesByOwnerCaseId.set(ownerCaseId, current);
-    });
+  const searchTokens = useMemo(
+    (): ParsedCaseSearchToken[] => parseCaseSearchQuery(deferredCaseSearchQuery),
+    [deferredCaseSearchQuery],
+  );
 
-    const ownerCaseIdBySourceFileId = new Map<string, string>();
-    nonCaseFilesByOwnerCaseId.forEach((files: CaseResolverFile[], ownerCaseId: string): void => {
-      files.forEach((file: CaseResolverFile): void => {
-        ownerCaseIdBySourceFileId.set(file.id, ownerCaseId);
-      });
-    });
+  const tagFilterSet = useMemo(() => new Set(caseFilterTagIds), [caseFilterTagIds]);
+  const identifierFilterSet = useMemo(
+    () => new Set(caseFilterCaseIdentifierIds),
+    [caseFilterCaseIdentifierIds],
+  );
+  const categoryFilterSet = useMemo(
+    () => new Set(caseFilterCategoryIds),
+    [caseFilterCategoryIds],
+  );
 
-    const assetsByOwnerCaseId = new Map<string, CaseResolverAssetFile[]>();
-    workspace.assets.forEach((asset: CaseResolverAssetFile): void => {
-      const sourceFileId = asset.sourceFileId?.trim() ?? '';
-      if (!sourceFileId) return;
-      const ownerCaseId = ownerCaseIdBySourceFileId.get(sourceFileId);
-      if (!ownerCaseId) return;
-      const current = assetsByOwnerCaseId.get(ownerCaseId) ?? [];
-      current.push(asset);
-      assetsByOwnerCaseId.set(ownerCaseId, current);
-    });
-
-    const subtreeCaseIdsMemo = new Map<string, Set<string>>();
-    const resolveSubtreeCaseIds = (caseId: string, stack: Set<string>): Set<string> => {
-      const cached = subtreeCaseIdsMemo.get(caseId);
-      if (cached) return cached;
-
-      const subtreeCaseIds = new Set<string>();
-      if (stack.has(caseId)) {
-        subtreeCaseIds.add(caseId);
-        subtreeCaseIdsMemo.set(caseId, subtreeCaseIds);
-        return subtreeCaseIds;
-      }
-
-      stack.add(caseId);
-      subtreeCaseIds.add(caseId);
-      const children = childCaseIdsByParentId.get(caseId) ?? [];
-      children.forEach((childCaseId: string): void => {
-        const childIds = resolveSubtreeCaseIds(childCaseId, stack);
-        childIds.forEach((id: string): void => {
-          subtreeCaseIds.add(id);
-        });
-      });
-      stack.delete(caseId);
-
-      subtreeCaseIdsMemo.set(caseId, subtreeCaseIds);
-      return subtreeCaseIds;
-    };
-
-    const indexedRows: IndexedCaseSearchRow[] = caseFiles.map((caseFile: CaseResolverFile): IndexedCaseSearchRow => {
-      const subtreeCaseIds = resolveSubtreeCaseIds(caseFile.id, new Set<string>());
-      const textFragments: string[] = [];
-
-      subtreeCaseIds.forEach((subtreeCaseId: string): void => {
-        const subtreeCaseFile = caseFilesById.get(subtreeCaseId);
-        if (subtreeCaseFile) {
-          const subtreeText = resolvePlainText(subtreeCaseFile);
-          if (subtreeText.length > 0) textFragments.push(subtreeText);
-        }
-
-        const scopedFiles = nonCaseFilesByOwnerCaseId.get(subtreeCaseId) ?? [];
-        scopedFiles.forEach((file: CaseResolverFile): void => {
-          const fileText = resolvePlainText(file);
-          if (fileText.length > 0) textFragments.push(fileText);
-        });
-
-        const scopedAssets = assetsByOwnerCaseId.get(subtreeCaseId) ?? [];
-        scopedAssets.forEach((asset: CaseResolverAssetFile): void => {
-          if (asset.textContent.trim().length > 0) {
-            textFragments.push(asset.textContent);
-          }
-          if (asset.description.trim().length > 0) {
-            textFragments.push(asset.description);
-          }
-        });
-      });
-
-      const hasParentCase = (parentCaseIdByCaseId.get(caseFile.id) ?? null) !== null;
-      const hasReferences =
-        Array.isArray(caseFile.referenceCaseIds) &&
-        caseFile.referenceCaseIds.some(
-          (referenceCaseId: string): boolean => referenceCaseId.trim().length > 0,
-        );
-
-      return {
-        file: caseFile,
-        normalizedName: toSearchText(caseFile.name),
-        normalizedFolder: toSearchText(caseFile.folder),
-        normalizedTag: toSearchText(
-          caseFile.tagId ? (caseTagPathById.get(caseFile.tagId) ?? '') : ''
-        ),
-        normalizedIdentifier: toSearchText(
-          caseFile.caseIdentifierId
-            ? (caseIdentifierPathById.get(caseFile.caseIdentifierId) ?? '')
-            : ''
-        ),
-        normalizedCategory: toSearchText(
-          caseFile.categoryId ? (caseCategoryPathById.get(caseFile.categoryId) ?? '') : ''
-        ),
-        normalizedStatus: toSearchText(caseFile.caseStatus ?? 'pending'),
-        normalizedLocked: toSearchText(
-          caseFile.isLocked === true ? 'locked true yes' : 'unlocked false no',
-        ),
-        normalizedSent: toSearchText(
-          caseFile.isSent === true ? 'sent true yes' : 'not_sent unsent false no',
-        ),
-        normalizedParent: toSearchText(hasParentCase ? 'child with_parent' : 'root'),
-        normalizedRefs: toSearchText(
-          hasReferences ? 'with_references with_refs has yes true' : 'without_references no_refs no false',
-        ),
-        normalizedId: toSearchText(caseFile.id),
-        normalizedText: toSearchText(textFragments.join(' ')),
-      };
-    });
-
-    const searchTokens = parseCaseSearchQuery(caseSearchQuery);
-    const tagFilterSet = new Set(caseFilterTagIds);
-    const identifierFilterSet = new Set(caseFilterCaseIdentifierIds);
-    const categoryFilterSet = new Set(caseFilterCategoryIds);
-
-    const matchedCaseIds = new Set<string>();
-    indexedRows.forEach((row: IndexedCaseSearchRow): void => {
+  const matchedCaseIds = useMemo((): Set<string> => {
+    const nextMatchedCaseIds = new Set<string>();
+    builtSearchIndex.indexedRows.forEach((row: IndexedCaseSearchRow): void => {
       if (caseFileTypeFilter !== 'all' && row.file.fileType !== caseFileTypeFilter) {
         return;
       }
@@ -389,13 +362,13 @@ export function useCaseResolverCaseSearchIndex({
       }
       if (
         caseFilterHierarchy === 'root' &&
-        (parentCaseIdByCaseId.get(row.file.id) ?? null) !== null
+        (builtSearchIndex.parentCaseIdByCaseId.get(row.file.id) ?? null) !== null
       ) {
         return;
       }
       if (
         caseFilterHierarchy === 'child' &&
-        (parentCaseIdByCaseId.get(row.file.id) ?? null) === null
+        (builtSearchIndex.parentCaseIdByCaseId.get(row.file.id) ?? null) === null
       ) {
         return;
       }
@@ -430,33 +403,17 @@ export function useCaseResolverCaseSearchIndex({
         searchTokens.length === 0
           ? true
           : searchTokens.every((token: ParsedCaseSearchToken): boolean =>
-            resolveCaseRowMatchesToken(row, token, caseSearchScope)
+            resolveCaseRowMatchesToken(row, token, caseSearchScope),
           );
       if (!searchMatches) return;
 
-      matchedCaseIds.add(row.file.id);
+      nextMatchedCaseIds.add(row.file.id);
     });
-
-    const visibleCaseIds = new Set<string>();
-    matchedCaseIds.forEach((caseId: string): void => {
-      let currentCaseId: string | null = caseId;
-      while (currentCaseId) {
-        if (visibleCaseIds.has(currentCaseId)) break;
-        visibleCaseIds.add(currentCaseId);
-        currentCaseId = parentCaseIdByCaseId.get(currentCaseId) ?? null;
-      }
-    });
-
-    return {
-      caseFiles,
-      caseFilesById,
-      matchedCaseIds,
-      visibleCaseIds,
-    };
+    return nextMatchedCaseIds;
   }, [
-    caseCategoryPathById,
+    builtSearchIndex.indexedRows,
+    builtSearchIndex.parentCaseIdByCaseId,
     caseFileTypeFilter,
-    caseFilterCaseIdentifierIds,
     caseFilterCategoryIds,
     caseFilterFolder,
     caseFilterHierarchy,
@@ -465,11 +422,30 @@ export function useCaseResolverCaseSearchIndex({
     caseFilterSent,
     caseFilterStatus,
     caseFilterTagIds,
-    caseIdentifierPathById,
-    caseSearchQuery,
     caseSearchScope,
-    caseTagPathById,
-    workspace.assets,
-    workspace.files,
+    categoryFilterSet,
+    identifierFilterSet,
+    searchTokens,
+    tagFilterSet,
   ]);
+
+  const visibleCaseIds = useMemo((): Set<string> => {
+    const nextVisibleCaseIds = new Set<string>();
+    matchedCaseIds.forEach((caseId: string): void => {
+      let currentCaseId: string | null = caseId;
+      while (currentCaseId) {
+        if (nextVisibleCaseIds.has(currentCaseId)) break;
+        nextVisibleCaseIds.add(currentCaseId);
+        currentCaseId = builtSearchIndex.parentCaseIdByCaseId.get(currentCaseId) ?? null;
+      }
+    });
+    return nextVisibleCaseIds;
+  }, [builtSearchIndex.parentCaseIdByCaseId, matchedCaseIds]);
+
+  return {
+    caseFiles: builtSearchIndex.caseFiles,
+    caseFilesById: builtSearchIndex.caseFilesById,
+    matchedCaseIds,
+    visibleCaseIds,
+  };
 }

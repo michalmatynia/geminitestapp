@@ -1,10 +1,11 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
 import { FileText, GitBranch, Lock, Pin, ScanText } from 'lucide-react';
 import { Button } from '@/shared/ui';
+import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
+import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 import {
   decodeCaseResolverCaseContentFileNodeId,
   decodeCaseResolverCaseContentFolderNodeId,
@@ -15,8 +16,14 @@ import {
   formatCaseTimestamp 
 } from '../case-list-utils';
 
+type FolderIconComponent = React.ComponentType<{ className?: string }>;
+type CaseListNodeItemController = Pick<
+  MasterFolderTreeController,
+  'renameDraft' | 'updateRenameDraft' | 'commitRename' | 'cancelRename'
+>;
+
 export interface CaseListNodeItemProps {
-  node: any;
+  node: MasterTreeViewNode;
   depth: number;
   hasChildren: boolean;
   isExpanded: boolean;
@@ -25,12 +32,12 @@ export interface CaseListNodeItemProps {
   isDropTarget: boolean;
   dropPosition: 'inside' | 'before' | 'after' | null;
   toggleExpand: () => void;
-  filesById: Map<string, any>;
+  filesById: Map<string, CaseResolverFile>;
   caseTagPathById: Map<string, string>;
   caseIdentifierPathById: Map<string, string>;
   caseCategoryPathById: Map<string, string>;
-  controller: any;
-  handleToggleCaseStatus: (id: string) => void;
+  controller: CaseListNodeItemController;
+  handleToggleCaseStatus: (id: string) => Promise<void>;
   heldCaseId: string | null;
   canNestHeldHere: boolean;
   canShowNestHeldAction: boolean;
@@ -39,11 +46,10 @@ export interface CaseListNodeItemProps {
   handleNestHeldCase: (targetCaseId: string) => void;
   handleOpenCase: (id: string) => void;
   handleOpenFile: (id: string) => void;
-  handleEditCase: (caseFile: any) => void;
   handleCreateCase: (parentId: string | null) => void;
   handleDeleteCase: (id: string) => void;
-  FolderClosedIcon: any;
-  FolderOpenIcon: any;
+  FolderClosedIcon: FolderIconComponent;
+  FolderOpenIcon: FolderIconComponent;
 }
 
 export const CaseListNodeItem = React.memo(function CaseListNodeItem({
@@ -70,7 +76,6 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
   handleNestHeldCase,
   handleOpenCase,
   handleOpenFile,
-  handleEditCase,
   handleCreateCase,
   handleDeleteCase,
   FolderClosedIcon,
@@ -291,7 +296,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
                 event.preventDefault();
                 event.stopPropagation();
                 if (!caseFile) return;
-                void handleToggleCaseStatus(caseFile.id);
+                handleToggleCaseStatus(caseFile.id).catch((): void => {});
               }}
               title={
                 isLocked

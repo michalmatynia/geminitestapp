@@ -89,6 +89,7 @@ import { useCaseResolverStateRelatedFilesActions } from './useCaseResolverState.
 import { useCaseResolverStateCreationActions } from './useCaseResolverState.creation-actions';
 import { useCaseResolverStateViewState } from './useCaseResolverState.view-state';
 import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
+import { buildCaseResolverRuntimeIndexes } from '../runtime';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
 const CASE_RESOLVER_REQUESTED_CONTEXT_LOADING_WATCHDOG_MS = 10_000;
@@ -1209,6 +1210,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
     (): Set<string> | null => collectCaseScopeIds(workspace.files, viewState.activeCaseId),
     [viewState.activeCaseId, workspace.files]
   );
+  const workspaceIndexes = useMemo(
+    () => buildCaseResolverRuntimeIndexes(workspace),
+    [workspace.assets, workspace.files, workspace.folderRecords, workspace.folders],
+  );
   const workspaceNormalizationDiagnostics = useMemo(
     () => getCaseResolverWorkspaceNormalizationDiagnostics(workspace),
     [workspace],
@@ -1221,12 +1226,13 @@ export function useCaseResolverState(): CaseResolverStateValue {
       activeCaseId: viewState.activeCaseId,
       workspace,
       includeDescendantCaseScope: true,
+      indexes: workspaceIndexes,
     });
     return scopedWorkspace.files.filter(
       (file: CaseResolverFile): boolean =>
         file.fileType !== 'case' && !file.parentCaseId,
     ).length;
-  }, [viewState.activeCaseId, workspace]);
+  }, [viewState.activeCaseId, workspace, workspaceIndexes]);
 
   useEffect((): void => {
     const diagnosticsSignature = [

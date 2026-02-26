@@ -577,10 +577,11 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
       seedHistory: runtimeState.history,
       seedRunId: runtimeState.runId ?? undefined,
       seedRunStartedAt: runtimeState.runStartedAt ?? undefined,
-      recordHistory: true,      historyLimit: resolvedHistoryLimit,      skipNodeIds: skipNodes,
+      recordHistory: true,
+      historyLimit: resolvedHistoryLimit,
+      skipNodeIds: Array.from(skipNodes),
       fetchEntityByType,
-      reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {
-        void reportAiPathsError(error, meta, summary);
+      reportAiPathsError: (error: unknown, meta: Record<string, unknown>, summary?: string) => {        void reportAiPathsError(error, meta, summary);
       },
       toast,
       profile: {

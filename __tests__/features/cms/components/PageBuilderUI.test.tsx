@@ -63,10 +63,12 @@ vi.mock('@/features/foldertree', () => ({
     </div>
   ),
   useMasterFolderTreeInstance: ({ nodes, initiallyExpandedNodeIds }: any) => {
-    const roots = nodes.filter((n: any) => !n.parentId).map((root: any) => ({
-      ...root,
-      children: nodes.filter((n: any) => n.parentId === root.id)
-    }));
+    const buildTree = (parentId: string | null) => 
+      nodes.filter((n: any) => n.parentId === parentId).map((node: any) => ({
+        ...node,
+        children: buildTree(node.id)
+      }));
+    const roots = buildTree(null);
     return {
       profile: {
         placeholders: { inlineDropLabel: 'Drop here' },

@@ -17,7 +17,7 @@ const createBaseProps = () => ({
     name: 'Case One',
     kind: 'case_entry',
     metadata: { isLocked: false },
-  },
+  } as any,
   depth: 0,
   hasChildren: false,
   isExpanded: false,
@@ -81,7 +81,7 @@ describe('CaseListNodeItem', () => {
       name: 'evidence',
       kind: 'case_content_folder',
       metadata: { isLocked: false },
-    };
+    } as any;
     props.hasChildren = true;
     props.isExpanded = false;
 
@@ -102,7 +102,7 @@ describe('CaseListNodeItem', () => {
       name: 'Transcript.pdf',
       kind: 'case_content_file',
       metadata: { isLocked: false },
-    };
+    } as any;
     props.filesById.set('file-1', {
       id: 'file-1',
       name: 'Transcript.pdf',

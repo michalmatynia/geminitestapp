@@ -94,9 +94,7 @@ export async function POST_handler(
     },
     { palette },
   );
-  const normalizedNodes = normalizeNodes(
-    identityRepair.config.nodes as AiNode[],
-  );
+  const normalizedNodes = normalizeNodes(identityRepair.config.nodes);
   const normalizedEdges = sanitizeEdges(
     normalizedNodes,
     identityRepair.config.edges,

@@ -7,7 +7,7 @@ import {
   NoteRelation,
 } from '@prisma/client';
 import { NextRequest } from 'next/server';
-import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterAll, beforeAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
@@ -17,6 +17,8 @@ import {
   DELETE as DELETE_NOTE,
 } from '@/app/api/notes/[id]/route';
 import { GET as GET_NOTES, POST as POST_NOTES } from '@/app/api/notes/route';
+import { noteService, invalidateNoteRepositoryCache } from '@/features/notesapp/services/notes';
+import { invalidateAppDbProviderCache } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
 
 
@@ -26,9 +28,14 @@ type NoteWithRelations = Note & {
   relationsFrom: (NoteRelation & { targetNote: Note })[];
 };
 
-const createTag = (name: string) => prisma.tag.create({ data: { name } });
-const createCategory = (name: string, parentId?: string | null) =>
-  prisma.category.create({ data: { name, parentId: parentId ?? null } });
+const createTag = async (name: string) => {
+  const notebook = await noteService.getOrCreateDefaultNotebook();
+  return prisma.tag.create({ data: { name, notebookId: notebook.id } });
+};
+const createCategory = async (name: string, parentId?: string | null) => {
+  const notebook = await noteService.getOrCreateDefaultNotebook();
+  return prisma.category.create({ data: { name, parentId: parentId ?? null, notebookId: notebook.id } });
+};
 
 const createNote = async (data: {
   title: string;
@@ -40,9 +47,11 @@ const createNote = async (data: {
   relatedNoteIds?: string[];
 }) => {
   const { tagIds = [], categoryIds = [], relatedNoteIds = [], ...rest } = data;
+  const notebook = await noteService.getOrCreateDefaultNotebook();
   return prisma.note.create({
     data: {
       ...rest,
+      notebookId: notebook.id,
       tags: {
         create: tagIds.map((tagId) => ({ tag: { connect: { id: tagId } } })),
       },
@@ -61,6 +70,12 @@ const createNote = async (data: {
 };
 
 describe('Notes API', () => {
+  beforeAll(() => {
+    process.env['APP_DB_PROVIDER'] = 'prisma';
+    invalidateAppDbProviderCache();
+    invalidateNoteRepositoryCache();
+  });
+
   beforeEach(async () => {
     // Only run if DATABASE_URL is available
     if (!process.env['DATABASE_URL']) return;
@@ -71,6 +86,9 @@ describe('Notes API', () => {
     await prisma.note.deleteMany({});
     await prisma.tag.deleteMany({});
     await prisma.category.deleteMany({});
+    await prisma.notebook.deleteMany({});
+    
+    await noteService.invalidateDefaultNotebookCache();
   });
 
   afterAll(async () => {

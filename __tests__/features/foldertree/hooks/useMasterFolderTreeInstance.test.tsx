@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useMasterFolderTreeConfig } from '@/features/foldertree/hooks/useMasterFolderTreeConfig';
 import { useMasterFolderTreeInstance } from '@/features/foldertree/hooks/useMasterFolderTreeInstance';
-import { useUpdateSetting } from '@/shared/hooks/use-settings';
+import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils';
 import { createDefaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
@@ -20,6 +20,7 @@ vi.mock('@/shared/providers/SettingsStoreProvider', () => ({
 }));
 vi.mock('@/shared/hooks/use-settings', () => ({
   useUpdateSetting: vi.fn(),
+  useUpdateSettingsBulk: vi.fn(),
 }));
 vi.mock('@/shared/ui/toast', () => ({
   useToast: vi.fn(() => ({ toast: vi.fn() })),
@@ -78,6 +79,9 @@ describe('useMasterFolderTreeInstance', () => {
     vi.mocked(useUpdateSetting).mockReturnValue({
       mutateAsync,
     } as unknown as ReturnType<typeof useUpdateSetting>);
+    vi.mocked(useUpdateSettingsBulk).mockReturnValue({
+      mutateAsync,
+    } as unknown as ReturnType<typeof useUpdateSettingsBulk>);
   });
 
   it('returns profile + appearance and keeps controller in sync with external nodes', () => {
@@ -141,8 +145,8 @@ describe('useMasterFolderTreeInstance', () => {
 
     result.current.setPanelCollapsed(false);
     expect(mutateAsync).toHaveBeenCalledWith({
-      key: FOLDER_TREE_UI_STATE_V1_SETTING_KEY,
-      value: expect.any(String),
+      key: 'folder_tree_ui_state::notes',
+      value: expect.stringContaining('"panelCollapsed":false'),
     });
   });
 });

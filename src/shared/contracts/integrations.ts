@@ -4,6 +4,7 @@ import { dtoBaseSchema, namedDtoSchema } from './base';
 import {
   productParameterValueSchema,
   type ParameterRepository,
+  type ProductParameter,
   type ProductParameterValue,
   type Producer,
   type ProductCategory,
@@ -916,6 +917,8 @@ export interface ApplyBaseParameterImportInput {
   defaultLanguageCode?: string | null | undefined;
   settings: BaseImportParameterImportSettings;
   templateMappings: { sourceKey: string; targetField: string }[];
+  prefetchedParameters?: ProductParameter[];
+  prefetchedLinks?: Record<string, string>;
 }
 
 export const applyBaseParameterImportResultSchema = z.object({
@@ -1285,6 +1288,8 @@ export type ProductListingRepository = {
   appendExportHistory: (id: string, event: ProductListingExportEventRecord) => Promise<void>;
   deleteListing: (id: string) => Promise<void>;
   listingExists: (productId: string, connectionId: string) => Promise<boolean>;
+  getListingsByProductIds: (productIds: string[]) => Promise<ProductListing[]>;
+  getListingsByConnection: (connectionId: string) => Promise<ProductListing[]>;
   listAllListings: () => Promise<Array<Pick<ProductListing, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>>;
 };
 

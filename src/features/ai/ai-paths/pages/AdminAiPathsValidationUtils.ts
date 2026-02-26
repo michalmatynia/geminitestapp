@@ -1,4 +1,5 @@
 import type {
+  AiNode,
   AiPathsValidationRule,
   PathConfig,
   PathMeta,
@@ -151,7 +152,7 @@ export const coercePathConfig = (pathId: string, raw: unknown): PathConfig | nul
   const name = normalizeString(record['name']) || fallback.name || `Path ${pathId.slice(0, 6)}`;
   const updatedAt = normalizeIso(record['updatedAt'], new Date().toISOString());
   const nodes = Array.isArray(record['nodes'])
-    ? (record['nodes'])
+    ? (record['nodes'] as AiNode[])
     : fallback.nodes;
   const edges = Array.isArray(record['edges'])
     ? (record['edges'] as PathConfig['edges'])

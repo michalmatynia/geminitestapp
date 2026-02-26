@@ -5,6 +5,7 @@ export {
   handleNotification,
   handlePoll,
   handlePlaywright,
+  handleSimulation,
   handleTrigger,
 } from './integration-basic-handlers';
 export { handleDatabase } from './integration-database-handler';

@@ -10,6 +10,7 @@ import * as themeImpl from './prisma/theme-impl';
 export const prismaNoteRepository: NoteRepository = {
   // Notebooks
   getOrCreateDefaultNotebook: notebookImpl.getOrCreateDefaultNotebook,
+  invalidateDefaultNotebookCache: notebookImpl.invalidateDefaultNotebookCache,
   getAllNotebooks: notebookImpl.getAllNotebooks,
   getNotebookById: notebookImpl.getNotebookById,
   createNotebook: notebookImpl.createNotebook,

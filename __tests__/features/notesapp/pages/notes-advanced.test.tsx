@@ -74,6 +74,7 @@ describe('Notes Advanced UI', () => {
       http.get('/api/notes/tags', () => HttpResponse.json([])),
       http.get('/api/notes/categories', () => HttpResponse.json([])),
       http.post('/api/client-errors', () => HttpResponse.json({ success: true })),
+      http.post('/api/query-telemetry', () => HttpResponse.json({ success: true })),
       http.get('/api/notes/themes', () => HttpResponse.json([])),
       http.get('/api/ai-paths/trigger-buttons', () => HttpResponse.json([])),
       http.get('/api/notes/notebooks', () => HttpResponse.json([{ id: 'nb-1', name: 'Default' }])),

@@ -20,16 +20,16 @@ export const toDate = (value: unknown): Date | null => {
   return null;
 };
 
-export const toJsonValue = (value: unknown): any => {
+export const toJsonValue = (value: unknown): unknown => {
   if (value === undefined || value === null) return null;
   if (value instanceof Date) return value.toISOString();
   if (value instanceof ObjectId) return value.toString();
   if (Array.isArray(value)) {
-    return value.map((entry: unknown) => toJsonValue(entry));
+    return value.map((entry: unknown): unknown => toJsonValue(entry));
   }
   if (typeof value === 'object') {
     const record = value as Record<string, unknown>;
-    const entries = Object.entries(record).map(([key, entry]) => [
+    const entries = Object.entries(record).map(([key, entry]): [string, unknown] => [
       key,
       toJsonValue(entry),
     ]);

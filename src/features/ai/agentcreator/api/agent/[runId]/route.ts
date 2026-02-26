@@ -4,7 +4,6 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { logAgentAudit } from '@/features/ai/agent-runtime/server';
-import { startAgentQueue } from '@/features/jobs/server';
 import { ErrorSystem } from '@/features/observability/server';
 import {
   badRequestError,
@@ -23,7 +22,6 @@ async function GET_handler(_req: NextRequest,
   { params }: { params: Promise<{ runId: string }> }
 ): Promise<Response> {
   const requestStart = Date.now();
-  startAgentQueue();
   if (!('chatbotAgentRun' in prisma)) {
     throw internalError(
       'Agent runs not initialized. Run prisma generate/db push.'

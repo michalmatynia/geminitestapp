@@ -25,7 +25,7 @@ const makeCondition = (
   operator,
   ...(value !== undefined ? { value } : {}),
   ...(valueTo !== undefined ? { valueTo } : {}),
-});
+}) as any;
 
 const makeGroup = (
   id: string,

@@ -6,7 +6,6 @@ import { withApiVersioning, createVersionedResponse, StandardErrors, withErrorHa
 import type { ApiVersion } from '@/features/products/api/server';
 import { CachedProductService } from '@/features/products/performance';
 import { withSecurity } from '@/features/products/security';
-import { productService } from '@/features/products/services/productService';
 
 // Versioned products API handler
 async function productsHandler(req: NextRequest, version: ApiVersion): Promise<Response> {
@@ -29,13 +28,18 @@ async function handleGetProducts(_req: NextRequest, version: ApiVersion, searchP
   const page = parseInt(searchParams.get('page') || '1');
   const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
 
-  const products = await productService.getProducts({
-    ...filters,
-    page,
-    pageSize: limit,
-  });
+  const [products, total] = await Promise.all([
+    CachedProductService.getProducts({
+      ...filters,
+      page,
+      limit,
+    }),
+    CachedProductService.getProductCount({
+      ...filters,
+    })
+  ]);
 
-  if (!products || products.length === 0) {
+  if (!products || (products.length === 0 && page === 1)) {
     return StandardErrors.notFound('Products')
       .withMeta(version, '/api/products', 'GET')
       .toResponse(404);
@@ -46,7 +50,7 @@ async function handleGetProducts(_req: NextRequest, version: ApiVersion, searchP
     pagination: {
       page,
       limit,
-      total: products.length,
+      total,
       hasNext: products.length === limit,
     },
   };

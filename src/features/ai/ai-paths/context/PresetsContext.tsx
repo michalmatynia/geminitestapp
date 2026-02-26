@@ -167,11 +167,11 @@ export function PresetsProvider({
 
   const normalizeDbNodePreset = useCallback((raw: Partial<DbNodePreset>): DbNodePreset => {
     const now = new Date().toISOString();
-    const baseConfig =
-      raw.config && typeof raw.config === 'object'
-        ? raw.config
-        : ({ operation: 'query' } as DbNodePreset['config']);
-    const migratedConfig = migrateDatabaseConfigCollections(baseConfig as DatabaseConfig).databaseConfig ?? baseConfig;
+    const baseConfig = (raw.config && typeof raw.config === 'object'
+      ? raw.config
+      : { operation: 'query' }) as unknown as DatabaseConfig;
+    const migrationResult = migrateDatabaseConfigCollections(baseConfig);
+    const migratedConfig = migrationResult.databaseConfig ?? baseConfig;
     return {
       id: raw.id && typeof raw.id === 'string' ? raw.id : createPresetId(),
       name:

@@ -236,8 +236,9 @@ export async function postExportToBaseHandler(
       ['baselinker', 'base-com', 'base'].includes(i.slug)
     );
     const baseIntegrationId = baseIntegration?.id ?? connection.integrationId ?? null;
-    const token = (baseIntegration as any)?.credentials?.token
-      ? decryptSecret((baseIntegration as any).credentials.token)
+    const tokenValue = baseIntegration?.credentials?.['token'] as unknown;
+    const token = typeof tokenValue === 'string'
+      ? decryptSecret(tokenValue)
       : '';
 
     let imageDiagnosticsContext: Record<string, unknown> = {

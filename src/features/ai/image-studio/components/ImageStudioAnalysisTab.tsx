@@ -2,8 +2,7 @@
 // @ts-nocheck
 'use client';
 
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
@@ -14,7 +13,7 @@ import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Card, useToast } from '@/shared/ui';
 
 import { useProjectsState } from '../context/ProjectsContext';
-import { useSlotsState } from '../context/SlotsContext';
+import { useSlotsActions, useSlotsState } from '../context/SlotsContext';
 import {
   imageStudioAnalysisResponseSchema,
 } from '../contracts/analysis';
@@ -24,10 +23,14 @@ import {
 } from './generation-toolbar/GenerationToolbarImageUtils';
 import {
   buildImageStudioAnalysisSourceSignature,
+  IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT,
+  loadImageStudioAnalysisPlanSnapshot,
   saveImageStudioAnalysisApplyIntent,
+  type ImageStudioAnalysisPlanSnapshot,
   saveImageStudioAnalysisPlanSnapshot,
 } from '../utils/analysis-bridge';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
+import { useRightSidebarContext } from './RightSidebarContext';
 import {
   buildObjectLayoutPresetOptions,
   deleteObjectLayoutCustomPreset,
@@ -83,12 +86,11 @@ const normalizeThreshold = (
 
 export function ImageStudioAnalysisTab(): React.JSX.Element {
   const { toast } = useToast();
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const { switchToControls } = useRightSidebarContext();
   const settingsStore = useSettingsStore();
   const { projectId, projectsQuery } = useProjectsState();
-  const { workingSlot } = useSlotsState();
+  const { slots, slotSelectionLocked, workingSlot } = useSlotsState();
+  const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
   const [mode, setMode] = useState<AnalysisMode>('server_analysis_v1');
   const [layoutPadding, setLayoutPadding] = useState<string>(String(PADDING_DEFAULT));
   const [layoutPaddingX, setLayoutPaddingX] = useState<string>(String(PADDING_DEFAULT));
@@ -111,6 +113,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [resultSourceSlotId, setResultSourceSlotId] = useState('');
   const [resultSourceSignature, setResultSourceSignature] = useState('');
+  const [persistedPlanSnapshot, setPersistedPlanSnapshot] = useState<ImageStudioAnalysisPlanSnapshot | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
   const skipAdvancedDefaultsSaveRef = useRef(true);
   const selectedCustomPresetIdRef = useRef<string | null>(null);
@@ -124,6 +127,39 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   const clientProcessingImageSrc = useMemo(
     () => resolveClientProcessingImageSrc(workingSlot, workingSlotImageSrc),
     [workingSlot, workingSlotImageSrc]
+  );
+  const buildSlotSourceSignature = useCallback(
+    (slot: typeof workingSlot): string => {
+      const slotId = slot?.id?.trim() ?? '';
+      if (!slotId) return '';
+      const slotImageSrc = getImageStudioSlotImageSrc(
+        slot,
+        productImagesExternalBaseUrl
+      );
+      const slotClientProcessingImageSrc = resolveClientProcessingImageSrc(
+        slot,
+        slotImageSrc
+      );
+      const hasSourceMetadata = Boolean(
+        slot?.imageFileId ??
+          slot?.imageFile ??
+          slot?.imageUrl ??
+          slot?.imageBase64 ??
+          slotImageSrc ??
+          slotClientProcessingImageSrc
+      );
+      if (!hasSourceMetadata) return '';
+      return buildImageStudioAnalysisSourceSignature({
+        slotId,
+        imageFileId: slot?.imageFileId ?? null,
+        imageFile: slot?.imageFile ?? null,
+        imageUrl: slot?.imageUrl ?? null,
+        imageBase64: slot?.imageBase64 ?? null,
+        resolvedImageSrc: slotImageSrc,
+        clientProcessingImageSrc: slotClientProcessingImageSrc,
+      });
+    },
+    [productImagesExternalBaseUrl]
   );
 
   const activeProject = useMemo(
@@ -176,6 +212,31 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     window.addEventListener('storage', handleStorage);
     return () => {
       window.removeEventListener(IMAGE_STUDIO_OBJECT_LAYOUT_PRESETS_CHANGED_EVENT, syncCustomPresets);
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, [activeProjectId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const syncPersistedSnapshot = (): void => {
+      setPersistedPlanSnapshot(loadImageStudioAnalysisPlanSnapshot(activeProjectId));
+    };
+    const handleStorage = (event: StorageEvent): void => {
+      if (
+        event.key &&
+        !event.key.includes('image_studio_analysis_plan_snapshot_') &&
+        event.key !== 'image_studio_analysis_plan_snapshot_session'
+      ) {
+        return;
+      }
+      syncPersistedSnapshot();
+    };
+
+    syncPersistedSnapshot();
+    window.addEventListener(IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT, syncPersistedSnapshot);
+    window.addEventListener('storage', handleStorage);
+    return () => {
+      window.removeEventListener(IMAGE_STUDIO_ANALYSIS_PLAN_CHANGED_EVENT, syncPersistedSnapshot);
       window.removeEventListener('storage', handleStorage);
     };
   }, [activeProjectId]);
@@ -322,18 +383,48 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     target: 'object_layout' | 'auto_scaler',
     options?: { runAfterApply?: boolean }
   ): void => {
-    if (!result) {
+    const fallbackSlotId = persistedPlanSnapshot?.slotId?.trim() ?? '';
+    const fallbackSourceSignature = persistedPlanSnapshot?.sourceSignature?.trim() ?? '';
+    const fallbackLayout = persistedPlanSnapshot?.layout ?? null;
+    const resolvedLayout = result ? toSharedLayout(result.layout) : fallbackLayout;
+    if (!resolvedLayout) {
       toast('Run analysis before applying plan to tools.', { variant: 'info' });
       return;
     }
-    const analyzedSlotId = resultSourceSlotId.trim();
+    const analyzedSlotId = resultSourceSlotId.trim() || fallbackSlotId;
     if (!analyzedSlotId) {
       toast('Analysis slot context is missing. Rerun analysis first.', { variant: 'info' });
       return;
     }
-    const analyzedSourceSignature = resultSourceSignature.trim();
+    const analyzedSourceSignature = resultSourceSignature.trim() || fallbackSourceSignature;
     if (!analyzedSourceSignature) {
       toast('Analysis source signature is missing. Rerun analysis first.', { variant: 'info' });
+      return;
+    }
+    const analyzedSlotExists = slots.some(
+      (slot) => (slot.id ?? '').trim() === analyzedSlotId
+    );
+    if (!analyzedSlotExists) {
+      toast('Analyzed slot no longer exists. Run analysis again on an available slot.', {
+        variant: 'info',
+      });
+      return;
+    }
+    const analyzedSlot = slots.find(
+      (slot) => (slot.id ?? '').trim() === analyzedSlotId
+    );
+    const currentAnalyzedSlotSignature = buildSlotSourceSignature(analyzedSlot ?? null);
+    if (
+      currentAnalyzedSlotSignature &&
+      analyzedSourceSignature !== currentAnalyzedSlotSignature
+    ) {
+      toast('Analysis plan is stale for this slot image. Run analysis again.', {
+        variant: 'info',
+      });
+      return;
+    }
+    if (slotSelectionLocked) {
+      toast('Cannot apply while slot selection is locked.', { variant: 'info' });
       return;
     }
     const runAfterApply = Boolean(options?.runAfterApply);
@@ -342,7 +433,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
       sourceSignature: analyzedSourceSignature,
       runAfterApply,
       target,
-      layout: toSharedLayout(result.layout),
+      layout: resolvedLayout,
     });
     const targetLabel = target === 'object_layout' ? 'Object Layout' : 'Auto Scaler';
     toast(
@@ -351,12 +442,9 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         : `Queued analysis plan for ${targetLabel}.`,
       { variant: 'success' }
     );
-    const params = new URLSearchParams(searchParams?.toString() ?? '');
-    if (params.has('tab')) {
-      params.delete('tab');
-      const query = params.toString();
-      router.replace(query ? `${pathname}?${query}` : pathname);
-    }
+    setSelectedSlotId(analyzedSlotId);
+    setWorkingSlotId(analyzedSlotId);
+    switchToControls();
   };
 
   const handleAnalyze = async (): Promise<void> => {
@@ -544,6 +632,13 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         <AnalysisResultSection
           result={result}
           resultSourceSlotId={resultSourceSlotId}
+          persistedPlanSnapshot={persistedPlanSnapshot}
+          currentWorkingSlotId={workingSlot?.id?.trim() ?? ''}
+          availableSlots={slots.map((slot) => ({
+            id: slot.id,
+            label: slot.name ?? undefined,
+          }))}
+          slotSelectionLocked={slotSelectionLocked}
           queueAnalysisApplyIntent={queueAnalysisApplyIntent}
         />
       </Card>

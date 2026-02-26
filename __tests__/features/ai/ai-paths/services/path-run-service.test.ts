@@ -176,7 +176,8 @@ describe('PathRunService', () => {
         | { errors?: number }
         | undefined;
       expect(typeof compileMeta?.errors).toBe('number');
-      expect(compileMeta?.errors).toBe(0);
+      // Even if non-blocking, compile errors are still reported in meta
+      expect(compileMeta?.errors).toBe(1);
     });
 
     it('should block enqueue when compile checks fail and node validation is enabled', async () => {
@@ -189,7 +190,7 @@ describe('PathRunService', () => {
             aiPathsValidation: { enabled: true },
           },
         })
-      ).rejects.toThrow('Required input "prompt" on node "Model" has no incoming edge');
+      ).rejects.toThrow('is missing required input wiring for port "prompt"');
     });
 
     it('should dedupe active runs by requestId', async () => {

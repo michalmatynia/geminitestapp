@@ -10,6 +10,8 @@ import {
 } from '@/features/integrations/services/imports/base-import-error-utils';
 import {
   importSingleItem,
+  normalizeMappedProduct,
+  pickMappedSku,
   resolveProducerAndTagLookups,
 } from '@/features/integrations/services/imports/base-import-item-processor';
 import {
@@ -20,7 +22,7 @@ import {
   getBaseImportRunDetail,
   listBaseImportRunItems,
   listBaseImportRuns,
-  putBaseImportRunItem,
+  putBaseImportRunItems,
   recomputeBaseImportRunStats,
   releaseBaseImportRunLease,
   updateBaseImportRun,
@@ -43,13 +45,16 @@ import {
   resolveMode,
   shouldReuseIdempotentRun,
   shouldFilterToUniqueOnly,
+  toStringId,
   type BaseConnectionContext,
   type StartBaseImportRunInput,
 } from '@/features/integrations/services/imports/base-import-service-shared';
 import { getCatalogRepository } from '@/features/products/services/catalog-repository';
+import { getCatalogParameterLinks } from '@/features/integrations/services/imports/parameter-import/link-map-repository';
 import { getParameterRepository } from '@/features/products/services/parameter-repository';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import { getProductRepository } from '@/features/products/services/product-repository';
+import { findProductListingsByProductsAndConnectionAcrossProviders } from '@/features/integrations/services/product-listing-repository';
 import type {
   BaseImportErrorCode,
   BaseImportErrorClass,
@@ -275,29 +280,34 @@ export const prepareBaseImportRun = async (
   }
 
   const createdAt = nowIso();
-  for (const itemId of ids) {
-    await putBaseImportRunItem({
-      runId: run.id,
-      itemId,
-      baseProductId: itemId,
-      sku: null,
-      status: 'pending',
-      attempt: 0,
-      idempotencyKey: `${run.id}:${itemId}`,
-      action: 'pending',
-      errorCode: null,
-      errorClass: null,
-      errorMessage: null,
-      retryable: null,
-      nextRetryAt: null,
-      lastErrorAt: null,
-      importedProductId: null,
-      payloadSnapshot: null,
-      createdAt,
-      updatedAt: createdAt,
-      startedAt: null,
-      finishedAt: null,
-    });
+  const runItems: BaseImportItemRecord[] = ids.map((itemId) => ({
+    runId: run.id,
+    itemId,
+    baseProductId: itemId,
+    sku: null,
+    status: 'pending',
+    attempt: 0,
+    idempotencyKey: `${run.id}:${itemId}`,
+    action: 'pending',
+    errorCode: null,
+    errorClass: null,
+    errorMessage: null,
+    retryable: null,
+    nextRetryAt: null,
+    lastErrorAt: null,
+    importedProductId: null,
+    payloadSnapshot: null,
+    createdAt,
+    updatedAt: createdAt,
+    startedAt: null,
+    finishedAt: null,
+  }));
+
+  // Batch insert items to avoid thousands of serial database calls
+  const batchSize = 1000;
+  for (let i = 0; i < runItems.length; i += batchSize) {
+    const batch = runItems.slice(i, i + batchSize);
+    await putBaseImportRunItems(batch);
   }
 
   return recomputeBaseImportRunStats(run.id);
@@ -332,10 +342,8 @@ const failRemainingItems = async (input: {
   }
 
   if (toFail.length > 0) {
-    const { putBaseImportRunItems } = await import('./base-import-run-repository');
     await putBaseImportRunItems(toFail);
   }
-  
   await recomputeBaseImportRunStats(input.runId);
 };
 
@@ -479,6 +487,19 @@ export const processBaseImportRun = async (
     const lookups = await resolveProducerAndTagLookups(connection.connectionId);
     const productRepository = await getProductRepository();
     const parameterRepository = await getParameterRepository();
+    
+    // Performance optimization: pre-fetch catalog context once per run
+    const [prefetchedParameters, prefetchedLinks] = await Promise.all([
+      parameterRepository.listParameters({ catalogId: targetCatalog.id }),
+      templateParameterImportSettings.matchBy === 'base_id_then_name'
+        ? getCatalogParameterLinks({
+          catalogId: targetCatalog.id,
+          connectionId: connection.connectionId,
+          inventoryId: run.params.inventoryId,
+        })
+        : Promise.resolve({}),
+    ]);
+
     const catalogLanguageContext = await resolveCatalogLanguageContext(
       provider,
       targetCatalog
@@ -535,6 +556,60 @@ export const processBaseImportRun = async (
         run.params.inventoryId,
         dueItems.map((item: BaseImportItemRecord): string => item.itemId)
       );
+
+      // Performance optimization: batch pre-fetch existing products
+      const batchBaseProductIds: string[] = [];
+      const batchSkus: string[] = [];
+      dueItems.forEach((item) => {
+        const raw = detailsMap.get(item.itemId);
+        if (!raw) return;
+        const mapped = normalizeMappedProduct(
+          raw,
+          templateMappings,
+          pricingContext.preferredCurrencies
+        );
+        const baseId =
+          mapped.baseProductId?.trim() ||
+          toStringId(raw['base_product_id']) ||
+          toStringId(raw['product_id']) ||
+          toStringId(raw['id']);
+        const sku = pickMappedSku(mapped);
+        if (baseId) batchBaseProductIds.push(baseId);
+        if (sku) batchSkus.push(sku);
+      });
+
+      const [existingByBaseIdList, existingBySkuList] = await Promise.all([
+        batchBaseProductIds.length > 0
+          ? productRepository.findProductsByBaseIds(batchBaseProductIds)
+          : Promise.resolve([]),
+        batchSkus.length > 0
+          ? productRepository.getProductsBySkus(batchSkus)
+          : Promise.resolve([]),
+      ]);
+
+      const prefetchedProductsByBaseId = new Map<string, ProductWithImages>(
+        existingByBaseIdList
+          .filter((p) => p.baseProductId)
+          .map((p) => [p.baseProductId!, p as ProductWithImages])
+      );
+      const prefetchedProductsBySku = new Map<string, ProductWithImages>(
+        existingBySkuList
+          .filter((p) => p.sku)
+          .map((p) => [p.sku!, p as ProductWithImages])
+      );
+
+      // Performance optimization: pre-fetch listings for this batch
+      const allProductIdsForBatch = new Set<string>();
+      existingByBaseIdList.forEach((p) => allProductIdsForBatch.add(p.id));
+      existingBySkuList.forEach((p) => allProductIdsForBatch.add(p.id));
+
+      const prefetchedListings =
+        allProductIdsForBatch.size > 0
+          ? await findProductListingsByProductsAndConnectionAcrossProviders(
+            Array.from(allProductIdsForBatch),
+            connection.connectionId
+          )
+          : new Map<string, { listing: unknown; repository: unknown }>();
 
       for (const item of dueItems) {
         processedItemsSinceHeartbeat += 1;
@@ -613,6 +688,11 @@ export const processBaseImportRun = async (
             parameterImportSettings: templateParameterImportSettings,
             catalogLanguageCodes: catalogLanguageContext.languageCodes,
             defaultLanguageCode: catalogLanguageContext.defaultLanguageCode,
+            prefetchedParameters,
+            prefetchedLinks,
+            prefetchedProductsByBaseId,
+            prefetchedProductsBySku,
+            prefetchedListings,
           });
 
           const retryableResult = result.status === 'failed' && result.retryable === true;

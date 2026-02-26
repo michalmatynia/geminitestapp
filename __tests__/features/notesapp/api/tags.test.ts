@@ -1,6 +1,6 @@
 import { Tag } from '@prisma/client';
 import { NextRequest } from 'next/server';
-import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterAll, beforeAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
@@ -12,10 +12,18 @@ import {
   GET as GET_TAGS,
   POST as POST_TAG,
 } from '@/app/api/notes/tags/route';
+import { noteService, invalidateNoteRepositoryCache } from '@/features/notesapp/services/notes';
+import { invalidateAppDbProviderCache } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
 
 
 describe('Notes Tags API', () => {
+  beforeAll(() => {
+    process.env['APP_DB_PROVIDER'] = 'prisma';
+    invalidateAppDbProviderCache();
+    invalidateNoteRepositoryCache();
+  });
+
   beforeEach(async () => {
     // Only run if DATABASE_URL is available
     if (!process.env['DATABASE_URL']) return;
@@ -23,6 +31,9 @@ describe('Notes Tags API', () => {
     await prisma.noteTag.deleteMany({});
     await prisma.note.deleteMany({});
     await prisma.tag.deleteMany({});
+    await prisma.notebook.deleteMany({});
+    
+    await noteService.invalidateDefaultNotebookCache();
   });
 
   afterAll(async () => {
@@ -32,8 +43,9 @@ describe('Notes Tags API', () => {
   it('lists tags ordered by name', async () => {
     if (!process.env['DATABASE_URL']) return;
 
+    const notebook = await noteService.getOrCreateDefaultNotebook();
     await prisma.tag.createMany({
-      data: [{ name: 'Beta' }, { name: 'Alpha' }],
+      data: [{ name: 'Beta', notebookId: notebook.id }, { name: 'Alpha', notebookId: notebook.id }],
     });
 
     const res = await GET_TAGS(
@@ -79,7 +91,8 @@ describe('Notes Tags API', () => {
   it('updates a tag', async () => {
     if (!process.env['DATABASE_URL']) return;
 
-    const tag = await prisma.tag.create({ data: { name: 'Old' } });
+    const notebook = await noteService.getOrCreateDefaultNotebook();
+    const tag = await prisma.tag.create({ data: { name: 'Old', notebookId: notebook.id } });
 
     const res = await PATCH_TAG(
       new NextRequest(`http://localhost/api/notes/tags/${tag.id}`, {
@@ -98,7 +111,8 @@ describe('Notes Tags API', () => {
   it('deletes a tag', async () => {
     if (!process.env['DATABASE_URL']) return;
 
-    const tag = await prisma.tag.create({ data: { name: 'Delete' } });
+    const notebook = await noteService.getOrCreateDefaultNotebook();
+    const tag = await prisma.tag.create({ data: { name: 'Delete', notebookId: notebook.id } });
 
     const res = await DELETE_TAG(
       new NextRequest(`http://localhost/api/notes/tags/${tag.id}`, {

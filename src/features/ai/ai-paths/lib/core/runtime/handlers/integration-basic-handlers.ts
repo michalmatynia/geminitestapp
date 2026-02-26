@@ -4,4 +4,5 @@ export { handleHttp } from './integration-http-handler';
 export { handleNotification } from './integration-notification-handler';
 export { handlePoll } from './integration-poll-handler';
 export { handlePlaywright } from './integration-playwright-handler';
+export { handleSimulation } from './integration-simulation-handler';
 export { handleTrigger } from './integration-trigger-handler';

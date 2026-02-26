@@ -162,7 +162,7 @@ export const IssueHintRow = memo(function IssueHintRow({
             ? String(raw)
             : '';
       const nextValue = getIssueReplacementPreview(currentValue, issue);
-      acceptIssue({
+      void acceptIssue({
         fieldName,
         patternId: issue.patternId,
         postAcceptBehavior: issue.postAcceptBehavior,
@@ -174,14 +174,14 @@ export const IssueHintRow = memo(function IssueHintRow({
       if (!Number.isFinite(numericValue)) return;
       setValue(
         numericField,
-        Math.max(0, Math.floor(numericValue)) as ProductFormData[typeof numericField],
-        { shouldDirty: true, shouldTouch: true }
+                      Math.max(0, Math.floor(numericValue)) as ProductFormData[typeof numericField],
+                      { shouldDirty: true, shouldTouch: true }
       );
     } else {
       const currentValue =
-        (getValues(fieldName as keyof ProductFormData) as string | undefined) ?? '';
+                      (getValues(fieldName as keyof ProductFormData) as string | undefined) ?? '';
       const nextValue = getIssueReplacementPreview(currentValue, issue);
-      acceptIssue({
+      void acceptIssue({
         fieldName,
         patternId: issue.patternId,
         postAcceptBehavior: issue.postAcceptBehavior,
@@ -190,23 +190,22 @@ export const IssueHintRow = memo(function IssueHintRow({
       });
       if (nextValue !== currentValue) {
         setValue(
-          fieldName as keyof ProductFormData,
-          nextValue as ProductFormData[keyof ProductFormData],
-          { shouldDirty: true, shouldTouch: true }
+                        fieldName as keyof ProductFormData,
+                        nextValue as ProductFormData[keyof ProductFormData],
+                        { shouldDirty: true, shouldTouch: true }
         );
       }
     }
   }, [acceptIssue, fieldName, getValues, issue, numericField, setValue]);
-
+            
   const onDeny = useCallback((): void => {
-    denyIssue({
+    void denyIssue({
       fieldName,
       patternId: issue.patternId,
       message: issue.message,
       replacementValue: issue.replacementValue,
     });
   }, [denyIssue, fieldName, issue.message, issue.patternId, issue.replacementValue]);
-
   return (
     <ValidatorIssueHint
       issue={issue}

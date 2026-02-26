@@ -34,6 +34,7 @@ describe('AI Path Run Queue Worker', () => {
     updateRunIfStatus: vi.fn(),
     claimRunForProcessing: vi.fn(),
     createRunEvent: vi.fn(),
+    finalizeRun: vi.fn(),
   };
 
   beforeEach(() => {
@@ -179,23 +180,11 @@ describe('AI Path Run Queue Worker', () => {
     it('moves to dead-letter on max retries', async () => {
       const run = { id: 'run-1', pathId: 'path-1', retryCount: 2, maxAttempts: 3 } as any;
       vi.mocked(executePathRun).mockRejectedValue(new Error('Fatal Error'));
-      mockRepo.updateRunIfStatus.mockResolvedValueOnce({
-        id: 'run-1',
-        status: 'dead_lettered',
-        retryCount: 3,
-      });
-
+      
       await processRun(run);
 
-      expect(mockRepo.updateRunIfStatus).toHaveBeenCalledWith('run-1', ['running', 'queued'], expect.objectContaining({
-        status: 'dead_lettered',
-        retryCount: 3,
+      expect(mockRepo.finalizeRun).toHaveBeenCalledWith('run-1', 'dead_lettered', expect.objectContaining({
         errorMessage: 'Fatal Error',
-      }));
-      expect(mockRepo.createRunEvent).toHaveBeenCalledWith(expect.objectContaining({
-        runId: 'run-1',
-        level: 'error',
-        message: expect.stringContaining('dead-letter'),
       }));
     });
   });

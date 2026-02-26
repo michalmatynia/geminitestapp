@@ -43,6 +43,9 @@ export type {
   CaseResolverFileEditDraft,
 };
 
+import type { CaseResolverRuntimeIndexes } from './runtime/selectors/indexes';
+import type { CaseResolverWorkspaceNormalizationDiagnostics } from './settings.workspace';
+
 export type CaseResolverDocumentVersion = 'original' | 'exploded';
 
 export interface CaseResolverCompiledSegment {
@@ -90,8 +93,8 @@ export type CaseResolverStateValue = {
   selectedFileId: string | null;
   selectedAssetId: string | null;
   selectedFolderPath: string | null;
-  workspaceIndexes: Record<string, any>; // Using any for now to resolve type error quickly
-  workspaceNormalizationDiagnostics: Record<string, any>;
+  workspaceIndexes: CaseResolverRuntimeIndexes;
+  workspaceNormalizationDiagnostics: CaseResolverWorkspaceNormalizationDiagnostics;
   setSelectedFileId: React.Dispatch<React.SetStateAction<string | null>>;
   setSelectedAssetId: React.Dispatch<React.SetStateAction<string | null>>;
   setSelectedFolderPath: React.Dispatch<React.SetStateAction<string | null>>;

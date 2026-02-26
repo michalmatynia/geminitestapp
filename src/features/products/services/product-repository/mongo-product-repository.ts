@@ -172,41 +172,24 @@ export const mongoProductRepository: ProductRepository = {
     const searchFilter = await buildMongoWhere(filters);
     const projectStage = buildListProjectStage(filters);
 
-    const facetProductsPipeline: Document[] = [
-      { $sort: { createdAt: -1 } },
-      { $skip: skip },
-      { $limit: pageSize },
-    ];
-    if (projectStage) {
-      facetProductsPipeline.push({ $project: projectStage });
-    }
-
-    const pipeline: Document[] = [];
-    if (!isEmptyFilter(searchFilter)) {
-      pipeline.push({ $match: searchFilter });
-    }
-    pipeline.push({
-      $facet: {
-        products: facetProductsPipeline,
-        total: [{ $count: 'count' }],
-      },
-    });
-
-    const aggregateOptions = isEmptyFilter(searchFilter)
-      ? { hint: { createdAt: -1 } }
-      : undefined;
-
-    const [result] = await collection
-      .aggregate<{ products: ProductDocument[]; total: Array<{ count: number }> }>(
-        pipeline,
-        aggregateOptions
-      )
-      .toArray();
+    const [docs, total] = await Promise.all([
+      (async () => {
+        let cursor = collection.find(searchFilter).sort({ createdAt: -1 });
+        if (isEmptyFilter(searchFilter)) {
+          cursor = cursor.hint({ createdAt: -1 });
+        }
+        cursor = cursor.skip(skip).limit(pageSize);
+        if (projectStage) {
+          cursor = cursor.project(projectStage);
+        }
+        return await cursor.toArray();
+      })(),
+      collection.countDocuments(searchFilter),
+    ]);
 
     return {
-       
-      products: (result?.products ?? []).map((p) => toProductResponse(p as any)),
-      total: result?.total?.[0]?.count ?? 0,
+      products: docs.map((doc) => toProductResponse(doc as any)),
+      total,
     };
   },
   

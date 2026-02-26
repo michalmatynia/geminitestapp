@@ -236,7 +236,7 @@ export const sanitizePathConfig = (config: PathConfig): PathConfig => {
     });
   }
   const repairedConfig = identityRepair.config;
-  const normalizedNodes = normalizeNodes(repairedConfig.nodes as AiNode[]);
+  const normalizedNodes = normalizeNodes(repairedConfig.nodes);
   const migratedTriggerGraph = migrateTriggerToFetcherGraph(
     normalizedNodes,
     Array.isArray(repairedConfig.edges) ? (repairedConfig.edges as EdgeDto[]) : []

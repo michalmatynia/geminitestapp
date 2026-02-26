@@ -10,7 +10,7 @@ import type {
   NodeHandler,
   RuntimeHistoryEntry,
 } from '@/shared/contracts/ai-paths-runtime';
-import type { Toast } from '@/shared/contracts/ui';
+import type { Toast, ToastOptions } from '@/shared/contracts/ui';
 
 import {
   appendInputValue,
@@ -113,6 +113,16 @@ const checkContextMatchesSimulation = (context: Record<string, unknown>): boolea
   return false;
 };
 
+const hasValuableSimulationContext = (context: Record<string, unknown>): boolean => {
+  return Boolean(readEntityIdFromContext(context) && readEntityTypeFromContext(context));
+};
+
+const isSimulationCapableFetcher = (node: AiNode): boolean => {
+  if (node.type !== 'fetcher') return false;
+  const mode = node.config?.fetcher?.sourceMode;
+  return mode === 'simulation_id' || mode === 'live_then_simulation';
+};
+
 export type EvaluateGraphOptions = {
   runId?: string | undefined;
   pathId?: string | undefined;
@@ -124,8 +134,11 @@ export type EvaluateGraphOptions = {
   strictFlowMode?: boolean | undefined;
   deferPoll?: boolean | undefined;
   skipAiJobs?: boolean | undefined;
+  skipNodeIds?: string[] | undefined;
   seedOutputs?: Record<string, RuntimePortValues> | undefined;
+  seedHashes?: Record<string, string> | undefined;
   cache?: Map<string, RuntimePortValues> | undefined;
+  maxIterations?: number | undefined;
   onNodeStart?: (event: {
     runId: string;
     runStartedAt: string;
@@ -145,6 +158,9 @@ export type EvaluateGraphOptions = {
     iteration: number;
     cached?: boolean;
     error?: string;
+    sideEffectDecision?: string;
+    sideEffectPolicy?: string;
+    activationHash?: string | null;
   }) => Promise<void> | void;
   onNodeError?: (event: {
     runId: string;
@@ -168,15 +184,20 @@ export type EvaluateGraphOptions = {
     iteration: number;
     activeNodes: string[];
   }) => Promise<void> | void;
+  onHalt?: (event: {
+    runId: string;
+    reason: 'blocked' | 'max_iterations' | 'completed' | 'failed';
+    nodeStatuses: Record<string, string>;
+  }) => Promise<void> | void;
   profile?: RuntimeProfileOptions | undefined;
   abortSignal?: AbortSignal | undefined;
-  toast?: Toast | undefined; // ToastFn signature mismatch? Check below.
+  toast?: Toast | undefined;
   reportAiPathsError: (error: unknown, context: Record<string, unknown>, summary?: string) => void;
   // Handler Resolution
   resolveHandler?: (type: string) => NodeHandler | null;
   // Services
-  fetchEntityCached?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
   fetchEntityByType?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
+  fetchEntityCached?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
   services?: {
     prisma?: unknown;
     mongo?: unknown;
@@ -238,12 +259,37 @@ export async function evaluateGraphInternal(
     outgoingEdgesByNode.get(fromNodeId)!.push(edge);
   });
 
+  const collectNodeInputs = (nodeId: string, currentOutputs: Record<string, RuntimePortValues>): RuntimePortValues => {
+    const incoming = incomingEdgesByNode.get(nodeId) ?? [];
+    if (incoming.length === 0) return {};
+    const collected: RuntimePortValues = {};
+    incoming.forEach((edge: Edge) => {
+      const fromNodeId = resolveEdgeFromNodeId(edge);
+      if (!fromNodeId) return;
+      const fromOutput = currentOutputs[fromNodeId];
+      const fromPort = resolveEdgeFromPort(edge);
+      const toPort = resolveEdgeToPort(edge);
+      if (!fromOutput || !fromPort || !toPort) return;
+      const value = (fromOutput)[fromPort];
+      if (value === undefined) return;
+      const expectedTypes = getPortDataTypes(toPort);
+      if (!isValueCompatibleWithTypes(value, expectedTypes)) return;
+      const existing = (collected)[toPort];
+      (collected)[toPort] = appendInputValue(existing, value);
+    });
+    return collected;
+  };
+
+  const seedHashes = (options.seedHashes ?? {});
+
   const scopedNodeIds = (() => {
     if (!options.triggerNodeId || !nodeById.has(options.triggerNodeId)) {
       return new Set(nodes.map((node) => node.id));
     }
     const reachable = new Set<string>();
     const stack = [options.triggerNodeId];
+    
+    // Forward reachability
     while (stack.length > 0) {
       const current = stack.pop();
       if (!current || reachable.has(current)) continue;
@@ -256,6 +302,27 @@ export async function evaluateGraphInternal(
         }
       });
     }
+
+    // Include upstream simulation nodes if trigger requires simulation
+    const triggerNode = nodeById.get(options.triggerNodeId);
+    if (triggerNode?.config?.trigger?.contextMode === 'simulation_required' || 
+        triggerNode?.config?.trigger?.contextMode === 'simulation_preferred') {
+      const incoming = incomingEdgesByNode.get(options.triggerNodeId) ?? [];
+      incoming.forEach(edge => {
+        const fromNodeId = resolveEdgeFromNodeId(edge);
+        if (fromNodeId) {
+          const fromNode = nodeById.get(fromNodeId);
+          if (fromNode?.type === 'simulation' || isSimulationCapableFetcher(fromNode!)) {
+            const config = fromNode?.config?.simulation;
+            // Respect manual_only behavior
+            if (fromNode?.type !== 'simulation' || config?.runBehavior !== 'manual_only' || fromNodeId === options.triggerNodeId || seedHashes[fromNodeId]) {
+              reachable.add(fromNodeId);
+            }
+          }
+        }
+      });
+    }
+
     return reachable;
   })();
   const executableNodeCount = scopedNodeIds.size;
@@ -264,18 +331,37 @@ export async function evaluateGraphInternal(
   const outputs: Record<string, RuntimePortValues> = options.seedOutputs
     ? cloneValue(options.seedOutputs)
     : {};
-  Object.keys(outputs).forEach((nodeId) => {
-    if (!scopedNodeIds.has(nodeId)) {
-      delete outputs[nodeId];
-    }
-  });
+  
   const history = new Map<string, RuntimeHistoryEntry[]>();
   const activeNodes = new Set<string>();
   const finishedNodes = new Set<string>();
   const errorNodes = new Set<string>();
   const blockedNodes = new Set<string>();
-  
-  const executed = {
+  const skippedNodes = new Set<string>(options.skipNodeIds ?? []);
+  const nodeHashes = new Map<string, string>();
+
+  Object.keys(outputs).forEach((nodeId) => {
+    if (!scopedNodeIds.has(nodeId)) {
+      delete outputs[nodeId];
+    } else if (seedHashes[nodeId] === undefined) {
+      // Re-validate if no seed hash provided.
+    } else {
+      // Validation will happen in the loop based on hash match.
+    }
+  });
+
+  skippedNodes.forEach(id => {
+    if (nodeById.has(id)) {
+      finishedNodes.add(id);
+    }
+  });
+
+  // Initial input propagation
+  nodes.forEach(node => {
+    inputs[node.id] = collectNodeInputs(node.id, outputs);
+  });
+          
+  const executed: NodeHandlerContext['executed'] = {
     notification: new Set<string>(),
     updater: new Set<string>(),
     http: new Set<string>(),
@@ -285,9 +371,7 @@ export async function evaluateGraphInternal(
     schema: new Set<string>(),
     mapper: new Set<string>(),
   };
-
-  const isNodeActiveById = (id: string): boolean => activeNodes.has(id);
-
+  
   const buildRuntimeStateSnapshot = (
     inputsSnapshot: Record<string, RuntimePortValues>
   ): RuntimeState => {
@@ -295,6 +379,8 @@ export async function evaluateGraphInternal(
       (acc, node) => {
         if (errorNodes.has(node.id)) {
           acc[node.id] = 'failed';
+        } else if (skippedNodes.has(node.id)) {
+          acc[node.id] = 'skipped';
         } else if (finishedNodes.has(node.id)) {
           acc[node.id] = 'completed';
         } else if (blockedNodes.has(node.id)) {
@@ -317,56 +403,19 @@ export async function evaluateGraphInternal(
                 : finishedNodes.size >= executableNodeCount
                   ? 'completed'
                   : 'running',
-      nodeStatuses,      nodeOutputs: outputsSnapshot,
+      nodeStatuses,
+      nodeOutputs: outputsSnapshot,
       variables: {},
       events: [],
       runId: resolvedRunId,
       runStartedAt: resolvedRunStartedAt,
       inputs: cloneValue(inputsSnapshot),
       outputs: outputsSnapshot,
+      hashes: Object.fromEntries(nodeHashes),
       history: history.size
         ? (cloneValue(Object.fromEntries(history)) as Record<string, RuntimeHistoryEntry[]>)
         : undefined,
     };
-  };
-
-  const collectNodeInputs = (nodeId: string): RuntimePortValues => {
-    const incoming = incomingEdgesByNode.get(nodeId) ?? [];
-    if (incoming.length === 0) return {};
-    const collected: RuntimePortValues = {};
-    incoming.forEach((edge: Edge) => {
-      const fromNodeId = resolveEdgeFromNodeId(edge);
-      if (!fromNodeId) return;
-      if (!isNodeActiveById(fromNodeId)) return;
-      const fromOutput = outputs[fromNodeId];
-      const fromPort = resolveEdgeFromPort(edge);
-      const toPort = resolveEdgeToPort(edge);
-      if (!fromOutput || !fromPort || !toPort) return;
-      const value = (fromOutput)[fromPort];
-      if (value === undefined) return;
-      const expectedTypes = getPortDataTypes(toPort);
-      if (!isValueCompatibleWithTypes(value, expectedTypes)) return;
-      const existing = (collected)[toPort];
-      (collected)[toPort] = appendInputValue(existing, value);
-    });
-    return collected;
-  };
-
-  const refreshDownstreamInputs = (
-    sourceNodeId: string,
-    nextInputs: Record<string, RuntimePortValues>
-  ): void => {
-    const outgoing = outgoingEdgesByNode.get(sourceNodeId) ?? [];
-    if (outgoing.length === 0) return;
-    const touched = new Set<string>();
-    outgoing.forEach((edge: Edge) => {
-      const toNodeId = resolveEdgeToNodeId(edge);
-      if (toNodeId) touched.add(toNodeId);
-    });
-    touched.forEach((targetId: string) => {
-      const updatedInputs = collectNodeInputs(targetId);
-      nextInputs[targetId] = updatedInputs;
-    });
   };
 
   const throwAbortIfCancelled = (nextInputs: Record<string, RuntimePortValues>, nodeId?: string): void => {
@@ -379,69 +428,64 @@ export async function evaluateGraphInternal(
     }
   };
 
-  const triggerSource = options.triggerNodeId ? nodeById.get(options.triggerNodeId) : null;
   const triggerContext = options.triggerContext ?? null;
   const triggerContextRecord = triggerContext ?? null;
 
-  const connectedSimulationNodes: AiNode[] = (() => {
-    if (!options.triggerNodeId) return [];
-    const simulationNodeById = new Map<string, AiNode>(
-      nodes.filter((n) => n.type === 'simulation').map((n) => [n.id, n])
-    );
-    const reachable = new Set<string>();
-    const stack = [options.triggerNodeId];
-    while (stack.length > 0) {
-      const currentId = stack.pop()!;
-      if (reachable.has(currentId)) continue;
-      reachable.add(currentId);
-      const outgoing = outgoingEdgesByNode.get(currentId) ?? [];
-      outgoing.forEach((e) => {
-        const toNodeId = resolveEdgeToNodeId(e);
-        if (toNodeId) stack.push(toNodeId);
-      });
+  const triggerSource = options.triggerNodeId ? nodeById.get(options.triggerNodeId) : null;
+  
+  const checkTriggerProvenance = (): boolean => {
+    const simulationNodesInScope = Array.from(scopedNodeIds).map(id => nodeById.get(id)).filter(n => n && (n.type === 'simulation' || isSimulationCapableFetcher(n)));
+    const finishedSimulationNodes = simulationNodesInScope.filter(n => finishedNodes.has(n!.id));
+    const simulationOutputs = finishedSimulationNodes.map(n => outputs[n!.id]).filter(Boolean);
+    
+    const hasLiveProvenance = (triggerContextRecord && checkContextMatchesSimulation(triggerContextRecord));
+    const hasSimNodeProvenance = simulationOutputs.some(out => out && hasValuableSimulationContext(out['context'] as Record<string, unknown> ?? {}));
+    
+    if (triggerSource?.type === 'simulation' || hasLiveProvenance || hasSimNodeProvenance) {
+      return true;
     }
-    return Array.from(reachable)
-      .map((id) => simulationNodeById.get(id))
-      .filter((n): n is AiNode => Boolean(n));
-  })();
 
-  const triggerHasSimulationProvenance =
-    triggerSource?.type === 'simulation' ||
-    (triggerContextRecord && checkContextMatchesSimulation(triggerContextRecord)) ||
-    connectedSimulationNodes.length > 0;
-
-  const deriveDatabaseInputs = (
-    node: AiNode,
-    nodeInputs: RuntimePortValues
-  ): RuntimePortValues => {
-    const next = { ...nodeInputs };
-    if (node.type === 'database') {
-      if (!pickString(next['entityId'])) {
-        next['entityId'] =
-          pickString(triggerContext?.['productId']) ??
-          pickString(triggerContext?.['entityId']) ??
-          pickString(next['entityId']) ??
-          undefined;
-      }
-      if (!pickString(next['entityType'])) {
-        next['entityType'] =
-          pickString(triggerContext?.['entityType']) ??
-          readEntityTypeFromContext(next) ??
-          undefined;
-      }
-    }
-    return next;
+    const hasPotentialSimNode = simulationNodesInScope.some(n => !finishedNodes.has(n!.id));
+    return hasPotentialSimNode;
   };
 
-  const deriveModelInputs = (
-    node: AiNode,
-    nodeInputs: RuntimePortValues
-  ): RuntimePortValues => {
-    const next = { ...nodeInputs };
+  // Pre-Execution Simulation Context Feasibility Check
+  const triggerCanEventuallyHaveSimulationProvenance =
+    triggerSource?.type === 'simulation' ||
+    (triggerContextRecord && checkContextMatchesSimulation(triggerContextRecord)) ||
+    Array.from(scopedNodeIds).some(id => {
+      const n = nodeById.get(id);
+      return n && (n.type === 'simulation' || isSimulationCapableFetcher(n));
+    });
+
+  if (triggerSource?.config?.trigger?.contextMode === 'simulation_required' && !triggerCanEventuallyHaveSimulationProvenance) {
+    throw new GraphExecutionError(
+      `Trigger "${triggerSource.title || triggerSource.id}" requires simulation context but none was provided or resolved.`,
+      buildRuntimeStateSnapshot(inputs),
+      triggerSource.id
+    );
+  }
+
+  const deriveNodeInputs = (node: AiNode, rawInputs: RuntimePortValues): RuntimePortValues => {
+    const next = { ...rawInputs };
+    if (node.type === 'database') {
+      if (!pickString(next['entityId'])) {
+        const triggerEntityId = pickString(triggerContext?.['productId']) ?? pickString(triggerContext?.['entityId']);
+        if (triggerEntityId) {
+          next['entityId'] = triggerEntityId;
+        }
+      }
+      if (!pickString(next['entityType'])) {
+        const triggerEntityType = pickString(triggerContext?.['entityType']) ?? (pickString(triggerContext?.['productId']) ? 'product' : undefined);
+        if (triggerEntityType) {
+          next['entityType'] = triggerEntityType;
+        }
+      }
+    }
     if (node.type === 'model' || node.type === 'prompt') {
       const contextEntityId = readEntityIdFromContext(next);
       const contextEntityType = readEntityTypeFromContext(next);
-      if (contextEntityId && contextEntityType && triggerHasSimulationProvenance) {
+      if (contextEntityId && contextEntityType && checkTriggerProvenance()) {
         const inheritedContextSource =
           typeof triggerContextRecord?.['contextSource'] === 'string'
             ? triggerContextRecord['contextSource']
@@ -459,16 +503,11 @@ export async function evaluateGraphInternal(
     return next;
   };
 
-  const deriveNodeInputs = (node: AiNode, rawInputs: RuntimePortValues): RuntimePortValues => {
-    let next = deriveDatabaseInputs(node, rawInputs);
-    next = deriveModelInputs(node, next);
-    return next;
-  };
-
   let iteration = 0;
   let changedInLastIteration = true;
+  const maxIterationsLimit = options.maxIterations ?? MAX_ITERATIONS;
 
-  while (changedInLastIteration && iteration < MAX_ITERATIONS) {
+  while (changedInLastIteration && iteration < maxIterationsLimit) {
     iteration += 1;
     changedInLastIteration = false;
 
@@ -487,35 +526,8 @@ export async function evaluateGraphInternal(
 
       const rawInputs = inputs[node.id] ?? {};
       const nodeInputs = deriveNodeInputs(node, rawInputs);
-      
-      const readiness = evaluateInputReadiness(
-        node, 
-        nodeInputs, 
-        incomingEdgesByNode.get(node.id) ?? [], 
-        nodeById,
-        (id) => finishedNodes.has(id) ? 'completed' : errorNodes.has(id) ? 'failed' : blockedNodes.has(id) ? 'blocked' : 'pending',
-        (id) => outputs[id] ?? {}
-      );
 
-      if (!readiness.ready) {
-        if (!blockedNodes.has(node.id)) {
-          blockedNodes.add(node.id);
-          if (options.onNodeBlocked) {
-            await options.onNodeBlocked({
-              runId: resolvedRunId,
-              node,
-              reason: 'missing_inputs',
-              waitingOnPorts: readiness.waitingOnPorts,
-              waitingOnDetails: readiness.waitingOnDetails,
-            });
-          }
-        }
-        continue;
-      }
-
-      blockedNodes.delete(node.id);
-      activeNodes.add(node.id);
-
+      // --- Cache Check Start ---
       const cacheScope = resolveNodeCacheScope(node);
       const cacheScopeFingerprint = cacheScope === 'run' ? { runId: resolvedRunId } : undefined;
       
@@ -528,15 +540,30 @@ export async function evaluateGraphInternal(
               ? buildPromptInputHash(node, nodeInputs, cacheScopeFingerprint)
               : buildNodeInputHash(node, nodeInputs, cacheScopeFingerprint);
 
+      if (nodeHash) {
+        nodeHashes.set(node.id, nodeHash);
+      }
+
       const prevOutputs = outputs[node.id] ?? null;
       const cachedOutputs = nodeHash ? options.cache?.get(nodeHash) : null;
+      const isSeedMatch = Boolean(nodeHash && seedHashes[node.id] === nodeHash && options.seedOutputs?.[node.id]);
 
-      if (cachedOutputs) {
-        outputs[node.id] = cloneValue(cachedOutputs);
-        finishedNodes.add(node.id);
-        refreshDownstreamInputs(node.id, inputs);
-        changedInLastIteration = true;
+      const isEntryNode = node.id === options.triggerNodeId;
+      const isImplicitTriggerNode = node.type === 'trigger' && !options.triggerNodeId;
+      const cacheMode = node.config?.runtime?.cache?.mode ?? 'auto';
+      const isCacheDisabled = cacheMode === 'disabled';
+      const skipCache = isEntryNode || isImplicitTriggerNode || isCacheDisabled;
 
+      if (!skipCache && (cachedOutputs || isSeedMatch)) {
+        const out = isSeedMatch ? options.seedOutputs![node.id]! : cachedOutputs!;
+        outputs[node.id] = cloneValue(out);
+        
+        if ((out)['status'] === 'blocked') {
+          blockedNodes.add(node.id);
+        } else {
+          finishedNodes.add(node.id);
+        }
+        
         if (options.onNodeFinish) {
           await options.onNodeFinish({
             runId: resolvedRunId,
@@ -552,6 +579,69 @@ export async function evaluateGraphInternal(
         }
         continue;
       }
+      // --- Cache Check End ---
+      
+      const readiness = evaluateInputReadiness(
+        node, 
+        nodeInputs, 
+        incomingEdgesByNode.get(node.id) ?? [], 
+        nodeById,
+        (id) => finishedNodes.has(id) ? 'completed' : errorNodes.has(id) ? 'failed' : blockedNodes.has(id) ? 'blocked' : 'pending',
+        (id) => outputs[id] ?? {}
+      );
+
+      if (!readiness.ready) {
+        if (!blockedNodes.has(node.id)) {
+          blockedNodes.add(node.id);
+          
+          let message = `Upstream waiting diagnostics: ${readiness.waitingOnPorts.length > 0 ? `Waiting on ports: ${readiness.waitingOnPorts.join(', ')}` : 'Blocked by upstream nodes'}`;
+          if (readiness.waitingOnDetails && readiness.waitingOnDetails.length > 0) {
+            const detailsMsg = readiness.waitingOnDetails.map(d => {
+              const upstreamNodes = d.upstream.map(u => `${u.nodeTitle || u.nodeId} (${u.status})`).join(', ');
+              return `Upstream status for ${d.port}: ${upstreamNodes}`;
+            }).join('; ');
+            message = `Upstream waiting diagnostics: ${detailsMsg}`;
+          }
+
+          outputs[node.id] = {
+            status: 'blocked',
+            skipReason: 'missing_inputs',
+            message,
+            waitingOnPorts: readiness.waitingOnPorts,
+            waitingOnDetails: readiness.waitingOnDetails,
+            requiredPorts: readiness.requiredPorts,
+          };
+
+          if (options.onNodeBlocked) {
+            await options.onNodeBlocked({
+              runId: resolvedRunId,
+              node,
+              reason: 'missing_inputs',
+              message,
+              waitingOnPorts: readiness.waitingOnPorts,
+              waitingOnDetails: readiness.waitingOnDetails,
+            });
+          }
+        }
+        continue;
+      }
+
+      // Final check for trigger provenance if ready
+      if (node.id === options.triggerNodeId && node.config?.trigger?.contextMode === 'simulation_required') {
+        if (!checkTriggerProvenance()) {
+          throw new GraphExecutionError(
+            `Trigger "${node.title || node.id}" requires simulation context but none was provided or resolved.`,
+            buildRuntimeStateSnapshot(inputs),
+            node.id
+          );
+        }
+      }
+
+      if (blockedNodes.has(node.id)) {
+        delete outputs[node.id];
+      }
+      blockedNodes.delete(node.id);
+      activeNodes.add(node.id);
 
       const handler = options.resolveHandler ? options.resolveHandler(node.type) : null;
       if (!handler) {
@@ -580,6 +670,14 @@ export async function evaluateGraphInternal(
       const nodeStartedAt = nowMs();
 
       try {
+        const sideEffectPolicy = node.config?.runtime?.sideEffectPolicy ?? 'per_run';
+        const activationHash = buildNodeInputHash(node, nodeInputs, { iteration });
+        
+        let sideEffectDecision: 'executed' | 'skipped_policy' = 'executed';
+        if (sideEffectPolicy === 'per_run' && (executed as Record<string, Set<string> | undefined>)[node.type]?.has(node.id)) {
+          sideEffectDecision = 'skipped_policy';
+        }
+        
         if (options.onNodeStart) {
           await options.onNodeStart({
             runId: resolvedRunId,
@@ -592,23 +690,20 @@ export async function evaluateGraphInternal(
         }
 
         const timeoutMs = resolveNodeTimeoutMs(node);
-        const resolvedEntityType = readEntityTypeFromContext(nodeInputs) ?? triggerContext?.['entityType'];
-        const resolvedEntityId = readEntityIdFromContext(nodeInputs) ?? triggerContext?.['entityId'];
-        const fetchEntityResolver =
-          options.fetchEntityCached ??
-          options.fetchEntityByType ??
-          (async (): Promise<Record<string, unknown> | null> => null);
+        const resolvedEntityType = readEntityTypeFromContext(nodeInputs) ?? pickString(triggerContext?.['entityType']) ?? (pickString(triggerContext?.['productId']) ? 'product' : null);
+        const resolvedEntityId = readEntityIdFromContext(nodeInputs) ?? pickString(triggerContext?.['productId']) ?? pickString(triggerContext?.['entityId']) ?? null;
+        const fetchEntityResolver = options.fetchEntityByType ?? options.fetchEntityCached ?? (async () => null);
 
         const handlerContext: NodeHandlerContext = {
           node,
           nodeInputs,
-          prevOutputs: prevOutputs ?? {},
+          prevOutputs: prevOutputs && (prevOutputs)['status'] !== 'blocked' ? prevOutputs : {},
           edges: sanitizedEdges,
           nodes,
           nodeById,
           runId: resolvedRunId,
           runStartedAt: resolvedRunStartedAt,
-          runMeta: options.services, // Passing services as runMeta might be what was intended or abused
+          runMeta: options.services,
           activePathId: options.pathId ?? null,
           triggerNodeId: options.triggerNodeId ?? undefined,
           triggerEvent: options.triggerEvent ?? undefined,
@@ -621,16 +716,22 @@ export async function evaluateGraphInternal(
           allInputs: inputs,
           fetchEntityCached: fetchEntityResolver,
           reportAiPathsError: options.reportAiPathsError,
-          toast: (msg: string, opts?: unknown) => {
-            if (options.toast && typeof options.toast === 'function') {
-              options.toast(msg, opts as Record<string, unknown>);
+          toast: (msg: string, opts?: ToastOptions) => {
+            if (options.toast) {
+              options.toast(msg, opts);
             }
           },
           simulationEntityType: typeof resolvedEntityType === 'string' ? resolvedEntityType : null,
           simulationEntityId: typeof resolvedEntityId === 'string' ? resolvedEntityId : null,
-          resolvedEntity: null, // Should be resolved from context?
+          resolvedEntity: null,
           fallbackEntityId: null,
           strictFlowMode: options.strictFlowMode ?? true,
+          sideEffectControl: {
+            policy: sideEffectPolicy,
+            decision: sideEffectDecision,
+            activationHash,
+            idempotencyKey: null,
+          },
           executed,
         };
 
@@ -639,6 +740,10 @@ export async function evaluateGraphInternal(
           timeoutMs,
           `${node.type}:${node.id}`
         );
+
+        if (sideEffectPolicy === 'per_run') {
+          (executed as Record<string, Set<string> | undefined>)[node.type]?.add(node.id);
+        }
 
         const nodeFinishedAt = nowMs();
         const durationMs = nodeFinishedAt - nodeStartedAt;
@@ -649,9 +754,6 @@ export async function evaluateGraphInternal(
         finishedNodes.add(node.id);
         if (nodeHash) options.cache?.set(nodeHash, cloneValue(result));
         
-        refreshDownstreamInputs(node.id, inputs);
-        changedInLastIteration = true;
-
         if (options.onNodeFinish) {
           await options.onNodeFinish({
             runId: resolvedRunId,
@@ -662,6 +764,9 @@ export async function evaluateGraphInternal(
             nextOutputs: result,
             changed: true,
             iteration,
+            sideEffectDecision,
+            sideEffectPolicy,
+            activationHash,
           });
         }
       } catch (error) {
@@ -681,10 +786,37 @@ export async function evaluateGraphInternal(
         throw error;
       }
     }
+
+    // Input propagation for next iteration
+    nodes.forEach(n => {
+      const updatedInputs = collectNodeInputs(n.id, outputs);
+      const currentInputsStr = JSON.stringify(inputs[n.id] ?? {});
+      const updatedInputsStr = JSON.stringify(updatedInputs);
+      if (updatedInputsStr !== currentInputsStr) {
+        inputs[n.id] = updatedInputs;
+        changedInLastIteration = true;
+        if (finishedNodes.has(n.id)) {
+          finishedNodes.delete(n.id);
+        }
+        blockedNodes.delete(n.id);
+        errorNodes.delete(n.id);
+      }
+    });
   }
 
   const finalState = buildRuntimeStateSnapshot(inputs);
   
+  const onHalt = options.onHalt || (options['control'] as Record<string, unknown> | undefined)?.['onHalt'] as typeof options.onHalt;
+
+  if (finalState.status !== 'completed' && finalState.status !== 'failed' && onHalt) {
+    const reason = iteration >= maxIterationsLimit ? 'max_iterations' : 'blocked';
+    await onHalt({
+      runId: resolvedRunId,
+      reason,
+      nodeStatuses: finalState.nodeStatuses,
+    });
+  }
+
   if (options.profile?.onSummary) {
     const profileNodes = Array.from(nodeStats.values()).map((stats) => ({
       ...stats,

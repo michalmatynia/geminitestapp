@@ -34,6 +34,7 @@ import {
   CENTER_LAYOUT_MAX_WHITE_THRESHOLD,
   CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
   CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
+  normalizeCenterPaddingPercent,
   normalizeCenterThreshold,
   normalizeMaskShapeForExport,
 } from './GenerationToolbar.utils';
@@ -50,7 +51,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     setCanvasSelectionEnabled,
   } = uiActions;
   const { projectId, projectsQuery } = useProjectsState();
-  const { workingSlot } = useSlotsState();
+  const { slots, slotSelectionLocked, workingSlot } = useSlotsState();
   const { setSelectedSlotId, setWorkingSlotId } = useSlotsActions();
   const settingsStore = useSettingsStore();
   const maskingState = useMaskingState();
@@ -84,11 +85,22 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     setCenterLayoutShadowPolicy,
     setCenterLayoutWhiteThreshold,
     setCenterLayoutChromaThreshold,
+    centerLayoutPadding,
+    centerLayoutPaddingX,
+    centerLayoutPaddingY,
+    centerLayoutSplitAxes,
+    centerLayoutFillMissingCanvasWhite,
     centerLayoutWhiteThreshold,
     centerLayoutChromaThreshold,
     centerLayoutDetection,
     centerLayoutShadowPolicy,
     centerLayoutCustomPresets,
+    autoScaleLayoutPadding,
+    autoScaleLayoutPaddingX,
+    autoScaleLayoutPaddingY,
+    autoScaleLayoutSplitAxes,
+    autoScaleLayoutFillMissingCanvasWhite,
+    autoScaleLayoutShadowPolicy,
   } = toolbarContext;
 
   const upscaleRequestInFlightRef = useRef(false);
@@ -241,17 +253,9 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   }, [clientProcessingImageSrc, workingSlot, workingSlotImageSrc]);
   const analysisPlanIsStale =
     analysisPlanAvailable &&
+    analysisPlanMatchesWorkingSlot &&
     (!workingSourceSignature || analysisPlanSourceSignature !== workingSourceSignature);
 
-  const centerAnalysisConfigMismatchMessage = useMemo(() => {
-    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale) return null;
-    return null; // Logic could be added here to compare current UI state with analysis plan
-  }, [analysisPlanAvailable, analysisPlanMatchesWorkingSlot, analysisPlanIsStale]);
-
-  const autoScaleAnalysisConfigMismatchMessage = useMemo(() => {
-    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale) return null;
-    return null;
-  }, [analysisPlanAvailable, analysisPlanMatchesWorkingSlot, analysisPlanIsStale]);
   const activeProject = useMemo(
     () =>
       (projectsQuery.data ?? []).find((project) => project.id === projectId) ??
@@ -273,6 +277,191 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     if (width < 64 || width > 32_768 || height < 64 || height > 32_768) return null;
     return { width, height };
   }, [activeProject?.canvasHeightPx, activeProject?.canvasWidthPx]);
+
+  const normalizePaddingInput = (value: string, fallback: number): number => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return fallback;
+    return normalizeCenterPaddingPercent(String(parsed));
+  };
+
+  const centerLayoutPayload = useMemo(() => {
+    const splitAxes = Boolean(centerLayoutSplitAxes);
+    const uniformPadding = normalizePaddingInput(centerLayoutPadding, 8);
+    const paddingX = splitAxes
+      ? normalizePaddingInput(centerLayoutPaddingX, uniformPadding)
+      : uniformPadding;
+    const paddingY = splitAxes
+      ? normalizePaddingInput(centerLayoutPaddingY, uniformPadding)
+      : uniformPadding;
+    const paddingPercent = splitAxes
+      ? Number(((paddingX + paddingY) / 2).toFixed(2))
+      : uniformPadding;
+    const fillMissingCanvasWhite =
+      Boolean(centerLayoutFillMissingCanvasWhite) && Boolean(projectCanvasSize);
+
+    return {
+      paddingPercent,
+      paddingXPercent: paddingX,
+      paddingYPercent: paddingY,
+      fillMissingCanvasWhite,
+      ...(fillMissingCanvasWhite && projectCanvasSize
+        ? {
+          targetCanvasWidth: projectCanvasSize.width,
+          targetCanvasHeight: projectCanvasSize.height,
+        }
+        : {}),
+      whiteThreshold: centerLayoutWhiteThresholdValue,
+      chromaThreshold: centerLayoutChromaThresholdValue,
+      shadowPolicy: centerLayoutShadowPolicy,
+      detection: centerLayoutDetection,
+    };
+  }, [
+    centerLayoutChromaThresholdValue,
+    centerLayoutDetection,
+    centerLayoutFillMissingCanvasWhite,
+    centerLayoutPadding,
+    centerLayoutPaddingX,
+    centerLayoutPaddingY,
+    centerLayoutShadowPolicy,
+    centerLayoutSplitAxes,
+    centerLayoutWhiteThresholdValue,
+    projectCanvasSize,
+  ]);
+
+  const autoScaleLayoutPayload = useMemo(() => {
+    const splitAxes = Boolean(autoScaleLayoutSplitAxes);
+    const uniformPadding = normalizePaddingInput(autoScaleLayoutPadding, 8);
+    const paddingX = splitAxes
+      ? normalizePaddingInput(autoScaleLayoutPaddingX, uniformPadding)
+      : uniformPadding;
+    const paddingY = splitAxes
+      ? normalizePaddingInput(autoScaleLayoutPaddingY, uniformPadding)
+      : uniformPadding;
+    const paddingPercent = splitAxes
+      ? Number(((paddingX + paddingY) / 2).toFixed(2))
+      : uniformPadding;
+    const fillMissingCanvasWhite =
+      Boolean(autoScaleLayoutFillMissingCanvasWhite) && Boolean(projectCanvasSize);
+
+    return {
+      paddingPercent,
+      paddingXPercent: paddingX,
+      paddingYPercent: paddingY,
+      fillMissingCanvasWhite,
+      ...(fillMissingCanvasWhite && projectCanvasSize
+        ? {
+          targetCanvasWidth: projectCanvasSize.width,
+          targetCanvasHeight: projectCanvasSize.height,
+        }
+        : {}),
+      whiteThreshold: centerLayoutWhiteThresholdValue,
+      chromaThreshold: centerLayoutChromaThresholdValue,
+      shadowPolicy: autoScaleLayoutShadowPolicy,
+      detection: centerLayoutDetection,
+    };
+  }, [
+    autoScaleLayoutFillMissingCanvasWhite,
+    autoScaleLayoutPadding,
+    autoScaleLayoutPaddingX,
+    autoScaleLayoutPaddingY,
+    autoScaleLayoutShadowPolicy,
+    autoScaleLayoutSplitAxes,
+    centerLayoutChromaThresholdValue,
+    centerLayoutDetection,
+    centerLayoutWhiteThresholdValue,
+    projectCanvasSize,
+  ]);
+
+  const getNormalizedTargetCanvasSide = (value: number | null | undefined): number | null =>
+    typeof value === 'number' && Number.isFinite(value) ? Math.floor(value) : null;
+
+  const numericEquals = (left: number, right: number): boolean =>
+    Math.abs(left - right) < 0.01;
+
+  const buildConfigMismatchMessage = (fields: string[]): string | null => {
+    if (fields.length === 0) return null;
+    return `Current controls differ from analysis plan: ${fields.join(', ')}.`;
+  };
+
+  const centerAnalysisConfigMismatchMessage = useMemo(() => {
+    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale) return null;
+    const planLayout = toolbarContext.analysisPlanSnapshot?.layout;
+    if (!planLayout) return null;
+
+    const mismatches: string[] = [];
+    if (Boolean(centerLayoutSplitAxes) !== Boolean(planLayout.splitAxes)) mismatches.push('split axes');
+    if (!numericEquals(centerLayoutPayload.paddingPercent, planLayout.paddingPercent)) mismatches.push('padding');
+    if (!numericEquals(centerLayoutPayload.paddingXPercent, planLayout.paddingXPercent)) mismatches.push('padding X');
+    if (!numericEquals(centerLayoutPayload.paddingYPercent, planLayout.paddingYPercent)) mismatches.push('padding Y');
+    if (centerLayoutPayload.fillMissingCanvasWhite !== Boolean(planLayout.fillMissingCanvasWhite)) {
+      mismatches.push('fill missing canvas');
+    }
+    if (
+      getNormalizedTargetCanvasSide(centerLayoutPayload.targetCanvasWidth) !==
+      getNormalizedTargetCanvasSide(planLayout.targetCanvasWidth)
+    ) {
+      mismatches.push('target canvas width');
+    }
+    if (
+      getNormalizedTargetCanvasSide(centerLayoutPayload.targetCanvasHeight) !==
+      getNormalizedTargetCanvasSide(planLayout.targetCanvasHeight)
+    ) {
+      mismatches.push('target canvas height');
+    }
+    if (centerLayoutPayload.shadowPolicy !== planLayout.shadowPolicy) mismatches.push('shadow policy');
+    if (centerLayoutPayload.detection !== planLayout.detection) mismatches.push('detection');
+    if (centerLayoutPayload.whiteThreshold !== planLayout.whiteThreshold) mismatches.push('white threshold');
+    if (centerLayoutPayload.chromaThreshold !== planLayout.chromaThreshold) mismatches.push('chroma threshold');
+
+    return buildConfigMismatchMessage(mismatches);
+  }, [
+    analysisPlanAvailable,
+    analysisPlanIsStale,
+    analysisPlanMatchesWorkingSlot,
+    centerLayoutPayload,
+    centerLayoutSplitAxes,
+    toolbarContext.analysisPlanSnapshot?.layout,
+  ]);
+
+  const autoScaleAnalysisConfigMismatchMessage = useMemo(() => {
+    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale) return null;
+    const planLayout = toolbarContext.analysisPlanSnapshot?.layout;
+    if (!planLayout) return null;
+
+    const mismatches: string[] = [];
+    if (Boolean(autoScaleLayoutSplitAxes) !== Boolean(planLayout.splitAxes)) mismatches.push('split axes');
+    if (!numericEquals(autoScaleLayoutPayload.paddingPercent, planLayout.paddingPercent)) mismatches.push('padding');
+    if (!numericEquals(autoScaleLayoutPayload.paddingXPercent, planLayout.paddingXPercent)) mismatches.push('padding X');
+    if (!numericEquals(autoScaleLayoutPayload.paddingYPercent, planLayout.paddingYPercent)) mismatches.push('padding Y');
+    if (autoScaleLayoutPayload.fillMissingCanvasWhite !== Boolean(planLayout.fillMissingCanvasWhite)) {
+      mismatches.push('fill missing canvas');
+    }
+    if (
+      getNormalizedTargetCanvasSide(autoScaleLayoutPayload.targetCanvasWidth) !==
+      getNormalizedTargetCanvasSide(planLayout.targetCanvasWidth)
+    ) {
+      mismatches.push('target canvas width');
+    }
+    if (
+      getNormalizedTargetCanvasSide(autoScaleLayoutPayload.targetCanvasHeight) !==
+      getNormalizedTargetCanvasSide(planLayout.targetCanvasHeight)
+    ) {
+      mismatches.push('target canvas height');
+    }
+    if (autoScaleLayoutPayload.shadowPolicy !== planLayout.shadowPolicy) mismatches.push('shadow policy');
+    if (autoScaleLayoutPayload.detection !== planLayout.detection) mismatches.push('detection');
+    if (autoScaleLayoutPayload.whiteThreshold !== planLayout.whiteThreshold) mismatches.push('white threshold');
+    if (autoScaleLayoutPayload.chromaThreshold !== planLayout.chromaThreshold) mismatches.push('chroma threshold');
+
+    return buildConfigMismatchMessage(mismatches);
+  }, [
+    analysisPlanAvailable,
+    analysisPlanIsStale,
+    analysisPlanMatchesWorkingSlot,
+    autoScaleLayoutPayload,
+    autoScaleLayoutSplitAxes,
+    toolbarContext.analysisPlanSnapshot?.layout,
+  ]);
 
   useEffect(() => {
     skipCenterAdvancedDefaultsSaveRef.current = true;
@@ -346,6 +535,13 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     );
     toolbarContext.setAutoScaleLayoutFillMissingCanvasWhite(Boolean(layout.fillMissingCanvasWhite));
     toolbarContext.setAutoScaleLayoutShadowPolicy(layout.shadowPolicy);
+    toolbarContext.setCenterLayoutDetection(layout.detection);
+    toolbarContext.setCenterLayoutWhiteThreshold(
+      String(Math.round(Number.isFinite(layout.whiteThreshold) ? layout.whiteThreshold : 16))
+    );
+    toolbarContext.setCenterLayoutChromaThreshold(
+      String(Math.round(Number.isFinite(layout.chromaThreshold) ? layout.chromaThreshold : 10))
+    );
     if (mode === 'auto') {
       toolbarContext.setQueuedAnalysisRunTarget('auto_scaler');
     }
@@ -362,6 +558,8 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     getPreviewCanvasImageFrame: (): PreviewCanvasImageFrameBinding | null => uiActions.getPreviewCanvasImageFrame(),
     projectId,
     projectsQuery,
+    slots,
+    slotSelectionLocked,
     workingSlot,
     setSelectedSlotId,
     setWorkingSlotId,
@@ -402,6 +600,8 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     workingSlotImageSrc,
     clientProcessingImageSrc,
     workingSourceSignature,
+    centerLayoutPayload,
+    autoScaleLayoutPayload,
     activeProjectId,
     projectCanvasSize,
     centerLayoutWhiteThresholdValue,

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import type {
   CaseResolverCaptureDocumentDateAction,
+  CaseResolverCaptureProposal,
   CaseResolverCaptureProposalState,
 } from '@/features/case-resolver-capture/proposals';
 import {
@@ -346,22 +347,22 @@ export function useAdminCaseResolverCaptureActions({
         let nextProposalState: CaseResolverCaptureProposalState = {
           targetFileId,
           addresser: promptExploderProposalDraft.addresser
-            ? {
+            ? ({
               ...promptExploderProposalDraft.addresser,
               candidate: { ...promptExploderProposalDraft.addresser.candidate },
               existingReference: promptExploderProposalDraft.addresser.existingReference
                 ? { ...promptExploderPartyProposal?.addresser?.existingReference ?? null }
                 : null,
-            }
+            } as CaseResolverCaptureProposal)
             : null,
           addressee: promptExploderProposalDraft.addressee
-            ? {
+            ? ({
               ...promptExploderProposalDraft.addressee,
               candidate: { ...promptExploderProposalDraft.addressee.candidate },
               existingReference: promptExploderProposalDraft.addressee.existingReference
                 ? { ...promptExploderPartyProposal?.addressee?.existingReference ?? null }
                 : null,
-            }
+            } as CaseResolverCaptureProposal)
             : null,
           documentDate: promptExploderProposalDraft.documentDate
             ? {
@@ -369,7 +370,6 @@ export function useAdminCaseResolverCaptureActions({
             }
             : null,
         };
-
         const rolePatches: {
           addresser?: { kind: 'person' | 'organization'; id: string } | null;
           addressee?: { kind: 'person' | 'organization'; id: string } | null;

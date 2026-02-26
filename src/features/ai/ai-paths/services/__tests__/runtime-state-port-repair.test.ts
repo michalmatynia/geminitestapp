@@ -44,7 +44,7 @@ describe('repairRuntimeStatePorts', () => {
           },
         ],
       },
-    } as RuntimeState;
+    } as unknown as RuntimeState;
 
     const nodes = [
       buildRunNode({
@@ -82,7 +82,7 @@ describe('repairRuntimeStatePorts', () => {
         },
       },
       inputs: {},
-    } as RuntimeState;
+    } as unknown as RuntimeState;
 
     const nodes = [
       buildRunNode({
@@ -114,7 +114,7 @@ describe('repairRuntimeStatePorts', () => {
       nodeOutputs: {
         'node-regex-params': { grouped: {}, matches: [] },
       },
-    } as RuntimeState;
+    } as unknown as RuntimeState;
 
     const nodes = [
       buildRunNode({
@@ -143,7 +143,7 @@ describe('repairRuntimeStatePorts', () => {
       inputs: {},
       outputs: {},
       nodeOutputs: {},
-    } as RuntimeState;
+    } as unknown as RuntimeState;
 
     const nodes = [
       buildRunNode({

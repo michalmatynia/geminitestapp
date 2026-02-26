@@ -1,0 +1,4 @@
+src/features/ai/ai-paths/lib/core/runtime/engine-core.ts(588,9): error TS2304: Cannot find name 'finishedInIteration'.
+src/features/ai/ai-paths/lib/core/runtime/engine-core.ts(811,11): error TS2740: Type 'Record<string, Set<string>>' is missing the following properties from type '{ notification: Set<string>; updater: Set<string>; http: Set<string>; delay: Set<string>; poll: Set<string>; ai: Set<string>; schema: Set<string>; mapper: Set<...>; }': notification, updater, http, delay, and 4 more.
+src/features/ai/ai-paths/lib/core/runtime/engine-core.ts(830,9): error TS2304: Cannot find name 'finishedInIteration'.
+src/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-update-operation.ts(73,3): error TS6133: 'ensureExistingParameterTemplateContext' is declared but its value is never read.

@@ -57,6 +57,13 @@ const createInMemoryParameterRepository = (): ParameterRepository => {
         updatedAt: new Date(0).toISOString(),
       };
     },
+    async bulkCreateParameters(data) {
+      const results = [];
+      for (const item of data) {
+        results.push(await this.createParameter(item));
+      }
+      return results;
+    },
     async updateParameter(id, data) {
       const index = items.findIndex((item) => item.id === id);
       if (index === -1) {

@@ -19,12 +19,34 @@ export type ResolveDatabaseUpdateMappingsResult = {
 };
 
 export function resolveDatabaseUpdateMappings({
-  dbConfig: _dbConfig,
-  nodeInputPorts: _nodeInputPorts,
-  resolvedInputs: _resolvedInputs,
-  parameterTargetPath: _parameterTargetPath,
+  dbConfig,
+  resolvedInputs,
+  parameterTargetPath,
 }: ResolveDatabaseUpdateMappingsInput): ResolveDatabaseUpdateMappingsResult {
-  throw new Error(
-    'Mapping-based database updates are disabled. Use an explicit update template instead.'
-  );
+  const mappings = dbConfig.mappings ?? [];
+  const updates: Record<string, unknown> = {};
+  const requiredSourcePorts = new Set<string>();
+  const unresolvedSourcePorts = new Set<string>();
+
+  mappings.forEach((mapping) => {
+    const sourcePort = mapping.sourcePort;
+    const targetPath = mapping.targetPath;
+    if (!sourcePort || !targetPath) return;
+
+    requiredSourcePorts.add(sourcePort);
+    const value = resolvedInputs[sourcePort];
+    if (value === undefined) {
+      unresolvedSourcePorts.add(sourcePort);
+      return;
+    }
+    updates[targetPath] = value;
+  });
+
+  return {
+    fallbackTarget: parameterTargetPath,
+    mappings,
+    updates,
+    requiredSourcePorts,
+    unresolvedSourcePorts,
+  };
 }

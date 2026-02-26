@@ -14,6 +14,7 @@ describe('folder-tree-profiles-v2', () => {
       'product_categories',
       'cms_page_builder',
       'case_resolver',
+      'case_resolver_cases',
     ]);
   });
 

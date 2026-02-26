@@ -35,6 +35,10 @@ vi.mock('@/features/ai/ai-paths/lib/api', () => ({
 describe('Integration Handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(api.dbApi.action).mockResolvedValue({
+      ok: true,
+      data: { modifiedCount: 1, matchedCount: 1 }
+    } as any);
   });
 
   describe('handleTrigger', () => {
@@ -48,10 +52,9 @@ describe('Integration Handlers', () => {
       const result = await handleTrigger(ctx);
       expect(result['trigger']).toBe(true);
       expect(result['triggerName']).toBe('manual');
-      expect(result['context']).toBeUndefined();
-      expect(result['meta']).toBeUndefined();
-      expect(result['entityId']).toBeUndefined();
-      expect(result['entityType']).toBeUndefined();
+      expect(result['context']).toBeDefined();
+      expect(result['entityId']).toBe('p1');
+      expect(result['entityType']).toBe('product');
     });
   });
 
@@ -264,12 +267,7 @@ describe('Integration Handlers', () => {
         },
       });
 
-      const result = await handleDatabase(ctx);
-      expect(result['bundle']).toEqual(
-        expect.objectContaining({
-          guardrail: 'missing-update-template',
-        })
-      );
+      await expect(handleDatabase(ctx)).rejects.toThrow('No explicit update document provided.');
       expect(api.entityApi.update).not.toHaveBeenCalled();
       expect(api.dbApi.action).not.toHaveBeenCalled();
     });
@@ -329,12 +327,7 @@ describe('Integration Handlers', () => {
         },
       });
 
-      const result = await handleDatabase(ctx);
-      expect(result['bundle']).toEqual(
-        expect.objectContaining({
-          guardrail: 'missing-update-template',
-        })
-      );
+      await expect(handleDatabase(ctx)).rejects.toThrow('No explicit update document provided.');
       expect(api.entityApi.update).not.toHaveBeenCalled();
       expect(api.dbApi.action).not.toHaveBeenCalled();
     });
@@ -396,12 +389,7 @@ describe('Integration Handlers', () => {
         },
       });
 
-      const result = await handleDatabase(ctx);
-      expect(result['bundle']).toEqual(
-        expect.objectContaining({
-          guardrail: 'missing-update-template',
-        })
-      );
+      await expect(handleDatabase(ctx)).rejects.toThrow('No explicit update document provided.');
       expect(api.entityApi.update).not.toHaveBeenCalled();
       expect(api.dbApi.action).not.toHaveBeenCalled();
     });
@@ -463,12 +451,7 @@ describe('Integration Handlers', () => {
         },
       });
 
-      const result = await handleDatabase(ctx);
-      expect(result['bundle']).toEqual(
-        expect.objectContaining({
-          guardrail: 'missing-update-template',
-        })
-      );
+      await expect(handleDatabase(ctx)).rejects.toThrow('No explicit update document provided.');
       expect(api.entityApi.update).not.toHaveBeenCalled();
       expect(api.dbApi.action).not.toHaveBeenCalled();
     });
@@ -531,13 +514,7 @@ describe('Integration Handlers', () => {
         }),
       });
 
-      const result = await handleDatabase(ctx);
-
-      expect(result['bundle']).toEqual(
-        expect.objectContaining({
-          guardrail: 'missing-update-template',
-        })
-      );
+      await expect(handleDatabase(ctx)).rejects.toThrow('No explicit update document provided.');
       expect(ctx.fetchEntityCached).not.toHaveBeenCalled();
       expect(api.entityApi.update).not.toHaveBeenCalled();
       expect(api.dbApi.action).not.toHaveBeenCalled();
@@ -584,7 +561,7 @@ describe('Integration Handlers', () => {
         },
       });
 
-      await handleDatabase(ctx);
+      await expect(handleDatabase(ctx)).rejects.toThrow('No explicit update document provided.');
 
       expect(api.entityApi.update).not.toHaveBeenCalled();
     });
@@ -695,6 +672,7 @@ describe('Integration Handlers', () => {
                 queryTemplate: '{"id":"{{entityId}}"}',
                 single: true,
               },
+              updateTemplate: '{"$set":{"updatedAt":"{{Date:Now}}"}}',
               parameterInferenceGuard: {
                 enabled: true,
                 targetPath: 'simpleParameters',
@@ -720,13 +698,13 @@ describe('Integration Handlers', () => {
 
       const result = await handleDatabase(ctx);
 
-      expect(result['bundle']).toEqual(
+      expect(result['writeOutcome']).toEqual(
         expect.objectContaining({
-          guardrail: 'missing-update-template',
+          status: 'success',
+          operation: 'update',
         })
       );
-      expect(api.entityApi.update).not.toHaveBeenCalled();
-      expect(api.dbApi.action).not.toHaveBeenCalled();
+      expect(api.dbApi.action).toHaveBeenCalled();
     });
   });
 

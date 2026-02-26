@@ -534,7 +534,7 @@ export function CaseResolverDocumentEditor(): React.JSX.Element | null {
               entries={editingDocumentDraft.documentHistory || []}
               formatTimestamp={formatHistoryTimestamp}
               onRestore={handleUseHistoryEntry}
-              isRestoreDisabled={isEditingDocumentLocked}
+              isRestoreDisabled={!!isEditingDocumentLocked}
             />
           </TabsContent>
         </div>

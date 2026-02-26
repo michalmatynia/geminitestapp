@@ -51,6 +51,7 @@ export interface NoteRepository {
   updateNotebook(id: string, data: NotebookUpdateInput): Promise<NotebookRecord | null>;
   deleteNotebook(id: string): Promise<boolean>;
   getOrCreateDefaultNotebook(): Promise<NotebookRecord>;
+  invalidateDefaultNotebookCache(): Promise<void>;
 
   // Themes
   getAllThemes(notebookId?: string | null): Promise<ThemeRecord[]>;

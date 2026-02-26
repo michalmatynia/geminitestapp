@@ -528,7 +528,7 @@ export function useAiPathsPersistence({
                   });
                 }
                 const repairedConfig = identityRepair.config;
-                const normalizedConfigNodes = normalizeNodes((repairedConfig.nodes as AiNode[]) ?? []);
+                const normalizedConfigNodes = normalizeNodes(repairedConfig.nodes ?? []);
                 const normalizedConfigEdges = sanitizeEdges(
                   normalizedConfigNodes,
                   Array.isArray(repairedConfig.edges) ? repairedConfig.edges : []
@@ -646,7 +646,7 @@ export function useAiPathsPersistence({
         }
         setActivePathId(firstPath);
         const activeConfig = configs[firstPath] ?? createDefaultPathConfig(firstPath);
-        const normalizedNodes = normalizeNodes(activeConfig.nodes as AiNode[]);
+        const normalizedNodes = normalizeNodes(activeConfig.nodes);
         setNodes(normalizedNodes);
         setEdges(sanitizeEdges(normalizedNodes, activeConfig.edges));
         setPathName(activeConfig.name);
@@ -997,7 +997,7 @@ export function useAiPathsPersistence({
           : buildNodesForAutoSave(resolvedNodes);
         const lintResult = lintPathNodeRoles(nodesForSave);
         if (lintResult.errors.length > 0) {
-          const baselineNodes = (pathConfigsRef.current[activePathId]?.nodes ?? []) as AiNode[];
+          const baselineNodes = pathConfigsRef.current[activePathId]?.nodes ?? [];
           const baselineLint = lintPathNodeRoles(
             Array.isArray(baselineNodes) ? baselineNodes : []
           );
@@ -1058,7 +1058,7 @@ export function useAiPathsPersistence({
         const finalConfig = persistedConfig ?? config;
         if (options?.nodeOverride) {
           const expectedNode = options.nodeOverride;
-          const persistedNode: AiNode | undefined = (finalConfig.nodes as AiNode[]).find(
+          const persistedNode: AiNode | undefined = finalConfig.nodes.find(
             (node: AiNode): boolean => node.id === expectedNode.id
           );
           const expectedConfigHash = stableStringify(expectedNode.config ?? null);

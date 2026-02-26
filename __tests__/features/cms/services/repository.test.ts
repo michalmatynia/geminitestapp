@@ -3,8 +3,8 @@ import { vi, describe, it, expect, beforeEach } from 'vitest';
 import { prismaCmsRepository } from '@/features/cms/services/cms-repository/prisma-cms-repository';
 import prisma from '@/shared/lib/db/prisma';
 
-vi.mock('@/shared/lib/db/prisma', () => ({
-  default: {
+vi.mock('@/shared/lib/db/prisma', () => {
+  const mockPrisma = {
     page: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -37,8 +37,12 @@ vi.mock('@/shared/lib/db/prisma', () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
-  },
-}));
+    $transaction: vi.fn((cb) => cb(mockPrisma)),
+  };
+  return {
+    default: mockPrisma,
+  };
+});
 
 describe('CMS Repository (Prisma)', () => {
   beforeEach(() => {

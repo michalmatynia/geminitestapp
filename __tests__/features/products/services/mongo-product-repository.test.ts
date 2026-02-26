@@ -21,10 +21,14 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
 }));
 
 import { mongoProductRepository } from '@/features/products/services/product-repository/mongo-product-repository';
+import { invalidateMongoBaseExportLookupContextCache } from '@/features/products/services/product-repository/mongo-product-repository.helpers';
 
 describe('mongoProductRepository.replaceProductCategory', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    invalidateMongoBaseExportLookupContextCache();
+    mocks.integrationToArray.mockResolvedValue([]);
+    mocks.listingDistinct.mockResolvedValue([]);
 
     mocks.getMongoDb.mockResolvedValue({
       collection: (name: string) => {
@@ -80,6 +84,9 @@ describe('mongoProductRepository.replaceProductCategory', () => {
         if (name === 'integrations') {
           return {
             find: vi.fn().mockReturnValue({
+              project: vi.fn().mockReturnValue({
+                toArray: mocks.integrationToArray,
+              }),
               toArray: mocks.integrationToArray,
             }),
           };
@@ -272,7 +279,7 @@ describe('mongoProductRepository.replaceProductCategory', () => {
 
     expect(mocks.productAggregate).toHaveBeenCalledOnce();
     const pipeline = mocks.productAggregate.mock.calls[0]?.[0] as Array<Record<string, unknown>>;
-    const match = pipeline?.find((stage) => '$match' in stage)?.$match as Record<string, unknown>;
+    const match = pipeline?.find((stage) => '$match' in stage)?.['$match'] as Record<string, unknown>;
     const serializedMatch = JSON.stringify(match);
 
     expect(serializedMatch).toContain('catalogs.catalogId');
@@ -300,7 +307,7 @@ describe('mongoProductRepository.replaceProductCategory', () => {
     expect(mocks.integrationToArray).toHaveBeenCalledOnce();
     expect(mocks.listingDistinct).toHaveBeenCalledOnce();
     const pipeline = mocks.productAggregate.mock.calls[0]?.[0] as Array<Record<string, unknown>>;
-    const match = pipeline?.find((stage) => '$match' in stage)?.$match as Record<string, unknown>;
+    const match = pipeline?.find((stage) => '$match' in stage)?.['$match'] as Record<string, unknown>;
     const serializedMatch = JSON.stringify(match);
 
     expect(serializedMatch).toContain('baseProductId');

@@ -19,11 +19,10 @@ vi.mock('@/features/case-resolver/components/CaseResolverViewContext', () => ({
 }));
 
 vi.mock('@/features/case-resolver/components/CaseResolverFolderTree', async () => {
-  const React = await import('react');
   const {
     useCaseResolverPageContext,
   } = await import('@/features/case-resolver/context/CaseResolverPageContext');
-  const CaseResolverFolderTree = (): React.JSX.Element => {
+  const CaseResolverFolderTree = () => {
     const context = useCaseResolverPageContext();
     return (
       <button type='button' onClick={() => context.onEditFile('file-b')}>

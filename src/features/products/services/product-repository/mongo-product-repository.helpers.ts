@@ -264,7 +264,25 @@ export const buildLookupFilterForIds = (ids: string[]): Filter<Document> => {
   return { $or: conditions } as Filter<Document>;
 };
 
+let baseExportContextCache: {
+  data: BaseExportLookupContext;
+  timestamp: number;
+} | null = null;
+const BASE_EXPORT_CACHE_TTL_MS = 60 * 1000;
+
+export const invalidateMongoBaseExportLookupContextCache = (): void => {
+  baseExportContextCache = null;
+};
+
 export const loadMongoBaseExportLookupContext = async (): Promise<BaseExportLookupContext> => {
+  const nowMs = Date.now();
+  if (
+    baseExportContextCache &&
+    nowMs - baseExportContextCache.timestamp < BASE_EXPORT_CACHE_TTL_MS
+  ) {
+    return baseExportContextCache.data;
+  }
+
   const db = await getMongoDb();
   const integrations = await db
     .collection<IntegrationSlugDocument>(integrationCollectionName)
@@ -280,11 +298,13 @@ export const loadMongoBaseExportLookupContext = async (): Promise<BaseExportLook
   const integrationLookupValues = buildLookupValues(integrationIds);
 
   if (integrationLookupValues.length === 0) {
-    return {
+    const result = {
       integrationLookupValues,
       exportedProductIds: [],
       exportedProductLookupValues: [],
     };
+    baseExportContextCache = { data: result, timestamp: nowMs };
+    return result;
   }
 
   const exportedProductIdsRaw = await db
@@ -299,9 +319,11 @@ export const loadMongoBaseExportLookupContext = async (): Promise<BaseExportLook
     .filter((id: string) => id.length > 0);
   const exportedProductLookupValues = buildLookupValues(exportedProductIds);
 
-  return {
+  const result = {
     integrationLookupValues,
     exportedProductIds,
     exportedProductLookupValues,
   };
+  baseExportContextCache = { data: result, timestamp: nowMs };
+  return result;
 };

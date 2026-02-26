@@ -14,7 +14,7 @@ export interface SyncHandlerContext {
   toDate: (value: unknown) => Date | null;
   normalizeId: (doc: Record<string, unknown>) => string;
   toObjectIdMaybe: (id: string | null | undefined) => ObjectId | string | null;
-  toJsonValue: (value: unknown) => any;
+  toJsonValue: (value: unknown) => unknown;
   currencyCodes: Set<string>;
   countryCodes: Set<string>;
 }

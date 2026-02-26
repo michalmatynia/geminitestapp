@@ -17,11 +17,10 @@ export const handleNotification: NodeHandler = ({
   allInputs,
   edges,
   nodes,
-  executed,
   toast,
-  reportAiPathsError,
+  reportAiPathsError,  sideEffectControl,
 }: NodeHandlerContext) => {
-  if (executed.notification.has(node.id)) return prevOutputs;
+  if (sideEffectControl?.decision === 'skipped_policy') return prevOutputs;
   const hasMeaningfulValue = (value: unknown): boolean => {
     if (value === undefined || value === null) return false;
     if (typeof value === 'string') return value.trim().length > 0;
@@ -98,6 +97,11 @@ export const handleNotification: NodeHandler = ({
     coerceInput(nodeInputs['meta']) ??
     coerceInput(nodeInputs['entityId']) ??
     coerceInput(nodeInputs['entityType']);
+  
+  if (process.env['NODE_ENV'] === 'test') {
+    console.log(`[handleNotification] nodeInputs keys: ${Object.keys(nodeInputs)}, messageSource: ${JSON.stringify(messageSource)}`);
+  }
+
   if (messageSource === undefined) {
     return prevOutputs;
   }
@@ -107,6 +111,5 @@ export const handleNotification: NodeHandler = ({
     return prevOutputs;
   }
   toast(trimmed, { variant: 'success' });
-  executed.notification.add(node.id);
   return prevOutputs;
 };

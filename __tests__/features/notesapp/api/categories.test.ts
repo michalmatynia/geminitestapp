@@ -1,6 +1,6 @@
 import { Category, Note } from '@prisma/client';
 import { NextRequest } from 'next/server';
-import { describe, it, expect, beforeEach, vi, afterAll } from 'vitest';
+import { describe, it, expect, beforeEach, vi, afterAll, beforeAll } from 'vitest';
 
 vi.unmock('@/shared/lib/db/prisma');
 
@@ -13,17 +13,23 @@ import {
   POST as POST_CATEGORY,
 } from '@/app/api/notes/categories/route';
 import { GET as GET_TREE } from '@/app/api/notes/categories/tree/route';
+import { noteService, invalidateNoteRepositoryCache } from '@/features/notesapp/services/notes';
+import { invalidateAppDbProviderCache } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
 
 
-const createCategory = (name: string, parentId?: string | null) =>
-  prisma.category.create({ data: { name, parentId: parentId ?? null } });
+const createCategory = async (name: string, parentId?: string | null) => {
+  const notebook = await noteService.getOrCreateDefaultNotebook();
+  return prisma.category.create({ data: { name, parentId: parentId ?? null, notebookId: notebook.id } });
+};
 
 const createNote = async (title: string, categoryId: string) => {
+  const notebook = await noteService.getOrCreateDefaultNotebook();
   return prisma.note.create({
     data: {
       title,
       content: `${title} content`,
+      notebookId: notebook.id,
       categories: {
         create: [{ category: { connect: { id: categoryId } } }],
       },
@@ -32,6 +38,12 @@ const createNote = async (title: string, categoryId: string) => {
 };
 
 describe('Notes Categories API', () => {
+  beforeAll(() => {
+    process.env['APP_DB_PROVIDER'] = 'prisma';
+    invalidateAppDbProviderCache();
+    invalidateNoteRepositoryCache();
+  });
+
   beforeEach(async () => {
     // Only run if DATABASE_URL is available
     if (!process.env['DATABASE_URL']) return;
@@ -41,6 +53,9 @@ describe('Notes Categories API', () => {
     await prisma.noteCategory.deleteMany({});
     await prisma.note.deleteMany({});
     await prisma.category.deleteMany({});
+    await prisma.notebook.deleteMany({});
+    
+    await noteService.invalidateDefaultNotebookCache();
   });
 
   afterAll(async () => {
@@ -50,8 +65,9 @@ describe('Notes Categories API', () => {
   it('lists categories', async () => {
     if (!process.env['DATABASE_URL']) return;
 
+    const notebook = await noteService.getOrCreateDefaultNotebook();
     await prisma.category.createMany({
-      data: [{ name: 'Work' }, { name: 'Home' }],
+      data: [{ name: 'Work', notebookId: notebook.id }, { name: 'Home', notebookId: notebook.id }],
     });
 
     const res = await GET_CATEGORIES(

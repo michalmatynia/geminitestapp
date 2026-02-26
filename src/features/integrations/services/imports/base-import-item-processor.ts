@@ -35,6 +35,8 @@ import type {
   BaseImportItemRecord,
   BaseImportMode,
   BaseImportRunRecord,
+  ProductListing,
+  ProductListingRepository,
 } from '@/shared/contracts/integrations';
 import {
   defaultBaseImportParameterImportSettings,
@@ -43,6 +45,7 @@ import {
 } from '@/shared/contracts/integrations';
 import type {
   ParameterRepository,
+  ProductParameter,
   ProductDto as ProductRecord,
   ProductWithImagesDto as ProductWithImages,
   ProductParameterValueDto as ProductParameterValue,
@@ -237,6 +240,7 @@ const linkImportedProductToBaseListing = async (input: {
   connectionId: string;
   inventoryId: string;
   baseProductId: string | null | undefined;
+  existingListing?: { listing: ProductListing; repository: ProductListingRepository } | null;
 }): Promise<void> => {
   const normalizedBaseProductId = input.baseProductId?.trim() || '';
   if (!normalizedBaseProductId) return;
@@ -246,10 +250,11 @@ const linkImportedProductToBaseListing = async (input: {
   } as const;
 
   const existingListing =
-    await findProductListingByProductAndConnectionAcrossProviders(
+    input.existingListing ??
+    (await findProductListingByProductAndConnectionAcrossProviders(
       input.product.id,
       input.connectionId
-    );
+    ));
 
   if (existingListing) {
     if (existingListing.listing.externalListingId !== normalizedBaseProductId) {
@@ -413,12 +418,12 @@ const decideImportAction = (input: {
   return { type: 'create' };
 };
 
-const pickMappedSku = (mapped: NormalizedMappedProduct): string | null => {
+export const pickMappedSku = (mapped: NormalizedMappedProduct): string | null => {
   const rawSku = typeof mapped.sku === 'string' ? mapped.sku.trim() : '';
   return rawSku.length > 0 ? rawSku : null;
 };
 
-const normalizeMappedProduct = (
+export const normalizeMappedProduct = (
   record: BaseProductRecord,
   mappings: Array<{ sourceKey: string; targetField: string }>,
   preferredCurrencies: string[]
@@ -517,6 +522,11 @@ export const importSingleItem = async (input: {
   parameterImportSettings?: BaseImportParameterImportSettings;
   catalogLanguageCodes?: string[];
   defaultLanguageCode?: string | null;
+  prefetchedParameters?: ProductParameter[];
+  prefetchedLinks?: Record<string, string>;
+  prefetchedProductsByBaseId?: Map<string, ProductWithImages>;
+  prefetchedProductsBySku?: Map<string, ProductWithImages>;
+  prefetchedListings?: Map<string, { listing: ProductListing; repository: ProductListingRepository }>;
 }): Promise<ProcessItemResult> => {
   const mapped = normalizeMappedProduct(
     input.raw,
@@ -538,10 +548,12 @@ export const importSingleItem = async (input: {
   const mappedSku = pickMappedSku(mapped);
 
   const existingByBaseId = mappedBaseProductId
-    ? await input.productRepository.findProductByBaseId(mappedBaseProductId)
+    ? input.prefetchedProductsByBaseId?.get(mappedBaseProductId) ??
+      (await input.productRepository.findProductByBaseId(mappedBaseProductId))
     : null;
   const existingBySku = mappedSku
-    ? await input.productRepository.getProductBySku(mappedSku)
+    ? input.prefetchedProductsBySku?.get(mappedSku) ??
+      (await input.productRepository.getProductBySku(mappedSku))
     : null;
 
   const decision = decideImportAction({
@@ -600,6 +612,8 @@ export const importSingleItem = async (input: {
           defaultBaseImportParameterImportSettings
       ),
       templateMappings: input.templateMappings,
+      prefetchedParameters: input.prefetchedParameters,
+      prefetchedLinks: input.prefetchedLinks,
     })) as ParameterImportResult;
     const parameterImportSummary: ParameterImportSummary | null = parameterImportResult.applied
       ? parameterImportResult.summary
@@ -722,6 +736,7 @@ export const importSingleItem = async (input: {
       connectionId: input.connectionId,
       inventoryId: input.inventoryId,
       baseProductId: mappedBaseProductId,
+      existingListing: input.prefetchedListings?.get(updated.id) ?? null,
     });
 
     return {
@@ -780,6 +795,8 @@ export const importSingleItem = async (input: {
       input.parameterImportSettings ?? defaultBaseImportParameterImportSettings
     ),
     templateMappings: input.templateMappings,
+    prefetchedParameters: input.prefetchedParameters,
+    prefetchedLinks: input.prefetchedLinks,
   })) as ParameterImportResult;
   const parameterImportSummary: ParameterImportSummary | null = parameterImportResult.applied
     ? parameterImportResult.summary
@@ -882,6 +899,7 @@ export const importSingleItem = async (input: {
     connectionId: input.connectionId,
     inventoryId: input.inventoryId,
     baseProductId: mappedBaseProductId,
+    existingListing: input.prefetchedListings?.get(created.id) ?? null,
   });
 
   return {

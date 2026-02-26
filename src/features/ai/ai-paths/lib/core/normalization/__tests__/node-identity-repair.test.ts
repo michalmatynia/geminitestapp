@@ -189,7 +189,6 @@ describe('repairPathNodeIdentities', () => {
     expect(
       Object.keys(repaired.config.parserSamples as Record<string, unknown>)
     ).toEqual([repairedNode?.id]);
-    expect(Object.keys(repairedRuntimeState.inputs ?? {})).toEqual([repairedNode?.id]);
-    expect(repaired.warnings.some((warning) => warning.code === 'missing_node_id')).toBe(true);
+    expect(Object.keys(repairedRuntimeState['inputs'] ?? {})).toEqual([repairedNode?.id]);    expect(repaired.warnings.some((warning) => warning.code === 'missing_node_id')).toBe(true);
   });
 });

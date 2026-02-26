@@ -219,10 +219,10 @@ export const prismaCmsRepository: CmsRepository = {
         await tx.pageComponent.deleteMany({ where: { pageId: id } });
         if (data.components.length > 0) {
           await tx.pageComponent.createMany({
-            data: data.components.map((component: PageComponent, index: number) => ({
+            data: data.components.map((component, index: number) => ({
               pageId: id,
               type: component.type,
-              content: component.content as Prisma.InputJsonValue,
+              content: (component.content as Prisma.InputJsonValue) ?? {},
               order: index,
             })),
           });
@@ -238,7 +238,7 @@ export const prismaCmsRepository: CmsRepository = {
       });
     });
 
-    return updated ? mapPrismaPage(updated as any) : null;
+    return updated ? mapPrismaPage(updated as Parameters<typeof mapPrismaPage>[0]) : null;
   },
 
   async deletePage(id: string): Promise<Page | null> {
@@ -264,10 +264,10 @@ export const prismaCmsRepository: CmsRepository = {
     await prisma.pageComponent.deleteMany({ where: { pageId } });
     if (components.length === 0) return;
     await prisma.pageComponent.createMany({
-      data: components.map((component: PageComponent, index: number) => ({
+      data: components.map((component, index: number) => ({
         pageId,
         type: component.type,
-        content: component.content as Prisma.InputJsonValue,
+        content: (component.content as Prisma.InputJsonValue) ?? {},
         order: index,
       })),
     });

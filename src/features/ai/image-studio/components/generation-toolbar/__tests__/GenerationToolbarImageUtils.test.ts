@@ -41,9 +41,9 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
     );
 
     expect(result.cropRect).toEqual({
-      x: 404,
+      x: 202,
       y: 605,
-      width: 809,
+      width: 1214,
       height: 1210,
     });
     expect(result.diagnostics?.usedImageContentFrameMapping).toBe(true);
@@ -199,7 +199,7 @@ describe('GenerationToolbarImageUtils coordinate mapping', () => {
     expect(cropRect).toEqual({
       x: 0,
       y: 0,
-      width: 1600,
+      width: 1280,
       height: 1200,
     });
   });

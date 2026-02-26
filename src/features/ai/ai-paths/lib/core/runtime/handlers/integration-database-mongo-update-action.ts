@@ -117,10 +117,11 @@ export async function handleDatabaseMongoUpdateAction({
     };
   }
 
-  const updatePayloadMode = dbConfig.updatePayloadMode ?? 'custom';
-  if (updatePayloadMode !== 'custom') {
+  const updatePayloadMode = dbConfig.updatePayloadMode ?? (dbConfig.mappings?.length ? 'mapping' : 'custom');
+  
+  if (updatePayloadMode !== 'custom' && updatePayloadMode !== 'mapping' && (updatePayloadMode as string) !== 'mongo') {
     const error =
-      'Mapping-based update mode is disabled. Configure explicit filter and update document.';
+      'Unsupported update mode. Configure explicit filter and update document or use mappings.';
     reportAiPathsError(
       new Error(error),
       {

@@ -2,7 +2,8 @@
 
 import React, { useState } from 'react';
 
-import type { AiNode, ClusterPreset, DatabaseConfig, DbNodePreset, DbQueryPreset, Edge } from '@/features/ai/ai-paths/lib';
+import type { DatabaseConfig } from '@/shared/contracts/ai-paths-core';
+import type { AiNode, ClusterPreset, DbNodePreset, DbQueryPreset, Edge } from '@/shared/contracts/ai-paths';
 import {
   BUNDLE_INPUT_PORTS,
   CLUSTER_PRESETS_KEY,
@@ -165,11 +166,11 @@ export function useAiPathsPresets({
 
   const normalizeDbNodePreset = (raw: Partial<DbNodePreset>): DbNodePreset => {
     const now = new Date().toISOString();
-    const baseConfig =
-      raw.config && typeof raw.config === 'object'
-        ? raw.config
-        : ({ operation: 'query' } as DbNodePreset['config']);
-    const migratedConfig = migrateDatabaseConfigCollections(baseConfig as DatabaseConfig).databaseConfig ?? baseConfig;
+    const baseConfig = (raw.config && typeof raw.config === 'object'
+      ? raw.config
+      : { operation: 'query' }) as unknown as DatabaseConfig;
+    const migrationResult = migrateDatabaseConfigCollections(baseConfig);
+    const migratedConfig = migrationResult.databaseConfig ?? baseConfig;
     return {
       id: raw.id && typeof raw.id === 'string' ? raw.id : createPresetId(),
       name:

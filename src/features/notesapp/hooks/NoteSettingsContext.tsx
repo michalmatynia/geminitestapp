@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
 
 import { logClientError } from '@/features/observability';
 import type { NoteSettings } from '@/shared/contracts/notes';
@@ -165,18 +165,18 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     }
   }, [settings.editorMode, isInitialized, updateSetting]);
 
-  const updateSettings = (updates: Partial<NoteSettings>): void => {
+  const updateSettings = useCallback((updates: Partial<NoteSettings>): void => {
     setSettings((prev: NoteSettings): NoteSettings => ({ ...prev, ...updates }));
-  };
+  }, []);
 
-  const resetToDefaults = (): void => {
+  const resetToDefaults = useCallback((): void => {
     setSettings(DEFAULT_NOTE_SETTINGS);
     // Also clear the database values
     updateSetting.mutate({ key: DB_SETTING_KEY, value: '' });
     updateSetting.mutate({ key: DB_NOTEBOOK_KEY, value: '' });
     updateSetting.mutate({ key: DB_AUTOFORMAT_KEY, value: 'false' });
     updateSetting.mutate({ key: DB_EDITOR_MODE_KEY, value: 'markdown' });
-  };
+  }, [updateSetting]);
 
   return (
     <NoteSettingsContext.Provider

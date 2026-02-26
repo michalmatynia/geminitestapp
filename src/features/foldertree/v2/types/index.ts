@@ -4,6 +4,7 @@ import type {
   MasterFolderTreePersistOperation,
   MasterTreeCanDropResultDto,
   MasterFolderTreeUndoEntry,
+  MasterFolderTreePersistContext,
 } from '@/shared/contracts/master-folder-tree';
 import type {
   MasterTreeDropPosition,
@@ -44,6 +45,7 @@ export interface MasterFolderTreeAdapterV3 {
     nodes: MasterTreeNode[];
     version?: number | undefined;
   }>;
+  loadNodes?: () => Promise<MasterTreeNode[]>;
   prepare?: (
     tx: FolderTreeTransaction
   ) => Promise<FolderTreePreparedTransaction>;
@@ -60,6 +62,10 @@ export interface MasterFolderTreeAdapterV3 {
     stage: 'prepare' | 'apply' | 'commit',
     reason: unknown
   ) => Promise<void>;
+  applyOperation?: (
+    operation: FolderTreePersistOperationV3,
+    context: MasterFolderTreePersistContext
+  ) => Promise<MasterTreeNode[] | void>;
 }
 
 export type FolderTreeState = {

@@ -106,6 +106,10 @@ export const mongoNoteRepository: NoteRepository = {
     return notebook;
   },
 
+  async invalidateDefaultNotebookCache(): Promise<void> {
+    // No cache in mongo repository
+  },
+
   // Note CRUD operations
   async getAll(filters: NoteFilters = {}): Promise<NoteWithRelations[]> {
     const db = await getMongoDb();
@@ -422,7 +426,7 @@ export const mongoNoteRepository: NoteRepository = {
     if (addedIds.length === 0 && removedIds.length === 0) return;
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);
-    const bulkOps: any[] = [];
+    const bulkOps: Record<string, unknown>[] = [];
 
     for (const relatedId of addedIds) {
       if (relatedId === noteId) continue;
@@ -444,9 +448,8 @@ export const mongoNoteRepository: NoteRepository = {
     }
 
     if (bulkOps.length > 0) {
-      await collection.bulkWrite(bulkOps);
-    }
-  },
+      await collection.bulkWrite(bulkOps as unknown as Parameters<typeof collection.bulkWrite>[0]);
+    }  },
 
   async delete(id: string): Promise<boolean> {
     const db = await getMongoDb();

@@ -174,23 +174,29 @@ const applyProductRelations = async (
   productId: string,
   relations: RelationPayload
 ): Promise<void> => {
+  const tasks: Promise<unknown>[] = [];
+
   if (relations.imageFileIds !== undefined) {
-    await repository.replaceProductImages(productId, relations.imageFileIds);
+    tasks.push(repository.replaceProductImages(productId, relations.imageFileIds));
   }
   if (relations.catalogIds !== undefined) {
-    await repository.replaceProductCatalogs(productId, relations.catalogIds);
+    tasks.push(repository.replaceProductCatalogs(productId, relations.catalogIds));
   }
   if (relations.categoryId !== undefined) {
-    await repository.replaceProductCategory(productId, relations.categoryId);
+    tasks.push(repository.replaceProductCategory(productId, relations.categoryId));
   }
   if (relations.tagIds !== undefined) {
-    await repository.replaceProductTags(productId, relations.tagIds);
+    tasks.push(repository.replaceProductTags(productId, relations.tagIds));
   }
   if (relations.producerIds !== undefined) {
-    await repository.replaceProductProducers(productId, relations.producerIds);
+    tasks.push(repository.replaceProductProducers(productId, relations.producerIds));
   }
   if (relations.noteIds !== undefined) {
-    await repository.replaceProductNotes(productId, relations.noteIds);
+    tasks.push(repository.replaceProductNotes(productId, relations.noteIds));
+  }
+
+  if (tasks.length > 0) {
+    await Promise.all(tasks);
   }
 };
 const shouldLogTiming = (): boolean =>
@@ -265,13 +271,7 @@ async function getProductsBySkus(
 ): Promise<ProductWithImages[]> {
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
-  const products: ProductRecord[] = [];
-  for (const sku of skus) {
-    const product = await productRepository.getProductBySku(sku);
-    if (product) {
-      products.push(product);
-    }
-  }
+  const products = await productRepository.getProductsBySkus(skus);
   return products as ProductWithImages[];
 }
 
@@ -279,11 +279,12 @@ async function findProductsByBaseIds(
   baseIds: string[],
   options?: { provider?: ProductDbProvider },
 ): Promise<ProductWithImages[]> {
-  if (baseIds.length === 0 || !baseIds[0]) return [];
+  if (baseIds.length === 0) return [];
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
-  const products = await productRepository.findProductByBaseId(baseIds[0]); // TODO: Implement bulk find
-  return products ? [products as ProductWithImages] : [];
+
+  const products = await productRepository.findProductsByBaseIds(baseIds);
+  return products as ProductWithImages[];
 }
 
 async function createProduct(

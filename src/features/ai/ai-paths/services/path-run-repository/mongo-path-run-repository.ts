@@ -1,7 +1,6 @@
 import 'server-only';
 
 import { randomUUID } from 'crypto';
-import { AnyBulkWriteOperation, Document } from 'mongodb';
 
 import {
   AI_PATHS_RUN_SOURCE_TABS,
@@ -262,6 +261,9 @@ const RUN_LIST_PROJECTION = {
 
 const buildRunFilter = (options: AiPathRunListOptions = {}): Record<string, unknown> => {
   const andFilters: Record<string, unknown>[] = [];
+  if (options.id) {
+    andFilters.push({ $or: [{ id: options.id }, { _id: options.id }] });
+  }
   if (options.userId) {
     andFilters.push({ userId: options.userId });
   }
@@ -619,6 +621,7 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const db = await getMongoDb();
     const now = new Date();
     const docs: NodeDocument[] = nodes.map((node: AiNode) => ({
+      _id: randomUUID(),
       runId,
       nodeId: node.id,
       nodeType: node.type,
@@ -711,7 +714,9 @@ export const mongoPathRunRepository: AiPathRunRepository = {
   async createRunEvent(input: AiPathRunEventCreateInput) {
     await ensureIndexes();
     const db = await getMongoDb();
+    const now = new Date();
     const document: EventDocument = {
+      _id: randomUUID(),
       runId: input.runId,
       nodeId: input.nodeId ?? null,
       nodeType: input.nodeType ?? null,
@@ -721,12 +726,11 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       level: input.level,
       message: input.message,
       metadata: input.metadata ?? null,
-      createdAt: new Date(),
+      createdAt: now,
     };
     await db.collection<EventDocument>(EVENTS_COLLECTION).insertOne(document);
     return toEventRecord(document);
   },
-
   async listRunEvents(
     runId: string,
     options: AiPathRunEventListOptions = {}
@@ -800,10 +804,10 @@ export const mongoPathRunRepository: AiPathRunRepository = {
     const db = await getMongoDb();
     const finishedAt = options?.finishedAt ? new Date(options.finishedAt) : new Date();
     
-    const bulkOps: any[] = [
+    const bulkOps = [
       {
         updateOne: {
-          filter: buildRunFilter({ runId }),
+          filter: buildRunFilter({ id: runId }),
           update: {
             $set: {
               status,
@@ -816,21 +820,14 @@ export const mongoPathRunRepository: AiPathRunRepository = {
       },
     ];
 
+    await db.collection(RUNS_COLLECTION).bulkWrite(bulkOps);
+
     if (options?.event) {
-      bulkOps.push({
-        insertOne: {
-          document: {
-            runId,
-            level: options.event.level,
-            message: options.event.message,
-            metadata: options.event.metadata ?? null,
-            createdAt: new Date(),
-          },
-        },
+      await this.createRunEvent({
+        ...options.event,
+        runId,
       });
     }
-
-    await db.collection(RUNS_COLLECTION).bulkWrite(bulkOps);
   },
 
 };

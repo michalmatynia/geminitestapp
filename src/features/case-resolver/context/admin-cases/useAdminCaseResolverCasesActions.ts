@@ -25,7 +25,7 @@ import { createCaseResolverFile } from '../../settings';
 import { logClientError } from '@/features/observability';
 import type { CaseResolverCaseListConfirmationState } from './types';
 
-type ToastFn = (message: string, options?: { variant?: string }) => void;
+export type ToastFn = (message: string, options?: { variant?: string }) => void;
 
 type UseAdminCaseResolverCasesActionsArgs = {
   workspace: CaseResolverWorkspace;

@@ -1,5 +1,4 @@
-/* eslint-disable */
-// @ts-nocheck
+
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -24,10 +23,11 @@ import type {
   ProductValidationAcceptIssueInput,
   ProductValidationDenyIssueInput,
 } from '@/shared/contracts/products';
-import type { ProductFormData } from '@/shared/contracts/products';
+import type { ProductFormData, ProductWithImages } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
+import { logClientError } from '@/features/observability/utils/client-error-logger';
 
 import type { FieldValidatorIssue } from '../validation-engine/core';
 
@@ -81,9 +81,9 @@ export interface UseProductFormValidatorResult {
   denyActionLabel: 'Deny' | 'Mute';
   getDenyActionLabel: (patternId: string) => 'Deny' | 'Mute';
   isIssueDenied: (fieldName: string, patternId: string) => boolean;
-  denyIssue: (input: ProductValidationDenyIssueInput) => void;
+  denyIssue: (input: ProductValidationDenyIssueInput) => Promise<void>;
   isIssueAccepted: (fieldName: string, patternId: string) => boolean;
-  acceptIssue: (input: ProductValidationAcceptIssueInput) => void;
+  acceptIssue: (input: ProductValidationAcceptIssueInput) => Promise<void>;
   validatorPatterns: ProductValidationPattern[];
   latestProductValues: Record<string, unknown> | null;
   visibleFieldIssues: Record<string, FieldValidatorIssue[]>;
@@ -347,7 +347,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   const latestProductValues = useMemo((): Record<string, unknown> | null => {
     const list = latestProductsQuery.data ?? [];
     if (list.length === 0) return null;
-    const preferred = list.find((item) => item.id !== product?.id) ?? list[0] ?? null;
+    const preferred = list.find((item: ProductWithImages) => item.id !== product?.id) ?? list[0] ?? null;
     return preferred as unknown as Record<string, unknown>;
   }, [latestProductsQuery.data, product?.id]);
 
@@ -577,7 +577,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   });
 
   const denyIssue = useCallback(
-    (input: ProductValidationDenyIssueInput): void => {
+    async (input: ProductValidationDenyIssueInput): Promise<void> => {
       const patternId = (input.patternId || '').trim();
       const fieldName = (input.fieldName || '').trim();
       if (!patternId || !fieldName) return;
@@ -593,8 +593,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
         });
       }
 
-      void api
-        .post('/api/products/validator-decisions', {
+      try {
+        await api.post<Record<string, unknown>>('/api/products/validator-decisions', {
           action: 'deny',
           productId: product?.id ?? null,
           draftId: draft?.id ?? null,
@@ -606,20 +606,20 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           sessionId: validationSessionId || null,
         }, {
           logError: false,
-        })
-        .catch((error: unknown) => {
-          logClientError(
-            error instanceof Error ? error : new Error(String(error)),
-            {
-              context: {
-                source: 'ProductForm',
-                action: 'denyValidatorIssue',
-                fieldName,
-                patternId,
-              },
-            }
-          );
         });
+      } catch (error: unknown) {
+        logClientError(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            context: {
+              source: 'ProductForm',
+              action: 'denyValidatorIssue',
+              fieldName,
+              patternId,
+            },
+          }
+        );
+      }
     },
     [
       buildIssueDecisionKey,
@@ -631,7 +631,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   );
 
   const acceptIssue = useCallback(
-    (input: ProductValidationAcceptIssueInput): void => {
+    async (input: ProductValidationAcceptIssueInput): Promise<void> => {
       const patternId = (input.patternId || '').trim();
       const fieldName = (input.fieldName || '').trim();
       if (!patternId || !fieldName) return;
@@ -651,8 +651,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
         return next;
       });
 
-      void api
-        .post('/api/products/validator-decisions', {
+      try {
+        await api.post<Record<string, unknown>>('/api/products/validator-decisions', {
           action: 'accept',
           productId: product?.id ?? null,
           draftId: draft?.id ?? null,
@@ -664,20 +664,20 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           sessionId: validationSessionId || null,
         }, {
           logError: false,
-        })
-        .catch((error: unknown) => {
-          logClientError(
-            error instanceof Error ? error : new Error(String(error)),
-            {
-              context: {
-                source: 'ProductForm',
-                action: 'acceptValidatorIssue',
-                fieldName,
-                patternId,
-              },
-            }
-          );
         });
+      } catch (error: unknown) {
+        logClientError(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            context: {
+              source: 'ProductForm',
+              action: 'acceptValidatorIssue',
+              fieldName,
+              patternId,
+            },
+          }
+        );
+      }
     },
     [
       buildIssueDecisionKey,
@@ -710,7 +710,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           !Number.isFinite(currentNumeric) ||
           currentNumeric !== normalizedNumeric
         ) {
-          setValue(fieldName, normalizedNumeric, {
+          setValue(fieldName as keyof ProductFormData, normalizedNumeric, {
             shouldDirty: true,
             shouldTouch: true,
           });
@@ -754,7 +754,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           const applied = applyAutoReplacementToField(fieldName, issue.replacementValue ?? '');
           if (!applied) continue;
         }
-        acceptIssue({
+        void acceptIssue({
           fieldName,
           patternId: issue.patternId,
           postAcceptBehavior: issue.postAcceptBehavior,

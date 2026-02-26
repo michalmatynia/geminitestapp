@@ -11,6 +11,7 @@ import {
   type CropRect,
 } from './GenerationToolbarImageUtils';
 import { type ImageStudioAnalysisSharedLayout } from '../../utils/analysis-bridge';
+import { type ImageStudioCenterLayoutConfig } from '../../contracts/center';
 import { type PreviewCanvasImageFrameBinding } from '../../context/UiContext';
 import { type ObjectLayoutCustomPreset } from '../../utils/object-layout-presets';
 import { type ImageStudioAnalysisSummaryChipData } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
@@ -43,6 +44,8 @@ export interface GenerationToolbarState extends GenerationToolbarContextValue {
   getPreviewCanvasImageFrame: () => PreviewCanvasImageFrameBinding | null;
   projectId: string | null;
   projectsQuery: UseQueryResult<ImageStudioProjectRecord[]>;
+  slots: ImageStudioSlotRecord[];
+  slotSelectionLocked: boolean;
   workingSlot: ImageStudioSlotRecord | null;
   setSelectedSlotId: (id: string | null) => void;
   setWorkingSlotId: (id: string | null) => void;
@@ -82,6 +85,8 @@ export interface GenerationToolbarState extends GenerationToolbarContextValue {
   workingSlotImageSrc: string | null;
   clientProcessingImageSrc: string | null;
   workingSourceSignature: string;
+  centerLayoutPayload: ImageStudioCenterLayoutConfig;
+  autoScaleLayoutPayload: ImageStudioCenterLayoutConfig;
   activeProjectId: string;
   projectCanvasSize: { width: number; height: number } | null;
   centerLayoutWhiteThresholdValue: number;
@@ -100,4 +105,3 @@ export interface GenerationToolbarState extends GenerationToolbarContextValue {
   applyAnalysisLayoutToCenter: (layout: ImageStudioAnalysisSharedLayout, mode: 'auto' | 'manual') => void;
   applyAnalysisLayoutToAutoScaler: (layout: ImageStudioAnalysisSharedLayout, mode: 'auto' | 'manual') => void;
 }
-

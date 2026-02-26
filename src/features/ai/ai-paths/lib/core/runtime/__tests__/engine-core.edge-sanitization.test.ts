@@ -13,10 +13,10 @@ const buildNodes = (): AiNode[] => [
     outputs: ['value'],
     config: {
       constant: {
+        valueType: 'string',
         value: 'hello',
       },
-    },
-    position: { x: 0, y: 0 },
+    },    position: { x: 0, y: 0 },
   },
   {
     id: 'node-delay',

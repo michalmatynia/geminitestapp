@@ -26,6 +26,8 @@ describe('NoteService', () => {
     await prisma.category.deleteMany({});
     await prisma.notebook.deleteMany({});
     
+    await noteService.invalidateDefaultNotebookCache();
+
     vi.clearAllMocks();
   });
 

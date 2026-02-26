@@ -52,7 +52,7 @@ const CategoryIssueHintRow = memo(function CategoryIssueHintRow({
   const onReplace = useCallback((): void => {
     const currentValue = selectedCategoryId ?? '';
     const nextValue = getIssueReplacementPreview(currentValue, issue).trim();
-    acceptIssue({
+    void acceptIssue({
       fieldName: 'categoryId',
       patternId: issue.patternId,
       postAcceptBehavior: issue.postAcceptBehavior,
@@ -62,16 +62,15 @@ const CategoryIssueHintRow = memo(function CategoryIssueHintRow({
     if (!nextValue || nextValue === currentValue) return;
     setCategoryId(nextValue);
   }, [acceptIssue, issue, selectedCategoryId, setCategoryId]);
-
+  
   const onDeny = useCallback((): void => {
-    denyIssue({
+    void denyIssue({
       fieldName: 'categoryId',
       patternId: issue.patternId,
       message: issue.message,
       replacementValue: issue.replacementValue,
     });
   }, [denyIssue, issue.message, issue.patternId, issue.replacementValue]);
-
   return (
     <ValidatorIssueHint
       issue={issue}

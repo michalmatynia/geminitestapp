@@ -42,4 +42,48 @@ describe('VectorCanvas interactions', () => {
       expect(canvas).not.toHaveClass('cursor-grabbing');
     });
   });
+
+  it('toggles center guides overlay when showCenterGuides changes', () => {
+    const { queryByTestId, rerender } = render(
+      <div style={{ width: 800, height: 600 }}>
+        <VectorCanvas
+          src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
+          tool='select'
+          selectionEnabled={false}
+          showCenterGuides={false}
+          shapes={[]}
+          activeShapeId={null}
+          selectedPointIndex={null}
+          onChange={vi.fn()}
+          onSelectShape={vi.fn()}
+          brushRadius={16}
+          allowWithoutImage
+        />
+      </div>
+    );
+
+    expect(queryByTestId('vector-canvas-center-guides')).toBeNull();
+
+    rerender(
+      <div style={{ width: 800, height: 600 }}>
+        <VectorCanvas
+          src='data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
+          tool='select'
+          selectionEnabled={false}
+          showCenterGuides
+          shapes={[]}
+          activeShapeId={null}
+          selectedPointIndex={null}
+          onChange={vi.fn()}
+          onSelectShape={vi.fn()}
+          brushRadius={16}
+          allowWithoutImage
+        />
+      </div>
+    );
+
+    expect(queryByTestId('vector-canvas-center-guides')).not.toBeNull();
+    expect(queryByTestId('vector-canvas-center-guides-vertical')).not.toBeNull();
+    expect(queryByTestId('vector-canvas-center-guides-horizontal')).not.toBeNull();
+  });
 });

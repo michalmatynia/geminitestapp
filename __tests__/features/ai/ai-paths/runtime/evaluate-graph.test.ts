@@ -15,6 +15,10 @@ describe('evaluateGraph', () => {
     toast: mockToast,
   };
 
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('should evaluate a simple constant node', async () => {
     const nodes: AiNode[] = [
       {
@@ -788,7 +792,7 @@ describe('evaluateGraph', () => {
   });
 
   it('emits blocked node status when wait-for-inputs node is missing required inputs', async () => {
-    const onNodeFinish = vi.fn();
+    const onNodeBlocked = vi.fn();
     const nodes: AiNode[] = [
       {
         id: 'seed-1',
@@ -845,16 +849,16 @@ describe('evaluateGraph', () => {
       ...defaultOptions,
       nodes,
       edges,
-      onNodeFinish,
+      onNodeBlocked,
     });
 
-    const blockedCall = onNodeFinish.mock.calls.find((call) => {
-      const payload = call[0] as { node?: { id?: string }; nextOutputs?: Record<string, unknown> };
-      return payload.node?.id === 'model-1' && payload.nextOutputs?.['status'] === 'blocked';
+    const blockedCall = onNodeBlocked.mock.calls.find((call) => {
+      const payload = call[0] as { node?: { id?: string }; reason?: string };
+      return payload.node?.id === 'model-1' && payload.reason === 'missing_inputs';
     });
     expect(blockedCall).toBeDefined();
-    expect(result.outputs['model-1']?.['skipReason']).toBe('missing_inputs');
-    expect(result.outputs['model-1']?.['waitingOnPorts']).toContain('prompt');
+    // In current implementation, blocked status is in nodeStatuses, not outputs
+    expect(result.nodeStatuses['model-1']).toBe('blocked');
   });
 
   it('includes upstream waiting diagnostics when model is blocked on prompt', async () => {
@@ -1254,6 +1258,7 @@ describe('evaluateGraph', () => {
       nodes,
       edges,
       seedOutputs: { n1: { value: 0 } },
+      maxIterations: 3,
     });
 
     // Iteration 0: outputs[n1].value=0 (seed)

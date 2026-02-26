@@ -195,17 +195,26 @@ export async function apiClient<T>(
   }
 }
 
-export const api = {
-  get: <T>(endpoint: string, options?: ApiClientOptions) => 
+export interface Api {
+  get: <T>(endpoint: string, options?: ApiClientOptions) => Promise<T>;
+  post: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions) => Promise<T>;
+  put: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions) => Promise<T>;
+  patch: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions) => Promise<T>;
+  patchFormData: <T>(endpoint: string, body: FormData, options?: ApiClientOptions) => Promise<T>;
+  delete: <T>(endpoint: string, options?: ApiClientOptions) => Promise<T>;
+}
+
+export const api: Api = {
+  get: <T>(endpoint: string, options?: ApiClientOptions): Promise<T> => 
     apiClient<T>(endpoint, { ...options, method: 'GET' }),
-  post: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions) => 
+  post: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions): Promise<T> => 
     apiClient<T>(endpoint, { ...options, method: 'POST', body: body instanceof FormData ? body : JSON.stringify(body) }),
-  put: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions) => 
+  put: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions): Promise<T> => 
     apiClient<T>(endpoint, { ...options, method: 'PUT', body: body instanceof FormData ? body : JSON.stringify(body) }),
-  patch: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions) => 
+  patch: <T>(endpoint: string, body?: unknown, options?: ApiClientOptions): Promise<T> => 
     apiClient<T>(endpoint, { ...options, method: 'PATCH', body: body instanceof FormData ? body : JSON.stringify(body) }),
-  patchFormData: <T>(endpoint: string, body: FormData, options?: ApiClientOptions) =>
+  patchFormData: <T>(endpoint: string, body: FormData, options?: ApiClientOptions): Promise<T> =>
     apiClient<T>(endpoint, { ...options, method: 'PATCH', body }),
-  delete: <T>(endpoint: string, options?: ApiClientOptions) => 
+  delete: <T>(endpoint: string, options?: ApiClientOptions): Promise<T> => 
     apiClient<T>(endpoint, { ...options, method: 'DELETE' }),
 };

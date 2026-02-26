@@ -106,6 +106,14 @@ const buildLookupFilter = (
   return { [field]: candidates[0] ?? normalized } as unknown as Filter<ProductListingDocument>;
 };
 
+const buildLookupFilterForIds = (
+  field: string,
+  values: string[]
+): Filter<ProductListingDocument> => {
+  const candidates = buildLookupCandidates(values);
+  return { [field]: { $in: candidates } } as unknown as Filter<ProductListingDocument>;
+};
+
 const normalizeIsoDate = (value: string | Date | null | undefined): string | null => {
   if (!value) return null;
   return value instanceof Date ? value.toISOString() : value;
@@ -310,6 +318,21 @@ const prismaRepository: ProductListingRepository = {
       where: { productId, connectionId },
     });
     return count > 0;
+  },
+
+  getListingsByProductIds: async (productIds: string[]): Promise<ProductListingRecord[]> => {
+    if (productIds.length === 0) return [];
+    const listings = await prisma.productListing.findMany({
+      where: { productId: { in: productIds } },
+    });
+    return listings.map((l) => toListingRecord({ ...l, _id: l.id } as unknown as Record<string, unknown>));
+  },
+
+  getListingsByConnection: async (connectionId: string): Promise<ProductListingRecord[]> => {
+    const listings = await prisma.productListing.findMany({
+      where: { connectionId },
+    });
+    return listings.map((l) => toListingRecord({ ...l, _id: l.id } as unknown as Record<string, unknown>));
   },
 
   listAllListings: async (): Promise<
@@ -532,6 +555,25 @@ const mongoRepository: ProductListingRepository = {
     return count > 0;
   },
 
+  getListingsByProductIds: async (productIds: string[]): Promise<ProductListingRecord[]> => {
+    if (productIds.length === 0) return [];
+    const db = await getMongoDb();
+    const listings = await db
+      .collection<ProductListingDocument>(LISTING_COLLECTION)
+      .find(buildLookupFilterForIds('productId', productIds))
+      .toArray();
+    return listings.map(toListingRecord);
+  },
+
+  getListingsByConnection: async (connectionId: string): Promise<ProductListingRecord[]> => {
+    const db = await getMongoDb();
+    const listings = await db
+      .collection<ProductListingDocument>(LISTING_COLLECTION)
+      .find(buildLookupFilter('connectionId', connectionId))
+      .toArray();
+    return listings.map(toListingRecord);
+  },
+
   listAllListings: async (): Promise<
     Array<Pick<ProductListingRecord, 'productId' | 'status' | 'integrationId' | 'marketplaceData'>>
   > => {
@@ -605,6 +647,30 @@ export async function findProductListingByProductAndConnectionAcrossProviders(
     }
   }
   return null;
+}
+
+export async function findProductListingsByProductsAndConnectionAcrossProviders(
+  productIds: string[],
+  connectionId: string
+): Promise<Map<string, { listing: ProductListingRecord; repository: ProductListingRepository }>> {
+  const result = new Map<string, { listing: ProductListingRecord; repository: ProductListingRepository }>();
+  if (productIds.length === 0) return result;
+
+  const providers = [
+    { repo: prismaRepository, name: 'prisma' },
+    { repo: mongoRepository, name: 'mongodb' },
+  ];
+
+  for (const { repo } of providers) {
+    const listings = await repo.getListingsByProductIds(productIds);
+    listings.forEach((listing) => {
+      if (listing.connectionId === connectionId) {
+        result.set(listing.productId, { listing, repository: repo });
+      }
+    });
+  }
+
+  return result;
 }
 
 export async function listProductListingsByProductIdAcrossProviders(

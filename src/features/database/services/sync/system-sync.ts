@@ -79,9 +79,8 @@ export const syncSystemLogs: SyncHandler = async ({ mongo, prisma, normalizeId, 
         level: doc.level ?? 'error',
         message: doc.message ?? '',
         source: doc.source ?? null,
-        context: toJsonValue(doc.context ?? null),
-        stack: doc.stack ?? null,
-        path: doc.path ?? null,
+        context: toJsonValue(doc.context ?? null) as Prisma.InputJsonValue,
+        stack: doc.stack ?? null,        path: doc.path ?? null,
         method: doc.method ?? null,
         statusCode: doc.statusCode ?? null,
         requestId: doc.requestId ?? null,
@@ -121,9 +120,8 @@ export const syncFileUploadEvents: SyncHandler = async ({ mongo, prisma, normali
         errorMessage: doc.errorMessage ?? null,
         requestId: doc.requestId ?? null,
         userId: doc.userId ?? null,
-        meta: toJsonValue(doc.meta ?? null),
-        createdAt: toDate(doc.createdAt) ?? new Date(),
-      };
+        meta: toJsonValue(doc.meta ?? null) as Prisma.InputJsonValue,
+        createdAt: toDate(doc.createdAt) ?? new Date(),      };
     })
     .filter((item): item is Prisma.FileUploadEventCreateManyInput => item !== null);
   const deleted = await prisma.fileUploadEvent.deleteMany();

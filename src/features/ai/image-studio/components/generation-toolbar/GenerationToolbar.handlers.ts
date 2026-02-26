@@ -43,6 +43,7 @@ import {
   imageStudioAutoScalerResponseSchema,
   type ImageStudioAutoScalerResponse,
 } from '../../contracts/autoscaler';
+import { saveImageStudioAnalysisApplyIntent } from '../../utils/analysis-bridge';
 import { createGenerationToolbarActionHandlers } from './generation-toolbar-action-handlers';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
 import { type GenerationToolbarState, type GenerationToolbarHandlers } from './GenerationToolbar.types';
@@ -93,12 +94,11 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     clientProcessingImageSrc,
     workingSourceSignature,
     projectCanvasSize,
+    centerLayoutPayload,
+    autoScaleLayoutPayload,
     getPreviewCanvasViewportCrop,
     getPreviewCanvasImageFrame,
   } = state;
-
-  const centerLayoutPayload = undefined;
-  const autoScaleLayoutPayload = undefined;
 
   const resolveWorkingSlotImageContentFrame = useCallback((): ImageContentFrame | null => {
     const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
@@ -819,15 +819,39 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
       toast('No analysis plan is available yet. Run analysis first.', { variant: 'info' });
       return;
     }
+    if (state.slotSelectionLocked) {
+      toast('Cannot apply while slot selection is locked.', { variant: 'info' });
+      return;
+    }
     const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
     const analysisPlanSlotId = state.analysisPlanSnapshot?.slotId?.trim() ?? '';
-    if (!normalizedWorkingSlotId || analysisPlanSlotId !== normalizedWorkingSlotId) {
-      toast('Latest analysis plan belongs to a different slot. Select that slot first.', { variant: 'info' });
+    if (!analysisPlanSlotId) {
+      toast('Analysis plan is missing slot metadata. Rerun analysis first.', { variant: 'info' });
       return;
     }
     const analysisPlanSourceSignature = state.analysisPlanSnapshot?.sourceSignature?.trim() ?? '';
     if (!analysisPlanSourceSignature) {
       toast('Analysis plan is missing source metadata. Rerun analysis first.', { variant: 'info' });
+      return;
+    }
+    const planSlotExists = state.slots.some(
+      (slot) => (slot.id ?? '').trim() === analysisPlanSlotId
+    );
+    if (!planSlotExists) {
+      toast('Analyzed slot no longer exists.', { variant: 'info' });
+      return;
+    }
+    if (!normalizedWorkingSlotId || analysisPlanSlotId !== normalizedWorkingSlotId) {
+      saveImageStudioAnalysisApplyIntent(projectId, {
+        slotId: analysisPlanSlotId,
+        sourceSignature: analysisPlanSourceSignature,
+        runAfterApply: false,
+        target: 'object_layout',
+        layout: state.analysisPlanSnapshot.layout,
+      });
+      setSelectedSlotId(analysisPlanSlotId);
+      setWorkingSlotId(analysisPlanSlotId);
+      toast('Switching to analyzed slot and applying Object Layout plan.', { variant: 'info' });
       return;
     }
     if (!workingSourceSignature || analysisPlanSourceSignature !== workingSourceSignature) {
@@ -835,17 +859,21 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
       return;
     }
     state.applyAnalysisLayoutToCenter(state.analysisPlanSnapshot.layout, 'manual');
-  }, [state, toast, workingSlot?.id, workingSourceSignature]);
+  }, [projectId, setSelectedSlotId, setWorkingSlotId, state, toast, workingSlot?.id, workingSourceSignature]);
 
   const handleApplyAnalysisPlanToAutoScaler = useCallback((): void => {
     if (!state.analysisPlanSnapshot) {
       toast('No analysis plan is available yet. Run analysis first.', { variant: 'info' });
       return;
     }
+    if (state.slotSelectionLocked) {
+      toast('Cannot apply while slot selection is locked.', { variant: 'info' });
+      return;
+    }
     const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
     const analysisPlanSlotId = state.analysisPlanSnapshot?.slotId?.trim() ?? '';
-    if (!normalizedWorkingSlotId || analysisPlanSlotId !== normalizedWorkingSlotId) {
-      toast('Latest analysis plan belongs to a different slot. Select that slot first.', { variant: 'info' });
+    if (!analysisPlanSlotId) {
+      toast('Analysis plan is missing slot metadata. Rerun analysis first.', { variant: 'info' });
       return;
     }
     const analysisPlanSourceSignature = state.analysisPlanSnapshot?.sourceSignature?.trim() ?? '';
@@ -853,12 +881,32 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
       toast('Analysis plan is missing source metadata. Rerun analysis first.', { variant: 'info' });
       return;
     }
+    const planSlotExists = state.slots.some(
+      (slot) => (slot.id ?? '').trim() === analysisPlanSlotId
+    );
+    if (!planSlotExists) {
+      toast('Analyzed slot no longer exists.', { variant: 'info' });
+      return;
+    }
+    if (!normalizedWorkingSlotId || analysisPlanSlotId !== normalizedWorkingSlotId) {
+      saveImageStudioAnalysisApplyIntent(projectId, {
+        slotId: analysisPlanSlotId,
+        sourceSignature: analysisPlanSourceSignature,
+        runAfterApply: false,
+        target: 'auto_scaler',
+        layout: state.analysisPlanSnapshot.layout,
+      });
+      setSelectedSlotId(analysisPlanSlotId);
+      setWorkingSlotId(analysisPlanSlotId);
+      toast('Switching to analyzed slot and applying Auto Scaler plan.', { variant: 'info' });
+      return;
+    }
     if (!workingSourceSignature || analysisPlanSourceSignature !== workingSourceSignature) {
       toast('Latest analysis plan is stale for the current slot image. Rerun analysis first.', { variant: 'info' });
       return;
     }
     state.applyAnalysisLayoutToAutoScaler(state.analysisPlanSnapshot.layout, 'manual');
-  }, [state, toast, workingSlot?.id, workingSourceSignature]);
+  }, [projectId, setSelectedSlotId, setWorkingSlotId, state, toast, workingSlot?.id, workingSourceSignature]);
 
   return {
     handleUpscale,

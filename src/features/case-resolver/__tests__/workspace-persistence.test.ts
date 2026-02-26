@@ -261,9 +261,9 @@ describe('case-resolver workspace persistence', () => {
       documentHistory: [
         {
           id: 'scan-history-1',
-          createdAt: '2026-02-26T10:00:00.000Z',
-          editorType: 'markdown',
-          activeDocumentVersion: 'original',
+          savedAt: '2026-02-26T10:00:00.000Z',
+          documentContentVersion: 1,
+          editorType: 'markdown',          activeDocumentVersion: 'original',
           documentContent: '# History',
           documentContentMarkdown: '# History',
           documentContentHtml: '<h1>History</h1>',
@@ -282,9 +282,9 @@ describe('case-resolver workspace persistence', () => {
       documentHistory: [
         {
           id: 'doc-history-1',
-          createdAt: '2026-02-26T10:00:00.000Z',
-          editorType: 'wysiwyg',
-          activeDocumentVersion: 'original',
+          savedAt: '2026-02-26T10:00:00.000Z',
+          documentContentVersion: 1,
+          editorType: 'wysiwyg',          activeDocumentVersion: 'original',
           documentContent: '<p>History</p>',
           documentContentMarkdown: 'History',
           documentContentHtml: '<p>History</p>',

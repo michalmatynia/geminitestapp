@@ -189,7 +189,7 @@ export function FolderTreeViewportV2({
     const walk = (nodes: MasterTreeViewNode[]): void => {
       nodes.forEach((node) => {
         map.set(node.id, node);
-        if (node.children.length > 0) {
+        if (node.children && node.children.length > 0) {
           walk(node.children);
         }
       });

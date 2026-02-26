@@ -41,8 +41,17 @@ type NoteRelationWithTarget = NoteRelationDto & {
 // Lazy load to avoid initializing Prisma when using MongoDB
 let _repository: NoteRepository | null = null;
 
-const resolveNoteProvider = async (): Promise<'mongodb' | 'prisma'> =>
-  getAppDbProvider() as Promise<'mongodb' | 'prisma'>;
+export const invalidateNoteRepositoryCache = (): void => {
+  _repository = null;
+};
+
+const resolveNoteProvider = async (): Promise<'mongodb' | 'prisma'> => {
+  const provider = await getAppDbProvider() as 'mongodb' | 'prisma';
+  if (process.env['NODE_ENV'] === 'test') {
+    console.log(`[note-service] Resolved provider: ${provider} (APP_DB_PROVIDER=${process.env['APP_DB_PROVIDER']})`);
+  }
+  return provider;
+};
 
 async function getRepository(): Promise<NoteRepository> {
   if (!_repository) {
@@ -230,6 +239,9 @@ export const noteService: NoteRepository = {
   updateNotebook: (id: string, data: NotebookUpdateInput): Promise<NotebookRecord | null> => repoCall('updateNotebook', id, data),
   deleteNotebook: (id: string): Promise<boolean> => repoCall('deleteNotebook', id),
   getOrCreateDefaultNotebook: (): Promise<NotebookRecord> => repoCall('getOrCreateDefaultNotebook'),
+  invalidateDefaultNotebookCache: async (): Promise<void> => {
+    await repoCall('invalidateDefaultNotebookCache');
+  },
   getAllThemes: (notebookId?: string | null): Promise<ThemeRecord[]> => repoCall('getAllThemes', notebookId),
   getThemeById: (id: string): Promise<ThemeRecord | null> => repoCall('getThemeById', id),
   createTheme: (data: ThemeCreateInput): Promise<ThemeRecord> => repoCall('createTheme', data),

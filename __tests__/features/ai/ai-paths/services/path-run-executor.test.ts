@@ -396,7 +396,7 @@ describe('PathRunExecutor', () => {
       },
     } as any);
 
-    await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow(/Required input "prompt" on node "Model" has no incoming edge/);
+    await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow(/is missing required input wiring for port "prompt"/);
   });
 
   it('should bypass strict-flow preflight when node validation is disabled', async () => {
@@ -441,7 +441,7 @@ describe('PathRunExecutor', () => {
       },
     } as any);
 
-    await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow(/Required input "prompt" on node "Model" has no incoming edge/);
+    await expect(executePathRun(run as AiPathRunRecord)).rejects.toThrow(/is missing required input wiring for port "prompt"/);
     expect(evaluateGraphWithIteratorAutoContinue).not.toHaveBeenCalled();
   });
 

@@ -4,18 +4,106 @@ import React from 'react';
 import { Button, Card } from '@/shared/ui';
 import { ImageStudioAnalysisSummaryChip } from '../../ImageStudioAnalysisSummaryChip';
 import type { AnalysisResult } from '../analysis-types';
+import type { ImageStudioAnalysisPlanSnapshot } from '../../../utils/analysis-bridge';
 
 export interface AnalysisResultSectionProps {
   result: AnalysisResult | null;
   resultSourceSlotId: string;
+  persistedPlanSnapshot: ImageStudioAnalysisPlanSnapshot | null;
+  currentWorkingSlotId: string;
+  availableSlots: Array<{ id: string; label?: string }>;
+  slotSelectionLocked: boolean;
   queueAnalysisApplyIntent: (target: 'object_layout' | 'auto_scaler', options?: { runAfterApply?: boolean }) => void;
 }
 
 export function AnalysisResultSection({
   result,
   resultSourceSlotId,
+  persistedPlanSnapshot,
+  currentWorkingSlotId,
+  availableSlots,
+  slotSelectionLocked,
   queueAnalysisApplyIntent,
 }: AnalysisResultSectionProps): React.JSX.Element {
+  const resolvedSourceSlotId =
+    resultSourceSlotId.trim() || persistedPlanSnapshot?.slotId?.trim() || '';
+  const normalizedWorkingSlotId = currentWorkingSlotId.trim();
+  const availableSourceSlot = availableSlots.find(
+    (slot) => slot.id.trim() === resolvedSourceSlotId
+  );
+  const sourceSlotExists = Boolean(availableSourceSlot);
+  const sourceSlotLabel =
+    availableSourceSlot?.label?.trim() || resolvedSourceSlotId;
+  const applyDisabledReason = !resolvedSourceSlotId
+    ? 'Analysis slot context is missing. Run analysis first.'
+    : slotSelectionLocked
+      ? 'Slot selection is currently locked by sequencing.'
+      : !sourceSlotExists
+        ? 'Analyzed slot no longer exists.'
+        : null;
+  const applyActions = (
+    <div className='flex flex-wrap items-center gap-2'>
+      <Button
+        type='button'
+        size='xs'
+        variant='outline'
+        onClick={() => {
+          queueAnalysisApplyIntent('object_layout');
+        }}
+        disabled={Boolean(applyDisabledReason)}
+        title={applyDisabledReason ?? 'Apply analysis plan to Object Layout controls'}
+      >
+        Apply To Object Layout
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='outline'
+        onClick={() => {
+          queueAnalysisApplyIntent('auto_scaler');
+        }}
+        disabled={Boolean(applyDisabledReason)}
+        title={applyDisabledReason ?? 'Apply analysis plan to Auto Scaler controls'}
+      >
+        Apply To Auto Scaler
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='outline'
+        onClick={() => {
+          queueAnalysisApplyIntent('object_layout', { runAfterApply: true });
+        }}
+        disabled={Boolean(applyDisabledReason)}
+        title={applyDisabledReason ?? 'Apply analysis plan and run Object Layout'}
+      >
+        Apply + Run Object Layout
+      </Button>
+      <Button
+        type='button'
+        size='xs'
+        variant='outline'
+        onClick={() => {
+          queueAnalysisApplyIntent('auto_scaler', { runAfterApply: true });
+        }}
+        disabled={Boolean(applyDisabledReason)}
+        title={applyDisabledReason ?? 'Apply analysis plan and run Auto Scaler'}
+      >
+        Apply + Run Auto Scaler
+      </Button>
+      <span className='text-[10px] text-gray-500'>
+        Applies this analysis plan to Studio controls; optional run executes automatically after apply.
+      </span>
+    </div>
+  );
+  const routingNotice =
+    resolvedSourceSlotId &&
+    sourceSlotExists &&
+    normalizedWorkingSlotId &&
+    resolvedSourceSlotId !== normalizedWorkingSlotId
+      ? `Apply will switch to analyzed slot: ${sourceSlotLabel}.`
+      : null;
+
   return (
     <Card variant='subtle-compact' padding='md' className='border-border/60 bg-card/30'>
       {result ? (
@@ -69,55 +157,22 @@ export function AnalysisResultSection({
             </Card>
           </div>
 
-          <div className='flex flex-wrap items-center gap-2'>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={() => {
-                queueAnalysisApplyIntent('object_layout');
-              }}
-              disabled={!resultSourceSlotId}
-            >
-              Apply To Object Layout
-            </Button>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={() => {
-                queueAnalysisApplyIntent('auto_scaler');
-              }}
-              disabled={!resultSourceSlotId}
-            >
-              Apply To Auto Scaler
-            </Button>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={() => {
-                queueAnalysisApplyIntent('object_layout', { runAfterApply: true });
-              }}
-              disabled={!resultSourceSlotId}
-            >
-              Apply + Run Object Layout
-            </Button>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={() => {
-                queueAnalysisApplyIntent('auto_scaler', { runAfterApply: true });
-              }}
-              disabled={!resultSourceSlotId}
-            >
-              Apply + Run Auto Scaler
-            </Button>
-            <span className='text-[10px] text-gray-500'>
-              Applies this analysis plan to Studio controls; optional run executes automatically after apply.
-            </span>
-          </div>
+          {applyActions}
+          {routingNotice ? (
+            <div className='text-[11px] text-sky-200'>
+              {routingNotice}
+            </div>
+          ) : null}
+          {slotSelectionLocked ? (
+            <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+              Slot selection is currently locked by sequencing. Unlock it before applying this plan.
+            </Card>
+          ) : null}
+          {resolvedSourceSlotId && !sourceSlotExists ? (
+            <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+              Analyzed slot no longer exists. Re-run analysis on an available slot.
+            </Card>
+          ) : null}
 
           {result.fallbackApplied || result.confidence < 0.35 ? (
             <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
@@ -172,6 +227,38 @@ export function AnalysisResultSection({
                 L {result.suggestedPlan.whitespace.percent.left.toFixed(3)} | R {result.suggestedPlan.whitespace.percent.right.toFixed(3)} | T {result.suggestedPlan.whitespace.percent.top.toFixed(3)} | B {result.suggestedPlan.whitespace.percent.bottom.toFixed(3)}
               </div>
             </Card>
+          </div>
+        </div>
+      ) : persistedPlanSnapshot ? (
+        <div className='space-y-3 text-xs text-gray-200'>
+          <ImageStudioAnalysisSummaryChip
+            data={{
+              detectionUsed: persistedPlanSnapshot.detectionUsed,
+              confidence: persistedPlanSnapshot.confidence,
+              fallbackApplied: persistedPlanSnapshot.fallbackApplied,
+              policyReason: persistedPlanSnapshot.policyReason,
+              policyVersion: persistedPlanSnapshot.policyVersion,
+            }}
+            label='Retained Analysis Summary'
+          />
+          {applyActions}
+          {routingNotice ? (
+            <div className='text-[11px] text-sky-200'>
+              {routingNotice}
+            </div>
+          ) : null}
+          {slotSelectionLocked ? (
+            <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+              Slot selection is currently locked by sequencing. Unlock it before applying this plan.
+            </Card>
+          ) : null}
+          {resolvedSourceSlotId && !sourceSlotExists ? (
+            <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+              Analyzed slot no longer exists. Re-run analysis on an available slot.
+            </Card>
+          ) : null}
+          <div className='text-[11px] text-gray-500'>
+            Retained summary loaded from saved analysis plan. Run analysis again to view full metrics.
           </div>
         </div>
       ) : (

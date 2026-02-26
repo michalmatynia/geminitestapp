@@ -241,7 +241,7 @@ export const applySemanticSubgraphToPathConfig = (
 
   const pathConfig: PathConfig = {
     ...targetConfig,
-    nodes: [...(targetConfig.nodes as AiNode[] ?? []), ...appendedNodes],
+    nodes: [...(targetConfig.nodes ?? []), ...appendedNodes],
     edges: [...(targetConfig.edges ?? []), ...appendedEdges],
     updatedAt: now,
     uiState: {

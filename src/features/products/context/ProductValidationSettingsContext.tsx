@@ -12,26 +12,12 @@ import type {
   ProductValidationPattern,
   ProductValidationDenyBehavior,
   ProductValidationInstanceScope,
-  ProductValidationPostAcceptBehavior,
+  ProductValidationDenyIssueInput,
+  ProductValidationAcceptIssueInput,
 } from '@/shared/contracts/products';
 import { internalError } from '@/shared/errors/app-error';
 
 import type { FieldValidatorIssue } from '../validation-engine/core';
-
-export type ProductValidationDenyIssueInput = {
-  fieldName: string;
-  patternId: string;
-  message?: string | null;
-  replacementValue?: string | null;
-};
-
-export type ProductValidationAcceptIssueInput = {
-  fieldName: string;
-  patternId: string;
-  postAcceptBehavior: ProductValidationPostAcceptBehavior;
-  message?: string | null;
-  replacementValue?: string | null;
-};
 
 // ── State sub-context ────────────────────────────────────────────────────────
 // Re-renders consumers only when the boolean/enum settings change.
@@ -69,9 +55,9 @@ export interface ProductValidationActionsValue {
   setValidationDenyBehavior: Dispatch<SetStateAction<ProductValidationDenyBehavior>>;
   getDenyActionLabel: (patternId: string) => 'Deny' | 'Mute';
   isIssueDenied: (fieldName: string, patternId: string) => boolean;
-  denyIssue: (input: ProductValidationDenyIssueInput) => void;
+  denyIssue: (input: ProductValidationDenyIssueInput) => Promise<void>;
   isIssueAccepted: (fieldName: string, patternId: string) => boolean;
-  acceptIssue: (input: ProductValidationAcceptIssueInput) => void;
+  acceptIssue: (input: ProductValidationAcceptIssueInput) => Promise<void>;
 }
 
 const ProductValidationActionsContext =

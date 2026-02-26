@@ -23,6 +23,8 @@ export { type VectorPoint, type VectorShape, type VectorShapeType, type VectorTo
 export type { VectorCanvasImageContentFrame, VectorCanvasViewCropRect };
 export {
   DEFAULT_VECTOR_VIEWBOX,
+  resolveRectDragPoints,
+  resolveRectResizePoints,
   vectorShapeToPath,
   vectorShapesToPath,
   vectorShapeToPathWithBounds,
@@ -86,7 +88,7 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
     maskPreviewInvert = false,
     maskPreviewOpacity = 0.48,
     maskPreviewFeather = 0,
-    showCenterGuides: _showCenterGuides = false,
+    showCenterGuides = false,
     enableTwoFingerRotate = false,
     baseCanvasWidthPx = null,
     baseCanvasHeightPx = null,
@@ -935,6 +937,22 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
         )}
         {showCanvasGrid && (
           <div className='pointer-events-none absolute left-1/2 top-0 z-[5] -translate-x-1/2 border border-slate-700/70 bg-transparent [background-size:24px_24px] [background-image:linear-gradient(to_right,rgba(148,163,184,0.22)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,0.22)_1px,transparent_1px)]' style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }} />
+        )}
+        {showCenterGuides && (
+          <div
+            data-testid='vector-canvas-center-guides'
+            className='pointer-events-none absolute left-1/2 top-0 z-[16] -translate-x-1/2'
+            style={{ width: `${canvasRenderSize.width}px`, height: `${canvasRenderSize.height}px` }}
+          >
+            <div
+              data-testid='vector-canvas-center-guides-vertical'
+              className='absolute left-1/2 top-0 h-full w-px -translate-x-1/2 bg-cyan-300/70'
+            />
+            <div
+              data-testid='vector-canvas-center-guides-horizontal'
+              className='absolute left-0 top-1/2 h-px w-full -translate-y-1/2 bg-cyan-300/70'
+            />
+          </div>
         )}
         {src && (
           // eslint-disable-next-line @next/next/no-img-element

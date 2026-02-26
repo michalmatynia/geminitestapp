@@ -68,6 +68,8 @@ vi.mock('@/shared/ui', async (importOriginal) => {
 });
 vi.mock('@/features/cms/components/page-builder/tree', () => ({
   SectionNodeItem: ({ section }: any) => <div data-testid='section-item'>{section.type}</div>,
+  ZoneFooterNode: () => <div data-testid='zone-footer' />,
+  SectionDropTarget: () => <div data-testid='section-drop-target' />,
 }));
 
 describe('ComponentTreePanel Component', () => {

@@ -17,6 +17,7 @@ export function useSlotImageUpload({
   uploadMutation,
   getFolderForNewSlot,
   objectSlot,
+  createSlots,
   updateSlotMutation,
   setTemporaryObjectUpload,
   setSelectedSlotId,
@@ -139,6 +140,7 @@ export function useSlotImageUpload({
       setObjectImageBase64Draft,
       deleteUploadedAsset,
       updateSlotMutation,
+      createSlots,
       queryClient,
     ]
   );

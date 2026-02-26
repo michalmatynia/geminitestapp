@@ -186,18 +186,22 @@ export const applyBaseParameterImport = async (
     };
   }
 
-  const allCatalogParameters = await input.parameterRepository.listParameters({
-    catalogId: input.catalogId,
-  });
+  const allCatalogParameters =
+    input.prefetchedParameters ??
+    (await input.parameterRepository.listParameters({
+      catalogId: input.catalogId,
+    }));
   const { byId, byName } = buildLookupMaps(allCatalogParameters);
   const useLinkMap = input.settings.matchBy === 'base_id_then_name';
-  const linkMap = useLinkMap
-    ? await getCatalogParameterLinks({
-      catalogId: input.catalogId,
-      connectionId: input.connectionId ?? null,
-      inventoryId: input.inventoryId ?? null,
-    })
-    : {};
+  const linkMap =
+    input.prefetchedLinks ??
+    (useLinkMap
+      ? await getCatalogParameterLinks({
+        catalogId: input.catalogId,
+        connectionId: input.connectionId ?? null,
+        inventoryId: input.inventoryId ?? null,
+      })
+      : {});
   const linkUpdates: Record<string, string> = {};
 
   const nextByParameterId = new Map<string, ProductParameterValue>();

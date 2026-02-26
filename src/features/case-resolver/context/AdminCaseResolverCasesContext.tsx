@@ -50,7 +50,7 @@ import {
   normalizeCaseListViewDefaults,
 } from './admin-cases/utils';
 import { useAdminCaseResolverCasesState } from './admin-cases/useAdminCaseResolverCasesState';
-import { useAdminCaseResolverCasesActions } from './admin-cases/useAdminCaseResolverCasesActions';
+import { useAdminCaseResolverCasesActions, type ToastFn } from './admin-cases/useAdminCaseResolverCasesActions';
 
 export type { 
   CaseViewMode,
@@ -220,7 +220,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     editingCaseCaseIdentifierId,
     editingCaseCategoryId,
     setConfirmation,
-    toast: toast as any,
+    toast: toast as unknown as ToastFn,
     settingsStoreRefetchRef,
   });
 

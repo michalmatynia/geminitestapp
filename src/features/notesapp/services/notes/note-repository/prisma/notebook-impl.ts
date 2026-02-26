@@ -9,6 +9,10 @@ import type { Notebook } from '@prisma/client';
 
 let cachedDefaultNotebook: NotebookRecord | null = null;
 
+export const invalidateDefaultNotebookCache = async (): Promise<void> => {
+  cachedDefaultNotebook = null;
+};
+
 export const getOrCreateDefaultNotebook = async (): Promise<NotebookRecord> => {
   if (cachedDefaultNotebook) return cachedDefaultNotebook;
 

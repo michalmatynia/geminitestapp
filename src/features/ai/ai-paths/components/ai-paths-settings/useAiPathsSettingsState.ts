@@ -1026,7 +1026,7 @@ export function useAiPathsSettingsState({
   React.useEffect((): void | (() => void) => {
     if (loading || !activePathId) return;
 
-    const persistedNodes = (pathConfigs[activePathId]?.nodes ?? nodes) as AiNode[];
+    const persistedNodes = pathConfigs[activePathId]?.nodes ?? nodes;
     const runtimeSnapshot = buildPersistedRuntimeState(
       runtimeState,
       persistedNodes,
@@ -1314,4 +1314,5 @@ export function useAiPathsSettingsState({
   };
 }
 
+export type { UseAiPathsSettingsStateReturn };
 export type AiPathsSettingsState = UseAiPathsSettingsStateReturn;

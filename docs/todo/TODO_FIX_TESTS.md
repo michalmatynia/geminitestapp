@@ -47,9 +47,9 @@
 
 ## Progress
 
-- [ ] Step 1: Fix Products API Tests
-- [ ] Step 2: Fix TOTP Tests
-- [ ] Step 3: Fix Page Builder Tests
-- [ ] Step 4: Fix AiPathRunRepository Test
-- [ ] Run tests to verify all fixes
+- [x] Step 1: Fix Products API Tests
+- [x] Step 2: Fix TOTP Tests
+- [x] Step 3: Fix Page Builder Tests
+- [x] Step 4: Fix AiPathRunRepository Test
+- [x] Run tests to verify all fixes
 

@@ -192,7 +192,7 @@ describe('sanitizePathConfig', () => {
           value: sharedValue,
         },
       },
-    } as RuntimeState;
+    } as unknown as RuntimeState;
 
     const persisted = buildPersistedRuntimeState(runtimeState, [
       buildNode({ id: 'node-6bb64bd12ced85746705fc69', type: 'mapper', outputs: ['value'] }),

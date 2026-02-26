@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
@@ -10,7 +8,7 @@ import { useBulkDeleteProductsMutation } from '@/features/products/hooks/useProd
 import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useToast } from '@/shared/ui';
-import type { ProductWithImages } from '@/shared/contracts/products';
+import type { ProductWithImages, ProductFilters } from '@/shared/contracts/products';
 
 export type RowSelectionState = Record<string, boolean>;
 
@@ -53,7 +51,7 @@ export function useProductListSelection({
     setRowSelection(newSelection);
   }, [data, rowSelection]);
 
-  const handleSelectAllGlobal = useCallback(async (filters: any) => {
+  const handleSelectAllGlobal = useCallback(async (filters: ProductFilters) => {
     setLoadingGlobalSelection(true);
     try {
       const allProducts = await queryClient.fetchQuery({

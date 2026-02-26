@@ -135,6 +135,7 @@ describe('Notes page UI', () => {
       http.get('/api/settings', () => HttpResponse.json([])),
       http.get('/api/notes/categories', () => HttpResponse.json([])),
       http.post('/api/client-errors', () => HttpResponse.json({ success: true })),
+      http.post('/api/query-telemetry', () => HttpResponse.json({ success: true })),
       http.get('/api/notes/tags', () => HttpResponse.json(tags)),
       http.get('/api/notes/themes', () => HttpResponse.json([])),
       http.get('/api/ai-paths/trigger-buttons', () => HttpResponse.json([])),

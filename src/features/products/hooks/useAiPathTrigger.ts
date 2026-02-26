@@ -203,9 +203,7 @@ export function useAiPathTrigger(): {
 
       toast(`Running AI Path: ${selectedConfig.name}`, { variant: 'success' });
 
-      const nodes: AiNode[] = normalizeNodes(
-        (selectedConfig.nodes as AiNode[]) ?? []
-      );
+      const nodes: AiNode[] = normalizeNodes(selectedConfig.nodes ?? []);
       const edges: Edge[] = sanitizeEdges(
         nodes,
         Array.isArray(selectedConfig.edges) ? selectedConfig.edges : []

@@ -1114,6 +1114,21 @@ export const productValidationInstanceScopeSchema = z.enum([
 export type ProductValidationInstanceScopeDto = z.infer<typeof productValidationInstanceScopeSchema>;
 export type ProductValidationInstanceScope = ProductValidationInstanceScopeDto;
 
+export type ProductValidationDenyIssueInput = {
+  fieldName: string;
+  patternId: string;
+  message?: string | null;
+  replacementValue?: string | null;
+};
+
+export type ProductValidationAcceptIssueInput = {
+  fieldName: string;
+  patternId: string;
+  postAcceptBehavior: ProductValidationPostAcceptBehavior;
+  message?: string | null;
+  replacementValue?: string | null;
+};
+
 export const productValidationPatternSchema = dtoBaseSchema.extend({
   label: z.string(),
   target: productValidationTargetSchema,

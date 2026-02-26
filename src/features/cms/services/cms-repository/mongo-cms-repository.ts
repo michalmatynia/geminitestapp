@@ -233,7 +233,13 @@ export const mongoCmsRepository: CmsRepository = {
     ]);
 
     if (!result) return null;
-    return mapPageDocumentToPage(result, slugLinks);
+
+    const slugIds = slugLinks.map((link) => link.slugId);
+    const slugDocs = slugIds.length > 0 
+      ? await db.collection<SlugDocument>(slugsCollection).find({ id: { $in: slugIds } }).toArray()
+      : [];
+
+    return mapPageDocumentToPage(result, slugDocs);
   },
 
   async deletePage(id: string): Promise<Page | null> {

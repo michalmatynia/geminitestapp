@@ -4,7 +4,6 @@ import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAiPathsSettingsQuery } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
-import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type {
   AiPathsValidationConfig,
   AiPathsValidationRule,
@@ -329,8 +328,8 @@ export function useAdminAiPathsValidationState() {
   const validationReport = useMemo(() => {
     if (!selectedPathConfig) return null;
     return evaluateAiPathsValidationPreflight({
-      nodes: (selectedPathConfig.nodes as AiNode[]) ?? [],
-      edges: (selectedPathConfig.edges as Edge[]) ?? [],
+      nodes: selectedPathConfig.nodes ?? [],
+      edges: selectedPathConfig.edges ?? [],
       config: validationDraft,
     });
   }, [selectedPathConfig, validationDraft]);

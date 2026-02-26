@@ -30,12 +30,12 @@ const ENTITY_MAP: Record<string, string> = {
   '&lt;': '<',
   '&gt;': '>',
   '&quot;': '"',
-  '&apos;': "'",
-  '&#39;': "'",
+  '&apos;': '\'',
+  '&#39;': '\'',
 };
 
 const decodeHtmlEntity = (value: string): string => {
-  if (!value || !value.includes('&')) return value;
+  if (!value?.includes('&')) return value;
   
   // Fast path for common entities
   let result = value.replace(/&[a-z0-9#]+;/gi, (match) => ENTITY_MAP[match.toLowerCase()] || match);

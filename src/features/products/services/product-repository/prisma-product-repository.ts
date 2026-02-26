@@ -201,7 +201,19 @@ const createTransactionalRepository = (
       }
     }
 
-    const { categoryId: _cat, id, ...rest } = data;
+    const {
+      categoryId: _cat,
+      catalogIds: _cats,
+      tagIds: _tags,
+      producerIds: _prods,
+      noteIds: _notes,
+      imageFileIds: _imgs,
+      studioProjectId: _studio,
+      imageLinks: _links,
+      imageBase64s: _base64,
+      id,
+      ...rest
+    } = data;
     const normalizedParameters =
       rest.parameters !== undefined
         ? normalizeProductParameterValues(rest.parameters)
@@ -267,7 +279,19 @@ const createTransactionalRepository = (
     const productExists = await tx.product.findUnique({ where: { id } });
     if (!productExists) return null;
 
-    const { categoryId: _cat, id: _id, ...rest } = data;
+    const {
+      categoryId: _cat,
+      catalogIds: _cats,
+      tagIds: _tags,
+      producerIds: _prods,
+      noteIds: _notes,
+      imageFileIds: _imgs,
+      studioProjectId: _studio,
+      imageLinks: _links,
+      imageBase64s: _base64,
+      id: _id,
+      ...rest
+    } = data;
     const normalizedParameters =
       rest.parameters !== undefined
         ? normalizeProductParameterValues(rest.parameters)

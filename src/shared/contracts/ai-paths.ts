@@ -544,7 +544,7 @@ export const dbNodePresetSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  config: z.any(), // databaseConfigSchema
+  config: z.any(),
   createdAt: z.string(),
   updatedAt: z.string(),
 });
@@ -584,6 +584,7 @@ export type AiPathRunEventListOptionsDto = z.infer<typeof aiPathRunEventListOpti
 export type AiPathRunEventListOptions = AiPathRunEventListOptionsDto;
 
 export const aiPathRunListOptionsSchema = z.object({
+  id: z.string().optional(),
   userId: z.string().nullable().optional(),
   pathId: z.string().optional(),
   nodeId: z.string().optional(),

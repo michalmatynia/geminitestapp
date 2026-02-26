@@ -27,7 +27,11 @@ type CenterTooltipContent = {
 
 type GenerationToolbarCenterSectionProps = {
   analysisPlanAvailable: boolean;
-  analysisPlanMatchesWorkingSlot: boolean;
+  analysisPlanIsStale: boolean;
+  analysisPlanSlotMissing: boolean;
+  analysisPlanWillSwitchSlot: boolean;
+  analysisPlanSwitchSlotLabel: string;
+  slotSelectionLocked: boolean;
   analysisSummaryData: ImageStudioAnalysisSummaryChipData | null;
   analysisSummaryIsStale: boolean;
   analysisConfigMismatchMessage: string | null;
@@ -59,7 +63,11 @@ type GenerationToolbarCenterSectionProps = {
 
 export function GenerationToolbarCenterSection({
   analysisPlanAvailable,
-  analysisPlanMatchesWorkingSlot,
+  analysisPlanIsStale,
+  analysisPlanSlotMissing,
+  analysisPlanWillSwitchSlot,
+  analysisPlanSwitchSlotLabel,
+  slotSelectionLocked,
   analysisSummaryData,
   analysisSummaryIsStale,
   analysisConfigMismatchMessage,
@@ -118,6 +126,16 @@ export function GenerationToolbarCenterSection({
     );
   };
 
+  const analysisPlanDisabledReason = !analysisPlanAvailable
+    ? 'Run analysis first to create a reusable plan'
+    : slotSelectionLocked
+      ? 'Cannot apply while slot selection is locked'
+      : analysisPlanSlotMissing
+        ? 'Analyzed slot no longer exists'
+        : analysisPlanIsStale
+          ? 'Latest analysis plan is stale for the current slot image'
+          : null;
+
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>
       <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Center</div>
@@ -132,6 +150,11 @@ export function GenerationToolbarCenterSection({
       {analysisConfigMismatchMessage ? (
         <div className='mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-100'>
           {analysisConfigMismatchMessage}
+        </div>
+      ) : null}
+      {analysisPlanWillSwitchSlot ? (
+        <div className='mb-2 rounded border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10px] text-sky-100'>
+          Use Analysis Plan will switch to analyzed slot{analysisPlanSwitchSlotLabel ? `: ${analysisPlanSwitchSlotLabel}` : ''}.
         </div>
       ) : null}
       <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
@@ -396,10 +419,12 @@ export function GenerationToolbarCenterSection({
           type='button'
           variant='outline'
           onClick={onApplyAnalysisPlan}
-          disabled={!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || centerBusy}
-          title={analysisPlanMatchesWorkingSlot
-            ? 'Apply latest analysis plan to object layout controls'
-            : 'Latest analysis plan is stale or for a different slot'}
+          disabled={Boolean(analysisPlanDisabledReason) || centerBusy}
+          title={
+            analysisPlanDisabledReason
+              ? analysisPlanDisabledReason
+              : 'Apply latest analysis plan to object layout controls'
+          }
         >
           Use Analysis Plan
         </Button>

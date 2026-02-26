@@ -231,6 +231,19 @@ export function GenerationToolbarInner(): React.JSX.Element {
   );
 
   const hasSourceImage = Boolean(workingSlot);
+  const analysisPlanSlotId = state.analysisPlanSnapshot?.slotId?.trim() ?? '';
+  const analysisPlanSlotRecord =
+    analysisPlanSlotId === ''
+      ? null
+      : state.slots.find((slot) => (slot.id ?? '').trim() === analysisPlanSlotId) ?? null;
+  const analysisPlanSlotMissing =
+    state.analysisPlanAvailable && analysisPlanSlotId !== '' && !analysisPlanSlotRecord;
+  const analysisPlanWillSwitchSlot =
+    state.analysisPlanAvailable &&
+    Boolean(analysisPlanSlotRecord) &&
+    !state.analysisPlanMatchesWorkingSlot;
+  const analysisPlanSwitchSlotLabel =
+    analysisPlanSlotRecord?.name?.trim() || analysisPlanSlotId;
   const cropTooltipsEnabled = studioSettings.helpTooltips.cropButtonsEnabled;
   const cropTooltipContent = useMemo(
     () => ({
@@ -378,7 +391,11 @@ export function GenerationToolbarInner(): React.JSX.Element {
 
       <GenerationToolbarCenterSection
         analysisPlanAvailable={state.analysisPlanAvailable}
-        analysisPlanMatchesWorkingSlot={state.analysisPlanMatchesWorkingSlot}
+        analysisPlanIsStale={state.analysisPlanIsStale}
+        analysisPlanSlotMissing={analysisPlanSlotMissing}
+        analysisPlanWillSwitchSlot={analysisPlanWillSwitchSlot}
+        analysisPlanSwitchSlotLabel={analysisPlanSwitchSlotLabel}
+        slotSelectionLocked={state.slotSelectionLocked}
         analysisSummaryData={state.analysisSummaryData}
         analysisSummaryIsStale={state.analysisPlanIsStale}
         analysisConfigMismatchMessage={state.centerAnalysisConfigMismatchMessage}
@@ -459,7 +476,11 @@ export function GenerationToolbarInner(): React.JSX.Element {
 
       <GenerationToolbarAutoScalerSection
         analysisPlanAvailable={state.analysisPlanAvailable}
-        analysisPlanMatchesWorkingSlot={state.analysisPlanMatchesWorkingSlot}
+        analysisPlanIsStale={state.analysisPlanIsStale}
+        analysisPlanSlotMissing={analysisPlanSlotMissing}
+        analysisPlanWillSwitchSlot={analysisPlanWillSwitchSlot}
+        analysisPlanSwitchSlotLabel={analysisPlanSwitchSlotLabel}
+        slotSelectionLocked={state.slotSelectionLocked}
         analysisSummaryData={state.analysisSummaryData}
         analysisSummaryIsStale={state.analysisPlanIsStale}
         analysisConfigMismatchMessage={state.autoScaleAnalysisConfigMismatchMessage}
@@ -476,6 +497,16 @@ export function GenerationToolbarInner(): React.JSX.Element {
         }}
         onApplyAnalysisPlan={handleApplyAnalysisPlanToAutoScaler}
         onCancelAutoScale={handleCancelAutoScale}
+        onOpenSharedDetectionSettings={() => {
+          state.setCenterLayoutAdvancedEnabled(true);
+          const preferredCenterMode =
+            state.centerMode === 'client_alpha_bbox' || state.centerMode === 'client_object_layout_v1'
+              ? 'client_object_layout_v1'
+              : 'server_object_layout_v1';
+          if (state.centerMode !== preferredCenterMode) {
+            state.setCenterMode(preferredCenterMode);
+          }
+        }}
         onToggleAutoScaleLayoutSplitAxes={() => {
           state.setAutoScaleLayoutSplitAxes(!state.autoScaleLayoutSplitAxes);
         }}

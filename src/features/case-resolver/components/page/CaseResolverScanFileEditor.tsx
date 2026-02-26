@@ -578,7 +578,7 @@ export function CaseResolverScanFileEditor(): React.JSX.Element | null {
               entries={draft.documentHistory ?? []}
               formatTimestamp={formatHistoryTimestamp}
               onRestore={handleUseHistoryEntry}
-              isRestoreDisabled={isEditingDocumentLocked}
+              isRestoreDisabled={!!isEditingDocumentLocked}
             />
           </TabsContent>
 

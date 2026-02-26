@@ -46,7 +46,6 @@ const readBrainSettingValue = async (key: string): Promise<string | null> => {
   }
 
   const provider = await getAppDbProvider().catch(() => null);
-  let value: string | null = null;
 
   const tryPrisma = async () => {
     try { return await readPrismaSettingValue(key); } catch { return null; }
@@ -55,11 +54,10 @@ const readBrainSettingValue = async (key: string): Promise<string | null> => {
     try { return await readMongoSettingValue(key); } catch { return null; }
   };
 
-  if (provider === 'mongodb') {
-    value = await tryMongo() || await tryPrisma();
-  } else {
-    value = await tryPrisma() || await tryMongo();
-  }
+  const value =
+    provider === 'mongodb'
+      ? (await tryMongo()) || (await tryPrisma())
+      : (await tryPrisma()) || (await tryMongo());
 
   if (key === AI_BRAIN_SETTINGS_KEY) {
     cachedBrainSettingsValue = value;

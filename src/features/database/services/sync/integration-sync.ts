@@ -185,10 +185,9 @@ export const syncProductListings: SyncHandler = async ({ mongo, prisma, normaliz
       inventoryId: (doc as { inventoryId?: string | null }).inventoryId ?? null,
       status: (doc as { status?: string }).status ?? 'pending',
       listedAt: toDate((doc as { listedAt?: Date | string | null }).listedAt),
-      exportHistory: toJsonValue((doc as { exportHistory?: unknown }).exportHistory ?? null),
+      exportHistory: toJsonValue((doc as { exportHistory?: unknown }).exportHistory ?? null) as Prisma.InputJsonValue,
       createdAt: (doc as { createdAt?: Date }).createdAt ?? new Date(),
-      updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),
-    };
+      updatedAt: (doc as { updatedAt?: Date }).updatedAt ?? new Date(),    };
   });
   const deleted = await prisma.productListing.deleteMany();
   const created = data.length ? await prisma.productListing.createMany({ data }) : { count: 0 };

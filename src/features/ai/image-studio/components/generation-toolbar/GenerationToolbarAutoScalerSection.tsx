@@ -25,7 +25,11 @@ type AutoScaleTooltipContent = {
 
 type GenerationToolbarAutoScalerSectionProps = {
   analysisPlanAvailable: boolean;
-  analysisPlanMatchesWorkingSlot: boolean;
+  analysisPlanIsStale: boolean;
+  analysisPlanSlotMissing: boolean;
+  analysisPlanWillSwitchSlot: boolean;
+  analysisPlanSwitchSlotLabel: string;
+  slotSelectionLocked: boolean;
   analysisSummaryData: ImageStudioAnalysisSummaryChipData | null;
   analysisSummaryIsStale: boolean;
   analysisConfigMismatchMessage: string | null;
@@ -39,12 +43,17 @@ type GenerationToolbarAutoScalerSectionProps = {
   onAutoScale: () => void;
   onApplyAnalysisPlan: () => void;
   onCancelAutoScale: () => void;
+  onOpenSharedDetectionSettings: () => void;
   onToggleAutoScaleLayoutSplitAxes: () => void;
 };
 
 export function GenerationToolbarAutoScalerSection({
   analysisPlanAvailable,
-  analysisPlanMatchesWorkingSlot,
+  analysisPlanIsStale,
+  analysisPlanSlotMissing,
+  analysisPlanWillSwitchSlot,
+  analysisPlanSwitchSlotLabel,
+  slotSelectionLocked,
   analysisSummaryData,
   analysisSummaryIsStale,
   analysisConfigMismatchMessage,
@@ -58,6 +67,7 @@ export function GenerationToolbarAutoScalerSection({
   onAutoScale,
   onApplyAnalysisPlan,
   onCancelAutoScale,
+  onOpenSharedDetectionSettings,
   onToggleAutoScaleLayoutSplitAxes,
 }: GenerationToolbarAutoScalerSectionProps): React.JSX.Element {
   const {
@@ -85,6 +95,16 @@ export function GenerationToolbarAutoScalerSection({
     );
   };
 
+  const analysisPlanDisabledReason = !analysisPlanAvailable
+    ? 'Run analysis first to create a reusable plan'
+    : slotSelectionLocked
+      ? 'Cannot apply while slot selection is locked'
+      : analysisPlanSlotMissing
+        ? 'Analyzed slot no longer exists'
+        : analysisPlanIsStale
+          ? 'Latest analysis plan is stale for the current slot image'
+          : null;
+
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>
       <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>Auto Scaler</div>
@@ -99,6 +119,11 @@ export function GenerationToolbarAutoScalerSection({
       {analysisConfigMismatchMessage ? (
         <div className='mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-100'>
           {analysisConfigMismatchMessage}
+        </div>
+      ) : null}
+      {analysisPlanWillSwitchSlot ? (
+        <div className='mb-2 rounded border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10px] text-sky-100'>
+          Use Analysis Plan will switch to analyzed slot{analysisPlanSwitchSlotLabel ? `: ${analysisPlanSwitchSlotLabel}` : ''}.
         </div>
       ) : null}
       <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
@@ -144,6 +169,17 @@ export function GenerationToolbarAutoScalerSection({
         )}
         <div className='text-[10px] text-gray-500'>
           Detection mode and thresholds follow Object Layout advanced settings.
+        </div>
+        <div>
+          <Button
+            size='xs'
+            type='button'
+            variant='outline'
+            onClick={onOpenSharedDetectionSettings}
+            title='Open Object Layout advanced settings used by Auto Scaler detection'
+          >
+            Edit Shared Detection Settings
+          </Button>
         </div>
       </div>
       <div className='mt-2 space-y-2'>
@@ -242,10 +278,12 @@ export function GenerationToolbarAutoScalerSection({
           type='button'
           variant='outline'
           onClick={onApplyAnalysisPlan}
-          disabled={!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || autoScaleBusy}
-          title={analysisPlanMatchesWorkingSlot
-            ? 'Apply latest analysis plan to auto scaler controls'
-            : 'Latest analysis plan is stale or for a different slot'}
+          disabled={Boolean(analysisPlanDisabledReason) || autoScaleBusy}
+          title={
+            analysisPlanDisabledReason
+              ? analysisPlanDisabledReason
+              : 'Apply latest analysis plan to auto scaler controls'
+          }
         >
           Use Analysis Plan
         </Button>

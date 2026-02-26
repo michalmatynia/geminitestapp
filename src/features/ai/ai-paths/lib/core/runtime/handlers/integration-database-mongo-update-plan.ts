@@ -21,6 +21,7 @@ import {
   createWriteTemplateGuardrailOutput,
   resolveWriteTemplateGuardrail,
 } from './integration-database-write-guardrails';
+import { resolveDatabaseUpdateMappings } from './integration-database-update-mapping-resolution';
 
 export type MongoUpdatePlan = {
   resolvedFilter: Record<string, unknown>;
@@ -64,7 +65,7 @@ export async function buildMongoUpdatePlan({
   reportAiPathsError,
   toast,
   resolvedInputs,
-  nodeInputPorts: _nodeInputPorts,
+  nodeInputPorts,
   dbConfig,
   queryConfig,
   collection,
@@ -76,14 +77,15 @@ export async function buildMongoUpdatePlan({
   ensureExistingParameterTemplateContext,
   aiPrompt,
 }: BuildMongoUpdatePlanInput): Promise<BuildMongoUpdatePlanResult> {
-  const updatePayloadMode = dbConfig.updatePayloadMode ?? 'custom';
+  const updatePayloadMode = dbConfig.updatePayloadMode ?? (dbConfig.mappings?.length ? 'mapping' : 'custom');
   const currentValueRaw: unknown = templateInputs['value'] ?? templateInputs['jobId'] ?? '';
   const currentValue = Array.isArray(currentValueRaw)
     ? (currentValueRaw as unknown[])[0]
     : currentValueRaw;
-  if (updatePayloadMode !== 'custom') {
+  
+  if (updatePayloadMode !== 'custom' && updatePayloadMode !== 'mapping' && (updatePayloadMode as string) !== 'mongo') {
     const error =
-      'Mapping-based update mode is disabled. Configure explicit filter and update document.';
+      'Unsupported update mode. Configure explicit filter and update document or use mappings.';
     reportAiPathsError(
       new Error(error),
       {
@@ -102,7 +104,7 @@ export async function buildMongoUpdatePlan({
           guardrail: 'update-mode-explicit-only',
         },
         debugPayload: {
-          mode: 'mongo',
+          mode: updatePayloadMode,
           guardrail: 'update-mode-explicit-only',
         },
         aiPrompt,
@@ -115,6 +117,122 @@ export async function buildMongoUpdatePlan({
     queryTemplate: queryConfig.queryTemplate,
     parseJsonTemplate,
   });
+  
+  const parameterTargetPath =
+    normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
+    'parameters';
+
+  let updates: Record<string, unknown>;
+  let updateDoc: unknown;
+
+  if (updatePayloadMode === 'mapping') {
+    const mappingResult = resolveDatabaseUpdateMappings({
+      dbConfig,
+      nodeInputPorts,
+      resolvedInputs,
+      parameterTargetPath,
+    });
+    updates = mappingResult.updates;
+    updateDoc = { $set: updates };
+  } else {
+    if (!updateTemplate.trim()) {
+      const error = 'No explicit update document provided.';
+      reportAiPathsError(
+        new Error(error),
+        {
+          action: 'dbUpdateGuardrail',
+          nodeId: node.id,
+          guardrail: 'missing_update_template',
+        },
+        'Database update blocked:',
+      );
+      toast(error, { variant: 'error' });
+      return {
+        output: {
+          result: null,
+          bundle: {
+            error,
+            guardrail: 'missing-update-template',
+          },
+          debugPayload: {
+            mode: 'custom',
+            updateStrategy: dbConfig.updateStrategy ?? 'one',
+            collection,
+            filter: resolvedFilter,
+          },
+          aiPrompt,
+        },
+      };
+    }
+
+    const templateGuardrail = resolveWriteTemplateGuardrail({
+      templates: [
+        {
+          name: 'queryTemplate',
+          template: queryConfig.queryTemplate ?? '',
+        },
+        {
+          name: 'updateTemplate',
+          template: updateTemplate,
+        },
+      ],
+      templateContext: templateInputs,
+      currentValue,
+    });
+    if (!templateGuardrail.ok) {
+      const errorMessage = templateGuardrail.message;
+      reportAiPathsError(
+        new Error(errorMessage),
+        {
+          action: 'dbUpdateTemplate',
+          nodeId: node.id,
+          guardrailMeta: templateGuardrail.guardrailMeta,
+        },
+        'Database update blocked:'
+      );
+      toast(errorMessage, { variant: 'error' });
+      return {
+        output: createWriteTemplateGuardrailOutput({
+          aiPrompt,
+          message: errorMessage,
+          guardrailMeta: templateGuardrail.guardrailMeta,
+        }),
+      };
+    }
+
+    const parsedUpdate: unknown = parseJsonTemplate(updateTemplate);
+    if (
+      !parsedUpdate ||
+      (typeof parsedUpdate !== 'object' && !Array.isArray(parsedUpdate))
+    ) {
+      toast('Update template must be valid JSON.', { variant: 'error' });
+      return {
+        output: {
+          result: null,
+          bundle: { error: 'Invalid update template' },
+          debugPayload: {
+            mode: 'custom',
+            collection,
+            filter: resolvedFilter,
+          },
+          aiPrompt,
+        }
+      };
+    }
+    updateDoc = parsedUpdate;
+    
+    const extractUpdates = (value: unknown): Record<string, unknown> => {
+      const record = toRecord(value);
+      if (!record) return {};
+      const setRecord = toRecord(record['$set']);
+      if (setRecord) return setRecord;
+      const hasOperator = Object.keys(record).some((key: string): boolean => key.startsWith('$'));
+      if (hasOperator) return {};
+      return record;
+    };
+    updates = extractUpdates(updateDoc);
+  }
+
   const debugPayload: Record<string, unknown> = buildMongoUpdateDebugPayload({
     actionCategory,
     action,
@@ -124,72 +242,6 @@ export async function buildMongoUpdatePlan({
     idType,
     resolvedInputs,
   });
-  const parameterTargetPath =
-    normalizeNonEmptyString(dbConfig.parameterInferenceGuard?.targetPath) ??
-    'parameters';
-
-  if (!updateTemplate.trim()) {
-    const error = 'No explicit update document provided.';
-    reportAiPathsError(
-      new Error(error),
-      {
-        action: 'dbUpdateGuardrail',
-        nodeId: node.id,
-        guardrail: 'missing_update_template',
-      },
-      'Database update blocked:'
-    );
-    toast(error, { variant: 'error' });
-    return {
-      output: {
-        result: null,
-        bundle: {
-          error,
-          guardrail: 'missing-update-template',
-        },
-        debugPayload: {
-          ...debugPayload,
-          guardrail: 'missing-update-template',
-        },
-        aiPrompt,
-      },
-    };
-  }
-
-  const templateGuardrail = resolveWriteTemplateGuardrail({
-    templates: [
-      {
-        name: 'queryTemplate',
-        template: queryConfig.queryTemplate ?? '',
-      },
-      {
-        name: 'updateTemplate',
-        template: updateTemplate,
-      },
-    ],
-    templateContext: templateInputs,
-    currentValue,
-  });
-  if (!templateGuardrail.ok) {
-    const errorMessage = templateGuardrail.message;
-    reportAiPathsError(
-      new Error(errorMessage),
-      {
-        action: 'dbUpdateTemplate',
-        nodeId: node.id,
-        guardrailMeta: templateGuardrail.guardrailMeta,
-      },
-      'Database update blocked:'
-    );
-    toast(errorMessage, { variant: 'error' });
-    return {
-      output: createWriteTemplateGuardrailOutput({
-        aiPrompt,
-        message: errorMessage,
-        guardrailMeta: templateGuardrail.guardrailMeta,
-      }),
-    };
-  }
 
   if (!resolvedFilter || Object.keys(resolvedFilter).length === 0) {
     const error = 'No explicit update filter provided.';
@@ -219,140 +271,6 @@ export async function buildMongoUpdatePlan({
     };
   }
 
-  const parsedUpdate: unknown = updateTemplate ? parseJsonTemplate(updateTemplate) : null;
-  if (
-    updateTemplate &&
-  (!parsedUpdate ||
-    (typeof parsedUpdate !== 'object' && !Array.isArray(parsedUpdate)))
-  ) {
-    toast('Update template must be valid JSON.', { variant: 'error' });
-    return {
-      output: {
-        result: null,
-        bundle: { error: 'Invalid update template' },
-        debugPayload,
-        aiPrompt,
-      }
-    };
-  }
-  const updateDocCandidate: unknown = parsedUpdate;
-  if (
-    !updateDocCandidate ||
-  (typeof updateDocCandidate !== 'object' && !Array.isArray(updateDocCandidate))
-  ) {
-    toast('Update document is missing or invalid.', { variant: 'error' });
-    return {
-      output: {
-        result: null,
-        bundle: { error: 'Invalid update' },
-        debugPayload,
-        aiPrompt,
-      }
-    };
-  }
-  let updateDoc: unknown = updateDocCandidate;
-
-  if (
-    !Array.isArray(updateDoc) &&
-  typeof updateDoc === 'object' &&
-  Object.keys(updateDoc as Record<string, unknown>).length === 0
-  ) {
-    toast('Update document is empty.', { variant: 'error' });
-    return {
-      output: {
-        result: null,
-        bundle: { error: 'Empty update' },
-        debugPayload,
-        aiPrompt,
-      }
-    };
-  }
-
-  const extractUpdates = (value: unknown): Record<string, unknown> => {
-    const record = toRecord(value);
-    if (!record) return {};
-    const setRecord = toRecord(record['$set']);
-    if (setRecord) return setRecord;
-    const hasOperator = Object.keys(record).some((key: string): boolean => key.startsWith('$'));
-    if (hasOperator) return {};
-    return record;
-  };
-  const patchTargetPathInUpdateDoc = (
-    value: unknown,
-    targetPath: string,
-    nextUpdates: Record<string, unknown>
-  ): unknown => {
-    const record = toRecord(value);
-    if (!record) return value;
-    const hasTarget = Object.prototype.hasOwnProperty.call(
-      nextUpdates,
-      targetPath
-    );
-    const nextTargetValue = nextUpdates[targetPath];
-    const setRecord = toRecord(record['$set']);
-    if (setRecord) {
-      const nextSet: Record<string, unknown> = { ...setRecord };
-      if (hasTarget) {
-        nextSet[targetPath] = nextTargetValue;
-      } else {
-        delete nextSet[targetPath];
-      }
-      return {
-        ...record,
-        $set: nextSet,
-      };
-    }
-    const hasOperator = Object.keys(record).some((key: string): boolean =>
-      key.startsWith('$')
-    );
-    if (hasOperator) return value;
-    const nextRecord: Record<string, unknown> = { ...record };
-    if (hasTarget) {
-      nextRecord[targetPath] = nextTargetValue;
-    } else {
-      delete nextRecord[targetPath];
-    }
-    return nextRecord;
-  };
-  const isEmptyCustomUpdateDoc = (value: unknown): boolean => {
-    const record = toRecord(value);
-    if (!record) return true;
-    const keys = Object.keys(record);
-    if (keys.length === 0) return true;
-    const operatorKeys = keys.filter((key: string): boolean =>
-      key.startsWith('$')
-    );
-    if (operatorKeys.length === 0) {
-      return keys.length === 0;
-    }
-    if (operatorKeys.length === 1 && operatorKeys[0] === '$set') {
-      const setRecord = toRecord(record['$set']);
-      return !setRecord || Object.keys(setRecord).length === 0;
-    }
-    return false;
-  };
-  const setParameterInferenceDebug = (meta: Record<string, unknown>): void => {
-    const existingMeta = toRecord(debugPayload['parameterInferenceGuard']) ?? {};
-    debugPayload['parameterInferenceGuard'] = {
-      ...existingMeta,
-      ...meta,
-    };
-  };
-  const setParameterInferenceWritePlanDebug = (
-    writePlanMeta: Record<string, unknown>
-  ): void => {
-    const existingMeta = toRecord(debugPayload['parameterInferenceGuard']) ?? {};
-    const existingWritePlan = toRecord(existingMeta['writePlan']) ?? {};
-    debugPayload['parameterInferenceGuard'] = {
-      ...existingMeta,
-      writePlan: {
-        ...existingWritePlan,
-        ...writePlanMeta,
-      },
-    };
-  };
-
-  let updates = extractUpdates(updateDoc);
   let primaryTarget = Object.keys(updates)[0] ?? 'content_en';
 
   if (dbConfig.parameterInferenceGuard?.enabled) {
@@ -364,7 +282,8 @@ export async function buildMongoUpdatePlan({
       templateInputs,
     });
     if (guardResult.applied && guardResult.meta) {
-      setParameterInferenceDebug(guardResult.meta);
+      const existingMeta = toRecord(debugPayload['parameterInferenceGuard']) ?? {};
+      debugPayload['parameterInferenceGuard'] = { ...existingMeta, ...guardResult.meta };
       updates = guardResult.updates;
     }
     if (guardResult.blocked) {
@@ -397,13 +316,72 @@ export async function buildMongoUpdatePlan({
     if (materializeResult.applied) {
       updates = materializeResult.updates;
       if (materializeResult.meta) {
-        setParameterInferenceWritePlanDebug(materializeResult.meta);
+        const existingMeta = toRecord(debugPayload['parameterInferenceGuard']) ?? {};
+        const existingWritePlan = toRecord(existingMeta['writePlan']) ?? {};
+        debugPayload['parameterInferenceGuard'] = {
+          ...existingMeta,
+          writePlan: {
+            ...existingWritePlan,
+            ...materializeResult.meta,
+          },
+        };
       }
     }
 
-    updateDoc = patchTargetPathInUpdateDoc(updateDoc, parameterTargetPath, updates);
-    updates = extractUpdates(updateDoc);
+    // Patch updateDoc if it was custom
+    if (updatePayloadMode !== 'mapping') {
+      const patchTargetPathInUpdateDoc = (
+        value: unknown,
+        targetPath: string,
+        nextUpdates: Record<string, unknown>
+      ): unknown => {
+        const record = toRecord(value);
+        if (!record) return value;
+        const hasTarget = Object.prototype.hasOwnProperty.call(
+          nextUpdates,
+          targetPath
+        );
+        const nextTargetValue = nextUpdates[targetPath];
+        const setRecord = toRecord(record['$set']);
+        if (setRecord) {
+          const nextSet: Record<string, unknown> = { ...setRecord };
+          if (hasTarget) {
+            nextSet[targetPath] = nextTargetValue;
+          } else {
+            delete nextSet[targetPath];
+          }
+          return { ...record, $set: nextSet };
+        }
+        const hasOperator = Object.keys(record).some((key: string): boolean => key.startsWith('$'));
+        if (hasOperator) return value;
+        const nextRecord: Record<string, unknown> = { ...record };
+        if (hasTarget) {
+          nextRecord[targetPath] = nextTargetValue;
+        } else {
+          delete nextRecord[targetPath];
+        }
+        return nextRecord;
+      };
+      updateDoc = patchTargetPathInUpdateDoc(updateDoc, parameterTargetPath, updates);
+    } else {
+      updateDoc = { $set: updates };
+    }
+    
     primaryTarget = Object.keys(updates)[0] ?? 'content_en';
+
+    const isEmptyCustomUpdateDoc = (value: unknown): boolean => {
+      const record = toRecord(value);
+      if (!record) return true;
+      const keys = Object.keys(record);
+      if (keys.length === 0) return true;
+      const operatorKeys = keys.filter((key: string): boolean => key.startsWith('$'));
+      if (operatorKeys.length === 0) return keys.length === 0;
+      if (operatorKeys.length === 1 && operatorKeys[0] === '$set') {
+        const setRecord = toRecord(record['$set']);
+        return !setRecord || Object.keys(setRecord).length === 0;
+      }
+      return false;
+    };
 
     if (isEmptyCustomUpdateDoc(updateDoc)) {
       return {

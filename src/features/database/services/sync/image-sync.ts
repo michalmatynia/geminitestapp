@@ -74,10 +74,9 @@ export const syncImageStudioSlots: SyncHandler = async ({ mongo, prisma, normali
         imageBase64: doc.imageBase64 ?? null,
         asset3dId: resolvedAsset3dId,
         screenshotFileId: resolvedScreenshotFileId,
-        metadata: toJsonValue(doc.metadata ?? null),
+        metadata: toJsonValue(doc.metadata ?? null) as Prisma.InputJsonValue,
         createdAt: toDate(doc.createdAt) ?? new Date(),
-        updatedAt: toDate(doc.updatedAt) ?? new Date(),
-      };
+        updatedAt: toDate(doc.updatedAt) ?? new Date(),      };
     })
     .filter((item): item is Prisma.ImageStudioSlotCreateManyInput => item !== null);
   const deleted = await prisma.imageStudioSlot.deleteMany();

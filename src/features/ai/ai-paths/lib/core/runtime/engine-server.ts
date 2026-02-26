@@ -45,6 +45,7 @@ import {
   handleValidationPattern,
   handleIterator,
   handleRouter,
+  handleSimulation,
   handleLearnerAgent,
   handleTemplate,
   handleFetcher,
@@ -74,6 +75,7 @@ const HANDLERS: Record<string, NodeHandler> = {
   gate: handleGate,
   router: handleRouter,
   iterator: handleIterator,
+  simulation: handleSimulation,
   trigger: handleTrigger,
   viewer: handleViewer,
   bundle: handleBundle,
@@ -113,9 +115,17 @@ export async function evaluateGraphServer(
 
   const mongo = await getMongoClient();
 
+  const customResolveHandler = (type: string): NodeHandler | null => {
+    if (resolvedOptions.resolveHandler) {
+      const handler = resolvedOptions.resolveHandler(type);
+      if (handler) return handler;
+    }
+    return resolveHandler(type);
+  };
+
   return evaluateGraphInternal(nodes, resolvedEdges, {
     ...resolvedOptions,
-    resolveHandler,
+    resolveHandler: customResolveHandler,
     services: {
       prisma,
       mongo,

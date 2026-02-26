@@ -172,7 +172,7 @@ export function useAiPathsSettingsPathActions({
 
   const applyPathConfigState = useCallback(
     (config: PathConfig): void => {
-      const normalized = normalizeNodes(config.nodes as AiNode[]);
+      const normalized = normalizeNodes(config.nodes);
       setNodes(normalized);
       setEdges(sanitizeEdges(normalized, config.edges));
       setPathName(config.name);

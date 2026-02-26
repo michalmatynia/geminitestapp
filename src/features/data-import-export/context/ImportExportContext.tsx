@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
@@ -25,18 +23,16 @@ import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries
 import type {
   ImportResponse,
   Template,
-  TemplateMapping,
-  ImportListItem,
 } from '@/shared/contracts/data-import-export';
 import type { 
   IntegrationConnectionBasic,
   IntegrationWithConnections,
   BaseImportMode,
   ImageRetryPreset,
+  ImportParameterCacheResponse,
 } from '@/shared/contracts/integrations';
 import {
   defaultBaseImportParameterImportSettings,
-  normalizeBaseImportParameterImportSettings,
 } from '@/shared/contracts/integrations';
 import { useToast } from '@/shared/ui';
 
@@ -46,6 +42,7 @@ import type { ImportExportContextType } from './ImportExportContext.types';
 import { useImportExportPreferences } from './import-export/useImportExportPreferences';
 import { useImportExportTemplates } from './import-export/useImportExportTemplates';
 import { useImportExportData } from './import-export/useImportExportData';
+import type { ProductCategory } from '@/shared/contracts/products';
 
 const ImportExportContext = createContext<ImportExportContextType | undefined>(undefined);
 
@@ -103,7 +100,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   [integrationsWithConnectionsData]
   );
   const catalogsQuery = useCatalogs();
-  const catalogsData = useMemo(() => catalogsQuery.data || [], [catalogsQuery.data]);
+  const catalogsData = useMemo<ProductCategory[]>(() => catalogsQuery.data || [], [catalogsQuery.data]);
   const loadingCatalogs = catalogsQuery.isLoading;
   
   const { data: importTemplates = [], isLoading: loadingImportTemplates } = useTemplates('import');
@@ -170,7 +167,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     if (catalogsData.length > 0 && !catalogId && !hasInitializedCatalog.current) {
-      const defaultCatalog = (catalogsData).find((catalog: any) => catalog.isDefault);
+      const defaultCatalog = catalogsData.find((catalog: ProductCategory) => catalog.isDefault);
       if (defaultCatalog) {
         timer = setTimeout(() => {
           setCatalogId(defaultCatalog.id);

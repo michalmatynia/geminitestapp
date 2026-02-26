@@ -20,20 +20,65 @@ vi.mock('@/shared/lib/db/prisma', () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
+    productListing: {
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+      count: vi.fn(),
+    },
+    categoryMapping: {
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+      count: vi.fn(),
+    },
+    externalCategory: {
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+      count: vi.fn(),
+    },
+    producerMapping: {
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+      count: vi.fn(),
+    },
+    externalProducer: {
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+      count: vi.fn(),
+    },
+    tagMapping: {
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+      count: vi.fn(),
+    },
+    externalTag: {
+      deleteMany: vi.fn(),
+      updateMany: vi.fn(),
+      count: vi.fn(),
+    },
+    setting: {
+      findUnique: vi.fn(),
+      upsert: vi.fn(),
+    },
   },
 }));
 
-const { 
-  mockCollection, 
-  mockFind, 
-  mockInsertOne, 
-  mockDeleteOne, 
-  mockFindOneAndUpdate 
+const {
+  mockCollection,
+  mockFind,
+  mockFindOne,
+  mockInsertOne,
+  mockDeleteMany,
+  mockCountDocuments,
+  mockUpdateMany,
+  mockFindOneAndUpdate,
 } = vi.hoisted(() => {
   const mockInsertOne = vi.fn();
   const mockFindOne = vi.fn();
   const mockFind = vi.fn();
   const mockDeleteOne = vi.fn();
+  const mockDeleteMany = vi.fn();
+  const mockCountDocuments = vi.fn();
+  const mockUpdateMany = vi.fn();
   const mockUpdateOne = vi.fn();
   const mockFindOneAndUpdate = vi.fn();
   
@@ -42,19 +87,25 @@ const {
     find: mockFind,
     insertOne: mockInsertOne,
     deleteOne: mockDeleteOne,
+    deleteMany: mockDeleteMany,
+    countDocuments: mockCountDocuments,
+    updateMany: mockUpdateMany,
     updateOne: mockUpdateOne,
     findOneAndUpdate: mockFindOneAndUpdate,
     sort: vi.fn().mockReturnThis(),
     toArray: vi.fn().mockResolvedValue([]),
   }));
-  return { 
-    mockCollection, 
-    mockInsertOne, 
-    mockFindOne, 
-    mockFind, 
-    mockDeleteOne, 
-    mockUpdateOne, 
-    mockFindOneAndUpdate 
+  return {
+    mockCollection,
+    mockInsertOne,
+    mockFindOne,
+    mockFind,
+    mockDeleteOne,
+    mockDeleteMany,
+    mockCountDocuments,
+    mockUpdateMany,
+    mockUpdateOne,
+    mockFindOneAndUpdate,
   };
 });
 
@@ -129,13 +180,89 @@ describe('Integration Repository', () => {
       expect(result.name).toBe('Updated');
     });
 
-    it('deleteConnection calls prisma.integrationConnection.delete', async () => {
+    it('deleteConnection removes dependent records for non-base integrations', async () => {
+      vi.mocked(prisma.integrationConnection.findUnique).mockResolvedValue({
+        id: 'c1',
+        integrationId: 'int-1',
+      } as any);
+      vi.mocked(prisma.integration.findUnique).mockResolvedValue({
+        id: 'int-1',
+        slug: 'allegro',
+      } as any);
+      vi.mocked(prisma.setting.findUnique).mockResolvedValue(null);
       const repo = await getIntegrationRepository();
       await repo.deleteConnection('c1');
 
+      expect(prisma.productListing.deleteMany).toHaveBeenCalledWith({
+        where: { connectionId: 'c1' },
+      });
+      expect(prisma.categoryMapping.deleteMany).toHaveBeenCalledWith({
+        where: { connectionId: 'c1' },
+      });
+      expect(prisma.externalCategory.deleteMany).toHaveBeenCalledWith({
+        where: { connectionId: 'c1' },
+      });
       expect(prisma.integrationConnection.delete).toHaveBeenCalledWith({
         where: { id: 'c1' },
       });
+    });
+
+    it('deleteConnection reassigns base dependencies when replacement exists', async () => {
+      vi.mocked(prisma.integrationConnection.findUnique).mockResolvedValue({
+        id: 'c1',
+        integrationId: 'int-base',
+      } as any);
+      vi.mocked(prisma.integration.findUnique).mockResolvedValue({
+        id: 'int-base',
+        slug: 'baselinker',
+      } as any);
+      vi.mocked(prisma.productListing.count).mockResolvedValue(1 as any);
+      vi.mocked(prisma.categoryMapping.count).mockResolvedValue(0 as any);
+      vi.mocked(prisma.externalCategory.count).mockResolvedValue(0 as any);
+      vi.mocked(prisma.producerMapping.count).mockResolvedValue(0 as any);
+      vi.mocked(prisma.externalProducer.count).mockResolvedValue(0 as any);
+      vi.mocked(prisma.tagMapping.count).mockResolvedValue(0 as any);
+      vi.mocked(prisma.externalTag.count).mockResolvedValue(0 as any);
+      vi.mocked(prisma.integrationConnection.findFirst).mockResolvedValue({
+        id: 'c2',
+      } as any);
+      vi.mocked(prisma.setting.findUnique).mockResolvedValue(null);
+
+      const repo = await getIntegrationRepository();
+      await repo.deleteConnection('c1');
+
+      expect(prisma.productListing.updateMany).toHaveBeenCalledWith({
+        where: { connectionId: 'c1' },
+        data: { connectionId: 'c2' },
+      });
+      expect(prisma.integrationConnection.delete).toHaveBeenCalledWith({
+        where: { id: 'c1' },
+      });
+    });
+
+    it('deleteConnection throws conflict for base connection without replacement', async () => {
+      vi.mocked(prisma.integrationConnection.findUnique).mockResolvedValue({
+        id: 'c1',
+        integrationId: 'int-base',
+      } as any);
+      vi.mocked(prisma.integration.findUnique).mockResolvedValue({
+        id: 'int-base',
+        slug: 'base',
+      } as any);
+      vi.mocked(prisma.productListing.count).mockResolvedValue(2 as any);
+      vi.mocked(prisma.categoryMapping.count).mockResolvedValue(0 as any);
+      vi.mocked(prisma.externalCategory.count).mockResolvedValue(0 as any);
+      vi.mocked(prisma.producerMapping.count).mockResolvedValue(0 as any);
+      vi.mocked(prisma.externalProducer.count).mockResolvedValue(0 as any);
+      vi.mocked(prisma.tagMapping.count).mockResolvedValue(0 as any);
+      vi.mocked(prisma.externalTag.count).mockResolvedValue(0 as any);
+      vi.mocked(prisma.integrationConnection.findFirst).mockResolvedValue(null as any);
+
+      const repo = await getIntegrationRepository();
+      await expect(repo.deleteConnection('c1')).rejects.toThrow(
+        'Deleting this Base.com connection would orphan listing and mapping status links'
+      );
+      expect(prisma.integrationConnection.delete).not.toHaveBeenCalled();
     });
   });
 
@@ -175,6 +302,88 @@ describe('Integration Repository', () => {
       expect(mockInsertOne).toHaveBeenCalled();
     });
 
+    it('listConnections tolerates legacy string timestamps', async () => {
+      const iso = '2026-02-26T21:00:00.000Z';
+      mockFind.mockReturnValue({
+        sort: vi.fn().mockReturnThis(),
+        toArray: vi.fn().mockResolvedValue([
+          {
+            _id: 'c1',
+            integrationId: 'int-1',
+            name: 'Conn 1',
+            username: 'user',
+            password: 'pass',
+            createdAt: iso,
+            updatedAt: iso,
+            baseTokenUpdatedAt: iso,
+          },
+        ]),
+      });
+
+      const repo = await getIntegrationRepository();
+      const result = await repo.listConnections('int-1');
+
+      expect(mockCollection).toHaveBeenCalledWith('integration_connections');
+      expect(result[0]!.id).toBe('c1');
+      expect(result[0]!.createdAt).toBe(iso);
+      expect(result[0]!.baseTokenUpdatedAt).toBe(iso);
+    });
+
+    it('getConnectionById matches both string and ObjectId candidates', async () => {
+      const legacyId = '69a0bd1222b8b6a199060c3c';
+      mockFindOne.mockResolvedValue({
+        _id: legacyId,
+        integrationId: 'int-1',
+        name: 'Conn 1',
+        username: '',
+        password: 'pass',
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      const repo = await getIntegrationRepository();
+      const result = await repo.getConnectionById(legacyId);
+
+      expect(result?.id).toBe(legacyId);
+      expect(mockFindOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          _id: expect.objectContaining({
+            $in: expect.arrayContaining([legacyId]),
+          }),
+        })
+      );
+      const filter = mockFindOne.mock.calls[0]?.[0] as {
+        _id?: { $in?: unknown[] };
+      };
+      expect(filter._id?.$in).toHaveLength(2);
+      expect(String(filter._id?.$in?.[1])).toBe(legacyId);
+    });
+
+    it('updateConnection matches both string and ObjectId candidates', async () => {
+      const legacyId = '69a0bd1222b8b6a199060c3c';
+      mockFindOneAndUpdate.mockResolvedValue({
+        _id: legacyId,
+        integrationId: 'int-1',
+        name: 'Conn Updated',
+        username: '',
+        password: 'pass',
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      const repo = await getIntegrationRepository();
+      await repo.updateConnection(legacyId, {
+        name: 'Conn Updated',
+      } as any);
+
+      const filter = mockFindOneAndUpdate.mock.calls[0]?.[0] as {
+        _id?: { $in?: unknown[] };
+      };
+      expect(filter._id?.$in).toHaveLength(2);
+      expect(filter._id?.$in?.[0]).toBe(legacyId);
+      expect(String(filter._id?.$in?.[1])).toBe(legacyId);
+    });
+
     it('upsertIntegration updates existing in mongo', async () => {
       const existing = { _id: '1', slug: 'int-1', name: 'New', createdAt: now, updatedAt: now };
       mockFindOneAndUpdate.mockResolvedValue(existing);
@@ -187,14 +396,38 @@ describe('Integration Repository', () => {
       expect(result.name).toBe('New');
     });
 
-    it('deleteConnection calls deleteOne in mongo', async () => {
-      mockDeleteOne.mockResolvedValue({ deletedCount: 1 });
+    it('deleteConnection removes related data and connection in mongo', async () => {
+      mockFindOne
+        .mockResolvedValueOnce({
+          _id: 'c1',
+          integrationId: 'int-1',
+          name: 'Conn 1',
+          username: '',
+          password: 'enc',
+          createdAt: now,
+          updatedAt: now,
+        })
+        .mockResolvedValueOnce({
+          _id: 'int-1',
+          slug: 'allegro',
+          name: 'Allegro',
+          createdAt: now,
+          updatedAt: now,
+        })
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce(null);
+      mockDeleteMany.mockResolvedValue({ deletedCount: 1 });
 
       const repo = await getIntegrationRepository();
       await repo.deleteConnection('c1');
 
+      expect(mockCollection).toHaveBeenCalledWith('product_listings');
       expect(mockCollection).toHaveBeenCalledWith('integration_connections');
-      expect(mockDeleteOne).toHaveBeenCalled();
+      expect(mockDeleteMany).toHaveBeenCalledTimes(8);
+      expect(mockDeleteMany).toHaveBeenLastCalledWith({
+        _id: { $in: ['c1'] },
+      });
     });
   });
 });

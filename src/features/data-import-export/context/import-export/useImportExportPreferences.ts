@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useEffect, useRef } from 'react';
@@ -24,12 +22,12 @@ export function useImportExportPreferences({
   setImageRetryPresets,
   setInventoryId,
 }: {
-  lastImportTemplatePref: any;
-  defaultExportInventoryPref: any;
-  defaultConnectionPref: any;
-  exportStockFallbackPref: any;
-  imageRetryPresetsPref: any;
-  sampleProductPref: any;
+  lastImportTemplatePref: { templateId?: string | null } | undefined | null;
+  defaultExportInventoryPref: { inventoryId?: string | null } | undefined | null;
+  defaultConnectionPref: { connectionId?: string | null } | undefined | null;
+  exportStockFallbackPref: { enabled?: boolean } | undefined | null;
+  imageRetryPresetsPref: { presets?: unknown } | undefined | null;
+  sampleProductPref: { inventoryId?: string | null } | undefined | null;
   baseConnections: IntegrationConnectionBasic[];
   setImportTemplateId: (id: string) => void;
   setExportInventoryId: (id: string) => void;

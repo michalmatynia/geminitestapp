@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -334,10 +333,18 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     const isTraderaApiIntegration = isTraderaApiIntegrationSlug(
       activeIntegration.slug
     );
+    const isBaselinkerIntegration = activeIntegration.slug === 'baselinker';
     const isCreateMode =
       !editingConnectionId || editingConnectionId === NEW_CONNECTION_DRAFT_ID;
-    if (!connectionForm.name.trim() || !connectionForm.username.trim()) {
-      toast('Connection name and username are required.', { variant: 'error' });
+    const normalizedName = connectionForm.name.trim();
+    const normalizedUsername = connectionForm.username.trim();
+
+    if (!normalizedName) {
+      toast('Connection name is required.', { variant: 'error' });
+      return;
+    }
+    if (!isBaselinkerIntegration && !normalizedUsername) {
+      toast('Username is required for this integration.', { variant: 'error' });
       return;
     }
     if (isCreateMode && !connectionForm.password.trim()) {
@@ -371,8 +378,8 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       10
     );
     const payload = {
-      name: connectionForm.name.trim(),
-      username: connectionForm.username.trim(),
+      name: normalizedName,
+      username: normalizedUsername,
       ...(normalizedPassword ? { password: normalizedPassword } : {}),
       ...(isTraderaIntegration
         ? {
@@ -502,15 +509,15 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
           : {}),
       }));
 
-      const normalizedSteps = normalizeSteps((payload['steps'] as unknown[]) || []);
+      const normalizedSteps = normalizeSteps((payload.steps as unknown[]) || []);
       if (normalizedSteps.length) setTestLog(normalizedSteps);
 
       const durationMs = Math.round(performance.now() - startedAt);
       let extraInfo = '';
       if (type === 'base/test' && payload['inventoryCount'] !== undefined) {
         extraInfo = `\nInventories found: ${String(payload['inventoryCount'])}`;
-      } else if (type === 'allegro/test' && payload['profile']) {
-        const profile = payload['profile'] as Record<string, unknown>;
+      } else if (type === 'allegro/test' && payload.profile) {
+        const profile = payload.profile as Record<string, unknown>;
         const login = (profile['login'] as string) ?? '';
         const name = (profile['name'] as string) ?? '';
         const identifier = name || login;

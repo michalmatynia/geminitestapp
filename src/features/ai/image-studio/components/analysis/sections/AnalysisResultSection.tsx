@@ -44,15 +44,15 @@ export function AnalysisResultSection({
     ? 'Analysis slot context is missing. Run analysis first.'
     : slotSelectionLocked
       ? 'Slot selection is currently locked by sequencing.'
-    : analysisSourceSignatureMissing
+      : analysisSourceSignatureMissing
         ? 'Analysis plan source metadata is missing. Run analysis again.'
-      : analysisCurrentSourceMetadataMissing
-        ? 'Analyzed slot source metadata is missing. Reselect slot image and rerun analysis.'
-      : analysisPlanIsStale
-        ? 'Analysis plan is stale for the current analyzed slot image.'
-      : !sourceSlotExists
-        ? 'Analyzed slot no longer exists.'
-        : null;
+        : analysisCurrentSourceMetadataMissing
+          ? 'Analyzed slot source metadata is missing. Reselect slot image and rerun analysis.'
+          : analysisPlanIsStale
+            ? 'Analysis plan is stale for the current analyzed slot image.'
+            : !sourceSlotExists
+              ? 'Analyzed slot no longer exists.'
+              : null;
   const applyActions = (
     <div className='flex flex-wrap items-center gap-2'>
       <Button

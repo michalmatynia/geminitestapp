@@ -340,6 +340,12 @@ export function useAiPathsLocalExecutionLogic(args: LocalExecutionArgs) {
               node,
               nodeInputs,
               iteration,
+            }: {
+              runId: string;
+              runStartedAt: string;
+              node: AiNode;
+              nodeInputs: RuntimePortValues;
+              iteration: number;
             }) => {
               args.setNodeStatus({
                 nodeId: node.id,
@@ -385,8 +391,16 @@ export function useAiPathsLocalExecutionLogic(args: LocalExecutionArgs) {
               nextOutputs,
               cached,
               iteration,
+            }: {
+              runId: string;
+              runStartedAt: string;
+              node: AiNode;
+              nodeInputs: RuntimePortValues;
+              nextOutputs: RuntimePortValues;
+              cached?: boolean;
+              iteration: number;
             }) => {
-              const rawStatus = (nextOutputs)?.['status'];
+              const rawStatus = (nextOutputs)['status'] as string | undefined;
               const normalizedStatus =
                 (cached ? 'cached' : args.normalizeNodeStatus(rawStatus)) ?? 'completed';
               const metadata =
@@ -441,6 +455,14 @@ export function useAiPathsLocalExecutionLogic(args: LocalExecutionArgs) {
               prevOutputs,
               error,
               iteration,
+            }: {
+              runId: string;
+              runStartedAt: string;
+              node: AiNode;
+              nodeInputs: RuntimePortValues;
+              prevOutputs: RuntimePortValues | null;
+              error: unknown;
+              iteration: number;
             }) => {
               const message = error instanceof Error ? error.message : String(error);
               args.setNodeStatus({
@@ -463,16 +485,16 @@ export function useAiPathsLocalExecutionLogic(args: LocalExecutionArgs) {
                   runId: callbackRunId,
                   runStartedAt: callbackRunStartedAt,
                   inputs: {
-                    ...prev.inputs,
+                    ...(prev.inputs ?? {}),
                     [node.id]: nodeInputs,
                   },
                   outputs: {
-                    ...prev.outputs,
+                    ...(prev.outputs ?? {}),
                     [node.id]: {
                       ...((prevOutputs ?? {})),
                       status: 'failed',
                       error: message,
-                    },
+                    } as RuntimePortValues,
                   },
                 };
                 args.runtimeStateRef.current = next;

@@ -144,6 +144,21 @@ describe('useIntegrationMutations invalidation', () => {
     });
   });
 
+  it('useDeleteConnection appends replacementConnectionId when provided', async () => {
+    vi.mocked(api.delete).mockResolvedValue({} as never);
+
+    const { result } = renderHook(() => useDeleteConnection(), { wrapper });
+    await result.current.mutateAsync({
+      integrationId: 'int-1',
+      connectionId: 'conn-1',
+      replacementConnectionId: 'conn-2',
+    });
+
+    expect(api.delete).toHaveBeenCalledWith(
+      '/api/integrations/connections/conn-1?replacementConnectionId=conn-2'
+    );
+  });
+
   it('useDisconnectAllegro invalidates connections key', async () => {
     vi.mocked(api.post).mockResolvedValue({} as never);
 

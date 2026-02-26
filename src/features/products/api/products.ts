@@ -27,6 +27,7 @@ export async function getProducts(filters: {
 }, signal?: AbortSignal): Promise<ProductWithImages[]> {
   const options: ApiClientOptions = {
     params: {
+      fresh: 1,
       search: filters.search,
       id: filters.id,
       idMatchMode: filters.idMatchMode,
@@ -138,6 +139,7 @@ export async function getProductsWithCount(
 ): Promise<ProductsPagedResult> {
   const options: ApiClientOptions = {
     params: {
+      fresh: 1,
       search: filters.search,
       id: filters.id,
       idMatchMode: filters.idMatchMode,

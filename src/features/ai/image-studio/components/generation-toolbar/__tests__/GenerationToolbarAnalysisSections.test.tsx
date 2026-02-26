@@ -48,6 +48,92 @@ vi.mock('../GenerationToolbarContext', () => ({
   useGenerationToolbarContext: () => mockToolbarContext,
 }));
 
+const baseCenterProps = (overrides?: Record<string, unknown>) => ({
+  analysisPlanAvailable: true,
+  analysisPlanSourceMetadataMissing: false,
+  analysisWorkingSourceMetadataMissing: false,
+  analysisPlanIsStale: false,
+  analysisPlanSlotMissing: false,
+  analysisPlanWillSwitchSlot: false,
+  analysisPlanSwitchSlotLabel: '',
+  slotSelectionLocked: false,
+  analysisSummaryData: null,
+  analysisSummaryIsStale: false,
+  analysisConfigMismatchMessage: null,
+  analysisBusy: false,
+  analysisBusyLabel: 'Run Analysis',
+  centerBusyLabel: 'Center',
+  centerGuidesEnabled: false,
+  centerLayoutEnabled: true,
+  centerLayoutPreset: 'default:auto',
+  centerLayoutPresetOptions: [{ value: 'default:auto', label: 'Default' }],
+  centerLayoutCanDeletePreset: false,
+  centerLayoutCanSavePreset: false,
+  centerLayoutSavePresetLabel: 'Save',
+  centerLayoutDetectionOptions: [{ value: 'auto', label: 'Auto' }],
+  centerLayoutProjectCanvasSize: null,
+  centerLayoutShadowPolicyOptions: [{ value: 'auto', label: 'Auto' }],
+  centerTooltipContent: {
+    apply: 'Apply',
+    detection: 'Detection',
+    fillMissingCanvasWhite: 'Fill',
+    mode: 'Mode',
+    padding: 'Padding',
+    paddingAxes: 'Axes',
+    shadowPolicy: 'Shadow',
+    thresholds: 'Thresholds',
+  },
+  centerTooltipsEnabled: false,
+  centerModeOptions: [{ value: 'server_object_layout_v1', label: 'Layout Server' }],
+  hasSourceImage: true,
+  onCancelCenter: vi.fn(),
+  onCenterLayoutPresetChange: vi.fn(),
+  onCenterLayoutSavePreset: vi.fn(),
+  onCenterLayoutDeletePreset: vi.fn(),
+  onRunAnalysis: vi.fn(),
+  onCenterObject: vi.fn(),
+  onToggleCenterLayoutAdvanced: vi.fn(),
+  onToggleCenterLayoutSplitAxes: vi.fn(),
+  onToggleCenterGuides: vi.fn(),
+  ...(overrides ?? {}),
+});
+
+const baseAutoScalerProps = (overrides?: Record<string, unknown>) => ({
+  analysisPlanAvailable: true,
+  analysisPlanSourceMetadataMissing: false,
+  analysisWorkingSourceMetadataMissing: false,
+  analysisPlanIsStale: false,
+  analysisPlanSlotMissing: false,
+  analysisPlanWillSwitchSlot: false,
+  analysisPlanSwitchSlotLabel: '',
+  slotSelectionLocked: false,
+  analysisSummaryData: null,
+  analysisSummaryIsStale: false,
+  analysisConfigMismatchMessage: null,
+  analysisBusy: false,
+  analysisBusyLabel: 'Run Analysis',
+  autoScaleBusyLabel: 'Auto Scale',
+  autoScaleLayoutProjectCanvasSize: null,
+  autoScaleShadowPolicyOptions: [{ value: 'auto', label: 'Auto' }],
+  autoScaleTooltipContent: {
+    apply: 'Apply',
+    fillMissingCanvasWhite: 'Fill',
+    mode: 'Mode',
+    padding: 'Padding',
+    paddingAxes: 'Axes',
+    shadowPolicy: 'Shadow',
+  },
+  autoScaleTooltipsEnabled: false,
+  autoScaleModeOptions: [{ value: 'server_auto_scaler_v1', label: 'Server' }],
+  hasSourceImage: true,
+  onAutoScale: vi.fn(),
+  onRunAnalysis: vi.fn(),
+  onCancelAutoScale: vi.fn(),
+  onOpenSharedDetectionSettings: vi.fn(),
+  onToggleAutoScaleLayoutSplitAxes: vi.fn(),
+  ...(overrides ?? {}),
+});
+
 describe('GenerationToolbar analysis integration section UX', () => {
   beforeEach(() => {
     Object.values(mockToolbarContext).forEach((entry) => {
@@ -57,100 +143,63 @@ describe('GenerationToolbar analysis integration section UX', () => {
     });
   });
 
-  it('disables Center "Use Analysis Plan" when the plan is stale', () => {
-    render(
-      <GenerationToolbarCenterSection
-        analysisPlanAvailable
-        analysisPlanSourceMetadataMissing={false}
-        analysisWorkingSourceMetadataMissing={false}
-        analysisPlanIsStale
-        analysisPlanSlotMissing={false}
-        analysisPlanWillSwitchSlot={false}
-        analysisPlanSwitchSlotLabel=''
-        slotSelectionLocked={false}
-        analysisSummaryData={null}
-        analysisSummaryIsStale
-        analysisConfigMismatchMessage={null}
-        centerBusyLabel='Center'
-        centerGuidesEnabled={false}
-        centerLayoutEnabled
-        centerLayoutPreset='default:auto'
-        centerLayoutPresetOptions={[{ value: 'default:auto', label: 'Default' }]}
-        centerLayoutCanDeletePreset={false}
-        centerLayoutCanSavePreset={false}
-        centerLayoutSavePresetLabel='Save'
-        centerLayoutDetectionOptions={[{ value: 'auto', label: 'Auto' }]}
-        centerLayoutProjectCanvasSize={null}
-        centerLayoutShadowPolicyOptions={[{ value: 'auto', label: 'Auto' }]}
-        centerTooltipContent={{
-          apply: 'Apply',
-          detection: 'Detection',
-          fillMissingCanvasWhite: 'Fill',
-          mode: 'Mode',
-          padding: 'Padding',
-          paddingAxes: 'Axes',
-          shadowPolicy: 'Shadow',
-          thresholds: 'Thresholds',
-        }}
-        centerTooltipsEnabled={false}
-        centerModeOptions={[{ value: 'server_object_layout_v1', label: 'Layout Server' }]}
-        hasSourceImage
-        onCancelCenter={vi.fn()}
-        onCenterLayoutPresetChange={vi.fn()}
-        onCenterLayoutSavePreset={vi.fn()}
-        onCenterLayoutDeletePreset={vi.fn()}
-        onApplyAnalysisPlan={vi.fn()}
-        onCenterObject={vi.fn()}
-        onToggleCenterLayoutAdvanced={vi.fn()}
-        onToggleCenterLayoutSplitAxes={vi.fn()}
-        onToggleCenterGuides={vi.fn()}
-      />
-    );
+  it('shows "Run Analysis" in both Object Layouting and Auto Scaler sections', () => {
+    render(<GenerationToolbarCenterSection {...baseCenterProps()} />);
+    render(<GenerationToolbarAutoScalerSection {...baseAutoScalerProps()} />);
 
-    const button = screen.getByRole('button', { name: 'Use Analysis Plan' });
-    expect(button).toBeDisabled();
-    expect(button).toHaveAttribute('title', 'Latest analysis plan is stale for the current slot image');
+    expect(screen.getAllByRole('button', { name: 'Run Analysis' })).toHaveLength(2);
   });
 
-  it('disables Auto Scaler "Use Analysis Plan" when the plan is stale', () => {
+  it('invokes run callbacks from both sections', () => {
+    const onRunCenter = vi.fn();
+    const onRunAuto = vi.fn();
+    render(<GenerationToolbarCenterSection {...baseCenterProps({ onRunAnalysis: onRunCenter })} />);
+    render(<GenerationToolbarAutoScalerSection {...baseAutoScalerProps({ onRunAnalysis: onRunAuto })} />);
+
+    const buttons = screen.getAllByRole('button', { name: 'Run Analysis' });
+    fireEvent.click(buttons[0]!);
+    fireEvent.click(buttons[1]!);
+
+    expect(onRunCenter).toHaveBeenCalledTimes(1);
+    expect(onRunAuto).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps Run Analysis enabled when plan is stale and still shows stale guidance', () => {
     render(
-      <GenerationToolbarAutoScalerSection
-        analysisPlanAvailable
-        analysisPlanSourceMetadataMissing={false}
-        analysisWorkingSourceMetadataMissing={false}
-        analysisPlanIsStale
-        analysisPlanSlotMissing={false}
-        analysisPlanWillSwitchSlot={false}
-        analysisPlanSwitchSlotLabel=''
-        slotSelectionLocked={false}
-        analysisSummaryData={null}
-        analysisSummaryIsStale
-        analysisConfigMismatchMessage={null}
-        autoScaleBusyLabel='Auto Scale'
-        autoScaleLayoutProjectCanvasSize={null}
-        autoScaleShadowPolicyOptions={[{ value: 'auto', label: 'Auto' }]}
-        autoScaleTooltipContent={{
-          apply: 'Apply',
-          fillMissingCanvasWhite: 'Fill',
-          mode: 'Mode',
-          padding: 'Padding',
-          paddingAxes: 'Axes',
-          shadowPolicy: 'Shadow',
-        }}
-        autoScaleTooltipsEnabled={false}
-        autoScaleModeOptions={[{ value: 'server_auto_scaler_v1', label: 'Server' }]}
-        hasSourceImage
-        onAutoScale={vi.fn()}
-        onApplyAnalysisPlan={vi.fn()}
-        onCancelAutoScale={vi.fn()}
-        onOpenSharedDetectionSettings={vi.fn()}
-        onToggleAutoScaleLayoutSplitAxes={vi.fn()}
+      <GenerationToolbarCenterSection
+        {...baseCenterProps({
+          analysisPlanIsStale: true,
+          analysisSummaryIsStale: true,
+        })}
       />
     );
 
-    const button = screen.getByRole('button', { name: 'Use Analysis Plan' });
+    const button = screen.getByRole('button', { name: 'Run Analysis' });
+    expect(button).toBeEnabled();
+    expect(
+      screen.getByText('Latest analysis plan is stale for the current slot image.')
+    ).toBeInTheDocument();
+  });
+
+  it('disables Run Analysis when there is no source image', () => {
+    render(<GenerationToolbarAutoScalerSection {...baseAutoScalerProps({ hasSourceImage: false })} />);
+    const button = screen.getByRole('button', { name: 'Run Analysis' });
     expect(button).toBeDisabled();
-    expect(button).toHaveAttribute('title', 'Latest analysis plan is stale for the current slot image');
+    expect(button).toHaveAttribute('title', 'Select a slot image before analysis');
+  });
+
+  it('disables Run Analysis while analysis is already running', () => {
+    render(
+      <GenerationToolbarCenterSection
+        {...baseCenterProps({
+          analysisBusy: true,
+          analysisBusyLabel: 'Analyze: Processing',
+        })}
+      />
+    );
+    const button = screen.getByRole('button', { name: 'Analyze: Processing' });
+    expect(button).toBeDisabled();
+    expect(button).toHaveAttribute('title', 'Analysis is already running');
   });
 
   it('renders mismatch message and invokes shared detection deep-link action', () => {
@@ -158,36 +207,10 @@ describe('GenerationToolbar analysis integration section UX', () => {
 
     render(
       <GenerationToolbarAutoScalerSection
-        analysisPlanAvailable
-        analysisPlanSourceMetadataMissing={false}
-        analysisWorkingSourceMetadataMissing={false}
-        analysisPlanIsStale={false}
-        analysisPlanSlotMissing={false}
-        analysisPlanWillSwitchSlot={false}
-        analysisPlanSwitchSlotLabel=''
-        slotSelectionLocked={false}
-        analysisSummaryData={null}
-        analysisSummaryIsStale={false}
-        analysisConfigMismatchMessage='Current controls differ from analysis plan: padding, detection.'
-        autoScaleBusyLabel='Auto Scale'
-        autoScaleLayoutProjectCanvasSize={null}
-        autoScaleShadowPolicyOptions={[{ value: 'auto', label: 'Auto' }]}
-        autoScaleTooltipContent={{
-          apply: 'Apply',
-          fillMissingCanvasWhite: 'Fill',
-          mode: 'Mode',
-          padding: 'Padding',
-          paddingAxes: 'Axes',
-          shadowPolicy: 'Shadow',
-        }}
-        autoScaleTooltipsEnabled={false}
-        autoScaleModeOptions={[{ value: 'server_auto_scaler_v1', label: 'Server' }]}
-        hasSourceImage
-        onAutoScale={vi.fn()}
-        onApplyAnalysisPlan={vi.fn()}
-        onCancelAutoScale={vi.fn()}
-        onOpenSharedDetectionSettings={onOpenSharedDetectionSettings}
-        onToggleAutoScaleLayoutSplitAxes={vi.fn()}
+        {...baseAutoScalerProps({
+          analysisConfigMismatchMessage: 'Current controls differ from analysis plan: padding, detection.',
+          onOpenSharedDetectionSettings,
+        })}
       />
     );
 
@@ -197,266 +220,5 @@ describe('GenerationToolbar analysis integration section UX', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Shared Detection Settings' }));
     expect(onOpenSharedDetectionSettings).toHaveBeenCalledTimes(1);
-  });
-
-  it('keeps Use Analysis Plan enabled on slot mismatch and shows switch note', () => {
-    render(
-      <GenerationToolbarCenterSection
-        analysisPlanAvailable
-        analysisPlanSourceMetadataMissing={false}
-        analysisWorkingSourceMetadataMissing={false}
-        analysisPlanIsStale={false}
-        analysisPlanSlotMissing={false}
-        analysisPlanWillSwitchSlot
-        analysisPlanSwitchSlotLabel='Analyzed Slot'
-        slotSelectionLocked={false}
-        analysisSummaryData={null}
-        analysisSummaryIsStale={false}
-        analysisConfigMismatchMessage={null}
-        centerBusyLabel='Center'
-        centerGuidesEnabled={false}
-        centerLayoutEnabled
-        centerLayoutPreset='default:auto'
-        centerLayoutPresetOptions={[{ value: 'default:auto', label: 'Default' }]}
-        centerLayoutCanDeletePreset={false}
-        centerLayoutCanSavePreset={false}
-        centerLayoutSavePresetLabel='Save'
-        centerLayoutDetectionOptions={[{ value: 'auto', label: 'Auto' }]}
-        centerLayoutProjectCanvasSize={null}
-        centerLayoutShadowPolicyOptions={[{ value: 'auto', label: 'Auto' }]}
-        centerTooltipContent={{
-          apply: 'Apply',
-          detection: 'Detection',
-          fillMissingCanvasWhite: 'Fill',
-          mode: 'Mode',
-          padding: 'Padding',
-          paddingAxes: 'Axes',
-          shadowPolicy: 'Shadow',
-          thresholds: 'Thresholds',
-        }}
-        centerTooltipsEnabled={false}
-        centerModeOptions={[{ value: 'server_object_layout_v1', label: 'Layout Server' }]}
-        hasSourceImage
-        onCancelCenter={vi.fn()}
-        onCenterLayoutPresetChange={vi.fn()}
-        onCenterLayoutSavePreset={vi.fn()}
-        onCenterLayoutDeletePreset={vi.fn()}
-        onApplyAnalysisPlan={vi.fn()}
-        onCenterObject={vi.fn()}
-        onToggleCenterLayoutAdvanced={vi.fn()}
-        onToggleCenterLayoutSplitAxes={vi.fn()}
-        onToggleCenterGuides={vi.fn()}
-      />
-    );
-
-    const button = screen.getByRole('button', { name: 'Use Analysis Plan' });
-    expect(button).toBeEnabled();
-    expect(
-      screen.getByText('Use Analysis Plan will switch to analyzed slot: Analyzed Slot.')
-    ).toBeInTheDocument();
-  });
-
-  it('shows explicit lock warning and disables Use Analysis Plan when slot selection is locked', () => {
-    render(
-      <GenerationToolbarAutoScalerSection
-        analysisPlanAvailable
-        analysisPlanSourceMetadataMissing={false}
-        analysisWorkingSourceMetadataMissing={false}
-        analysisPlanIsStale={false}
-        analysisPlanSlotMissing={false}
-        analysisPlanWillSwitchSlot={false}
-        analysisPlanSwitchSlotLabel=''
-        slotSelectionLocked
-        analysisSummaryData={null}
-        analysisSummaryIsStale={false}
-        analysisConfigMismatchMessage={null}
-        autoScaleBusyLabel='Auto Scale'
-        autoScaleLayoutProjectCanvasSize={null}
-        autoScaleShadowPolicyOptions={[{ value: 'auto', label: 'Auto' }]}
-        autoScaleTooltipContent={{
-          apply: 'Apply',
-          fillMissingCanvasWhite: 'Fill',
-          mode: 'Mode',
-          padding: 'Padding',
-          paddingAxes: 'Axes',
-          shadowPolicy: 'Shadow',
-        }}
-        autoScaleTooltipsEnabled={false}
-        autoScaleModeOptions={[{ value: 'server_auto_scaler_v1', label: 'Server' }]}
-        hasSourceImage
-        onAutoScale={vi.fn()}
-        onApplyAnalysisPlan={vi.fn()}
-        onCancelAutoScale={vi.fn()}
-        onOpenSharedDetectionSettings={vi.fn()}
-        onToggleAutoScaleLayoutSplitAxes={vi.fn()}
-      />
-    );
-
-    const button = screen.getByRole('button', { name: 'Use Analysis Plan' });
-    expect(button).toBeDisabled();
-    expect(button).toHaveAttribute('title', 'Cannot apply while slot selection is locked');
-    expect(
-      screen.getByText('Slot selection is locked by sequencing. Unlock it before applying analysis plan.')
-    ).toBeInTheDocument();
-  });
-
-  it('shows missing-slot warning and disables Use Analysis Plan when analyzed slot is missing', () => {
-    render(
-      <GenerationToolbarCenterSection
-        analysisPlanAvailable
-        analysisPlanSourceMetadataMissing={false}
-        analysisWorkingSourceMetadataMissing={false}
-        analysisPlanIsStale={false}
-        analysisPlanSlotMissing
-        analysisPlanWillSwitchSlot={false}
-        analysisPlanSwitchSlotLabel=''
-        slotSelectionLocked={false}
-        analysisSummaryData={null}
-        analysisSummaryIsStale={false}
-        analysisConfigMismatchMessage={null}
-        centerBusyLabel='Center'
-        centerGuidesEnabled={false}
-        centerLayoutEnabled
-        centerLayoutPreset='default:auto'
-        centerLayoutPresetOptions={[{ value: 'default:auto', label: 'Default' }]}
-        centerLayoutCanDeletePreset={false}
-        centerLayoutCanSavePreset={false}
-        centerLayoutSavePresetLabel='Save'
-        centerLayoutDetectionOptions={[{ value: 'auto', label: 'Auto' }]}
-        centerLayoutProjectCanvasSize={null}
-        centerLayoutShadowPolicyOptions={[{ value: 'auto', label: 'Auto' }]}
-        centerTooltipContent={{
-          apply: 'Apply',
-          detection: 'Detection',
-          fillMissingCanvasWhite: 'Fill',
-          mode: 'Mode',
-          padding: 'Padding',
-          paddingAxes: 'Axes',
-          shadowPolicy: 'Shadow',
-          thresholds: 'Thresholds',
-        }}
-        centerTooltipsEnabled={false}
-        centerModeOptions={[{ value: 'server_object_layout_v1', label: 'Layout Server' }]}
-        hasSourceImage
-        onCancelCenter={vi.fn()}
-        onCenterLayoutPresetChange={vi.fn()}
-        onCenterLayoutSavePreset={vi.fn()}
-        onCenterLayoutDeletePreset={vi.fn()}
-        onApplyAnalysisPlan={vi.fn()}
-        onCenterObject={vi.fn()}
-        onToggleCenterLayoutAdvanced={vi.fn()}
-        onToggleCenterLayoutSplitAxes={vi.fn()}
-        onToggleCenterGuides={vi.fn()}
-      />
-    );
-
-    const button = screen.getByRole('button', { name: 'Use Analysis Plan' });
-    expect(button).toBeDisabled();
-    expect(button).toHaveAttribute('title', 'Analyzed slot no longer exists');
-    expect(
-      screen.getByText('Analyzed slot no longer exists. Run analysis again to create a fresh plan.')
-    ).toBeInTheDocument();
-  });
-
-  it('shows source-metadata warning and disables Use Analysis Plan when metadata is missing', () => {
-    render(
-      <GenerationToolbarAutoScalerSection
-        analysisPlanAvailable
-        analysisPlanSourceMetadataMissing
-        analysisWorkingSourceMetadataMissing={false}
-        analysisPlanIsStale={false}
-        analysisPlanSlotMissing={false}
-        analysisPlanWillSwitchSlot={false}
-        analysisPlanSwitchSlotLabel=''
-        slotSelectionLocked={false}
-        analysisSummaryData={null}
-        analysisSummaryIsStale={false}
-        analysisConfigMismatchMessage={null}
-        autoScaleBusyLabel='Auto Scale'
-        autoScaleLayoutProjectCanvasSize={null}
-        autoScaleShadowPolicyOptions={[{ value: 'auto', label: 'Auto' }]}
-        autoScaleTooltipContent={{
-          apply: 'Apply',
-          fillMissingCanvasWhite: 'Fill',
-          mode: 'Mode',
-          padding: 'Padding',
-          paddingAxes: 'Axes',
-          shadowPolicy: 'Shadow',
-        }}
-        autoScaleTooltipsEnabled={false}
-        autoScaleModeOptions={[{ value: 'server_auto_scaler_v1', label: 'Server' }]}
-        hasSourceImage
-        onAutoScale={vi.fn()}
-        onApplyAnalysisPlan={vi.fn()}
-        onCancelAutoScale={vi.fn()}
-        onOpenSharedDetectionSettings={vi.fn()}
-        onToggleAutoScaleLayoutSplitAxes={vi.fn()}
-      />
-    );
-
-    const button = screen.getByRole('button', { name: 'Use Analysis Plan' });
-    expect(button).toBeDisabled();
-    expect(button).toHaveAttribute('title', 'Analysis plan source metadata is missing');
-    expect(
-      screen.getByText('Analysis plan source metadata is missing. Run analysis again.')
-    ).toBeInTheDocument();
-  });
-
-  it('shows working-slot metadata warning and disables Use Analysis Plan when working signature is missing', () => {
-    render(
-      <GenerationToolbarCenterSection
-        analysisPlanAvailable
-        analysisPlanSourceMetadataMissing={false}
-        analysisWorkingSourceMetadataMissing
-        analysisPlanIsStale={false}
-        analysisPlanSlotMissing={false}
-        analysisPlanWillSwitchSlot={false}
-        analysisPlanSwitchSlotLabel=''
-        slotSelectionLocked={false}
-        analysisSummaryData={null}
-        analysisSummaryIsStale={false}
-        analysisConfigMismatchMessage={null}
-        centerBusyLabel='Center'
-        centerGuidesEnabled={false}
-        centerLayoutEnabled
-        centerLayoutPreset='default:auto'
-        centerLayoutPresetOptions={[{ value: 'default:auto', label: 'Default' }]}
-        centerLayoutCanDeletePreset={false}
-        centerLayoutCanSavePreset={false}
-        centerLayoutSavePresetLabel='Save'
-        centerLayoutDetectionOptions={[{ value: 'auto', label: 'Auto' }]}
-        centerLayoutProjectCanvasSize={null}
-        centerLayoutShadowPolicyOptions={[{ value: 'auto', label: 'Auto' }]}
-        centerTooltipContent={{
-          apply: 'Apply',
-          detection: 'Detection',
-          fillMissingCanvasWhite: 'Fill',
-          mode: 'Mode',
-          padding: 'Padding',
-          paddingAxes: 'Axes',
-          shadowPolicy: 'Shadow',
-          thresholds: 'Thresholds',
-        }}
-        centerTooltipsEnabled={false}
-        centerModeOptions={[{ value: 'server_object_layout_v1', label: 'Layout Server' }]}
-        hasSourceImage
-        onCancelCenter={vi.fn()}
-        onCenterLayoutPresetChange={vi.fn()}
-        onCenterLayoutSavePreset={vi.fn()}
-        onCenterLayoutDeletePreset={vi.fn()}
-        onApplyAnalysisPlan={vi.fn()}
-        onCenterObject={vi.fn()}
-        onToggleCenterLayoutAdvanced={vi.fn()}
-        onToggleCenterLayoutSplitAxes={vi.fn()}
-        onToggleCenterGuides={vi.fn()}
-      />
-    );
-
-    const button = screen.getByRole('button', { name: 'Use Analysis Plan' });
-    expect(button).toBeDisabled();
-    expect(button).toHaveAttribute('title', 'Working slot source metadata is missing');
-    expect(
-      screen.getByText('Working slot source metadata is missing. Reselect slot image and retry.')
-    ).toBeInTheDocument();
   });
 });

@@ -7,10 +7,9 @@ import type {
   RuntimePortValues,
   RuntimeState,
   NodeHandlerContext,
-  NodeHandler,
   RuntimeHistoryEntry,
 } from '@/shared/contracts/ai-paths-runtime';
-import type { Toast, ToastOptions } from '@/shared/contracts/ui';
+import type { ToastOptions } from '@/shared/contracts/ui';
 
 import {
   appendInputValue,
@@ -29,9 +28,9 @@ import {
 import { 
   GraphExecutionError, 
   GraphExecutionCancelled,
-  type RuntimeProfileOptions, 
   type RuntimeProfileNodeStats, 
-  type RuntimeProfileSummary 
+  type RuntimeProfileSummary,
+  type EvaluateGraphOptions,
 } from './engine-modules/engine-types';
 import { 
   buildNodeInputHash, 
@@ -42,6 +41,16 @@ import {
 import { 
   orderNodesByDependencies, 
   evaluateInputReadiness,
+  pickString,
+  readEntityTypeFromContext,
+  readEntityIdFromContext,
+  resolveEdgeFromNodeId,
+  resolveEdgeToNodeId,
+  resolveEdgeFromPort,
+  resolveEdgeToPort,
+  checkContextMatchesSimulation,
+  hasValuableSimulationContext,
+  isSimulationCapableFetcher,
 } from './engine-modules/engine-utils';
 
 export { GraphExecutionError, GraphExecutionCancelled };
@@ -55,160 +64,6 @@ const resolveNodeCacheScope = (node: AiNode): NodeCacheScope => {
     return scope;
   }
   return DEFAULT_NODE_CACHE_SCOPE;
-};
-
-const pickString = (val: unknown): string | undefined =>
-  typeof val === 'string' && val.trim().length > 0 ? val.trim() : undefined;
-
-const readEntityTypeFromContext = (context: Record<string, unknown>): string | null => {
-  const type = pickString(context['entityType']);
-  if (type) return type;
-  if (pickString(context['productId'])) return 'product';
-  return null;
-};
-
-const readEntityIdFromContext = (context: Record<string, unknown>): string | null =>
-  pickString(context['productId']) ?? pickString(context['entityId']) ?? null;
-
-const resolveEdgeNodeId = (
-  primary: string | undefined,
-  fallback: string | undefined
-): string | null => {
-  const first = pickString(primary);
-  if (first) return first;
-  return pickString(fallback) ?? null;
-};
-
-const resolveEdgeFromNodeId = (edge: Edge): string | null =>
-  resolveEdgeNodeId(edge.from, edge.source);
-
-const resolveEdgeToNodeId = (edge: Edge): string | null =>
-  resolveEdgeNodeId(edge.to, edge.target);
-
-const resolveEdgePort = (
-  primary: string | null | undefined,
-  fallback: string | null | undefined
-): string | null => {
-  const first = typeof primary === 'string' ? primary.trim() : '';
-  if (first.length > 0) return first;
-  const second = typeof fallback === 'string' ? fallback.trim() : '';
-  return second.length > 0 ? second : null;
-};
-
-const resolveEdgeFromPort = (edge: Edge): string | null =>
-  resolveEdgePort(edge.fromPort, edge.sourceHandle);
-
-const resolveEdgeToPort = (edge: Edge): string | null =>
-  resolveEdgePort(edge.toPort, edge.targetHandle);
-
-const checkContextMatchesSimulation = (context: Record<string, unknown>): boolean => {
-  const contextSource = context['contextSource'];
-  if (typeof contextSource === 'string' && contextSource.trim().toLowerCase().startsWith('simulation')) {
-    return true;
-  }
-  const source = context['source'];
-  if (typeof source === 'string' && source.trim().toLowerCase() === 'simulation') {
-    return true;
-  }
-  return false;
-};
-
-const hasValuableSimulationContext = (context: Record<string, unknown>): boolean => {
-  return Boolean(readEntityIdFromContext(context) && readEntityTypeFromContext(context));
-};
-
-const isSimulationCapableFetcher = (node: AiNode): boolean => {
-  if (node.type !== 'fetcher') return false;
-  const mode = node.config?.fetcher?.sourceMode;
-  return mode === 'simulation_id' || mode === 'live_then_simulation';
-};
-
-export type EvaluateGraphOptions = {
-  runId?: string | undefined;
-  pathId?: string | undefined;
-  pathName?: string | undefined;
-  userId?: string | null | undefined;
-  triggerEvent?: string | null | undefined;
-  triggerNodeId?: string | null | undefined;
-  triggerContext?: Record<string, unknown> | null | undefined;
-  strictFlowMode?: boolean | undefined;
-  deferPoll?: boolean | undefined;
-  skipAiJobs?: boolean | undefined;
-  skipNodeIds?: string[] | undefined;
-  seedOutputs?: Record<string, RuntimePortValues> | undefined;
-  seedHashes?: Record<string, string> | undefined;
-  cache?: Map<string, RuntimePortValues> | undefined;
-  maxIterations?: number | undefined;
-  onNodeStart?: (event: {
-    runId: string;
-    runStartedAt: string;
-    node: AiNode;
-    nodeInputs: RuntimePortValues;
-    prevOutputs: RuntimePortValues | null;
-    iteration: number;
-  }) => Promise<void> | void;
-  onNodeFinish?: (event: {
-    runId: string;
-    runStartedAt: string;
-    node: AiNode;
-    nodeInputs: RuntimePortValues;
-    prevOutputs: RuntimePortValues | null;
-    nextOutputs: RuntimePortValues;
-    changed: boolean;
-    iteration: number;
-    cached?: boolean;
-    error?: string;
-    sideEffectDecision?: string;
-    sideEffectPolicy?: string;
-    activationHash?: string | null;
-  }) => Promise<void> | void;
-  onNodeError?: (event: {
-    runId: string;
-    runStartedAt: string;
-    node: AiNode;
-    nodeInputs: RuntimePortValues;
-    prevOutputs: RuntimePortValues | null;
-    error: unknown;
-    iteration: number;
-  }) => Promise<void> | void;
-  onNodeBlocked?: (event: {
-    runId: string;
-    node: AiNode;
-    reason: 'missing_inputs' | 'flow_control' | 'error';
-    waitingOnPorts?: string[];
-    waitingOnDetails?: Array<Record<string, unknown>>;
-    message?: string;
-  }) => Promise<void> | void;
-  onIteration?: (event: {
-    runId: string;
-    iteration: number;
-    activeNodes: string[];
-  }) => Promise<void> | void;
-  onHalt?: (event: {
-    runId: string;
-    reason: 'blocked' | 'max_iterations' | 'completed' | 'failed';
-    nodeStatuses: Record<string, string>;
-  }) => Promise<void> | void;
-  profile?: RuntimeProfileOptions | undefined;
-  abortSignal?: AbortSignal | undefined;
-  toast?: Toast | undefined;
-  reportAiPathsError: (error: unknown, context: Record<string, unknown>, summary?: string) => void;
-  // Handler Resolution
-  resolveHandler?: (type: string) => NodeHandler | null;
-  // Services
-  fetchEntityByType?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
-  fetchEntityCached?: (type: string, id: string) => Promise<Record<string, unknown> | null>;
-  services?: {
-    prisma?: unknown;
-    mongo?: unknown;
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
-};
-
-export type EvaluateGraphArgs = EvaluateGraphOptions & {
-  nodes: AiNode[];
-  edges: Edge[];
 };
 
 export async function evaluateGraphInternal(
@@ -567,10 +422,10 @@ export async function evaluateGraphInternal(
             requiredPorts: readiness.requiredPorts,
           };
 
-          if (options.recordHistory) {
+          if (options['recordHistory']) {
             const entries = history.get(node.id) ?? [];
             entries.push({
-              timestamp: now(),
+              timestamp: new Date().toISOString(),
               runId: resolvedRunId,
               runStartedAt: resolvedRunStartedAt,
               pathId: options.pathId ?? null,
@@ -669,10 +524,42 @@ export async function evaluateGraphInternal(
               : cachedOutputs!;
             outputs[node.id] = cloneValue(out);
 
-            if ((out as any)['status'] === 'blocked') {
+            if ((out)['status'] === 'blocked') {
               blockedNodes.add(node.id);
             } else {
               finishedNodes.add(node.id);
+            }
+
+            if (options['recordHistory']) {
+              const entries = history.get(node.id) ?? [];
+              entries.push({
+                timestamp: new Date().toISOString(),
+                runId: resolvedRunId,
+                runStartedAt: resolvedRunStartedAt,
+                pathId: options.pathId ?? null,
+                pathName: null,
+                nodeId: node.id,
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                status: 'cached',
+                iteration,
+                inputs: cloneValue(nodeInputs),
+                outputs: cloneValue(outputs[node.id]),
+              } as RuntimeHistoryEntry);
+              history.set(node.id, entries);
+            }
+
+            if (options.profile?.onEvent) {
+              options.profile.onEvent({
+                type: 'node',
+                runId: resolvedRunId,
+                runStartedAt: resolvedRunStartedAt,
+                nodeId: node.id,
+                nodeType: node.type,
+                iteration,
+                status: 'cached',
+                durationMs: 0,
+              });
             }
 
             if (options.onNodeFinish) {
@@ -750,7 +637,9 @@ export async function evaluateGraphInternal(
             let sideEffectDecision: 'executed' | 'skipped_policy' = 'executed';
             if (
               sideEffectPolicy === 'per_run' &&
-              (executed as any)[node.type]?.has(node.id)
+              (executed as unknown as Record<string, Set<string> | undefined>)[
+                node.type
+              ]?.has(node.id)
             ) {
               sideEffectDecision = 'skipped_policy';
             }
@@ -785,7 +674,8 @@ export async function evaluateGraphInternal(
               node,
               nodeInputs,
               prevOutputs:
-                prevOutputs && (prevOutputs as any)['status'] !== 'blocked'
+                prevOutputs &&
+                (prevOutputs)['status'] !== 'blocked'
                   ? prevOutputs
                   : {},
               edges: sanitizedEdges,
@@ -834,46 +724,117 @@ export async function evaluateGraphInternal(
             );
 
             if (sideEffectPolicy === 'per_run') {
-              (executed as any)[node.type]?.add(node.id);
+              (executed as unknown as Record<string, Set<string> | undefined>)[
+                node.type
+              ]?.add(node.id);
             }
 
             const nodeFinishedAt = nowMs();
             const durationMs = nodeFinishedAt - nodeStartedAt;
             stats.totalMs += durationMs;
             stats.maxMs = Math.max(stats.maxMs, durationMs);
-
+            
             outputs[node.id] = result;
             finishedNodes.add(node.id);
             if (nodeHash) options.cache?.set(nodeHash, cloneValue(result));
-
-            if (options.onNodeFinish) {
-              await options.onNodeFinish({
+            
+            if (options['recordHistory']) {
+              const entries = history.get(node.id) ?? [];
+              entries.push({
+                timestamp: new Date().toISOString(),                        runId: resolvedRunId,
+                runStartedAt: resolvedRunStartedAt,
+                pathId: options.pathId ?? null,
+                pathName: null,
+                nodeId: node.id,
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                status: 'completed',
+                iteration,
+                inputs: cloneValue(nodeInputs),
+                outputs: cloneValue(result),
+                sideEffectPolicy,
+                sideEffectDecision,
+                activationHash,
+                durationMs,
+              } as RuntimeHistoryEntry);
+              history.set(node.id, entries);
+            }
+            
+            if (options.profile?.onEvent) {
+              options.profile.onEvent({
+                type: 'node',
                 runId: resolvedRunId,
                 runStartedAt: resolvedRunStartedAt,
-                node,
-                nodeInputs,
-                prevOutputs,
-                nextOutputs: result,
-                changed: true,
+                nodeId: node.id,
+                nodeType: node.type,
                 iteration,
-                sideEffectDecision,
+                status: 'executed',
+                durationMs,
                 sideEffectPolicy,
+                sideEffectDecision,
                 activationHash,
               });
+            }
+            
+            if (options.onNodeFinish) {              await options.onNodeFinish({
+              runId: resolvedRunId,
+              runStartedAt: resolvedRunStartedAt,
+              node,
+              nodeInputs,
+              prevOutputs,
+              nextOutputs: result,
+              changed: true,
+              iteration,
+              sideEffectDecision,
+              sideEffectPolicy,
+              activationHash,
+            });
             }
           } catch (error) {
             errorNodes.add(node.id);
             stats.errorCount += 1;
-            if (options.onNodeError) {
-              await options.onNodeError({
+          
+            if (options['recordHistory']) {
+              const entries = history.get(node.id) ?? [];
+              entries.push({
+                timestamp: new Date().toISOString(),                      runId: resolvedRunId,
+                runStartedAt: resolvedRunStartedAt,
+                pathId: options.pathId ?? null,
+                pathName: null,
+                nodeId: node.id,
+                nodeType: node.type,
+                nodeTitle: node.title ?? null,
+                status: 'failed',
+                iteration,
+                inputs: cloneValue(nodeInputs),
+                outputs: {},
+                error: error instanceof Error ? error.message : String(error),
+              } as RuntimeHistoryEntry);
+              history.set(node.id, entries);
+            }
+          
+            if (options.profile?.onEvent) {
+              options.profile.onEvent({
+                type: 'node',
                 runId: resolvedRunId,
                 runStartedAt: resolvedRunStartedAt,
-                node,
-                nodeInputs,
-                prevOutputs,
-                error,
+                nodeId: node.id,
+                nodeType: node.type,
                 iteration,
+                status: 'error',
+                durationMs: nowMs() - nodeStartedAt,
               });
+            }
+          
+            if (options.onNodeError) {              await options.onNodeError({
+              runId: resolvedRunId,
+              runStartedAt: resolvedRunStartedAt,
+              node,
+              nodeInputs,
+              prevOutputs,
+              error,
+              iteration,
+            });
             }
             throw error;
           }

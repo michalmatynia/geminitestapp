@@ -1,12 +1,10 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React, { Fragment } from 'react';
 import { GsapAnimationWrapper } from '../../GsapAnimationWrapper';
 import { CssAnimationWrapper } from '../../CssAnimationWrapper';
 import { FrontendBlockRenderer, BlockSettingsContext } from '../FrontendBlockRenderer';
-import { SectionDataProvider, useSectionData } from '../SectionDataContext';
+import { useSectionData } from '../SectionDataContext';
 import { SectionLayoutProvider, useSectionLayout } from '../SectionLayoutContext';
 import { BlockRenderContext } from '../../blocks/BlockContext';
 import { getSectionStyles, getTextAlign } from '../../theme-styles';
@@ -23,7 +21,7 @@ import {
 } from './frontend-grid-utils';
 import { BackgroundImageLayer } from './BackgroundImageLayer';
 import { SectionBlockRenderer } from './SectionBlockRenderer';
-import type { BlockInstance } from '../../../types/page-builder';
+import type { CmsBlockInstanceDto as BlockInstance } from '@/shared/contracts/cms';
 
 export function ColumnRenderer({
   column,
@@ -62,7 +60,7 @@ export function ColumnRenderer({
   };
   const columnStyle: React.CSSProperties = {};
   if (columnHeightMode === 'fixed' && columnHeight > 0) {
-    columnStyle.height = `\${columnHeight}px`;
+    columnStyle.height = `${columnHeight}px`;
   } else if (rowHeightMode === 'fixed' && rowHeight && rowHeight > 0) {
     columnStyle.height = '100%';
   }
@@ -73,18 +71,18 @@ export function ColumnRenderer({
         <GsapAnimationWrapper>
           <CssAnimationWrapper>
             <div
-              className={`relative cms-node-\${column.id} \${hasColumnBackground ? 'overflow-hidden' : ''}`}
+              className={`relative cms-node-${column.id} ${hasColumnBackground ? 'overflow-hidden' : ''}`}
               style={{ ...columnStyles, ...columnStyle }}
             >
               {columnCustomCss ? <style data-cms-custom-css={column.id}>{columnCustomCss}</style> : null}
               {columnBackgroundModeImages.map((block: BlockInstance) => (
-                <Fragment key={`col-bg-mode-\${block.id}`}>
+                <Fragment key={`col-bg-mode-${block.id}`}>
                   <BackgroundImageLayer settings={block.settings} />
                 </Fragment>
               ))}
               {hasColumnBackgroundSetting && <BackgroundImageLayer settings={columnBackgroundSettings} />}
               <div
-                className={`relative z-10 flex flex-col \${shouldStretch ? 'h-full' : columnGapClass}`}
+                className={`relative z-10 flex flex-col ${shouldStretch ? 'h-full' : columnGapClass}`}
                 style={{
                   ...(columnGapStyle ?? {}),
                   ...(columnJustify ? { justifyContent: columnJustify } : {}),
@@ -94,7 +92,7 @@ export function ColumnRenderer({
                 {contentChildren.map((block: BlockInstance, blockIndex: number) => {
                   const minHeight = getBlockMinHeight(block.type);
                   const wrapperStyle: React.CSSProperties = {
-                    ...(shouldStretch ? { height: '100%' } : { minHeight: `\${minHeight}px` }),
+                    ...(shouldStretch ? { height: '100%' } : { minHeight: `${minHeight}px` }),
                     position: 'relative',
                     zIndex: contentChildren.length - blockIndex,
                   };

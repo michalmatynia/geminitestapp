@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import {
@@ -42,7 +40,7 @@ import {
   adminNavToCustomNav,
   getAdminMenuSections
 } from './menu/admin-menu-utils';
-import { NavTree, AdminMenuTreeContext, AdminMenuDepthContext } from './menu/NavTree';
+import { NavTree, AdminMenuTreeContext, AdminMenuDepthContext, type AdminMenuTreeContextValue } from './menu/NavTree';
 
 export { 
   buildAdminNav,
@@ -121,7 +119,7 @@ export default function Menu(): React.ReactNode {
     const openChat = async (): Promise<void> => {
       const storedSession = window.localStorage.getItem('chatbotSessionId');
       if (storedSession) {
-        router.push(`/admin/chatbot?session=\${storedSession}`);
+        router.push(`/admin/chatbot?session=${storedSession}`);
         return;
       }
       try {
@@ -132,14 +130,14 @@ export default function Menu(): React.ReactNode {
         }
         if (latestId) {
           window.localStorage.setItem('chatbotSessionId', latestId);
-          router.push(`/admin/chatbot?session=\${latestId}`);
+          router.push(`/admin/chatbot?session=${latestId}`);
           return;
         }
         
         const created = await createChatbotSession({});
         if (created.sessionId) {
           window.localStorage.setItem('chatbotSessionId', created.sessionId);
-          router.push(`/admin/chatbot?session=\${created.sessionId}`);
+          router.push(`/admin/chatbot?session=${created.sessionId}`);
         } else {
           router.push('/admin/chatbot');
         }
@@ -158,24 +156,24 @@ export default function Menu(): React.ReactNode {
   }, [router, setIsMenuCollapsed, setIsProgrammaticallyCollapsed]);
 
   const settingsStore = useSettingsStore();
-  const favoriteIds = useMemo(() => {
+  const favoriteIds = useMemo<string[]>(() => {
     const raw = settingsStore.get(ADMIN_MENU_FAVORITES_KEY);
-    const parsed = parseAdminMenuJson<unknown[]>(raw, []);
+    const parsed = parseAdminMenuJson<string[]>(raw, []);
     return parsed.filter(
-      (id: unknown): id is string => typeof id === 'string' && id.length > 0
+      (id: string): id is string => typeof id === 'string' && id.length > 0
     );
   }, [settingsStore]);
   const favoriteIdSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
-  const sectionColors = useMemo(() => {
+  const sectionColors = useMemo<Record<string, string>>(() => {
     const raw = settingsStore.get(ADMIN_MENU_SECTION_COLORS_KEY);
     const parsed = parseAdminMenuJson<Record<string, string> | null>(raw, null);
-    return parsed && typeof parsed === 'object' ? parsed : {};
+    return (parsed && typeof parsed === 'object') ? parsed : {};
   }, [settingsStore]);
   const customEnabled = useMemo(
     () => parseAdminMenuBoolean(settingsStore.get(ADMIN_MENU_CUSTOM_ENABLED_KEY), false),
     [settingsStore]
   );
-  const customNav = useMemo(() => {
+  const customNav = useMemo<AdminMenuCustomNode[]>(() => {
     const raw = settingsStore.get(ADMIN_MENU_CUSTOM_NAV_KEY);
     const parsed = parseAdminMenuJson<AdminMenuCustomNode[]>(raw, []);
     return normalizeAdminMenuCustomNav(parsed);
@@ -231,7 +229,7 @@ export default function Menu(): React.ReactNode {
   }, [favoriteItems, navWithColors]);
 
   const normalizedQuery = normalizeText(deferredQuery);
-  const filteredNav = useMemo(() => filterTree(navWithFavorites, normalizedQuery), [navWithFavorites, normalizedQuery]);
+  const filteredNav = useMemo<NavItem[]>(() => filterTree(navWithFavorites, normalizedQuery), [navWithFavorites, normalizedQuery]);
   const autoOpenIds = useMemo(
     () =>
       normalizedQuery

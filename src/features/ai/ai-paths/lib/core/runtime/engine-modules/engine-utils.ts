@@ -39,10 +39,23 @@ const resolveEdgeNodeId = (
   return second.length > 0 ? second : null;
 };
 
-const resolveEdgeFromNodeId = (edge: Edge): string | null =>
+export const pickString = (val: unknown): string | undefined =>
+  typeof val === 'string' && val.trim().length > 0 ? val.trim() : undefined;
+
+export const readEntityTypeFromContext = (context: Record<string, unknown>): string | null => {
+  const type = pickString(context['entityType']);
+  if (type) return type;
+  if (pickString(context['productId'])) return 'product';
+  return null;
+};
+
+export const readEntityIdFromContext = (context: Record<string, unknown>): string | null =>
+  pickString(context['productId']) ?? pickString(context['entityId']) ?? null;
+
+export const resolveEdgeFromNodeId = (edge: Edge): string | null =>
   resolveEdgeNodeId(edge.from, edge.source);
 
-const resolveEdgeToNodeId = (edge: Edge): string | null =>
+export const resolveEdgeToNodeId = (edge: Edge): string | null =>
   resolveEdgeNodeId(edge.to, edge.target);
 
 const resolveEdgePort = (
@@ -55,11 +68,33 @@ const resolveEdgePort = (
   return second.length > 0 ? second : null;
 };
 
-const resolveEdgeFromPort = (edge: Edge): string | null =>
+export const resolveEdgeFromPort = (edge: Edge): string | null =>
   resolveEdgePort(edge.fromPort, edge.sourceHandle);
 
-const resolveEdgeToPort = (edge: Edge): string | null =>
+export const resolveEdgeToPort = (edge: Edge): string | null =>
   resolveEdgePort(edge.toPort, edge.targetHandle);
+
+export const checkContextMatchesSimulation = (context: Record<string, unknown>): boolean => {
+  const contextSource = context['contextSource'];
+  if (typeof contextSource === 'string' && contextSource.trim().toLowerCase().startsWith('simulation')) {
+    return true;
+  }
+  const source = context['source'];
+  if (typeof source === 'string' && source.trim().toLowerCase() === 'simulation') {
+    return true;
+  }
+  return false;
+};
+
+export const hasValuableSimulationContext = (context: Record<string, unknown>): boolean => {
+  return Boolean(readEntityIdFromContext(context) && readEntityTypeFromContext(context));
+};
+
+export const isSimulationCapableFetcher = (node: AiNode): boolean => {
+  if (node.type !== 'fetcher') return false;
+  const mode = node.config?.fetcher?.sourceMode;
+  return mode === 'simulation_id' || mode === 'live_then_simulation';
+};
 
 export const hasMeaningfulValue = (value: unknown): boolean => {
   if (value === undefined || value === null) return false;

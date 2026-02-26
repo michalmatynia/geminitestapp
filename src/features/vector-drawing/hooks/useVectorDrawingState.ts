@@ -1,9 +1,7 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import { useShapeHistory, type ShapeHistoryControls } from '../useShapeHistory';
+import { useShapeHistory } from '../useShapeHistory';
 import { smoothShape, simplifyShape } from '../geometry';
 import { vectorShapesToPath } from '../utils';
 import type { VectorShape, VectorToolMode } from '../types';
@@ -54,7 +52,7 @@ export function useVectorDrawingState({
   const currentTool = tool ?? internalTool;
 
   // --------------- Undo / Redo ---------------
-  const history: ShapeHistoryControls = (useShapeHistory as any)(50);
+  const history = useShapeHistory(50);
   const isHistoryAction = useRef(false);
 
   // Seed the history with the initial shapes (once).

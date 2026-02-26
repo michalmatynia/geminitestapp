@@ -11,9 +11,12 @@ import type {
 
 import {
   evaluateGraphInternal,
+} from './engine-core';
+
+import {
   type EvaluateGraphArgs,
   type EvaluateGraphOptions,
-} from './engine-core';
+} from './engine-modules/engine-types';
 
 import {
   handleConstant,
@@ -77,10 +80,19 @@ export async function evaluateGraphClient(
   edges?: Edge[],
   options?: EvaluateGraphOptions
 ): Promise<RuntimeState> {
-  const isArgsObject = !Array.isArray(argsOrNodes);
-  const nodes = isArgsObject ? (argsOrNodes).nodes : argsOrNodes;
-  const resolvedEdges = isArgsObject ? (argsOrNodes).edges : edges ?? [];
-  const resolvedOptions = isArgsObject ? (argsOrNodes) : options ?? { reportAiPathsError: () => {} };
+  let nodes: AiNode[];
+  let resolvedEdges: Edge[];
+  let resolvedOptions: EvaluateGraphOptions;
+
+  if (Array.isArray(argsOrNodes)) {
+    nodes = argsOrNodes;
+    resolvedEdges = edges ?? [];
+    resolvedOptions = options ?? { reportAiPathsError: () => {} };
+  } else {
+    nodes = argsOrNodes.nodes;
+    resolvedEdges = argsOrNodes.edges;
+    resolvedOptions = argsOrNodes;
+  }
 
   return evaluateGraphInternal(nodes, resolvedEdges, {
     ...resolvedOptions,

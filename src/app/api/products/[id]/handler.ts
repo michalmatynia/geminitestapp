@@ -83,6 +83,7 @@ export async function PUT_handler(
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
+  CachedProductService.invalidateProduct(id);
   return NextResponse.json(product);
 }
 
@@ -120,6 +121,7 @@ export async function PATCH_handler(
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
+  CachedProductService.invalidateProduct(id);
 
   return NextResponse.json(product);
 }
@@ -140,5 +142,6 @@ export async function DELETE_handler(
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
+  CachedProductService.invalidateProduct(id);
   return new Response(null, { status: 204 });
 }

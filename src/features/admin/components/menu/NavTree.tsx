@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React, { createContext, useContext } from 'react';
@@ -13,7 +11,7 @@ import {
 } from './admin-menu-utils';
 import { ADMIN_MENU_COLOR_MAP } from '../Menu';
 
-type AdminMenuTreeContextValue = {
+export type AdminMenuTreeContextValue = {
   isMenuCollapsed: boolean;
   pathname: string;
   openIds: Set<string>;
@@ -193,7 +191,7 @@ export function NavTree({
                       className={rowClassName}
                       style={rowStyle}
                       aria-expanded={isOpen}
-                      aria-controls={`\${item.id}-children`}
+                      aria-controls={`${item.id}-children`}
                     >
                       <div className='flex min-w-0 items-center gap-2'>
                         {depth === 0 && item.icon ? (
@@ -283,7 +281,7 @@ export function NavTree({
                 )}
 
                 {hasChildren && isOpen ? (
-                  <div className='mt-1' id={`\${item.id}-children`}>
+                  <div className='mt-1' id={`${item.id}-children`}>
                     <AdminMenuDepthContext.Provider value={depth + 1}>
                       <NavTree
                         items={item.children ?? []}

@@ -1,16 +1,41 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useCallback, useState } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { logClientError } from '@/features/observability';
+import { useToast } from '@/shared/ui';
+
+interface BackfillProjectResult {
+  projectId: string;
+  updatedCards: number;
+  slotLinkBackfilled: number;
+  maskFolderBackfilled: number;
+  inferredGenerationBackfilled: number;
+  errors: string[];
+}
+
+interface BackfillResult {
+  dryRun: boolean;
+  projectCount: number;
+  scannedSlots: number;
+  scannedLinks: number;
+  updatedCards: number;
+  slotLinkBackfilled: number;
+  maskFolderBackfilled: number;
+  inferredGenerationBackfilled: number;
+  projects: BackfillProjectResult[];
+}
 
 export function useMaintenanceActions({
   backfillProjectId,
   backfillDryRun,
   backfillIncludeHeuristicGenerationLinks,
   toast,
+}: {
+  backfillProjectId: string;
+  backfillDryRun: boolean;
+  backfillIncludeHeuristicGenerationLinks: boolean;
+  toast: ReturnType<typeof useToast>['toast'];
 }) {
   const [backfillRunning, setBackfillRunning] = useState(false);
   const [backfillResultText, setBackfillResultText] = useState('');
@@ -20,7 +45,7 @@ export function useMaintenanceActions({
     setBackfillResultText('');
 
     try {
-      const response = await api.post('/api/image-studio/cards/backfill', {
+      const response = await api.post<{ result: BackfillResult }>('/api/image-studio/cards/backfill', {
         projectId: backfillProjectId.trim() || null,
         dryRun: backfillDryRun,
         includeHeuristicGenerationLinks: backfillIncludeHeuristicGenerationLinks,
@@ -38,7 +63,7 @@ export function useMaintenanceActions({
         `Generation inferred: ${result.inferredGenerationBackfilled}`,
       ].join('\n');
 
-      const projectErrorCount = result.projects.reduce((count, project) => {
+      const projectErrorCount = result.projects.reduce((count: number, project: BackfillProjectResult) => {
         return count + (project.errors.length > 0 ? 1 : 0);
       }, 0);
 

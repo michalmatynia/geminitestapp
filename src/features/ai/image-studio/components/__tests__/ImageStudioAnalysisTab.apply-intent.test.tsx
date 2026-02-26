@@ -134,9 +134,9 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
     mocks.slotState.slots = [
       { id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png' },
       { id: 'slot-2', name: 'Slot 2', imageUrl: 'https://example.test/slot-2.png' },
-    ];
+    ] as any;
     mocks.slotState.slotSelectionLocked = false;
-    mocks.slotState.workingSlot = { id: 'slot-1' };
+    mocks.slotState.workingSlot = { id: 'slot-1' } as any;
   });
 
   it('saves intent, pre-switches slot, and switches to controls when analyzed slot is valid', async () => {
@@ -191,9 +191,8 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
   });
 
   it('blocks apply when analyzed slot is missing', async () => {
-    mocks.slotState.slots = [{ id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png' }];
+    mocks.slotState.slots = [{ id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png' }] as any;
     saveImageStudioAnalysisPlanSnapshot('project-alpha', createSnapshot('slot-2'));
-
     render(<ImageStudioAnalysisTab />);
 
     await waitFor(() => {
@@ -218,9 +217,8 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
     mocks.slotState.slots = [
       { id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png' },
       { id: 'slot-2', name: 'Slot 2' },
-    ];
+    ] as any;
     saveImageStudioAnalysisPlanSnapshot('project-alpha', createSnapshot('slot-2', 'signature_slot_2_old'));
-
     render(<ImageStudioAnalysisTab />);
 
     await waitFor(() => {
@@ -245,9 +243,8 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
     mocks.slotState.slots = [
       { id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png' },
       { id: 'slot-2', name: 'Slot 2', imageUrl: 'https://example.test/slot-2-latest.png' },
-    ];
-    saveImageStudioAnalysisPlanSnapshot('project-alpha', {
-      ...createSnapshot('slot-2'),
+    ] as any;
+    saveImageStudioAnalysisPlanSnapshot('project-alpha', {      ...createSnapshot('slot-2'),
       sourceSignature: 'signature_slot_2_old',
     });
 

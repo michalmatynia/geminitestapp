@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -103,7 +101,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
     );
 
     const deleteUploadedAsset = useCallback(
-      async (uploaded: any): Promise<void> => {
+      async (uploaded: { id: string; filepath: string }): Promise<void> => {
         if (!projectId) return;
         await api.post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`, {
           id: uploaded.id,

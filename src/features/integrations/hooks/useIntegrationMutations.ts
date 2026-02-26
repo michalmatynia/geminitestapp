@@ -2,7 +2,7 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import type { Integration, IntegrationConnection } from '@/shared/contracts/integrations';
+import type { Integration, IntegrationConnection, TestConnectionResponse } from '@/shared/contracts/integrations';
 import type { MutationResult } from '@/shared/contracts/ui';
 import { api } from '@/shared/lib/api-client';
 import {
@@ -76,14 +76,25 @@ export function useUpsertConnection() {
 type DeleteConnectionVariables = {
   integrationId: string;
   connectionId: string;
+  replacementConnectionId?: string | null;
 };
 
 export function useDeleteConnection() {
   const queryClient = useQueryClient();
   const mutationKey = QUERY_KEYS.integrations.connections();
   return createDeleteMutationV2<Record<string, unknown>, DeleteConnectionVariables>({
-    mutationFn: ({ connectionId }: DeleteConnectionVariables): Promise<Record<string, unknown>> =>
-      api.delete<Record<string, unknown>>(`/api/integrations/connections/${connectionId}`),
+    mutationFn: ({
+      connectionId,
+      replacementConnectionId,
+    }: DeleteConnectionVariables): Promise<Record<string, unknown>> => {
+      const trimmedReplacementConnectionId = replacementConnectionId?.trim();
+      const query = trimmedReplacementConnectionId
+        ? `?replacementConnectionId=${encodeURIComponent(trimmedReplacementConnectionId)}`
+        : '';
+      return api.delete<Record<string, unknown>>(
+        `/api/integrations/connections/${connectionId}${query}`
+      );
+    },
     mutationKey,
     meta: {
       source: 'integrations.hooks.useDeleteConnection',
@@ -110,9 +121,9 @@ type TestConnectionVariables = {
 
 export function useTestConnection() {
   const mutationKey = QUERY_KEYS.integrations.connections();
-  return createCreateMutationV2<Record<string, unknown>, TestConnectionVariables>({
-    mutationFn: ({ integrationId, connectionId, type = 'test', ...rest }): Promise<Record<string, unknown>> =>
-      api.post<Record<string, unknown>>(
+  return createCreateMutationV2<TestConnectionResponse, TestConnectionVariables>({
+    mutationFn: ({ integrationId, connectionId, type = 'test', ...rest }): Promise<TestConnectionResponse> =>
+      api.post<TestConnectionResponse>(
         `/api/integrations/${integrationId}/connections/${connectionId}/${type}`,
         { integrationId, connectionId, type, ...rest }
       ),

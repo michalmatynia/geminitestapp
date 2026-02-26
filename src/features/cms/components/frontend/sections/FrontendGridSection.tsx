@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React, { Fragment } from 'react';
@@ -9,7 +7,7 @@ import { buildScopedCustomCss, getCustomCssSelector } from '@/features/cms/utils
 
 import { getSectionContainerClass, getSectionStyles } from '../theme-styles';
 import { FrontendBlockRenderer, BlockSettingsContext } from './FrontendBlockRenderer';
-import { SectionBlockProvider, useSectionBlockData } from './SectionBlockContext';
+import { useSectionBlockData } from './SectionBlockContext';
 import { SectionDataProvider } from './SectionDataContext';
 import { SectionLayoutProvider } from './SectionLayoutContext';
 import { useCmsPageContext } from '../CmsPageContext';

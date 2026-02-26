@@ -648,11 +648,11 @@ export const getProductImagesAsBase64 = async (
 ): Promise<Record<string, string>> => {
   const images: Record<string, string> = {};
   const imageSlots = product.images || [];
+  const imageLinks = product.imageLinks || [];
 
-  let index = 0;
-  for (const [slotIndex, imageSlot] of imageSlots.entries()) {
+  const slotTasks = imageSlots.map(async (imageSlot, slotIndex) => {
     const filepath = imageSlot.imageFile?.filepath;
-    if (!filepath) continue;
+    if (!filepath) return null;
 
     const base64 = await imageToBase64DataUri(filepath, {
       contentTypeHint: imageSlot.imageFile?.mimetype ?? null,
@@ -662,22 +662,17 @@ export const getProductImagesAsBase64 = async (
       ...(options?.outputMode ? { outputMode: options.outputMode } : {}),
       ...(options?.transform ? { transform: options.transform } : {}),
     });
-    if (base64) {
-      images[String(index)] = base64;
-      index++;
-    }
-  }
+    return base64 ? { base64, originalIndex: slotIndex, type: 'slot' } : null;
+  });
 
-  // Also process imageLinks if they exist and we don't have enough images
-  const imageLinks = product.imageLinks || [];
-  for (const [linkIndex, link] of imageLinks.entries()) {
-    if (!link?.trim()) continue;
+  const linkTasks = imageLinks.map(async (link, linkIndex) => {
+    if (!link?.trim()) return null;
 
     // Skip if we already have this as an uploaded image
     const alreadyProcessed = imageSlots.some(
       (slot: { imageFile?: { filepath?: string | null } | null }) => slot.imageFile?.filepath === link
     );
-    if (alreadyProcessed) continue;
+    if (alreadyProcessed) return null;
 
     const base64 = await imageToBase64DataUri(link, {
       diagnostics: options?.diagnostics,
@@ -686,9 +681,16 @@ export const getProductImagesAsBase64 = async (
       ...(options?.outputMode ? { outputMode: options.outputMode } : {}),
       ...(options?.transform ? { transform: options.transform } : {}),
     });
-    if (base64) {
-      images[String(index)] = base64;
-      index++;
+    return base64 ? { base64, originalIndex: linkIndex, type: 'link' } : null;
+  });
+
+  const results = await Promise.all([...slotTasks, ...linkTasks]);
+  
+  let outputIndex = 0;
+  for (const result of results) {
+    if (result?.base64) {
+      images[String(outputIndex)] = result.base64;
+      outputIndex++;
     }
   }
 

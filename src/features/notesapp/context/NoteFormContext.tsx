@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useQueries, type UseQueryResult } from '@tanstack/react-query';
@@ -206,10 +204,10 @@ export function NoteFormProvider({
     return [
       ...(note.relations ?? []).map((rel: RelatedNote) => ({ id: rel.id, title: rel.title, color: rel.color ?? null, content: '' })),
       ...(note.relationsFrom ?? [])
-        .map((rel: any) => rel.targetNote ? { id: rel.targetNote.id, title: rel.targetNote.title, color: rel.targetNote.color ?? null, content: '' } : null)
+        .map((rel: NoteRelationDto & { targetNote?: RelatedNote }) => rel.targetNote ? { id: rel.targetNote.id, title: rel.targetNote.title, color: rel.targetNote.color ?? null, content: '' } : null)
         .filter((item: RelatedNoteItem | null): item is RelatedNoteItem => Boolean(item)),
       ...(note.relationsTo ?? [])
-        .map((rel: any) => rel.sourceNote ? { id: rel.sourceNote.id, title: rel.sourceNote.title, color: rel.sourceNote.color ?? null, content: '' } : null)
+        .map((rel: NoteRelationDto & { sourceNote?: RelatedNote }) => rel.sourceNote ? { id: rel.sourceNote.id, title: rel.sourceNote.title, color: rel.sourceNote.color ?? null, content: '' } : null)
         .filter((item: RelatedNoteItem | null): item is RelatedNoteItem => Boolean(item)),
     ].filter((item: RelatedNoteItem, index: number, array: RelatedNoteItem[]) => array.findIndex((entry: RelatedNoteItem) => entry.id === item.id) === index);
   }, [note]);

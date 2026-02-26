@@ -244,6 +244,7 @@ describe('Integration Handlers', () => {
               action: 'updateOne',
               entityType: 'product',
               mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+              updatePayloadMode: 'custom',
               query: {
                 provider: 'mongodb',
                 collection: 'products',
@@ -290,6 +291,7 @@ describe('Integration Handlers', () => {
               action: 'updateOne',
               entityType: 'product',
               mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+              updatePayloadMode: 'custom',
               query: {
                 provider: 'mongodb',
                 collection: 'products',
@@ -350,6 +352,7 @@ describe('Integration Handlers', () => {
               action: 'updateOne',
               entityType: 'product',
               mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+              updatePayloadMode: 'custom',
               query: {
                 provider: 'mongodb',
                 collection: 'products',
@@ -412,6 +415,7 @@ describe('Integration Handlers', () => {
               action: 'updateOne',
               entityType: 'product',
               mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+              updatePayloadMode: 'custom',
               query: {
                 provider: 'mongodb',
                 collection: 'products',
@@ -474,6 +478,7 @@ describe('Integration Handlers', () => {
               action: 'updateOne',
               entityType: 'product',
               mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+              updatePayloadMode: 'custom',
               query: {
                 provider: 'mongodb',
                 collection: 'products',
@@ -538,6 +543,7 @@ describe('Integration Handlers', () => {
               action: 'updateOne',
               entityType: 'product',
               mappings: [{ targetPath: 'parameters', sourcePort: 'value' }],
+              updatePayloadMode: 'custom',
               query: {
                 provider: 'mongodb',
                 collection: 'products',

@@ -1,9 +1,7 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { ProfilerOnRenderCallback, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useDraftQueries, draftKeys } from '@/features/drafter/hooks/useDraftQueries';
@@ -46,7 +44,7 @@ import {
 import { useProductOperations } from '@/features/products/hooks/useProductOperations';
 import { useUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import { useQueuedProductIds } from '@/features/products/state/queued-product-ops';
-import type { ProductCategory, ProductWithImages } from '@/shared/contracts/products';
+import type { ProductCategory, ProductWithImages, ProductDraftDto } from '@/shared/contracts/products';
 import { useProductListSync } from '@/shared/hooks/sync/useBackgroundSync';
 import { ApiError, api } from '@/shared/lib/api-client';
 import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
@@ -78,8 +76,6 @@ export function useProductListState(): ProductListContextType & {
   handleConfirmSingleDelete: () => Promise<void>;
   bulkDeletePending: boolean;
   } {
-  const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
   const openProductIdFromQuery = searchParams.get('openProductId')?.trim() ?? '';
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -130,7 +126,7 @@ export function useProductListState(): ProductListContextType & {
   }, [queryClient]);
 
   const { data: allDrafts = [] } = useDraftQueries();
-  const activeDrafts = useMemo(() => allDrafts.filter((d: any) => d.active !== false), [allDrafts]);
+  const activeDrafts = useMemo(() => allDrafts.filter((d: ProductDraftDto) => d.active !== false), [allDrafts]);
 
   const queuedProductIds = useQueuedProductIds();
 
@@ -153,7 +149,6 @@ export function useProductListState(): ProductListContextType & {
     currencyOptions,
     priceGroups,
     languageOptions,
-    fallbackNameLocale,
   } = useCatalogSync(preferences.catalogFilter || 'all', {
     enabled: !preferencesLoading,
   });
@@ -311,9 +306,6 @@ export function useProductListState(): ProductListContextType & {
   const {
     rowSelection,
     setRowSelection,
-    selectedCount,
-    handleSelectPage,
-    handleDeselectPage,
     handleSelectAllGlobal,
     loadingGlobalSelection,
     isMassDeleteConfirmOpen,
@@ -347,7 +339,6 @@ export function useProductListState(): ProductListContextType & {
     handleStartListing,
     massListIntegration,
     massListProductIds,
-    isMassListing,
     showIntegrationModal,
     handleCloseIntegrationModal,
     handleSelectIntegrationFromModal,

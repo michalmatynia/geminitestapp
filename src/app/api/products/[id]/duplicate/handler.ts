@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { parseJsonBody } from '@/features/products/server';
+import { CachedProductService } from '@/features/products/performance/cached-service';
 import { productService } from '@/features/products/services/productService'; // Direct import
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -36,5 +37,6 @@ export async function POST_handler(
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
+  CachedProductService.invalidateAll();
   return NextResponse.json(product);
 }

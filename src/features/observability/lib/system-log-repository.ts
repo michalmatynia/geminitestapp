@@ -292,9 +292,10 @@ const getMongoSystemLogMetrics = async (
   ]);
 
   const levels = { info: 0, warn: 0, error: 0 } as Record<SystemLogLevel, number>;
-  levelGroups.forEach((row: any) => {
-    if (row._id in levels) {
-      levels[row._id as SystemLogLevel] = row.count;
+  levelGroups.forEach((row: unknown) => {
+    const r = row as Record<string, unknown>;
+    if (typeof r['_id'] === 'string' && r['_id'] in levels) {
+      levels[r['_id'] as SystemLogLevel] = r['count'] as number;
     }
   });
 
@@ -303,14 +304,20 @@ const getMongoSystemLogMetrics = async (
     levels,
     last24Hours,
     last7Days,
-    topSources: sourceGroups.map((row: any) => ({
-      source: String(row._id ?? ''),
-      count: row.count,
-    })),
-    topPaths: pathGroups.map((row: any) => ({
-      path: String(row._id ?? ''),
-      count: row.count,
-    })),
+    topSources: sourceGroups.map((row: unknown) => {
+      const r = row as Record<string, unknown>;
+      return {
+        source: String(r['_id'] ?? ''),
+        count: r['count'] as number,
+      };
+    }),
+    topPaths: pathGroups.map((row: unknown) => {
+      const r = row as Record<string, unknown>;
+      return {
+        path: String(r['_id'] ?? ''),
+        count: r['count'] as number,
+      };
+    }),
     generatedAt: now.toISOString(),
   };
 };

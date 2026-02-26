@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useMemo } from 'react';
@@ -9,10 +7,15 @@ import {
   uniqueSortedModelIds 
 } from '../../utils/image-models';
 import { normalizeImageStudioModelPresets } from '../../utils/studio-settings';
+import type { ImageStudioSettings } from '../../utils/studio-settings';
+import type { UseQueryResult } from '@tanstack/react-query';
 
 export function useModelAwareSettings({
   studioSettings,
   imageModelsQuery,
+}: {
+  studioSettings: ImageStudioSettings;
+  imageModelsQuery: UseQueryResult<{ models: string[] }, Error>;
 }) {
   const quickSwitchModels = useMemo(() => {
     return normalizeImageStudioModelPresets(

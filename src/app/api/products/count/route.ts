@@ -1,5 +1,5 @@
 export const runtime = 'nodejs';
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 import {
   productFilterSchema,
@@ -13,5 +13,6 @@ export const GET = apiHandler(
   {
     source: 'products.count.GET',
     querySchema: productFilterSchema,
+    cacheControl: 'no-store',
   }
 );

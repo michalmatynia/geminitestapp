@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useCallback, useState } from 'react';
@@ -10,6 +8,7 @@ import {
   type BaseImportParameterImportSettings 
 } from '@/shared/contracts/integrations';
 import { useTemplateMutation } from '@/features/data-import-export/hooks/useImportQueries';
+import type { useToast } from '@/shared/ui';
 
 export function useImportExportTemplates({
   toast,
@@ -17,7 +16,7 @@ export function useImportExportTemplates({
   exportTemplates,
   setTemplateScope,
 }: {
-  toast: any;
+  toast: ReturnType<typeof useToast>['toast'];
   importTemplates: Template[];
   exportTemplates: Template[];
   setTemplateScope: (scope: 'import' | 'export') => void;
@@ -102,7 +101,7 @@ export function useImportExportTemplates({
       .filter((mapping: TemplateMapping) => mapping.sourceKey && mapping.targetField);
 
     const mutation = isImport ? createImportTemplateMutation : createExportTemplateMutation;
-    const duplicatedName = `\${(sourceTemplate.name || 'Template').trim()} Copy`;
+    const duplicatedName = `${(sourceTemplate.name || 'Template').trim()} Copy`;
 
     try {
       const duplicated = (await mutation.mutateAsync({
@@ -157,7 +156,7 @@ export function useImportExportTemplates({
     const baseName = (sourceTemplate.name || 'Template').trim();
     const exportTemplateNameCandidate = baseName.toLowerCase().includes('export')
       ? baseName
-      : `\${baseName} Export`;
+      : `${baseName} Export`;
 
     try {
       const created = (await createExportTemplateMutation.mutateAsync({

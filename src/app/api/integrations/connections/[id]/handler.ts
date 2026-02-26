@@ -9,7 +9,7 @@ import { badRequestError } from '@/shared/errors/app-error';
 
 const connectionSchema = z.object({
   name: z.string().trim().min(1),
-  username: z.string().trim().min(1),
+  username: z.string().trim().optional(),
   password: z.string().trim().optional(),
   playwrightHeadless: z.boolean().optional(),
   playwrightSlowMo: z.number().int().min(0).optional(),
@@ -62,9 +62,30 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
   const data = parsed.data;
 
   const repo = await getIntegrationRepository();
+  const existingConnection = await repo.getConnectionById(id);
+  const integration = existingConnection
+    ? await repo.getIntegrationById(existingConnection.integrationId)
+    : null;
+  const normalizedUsername = data.username?.trim();
+
+  if (
+    integration &&
+    integration.slug !== 'baselinker' &&
+    typeof normalizedUsername === 'string' &&
+    !normalizedUsername
+  ) {
+    throw badRequestError('Username is required for this integration.', {
+      connectionId: id,
+      integrationId: integration.id,
+      integrationSlug: integration.slug,
+    });
+  }
+
   const connection = await repo.updateConnection(id, {
     name: data.name,
-    username: data.username,
+    ...(typeof normalizedUsername === 'string'
+      ? { username: normalizedUsername }
+      : {}),
     ...(data.password ? { password: encryptSecret(data.password) } : {}),
 
     ...(typeof data.playwrightHeadless === 'boolean'
@@ -223,14 +244,19 @@ export async function PUT_handler(req: NextRequest, _ctx: ApiHandlerContext, par
  * DELETE /api/integrations/connections/[id]
  * Deletes an integration connection.
  */
-export async function DELETE_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
   const { id } = params;
   if (!id) {
     throw badRequestError('Connection id is required');
   }
 
+  const replacementConnectionIdRaw =
+    req.nextUrl.searchParams.get('replacementConnectionId') ?? null;
+  const replacementConnectionId = replacementConnectionIdRaw?.trim() || undefined;
+
   const repo = await getIntegrationRepository();
-  await repo.deleteConnection(id);
+  await repo.deleteConnection(id, {
+    replacementConnectionId,
+  });
   return new Response(null, { status: 204 });
 }
-

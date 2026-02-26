@@ -12,7 +12,7 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 const createConnectionSchema = z
   .object({
     name: z.string().trim().min(1),
-    username: z.string().trim().min(1),
+    username: z.string().trim().optional(),
     password: z.string().trim().min(1),
     traderaDefaultTemplateId: z.string().trim().nullable().optional(),
     traderaDefaultDurationHours: z.number().int().min(1).max(720).optional(),
@@ -119,9 +119,17 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext, pa
     throw notFoundError('Integration not found', { integrationId });
   }
 
+  const normalizedUsername = data.username?.trim() ?? '';
+  if (integration.slug !== 'baselinker' && !normalizedUsername) {
+    throw badRequestError('Username is required for this integration.', {
+      integrationId,
+      integrationSlug: integration.slug,
+    });
+  }
+
   const created = await repo.createConnection(integrationId, {
     name: data.name,
-    username: data.username,
+    username: normalizedUsername,
     password: encryptSecret(data.password),
     ...(typeof data.traderaDefaultTemplateId === 'string' ||
     data.traderaDefaultTemplateId === null

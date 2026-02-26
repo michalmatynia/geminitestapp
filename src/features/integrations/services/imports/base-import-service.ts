@@ -609,7 +609,7 @@ export const processBaseImportRun = async (
             Array.from(allProductIdsForBatch),
             connection.connectionId
           )
-          : new Map<string, { listing: any; repository: any }>();
+          : new Map<string, { listing: Record<string, unknown>; repository: Record<string, unknown> }>();
 
       for (const item of dueItems) {
         processedItemsSinceHeartbeat += 1;

@@ -11,9 +11,12 @@ import type {
 
 import {
   evaluateGraphInternal,
+} from './engine-core';
+
+import {
   type EvaluateGraphArgs,
   type EvaluateGraphOptions,
-} from './engine-core';
+} from './engine-modules/engine-types';
 
 import {
   handleAiDescription,
@@ -108,16 +111,26 @@ export async function evaluateGraphServer(
   edges?: Edge[],
   options?: EvaluateGraphOptions
 ): Promise<RuntimeState> {
-  const isArgsObject = !Array.isArray(argsOrNodes);
-  const nodes = isArgsObject ? (argsOrNodes).nodes : argsOrNodes;
-  const resolvedEdges = isArgsObject ? (argsOrNodes).edges : edges ?? [];
-  const resolvedOptions = isArgsObject ? (argsOrNodes) : options ?? { reportAiPathsError: () => {} };
+  let nodes: AiNode[];
+  let resolvedEdges: Edge[];
+  let resolvedOptions: EvaluateGraphOptions;
+
+  if (Array.isArray(argsOrNodes)) {
+    nodes = argsOrNodes;
+    resolvedEdges = edges ?? [];
+    resolvedOptions = options ?? { reportAiPathsError: () => {} };
+  } else {
+    nodes = argsOrNodes.nodes;
+    resolvedEdges = argsOrNodes.edges;
+    resolvedOptions = argsOrNodes;
+  }
 
   const mongo = await getMongoClient();
 
   const customResolveHandler = (type: string): NodeHandler | null => {
-    if (resolvedOptions.resolveHandler) {
-      const handler = resolvedOptions.resolveHandler(type);
+    const rh = resolvedOptions.resolveHandler;
+    if (rh) {
+      const handler = rh(type);
       if (handler) return handler;
     }
     return resolveHandler(type);
@@ -129,7 +142,7 @@ export async function evaluateGraphServer(
     services: {
       prisma,
       mongo,
-      ...(resolvedOptions.services ?? {}),
+      ...(resolvedOptions.services as Record<string, unknown> ?? {}),
     },
   });
 }

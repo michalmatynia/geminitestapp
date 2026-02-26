@@ -158,9 +158,19 @@ export function GenerationToolbarCenterSection({
           {analysisConfigMismatchMessage}
         </div>
       ) : null}
+      {!analysisPlanAvailable ? (
+        <div className='mb-2 rounded border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10px] text-sky-100'>
+          No saved analysis plan yet. Run analysis to create a shared snapshot for both tools.
+        </div>
+      ) : null}
       {analysisPlanWillSwitchSlot ? (
         <div className='mb-2 rounded border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10px] text-sky-100'>
           Latest saved analysis plan targets a different slot{analysisPlanSwitchSlotLabel ? `: ${analysisPlanSwitchSlotLabel}` : ''}.
+        </div>
+      ) : null}
+      {analysisPlanIsStale ? (
+        <div className='mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-100'>
+          Latest analysis plan is stale for the current slot image.
         </div>
       ) : null}
       {analysisPlanSourceMetadataMissing ? (

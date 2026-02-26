@@ -1,10 +1,7 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
 import { ArrowUpDown, Download } from 'lucide-react';
-import { useRef, useState } from 'react';
 
 import {
   TriggerButtonBar,
@@ -293,7 +290,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
   {
     accessorKey: 'price',
     header: ({ column, table }: { column: Column<ProductWithImages, unknown>; table: Table<ProductWithImages> }): React.JSX.Element => {
-      const meta: { currencyCode?: string } | undefined = table.options.meta as any;
+      const meta = table.options.meta as { currencyCode?: string } | undefined;
       const currencyCode: string = meta?.currencyCode || '';
 
       return (

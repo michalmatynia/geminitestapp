@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -378,7 +376,7 @@ export function ImageStudioSettingsProvider({
   const { backfillRunning, backfillResultText, runCardBackfill } = maintenance;
 
   const toggleProjectSequencingOperation = useCallback(
-    (operation, checked) => {
+    (operation: string, checked: boolean): void => {
       setStudioSettings((prev) => {
         const operations = prev.projectSequencing.operations;
         const nextOperations = checked
@@ -399,7 +397,7 @@ export function ImageStudioSettingsProvider({
   );
 
   const moveProjectSequencingOperation = useCallback(
-    (operation, direction) => {
+    (operation: string, direction: number): void => {
       setStudioSettings((prev) => {
         const operations = [...prev.projectSequencing.operations];
         const index = operations.indexOf(operation);

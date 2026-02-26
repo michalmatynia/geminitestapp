@@ -958,7 +958,7 @@ export const testConnectionResponseSchema = z.object({
   connectionId: z.string().nullable().optional(),
   steps: z.unknown().optional(),
   profile: z.unknown().optional(),
-});
+}).catchall(z.unknown());
 
 export type TestConnectionResponse = z.infer<typeof testConnectionResponseSchema>;
 
@@ -1251,7 +1251,10 @@ export type IntegrationRepository = {
   getConnectionByIdAndIntegration: (id: string, integrationId: string) => Promise<IntegrationConnectionRecord | null>;
   createConnection: (integrationId: string, input: Record<string, unknown>) => Promise<IntegrationConnectionRecord>;
   updateConnection: (id: string, input: Partial<IntegrationConnectionRecord>) => Promise<IntegrationConnectionRecord>;
-  deleteConnection: (id: string) => Promise<void>;
+  deleteConnection: (
+    id: string,
+    options?: { replacementConnectionId?: string | null }
+  ) => Promise<void>;
 };
 
 export type ExternalCategoryRepository = {

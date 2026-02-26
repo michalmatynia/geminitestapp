@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
@@ -23,7 +21,7 @@ import { CanvasSelectionMarquee } from './canvas/CanvasSelectionMarquee';
 import { CanvasMinimap } from './canvas-minimap';
 import { CanvasSvgEdgeLayer } from './canvas-svg-edge-layer';
 import { CanvasSvgNodeLayer } from './canvas-svg-node-layer';
-import { type CanvasBoardState, useCanvasBoardState } from './useCanvasBoardState';
+import { useCanvasBoardState } from './useCanvasBoardState';
 
 export interface CanvasBoardProps {
   viewportClassName?: string | undefined;
@@ -44,10 +42,10 @@ export function CanvasBoard({
   onFocusNodeDiagnostics,
   resolveConnectorTooltip,
 }: CanvasBoardProps): React.JSX.Element {
-  const state: CanvasBoardState = useCanvasBoardState({
+  const state = useCanvasBoardState({
     confirmNodeSwitch,
     nodeDiagnosticsById,
-  }) as unknown as CanvasBoardState;
+  });
 
   const {
     view,
@@ -275,19 +273,19 @@ export function CanvasBoard({
       connectorHitTargetPx: 18,
       openNodeConfigOnSingleClick,
       zoomTo: (targetScale) => {
-        void zoomTo(targetScale);
+        zoomTo(targetScale);
       },
       fitToNodes: () => {
-        void fitToNodes();
+        fitToNodes();
       },
       fitToSelection: () => {
-        void fitToSelection();
+        fitToSelection();
       },
       resetView: () => {
-        void resetView();
+        resetView();
       },
       centerOnCanvasPoint: (canvasX, canvasY) => {
-        void centerOnCanvasPoint(canvasX, canvasY);
+        centerOnCanvasPoint(canvasX, canvasY);
       },
       hoveredConnectorKey,
       pinnedConnectorKey,
@@ -308,7 +306,7 @@ export function CanvasBoard({
         handlePointerUpNode(nodeId, event);
       },
       onSelectNode: (nodeId, options) => {
-        void handleSelectNode(nodeId, options);
+        handleSelectNode(nodeId, options);
       },
       onOpenNodeConfig: () => {
         setConfigOpen(true);
@@ -317,10 +315,10 @@ export function CanvasBoard({
         handleStartConnection(event, node, port);
       },
       onCompleteConnection: (event, node, port) => {
-        void handleCompleteConnection(event, node, port);
+        handleCompleteConnection(event, node, port);
       },
       onReconnectInput: (event, nodeId, port) => {
-        void handleReconnectInput(event, nodeId, port);
+        handleReconnectInput(event, nodeId, port);
       },
       onDisconnectPort: (direction, nodeId, port) => {
         handleDisconnectPort(direction, nodeId, port);
@@ -442,19 +440,19 @@ export function CanvasBoard({
             }}
             selectionToolMode={selectionToolMode}
             onZoomIn={() => {
-              void zoomTo(view.scale * 1.2);
+              zoomTo(view.scale * 1.2);
             }}
             onZoomOut={() => {
-              void zoomTo(view.scale / 1.2);
+              zoomTo(view.scale / 1.2);
             }}
             onFitToNodes={() => {
-              void fitToNodes();
+              fitToNodes();
             }}
             onFitToSelection={() => {
-              void fitToSelection();
+              fitToSelection();
             }}
             onResetView={() => {
-              void resetView();
+              resetView();
             }}
             viewScale={view.scale}
             svgPerf={svgPerf}
@@ -489,7 +487,7 @@ export function CanvasBoard({
                   handlePointerDownNode(id, event);
                 }}
                 onSelectNode={(id: string) => {
-                  void handleSelectNode(id);
+                  handleSelectNode(id);
                 }}
                 onFocusNodeDiagnostics={(id: string) => {
                   onFocusNodeDiagnostics?.(id);

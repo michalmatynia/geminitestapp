@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
@@ -70,13 +69,13 @@ export function useImportExportData({
     };
     const rawInventories = Array.isArray(inventoriesQuery.data) ? inventoriesQuery.data : [];
     return rawInventories
-      .map((inventory) => ({
-        id: toText(
-          (inventory as { inventory_id?: unknown; id?: unknown })?.inventory_id ??
-            (inventory as { inventory_id?: unknown; id?: unknown })?.id
-        ),
-        name: toText((inventory as { name?: unknown })?.name),
-      }))
+      .map((inventory: unknown) => {
+        const inv = inventory as { inventory_id?: unknown; id?: unknown; name?: unknown };
+        return {
+          id: toText(inv.inventory_id ?? inv.id),
+          name: toText(inv.name),
+        };
+      })
       .filter((inventory: InventoryOption) => inventory.id.length > 0)
       .map((inventory: InventoryOption) => ({
         ...inventory,
@@ -116,12 +115,12 @@ export function useImportExportData({
       !!selectedBaseConnectionId &&
       !!exportInventoryId
   );
-  const warehousesData = warehousesQuery.data;
+  const warehousesData = warehousesQuery.data as { warehouses?: WarehouseOption[]; allWarehouses?: WarehouseOption[] } | undefined;
   const isFetchingWarehouses = warehousesQuery.isFetching;
   const refetchWarehouses = warehousesQuery.refetch;
   
-  const warehouses: WarehouseOption[] = (warehousesData as { warehouses?: WarehouseOption[] })?.warehouses ?? [];
-  const allWarehouses: WarehouseOption[] = (warehousesData as { allWarehouses?: WarehouseOption[] })?.allWarehouses ?? [];
+  const warehouses: WarehouseOption[] = warehousesData?.warehouses ?? [];
+  const allWarehouses: WarehouseOption[] = warehousesData?.allWarehouses ?? [];
 
   const importListQuery = useImportList(
     inventoryId,
@@ -137,32 +136,32 @@ export function useImportExportData({
     },
     importListEnabled && isBaseConnected && !!inventoryId
   );
-  const importListData = importListQuery.data;
+  const importListData = importListQuery.data as {
+    products?: ImportListItem[];
+    total?: number;
+    filtered?: number;
+    available?: number;
+    existing?: number;
+    skuDuplicates?: number;
+    page?: number;
+    pageSize?: number;
+    totalPages?: number;
+  } | undefined;
   const loadingImportList = importListQuery.isFetching;
   const refetchImportList = importListQuery.refetch;
   
-  const importList: ImportListItem[] = useMemo(() => (importListData as { products?: ImportListItem[] })?.products ?? [], [importListData]);
+  const importList: ImportListItem[] = useMemo(() => importListData?.products ?? [], [importListData]);
   const importListStats = useMemo(() => {
     if (!importListData) return null;
-    const data = importListData as {
-      total?: number;
-      filtered?: number;
-      available?: number;
-      existing?: number;
-      skuDuplicates?: number;
-      page?: number;
-      pageSize?: number;
-      totalPages?: number;
-    };
     return {
-      total: data.total ?? 0,
-      filtered: data.filtered ?? 0,
-      available: data.available ?? data.filtered ?? 0,
-      existing: data.existing ?? 0,
-      skuDuplicates: data.skuDuplicates ?? 0,
-      page: data.page ?? 1,
-      pageSize: data.pageSize ?? importListPageSize,
-      totalPages: data.totalPages ?? 1,
+      total: importListData.total ?? 0,
+      filtered: importListData.filtered ?? 0,
+      available: importListData.available ?? importListData.filtered ?? 0,
+      existing: importListData.existing ?? 0,
+      skuDuplicates: importListData.skuDuplicates ?? 0,
+      page: importListData.page ?? 1,
+      pageSize: importListData.pageSize ?? importListPageSize,
+      totalPages: importListData.totalPages ?? 1,
     };
   }, [importListData, importListPageSize]);
 

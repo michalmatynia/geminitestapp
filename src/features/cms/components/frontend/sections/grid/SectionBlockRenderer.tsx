@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
@@ -11,7 +9,6 @@ import { FrontendHeroBlock } from '../FrontendHeroBlock';
 import { FrontendBlockRenderer } from '../FrontendBlockRenderer';
 import { FrontendCarousel } from '../FrontendCarousel';
 import { FrontendSlideshowSection } from '../FrontendSlideshowSection';
-import { SectionBlockProvider } from '../SectionBlockContext';
 import { BlockRenderContext } from '../../blocks/BlockContext';
 import { BlockSettingsContext } from '../FrontendBlockRenderer';
 import { SectionLayoutProvider, useSectionLayout } from '../SectionLayoutContext';
@@ -19,7 +16,7 @@ import { useSectionData } from '../SectionDataContext';
 import { getSectionStyles, getTextAlign } from '../../theme-styles';
 import { getCustomCssSelector, buildScopedCustomCss } from '@/features/cms/utils/custom-css';
 import { resolveJustifyContent, resolveAlignItems } from './frontend-grid-utils';
-import type { BlockInstance, PageZone } from '../../../types/page-builder';
+import type { CmsBlockInstanceDto as BlockInstance } from '@/shared/contracts/cms';
 
 export function SectionBlockRenderer({
   block,
@@ -116,8 +113,8 @@ export function SectionBlockRenderer({
       const blockCustomCss = buildScopedCustomCss(block.settings['customCss'], blockSelector);
       const innerContent = (
         <div
-          className={`flex \${flexDirClass} \${wrapClass}`}
-          style={{ gap: `\${blockGap}px`, justifyContent, alignItems }}
+          className={`flex ${flexDirClass} ${wrapClass}`}
+          style={{ gap: `${blockGap}px`, justifyContent, alignItems }}
         >
           {children.map((child: BlockInstance) => (
             <SectionLayoutProvider key={child.id} stretch={shouldStretchChildren}>
@@ -132,7 +129,7 @@ export function SectionBlockRenderer({
             {wrapEventsOnly(
               <div
                 style={{ ...sectionStyles, ...(stretchStyle ?? {}) }}
-                className={`\${stretchClass} cms-node-\${block.id}`.trim()}
+                className={`${stretchClass} cms-node-${block.id}`.trim()}
               >
                 {blockCustomCss ? <style data-cms-custom-css={block.id}>{blockCustomCss}</style> : null}
                 {linkUrl ? (
@@ -157,7 +154,7 @@ export function SectionBlockRenderer({
       const letters = (block.blocks ?? []).length
         ? (block.blocks ?? [])
         : Array.from(text).map((char: string, index: number): BlockInstance => ({
-          id: `text-atom-\${block.id}-\${index}`,
+          id: `text-atom-${block.id}-${index}`,
           type: 'TextAtomLetter',
           settings: { textContent: char },
         }));

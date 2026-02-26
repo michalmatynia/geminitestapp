@@ -64,6 +64,8 @@ export function useAdminCaseResolverPageState() {
     caseResolverSettings,
     filemakerDatabase,
     requestedFileId,
+    requestedContextAutoClearRequestKey,
+    handleAcknowledgeRequestedContextAutoClear,
     handleResetCaseContext: resetCaseContextState,
     shouldOpenEditorFromQuery,
     handleUploadScanFiles,
@@ -87,6 +89,7 @@ export function useAdminCaseResolverPageState() {
   } = state;
 
   const openEditorFromQueryHandledRef = useRef<string | null>(null);
+  const autoClearRequestKeyHandledRef = useRef<string | null>(null);
   
   useEffect(() => {
     if (!shouldOpenEditorFromQuery || !requestedFileId) {
@@ -108,6 +111,24 @@ export function useAdminCaseResolverPageState() {
     requestedFileId,
     shouldOpenEditorFromQuery,
     workspace.files,
+  ]);
+
+  useEffect(() => {
+    const autoClearRequestKey = requestedContextAutoClearRequestKey?.trim() ?? '';
+    if (!autoClearRequestKey) {
+      autoClearRequestKeyHandledRef.current = null;
+      return;
+    }
+    if (autoClearRequestKeyHandledRef.current === autoClearRequestKey) return;
+    autoClearRequestKeyHandledRef.current = autoClearRequestKey;
+    handleAcknowledgeRequestedContextAutoClear(autoClearRequestKey);
+    const nextQuery = stripCaseContextQueryParams(searchParams.toString());
+    router.replace(nextQuery ? `/admin/case-resolver?${nextQuery}` : '/admin/case-resolver');
+  }, [
+    handleAcknowledgeRequestedContextAutoClear,
+    requestedContextAutoClearRequestKey,
+    router,
+    searchParams,
   ]);
 
   const editorUi = useAdminCaseResolverEditorUiState({
@@ -635,6 +656,7 @@ export function useAdminCaseResolverPageState() {
 
   const handleResetCaseContext = useCallback((): void => {
     resetCaseContextState();
+    autoClearRequestKeyHandledRef.current = null;
     const nextQuery = stripCaseContextQueryParams(searchParams.toString());
     router.replace(nextQuery ? `/admin/case-resolver?${nextQuery}` : '/admin/case-resolver');
   }, [resetCaseContextState, router, searchParams]);

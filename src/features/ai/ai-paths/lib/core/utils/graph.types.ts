@@ -32,3 +32,21 @@ export type CompiledGraph = {
   processingNodeIds: string[];
   terminalNodeIds: string[];
 };
+
+export type GraphCompileFinding = {
+  code: string;
+  severity: 'error' | 'warning';
+  message: string;
+  ruleTitle?: string;
+  nodeId?: string;
+  edgeId?: string;
+  port?: string;
+  metadata?: Record<string, any>;
+};
+
+export type GraphCompileReport = CompiledGraph & {
+  ok: boolean;
+  errors: number;
+  warnings: number;
+  findings: GraphCompileFinding[];
+};

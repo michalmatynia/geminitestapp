@@ -131,8 +131,10 @@ export type CaseResolverStateValue = {
   activeCaseId: string | null;
   requestedCaseStatus: CaseResolverRequestedCaseStatus;
   requestedCaseIssue: CaseResolverRequestedCaseIssue | null;
+  requestedContextAutoClearRequestKey: string | null;
   canCreateInActiveCase: boolean;
   shouldOpenEditorFromQuery: boolean;
+  handleAcknowledgeRequestedContextAutoClear: (requestKey: string | null) => void;
   handleRetryCaseContext: () => void;
   handleResetCaseContext: () => void;
   handleSelectFile: (fileId: string) => void;

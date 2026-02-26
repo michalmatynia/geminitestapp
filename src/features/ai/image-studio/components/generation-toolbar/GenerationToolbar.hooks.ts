@@ -65,6 +65,14 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   const queryClient = useQueryClient();
 
   const toolbarContext = useGenerationToolbarContext();
+  const {
+    setCenterLayoutPresetDraftName,
+    setCenterLayoutCustomPresets,
+    setCenterLayoutDetection,
+    setCenterLayoutShadowPolicy,
+    setCenterLayoutWhiteThreshold,
+    setCenterLayoutChromaThreshold,
+  } = toolbarContext;
 
   const upscaleRequestInFlightRef = useRef(false);
   const upscaleAbortControllerRef = useRef<AbortController | null>(null);
@@ -166,15 +174,23 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   useEffect(() => {
     skipCenterAdvancedDefaultsSaveRef.current = true;
     selectedCenterCustomPresetIdRef.current = null;
-    toolbarContext.setCenterLayoutPresetDraftName('');
-    toolbarContext.setCenterLayoutCustomPresets(loadObjectLayoutCustomPresets(activeProjectId));
+    setCenterLayoutPresetDraftName('');
+    setCenterLayoutCustomPresets(loadObjectLayoutCustomPresets(activeProjectId));
     const persistedDefaults = loadObjectLayoutAdvancedDefaults(activeProjectId);
     if (!persistedDefaults) return;
-    toolbarContext.setCenterLayoutDetection(persistedDefaults.detection);
-    toolbarContext.setCenterLayoutShadowPolicy(persistedDefaults.shadowPolicy);
-    toolbarContext.setCenterLayoutWhiteThreshold(String(persistedDefaults.whiteThreshold));
-    toolbarContext.setCenterLayoutChromaThreshold(String(persistedDefaults.chromaThreshold));
-  }, [activeProjectId, toolbarContext]);
+    setCenterLayoutDetection(persistedDefaults.detection);
+    setCenterLayoutShadowPolicy(persistedDefaults.shadowPolicy);
+    setCenterLayoutWhiteThreshold(String(persistedDefaults.whiteThreshold));
+    setCenterLayoutChromaThreshold(String(persistedDefaults.chromaThreshold));
+  }, [
+    activeProjectId,
+    setCenterLayoutPresetDraftName,
+    setCenterLayoutCustomPresets,
+    setCenterLayoutDetection,
+    setCenterLayoutShadowPolicy,
+    setCenterLayoutWhiteThreshold,
+    setCenterLayoutChromaThreshold,
+  ]);
 
   const normalizeAnalysisPercentString = (value: number, fallback: number): string => {
     const numeric = Number.isFinite(value) ? value : fallback;

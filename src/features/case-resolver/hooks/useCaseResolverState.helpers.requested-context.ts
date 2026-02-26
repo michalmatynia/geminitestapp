@@ -76,3 +76,23 @@ export const hasValidRequestedContextInFlight = ({
   if (startedAtMs <= 0) return false;
   return nowMs - startedAtMs <= watchdogMs;
 };
+
+export const shouldQueueRequestedContextAutoClear = ({
+  requestedFileId,
+  requestedCaseStatus,
+  requestedCaseIssue,
+  requestKey,
+  lastQueuedRequestKey,
+}: {
+  requestedFileId: string | null | undefined;
+  requestedCaseStatus: 'loading' | 'ready' | 'missing';
+  requestedCaseIssue: CaseResolverRequestedCaseIssue | null;
+  requestKey: string | null | undefined;
+  lastQueuedRequestKey: string | null;
+}): boolean => {
+  const normalizedRequestedFileId = normalizeRequestedFileId(requestedFileId);
+  const normalizedRequestKey = typeof requestKey === 'string' ? requestKey.trim() : '';
+  if (!normalizedRequestedFileId || !normalizedRequestKey) return false;
+  if (requestedCaseStatus !== 'missing' || requestedCaseIssue === null) return false;
+  return normalizedRequestKey !== lastQueuedRequestKey;
+};

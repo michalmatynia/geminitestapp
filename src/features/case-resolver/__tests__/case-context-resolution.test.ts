@@ -12,6 +12,7 @@ import {
   hasRequestedCaseFile,
   hasValidRequestedContextInFlight,
   resolveRequestedCaseIssueAfterRefresh,
+  shouldQueueRequestedContextAutoClear,
   shouldStartRequestedContextFetch,
   stripCaseContextQueryParams,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers.requested-context';
@@ -95,6 +96,31 @@ describe('case resolver case context resolution', () => {
     ).toBe(true);
   });
 
+  it('keeps active case unset when no requested or selected case context is present', () => {
+    const caseFile = createCaseResolverFile({
+      id: 'case-a',
+      fileType: 'case',
+      name: 'Case A',
+    });
+    const files = [caseFile];
+
+    const activeCaseId = resolveCaseResolverActiveCaseId({
+      requestedFileId: null,
+      requestedCaseContainerId: null,
+      selectedCaseContainerId: null,
+      files,
+    });
+
+    expect(activeCaseId).toBeNull();
+    expect(
+      isCaseResolverCreateContextReady({
+        activeCaseId,
+        requestedFileId: null,
+        requestedCaseStatus: 'ready',
+      }),
+    ).toBe(false);
+  });
+
   it('detects requested file presence in workspace files', () => {
     const caseFile = createCaseResolverFile({
       id: 'case-a',
@@ -169,6 +195,41 @@ describe('case resolver case context resolution', () => {
         attemptedRequestKey: requestKey,
         inFlightRequestKey: null,
         currentStatus: 'missing',
+      }),
+    ).toBe(false);
+  });
+
+  it('queues auto-clear once for missing requested context terminal state', () => {
+    const requestKey = buildRequestedContextRequestKey('case-missing', 3);
+    expect(
+      shouldQueueRequestedContextAutoClear({
+        requestedFileId: 'case-missing',
+        requestedCaseStatus: 'missing',
+        requestedCaseIssue: 'requested_file_missing',
+        requestKey,
+        lastQueuedRequestKey: null,
+      }),
+    ).toBe(true);
+    expect(
+      shouldQueueRequestedContextAutoClear({
+        requestedFileId: 'case-missing',
+        requestedCaseStatus: 'missing',
+        requestedCaseIssue: 'requested_file_missing',
+        requestKey,
+        lastQueuedRequestKey: requestKey,
+      }),
+    ).toBe(false);
+  });
+
+  it('does not queue auto-clear while context is still loading', () => {
+    const requestKey = buildRequestedContextRequestKey('case-missing', 4);
+    expect(
+      shouldQueueRequestedContextAutoClear({
+        requestedFileId: 'case-missing',
+        requestedCaseStatus: 'loading',
+        requestedCaseIssue: null,
+        requestKey,
+        lastQueuedRequestKey: null,
       }),
     ).toBe(false);
   });

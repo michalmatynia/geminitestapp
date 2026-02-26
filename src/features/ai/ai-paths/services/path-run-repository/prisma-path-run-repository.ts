@@ -447,7 +447,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
     nodeId: string,
     nodeData: AiPathRunNodeUpdate & { nodeType: string; nodeTitle?: string | null }
   ): Promise<AiPathRunNodeRecord> {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+     
     const status = (
       nodeData.status as unknown as Prisma.AiPathRunNodeCreateInput['status']
     ) ?? 'pending';
@@ -459,7 +459,7 @@ export const prismaPathRunRepository: AiPathRunRepository = {
         nodeId,
         nodeType: nodeData.nodeType,
         nodeTitle: nodeData.nodeTitle ?? null,
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+         
         status,
         attempt: nodeData.attempt ?? 0,
         inputs: toNullableJsonInput(nodeData.inputs),

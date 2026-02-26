@@ -48,6 +48,10 @@ model Product {
   @@index([catalogId])
   @@index([createdAt])
   @@index([published])
+  @@index([ean])
+  @@index([gtin])
+  @@index([asin])
+  @@index([baseProductId])
 }
 
 model Setting {
@@ -147,11 +151,11 @@ model Country {
 }
 
 model Integration {
-  id          String                 @id @default(cuid())
+  id          String                  @id @default(cuid())
   name        String
-  slug        String                 @unique
-  createdAt   DateTime               @default(now())
-  updatedAt   DateTime               @updatedAt
+  slug        String                  @unique
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
   connections IntegrationConnection[]
   listings    ProductListing[]
 }
@@ -235,6 +239,9 @@ model ProductListing {
   product           Product               @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([productId, connectionId])
+  @@index([integrationId])
+  @@index([connectionId])
+  @@index([status])
 }
 
 model Language {
@@ -267,6 +274,9 @@ model PriceGroup {
   sourceGroup     PriceGroup?  @relation("PriceGroupDependency", fields: [sourceGroupId], references: [id])
   dependentGroups PriceGroup[] @relation("PriceGroupDependency")
   products        Product[]
+
+  @@index([currencyId])
+  @@index([sourceGroupId])
 }
 
 model ProductImage {
@@ -298,16 +308,16 @@ model Catalog {
 }
 
 model ProductParameter {
-  id        String   @id @default(cuid())
-  catalogId String
-  name_en   String
-  name_pl   String?
-  name_de   String?
-  selectorType String @default("text")
+  id           String   @id @default(cuid())
+  catalogId    String
+  name_en      String
+  name_pl      String?
+  name_de      String?
+  selectorType String   @default("text")
   optionLabels String[] @default([])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  catalog   Catalog  @relation(fields: [catalogId], references: [id], onDelete: Cascade)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  catalog      Catalog  @relation(fields: [catalogId], references: [id], onDelete: Cascade)
 
   @@unique([catalogId, name_en])
   @@index([catalogId])
@@ -1116,6 +1126,7 @@ model ProducerMapping {
   @@unique([connectionId, internalProducerId])
   @@index([connectionId])
   @@index([externalProducerId])
+  @@index([internalProducerId])
 }
 
 model ExternalTag {
@@ -1147,6 +1158,7 @@ model TagMapping {
   @@unique([connectionId, internalTagId])
   @@index([connectionId])
   @@index([externalTagId])
+  @@index([internalTagId])
 }
 
 model Asset3D {

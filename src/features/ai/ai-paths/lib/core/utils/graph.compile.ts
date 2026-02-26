@@ -1,16 +1,34 @@
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
-import type { CompiledGraph } from './graph.types';
+import type {
+  CompiledGraph,
+  GraphCompileFinding,
+  GraphCompileReport,
+} from './graph.types';
+import { sanitizeEdges } from './graph.edges';
+import { getNodeInputPortCardinality, getNodeInputPortContract } from './graph.nodes';
+import { arePortTypesCompatible, getPortDataTypes } from './port-types';
+
+export type CompileGraphOptions = {
+  scopeMode?: 'full' | 'reachable_from_roots';
+  scopeRootNodeIds?: string[];
+};
 
 export const compileGraph = (
   nodes: AiNode[],
-  edges: Edge[]
-): CompiledGraph => {
+  edges: Edge[],
+  options: CompileGraphOptions = {}
+): GraphCompileReport => {
+  const findings: GraphCompileFinding[] = [];
+  const normalizedEdges = sanitizeEdges(nodes, edges);
+  
   const nodeMap = new Map(nodes.map((node: AiNode) => [node.id, node]));
   const adjacency = new Map<string, string[]>();
   const inverseAdjacency = new Map<string, string[]>();
+  const edgeMap = new Map<string, Edge[]>(); // toNodeId -> edges
 
-  edges.forEach((edge: Edge) => {
+  normalizedEdges.forEach((edge: Edge) => {
     if (!edge.from || !edge.to) return;
+    
     const targets = adjacency.get(edge.from) ?? [];
     targets.push(edge.to);
     adjacency.set(edge.from, targets);
@@ -18,6 +36,10 @@ export const compileGraph = (
     const sources = inverseAdjacency.get(edge.to) ?? [];
     sources.push(edge.from);
     inverseAdjacency.set(edge.to, sources);
+
+    const nodeEdges = edgeMap.get(edge.to) ?? [];
+    nodeEdges.push(edge);
+    edgeMap.set(edge.to, nodeEdges);
   });
 
   const triggerNode = nodes.find((node: AiNode) => node.type === 'trigger');
@@ -34,14 +56,243 @@ export const compileGraph = (
     })
     .map((node: AiNode) => node.id);
 
+  // Scoping logic
+  let reachableNodeIds = new Set<string>(nodes.map(n => n.id));
+  if (options.scopeMode === 'reachable_from_roots' && options.scopeRootNodeIds) {
+    reachableNodeIds = new Set<string>();
+    const queue = [...options.scopeRootNodeIds];
+    options.scopeRootNodeIds.forEach(id => reachableNodeIds.add(id));
+    
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      const targets = adjacency.get(current) ?? [];
+      targets.forEach(target => {
+        if (!reachableNodeIds.has(target)) {
+          reachableNodeIds.add(target);
+          queue.push(target);
+        }
+      });
+    }
+  }
+
+  // 1. Fan-in validation
+  nodes.forEach(node => {
+    if (!reachableNodeIds.has(node.id)) return;
+    const incomingEdges = edgeMap.get(node.id) ?? [];
+    const portGroups = new Map<string, Edge[]>();
+    incomingEdges.forEach(edge => {
+      if (edge.toPort) {
+        const group = portGroups.get(edge.toPort) ?? [];
+        group.push(edge);
+        portGroups.set(edge.toPort, group);
+      }
+    });
+
+    portGroups.forEach((edges, port) => {
+      if (edges.length > 1) {
+        const cardinality = getNodeInputPortCardinality(node, port);
+        if (cardinality === 'one') {
+          findings.push({
+            code: 'fan_in_single_port',
+            severity: 'error',
+            message: `Node "${node.title || node.id}" receives multiple inputs on single-cardinality port "${port}".`,
+            nodeId: node.id,
+            port,
+          });
+        }
+      }
+    });
+  });
+
+  // 2. Required input validation
+  nodes.forEach(node => {
+    if (!reachableNodeIds.has(node.id)) return;
+    if (node.type === 'trigger') return;
+
+    const incomingPorts = new Set((edgeMap.get(node.id) ?? []).map(e => e.toPort).filter(Boolean) as string[]);
+    
+    (node.inputs || []).forEach(port => {
+      const contract = getNodeInputPortContract(node, port);
+      if (contract.required && !incomingPorts.has(port)) {
+        findings.push({
+          code: 'required_input_missing_wiring',
+          severity: 'error',
+          message: `Node "${node.title || node.id}" is missing required input wiring for port "${port}".`,
+          nodeId: node.id,
+          port,
+        });
+      }
+    });
+  });
+
+  // 3. Cycle detection (Simple DFS for cycles)
+  const visited = new Set<string>();
+  const recStack = new Set<string>();
+  const detectCycle = (u: string, path: string[]) => {
+    visited.add(u);
+    recStack.add(u);
+    path.push(u);
+
+    const neighbors = adjacency.get(u) ?? [];
+    for (const v of neighbors) {
+      if (!visited.has(v)) {
+        detectCycle(v, path);
+      } else if (recStack.has(v)) {
+        // Cycle detected
+        const cycleNodes = path.slice(path.indexOf(v));
+        const isTriggerSimulationHandshake = cycleNodes.length === 2 && 
+          ((nodeMap.get(cycleNodes[0])?.type === 'trigger' && nodeMap.get(cycleNodes[1])?.type === 'simulation') ||
+           (nodeMap.get(cycleNodes[1])?.type === 'trigger' && nodeMap.get(cycleNodes[0])?.type === 'simulation'));
+
+        const isAllowedLoop = cycleNodes.some(id => {
+          const type = nodeMap.get(id)?.type;
+          return type === 'iterator' || type === 'delay' || type === 'poll';
+        });
+
+        if (isTriggerSimulationHandshake) {
+          findings.push({
+            code: 'cycle_detected',
+            severity: 'warning',
+            message: 'Trigger/Simulation handshake loop detected. This pattern is supported but Trigger -> Fetcher -> Context Filter is preferred.',
+            metadata: { legacyTriggerSimulationHandshake: true, nodeIds: cycleNodes }
+          });
+        } else if (isAllowedLoop) {
+          findings.push({
+            code: 'cycle_detected',
+            severity: 'warning',
+            message: `Detected a circular loop across ${cycleNodes.length} node(s). Fix: remove at least one loop edge.`,
+            metadata: { nodeIds: cycleNodes }
+          });
+
+          // Also check for deadlock risk in loops
+          const loopNodes = cycleNodes.map(id => nodeMap.get(id)).filter(Boolean) as AiNode[];
+          const allWait = loopNodes.every(n => n.config?.runtime?.waitForInputs);
+          if (allWait) {
+            const anyExternalRequired = loopNodes.some(n => {
+              const incomingFromOutside = (edgeMap.get(n.id) ?? []).filter(e => !cycleNodes.includes(e.from!));
+              const ports = new Set(incomingFromOutside.map(e => e.toPort).filter(Boolean) as string[]);
+              return (n.inputs || []).some(p => getNodeInputPortContract(n, p).required && ports.has(p));
+            });
+            if (!anyExternalRequired) {
+              findings.push({
+                code: 'cycle_wait_deadlock_risk',
+                severity: 'warning',
+                message: 'This loop contains only wait-for-inputs nodes with internal dependencies. Fix: provide at least one required input from outside the loop.',
+                metadata: { nodeIds: cycleNodes }
+              });
+            }
+          }
+        } else {
+          findings.push({
+            code: 'unsupported_cycle',
+            severity: 'error',
+            message: 'Unsupported circular dependency detected. Circular loops are only allowed through Iterator, Delay, or Poll nodes.',
+            metadata: { nodeIds: cycleNodes }
+          });
+        }
+      }
+    }
+
+    recStack.delete(u);
+    path.pop();
+  };
+
+  nodes.forEach(node => {
+    if (!visited.has(node.id)) {
+      detectCycle(node.id, []);
+    }
+  });
+
+  // 4. Incompatible wiring
+  normalizedEdges.forEach(edge => {
+    if (!edge.from || !edge.to || !edge.fromPort || !edge.toPort) return;
+    if (!reachableNodeIds.has(edge.from) || !reachableNodeIds.has(edge.to)) return;
+
+    const fromNode = nodeMap.get(edge.from);
+    const toNode = nodeMap.get(edge.to);
+    if (!fromNode || !toNode) return;
+
+    const fromTypes = getPortDataTypes(edge.fromPort);
+    const toTypes = getPortDataTypes(edge.toPort);
+    if (!arePortTypesCompatible(fromTypes, toTypes)) {
+      const contract = getNodeInputPortContract(toNode, edge.toPort);
+      findings.push({
+        code: contract.required ? 'incompatible_wiring' : 'optional_input_incompatible_wiring',
+        severity: contract.required ? 'error' : 'warning',
+        message: `Incompatible wiring: ${edge.fromPort} -> ${edge.toPort}`,
+        edgeId: edge.id,
+      });
+    }
+  });
+
+  // 5. Trigger context resolution risk
+  nodes.forEach(node => {
+    if (node.type === 'trigger' && node.config?.trigger?.contextMode === 'simulation_required') {
+      const incomingEdges = edgeMap.get(node.id) ?? [];
+      const hasSimulationSource = incomingEdges.some(e => {
+        const source = nodeMap.get(e.from!);
+        if (source?.type === 'simulation') {
+          return source.config?.simulation?.runBehavior !== 'manual_only';
+        }
+        if (source?.type === 'fetcher') {
+          return source.config?.fetcher?.sourceMode === 'simulation_id';
+        }
+        return false;
+      });
+
+      if (!hasSimulationSource) {
+        findings.push({
+          code: 'trigger_context_resolution_risk',
+          severity: 'warning',
+          message: `Trigger "${node.title || node.id}" requires simulation context but no simulation-capable source is connected, or source is manual-only.`,
+          nodeId: node.id
+        });
+      }
+    }
+  });
+
+  // 6. Model prompt deadlock risk
+  nodes.forEach(node => {
+    if (node.type === 'model') {
+      const isPromptRequired = getNodeInputPortContract(node, 'prompt').required;
+      const waitForInputs = node.config?.runtime?.waitForInputs;
+      if (isPromptRequired && waitForInputs) {
+        // Check if prompt comes from a cycle
+        const incoming = (edgeMap.get(node.id) ?? []).find(e => e.toPort === 'prompt');
+        if (incoming) {
+          // Simple check: if fromPort is 'result' and fromNode is 'prompt' node which depends on us
+          const source = nodeMap.get(incoming.from!);
+          if (source?.type === 'prompt') {
+            const sourceIncoming = (edgeMap.get(source.id) ?? []).some(e => e.from === node.id);
+            if (sourceIncoming) {
+              findings.push({
+                code: 'model_prompt_deadlock_risk',
+                severity: 'warning',
+                message: 'Model prompt may never resolve because it depends on this model\'s own output in a wait-for-inputs cycle.',
+                nodeId: node.id
+              });
+            }
+          }
+        }
+      }
+    }
+  });
+
+  const errors = findings.filter(f => f.severity === 'error').length;
+  const warnings = findings.filter(f => f.severity === 'warning').length;
+
   return {
     nodes,
-    edges,
+    edges: normalizedEdges,
     nodeMap,
     adjacency,
     inverseAdjacency,
     triggerNodeId,
     processingNodeIds,
     terminalNodeIds,
+    ok: errors === 0,
+    errors,
+    warnings,
+    findings,
   };
 };

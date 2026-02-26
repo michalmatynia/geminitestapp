@@ -266,6 +266,26 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     expect(scoped.activeFileId).toBe(workspace.activeFileId);
   });
 
+  it('shows full workspace when no case context is selected', () => {
+    const workspace = buildWorkspaceFixture();
+    const scoped = resolveCaseResolverTreeWorkspace({
+      selectedFileId: null,
+      requestedFileId: null,
+      workspace: {
+        ...workspace,
+        activeFileId: null,
+      },
+    });
+
+    expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual(
+      workspace.files.map((file: CaseResolverFile) => file.id).sort(),
+    );
+    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual(
+      workspace.assets.map((asset: CaseResolverAssetFile) => asset.id).sort(),
+    );
+    expect(scoped.folders).toEqual(workspace.folders);
+  });
+
   it('includes descendant case scope by default', () => {
     const workspace = buildNestedCaseWorkspaceFixture();
     const scoped = resolveCaseResolverTreeWorkspace({

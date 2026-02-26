@@ -169,7 +169,7 @@ export const resolveCaseResolverActiveCaseId = ({
   requestedFileId,
   requestedCaseContainerId,
   selectedCaseContainerId,
-  files,
+  files: _files,
 }: {
   requestedFileId: string | null;
   requestedCaseContainerId: string | null;
@@ -178,10 +178,7 @@ export const resolveCaseResolverActiveCaseId = ({
 }): string | null => {
   if (requestedFileId) return requestedCaseContainerId;
   if (selectedCaseContainerId) return selectedCaseContainerId;
-  return (
-    files.find((file: CaseResolverFile): boolean => file.fileType === 'case')?.id ??
-    null
-  );
+  return null;
 };
 
 export const resolveCaseScopedFolderTarget = ({

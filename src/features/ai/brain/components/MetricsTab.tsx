@@ -41,11 +41,11 @@ export function MetricsTab(): React.JSX.Element {
     runtimeAnalyticsQuery,
   } = useBrain();
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+   
   const insightsData = insightsQuery.data;
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+   
   const latestAnalyticsInsight = insightsData?.analytics?.[0];
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+   
   const latestLogsInsight = insightsData?.logs?.[0];
 
   return (
@@ -65,12 +65,12 @@ export function MetricsTab(): React.JSX.Element {
             <div className='py-8 text-center text-xs text-gray-500'>Loading analytics summary...</div>
           ) : analyticsSummaryQuery.data ? (
             <div className='grid grid-cols-2 gap-4 mt-2'>
-              {/* eslint-disable @typescript-eslint/no-unsafe-argument */}
+              { }
               <MetadataItem label='Total Events' value={formatNumber(analyticsSummaryQuery.data.totals.events)} />
               <MetadataItem label='Pageviews' value={formatNumber(analyticsSummaryQuery.data.totals.pageviews)} />
               <MetadataItem label='Visitors' value={formatNumber(analyticsSummaryQuery.data.visitors)} />
               <MetadataItem label='Sessions' value={formatNumber(analyticsSummaryQuery.data.sessions)} />
-              {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
+              { }
             </div>
           ) : (
             <EmptyState title='No analytics' description='Failed to load analytics summary.' variant='compact' />
@@ -144,12 +144,12 @@ export function MetricsTab(): React.JSX.Element {
           <div className='py-8 text-center text-xs text-gray-500'>Loading runtime analytics...</div>
         ) : runtimeAnalyticsQuery.data ? (
           <div className='grid grid-cols-2 gap-4 md:grid-cols-4 mt-2'>
-            {/* eslint-disable @typescript-eslint/no-unsafe-argument */}
+            { }
             <MetadataItem label='Total Runs' value={formatNumber(runtimeAnalyticsQuery.data.runs.total)} />
             <MetadataItem label='Success Rate' value={formatPercent(runtimeAnalyticsQuery.data.runs.successRate)} />
             <MetadataItem label='Avg Duration' value={formatDurationMs(runtimeAnalyticsQuery.data.runs.avgDurationMs)} />
             <MetadataItem label='Active Nodes' value={formatNumber(runtimeAnalyticsQuery.data.nodes.running)} />
-            {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
+            { }
           </div>
         ) : (
           <EmptyState title='No runtime telemetry' description='Failed to load runtime analytics.' variant='compact' />

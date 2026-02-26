@@ -33,13 +33,10 @@ export const resolveCaseResolverTreeWorkspace = ({
   );
   const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
   const forcedContextFileId = normalizedRequestedFileId.length > 0 ? normalizedRequestedFileId : null;
-  const fallbackCaseId =
-    workspace.files.find((file: CaseResolverFile): boolean => file.fileType === 'case')?.id ?? null;
   const contextFileId =
     forcedContextFileId ??
     selectedFileId ??
-    workspace.activeFileId ??
-    fallbackCaseId;
+    workspace.activeFileId;
   if (!contextFileId) return workspace;
   const contextFile = filesById.get(contextFileId) ?? null;
   if (!contextFile) {

@@ -62,10 +62,10 @@ export function ProvidersTab(): React.JSX.Element {
               ? (ollamaModelsQuery.error instanceof Error ? ollamaModelsQuery.error.message : 'Failed to load Ollama models.')
               : `${liveOllamaModels.length} live model(s) available for report routing.`}
         </div>
-        {/* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */}
+        { }
         {ollamaModelsQuery.data?.warning?.message ? (
           <div className='mt-1 text-[11px] text-amber-300'>
-            {/* eslint-disable-next-line @typescript-eslint/no-unsafe-member-access */}
+            { }
             {ollamaModelsQuery.data.warning.message}
           </div>
         ) : null}

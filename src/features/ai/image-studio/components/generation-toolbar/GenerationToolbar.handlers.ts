@@ -523,7 +523,7 @@ export function useGenerationToolbarHandlers(rawState: GenerationToolbarState): 
           }
 
           setCenterStatus('uploading');
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           response = await withCenterRetry(
             () => {
               const formData = new FormData();
@@ -564,7 +564,7 @@ export function useGenerationToolbarHandlers(rawState: GenerationToolbarState): 
               ? 'server_object_layout_v1'
               : 'server_alpha_bbox';
           const fallbackRequestPayload = buildValidatedCenterRequestPayload(fallbackMode);
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           response = await withCenterRetry(
             () =>
               api
@@ -592,7 +592,7 @@ export function useGenerationToolbarHandlers(rawState: GenerationToolbarState): 
       } else {
         setCenterStatus('processing');
         const centerRequestPayload = buildValidatedCenterRequestPayload(centerMode as ImageStudioCenterMode);
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+         
         response = await withCenterRetry(
           () =>
             api
@@ -708,7 +708,7 @@ export function useGenerationToolbarHandlers(rawState: GenerationToolbarState): 
           }
 
           setAutoScaleStatus('uploading');
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           response = await withAutoScalerRetry(
             () => {
               const formData = new FormData();
@@ -736,7 +736,7 @@ export function useGenerationToolbarHandlers(rawState: GenerationToolbarState): 
           );
         } catch (error) {
           setAutoScaleStatus('processing');
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+           
           response = await withAutoScalerRetry(
             () =>
               api
@@ -762,7 +762,7 @@ export function useGenerationToolbarHandlers(rawState: GenerationToolbarState): 
         }
       } else {
         setAutoScaleStatus('processing');
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+         
         response = await withAutoScalerRetry(
           () =>
             api

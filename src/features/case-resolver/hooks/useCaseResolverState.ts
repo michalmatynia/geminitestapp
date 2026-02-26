@@ -69,6 +69,7 @@ import {
   hasRequestedCaseFile,
   hasValidRequestedContextInFlight,
   resolveRequestedCaseIssueAfterRefresh,
+  shouldQueueRequestedContextAutoClear,
   shouldStartRequestedContextFetch,
 } from './useCaseResolverState.helpers.requested-context';
 import { useCaseResolverStateSelectionActions } from './useCaseResolverState.selection-actions';
@@ -186,6 +187,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const [requestedCaseIssue, setRequestedCaseIssue] =
     useState<CaseResolverRequestedCaseIssue | null>(null);
   const [requestedContextRetryTick, setRequestedContextRetryTick] = useState(0);
+  const [requestedContextAutoClearRequestKey, setRequestedContextAutoClearRequestKey] =
+    useState<string | null>(null);
   const [editingDocumentDraft, setEditingDocumentDraft] = useState<CaseResolverFileEditDraft | null>(null);
   const [editingDocumentNodeContext, setEditingDocumentNodeContext] =
     useState<CaseResolverEditorNodeContext | null>(null);
@@ -210,6 +213,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const requestedContextInFlightRef = useRef<RequestedContextInFlightState | null>(null);
   const requestedContextAttemptKeyRef = useRef<string | null>(null);
   const requestedContextStartedAtRef = useRef<number | null>(null);
+  const requestedContextAutoClearRequestKeyRef = useRef<string | null>(null);
+  const requestedContextLastQueuedAutoClearKeyRef = useRef<string | null>(null);
   const unresolvedOwnershipWarningShownRef = useRef(false);
   const lastLoggedOwnershipDiagnosticsSignatureRef = useRef<string>('');
   const lastLoggedRequestedContextSignatureRef = useRef<string>('');
@@ -238,7 +243,13 @@ export function useCaseResolverState(): CaseResolverStateValue {
       input?: {
         message?: string;
         requestKey?: string | null;
-        resolvedVia?: 'workspace_presence' | 'snapshot_fetch' | 'watchdog' | 'manual' | 'none';
+        resolvedVia?:
+          | 'workspace_presence'
+          | 'snapshot_fetch'
+          | 'watchdog'
+          | 'manual'
+          | 'auto_clear'
+          | 'none';
       },
     ): void => {
       const message = input?.message;
@@ -276,6 +287,58 @@ export function useCaseResolverState(): CaseResolverStateValue {
       });
     },
     [requestedFileId],
+  );
+
+  const queueRequestedContextAutoClear = useCallback(
+    ({
+      requestKey,
+      issue,
+      message,
+    }: {
+      requestKey: string | null;
+      issue: CaseResolverRequestedCaseIssue | null;
+      message: string;
+    }): void => {
+      const normalizedRequestKey = requestKey?.trim() ?? '';
+      if (
+        !shouldQueueRequestedContextAutoClear({
+          requestedFileId,
+          requestedCaseStatus: 'missing',
+          requestedCaseIssue: issue,
+          requestKey: normalizedRequestKey,
+          lastQueuedRequestKey: requestedContextLastQueuedAutoClearKeyRef.current,
+        })
+      ) {
+        return;
+      }
+      requestedContextLastQueuedAutoClearKeyRef.current = normalizedRequestKey;
+      requestedContextAutoClearRequestKeyRef.current = normalizedRequestKey;
+      setRequestedContextAutoClearRequestKey(normalizedRequestKey);
+      logRequestedContextTransition('requested_context_auto_cleared', {
+        message,
+        requestKey: normalizedRequestKey,
+        resolvedVia: 'auto_clear',
+      });
+    },
+    [logRequestedContextTransition, requestedFileId],
+  );
+
+  const handleAcknowledgeRequestedContextAutoClear = useCallback(
+    (requestKey: string | null): void => {
+      const normalizedRequestKey =
+        requestKey?.trim() ??
+        requestedContextAutoClearRequestKeyRef.current?.trim() ??
+        '';
+      if (!normalizedRequestKey) return;
+      requestedContextLastQueuedAutoClearKeyRef.current = normalizedRequestKey;
+      if (requestedContextAutoClearRequestKeyRef.current === normalizedRequestKey) {
+        requestedContextAutoClearRequestKeyRef.current = null;
+      }
+      setRequestedContextAutoClearRequestKey((current: string | null): string | null =>
+        current === normalizedRequestKey ? null : current,
+      );
+    },
+    [],
   );
 
   const persistence: UseCaseResolverPersistenceValue = useCaseResolverPersistence({
@@ -504,7 +567,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
       requestedContextInFlightRef.current = null;
       requestedContextAttemptKeyRef.current = null;
       requestedContextStartedAtRef.current = null;
+      requestedContextAutoClearRequestKeyRef.current = null;
+      requestedContextLastQueuedAutoClearKeyRef.current = null;
       handledRequestedFileIdRef.current = null;
+      setRequestedContextAutoClearRequestKey(null);
       setRequestedCaseIssueSafe(null);
       setRequestedCaseStatusSafe('ready');
       logRequestedContextTransition('requested_context_ready', {
@@ -525,7 +591,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedContextInFlightRef.current = null;
     requestedContextAttemptKeyRef.current = null;
     requestedContextStartedAtRef.current = null;
+    requestedContextAutoClearRequestKeyRef.current = null;
+    requestedContextLastQueuedAutoClearKeyRef.current = null;
     handledRequestedFileIdRef.current = null;
+    setRequestedContextAutoClearRequestKey(null);
     setRequestedCaseIssueSafe(null);
     setRequestedCaseStatusSafe('ready');
     logRequestedContextTransition('requested_context_ready', {
@@ -607,6 +676,11 @@ export function useCaseResolverState(): CaseResolverStateValue {
           requestKey,
           resolvedVia: 'snapshot_fetch',
         });
+        queueRequestedContextAutoClear({
+          requestKey,
+          issue: requestedIssueAfterRefresh,
+          message: 'Auto-cleared stale URL context after refresh failure.',
+        });
         return;
       }
 
@@ -660,8 +734,14 @@ export function useCaseResolverState(): CaseResolverStateValue {
         requestKey,
         resolvedVia: 'snapshot_fetch',
       });
+      queueRequestedContextAutoClear({
+        requestKey,
+        issue: requestedIssueAfterRefresh,
+        message: 'Auto-cleared stale URL context after requested file was not found.',
+      });
     })();
   }, [
+    queueRequestedContextAutoClear,
     logRequestedContextTransition,
     queuedExpectedRevisionRef,
     queuedMutationIdRef,
@@ -706,12 +786,18 @@ export function useCaseResolverState(): CaseResolverStateValue {
         requestKey,
         resolvedVia: 'watchdog',
       });
+      queueRequestedContextAutoClear({
+        requestKey,
+        issue: 'workspace_unavailable',
+        message: 'Auto-cleared stale URL context after loading watchdog timeout.',
+      });
     }, 500);
 
     return (): void => {
       window.clearInterval(watchdogTimer);
     };
   }, [
+    queueRequestedContextAutoClear,
     logRequestedContextTransition,
     requestedCaseStatus,
     requestedContextRetryTick,
@@ -767,12 +853,18 @@ export function useCaseResolverState(): CaseResolverStateValue {
         requestKey: requestedContextAttemptKeyRef.current,
         resolvedVia: 'watchdog',
       });
+      queueRequestedContextAutoClear({
+        requestKey: requestedContextAttemptKeyRef.current,
+        issue: 'workspace_unavailable',
+        message: 'Auto-cleared stale URL context after deadlock guard transition.',
+      });
     }, 1500);
 
     return (): void => {
       window.clearTimeout(deadlockGuardTimer);
     };
   }, [
+    queueRequestedContextAutoClear,
     logRequestedContextTransition,
     requestedCaseStatus,
     requestedFileId,
@@ -848,9 +940,12 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedContextInFlightRef.current = null;
     requestedContextAttemptKeyRef.current = null;
     requestedContextStartedAtRef.current = null;
+    requestedContextAutoClearRequestKeyRef.current = null;
+    requestedContextLastQueuedAutoClearKeyRef.current = null;
     requestedWorkspaceMissingFileIdRef.current = null;
     requestedWorkspaceRefreshFileIdRef.current = normalizedRequestedFileId;
     handledRequestedFileIdRef.current = null;
+    setRequestedContextAutoClearRequestKey(null);
     setRequestedCaseIssueSafe(null);
     setRequestedCaseStatusSafe('loading');
     setRequestedContextRetryTick(nextRetryTick);
@@ -873,10 +968,12 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedContextInFlightRef.current = null;
     requestedContextAttemptKeyRef.current = null;
     requestedContextStartedAtRef.current = null;
+    requestedContextAutoClearRequestKeyRef.current = null;
+    requestedContextLastQueuedAutoClearKeyRef.current = null;
     handledRequestedFileIdRef.current = null;
+    setRequestedContextAutoClearRequestKey(null);
     setRequestedCaseIssueSafe(null);
-    setRequestedCaseStatusSafe('loading');
-    setRequestedContextRetryTick((prev) => prev + 1);
+    setRequestedCaseStatusSafe('ready');
     setSelectedFileId(null);
     setSelectedAssetId(null);
     setSelectedFolderPath(null);
@@ -982,6 +1079,9 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedContextInFlightRef.current = null;
     requestedContextAttemptKeyRef.current = null;
     requestedContextStartedAtRef.current = null;
+    requestedContextAutoClearRequestKeyRef.current = null;
+    requestedContextLastQueuedAutoClearKeyRef.current = null;
+    setRequestedContextAutoClearRequestKey(null);
     setRequestedCaseIssueSafe(null);
     setRequestedCaseStatusSafe('ready');
   }, [requestedFileId, setRequestedCaseIssueSafe, setRequestedCaseStatusSafe]);
@@ -1032,7 +1132,9 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedPromptExploderSessionId,
     requestedCaseStatus,
     requestedCaseIssue,
+    requestedContextAutoClearRequestKey,
     shouldOpenEditorFromQuery,
+    handleAcknowledgeRequestedContextAutoClear,
     handleRetryCaseContext,
     handleResetCaseContext,
     handleCreateFolder: creationActions.handleCreateFolder,

@@ -761,7 +761,7 @@ export function useAiPathsCanvasInteractions({
     }
 
     const targetCardinality = getNodeInputPortCardinality(node, port);
-    if (targetCardinality === 'single') {
+    if (targetCardinality === 'one') {
       const existingIncoming = edges.find(
         (edge: Edge): boolean => edge.to === node.id && edge.toPort === port
       );

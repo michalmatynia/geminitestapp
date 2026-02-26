@@ -6,6 +6,7 @@ import {
 
 import {
   type CreateProductInput,
+  type ProductCreateInputDto,
   ProductFilters,
   ProductRepository,
   UpdateProductInput,
@@ -142,6 +143,21 @@ const createTransactionalRepository = (
     return product ? toProductRecord(product as FullPrismaProduct) : null;
   },
 
+  getProductsBySkus: async (skus) => {
+    if (skus.length === 0) return [];
+    const products = await tx.product.findMany({
+      where: { sku: { in: skus } },
+      include: {
+        images: { include: { imageFile: true } },
+        catalogs: { include: { catalog: true } },
+        categories: true,
+        tags: true,
+        producers: true,
+      },
+    });
+    return products.map((p) => toProductRecord(p as FullPrismaProduct));
+  },
+
   findProductByBaseId: async (baseProductId) => {
     const product = await tx.product.findFirst({
       where: { baseProductId },
@@ -154,6 +170,21 @@ const createTransactionalRepository = (
       },
     });
     return product ? toProductRecord(product as FullPrismaProduct) : null;
+  },
+
+  findProductsByBaseIds: async (baseIds) => {
+    if (baseIds.length === 0) return [];
+    const products = await tx.product.findMany({
+      where: { baseProductId: { in: baseIds } },
+      include: {
+        images: { include: { imageFile: true } },
+        catalogs: { include: { catalog: true } },
+        categories: true,
+        tags: true,
+        producers: true,
+      },
+    });
+    return products.map((p) => toProductRecord(p as FullPrismaProduct));
   },
 
   createProduct: async (data) => {
@@ -205,7 +236,7 @@ const createTransactionalRepository = (
     }
   },
 
-  bulkCreateProducts: async (data) => {
+  bulkCreateProducts: async (data: ProductCreateInputDto[]) => {
     if (data.length === 0) return 0;
     const cleanData = data.map((item) => {
       const { categoryId: _cat, id, ...rest } = item;
@@ -218,7 +249,7 @@ const createTransactionalRepository = (
         ...(normalizedParameters !== undefined
           ? {
             parameters:
-                normalizedParameters as Prisma.JsonValue,
+                normalizedParameters as Prisma.InputJsonValue,
           }
           : {}),
         ...(id ? { id } : {}),
@@ -320,7 +351,7 @@ const createTransactionalRepository = (
     const product = await tx.product.create({
       data: {
         ...rest,
-        parameters: rest.parameters,
+        parameters: rest.parameters as Prisma.InputJsonValue,
         sku,
         published: false,
       },
@@ -583,12 +614,24 @@ export const prismaProductRepository: ProductRepository = {
     return createTransactionalRepository(prisma).getProductBySku(sku);
   },
 
+  async getProductsBySkus(skus: string[]) {
+    return createTransactionalRepository(prisma).getProductsBySkus(skus);
+  },
+
   async findProductByBaseId(baseProductId: string) {
     return createTransactionalRepository(prisma).findProductByBaseId(baseProductId);
   },
 
+  async findProductsByBaseIds(baseIds: string[]) {
+    return createTransactionalRepository(prisma).findProductsByBaseIds(baseIds);
+  },
+
   async createProduct(data: CreateProductInput) {
     return createTransactionalRepository(prisma).createProduct(data);
+  },
+
+  async bulkCreateProducts(data: ProductCreateInputDto[]) {
+    return createTransactionalRepository(prisma).bulkCreateProducts(data);
   },
 
   async updateProduct(id: string, data: UpdateProductInput) {

@@ -102,7 +102,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
     ? (caseIdentifierPathById.get(caseFile.caseIdentifierId) ??
       caseFile.caseIdentifierId)
     : null;
-  const isHeldCase = Boolean(caseFile) && heldCaseId === caseFile.id;
+  const isHeldCase = Boolean(caseFile) && heldCaseId === caseFile?.id;
   const isLocked =
     caseFile?.isLocked === true ||
     caseContentFile?.isLocked === true ||

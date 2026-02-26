@@ -643,7 +643,13 @@ export function useCanvasInteractions(args?: {
   const handleWheel = useCallback((event: React.WheelEvent<Element>): void => {
     event.preventDefault();
     event.stopPropagation();
-    nav.applyWheelZoom(event.deltaY, event.clientX, event.clientY, event.deltaMode);
+    nav.applyWheelZoom(
+      event.deltaY,
+      event.clientX,
+      event.clientY,
+      event.deltaMode,
+      event.ctrlKey
+    );
   }, [nav]);
 
   useEffect(() => {
@@ -751,8 +757,19 @@ export function useCanvasInteractions(args?: {
       endConnection();
       selectEdge(null);
     };
-    const handlePointerUp = () => {
+    const handlePointerUp = (event: PointerEvent): void => {
       setMarqueeSelection(null);
+      const target = event.target as HTMLElement | null;
+      const portDirection = target?.getAttribute('data-port');
+      if (portDirection === 'input') {
+        // Let input-port handlers complete a connection before any global cancel.
+        return;
+      }
+      if (portDirection === 'output') {
+        endConnection();
+        return;
+      }
+      if (target?.closest('[data-edge-panel]')) return;
       endConnection();
     };
     

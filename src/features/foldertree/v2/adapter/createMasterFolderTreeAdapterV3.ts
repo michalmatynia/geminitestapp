@@ -143,33 +143,7 @@ export function createMasterFolderTreeAdapterV3<TEntity extends string>({
   fetchState,
   handlers,
 }: CreateMasterFolderTreeAdapterV3Options<TEntity>): MasterFolderTreeAdapterV3 {
-  const applyOperationCompat = async (
-    operation: MasterFolderTreePersistOperation,
-    context: MasterFolderTreePersistContext
-  ): Promise<MasterTreeNode[] | void> => {
-    const tx: FolderTreeTransaction = {
-      id: `legacy_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`,
-      version: 0,
-      createdAt: Date.now(),
-      operation,
-      previousNodes: context.previousNodes,
-      nextNodes: context.nextNodes,
-    };
-    const applied = await applyDecodedOperation({
-      tx,
-      decodeNodeId,
-      handlers,
-    });
-    return applied?.nodes;
-  };
-
   return {
-    ...(fetchState
-      ? {
-        loadNodes: async (): Promise<MasterTreeNode[]> => (await fetchState()).nodes,
-      }
-      : {}),
-    applyOperation: applyOperationCompat,
     ...(fetchState ? { fetchState } : {}),
     prepare: defaultPrepare,
     apply: async (

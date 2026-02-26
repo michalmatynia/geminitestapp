@@ -14,6 +14,7 @@ import type {
 import type { ConnectorInfo } from './canvas-board-connectors';
 
 import type { EdgePath } from '../context/hooks/useEdgePaths';
+import type { EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 
 export type CanvasRendererMode = 'legacy' | 'svg';
 export type SvgDetailLevel = 'full' | 'compact' | 'skeleton';
@@ -31,6 +32,9 @@ export interface CanvasBoardUIContextValue {
   edgePaths: EdgePath[];
   edgeMetaMap: Map<string, Edge>;
   nodeById: Map<string, AiNode>;
+  edgeRoutingMode: EdgeRoutingMode;
+  connecting: { fromNodeId: string; fromPort: string; start: { x: number; y: number } } | null;
+  connectingPos: { x: number; y: number } | null;
   
   // Selection
   selectedNodeId: string | null;

@@ -355,20 +355,13 @@ export function useCanvasBoardState({
     handleWheel: (event) => { canvasInteractions.handleWheel(event); },
     handleRemoveEdge: (edgeId) => { canvasInteractions.handleRemoveEdge(edgeId); },
     handleDisconnectPort: (direction, nodeId, port) => { canvasInteractions.handleDisconnectPort(direction, nodeId, port); },
-    handleStartConnection: (nodeId, port, _pos) => { 
-      const node = graphState.nodes.find(n => n.id === nodeId);
-      if (!node) return;
-      const event = new PointerEvent('pointerdown') as unknown as React.PointerEvent<Element>;
+    handleStartConnection: (event, node, port) => {
       void canvasInteractions.handleStartConnection(event, node, port);
     },
-    handleCompleteConnection: (nodeId, port) => {
-      const node = graphState.nodes.find(n => n.id === nodeId);
-      if (!node) return;
-      const event = new PointerEvent('pointerup') as unknown as React.PointerEvent<Element>;
+    handleCompleteConnection: (event, node, port) => {
       canvasInteractions.handleCompleteConnection(event, node, port);
     },
-    handleReconnectInput: (_edgeId, nodeId, port) => {
-      const event = new PointerEvent('pointerdown') as unknown as React.PointerEvent<Element>;
+    handleReconnectInput: (event, nodeId, port) => {
       void canvasInteractions.handleReconnectInput(event, nodeId, port);
     },
     handleSelectNode: (nodeId, options) => { void canvasInteractions.handleSelectNode(nodeId, options); },

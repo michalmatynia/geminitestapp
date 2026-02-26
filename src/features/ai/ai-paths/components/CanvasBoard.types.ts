@@ -72,9 +72,9 @@ export interface CanvasBoardState {
   handleWheel: (event: React.WheelEvent) => void;
   handleRemoveEdge: (edgeId: string) => void;
   handleDisconnectPort: (direction: 'input' | 'output', nodeId: string, port: string) => void;
-  handleStartConnection: (nodeId: string, port: string, pos: { x: number; y: number }) => void;
-  handleCompleteConnection: (nodeId: string, port: string) => void;
-  handleReconnectInput: (edgeId: string, nodeId: string, port: string) => void;
+  handleStartConnection: (event: React.PointerEvent<Element>, node: AiNode, port: string) => void;
+  handleCompleteConnection: (event: React.PointerEvent<Element>, node: AiNode, port: string) => void;
+  handleReconnectInput: (event: React.PointerEvent<Element>, nodeId: string, port: string) => void;
   handleSelectNode: (nodeId: string, options?: { toggle?: boolean }) => void;
   handleDrop: (event: React.DragEvent<HTMLDivElement>) => void;
   handleDragOver: (event: React.DragEvent<HTMLDivElement>) => void;

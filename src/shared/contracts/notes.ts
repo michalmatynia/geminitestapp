@@ -241,10 +241,9 @@ export type NoteCategoryRelationDto = z.infer<typeof noteCategoryRelationSchema>
 export type NoteCategoryRecord = NoteCategoryRelationDto;
 
 export const noteRelationSchema = z.object({
-  id: z.string(),
   sourceNoteId: z.string(),
   targetNoteId: z.string(),
-  type: z.string(),
+  assignedAt: z.string(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 

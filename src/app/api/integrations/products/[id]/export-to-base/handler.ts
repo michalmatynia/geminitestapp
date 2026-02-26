@@ -122,77 +122,18 @@ export async function postExportToBaseHandler(
       inFlightExportRequests.set(lockKey, Date.now());
       requestLockKey = lockKey;
     }
-    const session = await auth().catch(() => null);
-    const userId = session?.user?.id ?? null;
-    runMeta = {
-      ...runMeta,
-      sourceInfo: {
-        tab: 'products',
-        location: 'product-listing',
-        action: 'export_to_base',
-        productId,
-        connectionId: data.connectionId,
-        inventoryId: resolvedInventoryId,
-        imagesOnly,
-      },
-      templateId: data.templateId ?? null,
-      imagesOnly,
-    };
-    try {
-      const createdRun = await runRepository.createRun({
-        userId,
-        pathId: BASE_EXPORT_RUN_PATH_ID,
-        pathName: BASE_EXPORT_RUN_PATH_NAME,
-        triggerEvent: 'export_to_base',
-        triggerNodeId: `product:${productId}`,
-        entityId: productId,
-        entityType: 'product',
-        meta: runMeta,
-        maxAttempts: 1,
-        retryCount: 0,
-      });
-      const createdRunId = createdRun.id;
-      runId = createdRunId;
-      await runRepository.updateRun(createdRunId, {
-        status: 'running',
-        startedAt: new Date().toISOString(),
-        meta: runMeta,
-      });
-      await runRepository.createRunEvent({
-        runId: createdRunId,
-        level: 'info',
-        message: 'Export to Base.com started.',
-        metadata: {
-          productId,
-          connectionId: data.connectionId,
-          inventoryId: resolvedInventoryId,
-          imagesOnly,
-        },
-      });
-    } catch {
-      // Keep export flow resilient if runtime-run logging fails.
-    }
-
-    await ErrorSystem.logInfo('[export-to-base] Starting export', {
-      productId,
-      connectionId: data.connectionId,
-      inventoryId: resolvedInventoryId,
-      requestedInventoryId: data.inventoryId,
-      templateId: data.templateId || 'none',
-      imagesOnly
-    });
-
-    // Parallelize resource loading
+    // Parallelize resource loading and initial run preparation
     const [productRepo, integrationRepo, primaryListingRepo] = await Promise.all([
       getProductRepository(),
       getIntegrationRepository(),
       getProductListingRepository(),
     ]);
 
-    const [product, connection, integrations] = await Promise.all([
+    const [product, connection, integrations, session] = await Promise.all([
       productRepo.getProductById(productId),
       integrationRepo.getConnectionById(data.connectionId),
       integrationRepo.listIntegrations(),
+      auth().catch(() => null),
     ]);
 
     if (!product) {
@@ -205,57 +146,77 @@ export async function postExportToBaseHandler(
       });
     }
 
-    await ErrorSystem.logInfo('[export-to-base] Resources loaded', {
-      productId,
-      sku: product.sku,
-      connectionName: connection.name,
-    });
+    const userId = session?.user?.id ?? null;
 
-    // Get Base.com token from connection
-    let token: string | null = null;
-    try {
-      if (connection.baseApiToken) {
-        token = decryptSecret(connection.baseApiToken);
-      } else if (connection.password) {
-        token = decryptSecret(connection.password);
+    // Concurrently create the run and prepare mappings
+    const [createdRun, preparedExportContext] = await Promise.all([
+      runRepository.createRun({
+        userId,
+        pathId: BASE_EXPORT_RUN_PATH_ID,
+        pathName: BASE_EXPORT_RUN_PATH_NAME,
+        triggerEvent: 'export_to_base',
+        triggerNodeId: `product:${productId}`,
+        entityId: productId,
+        entityType: 'product',
+        meta: {
+          ...runMeta,
+          sourceInfo: {
+            tab: 'products',
+            location: 'product-listing',
+            action: 'export_to_base',
+            productId,
+            connectionId: data.connectionId,
+            inventoryId: resolvedInventoryId,
+            imagesOnly,
+          },
+          templateId: data.templateId ?? null,
+          imagesOnly,
+        },
+        maxAttempts: 1,
+        retryCount: 0,
+      }),
+      prepareBaseExportMappingsAndProduct({
+        data,
+        imagesOnly,
+        productId: productId,
+        resolvedInventoryId: resolvedInventoryId,
+        product: {
+          ...product,
+          categoryId: product.categoryId ?? null,
+        },
+      }),
+      ErrorSystem.logInfo('[export-to-base] Resources loaded and mapping prepared', {
+        productId,
+        sku: product.sku,
+        connectionName: connection.name,
+      })
+    ]);
+
+    const createdRunId = createdRun.id;
+    runId = createdRunId;
+
+    // Non-blocking update and event creation
+    void (async () => {
+      try {
+        await runRepository.updateRun(createdRunId, {
+          status: 'running',
+          startedAt: new Date().toISOString(),
+        });
+        await runRepository.createRunEvent({
+          runId: createdRunId,
+          level: 'info',
+          message: 'Export to Base.com started.',
+          metadata: {
+            productId,
+            connectionId: data.connectionId,
+            inventoryId: resolvedInventoryId,
+            imagesOnly,
+          },
+        });
+      } catch {
+        // Keep flow resilient
       }
-    } catch (_error) {
-      throw badRequestError(
-        'Failed to decrypt Base.com API token. Please re-save the connection token.',
-        {
-          connectionId: data.connectionId,
-          connectionName: connection.name
-        }
-      );
-    }
-
-    if (!token) {
-      throw badRequestError(
-        'Base.com API token not found in connection. Please configure the API token in the connection settings.',
-        {
-          connectionId: data.connectionId,
-          connectionName: connection.name
-        }
-      );
-    }
-
-    const normalizedProductForExport = {
-      ...product,
-      categoryId: product.categoryId ?? null,
-    };
-
-    let imageDiagnosticsContext: Record<string, unknown> = {
-      productId,
-      connectionId: data.connectionId,
-    };
-
-    const preparedExportContext = await prepareBaseExportMappingsAndProduct({
-      data,
-      imagesOnly,
-      productId: productId,
-      resolvedInventoryId: resolvedInventoryId,
-      product: normalizedProductForExport,
-    });
+    })();
     const mappings = preparedExportContext.mappings;
     const resolvedTemplateId = preparedExportContext.resolvedTemplateId;
     const requestedTemplateId = preparedExportContext.requestedTemplateId;

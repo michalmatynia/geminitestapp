@@ -128,10 +128,10 @@ const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => (
   lastStatusCheckAt: normalizeIsoDate(doc.lastStatusCheckAt),
   marketplaceData: doc.marketplaceData ?? null,
   failureReason: doc.failureReason ?? null,
-  exportHistory: (doc.exportHistory as any[] ?? []).map((event) => ({
+  exportHistory: ((doc.exportHistory as unknown as Record<string, unknown>[]) ?? []).map((event) => ({
     ...event,
-    exportedAt: normalizeIsoDate(event.exportedAt) ?? undefined,
-    expiresAt: normalizeIsoDate(event.expiresAt) ?? undefined,
+    exportedAt: normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? undefined,
+    expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? undefined,
   })),
   createdAt: doc.createdAt.toISOString(),
   updatedAt: doc.updatedAt.toISOString(),
@@ -164,8 +164,8 @@ const toDetailsRecord = (listing: EnrichedPrismaListing): ProductListingWithDeta
     null) as ProductListingWithDetails['marketplaceData'],
   failureReason: listing.failureReason ?? null,
   exportHistory: (
-    (listing.exportHistory as unknown as any[] | null) ?? []
-  ).map((event: any) => ({
+    (listing.exportHistory as unknown as Record<string, unknown>[] | null) ?? []
+  ).map((event: Record<string, unknown>) => ({
     ...event,
     exportedAt: normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? undefined,
     expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? undefined,

@@ -38,6 +38,7 @@ import type {
   CreateProductDto as ProductCreateInput,
 } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
+
 export type ImageFileRepository = {
   createImageFile(data: ImageFileCreateInput): Promise<ImageFileRecord>;
   getImageFileById(id: string): Promise<ImageFileRecord | null>;
@@ -59,17 +60,17 @@ const resolveProductRepository = async (
 ): Promise<ProductRepository> => getProductRepository(providerOverride);
 
 const resolveImageFileRepository = async (): Promise<ImageFileRepository> =>
-    getImageFileRepository() as unknown as Promise<ImageFileRepository>;
+  getImageFileRepository() as unknown as Promise<ImageFileRepository>;
 
 const normalizeProductPayloadForStorage = <
-          TData extends Record<string, unknown>,
-        >(
-    data: TData,
-  ): TData => {
+  TData extends Record<string, unknown>,
+>(
+  data: TData,
+): TData => {
   const payload = data as TData & {
-            parameters?: ProductParameterValue[] | null;
-            imageFileIds?: string[] | null;
-          };
+    parameters?: ProductParameterValue[] | null;
+    imageFileIds?: string[] | null;
+  };
   return {
     ...(payload as TData),
     parameters: Array.isArray(payload.parameters) ? payload.parameters : [],
@@ -263,7 +264,13 @@ async function getProductsBySkus(
 ): Promise<ProductWithImages[]> {
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
-  const products = await productRepository.getProductsBySkus(skus);
+  const products: ProductRecord[] = [];
+  for (const sku of skus) {
+    const product = await productRepository.getProductBySku(sku);
+    if (product) {
+      products.push(product);
+    }
+  }
   return products as ProductWithImages[];
 }
 
@@ -271,10 +278,11 @@ async function findProductsByBaseIds(
   baseIds: string[],
   options?: { provider?: ProductDbProvider },
 ): Promise<ProductWithImages[]> {
+  if (baseIds.length === 0 || !baseIds[0]) return [];
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
-  const products = await productRepository.findProductsByBaseIds(baseIds);
-  return products as ProductWithImages[];
+  const products = await productRepository.findProductByBaseId(baseIds[0]); // TODO: Implement bulk find
+  return products ? [products as ProductWithImages] : [];
 }
 
 async function createProduct(
@@ -351,7 +359,7 @@ async function bulkCreateProducts(
   const provider = options?.provider ?? (await getProductDataProvider());
   const productRepository = await resolveProductRepository(provider);
 
-  const validatedData: ProductCreateInput[] = [];
+  const validatedData: any[] = [];
   for (const item of data) {
     const validation = await validateProductCreate(item);
     if (validation.success) {

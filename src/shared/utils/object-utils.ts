@@ -21,17 +21,18 @@ export function isObject(item: unknown): item is Record<string, unknown> {
 /**
  * Deeply merges two or more objects.
  */
-export function deepMerge<T extends Record<string, any>>(target: T, ...sources: Partial<T>[]): T {
+export function deepMerge<T extends Record<string, unknown>>(target: T, ...sources: Partial<T>[]): T {
   if (!sources.length) return target;
   const source = sources.shift();
 
   if (isObject(target) && isObject(source)) {
     for (const key in source) {
-      if (isObject(source[key])) {
+      const val = source[key];
+      if (isObject(val)) {
         if (!target[key]) Object.assign(target, { [key]: {} });
-        deepMerge(target[key], source[key] as any);
+        deepMerge(target[key] as Record<string, unknown>, val as Record<string, unknown>);
       } else {
-        Object.assign(target, { [key]: source[key] });
+        Object.assign(target, { [key]: val });
       }
     }
   }

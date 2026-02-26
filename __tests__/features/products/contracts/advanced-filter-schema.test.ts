@@ -8,12 +8,14 @@ import {
   PRODUCT_ADVANCED_FILTER_MAX_RULES,
   PRODUCT_ADVANCED_FILTER_MAX_SET_ITEMS,
   type ProductAdvancedFilterGroup,
+  type ProductAdvancedFilterField,
+  type ProductAdvancedFilterOperator,
 } from '@/shared/contracts/products';
 
 const makeCondition = (
   id: string,
-  field: string,
-  operator: string,
+  field: ProductAdvancedFilterField,
+  operator: ProductAdvancedFilterOperator,
   value?: unknown,
   valueTo?: unknown
 ) => ({

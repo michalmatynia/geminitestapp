@@ -1,6 +1,6 @@
 'use client';
 
-import { useDeferredValue, useMemo } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef } from 'react';
 
 import type {
   CaseResolverAssetFile,
@@ -8,8 +8,9 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 import {
-  buildCaseResolverRuntimeIndexes,
+  getCachedCaseResolverRuntimeIndexes,
   getCaseSubtreeIds,
+  logCaseResolverDurationMetric,
 } from '../runtime';
 
 export type CaseSearchScope = 'all' | 'name' | 'folder' | 'content';
@@ -199,7 +200,7 @@ const buildSearchIndex = ({
   caseIdentifierPathById: Map<string, string>;
   caseCategoryPathById: Map<string, string>;
 }): BuiltSearchIndex => {
-  const indexes = buildCaseResolverRuntimeIndexes(workspace);
+  const indexes = getCachedCaseResolverRuntimeIndexes(workspace);
   const caseFiles = workspace.files.filter(
     (file: CaseResolverFile): boolean => file.fileType === 'case',
   );
@@ -306,6 +307,7 @@ export function useCaseResolverCaseSearchIndex({
   caseCategoryPathById,
 }: UseCaseResolverCaseSearchIndexInput): UseCaseResolverCaseSearchIndexResult {
   const deferredCaseSearchQuery = useDeferredValue(caseSearchQuery);
+  const caseSearchFilterDurationMsRef = useRef<number | null>(null);
 
   const builtSearchIndex = useMemo(
     (): BuiltSearchIndex =>
@@ -334,6 +336,10 @@ export function useCaseResolverCaseSearchIndex({
   );
 
   const matchedCaseIds = useMemo((): Set<string> => {
+    const searchFilterStartedAtMs =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
     const nextMatchedCaseIds = new Set<string>();
     builtSearchIndex.indexedRows.forEach((row: IndexedCaseSearchRow): void => {
       if (caseFileTypeFilter !== 'all' && row.file.fileType !== caseFileTypeFilter) {
@@ -409,6 +415,11 @@ export function useCaseResolverCaseSearchIndex({
 
       nextMatchedCaseIds.add(row.file.id);
     });
+    const searchFilterCompletedAtMs =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+    caseSearchFilterDurationMsRef.current = searchFilterCompletedAtMs - searchFilterStartedAtMs;
     return nextMatchedCaseIds;
   }, [
     builtSearchIndex.indexedRows,
@@ -428,6 +439,16 @@ export function useCaseResolverCaseSearchIndex({
     searchTokens,
     tagFilterSet,
   ]);
+
+  useEffect((): void => {
+    const durationMs = caseSearchFilterDurationMsRef.current;
+    if (typeof durationMs !== 'number') return;
+    logCaseResolverDurationMetric('case_search_filter_ms', durationMs, {
+      source: 'case_search',
+      minDurationMs: 1,
+      message: `query_length=${deferredCaseSearchQuery.trim().length} matched=${matchedCaseIds.size}`,
+    });
+  }, [deferredCaseSearchQuery, matchedCaseIds]);
 
   const visibleCaseIds = useMemo((): Set<string> => {
     const nextVisibleCaseIds = new Set<string>();

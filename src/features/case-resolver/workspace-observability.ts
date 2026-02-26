@@ -28,6 +28,17 @@ type RequestedContextSnapshot = {
   resolvedVia: string | null;
 };
 
+type RuntimeCounterSnapshot = {
+  selectorRecomputeCount: number;
+  contextStateTransitionCount: number;
+};
+
+type RuntimeDurationSnapshot = {
+  treeScopeResolveMs: PercentileSnapshot;
+  caseSearchFilterMs: PercentileSnapshot;
+  editorDirtyEvalMs: PercentileSnapshot;
+};
+
 export type CaseResolverWorkspaceObservabilitySnapshot = {
   generatedAt: string;
   sampleSize: number;
@@ -40,6 +51,8 @@ export type CaseResolverWorkspaceObservabilitySnapshot = {
   saveSuccessRate: number;
   persistDurationMs: PercentileSnapshot;
   payloadBytes: PercentileSnapshot;
+  runtimeCounters: RuntimeCounterSnapshot;
+  runtimeDurations: RuntimeDurationSnapshot;
   latestHydrationSelection: WorkspaceHydrationSelectionSnapshot | null;
   latestRequestedContext: RequestedContextSnapshot | null;
 };
@@ -97,6 +110,33 @@ const normalizeNullableValue = (value: string | undefined): string | null => {
   if (!value || value === 'none' || value === '<none>' || value === '-') return null;
   return value;
 };
+
+const parsePositiveIntegerToken = (value: string | undefined): number => {
+  if (!value) return 0;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) return 0;
+  return Math.floor(parsed);
+};
+
+const sumCounterMetric = (
+  events: CaseResolverWorkspaceDebugEvent[],
+  action: string,
+): number =>
+  events.reduce((count: number, event: CaseResolverWorkspaceDebugEvent): number => {
+    if (event.action !== action) return count;
+    const tokens = parseEventMessageTokens(event.message);
+    const step = parsePositiveIntegerToken(tokens['count']);
+    return count + (step > 0 ? step : 1);
+  }, 0);
+
+const collectDurationMetricValues = (
+  events: CaseResolverWorkspaceDebugEvent[],
+  action: string,
+): number[] =>
+  events
+    .filter((event: CaseResolverWorkspaceDebugEvent): boolean => event.action === action)
+    .map((event: CaseResolverWorkspaceDebugEvent): number => event.durationMs ?? 0)
+    .filter((value: number): boolean => Number.isFinite(value) && value >= 0);
 
 const getLatestHydrationSelection = (
   events: CaseResolverWorkspaceDebugEvent[],
@@ -168,6 +208,21 @@ export const buildCaseResolverWorkspaceObservabilitySnapshot = (
     .filter((event): boolean => event.action === 'persist_attempt')
     .map((event): number => event.payloadBytes ?? 0)
     .filter((value): boolean => Number.isFinite(value) && value >= 0);
+  const runtimeCounters: RuntimeCounterSnapshot = {
+    selectorRecomputeCount: sumCounterMetric(events, 'selector_recompute_count'),
+    contextStateTransitionCount: sumCounterMetric(events, 'context_state_transition_count'),
+  };
+  const runtimeDurations: RuntimeDurationSnapshot = {
+    treeScopeResolveMs: buildPercentileSnapshot(
+      collectDurationMetricValues(events, 'tree_scope_resolve_ms')
+    ),
+    caseSearchFilterMs: buildPercentileSnapshot(
+      collectDurationMetricValues(events, 'case_search_filter_ms')
+    ),
+    editorDirtyEvalMs: buildPercentileSnapshot(
+      collectDurationMetricValues(events, 'editor_dirty_eval_ms')
+    ),
+  };
   const latestHydrationSelection = getLatestHydrationSelection(events);
   const latestRequestedContext = getLatestRequestedContext(events);
 
@@ -183,6 +238,8 @@ export const buildCaseResolverWorkspaceObservabilitySnapshot = (
     saveSuccessRate,
     persistDurationMs: buildPercentileSnapshot(persistDurations),
     payloadBytes: buildPercentileSnapshot(payloadSizes),
+    runtimeCounters,
+    runtimeDurations,
     latestHydrationSelection,
     latestRequestedContext,
   };

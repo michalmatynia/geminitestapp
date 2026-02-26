@@ -55,6 +55,8 @@ export function CanvasBoard({
     canvasRef,
     nodes,
     edges,
+    connecting,
+    connectingPos,
     runtimeState,
     runtimeNodeStatuses,
     runtimeRunStatus,
@@ -250,6 +252,9 @@ export function CanvasBoard({
       edges,
       edgePaths,
       edgeMetaMap,
+      edgeRoutingMode,
+      connecting,
+      connectingPos,
       nodeById,
       selectedNodeId,
       selectedNodeIdSet,
@@ -308,14 +313,14 @@ export function CanvasBoard({
       onOpenNodeConfig: () => {
         setConfigOpen(true);
       },
-      onStartConnection: (_event, node, port) => {
-        handleStartConnection(node.id, port, { x: 0, y: 0 });
+      onStartConnection: (event, node, port) => {
+        handleStartConnection(event, node, port);
       },
-      onCompleteConnection: (_event, node, port) => {
-        void handleCompleteConnection(node.id, port);
+      onCompleteConnection: (event, node, port) => {
+        void handleCompleteConnection(event, node, port);
       },
-      onReconnectInput: (_event, nodeId, port) => {
-        void handleReconnectInput('', nodeId, port);
+      onReconnectInput: (event, nodeId, port) => {
+        void handleReconnectInput(event, nodeId, port);
       },
       onDisconnectPort: (direction, nodeId, port) => {
         handleDisconnectPort(direction, nodeId, port);
@@ -338,6 +343,9 @@ export function CanvasBoard({
       edges,
       edgePaths,
       edgeMetaMap,
+      edgeRoutingMode,
+      connecting,
+      connectingPos,
       nodeById,
       selectedNodeId,
       selectedNodeIdSet,

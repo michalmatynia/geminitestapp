@@ -51,7 +51,7 @@ export function CaseListHeldDock({
           </Button>
           <Button
             variant='outline'
-            size='icon-sm'
+            size='xs'
             className='h-7 w-7'
             onClick={(): void => {
               onClearHeldCase();

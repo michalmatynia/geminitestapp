@@ -5,7 +5,10 @@ import type {
 } from '@/shared/contracts/case-resolver';
 
 import { normalizeFolderPaths } from '../../settings';
-import { buildCaseResolverRuntimeIndexes, type CaseResolverRuntimeIndexes } from './indexes';
+import {
+  getCachedCaseResolverRuntimeIndexes,
+  type CaseResolverRuntimeIndexes,
+} from './indexes';
 
 type ResolveScopedWorkspaceArgs = {
   workspace: CaseResolverWorkspace;
@@ -54,7 +57,7 @@ export const resolveScopedCaseResolverWorkspaceWithIndexes = ({
   includeDescendantCaseScope = true,
   indexes: providedIndexes,
 }: ResolveScopedWorkspaceArgs): CaseResolverWorkspace => {
-  const indexes = providedIndexes ?? buildCaseResolverRuntimeIndexes(workspace);
+  const indexes = providedIndexes ?? getCachedCaseResolverRuntimeIndexes(workspace);
   const contextFileId = resolveCaseContextId({
     selectedFileId,
     requestedFileId,

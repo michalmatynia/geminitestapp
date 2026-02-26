@@ -1,9 +1,10 @@
 'use client';
 
-import { useRef, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useSyncExternalStore } from 'react';
 
 import type { CaseResolverRuntimeSelector, CaseResolverRuntimeSnapshot } from '../types';
 import type { CaseResolverRuntimeStore } from '../store';
+import { incrementCaseResolverCounterMetric } from '../metrics';
 
 const defaultEquality = <T,>(left: T, right: T): boolean => Object.is(left, right);
 
@@ -14,8 +15,9 @@ export function useCaseResolverSelector<T>(
 ): T {
   const cachedRef = useRef<T | null>(null);
   const hasCachedValueRef = useRef(false);
+  const pendingSelectorRecomputeCountRef = useRef(0);
 
-  return useSyncExternalStore(
+  const selectedValue = useSyncExternalStore(
     store.subscribe,
     (): T => {
       const snapshot: CaseResolverRuntimeSnapshot = store.getSnapshot();
@@ -25,6 +27,7 @@ export function useCaseResolverSelector<T>(
         if (equalityFn(current, nextValue)) {
           return current;
         }
+        pendingSelectorRecomputeCountRef.current += 1;
       }
       cachedRef.current = nextValue;
       hasCachedValueRef.current = true;
@@ -32,4 +35,16 @@ export function useCaseResolverSelector<T>(
     },
     (): T => selector(store.getSnapshot()),
   );
+
+  useEffect((): void => {
+    const pendingCount = pendingSelectorRecomputeCountRef.current;
+    if (pendingCount <= 0) return;
+    pendingSelectorRecomputeCountRef.current = 0;
+    incrementCaseResolverCounterMetric('selector_recompute_count', {
+      count: pendingCount,
+      source: 'runtime_store',
+    });
+  });
+
+  return selectedValue;
 }

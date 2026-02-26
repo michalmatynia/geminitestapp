@@ -1,7 +1,5 @@
 import 'server-only';
 
-import { randomUUID } from 'crypto';
-
 import type {
   NoteFiltersDto as NoteFilters,
   NoteWithRelationsDto as NoteWithRelations,
@@ -82,16 +80,12 @@ const convertNote = (note: NotePrismaResult): NoteWithRelations => ({
     },
   })),
   relationsFrom: note.relationsFrom.map((r: NotePrismaResult['relationsFrom'][number]) => ({
-    id: randomUUID(),
-    type: 'related',
     sourceNoteId: r.sourceNoteId,
     targetNoteId: r.targetNoteId,
     assignedAt: r.assignedAt.toISOString(),
     targetNote: r.targetNote,
   })),
   relationsTo: note.relationsTo.map((r: NotePrismaResult['relationsTo'][number]) => ({
-    id: randomUUID(),
-    type: 'related',
     sourceNoteId: r.sourceNoteId,
     targetNoteId: r.targetNoteId,
     assignedAt: r.assignedAt.toISOString(),
@@ -313,8 +307,7 @@ export const syncRelatedNotesBatch = async (
         create: {
           sourceNoteId: relatedId,
           targetNoteId: noteId,
-          type: 'related',
-        },
+              },
         update: {},
       });
     }

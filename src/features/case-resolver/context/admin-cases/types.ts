@@ -6,6 +6,14 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 
+export type {
+  CaseResolverCategory,
+  CaseResolverFile,
+  CaseResolverIdentifier,
+  CaseResolverTag,
+  CaseResolverWorkspace,
+};
+
 export type CaseViewMode = 'list' | 'hierarchy';
 export type CaseSortKey =
   | 'updated'

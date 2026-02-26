@@ -91,6 +91,48 @@ describe('case resolver workspace observability snapshot', () => {
         message:
           'requested_file_id=case-a request_key=case-a|1 in_flight=none attempted_key=case-a|1 resolved_via=watchdog requested_case_status=missing requested_case_issue=workspace_unavailable',
       }),
+      buildEvent({
+        id: 'event-runtime-counter-1',
+        timestamp: '2026-02-24T10:00:05.000Z',
+        action: 'selector_recompute_count',
+        message: 'count=4',
+      }),
+      buildEvent({
+        id: 'event-runtime-counter-2',
+        timestamp: '2026-02-24T10:00:06.000Z',
+        action: 'selector_recompute_count',
+        message: 'count=3',
+      }),
+      buildEvent({
+        id: 'event-runtime-counter-3',
+        timestamp: '2026-02-24T10:00:07.000Z',
+        action: 'context_state_transition_count',
+        message: 'count=2',
+      }),
+      buildEvent({
+        id: 'event-runtime-duration-1',
+        timestamp: '2026-02-24T10:00:08.000Z',
+        action: 'tree_scope_resolve_ms',
+        durationMs: 2,
+      }),
+      buildEvent({
+        id: 'event-runtime-duration-2',
+        timestamp: '2026-02-24T10:00:09.000Z',
+        action: 'tree_scope_resolve_ms',
+        durationMs: 8,
+      }),
+      buildEvent({
+        id: 'event-runtime-duration-3',
+        timestamp: '2026-02-24T10:00:10.000Z',
+        action: 'case_search_filter_ms',
+        durationMs: 5,
+      }),
+      buildEvent({
+        id: 'event-runtime-duration-4',
+        timestamp: '2026-02-24T10:00:11.000Z',
+        action: 'editor_dirty_eval_ms',
+        durationMs: 3,
+      }),
     ];
 
     const snapshot = buildCaseResolverWorkspaceObservabilitySnapshot(events);
@@ -110,6 +152,28 @@ describe('case resolver workspace observability snapshot', () => {
       requestedCaseStatus: 'missing',
       requestedCaseIssue: 'workspace_unavailable',
       resolvedVia: 'watchdog',
+    });
+    expect(snapshot.runtimeCounters).toEqual({
+      selectorRecomputeCount: 7,
+      contextStateTransitionCount: 2,
+    });
+    expect(snapshot.runtimeDurations.treeScopeResolveMs).toMatchObject({
+      count: 2,
+      p50: 2,
+      p95: 2,
+      max: 8,
+    });
+    expect(snapshot.runtimeDurations.caseSearchFilterMs).toMatchObject({
+      count: 1,
+      p50: 5,
+      p95: 5,
+      max: 5,
+    });
+    expect(snapshot.runtimeDurations.editorDirtyEvalMs).toMatchObject({
+      count: 1,
+      p50: 3,
+      p95: 3,
+      max: 3,
     });
   });
 });

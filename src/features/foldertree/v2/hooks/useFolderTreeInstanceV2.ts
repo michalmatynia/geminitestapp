@@ -186,8 +186,9 @@ const toV3Adapter = (
   return {
     ...(legacy.loadNodes
       ? {
-        fetchState: async () => ({
-          nodes: await legacy.loadNodes?.(),
+        fetchState: async (_instanceId?: string) => ({
+          nodes: (await legacy.loadNodes?.()) ?? [],
+          version: 0,
         }),
       }
       : {}),
@@ -382,7 +383,7 @@ export function useFolderTreeInstanceV2(
           dragState: null,
           version: previousSnapshot.version,
         });
-        return createErrorAction(normalizedError.code, normalizedError.message);
+        return createErrorAction(normalizedError!.code, normalizedError!.message);
       }
     },
     [adapter, instanceId, maxUndoEntries, runtime, store]
@@ -736,7 +737,7 @@ export function useFolderTreeInstanceV2(
           reason,
         },
         optimisticNodes: normalizedNodes,
-        undoLabel: reason === 'external_sync' ? 'Sync tree' : 'Replace tree',
+        undoLabel: 'Replace tree',
         ...(persistedVersion !== undefined ? { persistedVersion } : {}),
       });
     },
@@ -761,7 +762,7 @@ export function useFolderTreeInstanceV2(
         lastError: normalizedError,
         isApplying: false,
       }));
-      return createErrorAction(normalizedError.code, normalizedError.message);
+      return createErrorAction(normalizedError!.code, normalizedError!.message);
     }
   }, [adapter, instanceId, replaceNodes, store]);
 
@@ -842,7 +843,7 @@ export function useFolderTreeInstanceV2(
         isApplying: false,
         lastError: normalizedError,
       }));
-      return createErrorAction(normalizedError.code, normalizedError.message);
+      return createErrorAction(normalizedError!.code, normalizedError!.message);
     }
   }, [adapter, instanceId, runtime, store]);
 

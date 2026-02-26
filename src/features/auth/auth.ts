@@ -49,14 +49,25 @@ const credentialsProvider = Credentials({
       const otp = credentials?.['otp']?.toString() ?? '';
       const recoveryCode = credentials?.['recoveryCode']?.toString() ?? '';
       const challengeId = credentials?.['challengeId']?.toString() ?? '';
+      
       if (!email || !password) {
-        await ErrorSystem.logInfo('[AUTH] Missing email or password', { service: 'auth' });
+        // Log non-critical info without awaiting
+        void ErrorSystem.logInfo('[AUTH] Missing email or password', { service: 'auth' });
         return null;
       }
+
       const ip = extractClientIp(request);
-      const allowed = await checkLoginAllowed({ email, ip });
+      
+      // Parallelize initial security checks and user lookup
+      const [allowed, user] = await Promise.all([
+        checkLoginAllowed({ email, ip }),
+        challengeId 
+          ? consumeLoginChallenge({ id: challengeId, email, ip }).then(c => c ? findAuthUserById(c.userId) : null)
+          : findAuthUserByEmail(email)
+      ]);
+
       if (!allowed.allowed) {
-        await ErrorSystem.logWarning('[AUTH] Login blocked due to rate limits', {
+        void ErrorSystem.logWarning('[AUTH] Login blocked due to rate limits', {
           service: 'auth',
           email,
           ip,
@@ -65,142 +76,64 @@ const credentialsProvider = Credentials({
         return null;
       }
 
-      if (challengeId) {
-        const challenge = await consumeLoginChallenge({
-          id: challengeId,
-          email,
-          ip,
-        });
-        if (challenge) {
-          const user = await findAuthUserById(challenge.userId);
-          if (!user) {
-            await recordLoginFailure({ email, ip, request });
-            return null;
-          }
-
-          const security = await getAuthSecurityProfile(user.id);
-          const settings = await getAuthUserPageSettings();
-
-          if (security.bannedAt) {
-            await recordLoginFailure({ email, ip, request });
-            return null;
-          }
-          if (security.disabledAt) {
-            await recordLoginFailure({ email, ip, request });
-            return null;
-          }
-          if (
-            settings.requireEmailVerification &&
-            !user.emailVerified
-          ) {
-            await recordLoginFailure({ email, ip, request });
-            return null;
-          }
-          if (security.allowedIps.length > 0 && ip) {
-            const allowedSet = new Set(security.allowedIps);
-            if (!allowedSet.has(ip)) {
-              await recordLoginFailure({ email, ip, request });
-              return null;
-            }
-          }
-
-          if (security.mfaEnabled) {
-            const providedRecovery = recoveryCode.trim();
-            const providedOtp = otp.trim();
-            let mfaOk = false;
-            if (providedRecovery) {
-              const hashed = hashRecoveryCode(providedRecovery);
-              if (security.recoveryCodes.includes(hashed)) {
-                const nextCodes = security.recoveryCodes.filter(
-                  (code: string) => code !== hashed
-                );
-
-                await updateAuthSecurityProfile(user.id, {
-                  recoveryCodes: nextCodes,
-                });
-                mfaOk = true;
-              }
-            } else if (providedOtp && security.mfaSecret) {
-              const secret = decryptAuthSecret(security.mfaSecret);
-              mfaOk = verifyTotpToken(secret, providedOtp);
-            }
-            if (!mfaOk) {
-              await recordLoginFailure({ email, ip, request });
-              return null;
-            }
-          }
-
-          await recordLoginSuccess({ email, ip, request, userId: user.id });
-          return {
-            id: user.id,
-            email: user.email,
-            name: user.name ?? null,
-            image: user.image ?? null,
-          };
-        }
-      }
-
-      await ErrorSystem.logInfo('[AUTH] Attempting to find user', { service: 'auth', email });
-      
-      // findAuthUserByEmail reads from MongoDB-backed auth store
-      const user = await findAuthUserByEmail(email);
-
       if (!user) {
-        await ErrorSystem.logInfo('[AUTH] User not found', { service: 'auth', email });
-        await recordLoginFailure({ email, ip, request });
+        void ErrorSystem.logInfo('[AUTH] User not found or challenge invalid', { service: 'auth', email });
+        void recordLoginFailure({ email, ip, request });
         return null;
       }
 
-      const security = await getAuthSecurityProfile(user.id);
-      const settings = await getAuthUserPageSettings();
+      // Parallelize profile fetching
+      const [security, settings] = await Promise.all([
+        getAuthSecurityProfile(user.id),
+        getAuthUserPageSettings()
+      ]);
 
-      if (security.bannedAt) {
-        await recordLoginFailure({ email, ip, request });
-        return null;
-      }
-      if (security.disabledAt) {
-        await recordLoginFailure({ email, ip, request });
+      if (security.bannedAt || security.disabledAt) {
+        void recordLoginFailure({ email, ip, request });
         return null;
       }
       if (settings.requireEmailVerification && !user.emailVerified) {
-        await recordLoginFailure({ email, ip, request });
+        void recordLoginFailure({ email, ip, request });
         return null;
       }
       if (security.allowedIps.length > 0 && ip) {
         const allowedSet = new Set(security.allowedIps);
         if (!allowedSet.has(ip)) {
-          await recordLoginFailure({ email, ip, request });
+          void recordLoginFailure({ email, ip, request });
           return null;
         }
       }
-      
-      if (!user.passwordHash) {
-        await ErrorSystem.logWarning('[AUTH] User has no password hash', { service: 'auth', userId: user.id });
-        await recordLoginFailure({ email, ip, request });
-        return null;
-      }
 
-      await ErrorSystem.logInfo(`[AUTH] User found: ${user.id}. Hash len: ${user.passwordHash.length}. Input pass len: ${password.length}`, { service: 'auth', userId: user.id });
-      const isValid = await bcrypt.compare(password, user.passwordHash);
-      await ErrorSystem.logInfo('[AUTH] Password valid:', { isValid, service: 'auth', userId: user.id });
-      
-      if (!isValid) {
-        await recordLoginFailure({ email, ip, request });
-        return null;
+      // If challenge was used, we skip password check as it was verified during challenge creation
+      // But we still verify MFA if enabled
+      if (!challengeId) {
+        if (!user.passwordHash) {
+          void ErrorSystem.logWarning('[AUTH] User has no password hash', { service: 'auth', userId: user.id });
+          void recordLoginFailure({ email, ip, request });
+          return null;
+        }
+
+        const isValid = await bcrypt.compare(password, user.passwordHash);
+        
+        if (!isValid) {
+          void recordLoginFailure({ email, ip, request });
+          return null;
+        }
       }
 
       if (security.mfaEnabled) {
         const providedRecovery = recoveryCode.trim();
         const providedOtp = otp.trim();
         let mfaOk = false;
+        
         if (providedRecovery) {
           const hashed = hashRecoveryCode(providedRecovery);
           if (security.recoveryCodes.includes(hashed)) {
             const nextCodes = security.recoveryCodes.filter(
               (code: string) => code !== hashed
             );
-
-            await updateAuthSecurityProfile(user.id, {
+            // Update codes in background
+            void updateAuthSecurityProfile(user.id, {
               recoveryCodes: nextCodes,
             });
             mfaOk = true;
@@ -209,13 +142,14 @@ const credentialsProvider = Credentials({
           const secret = decryptAuthSecret(security.mfaSecret);
           mfaOk = verifyTotpToken(secret, providedOtp);
         }
+        
         if (!mfaOk) {
-          await recordLoginFailure({ email, ip, request });
+          void recordLoginFailure({ email, ip, request });
           return null;
         }
       }
 
-      await recordLoginSuccess({ email, ip, request, userId: user.id });
+      void recordLoginSuccess({ email, ip, request, userId: user.id });
 
       return {
         id: user.id,
@@ -224,7 +158,7 @@ const credentialsProvider = Credentials({
         image: user.image ?? null,
       };
     } catch (error) {
-      await ErrorSystem.captureException(error, {
+      void ErrorSystem.captureException(error, {
         service: 'auth',
         action: 'authorize',
       });

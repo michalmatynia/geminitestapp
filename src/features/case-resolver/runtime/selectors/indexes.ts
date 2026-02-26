@@ -60,6 +60,11 @@ export type CaseResolverRuntimeIndexes = {
   plainTextByFileId: Map<string, string>;
 };
 
+const runtimeIndexesCache = new WeakMap<
+  CaseResolverWorkspace,
+  { revision: number; indexes: CaseResolverRuntimeIndexes }
+>();
+
 export const buildCaseResolverRuntimeIndexes = (
   workspace: CaseResolverWorkspace,
 ): CaseResolverRuntimeIndexes => {
@@ -206,6 +211,22 @@ export const buildCaseResolverRuntimeIndexes = (
     relatedFileIdsByFileId,
     plainTextByFileId,
   };
+};
+
+export const getCachedCaseResolverRuntimeIndexes = (
+  workspace: CaseResolverWorkspace,
+): CaseResolverRuntimeIndexes => {
+  const workspaceRevision = getCaseResolverWorkspaceRevision(workspace);
+  const cached = runtimeIndexesCache.get(workspace);
+  if (cached?.revision === workspaceRevision) {
+    return cached.indexes;
+  }
+  const indexes = buildCaseResolverRuntimeIndexes(workspace);
+  runtimeIndexesCache.set(workspace, {
+    revision: workspaceRevision,
+    indexes,
+  });
+  return indexes;
 };
 
 export const getCaseSubtreeIds = (

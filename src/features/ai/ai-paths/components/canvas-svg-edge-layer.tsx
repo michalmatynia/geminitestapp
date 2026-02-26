@@ -4,6 +4,7 @@ import React from 'react';
 
 import { useCanvasBoardUI } from './CanvasBoardUIContext';
 import { SignalDots } from './SignalDots';
+import { buildConnectingPreviewPath } from './CanvasBoard.utils';
 
 export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
   cullPadding = 160,
@@ -15,6 +16,9 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
     view,
     viewportSize,
     edgeMetaMap,
+    edgeRoutingMode,
+    connecting,
+    connectingPos,
     nodeById,
     selectedEdgeId,
     selectedNodeIdSet,
@@ -58,6 +62,29 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
       return false;
     });
   }, [activeEdgeIds, edgePaths, selectedEdgeId, selectedNodeIdSet, worldViewport]);
+
+  const connectingPreviewPath = React.useMemo((): string | null => {
+    if (!connecting || !connectingPos) return null;
+    const fromX = connecting.start?.x;
+    const fromY = connecting.start?.y;
+    const toX = connectingPos.x;
+    const toY = connectingPos.y;
+    if (
+      !Number.isFinite(fromX) ||
+      !Number.isFinite(fromY) ||
+      !Number.isFinite(toX) ||
+      !Number.isFinite(toY)
+    ) {
+      return null;
+    }
+    return buildConnectingPreviewPath(
+      fromX,
+      fromY,
+      toX,
+      toY,
+      edgeRoutingMode
+    );
+  }, [connecting, connectingPos, edgeRoutingMode]);
 
   return (
     <>
@@ -165,6 +192,22 @@ export const CanvasSvgEdgeLayer = React.memo(function CanvasSvgEdgeLayer({
           </g>
         );
       })}
+      {connectingPreviewPath ? (
+        <g className='pointer-events-none'>
+          <path
+            data-connecting-preview='true'
+            d={connectingPreviewPath}
+            stroke='rgba(125, 211, 252, 0.95)'
+            strokeWidth='2'
+            strokeDasharray='8 6'
+            fill='none'
+            vectorEffect='non-scaling-stroke'
+            strokeLinecap='round'
+            strokeLinejoin='round'
+            style={{ filter: 'drop-shadow(0 0 4px rgba(56, 189, 248, 0.5))' }}
+          />
+        </g>
+      ) : null}
     </>
   );
 });

@@ -42,9 +42,7 @@ export function useCaseResolverStateViewState({
   requestedCaseStatus,
   initialWorkspaceState,
   syncPersistedWorkspaceTracking,
-  queuedSerializedWorkspaceRef,
-  queuedExpectedRevisionRef,
-  queuedMutationIdRef,
+  clearQueuedWorkspacePersistMutation,
   handledRequestedFileIdRef,
   requestedWorkspaceRefreshFileIdRef: _requestedWorkspaceRefreshFileIdRef,
   requestedWorkspaceMissingFileIdRef: _requestedWorkspaceMissingFileIdRef,
@@ -55,9 +53,7 @@ export function useCaseResolverStateViewState({
   requestedCaseStatus: CaseResolverRequestedCaseStatus;
   initialWorkspaceState: CaseResolverWorkspace;
   syncPersistedWorkspaceTracking: (workspace: CaseResolverWorkspace) => void;
-  queuedSerializedWorkspaceRef: React.MutableRefObject<string | null>;
-  queuedExpectedRevisionRef: React.MutableRefObject<number | null>;
-  queuedMutationIdRef: React.MutableRefObject<string | null>;
+  clearQueuedWorkspacePersistMutation: () => void;
   handledRequestedFileIdRef: React.MutableRefObject<string | null>;
   requestedWorkspaceRefreshFileIdRef: React.MutableRefObject<string | null>;
   requestedWorkspaceMissingFileIdRef: React.MutableRefObject<string | null>;
@@ -179,9 +175,7 @@ export function useCaseResolverStateViewState({
             activeFileId: null,
           };
           syncPersistedWorkspaceTracking(nextWorkspace);
-          queuedSerializedWorkspaceRef.current = null;
-          queuedExpectedRevisionRef.current = null;
-          queuedMutationIdRef.current = null;
+          clearQueuedWorkspacePersistMutation();
           return nextWorkspace;
         });
       }
@@ -208,13 +202,12 @@ export function useCaseResolverStateViewState({
           activeFileId: requestedFileId,
         };
         syncPersistedWorkspaceTracking(nextWorkspace);
-        queuedSerializedWorkspaceRef.current = null;
-        queuedExpectedRevisionRef.current = null;
-        queuedMutationIdRef.current = null;
+        clearQueuedWorkspacePersistMutation();
         return nextWorkspace;
       });
     }
   }, [
+    clearQueuedWorkspacePersistMutation,
     requestedFileExists,
     requestedFileId,
     selectedAssetId,
@@ -223,9 +216,6 @@ export function useCaseResolverStateViewState({
     syncPersistedWorkspaceTracking,
     workspace.activeFileId,
     setWorkspace,
-    queuedSerializedWorkspaceRef,
-    queuedExpectedRevisionRef,
-    queuedMutationIdRef,
     handledRequestedFileIdRef,
   ]);
 

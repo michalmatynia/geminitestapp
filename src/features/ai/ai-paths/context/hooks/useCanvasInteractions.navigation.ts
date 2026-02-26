@@ -34,7 +34,8 @@ export interface UseCanvasInteractionsNavigationValue {
     deltaY: number,
     clientX: number,
     clientY: number,
-    deltaMode?: number
+    deltaMode?: number,
+    ctrlKey?: boolean
   ) => void;
   wheelZoomRafRef: React.MutableRefObject<number | null>;
   viewAnimationRafRef: React.MutableRefObject<number | null>;
@@ -368,7 +369,8 @@ export function useCanvasInteractionsNavigation({
       deltaY: number,
       clientX: number,
       clientY: number,
-      deltaMode = 0
+      deltaMode = 0,
+      ctrlKey = false
     ): void => {
       stopProgrammaticViewAnimation();
       let normalizedDeltaY = Number.isFinite(deltaY) ? deltaY : 0;
@@ -378,9 +380,16 @@ export function useCanvasInteractionsNavigation({
       } else if (deltaMode === 2) {
         normalizedDeltaY *= 120;
       }
+      const isPinchLikeGesture = Boolean(ctrlKey);
+      if (isPinchLikeGesture) {
+        normalizedDeltaY *= 3;
+      }
       const absDelta = Math.abs(normalizedDeltaY);
       if (absDelta > 0 && absDelta < 4) {
-        normalizedDeltaY *= 6;
+        normalizedDeltaY *= isPinchLikeGesture ? 10 : 6;
+      }
+      if (isPinchLikeGesture && Math.abs(normalizedDeltaY) > 0 && Math.abs(normalizedDeltaY) < 1.25) {
+        normalizedDeltaY = Math.sign(normalizedDeltaY) * 1.25;
       }
       const baseScale = wheelZoomTargetRef.current?.scale ?? latestViewRef.current.scale;
       const zoomFactor = Math.exp((-normalizedDeltaY) * WHEEL_ZOOM_SENSITIVITY);

@@ -9,6 +9,16 @@ import {
 import type { CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { parseCaseResolverWorkspace } from '../settings';
 import { serializeWorkspaceForUnsavedChangesCheck } from './useCaseResolverState.helpers';
+import {
+  beginCaseResolverWorkspacePersistAttempt,
+  clearCaseResolverWorkspacePersistQueue,
+  completeCaseResolverWorkspacePersistAttemptConflict,
+  completeCaseResolverWorkspacePersistAttemptFailure,
+  completeCaseResolverWorkspacePersistAttemptSuccess,
+  createCaseResolverWorkspacePersistQueueState,
+  enqueueCaseResolverWorkspacePersistMutation,
+  type CaseResolverWorkspacePersistQueueState,
+} from './useCaseResolverState.helpers.persist-queue';
 
 const CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT = 5;
 
@@ -31,6 +41,12 @@ export interface UseCaseResolverPersistenceValue {
   persistWorkspaceInFlightRef: React.MutableRefObject<boolean>;
   workspaceConflictAutoRetryCountRef: React.MutableRefObject<number>;
   syncPersistedWorkspaceTracking: (nextWorkspace: CaseResolverWorkspace) => void;
+  enqueueWorkspacePersistMutation: (input: {
+    serializedWorkspace: string;
+    expectedRevision: number;
+    mutationId: string;
+  }) => void;
+  clearQueuedWorkspacePersistMutation: () => void;
   clearConflictRetryTimer: () => void;
   flushWorkspacePersist: () => void;
 }
@@ -61,10 +77,26 @@ export function useCaseResolverPersistence({
   const queuedSerializedWorkspaceRef = useRef<string | null>(null);
   const queuedExpectedRevisionRef = useRef<number | null>(null);
   const queuedMutationIdRef = useRef<string | null>(null);
+  const queueStateRef = useRef<CaseResolverWorkspacePersistQueueState>(
+    createCaseResolverWorkspacePersistQueueState(),
+  );
   const conflictRetryTimerRef = useRef<number | null>(null);
   const persistWorkspaceTimerRef = useRef<number | null>(null);
   const persistWorkspaceInFlightRef = useRef(false);
   const workspaceConflictAutoRetryCountRef = useRef(0);
+
+  const applyQueueState = useCallback(
+    (nextState: CaseResolverWorkspacePersistQueueState): void => {
+      queueStateRef.current = nextState;
+      queuedSerializedWorkspaceRef.current = nextState.queuedSerializedWorkspace;
+      queuedExpectedRevisionRef.current = nextState.queuedExpectedRevision;
+      queuedMutationIdRef.current = nextState.queuedMutationId;
+      persistWorkspaceInFlightRef.current =
+        nextState.inFlightSerializedWorkspace !== null;
+      workspaceConflictAutoRetryCountRef.current = nextState.conflictAutoRetryCount;
+    },
+    [],
+  );
 
   const syncPersistedWorkspaceTracking = useCallback(
     (nextWorkspace: CaseResolverWorkspace): void => {
@@ -78,6 +110,25 @@ export function useCaseResolverPersistence({
     },
     [setPersistedWorkspaceSnapshot, setPersistedWorkspaceComparableSnapshot]
   );
+
+  const enqueueWorkspacePersistMutation = useCallback(
+    (input: {
+      serializedWorkspace: string;
+      expectedRevision: number;
+      mutationId: string;
+    }): void => {
+      applyQueueState(
+        enqueueCaseResolverWorkspacePersistMutation(queueStateRef.current, input),
+      );
+    },
+    [applyQueueState],
+  );
+
+  const clearQueuedWorkspacePersistMutation = useCallback((): void => {
+    applyQueueState(
+      clearCaseResolverWorkspacePersistQueue(queueStateRef.current),
+    );
+  }, [applyQueueState]);
 
   const clearConflictRetryTimer = useCallback((): void => {
     if (conflictRetryTimerRef.current === null) return;
@@ -97,22 +148,31 @@ export function useCaseResolverPersistence({
       return;
     }
 
-    const nextSerialized = queuedSerializedWorkspaceRef.current;
-    if (!nextSerialized || nextSerialized === lastPersistedValueRef.current) {
-      workspaceConflictAutoRetryCountRef.current = 0;
+    const persistAttemptResult = beginCaseResolverWorkspacePersistAttempt({
+      state: queueStateRef.current,
+      lastPersistedSerialized: lastPersistedValueRef.current,
+      lastPersistedRevision: lastPersistedRevisionRef.current,
+      fallbackMutationId: createCaseResolverWorkspaceMutationId(
+        'case-resolver-workspace-manual',
+      ),
+    });
+    applyQueueState(persistAttemptResult.nextState);
+    const persistAttempt = persistAttemptResult.attempt;
+    if (!persistAttempt) {
       setIsWorkspaceSaving(false);
       setWorkspaceSaveStatus('saved');
       setWorkspaceSaveError(null);
       return;
     }
-    const expectedRevision =
-      queuedExpectedRevisionRef.current ?? lastPersistedRevisionRef.current;
-    const mutationId =
-      queuedMutationIdRef.current ??
-      createCaseResolverWorkspaceMutationId('case-resolver-workspace-manual');
-    const parsedWorkspaceForPersist = parseCaseResolverWorkspace(nextSerialized);
+    const {
+      serializedWorkspace: nextSerializedWorkspace,
+      expectedRevision,
+      mutationId,
+    } = persistAttempt;
+    const parsedWorkspaceForPersist = parseCaseResolverWorkspace(
+      nextSerializedWorkspace,
+    );
 
-    persistWorkspaceInFlightRef.current = true;
     setIsWorkspaceSaving(true);
     setWorkspaceSaveStatus('saving');
     setWorkspaceSaveError(null);
@@ -126,9 +186,16 @@ export function useCaseResolverPersistence({
     }).then((result) => {
       if (result.ok) {
         clearConflictRetryTimer();
-        workspaceConflictAutoRetryCountRef.current = 0;
         const persistedWorkspace = result.workspace;
         syncPersistedWorkspaceTracking(persistedWorkspace);
+        applyQueueState(
+          completeCaseResolverWorkspacePersistAttemptSuccess(
+            queueStateRef.current,
+            {
+              persistedRevision: getCaseResolverWorkspaceRevision(persistedWorkspace),
+            },
+          ),
+        );
         logCaseResolverWorkspaceEvent({
           source: 'case_view',
           action: 'manual_save_success',
@@ -137,13 +204,6 @@ export function useCaseResolverPersistence({
           workspaceRevision: getCaseResolverWorkspaceRevision(persistedWorkspace),
         });
         settingsStoreRef.current.refetch();
-        if (queuedSerializedWorkspaceRef.current === nextSerialized) {
-          queuedSerializedWorkspaceRef.current = null;
-          queuedExpectedRevisionRef.current = null;
-          queuedMutationIdRef.current = null;
-        } else if (queuedSerializedWorkspaceRef.current) {
-          queuedExpectedRevisionRef.current = lastPersistedRevisionRef.current;
-        }
         if (pendingSaveToastRef.current) {
           toast(pendingSaveToastRef.current, { variant: 'success' });
           pendingSaveToastRef.current = null;
@@ -164,9 +224,13 @@ export function useCaseResolverPersistence({
           expectedRevision,
           workspaceRevision: serverRevision,
         });
-        const nextRetryCount = workspaceConflictAutoRetryCountRef.current + 1;
-        workspaceConflictAutoRetryCountRef.current = nextRetryCount;
-        if (nextRetryCount > CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT) {
+        const conflictResult = completeCaseResolverWorkspacePersistAttemptConflict({
+          state: queueStateRef.current,
+          serverRevision,
+          maxAutoRetryCount: CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT,
+        });
+        applyQueueState(conflictResult.nextState);
+        if (conflictResult.exhausted) {
           clearConflictRetryTimer();
           shouldContinuePersistQueue = false;
           pendingSaveToastRef.current = null;
@@ -186,10 +250,9 @@ export function useCaseResolverPersistence({
           return;
         }
 
-        queuedSerializedWorkspaceRef.current = nextSerialized;
-        queuedExpectedRevisionRef.current = serverRevision;
-        queuedMutationIdRef.current = mutationId;
-        const retryDelayMs = computeCaseResolverConflictRetryDelayMs(nextRetryCount);
+        const retryDelayMs = computeCaseResolverConflictRetryDelayMs(
+          conflictResult.retryCount,
+        );
         setWorkspaceSaveStatus('saving');
         setWorkspaceSaveError(null);
         clearConflictRetryTimer();
@@ -204,13 +267,15 @@ export function useCaseResolverPersistence({
           mutationId,
           expectedRevision: serverRevision,
           workspaceRevision: serverRevision,
-          message: `Auto-retrying save after conflict (${nextRetryCount}/${CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT}) in ${retryDelayMs}ms.`,
+          message: `Auto-retrying save after conflict (${conflictResult.retryCount}/${CASE_RESOLVER_WORKSPACE_CONFLICT_AUTO_RETRY_LIMIT}) in ${retryDelayMs}ms.`,
         });
         return;
       }
 
       clearConflictRetryTimer();
-      workspaceConflictAutoRetryCountRef.current = 0;
+      applyQueueState(
+        completeCaseResolverWorkspacePersistAttemptFailure(queueStateRef.current),
+      );
       if (pendingSaveToastRef.current) {
         pendingSaveToastRef.current = null;
       }
@@ -227,18 +292,30 @@ export function useCaseResolverPersistence({
       setWorkspaceSaveError(errorMessage);
       toast(errorMessage, { variant: 'error' });
     }).finally(() => {
-      persistWorkspaceInFlightRef.current = false;
+      applyQueueState({
+        ...queueStateRef.current,
+        inFlightSerializedWorkspace: null,
+        inFlightExpectedRevision: null,
+        inFlightMutationId: null,
+      });
       if (
         shouldContinuePersistQueue &&
-        queuedSerializedWorkspaceRef.current &&
-        queuedSerializedWorkspaceRef.current !== lastPersistedValueRef.current
+        queueStateRef.current.queuedSerializedWorkspace &&
+        queueStateRef.current.queuedSerializedWorkspace !==
+          lastPersistedValueRef.current
       ) {
         flushWorkspacePersist();
         return;
       }
       setIsWorkspaceSaving(false);
     });
-  }, [clearConflictRetryTimer, syncPersistedWorkspaceTracking, toast, settingsStoreRef]);
+  }, [
+    applyQueueState,
+    clearConflictRetryTimer,
+    settingsStoreRef,
+    syncPersistedWorkspaceTracking,
+    toast,
+  ]);
 
   return {
     isWorkspaceSaving,
@@ -257,8 +334,9 @@ export function useCaseResolverPersistence({
     persistWorkspaceInFlightRef,
     workspaceConflictAutoRetryCountRef,
     syncPersistedWorkspaceTracking,
+    enqueueWorkspacePersistMutation,
+    clearQueuedWorkspacePersistMutation,
     clearConflictRetryTimer,
     flushWorkspacePersist,
   };
 }
-

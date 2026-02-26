@@ -12,7 +12,11 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 import type { MasterFolderTreeAdapter } from '@/shared/contracts/master-folder-tree';
 import { useCaseResolverPageContext } from './CaseResolverPageContext';
 import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
-import { buildCaseResolverRuntimeIndexes } from '../runtime';
+import {
+  getCachedCaseResolverRuntimeIndexes,
+  logCaseResolverDurationMetric,
+  useCaseResolverRuntimeSelector,
+} from '../runtime';
 import {
   buildMasterNodesFromCaseResolverWorkspace,
   fromCaseResolverCaseNodeId,
@@ -132,6 +136,11 @@ const areStringArraysEqual = (left: string[], right: string[]): boolean =>
   left.length === right.length &&
   left.every((value: string, index: number): boolean => value === right[index]);
 
+const nowMs = (): number =>
+  typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
+
 export function CaseResolverFolderTreeProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const searchParams = useSearchParams();
   const requestedFileIdRaw = searchParams.get('fileId');
@@ -145,12 +154,7 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
     return normalizedRequestedFileId;
   }, [requestedFileIdRaw]);
   const {
-    workspace,
-    activeCaseId,
     activeFile,
-    selectedFileId,
-    selectedAssetId,
-    selectedFolderPath,
     onMoveFile,
     onMoveAsset,
     onMoveFolder,
@@ -158,12 +162,28 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
     onRenameAsset,
     onRenameFolder,
   } = useCaseResolverPageContext();
+  const workspace = useCaseResolverRuntimeSelector(
+    (snapshot) => snapshot.state.workspace.value,
+  );
+  const activeCaseId = useCaseResolverRuntimeSelector(
+    (snapshot) => snapshot.state.selection.activeCaseId,
+  );
+  const selectedFileId = useCaseResolverRuntimeSelector(
+    (snapshot) => snapshot.state.selection.selectedFileId,
+  );
+  const selectedAssetId = useCaseResolverRuntimeSelector(
+    (snapshot) => snapshot.state.selection.selectedAssetId,
+  );
+  const selectedFolderPath = useCaseResolverRuntimeSelector(
+    (snapshot) => snapshot.state.selection.selectedFolderPath,
+  );
 
   const [showChildCaseFolders, setShowChildCaseFolders] = useState(true);
   const [highlightedNodeFileAssetIds, setHighlightedNodeFileAssetIds] = useState<string[]>([]);
+  const treeScopeResolveDurationMsRef = React.useRef<number | null>(null);
 
   const workspaceIndexes = useMemo(
-    () => buildCaseResolverRuntimeIndexes(workspace),
+    () => getCachedCaseResolverRuntimeIndexes(workspace),
     [workspace.assets, workspace.files, workspace.folderRecords, workspace.folders],
   );
 
@@ -211,6 +231,7 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
 
   const treeWorkspace = useMemo(
     (): CaseResolverWorkspace => {
+      const resolveStartedAtMs = nowMs();
       const scopedWorkspace = resolveCaseResolverTreeWorkspace({
         selectedFileId,
         requestedFileId,
@@ -233,8 +254,10 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
         workspace.assets.length > 0 ||
         workspace.folders.length > 0;
       if (!hasExplicitCaseContext && scopedIsEmpty && sourceHasData) {
+        treeScopeResolveDurationMsRef.current = nowMs() - resolveStartedAtMs;
         return workspace;
       }
+      treeScopeResolveDurationMsRef.current = nowMs() - resolveStartedAtMs;
       return scopedWorkspace;
     },
     [
@@ -246,6 +269,22 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
       workspaceIndexes,
     ],
   );
+
+  useEffect((): void => {
+    const durationMs = treeScopeResolveDurationMsRef.current;
+    if (typeof durationMs !== 'number') return;
+    logCaseResolverDurationMetric('tree_scope_resolve_ms', durationMs, {
+      source: 'case_tree',
+      minDurationMs: 1,
+      message: `workspace_revision=${workspaceIndexes.workspaceRevision}`,
+    });
+  }, [
+    activeCaseId,
+    requestedFileId,
+    selectedFileId,
+    showChildCaseFolders,
+    workspaceIndexes.workspaceRevision,
+  ]);
 
   const isNodeFileCanvasActive = useMemo(
     (): boolean =>

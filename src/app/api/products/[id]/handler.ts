@@ -116,21 +116,12 @@ export async function PATCH_handler(
   if (data.price !== undefined) updateData.price = data.price;
   if (data.stock !== undefined) updateData.stock = data.stock;
 
-  const productRepository = await getProductRepository();
-  const product: ProductRecord | null = await productRepository.updateProduct(id, updateData);
+  const options = _ctx.userId ? { userId: _ctx.userId } : {};
+  const product: ProductWithImages | null = await productService.updateProduct(id, updateData, options);
+  
   if (!product) {
     throw notFoundError('Product not found', { productId: id });
   }
-
-  // Manually log activity for PATCH as it uses repository directly for now
-  void (logActivity({
-    type: ActivityTypes.PRODUCT.UPDATED,
-    description: `Quick updated product ${id}`,
-    userId: _ctx.userId ?? null,
-    entityId: id,
-    entityType: 'product',
-    metadata: { changes: updateData }
-  })).catch(() => {});
 
   return NextResponse.json(product);
 }

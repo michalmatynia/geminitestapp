@@ -89,7 +89,7 @@ import { useCaseResolverStateRelatedFilesActions } from './useCaseResolverState.
 import { useCaseResolverStateCreationActions } from './useCaseResolverState.creation-actions';
 import { useCaseResolverStateViewState } from './useCaseResolverState.view-state';
 import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
-import { buildCaseResolverRuntimeIndexes } from '../runtime';
+import { getCachedCaseResolverRuntimeIndexes } from '../runtime';
 
 const CASE_RESOLVER_TREE_SAVE_TOAST = 'Case Resolver tree changes saved.';
 const CASE_RESOLVER_REQUESTED_CONTEXT_LOADING_WATCHDOG_MS = 10_000;
@@ -418,6 +418,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const queuedSerializedWorkspaceRef = persistence.queuedSerializedWorkspaceRef;
   const queuedExpectedRevisionRef = persistence.queuedExpectedRevisionRef;
   const queuedMutationIdRef = persistence.queuedMutationIdRef;
+  const clearQueuedWorkspacePersistMutation =
+    persistence.clearQueuedWorkspacePersistMutation;
   const clearConflictRetryTimer = persistence.clearConflictRetryTimer;
   const persistWorkspaceTimerRef = persistence.persistWorkspaceTimerRef;
   const isWorkspaceSaving = persistence.isWorkspaceSaving;
@@ -432,9 +434,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedCaseStatus,
     initialWorkspaceState,
     syncPersistedWorkspaceTracking: persistence.syncPersistedWorkspaceTracking,
-    queuedSerializedWorkspaceRef: persistence.queuedSerializedWorkspaceRef,
-    queuedExpectedRevisionRef: persistence.queuedExpectedRevisionRef,
-    queuedMutationIdRef: persistence.queuedMutationIdRef,
+    clearQueuedWorkspacePersistMutation:
+      persistence.clearQueuedWorkspacePersistMutation,
     handledRequestedFileIdRef,
     requestedWorkspaceRefreshFileIdRef,
     requestedWorkspaceMissingFileIdRef,
@@ -478,15 +479,19 @@ export function useCaseResolverState(): CaseResolverStateValue {
           action: 'mutation_enqueued',
           mutationId,
           expectedRevision:
-            persistence.queuedExpectedRevisionRef.current ?? persistence.lastPersistedRevisionRef.current,
+            persistence.queuedExpectedRevisionRef.current ??
+            persistence.lastPersistedRevisionRef.current,
           workspaceRevision: getCaseResolverWorkspaceRevision(stampedWorkspace),
         });
         if (options?.persistToast) persistence.pendingSaveToastRef.current = options.persistToast;
-        if (persistence.queuedExpectedRevisionRef.current === null) {
-          persistence.queuedExpectedRevisionRef.current = persistence.lastPersistedRevisionRef.current;
-        }
-        persistence.queuedMutationIdRef.current = mutationId;
-        persistence.queuedSerializedWorkspaceRef.current = JSON.stringify(stampedWorkspace);
+        const expectedRevision =
+          persistence.queuedExpectedRevisionRef.current ??
+          persistence.lastPersistedRevisionRef.current;
+        persistence.enqueueWorkspacePersistMutation({
+          serializedWorkspace: JSON.stringify(stampedWorkspace),
+          expectedRevision,
+          mutationId,
+        });
         return stampedWorkspace;
       });
       if (options?.persistToast || options?.persistNow) {
@@ -646,9 +651,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
           });
         }
         syncPersistedWorkspaceTracking(snapshot);
-        queuedSerializedWorkspaceRef.current = null;
-        queuedExpectedRevisionRef.current = null;
-        queuedMutationIdRef.current = null;
+        clearQueuedWorkspacePersistMutation();
         return snapshot;
       });
       settingsStoreRef.current.refetch();
@@ -659,10 +662,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
   }, [
     bootstrapRefreshRetryTick,
     canHydrateWorkspaceFromStore,
+    clearQueuedWorkspacePersistMutation,
     preferredWorkspaceSelection.source,
-    queuedExpectedRevisionRef,
-    queuedMutationIdRef,
-    queuedSerializedWorkspaceRef,
     requestedFileId,
     settingsStoreRef,
     syncPersistedWorkspaceTracking,
@@ -711,18 +712,14 @@ export function useCaseResolverState(): CaseResolverStateValue {
       }
 
       syncPersistedWorkspaceTracking(parsedWorkspace);
-      queuedSerializedWorkspaceRef.current = null;
-      queuedExpectedRevisionRef.current = null;
-      queuedMutationIdRef.current = null;
+      clearQueuedWorkspacePersistMutation();
       return parsedWorkspace;
     });
   }, [
     canHydrateWorkspaceFromStore,
+    clearQueuedWorkspacePersistMutation,
     promptExploder.isApplyingPromptExploderPartyProposal,
     parsedWorkspace,
-    queuedExpectedRevisionRef,
-    queuedMutationIdRef,
-    queuedSerializedWorkspaceRef,
     requestedFileId,
     syncPersistedWorkspaceTracking,
   ]);
@@ -892,9 +889,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
             });
           }
           syncPersistedWorkspaceTracking(refreshedWorkspace);
-          queuedSerializedWorkspaceRef.current = null;
-          queuedExpectedRevisionRef.current = null;
-          queuedMutationIdRef.current = null;
+          clearQueuedWorkspacePersistMutation();
           return refreshedWorkspace;
         });
         settingsStoreRef.current.refetch();
@@ -928,11 +923,9 @@ export function useCaseResolverState(): CaseResolverStateValue {
       });
     })();
   }, [
+    clearQueuedWorkspacePersistMutation,
     queueRequestedContextAutoClear,
     logRequestedContextTransition,
-    queuedExpectedRevisionRef,
-    queuedMutationIdRef,
-    queuedSerializedWorkspaceRef,
     requestedContextRetryTick,
     requestedFileId,
     setRequestedCaseIssueSafe,
@@ -1211,7 +1204,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     [viewState.activeCaseId, workspace.files]
   );
   const workspaceIndexes = useMemo(
-    () => buildCaseResolverRuntimeIndexes(workspace),
+    () => getCachedCaseResolverRuntimeIndexes(workspace),
     [workspace.assets, workspace.files, workspace.folderRecords, workspace.folders],
   );
   const workspaceNormalizationDiagnostics = useMemo(

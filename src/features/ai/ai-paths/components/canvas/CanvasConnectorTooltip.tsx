@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { Card } from '@/shared/ui';
 import { renderConnectorTooltip } from '../canvas-board-connectors';
 import { type CanvasBoardConnectorTooltipOverride, type SvgConnectorTooltipState } from '../CanvasBoard.utils';
 
@@ -26,7 +27,9 @@ export function CanvasConnectorTooltip({
         maxWidth: override?.maxWidth,
       }}
     >
-      {content}
+      <Card className='w-[320px] max-w-[320px] border-border/70 bg-card/95 p-3 text-gray-200 shadow-2xl backdrop-blur-sm'>
+        <div className='max-h-[320px] overflow-auto pr-1'>{content}</div>
+      </Card>
     </div>
   );
 }

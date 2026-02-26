@@ -33,6 +33,7 @@ import {
 import {
   isPathWithinFolder,
 } from '../utils/caseResolverUtils';
+import { logCaseResolverDurationMetric } from '../runtime';
 
 import { useAdminCaseResolverCaptureActions } from './useAdminCaseResolverCaptureActions';
 import { useAdminCaseResolverEditorUiState } from './useAdminCaseResolverEditorUiState';
@@ -90,6 +91,7 @@ export function useAdminCaseResolverPageState() {
 
   const openEditorFromQueryHandledRef = useRef<string | null>(null);
   const autoClearRequestKeyHandledRef = useRef<string | null>(null);
+  const editorDirtyEvalDurationMsRef = useRef<number | null>(null);
   
   useEffect(() => {
     if (!shouldOpenEditorFromQuery || !requestedFileId) {
@@ -185,14 +187,36 @@ export function useAdminCaseResolverPageState() {
   });
 
   const isEditorDraftDirty = useMemo(() => {
-    if (!editingDocumentDraft) return false;
+    const dirtyEvalStartedAtMs =
+      typeof performance !== 'undefined' && typeof performance.now === 'function'
+        ? performance.now()
+        : Date.now();
+    const completeDirtyEval = (result: boolean): boolean => {
+      const dirtyEvalCompletedAtMs =
+        typeof performance !== 'undefined' && typeof performance.now === 'function'
+          ? performance.now()
+          : Date.now();
+      editorDirtyEvalDurationMsRef.current = dirtyEvalCompletedAtMs - dirtyEvalStartedAtMs;
+      return result;
+    };
+    if (!editingDocumentDraft) return completeDirtyEval(false);
     const currentFile = workspace.files.find((file) => file.id === editingDocumentDraft.id);
-    if (!currentFile) return false;
-    return hasCaseResolverDraftMeaningfulChanges({
+    if (!currentFile) return completeDirtyEval(false);
+    return completeDirtyEval(hasCaseResolverDraftMeaningfulChanges({
       draft: editingDocumentDraft,
       file: currentFile,
-    });
+    }));
   }, [editingDocumentDraft, workspace.files]);
+
+  useEffect((): void => {
+    const durationMs = editorDirtyEvalDurationMsRef.current;
+    if (typeof durationMs !== 'number') return;
+    logCaseResolverDurationMetric('editor_dirty_eval_ms', durationMs, {
+      source: 'editor_state',
+      minDurationMs: 1,
+      message: `draft_present=${editingDocumentDraft ? 'true' : 'false'} dirty=${isEditorDraftDirty ? 'true' : 'false'}`,
+    });
+  }, [editingDocumentDraft, isEditorDraftDirty, workspace.files]);
 
   const resolvePromptExploderMatchedPartyLabel = useCallback(
     (reference: { kind: string; id: string } | null | undefined): string => {

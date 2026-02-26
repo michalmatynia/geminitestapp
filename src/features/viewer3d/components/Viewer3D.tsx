@@ -180,10 +180,12 @@ function Model3D({
           child.castShadow = enableShadows;
           child.receiveShadow = enableShadows;
 
-          // Enhance material properties for better realism
+          // Enhance material properties for better realism, but only once or if changed
           if (child.material instanceof THREE.MeshStandardMaterial) {
-            child.material.envMapIntensity = 1.5;
-            child.material.needsUpdate = true;
+            if (child.material.envMapIntensity !== 1.5) {
+              child.material.envMapIntensity = 1.5;
+              child.material.needsUpdate = true;
+            }
           }
         }
       });

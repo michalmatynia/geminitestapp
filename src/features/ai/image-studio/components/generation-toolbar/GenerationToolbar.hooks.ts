@@ -37,6 +37,7 @@ import {
   normalizeCenterThreshold,
   normalizeMaskShapeForExport,
 } from './GenerationToolbar.utils';
+import { type ImageStudioAnalysisSummaryChipData } from '../ImageStudioAnalysisSummaryChip';
 import { useGenerationToolbarContext } from './GenerationToolbarContext';
 import { type GenerationToolbarState } from './GenerationToolbar.types';
 
@@ -159,13 +160,13 @@ export function useGenerationToolbarState(): GenerationToolbarState {
 
   const analysisSummaryData = useMemo((): ImageStudioAnalysisSummaryChipData | null => {
     if (!toolbarContext.analysisPlanSnapshot) return null;
-    const { layout } = toolbarContext.analysisPlanSnapshot;
+    const snap = toolbarContext.analysisPlanSnapshot;
     return {
-      detection: layout.detection,
-      shadowPolicy: layout.shadowPolicy,
-      padding: layout.paddingPercent,
-      whiteThreshold: layout.whiteThreshold,
-      chromaThreshold: layout.chromaThreshold,
+      detectionUsed: snap.detectionUsed,
+      confidence: snap.confidence,
+      fallbackApplied: snap.fallbackApplied,
+      policyReason: snap.policyReason,
+      policyVersion: snap.policyVersion,
     };
   }, [toolbarContext.analysisPlanSnapshot]);
 

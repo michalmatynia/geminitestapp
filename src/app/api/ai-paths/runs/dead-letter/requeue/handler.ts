@@ -20,7 +20,10 @@ const requeueSchema = z.object({
   limit: z.number().int().min(1).max(1000).optional(),
 });
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'run-requeue');
   const parsed = await parseJsonBody(req, requeueSchema, {
@@ -91,10 +94,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   if (errors.length > 0) {
     const { logger } = await import('@/shared/utils/logger');
-    logger.warn(`[ai-paths.runs.requeue] ${errors.length} runs failed to requeue`, {
-      errors: errors.slice(0, 5),
-      totalErrors: errors.length
-    });
+    logger.warn(
+      `[ai-paths.runs.requeue] ${errors.length} runs failed to requeue`,
+      {
+        errors: errors.slice(0, 5),
+        totalErrors: errors.length,
+      },
+    );
   }
 
   return NextResponse.json({

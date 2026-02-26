@@ -1,11 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { updateAuthSecurityProfile, getAuthSecurityProfile } from '@/features/auth/server';
+import {
+  updateAuthSecurityProfile,
+  getAuthSecurityProfile,
+} from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { internalError, authError, badRequestError } from '@/shared/errors/app-error';
+import {
+  internalError,
+  authError,
+  badRequestError,
+} from '@/shared/errors/app-error';
 
 export const updateSchema = z.object({
   disabled: z.boolean().optional(),
@@ -14,7 +21,11 @@ export const updateSchema = z.object({
   disableMfa: z.boolean().optional(),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string },
+): Promise<Response> {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated ||
@@ -36,7 +47,11 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext, pa
   });
 }
 
-export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext, params: { id: string }): Promise<Response> {
+export async function PATCH_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+  params: { id: string },
+): Promise<Response> {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated ||

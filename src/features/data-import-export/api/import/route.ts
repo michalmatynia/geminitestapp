@@ -22,15 +22,33 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const text = await file.text();
 
   const parsed = Papa.parse<CsvRow>(text, { header: true });
-  const productRepository = await getProductRepository();
-
+  
+  const CHUNK_SIZE = 50;
   let successful = 0;
   let failed = 0;
   const errors: Array<{ sku: string; error: string }> = [];
+  const pendingBatch: any[] = [];
+
+  const flushBatch = async (): Promise<void> => {
+    if (pendingBatch.length === 0) return;
+    try {
+      const { productService } = await import('@/features/products/server');
+      const createdCount = await productService.bulkCreateProducts(pendingBatch);
+      successful += createdCount;
+      failed += (pendingBatch.length - createdCount);
+    } catch (error) {
+      failed += pendingBatch.length;
+      const message = error instanceof Error ? error.message : 'Batch creation failed';
+      void ErrorSystem.logWarning(`Failed to import batch of ${pendingBatch.length} products`, {
+        service: 'csv-import',
+        error: message
+      });
+    }
+    pendingBatch.length = 0;
+  };
 
   for (const row of parsed.data) {
     const sku = row['SKU'];
-    // Filter out entries with null or empty sku
     if (!sku) continue;
 
     const productData = {
@@ -46,22 +64,14 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       description_pl: `${row['PL']}`,
     };
 
-    try {
-      const validated = productCreateSchema.parse(productData);
-      await productRepository.createProduct(validated);
-      successful++;
-    } catch (error) {
-      failed++;
-      const message = error instanceof Error ? error.message : 'Unknown error';
-      errors.push({ sku, error: message });
-      
-      void ErrorSystem.logWarning(`Failed to import product row for SKU: ${sku}`, {
-        service: 'csv-import',
-        sku,
-        error: message
-      });
+    pendingBatch.push(productData);
+
+    if (pendingBatch.length >= CHUNK_SIZE) {
+      await flushBatch();
     }
   }
+
+  await flushBatch();
 
   return NextResponse.json({ 
     message: 'CSV import completed',
@@ -69,7 +79,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
       total: parsed.data.length,
       successful,
       failed,
-      errors: errors.slice(0, 10) // Only return first 10 errors to keep response size reasonable
+      errors: errors.slice(0, 10)
     }
   });
 }

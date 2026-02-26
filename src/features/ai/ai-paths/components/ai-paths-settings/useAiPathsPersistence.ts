@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type {
   AiNode,
   ClusterPreset,
+  DatabaseConfig,
   DbNodePreset,
   DbQueryPreset,
   Edge,
@@ -448,7 +449,7 @@ export function useAiPathsPersistence({
               let dbNodePresetsChanged = false;
               const normalized = parsed.map((item: DbNodePreset): DbNodePreset => {
                 const preset = normalizeDbNodePreset(item);
-                const migration = migrateDatabaseConfigCollections(preset.config);
+                const migration = migrateDatabaseConfigCollections(preset.config as DatabaseConfig);
                 if (!migration.changed || !migration.databaseConfig) {
                   return preset;
                 }
@@ -527,7 +528,7 @@ export function useAiPathsPersistence({
                   });
                 }
                 const repairedConfig = identityRepair.config;
-                const normalizedConfigNodes = normalizeNodes(repairedConfig.nodes ?? []);
+                const normalizedConfigNodes = normalizeNodes((repairedConfig.nodes as AiNode[]) ?? []);
                 const normalizedConfigEdges = sanitizeEdges(
                   normalizedConfigNodes,
                   Array.isArray(repairedConfig.edges) ? repairedConfig.edges : []
@@ -645,7 +646,7 @@ export function useAiPathsPersistence({
         }
         setActivePathId(firstPath);
         const activeConfig = configs[firstPath] ?? createDefaultPathConfig(firstPath);
-        const normalizedNodes = normalizeNodes(activeConfig.nodes);
+        const normalizedNodes = normalizeNodes(activeConfig.nodes as AiNode[]);
         setNodes(normalizedNodes);
         setEdges(sanitizeEdges(normalizedNodes, activeConfig.edges));
         setPathName(activeConfig.name);
@@ -996,7 +997,7 @@ export function useAiPathsPersistence({
           : buildNodesForAutoSave(resolvedNodes);
         const lintResult = lintPathNodeRoles(nodesForSave);
         if (lintResult.errors.length > 0) {
-          const baselineNodes = pathConfigsRef.current[activePathId]?.nodes ?? [];
+          const baselineNodes = (pathConfigsRef.current[activePathId]?.nodes ?? []) as AiNode[];
           const baselineLint = lintPathNodeRoles(
             Array.isArray(baselineNodes) ? baselineNodes : []
           );
@@ -1057,7 +1058,7 @@ export function useAiPathsPersistence({
         const finalConfig = persistedConfig ?? config;
         if (options?.nodeOverride) {
           const expectedNode = options.nodeOverride;
-          const persistedNode = finalConfig.nodes.find(
+          const persistedNode: AiNode | undefined = (finalConfig.nodes as AiNode[]).find(
             (node: AiNode): boolean => node.id === expectedNode.id
           );
           const expectedConfigHash = stableStringify(expectedNode.config ?? null);

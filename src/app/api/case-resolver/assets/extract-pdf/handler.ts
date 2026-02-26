@@ -16,7 +16,7 @@ const CASE_RESOLVER_UPLOAD_DISK_PREFIX = path.join(
   process.cwd(),
   'public',
   'uploads',
-  'case-resolver'
+  'case-resolver',
 );
 
 const normalizePublicFilepath = (value: unknown): string | null => {
@@ -28,7 +28,10 @@ const normalizePublicFilepath = (value: unknown): string | null => {
   return withoutQuery.startsWith('/') ? withoutQuery : `/${withoutQuery}`;
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   let payload: ExtractPdfRequest;
   try {
     payload = (await req.json()) as ExtractPdfRequest;
@@ -54,7 +57,11 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const fileBuffer = await fs.readFile(diskPath);
   const pdfModule = await import('pdf-parse');
-  const pdfParse = (pdfModule as unknown as { default: (buffer: Buffer) => Promise<{ text: string; numpages: number }> }).default;
+  const pdfParse = (
+    pdfModule as unknown as {
+      default: (buffer: Buffer) => Promise<{ text: string; numpages: number }>;
+    }
+  ).default;
   const parsed = await pdfParse(fileBuffer);
   const text = typeof parsed.text === 'string' ? parsed.text.trim() : '';
 

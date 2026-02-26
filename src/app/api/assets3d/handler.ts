@@ -1,7 +1,11 @@
 import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAsset3DRepository, uploadAsset3D, validate3DFile } from '@/features/viewer3d/server';
+import {
+  getAsset3DRepository,
+  uploadAsset3D,
+  validate3DFile,
+} from '@/features/viewer3d/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getQueryParams } from '@/shared/lib/api/api-handler';
@@ -9,7 +13,10 @@ import { logger } from '@/shared/utils/logger';
 
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const searchParams = getQueryParams(req);
   const filename = searchParams.get('filename');
   const category = searchParams.get('category');
@@ -35,9 +42,15 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error.code === 'P2021' || error.code === 'P2022' || error.code === 'P1001' || error.code === 'P1003')
+      (error.code === 'P2021' ||
+        error.code === 'P2022' ||
+        error.code === 'P1001' ||
+        error.code === 'P1003')
     ) {
-      logger.warn('[assets3d] Falling back to empty list due to missing table or database.', { code: error.code });
+      logger.warn(
+        '[assets3d] Falling back to empty list due to missing table or database.',
+        { code: error.code },
+      );
       return NextResponse.json([], {
         headers: {
           'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
@@ -48,7 +61,10 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   let formData: FormData;
   try {
     formData = await req.formData();

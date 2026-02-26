@@ -106,6 +106,11 @@ const buildLookupFilter = (
   return { [field]: candidates[0] ?? normalized } as unknown as Filter<ProductListingDocument>;
 };
 
+const normalizeIsoDate = (value: string | Date | null | undefined): string | null => {
+  if (!value) return null;
+  return value instanceof Date ? value.toISOString() : value;
+};
+
 const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => ({
   id: normalizeLookupIdOrFallback(doc._id),
   productId: normalizeLookupIdOrFallback(doc.productId),
@@ -114,27 +119,19 @@ const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => (
   externalListingId: doc.externalListingId,
   inventoryId: doc.inventoryId ?? null,
   status: doc.status,
-  listedAt: doc.listedAt ? doc.listedAt.toISOString() : null,
-  expiresAt: doc.expiresAt ? doc.expiresAt.toISOString() : null,
-  nextRelistAt: doc.nextRelistAt ? doc.nextRelistAt.toISOString() : null,
+  listedAt: normalizeIsoDate(doc.listedAt),
+  expiresAt: normalizeIsoDate(doc.expiresAt),
+  nextRelistAt: normalizeIsoDate(doc.nextRelistAt),
   relistPolicy: (doc.relistPolicy ?? null) as ProductListingRecord['relistPolicy'],
   relistAttempts: doc.relistAttempts ?? 0,
-  lastRelistedAt: doc.lastRelistedAt ? doc.lastRelistedAt.toISOString() : null,
-  lastStatusCheckAt: doc.lastStatusCheckAt
-    ? doc.lastStatusCheckAt.toISOString()
-    : null,
+  lastRelistedAt: normalizeIsoDate(doc.lastRelistedAt),
+  lastStatusCheckAt: normalizeIsoDate(doc.lastStatusCheckAt),
   marketplaceData: doc.marketplaceData ?? null,
   failureReason: doc.failureReason ?? null,
-  exportHistory: (doc.exportHistory ?? []).map((event) => ({
+  exportHistory: (doc.exportHistory as any[] ?? []).map((event) => ({
     ...event,
-    exportedAt:
-      (event.exportedAt as any) instanceof Date
-        ? (event.exportedAt as any).toISOString()
-        : event.exportedAt,
-    expiresAt:
-      (event.expiresAt as any) instanceof Date
-        ? (event.expiresAt as any).toISOString()
-        : event.expiresAt ?? undefined,
+    exportedAt: normalizeIsoDate(event.exportedAt) ?? undefined,
+    expiresAt: normalizeIsoDate(event.expiresAt) ?? undefined,
   })),
   createdAt: doc.createdAt.toISOString(),
   updatedAt: doc.updatedAt.toISOString(),
@@ -155,33 +152,23 @@ const toDetailsRecord = (listing: EnrichedPrismaListing): ProductListingWithDeta
   status: listing.status,
   externalListingId: listing.externalListingId ?? null,
   inventoryId: listing.inventoryId ?? null,
-  listedAt: listing.listedAt ? listing.listedAt.toISOString() : null,
-  expiresAt: listing.expiresAt ? listing.expiresAt.toISOString() : null,
-  nextRelistAt: listing.nextRelistAt ? listing.nextRelistAt.toISOString() : null,
+  listedAt: normalizeIsoDate(listing.listedAt),
+  expiresAt: normalizeIsoDate(listing.expiresAt),
+  nextRelistAt: normalizeIsoDate(listing.nextRelistAt),
   relistPolicy: (listing.relistPolicy ??
     null) as ProductListingWithDetails['relistPolicy'],
   relistAttempts: listing.relistAttempts ?? 0,
-  lastRelistedAt: listing.lastRelistedAt
-    ? listing.lastRelistedAt.toISOString()
-    : null,
-  lastStatusCheckAt: listing.lastStatusCheckAt
-    ? listing.lastStatusCheckAt.toISOString()
-    : null,
+  lastRelistedAt: normalizeIsoDate(listing.lastRelistedAt),
+  lastStatusCheckAt: normalizeIsoDate(listing.lastStatusCheckAt),
   marketplaceData: (listing.marketplaceData ??
     null) as ProductListingWithDetails['marketplaceData'],
   failureReason: listing.failureReason ?? null,
   exportHistory: (
-    (listing.exportHistory as unknown as ProductListingExportEvent[] | null) ?? []
-  ).map((event) => ({
+    (listing.exportHistory as unknown as any[] | null) ?? []
+  ).map((event: any) => ({
     ...event,
-    exportedAt:
-      (event.exportedAt as any) instanceof Date
-        ? (event.exportedAt as any).toISOString()
-        : event.exportedAt,
-    expiresAt:
-      (event.expiresAt as any) instanceof Date
-        ? (event.expiresAt as any).toISOString()
-        : event.expiresAt ?? undefined,
+    exportedAt: normalizeIsoDate(event?.['exportedAt'] as string | Date) ?? undefined,
+    expiresAt: normalizeIsoDate(event?.['expiresAt'] as string | Date) ?? undefined,
   })),
   createdAt: listing.createdAt.toISOString(),
   updatedAt: listing.updatedAt.toISOString(),
@@ -302,8 +289,8 @@ const prismaRepository: ProductListingRepository = {
     
     const normalizedEvent: ProductListingExportEvent = {
       ...event,
-      exportedAt: (event.exportedAt as any) instanceof Date ? (event.exportedAt as any).toISOString() : event.exportedAt,
-      expiresAt: (event.expiresAt as any) instanceof Date ? (event.expiresAt as any).toISOString() : (event.expiresAt ?? null),
+      exportedAt: normalizeIsoDate(event.exportedAt) ?? '',
+      expiresAt: normalizeIsoDate(event.expiresAt),
     };
 
     await prisma.productListing.update({
@@ -507,8 +494,8 @@ const mongoRepository: ProductListingRepository = {
     
     const normalizedEvent: ProductListingExportEvent = {
       ...event,
-      exportedAt: (event.exportedAt as any) instanceof Date ? (event.exportedAt as any).toISOString() : event.exportedAt,
-      expiresAt: (event.expiresAt as any) instanceof Date ? (event.expiresAt as any).toISOString() : (event.expiresAt ?? null),
+      exportedAt: normalizeIsoDate(event.exportedAt) ?? '',
+      expiresAt: normalizeIsoDate(event.expiresAt),
     };
 
     await db.collection<ProductListingDocument>(LISTING_COLLECTION).updateOne(

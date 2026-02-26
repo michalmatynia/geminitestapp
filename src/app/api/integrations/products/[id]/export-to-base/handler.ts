@@ -182,41 +182,33 @@ export async function postExportToBaseHandler(
       imagesOnly
     });
 
-    // Get product
-    const productRepo = await getProductRepository();
-    const product = await productRepo.getProductById(productId);
+    // Parallelize resource loading
+    const [productRepo, integrationRepo, primaryListingRepo] = await Promise.all([
+      getProductRepository(),
+      getIntegrationRepository(),
+      getProductListingRepository(),
+    ]);
+
+    const [product, connection, integrations] = await Promise.all([
+      productRepo.getProductById(productId),
+      integrationRepo.getConnectionById(data.connectionId),
+      integrationRepo.listIntegrations(),
+    ]);
+
     if (!product) {
       throw notFoundError('Product not found', { productId });
     }
 
-    await ErrorSystem.logInfo('[export-to-base] Product loaded', {
-      productId,
-      sku: product.sku,
-      name: product.name_en || product.name_pl || 'unnamed'
-    });
-
-    let imageDiagnosticsContext = {
-      productId,
-      sku: product.sku,
-      inventoryId: resolvedInventoryId,
-      connectionId: data.connectionId
-    };
-
-    // Get connection to retrieve API token
-    const integrationRepo = await getIntegrationRepository();
-    const connection = await integrationRepo.getConnectionById(
-      data.connectionId
-    );
     if (!connection) {
       throw notFoundError('Connection not found', {
         connectionId: data.connectionId
       });
     }
 
-    await ErrorSystem.logInfo('[export-to-base] Connection loaded', {
-      connectionId: data.connectionId,
+    await ErrorSystem.logInfo('[export-to-base] Resources loaded', {
+      productId,
+      sku: product.sku,
       connectionName: connection.name,
-      hasToken: Boolean(connection.baseApiToken || connection.password)
     });
 
     // Get Base.com token from connection
@@ -252,6 +244,11 @@ export async function postExportToBaseHandler(
       categoryId: product.categoryId ?? null,
     };
 
+    let imageDiagnosticsContext: Record<string, unknown> = {
+      productId,
+      connectionId: data.connectionId,
+    };
+
     const preparedExportContext = await prepareBaseExportMappingsAndProduct({
       data,
       imagesOnly,
@@ -273,9 +270,7 @@ export async function postExportToBaseHandler(
       preparedExportContext.tagExternalIdByInternalId;
     const exportProduct = preparedExportContext.exportProduct;
 
-    const primaryListingRepo = await getProductListingRepository();
     let listingRepo = primaryListingRepo;
-    const integrations = await integrationRepo.listIntegrations();
     const baseIntegration = integrations.find((i: (typeof integrations)[number]) =>
       ['baselinker', 'base-com', 'base'].includes(i.slug)
     );

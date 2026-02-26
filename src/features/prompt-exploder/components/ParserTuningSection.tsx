@@ -1,7 +1,7 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-call */
+ 
+ 
 
 import React from 'react';
 

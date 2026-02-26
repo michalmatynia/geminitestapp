@@ -12,7 +12,10 @@ import {
   startAiInsightsQueue,
   startAiPathRunQueue,
 } from '@/features/jobs/server';
-import { getProductAiJobProvider, getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
+import {
+  getProductAiJobProvider,
+  getProductAiJobRepository,
+} from '@/features/jobs/services/product-ai-job-repository';
 import { notifyAiPathsSloBreach } from '@/features/observability/lib/ai-paths-slo-notifier';
 import type { AiPathRunStatus } from '@/shared/contracts/ai-paths';
 import type { ProductAiJobStatus } from '@/shared/contracts/jobs';
@@ -40,7 +43,10 @@ const JOB_STATUSES: ProductAiJobStatus[] = [
 const DEFAULT_HEALTH_CRITICAL_GRACE_MS = 15 * 60 * 1000;
 let criticalSloSinceMs: number | null = null;
 
-const parsePositiveInt = (value: string | undefined, fallback: number): number => {
+const parsePositiveInt = (
+  value: string | undefined,
+  fallback: number,
+): number => {
   const parsed = Number.parseInt(value ?? '', 10);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
@@ -52,7 +58,10 @@ const toIso = (value?: Date | string | null): string | null => {
   return date.toISOString();
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   await requireAiPathsAccess();
   startAiPathRunQueue();
   startAiInsightsQueue();
@@ -67,22 +76,28 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 
   const aiPaths = await (async () => {
     try {
-      const repo = (await getPathRunRepository());
+      const repo = await getPathRunRepository();
       const byStatusEntries = await Promise.all(
         AI_PATH_STATUSES.map(async (status) => {
-           
           const result = await repo.listRuns({ status, limit: 1, offset: 0 });
           return [status, result.total] as const;
-        })
+        }),
       );
-      const byStatus = Object.fromEntries(byStatusEntries) as Record<AiPathRunStatus, number>;
-       
+      const byStatus = Object.fromEntries(byStatusEntries) as Record<
+        AiPathRunStatus,
+        number
+      >;
+
       const all = await repo.listRuns({ limit: 1, offset: 0 });
       const latest = all.runs[0]
         ? {
           id: String((all.runs[0] as Record<string, unknown>)['id']),
-          status: (all.runs[0] as Record<string, unknown>)['status'] as AiPathRunStatus,
-          createdAt: toIso((all.runs[0] as Record<string, unknown>)['createdAt'] as string),
+          status: (all.runs[0] as Record<string, unknown>)[
+            'status'
+          ] as AiPathRunStatus,
+          createdAt: toIso(
+              (all.runs[0] as Record<string, unknown>)['createdAt'] as string,
+          ),
         }
         : null;
       return {
@@ -92,7 +107,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         latest,
       };
     } catch (error) {
-      errors['aiPaths'] = error instanceof Error ? error.message : 'Failed to load AI Paths counts.';
+      errors['aiPaths'] =
+        error instanceof Error
+          ? error.message
+          : 'Failed to load AI Paths counts.';
       return {
         provider: aiPathsProvider,
         total: null,
@@ -111,21 +129,41 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         const db = await getMongoDb();
         const collection = db.collection('product_ai_jobs');
         const totals = await Promise.all(
-          JOB_STATUSES.map(async (status) => [status, await collection.countDocuments({ status })] as const)
+          JOB_STATUSES.map(
+            async (status) =>
+              [status, await collection.countDocuments({ status })] as const,
+          ),
         );
         const total = await collection.countDocuments({});
         const latest = await collection
-          .find({}, { projection: { _id: 1, id: 1, status: 1, createdAt: 1, productId: 1, type: 1 } })
+          .find(
+            {},
+            {
+              projection: {
+                _id: 1,
+                id: 1,
+                status: 1,
+                createdAt: 1,
+                productId: 1,
+                type: 1,
+              },
+            },
+          )
           .sort({ createdAt: -1 })
           .limit(1)
           .next();
         return {
           provider,
           total,
-          byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
+          byStatus: Object.fromEntries(totals) as Record<
+            ProductAiJobStatus,
+            number
+          >,
           latest: latest
             ? {
-              id: (latest as unknown as { id?: string; _id?: string }).id ?? String(latest['_id']),
+              id:
+                  (latest as unknown as { id?: string; _id?: string }).id ??
+                  String(latest['_id']),
               status: latest['status'] as ProductAiJobStatus,
               createdAt: toIso(latest['createdAt'] as Date | string | null),
               productId: latest['productId'] as string | null,
@@ -137,16 +175,34 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 
       if (provider === 'prisma') {
         const totals = await Promise.all(
-          JOB_STATUSES.map(async (status) => [status, await prisma.productAiJob.count({ where: { status: status as PrismaJobStatus } })] as const)
-        );        const total = await prisma.productAiJob.count();
+          JOB_STATUSES.map(
+            async (status) =>
+              [
+                status,
+                await prisma.productAiJob.count({
+                  where: { status: status as PrismaJobStatus },
+                }),
+              ] as const,
+          ),
+        );
+        const total = await prisma.productAiJob.count();
         const latest = await prisma.productAiJob.findFirst({
           orderBy: { createdAt: 'desc' },
-          select: { id: true, status: true, createdAt: true, productId: true, type: true },
+          select: {
+            id: true,
+            status: true,
+            createdAt: true,
+            productId: true,
+            type: true,
+          },
         });
         return {
           provider,
           total,
-          byStatus: Object.fromEntries(totals) as Record<ProductAiJobStatus, number>,
+          byStatus: Object.fromEntries(totals) as Record<
+            ProductAiJobStatus,
+            number
+          >,
           latest: latest
             ? {
               id: latest.id,
@@ -166,7 +222,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
         latest: null,
       };
     } catch (error) {
-      errors['aiJobs'] = error instanceof Error ? error.message : 'Failed to load AI Jobs counts.';
+      errors['aiJobs'] =
+        error instanceof Error
+          ? error.message
+          : 'Failed to load AI Jobs counts.';
       return {
         provider: getProductAiJobProvider() ?? 'unknown',
         total: null,
@@ -180,7 +239,8 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     try {
       return await getAiPathRunQueueStatus();
     } catch (error) {
-      errors['queue'] = error instanceof Error ? error.message : 'Failed to load queue health.';
+      errors['queue'] =
+        error instanceof Error ? error.message : 'Failed to load queue health.';
       return null;
     }
   })();
@@ -191,7 +251,9 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       return await getRuntimeAnalyticsSummary({ from, to, range: '24h' });
     } catch (error) {
       errors['runtime24h'] =
-        error instanceof Error ? error.message : 'Failed to load runtime analytics summary.';
+        error instanceof Error
+          ? error.message
+          : 'Failed to load runtime analytics summary.';
       return null;
     }
   })();
@@ -213,7 +275,7 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   const nowMs = Date.now();
   const criticalGraceMs = parsePositiveInt(
     process.env['AI_PATHS_HEALTH_CRITICAL_GRACE_MS'],
-    DEFAULT_HEALTH_CRITICAL_GRACE_MS
+    DEFAULT_HEALTH_CRITICAL_GRACE_MS,
   );
   const isCriticalNow = queue?.slo?.overall === 'critical';
   if (isCriticalNow) {
@@ -225,16 +287,15 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     criticalSloSinceMs !== null ? Math.max(0, nowMs - criticalSloSinceMs) : 0;
   const hasCriticalSlo = isCriticalNow && criticalForMs >= criticalGraceMs;
   const ok = Object.keys(errors).length === 0 && !hasCriticalSlo;
-  const responseErrors =
-    ok
-      ? undefined
-      : Object.keys(errors).length > 0
-        ? errors
-        : {
-          slo: `Critical AI Paths SLO breach detected for ${Math.round(
-            criticalForMs / 1000
-          )}s.`,
-        };
+  const responseErrors = ok
+    ? undefined
+    : Object.keys(errors).length > 0
+      ? errors
+      : {
+        slo: `Critical AI Paths SLO breach detected for ${Math.round(
+          criticalForMs / 1000,
+        )}s.`,
+      };
   return NextResponse.json(
     {
       ok,
@@ -246,13 +307,14 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       sloGate: {
         graceMs: criticalGraceMs,
         criticalSince:
-          criticalSloSinceMs !== null ? new Date(criticalSloSinceMs).toISOString() : null,
+          criticalSloSinceMs !== null
+            ? new Date(criticalSloSinceMs).toISOString()
+            : null,
         criticalForMs,
       },
       sloNotification,
       errors: responseErrors,
     },
-    { status: ok ? 200 : hasCriticalSlo ? 503 : 500 }
+    { status: ok ? 200 : hasCriticalSlo ? 503 : 500 },
   );
 }
-

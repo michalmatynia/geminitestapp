@@ -458,7 +458,7 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     const centerRequestId = buildCenterRequestId();
     const buildValidatedCenterRequestPayload = (mode: ImageStudioCenterMode): {
       mode: ImageStudioCenterMode;
-      requestId: string;
+      requestId?: string;
       layout?: Record<string, unknown>;
     } => {
       const validation = imageStudioCenterRequestSchema.safeParse({
@@ -471,7 +471,7 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
           `Center request payload is invalid (${describeSchemaValidationIssue(validation.error.issues)}).`
         );
       }
-      return validation.data as unknown as ImageStudioCenterResponse;
+      return validation.data;
     };
     const abortController = new AbortController();
     centerAbortControllerRef.current = abortController;

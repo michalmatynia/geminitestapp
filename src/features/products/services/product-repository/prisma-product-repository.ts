@@ -47,7 +47,7 @@ const createTransactionalRepository = (
           include: { imageFile: true },
           orderBy: { assignedAt: 'asc' },
         },
-      
+
         catalogs: {
           include: {
             catalog: {
@@ -198,10 +198,38 @@ const createTransactionalRepository = (
       ) {
         throw conflictError('A product with this SKU already exists.', {
           sku: data.sku ?? null,
+          error,
         });
       }
       throw error;
     }
+  },
+
+  bulkCreateProducts: async (data) => {
+    if (data.length === 0) return 0;
+    const cleanData = data.map((item) => {
+      const { categoryId: _cat, id, ...rest } = item;
+      const normalizedParameters =
+        rest.parameters !== undefined
+          ? normalizeProductParameterValues(rest.parameters)
+          : undefined;
+      return removeUndefined({
+        ...rest,
+        ...(normalizedParameters !== undefined
+          ? {
+            parameters:
+                normalizedParameters as any,
+          }
+          : {}),
+        ...(id ? { id } : {}),
+      }) as Prisma.ProductCreateManyInput;
+    });
+
+    const result = await tx.product.createMany({
+      data: cleanData,
+      skipDuplicates: true,
+    });
+    return result.count;
   },
 
   updateProduct: async (id, data) => {
@@ -499,13 +527,15 @@ const createTransactionalRepository = (
   },
 
   createProductInTransaction: async <T>(
-    _callback: (
+    callback: (
       txClient: ProductRepository & Prisma.TransactionClient,
     ) => Promise<T>,
   ): Promise<T> => {
-    throw internalError(
-      'createProductInTransaction cannot be called within a transaction',
-    );
+    return prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      const txRepo = createTransactionalRepository(tx);
+      const txClient = Object.assign(tx, txRepo);
+      return callback(txClient as ProductRepository & Prisma.TransactionClient);
+    });
   },
 });
 

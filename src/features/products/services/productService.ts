@@ -35,6 +35,7 @@ import type {
   ProductRecord,
   ProductFilters,
   ProductRepository,
+  CreateProductDto as ProductCreateInput,
 } from '@/shared/contracts/products';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 export type ImageFileRepository = {
@@ -322,6 +323,26 @@ async function createProduct(
   return refreshed;
 }
 
+async function bulkCreateProducts(
+  data: ProductCreateInput[],
+  options?: { provider?: ProductDbProvider; userId?: string },
+): Promise<number> {
+  if (data.length === 0) return 0;
+  const provider = options?.provider ?? (await getProductDataProvider());
+  const productRepository = await resolveProductRepository(provider);
+
+  const validatedData: ProductCreateInput[] = [];
+  for (const item of data) {
+    const validation = await validateProductCreate(item);
+    if (validation.success) {
+      validatedData.push(normalizeProductPayloadForStorage(validation.data) as any);
+    }
+  }
+
+  if (validatedData.length === 0) return 0;
+  return productRepository.bulkCreateProducts(validatedData as any);
+}
+
 async function updateProduct(
   id: string,
   data: unknown,
@@ -532,7 +553,10 @@ export const productService = {
   getProductsWithCount,
   getProductById,
   getProductBySku,
+  getProductsBySkus,
+  findProductsByBaseIds,
   createProduct,
+  bulkCreateProducts,
   updateProduct,
   duplicateProduct,
   deleteProduct,

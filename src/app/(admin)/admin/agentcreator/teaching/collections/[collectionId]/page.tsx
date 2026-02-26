@@ -3,4 +3,3 @@ import { AgentTeachingCollectionDetailPage } from '@/features/ai/agentcreator/te
 export default function AgentTeachingCollectionDetailRoute(): React.JSX.Element {
   return <AgentTeachingCollectionDetailPage />;
 }
-

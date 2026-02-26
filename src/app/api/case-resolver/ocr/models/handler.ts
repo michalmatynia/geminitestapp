@@ -11,7 +11,8 @@ import {
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
+const OLLAMA_BASE_URL =
+  process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
 const OLLAMA_MODELS_TIMEOUT_MS = 2_500;
 
 type CaseResolverOcrModelKeySource =
@@ -35,7 +36,8 @@ const resolveOpenAiKey = async (): Promise<{
   key: string | null;
   source: CaseResolverOcrModelKeySource;
 }> => {
-  const imageStudioKey = (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ?? '';
+  const imageStudioKey =
+    (await getSettingValue(IMAGE_STUDIO_OPENAI_API_KEY_KEY))?.trim() ?? '';
   if (imageStudioKey) {
     return {
       key: imageStudioKey,
@@ -51,7 +53,10 @@ const resolveOpenAiKey = async (): Promise<{
 
 const fetchOllamaModels = async (): Promise<string[] | null> => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), OLLAMA_MODELS_TIMEOUT_MS);
+  const timeoutId = setTimeout(
+    () => controller.abort(),
+    OLLAMA_MODELS_TIMEOUT_MS,
+  );
   try {
     const response = await fetch(`${OLLAMA_BASE_URL}/api/tags`, {
       headers: { 'Content-Type': 'application/json' },
@@ -63,7 +68,7 @@ const fetchOllamaModels = async (): Promise<string[] | null> => {
     };
     const names = (payload.models ?? [])
       .map((model: { name?: string | null }): string =>
-        typeof model.name === 'string' ? model.name.trim() : ''
+        typeof model.name === 'string' ? model.name.trim() : '',
       )
       .filter(Boolean);
     return toLikelyCaseResolverOcrModelIds(names);
@@ -77,7 +82,8 @@ const fetchOllamaModels = async (): Promise<string[] | null> => {
 const isLikelyOpenAiOcrModel = (modelId: string): boolean => {
   const normalized = modelId.trim().toLowerCase();
   if (!normalized) return false;
-  if (normalized.includes('gpt-image') || normalized.startsWith('dall-e')) return false;
+  if (normalized.includes('gpt-image') || normalized.startsWith('dall-e'))
+    return false;
   if (
     normalized.startsWith('gpt-') ||
     normalized.startsWith('ft:gpt-') ||
@@ -97,26 +103,35 @@ const fetchOpenAiModels = async (apiKey: string): Promise<string[] | null> => {
     const listResponse = await client.models.list();
     const discovered = (listResponse.data ?? [])
       .map((entry: { id?: string | null }): string =>
-        typeof entry.id === 'string' ? entry.id.trim() : ''
+        typeof entry.id === 'string' ? entry.id.trim() : '',
       )
       .filter(Boolean);
     return uniqueSortedCaseResolverOcrModelIds(
-      discovered.filter((modelId: string): boolean => isLikelyOpenAiOcrModel(modelId))
+      discovered.filter((modelId: string): boolean =>
+        isLikelyOpenAiOcrModel(modelId),
+      ),
     );
   } catch {
     return null;
   }
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const [{ key, source }, ollamaModels] = await Promise.all([
     resolveOpenAiKey(),
     fetchOllamaModels(),
   ]);
 
   const openAiModels = key ? await fetchOpenAiModels(key) : null;
-  const fallbackModels = toLikelyCaseResolverOcrModelIds(CASE_RESOLVER_OCR_OPENAI_MODEL_FALLBACKS);
-  const normalizedOllamaModels = uniqueSortedCaseResolverOcrModelIds(ollamaModels ?? []);
+  const fallbackModels = toLikelyCaseResolverOcrModelIds(
+    CASE_RESOLVER_OCR_OPENAI_MODEL_FALLBACKS,
+  );
+  const normalizedOllamaModels = uniqueSortedCaseResolverOcrModelIds(
+    ollamaModels ?? [],
+  );
   const normalizedOtherModels = uniqueSortedCaseResolverOcrModelIds([
     ...(openAiModels ?? []),
     ...fallbackModels,

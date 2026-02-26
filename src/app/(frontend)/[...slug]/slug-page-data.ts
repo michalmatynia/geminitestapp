@@ -2,8 +2,14 @@ import { headers } from 'next/headers';
 
 import { auth } from '@/features/auth/auth';
 import { getUserPreferences } from '@/features/auth/server';
-import { getMediaInlineStyles, getMediaStyleVars } from '@/features/cms/components/frontend/theme-styles';
-import { getSlugForDomainByValue, resolveCmsDomainFromHeaders } from '@/features/cms/services/cms-domain';
+import {
+  getMediaInlineStyles,
+  getMediaStyleVars,
+} from '@/features/cms/components/frontend/theme-styles';
+import {
+  getSlugForDomainByValue,
+  resolveCmsDomainFromHeaders,
+} from '@/features/cms/services/cms-domain';
 import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
 import { getCmsThemeSettings } from '@/features/cms/services/cms-theme-settings';
@@ -23,21 +29,26 @@ export type SlugRenderData = {
   layout: { fullWidth: boolean };
   mediaVars: ReturnType<typeof getMediaStyleVars>;
   mediaStyles: ReturnType<typeof getMediaInlineStyles>;
-  hoverEffect: Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverEffect'] | undefined;
-  hoverScale: Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverScale'] | undefined;
+  hoverEffect:
+    | Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverEffect']
+    | undefined;
+  hoverScale:
+    | Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverScale']
+    | undefined;
 };
 
 const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
-  const user = session.user as Session['user'] & { isElevated?: boolean; role?: string | null };
+  const user = session.user as Session['user'] & {
+    isElevated?: boolean;
+    role?: string | null;
+  };
   if (user.isElevated) return true;
   const role = user.role ?? '';
   return ['admin', 'super_admin', 'superuser'].includes(role);
 };
 
-const canPreviewDrafts = async (
-  session: Session | null
-): Promise<boolean> => {
+const canPreviewDrafts = async (session: Session | null): Promise<boolean> => {
   if (!isAdminSession(session)) return false;
   const userId = session?.user?.id;
   if (!userId) return false;
@@ -49,13 +60,19 @@ const canPreviewDrafts = async (
   }
 };
 
-export async function resolveSlugToPage(slugSegments: string[]): Promise<Page | null> {
+export async function resolveSlugToPage(
+  slugSegments: string[],
+): Promise<Page | null> {
   try {
     const slugValue = slugSegments.join('/');
     const cmsRepository = await getCmsRepository();
     const hdrs = await headers();
     const domain = await resolveCmsDomainFromHeaders(hdrs);
-    const domainSlug = await getSlugForDomainByValue(domain.id, slugValue, cmsRepository);
+    const domainSlug = await getSlugForDomainByValue(
+      domain.id,
+      slugValue,
+      cmsRepository,
+    );
     if (!domainSlug) return null;
     const page = await cmsRepository.getPageBySlug(slugValue);
     if (!page) return null;
@@ -94,7 +111,9 @@ export const buildSlugMetadata = (page: Page): Metadata => {
   return metadata;
 };
 
-export const loadSlugRenderData = async (page: Page): Promise<SlugRenderData> => {
+export const loadSlugRenderData = async (
+  page: Page,
+): Promise<SlugRenderData> => {
   let theme: CmsTheme | null = null;
   if (page.themeId) {
     const cmsRepository = await getCmsRepository();
@@ -109,18 +128,24 @@ export const loadSlugRenderData = async (page: Page): Promise<SlugRenderData> =>
   const layout = { fullWidth: Boolean(themeSettings.fullWidth) };
   const mediaVars = getMediaStyleVars(themeSettings);
   const mediaStyles = getMediaInlineStyles(themeSettings);
-  const hoverEffect = themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined;
-  const hoverScale = themeSettings.enableAnimations ? themeSettings.hoverScale : undefined;
+  const hoverEffect = themeSettings.enableAnimations
+    ? themeSettings.hoverEffect
+    : undefined;
+  const hoverScale = themeSettings.enableAnimations
+    ? themeSettings.hoverScale
+    : undefined;
   const showMenu = page.showMenu !== false;
-  const rendererComponents: PageComponent[] = (page.components ?? []).map((component) => ({
-    id: component.id ?? `component-${Math.random().toString(36).slice(2, 9)}`,
-    type: component.type,
-    order: component.order || 0,
-    content: (component.content as Record<string, unknown>) ?? {},
-    pageId: page.id,
-    createdAt: component.createdAt ?? new Date().toISOString(),
-    updatedAt: component.updatedAt ?? null,
-  }));
+  const rendererComponents: PageComponent[] = (page.components ?? []).map(
+    (component) => ({
+      id: component.id ?? `component-${Math.random().toString(36).slice(2, 9)}`,
+      type: component.type,
+      order: component.order || 0,
+      content: (component.content as Record<string, unknown>) ?? {},
+      pageId: page.id,
+      createdAt: component.createdAt ?? new Date().toISOString(),
+      updatedAt: component.updatedAt ?? null,
+    }),
+  );
 
   return {
     theme,

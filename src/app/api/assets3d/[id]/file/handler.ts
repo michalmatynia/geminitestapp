@@ -11,7 +11,7 @@ import { notFoundError } from '@/shared/errors/app-error';
 export async function GET_handler(
   _request: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { id: string }
+  params: { id: string },
 ): Promise<Response> {
   const { id } = params;
   const repository = getAsset3DRepository();
@@ -21,14 +21,18 @@ export async function GET_handler(
     throw notFoundError(`Asset or filepath not found in database: ${id}`);
   }
 
-  const diskPath = join(process.cwd(), 'public', asset.filepath.replace(/^\/+/, ''));
-  
+  const diskPath = join(
+    process.cwd(),
+    'public',
+    asset.filepath.replace(/^\/+/, ''),
+  );
+
   if (!existsSync(diskPath)) {
     throw notFoundError(`File not found on disk: ${diskPath}`);
   }
 
   const fileBuffer = await readFile(diskPath);
-  
+
   return new NextResponse(fileBuffer, {
     headers: {
       'Content-Type': asset.mimetype || 'application/octet-stream',

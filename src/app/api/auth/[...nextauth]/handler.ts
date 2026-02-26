@@ -33,7 +33,8 @@ type AuthSessionGlobalState = {
   __authSessionMemoState?: AuthSessionMemoState;
 };
 
-const globalForAuthSessionMemo = globalThis as typeof globalThis & AuthSessionGlobalState;
+const globalForAuthSessionMemo = globalThis as typeof globalThis &
+  AuthSessionGlobalState;
 
 const getAuthSessionMemoState = (): AuthSessionMemoState => {
   if (!globalForAuthSessionMemo.__authSessionMemoState) {
@@ -44,15 +45,20 @@ const getAuthSessionMemoState = (): AuthSessionMemoState => {
   return globalForAuthSessionMemo.__authSessionMemoState;
 };
 
-const buildServerTiming = (entries: Record<string, number | null | undefined>): string =>
+const buildServerTiming = (
+  entries: Record<string, number | null | undefined>,
+): string =>
   Object.entries(entries)
-    .filter(([, value]) => typeof value === 'number' && Number.isFinite(value) && value >= 0)
+    .filter(
+      ([, value]) =>
+        typeof value === 'number' && Number.isFinite(value) && value >= 0,
+    )
     .map(([name, value]) => `${name};dur=${(value as number).toFixed(2)}`)
     .join(', ');
 
 const attachServerTiming = (
   response: Response,
-  entries: Record<string, number | null | undefined>
+  entries: Record<string, number | null | undefined>,
 ): void => {
   const value = buildServerTiming(entries);
   if (!value) return;
@@ -63,7 +69,7 @@ const hasSessionTokenCookie = (req: NextRequest): boolean => {
   const rawCookie = req.headers.get('cookie') ?? '';
   if (!rawCookie) return false;
   return SESSION_COOKIE_NAMES.some((cookieName) =>
-    rawCookie.includes(`${cookieName}=`)
+    rawCookie.includes(`${cookieName}=`),
   );
 };
 
@@ -72,7 +78,7 @@ const buildUnauthSessionResponse = (
   body: string,
   cacheHeader: string,
   requestStart: number,
-  cacheDurationMs: number
+  cacheDurationMs: number,
 ): Response => {
   const response = new Response(body, {
     status,
@@ -89,7 +95,10 @@ const buildUnauthSessionResponse = (
   return response;
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const requestStart = performance.now();
   const isSessionRequest = req.nextUrl.pathname.endsWith('/session');
   if (isSessionRequest && !hasSessionTokenCookie(req)) {
@@ -103,7 +112,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
         cached.body,
         'hit',
         requestStart,
-        performance.now() - cacheStart
+        performance.now() - cacheStart,
       );
     }
     const nextEntry: AuthSessionMemoEntry = {
@@ -117,7 +126,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       nextEntry.body,
       'miss',
       requestStart,
-      performance.now() - cacheStart
+      performance.now() - cacheStart,
     );
   }
 
@@ -125,7 +134,12 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const handlerStart = performance.now();
   try {
     const response = await handlers.GET(req);
-    await logAuthEvent({ req, action: 'auth.nextauth', stage: 'success', status: response.status });
+    await logAuthEvent({
+      req,
+      action: 'auth.nextauth',
+      stage: 'success',
+      status: response.status,
+    });
     if (isSessionRequest) {
       attachServerTiming(response, {
         total: performance.now() - requestStart,
@@ -142,16 +156,30 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
         total: performance.now() - requestStart,
         handler: performance.now() - handlerStart,
       });
-      await logAuthEvent({ req, action: 'auth.nextauth', stage: 'failure', status: 200, outcome: 'session-fallback' });
+      await logAuthEvent({
+        req,
+        action: 'auth.nextauth',
+        stage: 'failure',
+        status: 200,
+        outcome: 'session-fallback',
+      });
       return response;
     }
     throw error;
   }
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   await logAuthEvent({ req, action: 'auth.nextauth', stage: 'start' });
   const response = await handlers.POST(req);
-  await logAuthEvent({ req, action: 'auth.nextauth', stage: 'success', status: response.status });
+  await logAuthEvent({
+    req,
+    action: 'auth.nextauth',
+    stage: 'success',
+    status: response.status,
+  });
   return response;
 }

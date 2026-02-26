@@ -113,7 +113,7 @@ describe('AI Paths DB provider fallback', () => {
       createRequest('/api/ai-paths/db-update') as Parameters<
         typeof postAiPathsDbUpdateHandler
       >[0],
-      {} as Parameters<typeof postAiPathsDbUpdateHandler>[1]
+      {} as Parameters<typeof postAiPathsDbUpdateHandler>[1],
     );
     const body = (await response.json()) as Record<string, unknown>;
 
@@ -126,11 +126,11 @@ describe('AI Paths DB provider fallback', () => {
         used: true,
         attemptedProvider: 'prisma',
         resolvedProvider: 'mongodb',
-      })
+      }),
     );
     expect(updateOneMock).toHaveBeenCalledWith(
       { id: 'product-1' },
-      { $set: { name_en: 'Updated name' } }
+      { $set: { name_en: 'Updated name' } },
     );
   });
 
@@ -146,15 +146,17 @@ describe('AI Paths DB provider fallback', () => {
         idType: 'string',
       },
     });
-    isCollectionAllowedMock.mockImplementation((value: string) => value === 'products');
+    isCollectionAllowedMock.mockImplementation(
+      (value: string) => value === 'products',
+    );
 
     await expect(
       postAiPathsDbUpdateHandler(
         createRequest('/api/ai-paths/db-update') as Parameters<
           typeof postAiPathsDbUpdateHandler
         >[0],
-        {} as Parameters<typeof postAiPathsDbUpdateHandler>[1]
-      )
+        {} as Parameters<typeof postAiPathsDbUpdateHandler>[1],
+      ),
     ).rejects.toThrow('Collection not allowlisted');
 
     expect(isCollectionAllowedMock).toHaveBeenCalledWith('Product');
@@ -176,7 +178,9 @@ describe('AI Paths DB provider fallback', () => {
         idType: 'string',
       },
     });
-    isCollectionAllowedMock.mockImplementation((value: string) => value === 'products');
+    isCollectionAllowedMock.mockImplementation(
+      (value: string) => value === 'products',
+    );
     resolveCollectionProviderForRequestMock.mockResolvedValueOnce('mongodb');
 
     const updateOneMock = vi
@@ -196,14 +200,14 @@ describe('AI Paths DB provider fallback', () => {
       createRequest('/api/ai-paths/db-update') as Parameters<
         typeof postAiPathsDbUpdateHandler
       >[0],
-      {} as Parameters<typeof postAiPathsDbUpdateHandler>[1]
+      {} as Parameters<typeof postAiPathsDbUpdateHandler>[1],
     );
     const body = (await response.json()) as Record<string, unknown>;
 
     expect(isCollectionAllowedMock).toHaveBeenCalledWith('products');
     expect(resolveCollectionProviderForRequestMock).toHaveBeenCalledWith(
       'products',
-      'auto'
+      'auto',
     );
     expect(mongoCollectionMock).toHaveBeenCalledWith('products');
     expect(body['collection']).toBe('products');
@@ -223,7 +227,9 @@ describe('AI Paths DB provider fallback', () => {
     });
     resolveCollectionProviderForRequestMock.mockResolvedValueOnce('prisma');
 
-    const aggregateToArrayMock = vi.fn().mockResolvedValue([{ id: 'product-1' }]);
+    const aggregateToArrayMock = vi
+      .fn()
+      .mockResolvedValue([{ id: 'product-1' }]);
     const aggregateMock = vi
       .fn()
       .mockReturnValue({ toArray: aggregateToArrayMock });
@@ -240,7 +246,7 @@ describe('AI Paths DB provider fallback', () => {
       createRequest('/api/ai-paths/db-action') as Parameters<
         typeof postAiPathsDbActionHandler
       >[0],
-      {} as Parameters<typeof postAiPathsDbActionHandler>[1]
+      {} as Parameters<typeof postAiPathsDbActionHandler>[1],
     );
     const body = (await response.json()) as Record<string, unknown>;
 
@@ -254,9 +260,11 @@ describe('AI Paths DB provider fallback', () => {
         attemptedProvider: 'prisma',
         resolvedProvider: 'mongodb',
         code: 'action_not_supported',
-      })
+      }),
     );
-    expect(aggregateMock).toHaveBeenCalledWith([{ $match: { id: 'product-1' } }]);
+    expect(aggregateMock).toHaveBeenCalledWith([
+      { $match: { id: 'product-1' } },
+    ]);
     expect(aggregateToArrayMock).toHaveBeenCalledTimes(1);
   });
 
@@ -273,9 +281,11 @@ describe('AI Paths DB provider fallback', () => {
     });
     resolveCollectionProviderForRequestMock.mockResolvedValueOnce('prisma');
 
-    const prismaUpdateMock = vi.fn().mockRejectedValue(
-      Object.assign(new Error('Record not found'), { code: 'P2025' }),
-    );
+    const prismaUpdateMock = vi
+      .fn()
+      .mockRejectedValue(
+        Object.assign(new Error('Record not found'), { code: 'P2025' }),
+      );
     prismaMock['product'] = {
       update: prismaUpdateMock,
     };
@@ -296,7 +306,7 @@ describe('AI Paths DB provider fallback', () => {
       createRequest('/api/ai-paths/db-action') as Parameters<
         typeof postAiPathsDbActionHandler
       >[0],
-      {} as Parameters<typeof postAiPathsDbActionHandler>[1]
+      {} as Parameters<typeof postAiPathsDbActionHandler>[1],
     );
     const body = (await response.json()) as Record<string, unknown>;
 

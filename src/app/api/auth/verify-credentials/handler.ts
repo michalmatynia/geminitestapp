@@ -15,13 +15,15 @@ import { logAuthEvent } from '@/features/auth/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
-
 export const payloadSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(1),
 });
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+): Promise<Response> {
   const data = ctx.body as z.infer<typeof payloadSchema> | undefined;
   if (!data) throw badRequestError('Invalid payload');
 
@@ -52,7 +54,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         message: 'Too many attempts. Please try again later.',
         lockedUntil: allowed.lockedUntil?.toISOString() ?? null,
       },
-      { status: 429 }
+      { status: 429 },
     );
   }
 
@@ -186,4 +188,3 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     expiresAt: challenge.expiresAt.toISOString(),
   });
 }
-

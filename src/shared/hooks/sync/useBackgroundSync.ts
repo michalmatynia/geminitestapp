@@ -21,23 +21,45 @@ export function useBackgroundSync({
   const queryClient = useQueryClient();
   const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const previousDataRef = useRef<unknown>(undefined);
+  const isVisibleRef = useRef(true);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const handleVisibilityChange = (): void => {
+      isVisibleRef.current = document.visibilityState === 'visible';
+      if (isVisibleRef.current && enabled) {
+        // Immediate sync when tab becomes visible after being hidden
+        void syncData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [enabled]);
+
+  const syncData = async (): Promise<void> => {
+    if (!isVisibleRef.current || !enabled) return;
+    
+    try {
+      await queryClient.refetchQueries({ queryKey });
+      const currentData = queryClient.getQueryData(queryKey);
+      
+      if (currentData !== previousDataRef.current) {
+        onUpdate?.(currentData);
+        previousDataRef.current = currentData;
+      }
+    } catch (error: unknown) {
+      logClientError(error instanceof Error ? error : new Error(String(error)), { 
+        context: { source: 'useBackgroundSync', action: 'backgroundSyncFailed', level: 'warn' } 
+      });
+    }
+  };
 
   useEffect(() => {
     if (!enabled) return;
-
-    const syncData = async (): Promise<void> => {
-      try {
-        await queryClient.refetchQueries({ queryKey });
-        const currentData = queryClient.getQueryData(queryKey);
-        
-        if (currentData !== previousDataRef.current) {
-          onUpdate?.(currentData);
-          previousDataRef.current = currentData;
-        }
-      } catch (error: unknown) {
-        logClientError(error instanceof Error ? error : new Error(String(error)), { context: { source: 'useBackgroundSync', action: 'backgroundSyncFailed', level: 'warn' } });
-      }
-    };
 
     intervalRef.current = setInterval(() => {
       void syncData();

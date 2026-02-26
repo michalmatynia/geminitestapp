@@ -5,7 +5,10 @@ import {
   getRuntimeAnalyticsSummary,
   resolveRuntimeAnalyticsRangeWindow,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { startAiInsightsQueue, startAiPathRunQueue } from '@/features/jobs/server';
+import {
+  startAiInsightsQueue,
+  startAiPathRunQueue,
+} from '@/features/jobs/server';
 import type { AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
@@ -15,11 +18,20 @@ import {
 } from '@/shared/errors/app-error';
 import { getQueryParams } from '@/shared/lib/api/api-handler';
 
-const RANGE_VALUES: readonly AiPathRuntimeAnalyticsRange[] = ['1h', '24h', '7d', '30d'];
+const RANGE_VALUES: readonly AiPathRuntimeAnalyticsRange[] = [
+  '1h',
+  '24h',
+  '7d',
+  '30d',
+];
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const searchParams = getQueryParams(req);
-  const rangeRaw = (searchParams.get('range') ?? '24h') as AiPathRuntimeAnalyticsRange;
+  const rangeRaw = (searchParams.get('range') ??
+    '24h') as AiPathRuntimeAnalyticsRange;
   if (!RANGE_VALUES.includes(rangeRaw)) {
     throw badRequestError('Invalid range.');
   }
@@ -29,7 +41,8 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   } catch (error) {
     if (
       isAppError(error) &&
-      (error.code === AppErrorCodes.unauthorized || error.code === AppErrorCodes.forbidden)
+      (error.code === AppErrorCodes.unauthorized ||
+        error.code === AppErrorCodes.forbidden)
     ) {
       return NextResponse.json({
         summary: {
@@ -90,6 +103,10 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   }
   startAiPathRunQueue();
   startAiInsightsQueue();
-  const summary = await getRuntimeAnalyticsSummary({ from, to, range: rangeRaw });
+  const summary = await getRuntimeAnalyticsSummary({
+    from,
+    to,
+    range: rangeRaw,
+  });
   return NextResponse.json({ summary });
 }

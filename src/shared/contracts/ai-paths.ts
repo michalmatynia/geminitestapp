@@ -7,6 +7,8 @@ import {
   aiEdgeSchema,
   edgeSchema,
   aiNodeSchema,
+  type AiNode,
+  type Edge,
 } from './ai-paths-core';
 
 import {

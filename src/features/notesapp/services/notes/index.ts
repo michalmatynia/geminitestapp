@@ -168,38 +168,9 @@ export const noteService: NoteRepository = {
         (relId: string) => !nextRelatedIds.includes(relId) && relId !== id
       );
 
-      const syncRelatedNote = async (relatedId: string, shouldAdd: boolean): Promise<void> => {
-        try {
-          const relatedNote = await repoCall('getById', relatedId);
-          if (!relatedNote) return;
-          
-          const currentIds =
-            relatedNote.relationsFrom
-              ?.map((rel: NoteRelationWithTarget) => rel.targetNote?.id)
-              .filter((rid: string | undefined): rid is string => !!rid) || [];
-          
-          let nextIds: string[];
-          if (shouldAdd) {
-            nextIds = Array.from(new Set([...currentIds, id]));
-          } else {
-            nextIds = currentIds.filter((relId: string) => relId !== id);
-          }
-          
-          await repoCall('update', relatedId, { relatedNoteIds: nextIds });
-        } catch (syncError) {
-          void ErrorSystem.captureException(syncError, { 
-            service: 'note-service',
-            action: 'syncRelatedNote',
-            noteId: id,
-            relatedId
-          });
-        }
-      };
-
-      await Promise.all([
-        ...addedRelations.map((relId: string) => syncRelatedNote(relId, true)),
-        ...removedRelations.map((relId: string) => syncRelatedNote(relId, false)),
-      ]);
+      if (addedRelations.length > 0 || removedRelations.length > 0) {
+        await repoCall('syncRelatedNotesBatch', id, addedRelations, removedRelations);
+      }
     }
 
     const populated = populateRelations(note);

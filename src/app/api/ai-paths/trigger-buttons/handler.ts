@@ -12,7 +12,11 @@ import {
   parseAiTriggerButtonsRaw,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { AppErrorCodes, badRequestError, isAppError } from '@/shared/errors/app-error';
+import {
+  AppErrorCodes,
+  badRequestError,
+  isAppError,
+} from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { logger } from '@/shared/utils/logger';
 
@@ -24,7 +28,10 @@ const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
   await upsertAiPathsSetting(AI_PATHS_TRIGGER_BUTTONS_KEY, value);
 };
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   try {
     await requireAiPathsRunAccess();
   } catch (error) {
@@ -32,7 +39,8 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
     // AI-paths permissions, treat this as an empty list rather than a noisy API error.
     if (
       isAppError(error) &&
-      (error.code === AppErrorCodes.unauthorized || error.code === AppErrorCodes.forbidden)
+      (error.code === AppErrorCodes.unauthorized ||
+        error.code === AppErrorCodes.forbidden)
     ) {
       return NextResponse.json([], {
         headers: {
@@ -52,9 +60,12 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
       },
     });
   } catch (error) {
-    logger.warn('[ai-paths.trigger-buttons.GET] Falling back to empty trigger-buttons list.', {
-      error,
-    });
+    logger.warn(
+      '[ai-paths.trigger-buttons.GET] Falling back to empty trigger-buttons list.',
+      {
+        error,
+      },
+    );
     return NextResponse.json([], {
       headers: {
         'Cache-Control': 'no-store',
@@ -63,14 +74,18 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   }
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   await requireAiPathsAccess();
   const parsed = await parseJsonBody(req, aiTriggerButtonCreateSchema, {
     logPrefix: 'ai-paths.trigger-buttons.POST',
   });
   if (!parsed.ok) return parsed.response;
 
-  const { name, iconId, pathId, enabled, locations, mode, display } = parsed.data;
+  const { name, iconId, pathId, enabled, locations, mode, display } =
+    parsed.data;
   const raw = await readTriggerButtonsRaw();
   const existing = parseAiTriggerButtonsRaw(raw);
   const normalizedName = name.trim();

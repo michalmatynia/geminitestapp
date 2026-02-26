@@ -25,10 +25,17 @@ export default function AdminError({
         {error.message || 'Something went wrong while loading this admin page.'}
       </p>
       <div className='flex flex-wrap items-center justify-center gap-3'>
-        <Button onClick={() => reset()} className='bg-blue-600 text-white hover:bg-blue-700'>
+        <Button
+          onClick={() => reset()}
+          className='bg-blue-600 text-white hover:bg-blue-700'
+        >
           Try Again
         </Button>
-        <Button asChild variant='outline' className='border-gray-700 text-gray-300 hover:bg-gray-800'>
+        <Button
+          asChild
+          variant='outline'
+          className='border-gray-700 text-gray-300 hover:bg-gray-800'
+        >
           <Link href='/admin'>Back to Admin</Link>
         </Button>
       </div>

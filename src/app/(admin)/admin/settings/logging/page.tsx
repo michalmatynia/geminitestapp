@@ -10,16 +10,18 @@ export default function LoggingSettingsPage(): React.JSX.Element {
   const settingsQuery = useSettingsMap();
 
   if (settingsQuery.isLoading || !settingsQuery.data) {
-    return <div className='p-10 text-center text-gray-400'>Loading settings...</div>;
+    return (
+      <div className='p-10 text-center text-gray-400'>Loading settings...</div>
+    );
   }
 
   const tags = parseJsonSetting<Record<string, unknown> | null>(
     settingsQuery.data.get(CLIENT_LOGGING_KEYS.tags),
-    null
+    null,
   );
   const flags = parseJsonSetting<Record<string, unknown> | null>(
     settingsQuery.data.get(CLIENT_LOGGING_KEYS.featureFlags),
-    null
+    null,
   );
 
   return (

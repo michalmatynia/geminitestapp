@@ -1,12 +1,16 @@
 import { logSystemEvent } from '@/features/observability/server';
 
-export const shouldLogHomeTiming = (): boolean => process.env['DEBUG_API_TIMING'] === 'true';
+export const shouldLogHomeTiming = (): boolean =>
+  process.env['DEBUG_API_TIMING'] === 'true';
 
 export const createHomeTimingRecorder = () => {
   const timings: Record<string, number> = {};
   const totalStart = performance.now();
 
-  const withTiming = async <T,>(label: string, fn: () => Promise<T>): Promise<T> => {
+  const withTiming = async <T>(
+    label: string,
+    fn: () => Promise<T>,
+  ): Promise<T> => {
     const start = performance.now();
     const result = await fn();
     timings[label] = performance.now() - start;

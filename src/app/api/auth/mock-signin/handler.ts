@@ -17,7 +17,6 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, internalError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-
 export const payloadSchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(1),
@@ -29,7 +28,10 @@ type MongoUserDoc = {
   emailVerified?: Date | null;
 };
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+): Promise<Response> {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated ||
@@ -37,7 +39,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   if (!hasAccess) {
     return NextResponse.json(
       { ok: false, message: 'Unauthorized.' },
-      { status: 401 }
+      { status: 401 },
     );
   }
   const data = ctx.body as z.infer<typeof payloadSchema> | undefined;
@@ -73,7 +75,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         ok: false,
         message: 'Too many attempts. Please try again later.',
       },
-      { status: 429 }
+      { status: 429 },
     );
   }
   const db = await getMongoDb();
@@ -135,7 +137,10 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         body: { email },
         status: 200,
       });
-      return NextResponse.json({ ok: false, message: 'Email verification required.' });
+      return NextResponse.json({
+        ok: false,
+        message: 'Email verification required.',
+      });
     }
   }
   if (security.allowedIps.length > 0 && ip) {
@@ -162,7 +167,10 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       body: { email },
       status: 200,
     });
-    return NextResponse.json({ ok: false, message: 'MFA is enabled. Use MFA login.' });
+    return NextResponse.json({
+      ok: false,
+      message: 'MFA is enabled. Use MFA login.',
+    });
   }
 
   const isValid = await bcrypt.compare(data.password, user.passwordHash);
@@ -184,4 +192,3 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     message: isValid ? 'Credentials are valid.' : 'Invalid credentials.',
   });
 }
-

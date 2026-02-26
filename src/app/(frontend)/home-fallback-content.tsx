@@ -33,10 +33,14 @@ const normalizeSocialUrl = (value?: string | null): string | null => {
   return `https://${trimmed}`;
 };
 
-const buildSocialLinks = (theme: SocialThemeSettings | null | undefined): SocialLink[] => {
+const buildSocialLinks = (
+  theme: SocialThemeSettings | null | undefined,
+): SocialLink[] => {
   if (!theme) return [];
   const links: SocialLink[] = [];
-  const addLink = (link: Omit<SocialLink, 'href'> & { href: string | null }) => {
+  const addLink = (
+    link: Omit<SocialLink, 'href'> & { href: string | null },
+  ) => {
     if (link.href) links.push({ ...link, href: link.href });
   };
 
@@ -109,7 +113,11 @@ const buildSocialLinks = (theme: SocialThemeSettings | null | undefined): Social
   return links;
 };
 
-function SocialLinks({ theme }: { theme: SocialThemeSettings | null | undefined }) {
+function SocialLinks({
+  theme,
+}: {
+  theme: SocialThemeSettings | null | undefined;
+}) {
   const links = buildSocialLinks(theme);
   if (!links.length) return null;
 

@@ -8,28 +8,27 @@ import {
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { mongoPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository/mongo-path-run-repository';
 import { prismaPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository/prisma-path-run-repository';
-import {
-  cancelPathRunWithRepository,
-} from '@/features/ai/ai-paths/services/path-run-service';
+import { cancelPathRunWithRepository } from '@/features/ai/ai-paths/services/path-run-service';
 import { removePathRunQueueEntries } from '@/features/jobs/workers/aiPathRunQueue';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
-const TERMINAL_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
+const TERMINAL_STATUSES = new Set([
+  'completed',
+  'failed',
+  'canceled',
+  'dead_lettered',
+]);
 
 const resolveFallbackRepository = (
-  primary: AiPathRunRepository
+  primary: AiPathRunRepository,
 ): AiPathRunRepository | null => {
   if (primary === prismaPathRunRepository) {
-    return process.env['MONGODB_URI']
-      ? (mongoPathRunRepository)
-      : null;
+    return process.env['MONGODB_URI'] ? mongoPathRunRepository : null;
   }
   if (primary === mongoPathRunRepository) {
-    return process.env['DATABASE_URL']
-      ? prismaPathRunRepository
-      : null;
+    return process.env['DATABASE_URL'] ? prismaPathRunRepository : null;
   }
   return null;
 };
@@ -37,7 +36,7 @@ const resolveFallbackRepository = (
 export async function POST_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { runId: string }
+  params: { runId: string },
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'run-cancel');
@@ -61,7 +60,8 @@ export async function POST_handler(
       run: null,
       canceled: false,
       runId,
-      message: 'Run already missing. Queue entry (if present) has been removed.',
+      message:
+        'Run already missing. Queue entry (if present) has been removed.',
     });
   }
   assertAiPathRunAccess(access, existing);

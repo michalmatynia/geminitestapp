@@ -83,13 +83,13 @@ export function CentralDocsSyncPanel(): React.JSX.Element {
           size='sm'
         />
         <StatusBadge
-          status={`New: ${candidateChangeStats.new}`}
-          variant={candidateChangeStats.new > 0 ? 'warning' : 'neutral'}
+          status={`New: ${candidateChangeStats['new'] ?? 0}`}
+          variant={(candidateChangeStats['new'] ?? 0) > 0 ? 'warning' : 'neutral'}
           size='sm'
         />
         <StatusBadge
-          status={`Changed: ${candidateChangeStats.changed}`}
-          variant={candidateChangeStats.changed > 0 ? 'warning' : 'neutral'}
+          status={`Changed: ${candidateChangeStats.changed ?? 0}`}
+          variant={(candidateChangeStats.changed ?? 0) > 0 ? 'warning' : 'neutral'}
           size='sm'
         />
         <StatusBadge

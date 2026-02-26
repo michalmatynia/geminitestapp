@@ -9,10 +9,18 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
 const isFileLike = (entry: FormDataEntryValue): entry is File => {
-  return typeof entry === 'object' && entry !== null && 'arrayBuffer' in entry && 'size' in entry;
+  return (
+    typeof entry === 'object' &&
+    entry !== null &&
+    'arrayBuffer' in entry &&
+    'size' in entry
+  );
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   let formData: FormData;
   try {
     formData = await req.formData();
@@ -57,8 +65,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
         folder: targetFolder,
         kind: inferredKind,
       };
-    })
+    }),
   );
 
-  return NextResponse.json(uploads.length === 1 ? uploads[0] : uploads, { status: 201 });
+  return NextResponse.json(uploads.length === 1 ? uploads[0] : uploads, {
+    status: 201,
+  });
 }

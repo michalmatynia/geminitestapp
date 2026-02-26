@@ -1721,8 +1721,11 @@ export type TransactionalProductRepository = {
   countProducts(filters: ProductFilters): Promise<number>;
   getProductById(id: string): Promise<ProductWithImages | null>;
   getProductBySku(sku: string): Promise<ProductRecord | null>;
+  getProductsBySkus(skus: string[]): Promise<ProductRecord[]>;
   findProductByBaseId(baseProductId: string): Promise<ProductRecord | null>;
+  findProductsByBaseIds(baseIds: string[]): Promise<ProductRecord[]>;
   createProduct(data: ProductCreateInputDto): Promise<ProductRecord>;
+  bulkCreateProducts(data: ProductCreateInputDto[]): Promise<number>;
   updateProduct(
     id: string,
     data: ProductUpdateInputDto

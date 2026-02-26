@@ -343,6 +343,62 @@ export const listBaseImportRuns = async (
     .map((record: BaseImportRunRecord) => normalizeRunRecord(record));
 };
 
+export const putBaseImportRunItems = async (
+  items: BaseImportItemRecord[]
+): Promise<number> => {
+  if (items.length === 0) return 0;
+  const provider = await resolveProvider();
+  const now = nowIso();
+
+  const normalizedItems = items.map((item) => ({
+    ...item,
+    errorClass: item.errorClass ?? null,
+    retryable: item.retryable ?? null,
+    nextRetryAt: item.nextRetryAt ?? null,
+    lastErrorAt: item.lastErrorAt ?? null,
+    parameterImportSummary: normalizeParameterImportSummary(
+      item.parameterImportSummary
+    ),
+    updatedAt: now,
+  }));
+
+  if (provider === 'mongodb') {
+    const mongo = await getMongoDb();
+    const bulkOps = normalizedItems.map((item) => ({
+      updateOne: {
+        filter: { key: itemKey(item.runId, item.itemId) },
+        update: {
+          $set: {
+            key: itemKey(item.runId, item.itemId),
+            value: JSON.stringify(item),
+            updatedAt: new Date(now),
+          },
+        },
+        upsert: true,
+      },
+    }));
+    const result = await mongo.collection<SettingDoc>('settings').bulkWrite(bulkOps as any);
+    return (result.modifiedCount || 0) + (result.upsertedCount || 0);
+  }
+
+  await prisma.$transaction(
+    normalizedItems.map((item) =>
+      prisma.setting.upsert({
+        where: { key: itemKey(item.runId, item.itemId) },
+        create: {
+          key: itemKey(item.runId, item.itemId),
+          value: JSON.stringify(item),
+        },
+        update: {
+          value: JSON.stringify(item),
+        },
+      })
+    )
+  );
+
+  return items.length;
+};
+
 export const putBaseImportRunItem = async (
   item: BaseImportItemRecord
 ): Promise<BaseImportItemRecord> => {

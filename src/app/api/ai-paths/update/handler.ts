@@ -1,5 +1,3 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
@@ -15,11 +13,13 @@ import { productUpdateSchema } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import { NoteUpdateInput } from '@/shared/contracts/notes';
-import type {
-  ProductParameterValue,
-} from '@/shared/contracts/products';
+import type { ProductParameterValue } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError, notFoundError, validationError } from '@/shared/errors/app-error';
+import {
+  badRequestError,
+  notFoundError,
+  validationError,
+} from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { removeUndefined } from '@/shared/utils';
 
@@ -52,14 +52,17 @@ const mergeAppendValue = (current: unknown, next: unknown): unknown => {
     typeof next === 'object' &&
     !Array.isArray(next)
   ) {
-    return { ...(current as Record<string, unknown>), ...(next as Record<string, unknown>) };
+    return {
+      ...(current as Record<string, unknown>),
+      ...(next as Record<string, unknown>),
+    };
   }
   return next;
 };
 
 const applyAppendMode = (
   updates: Record<string, unknown>,
-  current: Record<string, unknown>
+  current: Record<string, unknown>,
 ): Record<string, unknown> => {
   const next: Record<string, unknown> = {};
   Object.entries(updates).forEach(([key, value]: [string, unknown]) => {
@@ -76,30 +79,27 @@ const toTrimmedString = (value: unknown): string => {
 const LEGACY_SIMPLE_PARAMETER_PREFIX = 'sp:';
 
 const normalizeLegacySimpleParameterUpdates = (
-  value: unknown
+  value: unknown,
 ): ProductParameterValue[] => {
   if (!Array.isArray(value)) return [];
   const seen = new Set<string>();
-  return value.reduce(
-    (acc: ProductParameterValue[], entry: unknown) => {
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-        return acc;
-      }
-      const record = entry as Record<string, unknown>;
-      const parameterId =
-        toTrimmedString(record['parameterId']) || toTrimmedString(record['id']);
-      if (!parameterId || seen.has(parameterId)) return acc;
-      const inferredValue = toTrimmedString(record['value']);
-      if (!inferredValue) return acc;
-      seen.add(parameterId);
-      acc.push({
-        parameterId,
-        value: inferredValue,
-      });
+  return value.reduce((acc: ProductParameterValue[], entry: unknown) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
       return acc;
-    },
-    []
-  );
+    }
+    const record = entry as Record<string, unknown>;
+    const parameterId =
+      toTrimmedString(record['parameterId']) || toTrimmedString(record['id']);
+    if (!parameterId || seen.has(parameterId)) return acc;
+    const inferredValue = toTrimmedString(record['value']);
+    if (!inferredValue) return acc;
+    seen.add(parameterId);
+    acc.push({
+      parameterId,
+      value: inferredValue,
+    });
+    return acc;
+  }, []);
 };
 
 const decodeLegacySimpleParameterId = (parameterId: string): string => {
@@ -112,43 +112,46 @@ const decodeLegacySimpleParameterId = (parameterId: string): string => {
 };
 
 const normalizeExistingParameterValues = (
-  input: unknown
+  input: unknown,
 ): ProductParameterValue[] => {
   if (!Array.isArray(input)) return [];
-  return input.reduce(
-    (acc: ProductParameterValue[], entry: unknown) => {
-      if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
-        return acc;
-      }
-      const record = entry as Record<string, unknown>;
-      const parameterId = toTrimmedString(record['parameterId']);
-      if (!parameterId) return acc;
-      const value = typeof record['value'] === 'string' ? record['value'] : '';
-      const valuesByLanguage =
-        record['valuesByLanguage'] &&
-        typeof record['valuesByLanguage'] === 'object' &&
-        !Array.isArray(record['valuesByLanguage'])
-          ? (record['valuesByLanguage'] as Record<string, string>)
-          : undefined;
-      acc.push({
-        parameterId,
-        value,
-        ...(valuesByLanguage ? { valuesByLanguage } : {}),
-      });
+  return input.reduce((acc: ProductParameterValue[], entry: unknown) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
       return acc;
-    },
-    []
-  );
+    }
+    const record = entry as Record<string, unknown>;
+    const parameterId = toTrimmedString(record['parameterId']);
+    if (!parameterId) return acc;
+    const value = typeof record['value'] === 'string' ? record['value'] : '';
+    const valuesByLanguage =
+      record['valuesByLanguage'] &&
+      typeof record['valuesByLanguage'] === 'object' &&
+      !Array.isArray(record['valuesByLanguage'])
+        ? (record['valuesByLanguage'] as Record<string, string>)
+        : undefined;
+    acc.push({
+      parameterId,
+      value,
+      ...(valuesByLanguage ? { valuesByLanguage } : {}),
+    });
+    return acc;
+  }, []);
 };
 
 const mergeLegacySimpleParameterInferenceWithExisting = (args: {
   existingParameters: ProductParameterValue[];
   inferredSimpleParameters: ProductParameterValue[];
 }): ProductParameterValue[] => {
-  if (!Array.isArray(args.existingParameters) || args.existingParameters.length === 0) {
+  if (
+    !Array.isArray(args.existingParameters) ||
+    args.existingParameters.length === 0
+  ) {
     return [];
   }
-  if (!Array.isArray(args.inferredSimpleParameters) || args.inferredSimpleParameters.length === 0) {
+  if (
+    !Array.isArray(args.inferredSimpleParameters) ||
+    args.inferredSimpleParameters.length === 0
+  ) {
     return args.existingParameters;
   }
 
@@ -177,7 +180,10 @@ const mergeLegacySimpleParameterInferenceWithExisting = (args: {
   });
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
     await enforceAiPathsActionRateLimit(access, 'entity-update');
@@ -216,31 +222,42 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     const productProvider = await getProductDataProvider();
     if (appProvider === 'prisma' && productProvider === 'mongodb') {
       throw badRequestError(
-        'Product updates are blocked: product_db_provider is MongoDB while app_db_provider is Prisma.'
+        'Product updates are blocked: product_db_provider is MongoDB while app_db_provider is Prisma.',
       );
     }
     const productRepository = await getProductRepository();
     const existing =
-      mode === 'append' ? await productRepository.getProductById(entityId as string) : null;
+      mode === 'append'
+        ? await productRepository.getProductById(entityId as string)
+        : null;
     if (mode === 'append' && !existing) {
       throw notFoundError('Product not found', { productId: entityId });
     }
     const preparedRaw =
       mode === 'append' && existing
-        ? applyAppendMode(normalizedUpdates, existing as unknown as Record<string, unknown>)
+        ? applyAppendMode(
+          normalizedUpdates,
+            existing as unknown as Record<string, unknown>,
+        )
         : normalizedUpdates;
     const prepared = { ...preparedRaw } as Record<string, unknown>;
-    if (prepared['parameters'] === undefined && prepared['simpleParameters'] !== undefined) {
+    if (
+      prepared['parameters'] === undefined &&
+      prepared['simpleParameters'] !== undefined
+    ) {
       const existingProduct =
-        existing ?? (await productRepository.getProductById(entityId as string));
+        existing ??
+        (await productRepository.getProductById(entityId as string));
       if (!existingProduct) {
         throw notFoundError('Product not found', { productId: entityId });
       }
       const inferredSimpleParameters = normalizeLegacySimpleParameterUpdates(
-        prepared['simpleParameters']
+        prepared['simpleParameters'],
       );
       prepared['parameters'] = mergeLegacySimpleParameterInferenceWithExisting({
-        existingParameters: normalizeExistingParameterValues(existingProduct.parameters),
+        existingParameters: normalizeExistingParameterValues(
+          existingProduct.parameters,
+        ),
         inferredSimpleParameters,
       });
     }
@@ -256,7 +273,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
     const updated = await productRepository.updateProduct(
       entityId as string,
-      updateData
+      updateData,
     );
     if (!updated) {
       throw notFoundError('Product not found', { productId: entityId });
@@ -278,7 +295,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     }
     const prepared =
       mode === 'append' && existing
-        ? applyAppendMode(normalizedUpdates, existing as unknown as Record<string, unknown>)
+        ? applyAppendMode(
+          normalizedUpdates,
+            existing as unknown as Record<string, unknown>,
+        )
         : normalizedUpdates;
     const validated = noteUpdateSchema.safeParse(prepared);
     if (!validated.success) {
@@ -290,7 +310,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     if (Object.keys(updateData).length === 0) {
       throw badRequestError('No valid note fields to update');
     }
-    const updated = await noteService.update(entityId as string, updateData as NoteUpdateInput);
+    const updated = await noteService.update(
+      entityId as string,
+      updateData as NoteUpdateInput,
+    );
     if (!updated) {
       throw notFoundError('Note not found', { noteId: entityId });
     }

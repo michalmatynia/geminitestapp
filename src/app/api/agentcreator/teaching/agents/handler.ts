@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { listTeachingAgents, upsertTeachingAgent } from '@/features/ai/agentcreator/teaching/server/repository';
+import {
+  listTeachingAgents,
+  upsertTeachingAgent,
+} from '@/features/ai/agentcreator/teaching/server/repository';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -17,15 +20,27 @@ const createAgentSchema = z.object({
   maxTokens: z.number().int().min(1).max(8000).optional().default(800),
   retrievalTopK: z.number().int().min(1).max(50).optional().default(6),
   retrievalMinScore: z.number().min(-1).max(1).optional().default(0.15),
-  maxDocsPerCollection: z.number().int().min(10).max(2000).optional().default(400),
+  maxDocsPerCollection: z
+    .number()
+    .int()
+    .min(10)
+    .max(2000)
+    .optional()
+    .default(400),
 });
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const agents = await listTeachingAgents();
   return NextResponse.json({ agents });
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const parsed = await parseJsonBody(req, createAgentSchema, {
     logPrefix: 'agentcreator.teaching.agents.POST',
   });

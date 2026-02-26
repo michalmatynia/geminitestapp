@@ -9,9 +9,7 @@ export default function FrontendLayout({
 }): JSX.Element {
   return (
     <div className='min-h-screen bg-background'>
-      <QueryErrorBoundary>
-        {children}
-      </QueryErrorBoundary>
+      <QueryErrorBoundary>{children}</QueryErrorBoundary>
     </div>
   );
 }

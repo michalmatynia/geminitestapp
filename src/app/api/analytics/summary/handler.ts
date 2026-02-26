@@ -21,7 +21,10 @@ const getRangeWindow = (range: AnalyticsRange): { from: Date; to: Date } => {
   return { from, to };
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const session = await auth();
   if (!session?.user) throw authError('Unauthorized.');
 
@@ -34,8 +37,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const range = rangeRaw as AnalyticsRange;
 
   const scopeRaw = searchParams.get('scope') ?? 'all';
-  const scope =
-    scopeRaw === 'all' ? undefined : (scopeRaw as AnalyticsScope);
+  const scope = scopeRaw === 'all' ? undefined : (scopeRaw as AnalyticsScope);
   if (scopeRaw !== 'all' && scope !== 'public' && scope !== 'admin') {
     throw badRequestError('Invalid scope');
   }

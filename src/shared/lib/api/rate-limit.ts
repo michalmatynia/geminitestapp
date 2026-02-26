@@ -25,6 +25,25 @@ type RateLimitResult = {
   totalHits: number;
 };
 
+const RATE_LIMIT_LUA_SCRIPT = `
+  local key = KEYS[1]
+  local now = tonumber(ARGV[1])
+  local window = tonumber(ARGV[2])
+  local max = tonumber(ARGV[3])
+  local requestId = ARGV[4]
+  
+  redis.call('ZREMRANGEBYSCORE', key, 0, now - window)
+  local count = redis.call('ZCARD', key)
+  
+  if count < max then
+    redis.call('ZADD', key, now, requestId)
+    redis.call('PEXPIRE', key, window)
+    return {1, max - count - 1}
+  else
+    return {0, 0}
+  end
+`;
+
 class RateLimiter {
   private store: Map<string, RateLimitEntry> = new Map<string, RateLimitEntry>();
   private config: Required<RateLimitConfig>;
@@ -43,26 +62,26 @@ class RateLimiter {
     if (redis) {
       try {
         const now = Date.now();
-        const windowStart = now - this.config.windowMs;
-        
-        // Multi-transaction for atomicity
-        const multi = redis.multi();
-        multi.zremrangebyscore(key, 0, windowStart);
-        multi.zcard(key);
-        multi.zadd(key, now, `${now}-${Math.random()}`);
-        multi.pexpire(key, this.config.windowMs);
-        
-        const results = await multi.exec();
-        if (!results) throw new Error('Multi exec failed');
-        
-        const count = (results[1]?.[1] as number) ?? 0;
-        const allowed = count < this.config.maxRequests;
-        
+        const requestId = `${now}-${Math.random()}`;
+
+        // Use Lua script for atomic execution
+        const results = (await redis.eval(
+          RATE_LIMIT_LUA_SCRIPT,
+          1,
+          key,
+          now.toString(),
+          this.config.windowMs.toString(),
+          this.config.maxRequests.toString(),
+          requestId
+        )) as [number, number];
+
+        const [allowed, remaining] = results;
+
         return {
-          allowed,
-          remaining: Math.max(0, this.config.maxRequests - count - (allowed ? 1 : 0)),
+          allowed: allowed === 1,
+          remaining: remaining ?? 0,
           resetTime: now + this.config.windowMs,
-          totalHits: count + (allowed ? 1 : 0),
+          totalHits: this.config.maxRequests - (remaining ?? 0),
         };
       } catch (error) {
         logger.warn('[rate-limit] Redis failure, falling back to memory', { error });
@@ -170,4 +189,3 @@ if (typeof setInterval !== 'undefined') {
     Object.values(rateLimiters).forEach((limiter: RateLimiter): void => limiter.cleanup());
   }, 5 * 60 * 1000);
 }
-

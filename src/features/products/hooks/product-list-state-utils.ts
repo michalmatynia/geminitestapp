@@ -83,26 +83,17 @@ export const resolveProductCategoryId = (product: ProductWithImages): string => 
   const direct = toTrimmedString(product.categoryId);
   if (direct) return direct;
 
-  const relations = (product as ProductWithImages & { categories?: unknown }).categories;
-  if (Array.isArray(relations)) {
-    for (const relation of relations) {
-      if (!relation || typeof relation !== 'object') continue;
-      const record = relation as Record<string, unknown>;
-      const relationCategoryId =
-        toTrimmedString(record['categoryId']) ||
-        toTrimmedString(record['category_id']) ||
-        toTrimmedString(record['id']) ||
-        toTrimmedString(record['value']);
-      if (relationCategoryId) return relationCategoryId;
-    }
-  } else if (relations && typeof relations === 'object') {
-    const record = relations as Record<string, unknown>;
-    const relationCategoryId =
-      toTrimmedString(record['categoryId']) ||
-      toTrimmedString(record['category_id']) ||
-      toTrimmedString(record['id']) ||
-      toTrimmedString(record['value']);
-    if (relationCategoryId) return relationCategoryId;
+  const categories = (product as any).categories;
+  if (!categories) return '';
+
+  if (Array.isArray(categories)) {
+    const first = categories[0];
+    if (!first) return '';
+    return toTrimmedString(first.categoryId || first.category_id || first.id || first.value);
+  }
+  
+  if (typeof categories === 'object') {
+    return toTrimmedString(categories.categoryId || categories.category_id || categories.id || categories.value);
   }
 
   return '';
@@ -112,13 +103,11 @@ export const resolveProductCatalogId = (product: ProductWithImages): string => {
   const direct = toTrimmedString(product.catalogId);
   if (direct) return direct;
 
-  const firstCatalog = Array.isArray(product.catalogs) ? product.catalogs[0] : null;
-  if (!firstCatalog || typeof firstCatalog !== 'object') return '';
+  const catalogs = product.catalogs;
+  if (!Array.isArray(catalogs)) return '';
+  
+  const first = catalogs[0] as any;
+  if (!first) return '';
 
-  const byField = toTrimmedString((firstCatalog as { catalogId?: unknown }).catalogId);
-  if (byField) return byField;
-
-  const catalogRecord = (firstCatalog as { catalog?: unknown }).catalog;
-  if (!catalogRecord || typeof catalogRecord !== 'object') return '';
-  return toTrimmedString((catalogRecord as { id?: unknown }).id);
+  return toTrimmedString(first.catalogId || first.catalog?.id || first.id);
 };

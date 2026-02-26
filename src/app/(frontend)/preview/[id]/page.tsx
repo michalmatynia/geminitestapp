@@ -16,7 +16,9 @@ interface PreviewPageProps {
   params: Promise<{ id: string }>;
 }
 
-export async function generateMetadata({ params }: PreviewPageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PreviewPageProps): Promise<Metadata> {
   const { id } = await params;
   return {
     title: `Preview ${id}`,
@@ -24,7 +26,9 @@ export async function generateMetadata({ params }: PreviewPageProps): Promise<Me
   };
 }
 
-export default async function CmsPreviewPage({ params }: PreviewPageProps): Promise<JSX.Element> {
+export default async function CmsPreviewPage({
+  params,
+}: PreviewPageProps): Promise<JSX.Element> {
   const session = await auth();
   if (!isAdminSession(session)) {
     notFound();
@@ -56,7 +60,11 @@ export default async function CmsPreviewPage({ params }: PreviewPageProps): Prom
 
   return (
     <div className='min-h-screen bg-gray-950 text-white'>
-      {previewData.theme ? <ThemeProvider theme={previewData.theme}>{content}</ThemeProvider> : content}
+      {previewData.theme ? (
+        <ThemeProvider theme={previewData.theme}>{content}</ThemeProvider>
+      ) : (
+        content
+      )}
     </div>
   );
 }

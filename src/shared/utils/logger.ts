@@ -27,11 +27,15 @@ const formatMessage = (level: LogLevel, message: string, _context?: Record<strin
 
 export const logger = {
   info: (message: string, context?: Record<string, unknown>): void => {
-    console.info(formatMessage('info', message, context), context || '');
+    if (handlers.length === 0) {
+      console.info(formatMessage('info', message, context), context || '');
+    }
     handlers.forEach((h) => h('info', message, undefined, context));
   },
   warn: (message: string, context?: Record<string, unknown>): void => {
-    console.warn(formatMessage('warn', message, context), context || '');
+    if (handlers.length === 0) {
+      console.warn(formatMessage('warn', message, context), context || '');
+    }
     handlers.forEach((h) => h('warn', message, undefined, context));
   },
   error: (message: string, error?: unknown, context?: Record<string, unknown>): void => {
@@ -39,12 +43,16 @@ export const logger = {
       ...(context || {}), 
       error: error instanceof Error ? { message: error.message, stack: error.stack } : error 
     };
-    console.error(formatMessage('error', message, combinedContext), combinedContext);
+    
+    if (handlers.length === 0) {
+      console.error(formatMessage('error', message, combinedContext), combinedContext);
+    }
     
     handlers.forEach((h) => h('error', message, error, context));
 
     // Integration with centralized observability (Client-side)
-    if (typeof window !== 'undefined') {
+    // Only call if no handlers are registered to prevent duplicate logging
+    if (typeof window !== 'undefined' && handlers.length === 0) {
       void (async (): Promise<void> => {
         try {
           const { logClientError } = await import('@/shared/utils/observability/client-error-logger');
@@ -57,7 +65,9 @@ export const logger = {
     }
   },
   log: (message: string, context?: Record<string, unknown>): void => {
-    console.log(formatMessage('log', message, context), context || '');
+    if (handlers.length === 0) {
+      console.log(formatMessage('log', message, context), context || '');
+    }
     handlers.forEach((h) => h('log', message, undefined, context));
   },
 };

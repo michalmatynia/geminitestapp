@@ -6,5 +6,5 @@ import { getAiPathRunStreamHandler } from './handler';
 
 export const GET = apiHandlerWithParams<{ runId: string }>(
   getAiPathRunStreamHandler,
-  { source: 'ai-paths.runs.stream' }
+  { source: 'ai-paths.runs.stream' },
 );

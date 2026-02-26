@@ -11,7 +11,10 @@ import {
   repairPathNodeIdentities,
   sanitizeEdges,
 } from '@/features/ai/ai-paths/lib';
-import { enforceAiPathsRunRateLimit, requireAiPathsRunAccess } from '@/features/ai/ai-paths/server';
+import {
+  enforceAiPathsRunRateLimit,
+  requireAiPathsRunAccess,
+} from '@/features/ai/ai-paths/server';
 import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
 import { startAiPathRunQueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
@@ -31,12 +34,20 @@ const enqueueSchema = z.object({
   entityType: z.string().trim().optional().nullable(),
   maxAttempts: z.number().int().min(1).max(50).optional(),
   backoffMs: z.number().int().min(0).max(60_000).optional(),
-  backoffMaxMs: z.number().int().min(0).max(10 * 60_000).optional(),
+  backoffMaxMs: z
+    .number()
+    .int()
+    .min(0)
+    .max(10 * 60_000)
+    .optional(),
   requestId: z.string().trim().min(1).max(200).optional(),
   meta: z.record(z.string(), z.any()).optional().nullable(),
 });
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const access = await requireAiPathsRunAccess();
   await enforceAiPathsRunRateLimit(access);
   const parsed = await parseJsonBody(req, enqueueSchema, {
@@ -51,9 +62,10 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     const metaRecord = normalizedMeta as Record<string, unknown>;
     const sourceValue = metaRecord['source'];
     if (sourceValue && typeof sourceValue === 'object') {
-      const triggerEventId = typeof metaRecord['triggerEventId'] === 'string'
-        ? metaRecord['triggerEventId']
-        : null;
+      const triggerEventId =
+        typeof metaRecord['triggerEventId'] === 'string'
+          ? metaRecord['triggerEventId']
+          : null;
       normalizedMeta = {
         ...metaRecord,
         sourceInfo: sourceValue,
@@ -67,7 +79,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const migratedGraph = migrateTriggerToFetcherGraph(
     normalizeNodes(nodes as AiNode[]),
-    edges as Edge[]
+    edges as Edge[],
   );
   const identityRepair = repairPathNodeIdentities(
     {
@@ -80,17 +92,22 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       edges: migratedGraph.edges,
       updatedAt: new Date().toISOString(),
     },
-    { palette }
+    { palette },
   );
-  const normalizedNodes = normalizeNodes(identityRepair.config.nodes);
-  const normalizedEdges = sanitizeEdges(normalizedNodes, identityRepair.config.edges);
+  const normalizedNodes = normalizeNodes(
+    identityRepair.config.nodes as AiNode[],
+  );
+  const normalizedEdges = sanitizeEdges(
+    normalizedNodes,
+    identityRepair.config.edges,
+  );
   const metaRecord =
     normalizedMeta && typeof normalizedMeta === 'object'
       ? (normalizedMeta as Record<string, unknown>)
       : {};
   const validationConfig = normalizeAiPathsValidationConfig(
     (metaRecord['aiPathsValidation'] as Record<string, unknown> | undefined) ??
-      undefined
+      undefined,
   );
   const nodeValidationEnabled = validationConfig.enabled !== false;
   const validationReport = evaluateAiPathsValidationPreflight({
@@ -103,7 +120,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     throw badRequestError(
       finding
         ? `Validation blocked run: ${finding.ruleTitle}.`
-        : `Validation blocked run: score ${validationReport.score} below threshold ${validationReport.blockThreshold}.`
+        : `Validation blocked run: score ${validationReport.score} below threshold ${validationReport.blockThreshold}.`,
     );
   }
   normalizedMeta = {
@@ -124,13 +141,17 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     ? compileGraph(normalizedNodes, normalizedEdges)
     : compileGraph(normalizedNodes, normalizedEdges, {
       scopeMode: 'reachable_from_roots',
-      ...(rest.triggerNodeId ? { scopeRootNodeIds: [rest.triggerNodeId] } : {}),
+      ...(rest.triggerNodeId
+        ? { scopeRootNodeIds: [rest.triggerNodeId] }
+        : {}),
     });
   if (nodeValidationEnabled && !compileReport.ok) {
-    const primaryError = compileReport.findings.find((finding) => finding.severity === 'error');
+    const primaryError = compileReport.findings.find(
+      (finding) => finding.severity === 'error',
+    );
     throw badRequestError(
       (primaryError ? `Graph compile failed: ${primaryError.message}` : null) ??
-        `Graph compile failed with ${compileReport.errors} blocking issue(s).`
+        `Graph compile failed with ${compileReport.errors} blocking issue(s).`,
     );
   }
   normalizedMeta = {
@@ -154,9 +175,13 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     triggerContext: rest.triggerContext ?? null,
     entityId: rest.entityId ?? null,
     entityType: rest.entityType ?? null,
-    ...(rest.maxAttempts !== undefined ? { maxAttempts: rest.maxAttempts } : {}),
+    ...(rest.maxAttempts !== undefined
+      ? { maxAttempts: rest.maxAttempts }
+      : {}),
     ...(rest.backoffMs !== undefined ? { backoffMs: rest.backoffMs } : {}),
-    ...(rest.backoffMaxMs !== undefined ? { backoffMaxMs: rest.backoffMaxMs } : {}),
+    ...(rest.backoffMaxMs !== undefined
+      ? { backoffMaxMs: rest.backoffMaxMs }
+      : {}),
     ...(rest.requestId ? { requestId: rest.requestId } : {}),
     meta: normalizedMeta,
   });

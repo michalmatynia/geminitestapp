@@ -309,52 +309,57 @@ export async function runPlanStepLoop(
         steps: planSteps,
         result: 'completed',
       });
-      await maybeUpdateCheckpointBrief(step.id);
+
       const completedCount = planSteps.filter(
         (item: PlanStep) => item.status === 'completed'
       ).length;
-      if (
-        completedCount >= summaryInterval &&
-        completedCount % summaryInterval === 0 &&
-        completedCount !== summaryCheckpoint
-      ) {
-        const summaryContext = await getBrowserContextSummary(run.id);
-        const summary = await summarizePlannerMemoryWithLLM({
-          prompt: run.prompt,
-          model: memorySummarizationModel,
-          memory: memoryContext,
-          steps: planSteps,
-          browserContext: summaryContext,
-          runId: run.id,
-        });
-        if (summary) {
-          await addAgentMemory({
-            runId: run.id,
-            scope: 'session',
-            content: summary,
-            metadata: { type: 'planner-summary', completedCount },
-          });
-          memoryContext = [...memoryContext, summary].slice(-10);
-          summaryCheckpoint = completedCount;
-          await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
-            type: 'planner-summary',
-            completedCount,
-            summary,
-          });
-          await persistCheckpoint({
-            runId: run.id,
-            steps: planSteps,
-            activeStepId: step.id,
-            lastError,
-            taskType,
-            approvalRequestedStepId,
-            approvalGrantedStepId,
-            summaryCheckpoint,
-            settings,
-            preferences,
-          });
+
+      void (async () => {
+        const tasks: Promise<any>[] = [];
+        
+        // Task 1: Checkpoint Brief
+        tasks.push(maybeUpdateCheckpointBrief(step.id));
+
+        // Task 2: Planner Summary (periodic)
+        if (
+          completedCount >= summaryInterval &&
+          completedCount % summaryInterval === 0 &&
+          completedCount !== summaryCheckpoint
+        ) {
+          tasks.push((async () => {
+            const summaryContext = await getBrowserContextSummary(run.id);
+            const summary = await summarizePlannerMemoryWithLLM({
+              prompt: run.prompt,
+              model: memorySummarizationModel,
+              memory: memoryContext,
+              steps: planSteps,
+              browserContext: summaryContext,
+              runId: run.id,
+            });
+            if (summary) {
+              await addAgentMemory({
+                runId: run.id,
+                scope: 'session',
+                content: summary,
+                metadata: { type: 'planner-summary', completedCount },
+              });
+              memoryContext = [...memoryContext, summary].slice(-10);
+              summaryCheckpoint = completedCount;
+              await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
+                type: 'planner-summary',
+                completedCount,
+                summary,
+              });
+            }
+          })());
         }
-      }
+
+        if (tasks.length > 0) {
+          await Promise.allSettled(tasks);
+        }
+      })();
+      
+      stepIndex += 1;
       continue;
     }
 
@@ -482,23 +487,61 @@ export async function runPlanStepLoop(
       steps: planSteps,
       result: toolResult.ok ? 'completed' : 'failed',
     });
-    await persistCheckpoint({
-      runId: run.id,
-      steps: planSteps,
-      activeStepId: toolResult.ok
-        ? (planSteps[stepIndex + 1]?.id ?? null)
-        : step.id,
-      lastError,
-      taskType,
-      approvalRequestedStepId,
-      approvalGrantedStepId,
-      summaryCheckpoint,
-      settings,
-      preferences,
-    });
-    await maybeUpdateCheckpointBrief(
-      toolResult.ok ? (planSteps[stepIndex + 1]?.id ?? null) : step.id
-    );
+    const completedCount = planSteps.filter(
+      (item: PlanStep) => item.status === 'completed'
+    ).length;
+    
+    // Parallelize non-critical background tasks
+    const activeStepIdForBrief = toolResult.ok
+      ? (planSteps[stepIndex + 1]?.id ?? null)
+      : step.id;
+
+    void (async () => {
+      const tasks: Promise<any>[] = [];
+      
+      // Task 1: Checkpoint Brief (only on change)
+      if (activeStepIdForBrief && (checkpointBriefStepId !== activeStepIdForBrief || checkpointBriefError !== (lastError ?? null))) {
+        tasks.push(maybeUpdateCheckpointBrief(activeStepIdForBrief));
+      }
+
+      // Task 2: Planner Summary (periodic)
+      if (
+        completedCount >= summaryInterval &&
+        completedCount % summaryInterval === 0 &&
+        completedCount !== summaryCheckpoint
+      ) {
+        tasks.push((async () => {
+          const summaryContext = await getBrowserContextSummary(run.id);
+          const summary = await summarizePlannerMemoryWithLLM({
+            prompt: run.prompt,
+            model: memorySummarizationModel,
+            memory: memoryContext,
+            steps: planSteps,
+            browserContext: summaryContext,
+            runId: run.id,
+          });
+          if (summary) {
+            await addAgentMemory({
+              runId: run.id,
+              scope: 'session',
+              content: summary,
+              metadata: { type: 'planner-summary', completedCount },
+            });
+            memoryContext = [...memoryContext, summary].slice(-10);
+            summaryCheckpoint = completedCount;
+            await logAgentAudit(run.id, 'info', 'Planner summary saved.', {
+              type: 'planner-summary',
+              completedCount,
+              summary,
+            });
+          }
+        })());
+      }
+
+      if (tasks.length > 0) {
+        await Promise.allSettled(tasks);
+      }
+    })();
 
     loopGuardCooldown = Math.max(0, loopGuardCooldown - 1);
     recentStepTrace.push({

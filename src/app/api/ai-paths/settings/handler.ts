@@ -11,9 +11,13 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
 const settingPayloadSchema = z.object({
-  key: z.string().trim().min(1).refine((value) => value.startsWith('ai_paths_'), {
-    message: 'AI Paths setting keys must start with "ai_paths_".',
-  }),
+  key: z
+    .string()
+    .trim()
+    .min(1)
+    .refine((value) => value.startsWith('ai_paths_'), {
+      message: 'AI Paths setting keys must start with "ai_paths_".',
+    }),
   value: z.string(),
 });
 
@@ -27,11 +31,15 @@ const deletePayloadSchema = z
     keys: z.array(z.string().trim().min(1)).min(1).optional(),
   })
   .refine(
-    (value) => Boolean(value.key) || Boolean(value.keys && value.keys.length > 0),
-    { message: 'Provide "key" or non-empty "keys".' }
+    (value) =>
+      Boolean(value.key) || Boolean(value.keys && value.keys.length > 0),
+    { message: 'Provide "key" or non-empty "keys".' },
   );
 
-export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const settings = await listAiPathsSettings();
   return NextResponse.json(settings, {
     headers: {
@@ -40,7 +48,10 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
   });
 }
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
   if (rawBody) {
@@ -59,16 +70,16 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   const parsedSingle = settingPayloadSchema.safeParse(body);
   if (parsedSingle.success) {
-    await upsertAiPathsSetting(
-      parsedSingle.data.key,
-      parsedSingle.data.value
-    );
+    await upsertAiPathsSetting(parsedSingle.data.key, parsedSingle.data.value);
     return NextResponse.json({ success: true });
   }
   throw badRequestError('Invalid AI Paths settings payload.');
 }
 
-export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function DELETE_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const rawBody = await req.text();
   let body: unknown = {};
   if (rawBody) {

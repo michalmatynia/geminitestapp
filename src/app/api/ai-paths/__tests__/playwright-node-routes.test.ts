@@ -44,19 +44,24 @@ const createPostRequest = (): Request =>
   });
 
 const createGetRequest = (runId: string): Request =>
-  new Request(`http://localhost/api/ai-paths/playwright/${encodeURIComponent(runId)}`, {
-    method: 'GET',
-  });
+  new Request(
+    `http://localhost/api/ai-paths/playwright/${encodeURIComponent(runId)}`,
+    {
+      method: 'GET',
+    },
+  );
 
 const createArtifactGetRequest = (runId: string, file: string): Request =>
   new Request(
     `http://localhost/api/ai-paths/playwright/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(file)}`,
     {
       method: 'GET',
-    }
+    },
   );
 
-const buildRun = (patch: Record<string, unknown> = {}): Record<string, unknown> => ({
+const buildRun = (
+  patch: Record<string, unknown> = {},
+): Record<string, unknown> => ({
   runId: 'run-1',
   ownerUserId: 'user-1',
   status: 'queued',
@@ -105,17 +110,19 @@ describe('AI Paths Playwright routes', () => {
         capture: { screenshot: true, html: false, video: false, trace: false },
       },
     });
-    enqueuePlaywrightNodeRunMock.mockResolvedValueOnce(buildRun({ runId: 'run-123' }));
+    enqueuePlaywrightNodeRunMock.mockResolvedValueOnce(
+      buildRun({ runId: 'run-123' }),
+    );
 
     const response = await POST_handler(
       createPostRequest() as Parameters<typeof POST_handler>[0],
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof POST_handler>[1],
     );
     const body = (await response.json()) as Record<string, unknown>;
 
     expect(enforceAiPathsActionRateLimitMock).toHaveBeenCalledWith(
       expect.objectContaining({ userId: 'user-1' }),
-      'playwright-enqueue'
+      'playwright-enqueue',
     );
     expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith({
       request: expect.objectContaining({
@@ -149,38 +156,38 @@ describe('AI Paths Playwright routes', () => {
 
     await POST_handler(
       createPostRequest() as Parameters<typeof POST_handler>[0],
-      {} as Parameters<typeof POST_handler>[1]
+      {} as Parameters<typeof POST_handler>[1],
     );
 
     expect(enforceAiPathsActionRateLimitMock).not.toHaveBeenCalled();
     expect(enqueuePlaywrightNodeRunMock).toHaveBeenCalledWith(
       expect.objectContaining({
         ownerUserId: 'system',
-      })
+      }),
     );
   });
 
   it('returns run via GET and enforces poll rate limit for external requests', async () => {
     readPlaywrightNodeRunMock.mockResolvedValueOnce(
-      buildRun({ runId: 'run-900', status: 'completed' })
+      buildRun({ runId: 'run-900', status: 'completed' }),
     );
 
     const response = await GET_handler(
       createGetRequest('run-900') as Parameters<typeof GET_handler>[0],
       {} as Parameters<typeof GET_handler>[1],
-      { runId: 'run-900' }
+      { runId: 'run-900' },
     );
     const body = (await response.json()) as Record<string, unknown>;
 
     expect(enforceAiPathsActionRateLimitMock).toHaveBeenCalledWith(
       expect.objectContaining({ userId: 'user-1' }),
-      'playwright-poll'
+      'playwright-poll',
     );
     expect(body['run']).toEqual(
       expect.objectContaining({
         runId: 'run-900',
         status: 'completed',
-      })
+      }),
     );
   });
 
@@ -191,28 +198,30 @@ describe('AI Paths Playwright routes', () => {
       GET_handler(
         createGetRequest('missing-run') as Parameters<typeof GET_handler>[0],
         {} as Parameters<typeof GET_handler>[1],
-        { runId: 'missing-run' }
-      )
+        { runId: 'missing-run' },
+      ),
     ).rejects.toThrow('Playwright run not found.');
   });
 
   it('blocks GET polling for non-owner non-elevated user', async () => {
     readPlaywrightNodeRunMock.mockResolvedValueOnce(
-      buildRun({ runId: 'run-unauthorized', ownerUserId: 'different-user' })
+      buildRun({ runId: 'run-unauthorized', ownerUserId: 'different-user' }),
     );
 
     await expect(
       GET_handler(
-        createGetRequest('run-unauthorized') as Parameters<typeof GET_handler>[0],
+        createGetRequest('run-unauthorized') as Parameters<
+          typeof GET_handler
+        >[0],
         {} as Parameters<typeof GET_handler>[1],
-        { runId: 'run-unauthorized' }
-      )
+        { runId: 'run-unauthorized' },
+      ),
     ).rejects.toThrow('Playwright run access denied.');
   });
 
   it('returns artifact bytes via artifact GET route', async () => {
     readPlaywrightNodeRunMock.mockResolvedValueOnce(
-      buildRun({ runId: 'run-901', ownerUserId: 'user-1' })
+      buildRun({ runId: 'run-901', ownerUserId: 'user-1' }),
     );
     readPlaywrightNodeArtifactMock.mockResolvedValueOnce({
       artifact: {
@@ -229,12 +238,12 @@ describe('AI Paths Playwright routes', () => {
         typeof GET_playwrightArtifactHandler
       >[0],
       {} as Parameters<typeof GET_playwrightArtifactHandler>[1],
-      { runId: 'run-901', file: 'final.png' }
+      { runId: 'run-901', file: 'final.png' },
     );
 
     expect(enforceAiPathsActionRateLimitMock).toHaveBeenCalledWith(
       expect.objectContaining({ userId: 'user-1' }),
-      'playwright-artifact'
+      'playwright-artifact',
     );
     expect(readPlaywrightNodeArtifactMock).toHaveBeenCalledWith({
       runId: 'run-901',
@@ -248,7 +257,7 @@ describe('AI Paths Playwright routes', () => {
 
   it('throws not found when artifact GET target does not exist', async () => {
     readPlaywrightNodeRunMock.mockResolvedValueOnce(
-      buildRun({ runId: 'run-902', ownerUserId: 'user-1' })
+      buildRun({ runId: 'run-902', ownerUserId: 'user-1' }),
     );
     readPlaywrightNodeArtifactMock.mockResolvedValueOnce(null);
 
@@ -258,14 +267,14 @@ describe('AI Paths Playwright routes', () => {
           typeof GET_playwrightArtifactHandler
         >[0],
         {} as Parameters<typeof GET_playwrightArtifactHandler>[1],
-        { runId: 'run-902', file: 'missing.png' }
-      )
+        { runId: 'run-902', file: 'missing.png' },
+      ),
     ).rejects.toThrow('Playwright artifact not found.');
   });
 
   it('blocks artifact GET for non-owner non-elevated user', async () => {
     readPlaywrightNodeRunMock.mockResolvedValueOnce(
-      buildRun({ runId: 'run-903', ownerUserId: 'different-user' })
+      buildRun({ runId: 'run-903', ownerUserId: 'different-user' }),
     );
 
     await expect(
@@ -274,8 +283,8 @@ describe('AI Paths Playwright routes', () => {
           typeof GET_playwrightArtifactHandler
         >[0],
         {} as Parameters<typeof GET_playwrightArtifactHandler>[1],
-        { runId: 'run-903', file: 'final.png' }
-      )
+        { runId: 'run-903', file: 'final.png' },
+      ),
     ).rejects.toThrow('Playwright run access denied.');
     expect(readPlaywrightNodeArtifactMock).not.toHaveBeenCalled();
   });

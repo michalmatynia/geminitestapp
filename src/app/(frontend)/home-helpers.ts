@@ -16,14 +16,17 @@ type SettingDocument = {
 
 const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
-  const user = session.user as Session['user'] & { isElevated?: boolean; role?: string | null };
+  const user = session.user as Session['user'] & {
+    isElevated?: boolean;
+    role?: string | null;
+  };
   if (user.isElevated) return true;
   const role = user.role ?? '';
   return ['admin', 'super_admin', 'superuser'].includes(role);
 };
 
 export const canPreviewDrafts = async (
-  session: Session | null
+  session: Session | null,
 ): Promise<boolean> => {
   if (!isAdminSession(session)) return false;
   const userId = session?.user?.id;

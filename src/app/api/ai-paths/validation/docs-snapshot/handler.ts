@@ -11,9 +11,12 @@ export async function GET_handler(
 ): Promise<Response> {
   await requireAiPathsAccess();
   const snapshot = await buildAiPathsValidationDocsSnapshot();
-  const inferredCandidates = compileAiPathsValidationRulesFromDocsSnapshot(snapshot, {
-    status: 'candidate',
-  });
+  const inferredCandidates = compileAiPathsValidationRulesFromDocsSnapshot(
+    snapshot,
+    {
+      status: 'candidate',
+    },
+  );
   return NextResponse.json({
     snapshot,
     inferredCandidates,

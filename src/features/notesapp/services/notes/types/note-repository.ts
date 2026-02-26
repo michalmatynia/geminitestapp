@@ -26,6 +26,7 @@ export interface NoteRepository {
   getById(id: string): Promise<NoteWithRelations | null>;
   create(data: NoteCreateInput): Promise<NoteWithRelations>;
   update(id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null>;
+  syncRelatedNotesBatch(noteId: string, addedIds: string[], removedIds: string[]): Promise<void>;
   delete(id: string): Promise<boolean>;
 
   // Tags

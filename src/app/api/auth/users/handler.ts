@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { auth } from '@/features/auth/server';
-import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
+import {
+  getAuthDataProvider,
+  requireAuthProvider,
+} from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import type { AuthUser } from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -21,7 +24,10 @@ type MongoUserDoc = {
   updatedAt?: Date | null;
 };
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const session = await auth();
   const hasAccess =
     session?.user?.isElevated ||
@@ -70,11 +76,14 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       status: 200,
       extra: { count: users.length },
     });
-    return NextResponse.json({ provider, users }, {
-      headers: {
-        'Cache-Control': 'no-store',
+    return NextResponse.json(
+      { provider, users },
+      {
+        headers: {
+          'Cache-Control': 'no-store',
+        },
       },
-    });
+    );
   }
 
   if (!process.env['MONGODB_URI']) {
@@ -93,9 +102,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     email: doc.email ?? null,
     name: doc.name ?? null,
     image: doc.image ?? null,
-    emailVerified: doc.emailVerified
-      ? doc.emailVerified.toISOString()
-      : null,
+    emailVerified: doc.emailVerified ? doc.emailVerified.toISOString() : null,
     provider: 'mongodb',
     createdAt: doc.createdAt?.toISOString() ?? new Date().toISOString(),
     updatedAt: doc.updatedAt?.toISOString() ?? new Date().toISOString(),
@@ -109,9 +116,12 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     status: 200,
     extra: { count: users.length },
   });
-  return NextResponse.json({ provider: 'mongodb', users }, {
-    headers: {
-      'Cache-Control': 'no-store',
+  return NextResponse.json(
+    { provider: 'mongodb', users },
+    {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
     },
-  });
+  );
 }

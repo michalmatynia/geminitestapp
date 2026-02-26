@@ -14,7 +14,7 @@ import { notFoundError } from '@/shared/errors/app-error';
 export async function GET_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { runId: string }
+  params: { runId: string },
 ): Promise<Response> {
   const access = await requireAiPathsRunAccess();
   const runId = params.runId;
@@ -26,10 +26,7 @@ export async function GET_handler(
   assertAiPathRunAccess(access, run);
   const nodes = await repo.listRunNodes(runId);
   const events = await repo.listRunEvents(runId);
-  const runMeta =
-    run.meta && typeof run.meta === 'object'
-      ? run.meta
-      : null;
+  const runMeta = run.meta && typeof run.meta === 'object' ? run.meta : null;
   const compile =
     runMeta?.['graphCompile'] && typeof runMeta['graphCompile'] === 'object'
       ? (runMeta['graphCompile'] as Record<string, unknown>)
@@ -40,7 +37,7 @@ export async function GET_handler(
 export async function DELETE_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { runId: string }
+  params: { runId: string },
 ): Promise<Response> {
   const access = await requireAiPathsAccess();
   await enforceAiPathsActionRateLimit(access, 'run-delete');

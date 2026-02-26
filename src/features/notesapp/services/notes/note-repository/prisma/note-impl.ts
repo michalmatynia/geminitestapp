@@ -291,6 +291,47 @@ export const update = async (
   }
 };
 
+export const syncRelatedNotesBatch = async (
+  noteId: string,
+  addedIds: string[],
+  removedIds: string[]
+): Promise<void> => {
+  if (addedIds.length === 0 && removedIds.length === 0) return;
+
+  await prisma.$transaction(async (tx) => {
+    // Bilateral additions
+    for (const relatedId of addedIds) {
+      if (relatedId === noteId) continue;
+      // Add relation from related to current (current to related is already handled by main update)
+      await tx.noteRelation.upsert({
+        where: {
+          sourceNoteId_targetNoteId: {
+            sourceNoteId: relatedId,
+            targetNoteId: noteId,
+          },
+        },
+        create: {
+          sourceNoteId: relatedId,
+          targetNoteId: noteId,
+          type: 'related',
+        },
+        update: {},
+      });
+    }
+
+    // Bilateral removals
+    for (const relatedId of removedIds) {
+      // Remove relation from related to current
+      await tx.noteRelation.deleteMany({
+        where: {
+          sourceNoteId: relatedId,
+          targetNoteId: noteId,
+        },
+      });
+    }
+  });
+};
+
 export const deleteNote = async (id: string): Promise<boolean> => {
   try {
     await prisma.note.delete({ where: { id } });

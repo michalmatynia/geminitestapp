@@ -7,35 +7,29 @@ import prisma from '@/shared/lib/db/prisma';
 
 import type { Notebook } from '@prisma/client';
 
+let cachedDefaultNotebook: NotebookRecord | null = null;
+
 export const getOrCreateDefaultNotebook = async (): Promise<NotebookRecord> => {
+  if (cachedDefaultNotebook) return cachedDefaultNotebook;
+
   const existing = await prisma.notebook.findFirst({
     orderBy: { createdAt: 'asc' },
   });
+  
   const notebook = existing
     ? existing
     : await prisma.notebook.create({
       data: { name: 'Default', color: '#3b82f6' },
     });
 
-  // Ensure orphans are assigned to the default notebook
-  await prisma.note.updateMany({
-    where: { notebookId: null },
-    data: { notebookId: notebook.id },
-  });
-  await prisma.tag.updateMany({
-    where: { notebookId: null },
-    data: { notebookId: notebook.id },
-  });
-  await prisma.category.updateMany({
-    where: { notebookId: null },
-    data: { notebookId: notebook.id },
-  });
-
-  return {
+  const result: NotebookRecord = {
     ...notebook,
     createdAt: notebook.createdAt.toISOString(),
     updatedAt: notebook.updatedAt.toISOString(),
   };
+
+  cachedDefaultNotebook = result;
+  return result;
 };
 
 export const getAllNotebooks = async (): Promise<NotebookRecord[]> => {

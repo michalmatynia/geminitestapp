@@ -16,7 +16,9 @@ import {
 } from './transient-recovery-settings-utils';
 
 export default function TransientRecoverySettingsPage(): React.JSX.Element {
-  const [constants, setConstants] = useState<TransientRecoveryConstants | null>(null);
+  const [constants, setConstants] = useState<TransientRecoveryConstants | null>(
+    null,
+  );
   const settingsQuery = useSettingsMap();
 
   useEffect(() => {
@@ -28,17 +30,25 @@ export default function TransientRecoverySettingsPage(): React.JSX.Element {
   }, []);
 
   if (settingsQuery.isLoading || !settingsQuery.data || !constants) {
-    return <div className='p-10 text-center text-gray-400'>Loading settings...</div>;
+    return (
+      <div className='p-10 text-center text-gray-400'>Loading settings...</div>
+    );
   }
 
   const stored = parseJsonSetting<TransientRecoverySettings | null>(
     settingsQuery.data.get(constants.TRANSIENT_RECOVERY_KEYS.settings),
-    null
+    null,
   );
-  const initialSettings: TransientRecoverySettings = buildInitialTransientRecoverySettings({
-    stored,
-    defaults: constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS,
-  });
+  const initialSettings: TransientRecoverySettings =
+    buildInitialTransientRecoverySettings({
+      stored,
+      defaults: constants.DEFAULT_TRANSIENT_RECOVERY_SETTINGS,
+    });
 
-  return <TransientRecoverySettingsForm initialSettings={initialSettings} recoveryKeys={constants.TRANSIENT_RECOVERY_KEYS} />;
+  return (
+    <TransientRecoverySettingsForm
+      initialSettings={initialSettings}
+      recoveryKeys={constants.TRANSIENT_RECOVERY_KEYS}
+    />
+  );
 }

@@ -2,7 +2,15 @@ import Link from 'next/link';
 import { useState, type ChangeEvent } from 'react';
 
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { Button, Input, ToggleRow, useToast, FormSection, FormField, PageLayout } from '@/shared/ui';
+import {
+  Button,
+  Input,
+  ToggleRow,
+  useToast,
+  FormSection,
+  FormField,
+  PageLayout,
+} from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 
 export type TransientRecoverySettings = {
@@ -35,12 +43,16 @@ export function TransientRecoverySettingsForm({
   recoveryKeys: { settings: string };
 }): React.JSX.Element {
   const { toast } = useToast();
-  const [settings, setSettings] = useState<TransientRecoverySettings>(initialSettings);
+  const [settings, setSettings] =
+    useState<TransientRecoverySettings>(initialSettings);
   const [dirty, setDirty] = useState(false);
   const settingsQuery = useSettingsMap();
   const updateSetting = useUpdateSetting();
 
-  const updateRetry = (key: keyof TransientRecoverySettings['retry'], value: number | boolean): void => {
+  const updateRetry = (
+    key: keyof TransientRecoverySettings['retry'],
+    value: number | boolean,
+  ): void => {
     setSettings((prev: TransientRecoverySettings) => ({
       ...prev,
       retry: {
@@ -53,7 +65,7 @@ export function TransientRecoverySettingsForm({
 
   const updateCircuit = (
     key: keyof TransientRecoverySettings['circuit'],
-    value: number | boolean
+    value: number | boolean,
   ): void => {
     setSettings((prev: TransientRecoverySettings) => ({
       ...prev,
@@ -87,9 +99,12 @@ export function TransientRecoverySettingsForm({
       setDirty(false);
       toast('Transient recovery settings saved.', { variant: 'success' });
     } catch (error) {
-      toast(error instanceof Error ? error.message : 'Failed to save settings.', {
-        variant: 'error',
-      });
+      toast(
+        error instanceof Error ? error.message : 'Failed to save settings.',
+        {
+          variant: 'error',
+        },
+      );
     }
   };
 
@@ -97,26 +112,32 @@ export function TransientRecoverySettingsForm({
     <PageLayout
       title='Transient Recovery'
       description='Configure retry and circuit-breaker policies for transient failures.'
-      eyebrow={(
-        <Link href='/admin/settings' className='text-blue-300 hover:text-blue-200'>
+      eyebrow={
+        <Link
+          href='/admin/settings'
+          className='text-blue-300 hover:text-blue-200'
+        >
           ← Back to settings
         </Link>
-      )}
+      }
     >
       <FormSection
         title='Global Controls'
         description='Manage high-level activation of recovery policies.'
-        actions={(
+        actions={
           <ToggleRow
             label={`Global ${settings.enabled ? 'Enabled' : 'Disabled'}`}
             checked={settings.enabled}
             onCheckedChange={(checked: boolean) => {
-              setSettings((prev: TransientRecoverySettings) => ({ ...prev, enabled: checked }));
+              setSettings((prev: TransientRecoverySettings) => ({
+                ...prev,
+                enabled: checked,
+              }));
               setDirty(true);
             }}
             className='bg-transparent border-none p-0 hover:bg-transparent'
           />
-        )}
+        }
         className='p-6'
       >
         <div className='grid gap-6 md:grid-cols-2'>
@@ -125,17 +146,22 @@ export function TransientRecoverySettingsForm({
             description='Applies to transient external calls and webhooks.'
             variant='subtle'
             className='p-4'
-            actions={(
+            actions={
               <ToggleRow
                 label='Retry enabled'
                 checked={settings.retry.enabled}
-                onCheckedChange={(checked: boolean) => updateRetry('enabled', checked)}
+                onCheckedChange={(checked: boolean) =>
+                  updateRetry('enabled', checked)
+                }
                 className='bg-transparent border-none p-0 hover:bg-transparent'
               />
-            )}
+            }
           >
             <div className='grid gap-4 mt-2'>
-              <FormField label='Max attempts' description='Maximum number of execution tries.'>
+              <FormField
+                label='Max attempts'
+                description='Maximum number of execution tries.'
+              >
                 <Input
                   type='number'
                   min={1}
@@ -143,7 +169,11 @@ export function TransientRecoverySettingsForm({
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateRetry(
                       'maxAttempts',
-                      toNumber(event.target.value, settings.retry.maxAttempts, 1)
+                      toNumber(
+                        event.target.value,
+                        settings.retry.maxAttempts,
+                        1,
+                      ),
                     )
                   }
                   disabled={settingsQuery.isPending}
@@ -158,7 +188,10 @@ export function TransientRecoverySettingsForm({
                     onChange={(event: ChangeEvent<HTMLInputElement>) =>
                       updateRetry(
                         'initialDelayMs',
-                        toNumber(event.target.value, settings.retry.initialDelayMs)
+                        toNumber(
+                          event.target.value,
+                          settings.retry.initialDelayMs,
+                        ),
                       )
                     }
                     disabled={settingsQuery.isPending}
@@ -172,14 +205,17 @@ export function TransientRecoverySettingsForm({
                     onChange={(event: ChangeEvent<HTMLInputElement>) =>
                       updateRetry(
                         'maxDelayMs',
-                        toNumber(event.target.value, settings.retry.maxDelayMs)
+                        toNumber(event.target.value, settings.retry.maxDelayMs),
                       )
                     }
                     disabled={settingsQuery.isPending}
                   />
                 </FormField>
               </div>
-              <FormField label='Timeout per attempt (ms)' description='Set to 0 to disable.'>
+              <FormField
+                label='Timeout per attempt (ms)'
+                description='Set to 0 to disable.'
+              >
                 <Input
                   type='number'
                   min={0}
@@ -187,7 +223,10 @@ export function TransientRecoverySettingsForm({
                   onChange={(event: ChangeEvent<HTMLInputElement>) =>
                     updateRetry(
                       'timeoutMs',
-                      toNumber(event.target.value, settings.retry.timeoutMs ?? 0)
+                      toNumber(
+                        event.target.value,
+                        settings.retry.timeoutMs ?? 0,
+                      ),
                     )
                   }
                   disabled={settingsQuery.isPending}
@@ -201,17 +240,22 @@ export function TransientRecoverySettingsForm({
             description='Prevents repeated calls to failing services.'
             variant='subtle'
             className='p-4'
-            actions={(
+            actions={
               <ToggleRow
                 label='Circuit breaker enabled'
                 checked={settings.circuit.enabled}
-                onCheckedChange={(checked: boolean) => updateCircuit('enabled', checked)}
+                onCheckedChange={(checked: boolean) =>
+                  updateCircuit('enabled', checked)
+                }
                 className='bg-transparent border-none p-0 hover:bg-transparent'
               />
-            )}
+            }
           >
             <div className='grid gap-4 mt-2'>
-              <FormField label='Failure threshold' description='Consecutive failures before opening.'>
+              <FormField
+                label='Failure threshold'
+                description='Consecutive failures before opening.'
+              >
                 <Input
                   type='number'
                   min={1}
@@ -222,14 +266,17 @@ export function TransientRecoverySettingsForm({
                       toNumber(
                         event.target.value,
                         settings.circuit.failureThreshold,
-                        1
-                      )
+                        1,
+                      ),
                     )
                   }
                   disabled={settingsQuery.isPending}
                 />
               </FormField>
-              <FormField label='Reset timeout (ms)' description='Wait time before attempting to close.'>
+              <FormField
+                label='Reset timeout (ms)'
+                description='Wait time before attempting to close.'
+              >
                 <Input
                   type='number'
                   min={0}
@@ -239,8 +286,8 @@ export function TransientRecoverySettingsForm({
                       'resetTimeoutMs',
                       toNumber(
                         event.target.value,
-                        settings.circuit.resetTimeoutMs
-                      )
+                        settings.circuit.resetTimeoutMs,
+                      ),
                     )
                   }
                   disabled={settingsQuery.isPending}

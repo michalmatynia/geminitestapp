@@ -3,18 +3,28 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { normalizeAuthEmail } from '@/features/auth/server';
-import { getAuthSecurityPolicy, validatePasswordStrength } from '@/features/auth/server';
+import {
+  getAuthSecurityPolicy,
+  validatePasswordStrength,
+} from '@/features/auth/server';
 import { getAuthUserPageSettings } from '@/features/auth/server';
-import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
+import {
+  getAuthDataProvider,
+  requireAuthProvider,
+} from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import { ActivityTypes, logActivity } from '@/features/observability/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { conflictError, internalError, validationError, forbiddenError } from '@/shared/errors/app-error';
+import {
+  conflictError,
+  internalError,
+  validationError,
+  forbiddenError,
+} from '@/shared/errors/app-error';
 import { badRequestError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { logger } from '@/shared/utils/logger';
-
 
 export const registerSchema = z.object({
   email: z.string().trim().email(),
@@ -33,14 +43,21 @@ type MongoUserDoc = {
   updatedAt: Date;
 };
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+): Promise<Response> {
   const data = ctx.body as z.infer<typeof registerSchema> | undefined;
   if (!data) throw badRequestError('Invalid payload');
   await logAuthEvent({
     req,
     action: 'auth.register',
     stage: 'start',
-    body: { email: data.email, name: data.name, emailVerified: data.emailVerified },
+    body: {
+      email: data.email,
+      name: data.name,
+      emailVerified: data.emailVerified,
+    },
   });
   const pageSettings = await getAuthUserPageSettings();
   if (!pageSettings.allowSignup) {
@@ -93,13 +110,13 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       userId: user.id,
       entityId: user.id,
       entityType: 'user',
-      metadata: { email: user.email }
+      metadata: { email: user.email },
     }).catch((error: Error) => {
       logger.warn('Failed to log registration activity', { error });
     });
     return NextResponse.json(
       { id: user.id, email: user.email, name: user.name },
-      { status: 201 }
+      { status: 201 },
     );
   }
 
@@ -144,7 +161,6 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
   });
   return NextResponse.json(
     { id: result.insertedId.toString(), email: doc.email, name: doc.name },
-    { status: 201 }
+    { status: 201 },
   );
 }
-

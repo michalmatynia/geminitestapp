@@ -189,9 +189,10 @@ export const loginSchema = z.object({
 export type Login = z.infer<typeof loginSchema>;
 
 export const registerSchema = z.object({
-  name: z.string(),
+  name: z.string().optional(),
   email: z.string(),
   password: z.string(),
+  emailVerified: z.boolean().optional(),
 });
 
 export type Register = z.infer<typeof registerSchema>;

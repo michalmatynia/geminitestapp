@@ -28,7 +28,7 @@ export const normalizeHistoryRetentionOptionsMax = (value: unknown): number =>
 
 export const normalizeConfigForHash = (config: PathConfig): PathConfig => ({
   ...config,
-  nodes: [...config.nodes].sort((a: AiNode, b: AiNode): number => a.id.localeCompare(b.id)),
+  nodes: [...(config.nodes as AiNode[])].sort((a: AiNode, b: AiNode): number => a.id.localeCompare(b.id)),
   edges: [...config.edges].sort((a: Edge, b: Edge): number => a.id.localeCompare(b.id)),
 });
 

@@ -1,14 +1,21 @@
 import Link from 'next/link';
 import { JSX } from 'react';
 
-import { PageLayout, Card, CardHeader, CardTitle, CardDescription } from '@/shared/ui';
+import {
+  PageLayout,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/shared/ui';
 
 export default function AgentCreatorPage(): JSX.Element {
   const cards = [
     {
       href: '/admin/agentcreator/teaching',
       title: 'Learner Agents',
-      description: 'Build embedding collections and connect them to learner agents.',
+      description:
+        'Build embedding collections and connect them to learner agents.',
     },
     {
       href: '/admin/agentcreator/runs',

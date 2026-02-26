@@ -2,8 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { generateOllamaEmbedding } from '@/features/ai/agentcreator/teaching/server/embeddings';
-import { createEmbeddingDocument, getEmbeddingCollectionById, listEmbeddingDocuments } from '@/features/ai/agentcreator/teaching/server/repository';
-import type { AgentTeachingEmbeddingDocumentListItem, AgentTeachingSourceType } from '@/shared/contracts/agent-teaching';
+import {
+  createEmbeddingDocument,
+  getEmbeddingCollectionById,
+  listEmbeddingDocuments,
+} from '@/features/ai/agentcreator/teaching/server/repository';
+import type {
+  AgentTeachingEmbeddingDocumentListItem,
+  AgentTeachingSourceType,
+} from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -17,7 +24,10 @@ const createDocumentSchema = z.object({
 
 type Params = { collectionId: string };
 
-export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+): Promise<Response> {
   const params = ctx.params as unknown as Params | undefined;
   const collectionId = params?.collectionId;
   if (!collectionId) throw badRequestError('Missing collectionId.');
@@ -28,7 +38,10 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
   return NextResponse.json(result);
 }
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+): Promise<Response> {
   const params = ctx.params as unknown as Params | undefined;
   const collectionId = params?.collectionId;
   if (!collectionId) throw badRequestError('Missing collectionId.');
@@ -47,17 +60,18 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     text: data.text,
   });
 
-  const item: AgentTeachingEmbeddingDocumentListItem = await createEmbeddingDocument({
-    collectionId,
-    text: data.text,
-    embedding,
-    embeddingModel: collection.embeddingModel,
-    metadata: {
-      title: data.title ?? undefined,
-      source: (data.source ?? undefined) as AgentTeachingSourceType,
-      tags: data.tags ?? [],
-    },
-  });
+  const item: AgentTeachingEmbeddingDocumentListItem =
+    await createEmbeddingDocument({
+      collectionId,
+      text: data.text,
+      embedding,
+      embeddingModel: collection.embeddingModel,
+      metadata: {
+        title: data.title ?? undefined,
+        source: (data.source ?? undefined) as AgentTeachingSourceType,
+        tags: data.tags ?? [],
+      },
+    });
 
   return NextResponse.json({ item });
 }

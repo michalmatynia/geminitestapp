@@ -5,17 +5,33 @@ import { z } from 'zod';
 import { normalizeAuthEmail } from '@/features/auth/server';
 import { auth } from '@/features/auth/server';
 import { invalidateAuthAccessCache } from '@/features/auth/server';
-import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/server';
+import {
+  getAuthDataProvider,
+  requireAuthProvider,
+} from '@/features/auth/server';
 import { invalidateAuthSecurityProfileCache } from '@/features/auth/server';
 import { invalidateUserPreferencesCache } from '@/features/auth/server';
-import { AUTH_SETTINGS_KEYS, type AuthUserRoleMap } from '@/features/auth/server';
+import {
+  AUTH_SETTINGS_KEYS,
+  type AuthUserRoleMap,
+} from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
 import type { AuthUser } from '@/shared/contracts/auth';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { authError, badRequestError, conflictError, forbiddenError, internalError, notFoundError } from '@/shared/errors/app-error';
+import {
+  authError,
+  badRequestError,
+  conflictError,
+  forbiddenError,
+  internalError,
+  notFoundError,
+} from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
-import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
+import {
+  parseJsonSetting,
+  serializeSetting,
+} from '@/shared/utils/settings-json';
 
 export const updateSchema = z.object({
   name: z.string().trim().min(1).max(200).optional().nullable(),
@@ -43,7 +59,9 @@ type MongoSettingDoc = {
 
 const USER_ROLES_SETTING_KEY = AUTH_SETTINGS_KEYS.userRoles;
 
-const buildMongoUserIdFilter = (userId: string): {
+const buildMongoUserIdFilter = (
+  userId: string,
+): {
   _id: ObjectId | string | { $in: Array<ObjectId | string> };
 } => {
   if (ObjectId.isValid(userId)) {
@@ -52,20 +70,28 @@ const buildMongoUserIdFilter = (userId: string): {
   return { _id: userId };
 };
 
-const buildMongoUserIdCandidates = (userId: string): Array<ObjectId | string> => {
+const buildMongoUserIdCandidates = (
+  userId: string,
+): Array<ObjectId | string> => {
   if (ObjectId.isValid(userId)) {
     return [new ObjectId(userId), userId];
   }
   return [userId];
 };
 
-const removeRoleMappingForUser = async (provider: 'prisma' | 'mongodb', userId: string): Promise<boolean> => {
+const removeRoleMappingForUser = async (
+  provider: 'prisma' | 'mongodb',
+  userId: string,
+): Promise<boolean> => {
   if (provider === 'prisma') {
     const current = await prisma.setting.findUnique({
       where: { key: USER_ROLES_SETTING_KEY },
       select: { value: true },
     });
-    const userRoles = parseJsonSetting<AuthUserRoleMap>(current?.value ?? null, {});
+    const userRoles = parseJsonSetting<AuthUserRoleMap>(
+      current?.value ?? null,
+      {},
+    );
     if (!(userId in userRoles)) {
       return false;
     }
@@ -88,7 +114,10 @@ const removeRoleMappingForUser = async (provider: 'prisma' | 'mongodb', userId: 
   const current = await settingsCollection.findOne({
     $or: [{ _id: USER_ROLES_SETTING_KEY }, { key: USER_ROLES_SETTING_KEY }],
   });
-  const userRoles = parseJsonSetting<AuthUserRoleMap>(current?.value ?? null, {});
+  const userRoles = parseJsonSetting<AuthUserRoleMap>(
+    current?.value ?? null,
+    {},
+  );
   if (!(userId in userRoles)) {
     return false;
   }
@@ -106,7 +135,7 @@ const removeRoleMappingForUser = async (provider: 'prisma' | 'mongodb', userId: 
       },
       $setOnInsert: { createdAt: now },
     },
-    { upsert: true }
+    { upsert: true },
   );
   return true;
 };
@@ -114,7 +143,7 @@ const removeRoleMappingForUser = async (provider: 'prisma' | 'mongodb', userId: 
 export async function patchAuthUserHandler(
   req: NextRequest,
   ctx: ApiHandlerContext,
-  params: { id: string }
+  params: { id: string },
 ): Promise<Response> {
   const session = await auth();
   const hasAccess =
@@ -136,7 +165,11 @@ export async function patchAuthUserHandler(
   });
 
   const { name, email, emailVerified } = data;
-  if (name === undefined && email === undefined && emailVerified === undefined) {
+  if (
+    name === undefined &&
+    email === undefined &&
+    emailVerified === undefined
+  ) {
     throw badRequestError('No updates provided.');
   }
 
@@ -247,10 +280,9 @@ export async function patchAuthUserHandler(
     updatedAt: new Date(),
   };
 
-  await db.collection<MongoUserDoc>('users').updateOne(
-    userIdFilter,
-    { $set: updateDoc }
-  );
+  await db
+    .collection<MongoUserDoc>('users')
+    .updateOne(userIdFilter, { $set: updateDoc });
 
   const updated = await db
     .collection<MongoUserDoc>('users')
@@ -285,7 +317,7 @@ export async function patchAuthUserHandler(
 export async function deleteAuthUserHandler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { id: string }
+  params: { id: string },
 ): Promise<Response> {
   const session = await auth();
   const hasAccess =
@@ -355,13 +387,16 @@ export async function deleteAuthUserHandler(
 
   const db = await getMongoDb();
   const userIdFilter = buildMongoUserIdFilter(userId);
-  const existing = await db.collection<MongoUserDoc>('users').findOne(userIdFilter);
+  const existing = await db
+    .collection<MongoUserDoc>('users')
+    .findOne(userIdFilter);
   if (!existing) {
     throw notFoundError('User not found.');
   }
   const userIdCandidates = buildMongoUserIdCandidates(userId);
   const objectIdCandidates = userIdCandidates.filter(
-    (candidate: ObjectId | string): candidate is ObjectId => candidate instanceof ObjectId
+    (candidate: ObjectId | string): candidate is ObjectId =>
+      candidate instanceof ObjectId,
   );
   const authSecurityProfileFilters: Array<Record<string, unknown>> = [
     { userId: { $in: userIdCandidates } },

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getTeachingAgentById, upsertTeachingAgent, deleteTeachingAgent } from '@/features/ai/agentcreator/teaching/server/repository';
+import {
+  getTeachingAgentById,
+  upsertTeachingAgent,
+  deleteTeachingAgent,
+} from '@/features/ai/agentcreator/teaching/server/repository';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
@@ -21,7 +25,10 @@ const updateAgentSchema = z.object({
   enabled: z.boolean().optional(),
 });
 
-export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function PATCH_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+): Promise<Response> {
   const agentId = ctx.params?.['agentId'];
   if (typeof agentId !== 'string' || !agentId.trim()) {
     return NextResponse.json({ error: 'Missing agentId' }, { status: 400 });
@@ -42,7 +49,10 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
     ...existing,
     id: agentId,
     name: data.name ?? existing.name,
-    description: data.description !== undefined ? (data.description ?? null) : existing.description,
+    description:
+      data.description !== undefined
+        ? (data.description ?? null)
+        : existing.description,
     llmModel: data.llmModel ?? existing.llmModel,
     embeddingModel: data.embeddingModel ?? existing.embeddingModel,
     systemPrompt: data.systemPrompt ?? existing.systemPrompt,
@@ -51,14 +61,18 @@ export async function PATCH_handler(req: NextRequest, ctx: ApiHandlerContext): P
     maxTokens: data.maxTokens ?? existing.maxTokens,
     retrievalTopK: data.retrievalTopK ?? existing.retrievalTopK,
     retrievalMinScore: data.retrievalMinScore ?? existing.retrievalMinScore,
-    maxDocsPerCollection: data.maxDocsPerCollection ?? existing.maxDocsPerCollection,
+    maxDocsPerCollection:
+      data.maxDocsPerCollection ?? existing.maxDocsPerCollection,
     enabled: data.enabled ?? existing.enabled,
   });
-  
+
   return NextResponse.json({ agent });
 }
 
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  ctx: ApiHandlerContext,
+): Promise<Response> {
   const agentId = ctx.params?.['agentId'];
   if (typeof agentId !== 'string' || !agentId.trim()) {
     return NextResponse.json({ error: 'Missing agentId' }, { status: 400 });
@@ -70,7 +84,10 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   return NextResponse.json({ agent });
 }
 
-export async function DELETE_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function DELETE_handler(
+  _req: NextRequest,
+  ctx: ApiHandlerContext,
+): Promise<Response> {
   const agentId = ctx.params?.['agentId'];
   if (typeof agentId !== 'string' || !agentId.trim()) {
     return NextResponse.json({ error: 'Missing agentId' }, { status: 400 });

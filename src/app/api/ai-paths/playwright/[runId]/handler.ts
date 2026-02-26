@@ -14,7 +14,7 @@ import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { assertPlaywrightRunAccess } from '../access';
 
 const toPublicRun = (
-  run: PlaywrightNodeRunRecord
+  run: PlaywrightNodeRunRecord,
 ): Omit<PlaywrightNodeRunRecord, 'ownerUserId'> => {
   const { ownerUserId: _ownerUserId, ...rest } = run;
   return rest;
@@ -23,7 +23,7 @@ const toPublicRun = (
 export async function GET_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { runId: string }
+  params: { runId: string },
 ): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {

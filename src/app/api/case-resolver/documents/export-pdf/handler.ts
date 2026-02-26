@@ -16,7 +16,10 @@ type CaseResolverExportPdfRequest = {
 };
 
 type PlaywrightPage = {
-  setContent: (content: string, options?: { waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' }) => Promise<void>;
+  setContent: (
+    content: string,
+    options?: { waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' },
+  ) => Promise<void>;
   pdf: (options: {
     format: 'A4';
     printBackground: boolean;
@@ -71,7 +74,10 @@ const sanitizePdfFilename = (value: unknown): string => {
   return `${safeBase}.pdf`;
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   let payload: CaseResolverExportPdfRequest;
   try {
     payload = (await req.json()) as CaseResolverExportPdfRequest;
@@ -115,7 +121,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       throw error;
     }
     throw internalError(
-      error instanceof Error ? error.message : 'Failed to export PDF document.'
+      error instanceof Error ? error.message : 'Failed to export PDF document.',
     );
   } finally {
     await page?.close().catch(() => undefined);

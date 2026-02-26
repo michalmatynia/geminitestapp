@@ -18,18 +18,12 @@ export const autoformatMarkdown = (text: string): string => {
   // Replace 3+ consecutive blank lines with 2 (one blank line)
   result = result.replace(/\n{3,}/g, '\n\n');
 
-  // Clean up excessive spaces within lines (but preserve intentional indentation)
-  result = result
-    .split('\n')
-    .map((line: string) => {
-      // Preserve leading whitespace (indentation)
-      const leadingSpaces = line.match(/^(\s*)/)?.[1] ?? '';
-      const rest = line.slice(leadingSpaces.length);
-      // Replace multiple spaces with single space in the rest
-      const cleaned = rest.replace(/  +/g, ' ').trimEnd();
-      return leadingSpaces + cleaned;
-    })
-    .join('\n');
+  // Clean up excessive spaces within lines efficiently
+  // Handle trailing spaces first
+  result = result.replace(/[ \t]+\n/g, '\n');
+  // Handle multiple spaces within lines but preserve indentation
+  // This regex matches spaces that are NOT at the start of a line
+  result = result.replace(/([^ \n\t])[ \t]{2,}/g, '$1 ');
 
   // Convert bare URLs to markdown links (but not if already in markdown format)
   // Match URLs that are not already in [text](url) or <url> format

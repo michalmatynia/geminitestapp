@@ -1,6 +1,6 @@
 'use client';
 
-/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+ 
 
 import React, { useMemo } from 'react';
 import { useGenerationToolbarState } from './GenerationToolbar.hooks';

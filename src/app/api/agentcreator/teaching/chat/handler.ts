@@ -16,7 +16,10 @@ const chatSchema = z.object({
   messages: z.array(chatMessageSchema).min(1),
 });
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const parsed = await parseJsonBody(req, chatSchema, {
     logPrefix: 'agentcreator.teaching.chat.POST',
   });

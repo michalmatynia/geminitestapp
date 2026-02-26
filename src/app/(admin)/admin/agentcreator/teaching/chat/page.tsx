@@ -3,4 +3,3 @@ import { AgentTeachingChatPage } from '@/features/ai/agentcreator/teaching/pages
 export default function AgentTeachingChatRoute(): React.JSX.Element {
   return <AgentTeachingChatPage />;
 }
-

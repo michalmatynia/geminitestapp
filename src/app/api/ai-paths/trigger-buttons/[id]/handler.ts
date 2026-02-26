@@ -26,7 +26,7 @@ const writeTriggerButtonsRaw = async (value: string): Promise<void> => {
 export async function PATCH_handler(
   req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { id: string }
+  params: { id: string },
 ): Promise<Response> {
   await requireAiPathsAccess();
   const id = params.id;
@@ -37,20 +37,27 @@ export async function PATCH_handler(
   if (!parsed.ok) return parsed.response;
   const raw = await readTriggerButtonsRaw();
   const existing = parseAiTriggerButtonsRaw(raw);
-  const index = existing.findIndex((item: AiTriggerButtonRecord) => item.id === id);
+  const index = existing.findIndex(
+    (item: AiTriggerButtonRecord) => item.id === id,
+  );
   if (index === -1) {
     throw notFoundError('Trigger button not found.', { id });
   }
   const current = existing[index]!;
   const now = new Date().toISOString();
   const nextName = parsed.data.name ? parsed.data.name.trim() : current.name;
-  const currentDisplayMode = current.display.showLabel === false ? 'icon' : 'icon_label';
+  const currentDisplayMode =
+    current.display.showLabel === false ? 'icon' : 'icon_label';
   const nextDisplayMode = parsed.data.display ?? currentDisplayMode;
   const nextRecord: AiTriggerButtonRecord = {
     ...current,
     name: nextName,
-    ...(parsed.data.iconId !== undefined ? { iconId: parsed.data.iconId ? parsed.data.iconId.trim() : null } : {}),
-    ...(parsed.data.pathId !== undefined ? { pathId: parsed.data.pathId ? parsed.data.pathId.trim() : null } : {}),
+    ...(parsed.data.iconId !== undefined
+      ? { iconId: parsed.data.iconId ? parsed.data.iconId.trim() : null }
+      : {}),
+    ...(parsed.data.pathId !== undefined
+      ? { pathId: parsed.data.pathId ? parsed.data.pathId.trim() : null }
+      : {}),
     ...(parsed.data.enabled !== undefined
       ? { enabled: parsed.data.enabled, isActive: parsed.data.enabled }
       : {}),
@@ -68,7 +75,7 @@ export async function PATCH_handler(
 export async function DELETE_handler(
   _req: NextRequest,
   _ctx: ApiHandlerContext,
-  params: { id: string }
+  params: { id: string },
 ): Promise<Response> {
   await requireAiPathsAccess();
   const id = params.id;

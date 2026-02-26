@@ -14,7 +14,9 @@ import {
 export default function AdminDashboard(): JSX.Element {
   const [recentActivityOpen, setRecentActivityOpen] = useState(true);
   const { data, isLoading, error } = useHealthStatus();
-  const { data: activityData, isLoading: activityLoading } = useSystemActivity({ pageSize: 5 });
+  const { data: activityData, isLoading: activityLoading } = useSystemActivity({
+    pageSize: 5,
+  });
   const activity = activityData?.data ?? [];
 
   return (

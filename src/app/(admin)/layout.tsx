@@ -1,7 +1,6 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
-
 import { AdminLayout } from '@/features/admin/layout/AdminLayout';
 import { auth, getUserPreferences } from '@/features/auth/server';
 import { MasterFolderTreeRuntimeProvider } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
@@ -12,7 +11,9 @@ import type { JSX } from 'react';
 export const dynamic = 'force-dynamic';
 const ADMIN_MENU_COLLAPSED_COOKIE_KEY = 'admin_menu_collapsed';
 const ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS = (() => {
-  const parsed = Number(process.env['ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS']);
+  const parsed = Number(
+    process.env['ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS'],
+  );
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : 1200;
 })();
 
@@ -33,11 +34,16 @@ export default async function Layout({
     }
     try {
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
-      const preferencesPromise = getUserPreferences(session.user.id).catch(() => null);
+      const preferencesPromise = getUserPreferences(session.user.id).catch(
+        () => null,
+      );
       const preferences = await Promise.race([
         preferencesPromise,
         new Promise<null>((resolve) => {
-          timeoutId = setTimeout(() => resolve(null), ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS);
+          timeoutId = setTimeout(
+            () => resolve(null),
+            ADMIN_LAYOUT_USER_PREFERENCES_TIMEOUT_MS,
+          );
         }),
       ]);
       if (timeoutId) clearTimeout(timeoutId);
@@ -47,7 +53,9 @@ export default async function Layout({
     } catch {
       // Fallback to cookie-derived value when preferences are unavailable.
       const cookieStore = await cookies();
-      const cookieValue = cookieStore.get(ADMIN_MENU_COLLAPSED_COOKIE_KEY)?.value;
+      const cookieValue = cookieStore.get(
+        ADMIN_MENU_COLLAPSED_COOKIE_KEY,
+      )?.value;
       if (cookieValue === '1' || cookieValue === 'true') {
         initialMenuCollapsed = true;
       } else if (cookieValue === '0' || cookieValue === 'false') {
@@ -60,7 +68,10 @@ export default async function Layout({
   return (
     <SettingsStoreProvider mode='admin'>
       <MasterFolderTreeRuntimeProvider>
-        <AdminLayout session={session} initialMenuCollapsed={initialMenuCollapsed}>
+        <AdminLayout
+          session={session}
+          initialMenuCollapsed={initialMenuCollapsed}
+        >
           {children}
         </AdminLayout>
       </MasterFolderTreeRuntimeProvider>

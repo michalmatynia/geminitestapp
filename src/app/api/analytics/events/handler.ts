@@ -1,14 +1,21 @@
-
-
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { insertAnalyticsEvent, listAnalyticsEvents } from '@/features/analytics/server';
+import {
+  insertAnalyticsEvent,
+  listAnalyticsEvents,
+} from '@/features/analytics/server';
 import { auth, extractClientIp } from '@/features/auth/server';
-import type { AnalyticsEventCreateInput, AnalyticsScope } from '@/shared/contracts';
+import type {
+  AnalyticsEventCreateInput,
+  AnalyticsScope,
+} from '@/shared/contracts';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError } from '@/shared/errors/app-error';
-import { getPaginationParams, getQueryParams } from '@/shared/lib/api/api-handler';
+import {
+  getPaginationParams,
+  getQueryParams,
+} from '@/shared/lib/api/api-handler';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { logger } from '@/shared/utils/logger';
 
@@ -96,7 +103,7 @@ const persistAnalyticsEvent = async (
     country: string | null;
     region: string | null;
     city: string | null;
-  }
+  },
 ): Promise<{ id: string }> => {
   const userId = await resolveSessionUserId();
   const input: AnalyticsEventCreateInput = userId
@@ -106,7 +113,10 @@ const persistAnalyticsEvent = async (
   return insertAnalyticsEvent(input, serverContext);
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const parsed = await parseJsonBody(req, createEventSchema, {
     logPrefix: 'analytics.events.POST',
   });
@@ -128,19 +138,33 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     path: parsed.data.path,
     visitorId: parsed.data.visitorId,
     sessionId: parsed.data.sessionId,
-    ...(parsed.data.search !== null && parsed.data.search !== undefined ? { search: parsed.data.search } : {}),
-    ...(parsed.data.url !== null && parsed.data.url !== undefined ? { url: parsed.data.url } : {}),
-    ...(parsed.data.title !== null && parsed.data.title !== undefined ? { title: parsed.data.title } : {}),
-    ...(parsed.data.referrer !== null && parsed.data.referrer !== undefined ? { referrer: parsed.data.referrer } : {}),
+    ...(parsed.data.search !== null && parsed.data.search !== undefined
+      ? { search: parsed.data.search }
+      : {}),
+    ...(parsed.data.url !== null && parsed.data.url !== undefined
+      ? { url: parsed.data.url }
+      : {}),
+    ...(parsed.data.title !== null && parsed.data.title !== undefined
+      ? { title: parsed.data.title }
+      : {}),
+    ...(parsed.data.referrer !== null && parsed.data.referrer !== undefined
+      ? { referrer: parsed.data.referrer }
+      : {}),
     ...(parsed.data.utm ? { utm: parsed.data.utm } : {}),
-    ...(parsed.data.language !== null && parsed.data.language !== undefined ? { language: parsed.data.language } : {}),
+    ...(parsed.data.language !== null && parsed.data.language !== undefined
+      ? { language: parsed.data.language }
+      : {}),
     ...(parsed.data.languages ? { languages: parsed.data.languages } : {}),
-    ...(parsed.data.timeZone !== null && parsed.data.timeZone !== undefined ? { timeZone: parsed.data.timeZone } : {}),
+    ...(parsed.data.timeZone !== null && parsed.data.timeZone !== undefined
+      ? { timeZone: parsed.data.timeZone }
+      : {}),
     ...(parsed.data.viewport ? { viewport: parsed.data.viewport } : {}),
     ...(parsed.data.screen ? { screen: parsed.data.screen } : {}),
     ...(parsed.data.connection ? { connection: parsed.data.connection } : {}),
     ...(parsed.data.meta ? { meta: parsed.data.meta } : {}),
-    ...(parsed.data.clientTs !== null && parsed.data.clientTs !== undefined ? { clientTs: parsed.data.clientTs } : {}),
+    ...(parsed.data.clientTs !== null && parsed.data.clientTs !== undefined
+      ? { clientTs: parsed.data.clientTs }
+      : {}),
   };
 
   const serverContext = {
@@ -168,11 +192,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
 
   return NextResponse.json(
     { ok: true, queued: true, requestId: _ctx.requestId },
-    { status: 202 }
+    { status: 202 },
   );
 }
 
-export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const session = await auth();
   if (!session?.user) throw authError('Unauthorized.');
 
@@ -186,8 +213,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   const range = rangeRaw as AnalyticsRange;
 
   const scopeRaw = searchParams.get('scope') ?? 'all';
-  const scope =
-    scopeRaw === 'all' ? undefined : (scopeRaw as AnalyticsScope);
+  const scope = scopeRaw === 'all' ? undefined : (scopeRaw as AnalyticsScope);
   if (scopeRaw !== 'all' && scope !== 'public' && scope !== 'admin') {
     throw badRequestError('Invalid scope');
   }
@@ -201,16 +227,18 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     skip,
   });
 
-  return NextResponse.json({
-    page,
-    pageSize,
-    range,
-    scope: scopeRaw,
-    ...result,
-  }, {
-    headers: {
-      'Cache-Control': 'no-store',
+  return NextResponse.json(
+    {
+      page,
+      pageSize,
+      range,
+      scope: scopeRaw,
+      ...result,
     },
-  });
+    {
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    },
+  );
 }
-

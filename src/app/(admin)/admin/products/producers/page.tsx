@@ -5,4 +5,3 @@ import { AdminProductProducersPage } from '@/features/products/pages/AdminProduc
 export default function Page(): JSX.Element {
   return <AdminProductProducersPage />;
 }
-

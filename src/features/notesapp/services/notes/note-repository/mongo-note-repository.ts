@@ -414,6 +414,40 @@ export const mongoNoteRepository: NoteRepository = {
     return toNoteResponse(result) as unknown as NoteWithRelations;
   },
 
+  async syncRelatedNotesBatch(
+    noteId: string,
+    addedIds: string[],
+    removedIds: string[]
+  ): Promise<void> {
+    if (addedIds.length === 0 && removedIds.length === 0) return;
+    const db = await getMongoDb();
+    const collection = db.collection<NoteDocument>(noteCollectionName);
+    const bulkOps: any[] = [];
+
+    for (const relatedId of addedIds) {
+      if (relatedId === noteId) continue;
+      bulkOps.push({
+        updateOne: {
+          filter: { $or: [{ id: relatedId }, { _id: relatedId }] },
+          update: { $addToSet: { relatedNoteIds: noteId } },
+        },
+      });
+    }
+
+    for (const relatedId of removedIds) {
+      bulkOps.push({
+        updateOne: {
+          filter: { $or: [{ id: relatedId }, { _id: relatedId }] },
+          update: { $pull: { relatedNoteIds: noteId } },
+        },
+      });
+    }
+
+    if (bulkOps.length > 0) {
+      await collection.bulkWrite(bulkOps);
+    }
+  },
+
   async delete(id: string): Promise<boolean> {
     const db = await getMongoDb();
     const collection = db.collection<NoteDocument>(noteCollectionName);

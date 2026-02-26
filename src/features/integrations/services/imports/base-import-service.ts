@@ -313,9 +313,12 @@ const failRemainingItems = async (input: {
 }): Promise<void> => {
   const items = await listBaseImportRunItems(input.runId);
   const now = nowIso();
+  const toFail: BaseImportItemRecord[] = [];
+
   for (const item of items) {
     if (!input.allowedStatuses.has(item.status)) continue;
-    await updateBaseImportRunItem(input.runId, item.itemId, {
+    toFail.push({
+      ...item,
       status: 'failed',
       action: 'failed',
       errorCode: input.code,
@@ -327,6 +330,12 @@ const failRemainingItems = async (input: {
       finishedAt: now,
     });
   }
+
+  if (toFail.length > 0) {
+    const { putBaseImportRunItems } = await import('./base-import-run-repository');
+    await putBaseImportRunItems(toFail);
+  }
+  
   await recomputeBaseImportRunStats(input.runId);
 };
 

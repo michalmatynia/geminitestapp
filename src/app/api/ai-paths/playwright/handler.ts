@@ -23,7 +23,12 @@ const enqueueSchema = z.object({
   script: z.string().trim().min(1),
   input: z.record(z.string(), z.unknown()).optional(),
   startUrl: z.string().trim().optional(),
-  timeoutMs: z.number().int().min(1000).max(30 * 60 * 1000).optional(),
+  timeoutMs: z
+    .number()
+    .int()
+    .min(1000)
+    .max(30 * 60 * 1000)
+    .optional(),
   waitForResult: z.boolean().optional(),
   browserEngine: z.enum(['chromium', 'firefox', 'webkit']).optional(),
   personaId: z.string().trim().optional(),
@@ -41,11 +46,12 @@ type CapturePayload = {
 };
 
 const normalizeCaptureConfig = (
-  capture: z.infer<typeof captureSchema> | undefined
+  capture: z.infer<typeof captureSchema> | undefined,
 ): CapturePayload | undefined => {
   if (!capture) return undefined;
   const normalized: CapturePayload = {};
-  if (typeof capture.screenshot === 'boolean') normalized.screenshot = capture.screenshot;
+  if (typeof capture.screenshot === 'boolean')
+    normalized.screenshot = capture.screenshot;
   if (typeof capture.html === 'boolean') normalized.html = capture.html;
   if (typeof capture.video === 'boolean') normalized.video = capture.video;
   if (typeof capture.trace === 'boolean') normalized.trace = capture.trace;
@@ -53,13 +59,16 @@ const normalizeCaptureConfig = (
 };
 
 const toPublicRun = (
-  run: PlaywrightNodeRunRecord
+  run: PlaywrightNodeRunRecord,
 ): Omit<PlaywrightNodeRunRecord, 'ownerUserId'> => {
   const { ownerUserId: _ownerUserId, ...rest } = run;
   return rest;
 };
 
-export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {
+export async function POST_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+): Promise<Response> {
   const { access, isInternal } = await requireAiPathsAccessOrInternal(req);
   if (!isInternal) {
     await enforceAiPathsActionRateLimit(access, 'playwright-enqueue');
@@ -79,12 +88,22 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
       script: payload.script,
       ...(payload.input ? { input: payload.input } : {}),
       ...(startUrl ? { startUrl } : {}),
-      ...(payload.timeoutMs !== undefined ? { timeoutMs: payload.timeoutMs } : {}),
-      ...(payload.browserEngine ? { browserEngine: payload.browserEngine } : {}),
+      ...(payload.timeoutMs !== undefined
+        ? { timeoutMs: payload.timeoutMs }
+        : {}),
+      ...(payload.browserEngine
+        ? { browserEngine: payload.browserEngine }
+        : {}),
       ...(personaId ? { personaId } : {}),
-      ...(payload.settingsOverrides ? { settingsOverrides: payload.settingsOverrides } : {}),
-      ...(payload.launchOptions ? { launchOptions: payload.launchOptions } : {}),
-      ...(payload.contextOptions ? { contextOptions: payload.contextOptions } : {}),
+      ...(payload.settingsOverrides
+        ? { settingsOverrides: payload.settingsOverrides }
+        : {}),
+      ...(payload.launchOptions
+        ? { launchOptions: payload.launchOptions }
+        : {}),
+      ...(payload.contextOptions
+        ? { contextOptions: payload.contextOptions }
+        : {}),
       ...(capture ? { capture } : {}),
     },
     waitForResult: payload.waitForResult ?? true,

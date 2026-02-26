@@ -1,6 +1,9 @@
 import { headers } from 'next/headers';
 
-import { getMediaInlineStyles, getMediaStyleVars } from '@/features/cms/components/frontend/theme-styles';
+import {
+  getMediaInlineStyles,
+  getMediaStyleVars,
+} from '@/features/cms/components/frontend/theme-styles';
 import { resolveCmsDomainFromHeaders } from '@/features/cms/services/cms-domain';
 import { getCmsMenuSettings } from '@/features/cms/services/cms-menu-settings';
 import { getCmsRepository } from '@/features/cms/services/cms-repository';
@@ -20,19 +23,28 @@ export type PreviewRenderData = {
   layout: { fullWidth: boolean };
   mediaVars: ReturnType<typeof getMediaStyleVars>;
   mediaStyles: ReturnType<typeof getMediaInlineStyles>;
-  hoverEffect: Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverEffect'] | undefined;
-  hoverScale: Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverScale'] | undefined;
+  hoverEffect:
+    | Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverEffect']
+    | undefined;
+  hoverScale:
+    | Awaited<ReturnType<typeof getCmsThemeSettings>>['hoverScale']
+    | undefined;
 };
 
 export const isAdminSession = (session: Session | null): boolean => {
   if (!session?.user) return false;
-  const user = session.user as Session['user'] & { isElevated?: boolean; role?: string | null };
+  const user = session.user as Session['user'] & {
+    isElevated?: boolean;
+    role?: string | null;
+  };
   if (user.isElevated) return true;
   const role = user.role ?? '';
   return ['admin', 'super_admin', 'superuser'].includes(role);
 };
 
-export const loadPreviewRenderData = async (id: string): Promise<PreviewRenderData | null> => {
+export const loadPreviewRenderData = async (
+  id: string,
+): Promise<PreviewRenderData | null> => {
   const cmsRepository = await getCmsRepository();
   const page = await cmsRepository.getPageById(id);
   if (!page) {
@@ -52,18 +64,24 @@ export const loadPreviewRenderData = async (id: string): Promise<PreviewRenderDa
   const layout = { fullWidth: Boolean(themeSettings.fullWidth) };
   const mediaVars = getMediaStyleVars(themeSettings);
   const mediaStyles = getMediaInlineStyles(themeSettings);
-  const hoverEffect = themeSettings.enableAnimations ? themeSettings.hoverEffect : undefined;
-  const hoverScale = themeSettings.enableAnimations ? themeSettings.hoverScale : undefined;
+  const hoverEffect = themeSettings.enableAnimations
+    ? themeSettings.hoverEffect
+    : undefined;
+  const hoverScale = themeSettings.enableAnimations
+    ? themeSettings.hoverScale
+    : undefined;
   const showMenu = page.showMenu !== false;
-  const rendererComponents: PageComponent[] = (page.components ?? []).map((component) => ({
-    id: component.id ?? `component-${Math.random().toString(36).slice(2, 9)}`,
-    type: component.type,
-    order: component.order || 0,
-    content: (component.content as Record<string, unknown>) ?? {},
-    pageId: page.id,
-    createdAt: component.createdAt ?? new Date().toISOString(),
-    updatedAt: component.updatedAt ?? null,
-  }));
+  const rendererComponents: PageComponent[] = (page.components ?? []).map(
+    (component) => ({
+      id: component.id ?? `component-${Math.random().toString(36).slice(2, 9)}`,
+      type: component.type,
+      order: component.order || 0,
+      content: (component.content as Record<string, unknown>) ?? {},
+      pageId: page.id,
+      createdAt: component.createdAt ?? new Date().toISOString(),
+      updatedAt: component.updatedAt ?? null,
+    }),
+  );
 
   return {
     theme,

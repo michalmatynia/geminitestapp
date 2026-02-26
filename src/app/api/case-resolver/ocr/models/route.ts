@@ -8,4 +8,3 @@ import { GET_handler } from './handler';
 export const GET = apiHandler(GET_handler, {
   source: 'case-resolver.ocr.models.GET',
 });
-

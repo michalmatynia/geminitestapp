@@ -34,30 +34,34 @@ export async function HomeContent({
 
   if (defaultSlug) {
     const cmsPage: Page | null = await withTiming('cmsPageBySlug', () =>
-      cmsRepository.getPageBySlug(defaultSlug.slug)
+      cmsRepository.getPageBySlug(defaultSlug.slug),
     );
     let allowDrafts = false;
     if (cmsPage && cmsPage.status !== 'published') {
       const session = await withTiming('auth', () => auth());
-      allowDrafts = await withTiming('canPreviewDrafts', () => canPreviewDrafts(session));
+      allowDrafts = await withTiming('canPreviewDrafts', () =>
+        canPreviewDrafts(session),
+      );
     }
 
     const hasCmsContent = Boolean(
       cmsPage &&
-        (allowDrafts || cmsPage.status === 'published') &&
-        cmsPage.components.length > 0
+      (allowDrafts || cmsPage.status === 'published') &&
+      cmsPage.components.length > 0,
     );
 
     const rendererComponents: PageComponent[] = (cmsPage?.components ?? []).map(
       (component) => ({
-        id: component.id ?? `home-component-${Math.random().toString(36).slice(2, 9)}`,
+        id:
+          component.id ??
+          `home-component-${Math.random().toString(36).slice(2, 9)}`,
         type: component.type,
         order: component.order || 0,
         content: (component.content as Record<string, unknown>) ?? {},
         pageId: cmsPage?.id ?? 'home',
         createdAt: component.createdAt ?? new Date().toISOString(),
         updatedAt: component.updatedAt ?? null,
-      })
+      }),
     );
 
     const showMenu = cmsPage?.showMenu !== false;
@@ -81,7 +85,7 @@ export async function HomeContent({
   }
 
   const productsRaw = await withTiming('products', () =>
-    productService.getProducts({ page: 1, pageSize: 20 })
+    productService.getProducts({ page: 1, pageSize: 20 }),
   );
   const products = normalizeHomeProducts(productsRaw);
 

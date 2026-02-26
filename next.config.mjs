@@ -53,6 +53,13 @@ const nextConfig = {
       '@radix-ui/react-toast',
       'date-fns',
       'lodash',
+      'react-syntax-highlighter',
+      'three',
+      '@react-three/drei',
+      '@react-three/fiber',
+      'papaparse',
+      'gsap',
+      'zod',
     ],
   },
   serverExternalPackages: [

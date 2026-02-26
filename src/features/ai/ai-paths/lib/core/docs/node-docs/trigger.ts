@@ -1,4 +1,3 @@
-import type { NodeType } from '@/shared/contracts/ai-paths';
 import type { NodeConfigDocField } from '../node-docs.types';
 import { COMMON_RUNTIME_FIELDS } from '../node-docs.constants';
 

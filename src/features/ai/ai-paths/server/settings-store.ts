@@ -39,11 +39,6 @@ import {
   BASE_EXPORT_BLWO_PATH_NAME,
 } from './settings-store-base-export-workflow';
 import {
-  buildDescriptionInferenceLitePathConfigValue,
-  DESCRIPTION_INFERENCE_LITE_PATH_ID,
-  DESCRIPTION_INFERENCE_LITE_PATH_NAME,
-} from './settings-store-description-inference';
-import {
   buildParameterInferencePathConfigValue,
   PARAMETER_INFERENCE_PATH_ID,
   PARAMETER_INFERENCE_PATH_NAME,
@@ -143,12 +138,6 @@ async function maybeAutoApplyDefaultSeedsOnRead(
           display: buildTriggerButtonDisplay(BASE_EXPORT_BLWO_PATH_NAME),
         },
         {
-          id: 'description-inference-lite',
-          name: DESCRIPTION_INFERENCE_LITE_PATH_NAME,
-          pathId: DESCRIPTION_INFERENCE_LITE_PATH_ID,
-          display: buildTriggerButtonDisplay(DESCRIPTION_INFERENCE_LITE_PATH_NAME),
-        },
-        {
           id: 'parameter-inference',
           name: PARAMETER_INFERENCE_PATH_NAME,
           pathId: PARAMETER_INFERENCE_PATH_ID,
@@ -170,7 +159,6 @@ async function maybeAutoApplyDefaultSeedsOnRead(
   // 2. Ensure Core Path Configs
   const corePaths = [
     { id: BASE_EXPORT_BLWO_PATH_ID, name: BASE_EXPORT_BLWO_PATH_NAME, factory: () => buildBaseExportBlwoPathConfigValue(now) },
-    { id: DESCRIPTION_INFERENCE_LITE_PATH_ID, name: DESCRIPTION_INFERENCE_LITE_PATH_NAME, factory: () => buildDescriptionInferenceLitePathConfigValue(now) },
     { id: PARAMETER_INFERENCE_PATH_ID, name: PARAMETER_INFERENCE_PATH_NAME, factory: () => buildParameterInferencePathConfigValue(now) },
     { id: TRANSLATION_EN_PL_PATH_ID, name: TRANSLATION_EN_PL_PATH_NAME, factory: () => buildTranslationEnPlPathConfigValue() },
   ];

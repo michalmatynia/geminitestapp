@@ -92,7 +92,7 @@ export interface UseProductFormValidatorResult {
 
 // --- Main Hook Implementation ---
 
-export function useProductFormValidator(): UseProductFormValidatorResult {
+export function useProductFormValidator(scopeOverride?: string): UseProductFormValidatorResult {
   const { product, draft } = useProductFormContext();
   const {
     categories,
@@ -213,10 +213,11 @@ export function useProductFormValidator(): UseProductFormValidatorResult {
   );
 
   const inferredValidationInstanceScope = useMemo((): ProductValidationInstanceScope => {
+    if (scopeOverride) return scopeOverride as ProductValidationInstanceScope;
     if (product?.id?.trim()) return 'product_edit';
     if (draft?.id?.trim()) return 'draft_template';
     return 'product_create';
-  }, [draft?.id, product?.id]);
+  }, [draft?.id, product?.id, scopeOverride]);
 
   const validationInstanceScope = inferredValidationInstanceScope;
 

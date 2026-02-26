@@ -72,7 +72,7 @@ export function useGenerationToolbarAutoScale({
       });
       if (!validation.success) {
         throw new Error(
-          `Auto scaler request payload is invalid (\${describeSchemaValidationIssue(validation.error.issues)}).`
+          `Auto scaler request payload is invalid (${describeSchemaValidationIssue(validation.error.issues)}).`
         );
       }
       return validation.data;
@@ -113,10 +113,10 @@ export function useGenerationToolbarAutoScale({
               if (autoScaleRequestPayload.layout) {
                 formData.append('layout', JSON.stringify(autoScaleRequestPayload.layout));
               }
-              formData.append('image', uploadBlob, `autoscale-client-\${Date.now()}.png`);
+              formData.append('image', uploadBlob, `autoscale-client-${Date.now()}.png`);
               return api
                 .post<unknown>(
-                  `/api/image-studio/slots/\${encodeURIComponent(workingSlot.id)}/autoscale`,
+                  `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
                   formData,
                   {
                     signal: abortController.signal,
@@ -143,7 +143,7 @@ export function useGenerationToolbarAutoScale({
             () =>
               api
                 .post<unknown>(
-                  `/api/image-studio/slots/\${encodeURIComponent(workingSlot.id)}/autoscale`,
+                  `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
                   fallbackRequestPayload,
                   {
                     signal: abortController.signal,
@@ -171,7 +171,7 @@ export function useGenerationToolbarAutoScale({
           () =>
             api
               .post<unknown>(
-                `/api/image-studio/slots/\${encodeURIComponent(workingSlot.id)}/autoscale`,
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/autoscale`,
                 autoScaleRequestPayload,
                 {
                   signal: abortController.signal,
@@ -233,9 +233,9 @@ export function useGenerationToolbarAutoScale({
         )
       );
       if (autoScaleShiftedObject) {
-        toast(`Created \${createdLabel} (\${modeLabel}).`, { variant: 'success' });
+        toast(`Created ${createdLabel} (${modeLabel}).`, { variant: 'success' });
       } else {
-        toast(`\${createdLabel} created, but the object already matched current canvas/padding.`, {
+        toast(`${createdLabel} created, but the object already matched current canvas/padding.`, {
           variant: 'info',
         });
       }
@@ -243,7 +243,7 @@ export function useGenerationToolbarAutoScale({
         const reason = response.detectionDetails.policyReason ?? response.layout?.detectionPolicyDecision;
         toast(
           reason
-            ? `Auto scaler policy fallback applied (\${reason}).`
+            ? `Auto scaler policy fallback applied (${reason}).`
             : 'Auto scaler policy fallback applied.',
           { variant: 'info' }
         );

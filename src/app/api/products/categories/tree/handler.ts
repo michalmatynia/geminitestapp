@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { CachedProductService } from '@/features/products/performance/cached-service';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
@@ -18,9 +19,15 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     throw badRequestError('catalogId query parameter is required');
   }
 
-  const primaryProvider = await getProductDataProvider();
-  const repository = await getCategoryRepository(primaryProvider);
-  const tree = await repository.getCategoryTree(catalogId);
+  const forceFresh = searchParams.get('fresh') === '1';
+
+  const tree = forceFresh
+    ? await (async () => {
+      const primaryProvider = await getProductDataProvider();
+      const repository = await getCategoryRepository(primaryProvider);
+      return repository.getCategoryTree(catalogId);
+    })()
+    : await CachedProductService.getCategoryTree(catalogId);
   
   return NextResponse.json(tree);
 }

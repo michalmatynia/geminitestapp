@@ -50,6 +50,7 @@ export function CanvasSvgNodePorts({
               cx={0}
               cy={0}
               r={isHovered || isPinned ? PORT_SIZE / 2 + 1.5 : PORT_SIZE / 2}
+              pointerEvents='all'
               fill={
                 isConnected
                   ? INPUT_CONNECTOR_COLORS.fillConnected
@@ -100,6 +101,7 @@ export function CanvasSvgNodePorts({
               cx={0}
               cy={0}
               r={connectorHitRadius}
+              pointerEvents='all'
               fill='transparent'
               stroke='none'
               style={{ cursor: 'crosshair' }}
@@ -163,6 +165,7 @@ export function CanvasSvgNodePorts({
               cx={0}
               cy={0}
               r={isHovered || isPinned ? PORT_SIZE / 2 + 1.5 : PORT_SIZE / 2}
+              pointerEvents='all'
               fill={OUTPUT_CONNECTOR_COLORS.fill}
               stroke={OUTPUT_CONNECTOR_COLORS.stroke}
               strokeWidth={isHovered || isPinned ? 2 : 1}
@@ -213,6 +216,7 @@ export function CanvasSvgNodePorts({
               cx={0}
               cy={0}
               r={connectorHitRadius}
+              pointerEvents='all'
               fill='transparent'
               stroke='none'
               style={{ cursor: 'crosshair' }}

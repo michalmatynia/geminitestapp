@@ -35,7 +35,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
     // Dynamically import to avoid circular dependency (shared -> features -> shared)
     const mod = await import('@/features/observability/server') as { 
       logSystemEvent: (input: LogSystemEventParams) => Promise<void>;
-      getErrorFingerprint: (input: ErrorFingerprintParams) => Promise<string>;
+      getErrorFingerprint: (input: ErrorFingerprintParams) => string;
     };
     
     await mod.logSystemEvent(params);
@@ -47,7 +47,7 @@ const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
 const getErrorFingerprint = async (params: ErrorFingerprintParams): Promise<string> => {
   try {
     const mod = await import('@/features/observability/server') as {
-      getErrorFingerprint: (input: ErrorFingerprintParams) => Promise<string>;
+      getErrorFingerprint: (input: ErrorFingerprintParams) => string;
     };
     return mod.getErrorFingerprint(params);
   } catch (error) {

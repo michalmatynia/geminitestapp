@@ -69,6 +69,7 @@ export interface CanvasBoardState {
   handlePanStart: (event: React.PointerEvent) => void;
   handlePanMove: (event: React.PointerEvent) => void;
   handlePanEnd: (event: React.PointerEvent) => void;
+  handleWheel: (event: React.WheelEvent) => void;
   handleRemoveEdge: (edgeId: string) => void;
   handleDisconnectPort: (direction: 'input' | 'output', nodeId: string, port: string) => void;
   handleStartConnection: (nodeId: string, port: string, pos: { x: number; y: number }) => void;

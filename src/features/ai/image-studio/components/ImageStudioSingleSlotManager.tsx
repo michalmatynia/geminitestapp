@@ -105,7 +105,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
     const deleteUploadedAsset = useCallback(
       async (uploaded: any): Promise<void> => {
         if (!projectId) return;
-        await api.post(`/api/image-studio/projects/\${encodeURIComponent(projectId)}/assets/delete`, {
+        await api.post(`/api/image-studio/projects/${encodeURIComponent(projectId)}/assets/delete`, {
           id: uploaded.id,
           filepath: uploaded.filepath,
         });
@@ -295,7 +295,7 @@ export const ImageStudioSingleSlotManager = forwardRef<ImageStudioSingleSlotMana
     return (
       <ProductImageManagerControllerProvider value={controller}>
         <ProductImageManager
-          key={`obj:\${objectSlot?.id ?? temporaryObjectUpload?.id ?? 'none'}`}
+          key={`obj:${objectSlot?.id ?? temporaryObjectUpload?.id ?? 'none'}`}
           minimalUi
           showDragHandle={false}
           minimalSingleSlotAlign='left'

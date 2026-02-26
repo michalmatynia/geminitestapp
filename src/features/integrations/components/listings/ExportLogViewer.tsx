@@ -52,8 +52,8 @@ export function ExportLogViewer({
           </span>
         </div>
       )}
-      isOpen={isOpen}
-      onToggle={onToggle}
+      open={isOpen}
+      onOpenChange={onToggle}
       className='bg-card/20 border border-border/40 rounded-lg overflow-hidden'
     >
       <div className='p-4 space-y-4'>
@@ -73,7 +73,7 @@ export function ExportLogViewer({
             return (
               <Alert 
                 key={index}
-                variant='subtle'
+                variant='info'
                 className={`py-2 px-3 border ${levelClass}`}
               >
                 <div className='flex flex-col gap-1'>
@@ -92,7 +92,7 @@ export function ExportLogViewer({
                     {log.context && Object.keys(log.context).length > 0 && (
                       <CollapsibleSection
                         title='Context Data'
-                        variant='minimal'
+                        variant='subtle'
                         className='mt-1'
                         titleClassName='text-[10px] text-gray-500'
                       >

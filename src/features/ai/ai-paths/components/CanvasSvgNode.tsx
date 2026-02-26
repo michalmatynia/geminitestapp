@@ -211,7 +211,7 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
     <g
       key={node.id}
       transform={`translate(${node.position.x} ${node.position.y})`}
-      style={{ cursor: 'grab' }}
+      style={{ cursor: 'pointer' }}
       onDoubleClick={handleNodeDoubleClick}
     >
       {isBlockerProcessing ? (
@@ -230,6 +230,7 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
         />
       ) : null}
       <rect
+        data-node-body={node.id}
         x={0}
         y={0}
         width={NODE_WIDTH}
@@ -239,6 +240,8 @@ export function CanvasSvgNode({ node }: CanvasSvgNodeProps): React.JSX.Element {
         fill={palette.fill}
         stroke={isPrimarySelected ? '#bae6fd' : isSelected ? '#7dd3fc' : palette.stroke}
         strokeWidth={isPrimarySelected ? 2.4 : isSelected ? 1.9 : 1.25}
+        pointerEvents='all'
+        style={{ cursor: 'pointer' }}
         onPointerDown={(event: React.PointerEvent<SVGRectElement>) => {
           void onPointerDownNode(event, node.id);
         }}

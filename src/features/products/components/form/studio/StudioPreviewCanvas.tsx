@@ -51,8 +51,6 @@ function StudioPreviewCanvasInner(): React.JSX.Element {
 
       {canCompareWithSource && (
         <SplitViewControls
-          singleVariantView={singleVariantView}
-          splitVariantView={splitVariantView}
           canCompare={canCompareWithSource}
           onGoToSourceSlot={() => { setSplitVariantView(false); setSingleVariantView('source'); }}
           onToggleSourceVariantView={() => setSingleVariantView(prev => prev === 'variant' ? 'source' : 'variant')}

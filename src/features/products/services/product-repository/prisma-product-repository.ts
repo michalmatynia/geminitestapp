@@ -180,7 +180,7 @@ const createTransactionalRepository = (
       ...(normalizedParameters !== undefined
         ? {
           parameters:
-              normalizedParameters as unknown as Prisma.InputJsonValue,
+              normalizedParameters as any,
         }
         : {}),
       ...(id ? { id } : {}),
@@ -218,7 +218,7 @@ const createTransactionalRepository = (
       ...(normalizedParameters !== undefined
         ? {
           parameters:
-              normalizedParameters as unknown as Prisma.InputJsonValue,
+              normalizedParameters as any,
         }
         : {}),
     }) as Prisma.ProductUpdateInput;
@@ -231,7 +231,36 @@ const createTransactionalRepository = (
   },
 
   deleteProduct: async (id) => {
-    await tx.product.delete({ where: { id } });
+    try {
+      const product = await tx.product.delete({
+        where: { id },
+        include: {
+          images: {
+            include: { imageFile: true },
+            orderBy: { assignedAt: 'asc' },
+          },
+          catalogs: {
+            include: {
+              catalog: {
+                include: { languages: { select: { languageId: true } } },
+              },
+            },
+          },
+          categories: { select: { categoryId: true } },
+          tags: { select: { productId: true, tagId: true, assignedAt: true } },
+          producers: { select: { productId: true, producerId: true, assignedAt: true } },
+        },
+      });
+      return toProductRecord(product as FullPrismaProduct);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2025'
+      ) {
+        return null;
+      }
+      throw error;
+    }
   },
 
   duplicateProduct: async (id, sku) => {
@@ -263,6 +292,7 @@ const createTransactionalRepository = (
     const product = await tx.product.create({
       data: {
         ...rest,
+        parameters: rest.parameters as any,
         sku,
         published: false,
       },

@@ -548,8 +548,8 @@ export const buildMongoWhere = async (
 
   if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
     const priceFilter: Record<string, number> = {};
-    if (filters.minPrice !== undefined) priceFilter.$gte = filters.minPrice;
-    if (filters.maxPrice !== undefined) priceFilter.$lte = filters.maxPrice;
+    if (filters.minPrice !== undefined) priceFilter['$gte'] = filters.minPrice;
+    if (filters.maxPrice !== undefined) priceFilter['$lte'] = filters.maxPrice;
     filter = appendAndCondition(filter, { price: priceFilter } as Filter<ProductDocument>);
   }
 
@@ -575,8 +575,8 @@ export const buildMongoWhere = async (
 
   if (filters.startDate || filters.endDate) {
     const dateFilter: Record<string, Date> = {};
-    if (filters.startDate) dateFilter.$gte = new Date(filters.startDate);
-    if (filters.endDate) dateFilter.$lte = new Date(filters.endDate);
+    if (filters.startDate) dateFilter['$gte'] = new Date(filters.startDate);
+    if (filters.endDate) dateFilter['$lte'] = new Date(filters.endDate);
     filter = appendAndCondition(filter, {
       createdAt: dateFilter,
     } as Filter<ProductDocument>);

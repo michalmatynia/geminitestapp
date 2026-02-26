@@ -30,18 +30,18 @@ const SANITIZE_DROP_WARNING_LIMIT = 20;
 
 export const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
   const safe = cloneJsonSafe(state);
-  if (safe && typeof safe === 'object') {
-    const parsed = safe as any;
+  if (safe && typeof safe === 'object' && !Array.isArray(safe)) {
+    const parsed = safe as Record<string, unknown>;
     const sanitized: RuntimeState = {
       ...EMPTY_RUNTIME_STATE,
       ...parsed,
-      inputs: parsed.inputs ?? {},
-      outputs: parsed.outputs ?? {},
-      nodeOutputs: parsed.nodeOutputs ?? {},
-      nodeStatuses: parsed.nodeStatuses ?? {},
-      variables: parsed.variables ?? {},
-      events: parsed.events ?? [],
-    };
+      inputs: (parsed['inputs'] as Record<string, RuntimePortValues>) ?? {},
+      outputs: (parsed['outputs'] as Record<string, RuntimePortValues>) ?? {},
+      nodeOutputs: (parsed['nodeOutputs'] as Record<string, RuntimePortValues>) ?? {},
+      nodeStatuses: (parsed['nodeStatuses'] as Record<string, string>) ?? {},
+      variables: (parsed['variables'] as Record<string, unknown>) ?? {},
+      events: Array.isArray(parsed['events']) ? (parsed['events'] as unknown[]) : [],
+    } as unknown as RuntimeState;
     const dropSummary = collectDroppedRuntimePorts(state, sanitized);
     if (dropSummary.total > 0 && sanitizeDropWarningCount < SANITIZE_DROP_WARNING_LIMIT) {
       sanitizeDropWarningCount += 1;

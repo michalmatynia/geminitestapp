@@ -29,6 +29,14 @@ export function IntegrationModal(): React.JSX.Element {
     activeIntegration,
     onCloseModal,
     onOpenSessionModal,
+    showTestLogModal,
+    setShowTestLogModal,
+    showTestErrorModal,
+    setShowTestErrorModal,
+    showTestSuccessModal,
+    setShowTestSuccessModal,
+    showSessionModal,
+    setShowSessionModal,
   } = useIntegrationsContext();
 
   const {
@@ -124,11 +132,23 @@ export function IntegrationModal(): React.JSX.Element {
           )}
         </Tabs>
 
-        <TestLogModal />
+        <TestLogModal
+          isOpen={showTestLogModal}
+          onClose={() => setShowTestLogModal(false)}
+        />
 
-        <TestResultModal />
+        <TestResultModal
+          isOpen={showTestErrorModal || showTestSuccessModal}
+          onClose={() => {
+            setShowTestErrorModal(false);
+            setShowTestSuccessModal(false);
+          }}
+        />
 
-        <SessionModal />
+        <SessionModal
+          isOpen={showSessionModal}
+          onClose={() => setShowSessionModal(false)}
+        />
       </DetailModal>
     </IntegrationModalViewProvider>
   );

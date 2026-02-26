@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useMemo, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
 
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
@@ -206,7 +205,6 @@ export function ProductStudioProvider({ children }: { children: React.ReactNode 
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const _searchParams = useSearchParams();
   const settingsStore = useSettingsStore();
   
   const configuredDefaultStudioProjectId = settingsStore.get(PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY)?.trim() ?? '';

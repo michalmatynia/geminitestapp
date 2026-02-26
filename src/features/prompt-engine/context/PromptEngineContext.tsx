@@ -41,6 +41,8 @@ import {
   type PatternCollectionTab, 
   type ExploderPatternSubTab 
 } from './prompt-engine/PromptEngineConfigContext';
+
+export type { PatternCollectionTab, ExploderPatternSubTab };
 import { 
   FiltersContext, 
   type PromptEngineFilters, 

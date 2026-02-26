@@ -33,15 +33,27 @@ export type CompiledGraph = {
   terminalNodeIds: string[];
 };
 
+export type GraphCompileCode =
+  | 'fan_in_single_port'
+  | 'required_input_missing_wiring'
+  | 'cycle_detected'
+  | 'unsupported_cycle'
+  | 'cycle_wait_deadlock_risk'
+  | 'incompatible_wiring'
+  | 'optional_input_incompatible_wiring'
+  | 'trigger_context_resolution_risk'
+  | 'model_prompt_deadlock_risk'
+  | 'context_cache_scope_risk';
+
 export type GraphCompileFinding = {
-  code: string;
+  code: GraphCompileCode | string;
   severity: 'error' | 'warning';
   message: string;
   ruleTitle?: string;
   nodeId?: string;
   edgeId?: string;
   port?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 };
 
 export type GraphCompileReport = CompiledGraph & {

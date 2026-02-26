@@ -234,6 +234,19 @@ describe('case resolver case context resolution', () => {
     ).toBe(false);
   });
 
+  it('does not queue auto-clear for workspace_unavailable issue', () => {
+    const requestKey = buildRequestedContextRequestKey('case-missing', 5);
+    expect(
+      shouldQueueRequestedContextAutoClear({
+        requestedFileId: 'case-missing',
+        requestedCaseStatus: 'missing',
+        requestedCaseIssue: 'workspace_unavailable',
+        requestKey,
+        lastQueuedRequestKey: null,
+      }),
+    ).toBe(false);
+  });
+
   it('treats watchdog in-flight request validity based on key and age', () => {
     expect(
       hasValidRequestedContextInFlight({

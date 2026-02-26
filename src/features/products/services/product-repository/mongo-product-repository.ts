@@ -12,7 +12,7 @@ import {
   toProductResponse,
   type ProductDocument,
 } from '@/features/products/services/product-repository/mongo-product-repository-mappers';
-import type { ImageFileRecord } from '@/features/files/contracts';
+import type { ImageFileRecord } from '@/features/files';
 import {
   type CatalogRecord,
   CreateProductInput,

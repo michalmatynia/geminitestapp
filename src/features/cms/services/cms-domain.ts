@@ -411,14 +411,15 @@ export async function getSlugsForDomain(domainId: string, repo: CmsRepository): 
   }
   const links = await getDomainSlugLinks(domainId);
   if (!links.length) return [];
+  
+  const slugIds = links.map((link: CmsDomainSlugLink) => link.slugId);
   const map = new Map(links.map((link: CmsDomainSlugLink) => [link.slugId, link]));
-  const slugs = await repo.getSlugs();
-  return slugs
-    .filter((slug: Slug) => map.has(slug.id))
-    .map((slug: Slug) => ({
-      ...slug,
-      isDefault: map.get(slug.id)?.isDefault ?? false,
-    }));
+  
+  const slugs = await repo.getSlugsByIds(slugIds);
+  return slugs.map((slug: Slug) => ({
+    ...slug,
+    isDefault: map.get(slug.id)?.isDefault ?? false,
+  }));
 }
 
 export async function getSlugForDomainById(

@@ -120,7 +120,7 @@ export function useStateBridgeSelection({
 // ---------------------------------------------------------------------------
 
 export interface StateBridgeCanvasProps {
-  view: ViewState;
+  view?: ViewState | undefined;
   panState?: PanState | null | undefined;
   dragState?: DragState | null | undefined;
   connecting?: ConnectingState | null | undefined;
@@ -142,7 +142,9 @@ export function useStateBridgeCanvas({
   const actions = useCanvasActions();
 
   useEffect(() => {
-    actions.setView(view);
+    if (view !== undefined) {
+      actions.setView(view);
+    }
   }, [view, actions]);
   useEffect(() => {
     if (panState !== undefined) {
@@ -646,7 +648,7 @@ export interface StateBridgeAllProps {
   nodeConfigDirty?: boolean | undefined;
   simulationOpenNodeId?: string | null | undefined;
   // Canvas
-  view: ViewState;
+  view?: ViewState | undefined;
   panState?: PanState | null | undefined;
   dragState?: DragState | null | undefined;
   connecting?: ConnectingState | null | undefined;

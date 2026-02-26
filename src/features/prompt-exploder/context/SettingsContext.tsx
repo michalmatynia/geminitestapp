@@ -58,6 +58,7 @@ import { parsePromptExploderSettings, PROMPT_EXPLODER_SETTINGS_KEY } from '../se
 import type { PromptExploderLearnedTemplate, PromptExploderSettings } from '../types';
 import {
   DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
+  type PromptExploderRuntimeValidationScope,
 } from '../validation-stack';
 
 import { SettingsCoreContext, type SettingsCoreState } from './settings/SettingsCoreContext';
@@ -65,6 +66,8 @@ import { SettingsRuntimeContext, type SettingsRuntimeState } from './settings/Se
 import { SettingsDraftsContext, type SettingsDraftsState, type LearningDraft } from './settings/SettingsDraftsContext';
 import { SettingsSnapshotsContext, type SettingsSnapshotsState } from './settings/SettingsSnapshotsContext';
 import { SettingsActionsContext, type SettingsActions } from './settings/SettingsActionsContext';
+
+export type { LearningDraft, SettingsActions };
 
 export interface SettingsState extends SettingsCoreState, SettingsRuntimeState, SettingsDraftsState, SettingsSnapshotsState {}
 
@@ -264,7 +267,10 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const runtimeSelection = runtimeResolution.selection as unknown as PromptValidationOrchestrationResult;
   const runtimeGuardrailIssue = runtimeResolution.guardrailIssue;
 
-  const activeValidationScope = preferredValidatorScope;
+  const activeValidationScope: PromptExploderRuntimeValidationScope =
+    preferredValidatorScope === 'case-resolver-prompt-exploder'
+      ? 'case_resolver_prompt_exploder'
+      : 'prompt_exploder';
   const activeValidationRuleStack = runtimeSelection.validationRuleStack;
 
   const scopedRules = useMemo(
@@ -298,7 +304,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     return (promptExploderSettings.patternSnapshots ?? []).map((snapshot) => {
       let rules: PromptValidationRule[] = [];
       try {
-        rules = JSON.parse(snapshot.rulesJson) as PromptValidationRule[];
+        if (snapshot.rulesJson) {
+          rules = JSON.parse(snapshot.rulesJson) as PromptValidationRule[];
+        }
       } catch (e) {
         logClientError(e, { context: { source: 'PromptExploderSettingsContext', action: 'parseSnapshotRules', snapshotId: snapshot.id } });
       }
@@ -317,7 +325,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   useEffect(() => {
     if (settingsQuery.isLoading) return;
     const rulesJson = settingsMap.get(PROMPT_ENGINE_SETTINGS_KEY + '_rules');
-    const rules = parsePromptValidationRules(rulesJson);
+    const rules = parsePromptValidationRules(rulesJson ?? '');
     if ('ok' in rules && rules.ok) {
       setSessionLearnedRules(rules.rules);
     }

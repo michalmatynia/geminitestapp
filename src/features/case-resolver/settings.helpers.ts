@@ -1,14 +1,8 @@
 import {
   type CaseResolverDocumentDateProposal,
   type CaseResolverDocumentFormatVersion,
-  type CaseResolverDocumentHistoryEntry,
-  type CaseResolverDocumentVersion,
-  type CaseResolverEditorType,
-  type CaseResolverFile,
   type CaseResolverFileType,
-  type CaseResolverGraph,
   type CaseResolverPartyReference,
-  type CaseResolverScanSlot,
 } from '@/shared/contracts/case-resolver';
 import {
   type CaseResolverPartySearchKind,

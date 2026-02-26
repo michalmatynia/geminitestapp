@@ -67,20 +67,22 @@ export async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): P
 
   const aiPaths = await (async () => {
     try {
-      const repo = await getPathRunRepository();
+      const repo = (await getPathRunRepository());
       const byStatusEntries = await Promise.all(
         AI_PATH_STATUSES.map(async (status) => {
+           
           const result = await repo.listRuns({ status, limit: 1, offset: 0 });
           return [status, result.total] as const;
         })
       );
       const byStatus = Object.fromEntries(byStatusEntries) as Record<AiPathRunStatus, number>;
+       
       const all = await repo.listRuns({ limit: 1, offset: 0 });
       const latest = all.runs[0]
         ? {
-          id: all.runs[0].id,
-          status: all.runs[0].status,
-          createdAt: toIso(all.runs[0].createdAt),
+          id: String((all.runs[0] as Record<string, unknown>)['id']),
+          status: (all.runs[0] as Record<string, unknown>)['status'] as AiPathRunStatus,
+          createdAt: toIso((all.runs[0] as Record<string, unknown>)['createdAt'] as string),
         }
         : null;
       return {

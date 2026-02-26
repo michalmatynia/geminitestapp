@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { logSystemEvent } from '@/features/observability/server';
+import { CachedProductService } from '@/features/products/performance/cached-service';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
@@ -53,10 +54,17 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     throw badRequestError('catalogId query parameter is required');
   }
 
+  const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
   const repositoryStart = performance.now();
-  const primaryProvider = await getProductDataProvider();
-  const repository = await getCategoryRepository(primaryProvider);
-  const categories = await repository.listCategories({ catalogId });
+  
+  const categories = forceFresh
+    ? await (async () => {
+      const primaryProvider = await getProductDataProvider();
+      const repository = await getCategoryRepository(primaryProvider);
+      return repository.listCategories({ catalogId });
+    })()
+    : await CachedProductService.listCategories({ catalogId });
+
   timings['repository'] = performance.now() - repositoryStart;
   
   timings['total'] = performance.now() - requestStart;
@@ -106,6 +114,8 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
     ...(data.description !== undefined ? { description: data.description } : {}),
     ...(data.sortIndex !== undefined ? { sortIndex: data.sortIndex } : {}),
   });
+
+  CachedProductService.invalidateAll();
 
   return NextResponse.json(category, { status: 201 });
 }

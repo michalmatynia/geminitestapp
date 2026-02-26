@@ -1,6 +1,5 @@
 import {
   type CaseResolverAssetFile,
-  type CaseResolverDocumentHistoryEntry,
   type CaseResolverFile,
   type CaseResolverFileType,
   type CaseResolverFolderRecord,

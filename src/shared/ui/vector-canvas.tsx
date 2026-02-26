@@ -63,6 +63,9 @@ export interface VectorCanvasProps {
   className?: string;
 }
 
+const MIN_VIEW_SCALE = 0.25;
+const MAX_VIEW_SCALE = 8;
+
 export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
   const {
     src,
@@ -642,6 +645,11 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
         setIsDraggingImage(true);
         return;
       }
+      if (tool === 'select' && !selectionEnabled && event.button === 0) {
+        event.preventDefault();
+        beginPan(event.clientX, event.clientY);
+        return;
+      }
       if (tool === 'select' && selectionEnabled) {
         if (event.shiftKey) {
           const hitSegment = hitTestSegment(event.clientX, event.clientY);
@@ -852,28 +860,66 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
     setViewTransform({ scale: 1, panX: 0, panY: 0, rotateDeg: 0 });
   }, [stopPan, setViewTransform]);
 
-  const _handleResetHorizonLevel = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) {
-      setViewTransform((prev) => ({ ...prev, rotateDeg: 0 }));
-      return;
-    }
-    const rect = container.getBoundingClientRect();
-    const anchor = { x: rect.width / 2, y: rect.height / 2 };
+  const applyScaleAtAnchor = useCallback((scaleFactor: number, anchor: { x: number; y: number }): void => {
+    if (!Number.isFinite(scaleFactor) || scaleFactor <= 0) return;
     setViewTransform((prev) => {
-      const anchorWorld = screenPointToWorld(anchor, prev);
-      const leveled = worldPointToScreen(anchorWorld, { scale: prev.scale, panX: 0, panY: 0, rotateDeg: 0 });
-      return { ...prev, panX: anchor.x - leveled.x, panY: anchor.y - leveled.y, rotateDeg: 0 };
-    });
-  }, [containerRef, setViewTransform]);
+      const nextScale = Math.max(MIN_VIEW_SCALE, Math.min(MAX_VIEW_SCALE, prev.scale * scaleFactor));
+      if (Math.abs(nextScale - prev.scale) < 1e-4) return prev;
 
-  const showViewTransformHud = viewTransform.scale !== 1 || viewTransform.panX !== 0 || viewTransform.panY !== 0 || Math.abs(viewTransform.rotateDeg) > 1e-3;
+      const anchorWorld = screenPointToWorld(anchor, prev);
+      const shifted = worldPointToScreen(anchorWorld, { ...prev, scale: nextScale });
+      return {
+        ...prev,
+        scale: nextScale,
+        panX: prev.panX + (anchor.x - shifted.x),
+        panY: prev.panY + (anchor.y - shifted.y),
+      };
+    });
+  }, [setViewTransform]);
+
+  const resolveViewportCenter = useCallback((): { x: number; y: number } => {
+    const container = containerRef.current;
+    if (!container) return { x: 0, y: 0 };
+    const rect = container.getBoundingClientRect();
+    return {
+      x: rect.width / 2,
+      y: rect.height / 2,
+    };
+  }, [containerRef]);
+
+  const handleZoomIn = useCallback((): void => {
+    applyScaleAtAnchor(1.15, resolveViewportCenter());
+  }, [applyScaleAtAnchor, resolveViewportCenter]);
+
+  const handleZoomOut = useCallback((): void => {
+    applyScaleAtAnchor(1 / 1.15, resolveViewportCenter());
+  }, [applyScaleAtAnchor, resolveViewportCenter]);
+
+  const handleWheel = useCallback((event: React.WheelEvent<HTMLDivElement>): void => {
+    if (!src) return;
+    event.preventDefault();
+    const container = containerRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    if (!(rect.width > 0 && rect.height > 0)) return;
+
+    const anchor = {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top,
+    };
+    const magnitude = Math.max(0.04, Math.min(0.45, Math.abs(event.deltaY) * 0.0015));
+    const zoomFactor = event.deltaY < 0 ? 1 + magnitude : 1 / (1 + magnitude);
+    applyScaleAtAnchor(zoomFactor, anchor);
+  }, [applyScaleAtAnchor, containerRef, src]);
+
+  const showViewTransformHud = Boolean(src);
 
   return (
     <div
       ref={containerRef}
       className={cn('relative flex h-full w-full items-center justify-center overflow-hidden rounded border border-border bg-black/20', className)}
       style={enableTwoFingerRotate ? { touchAction: 'none' } : undefined}
+      onWheel={handleWheel}
     >
       <div
         ref={viewportRef}
@@ -916,7 +962,27 @@ export function VectorCanvas(props: VectorCanvasProps): React.JSX.Element {
       </div>
       {showViewTransformHud && (
         <div className='absolute bottom-2 right-2 z-10 flex items-center gap-1'>
+          <Button
+            variant='outline'
+            size='sm'
+            className='h-6 bg-black/60 px-2 text-[11px] text-white/90'
+            onClick={handleZoomOut}
+            title='Zoom out'
+            aria-label='Zoom out'
+          >
+            -
+          </Button>
           <div className='rounded bg-black/60 px-2 py-0.5 text-xs font-medium text-white/90'>{Math.round(viewTransform.scale * 100)}%</div>
+          <Button
+            variant='outline'
+            size='sm'
+            className='h-6 bg-black/60 px-2 text-[11px] text-white/90'
+            onClick={handleZoomIn}
+            title='Zoom in'
+            aria-label='Zoom in'
+          >
+            +
+          </Button>
           <Button variant='outline' size='sm' className='h-6 bg-black/60 px-2 text-[11px] text-white/90' onClick={handleFitToScreen}>Fit</Button>
         </div>
       )}

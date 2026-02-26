@@ -2,6 +2,7 @@ import type {
   CreateProductListingInput,
   ProductListing,
   ProductListingExportEvent,
+  ProductListingExportEventRecord,
   ProductListingRepository,
   ProductListingWithDetails,
 } from '@/shared/contracts/integrations';
@@ -9,6 +10,7 @@ import type {
 export type {
   CreateProductListingInput,
   ProductListingExportEvent,
+  ProductListingExportEventRecord,
   ProductListingRepository,
   ProductListingWithDetails,
 };

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { CachedProductService } from '@/features/products/performance/cached-service';
 import { getCategoryRepository, getProductDataProvider } from '@/features/products/server';
 import type { ProductCategory } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -30,12 +31,15 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     throw badRequestError(`catalogIds may contain at most ${MAX_CATALOG_IDS} IDs`);
   }
 
+  const forceFresh = new URL(req.url).searchParams.get('fresh') === '1';
   const primaryProvider = await getProductDataProvider();
   const repository = await getCategoryRepository(primaryProvider);
 
   const results = await Promise.all(
     catalogIds.map(async (catalogId) => {
-      const categories = await repository.listCategories({ catalogId });
+      const categories = forceFresh
+        ? await repository.listCategories({ catalogId })
+        : await CachedProductService.listCategories({ catalogId });
       return [catalogId, categories] as [string, ProductCategory[]];
     })
   );

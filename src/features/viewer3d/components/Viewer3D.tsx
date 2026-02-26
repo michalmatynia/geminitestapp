@@ -585,7 +585,7 @@ export function Viewer3D({
 
         {/* HDR Environment */}
         {environment !== 'none' && environment !== 'gym' && (
-          <Environment preset={environment as string} background={false} />
+          <Environment preset={environment as any} background={false} />
         )}
 
         <Suspense fallback={<Loader />}>

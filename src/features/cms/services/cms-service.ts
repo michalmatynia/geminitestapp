@@ -87,6 +87,7 @@ export const cmsService: CmsRepository = {
 
   // Slugs
   getSlugs: (): Promise<Slug[]> => repoCall('getSlugs'),
+  getSlugsByIds: (ids: string[]): Promise<Slug[]> => repoCall('getSlugsByIds', ids),
   getSlugById: (id: string): Promise<Slug | null> => repoCall('getSlugById', id),
   getSlugByValue: (slug: string): Promise<Slug | null> => repoCall('getSlugByValue', slug),
   createSlug: (data: { slug: string; pageId?: string | null; isDefault?: boolean }): Promise<Slug> => repoCall('createSlug', data),

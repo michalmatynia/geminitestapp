@@ -42,9 +42,13 @@ const buildContextValue = (
   handlers?: {
     onNodeDiagnosticsHover?: CanvasBoardUIContextValue['onNodeDiagnosticsHover'];
     onNodeDiagnosticsLeave?: CanvasBoardUIContextValue['onNodeDiagnosticsLeave'];
+    onSelectNode?: CanvasBoardUIContextValue['onSelectNode'];
+    onOpenNodeConfig?: CanvasBoardUIContextValue['onOpenNodeConfig'];
+    openNodeConfigOnSingleClick?: boolean;
+    node?: AiNode;
   }
 ): CanvasBoardUIContextValue => {
-  const node = buildNode({});
+  const node = handlers?.node ?? buildNode({});
   return {
     view: { x: 0, y: 0, scale: 1 },
     viewportSize: { width: 1200, height: 800 },
@@ -70,7 +74,7 @@ const buildContextValue = (
     reduceVisualEffects: false,
     enableNodeAnimations: false,
     connectorHitTargetPx: 14,
-    openNodeConfigOnSingleClick: false,
+    openNodeConfigOnSingleClick: handlers?.openNodeConfigOnSingleClick ?? false,
     hoveredConnectorKey: null,
     pinnedConnectorKey: null,
     setHoveredConnectorKey: vi.fn(),
@@ -83,8 +87,8 @@ const buildContextValue = (
     onPointerDownNode: vi.fn(),
     onPointerMoveNode: vi.fn(),
     onPointerUpNode: vi.fn(),
-    onSelectNode: vi.fn(),
-    onOpenNodeConfig: vi.fn(),
+    onSelectNode: handlers?.onSelectNode ?? vi.fn(),
+    onOpenNodeConfig: handlers?.onOpenNodeConfig ?? vi.fn(),
     onStartConnection: vi.fn(),
     onCompleteConnection: vi.fn(),
     onReconnectInput: vi.fn(),
@@ -159,5 +163,68 @@ describe('Canvas node diagnostics badges', () => {
 
     const badge = container.querySelector('[data-node-diagnostics-badge="node-1"]');
     expect(badge).toBeNull();
+  });
+
+  it('selects node on single click and does not open config when single-click-open is disabled', () => {
+    const selectSpy = vi.fn();
+    const openConfigSpy = vi.fn();
+    const value = buildContextValue(
+      {},
+      {
+        onSelectNode: selectSpy,
+        onOpenNodeConfig: openConfigSpy,
+        openNodeConfigOnSingleClick: false,
+      }
+    );
+
+    const { container } = render(
+      <svg>
+        <CanvasBoardUIProvider value={value}>
+          <CanvasSvgNodeLayer />
+        </CanvasBoardUIProvider>
+      </svg>
+    );
+
+    const nodeBody = container.querySelector('[data-node-body="node-1"]');
+    expect(nodeBody).toBeTruthy();
+    if (nodeBody) {
+      fireEvent.click(nodeBody);
+    }
+
+    expect(selectSpy).toHaveBeenCalledTimes(1);
+    expect(selectSpy.mock.calls[0]?.[0]).toBe('node-1');
+    expect(selectSpy.mock.calls[0]?.[1]).toEqual({ toggle: false });
+    expect(openConfigSpy).not.toHaveBeenCalled();
+  });
+
+  it('opens node config on double click', () => {
+    const selectSpy = vi.fn();
+    const openConfigSpy = vi.fn();
+    const value = buildContextValue(
+      {},
+      {
+        onSelectNode: selectSpy,
+        onOpenNodeConfig: openConfigSpy,
+        openNodeConfigOnSingleClick: false,
+      }
+    );
+
+    const { container } = render(
+      <svg>
+        <CanvasBoardUIProvider value={value}>
+          <CanvasSvgNodeLayer />
+        </CanvasBoardUIProvider>
+      </svg>
+    );
+
+    const nodeBody = container.querySelector('[data-node-body="node-1"]');
+    expect(nodeBody).toBeTruthy();
+    if (nodeBody) {
+      fireEvent.doubleClick(nodeBody);
+    }
+
+    expect(selectSpy).toHaveBeenCalled();
+    expect(selectSpy.mock.calls[0]?.[0]).toBe('node-1');
+    expect(openConfigSpy).toHaveBeenCalledTimes(1);
   });
 });

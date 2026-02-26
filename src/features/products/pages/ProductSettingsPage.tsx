@@ -44,29 +44,9 @@ function InternationalizationModals(): React.JSX.Element | null {
 
   return (
     <>
-      <LanguageModal
-        isOpen={intCtx.isLanguageModalOpen}
-        onClose={() => intCtx.handleCloseLanguageModal()}
-        onSuccess={() => intCtx.handleCloseLanguageModal()}
-        item={intCtx.activeLanguage}
-        items={intCtx.countries}
-      />
-
-      <CurrencyModal
-        isOpen={intCtx.isCurrencyModalOpen}
-        onClose={() => intCtx.handleCloseCurrencyModal()}
-        onSuccess={() => intCtx.handleCloseCurrencyModal()}
-        item={intCtx.activeCurrency}
-      />
-
-      <CountryModal
-        isOpen={intCtx.isCountryModalOpen}
-        onClose={() => intCtx.handleCloseCountryModal()}
-        onSuccess={() => intCtx.handleCloseCountryModal()}
-        item={intCtx.activeCountry}
-        items={intCtx.currencies}
-        loading={intCtx.loadingCurrencies}
-      />
+      <LanguageModal />
+      <CurrencyModal />
+      <CountryModal />
     </>
   );
 }

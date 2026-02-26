@@ -267,6 +267,15 @@ export const mongoCmsRepository: CmsRepository = {
     return docs.map((doc: SlugDocument): Slug => mapSlugDocumentToSlug(doc));
   },
 
+  async getSlugsByIds(ids: string[]): Promise<Slug[]> {
+    if (ids.length === 0) return [];
+    const db = await getMongoDb();
+    const docs = await db.collection<SlugDocument>(slugsCollection).find({
+      id: { $in: ids }
+    }).sort({ createdAt: -1 }).toArray();
+    return docs.map((doc: SlugDocument): Slug => mapSlugDocumentToSlug(doc));
+  },
+
   async getSlugById(id: string): Promise<Slug | null> {
     const db = await getMongoDb();
     const doc = await db.collection<SlugDocument>(slugsCollection).findOne(buildIdFilter<SlugDocument>(id));

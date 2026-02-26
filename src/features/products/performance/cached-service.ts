@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { productService } from '@/features/products/services/productService';
+import { getProductDataProvider } from '@/features/products/services/product-provider';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import type { ProductFilters } from '@/shared/contracts/products';
 
@@ -200,6 +201,34 @@ export class CachedProductService {
     }
   );
 
+  // List categories with caching
+  static listCategories: (filters: { catalogId: string }) => Promise<unknown[]> = withQueryCache(
+    async (filters: { catalogId: string }) => {
+      const primaryProvider = await getProductDataProvider();
+      const repository = await import('@/features/products/services/category-repository').then(m => m.getCategoryRepository(primaryProvider));
+      return repository.listCategories(filters);
+    },
+    {
+      keyGenerator: (filters: { catalogId: string }) => `categories:list:${filters.catalogId}`,
+      ttl: 300000, // 5 minutes
+      tags: (filters: { catalogId: string }) => [`categories:list:${filters.catalogId}`, 'categories:list']
+    }
+  );
+
+  // Get category tree with caching
+  static getCategoryTree: (catalogId: string) => Promise<unknown[]> = withQueryCache(
+    async (catalogId: string) => {
+      const primaryProvider = await getProductDataProvider();
+      const repository = await import('@/features/products/services/category-repository').then(m => m.getCategoryRepository(primaryProvider));
+      return repository.getCategoryTree(catalogId);
+    },
+    {
+      keyGenerator: (catalogId: string) => `categories:tree:${catalogId}`,
+      ttl: 300000, // 5 minutes
+      tags: (catalogId: string) => [`categories:tree:${catalogId}`, 'categories:list']
+    }
+  );
+
   // Cache invalidation methods
   static invalidateProduct(productId: string): void {
     ProductCacheHelpers.invalidateProduct(productId);
@@ -211,6 +240,8 @@ export class CachedProductService {
 
   static invalidateAll(): void {
     ProductCacheHelpers.invalidateAll();
+    queryCache.invalidateByTag('categories:list');
+    queryCache.invalidateByPattern(/^categories:/);
   }
 }
 

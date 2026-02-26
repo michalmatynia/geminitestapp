@@ -6,6 +6,7 @@ import { normalizeFolderPaths } from '../settings';
 type ResolveCaseResolverTreeWorkspaceArgs = {
   selectedFileId: string | null;
   requestedFileId: string | null;
+  activeCaseId?: string | null;
   workspace: CaseResolverWorkspace;
   includeDescendantCaseScope?: boolean;
 };
@@ -25,6 +26,7 @@ const forEachFolderPathAncestor = (
 export const resolveCaseResolverTreeWorkspace = ({
   selectedFileId,
   requestedFileId,
+  activeCaseId = null,
   workspace,
   includeDescendantCaseScope = true,
 }: ResolveCaseResolverTreeWorkspaceArgs): CaseResolverWorkspace => {
@@ -33,10 +35,11 @@ export const resolveCaseResolverTreeWorkspace = ({
   );
   const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
   const forcedContextFileId = normalizedRequestedFileId.length > 0 ? normalizedRequestedFileId : null;
+  const normalizedActiveCaseId = activeCaseId?.trim() ?? '';
   const contextFileId =
     forcedContextFileId ??
     selectedFileId ??
-    workspace.activeFileId;
+    (normalizedActiveCaseId.length > 0 ? normalizedActiveCaseId : null);
   if (!contextFileId) return workspace;
   const contextFile = filesById.get(contextFileId) ?? null;
   if (!contextFile) {
@@ -187,7 +190,7 @@ export const resolveCaseResolverTreeWorkspace = ({
   );
   const activeCandidates = [
     selectedFileId,
-    workspace.activeFileId,
+    normalizedActiveCaseId.length > 0 ? normalizedActiveCaseId : null,
     scopedRootCaseId,
     scopedFiles[0]?.id ?? null,
   ];

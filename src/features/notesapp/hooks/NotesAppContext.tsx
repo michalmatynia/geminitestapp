@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
 
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
 import { 
@@ -162,6 +162,10 @@ export function NotesAppProvider({
   const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
   const [isFolderTreeCollapsed, setIsFolderTreeCollapsed] = useState<boolean>(false);
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
+
+  useEffect(() => {
+    updateSettings({ selectedNoteId: selectedNote?.id ?? null });
+  }, [selectedNote?.id, updateSettings]);
   const [confirmation, setConfirmation] = useState<{
       title: string;
       message: string;
@@ -323,6 +327,7 @@ export function NotesAppProvider({
     try {
       const note = await api.get<NoteWithRelations>(`/api/notes/${noteId}`);
       setSelectedNote(note);
+      updateSettings({ selectedNoteId: noteId });
       setIsEditing(false);
     } catch (error: unknown) {
       logClientError(error, { context: { source: 'NotesAppProvider', action: 'fetchNote', noteId } });

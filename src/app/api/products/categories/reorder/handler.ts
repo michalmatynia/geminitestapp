@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
 import { logSystemEvent } from '@/features/observability/server';
+import { CachedProductService } from '@/features/products/performance/cached-service';
 import { getCategoryRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
@@ -152,6 +153,8 @@ export async function POST_handler(
   });
   timings['update'] = performance.now() - updateStart;
   timings['total'] = performance.now() - requestStart;
+
+  CachedProductService.invalidateAll();
 
   if (shouldLogTiming()) {
     await logSystemEvent({

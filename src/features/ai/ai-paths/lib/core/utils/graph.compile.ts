@@ -1,6 +1,5 @@
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type {
-  CompiledGraph,
   GraphCompileFinding,
   GraphCompileReport,
 } from './graph.types';
@@ -140,9 +139,11 @@ export const compileGraph = (
       } else if (recStack.has(v)) {
         // Cycle detected
         const cycleNodes = path.slice(path.indexOf(v));
+        const firstId = cycleNodes[0]!;
+        const secondId = cycleNodes[1]!;
         const isTriggerSimulationHandshake = cycleNodes.length === 2 && 
-          ((nodeMap.get(cycleNodes[0])?.type === 'trigger' && nodeMap.get(cycleNodes[1])?.type === 'simulation') ||
-           (nodeMap.get(cycleNodes[1])?.type === 'trigger' && nodeMap.get(cycleNodes[0])?.type === 'simulation'));
+          ((nodeMap.get(firstId)?.type === 'trigger' && nodeMap.get(secondId)?.type === 'simulation') ||
+           (nodeMap.get(secondId)?.type === 'trigger' && nodeMap.get(firstId)?.type === 'simulation'));
 
         const isAllowedLoop = cycleNodes.some(id => {
           const type = nodeMap.get(id)?.type;

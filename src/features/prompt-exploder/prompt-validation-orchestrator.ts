@@ -60,6 +60,7 @@ type PromptValidationOrchestratorInput = {
 export type PromptValidationOrchestrationResult = PromptValidationRuntimeSelection & {
   correlationId: string;
   stackResolution: ReturnType<typeof resolvePromptExploderValidationStack>;
+  validationRuleStack: PromptExploderValidationRuleStack;
 };
 
 type CachedRuntimeSelection = {
@@ -432,6 +433,7 @@ export const resolvePromptValidationRuntime = (
       return {
         correlationId,
         stackResolution: cached.stackResolution,
+        validationRuleStack: cached.stackResolution.stack || 'prompt-exploder',
         identity: cached.identity,
         scopedRules: cached.scopedRules,
         effectiveRules: cached.effectiveRules,
@@ -547,6 +549,7 @@ export const resolvePromptValidationRuntime = (
     return {
       correlationId,
       stackResolution,
+      validationRuleStack: stackResolution.stack || 'prompt-exploder',
       identity,
       scopedRules,
       effectiveRules,

@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { CachedProductService } from '@/features/products/performance/cached-service';
 import { getCategoryRepository } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
@@ -131,6 +132,8 @@ export async function PUT_handler(
 
   const category = await repository.updateCategory(params.id, updatePayload);
 
+  CachedProductService.invalidateAll();
+
   return NextResponse.json(category);
 }
 
@@ -145,6 +148,9 @@ export async function DELETE_handler(
 ): Promise<Response> {
   const repository = await getCategoryRepository();
   await repository.deleteCategory(params.id);
+  
+  CachedProductService.invalidateAll();
+
   return NextResponse.json({ success: true });
 }
 

@@ -171,11 +171,26 @@ export const prismaCmsRepository: CmsRepository = {
   },
 
   async getPageBySlug(slugValue: string): Promise<Page | null> {
-    const slug = await prisma.slug.findUnique({ where: { slug: slugValue } });
-    if (!slug) return null;
-    const pageSlug = await prisma.pageSlug.findFirst({ where: { slugId: slug.id } });
-    if (!pageSlug) return null;
-    return this.getPageById(pageSlug.pageId);
+    const pageSlug = await prisma.pageSlug.findFirst({
+      where: {
+        slug: { slug: slugValue },
+      },
+      include: {
+        page: {
+          include: {
+            slugs: {
+              include: {
+                slug: true,
+              },
+            },
+            components: {
+              orderBy: { order: 'asc' },
+            },
+          },
+        },
+      },
+    });
+    return pageSlug?.page ? mapPrismaPage(pageSlug.page as Parameters<typeof mapPrismaPage>[0]) : null;
   },
 
   async updatePage(id: string, data: PageUpdateData): Promise<Page | null> {
@@ -241,6 +256,16 @@ export const prismaCmsRepository: CmsRepository = {
   // Slugs
   async getSlugs(): Promise<Slug[]> {
     const slugs = await prisma.slug.findMany({
+      include: { pages: true },
+      orderBy: { createdAt: 'desc' },
+    });
+    return slugs.map(mapPrismaSlug);
+  },
+
+  async getSlugsByIds(ids: string[]): Promise<Slug[]> {
+    if (ids.length === 0) return [];
+    const slugs = await prisma.slug.findMany({
+      where: { id: { in: ids } },
       include: { pages: true },
       orderBy: { createdAt: 'desc' },
     });

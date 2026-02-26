@@ -144,6 +144,49 @@ describe('case-resolver workspace persistence', () => {
     });
   });
 
+  it('falls back to cached key endpoint when fresh key fetch fails', async () => {
+    const workspace = createDefaultCaseResolverWorkspace();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(toJsonResponse(500, { error: 'fresh key failed' }))
+      .mockResolvedValueOnce(
+        toJsonResponse(200, [
+          {
+            key: CASE_RESOLVER_WORKSPACE_KEY,
+            value: JSON.stringify(workspace),
+          },
+        ]),
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
+
+    expect(result).not.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+    );
+    expect(fetchMock.mock.calls[1]?.[0]).toBe(
+      `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+    );
+  });
+
+  it('supports object payload shape for key snapshot fetch responses', async () => {
+    const workspace = createDefaultCaseResolverWorkspace();
+    const fetchMock = vi.fn().mockResolvedValue(
+      toJsonResponse(200, {
+        key: CASE_RESOLVER_WORKSPACE_KEY,
+        value: JSON.stringify(workspace),
+      }),
+    );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceSnapshot('test_source');
+
+    expect(result).not.toBeNull();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('fetches workspace metadata via key meta endpoint', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       toJsonResponse(200, {

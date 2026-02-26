@@ -1,8 +1,9 @@
 'use client';
 
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call */
+
 import React, { useMemo } from 'react';
 import { useGenerationToolbarState } from './GenerationToolbar.hooks';
-import { type GenerationToolbarState } from './GenerationToolbar.types';
 import {
   UPSCALE_MAX_OUTPUT_SIDE,
 } from './GenerationToolbar.utils';
@@ -15,6 +16,8 @@ import {
 import { getImageStudioDocTooltip } from '../../utils/studio-docs';
 import { normalizeImageStudioModelPresets } from '../../utils/studio-settings';
 import { useGenerationToolbarHandlers } from './GenerationToolbar.handlers';
+import { type GenerationToolbarHandlers } from './GenerationToolbar.types';
+import { useGenerationToolbarEffects } from './useGenerationToolbarEffects';
 import { GenerationToolbarAutoScalerSection } from './GenerationToolbarAutoScalerSection';
 import { GenerationToolbarCenterSection } from './GenerationToolbarCenterSection';
 import { GenerationToolbarCropSection } from './GenerationToolbarCropSection';
@@ -23,8 +26,7 @@ import { GenerationToolbarMaskSection } from './GenerationToolbarMaskSection';
 import { GenerationToolbarUpscaleSection } from './GenerationToolbarUpscaleSection';
 
 export function GenerationToolbarInner(): React.JSX.Element {
-  const rawState = useGenerationToolbarState();
-  const state = rawState as unknown as GenerationToolbarState;
+  const state = useGenerationToolbarState();
   const {
     maskPreviewEnabled,
     centerGuidesEnabled,
@@ -32,6 +34,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
     setCenterGuidesEnabled,
     workingSlot,
     maskInvert,
+    setMaskInvert,
     maskGenLoading,
     maskGenMode,
     setMaskGenMode,
@@ -56,7 +59,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
     centerIsObjectLayoutMode,
   } = state;
 
-  const handlers = useGenerationToolbarHandlers(state);
+  const handlers: GenerationToolbarHandlers = useGenerationToolbarHandlers(state);
   const {
     handleUpscale,
     handleCrop,
@@ -74,6 +77,11 @@ export function GenerationToolbarInner(): React.JSX.Element {
     handleApplyAnalysisPlanToCenter,
     handleApplyAnalysisPlanToAutoScaler,
   } = handlers;
+
+  useGenerationToolbarEffects(state, {
+    handleCenterObject,
+    handleAutoScale,
+  });
 
   const maskGenerationBusy = maskGenLoading;
   const maskGenerationLabel = maskGenerationBusy
@@ -306,7 +314,10 @@ export function GenerationToolbarInner(): React.JSX.Element {
         maskModeOptions={maskModeOptions}
         maskPreviewEnabled={maskPreviewEnabled}
         onAttachMasks={() => {
-          const action = async () => { await attachMaskVariantsFromSelection(); };
+          const action = async () => {
+             
+            await attachMaskVariantsFromSelection();
+          };
           void action();
         }}
         onGenerateMask={() => {
@@ -416,7 +427,8 @@ export function GenerationToolbarInner(): React.JSX.Element {
               toast(error instanceof Error ? error.message : 'Failed to save custom preset.', { variant: 'error' });
             }
           })();
-        }}        onCenterLayoutDeletePreset={() => {
+        }}
+        onCenterLayoutDeletePreset={() => {
           if (!state.selectedCenterCustomPresetId) return;
           const deletedName = state.selectedCenterCustomPreset?.name?.trim() ?? '';
           const nextPresets = deleteObjectLayoutCustomPreset(activeProjectId, state.selectedCenterCustomPresetId);
@@ -438,7 +450,7 @@ export function GenerationToolbarInner(): React.JSX.Element {
           state.setCenterLayoutAdvancedEnabled(!state.centerLayoutAdvancedEnabled);
         }}
         onToggleCenterLayoutSplitAxes={() => {
-          state.setCenterLayoutSplitAxes(!state.setCenterLayoutSplitAxes);
+          state.setCenterLayoutSplitAxes(!state.centerLayoutSplitAxes);
         }}
         onToggleCenterGuides={() => {
           setCenterGuidesEnabled(!centerGuidesEnabled);

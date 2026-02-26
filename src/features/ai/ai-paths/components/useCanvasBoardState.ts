@@ -352,6 +352,7 @@ export function useCanvasBoardState({
     handlePanStart: (event) => { canvasInteractions.handlePanStart(event); },
     handlePanMove: (event) => { canvasInteractions.handlePanMove(event); },
     handlePanEnd: (event) => { canvasInteractions.handlePanEnd(event); },
+    handleWheel: (event) => { canvasInteractions.handleWheel(event); },
     handleRemoveEdge: (edgeId) => { canvasInteractions.handleRemoveEdge(edgeId); },
     handleDisconnectPort: (direction, nodeId, port) => { canvasInteractions.handleDisconnectPort(direction, nodeId, port); },
     handleStartConnection: (nodeId, port, _pos) => { 

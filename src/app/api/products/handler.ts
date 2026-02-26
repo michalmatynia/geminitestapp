@@ -60,22 +60,23 @@ const attachTimingHeaders = (
 };
 
 export async function GET_handler(
-  _req: NextRequest,
+  req: NextRequest,
   ctx: ApiHandlerContext,
 ): Promise<Response> {
   const filters = ctx.query as ProductFiltersParsed;
   const timings: Record<string, number | null | undefined> = {};
+  const forceFresh = req.nextUrl.searchParams.get('fresh') === '1';
 
   try {
     const providerStart = performance.now();
     const provider = await getProductDataProvider();
     timings['provider'] = performance.now() - providerStart;
 
-    // Read directly from the product service.
-    const products = await productService.getProducts(filters, {
-      timings,
-      provider,
-    });
+    // Use CachedProductService for better performance, unless fresh data is explicitly requested.
+    const products = forceFresh
+      ? await productService.getProducts(filters, { timings, provider })
+      : await CachedProductService.getProducts(filters);
+    
     timings['total'] = ctx.getElapsedMs();
 
     if (shouldLogTiming()) {

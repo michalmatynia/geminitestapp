@@ -27,6 +27,7 @@ import { useProductFormValidator } from '../hooks/useProductFormValidator';
 interface ProductFormProps {
   submitButtonText: string;
   skuRequired?: boolean;
+  validationInstanceScopeOverride?: string;
 }
 
 const PRODUCT_FORM_TAB_SET = new Set<string>(PRODUCT_DRAFT_OPEN_FORM_TAB_OPTIONS);
@@ -47,6 +48,7 @@ const normalizeProductFormTab = (value: unknown): ProductDraftOpenFormTab => {
 export default function ProductForm({
   submitButtonText: _submitButtonText,
   skuRequired: _skuRequired = false,
+  validationInstanceScopeOverride,
 }: ProductFormProps): React.JSX.Element {
   const {
     handleSubmit,
@@ -68,7 +70,7 @@ export default function ProductForm({
     return initial;
   });
 
-  const validator = useProductFormValidator();
+  const validator = useProductFormValidator(validationInstanceScopeOverride);
 
   const footerEntityId = product?.id?.trim() || draft?.id?.trim() || '';
 
@@ -93,8 +95,12 @@ export default function ProductForm({
           validationInstanceScope: validator.validationInstanceScope,
           validatorEnabled: validator.validatorEnabled,
           formatterEnabled: validator.formatterEnabled,
-          setValidatorEnabled: validator.setValidatorEnabled,
-          setFormatterEnabled: validator.setFormatterEnabled,
+          setValidatorEnabled: (val): void => {
+            validator.setValidatorEnabled(typeof val === 'function' ? val(validator.validatorEnabled) : val);
+          },
+          setFormatterEnabled: (val): void => {
+            validator.setFormatterEnabled(typeof val === 'function' ? val(validator.formatterEnabled) : val);
+          },
           validationDenyBehavior: validator.validationDenyBehavior,
           setValidationDenyBehavior: (behavior: React.SetStateAction<ProductValidationDenyBehavior>): void => {
             if (typeof behavior === 'string') {

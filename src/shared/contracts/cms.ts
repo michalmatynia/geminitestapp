@@ -709,6 +709,7 @@ export type CmsRepository = {
 
   // Slugs
   getSlugs(): Promise<Slug[]>;
+  getSlugsByIds(ids: string[]): Promise<Slug[]>;
   getSlugById(id: string): Promise<Slug | null>;
   getSlugByValue(slug: string): Promise<Slug | null>;
   createSlug(data: { slug: string; pageId?: string | null; isDefault?: boolean }): Promise<Slug>;

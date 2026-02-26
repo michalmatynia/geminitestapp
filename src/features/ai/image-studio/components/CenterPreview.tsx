@@ -450,10 +450,10 @@ export function CenterPreviewInner(): React.JSX.Element {
   const previewGridStyle = useMemo((): React.CSSProperties => {
     const canvasMinHeightPx = PREVIEW_CANVAS_MIN_HEIGHT_BY_SIZE[previewCanvasSize];
     if (!showVariantPanel) {
-      return { gridTemplateRows: `\${canvasMinHeightPx}px` };
+      return { gridTemplateRows: `${canvasMinHeightPx}px` };
     }
     return {
-      gridTemplateRows: `\${canvasMinHeightPx}px \${PREVIEW_VARIANT_PANEL_HEIGHT}`,
+      gridTemplateRows: `${canvasMinHeightPx}px ${PREVIEW_VARIANT_PANEL_HEIGHT}`,
     };
   }, [previewCanvasSize, showVariantPanel]);
 
@@ -590,10 +590,10 @@ export function CenterPreviewInner(): React.JSX.Element {
   }, []);
 
   const handleDeleteVariant = useCallback((variant: VariantThumbnailInfo): void => {
-    const variantLabel = variant.output?.filename?.trim() || `Variant \${variant.index}`;
+    const variantLabel = variant.output?.filename?.trim() || `Variant ${variant.index}`;
     confirm({
       title: 'Delete Variant?',
-      message: `Delete variant "\${variantLabel}"? This action cannot be undone.`,
+      message: `Delete variant "${variantLabel}"? This action cannot be undone.`,
       confirmText: 'Delete',
       isDangerous: true,
       onConfirm: async () => {
@@ -688,9 +688,9 @@ export function CenterPreviewInner(): React.JSX.Element {
     setScreenshotBusy(true);
     try {
       const baseName = (workingSlot.name || workingSlot.id || 'slot').replace(/[^a-zA-Z0-9_-]/g, '_');
-      await api.post(`/api/image-studio/slots/\${encodeURIComponent(workingSlot.id)}/screenshot`, {
+      await api.post(`/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/screenshot`, {
         dataUrl,
-        filename: `\${baseName}-\${Date.now()}.png`,
+        filename: `${baseName}-${Date.now()}.png`,
       });
       void invalidateImageStudioSlots(queryClient, projectId);
       toast('Screenshot saved and attached to slot.', { variant: 'success' });

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Locate } from 'lucide-react';
-import { VectorDrawingCanvas, VectorDrawingProvider } from '@/features/vector-drawing';
+import { VectorDrawingCanvas, VectorDrawingProvider, VectorDrawingToolbar } from '@/features/vector-drawing';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import { Button, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -119,6 +119,14 @@ export function CenterPreviewCanvas({
             />
           </div>
         )}
+
+        {previewMode !== '3d' && !splitVariantView ? (
+          <div className='absolute left-4 top-4 z-30'>
+            <VectorDrawingToolbar
+              className='max-w-[min(100%,48rem)] flex-wrap justify-start rounded-xl border-white/10 bg-slate-900/70 backdrop-blur-md'
+            />
+          </div>
+        ) : null}
 
         <div className='absolute bottom-4 left-4 z-30'>
           <SplitViewControls

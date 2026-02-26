@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
-import type { IntegrationDefinition } from './integrations-context-types';
+import type { IntegrationDefinition } from '../integrations-context-types';
 
 export interface IntegrationsActions {
   handleIntegrationClick: (definition: IntegrationDefinition) => Promise<void>;

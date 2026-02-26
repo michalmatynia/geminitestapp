@@ -387,7 +387,7 @@ const readMetaRecord = (meta: AiPathRunRecord['meta']): Record<string, unknown> 
 };
 
 const resolveRunSource = (run: AiPathRunRecord): string | null => {
-  const meta = readMetaRecord(run.meta);
+  const meta = readMetaRecord(run.meta as Record<string, unknown>);
   if (!meta) return null;
 
   const sourceRaw = meta['source'];

@@ -3,6 +3,8 @@ import type { PromptValidationRule, PromptValidationScope } from '@/features/pro
 import type { PromptExploderPatternSnapshot } from './types';
 import type { PromptExploderRuntimeValidationScope } from './validation-stack';
 
+export type { PromptExploderPatternSnapshot };
+
 
 export const buildPatternSnapshot = (args: {
   rules: PromptValidationRule[];

@@ -93,6 +93,8 @@ export const shouldQueueRequestedContextAutoClear = ({
   const normalizedRequestedFileId = normalizeRequestedFileId(requestedFileId);
   const normalizedRequestKey = typeof requestKey === 'string' ? requestKey.trim() : '';
   if (!normalizedRequestedFileId || !normalizedRequestKey) return false;
-  if (requestedCaseStatus !== 'missing' || requestedCaseIssue === null) return false;
+  if (requestedCaseStatus !== 'missing' || requestedCaseIssue !== 'requested_file_missing') {
+    return false;
+  }
   return normalizedRequestKey !== lastQueuedRequestKey;
 };

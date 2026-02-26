@@ -347,15 +347,15 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     const targetLabel = target === 'object_layout' ? 'Object Layout' : 'Auto Scaler';
     toast(
       runAfterApply
-        ? `Queued analysis plan and execution for \${targetLabel}.`
-        : `Queued analysis plan for \${targetLabel}.`,
+        ? `Queued analysis plan and execution for ${targetLabel}.`
+        : `Queued analysis plan for ${targetLabel}.`,
       { variant: 'success' }
     );
     const params = new URLSearchParams(searchParams?.toString() ?? '');
     if (params.has('tab')) {
       params.delete('tab');
       const query = params.toString();
-      router.replace(query ? `\${pathname}?\${query}` : pathname);
+      router.replace(query ? `${pathname}?${query}` : pathname);
     }
   };
 
@@ -410,7 +410,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
         setStatus('processing');
         const response = await api
           .post<unknown>(
-            `/api/image-studio/slots/\${encodeURIComponent(slotId)}/analysis`,
+            `/api/image-studio/slots/${encodeURIComponent(slotId)}/analysis`,
             {
               mode,
               layout: layoutPayload,
@@ -509,7 +509,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
               });
               setLayoutCustomPresets(saved.presets);
               setLayoutPresetDraftName(saved.savedPreset.name);
-              toast(`Saved preset "\${saved.savedPreset.name}".`, { variant: 'success' });
+              toast(`Saved preset "${saved.savedPreset.name}".`, { variant: 'success' });
             } catch (error) {
               toast(error instanceof Error ? error.message : 'Failed to save custom preset.', { variant: 'error' });
             }
@@ -522,7 +522,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
             setLayoutPresetDraftName('');
             toast(
               deletedName
-                ? `Deleted preset "\${deletedName}".`
+                ? `Deleted preset "${deletedName}".`
                 : 'Deleted selected custom preset.',
               { variant: 'success' }
             );

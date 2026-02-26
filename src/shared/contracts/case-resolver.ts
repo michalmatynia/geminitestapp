@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import { aiNodeSchema, edgeSchema, type AiNode, type Edge, type NodeDefinition } from './ai-paths';
+import { edgeSchema, type Edge, type NodeDefinition } from './ai-paths';
+import { aiNodeSchema, type AiNode } from './ai-paths-core';
 import { dtoBaseSchema, namedDtoSchema, type NamedDto, type DtoBase } from './base';
 import { documentEditorModeSchema } from './document-editor';
 

@@ -19,6 +19,7 @@ import { getImageStudioSlotImageSrc } from '../../utils/image-src';
 import {
   loadObjectLayoutAdvancedDefaults,
   loadObjectLayoutCustomPresets,
+  resolveObjectLayoutPresetOptionValue,
 } from '../../utils/object-layout-presets';
 import {
   resolveClientProcessingImageSrc,
@@ -26,8 +27,17 @@ import {
   type MaskShapeForExport,
   type CropRectResolutionDiagnostics,
 } from './GenerationToolbarImageUtils';
+import {
+  CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD,
+  CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD,
+  CENTER_LAYOUT_MAX_CHROMA_THRESHOLD,
+  CENTER_LAYOUT_MAX_WHITE_THRESHOLD,
+  CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
+  CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
+  normalizeCenterThreshold,
+  normalizeMaskShapeForExport,
+} from './GenerationToolbar.utils';
 import { useGenerationToolbarContext } from './GenerationToolbarContext';
-import { normalizeMaskShapeForExport } from './GenerationToolbar.utils';
 import { type GenerationToolbarState } from './GenerationToolbar.types';
 
 export function useGenerationToolbarState(): GenerationToolbarState {
@@ -72,6 +82,11 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     setCenterLayoutShadowPolicy,
     setCenterLayoutWhiteThreshold,
     setCenterLayoutChromaThreshold,
+    centerLayoutWhiteThreshold,
+    centerLayoutChromaThreshold,
+    centerLayoutDetection,
+    centerLayoutShadowPolicy,
+    centerLayoutCustomPresets,
   } = toolbarContext;
 
   const upscaleRequestInFlightRef = useRef(false);
@@ -86,6 +101,93 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   const selectedCenterCustomPresetIdRef = useRef<string | null>(null);
   const lastConsumedAnalysisIntentRef = useRef<string | null>(null);
   const cropDiagnosticsRef = useRef<CropRectResolutionDiagnostics | null>(null);
+
+  const centerLayoutWhiteThresholdValue = useMemo(
+    () => normalizeCenterThreshold(
+      centerLayoutWhiteThreshold,
+      CENTER_LAYOUT_MIN_WHITE_THRESHOLD,
+      CENTER_LAYOUT_MAX_WHITE_THRESHOLD,
+      CENTER_LAYOUT_DEFAULT_WHITE_THRESHOLD
+    ),
+    [centerLayoutWhiteThreshold]
+  );
+
+  const centerLayoutChromaThresholdValue = useMemo(
+    () => normalizeCenterThreshold(
+      centerLayoutChromaThreshold,
+      CENTER_LAYOUT_MIN_CHROMA_THRESHOLD,
+      CENTER_LAYOUT_MAX_CHROMA_THRESHOLD,
+      CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD
+    ),
+    [centerLayoutChromaThreshold]
+  );
+
+  const centerLayoutPresetOptionValue = useMemo(
+    () => resolveObjectLayoutPresetOptionValue({
+      detection: centerLayoutDetection,
+      shadowPolicy: centerLayoutShadowPolicy,
+      whiteThreshold: centerLayoutWhiteThresholdValue,
+      chromaThreshold: centerLayoutChromaThresholdValue,
+    }, centerLayoutCustomPresets),
+    [centerLayoutDetection, centerLayoutShadowPolicy, centerLayoutWhiteThresholdValue, centerLayoutChromaThresholdValue, centerLayoutCustomPresets]
+  );
+
+  const selectedCenterCustomPresetId = useMemo(() => {
+    if (!centerLayoutPresetOptionValue.startsWith('user:')) return null;
+    return centerLayoutPresetOptionValue.slice(5);
+  }, [centerLayoutPresetOptionValue]);
+
+  const selectedCenterCustomPreset = useMemo(() => {
+    if (!selectedCenterCustomPresetId) return null;
+    return centerLayoutCustomPresets.find(p => p.id === selectedCenterCustomPresetId) ?? null;
+  }, [selectedCenterCustomPresetId, centerLayoutCustomPresets]);
+
+  const centerIsObjectLayoutMode =
+    toolbarContext.centerMode === 'client_object_layout_v1' ||
+    toolbarContext.centerMode === 'server_object_layout_v1';
+
+  const analysisPlanAvailable = Boolean(toolbarContext.analysisPlanSnapshot);
+  const analysisPlanSlotId = toolbarContext.analysisPlanSnapshot?.slotId?.trim() ?? '';
+  const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
+  const analysisPlanMatchesWorkingSlot =
+    analysisPlanAvailable &&
+    normalizedWorkingSlotId !== '' &&
+    analysisPlanSlotId === normalizedWorkingSlotId;
+
+  const analysisPlanSourceSignature = toolbarContext.analysisPlanSnapshot?.sourceSignature?.trim() ?? '';
+  const analysisPlanIsStale =
+    analysisPlanAvailable &&
+    (!workingSourceSignature || analysisPlanSourceSignature !== workingSourceSignature);
+
+  const analysisSummaryData = useMemo((): ImageStudioAnalysisSummaryChipData | null => {
+    if (!toolbarContext.analysisPlanSnapshot) return null;
+    const { layout } = toolbarContext.analysisPlanSnapshot;
+    return {
+      detection: layout.detection,
+      shadowPolicy: layout.shadowPolicy,
+      padding: layout.paddingPercent,
+      whiteThreshold: layout.whiteThreshold,
+      chromaThreshold: layout.chromaThreshold,
+    };
+  }, [toolbarContext.analysisPlanSnapshot]);
+
+  const centerAnalysisConfigMismatchMessage = useMemo(() => {
+    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale) return null;
+    return null; // Logic could be added here to compare current UI state with analysis plan
+  }, [analysisPlanAvailable, analysisPlanMatchesWorkingSlot, analysisPlanIsStale]);
+
+  const autoScaleAnalysisConfigMismatchMessage = useMemo(() => {
+    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale) return null;
+    return null;
+  }, [analysisPlanAvailable, analysisPlanMatchesWorkingSlot, analysisPlanIsStale]);
+
+  const centerLayoutPresetOptions = useMemo(
+    () => loadObjectLayoutCustomPresets(activeProjectId).map(p => ({
+      value: `user:${p.id}`,
+      label: `Preset: ${p.name}`
+    })),
+    [activeProjectId, centerLayoutCustomPresets]
+  );
 
   const maskShapesForExport = useMemo<MaskShapeForExport[]>(
     () =>
@@ -301,6 +403,19 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     workingSourceSignature,
     activeProjectId,
     projectCanvasSize,
+    centerLayoutWhiteThresholdValue,
+    centerLayoutChromaThresholdValue,
+    centerLayoutPresetOptionValue,
+    selectedCenterCustomPresetId,
+    selectedCenterCustomPreset,
+    centerIsObjectLayoutMode,
+    analysisPlanAvailable,
+    analysisPlanMatchesWorkingSlot,
+    analysisSummaryData,
+    analysisPlanIsStale,
+    centerAnalysisConfigMismatchMessage,
+    autoScaleAnalysisConfigMismatchMessage,
+    centerLayoutPresetOptions,
     applyAnalysisLayoutToCenter,
     applyAnalysisLayoutToAutoScaler,
   };

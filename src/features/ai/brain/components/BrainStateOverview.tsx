@@ -5,7 +5,6 @@ import { Card } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
 import { AI_BRAIN_SETTINGS_KEY } from '../settings';
-import type { InsightsSnapshot } from '@/shared/contracts/ai-brain';
 
 const formatDate = (value: string | Date | null | undefined): string => {
   if (!value) return 'never';

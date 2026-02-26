@@ -90,7 +90,7 @@ export function useSlotImageDisconnect({
             if (!slotId) return null;
             try {
               const response = await api.patch(
-                `/api/image-studio/slots/\${encodeURIComponent(slotId)}`,
+                `/api/image-studio/slots/${encodeURIComponent(slotId)}`,
                 clearPayload
               );
               return response.slot ?? null;

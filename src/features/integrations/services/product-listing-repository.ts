@@ -10,6 +10,7 @@ import prisma from '@/shared/lib/db/prisma';
 import {
   CreateProductListingInput,
   ProductListingExportEvent,
+  ProductListingExportEventRecord,
   ProductListingRecord,
   ProductListingRepository,
   ProductListingWithDetails,
@@ -127,12 +128,12 @@ const toListingRecord = (doc: ProductListingDocument): ProductListingRecord => (
   exportHistory: (doc.exportHistory ?? []).map((event) => ({
     ...event,
     exportedAt:
-      event.exportedAt instanceof Date
-        ? event.exportedAt.toISOString()
+      (event.exportedAt as any) instanceof Date
+        ? (event.exportedAt as any).toISOString()
         : event.exportedAt,
     expiresAt:
-      event.expiresAt instanceof Date
-        ? event.expiresAt.toISOString()
+      (event.expiresAt as any) instanceof Date
+        ? (event.expiresAt as any).toISOString()
         : event.expiresAt ?? undefined,
   })),
   createdAt: doc.createdAt.toISOString(),
@@ -174,12 +175,12 @@ const toDetailsRecord = (listing: EnrichedPrismaListing): ProductListingWithDeta
   ).map((event) => ({
     ...event,
     exportedAt:
-      event.exportedAt instanceof Date
-        ? event.exportedAt.toISOString()
+      (event.exportedAt as any) instanceof Date
+        ? (event.exportedAt as any).toISOString()
         : event.exportedAt,
     expiresAt:
-      event.expiresAt instanceof Date
-        ? event.expiresAt.toISOString()
+      (event.expiresAt as any) instanceof Date
+        ? (event.expiresAt as any).toISOString()
         : event.expiresAt ?? undefined,
   })),
   createdAt: listing.createdAt.toISOString(),
@@ -294,14 +295,21 @@ const prismaRepository: ProductListingRepository = {
     });
   },
 
-  appendExportHistory: async (id: string, event: ProductListingExportEvent): Promise<void> => {
+  appendExportHistory: async (id: string, event: ProductListingExportEventRecord): Promise<void> => {
     const listing = await prisma.productListing.findUnique({ where: { id } });
     if (!listing) return;
     const history = (listing.exportHistory as unknown as ProductListingExportEvent[] | null) ?? [];
+    
+    const normalizedEvent: ProductListingExportEvent = {
+      ...event,
+      exportedAt: (event.exportedAt as any) instanceof Date ? (event.exportedAt as any).toISOString() : event.exportedAt,
+      expiresAt: (event.expiresAt as any) instanceof Date ? (event.expiresAt as any).toISOString() : (event.expiresAt ?? null),
+    };
+
     await prisma.productListing.update({
       where: { id },
       data: {
-        exportHistory: toPrismaNullableJson([event, ...history].slice(0, 50)),
+        exportHistory: toPrismaNullableJson([normalizedEvent, ...history].slice(0, 50)),
       },
     });
   },
@@ -494,14 +502,21 @@ const mongoRepository: ProductListingRepository = {
       );
   },
 
-  appendExportHistory: async (id: string, event: ProductListingExportEvent): Promise<void> => {
+  appendExportHistory: async (id: string, event: ProductListingExportEventRecord): Promise<void> => {
     const db = await getMongoDb();
+    
+    const normalizedEvent: ProductListingExportEvent = {
+      ...event,
+      exportedAt: (event.exportedAt as any) instanceof Date ? (event.exportedAt as any).toISOString() : event.exportedAt,
+      expiresAt: (event.expiresAt as any) instanceof Date ? (event.expiresAt as any).toISOString() : (event.expiresAt ?? null),
+    };
+
     await db.collection<ProductListingDocument>(LISTING_COLLECTION).updateOne(
       buildLookupFilter('_id', id),
       {
         $push: {
           exportHistory: {
-            $each: [event],
+            $each: [normalizedEvent],
             $position: 0,
             $slice: 50,
           },

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useEffect } from 'react';
+import { useCallback, useMemo } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import { type StudioSlotsResponse, type ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
@@ -45,28 +45,9 @@ import {
 } from '../../contracts/autoscaler';
 import { createGenerationToolbarActionHandlers } from './generation-toolbar-action-handlers';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
-import { type GenerationToolbarState } from './GenerationToolbar.types';
+import { type GenerationToolbarState, type GenerationToolbarHandlers } from './GenerationToolbar.types';
 
-export interface GenerationToolbarHandlers {
-  handleUpscale: () => Promise<void>;
-  handleCrop: (cropRect?: CropRect, options?: { includeCanvasContext?: boolean }) => Promise<void>;
-  handleCancelUpscale: () => void;
-  handleCancelCrop: () => void;
-  handleSquareCrop: () => Promise<void>;
-  handlePreviewViewCrop: () => Promise<void>;
-  handleCreateCropBox: () => void;
-  attachMaskVariantsFromSelection: () => Promise<void>;
-  handleCenterObject: () => Promise<void>;
-  handleCancelCenter: () => void;
-  handleAutoScale: () => Promise<void>;
-  handleCancelAutoScale: () => void;
-  handleAiMaskGeneration: (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges') => Promise<void>;
-  handleApplyAnalysisPlanToCenter: () => void;
-  handleApplyAnalysisPlanToAutoScaler: () => void;
-}
-
-export function useGenerationToolbarHandlers(rawState: GenerationToolbarState): GenerationToolbarHandlers {
-  const state = rawState as unknown as GenerationToolbarState;
+export function useGenerationToolbarHandlers(state: GenerationToolbarState): GenerationToolbarHandlers {
   const {
     projectId,
     workingSlot,
@@ -85,18 +66,14 @@ export function useGenerationToolbarHandlers(rawState: GenerationToolbarState): 
     cropMode,
     centerMode,
     autoScaleMode,
-    queuedAnalysisRunTarget,
-    setQueuedAnalysisRunTarget,
     upscaleScale,
     upscaleSmoothingQuality,
     upscaleTargetHeight,
     upscaleTargetWidth,
     setUpscaleBusy,
     setUpscaleStatus,
-    centerBusy,
     setCenterBusy,
     setCenterStatus,
-    autoScaleBusy,
     setAutoScaleBusy,
     setAutoScaleStatus,
     setCropBusy,
@@ -734,7 +711,7 @@ export function useGenerationToolbarHandlers(rawState: GenerationToolbarState): 
             },
             abortController.signal
           );
-        } catch (error) {
+        } catch (_error) {
           setAutoScaleStatus('processing');
            
           response = await withAutoScalerRetry(
@@ -832,28 +809,6 @@ export function useGenerationToolbarHandlers(rawState: GenerationToolbarState): 
     if (!controller) return;
     controller.abort();
   }, [autoScaleAbortControllerRef]);
-
-  useEffect(() => {
-    if (!queuedAnalysisRunTarget) return;
-    if (queuedAnalysisRunTarget === 'object_layout') {
-      if (centerBusy || centerRequestInFlightRef.current) return;
-      setQueuedAnalysisRunTarget(null);
-      void (async () => { await handleCenterObject(); })();
-      return;
-    }
-    if (autoScaleBusy || autoScaleRequestInFlightRef.current) return;
-    setQueuedAnalysisRunTarget(null);
-    void (async () => { await handleAutoScale(); })();
-  }, [
-    autoScaleBusy,
-    centerBusy,
-    handleAutoScale,
-    handleCenterObject,
-    queuedAnalysisRunTarget,
-    setQueuedAnalysisRunTarget,
-    autoScaleRequestInFlightRef,
-    centerRequestInFlightRef,
-  ]);
 
   const handleAiMaskGeneration = useCallback(async (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges'): Promise<void> => {
     await state.handleAiMaskGeneration(mode);

@@ -9,7 +9,7 @@ import { type ImageStudioRunDispatchMode } from '@/features/jobs/workers/imageSt
 export const buildAuditSettingsContext = (
   sequencingDiagnostics: ProductStudioSequencingDiagnostics
 ): {
-  settingsScope: 'project' | 'default';
+  settingsScope: 'project' | 'global' | 'default';
   settingsKey: string | null;
   projectSettingsKey: string | null;
   settingsScopeValid: boolean;

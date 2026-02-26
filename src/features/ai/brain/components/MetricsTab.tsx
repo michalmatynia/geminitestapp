@@ -6,7 +6,6 @@ import React from 'react';
 import { Button, MetadataItem, StatusBadge, SectionHeader, FormSection, EmptyState, Card } from '@/shared/ui';
 
 import { useBrain } from '../context/BrainContext';
-import type { AiInsightRecord } from '@/shared/contracts/ai-insights';
 
 const formatNumber = (value: number | undefined): string =>
   Number.isFinite(value) ? Number(value).toLocaleString() : '—';

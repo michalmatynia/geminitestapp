@@ -73,7 +73,7 @@ export function useGenerationToolbarCenter({
       });
       if (!validation.success) {
         throw new Error(
-          `Center request payload is invalid (\${describeSchemaValidationIssue(validation.error.issues)}).`
+          `Center request payload is invalid (${describeSchemaValidationIssue(validation.error.issues)}).`
         );
       }
       return validation.data;
@@ -120,10 +120,10 @@ export function useGenerationToolbarCenter({
                   })
                 );
               }
-              formData.append('image', uploadBlob, `center-client-\${Date.now()}.png`);
+              formData.append('image', uploadBlob, `center-client-${Date.now()}.png`);
               return api
                 .post<unknown>(
-                  `/api/image-studio/slots/\${encodeURIComponent(workingSlot.id)}/center`,
+                  `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
                   formData,
                   {
                     signal: abortController.signal,
@@ -151,7 +151,7 @@ export function useGenerationToolbarCenter({
             () =>
               api
                 .post<unknown>(
-                  `/api/image-studio/slots/\${encodeURIComponent(workingSlot.id)}/center`,
+                  `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
                   fallbackRequestPayload,
                   {
                     signal: abortController.signal,
@@ -179,7 +179,7 @@ export function useGenerationToolbarCenter({
           () =>
             api
               .post<unknown>(
-                `/api/image-studio/slots/\${encodeURIComponent(workingSlot.id)}/center`,
+                `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`,
                 centerRequestPayload,
                 {
                   signal: abortController.signal,
@@ -247,12 +247,12 @@ export function useGenerationToolbarCenter({
         )
       );
       if (centerShiftedObject) {
-        toast(`Created \${createdLabel} (\${modeLabel}).`, { variant: 'success' });
+        toast(`Created ${createdLabel} (${modeLabel}).`, { variant: 'success' });
       } else {
         toast(
           centerIsObjectLayoutMode
-            ? `\${createdLabel} created, but the object was already well-positioned with current padding.`
-            : `\${createdLabel} created, but the object was already centered in-frame.`,
+            ? `${createdLabel} created, but the object was already well-positioned with current padding.`
+            : `${createdLabel} created, but the object was already centered in-frame.`,
           { variant: 'info' }
         );
       }
@@ -260,7 +260,7 @@ export function useGenerationToolbarCenter({
         const reason = response.detectionDetails.policyReason ?? response.layout?.detectionPolicyDecision;
         toast(
           reason
-            ? `Object layout policy fallback applied (\${reason}).`
+            ? `Object layout policy fallback applied (${reason}).`
             : 'Object layout policy fallback applied.',
           { variant: 'info' }
         );

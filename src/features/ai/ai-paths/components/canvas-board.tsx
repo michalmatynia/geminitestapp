@@ -74,6 +74,7 @@ export function CanvasBoard({
     handlePanStart,
     handlePanMove,
     handlePanEnd,
+    handleWheel,
     handleRemoveEdge,
     handleDisconnectPort,
     handleStartConnection,
@@ -198,6 +199,12 @@ export function CanvasBoard({
     () => new Map(edges.map((edge) => [edge.id, edge])),
     [edges]
   );
+  const viewportCursorClassName =
+    state.isPanning
+      ? 'cursor-grabbing'
+      : selectionToolMode === 'pan'
+        ? 'cursor-grab'
+        : 'cursor-default';
 
   const activeEdgeIds = React.useMemo((): Set<string> => new Set<string>(), []);
   const inputPulseNodes = React.useMemo((): Set<string> => new Set<string>(), []);
@@ -382,7 +389,11 @@ export function CanvasBoard({
       <CanvasBoardUIProvider value={canvasContextValue}>
         <div
           ref={viewportRef}
-          className={cn('relative h-full w-full overflow-hidden outline-none', viewportClassName)}
+          className={cn(
+            'relative h-full w-full overflow-hidden outline-none',
+            viewportCursorClassName,
+            viewportClassName
+          )}
           tabIndex={0}
           onPointerDown={(event) => {
             handlePanStart(event);
@@ -395,6 +406,9 @@ export function CanvasBoard({
           }}
           onPointerLeave={(event) => {
             handlePanEnd(event);
+          }}
+          onWheel={(event) => {
+            handleWheel(event);
           }}
           onDragOver={(event) => {
             handleDragOver(event);

@@ -12,8 +12,9 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 import type { MasterFolderTreeAdapter } from '@/shared/contracts/master-folder-tree';
 import { useCaseResolverPageContext } from './CaseResolverPageContext';
 import { resolveCaseResolverTreeWorkspace } from '../components/case-resolver-tree-workspace';
-import { 
+import {
   buildMasterNodesFromCaseResolverWorkspace,
+  fromCaseResolverCaseNodeId,
   toCaseResolverFileNodeId,
   toCaseResolverAssetNodeId,
   toCaseResolverFolderNodeId,
@@ -132,7 +133,16 @@ const areStringArraysEqual = (left: string[], right: string[]): boolean =>
 
 export function CaseResolverFolderTreeProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
   const searchParams = useSearchParams();
-  const requestedFileId = searchParams.get('fileId');
+  const requestedFileIdRaw = searchParams.get('fileId');
+  const requestedFileId = useMemo((): string | null => {
+    const normalizedRequestedFileId = requestedFileIdRaw?.trim() ?? '';
+    if (!normalizedRequestedFileId) return null;
+    const decodedCaseNodeId = fromCaseResolverCaseNodeId(normalizedRequestedFileId);
+    if (decodedCaseNodeId) return decodedCaseNodeId;
+    const decodedFileNodeId = fromCaseResolverFileNodeId(normalizedRequestedFileId);
+    if (decodedFileNodeId) return decodedFileNodeId;
+    return normalizedRequestedFileId;
+  }, [requestedFileIdRaw]);
   const {
     workspace,
     activeCaseId,
@@ -194,14 +204,33 @@ export function CaseResolverFolderTreeProvider({ children }: { children: React.R
   );
 
   const treeWorkspace = useMemo(
-    (): CaseResolverWorkspace =>
-      resolveCaseResolverTreeWorkspace({
+    (): CaseResolverWorkspace => {
+      const scopedWorkspace = resolveCaseResolverTreeWorkspace({
         selectedFileId,
         requestedFileId,
+        activeCaseId,
         workspace,
         includeDescendantCaseScope: showChildCaseFolders,
-      }),
-    [requestedFileId, selectedFileId, showChildCaseFolders, workspace],
+      });
+      // If no explicit case context is active, never collapse a non-empty workspace to an empty tree.
+      const hasExplicitCaseContext = Boolean(
+        (activeCaseId?.trim() ?? '') ||
+        (requestedFileId?.trim() ?? ''),
+      );
+      const scopedIsEmpty =
+        scopedWorkspace.files.length === 0 &&
+        scopedWorkspace.assets.length === 0 &&
+        scopedWorkspace.folders.length === 0;
+      const sourceHasData =
+        workspace.files.length > 0 ||
+        workspace.assets.length > 0 ||
+        workspace.folders.length > 0;
+      if (!hasExplicitCaseContext && scopedIsEmpty && sourceHasData) {
+        return workspace;
+      }
+      return scopedWorkspace;
+    },
+    [activeCaseId, requestedFileId, selectedFileId, showChildCaseFolders, workspace],
   );
 
   const isNodeFileCanvasActive = useMemo(

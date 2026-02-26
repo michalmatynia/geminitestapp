@@ -22,7 +22,7 @@ export {
   createAdminSettingsSchema,
 } from './admin';
 export type {
-  AdminSettingsDto,
-  CreateAdminSettingsDto,
-  UpdateAdminSettingsDto,
+  AdminSettings,
+  CreateAdminSettings,
+  UpdateAdminSettings,
 } from './admin';

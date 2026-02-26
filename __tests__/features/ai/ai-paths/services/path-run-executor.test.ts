@@ -5,7 +5,6 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import { evaluateGraphWithIteratorAutoContinue } from '@/features/ai/ai-paths/lib/core/runtime/engine-server';
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
-import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import type { AiNode, Edge, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 // Mock evaluateGraphWithIteratorAutoContinue directly in its source module
@@ -212,7 +211,7 @@ describe('PathRunExecutor', () => {
     
     expect(mockRepo.upsertRunNode).toHaveBeenCalledWith(
       expect.anything(),
-      mockNodes[0].id,
+      mockNodes[0]!.id,
       expect.objectContaining({ status: 'cached' })
     );
   });
@@ -237,7 +236,7 @@ describe('PathRunExecutor', () => {
     
     expect(mockRepo.upsertRunNode).toHaveBeenCalledWith(
       expect.anything(),
-      mockNodes[0].id,
+      mockNodes[0]!.id,
       expect.objectContaining({ status: 'blocked' })
     );
   });
@@ -265,13 +264,13 @@ describe('PathRunExecutor', () => {
     
     expect(mockRepo.upsertRunNode).toHaveBeenCalledWith(
       expect.anything(),
-      mockNodes[0].id,
+      mockNodes[0]!.id,
       expect.objectContaining({ status: 'failed' })
     );
   });
 
   it('should propagate cancellation to runtime evaluation via abort signal', async () => {
-    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (options: any) => {
+    (evaluateGraphWithIteratorAutoContinue as any).mockImplementation(async (_options: any) => {
       return new Promise(() => {});
     });
 
@@ -361,7 +360,7 @@ describe('PathRunExecutor', () => {
     const nodeSpans = runtimeTrace?.profile?.nodeSpans ?? [];
     expect(nodeSpans.length).toBeGreaterThan(0);
     expect(nodeSpans[0]).toMatchObject({
-      nodeId: mockNodes[0].id,
+      nodeId: mockNodes[0]!.id,
       status: 'completed',
     });
   });
@@ -471,7 +470,17 @@ describe('PathRunExecutor', () => {
           database: {
             operation: 'query',
             query: {
+              provider: 'auto',
               collection: '', // EMPTY collection should fail validation rule database.query.collection_declared
+              mode: 'custom',
+              preset: 'by_id',
+              field: 'id',
+              idType: 'string',
+              queryTemplate: '{}',
+              limit: 1,
+              sort: '{}',
+              projection: '{}',
+              single: false,
             }
           }
         }

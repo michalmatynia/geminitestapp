@@ -314,7 +314,7 @@ export function useResilientQuery<TData>(
       const baseDelay = options?.retryDelay || 1000;
       return Math.min(baseDelay * Math.pow(2, attemptIndex), 30000);
     },
-    placeholderData: options?.fallbackData,
+    placeholderData: options?.fallbackData as any,
     meta: {
       source: 'shared.hooks.query.useResilientQuery',
       operation: 'list',

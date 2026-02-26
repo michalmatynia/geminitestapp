@@ -32,7 +32,6 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
   AiPathRunStatus,
-  Edge,
   RuntimePortValues,
   RuntimeState,
 } from '@/shared/contracts/ai-paths';
@@ -45,7 +44,6 @@ import {
   EMPTY_RUNTIME_STATE,
   INTERMEDIATE_SAVE_INTERVAL_MS,
   LOG_NODE_START_EVENTS,
-  RUNTIME_PROFILE_HIGHLIGHT_LIMIT,
   RUNTIME_PROFILE_SAMPLE_LIMIT,
   RUNTIME_PROFILE_SLOW_NODE_MS,
   RUNTIME_TRACE_SPAN_LIMIT,

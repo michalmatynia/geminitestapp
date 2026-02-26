@@ -67,6 +67,12 @@ type WorkspaceMetadataLike = {
   exists?: unknown;
 };
 
+type WorkspaceSettingsPayloadLike = {
+  settings?: unknown;
+  key?: unknown;
+  value?: unknown;
+};
+
 type PersistWorkspaceInput = {
   workspace: CaseResolverWorkspace;
   expectedRevision: number;
@@ -256,6 +262,67 @@ const readWorkspaceFromSettingRecord = (record: SettingsRecordLike | null, fallb
   return parseCaseResolverWorkspace(rawValue);
 };
 
+const readSettingsRecordsFromPayload = (payload: unknown): SettingsRecordLike[] => {
+  if (Array.isArray(payload)) {
+    return payload.filter(
+      (entry: unknown): entry is SettingsRecordLike =>
+        Boolean(entry) && typeof entry === 'object',
+    );
+  }
+  if (!payload || typeof payload !== 'object') return [];
+  const payloadRecord = payload as WorkspaceSettingsPayloadLike;
+  if (Array.isArray(payloadRecord.settings)) {
+    return payloadRecord.settings.filter(
+      (entry: unknown): entry is SettingsRecordLike =>
+        Boolean(entry) && typeof entry === 'object',
+    );
+  }
+  if (
+    typeof payloadRecord.key === 'string' &&
+    typeof payloadRecord.value === 'string'
+  ) {
+    return [payloadRecord as SettingsRecordLike];
+  }
+  return [];
+};
+
+const resolveWorkspaceRecordFromSettingsPayload = (
+  payload: unknown,
+): SettingsRecordLike | null => {
+  const records = readSettingsRecordsFromPayload(payload);
+  return (
+    records.find(
+      (entry: SettingsRecordLike): boolean =>
+        entry?.key === CASE_RESOLVER_WORKSPACE_KEY &&
+        typeof entry?.value === 'string',
+    ) ?? null
+  );
+};
+
+const fetchSettingsPayloadWithTimeout = async (input: {
+  url: string;
+  timeoutMs: number;
+}): Promise<Response> => {
+  const controller =
+    typeof AbortController !== 'undefined' ? new AbortController() : null;
+  const timeoutId = controller
+    ? setTimeout((): void => {
+      controller.abort();
+    }, input.timeoutMs)
+    : null;
+  try {
+    return await fetch(input.url, {
+      method: 'GET',
+      cache: 'no-store',
+      ...(controller ? { signal: controller.signal } : {}),
+    });
+  } finally {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  }
+};
+
 const readWorkspaceMetadata = (
   payload: WorkspaceMetadataLike | null
 ): CaseResolverWorkspaceMetadata => {
@@ -334,58 +401,82 @@ export const fetchCaseResolverWorkspaceSnapshot = async (
   source: string
 ): Promise<CaseResolverWorkspace | null> => {
   const startedAt = Date.now();
-  const controller =
-    typeof AbortController !== 'undefined' ? new AbortController() : null;
-  const timeoutId =
-    controller
-      ? setTimeout((): void => {
-        controller.abort();
-      }, CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS)
-      : null;
-  try {
-    const response = await fetch(
-      `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
-      {
-        method: 'GET',
-        cache: 'no-store',
-        ...(controller ? { signal: controller.signal } : {}),
+  const attempts: Array<{ key: string; url: string }> = [
+    {
+      key: 'light_fresh_key',
+      url: `/api/settings?scope=light&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+    },
+    {
+      key: 'light_cached_key',
+      url: `/api/settings?scope=light&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`,
+    },
+    {
+      key: 'all_cached_scope',
+      url: '/api/settings?scope=all',
+    },
+    {
+      key: 'all_fresh_scope',
+      url: '/api/settings?scope=all&fresh=1',
+    },
+  ];
+
+  let lastFailureMessage = 'Workspace snapshot request failed.';
+  for (const attempt of attempts) {
+    try {
+      const response = await fetchSettingsPayloadWithTimeout({
+        url: attempt.url,
+        timeoutMs: CASE_RESOLVER_WORKSPACE_FETCH_TIMEOUT_MS,
+      });
+      if (!response.ok) {
+        lastFailureMessage = `Attempt ${attempt.key} failed (${response.status}).`;
+        logCaseResolverWorkspaceEvent({
+          source,
+          action: 'refresh_attempt_failed',
+          durationMs: Date.now() - startedAt,
+          message: lastFailureMessage,
+        });
+        continue;
       }
-    );
-    if (!response.ok) {
+      const payload = (await response.json()) as unknown;
+      const workspaceRecord = resolveWorkspaceRecordFromSettingsPayload(payload);
+      if (!workspaceRecord) {
+        lastFailureMessage = `Attempt ${attempt.key} returned no workspace record.`;
+        logCaseResolverWorkspaceEvent({
+          source,
+          action: 'refresh_attempt_failed',
+          durationMs: Date.now() - startedAt,
+          message: lastFailureMessage,
+        });
+        continue;
+      }
+      const workspace = readWorkspaceFromSettingRecord(workspaceRecord, '');
       logCaseResolverWorkspaceEvent({
         source,
-        action: 'refresh_failed',
-        message: `Failed to fetch settings (${response.status}).`,
+        action: 'refresh_success',
+        workspaceRevision: getCaseResolverWorkspaceRevision(workspace),
+        durationMs: Date.now() - startedAt,
+        message: `attempt=${attempt.key}`,
       });
-      return null;
-    }
-    const payload = (await response.json()) as SettingsRecordLike[] | null;
-    const workspaceRecord = Array.isArray(payload)
-      ? payload.find((entry: SettingsRecordLike): boolean => entry?.key === CASE_RESOLVER_WORKSPACE_KEY) ?? null
-      : null;
-    const workspace = parseCaseResolverWorkspace(
-      typeof workspaceRecord?.value === 'string' ? workspaceRecord.value : null
-    );
-    logCaseResolverWorkspaceEvent({
-      source,
-      action: 'refresh_success',
-      workspaceRevision: getCaseResolverWorkspaceRevision(workspace),
-      durationMs: Date.now() - startedAt,
-    });
-    return workspace;
-  } catch (error: unknown) {
-    logCaseResolverWorkspaceEvent({
-      source,
-      action: 'refresh_failed',
-      message: error instanceof Error ? error.message : 'Unknown refresh error.',
-      durationMs: Date.now() - startedAt,
-    });
-    return null;
-  } finally {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
+      return workspace;
+    } catch (error: unknown) {
+      lastFailureMessage =
+        error instanceof Error ? error.message : `Unknown refresh error (${attempt.key}).`;
+      logCaseResolverWorkspaceEvent({
+        source,
+        action: 'refresh_attempt_failed',
+        durationMs: Date.now() - startedAt,
+        message: `Attempt ${attempt.key} failed: ${lastFailureMessage}`,
+      });
     }
   }
+
+  logCaseResolverWorkspaceEvent({
+    source,
+    action: 'refresh_failed',
+    message: lastFailureMessage,
+    durationMs: Date.now() - startedAt,
+  });
+  return null;
 };
 
 /**

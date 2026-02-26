@@ -647,20 +647,6 @@ export function useCanvasInteractions(args?: {
   }, [nav]);
 
   useEffect(() => {
-    const viewportElement = viewportRef.current;
-    if (!viewportElement) return;
-    const handleNativeWheel = (event: WheelEvent): void => {
-      event.preventDefault();
-      event.stopPropagation();
-      nav.applyWheelZoom(event.deltaY, event.clientX, event.clientY);
-    };
-    viewportElement.addEventListener('wheel', handleNativeWheel, { passive: false });
-    return () => {
-      viewportElement.removeEventListener('wheel', handleNativeWheel);
-    };
-  }, [nav, viewportRef]);
-
-  useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
       const targetWithinCanvas = ((): boolean => {
         if (!(event.target instanceof Node)) return false;

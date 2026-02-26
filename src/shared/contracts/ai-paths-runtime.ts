@@ -1,31 +1,35 @@
 import { z } from 'zod';
-
-import { aiPathRunSchema, type AiNode, type Edge } from './ai-paths';
+import { dtoBaseSchema } from './base';
+import type { AiNode, Edge } from './ai-paths-core';
 
 /**
- * AI Path Runtime DTOs
+ * AI Path Node Status
  */
-
-export const aiPathRuntimeNodeStatusSchema = z.enum([
+export const aiPathNodeStatusSchema = z.enum([
   'idle',
   'queued',
   'running',
   'completed',
+  'cached',
   'failed',
   'canceled',
   'cancelled', // Legacy support
-  'cached',
-  'blocked',
   'skipped',
-  'timeout',
+  'blocked',
+  'pending',
+  'processing',
   'polling',
   'waiting_callback',
   'advance_pending',
-  'pending',
-  'processing',
+  'timeout',
 ]);
 
-export type AiPathRuntimeNodeStatus = z.infer<typeof aiPathRuntimeNodeStatusSchema>;
+export type AiPathNodeStatus = z.infer<typeof aiPathNodeStatusSchema>;
+export type AiPathNodeStatusDto = AiPathNodeStatus;
+
+// Alias for compatibility
+export const aiPathRuntimeNodeStatusSchema = aiPathNodeStatusSchema;
+export type AiPathRuntimeNodeStatus = AiPathNodeStatus;
 
 export const NON_SETTLED_RUNTIME_NODE_STATUSES = new Set<AiPathRuntimeNodeStatus>([
   'idle',
@@ -57,10 +61,67 @@ export const IDLE_REHYDRATION_BLOCKED_NODE_STATUSES = new Set<AiPathRuntimeNodeS
   'cancelled',
 ]);
 
-export const aiPathRuntimeNodeStatusMapSchema = z.record(z.string(), aiPathRuntimeNodeStatusSchema);
+export const aiPathRuntimeNodeStatusMapSchema = z.record(z.string(), aiPathNodeStatusSchema);
 
 export type AiPathRuntimeNodeStatusMap = z.infer<typeof aiPathRuntimeNodeStatusMapSchema>;
 
+/**
+ * AI Path Run Status
+ */
+export const aiPathRunStatusSchema = z.enum([
+  'queued',
+  'running',
+  'paused',
+  'completed',
+  'failed',
+  'canceled',
+  'dead_lettered',
+]);
+
+export type AiPathRunStatus = z.infer<typeof aiPathRunStatusSchema>;
+export type AiPathRunStatusDto = AiPathRunStatus;
+
+/**
+ * AI Path Run Contract
+ */
+export const aiPathRunSchema = dtoBaseSchema.extend({
+  pathId: z.string().nullable().optional(),
+  pathName: z.string().nullable().optional(),
+  userId: z.string().nullable().optional(),
+  status: aiPathRunStatusSchema,
+  triggerNodeId: z.string().nullable().optional(),
+  triggerEvent: z.string().nullable().optional(),
+  triggerContext: z.record(z.string(), z.unknown()).nullable().optional(),
+  context: z.record(z.string(), z.unknown()).optional(),
+  result: z.record(z.string(), z.unknown()).nullable().optional(),
+  error: z.string().nullable().optional(),
+  errorMessage: z.string().nullable().optional(),
+  model: z.string().nullable().optional(),
+  prompt: z.string().nullable().optional(),
+  tools: z.array(z.string()).optional(),
+  searchProvider: z.string().nullable().optional(),
+  agentBrowser: z.string().nullable().optional(),
+  runHeadless: z.boolean().optional(),
+  logLines: z.array(z.string()).optional(),
+  requiresHumanIntervention: z.boolean().optional(),
+  memoryKey: z.string().nullable().optional(),
+  startedAt: z.string().nullable().optional(),
+  completedAt: z.string().nullable().optional(),
+  finishedAt: z.string().nullable().optional(),
+  deadLetteredAt: z.string().nullable().optional(),
+  retryCount: z.number().nullable().optional(),
+  maxAttempts: z.number().nullable().optional(),
+  nextRetryAt: z.string().nullable().optional(),
+  meta: z.record(z.string(), z.unknown()).nullable().optional(),
+  entityId: z.string().nullable().optional(),
+  entityType: z.string().nullable().optional(),
+});
+
+export type AiPathRunDto = z.infer<typeof aiPathRunSchema>;
+
+/**
+ * AI Path Runtime Event Contract
+ */
 export const aiPathRuntimeEventKindSchema = z.enum(['log', 'status', 'error', 'output']);
 export type AiPathRuntimeEventKind = z.infer<typeof aiPathRuntimeEventKindSchema>;
 
@@ -76,7 +137,7 @@ export const aiPathRuntimeEventSchema = z.object({
   nodeId: z.string().optional(),
   nodeType: z.string().optional(),
   nodeTitle: z.string().nullable().optional(),
-  status: z.union([aiPathRuntimeNodeStatusSchema, z.string()]).optional(),
+  status: z.union([aiPathNodeStatusSchema, z.string()]).optional(),
   iteration: z.number().optional(),
   level: z.enum(['info', 'warn', 'error', 'debug']).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
@@ -100,7 +161,7 @@ export const runtimeEventInputSchema = z.object({
   nodeId: z.string().nullable().optional(),
   nodeType: z.string().nullable().optional(),
   nodeTitle: z.string().nullable().optional(),
-  status: z.union([aiPathRuntimeNodeStatusSchema, z.string()]).optional(),
+  status: z.union([aiPathNodeStatusSchema, z.string()]).optional(),
   iteration: z.number().optional(),
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
 });
@@ -110,7 +171,7 @@ export type RuntimeEventInputDto = RuntimeEventInput;
 
 export const setNodeStatusInputSchema = z.object({
   nodeId: z.string(),
-  status: aiPathRuntimeNodeStatusSchema,
+  status: aiPathNodeStatusSchema,
   source: z.enum(['local', 'server']),
   runId: z.string().nullable().optional(),
   runStartedAt: z.string().nullable().optional(),
@@ -397,8 +458,8 @@ export type ToastFn = (message: string, options?: Record<string, unknown>) => vo
 
 export interface NodeHandlerContext {
   node: AiNode;
-  nodeInputs: RuntimePortValues;
-  prevOutputs: RuntimePortValues;
+  nodeInputs: Record<string, unknown>; // RuntimePortValues
+  prevOutputs: Record<string, unknown>; // RuntimePortValues
   edges: Edge[];
   nodes: AiNode[];
   nodeById: Map<string, AiNode>;
@@ -413,8 +474,8 @@ export interface NodeHandlerContext {
   skipAiJobs?: boolean | undefined;
   now: string;
   abortSignal?: AbortSignal | undefined;
-  allOutputs: Record<string, RuntimePortValues>;
-  allInputs: Record<string, RuntimePortValues>;
+  allOutputs: Record<string, Record<string, unknown>>;
+  allInputs: Record<string, Record<string, unknown>>;
   fetchEntityCached: (
     entityType: string,
     entityId: string
@@ -448,4 +509,4 @@ export interface NodeHandlerContext {
   };
 }
 
-export type NodeHandler = (context: NodeHandlerContext) => Promise<RuntimePortValues> | RuntimePortValues;
+export type NodeHandler = (context: NodeHandlerContext) => Promise<Record<string, unknown>> | Record<string, unknown>;

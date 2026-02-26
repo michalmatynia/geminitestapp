@@ -114,13 +114,13 @@ export const validateConnection = (
   toPort?: string
 ): ConnectionValidation => {
   if (!fromPort || !toPort) {
-    return { valid: false, reason: 'Source and target ports must be specified.' };
+    return { valid: false, message: 'Source and target ports must be specified.' };
   }
   if (!from.outputs.includes(fromPort)) {
-    return { valid: false, reason: `Node "${from.title ?? from.id}" does not have output port "${fromPort}".` };
+    return { valid: false, message: `Node "${from.title ?? from.id}" does not have output port "${fromPort}".` };
   }
   if (!to.inputs.includes(toPort)) {
-    return { valid: false, reason: `Node "${to.title ?? to.id}" does not have input port "${toPort}".` };
+    return { valid: false, message: `Node "${to.title ?? to.id}" does not have input port "${toPort}".` };
   }
 
   const fromTypes = getPortDataTypes(fromPort);
@@ -132,7 +132,7 @@ export const validateConnection = (
     const toLabel = formatPortDataTypes(toTypes);
     return {
       valid: false,
-      reason: `Port types are incompatible: ${fromLabel} \u2192 ${toLabel}.`,
+      message: `Port types are incompatible: ${fromLabel} \u2192 ${toLabel}.`,
     };
   }
 

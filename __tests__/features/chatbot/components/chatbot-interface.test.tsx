@@ -5,7 +5,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 import { ChatInterface } from '@/features/ai/chatbot/components/ChatInterface';
-import { useChatbot, useChatbotMessages } from '@/features/ai/chatbot/context/ChatbotContext';
+import { useChatbotMessages } from '@/features/ai/chatbot/context/ChatbotContext';
 
 vi.mock('@/features/ai/chatbot/context/ChatbotContext', () => {
   const useChatbotMock = vi.fn();

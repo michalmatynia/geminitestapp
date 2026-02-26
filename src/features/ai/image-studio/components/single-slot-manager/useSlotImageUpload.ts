@@ -95,7 +95,7 @@ export function useSlotImageUpload({
 
         const createdSlots = await createSlots([
           {
-            name: uploaded.filename?.trim() || `Card \${Date.now()}`,
+            name: uploaded.filename?.trim() || `Card ${Date.now()}`,
             ...(getFolderForNewSlot() ? { folderPath: getFolderForNewSlot() } : {}),
             imageFileId: uploaded.id,
             imageUrl: uploaded.filepath,

@@ -123,11 +123,11 @@ export function useConsumeTemporaryUpload({
             }
 
             const created = await api.post(
-              `/api/image-studio/projects/\${encodeURIComponent(normalizedProjectId)}/slots`,
+              `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots`,
               {
                 slots: [
                   {
-                    name: temporaryUploadSnapshot.filename?.trim() || `Card \${Date.now()}`,
+                    name: temporaryUploadSnapshot.filename?.trim() || `Card ${Date.now()}`,
                     ...(getFolderForNewSlot() ? { folderPath: getFolderForNewSlot() } : {}),
                     ...(currentTemporaryUploadId ? { imageFileId: currentTemporaryUploadId } : {}),
                     ...(normalizedTemporaryFilepath ? { imageUrl: normalizedTemporaryFilepath } : {}),
@@ -142,7 +142,7 @@ export function useConsumeTemporaryUpload({
           let ensuredSlot = null;
           try {
             const ensured = await api.post(
-              `/api/image-studio/projects/\${encodeURIComponent(normalizedProjectId)}/slots/ensure-from-upload`,
+              `/api/image-studio/projects/${encodeURIComponent(normalizedProjectId)}/slots/ensure-from-upload`,
               {
                 uploadId: currentTemporaryUploadId || null,
                 filepath: normalizedTemporaryFilepath || null,

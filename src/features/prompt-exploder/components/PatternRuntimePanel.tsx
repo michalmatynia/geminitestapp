@@ -23,6 +23,7 @@ import {
 } from '../validation-stack';
 
 import type { PromptExploderLearnedTemplate } from '../types';
+import type { LearningDraft } from '../context/settings/SettingsDraftsContext';
 
 const looksLikeCaseResolverPrompt = (value: string): boolean => {
   const text = value.trim();
@@ -199,7 +200,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             size='sm'
             className='border-amber-400/60 text-amber-100 hover:bg-amber-500/20'
             onClick={() => {
-              setLearningDraft((previous) => ({
+              setLearningDraft((previous: LearningDraft) => ({
                 ...previous,
                 runtimeValidationRuleStack: caseResolverStack,
               }));
@@ -280,7 +281,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             size='sm'
             value={typeof learningDraft.runtimeValidationRuleStack === 'string' ? learningDraft.runtimeValidationRuleStack : (learningDraft.runtimeValidationRuleStack?.id || '')}
             onValueChange={(value: string) => {
-              setLearningDraft((previous) => ({
+              setLearningDraft((previous: LearningDraft) => ({
                 ...previous,
                 runtimeValidationRuleStack: value,
               }));
@@ -295,7 +296,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
           <SelectSimple size='sm'
             value={learningDraft.runtimeRuleProfile}
             onValueChange={(value: string) => {
-              setLearningDraft((previous) => ({
+              setLearningDraft((previous: LearningDraft) => ({
                 ...previous,
                 runtimeRuleProfile: value as 'all' | 'pattern_pack' | 'learned_only',
               }));
@@ -313,7 +314,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             <StatusToggle
               enabled={learningDraft.enabled}
               onToggle={() => {
-                setLearningDraft((previous) => ({
+                setLearningDraft((previous: LearningDraft) => ({
                   ...previous,
                   enabled: !previous.enabled,
                 }));
@@ -332,7 +333,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             onChange={(event) => {
               const value = Number(event.target.value);
               if (!Number.isFinite(value)) return;
-              setLearningDraft((previous) => ({
+              setLearningDraft((previous: LearningDraft) => ({
                 ...previous,
                 similarityThreshold: promptExploderClampNumber(value, 0.3, 0.95),
               }));
@@ -350,7 +351,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             onChange={(event) => {
               const value = Number(event.target.value);
               if (!Number.isFinite(value)) return;
-              setLearningDraft((previous) => ({
+              setLearningDraft((previous: LearningDraft) => ({
                 ...previous,
                 templateMergeThreshold: promptExploderClampNumber(value, 0.3, 0.95),
               }));
@@ -368,7 +369,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             onChange={(event) => {
               const value = Number(event.target.value);
               if (!Number.isFinite(value)) return;
-              setLearningDraft((previous) => ({
+              setLearningDraft((previous: LearningDraft) => ({
                 ...previous,
                 minApprovalsForMatching: promptExploderClampNumber(Math.floor(value), 1, 20),
               }));
@@ -386,7 +387,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             onChange={(event) => {
               const value = Number(event.target.value);
               if (!Number.isFinite(value)) return;
-              setLearningDraft((previous) => ({
+              setLearningDraft((previous: LearningDraft) => ({
                 ...previous,
                 maxTemplates: promptExploderClampNumber(Math.floor(value), 50, 5000),
               }));
@@ -399,7 +400,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             <StatusToggle
               enabled={learningDraft.autoActivateLearnedTemplates}
               onToggle={() => {
-                setLearningDraft((previous) => ({
+                setLearningDraft((previous: LearningDraft) => ({
                   ...previous,
                   autoActivateLearnedTemplates: !previous.autoActivateLearnedTemplates,
                 }));
@@ -413,7 +414,7 @@ export function PatternRuntimePanel(): React.JSX.Element {
             <StatusToggle
               enabled={learningDraft.benchmarkSuggestionUpsertTemplates}
               onToggle={() => {
-                setLearningDraft((previous) => ({
+                setLearningDraft((previous: LearningDraft) => ({
                   ...previous,
                   benchmarkSuggestionUpsertTemplates:
                     !previous.benchmarkSuggestionUpsertTemplates,

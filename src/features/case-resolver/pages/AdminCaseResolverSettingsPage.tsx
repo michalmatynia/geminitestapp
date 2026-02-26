@@ -21,8 +21,8 @@ import {
   CASE_RESOLVER_SETTINGS_KEY,
   parseCaseResolverDefaultDocumentFormat,
   parseCaseResolverSettings,
-  type CaseResolverSettings,
 } from '../settings';
+import type { CaseResolverSettings } from '@/shared/contracts/case-resolver';
 
 type CaseResolverOcrModelsResponse = {
   models?: string[];

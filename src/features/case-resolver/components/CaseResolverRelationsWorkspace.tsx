@@ -37,6 +37,10 @@ import {
   buildCaseResolverRelationGraph,
   toCaseResolverRelationCaseNodeId,
 } from '../settings-relation-graph';
+import {
+  fromCaseResolverCaseNodeId,
+  fromCaseResolverFileNodeId,
+} from '../master-tree';
 import { resolveCaseResolverTreeWorkspace } from './case-resolver-tree-workspace';
 
 type CompatEdge = {
@@ -431,16 +435,26 @@ export function CaseResolverRelationsWorkspace({
   focusCaseId = null,
 }: CaseResolverRelationsWorkspaceProps = {}): React.JSX.Element {
   const searchParams = useSearchParams();
-  const requestedFileId = searchParams.get('fileId');
-  const { workspace, selectedFileId } = useCaseResolverPageContext();
+  const requestedFileIdRaw = searchParams.get('fileId');
+  const requestedFileId = React.useMemo((): string | null => {
+    const normalizedRequestedFileId = requestedFileIdRaw?.trim() ?? '';
+    if (!normalizedRequestedFileId) return null;
+    const decodedCaseNodeId = fromCaseResolverCaseNodeId(normalizedRequestedFileId);
+    if (decodedCaseNodeId) return decodedCaseNodeId;
+    const decodedFileNodeId = fromCaseResolverFileNodeId(normalizedRequestedFileId);
+    if (decodedFileNodeId) return decodedFileNodeId;
+    return normalizedRequestedFileId;
+  }, [requestedFileIdRaw]);
+  const { workspace, selectedFileId, activeCaseId } = useCaseResolverPageContext();
   const scopedWorkspace = React.useMemo(
     () =>
       resolveCaseResolverTreeWorkspace({
         selectedFileId,
         requestedFileId,
+        activeCaseId,
         workspace,
       }),
-    [requestedFileId, selectedFileId, workspace]
+    [activeCaseId, requestedFileId, selectedFileId, workspace]
   );
   const workspaceSnapshot = React.useMemo(
     () => readWorkspaceSnapshot(scopedWorkspace),

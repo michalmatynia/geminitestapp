@@ -1,4 +1,4 @@
-/* eslint-disable */
+ 
 // @ts-nocheck
 'use client';
 
@@ -105,7 +105,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
   const apiKeyConfigured = apiKeyRaw.trim().length > 0;
 
   const projectTreeKey = useMemo(
-    () => (projectId ? `\${IMAGE_STUDIO_TREE_KEY_PREFIX}\${sanitizeProjectId(projectId)}` : null),
+    () => (projectId ? `${IMAGE_STUDIO_TREE_KEY_PREFIX}${sanitizeProjectId(projectId)}` : null),
     [projectId]
   );
 
@@ -423,7 +423,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         label: 'Advanced overrides',
         description: 'Raw provider payload overrides.',
         value: studioSettings.targetAi.openai.advanced_overrides
-          ? `\${Object.keys(studioSettings.targetAi.openai.advanced_overrides).length} key(s)`
+          ? `${Object.keys(studioSettings.targetAi.openai.advanced_overrides).length} key(s)`
           : 'null',
       },
       {
@@ -436,7 +436,7 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         path: 'image_studio_ui_presets',
         label: 'UI presets',
         description: 'Saved UI param/prompt preset catalog for Studio.',
-        value: `\${uiPresets.length} preset(s)`,
+        value: `${uiPresets.length} preset(s)`,
       },
       {
         path: 'image_studio_ui_active_preset',
@@ -448,13 +448,13 @@ export function ImageStudioDocsContent(): React.JSX.Element {
         path: 'prompt_engine_settings',
         label: 'Prompt validation settings',
         description: 'Global validation/formatter rule set used by Image Studio validation.',
-        value: `\${enabledValidationRuleCount}/\${validationRules.length} enabled, \${formatterRuleCount} formatter, \${learnedValidationRules.length} learned`,
+        value: `${enabledValidationRuleCount}/${validationRules.length} enabled, ${formatterRuleCount} formatter, ${learnedValidationRules.length} learned`,
       },
       {
         path: projectTreeKey ?? 'image_studio_folder_tree_{project}',
         label: 'Folder tree state key',
         description: 'Per-project persisted folder tree and file-map state.',
-        value: `\${persistedTree.folders.length} folders, \${Object.keys(persistedTree.fileMap).length} mapped file(s)`,
+        value: `${persistedTree.folders.length} folders, ${Object.keys(persistedTree.fileMap).length} mapped file(s)`,
       },
     ],
     [

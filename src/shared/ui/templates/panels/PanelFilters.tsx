@@ -217,6 +217,27 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
     ...(field.width ? { width: field.width } : {}),
   };
 
+  const [localValue, setLocalValue] = useState<string | number | undefined>(
+    (value as string | number | undefined)
+  );
+
+  // Sync local value with external value (e.g. on reset or external change)
+  useEffect(() => {
+    setLocalValue(value as string | number | undefined);
+  }, [value]);
+
+  // Debounce changes for text and number fields
+  useEffect(() => {
+    if (field.type !== 'text' && field.type !== 'number' && field.type !== 'date') return;
+    if (localValue === value) return;
+
+    const timer = setTimeout(() => {
+      onChange(localValue);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localValue, value, onChange, field.type]);
+
   switch (field.type) {
     case 'select': {
       const options = (field.options ?? []).map((option) => ({
@@ -276,8 +297,8 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
           <Input
             type='number'
             placeholder={field.placeholder}
-            value={(value as string | number) || ''}
-            onChange={(e) => onChange(e.target.value ? Number(e.target.value) : undefined)}
+            value={localValue ?? ''}
+            onChange={(e) => setLocalValue(e.target.value ? Number(e.target.value) : undefined)}
             className='h-8 text-sm'
           />
         </div>
@@ -289,8 +310,8 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
           <Label className='text-[10px] font-semibold uppercase tracking-wider text-gray-500/80'>{field.label}</Label>
           <Input
             type='date'
-            value={(value as string) || ''}
-            onChange={(e) => onChange(e.target.value || undefined)}
+            value={(localValue as string) || ''}
+            onChange={(e) => setLocalValue(e.target.value || undefined)}
             className='h-8 text-sm'
           />
         </div>
@@ -339,8 +360,8 @@ const FilterControl: React.FC<FilterControlProps> = ({ field, value, onChange })
           <Input
             type='text'
             placeholder={field.placeholder}
-            value={(value as string) || ''}
-            onChange={(e) => onChange(e.target.value || undefined)}
+            value={(localValue as string) || ''}
+            onChange={(e) => setLocalValue(e.target.value || undefined)}
             className='h-8 text-sm'
           />
         </div>

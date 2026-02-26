@@ -266,14 +266,15 @@ describe('resolveCaseResolverTreeWorkspace', () => {
     expect(scoped.activeFileId).toBe(workspace.activeFileId);
   });
 
-  it('shows full workspace when no case context is selected', () => {
+  it('shows full workspace when no explicit case context is selected, even if activeFileId exists', () => {
     const workspace = buildWorkspaceFixture();
     const scoped = resolveCaseResolverTreeWorkspace({
       selectedFileId: null,
       requestedFileId: null,
+      activeCaseId: null,
       workspace: {
         ...workspace,
-        activeFileId: null,
+        activeFileId: 'case-a',
       },
     });
 
@@ -284,6 +285,23 @@ describe('resolveCaseResolverTreeWorkspace', () => {
       workspace.assets.map((asset: CaseResolverAssetFile) => asset.id).sort(),
     );
     expect(scoped.folders).toEqual(workspace.folders);
+  });
+
+  it('uses explicit activeCaseId to scope workspace when file selection is empty', () => {
+    const workspace = buildWorkspaceFixture();
+    const scoped = resolveCaseResolverTreeWorkspace({
+      selectedFileId: null,
+      requestedFileId: null,
+      activeCaseId: 'case-b',
+      workspace: {
+        ...workspace,
+        activeFileId: null,
+      },
+    });
+
+    expect(scoped.files.map((file: CaseResolverFile) => file.id).sort()).toEqual(['case-b', 'doc-b']);
+    expect(scoped.assets.map((asset: CaseResolverAssetFile) => asset.id).sort()).toEqual(['asset-b', 'asset-node-b']);
+    expect(scoped.folders).toEqual(['new-folder']);
   });
 
   it('includes descendant case scope by default', () => {

@@ -15,6 +15,8 @@ export function NoteDetailPreview(): React.JSX.Element | null {
     selectedNoteTheme,
   } = useNotesAppContext();
 
+  if (!selectedNote) return null;
+
   const { toast } = useToast();
 
   const getReadableTextColor = (hexColor: string): string => {

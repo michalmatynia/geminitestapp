@@ -330,6 +330,7 @@ export const noteSettingsSchema = z.object({
   showRelatedNotes: z.boolean().default(true),
   defaultNotebookId: z.string().nullable(),
   selectedFolderId: z.string().nullable().optional(),
+  selectedNoteId: z.string().nullable().optional(),
   selectedNotebookId: z.string().nullable().optional(),
   searchScope: z.enum(['both', 'title', 'content']).default('both'),
   gridDensity: z.number().default(4),

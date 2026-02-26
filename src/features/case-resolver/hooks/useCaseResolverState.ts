@@ -26,6 +26,7 @@ import type {
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { usePrompt } from '@/shared/hooks/ui/usePrompt';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+import { useSettings } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 
 import {
@@ -46,6 +47,10 @@ import {
   parseCaseResolverWorkspace,
 } from '../settings';
 import {
+  fromCaseResolverCaseNodeId,
+  fromCaseResolverFileNodeId,
+} from '../master-tree';
+import {
   type CaseResolverFileEditDraft,
   type CaseResolverRequestedCaseIssue,
   type CaseResolverRequestedCaseStatus,
@@ -64,6 +69,9 @@ import {
   collectCaseScopeIds,
   serializeWorkspaceForUnsavedChangesCheck,
 } from './useCaseResolverState.helpers';
+import {
+  shouldAdoptIncomingWorkspace,
+} from './useCaseResolverState.helpers.hydration';
 import {
   buildRequestedContextRequestKey,
   hasRequestedCaseFile,
@@ -95,6 +103,7 @@ type RequestedContextInFlightState = {
  */
 export function useCaseResolverState(): CaseResolverStateValue {
   const settingsStore = useSettingsStore();
+  const heavySettingsQuery = useSettings({ scope: 'heavy', enabled: true });
   const settingsStoreRef = useRef(settingsStore);
   settingsStoreRef.current = settingsStore;
   const { toast } = useToast();
@@ -102,11 +111,28 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const { PromptInputModal } = usePrompt();
   const { isMenuCollapsed, setIsMenuCollapsed } = useAdminLayout();
   const searchParams = useSearchParams();
-  const requestedFileId = searchParams.get('fileId');
+  const requestedFileIdRaw = searchParams.get('fileId');
+  const requestedFileId = useMemo((): string | null => {
+    const normalizedRequestedFileId = requestedFileIdRaw?.trim() ?? '';
+    if (!normalizedRequestedFileId) return null;
+    const decodedCaseNodeId = fromCaseResolverCaseNodeId(normalizedRequestedFileId);
+    if (decodedCaseNodeId) return decodedCaseNodeId;
+    const decodedFileNodeId = fromCaseResolverFileNodeId(normalizedRequestedFileId);
+    if (decodedFileNodeId) return decodedFileNodeId;
+    return normalizedRequestedFileId;
+  }, [requestedFileIdRaw]);
   const shouldOpenEditorFromQuery = searchParams.get('openEditor') === '1';
   const requestedPromptExploderSessionId = searchParams.get('promptExploderSessionId')?.trim() ?? '';
 
-  const rawWorkspace = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY);
+  const rawWorkspaceFromStore = settingsStore.get(CASE_RESOLVER_WORKSPACE_KEY) ?? null;
+  const rawWorkspaceFromHeavyScope = useMemo((): string | null => {
+    const records = heavySettingsQuery.data ?? [];
+    const record = records.find(
+      (entry): boolean => entry.key === CASE_RESOLVER_WORKSPACE_KEY,
+    );
+    return typeof record?.value === 'string' ? record.value : null;
+  }, [heavySettingsQuery.data]);
+  const rawWorkspace = rawWorkspaceFromStore ?? rawWorkspaceFromHeavyScope;
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
   const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
   const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
@@ -187,6 +213,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const [requestedCaseIssue, setRequestedCaseIssue] =
     useState<CaseResolverRequestedCaseIssue | null>(null);
   const [requestedContextRetryTick, setRequestedContextRetryTick] = useState(0);
+  const [bootstrapRefreshRetryTick, setBootstrapRefreshRetryTick] = useState(0);
   const [requestedContextAutoClearRequestKey, setRequestedContextAutoClearRequestKey] =
     useState<string | null>(null);
   const [editingDocumentDraft, setEditingDocumentDraft] = useState<CaseResolverFileEditDraft | null>(null);
@@ -215,6 +242,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const requestedContextStartedAtRef = useRef<number | null>(null);
   const requestedContextAutoClearRequestKeyRef = useRef<string | null>(null);
   const requestedContextLastQueuedAutoClearKeyRef = useRef<string | null>(null);
+  const bootstrapRefreshRetryAttemptRef = useRef(0);
+  const bootstrapRefreshRetryTimerRef = useRef<number | null>(null);
   const unresolvedOwnershipWarningShownRef = useRef(false);
   const lastLoggedOwnershipDiagnosticsSignatureRef = useRef<string>('');
   const lastLoggedRequestedContextSignatureRef = useRef<string>('');
@@ -300,6 +329,14 @@ export function useCaseResolverState(): CaseResolverStateValue {
       message: string;
     }): void => {
       const normalizedRequestKey = requestKey?.trim() ?? '';
+      if (issue === 'workspace_unavailable') {
+        logRequestedContextTransition('requested_context_auto_clear_suppressed_unavailable', {
+          message: `${message} reason_tag=auto_clear_suppressed_unavailable`,
+          requestKey: normalizedRequestKey || requestedContextAttemptKeyRef.current,
+          resolvedVia: 'none',
+        });
+        return;
+      }
       if (
         !shouldQueueRequestedContextAutoClear({
           requestedFileId,
@@ -493,13 +530,49 @@ export function useCaseResolverState(): CaseResolverStateValue {
 
   useEffect(() => {
     if (canHydrateWorkspaceFromStore) return;
+    if (workspaceRef.current.files.length > 0) return;
+    let cancelled = false;
     void (async (): Promise<void> => {
       const snapshot = await fetchCaseResolverWorkspaceSnapshot('case_view_bootstrap');
-      if (!snapshot || !isMountedRef.current) return;
-      const snapshotRevision = getCaseResolverWorkspaceRevision(snapshot);
+      if (!isMountedRef.current || cancelled) return;
+      if (!snapshot) {
+        if (bootstrapRefreshRetryTimerRef.current !== null) {
+          window.clearTimeout(bootstrapRefreshRetryTimerRef.current);
+        }
+        const nextAttempt = bootstrapRefreshRetryAttemptRef.current + 1;
+        bootstrapRefreshRetryAttemptRef.current = nextAttempt;
+        const retryDelayMs = Math.min(10_000, 700 * nextAttempt);
+        bootstrapRefreshRetryTimerRef.current = window.setTimeout((): void => {
+          bootstrapRefreshRetryTimerRef.current = null;
+          setBootstrapRefreshRetryTick((current: number): number => current + 1);
+        }, retryDelayMs);
+        logCaseResolverWorkspaceEvent({
+          source: 'case_view_bootstrap',
+          action: 'refresh_retry_scheduled',
+          message: `retry_in_ms=${retryDelayMs} attempt=${nextAttempt}`,
+        });
+        return;
+      }
+      bootstrapRefreshRetryAttemptRef.current = 0;
+      if (bootstrapRefreshRetryTimerRef.current !== null) {
+        window.clearTimeout(bootstrapRefreshRetryTimerRef.current);
+        bootstrapRefreshRetryTimerRef.current = null;
+      }
       setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-        const currentRevision = getCaseResolverWorkspaceRevision(current);
-        if (snapshotRevision <= currentRevision) return current;
+        const hydrationDecision = shouldAdoptIncomingWorkspace({
+          current,
+          incoming: snapshot,
+          requestedFileId,
+        });
+        if (!hydrationDecision.adopt) return current;
+        if (hydrationDecision.reason === 'equal_revision_current_placeholder') {
+          logCaseResolverWorkspaceEvent({
+            source: 'case_view_bootstrap',
+            action: 'refresh_equal_revision_adopted',
+            workspaceRevision: getCaseResolverWorkspaceRevision(snapshot),
+            message: 'Adopted equal-revision workspace snapshot because current workspace was placeholder.',
+          });
+        }
         syncPersistedWorkspaceTracking(snapshot);
         queuedSerializedWorkspaceRef.current = null;
         queuedExpectedRevisionRef.current = null;
@@ -508,39 +581,61 @@ export function useCaseResolverState(): CaseResolverStateValue {
       });
       settingsStoreRef.current.refetch();
     })();
+    return (): void => {
+      cancelled = true;
+    };
   }, [
+    bootstrapRefreshRetryTick,
     canHydrateWorkspaceFromStore,
     queuedExpectedRevisionRef,
     queuedMutationIdRef,
     queuedSerializedWorkspaceRef,
+    requestedFileId,
     settingsStoreRef,
     syncPersistedWorkspaceTracking,
+  ]);
+
+  useEffect((): (() => void) | void => {
+    const hasWorkspaceData =
+      workspace.files.length > 0 ||
+      workspace.assets.length > 0 ||
+      workspace.folders.length > 0;
+    if (hasWorkspaceData) return;
+    if (heavySettingsQuery.isFetching || heavySettingsQuery.isLoading) return;
+    const refreshTimer = window.setTimeout((): void => {
+      void heavySettingsQuery.refetch();
+    }, 1_500);
+    return (): void => {
+      window.clearTimeout(refreshTimer);
+    };
+  }, [
+    heavySettingsQuery.isFetching,
+    heavySettingsQuery.isLoading,
+    heavySettingsQuery.refetch,
+    workspace.assets.length,
+    workspace.files.length,
+    workspace.folders.length,
   ]);
 
   // Sync with store
   useEffect(() => {
     if (!canHydrateWorkspaceFromStore) return;
     if (promptExploder.isApplyingPromptExploderPartyProposal) return;
-    const incomingRevision = getCaseResolverWorkspaceRevision(parsedWorkspace);
     setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-      if (requestedFileId) {
-        const currentHasRequestedFile = current.files.some(
-          (file: CaseResolverFile): boolean => file.id === requestedFileId
-        );
-        const incomingHasRequestedFile = parsedWorkspace.files.some(
-          (file: CaseResolverFile): boolean => file.id === requestedFileId
-        );
-        if (!currentHasRequestedFile && incomingHasRequestedFile) {
-          syncPersistedWorkspaceTracking(parsedWorkspace);
-          queuedSerializedWorkspaceRef.current = null;
-          queuedExpectedRevisionRef.current = null;
-          queuedMutationIdRef.current = null;
-          return parsedWorkspace;
-        }
+      const hydrationDecision = shouldAdoptIncomingWorkspace({
+        current,
+        incoming: parsedWorkspace,
+        requestedFileId,
+      });
+      if (!hydrationDecision.adopt) return current;
+      if (hydrationDecision.reason === 'equal_revision_current_placeholder') {
+        logCaseResolverWorkspaceEvent({
+          source: 'case_view_sync',
+          action: 'refresh_equal_revision_adopted',
+          workspaceRevision: getCaseResolverWorkspaceRevision(parsedWorkspace),
+          message: 'Adopted equal-revision workspace from settings store because current workspace was placeholder.',
+        });
       }
-
-      const currentRevision = getCaseResolverWorkspaceRevision(current);
-      if (incomingRevision <= currentRevision) return current;
 
       syncPersistedWorkspaceTracking(parsedWorkspace);
       queuedSerializedWorkspaceRef.current = null;
@@ -662,6 +757,20 @@ export function useCaseResolverState(): CaseResolverStateValue {
       if (!latestRequestedFileId || latestRequestedFileId !== normalizedRequestedFileId) return;
 
       if (!refreshedWorkspace) {
+        if (hasRequestedCaseFile(workspaceRef.current.files, normalizedRequestedFileId)) {
+          requestedWorkspaceRefreshFileIdRef.current = null;
+          requestedWorkspaceMissingFileIdRef.current = null;
+          handledRequestedFileIdRef.current = null;
+          setRequestedCaseIssueSafe(null);
+          setRequestedCaseStatusSafe('ready');
+          logRequestedContextTransition('requested_context_ready', {
+            message:
+              'Workspace refresh failed but requested file resolved from in-memory workspace.',
+            requestKey,
+            resolvedVia: 'workspace_presence',
+          });
+          return;
+        }
         const requestedIssueAfterRefresh = resolveRequestedCaseIssueAfterRefresh({
           refreshSucceeded: false,
           hasRequestedFileAfterRefresh: false,
@@ -695,14 +804,19 @@ export function useCaseResolverState(): CaseResolverStateValue {
 
       if (requestedIssueAfterRefresh === null) {
         setWorkspace((current: CaseResolverWorkspace): CaseResolverWorkspace => {
-          const currentRevision = getCaseResolverWorkspaceRevision(current);
-          const incomingRevision = getCaseResolverWorkspaceRevision(refreshedWorkspace);
-          const currentHasRequestedFile = hasRequestedCaseFile(
-            current.files,
-            normalizedRequestedFileId,
-          );
-          if (incomingRevision <= currentRevision && currentHasRequestedFile) {
-            return current;
+          const hydrationDecision = shouldAdoptIncomingWorkspace({
+            current,
+            incoming: refreshedWorkspace,
+            requestedFileId: normalizedRequestedFileId,
+          });
+          if (!hydrationDecision.adopt) return current;
+          if (hydrationDecision.reason === 'equal_revision_current_placeholder') {
+            logCaseResolverWorkspaceEvent({
+              source: 'case_view_requested_context_resolve',
+              action: 'refresh_equal_revision_adopted',
+              workspaceRevision: getCaseResolverWorkspaceRevision(refreshedWorkspace),
+              message: 'Adopted equal-revision workspace during requested context resolve because current workspace was placeholder.',
+            });
           }
           syncPersistedWorkspaceTracking(refreshedWorkspace);
           queuedSerializedWorkspaceRef.current = null;
@@ -773,6 +887,22 @@ export function useCaseResolverState(): CaseResolverStateValue {
         watchdogMs: CASE_RESOLVER_REQUESTED_CONTEXT_LOADING_WATCHDOG_MS,
       });
       if (hasValidInFlightRequest) return;
+      if (hasRequestedCaseFile(workspaceRef.current.files, normalizedRequestedFileId)) {
+        requestedContextInFlightRef.current = null;
+        requestedContextStartedAtRef.current = null;
+        requestedWorkspaceRefreshFileIdRef.current = null;
+        requestedWorkspaceMissingFileIdRef.current = null;
+        handledRequestedFileIdRef.current = null;
+        setRequestedCaseIssueSafe(null);
+        setRequestedCaseStatusSafe('ready');
+        logRequestedContextTransition('requested_context_ready', {
+          message:
+            'Watchdog recovered requested context from in-memory workspace before forcing missing.',
+          requestKey,
+          resolvedVia: 'workspace_presence',
+        });
+        return;
+      }
 
       requestedContextInFlightRef.current = null;
       requestedContextStartedAtRef.current = null;
@@ -875,6 +1005,10 @@ export function useCaseResolverState(): CaseResolverStateValue {
   useEffect(() => {
     return (): void => {
       clearConflictRetryTimer();
+      if (bootstrapRefreshRetryTimerRef.current) {
+        window.clearTimeout(bootstrapRefreshRetryTimerRef.current);
+        bootstrapRefreshRetryTimerRef.current = null;
+      }
       if (persistWorkspaceTimerRef.current) {
         window.clearTimeout(persistWorkspaceTimerRef.current);
         persistWorkspaceTimerRef.current = null;
@@ -1012,6 +1146,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     const scopedWorkspace = resolveCaseResolverTreeWorkspace({
       selectedFileId: viewState.activeCaseId,
       requestedFileId: null,
+      activeCaseId: viewState.activeCaseId,
       workspace,
       includeDescendantCaseScope: true,
     });

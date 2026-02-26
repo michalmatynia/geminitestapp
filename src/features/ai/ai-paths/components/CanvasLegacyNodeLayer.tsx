@@ -90,7 +90,7 @@ export function CanvasLegacyNodeLayer({
           <div
             key={node.id}
             data-node-id={node.id}
-            className={`absolute flex flex-col items-center rounded-xl border-2 p-4 transition-all duration-200 select-none ${
+            className={`absolute flex cursor-pointer flex-col items-center rounded-xl border-2 p-4 transition-all duration-200 select-none ${
               isSelected
                 ? 'z-40 border-blue-500 bg-blue-500/10 shadow-[0_0_20px_rgba(59,130,246,0.4)]'
                 : isActive

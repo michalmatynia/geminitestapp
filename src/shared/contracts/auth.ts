@@ -234,6 +234,7 @@ export const userPreferencesSchema = dtoBaseSchema.extend({
   caseResolverCaseListSortBy: z.enum([
     'updated',
     'created',
+    'happeningDate',
     'name',
     'status',
     'signature',
@@ -243,6 +244,7 @@ export const userPreferencesSchema = dtoBaseSchema.extend({
   caseResolverCaseListSortOrder: z.enum(['asc', 'desc']),
   caseResolverCaseListSearchScope: z.enum(['all', 'name', 'folder', 'content']),
   caseResolverCaseListFiltersCollapsedByDefault: z.boolean(),
+  caseResolverCaseListShowNestedContent: z.boolean(),
   adminMenuCollapsed: z.boolean(),
   adminMenuFavorites: z.array(z.string()),
   adminMenuSectionColors: z.record(z.string(), z.string()),

@@ -13,6 +13,7 @@ import {
 } from '../utils/caseResolverUtils';
 import {
   CASE_RESOLVER_DOCUMENT_HISTORY_LIMIT,
+  buildCaseResolverDraftComparableFingerprint,
 } from './useCaseResolverState.helpers';
 import {
   deriveDocumentContentSync,
@@ -22,6 +23,7 @@ import {
 } from '@/features/document-editor';
 import { savePromptExploderDraftPromptFromCaseResolver } from '@/features/prompt-exploder/bridge';
 import type { CaseResolverFileEditDraft } from '../types';
+import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 
 const sanitizeDocumentExportBaseName = (value: string): string => {
   return value
@@ -71,6 +73,69 @@ const buildDraftPdfPreviewMarkup = (
     addresseeLabel: buildPartyAddressBlock(filemakerDatabase, draft.addressee),
     documentContent: draft.documentContentHtml ?? draft.documentContent ?? '',
   });
+};
+
+const normalizeSemanticallyEmptyCanonicalContent = (
+  canonical: DocumentContentCanonical
+): DocumentContentCanonical => {
+  if (canonical.plainText.trim().length > 0) return canonical;
+  if (
+    canonical.html.length === 0 &&
+    canonical.markdown.length === 0 &&
+    canonical.plainText.length === 0
+  ) {
+    return canonical;
+  }
+  return {
+    ...canonical,
+    html: '',
+    markdown: '',
+    plainText: '',
+  };
+};
+
+export const applyCaseResolverWysiwygDraftContentChange = ({
+  current,
+  nextHtml,
+}: {
+  current: CaseResolverFileEditDraft;
+  nextHtml: string;
+}): CaseResolverFileEditDraft => {
+  const canonical = normalizeSemanticallyEmptyCanonicalContent(
+    deriveDocumentContentSync({
+      mode: 'wysiwyg',
+      value: nextHtml,
+      previousMarkdown: current.documentContentMarkdown ?? '',
+      previousHtml: current.documentContentHtml ?? '',
+    })
+  );
+  const nextWarnings = canonical.warnings;
+  const nextStoredContent = toStorageDocumentValue(canonical);
+  const now = new Date().toISOString();
+  const nextDraft: CaseResolverFileEditDraft = {
+    ...current,
+    editorType: 'wysiwyg',
+    documentContentFormatVersion: 1,
+    documentContent: nextStoredContent,
+    documentContentMarkdown: canonical.markdown,
+    documentContentHtml: canonical.html,
+    documentContentPlainText: canonical.plainText,
+    documentConversionWarnings: nextWarnings,
+    lastContentConversionAt: now,
+  };
+  const currentFingerprint = buildCaseResolverDraftComparableFingerprint(current);
+  const nextFingerprint = buildCaseResolverDraftComparableFingerprint(nextDraft);
+  if (currentFingerprint === nextFingerprint) {
+    if (nextHtml !== (current.documentContentHtml ?? '')) {
+      logCaseResolverWorkspaceEvent({
+        source: 'case_view_document_editor',
+        action: 'document_editor_onchange_semantic_noop',
+        message: `file_id=${current.id}`,
+      });
+    }
+    return current;
+  }
+  return nextDraft;
 };
 
 export function useAdminCaseResolverDocumentActions({
@@ -378,10 +443,17 @@ export function useAdminCaseResolverDocumentActions({
 
   const handleUpdateDraftDocumentContent = useCallback(
     (next: string): void => {
-      if (!editingDocumentDraft || editingDocumentDraft.isLocked) return;
-      setEditingDocumentDraft(current => current ? { ...current, documentContent: next } : null);
+      setEditingDocumentDraft((current) => {
+        if (!current) return current;
+        if (current.isLocked) return current;
+        if (current.fileType === 'scanfile') return current;
+        return applyCaseResolverWysiwygDraftContentChange({
+          current,
+          nextHtml: next,
+        });
+      });
     },
-    [editingDocumentDraft, setEditingDocumentDraft]
+    [setEditingDocumentDraft]
   );
 
   const applyDraftCanonicalContent = useCallback(

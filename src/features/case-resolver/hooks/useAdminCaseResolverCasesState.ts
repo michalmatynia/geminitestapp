@@ -22,6 +22,16 @@ const resolveTimestampMs = (value: string | null | undefined): number => {
   return Number.isFinite(parsed) ? parsed : 0;
 };
 
+const resolveHappeningDateSortValue = (
+  file: CaseResolverFile
+): { timestampMs: number; hasValue: boolean } => {
+  const value = file.happeningDate?.trim() ?? '';
+  if (!value) return { timestampMs: 0, hasValue: false };
+  const parsed = Date.parse(value);
+  if (!Number.isFinite(parsed)) return { timestampMs: 0, hasValue: false };
+  return { timestampMs: parsed, hasValue: true };
+};
+
 const resolveCaseStatusRank = (
   status: CaseResolverFile['caseStatus'] | null | undefined
 ): number => (status === 'completed' ? 1 : 0);
@@ -57,6 +67,19 @@ const compareCaseRows = (
     const createdDelta =
       resolveTimestampMs(left.createdAt) - resolveTimestampMs(right.createdAt);
     if (createdDelta !== 0) return resolveDirectionalDelta(createdDelta);
+  }
+
+  if (sortBy === 'happeningDate') {
+    const leftHappeningDate = resolveHappeningDateSortValue(left);
+    const rightHappeningDate = resolveHappeningDateSortValue(right);
+    if (leftHappeningDate.hasValue !== rightHappeningDate.hasValue) {
+      return leftHappeningDate.hasValue ? -1 : 1;
+    }
+    if (leftHappeningDate.hasValue && rightHappeningDate.hasValue) {
+      const happeningDateDelta =
+        leftHappeningDate.timestampMs - rightHappeningDate.timestampMs;
+      if (happeningDateDelta !== 0) return resolveDirectionalDelta(happeningDateDelta);
+    }
   }
 
   if (sortBy === 'updated') {

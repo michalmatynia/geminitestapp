@@ -71,6 +71,7 @@ import {
 } from './useCaseResolverState.helpers';
 import {
   shouldAdoptIncomingWorkspace,
+  resolvePreferredCaseResolverWorkspace,
 } from './useCaseResolverState.helpers.hydration';
 import {
   buildRequestedContextRequestKey,
@@ -132,7 +133,6 @@ export function useCaseResolverState(): CaseResolverStateValue {
     );
     return typeof record?.value === 'string' ? record.value : null;
   }, [heavySettingsQuery.data]);
-  const rawWorkspace = rawWorkspaceFromStore ?? rawWorkspaceFromHeavyScope;
   const rawCaseResolverTags = settingsStore.get(CASE_RESOLVER_TAGS_KEY);
   const rawCaseResolverIdentifiers = settingsStore.get(CASE_RESOLVER_IDENTIFIERS_KEY);
   const rawCaseResolverCategories = settingsStore.get(CASE_RESOLVER_CATEGORIES_KEY);
@@ -143,14 +143,41 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const rawFilemakerDatabase = settingsStore.get(FILEMAKER_DATABASE_KEY);
   const rawCaseResolverCaptureSettings = settingsStore.get(CASE_RESOLVER_CAPTURE_SETTINGS_KEY);
   
-  const parsedWorkspace = useMemo(
-    (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspace),
-    [rawWorkspace]
+  const hasWorkspaceFromStore = useMemo(
+    (): boolean => hasCaseResolverWorkspaceFilesArray(rawWorkspaceFromStore),
+    [rawWorkspaceFromStore],
   );
-  const canHydrateWorkspaceFromStore = useMemo(
-    (): boolean => hasCaseResolverWorkspaceFilesArray(rawWorkspace),
-    [rawWorkspace]
+  const hasWorkspaceFromHeavyScope = useMemo(
+    (): boolean => hasCaseResolverWorkspaceFilesArray(rawWorkspaceFromHeavyScope),
+    [rawWorkspaceFromHeavyScope],
   );
+  const parsedWorkspaceFromStore = useMemo(
+    (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspaceFromStore),
+    [rawWorkspaceFromStore],
+  );
+  const parsedWorkspaceFromHeavyScope = useMemo(
+    (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspaceFromHeavyScope),
+    [rawWorkspaceFromHeavyScope],
+  );
+  const preferredWorkspaceSelection = useMemo(
+    () =>
+      resolvePreferredCaseResolverWorkspace({
+        storeWorkspace: parsedWorkspaceFromStore,
+        heavyWorkspace: parsedWorkspaceFromHeavyScope,
+        hasStoreWorkspace: hasWorkspaceFromStore,
+        hasHeavyWorkspace: hasWorkspaceFromHeavyScope,
+        requestedFileId,
+      }),
+    [
+      hasWorkspaceFromHeavyScope,
+      hasWorkspaceFromStore,
+      parsedWorkspaceFromHeavyScope,
+      parsedWorkspaceFromStore,
+      requestedFileId,
+    ],
+  );
+  const parsedWorkspace = preferredWorkspaceSelection.workspace;
+  const canHydrateWorkspaceFromStore = preferredWorkspaceSelection.source !== 'none';
   const caseResolverTags = useMemo(
     (): CaseResolverTag[] => parseCaseResolverTags(rawCaseResolverTags),
     [rawCaseResolverTags]
@@ -247,6 +274,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
   const unresolvedOwnershipWarningShownRef = useRef(false);
   const lastLoggedOwnershipDiagnosticsSignatureRef = useRef<string>('');
   const lastLoggedRequestedContextSignatureRef = useRef<string>('');
+  const lastWorkspaceSourceSelectionSignatureRef = useRef<string>('');
 
   const setRequestedCaseStatusSafe = useCallback(
     (nextStatus: CaseResolverRequestedCaseStatus): void => {
@@ -528,14 +556,57 @@ export function useCaseResolverState(): CaseResolverStateValue {
     workspaceRef.current = workspace;
   }, [workspace]);
 
+  useEffect((): void => {
+    const selectionSignature = [
+      preferredWorkspaceSelection.source,
+      preferredWorkspaceSelection.reason,
+      hasWorkspaceFromStore ? 'store:1' : 'store:0',
+      hasWorkspaceFromHeavyScope ? 'heavy:1' : 'heavy:0',
+      getCaseResolverWorkspaceRevision(parsedWorkspace),
+    ].join('|');
+    if (lastWorkspaceSourceSelectionSignatureRef.current === selectionSignature) return;
+    lastWorkspaceSourceSelectionSignatureRef.current = selectionSignature;
+    logCaseResolverWorkspaceEvent({
+      source: 'case_view',
+      action: 'hydrate_workspace_source_selected',
+      workspaceRevision: getCaseResolverWorkspaceRevision(parsedWorkspace),
+      message: [
+        `source=${preferredWorkspaceSelection.source}`,
+        `reason=${preferredWorkspaceSelection.reason}`,
+        `has_store=${hasWorkspaceFromStore ? 'true' : 'false'}`,
+        `has_heavy=${hasWorkspaceFromHeavyScope ? 'true' : 'false'}`,
+      ].join(' '),
+    });
+  }, [
+    hasWorkspaceFromHeavyScope,
+    hasWorkspaceFromStore,
+    parsedWorkspace,
+    preferredWorkspaceSelection.reason,
+    preferredWorkspaceSelection.source,
+  ]);
+
   useEffect(() => {
-    if (canHydrateWorkspaceFromStore) return;
-    if (workspaceRef.current.files.length > 0) return;
+    const workspaceHasTreeData =
+      workspaceRef.current.files.length > 0 ||
+      workspaceRef.current.assets.length > 0 ||
+      workspaceRef.current.folders.length > 0;
+    if (workspaceHasTreeData) return;
+    const shouldBootstrapRefresh =
+      !canHydrateWorkspaceFromStore || preferredWorkspaceSelection.source === 'store';
+    if (!shouldBootstrapRefresh) return;
     let cancelled = false;
     void (async (): Promise<void> => {
       const snapshot = await fetchCaseResolverWorkspaceSnapshot('case_view_bootstrap');
       if (!isMountedRef.current || cancelled) return;
       if (!snapshot) {
+        if (canHydrateWorkspaceFromStore) {
+          logCaseResolverWorkspaceEvent({
+            source: 'case_view_bootstrap',
+            action: 'refresh_failed_no_retry',
+            message: 'Bootstrap refresh failed while store snapshot is available; skipping retry loop.',
+          });
+          return;
+        }
         if (bootstrapRefreshRetryTimerRef.current !== null) {
           window.clearTimeout(bootstrapRefreshRetryTimerRef.current);
         }
@@ -587,6 +658,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
   }, [
     bootstrapRefreshRetryTick,
     canHydrateWorkspaceFromStore,
+    preferredWorkspaceSelection.source,
     queuedExpectedRevisionRef,
     queuedMutationIdRef,
     queuedSerializedWorkspaceRef,

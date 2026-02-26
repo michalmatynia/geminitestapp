@@ -3,6 +3,7 @@ import {
   ensureHtmlForPreview,
   ensureSafeDocumentHtml,
   toStorageDocumentValue,
+  type DocumentContentCanonical,
 } from '@/features/document-editor/content-format';
 import type {
   CaseResolverFile,
@@ -20,6 +21,25 @@ export type CaseResolverDraftCanonicalState = {
   warnings: string[];
   originalDocumentContent: string;
   explodedDocumentContent: string;
+};
+
+const normalizeSemanticallyEmptyCanonicalContent = (
+  canonical: DocumentContentCanonical
+): DocumentContentCanonical => {
+  if (canonical.plainText.trim().length > 0) return canonical;
+  if (
+    canonical.html.length === 0 &&
+    canonical.markdown.length === 0 &&
+    canonical.plainText.length === 0
+  ) {
+    return canonical;
+  }
+  return {
+    ...canonical,
+    html: '',
+    markdown: '',
+    plainText: '',
+  };
 };
 
 export const buildCaseResolverDraftCanonicalState = (
@@ -57,12 +77,14 @@ export const buildCaseResolverDraftCanonicalState = (
     }
     return ensureSafeDocumentHtml(draft.documentContent ?? '');
   })();
-  const canonical = deriveDocumentContentSync({
-    mode: resolvedMode,
-    value: resolvedCanonicalSource,
-    previousHtml: draft.documentContentHtml ?? '',
-    previousMarkdown: draft.documentContentMarkdown ?? '',
-  });
+  const canonical = normalizeSemanticallyEmptyCanonicalContent(
+    deriveDocumentContentSync({
+      mode: resolvedMode,
+      value: resolvedCanonicalSource,
+      previousHtml: draft.documentContentHtml ?? '',
+      previousMarkdown: draft.documentContentMarkdown ?? '',
+    })
+  );
   const storedContent = toStorageDocumentValue(canonical);
   const originalDocumentContent =
     draft.activeDocumentVersion === 'original'

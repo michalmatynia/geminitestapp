@@ -13,6 +13,7 @@ export const DEFAULT_CASE_LIST_VIEW_DEFAULTS: CaseListViewDefaults = {
   sortOrder: 'desc',
   searchScope: 'all',
   filtersCollapsedByDefault: true,
+  showNestedContent: true,
 };
 
 export const resolveCaseTreeOrderValue = (file: CaseResolverFile): number =>
@@ -97,6 +98,7 @@ export const normalizeCaseListViewDefaults = (
     preferences?.caseResolverCaseListViewMode === 'list' ? 'list' : 'hierarchy',
   sortBy:
     preferences?.caseResolverCaseListSortBy === 'created' ||
+    preferences?.caseResolverCaseListSortBy === 'happeningDate' ||
     preferences?.caseResolverCaseListSortBy === 'name' ||
     preferences?.caseResolverCaseListSortBy === 'status' ||
     preferences?.caseResolverCaseListSortBy === 'signature' ||
@@ -114,6 +116,8 @@ export const normalizeCaseListViewDefaults = (
       : 'all',
   filtersCollapsedByDefault:
     preferences?.caseResolverCaseListFiltersCollapsedByDefault ?? true,
+  showNestedContent:
+    preferences?.caseResolverCaseListShowNestedContent ?? true,
 });
 
 export const getCaseResolverWorkspaceRevision = (

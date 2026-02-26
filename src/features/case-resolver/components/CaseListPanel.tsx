@@ -12,6 +12,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { createCaseResolverCasesMasterTreeAdapter } from '@/features/case-resolver/adapter';
 import {
+  buildMasterCaseContentNodesFromCaseResolverWorkspace,
   buildMasterCaseNodesFromCaseResolverWorkspace,
   decodeCaseResolverCaseMasterNodeId,
   fromCaseResolverCaseNodeId,
@@ -100,6 +101,8 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     caseSortOrder,
     setCaseSortBy,
     setCaseSortOrder,
+    caseShowNestedContent,
+    setCaseShowNestedContent,
     handleSaveListViewDefaults,
   } = useAdminCaseResolverCases();
   const {
@@ -243,15 +246,28 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     [files.length, visibleCaseIdSet]
   );
 
-  const masterNodes = useMemo((): MasterTreeNode[] => {
+  const visibleCaseNodes = useMemo((): MasterTreeNode[] => {
     if (!isCaseSubsetVisible) return baseCaseNodes;
     return baseCaseNodes.filter((node: MasterTreeNode): boolean => visibleCaseNodeIdSet.has(node.id));
   }, [baseCaseNodes, isCaseSubsetVisible, visibleCaseNodeIdSet]);
 
+  const nestedCaseContentNodes = useMemo((): MasterTreeNode[] => {
+    if (!caseShowNestedContent) return [];
+    return buildMasterCaseContentNodesFromCaseResolverWorkspace({
+      workspace,
+      includeCaseIds: isCaseSubsetVisible ? visibleCaseIdSet : null,
+    });
+  }, [caseShowNestedContent, isCaseSubsetVisible, visibleCaseIdSet, workspace]);
+
+  const masterNodes = useMemo((): MasterTreeNode[] => {
+    if (!caseShowNestedContent) return visibleCaseNodes;
+    return [...visibleCaseNodes, ...nestedCaseContentNodes];
+  }, [caseShowNestedContent, nestedCaseContentNodes, visibleCaseNodes]);
+
   const autoExpandedNodeIds = useMemo((): string[] => {
     if (!isCaseSubsetVisible) return [];
     return masterNodes
-      .filter((node: MasterTreeNode): boolean => node.type === 'folder')
+      .filter((node: MasterTreeNode): boolean => node.type === 'folder' && node.kind === 'case_entry')
       .map((node: MasterTreeNode): string => node.id);
   }, [isCaseSubsetVisible, masterNodes]);
 
@@ -336,6 +352,13 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     [router]
   );
 
+  const handleOpenFile = useCallback(
+    (fileId: string): void => {
+      router.push(buildCaseResolverCaseHref(fileId));
+    },
+    [router]
+  );
+
   const handleCreateCaseLocal = useCallback(
     (parentCaseId: string | null = null): void => {
       setEditingCaseId(null);
@@ -389,6 +412,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
   const canStartDrag = useCallback(
     ({ node }): boolean => {
       if (isHierarchyLocked) return false;
+      if (!decodeCaseResolverCaseMasterNodeId(node.id)) return false;
       return !parseBoolean(node.metadata?.['isLocked']);
     },
     [isHierarchyLocked]
@@ -436,6 +460,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
         handleToggleHeldCase={handleToggleHeldCase}
         handleNestHeldCase={handleNestHeldCaseVoid}
         handleOpenCase={handleOpenCase}
+        handleOpenFile={handleOpenFile}
         handleEditCase={handleEditCaseLocal}
         handleCreateCase={handleCreateCaseLocal}
         handleDeleteCase={handleDeleteCase}
@@ -447,7 +472,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       filesById, caseTagPathById, caseIdentifierPathById, caseCategoryPathById,
       controller, handleToggleCaseStatus, heldCaseId, heldCaseFile,
       isHierarchyLocked, isHeldCaseAncestorOf,
-      handleToggleHeldCase, handleNestHeldCaseVoid, handleOpenCase,
+      handleToggleHeldCase, handleNestHeldCaseVoid, handleOpenCase, handleOpenFile,
       handleEditCaseLocal, handleCreateCaseLocal, handleDeleteCase,
       FolderClosedIcon, FolderOpenIcon,
     ]
@@ -484,8 +509,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           query={treeSearchQuery}
           onOpenCase={(caseId) => router.push(buildCaseResolverCaseHref(caseId))}
           onOpenFile={(file) => {
-            const targetId = file.parentCaseId ?? file.id;
-            router.push(buildCaseResolverCaseHref(targetId));
+            router.push(buildCaseResolverCaseHref(file.id));
           }}
         />
       ) : isLoading ? (
@@ -519,6 +543,8 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
             setCaseSortOrder={setCaseSortOrder}
             isHierarchyLocked={isHierarchyLocked}
             setIsHierarchyLocked={setIsHierarchyLocked}
+            caseShowNestedContent={caseShowNestedContent}
+            setCaseShowNestedContent={setCaseShowNestedContent}
             handleSaveDefaults={handleSaveDefaults}
             isSavingDefaults={isSavingDefaults}
           />
@@ -545,6 +571,8 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
             setCaseSortOrder={setCaseSortOrder}
             isHierarchyLocked={isHierarchyLocked}
             setIsHierarchyLocked={setIsHierarchyLocked}
+            caseShowNestedContent={caseShowNestedContent}
+            setCaseShowNestedContent={setCaseShowNestedContent}
             handleSaveDefaults={handleSaveDefaults}
             isSavingDefaults={isSavingDefaults}
             className='mb-3'

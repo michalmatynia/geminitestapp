@@ -73,6 +73,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
   const { setStudioSettings } = useSettingsActions();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const activeProjectId = projectId?.trim() ?? '';
 
   const toolbarContext = useGenerationToolbarContext();
   const {
@@ -155,9 +156,6 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     analysisPlanSlotId === normalizedWorkingSlotId;
 
   const analysisPlanSourceSignature = toolbarContext.analysisPlanSnapshot?.sourceSignature?.trim() ?? '';
-  const analysisPlanIsStale =
-    analysisPlanAvailable &&
-    (!workingSourceSignature || analysisPlanSourceSignature !== workingSourceSignature);
 
   const analysisSummaryData = useMemo((): ImageStudioAnalysisSummaryChipData | null => {
     if (!toolbarContext.analysisPlanSnapshot) return null;
@@ -170,16 +168,6 @@ export function useGenerationToolbarState(): GenerationToolbarState {
       chromaThreshold: layout.chromaThreshold,
     };
   }, [toolbarContext.analysisPlanSnapshot]);
-
-  const centerAnalysisConfigMismatchMessage = useMemo(() => {
-    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale) return null;
-    return null; // Logic could be added here to compare current UI state with analysis plan
-  }, [analysisPlanAvailable, analysisPlanMatchesWorkingSlot, analysisPlanIsStale]);
-
-  const autoScaleAnalysisConfigMismatchMessage = useMemo(() => {
-    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale) return null;
-    return null;
-  }, [analysisPlanAvailable, analysisPlanMatchesWorkingSlot, analysisPlanIsStale]);
 
   const centerLayoutPresetOptions = useMemo(
     () => loadObjectLayoutCustomPresets(activeProjectId).map(p => ({
@@ -250,13 +238,25 @@ export function useGenerationToolbarState(): GenerationToolbarState {
       clientProcessingImageSrc,
     });
   }, [clientProcessingImageSrc, workingSlot, workingSlotImageSrc]);
+  const analysisPlanIsStale =
+    analysisPlanAvailable &&
+    (!workingSourceSignature || analysisPlanSourceSignature !== workingSourceSignature);
+
+  const centerAnalysisConfigMismatchMessage = useMemo(() => {
+    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale) return null;
+    return null; // Logic could be added here to compare current UI state with analysis plan
+  }, [analysisPlanAvailable, analysisPlanMatchesWorkingSlot, analysisPlanIsStale]);
+
+  const autoScaleAnalysisConfigMismatchMessage = useMemo(() => {
+    if (!analysisPlanAvailable || !analysisPlanMatchesWorkingSlot || analysisPlanIsStale) return null;
+    return null;
+  }, [analysisPlanAvailable, analysisPlanMatchesWorkingSlot, analysisPlanIsStale]);
   const activeProject = useMemo(
     () =>
       (projectsQuery.data ?? []).find((project) => project.id === projectId) ??
       null,
     [projectId, projectsQuery.data]
   );
-  const activeProjectId = projectId?.trim() ?? '';
   const projectCanvasSize = useMemo((): { width: number; height: number } | null => {
     const width =
       typeof activeProject?.canvasWidthPx === 'number' &&

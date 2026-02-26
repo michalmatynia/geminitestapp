@@ -24,6 +24,7 @@ type CaseResolverCaseListViewMode = 'hierarchy' | 'list';
 type CaseResolverCaseListSortBy =
   | 'updated'
   | 'created'
+  | 'happeningDate'
   | 'name'
   | 'status'
   | 'signature'
@@ -38,6 +39,7 @@ type CaseResolverCaseListPreferences = {
   caseResolverCaseListSortOrder: CaseResolverCaseListSortOrder;
   caseResolverCaseListSearchScope: CaseResolverCaseListSearchScope;
   caseResolverCaseListFiltersCollapsedByDefault: boolean;
+  caseResolverCaseListShowNestedContent: boolean;
 };
 
 const DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES: CaseResolverCaseListPreferences = {
@@ -46,6 +48,7 @@ const DEFAULT_CASE_RESOLVER_CASE_LIST_PREFERENCES: CaseResolverCaseListPreferenc
   caseResolverCaseListSortOrder: 'desc',
   caseResolverCaseListSearchScope: 'all',
   caseResolverCaseListFiltersCollapsedByDefault: true,
+  caseResolverCaseListShowNestedContent: true,
 };
 
 const normalizeCaseResolverCaseListPreferences = (
@@ -55,6 +58,7 @@ const normalizeCaseResolverCaseListPreferences = (
     preferences?.caseResolverCaseListViewMode === 'list' ? 'list' : 'hierarchy',
   caseResolverCaseListSortBy:
     preferences?.caseResolverCaseListSortBy === 'created' ||
+    preferences?.caseResolverCaseListSortBy === 'happeningDate' ||
     preferences?.caseResolverCaseListSortBy === 'name' ||
     preferences?.caseResolverCaseListSortBy === 'status' ||
     preferences?.caseResolverCaseListSortBy === 'signature' ||
@@ -72,6 +76,8 @@ const normalizeCaseResolverCaseListPreferences = (
       : 'all',
   caseResolverCaseListFiltersCollapsedByDefault:
     preferences?.caseResolverCaseListFiltersCollapsedByDefault ?? true,
+  caseResolverCaseListShowNestedContent:
+    preferences?.caseResolverCaseListShowNestedContent ?? true,
 });
 
 export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
@@ -109,6 +115,8 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
         caseResolverCaseListSearchScope: draft.caseResolverCaseListSearchScope,
         caseResolverCaseListFiltersCollapsedByDefault:
           draft.caseResolverCaseListFiltersCollapsedByDefault,
+        caseResolverCaseListShowNestedContent:
+          draft.caseResolverCaseListShowNestedContent,
       });
       toast('Case Resolver preferences saved.', { variant: 'success' });
       router.push('/admin/case-resolver/cases');
@@ -206,6 +214,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
                   ...current,
                   caseResolverCaseListSortBy:
                     value === 'created' ||
+                    value === 'happeningDate' ||
                     value === 'name' ||
                     value === 'status' ||
                     value === 'signature' ||
@@ -218,6 +227,7 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
               options={[
                 { value: 'updated', label: 'Date modified' },
                 { value: 'created', label: 'Date created' },
+                { value: 'happeningDate', label: 'Happening date' },
                 { value: 'name', label: 'Name' },
                 { value: 'status', label: 'Status' },
                 { value: 'signature', label: 'Signature' },
@@ -288,6 +298,26 @@ export function AdminCaseResolverPreferencesPage(): React.JSX.Element {
               options={[
                 { value: 'hidden', label: 'Hide Filters' },
                 { value: 'shown', label: 'Show Filters' },
+              ]}
+            />
+          </FormField>
+
+          <FormField
+            label='Default Nested Content'
+            description='Choose whether nested folders and files are shown by default in Case List.'
+          >
+            <SelectSimple
+              size='sm'
+              value={draft.caseResolverCaseListShowNestedContent ? 'shown' : 'hidden'}
+              onValueChange={(value: string): void => {
+                setDraft((current: CaseResolverCaseListPreferences) => ({
+                  ...current,
+                  caseResolverCaseListShowNestedContent: value !== 'hidden',
+                }));
+              }}
+              options={[
+                { value: 'shown', label: 'Show nested content' },
+                { value: 'hidden', label: 'Hide nested content' },
               ]}
             />
           </FormField>

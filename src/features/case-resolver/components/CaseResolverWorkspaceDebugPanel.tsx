@@ -57,6 +57,52 @@ export function CaseResolverWorkspaceDebugPanel({
         <span>success: {successRatePercent}%</span>
         <span>conflict: {conflictRatePercent}%</span>
       </div>
+      <div className='mb-2 space-y-1 rounded border border-border/60 bg-black/40 px-2 py-1 font-mono text-[10px] text-gray-200'>
+        <div className='font-medium text-gray-100'>Hydration</div>
+        {snapshot.latestHydrationSelection ? (
+          <div className='space-y-0.5'>
+            <div>
+              source={snapshot.latestHydrationSelection.source ?? 'n/a'} reason=
+              {snapshot.latestHydrationSelection.reason ?? 'n/a'}
+            </div>
+            <div>
+              has_store=
+              {snapshot.latestHydrationSelection.hasStore === null
+                ? 'n/a'
+                : snapshot.latestHydrationSelection.hasStore
+                  ? 'true'
+                  : 'false'}{' '}
+              has_heavy=
+              {snapshot.latestHydrationSelection.hasHeavy === null
+                ? 'n/a'
+                : snapshot.latestHydrationSelection.hasHeavy
+                  ? 'true'
+                  : 'false'}{' '}
+              rev={snapshot.latestHydrationSelection.workspaceRevision ?? 'n/a'}
+            </div>
+            <div className='text-gray-400'>{snapshot.latestHydrationSelection.timestamp}</div>
+          </div>
+        ) : (
+          <div className='text-gray-400'>No hydration source event yet.</div>
+        )}
+      </div>
+      <div className='mb-2 space-y-1 rounded border border-border/60 bg-black/40 px-2 py-1 font-mono text-[10px] text-gray-200'>
+        <div className='font-medium text-gray-100'>Requested Context</div>
+        {snapshot.latestRequestedContext ? (
+          <div className='space-y-0.5'>
+            <div>action={snapshot.latestRequestedContext.action}</div>
+            <div>
+              status={snapshot.latestRequestedContext.requestedCaseStatus ?? 'n/a'} issue=
+              {snapshot.latestRequestedContext.requestedCaseIssue ?? 'n/a'} via=
+              {snapshot.latestRequestedContext.resolvedVia ?? 'n/a'}
+            </div>
+            <div>request_key={snapshot.latestRequestedContext.requestKey ?? 'n/a'}</div>
+            <div className='text-gray-400'>{snapshot.latestRequestedContext.timestamp}</div>
+          </div>
+        ) : (
+          <div className='text-gray-400'>No requested-context event yet.</div>
+        )}
+      </div>
       <div className='space-y-1 overflow-auto pr-1 font-mono'>
         {recent.length === 0 ? (
           <div className='text-gray-400'>No workspace events captured.</div>

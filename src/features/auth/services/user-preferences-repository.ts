@@ -43,6 +43,7 @@ type UserPreferencesDocument = {
   caseResolverCaseListSortBy:
     | 'updated'
     | 'created'
+    | 'happeningDate'
     | 'name'
     | 'status'
     | 'signature'
@@ -52,6 +53,7 @@ type UserPreferencesDocument = {
   caseResolverCaseListSortOrder: 'asc' | 'desc' | null;
   caseResolverCaseListSearchScope: 'all' | 'name' | 'folder' | 'content' | null;
   caseResolverCaseListFiltersCollapsedByDefault: boolean | null;
+  caseResolverCaseListShowNestedContent: boolean | null;
   adminMenuCollapsed: boolean | null;
   adminMenuFavorites: string[] | null;
   adminMenuSectionColors: Record<string, string> | null;
@@ -162,6 +164,8 @@ const toUserPreferences = (doc: UserPreferencesDocument): UserPreferencesRecord 
   caseResolverCaseListSearchScope: doc.caseResolverCaseListSearchScope ?? 'all',
   caseResolverCaseListFiltersCollapsedByDefault:
     doc.caseResolverCaseListFiltersCollapsedByDefault ?? true,
+  caseResolverCaseListShowNestedContent:
+    doc.caseResolverCaseListShowNestedContent ?? true,
   adminMenuCollapsed: doc.adminMenuCollapsed ?? false,
   adminMenuFavorites: doc.adminMenuFavorites ?? [],
   adminMenuSectionColors: doc.adminMenuSectionColors ?? {},
@@ -200,6 +204,7 @@ const defaultPreferences = (
   caseResolverCaseListSortOrder: 'desc',
   caseResolverCaseListSearchScope: 'all',
   caseResolverCaseListFiltersCollapsedByDefault: true,
+  caseResolverCaseListShowNestedContent: true,
   adminMenuCollapsed: false,
   adminMenuFavorites: [],
   adminMenuSectionColors: {},

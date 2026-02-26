@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { useSearchParams } from 'next/navigation';
 
 import {
   Button,
@@ -16,10 +17,13 @@ import { CaseResolverPageProvider } from '../context/CaseResolverPageContext';
 import { CaseResolverFolderTree } from './CaseResolverFolderTree';
 import { CaseResolverPageMainContent } from './page/CaseResolverPageMainContent';
 import { CaseResolverCaptureMappingModal } from './page/CaseResolverCaptureMappingModal';
+import { CaseResolverWorkspaceDebugPanel } from './CaseResolverWorkspaceDebugPanel';
 
 export function CaseResolverPageView(): React.JSX.Element {
+  const searchParams = useSearchParams();
   const contextValue = useCaseResolverViewContext();
   const { state } = contextValue;
+  const workspaceDebugEnabled = (searchParams.get('debugWorkspace')?.trim() ?? '') === '1';
   const {
     workspace,
     activeCaseId,
@@ -184,6 +188,7 @@ export function CaseResolverPageView(): React.JSX.Element {
 
         <ConfirmationModal />
         <PromptInputModal />
+        <CaseResolverWorkspaceDebugPanel enabled={workspaceDebugEnabled} />
 
         {/* Unsaved-changes guard dialog */}
         <Dialog

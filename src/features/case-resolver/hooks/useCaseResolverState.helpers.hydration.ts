@@ -13,6 +13,21 @@ export type CaseResolverWorkspaceHydrationDecision = {
   reason: CaseResolverWorkspaceHydrationDecisionReason;
 };
 
+export type CaseResolverWorkspaceHydrationSource = 'store' | 'heavy' | 'none';
+
+export type CaseResolverWorkspaceHydrationSourceReason =
+  | CaseResolverWorkspaceHydrationDecisionReason
+  | 'store_only'
+  | 'heavy_only'
+  | 'store_preferred'
+  | 'no_workspace_source';
+
+export type CaseResolverWorkspaceHydrationSourceSelection = {
+  workspace: CaseResolverWorkspace;
+  source: CaseResolverWorkspaceHydrationSource;
+  reason: CaseResolverWorkspaceHydrationSourceReason;
+};
+
 const normalizeRequestedFileId = (value: string | null | undefined): string =>
   typeof value === 'string' ? value.trim() : '';
 
@@ -66,4 +81,60 @@ export const shouldAdoptIncomingWorkspace = ({
   }
 
   return { adopt: false, reason: 'keep_current' };
+};
+
+export const resolvePreferredCaseResolverWorkspace = ({
+  storeWorkspace,
+  heavyWorkspace,
+  hasStoreWorkspace,
+  hasHeavyWorkspace,
+  requestedFileId,
+}: {
+  storeWorkspace: CaseResolverWorkspace;
+  heavyWorkspace: CaseResolverWorkspace;
+  hasStoreWorkspace: boolean;
+  hasHeavyWorkspace: boolean;
+  requestedFileId: string | null;
+}): CaseResolverWorkspaceHydrationSourceSelection => {
+  if (hasStoreWorkspace && hasHeavyWorkspace) {
+    const decision = shouldAdoptIncomingWorkspace({
+      current: storeWorkspace,
+      incoming: heavyWorkspace,
+      requestedFileId,
+    });
+    if (decision.adopt) {
+      return {
+        workspace: heavyWorkspace,
+        source: 'heavy',
+        reason: decision.reason,
+      };
+    }
+    return {
+      workspace: storeWorkspace,
+      source: 'store',
+      reason: 'store_preferred',
+    };
+  }
+
+  if (hasStoreWorkspace) {
+    return {
+      workspace: storeWorkspace,
+      source: 'store',
+      reason: 'store_only',
+    };
+  }
+
+  if (hasHeavyWorkspace) {
+    return {
+      workspace: heavyWorkspace,
+      source: 'heavy',
+      reason: 'heavy_only',
+    };
+  }
+
+  return {
+    workspace: storeWorkspace,
+    source: 'none',
+    reason: 'no_workspace_source',
+  };
 };

@@ -67,6 +67,8 @@ const buildUserPreferencesResponse = (
   caseResolverCaseListSearchScope: preferences?.caseResolverCaseListSearchScope ?? 'all',
   caseResolverCaseListFiltersCollapsedByDefault:
     preferences?.caseResolverCaseListFiltersCollapsedByDefault ?? true,
+  caseResolverCaseListShowNestedContent:
+    preferences?.caseResolverCaseListShowNestedContent ?? true,
   adminMenuCollapsed: preferences?.adminMenuCollapsed ?? false,
   cmsLastPageId: preferences?.cmsLastPageId ?? null,
   cmsActiveDomainId: preferences?.cmsActiveDomainId ?? null,

@@ -61,6 +61,8 @@ export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWork
   const [caseSortBy, setCaseSortBy] = useState<CaseSortKey>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortBy);
   const [caseSortOrder, setCaseSortOrder] = useState<CaseSortOrder>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.sortOrder);
   const [caseViewMode, setCaseViewMode] = useState<CaseViewMode>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.viewMode);
+  const [caseShowNestedContent, setCaseShowNestedContent] =
+    useState<boolean>(DEFAULT_CASE_LIST_VIEW_DEFAULTS.showNestedContent);
   const [caseFilterPanelDefaultExpanded, setCaseFilterPanelDefaultExpanded] = useState<boolean>(!DEFAULT_CASE_LIST_VIEW_DEFAULTS.filtersCollapsedByDefault);
   const [didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults] = useState(false);
   const [confirmation, setConfirmation] = useState<any>(null);
@@ -106,6 +108,7 @@ export function useAdminCaseResolverCasesState(parsedWorkspace: CaseResolverWork
     caseSortBy, setCaseSortBy,
     caseSortOrder, setCaseSortOrder,
     caseViewMode, setCaseViewMode,
+    caseShowNestedContent, setCaseShowNestedContent,
     caseFilterPanelDefaultExpanded, setCaseFilterPanelDefaultExpanded,
     didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults,
     confirmation, setConfirmation,

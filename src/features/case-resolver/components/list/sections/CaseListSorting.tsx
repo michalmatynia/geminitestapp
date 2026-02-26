@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { ArrowDown, ArrowUp, Lock, Save, Unlock } from 'lucide-react';
-import { Button, SelectSimple } from '@/shared/ui';
+import { Button, SelectSimple, Switch } from '@/shared/ui';
 
 export interface CaseListSortingProps {
   caseSortBy: string;
@@ -13,6 +13,8 @@ export interface CaseListSortingProps {
   setCaseSortOrder: (v: 'asc' | 'desc') => void;
   isHierarchyLocked: boolean;
   setIsHierarchyLocked: (v: boolean | ((p: boolean) => boolean)) => void;
+  caseShowNestedContent: boolean;
+  setCaseShowNestedContent: (v: boolean) => void;
   handleSaveDefaults: () => Promise<void>;
   isSavingDefaults: boolean;
   className?: string;
@@ -25,6 +27,8 @@ export function CaseListSorting({
   setCaseSortOrder,
   isHierarchyLocked,
   setIsHierarchyLocked,
+  caseShowNestedContent,
+  setCaseShowNestedContent,
   handleSaveDefaults,
   isSavingDefaults,
   className = '',
@@ -41,6 +45,7 @@ export function CaseListSorting({
           options={[
             { value: 'updated', label: 'Date modified' },
             { value: 'created', label: 'Date created' },
+            { value: 'happeningDate', label: 'Happening date' },
             { value: 'name', label: 'Name' },
             { value: 'status', label: 'Status' },
             { value: 'signature', label: 'Signature' },
@@ -66,6 +71,17 @@ export function CaseListSorting({
           )}
           {caseSortOrder === 'asc' ? 'Ascending' : 'Descending'}
         </Button>
+        <div className='inline-flex h-8 shrink-0 items-center gap-2 rounded-md border border-border/60 bg-card/50 px-2'>
+          <span className='text-[11px] text-gray-300'>Show nested folders and files</span>
+          <Switch
+            checked={caseShowNestedContent}
+            onCheckedChange={(checked): void => {
+              setCaseShowNestedContent(checked === true);
+            }}
+            aria-label='Show nested folders and files'
+            className='h-5 w-9'
+          />
+        </div>
         <Button
           variant='outline'
           size='sm'

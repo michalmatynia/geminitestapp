@@ -10,6 +10,7 @@ export type CaseViewMode = 'list' | 'hierarchy';
 export type CaseSortKey =
   | 'updated'
   | 'created'
+  | 'happeningDate'
   | 'name'
   | 'status'
   | 'signature'
@@ -30,6 +31,7 @@ export type CaseListViewDefaults = {
   sortOrder: CaseSortOrder;
   searchScope: CaseSearchScope;
   filtersCollapsedByDefault: boolean;
+  showNestedContent: boolean;
 };
 
 export type AdminCaseResolverCasesContextValue = {
@@ -63,6 +65,7 @@ export type AdminCaseResolverCasesContextValue = {
   caseSortBy: CaseSortKey;
   caseSortOrder: CaseSortOrder;
   caseViewMode: CaseViewMode;
+  caseShowNestedContent: boolean;
   caseFilterPanelDefaultExpanded: boolean;
   didHydrateCaseListViewDefaults: boolean;
   confirmation: {
@@ -102,6 +105,7 @@ export type AdminCaseResolverCasesContextValue = {
   setCaseSortBy: (sortBy: CaseSortKey) => void;
   setCaseSortOrder: (order: CaseSortOrder) => void;
   setCaseViewMode: (mode: CaseViewMode) => void;
+  setCaseShowNestedContent: (showNested: boolean) => void;
   setCaseFilterPanelDefaultExpanded: (expanded: boolean) => void;
   setConfirmation: React.Dispatch<React.SetStateAction<AdminCaseResolverCasesContextValue['confirmation']>>;
   

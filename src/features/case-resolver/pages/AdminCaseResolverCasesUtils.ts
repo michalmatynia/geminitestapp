@@ -8,6 +8,7 @@ export type CaseTreeNode = {
 export type CaseSortKey =
   | 'updated'
   | 'created'
+  | 'happeningDate'
   | 'name'
   | 'status'
   | 'signature'

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildMasterCaseContentNodesFromCaseResolverWorkspace,
   buildMasterCaseNodesFromCaseResolverWorkspace,
   buildMasterNodesFromCaseResolverWorkspace,
   toCaseResolverCaseNodeId,
+  toCaseResolverCaseContentFileNodeId,
+  toCaseResolverCaseContentFolderNodeId,
 } from '@/features/case-resolver/master-tree';
 import {
   createCaseResolverAssetFile,
@@ -164,5 +167,74 @@ describe('case-resolver master tree', () => {
     ]);
     expect(caseNodes.every((node) => node.kind === 'case_entry')).toBe(true);
     expect(caseNodes.every((node) => node.type === 'folder')).toBe(true);
+  });
+
+  it('builds nested case content nodes only for the requested case scope', () => {
+    const workspace: CaseResolverWorkspace = {
+      id: 'case-content-workspace',
+      name: 'Case Content Workspace',
+      ownerId: 'owner-1',
+      isPublic: false,
+      version: 2,
+      workspaceRevision: 0,
+      lastMutationId: null,
+      lastMutationAt: null,
+      folders: [],
+      folderRecords: [
+        { path: 'root-folder', ownerCaseId: 'case-root' },
+        { path: 'child-folder', ownerCaseId: 'case-child' },
+      ],
+      folderTimestamps: {},
+      files: [
+        createCaseResolverFile({
+          id: 'case-root',
+          name: 'Root Case',
+          fileType: 'case',
+          folder: '',
+        }),
+        createCaseResolverFile({
+          id: 'case-child',
+          name: 'Child Case',
+          fileType: 'case',
+          folder: '',
+          parentCaseId: 'case-root',
+        }),
+        createCaseResolverFile({
+          id: 'doc-root',
+          name: 'Root Doc',
+          fileType: 'document',
+          folder: 'root-folder/evidence',
+          parentCaseId: 'case-root',
+        }),
+        createCaseResolverFile({
+          id: 'scan-child',
+          name: 'Child Scan',
+          fileType: 'scanfile',
+          folder: 'child-folder',
+          parentCaseId: 'case-child',
+        }),
+      ],
+      assets: [],
+      relationGraph: createEmptyCaseResolverRelationGraph(),
+      activeFileId: null,
+    };
+
+    const scopedNodes = buildMasterCaseContentNodesFromCaseResolverWorkspace({
+      workspace,
+      includeCaseIds: new Set<string>(['case-root']),
+    });
+
+    expect(
+      scopedNodes.some((node) => node.id === toCaseResolverCaseContentFileNodeId('case-root', 'doc-root'))
+    ).toBe(true);
+    expect(
+      scopedNodes.some((node) => node.id === toCaseResolverCaseContentFileNodeId('case-child', 'scan-child'))
+    ).toBe(false);
+    expect(
+      scopedNodes.some((node) => node.id === toCaseResolverCaseContentFolderNodeId('case-root', 'root-folder/evidence'))
+    ).toBe(true);
+    expect(
+      scopedNodes.some((node) => node.id === toCaseResolverCaseContentFolderNodeId('case-child', 'child-folder'))
+    ).toBe(false);
   });
 });

@@ -46,6 +46,7 @@ export const userPreferencesUpdateSchema = z.object({
     .enum([
       'updated',
       'created',
+      'happeningDate',
       'name',
       'status',
       'signature',
@@ -57,6 +58,7 @@ export const userPreferencesUpdateSchema = z.object({
   caseResolverCaseListSortOrder: z.enum(['asc', 'desc']).optional().nullable(),
   caseResolverCaseListSearchScope: z.enum(['all', 'name', 'folder', 'content']).optional().nullable(),
   caseResolverCaseListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
+  caseResolverCaseListShowNestedContent: z.boolean().optional().nullable(),
   adminMenuCollapsed: z.boolean().optional().nullable(),
   adminMenuFavorites: stringArraySchema.optional().nullable(),
   adminMenuSectionColors: z.record(z.string(), z.string()).optional().nullable(),
@@ -95,6 +97,7 @@ export const userPreferencesResponseSchema = z
       .enum([
         'updated',
         'created',
+        'happeningDate',
         'name',
         'status',
         'signature',
@@ -106,6 +109,7 @@ export const userPreferencesResponseSchema = z
     caseResolverCaseListSortOrder: z.enum(['asc', 'desc']).optional().nullable(),
     caseResolverCaseListSearchScope: z.enum(['all', 'name', 'folder', 'content']).optional().nullable(),
     caseResolverCaseListFiltersCollapsedByDefault: z.boolean().optional().nullable(),
+    caseResolverCaseListShowNestedContent: z.boolean().optional().nullable(),
     adminMenuCollapsed: z.boolean().optional().nullable(),
     adminMenuFavorites: z.array(z.string()).optional(),
     adminMenuSectionColors: z.record(z.string(), z.string()).optional(),
@@ -206,6 +210,10 @@ export const normalizeUserPreferencesUpdatePayload = (
   if (payload.caseResolverCaseListFiltersCollapsedByDefault !== undefined) {
     normalized.caseResolverCaseListFiltersCollapsedByDefault =
       payload.caseResolverCaseListFiltersCollapsedByDefault;
+  }
+  if (payload.caseResolverCaseListShowNestedContent !== undefined) {
+    normalized.caseResolverCaseListShowNestedContent =
+      payload.caseResolverCaseListShowNestedContent;
   }
   if (payload.adminMenuCollapsed !== undefined) {
     normalized.adminMenuCollapsed = payload.adminMenuCollapsed;

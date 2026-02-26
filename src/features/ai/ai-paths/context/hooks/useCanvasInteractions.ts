@@ -643,7 +643,7 @@ export function useCanvasInteractions(args?: {
   const handleWheel = useCallback((event: React.WheelEvent<Element>): void => {
     event.preventDefault();
     event.stopPropagation();
-    nav.applyWheelZoom(event.deltaY, event.clientX, event.clientY);
+    nav.applyWheelZoom(event.deltaY, event.clientX, event.clientY, event.deltaMode);
   }, [nav]);
 
   useEffect(() => {

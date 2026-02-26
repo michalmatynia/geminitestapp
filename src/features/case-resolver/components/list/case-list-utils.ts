@@ -36,6 +36,33 @@ export const resolveCaseTreeOrderValue = (file: CaseResolverFile | null): number
     ? Math.max(0, Math.floor(file.caseTreeOrder))
     : Number.MAX_SAFE_INTEGER;
 
+const resolveNodeHappeningDateMs = (
+  node: MasterTreeNode,
+  file: CaseResolverFile | null,
+): { timestampMs: number; hasValue: boolean } => {
+  if (file) {
+    const happeningDateValue = file.happeningDate?.trim() ?? '';
+    if (happeningDateValue.length > 0) {
+      const parsed = Date.parse(happeningDateValue);
+      if (Number.isFinite(parsed)) {
+        return { timestampMs: parsed, hasValue: true };
+      }
+    }
+  }
+
+  const metadata = node.metadata && typeof node.metadata === 'object'
+    ? node.metadata
+    : null;
+  const happeningDate =
+    typeof metadata?.['happeningDate'] === 'string'
+      ? metadata['happeningDate']
+      : null;
+  if (!happeningDate) return { timestampMs: 0, hasValue: false };
+  const parsed = Date.parse(happeningDate);
+  if (!Number.isFinite(parsed)) return { timestampMs: 0, hasValue: false };
+  return { timestampMs: parsed, hasValue: true };
+};
+
 export const CASE_ROW_TIMESTAMP_FORMATTER = new Intl.DateTimeFormat(undefined, {
   year: 'numeric',
   month: 'short',
@@ -64,6 +91,7 @@ export const sortCaseTreeNodes = ({
   sortBy:
     | 'updated'
     | 'created'
+    | 'happeningDate'
     | 'name'
     | 'status'
     | 'signature'
@@ -125,6 +153,18 @@ export const sortCaseTreeNodes = ({
             resolveNodeTimestamp(left, 'created') -
             resolveNodeTimestamp(right, 'created');
           if (createdDelta !== 0) return createdDelta * direction;
+        } else if (sortBy === 'happeningDate') {
+          const leftHappeningDate = resolveNodeHappeningDateMs(left, leftCaseFile);
+          const rightHappeningDate = resolveNodeHappeningDateMs(right, rightCaseFile);
+          if (leftHappeningDate.hasValue !== rightHappeningDate.hasValue) {
+            return leftHappeningDate.hasValue ? -1 : 1;
+          }
+          if (leftHappeningDate.hasValue && rightHappeningDate.hasValue) {
+            const happeningDateDelta =
+              leftHappeningDate.timestampMs -
+              rightHappeningDate.timestampMs;
+            if (happeningDateDelta !== 0) return happeningDateDelta * direction;
+          }
         } else if (sortBy === 'updated') {
           const updatedDelta =
             resolveNodeTimestamp(left, 'updated') -

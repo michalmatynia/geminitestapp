@@ -68,8 +68,9 @@ export function useCanvasInteractionsClipboard({
   resolveActiveNodeSelectionIds: () => string[];
   viewportRef: React.RefObject<HTMLDivElement | null>;
   lastPointerCanvasPosRef: React.MutableRefObject<{ x: number; y: number } | null>;
-  view: { x: number; y: number; scale: number };
+  view?: { x: number; y: number; scale: number } | undefined;
 }): UseCanvasInteractionsClipboardValue {
+  const safeView = view ?? { x: 0, y: 0, scale: 1 };
   const buildClipboardPayloadFromSelection = useCallback((): SubgraphClipboardPayload | null => {
     const selectedIds = resolveActiveNodeSelectionIds();
     if (selectedIds.length === 0) return null;
@@ -208,10 +209,10 @@ export function useCanvasInteractionsClipboard({
       const cursorAnchor = lastPointerCanvasPosRef.current;
       const targetCanvasCenterX = cursorAnchor
         ? cursorAnchor.x
-        : (viewportCenterX - view.x) / view.scale;
+        : (viewportCenterX - safeView.x) / safeView.scale;
       const targetCanvasCenterY = cursorAnchor
         ? cursorAnchor.y
-        : (viewportCenterY - view.y) / view.scale;
+        : (viewportCenterY - safeView.y) / safeView.scale;
       const boundsWidth = Math.max(1, payload.bounds.maxX - payload.bounds.minX);
       const boundsHeight = Math.max(1, payload.bounds.maxY - payload.bounds.minY);
       const pasteOffset = pasteSequence * PASTE_OFFSET_STEP;
@@ -293,9 +294,9 @@ export function useCanvasInteractionsClipboard({
       setEdges,
       setNodeSelection,
       setNodes,
-      view.scale,
-      view.x,
-      view.y,
+      safeView.scale,
+      safeView.x,
+      safeView.y,
       viewportRef,
       lastPointerCanvasPosRef,
     ]

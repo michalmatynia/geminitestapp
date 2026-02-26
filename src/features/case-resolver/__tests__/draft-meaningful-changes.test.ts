@@ -74,6 +74,78 @@ describe('case resolver meaningful draft changes', () => {
     ).toBe(true);
   });
 
+  it('treats semantically empty wysiwyg markup as unchanged', () => {
+    const file = createCaseResolverFile({
+      id: 'empty-html-equivalence',
+      fileType: 'document',
+      name: 'Empty HTML Equivalence',
+      documentContent: '',
+      documentContentHtml: '',
+      documentContentMarkdown: '',
+      documentContentPlainText: '',
+    });
+    const draft = buildFileEditDraft(file);
+    draft.documentContent = '<p></p>';
+    draft.documentContentHtml = '<p><br></p>';
+    draft.documentContentMarkdown = '';
+    draft.documentContentPlainText = '';
+
+    expect(
+      hasCaseResolverDraftMeaningfulChanges({
+        draft,
+        file,
+      })
+    ).toBe(false);
+  });
+
+  it('treats semantically empty wysiwyg markup variants as unchanged', () => {
+    const file = createCaseResolverFile({
+      id: 'empty-html-variant-equivalence',
+      fileType: 'document',
+      name: 'Empty HTML Variant Equivalence',
+      documentContent: '',
+      documentContentHtml: '',
+      documentContentMarkdown: '',
+      documentContentPlainText: '',
+    });
+    const draft = buildFileEditDraft(file);
+    draft.documentContent = '<p><br></p>';
+    draft.documentContentHtml = '<p></p>';
+    draft.documentContentMarkdown = '';
+    draft.documentContentPlainText = '';
+
+    expect(
+      hasCaseResolverDraftMeaningfulChanges({
+        draft,
+        file,
+      })
+    ).toBe(false);
+  });
+
+  it('treats non-empty text updates as meaningful changes', () => {
+    const file = createCaseResolverFile({
+      id: 'non-empty-change',
+      fileType: 'document',
+      name: 'Non-empty change',
+      documentContent: '',
+      documentContentHtml: '',
+      documentContentMarkdown: '',
+      documentContentPlainText: '',
+    });
+    const draft = buildFileEditDraft(file);
+    draft.documentContent = '<p>Hello world</p>';
+    draft.documentContentHtml = '<p>Hello world</p>';
+    draft.documentContentMarkdown = 'Hello world';
+    draft.documentContentPlainText = 'Hello world';
+
+    expect(
+      hasCaseResolverDraftMeaningfulChanges({
+        draft,
+        file,
+      })
+    ).toBe(true);
+  });
+
   it('allows saving a pristine newly created empty document', () => {
     const file = createCaseResolverFile({
       id: 'initial-empty',

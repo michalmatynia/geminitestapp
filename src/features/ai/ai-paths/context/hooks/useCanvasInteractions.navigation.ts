@@ -30,7 +30,12 @@ export interface UseCanvasInteractionsNavigationValue {
   fitToSelection: () => void;
   resetView: () => void;
   centerOnCanvasPoint: (canvasX: number, canvasY: number) => void;
-  applyWheelZoom: (deltaY: number, clientX: number, clientY: number) => void;
+  applyWheelZoom: (
+    deltaY: number,
+    clientX: number,
+    clientY: number,
+    deltaMode?: number
+  ) => void;
   wheelZoomRafRef: React.MutableRefObject<number | null>;
   viewAnimationRafRef: React.MutableRefObject<number | null>;
   panInertiaRafRef: React.MutableRefObject<number | null>;
@@ -359,18 +364,31 @@ export function useCanvasInteractionsNavigation({
   }, [animateViewTo, viewportRef, latestViewRef]);
 
   const applyWheelZoom = useCallback(
-    (deltaY: number, clientX: number, clientY: number): void => {
+    (
+      deltaY: number,
+      clientX: number,
+      clientY: number,
+      deltaMode = 0
+    ): void => {
       stopProgrammaticViewAnimation();
+      let normalizedDeltaY = Number.isFinite(deltaY) ? deltaY : 0;
+      // Normalize wheel units and amplify very small trackpad deltas.
+      if (deltaMode === 1) {
+        normalizedDeltaY *= 16;
+      } else if (deltaMode === 2) {
+        normalizedDeltaY *= 120;
+      }
+      const absDelta = Math.abs(normalizedDeltaY);
+      if (absDelta > 0 && absDelta < 4) {
+        normalizedDeltaY *= 6;
+      }
       const baseScale = wheelZoomTargetRef.current?.scale ?? latestViewRef.current.scale;
-      const zoomFactor = Math.exp((-deltaY) * WHEEL_ZOOM_SENSITIVITY);
+      const zoomFactor = Math.exp((-normalizedDeltaY) * WHEEL_ZOOM_SENSITIVITY);
       const targetScale = clampScale(baseScale * zoomFactor);
       if (!Number.isFinite(targetScale)) return;
-      if (
-        Math.abs(targetScale - latestViewRef.current.scale) < WHEEL_ZOOM_STOP_THRESHOLD &&
-        (!wheelZoomTargetRef.current ||
-          Math.abs(targetScale - wheelZoomTargetRef.current.scale) <
-            WHEEL_ZOOM_STOP_THRESHOLD)
-      ) {
+      const previousTargetScale =
+        wheelZoomTargetRef.current?.scale ?? latestViewRef.current.scale;
+      if (Math.abs(targetScale - previousTargetScale) < 0.000001) {
         return;
       }
       wheelZoomTargetRef.current = {

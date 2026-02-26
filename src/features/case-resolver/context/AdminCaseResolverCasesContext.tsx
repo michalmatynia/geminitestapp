@@ -195,6 +195,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     caseSortBy, setCaseSortBy,
     caseSortOrder, setCaseSortOrder,
     caseViewMode, setCaseViewMode,
+    caseShowNestedContent, setCaseShowNestedContent,
     caseFilterPanelDefaultExpanded, setCaseFilterPanelDefaultExpanded,
     didHydrateCaseListViewDefaults, setDidHydrateCaseListViewDefaults,
     confirmation, setConfirmation,
@@ -317,10 +318,11 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     setCaseSortBy(caseListViewDefaults.sortBy);
     setCaseSortOrder(caseListViewDefaults.sortOrder);
     setCaseViewMode(caseListViewDefaults.viewMode);
+    setCaseShowNestedContent(caseListViewDefaults.showNestedContent);
     setCaseSearchScope(caseListViewDefaults.searchScope);
     setCaseFilterPanelDefaultExpanded(!caseListViewDefaults.filtersCollapsedByDefault);
     setDidHydrateCaseListViewDefaults(true);
-  }, [caseListViewDefaults, didHydrateCaseListViewDefaults, preferencesQuery.isFetched, setCaseFilterPanelDefaultExpanded, setCaseSearchScope, setCaseSortBy, setCaseSortOrder, setCaseViewMode, setDidHydrateCaseListViewDefaults]);
+  }, [caseListViewDefaults, didHydrateCaseListViewDefaults, preferencesQuery.isFetched, setCaseFilterPanelDefaultExpanded, setCaseSearchScope, setCaseShowNestedContent, setCaseSortBy, setCaseSortOrder, setCaseViewMode, setDidHydrateCaseListViewDefaults]);
 
   useEffect(() => {
     if (appliedCaseIdentifierFilterFromQueryRef.current === requestedCaseIdentifierFilterFromQuery) return;
@@ -338,13 +340,14 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
         { key: 'caseResolverCaseListSortOrder', value: caseSortOrder },
         { key: 'caseResolverCaseListSearchScope', value: caseSearchScope },
         { key: 'caseResolverCaseListFiltersCollapsedByDefault', value: (!caseFilterPanelDefaultExpanded).toString() },
+        { key: 'caseResolverCaseListShowNestedContent', value: caseShowNestedContent.toString() },
       ]);
       toast('Default view settings saved.', { variant: 'success' });
     } catch (error) {
       logClientError(error, { context: { source: 'AdminCaseResolverCasesPage', action: 'saveDefaults' } });
       toast('Failed to save default settings.', { variant: 'error' });
     }
-  }, [caseViewMode, caseSortBy, caseSortOrder, caseSearchScope, caseFilterPanelDefaultExpanded, updateSetting, toast]);
+  }, [caseViewMode, caseSortBy, caseSortOrder, caseSearchScope, caseFilterPanelDefaultExpanded, caseShowNestedContent, updateSetting, toast]);
 
   // Options
   const parentCaseOptions = useMemo(
@@ -419,6 +422,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     caseSortBy,
     caseSortOrder,
     caseViewMode,
+    caseShowNestedContent,
     caseFilterPanelDefaultExpanded,
     didHydrateCaseListViewDefaults,
     confirmation,
@@ -450,6 +454,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     setCaseSortBy,
     setCaseSortOrder,
     setCaseViewMode,
+    setCaseShowNestedContent,
     setCaseFilterPanelDefaultExpanded,
     setConfirmation,
     handleCreateCase,
@@ -484,7 +489,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     caseFilterTagIds, caseFilterCaseIdentifierIds, caseFilterCategoryIds,
     caseFilterFolder, caseFilterStatus, caseFilterLocked, caseFilterSent,
     caseFilterHierarchy, caseFilterReferences,
-    caseSortBy, caseSortOrder, caseViewMode, caseFilterPanelDefaultExpanded,
+    caseSortBy, caseSortOrder, caseViewMode, caseShowNestedContent, caseFilterPanelDefaultExpanded,
     didHydrateCaseListViewDefaults, confirmation,
     setWorkspace, setCaseDraft, setIsCreateCaseModalOpen, setEditingCaseId,
     setEditingCaseName, setEditingCaseParentId, setEditingCaseReferenceCaseIds,
@@ -494,7 +499,7 @@ export function AdminCaseResolverCasesProvider({ children }: { children: React.R
     setCaseFilterTagIds, setCaseFilterCaseIdentifierIds, setCaseFilterCategoryIds,
     setCaseFilterFolder, setCaseFilterStatus, setCaseFilterLocked, setCaseFilterSent,
     setCaseFilterHierarchy, setCaseFilterReferences,
-    setCaseSortBy, setCaseSortOrder, setCaseViewMode, setCaseFilterPanelDefaultExpanded,
+    setCaseSortBy, setCaseSortOrder, setCaseViewMode, setCaseShowNestedContent, setCaseFilterPanelDefaultExpanded,
     setConfirmation,
     handleCreateCase, handleUpdateCase, handleDeleteCase,
     handleToggleCaseCollapse, handleToggleHeldCase, handleClearHeldCase,

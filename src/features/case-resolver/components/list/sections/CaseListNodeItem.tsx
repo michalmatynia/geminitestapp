@@ -3,9 +3,13 @@
 'use client';
 
 import React from 'react';
-import { GitBranch, Lock, Pin } from 'lucide-react';
+import { FileText, GitBranch, Lock, Pin, ScanText } from 'lucide-react';
 import { Button } from '@/shared/ui';
-import { fromCaseResolverCaseNodeId } from '@/features/case-resolver/master-tree';
+import {
+  decodeCaseResolverCaseContentFileNodeId,
+  decodeCaseResolverCaseContentFolderNodeId,
+  fromCaseResolverCaseNodeId,
+} from '@/features/case-resolver/master-tree';
 import { 
   parseBoolean, 
   formatCaseTimestamp 
@@ -34,6 +38,7 @@ export interface CaseListNodeItemProps {
   handleToggleHeldCase: (caseId: string) => void;
   handleNestHeldCase: (targetCaseId: string) => void;
   handleOpenCase: (id: string) => void;
+  handleOpenFile: (id: string) => void;
   handleEditCase: (caseFile: any) => void;
   handleCreateCase: (parentId: string | null) => void;
   handleDeleteCase: (id: string) => void;
@@ -64,6 +69,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
   handleToggleHeldCase,
   handleNestHeldCase,
   handleOpenCase,
+  handleOpenFile,
   handleEditCase,
   handleCreateCase,
   handleDeleteCase,
@@ -71,11 +77,21 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
   FolderOpenIcon,
 }: CaseListNodeItemProps): React.JSX.Element {
   const caseId = fromCaseResolverCaseNodeId(node.id) ?? '';
+  const caseContentFolderRef = decodeCaseResolverCaseContentFolderNodeId(node.id);
+  const caseContentFileRef = decodeCaseResolverCaseContentFileNodeId(node.id);
+  const isCaseContentFolderNode = Boolean(caseContentFolderRef);
+  const isCaseContentFileNode = Boolean(caseContentFileRef);
   const caseFile = caseId ? (filesById.get(caseId) ?? null) : null;
+  const caseContentFile = caseContentFileRef
+    ? (filesById.get(caseContentFileRef.fileId) ?? null)
+    : null;
   const caseStatus = caseFile?.caseStatus ?? 'pending';
   const createdAtLabel = formatCaseTimestamp(caseFile?.createdAt);
   const modifiedAtLabel = formatCaseTimestamp(
     caseFile?.updatedAt ?? caseFile?.createdAt
+  );
+  const caseContentUpdatedAtLabel = formatCaseTimestamp(
+    caseContentFile?.updatedAt ?? caseContentFile?.createdAt
   );
   const caseIdentifierLabel = caseFile?.caseIdentifierId
     ? (caseIdentifierPathById.get(caseFile.caseIdentifierId) ??
@@ -83,7 +99,9 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
     : null;
   const isHeldCase = Boolean(caseFile) && heldCaseId === caseFile.id;
   const isLocked =
-    caseFile?.isLocked === true || parseBoolean(node.metadata?.['isLocked']);
+    caseFile?.isLocked === true ||
+    caseContentFile?.isLocked === true ||
+    parseBoolean(node.metadata?.['isLocked']);
   const isStatusToggleDisabled = !caseFile || isLocked;
   const stateClassName = dropPosition === 'before'
     ? 'bg-blue-500/10 text-gray-100 ring-1 ring-inset ring-blue-500/60'
@@ -100,6 +118,91 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
   ) : (
     <FolderClosedIcon className='size-4 shrink-0' />
   );
+
+  if (isCaseContentFolderNode) {
+    return (
+      <div
+        className={`group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition ${stateClassName}`}
+        style={{ paddingLeft: `${depth * 16 + 8}px` }}
+      >
+        {hasChildren ? (
+          <button
+            type='button'
+            className='inline-flex size-4 items-center justify-center rounded hover:bg-muted/60'
+            onClick={(event): void => {
+              event.preventDefault();
+              event.stopPropagation();
+              toggleExpand();
+            }}
+            aria-label={isExpanded ? 'Collapse folder' : 'Expand folder'}
+          >
+            {isExpanded ? '▾' : '▸'}
+          </button>
+        ) : (
+          <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
+        )}
+        {iconNode}
+        <div className='min-w-0 flex flex-1 items-center gap-2'>
+          <button
+            type='button'
+            className='min-w-0 truncate text-left text-sm text-gray-200 hover:underline focus:outline-none focus:underline'
+            onClick={(event): void => {
+              event.preventDefault();
+              event.stopPropagation();
+              if (hasChildren) {
+                toggleExpand();
+              }
+            }}
+            title={`Folder: ${node.name}`}
+          >
+            {node.name}
+          </button>
+          <span className='shrink-0 rounded border border-border/60 bg-card/30 px-1.5 py-0.5 text-[10px] text-gray-400'>
+            Folder
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (isCaseContentFileNode) {
+    const fileId = caseContentFileRef?.fileId ?? '';
+    const isScanFile =
+      caseContentFile?.fileType === 'scanfile' ||
+      node.kind === 'case_content_file_scan';
+    return (
+      <div
+        className={`group flex items-center gap-2 rounded px-2 py-1.5 text-sm transition ${stateClassName}`}
+        style={{ paddingLeft: `${depth * 16 + 8}px` }}
+      >
+        <span className='inline-flex size-4 items-center justify-center text-xs opacity-40'>•</span>
+        {isScanFile ? (
+          <ScanText className='size-4 shrink-0 text-cyan-400/80' />
+        ) : (
+          <FileText className='size-4 shrink-0 text-sky-400/80' />
+        )}
+        {isLocked ? <Lock className='size-3.5 shrink-0 text-amber-300' /> : null}
+        <div className='min-w-0 flex flex-1 items-center gap-2'>
+          <button
+            type='button'
+            className='min-w-0 truncate text-left font-medium text-gray-100 hover:underline focus:outline-none focus:underline'
+            onClick={(event): void => {
+              event.preventDefault();
+              event.stopPropagation();
+              if (!fileId) return;
+              handleOpenFile(fileId);
+            }}
+            title={`Open file: ${caseContentFile?.name ?? node.name}`}
+          >
+            {caseContentFile?.name ?? node.name}
+          </button>
+          <span className='min-w-0 truncate text-[10px] opacity-70'>
+            Modified: {caseContentUpdatedAtLabel}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -261,30 +364,6 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
 
       {!isRenaming && caseFile ? (
         <div className='flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100'>
-          <Button
-            variant='outline'
-            size='xs'
-            className='h-7'
-            onClick={(event): void => {
-              event.preventDefault();
-              event.stopPropagation();
-              handleOpenCase(caseFile.id);
-            }}
-          >
-          View
-          </Button>
-          <Button
-            variant='outline'
-            size='xs'
-            className='h-7'
-            onClick={(event): void => {
-              event.preventDefault();
-              event.stopPropagation();
-              handleEditCase(caseFile);
-            }}
-          >
-          Edit
-          </Button>
           <Button
             variant='outline'
             size='xs'

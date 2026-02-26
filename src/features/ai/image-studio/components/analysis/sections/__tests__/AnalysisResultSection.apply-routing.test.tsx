@@ -58,6 +58,9 @@ describe('AnalysisResultSection apply routing UX', () => {
           { id: 'slot-2', label: 'Analyzed Slot' },
         ]}
         slotSelectionLocked={false}
+        analysisSourceSignatureMissing={false}
+        analysisCurrentSourceMetadataMissing={false}
+        analysisPlanIsStale={false}
         queueAnalysisApplyIntent={vi.fn()}
       />
     );
@@ -75,6 +78,9 @@ describe('AnalysisResultSection apply routing UX', () => {
         currentWorkingSlotId='slot-1'
         availableSlots={[{ id: 'slot-1', label: 'Current Slot' }]}
         slotSelectionLocked={false}
+        analysisSourceSignatureMissing={false}
+        analysisCurrentSourceMetadataMissing={false}
+        analysisPlanIsStale={false}
         queueAnalysisApplyIntent={vi.fn()}
       />
     );
@@ -93,6 +99,9 @@ describe('AnalysisResultSection apply routing UX', () => {
         currentWorkingSlotId='slot-1'
         availableSlots={[{ id: 'slot-1', label: 'Current Slot' }]}
         slotSelectionLocked
+        analysisSourceSignatureMissing={false}
+        analysisCurrentSourceMetadataMissing={false}
+        analysisPlanIsStale={false}
         queueAnalysisApplyIntent={vi.fn()}
       />
     );
@@ -101,6 +110,78 @@ describe('AnalysisResultSection apply routing UX', () => {
     expect(screen.getByRole('button', { name: 'Apply To Auto Scaler' })).toBeDisabled();
     expect(
       screen.getByText('Slot selection is currently locked by sequencing. Unlock it before applying this plan.')
+    ).toBeInTheDocument();
+  });
+
+  it('disables apply actions and shows stale warning when analysis plan is stale', () => {
+    render(
+      <AnalysisResultSection
+        result={null}
+        resultSourceSlotId=''
+        persistedPlanSnapshot={createSnapshot('slot-1')}
+        currentWorkingSlotId='slot-1'
+        availableSlots={[{ id: 'slot-1', label: 'Current Slot' }]}
+        slotSelectionLocked={false}
+        analysisSourceSignatureMissing={false}
+        analysisCurrentSourceMetadataMissing={false}
+        analysisPlanIsStale
+        queueAnalysisApplyIntent={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Apply To Object Layout' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Apply To Auto Scaler' })).toBeDisabled();
+    expect(
+      screen.getByText('Analyzed slot image has changed since this plan was created. Run analysis again.')
+    ).toBeInTheDocument();
+  });
+
+  it('disables apply actions and shows warning when source signature metadata is missing', () => {
+    render(
+      <AnalysisResultSection
+        result={null}
+        resultSourceSlotId=''
+        persistedPlanSnapshot={{
+          ...createSnapshot('slot-1'),
+          sourceSignature: '',
+        }}
+        currentWorkingSlotId='slot-1'
+        availableSlots={[{ id: 'slot-1', label: 'Current Slot' }]}
+        slotSelectionLocked={false}
+        analysisSourceSignatureMissing
+        analysisCurrentSourceMetadataMissing={false}
+        analysisPlanIsStale={false}
+        queueAnalysisApplyIntent={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Apply To Object Layout' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Apply To Auto Scaler' })).toBeDisabled();
+    expect(
+      screen.getByText('Analysis plan source metadata is missing. Run analysis again.')
+    ).toBeInTheDocument();
+  });
+
+  it('disables apply actions and shows warning when analyzed slot source metadata is missing', () => {
+    render(
+      <AnalysisResultSection
+        result={null}
+        resultSourceSlotId=''
+        persistedPlanSnapshot={createSnapshot('slot-1')}
+        currentWorkingSlotId='slot-1'
+        availableSlots={[{ id: 'slot-1', label: 'Current Slot' }]}
+        slotSelectionLocked={false}
+        analysisSourceSignatureMissing={false}
+        analysisCurrentSourceMetadataMissing
+        analysisPlanIsStale={false}
+        queueAnalysisApplyIntent={vi.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: 'Apply To Object Layout' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Apply To Auto Scaler' })).toBeDisabled();
+    expect(
+      screen.getByText('Analyzed slot source metadata is missing. Reselect slot image and rerun analysis.')
     ).toBeInTheDocument();
   });
 });

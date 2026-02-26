@@ -41,6 +41,7 @@ describe('system-log-repository', () => {
     countDocuments: vi.fn(),
     deleteMany: vi.fn(),
     aggregate: vi.fn().mockReturnThis(),
+    createIndex: vi.fn().mockResolvedValue('index_name'),
   };
 
   const mockMongoDb = {

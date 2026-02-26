@@ -229,102 +229,88 @@ const buildMongoFilter = (
   return filter;
 };
 
+let indexesReady = false;
+let indexesPromise: Promise<void> | null = null;
+
+const ensureSystemLogIndexes = async (): Promise<void> => {
+  const provider = await getAppDbProvider();
+  if (provider !== 'mongodb') return;
+  
+  if (indexesReady) return;
+  if (!indexesPromise) {
+    indexesPromise = (async (): Promise<void> => {
+      const db = await getMongoDb();
+      const col = db.collection(SYSTEM_LOGS_COLLECTION);
+      await Promise.all([
+        col.createIndex({ createdAt: -1 }),
+        col.createIndex({ level: 1, createdAt: -1 }),
+        col.createIndex({ source: 1, createdAt: -1 }),
+        col.createIndex({ path: 1, createdAt: -1 }),
+        col.createIndex({ requestId: 1 }),
+        col.createIndex({ userId: 1 }),
+      ]);
+      indexesReady = true;
+    })().catch((error: unknown) => {
+      indexesPromise = null;
+      throw error;
+    });
+  }
+  await indexesPromise;
+};
+
 const getMongoSystemLogMetrics = async (
   filter: Filter<MongoSystemLogDoc>,
 ): Promise<SystemLogMetrics> => {
+  await ensureSystemLogIndexes();
   const mongo = await getMongoDb();
+  const col = mongo.collection<MongoSystemLogDoc>(SYSTEM_LOGS_COLLECTION);
+  
   const now = new Date();
   const last24 = new Date(now.getTime() - 24 * 60 * 60 * 1000);
   const last7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const result = (await mongo
-    .collection(SYSTEM_LOGS_COLLECTION)
-    .aggregate([
+
+  const [total, last24Hours, last7Days, levelGroups, sourceGroups, pathGroups] = await Promise.all([
+    col.countDocuments(filter),
+    col.countDocuments({ ...filter, createdAt: { $gte: last24 } }),
+    col.countDocuments({ ...filter, createdAt: { $gte: last7 } }),
+    col.aggregate([
       { $match: filter },
-      {
-        $facet: {
-          totals: [{ $count: 'count' }],
-          levels: [
-            { $group: { _id: '$level', count: { $sum: 1 } } },
-            { $sort: { count: -1 } },
-          ],
-          sources: [
-            { $match: { source: { $nin: [null, ''] } } },
-            { $group: { _id: '$source', count: { $sum: 1 } } },
-            { $sort: { count: -1 } },
-            { $limit: 5 },
-          ],
-          paths: [
-            { $match: { path: { $nin: [null, ''] } } },
-            { $group: { _id: '$path', count: { $sum: 1 } } },
-            { $sort: { count: -1 } },
-            { $limit: 5 },
-          ],
-          last24Hours: [
-            { $match: { createdAt: { $gte: last24 } } },
-            { $count: 'count' },
-          ],
-          last7Days: [
-            { $match: { createdAt: { $gte: last7 } } },
-            { $count: 'count' },
-          ],
-        },
-      },
-    ])
-    .toArray()) as unknown as [
-    {
-      totals: { count: number }[];
-      levels: { _id: string; count: number }[];
-      sources: { _id: string; count: number }[];
-      paths: { _id: string; count: number }[];
-      last24Hours: { count: number }[];
-      last7Days: { count: number }[];
-    },
-  ];
+      { $group: { _id: '$level', count: { $sum: 1 } } }
+    ]).toArray(),
+    col.aggregate([
+      { $match: { ...filter, source: { $nin: [null, ''] } } },
+      { $group: { _id: '$source', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]).toArray(),
+    col.aggregate([
+      { $match: { ...filter, path: { $nin: [null, ''] } } },
+      { $group: { _id: '$path', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 5 }
+    ]).toArray(),
+  ]);
 
-  const first = result[0];
-  if (!first) {
-    return {
-      total: 0,
-      levels: { info: 0, warn: 0, error: 0 },
-      last24Hours: 0,
-      last7Days: 0,
-      topSources: [],
-      topPaths: [],
-      generatedAt: now.toISOString(),
-    };
-  }
-
-  const total = first.totals[0]?.count ?? 0;
-  const levels = { info: 0, warn: 0, error: 0 } as Record<
-    SystemLogLevel,
-    number
-  >;
-  for (const row of first.levels as { _id: string; count: number }[]) {
-    const key = row._id as SystemLogLevel;
-    if (key && key in levels) {
-      levels[key] = row.count;
+  const levels = { info: 0, warn: 0, error: 0 } as Record<SystemLogLevel, number>;
+  levelGroups.forEach((row: any) => {
+    if (row._id in levels) {
+      levels[row._id as SystemLogLevel] = row.count;
     }
-  }
-  const topSources = first.sources.map(
-    (row: { _id: string; count: number }) => ({
-      source: String(row._id ?? ''),
-      count: row.count,
-    }),
-  );
-  const topPaths = first.paths.map((row: { _id: string; count: number }) => ({
-    path: String(row._id ?? ''),
-    count: row.count,
-  }));
-  const last24Hours = first.last24Hours[0]?.count ?? 0;
-  const last7Days = first.last7Days[0]?.count ?? 0;
+  });
 
   return {
     total,
     levels,
     last24Hours,
     last7Days,
-    topSources,
-    topPaths,
+    topSources: sourceGroups.map((row: any) => ({
+      source: String(row._id ?? ''),
+      count: row.count,
+    })),
+    topPaths: pathGroups.map((row: any) => ({
+      path: String(row._id ?? ''),
+      count: row.count,
+    })),
     generatedAt: now.toISOString(),
   };
 };
@@ -438,6 +424,7 @@ export async function listSystemLogs(
   const pageSize = Math.min(200, Math.max(1, input.pageSize ?? 50));
         
   if (provider === 'mongodb') {
+    await ensureSystemLogIndexes();
     const mongo = await getMongoDb();
     const filter = buildMongoFilter(input);
     const total = await mongo

@@ -630,6 +630,45 @@ export function useSaveExportSettingsMutation(): MutationResult<void, {
   });
 }
 
+export function useSaveDefaultConnectionMutation(): MutationResult<{ connectionId: string | null }, { connectionId?: string | null }> {
+  const queryClient = useQueryClient();
+  const mutationKey = importExportKeys.preferences();
+
+  return createUpdateMutationV2({
+    mutationFn: async ({
+      connectionId,
+    }: {
+      connectionId?: string | null;
+    }): Promise<{ connectionId: string | null }> => {
+      const normalizedConnectionId = connectionId?.trim() || null;
+      return api.post<{ connectionId: string | null }>(
+        '/api/integrations/exports/base/default-connection',
+        { connectionId: normalizedConnectionId }
+      );
+    },
+    mutationKey,
+    meta: {
+      source: 'importExport.hooks.useSaveDefaultConnectionMutation',
+      operation: 'update',
+      resource: 'integrations.import-export.default-connection',
+      domain: 'integrations',
+      mutationKey,
+      tags: ['import-export', 'default-connection', 'save'],
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({
+        queryKey: integrationKeys.selection.defaultConnection(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: importExportKeys.preferences(),
+      });
+      void queryClient.invalidateQueries({
+        queryKey: importExportKeys.pref('default-connection'),
+      });
+    },
+  });
+}
+
 export function useClearInventoryMutation(): MutationResult<void, void> {
   const queryClient = useQueryClient();
   const mutationKey = importExportKeys.inventories(undefined);

@@ -52,10 +52,11 @@ export function useUpsertConnection() {
       const url = hasConnection
         ? `/api/integrations/connections/${variables.connectionId}`
         : `/api/integrations/${variables.integrationId}/connections`;
+      const body = variables.payload;
       if (hasConnection) {
-        return api.patch<IntegrationConnection>(url, variables);
+        return api.put<IntegrationConnection>(url, body);
       }
-      return api.post<IntegrationConnection>(url, variables);
+      return api.post<IntegrationConnection>(url, body);
     },
     mutationKey,
     meta: {

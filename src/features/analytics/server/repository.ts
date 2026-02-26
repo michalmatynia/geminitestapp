@@ -82,6 +82,9 @@ async function ensureAnalyticsIndexes(): Promise<void> {
       col.createIndex({ path: 1, ts: -1 }),
       col.createIndex({ visitorId: 1, ts: -1 }),
       col.createIndex({ sessionId: 1, ts: -1 }),
+      col.createIndex({ referrer: 1, ts: -1 }),
+      col.createIndex({ language: 1, ts: -1 }),
+      col.createIndex({ country: 1, ts: -1 }),
     ]);
   }
 
@@ -366,95 +369,88 @@ export async function getAnalyticsSummary(input: {
     match['scope'] = input.scope;
   }
 
-  const [result] = await col
-    .aggregate<{
-      totals: Array<{ events: number; pageviews: number }>;
-      visitors: Array<{ count: number }>;
-      sessions: Array<{ count: number }>;
-      topPages: Array<{ path: string; count: number }>;
-      topReferrers: Array<{ referrer: string; count: number }>;
-      topLanguages: Array<{ language: string; count: number }>;
-      topCountries: Array<{ country: string; count: number }>;
-      recent: AnalyticsEventMongoDocWithId[];
-    }>([
+  const [
+    totalsResult,
+    visitorsResult,
+    sessionsResult,
+    topPages,
+    topReferrers,
+    topLanguages,
+    topCountries,
+    recent,
+  ] = await Promise.all([
+    col.aggregate<{ events: number; pageviews: number }>([
       { $match: match },
       {
-        $facet: {
-          totals: [
-            {
-              $group: {
-                _id: null,
-                events: { $sum: 1 },
-                pageviews: {
-                  $sum: {
-                    $cond: [{ $eq: ['$type', 'pageview'] }, 1, 0],
-                  },
-                },
-              },
+        $group: {
+          _id: null,
+          events: { $sum: 1 },
+          pageviews: {
+            $sum: {
+              $cond: [{ $eq: ['$type', 'pageview'] }, 1, 0],
             },
-            { $project: { _id: 0, events: 1, pageviews: 1 } },
-          ],
-          visitors: [
-            { $group: { _id: '$visitorId' } },
-            { $count: 'count' },
-          ],
-          sessions: [
-            { $group: { _id: '$sessionId' } },
-            { $count: 'count' },
-          ],
-          topPages: [
-            { $match: { type: 'pageview' } },
-            { $group: { _id: '$path', count: { $sum: 1 } } },
-            { $sort: { count: -1 } },
-            { $limit: 20 },
-            { $project: { _id: 0, path: '$_id', count: 1 } },
-          ],
-          topReferrers: [
-            { $match: { referrer: { $exists: true, $ne: '' } } },
-            { $group: { _id: '$referrer', count: { $sum: 1 } } },
-            { $sort: { count: -1 } },
-            { $limit: 20 },
-            { $project: { _id: 0, referrer: '$_id', count: 1 } },
-          ],
-          topLanguages: [
-            { $match: { language: { $exists: true, $ne: '' } } },
-            { $group: { _id: '$language', count: { $sum: 1 } } },
-            { $sort: { count: -1 } },
-            { $limit: 20 },
-            { $project: { _id: 0, language: '$_id', count: 1 } },
-          ],
-          topCountries: [
-            { $match: { country: { $exists: true, $ne: '' } } },
-            { $group: { _id: '$country', count: { $sum: 1 } } },
-            { $sort: { count: -1 } },
-            { $limit: 20 },
-            { $project: { _id: 0, country: '$_id', count: 1 } },
-          ],
-          recent: [
-            { $sort: { ts: -1 } },
-            { $limit: 50 },
-          ],
+          },
         },
       },
-    ])
-    .toArray();
+      { $project: { _id: 0, events: 1, pageviews: 1 } },
+    ]).toArray(),
+    col.aggregate<{ count: number }>([
+      { $match: match },
+      { $group: { _id: '$visitorId' } },
+      { $count: 'count' },
+    ]).toArray(),
+    col.aggregate<{ count: number }>([
+      { $match: match },
+      { $group: { _id: '$sessionId' } },
+      { $count: 'count' },
+    ]).toArray(),
+    col.aggregate<{ path: string; count: number }>([
+      { $match: { ...match, type: 'pageview' } },
+      { $group: { _id: '$path', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 20 },
+      { $project: { _id: 0, path: '$_id', count: 1 } },
+    ]).toArray(),
+    col.aggregate<{ referrer: string; count: number }>([
+      { $match: { ...match, referrer: { $exists: true, $ne: '' } } },
+      { $group: { _id: '$referrer', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 20 },
+      { $project: { _id: 0, referrer: '$_id', count: 1 } },
+    ]).toArray(),
+    col.aggregate<{ language: string; count: number }>([
+      { $match: { ...match, language: { $exists: true, $ne: '' } } },
+      { $group: { _id: '$language', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 20 },
+      { $project: { _id: 0, language: '$_id', count: 1 } },
+    ]).toArray(),
+    col.aggregate<{ country: string; count: number }>([
+      { $match: { ...match, country: { $exists: true, $ne: '' } } },
+      { $group: { _id: '$country', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 20 },
+      { $project: { _id: 0, country: '$_id', count: 1 } },
+    ]).toArray(),
+    col.find(match).sort({ ts: -1 }).limit(50).toArray(),
+  ]);
 
-  const totals = result?.totals?.[0] ?? { events: 0, pageviews: 0 };
-  const visitors = result?.visitors?.[0]?.count ?? 0;
-  const sessions = result?.sessions?.[0]?.count ?? 0;
+  const finalTotals = totalsResult[0] ?? { events: 0, pageviews: 0 };
+  const finalVisitors = visitorsResult[0]?.count ?? 0;
+  const finalSessions = sessionsResult[0]?.count ?? 0;
 
   const payload: AnalyticsSummaryDto = {
     from: input.from.toISOString(),
     to: input.to.toISOString(),
     scope: input.scope ?? 'all',
-    totals,
-    visitors,
-    sessions,
-    topPages: result?.topPages ?? [],
-    topReferrers: result?.topReferrers ?? [],
+    totals: finalTotals,
+    visitors: finalVisitors,
+    sessions: finalSessions,
+    topPages: topPages ?? [],
+    topReferrers: topReferrers ?? [],
     topEventNames: [],
-    topLanguages: result?.topLanguages ?? [],
-    topCountries: result?.topCountries ?? [],
+    topLanguages: topLanguages ?? [],
+    topCountries: topCountries ?? [],
     topRegions: [],
     topCities: [],
     topBrowsers: [],
@@ -463,7 +459,7 @@ export async function getAnalyticsSummary(input: {
     topUtmSources: [],
     topUtmMediums: [],
     topUtmCampaigns: [],
-    recent: (result?.recent ?? []).map(toEventDto),
+    recent: (recent ?? []).map(toEventDto),
   };
   if (redis) {
     await redis.set(cacheKey, JSON.stringify(payload), 'EX', ANALYTICS_SUMMARY_TTL_SECONDS);

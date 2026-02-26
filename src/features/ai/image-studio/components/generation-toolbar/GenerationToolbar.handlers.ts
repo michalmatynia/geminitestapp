@@ -43,13 +43,21 @@ import {
   imageStudioAutoScalerResponseSchema,
   type ImageStudioAutoScalerResponse,
 } from '../../contracts/autoscaler';
-import { saveImageStudioAnalysisApplyIntent } from '../../utils/analysis-bridge';
+import {
+  imageStudioAnalysisResponseSchema,
+  type ImageStudioAnalysisResponse,
+} from '../../contracts/analysis';
+import {
+  saveImageStudioAnalysisPlanSnapshot,
+  type ImageStudioAnalysisSharedLayout,
+} from '../../utils/analysis-bridge';
 import { createGenerationToolbarActionHandlers } from './generation-toolbar-action-handlers';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
 import { type GenerationToolbarState, type GenerationToolbarHandlers } from './GenerationToolbar.types';
 
 export function useGenerationToolbarHandlers(state: GenerationToolbarState): GenerationToolbarHandlers {
   const {
+    activeProjectId,
     projectId,
     workingSlot,
     setSelectedSlotId,
@@ -77,6 +85,8 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     setCenterStatus,
     setAutoScaleBusy,
     setAutoScaleStatus,
+    setAnalysisBusy,
+    setAnalysisStatus,
     setCropBusy,
     setCropStatus,
     upscaleRequestInFlightRef,
@@ -98,6 +108,7 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     autoScaleLayoutPayload,
     getPreviewCanvasViewportCrop,
     getPreviewCanvasImageFrame,
+    analysisBusy,
   } = state;
 
   const resolveWorkingSlotImageContentFrame = useCallback((): ImageContentFrame | null => {
@@ -814,99 +825,114 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     await state.handleAiMaskGeneration(mode);
   }, [state]);
 
-  const handleApplyAnalysisPlanToCenter = useCallback((): void => {
-    if (!state.analysisPlanSnapshot) {
-      toast('No analysis plan is available yet. Run analysis first.', { variant: 'info' });
+  const runAnalysisFromToolbar = useCallback(async (
+    trigger: 'object_layout' | 'auto_scaler'
+  ): Promise<void> => {
+    const slotId = workingSlot?.id?.trim() ?? '';
+    if (!slotId) {
+      toast('No active source slot selected.', { variant: 'info' });
       return;
     }
-    if (state.slotSelectionLocked) {
-      toast('Cannot apply while slot selection is locked.', { variant: 'info' });
+    if (!workingSlotImageSrc) {
+      toast('Select a slot image before analysis.', { variant: 'info' });
       return;
     }
-    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
-    const analysisPlanSlotId = state.analysisPlanSnapshot?.slotId?.trim() ?? '';
-    if (!analysisPlanSlotId) {
-      toast('Analysis plan is missing slot metadata. Rerun analysis first.', { variant: 'info' });
-      return;
-    }
-    const analysisPlanSourceSignature = state.analysisPlanSnapshot?.sourceSignature?.trim() ?? '';
-    if (!analysisPlanSourceSignature) {
-      toast('Analysis plan is missing source metadata. Rerun analysis first.', { variant: 'info' });
-      return;
-    }
-    const planSlotExists = state.slots.some(
-      (slot) => (slot.id ?? '').trim() === analysisPlanSlotId
-    );
-    if (!planSlotExists) {
-      toast('Analyzed slot no longer exists.', { variant: 'info' });
-      return;
-    }
-    if (!normalizedWorkingSlotId || analysisPlanSlotId !== normalizedWorkingSlotId) {
-      saveImageStudioAnalysisApplyIntent(projectId, {
-        slotId: analysisPlanSlotId,
-        sourceSignature: analysisPlanSourceSignature,
-        runAfterApply: false,
-        target: 'object_layout',
-        layout: state.analysisPlanSnapshot.layout,
+    if (!workingSourceSignature) {
+      toast('Unable to capture source signature for analysis. Reselect slot image and retry.', {
+        variant: 'info',
       });
-      setSelectedSlotId(analysisPlanSlotId);
-      setWorkingSlotId(analysisPlanSlotId);
-      toast('Switching to analyzed slot and applying Object Layout plan.', { variant: 'info' });
       return;
     }
-    if (!workingSourceSignature || analysisPlanSourceSignature !== workingSourceSignature) {
-      toast('Latest analysis plan is stale for the current slot image. Rerun analysis first.', { variant: 'info' });
+    if (analysisBusy) {
       return;
     }
-    state.applyAnalysisLayoutToCenter(state.analysisPlanSnapshot.layout, 'manual');
-  }, [projectId, setSelectedSlotId, setWorkingSlotId, state, toast, workingSlot?.id, workingSourceSignature]);
 
-  const handleApplyAnalysisPlanToAutoScaler = useCallback((): void => {
-    if (!state.analysisPlanSnapshot) {
-      toast('No analysis plan is available yet. Run analysis first.', { variant: 'info' });
-      return;
-    }
-    if (state.slotSelectionLocked) {
-      toast('Cannot apply while slot selection is locked.', { variant: 'info' });
-      return;
-    }
-    const normalizedWorkingSlotId = workingSlot?.id?.trim() ?? '';
-    const analysisPlanSlotId = state.analysisPlanSnapshot?.slotId?.trim() ?? '';
-    if (!analysisPlanSlotId) {
-      toast('Analysis plan is missing slot metadata. Rerun analysis first.', { variant: 'info' });
-      return;
-    }
-    const analysisPlanSourceSignature = state.analysisPlanSnapshot?.sourceSignature?.trim() ?? '';
-    if (!analysisPlanSourceSignature) {
-      toast('Analysis plan is missing source metadata. Rerun analysis first.', { variant: 'info' });
-      return;
-    }
-    const planSlotExists = state.slots.some(
-      (slot) => (slot.id ?? '').trim() === analysisPlanSlotId
-    );
-    if (!planSlotExists) {
-      toast('Analyzed slot no longer exists.', { variant: 'info' });
-      return;
-    }
-    if (!normalizedWorkingSlotId || analysisPlanSlotId !== normalizedWorkingSlotId) {
-      saveImageStudioAnalysisApplyIntent(projectId, {
-        slotId: analysisPlanSlotId,
-        sourceSignature: analysisPlanSourceSignature,
-        runAfterApply: false,
-        target: 'auto_scaler',
-        layout: state.analysisPlanSnapshot.layout,
+    const toSharedLayout = (
+      layout: ImageStudioAnalysisResponse['analysis']['layout']
+    ): ImageStudioAnalysisSharedLayout => {
+      const splitAxes = Math.abs(layout.paddingXPercent - layout.paddingYPercent) >= 0.01;
+      return {
+        paddingPercent: layout.paddingPercent,
+        paddingXPercent: layout.paddingXPercent,
+        paddingYPercent: layout.paddingYPercent,
+        splitAxes,
+        fillMissingCanvasWhite: layout.fillMissingCanvasWhite,
+        targetCanvasWidth: layout.targetCanvasWidth,
+        targetCanvasHeight: layout.targetCanvasHeight,
+        whiteThreshold: layout.whiteThreshold,
+        chromaThreshold: layout.chromaThreshold,
+        shadowPolicy: layout.shadowPolicy,
+        detection: layout.detection,
+      };
+    };
+
+    const layoutPayload = trigger === 'object_layout'
+      ? centerLayoutPayload
+      : autoScaleLayoutPayload;
+
+    setAnalysisBusy(true);
+    setAnalysisStatus('resolving');
+    try {
+      setAnalysisStatus('processing');
+      const response = await api
+        .post<unknown>(
+          `/api/image-studio/slots/${encodeURIComponent(slotId)}/analysis`,
+          {
+            mode: 'server_analysis_v1',
+            layout: layoutPayload,
+          }
+        )
+        .then((raw) => imageStudioAnalysisResponseSchema.parse(raw));
+
+      const sharedLayout = toSharedLayout(response.analysis.layout);
+      const snapshot = saveImageStudioAnalysisPlanSnapshot(activeProjectId, {
+        slotId,
+        sourceSignature: workingSourceSignature,
+        savedAt: new Date().toISOString(),
+        layout: sharedLayout,
+        effectiveMode: response.effectiveMode,
+        authoritativeSource: response.authoritativeSource,
+        detectionUsed: response.analysis.detectionUsed,
+        confidence: response.analysis.confidence,
+        policyVersion: response.analysis.policyVersion,
+        policyReason: response.analysis.policyReason,
+        fallbackApplied: response.analysis.fallbackApplied,
       });
-      setSelectedSlotId(analysisPlanSlotId);
-      setWorkingSlotId(analysisPlanSlotId);
-      toast('Switching to analyzed slot and applying Auto Scaler plan.', { variant: 'info' });
-      return;
+      state.setAnalysisPlanSnapshot(snapshot);
+      state.applyAnalysisLayoutToCenter(sharedLayout, 'manual');
+      state.applyAnalysisLayoutToAutoScaler(sharedLayout, 'manual');
+      toast('Analysis completed and synced to Object Layouting + Auto Scaler controls.', {
+        variant: 'success',
+      });
+    } catch (error) {
+      toast(error instanceof Error ? error.message : 'Failed to analyze image.', {
+        variant: 'error',
+      });
+    } finally {
+      setAnalysisBusy(false);
+      setAnalysisStatus('idle');
     }
-    if (!workingSourceSignature || analysisPlanSourceSignature !== workingSourceSignature) {
-      toast('Latest analysis plan is stale for the current slot image. Rerun analysis first.', { variant: 'info' });
-      return;
-    }
-    state.applyAnalysisLayoutToAutoScaler(state.analysisPlanSnapshot.layout, 'manual');
-  }, [projectId, setSelectedSlotId, setWorkingSlotId, state, toast, workingSlot?.id, workingSourceSignature]);
+  }, [
+    activeProjectId,
+    analysisBusy,
+    autoScaleLayoutPayload,
+    centerLayoutPayload,
+    setAnalysisBusy,
+    setAnalysisStatus,
+    state,
+    toast,
+    workingSlot?.id,
+    workingSlotImageSrc,
+    workingSourceSignature,
+  ]);
+
+  const handleRunAnalysisFromCenter = useCallback(async (): Promise<void> => {
+    await runAnalysisFromToolbar('object_layout');
+  }, [runAnalysisFromToolbar]);
+
+  const handleRunAnalysisFromAutoScaler = useCallback(async (): Promise<void> => {
+    await runAnalysisFromToolbar('auto_scaler');
+  }, [runAnalysisFromToolbar]);
 
   return {
     handleUpscale,
@@ -922,7 +948,7 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     handleAutoScale,
     handleCancelAutoScale,
     handleAiMaskGeneration,
-    handleApplyAnalysisPlanToCenter,
-    handleApplyAnalysisPlanToAutoScaler,
+    handleRunAnalysisFromCenter,
+    handleRunAnalysisFromAutoScaler,
   };
 }

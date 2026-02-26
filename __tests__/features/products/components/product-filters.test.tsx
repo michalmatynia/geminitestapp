@@ -135,11 +135,11 @@ describe('ProductFilters Component', () => {
     expect(screen.getByPlaceholderText('To')).toBeInTheDocument();
   });
 
-  it('calls setProductId when Product ID input changes', () => {
+  it('calls setProductId when Product ID input changes', async () => {
     renderWithProviders(mockContextValue);
     const input = screen.getByPlaceholderText('Search by product ID...');
     fireEvent.change(input, { target: { value: 'cma123' } });
-    expect(mockContextValue.setProductId).toHaveBeenCalledWith('cma123');
+    await waitFor(() => expect(mockContextValue.setProductId).toHaveBeenCalledWith('cma123'), { timeout: 1000 });
   });
 
   it('calls setSearch when name input changes', async () => {
@@ -149,11 +149,11 @@ describe('ProductFilters Component', () => {
     await waitFor(() => expect(mockContextValue.setSearch).toHaveBeenCalledWith('laptop'), { timeout: 1000 });
   });
 
-  it('calls setSku when SKU input changes', () => {
+  it('calls setSku when SKU input changes', async () => {
     renderWithProviders(mockContextValue);
     const input = screen.getByPlaceholderText('Search by SKU...');
     fireEvent.change(input, { target: { value: 'ABC' } });
-    expect(mockContextValue.setSku).toHaveBeenCalledWith('ABC');
+    await waitFor(() => expect(mockContextValue.setSku).toHaveBeenCalledWith('ABC'), { timeout: 1000 });
   });
 
   it('shows active preset pill and clears it on close click', () => {

@@ -212,6 +212,32 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
     expect(state.applyAnalysisLayoutToAutoScaler).not.toHaveBeenCalled();
   });
 
+  it('clears intent and toasts when working source metadata is missing', async () => {
+    saveImageStudioAnalysisApplyIntent('project-alpha', {
+      slotId: 'slot-1',
+      sourceSignature: 'signature_slot_1_v1',
+      target: 'object_layout',
+      runAfterApply: false,
+      layout: BASE_LAYOUT,
+    });
+
+    const state = createState({
+      workingSourceSignature: '',
+    });
+    const actions = createActions();
+    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+
+    await waitFor(() => {
+      expect(state.toast).toHaveBeenCalledWith(
+        'Working slot source metadata is missing. Reselect slot image and retry.',
+        { variant: 'info' }
+      );
+    });
+    expect(loadImageStudioAnalysisApplyIntent('project-alpha')).toBeNull();
+    expect(state.applyAnalysisLayoutToCenter).not.toHaveBeenCalled();
+    expect(state.applyAnalysisLayoutToAutoScaler).not.toHaveBeenCalled();
+  });
+
   it('consumes matching auto scaler intent in manual mode and clears intent', async () => {
     saveImageStudioAnalysisApplyIntent('project-alpha', {
       slotId: 'slot-1',

@@ -117,7 +117,18 @@ export function useGenerationToolbarEffects(
     const normalizedIntentSourceSignature = intent.sourceSignature?.trim() ?? '';
     if (
       normalizedIntentSourceSignature &&
-      (!workingSourceSignature || normalizedIntentSourceSignature !== workingSourceSignature)
+      !workingSourceSignature
+    ) {
+      lastConsumedAnalysisIntentRef.current = intentKey;
+      clearImageStudioAnalysisApplyIntent(activeProjectId);
+      toast('Working slot source metadata is missing. Reselect slot image and retry.', {
+        variant: 'info',
+      });
+      return;
+    }
+    if (
+      normalizedIntentSourceSignature &&
+      normalizedIntentSourceSignature !== workingSourceSignature
     ) {
       lastConsumedAnalysisIntentRef.current = intentKey;
       clearImageStudioAnalysisApplyIntent(activeProjectId);

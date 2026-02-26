@@ -51,6 +51,8 @@ export function GenerationToolbarInner(): React.JSX.Element {
     centerStatus,
     autoScaleBusy,
     autoScaleStatus,
+    analysisBusy,
+    analysisStatus,
     cropBusy,
     cropStatus,
     exportMaskCount,
@@ -74,8 +76,8 @@ export function GenerationToolbarInner(): React.JSX.Element {
     handleAutoScale,
     handleCancelAutoScale,
     handleAiMaskGeneration,
-    handleApplyAnalysisPlanToCenter,
-    handleApplyAnalysisPlanToAutoScaler,
+    handleRunAnalysisFromCenter,
+    handleRunAnalysisFromAutoScaler,
   } = handlers;
 
   useGenerationToolbarEffects(state, {
@@ -131,6 +133,14 @@ export function GenerationToolbarInner(): React.JSX.Element {
       default: return 'Auto Scale';
     }
   }, [autoScaleBusy, autoScaleStatus]);
+  const analysisBusyLabel = useMemo(() => {
+    if (!analysisBusy) return 'Run Analysis';
+    switch (analysisStatus) {
+      case 'resolving': return 'Analyze: Resolving';
+      case 'processing': return 'Analyze: Processing';
+      default: return 'Run Analysis';
+    }
+  }, [analysisBusy, analysisStatus]);
 
   const quickSwitchModels = useMemo(
     () =>
@@ -232,6 +242,9 @@ export function GenerationToolbarInner(): React.JSX.Element {
 
   const hasSourceImage = Boolean(workingSlot);
   const analysisPlanSlotId = state.analysisPlanSnapshot?.slotId?.trim() ?? '';
+  const analysisPlanSourceMetadataMissing =
+    state.analysisPlanAvailable &&
+    (state.analysisPlanSnapshot?.sourceSignature?.trim() ?? '') === '';
   const analysisPlanSlotRecord =
     analysisPlanSlotId === ''
       ? null
@@ -391,6 +404,8 @@ export function GenerationToolbarInner(): React.JSX.Element {
 
       <GenerationToolbarCenterSection
         analysisPlanAvailable={state.analysisPlanAvailable}
+        analysisPlanSourceMetadataMissing={analysisPlanSourceMetadataMissing}
+        analysisWorkingSourceMetadataMissing={state.analysisWorkingSourceMetadataMissing}
         analysisPlanIsStale={state.analysisPlanIsStale}
         analysisPlanSlotMissing={analysisPlanSlotMissing}
         analysisPlanWillSwitchSlot={analysisPlanWillSwitchSlot}
@@ -399,6 +414,8 @@ export function GenerationToolbarInner(): React.JSX.Element {
         analysisSummaryData={state.analysisSummaryData}
         analysisSummaryIsStale={state.analysisPlanIsStale}
         analysisConfigMismatchMessage={state.centerAnalysisConfigMismatchMessage}
+        analysisBusy={analysisBusy}
+        analysisBusyLabel={analysisBusyLabel}
         centerBusyLabel={centerBusyLabel}
         centerGuidesEnabled={centerGuidesEnabled}
         centerLayoutEnabled={centerIsObjectLayoutMode}
@@ -458,7 +475,10 @@ export function GenerationToolbarInner(): React.JSX.Element {
             { variant: 'success' }
           );
         }}
-        onApplyAnalysisPlan={handleApplyAnalysisPlanToCenter}
+        onRunAnalysis={() => {
+          const action = async () => { await handleRunAnalysisFromCenter(); };
+          void action();
+        }}
         onCenterObject={() => {
           const action = async () => { await handleCenterObject(); };
           void action();
@@ -476,6 +496,8 @@ export function GenerationToolbarInner(): React.JSX.Element {
 
       <GenerationToolbarAutoScalerSection
         analysisPlanAvailable={state.analysisPlanAvailable}
+        analysisPlanSourceMetadataMissing={analysisPlanSourceMetadataMissing}
+        analysisWorkingSourceMetadataMissing={state.analysisWorkingSourceMetadataMissing}
         analysisPlanIsStale={state.analysisPlanIsStale}
         analysisPlanSlotMissing={analysisPlanSlotMissing}
         analysisPlanWillSwitchSlot={analysisPlanWillSwitchSlot}
@@ -484,6 +506,8 @@ export function GenerationToolbarInner(): React.JSX.Element {
         analysisSummaryData={state.analysisSummaryData}
         analysisSummaryIsStale={state.analysisPlanIsStale}
         analysisConfigMismatchMessage={state.autoScaleAnalysisConfigMismatchMessage}
+        analysisBusy={analysisBusy}
+        analysisBusyLabel={analysisBusyLabel}
         autoScaleBusyLabel={autoScaleBusyLabel}
         autoScaleLayoutProjectCanvasSize={projectCanvasSize}
         autoScaleShadowPolicyOptions={shadowPolicyOptions}
@@ -495,7 +519,10 @@ export function GenerationToolbarInner(): React.JSX.Element {
           const action = async () => { await handleAutoScale(); };
           void action();
         }}
-        onApplyAnalysisPlan={handleApplyAnalysisPlanToAutoScaler}
+        onRunAnalysis={() => {
+          const action = async () => { await handleRunAnalysisFromAutoScaler(); };
+          void action();
+        }}
         onCancelAutoScale={handleCancelAutoScale}
         onOpenSharedDetectionSettings={() => {
           state.setCenterLayoutAdvancedEnabled(true);

@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  buildImageStudioAnalysisSourceSignature,
   loadImageStudioAnalysisApplyIntent,
   saveImageStudioAnalysisPlanSnapshot,
   type ImageStudioAnalysisPlanSnapshot,
@@ -70,6 +71,9 @@ vi.mock('@/features/ai/image-studio/components/analysis/sections/AnalysisResultS
     queueAnalysisApplyIntent,
   }: {
     persistedPlanSnapshot: ImageStudioAnalysisPlanSnapshot | null;
+    analysisSourceSignatureMissing?: boolean;
+    analysisCurrentSourceMetadataMissing?: boolean;
+    analysisPlanIsStale?: boolean;
     queueAnalysisApplyIntent: (
       target: 'object_layout' | 'auto_scaler',
       options?: { runAfterApply?: boolean }
@@ -84,9 +88,12 @@ vi.mock('@/features/ai/image-studio/components/analysis/sections/AnalysisResultS
   ),
 }));
 
-const createSnapshot = (slotId: string): Omit<ImageStudioAnalysisPlanSnapshot, 'version'> => ({
+const createSnapshot = (
+  slotId: string,
+  sourceSignature = `signature_${slotId}`
+): Omit<ImageStudioAnalysisPlanSnapshot, 'version'> => ({
   slotId,
-  sourceSignature: `signature_${slotId}`,
+  sourceSignature,
   savedAt: '2026-02-26T12:00:00.000Z',
   layout: {
     paddingPercent: 8,
@@ -110,6 +117,14 @@ const createSnapshot = (slotId: string): Omit<ImageStudioAnalysisPlanSnapshot, '
   fallbackApplied: false,
 });
 
+const createSlotSourceSignature = (slotId: string, imageUrl: string): string =>
+  buildImageStudioAnalysisSourceSignature({
+    slotId,
+    imageUrl,
+    resolvedImageSrc: imageUrl,
+    clientProcessingImageSrc: imageUrl,
+  });
+
 describe('ImageStudioAnalysisTab apply intent routing', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -117,15 +132,19 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
     vi.clearAllMocks();
 
     mocks.slotState.slots = [
-      { id: 'slot-1', name: 'Slot 1' },
-      { id: 'slot-2', name: 'Slot 2' },
+      { id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png' },
+      { id: 'slot-2', name: 'Slot 2', imageUrl: 'https://example.test/slot-2.png' },
     ];
     mocks.slotState.slotSelectionLocked = false;
     mocks.slotState.workingSlot = { id: 'slot-1' };
   });
 
   it('saves intent, pre-switches slot, and switches to controls when analyzed slot is valid', async () => {
-    saveImageStudioAnalysisPlanSnapshot('project-alpha', createSnapshot('slot-2'));
+    const slot2Url = 'https://example.test/slot-2.png';
+    saveImageStudioAnalysisPlanSnapshot(
+      'project-alpha',
+      createSnapshot('slot-2', createSlotSourceSignature('slot-2', slot2Url))
+    );
 
     render(<ImageStudioAnalysisTab />);
 
@@ -149,7 +168,10 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
 
   it('blocks apply when slot selection is locked', async () => {
     mocks.slotState.slotSelectionLocked = true;
-    saveImageStudioAnalysisPlanSnapshot('project-alpha', createSnapshot('slot-2'));
+    saveImageStudioAnalysisPlanSnapshot(
+      'project-alpha',
+      createSnapshot('slot-2', createSlotSourceSignature('slot-2', 'https://example.test/slot-2.png'))
+    );
 
     render(<ImageStudioAnalysisTab />);
 
@@ -169,7 +191,7 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
   });
 
   it('blocks apply when analyzed slot is missing', async () => {
-    mocks.slotState.slots = [{ id: 'slot-1', name: 'Slot 1' }];
+    mocks.slotState.slots = [{ id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png' }];
     saveImageStudioAnalysisPlanSnapshot('project-alpha', createSnapshot('slot-2'));
 
     render(<ImageStudioAnalysisTab />);
@@ -186,6 +208,33 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
     expect(mocks.switchToControls).not.toHaveBeenCalled();
     expect(mocks.toast).toHaveBeenCalledWith(
       'Analyzed slot no longer exists. Run analysis again on an available slot.',
+      {
+        variant: 'info',
+      }
+    );
+  });
+
+  it('blocks apply when analyzed slot source metadata is missing', async () => {
+    mocks.slotState.slots = [
+      { id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png' },
+      { id: 'slot-2', name: 'Slot 2' },
+    ];
+    saveImageStudioAnalysisPlanSnapshot('project-alpha', createSnapshot('slot-2', 'signature_slot_2_old'));
+
+    render(<ImageStudioAnalysisTab />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('snapshot-slot')).toHaveTextContent('slot-2');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Apply To Auto Scaler' }));
+
+    expect(loadImageStudioAnalysisApplyIntent('project-alpha')).toBeNull();
+    expect(mocks.setSelectedSlotId).not.toHaveBeenCalled();
+    expect(mocks.setWorkingSlotId).not.toHaveBeenCalled();
+    expect(mocks.switchToControls).not.toHaveBeenCalled();
+    expect(mocks.toast).toHaveBeenCalledWith(
+      'Analyzed slot source metadata is missing. Reselect slot image and rerun analysis.',
       {
         variant: 'info',
       }
@@ -221,4 +270,5 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
       }
     );
   });
+
 });

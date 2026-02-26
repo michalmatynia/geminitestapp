@@ -13,6 +13,9 @@ export interface AnalysisResultSectionProps {
   currentWorkingSlotId: string;
   availableSlots: Array<{ id: string; label?: string }>;
   slotSelectionLocked: boolean;
+  analysisSourceSignatureMissing: boolean;
+  analysisCurrentSourceMetadataMissing: boolean;
+  analysisPlanIsStale: boolean;
   queueAnalysisApplyIntent: (target: 'object_layout' | 'auto_scaler', options?: { runAfterApply?: boolean }) => void;
 }
 
@@ -23,6 +26,9 @@ export function AnalysisResultSection({
   currentWorkingSlotId,
   availableSlots,
   slotSelectionLocked,
+  analysisSourceSignatureMissing,
+  analysisCurrentSourceMetadataMissing,
+  analysisPlanIsStale,
   queueAnalysisApplyIntent,
 }: AnalysisResultSectionProps): React.JSX.Element {
   const resolvedSourceSlotId =
@@ -38,6 +44,12 @@ export function AnalysisResultSection({
     ? 'Analysis slot context is missing. Run analysis first.'
     : slotSelectionLocked
       ? 'Slot selection is currently locked by sequencing.'
+    : analysisSourceSignatureMissing
+        ? 'Analysis plan source metadata is missing. Run analysis again.'
+      : analysisCurrentSourceMetadataMissing
+        ? 'Analyzed slot source metadata is missing. Reselect slot image and rerun analysis.'
+      : analysisPlanIsStale
+        ? 'Analysis plan is stale for the current analyzed slot image.'
       : !sourceSlotExists
         ? 'Analyzed slot no longer exists.'
         : null;
@@ -168,6 +180,21 @@ export function AnalysisResultSection({
               Slot selection is currently locked by sequencing. Unlock it before applying this plan.
             </Card>
           ) : null}
+          {analysisSourceSignatureMissing ? (
+            <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+              Analysis plan source metadata is missing. Run analysis again.
+            </Card>
+          ) : null}
+          {analysisCurrentSourceMetadataMissing ? (
+            <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+              Analyzed slot source metadata is missing. Reselect slot image and rerun analysis.
+            </Card>
+          ) : null}
+          {analysisPlanIsStale ? (
+            <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+              Analyzed slot image has changed since this plan was created. Run analysis again.
+            </Card>
+          ) : null}
           {resolvedSourceSlotId && !sourceSlotExists ? (
             <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
               Analyzed slot no longer exists. Re-run analysis on an available slot.
@@ -250,6 +277,21 @@ export function AnalysisResultSection({
           {slotSelectionLocked ? (
             <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
               Slot selection is currently locked by sequencing. Unlock it before applying this plan.
+            </Card>
+          ) : null}
+          {analysisSourceSignatureMissing ? (
+            <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+              Analysis plan source metadata is missing. Run analysis again.
+            </Card>
+          ) : null}
+          {analysisCurrentSourceMetadataMissing ? (
+            <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+              Analyzed slot source metadata is missing. Reselect slot image and rerun analysis.
+            </Card>
+          ) : null}
+          {analysisPlanIsStale ? (
+            <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+              Analyzed slot image has changed since this plan was created. Run analysis again.
             </Card>
           ) : null}
           {resolvedSourceSlotId && !sourceSlotExists ? (

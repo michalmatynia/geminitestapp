@@ -24,6 +24,7 @@ export type CropStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'pro
 export type CenterStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting';
 export type UpscaleStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting';
 export type AutoScaleStatus = 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting';
+export type AnalysisStatus = 'idle' | 'resolving' | 'processing';
 
 export interface GenerationToolbarContextValue {
   // Mode State
@@ -113,6 +114,10 @@ export interface GenerationToolbarContextValue {
   setAutoScaleBusy: (val: boolean) => void;
   autoScaleStatus: AutoScaleStatus;
   setAutoScaleStatus: (val: AutoScaleStatus) => void;
+  analysisBusy: boolean;
+  setAnalysisBusy: (val: boolean) => void;
+  analysisStatus: AnalysisStatus;
+  setAnalysisStatus: (val: AnalysisStatus) => void;
 }
 
 const GenerationToolbarContext = createContext<GenerationToolbarContextValue | null>(null);
@@ -161,6 +166,8 @@ export function GenerationToolbarProvider({ children }: { children: React.ReactN
   const [centerStatus, setCenterStatus] = useState<CenterStatus>('idle');
   const [autoScaleBusy, setAutoScaleBusy] = useState(false);
   const [autoScaleStatus, setAutoScaleStatus] = useState<AutoScaleStatus>('idle');
+  const [analysisBusy, setAnalysisBusy] = useState(false);
+  const [analysisStatus, setAnalysisStatus] = useState<AnalysisStatus>('idle');
 
   const value = useMemo((): GenerationToolbarContextValue => ({
     maskAttachMode, setMaskAttachMode,
@@ -201,6 +208,8 @@ export function GenerationToolbarProvider({ children }: { children: React.ReactN
     centerStatus, setCenterStatus,
     autoScaleBusy, setAutoScaleBusy,
     autoScaleStatus, setAutoScaleStatus,
+    analysisBusy, setAnalysisBusy,
+    analysisStatus, setAnalysisStatus,
   }), [
     maskAttachMode, upscaleMode, upscaleStrategy, cropMode, centerMode, autoScaleMode,
     centerLayoutPadding, centerLayoutPaddingX, centerLayoutPaddingY, centerLayoutSplitAxes,
@@ -211,7 +220,7 @@ export function GenerationToolbarProvider({ children }: { children: React.ReactN
     autoScaleLayoutPaddingY, autoScaleLayoutSplitAxes, autoScaleLayoutFillMissingCanvasWhite,
     autoScaleLayoutShadowPolicy, upscaleScale, upscaleTargetWidth, upscaleTargetHeight,
     upscaleSmoothingQuality, upscaleBusy, upscaleStatus, cropBusy, cropStatus,
-    centerBusy, centerStatus, autoScaleBusy, autoScaleStatus,
+    centerBusy, centerStatus, autoScaleBusy, autoScaleStatus, analysisBusy, analysisStatus,
   ]);
 
   return (

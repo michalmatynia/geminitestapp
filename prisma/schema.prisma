@@ -215,6 +215,8 @@ model IntegrationConnection {
   traderaApiSandbox               Boolean          @default(false)
   integration                     Integration      @relation(fields: [integrationId], references: [id], onDelete: Cascade)
   listings                        ProductListing[]
+
+  @@index([integrationId])
 }
 
 model ProductListing {

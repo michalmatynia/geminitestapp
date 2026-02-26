@@ -297,6 +297,34 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   const layoutCanDeletePreset = Boolean(selectedCustomPresetId);
   const layoutCanSavePreset = layoutPresetDraftName.trim().length > 0;
   const layoutSavePresetLabel = selectedCustomPresetId ? 'Update Preset' : 'Save Preset';
+  const resolvedAnalysisSourceSlotId = resultSourceSlotId.trim() || persistedPlanSnapshot?.slotId?.trim() || '';
+  const resolvedAnalysisSourceSignature =
+    resultSourceSignature.trim() || persistedPlanSnapshot?.sourceSignature?.trim() || '';
+  const analysisSourceSignatureMissing =
+    resolvedAnalysisSourceSlotId !== '' && resolvedAnalysisSourceSignature === '';
+  const analysisPlanIsStale = useMemo((): boolean => {
+    if (!resolvedAnalysisSourceSlotId || !resolvedAnalysisSourceSignature) return false;
+    const sourceSlot = slots.find(
+      (slot) => (slot.id ?? '').trim() === resolvedAnalysisSourceSlotId
+    );
+    if (!sourceSlot) return false;
+    const currentSignature = buildSlotSourceSignature(sourceSlot);
+    if (!currentSignature) return false;
+    return currentSignature !== resolvedAnalysisSourceSignature;
+  }, [
+    buildSlotSourceSignature,
+    resolvedAnalysisSourceSignature,
+    resolvedAnalysisSourceSlotId,
+    slots,
+  ]);
+  const analysisCurrentSourceMetadataMissing = useMemo((): boolean => {
+    if (!resolvedAnalysisSourceSlotId) return false;
+    const sourceSlot = slots.find(
+      (slot) => (slot.id ?? '').trim() === resolvedAnalysisSourceSlotId
+    );
+    if (!sourceSlot) return false;
+    return buildSlotSourceSignature(sourceSlot) === '';
+  }, [buildSlotSourceSignature, resolvedAnalysisSourceSlotId, slots]);
 
   useEffect(() => {
     const nextSelectedId = selectedCustomPreset?.id ?? null;
@@ -410,21 +438,26 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
       });
       return;
     }
+    if (slotSelectionLocked) {
+      toast('Cannot apply while slot selection is locked.', { variant: 'info' });
+      return;
+    }
     const analyzedSlot = slots.find(
       (slot) => (slot.id ?? '').trim() === analyzedSlotId
     );
     const currentAnalyzedSlotSignature = buildSlotSourceSignature(analyzedSlot ?? null);
+    if (!currentAnalyzedSlotSignature) {
+      toast('Analyzed slot source metadata is missing. Reselect slot image and rerun analysis.', {
+        variant: 'info',
+      });
+      return;
+    }
     if (
-      currentAnalyzedSlotSignature &&
       analyzedSourceSignature !== currentAnalyzedSlotSignature
     ) {
       toast('Analysis plan is stale for this slot image. Run analysis again.', {
         variant: 'info',
       });
-      return;
-    }
-    if (slotSelectionLocked) {
-      toast('Cannot apply while slot selection is locked.', { variant: 'info' });
       return;
     }
     const runAfterApply = Boolean(options?.runAfterApply);
@@ -639,6 +672,9 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
             label: slot.name ?? undefined,
           }))}
           slotSelectionLocked={slotSelectionLocked}
+          analysisSourceSignatureMissing={analysisSourceSignatureMissing}
+          analysisCurrentSourceMetadataMissing={analysisCurrentSourceMetadataMissing}
+          analysisPlanIsStale={analysisPlanIsStale}
           queueAnalysisApplyIntent={queueAnalysisApplyIntent}
         />
       </Card>

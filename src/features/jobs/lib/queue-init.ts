@@ -109,11 +109,11 @@ export const initializeQueues = (): void => {
     ]);
 
     // Call specialized startup functions if they exist (to enqueue repeat jobs, etc.)
-    ((queueModules[1] as Record<string, unknown>).startAiPathRunQueue as (() => void) | undefined)?.();
-    ((queueModules[3] as Record<string, unknown>).startAgentQueue as (() => void) | undefined)?.();
-    ((queueModules[5] as Record<string, unknown>).startDatabaseBackupSchedulerQueue as (() => void) | undefined)?.();
-    ((queueModules[9] as Record<string, unknown>).startTraderaRelistSchedulerQueue as (() => void) | undefined)?.();
-    ((queueModules[13] as Record<string, unknown>).startProductSyncSchedulerQueue as (() => void) | undefined)?.();
+    ((queueModules[1] as Record<string, unknown>)['startAiPathRunQueue'] as (() => void) | undefined)?.();
+    ((queueModules[3] as Record<string, unknown>)['startAgentQueue'] as (() => void) | undefined)?.();
+    ((queueModules[5] as Record<string, unknown>)['startDatabaseBackupSchedulerQueue'] as (() => void) | undefined)?.();
+    ((queueModules[9] as Record<string, unknown>)['startTraderaRelistSchedulerQueue'] as (() => void) | undefined)?.();
+    ((queueModules[13] as Record<string, unknown>)['startProductSyncSchedulerQueue'] as (() => void) | undefined)?.();
 
     void logSystemEvent({
       level: 'info',

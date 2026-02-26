@@ -16,7 +16,6 @@ vi.mock('@/shared/lib/api-client', () => ({
   api: {
     post: vi.fn(),
     put: vi.fn(),
-    patch: vi.fn(),
     delete: vi.fn(),
   },
 }));
@@ -79,7 +78,10 @@ describe('useIntegrationMutations invalidation', () => {
     };
     await result.current.mutateAsync(variables);
 
-    expect(api.post).toHaveBeenCalledWith('/api/integrations/int-1/connections', variables);
+    expect(api.post).toHaveBeenCalledWith(
+      '/api/integrations/int-1/connections',
+      variables.payload
+    );
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalled());
     
     // Invalidation logic for connections calls it multiple times
@@ -91,8 +93,8 @@ describe('useIntegrationMutations invalidation', () => {
     });
   });
 
-  it('useUpsertConnection update path calls api.patch and invalidates scoped keys', async () => {
-    vi.mocked(api.patch).mockResolvedValue({
+  it('useUpsertConnection update path calls api.put and invalidates scoped keys', async () => {
+    vi.mocked(api.put).mockResolvedValue({
       id: 'conn-1',
       integrationId: 'int-1',
       name: 'Updated Connection',
@@ -108,7 +110,10 @@ describe('useIntegrationMutations invalidation', () => {
     };
     await result.current.mutateAsync(variables);
 
-    expect(api.patch).toHaveBeenCalledWith('/api/integrations/connections/conn-1', variables);
+    expect(api.put).toHaveBeenCalledWith(
+      '/api/integrations/connections/conn-1',
+      variables.payload
+    );
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalled());
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.integrations.connections(),

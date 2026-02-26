@@ -8,6 +8,7 @@ import {
   useImportPreference,
   useTemplates,
   useSavePreferenceMutation,
+  useSaveDefaultConnectionMutation,
   useImportMutation,
   useResumeImportRunMutation,
   useCancelImportRunMutation,
@@ -384,6 +385,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
 
   // Mutations
   const savePreferenceMutation = useSavePreferenceMutation();
+  const saveDefaultConnectionMutation = useSaveDefaultConnectionMutation();
   const importMutation = useImportMutation();
   const resumeImportRunMutation = useResumeImportRunMutation(activeImportRunId);
   const cancelImportRunMutation = useCancelImportRunMutation(activeImportRunId);
@@ -558,6 +560,27 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     clearInventoryMutation,
   });
 
+  const handleSaveDefaultBaseConnection = useCallback(async (): Promise<void> => {
+    const normalizedConnectionId = selectedBaseConnectionId.trim();
+    if (!normalizedConnectionId) {
+      toast('Select a Base.com connection first.', { variant: 'error' });
+      return;
+    }
+
+    try {
+      await saveDefaultConnectionMutation.mutateAsync({
+        connectionId: normalizedConnectionId,
+      });
+      toast('Default Base.com connection saved.', { variant: 'success' });
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to save default Base.com connection.';
+      toast(message, { variant: 'error' });
+    }
+  }, [selectedBaseConnectionId, saveDefaultConnectionMutation, toast]);
+
   const value: ImportExportContextType = {
     inventoryId,
     setInventoryId,
@@ -641,6 +664,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     importListStats,
 
     ...runtimeActions,
+    handleSaveDefaultBaseConnection,
     handleNewTemplate: () => templates.handleNewTemplate(templateScope),
     handleDuplicateTemplate: () => templates.handleDuplicateTemplate(templateScope),
     handleSaveTemplate: () => templates.handleSaveTemplate(templateScope),
@@ -651,6 +675,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
       resumeImportRunMutation.isPending ||
       cancelImportRunMutation.isPending ||
       activeRunBusy,
+    savingDefaultConnection: saveDefaultConnectionMutation.isPending,
     savingExportSettings: saveExportSettingsMutation.isPending,
     savingImportTemplate: templates.saveImportTemplateMutation.isPending || templates.createImportTemplateMutation.isPending,
     savingExportTemplate: templates.saveExportTemplateMutation.isPending || templates.createExportTemplateMutation.isPending,

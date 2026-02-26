@@ -251,10 +251,15 @@ export function useGenerationToolbarState(): GenerationToolbarState {
       clientProcessingImageSrc,
     });
   }, [clientProcessingImageSrc, workingSlot, workingSlotImageSrc]);
+  const analysisWorkingSourceMetadataMissing =
+    analysisPlanAvailable &&
+    analysisPlanMatchesWorkingSlot &&
+    !workingSourceSignature;
   const analysisPlanIsStale =
     analysisPlanAvailable &&
     analysisPlanMatchesWorkingSlot &&
-    (!workingSourceSignature || analysisPlanSourceSignature !== workingSourceSignature);
+    Boolean(workingSourceSignature) &&
+    analysisPlanSourceSignature !== workingSourceSignature;
 
   const activeProject = useMemo(
     () =>
@@ -613,6 +618,7 @@ export function useGenerationToolbarState(): GenerationToolbarState {
     analysisPlanAvailable,
     analysisPlanMatchesWorkingSlot,
     analysisSummaryData,
+    analysisWorkingSourceMetadataMissing,
     analysisPlanIsStale,
     centerAnalysisConfigMismatchMessage,
     autoScaleAnalysisConfigMismatchMessage,

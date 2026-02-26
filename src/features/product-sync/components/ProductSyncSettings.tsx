@@ -28,6 +28,7 @@ import type {
   ProductSyncProfile,
 } from '@/shared/contracts/product-sync';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { api } from '@/shared/lib/api-client';
 import {
   Badge,
   Button,
@@ -149,6 +150,8 @@ export function ProductSyncSettings(): React.JSX.Element {
   const profiles = profilesQuery.data ?? EMPTY_PROFILES;
   const [selectedProfileId, setSelectedProfileId] = useState<string>('');
   const [draft, setDraft] = useState<ProductSyncProfileDraft>(defaultDraft());
+  const [applyingConnectionDefaults, setApplyingConnectionDefaults] =
+    useState(false);
 
   const runsQuery = useProductSyncRuns(selectedProfileId || null, 50);
   const runs = runsQuery.data ?? [];
@@ -326,6 +329,61 @@ export function ProductSyncSettings(): React.JSX.Element {
     }
   };
 
+  const handleApplyConnectionAcrossSettings = (): void => {
+    const connectionId = draft.connectionId.trim();
+    if (!connectionId) {
+      toast('Select a Base connection first.', { variant: 'error' });
+      return;
+    }
+
+    const selectedConnection = baseConnections.find(
+      (connection) => connection.id === connectionId
+    );
+    const connectionLabel = selectedConnection?.name || connectionId;
+    const profilesToUpdate = profiles.filter(
+      (profile) => profile.connectionId !== connectionId
+    );
+
+    confirm({
+      title: 'Apply connection to Base.com settings?',
+      message:
+        `Set "${connectionLabel}" as default import/export connection and update ${profilesToUpdate.length} sync profile(s) to use it.`,
+      confirmText: 'Apply',
+      onConfirm: async () => {
+        setApplyingConnectionDefaults(true);
+        try {
+          await api.post<{ connectionId: string | null }>(
+            '/api/integrations/exports/base/default-connection',
+            { connectionId }
+          );
+          for (const profile of profilesToUpdate) {
+            await updateProfileMutation.mutateAsync({
+              id: profile.id,
+              data: { connectionId },
+            });
+          }
+          await Promise.all([
+            profilesQuery.refetch(),
+            defaultExportConnectionQuery.refetch(),
+          ]);
+          toast(
+            `Applied "${connectionLabel}" to default Base.com settings and ${profilesToUpdate.length} sync profile(s).`,
+            { variant: 'success' }
+          );
+        } catch (error) {
+          toast(
+            error instanceof Error
+              ? error.message
+              : 'Failed to apply Base.com connection.',
+            { variant: 'error' }
+          );
+        } finally {
+          setApplyingConnectionDefaults(false);
+        }
+      },
+    });
+  };
+
   const updateRule = (
     id: string,
     patch: Partial<ProductSyncFieldRule>
@@ -434,6 +492,19 @@ export function ProductSyncSettings(): React.JSX.Element {
                   ]}
                   triggerClassName='w-full'
                 />
+                <div className='mt-2'>
+                  <Button
+                    type='button'
+                    size='sm'
+                    variant='secondary'
+                    onClick={handleApplyConnectionAcrossSettings}
+                    disabled={!draft.connectionId.trim()}
+                    loading={applyingConnectionDefaults}
+                    loadingText='Applying...'
+                  >
+                    Apply To Import/Export + All Sync Profiles
+                  </Button>
+                </div>
               </FormField>
             </div>
 

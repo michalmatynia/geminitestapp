@@ -126,6 +126,7 @@ export interface ImportExportContextType {
   handleResumeImport: () => Promise<void>;
   handleCancelImport: () => Promise<void>;
   handleDownloadImportReport: () => void;
+  handleSaveDefaultBaseConnection: () => Promise<void>;
   handleSaveExportSettings: () => Promise<void>;
   handleClearInventory: () => Promise<void>;
   handleNewTemplate: () => void;
@@ -136,6 +137,7 @@ export interface ImportExportContextType {
   applyTemplate: (template: Template, scope: 'import' | 'export') => void;
 
   importing: boolean;
+  savingDefaultConnection: boolean;
   savingExportSettings: boolean;
   savingImportTemplate: boolean;
   savingExportTemplate: boolean;

@@ -27,6 +27,8 @@ type CenterTooltipContent = {
 
 type GenerationToolbarCenterSectionProps = {
   analysisPlanAvailable: boolean;
+  analysisPlanSourceMetadataMissing: boolean;
+  analysisWorkingSourceMetadataMissing: boolean;
   analysisPlanIsStale: boolean;
   analysisPlanSlotMissing: boolean;
   analysisPlanWillSwitchSlot: boolean;
@@ -35,6 +37,8 @@ type GenerationToolbarCenterSectionProps = {
   analysisSummaryData: ImageStudioAnalysisSummaryChipData | null;
   analysisSummaryIsStale: boolean;
   analysisConfigMismatchMessage: string | null;
+  analysisBusy: boolean;
+  analysisBusyLabel: string;
   centerBusyLabel: string;
   centerGuidesEnabled: boolean;
   centerLayoutEnabled: boolean;
@@ -54,7 +58,7 @@ type GenerationToolbarCenterSectionProps = {
   onCenterLayoutPresetChange: (value: string) => void;
   onCenterLayoutSavePreset: () => void;
   onCenterLayoutDeletePreset: () => void;
-  onApplyAnalysisPlan: () => void;
+  onRunAnalysis: () => void;
   onCenterObject: () => void;
   onToggleCenterLayoutAdvanced: () => void;
   onToggleCenterLayoutSplitAxes: () => void;
@@ -63,6 +67,8 @@ type GenerationToolbarCenterSectionProps = {
 
 export function GenerationToolbarCenterSection({
   analysisPlanAvailable,
+  analysisPlanSourceMetadataMissing,
+  analysisWorkingSourceMetadataMissing,
   analysisPlanIsStale,
   analysisPlanSlotMissing,
   analysisPlanWillSwitchSlot,
@@ -71,6 +77,8 @@ export function GenerationToolbarCenterSection({
   analysisSummaryData,
   analysisSummaryIsStale,
   analysisConfigMismatchMessage,
+  analysisBusy,
+  analysisBusyLabel,
   centerBusyLabel,
   centerGuidesEnabled,
   centerLayoutEnabled,
@@ -90,7 +98,7 @@ export function GenerationToolbarCenterSection({
   onCenterLayoutPresetChange,
   onCenterLayoutSavePreset,
   onCenterLayoutDeletePreset,
-  onApplyAnalysisPlan,
+  onRunAnalysis,
   onCenterObject,
   onToggleCenterLayoutAdvanced,
   onToggleCenterLayoutSplitAxes,
@@ -126,15 +134,13 @@ export function GenerationToolbarCenterSection({
     );
   };
 
-  const analysisPlanDisabledReason = !analysisPlanAvailable
-    ? 'Run analysis first to create a reusable plan'
-    : slotSelectionLocked
-      ? 'Cannot apply while slot selection is locked'
-      : analysisPlanSlotMissing
-        ? 'Analyzed slot no longer exists'
-        : analysisPlanIsStale
-          ? 'Latest analysis plan is stale for the current slot image'
-          : null;
+  const runAnalysisDisabledReason = !hasSourceImage
+    ? 'Select a slot image before analysis'
+    : analysisBusy
+      ? 'Analysis is already running'
+      : centerBusy
+        ? 'Cannot run analysis while Object Layouting is running'
+        : null;
 
   return (
     <div className='rounded border border-border/60 bg-card/40 p-3'>
@@ -154,7 +160,27 @@ export function GenerationToolbarCenterSection({
       ) : null}
       {analysisPlanWillSwitchSlot ? (
         <div className='mb-2 rounded border border-sky-500/30 bg-sky-500/10 px-2 py-1 text-[10px] text-sky-100'>
-          Use Analysis Plan will switch to analyzed slot{analysisPlanSwitchSlotLabel ? `: ${analysisPlanSwitchSlotLabel}` : ''}.
+          Latest saved analysis plan targets a different slot{analysisPlanSwitchSlotLabel ? `: ${analysisPlanSwitchSlotLabel}` : ''}.
+        </div>
+      ) : null}
+      {analysisPlanSourceMetadataMissing ? (
+        <div className='mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-100'>
+          Analysis plan source metadata is missing. Run analysis again.
+        </div>
+      ) : null}
+      {analysisWorkingSourceMetadataMissing ? (
+        <div className='mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-100'>
+          Working slot source metadata is missing. Reselect slot image and retry.
+        </div>
+      ) : null}
+      {slotSelectionLocked ? (
+        <div className='mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-100'>
+          Slot selection is locked by sequencing. Existing saved plans cannot switch slots until unlocked.
+        </div>
+      ) : null}
+      {analysisPlanSlotMissing ? (
+        <div className='mb-2 rounded border border-amber-500/40 bg-amber-500/10 px-2 py-1 text-[10px] text-amber-100'>
+          Analyzed slot no longer exists. Run analysis again to create a fresh plan.
         </div>
       ) : null}
       <div className='grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center'>
@@ -418,15 +444,16 @@ export function GenerationToolbarCenterSection({
           size='xs'
           type='button'
           variant='outline'
-          onClick={onApplyAnalysisPlan}
-          disabled={Boolean(analysisPlanDisabledReason) || centerBusy}
+          onClick={onRunAnalysis}
+          disabled={Boolean(runAnalysisDisabledReason)}
           title={
-            analysisPlanDisabledReason
-              ? analysisPlanDisabledReason
-              : 'Apply latest analysis plan to object layout controls'
+            runAnalysisDisabledReason
+              ? runAnalysisDisabledReason
+              : 'Run server analysis and sync layout controls to Object Layouting + Auto Scaler'
           }
+          loading={analysisBusy}
         >
-          Use Analysis Plan
+          {analysisBusyLabel}
         </Button>
         {maybeWrapTooltip(
           centerTooltipContent.apply,

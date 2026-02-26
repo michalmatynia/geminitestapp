@@ -33,6 +33,8 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
     loadingImportTemplates,
     selectedBaseConnectionId,
     setSelectedBaseConnectionId,
+    savingDefaultConnection,
+    handleSaveDefaultBaseConnection,
     isBaseConnected,
     baseConnections,
     imageMode,
@@ -81,6 +83,24 @@ export function ImportBaseConnectionSection(): React.JSX.Element {
             }
             triggerClassName='w-full bg-gray-900 border-border text-sm text-white h-9'
           />
+          <div className='mt-2 flex flex-wrap items-center gap-2'>
+            <Button
+              type='button'
+              size='sm'
+              variant='secondary'
+              onClick={(): void => {
+                void handleSaveDefaultBaseConnection();
+              }}
+              disabled={!selectedBaseConnectionId}
+              loading={savingDefaultConnection}
+              loadingText='Saving...'
+            >
+              Set as default Base connection
+            </Button>
+            <Hint>
+              Saves this connection for import/export tools and one-click export.
+            </Hint>
+          </div>
         </FormField>
 
         <div className='flex flex-wrap items-end gap-3'>

@@ -30,8 +30,8 @@ export interface GenerationToolbarHandlers {
   handleAutoScale: () => Promise<void>;
   handleCancelAutoScale: () => void;
   handleAiMaskGeneration: (mode: 'ai-polygon' | 'ai-bbox' | 'threshold' | 'edges') => Promise<void>;
-  handleApplyAnalysisPlanToCenter: () => void;
-  handleApplyAnalysisPlanToAutoScaler: () => void;
+  handleRunAnalysisFromCenter: () => Promise<void>;
+  handleRunAnalysisFromAutoScaler: () => Promise<void>;
 }
 
 export interface GenerationToolbarState extends GenerationToolbarContextValue {
@@ -98,6 +98,7 @@ export interface GenerationToolbarState extends GenerationToolbarContextValue {
   analysisPlanAvailable: boolean;
   analysisPlanMatchesWorkingSlot: boolean;
   analysisSummaryData: ImageStudioAnalysisSummaryChipData | null;
+  analysisWorkingSourceMetadataMissing: boolean;
   analysisPlanIsStale: boolean;
   centerAnalysisConfigMismatchMessage: string | null;
   autoScaleAnalysisConfigMismatchMessage: string | null;

@@ -1,10 +1,8 @@
 import { renderHook } from '@testing-library/react';
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { api } from '@/shared/lib/api-client';
-import {
-  loadImageStudioAnalysisApplyIntent,
-} from '@/features/ai/image-studio/utils/analysis-bridge';
+import { loadImageStudioAnalysisPlanSnapshot } from '@/features/ai/image-studio/utils/analysis-bridge';
 import { useGenerationToolbarHandlers } from '../GenerationToolbar.handlers';
 
 vi.mock('@/shared/lib/query-invalidation', () => ({
@@ -48,7 +46,7 @@ vi.mock('../GenerationToolbarImageUtils', async () => {
   };
 });
 
-const BASE_LAYOUT_PAYLOAD = {
+const CENTER_LAYOUT_PAYLOAD = {
   paddingPercent: 9,
   paddingXPercent: 9,
   paddingYPercent: 9,
@@ -59,11 +57,23 @@ const BASE_LAYOUT_PAYLOAD = {
   detection: 'white_bg_first_colored_pixel',
 };
 
-const BASE_ANALYSIS_LAYOUT = {
+const AUTO_SCALE_LAYOUT_PAYLOAD = {
+  paddingPercent: 6,
+  paddingXPercent: 7,
+  paddingYPercent: 5,
+  fillMissingCanvasWhite: true,
+  targetCanvasWidth: 1800,
+  targetCanvasHeight: 1400,
+  whiteThreshold: 33,
+  chromaThreshold: 4,
+  shadowPolicy: 'exclude_shadow',
+  detection: 'alpha_bbox',
+};
+
+const ANALYSIS_LAYOUT = {
   paddingPercent: 12,
   paddingXPercent: 14,
   paddingYPercent: 10,
-  splitAxes: true,
   fillMissingCanvasWhite: false,
   targetCanvasWidth: null,
   targetCanvasHeight: null,
@@ -73,9 +83,50 @@ const BASE_ANALYSIS_LAYOUT = {
   detection: 'alpha_bbox',
 };
 
+const createAnalysisResponse = () => ({
+  sourceSlotId: 'slot-1',
+  mode: 'server_analysis_v1',
+  effectiveMode: 'server_analysis_v1',
+  authoritativeSource: 'source_slot',
+  sourceMimeHint: null,
+  analysis: {
+    width: 1000,
+    height: 1000,
+    sourceObjectBounds: { left: 120, top: 140, width: 700, height: 680 },
+    detectionUsed: 'alpha_bbox',
+    confidence: 0.92,
+    detectionDetails: null,
+    policyVersion: 'policy_v2',
+    policyReason: 'alpha_confident',
+    fallbackApplied: false,
+    candidateDetections: {
+      alpha_bbox: { confidence: 0.92, area: 476000 },
+      white_bg_first_colored_pixel: null,
+    },
+    whitespace: {
+      px: { left: 10, top: 10, right: 10, bottom: 10 },
+      percent: { left: 0.01, top: 0.01, right: 0.01, bottom: 0.01 },
+    },
+    objectAreaPercent: 0.476,
+    layout: ANALYSIS_LAYOUT,
+    suggestedPlan: {
+      outputWidth: 1000,
+      outputHeight: 1000,
+      targetObjectBounds: { left: 130, top: 150, width: 700, height: 680 },
+      scale: 1.02,
+      whitespace: {
+        px: { left: 12, top: 12, right: 12, bottom: 12 },
+        percent: { left: 0.012, top: 0.012, right: 0.012, bottom: 0.012 },
+      },
+    },
+  },
+  lifecycle: { state: 'analyzed', durationMs: 25 },
+  pipelineVersion: 'test-v1',
+});
+
 const createState = (overrides?: Record<string, unknown>) => {
-  const toast = vi.fn();
   return {
+    activeProjectId: 'project-alpha',
     projectId: null,
     slots: [{ id: 'slot-1' }, { id: 'slot-2' }],
     slotSelectionLocked: false,
@@ -93,7 +144,7 @@ const createState = (overrides?: Record<string, unknown>) => {
     setActiveMaskId: vi.fn(),
     activeMaskId: null,
     setCanvasSelectionEnabled: vi.fn(),
-    toast,
+    toast: vi.fn(),
     queryClient: {
       setQueryData: vi.fn(),
     },
@@ -113,6 +164,8 @@ const createState = (overrides?: Record<string, unknown>) => {
     setCenterStatus: vi.fn(),
     setAutoScaleBusy: vi.fn(),
     setAutoScaleStatus: vi.fn(),
+    setAnalysisBusy: vi.fn(),
+    setAnalysisStatus: vi.fn(),
     setCropBusy: vi.fn(),
     setCropStatus: vi.fn(),
     upscaleRequestInFlightRef: { current: false },
@@ -129,185 +182,127 @@ const createState = (overrides?: Record<string, unknown>) => {
     workingSlotImageSrc: 'https://example.test/source.png',
     clientProcessingImageSrc: null,
     workingSourceSignature: 'sig_v1',
-    centerLayoutPayload: BASE_LAYOUT_PAYLOAD,
-    autoScaleLayoutPayload: BASE_LAYOUT_PAYLOAD,
+    centerLayoutPayload: CENTER_LAYOUT_PAYLOAD,
+    autoScaleLayoutPayload: AUTO_SCALE_LAYOUT_PAYLOAD,
     projectCanvasSize: null,
     getPreviewCanvasViewportCrop: () => null,
     getPreviewCanvasImageFrame: () => null,
     handleAiMaskGeneration: vi.fn(async () => {}),
-    analysisPlanSnapshot: {
-      slotId: 'slot-1',
-      sourceSignature: 'sig_v1',
-      layout: BASE_ANALYSIS_LAYOUT,
-    },
+    analysisPlanSnapshot: null,
+    setAnalysisPlanSnapshot: vi.fn(),
     applyAnalysisLayoutToCenter: vi.fn(),
     applyAnalysisLayoutToAutoScaler: vi.fn(),
+    analysisBusy: false,
+    analysisStatus: 'idle',
     ...overrides,
   };
 };
 
 beforeEach(() => {
   vi.restoreAllMocks();
+  window.localStorage.clear();
+  window.sessionStorage.clear();
 });
 
 describe('useGenerationToolbarHandlers analysis layout integration', () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-    window.sessionStorage.clear();
-  });
-
-  it('sends normalized center layout payload in object layout request', async () => {
+  it('runs server analysis from Object Layouting and syncs both tool controls', async () => {
     const state = createState();
-    const postSpy = vi.spyOn(api, 'post').mockResolvedValueOnce({
-      mode: 'server_object_layout_v1',
-      effectiveMode: 'server_object_layout_v1',
-      slot: { id: 'slot-center-out' },
-      deduplicated: false,
-      lifecycle: { state: 'persisted', durationMs: 12 },
-      pipelineVersion: 'test-v1',
-    } as never);
+    const response = createAnalysisResponse();
+    const postSpy = vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
 
     const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
-    await result.current.handleCenterObject();
+    await result.current.handleRunAnalysisFromCenter();
 
     expect(postSpy).toHaveBeenCalledWith(
-      '/api/image-studio/slots/slot-1/center',
+      '/api/image-studio/slots/slot-1/analysis',
       expect.objectContaining({
-        mode: 'server_object_layout_v1',
-        layout: expect.objectContaining({
-          paddingPercent: 9,
-          paddingXPercent: 9,
-          paddingYPercent: 9,
-          whiteThreshold: 15,
-          chromaThreshold: 12,
-          detection: 'white_bg_first_colored_pixel',
-        }),
-      }),
-      expect.anything()
+        mode: 'server_analysis_v1',
+        layout: expect.objectContaining(CENTER_LAYOUT_PAYLOAD),
+      })
     );
-  });
-
-  it('sends normalized auto scaler layout payload with shared thresholds', async () => {
-    const state = createState({
-      autoScaleLayoutPayload: {
-        paddingPercent: 6,
-        paddingXPercent: 7,
-        paddingYPercent: 5,
-        fillMissingCanvasWhite: true,
-        targetCanvasWidth: 1800,
-        targetCanvasHeight: 1400,
-        whiteThreshold: 33,
-        chromaThreshold: 4,
-        shadowPolicy: 'exclude_shadow',
-        detection: 'alpha_bbox',
-      },
-    });
-    const postSpy = vi.spyOn(api, 'post').mockResolvedValueOnce({
-      mode: 'server_auto_scaler_v1',
-      effectiveMode: 'server_auto_scaler_v1',
-      slot: { id: 'slot-autoscale-out' },
-      deduplicated: false,
-      lifecycle: { state: 'persisted', durationMs: 15 },
-      pipelineVersion: 'test-v1',
-    } as never);
-
-    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
-    await result.current.handleAutoScale();
-
-    expect(postSpy).toHaveBeenCalledWith(
-      '/api/image-studio/slots/slot-1/autoscale',
+    expect(state.setAnalysisBusy).toHaveBeenNthCalledWith(1, true);
+    expect(state.setAnalysisStatus).toHaveBeenNthCalledWith(1, 'resolving');
+    expect(state.setAnalysisStatus).toHaveBeenNthCalledWith(2, 'processing');
+    expect(state.setAnalysisBusy).toHaveBeenLastCalledWith(false);
+    expect(state.setAnalysisStatus).toHaveBeenLastCalledWith('idle');
+    expect(state.applyAnalysisLayoutToCenter).toHaveBeenCalledWith(
       expect.objectContaining({
-        mode: 'server_auto_scaler_v1',
-        layout: expect.objectContaining({
-          detection: 'alpha_bbox',
-          whiteThreshold: 33,
-          chromaThreshold: 4,
-          targetCanvasWidth: 1800,
-          targetCanvasHeight: 1400,
-        }),
-      }),
-      expect.anything()
-    );
-  });
-
-  it('applies analysis plan to auto scaler when slot/signature are valid', () => {
-    const setAutoScalePadding = vi.fn();
-    const setSharedDetection = vi.fn();
-    const setSharedWhiteThreshold = vi.fn();
-    const setSharedChromaThreshold = vi.fn();
-    const applyAnalysisLayoutToAutoScaler = vi.fn((layout: typeof BASE_ANALYSIS_LAYOUT) => {
-      setAutoScalePadding(String(layout.paddingPercent));
-      setSharedDetection(layout.detection);
-      setSharedWhiteThreshold(String(layout.whiteThreshold));
-      setSharedChromaThreshold(String(layout.chromaThreshold));
-    });
-    const state = createState({
-      applyAnalysisLayoutToAutoScaler,
-    });
-
-    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
-    result.current.handleApplyAnalysisPlanToAutoScaler();
-
-    expect(applyAnalysisLayoutToAutoScaler).toHaveBeenCalledWith(
-      expect.objectContaining({
+        paddingPercent: 12,
+        splitAxes: true,
         detection: 'alpha_bbox',
-        whiteThreshold: 21,
-        chromaThreshold: 7,
       }),
       'manual'
     );
-    expect(setAutoScalePadding).toHaveBeenCalledWith('12');
-    expect(setSharedDetection).toHaveBeenCalledWith('alpha_bbox');
-    expect(setSharedWhiteThreshold).toHaveBeenCalledWith('21');
-    expect(setSharedChromaThreshold).toHaveBeenCalledWith('7');
+    expect(state.applyAnalysisLayoutToAutoScaler).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paddingPercent: 12,
+        splitAxes: true,
+        detection: 'alpha_bbox',
+      }),
+      'manual'
+    );
+    const savedSnapshot = loadImageStudioAnalysisPlanSnapshot('project-alpha');
+    expect(savedSnapshot?.slotId).toBe('slot-1');
+    expect(savedSnapshot?.sourceSignature).toBe('sig_v1');
+    expect(savedSnapshot?.layout.paddingPercent).toBe(12);
+    expect(state.setAnalysisPlanSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        slotId: 'slot-1',
+        sourceSignature: 'sig_v1',
+      })
+    );
   });
 
-  it('queues intent and switches slot when toolbar apply target slot differs', () => {
-    const state = createState({
-      projectId: 'project-alpha',
-      workingSlot: { id: 'slot-1' },
-      analysisPlanSnapshot: {
-        slotId: 'slot-2',
-        sourceSignature: 'sig_slot_2',
-        layout: BASE_ANALYSIS_LAYOUT,
-      },
-      workingSourceSignature: 'sig_slot_1',
-    });
+  it('runs server analysis from Auto Scaler using auto-scaler layout payload', async () => {
+    const state = createState();
+    const response = createAnalysisResponse();
+    const postSpy = vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
 
     const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
-    result.current.handleApplyAnalysisPlanToAutoScaler();
+    await result.current.handleRunAnalysisFromAutoScaler();
 
-    expect(state.applyAnalysisLayoutToAutoScaler).not.toHaveBeenCalled();
-    expect(state.setSelectedSlotId).toHaveBeenCalledWith('slot-2');
-    expect(state.setWorkingSlotId).toHaveBeenCalledWith('slot-2');
-
-    const intent = loadImageStudioAnalysisApplyIntent('project-alpha');
-    expect(intent).not.toBeNull();
-    expect(intent?.slotId).toBe('slot-2');
-    expect(intent?.target).toBe('auto_scaler');
+    expect(postSpy).toHaveBeenCalledWith(
+      '/api/image-studio/slots/slot-1/analysis',
+      expect.objectContaining({
+        mode: 'server_analysis_v1',
+        layout: expect.objectContaining(AUTO_SCALE_LAYOUT_PAYLOAD),
+      })
+    );
+    expect(state.applyAnalysisLayoutToCenter).toHaveBeenCalledTimes(1);
+    expect(state.applyAnalysisLayoutToAutoScaler).toHaveBeenCalledTimes(1);
   });
 
-  it('does not queue intent when slot selection is locked', () => {
+  it('blocks run analysis when working source signature is missing', async () => {
     const state = createState({
-      projectId: 'project-alpha',
-      slotSelectionLocked: true,
-      analysisPlanSnapshot: {
-        slotId: 'slot-2',
-        sourceSignature: 'sig_slot_2',
-        layout: BASE_ANALYSIS_LAYOUT,
-      },
-      workingSourceSignature: 'sig_slot_2',
+      workingSourceSignature: '',
     });
+    const postSpy = vi.spyOn(api, 'post');
 
     const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
-    result.current.handleApplyAnalysisPlanToAutoScaler();
+    await result.current.handleRunAnalysisFromCenter();
 
+    expect(postSpy).not.toHaveBeenCalled();
+    expect(state.setAnalysisBusy).not.toHaveBeenCalled();
+    expect(state.applyAnalysisLayoutToCenter).not.toHaveBeenCalled();
     expect(state.applyAnalysisLayoutToAutoScaler).not.toHaveBeenCalled();
-    expect(state.setSelectedSlotId).not.toHaveBeenCalled();
-    expect(state.setWorkingSlotId).not.toHaveBeenCalled();
-    expect(loadImageStudioAnalysisApplyIntent('project-alpha')).toBeNull();
-    expect(state.toast).toHaveBeenCalledWith('Cannot apply while slot selection is locked.', {
-      variant: 'info',
-    });
+    expect(state.toast).toHaveBeenCalledWith(
+      'Unable to capture source signature for analysis. Reselect slot image and retry.',
+      { variant: 'info' }
+    );
+  });
+
+  it('shows error and does not sync controls when analysis request fails', async () => {
+    const state = createState();
+    vi.spyOn(api, 'post').mockRejectedValueOnce(new Error('analysis failed'));
+
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    await result.current.handleRunAnalysisFromAutoScaler();
+
+    expect(state.applyAnalysisLayoutToCenter).not.toHaveBeenCalled();
+    expect(state.applyAnalysisLayoutToAutoScaler).not.toHaveBeenCalled();
+    expect(state.setAnalysisPlanSnapshot).not.toHaveBeenCalled();
+    expect(state.toast).toHaveBeenCalledWith('analysis failed', { variant: 'error' });
+    expect(state.setAnalysisBusy).toHaveBeenLastCalledWith(false);
+    expect(state.setAnalysisStatus).toHaveBeenLastCalledWith('idle');
   });
 });

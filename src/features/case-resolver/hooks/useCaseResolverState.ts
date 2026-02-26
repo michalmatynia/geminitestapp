@@ -875,8 +875,8 @@ export function useCaseResolverState(): CaseResolverStateValue {
     requestedContextStartedAtRef.current = null;
     handledRequestedFileIdRef.current = null;
     setRequestedCaseIssueSafe(null);
-    setRequestedCaseStatusSafe('ready');
-    setRequestedContextRetryTick(0);
+    setRequestedCaseStatusSafe('loading');
+    setRequestedContextRetryTick((prev) => prev + 1);
     setSelectedFileId(null);
     setSelectedAssetId(null);
     setSelectedFolderPath(null);

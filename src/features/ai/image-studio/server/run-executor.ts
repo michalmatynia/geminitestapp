@@ -109,7 +109,7 @@ export const imageStudioRunRequestSchema = z.object({
   prompt: z.string().min(1),
   mask: imageStudioRunMaskSchema.nullable().optional(),
   center: imageStudioRunCenterSchema.optional(),
-  studioSettings: z.record(z.string(), z.any()).optional(),
+  studioSettings: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type ImageStudioRunRequest = z.infer<typeof imageStudioRunRequestSchema>;

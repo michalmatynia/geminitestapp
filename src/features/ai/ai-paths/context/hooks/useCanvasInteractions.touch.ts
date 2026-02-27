@@ -9,6 +9,7 @@ import {
   type TouchLongPressSelectionState,
   type TouchPointSample,
   type MarqueeMode,
+  type MarqueeSelectionState,
 } from './useCanvasInteractions.helpers';
 
 export interface UseCanvasInteractionsTouchValue {
@@ -44,8 +45,7 @@ export function useCanvasInteractionsTouch({
   setTouchLongPressIndicator: React.Dispatch<React.SetStateAction<TouchLongPressIndicatorState | null>>;
   setNodeSelection: (nodeIds: string[]) => void;
   selectEdge: (edgeId: string | null) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setMarqueeSelection: React.Dispatch<React.SetStateAction<any>>;
+  setMarqueeSelection: React.Dispatch<React.SetStateAction<MarqueeSelectionState | null>>;
 }): UseCanvasInteractionsTouchValue {
   const clearTouchLongPressIndicator = useCallback((): void => {
     if (touchLongPressIndicatorRafRef.current !== null) {

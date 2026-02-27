@@ -1,3 +1,4 @@
+export { handleBoundsNormalizer } from './transform/bounds-normalizer-handler';
 export { handleContext } from './transform/context';
 export { handleParser } from './transform/parser';
 export { handleMapper } from './transform/mapper';

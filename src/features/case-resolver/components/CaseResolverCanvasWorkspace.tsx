@@ -53,9 +53,7 @@ import {
   resolvePromptConfig, 
   renderPromptNodeTextPreview, 
 } from './case-resolver-canvas-utils';
-
-const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+import { isObjectRecord } from '@/shared/utils/object';
 
 function CaseResolverCanvasWorkspaceInner(): React.JSX.Element {
   const {

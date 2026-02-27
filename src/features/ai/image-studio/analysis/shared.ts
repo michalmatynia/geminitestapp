@@ -22,7 +22,14 @@ import {
   type ImageStudioCenterShadowPolicy,
 } from '@/features/ai/image-studio/contracts/center';
 
-export type { ImageStudioDetectionCandidateSummary, ImageStudioDetectionPolicyDecision };
+export type {
+  ImageStudioDetectionCandidateSummary,
+  ImageStudioDetectionPolicyDecision,
+  ImageStudioCenterDetectionMode,
+  ImageStudioCenterLayoutConfig,
+  ImageStudioCenterObjectBounds,
+  ImageStudioCenterShadowPolicy,
+};
 
 
 type PixelData = ArrayLike<number>;

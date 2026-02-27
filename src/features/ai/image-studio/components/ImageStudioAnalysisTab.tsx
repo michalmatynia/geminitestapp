@@ -62,6 +62,8 @@ import {
 } from './analysis/analysis-types';
 import { AnalysisSettingsSection } from './analysis/sections/AnalysisSettingsSection';
 import { AnalysisResultSection } from './analysis/sections/AnalysisResultSection';
+import { AiPathAnalysisTriggerSection } from './analysis/sections/AiPathAnalysisTriggerSection';
+import { useAiPathsObjectAnalysis } from '../hooks/useAiPathsObjectAnalysis';
 
 const sanitizePaddingInput = (value: string): string =>
   value.replace(/[^0-9.]/g, '');
@@ -185,6 +187,16 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
     if (width < 64 || width > 32_768 || height < 64 || height > 32_768) return null;
     return { width, height };
   }, [activeProject?.canvasHeightPx, activeProject?.canvasWidthPx]);
+
+  const aiPathsAnalysis = useAiPathsObjectAnalysis({
+    projectId: activeProjectId,
+    workingSlotId: workingSlot?.id ?? null,
+    workingSlotImageSrc: workingSlotImageSrc ?? null,
+    workingSlotImageWidth: workingSlot?.width ?? null,
+    workingSlotImageHeight: workingSlot?.height ?? null,
+    canvasWidth: projectCanvasSize?.width ?? null,
+    canvasHeight: projectCanvasSize?.height ?? null,
+  });
 
   useEffect(() => {
     skipAdvancedDefaultsSaveRef.current = true;
@@ -593,6 +605,8 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
             Detect object bounds from whitespace/foreground and preview auto-scaler plan using shared analysis logic.
           </div>
         </div>
+
+        <AiPathAnalysisTriggerSection variant='full' analysis={aiPathsAnalysis} />
 
         <AnalysisSettingsSection
           mode={mode} setMode={setMode}

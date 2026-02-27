@@ -460,7 +460,7 @@ export const databaseEngineBackupSchedulerStatusSchema = z.object({
   lastRunStatus: z.string().nullable().optional(),
   queue: z.record(z.string(), z.unknown()).optional(),
   repeatEveryMs: z.number().optional(),
-  targets: z.record(z.string(), z.any()).optional(),
+  targets: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type DatabaseEngineBackupSchedulerStatus = z.infer<typeof databaseEngineBackupSchedulerStatusSchema>;

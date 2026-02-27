@@ -49,7 +49,7 @@ export function useRealtimeQuery<TData>(
       
       wsRef.current.onmessage = (event: MessageEvent): void => {
         try {
-          const data = JSON.parse(event.data) as unknown;
+          const data = JSON.parse(event.data as string) as unknown;
           queryClient.setQueryData(queryKey as unknown[], data);
           config?.onUpdate?.(data);
         } catch (error) {
@@ -96,7 +96,7 @@ export function useServerSentEvents<TData>(
 
     eventSource.onmessage = (event: MessageEvent): void => {
       try {
-        const data = JSON.parse(event.data) as TData;
+        const data = JSON.parse(event.data as string) as TData;
         queryClient.setQueryData(queryKey as unknown[], data);
         config?.onUpdate?.(data);
       } catch (error) {

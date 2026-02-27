@@ -230,30 +230,7 @@ module.exports = tseslint.config(
     },
     rules: {
       'no-undef': 'off', // Test files often define globals or use test utilities
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
     },
-  },
-  {
-    // Specific overrides for generic hooks and complex features where 'any' is necessary
-    files: [
-      'src/shared/hooks/query/*.ts',
-      'src/shared/hooks/useQueryComposition.ts',
-      'src/shared/dtos/*.ts',
-      'src/mocks/__tests__/*.ts',
-    ],
-    rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unsafe-assignment': 'off',
-      '@typescript-eslint/no-unsafe-member-access': 'off',
-      '@typescript-eslint/no-unsafe-call': 'off',
-      '@typescript-eslint/no-unsafe-return': 'off',
-      '@typescript-eslint/no-unsafe-argument': 'off',
-    }
   },
   {
     files: [

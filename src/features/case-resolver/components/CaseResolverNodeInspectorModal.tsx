@@ -49,6 +49,7 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
     isNodeInspectorOpen: open,
     setIsNodeInspectorOpen: onOpenChange,
     handleManualSave: onManualUpdate,
+    hasPendingSnapshotChanges = false,
     selectedNode,
     selectedPromptMeta,
     selectedPromptSourceFile,
@@ -126,7 +127,12 @@ export function CaseResolverNodeInspectorModal(): React.JSX.Element {
             type='button'
             size='sm'
             onClick={onManualUpdate}
-            className='h-7 rounded-md border border-emerald-500/40 px-2 text-[11px] text-emerald-200 transition-colors hover:bg-emerald-500/10'
+            disabled={!hasPendingSnapshotChanges}
+            className={
+              hasPendingSnapshotChanges
+                ? 'h-7 rounded-md border border-emerald-500/40 px-2 text-[11px] text-emerald-200 transition-colors hover:bg-emerald-500/10'
+                : 'h-7 rounded-md border border-border/60 px-2 text-[11px] text-gray-500'
+            }
           >
             Update
           </Button>

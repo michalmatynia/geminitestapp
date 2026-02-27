@@ -14,7 +14,7 @@ const DEFAULT_SETTINGS_KEY = 'default';
 
 const settingsSchema = z.object({
   key: z.string().trim().optional(),
-  settings: z.record(z.string(), z.any()).optional(),
+  settings: z.record(z.string(), z.unknown()).optional(),
 });
 
 export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<Response> {

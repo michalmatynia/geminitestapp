@@ -5,6 +5,7 @@ import type {
   CaseResolverFile,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
+import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 
 type UpdateWorkspaceOptions = {
   persistToast?: string;
@@ -28,7 +29,10 @@ type UseCaseResolverStateSelectionActionsInput = {
 type UseCaseResolverStateSelectionActionsResult = {
   activeFile: CaseResolverFile | null;
   selectedAsset: CaseResolverAssetFile | null;
-  handleUpdateSelectedAsset: (patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>) => void;
+  handleUpdateSelectedAsset: (
+    patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>,
+    options?: UpdateWorkspaceOptions
+  ) => void;
   handleUpdateActiveFileParties: (
     patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee' | 'referenceCaseIds'>>
   ) => void;
@@ -57,8 +61,14 @@ export const useCaseResolverStateSelectionActions = ({
   );
 
   const handleUpdateSelectedAsset = useCallback(
-    (patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>): void => {
+    (
+      patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>,
+      options?: UpdateWorkspaceOptions
+    ): void => {
       if (!selectedAssetId) return;
+      const resolvedOptions: UpdateWorkspaceOptions = options ?? {
+        persistToast: treeSaveToast,
+      };
       updateWorkspace((current: CaseResolverWorkspace) => ({
         ...current,
         assets: current.assets.map((asset: CaseResolverAssetFile) =>
@@ -70,7 +80,14 @@ export const useCaseResolverStateSelectionActions = ({
             }
             : asset
         ),
-      }), { persistToast: treeSaveToast });
+      }), resolvedOptions);
+      if (resolvedOptions.source === 'node_file_manual_save') {
+        logCaseResolverWorkspaceEvent({
+          source: resolvedOptions.source,
+          action: 'node_file_snapshot_manual_save',
+          message: `asset_id=${selectedAssetId} persist_now=${resolvedOptions.persistNow === true ? 'true' : 'false'}`,
+        });
+      }
     },
     [selectedAssetId, treeSaveToast, updateWorkspace]
   );

@@ -20,6 +20,8 @@ import {
   PATH_INDEX_KEY,
   STORAGE_VERSION,
   DEFAULT_AI_PATHS_VALIDATION_CONFIG,
+  PATH_TEMPLATES,
+  buildPathConfigFromTemplate,
   createAiDescriptionPath,
   createDefaultPathConfig,
   createPathId,
@@ -107,6 +109,7 @@ export type UseAiPathsSettingsPathActionsReturn = {
   handleReset: () => void;
   handleCreatePath: () => void;
   handleCreateAiDescriptionPath: () => void;
+  handleCreateFromTemplate: (templateId: string) => void;
   handleDuplicatePath: (pathId?: string) => void;
   handleDeletePath: (pathId?: string) => Promise<void>;
   handleSwitchPath: (pathId: string) => void;
@@ -343,6 +346,25 @@ export function useAiPathsSettingsPathActions({
     toast('AI Description Path created.', { variant: 'success' });
   }, [applyPathConfigState, setActivePathId, setPathConfigs, setPaths, toast]);
 
+  const handleCreateFromTemplate = useCallback((templateId: string): void => {
+    const template = PATH_TEMPLATES.find((t) => t.templateId === templateId);
+    if (!template) {
+      toast(`Path template "${templateId}" not found.`, { variant: 'error' });
+      return;
+    }
+    const id = createPathId();
+    const config = buildPathConfigFromTemplate(id, template);
+    const meta = createPathMeta(config);
+    setPaths((prev: PathMeta[]): PathMeta[] => [...prev, meta]);
+    setPathConfigs((prev: Record<string, PathConfig>): Record<string, PathConfig> => ({
+      ...prev,
+      [id]: config,
+    }));
+    setActivePathId(id);
+    applyPathConfigState(config);
+    toast(`Path "${template.name}" created from template.`, { variant: 'success' });
+  }, [applyPathConfigState, setActivePathId, setPathConfigs, setPaths, toast]);
+
   const handleDuplicatePath = useCallback(
     (pathId?: string): void => {
       const sourceId = pathId ?? activePathId;
@@ -535,6 +557,7 @@ export function useAiPathsSettingsPathActions({
     handleReset,
     handleCreatePath,
     handleCreateAiDescriptionPath,
+    handleCreateFromTemplate,
     handleDuplicatePath,
     handleDeletePath,
     handleSwitchPath,

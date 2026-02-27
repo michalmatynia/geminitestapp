@@ -1,9 +1,11 @@
 import {
   type AutoScaleCanvasResult,
-  type CenterLayoutConfig,
   type CenterLayoutResult,
   type ClientImageObjectAnalysisResult,
 } from './GenerationToolbarImageUtils.types';
+import {
+  type ImageStudioCenterLayoutConfig as CenterLayoutConfig,
+} from '@/features/ai/image-studio/analysis/shared';
 import {
   CENTER_LAYOUT_DEFAULT_CHROMA_THRESHOLD,
   CENTER_LAYOUT_DEFAULT_PADDING_PERCENT,
@@ -37,10 +39,10 @@ export const isRetryableCenterError = (error: unknown): boolean => {
   if (error instanceof ApiError) {
     return error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
   }
-  return (
-    error instanceof Error &&
-    /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(error.message.toLowerCase())
-  );
+  if (error instanceof Error) {
+    return /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(error.message.toLowerCase());
+  }
+  return false;
 };
 
 export const buildCenterRequestId = (): string =>
@@ -81,10 +83,10 @@ export const isRetryableAutoScalerError = (error: unknown): boolean => {
   if (error instanceof ApiError) {
     return error.status === 408 || error.status === 425 || error.status === 429 || error.status >= 500;
   }
-  return (
-    error instanceof Error &&
-    /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(error.message.toLowerCase())
-  );
+  if (error instanceof Error) {
+    return /timeout|network|failed to fetch|temporarily unavailable|retry/i.test(error.message.toLowerCase());
+  }
+  return false;
 };
 
 export const buildAutoScalerRequestId = (): string =>
@@ -368,8 +370,7 @@ export const layoutCanvasImageObject = async (
     },
     detectionUsed: objectBoundsResult.detectionUsed,
     scale: planned.plan.scale,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    layout: planned.analysis.layout as any,
+    layout: planned.analysis.layout,
   };
 };
 
@@ -399,17 +400,14 @@ export const analyzeCanvasImageObject = async (
     sourceObjectBounds: planned.analysis.sourceObjectBounds,
     detectionUsed: planned.analysis.detectionUsed,
     confidence: planned.analysis.confidence,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    detectionDetails: planned.analysis.detectionDetails as any,
+    detectionDetails: planned.analysis.detectionDetails,
     policyVersion: planned.analysis.policyVersion,
     policyReason: planned.analysis.policyReason,
     fallbackApplied: planned.analysis.fallbackApplied,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    candidateDetections: planned.analysis.candidateDetections as any,
+    candidateDetections: planned.analysis.candidateDetections,
     whitespace: planned.analysis.whitespace,
     objectAreaPercent: planned.analysis.objectAreaPercent,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    layout: planned.analysis.layout as any,
+    layout: planned.analysis.layout,
     suggestedPlan: planned.plan,
   };
 };
@@ -471,11 +469,9 @@ export const autoScaleCanvasImageObject = async (
     targetObjectBounds,
     detectionUsed: planned.analysis.detectionUsed,
     confidenceBefore: planned.analysis.confidence,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    detectionDetails: planned.analysis.detectionDetails as any,
+    detectionDetails: planned.analysis.detectionDetails,
     scale: planned.plan.scale,
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
-    layout: planned.analysis.layout as any,
+    layout: planned.analysis.layout,
     outputWidth,
     outputHeight,
     whitespaceBefore: planned.analysis.whitespace,

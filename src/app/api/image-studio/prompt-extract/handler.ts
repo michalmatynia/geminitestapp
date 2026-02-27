@@ -33,7 +33,7 @@ const payloadSchema = z.object({
 });
 
 const responseSchema = z.object({
-  params: z.record(z.string(), z.any()),
+  params: z.record(z.string(), z.unknown()),
 });
 
 type PromptExtractSource = 'programmatic' | 'programmatic_autofix' | 'gpt';

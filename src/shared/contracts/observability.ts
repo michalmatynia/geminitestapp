@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
 
+import { activityLogSchema } from './system';
+
 /**
  * Metric DTO
  */
@@ -122,7 +124,7 @@ export type SystemLogsResponse = z.infer<typeof systemLogsResponseSchema>;
 export type SystemLogsResponseDto = SystemLogsResponse;
 
 export const systemActivityResponseSchema = z.object({
-  data: z.array(z.any()), // activityLogSchema reference can be circular or complex, use any for now or import properly
+  data: z.array(activityLogSchema),
   total: z.number(),
   page: z.number(),
   pageSize: z.number(),

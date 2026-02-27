@@ -7,10 +7,10 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 
 interface QueryMiddleware {
   name: string;
-  onQueryStart?: (query: Query) => void;
-  onQuerySuccess?: (query: Query, data: unknown) => void;
-  onQueryError?: (query: Query, error: Error) => void;
-  onQueryUpdate?: (query: Query) => void;
+  onQueryStart?: (query: Query<unknown, Error, unknown, readonly unknown[]>) => void;
+  onQuerySuccess?: (query: Query<unknown, Error, unknown, readonly unknown[]>, data: unknown) => void;
+  onQueryError?: (query: Query<unknown, Error, unknown, readonly unknown[]>, error: Error) => void;
+  onQueryUpdate?: (query: Query<unknown, Error, unknown, readonly unknown[]>) => void;
 }
 
 const parseEnvNumber = (value: string | undefined, fallback: number): number => {
@@ -49,11 +49,11 @@ const ENABLE_LOGGING_MIDDLEWARE = isEnabled(
   false
 );
 
-const queryStartTimes = new WeakMap<Query, number>();
+const queryStartTimes = new WeakMap<Query<unknown, Error, unknown, readonly unknown[]>, number>();
 const slowQueryLastReportedAt = new Map<string, number>();
 const queryWarningLastReportedAt = new Map<string, number>();
 
-const getQueryKeyLabel = (query: Query): string => {
+const getQueryKeyLabel = (query: Query<unknown, Error, unknown, readonly unknown[]>): string => {
   try {
     return JSON.stringify(query.queryKey);
   } catch {
@@ -81,7 +81,7 @@ export function useQueryMiddleware(middlewares: QueryMiddleware[]): void {
 
   useEffect((): (() => void) => {
     const unsubscribe = queryClient.getQueryCache().subscribe((event): void => {
-      const query = event.query;
+      const query = event.query as Query<unknown, Error, unknown, readonly unknown[]>;
 
       middlewares.forEach((middleware: QueryMiddleware): void => {
         try {
@@ -112,7 +112,7 @@ export const loggingMiddleware: QueryMiddleware = {
   name: 'logging',
 
 
-  onQueryError: (query: Query, error: Error): void => {
+  onQueryError: (query: Query<unknown, Error, unknown, readonly unknown[]>, error: Error): void => {
     const message = error?.message?.trim() || '';
     if (!message || ['{}', '[]', '[object Object]'].includes(message)) {
       return;
@@ -131,12 +131,12 @@ export const loggingMiddleware: QueryMiddleware = {
 // Performance tracking middleware
 export const performanceMiddleware: QueryMiddleware = {
   name: 'performance',
-  onQueryStart: (query: Query): void => {
+  onQueryStart: (query: Query<unknown, Error, unknown, readonly unknown[]>): void => {
     if (!queryStartTimes.has(query)) {
       queryStartTimes.set(query, performance.now());
     }
   },
-  onQuerySuccess: (query: Query): void => {
+  onQuerySuccess: (query: Query<unknown, Error, unknown, readonly unknown[]>): void => {
     const startTime = queryStartTimes.get(query);
     if (typeof startTime !== 'number') return;
     const duration = performance.now() - startTime;
@@ -156,7 +156,7 @@ export const performanceMiddleware: QueryMiddleware = {
       },
     });
   },
-  onQueryError: (query: Query): void => {
+  onQueryError: (query: Query<unknown, Error, unknown, readonly unknown[]>): void => {
     queryStartTimes.delete(query);
   },
 };
@@ -164,10 +164,10 @@ export const performanceMiddleware: QueryMiddleware = {
 // Cache optimization middleware
 export const cacheOptimizationMiddleware: QueryMiddleware = {
   name: 'cacheOptimization',
-  onQuerySuccess: (query: Query, data: unknown): void => {
+  onQuerySuccess: (query: Query<unknown, Error, unknown, readonly unknown[]>, data: unknown): void => {
     // Automatically set longer stale time for large datasets
     if (Array.isArray(data) && data.length > 100) {
-      const queryWithSetOptions = query as Query & { setOptions?: (options: any) => void };
+      const queryWithSetOptions = query as Query<unknown, Error, unknown, readonly unknown[]> & { setOptions?: (options: unknown) => void };
       if (typeof queryWithSetOptions.setOptions === 'function') {
         queryWithSetOptions.setOptions({
           staleTime: 10 * 60 * 1000, // 10 minutes for large datasets

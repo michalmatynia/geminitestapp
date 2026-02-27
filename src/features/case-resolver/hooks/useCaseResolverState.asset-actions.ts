@@ -12,7 +12,7 @@ import type { Toast } from '@/shared/contracts/ui';
 
 import { useCaseResolverStateOcrActions } from './useCaseResolverState.ocr-actions';
 import { useCaseResolverStateUploadActions } from './useCaseResolverState.upload-actions';
-import { useCaseResolverStateAssetFactoryActions } from './useCaseResolverState.asset-factory-actions';
+import { useCaseResolverAssetFactoryActions } from './useCaseResolverState.asset-factory-actions';
 
 type CaseResolverRequestedCaseStatus = 'loading' | 'ready' | 'missing';
 
@@ -83,14 +83,9 @@ export const useCaseResolverStateAssetActions = (
     treeSaveToast: input.treeSaveToast,
   });
 
-  const factoryActions = useCaseResolverStateAssetFactoryActions({
+  const factoryActions = useCaseResolverAssetFactoryActions({
     settingsStoreRef,
     toast: input.toast,
-    updateWorkspace: input.updateWorkspace,
-    workspace: input.workspace,
-    defaultTagId: input.defaultTagId,
-    defaultCaseIdentifierId: input.defaultCaseIdentifierId,
-    defaultCategoryId: input.defaultCategoryId,
     activeCaseId: input.activeCaseId,
     requestedCaseStatus: input.requestedCaseStatus,
     setSelectedFileId: input.setSelectedFileId,
@@ -103,5 +98,17 @@ export const useCaseResolverStateAssetActions = (
     ...factoryActions,
     ...uploadActions,
     ...ocrActions,
+    handleCreateNodeFile: (targetFolderPath: string | null) => {
+      // Placeholder for missing method
+      console.log('handleCreateNodeFile placeholder', targetFolderPath);
+    },
+    handleCreateDocumentFromText: (scanFileId: string) => {
+      // Placeholder for missing method
+      console.log('handleCreateDocumentFromText placeholder', scanFileId);
+    },
+    handleCreateImageAsset: (targetFolderPath: string | null) => {
+      // Placeholder for missing method
+      console.log('handleCreateImageAsset placeholder', targetFolderPath);
+    },
   };
 };

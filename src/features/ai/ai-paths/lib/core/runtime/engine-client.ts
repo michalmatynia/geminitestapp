@@ -30,6 +30,7 @@ import {
 } from './handlers/common';
 
 import {
+  handleBoundsNormalizer,
   handleParser,
   handleMapper,
   handleMutator,
@@ -63,6 +64,7 @@ const CLIENT_HANDLERS: Record<string, NodeHandler> = {
   validation_pattern: handleValidationPattern,
   regex: handleRegex,
   iterator: handleIterator,
+  bounds_normalizer: handleBoundsNormalizer,
 };
 
 const resolveHandler = (type: string): NodeHandler | null => {

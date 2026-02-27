@@ -18,6 +18,11 @@ import type {
 type CaseResolverAssetPatch = Partial<
   Pick<CaseResolverAssetFile, 'textContent' | 'description'>
 >;
+type CaseResolverAssetUpdateOptions = {
+  persistToast?: string;
+  persistNow?: boolean;
+  source?: string;
+};
 
 export type CaseResolverPageContextValue = {
   workspace: CaseResolverWorkspace;
@@ -75,7 +80,10 @@ export type CaseResolverPageContextValue = {
   onEditFileFromSearch: (fileId: string) => void;
   activeFile: CaseResolverFile | null;
   selectedAsset: CaseResolverAssetFile | null;
-  onUpdateSelectedAsset: (patch: CaseResolverAssetPatch) => void;
+  onUpdateSelectedAsset: (
+    patch: CaseResolverAssetPatch,
+    options?: CaseResolverAssetUpdateOptions
+  ) => void;
   onGraphChange: (nextGraph: CaseResolverGraph) => void;
   onRelationGraphChange: (nextGraph: CaseResolverRelationGraph) => void;
   onLinkRelatedFiles: (fileIdA: string, fileIdB: string) => void;

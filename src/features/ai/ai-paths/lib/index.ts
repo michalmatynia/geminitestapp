@@ -16,6 +16,7 @@ export * from './core/helpers';
 export * from './core/runtime';
 export * from './core/utils/graph';
 export * from './core/utils/data-contract-preflight';
+export * from './core/utils/path-templates';
 export { buildPromptOutput } from './core/runtime/utils';
 export * from './api';
 export * from './local-runs';

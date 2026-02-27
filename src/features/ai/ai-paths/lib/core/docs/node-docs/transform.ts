@@ -319,3 +319,59 @@ export const validationPatternDocs: NodeConfigDocField[] = [
   },
   ...COMMON_RUNTIME_FIELDS,
 ];
+
+export const boundsNormalizerDocs: NodeConfigDocField[] = [
+  {
+    path: 'boundsNormalizer.inputFormat',
+    description:
+      'How the incoming bounding box is encoded. pixels_tlwh is the standard {left,top,width,height} format. gemini_millirelative handles Google Gemini [y1,x1,y2,x2] 0-1000 arrays. relative_xywh handles YOLO centre format.',
+    defaultValue: 'pixels_tlwh',
+  },
+  {
+    path: 'boundsNormalizer.boundsPath',
+    description:
+      'Dot-path into the incoming value to locate the bounds object/array. Leave empty if bounds are at the root of the input.',
+    defaultValue: '""',
+  },
+  {
+    path: 'boundsNormalizer.leftField',
+    description: 'Override the field name for the left/x1 coordinate. Default: left (or x1 for pixels_tlbr).',
+    defaultValue: 'left',
+  },
+  {
+    path: 'boundsNormalizer.topField',
+    description: 'Override the field name for the top/y1 coordinate. Default: top (or y1 for pixels_tlbr).',
+    defaultValue: 'top',
+  },
+  {
+    path: 'boundsNormalizer.widthField',
+    description: 'Override the field name for the width/x2 coordinate. Default: width (or x2 for pixels_tlbr).',
+    defaultValue: 'width',
+  },
+  {
+    path: 'boundsNormalizer.heightField',
+    description: 'Override the field name for the height/y2 coordinate. Default: height (or y2 for pixels_tlbr).',
+    defaultValue: 'height',
+  },
+  {
+    path: 'boundsNormalizer.imageWidthPath',
+    description: 'Dot-path inside the context port value for source image width. Required for relative/percentage formats.',
+    defaultValue: 'imageWidth',
+  },
+  {
+    path: 'boundsNormalizer.imageHeightPath',
+    description: 'Dot-path inside the context port value for source image height. Required for relative/percentage formats.',
+    defaultValue: 'imageHeight',
+  },
+  {
+    path: 'boundsNormalizer.confidencePath',
+    description: 'Dot-path in the raw bounds object for a confidence score (0-1). Optional.',
+    defaultValue: '""',
+  },
+  {
+    path: 'boundsNormalizer.labelPath',
+    description: 'Dot-path in the raw bounds object for the detected object label/class. Optional.',
+    defaultValue: '""',
+  },
+  ...COMMON_RUNTIME_FIELDS,
+];

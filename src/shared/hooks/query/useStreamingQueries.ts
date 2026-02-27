@@ -34,7 +34,7 @@ export function useStreamingQuery<T>(
 
     eventSourceRef.current.onmessage = (event: MessageEvent): void => {
       try {
-        const data = JSON.parse(event.data) as T;
+        const data = JSON.parse(event.data as string) as T;
         queryClient.setQueryData(queryKey, data);
         config.onMessage?.(data);
         reconnectAttemptsRef.current = 0; // Reset on successful message
@@ -105,7 +105,7 @@ export function useWebSocketQuery<T>(
 
     wsRef.current.onmessage = (event: MessageEvent): void => {
       try {
-        const data = JSON.parse(event.data) as T;
+        const data = JSON.parse(event.data as string) as T;
         queryClient.setQueryData(queryKey, data);
         options?.onMessage?.(data);
       } catch (error) {

@@ -60,7 +60,7 @@ export function useQueryLifecycle(): {
     const now = Date.now();
     const staleThreshold = 30 * 60 * 1000; // 30 minutes
 
-    queries.forEach((query: Query): void => {
+    queries.forEach((query: Query<unknown, Error, unknown, readonly unknown[]>): void => {
       const key = JSON.stringify(query.queryKey);
       const metadata = queryMetadata.current.get(key);
       
@@ -78,7 +78,7 @@ export function useQueryLifecycle(): {
     const cache = queryClient.getQueryCache();
     const queries = cache.getAll();
 
-    queries.forEach((query: Query): void => {
+    queries.forEach((query: Query<unknown, Error, unknown, readonly unknown[]>): void => {
       const key = JSON.stringify(query.queryKey);
       const metadata = queryMetadata.current.get(key);
       
@@ -88,7 +88,7 @@ export function useQueryLifecycle(): {
         const adjustedStaleTime = baseStaleTime * (metadata.priority / 5);
         
         // Use type-safe check for setOptions if it exists on the instance
-        const queryWithSetOptions = query as Query & { setOptions?: (options: any) => void };
+        const queryWithSetOptions = query as Query<unknown, Error, unknown, readonly unknown[]> & { setOptions?: (options: unknown) => void };
         if (typeof queryWithSetOptions.setOptions === 'function') {
           queryWithSetOptions.setOptions({
             staleTime: Math.max(adjustedStaleTime, 30 * 1000), // Min 30 seconds
@@ -103,7 +103,7 @@ export function useQueryLifecycle(): {
   useEffect((): (() => void) => {
     const unsubscribe = queryClient.getQueryCache().subscribe((event): void => {
       if (event.type === 'updated') {
-        const query = event.query;
+        const query = event.query as Query<unknown, Error, unknown, readonly unknown[]>;
         
         if (query.state.status === 'success') {
           updateMetadata(query.queryKey, 'success');

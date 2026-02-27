@@ -164,7 +164,14 @@ export type CaseResolverStateValue = {
   handleOpenFileEditor: (fileId: string, options?: { nodeContext?: CaseResolverEditorNodeContext | null }) => void;
   activeFile: CaseResolverFile | null;
   selectedAsset: CaseResolverAssetFile | null;
-  handleUpdateSelectedAsset: (patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>) => void;
+  handleUpdateSelectedAsset: (
+    patch: Partial<Pick<CaseResolverAssetFile, 'textContent' | 'description'>>,
+    options?: {
+      persistToast?: string;
+      persistNow?: boolean;
+      source?: string;
+    }
+  ) => void;
   handleUpdateActiveFileParties: (patch: Partial<Pick<CaseResolverFile, 'addresser' | 'addressee' | 'referenceCaseIds'>>) => void;
   handleLinkRelatedFiles: (fileIdA: string, fileIdB: string) => void;
   handleUnlinkRelatedFile: (sourceFileId: string, targetFileId: string) => void;

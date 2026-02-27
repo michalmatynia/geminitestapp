@@ -58,7 +58,7 @@ export function CanvasControlPanel({
       )}
     >
       <div className='flex items-center gap-1 px-1'>
-        {/* eslint-disable no-restricted-syntax */}
+        {/* eslint-disable-next-line no-restricted-syntax */}
         <Tooltip content='Zoom In'>
           <Button variant='ghost' size='icon' className='h-8 w-8 rounded-full' onClick={onZoomIn}>
             <ZoomIn className='size-4' />
@@ -67,6 +67,7 @@ export function CanvasControlPanel({
         <div className='min-w-[42px] text-center text-[11px] font-bold tabular-nums text-foreground/90'>
           {Math.round(viewScale * 100)}%
         </div>
+        {/* eslint-disable-next-line no-restricted-syntax */}
         <Tooltip content='Zoom Out'>
           <Button variant='ghost' size='icon' className='h-8 w-8 rounded-full' onClick={onZoomOut}>
             <ZoomOut className='size-4' />
@@ -77,11 +78,13 @@ export function CanvasControlPanel({
       <div className='h-4 w-px bg-border/40' />
 
       <div className='flex items-center gap-1'>
+        {/* eslint-disable-next-line no-restricted-syntax */}
         <Tooltip content='Fit all nodes'>
           <Button variant='ghost' size='icon' className='h-8 w-8 rounded-full' onClick={onFitToNodes}>
             <Maximize className='size-4' />
           </Button>
         </Tooltip>
+        {/* eslint-disable-next-line no-restricted-syntax */}
         <Tooltip content='Fit selection'>
           <Button
             variant='ghost'
@@ -92,6 +95,7 @@ export function CanvasControlPanel({
             <Crosshair className='size-4' />
           </Button>
         </Tooltip>
+        {/* eslint-disable-next-line no-restricted-syntax */}
         <Tooltip content='Reset view'>
           <Button variant='ghost' size='icon' className='h-8 w-8 rounded-full' onClick={onResetView}>
             <Activity className='size-4' />
@@ -142,7 +146,6 @@ export function CanvasControlPanel({
             )}
           </Button>
         </Tooltip>
-        {/* eslint-enable no-restricted-syntax */}
       </div>
 
       {svgPerf && svgPerf.fps > 0 && rendererMode === 'svg' && (

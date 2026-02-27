@@ -12,9 +12,7 @@ import {
   useSelectionState,
 } from '@/features/ai/ai-paths/context';
 import {
-  stableStringify,
 } from '@/features/ai/ai-paths/lib';
-import { useToast } from '@/shared/ui';
 import type {
   AiNode,
   CaseResolverNodeMeta,
@@ -25,12 +23,17 @@ import type {
   CaseResolverCompileResult,
 } from '@/shared/contracts/case-resolver';
 import { useDocumentRelationSearch } from '../relation-search/hooks/useDocumentRelationSearch';
+import type { NodeFileSnapshotPersistOptions } from '../components/CaseResolverNodeFileWorkspace';
+import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 
 export type UseNodeFileWorkspaceStateProps = {
   assetId: string;
   assetName: string;
   snapshot: CaseResolverNodeFileSnapshot;
-  onSnapshotChange: (updated: CaseResolverNodeFileSnapshot) => void;
+  onSnapshotChange: (
+    updated: CaseResolverNodeFileSnapshot,
+    options?: NodeFileSnapshotPersistOptions
+  ) => void;
 };
 
 const renderNodeTemplate = (
@@ -65,8 +68,6 @@ export function useNodeFileWorkspaceState({
   const { addNode, setNodes, updateNode, setEdges } = useGraphActions();
   const { selectedNodeId, selectedEdgeId, configOpen } = useSelectionState();
   const { selectNode, setConfigOpen } = useSelectionActions();
-  const { toast } = useToast();
-
   const [newNodeType, setNewNodeType] = useState<'prompt' | 'model' | 'template' | 'database' | 'viewer'>('prompt');
   const [isSidePanelVisible, setIsSidePanelVisible] = useState(false);
   const [isNodeInspectorOpen, setIsNodeInspectorOpen] = useState(false);
@@ -228,44 +229,66 @@ export function useNodeFileWorkspaceState({
     [filesById, selectedNodeFileMeta]
   );
 
-  // Persistence
-  const skipNextSnapshotEmitRef = useRef(true);
-  const lastEmittedSnapshotHashRef = useRef('');
+  const buildCurrentSnapshot = useCallback(
+    (): CaseResolverNodeFileSnapshot => ({
+      kind: 'case_resolver_node_file_snapshot_v1',
+      nodes,
+      edges,
+      nodeMeta: nodeMetaByNode,
+      edgeMeta: edgeMetaByEdge,
+      nodeFileMeta: nodeFileMetaRef.current,
+    }),
+    [nodes, edges, nodeMetaByNode, edgeMetaByEdge]
+  );
+  const [hasPendingSnapshotChanges, setHasPendingSnapshotChanges] = useState(false);
+  const hasInitializedSnapshotTrackingRef = useRef(false);
+  const pendingChangesRef = useRef(hasPendingSnapshotChanges);
 
   useEffect(() => {
-    const currentSnapshot: CaseResolverNodeFileSnapshot = {
-      kind: 'case_resolver_node_file_snapshot_v1',
-      nodes,
-      edges,
-      nodeMeta: nodeMetaByNode,
-      edgeMeta: edgeMetaByEdge,
-      nodeFileMeta: nodeFileMetaRef.current,
-    };
-    const hash = stableStringify(currentSnapshot);
-    if (hash === lastEmittedSnapshotHashRef.current) return;
-
-    if (skipNextSnapshotEmitRef.current) {
-      skipNextSnapshotEmitRef.current = false;
-      lastEmittedSnapshotHashRef.current = hash;
+    if (!hasInitializedSnapshotTrackingRef.current) {
+      hasInitializedSnapshotTrackingRef.current = true;
       return;
     }
+    setHasPendingSnapshotChanges((current): boolean => (current ? current : true));
+  }, [nodes, edges, nodeMetaByNode, edgeMetaByEdge]);
 
-    lastEmittedSnapshotHashRef.current = hash;
-    onSnapshotChange(currentSnapshot);
-  }, [nodes, edges, nodeMetaByNode, edgeMetaByEdge, onSnapshotChange]);
+  useEffect(() => {
+    logCaseResolverWorkspaceEvent({
+      source: 'node_file_workspace',
+      action: 'node_file_snapshot_autosave_skipped',
+      message: `asset_id=${assetId}`,
+    });
+  }, [assetId]);
+
+  useEffect(() => {
+    if (pendingChangesRef.current === hasPendingSnapshotChanges) return;
+    pendingChangesRef.current = hasPendingSnapshotChanges;
+    logCaseResolverWorkspaceEvent({
+      source: 'node_file_workspace',
+      action: 'node_file_snapshot_pending_changes',
+      message: `asset_id=${assetId} pending=${hasPendingSnapshotChanges ? 'true' : 'false'}`,
+    });
+  }, [assetId, hasPendingSnapshotChanges]);
 
   const handleManualSave = useCallback(() => {
-    const currentSnapshot: CaseResolverNodeFileSnapshot = {
-      kind: 'case_resolver_node_file_snapshot_v1',
-      nodes,
-      edges,
-      nodeMeta: nodeMetaByNode,
-      edgeMeta: edgeMetaByEdge,
-      nodeFileMeta: nodeFileMetaRef.current,
-    };
-    onSnapshotChange(currentSnapshot);
-    toast('Snapshot saved.', { variant: 'success' });
-  }, [nodes, edges, nodeMetaByNode, edgeMetaByEdge, onSnapshotChange, toast]);
+    if (!hasPendingSnapshotChanges) return;
+    onSnapshotChange(buildCurrentSnapshot(), {
+      persistNow: true,
+      persistToast: 'Node file updated.',
+      source: 'node_file_manual_save',
+    });
+    setHasPendingSnapshotChanges(false);
+    logCaseResolverWorkspaceEvent({
+      source: 'node_file_workspace',
+      action: 'node_file_snapshot_manual_save',
+      message: `asset_id=${assetId}`,
+    });
+  }, [
+    assetId,
+    buildCurrentSnapshot,
+    hasPendingSnapshotChanges,
+    onSnapshotChange,
+  ]);
 
   // Actions
   const handleAddNode = useCallback((node: AiNode) => {
@@ -332,6 +355,7 @@ export function useNodeFileWorkspaceState({
     selectedNodeMeta,
     selectedNodeFileMeta,
     selectedFile,
+    hasPendingSnapshotChanges,
     handleManualSave,
     selectNode,
     setConfigOpen,

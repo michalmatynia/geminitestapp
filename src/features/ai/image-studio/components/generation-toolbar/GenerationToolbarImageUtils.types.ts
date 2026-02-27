@@ -1,3 +1,15 @@
+import type { 
+  ImageStudioCenterLayoutConfig, 
+  ImageStudioCenterShadowPolicy, 
+  ImageStudioCenterDetectionMode,
+  NormalizedImageStudioAnalysisLayoutConfig,
+  ImageStudioDetectionDetails,
+  ImageStudioDetectionCandidateSummary,
+  ImageStudioObjectWhitespaceMetrics,
+  ImageStudioCenterObjectBounds,
+  ImageStudioAutoScalePlan
+} from '@/features/ai/image-studio/analysis/shared';
+
 export type UpscaleSmoothingQuality = 'low' | 'medium' | 'high';
 
 export type UpscaleRequestStrategyPayload =
@@ -47,92 +59,37 @@ export type CropRectResolutionDiagnostics = {
   usedImageContentFrameMapping: boolean;
 };
 
-export type CenterDetectionMode = 'auto' | 'alpha_bbox' | 'white_bg_first_colored_pixel';
-export type CenterShadowPolicy = 'auto' | 'include_shadow' | 'exclude_shadow';
+export type CenterDetectionMode = ImageStudioCenterDetectionMode;
+export type CenterShadowPolicy = ImageStudioCenterShadowPolicy;
 
-export type CenterLayoutConfig = {
-  paddingPercent?: number;
-  paddingXPercent?: number;
-  paddingYPercent?: number;
-  fillMissingCanvasWhite?: boolean;
-  targetCanvasWidth?: number | null;
-  targetCanvasHeight?: number | null;
-  whiteThreshold?: number;
-  chromaThreshold?: number;
-  shadowPolicy?: CenterShadowPolicy;
-  detection?: CenterDetectionMode;
-};
+export type CenterLayoutConfig = ImageStudioCenterLayoutConfig;
 
-export type CenterDetectionDetails = {
-  shadowPolicyRequested: CenterShadowPolicy;
-  shadowPolicyApplied: CenterShadowPolicy;
-  componentCount: number;
-  coreComponentCount: number;
-  selectedComponentPixels: number;
-  selectedComponentCoverage: number;
-  foregroundPixels: number;
-  corePixels: number;
-  touchesBorder: boolean;
-  maskSource: 'foreground' | 'core';
-  policyVersion?: string;
-  policyReason?: string;
-  fallbackApplied?: boolean;
-  candidateDetections?: {
-    alpha_bbox: { confidence: number; area: number } | null;
-    white_bg_first_colored_pixel: { confidence: number; area: number } | null;
-  };
-};
+export type CenterDetectionDetails = ImageStudioDetectionDetails;
 
 export type CenterLayoutResult = {
   dataUrl: string;
-  sourceObjectBounds: { left: number; top: number; width: number; height: number };
-  targetObjectBounds: { left: number; top: number; width: number; height: number };
+  sourceObjectBounds: ImageStudioCenterObjectBounds;
+  targetObjectBounds: ImageStudioCenterObjectBounds;
   detectionUsed: Exclude<CenterDetectionMode, 'auto'>;
   scale: number;
-  layout: {
-    paddingPercent: number;
-    paddingXPercent: number;
-    paddingYPercent: number;
-    fillMissingCanvasWhite: boolean;
-    targetCanvasWidth: number | null;
-    targetCanvasHeight: number | null;
-    whiteThreshold: number;
-    chromaThreshold: number;
-    shadowPolicy: CenterShadowPolicy;
-    detection: CenterDetectionMode;
-  };
+  layout: NormalizedImageStudioAnalysisLayoutConfig;
 };
 
 export type ClientImageObjectAnalysisResult = {
   width: number;
   height: number;
-  sourceObjectBounds: { left: number; top: number; width: number; height: number };
+  sourceObjectBounds: ImageStudioCenterObjectBounds;
   detectionUsed: Exclude<CenterDetectionMode, 'auto'>;
   confidence: number;
   detectionDetails: CenterDetectionDetails | null;
   policyVersion: string;
   policyReason: string;
   fallbackApplied: boolean;
-  candidateDetections: {
-    alpha_bbox: { confidence: number; area: number } | null;
-    white_bg_first_colored_pixel: { confidence: number; area: number } | null;
-  };
-  whitespace: {
-    px: { left: number; top: number; right: number; bottom: number };
-    percent: { left: number; top: number; right: number; bottom: number };
-  };
+  candidateDetections: ImageStudioDetectionCandidateSummary;
+  whitespace: ImageStudioObjectWhitespaceMetrics;
   objectAreaPercent: number;
-  layout: CenterLayoutResult['layout'];
-  suggestedPlan: {
-    outputWidth: number;
-    outputHeight: number;
-    targetObjectBounds: { left: number; top: number; width: number; height: number };
-    scale: number;
-    whitespace: {
-      px: { left: number; top: number; right: number; bottom: number };
-      percent: { left: number; top: number; right: number; bottom: number };
-    };
-  };
+  layout: NormalizedImageStudioAnalysisLayoutConfig;
+  suggestedPlan: ImageStudioAutoScalePlan;
 };
 
 export type AutoScaleCanvasResult = CenterLayoutResult & {
@@ -140,8 +97,8 @@ export type AutoScaleCanvasResult = CenterLayoutResult & {
   outputHeight: number;
   confidenceBefore: number;
   detectionDetails: CenterDetectionDetails | null;
-  whitespaceBefore: ClientImageObjectAnalysisResult['whitespace'];
-  whitespaceAfter: ClientImageObjectAnalysisResult['whitespace'];
+  whitespaceBefore: ImageStudioObjectWhitespaceMetrics;
+  whitespaceAfter: ImageStudioObjectWhitespaceMetrics;
   objectAreaPercentBefore: number;
   objectAreaPercentAfter: number;
 };

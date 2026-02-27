@@ -30,11 +30,17 @@ import { NodeFileDocumentSearchPanel } from './NodeFileDocumentSearchPanel';
 // ─── inner canvas component ───────────────────────────────────────────────────
 
 const DRAG_FILE_ID_TYPE = 'application/case-resolver-file-id';
+export type NodeFileSnapshotPersistOptions = {
+  persistNow?: boolean;
+  persistToast?: string;
+  source?: string;
+};
 
 function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
   const {
     nodes,
     selectedNodeId,
+    isNodeInspectorOpen,
     newNodeType,
     setNewNodeType,
     isSidePanelVisible,
@@ -222,7 +228,7 @@ function CaseResolverNodeFileWorkspaceInner(): React.JSX.Element {
         />
       )}
 
-      <CaseResolverNodeInspectorModal />
+      {isNodeInspectorOpen ? <CaseResolverNodeInspectorModal /> : null}
     </div>
   );
 }
@@ -249,8 +255,14 @@ export function CaseResolverNodeFileWorkspace(): React.JSX.Element {
   );
 
   const handleSnapshotChange = useCallback(
-    (updated: CaseResolverNodeFileSnapshot): void => {
-      onUpdateSelectedAsset({ textContent: serializeNodeFileSnapshot(updated) });
+    (
+      updated: CaseResolverNodeFileSnapshot,
+      options?: NodeFileSnapshotPersistOptions
+    ): void => {
+      onUpdateSelectedAsset(
+        { textContent: serializeNodeFileSnapshot(updated) },
+        options
+      );
     },
     [onUpdateSelectedAsset]
   );

@@ -24,6 +24,7 @@ import {
   handleAudioSpeaker,
   handleAdvancedApi,
   handleAgent,
+  handleBoundsNormalizer,
   handleBundle,
   handleLogicalCondition,
   handleConstant,
@@ -100,6 +101,7 @@ const HANDLERS: Record<string, NodeHandler> = {
   ai_description: handleAiDescription,
   audio_oscillator: handleAudioOscillator,
   audio_speaker: handleAudioSpeaker,
+  bounds_normalizer: handleBoundsNormalizer,
 };
 
 const resolveHandler = (type: string): NodeHandler | null => {

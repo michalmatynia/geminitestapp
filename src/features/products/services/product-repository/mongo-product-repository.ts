@@ -594,7 +594,7 @@ export const mongoProductRepository: ProductRepository = {
       weight: existing.weight ?? null,
       length: existing.length ?? null,
        
-      parameters: Array.isArray(existing.parameters) ? (existing.parameters as ProductParameterValue[]) : [],
+      parameters: Array.isArray(existing.parameters) ? (existing.parameters) : [],
       imageLinks: Array.isArray(existing.imageLinks) ? existing.imageLinks : [],
       imageBase64s: Array.isArray(existing.imageBase64s) ? existing.imageBase64s : [],
        

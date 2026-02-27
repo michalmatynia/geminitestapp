@@ -31,7 +31,7 @@ const slotSchema = z.object({
   imageBase64: z.string().trim().optional().nullable(),
   imageFileId: z.string().trim().optional().nullable(),
   asset3dId: z.string().trim().optional().nullable(),
-  metadata: z.record(z.string(), z.any()).optional().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 const createSchema = z.object({

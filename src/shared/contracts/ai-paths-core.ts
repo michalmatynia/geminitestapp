@@ -49,6 +49,7 @@ export const aiNodeTypeSchema = z.enum([
   'notification',
   'ai_description',
   'description_updater',
+  'bounds_normalizer',
 ]);
 
 export type AiNodeTypeDto = z.infer<typeof aiNodeTypeSchema>;
@@ -168,6 +169,42 @@ export const mapperConfigSchema = z.object({
 
 export type MapperConfigDto = z.infer<typeof mapperConfigSchema>;
 export type MapperConfig = MapperConfigDto;
+
+export const boundsNormalizerInputFormatSchema = z.enum([
+  'pixels_tlwh',          // {left,top,width,height} in pixels — pass-through (default)
+  'pixels_tlbr',          // {x1,y1,x2,y2} in pixels → convert
+  'gemini_millirelative', // [y1,x1,y2,x2] on 0-1000 scale → multiply by image dims
+  'relative_xywh',        // [cx,cy,w,h] normalised 0-1 (YOLO) → convert + multiply
+  'percentage_tlwh',      // {left,top,width,height} as 0-100 % → multiply by image dims
+  'auto',                 // Inspect input shape and infer format
+]);
+
+export const boundsNormalizerConfigSchema = z.object({
+  /** How the incoming bounding box is encoded. */
+  inputFormat: boundsNormalizerInputFormatSchema.default('pixels_tlwh'),
+  /** Dot-path into value to locate the bounds object/array. Leave empty for root. */
+  boundsPath: z.string().optional(),
+  /** Field name overrides for non-standard APIs (defaults: left/top/width/height). */
+  leftField:   z.string().optional(),
+  topField:    z.string().optional(),
+  widthField:  z.string().optional(),
+  heightField: z.string().optional(),
+  /**
+   * For relative/percentage formats: dot-path inside the context port value
+   * to find the source image width/height.
+   * Defaults to reading imageWidth / imageHeight directly from the context object.
+   */
+  imageWidthPath:  z.string().optional(),
+  imageHeightPath: z.string().optional(),
+  /** Optional confidence score field path in the raw bounds object. */
+  confidencePath: z.string().optional(),
+  /** Optional label/class field path in the raw bounds object. */
+  labelPath: z.string().optional(),
+});
+
+export type BoundsNormalizerInputFormat = z.infer<typeof boundsNormalizerInputFormatSchema>;
+export type BoundsNormalizerConfigDto = z.infer<typeof boundsNormalizerConfigSchema>;
+export type BoundsNormalizerConfig = BoundsNormalizerConfigDto;
 
 export const mutatorConfigSchema = z.object({
   path: z.string(),
@@ -930,6 +967,7 @@ export const nodeConfigSchema = z.object({
   regex: regexConfigSchema.optional(),
   iterator: iteratorConfigSchema.optional(),
   mapper: mapperConfigSchema.optional(),
+  boundsNormalizer: boundsNormalizerConfigSchema.optional(),
   mutator: mutatorConfigSchema.optional(),
   stringMutator: stringMutatorConfigSchema.optional(),
   validator: validatorConfigSchema.optional(),

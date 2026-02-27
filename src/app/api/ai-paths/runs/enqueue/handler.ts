@@ -18,18 +18,22 @@ import {
 import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
 import { startAiPathRunQueue } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
+import { 
+  aiNodeSchema, 
+  edgeSchema, 
+} from '@/shared/contracts/ai-paths';
+import type { Edge } from '@/shared/contracts/ai-paths';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';
 
 const enqueueSchema = z.object({
   pathId: z.string().trim().min(1),
   pathName: z.string().trim().optional(),
-  nodes: z.array(z.any()).optional(),
-  edges: z.array(z.any()).optional(),
+  nodes: z.array(aiNodeSchema).optional(),
+  edges: z.array(edgeSchema).optional(),
   triggerEvent: z.string().trim().optional(),
   triggerNodeId: z.string().trim().optional(),
-  triggerContext: z.record(z.string(), z.any()).optional().nullable(),
+  triggerContext: z.record(z.string(), z.unknown()).optional().nullable(),
   entityId: z.string().trim().optional().nullable(),
   entityType: z.string().trim().optional().nullable(),
   maxAttempts: z.number().int().min(1).max(50).optional(),
@@ -41,7 +45,7 @@ const enqueueSchema = z.object({
     .max(10 * 60_000)
     .optional(),
   requestId: z.string().trim().min(1).max(200).optional(),
-  meta: z.record(z.string(), z.any()).optional().nullable(),
+  meta: z.record(z.string(), z.unknown()).optional().nullable(),
 });
 
 export async function POST_handler(
@@ -59,7 +63,7 @@ export async function POST_handler(
   const { nodes, edges, ...rest } = data;
   let normalizedMeta = rest.meta ?? null;
   if (normalizedMeta && typeof normalizedMeta === 'object') {
-    const metaRecord = normalizedMeta as Record<string, unknown>;
+    const metaRecord = normalizedMeta;
     const sourceValue = metaRecord['source'];
     if (sourceValue && typeof sourceValue === 'object') {
       const triggerEventId =
@@ -78,7 +82,7 @@ export async function POST_handler(
   }
 
   const migratedGraph = migrateTriggerToFetcherGraph(
-    normalizeNodes(nodes as AiNode[]),
+    normalizeNodes(nodes),
     edges as Edge[],
   );
   const identityRepair = repairPathNodeIdentities(
@@ -101,7 +105,7 @@ export async function POST_handler(
   );
   const metaRecord =
     normalizedMeta && typeof normalizedMeta === 'object'
-      ? (normalizedMeta as Record<string, unknown>)
+      ? (normalizedMeta)
       : {};
   const validationConfig = normalizeAiPathsValidationConfig(
     (metaRecord['aiPathsValidation'] as Record<string, unknown> | undefined) ??

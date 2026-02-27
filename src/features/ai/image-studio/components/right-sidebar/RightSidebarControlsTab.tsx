@@ -10,9 +10,19 @@ import {
 import { Button, MultiSelect, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
+import {
+  DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL,
+  PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY,
+} from '@/features/products/constants';
+import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
+
 import { useMaskingActions, useMaskingState } from '../../context/MaskingContext';
+import { useProjectsState } from '../../context/ProjectsContext';
 import { useSlotsActions, useSlotsState } from '../../context/SlotsContext';
 import { useUiActions, useUiState } from '../../context/UiContext';
+import { useAiPathsObjectAnalysis } from '../../hooks/useAiPathsObjectAnalysis';
+import { getImageStudioSlotImageSrc } from '../../utils/image-src';
+import { AiPathAnalysisTriggerSection } from '../analysis/sections/AiPathAnalysisTriggerSection';
 import { GenerationToolbar } from '../GenerationToolbar';
 import { LabeledSlider } from '../LabeledSlider';
 import { StudioCard } from '../StudioCard';
@@ -60,6 +70,33 @@ export const RightSidebarControlsTab = React.memo(function RightSidebarControlsT
     compositeAssetIds,
     compositeAssetOptions,
   } = useSlotsState();
+
+  const settingsStore = useSettingsStore();
+  const { projectId, projectsQuery } = useProjectsState();
+  const productImagesExternalBaseUrl =
+    settingsStore.get(PRODUCT_IMAGES_EXTERNAL_BASE_URL_SETTING_KEY) ??
+    DEFAULT_PRODUCT_IMAGES_EXTERNAL_BASE_URL;
+  const workingSlotImageSrc = getImageStudioSlotImageSrc(workingSlot, productImagesExternalBaseUrl);
+  const activeProjectId = projectId?.trim() ?? '';
+  const activeProject = (projectsQuery.data ?? []).find((p) => p.id === projectId) ?? null;
+  const projectCanvasWidth =
+    typeof activeProject?.canvasWidthPx === 'number' && Number.isFinite(activeProject.canvasWidthPx)
+      ? Math.floor(activeProject.canvasWidthPx)
+      : null;
+  const projectCanvasHeight =
+    typeof activeProject?.canvasHeightPx === 'number' && Number.isFinite(activeProject.canvasHeightPx)
+      ? Math.floor(activeProject.canvasHeightPx)
+      : null;
+
+  const aiPathsAnalysis = useAiPathsObjectAnalysis({
+    projectId: activeProjectId,
+    workingSlotId: workingSlot?.id ?? null,
+    workingSlotImageSrc: workingSlotImageSrc ?? null,
+    workingSlotImageWidth: workingSlot?.width ?? null,
+    workingSlotImageHeight: workingSlot?.height ?? null,
+    canvasWidth: projectCanvasWidth,
+    canvasHeight: projectCanvasHeight,
+  });
 
   const {
     setCompositeAssetIds,
@@ -320,6 +357,13 @@ export const RightSidebarControlsTab = React.memo(function RightSidebarControlsT
               Image Operations
             </div>
             <GenerationToolbar />
+          </div>
+
+          <div className='rounded border border-border/60 bg-card/30 p-3'>
+            <div className='mb-2 text-[10px] uppercase tracking-wide text-gray-500'>
+              AI Object Analysis
+            </div>
+            <AiPathAnalysisTriggerSection variant='compact' analysis={aiPathsAnalysis} />
           </div>
 
           <div className='rounded border border-border/60 bg-card/30 p-3'>

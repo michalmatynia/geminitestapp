@@ -86,8 +86,15 @@ export function useCanvasInteractionsNodes({
   updateLastPointerCanvasPosFromClient: (clientX: number, clientY: number) => { x: number; y: number } | null;
   stopViewAnimation: () => void;
   resolveActiveNodeSelectionIds: () => string[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  confirm: (options: any) => void;
+  confirm: (options: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    cancelText?: string;
+    isDangerous?: boolean;
+    onConfirm: () => void;
+    onCancel?: () => void;
+  }) => void;
   setEdges: (edges: Edge[] | ((prev: Edge[]) => Edge[])) => void;
   setRuntimeState: (state: RuntimeState | ((prev: RuntimeState) => RuntimeState)) => void;
   pruneRuntimeInputsInternal: (state: RuntimeState, removedEdges: Edge[], remainingEdges: Edge[]) => RuntimeState;

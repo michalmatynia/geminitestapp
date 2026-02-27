@@ -52,8 +52,7 @@ const PROMPT_EXPLODER_PARAM_UI_CONTROLS: PromptExploderParamUiControl[] = [
   'tuple2',
 ];
 
-const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+import { isObjectRecord } from '@/shared/utils/object';
 
 type ScanState = {
   inSingle: boolean;

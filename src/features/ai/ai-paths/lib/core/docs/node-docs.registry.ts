@@ -4,6 +4,7 @@ import type { NodeConfigDocField } from './node-docs.types';
 import { triggerDocs, fetcherDocs, simulationDocs } from './node-docs/trigger';
 import { audioOscillatorDocs, audioSpeakerDocs } from './node-docs/audio';
 import {
+  boundsNormalizerDocs,
   contextDocs,
   parserDocs,
   regexDocs,
@@ -54,6 +55,7 @@ export const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>
   regex: regexDocs,
   iterator: iteratorDocs,
   mapper: mapperDocs,
+  bounds_normalizer: boundsNormalizerDocs,
   mutator: mutatorDocs,
   string_mutator: stringMutatorDocs,
   validator: validatorDocs,

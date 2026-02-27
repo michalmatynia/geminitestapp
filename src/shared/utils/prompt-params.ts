@@ -5,13 +5,12 @@ import type {
   ParamIssueSeverityDto
 } from '@/shared/contracts/prompt-engine';
 
+import { isObjectRecord } from './object';
+
 export type ExtractParamsResult = ExtractParamsResultDto;
 export type ParamSpec = ParamSpecDto;
 export type ParamIssue = ParamIssueDto;
 export type ParamIssueSeverity = ParamIssueSeverityDto;
-
-export const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
 
 type ScanState = {
   inSingle: boolean;

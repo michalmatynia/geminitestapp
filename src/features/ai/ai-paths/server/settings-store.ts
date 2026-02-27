@@ -1,4 +1,3 @@
-/* eslint-disable */
 import 'server-only';
 
 import {
@@ -55,7 +54,7 @@ export async function getAiPathsSettings(
   keys?: string[],
   options?: { bypassCache?: boolean }
 ): Promise<AiPathsSettingRecord[]> {
-  await assertMongoConfigured();
+  assertMongoConfigured();
 
   if (!keys || keys.length === 0) {
     // Fetch index and then all configs
@@ -73,7 +72,7 @@ export async function getAiPathsSettings(
   const normalizedKeys = keys.filter(isAiPathsKey);
   if (normalizedKeys.length === 0) return [];
 
-  await assertMongoConfigured();
+  assertMongoConfigured();
   
   const records = await fetchMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);
   
@@ -89,7 +88,7 @@ export async function getAiPathsSetting(key: string): Promise<string | null> {
 }
 
 export async function getAllAiPathsSettings(): Promise<AiPathsSettingRecord[]> {
-  await assertMongoConfigured();
+  assertMongoConfigured();
   // We don't have a 'fetchAll' in mongo wrapper yet, but we can fetch index and then all configs
   
   const indexRecord = await fetchMongoAiPathsSettings([AI_PATHS_INDEX_KEY], AI_PATHS_MONGO_OP_TIMEOUT_MS);
@@ -219,7 +218,7 @@ export async function upsertAiPathsSettings(
   const normalized = records.filter(r => isAiPathsKey(r.key));
   if (normalized.length === 0) return;
 
-  await assertMongoConfigured();
+  assertMongoConfigured();
   await ensureMongoIndexes(AI_PATHS_MONGO_OP_TIMEOUT_MS);
   
   await upsertMongoAiPathsSettings(normalized, AI_PATHS_MONGO_OP_TIMEOUT_MS);
@@ -235,7 +234,7 @@ export async function deleteAiPathsSettings(keys: string[]): Promise<number> {
   const normalizedKeys = keys.filter(isAiPathsKey);
   if (normalizedKeys.length === 0) return 0;
 
-  await assertMongoConfigured();
+  assertMongoConfigured();
   await ensureMongoIndexes(AI_PATHS_MONGO_OP_TIMEOUT_MS);
   
   await deleteMongoAiPathsSettings(normalizedKeys, AI_PATHS_MONGO_OP_TIMEOUT_MS);

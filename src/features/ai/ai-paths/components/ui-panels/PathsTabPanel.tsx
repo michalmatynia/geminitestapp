@@ -4,6 +4,7 @@ import { Lock, Edit, Copy, Trash2 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
 import type { PathMeta } from '@/features/ai/ai-paths/lib';
+import { PATH_TEMPLATES } from '@/features/ai/ai-paths/lib';
 import {
   ActionMenu,
   Button,
@@ -165,6 +166,22 @@ export function PathsTabPanel({
           >
             New Path
           </Button>
+          <ActionMenu
+            trigger='From Template ▾'
+            variant='outline'
+            size='sm'
+            ariaLabel='Create path from template'
+            align='end'
+          >
+            {PATH_TEMPLATES.map((t) => (
+              <DropdownMenuItem
+                key={t.templateId}
+                onClick={() => orchestrator.handleCreateFromTemplate(t.templateId)}
+              >
+                {t.name}
+              </DropdownMenuItem>
+            ))}
+          </ActionMenu>
           <Button
             variant='outline'
             size='sm'

@@ -60,8 +60,7 @@ type CaseResolverRelationsWorkspaceProps = {
   focusCaseId?: string | null;
 };
 
-const isObjectRecord = (value: unknown): value is Record<string, unknown> =>
-  Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+import { isObjectRecord } from '@/shared/utils/object';
 
 const isCaseResolverFile = (value: unknown): value is CaseResolverFile =>
   isObjectRecord(value) &&

@@ -1,22 +1,27 @@
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { logClientError } from '@/features/observability';
 import type { DatabaseInfo, DatabaseType } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
-import { normalizeDatabaseEngineBackupSchedule } from '@/shared/lib/db/database-engine-backup-schedule';
+import {
+  isValidDatabaseEngineBackupTimeUtc,
+  normalizeDatabaseEngineBackupSchedule,
+} from '@/shared/lib/db/database-engine-backup-schedule';
 import {
   DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
   DATABASE_ENGINE_OPERATION_CONTROLS_KEY,
   DEFAULT_DATABASE_ENGINE_BACKUP_SCHEDULE,
   DEFAULT_DATABASE_ENGINE_OPERATION_CONTROLS,
+  type DatabaseEngineBackupType,
 } from '@/shared/lib/db/database-engine-constants';
 import { normalizeDatabaseEngineOperationControls } from '@/shared/lib/db/database-engine-operation-controls';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast, type FileUploadHelpers } from '@/shared/ui';
 
+import { localHmToUtcHm, utcHmToLocalHm } from '../utils/backup-schedule-time';
 import {
   useCreateBackupMutation,
   useDatabaseBackups,
@@ -34,6 +39,10 @@ export function useDatabaseBackupsState() {
   const [isRestoreModalOpen, setIsRestoreModalOpen] = useState(false);
   const [selectedBackupForRestore, setSelectedBackupForRestore] = useState<string | null>(null);
   const [backupToDelete, setBackupToDelete] = useState<string | null>(null);
+  const [schedulerEnabledDraft, setSchedulerEnabledDraft] = useState(false);
+  const [repeatTickEnabledDraft, setRepeatTickEnabledDraft] = useState(false);
+  const [activeTargetEnabledDraft, setActiveTargetEnabledDraft] = useState(false);
+  const [activeTargetTimeLocalDraft, setActiveTargetTimeLocalDraft] = useState('02:00');
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -68,6 +77,47 @@ export function useDatabaseBackupsState() {
   const schedulerEnabled = backupSchedule.schedulerEnabled;
   const repeatSchedulerTickEnabled = backupSchedule.repeatTickEnabled;
   const isBackupScheduleSaving = updateSetting.isPending;
+  const activeTargetKey: DatabaseEngineBackupType = activeTab === 'mongodb' ? 'mongodb' : 'postgresql';
+  const activeTargetSchedule = backupSchedule[activeTargetKey];
+  const activeTargetTimeLocalCurrent = useMemo(
+    () =>
+      utcHmToLocalHm(activeTargetSchedule.timeUtc) ??
+      activeTargetSchedule.timeUtc,
+    [activeTargetSchedule.timeUtc]
+  );
+  const activeTargetTimeLocalDraftValid = isValidDatabaseEngineBackupTimeUtc(
+    activeTargetTimeLocalDraft
+  );
+
+  useEffect(() => {
+    setSchedulerEnabledDraft(backupSchedule.schedulerEnabled);
+    setRepeatTickEnabledDraft(backupSchedule.repeatTickEnabled);
+    setActiveTargetEnabledDraft(activeTargetSchedule.enabled);
+    setActiveTargetTimeLocalDraft(activeTargetTimeLocalCurrent);
+  }, [
+    backupSchedule.schedulerEnabled,
+    backupSchedule.repeatTickEnabled,
+    activeTargetSchedule.enabled,
+    activeTargetTimeLocalCurrent,
+  ]);
+
+  const isBackupScheduleDirty = useMemo(
+    () =>
+      schedulerEnabledDraft !== backupSchedule.schedulerEnabled ||
+      repeatTickEnabledDraft !== backupSchedule.repeatTickEnabled ||
+      activeTargetEnabledDraft !== activeTargetSchedule.enabled ||
+      activeTargetTimeLocalDraft !== activeTargetTimeLocalCurrent,
+    [
+      schedulerEnabledDraft,
+      backupSchedule.schedulerEnabled,
+      repeatTickEnabledDraft,
+      backupSchedule.repeatTickEnabled,
+      activeTargetEnabledDraft,
+      activeTargetSchedule.enabled,
+      activeTargetTimeLocalDraft,
+      activeTargetTimeLocalCurrent,
+    ]
+  );
 
   const openLogModal = useCallback((content: string): void => {
     setLogModalContent(content);
@@ -241,38 +291,90 @@ ${String(error)}`);
     window.location.assign(`/admin/databases/preview?mode=current&type=${activeTab}`);
   };
 
-  const handleRepeatSchedulerTickToggle = async (enabled: boolean): Promise<void> => {
-    const nextSchedule = {
-      ...backupSchedule,
-      repeatTickEnabled: enabled,
+  const handleSchedulerEnabledDraftChange = useCallback((enabled: boolean): void => {
+    setSchedulerEnabledDraft(enabled);
+  }, []);
+
+  const handleRepeatSchedulerTickDraftChange = useCallback((enabled: boolean): void => {
+    setRepeatTickEnabledDraft(enabled);
+  }, []);
+
+  const handleActiveTargetEnabledDraftChange = useCallback((enabled: boolean): void => {
+    setActiveTargetEnabledDraft(enabled);
+  }, []);
+
+  const handleActiveTargetTimeLocalChange = useCallback((value: string): void => {
+    setActiveTargetTimeLocalDraft(value);
+  }, []);
+
+  const saveDailySchedule = useCallback(async (): Promise<void> => {
+    if (!isValidDatabaseEngineBackupTimeUtc(activeTargetTimeLocalDraft)) {
+      toast('Backup time must be a valid HH:MM value.', { variant: 'error' });
+      return;
+    }
+
+    const nextTimeUtc = localHmToUtcHm(activeTargetTimeLocalDraft);
+    if (!nextTimeUtc) {
+      toast('Failed to convert local backup time to UTC.', { variant: 'error' });
+      return;
+    }
+
+    const activeTargetNext = {
+      ...activeTargetSchedule,
+      enabled: activeTargetEnabledDraft,
+      cadence: 'daily' as const,
+      intervalDays: 1,
+      timeUtc: nextTimeUtc,
     };
+    const nextSchedule =
+      activeTargetKey === 'mongodb'
+        ? {
+          ...backupSchedule,
+          schedulerEnabled: schedulerEnabledDraft,
+          repeatTickEnabled: repeatTickEnabledDraft,
+          mongodb: activeTargetNext,
+        }
+        : {
+          ...backupSchedule,
+          schedulerEnabled: schedulerEnabledDraft,
+          repeatTickEnabled: repeatTickEnabledDraft,
+          postgresql: activeTargetNext,
+        };
 
     try {
       await updateSetting.mutateAsync({
         key: DATABASE_ENGINE_BACKUP_SCHEDULE_KEY,
         value: JSON.stringify(nextSchedule),
       });
+      await settingsQuery.refetch();
       void fetch('/api/databases/engine/backup-scheduler/status', {
         method: 'GET',
         cache: 'no-store',
       });
-      toast(
-        enabled
-          ? 'Repeating scheduler checks enabled.'
-          : 'Repeating scheduler checks disabled.',
-        { variant: 'success' },
-      );
+      toast('Backup schedule saved.', { variant: 'success' });
     } catch (error: unknown) {
       logClientError(error, {
         context: {
           source: 'DatabaseBackupsPanel',
-          action: 'updateBackupSchedule',
-          setting: 'repeatTickEnabled',
+          action: 'saveDailySchedule',
+          setting: 'database_engine_backup_schedule_v1',
+          dbType: activeTargetKey,
         },
       });
-      toast('Failed to update backup scheduling options.', { variant: 'error' });
+      toast('Failed to save backup schedule.', { variant: 'error' });
     }
-  };
+  }, [
+    activeTargetTimeLocalDraft,
+    toast,
+    activeTargetSchedule,
+    activeTargetEnabledDraft,
+    activeTargetKey,
+    backupSchedule,
+    schedulerEnabledDraft,
+    repeatTickEnabledDraft,
+    updateSetting,
+    settingsQuery,
+  ]);
 
   return {
     activeTab,
@@ -292,6 +394,13 @@ ${String(error)}`);
     backupMaintenanceAllowed,
     schedulerEnabled,
     repeatSchedulerTickEnabled,
+    schedulerEnabledDraft,
+    repeatTickEnabledDraft,
+    activeTargetEnabledDraft,
+    activeTargetTimeLocalDraft,
+    activeTargetTimeLocalDraftValid,
+    isBackupScheduleDirty,
+    activeTargetKey,
     isBackupScheduleSaving,
     closeLogModal,
     handleBackup,
@@ -302,6 +411,10 @@ ${String(error)}`);
     handleConfirmDelete,
     handlePreview,
     handlePreviewCurrent,
-    handleRepeatSchedulerTickToggle,
+    handleSchedulerEnabledDraftChange,
+    handleRepeatSchedulerTickDraftChange,
+    handleActiveTargetEnabledDraftChange,
+    handleActiveTargetTimeLocalChange,
+    saveDailySchedule,
   };
 }

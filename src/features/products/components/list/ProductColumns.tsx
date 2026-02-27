@@ -485,6 +485,7 @@ export const getProductColumns = (): ColumnDef<ProductWithImages>[] => [
             status={status}
             prefetchListings={prefetchListings}
             showMarketplaceBadge={showMarketplaceBadge}
+            onOpenIntegrations={(): void => handleClick(product)}
             onOpenSettings={
               handleOpenExportSettings
                 ? (): void => handleOpenExportSettings(product)

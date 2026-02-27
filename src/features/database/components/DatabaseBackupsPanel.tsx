@@ -20,6 +20,8 @@ import {
   StandardDataTablePanel,
   Card,
   ToggleRow,
+  FormField,
+  Input,
 } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 import { cn } from '@/shared/utils';
@@ -74,6 +76,13 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
     backupMaintenanceAllowed,
     schedulerEnabled,
     repeatSchedulerTickEnabled,
+    schedulerEnabledDraft,
+    repeatTickEnabledDraft,
+    activeTargetEnabledDraft,
+    activeTargetTimeLocalDraft,
+    activeTargetTimeLocalDraftValid,
+    isBackupScheduleDirty,
+    activeTargetKey,
     isBackupScheduleSaving,
     closeLogModal,
     handleBackup,
@@ -81,7 +90,11 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
     handleRestoreConfirm,
     handleConfirmDelete,
     handlePreviewCurrent,
-    handleRepeatSchedulerTickToggle,
+    handleSchedulerEnabledDraftChange,
+    handleRepeatSchedulerTickDraftChange,
+    handleActiveTargetEnabledDraftChange,
+    handleActiveTargetTimeLocalChange,
+    saveDailySchedule,
   } = useDatabaseBackupsContext();
 
   const selectedDatabase =
@@ -160,21 +173,90 @@ function DatabaseBackupsPanelInner(): React.JSX.Element {
       </Card>
 
       <div className='space-y-2'>
-        <p className='text-[11px] font-semibold uppercase tracking-wide text-gray-400'>Backup Scheduling Options</p>
+        <p className='text-[11px] font-semibold uppercase tracking-wide text-gray-400'>
+          Backup Scheduling Options
+        </p>
+        <ToggleRow
+          type='switch'
+          label='Enable Scheduled Backups'
+          description='Global scheduler switch for all backup targets.'
+          checked={schedulerEnabledDraft}
+          disabled={isBackupScheduleSaving}
+          onCheckedChange={handleSchedulerEnabledDraftChange}
+          className='border-border/60 bg-card/20'
+        />
+        <ToggleRow
+          type='switch'
+          label='Enable schedule for selected source'
+          description={`Applies to ${selectedDatabase.label} only.`}
+          checked={activeTargetEnabledDraft}
+          disabled={isBackupScheduleSaving || !schedulerEnabledDraft}
+          onCheckedChange={handleActiveTargetEnabledDraftChange}
+          className='border-border/60 bg-card/20'
+        />
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20'>
+          <FormField
+            label='Daily Run Time (Server Local)'
+            description='Time is entered as server-local time and stored as UTC.'
+          >
+            <Input
+              type='time'
+              size='sm'
+              value={activeTargetTimeLocalDraft}
+              onChange={(event) => {
+                handleActiveTargetTimeLocalChange(event.target.value);
+              }}
+              disabled={
+                isBackupScheduleSaving ||
+                !schedulerEnabledDraft ||
+                !activeTargetEnabledDraft
+              }
+            />
+          </FormField>
+        </Card>
         <ToggleRow
           type='switch'
           label='Enable Repeating Due-Checks'
           description='When disabled, scheduler checks run only on startup catch-up and manual tick.'
-          checked={repeatSchedulerTickEnabled}
+          checked={repeatTickEnabledDraft}
           disabled={isBackupScheduleSaving}
-          onCheckedChange={(checked) => {
-            void handleRepeatSchedulerTickToggle(checked);
-          }}
+          onCheckedChange={handleRepeatSchedulerTickDraftChange}
           className='border-border/60 bg-card/20'
         />
-        {!schedulerEnabled && (
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 text-[11px] text-gray-300'>
+          If app starts after missed scheduled time, one catch-up run is queued in background.
+        </Card>
+        {!activeTargetTimeLocalDraftValid && (
           <Alert variant='warning'>
-            Scheduled backups are currently disabled. Enable scheduler in backup schedule settings.
+            Enter a valid time in HH:MM format.
+          </Alert>
+        )}
+        {!schedulerEnabledDraft && (
+          <Alert variant='warning'>
+            Scheduled backups are currently disabled.
+          </Alert>
+        )}
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/20 text-[11px] text-gray-300'>
+          Changes apply only to the selected source tab ({activeTargetKey}).
+        </Card>
+        <Button
+          size='sm'
+          variant='secondary'
+          disabled={
+            isBackupScheduleSaving ||
+            !isBackupScheduleDirty ||
+            !activeTargetTimeLocalDraftValid
+          }
+          onClick={(): void => {
+            void saveDailySchedule();
+          }}
+        >
+          {isBackupScheduleSaving ? 'Saving Schedule...' : 'Save Schedule'}
+        </Button>
+        {(schedulerEnabled !== schedulerEnabledDraft ||
+          repeatSchedulerTickEnabled !== repeatTickEnabledDraft) && (
+          <Alert variant='info'>
+            Save schedule changes to apply the latest scheduler toggles.
           </Alert>
         )}
       </div>

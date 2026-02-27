@@ -29,7 +29,9 @@ export const fromFolderMasterNodeId = (value: string): string | null =>
 export const fromNoteMasterNodeId = (value: string): string | null =>
   isNoteMasterNodeId(value) ? value.slice(NOTE_NODE_PREFIX.length) : null;
 
-export const decodeNotesMasterNodeId = (value: string): NotesMasterNodeRef | null => {
+export const decodeNotesMasterNodeId = (
+  value: string,
+): NotesMasterNodeRef | null => {
   const folderId = fromFolderMasterNodeId(value);
   if (folderId) return { entity: 'folder', id: folderId, nodeId: value };
   const noteId = fromNoteMasterNodeId(value);
@@ -44,7 +46,7 @@ const buildFolderPath = (parentPath: string, folderName: string): string => {
 };
 
 export const buildMasterNodesFromNotesFolderTree = (
-  folders: CategoryWithChildren[]
+  folders: CategoryWithChildren[],
 ): MasterTreeNode[] => {
   const nodes: MasterTreeNode[] = [];
 
@@ -52,7 +54,7 @@ export const buildMasterNodesFromNotesFolderTree = (
     folder: CategoryWithChildren,
     parentFolderNodeId: string | null,
     parentPath: string,
-    siblingIndex: number
+    siblingIndex: number,
   ): void => {
     const folderNodeId = toFolderMasterNodeId(folder.id);
     const folderPath = buildFolderPath(parentPath, folder.name);
@@ -74,8 +76,8 @@ export const buildMasterNodesFromNotesFolderTree = (
       walkFolder(child, folderNodeId, folderPath, index);
     });
 
-    const sortedNotes = [...(folder.notes ?? [])].sort((a: NoteRecord, b: NoteRecord) =>
-      a.title.localeCompare(b.title)
+    const sortedNotes = [...(folder.notes ?? [])].sort(
+      (a: NoteRecord, b: NoteRecord) => a.title.localeCompare(b.title),
     );
     sortedNotes.forEach((note: NoteRecord, index: number) => {
       nodes.push({

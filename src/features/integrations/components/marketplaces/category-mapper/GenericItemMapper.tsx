@@ -3,7 +3,7 @@
 import { useEffect, useMemo } from 'react';
 
 import { useCategoryMapper } from '@/features/integrations/context/CategoryMapperContext';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { StandardDataTablePanel, EmptyState } from '@/shared/ui';
 import { useToast } from '@/shared/ui/toast';
 

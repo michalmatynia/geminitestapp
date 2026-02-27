@@ -1,17 +1,17 @@
 import type {
   ValidatorPatternList,
   ValidatorScope,
-} from '@/features/admin/pages/validator-scope';
+} from '@/shared/contracts/validator';
 import {
   PromptValidationRuntimeError,
   PromptValidationScopeResolutionError,
   asPromptValidationIntegrationError,
-} from '@/features/prompt-core/errors';
+} from '@/shared/lib/prompt-core/errors';
 import {
   recordPromptValidationCounter,
   recordPromptValidationError,
   recordPromptValidationTiming,
-} from '@/features/prompt-core/runtime-observability';
+} from '@/shared/lib/prompt-core/runtime-observability';
 import type {
   PromptValidationRule,
   PromptEngineSettings,

@@ -5,7 +5,7 @@ import {
   listSystemLogs,
   getSystemLogMetrics,
   clearSystemLogs,
-} from '@/features/observability/lib/system-log-repository';
+} from '@/shared/lib/observability/system-log-repository';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

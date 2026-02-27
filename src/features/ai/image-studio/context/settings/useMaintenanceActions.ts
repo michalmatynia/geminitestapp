@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { api } from '@/shared/lib/api-client';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useToast } from '@/shared/ui';
 
 interface BackfillProjectResult {

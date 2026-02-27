@@ -4,12 +4,12 @@ import type {
   DbQueryConfig,
   Edge,
   PollConfig,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   DB_COLLECTION_OPTIONS,
   renderTemplate,
   toNumber,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   Button,
   Input,

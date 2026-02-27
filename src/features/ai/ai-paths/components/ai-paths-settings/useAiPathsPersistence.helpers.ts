@@ -1,10 +1,10 @@
-import type { AiNode, Edge, PathConfig, PathMeta } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, PathConfig, PathMeta } from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_MAX,
   AI_PATHS_HISTORY_RETENTION_MIN,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 const normalizeHistoryRetentionValue = (value: unknown, fallback: number): number => {
   const parsed =

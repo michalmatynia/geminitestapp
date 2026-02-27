@@ -1,4 +1,5 @@
 import type { TransientRecoverySettings } from './transient-recovery-settings-form';
+import { DEFAULT_TRANSIENT_RECOVERY_SETTINGS, TRANSIENT_RECOVERY_KEYS } from '@/shared/lib/observability/transient-recovery/constants';
 
 export type TransientRecoveryConstants = {
   DEFAULT_TRANSIENT_RECOVERY_SETTINGS: TransientRecoverySettings;
@@ -7,8 +8,6 @@ export type TransientRecoveryConstants = {
 
 export const loadTransientRecoveryConstants =
   async (): Promise<TransientRecoveryConstants> => {
-    const { DEFAULT_TRANSIENT_RECOVERY_SETTINGS, TRANSIENT_RECOVERY_KEYS } =
-      await import('@/features/observability/constants');
     return {
       DEFAULT_TRANSIENT_RECOVERY_SETTINGS,
       TRANSIENT_RECOVERY_KEYS,

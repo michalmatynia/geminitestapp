@@ -18,7 +18,7 @@ import {
   typeStyles,
   type AiNode,
   type Edge,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import type {
   CaseResolverAssetFile,
   CaseResolverFile,

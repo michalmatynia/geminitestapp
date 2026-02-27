@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { validatorPatternListSchema, validatorScopeSchema, type ValidatorScope } from './admin';
+import { validatorPatternListSchema, validatorScopeSchema, type ValidatorScope } from './validator';
 import {
   promptExploderSegmentTypeSchema,
   promptExploderLearnedTemplateSchema,

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
+import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
 import type { ChatbotSettingsDto as ChatbotSettingsPayload } from '@/shared/contracts/chatbot';
 import { useToast } from '@/shared/ui';
 
@@ -10,7 +11,7 @@ import {
   CHATBOT_SETTINGS_KEY,
   DEFAULT_CHATBOT_SETTINGS,
 } from '../utils/constants';
-import { useChatbotSettings, useChatbotModels } from './useChatbotQueries';
+import { useChatbotSettings } from './useChatbotQueries';
 import { useSaveChatbotSettings } from './useChatbotMutations';
 
 export interface UseChatbotSettingsStateReturn {
@@ -124,7 +125,9 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
   const settingsLoadedRef = useRef<boolean>(false);
 
   // External settings & data
-  const modelsQuery = useChatbotModels();
+  const brainModelOptions = useBrainModelOptions({
+    feature: 'chatbot',
+  });
   const settingsQuery = useChatbotSettings(CHATBOT_SETTINGS_KEY);
   const saveMutation = useSaveChatbotSettings();
 
@@ -359,10 +362,10 @@ export function useChatbotSettingsState(): UseChatbotSettingsStateReturn {
   };
 
   return {
-    modelOptions: modelsQuery.data ?? [],
+    modelOptions: brainModelOptions.models,
     model,
     setModel,
-    modelLoading: modelsQuery.isLoading,
+    modelLoading: brainModelOptions.isLoading,
     webSearchEnabled,
     setWebSearchEnabled,
     useGlobalContext,

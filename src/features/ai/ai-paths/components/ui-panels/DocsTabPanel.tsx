@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 import { 
   AI_PATHS_NODE_DOCS, 
   buildAiPathsNodeDocJsonSnippet 
-} from '@/features/ai/ai-paths/lib/core/docs/node-docs';
+} from '@/shared/lib/ai-paths/core/docs/node-docs';
 import {
   Button,
   CollapsibleSection,

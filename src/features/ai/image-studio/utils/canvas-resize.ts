@@ -1,4 +1,4 @@
-import type { VectorShape } from '@/features/vector-drawing';
+import type { VectorShape } from '@/shared/lib/vector-drawing';
 
 export type CanvasResizeDirection =
   | 'up-left'

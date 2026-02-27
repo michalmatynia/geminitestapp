@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import { useCanvasRefs } from '@/features/ai/ai-paths/context/CanvasContext';
 import { useSelectionActions, useSelectionState } from '@/features/ai/ai-paths/context/SelectionContext';
-import type { AiNode, Edge, NodeDefinition } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, NodeDefinition } from '@/shared/lib/ai-paths';
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -21,7 +21,7 @@ import {
   resolveNodeTypeId,
   sanitizeEdges,
   validateConnection,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { type ConfirmConfig, useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { DRAG_KEYS, getFirstDragValue, setDragData } from '@/shared/utils/drag-drop';
 

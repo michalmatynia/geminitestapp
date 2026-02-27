@@ -4,7 +4,7 @@ import React, { createContext, useContext, useState, useCallback, useMemo, useRe
 
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
-import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { ColorSchemeColors, ColorScheme, ThemeSettings } from '@/shared/contracts/cms-theme';
@@ -79,17 +79,18 @@ export function ThemeColorsProvider({ children }: { children: React.ReactNode })
   
   const [isGlobalPaletteOpen, setIsGlobalPaletteOpen] = useState(false);
 
-  const modelsQuery = useChatbotModels({ enabled: schemeView === 'edit' && schemeAiProvider === 'model' });
+  const brainModelOptions = useBrainModelOptions({
+    feature: 'cms_builder',
+    enabled: schemeView === 'edit' && schemeAiProvider === 'model',
+  });
   const teachingAgentsQuery = useTeachingAgents({ enabled: schemeView === 'edit' && schemeAiProvider === 'agent' });
   
   const modelOptions = useMemo((): string[] => {
-    // Defensive: query cache may contain malformed non-array payloads.
-    const models = Array.isArray(modelsQuery.data) ? modelsQuery.data : [];
-    const fromApi = models
+    const fromApi = brainModelOptions.models
       .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
       .map((value) => value.trim());
     return Array.from(new Set(fromApi));
-  }, [modelsQuery.data]);
+  }, [brainModelOptions.models]);
 
   const agentOptions = useMemo(
     (): Array<{ label: string; value: string }> => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),

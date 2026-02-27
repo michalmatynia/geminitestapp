@@ -10,8 +10,8 @@ import {
   FormSection,
   FormField,
 } from '@/shared/ui';
-import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import { useAnimationConfigContext } from '../AnimationConfigContext';
 import type { VectorOverlayResult } from '../../../hooks/usePageBuilderContext';

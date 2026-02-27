@@ -6,7 +6,7 @@ import React, { useCallback } from 'react';
 import {
   type VectorToolMode,
   VectorDrawingToolbar,
-} from '@/features/vector-drawing';
+} from '@/shared/lib/vector-drawing';
 import { Button, MultiSelect, SelectSimple } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

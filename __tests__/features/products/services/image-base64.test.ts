@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { buildImageBase64Slots } from '@/features/products/services/image-base64';
 
-vi.mock('@/features/observability/services/error-system', () => ({
+vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     logWarning: vi.fn().mockResolvedValue(undefined),
   },

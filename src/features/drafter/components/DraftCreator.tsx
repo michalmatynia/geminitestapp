@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useDraft, useCreateDraft, useUpdateDraft } from '@/features/drafter/hooks/useDraftQueries';
 import { draftSubmitSchema } from '@/features/drafter/validations/draft-form';
-import { IconSelector } from '@/features/icons';
+import { IconSelector } from '@/shared/lib/icons';
 import { CreateProductDraftInput, UpdateProductDraftInput } from '@/features/products';
 import type {
   ProductCategoryDto,

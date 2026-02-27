@@ -5,7 +5,7 @@ import { useCallback, useRef, useState, useEffect } from 'react';
 
 
 
-import { logClientError } from '@/features/observability/utils/client-error-logger';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { decodeSimpleParameterStorageId } from '@/features/products/utils/parameter-partition';
 import type {
   ProductWithImages,

@@ -5,7 +5,7 @@ import React, { useCallback, useMemo, useRef, useEffect } from 'react';
 
 import {
   stableStringify,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import type { FilemakerPartyKind } from '@/features/filemaker';
 import {
   resolveFilemakerPartyLabel,

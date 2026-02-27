@@ -3,7 +3,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { DatabaseInfo, DatabaseType } from '@/shared/contracts/database';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import {

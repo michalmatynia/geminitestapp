@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type ImageFormat = 'webp' | 'avif' | 'jpeg' | 'png';
 export type ImageSize = 'thumbnail' | 'small' | 'medium' | 'large' | 'original';

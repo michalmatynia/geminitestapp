@@ -15,8 +15,8 @@
 
 import { useMemo, useRef } from 'react';
 
-import { NODE_WIDTH, getPortOffsetY } from '@/features/ai/ai-paths/lib';
-import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
+import { NODE_WIDTH, getPortOffsetY } from '@/shared/lib/ai-paths';
+import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 
 import { useGraphState } from '../GraphContext';
 

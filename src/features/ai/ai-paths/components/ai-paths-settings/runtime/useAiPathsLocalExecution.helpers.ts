@@ -1,7 +1,7 @@
 import type {
   AiNode,
   RuntimePortValues,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 export const isPlainRecord = (value: unknown): value is Record<string, unknown> =>
   Boolean(value) && typeof value === 'object' && !Array.isArray(value);

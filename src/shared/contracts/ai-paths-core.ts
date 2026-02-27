@@ -918,6 +918,7 @@ export const modelConfigSchema = z.object({
   maxTokens: z.number(),
   vision: z.boolean(),
   waitForResult: z.boolean().optional(),
+  systemPrompt: z.string().optional(),
 });
 
 export type ModelConfigDto = z.infer<typeof modelConfigSchema>;

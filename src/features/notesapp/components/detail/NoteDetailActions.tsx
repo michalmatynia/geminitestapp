@@ -35,12 +35,16 @@ export function NoteDetailActions(): React.JSX.Element | null {
       </Button>
       <Button
         type='button'
-        onClick={(): void => { void handleToggleFavorite(selectedNote); }}
+        onClick={(): void => {
+          void handleToggleFavorite(selectedNote);
+        }}
         className='flex items-center gap-2 border border-white/20 hover:border-white/40'
       >
         <Star
           size={16}
-          className={selectedNote.isFavorite ? 'fill-yellow-400 text-yellow-500' : ''}
+          className={
+            selectedNote.isFavorite ? 'fill-yellow-400 text-yellow-500' : ''
+          }
         />
         <span className='text-sm'>
           {selectedNote.isFavorite ? 'Favorited' : 'Favorite'}
@@ -59,7 +63,9 @@ export function NoteDetailActions(): React.JSX.Element | null {
             type='button'
             form='note-edit-form'
             onClick={(): void => {
-              const form = document.getElementById('note-edit-form') as HTMLFormElement;
+              const form = document.getElementById(
+                'note-edit-form',
+              ) as HTMLFormElement;
               form?.requestSubmit();
             }}
             className='min-w-[80px] border border-white/20 hover:border-white/40'
@@ -75,7 +81,9 @@ export function NoteDetailActions(): React.JSX.Element | null {
           </Button>
           <Button
             type='button'
-            onClick={(): void => { void handleDeleteNote(); }}
+            onClick={(): void => {
+              void handleDeleteNote();
+            }}
             className='min-w-[80px] border border-red-500/20 hover:border-red-500/40 text-red-400'
           >
             Delete
@@ -87,7 +95,9 @@ export function NoteDetailActions(): React.JSX.Element | null {
           location='note_modal'
           entityType='note'
           entityId={selectedNote.id}
-          getEntityJson={() => selectedNote as unknown as Record<string, unknown>}
+          getEntityJson={() =>
+            selectedNote as unknown as Record<string, unknown>
+          }
         />
       </div>
     </div>

@@ -6,7 +6,10 @@ import { CreateNoteModal } from '@/features/notesapp/components/CreateNoteModal'
 import { NoteDetailView } from '@/features/notesapp/components/NoteDetailView';
 import { NoteListView } from '@/features/notesapp/components/NoteListView';
 import { NotesAppFolderTree } from '@/features/notesapp/components/NotesAppFolderTree';
-import { NotesAppProvider, useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
+import {
+  NotesAppProvider,
+  useNotesAppContext,
+} from '@/features/notesapp/hooks/NotesAppContext';
 import { Card } from '@/shared/ui';
 
 function AdminNotesPageContent(): React.JSX.Element {
@@ -42,7 +45,11 @@ function AdminNotesPageContent(): React.JSX.Element {
         </Card>
 
         {/* Main Content */}
-        <Card variant='subtle' padding='lg' className='flex min-h-0 flex-col overflow-hidden border-border/60 bg-card/40'>
+        <Card
+          variant='subtle'
+          padding='lg'
+          className='flex min-h-0 flex-col overflow-hidden border-border/60 bg-card/40'
+        >
           {selectedNote ? <NoteDetailView /> : <NoteListView />}
         </Card>
 

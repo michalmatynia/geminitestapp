@@ -5,7 +5,7 @@ import { useToast } from '@/shared/ui';
 import { ApiError } from '@/shared/lib/api-client';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getSectionDefinition } from '../../section-registry';
 import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
 import { usePageBuilderState, usePageBuilderDispatch } from '../../../../hooks/usePageBuilderContext';

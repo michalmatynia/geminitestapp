@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useSavePriceGroupMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { PriceGroup } from '@/shared/contracts/products';
 import { useToast } from '@/shared/ui';

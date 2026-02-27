@@ -9,14 +9,14 @@ import {
   createRegexTemplateId,
   parseRegexTemplatesStore,
   renderTemplate,
-} from '@/features/ai/ai-paths/lib';
-import type { RegexConfig, RegexTemplate } from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
+import type { RegexConfig, RegexTemplate } from '@/shared/lib/ai-paths';
 import {
   fetchAiPathsSettingsCached,
   updateAiPathsSetting,
-} from '@/features/ai/ai-paths/lib/settings-store-client';
-import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+} from '@/shared/lib/ai-paths/settings-store-client';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 import { createListQueryV2, createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import {

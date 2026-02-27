@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 
 import { AdminLayout } from '@/features/admin/layout/AdminLayout';
 import { auth, getUserPreferences } from '@/features/auth/server';
-import { MasterFolderTreeRuntimeProvider } from '@/features/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
+import { MasterFolderTreeRuntimeProvider } from '@/shared/lib/foldertree/v2/runtime/MasterFolderTreeRuntimeProvider';
 import { SettingsStoreProvider } from '@/shared/providers/SettingsStoreProvider';
 
 import type { JSX } from 'react';

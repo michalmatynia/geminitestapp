@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { type VectorShape, type VectorToolMode } from '@/features/vector-drawing';
+import { type VectorShape, type VectorToolMode } from '@/shared/lib/vector-drawing';
 import { api } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
 

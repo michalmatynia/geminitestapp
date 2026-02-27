@@ -1,7 +1,7 @@
 'use client';
 
-import type { AudioWaveform } from '@/features/ai/ai-paths/lib';
-import { toNumber } from '@/features/ai/ai-paths/lib';
+import type { AudioWaveform } from '@/shared/lib/ai-paths';
+import { toNumber } from '@/shared/lib/ai-paths';
 import {
   Input,
   

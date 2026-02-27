@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { countFolderStructure, countMultipleFolders, type FolderNode } from '@/features/foldertree/utils/folderImporter';
+import { countFolderStructure, countMultipleFolders, type FolderNode } from '@/shared/lib/foldertree/utils/folderImporter';
 
 describe('folderImporter utils', () => {
   const mockNode: FolderNode = {

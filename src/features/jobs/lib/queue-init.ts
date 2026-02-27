@@ -2,7 +2,7 @@ import 'server-only';
 
 import { Redis } from 'ioredis';
 
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { isRedisAvailable } from '@/shared/lib/queue/redis-connection';
 import { startAllWorkers } from '@/shared/lib/queue/registry';
 

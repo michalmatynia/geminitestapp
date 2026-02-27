@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { internalError } from '@/shared/errors/app-error';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import {

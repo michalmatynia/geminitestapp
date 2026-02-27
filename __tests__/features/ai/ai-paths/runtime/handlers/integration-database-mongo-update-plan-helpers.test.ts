@@ -5,7 +5,7 @@ import {
   buildMongoUpdatesFromMappings,
   extractMissingTemplatePorts,
   resolveMongoUpdateFilter,
-} from '@/features/ai/ai-paths/lib/core/runtime/handlers/integration-database-mongo-update-plan-helpers';
+} from '@/shared/lib/ai-paths/core/runtime/handlers/integration-database-mongo-update-plan-helpers';
 
 describe('Mongo update plan helpers', () => {
   it('resolves filter from parsed query template object', () => {

@@ -3,7 +3,7 @@ import 'server-only';
 import { randomUUID } from 'crypto';
 
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
-import { ErrorSystem } from '@/features/observability/services/error-system';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiPathRuntimeAnalyticsRange,
   AiPathRuntimeAnalyticsSummary,

@@ -4,7 +4,7 @@ import { SaveIcon } from 'lucide-react';
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, useToast, SectionHeader, FormSection, Badge, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';

@@ -9,11 +9,11 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
   AiPathRuntimeEvent,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   runsApi,
-} from '@/features/ai/ai-paths/lib';
-import { logClientError } from '@/features/observability';
+} from '@/shared/lib/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   invalidateAiPathQueue,
   notifyAiPathRunEnqueued,

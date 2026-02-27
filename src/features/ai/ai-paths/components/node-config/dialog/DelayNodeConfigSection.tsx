@@ -2,7 +2,7 @@
 
 
 
-import { toNumber } from '@/features/ai/ai-paths/lib';
+import { toNumber } from '@/shared/lib/ai-paths';
 import { Input,  FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { tickDatabaseBackupScheduler } from '@/features/database/services/database-backup-scheduler';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getDatabaseEngineBackupSchedule } from '@/shared/lib/db/database-engine-policy';
 import { createManagedQueue } from '@/shared/lib/queue';
 

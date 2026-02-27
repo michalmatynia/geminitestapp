@@ -1,4 +1,4 @@
-import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 
 export type MarqueeMode = 'replace' | 'add' | 'subtract';
 

@@ -62,35 +62,41 @@ const convertNote = (note: NotePrismaResult): NoteWithRelations => ({
       updatedAt: t.tag.updatedAt.toISOString(),
     },
   })),
-  categories: note.categories.map((c: NotePrismaResult['categories'][number]) => ({
-    noteId: c.noteId,
-    categoryId: c.categoryId,
-    assignedAt: c.assignedAt.toISOString(),
-    category: {
-      id: c.category.id,
-      name: c.category.name,
-      description: c.category.description,
-      color: c.category.color,
-      parentId: c.category.parentId,
-      notebookId: c.category.notebookId,
-      themeId: c.category.themeId,
-      sortIndex: c.category.sortIndex,
-      createdAt: c.category.createdAt.toISOString(),
-      updatedAt: c.category.updatedAt.toISOString(),
-    },
-  })),
-  relationsFrom: note.relationsFrom.map((r: NotePrismaResult['relationsFrom'][number]) => ({
-    sourceNoteId: r.sourceNoteId,
-    targetNoteId: r.targetNoteId,
-    assignedAt: r.assignedAt.toISOString(),
-    targetNote: r.targetNote,
-  })),
-  relationsTo: note.relationsTo.map((r: NotePrismaResult['relationsTo'][number]) => ({
-    sourceNoteId: r.sourceNoteId,
-    targetNoteId: r.targetNoteId,
-    assignedAt: r.assignedAt.toISOString(),
-    sourceNote: r.sourceNote,
-  })),
+  categories: note.categories.map(
+    (c: NotePrismaResult['categories'][number]) => ({
+      noteId: c.noteId,
+      categoryId: c.categoryId,
+      assignedAt: c.assignedAt.toISOString(),
+      category: {
+        id: c.category.id,
+        name: c.category.name,
+        description: c.category.description,
+        color: c.category.color,
+        parentId: c.category.parentId,
+        notebookId: c.category.notebookId,
+        themeId: c.category.themeId,
+        sortIndex: c.category.sortIndex,
+        createdAt: c.category.createdAt.toISOString(),
+        updatedAt: c.category.updatedAt.toISOString(),
+      },
+    }),
+  ),
+  relationsFrom: note.relationsFrom.map(
+    (r: NotePrismaResult['relationsFrom'][number]) => ({
+      sourceNoteId: r.sourceNoteId,
+      targetNoteId: r.targetNoteId,
+      assignedAt: r.assignedAt.toISOString(),
+      targetNote: r.targetNote,
+    }),
+  ),
+  relationsTo: note.relationsTo.map(
+    (r: NotePrismaResult['relationsTo'][number]) => ({
+      sourceNoteId: r.sourceNoteId,
+      targetNoteId: r.targetNoteId,
+      assignedAt: r.assignedAt.toISOString(),
+      sourceNote: r.sourceNote,
+    }),
+  ),
   files: note.files.map((f: NotePrismaResult['files'][number]) => ({
     id: f.id,
     noteId: f.noteId,
@@ -107,7 +113,7 @@ const convertNote = (note: NotePrismaResult): NoteWithRelations => ({
 });
 
 export const getAll = async (
-  filters: NoteFilters
+  filters: NoteFilters,
 ): Promise<NoteWithRelations[]> => {
   const {
     search,
@@ -172,7 +178,9 @@ export const getAll = async (
   return notes.map(convertNote);
 };
 
-export const getById = async (id: string): Promise<NoteWithRelations | null> => {
+export const getById = async (
+  id: string,
+): Promise<NoteWithRelations | null> => {
   const note = await prisma.note.findUnique({
     where: { id },
     include: noteInclude,
@@ -182,7 +190,7 @@ export const getById = async (id: string): Promise<NoteWithRelations | null> => 
 };
 
 export const create = async (
-  data: NoteCreateInput
+  data: NoteCreateInput,
 ): Promise<NoteWithRelations> => {
   const { tagIds, categoryIds, relatedNoteIds, notebookId } = data;
   const resolvedNotebookId =
@@ -201,7 +209,9 @@ export const create = async (
 
   if (tagIds) {
     createData.tags = {
-      create: tagIds.map((tagId: string) => ({ tag: { connect: { id: tagId } } })),
+      create: tagIds.map((tagId: string) => ({
+        tag: { connect: { id: tagId } },
+      })),
     };
   }
 
@@ -231,7 +241,7 @@ export const create = async (
 
 export const update = async (
   id: string,
-  data: NoteUpdateInput
+  data: NoteUpdateInput,
 ): Promise<NoteWithRelations | null> => {
   const { tagIds, categoryIds, relatedNoteIds, notebookId } = data;
 
@@ -251,7 +261,9 @@ export const update = async (
   if (tagIds !== undefined) {
     updateData.tags = {
       deleteMany: {},
-      create: tagIds.map((tagId: string) => ({ tag: { connect: { id: tagId } } })),
+      create: tagIds.map((tagId: string) => ({
+        tag: { connect: { id: tagId } },
+      })),
     };
   }
 
@@ -288,7 +300,7 @@ export const update = async (
 export const syncRelatedNotesBatch = async (
   noteId: string,
   addedIds: string[],
-  removedIds: string[]
+  removedIds: string[],
 ): Promise<void> => {
   if (addedIds.length === 0 && removedIds.length === 0) return;
 

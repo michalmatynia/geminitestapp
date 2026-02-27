@@ -12,7 +12,7 @@ import type {
   PathDebugSnapshot,
   RuntimeState,
   UpdaterSampleState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { useToast } from '@/shared/ui';
 
 import {

@@ -5,12 +5,12 @@ import React, { useCallback, useEffect, useMemo, useRef } from 'react';
 
 import {
   useMasterFolderTreeInstance,
-} from '@/features/foldertree';
+} from '@/shared/lib/foldertree';
 import {
   FolderTreeViewportV2,
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,
-} from '@/features/foldertree/v2';
+} from '@/shared/lib/foldertree/v2';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
   type MasterTreeDropPosition,

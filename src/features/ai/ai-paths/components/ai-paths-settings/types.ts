@@ -27,7 +27,7 @@ import type {
   DbQueryPreset,
   DbNodePreset,
   ClusterPreset,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import type { ClusterPresetDraft } from '../cluster-presets-panel';
 import type { RunHistoryFilter } from '../run-history-panel';
 import type { HistoryNodeOption } from '../run-history-utils';

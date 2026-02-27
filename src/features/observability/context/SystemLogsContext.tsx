@@ -6,8 +6,8 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 
 import { useClearLogsMutation, useRebuildIndexesMutation, useRunLogInsight, useInterpretLog } from '@/features/observability/hooks/useLogMutations';
 import { useSystemLogs, useSystemLogMetrics, useMongoDiagnostics, useLogInsights } from '@/features/observability/hooks/useLogQueries';
-import { readSystemLogUrlState, writeSystemLogUrlState } from '@/features/observability/lib/system-log-filter-url-state';
-import { logClientError } from '@/features/observability/utils/client-error-logger';
+import { readSystemLogUrlState, writeSystemLogUrlState } from '../lib/system-log-filter-url-state';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type { 
   MongoCollectionIndexStatusDto as MongoCollectionIndexStatus,

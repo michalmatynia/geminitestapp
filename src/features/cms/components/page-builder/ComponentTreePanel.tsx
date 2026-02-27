@@ -5,8 +5,8 @@ import React, { useMemo, useState } from 'react';
 
 import {
   useMasterFolderTreeInstance,
-} from '@/features/foldertree';
-import { FolderTreeViewportV2 } from '@/features/foldertree/v2';
+} from '@/shared/lib/foldertree';
+import { FolderTreeViewportV2 } from '@/shared/lib/foldertree/v2';
 import type { 
   PageZone, 
   SectionInstance,

@@ -7,7 +7,7 @@ import type {
   Edge,
   RuntimeState,
   SvgDetailLevel,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { type ConnectorInfo } from './canvas-board-connectors';
 import { type EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 

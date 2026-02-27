@@ -8,7 +8,7 @@ import type {
   DbQueryConfig,
   UpdaterMapping,
   UpdaterSampleState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import type { AiQuery, DatabasePresetOption, SchemaData } from '@/shared/contracts/database';
 
 export type DatabaseConstructorContextValue = {

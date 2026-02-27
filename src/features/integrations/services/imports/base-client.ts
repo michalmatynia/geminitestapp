@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { withTransientRecovery } from '@/features/observability/server';
+import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';
 import { externalServiceError } from '@/shared/errors/app-error';
 
 import {

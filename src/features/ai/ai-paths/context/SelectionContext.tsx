@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 
-import type { AiNode } from '@/features/ai/ai-paths/lib';
+import type { AiNode } from '@/shared/lib/ai-paths';
 
 export type SelectionToolMode = 'pan' | 'select';
 export type SelectionScopeMode = 'portion' | 'wiring';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { VectorShape } from '@/features/vector-drawing';
+import type { VectorShape } from '@/shared/lib/vector-drawing';
 
 import {
   applyCanvasResizeLocalTransform,

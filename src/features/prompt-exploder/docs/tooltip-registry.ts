@@ -4,8 +4,8 @@ import {
   DOCUMENTATION_MODULE_IDS,
   getDocumentationEntry,
   resolveDocumentationEntryFromElement,
-} from '@/features/documentation';
-import { formatDocumentationTooltip } from '@/features/tooltip-engine';
+} from '@/shared/lib/documentation';
+import { formatDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 
 import { type PromptExploderDocEntry } from './catalog';
 

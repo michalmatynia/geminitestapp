@@ -8,7 +8,7 @@ import {
   handleGate, 
   handleBundle, 
   handleDelay 
-} from '@/features/ai/ai-paths/lib/core/runtime/handlers/common';
+} from '@/shared/lib/ai-paths/core/runtime/handlers/common';
 
 import { createMockContext } from '../../test-utils';
 

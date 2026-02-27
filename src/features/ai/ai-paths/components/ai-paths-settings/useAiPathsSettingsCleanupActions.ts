@@ -13,8 +13,8 @@ import type {
   PathRunMode,
   RuntimeState,
   UpdaterSampleState,
-} from '@/features/ai/ai-paths/lib';
-import { STORAGE_VERSION } from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
+import { STORAGE_VERSION } from '@/shared/lib/ai-paths';
 
 type ConfirmFn = (input: {
   title: string;

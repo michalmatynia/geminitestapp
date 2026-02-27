@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/features/observability/services/error-system';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { AiPathRunRepository } from '@/shared/contracts/ai-paths';
 
 import { getPathRunRepository } from './path-run-repository';

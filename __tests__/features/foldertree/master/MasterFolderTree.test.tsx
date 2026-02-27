@@ -5,8 +5,8 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { MasterFolderTree } from '@/features/foldertree/master/MasterFolderTree';
-import { useMasterFolderTree } from '@/features/foldertree/master/useMasterFolderTree';
+import { MasterFolderTree } from '@/shared/lib/foldertree/master/MasterFolderTree';
+import { useMasterFolderTree } from '@/shared/lib/foldertree/master/useMasterFolderTree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 
 const createNodes = (): MasterTreeNode[] => [

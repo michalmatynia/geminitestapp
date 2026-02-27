@@ -13,7 +13,7 @@ import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';
 import { internalError } from '@/shared/errors/app-error';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   CASE_RESOLVER_CATEGORIES_KEY,

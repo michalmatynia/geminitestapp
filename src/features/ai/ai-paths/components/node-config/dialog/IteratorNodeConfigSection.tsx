@@ -3,8 +3,8 @@
 import React from 'react';
 
 
-import type { IteratorConfig } from '@/features/ai/ai-paths/lib';
-import { formatRuntimeValue } from '@/features/ai/ai-paths/lib';
+import type { IteratorConfig } from '@/shared/lib/ai-paths';
+import { formatRuntimeValue } from '@/shared/lib/ai-paths';
 import { Input, Textarea, ToggleRow, FormField, Card, Badge, StatusBadge } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

@@ -1,4 +1,4 @@
-import type { PromptValidationRule, PromptValidationSettings, PromptValidationSeverity, PromptValidationSimilarPattern } from '@/features/prompt-engine/settings';
+import type { PromptValidationRule, PromptValidationSettings, PromptValidationSeverity, PromptValidationSimilarPattern } from '@/shared/lib/prompt-engine/settings';
 
 import { extractParamsFromPrompt } from './prompt-params';
 

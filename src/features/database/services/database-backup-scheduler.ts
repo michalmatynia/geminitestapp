@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { enqueueProductAiJob } from '@/features/jobs/services/productAiService';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   DatabaseBackupSchedulerTickResult,
   DatabaseEngineBackupSchedulerStatus,

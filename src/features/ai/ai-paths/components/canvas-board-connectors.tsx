@@ -4,7 +4,7 @@ import type {
   AiNode,
   Edge,
   PortDataType,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   arePortTypesCompatible,
   formatPortDataTypes,
@@ -12,7 +12,7 @@ import {
   getPortDataTypes,
   getValueTypeLabel,
   isValueCompatibleWithTypes,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 import { formatPortLabel } from '../utils/ui-utils';
 

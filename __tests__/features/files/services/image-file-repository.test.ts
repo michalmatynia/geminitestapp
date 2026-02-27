@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { prismaImageFileRepository } from '@/features/files/services/image-file-repository/prisma-image-file-repository';
+import { prismaImageFileRepository } from '@/shared/lib/files/services/image-file-repository/prisma-image-file-repository';
 import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/shared/lib/db/prisma', () => ({

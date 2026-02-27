@@ -10,7 +10,8 @@ import {
   type ImageStudioSequenceMaskContext,
   type ImageStudioSequenceRunRecord,
 } from '@/features/ai/image-studio/server/sequence-run-repository';
-import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 import { publishRunEvent } from '@/shared/lib/redis-pubsub';
 

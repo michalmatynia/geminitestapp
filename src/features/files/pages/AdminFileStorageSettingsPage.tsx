@@ -11,7 +11,7 @@ import type {
   FastCometStorageConfig,
   FileStorageSource,
 } from '@/features/files/constants/storage-settings';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
   FormField,

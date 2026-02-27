@@ -12,7 +12,7 @@ import prisma from '@/shared/lib/db/prisma';
 import { getOrCreateDefaultNotebook } from './notebook-impl';
 
 export const getAllThemes = async (
-  notebookId?: string | null
+  notebookId?: string | null,
 ): Promise<ThemeRecord[]> => {
   const resolvedNotebookId =
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
@@ -30,16 +30,19 @@ export const getAllThemes = async (
 
 export const getThemeById = async (id: string): Promise<ThemeRecord | null> => {
   const theme = await prisma.theme.findUnique({ where: { id } });
-  return theme ? {
-    ...theme,
-    isDefault: (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
-    createdAt: theme.createdAt.toISOString(),
-    updatedAt: theme.updatedAt?.toISOString() ?? null,
-  } : null;
+  return theme
+    ? {
+      ...theme,
+      isDefault:
+          (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
+      createdAt: theme.createdAt.toISOString(),
+      updatedAt: theme.updatedAt?.toISOString() ?? null,
+    }
+    : null;
 };
 
 export const createTheme = async (
-  data: ThemeCreateInput
+  data: ThemeCreateInput,
 ): Promise<ThemeRecord> => {
   const resolvedNotebookId =
     data.notebookId ?? (await getOrCreateDefaultNotebook()).id;
@@ -90,7 +93,7 @@ export const createTheme = async (
 
 export const updateTheme = async (
   id: string,
-  data: ThemeUpdateInput
+  data: ThemeUpdateInput,
 ): Promise<ThemeRecord | null> => {
   try {
     const updateData: Prisma.ThemeUpdateInput = {
@@ -134,7 +137,8 @@ export const updateTheme = async (
     });
     return {
       ...theme,
-      isDefault: (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
+      isDefault:
+        (theme as unknown as { isDefault?: boolean }).isDefault ?? false,
       createdAt: theme.createdAt.toISOString(),
       updatedAt: theme.updatedAt?.toISOString() ?? null,
     };

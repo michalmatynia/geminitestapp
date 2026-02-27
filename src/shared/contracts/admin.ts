@@ -1,15 +1,11 @@
 import { z } from 'zod';
 
-import { dtoBaseSchema, type DtoBase } from './base';
-
-import type {
-  ProductValidationPatternDto,
-  CreateProductValidationPatternDto,
-  UpdateProductValidationPatternDto,
-  ProductValidatorSettingsDto,
-} from './products';
+import { dtoBaseSchema } from './base';
 
 export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
+
+export * from './validator';
+
 
 /**
  * Admin Activity DTOs
@@ -161,34 +157,3 @@ export const adminNavLeafSchema = z.object({
 
 export type AdminNavLeaf = z.infer<typeof adminNavLeafSchema>;
 
-/**
- * Admin Validator DTOs
- */
-
-export const validatorScopeSchema = z.enum([
-  'products',
-  'image-studio',
-  'prompt-exploder',
-  'case-resolver-prompt-exploder',
-  'case-resolver-plain-text',
-  'ai-paths',
-]);
-
-export type ValidatorScope = z.infer<typeof validatorScopeSchema>;
-
-export const validatorPatternListSchema = dtoBaseSchema.extend({
-  name: z.string(),
-  description: z.string(),
-  scope: validatorScopeSchema,
-  deletionLocked: z.boolean(),
-});
-
-export type ValidatorPatternList = z.infer<typeof validatorPatternListSchema>;
-
-export type ValidatorPattern = ProductValidationPatternDto;
-export type CreateValidatorPattern = CreateProductValidationPatternDto;
-export type UpdateValidatorPattern = UpdateProductValidationPatternDto;
-export type ValidatorSettings = ProductValidatorSettingsDto;
-export type UpdateValidatorSettings = Partial<ProductValidatorSettingsDto>;
-export type CreateValidatorPatternList = Omit<ValidatorPatternList, keyof DtoBase>;
-export type UpdateValidatorPatternList = Partial<CreateValidatorPatternList>;

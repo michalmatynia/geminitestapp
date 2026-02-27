@@ -2,13 +2,13 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 import { 
   GraphExecutionCancelled,
-} from '@/features/ai/ai-paths/lib';
-import { evaluateGraphWithIteratorAutoContinue } from '@/features/ai/ai-paths/lib/core/runtime/engine-server';
+} from '@/shared/lib/ai-paths';
+import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
 import { executePathRun } from '@/features/ai/ai-paths/services/path-run-executor';
 import type { AiNode, Edge, AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 // Mock evaluateGraphWithIteratorAutoContinue directly in its source module
-vi.mock('@/features/ai/ai-paths/lib/core/runtime/engine-server', () => ({
+vi.mock('@/shared/lib/ai-paths/core/runtime/engine-server', () => ({
   evaluateGraphWithIteratorAutoContinue: vi.fn(),
 }));
 

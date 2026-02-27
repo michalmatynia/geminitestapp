@@ -7,7 +7,7 @@ import type {
   ImportValidationPatternsPayload,
   ImportValidationPatternsResult,
 } from '@/features/products/api/settings';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   AppModal,
   Button,

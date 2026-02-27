@@ -1,4 +1,4 @@
-import type { DataContractNodeIssueSummary } from '@/features/ai/ai-paths/lib';
+import type { DataContractNodeIssueSummary } from '@/shared/lib/ai-paths';
 
 export const BLOCKER_PROCESSING_STATUSES = new Set<string>([
   'running',

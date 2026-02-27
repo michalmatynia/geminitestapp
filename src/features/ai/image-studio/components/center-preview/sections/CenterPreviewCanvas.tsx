@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Locate } from 'lucide-react';
-import { VectorDrawingCanvas, VectorDrawingProvider } from '@/features/vector-drawing';
+import { VectorDrawingCanvas, VectorDrawingProvider } from '@/shared/lib/vector-drawing';
 import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import { Button, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
@@ -12,7 +12,7 @@ import { useUiState, useUiActions } from '../../../context/UiContext';
 import { useSlotsState } from '../../../context/SlotsContext';
 import { useVersionGraphState } from '../../../context/VersionGraphContext';
 import { useMaskingState } from '../../../context/MaskingContext';
-import type { VectorDrawingContextValue } from '@/features/vector-drawing';
+import type { VectorDrawingContextValue } from '@/shared/lib/vector-drawing';
 import type { VectorShape } from '@/shared/contracts/vector';
 import type { PreviewCanvasCropRect, PreviewCanvasImageContentFrame } from '../../../context/UiContext';
 

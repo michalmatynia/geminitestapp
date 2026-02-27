@@ -4,10 +4,10 @@ import type {
   AiNode,
   AiPathRuntimeEvent,
   Edge,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   hashRuntimeValue,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 type RuntimeHashes = {
   inputs: Record<string, Record<string, string>>;

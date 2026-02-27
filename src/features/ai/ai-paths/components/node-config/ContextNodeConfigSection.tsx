@@ -10,7 +10,7 @@ import {
   parsePathList,
   safeStringify,
   toggleContextTarget,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { Button, Input, Textarea, SelectSimple, CopyButton, Label, Card, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';

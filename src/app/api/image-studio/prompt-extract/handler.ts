@@ -9,16 +9,16 @@ import {
 } from '@/features/ai/image-studio/utils/studio-settings';
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
-import { formatProgrammaticPrompt } from '@/features/prompt-engine/prompt-formatter';
+import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-formatter';
 import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 import {
   type PromptValidationIssue,
   validateProgrammaticPrompt,
-} from '@/features/prompt-engine/prompt-validator';
+} from '@/shared/lib/prompt-engine/prompt-validator';
 import {
   parsePromptEngineSettings,
   PROMPT_ENGINE_SETTINGS_KEY,
-} from '@/features/prompt-engine/settings';
+} from '@/shared/lib/prompt-engine/settings';
 import type { PromptValidationSettingsDto as PromptValidationSettings } from '@/shared/contracts/prompt-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, badRequestError, internalError } from '@/shared/errors/app-error';

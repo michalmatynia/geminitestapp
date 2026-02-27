@@ -2,7 +2,7 @@ import 'server-only';
 
 import OpenAI from 'openai';
 
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   apiKeyInvalidError,
   configurationError,

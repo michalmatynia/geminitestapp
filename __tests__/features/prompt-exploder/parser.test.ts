@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type {
   PromptExploderRuleSegmentType,
   PromptValidationRule,
-} from '@/features/prompt-engine/settings';
+} from '@/shared/lib/prompt-engine/settings';
 import {
   explodePromptText,
   reassemblePromptSegments,

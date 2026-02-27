@@ -10,7 +10,7 @@ import {
   SelectSimple, 
   ToggleRow 
 } from '@/shared/ui';
-import type { RegexConfig } from '@/features/ai/ai-paths/lib';
+import type { RegexConfig } from '@/shared/lib/ai-paths';
 import { extractRegexLiteral, normalizeRegexFlags } from '../regex-node-config-preview';
 
 export type RegexConfigBasicTabProps = {

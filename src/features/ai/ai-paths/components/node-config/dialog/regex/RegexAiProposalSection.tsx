@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button, SelectSimple } from '@/shared/ui';
-import type { RegexConfig } from '@/features/ai/ai-paths/lib';
+import type { RegexConfig } from '@/shared/lib/ai-paths';
 
 export type RegexAiProposalSectionProps = {
   regexConfig: RegexConfig;

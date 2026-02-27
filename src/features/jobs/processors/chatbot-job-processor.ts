@@ -1,71 +1,81 @@
+import { resolveBrainModelExecutionConfig } from '@/features/ai/brain/server';
+import { runChatbotModel } from '@/features/ai/chatbot/server-model-runtime';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
 
-const OLLAMA_BASE_URL = process.env['OLLAMA_BASE_URL'] || 'http://localhost:11434';
-
-type ChatMessage = {
+type ChatPayloadMessage = {
   role: string;
   content: string;
+  images?: string[];
 };
 
 type ChatPayload = {
   model?: string;
-  messages?: ChatMessage[];
+  messages?: ChatPayloadMessage[];
+  options?: Record<string, unknown>;
 };
 
-const fetchWithTimeout = async (url: string, init: RequestInit, timeoutMs: number): Promise<Response> => {
-  const controller = new AbortController();
-  const timer = setTimeout((): void => controller.abort(), timeoutMs);
-  try {
-    return await fetch(url, { ...init, signal: controller.signal });
-  } finally {
-    clearTimeout(timer);
-  }
-};
+const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
 
 export const processJob = async (jobId: string): Promise<void> => {
   const job = await chatbotJobRepository.findById(jobId);
   if (job?.status !== 'running') return;
 
   const payload = job.payload as ChatPayload;
-  if (!payload?.model || !Array.isArray(payload?.messages)) {
+  if (!Array.isArray(payload?.messages) || payload.messages.length === 0) {
+    throw new Error('Invalid job payload.');
+  }
+  const messages = payload.messages.filter(
+    (message: ChatPayloadMessage): boolean =>
+      typeof message?.role === 'string' && typeof message?.content === 'string',
+  );
+  if (messages.length !== payload.messages.length) {
     throw new Error('Invalid job payload.');
   }
 
-  const res = await fetchWithTimeout(
-    `${OLLAMA_BASE_URL}/api/chat`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: payload.model,
-        messages: payload.messages,
-        stream: false,
-      }),
-    },
-    60000
-  );
+  const brainConfig = await resolveBrainModelExecutionConfig('chatbot', {
+    defaultTemperature: 0.7,
+    defaultMaxTokens: 800,
+    defaultSystemPrompt: DEFAULT_CHATBOT_SYSTEM_PROMPT,
+  });
 
-  if (!res.ok) {
-    const detail = await res.text();
-    throw new Error(detail || res.statusText);
-  }
-
-  const data = (await res.json()) as {
-    message?: { content?: string };
-    response?: string;
-  };
-  const reply = data.message?.content || data.response || 'No response from model.';
+  const result = await runChatbotModel({
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-explicit-any
+    messages: messages as any,
+    modelId: brainConfig.modelId,
+    temperature: brainConfig.temperature,
+    maxTokens: brainConfig.maxTokens,
+    systemPrompt: brainConfig.systemPrompt,
+  });
 
   await chatbotSessionRepository.addMessage(job.sessionId, {
     role: 'assistant',
-    content: reply,
+    content: result.message || 'No response from model.',
     timestamp: new Date().toISOString(),
+    model: brainConfig.modelId,
+    metadata: {
+      brainApplied: brainConfig.brainApplied,
+    },
   });
+
+  const requestedModel =
+    typeof payload.model === 'string' && payload.model.trim().length > 0
+      ? payload.model.trim()
+      : null;
 
   await chatbotJobRepository.update(job.id, {
     status: 'completed',
+    model: brainConfig.modelId,
+    payload: {
+      ...job.payload,
+      model: brainConfig.modelId,
+      options: {
+        ...(payload.options ?? {}),
+        brainApplied: brainConfig.brainApplied,
+        ...(requestedModel ? { requestedModel } : {}),
+      },
+    },
     finishedAt: new Date(),
-    resultText: reply.slice(0, 2000),
+    resultText: (result.message || 'No response from model.').slice(0, 2000),
   });
 };

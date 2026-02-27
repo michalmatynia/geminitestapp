@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
 import { mongoProductRepository } from '@/features/products/services/product-repository/mongo-product-repository';
 import { prismaProductRepository } from '@/features/products/services/product-repository/prisma-product-repository';

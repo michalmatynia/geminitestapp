@@ -3,7 +3,7 @@
 import { Settings2 } from 'lucide-react';
 import React from 'react';
 
-import { ICON_LIBRARY_MAP } from '@/features/icons';
+import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import type { AiTriggerButtonLocation, AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { Button, ToggleRow, Tooltip } from '@/shared/ui';
 import { cn } from '@/shared/utils';

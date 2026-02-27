@@ -1,34 +1,13 @@
 import { 
   type ValidatorScope, 
   type ValidatorPatternList,
-  VALIDATOR_PATTERN_LISTS_KEY 
-} from '@/shared/contracts/admin';
+  VALIDATOR_PATTERN_LISTS_KEY,
+  VALIDATOR_SCOPE_LABELS,
+  VALIDATOR_SCOPE_DESCRIPTIONS,
+} from '@/shared/contracts/index';
 
-export { VALIDATOR_PATTERN_LISTS_KEY };
+export { VALIDATOR_PATTERN_LISTS_KEY, VALIDATOR_SCOPE_LABELS, VALIDATOR_SCOPE_DESCRIPTIONS };
 export type { ValidatorScope, ValidatorPatternList };
-
-export const VALIDATOR_SCOPE_LABELS: Record<ValidatorScope, string> = {
-  products: 'Product Patterns',
-  'image-studio': 'Image Studio Patterns',
-  'prompt-exploder': 'Image Studio - Prompt Exploder',
-  'case-resolver-prompt-exploder': 'Case Resolver - Prompt Exploder',
-  'case-resolver-plain-text': 'Case Resolver - Plain Text',
-  'ai-paths': 'AI Paths Patterns',
-};
-
-export const VALIDATOR_SCOPE_DESCRIPTIONS: Record<ValidatorScope, string> = {
-  products: '',
-  'image-studio':
-    'Image Studio patterns control prompt validation rules used in AI image workflows.',
-  'prompt-exploder':
-    'Image Studio Prompt Exploder patterns control prompt segmentation, subsection recognition, and parser behavior for exploded prompt editing in Image Studio workflows.',
-  'case-resolver-prompt-exploder':
-    'Case Resolver Prompt Exploder patterns are isolated for Case Resolver document workflows.',
-  'case-resolver-plain-text':
-    'Case Resolver Plain Text patterns normalize and convert HTML-rich document content into plain text outputs for node connectors.',
-  'ai-paths':
-    'AI Paths patterns validate and format outputs from AI model nodes within visual AI workflow paths.',
-};
 
 const DEFAULT_PATTERN_LIST_DEFS: Array<{
   id: string;
@@ -93,6 +72,8 @@ export const defaultValidatorPatternLists = (): ValidatorPatternList[] => {
     deletionLocked: true,
     createdAt: now,
     updatedAt: now,
+    patterns: [],
+    isActive: true,
   }));
 };
 
@@ -145,6 +126,8 @@ const normalizeListRecord = (
         : fallback.deletionLocked,
     createdAt,
     updatedAt,
+    patterns: Array.isArray(record['patterns']) ? record['patterns'].map(String) : fallback.patterns,
+    isActive: typeof record['isActive'] === 'boolean' ? record['isActive'] : fallback.isActive,
   };
 };
 
@@ -194,6 +177,8 @@ export const normalizeValidatorPatternLists = (
           deletionLocked: false,
           createdAt: nowIso(),
           updatedAt: nowIso(),
+          patterns: [],
+          isActive: true,
         } satisfies ValidatorPatternList);
       return normalizeListRecord(entry, fallback);
     });

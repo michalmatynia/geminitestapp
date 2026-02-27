@@ -4,7 +4,7 @@ import { PlusIcon } from 'lucide-react';
 import { memo, type ReactNode } from 'react';
 
 import { Breadcrumbs, Button, Pagination } from '@/shared/ui';
-import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
+import { FolderTreeSearchBar } from '@/shared/lib/foldertree/v2/search';
 
 type CaseListHeaderProps = {
   filtersContent: ReactNode;

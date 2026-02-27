@@ -1,4 +1,4 @@
-import { createMasterFolderTreeAdapter } from '@/features/foldertree/master/createMasterFolderTreeAdapter';
+import { createMasterFolderTreeAdapter } from '@/shared/lib/foldertree/master/createMasterFolderTreeAdapter';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 import { canMoveTreePath, normalizeTreePath } from '@/shared/utils/tree-operations';
 

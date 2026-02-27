@@ -9,11 +9,7 @@ import { NoteDetailActions } from './detail/NoteDetailActions';
 import { NoteDetailPreview } from './detail/NoteDetailPreview';
 
 export function NoteDetailView(): React.JSX.Element | null {
-  const {
-    selectedNote,
-    isEditing,
-    handleUpdateSuccess,
-  } = useNotesAppContext();
+  const { selectedNote, isEditing, handleUpdateSuccess } = useNotesAppContext();
 
   if (!selectedNote) return null;
 
@@ -24,10 +20,7 @@ export function NoteDetailView(): React.JSX.Element | null {
 
       {isEditing ? (
         <div className='flex-1 overflow-y-auto'>
-          <NoteForm
-            note={selectedNote}
-            onSuccess={handleUpdateSuccess}
-          />
+          <NoteForm note={selectedNote} onSuccess={handleUpdateSuccess} />
         </div>
       ) : (
         <NoteDetailPreview />

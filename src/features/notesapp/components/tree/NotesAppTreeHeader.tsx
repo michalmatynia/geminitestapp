@@ -33,12 +33,13 @@ export function NotesAppTreeHeader({
     setSelectedFolderId,
   } = useNotesAppContext();
 
-  const isAllNotesActive = !settings.selectedFolderId && !settings.selectedNoteId;
+  const isAllNotesActive =
+    !settings.selectedFolderId && !settings.selectedNoteId;
 
   return (
     <TreeHeader
       title='Folders'
-      actions={(
+      actions={
         <>
           <Button
             onClick={(): void => {
@@ -88,7 +89,7 @@ export function NotesAppTreeHeader({
             <ChevronRight className='size-4' />
           </Button>
         </>
-      )}
+      }
     >
       <Button
         onClick={(): void => {
@@ -111,7 +112,7 @@ export function NotesAppTreeHeader({
           filters.handleToggleFavoritesFilter(
             setSelectedFolderId,
             setSelectedNote,
-            setIsEditing
+            setIsEditing,
           );
         }}
         className={`mt-1 w-full justify-start gap-2 px-2 py-1.5 text-left text-sm ${
@@ -129,16 +130,18 @@ export function NotesAppTreeHeader({
             History
           </div>
           <div className='space-y-1'>
-            {undoHistory.slice(0, 10).map((entry: { label: string }, index: number) => (
-              <Button
-                key={`${entry.label}-${index}`}
-                type='button'
-                onClick={(): void => handleUndoAtIndex(index)}
-                className='flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-muted/50'
-              >
-                <span className='truncate'>{entry.label}</span>
-              </Button>
-            ))}
+            {undoHistory
+              .slice(0, 10)
+              .map((entry: { label: string }, index: number) => (
+                <Button
+                  key={`${entry.label}-${index}`}
+                  type='button'
+                  onClick={(): void => handleUndoAtIndex(index)}
+                  className='flex w-full items-center justify-between rounded px-1.5 py-1 text-left text-gray-300 hover:bg-muted/50'
+                >
+                  <span className='truncate'>{entry.label}</span>
+                </Button>
+              ))}
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
-import { cloneJsonSafe } from '@/features/ai/ai-paths/lib';
-import { ErrorSystem } from '@/features/observability/services/error-system';
+import { cloneJsonSafe } from '@/shared/lib/ai-paths';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiNode,
   AiPathRunRecord,

@@ -6,7 +6,7 @@ import { Button, Input, useToast } from '@/shared/ui';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { SettingsFormProvider } from './SettingsFormContext';
 import { prependManagementFields, groupSettingsFields, renderFieldGroups } from './field-group-helpers';

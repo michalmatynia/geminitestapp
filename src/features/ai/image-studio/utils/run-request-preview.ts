@@ -1,4 +1,4 @@
-import type { VectorShape } from '@/features/vector-drawing';
+import type { VectorShape } from '@/shared/lib/vector-drawing';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 
 import type { ImageStudioSettings } from './studio-settings';

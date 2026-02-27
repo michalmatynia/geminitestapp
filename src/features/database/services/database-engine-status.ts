@@ -6,7 +6,7 @@ import path from 'node:path';
 import { getAuthDataProvider } from '@/features/auth/services/auth-provider';
 import { getCmsDataProvider } from '@/features/cms/services/cms-provider';
 import { getIntegrationDataProvider } from '@/features/integrations/services/integration-provider';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getProductDataProvider } from '@/features/products/services/product-provider';
 import type {
   DatabaseEngineCollectionStatusDto,

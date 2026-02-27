@@ -1,4 +1,4 @@
-import { cloneJsonSafe } from '@/features/ai/ai-paths/lib/core/utils/runtime';
+import { cloneJsonSafe } from '@/shared/lib/ai-paths/core/utils/runtime';
 import type {
   AiPathRunNodeRecord,
   RuntimeHistoryEntry,

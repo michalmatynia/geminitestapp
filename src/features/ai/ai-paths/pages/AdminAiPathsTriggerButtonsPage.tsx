@@ -6,13 +6,13 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useAiPathsSettingsQuery } from '@/features/ai/ai-paths/hooks/useAiPathQueries';
-import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
+import { PATH_CONFIG_PREFIX, PATH_INDEX_KEY, triggerButtonsApi } from '@/shared/lib/ai-paths';
 import {
   aiTriggerButtonCreateSchema,
   type AiTriggerButtonCreatePayload,
 } from '@/features/ai/ai-paths/validations/trigger-buttons';
-import { ICON_LIBRARY, IconSelector } from '@/features/icons';
-import { logClientError } from '@/features/observability';
+import { ICON_LIBRARY, IconSelector } from '@/shared/lib/icons';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type {
   AiTriggerButtonLocation,
   AiTriggerButtonDto,

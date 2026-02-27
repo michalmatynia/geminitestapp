@@ -13,8 +13,8 @@ import {
   createPresetId,
   migrateDatabaseConfigCollections,
   parsePathList,
-} from '@/features/ai/ai-paths/lib';
-import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
+} from '@/shared/lib/ai-paths';
+import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
 import { ConfirmConfig } from '@/shared/hooks/ui/useConfirm';
 
 import type { ClusterPresetDraft } from '../cluster-presets-panel';

@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-import { isSensitiveKey } from '@/features/observability/lib/log-redaction';
+import { isSensitiveKey } from '@/shared/lib/observability/log-redaction';
 import { logClientError, setClientErrorBaseContext } from '@/features/observability/utils/client-error-logger';
 
 // Mock dependencies
-vi.mock('@/features/observability/lib/log-redaction', () => ({
+vi.mock('@/shared/lib/observability/log-redaction', () => ({
   isSensitiveKey: vi.fn(() => false),
   REDACTED_VALUE: '[REDACTED]',
   truncateString: vi.fn((s) => s),

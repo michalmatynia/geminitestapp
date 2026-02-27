@@ -5,7 +5,7 @@ import { z } from 'zod';
 import {
   normalizeAiPathsCollectionMap,
   resolveAiPathsCollectionName,
-} from '@/features/ai/ai-paths/lib/core/utils/collection-mapping';
+} from '@/shared/lib/ai-paths/core/utils/collection-mapping';
 import {
   enforceAiPathsActionRateLimit,
   isCollectionAllowed,

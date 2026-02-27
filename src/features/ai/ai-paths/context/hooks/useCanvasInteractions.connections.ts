@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
-import type { AiNode, Edge, RuntimeState } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import {
   NODE_WIDTH,
   getPortOffsetY,
   validateConnection,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import type { Toast } from '@/shared/contracts/ui';
 
 export interface UseCanvasInteractionsConnectionsValue {

@@ -3,7 +3,7 @@
 
 
 
-import { parsePathList } from '@/features/ai/ai-paths/lib';
+import { parsePathList } from '@/shared/lib/ai-paths';
 import { Button,  Textarea, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

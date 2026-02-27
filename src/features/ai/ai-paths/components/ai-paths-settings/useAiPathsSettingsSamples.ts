@@ -1,7 +1,7 @@
 import React from 'react';
 
-import type { ParserSampleState, UpdaterSampleState } from '@/features/ai/ai-paths/lib';
-import { dbApi, entityApi } from '@/features/ai/ai-paths/lib';
+import type { ParserSampleState, UpdaterSampleState } from '@/shared/lib/ai-paths';
+import { dbApi, entityApi } from '@/shared/lib/ai-paths';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

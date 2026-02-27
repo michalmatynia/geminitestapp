@@ -6,11 +6,11 @@ import type {
   PathConfig,
   PathMeta,
   RuntimeState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   DEFAULT_AI_PATHS_VALIDATION_CONFIG,
   createDefaultPathConfig,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 import { useAiPathsSettingsModeActions } from '../useAiPathsSettingsModeActions';
 

@@ -3,12 +3,27 @@
 import { Trash2 } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 
-import { useCreateNoteTheme, useDeleteNoteTheme, useUpdateNoteTheme } from '@/features/notesapp/api/useNoteMutations';
-import { useNotebooks, useNoteThemes } from '@/features/notesapp/api/useNoteQueries';
+import {
+  useCreateNoteTheme,
+  useDeleteNoteTheme,
+  useUpdateNoteTheme,
+} from '@/features/notesapp/api/useNoteMutations';
+import {
+  useNotebooks,
+  useNoteThemes,
+} from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { NoteThemeDto as ThemeRecord } from '@/shared/contracts/notes';
-import { Button, useToast, Input, PageLayout, FormSection, FormField, ListPanel } from '@/shared/ui';
+import {
+  Button,
+  useToast,
+  Input,
+  PageLayout,
+  FormSection,
+  FormField,
+  ListPanel,
+} from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 const defaultTheme: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'> = {
@@ -31,9 +46,11 @@ export function AdminNotesThemesPage(): React.JSX.Element {
   const { toast } = useToast();
   const { settings, updateSettings } = useNoteSettings();
   const { selectedNotebookId } = settings;
-  const [form, setForm] = useState<Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>>(defaultTheme);
+  const [form, setForm] =
+    useState<Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>>(defaultTheme);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingForm, setEditingForm] = useState<Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>>(defaultTheme);
+  const [editingForm, setEditingForm] =
+    useState<Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt'>>(defaultTheme);
   const notebooksQuery = useNotebooks();
   const themesQuery = useNoteThemes(selectedNotebookId ?? undefined);
   const createTheme = useCreateNoteTheme();
@@ -70,7 +87,14 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       setForm(defaultTheme);
       toast('Theme created', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AdminNotesThemesPage', action: 'createTheme', name: form.name, notebookId: selectedNotebookId } });
+      logClientError(error, {
+        context: {
+          source: 'AdminNotesThemesPage',
+          action: 'createTheme',
+          name: form.name,
+          notebookId: selectedNotebookId,
+        },
+      });
       toast('Failed to create theme', { variant: 'error' });
     }
   };
@@ -81,7 +105,13 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       toast('Theme deleted', { variant: 'success' });
       setThemeToDelete(null);
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AdminNotesThemesPage', action: 'deleteTheme', themeId } });
+      logClientError(error, {
+        context: {
+          source: 'AdminNotesThemesPage',
+          action: 'deleteTheme',
+          themeId,
+        },
+      });
       toast('Failed to delete theme', { variant: 'error' });
     }
   };
@@ -110,7 +140,13 @@ export function AdminNotesThemesPage(): React.JSX.Element {
       toast('Theme updated', { variant: 'success' });
       handleEditCancel();
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AdminNotesThemesPage', action: 'updateTheme', themeId } });
+      logClientError(error, {
+        context: {
+          source: 'AdminNotesThemesPage',
+          action: 'updateTheme',
+          themeId,
+        },
+      });
       toast('Failed to update theme', { variant: 'error' });
     }
   };
@@ -127,7 +163,9 @@ export function AdminNotesThemesPage(): React.JSX.Element {
               <Input
                 type='text'
                 value={form.name}
-                onChange={(e) => setForm((prev) => ({ ...prev, name: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, name: e.target.value }))
+                }
                 placeholder='Enter theme name'
               />
             </FormField>
@@ -135,7 +173,9 @@ export function AdminNotesThemesPage(): React.JSX.Element {
               <Input
                 type='color'
                 value={form.textColor}
-                onChange={(e) => setForm((prev) => ({ ...prev, textColor: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, textColor: e.target.value }))
+                }
                 className='h-10 p-1'
               />
             </FormField>
@@ -143,7 +183,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
               <Input
                 type='color'
                 value={form.backgroundColor}
-                onChange={(e) => setForm((prev) => ({ ...prev, backgroundColor: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    backgroundColor: e.target.value,
+                  }))
+                }
                 className='h-10 p-1'
               />
             </FormField>
@@ -151,7 +196,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
               <Input
                 type='color'
                 value={form.markdownHeadingColor}
-                onChange={(e) => setForm((prev) => ({ ...prev, markdownHeadingColor: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    markdownHeadingColor: e.target.value,
+                  }))
+                }
                 className='h-10 p-1'
               />
             </FormField>
@@ -159,7 +209,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
               <Input
                 type='color'
                 value={form.markdownLinkColor}
-                onChange={(e) => setForm((prev) => ({ ...prev, markdownLinkColor: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    markdownLinkColor: e.target.value,
+                  }))
+                }
                 className='h-10 p-1'
               />
             </FormField>
@@ -167,7 +222,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
               <Input
                 type='color'
                 value={form.markdownCodeBackground}
-                onChange={(e) => setForm((prev) => ({ ...prev, markdownCodeBackground: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    markdownCodeBackground: e.target.value,
+                  }))
+                }
                 className='h-10 p-1'
               />
             </FormField>
@@ -175,7 +235,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
               <Input
                 type='color'
                 value={form.markdownCodeText}
-                onChange={(e) => setForm((prev) => ({ ...prev, markdownCodeText: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    markdownCodeText: e.target.value,
+                  }))
+                }
                 className='h-10 p-1'
               />
             </FormField>
@@ -185,14 +250,24 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                 min={0}
                 max={8}
                 value={form.relatedNoteBorderWidth}
-                onChange={(e) => setForm((prev) => ({ ...prev, relatedNoteBorderWidth: Number(e.target.value) }))}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    relatedNoteBorderWidth: Number(e.target.value),
+                  }))
+                }
               />
             </FormField>
             <FormField label='Related Border Color'>
               <Input
                 type='color'
                 value={form.relatedNoteBorderColor}
-                onChange={(e) => setForm((prev) => ({ ...prev, relatedNoteBorderColor: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    relatedNoteBorderColor: e.target.value,
+                  }))
+                }
                 className='h-10 p-1'
               />
             </FormField>
@@ -200,7 +275,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
               <Input
                 type='color'
                 value={form.relatedNoteBackgroundColor}
-                onChange={(e) => setForm((prev) => ({ ...prev, relatedNoteBackgroundColor: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    relatedNoteBackgroundColor: e.target.value,
+                  }))
+                }
                 className='h-10 p-1'
               />
             </FormField>
@@ -208,7 +288,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
               <Input
                 type='color'
                 value={form.relatedNoteTextColor}
-                onChange={(e) => setForm((prev) => ({ ...prev, relatedNoteTextColor: e.target.value }))}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    relatedNoteTextColor: e.target.value,
+                  }))
+                }
                 className='h-10 p-1'
               />
             </FormField>
@@ -230,7 +315,9 @@ export function AdminNotesThemesPage(): React.JSX.Element {
         >
           <div className='space-y-4'>
             {themes.length === 0 ? (
-              <p className='text-sm text-gray-400 italic py-4'>No themes created yet.</p>
+              <p className='text-sm text-gray-400 italic py-4'>
+                No themes created yet.
+              </p>
             ) : (
               themes.map((theme) => {
                 const isEditing = editingId === theme.id;
@@ -242,9 +329,14 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                   >
                     <div className='flex flex-wrap items-center justify-between gap-3 mb-4'>
                       <div className='flex items-center gap-3'>
-                        <div className='text-lg font-semibold text-white'>{theme.name}</div>
+                        <div className='text-lg font-semibold text-white'>
+                          {theme.name}
+                        </div>
                         <div className='text-xs text-gray-500'>
-                          Updated {theme.updatedAt ? new Date(theme.updatedAt).toLocaleString() : '—'}
+                          Updated{' '}
+                          {theme.updatedAt
+                            ? new Date(theme.updatedAt).toLocaleString()
+                            : '—'}
                         </div>
                       </div>
                       <div className='flex items-center gap-2'>
@@ -257,12 +349,20 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                             >
                               {isUpdating ? 'Saving...' : 'Save'}
                             </Button>
-                            <Button onClick={handleEditCancel} variant='ghost' size='sm'>
+                            <Button
+                              onClick={handleEditCancel}
+                              variant='ghost'
+                              size='sm'
+                            >
                               Cancel
                             </Button>
                           </>
                         ) : (
-                          <Button onClick={() => handleEditStart(theme)} variant='outline' size='sm'>
+                          <Button
+                            onClick={() => handleEditStart(theme)}
+                            variant='outline'
+                            size='sm'
+                          >
                             Edit
                           </Button>
                         )}
@@ -282,7 +382,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type='text'
                           value={values.name}
                           disabled={!isEditing}
-                          onChange={(e) => setEditingForm((prev) => ({ ...prev, name: e.target.value }))}
+                          onChange={(e) =>
+                            setEditingForm((prev) => ({
+                              ...prev,
+                              name: e.target.value,
+                            }))
+                          }
                           className='h-8 text-sm'
                         />
                       </FormField>
@@ -291,7 +396,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type='color'
                           disabled={!isEditing}
                           value={values.textColor}
-                          onChange={(e) => setEditingForm((prev) => ({ ...prev, textColor: e.target.value }))}
+                          onChange={(e) =>
+                            setEditingForm((prev) => ({
+                              ...prev,
+                              textColor: e.target.value,
+                            }))
+                          }
                           className='h-8 p-1'
                         />
                       </FormField>
@@ -300,7 +410,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type='color'
                           disabled={!isEditing}
                           value={values.backgroundColor}
-                          onChange={(e) => setEditingForm((prev) => ({ ...prev, backgroundColor: e.target.value }))}
+                          onChange={(e) =>
+                            setEditingForm((prev) => ({
+                              ...prev,
+                              backgroundColor: e.target.value,
+                            }))
+                          }
                           className='h-8 p-1'
                         />
                       </FormField>
@@ -309,7 +424,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type='color'
                           disabled={!isEditing}
                           value={values.markdownHeadingColor}
-                          onChange={(e) => setEditingForm((prev) => ({ ...prev, markdownHeadingColor: e.target.value }))}
+                          onChange={(e) =>
+                            setEditingForm((prev) => ({
+                              ...prev,
+                              markdownHeadingColor: e.target.value,
+                            }))
+                          }
                           className='h-8 p-1'
                         />
                       </FormField>
@@ -318,7 +438,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type='color'
                           disabled={!isEditing}
                           value={values.markdownLinkColor}
-                          onChange={(e) => setEditingForm((prev) => ({ ...prev, markdownLinkColor: e.target.value }))}
+                          onChange={(e) =>
+                            setEditingForm((prev) => ({
+                              ...prev,
+                              markdownLinkColor: e.target.value,
+                            }))
+                          }
                           className='h-8 p-1'
                         />
                       </FormField>
@@ -327,7 +452,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type='color'
                           disabled={!isEditing}
                           value={values.markdownCodeBackground}
-                          onChange={(e) => setEditingForm((prev) => ({ ...prev, markdownCodeBackground: e.target.value }))}
+                          onChange={(e) =>
+                            setEditingForm((prev) => ({
+                              ...prev,
+                              markdownCodeBackground: e.target.value,
+                            }))
+                          }
                           className='h-8 p-1'
                         />
                       </FormField>
@@ -336,7 +466,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           type='color'
                           disabled={!isEditing}
                           value={values.markdownCodeText}
-                          onChange={(e) => setEditingForm((prev) => ({ ...prev, markdownCodeText: e.target.value }))}
+                          onChange={(e) =>
+                            setEditingForm((prev) => ({
+                              ...prev,
+                              markdownCodeText: e.target.value,
+                            }))
+                          }
                           className='h-8 p-1'
                         />
                       </FormField>
@@ -347,7 +482,12 @@ export function AdminNotesThemesPage(): React.JSX.Element {
                           max={8}
                           disabled={!isEditing}
                           value={values.relatedNoteBorderWidth}
-                          onChange={(e) => setEditingForm((prev) => ({ ...prev, relatedNoteBorderWidth: Number(e.target.value) }))}
+                          onChange={(e) =>
+                            setEditingForm((prev) => ({
+                              ...prev,
+                              relatedNoteBorderWidth: Number(e.target.value),
+                            }))
+                          }
                           className='h-8'
                         />
                       </FormField>

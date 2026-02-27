@@ -13,7 +13,7 @@ import {
   type ExportToBaseVariables,
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { 
   ProductListingWithDetails,
   ProductListingExportEvent,

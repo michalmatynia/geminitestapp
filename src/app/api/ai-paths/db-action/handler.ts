@@ -5,8 +5,8 @@ import { z } from 'zod';
 import {
   normalizeAiPathsCollectionMap,
   resolveAiPathsCollectionName,
-} from '@/features/ai/ai-paths/lib/core/utils/collection-mapping';
-import { getUnsupportedProviderActionMessage } from '@/features/ai/ai-paths/lib/core/utils/provider-actions';
+} from '@/shared/lib/ai-paths/core/utils/collection-mapping';
+import { getUnsupportedProviderActionMessage } from '@/shared/lib/ai-paths/core/utils/provider-actions';
 import {
   enforceAiPathsActionRateLimit,
   isCollectionAllowed,

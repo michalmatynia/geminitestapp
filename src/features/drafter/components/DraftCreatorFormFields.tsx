@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 
-import { ICON_LIBRARY_MAP } from '@/features/icons';
+import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { CatalogMultiSelectField } from '@/features/products/components/form/CatalogMultiSelectField';
 import { CategorySingleSelectField } from '@/features/products/components/form/CategorySingleSelectField';
 import { ProducerMultiSelectField } from '@/features/products/components/form/ProducerMultiSelectField';

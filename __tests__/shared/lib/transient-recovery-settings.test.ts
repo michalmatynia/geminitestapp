@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { DEFAULT_TRANSIENT_RECOVERY_SETTINGS } from '@/features/observability/lib/transient-recovery/constants';
-import { getTransientRecoverySettings } from '@/features/observability/lib/transient-recovery/settings';
+import { DEFAULT_TRANSIENT_RECOVERY_SETTINGS } from '@/shared/lib/observability/transient-recovery/constants';
+import { getTransientRecoverySettings } from '@/shared/lib/observability/transient-recovery/settings';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 import prisma from '@/shared/lib/db/prisma';
 

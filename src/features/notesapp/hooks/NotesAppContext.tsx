@@ -1,27 +1,37 @@
 'use client';
 
-import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+} from 'react';
 
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
-import { 
+import {
   useNoteData,
   useUpdateNoteMutation,
   useDeleteNoteMutation,
-  useUpdateCategoryMutation
+  useUpdateCategoryMutation,
 } from '@/features/notesapp/hooks/useNoteData';
-import { useNoteFilters, type UseNoteFiltersResult } from '@/features/notesapp/hooks/useNoteFilters';
+import {
+  useNoteFilters,
+  type UseNoteFiltersResult,
+} from '@/features/notesapp/hooks/useNoteFilters';
 import { useNoteOperations } from '@/features/notesapp/hooks/useNoteOperations';
 import { useNoteTheme } from '@/features/notesapp/hooks/useNoteTheme';
 import type { UndoAction } from '@/shared/contracts/notes';
 import type { NoteSettings } from '@/shared/contracts/notes';
-import type { 
-  NoteWithRelationsDto as NoteWithRelations, 
-  NoteTagDto as TagRecord, 
-  NoteThemeDto as ThemeRecord, 
-  NoteCategoryRecordWithChildrenDto as CategoryWithChildren, 
-  NoteTagRelationDto as NoteTagRecord, 
+import type {
+  NoteWithRelationsDto as NoteWithRelations,
+  NoteTagDto as TagRecord,
+  NoteThemeDto as ThemeRecord,
+  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  NoteTagRelationDto as NoteTagRecord,
   NoteRelationDto,
-  RelatedNoteDto as RelatedNote
+  RelatedNoteDto as RelatedNote,
 } from '@/shared/contracts/notes';
 import { internalError } from '@/shared/errors/app-error';
 import { api } from '@/shared/lib/api-client';
@@ -78,7 +88,7 @@ export interface NotesAppContextValue {
   handleCreateSuccess: () => void;
   handleUnlinkRelatedNote: (id: string) => Promise<void>;
   handleFilterByTag: (tagId: string) => void;
-  
+
   // Confirmation Modal
   confirmation: {
     title: string;
@@ -87,13 +97,15 @@ export interface NotesAppContextValue {
     confirmText?: string;
     isDangerous?: boolean;
   } | null;
-  setConfirmation: (val: {
-    title: string;
-    message: string;
-    onConfirm: () => void | Promise<void>;
-    confirmText?: string;
-    isDangerous?: boolean;
-  } | null) => void;
+  setConfirmation: (
+    val: {
+      title: string;
+      message: string;
+      onConfirm: () => void | Promise<void>;
+      confirmText?: string;
+      isDangerous?: boolean;
+    } | null,
+  ) => void;
   confirmAction: (config: {
     title: string;
     message: string;
@@ -112,15 +124,17 @@ export interface NotesAppContextValue {
     onConfirm: (value: string) => void | Promise<void>;
     required?: boolean;
   } | null;
-  setPrompt: (val: {
-    title: string;
-    message?: string;
-    label?: string;
-    defaultValue?: string;
-    placeholder?: string;
-    onConfirm: (value: string) => void | Promise<void>;
-    required?: boolean;
-  } | null) => void;
+  setPrompt: (
+    val: {
+      title: string;
+      message?: string;
+      label?: string;
+      defaultValue?: string;
+      placeholder?: string;
+      onConfirm: (value: string) => void | Promise<void>;
+      required?: boolean;
+    } | null,
+  ) => void;
   promptAction: (config: {
     title: string;
     message?: string;
@@ -149,51 +163,58 @@ export function NotesAppProvider({
 }): React.JSX.Element {
   const { settings, updateSettings } = useNoteSettings();
   const { toast } = useToast();
-  
+
   // Mutations
   const updateNoteMutation = useUpdateNoteMutation();
   const deleteNoteMutation = useDeleteNoteMutation();
   const updateCategoryMutation = useUpdateCategoryMutation();
 
   // Local UI State
-  const [selectedNote, setSelectedNote] = useState<NoteWithRelations | null>(null);
+  const [selectedNote, setSelectedNote] = useState<NoteWithRelations | null>(
+    null,
+  );
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isCreating, setIsCreating] = useState<boolean>(false);
   const [draggedNoteId, setDraggedNoteId] = useState<string | null>(null);
-  const [isFolderTreeCollapsed, setIsFolderTreeCollapsed] = useState<boolean>(false);
+  const [isFolderTreeCollapsed, setIsFolderTreeCollapsed] =
+    useState<boolean>(false);
   const [undoStack, setUndoStack] = useState<UndoAction[]>([]);
 
   useEffect(() => {
     updateSettings({ selectedNoteId: selectedNote?.id ?? null });
   }, [selectedNote?.id, updateSettings]);
   const [confirmation, setConfirmation] = useState<{
-      title: string;
-      message: string;
-      onConfirm: () => void | Promise<void>;
-      confirmText?: string;
-      isDangerous?: boolean;
-        } | null>(null);
+    title: string;
+    message: string;
+    onConfirm: () => void | Promise<void>;
+    confirmText?: string;
+    isDangerous?: boolean;
+      } | null>(null);
   const [prompt, setPrompt] = useState<{
-      title: string;
-      message?: string;
-      label?: string;
-      defaultValue?: string;
-      placeholder?: string;
-      onConfirm: (value: string) => void | Promise<void>;
-      required?: boolean;
-        } | null>(null);
-  
-  const confirmAction = useCallback((config: {
+    title: string;
+    message?: string;
+    label?: string;
+    defaultValue?: string;
+    placeholder?: string;
+    onConfirm: (value: string) => void | Promise<void>;
+    required?: boolean;
+      } | null>(null);
+
+  const confirmAction = useCallback(
+    (config: {
       title: string;
       message: string;
       onConfirm: () => void | Promise<void>;
       confirmText?: string;
       isDangerous?: boolean;
     }): void => {
-    setConfirmation(config);
-  }, []);
-  
-  const promptAction = useCallback((config: {
+      setConfirmation(config);
+    },
+    [],
+  );
+
+  const promptAction = useCallback(
+    (config: {
       title: string;
       message?: string;
       label?: string;
@@ -202,22 +223,30 @@ export function NotesAppProvider({
       onConfirm: (value: string) => void | Promise<void>;
       required?: boolean;
     }): void => {
-    setPrompt(config);
-  }, []);
-  
-  // Settings helpers
-  
-  const setSelectedFolderId = useCallback((id: string | null): void => {
-    updateSettings({ selectedFolderId: id });
-  }, [updateSettings]);
+      setPrompt(config);
+    },
+    [],
+  );
 
-  const setSelectedNotebookId = useCallback((id: string | null): void => {
-    updateSettings({ selectedNotebookId: id });
-  }, [updateSettings]);
+  // Settings helpers
+
+  const setSelectedFolderId = useCallback(
+    (id: string | null): void => {
+      updateSettings({ selectedFolderId: id });
+    },
+    [updateSettings],
+  );
+
+  const setSelectedNotebookId = useCallback(
+    (id: string | null): void => {
+      updateSettings({ selectedNotebookId: id });
+    },
+    [updateSettings],
+  );
 
   // Hooks
   const filters = useNoteFilters({ settings, updateSettings });
-  
+
   const {
     notes,
     setNotes,
@@ -276,17 +305,22 @@ export function NotesAppProvider({
   }, [notes]);
 
   const sortedNotes: NoteWithRelations[] = useMemo((): NoteWithRelations[] => {
-    const sorted: NoteWithRelations[] = [...notesInScope].sort((a: NoteWithRelations, b: NoteWithRelations): number => {
-      if (settings.sortBy === 'name') {
-        return a.title.localeCompare(b.title);
-      }
-      if (settings.sortBy === 'updated') {
-        const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
-        const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
-        return aTime - bTime;
-      }
-      return new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
-    });
+    const sorted: NoteWithRelations[] = [...notesInScope].sort(
+      (a: NoteWithRelations, b: NoteWithRelations): number => {
+        if (settings.sortBy === 'name') {
+          return a.title.localeCompare(b.title);
+        }
+        if (settings.sortBy === 'updated') {
+          const aTime = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const bTime = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          return aTime - bTime;
+        }
+        return (
+          new Date(a.createdAt || 0).getTime() -
+          new Date(b.createdAt || 0).getTime()
+        );
+      },
+    );
     return settings.sortOrder === 'desc' ? sorted.reverse() : sorted;
   }, [notesInScope, settings.sortBy, settings.sortOrder]);
 
@@ -313,26 +347,34 @@ export function NotesAppProvider({
   const availableTagsInScope: TagRecord[] = useMemo((): TagRecord[] => {
     const tagMap: Map<string, TagRecord> = new Map<string, TagRecord>();
     notesInScope.forEach((note: NoteWithRelations): void => {
-      (note.tags as NoteTagWithDetails[]).forEach((noteTag: NoteTagWithDetails): void => {
-        tagMap.set(noteTag.tagId, noteTag.tag);
-      });
+      (note.tags as NoteTagWithDetails[]).forEach(
+        (noteTag: NoteTagWithDetails): void => {
+          tagMap.set(noteTag.tagId, noteTag.tag);
+        },
+      );
     });
-    return Array.from(tagMap.values()).sort((a: TagRecord, b: TagRecord): number => 
-      (a.name || '').localeCompare(b.name || '')
+    return Array.from(tagMap.values()).sort(
+      (a: TagRecord, b: TagRecord): number =>
+        (a.name || '').localeCompare(b.name || ''),
     );
   }, [notesInScope]);
 
   // Handlers
-  const handleSelectNoteFromTree = useCallback(async (noteId: string): Promise<void> => {
-    try {
-      const note = await api.get<NoteWithRelations>(`/api/notes/${noteId}`);
-      setSelectedNote(note);
-      updateSettings({ selectedNoteId: noteId });
-      setIsEditing(false);
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'NotesAppProvider', action: 'fetchNote', noteId } });
-    }
-  }, []);
+  const handleSelectNoteFromTree = useCallback(
+    async (noteId: string): Promise<void> => {
+      try {
+        const note = await api.get<NoteWithRelations>(`/api/notes/${noteId}`);
+        setSelectedNote(note);
+        updateSettings({ selectedNoteId: noteId });
+        setIsEditing(false);
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: { source: 'NotesAppProvider', action: 'fetchNote', noteId },
+        });
+      }
+    },
+    [],
+  );
 
   const handleCreateSuccess = useCallback((): void => {
     setIsCreating(false);
@@ -340,9 +382,17 @@ export function NotesAppProvider({
     void fetchFolderTree();
   }, [fetchNotes, fetchFolderTree]);
 
-  const handleFilterByTag = useCallback((tagId: string): void => {
-    filters.handleFilterByTag(tagId, setSelectedFolderId, setSelectedNote, setIsEditing);
-  }, [filters, setSelectedFolderId]);
+  const handleFilterByTag = useCallback(
+    (tagId: string): void => {
+      filters.handleFilterByTag(
+        tagId,
+        setSelectedFolderId,
+        setSelectedNote,
+        setIsEditing,
+      );
+    },
+    [filters, setSelectedFolderId],
+  );
 
   const handleUpdateSuccess = useCallback((): void => {
     setIsEditing(false);
@@ -353,54 +403,94 @@ export function NotesAppProvider({
     }
   }, [fetchNotes, fetchFolderTree, selectedNote, handleSelectNoteFromTree]);
 
-  const handleToggleFavorite = useCallback(async (note: NoteWithRelations): Promise<void> => {
-    const nextFavorite: boolean = !note.isFavorite;
-    try {
-      await updateNoteMutation.mutateAsync({ id: note.id, isFavorite: nextFavorite });
-      
-      setNotes((prev: NoteWithRelations[] | undefined): NoteWithRelations[] =>
-        (prev || []).map((item: NoteWithRelations): NoteWithRelations =>
-          item.id === note.id ? { ...item, isFavorite: nextFavorite } : item
-        )
-      );
-      
-      setSelectedNote((prev: NoteWithRelations | null): NoteWithRelations | null =>
-        prev?.id === note.id ? { ...prev, isFavorite: nextFavorite } : prev
-      );
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'NotesAppProvider', action: 'toggleFavorite', noteId: note.id } });
-      toast('Failed to update favorite', { variant: 'error' });
-    }
-  }, [toast, setNotes, updateNoteMutation]);
+  const handleToggleFavorite = useCallback(
+    async (note: NoteWithRelations): Promise<void> => {
+      const nextFavorite: boolean = !note.isFavorite;
+      try {
+        await updateNoteMutation.mutateAsync({
+          id: note.id,
+          isFavorite: nextFavorite,
+        });
 
-  const handleUnlinkRelatedNote = useCallback(async (relatedId: string): Promise<void> => {
-    if (!selectedNote) return;
-    try {
-      const sourceRelations: string[] =
-        selectedNote.relations?.map((rel: { id: string }): string => rel.id) ||
-        [
-          ...(selectedNote.relationsFrom ?? [])
-            .map((rel: NoteRelationWithTarget) => rel.targetNote?.id)
-            .filter((rid: string | undefined): rid is string => !!rid),
-          ...(selectedNote.relationsTo ?? [])
-            .map((rel: NoteRelationWithSource) => rel.sourceNote?.id)
-            .filter((rid: string | undefined): rid is string => !!rid),
-        ].filter(
-          (id: string, index: number, array: string[]): boolean => array.indexOf(id) === index
+        setNotes((prev: NoteWithRelations[] | undefined): NoteWithRelations[] =>
+          (prev || []).map(
+            (item: NoteWithRelations): NoteWithRelations =>
+              item.id === note.id
+                ? { ...item, isFavorite: nextFavorite }
+                : item,
+          ),
         );
 
-      const nextSourceIds: string[] = sourceRelations.filter((id: string): boolean => id !== relatedId);
+        setSelectedNote(
+          (prev: NoteWithRelations | null): NoteWithRelations | null =>
+            prev?.id === note.id ? { ...prev, isFavorite: nextFavorite } : prev,
+        );
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: {
+            source: 'NotesAppProvider',
+            action: 'toggleFavorite',
+            noteId: note.id,
+          },
+        });
+        toast('Failed to update favorite', { variant: 'error' });
+      }
+    },
+    [toast, setNotes, updateNoteMutation],
+  );
 
-      await updateNoteMutation.mutateAsync({ id: selectedNote.id, relatedNoteIds: nextSourceIds });
+  const handleUnlinkRelatedNote = useCallback(
+    async (relatedId: string): Promise<void> => {
+      if (!selectedNote) return;
+      try {
+        const sourceRelations: string[] =
+          selectedNote.relations?.map(
+            (rel: { id: string }): string => rel.id,
+          ) ||
+          [
+            ...(selectedNote.relationsFrom ?? [])
+              .map((rel: NoteRelationWithTarget) => rel.targetNote?.id)
+              .filter((rid: string | undefined): rid is string => !!rid),
+            ...(selectedNote.relationsTo ?? [])
+              .map((rel: NoteRelationWithSource) => rel.sourceNote?.id)
+              .filter((rid: string | undefined): rid is string => !!rid),
+          ].filter(
+            (id: string, index: number, array: string[]): boolean =>
+              array.indexOf(id) === index,
+          );
 
-      toast('Note unlinked');
-      await fetchNotes();
-      void handleSelectNoteFromTree(selectedNote.id);
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'NotesAppProvider', action: 'unlinkNote', noteId: selectedNote.id, relatedId } });
-      toast('Failed to unlink note', { variant: 'error' });
-    }
-  }, [selectedNote, fetchNotes, handleSelectNoteFromTree, toast, updateNoteMutation]);
+        const nextSourceIds: string[] = sourceRelations.filter(
+          (id: string): boolean => id !== relatedId,
+        );
+
+        await updateNoteMutation.mutateAsync({
+          id: selectedNote.id,
+          relatedNoteIds: nextSourceIds,
+        });
+
+        toast('Note unlinked');
+        await fetchNotes();
+        void handleSelectNoteFromTree(selectedNote.id);
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: {
+            source: 'NotesAppProvider',
+            action: 'unlinkNote',
+            noteId: selectedNote.id,
+            relatedId,
+          },
+        });
+        toast('Failed to unlink note', { variant: 'error' });
+      }
+    },
+    [
+      selectedNote,
+      fetchNotes,
+      handleSelectNoteFromTree,
+      toast,
+      updateNoteMutation,
+    ],
+  );
 
   const handleDeleteNote = useCallback(async (): Promise<void> => {
     if (!selectedNote) return;
@@ -415,7 +505,13 @@ export function NotesAppProvider({
           setSelectedNote(null);
           setIsEditing(false);
         } catch (error: unknown) {
-          logClientError(error, { context: { source: 'NotesAppProvider', action: 'deleteNote', noteId: selectedNote.id } });
+          logClientError(error, {
+            context: {
+              source: 'NotesAppProvider',
+              action: 'deleteNote',
+              noteId: selectedNote.id,
+            },
+          });
           toast('Failed to delete note', { variant: 'error' });
         }
       },
@@ -426,62 +522,81 @@ export function NotesAppProvider({
   const formatUndoLabel = useCallback((action: UndoAction): string => {
     if (action.type === 'moveNote') return 'Moved note';
     if (action.type === 'moveFolder') return 'Moved folder';
-    if (action.type === 'renameFolder') return `Renamed folder to "${action.toName}"`;
+    if (action.type === 'renameFolder')
+      return `Renamed folder to "${action.toName}"`;
     return `Renamed note to "${action.toTitle}"`;
   }, []);
 
-  const applyUndoAction = useCallback(async (action: UndoAction): Promise<void> => {
-    if (action.type === 'moveNote') {
-      await updateNoteMutation.mutateAsync({
-        id: action.noteId,
-        categoryIds: action.fromFolderId ? [action.fromFolderId] : [],
-      });
-      return;
-    }
-    if (action.type === 'moveFolder') {
-      await updateCategoryMutation.mutateAsync({
-        id: action.folderId,
-        parentId: action.fromParentId ?? null,
-      });
-      return;
-    }
-    if (action.type === 'renameFolder') {
-      await updateCategoryMutation.mutateAsync({
-        id: action.folderId,
-        name: action.fromName,
-      });
-      return;
-    }
-    if (action.type === 'renameNote') {
-      await updateNoteMutation.mutateAsync({
-        id: action.noteId,
-        title: action.fromTitle,
-      });
-    }
-  }, [updateNoteMutation, updateCategoryMutation]);
-
-  const handleUndoFolderTree = useCallback(async (count: number = 1): Promise<void> => {
-    const actionsToUndo: UndoAction[] = undoStack.slice(0, count);
-    if (actionsToUndo.length === 0) return;
-    setUndoStack((prev: UndoAction[]): UndoAction[] => prev.slice(count));
-    try {
-      for (const action of actionsToUndo) {
-        await applyUndoAction(action);
+  const applyUndoAction = useCallback(
+    async (action: UndoAction): Promise<void> => {
+      if (action.type === 'moveNote') {
+        await updateNoteMutation.mutateAsync({
+          id: action.noteId,
+          categoryIds: action.fromFolderId ? [action.fromFolderId] : [],
+        });
+        return;
       }
-    } catch (error: unknown) {
-      logClientError(error, { context: { source: 'NotesAppProvider', action: 'undoFolderTree', count } });
-      toast('Failed to undo', { variant: 'error' });
-    }
-  }, [undoStack, applyUndoAction, toast]);
+      if (action.type === 'moveFolder') {
+        await updateCategoryMutation.mutateAsync({
+          id: action.folderId,
+          parentId: action.fromParentId ?? null,
+        });
+        return;
+      }
+      if (action.type === 'renameFolder') {
+        await updateCategoryMutation.mutateAsync({
+          id: action.folderId,
+          name: action.fromName,
+        });
+        return;
+      }
+      if (action.type === 'renameNote') {
+        await updateNoteMutation.mutateAsync({
+          id: action.noteId,
+          title: action.fromTitle,
+        });
+      }
+    },
+    [updateNoteMutation, updateCategoryMutation],
+  );
 
-  const handleUndoAtIndex = useCallback((index: number): void => {
-    const count: number = Math.max(1, index + 1);
-    void handleUndoFolderTree(count);
-  }, [handleUndoFolderTree]);
+  const handleUndoFolderTree = useCallback(
+    async (count: number = 1): Promise<void> => {
+      const actionsToUndo: UndoAction[] = undoStack.slice(0, count);
+      if (actionsToUndo.length === 0) return;
+      setUndoStack((prev: UndoAction[]): UndoAction[] => prev.slice(count));
+      try {
+        for (const action of actionsToUndo) {
+          await applyUndoAction(action);
+        }
+      } catch (error: unknown) {
+        logClientError(error, {
+          context: {
+            source: 'NotesAppProvider',
+            action: 'undoFolderTree',
+            count,
+          },
+        });
+        toast('Failed to undo', { variant: 'error' });
+      }
+    },
+    [undoStack, applyUndoAction, toast],
+  );
+
+  const handleUndoAtIndex = useCallback(
+    (index: number): void => {
+      const count: number = Math.max(1, index + 1);
+      void handleUndoFolderTree(count);
+    },
+    [handleUndoFolderTree],
+  );
 
   const undoHistory: { label: string }[] = useMemo(
-    (): { label: string }[] => undoStack.map((action: UndoAction): { label: string } => ({ label: formatUndoLabel(action) })),
-    [undoStack, formatUndoLabel]
+    (): { label: string }[] =>
+      undoStack.map((action: UndoAction): { label: string } => ({
+        label: formatUndoLabel(action),
+      })),
+    [undoStack, formatUndoLabel],
   );
 
   const contextValue: NotesAppContextValue = useMemo(
@@ -532,7 +647,7 @@ export function NotesAppProvider({
       prompt,
       setPrompt,
       promptAction,
-      
+
       operations,
       undoStack,
       undoHistory,
@@ -578,7 +693,7 @@ export function NotesAppProvider({
       handleUndoFolderTree,
       handleUndoAtIndex,
       fetchFolderTree,
-    ]
+    ],
   );
 
   return (
@@ -621,7 +736,9 @@ export function NotesAppProvider({
 export function useNotesAppContext(): NotesAppContextValue {
   const context = useContext(NotesAppContext);
   if (!context) {
-    throw internalError('useNotesAppContext must be used within NotesAppProvider');
+    throw internalError(
+      'useNotesAppContext must be used within NotesAppProvider',
+    );
   }
   return context;
 }

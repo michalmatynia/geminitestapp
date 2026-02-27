@@ -5,11 +5,11 @@ import React from 'react';
 import {
   DOCUMENTATION_MODULE_IDS,
   getDocumentationEntry,
-} from '@/features/documentation';
+} from '@/shared/lib/documentation';
 import {
   DocumentationTooltip,
   useDocsTooltipsSetting,
-} from '@/features/tooltip-engine';
+} from '@/shared/lib/tooltip-engine';
 
 import type { ValidatorUiDoc } from './validator-docs-catalog';
 

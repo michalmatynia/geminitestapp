@@ -17,7 +17,8 @@ import {
   type CaseResolverOcrErrorCategory,
 } from '@/features/case-resolver/server/ocr-runtime-job-store';
 import { DEFAULT_CASE_RESOLVER_OCR_PROMPT } from '@/features/case-resolver/settings';
-import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';
 

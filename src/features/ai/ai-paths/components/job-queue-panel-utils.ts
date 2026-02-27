@@ -2,11 +2,11 @@ import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_RUN_SOURCE_TABS,
   AI_PATHS_RUN_SOURCE_VALUES,
-} from '@/features/ai/ai-paths/lib/run-sources';
+} from '@/shared/lib/ai-paths/run-sources';
 import type { StatusVariant } from '@/shared/ui';
 
 import { safeJsonStringify } from './AiPathsSettingsUtils';

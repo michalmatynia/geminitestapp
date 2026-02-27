@@ -9,7 +9,7 @@ import type {
   DbQueryPreset,
   DbNodePreset,
   RuntimeState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 import { CanvasProvider, type ViewState } from './CanvasContext';
 import { GraphProvider } from './GraphContext';

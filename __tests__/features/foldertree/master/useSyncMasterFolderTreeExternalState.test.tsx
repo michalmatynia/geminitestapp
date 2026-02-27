@@ -1,7 +1,7 @@
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { useSyncMasterFolderTreeExternalState } from '@/features/foldertree/master/useSyncMasterFolderTreeExternalState';
+import { useSyncMasterFolderTreeExternalState } from '@/shared/lib/foldertree/master/useSyncMasterFolderTreeExternalState';
 import type { MasterTreeNode } from '@/shared/utils';
 
 const createNodes = (suffix: string): MasterTreeNode[] => [

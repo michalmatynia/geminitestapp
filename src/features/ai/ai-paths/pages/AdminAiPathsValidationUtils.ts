@@ -3,15 +3,15 @@ import type {
   AiPathsValidationRule,
   PathConfig,
   PathMeta,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
-} from '@/features/ai/ai-paths/lib/core/constants';
-import { createDefaultPathConfig } from '@/features/ai/ai-paths/lib/core/utils/factory';
+} from '@/shared/lib/ai-paths/core/constants';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import {
   normalizeAiPathsValidationConfig,
-} from '@/features/ai/ai-paths/lib/core/validation-engine';
+} from '@/shared/lib/ai-paths/core/validation-engine';
 
 export type SettingsRecord = { key: string; value: string };
 

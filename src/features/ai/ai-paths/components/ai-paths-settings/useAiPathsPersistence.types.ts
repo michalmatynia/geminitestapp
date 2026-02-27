@@ -15,7 +15,7 @@ import type {
   PathMeta,
   RuntimeState,
   UpdaterSampleState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 import type { Dispatch, SetStateAction } from 'react';
 

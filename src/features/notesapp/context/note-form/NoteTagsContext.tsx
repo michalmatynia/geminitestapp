@@ -21,6 +21,7 @@ export const NoteTagsContext = createContext<NoteTagsData | null>(null);
 
 export function useNoteTagsContext(): NoteTagsData {
   const context = useContext(NoteTagsContext);
-  if (!context) throw new Error('useNoteTagsContext must be used within NoteFormProvider');
+  if (!context)
+    throw new Error('useNoteTagsContext must be used within NoteFormProvider');
   return context;
 }

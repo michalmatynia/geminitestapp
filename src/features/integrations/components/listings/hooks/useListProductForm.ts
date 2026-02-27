@@ -8,7 +8,7 @@ import {
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import { listProductFormSchema } from '@/features/integrations/validations/listing-forms';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ImageTransformOptions, ImageRetryPreset } from '@/shared/contracts/integrations';
 import { useToast } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';

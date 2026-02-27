@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 
 import { useCreateTheme } from '@/features/cms/hooks/useCmsQueries';
 import { cmsThemeCreateSchema } from '@/features/cms/validations/api';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { CmsThemeColors, CmsThemeTypography, CmsThemeSpacing, CmsThemeCreateInput } from '@/shared/contracts/cms';
 import { Input, FormSection, FormField, PageLayout, Alert, FormActions, Breadcrumbs } from '@/shared/ui';
 import { validateFormData } from '@/shared/validations/form-validation';

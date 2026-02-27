@@ -4,8 +4,8 @@ import React from 'react';
 
 import {
   DOCUMENTATION_MODULE_IDS,
-} from '@/features/documentation';
-import { DocumentationTooltipEnhancer } from '@/features/tooltip-engine';
+} from '@/shared/lib/documentation';
+import { DocumentationTooltipEnhancer } from '@/shared/lib/tooltip-engine';
 
 export function DocsTooltipEnhancer({
   rootId,

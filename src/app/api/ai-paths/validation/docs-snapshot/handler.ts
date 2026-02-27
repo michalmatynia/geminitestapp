@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { compileAiPathsValidationRulesFromDocsSnapshot } from '@/features/ai/ai-paths/lib/core/validation-engine';
-import { buildAiPathsValidationDocsSnapshot } from '@/features/ai/ai-paths/lib/core/validation-engine/docs-registry-adapter';
+import { compileAiPathsValidationRulesFromDocsSnapshot } from '@/shared/lib/ai-paths/core/validation-engine';
+import { buildAiPathsValidationDocsSnapshot } from '@/shared/lib/ai-paths/core/validation-engine/docs-registry-adapter';
 import { requireAiPathsAccess } from '@/features/ai/ai-paths/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 

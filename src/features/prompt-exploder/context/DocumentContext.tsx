@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from 'next/navigation';
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 
-import { recordPromptValidationCounter } from '@/features/prompt-core/runtime-observability';
+import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
 import { useToast } from '@/shared/ui';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 

@@ -19,8 +19,8 @@ import type {
   RunStatus,
   SetNodeStatusInput,
   UpdaterSampleState,
-} from '@/features/ai/ai-paths/lib';
-export type { QueuedRun } from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
+export type { QueuedRun } from '@/shared/lib/ai-paths';
 
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 

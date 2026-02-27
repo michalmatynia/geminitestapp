@@ -1,6 +1,6 @@
 'use client';
 
-import type { HttpConfig } from '@/features/ai/ai-paths/lib';
+import type { HttpConfig } from '@/shared/lib/ai-paths';
 import { Input,  Textarea, SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

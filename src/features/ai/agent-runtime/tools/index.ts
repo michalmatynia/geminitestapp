@@ -6,7 +6,7 @@ import path from 'path';
 
 import { Prisma } from '@prisma/client';
 
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import prisma from '@/shared/lib/db/prisma';
 
 

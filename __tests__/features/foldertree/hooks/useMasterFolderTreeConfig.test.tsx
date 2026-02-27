@@ -1,15 +1,15 @@
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useMasterFolderTreeAppearance } from '@/features/foldertree/hooks/useMasterFolderTreeAppearance';
-import { useMasterFolderTreeConfig } from '@/features/foldertree/hooks/useMasterFolderTreeConfig';
+import { useMasterFolderTreeAppearance } from '@/shared/lib/foldertree/hooks/useMasterFolderTreeAppearance';
+import { useMasterFolderTreeConfig } from '@/shared/lib/foldertree/hooks/useMasterFolderTreeConfig';
 import { useFolderTreeProfile } from '@/shared/hooks/use-folder-tree-profile';
 
 vi.mock('@/shared/hooks/use-folder-tree-profile', () => ({
   useFolderTreeProfile: vi.fn(),
 }));
 
-vi.mock('@/features/foldertree/hooks/useMasterFolderTreeAppearance', () => ({
+vi.mock('@/shared/lib/foldertree/hooks/useMasterFolderTreeAppearance', () => ({
   useMasterFolderTreeAppearance: vi.fn(),
 }));
 

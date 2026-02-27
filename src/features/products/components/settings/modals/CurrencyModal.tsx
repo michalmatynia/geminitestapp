@@ -1,1 +1,1 @@
-export { CurrencyModal } from '@/features/internationalization/components/currency-modal/CurrencyModal';
+export { CurrencyModal } from '@/shared/lib/internationalization/components/currency-modal/CurrencyModal';

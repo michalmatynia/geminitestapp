@@ -22,7 +22,7 @@ import {
   parseAdminMenuBoolean,
   parseAdminMenuJson,
 } from '@/features/admin/constants/admin-menu-settings';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';
 import { internalError } from '@/shared/errors/app-error';

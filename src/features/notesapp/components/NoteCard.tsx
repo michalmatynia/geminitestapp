@@ -14,19 +14,22 @@ import { NoteCardContent } from './list/NoteCardContent';
 import { NoteCardFooter } from './list/NoteCardFooter';
 
 // Hardcoded dark mode fallback theme - consistent with page styling
-const FALLBACK_THEME: Omit<ThemeRecord, 'id' | 'createdAt' | 'updatedAt' | 'name' | 'notebookId'> = {
+const FALLBACK_THEME: Omit<
+  ThemeRecord,
+  'id' | 'createdAt' | 'updatedAt' | 'name' | 'notebookId'
+> = {
   description: 'Default dark theme',
   isDefault: true,
-  textColor: '#e5e7eb',                // gray-200
-  backgroundColor: '#111827',          // gray-900
-  markdownHeadingColor: '#ffffff',     // white
-  markdownLinkColor: '#60a5fa',        // blue-400
-  markdownCodeBackground: '#1f2937',   // gray-800
-  markdownCodeText: '#e5e7eb',         // gray-200
+  textColor: '#e5e7eb', // gray-200
+  backgroundColor: '#111827', // gray-900
+  markdownHeadingColor: '#ffffff', // white
+  markdownLinkColor: '#60a5fa', // blue-400
+  markdownCodeBackground: '#1f2937', // gray-800
+  markdownCodeText: '#e5e7eb', // gray-200
   relatedNoteBorderWidth: 1,
-  relatedNoteBorderColor: '#374151',   // gray-700
+  relatedNoteBorderColor: '#374151', // gray-700
   relatedNoteBackgroundColor: '#1f2937', // gray-800
-  relatedNoteTextColor: '#e5e7eb',     // gray-200
+  relatedNoteTextColor: '#e5e7eb', // gray-200
 };
 
 type NoteCardProps = {
@@ -59,7 +62,7 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
   const backgroundColor = hasCustomColor
     ? normalizedColor
     : effectiveTheme.backgroundColor;
-  
+
   const getReadableTextColor = (hexColor: string): string => {
     const normalized = hexColor.replace('#', '');
     if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
@@ -71,11 +74,11 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
     return luminance > 0.7 ? '#111827' : '#f8fafc';
   };
-  
+
   const textColor = hasCustomColor
     ? getReadableTextColor(backgroundColor)
     : effectiveTheme.textColor;
-  
+
   const relatedNoteStyle = {
     borderWidth: `${effectiveTheme.relatedNoteBorderWidth ?? 1}px`,
     borderColor: effectiveTheme.relatedNoteBorderColor,
@@ -113,9 +116,12 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
         ['--tw-prose-body' as never]: textColor,
         ['--tw-prose-headings' as never]:
           effectiveTheme.markdownHeadingColor ?? textColor,
-        ['--note-link-color' as never]: effectiveTheme.markdownLinkColor ?? '#38bdf8',
-        ['--note-code-bg' as never]: effectiveTheme.markdownCodeBackground ?? '#0f172a',
-        ['--note-code-text' as never]: effectiveTheme.markdownCodeText ?? '#e2e8f0',
+        ['--note-link-color' as never]:
+          effectiveTheme.markdownLinkColor ?? '#38bdf8',
+        ['--note-code-bg' as never]:
+          effectiveTheme.markdownCodeBackground ?? '#0f172a',
+        ['--note-code-text' as never]:
+          effectiveTheme.markdownCodeText ?? '#e2e8f0',
         ['--note-inline-code-bg' as never]:
           effectiveTheme.markdownCodeBackground ?? 'rgba(15, 23, 42, 0.12)',
       }}
@@ -128,10 +134,10 @@ function NoteCardBase({ note }: NoteCardProps): React.JSX.Element {
     >
       <NoteCardHeader note={note} />
       <NoteCardContent note={note} />
-      <NoteCardFooter 
-        note={note} 
-        backgroundColor={backgroundColor} 
-        relatedNoteStyle={relatedNoteStyle} 
+      <NoteCardFooter
+        note={note}
+        backgroundColor={backgroundColor}
+        relatedNoteStyle={relatedNoteStyle}
       />
     </div>
   );

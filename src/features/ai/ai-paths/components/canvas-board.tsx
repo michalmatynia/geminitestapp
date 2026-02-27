@@ -3,7 +3,7 @@
 import React from 'react';
 import {
   type DataContractNodeIssueSummary,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { cn } from '@/shared/utils';
 
 import { useCanvasBoardState } from './useCanvasBoardState';
@@ -210,7 +210,10 @@ export function CanvasBoard({
 
   return (
     <CanvasBoardUIProvider value={canvasInteractions}>
-      <div ref={viewportRef} className={cn('relative h-full w-full', viewportClassName)}>
+      <div
+        ref={viewportRef}
+        className={cn('relative h-full w-full overflow-hidden overscroll-none', viewportClassName)}
+      >
         <CanvasControlPanel
           rendererMode={rendererMode}
           onRendererModeChange={setRendererMode}
@@ -239,7 +242,7 @@ export function CanvasBoard({
 
         <div
           ref={canvasRef}
-          className='relative h-full w-full touch-none select-none'
+          className='relative h-full w-full touch-none select-none overscroll-none'
           onPointerDown={handlePanStart}
           onPointerMove={handlePanMove}
           onPointerUp={handlePanEnd}

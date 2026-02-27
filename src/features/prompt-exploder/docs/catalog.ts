@@ -3,7 +3,7 @@
 import {
   PROMPT_EXPLODER_DOC_CATALOG,
   type PromptExploderDocEntry,
-} from '@/features/documentation';
+} from '@/shared/lib/documentation';
 
 export type { PromptExploderDocEntry };
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { parseValidatorPatternLists } from '@/features/admin/pages/validator-scope';
-import { PromptValidationScopeResolutionError } from '@/features/prompt-core/errors';
+import { PromptValidationScopeResolutionError } from '@/shared/lib/prompt-core/errors';
 import {
   resolvePromptExploderValidationStack,
 } from '@/features/prompt-exploder/validation-stack';

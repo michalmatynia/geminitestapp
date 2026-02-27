@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+import { useMemo } from 'react';
 
-import type { AiNode, Edge, ModelConfig } from '@/features/ai/ai-paths/lib';
-import { DEFAULT_MODELS, toNumber } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, ModelConfig } from '@/shared/lib/ai-paths';
+import { DEFAULT_MODELS } from '@/shared/lib/ai-paths';
 import { AI_BRAIN_SETTINGS_KEY, parseBrainSettings, resolveBrainAssignment } from '@/features/ai/brain';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
-import { Button, Input,  SelectSimple, Card, FormField } from '@/shared/ui';
+import { Button, Card, FormField, Textarea } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';
 
@@ -15,7 +15,6 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
     selectedNode,
     nodes,
     edges,
-    modelOptions,
     updateSelectedNodeConfig,
   } = useAiPathConfig();
   const settingsStore = useSettingsStore();
@@ -28,12 +27,11 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
     () => resolveBrainAssignment(brainSettings, 'ai_paths'),
     [brainSettings]
   );
-  const brainAppliedRef = useRef<string | null>(null);
 
   const modelConfig: ModelConfig = useMemo(
     () =>
       selectedNode?.config?.model ?? {
-        modelId: DEFAULT_MODELS[0] ?? 'gpt-4o',
+        modelId: '',
         temperature: 0.7,
         maxTokens: 800,
         vision: selectedNode?.inputs.includes('images') ?? false,
@@ -41,44 +39,21 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
     [selectedNode?.config?.model, selectedNode?.inputs]
   );
 
-  const settingsReady = !settingsStore.isLoading && !settingsStore.error;
-
-  useEffect(() => {
-    if (!settingsReady) return;
-    if (!selectedNode) return;
-    if (selectedNode.type !== 'model') return;
-    if (!brainAssignment.enabled || brainAssignment.provider !== 'model') return;
-    if (!brainAssignment.modelId) return;
-    if (brainAppliedRef.current === selectedNode.id) return;
-    if (modelConfig.modelId && modelConfig.modelId !== DEFAULT_MODELS[0]) return;
-    brainAppliedRef.current = selectedNode.id;
-    updateSelectedNodeConfig({
-      model: {
-        ...modelConfig,
-        modelId: brainAssignment.modelId,
-        temperature: brainAssignment.temperature ?? modelConfig.temperature,
-        maxTokens: brainAssignment.maxTokens ?? modelConfig.maxTokens,
-      },
-    });
-  }, [
-    brainAssignment.enabled,
-    brainAssignment.maxTokens,
-    brainAssignment.modelId,
-    brainAssignment.provider,
-    brainAssignment.temperature,
-    modelConfig,
-    selectedNode?.id,
-    selectedNode?.type,
-    settingsReady,
-    updateSelectedNodeConfig,
-  ]);
-
   if (selectedNode?.type !== 'model') return null;
 
-  const mergedModelOptions =
-    modelConfig.modelId && !modelOptions.includes(modelConfig.modelId)
-      ? [modelConfig.modelId, ...modelOptions]
-      : modelOptions;
+  const effectiveModelId =
+    brainAssignment.modelId?.trim() ||
+    modelConfig.modelId?.trim() ||
+    DEFAULT_MODELS[0] ||
+    'gpt-4o';
+  const effectiveTemperature =
+    brainAssignment.temperature ?? modelConfig.temperature;
+  const effectiveMaxTokens = brainAssignment.maxTokens ?? modelConfig.maxTokens;
+  const effectiveSystemPrompt = brainAssignment.systemPrompt?.trim() ?? '';
+  const routingMisconfigured =
+    !brainAssignment.enabled ||
+    brainAssignment.provider !== 'model' ||
+    !brainAssignment.modelId?.trim();
   const hasPollConsumer = edges.some((edge: Edge): boolean => {
     if (edge.from !== selectedNode.id) return false;
     if (edge.fromPort !== 'jobId') return false;
@@ -88,61 +63,42 @@ export function ModelNodeConfigSection(): React.JSX.Element | null {
 
   return (
     <div className='space-y-4'>
-      <FormField label='Model'>
-        <SelectSimple size='sm'
-          value={modelConfig.modelId}
-          onValueChange={(value: string): void =>
-            updateSelectedNodeConfig({
-              model: { ...modelConfig, modelId: value },
-            })
-          }
-          options={mergedModelOptions.map((model: string) => ({ value: model, label: model }))}
-          placeholder='Select model'
-          variant='subtle'
+      <FormField label='Model (Brain managed)'>
+        <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/30 text-xs text-gray-300'>
+          <div className='font-medium text-gray-100'>{effectiveModelId}</div>
+          <div className='mt-1 text-[11px] text-gray-500'>
+            Change this in AI Brain Routing. Node-level model overrides are ignored at runtime.
+          </div>
+        </Card>
+      </FormField>
+      <FormField label='System Prompt (Brain managed)'>
+        <Textarea
+          className='min-h-[80px] resize-y text-xs'
+          value={effectiveSystemPrompt}
+          placeholder='Using Brain default system prompt.'
+          readOnly
         />
+        <p className='text-[11px] text-gray-500 mt-1'>
+          Sent from AI Brain. Empty means provider default prompt.
+        </p>
       </FormField>
       <div className='grid gap-3 sm:grid-cols-2'>
-        <FormField label='Temperature'>
-          <Input
-            type='number'
-            step='0.1'
-            variant='subtle'
-            size='sm'
-            value={modelConfig.temperature}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-              updateSelectedNodeConfig({
-                model: {
-                  ...modelConfig,
-                  temperature: toNumber(
-                    event.target.value,
-                    modelConfig.temperature
-                  ),
-                },
-              })
-            }
-          />
+        <FormField label='Temperature (Brain managed)'>
+          <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/30 text-xs text-gray-300'>
+            {effectiveTemperature}
+          </Card>
         </FormField>
-        <FormField label='Max Tokens'>
-          <Input
-            type='number'
-            step='50'
-            variant='subtle'
-            size='sm'
-            value={modelConfig.maxTokens}
-            onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
-              updateSelectedNodeConfig({
-                model: {
-                  ...modelConfig,
-                  maxTokens: toNumber(
-                    event.target.value,
-                    modelConfig.maxTokens
-                  ),
-                },
-              })
-            }
-          />
+        <FormField label='Max Tokens (Brain managed)'>
+          <Card variant='subtle-compact' padding='sm' className='border-border/60 bg-card/30 text-xs text-gray-300'>
+            {effectiveMaxTokens}
+          </Card>
         </FormField>
       </div>
+      {routingMisconfigured ? (
+        <Card variant='warning' padding='sm' className='text-[11px] text-amber-100'>
+          AI Brain routing for `ai_paths` is not ready. Enable the feature, keep provider set to Model, and set a non-empty model ID in Brain.
+        </Card>
+      ) : null}
       <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/60 bg-card/30 text-xs text-gray-300'>
         <span>Accepts Images</span>
         <Button

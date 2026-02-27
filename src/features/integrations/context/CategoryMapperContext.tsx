@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useMemo, useEffect, useRef,
 
 import { useFetchExternalCategoriesMutation, useSaveMappingsMutation } from '@/features/integrations/hooks/useMarketplaceMutations';
 import { useExternalCategories, useCategoryMappings } from '@/features/integrations/hooks/useMarketplaceQueries';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useProductCategories } from '@/features/products/hooks/useCategoryQueries';
 import { useCatalogs } from '@/features/products/hooks/useProductMetadataQueries';
 import type { ExternalCategory, CategoryMappingWithDetails } from '@/shared/contracts/integrations';

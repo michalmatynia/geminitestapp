@@ -2,11 +2,11 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { AiNode, RuntimeState, Edge } from '@/features/ai/ai-paths/lib';
+import type { AiNode, RuntimeState, Edge } from '@/shared/lib/ai-paths';
 import {
   clampScale,
   clampTranslate,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 
@@ -117,6 +117,7 @@ export function useCanvasInteractions(args?: {
   const lockedToastAtRef = useRef<number>(0);
   const hasCanvasKeyboardFocusRef = useRef(false);
   const safariGestureScaleRef = useRef<number | null>(null);
+  const wheelGestureActiveUntilRef = useRef<number>(0);
 
   const [marqueeSelection, setMarqueeSelection] = useState<MarqueeSelectionState | null>(null);
   const [touchLongPressIndicator, setTouchLongPressIndicator] = useState<TouchLongPressIndicatorState | null>(null);
@@ -649,23 +650,116 @@ export function useCanvasInteractions(args?: {
     }
   }, [touch, marqueeSelection, panState, connecting, endPan, endConnection, startPan, maybeStartTouchPanInertia]);
 
-  const handleWheel = useCallback((event: React.WheelEvent<Element>): void => {
-    event.preventDefault();
-    event.stopPropagation();
-    nav.applyWheelZoom(
-      event.deltaY,
-      event.clientX,
-      event.clientY,
-      event.deltaMode,
-      event.ctrlKey,
-      event.metaKey,
-      event.deltaX
-    );
-  }, [nav]);
+  const isPointInsideCanvas = useCallback(
+    (clientX: number, clientY: number): boolean => {
+      if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return false;
+      const canvasElement = canvasRef.current;
+      if (!canvasElement) return false;
+      const rect = canvasElement.getBoundingClientRect();
+      return (
+        clientX >= rect.left &&
+        clientX <= rect.right &&
+        clientY >= rect.top &&
+        clientY <= rect.bottom
+      );
+    },
+    [canvasRef]
+  );
+
+  const isWheelLikelyZoomGesture = useCallback(
+    (event: {
+      ctrlKey: boolean;
+      metaKey: boolean;
+      deltaMode: number;
+      deltaY: number;
+      deltaX: number;
+    }): boolean => {
+      if (event.ctrlKey || event.metaKey) return true;
+      if (event.deltaMode !== 0) return false;
+      const absY = Math.abs(event.deltaY);
+      const absX = Math.abs(event.deltaX);
+      const hasSmallTrackpadDelta =
+        (absY > 0 && absY < 12) || (absX > 0 && absX < 12);
+      return hasSmallTrackpadDelta;
+    },
+    []
+  );
+
+  const isWheelTargetInsideCanvas = useCallback(
+    (target: EventTarget | null): boolean => {
+      const canvasElement = canvasRef.current;
+      if (!canvasElement) return false;
+      return target instanceof Node && canvasElement.contains(target);
+    },
+    [canvasRef]
+  );
+
+  const applyWheelZoomFromEvent = useCallback(
+    (event: {
+      defaultPrevented: boolean;
+      preventDefault: () => void;
+      stopPropagation?: () => void;
+      target?: EventTarget | null;
+      deltaY: number;
+      deltaX: number;
+      clientX: number;
+      clientY: number;
+      deltaMode: number;
+      ctrlKey: boolean;
+      metaKey: boolean;
+    }): void => {
+      if (event.defaultPrevented) return;
+      const now = performance.now();
+      const likelyZoomGesture = isWheelLikelyZoomGesture(event);
+      const insideByTarget = isWheelTargetInsideCanvas(event.target ?? null);
+      const insideByPoint = isPointInsideCanvas(event.clientX, event.clientY);
+      const withinActiveGestureWindow = now <= wheelGestureActiveUntilRef.current;
+      const shouldHandle =
+        insideByTarget || insideByPoint || (likelyZoomGesture && withinActiveGestureWindow);
+      if (!shouldHandle) return;
+      wheelGestureActiveUntilRef.current = now + (likelyZoomGesture ? 520 : 260);
+      event.preventDefault();
+      event.stopPropagation?.();
+      nav.applyWheelZoom(
+        event.deltaY,
+        event.clientX,
+        event.clientY,
+        event.deltaMode,
+        event.ctrlKey,
+        event.metaKey,
+        event.deltaX
+      );
+    },
+    [isPointInsideCanvas, isWheelLikelyZoomGesture, isWheelTargetInsideCanvas, nav]
+  );
+
+  const handleWheel = useCallback(
+    (event: React.WheelEvent<Element>): void => {
+      const nativeWheelEvent = event.nativeEvent as WheelEvent | undefined;
+      if (nativeWheelEvent?.defaultPrevented) return;
+      applyWheelZoomFromEvent(event);
+    },
+    [applyWheelZoomFromEvent]
+  );
+
+  useEffect(() => {
+    const handleDocumentWheel = (event: WheelEvent): void => {
+      applyWheelZoomFromEvent(event);
+    };
+    window.addEventListener('wheel', handleDocumentWheel, {
+      passive: false,
+      capture: true,
+    });
+    return () => {
+      window.removeEventListener('wheel', handleDocumentWheel, true);
+    };
+  }, [applyWheelZoomFromEvent]);
 
   useEffect(() => {
     const canvasElement = canvasRef.current;
-    if (!canvasElement) return;
+    const viewportElement = viewportRef.current;
+    const gestureTarget = canvasElement ?? viewportElement;
+    if (!gestureTarget) return;
 
     const resolveGestureAnchor = (
       event: WebkitGestureLikeEvent
@@ -695,6 +789,7 @@ export function useCanvasInteractions(args?: {
       const event = rawEvent as WebkitGestureLikeEvent;
       rawEvent.preventDefault();
       nav.stopViewAnimation();
+      wheelGestureActiveUntilRef.current = performance.now() + 800;
       const scale = Number(event.scale);
       safariGestureScaleRef.current =
         Number.isFinite(scale) && scale > 0 ? scale : 1;
@@ -721,6 +816,7 @@ export function useCanvasInteractions(args?: {
       const scaleFactor = nextGestureScale / previousGestureScale;
       safariGestureScaleRef.current = nextGestureScale;
       if (!Number.isFinite(scaleFactor) || Math.abs(scaleFactor - 1) < 0.0001) return;
+      wheelGestureActiveUntilRef.current = performance.now() + 800;
 
       const anchor = resolveGestureAnchor(event);
       const targetScale = clampScale(latestViewRef.current.scale * scaleFactor);
@@ -735,13 +831,13 @@ export function useCanvasInteractions(args?: {
       safariGestureScaleRef.current = null;
     };
 
-    canvasElement.addEventListener('gesturestart', handleGestureStart, { passive: false });
-    canvasElement.addEventListener('gesturechange', handleGestureChange, { passive: false });
-    canvasElement.addEventListener('gestureend', handleGestureEnd);
+    gestureTarget.addEventListener('gesturestart', handleGestureStart, { passive: false });
+    gestureTarget.addEventListener('gesturechange', handleGestureChange, { passive: false });
+    gestureTarget.addEventListener('gestureend', handleGestureEnd);
     return () => {
-      canvasElement.removeEventListener('gesturestart', handleGestureStart);
-      canvasElement.removeEventListener('gesturechange', handleGestureChange);
-      canvasElement.removeEventListener('gestureend', handleGestureEnd);
+      gestureTarget.removeEventListener('gesturestart', handleGestureStart);
+      gestureTarget.removeEventListener('gesturechange', handleGestureChange);
+      gestureTarget.removeEventListener('gestureend', handleGestureEnd);
     };
   }, [
     canvasRef,

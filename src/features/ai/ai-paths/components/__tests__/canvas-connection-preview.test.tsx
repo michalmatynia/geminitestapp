@@ -1,8 +1,8 @@
 import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { AiNode } from '@/features/ai/ai-paths/lib';
-import type { PortDataType } from '@/features/ai/ai-paths/lib/core/utils/port-types';
+import type { AiNode } from '@/shared/lib/ai-paths';
+import type { PortDataType } from '@/shared/lib/ai-paths/core/utils/port-types';
 
 import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from '../CanvasBoardUIContext';
 import { CanvasSvgEdgeLayer } from '../canvas-svg-edge-layer';
@@ -131,7 +131,7 @@ describe('canvas connection preview', () => {
           onReconnectInput={vi.fn()}
           onCompleteConnection={vi.fn()}
           onDisconnectPort={vi.fn()}
-          onStartConnection={onStartConnection as any}
+          onStartConnection={onStartConnection}
           setHoveredConnectorKey={vi.fn()}
           onConnectorHover={vi.fn()}
           onConnectorLeave={vi.fn()}
@@ -163,7 +163,7 @@ describe('canvas connection preview', () => {
 
     fireEvent.pointerDown(outputPort, { clientX: 240, clientY: 180 });
     expect(onStartConnection).toHaveBeenCalledTimes(1);
-    const call = onStartConnection.mock.calls[0];
+    const call = onStartConnection.mock.calls[0] as [React.PointerEvent, AiNode, string];
     const calledNode = call?.[1];
     expect(calledNode?.id).toBe(node.id);
     expect(call?.[2]).toBe('result');

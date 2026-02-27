@@ -3,16 +3,16 @@
 import { createContext, useContext, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { 
-  useOllamaModels, 
+  useBrainModels, 
   useBrainAnalyticsSummary, 
   useBrainLogMetrics, 
   useBrainInsights, 
   useBrainRuntimeAnalytics,
-  type ChatbotModelsResponse,
+  type BrainModelsResponse,
   type InsightsSnapshot
 } from '@/features/ai/brain/hooks/useBrainQueries';
 
-export type { ChatbotModelsResponse, InsightsSnapshot };
+export type { BrainModelsResponse, InsightsSnapshot };
 
 import {
   AI_INSIGHTS_SETTINGS_KEYS,
@@ -20,7 +20,7 @@ import {
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from '@/features/ai/insights/settings';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
 import type {
   AiPathRuntimeAnalyticsSummary,
@@ -62,6 +62,7 @@ const defaultOverridesEnabled: Record<AiBrainFeature, boolean> = {
   image_studio: false,
   prompt_engine: false,
   ai_paths: false,
+  chatbot: false,
   analytics: true,
   runtime_analytics: true,
   system_logs: true,
@@ -158,7 +159,7 @@ interface BrainContextType {
   setLogsPromptSystem: (prompt: string) => void;
 
   // Queries
-  ollamaModelsQuery: SingleQuery<ChatbotModelsResponse>;
+  ollamaModelsQuery: SingleQuery<BrainModelsResponse>;
   analyticsSummaryQuery: SingleQuery<AnalyticsSummaryDto>;
   logMetricsQuery: SingleQuery<SystemLogMetrics>;
   insightsQuery: SingleQuery<InsightsSnapshot>;
@@ -235,6 +236,7 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
       image_studio: Boolean(parsedBrain.assignments.image_studio),
       prompt_engine: Boolean(parsedBrain.assignments.prompt_engine),
       ai_paths: Boolean(parsedBrain.assignments.ai_paths),
+      chatbot: Boolean(parsedBrain.assignments.chatbot),
       analytics: true,
       runtime_analytics: true,
       system_logs: true,
@@ -288,7 +290,7 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
   }, [settingsQuery.dataUpdatedAt, hydrateFromSettingsMap]);
 
   const allFeatureKeys: AiBrainFeature[] = [
-    'cms_builder', 'image_studio', 'prompt_engine', 'ai_paths',
+    'cms_builder', 'image_studio', 'prompt_engine', 'ai_paths', 'chatbot',
     'analytics', 'runtime_analytics', 'system_logs', 'error_logs'
   ];
 
@@ -299,16 +301,16 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
     }, {} as Record<AiBrainFeature, AiBrainAssignment>);
   }, [settings]);
 
-  const ollamaModelsQuery = useOllamaModels();
+  const ollamaModelsQuery = useBrainModels();
 
   const liveOllamaModels = useMemo((): string[] => {
-    const models = Array.isArray(ollamaModelsQuery.data?.models)
-      ? ollamaModelsQuery.data?.models ?? []
+    const models = Array.isArray(ollamaModelsQuery.data?.sources?.liveOllamaModels)
+      ? ollamaModelsQuery.data?.sources?.liveOllamaModels ?? []
       : [];
     return models
       .map((model: string) => model.trim())
       .filter((model: string) => model.length > 0);
-  }, [ollamaModelsQuery.data?.models]);
+  }, [ollamaModelsQuery.data?.sources?.liveOllamaModels]);
 
   const modelQuickPicks = useMemo((): SelectSimpleOption[] => {
     const seen = new Set<string>();

@@ -1,6 +1,6 @@
 'use client';
 
-import type { AiNode } from '@/features/ai/ai-paths/lib';
+import type { AiNode } from '@/shared/lib/ai-paths';
 
 const SUPPORTED_NODE_TYPES = new Set<AiNode['type']>([
   'trigger',

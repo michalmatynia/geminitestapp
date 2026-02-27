@@ -5,7 +5,7 @@ import {
   type DataContractNodeIssueSummary,
   formatDurationMs,
   type AiNode,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { Badge, Button, Tooltip } from '@/shared/ui';
 import { NodeProcessingDots } from './NodeProcessingDots';
 import {

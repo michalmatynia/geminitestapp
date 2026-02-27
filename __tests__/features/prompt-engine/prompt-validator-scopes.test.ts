@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatProgrammaticPrompt } from '@/features/prompt-engine/prompt-formatter';
-import { validateProgrammaticPrompt } from '@/features/prompt-engine/prompt-validator';
-import type { PromptValidationRule, PromptValidationSettings } from '@/features/prompt-engine/settings';
+import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-formatter';
+import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-validator';
+import type { PromptValidationRule, PromptValidationSettings } from '@/shared/lib/prompt-engine/settings';
 
 const buildRegexRule = (overrides: Partial<PromptValidationRule> = {}): PromptValidationRule => ({
   kind: 'regex',

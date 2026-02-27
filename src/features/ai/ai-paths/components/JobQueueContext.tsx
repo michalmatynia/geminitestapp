@@ -2,11 +2,11 @@
 
 import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { runsApi } from '@/features/ai/ai-paths/lib';
+import { runsApi } from '@/shared/lib/ai-paths';
 import type {
   AiPathRunRecord,
-} from '@/features/ai/ai-paths/lib';
-import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
+} from '@/shared/lib/ai-paths';
+import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
 import { createDeleteMutationV2, createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';

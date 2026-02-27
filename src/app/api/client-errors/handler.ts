@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { isSensitiveKey, REDACTED_VALUE, truncateString } from '@/features/observability/lib/log-redaction';
-import { ErrorSystem } from '@/features/observability/server';
-import type { ErrorContext } from '@/features/observability/services/error-system';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import {
+  isSensitiveKey,
+  REDACTED_VALUE,
+  truncateString,
+} from '@/shared/lib/observability/log-redaction';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { isAbortLikeError } from '@/shared/utils/observability/is-abort-like-error';
+import type { ErrorContext } from '@/shared/contracts/observability';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 
 const MAX_CLIENT_ERROR_BODY_BYTES = 64_000;

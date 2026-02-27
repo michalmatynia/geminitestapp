@@ -1,7 +1,7 @@
 'use client';
 
-import type { DatabaseConfig } from '@/features/ai/ai-paths/lib';
-import { DB_COLLECTION_OPTIONS } from '@/features/ai/ai-paths/lib';
+import type { DatabaseConfig } from '@/shared/lib/ai-paths';
+import { DB_COLLECTION_OPTIONS } from '@/shared/lib/ai-paths';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Input, Label, SelectSimple, FormField } from '@/shared/ui';
 

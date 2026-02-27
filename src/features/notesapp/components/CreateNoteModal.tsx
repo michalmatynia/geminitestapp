@@ -26,14 +26,9 @@ export function CreateNoteModal({
       formRef={formRef}
       onSave={handleSuccess}
       saveText='Create'
-      actions={
-        <TriggerButtonBar location='note_modal' entityType='note' />
-      }
+      actions={<TriggerButtonBar location='note_modal' entityType='note' />}
     >
-      <NoteForm
-        formRef={formRef}
-        onSuccess={handleSuccess}
-      />
+      <NoteForm formRef={formRef} onSuccess={handleSuccess} />
     </FormModal>
   );
 }

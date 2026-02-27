@@ -2,11 +2,11 @@
 
 import React from 'react';
 
-import type { AiNode } from '@/features/ai/ai-paths/lib';
+import type { AiNode } from '@/shared/lib/ai-paths';
 import {
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 import { CanvasSvgNode } from './CanvasSvgNode';
 import { useCanvasBoardUI } from './CanvasBoardUIContext';

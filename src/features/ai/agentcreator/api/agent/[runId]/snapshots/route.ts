@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { internalError } from '@/shared/errors/app-error';
 import { apiHandlerWithParams, type ApiHandlerContext as _ApiHandlerContext } from '@/shared/lib/api/api-handler';
 import prisma from '@/shared/lib/db/prisma';

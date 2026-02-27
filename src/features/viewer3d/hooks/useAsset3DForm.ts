@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { Asset3DRecord, Asset3DUpdateInput } from '@/shared/contracts/viewer3d';
 
 import { updateAsset3D } from '../api';

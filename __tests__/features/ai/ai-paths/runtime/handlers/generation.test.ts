@@ -1,13 +1,13 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
-import * as api from '@/features/ai/ai-paths/lib/api';
+import * as api from '@/shared/lib/ai-paths/api';
 import { 
   handleTemplate, 
   handlePrompt, 
   handleModel, 
   handleAiDescription, 
   handleDescriptionUpdater 
-} from '@/features/ai/ai-paths/lib/core/runtime/handlers/generation';
+} from '@/shared/lib/ai-paths/core/runtime/handlers/generation';
 
 import { createMockContext } from '../../test-utils';
 

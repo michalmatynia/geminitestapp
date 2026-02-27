@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useOfflineQueueStatus, type OfflineQueueItem } from '@/shared/hooks/offline';
 import { useOfflineSync } from '@/shared/hooks/offline/useOfflineMutation';
 import { useSettingsMap, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';

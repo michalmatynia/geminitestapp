@@ -165,7 +165,7 @@ export function usePersistSessionMessage(): UpdateMutation<void, PersistSessionM
 /**
  * Mutation hook for sending a chat message
  */
-export function useSendChatMessage(): UpdateMutation<{ message?: string }, { messages: ChatMessage[]; model: string; sessionId?: string | null }> {
+export function useSendChatMessage(): UpdateMutation<{ message?: string }, { messages: ChatMessage[]; model?: string; sessionId?: string | null }> {
   const mutationKey = chatbotQueryKeys.mutation('send-message');
   return createUpdateMutationV2({
     mutationFn: sendChatbotMessage,

@@ -1,6 +1,6 @@
 'use client';
 
-import type { ClusterPreset } from '@/features/ai/ai-paths/lib';
+import type { ClusterPreset } from '@/shared/lib/ai-paths';
 import { Button, Input, Label, Textarea, SimpleSettingsList, Card } from '@/shared/ui';
 
 import { usePresetsState, usePresetsActions } from '../context';

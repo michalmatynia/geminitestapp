@@ -1,4 +1,4 @@
-import type { AiNode } from '@/features/ai/ai-paths/lib';
+import type { AiNode } from '@/shared/lib/ai-paths';
 
 export type LocalExecutionSecurityIssue = {
   nodeId: string;

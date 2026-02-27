@@ -12,7 +12,7 @@ import {
   simplifyShape,
   type VectorShape,
   type VectorToolMode,
-} from '@/features/vector-drawing';
+} from '@/shared/lib/vector-drawing';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

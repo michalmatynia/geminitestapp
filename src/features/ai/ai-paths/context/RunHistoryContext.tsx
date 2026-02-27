@@ -12,7 +12,7 @@ import type {
   AiPathRunRecord,
   AiPathRunNodeRecord,
   AiPathRunEventRecord,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 // ---------------------------------------------------------------------------
 // Types

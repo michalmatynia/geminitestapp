@@ -3,7 +3,8 @@ import 'server-only';
 import { dispatchProductAiJob } from '@/features/jobs/processors/product-ai-processors';
 import type { Job } from '@/features/jobs/processors/product-ai-processors';
 import { getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
-import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { notFoundError } from '@/shared/errors/app-error';
 import { createManagedQueue } from '@/shared/lib/queue';
 

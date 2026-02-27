@@ -6,7 +6,7 @@ import { ArrowUpDown, Download } from 'lucide-react';
 import {
   TriggerButtonBar,
 } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
-import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import {
   fetchProductListings,
   productListingsQueryKey,
@@ -17,7 +17,7 @@ import { useProductListActionsContext } from '@/features/products/context/Produc
 import { getProductDetailQueryKey, productsListsQueryKey } from '@/features/products/hooks/productCache';
 import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
 import { calculatePriceForCurrency, normalizeCurrencyCode } from '@/features/products/utils/priceCalculation';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 import type { ProductWithImages } from '@/shared/contracts/products';
 import {
   Badge,

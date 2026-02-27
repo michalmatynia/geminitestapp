@@ -1,6 +1,6 @@
 'use client';
 
-import { toNumber } from '@/features/ai/ai-paths/lib';
+import { toNumber } from '@/shared/lib/ai-paths';
 import { Input, ToggleRow, FormField, Hint } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

@@ -1,5 +1,5 @@
 import type { AiPathRunRepository as PathRunRepository } from '@/shared/contracts/ai-paths';
-import { ErrorSystem } from '@/features/observability/services/error-system';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export type CancellationMonitorState = {
   active: boolean;

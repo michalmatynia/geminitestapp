@@ -1,4 +1,4 @@
-import type { PromptValidationRule } from '@/features/prompt-engine/settings';
+import type { PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
 import {
   buildPatternSnapshot,
   ensurePromptExploderScopeOnRules,

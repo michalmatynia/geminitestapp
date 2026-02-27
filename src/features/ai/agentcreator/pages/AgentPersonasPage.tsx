@@ -5,7 +5,7 @@ import React from 'react';
 import { AgentPersonaSettingsForm } from '@/features/ai/agentcreator/components/AgentPersonaSettingsForm';
 import { useAgentPersonas, useSaveAgentPersonasMutation } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
 import { buildAgentPersonaSettings, createAgentPersonaId } from '@/features/ai/agentcreator/utils/personas';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AgentPersonaDto as AgentPersona } from '@/shared/contracts/agents';
 import { ItemLibrary, useToast, Button } from '@/shared/ui';
 

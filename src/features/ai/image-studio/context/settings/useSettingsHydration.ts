@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { 
   parsePromptEngineSettings, 
   PROMPT_ENGINE_SETTINGS_KEY 
-} from '@/features/prompt-engine/settings';
+} from '@/shared/lib/prompt-engine/settings';
 import { 
   parseImageStudioSettings, 
   normalizeImageStudioModelPresets 

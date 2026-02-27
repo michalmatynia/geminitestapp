@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { buildPromptOutput } from '@/features/ai/ai-paths/lib';
+import { buildPromptOutput } from '@/shared/lib/ai-paths';
 
 describe('buildPromptOutput', () => {
   it('resolves {{result}} from nodeInputs.result', () => {

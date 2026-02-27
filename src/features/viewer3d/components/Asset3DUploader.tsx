@@ -3,7 +3,7 @@
 import { Upload, Plus, X } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { Button, Input, FileUploadTrigger, Textarea, Checkbox, Tag, FormField } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

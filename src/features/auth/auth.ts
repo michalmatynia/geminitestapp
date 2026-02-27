@@ -21,7 +21,9 @@ import { getAuthSecurityProfile, updateAuthSecurityProfile } from '@/features/au
 import { getAuthUserPageSettings } from '@/features/auth/services/auth-settings';
 import { hashRecoveryCode, verifyTotpToken } from '@/features/auth/services/totp';
 import { decryptAuthSecret } from '@/features/auth/utils/auth-encryption';
-import { ActivityTypes, ErrorSystem, logActivity } from '@/features/observability/server';
+import { logActivity } from '@/shared/utils/observability/activity-service';
+import { ActivityTypes } from '@/shared/constants/observability';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { configurationError } from '@/shared/errors/app-error';
 import { getMongoClient } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

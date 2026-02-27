@@ -1,5 +1,5 @@
 import { getAuthDataProvider, requireAuthProvider } from '@/features/auth/services/auth-provider';
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 

@@ -1,8 +1,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { getDiskPathFromPublicPath } from '@/features/files/utils/fileUploader';
-import { ErrorSystem } from '@/features/observability/services/error-system';
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   fetchWithOutboundUrlPolicy,
   OutboundUrlPolicyError,

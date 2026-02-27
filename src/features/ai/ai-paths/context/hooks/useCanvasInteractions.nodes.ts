@@ -1,11 +1,11 @@
 import { useCallback, useRef } from 'react';
-import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, NodeDefinition, RuntimeState } from '@/shared/lib/ai-paths';
 import {
   createNodeInstanceId,
   getDefaultConfigForType,
   palette,
   resolveNodeTypeId,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   getPointerCaptureTarget,
   setPointerCaptureSafe,

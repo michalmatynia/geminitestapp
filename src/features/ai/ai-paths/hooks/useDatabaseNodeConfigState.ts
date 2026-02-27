@@ -11,7 +11,7 @@ import {
   createPresetId,
   extractJsonPathEntries,
   createParserMappings,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import type { 
   AiNode, 
   Edge, 
@@ -21,15 +21,15 @@ import type {
   DbQueryPreset,
   DatabaseAction,
   DatabaseActionCategory
-} from '@/features/ai/ai-paths/lib';
-import { dbApi } from '@/features/ai/ai-paths/lib/api';
+} from '@/shared/lib/ai-paths';
+import { dbApi } from '@/shared/lib/ai-paths/api';
 import { 
   resolveDbActionProvider, 
   isProviderActionCategorySupported,
   resolveProviderAction,
   getDefaultProviderAction
-} from '@/features/ai/ai-paths/lib/core/utils/provider-actions';
-import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/features/prompt-engine/settings';
+} from '@/shared/lib/ai-paths/core/utils/provider-actions';
+import { PROMPT_ENGINE_SETTINGS_KEY, parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import type { SchemaData, AiQuery, DatabasePresetOption } from '@/shared/contracts/database';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap } from '@/shared/hooks/use-settings';

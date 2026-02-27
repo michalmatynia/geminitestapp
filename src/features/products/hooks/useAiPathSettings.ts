@@ -5,19 +5,19 @@ import {
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
   TRIGGER_EVENTS,
-} from '@/features/ai/ai-paths/lib/core/constants';
-import { palette } from '@/features/ai/ai-paths/lib/core/definitions';
+} from '@/shared/lib/ai-paths/core/constants';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import {
   migrateTriggerToFetcherGraph,
   normalizeNodes,
-} from '@/features/ai/ai-paths/lib/core/normalization';
+} from '@/shared/lib/ai-paths/core/normalization';
 import {
   createDefaultPathConfig,
-} from '@/features/ai/ai-paths/lib/core/utils/factory';
-import { sanitizeEdges } from '@/features/ai/ai-paths/lib/core/utils/graph';
-import { repairPathNodeIdentities } from '@/features/ai/ai-paths/lib/core/utils/node-identity';
-import { safeParseJson } from '@/features/ai/ai-paths/lib/core/utils/runtime';
-import { fetchAiPathsSettingsCached } from '@/features/ai/ai-paths/lib/settings-store-client';
+} from '@/shared/lib/ai-paths/core/utils/factory';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
+import { repairPathNodeIdentities } from '@/shared/lib/ai-paths/core/utils/node-identity';
+import { safeParseJson } from '@/shared/lib/ai-paths/core/utils/runtime';
+import { fetchAiPathsSettingsCached } from '@/shared/lib/ai-paths/settings-store-client';
 import type {
   AiNode,
   PathConfig,

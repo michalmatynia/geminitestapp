@@ -33,7 +33,7 @@ import { DatabaseQueryInputControls } from './DatabaseQueryInputControls';
 import { DatabaseTemplateSnippetsDialog } from './DatabaseTemplateSnippetsDialog';
 import { PlaceholderMatrixDialog, type PlaceholderGroup, type PlaceholderTarget, type PlaceholderEntry } from './PlaceholderMatrixDialog';
 import { useAiPathConfig } from '../../AiPathConfigContext';
-import { type UpdaterSampleState } from '@/features/ai/ai-paths/lib';
+import { type UpdaterSampleState } from '@/shared/lib/ai-paths';
 
 
 export function DatabaseConstructorTab(): React.JSX.Element | null {

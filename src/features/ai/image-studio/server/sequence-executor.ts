@@ -38,7 +38,7 @@ import {
   type ImageStudioSequenceStep,
   type ImageStudioSequenceUpscaleStep,
 } from '@/features/ai/image-studio/utils/studio-settings';
-import { getImageFileRepository, getDiskPathFromPublicPath } from '@/features/files/server';
+import { getImageFileRepository, getDiskPathFromPublicPath } from '@/shared/lib/files/services/image-file-service';
 import {
   enqueueImageStudioRunJob,
   startImageStudioRunQueue,

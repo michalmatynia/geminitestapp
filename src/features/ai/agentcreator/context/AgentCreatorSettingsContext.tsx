@@ -3,8 +3,7 @@
 import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react';
 
 import { DEFAULT_AGENT_SETTINGS } from '@/features/ai/agentcreator/utils/constants';
-import { DEFAULT_MODELS } from '@/features/ai/ai-paths/lib';
-import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
 
 // --- Granular Contexts ---
 
@@ -107,17 +106,19 @@ export const useAgentCreatorSettingsContext = (): AgentCreatorSettingsContextTyp
 };
 
 export function AgentCreatorSettingsProvider({ children }: { children: ReactNode }): React.JSX.Element {
-  const { data: fetchedModels = [], isLoading: modelsLoading } = useChatbotModels();
+  const brainModelOptions = useBrainModelOptions({
+    feature: 'chatbot',
+  });
   
   const modelOptions = useMemo(() => {
-    const combined = [...fetchedModels, ...DEFAULT_MODELS];
+    const combined = [...brainModelOptions.models];
     const seen = new Set<string>();
     return combined.filter((m: string) => {
       if (!m || seen.has(m)) return false;
       seen.add(m);
       return true;
     });
-  }, [fetchedModels]);
+  }, [brainModelOptions.models]);
 
   const [agentModeEnabled, setAgentModeEnabled] = useState(false);
   const [agentBrowser, setAgentBrowser] = useState(
@@ -210,7 +211,7 @@ export function AgentCreatorSettingsProvider({ children }: { children: ReactNode
     agentOutputNormalizationModel,
     setAgentOutputNormalizationModel,
     modelOptions,
-    modelsLoading,
+    modelsLoading: brainModelOptions.isLoading,
   }), [
     agentMemoryValidationModel,
     agentPlannerModel,
@@ -223,7 +224,7 @@ export function AgentCreatorSettingsProvider({ children }: { children: ReactNode
     agentSelectorInferenceModel,
     agentOutputNormalizationModel,
     modelOptions,
-    modelsLoading,
+    brainModelOptions.isLoading,
   ]);
 
   const performanceValue = useMemo<AgentCreatorPerformance>(() => ({

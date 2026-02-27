@@ -4,7 +4,7 @@ import {
   countryCodes,
   defaultCountries,
   countryMappings,
-} from '@/features/internationalization/lib/internationalizationDefaults';
+} from '@/shared/lib/internationalization/lib/internationalizationDefaults';
 
 describe('internationalizationDefaults', () => {
   it('should have correct country codes', () => {

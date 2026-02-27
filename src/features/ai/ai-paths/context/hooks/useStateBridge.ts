@@ -42,8 +42,8 @@ import type {
   PathRunMode,
   DbQueryPreset,
   DbNodePreset,
-} from '@/features/ai/ai-paths/lib';
-import { stableStringify } from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
+import { stableStringify } from '@/shared/lib/ai-paths';
 
 import { useCanvasActions } from '../CanvasContext';
 import { useGraphActions, useGraphState } from '../GraphContext';

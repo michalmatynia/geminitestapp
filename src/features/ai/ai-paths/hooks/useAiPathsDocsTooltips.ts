@@ -3,7 +3,7 @@
 import {
   readDocsTooltipsEnabled,
   useDocsTooltipsSetting,
-} from '@/features/tooltip-engine';
+} from '@/shared/lib/tooltip-engine';
 
 export const AI_PATHS_DOCS_TOOLTIP_KEY = 'ai_paths:docs_tooltips_enabled';
 

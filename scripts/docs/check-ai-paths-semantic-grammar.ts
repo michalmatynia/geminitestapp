@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 
-import { AI_PATHS_NODE_DOCS } from '../../src/features/ai/ai-paths/lib/core/docs/node-docs';
+import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 
 const workspaceRoot = process.cwd();
 const nodesDir = path.join(

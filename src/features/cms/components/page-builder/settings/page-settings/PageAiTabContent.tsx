@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { Button, Label, Textarea, SelectSimple } from '@/shared/ui';
 import { usePageAiAssistant } from './usePageAiAssistant';
-import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 
@@ -14,7 +14,8 @@ export function PageAiTabContent({
 }): React.JSX.Element {
   const ai = usePageAiAssistant();
   
-  const modelsQuery = useChatbotModels({
+  const brainModelOptions = useBrainModelOptions({
+    feature: 'cms_builder',
     enabled: activeTab === 'ai' && ai.pageAiProvider === 'model',
   });
   const teachingAgentsQuery = useTeachingAgents({
@@ -22,12 +23,11 @@ export function PageAiTabContent({
   });
 
   const modelOptions = useMemo((): string[] => {
-    const models = Array.isArray(modelsQuery.data) ? modelsQuery.data : [];
-    const fromApi = models
+    const fromApi = brainModelOptions.models
       .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
       .map((value) => value.trim());
     return Array.from(new Set(fromApi));
-  }, [modelsQuery.data]);
+  }, [brainModelOptions.models]);
 
   const agentOptions = useMemo(
     () => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),

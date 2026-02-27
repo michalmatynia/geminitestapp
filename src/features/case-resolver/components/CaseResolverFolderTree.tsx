@@ -12,17 +12,17 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import {
   useMasterFolderTreeInstance,
-} from '@/features/foldertree';
+} from '@/shared/lib/foldertree';
 import {
   FolderTreeViewportV2,
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,
   type FolderTreeViewportRenderNodeInput,
-} from '@/features/foldertree/v2';
+} from '@/shared/lib/foldertree/v2';
 import {
   useMasterFolderTreeSearch,
   MasterFolderTreeSearchResults,
-} from '@/features/foldertree/v2/search';
+} from '@/shared/lib/foldertree/v2/search';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { FolderTreePanel } from '@/shared/ui';
 import {

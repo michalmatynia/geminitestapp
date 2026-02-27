@@ -1,7 +1,7 @@
 import 'dotenv/config';
 
-import { normalizeNodes } from '@/features/ai/ai-paths/lib/core/normalization';
-import { sanitizeEdges } from '@/features/ai/ai-paths/lib/core/utils/graph';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { listAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
 import { enqueuePathRun } from '@/features/ai/ai-paths/services/path-run-service';
 

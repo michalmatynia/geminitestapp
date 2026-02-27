@@ -1,8 +1,16 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useRef,
+  ReactNode,
+  useCallback,
+} from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { NoteSettings } from '@/shared/contracts/notes';
 import { internalError } from '@/shared/errors/app-error';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
@@ -38,10 +46,14 @@ interface NoteSettingsContextType {
 }
 
 const NoteSettingsContext = createContext<NoteSettingsContextType | undefined>(
-  undefined
+  undefined,
 );
 
-export function NoteSettingsProvider({ children }: { children: ReactNode }): React.JSX.Element {
+export function NoteSettingsProvider({
+  children,
+}: {
+  children: ReactNode;
+}): React.JSX.Element {
   const [settings, setSettings] = useState<NoteSettings>(DEFAULT_NOTE_SETTINGS);
   const [isInitialized, setIsInitialized] = useState(false);
   const previousFolderIdRef = useRef<string | null>(null);
@@ -61,14 +73,21 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
       const stored = window.localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored) as Partial<NoteSettings>;
-        setSettings((prev: NoteSettings): NoteSettings => ({ ...prev, ...parsed }));
+        setSettings(
+          (prev: NoteSettings): NoteSettings => ({ ...prev, ...parsed }),
+        );
         previousFolderIdRef.current = parsed.selectedFolderId ?? null;
         previousNotebookIdRef.current = parsed.selectedNotebookId ?? null;
         previousAutoformatRef.current = parsed.autoformatOnPaste ?? false;
         previousEditorModeRef.current = parsed.editorMode ?? 'markdown';
       }
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'NoteSettingsContext', action: 'loadSettingsFromLocalStorage' } });
+      logClientError(error, {
+        context: {
+          source: 'NoteSettingsContext',
+          action: 'loadSettingsFromLocalStorage',
+        },
+      });
     }
     setIsInitialized(true);
   }, []);
@@ -107,7 +126,12 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
         }
       }
 
-      if (dbEditorMode && (dbEditorMode === 'markdown' || dbEditorMode === 'wysiwyg' || dbEditorMode === 'code')) {
+      if (
+        dbEditorMode &&
+        (dbEditorMode === 'markdown' ||
+          dbEditorMode === 'wysiwyg' ||
+          dbEditorMode === 'code')
+      ) {
         if (dbEditorMode !== prev.editorMode) {
           next.editorMode = dbEditorMode;
           previousEditorModeRef.current = next.editorMode;
@@ -117,7 +141,6 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
 
       return changed ? next : prev;
     });
-
   }, [settingsQuery.data, isInitialized]);
 
   // Save settings to localStorage whenever they change
@@ -127,7 +150,12 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'NoteSettingsContext', action: 'saveSettingsToLocalStorage' } });
+      logClientError(error, {
+        context: {
+          source: 'NoteSettingsContext',
+          action: 'saveSettingsToLocalStorage',
+        },
+      });
     }
   }, [settings, isInitialized]);
 
@@ -137,7 +165,10 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
 
     if (settings.selectedFolderId !== previousFolderIdRef.current) {
       previousFolderIdRef.current = settings.selectedFolderId ?? null;
-      updateSetting.mutate({ key: DB_SETTING_KEY, value: settings.selectedFolderId ?? '' });
+      updateSetting.mutate({
+        key: DB_SETTING_KEY,
+        value: settings.selectedFolderId ?? '',
+      });
     }
   }, [settings.selectedFolderId, isInitialized, updateSetting]);
 
@@ -145,7 +176,10 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     if (!isInitialized) return;
     if (settings.selectedNotebookId !== previousNotebookIdRef.current) {
       previousNotebookIdRef.current = settings.selectedNotebookId ?? null;
-      updateSetting.mutate({ key: DB_NOTEBOOK_KEY, value: settings.selectedNotebookId ?? '' });
+      updateSetting.mutate({
+        key: DB_NOTEBOOK_KEY,
+        value: settings.selectedNotebookId ?? '',
+      });
     }
   }, [settings.selectedNotebookId, isInitialized, updateSetting]);
 
@@ -153,7 +187,10 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     if (!isInitialized) return;
     if (settings.autoformatOnPaste !== previousAutoformatRef.current) {
       previousAutoformatRef.current = settings.autoformatOnPaste;
-      updateSetting.mutate({ key: DB_AUTOFORMAT_KEY, value: settings.autoformatOnPaste ? 'true' : 'false' });
+      updateSetting.mutate({
+        key: DB_AUTOFORMAT_KEY,
+        value: settings.autoformatOnPaste ? 'true' : 'false',
+      });
     }
   }, [settings.autoformatOnPaste, isInitialized, updateSetting]);
 
@@ -161,12 +198,17 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
     if (!isInitialized) return;
     if (settings.editorMode !== previousEditorModeRef.current) {
       previousEditorModeRef.current = settings.editorMode;
-      updateSetting.mutate({ key: DB_EDITOR_MODE_KEY, value: settings.editorMode });
+      updateSetting.mutate({
+        key: DB_EDITOR_MODE_KEY,
+        value: settings.editorMode,
+      });
     }
   }, [settings.editorMode, isInitialized, updateSetting]);
 
   const updateSettings = useCallback((updates: Partial<NoteSettings>): void => {
-    setSettings((prev: NoteSettings): NoteSettings => ({ ...prev, ...updates }));
+    setSettings(
+      (prev: NoteSettings): NoteSettings => ({ ...prev, ...updates }),
+    );
   }, []);
 
   const resetToDefaults = useCallback((): void => {
@@ -190,7 +232,9 @@ export function NoteSettingsProvider({ children }: { children: ReactNode }): Rea
 export function useNoteSettings(): NoteSettingsContextType {
   const context = useContext(NoteSettingsContext);
   if (context === undefined) {
-    throw internalError('useNoteSettings must be used within a NoteSettingsProvider');
+    throw internalError(
+      'useNoteSettings must be used within a NoteSettingsProvider',
+    );
   }
   return context;
 }

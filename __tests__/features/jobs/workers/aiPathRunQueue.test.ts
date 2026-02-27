@@ -21,7 +21,7 @@ vi.mock('@/features/ai/ai-paths/services/path-run-repository', () => ({
   getPathRunRepository: vi.fn(),
 }));
 
-vi.mock('@/features/observability/services/error-system', () => ({
+vi.mock('@/shared/utils/observability/error-system', () => ({
   ErrorSystem: {
     captureException: vi.fn(),
   },

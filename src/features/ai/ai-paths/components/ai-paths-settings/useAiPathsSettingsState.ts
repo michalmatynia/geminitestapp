@@ -18,7 +18,7 @@ import type {
   PathMeta,
   RuntimeState,
   UpdaterSampleState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_DEFAULT,
@@ -39,14 +39,14 @@ import {
   TRIGGER_OUTPUT_PORTS,
   triggers,
   triggerButtonsApi,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   updateAiPathsSetting,
-} from '@/features/ai/ai-paths/lib/settings-store-client';
-import { logClientError } from '@/features/observability';
+} from '@/shared/lib/ai-paths/settings-store-client';
+import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
-import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { useToast } from '@/shared/ui';
@@ -373,41 +373,12 @@ export function useAiPathsSettingsState({
     ],
   );
 
-  const modelsQuery = createListQueryV2<
-    { models?: string[] },
-    { models?: string[] }
-  >({
-    queryKey: QUERY_KEYS.ai.chatbot.models(),
-    queryFn: async (): Promise<{ models?: string[] }> => {
-      try {
-        return await api.get<{ models?: string[] }>('/api/chatbot', {
-          logError: false,
-        });
-      } catch (error) {
-        logClientError(error, {
-          context: {
-            source: 'useAiPathsSettingsState',
-            action: 'modelsQueryFn',
-          },
-        });
-        return { models: [] };
-      }
-    },
-    staleTime: 1000 * 60 * 30,
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-    meta: {
-      source: 'ai.ai-paths.settings.models',
-      operation: 'list',
-      resource: 'ai.chatbot.models',
-      domain: 'global',
-      tags: ['ai-paths', 'settings', 'models'],
-    },
+  const brainModelOptions = useBrainModelOptions({
+    feature: 'ai_paths',
   });
 
   const modelOptions = useMemo((): string[] => {
-    const apiModels = modelsQuery.data?.models;
+    const apiModels = brainModelOptions.models;
     const savedModels = nodes
       .filter((node: AiNode): boolean => node.type === 'model')
       .map((node: AiNode): string | undefined => node.config?.model?.modelId)
@@ -417,11 +388,11 @@ export function useAiPathsSettingsState({
     return Array.from(
       new Set([
         ...DEFAULT_MODELS,
-        ...(Array.isArray(apiModels) ? apiModels : []),
+        ...apiModels,
         ...savedModels,
       ]),
     );
-  }, [modelsQuery.data, nodes]);
+  }, [brainModelOptions.models, nodes]);
 
   const pruneRuntimeInputs = useCallback(
     (

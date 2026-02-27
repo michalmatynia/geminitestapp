@@ -12,10 +12,10 @@ import {
 } from '@/shared/ui';
 import {
   AI_PATHS_NODE_DOCS as NODE_DOCS_LIST,
-} from '@/features/ai/ai-paths/lib/core/docs/node-docs';
+} from '@/shared/lib/ai-paths/core/docs/node-docs';
 import {
   DEFAULT_AI_PATHS_VALIDATION_DOC_SOURCES,
-} from '@/features/ai/ai-paths/lib/core/validation-engine';
+} from '@/shared/lib/ai-paths/core/validation-engine';
 import { useAdminAiPathsValidationContext } from '../../context/AdminAiPathsValidationContext';
 import { parseDocsSourcesText } from '../../pages/AdminAiPathsValidationUtils';
 

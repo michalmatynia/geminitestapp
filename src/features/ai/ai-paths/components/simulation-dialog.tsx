@@ -2,7 +2,7 @@
 
 import React, { useMemo, useCallback } from 'react';
 
-import type { AiNode } from '@/features/ai/ai-paths/lib';
+import type { AiNode } from '@/shared/lib/ai-paths';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import {
   Button,

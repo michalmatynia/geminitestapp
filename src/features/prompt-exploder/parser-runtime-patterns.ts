@@ -1,12 +1,12 @@
 import { validateRegexSafety } from '@/shared/utils/regex-safety';
 import {
   PromptValidationRuleCompileError,
-} from '@/features/prompt-core/errors';
+} from '@/shared/lib/prompt-core/errors';
 import {
   recordPromptValidationCounter,
   recordPromptValidationError,
   recordPromptValidationTiming,
-} from '@/features/prompt-core/runtime-observability';
+} from '@/shared/lib/prompt-core/runtime-observability';
 import type {
   PromptExploderRuleSegmentType,
   PromptValidationRule,

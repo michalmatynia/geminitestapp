@@ -1,4 +1,4 @@
-import { createMasterFolderTreeAdapter } from '@/features/foldertree';
+import { createMasterFolderTreeAdapter } from '@/shared/lib/foldertree';
 import type { ReorderCategoryPayload } from '@/features/products/api/settings';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 

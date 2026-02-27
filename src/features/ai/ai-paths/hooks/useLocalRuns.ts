@@ -2,9 +2,9 @@
 
 import { useCallback, useMemo } from 'react';
 
-import { AI_PATHS_LOCAL_RUNS_KEY, parseLocalRuns } from '@/features/ai/ai-paths/lib';
-import type { AiPathLocalRunRecord } from '@/features/ai/ai-paths/lib';
-import { AI_PATHS_RUN_SOURCE_VALUES } from '@/features/ai/ai-paths/lib/run-sources';
+import { AI_PATHS_LOCAL_RUNS_KEY, parseLocalRuns } from '@/shared/lib/ai-paths';
+import type { AiPathLocalRunRecord } from '@/shared/lib/ai-paths';
+import { AI_PATHS_RUN_SOURCE_VALUES } from '@/shared/lib/ai-paths/run-sources';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

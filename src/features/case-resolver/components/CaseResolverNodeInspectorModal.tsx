@@ -4,7 +4,7 @@ import React from 'react';
 import {
   VALIDATOR_PATTERN_LISTS_KEY,
   parseValidatorPatternLists,
-} from '@/features/admin/pages/validator-scope';
+} from '@/shared/contracts/validator';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import {
   CASE_RESOLVER_JOIN_MODE_OPTIONS,

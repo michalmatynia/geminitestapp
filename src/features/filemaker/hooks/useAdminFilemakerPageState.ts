@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useMemo, useState } from 'react';
 
-import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
+import { useCountries } from '@/shared/lib/internationalization/hooks/useInternationalizationQueries';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';

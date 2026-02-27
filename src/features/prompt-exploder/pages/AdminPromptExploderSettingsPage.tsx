@@ -7,12 +7,12 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   parseValidatorPatternLists,
   VALIDATOR_PATTERN_LISTS_KEY,
-} from '@/features/admin/pages/validator-scope';
+} from '@/shared/contracts/validator';
 import {
   AI_BRAIN_PROVIDER_CATALOG_KEY,
   parseBrainProviderCatalog,
 } from '@/features/ai/brain/settings';
-import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { FormSection, SectionHeader, Button, useToast } from '@/shared/ui';
 import {
@@ -154,7 +154,8 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     usePromptExploderDocsTooltips();
   const settingsQuery = useSettingsMap({ scope: 'heavy' });
   const updateSetting = useUpdateSetting();
-  const chatbotModelsQuery = useChatbotModels({
+  const brainModelOptions = useBrainModelOptions({
+    feature: 'prompt_engine',
     enabled: settingsQuery.isSuccess,
   });
 
@@ -246,7 +247,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
     append(providerCatalog.modelPresets, 'AI Brain preset');
     append(providerCatalog.paidModels, 'AI Brain paid model');
     append(providerCatalog.ollamaModels, 'AI Brain ollama');
-    append(chatbotModelsQuery.data ?? [], 'live discovery');
+    append(brainModelOptions.models, 'Brain discovery');
 
     const openAiModel = settingsQuery.data?.get('openai_model') ?? '';
     if (openAiModel.trim()) append(openAiModel, 'system openai_model');
@@ -258,7 +259,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
 
     return options;
   }, [
-    chatbotModelsQuery.data,
+    brainModelOptions.models,
     draft?.ai.fallbackModelId,
     draft?.ai.modelId,
     providerCatalog.modelPresets,
@@ -268,15 +269,15 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
   ]);
 
   const modelDiscoverySummary = useMemo(() => {
-    const discovered = normalizeModelValues(chatbotModelsQuery.data).length;
+    const discovered = normalizeModelValues(brainModelOptions.models).length;
     const catalog = new Set([
       ...normalizeModelValues(providerCatalog.modelPresets),
       ...normalizeModelValues(providerCatalog.paidModels),
       ...normalizeModelValues(providerCatalog.ollamaModels),
     ]).size;
-    return `Catalog ${catalog} + live ${discovered} = ${modelOptions.length} unique model option(s)`;
+    return `Brain catalog ${catalog} + runtime ${discovered} = ${modelOptions.length} unique model option(s)`;
   }, [
-    chatbotModelsQuery.data,
+    brainModelOptions.models,
     modelOptions.length,
     providerCatalog.modelPresets,
     providerCatalog.ollamaModels,
@@ -586,7 +587,7 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
               size='xs'
               onClick={() => {
                 void settingsQuery.refetch();
-                void chatbotModelsQuery.refetch();
+                brainModelOptions.refresh();
               }}
               disabled={settingsQuery.isLoading}
               data-doc-id='settings_refresh'
@@ -699,11 +700,11 @@ export function AdminPromptExploderSettingsPage(): React.JSX.Element {
           Reset Unsaved Changes
         </Button>
         <span className='text-xs text-gray-500'>
-          {chatbotModelsQuery.isLoading
-            ? 'Loading model discovery...'
-            : chatbotModelsQuery.error
-              ? 'Live model discovery unavailable.'
-              : 'Live model discovery connected.'}
+          {brainModelOptions.isLoading
+            ? 'Loading Brain model discovery...'
+            : brainModelOptions.sourceWarnings.length > 0
+              ? brainModelOptions.sourceWarnings[0]
+              : 'Brain model discovery connected.'}
         </span>
       </div>
       <DocsTooltipEnhancer

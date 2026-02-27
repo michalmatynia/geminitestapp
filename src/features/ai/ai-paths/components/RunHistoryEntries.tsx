@@ -1,7 +1,7 @@
 'use client';
 
-import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/features/ai/ai-paths/lib';
-import { formatDurationMs, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
+import type { RuntimeHistoryEntry, RuntimeHistoryLink } from '@/shared/lib/ai-paths';
+import { formatDurationMs, formatRuntimeValue } from '@/shared/lib/ai-paths';
 import { StatusBadge, EmptyState, type StatusVariant } from '@/shared/ui';
 
 type RunHistoryEntriesProps = {

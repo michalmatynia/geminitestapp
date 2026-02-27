@@ -2,9 +2,9 @@
 
 import { useCallback } from 'react';
 
-import { AI_PATHS_LAST_ERROR_KEY, safeStringify } from '@/features/ai/ai-paths/lib';
-import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
-import { logClientError } from '@/features/observability';
+import { AI_PATHS_LAST_ERROR_KEY, safeStringify } from '@/shared/lib/ai-paths';
+import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import { useGraphState, useRuntimeActions } from '../../context';
 

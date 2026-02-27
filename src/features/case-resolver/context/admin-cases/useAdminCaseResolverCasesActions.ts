@@ -22,7 +22,7 @@ import {
   isDescendantCaseId
 } from './utils';
 import { createCaseResolverFile } from '../../settings';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { CaseResolverCaseListConfirmationState } from './types';
 
 export type ToastFn = (message: string, options?: { variant?: string }) => void;

@@ -1,4 +1,5 @@
-import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import prisma from '@/shared/lib/db/prisma';
 
 import type { Prisma } from '@prisma/client';

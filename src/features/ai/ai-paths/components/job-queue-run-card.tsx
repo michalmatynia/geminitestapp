@@ -5,7 +5,7 @@ import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,
   RuntimeHistoryEntry,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   Alert,
   Button,

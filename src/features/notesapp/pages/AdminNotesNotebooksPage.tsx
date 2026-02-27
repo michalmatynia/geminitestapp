@@ -10,9 +10,21 @@ import {
 } from '@/features/notesapp/api/useNoteMutations';
 import { useNotebooks } from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { NotebookDto as NotebookRecord } from '@/shared/contracts/notes';
-import { Button, useToast, Input, PageLayout, FormSection, FormField, RefreshButton, LoadingState, StatusBadge, SimpleSettingsList, DropdownMenuItem } from '@/shared/ui';
+import {
+  Button,
+  useToast,
+  Input,
+  PageLayout,
+  FormSection,
+  FormField,
+  RefreshButton,
+  LoadingState,
+  StatusBadge,
+  SimpleSettingsList,
+  DropdownMenuItem,
+} from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals';
 
 export function AdminNotesNotebooksPage(): React.JSX.Element {
@@ -26,7 +38,10 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
   const [notebookToDelete, setNotebookToDelete] = useState<string | null>(null);
 
   const notebooksQuery = useNotebooks();
-  const notebooks = useMemo((): NotebookRecord[] => notebooksQuery.data ?? [], [notebooksQuery.data]);
+  const notebooks = useMemo(
+    (): NotebookRecord[] => notebooksQuery.data ?? [],
+    [notebooksQuery.data],
+  );
   const loading = notebooksQuery.isPending;
 
   const createNotebook = useCreateNotebook();
@@ -54,7 +69,13 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       setName('');
       toast('Notebook created', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AdminNotesNotebooksPage', action: 'createNotebook', name } });
+      logClientError(error, {
+        context: {
+          source: 'AdminNotesNotebooksPage',
+          action: 'createNotebook',
+          name,
+        },
+      });
       toast('Failed to create notebook', { variant: 'error' });
     }
   };
@@ -79,7 +100,13 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       toast('Notebook updated', { variant: 'success' });
       handleEditCancel();
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AdminNotesNotebooksPage', action: 'updateNotebook', id } });
+      logClientError(error, {
+        context: {
+          source: 'AdminNotesNotebooksPage',
+          action: 'updateNotebook',
+          id,
+        },
+      });
       toast('Failed to update notebook', { variant: 'error' });
     }
   };
@@ -93,7 +120,13 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       toast('Notebook deleted', { variant: 'success' });
       setNotebookToDelete(null);
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AdminNotesNotebooksPage', action: 'deleteNotebook', id } });
+      logClientError(error, {
+        context: {
+          source: 'AdminNotesNotebooksPage',
+          action: 'deleteNotebook',
+          id,
+        },
+      });
       toast('Failed to delete notebook', { variant: 'error' });
     }
   };
@@ -116,7 +149,13 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
       });
       toast('Notebook duplicated', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AdminNotesNotebooksPage', action: 'duplicateNotebook', originalId: notebook.id } });
+      logClientError(error, {
+        context: {
+          source: 'AdminNotesNotebooksPage',
+          action: 'duplicateNotebook',
+          originalId: notebook.id,
+        },
+      });
       toast('Failed to duplicate notebook', { variant: 'error' });
     }
   };
@@ -143,12 +182,19 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
               <Input
                 type='text'
                 value={name}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setName(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setName(event.target.value)
+                }
                 className='w-full'
                 placeholder='Enter notebook name'
               />
             </FormField>
-            <Button onClick={(): void => { void handleCreate(); }} disabled={createNotebook.isPending}>
+            <Button
+              onClick={(): void => {
+                void handleCreate();
+              }}
+              disabled={createNotebook.isPending}
+            >
               {createNotebook.isPending ? 'Saving...' : 'Create'}
             </Button>
           </div>
@@ -157,12 +203,14 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
         <FormSection
           title='Your Notebooks'
           className='p-6'
-          actions={(
+          actions={
             <RefreshButton
-              onRefresh={(): void => { void notebooksQuery.refetch(); }}
+              onRefresh={(): void => {
+                void notebooksQuery.refetch();
+              }}
               isRefreshing={loading}
             />
-          )}
+          }
         >
           <SimpleSettingsList
             items={notebooks.map((nb) => ({
@@ -181,7 +229,12 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                     <>
                       <span>{nb.name}</span>
                       {selectedNotebookId === nb.id && (
-                        <StatusBadge status='Active' variant='active' size='sm' className='font-bold' />
+                        <StatusBadge
+                          status='Active'
+                          variant='active'
+                          size='sm'
+                          className='font-bold'
+                        />
                       )}
                     </>
                   )}
@@ -197,7 +250,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
             }}
             onEdit={(item) => handleEditStart(item.original)}
             onDelete={(item) => setNotebookToDelete(item.id)}
-            renderActions={(item) => (
+            renderActions={(item) =>
               editingId === item.id ? (
                 <div className='flex items-center gap-1'>
                   <Button
@@ -223,7 +276,7 @@ export function AdminNotesNotebooksPage(): React.JSX.Element {
                   </Button>
                 </div>
               ) : null
-            )}
+            }
             renderExtraActions={(item) => (
               <DropdownMenuItem
                 onSelect={(e) => {

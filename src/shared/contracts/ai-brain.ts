@@ -30,6 +30,7 @@ export const aiBrainFeatureSchema = z.enum([
   'runtime_analytics',
   'image_studio',
   'ai_paths',
+  'chatbot',
   'prompt_engine',
 ]);
 export type AiBrainFeature = z.infer<typeof aiBrainFeatureSchema>;
@@ -41,6 +42,7 @@ export const aiBrainAssignmentSchema = z.object({
   agentId: z.string().trim().default(''),
   temperature: numberField(0, 2),
   maxTokens: numberField(1, 8192),
+  systemPrompt: z.string().trim().optional(),
   notes: z.string().trim().nullable().optional().default(null),
 });
 
@@ -87,15 +89,26 @@ export type AiBrainProviderCatalogDto = AiBrainProviderCatalog;
  * AI Brain Query Response DTOs
  */
 
-export const chatbotModelsResponseSchema = z.object({
-  models: z.array(z.string()).optional(),
+export const brainModelsResponseSchema = z.object({
+  models: z.array(z.string()).default([]),
   warning: z.object({
     code: z.string().optional(),
     message: z.string().optional(),
   }).optional(),
+  sources: z.object({
+    modelPresets: z.array(z.string()).default([]),
+    paidModels: z.array(z.string()).default([]),
+    configuredOllamaModels: z.array(z.string()).default([]),
+    liveOllamaModels: z.array(z.string()).default([]),
+  }).optional(),
 });
 
-export type ChatbotModelsResponse = z.infer<typeof chatbotModelsResponseSchema>;
+export type BrainModelsResponse = z.infer<typeof brainModelsResponseSchema>;
+export type BrainModelsResponseDto = BrainModelsResponse;
+
+// Backward-compatibility alias for one migration cycle.
+export const chatbotModelsResponseSchema = brainModelsResponseSchema;
+export type ChatbotModelsResponse = BrainModelsResponse;
 export type ChatbotModelsResponseDto = ChatbotModelsResponse;
 
 const insightsSnapshotSchema = z.object({

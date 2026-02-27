@@ -19,7 +19,7 @@ export const getOrCreateDefaultNotebook = async (): Promise<NotebookRecord> => {
   const existing = await prisma.notebook.findFirst({
     orderBy: { createdAt: 'asc' },
   });
-  
+
   const notebook = existing
     ? existing
     : await prisma.notebook.create({
@@ -38,7 +38,9 @@ export const getOrCreateDefaultNotebook = async (): Promise<NotebookRecord> => {
 
 export const getAllNotebooks = async (): Promise<NotebookRecord[]> => {
   await getOrCreateDefaultNotebook();
-  const notebooks = await prisma.notebook.findMany({ orderBy: { createdAt: 'asc' } });
+  const notebooks = await prisma.notebook.findMany({
+    orderBy: { createdAt: 'asc' },
+  });
   return notebooks.map((nb: Notebook) => ({
     ...nb,
     createdAt: nb.createdAt.toISOString(),
@@ -47,18 +49,20 @@ export const getAllNotebooks = async (): Promise<NotebookRecord[]> => {
 };
 
 export const getNotebookById = async (
-  id: string
+  id: string,
 ): Promise<NotebookRecord | null> => {
   const notebook = await prisma.notebook.findUnique({ where: { id } });
-  return notebook ? {
-    ...notebook,
-    createdAt: notebook.createdAt.toISOString(),
-    updatedAt: notebook.updatedAt.toISOString(),
-  } : null;
+  return notebook
+    ? {
+      ...notebook,
+      createdAt: notebook.createdAt.toISOString(),
+      updatedAt: notebook.updatedAt.toISOString(),
+    }
+    : null;
 };
 
 export const createNotebook = async (
-  data: NotebookCreateInput
+  data: NotebookCreateInput,
 ): Promise<NotebookRecord> => {
   const notebook = await prisma.notebook.create({
     data: {
@@ -75,7 +79,7 @@ export const createNotebook = async (
 
 export const updateNotebook = async (
   id: string,
-  data: NotebookUpdateInput
+  data: NotebookUpdateInput,
 ): Promise<NotebookRecord | null> => {
   try {
     const notebook = await prisma.notebook.update({

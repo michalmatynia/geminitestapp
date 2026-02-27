@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import { useAgentCreatorSettings } from '@/features/ai/agentcreator';
+import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
 import type {
   ChatMessageDto as ChatMessage,
   CreateChatbotSettingsDto as ChatbotSettingsPayload,
@@ -124,7 +125,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
   const [input, setInput] = useState<string>('');
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSending, setIsSending] = useState<boolean>(false);
-  const [model, setModel] = useState<string>('');
+  const [model, setModelState] = useState<string>('');
   const [webSearchEnabled, setWebSearchEnabled] = useState<boolean>(false);
   const [useGlobalContext, setUseGlobalContext] = useState<boolean>(false);
   const [useLocalContext, setUseLocalContext] = useState<boolean>(false);
@@ -177,9 +178,11 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     setAgentLoopBackoffBaseMs,
     agentLoopBackoffMaxMs,
     setAgentLoopBackoffMaxMs,
-    modelOptions,
-    modelsLoading: modelLoading,
+    modelsLoading: agentModelsLoading,
   } = useAgentCreatorSettings();
+  const brainModelOptions = useBrainModelOptions({
+    feature: 'chatbot',
+  });
   const [latestAgentRunId, setLatestAgentRunId] = useState<string | null>(null);
   const [debugState, setDebugState] = useState<ChatbotDebugState>({
     activeRunId: null,
@@ -206,12 +209,24 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     return currentSessionId || searchParams.get('session') || null;
   }, [currentSessionId, searchParams]);
 
+  const setModel = useCallback<React.Dispatch<React.SetStateAction<string>>>(
+    (): void => {
+      // Brain is authoritative for Chatbot model routing.
+    },
+    [],
+  );
+
+  useEffect((): void => {
+    const nextModel =
+      brainModelOptions.effectiveModelId ||
+      brainModelOptions.models[0] ||
+      '';
+    if (!nextModel || nextModel === model) return;
+    setModelState(nextModel);
+  }, [brainModelOptions.effectiveModelId, brainModelOptions.models, model]);
+
   const currentSettings = useMemo<ChatbotSettingsPayload>(
     () => ({
-      model,
-      temperature: DEFAULT_CHATBOT_SETTINGS.temperature,
-      maxTokens: DEFAULT_CHATBOT_SETTINGS.maxTokens,
-      systemPrompt: DEFAULT_CHATBOT_SETTINGS.systemPrompt,
       enableMemory: DEFAULT_CHATBOT_SETTINGS.enableMemory,
       enableContext: DEFAULT_CHATBOT_SETTINGS.enableContext,
       webSearchEnabled,
@@ -245,7 +260,6 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       loopBackoffMaxMs: agentLoopBackoffMaxMs,
     }),
     [
-      model,
       webSearchEnabled,
       useGlobalContext,
       useLocalContext,
@@ -309,7 +323,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
     try {
       const data = await chatbotApi.createChatbotSession({
         title: `Chat ${new Date().toLocaleString()}`,
-        settings: { model, webSearchEnabled, useGlobalContext, useLocalContext },
+        settings: { webSearchEnabled, useGlobalContext, useLocalContext },
       });
       await fetchSessions();
       setCurrentSessionId(data.sessionId);
@@ -318,7 +332,7 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       logClientError(error, { context: { source: 'useChatbotLogic.createNewSession' } });
       toast('Failed to create new chat session', { variant: 'error' });
     }
-  }, [model, webSearchEnabled, useGlobalContext, useLocalContext, fetchSessions, toast]);
+  }, [webSearchEnabled, useGlobalContext, useLocalContext, fetchSessions, toast]);
 
   const deleteSession = useCallback(async (id: string): Promise<void> => {
     try {
@@ -361,10 +375,15 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
         ...DEFAULT_CHATBOT_SETTINGS,
         ...stored,
       };
-      const resolvedModel = resolved.model || model;
-      const nextSettings = { ...resolved, model: resolvedModel };
+      const {
+        model: _storedModel,
+        temperature: _storedTemperature,
+        maxTokens: _storedMaxTokens,
+        systemPrompt: _storedSystemPrompt,
+        ...resolvedSettings
+      } = resolved;
+      const nextSettings: ChatbotSettingsPayload = resolvedSettings;
 
-      if (resolvedModel) setModel(resolvedModel);
       setWebSearchEnabled(Boolean(resolved.webSearchEnabled));
       setUseGlobalContext(Boolean(resolved.useGlobalContext));
       setUseLocalContext(Boolean(resolved.useLocalContext));
@@ -402,8 +421,6 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
       // Fallback to local storage or defaults
     }
   }, [
-    model,
-    setModel,
     setWebSearchEnabled,
     setUseGlobalContext,
     setUseLocalContext,
@@ -516,98 +533,98 @@ export const useChatbotLogic = (): UseChatbotLogicReturn => {
   }, [input, isSending, messages, model, sessionId, toast]);
 
   return {
-    messages,
-    setMessages,
-    input,
-    setInput,
-    sendMessage,
-    attachments,
-    setAttachments,
-    isSending,
-    setIsSending,
-    modelOptions,
-    model,
-    setModel,
-    modelLoading,
-    webSearchEnabled,
-    setWebSearchEnabled,
-    useGlobalContext,
-    setUseGlobalContext,
-    useLocalContext,
-    setUseLocalContext,
-    agentModeEnabled,
-    setAgentModeEnabled,
-    searchProvider,
-    setSearchProvider,
-    playwrightPersonaId,
-    setPlaywrightPersonaId,
+    messages: messages,
+    setMessages: setMessages,
+    input: input,
+    setInput: setInput,
+    sendMessage: sendMessage,
+    attachments: attachments,
+    setAttachments: setAttachments,
+    isSending: isSending,
+    setIsSending: setIsSending,
+    modelOptions: brainModelOptions.models,
+    model: model,
+    setModel: setModel,
+    modelLoading: Boolean(brainModelOptions.isLoading || agentModelsLoading),
+    webSearchEnabled: webSearchEnabled,
+    setWebSearchEnabled: setWebSearchEnabled,
+    useGlobalContext: useGlobalContext,
+    setUseGlobalContext: setUseGlobalContext,
+    useLocalContext: useLocalContext,
+    setUseLocalContext: setUseLocalContext,
+    agentModeEnabled: agentModeEnabled,
+    setAgentModeEnabled: setAgentModeEnabled,
+    searchProvider: searchProvider,
+    setSearchProvider: setSearchProvider,
+    playwrightPersonaId: playwrightPersonaId,
+    setPlaywrightPersonaId: setPlaywrightPersonaId,
     agentBrowser: agentBrowser ?? 'chromium',
-    setAgentBrowser,
+    setAgentBrowser: setAgentBrowser,
     agentRunHeadless: agentRunHeadless ?? false,
-    setAgentRunHeadless,
+    setAgentRunHeadless: setAgentRunHeadless,
     agentIgnoreRobotsTxt: agentIgnoreRobotsTxt ?? false,
-    setAgentIgnoreRobotsTxt,
+    setAgentIgnoreRobotsTxt: setAgentIgnoreRobotsTxt,
     agentRequireHumanApproval: agentRequireHumanApproval ?? false,
-    setAgentRequireHumanApproval,
+    setAgentRequireHumanApproval: setAgentRequireHumanApproval,
     agentMemoryValidationModel: agentMemoryValidationModel ?? null,
-    setAgentMemoryValidationModel,
+    setAgentMemoryValidationModel: setAgentMemoryValidationModel,
     agentPlannerModel: agentPlannerModel ?? null,
-    setAgentPlannerModel,
+    setAgentPlannerModel: setAgentPlannerModel,
     agentSelfCheckModel: agentSelfCheckModel ?? null,
-    setAgentSelfCheckModel,
+    setAgentSelfCheckModel: setAgentSelfCheckModel,
     agentExtractionValidationModel: agentExtractionValidationModel ?? null,
-    setAgentExtractionValidationModel,
+    setAgentExtractionValidationModel: setAgentExtractionValidationModel,
     agentToolRouterModel: agentToolRouterModel ?? null,
-    setAgentToolRouterModel,
+    setAgentToolRouterModel: setAgentToolRouterModel,
     agentLoopGuardModel: agentLoopGuardModel ?? null,
-    setAgentLoopGuardModel,
+    setAgentLoopGuardModel: setAgentLoopGuardModel,
     agentApprovalGateModel: agentApprovalGateModel ?? null,
-    setAgentApprovalGateModel,
+    setAgentApprovalGateModel: setAgentApprovalGateModel,
     agentMemorySummarizationModel: agentMemorySummarizationModel ?? null,
-    setAgentMemorySummarizationModel,
+    setAgentMemorySummarizationModel: setAgentMemorySummarizationModel,
     agentSelectorInferenceModel: agentSelectorInferenceModel ?? null,
-    setAgentSelectorInferenceModel,
+    setAgentSelectorInferenceModel: setAgentSelectorInferenceModel,
     agentOutputNormalizationModel: agentOutputNormalizationModel ?? null,
-    setAgentOutputNormalizationModel,
+    setAgentOutputNormalizationModel: setAgentOutputNormalizationModel,
     agentMaxSteps: agentMaxSteps ?? 10,
-    setAgentMaxSteps,
+    setAgentMaxSteps: setAgentMaxSteps,
     agentMaxStepAttempts: agentMaxStepAttempts ?? 3,
-    setAgentMaxStepAttempts,
+    setAgentMaxStepAttempts: setAgentMaxStepAttempts,
     agentMaxReplanCalls: agentMaxReplanCalls ?? 3,
-    setAgentMaxReplanCalls,
+    setAgentMaxReplanCalls: setAgentMaxReplanCalls,
     agentReplanEverySteps: agentReplanEverySteps ?? 5,
-    setAgentReplanEverySteps,
+    setAgentReplanEverySteps: setAgentReplanEverySteps,
     agentMaxSelfChecks: agentMaxSelfChecks ?? 3,
-    setAgentMaxSelfChecks,
+    setAgentMaxSelfChecks: setAgentMaxSelfChecks,
     agentLoopGuardThreshold: agentLoopGuardThreshold ?? 3,
-    setAgentLoopGuardThreshold,
+    setAgentLoopGuardThreshold: setAgentLoopGuardThreshold,
     agentLoopBackoffBaseMs: agentLoopBackoffBaseMs ?? 1000,
-    setAgentLoopBackoffBaseMs,
+    setAgentLoopBackoffBaseMs: setAgentLoopBackoffBaseMs,
     agentLoopBackoffMaxMs: agentLoopBackoffMaxMs ?? 5000,
-    setAgentLoopBackoffMaxMs,
-    latestAgentRunId,
-    setLatestAgentRunId,
-    debugState,
-    setDebugState,
-    globalContext,
-    setGlobalContext,
-    localContext,
-    setLocalContext,
-    localContextMode,
-    setLocalContextMode,
-    settingsDirty,
-    setSettingsDirty,
-    settingsSaving,
-    setSettingsSaving,
-    sessionId,
-    loadChatbotSettings,
-    saveChatbotSettings,
+    setAgentLoopBackoffMaxMs: setAgentLoopBackoffMaxMs,
+    latestAgentRunId: latestAgentRunId,
+    setLatestAgentRunId: setLatestAgentRunId,
+    debugState: debugState,
+    setDebugState: setDebugState,
+    globalContext: globalContext,
+    setGlobalContext: setGlobalContext,
+    localContext: localContext,
+    setLocalContext: setLocalContext,
+    localContextMode: localContextMode,
+    setLocalContextMode: setLocalContextMode,
+    settingsDirty: settingsDirty,
+    setSettingsDirty: setSettingsDirty,
+    settingsSaving: settingsSaving,
+    setSettingsSaving: setSettingsSaving,
+    sessionId: sessionId,
+    loadChatbotSettings: loadChatbotSettings,
+    saveChatbotSettings: saveChatbotSettings,
     // Session management
-    sessions,
-    currentSessionId,
-    sessionsLoading,
-    createNewSession,
-    deleteSession,
+    sessions: sessions,
+    currentSessionId: currentSessionId,
+    sessionsLoading: sessionsLoading,
+    createNewSession: createNewSession,
+    deleteSession: deleteSession,
     selectSession: setCurrentSessionId,
   };
 };

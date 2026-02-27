@@ -5,8 +5,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   AiNode,
   NodeConfig,
-} from '@/features/ai/ai-paths/lib';
-import { stableStringify } from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
+import { stableStringify } from '@/shared/lib/ai-paths';
 import {
   Button,
   Tabs,

@@ -13,7 +13,8 @@ import {
   requireAuthProvider,
 } from '@/features/auth/server';
 import { logAuthEvent } from '@/features/auth/server';
-import { ActivityTypes, logActivity } from '@/features/observability/server';
+import { logActivity } from '@/features/observability/server';
+import { ActivityTypes } from '@/shared/constants/observability';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import {
   conflictError,

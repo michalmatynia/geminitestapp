@@ -1,4 +1,4 @@
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type {
   CreateValidationPatternPayload,
   UpdateValidationPatternPayload,

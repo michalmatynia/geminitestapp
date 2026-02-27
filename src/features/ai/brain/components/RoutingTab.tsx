@@ -28,6 +28,11 @@ const ROUTING_FEATURES: FeatureConfig[] = [
     label: 'AI Paths',
     description: 'Default model routing for AI Path model nodes and graph actions.',
   },
+  {
+    key: 'chatbot',
+    label: 'Chatbot',
+    description: 'Authoritative AI routing for Chatbot message execution.',
+  },
 ];
 
 export function RoutingTab(): React.JSX.Element {

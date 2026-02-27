@@ -7,13 +7,13 @@ import {
   FolderTreeViewportV2,
   MasterFolderTreeRuntimeProvider,
   useFolderTreeInstanceV2,
-} from '@/features/foldertree/v2';
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
+} from '@/shared/lib/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/v2';
 import type { ValidatorPatternList } from '@/shared/contracts/admin';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { FolderTreeProfileV2 } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeDropPosition, MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useToast } from '@/shared/ui';
 
 import {

@@ -11,7 +11,7 @@ import {
   currencyCodes,
 } from '@/features/database/services/database-sync-types';
 import { toObjectIdMaybe, toDate, toJsonValue, normalizeId } from '@/features/database/services/sync-utils';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   DatabaseSyncDirection,
   DatabaseSyncCollectionResult,

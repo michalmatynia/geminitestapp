@@ -5,7 +5,7 @@ import {
   getCurrencyRepository,
   getInternationalizationProvider,
   type InternationalizationProvider,
-} from '@/features/internationalization/server';
+} from '@/shared/lib/internationalization/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError } from '@/shared/errors/app-error';
 

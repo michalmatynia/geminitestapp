@@ -1,8 +1,8 @@
 import {
   VALIDATOR_SCOPE_DESCRIPTIONS,
   VALIDATOR_SCOPE_LABELS,
-} from '@/features/admin/pages/validator-scope';
-import { PromptValidationScopeResolutionError } from '@/features/prompt-core/errors';
+} from '@/shared/contracts/validator';
+import { PromptValidationScopeResolutionError } from '@/shared/lib/prompt-core/errors';
 import type { PromptValidationScope } from '@/shared/contracts/prompt-engine';
 import type { ValidatorPatternList, ValidatorScope } from '@/shared/contracts/admin';
 import type {

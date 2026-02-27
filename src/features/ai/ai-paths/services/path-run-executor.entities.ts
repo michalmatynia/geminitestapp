@@ -1,6 +1,6 @@
 import { getProductRepository } from '@/features/products/services/product-repository';
 import { noteService } from '@/features/notesapp/server';
-import { ErrorSystem } from '@/features/observability/services/error-system';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 export const normalizeEntityType = (value?: string | null): string | null => {
   const normalized = value?.trim().toLowerCase();

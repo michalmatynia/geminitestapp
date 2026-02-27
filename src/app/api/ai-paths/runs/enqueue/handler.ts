@@ -10,7 +10,7 @@ import {
   palette,
   repairPathNodeIdentities,
   sanitizeEdges,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   enforceAiPathsRunRateLimit,
   requireAiPathsRunAccess,

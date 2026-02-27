@@ -12,7 +12,7 @@ import { AdminLayoutProvider, useAdminLayout } from '@/features/admin/context/Ad
 import { AuthProvider } from '@/features/auth';
 import { useUserPreferences, useUpdateUserPreferencesMutation } from '@/features/auth/hooks/useUserPreferences';
 import { NoteSettingsProvider } from '@/features/notesapp/hooks/NoteSettingsContext';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { QueryProvider } from '@/shared/providers/QueryProvider';
 import { Button, ToastProvider } from '@/shared/ui';
 import { QueryErrorBoundary } from '@/shared/ui/QueryErrorBoundary';

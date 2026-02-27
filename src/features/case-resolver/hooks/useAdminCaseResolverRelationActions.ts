@@ -7,7 +7,7 @@ import type {
 } from '@/shared/contracts/case-resolver';
 import {
   stableStringify,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   createCaseResolverAssetFile,
   normalizeFolderPath,

@@ -2,7 +2,7 @@ import 'server-only';
 
 import { Prisma } from '@prisma/client';
 
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { CmsRepository } from '@/shared/contracts/cms';
 import { internalError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';

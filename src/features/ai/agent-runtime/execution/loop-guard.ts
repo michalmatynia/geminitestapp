@@ -8,7 +8,7 @@ import {
   normalizeStringList,
   parsePlanJson,
 } from '@/features/ai/agent-runtime/planning/utils';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   LoopSignal,
   PlanStep,

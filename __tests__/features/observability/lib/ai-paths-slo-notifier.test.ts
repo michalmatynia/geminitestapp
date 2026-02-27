@@ -29,7 +29,7 @@ vi.mock('@/shared/lib/queue', () => ({
   getRedisConnection: vi.fn(),
 }));
 
-vi.mock('@/features/observability/lib/transient-recovery/with-recovery', () => ({
+vi.mock('@/shared/lib/observability/transient-recovery/with-recovery', () => ({
   withTransientRecovery: vi.fn((op) => op()),
 }));
 

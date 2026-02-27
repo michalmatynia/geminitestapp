@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 
-import type { AiNode, NodeDefinition } from '@/features/ai/ai-paths/lib';
-import { createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
+import type { AiNode, NodeDefinition } from '@/shared/lib/ai-paths';
+import { createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths';
 import { Button, Input, Label, Textarea, StatusBadge, Card, Badge, EmptyState, Hint } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

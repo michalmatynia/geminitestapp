@@ -3,7 +3,7 @@ import {
   type RuntimeState,
   type RuntimePortValues,
 } from '@/shared/contracts/ai-paths';
-import { cloneJsonSafe } from '@/features/ai/ai-paths/lib';
+import { cloneJsonSafe } from '@/shared/lib/ai-paths';
 
 export const TERMINAL_RUN_STATUSES = new Set(['completed', 'failed', 'canceled', 'dead_lettered']);
 export const UPDATE_ELIGIBLE_RUN_STATUSES: AiPathRunStatus[] = [

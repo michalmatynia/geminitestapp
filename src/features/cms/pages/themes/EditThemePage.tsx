@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 
 import { useCmsTheme, useUpdateTheme } from '@/features/cms/hooks/useCmsQueries';
 import { cmsThemeUpdateSchema } from '@/features/cms/validations/api';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type {
   CmsTheme,
   CmsThemeColors,

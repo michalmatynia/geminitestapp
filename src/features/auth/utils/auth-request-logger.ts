@@ -1,6 +1,7 @@
 import 'server-only';
 
-import { logSystemEvent, isSensitiveKey, REDACTED_VALUE, truncateString } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { isSensitiveKey, REDACTED_VALUE, truncateString } from '@/shared/lib/observability/log-redaction';
 
 type AuthLogStage = 'start' | 'success' | 'failure';
 

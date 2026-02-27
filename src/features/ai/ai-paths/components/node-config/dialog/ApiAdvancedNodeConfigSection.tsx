@@ -1,6 +1,6 @@
 'use client';
 
-import type { AdvancedApiConfig } from '@/features/ai/ai-paths/lib';
+import type { AdvancedApiConfig } from '@/shared/lib/ai-paths';
 import {
   Input,
   

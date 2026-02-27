@@ -10,12 +10,12 @@ import type {
   RuntimePortValues,
   RuntimeState,
   PathExecutionMode,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   TRIGGER_EVENTS,
   evaluateDataContractPreflight,
   entityApi,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { getProductDetailQueryKey } from '@/features/products/hooks/productCache';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

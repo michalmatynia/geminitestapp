@@ -7,8 +7,8 @@ import {
   IMAGE_STUDIO_VERSION_GRAPH_DOC_KEYS,
   type ImageStudioDocEntry,
   type ImageStudioDocKey,
-} from '@/features/documentation';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+} from '@/shared/lib/documentation';
+import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 
 export type {
   ImageStudioDocEntry,

@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { z } from 'zod';
 
-import { AI_PATHS_NODE_DOCS } from '../../src/features/ai/ai-paths/lib/core/docs/node-docs';
+import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import {
   DOCS_DESCRIPTION_SNIPPET,
   DOCS_JOBS_SNIPPET,

@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import type { AiNode, DataContractNodeIssueSummary, Edge, RuntimeState, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent } from '@/features/ai/ai-paths/lib';
+import type { AiNode, DataContractNodeIssueSummary, Edge, RuntimeState, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
 import { 
   type CanvasRendererMode,
   type SvgConnectorTooltipState,

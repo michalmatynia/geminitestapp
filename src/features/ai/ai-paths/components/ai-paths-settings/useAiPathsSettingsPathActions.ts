@@ -13,7 +13,7 @@ import type {
   PathRunMode,
   RuntimeState,
   UpdaterSampleState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   PATH_CONFIG_PREFIX,
   PATH_DEBUG_PREFIX,
@@ -30,8 +30,8 @@ import {
   normalizeNodes,
   sanitizeEdges,
   triggers,
-} from '@/features/ai/ai-paths/lib';
-import { deleteAiPathsSettings } from '@/features/ai/ai-paths/lib/settings-store-client';
+} from '@/shared/lib/ai-paths';
+import { deleteAiPathsSettings } from '@/shared/lib/ai-paths/settings-store-client';
 
 import {
   normalizeParserSamples,

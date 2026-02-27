@@ -3,7 +3,7 @@
 
 
 
-import type { GateConfig } from '@/features/ai/ai-paths/lib';
+import type { GateConfig } from '@/shared/lib/ai-paths';
 import { Input,  SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

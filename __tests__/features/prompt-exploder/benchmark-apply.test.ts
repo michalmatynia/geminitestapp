@@ -1,4 +1,4 @@
-import type { PromptValidationRule } from '@/features/prompt-engine/settings';
+import type { PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
 import { applyBenchmarkSuggestions } from '@/features/prompt-exploder/benchmark-apply';
 import { benchmarkSuggestionRuleId } from '@/features/prompt-exploder/benchmark-suggestions';
 import type { PromptExploderBenchmarkSuggestion } from '@/shared/contracts/prompt-exploder';

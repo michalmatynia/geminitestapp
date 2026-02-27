@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
 import { useState, useCallback } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useSaveTagMutation, useDeleteTagMutation } from '@/features/products/hooks/useProductSettingsQueries';
 import type { Catalog, ProductTag } from '@/shared/contracts/products';
 import { useToast, Button, SelectSimple, Input, FormModal, EmptyState, Tag as UiTag, FormSection, FormField, SimpleSettingsList } from '@/shared/ui';

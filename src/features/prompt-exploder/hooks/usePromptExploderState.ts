@@ -6,11 +6,11 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   parseValidatorPatternLists,
   VALIDATOR_PATTERN_LISTS_KEY,
-} from '@/features/admin/pages/validator-scope';
-import { recordPromptValidationCounter } from '@/features/prompt-core/runtime-observability';
+} from '@/shared/contracts/validator';
+import { recordPromptValidationCounter } from '@/shared/lib/prompt-core/runtime-observability';
 import {
   parsePromptEngineSettings,
-} from '@/features/prompt-engine/settings';
+} from '@/shared/lib/prompt-engine/settings';
 import { 
   PROMPT_ENGINE_SETTINGS_KEY,
   type PromptValidationRule 

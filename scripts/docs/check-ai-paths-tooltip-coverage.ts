@@ -1,4 +1,4 @@
-import { AI_PATHS_NODE_DOCS } from '../../src/features/ai/ai-paths/lib/core/docs/node-docs';
+import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 import { AI_PATHS_TOOLTIP_CATALOG } from '../../docs/ai-paths/tooltip-catalog';
 
 const REQUIRED_TOOLTIP_IDS = [

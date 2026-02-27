@@ -6,7 +6,7 @@ import {
   FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
   getFolderTreeProfileV2Key,
   parseFolderTreeProfileV2Entry,
-} from '@/features/foldertree/v2/settings';
+} from '@/shared/lib/foldertree/v2/settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import {
   FOLDER_TREE_PROFILES_V2_SETTING_KEY,

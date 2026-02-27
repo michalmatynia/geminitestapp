@@ -1,7 +1,7 @@
 'use client';
 
-import type { MathConfig } from '@/features/ai/ai-paths/lib';
-import { toNumber } from '@/features/ai/ai-paths/lib';
+import type { MathConfig } from '@/shared/lib/ai-paths';
+import { toNumber } from '@/shared/lib/ai-paths';
 import { Input,  SelectSimple, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

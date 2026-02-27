@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { NoteEditorType } from '@/shared/contracts/notes';
 import { ApiError } from '@/shared/lib/api-client';
 import { useToast } from '@/shared/ui';
@@ -12,19 +12,30 @@ import { useToast } from '@/shared/ui';
 // - Migration involves API calls and content updates
 // Extracting this prevents NoteForm bloat and makes migrations testable.
 export function useEditorMode(
-  note: { id?: string; editorType?: string; content?: string; [key: string]: unknown } | null,
-  settingsEditorMode: NoteEditorType
+  note: {
+    id?: string;
+    editorType?: string;
+    content?: string;
+    [key: string]: unknown;
+  } | null,
+  settingsEditorMode: NoteEditorType,
 ): {
   editorMode: NoteEditorType;
   setEditorMode: (mode: NoteEditorType) => void;
   isEditorModeLocked: boolean;
   isMigrating: boolean;
-  handleMigrateToWysiwyg: (content: string, onSuccess?: () => void) => Promise<string | undefined>;
-  handleMigrateToMarkdown: (content: string, onSuccess?: () => void) => Promise<string | undefined>;
+  handleMigrateToWysiwyg: (
+    content: string,
+    onSuccess?: () => void,
+  ) => Promise<string | undefined>;
+  handleMigrateToMarkdown: (
+    content: string,
+    onSuccess?: () => void,
+  ) => Promise<string | undefined>;
 } {
   const { toast } = useToast();
   const [editorMode, setEditorMode] = useState<NoteEditorType>(
-    (note?.editorType as NoteEditorType) || settingsEditorMode
+    (note?.editorType as NoteEditorType) || settingsEditorMode,
   );
   const [isMigrating, setIsMigrating] = useState(false);
 
@@ -76,7 +87,7 @@ export function useEditorMode(
 
   const handleMigrateToWysiwyg = async (
     content: string,
-    onSuccess?: () => void
+    onSuccess?: () => void,
   ): Promise<string | undefined> => {
     if (!note?.id) return;
 
@@ -102,7 +113,13 @@ export function useEditorMode(
       onSuccess?.();
       return htmlContent;
     } catch (error) {
-      logClientError(error, { context: { source: 'useEditorMode', action: 'migrateToWysiwyg', noteId: note.id } });
+      logClientError(error, {
+        context: {
+          source: 'useEditorMode',
+          action: 'migrateToWysiwyg',
+          noteId: note.id,
+        },
+      });
       toast('Failed to migrate note', { variant: 'error' });
       throw error;
     } finally {
@@ -112,7 +129,7 @@ export function useEditorMode(
 
   const handleMigrateToMarkdown = async (
     content: string,
-    onSuccess?: () => void
+    onSuccess?: () => void,
   ): Promise<string | undefined> => {
     if (!note?.id) return;
 
@@ -138,7 +155,13 @@ export function useEditorMode(
       onSuccess?.();
       return markdownContent;
     } catch (error) {
-      logClientError(error, { context: { source: 'useEditorMode', action: 'migrateToMarkdown', noteId: note.id } });
+      logClientError(error, {
+        context: {
+          source: 'useEditorMode',
+          action: 'migrateToMarkdown',
+          noteId: note.id,
+        },
+      });
       toast('Failed to migrate note', { variant: 'error' });
       throw error;
     } finally {

@@ -7,7 +7,7 @@
 
 import React from 'react';
 
-import { getPromptValidationObservabilitySnapshot } from '@/features/prompt-core/runtime-observability';
+import { getPromptValidationObservabilitySnapshot } from '@/shared/lib/prompt-core/runtime-observability';
 import { Button, FormSection, Input, Label, StatusToggle, SelectSimple, EmptyState, Card, Badge, Hint } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 

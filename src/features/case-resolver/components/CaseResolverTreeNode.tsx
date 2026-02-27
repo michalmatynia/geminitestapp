@@ -10,7 +10,7 @@ import {
   GitBranch 
 } from 'lucide-react';
 
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/v2';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import { 
   useCaseResolverFolderTreeContext,

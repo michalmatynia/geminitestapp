@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useMemo } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { Button, Label, Textarea, SelectSimple, useToast, Card, EmptyState } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';

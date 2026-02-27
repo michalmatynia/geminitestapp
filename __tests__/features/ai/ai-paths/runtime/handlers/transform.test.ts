@@ -8,7 +8,7 @@ import {
   handleValidator, 
   handleRegex, 
   handleIterator 
-} from '@/features/ai/ai-paths/lib/core/runtime/handlers/transform';
+} from '@/shared/lib/ai-paths/core/runtime/handlers/transform';
 
 import { createMockContext } from '../../test-utils';
 

@@ -25,7 +25,8 @@ import {
   type GenerationCostEstimate,
 } from '@/features/ai/image-studio/utils/generation-cost';
 import { parseImageStudioSettings } from '@/features/ai/image-studio/utils/studio-settings';
-import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ImageStudioRunDispatchMode } from '@/shared/contracts/image-studio';
 export type { ImageStudioRunDispatchMode };
 import { createManagedQueue, isRedisAvailable } from '@/shared/lib/queue';

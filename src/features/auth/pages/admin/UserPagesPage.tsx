@@ -8,7 +8,7 @@ import { AUTH_SETTINGS_KEYS } from '@/features/auth/utils/auth-management';
 import {
   type AuthUserPageSettings,
 } from '@/features/auth/utils/auth-user-pages';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useToast,  FormSection, ToggleRow, FormActions, LoadingState } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';

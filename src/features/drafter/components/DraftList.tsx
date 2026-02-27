@@ -6,8 +6,8 @@ import {
 import { useState } from 'react';
 
 import { useDraftQueries, useDeleteDraft } from '@/features/drafter/hooks/useDraftQueries';
-import { ICON_LIBRARY_MAP } from '@/features/icons';
-import { logClientError } from '@/features/observability';
+import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ProductDraftDto } from '@/shared/contracts/products';
 import { Button, ListPanel, useToast, SimpleSettingsList, StatusBadge, Badge } from '@/shared/ui';
 import { ConfirmModal } from '@/shared/ui/templates/modals/ConfirmModal';

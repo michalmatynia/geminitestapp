@@ -9,11 +9,8 @@ import { renderMarkdownToHtml } from '../../utils';
 import { NoteDetailRelatedNotes } from './NoteDetailRelatedNotes';
 
 export function NoteDetailPreview(): React.JSX.Element | null {
-  const {
-    selectedNote,
-    setIsEditing,
-    selectedNoteTheme,
-  } = useNotesAppContext();
+  const { selectedNote, setIsEditing, selectedNoteTheme } =
+    useNotesAppContext();
 
   if (!selectedNote) return null;
 
@@ -44,7 +41,7 @@ export function NoteDetailPreview(): React.JSX.Element | null {
       relatedNoteBackgroundColor: '#1f2937',
       relatedNoteTextColor: '#e5e7eb',
     }),
-    []
+    [],
   );
 
   const effectivePreviewTheme = selectedNoteTheme ?? fallbackTheme;
@@ -52,13 +49,14 @@ export function NoteDetailPreview(): React.JSX.Element | null {
   const previewStyle = useMemo((): React.CSSProperties => {
     const normalizedColor = selectedNote?.color?.toLowerCase().trim();
     const isDefaultColor = !normalizedColor || normalizedColor === '#ffffff';
-    const color =
-      !isDefaultColor
-        ? normalizedColor ?? selectedNote?.color ?? effectivePreviewTheme.backgroundColor
-        : effectivePreviewTheme.backgroundColor ||
-          normalizedColor ||
-          selectedNote?.color ||
-          '#1f2937';
+    const color = !isDefaultColor
+      ? (normalizedColor ??
+        selectedNote?.color ??
+        effectivePreviewTheme.backgroundColor)
+      : effectivePreviewTheme.backgroundColor ||
+        normalizedColor ||
+        selectedNote?.color ||
+        '#1f2937';
     const hex = color.replace('#', '');
     if (!/^[0-9a-fA-F]{6}$/.test(hex)) {
       return { backgroundColor: color };
@@ -67,29 +65,36 @@ export function NoteDetailPreview(): React.JSX.Element | null {
     const g = parseInt(hex.slice(2, 4), 16);
     const b = parseInt(hex.slice(4, 6), 16);
     const luminance = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
-    const borderColor = luminance > 0.78 ? 'rgba(15, 23, 42, 0.35)' : 'rgba(148, 163, 184, 0.2)';
+    const borderColor =
+      luminance > 0.78 ? 'rgba(15, 23, 42, 0.35)' : 'rgba(148, 163, 184, 0.2)';
     return {
       backgroundColor: color,
       borderColor,
-      boxShadow: luminance > 0.78 ? '0 0 0 1px rgba(15, 23, 42, 0.12)' : undefined,
+      boxShadow:
+        luminance > 0.78 ? '0 0 0 1px rgba(15, 23, 42, 0.12)' : undefined,
     };
   }, [selectedNote?.color, effectivePreviewTheme.backgroundColor]);
 
   const previewTextColor = useMemo((): string => {
     const normalizedColor = selectedNote?.color?.toLowerCase().trim();
     const isDefaultColor = !normalizedColor || normalizedColor === '#ffffff';
-    const background =
-      !isDefaultColor
-        ? normalizedColor ?? selectedNote?.color ?? effectivePreviewTheme.backgroundColor
-        : effectivePreviewTheme.backgroundColor ||
-          normalizedColor ||
-          selectedNote?.color ||
-          '#1f2937';
+    const background = !isDefaultColor
+      ? (normalizedColor ??
+        selectedNote?.color ??
+        effectivePreviewTheme.backgroundColor)
+      : effectivePreviewTheme.backgroundColor ||
+        normalizedColor ||
+        selectedNote?.color ||
+        '#1f2937';
     if (effectivePreviewTheme.textColor && !isDefaultColor) {
       return getReadableTextColor(background);
     }
     return effectivePreviewTheme.textColor ?? getReadableTextColor(background);
-  }, [selectedNote?.color, effectivePreviewTheme.backgroundColor, effectivePreviewTheme.textColor]);
+  }, [
+    selectedNote?.color,
+    effectivePreviewTheme.backgroundColor,
+    effectivePreviewTheme.textColor,
+  ]);
 
   const previewTypographyStyle = useMemo(
     () => ({
@@ -111,12 +116,10 @@ export function NoteDetailPreview(): React.JSX.Element | null {
       ['--note-code-text' as never]:
         effectivePreviewTheme.markdownCodeText ?? '#e2e8f0',
       ['--note-inline-code-bg' as never]:
-        effectivePreviewTheme.markdownCodeBackground ?? 'rgba(15, 23, 42, 0.12)',
+        effectivePreviewTheme.markdownCodeBackground ??
+        'rgba(15, 23, 42, 0.12)',
     }),
-    [
-      previewTextColor,
-      effectivePreviewTheme,
-    ]
+    [previewTextColor, effectivePreviewTheme],
   );
 
   const contentRenderer = renderMarkdownToHtml as (val: string) => string;
@@ -138,9 +141,10 @@ export function NoteDetailPreview(): React.JSX.Element | null {
         style={previewTypographyStyle}
         dangerouslySetInnerHTML={{
           __html: sanitizeHtml(
-            typeof selectedNote.editorType === 'string' && selectedNote.editorType === 'wysiwyg'
+            typeof selectedNote.editorType === 'string' &&
+              selectedNote.editorType === 'wysiwyg'
               ? selectedNote.content
-              : contentRenderer(selectedNote.content)
+              : contentRenderer(selectedNote.content),
           ),
         }}
         onMouseOver={(e: React.MouseEvent<HTMLDivElement>): void => {
@@ -174,15 +178,24 @@ export function NoteDetailPreview(): React.JSX.Element | null {
                 copyButton.textContent = originalLabel ?? 'Copy';
               }, 1500);
             })
-            .catch((): void => { toast('Failed to copy code', { variant: 'error' }); });
+            .catch((): void => {
+              toast('Failed to copy code', { variant: 'error' });
+            });
         }}
       />
-      
+
       <NoteDetailRelatedNotes />
 
       <div className='mt-8 pt-4 border-t border-border flex gap-6 text-sm text-gray-500'>
-        <span>Created: {new Date(selectedNote.createdAt || 0).toLocaleString()}</span>
-        <span>Modified: {selectedNote.updatedAt ? new Date(selectedNote.updatedAt || 0).toLocaleString() : 'Never'}</span>
+        <span>
+          Created: {new Date(selectedNote.createdAt || 0).toLocaleString()}
+        </span>
+        <span>
+          Modified:{' '}
+          {selectedNote.updatedAt
+            ? new Date(selectedNote.updatedAt || 0).toLocaleString()
+            : 'Never'}
+        </span>
       </div>
     </div>
   );

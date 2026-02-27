@@ -8,8 +8,8 @@ import {
   Badge,
   StatusBadge,
 } from '@/shared/ui';
-import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
+import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 import { usePromptEngine } from '../../context/PromptEngineContext';
 import { useRuleItemContext } from '../context/RuleItemContext';
 import { useRuleItemDragState } from '../context/RuleListDragContext';

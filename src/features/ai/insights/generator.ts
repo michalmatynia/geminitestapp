@@ -10,8 +10,8 @@ import {
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
 import { listAnalyticsEvents, getAnalyticsSummary } from '@/features/analytics/server';
-import { ErrorSystem } from '@/features/observability/server';
-import { listSystemLogs, getSystemLogMetrics } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { listSystemLogs, getSystemLogMetrics } from '@/shared/lib/observability/system-logger';
 import type { AiInsightRecordDto as AiInsightRecord, AiInsightSourceDto as AiInsightSource, AiInsightStatusDto as AiInsightStatus, AiInsightTypeDto as AiInsightType } from '@/shared/contracts/ai-insights';
 import type { AiPathRuntimeAnalyticsRangeDto as AiPathRuntimeAnalyticsRange } from '@/shared/contracts/ai-paths';
 import type { AnalyticsEventDto, AnalyticsSummaryDto } from '@/shared/contracts/analytics';

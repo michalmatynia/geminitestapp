@@ -4,7 +4,7 @@ import type {
   NodeCacheMode,
   NodeCacheScope,
   NodeSideEffectPolicy,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { Button, Input, MultiSelect, SelectSimple, ToggleRow, FormField } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

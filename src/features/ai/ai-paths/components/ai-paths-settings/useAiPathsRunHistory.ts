@@ -9,7 +9,7 @@ import {
   type AiPathRunNodeRecord,
   type AiPathRunRecord,
   type RuntimeHistoryEntry,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 

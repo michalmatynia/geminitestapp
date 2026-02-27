@@ -1,2 +1,2 @@
 // Client-safe constants export
-export * from './lib/transient-recovery/constants';
+export * from '@/shared/lib/observability/transient-recovery/constants';

@@ -7,7 +7,7 @@ import {
   useAgentCreatorOperations,
 } from '@/features/ai/agentcreator';
 import { AgentCreatorSettingsSection } from '@/features/ai/agentcreator/components/AgentCreatorSettingsSection';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import { Button, SelectSimple, useToast, FormSection, FormField, ToggleRow, FormActions } from '@/shared/ui';
 
@@ -16,8 +16,6 @@ import { useChatbotSettings } from '../context/ChatbotContext';
 export function SettingsTab(): React.JSX.Element {
   const {
     model,
-    setModel,
-    modelOptions,
     webSearchEnabled,
     setWebSearchEnabled,
     useGlobalContext,
@@ -80,13 +78,15 @@ export function SettingsTab(): React.JSX.Element {
     <div className='space-y-6 p-4'>
       <FormSection title='General Settings' variant='subtle' className='p-4'>
         <div className='grid gap-4 md:grid-cols-2 mt-4'>
-          <FormField label='Model'>
-            <SelectSimple size='sm'
-              value={model}
-              onValueChange={(value: string): void => setModel(value)}
-              options={modelOptions.map((opt: string) => ({ value: opt, label: opt }))}
-              placeholder='Select a model'
-            />
+          <FormField label='AI Routing'>
+            <div className='rounded-md border border-border/60 bg-card/30 px-3 py-2'>
+              <div className='text-xs font-medium text-gray-200'>
+                {model || 'No Brain model configured'}
+              </div>
+              <div className='mt-1 text-[11px] text-gray-500'>
+                Managed by Brain. Update `/admin/settings/brain` to change Chatbot model routing.
+              </div>
+            </div>
           </FormField>
           <FormField label='Search Provider'>
             <SelectSimple size='sm'

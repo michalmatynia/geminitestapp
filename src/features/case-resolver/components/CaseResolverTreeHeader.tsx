@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 import { Button, Switch } from '@/shared/ui';
-import { FolderTreeSearchBar } from '@/features/foldertree/v2/search';
+import { FolderTreeSearchBar } from '@/shared/lib/foldertree/v2/search';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import { useCaseResolverFolderTreeContext } from '../context/CaseResolverFolderTreeContext';
 

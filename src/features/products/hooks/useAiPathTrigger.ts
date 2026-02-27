@@ -2,14 +2,14 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { runsApi } from '@/features/ai/ai-paths/lib/api/client';
+import { runsApi } from '@/shared/lib/ai-paths/api/client';
 import {
   TRIGGER_EVENTS,
-} from '@/features/ai/ai-paths/lib/core/constants';
+} from '@/shared/lib/ai-paths/core/constants';
 import {
   sanitizeEdges,
-} from '@/features/ai/ai-paths/lib/core/utils/graph';
-import { logClientError } from '@/features/observability/utils/client-error-logger';
+} from '@/shared/lib/ai-paths/core/utils/graph';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type {
   AiNode,
   PathConfig,

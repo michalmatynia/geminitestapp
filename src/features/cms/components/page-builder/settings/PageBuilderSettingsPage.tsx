@@ -3,7 +3,7 @@
 import { Loader2 } from 'lucide-react';
 import React, { useState } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { Card, PanelHeader, useToast, LoadingState, ToggleRow } from '@/shared/ui';

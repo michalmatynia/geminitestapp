@@ -5,7 +5,7 @@ import React from 'react';
 import type { 
   AiPathRunRecord,
   RuntimeHistoryEntry,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   Button,
   Label,

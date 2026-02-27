@@ -32,7 +32,7 @@ async function GET_handler(req: NextRequest,
           );
         } catch (error) {
           try {
-            const { ErrorSystem } = await import('@/features/observability/services/error-system');
+            const { ErrorSystem } = await import('@/features/observability/server');
             void ErrorSystem.captureException(error, { 
               service: 'agent-stream', 
               action: 'sendSnapshot',

@@ -6,8 +6,8 @@ import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,
   AiPathRunRecord,
-} from '@/features/ai/ai-paths/lib';
-import { formatDurationMs } from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
+import { formatDurationMs } from '@/shared/lib/ai-paths';
 import { Button, Tooltip, StatusBadge, Alert, type StatusVariant } from '@/shared/ui';
 
 

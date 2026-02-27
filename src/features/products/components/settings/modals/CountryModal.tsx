@@ -1,1 +1,1 @@
-export { CountryModal } from '@/features/internationalization/components/country-modal/CountryModal';
+export { CountryModal } from '@/shared/lib/internationalization/components/country-modal/CountryModal';

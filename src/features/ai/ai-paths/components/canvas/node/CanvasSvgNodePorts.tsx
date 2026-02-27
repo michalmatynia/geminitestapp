@@ -6,7 +6,7 @@ import {
   PORT_SIZE, 
   getPortOffsetY,
   type AiNode
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { 
   INPUT_CONNECTOR_COLORS, 
   OUTPUT_CONNECTOR_COLORS 

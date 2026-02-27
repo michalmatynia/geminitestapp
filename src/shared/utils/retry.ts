@@ -24,7 +24,7 @@ type LogSystemEventParams = {
 const logSystemEvent = async (params: LogSystemEventParams): Promise<void> => {
   try {
      
-    const mod = await import('@/features/observability/lib/system-logger');
+    const mod = await import('@/features/observability/server');
     await mod.logSystemEvent(params);
   } catch (error) {
     logger.error('Failed to log system event via observability feature', error);

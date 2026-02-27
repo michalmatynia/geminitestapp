@@ -3,7 +3,7 @@ import 'server-only';
 import { getBrainAssignmentForFeature } from '@/features/ai/brain/server';
 import { getScheduleSettings } from '@/features/ai/insights/generator';
 import { tick } from '@/features/jobs/processors/ai-insights-processor';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 type AiInsightsJobData = {

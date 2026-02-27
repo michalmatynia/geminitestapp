@@ -6,7 +6,7 @@ import {
   EmptyState,
 } from '@/shared/ui';
 import { useAiPathsSettingsOrchestrator } from '../AiPathsSettingsOrchestratorContext';
-import type { AiPathRuntimeEvent } from '@/features/ai/ai-paths/lib';
+import type { AiPathRuntimeEvent } from '@/shared/lib/ai-paths';
 
 export function AiPathsLiveLog(): React.JSX.Element {
   const { runtimeEvents } = useAiPathsSettingsOrchestrator();

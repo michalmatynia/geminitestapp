@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PromptValidationRule } from '@/features/prompt-engine/settings';
+import type { PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
 import {
   promptExploderCreateListItem as createListItem,
   promptExploderAddBlankListItem as addBlankListItem,

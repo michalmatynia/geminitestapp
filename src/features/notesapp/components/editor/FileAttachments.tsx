@@ -6,7 +6,14 @@ import React from 'react';
 
 import { useNoteFormContext } from '@/features/notesapp/context/NoteFormContext';
 import type { NoteFileDto as NoteFileRecord } from '@/shared/contracts/notes';
-import { Button, Label, FileUploadTrigger, type FileUploadHelpers, Card, LoadingState } from '@/shared/ui';
+import {
+  Button,
+  Label,
+  FileUploadTrigger,
+  type FileUploadHelpers,
+  Card,
+  LoadingState,
+} from '@/shared/ui';
 
 export function FileAttachments(): React.JSX.Element {
   const {
@@ -25,8 +32,13 @@ export function FileAttachments(): React.JSX.Element {
 
   if (!note?.id) {
     return (
-      <Card variant='subtle-compact' padding='md' className='border-dashed border-border/60 bg-card/30 text-center text-sm text-gray-400'>
-        Save the note first to enable file attachments ({maxSlots} slots available)
+      <Card
+        variant='subtle-compact'
+        padding='md'
+        className='border-dashed border-border/60 bg-card/30 text-center text-sm text-gray-400'
+      >
+        Save the note first to enable file attachments ({maxSlots} slots
+        available)
       </Card>
     );
   }
@@ -37,7 +49,7 @@ export function FileAttachments(): React.JSX.Element {
         Attachments ({noteFiles.length}/{maxSlots} slots used)
       </Label>
       <div className='flex flex-wrap gap-3'>
-        {(() : React.JSX.Element => {
+        {((): React.JSX.Element => {
           const nextSlot = getNextAvailableSlot();
           const isUploading = nextSlot !== null && uploadingSlots.has(nextSlot);
           return (
@@ -66,7 +78,10 @@ export function FileAttachments(): React.JSX.Element {
                   <FileUploadTrigger
                     multiple
                     asChild
-                    onFilesSelected={(files: File[], helpers?: FileUploadHelpers) => onMultiFileUpload(files, helpers)}
+                    onFilesSelected={(
+                      files: File[],
+                      helpers?: FileUploadHelpers,
+                    ) => onMultiFileUpload(files, helpers)}
                   >
                     <span className='flex h-full w-full flex-col items-center justify-center'>
                       <Upload size={14} />
@@ -121,7 +136,9 @@ export function FileAttachments(): React.JSX.Element {
                 </Button>
                 <Button
                   type='button'
-                  onClick={(): void => { void onFileDelete(file.slotIndex); }}
+                  onClick={(): void => {
+                    void onFileDelete(file.slotIndex);
+                  }}
                   variant='solid-destructive'
                   size='icon'
                   className='h-7 w-7'

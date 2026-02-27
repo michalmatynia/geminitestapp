@@ -1,10 +1,10 @@
 import { type ValidatorPatternList } from '@/shared/contracts/admin';
-import { formatProgrammaticPrompt } from '@/features/prompt-engine/prompt-formatter';
-import { type PromptEngineSettings, type PromptValidationRule } from '@/features/prompt-engine/settings';
+import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-formatter';
+import { type PromptEngineSettings, type PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
 import {
   preparePromptValidationRuntime,
   validateProgrammaticPromptWithRuntime,
-} from '@/features/prompt-engine/prompt-validator';
+} from '@/shared/lib/prompt-engine/prompt-validator';
 import { type CaseResolverNodeMeta } from '@/shared/contracts/case-resolver';
 import { type PromptValidationScopeDto as PromptValidationScope } from '@/shared/contracts/prompt-engine';
 

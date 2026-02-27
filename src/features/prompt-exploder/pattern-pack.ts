@@ -1,6 +1,6 @@
 import {
   defaultPromptEngineSettings,
-} from '@/features/prompt-engine/settings';
+} from '@/shared/lib/prompt-engine/settings';
 import type { 
   PromptEngineSettings,
   PromptValidationRule,

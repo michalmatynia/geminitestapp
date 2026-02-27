@@ -2,9 +2,9 @@ import 'dotenv/config';
 
 import {
   sanitizeEdges,
-} from '@/features/ai/ai-paths/lib/core/utils/graph';
-import { normalizeNodes } from '@/features/ai/ai-paths/lib/core/normalization';
-import { stableStringify } from '@/features/ai/ai-paths/lib/core/utils/runtime';
+} from '@/shared/lib/ai-paths/core/utils/graph';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import {
   listAiPathsSettings,
   upsertAiPathsSettingsBulk,

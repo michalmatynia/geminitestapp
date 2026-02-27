@@ -18,13 +18,13 @@ import type {
   PathFlowIntensity,
   PathRunMode,
   NodeConfig,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   initialNodes,
   initialEdges,
   normalizeNodes,
   sanitizeEdges,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 // ---------------------------------------------------------------------------
 // Types

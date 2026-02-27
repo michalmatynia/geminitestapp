@@ -13,12 +13,12 @@ import {
   EMPTY_RUNTIME_STATE,
   type Edge as AiEdge,
   type AiNode,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   fetchAiPathsSettingsCached,
   invalidateAiPathsSettingsCache,
   updateAiPathsSetting,
-} from '@/features/ai/ai-paths/lib/settings-store-client';
+} from '@/shared/lib/ai-paths/settings-store-client';
 import {
   useGraphState,
 } from '@/features/ai/ai-paths/context/hooks/useGraph';
@@ -41,7 +41,7 @@ import {
 } from '@/shared/ui';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { cn } from '@/shared/utils';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import {
   useCaseResolverPageContext,

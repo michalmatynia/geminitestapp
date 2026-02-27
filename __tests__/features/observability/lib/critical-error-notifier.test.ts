@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { notifyCriticalError } from '@/features/observability/lib/critical-error-notifier';
+import { notifyCriticalError } from '@/shared/lib/observability/critical-error-notifier';
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
 
 
@@ -24,7 +24,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   }),
 }));
 
-vi.mock('@/features/observability/lib/transient-recovery/with-recovery', () => ({
+vi.mock('@/shared/lib/observability/transient-recovery/with-recovery', () => ({
   withTransientRecovery: vi.fn((op) => op()),
 }));
 

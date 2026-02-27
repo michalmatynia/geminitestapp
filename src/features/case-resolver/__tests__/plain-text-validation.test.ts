@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseValidatorPatternLists } from '@/features/admin/pages/validator-scope';
-import { parsePromptEngineSettings } from '@/features/prompt-engine/settings';
+import { parseValidatorPatternLists } from '@/shared/contracts/validator';
+import { parsePromptEngineSettings } from '@/shared/lib/prompt-engine/settings';
 import { DEFAULT_CASE_RESOLVER_NODE_META } from '@/shared/contracts/case-resolver';
 
 import { applyCaseResolverPlainTextValidation } from '../plain-text-validation';

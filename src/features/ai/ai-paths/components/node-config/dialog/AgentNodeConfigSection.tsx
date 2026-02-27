@@ -3,7 +3,7 @@
 import Link from 'next/link';
 
 import { useAgentPersonas } from '@/features/ai/agentcreator/hooks/useAgentPersonas';
-import type { AgentConfig } from '@/features/ai/ai-paths/lib';
+import type { AgentConfig } from '@/shared/lib/ai-paths';
 import {
   Button,
   

@@ -3,7 +3,7 @@
 import { Plus, Trash2, Factory } from 'lucide-react';
 import { useMemo, useState, useCallback } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   useDeleteProducerMutation,
   useProducers,

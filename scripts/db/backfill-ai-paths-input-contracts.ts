@@ -1,6 +1,6 @@
 import 'dotenv/config';
 
-import { backfillPathConfigNodeContracts } from '@/features/ai/ai-paths/lib/core/normalization';
+import { backfillPathConfigNodeContracts } from '@/shared/lib/ai-paths/core/normalization';
 import {
   listAiPathsSettings,
   upsertAiPathsSettingsBulk,

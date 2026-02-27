@@ -4,7 +4,7 @@ import type {
   AiNode,
   AiPathRunNodeRecord,
   RuntimeHistoryEntry,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 export type HistoryNodeOption = {
   id: string;

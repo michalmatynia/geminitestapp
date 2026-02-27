@@ -25,7 +25,7 @@ const queue = createManagedQueue<AgentJobData>({
   },
   onFailed: async (_jobId, error, data) => {
     try {
-      const { ErrorSystem } = await import('@/features/observability/services/error-system');
+      const { ErrorSystem } = await import('@/features/observability/server');
       void ErrorSystem.captureException(error, {
         service: 'agent-queue',
         runId: data.runId,

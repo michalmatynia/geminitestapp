@@ -1,6 +1,6 @@
 'use client';
 
-import type { AiNode, Edge } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge } from '@/shared/lib/ai-paths';
 import { Button } from '@/shared/ui';
 
 import { useDatabaseQueryValidatorPanelContext } from './DatabaseQueryValidatorPanelContext';

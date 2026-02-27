@@ -11,9 +11,11 @@ export type NoteCardHeaderProps = {
   note: NoteWithRelations;
 };
 
-export function NoteCardHeader({ note }: NoteCardHeaderProps): React.JSX.Element {
+export function NoteCardHeader({
+  note,
+}: NoteCardHeaderProps): React.JSX.Element {
   const { handleToggleFavorite } = useNotesAppContext();
-  
+
   const isCodeNote = (note.editorType as string) === 'code';
   const onToggleFavorite = (target: NoteWithRelations): void => {
     void handleToggleFavorite(target);
@@ -31,7 +33,7 @@ export function NoteCardHeader({ note }: NoteCardHeaderProps): React.JSX.Element
       </div>
       <div className='flex items-center gap-2'>
         {isCodeNote && (
-          <CopyButton 
+          <CopyButton
             value={note.content}
             className='text-gray-500 hover:text-blue-500'
           />
@@ -41,7 +43,9 @@ export function NoteCardHeader({ note }: NoteCardHeaderProps): React.JSX.Element
           variant='ghost'
           size='icon'
           className='h-auto w-auto p-0 text-gray-500 hover:bg-transparent hover:text-yellow-500'
-          onMouseDown={(event: React.MouseEvent): void => event.preventDefault()}
+          onMouseDown={(event: React.MouseEvent): void =>
+            event.preventDefault()
+          }
           onClick={(event: React.MouseEvent): void => {
             event.stopPropagation();
             onToggleFavorite(note);

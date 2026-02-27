@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 
 import { useCreateNoteTag } from '@/features/notesapp/api/useNoteMutations';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { NoteTagDto as TagRecord } from '@/shared/contracts/notes';
 import { useToast } from '@/shared/ui';
 
@@ -16,7 +16,7 @@ export function useNoteTags(
   availableTags: TagRecord[] = [],
   notebookId?: string | null,
   noteNotebookId?: string | null,
-  onTagCreated?: () => void
+  onTagCreated?: () => void,
 ): {
   selectedTagIds: string[];
   setSelectedTagIds: (ids: string[]) => void;
@@ -35,13 +35,14 @@ export function useNoteTags(
   const [tagInput, setTagInput] = useState('');
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
 
-  const filteredTags = useMemo((): TagRecord[] => 
-    availableTags.filter(
-      (tag: TagRecord) =>
-        (tag.name || '').toLowerCase().includes(tagInput.toLowerCase()) &&
-        !selectedTagIds.includes(tag.id)
-    ), 
-  [availableTags, tagInput, selectedTagIds]
+  const filteredTags = useMemo(
+    (): TagRecord[] =>
+      availableTags.filter(
+        (tag: TagRecord) =>
+          (tag.name || '').toLowerCase().includes(tagInput.toLowerCase()) &&
+          !selectedTagIds.includes(tag.id),
+      ),
+    [availableTags, tagInput, selectedTagIds],
   );
 
   const handleAddTag = (tag: TagRecord): void => {
@@ -54,7 +55,8 @@ export function useNoteTags(
     if (!tagInput.trim()) return;
 
     const existingTag = availableTags.find(
-      (t: TagRecord) => (t.name || '').toLowerCase() === tagInput.trim().toLowerCase()
+      (t: TagRecord) =>
+        (t.name || '').toLowerCase() === tagInput.trim().toLowerCase(),
     );
 
     if (existingTag) {
@@ -78,7 +80,14 @@ export function useNoteTags(
       setTagInput('');
       setIsTagDropdownOpen(false);
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'useNoteTags', action: 'createTag', name: tagInput.trim(), notebookId: notebookId ?? noteNotebookId } });
+      logClientError(error, {
+        context: {
+          source: 'useNoteTags',
+          action: 'createTag',
+          name: tagInput.trim(),
+          notebookId: notebookId ?? noteNotebookId,
+        },
+      });
       toast('Failed to create tag', { variant: 'error' });
     }
   };

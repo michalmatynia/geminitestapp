@@ -6,12 +6,12 @@ import type {
   AiNode,
   Edge,
   RuntimeState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   normalizeNodes,
   sanitizeEdges,
   aiJobsApi,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 import { useAiPathsLocalExecution } from './runtime/useAiPathsLocalExecution';
 import { useAiPathsRuntimeState } from './runtime/useAiPathsRuntimeState';

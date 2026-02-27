@@ -5,7 +5,7 @@ import {
   recordPromptValidationCounter,
   recordPromptValidationTiming,
   resetPromptValidationObservability,
-} from '@/features/prompt-core/runtime-observability';
+} from '@/shared/lib/prompt-core/runtime-observability';
 
 describe('prompt runtime observability', () => {
   it('calculates health as degraded when SLO checks fail', () => {

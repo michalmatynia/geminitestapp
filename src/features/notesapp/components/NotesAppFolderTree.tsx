@@ -1,27 +1,17 @@
 'use client';
 
-import {
-  FileText,
-  Folder,
-  FolderOpen,
-  GripVertical,
-} from 'lucide-react';
+import { FileText, Folder, FolderOpen, GripVertical } from 'lucide-react';
 import React, { useEffect, useMemo, useRef } from 'react';
 
-import {
-  useMasterFolderTreeInstance,
-} from '@/features/foldertree';
+import { useMasterFolderTreeInstance } from '@/shared/lib/foldertree';
 import {
   FolderTreeViewportV2,
   applyInternalMasterTreeDrop,
   isInternalMasterTreeNode,
-} from '@/features/foldertree/v2';
+} from '@/shared/lib/foldertree/v2';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { FolderTreePanel } from '@/shared/ui';
-import {
-  type MasterTreeId,
-  type MasterTreeNode,
-} from '@/shared/utils';
+import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils';
 import { getFolderDragId, getNoteDragId } from '@/shared/utils/drag-drop';
 
 import {
@@ -54,14 +44,14 @@ export function NotesAppFolderTree(): React.JSX.Element {
 
   const masterNodes = useMemo(
     (): MasterTreeNode[] => buildMasterNodesFromNotesFolderTree(folderTree),
-    [folderTree]
+    [folderTree],
   );
   const initialExpandedFolderNodeIds = useMemo(
     () =>
       masterNodes
         .filter((node: MasterTreeNode) => node.type === 'folder')
         .map((node: MasterTreeNode) => node.id),
-    [masterNodes]
+    [masterNodes],
   );
   const selectedMasterNodeId = useMemo((): MasterTreeId | null => {
     if (selectedNote?.id) return toNoteMasterNodeId(selectedNote.id);
@@ -71,7 +61,7 @@ export function NotesAppFolderTree(): React.JSX.Element {
 
   const notesAdapter = useMemo(
     () => createNotesMasterTreeAdapter(operations),
-    [operations]
+    [operations],
   );
   const {
     appearance: { rootDropUi, resolveIcon },
@@ -98,64 +88,65 @@ export function NotesAppFolderTree(): React.JSX.Element {
     setPanelCollapsed(isFolderTreeCollapsed);
   }, [isFolderTreeCollapsed, setPanelCollapsed]);
 
-
   const selectedFolderForCreate = useMemo(
-    (): string | null => resolveNotesFolderTargetForNode(controller.nodes, controller.selectedNodeId),
-    [controller.nodes, controller.selectedNodeId]
+    (): string | null =>
+      resolveNotesFolderTargetForNode(
+        controller.nodes,
+        controller.selectedNodeId,
+      ),
+    [controller.nodes, controller.selectedNodeId],
   );
 
-  const {
-    FolderClosedIcon,
-    FolderOpenIcon,
-    FileIcon,
-    DragHandleIcon,
-  } = useMemo(
-    () => ({
-      FolderClosedIcon: resolveIcon({
-        slot: 'folderClosed',
-        kind: 'folder',
-        fallback: Folder,
-        fallbackId: 'Folder',
+  const { FolderClosedIcon, FolderOpenIcon, FileIcon, DragHandleIcon } =
+    useMemo(
+      () => ({
+        FolderClosedIcon: resolveIcon({
+          slot: 'folderClosed',
+          kind: 'folder',
+          fallback: Folder,
+          fallbackId: 'Folder',
+        }),
+        FolderOpenIcon: resolveIcon({
+          slot: 'folderOpen',
+          kind: 'folder',
+          fallback: FolderOpen,
+          fallbackId: 'FolderOpen',
+        }),
+        FileIcon: resolveIcon({
+          slot: 'file',
+          kind: 'note',
+          fallback: FileText,
+          fallbackId: 'FileText',
+        }),
+        DragHandleIcon: resolveIcon({
+          slot: 'dragHandle',
+          fallback: GripVertical,
+          fallbackId: 'GripVertical',
+        }),
       }),
-      FolderOpenIcon: resolveIcon({
-        slot: 'folderOpen',
-        kind: 'folder',
-        fallback: FolderOpen,
-        fallbackId: 'FolderOpen',
-      }),
-      FileIcon: resolveIcon({
-        slot: 'file',
-        kind: 'note',
-        fallback: FileText,
-        fallbackId: 'FileText',
-      }),
-      DragHandleIcon: resolveIcon({
-        slot: 'dragHandle',
-        fallback: GripVertical,
-        fallbackId: 'GripVertical',
-      }),
-    }),
-    [resolveIcon]
-  );
+      [resolveIcon],
+    );
 
   return (
     <FolderTreePanel
       className='bg-gray-900 border-r border-border'
       bodyClassName='flex min-h-0 flex-1 flex-col'
       masterInstance='notes'
-      header={(
+      header={
         <NotesAppTreeHeader
           controller={controller}
           selectedFolderForCreate={selectedFolderForCreate}
           setPanelCollapsed={setPanelCollapsed}
         />
-      )}
+      }
     >
       <div className='min-h-0 flex-1 overflow-auto p-2'>
         <FolderTreeViewportV2
           controller={controller}
           rootDropUi={rootDropUi}
-          resolveDraggedNodeId={(event: React.DragEvent<HTMLElement>): string | null => {
+          resolveDraggedNodeId={(
+            event: React.DragEvent<HTMLElement>,
+          ): string | null => {
             const noteId = getNoteDragId(event.dataTransfer, draggedNoteId);
             if (noteId) return toNoteMasterNodeId(noteId);
             const folderId = getFolderDragId(event.dataTransfer);
@@ -169,8 +160,14 @@ export function NotesAppFolderTree(): React.JSX.Element {
               nodes: ctlr.nodes,
             });
           }}
-          onNodeDrop={async ({ draggedNodeId, targetId, position, rootDropZone }, ctlr): Promise<void> => {
-            const isInternalDrag = isInternalMasterTreeNode(ctlr.nodes, draggedNodeId);
+          onNodeDrop={async (
+            { draggedNodeId, targetId, position, rootDropZone },
+            ctlr,
+          ): Promise<void> => {
+            const isInternalDrag = isInternalMasterTreeNode(
+              ctlr.nodes,
+              draggedNodeId,
+            );
 
             if (isInternalDrag) {
               await applyInternalMasterTreeDrop({
@@ -193,21 +190,34 @@ export function NotesAppFolderTree(): React.JSX.Element {
             if (!action) return;
 
             if (action.type === 'relate_notes') {
-              await operations.handleRelateNotes(action.noteId, action.targetNoteId);
+              await operations.handleRelateNotes(
+                action.noteId,
+                action.targetNoteId,
+              );
               return;
             }
             if (action.type === 'move_note') {
-              await operations.handleMoveNoteToFolder(action.noteId, action.targetFolderId);
+              await operations.handleMoveNoteToFolder(
+                action.noteId,
+                action.targetFolderId,
+              );
               return;
             }
             if (action.type === 'reorder_folder_root_top') {
-              await operations.handleReorderFolder(action.folderId, action.anchorFolderId, 'before');
+              await operations.handleReorderFolder(
+                action.folderId,
+                action.anchorFolderId,
+                'before',
+              );
               return;
             }
-            await operations.handleMoveFolderToFolder(action.folderId, action.targetFolderId);
+            await operations.handleMoveFolderToFolder(
+              action.folderId,
+              action.targetFolderId,
+            );
           }}
           renderNode={(nodeProps) => (
-            <NotesAppTreeNode 
+            <NotesAppTreeNode
               {...nodeProps}
               controller={controller}
               FolderClosedIcon={FolderClosedIcon}

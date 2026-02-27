@@ -8,7 +8,8 @@ import {
   getDefaultImageRetryPresets,
   normalizeImageRetryPresets,
 } from '@/features/data-import-export/utils/image-retry-presets';
-import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getProductDataProvider } from '@/features/products/server';
 import type {
   ImageRetryPreset,

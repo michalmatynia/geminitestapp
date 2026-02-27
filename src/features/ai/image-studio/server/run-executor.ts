@@ -27,7 +27,7 @@ import {
   IMAGE_STUDIO_OPENAI_API_KEY_KEY,
   parseImageStudioSettings,
 } from '@/features/ai/image-studio/utils/studio-settings';
-import { getImageFileRepository } from '@/features/files/server';
+import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import { badRequestError, configurationError, operationFailedError } from '@/shared/errors/app-error';

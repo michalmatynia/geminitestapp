@@ -8,7 +8,7 @@ import {
 } from '@/features/integrations/hooks/useProductListingMutations';
 import type { CapturedLog } from '@/features/integrations/services/exports/log-capture';
 import { massListProductFormSchema } from '@/features/integrations/validations/listing-forms';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 import { useMassListProductModalViewContext } from '../mass-list-modal/context/MassListProductModalViewContext';

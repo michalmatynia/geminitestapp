@@ -1,4 +1,4 @@
-import { palette } from '@/features/ai/ai-paths/lib';
+import { palette } from '@/shared/lib/ai-paths';
 import { type EdgeDto as AiEdge } from '@/shared/contracts/ai-paths';
 import { type AiNode, type NodeDefinition } from '@/shared/contracts/case-resolver';
 import {

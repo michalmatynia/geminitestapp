@@ -2,8 +2,8 @@ import { renderHook } from '@testing-library/react';
 import { Folder } from 'lucide-react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { useMasterFolderTreeConfig } from '@/features/foldertree/hooks/useMasterFolderTreeConfig';
-import { useMasterFolderTreeInstance } from '@/features/foldertree/hooks/useMasterFolderTreeInstance';
+import { useMasterFolderTreeConfig } from '@/shared/lib/foldertree/hooks/useMasterFolderTreeConfig';
+import { useMasterFolderTreeInstance } from '@/shared/lib/foldertree/hooks/useMasterFolderTreeInstance';
 import { useUpdateSetting, useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import type { MasterTreeNode } from '@/shared/utils';
@@ -25,7 +25,7 @@ vi.mock('@/shared/hooks/use-settings', () => ({
 vi.mock('@/shared/ui/toast', () => ({
   useToast: vi.fn(() => ({ toast: vi.fn() })),
 }));
-vi.mock('@/features/foldertree/hooks/useMasterFolderTreeConfig', () => ({
+vi.mock('@/shared/lib/foldertree/hooks/useMasterFolderTreeConfig', () => ({
   useMasterFolderTreeConfig: vi.fn(),
 }));
 

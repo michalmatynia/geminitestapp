@@ -7,7 +7,7 @@ import {
   type ExportToBaseVariables,
 } from '@/features/integrations/hooks/useProductListingMutations';
 import { selectProductForListingFormSchema } from '@/features/integrations/validations/listing-forms';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { validateFormData } from '@/shared/validations/form-validation';
 
 type UseProductSelectionFormResult = {

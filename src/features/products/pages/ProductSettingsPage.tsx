@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 
-import { InternationalizationSettings, InternationalizationProvider, useInternationalizationContext } from '@/features/internationalization';
-import { logClientError } from '@/features/observability';
+import { InternationalizationSettings, InternationalizationProvider, useInternationalizationContext } from '@/shared/lib/internationalization';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { ProductSyncSettings } from '@/features/product-sync/components/ProductSyncSettings';
 import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';
 import { CatalogsSettings } from '@/features/products/components/settings/catalogs/CatalogsSettings';

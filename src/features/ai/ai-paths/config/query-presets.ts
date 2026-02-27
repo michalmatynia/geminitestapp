@@ -1,4 +1,4 @@
-import type { DbQueryConfig } from '@/features/ai/ai-paths/lib';
+import type { DbQueryConfig } from '@/shared/lib/ai-paths';
 
 type LabeledPreset = { id: string; label: string; value: string };
 

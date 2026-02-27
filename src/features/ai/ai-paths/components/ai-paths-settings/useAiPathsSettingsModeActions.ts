@@ -13,7 +13,7 @@ import type {
   PathRunMode,
   RuntimeState,
   UpdaterSampleState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_HISTORY_RETENTION_DEFAULT,
   AI_PATHS_HISTORY_RETENTION_KEY,
@@ -21,7 +21,7 @@ import {
   AI_PATHS_HISTORY_RETENTION_MIN,
   STORAGE_VERSION,
   createDefaultPathConfig,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 type ToastFn = (
   message: string,

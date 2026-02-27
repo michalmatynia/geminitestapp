@@ -37,7 +37,7 @@ import type { ProductFormData, ProductWithImages } from '@/shared/contracts/prod
 import { api } from '@/shared/lib/api-client';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
-import { logClientError } from '@/features/observability/utils/client-error-logger';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 
 import type { FieldValidatorIssue } from '../validation-engine/core';
 

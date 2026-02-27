@@ -2,7 +2,7 @@ import path from 'path';
 
 import { describe, it, expect, vi } from 'vitest';
 
-import { getDiskPathFromPublicPath } from '@/features/files/utils/fileUploader';
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 
 // Mock server-only
 vi.mock('server-only', () => ({}));

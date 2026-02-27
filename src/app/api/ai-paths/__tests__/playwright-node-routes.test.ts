@@ -1,4 +1,6 @@
+import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const {
   requireAiPathsAccessOrInternalMock,
@@ -35,24 +37,30 @@ import { GET_handler as GET_playwrightArtifactHandler } from '@/app/api/ai-paths
 import { GET_handler } from '@/app/api/ai-paths/playwright/[runId]/handler';
 import { POST_handler } from '@/app/api/ai-paths/playwright/handler';
 
-const createPostRequest = (): Request =>
-  new Request('http://localhost/api/ai-paths/playwright', {
+const mockContext: ApiHandlerContext = {
+  requestId: 'test-req-id',
+  startTime: Date.now(),
+  getElapsedMs: () => 0,
+};
+
+const createPostRequest = (): NextRequest =>
+  new NextRequest('http://localhost/api/ai-paths/playwright', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
     },
   });
 
-const createGetRequest = (runId: string): Request =>
-  new Request(
+const createGetRequest = (runId: string): NextRequest =>
+  new NextRequest(
     `http://localhost/api/ai-paths/playwright/${encodeURIComponent(runId)}`,
     {
       method: 'GET',
     },
   );
 
-const createArtifactGetRequest = (runId: string, file: string): Request =>
-  new Request(
+const createArtifactGetRequest = (runId: string, file: string): NextRequest =>
+  new NextRequest(
     `http://localhost/api/ai-paths/playwright/${encodeURIComponent(runId)}/artifacts/${encodeURIComponent(file)}`,
     {
       method: 'GET',
@@ -115,8 +123,8 @@ describe('AI Paths Playwright routes', () => {
     );
 
     const response = await POST_handler(
-      createPostRequest() as Parameters<typeof POST_handler>[0],
-      {} as Parameters<typeof POST_handler>[1],
+      createPostRequest(),
+      mockContext,
     );
     const body = (await response.json()) as Record<string, unknown>;
 
@@ -132,7 +140,7 @@ describe('AI Paths Playwright routes', () => {
         timeoutMs: 45000,
         browserEngine: 'firefox',
         personaId: 'persona-1',
-      }),
+      }) as unknown,
       waitForResult: false,
       ownerUserId: 'user-1',
     });
@@ -155,8 +163,8 @@ describe('AI Paths Playwright routes', () => {
     enqueuePlaywrightNodeRunMock.mockResolvedValueOnce(buildRun());
 
     await POST_handler(
-      createPostRequest() as Parameters<typeof POST_handler>[0],
-      {} as Parameters<typeof POST_handler>[1],
+      createPostRequest(),
+      mockContext,
     );
 
     expect(enforceAiPathsActionRateLimitMock).not.toHaveBeenCalled();
@@ -173,8 +181,8 @@ describe('AI Paths Playwright routes', () => {
     );
 
     const response = await GET_handler(
-      createGetRequest('run-900') as Parameters<typeof GET_handler>[0],
-      {} as Parameters<typeof GET_handler>[1],
+      createGetRequest('run-900'),
+      mockContext,
       { runId: 'run-900' },
     );
     const body = (await response.json()) as Record<string, unknown>;
@@ -196,8 +204,8 @@ describe('AI Paths Playwright routes', () => {
 
     await expect(
       GET_handler(
-        createGetRequest('missing-run') as Parameters<typeof GET_handler>[0],
-        {} as Parameters<typeof GET_handler>[1],
+        createGetRequest('missing-run'),
+        mockContext,
         { runId: 'missing-run' },
       ),
     ).rejects.toThrow('Playwright run not found.');
@@ -210,10 +218,8 @@ describe('AI Paths Playwright routes', () => {
 
     await expect(
       GET_handler(
-        createGetRequest('run-unauthorized') as Parameters<
-          typeof GET_handler
-        >[0],
-        {} as Parameters<typeof GET_handler>[1],
+        createGetRequest('run-unauthorized'),
+        mockContext,
         { runId: 'run-unauthorized' },
       ),
     ).rejects.toThrow('Playwright run access denied.');
@@ -234,10 +240,8 @@ describe('AI Paths Playwright routes', () => {
     });
 
     const response = await GET_playwrightArtifactHandler(
-      createArtifactGetRequest('run-901', 'final.png') as Parameters<
-        typeof GET_playwrightArtifactHandler
-      >[0],
-      {} as Parameters<typeof GET_playwrightArtifactHandler>[1],
+      createArtifactGetRequest('run-901', 'final.png'),
+      mockContext,
       { runId: 'run-901', file: 'final.png' },
     );
 
@@ -263,10 +267,8 @@ describe('AI Paths Playwright routes', () => {
 
     await expect(
       GET_playwrightArtifactHandler(
-        createArtifactGetRequest('run-902', 'missing.png') as Parameters<
-          typeof GET_playwrightArtifactHandler
-        >[0],
-        {} as Parameters<typeof GET_playwrightArtifactHandler>[1],
+        createArtifactGetRequest('run-902', 'missing.png'),
+        mockContext,
         { runId: 'run-902', file: 'missing.png' },
       ),
     ).rejects.toThrow('Playwright artifact not found.');
@@ -279,10 +281,8 @@ describe('AI Paths Playwright routes', () => {
 
     await expect(
       GET_playwrightArtifactHandler(
-        createArtifactGetRequest('run-903', 'final.png') as Parameters<
-          typeof GET_playwrightArtifactHandler
-        >[0],
-        {} as Parameters<typeof GET_playwrightArtifactHandler>[1],
+        createArtifactGetRequest('run-903', 'final.png'),
+        mockContext,
         { runId: 'run-903', file: 'final.png' },
       ),
     ).rejects.toThrow('Playwright run access denied.');

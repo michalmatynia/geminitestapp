@@ -371,7 +371,9 @@ export const QUERY_KEYS = {
   brain: {
     all: ['brain'] as const,
     lists: () => [...QUERY_KEYS.brain.all, 'list'] as const,
-    ollamaModels: () => [...QUERY_KEYS.brain.lists(), 'ollama-models'] as const,
+    models: () => [...QUERY_KEYS.brain.lists(), 'models'] as const,
+    // Backward-compatible alias. Prefer QUERY_KEYS.brain.models().
+    ollamaModels: () => QUERY_KEYS.brain.models(),
     metrics: () => [...QUERY_KEYS.brain.all, 'metrics'] as const,
     analyticsSummary: () => [...QUERY_KEYS.brain.metrics(), 'analytics-summary'] as const,
     logMetrics: () => [...QUERY_KEYS.brain.metrics(), 'logs'] as const,

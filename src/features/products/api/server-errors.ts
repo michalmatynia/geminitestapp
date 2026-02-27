@@ -2,7 +2,7 @@ import 'server-only';
 
 import { NextRequest } from 'next/server';
 
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { AppError } from '@/shared/errors/app-error';
 
 import { ApiErrorBuilder, ErrorStatusCodes, createVersionedErrorResponse } from './errors';

@@ -40,7 +40,7 @@ import {
   usePlaywrightPersonas,
 } from '@/features/integrations/hooks/useIntegrationQueries';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { defaultPlaywrightSettings } from '@/features/playwright';
 import type {
   Integration,

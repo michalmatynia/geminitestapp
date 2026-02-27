@@ -1,9 +1,9 @@
 import 'dotenv/config';
 
-import { normalizeAiPathsValidationConfig } from '@/features/ai/ai-paths/lib/core/validation-engine/defaults';
-import { evaluateAiPathsValidationPreflight } from '@/features/ai/ai-paths/lib/core/validation-engine/evaluator';
-import { normalizeNodes } from '@/features/ai/ai-paths/lib/core/normalization';
-import { sanitizeEdges } from '@/features/ai/ai-paths/lib/core/utils/graph';
+import { normalizeAiPathsValidationConfig } from '@/shared/lib/ai-paths/core/validation-engine/defaults';
+import { evaluateAiPathsValidationPreflight } from '@/shared/lib/ai-paths/core/validation-engine/evaluator';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
 import { listAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
 
 const pathId = process.argv[2] ?? 'path_65mv2p';

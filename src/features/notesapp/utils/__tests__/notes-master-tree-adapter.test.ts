@@ -14,7 +14,7 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 const folderNode = (
   id: string,
   parentId: string | null,
-  sortOrder: number
+  sortOrder: number,
 ): MasterTreeNode => ({
   id: toFolderMasterNodeId(id),
   type: 'folder',
@@ -28,7 +28,7 @@ const folderNode = (
 const noteNode = (
   id: string,
   parentId: string,
-  sortOrder: number
+  sortOrder: number,
 ): MasterTreeNode => ({
   id: toNoteMasterNodeId(id),
   type: 'file',
@@ -41,7 +41,7 @@ const noteNode = (
 
 const createContext = (
   previousNodes: MasterTreeNode[],
-  nextNodes: MasterTreeNode[]
+  nextNodes: MasterTreeNode[],
 ): MasterFolderTreePersistContext => ({
   previousNodes,
   nextNodes,
@@ -55,8 +55,12 @@ describe('resolveNotesFolderTargetForNode', () => {
       noteNode('todo', workFolderNodeId, 0),
     ];
 
-    expect(resolveNotesFolderTargetForNode(nodes, toNoteMasterNodeId('todo'))).toBe('work');
-    expect(resolveNotesFolderTargetForNode(nodes, workFolderNodeId)).toBe('work');
+    expect(
+      resolveNotesFolderTargetForNode(nodes, toNoteMasterNodeId('todo')),
+    ).toBe('work');
+    expect(resolveNotesFolderTargetForNode(nodes, workFolderNodeId)).toBe(
+      'work',
+    );
     expect(resolveNotesFolderTargetForNode(nodes, null)).toBeNull();
   });
 });
@@ -79,11 +83,14 @@ describe('createNotesMasterTreeAdapter', () => {
         targetParentId: toFolderMasterNodeId('work'),
         targetIndex: 0,
       },
-      createContext([], [])
+      createContext([], []),
     );
 
     expect(operations.handleMoveNoteToFolder).toHaveBeenCalledTimes(1);
-    expect(operations.handleMoveNoteToFolder).toHaveBeenCalledWith('note-1', 'work');
+    expect(operations.handleMoveNoteToFolder).toHaveBeenCalledWith(
+      'note-1',
+      'work',
+    );
   });
 
   it('converts root-top folder moves into reorder-before operations', async () => {
@@ -107,11 +114,15 @@ describe('createNotesMasterTreeAdapter', () => {
         targetParentId: null,
         targetIndex: 0,
       },
-      createContext(nextNodes, nextNodes)
+      createContext(nextNodes, nextNodes),
     );
 
     expect(operations.handleReorderFolder).toHaveBeenCalledTimes(1);
-    expect(operations.handleReorderFolder).toHaveBeenCalledWith('beta', 'alpha', 'before');
+    expect(operations.handleReorderFolder).toHaveBeenCalledWith(
+      'beta',
+      'alpha',
+      'before',
+    );
     expect(operations.handleMoveFolderToFolder).not.toHaveBeenCalled();
   });
 
@@ -138,7 +149,7 @@ describe('createNotesMasterTreeAdapter', () => {
         targetId: toFolderMasterNodeId('work'),
         position: 'before',
       },
-      createContext(nextNodes, nextNodes)
+      createContext(nextNodes, nextNodes),
     );
 
     await adapter.applyOperation?.(
@@ -148,12 +159,19 @@ describe('createNotesMasterTreeAdapter', () => {
         targetId: toNoteMasterNodeId('target-note'),
         position: 'after',
       },
-      createContext(nextNodes, nextNodes)
+      createContext(nextNodes, nextNodes),
     );
 
     expect(operations.handleReorderFolder).toHaveBeenCalledTimes(1);
-    expect(operations.handleReorderFolder).toHaveBeenCalledWith('archive', 'work', 'before');
-    expect(operations.handleMoveNoteToFolder).toHaveBeenCalledWith('moving-note', 'work');
+    expect(operations.handleReorderFolder).toHaveBeenCalledWith(
+      'archive',
+      'work',
+      'before',
+    );
+    expect(operations.handleMoveNoteToFolder).toHaveBeenCalledWith(
+      'moving-note',
+      'work',
+    );
   });
 
   it('dispatches rename operations by entity type', async () => {
@@ -172,7 +190,7 @@ describe('createNotesMasterTreeAdapter', () => {
         nodeId: toNoteMasterNodeId('note-1'),
         name: 'Renamed note',
       },
-      createContext([], [])
+      createContext([], []),
     );
 
     await adapter.applyOperation?.(
@@ -181,10 +199,16 @@ describe('createNotesMasterTreeAdapter', () => {
         nodeId: toFolderMasterNodeId('work'),
         name: 'Renamed folder',
       },
-      createContext([], [])
+      createContext([], []),
     );
 
-    expect(operations.handleRenameNote).toHaveBeenCalledWith('note-1', 'Renamed note');
-    expect(operations.handleRenameFolder).toHaveBeenCalledWith('work', 'Renamed folder');
+    expect(operations.handleRenameNote).toHaveBeenCalledWith(
+      'note-1',
+      'Renamed note',
+    );
+    expect(operations.handleRenameFolder).toHaveBeenCalledWith(
+      'work',
+      'Renamed folder',
+    );
   });
 });

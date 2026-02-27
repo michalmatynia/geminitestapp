@@ -12,7 +12,7 @@ import {
 import type {
   AiNode,
   PathFlowIntensity,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import type { EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 import {
   RENDERER_MODE_STORAGE_KEY,

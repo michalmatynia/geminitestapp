@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useMemo, ReactNode } from '
 import type { TraderaQueueHealthResponse } from '@/features/jobs/api';
 import { useCancelListingMutation, useChatbotJobMutation, useClearChatbotJobsMutation } from '@/features/jobs/hooks/useJobMutations';
 import { useIntegrationJobs, useChatbotJobs, useTraderaQueueHealth } from '@/features/jobs/hooks/useJobQueries';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ListingJob, ProductJob } from '@/shared/contracts/integrations';
 import { internalError } from '@/shared/errors/app-error';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';

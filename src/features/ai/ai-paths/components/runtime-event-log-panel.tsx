@@ -2,7 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import type { AiPathRuntimeEvent, AiPathRunEventLevel } from '@/features/ai/ai-paths/lib';
+import type { AiPathRuntimeEvent, AiPathRunEventLevel } from '@/shared/lib/ai-paths';
 import { Button, StatusBadge, SelectSimple, Card } from '@/shared/ui';
 
 import { useRuntimeState, useRuntimeActions } from '../context';

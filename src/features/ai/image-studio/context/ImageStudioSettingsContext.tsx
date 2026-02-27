@@ -2,13 +2,13 @@
 
 import React, { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useUserPreferences } from '@/features/auth/hooks/useUserPreferences';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   defaultPromptEngineSettings,
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
   parsePromptValidationRules,
-} from '@/features/prompt-engine/settings';
+} from '@/shared/lib/prompt-engine/settings';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { useSettingsStore } from '@/shared/providers/SettingsStoreProvider';
 import { useToast } from '@/shared/ui';

@@ -4,7 +4,7 @@ import type { AiPathRuntimeAnalyticsSummaryDto as AiPathRuntimeAnalyticsSummary 
 import type { AnalyticsSummaryDto as AnalyticsSummary } from '@/shared/contracts/analytics';
 import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
 import type { 
-  ChatbotModelsResponseDto as ChatbotModelsResponse, 
+  BrainModelsResponseDto as BrainModelsResponse,
   InsightsSnapshotDto as InsightsSnapshot 
 } from '@/shared/contracts/ai-brain';
 import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
@@ -14,25 +14,33 @@ import { createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
 import { brainKeys } from '@/shared/lib/query-key-exports';
 
 export { brainKeys };
-export type { ChatbotModelsResponse, InsightsSnapshot };
+export type { BrainModelsResponse, InsightsSnapshot };
 
-export function useOllamaModels(): SingleQuery<ChatbotModelsResponse> {
-  const queryKey = brainKeys.ollamaModels();
-  return createSingleQueryV2<ChatbotModelsResponse>({
+export function useBrainModels(
+  options?: { enabled?: boolean; staleTime?: number },
+): SingleQuery<BrainModelsResponse> {
+  const queryKey = brainKeys.models();
+  return createSingleQueryV2<BrainModelsResponse>({
     queryKey,
-    queryFn: () => api.get<ChatbotModelsResponse>('/api/chatbot'),
-    id: 'ollama-models',
-    staleTime: 1000 * 60,
+    queryFn: () => api.get<BrainModelsResponse>('/api/brain/models'),
+    id: 'brain-models',
+    enabled: options?.enabled ?? true,
+    staleTime: options?.staleTime ?? 1000 * 60,
     refetchInterval: 1000 * 60,
     meta: {
-      source: 'brain.hooks.useOllamaModels',
+      source: 'brain.hooks.useBrainModels',
       operation: 'polling',
-      resource: 'brain.ollama-models',
+      resource: 'brain.models',
       domain: 'global',
       queryKey,
-      tags: ['brain', 'ollama-models'],
+      tags: ['brain', 'models'],
     },
   });
+}
+
+// Backward-compatibility alias for existing call sites.
+export function useOllamaModels(): SingleQuery<BrainModelsResponse> {
+  return useBrainModels();
 }
 
 export function useBrainAnalyticsSummary(): SingleQuery<AnalyticsSummary> {

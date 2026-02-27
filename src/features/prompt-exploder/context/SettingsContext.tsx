@@ -10,19 +10,17 @@ import React, { createContext, useCallback, useEffect, useMemo, useState, useCon
 
 import {
   parseValidatorPatternLists,
-} from '@/features/admin/pages/validator-scope';
+} from '@/shared/contracts/validator';
 import { 
-  type ValidatorPatternList,
   VALIDATOR_PATTERN_LISTS_KEY 
 } from '@/shared/contracts/admin';
 import {
   parsePromptEngineSettings,
   parsePromptValidationRules,
-} from '@/features/prompt-engine/settings';
+} from '@/shared/lib/prompt-engine/settings';
 import { 
   PROMPT_ENGINE_SETTINGS_KEY,
   type PromptValidationRule, 
-  type PromptEngineSettings 
 } from '@/shared/contracts/prompt-engine';
 import {
   useSettingsMap,
@@ -85,7 +83,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const updateSetting = useUpdateSetting();
   const updateSettingsBulk = useUpdateSettingsBulk();
   
-  const settingsMap = (settingsQuery.data as unknown as Map<string, string>) ?? new Map<string, string>();
+  const settingsMap = settingsQuery.data ?? new Map<string, string>();
   const returnTo = searchParams?.get('returnTo') || '/admin/image-studio';
   const isCaseResolverReturnTarget = returnTo.startsWith('/admin/case-resolver');
 
@@ -131,15 +129,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const promptSettings = useMemo(
     () => parsePromptEngineSettings(rawPromptSettings),
     [rawPromptSettings]
-  ) as unknown as PromptEngineSettings;
+  );
   const promptExploderSettings = useMemo(
     () => parsePromptExploderSettings(rawExploderSettings),
     [rawExploderSettings]
-  ) as unknown as PromptExploderSettings;
+  );
   const validatorPatternLists = useMemo(
     () => parseValidatorPatternLists(rawValidatorPatternLists),
     [rawValidatorPatternLists]
-  ) as unknown as ValidatorPatternList[];
+  );
 
   const strictStackMode = useMemo(
     () => isPromptValidationStrictStackMode(),
@@ -269,7 +267,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
     }
   }, [runtimeResolution.warning, runtimeResolution.guardrailIssue]);
 
-  const runtimeSelection = runtimeResolution.selection as unknown as PromptValidationOrchestrationResult;
+  const runtimeSelection = runtimeResolution.selection;
   const runtimeGuardrailIssue = runtimeResolution.guardrailIssue;
 
   const activeValidationScope: PromptExploderRuntimeValidationScope =
@@ -279,27 +277,27 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   const activeValidationRuleStack = runtimeSelection.validationRuleStack;
 
   const scopedRules = useMemo(
-    () => (runtimeSelection.scopedRules as unknown as PromptValidationRule[]),
+    () => runtimeSelection.scopedRules,
     [runtimeSelection.scopedRules]
   );
 
   const effectiveRules = useMemo(
-    () => (runtimeSelection.effectiveRules as unknown as PromptValidationRule[]),
+    () => runtimeSelection.effectiveRules,
     [runtimeSelection.effectiveRules]
   );
 
   const runtimeValidationRules = useMemo(
-    () => (runtimeSelection.runtimeValidationRules as unknown as PromptValidationRule[]),
+    () => runtimeSelection.runtimeValidationRules,
     [runtimeSelection.runtimeValidationRules]
   );
 
   const effectiveLearnedTemplates = useMemo(
-    () => (runtimeSelection.effectiveLearnedTemplates as unknown as PromptExploderLearnedTemplate[]),
+    () => runtimeSelection.effectiveLearnedTemplates,
     [runtimeSelection.effectiveLearnedTemplates]
   );
 
   const runtimeLearnedTemplates = useMemo(
-    () => (runtimeSelection.runtimeLearnedTemplates as unknown as PromptExploderLearnedTemplate[]),
+    () => runtimeSelection.runtimeLearnedTemplates,
     [runtimeSelection.runtimeLearnedTemplates]
   );
 
@@ -323,9 +321,9 @@ export function SettingsProvider({ children }: { children: React.ReactNode }): R
   }, [promptExploderSettings.patternSnapshots]);
 
   const selectedSnapshot = useMemo(
-    () => (availableSnapshots as unknown as PromptExploderPatternSnapshot[]).find((s) => s.id === selectedSnapshotId) ?? null,
+    () => availableSnapshots.find((s) => s.id === selectedSnapshotId) ?? null,
     [availableSnapshots, selectedSnapshotId]
-  ) as unknown as PromptExploderPatternSnapshot | null;
+  );
 
   useEffect(() => {
     if (settingsQuery.isLoading) return;

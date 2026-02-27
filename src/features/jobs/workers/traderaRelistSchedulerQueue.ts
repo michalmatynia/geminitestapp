@@ -9,7 +9,7 @@ import {
   findDueTraderaRelistListingIds,
   shouldRunTraderaRelistScheduler,
 } from '@/features/integrations/services/tradera-listing-service';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getSettingValue } from '@/features/products/server';
 import { createManagedQueue } from '@/shared/lib/queue';
 

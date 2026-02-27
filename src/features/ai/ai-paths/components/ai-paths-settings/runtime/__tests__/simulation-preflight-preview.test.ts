@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { evaluateDataContractPreflight } from '@/features/ai/ai-paths/lib/core/utils/data-contract-preflight';
+import { evaluateDataContractPreflight } from '@/shared/lib/ai-paths/core/utils/data-contract-preflight';
 import { applySimulationPreviewToRuntimeState } from '@/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsSimulation';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 import type { RuntimePortValues, RuntimeState } from '@/shared/contracts/ai-paths-runtime';

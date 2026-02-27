@@ -3,17 +3,17 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 
-import type { PlaywrightConfig } from '@/features/ai/ai-paths/lib';
+import type { PlaywrightConfig } from '@/shared/lib/ai-paths';
 import {
   createDefaultPlaywrightConfig,
   normalizePlaywrightConfig,
-} from '@/features/ai/ai-paths/lib/core/playwright/default-config';
+} from '@/shared/lib/ai-paths/core/playwright/default-config';
 import {
   CUSTOM_PLAYWRIGHT_SCRIPT_TEMPLATE,
   findPlaywrightScriptTemplate,
   findPlaywrightTemplateByScript,
   PLAYWRIGHT_SCRIPT_TEMPLATES,
-} from '@/features/ai/ai-paths/lib/core/playwright/script-templates';
+} from '@/shared/lib/ai-paths/core/playwright/script-templates';
 import { usePlaywrightPersonas } from '@/features/playwright/hooks/usePlaywrightPersonas';
 import { playwrightSettingsSchema } from '@/shared/contracts/playwright';
 import { Button, Input,  LoadingState, SelectSimple, Textarea, FormField } from '@/shared/ui';

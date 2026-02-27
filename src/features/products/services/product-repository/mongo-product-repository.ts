@@ -4,14 +4,14 @@ import { randomUUID } from 'crypto';
 
 import { Filter, type Document, WithId } from 'mongodb';
 
-import { mongoImageFileRepository } from '@/features/files/server';
+import { mongoImageFileRepository } from '@/shared/lib/files/services/image-file-service';
 import { mongoCatalogRepository } from '@/features/products/services/catalog-repository/mongo-catalog-repository';
 import {
   toProductBase,
   toProductResponse,
   type ProductDocument,
 } from '@/features/products/services/product-repository/mongo-product-repository-mappers';
-import type { ImageFileRecord } from '@/features/files';
+import type { ImageFileRecord } from '@/shared/contracts/files';
 import {
   type CatalogRecord,
   CreateProductInput,

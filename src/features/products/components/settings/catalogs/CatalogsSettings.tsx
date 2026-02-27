@@ -1,4 +1,4 @@
-import { useInternationalizationContext } from '@/features/internationalization';
+import { useInternationalizationContext } from '@/shared/lib/internationalization';
 import type { Language } from '@/shared/contracts/internationalization';
 import { Catalog } from '@/shared/contracts/products';
 import { Button, Badge, SimpleSettingsList } from '@/shared/ui';

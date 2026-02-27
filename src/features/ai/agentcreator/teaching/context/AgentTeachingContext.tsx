@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, ReactNode, useMemo } from 'react';
 
-import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
+import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
 import type { AgentTeachingAgentRecord, AgentTeachingEmbeddingCollectionRecord } from '@/shared/contracts/agent-teaching';
 
 import { useTeachingAgents, useTeachingCollections } from '../hooks/useAgentTeachingQueries';
@@ -49,10 +49,16 @@ export const useAgentTeachingQueriesContext = (): AgentTeachingContextType => {
 export function AgentTeachingProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { data: agents = [], isLoading: loadingAgents, refetch: refetchAgents } = useTeachingAgents();
   const { data: collections = [], isLoading: loadingCollections, refetch: refetchCollections } = useTeachingCollections();
-  const { data: modelOptionsRaw, isLoading: loadingModels } = useChatbotModels();
-  const modelOptions = useMemo(() => normalizeModelOptions(modelOptionsRaw), [modelOptionsRaw]);
+  const brainModelOptions = useBrainModelOptions({
+    feature: 'prompt_engine',
+  });
+  const modelOptions = useMemo(
+    () => normalizeModelOptions(brainModelOptions.models),
+    [brainModelOptions.models],
+  );
 
-  const isLoading = loadingAgents || loadingCollections || loadingModels;
+  const isLoading =
+    loadingAgents || loadingCollections || brainModelOptions.isLoading;
 
   const value = useMemo((): AgentTeachingContextType => ({
     agents,

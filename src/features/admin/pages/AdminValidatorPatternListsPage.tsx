@@ -38,7 +38,7 @@ import {
 import { ValidatorListTree } from './validator-lists/ValidatorListTree';
 
 const scopeOptions: Array<{ value: ValidatorScope; label: string }> = [
-  { value: 'products', label: VALIDATOR_SCOPE_LABELS.products },
+  { value: 'products', label: VALIDATOR_SCOPE_LABELS['products'] },
   { value: 'image-studio', label: VALIDATOR_SCOPE_LABELS['image-studio'] },
   { value: 'prompt-exploder', label: VALIDATOR_SCOPE_LABELS['prompt-exploder'] },
   {
@@ -70,6 +70,8 @@ const canonicalizeLists = (lists: ValidatorPatternList[]): string =>
       description: list.description.trim(),
       scope: list.scope,
       deletionLocked: list.deletionLocked,
+      patterns: list.patterns,
+      isActive: list.isActive,
     }))
   );
 
@@ -211,6 +213,8 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
       deletionLocked: true,
       createdAt: now,
       updatedAt: now,
+      patterns: [],
+      isActive: true,
     };
     setLists((current: ValidatorPatternList[]) => [...current, nextList]);
     setQuery('');
@@ -293,8 +297,8 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
     const normalizedQuery = query.trim().toLowerCase();
     if (!normalizedQuery) return lists;
     return lists.filter((list: ValidatorPatternList) => {
-      const scopeLabel = VALIDATOR_SCOPE_LABELS[list.scope].toLowerCase();
-      const scopeDescription = VALIDATOR_SCOPE_DESCRIPTIONS[list.scope].toLowerCase();
+      const scopeLabel = (VALIDATOR_SCOPE_LABELS[list.scope] ?? '').toLowerCase();
+      const scopeDescription = (VALIDATOR_SCOPE_DESCRIPTIONS[list.scope] ?? '').toLowerCase();
       return (
         list.name.toLowerCase().includes(normalizedQuery) ||
         list.id.toLowerCase().includes(normalizedQuery) ||

@@ -9,7 +9,7 @@ import type {
   AiNode,
   EdgeDto,
   UpdaterSampleState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   safeParseJson,
   parseJsonSafe,
@@ -32,8 +32,8 @@ import {
   repairPathNodeIdentities,
   stableStringify,
   EMPTY_RUNTIME_STATE,
-} from '@/features/ai/ai-paths/lib';
-import type { DbQueryPayload } from '@/features/ai/ai-paths/lib/api/client';
+} from '@/shared/lib/ai-paths';
+import type { DbQueryPayload } from '@/shared/lib/ai-paths/api/client';
 
 type DatabaseOperation = 'query' | 'update' | 'insert' | 'delete';
 

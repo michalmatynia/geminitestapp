@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { AiPathsStateBridger } from '@/features/ai/ai-paths/components/ai-paths-settings/AiPathsStateBridger';
 import type { UseAiPathsSettingsStateReturn } from '@/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState';
 import { AiPathsProvider, useCanvasActions, useCanvasState } from '@/features/ai/ai-paths/context';
-import type { RuntimeState } from '@/features/ai/ai-paths/lib';
+import type { RuntimeState } from '@/shared/lib/ai-paths';
 
 const EMPTY_NODES: unknown[] = [];
 const EMPTY_EDGES: unknown[] = [];

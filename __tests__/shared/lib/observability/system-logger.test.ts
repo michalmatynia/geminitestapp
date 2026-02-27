@@ -3,16 +3,16 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { notifyCriticalError } from '@/features/observability/lib/critical-error-notifier';
-import { createSystemLog } from '@/features/observability/lib/system-log-repository';
-import { logSystemEvent, logSystemError } from '@/features/observability/lib/system-logger';
+import { notifyCriticalError } from '@/shared/lib/observability/critical-error-notifier';
+import { createSystemLog } from '@/shared/lib/observability/system-log-repository';
+import { logSystemEvent, logSystemError } from '@/shared/lib/observability/system-logger';
 import { AppError, AppErrorCodes } from '@/shared/errors/app-error';
 
-vi.mock('@/features/observability/lib/system-log-repository', () => ({
+vi.mock('@/shared/lib/observability/system-log-repository', () => ({
   createSystemLog: vi.fn().mockResolvedValue({ id: 'log-1', level: 'info', message: 'Logged' }),
 }));
 
-vi.mock('@/features/observability/lib/critical-error-notifier', () => ({
+vi.mock('@/shared/lib/observability/critical-error-notifier', () => ({
   notifyCriticalError: vi.fn().mockResolvedValue({ delivered: true }),
 }));
 

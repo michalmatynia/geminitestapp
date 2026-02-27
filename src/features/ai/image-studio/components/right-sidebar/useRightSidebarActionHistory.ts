@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { type ParamSpec } from '@/features/prompt-engine/prompt-params';
-import type { VectorShape, VectorToolMode } from '@/features/vector-drawing';
+import { type ParamSpec } from '@/shared/lib/prompt-engine/prompt-params';
+import type { VectorShape, VectorToolMode } from '@/shared/lib/vector-drawing';
 
 import { areStringArraysEqual, cloneSerializableValue, type StudioActionHistoryEntry, type StudioActionHistorySnapshot } from './right-sidebar-utils';
 

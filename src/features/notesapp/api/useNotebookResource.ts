@@ -11,6 +11,6 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 export function useNotebookResource() {
   return useResource<NotebookDto>(
     '/api/notes/notebooks',
-    QUERY_KEYS.notes.notebooks()
+    QUERY_KEYS.notes.notebooks(),
   );
 }

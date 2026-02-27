@@ -3,7 +3,7 @@
 import { GripVertical, Trash2, Edit, RefreshCw } from 'lucide-react';
 import React, { useState, useCallback, useEffect, useMemo, useRef } from 'react';
 
-import { ICON_LIBRARY_MAP } from '@/features/icons';
+import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import {
   AiTriggerButtonDto,
 } from '@/shared/contracts/ai-trigger-buttons';

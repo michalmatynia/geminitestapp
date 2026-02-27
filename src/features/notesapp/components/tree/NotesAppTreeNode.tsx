@@ -1,21 +1,21 @@
 'use client';
 
 import React from 'react';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  FilePlus, 
-  FolderPlus, 
-  Copy, 
-  Edit2, 
-  Trash2 
+import {
+  ChevronDown,
+  ChevronRight,
+  FilePlus,
+  FolderPlus,
+  Copy,
+  Edit2,
+  Trash2,
 } from 'lucide-react';
 
-import type { FolderTreeViewportRenderNodeInput } from '@/features/foldertree/v2';
+import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/v2';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
-import { 
-  fromFolderMasterNodeId, 
-  fromNoteMasterNodeId 
+import {
+  fromFolderMasterNodeId,
+  fromNoteMasterNodeId,
 } from '../../utils/master-folder-tree';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 
@@ -57,13 +57,17 @@ export function NotesAppTreeNode({
   const isFolder = Boolean(folderId);
   const canToggle = isFolder && hasChildren;
   const Icon = isFolder
-    ? (isExpanded ? FolderOpenIcon : FolderClosedIcon)
+    ? isExpanded
+      ? FolderOpenIcon
+      : FolderClosedIcon
     : FileIcon;
 
   return (
     <div
       className={`group flex items-center gap-1 rounded px-2 py-1.5 text-sm ${
-        isSelected ? 'bg-blue-600 text-white' : 'text-gray-300 hover:bg-muted/40'
+        isSelected
+          ? 'bg-blue-600 text-white'
+          : 'text-gray-300 hover:bg-muted/40'
       }`}
       style={{ marginLeft: `${depth * 16}px` }}
       onClick={(): void => {
@@ -86,7 +90,9 @@ export function NotesAppTreeNode({
             toggleExpand();
           }}
           className='inline-flex size-4 items-center justify-center rounded hover:bg-muted/40'
-          aria-label={isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`}
+          aria-label={
+            isExpanded ? `Collapse ${node.name}` : `Expand ${node.name}`
+          }
         >
           {isExpanded ? (
             <ChevronDown className='size-3' />
@@ -95,7 +101,9 @@ export function NotesAppTreeNode({
           )}
         </button>
       ) : (
-        <span className='inline-flex size-4 items-center justify-center text-xs opacity-30'>•</span>
+        <span className='inline-flex size-4 items-center justify-center text-xs opacity-30'>
+          •
+        </span>
       )}
       <Icon className='size-3.5 shrink-0' />
       {isRenaming ? (
@@ -116,7 +124,9 @@ export function NotesAppTreeNode({
               controller.cancelRename();
             }
           }}
-          onClick={(event: React.MouseEvent<HTMLInputElement>): void => event.stopPropagation()}
+          onClick={(event: React.MouseEvent<HTMLInputElement>): void =>
+            event.stopPropagation()
+          }
           className='flex-1 rounded border border-blue-500 bg-gray-800 px-1 py-0.5 text-sm text-white outline-none'
         />
       ) : (

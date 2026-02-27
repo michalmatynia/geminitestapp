@@ -9,23 +9,23 @@ import type {
   AiPathsValidationRule,
   PathConfig,
   PathMeta,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   PATH_CONFIG_PREFIX,
   PATH_INDEX_KEY,
-} from '@/features/ai/ai-paths/lib/core/constants';
+} from '@/shared/lib/ai-paths/core/constants';
 import {
   AI_PATHS_NODE_DOCS as NODE_DOCS_LIST,
   type AiPathsNodeDoc,
-} from '@/features/ai/ai-paths/lib/core/docs/node-docs';
+} from '@/shared/lib/ai-paths/core/docs/node-docs';
 import {
   approveInferredAiPathsValidationRule,
   buildAiPathsValidationRulesFromDocs,
   evaluateAiPathsValidationPreflight,
   normalizeAiPathsValidationConfig,
   rejectInferredAiPathsValidationRule,
-} from '@/features/ai/ai-paths/lib/core/validation-engine';
-import { updateAiPathsSettingsBulk } from '@/features/ai/ai-paths/lib/settings-store-client';
+} from '@/shared/lib/ai-paths/core/validation-engine';
+import { updateAiPathsSettingsBulk } from '@/shared/lib/ai-paths/settings-store-client';
 import { useToast } from '@/shared/ui';
 
 import {

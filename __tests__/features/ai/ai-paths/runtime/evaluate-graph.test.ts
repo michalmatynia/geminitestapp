@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { evaluateGraph } from '@/features/ai/ai-paths/lib/core/runtime/engine';
+import { evaluateGraph } from '@/shared/lib/ai-paths/core/runtime/engine';
 import type { AiNode, Edge } from '@/shared/contracts/ai-paths';
 
 describe('evaluateGraph', () => {

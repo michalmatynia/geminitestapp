@@ -8,7 +8,7 @@ import type {
   RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 const createNode = (): AiNode => ({
   id: 'node-db-1',

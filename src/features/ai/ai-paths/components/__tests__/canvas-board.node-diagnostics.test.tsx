@@ -5,7 +5,7 @@ import type {
   AiNode,
   DataContractNodeIssueSummary,
   RuntimeState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 import {
   CanvasBoardUIProvider,

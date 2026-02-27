@@ -4,7 +4,7 @@ import {
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
   getDefaultConfigForType,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { type EdgeDto as AiEdge } from '@/shared/contracts/ai-paths';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,

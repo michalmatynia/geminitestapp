@@ -13,7 +13,7 @@ import type {
   PathConfig,
   PathDebugSnapshot,
   PathMeta,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   AI_PATHS_HISTORY_RETENTION_KEY,
   AI_PATHS_HISTORY_RETENTION_OPTIONS_MAX_KEY,
@@ -38,13 +38,13 @@ import {
   safeParseJson,
   stableStringify,
   sanitizeEdges,
-} from '@/features/ai/ai-paths/lib';
-import { buildCompileWarningMessage } from '@/features/ai/ai-paths/lib/core/utils/compile-warning-message';
+} from '@/shared/lib/ai-paths';
+import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
 import {
   fetchAiPathsSettingsCached,
   updateAiPathsSettingsBulk,
-} from '@/features/ai/ai-paths/lib/settings-store-client';
-import { logClientError } from '@/features/observability';
+} from '@/shared/lib/ai-paths/settings-store-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { api } from '@/shared/lib/api-client';
 import { createUpdateMutationV2 } from '@/shared/lib/query-factories-v2';
 import { invalidateAiPathSettings } from '@/shared/lib/query-invalidation';

@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { DatabaseConfig, DatabaseOperation, DbQueryConfig } from '@/features/ai/ai-paths/lib';
+import type { DatabaseConfig, DatabaseOperation, DbQueryConfig } from '@/shared/lib/ai-paths';
 
 import type { QueryValidationResult } from './query-utils';
 

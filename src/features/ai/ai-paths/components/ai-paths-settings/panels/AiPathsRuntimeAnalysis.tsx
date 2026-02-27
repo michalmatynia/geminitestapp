@@ -17,7 +17,7 @@ import {
 } from '../ai-paths-settings-view-utils';
 import { 
   runsApi,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import type { 
   AiPathRuntimeTraceSlowNode,
   AiPathRuntimeTraceFailedNode,

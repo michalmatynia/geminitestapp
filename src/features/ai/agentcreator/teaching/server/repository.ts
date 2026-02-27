@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type {
   AgentTeachingAgentDto as AgentTeachingAgentRecord,
   AgentTeachingCollectionDto as AgentTeachingEmbeddingCollectionRecord,

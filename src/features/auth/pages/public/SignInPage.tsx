@@ -7,7 +7,7 @@ import { useState, Suspense } from 'react';
 
 import { useAuth } from '@/features/auth/context/AuthContext';
 import { useVerifyCredentials } from '@/features/auth/hooks/useAuthQueries';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   Button,
   Input,

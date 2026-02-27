@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import type { AiNode } from '@/shared/contracts/ai-paths';
 
-import { palette } from '@/features/ai/ai-paths/lib/core/definitions';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import {
   createNodeInstanceId,
   resolveNodeTypeId,
-} from '@/features/ai/ai-paths/lib/core/utils';
+} from '@/shared/lib/ai-paths/core/utils';
 
 const buildNode = (patch: Partial<AiNode>): AiNode =>
   ({

@@ -1,6 +1,8 @@
 import 'server-only';
 
-import { ErrorSystem, logActivity, ActivityTypes } from '@/features/observability/server';
+import { logActivity } from '@/shared/utils/observability/activity-service';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { ActivityTypes } from '@/shared/constants/observability';
 
 import { getIntegrationRepository } from './integration-repository';
 

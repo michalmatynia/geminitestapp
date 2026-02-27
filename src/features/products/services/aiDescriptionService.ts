@@ -5,8 +5,8 @@ import path from 'path';
 
 import OpenAI from 'openai';
 
-import { getImageFileRepository } from '@/features/files/server';
-import { ErrorSystem } from '@/features/observability/server';
+import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ImageFileRecordDto as ImageFileRecord } from '@/shared/contracts/files';
 import type { ProductFormData } from '@/shared/contracts/products';
 import {

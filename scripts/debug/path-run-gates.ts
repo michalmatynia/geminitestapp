@@ -1,8 +1,8 @@
 import 'dotenv/config';
 
-import { normalizeNodes } from '@/features/ai/ai-paths/lib/core/normalization';
-import { compileGraph, sanitizeEdges } from '@/features/ai/ai-paths/lib/core/utils/graph';
-import { inspectPathDependencies } from '@/features/ai/ai-paths/lib/core/utils/dependency-inspector';
+import { normalizeNodes } from '@/shared/lib/ai-paths/core/normalization';
+import { compileGraph, sanitizeEdges } from '@/shared/lib/ai-paths/core/utils/graph';
+import { inspectPathDependencies } from '@/shared/lib/ai-paths/core/utils/dependency-inspector';
 import { listAiPathsSettings } from '@/features/ai/ai-paths/server/settings-store';
 
 const pathId = process.argv[2] ?? 'path_65mv2p';

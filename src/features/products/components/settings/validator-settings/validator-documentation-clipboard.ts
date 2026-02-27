@@ -3,7 +3,7 @@ import {
   VALIDATOR_IMPORT_SEMANTIC_GRAMMAR_OPTIONS,
   VALIDATOR_IMPORT_SEMANTIC_GRAMMAR_SCHEMA,
   VALIDATOR_IMPORT_SEMANTIC_GRAMMAR_TYPES,
-} from '@/features/documentation/catalogs/validator-semantic-grammar';
+} from '@/shared/lib/documentation/catalogs/validator-semantic-grammar';
 
 import {
   VALIDATOR_FUNCTION_DOCS,

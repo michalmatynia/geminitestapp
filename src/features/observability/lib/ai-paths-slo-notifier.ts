@@ -8,8 +8,8 @@ import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 import { getRedisConnection } from '@/shared/lib/queue';
 
-import { ErrorSystem } from '../services/error-system';
-import { withTransientRecovery } from './transient-recovery/with-recovery';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
+import { withTransientRecovery } from '@/shared/lib/observability/transient-recovery/with-recovery';
 
 const SETTINGS_COLLECTION = 'settings';
 

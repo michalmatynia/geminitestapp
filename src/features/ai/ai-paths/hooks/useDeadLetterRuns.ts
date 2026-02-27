@@ -2,8 +2,8 @@
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
 
-import { runsApi } from '@/features/ai/ai-paths/lib';
-import { logClientError } from '@/features/observability';
+import { runsApi } from '@/shared/lib/ai-paths';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type {
   AiPathRunEventRecord,
   AiPathRunNodeRecord,

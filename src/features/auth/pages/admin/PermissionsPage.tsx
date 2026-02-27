@@ -10,7 +10,7 @@ import {
   type AuthPermission,
   type AuthRole,
 } from '@/features/auth/utils/auth-management';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useUpdateSettingsBulk } from '@/shared/hooks/use-settings';
 import {
   Button,

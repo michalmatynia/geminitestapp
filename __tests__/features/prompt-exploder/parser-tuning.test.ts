@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { defaultPromptEngineSettings, type PromptValidationRule } from '@/features/prompt-engine/settings';
+import { defaultPromptEngineSettings, type PromptValidationRule } from '@/shared/lib/prompt-engine/settings';
 import {
   applyPromptExploderParserTuningDrafts,
   buildPromptExploderParserTuningDrafts,

@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ImageFileRecordDto as ImageFileRecord } from '@/shared/contracts/files';
 import type { 
   CatalogDto as CatalogRecord, 

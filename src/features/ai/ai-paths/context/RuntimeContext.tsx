@@ -20,7 +20,7 @@ import type {
   RuntimeHistoryEntry,
   AiPathRuntimeNodeStatusMap,
   AiPathRuntimeEvent,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 // ---------------------------------------------------------------------------
 // Types

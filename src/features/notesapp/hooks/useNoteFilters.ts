@@ -21,19 +21,37 @@ export type UseNoteFiltersResult = {
   setPage: (p: number | ((curr: number) => number)) => void;
   pageSize: number;
   setPageSize: (s: number) => void;
-  handleFilterByTag: (tagId: string, setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void) => void;
-  handleToggleFavoritesFilter: (setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void) => void;
+  handleFilterByTag: (
+    tagId: string,
+    setSelectedFolderId: (id: string | null) => void,
+    setSelectedNote: (val: NoteWithRelations | null) => void,
+    setIsEditing: (val: boolean) => void,
+  ) => void;
+  handleToggleFavoritesFilter: (
+    setSelectedFolderId: (id: string | null) => void,
+    setSelectedNote: (val: NoteWithRelations | null) => void,
+    setIsEditing: (val: boolean) => void,
+  ) => void;
 };
 
-export function useNoteFilters({ settings, updateSettings: _updateSettings }: UseNoteFiltersProps): UseNoteFiltersResult {
+export function useNoteFilters({
+  settings,
+  updateSettings: _updateSettings,
+}: UseNoteFiltersProps): UseNoteFiltersResult {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
-  const [filterPinned, setFilterPinned] = useState<boolean | undefined>(undefined);
-  const [filterArchived, setFilterArchived] = useState<boolean | undefined>(undefined);
-  const [filterFavorite, setFilterFavorite] = useState<boolean | undefined>(undefined);
+  const [filterPinned, setFilterPinned] = useState<boolean | undefined>(
+    undefined,
+  );
+  const [filterArchived, setFilterArchived] = useState<boolean | undefined>(
+    undefined,
+  );
+  const [filterFavorite, setFilterFavorite] = useState<boolean | undefined>(
+    undefined,
+  );
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
   const [highlightTagId, setHighlightTagId] = useState<string | null>(null);
-  
+
   // Pagination
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(24);
@@ -52,7 +70,7 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
   // Reset page when settings change
   const [prevSettingsKey, setPrevSettingsKey] = useState('');
   const currentSettingsKey = `${settings.selectedFolderId ?? ''}-${settings.sortBy ?? ''}-${settings.sortOrder ?? ''}-${settings.selectedNotebookId ?? ''}`;
-  
+
   if (currentSettingsKey !== prevSettingsKey) {
     setPrevSettingsKey(currentSettingsKey);
     setPage(1);
@@ -67,23 +85,40 @@ export function useNoteFilters({ settings, updateSettings: _updateSettings }: Us
     return (): void => clearTimeout(timer);
   }, [highlightTagId]);
 
-  const handleFilterByTag = useCallback((tagId: string, setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void): void => {
-    setSelectedFolderId(null);
-    setFilterTagIds([tagId]);
-    setSearchQuery('');
-    setSelectedNote(null);
-    setIsEditing(false);
-    setHighlightTagId(tagId);
-    setPage(1);
-  }, []);
+  const handleFilterByTag = useCallback(
+    (
+      tagId: string,
+      setSelectedFolderId: (id: string | null) => void,
+      setSelectedNote: (val: NoteWithRelations | null) => void,
+      setIsEditing: (val: boolean) => void,
+    ): void => {
+      setSelectedFolderId(null);
+      setFilterTagIds([tagId]);
+      setSearchQuery('');
+      setSelectedNote(null);
+      setIsEditing(false);
+      setHighlightTagId(tagId);
+      setPage(1);
+    },
+    [],
+  );
 
-  const handleToggleFavoritesFilter = useCallback((setSelectedFolderId: (id: string | null) => void, setSelectedNote: (val: NoteWithRelations | null) => void, setIsEditing: (val: boolean) => void): void => {
-    setFilterFavorite((prev: boolean | undefined) => (prev ? undefined : true));
-    setSelectedFolderId(null);
-    setSelectedNote(null);
-    setIsEditing(false);
-    setPage(1);
-  }, []);
+  const handleToggleFavoritesFilter = useCallback(
+    (
+      setSelectedFolderId: (id: string | null) => void,
+      setSelectedNote: (val: NoteWithRelations | null) => void,
+      setIsEditing: (val: boolean) => void,
+    ): void => {
+      setFilterFavorite((prev: boolean | undefined) =>
+        prev ? undefined : true,
+      );
+      setSelectedFolderId(null);
+      setSelectedNote(null);
+      setIsEditing(false);
+      setPage(1);
+    },
+    [],
+  );
 
   const setFilterPinnedWithPage = (v: boolean | undefined): void => {
     setFilterPinned(v);

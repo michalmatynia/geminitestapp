@@ -1,5 +1,5 @@
 import { DEBUG_CHATBOT } from '@/features/ai/agent-runtime/core/config';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import prisma from '@/shared/lib/db/prisma';
 
 export async function getBrowserContextSummary(runId: string): Promise<{

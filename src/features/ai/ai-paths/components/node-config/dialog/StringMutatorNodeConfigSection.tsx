@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 
-import type { StringMutatorOperation } from '@/features/ai/ai-paths/lib';
+import type { StringMutatorOperation } from '@/shared/lib/ai-paths';
 import {
   Button,
   Input,

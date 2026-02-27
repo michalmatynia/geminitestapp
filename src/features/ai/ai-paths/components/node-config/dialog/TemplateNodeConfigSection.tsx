@@ -2,8 +2,8 @@
 
 import React from 'react';
 
-import type { AiNode, Edge, TemplateConfig } from '@/features/ai/ai-paths/lib';
-import { createParserMappings, formatRuntimeValue } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, TemplateConfig } from '@/shared/lib/ai-paths';
+import { createParserMappings, formatRuntimeValue } from '@/shared/lib/ai-paths';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
 import { Button, Label, Textarea } from '@/shared/ui';
 

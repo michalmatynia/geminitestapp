@@ -7,7 +7,7 @@ import {
   getProviderActionOptions,
   isProviderActionCategorySupported,
   resolveProviderAction,
-} from '@/features/ai/ai-paths/lib/core/utils/provider-actions';
+} from '@/shared/lib/ai-paths/core/utils/provider-actions';
 import { 
   Tabs, 
   TabsContent, 

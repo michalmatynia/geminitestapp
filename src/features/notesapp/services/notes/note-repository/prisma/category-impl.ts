@@ -30,7 +30,7 @@ type CategoryTreeRecord = Prisma.CategoryGetPayload<{
 }>;
 
 export const getAllCategories = async (
-  notebookId?: string | null
+  notebookId?: string | null,
 ): Promise<CategoryRecord[]> => {
   const resolvedNotebookId =
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
@@ -46,7 +46,7 @@ export const getAllCategories = async (
 };
 
 export const getCategoryById = async (
-  id: string
+  id: string,
 ): Promise<CategoryRecord | null> => {
   const cat = await prisma.category.findUnique({ where: { id } });
   if (!cat) return null;
@@ -58,7 +58,7 @@ export const getCategoryById = async (
 };
 
 export const getCategoryTree = async (
-  notebookId?: string | null
+  notebookId?: string | null,
 ): Promise<CategoryWithChildren[]> => {
   const resolvedNotebookId =
     notebookId ?? (await getOrCreateDefaultNotebook()).id;
@@ -71,34 +71,36 @@ export const getCategoryTree = async (
   const buildTree = (parentId: string | null): CategoryWithChildren[] => {
     return categories
       .filter((cat: CategoryTreeRecord) => cat.parentId === parentId)
-      .map((cat: CategoryTreeRecord): CategoryWithChildren => ({
-        ...cat,
-        createdAt: cat.createdAt.toISOString(),
-        updatedAt: cat.updatedAt.toISOString(),
-        notes: cat.notes.map((nc: CategoryTreeRecord['notes'][number]) => ({
-          ...nc.note,
-          editorType: nc.note.editorType as 'markdown' | 'wysiwyg' | 'code',
-          createdAt: nc.note.createdAt.toISOString(),
-          updatedAt: nc.note.updatedAt?.toISOString() ?? null,
-          tagIds: nc.note.tags.map((t) => t.tagId),
-          categoryIds: nc.note.categories.map((c) => c.categoryId),
-          relatedNoteIds: [],
-          relations: [],
-          tags: nc.note.tags.map((t) => t.tag.name),
-          categories: nc.note.categories.map((c) => c.category.name),
-          relationsFrom: [],
-          relationsTo: [],
-        })),
-        children: buildTree(cat.id),
-        _count: { notes: cat.notes.length },
-      }));
+      .map(
+        (cat: CategoryTreeRecord): CategoryWithChildren => ({
+          ...cat,
+          createdAt: cat.createdAt.toISOString(),
+          updatedAt: cat.updatedAt.toISOString(),
+          notes: cat.notes.map((nc: CategoryTreeRecord['notes'][number]) => ({
+            ...nc.note,
+            editorType: nc.note.editorType as 'markdown' | 'wysiwyg' | 'code',
+            createdAt: nc.note.createdAt.toISOString(),
+            updatedAt: nc.note.updatedAt?.toISOString() ?? null,
+            tagIds: nc.note.tags.map((t) => t.tagId),
+            categoryIds: nc.note.categories.map((c) => c.categoryId),
+            relatedNoteIds: [],
+            relations: [],
+            tags: nc.note.tags.map((t) => t.tag.name),
+            categories: nc.note.categories.map((c) => c.category.name),
+            relationsFrom: [],
+            relationsTo: [],
+          })),
+          children: buildTree(cat.id),
+          _count: { notes: cat.notes.length },
+        }),
+      );
   };
 
   return buildTree(null);
 };
 
 export const createCategory = async (
-  data: CategoryCreateInput
+  data: CategoryCreateInput,
 ): Promise<CategoryRecord> => {
   const resolvedNotebookId =
     data.notebookId ?? (await getOrCreateDefaultNotebook()).id;
@@ -128,19 +130,20 @@ export const createCategory = async (
 
 export const updateCategory = async (
   id: string,
-  data: CategoryUpdateInput
+  data: CategoryUpdateInput,
 ): Promise<CategoryRecord | null> => {
   try {
     let nextSortIndex: number | undefined;
     if (data.parentId !== undefined && data.sortIndex === undefined) {
       const current = await prisma.category.findUnique({ where: { id } });
-      const resolvedNotebookId = current?.notebookId ?? (await getOrCreateDefaultNotebook()).id;
+      const resolvedNotebookId =
+        current?.notebookId ?? (await getOrCreateDefaultNotebook()).id;
       const parentId = data.parentId ?? null;
       const maxSort = await prisma.category.aggregate({
         where: { notebookId: resolvedNotebookId, parentId },
         _max: { sortIndex: true },
       });
-      nextSortIndex = ((maxSort._max.sortIndex ?? -1) + 1);
+      nextSortIndex = (maxSort._max.sortIndex ?? -1) + 1;
     }
     const updateData: Prisma.CategoryUpdateInput = {
       ...(data.name !== undefined && { name: data.name }),
@@ -163,7 +166,10 @@ export const updateCategory = async (
         ? { connect: { id: data.themeId } }
         : { disconnect: true };
     }
-    const cat = await prisma.category.update({ where: { id }, data: updateData });
+    const cat = await prisma.category.update({
+      where: { id },
+      data: updateData,
+    });
     return {
       ...cat,
       createdAt: cat.createdAt.toISOString(),
@@ -176,13 +182,13 @@ export const updateCategory = async (
 
 export const deleteCategory = async (
   id: string,
-  recursive?: boolean
+  recursive?: boolean,
 ): Promise<boolean> => {
   try {
     if (recursive) {
       // Recursively collect all descendant category IDs
       const collectDescendantIds = async (
-        categoryId: string
+        categoryId: string,
       ): Promise<string[]> => {
         const children = await prisma.category.findMany({
           where: { parentId: categoryId },
@@ -206,7 +212,7 @@ export const deleteCategory = async (
         select: { noteId: true },
       });
       const noteIds = Array.from(
-        new Set(notesInCategories.map((nc: { noteId: string }) => nc.noteId))
+        new Set(notesInCategories.map((nc: { noteId: string }) => nc.noteId)),
       );
 
       // Delete note-tag relations for these notes
@@ -239,7 +245,7 @@ export const deleteCategory = async (
       message: '[PrismaNoteRepository][deleteCategory] Error',
       error,
       context: { id, recursive },
-      source: 'note-repository-prisma'
+      source: 'note-repository-prisma',
     });
     return false;
   }

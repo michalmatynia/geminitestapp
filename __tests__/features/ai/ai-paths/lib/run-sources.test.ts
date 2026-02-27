@@ -5,7 +5,7 @@ import {
   AI_PATHS_RUN_SOURCE_VALUES,
   isAiPathsRunSourceTab,
   isAiPathsRunSourceValue,
-} from '@/features/ai/ai-paths/lib/run-sources';
+} from '@/shared/lib/ai-paths/run-sources';
 
 describe('ai-paths run source classification', () => {
   it('includes translation tab aliases for queue/source filters', () => {

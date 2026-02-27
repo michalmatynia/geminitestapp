@@ -3,7 +3,7 @@
 import { AlertTriangle, Copy, Link2, Monitor, Server, Shield, Trash2, SearchIcon, Eye } from 'lucide-react';
 import React, { Suspense, useMemo } from 'react';
 
-import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
+import { DOCUMENTATION_MODULE_IDS } from '@/shared/lib/documentation';
 import { SystemLogsProvider, useSystemLogsContext } from '@/features/observability/context/SystemLogsContext';
 import {
   SYSTEM_LOG_FILTER_DEFAULTS,
@@ -12,8 +12,8 @@ import {
   resolveSystemLogPresetFilters,
   type LogTriagePreset,
   type SystemLogFilterFormValues,
-} from '@/features/observability/lib/log-triage-presets';
-import { getDocumentationTooltip } from '@/features/tooltip-engine';
+} from '../lib/log-triage-presets';
+import { getDocumentationTooltip } from '@/shared/lib/tooltip-engine';
 import type { AiInsightRecordDto as AiInsightRecord } from '@/shared/contracts/ai-insights';
 import { 
   MongoIndexInfoDto as MongoIndexInfo,
@@ -100,7 +100,7 @@ function LogTriagePresets(): React.JSX.Element {
   const applyFilterValues = (nextValues: SystemLogFilterFormValues): void => {
     (Object.entries(nextValues) as Array<[keyof SystemLogFilterFormValues, string]>).forEach(
       ([key, value]) => {
-        handleFilterChange(key, value);
+        handleFilterChange(key as string, value);
       }
     );
   };
@@ -115,13 +115,13 @@ function LogTriagePresets(): React.JSX.Element {
   };
 
   const now = new Date();
-  const resolvedPresets = SYSTEM_LOG_TRIAGE_PRESETS.map((preset) => ({
+  const resolvedPresets = SYSTEM_LOG_TRIAGE_PRESETS.map((preset: LogTriagePreset) => ({
     preset,
     filters: resolveSystemLogPresetFilters(preset, now),
   }));
 
   const activePresetId =
-    resolvedPresets.find(({ filters }) => isSystemLogPresetActive(values, filters))?.preset.id ??
+    resolvedPresets.find(({ filters }: { filters: Partial<SystemLogFilterFormValues> }) => isSystemLogPresetActive(values, filters))?.preset.id ??
     null;
 
   return (
@@ -137,7 +137,7 @@ function LogTriagePresets(): React.JSX.Element {
       className='p-3'
     >
       <div className='grid gap-2 md:grid-cols-2 xl:grid-cols-4'>
-        {resolvedPresets.map(({ preset }) => {
+        {resolvedPresets.map(({ preset }: { preset: LogTriagePreset }) => {
           const isActive = preset.id === activePresetId;
           const Icon = triagePresetIcons[preset.id] ?? AlertTriangle;
           return (

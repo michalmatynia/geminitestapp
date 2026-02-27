@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import type { AiNode, Edge, RuntimeState } from '@/features/ai/ai-paths/lib';
+import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
@@ -9,7 +9,7 @@ import {
   palette,
   resolveNodeTypeId,
   sanitizeEdges,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   SUBGRAPH_CLIPBOARD_STORAGE_KEY,
   SUBGRAPH_CLIPBOARD_VERSION,

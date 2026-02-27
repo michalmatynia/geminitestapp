@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import { prismaActivityRepository } from '@/features/observability/services/activity-repository/prisma-activity-repository';
+import { prismaActivityRepository } from '@/shared/lib/observability/activity-repository/prisma-activity-repository';
 import prisma from '@/shared/lib/db/prisma';
 
 vi.mock('@/shared/lib/db/prisma', () => ({

@@ -10,10 +10,10 @@ import React, { useState, useCallback, useMemo, useEffect } from 'react';
 
 import {
   useMasterFolderTreeInstance,
-} from '@/features/foldertree';
-import { FolderTreeViewportV2 } from '@/features/foldertree/v2';
+} from '@/shared/lib/foldertree';
+import { FolderTreeViewportV2 } from '@/shared/lib/foldertree/v2';
 import { resolveVerticalDropPosition } from '@/shared/utils/drag-drop';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ReorderCategoryPayload } from '@/features/products/api/settings';
 import { useProductCategoryTree } from '@/features/products/hooks/useCategoryQueries';
 import {

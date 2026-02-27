@@ -3,10 +3,10 @@
 import { useCallback } from 'react';
 
 import type { ReorderValidationPatternUpdatePayload } from '@/features/products/api/settings';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
-import { applyInternalMasterTreeDrop } from '@/features/foldertree/v2';
+import { applyInternalMasterTreeDrop } from '@/shared/lib/foldertree/v2';
 import type { MasterTreeDropPosition, MasterTreeId } from '@/shared/utils/master-folder-tree-contract';
 import { useToast } from '@/shared/ui';
 

@@ -11,7 +11,7 @@ import type { ImageStudioSettings } from '../../utils/studio-settings';
 import { 
   PROMPT_ENGINE_SETTINGS_KEY, 
   parsePromptEngineSettings 
-} from '@/features/prompt-engine/settings';
+} from '@/shared/lib/prompt-engine/settings';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { 
   parseImageStudioFolderTree

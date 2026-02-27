@@ -10,5 +10,5 @@ export const fetchOllamaModels = async (baseUrl: string): Promise<string[]> => {
 };
 
 export const fetchChatbotModels = async (): Promise<unknown> => {
-  return api.get<unknown>('/api/chatbot');
+  return api.get<unknown>('/api/brain/models');
 };

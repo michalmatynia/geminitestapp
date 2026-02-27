@@ -3,7 +3,7 @@
 import { useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 import { useMemo } from 'react';
 
-import { TRIGGER_EVENTS, triggerButtonsApi } from '@/features/ai/ai-paths/lib';
+import { TRIGGER_EVENTS, triggerButtonsApi } from '@/shared/lib/ai-paths';
 import type { AiTriggerButtonRecord } from '@/shared/contracts/ai-trigger-buttons';
 import { createListQueryV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

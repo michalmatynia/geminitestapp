@@ -8,7 +8,7 @@ import {
   palette,
   repairPathNodeIdentities,
   sanitizeEdges,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   evaluateDisabledNodeTypesPolicy,
   formatDisabledNodeTypesPolicyMessage,
@@ -27,7 +27,7 @@ import {
   enqueuePathRunJob,
   removePathRunQueueEntries,
 } from '@/features/jobs/workers/aiPathRunQueue';
-import { ErrorSystem } from '@/features/observability/services/error-system';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiNode,
   Edge,

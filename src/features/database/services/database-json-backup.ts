@@ -12,7 +12,7 @@ import {
   getDatabaseName,
   getPgConnectionUrl,
 } from '@/features/database/utils/postgres';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { forbiddenError, operationFailedError } from '@/shared/errors/app-error';
 import prisma from '@/shared/lib/db/prisma';
 

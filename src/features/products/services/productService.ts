@@ -4,12 +4,10 @@ import {
   deleteFileFromStorage,
   uploadFile,
   getImageFileRepository,
-} from '@/features/files/server';
-import {
-  ErrorSystem,
-  logActivity,
-  ActivityTypes,
-} from '@/features/observability/server';
+} from '@/shared/lib/files/services/image-file-service';
+import { logActivity } from '@/shared/utils/observability/activity-service';
+import { ActivityTypes } from '@/shared/constants/observability';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   getProductDataProvider,
   type ProductDbProvider,

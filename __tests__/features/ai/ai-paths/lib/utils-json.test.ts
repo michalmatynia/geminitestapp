@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 
-import { getValueAtMappingPath, parsePathTokens, normalizeMappingPath } from '@/features/ai/ai-paths/lib/core/utils/json';
+import { getValueAtMappingPath, parsePathTokens, normalizeMappingPath } from '@/shared/lib/ai-paths/core/utils/json';
 
 describe('JSON Utils', () => {
   describe('normalizeMappingPath', () => {

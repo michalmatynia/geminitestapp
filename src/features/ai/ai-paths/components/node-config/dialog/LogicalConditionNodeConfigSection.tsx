@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { LogicalConditionConfig, LogicalConditionItem, LogicalConditionOperator } from '@/features/ai/ai-paths/lib';
+import type { LogicalConditionConfig, LogicalConditionItem, LogicalConditionOperator } from '@/shared/lib/ai-paths';
 import { Button, FormField, Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

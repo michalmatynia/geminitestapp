@@ -6,7 +6,7 @@ export { darkenColor, autoformatMarkdown };
 
 export const getCategoryIdsWithDescendants = (
   targetId: string,
-  categories: CategoryWithChildren[]
+  categories: CategoryWithChildren[],
 ): string[] => {
   const collectAllDescendantIds = (node: CategoryWithChildren): string[] => {
     const ids = [node.id];
@@ -19,7 +19,7 @@ export const getCategoryIdsWithDescendants = (
   };
 
   const findCategory = (
-    cats: CategoryWithChildren[]
+    cats: CategoryWithChildren[],
   ): CategoryWithChildren | null => {
     for (const cat of cats) {
       if (cat.id === targetId) {
@@ -44,13 +44,13 @@ export const getCategoryIdsWithDescendants = (
 export const buildBreadcrumbPath = (
   categoryId: string | null,
   noteTitle: string | null,
-  categories: CategoryWithChildren[]
+  categories: CategoryWithChildren[],
 ): Array<{ id: string | null; name: string; isNote?: boolean }> => {
   const path: Array<{ id: string | null; name: string; isNote?: boolean }> = [];
 
   const findPath = (
     cats: CategoryWithChildren[],
-    targetId: string
+    targetId: string,
   ): boolean => {
     for (const cat of cats) {
       if (cat.id === targetId) {
@@ -80,21 +80,23 @@ export const buildBreadcrumbPath = (
 };
 
 const escapeHtml = (value: string): string =>
-  value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
+  value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-const preserveSpans = (value: string): { withTokens: string; tokens: string[] } => {
+const preserveSpans = (
+  value: string,
+): { withTokens: string; tokens: string[] } => {
   const tokens: string[] = [];
 
-  const withTokens = value.replace(/<span\b[^>]*>[\s\S]*?<\/span>/gi, (match: string) => {
-    const token = `__SPAN_${tokens.length}__`;
+  const withTokens = value.replace(
+    /<span\b[^>]*>[\s\S]*?<\/span>/gi,
+    (match: string) => {
+      const token = `__SPAN_${tokens.length}__`;
 
-    tokens.push(match);
+      tokens.push(match);
 
-    return token;
-  });
+      return token;
+    },
+  );
 
   return { withTokens, tokens };
 };
@@ -116,19 +118,19 @@ const renderInlineMarkdown = (value: string): string => {
 
   const withCode = escaped.replace(
     /`([^`]+)`/g,
-    '<code style="background-color: var(--note-inline-code-bg, rgba(15, 23, 42, 0.12)); color: var(--note-code-text, #e2e8f0); padding: 0.1rem 0.25rem; border-radius: 0.25rem; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 0.85em;">$1</code>'
+    '<code style="background-color: var(--note-inline-code-bg, rgba(15, 23, 42, 0.12)); color: var(--note-code-text, #e2e8f0); padding: 0.1rem 0.25rem; border-radius: 0.25rem; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 0.85em;">$1</code>',
   );
 
   // Handle images first (before links, since syntax is similar)
 
   const withImages = withCode.replace(
     /!\[([^\]]*)\]\(([^)]+)\)/g,
-    '<img src="$2" alt="$1" style="max-width: 100%; height: auto; border-radius: 0.5rem; margin: 0.5rem 0;" />'
+    '<img src="$2" alt="$1" style="max-width: 100%; height: auto; border-radius: 0.5rem; margin: 0.5rem 0;" />',
   );
 
   const withLinks = withImages.replace(
     /\[([^\]]+)\]\(([^)]+)\)/g,
-    '<a href="$2" style="color: var(--note-link-color, #38bdf8); text-decoration: underline; cursor: pointer;" target="_blank" rel="noreferrer">$1</a>'
+    '<a href="$2" style="color: var(--note-link-color, #38bdf8); text-decoration: underline; cursor: pointer;" target="_blank" rel="noreferrer">$1</a>',
   );
 
   const withStrong = withLinks.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -143,12 +145,12 @@ const highlightCode = (value: string): string => {
 
   escaped = escaped.replace(
     /\b(\d+(\.\d+)?)\b/g,
-    '<span style="color: #fbbf24;">$1</span>'
+    '<span style="color: #fbbf24;">$1</span>',
   );
 
   escaped = escaped.replace(
     /\b(const|let|var|function|return|if|else|for|while|switch|case|break|continue|try|catch|finally|class|new|import|from|export|default|async|await|type|interface|extends)\b/g,
-    '<span style="color: #38bdf8;">$1</span>'
+    '<span style="color: #38bdf8;">$1</span>',
   );
 
   return escaped;
@@ -186,9 +188,11 @@ export const renderMarkdownToHtml = (value: string): string => {
       .map(
         (row: string[]) =>
           `<tr>${row
-            .map((cell: string) => `<td>${renderInlineMarkdown(cell.trim())}</td>`)
+            .map(
+              (cell: string) => `<td>${renderInlineMarkdown(cell.trim())}</td>`,
+            )
 
-            .join('')}</tr>`
+            .join('')}</tr>`,
       )
 
       .join('');
@@ -219,7 +223,9 @@ export const renderMarkdownToHtml = (value: string): string => {
 
         const encoded = encodeURIComponent(rawCode);
 
-        const highlighted = codeLines.map((codeLine: string) => highlightCode(codeLine)).join('\n');
+        const highlighted = codeLines
+          .map((codeLine: string) => highlightCode(codeLine))
+          .join('\n');
 
         html += `<div data-code="${encoded}" style="position: relative; margin: 0.75rem 0; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; overflow: hidden;"><button type="button" data-copy-code="true" style="position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.35); color: var(--note-code-text, #e2e8f0); font-size: 0.7rem; padding: 0.2rem 0.45rem; border-radius: 0.4rem; cursor: pointer; opacity: 0; transition: opacity 0.15s ease; z-index: 10;">Copy</button><pre style="background-color: var(--note-code-bg, #0f172a); color: var(--note-code-text, #e2e8f0); padding: 0.75rem; margin: 0; overflow-x: auto;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 0.85em; white-space: pre;">${highlighted}</code></pre></div>`;
 
@@ -391,7 +397,9 @@ export const renderMarkdownToHtml = (value: string): string => {
 
     const encoded = encodeURIComponent(rawCode);
 
-    const highlighted = codeLines.map((codeLine: string) => highlightCode(codeLine)).join('\n');
+    const highlighted = codeLines
+      .map((codeLine: string) => highlightCode(codeLine))
+      .join('\n');
 
     html += `<div data-code="${encoded}" style="position: relative; margin: 0.75rem 0; border: 1px solid rgba(148, 163, 184, 0.2); border-radius: 0.5rem; overflow: hidden;"><button type="button" data-copy-code="true" style="position: absolute; top: 0.5rem; right: 0.5rem; background: rgba(148, 163, 184, 0.15); border: 1px solid rgba(148, 163, 184, 0.35); color: var(--note-code-text, #e2e8f0); font-size: 0.7rem; padding: 0.2rem 0.45rem; border-radius: 0.4rem; cursor: pointer; opacity: 0; transition: opacity 0.15s ease; z-index: 10;">Copy</button><pre style="background-color: var(--note-code-bg, #0f172a); color: var(--note-code-text, #e2e8f0); padding: 0.75rem; margin: 0; overflow-x: auto;"><code style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 0.85em; white-space: pre;">${highlighted}</code></pre></div>`;
   }

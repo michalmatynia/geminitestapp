@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { stableStringify } from '@/features/ai/ai-paths/lib';
+import { stableStringify } from '@/shared/lib/ai-paths';
 import { repairRuntimeStatePorts } from '@/features/ai/ai-paths/services/runtime-state-port-repair';
 import type { AiPathRunNodeRecord, RuntimeState } from '@/shared/contracts/ai-paths';
 

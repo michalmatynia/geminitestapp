@@ -2,7 +2,7 @@ import {
   isInternalMasterTreeNode,
   resolveRootTopReorderAnchor,
   type MasterTreeRootDropZone,
-} from '@/features/foldertree/v2';
+} from '@/shared/lib/foldertree/v2';
 import type { MasterTreeId, MasterTreeNode } from '@/shared/utils';
 
 import {
@@ -44,14 +44,20 @@ export const canDropNotesNode = ({
   targetId: MasterTreeId | null;
   nodes: MasterTreeNode[];
 }): boolean => {
-  if (isNoteMasterNodeId(draggedNodeId) && targetId && isNoteMasterNodeId(targetId)) {
+  if (
+    isNoteMasterNodeId(draggedNodeId) &&
+    targetId &&
+    isNoteMasterNodeId(targetId)
+  ) {
     return true;
   }
 
   const isInternal = isInternalMasterTreeNode(nodes, draggedNodeId);
   if (isInternal) return false;
 
-  return isNoteMasterNodeId(draggedNodeId) || isFolderMasterNodeId(draggedNodeId);
+  return (
+    isNoteMasterNodeId(draggedNodeId) || isFolderMasterNodeId(draggedNodeId)
+  );
 };
 
 export const resolveNotesExternalDropAction = ({

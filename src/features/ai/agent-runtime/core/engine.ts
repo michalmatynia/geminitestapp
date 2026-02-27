@@ -30,7 +30,7 @@ import {
   launchBrowser,
   createBrowserContext,
 } from '@/features/ai/agent-runtime/tools/playwright/browser';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AgentDecision,
   PlanStep,
@@ -491,7 +491,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
       }
     } catch (innerError) {
       try {
-        const { ErrorSystem } = await import('@/features/observability/services/error-system');
+        const { ErrorSystem } = await import('@/features/observability/server');
         void ErrorSystem.captureException(innerError, { 
           service: 'agent-engine', 
           action: 'persistError',

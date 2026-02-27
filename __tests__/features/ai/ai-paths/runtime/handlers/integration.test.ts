@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-import * as api from '@/features/ai/ai-paths/lib/api';
+import * as api from '@/shared/lib/ai-paths/api';
 import { 
   handleTrigger, 
   handleNotification, 
@@ -8,7 +8,7 @@ import {
   handleHttp, 
   handleDatabase,
   handleDbSchema
-} from '@/features/ai/ai-paths/lib/core/runtime/handlers/integration';
+} from '@/shared/lib/ai-paths/core/runtime/handlers/integration';
 
 import { createMockContext } from '../../test-utils';
 

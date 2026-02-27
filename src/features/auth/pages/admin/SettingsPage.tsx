@@ -13,7 +13,7 @@ import {
 import {
   type AuthSecurityPolicy,
 } from '@/features/auth/utils/auth-security';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { ApiError } from '@/shared/lib/api-client';
 import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';

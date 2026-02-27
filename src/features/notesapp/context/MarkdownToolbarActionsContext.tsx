@@ -13,7 +13,8 @@ export type MarkdownToolbarActionsContextValue = {
   onApplySpanStyle: (color: string, font: string) => void;
 };
 
-const MarkdownToolbarActionsContext = createContext<MarkdownToolbarActionsContextValue | null>(null);
+const MarkdownToolbarActionsContext =
+  createContext<MarkdownToolbarActionsContextValue | null>(null);
 
 type MarkdownToolbarActionsProviderProps = {
   value: MarkdownToolbarActionsContextValue;
@@ -34,7 +35,9 @@ export function MarkdownToolbarActionsProvider({
 export function useMarkdownToolbarActions(): MarkdownToolbarActionsContextValue {
   const context = useContext(MarkdownToolbarActionsContext);
   if (!context) {
-    throw internalError('useMarkdownToolbarActions must be used within MarkdownToolbarActionsProvider');
+    throw internalError(
+      'useMarkdownToolbarActions must be used within MarkdownToolbarActionsProvider',
+    );
   }
   return context;
 }

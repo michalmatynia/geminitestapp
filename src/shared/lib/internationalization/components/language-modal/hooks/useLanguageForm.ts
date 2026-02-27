@@ -1,0 +1,92 @@
+import React from 'react';
+
+import { useInternationalizationContext } from '@/shared/lib/internationalization/context/InternationalizationContext';
+import { useSaveLanguageMutation } from '@/shared/lib/internationalization/hooks/useInternationalizationMutations';
+import { useToast } from '@/shared/ui';
+
+type UseLanguageFormResult = {
+  form: {
+    code: string;
+    name: string;
+    nativeName: string;
+  };
+  setForm: (value: React.SetStateAction<{ code: string; name: string; nativeName: string }>) => void;
+  selectedCountryIds: string[];
+  toggleCountry: (id: string) => void;
+  isSaving: boolean;
+  handleSubmit: () => Promise<void>;
+};
+
+export function useLanguageForm(): UseLanguageFormResult {
+  const context = useInternationalizationContext();
+  const language = context.activeLanguage;
+  const { toast } = useToast();
+  const saveMutation = useSaveLanguageMutation();
+
+  const [form, setForm] = React.useState({
+    code: '',
+    name: '',
+    nativeName: '',
+  });
+  const [selectedCountryIds, setSelectedCountryIds] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    if (language) {
+      setForm({
+        code: language.code,
+        name: language.name,
+        nativeName: language.nativeName ?? '',
+      });
+      setSelectedCountryIds(language.countries?.map((c: { id: string }) => c.id) ?? []);
+    } else {
+      setForm({ code: '', name: '', nativeName: '' });
+      setSelectedCountryIds([]);
+    }
+  }, [language]);
+
+  const handleSubmit = async (): Promise<void> => {
+    if (!form.code.trim() || !form.name.trim()) {
+      toast('Language code and name are required.', { variant: 'error' });
+      return;
+    }
+
+    try {
+      const payload: {
+        id?: string;
+        data: { code: string; name: string; nativeName: string | undefined; countryIds: string[] };
+      } = {
+        data: {
+          code: form.code.trim(),
+          name: form.name.trim(),
+          nativeName: form.nativeName.trim() || undefined,
+          countryIds: selectedCountryIds,
+        },
+      };
+      if (language?.id) {
+        payload.id = language.id;
+      }
+
+      await saveMutation.mutateAsync(payload);
+
+      toast('Language saved.', { variant: 'success' });
+    } catch (err) {
+      toast('Failed to save language.', { variant: 'error' });
+      throw err;
+    }
+  };
+
+  const toggleCountry = (id: string): void => {
+    setSelectedCountryIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  return {
+    form,
+    setForm,
+    selectedCountryIds,
+    toggleCountry,
+    isSaving: saveMutation.isPending,
+    handleSubmit,
+  };
+}

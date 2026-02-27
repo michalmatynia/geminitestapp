@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
+import { getInternationalizationProvider } from '@/shared/lib/internationalization/services/internationalization-provider';
 import { parseJsonBody } from '@/features/products/server';
 import type { LanguageWithCountriesDto as LanguageWithCountries } from '@/shared/contracts/internationalization';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

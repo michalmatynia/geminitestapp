@@ -2,9 +2,9 @@ import 'server-only';
 
 import fs from 'fs/promises';
 
-import { getImageFileRepository } from '@/features/files/server';
-import { getDiskPathFromPublicPath } from '@/features/files/utils/fileUploader';
-import { logSystemEvent } from '@/features/observability/server';
+import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { getProductRepository } from '@/features/products/services/product-repository';
 
 import { removeImageStudioRunOutputs } from './run-repository';

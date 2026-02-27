@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { toFolderMasterNodeId, toNoteMasterNodeId } from '@/features/notesapp/utils/master-folder-tree';
+import {
+  toFolderMasterNodeId,
+  toNoteMasterNodeId,
+} from '@/features/notesapp/utils/master-folder-tree';
 import {
   canDropNotesNode,
   resolveNotesExternalDropAction,
@@ -10,7 +13,7 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 const folderNode = (
   id: string,
   parentId: string | null,
-  sortOrder: number
+  sortOrder: number,
 ): MasterTreeNode => ({
   id: toFolderMasterNodeId(id),
   type: 'folder',
@@ -24,7 +27,7 @@ const folderNode = (
 const noteNode = (
   id: string,
   parentId: string,
-  sortOrder: number
+  sortOrder: number,
 ): MasterTreeNode => ({
   id: toNoteMasterNodeId(id),
   type: 'file',

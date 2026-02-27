@@ -10,7 +10,7 @@ import {
   type ParamSpec, 
   type ExtractParamsResult 
 } from '@/shared/utils/prompt-params';
-import { validateImageStudioParams } from '@/features/prompt-engine/prompt-params';
+import { validateImageStudioParams } from '@/shared/lib/prompt-engine/prompt-params';
 import { consumePromptExploderApplyPrompt } from '@/features/prompt-exploder/bridge';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { useToast } from '@/shared/ui';

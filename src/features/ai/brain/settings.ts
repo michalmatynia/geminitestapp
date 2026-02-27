@@ -30,6 +30,7 @@ const BRAIN_FEATURE_KEYS: AiBrainFeature[] = [
   'system_logs',
   'error_logs',
   'ai_paths',
+  'chatbot',
   'prompt_engine',
 ];
 
@@ -40,6 +41,7 @@ export const defaultBrainAssignment: AiBrainAssignment = {
   agentId: '',
   temperature: 0.2,
   maxTokens: 1200,
+  systemPrompt: '',
   notes: null,
 };
 

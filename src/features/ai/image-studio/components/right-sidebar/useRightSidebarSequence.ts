@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react';
 
-import type { VectorShape } from '@/features/vector-drawing';
+import type { VectorShape } from '@/shared/lib/vector-drawing';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { api } from '@/shared/lib/api-client';
 

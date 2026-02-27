@@ -12,7 +12,7 @@ import {
   useSelectionState,
 } from '@/features/ai/ai-paths/context';
 import {
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import type {
   AiNode,
   CaseResolverNodeMeta,

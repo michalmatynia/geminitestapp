@@ -1,6 +1,6 @@
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { processJob } from '@/features/jobs/processors/chatbot-job-processor';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 type ChatbotJobData = {

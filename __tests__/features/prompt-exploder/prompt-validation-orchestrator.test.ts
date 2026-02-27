@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { parseValidatorPatternLists } from '@/features/admin/pages/validator-scope';
-import { PromptValidationRuleCompileError } from '@/features/prompt-core/errors';
+import { PromptValidationRuleCompileError } from '@/shared/lib/prompt-core/errors';
 import type {
   PromptValidationRule,
   PromptEngineSettings,
-} from '@/features/prompt-engine/settings';
+} from '@/shared/lib/prompt-engine/settings';
 import {
   explodePromptText,
   getPromptExploderRuntimePatternCacheSnapshot,

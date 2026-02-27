@@ -7,7 +7,7 @@ import { withRetry, withCircuitBreaker, resetCircuitBreaker } from '@/shared/uti
 vi.mock('server-only', () => ({}));
 
 // Mock system logger to avoid DB/network calls
-vi.mock('@/features/observability/lib/system-logger', () => ({
+vi.mock('@/shared/lib/observability/system-logger', () => ({
   logSystemEvent: vi.fn().mockResolvedValue(undefined),
 }));
 

@@ -5,8 +5,8 @@ import { recoverStaleRunningRuns } from '@/features/ai/ai-paths/services/path-ru
 import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-repository';
 import { publishRunUpdate } from '@/features/ai/ai-paths/services/run-stream-publisher';
 import { recordRuntimeRunFinished } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { logSystemEvent } from '@/features/observability/server';
-import { ErrorSystem } from '@/features/observability/services/error-system';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 const DEFAULT_MAX_ATTEMPTS = Number(process.env['AI_PATHS_RUN_MAX_ATTEMPTS'] ?? '3');

@@ -3,8 +3,8 @@
 import { Lock, Edit, Copy, Trash2 } from 'lucide-react';
 import React, { useMemo } from 'react';
 
-import type { PathMeta } from '@/features/ai/ai-paths/lib';
-import { PATH_TEMPLATES } from '@/features/ai/ai-paths/lib';
+import type { PathMeta } from '@/shared/lib/ai-paths';
+import { PATH_TEMPLATES } from '@/shared/lib/ai-paths';
 import {
   ActionMenu,
   Button,

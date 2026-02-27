@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type { ProductDraftDto, CreateProductDraftDto, UpdateProductDraftDto } from '@/features/products/server';
 
 import * as repo from './draft-repository';

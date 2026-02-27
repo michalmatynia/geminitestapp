@@ -11,7 +11,7 @@ import { createPortal } from 'react-dom';
 
 import { TriggerButtonBar } from '@/features/ai/ai-paths/components/trigger-buttons/TriggerButtonBar';
 import { useAdminLayout } from '@/features/admin/context/AdminLayoutContext';
-import { ICON_LIBRARY_MAP } from '@/features/icons';
+import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import {
   useProductListActionsContext,
   useProductListFiltersContext,

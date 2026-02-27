@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useMemo, useCallback, ReactNode } from 'react';
 
 import { useFileQueries, useDeleteFile, useUpdateFileTags } from '@/features/files/hooks/useFileQueries';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ExpandedImageFile } from '@/features/products';
 import { useAssets3D } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { ImageFileSelection } from '@/shared/contracts/files';

@@ -3,8 +3,8 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect, useMemo } from 'react';
 
 import { useTeachingAgents } from '@/features/ai/agentcreator/teaching/hooks/useAgentTeachingQueries';
-import { useChatbotModels } from '@/features/ai/chatbot/hooks/useChatbotQueries';
-import { logClientError } from '@/features/observability';
+import { useBrainModelOptions } from '@/features/ai/brain/hooks/useBrainModelOptions';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { AgentTeachingAgentRecord } from '@/shared/contracts/agent-teaching';
 import type { ChatMessage } from '@/shared/contracts/chatbot';
 import type { 
@@ -194,7 +194,8 @@ export function InspectorAiProvider({
 
   // --- Data Loading ---
   const cssProvider = customCssAiConfig.provider ?? 'model';
-  const modelsQuery = useChatbotModels({
+  const brainModelOptions = useBrainModelOptions({
+    feature: 'cms_builder',
     enabled: aiQueriesEnabled && (cssProvider === 'model' || contentAiProvider === 'model'),
   });
   const teachingAgentsQuery = useTeachingAgents({
@@ -202,13 +203,11 @@ export function InspectorAiProvider({
   });
 
   const modelOptions = useMemo((): string[] => {
-    // Defensive: query cache may contain malformed non-array payloads.
-    const models = Array.isArray(modelsQuery.data) ? modelsQuery.data : [];
-    const fromApi = models
+    const fromApi = brainModelOptions.models
       .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
       .map((value) => value.trim());
     return Array.from(new Set(fromApi));
-  }, [modelsQuery.data]);
+  }, [brainModelOptions.models]);
 
   const agentOptions = useMemo(
     (): Array<{ label: string; value: string }> => (teachingAgentsQuery.data ?? []).map((agent: AgentTeachingAgentRecord) => ({ label: agent.name, value: agent.id })),

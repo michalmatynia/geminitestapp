@@ -10,7 +10,7 @@ import {
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
   PORT_SIZE,
-} from '@/features/ai/ai-paths/lib/core/constants';
+} from '@/shared/lib/ai-paths/core/constants';
 
 import {
   buildConnectorInfo,

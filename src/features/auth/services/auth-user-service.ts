@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 import { findAuthUserByEmail as repoFindByEmail, findAuthUserById as repoFindById } from './auth-user-repository';
 

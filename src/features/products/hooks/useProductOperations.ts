@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { getProductListQueryKey } from '@/features/products/hooks/productCache';
 import { useDuplicateProduct } from '@/features/products/hooks/useProductsMutations';
 import type { ProductWithImages } from '@/shared/contracts/products';

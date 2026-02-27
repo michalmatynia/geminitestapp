@@ -12,7 +12,7 @@ import type {
   AiNode,
   ParserConfig,
   ParserSampleState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   PARSER_PATH_OPTIONS,
   PARSER_PRESETS,
@@ -23,7 +23,7 @@ import {
   inferImageMappingPath,
   normalizePortName,
   safeParseJson,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import { Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
 
 import { useAiPathConfig } from '../AiPathConfigContext';

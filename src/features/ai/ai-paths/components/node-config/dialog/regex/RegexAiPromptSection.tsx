@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button, Label, Textarea, ToggleRow, Tooltip } from '@/shared/ui';
-import type { RegexConfig, AiNode } from '@/features/ai/ai-paths/lib';
+import type { RegexConfig, AiNode } from '@/shared/lib/ai-paths';
 
 export type RegexAiPromptSectionProps = {
   regexConfig: RegexConfig;

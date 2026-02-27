@@ -8,11 +8,11 @@ import {
   VALIDATOR_SCOPE_LABELS,
   parseValidatorPatternLists,
   type ValidatorPatternList,
-} from '@/features/admin/pages/validator-scope';
+} from '@/shared/contracts/validator';
 import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
-} from '@/features/prompt-engine/settings';
+} from '@/shared/lib/prompt-engine/settings';
 import type {
   PromptValidationRule,
   PromptValidationScope,

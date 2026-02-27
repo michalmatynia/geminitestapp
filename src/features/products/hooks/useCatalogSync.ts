@@ -3,7 +3,7 @@
 import { useQueries } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { Catalog } from '@/shared/contracts/products';
 import type { PriceGroupWithDetails } from '@/shared/contracts/products';
 import { api } from '@/shared/lib/api-client';

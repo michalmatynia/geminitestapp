@@ -5,7 +5,7 @@ import type {
   PathDebugSnapshot,
   RuntimeState,
   RuntimePortValues,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   PATH_DEBUG_PREFIX,
   TRIGGER_EVENTS,
@@ -15,9 +15,9 @@ import {
   stableStringify,
   GraphExecutionError,
   GraphExecutionCancelled,
-} from '@/features/ai/ai-paths/lib';
-import { updateAiPathsSetting } from '@/features/ai/ai-paths/lib/settings-store-client';
-import { logClientError } from '@/features/observability';
+} from '@/shared/lib/ai-paths';
+import { updateAiPathsSetting } from '@/shared/lib/ai-paths/settings-store-client';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import {
   LOCAL_RUN_STEP_CHUNK,
 } from '@/shared/contracts/ai-paths-runtime';

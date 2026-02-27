@@ -3,9 +3,24 @@
 import { RotateCcw } from 'lucide-react';
 import Link from 'next/link';
 
-import { useNoteSettings, DEFAULT_NOTE_SETTINGS } from '@/features/notesapp/hooks/NoteSettingsContext';
+import {
+  useNoteSettings,
+  DEFAULT_NOTE_SETTINGS,
+} from '@/features/notesapp/hooks/NoteSettingsContext';
 import type { NoteSettings } from '@/shared/contracts/notes';
-import { Button, SelectSimple, useToast, Label, RadioGroup, RadioGroupItem, SectionHeader, FormSection, FormField, ToggleRow, Card } from '@/shared/ui';
+import {
+  Button,
+  SelectSimple,
+  useToast,
+  Label,
+  RadioGroup,
+  RadioGroupItem,
+  SectionHeader,
+  FormSection,
+  FormField,
+  ToggleRow,
+  Card,
+} from '@/shared/ui';
 
 const sortByOptions = [
   { value: 'created', label: 'Created Date' },
@@ -25,9 +40,21 @@ const searchScopeOptions = [
 ] as const;
 
 const editorModeOptions = [
-  { value: 'markdown', label: 'Markdown', description: 'Plain text with markdown syntax and live preview' },
-  { value: 'wysiwyg', label: 'WYSIWYG', description: 'Rich text editor with visual formatting' },
-  { value: 'code', label: 'Code Snippets', description: 'Optimized for code with syntax highlighting and copy button' },
+  {
+    value: 'markdown',
+    label: 'Markdown',
+    description: 'Plain text with markdown syntax and live preview',
+  },
+  {
+    value: 'wysiwyg',
+    label: 'WYSIWYG',
+    description: 'Rich text editor with visual formatting',
+  },
+  {
+    value: 'code',
+    label: 'Code Snippets',
+    description: 'Optimized for code with syntax highlighting and copy button',
+  },
 ] as const;
 
 export function AdminNotesSettingsPage(): React.JSX.Element {
@@ -62,11 +89,14 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
       <SectionHeader
         title='Note Settings'
         description='Configure default view preferences for the Notes app.'
-        eyebrow={(
-          <Link href='/admin/notes' className='text-blue-300 hover:text-blue-200'>
+        eyebrow={
+          <Link
+            href='/admin/notes'
+            className='text-blue-300 hover:text-blue-200'
+          >
             ← Back to notes
           </Link>
-        )}
+        }
         className='mb-6'
       />
 
@@ -75,9 +105,12 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         <FormSection title='Sorting' className='p-6'>
           <FormField
             label='Sort By'
-            description={!isDefault('sortBy') ? 'Modified from default' : undefined}
+            description={
+              !isDefault('sortBy') ? 'Modified from default' : undefined
+            }
           >
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               options={[...sortByOptions]}
               value={settings.sortBy}
               onValueChange={(value: string): void =>
@@ -89,13 +122,18 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
 
           <FormField
             label='Sort Order'
-            description={!isDefault('sortOrder') ? 'Modified from default' : undefined}
+            description={
+              !isDefault('sortOrder') ? 'Modified from default' : undefined
+            }
           >
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               options={[...sortOrderOptions]}
               value={settings.sortOrder}
               onValueChange={(value: string): void =>
-                updateSettings({ sortOrder: value as NoteSettings['sortOrder'] })
+                updateSettings({
+                  sortOrder: value as NoteSettings['sortOrder'],
+                })
               }
               placeholder='Select sort order'
             />
@@ -121,7 +159,9 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             onCheckedChange={(checked: boolean): void =>
               updateSettings({ showBreadcrumbs: checked })
             }
-            className={!isDefault('showBreadcrumbs') ? 'border-blue-500/30' : ''}
+            className={
+              !isDefault('showBreadcrumbs') ? 'border-blue-500/30' : ''
+            }
           />
 
           <ToggleRow
@@ -131,7 +171,9 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             onCheckedChange={(checked: boolean): void =>
               updateSettings({ showRelatedNotes: checked })
             }
-            className={!isDefault('showRelatedNotes') ? 'border-blue-500/30' : ''}
+            className={
+              !isDefault('showRelatedNotes') ? 'border-blue-500/30' : ''
+            }
           />
         </FormSection>
 
@@ -139,13 +181,18 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         <FormSection title='Search' className='p-6'>
           <FormField
             label='Default Search Scope'
-            description={!isDefault('searchScope') ? 'Modified from default' : undefined}
+            description={
+              !isDefault('searchScope') ? 'Modified from default' : undefined
+            }
           >
-            <SelectSimple size='sm'
+            <SelectSimple
+              size='sm'
               options={[...searchScopeOptions]}
               value={settings.searchScope}
               onValueChange={(value: string): void =>
-                updateSettings({ searchScope: value as NoteSettings['searchScope'] })
+                updateSettings({
+                  searchScope: value as NoteSettings['searchScope'],
+                })
               }
               placeholder='Select search scope'
             />
@@ -156,41 +203,53 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         <FormSection title='Editor' className='p-6'>
           <FormField
             label='Default Editor Mode'
-            description={!isDefault('editorMode') ? 'Modified from default' : undefined}
+            description={
+              !isDefault('editorMode') ? 'Modified from default' : undefined
+            }
           >
             <RadioGroup
               value={settings.editorMode}
               onValueChange={(value: string): void =>
-                updateSettings({ editorMode: value as NoteSettings['editorMode'] })
+                updateSettings({
+                  editorMode: value as NoteSettings['editorMode'],
+                })
               }
               className='space-y-2'
             >
-              {editorModeOptions.map((option: { value: string; label: string; description: string }) => {
-                const id = `editor-mode-${option.value}`;
-                const isSelected = settings.editorMode === option.value;
-                return (
-                  <div
-                    key={option.value}
-                    className={`flex items-start gap-3 rounded-md border p-3 transition-colors ${
-                      isSelected
-                        ? 'border-blue-500 bg-blue-500/10'
-                        : 'border hover:border-border/60'
-                    }`}
-                  >
-                    <RadioGroupItem
-                      id={id}
-                      value={option.value}
-                      className='mt-1 border-border/60 text-blue-600'
-                    />
-                    <Label htmlFor={id} className='flex-1 cursor-pointer'>
-                      <span className='text-sm font-medium text-gray-200'>
-                        {option.label}
-                      </span>
-                      <p className='text-xs text-gray-500'>{option.description}</p>
-                    </Label>
-                  </div>
-                );
-              })}
+              {editorModeOptions.map(
+                (option: {
+                  value: string;
+                  label: string;
+                  description: string;
+                }) => {
+                  const id = `editor-mode-${option.value}`;
+                  const isSelected = settings.editorMode === option.value;
+                  return (
+                    <div
+                      key={option.value}
+                      className={`flex items-start gap-3 rounded-md border p-3 transition-colors ${
+                        isSelected
+                          ? 'border-blue-500 bg-blue-500/10'
+                          : 'border hover:border-border/60'
+                      }`}
+                    >
+                      <RadioGroupItem
+                        id={id}
+                        value={option.value}
+                        className='mt-1 border-border/60 text-blue-600'
+                      />
+                      <Label htmlFor={id} className='flex-1 cursor-pointer'>
+                        <span className='text-sm font-medium text-gray-200'>
+                          {option.label}
+                        </span>
+                        <p className='text-xs text-gray-500'>
+                          {option.description}
+                        </p>
+                      </Label>
+                    </div>
+                  );
+                },
+              )}
             </RadioGroup>
           </FormField>
 
@@ -202,25 +261,40 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
               onCheckedChange={(checked: boolean): void =>
                 updateSettings({ autoformatOnPaste: checked })
               }
-              className={!isDefault('autoformatOnPaste') ? 'border-blue-500/30' : ''}
+              className={
+                !isDefault('autoformatOnPaste') ? 'border-blue-500/30' : ''
+              }
             />
           </div>
         </FormSection>
 
         {/* Navigation State */}
         <FormSection title='Navigation' className='p-6'>
-          <Card variant='subtle-compact' padding='sm' className='flex items-center justify-between border-border/60 bg-card/30'>
+          <Card
+            variant='subtle-compact'
+            padding='sm'
+            className='flex items-center justify-between border-border/60 bg-card/30'
+          >
             <div className='flex-1 space-y-0.5'>
-              <p className='text-sm font-medium text-gray-200'>Remember Selected Folder</p>
-              <p className='text-[11px] text-gray-500'>Your selected folder is saved to the database and persists across sessions.</p>
+              <p className='text-sm font-medium text-gray-200'>
+                Remember Selected Folder
+              </p>
+              <p className='text-[11px] text-gray-500'>
+                Your selected folder is saved to the database and persists
+                across sessions.
+              </p>
             </div>
             {!isDefault('selectedFolderId') ? (
               <div className='flex items-center gap-2'>
-                <span className='text-xs text-green-400 font-bold uppercase'>Saved</span>
+                <span className='text-xs text-green-400 font-bold uppercase'>
+                  Saved
+                </span>
                 <Button
                   variant='outline'
                   size='xs'
-                  onClick={(): void => updateSettings({ selectedFolderId: null })}
+                  onClick={(): void =>
+                    updateSettings({ selectedFolderId: null })
+                  }
                   className='h-7 px-2 text-xs'
                 >
                   Clear
@@ -246,15 +320,23 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
         </div>
 
         {/* Current Settings Summary */}
-        <Card variant='subtle' padding='md' className='border-border/60 bg-card/40'>
+        <Card
+          variant='subtle'
+          padding='md'
+          className='border-border/60 bg-card/40'
+        >
           <h3 className='mb-2 text-sm font-medium text-gray-400'>
             Current Settings Summary
           </h3>
           <div className='grid grid-cols-2 gap-2 text-xs text-gray-500'>
             <span>Sort:</span>
             <span className='text-gray-300'>
-              {sortByOptions.find((o: { value: string }) => o.value === settings.sortBy)?.label} (
-              {settings.sortOrder === 'desc' ? 'Descending' : 'Ascending'})
+              {
+                sortByOptions.find(
+                  (o: { value: string }) => o.value === settings.sortBy,
+                )?.label
+              }{' '}
+              ({settings.sortOrder === 'desc' ? 'Descending' : 'Ascending'})
             </span>
             <span>Timestamps:</span>
             <span className='text-gray-300'>
@@ -266,7 +348,11 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             </span>
             <span>Search Scope:</span>
             <span className='text-gray-300'>
-              {searchScopeOptions.find((o: { value: string }) => o.value === settings.searchScope)?.label}
+              {
+                searchScopeOptions.find(
+                  (o: { value: string }) => o.value === settings.searchScope,
+                )?.label
+              }
             </span>
             <span>Selected Folder:</span>
             <span className='text-gray-300'>
@@ -278,7 +364,11 @@ export function AdminNotesSettingsPage(): React.JSX.Element {
             </span>
             <span>Editor Mode:</span>
             <span className='text-gray-300'>
-              {editorModeOptions.find((o: { value: string }) => o.value === settings.editorMode)?.label}
+              {
+                editorModeOptions.find(
+                  (o: { value: string }) => o.value === settings.editorMode,
+                )?.label
+              }
             </span>
           </div>
         </Card>

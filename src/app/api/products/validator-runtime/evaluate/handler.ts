@@ -6,9 +6,9 @@ import {
   dbApi,
   type DbActionPayload,
   type DbQueryPayload,
-} from '@/features/ai/ai-paths/lib/api/client';
-import { getValueAtMappingPath } from '@/features/ai/ai-paths/lib/core/utils/json';
-import { renderTemplate } from '@/features/ai/ai-paths/lib/core/utils/template';
+} from '@/shared/lib/ai-paths/api/client';
+import { getValueAtMappingPath } from '@/shared/lib/ai-paths/core/utils/json';
+import { renderTemplate } from '@/shared/lib/ai-paths/core/utils/template';
 import { ErrorSystem } from '@/features/observability/server';
 import { getSettingValue } from '@/features/products/server';
 import { listValidationPatternsCached } from '@/features/products/services/validation-pattern-runtime-cache';

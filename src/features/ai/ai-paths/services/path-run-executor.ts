@@ -8,9 +8,9 @@ import {
   normalizeNodes,
   normalizeAiPathsValidationConfig,
   sanitizeEdges,
-} from '@/features/ai/ai-paths/lib';
-import { evaluateGraphWithIteratorAutoContinue } from '@/features/ai/ai-paths/lib/core/runtime/engine-server';
-import { buildCompileWarningMessage } from '@/features/ai/ai-paths/lib/core/utils/compile-warning-message';
+} from '@/shared/lib/ai-paths';
+import { evaluateGraphWithIteratorAutoContinue } from '@/shared/lib/ai-paths/core/runtime/engine-server';
+import { buildCompileWarningMessage } from '@/shared/lib/ai-paths/core/utils/compile-warning-message';
 import {
   evaluateDisabledNodeTypesPolicy,
   formatDisabledNodeTypesPolicyMessage,
@@ -26,7 +26,7 @@ import {
   recordRuntimeNodeStatus,
   recordRuntimeRunFinished,
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
-import { ErrorSystem } from '@/features/observability/services/error-system';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   AiPathRunNodeRecord,
   AiPathRunRecord,

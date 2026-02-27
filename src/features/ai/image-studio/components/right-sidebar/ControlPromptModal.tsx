@@ -22,10 +22,10 @@ import {
 import { 
   parsePromptEngineSettings, 
   PROMPT_ENGINE_SETTINGS_KEY 
-} from '@/features/prompt-engine/settings';
-import { validateProgrammaticPrompt } from '@/features/prompt-engine/prompt-validator';
-import { formatProgrammaticPrompt } from '@/features/prompt-engine/prompt-formatter';
-import { logClientError } from '@/features/observability';
+} from '@/shared/lib/prompt-engine/settings';
+import { validateProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-validator';
+import { formatProgrammaticPrompt } from '@/shared/lib/prompt-engine/prompt-formatter';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { savePromptExploderDraftPrompt } from '@/features/prompt-exploder/bridge';
 import { useRouter } from 'next/navigation';
 import { useRightSidebarContext } from '../RightSidebarContext';

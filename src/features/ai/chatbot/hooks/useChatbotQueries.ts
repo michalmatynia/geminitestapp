@@ -4,7 +4,7 @@ import type { ChatbotSessionDto as ChatSession } from '@/shared/contracts/chatbo
 import type { ChatbotSessionListItem } from '@/shared/contracts/chatbot';
 import type { ListQuery, SingleQuery } from '@/shared/contracts/ui';
 import { createListQueryV2, createSingleQueryV2 } from '@/shared/lib/query-factories-v2';
-import { chatbotKeys } from '@/shared/lib/query-key-exports';
+import { brainKeys, chatbotKeys } from '@/shared/lib/query-key-exports';
 
 import {
   fetchChatbotSessions,
@@ -137,7 +137,7 @@ export function useChatbotSettings(key?: string, options?: { enabled?: boolean }
  * Query hook for fetching available models from the chatbot API
  */
 export function useChatbotModels(options?: { enabled?: boolean; staleTime?: number }): ListQuery<string> {
-  const queryKey = chatbotKeys.models();
+  const queryKey = brainKeys.models();
   return createListQueryV2<string, string[]>({
     queryKey,
     queryFn: async (): Promise<string[]> => {
@@ -154,10 +154,10 @@ export function useChatbotModels(options?: { enabled?: boolean; staleTime?: numb
     meta: {
       source: 'chatbot.hooks.useChatbotModels',
       operation: 'list',
-      resource: 'chatbot.models',
+      resource: 'brain.models',
       domain: 'global',
       queryKey,
-      tags: ['chatbot', 'models'],
+      tags: ['brain', 'models'],
     },
   });
 }

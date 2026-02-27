@@ -1,6 +1,6 @@
 import React from 'react';
 
-import type { RegexConfig, RegexTemplate } from '@/features/ai/ai-paths/lib';
+import type { RegexConfig, RegexTemplate } from '@/shared/lib/ai-paths';
 import { Button, EmptyState, FormField, Input, Label, SelectSimple, ToggleRow } from '@/shared/ui';
 
 type RegexTemplatesTabContentProps = {

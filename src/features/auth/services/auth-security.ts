@@ -9,7 +9,7 @@ import {
   normalizeAuthSecurityPolicy,
   type AuthSecurityPolicy,
 } from '@/features/auth/utils/auth-security';
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { MongoSettingRecord } from '@/shared/contracts/base';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';

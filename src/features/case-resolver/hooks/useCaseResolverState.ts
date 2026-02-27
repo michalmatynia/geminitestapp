@@ -13,7 +13,7 @@ import {
   FILEMAKER_DATABASE_KEY,
   parseFilemakerDatabase,
 } from '@/features/filemaker/settings';
-import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
+import { useCountries } from '@/shared/lib/internationalization/hooks/useInternationalizationQueries';
 import type {
   CaseResolverCategory,
   CaseResolverEditorNodeContext,

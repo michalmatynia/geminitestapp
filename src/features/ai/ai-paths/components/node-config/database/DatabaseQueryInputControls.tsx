@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { DatabaseAction, DatabaseActionCategory } from '@/features/ai/ai-paths/lib';
+import type { DatabaseAction, DatabaseActionCategory } from '@/shared/lib/ai-paths';
 import { Button, Textarea, SelectSimple } from '@/shared/ui';
 
 import { useDatabaseQueryInputControlsContext } from './DatabaseQueryInputControlsContext';

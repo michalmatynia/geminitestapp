@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useMemo } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries';
 import { useUserPreferences, useUpdateUserPreferences } from '@/features/products/hooks/useUserPreferences';
 import type { Catalog } from '@/shared/contracts/products';

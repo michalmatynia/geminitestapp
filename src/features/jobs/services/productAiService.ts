@@ -1,5 +1,5 @@
 import { getProductAiJobRepository } from '@/features/jobs/services/product-ai-job-repository';
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { productService } from '@/features/products/server';
 import type { ProductAiJobRecord, ProductAiJobUpdate } from '@/shared/contracts/jobs';
 import type { ProductAiJobType, ProductAiJob, ProductAiJobResult } from '@/shared/contracts/jobs';
@@ -121,7 +121,7 @@ const canReuseGraphModelJob = (
 
 export async function enqueueProductAiJob(productId: string, type: ProductAiJobType, payload: unknown): Promise<ProductAiJob> {
   try {
-    const { ErrorSystem } = await import('@/features/observability/services/error-system');
+    const { ErrorSystem } = await import('@/features/observability/server');
     void ErrorSystem.logInfo('[enqueueProductAiJob] Creating job', {
       service: 'product-ai-service',
       productId,
@@ -157,7 +157,7 @@ export async function enqueueProductAiJob(productId: string, type: ProductAiJobT
       );
       if (reusable) {
         try {
-          const { ErrorSystem } = await import('@/features/observability/services/error-system');
+          const { ErrorSystem } = await import('@/features/observability/server');
           void ErrorSystem.logInfo('[enqueueProductAiJob] Reusing graph_model job by cache key', {
             service: 'product-ai-service',
             productId,
@@ -180,7 +180,7 @@ export async function enqueueProductAiJob(productId: string, type: ProductAiJobT
   const jobRecord = await jobRepository.createJob(productId, type, payload);
   
   try {
-    const { ErrorSystem } = await import('@/features/observability/services/error-system');
+    const { ErrorSystem } = await import('@/features/observability/server');
     void ErrorSystem.logInfo('[enqueueProductAiJob] Job created', {
       service: 'product-ai-service',
       productId,

@@ -3,18 +3,25 @@
 import { Trash2, Plus } from 'lucide-react';
 import { useEffect, useMemo, useState, useCallback } from 'react';
 
-import { useCreateNoteTag, useDeleteNoteTag, useUpdateNoteTag } from '@/features/notesapp/api/useNoteMutations';
-import { useNotebooks, useNoteTags } from '@/features/notesapp/api/useNoteQueries';
+import {
+  useCreateNoteTag,
+  useDeleteNoteTag,
+  useUpdateNoteTag,
+} from '@/features/notesapp/api/useNoteMutations';
+import {
+  useNotebooks,
+  useNoteTags,
+} from '@/features/notesapp/api/useNoteQueries';
 import { useNoteSettings } from '@/features/notesapp/hooks/NoteSettingsContext';
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { NoteTagDto as TagRecord } from '@/shared/contracts/notes';
-import { 
-  Button, 
-  useToast, 
-  Input, 
-  SearchInput, 
-  FormSection, 
-  FormField, 
+import {
+  Button,
+  useToast,
+  Input,
+  SearchInput,
+  FormSection,
+  FormField,
   StandardDataTablePanel,
   Tag,
   EmptyState,
@@ -42,7 +49,10 @@ export function AdminNotesTagsPage(): React.JSX.Element {
   const updateTag = useUpdateNoteTag();
   const deleteTag = useDeleteNoteTag();
 
-  const tags = useMemo((): TagRecord[] => tagsQuery.data ?? [], [tagsQuery.data]);
+  const tags = useMemo(
+    (): TagRecord[] => tagsQuery.data ?? [],
+    [tagsQuery.data],
+  );
   const loading = tagsQuery.isLoading;
 
   useEffect((): void => {
@@ -60,11 +70,22 @@ export function AdminNotesTagsPage(): React.JSX.Element {
     }
     try {
       if (!selectedNotebookId) return;
-      await createTag.mutateAsync({ name: name.trim(), color, notebookId: selectedNotebookId });
+      await createTag.mutateAsync({
+        name: name.trim(),
+        color,
+        notebookId: selectedNotebookId,
+      });
       setName('');
       toast('Tag created', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AdminNotesTagsPage', action: 'createTag', name, notebookId: selectedNotebookId } });
+      logClientError(error, {
+        context: {
+          source: 'AdminNotesTagsPage',
+          action: 'createTag',
+          name,
+          notebookId: selectedNotebookId,
+        },
+      });
       toast('Failed to create tag', { variant: 'error' });
     }
   };
@@ -75,7 +96,13 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       await deleteTag.mutateAsync(toDelete.id);
       toast('Tag deleted', { variant: 'success' });
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AdminNotesTagsPage', action: 'deleteTag', tagId: toDelete.id } });
+      logClientError(error, {
+        context: {
+          source: 'AdminNotesTagsPage',
+          action: 'deleteTag',
+          tagId: toDelete.id,
+        },
+      });
       toast('Failed to delete tag', { variant: 'error' });
     } finally {
       setToDelete(null);
@@ -108,117 +135,139 @@ export function AdminNotesTagsPage(): React.JSX.Element {
       toast('Tag updated', { variant: 'success' });
       handleEditCancel();
     } catch (error: unknown) {
-      logClientError(error, { context: { source: 'AdminNotesTagsPage', action: 'updateTag', tagId } });
+      logClientError(error, {
+        context: { source: 'AdminNotesTagsPage', action: 'updateTag', tagId },
+      });
       toast('Failed to update tag', { variant: 'error' });
     }
   };
 
   const filteredTags = useMemo(
-    (): TagRecord[] => tags.filter((tag: TagRecord) => tag.name.toLowerCase().includes(searchQuery.trim().toLowerCase())),
-    [tags, searchQuery]
+    (): TagRecord[] =>
+      tags.filter((tag: TagRecord) =>
+        tag.name.toLowerCase().includes(searchQuery.trim().toLowerCase()),
+      ),
+    [tags, searchQuery],
   );
 
-  const columns = useMemo<ColumnDef<TagRecord>[]>(() => [
-    {
-      accessorKey: 'name',
-      header: 'Tag',
-      cell: ({ row }) => {
-        const tag = row.original;
-        const isEditing = editingId === tag.id;
-        
-        if (isEditing) {
-          return (
-            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
-              <Input
-                type='text'
-                value={editingName}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setEditingName(event.target.value)}
-                className='h-8 w-full sm:max-w-[200px]'
-                autoFocus
-              />
-              <div className='flex items-center gap-2'>
+  const columns = useMemo<ColumnDef<TagRecord>[]>(
+    () => [
+      {
+        accessorKey: 'name',
+        header: 'Tag',
+        cell: ({ row }) => {
+          const tag = row.original;
+          const isEditing = editingId === tag.id;
+
+          if (isEditing) {
+            return (
+              <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
                 <Input
-                  type='color'
-                  value={editingColor}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setEditingColor(event.target.value)}
-                  className='h-8 w-12 p-1'
+                  type='text'
+                  value={editingName}
+                  onChange={(
+                    event: React.ChangeEvent<HTMLInputElement>,
+                  ): void => setEditingName(event.target.value)}
+                  className='h-8 w-full sm:max-w-[200px]'
+                  autoFocus
                 />
-                <span className='text-[10px] font-mono text-gray-500 uppercase'>{editingColor}</span>
+                <div className='flex items-center gap-2'>
+                  <Input
+                    type='color'
+                    value={editingColor}
+                    onChange={(
+                      event: React.ChangeEvent<HTMLInputElement>,
+                    ): void => setEditingColor(event.target.value)}
+                    className='h-8 w-12 p-1'
+                  />
+                  <span className='text-[10px] font-mono text-gray-500 uppercase'>
+                    {editingColor}
+                  </span>
+                </div>
               </div>
+            );
+          }
+
+          return (
+            <Tag
+              label={tag.name || 'Unnamed'}
+              color={tag.color || '#3b82f6'}
+              dot
+              className='h-7 font-semibold'
+            />
+          );
+        },
+      },
+      {
+        id: 'actions',
+        header: () => <div className='text-right'>Actions</div>,
+        cell: ({ row }) => {
+          const tag = row.original;
+          const isEditing = editingId === tag.id;
+
+          return (
+            <div className='flex items-center justify-end gap-2'>
+              {isEditing ? (
+                <>
+                  <Button
+                    variant='outline'
+                    size='xs'
+                    onClick={(): void => {
+                      void handleUpdate(tag.id);
+                    }}
+                    disabled={updateTag.isPending}
+                  >
+                    Save
+                  </Button>
+                  <Button variant='ghost' size='xs' onClick={handleEditCancel}>
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant='outline'
+                    size='xs'
+                    onClick={(): void => handleEditStart(tag)}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    type='button'
+                    size='xs'
+                    variant='outline'
+                    onClick={(): void => setToDelete(tag)}
+                    className='text-red-300 hover:text-red-200'
+                    aria-label={`Delete ${tag.name}`}
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </>
+              )}
             </div>
           );
-        }
-
-        return (
-          <Tag 
-            label={tag.name || 'Unnamed'} 
-            color={tag.color || '#3b82f6'} 
-            dot 
-            className='h-7 font-semibold' 
-          />
-        );
+        },
       },
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => {
-        const tag = row.original;
-        const isEditing = editingId === tag.id;
-        
-        return (
-          <div className='flex items-center justify-end gap-2'>
-            {isEditing ? (
-              <>
-                <Button
-                  variant='outline'
-                  size='xs'
-                  onClick={(): void => { void handleUpdate(tag.id); }}
-                  disabled={updateTag.isPending}
-                >
-                  Save
-                </Button>
-                <Button
-                  variant='ghost'
-                  size='xs'
-                  onClick={handleEditCancel}
-                >
-                  Cancel
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  variant='outline'
-                  size='xs'
-                  onClick={(): void => handleEditStart(tag)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  type='button'
-                  size='xs'
-                  variant='outline'
-                  onClick={(): void => setToDelete(tag)}
-                  className='text-red-300 hover:text-red-200'
-                  aria-label={`Delete ${tag.name}`}
-                >
-                  <Trash2 size={14} />
-                </Button>
-              </>
-            )}
-          </div>
-        );
-      },
-    },
-  ], [editingId, editingName, editingColor, handleUpdate, updateTag.isPending, handleEditCancel, handleEditStart]);
+    ],
+    [
+      editingId,
+      editingName,
+      editingColor,
+      handleUpdate,
+      updateTag.isPending,
+      handleEditCancel,
+      handleEditStart,
+    ],
+  );
 
   return (
     <PageLayout
       title='Note Tags'
       description='Create and remove tags used in the Notes app.'
       refresh={{
-        onRefresh: () => { void tagsQuery.refetch(); },
+        onRefresh: () => {
+          void tagsQuery.refetch();
+        },
         isRefreshing: tagsQuery.isFetching,
       }}
     >
@@ -229,7 +278,9 @@ export function AdminNotesTagsPage(): React.JSX.Element {
               <Input
                 type='text'
                 value={name}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setName(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setName(event.target.value)
+                }
                 className='w-full'
                 placeholder='Enter tag name'
               />
@@ -239,13 +290,22 @@ export function AdminNotesTagsPage(): React.JSX.Element {
                 <Input
                   type='color'
                   value={color}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setColor(event.target.value)}
+                  onChange={(
+                    event: React.ChangeEvent<HTMLInputElement>,
+                  ): void => setColor(event.target.value)}
                   className='h-10 w-16 p-1'
                 />
-                <span className='text-xs font-mono text-gray-500 uppercase'>{color}</span>
+                <span className='text-xs font-mono text-gray-500 uppercase'>
+                  {color}
+                </span>
               </div>
             </FormField>
-            <Button onClick={(): void => { void handleCreate(); }} disabled={createTag.isPending}>
+            <Button
+              onClick={(): void => {
+                void handleCreate();
+              }}
+              disabled={createTag.isPending}
+            >
               <Plus className='mr-2 size-4' />
               {createTag.isPending ? 'Saving...' : 'Create'}
             </Button>
@@ -257,7 +317,9 @@ export function AdminNotesTagsPage(): React.JSX.Element {
             <div className='max-w-md'>
               <SearchInput
                 value={searchQuery}
-                onChange={(event: React.ChangeEvent<HTMLInputElement>): void => setSearchQuery(event.target.value)}
+                onChange={(event: React.ChangeEvent<HTMLInputElement>): void =>
+                  setSearchQuery(event.target.value)
+                }
                 onClear={() => setSearchQuery('')}
                 placeholder='Search tags...'
                 size='sm'
@@ -270,7 +332,11 @@ export function AdminNotesTagsPage(): React.JSX.Element {
           emptyState={
             <EmptyState
               title={searchQuery ? 'No tags found' : 'No tags created yet'}
-              description={searchQuery ? 'Try a different search query.' : 'Create your first tag to start organizing notes.'}
+              description={
+                searchQuery
+                  ? 'Try a different search query.'
+                  : 'Create your first tag to start organizing notes.'
+              }
               variant='compact'
               className='py-8'
             />

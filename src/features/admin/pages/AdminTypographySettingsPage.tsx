@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { logClientError } from '@/features/observability';
+import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { APP_FONT_SET_SETTING_KEY, APP_FONT_SETS, getAppFontSet, type AppFontSetId } from '@/shared/constants/typography';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { SectionHeader, SelectSimple, useToast, FormSection, FormField, Breadcrumbs, FormActions, LoadingState, PropertyRow, Hint } from '@/shared/ui';

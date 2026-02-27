@@ -3,7 +3,7 @@
 
 
 
-import type { RouterConfig } from '@/features/ai/ai-paths/lib';
+import type { RouterConfig } from '@/shared/lib/ai-paths';
 import { Input, Label, SelectSimple } from '@/shared/ui';
 
 import { useAiPathConfig } from '../../AiPathConfigContext';

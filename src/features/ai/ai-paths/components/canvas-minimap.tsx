@@ -2,14 +2,14 @@
 
 import React from 'react';
 
-import type { AiNode } from '@/features/ai/ai-paths/lib';
+import type { AiNode } from '@/shared/lib/ai-paths';
 import {
   CANVAS_HEIGHT,
   CANVAS_WIDTH,
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
   clampScale,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 
 import type { EdgePath } from '../context/hooks/useEdgePaths';
 import { useCanvasBoardUI } from './CanvasBoardUIContext';

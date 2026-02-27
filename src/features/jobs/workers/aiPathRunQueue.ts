@@ -7,7 +7,7 @@ import { getPathRunRepository } from '@/features/ai/ai-paths/services/path-run-r
 import { getRuntimeAnalyticsSummary, recordRuntimeRunStarted } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { processRun, processStaleRunRecovery } from '@/features/jobs/processors/ai-path-run-processor';
 import { getAiInsightsQueueStatus } from '@/features/jobs/workers/aiInsightsQueue';
-import { logSystemEvent } from '@/features/observability/server';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type {
   AiPathRunQueueSloStatusDto,
   QueueSloThresholdsDto,
@@ -312,7 +312,7 @@ const queue = createManagedQueue<AiPathRunJobData>({
   },
   onFailed: async (_jobId, error, data) => {
     try {
-      const { ErrorSystem } = await import('@/features/observability/services/error-system');
+      const { ErrorSystem } = await import('@/features/observability/server');
       void ErrorSystem.captureException(error, {
         service: LOG_SOURCE,
         runId: data.runId,
@@ -492,7 +492,7 @@ export const processSingleRun = async (runId: string): Promise<void> => {
     await executePathRun(run);
   } catch (error) {
     try {
-      const { ErrorSystem } = await import('@/features/observability/services/error-system');
+      const { ErrorSystem } = await import('@/features/observability/server');
       void ErrorSystem.captureException(error, {
         service: `${LOG_SOURCE}-single`,
         runId,

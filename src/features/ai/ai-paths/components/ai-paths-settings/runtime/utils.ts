@@ -15,11 +15,11 @@ import type {
   RuntimeState,
   RuntimePortValues,
   UpdaterSampleState,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   STORAGE_VERSION,
-} from '@/features/ai/ai-paths/lib';
-import { extractImageUrls } from '@/features/ai/ai-paths/lib/core/runtime/utils';
+} from '@/shared/lib/ai-paths';
+import { extractImageUrls } from '@/shared/lib/ai-paths/core/runtime/utils';
 
 /**
  * Generate a unique run ID

@@ -1,6 +1,7 @@
 import 'server-only';
 
 import { getAppDbProvider } from '@/shared/lib/db/app-db-provider';
+import { configurationError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 import prisma from '@/shared/lib/db/prisma';
 
@@ -11,6 +12,37 @@ import {
   type AiBrainAssignment,
   type AiBrainFeature,
 } from './settings';
+
+export type BrainAppliedMeta = {
+  feature: AiBrainFeature;
+  provider: 'model' | 'agent';
+  modelId: string;
+  temperature: number;
+  maxTokens: number;
+  systemPromptApplied: boolean;
+  enforced: true;
+};
+
+export type BrainModelExecutionConfig = {
+  assignment: AiBrainAssignment;
+  modelId: string;
+  temperature: number;
+  maxTokens: number;
+  systemPrompt: string;
+  brainApplied: BrainAppliedMeta;
+};
+
+const featureLabels: Record<AiBrainFeature, string> = {
+  cms_builder: 'CMS Builder',
+  system_logs: 'System Logs',
+  error_logs: 'Error Logs',
+  analytics: 'Analytics',
+  runtime_analytics: 'Runtime Analytics',
+  image_studio: 'Image Studio',
+  ai_paths: 'AI Paths',
+  chatbot: 'Chatbot',
+  prompt_engine: 'Prompt Engine',
+};
 
 type SettingDoc = { key?: string; value?: string; _id?: string };
 
@@ -73,4 +105,59 @@ export const getBrainAssignmentForFeature = async (
   const raw = await readBrainSettingValue(AI_BRAIN_SETTINGS_KEY);
   const settings = parseBrainSettings(raw);
   return resolveBrainAssignment(settings, feature);
+};
+
+export const resolveBrainModelExecutionConfig = async (
+  feature: AiBrainFeature,
+  options?: {
+    defaultTemperature?: number;
+    defaultMaxTokens?: number;
+    defaultSystemPrompt?: string;
+  },
+): Promise<BrainModelExecutionConfig> => {
+  const assignment = await getBrainAssignmentForFeature(feature);
+  const featureLabel = featureLabels[feature] ?? feature;
+
+  if (!assignment.enabled) {
+    throw configurationError(
+      `${featureLabel} is disabled in AI Brain. Enable it in /admin/settings/brain before running this action.`,
+    );
+  }
+
+  if (assignment.provider !== 'model') {
+    throw configurationError(
+      `${featureLabel} requires AI Brain provider=Model in this release. Update /admin/settings/brain to continue.`,
+    );
+  }
+
+  const modelId = assignment.modelId.trim();
+  if (!modelId) {
+    throw configurationError(
+      `${featureLabel} has no model assigned in AI Brain. Set a non-empty model ID in /admin/settings/brain.`,
+    );
+  }
+
+  const temperature = assignment.temperature ?? options?.defaultTemperature ?? 0.7;
+  const maxTokens = assignment.maxTokens ?? options?.defaultMaxTokens ?? 800;
+  const systemPrompt =
+    assignment.systemPrompt?.trim() ||
+    options?.defaultSystemPrompt ||
+    'You are an AI assistant.';
+
+  return {
+    assignment,
+    modelId,
+    temperature,
+    maxTokens,
+    systemPrompt,
+    brainApplied: {
+      feature,
+      provider: 'model',
+      modelId,
+      temperature,
+      maxTokens,
+      systemPromptApplied: systemPrompt.trim().length > 0,
+      enforced: true,
+    },
+  };
 };

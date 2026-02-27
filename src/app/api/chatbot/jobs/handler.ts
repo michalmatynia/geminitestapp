@@ -1,18 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { resolveBrainModelExecutionConfig } from '@/features/ai/brain/server';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
-import { startChatbotJobQueue } from '@/features/jobs/server';
-import type { EnqueueChatbotJobRequestDto as EnqueueJobRequest } from '@/shared/contracts/chatbot';
-import type { ChatbotJobDto as ChatbotJob } from '@/shared/contracts/chatbot';
-import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import type { JsonParseResult } from '@/shared/contracts/ui';
+import { enqueueChatbotJob, startChatbotJobQueue } from '@/features/jobs/server';
+import type {
+  ChatbotJobDto as ChatbotJob,
+  EnqueueChatbotJobRequestDto as EnqueueJobRequest,
+} from '@/shared/contracts/chatbot';
+import type { ApiHandlerContext, JsonParseResult } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';
 import { logger } from '@/shared/utils/logger';
 
 const DEBUG_CHATBOT = process.env['DEBUG_CHATBOT'] === 'true';
+const DEFAULT_CHATBOT_SYSTEM_PROMPT = 'You are a helpful assistant.';
 
 const chatMessageSchema = z.object({
   role: z.enum(['user', 'assistant', 'system']),
@@ -21,29 +24,39 @@ const chatMessageSchema = z.object({
 
 const enqueueJobSchema = z.object({
   sessionId: z.string().trim().min(1),
-  model: z.string().trim().min(1),
+  model: z.string().trim().min(1).optional(),
   messages: z.array(chatMessageSchema).min(1),
   userMessage: z.string().trim().optional(),
 }) as z.ZodSchema<EnqueueJobRequest>;
 
-export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function GET_handler(
+  _req: NextRequest,
+  ctx: ApiHandlerContext,
+): Promise<Response> {
   const jobs: ChatbotJob[] = await chatbotJobRepository.findAll(50);
 
   if (DEBUG_CHATBOT) {
-    logger.info('[chatbot][jobs][GET] Listed', { 
+    logger.info('[chatbot][jobs][GET] Listed', {
       count: jobs.length,
-      requestId: ctx.requestId 
+      requestId: ctx.requestId,
     });
   }
 
   return NextResponse.json({ jobs });
 }
 
-export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
-  const result: JsonParseResult<EnqueueJobRequest> = await parseJsonBody<EnqueueJobRequest>(req, enqueueJobSchema, {
-    logPrefix: 'chatbot.jobs.POST',
-  });
-  
+export async function POST_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+): Promise<Response> {
+  const result: JsonParseResult<EnqueueJobRequest> = await parseJsonBody<EnqueueJobRequest>(
+    req,
+    enqueueJobSchema,
+    {
+      logPrefix: 'chatbot.jobs.POST',
+    },
+  );
+
   if (!result.ok) {
     return result.response;
   }
@@ -55,14 +68,17 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     throw notFoundError('Session not found.');
   }
 
+  const brainConfig = await resolveBrainModelExecutionConfig('chatbot', {
+    defaultTemperature: 0.7,
+    defaultMaxTokens: 800,
+    defaultSystemPrompt: DEFAULT_CHATBOT_SYSTEM_PROMPT,
+  });
+
   const trimmedUserMessage: string | undefined = data.userMessage?.trim();
   if (trimmedUserMessage && session.messages) {
     const latest = session.messages[session.messages.length - 1];
 
-    if (
-      latest?.role !== 'user' ||
-      latest.content !== trimmedUserMessage
-    ) {
+    if (latest?.role !== 'user' || latest.content !== trimmedUserMessage) {
       await chatbotSessionRepository.addMessage(session.id, {
         role: 'user',
         content: trimmedUserMessage,
@@ -71,34 +87,52 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     }
   }
 
+  const requestedModel = data.model?.trim() || '';
   const job: ChatbotJob = await chatbotJobRepository.create({
     sessionId: session.id,
-    model: data.model,
+    model: brainConfig.modelId,
     payload: {
       sessionId: session.id,
-      model: data.model,
+      model: brainConfig.modelId,
       messages: data.messages,
+      options: {
+        brainApplied: brainConfig.brainApplied,
+        ...(requestedModel ? { requestedModel } : {}),
+      },
     },
   });
 
   startChatbotJobQueue();
+  await enqueueChatbotJob(job.id);
 
   if (DEBUG_CHATBOT) {
     logger.info('[chatbot][jobs][POST] Queued', {
       jobId: job.id,
       sessionId: job.sessionId,
       requestId: ctx.requestId,
+      requestedModel: requestedModel || null,
+      appliedModel: brainConfig.modelId,
     });
   }
 
-  const responsePayload = { jobId: job.id, status: job.status };
-  return NextResponse.json(responsePayload);
+  return NextResponse.json({
+    jobId: job.id,
+    status: job.status,
+    brainApplied: brainConfig.brainApplied,
+  });
 }
 
-export async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
+export async function DELETE_handler(
+  req: NextRequest,
+  ctx: ApiHandlerContext,
+): Promise<Response> {
   const scope = req.nextUrl.searchParams.get('scope') ?? 'terminal';
 
-  const terminalStatuses: Array<ChatbotJob['status']> = ['completed', 'failed', 'canceled'];
+  const terminalStatuses: Array<ChatbotJob['status']> = [
+    'completed',
+    'failed',
+    'canceled',
+  ];
 
   if (scope !== 'terminal') {
     throw badRequestError('Unsupported delete scope.');
@@ -107,9 +141,9 @@ export async function DELETE_handler(req: NextRequest, ctx: ApiHandlerContext): 
   const deletedCount: number = await chatbotJobRepository.deleteMany(terminalStatuses);
 
   if (DEBUG_CHATBOT) {
-    logger.info('[chatbot][jobs][DELETE] Deleted', { 
+    logger.info('[chatbot][jobs][DELETE] Deleted', {
       count: deletedCount,
-      requestId: ctx.requestId 
+      requestId: ctx.requestId,
     });
   }
 

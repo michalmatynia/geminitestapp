@@ -49,11 +49,11 @@ const buildIdFilter = (id: string): Filter<ProductCategoryDoc> => {
   }
   const deduped = Array.from(new Map(variants.map((value) => [value.toString(), value])).values());
   if (deduped.length === 1) {
-    return { _id: deduped[0] } as Filter<ProductCategoryDoc>;
+    return { _id: deduped[0] };
   }
   return {
     $or: deduped.map((value) => ({ _id: value })),
-  } as Filter<ProductCategoryDoc>;
+  };
 };
 
 const buildParentFilter = (parentId: string | null): Filter<ProductCategoryDoc> => {
@@ -64,11 +64,11 @@ const buildParentFilter = (parentId: string | null): Filter<ProductCategoryDoc> 
   }
   const deduped = Array.from(new Map(variants.map((value) => [value.toString(), value])).values());
   if (deduped.length === 1) {
-    return { parentId: deduped[0] } as Filter<ProductCategoryDoc>;
+    return { parentId: deduped[0] };
   }
   return {
     $or: deduped.map((value) => ({ parentId: value })),
-  } as Filter<ProductCategoryDoc>;
+  };
 };
 
 const resolveParentStorageId = async (
@@ -112,7 +112,7 @@ const normalizeSiblingOrder = async (
   const db = await getMongoDb();
   const query: Filter<ProductCategoryDoc> = {
     $and: [{ catalogId }, buildParentFilter(parentId)],
-  } as Filter<ProductCategoryDoc>;
+  };
   const siblings = await db
     .collection<ProductCategoryDoc>(COLLECTION)
     .find(query)
@@ -147,7 +147,7 @@ const reorderSiblingsForCategory = async (
   const collection = db.collection<ProductCategoryDoc>(COLLECTION);
   const query: Filter<ProductCategoryDoc> = {
     $and: [{ catalogId }, buildParentFilter(parentId)],
-  } as Filter<ProductCategoryDoc>;
+  };
   const siblings = await db
     .collection<ProductCategoryDoc>(COLLECTION)
     .find(query)
@@ -232,7 +232,7 @@ export const mongoCategoryRepository: CategoryRepository = {
         ? {}
         : clauses.length === 1
           ? clauses[0]!
-          : ({ $and: clauses } as Filter<ProductCategoryDoc>);
+          : { $and: clauses };
 
     const categories = await db
       .collection<ProductCategoryDoc>(COLLECTION)
@@ -368,7 +368,7 @@ export const mongoCategoryRepository: CategoryRepository = {
 
     await db.collection<ProductCategoryDoc>(COLLECTION).updateOne(
       buildIdFilter(id),
-      { $set: set } as UpdateFilter<ProductCategoryDoc>
+      { $set: set }
     );
 
     if (movedBucket) {
@@ -404,7 +404,7 @@ export const mongoCategoryRepository: CategoryRepository = {
     const db = await getMongoDb();
     const query: Filter<ProductCategoryDoc> = {
       $and: [{ catalogId }, { name }, buildParentFilter(parentId)],
-    } as Filter<ProductCategoryDoc>;
+    };
     const doc = await db.collection<ProductCategoryDoc>(COLLECTION).findOne(query);
     return doc ? toCategoryDomain(doc) : null;
   },

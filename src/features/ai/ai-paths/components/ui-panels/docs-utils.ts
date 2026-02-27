@@ -1,4 +1,4 @@
-import { AI_PATHS_NODE_DOCS } from '@/features/ai/ai-paths/lib/core/docs/node-docs';
+import { AI_PATHS_NODE_DOCS } from '@/shared/lib/ai-paths/core/docs/node-docs';
 
 type AiPathsNodeDocEntry = (typeof AI_PATHS_NODE_DOCS)[number];
 

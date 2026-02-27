@@ -1,23 +1,23 @@
-import type { 
-  NoteWithRelationsDto as NoteWithRelations, 
-  UpdateNoteDto as NoteUpdateInput, 
-  CreateNoteDto as NoteCreateInput, 
-  NoteFiltersDto as NoteFilters, 
-  NoteTagDto as TagRecord, 
-  CreateNoteTagDto as TagCreateInput, 
-  UpdateNoteTagDto as TagUpdateInput, 
-  NoteCategoryDto as CategoryRecord, 
-  CreateNoteCategoryDto as CategoryCreateInput, 
-  UpdateNoteCategoryDto as CategoryUpdateInput, 
-  NoteCategoryRecordWithChildrenDto as CategoryWithChildren, 
-  NotebookDto as NotebookRecord, 
-  CreateNotebookDto as NotebookCreateInput, 
-  UpdateNotebookDto as NotebookUpdateInput, 
-  NoteThemeDto as ThemeRecord, 
-  CreateNoteThemeDto as ThemeCreateInput, 
-  UpdateNoteThemeDto as ThemeUpdateInput, 
-  NoteFileDto as NoteFileRecord, 
-  CreateNoteFileDto as NoteFileCreateInput
+import type {
+  NoteWithRelationsDto as NoteWithRelations,
+  UpdateNoteDto as NoteUpdateInput,
+  CreateNoteDto as NoteCreateInput,
+  NoteFiltersDto as NoteFilters,
+  NoteTagDto as TagRecord,
+  CreateNoteTagDto as TagCreateInput,
+  UpdateNoteTagDto as TagUpdateInput,
+  NoteCategoryDto as CategoryRecord,
+  CreateNoteCategoryDto as CategoryCreateInput,
+  UpdateNoteCategoryDto as CategoryUpdateInput,
+  NoteCategoryRecordWithChildrenDto as CategoryWithChildren,
+  NotebookDto as NotebookRecord,
+  CreateNotebookDto as NotebookCreateInput,
+  UpdateNotebookDto as NotebookUpdateInput,
+  NoteThemeDto as ThemeRecord,
+  CreateNoteThemeDto as ThemeCreateInput,
+  UpdateNoteThemeDto as ThemeUpdateInput,
+  NoteFileDto as NoteFileRecord,
+  CreateNoteFileDto as NoteFileCreateInput,
 } from '@/shared/contracts/notes';
 
 export interface NoteRepository {
@@ -26,7 +26,11 @@ export interface NoteRepository {
   getById(id: string): Promise<NoteWithRelations | null>;
   create(data: NoteCreateInput): Promise<NoteWithRelations>;
   update(id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null>;
-  syncRelatedNotesBatch(noteId: string, addedIds: string[], removedIds: string[]): Promise<void>;
+  syncRelatedNotesBatch(
+    noteId: string,
+    addedIds: string[],
+    removedIds: string[],
+  ): Promise<void>;
   delete(id: string): Promise<boolean>;
 
   // Tags
@@ -41,14 +45,20 @@ export interface NoteRepository {
   getCategoryById(id: string): Promise<CategoryRecord | null>;
   getCategoryTree(notebookId?: string | null): Promise<CategoryWithChildren[]>;
   createCategory(data: CategoryCreateInput): Promise<CategoryRecord>;
-  updateCategory(id: string, data: CategoryUpdateInput): Promise<CategoryRecord | null>;
+  updateCategory(
+    id: string,
+    data: CategoryUpdateInput,
+  ): Promise<CategoryRecord | null>;
   deleteCategory(id: string, recursive?: boolean): Promise<boolean>;
 
   // Notebooks
   getAllNotebooks(): Promise<NotebookRecord[]>;
   getNotebookById(id: string): Promise<NotebookRecord | null>;
   createNotebook(data: NotebookCreateInput): Promise<NotebookRecord>;
-  updateNotebook(id: string, data: NotebookUpdateInput): Promise<NotebookRecord | null>;
+  updateNotebook(
+    id: string,
+    data: NotebookUpdateInput,
+  ): Promise<NotebookRecord | null>;
   deleteNotebook(id: string): Promise<boolean>;
   getOrCreateDefaultNotebook(): Promise<NotebookRecord>;
   invalidateDefaultNotebookCache(): Promise<void>;

@@ -6,6 +6,7 @@ import path from 'path';
 import { ObjectId } from 'mongodb';
 import OpenAI from 'openai';
 
+import { resolveBrainModelExecutionConfig } from '@/features/ai/brain/server';
 import {
   createMongoBackup,
   createPostgresBackup,
@@ -17,19 +18,20 @@ import {
   markDatabaseBackupJobRunning,
   markDatabaseBackupJobSucceeded,
 } from '@/features/database/services/database-backup-scheduler';
-import type { ImageFileRecord } from '@/features/files/server';
-import { getImageFileRepository } from '@/features/files/server';
+import type { ImageFileRecord } from '@/shared/lib/files/services/image-file-service';
+import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import { listBaseListingsForSync, syncBaseImagesForListing } from '@/features/integrations/services/base-image-sync';
-import { defaultLanguages } from '@/features/internationalization/server';
-import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
-import { ErrorSystem, logSystemEvent } from '@/features/observability/server';
+import { defaultLanguages } from '@/shared/lib/internationalization/server';
+import { getInternationalizationProvider } from '@/shared/lib/internationalization/services/internationalization-provider';
+import { logSystemEvent } from '@/shared/lib/observability/system-logger';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   generateProductDescription,
   getProductRepository,
   getSettingValue,
   translateProduct,
 } from '@/features/products/server';
-import { buildImageBase64Slots, type ProductImageBase64Source } from '@/features/products/services/image-base64';
+import { buildImageBase64Slots } from '@/features/products/services/image-base64';
 import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
 import type { ProductCreateInputDto as ProductFormData } from '@/shared/contracts/products';
 import {
@@ -141,30 +143,90 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
   if (!prompt) {
     throw badRequestError('Graph model job missing prompt', { jobId: job.id });
   }
+  const source =
+    typeof payload.source === 'string' && payload.source.trim()
+      ? payload.source.trim()
+      : 'ai_paths';
   const requestedModelId =
     typeof payload.modelId === 'string' ? payload.modelId.trim() : '';
-  const visionFallback = (await getSettingValue('ai_vision_model'))?.trim() || '';
-  const textFallback = (await getSettingValue('openai_model'))?.trim() || '';
-  let modelId =
-    requestedModelId ||
-    (payload.vision ? visionFallback : textFallback) ||
-    (payload.vision ? 'gemma3:27b' : 'gpt-4o');
-  const temperature =
-    typeof payload.temperature === 'number' ? payload.temperature : 0.7;
-  const maxTokens =
-    typeof payload.maxTokens === 'number' ? payload.maxTokens : 800;
+  const requestedTemperature =
+    typeof payload.temperature === 'number' ? payload.temperature : undefined;
+  const requestedMaxTokens =
+    typeof payload.maxTokens === 'number' ? payload.maxTokens : undefined;
+  const requestedSystemPrompt =
+    typeof payload['systemPrompt'] === 'string' &&
+    payload['systemPrompt'].trim()
+      ? payload['systemPrompt'].trim()
+      : '';
+  let modelId: string;
+  let temperature: number;
+  let maxTokens: number;
+  let systemMessage: string;
+  let brainApplied: Record<string, unknown> | undefined;
   const imageUrls = Array.isArray(payload.imageUrls)
     ? payload.imageUrls.filter((url: unknown): url is string => typeof url === 'string' && url.trim() !== '')
     : [];
   const attachImages = Boolean(payload.vision) && imageUrls.length > 0;
+  if (source === 'ai_paths') {
+    const brainConfig = await resolveBrainModelExecutionConfig('ai_paths', {
+      defaultTemperature: 0.7,
+      defaultMaxTokens: 800,
+      defaultSystemPrompt: 'You are an AI assistant.',
+    });
+    modelId = brainConfig.modelId;
+    temperature = brainConfig.temperature;
+    maxTokens = brainConfig.maxTokens;
+    systemMessage = brainConfig.systemPrompt;
+    brainApplied = brainConfig.brainApplied;
+
+    const overrideAttempted =
+      Boolean(requestedModelId) ||
+      requestedTemperature !== undefined ||
+      requestedMaxTokens !== undefined ||
+      Boolean(requestedSystemPrompt);
+    if (overrideAttempted) {
+      await logSystemEvent({
+        level: 'info',
+        message: '[brain][ai_paths] Ignored graph_model payload override',
+        context: {
+          jobId: job.id,
+          productId,
+          requestedModelId: requestedModelId || null,
+          requestedTemperature: requestedTemperature ?? null,
+          requestedMaxTokens: requestedMaxTokens ?? null,
+          requestedSystemPrompt: Boolean(requestedSystemPrompt),
+          enforcedModelId: modelId,
+        },
+      });
+    }
+  } else {
+    const visionFallback = (await getSettingValue('ai_vision_model'))?.trim() || '';
+    const textFallback = (await getSettingValue('openai_model'))?.trim() || '';
+    modelId =
+      requestedModelId ||
+      (payload.vision ? visionFallback : textFallback) ||
+      (payload.vision ? 'gemma3:27b' : 'gpt-4o');
+    temperature = requestedTemperature ?? 0.7;
+    maxTokens = requestedMaxTokens ?? 800;
+    systemMessage = requestedSystemPrompt || 'You are an AI assistant.';
+  }
   const apiKey = (await getSettingValue('openai_api_key')) ?? process.env['OPENAI_API_KEY'] ?? null;
   const modelLower = modelId.toLowerCase();
   const isOpenAIModel =
     (modelLower.startsWith('gpt-') && !modelLower.includes('oss')) ||
     modelLower.startsWith('ft:gpt-') ||
     modelLower.startsWith('o1-');
-  if (isOpenAIModel && !apiKey) {
-    const fallback = visionFallback || 'gemma3:27b';
+  const isAnthropicModel =
+    modelLower.startsWith('claude-') || modelLower.startsWith('anthropic:');
+  const isGeminiModel =
+    modelLower.startsWith('gemini-') || modelLower.startsWith('models/gemini-');
+  if (source === 'ai_paths' && (isAnthropicModel || isGeminiModel)) {
+    throw configurationError(
+      `AI Paths graph_model nodes currently support only OpenAI or Ollama Brain models. Update /admin/settings/brain because "${modelId}" is not supported yet.`,
+    );
+  }
+  if (source !== 'ai_paths' && isOpenAIModel && !apiKey) {
+    const fallback = (await getSettingValue('ai_vision_model'))?.trim() || 'gemma3:27b';
     modelId = fallback;
   }
   const { openai: client, isOllama } = getClient(modelId, apiKey);
@@ -178,7 +240,7 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
     const completion = await client.chat.completions.create({
       model: modelId,
       messages: [
-        { role: 'system', content: 'You are an AI assistant.' },
+        { role: 'system', content: systemMessage },
         { role: 'user', content },
       ],
       temperature,
@@ -192,9 +254,10 @@ export async function processGraphModel(job: Job): Promise<Record<string, unknow
       imageUrls,
       temperature,
       maxTokens,
-      source: payload.source ?? 'ai_paths',
+      source,
       graph: payload.graph ?? undefined,
       productId,
+      ...(brainApplied ? { brainApplied } : {}),
     };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -282,7 +345,7 @@ export async function processBase64ConvertAll(job: Job): Promise<Record<string, 
 
     for (const product of products) {
       try {
-        const { imageBase64s, imageLinks } = await buildImageBase64Slots(product as unknown as ProductImageBase64Source);
+        const { imageBase64s, imageLinks } = await buildImageBase64Slots(product);
         await productRepo.updateProduct(product.id, { imageBase64s, imageLinks });
         succeeded += 1;
       } catch {
@@ -563,14 +626,14 @@ export async function processTranslation(job: Job): Promise<Record<string, unkno
   let targetLanguages: string[];
 
   if (product.catalogs && product.catalogs.length > 0) {
-    const firstCatalog = product.catalogs[0] as unknown as { catalog?: { id: string; name: string; languageIds?: string[] } };
-    const hasEmbeddedCatalog = firstCatalog?.catalog && typeof firstCatalog.catalog === 'object';
+    const firstCatalog = product.catalogs[0];
+    const hasEmbeddedCatalog = Boolean(firstCatalog?.catalog);
 
     if (hasEmbeddedCatalog) {
       const languageSet = new Set<string>();
-      for (const catalogAssignment of (product.catalogs as unknown as { catalog: { id: string; name: string; languageIds?: string[] } }[])) {
+      for (const catalogAssignment of product.catalogs) {
         const catalog = catalogAssignment.catalog;
-        if (catalog.languageIds && Array.isArray(catalog.languageIds)) {
+        if (catalog && Array.isArray(catalog.languageIds)) {
           const languages = await fetchLanguagesByIds(catalog.languageIds);
           languages.forEach((lang: LanguageRecord) => {
             if (lang.code.toUpperCase() !== 'EN') {

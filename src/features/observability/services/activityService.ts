@@ -5,10 +5,9 @@ import type { CreateActivityLogDto, ActivityLogDto } from '@/shared/contracts/sy
 import { getActivityRepository } from './activity-repository';
 import { logSystemEvent } from '../lib/system-logger';
 
-
 /**
  * Logs a user activity event.
- * 
+ *
  * @example
  * ```ts
  * await logActivity({
@@ -24,9 +23,8 @@ export async function logActivity(data: CreateActivityLogDto): Promise<ActivityL
   const repository = await getActivityRepository();
   const log = await repository.createActivity(data);
 
-  // Connect to centralised logging
-  // We use void/catch to ensure activity logging doesn't block if system logging fails,
-  // although both usually go to the same DB.
+  // Connect to centralized logging.
+  // We use void/catch to avoid blocking activity writes if logging fails.
   void logSystemEvent({
     level: 'info',
     message: `Activity: ${data.type} - ${data.description}`,
@@ -40,7 +38,7 @@ export async function logActivity(data: CreateActivityLogDto): Promise<ActivityL
       metadata: data.metadata ?? null,
     },
   }).catch(() => {
-    // Silent fail for the secondary log
+    // Silent fail for the secondary log.
   });
 
   return log;
@@ -87,5 +85,5 @@ export const ActivityTypes = {
     CREATED: 'note.created',
     UPDATED: 'note.updated',
     DELETED: 'note.deleted',
-  }
+  },
 } as const;

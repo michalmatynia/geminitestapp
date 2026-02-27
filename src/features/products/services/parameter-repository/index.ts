@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import { getProductDataProvider, type ProductDbProvider } from '@/features/products/services/product-provider';
 import type { ParameterRepository } from '@/shared/contracts/products';
 

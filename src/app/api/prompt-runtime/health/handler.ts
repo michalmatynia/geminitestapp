@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import {
   getPromptValidationObservabilitySnapshot,
   resetPromptValidationObservability,
-} from '@/features/prompt-core/runtime-observability';
+} from '@/shared/lib/prompt-core/runtime-observability';
 import {
   getPromptExploderRuntimePatternCacheSnapshot,
   resetPromptExploderRuntimePatternCache,

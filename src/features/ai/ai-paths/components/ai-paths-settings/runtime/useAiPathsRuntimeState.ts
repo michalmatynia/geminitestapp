@@ -6,7 +6,7 @@ import type {
   AiPathRuntimeEvent,
   AiPathRuntimeNodeStatus,
   AiPathRuntimeNodeStatusMap,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/lib/ai-paths';
 import {
   MAX_RUNTIME_EVENTS,
   NON_SETTLED_RUNTIME_NODE_STATUSES,

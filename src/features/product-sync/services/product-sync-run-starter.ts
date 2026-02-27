@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { enqueueProductSyncRunJob } from '@/features/jobs/workers/productSyncQueue';
-import { ErrorSystem } from '@/features/observability/server';
+import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
   ProductSyncRunRecord,
   ProductSyncRunTrigger,

@@ -13,7 +13,7 @@ import {
   PROMPT_ENGINE_SETTINGS_KEY,
   parsePromptEngineSettings,
   parsePromptValidationRules,
-} from '@/features/prompt-engine/public';
+} from '@/shared/lib/prompt-engine/public';
 import type { PromptValidationRuleDto as PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, configurationError, internalError } from '@/shared/errors/app-error';

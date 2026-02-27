@@ -2,8 +2,8 @@ import { renderHook } from '@testing-library/react';
 import { Folder } from 'lucide-react';
 import { describe, expect, it } from 'vitest';
 
-import { useMasterFolderTreeAppearance } from '@/features/foldertree/hooks/useMasterFolderTreeAppearance';
-import { ICON_LIBRARY_MAP } from '@/features/icons';
+import { useMasterFolderTreeAppearance } from '@/shared/lib/foldertree/hooks/useMasterFolderTreeAppearance';
+import { ICON_LIBRARY_MAP } from '@/shared/lib/icons';
 import { createDefaultFolderTreeProfilesV2 } from '@/shared/utils/folder-tree-profiles-v2';
 
 describe('useMasterFolderTreeAppearance', () => {

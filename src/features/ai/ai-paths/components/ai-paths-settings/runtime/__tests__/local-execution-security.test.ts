@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { AiNode } from '@/features/ai/ai-paths/lib';
+import type { AiNode } from '@/shared/lib/ai-paths';
 
 import { evaluateLocalExecutionSecurity } from '../local-execution-security';
 

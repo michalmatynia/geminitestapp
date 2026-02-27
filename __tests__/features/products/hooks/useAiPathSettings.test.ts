@@ -1,4 +1,4 @@
-import { createDefaultPathConfig } from '@/features/ai/ai-paths/lib/core/utils/factory';
+import { createDefaultPathConfig } from '@/shared/lib/ai-paths/core/utils/factory';
 import { findTriggerPath } from '@/features/products/hooks/useAiPathSettings';
 import type { AiNode, PathConfig } from '@/shared/contracts/ai-paths';
 

@@ -9,7 +9,6 @@ import React, {
   useEffect,
   useCallback,
   useMemo,
-  useRef,
   ReactNode,
 } from 'react';
 
@@ -18,13 +17,12 @@ import {
   isTraderaIntegrationSlug,
 } from '@/features/integrations/constants/slugs';
 import type {
-  ConnectionFormState,
   IntegrationsContextType,
   SessionPayload,
   StepWithResult,
   IntegrationDefinition,
+  SaveConnectionOptions,
 } from '@/features/integrations/context/integrations-context-types';
-import { createEmptyConnectionForm } from '@/features/integrations/context/integrations-context-types';
 import { invalidateIntegrationConnections } from '@/features/integrations/hooks/integrationCache';
 import {
   useCreateIntegration,
@@ -80,7 +78,6 @@ export function useIntegrationsContext(): IntegrationsContextType {
 const EMPTY_INTEGRATIONS: Integration[] = [];
 const EMPTY_CONNECTIONS: IntegrationConnection[] = [];
 const EMPTY_PERSONAS: PlaywrightPersona[] = [];
-const NEW_CONNECTION_DRAFT_ID = '__new_connection__';
 
 export function IntegrationsProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const { toast } = useToast();
@@ -115,9 +112,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingConnectionId, setEditingConnectionId] = useState<string | null>(null);
   const [connectionToDelete, setConnectionToDelete] = useState<IntegrationConnection | null>(null);
-  const [connectionForm, setConnectionForm] =
-    useState<ConnectionFormState>(createEmptyConnectionForm());
-  const boundConnectionIdRef = useRef<string | null>(null);
 
   // Testing State
   const [testLog, setTestLog] = useState<TestLogEntry[]>([]);
@@ -218,11 +212,10 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
   useEffect(() => {
     if (connections.length === 0) {
       setEditingConnectionId(null);
-      setConnectionForm(createEmptyConnectionForm());
-      boundConnectionIdRef.current = null;
+      setPlaywrightSettings(defaultPlaywrightSettings);
+      setPlaywrightPersonaId(null);
       return;
     }
-    if (editingConnectionId === NEW_CONNECTION_DRAFT_ID) return;
 
     const connection =
       connections.find((item: IntegrationConnection) => item.id === editingConnectionId) ??
@@ -232,31 +225,6 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     if (editingConnectionId !== connection.id) {
       setEditingConnectionId(connection.id);
     }
-    const preserveSecrets = boundConnectionIdRef.current === connection.id;
-    setConnectionForm((prev) => ({
-      name: connection.name,
-      username: connection.username ?? '',
-      password: preserveSecrets ? prev.password : '',
-      traderaDefaultTemplateId: connection.traderaDefaultTemplateId ?? '',
-      traderaDefaultDurationHours: connection.traderaDefaultDurationHours ?? 72,
-      traderaAutoRelistEnabled:
-        connection.traderaAutoRelistEnabled ?? true,
-      traderaAutoRelistLeadMinutes:
-        connection.traderaAutoRelistLeadMinutes ?? 180,
-      traderaApiAppId:
-        typeof connection.traderaApiAppId === 'number'
-          ? String(connection.traderaApiAppId)
-          : '',
-      traderaApiAppKey: preserveSecrets ? prev.traderaApiAppKey : '',
-      traderaApiPublicKey: connection.traderaApiPublicKey ?? '',
-      traderaApiUserId:
-        typeof connection.traderaApiUserId === 'number'
-          ? String(connection.traderaApiUserId)
-          : '',
-      traderaApiToken: preserveSecrets ? prev.traderaApiToken : '',
-      traderaApiSandbox: connection.traderaApiSandbox ?? false,
-    }));
-    boundConnectionIdRef.current = connection.id;
     setPlaywrightSettings({
       headless: connection.playwrightHeadless ?? defaultPlaywrightSettings.headless,
       slowMo: connection.playwrightSlowMo ?? defaultPlaywrightSettings.slowMo,
@@ -278,7 +246,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       deviceName: connection.playwrightDeviceName ?? defaultPlaywrightSettings.deviceName,
     });
     setPlaywrightPersonaId(connection.playwrightPersonaId ?? null);
-  }, [connections, editingConnectionId]);
+  }, [connections, editingConnectionId, setPlaywrightSettings]);
 
   useEffect(() => {
     const loadPlaywrightUtils = async (): Promise<void> => {
@@ -327,54 +295,69 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     setIsModalOpen(true);
   };
 
-  const handleSaveConnection = async (): Promise<void> => {
-    if (!activeIntegration) return;
+  const handleSaveConnection = async (
+    options?: SaveConnectionOptions
+  ): Promise<IntegrationConnection | null> => {
+    if (!activeIntegration) return null;
+    if (!options?.formData) {
+      toast('Connection form data is missing.', { variant: 'error' });
+      return null;
+    }
+
+    const formData = options.formData;
     const isTraderaIntegration = isTraderaIntegrationSlug(activeIntegration.slug);
     const isTraderaApiIntegration = isTraderaApiIntegrationSlug(
       activeIntegration.slug
     );
     const isBaselinkerIntegration = activeIntegration.slug === 'baselinker';
+    const requestedConnectionId = options.connectionId?.trim() || null;
+    const resolvedConnectionId = requestedConnectionId ?? editingConnectionId;
     const isCreateMode =
-      !editingConnectionId || editingConnectionId === NEW_CONNECTION_DRAFT_ID;
-    const normalizedName = connectionForm.name.trim();
-    const normalizedUsername = connectionForm.username.trim();
+      options.mode === 'create' ||
+      (options.mode !== 'update' && !resolvedConnectionId);
+    const normalizedName = formData.name.trim();
+    const normalizedUsername = formData.username.trim();
 
     if (!normalizedName) {
       toast('Connection name is required.', { variant: 'error' });
-      return;
+      return null;
     }
     if (!isBaselinkerIntegration && !normalizedUsername) {
       toast('Username is required for this integration.', { variant: 'error' });
-      return;
+      return null;
     }
-    if (isCreateMode && !connectionForm.password.trim()) {
+    if (!isCreateMode && !resolvedConnectionId) {
+      toast('Connection id is required for update.', { variant: 'error' });
+      return null;
+    }
+    if (isCreateMode && !formData.password.trim()) {
       toast('Password/Token is required.', { variant: 'error' });
-      return;
+      return null;
     }
     if (isTraderaApiIntegration) {
-      if (!connectionForm.traderaApiAppId.trim()) {
+      if (!formData.traderaApiAppId.trim()) {
         toast('Tradera API App ID is required.', { variant: 'error' });
-        return;
+        return null;
       }
-      if (!connectionForm.traderaApiUserId.trim()) {
+      if (!formData.traderaApiUserId.trim()) {
         toast('Tradera API User ID is required.', { variant: 'error' });
-        return;
+        return null;
       }
-      if (isCreateMode && !connectionForm.traderaApiAppKey.trim()) {
+      if (isCreateMode && !formData.traderaApiAppKey.trim()) {
         toast('Tradera API App Key is required on create.', { variant: 'error' });
-        return;
+        return null;
       }
-      if (isCreateMode && !connectionForm.traderaApiToken.trim()) {
+      if (isCreateMode && !formData.traderaApiToken.trim()) {
         toast('Tradera API token is required on create.', { variant: 'error' });
-        return;
+        return null;
       }
     }
-    const normalizedPassword = connectionForm.password.trim();
-    const normalizedTraderaApiAppKey = connectionForm.traderaApiAppKey.trim();
-    const normalizedTraderaApiToken = connectionForm.traderaApiToken.trim();
-    const traderaApiAppId = Number.parseInt(connectionForm.traderaApiAppId, 10);
+    const normalizedPassword = formData.password.trim();
+    const normalizedTraderaApiAppKey = formData.traderaApiAppKey.trim();
+    const normalizedTraderaApiToken = formData.traderaApiToken.trim();
+    const traderaApiAppId = Number.parseInt(formData.traderaApiAppId, 10);
     const traderaApiUserId = Number.parseInt(
-      connectionForm.traderaApiUserId,
+      formData.traderaApiUserId,
       10
     );
     const payload = {
@@ -384,16 +367,16 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       ...(isTraderaIntegration
         ? {
           traderaDefaultTemplateId:
-              connectionForm.traderaDefaultTemplateId.trim() || null,
+              formData.traderaDefaultTemplateId.trim() || null,
           traderaDefaultDurationHours:
               Math.max(
                 1,
-                Math.min(720, Math.floor(connectionForm.traderaDefaultDurationHours))
+                Math.min(720, Math.floor(formData.traderaDefaultDurationHours))
               ),
-          traderaAutoRelistEnabled: connectionForm.traderaAutoRelistEnabled,
+          traderaAutoRelistEnabled: formData.traderaAutoRelistEnabled,
           traderaAutoRelistLeadMinutes: Math.max(
             0,
-            Math.min(10080, Math.floor(connectionForm.traderaAutoRelistLeadMinutes))
+            Math.min(10080, Math.floor(formData.traderaAutoRelistLeadMinutes))
           ),
         }
         : {}),
@@ -406,49 +389,30 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
             ? { traderaApiAppKey: normalizedTraderaApiAppKey }
             : {}),
           traderaApiPublicKey:
-            connectionForm.traderaApiPublicKey.trim() || null,
+            formData.traderaApiPublicKey.trim() || null,
           ...(Number.isFinite(traderaApiUserId) && traderaApiUserId > 0
             ? { traderaApiUserId }
             : {}),
           ...(normalizedTraderaApiToken
             ? { traderaApiToken: normalizedTraderaApiToken }
             : {}),
-          traderaApiSandbox: connectionForm.traderaApiSandbox,
+          traderaApiSandbox: formData.traderaApiSandbox,
         }
         : {}),
     };
     try {
       const saved = await upsertConnectionMutation.mutateAsync({
         integrationId: activeIntegration.id,
-        ...(!isCreateMode ? { connectionId: editingConnectionId } : {}),
+        ...(!isCreateMode ? { connectionId: resolvedConnectionId } : {}),
         payload,
       });
-      setEditingConnectionId(saved.id);
-      setConnectionForm({
-        name: saved.name,
-        username: saved.username ?? '',
-        password: normalizedPassword,
-        traderaDefaultTemplateId: saved.traderaDefaultTemplateId ?? '',
-        traderaDefaultDurationHours: saved.traderaDefaultDurationHours ?? 72,
-        traderaAutoRelistEnabled: saved.traderaAutoRelistEnabled ?? true,
-        traderaAutoRelistLeadMinutes:
-          saved.traderaAutoRelistLeadMinutes ?? 180,
-        traderaApiAppId:
-          typeof saved.traderaApiAppId === 'number'
-            ? String(saved.traderaApiAppId)
-            : '',
-        traderaApiAppKey: normalizedTraderaApiAppKey,
-        traderaApiPublicKey: saved.traderaApiPublicKey ?? '',
-        traderaApiUserId:
-          typeof saved.traderaApiUserId === 'number'
-            ? String(saved.traderaApiUserId)
-            : '',
-        traderaApiToken: normalizedTraderaApiToken,
-        traderaApiSandbox: saved.traderaApiSandbox ?? false,
-      });
-      boundConnectionIdRef.current = saved.id;
+      if (!isCreateMode) {
+        setEditingConnectionId(saved.id);
+      }
+      return saved;
     } catch (error: unknown) {
       toast((error as Error)?.message ?? 'Failed to save connection.', { variant: 'error' });
+      return null;
     }
   };
 
@@ -456,22 +420,29 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     setConnectionToDelete(connection);
   }, []);
 
-  const handleConfirmDeleteConnection = async (): Promise<void> => {
-    if (!connectionToDelete) return;
+  const handleConfirmDeleteConnection = async (userPassword: string): Promise<boolean> => {
+    if (!connectionToDelete) return false;
+
+    const normalizedPassword = userPassword.trim();
+    if (!normalizedPassword) {
+      toast('Password is required to delete this connection.', { variant: 'error' });
+      return false;
+    }
+
     try {
       await deleteConnectionMutation.mutateAsync({
         integrationId: connectionToDelete.integrationId,
         connectionId: connectionToDelete.id,
+        userPassword: normalizedPassword,
       });
       if (editingConnectionId === connectionToDelete.id) {
         setEditingConnectionId(null);
-        setConnectionForm(createEmptyConnectionForm());
-        boundConnectionIdRef.current = null;
       }
+      setConnectionToDelete(null);
+      return true;
     } catch (error: unknown) {
       toast((error as Error)?.message ?? 'Failed to delete connection.', { variant: 'error' });
-    } finally {
-      setConnectionToDelete(null);
+      return false;
     }
   };
 
@@ -756,15 +727,13 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     setIsModalOpen,
     editingConnectionId,
     setEditingConnectionId,
-    connectionForm,
-    setConnectionForm,
     connectionToDelete,
     setConnectionToDelete,
     playwrightSettings,
     setPlaywrightSettings,
     playwrightPersonaId,
     savingAllegroSandbox,
-  }), [isModalOpen, editingConnectionId, connectionForm, connectionToDelete, playwrightSettings, playwrightPersonaId, savingAllegroSandbox]);
+  }), [isModalOpen, editingConnectionId, connectionToDelete, playwrightSettings, playwrightPersonaId, savingAllegroSandbox]);
 
   const testingValue = useMemo<IntegrationsTesting>(() => ({
     isTesting,

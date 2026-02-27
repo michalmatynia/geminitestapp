@@ -1,17 +1,15 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
-import { cn, type MasterTreeId } from '@/shared/utils';
+import { cn, type MasterTreeNode } from '@/shared/utils';
 import { canNestTreeNodeV2 } from '@/shared/utils';
 import { useSlotTreeContext } from './SlotTreeContext';
 import { fromSlotMasterNodeId } from '../../utils/master-folder-tree';
 
 export interface CardNodeItemProps {
-  node: any;
+  node: MasterTreeNode;
   depth: number;
   hasChildren: boolean;
   isExpanded: boolean;

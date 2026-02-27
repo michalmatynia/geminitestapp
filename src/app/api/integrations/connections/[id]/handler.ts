@@ -1,11 +1,13 @@
+import bcrypt from 'bcryptjs';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
+import { auth, findAuthUserById } from '@/features/auth/server';
 import { getIntegrationRepository } from '@/features/integrations/server';
 import { encryptSecret } from '@/features/integrations/server';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
-import { badRequestError } from '@/shared/errors/app-error';
+import { authError, badRequestError } from '@/shared/errors/app-error';
 
 const connectionSchema = z.object({
   name: z.string().trim().min(1),
@@ -41,6 +43,10 @@ const connectionSchema = z.object({
   traderaApiUserId: z.number().int().positive().optional(),
   traderaApiToken: z.string().trim().optional(),
   traderaApiSandbox: z.boolean().optional(),
+});
+
+const deleteConnectionSchema = z.object({
+  userPassword: z.string().trim().min(1),
 });
 
 /**
@@ -248,6 +254,32 @@ export async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext, 
   const { id } = params;
   if (!id) {
     throw badRequestError('Connection id is required');
+  }
+
+  const session = await auth();
+  const userId = session?.user?.id ?? null;
+  if (!userId) {
+    throw authError('Unauthorized.');
+  }
+
+  const parsed = await parseJsonBody(req, deleteConnectionSchema, {
+    logPrefix: 'integrations.connection.DELETE',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+
+  const user = await findAuthUserById(userId);
+  if (!user?.passwordHash) {
+    throw authError('Unable to verify password for this account.');
+  }
+
+  const isPasswordValid = await bcrypt.compare(
+    parsed.data.userPassword,
+    user.passwordHash
+  );
+  if (!isPasswordValid) {
+    throw authError('Invalid password.');
   }
 
   const replacementConnectionIdRaw =

@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 import React from 'react';
 import type {
   AiNode,
@@ -64,11 +62,11 @@ export type SvgNodeDiagnosticsTooltipState = {
 
 export interface CanvasBoardState {
   view: { panX: number; panY: number; scale: number };
-  panState: any;
-  dragState: any;
-  lastDrop: any;
-  connecting: any;
-  connectingPos: any;
+  panState: unknown;
+  dragState: unknown;
+  lastDrop: unknown;
+  connecting: { nodeId: string; port: string; direction: 'input' | 'output' } | null;
+  connectingPos: { x: number; y: number } | null;
   viewportRef: React.RefObject<HTMLDivElement | null>;
   canvasRef: React.RefObject<HTMLDivElement | null>;
   nodes: AiNode[];

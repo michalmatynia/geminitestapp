@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -37,6 +35,7 @@ import {
 import {
   normalizeImageStudioSequenceSteps,
   resolveImageStudioSequenceActiveSteps,
+  type ImageStudioSequenceStep,
 } from '../utils/studio-settings';
 
 import { 
@@ -52,11 +51,9 @@ import { SequenceRuntimeCard } from './sequencing/SequenceRuntimeCard';
 import { SequencePresetsCard } from './sequencing/SequencePresetsCard';
 import { SequenceRunCard } from './sequencing/SequenceRunCard';
 
-const POLL_INTERVAL_MS = 1500;
 const SLOT_RESOLUTION_RETRY_MS = 220;
 const SLOT_RESOLUTION_ATTEMPTS = 10;
 const AUTO_SLOT_SYNC_RETRY_MS = 900;
-const ENABLE_SEQUENCE_SSE = process.env['NEXT_PUBLIC_IMAGE_STUDIO_SEQUENCE_SSE'] !== 'false';
 const ENABLE_ROBUST_SEQUENCE_SYNC =
   process.env['NEXT_PUBLIC_IMAGE_STUDIO_SEQUENCE_ROBUST_SYNC'] !== 'false';
 
@@ -70,7 +67,7 @@ const clamp01 = (value: number): number => Math.max(0, Math.min(1, value));
 const serializeGeometryValue = (value: unknown): string =>
   JSON.stringify(value ?? null);
 
-const toStepLogLine = (event: any): string => {
+const toStepLogLine = (event: { at: string | number | Date; message: string }): string => {
   const timestamp = new Date(event.at).toLocaleTimeString();
   return `${timestamp} ${event.message}`;
 };

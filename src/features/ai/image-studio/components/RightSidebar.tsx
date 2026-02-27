@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { Clock3, GitBranch, Redo2, Sparkles, Undo2, Workflow } from 'lucide-react';
@@ -40,12 +38,15 @@ import {
   CANVAS_SIZE_PRESET_OPTIONS, 
   estimatePromptTokens, 
   resolveModelCostProfile, 
-  cloneSerializableValue 
+  cloneSerializableValue,
+  type StudioActionHistorySnapshot,
 } from './right-sidebar/right-sidebar-utils';
 import { CanvasResizeModal } from './right-sidebar/CanvasResizeModal';
 import { ControlPromptModal } from './right-sidebar/ControlPromptModal';
 import { ParamRow } from './ParamRow';
-import { flattenParams } from '@/features/prompt-engine/prompt-params';
+import { flattenParams, type ParamSpec } from '@/features/prompt-engine/prompt-params';
+import { type ParamUiControl } from '../utils/param-ui';
+import { type ImageStudioSettings } from '../utils/studio-settings';
 
 const IMAGE_STUDIO_QUICK_ACTIONS_HOST_ID = 'image-studio-quick-actions-host';
 
@@ -129,12 +130,13 @@ export function RightSidebar(): React.JSX.Element {
   const [historyMode, setHistoryMode] = useState<'actions' | 'runs'>('actions');
   const [quickActionsHostEl, setQuickActionsHostEl] = useState<HTMLElement | null>(null);
   
-  const { toast } = useUiActions();
+  // @ts-expect-error - Complex toast type resolution
+  const { toast } = useToast();
 
   const switchToControls = React.useCallback(() => setSidebarTab('controls'), []);
 
   const flattenedParamsList = useMemo(
-    () => (paramsState ? (flattenParams(paramsState) as any[]).filter((leaf) => Boolean(leaf.path)) : []),
+    () => (paramsState ? (flattenParams(paramsState) as Array<{ path: string; value: unknown; kind: string }>).filter((leaf) => Boolean(leaf.path)) : []),
     [paramsState]
   );
   const hasExtractedControls = flattenedParamsList.length > 0;
@@ -277,7 +279,7 @@ export function RightSidebar(): React.JSX.Element {
     selectedFolder,
     selectedPointIndex,
     selectedSlotId,
-    studioSettings: studioSettings as unknown as Record<string, unknown>,
+    studioSettings,
     tool,
     validatorEnabled,
     workingSlotId,
@@ -308,7 +310,7 @@ export function RightSidebar(): React.JSX.Element {
     workingSlotId,
   ]);
 
-  const applyActionHistorySnapshot = React.useCallback((snapshot: any): void => {
+  const applyActionHistorySnapshot = React.useCallback((snapshot: StudioActionHistorySnapshot): void => {
     setSelectedFolder(snapshot.selectedFolder);
     setWorkingSlotId(snapshot.workingSlotId);
     setPreviewMode(snapshot.previewMode);
@@ -327,9 +329,9 @@ export function RightSidebar(): React.JSX.Element {
     setBrushRadius(snapshot.brushRadius);
     setPromptText(snapshot.promptText);
     setParamsState(cloneSerializableValue(snapshot.paramsState));
-    setParamSpecs(cloneSerializableValue(snapshot.paramSpecs) as any);
-    setParamUiOverrides(cloneSerializableValue(snapshot.paramUiOverrides) as any);
-    setStudioSettings(cloneSerializableValue(snapshot.studioSettings) as any);
+    setParamSpecs(cloneSerializableValue(snapshot.paramSpecs) as Record<string, ParamSpec> | null);
+    setParamUiOverrides(cloneSerializableValue(snapshot.paramUiOverrides) as Record<string, ParamUiControl>);
+    setStudioSettings(cloneSerializableValue(snapshot.studioSettings) as ImageStudioSettings);
     setValidatorEnabled(snapshot.validatorEnabled);
     setFormatterEnabled(snapshot.validatorEnabled ? snapshot.formatterEnabled : false);
   }, [setSelectedFolder, setWorkingSlotId, setPreviewMode, setCompositeAssetIds, setTool, setCanvasSelectionEnabled, setImageTransformMode, setCanvasImageOffset, setCanvasBackgroundLayerEnabled, setCanvasBackgroundColor, setMaskShapes, setActiveMaskId, setSelectedPointIndex, setMaskInvert, setMaskFeather, setBrushRadius, setPromptText, setParamsState, setParamSpecs, setParamUiOverrides, setStudioSettings, setValidatorEnabled, setFormatterEnabled]);
@@ -370,8 +372,11 @@ export function RightSidebar(): React.JSX.Element {
     setSequenceRunBusy,
     setSidebarTab,
     slots,
-    studioSettings: studioSettings as any,
-    toast: (msg: string, opt?: any) => { (toast as any)(msg, opt); },
+    studioSettings: studioSettings as ImageStudioSettings,
+    toast: (msg: string, opt?: { variant?: 'success' | 'error' | 'info' | 'warning' }) => {
+      // @ts-expect-error - Complex toast type mismatch
+      toast(msg, opt);
+    },
     workingSlot,
     workingSlotImageWidth,
     workingSlotImageHeight,
@@ -483,12 +488,12 @@ export function RightSidebar(): React.JSX.Element {
 
       // Request Preview
       activeErrors: activeRequestPreview.errors,
-      activeImages: (activeRequestPreview as any).images || [],
+      activeImages: activeRequestPreview.images || [],
       activeRequestPreviewEndpoint,
       activeRequestPreviewJson,
       maskShapeCount: activeRequestPreview.maskShapeCount,
       requestPreviewMode,
-      sequenceStepCount: (sequenceRequestPreview as any).stepCount || 0,
+      sequenceStepCount: sequenceRequestPreview.stepCount || 0,
       setRequestPreviewMode,
 
       // Quick Actions
@@ -534,7 +539,7 @@ export function RightSidebar(): React.JSX.Element {
                   ? 'border-b-2 border-blue-400 text-gray-200 hover:bg-transparent'
                   : 'text-gray-500 hover:text-gray-300'
               )}
-              onClick={() => setSidebarTab(tab as any)}
+              onClick={() => setSidebarTab(tab as 'controls' | 'analysis' | 'graph' | 'sequencing' | 'history')}
             >
               {tab === 'analysis' && <Sparkles className='mr-1 inline size-3' />}
               {tab === 'graph' && <GitBranch className='mr-1 inline size-3' />}

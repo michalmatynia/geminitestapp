@@ -1,11 +1,15 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { createContext, useContext } from 'react';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
-import { type MasterFolderTreeController } from '@/features/foldertree/v2';
-import { type MasterTreeId, type MasterTreeNode } from '@/shared/utils';
+import type { 
+  MasterFolderTreeController,
+  FolderTreeProfileV2,
+} from '@/shared/contracts/master-folder-tree';
+import type { 
+  MasterTreeId, 
+} from '@/shared/utils';
+import type { FolderTreePlaceholderClassSet } from '@/shared/utils/folder-tree-profiles-v2';
 
 export interface SlotTreeContextValue {
   controller: MasterFolderTreeController;
@@ -27,13 +31,13 @@ export interface SlotTreeContextValue {
   onSelectCardNode: (slot: ImageStudioSlotRecord, nodeId: MasterTreeId) => void;
   stickySelectionMode: boolean;
   clearSelectionOnAwayClick: boolean;
-  profile: any;
-  placeholderClasses: any;
+  profile: FolderTreeProfileV2;
+  placeholderClasses: FolderTreePlaceholderClassSet;
   icons: {
-    FolderClosedIcon: React.ComponentType<any>;
-    FolderOpenIcon: React.ComponentType<any>;
-    FileIcon: React.ComponentType<any>;
-    DragHandleIcon: React.ComponentType<any>;
+    FolderClosedIcon: React.ComponentType<{ className?: string }>;
+    FolderOpenIcon: React.ComponentType<{ className?: string }>;
+    FileIcon: React.ComponentType<{ className?: string }>;
+    DragHandleIcon: React.ComponentType<{ className?: string }>;
   };
   deleteSlotMutationPending: boolean;
 }

@@ -10,12 +10,18 @@ const {
   updateConnectionMock,
   deleteConnectionMock,
   getIntegrationRepositoryMock,
+  authMock,
+  findAuthUserByIdMock,
+  bcryptCompareMock,
 } = vi.hoisted(() => {
   const parseJsonBodyMock = vi.fn();
   const getConnectionByIdMock = vi.fn();
   const getIntegrationByIdMock = vi.fn();
   const updateConnectionMock = vi.fn();
   const deleteConnectionMock = vi.fn();
+  const authMock = vi.fn();
+  const findAuthUserByIdMock = vi.fn();
+  const bcryptCompareMock = vi.fn();
   const getIntegrationRepositoryMock = vi.fn().mockResolvedValue({
     getConnectionById: getConnectionByIdMock,
     getIntegrationById: getIntegrationByIdMock,
@@ -30,6 +36,9 @@ const {
     updateConnectionMock,
     deleteConnectionMock,
     getIntegrationRepositoryMock,
+    authMock,
+    findAuthUserByIdMock,
+    bcryptCompareMock,
   };
 });
 
@@ -40,6 +49,17 @@ vi.mock('@/features/products/server', () => ({
 vi.mock('@/features/integrations/server', () => ({
   getIntegrationRepository: getIntegrationRepositoryMock,
   encryptSecret: (value: string): string => `enc:${value}`,
+}));
+
+vi.mock('@/features/auth/server', () => ({
+  auth: authMock,
+  findAuthUserById: findAuthUserByIdMock,
+}));
+
+vi.mock('bcryptjs', () => ({
+  default: {
+    compare: bcryptCompareMock,
+  },
 }));
 
 import { DELETE_handler, PUT_handler } from './handler';
@@ -102,6 +122,13 @@ describe('integrations/connections/[id] PUT handler', () => {
     });
 
     deleteConnectionMock.mockResolvedValue(undefined);
+    authMock.mockResolvedValue({ user: { id: 'user-1' } });
+    findAuthUserByIdMock.mockResolvedValue({
+      id: 'user-1',
+      email: 'admin@example.com',
+      passwordHash: 'hashed-password',
+    });
+    bcryptCompareMock.mockResolvedValue(true);
   });
 
   it('allows empty username for Baselinker updates', async () => {
@@ -139,6 +166,13 @@ describe('integrations/connections/[id] PUT handler', () => {
   });
 
   it('passes replacementConnectionId to delete repository call', async () => {
+    parseJsonBodyMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        userPassword: 'password-123',
+      },
+    });
+
     const request = {
       nextUrl: {
         searchParams: new URLSearchParams({
@@ -155,6 +189,13 @@ describe('integrations/connections/[id] PUT handler', () => {
   });
 
   it('passes undefined replacementConnectionId when not provided', async () => {
+    parseJsonBodyMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        userPassword: 'password-123',
+      },
+    });
+
     const request = {
       nextUrl: { searchParams: new URLSearchParams() },
     } as unknown as NextRequest;
@@ -163,5 +204,25 @@ describe('integrations/connections/[id] PUT handler', () => {
     expect(deleteConnectionMock).toHaveBeenCalledWith('conn-1', {
       replacementConnectionId: undefined,
     });
+  });
+
+  it('rejects delete when password is invalid', async () => {
+    parseJsonBodyMock.mockResolvedValueOnce({
+      ok: true,
+      data: {
+        userPassword: 'bad-password',
+      },
+    });
+    bcryptCompareMock.mockResolvedValueOnce(false);
+
+    const request = {
+      nextUrl: { searchParams: new URLSearchParams() },
+    } as unknown as NextRequest;
+
+    await expect(
+      DELETE_handler(request, buildContext(), { id: 'conn-1' })
+    ).rejects.toThrow('Invalid password.');
+
+    expect(deleteConnectionMock).not.toHaveBeenCalled();
   });
 });

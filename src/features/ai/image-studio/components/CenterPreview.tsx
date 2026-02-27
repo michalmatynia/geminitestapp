@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -65,20 +63,12 @@ export function CenterPreviewInner(): React.JSX.Element {
     isFocusMode,
     maskPreviewEnabled,
     previewCanvasSize,
-    imageTransformMode,
-    canvasImageOffset,
-    canvasBackgroundLayerEnabled,
-    canvasBackgroundColor,
     pendingSequenceThumbnail,
-    centerGuidesEnabled,
-    canvasSelectionEnabled,
-    maskFeather,
   } = useUiState();
   const {
     toggleFocusMode,
     registerPreviewCanvasViewportCropResolver,
     registerPreviewCanvasImageFrameResolver,
-    setCanvasImageOffset,
     resetCanvasImageOffset,
   } = useUiActions();
   const { projectId, projectsQuery } = useProjectsState();
@@ -116,7 +106,6 @@ export function CenterPreviewInner(): React.JSX.Element {
     activeMaskId,
     selectedPointIndex,
     brushRadius,
-    maskInvert,
   } = useMaskingState();
 
   const {
@@ -127,7 +116,7 @@ export function CenterPreviewInner(): React.JSX.Element {
   } = useMaskingActions();
 
   const {
-    screenshotBusy, setScreenshotBusy,
+    setScreenshotBusy,
     singleVariantView, setSingleVariantView,
     splitVariantView, setSplitVariantView,
     setLeftSplitZoom,
@@ -168,7 +157,7 @@ export function CenterPreviewInner(): React.JSX.Element {
     [selectedSlot?.metadata]
   );
 
-  const { compositeResultCache, compositeLoading } = useVersionGraphState();
+  const { compositeResultCache } = useVersionGraphState();
   const isCompositeSlot = workingSlotMetadata?.role === 'composite';
   const compositeResultImage = workingSlot?.id ? compositeResultCache.get(workingSlot.id) ?? null : null;
 

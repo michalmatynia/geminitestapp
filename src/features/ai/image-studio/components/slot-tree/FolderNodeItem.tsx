@@ -1,17 +1,15 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
 import { Trash2 } from 'lucide-react';
 import { TreeCaret, TreeContextMenu, TreeRow } from '@/shared/ui';
-import { cn, type MasterTreeId } from '@/shared/utils';
+import { cn, type MasterTreeNode } from '@/shared/utils';
 import { canNestTreeNodeV2 } from '@/shared/utils';
 import { useSlotTreeContext } from './SlotTreeContext';
-import { fromFolderMasterNodeId, toFolderMasterNodeId } from '../../utils/master-folder-tree';
+import { fromFolderMasterNodeId } from '../../utils/master-folder-tree';
 
 export interface FolderNodeItemProps {
-  node: any;
+  node: MasterTreeNode;
   depth: number;
   hasChildren: boolean;
   isExpanded: boolean;
@@ -43,7 +41,6 @@ export function FolderNodeItem({
     startFolderRename,
     commitFolderRename,
     clearSelection,
-    clearPendingFolderSelection,
     stickySelectionMode,
     selectedSlotId,
     profile,
@@ -176,7 +173,6 @@ export function FolderNodeItem({
             onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
               event.stopPropagation();
               if (selectedSlotId) {
-                clearPendingFolderSelection();
                 // Delay folder selection to differentiate from potential double-click rename
                 setTimeout(() => {
                   if (stickySelectionMode && isSelected) {
@@ -198,7 +194,6 @@ export function FolderNodeItem({
             onDoubleClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
               event.preventDefault();
               event.stopPropagation();
-              clearPendingFolderSelection();
               startFolderRename(node.id);
             }}
             title={folderPath || 'Project root'}
@@ -237,7 +232,6 @@ export function FolderNodeItem({
               onDoubleClick={(event: React.MouseEvent<HTMLSpanElement>): void => {
                 event.preventDefault();
                 event.stopPropagation();
-                clearPendingFolderSelection();
                 startFolderRename(node.id);
               }}
               title='Double-click name to rename'

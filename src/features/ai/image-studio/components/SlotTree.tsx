@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { Folder, FolderOpen, GripVertical, LayoutGrid } from 'lucide-react';
@@ -15,7 +13,6 @@ import {
 } from '@/features/foldertree/v2';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import {
-  cn,
   type MasterTreeDropPosition,
   type MasterTreeId,
   type MasterTreeNode,

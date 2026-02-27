@@ -76,6 +76,7 @@ export function useUpsertConnection() {
 type DeleteConnectionVariables = {
   integrationId: string;
   connectionId: string;
+  userPassword: string;
   replacementConnectionId?: string | null;
 };
 
@@ -85,6 +86,7 @@ export function useDeleteConnection() {
   return createDeleteMutationV2<Record<string, unknown>, DeleteConnectionVariables>({
     mutationFn: ({
       connectionId,
+      userPassword,
       replacementConnectionId,
     }: DeleteConnectionVariables): Promise<Record<string, unknown>> => {
       const trimmedReplacementConnectionId = replacementConnectionId?.trim();
@@ -92,7 +94,8 @@ export function useDeleteConnection() {
         ? `?replacementConnectionId=${encodeURIComponent(trimmedReplacementConnectionId)}`
         : '';
       return api.delete<Record<string, unknown>>(
-        `/api/integrations/connections/${connectionId}${query}`
+        `/api/integrations/connections/${connectionId}${query}`,
+        { body: JSON.stringify({ userPassword }) }
       );
     },
     mutationKey,

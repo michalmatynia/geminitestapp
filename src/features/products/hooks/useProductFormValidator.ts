@@ -7,7 +7,10 @@ import { useFormContext } from 'react-hook-form';
 import * as productsApi from '@/features/products/api/products';
 import { useProductFormContext } from '@/features/products/context/ProductFormContext';
 import { useProductFormMetadata } from '@/features/products/context/ProductFormMetadataContext';
-import { useProductValidatorConfig } from '@/features/products/hooks/useProductSettingsQueries';
+import {
+  useProductValidatorConfig,
+  useUpdateValidatorSettingsMutation,
+} from '@/features/products/hooks/useProductSettingsQueries';
 import { useProductValidatorIssues } from '@/features/products/hooks/useProductValidatorIssues';
 import {
   normalizeProductValidationDenyBehavior,
@@ -120,14 +123,64 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     'categoryId',
   ]);
 
-  const [validatorEnabled, setValidatorEnabled] = useState<boolean>(() => draft?.validatorEnabled ?? true);
-  const [formatterEnabled, setFormatterEnabled] = useState<boolean>(
+  const [validatorEnabled, setValidatorEnabledState] = useState<boolean>(() => draft?.validatorEnabled ?? true);
+  const [formatterEnabled, setFormatterEnabledState] = useState<boolean>(
     () => ((draft?.validatorEnabled ?? true) ? (draft?.formatterEnabled ?? false) : false)
   );
   const [validatorInitialized, setValidatorInitialized] = useState<boolean>(
     () => typeof draft?.validatorEnabled === 'boolean'
   );
   const [validatorManuallyChanged, setValidatorManuallyChanged] = useState(false);
+  const updateValidatorSettingsMutation = useUpdateValidatorSettingsMutation();
+
+  const setValidatorEnabled = useCallback((enabled: boolean): void => {
+    const nextEnabled = Boolean(enabled);
+    setValidatorManuallyChanged(true);
+    setValidatorInitialized(true);
+    setValidatorEnabledState(nextEnabled);
+    if (!nextEnabled) {
+      setFormatterEnabledState(false);
+    }
+    void updateValidatorSettingsMutation
+      .mutateAsync(
+        nextEnabled
+          ? { enabledByDefault: true }
+          : { enabledByDefault: false, formatterEnabledByDefault: false }
+      )
+      .catch((error: unknown) => {
+        logClientError(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            context: {
+              source: 'ProductForm',
+              action: 'setValidatorEnabledDefault',
+              nextEnabled,
+            },
+          }
+        );
+      });
+  }, [updateValidatorSettingsMutation]);
+
+  const setFormatterEnabled = useCallback((enabled: boolean): void => {
+    const nextEnabled = validatorEnabled ? Boolean(enabled) : false;
+    setValidatorManuallyChanged(true);
+    setValidatorInitialized(true);
+    setFormatterEnabledState(nextEnabled);
+    void updateValidatorSettingsMutation
+      .mutateAsync({ formatterEnabledByDefault: nextEnabled })
+      .catch((error: unknown) => {
+        logClientError(
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            context: {
+              source: 'ProductForm',
+              action: 'setFormatterEnabledDefault',
+              nextEnabled,
+            },
+          }
+        );
+      });
+  }, [updateValidatorSettingsMutation, validatorEnabled]);
 
   const [validationDenyBehaviorOverrides, setValidationDenyBehaviorOverrides] = useState<
     Partial<Record<ProductValidationInstanceScope, ProductValidationDenyBehavior>>
@@ -354,14 +407,14 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   useEffect(() => {
     if (draft) {
       const nextValidatorEnabled = draft.validatorEnabled ?? true;
-      setValidatorEnabled(nextValidatorEnabled);
-      setFormatterEnabled(nextValidatorEnabled ? (draft.formatterEnabled ?? false) : false);
+      setValidatorEnabledState(nextValidatorEnabled);
+      setFormatterEnabledState(nextValidatorEnabled ? (draft.formatterEnabled ?? false) : false);
       setValidatorInitialized(true);
       setValidatorManuallyChanged(false);
       return;
     }
-    setValidatorEnabled(true);
-    setFormatterEnabled(false);
+    setValidatorEnabledState(true);
+    setFormatterEnabledState(false);
     setValidatorInitialized(false);
     setValidatorManuallyChanged(false);
   }, [draft?.id, product?.id]);
@@ -369,7 +422,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   useEffect(() => {
     if (validatorEnabled) return;
     if (!formatterEnabled) return;
-    setFormatterEnabled(false);
+    setFormatterEnabledState(false);
   }, [validatorEnabled, formatterEnabled]);
 
   useEffect(() => {
@@ -378,8 +431,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
     const enabledByDefault = validatorConfigQuery.data?.enabledByDefault;
     if (typeof enabledByDefault !== 'boolean') return;
     const formatterEnabledByDefault = validatorConfigQuery.data?.formatterEnabledByDefault;
-    setValidatorEnabled(enabledByDefault);
-    setFormatterEnabled(
+    setValidatorEnabledState(enabledByDefault);
+    setFormatterEnabledState(
       enabledByDefault
         ? (typeof formatterEnabledByDefault === 'boolean'
           ? formatterEnabledByDefault

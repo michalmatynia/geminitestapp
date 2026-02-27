@@ -2,13 +2,18 @@
 
 import { createContext, useContext } from 'react';
 import type { IntegrationConnection } from '@/shared/contracts/integrations';
-import type { IntegrationDefinition } from '../integrations-context-types';
+import type {
+  IntegrationDefinition,
+  SaveConnectionOptions,
+} from '../integrations-context-types';
 
 export interface IntegrationsActions {
   handleIntegrationClick: (definition: IntegrationDefinition) => Promise<void>;
-  handleSaveConnection: () => Promise<void>;
+  handleSaveConnection: (
+    options?: SaveConnectionOptions
+  ) => Promise<IntegrationConnection | null>;
   handleDeleteConnection: (connection: IntegrationConnection) => void;
-  handleConfirmDeleteConnection: () => Promise<void>;
+  handleConfirmDeleteConnection: (userPassword: string) => Promise<boolean>;
   handleBaselinkerTest: (connection: IntegrationConnection) => Promise<void>;
   handleAllegroTest: (connection: IntegrationConnection) => Promise<void>;
   handleTestConnection: (connection: IntegrationConnection) => Promise<void>;

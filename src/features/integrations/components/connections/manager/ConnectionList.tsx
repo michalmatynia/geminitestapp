@@ -8,13 +8,17 @@ import { useIntegrationsContext } from '@/features/integrations/context/Integrat
 import { IntegrationConnection } from '@/shared/contracts/integrations';
 import { Button, FormSection, SimpleSettingsList } from '@/shared/ui';
 
+import { ConnectionEditModal } from './ConnectionEditModal';
+
 export function ConnectionList(): React.JSX.Element {
+  const [connectionToEdit, setConnectionToEdit] =
+    React.useState<IntegrationConnection | null>(null);
+
   const {
     activeIntegration,
     connections,
     editingConnectionId,
     setEditingConnectionId,
-    setConnectionForm,
     handleDeleteConnection,
     handleTestConnection,
     handleBaselinkerTest,
@@ -39,7 +43,7 @@ export function ConnectionList(): React.JSX.Element {
           title: connection.name,
           subtitle: connection.username,
           description: editingConnectionId === connection.id ? (
-            <span className='text-[10px] uppercase tracking-wide text-emerald-300 font-bold'>Selected for editing</span>
+            <span className='text-[10px] uppercase tracking-wide text-emerald-300 font-bold'>Active connection</span>
           ) : undefined,
           original: connection
         }))}
@@ -52,41 +56,8 @@ export function ConnectionList(): React.JSX.Element {
               className='h-7 text-[10px] uppercase font-bold text-gray-200 hover:text-white'
               type='button'
               onClick={(): void => {
-                const connection = item.original;
-                const preserveCurrentSecrets =
-                  editingConnectionId === connection.id;
-                setEditingConnectionId(connection.id);
-                setConnectionForm((prev) => ({
-                  name: connection.name,
-                  username: connection.username ?? '',
-                  password: preserveCurrentSecrets ? prev.password : '',
-                  traderaDefaultTemplateId:
-                    connection.traderaDefaultTemplateId ?? '',
-                  traderaDefaultDurationHours:
-                    connection.traderaDefaultDurationHours ?? 72,
-                  traderaAutoRelistEnabled:
-                    connection.traderaAutoRelistEnabled ?? true,
-                  traderaAutoRelistLeadMinutes:
-                    connection.traderaAutoRelistLeadMinutes ?? 180,
-                  traderaApiAppId:
-                    typeof connection.traderaApiAppId === 'number'
-                      ? String(connection.traderaApiAppId)
-                      : '',
-                  traderaApiAppKey: preserveCurrentSecrets
-                    ? prev.traderaApiAppKey
-                    : '',
-                  traderaApiPublicKey:
-                    connection.traderaApiPublicKey ?? '',
-                  traderaApiUserId:
-                    typeof connection.traderaApiUserId === 'number'
-                      ? String(connection.traderaApiUserId)
-                      : '',
-                  traderaApiToken: preserveCurrentSecrets
-                    ? prev.traderaApiToken
-                    : '',
-                  traderaApiSandbox:
-                    connection.traderaApiSandbox ?? false,
-                }));
+                setEditingConnectionId(item.original.id);
+                setConnectionToEdit(item.original);
               }}
             >
               Edit
@@ -128,6 +99,10 @@ export function ConnectionList(): React.JSX.Element {
           </div>
         )}
         onDelete={(item) => handleDeleteConnection(item.original)}
+      />
+      <ConnectionEditModal
+        connection={connectionToEdit}
+        onClose={() => setConnectionToEdit(null)}
       />
     </FormSection>
   );

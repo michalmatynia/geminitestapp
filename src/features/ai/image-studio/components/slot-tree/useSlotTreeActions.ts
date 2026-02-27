@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useCallback } from 'react';
@@ -11,8 +9,9 @@ import {
   type MasterTreeNode, 
   normalizeTreePath, 
   canMoveTreePath, 
-  getTreePathLeaf 
+  getTreePathLeaf,
 } from '@/shared/utils';
+import type { MasterFolderTreeController } from '@/shared/contracts/master-folder-tree';
 import { 
   fromFolderMasterNodeId, 
   fromSlotMasterNodeId 
@@ -23,7 +22,7 @@ export function useSlotTreeActions({
   controller,
   slotById,
 }: {
-  controller: any;
+  controller: MasterFolderTreeController;
   slotById: Map<string, ImageStudioSlotRecord>;
   stickySelectionMode: boolean;
 }) {

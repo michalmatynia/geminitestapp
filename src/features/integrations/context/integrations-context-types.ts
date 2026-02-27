@@ -21,9 +21,6 @@ export type {
   PlaywrightSettings,
 };
 
-import type { Dispatch, SetStateAction } from 'react';
-
-
 export type ConnectionFormState = {
   name: string;
   username: string;
@@ -60,6 +57,12 @@ export type IntegrationDefinition = (typeof integrationDefinitions)[number];
 
 export type StepWithResult = TestLogEntry & { status: 'ok' | 'failed' };
 
+export type SaveConnectionOptions = {
+  mode?: 'create' | 'update';
+  connectionId?: string | null;
+  formData?: ConnectionFormState;
+};
+
 export interface IntegrationsContextType {
   integrations: Integration[];
   integrationsLoading: boolean;
@@ -73,8 +76,6 @@ export interface IntegrationsContextType {
   setIsModalOpen: (open: boolean) => void;
   editingConnectionId: string | null;
   setEditingConnectionId: (id: string | null) => void;
-  connectionForm: ConnectionFormState;
-  setConnectionForm: Dispatch<SetStateAction<ConnectionFormState>>;
   isTesting: boolean;
   testLog: TestLogEntry[];
   showTestLogModal: boolean;
@@ -125,9 +126,11 @@ export interface IntegrationsContextType {
   } | null;
   savingAllegroSandbox: boolean;
   handleIntegrationClick: (definition: IntegrationDefinition) => Promise<void>;
-  handleSaveConnection: () => Promise<void>;
+  handleSaveConnection: (
+    options?: SaveConnectionOptions
+  ) => Promise<IntegrationConnection | null>;
   handleDeleteConnection: (connection: IntegrationConnection) => void;
-  handleConfirmDeleteConnection: () => Promise<void>;
+  handleConfirmDeleteConnection: (userPassword: string) => Promise<boolean>;
   connectionToDelete: IntegrationConnection | null;
   setConnectionToDelete: (conn: IntegrationConnection | null) => void;
   handleBaselinkerTest: (connection: IntegrationConnection) => Promise<void>;

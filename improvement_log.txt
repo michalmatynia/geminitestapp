@@ -60,5 +60,27 @@ I've completed several high-value "general improvements" across the codebase, fo
     - Standardized usage of `ImageStudioSlotDto` and `ImageStudioAssetDto` across the upload/disconnect pipeline.
     - Note: Some hooks retain `@ts-nocheck` with detailed explanations due to a persistent ESLint conflict where correctly typed props are misidentified as "error" types.
 
+14. **Prompt Exploder:**
+    - Restored full type safety to `src/features/prompt-exploder/context/DocumentContext.tsx`.
+    - Fixed multiple string interpolation bugs in template literals.
+    - Corrected type imports for parameter entries and states.
+
+15. **AI Image Studio Slot Tree:**
+    - Restored full type safety to `SlotTree.tsx`, `useSlotTreeActions.ts`, `SlotTreeContext.tsx`, `CardNodeItem.tsx`, and `FolderNodeItem.tsx`.
+    - Resolved widespread `any` usage by providing strict interfaces for the folder tree controller and node types.
+    - Fixed leftover references to missing actions like `clearPendingFolderSelection`.
+
+16. **AI Paths Canvas Utils:**
+    - Restored full type safety to `src/features/ai/ai-paths/components/CanvasBoard.utils.tsx`.
+    - Resolved `any` types in `CanvasBoardState` by providing more specific types for connecting state and other UI elements.
+
+17. **AI Image Studio Sequencing:**
+    - Restored full type safety to `src/features/ai/image-studio/components/SequencingPanel.tsx`.
+    - Resolved `any` usage in step log processing and cleaned up unused constants and environment flags.
+
+18. **AI Image Studio Preview:**
+    - Restored full type safety to `src/features/ai/image-studio/components/CenterPreview.tsx`.
+    - Resolved multiple unused state variables and actions across UI, masking, and preview contexts.
+
 ### **Impact**
 These changes have eliminated hundreds of potential runtime errors, fixed dozens of "silent" template literal bugs, and provided a significantly more robust foundation for the application's most critical features. All refactored files now pass strict ESLint checks.

@@ -35,13 +35,14 @@ export const sanitizeRuntimeState = (state: RuntimeState): RuntimeState => {
     const sanitized: RuntimeState = {
       ...EMPTY_RUNTIME_STATE,
       ...parsed,
+      status: (parsed['status'] as RuntimeState['status']) ?? EMPTY_RUNTIME_STATE.status,
       inputs: (parsed['inputs'] as Record<string, RuntimePortValues>) ?? {},
       outputs: (parsed['outputs'] as Record<string, RuntimePortValues>) ?? {},
       nodeOutputs: (parsed['nodeOutputs'] as Record<string, RuntimePortValues>) ?? {},
-      nodeStatuses: (parsed['nodeStatuses'] as Record<string, string>) ?? {},
+      nodeStatuses: (parsed['nodeStatuses'] as RuntimeState['nodeStatuses']) ?? {},
       variables: (parsed['variables'] as Record<string, unknown>) ?? {},
-      events: Array.isArray(parsed['events']) ? (parsed['events'] as unknown[]) : [],
-    } as unknown as RuntimeState;
+      events: (Array.isArray(parsed['events']) ? parsed['events'] : []) as RuntimeState['events'],
+    };
     const dropSummary = collectDroppedRuntimePorts(state, sanitized);
     if (dropSummary.total > 0 && sanitizeDropWarningCount < SANITIZE_DROP_WARNING_LIMIT) {
       sanitizeDropWarningCount += 1;

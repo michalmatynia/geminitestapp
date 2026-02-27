@@ -2,6 +2,7 @@ import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { AiNode } from '@/features/ai/ai-paths/lib';
+import type { PortDataType } from '@/features/ai/ai-paths/lib/core/utils/port-types';
 
 import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from '../CanvasBoardUIContext';
 import { CanvasSvgEdgeLayer } from '../canvas-svg-edge-layer';
@@ -99,13 +100,17 @@ describe('canvas connection preview', () => {
     const value = buildContextValue();
     const { container } = render(
       <svg>
-        <CanvasBoardUIProvider value={value}>
-          <CanvasSvgEdgeLayer />
-        </CanvasBoardUIProvider>
+        <g data-canvas-world='true' transform='translate(0 0) scale(1)'>
+          <CanvasBoardUIProvider value={value}>
+            <CanvasSvgEdgeLayer />
+          </CanvasBoardUIProvider>
+        </g>
       </svg>
     );
 
-    expect(container.querySelector('[data-connecting-preview="true"]')).toBeTruthy();
+    const previewPath = container.querySelector('[data-connecting-preview="true"]');
+    expect(previewPath).toBeTruthy();
+    expect(previewPath?.closest('[data-canvas-world="true"]')).toBeTruthy();
   });
 
   it('forwards real pointer events from output connector start handlers', () => {
@@ -126,7 +131,7 @@ describe('canvas connection preview', () => {
           onReconnectInput={vi.fn()}
           onCompleteConnection={vi.fn()}
           onDisconnectPort={vi.fn()}
-          onStartConnection={onStartConnection}
+          onStartConnection={onStartConnection as any}
           setHoveredConnectorKey={vi.fn()}
           onConnectorHover={vi.fn()}
           onConnectorLeave={vi.fn()}
@@ -134,7 +139,7 @@ describe('canvas connection preview', () => {
             direction: 'output' as 'output' | 'input',
             nodeId: node.id,
             port: 'result',
-            expectedTypes: ['string'] as any[],
+            expectedTypes: ['string'] as PortDataType[],
             expectedLabel: 'string',
             rawValue: 'ok',
             value: 'ok',
@@ -159,7 +164,8 @@ describe('canvas connection preview', () => {
     fireEvent.pointerDown(outputPort, { clientX: 240, clientY: 180 });
     expect(onStartConnection).toHaveBeenCalledTimes(1);
     const call = onStartConnection.mock.calls[0];
-    expect(call?.[1]?.id).toBe(node.id);
+    const calledNode = call?.[1];
+    expect(calledNode?.id).toBe(node.id);
     expect(call?.[2]).toBe('result');
   });
 });

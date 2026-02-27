@@ -25,6 +25,20 @@ import { GET as reportGet } from '@/app/api/integrations/imports/base/runs/[runI
 import { POST as resumePost } from '@/app/api/integrations/imports/base/runs/[runId]/resume/route';
 import { GET as runDetailGet } from '@/app/api/integrations/imports/base/runs/[runId]/route';
 
+type BaseImportRunDetailResponse = {
+  run: { id: string; status: string };
+  items: unknown[];
+  pagination: { page: number; pageSize: number; totalItems: number; totalPages: number };
+};
+
+type BaseImportRunStartResponse = {
+  runId: string;
+  status: string;
+  queueJobId: string | null;
+  summaryMessage: string | null;
+  preflight: { ok: boolean; issues: string[]; checkedAt: string };
+};
+
 describe('base import run routes', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -67,7 +81,7 @@ describe('base import run routes', () => {
       ),
       { params: Promise.resolve({ runId: 'run-1' }) }
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as BaseImportRunDetailResponse;
 
     expect(response.status).toBe(200);
     expect(getBaseImportRunDetailOrThrowMock).toHaveBeenCalledWith('run-1', {
@@ -108,7 +122,7 @@ describe('base import run routes', () => {
       ),
       { params: Promise.resolve({ runId: 'run-resume-1' }) }
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as BaseImportRunStartResponse;
 
     expect(response.status).toBe(200);
     expect(resumeBaseImportRunMock).toHaveBeenCalledWith('run-resume-1', [
@@ -150,7 +164,7 @@ describe('base import run routes', () => {
       ),
       { params: Promise.resolve({ runId: 'run-cancel-1' }) }
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as BaseImportRunStartResponse;
 
     expect(response.status).toBe(200);
     expect(cancelBaseImportRunMock).toHaveBeenCalledWith('run-cancel-1');
@@ -211,7 +225,7 @@ describe('base import run routes', () => {
       ),
       { params: Promise.resolve({ runId: 'run-report-1' }) }
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as BaseImportRunDetailResponse;
 
     expect(response.status).toBe(200);
     expect(getBaseImportRunDetailOrThrowMock).toHaveBeenNthCalledWith(1, 'run-report-1', {

@@ -31,6 +31,7 @@ import {
   updaterSampleStateSchema,
   repairPathNodeIdentities,
   stableStringify,
+  EMPTY_RUNTIME_STATE,
 } from '@/features/ai/ai-paths/lib';
 import type { DbQueryPayload } from '@/features/ai/ai-paths/lib/api/client';
 
@@ -81,8 +82,6 @@ export const toJsonSafe = (value: unknown): unknown => cloneJsonSafe(value);
 
 export const safeJsonStringify = (value: unknown): string =>
   sharedSafeJsonStringify(value);
-
-const EMPTY_RUNTIME_STATE: RuntimeState = { inputs: {}, outputs: {} } as unknown as RuntimeState;
 
 export const parseRuntimeState = (value: unknown): RuntimeState => {
   if (!value) return EMPTY_RUNTIME_STATE;

@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { AiPathRunRecord } from '@/shared/contracts/ai-paths';
 
 const requireAiPathsAccessMock = vi.hoisted(() => vi.fn());
 const enforceAiPathsActionRateLimitMock = vi.hoisted(() => vi.fn());
@@ -46,6 +48,19 @@ vi.mock('@/features/jobs/workers/aiPathRunQueue', () => ({
 
 import { POST_handler } from '@/app/api/ai-paths/runs/[runId]/cancel/handler';
 
+const mockContext: ApiHandlerContext = {
+  requestId: 'test-req-id',
+  startTime: Date.now(),
+  getElapsedMs: () => 0,
+};
+
+type CancelRunResponse = {
+  run: AiPathRunRecord | null;
+  canceled: boolean;
+  runId: string;
+  message?: string;
+};
+
 describe('AI Paths run cancel handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -63,10 +78,10 @@ describe('AI Paths run cancel handler', () => {
       new NextRequest('http://localhost/api/ai-paths/runs/run-missing/cancel', {
         method: 'POST',
       }),
-      {} as never,
+      mockContext,
       { runId: 'run-missing' }
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as CancelRunResponse;
 
     expect(response.status).toBe(200);
     expect(cancelPathRunWithRepositoryMock).not.toHaveBeenCalled();
@@ -92,10 +107,10 @@ describe('AI Paths run cancel handler', () => {
       new NextRequest('http://localhost/api/ai-paths/runs/run-terminal/cancel', {
         method: 'POST',
       }),
-      {} as never,
+      mockContext,
       { runId: 'run-terminal' }
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as CancelRunResponse;
 
     expect(response.status).toBe(200);
     expect(cancelPathRunWithRepositoryMock).toHaveBeenCalledWith(
@@ -124,10 +139,10 @@ describe('AI Paths run cancel handler', () => {
       new NextRequest('http://localhost/api/ai-paths/runs/run-active/cancel', {
         method: 'POST',
       }),
-      {} as never,
+      mockContext,
       { runId: 'run-active' }
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as CancelRunResponse;
 
     expect(response.status).toBe(200);
     expect(cancelPathRunWithRepositoryMock).toHaveBeenCalledWith(

@@ -797,7 +797,8 @@ export const NODE_TYPE_COMPATIBILITY: Record<NodeType, NodeType[]> = {
   ai_description: ['viewer', 'description_updater', 'bundle', 'delay', 'poll'],
   description_updater: ['viewer', 'bundle', 'delay', 'poll'],
   notification: ['viewer', 'bundle', 'delay', 'poll'],
-  bounds_normalizer: ['viewer', 'bundle', 'mapper', 'validator', 'template', 'database', 'prompt'],
+  bounds_normalizer: ['viewer', 'canvas_output', 'bundle', 'mapper', 'validator', 'template', 'database', 'prompt'],
+  canvas_output: [],
 };
 
 export const typeStyles: Record<NodeType, { border: string; glow: string }> = {
@@ -841,6 +842,7 @@ export const typeStyles: Record<NodeType, { border: string; glow: string }> = {
   ai_description: { border: 'border-indigo-500/40', glow: 'shadow-indigo-500/20' },
   description_updater: { border: 'border-rose-400/40', glow: 'shadow-rose-400/20' },
   bounds_normalizer: { border: 'border-teal-400/40', glow: 'shadow-teal-500/20' },
+  canvas_output: { border: 'border-sky-400/40', glow: 'shadow-sky-500/20' },
 };
 
 export const triggers = [

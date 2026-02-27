@@ -31,26 +31,27 @@ export function useAiPathsRuntimeState() {
   }, []);
 
   const appendRuntimeEvent = useCallback((input: RuntimeEventInput): void => {
-    const event = {
+    const event: AiPathRuntimeEvent = {
       id:
         input.id ??
         (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
           ? crypto.randomUUID()
           : `evt_${Date.now()}_${Math.random().toString(16).slice(2, 10)}`),
       timestamp: input.timestamp ?? new Date().toISOString(),
+      type: input.type ?? 'log',
       source: input.source,
       kind: input.kind,
       level: input.level,
       message: input.message,
-      ...(input.runId != null ? { runId: input.runId } : {}),
-      ...(input.runStartedAt != null ? { runStartedAt: input.runStartedAt } : {}),
+      ...(input.runId !== undefined ? { runId: input.runId } : {}),
+      ...(input.runStartedAt !== undefined ? { runStartedAt: input.runStartedAt } : {}),
       ...(input.nodeId != null ? { nodeId: input.nodeId } : {}),
       ...(input.nodeType != null ? { nodeType: input.nodeType } : {}),
       ...(input.nodeTitle != null ? { nodeTitle: input.nodeTitle } : {}),
       ...(input.status != null ? { status: input.status } : {}),
       ...(input.iteration !== undefined ? { iteration: input.iteration } : {}),
-      ...(input.metadata != null ? { metadata: input.metadata } : {}),
-    } as unknown as AiPathRuntimeEvent;
+      ...(input.metadata != null ? { metadata: input.metadata ?? undefined } : {}),
+    };
     setRuntimeEvents((prev: AiPathRuntimeEvent[]): AiPathRuntimeEvent[] => {
       const next = [...prev, event];
       if (next.length > MAX_RUNTIME_EVENTS) {

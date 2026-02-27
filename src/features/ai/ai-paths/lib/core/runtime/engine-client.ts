@@ -31,6 +31,7 @@ import {
 
 import {
   handleBoundsNormalizer,
+  handleCanvasOutput,
   handleParser,
   handleMapper,
   handleMutator,
@@ -65,6 +66,7 @@ const CLIENT_HANDLERS: Record<string, NodeHandler> = {
   regex: handleRegex,
   iterator: handleIterator,
   bounds_normalizer: handleBoundsNormalizer,
+  canvas_output: handleCanvasOutput,
 };
 
 const resolveHandler = (type: string): NodeHandler | null => {

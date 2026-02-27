@@ -1,15 +1,20 @@
+import type {
+  NoteTagDto as TagRecord,
+  NoteCategoryDto as CategoryRecord,
+} from '@/shared/contracts/notes';
+
 export interface NoteTagEmbedded {
   tagId: string;
   noteId?: string;
   assignedAt?: string | Date;
-  tag?: unknown;
+  tag: TagRecord;
 }
 
 export interface NoteCategoryEmbedded {
   categoryId: string;
   noteId?: string;
   assignedAt?: string | Date;
-  category?: unknown;
+  category: CategoryRecord;
 }
 
 export interface NoteRelationFromEmbedded {

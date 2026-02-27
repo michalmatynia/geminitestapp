@@ -72,6 +72,20 @@ export const resolveNodePalette = (
         text: '#fef3c7',
         accent: '#fcd34d',
       };
+    case 'bounds_normalizer':
+      return {
+        fill: 'rgba(20, 184, 166, 0.14)',
+        stroke: 'rgba(20, 184, 166, 0.70)',
+        text: '#ccfbf1',
+        accent: '#5eead4',
+      };
+    case 'canvas_output':
+      return {
+        fill: 'rgba(14, 165, 233, 0.14)',
+        stroke: 'rgba(14, 165, 233, 0.70)',
+        text: '#e0f2fe',
+        accent: '#7dd3fc',
+      };
     default:
       return {
         fill: 'rgba(17, 24, 39, 0.88)',

@@ -26,17 +26,24 @@ const buildConnectorInfo = (
 });
 
 describe('CanvasConnectorTooltip', () => {
-  it('renders tooltip content inside a readable card container', () => {
+  it('renders tooltip content inside a readable HTML overlay card container', () => {
     const { container } = render(
-      <CanvasConnectorTooltip
-        tooltip={{ clientX: 120, clientY: 80, info: buildConnectorInfo() }}
-        position={{ left: 24, top: 18 }}
-        override={null}
-      />
+      <div>
+        <svg data-testid='canvas-svg' />
+        <CanvasConnectorTooltip
+          tooltip={{ clientX: 120, clientY: 80, info: buildConnectorInfo() }}
+          position={{ left: 24, top: 18 }}
+          override={null}
+        />
+      </div>
     );
 
-    expect(screen.getByText(/Output:\s*result/i)).toBeTruthy();
+    const outputLabel = screen.getByText(/Output:\s*result/i);
+    expect(outputLabel).toBeTruthy();
     expect(screen.getByText('Data passed through node (outputs):')).toBeTruthy();
-    expect(container.querySelector('[class*="bg-card/95"]')).toBeTruthy();
+    const tooltipCard = container.querySelector('[class*="bg-card/95"]');
+    expect(tooltipCard).toBeTruthy();
+    expect(tooltipCard?.closest('svg')).toBeNull();
+    expect(outputLabel.closest('svg')).toBeNull();
   });
 });

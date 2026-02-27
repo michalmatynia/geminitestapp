@@ -1,19 +1,13 @@
 'use client';
 
-import { ArrowLeft, ChevronRight, Plus, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles } from 'lucide-react';
 import React, { useMemo, useCallback } from 'react';
 
 import {
   Button,
   SelectSimple,
   SearchInput,
-  Table,
-  TableHeader,
-  TableBody,
-  TableHead,
-  TableRow,
-  TableCell,
-  StatusBadge,
+  DataTable,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import type { AiNode, CaseResolverFile } from '@/shared/contracts/case-resolver';
@@ -27,6 +21,7 @@ import {
   normalizeSearchText,
   type NodeFileDocumentSearchRow,
 } from './CaseResolverNodeFileUtils';
+import { getNodeFileDocumentColumns, getNodeFileCaseColumns } from './CaseResolverNodeFileColumns';
 
 const DRAG_FILE_ID_TYPE = 'application/case-resolver-file-id';
 
@@ -154,6 +149,23 @@ export function NodeFileDocumentSearchPanel({
       e.dataTransfer.setData(DRAG_FILE_ID_TYPE, file.id);
     },
     []
+  );
+
+  const docColumns = useMemo(
+    () => getNodeFileDocumentColumns({ isAllCases, onAddDocument: addDocumentToCanvas }),
+    [isAllCases, addDocumentToCanvas]
+  );
+
+  const caseColumns = useMemo(
+    () =>
+      getNodeFileCaseColumns({
+        onDrillInto: (id) => {
+          setSelectedDrillCaseId(id);
+          setDocumentSearchQuery('');
+          setSelectedSearchFolderPath(null);
+        },
+      }),
+    [setSelectedDrillCaseId, setDocumentSearchQuery, setSelectedSearchFolderPath]
   );
 
   return (
@@ -309,152 +321,28 @@ export function NodeFileDocumentSearchPanel({
 
       <div className='max-h-56 overflow-auto border-t border-border/40'>
         {showDocTable && (
-          <Table className='text-xs'>
-            <TableHeader className='sticky top-0 z-10 bg-card/90 backdrop-blur-sm'>
-              <TableRow className='border-border/40 text-left text-gray-500 hover:bg-transparent'>
-                <TableHead className='h-8 py-1 pl-3 pr-2 font-medium'>Name</TableHead>
-                <TableHead className='h-8 px-2 py-1 font-medium'>Folder</TableHead>
-                {isAllCases && <TableHead className='h-8 px-2 py-1 font-medium'>Signature</TableHead>}
-                <TableHead className='h-8 px-2 py-1 font-medium'>From</TableHead>
-                <TableHead className='h-8 px-2 py-1 font-medium'>To</TableHead>
-                <TableHead className='h-8 py-1 pl-2 pr-3 font-medium'></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {currentDocRows.length === 0 ? (
-                <TableRow className='border-border/20 hover:bg-transparent'>
-                  <TableCell
-                    colSpan={isAllCases ? 6 : 5}
-                    className='h-20 py-3 text-center text-gray-500'
-                  >
-                    No documents found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                currentDocRows.map((row: NodeFileDocumentSearchRow) => (
-                  <TableRow
-                    key={row.file.id}
-                    draggable
-                    onDragStart={(e) => handleRowDragStart(e, row.file)}
-                    className='cursor-grab border-border/20 transition-colors hover:bg-card/50 active:cursor-grabbing'
-                  >
-                    <TableCell className='h-9 max-w-[180px] py-1 pl-3 pr-2'>
-                      <span className='block truncate text-gray-200' title={row.file.name}>
-                        {row.file.name}
-                      </span>
-                    </TableCell>
-                    <TableCell className='h-9 max-w-[110px] px-2 py-1'>
-                      <span
-                        className='block truncate text-gray-400'
-                        title={row.folderPath || '—'}
-                      >
-                        {row.folderPath || '—'}
-                      </span>
-                    </TableCell>
-                    {isAllCases && (
-                      <TableCell className='h-9 max-w-[120px] px-2 py-1'>
-                        <span
-                          className='block truncate text-cyan-400/80'
-                          title={row.signatureLabel || '—'}
-                        >
-                          {row.signatureLabel || '—'}
-                        </span>
-                      </TableCell>
-                    )}
-                    <TableCell className='h-9 max-w-[90px] px-2 py-1'>
-                      <span
-                        className='block truncate text-gray-400'
-                        title={row.addresserLabel || '—'}
-                      >
-                        {row.addresserLabel || '—'}
-                      </span>
-                    </TableCell>
-                    <TableCell className='h-9 max-w-[90px] px-2 py-1'>
-                      <span
-                        className='block truncate text-gray-400'
-                        title={row.addresseeLabel || '—'}
-                      >
-                        {row.addresseeLabel || '—'}
-                      </span>
-                    </TableCell>
-                    <TableCell className='h-9 py-1 pl-2 pr-3'>
-                      <button
-                        type='button'
-                        title='Add to canvas center'
-                        className='flex items-center justify-center rounded p-1 text-gray-400 transition-colors hover:bg-cyan-500/15 hover:text-cyan-300'
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          addDocumentToCanvas(row.file);
-                        }}
-                      >
-                        <Plus className='size-3.5' />
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={docColumns}
+            data={currentDocRows}
+            className='border-none'
+            getRowId={(row) => row.file.id}
+            getRowClassName={() => 'cursor-grab border-border/20 transition-colors hover:bg-card/50 active:cursor-grabbing'}
+            stickyHeader
+            meta={{
+              onDragStart: handleRowDragStart,
+            }}
+          />
         )}
 
         {isAllCases && !selectedDrillCaseId && (
-          <Table className='text-xs'>
-            <TableHeader className='sticky top-0 z-10 bg-card/90 backdrop-blur-sm'>
-              <TableRow className='border-border/40 text-left text-gray-500 hover:bg-transparent'>
-                <TableHead className='h-8 py-1 pl-3 pr-2 font-medium'>Signature ID</TableHead>
-                <TableHead className='h-8 px-2 py-1 font-medium'>Status</TableHead>
-                <TableHead className='h-8 px-2 py-1 font-medium'>Docs</TableHead>
-                <TableHead className='h-8 py-1 pl-2 pr-3 font-medium'></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {visibleCaseRows.length === 0 ? (
-                <TableRow className='border-border/20 hover:bg-transparent'>
-                  <TableCell colSpan={4} className='h-20 py-3 text-center text-gray-500'>
-                    No cases found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                visibleCaseRows.map((row) => (
-                  <TableRow
-                    key={row.file.id}
-                    className='border-border/20 transition-colors hover:bg-card/50'
-                  >
-                    <TableCell className='h-9 max-w-[220px] py-1 pl-3 pr-2'>
-                      <span
-                        className='block truncate text-gray-200'
-                        title={row.signatureLabel || row.file.name}
-                      >
-                        {row.signatureLabel || row.file.name}
-                      </span>
-                    </TableCell>
-                    <TableCell className='h-9 px-2 py-1'>
-                      <StatusBadge
-                        status={row.file.caseStatus ?? 'pending'}
-                        variant={row.file.caseStatus === 'completed' ? 'success' : 'warning'}
-                        size='sm'
-                      />
-                    </TableCell>
-                    <TableCell className='h-9 px-2 py-1 text-gray-400'>{row.docCount}</TableCell>
-                    <TableCell className='h-9 py-1 pl-2 pr-3'>
-                      <button
-                        type='button'
-                        title='Browse documents in this case'
-                        className='flex items-center justify-center rounded p-1 text-gray-400 transition-colors hover:bg-cyan-500/15 hover:text-cyan-300'
-                        onClick={() => {
-                          setSelectedDrillCaseId(row.file.id);
-                          setDocumentSearchQuery('');
-                          setSelectedSearchFolderPath(null);
-                        }}
-                      >
-                        <ChevronRight className='size-3.5' />
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <DataTable
+            columns={caseColumns}
+            data={visibleCaseRows}
+            className='border-none'
+            getRowId={(row) => row.file.id}
+            getRowClassName={() => 'border-border/20 transition-colors hover:bg-card/50'}
+            stickyHeader
+          />
         )}
       </div>
 

@@ -230,6 +230,13 @@ module.exports = tseslint.config(
     },
     rules: {
       'no-undef': 'off', // Test files often define globals or use test utilities
+      // Enable any-related rules for tests to achieve 100% coverage
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
+      '@typescript-eslint/no-unsafe-argument': 'warn',
     },
   },
   {

@@ -17,6 +17,18 @@ vi.mock('@/features/integrations/services/integration-repository', () => ({
   })),
 }));
 
+type BaseImportRunResponse = {
+  runId: string;
+  status: string;
+  queueJobId: string;
+  summaryMessage: string | null;
+  preflight: {
+    ok: boolean;
+    issues: string[];
+    checkedAt: string;
+  };
+};
+
 describe('base import route unification', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -61,7 +73,7 @@ describe('base import route unification', () => {
         }),
       })
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as BaseImportRunResponse;
 
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');
@@ -108,7 +120,7 @@ describe('base import route unification', () => {
         }),
       })
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as BaseImportRunResponse;
 
     expect(response.status).toBe(200);
     expect(response.headers.get('cache-control')).toBe('no-store');

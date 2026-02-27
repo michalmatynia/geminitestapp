@@ -34,6 +34,7 @@ import {
   sanitizeEdges,
   normalizeAiPathsValidationConfig,
   derivePaletteNodeTypeId,
+  EMPTY_RUNTIME_STATE,
   TRIGGER_INPUT_PORTS,
   TRIGGER_OUTPUT_PORTS,
   triggers,
@@ -133,9 +134,7 @@ export function useAiPathsSettingsState({
   const [updaterSamples, setUpdaterSamples] = useState<
     Record<string, UpdaterSampleState>
   >({});
-  const [runtimeState, setRuntimeState] = useState<RuntimeState>(
-    { inputs: {}, outputs: {} } as unknown as RuntimeState
-  );
+  const [runtimeState, setRuntimeState] = useState<RuntimeState>(EMPTY_RUNTIME_STATE);
   const [pathDebugSnapshots, setPathDebugSnapshots] = useState<
     Record<string, PathDebugSnapshot>
   >({});

@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { GET_handler } from '@/app/api/integrations/exports/base/default-connection/handler';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const getExportDefaultConnectionIdMock = vi.hoisted(() => vi.fn());
 const setExportDefaultConnectionIdMock = vi.hoisted(() => vi.fn());
@@ -17,6 +18,16 @@ vi.mock('@/features/integrations/server', () => ({
   })),
 }));
 
+const mockContext: ApiHandlerContext = {
+  requestId: 'test-req-id',
+  startTime: Date.now(),
+  getElapsedMs: () => 0,
+};
+
+type DefaultExportConnectionResponse = {
+  connectionId: string | null;
+};
+
 describe('api/integrations/exports/base/default-connection handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -31,9 +42,9 @@ describe('api/integrations/exports/base/default-connection handler', () => {
       new NextRequest('http://localhost/api/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
-      {} as never
+      mockContext
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as DefaultExportConnectionResponse;
 
     expect(response.status).toBe(200);
     expect(payload).toEqual({ connectionId: null });
@@ -54,9 +65,9 @@ describe('api/integrations/exports/base/default-connection handler', () => {
       new NextRequest('http://localhost/api/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
-      {} as never
+      mockContext
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as DefaultExportConnectionResponse;
 
     expect(response.status).toBe(200);
     expect(payload).toEqual({ connectionId: 'conn-valid' });
@@ -77,9 +88,9 @@ describe('api/integrations/exports/base/default-connection handler', () => {
       new NextRequest('http://localhost/api/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
-      {} as never
+      mockContext
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as DefaultExportConnectionResponse;
 
     expect(response.status).toBe(200);
     expect(payload).toEqual({ connectionId: 'conn-fallback' });
@@ -94,9 +105,9 @@ describe('api/integrations/exports/base/default-connection handler', () => {
       new NextRequest('http://localhost/api/integrations/exports/base/default-connection', {
         method: 'GET',
       }),
-      {} as never
+      mockContext
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as DefaultExportConnectionResponse;
 
     expect(response.status).toBe(200);
     expect(payload).toEqual({ connectionId: 'conn-keep' });

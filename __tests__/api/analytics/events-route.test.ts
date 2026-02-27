@@ -49,12 +49,12 @@ describe('/api/analytics/events POST', () => {
 
     const response = await Promise.race([
       POST(req),
-      new Promise<never>((_resolve, reject) => {
+      new Promise<Response>((_resolve, reject) => {
         setTimeout(() => reject(new Error('POST /api/analytics/events timed out')), 250);
       }),
     ]);
 
-    const data = await response.json();
+    const data = (await response.json()) as { ok: boolean; queued: boolean };
     expect(response.status).toBe(202);
     expect(data).toEqual(
       expect.objectContaining({

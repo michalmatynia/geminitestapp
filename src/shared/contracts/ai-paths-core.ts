@@ -50,6 +50,7 @@ export const aiNodeTypeSchema = z.enum([
   'ai_description',
   'description_updater',
   'bounds_normalizer',
+  'canvas_output',
 ]);
 
 export type AiNodeTypeDto = z.infer<typeof aiNodeTypeSchema>;
@@ -205,6 +206,36 @@ export const boundsNormalizerConfigSchema = z.object({
 export type BoundsNormalizerInputFormat = z.infer<typeof boundsNormalizerInputFormatSchema>;
 export type BoundsNormalizerConfigDto = z.infer<typeof boundsNormalizerConfigSchema>;
 export type BoundsNormalizerConfig = BoundsNormalizerConfigDto;
+
+// ---------------------------------------------------------------------------
+// Canvas Output node — Image Studio terminal node
+// ---------------------------------------------------------------------------
+
+export const canvasOutputConfigSchema = z.object({
+  /**
+   * The top-level key written into run.result.
+   * Image Studio checks this key first before falling back to manual field mapping.
+   * Default: 'image_studio_bounds'
+   */
+  outputKey: z.string().default('image_studio_bounds'),
+  /** Dot-path into the `value` input to locate the bounds object. Leave empty for root. */
+  boundsPath: z.string().optional(),
+  /** Custom field name for the left coordinate (default: 'left'). */
+  leftField: z.string().optional(),
+  /** Custom field name for the top coordinate (default: 'top'). */
+  topField: z.string().optional(),
+  /** Custom field name for the width (default: 'width'). */
+  widthField: z.string().optional(),
+  /** Custom field name for the height (default: 'height'). */
+  heightField: z.string().optional(),
+  /** Dot-path into `value` for a confidence score to pass through. */
+  confidencePath: z.string().optional(),
+  /** Dot-path into `value` for an object label to pass through. */
+  labelPath: z.string().optional(),
+});
+
+export type CanvasOutputConfigDto = z.infer<typeof canvasOutputConfigSchema>;
+export type CanvasOutputConfig = CanvasOutputConfigDto;
 
 export const mutatorConfigSchema = z.object({
   path: z.string(),
@@ -968,6 +999,7 @@ export const nodeConfigSchema = z.object({
   iterator: iteratorConfigSchema.optional(),
   mapper: mapperConfigSchema.optional(),
   boundsNormalizer: boundsNormalizerConfigSchema.optional(),
+  canvasOutput: canvasOutputConfigSchema.optional(),
   mutator: mutatorConfigSchema.optional(),
   stringMutator: stringMutatorConfigSchema.optional(),
   validator: validatorConfigSchema.optional(),

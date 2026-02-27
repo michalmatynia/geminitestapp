@@ -1,5 +1,7 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { AiPathRunListResult } from '@/shared/contracts/ai-paths';
 
 const requireAiPathsRunAccessMock = vi.hoisted(() => vi.fn());
 const requireAiPathsAccessMock = vi.hoisted(() => vi.fn());
@@ -38,6 +40,12 @@ vi.mock('@/features/ai/ai-paths/services/path-run-recovery-service', () => ({
 
 import { GET_handler } from '@/app/api/ai-paths/runs/handler';
 
+const mockContext: ApiHandlerContext = {
+  requestId: 'test-req-id',
+  startTime: Date.now(),
+  getElapsedMs: () => 0,
+};
+
 describe('AI Paths runs list handler', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -59,9 +67,9 @@ describe('AI Paths runs list handler', () => {
       new NextRequest(
         'http://localhost/api/ai-paths/runs?pathId=path-node-filter&nodeId=node-42&status=failed&limit=25&offset=5',
       ),
-      {} as never,
+      mockContext,
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as AiPathRunListResult;
 
     expect(response.status).toBe(200);
     expect(listRunsMock).toHaveBeenCalledWith(
@@ -82,13 +90,13 @@ describe('AI Paths runs list handler', () => {
       new NextRequest(
         'http://localhost/api/ai-paths/runs?pathId=cache-key-path&nodeId=node-a&limit=1',
       ),
-      {} as never,
+      mockContext,
     );
     await GET_handler(
       new NextRequest(
         'http://localhost/api/ai-paths/runs?pathId=cache-key-path&nodeId=node-b&limit=1',
       ),
-      {} as never,
+      mockContext,
     );
 
     expect(listRunsMock).toHaveBeenCalledTimes(2);
@@ -111,7 +119,7 @@ describe('AI Paths runs list handler', () => {
       new NextRequest(
         'http://localhost/api/ai-paths/runs?status=all&limit=25&offset=0',
       ),
-      {} as never,
+      mockContext,
     );
 
     expect(listRunsMock).toHaveBeenCalledWith(
@@ -126,7 +134,7 @@ describe('AI Paths runs list handler', () => {
       new NextRequest(
         'http://localhost/api/ai-paths/runs?source=ai_paths_ui&sourceMode=exclude&limit=50',
       ),
-      {} as never,
+      mockContext,
     );
 
     expect(listRunsMock).toHaveBeenCalledWith(
@@ -144,7 +152,7 @@ describe('AI Paths runs list handler', () => {
       new NextRequest(
         'http://localhost/api/ai-paths/runs?sourceMode=exclude&limit=10',
       ),
-      {} as never,
+      mockContext,
     );
 
     expect(listRunsMock).toHaveBeenCalledWith(

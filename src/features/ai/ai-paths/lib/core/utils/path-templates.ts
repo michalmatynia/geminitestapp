@@ -151,38 +151,39 @@ const GEMMA_VISION_MODEL_TEMPLATE: AiPathTemplate = {
       },
     },
     {
-      id: 'node-viewer',
-      type: 'viewer',
-      title: 'Analysis Result',
-      description: 'Final output. Image Studio field mapping reads left/top/width/height from this node.',
-      inputs: ['value'],
+      id: 'node-canvas-output',
+      type: 'canvas_output',
+      title: 'Canvas Output',
+      description: 'Image Studio terminal node. Emits bounds at image_studio_bounds in run.result — no manual field mapping required.',
+      inputs: ['value', 'confidence', 'label'],
       outputs: ['value'],
       position: { x: 2020, y: 590 },
       config: {
-        viewer: {
-          outputs: { result: 'value' },
-          showImagesAsJson: false,
+        canvasOutput: {
+          outputKey: 'image_studio_bounds',
+          confidencePath: 'confidence',
+          labelPath: 'label',
         },
       },
     },
   ],
   edges: [
     // trigger → model: auto-extracts imageUrl from context
-    { id: 'e1', from: 'node-trigger',       to: 'node-model',     fromPort: 'context', toPort: 'context' },
+    { id: 'e1', from: 'node-trigger',       to: 'node-model',        fromPort: 'context', toPort: 'context' },
     // trigger → bounds_normalizer: provides imageWidth/imageHeight for relative formats
-    { id: 'e2', from: 'node-trigger',       to: 'node-bounds',    fromPort: 'context', toPort: 'context' },
+    { id: 'e2', from: 'node-trigger',       to: 'node-bounds',       fromPort: 'context', toPort: 'context' },
     // constant → prompt: injects system prompt text
-    { id: 'e3', from: 'node-system-prompt', to: 'node-prompt',    fromPort: 'value',   toPort: 'systemPrompt' },
+    { id: 'e3', from: 'node-system-prompt', to: 'node-prompt',       fromPort: 'value',   toPort: 'systemPrompt' },
     // prompt → model: prompt text
-    { id: 'e4', from: 'node-prompt',        to: 'node-model',     fromPort: 'prompt',  toPort: 'prompt' },
+    { id: 'e4', from: 'node-prompt',        to: 'node-model',        fromPort: 'prompt',  toPort: 'prompt' },
     // model → regex: raw text response
-    { id: 'e5', from: 'node-model',         to: 'node-regex',     fromPort: 'result',  toPort: 'value' },
+    { id: 'e5', from: 'node-model',         to: 'node-regex',        fromPort: 'result',  toPort: 'value' },
     // regex → bounds_normalizer: extracted JSON
-    { id: 'e6', from: 'node-regex',         to: 'node-bounds',    fromPort: 'result',  toPort: 'value' },
+    { id: 'e6', from: 'node-regex',         to: 'node-bounds',       fromPort: 'result',  toPort: 'value' },
     // bounds_normalizer → validator: normalised bounds (validator reads from 'context' port)
-    { id: 'e7', from: 'node-bounds',        to: 'node-validator', fromPort: 'value',   toPort: 'context' },
-    // validator → viewer: validated bounds
-    { id: 'e8', from: 'node-validator',     to: 'node-viewer',    fromPort: 'context', toPort: 'value' },
+    { id: 'e7', from: 'node-bounds',        to: 'node-validator',    fromPort: 'value',   toPort: 'context' },
+    // validator → canvas_output: validated bounds
+    { id: 'e8', from: 'node-validator',     to: 'node-canvas-output', fromPort: 'context', toPort: 'value' },
   ],
 };
 
@@ -311,29 +312,30 @@ const GEMMA_VISION_API_ADVANCED_TEMPLATE: AiPathTemplate = {
       },
     },
     {
-      id: 'node-viewer',
-      type: 'viewer',
-      title: 'Analysis Result',
-      description: 'Final output. Image Studio field mapping reads left/top/width/height from this node.',
-      inputs: ['value'],
+      id: 'node-canvas-output',
+      type: 'canvas_output',
+      title: 'Canvas Output',
+      description: 'Image Studio terminal node. Emits bounds at image_studio_bounds in run.result — no manual field mapping required.',
+      inputs: ['value', 'confidence', 'label'],
       outputs: ['value'],
       position: { x: 2020, y: 590 },
       config: {
-        viewer: {
-          outputs: { result: 'value' },
-          showImagesAsJson: false,
+        canvasOutput: {
+          outputKey: 'image_studio_bounds',
+          confidencePath: 'confidence',
+          labelPath: 'label',
         },
       },
     },
   ],
   edges: [
-    { id: 'e1', from: 'node-trigger',       to: 'node-api',       fromPort: 'context', toPort: 'context' },
-    { id: 'e2', from: 'node-trigger',       to: 'node-bounds',    fromPort: 'context', toPort: 'context' },
-    { id: 'e3', from: 'node-system-prompt', to: 'node-api',       fromPort: 'value',   toPort: 'systemPrompt' },
-    { id: 'e4', from: 'node-api',           to: 'node-regex',     fromPort: 'value',   toPort: 'value' },
-    { id: 'e5', from: 'node-regex',         to: 'node-bounds',    fromPort: 'result',  toPort: 'value' },
-    { id: 'e6', from: 'node-bounds',        to: 'node-validator', fromPort: 'value',   toPort: 'context' },
-    { id: 'e7', from: 'node-validator',     to: 'node-viewer',    fromPort: 'context', toPort: 'value' },
+    { id: 'e1', from: 'node-trigger',       to: 'node-api',           fromPort: 'context', toPort: 'context' },
+    { id: 'e2', from: 'node-trigger',       to: 'node-bounds',        fromPort: 'context', toPort: 'context' },
+    { id: 'e3', from: 'node-system-prompt', to: 'node-api',           fromPort: 'value',   toPort: 'systemPrompt' },
+    { id: 'e4', from: 'node-api',           to: 'node-regex',         fromPort: 'value',   toPort: 'value' },
+    { id: 'e5', from: 'node-regex',         to: 'node-bounds',        fromPort: 'result',  toPort: 'value' },
+    { id: 'e6', from: 'node-bounds',        to: 'node-validator',     fromPort: 'value',   toPort: 'context' },
+    { id: 'e7', from: 'node-validator',     to: 'node-canvas-output', fromPort: 'context', toPort: 'value' },
   ],
 };
 
@@ -357,7 +359,7 @@ export const buildPathConfigFromTemplate = (id: string, template: AiPathTemplate
       createdAt: now,
       updatedAt: null,
       data: {},
-      ...(node as Omit<AiNode, 'createdAt' | 'updatedAt' | 'data'>),
+      ...node,
     }),
   );
 

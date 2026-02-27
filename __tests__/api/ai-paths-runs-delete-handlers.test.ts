@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const requireAiPathsAccessMock = vi.hoisted(() => vi.fn());
 const requireAiPathsRunAccessMock = vi.hoisted(() => vi.fn());
@@ -39,6 +40,12 @@ vi.mock('@/features/ai/ai-paths/services/path-run-recovery-service', () => ({
 import { DELETE_handler as deleteRunHandler } from '@/app/api/ai-paths/runs/[runId]/handler';
 import { DELETE_handler as clearRunsHandler } from '@/app/api/ai-paths/runs/handler';
 
+const mockContext: ApiHandlerContext = {
+  requestId: 'test-req-id',
+  startTime: Date.now(),
+  getElapsedMs: () => 0,
+};
+
 describe('AI Paths run delete handlers', () => {
   const repoMock = {
     findRunById: findRunByIdMock,
@@ -62,10 +69,10 @@ describe('AI Paths run delete handlers', () => {
       new NextRequest('http://localhost/api/ai-paths/runs/run-delete-1', {
         method: 'DELETE',
       }),
-      {} as never,
+      mockContext,
       { runId: 'run-delete-1' }
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as { deleted: boolean; runId: string };
 
     expect(response.status).toBe(200);
     expect(enforceAiPathsActionRateLimitMock).toHaveBeenCalledWith(
@@ -87,9 +94,9 @@ describe('AI Paths run delete handlers', () => {
         'http://localhost/api/ai-paths/runs?scope=terminal&pathId=path-1&source=trigger&sourceMode=exclude',
         { method: 'DELETE' }
       ),
-      {} as never
+      mockContext
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as { deleted: number; scope: string };
 
     expect(response.status).toBe(200);
     expect(enforceAiPathsActionRateLimitMock).toHaveBeenCalledWith(
@@ -120,9 +127,9 @@ describe('AI Paths run delete handlers', () => {
       new NextRequest('http://localhost/api/ai-paths/runs?scope=all', {
         method: 'DELETE',
       }),
-      {} as never
+      mockContext
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as { deleted: number; scope: string };
 
     expect(response.status).toBe(200);
     expect(deletePathRunsWithRepositoryMock).toHaveBeenCalledWith(repoMock, {});

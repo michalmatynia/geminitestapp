@@ -1,8 +1,9 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useMemo, useRef } from 'react';
 import type { AiNode } from '@/features/ai/ai-paths/lib';
 import {
+  CANVAS_HEIGHT,
+  CANVAS_WIDTH,
   clampScale,
-  clampTranslate,
   VIEW_MARGIN,
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
@@ -35,7 +36,9 @@ export interface UseCanvasInteractionsNavigationValue {
     clientX: number,
     clientY: number,
     deltaMode?: number,
-    ctrlKey?: boolean
+    ctrlKey?: boolean,
+    metaKey?: boolean,
+    deltaX?: number
   ) => void;
   wheelZoomRafRef: React.MutableRefObject<number | null>;
   viewAnimationRafRef: React.MutableRefObject<number | null>;
@@ -73,6 +76,53 @@ export function useCanvasInteractionsNavigation({
     lastTs: number;
   } | null>(null);
 
+  const contentBounds = useMemo(
+    (): { minX: number; minY: number; maxX: number; maxY: number } => {
+      const next = {
+        minX: 0,
+        minY: 0,
+        maxX: CANVAS_WIDTH,
+        maxY: CANVAS_HEIGHT,
+      };
+      nodes.forEach((node: AiNode): void => {
+        const x = Number.isFinite(node.position.x) ? node.position.x : 0;
+        const y = Number.isFinite(node.position.y) ? node.position.y : 0;
+        next.minX = Math.min(next.minX, x);
+        next.minY = Math.min(next.minY, y);
+        next.maxX = Math.max(next.maxX, x + NODE_WIDTH);
+        next.maxY = Math.max(next.maxY, y + NODE_MIN_HEIGHT);
+      });
+      return next;
+    },
+    [nodes]
+  );
+
+  const clampTranslateToContent = useCallback(
+    (
+      x: number,
+      y: number,
+      scale: number,
+      viewport: { width: number; height: number } | null
+    ): { x: number; y: number } => {
+      if (!viewport) return { x, y };
+      const minX = viewport.width - contentBounds.maxX * scale - VIEW_MARGIN;
+      const maxX = VIEW_MARGIN - contentBounds.minX * scale;
+      const minY = viewport.height - contentBounds.maxY * scale - VIEW_MARGIN;
+      const maxY = VIEW_MARGIN - contentBounds.minY * scale;
+
+      const resolveAxis = (value: number, min: number, max: number): number => {
+        if (min > max) return (min + max) / 2;
+        return Math.max(min, Math.min(max, value));
+      };
+
+      return {
+        x: resolveAxis(x, minX, maxX),
+        y: resolveAxis(y, minY, maxY),
+      };
+    },
+    [contentBounds]
+  );
+
   const stopProgrammaticViewAnimation = useCallback((): void => {
     if (viewAnimationRafRef.current !== null) {
       cancelAnimationFrame(viewAnimationRafRef.current);
@@ -91,11 +141,11 @@ export function useCanvasInteractionsNavigation({
   const setViewClamped = useCallback((next: { x: number; y: number; scale: number }): void => {
     const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
     const clampedScale = clampScale(next.scale);
-    const clamped = clampTranslate(next.x, next.y, clampedScale, viewport);
+    const clamped = clampTranslateToContent(next.x, next.y, clampedScale, viewport);
     const resolved = { x: clamped.x, y: clamped.y, scale: clampedScale };
     latestViewRef.current = resolved;
     updateView(resolved);
-  }, [viewportRef, updateView, latestViewRef]);
+  }, [clampTranslateToContent, viewportRef, updateView, latestViewRef]);
 
   const stopViewAnimation = useCallback((): void => {
     stopProgrammaticViewAnimation();
@@ -123,7 +173,12 @@ export function useCanvasInteractionsNavigation({
       const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
       const nextX = currentView.x + inertia.vx * dtMs;
       const nextY = currentView.y + inertia.vy * dtMs;
-      const clamped = clampTranslate(nextX, nextY, currentView.scale, viewport);
+      const clamped = clampTranslateToContent(
+        nextX,
+        nextY,
+        currentView.scale,
+        viewport
+      );
       setViewClamped({
         x: clamped.x,
         y: clamped.y,
@@ -143,7 +198,13 @@ export function useCanvasInteractionsNavigation({
       panInertiaRafRef.current = requestAnimationFrame(tick);
     };
     panInertiaRafRef.current = requestAnimationFrame(tick);
-  }, [setViewClamped, stopPanInertia, viewportRef, latestViewRef]);
+  }, [
+    clampTranslateToContent,
+    setViewClamped,
+    stopPanInertia,
+    viewportRef,
+    latestViewRef,
+  ]);
 
   const getZoomTargetView = useCallback(
     (
@@ -170,14 +231,14 @@ export function useCanvasInteractionsNavigation({
       const canvasY = (anchorViewportY - currentView.y) / currentView.scale;
       const nextX = anchorViewportX - canvasX * nextScale;
       const nextY = anchorViewportY - canvasY * nextScale;
-      const clamped = clampTranslate(nextX, nextY, nextScale, viewport);
+      const clamped = clampTranslateToContent(nextX, nextY, nextScale, viewport);
       return {
         x: clamped.x,
         y: clamped.y,
         scale: nextScale,
       };
     },
-    [viewportRef, latestViewRef]
+    [clampTranslateToContent, viewportRef, latestViewRef]
   );
 
   const startWheelZoomLoop = useCallback((): void => {
@@ -285,12 +346,12 @@ export function useCanvasInteractionsNavigation({
     const centerY = bounds.minY + (bounds.maxY - bounds.minY) / 2;
     const nextX = viewport.width / 2 - centerX * nextScale;
     const nextY = viewport.height / 2 - centerY * nextScale;
-    const clamped = clampTranslate(nextX, nextY, nextScale, viewport);
+    const clamped = clampTranslateToContent(nextX, nextY, nextScale, viewport);
     animateViewTo(
       { x: clamped.x, y: clamped.y, scale: nextScale },
       ZOOM_ANIMATION_DURATION_MS
     );
-  }, [animateViewTo, nodes, viewportRef]);
+  }, [animateViewTo, clampTranslateToContent, nodes, viewportRef]);
 
   const fitToSelection = useCallback((): void => {
     const selectionIds = resolveActiveNodeSelectionIds();
@@ -339,12 +400,19 @@ export function useCanvasInteractionsNavigation({
     const centerY = bounds.minY + (bounds.maxY - bounds.minY) / 2;
     const nextX = viewport.width / 2 - centerX * nextScale;
     const nextY = viewport.height / 2 - centerY * nextScale;
-    const clamped = clampTranslate(nextX, nextY, nextScale, viewport);
+    const clamped = clampTranslateToContent(nextX, nextY, nextScale, viewport);
     animateViewTo(
       { x: clamped.x, y: clamped.y, scale: nextScale },
       ZOOM_ANIMATION_DURATION_MS
     );
-  }, [animateViewTo, fitToNodes, nodes, resolveActiveNodeSelectionIds, viewportRef]);
+  }, [
+    animateViewTo,
+    clampTranslateToContent,
+    fitToNodes,
+    nodes,
+    resolveActiveNodeSelectionIds,
+    viewportRef,
+  ]);
 
   const resetView = useCallback((): void => {
     animateViewTo({ x: VIEW_MARGIN, y: VIEW_MARGIN, scale: 1 });
@@ -357,12 +425,17 @@ export function useCanvasInteractionsNavigation({
     const currentView = latestViewRef.current;
     const nextX = viewport.width / 2 - canvasX * currentView.scale;
     const nextY = viewport.height / 2 - canvasY * currentView.scale;
-    const clamped = clampTranslate(nextX, nextY, currentView.scale, viewport);
+    const clamped = clampTranslateToContent(
+      nextX,
+      nextY,
+      currentView.scale,
+      viewport
+    );
     animateViewTo(
       { x: clamped.x, y: clamped.y, scale: currentView.scale },
       ZOOM_ANIMATION_DURATION_MS
     );
-  }, [animateViewTo, viewportRef, latestViewRef]);
+  }, [animateViewTo, clampTranslateToContent, viewportRef, latestViewRef]);
 
   const applyWheelZoom = useCallback(
     (
@@ -370,26 +443,42 @@ export function useCanvasInteractionsNavigation({
       clientX: number,
       clientY: number,
       deltaMode = 0,
-      ctrlKey = false
+      ctrlKey = false,
+      metaKey = false,
+      deltaX = 0
     ): void => {
       stopProgrammaticViewAnimation();
-      let normalizedDeltaY = Number.isFinite(deltaY) ? deltaY : 0;
+      // Some macOS trackpad pinch streams report minimal deltaY and meaningful deltaX.
+      const normalizedDeltaYRaw = Number.isFinite(deltaY) ? deltaY : 0;
+      const normalizedDeltaXRaw = Number.isFinite(deltaX) ? deltaX : 0;
+      let normalizedDeltaY =
+        Math.abs(normalizedDeltaYRaw) > 0.0001
+          ? normalizedDeltaYRaw
+          : normalizedDeltaXRaw;
       // Normalize wheel units and amplify very small trackpad deltas.
       if (deltaMode === 1) {
         normalizedDeltaY *= 16;
       } else if (deltaMode === 2) {
         normalizedDeltaY *= 120;
       }
-      const isPinchLikeGesture = Boolean(ctrlKey);
-      if (isPinchLikeGesture) {
+      const isModifierPinch = Boolean(ctrlKey || metaKey);
+      const isLikelyTrackpadDelta =
+        deltaMode === 0 &&
+        Math.abs(normalizedDeltaY) > 0 &&
+        Math.abs(normalizedDeltaY) < 12;
+      const isPinchLikeGesture = isModifierPinch || isLikelyTrackpadDelta;
+      if (isModifierPinch) {
         normalizedDeltaY *= 3;
+      } else if (isLikelyTrackpadDelta) {
+        normalizedDeltaY *= 2.2;
       }
       const absDelta = Math.abs(normalizedDeltaY);
       if (absDelta > 0 && absDelta < 4) {
-        normalizedDeltaY *= isPinchLikeGesture ? 10 : 6;
+        normalizedDeltaY *= isPinchLikeGesture ? 12 : 6;
       }
-      if (isPinchLikeGesture && Math.abs(normalizedDeltaY) > 0 && Math.abs(normalizedDeltaY) < 1.25) {
-        normalizedDeltaY = Math.sign(normalizedDeltaY) * 1.25;
+      const minStep = isPinchLikeGesture ? 1.25 : 0.9;
+      if (Math.abs(normalizedDeltaY) > 0 && Math.abs(normalizedDeltaY) < minStep) {
+        normalizedDeltaY = Math.sign(normalizedDeltaY) * minStep;
       }
       const baseScale = wheelZoomTargetRef.current?.scale ?? latestViewRef.current.scale;
       const zoomFactor = Math.exp((-normalizedDeltaY) * WHEEL_ZOOM_SENSITIVITY);
@@ -437,9 +526,9 @@ export function useCanvasInteractionsNavigation({
     } else if (nodeBottom > viewport.height - VIEW_MARGIN) {
       nextY -= nodeBottom - (viewport.height - VIEW_MARGIN);
     }
-    const clamped = clampTranslate(nextX, nextY, view.scale, viewport);
+    const clamped = clampTranslateToContent(nextX, nextY, view.scale, viewport);
     updateView({ x: clamped.x, y: clamped.y, scale: view.scale });
-  }, [view, viewportRef, updateView]);
+  }, [clampTranslateToContent, view, viewportRef, updateView]);
 
   return {
     stopViewAnimation,

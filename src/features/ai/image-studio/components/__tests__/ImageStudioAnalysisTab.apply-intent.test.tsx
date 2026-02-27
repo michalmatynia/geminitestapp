@@ -11,15 +11,17 @@ import {
 
 import { ImageStudioAnalysisTab } from '../ImageStudioAnalysisTab';
 
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+
 const mocks = vi.hoisted(() => ({
   toast: vi.fn(),
   switchToControls: vi.fn(),
   setSelectedSlotId: vi.fn(),
   setWorkingSlotId: vi.fn(),
   slotState: {
-    slots: [] as Array<{ id: string; name?: string | null }>,
+    slots: [] as ImageStudioSlotRecord[],
     slotSelectionLocked: false,
-    workingSlot: null as { id: string } | null,
+    workingSlot: null as ImageStudioSlotRecord | null,
   },
 }));
 
@@ -132,11 +134,11 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
     vi.clearAllMocks();
 
     mocks.slotState.slots = [
-      { id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png' },
-      { id: 'slot-2', name: 'Slot 2', imageUrl: 'https://example.test/slot-2.png' },
-    ] as any;
+      { id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png', projectId: 'project-alpha' } as ImageStudioSlotRecord,
+      { id: 'slot-2', name: 'Slot 2', imageUrl: 'https://example.test/slot-2.png', projectId: 'project-alpha' } as ImageStudioSlotRecord,
+    ];
     mocks.slotState.slotSelectionLocked = false;
-    mocks.slotState.workingSlot = { id: 'slot-1' } as any;
+    mocks.slotState.workingSlot = { id: 'slot-1', projectId: 'project-alpha' } as ImageStudioSlotRecord;
   });
 
   it('saves intent, pre-switches slot, and switches to controls when analyzed slot is valid', async () => {
@@ -191,7 +193,7 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
   });
 
   it('blocks apply when analyzed slot is missing', async () => {
-    mocks.slotState.slots = [{ id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png' }] as any;
+    mocks.slotState.slots = [{ id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png', projectId: 'project-alpha' } as ImageStudioSlotRecord];
     saveImageStudioAnalysisPlanSnapshot('project-alpha', createSnapshot('slot-2'));
     render(<ImageStudioAnalysisTab />);
 
@@ -215,9 +217,9 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
 
   it('blocks apply when analyzed slot source metadata is missing', async () => {
     mocks.slotState.slots = [
-      { id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png' },
-      { id: 'slot-2', name: 'Slot 2' },
-    ] as any;
+      { id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png', projectId: 'project-alpha' } as ImageStudioSlotRecord,
+      { id: 'slot-2', name: 'Slot 2', projectId: 'project-alpha' } as ImageStudioSlotRecord,
+    ];
     saveImageStudioAnalysisPlanSnapshot('project-alpha', createSnapshot('slot-2', 'signature_slot_2_old'));
     render(<ImageStudioAnalysisTab />);
 
@@ -241,9 +243,9 @@ describe('ImageStudioAnalysisTab apply intent routing', () => {
 
   it('blocks apply when analyzed slot signature is stale', async () => {
     mocks.slotState.slots = [
-      { id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png' },
-      { id: 'slot-2', name: 'Slot 2', imageUrl: 'https://example.test/slot-2-latest.png' },
-    ] as any;
+      { id: 'slot-1', name: 'Slot 1', imageUrl: 'https://example.test/slot-1.png', projectId: 'project-alpha' } as ImageStudioSlotRecord,
+      { id: 'slot-2', name: 'Slot 2', imageUrl: 'https://example.test/slot-2-latest.png', projectId: 'project-alpha' } as ImageStudioSlotRecord,
+    ];
     saveImageStudioAnalysisPlanSnapshot('project-alpha', {      ...createSnapshot('slot-2'),
       sourceSignature: 'signature_slot_2_old',
     });

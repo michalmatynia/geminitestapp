@@ -6,6 +6,7 @@ import { NextRequest } from 'next/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { postBaseImportParametersHandler } from '@/app/api/integrations/imports/base/parameters/handler';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const listIntegrationsMock = vi.hoisted(() => vi.fn());
 const listConnectionsMock = vi.hoisted(() => vi.fn());
@@ -29,6 +30,19 @@ vi.mock('@/features/observability/server', () => ({
     captureException: vi.fn(),
   },
 }));
+
+const mockContext: ApiHandlerContext = {
+  requestId: 'test-req-id',
+  startTime: Date.now(),
+  getElapsedMs: () => 0,
+};
+
+type BaseImportParametersResponse = {
+  keys: string[];
+  values: Record<string, string>;
+  productId?: string;
+  inventoryId: string;
+};
 
 describe('base import parameters handler', () => {
   beforeEach(() => {
@@ -89,9 +103,9 @@ describe('base import parameters handler', () => {
           sampleSize: 2,
         }),
       }),
-      {} as never
+      mockContext
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as BaseImportParametersResponse;
 
     expect(response.status).toBe(200);
     expect(payload.keys).toEqual(
@@ -147,9 +161,9 @@ describe('base import parameters handler', () => {
           connectionId: 'conn-1',
         }),
       }),
-      {} as never
+      mockContext
     );
-    const payload = await response.json();
+    const payload = (await response.json()) as BaseImportParametersResponse;
 
     expect(response.status).toBe(200);
     expect(payload.productId).toBe('p-99');

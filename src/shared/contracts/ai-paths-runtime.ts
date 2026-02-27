@@ -152,6 +152,7 @@ export type RunStatusDto = RunStatus;
 export const runtimeEventInputSchema = z.object({
   id: z.string().optional(),
   timestamp: z.string().optional(),
+  type: aiPathRuntimeEventKindSchema.optional(),
   source: z.enum(['local', 'server']),
   kind: z.string().optional(),
   level: z.enum(['info', 'warn', 'error', 'debug']).optional(),

@@ -39,6 +39,14 @@ import { useCanvasInteractionsTouch, type UseCanvasInteractionsTouchValue } from
 import { useCanvasInteractionsNodes, type UseCanvasInteractionsNodesValue } from './useCanvasInteractions.nodes';
 import { useCanvasInteractionsConnections, type UseCanvasInteractionsConnectionsValue } from './useCanvasInteractions.connections';
 
+type WebkitGestureLikeEvent = Event & {
+  scale?: number;
+  clientX?: number;
+  clientY?: number;
+  pageX?: number;
+  pageY?: number;
+};
+
 /**
  * Hook that manages all canvas-related interactions (pan, drag, connect, drop)
  * using AI-Paths contexts.
@@ -108,6 +116,7 @@ export function useCanvasInteractions(args?: {
   const latestViewRef = useRef(view);
   const lockedToastAtRef = useRef<number>(0);
   const hasCanvasKeyboardFocusRef = useRef(false);
+  const safariGestureScaleRef = useRef<number | null>(null);
 
   const [marqueeSelection, setMarqueeSelection] = useState<MarqueeSelectionState | null>(null);
   const [touchLongPressIndicator, setTouchLongPressIndicator] = useState<TouchLongPressIndicatorState | null>(null);
@@ -648,9 +657,99 @@ export function useCanvasInteractions(args?: {
       event.clientX,
       event.clientY,
       event.deltaMode,
-      event.ctrlKey
+      event.ctrlKey,
+      event.metaKey,
+      event.deltaX
     );
   }, [nav]);
+
+  useEffect(() => {
+    const canvasElement = canvasRef.current;
+    if (!canvasElement) return;
+
+    const resolveGestureAnchor = (
+      event: WebkitGestureLikeEvent
+    ): { x: number; y: number } | null => {
+      const clientX = Number.isFinite(event.clientX)
+        ? Number(event.clientX)
+        : Number.isFinite(event.pageX)
+          ? Number(event.pageX)
+          : null;
+      const clientY = Number.isFinite(event.clientY)
+        ? Number(event.clientY)
+        : Number.isFinite(event.pageY)
+          ? Number(event.pageY)
+          : null;
+      if (clientX !== null && clientY !== null) {
+        return { x: clientX, y: clientY };
+      }
+      const viewport = viewportRef.current?.getBoundingClientRect() ?? null;
+      if (!viewport) return null;
+      return {
+        x: viewport.left + viewport.width / 2,
+        y: viewport.top + viewport.height / 2,
+      };
+    };
+
+    const handleGestureStart = (rawEvent: Event): void => {
+      const event = rawEvent as WebkitGestureLikeEvent;
+      rawEvent.preventDefault();
+      nav.stopViewAnimation();
+      const scale = Number(event.scale);
+      safariGestureScaleRef.current =
+        Number.isFinite(scale) && scale > 0 ? scale : 1;
+    };
+
+    const handleGestureChange = (rawEvent: Event): void => {
+      const event = rawEvent as WebkitGestureLikeEvent;
+      rawEvent.preventDefault();
+      const previousGestureScale = safariGestureScaleRef.current ?? 1;
+      const nextGestureScale = Number(event.scale);
+      if (
+        !Number.isFinite(previousGestureScale) ||
+        previousGestureScale <= 0 ||
+        !Number.isFinite(nextGestureScale) ||
+        nextGestureScale <= 0
+      ) {
+        safariGestureScaleRef.current =
+          Number.isFinite(nextGestureScale) && nextGestureScale > 0
+            ? nextGestureScale
+            : previousGestureScale;
+        return;
+      }
+
+      const scaleFactor = nextGestureScale / previousGestureScale;
+      safariGestureScaleRef.current = nextGestureScale;
+      if (!Number.isFinite(scaleFactor) || Math.abs(scaleFactor - 1) < 0.0001) return;
+
+      const anchor = resolveGestureAnchor(event);
+      const targetScale = clampScale(latestViewRef.current.scale * scaleFactor);
+      const targetView = nav.getZoomTargetView(targetScale, anchor);
+      nav.setViewClamped(targetView);
+      if (anchor) {
+        updateLastPointerCanvasPosFromClient(anchor.x, anchor.y);
+      }
+    };
+
+    const handleGestureEnd = (): void => {
+      safariGestureScaleRef.current = null;
+    };
+
+    canvasElement.addEventListener('gesturestart', handleGestureStart, { passive: false });
+    canvasElement.addEventListener('gesturechange', handleGestureChange, { passive: false });
+    canvasElement.addEventListener('gestureend', handleGestureEnd);
+    return () => {
+      canvasElement.removeEventListener('gesturestart', handleGestureStart);
+      canvasElement.removeEventListener('gesturechange', handleGestureChange);
+      canvasElement.removeEventListener('gestureend', handleGestureEnd);
+    };
+  }, [
+    canvasRef,
+    nav,
+    updateLastPointerCanvasPosFromClient,
+    viewportRef,
+    latestViewRef,
+  ]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -760,7 +859,8 @@ export function useCanvasInteractions(args?: {
     const handlePointerUp = (event: PointerEvent): void => {
       setMarqueeSelection(null);
       const target = event.target as HTMLElement | null;
-      const portDirection = target?.getAttribute('data-port');
+      const portElement = target?.closest('[data-port]') as HTMLElement | null;
+      const portDirection = portElement?.getAttribute('data-port');
       if (portDirection === 'input') {
         // Let input-port handlers complete a connection before any global cancel.
         return;

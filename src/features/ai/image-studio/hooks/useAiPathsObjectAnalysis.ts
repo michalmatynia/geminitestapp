@@ -339,6 +339,12 @@ export function useAiPathsObjectAnalysis(
         edges: pathGraph.edges,
         triggerContext: {
           imageUrl,
+          ...(typeof workingSlotImageWidth === 'number' && Number.isFinite(workingSlotImageWidth)
+            ? { imageWidth: workingSlotImageWidth }
+            : {}),
+          ...(typeof workingSlotImageHeight === 'number' && Number.isFinite(workingSlotImageHeight)
+            ? { imageHeight: workingSlotImageHeight }
+            : {}),
           ...(slotId ? { slotId } : {}),
           ...(activeProjectIdRef.current ? { projectId: activeProjectIdRef.current } : {}),
         },

@@ -42,7 +42,7 @@ export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
   const relationsFrom = (Array.isArray(doc.relationsFrom) ? doc.relationsFrom : []);
   const relationsTo = (Array.isArray(doc.relationsTo) ? doc.relationsTo : []);
 
-  return {
+  const record: NoteRecord = {
     id,
     title: doc.title,
     content: doc.content,
@@ -60,9 +60,11 @@ export const toNoteResponse = (doc: WithId<NoteDocument>): NoteRecord => {
     categoryIds: categories.map((c: NoteCategoryEmbedded) => c.categoryId),
     relatedNoteIds: relationsFrom.map((r: NoteRelationFromEmbedded) => r.targetNoteId),
     relations: [],
-    relationsFrom: relationsFrom as unknown as NoteRecord['relationsFrom'],
-    relationsTo: relationsTo as unknown as NoteRecord['relationsTo'],
-  } as unknown as NoteRecord;
+    relationsFrom: relationsFrom as unknown[],
+    relationsTo: relationsTo as unknown[],
+  };
+
+  return record;
 };
 
 export const toTagResponse = (doc: WithId<TagDocument>): TagRecord => ({

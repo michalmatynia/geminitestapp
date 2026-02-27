@@ -480,6 +480,49 @@ const basePalette: NodeDefinition[] = [
       playwright: createDefaultPlaywrightConfig(),
     },
   },
+  // ---------------------------------------------------------------------------
+  // Image Studio: trigger + vision pipeline nodes
+  // ---------------------------------------------------------------------------
+  {
+    type: 'trigger',
+    title: 'Trigger: Image Studio Analysis',
+    description: 'Entry point for Image Studio object analysis. Receives imageUrl, imageWidth, imageHeight, slotId, and projectId from the Image Studio analysis panel.',
+    inputs: TRIGGER_INPUT_PORTS,
+    outputs: TRIGGER_OUTPUT_PORTS,
+    inputContracts: buildOptionalInputContracts(TRIGGER_INPUT_PORTS),
+    config: {
+      trigger: {
+        event: 'image_studio_object_analysis',
+        contextMode: 'trigger_only',
+      },
+    },
+  },
+  {
+    type: 'bounds_normalizer',
+    title: 'Bounds Normaliser',
+    description: 'Normalise bounding-box coordinates from any vision API format (pixels, Gemini millirelative, YOLO relative, percentage) to standard {left, top, width, height} in pixels.',
+    inputs: ['value', 'context'],
+    outputs: ['value'],
+    inputContracts: buildOptionalInputContracts(['value', 'context']),
+    config: {
+      boundsNormalizer: {
+        inputFormat: 'pixels_tlwh',
+      },
+    },
+  },
+  {
+    type: 'canvas_output',
+    title: 'Canvas Output',
+    description: 'Image Studio terminal node. Emits standardised bounds at a named run-result key so Image Studio can reposition the canvas without manual field-mapping configuration.',
+    inputs: ['value', 'confidence', 'label'],
+    outputs: ['value'],
+    inputContracts: buildOptionalInputContracts(['value', 'confidence', 'label']),
+    config: {
+      canvasOutput: {
+        outputKey: 'image_studio_bounds',
+      },
+    },
+  },
 ];
 
 const ensurePaletteNodeTypeIds = (

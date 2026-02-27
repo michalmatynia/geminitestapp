@@ -239,7 +239,7 @@ export function CanvasBoard({
 
         <div
           ref={canvasRef}
-          className='h-full w-full touch-none select-none'
+          className='relative h-full w-full touch-none select-none'
           onPointerDown={handlePanStart}
           onPointerMove={handlePanMove}
           onPointerUp={handlePanEnd}
@@ -251,13 +251,20 @@ export function CanvasBoard({
             width={viewportSize?.width ?? 0}
             height={viewportSize?.height ?? 0}
             viewBox={`0 0 ${viewportSize?.width ?? 0} ${viewportSize?.height ?? 0}`}
-            className={cn('h-full w-full transition-opacity', {
-              'opacity-50': svgPerf && svgPerf.fps < 30,
-            })}
+            className='h-full w-full'
             style={{
               cursor: isPanning ? 'grabbing' : (selectionToolMode === 'pan' ? 'grab' : 'default'),
             }}
           >
+            <g
+              data-canvas-world='true'
+              transform={`translate(${view.x} ${view.y}) scale(${view.scale})`}
+            >
+              <CanvasSvgEdgeLayer />
+              <CanvasSvgNodeLayer />
+            </g>
+          </svg>
+          <div className='pointer-events-none absolute inset-0'>
             {selectionMarqueeRect && <CanvasSelectionMarquee rect={selectionMarqueeRect} />}
             {touchLongPressIndicator && (
               <CanvasLongPressIndicator 
@@ -268,8 +275,6 @@ export function CanvasBoard({
                 }} 
               />
             )}
-            <CanvasSvgEdgeLayer />
-            <CanvasSvgNodeLayer />
             {svgConnectorTooltip && (
               <CanvasConnectorTooltip
                 tooltip={svgConnectorTooltip}
@@ -297,7 +302,7 @@ export function CanvasBoard({
                 }
               />
             )}
-          </svg>
+          </div>
         </div>
         {showMinimap && <CanvasMinimap />}
         <ConfirmationModal />

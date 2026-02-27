@@ -375,3 +375,51 @@ export const boundsNormalizerDocs: NodeConfigDocField[] = [
   },
   ...COMMON_RUNTIME_FIELDS,
 ];
+
+export const canvasOutputDocs: NodeConfigDocField[] = [
+  {
+    path: 'canvasOutput.outputKey',
+    description:
+      'Top-level key written into run.result. Image Studio reads this key directly — no manual field-mapping required when this key is present.',
+    defaultValue: 'image_studio_bounds',
+  },
+  {
+    path: 'canvasOutput.boundsPath',
+    description:
+      'Dot-path into the incoming value port to reach the bounds object. Leave empty if bounds are at the root of the input.',
+    defaultValue: '""',
+  },
+  {
+    path: 'canvasOutput.leftField',
+    description: 'Custom field name for the left coordinate in the bounds object.',
+    defaultValue: 'left',
+  },
+  {
+    path: 'canvasOutput.topField',
+    description: 'Custom field name for the top coordinate in the bounds object.',
+    defaultValue: 'top',
+  },
+  {
+    path: 'canvasOutput.widthField',
+    description: 'Custom field name for the width in the bounds object.',
+    defaultValue: 'width',
+  },
+  {
+    path: 'canvasOutput.heightField',
+    description: 'Custom field name for the height in the bounds object.',
+    defaultValue: 'height',
+  },
+  {
+    path: 'canvasOutput.confidencePath',
+    description:
+      'Dot-path into the value input for a confidence score (0–1). The dedicated confidence input port takes priority when connected.',
+    defaultValue: '""',
+  },
+  {
+    path: 'canvasOutput.labelPath',
+    description:
+      'Dot-path into the value input for the detected object label. The dedicated label input port takes priority when connected.',
+    defaultValue: '""',
+  },
+  ...COMMON_RUNTIME_FIELDS,
+];

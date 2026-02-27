@@ -20,6 +20,8 @@ vi.mock('@/features/auth/server', () => ({
   getAuthUserPageSettings: vi.fn().mockResolvedValue({
     allowSignup: true,
     requireEmailVerification: false,
+    allowPasswordReset: true,
+    allowSocialLogin: true,
   }),
   getAuthDataProvider: vi.fn().mockResolvedValue('mongodb'),
   requireAuthProvider: (provider: string) => provider,
@@ -64,7 +66,9 @@ describe('Auth Register API', () => {
     vi.mocked(getAuthUserPageSettings).mockResolvedValue({
       allowSignup: true,
       requireEmailVerification: false,
-    } as any);
+      allowPasswordReset: true,
+      allowSocialLogin: true,
+    });
   });
 
   afterAll(() => {
@@ -89,7 +93,7 @@ describe('Auth Register API', () => {
       })
     );
 
-    const data = await res.json();
+    const data = (await res.json()) as { id: string; email: string };
     expect(res.status).toEqual(201);
     expect(data.id).toEqual('user-id');
     expect(data.email).toEqual('test@example.com');
@@ -114,7 +118,12 @@ describe('Auth Register API', () => {
   });
 
   it('should return 403 if registration is disabled', async () => {
-    vi.mocked(getAuthUserPageSettings).mockResolvedValue({ allowSignup: false } as any);
+    vi.mocked(getAuthUserPageSettings).mockResolvedValue({
+      allowSignup: false,
+      requireEmailVerification: false,
+      allowPasswordReset: true,
+      allowSocialLogin: true,
+    });
 
     const payload = {
       email: 'test@example.com',
@@ -132,7 +141,7 @@ describe('Auth Register API', () => {
   });
 
   it('should return 400 if password does not meet policy', async () => {
-    vi.mocked(validatePasswordStrength).mockReturnValue({ ok: false, errors: ['Too short'] } as any);
+    vi.mocked(validatePasswordStrength).mockReturnValue({ ok: false, errors: ['Too short'] });
 
     const payload = {
       email: 'test@example.com',

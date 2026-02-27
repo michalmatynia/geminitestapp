@@ -5,6 +5,7 @@ import { triggerDocs, fetcherDocs, simulationDocs } from './node-docs/trigger';
 import { audioOscillatorDocs, audioSpeakerDocs } from './node-docs/audio';
 import {
   boundsNormalizerDocs,
+  canvasOutputDocs,
   contextDocs,
   parserDocs,
   regexDocs,
@@ -56,6 +57,7 @@ export const CONFIG_DOCS_BY_TYPE: Partial<Record<NodeType, NodeConfigDocField[]>
   iterator: iteratorDocs,
   mapper: mapperDocs,
   bounds_normalizer: boundsNormalizerDocs,
+  canvas_output: canvasOutputDocs,
   mutator: mutatorDocs,
   string_mutator: stringMutatorDocs,
   validator: validatorDocs,

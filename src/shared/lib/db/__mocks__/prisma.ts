@@ -63,13 +63,13 @@ const createMockModel = () => {
       return Promise.resolve(newItem);
     }),
     createMany: vi.fn().mockImplementation((args: { data: Record<string, unknown>[] }) => {
-      const newItems = args.data.map(d => ({
+      const newItems: MockItem[] = args.data.map(d => ({
         id: 'mock-id-' + Math.random().toString(36).slice(2, 9),
         createdAt: new Date(),
         updatedAt: new Date(),
         ...d,
       }));
-      items.push(...(newItems as unknown as MockItem[]));
+      items.push(...newItems);
       return Promise.resolve({ count: newItems.length });
     }),
     delete: vi.fn().mockImplementation((args: { where: { id: string } }) => {

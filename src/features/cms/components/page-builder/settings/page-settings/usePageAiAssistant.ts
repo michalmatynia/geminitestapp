@@ -102,7 +102,7 @@ export function usePageAiAssistant() {
     mutationKey: QUERY_KEYS.cms.pages.all,
     meta: {
       source: 'cms.page-builder.ai-assistant',
-      operation: 'update',
+      operation: 'action',
       resource: 'cms.pages.ai',
       domain: 'cms' as const,
       tags: ['cms', 'pages', 'ai'],

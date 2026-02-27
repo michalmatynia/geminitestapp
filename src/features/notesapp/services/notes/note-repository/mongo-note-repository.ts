@@ -143,20 +143,28 @@ export const mongoNoteRepository: NoteRepository = {
       : [];
     const incomingMap = buildIncomingRelationsMap(incomingDocs, noteIdSet);
     
-    const result = notes.map((note: NoteRecord) => ({
-      ...note,
-      files: filesByNoteId.get(note.id) ?? [],
-      relationsTo: incomingMap.get(note.id) ?? [],
-    }));
+    const result: NoteWithRelations[] = notes.map((note: NoteRecord) => {
+      const doc = docs.find(d => (d.id ?? d._id) === note.id);
+      const { tags: _, categories: __, relations: ___, relationsFrom: ____, relationsTo: _____, ...baseNote } = note;
+      return {
+        ...baseNote,
+        files: filesByNoteId.get(note.id) ?? [],
+        relations: [],
+        relationsFrom: ((doc as NoteDocument)?.relationsFrom ?? []).map(r => ({ ...r, assignedAt: toIsoCreatedAt(r.assignedAt) })),
+        relationsTo: (incomingMap.get(note.id) ?? []).map(r => ({ ...r, assignedAt: toIsoCreatedAt(r.assignedAt) })),
+        tags: (doc?.tags ?? []).map(t => ({ ...t, assignedAt: toIsoCreatedAt(t.assignedAt) })),
+        categories: (doc?.categories ?? []).map(c => ({ ...c, assignedAt: toIsoCreatedAt(c.assignedAt) })),
+      };
+    });
 
     if (filters.truncateContent) {
-      return result.map((note: NoteRecord) => ({
+      return result.map((note: NoteWithRelations) => ({
         ...note,
         content: note.content.length > 300 ? note.content.slice(0, 300) + '...' : note.content,
-      })) as unknown as NoteWithRelations[];
+      }));
     }
 
-    return result as unknown as NoteWithRelations[];
+    return result;
   },
 
   async getById(id: string): Promise<NoteWithRelations | null> {
@@ -173,7 +181,7 @@ export const mongoNoteRepository: NoteRepository = {
     const incomingDocs = await collection
       .find({ 'relationsFrom.targetNoteId': note.id } as Filter<NoteDocument>)
       .toArray();
-    const relationsTo: NoteRelationToEmbedded[] = incomingDocs
+    const relationsTo = incomingDocs
       .map((incoming: NoteDocument): NoteRelationToEmbedded | null => {
         const relation = incoming.relationsFrom?.find(
           (rel: NoteRelationFromEmbedded): boolean =>
@@ -195,7 +203,18 @@ export const mongoNoteRepository: NoteRepository = {
         };
       })
       .filter((rel: NoteRelationToEmbedded | null): rel is NoteRelationToEmbedded => rel !== null);
-    return { ...note, files: noteFiles.map(toNoteFileResponse), relationsTo } as unknown as NoteWithRelations;
+    
+    const { tags: _, categories: __, relations: ___, relationsFrom: ____, relationsTo: _____, ...baseNote } = note;
+    const result: NoteWithRelations = {
+      ...baseNote,
+      files: noteFiles.map(toNoteFileResponse),
+      relations: [],
+      relationsFrom: ((doc as NoteDocument).relationsFrom ?? []).map(r => ({ ...r, assignedAt: toIsoCreatedAt(r.assignedAt) })),
+      relationsTo: relationsTo.map(r => ({ ...r, assignedAt: toIsoCreatedAt(r.assignedAt) })),
+      tags: ((doc as NoteDocument).tags ?? []).map(t => ({ ...t, assignedAt: toIsoCreatedAt(t.assignedAt) })),
+      categories: ((doc as NoteDocument).categories ?? []).map(c => ({ ...c, assignedAt: toIsoCreatedAt(c.assignedAt) })),
+    };
+    return result;
   },
 
   async create(data: NoteCreateInput): Promise<NoteWithRelations> {
@@ -292,7 +311,18 @@ export const mongoNoteRepository: NoteRepository = {
     };
 
     await collection.insertOne(doc);
-    return toNoteResponse(doc) as unknown as NoteWithRelations;
+    const noteResponse = toNoteResponse(doc);
+    const { tags: _, categories: __, relations: ___, relationsFrom: ____, relationsTo: _____, ...baseNote } = noteResponse;
+    const result: NoteWithRelations = {
+      ...baseNote,
+      files: [],
+      relations: [],
+      relationsFrom: (doc.relationsFrom ?? []).map(r => ({ ...r, assignedAt: toIsoCreatedAt(r.assignedAt) })),
+      relationsTo: [],
+      tags: (doc.tags ?? []).map(t => ({ ...t, assignedAt: toIsoCreatedAt(t.assignedAt) })),
+      categories: (doc.categories ?? []).map(c => ({ ...c, assignedAt: toIsoCreatedAt(c.assignedAt) })),
+    };
+    return result;
   },
 
   async update(id: string, data: NoteUpdateInput): Promise<NoteWithRelations | null> {
@@ -415,7 +445,18 @@ export const mongoNoteRepository: NoteRepository = {
     );
 
     if (!result) throw notFoundError('Note not found');
-    return toNoteResponse(result) as unknown as NoteWithRelations;
+    const noteResponse = toNoteResponse(result);
+    const { tags: _, categories: __, relations: ___, ...baseNote } = noteResponse;
+    const noteWithRelations: NoteWithRelations = {
+      ...baseNote,
+      files: [], // Files are not updated in this operation
+      relations: [],
+      relationsFrom: ((result as NoteDocument).relationsFrom ?? []).map(r => ({ ...r, assignedAt: toIsoCreatedAt(r.assignedAt) })),
+      relationsTo: ((result as NoteDocument).relationsTo ?? []).map(r => ({ ...r, assignedAt: toIsoCreatedAt(r.assignedAt) })),
+      tags: ((result as NoteDocument).tags ?? []).map(t => ({ ...t, assignedAt: toIsoCreatedAt(t.assignedAt) })),
+      categories: ((result as NoteDocument).categories ?? []).map(c => ({ ...c, assignedAt: toIsoCreatedAt(c.assignedAt) })),
+    };
+    return noteWithRelations;
   },
 
   async syncRelatedNotesBatch(

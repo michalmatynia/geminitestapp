@@ -101,7 +101,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   [integrationsWithConnectionsData]
   );
   const catalogsQuery = useCatalogs();
-  const catalogsData = useMemo<CatalogOption[]>(() => (catalogsQuery.data as unknown as CatalogOption[]) || [], [catalogsQuery.data]);
+  const catalogsData = useMemo<CatalogOption[]>(() => (catalogsQuery.data || []), [catalogsQuery.data]);
   const loadingCatalogs = catalogsQuery.isLoading;
   
   const { data: importTemplates = [], isLoading: loadingImportTemplates } = useTemplates('import');

@@ -115,6 +115,26 @@ export const extractObjectBoundsFromRunResult = (
 ): ExtractedObjectBounds | null => {
   if (!result) return null;
 
+  // ---------------------------------------------------------------------------
+  // Fast-path: canvas_output node emits a named top-level key into run.result.
+  // If that key is present with all four numeric fields, use it directly —
+  // no manual field-mapping required.
+  // ---------------------------------------------------------------------------
+  const CANVAS_OUTPUT_KEYS = ['image_studio_bounds'] as const;
+  for (const key of CANVAS_OUTPUT_KEYS) {
+    const candidate = result[key];
+    if (candidate !== null && candidate !== undefined && typeof candidate === 'object' && !Array.isArray(candidate)) {
+      const rec = candidate as Record<string, unknown>;
+      const left   = toFiniteNumber(rec['left']);
+      const top    = toFiniteNumber(rec['top']);
+      const width  = toFiniteNumber(rec['width']);
+      const height = toFiniteNumber(rec['height']);
+      if (left !== null && top !== null && width !== null && height !== null && width > 0 && height > 0) {
+        return { left, top, width, height };
+      }
+    }
+  }
+
   // Try full bounds
   const leftPath = fieldMapping.boundsLeft?.trim() ?? '';
   const topPath = fieldMapping.boundsTop?.trim() ?? '';

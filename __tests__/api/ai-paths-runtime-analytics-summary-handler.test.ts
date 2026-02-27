@@ -23,6 +23,14 @@ vi.mock('@/features/jobs/server', () => ({
 
 import { GET_handler } from '@/app/api/ai-paths/runtime-analytics/summary/handler';
 import { authError } from '@/shared/errors/app-error';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import type { AiPathRuntimeAnalyticsSummary } from '@/shared/contracts/ai-paths';
+
+const mockContext: ApiHandlerContext = {
+  requestId: 'test-req-id',
+  startTime: Date.now(),
+  getElapsedMs: () => 0,
+};
 
 describe('AI Paths runtime analytics summary handler', () => {
   beforeEach(() => {
@@ -38,9 +46,9 @@ describe('AI Paths runtime analytics summary handler', () => {
 
     const response = await GET_handler(
       new NextRequest('http://localhost/api/ai-paths/runtime-analytics/summary?range=24h'),
-      {} as any
+      mockContext
     );
-    const body = await response.json();
+    const body = (await response.json()) as { summary: AiPathRuntimeAnalyticsSummary };
 
     expect(response.status).toBe(200);
     expect(body.summary.storage).toBe('disabled');
@@ -142,9 +150,9 @@ describe('AI Paths runtime analytics summary handler', () => {
 
     const response = await GET_handler(
       new NextRequest('http://localhost/api/ai-paths/runtime-analytics/summary?range=24h'),
-      {} as any
+      mockContext
     );
-    const body = await response.json();
+    const body = (await response.json()) as { summary: AiPathRuntimeAnalyticsSummary };
 
     expect(response.status).toBe(200);
     expect(startAiPathRunQueueMock).toHaveBeenCalled();
@@ -155,6 +163,6 @@ describe('AI Paths runtime analytics summary handler', () => {
       range: '24h',
     });
     expect(body.summary.traces.sampledSpans).toBe(42);
-    expect(body.summary.traces.slowestSpan.nodeType).toBe('model');
+    expect(body.summary.traces.slowestSpan!.nodeType).toBe('model');
   });
 });

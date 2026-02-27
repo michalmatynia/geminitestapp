@@ -42,6 +42,7 @@ import {
   saveObjectLayoutCustomPreset,
   saveObjectLayoutAdvancedDefaults,
   type ObjectLayoutCustomPreset,
+  type ObjectLayoutPresetOptionValue,
 } from '../utils/object-layout-presets';
 
 import { 
@@ -610,7 +611,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
           layoutPresetDraftName={layoutPresetDraftName} setLayoutPresetDraftName={setLayoutPresetDraftName}
           onCenterLayoutPresetChange={(value: string) => {
             const presetValues = getObjectLayoutPresetValuesFromOption(
-              value as Parameters<typeof getObjectLayoutPresetValuesFromOption>[0],
+              value as unknown as ObjectLayoutPresetOptionValue,
               layoutCustomPresets
             );
             if (!presetValues) return;
@@ -659,7 +660,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
           busyLabel={busyLabel}
           handleAnalyze={() => { void handleAnalyze(); }}
           handleCancel={handleCancel}
-          workingSlotId={workingSlot?.id}
+          workingSlotId={workingSlot?.id ?? null}
           workingSlotImageSrc={workingSlotImageSrc}
           sanitizePaddingInput={sanitizePaddingInput}
           sanitizeThresholdInput={sanitizeThresholdInput}

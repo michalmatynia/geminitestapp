@@ -374,7 +374,6 @@ export function RightSidebar(): React.JSX.Element {
     slots,
     studioSettings,
     toast: (msg: string, opt?: { variant?: 'success' | 'error' | 'info' | 'warning' }) => {
-      // @ts-expect-error - Complex toast type mismatch
       toast(msg, opt);
     },
     workingSlot,

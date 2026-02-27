@@ -1,4 +1,3 @@
-// @ts-nocheck - Persistent ESLint misidentification of correctly typed context hooks and TipTap objects.
 'use client';
 
 import { useCallback, useMemo, useRef, useState } from 'react';
@@ -8,7 +7,7 @@ import { createMutationV2 } from '@/shared/lib/query-factories-v2';
 import { QUERY_KEYS } from '@/shared/lib/query-keys';
 import { logClientError } from '@/features/observability';
 import { getSectionDefinition } from '../../section-registry';
-import type { PageZone } from '@/shared/contracts/cms';
+import type { PageZone, SectionInstance } from '@/shared/contracts/cms';
 import { usePageBuilderState, usePageBuilderDispatch } from '../../../../hooks/usePageBuilderContext';
 
 export function usePageAiAssistant() {
@@ -29,7 +28,7 @@ export function usePageAiAssistant() {
   const pageContext = useMemo((): string => {
     if (!page) return '';
     const sectionsData = state.sections;
-    const contextSections = (sectionsData || []).map((section: any) => {
+    const contextSections = (sectionsData || []).map((section: SectionInstance) => {
       return {
         id: String(section.id || ''),
         type: String(section.type || ''),
@@ -37,10 +36,13 @@ export function usePageAiAssistant() {
         blockCount: Array.isArray(section.blocks) ? section.blocks.length : 0,
       };
     });
+    const firstSlug = Array.isArray(page.slugs) ? page.slugs[0] : null;
+    const slugValue = typeof firstSlug === 'string' ? firstSlug : (firstSlug && typeof firstSlug === 'object' && 'slug' in firstSlug ? (firstSlug as { slug: string }).slug : '');
+
     return JSON.stringify({
       pageId: page.id,
-      title: page.title,
-      slug: page.slug,
+      title: page.name,
+      slug: slugValue,
       sections: contextSections,
     });
   }, [page, state.sections]);
@@ -73,8 +75,8 @@ export function usePageAiAssistant() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new ApiError(error.message || 'Failed to generate AI output', response.status);
+        const error = (await response.json()) as Record<string, unknown>;
+        throw new ApiError(String(error['message'] || 'Failed to generate AI output'), response.status);
       }
 
       if (response.headers.get('Content-Type')?.includes('text/event-stream')) {
@@ -93,11 +95,18 @@ export function usePageAiAssistant() {
         return { accumulated, provider: modelId || agentId || 'ai' };
       }
 
-      const data = await response.json();
+      const data = (await response.json()) as { output: string };
       setPageAiOutput(data.output);
       return { accumulated: data.output, provider: modelId || agentId || 'ai' };
     },
-    mutationKey: QUERY_KEYS.cms.pages.all(),
+    mutationKey: QUERY_KEYS.cms.pages.all,
+    meta: {
+      source: 'cms.page-builder.ai-assistant',
+      operation: 'update',
+      resource: 'cms.pages.ai',
+      domain: 'cms' as const,
+      tags: ['cms', 'pages', 'ai'],
+    },
   });
 
   const handleGeneratePageAi = useCallback(async (): Promise<void> => {
@@ -164,7 +173,6 @@ export function usePageAiAssistant() {
           type: 'ADD_SECTION',
           sectionType: type,
           zone: (section['zone'] || 'template') as PageZone,
-          index: undefined,
           initialSettings: section['settings'] as Record<string, unknown>,
         });
         inserted += 1;

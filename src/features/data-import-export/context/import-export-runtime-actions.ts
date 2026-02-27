@@ -40,7 +40,9 @@ type ImportMutationLike = {
 };
 
 type ResumeImportMutationLike = {
-  mutateAsync: (payload: { statuses: string[] }) => Promise<ImportResponse>;
+  mutateAsync: (payload: {
+    statuses?: Array<'pending' | 'processing' | 'imported' | 'updated' | 'skipped' | 'failed'>;
+  }) => Promise<ImportResponse>;
 };
 
 type CancelImportMutationLike = {

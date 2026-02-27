@@ -29,7 +29,7 @@ interface ConsumeTemporaryUploadProps {
   setTemporaryObjectUpload: React.Dispatch<React.SetStateAction<ImageStudioUploadedAsset | null>>;
   setSelectedSlotId: (id: string | null) => void;
   setWorkingSlotId: (id: string | null) => void;
-  setPreviewMode: (mode: 'view' | 'edit' | 'image' | 'analysis') => void;
+  setPreviewMode: (mode: 'image' | '3d') => void;
   getFolderForNewSlot: () => string;
   setUploadError: (error: string | null) => void;
 }

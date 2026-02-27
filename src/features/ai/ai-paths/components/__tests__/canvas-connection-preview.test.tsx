@@ -131,10 +131,10 @@ describe('canvas connection preview', () => {
           onConnectorHover={vi.fn()}
           onConnectorLeave={vi.fn()}
           getConnectorInfo={vi.fn(() => ({
-            direction: 'output',
+            direction: 'output' as 'output' | 'input',
             nodeId: node.id,
             port: 'result',
-            expectedTypes: ['string'],
+            expectedTypes: ['string'] as any[],
             expectedLabel: 'string',
             rawValue: 'ok',
             value: 'ok',

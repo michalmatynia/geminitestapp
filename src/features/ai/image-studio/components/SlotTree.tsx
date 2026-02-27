@@ -92,7 +92,7 @@ export function SlotTree({ revealRequest = null }: { revealRequest?: SlotTreeRev
     instance: 'image_studio',
     nodes: masterNodes,
     selectedNodeId: selectedMasterNodeId,
-    adapter: useMemo(() => null, []), // We'll set it properly below
+    adapter: undefined,
   });
 
   const stickySelectionMode = profile.interactions.selectionBehavior === 'toggle_only';

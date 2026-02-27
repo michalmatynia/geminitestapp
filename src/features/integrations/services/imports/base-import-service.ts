@@ -65,6 +65,8 @@ import type {
   BaseImportRunDetailResponse,
   BaseImportRunParams,
   BaseImportRunRecord,
+  ProductListing,
+  ProductListingRepository,
 } from '@/shared/contracts/integrations';
 import { normalizeBaseImportParameterImportSettings } from '@/shared/contracts/integrations';
 import type { ProductWithImages } from '@/shared/contracts/products';
@@ -609,7 +611,7 @@ export const processBaseImportRun = async (
             Array.from(allProductIdsForBatch),
             connection.connectionId
           )
-          : new Map<string, { listing: Record<string, unknown>; repository: Record<string, unknown> }>();
+          : new Map<string, { listing: ProductListing; repository: ProductListingRepository }>();
 
       for (const item of dueItems) {
         processedItemsSinceHeartbeat += 1;

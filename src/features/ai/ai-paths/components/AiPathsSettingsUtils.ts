@@ -1,12 +1,14 @@
 import type {
   DbQueryConfig,
   DatabaseConfig,
+  ParserSampleState,
   PathConfig,
   RuntimeHistoryEntry,
   RuntimePortValues,
   RuntimeState,
   AiNode,
   EdgeDto,
+  UpdaterSampleState,
 } from '@/features/ai/ai-paths/lib';
 import {
   safeParseJson,
@@ -22,9 +24,11 @@ import {
   migratePathConfigCollections,
   migrateTriggerToFetcherGraph,
   normalizeNodes,
+  parserSampleStateSchema,
   safeStringify,
   safeJsonStringify as sharedSafeJsonStringify,
   sanitizeEdges,
+  updaterSampleStateSchema,
   repairPathNodeIdentities,
   stableStringify,
 } from '@/features/ai/ai-paths/lib';
@@ -94,6 +98,36 @@ export const parseRuntimeState = (value: unknown): RuntimeState => {
   }
   return EMPTY_RUNTIME_STATE;
 };
+
+const normalizeSampleRecord = <TSample>(
+  value: unknown,
+  parseSample: (sample: unknown) => TSample | null
+): Record<string, TSample> => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return {};
+  }
+  const normalized: Record<string, TSample> = {};
+  Object.entries(value as Record<string, unknown>).forEach(([key, sampleValue]) => {
+    const normalizedKey = key.trim();
+    if (!normalizedKey) return;
+    const parsed = parseSample(sampleValue);
+    if (!parsed) return;
+    normalized[normalizedKey] = parsed;
+  });
+  return normalized;
+};
+
+export const normalizeParserSamples = (value: unknown): Record<string, ParserSampleState> =>
+  normalizeSampleRecord(value, (sample: unknown): ParserSampleState | null => {
+    const parsed = parserSampleStateSchema.safeParse(sample);
+    return parsed.success ? parsed.data : null;
+  });
+
+export const normalizeUpdaterSamples = (value: unknown): Record<string, UpdaterSampleState> =>
+  normalizeSampleRecord(value, (sample: unknown): UpdaterSampleState | null => {
+    const parsed = updaterSampleStateSchema.safeParse(sample);
+    return parsed.success ? parsed.data : null;
+  });
 
 export const buildPersistedRuntimeState = (
   state: RuntimeState,

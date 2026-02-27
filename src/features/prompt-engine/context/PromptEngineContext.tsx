@@ -55,7 +55,7 @@ import {
   ActionsContext, 
   type PromptEngineActions 
 } from './prompt-engine/PromptEngineActionsContext';
-import type { AdminMenuTreeContextValue } from '../admin/components/menu/NavTree';
+import type { AdminMenuTreeContextValue } from '../../admin/components/menu/NavTree';
 
 type PromptEngineProviderProps = {
   children: React.ReactNode;

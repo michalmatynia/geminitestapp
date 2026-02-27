@@ -402,15 +402,9 @@ export function SequencingPanel(): React.JSX.Element {
   );
 
   const { monitorRun, stopPolling, stopStreaming, fetchRunSnapshot } = useSequenceMonitor({
-    projectId,
     onApplyRunSnapshot: applyRunSnapshot,
     onSetActiveSequenceStatus: setActiveSequenceStatus,
     onSetSequenceError: setSequenceError,
-    onSetDisplayState: setDisplayState,
-    onSetSequenceLog: setSequenceLog,
-    onSetActiveStepLabel: setActiveStepLabel,
-    onStopPolling: () => {},
-    onStopStreaming: () => {},
   });
 
   useEffect(() => {

@@ -105,7 +105,7 @@ const resolveStackByScope = (
       stack: 'case-resolver-prompt-exploder',
       scope: 'case_resolver_prompt_exploder',
       validatorScope: CASE_RESOLVER_PROMPT_EXPLODER_VALIDATOR_SCOPE,
-      list: null,
+      list: undefined,
       usedFallback: true,
       reason: 'default_scope',
     };
@@ -114,7 +114,7 @@ const resolveStackByScope = (
     stack: DEFAULT_PROMPT_EXPLODER_VALIDATION_RULE_STACK,
     scope: 'prompt_exploder',
     validatorScope: PROMPT_EXPLODER_VALIDATOR_SCOPE,
-    list: null,
+    list: undefined,
     usedFallback: true,
     reason: 'default_scope',
   };

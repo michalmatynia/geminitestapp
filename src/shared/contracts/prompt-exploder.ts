@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
-import { validatorScopeSchema } from './admin';
+import { validatorScopeSchema, validatorPatternListSchema } from './admin';
 
 /**
  * Prompt Exploder Basic DTOs
@@ -63,7 +63,7 @@ export type PromptExploderLogicalCondition = z.infer<typeof promptExploderLogica
 
 export const promptExploderLogicalJoinGroupSchema = z.object({
   type: z.enum(['AND', 'OR']), // Legacy if needed, but implementation uses PromptExploderLogicalJoin
-  conditions: z.array(z.any()),
+  conditions: z.array(z.lazy(() => promptExploderLogicalConditionSchema)),
 });
 
 export type PromptExploderLogicalJoinGroup = z.infer<typeof promptExploderLogicalJoinGroupSchema>;
@@ -350,7 +350,7 @@ export const promptExploderValidationStackResolutionSchema = z.object({
   scope: promptExploderRuntimeValidationScopeSchema.optional(),
   reason: z.string().optional(),
   validatorScope: validatorScopeSchema.optional(),
-  list: z.any().optional(),
+  list: validatorPatternListSchema.optional(),
 });
 
 export type PromptExploderValidationStackResolution = z.infer<typeof promptExploderValidationStackResolutionSchema>;
@@ -372,7 +372,7 @@ export const promptExploderSettingsSchema = z.object({
     benchmarkSuite: z.string().optional(),
     benchmarkLowConfidenceThreshold: z.number().optional(),
     benchmarkSuggestionLimit: z.number().optional(),
-    customBenchmarkCases: z.array(z.any()).optional(),
+    customBenchmarkCases: z.array(promptExploderBenchmarkCaseConfigSchema).optional(),
   }),
   learning: z.object({
     enabled: z.boolean(),

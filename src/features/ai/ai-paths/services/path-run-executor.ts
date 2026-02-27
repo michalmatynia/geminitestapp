@@ -1,4 +1,3 @@
-/* eslint-disable */
 import 'server-only';
 
 import {
@@ -398,14 +397,14 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
 
   const runMetaRecord =
     run.meta && typeof run.meta === 'object'
-      ? run.meta as any
+      ? run.meta
       : null;
   const runMetaWithRuntimeFingerprint = withRuntimeFingerprintMeta(
     runMetaRecord
   );
   
   const strictFlowMode = runMetaRecord?.['strictFlowMode'] !== false;
-  const blockedRunPolicy = (runMetaRecord?.['blockedRunPolicy'] === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run') as 'fail_run' | 'complete_with_warning';
+  const blockedRunPolicy = (runMetaRecord?.['blockedRunPolicy'] === 'complete_with_warning' ? 'complete_with_warning' : 'fail_run');
   const validationConfig = normalizeAiPathsValidationConfig(
     runMetaRecord?.['aiPathsValidation'] as Record<string, unknown> | undefined
   );

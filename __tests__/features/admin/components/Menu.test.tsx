@@ -39,13 +39,19 @@ describe('Menu Component', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // @ts-ignore
-    delete window.location;
-    (window.location as any) = { ...originalLocation, assign: vi.fn() };
+    Object.defineProperty(window, 'location', {
+      value: { ...originalLocation, assign: vi.fn() },
+      configurable: true,
+      writable: true,
+    });
   });
 
   afterAll(() => {
-    (window.location as any) = originalLocation;
+    Object.defineProperty(window, 'location', {
+      value: originalLocation,
+      configurable: true,
+      writable: true,
+    });
   });
 
   it('renders main menu categories', () => {

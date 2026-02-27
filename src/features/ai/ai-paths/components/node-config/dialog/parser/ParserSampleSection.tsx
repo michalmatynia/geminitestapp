@@ -133,7 +133,7 @@ export function ParserSampleSection({
               ...prev,
               [selectedNodeId]: {
                 ...sampleState,
-                mappingMode: value as ParserSampleState['mappingMode'],
+                mappingMode: value as 'top' | 'flatten',
               },
             }))
           }
@@ -184,7 +184,7 @@ export function ParserSampleSection({
                 ...prev,
                 [selectedNodeId]: {
                   ...sampleState,
-                  keyStyle: value as ParserSampleState['keyStyle'],
+                  keyStyle: value as 'path' | 'leaf',
                 },
               }))
             }

@@ -132,7 +132,7 @@ export type UpdateExportJobDto = Partial<CreateExportJobDto_Base>;
 // Browser-native File object
 export const createImportJobSchema = z.object({
   type: z.string(),
-  file: z.any(),
+  file: z.unknown(),
   config: z.record(z.string(), z.unknown()).optional(),
   templateId: z.string().optional(),
 });

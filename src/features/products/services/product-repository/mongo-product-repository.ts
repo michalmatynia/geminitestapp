@@ -1,9 +1,8 @@
-/* eslint-disable */
 import 'server-only';
 
 import { randomUUID } from 'crypto';
 
-import { Filter, type Document } from 'mongodb';
+import { Filter, type Document, WithId } from 'mongodb';
 
 import { mongoImageFileRepository } from '@/features/files/server';
 import { mongoCatalogRepository } from '@/features/products/services/catalog-repository/mongo-catalog-repository';
@@ -139,10 +138,10 @@ export const mongoProductRepository: ProductRepository = {
         ? { hint: { createdAt: -1 } }
         : undefined;
       const docs = await collection
-        .aggregate<ProductDocument>(pipeline, aggregateOptions)
+        .aggregate<WithId<ProductDocument>>(pipeline, aggregateOptions)
         .toArray();
        
-      return docs.map((doc) => toProductResponse(doc as any));
+      return docs.map((doc) => toProductResponse(doc));
     }
 
     let cursor = collection.find(searchFilter).sort({ createdAt: -1 });
@@ -152,7 +151,7 @@ export const mongoProductRepository: ProductRepository = {
     cursor = cursor.skip(skip).limit(limit);
     const docs = await cursor.toArray();
      
-    return docs.map((doc) => toProductResponse(doc as any));
+    return docs.map((doc) => toProductResponse(doc));
   },
 
   async countProducts(filters: ProductFilters) {
@@ -180,7 +179,7 @@ export const mongoProductRepository: ProductRepository = {
         }
         cursor = cursor.skip(skip).limit(pageSize);
         if (projectStage) {
-          cursor = cursor.project(projectStage);
+          cursor = cursor.project<WithId<ProductDocument>>(projectStage);
         }
         return await cursor.toArray();
       })(),
@@ -188,7 +187,7 @@ export const mongoProductRepository: ProductRepository = {
     ]);
 
     return {
-      products: docs.map((doc) => toProductResponse(doc as any)),
+      products: docs.map((doc) => toProductResponse(doc)),
       total,
     };
   },
@@ -208,7 +207,7 @@ export const mongoProductRepository: ProductRepository = {
     }
 
      
-    const fallbackProductId = normalizeLookupId((doc as any).id ?? (doc as any)._id) || productId;
+    const fallbackProductId = normalizeLookupId(doc.id ?? doc._id) || productId;
     const fallbackAssignedAt =
       doc.updatedAt instanceof Date ? doc.updatedAt.toISOString() : new Date().toISOString();
 
@@ -305,21 +304,21 @@ export const mongoProductRepository: ProductRepository = {
     const collection = await getProductCollection();
     const doc = await collection.findOne(buildProductIdFilter(id));
      
-    return doc ? toProductResponse(doc as any) : null;
+    return doc ? toProductResponse(doc) : null;
   },
 
   async getProductBySku(sku: string) {
     const collection = await getProductCollection();
     const doc = await collection.findOne({ sku });
      
-    return doc ? toProductBase(doc as any) : null;
+    return doc ? toProductBase(doc) : null;
   },
 
   async getProductsBySkus(skus: string[]) {
     if (skus.length === 0) return [];
     const collection = await getProductCollection();
     const docs = await collection.find({ sku: { $in: skus } }).toArray();
-    return docs.map(doc => toProductBase(doc as any));
+    return docs.map(doc => toProductBase(doc));
   },
 
   async findProductByBaseId(baseProductId: string) {
@@ -328,7 +327,7 @@ export const mongoProductRepository: ProductRepository = {
       .collection<ProductDocument>(productCollectionName)
       .findOne({ baseProductId });
      
-    return doc ? toProductBase(doc as any) : null;
+    return doc ? toProductBase(doc) : null;
   },
 
   async findProductsByBaseIds(baseIds: string[]) {
@@ -338,7 +337,7 @@ export const mongoProductRepository: ProductRepository = {
       .collection<ProductDocument>(productCollectionName)
       .find({ baseProductId: { $in: baseIds } })
       .toArray();
-    return docs.map(doc => toProductBase(doc as any));
+    return docs.map(doc => toProductBase(doc));
   },
 
   async bulkCreateProducts(data: ProductCreateInputDto[]) {
@@ -410,7 +409,7 @@ export const mongoProductRepository: ProductRepository = {
         throw conflictError('A product with this SKU already exists.', {
           sku: data.sku,
            
-          productId: (existing as any).id ?? (existing as any)._id,
+          productId: existing.id ?? existing._id,
         });
       }
     }
@@ -537,12 +536,7 @@ export const mongoProductRepository: ProductRepository = {
         { returnDocument: 'after' }
       );
     if (!result) return null;
-    return toProductBase({
-       
-      ...(result as any as ProductDocument),
-       
-      id: (result as any).id ?? id,
-    });
+    return toProductBase(result);
   },
 
   async deleteProduct(id: string) {
@@ -551,12 +545,7 @@ export const mongoProductRepository: ProductRepository = {
       .collection<ProductDocument>(productCollectionName)
       .findOneAndDelete(buildProductIdFilter(id));
     if (!result) return null;
-    return toProductBase({
-       
-      ...(result as any as ProductDocument),
-       
-      id: (result as any).id ?? id,
-    });
+    return toProductBase(result);
   },
 
   async duplicateProduct(id: string, sku: string) {
@@ -573,7 +562,7 @@ export const mongoProductRepository: ProductRepository = {
       throw conflictError('A product with this SKU already exists.', {
         sku,
          
-        productId: (skuExists as any).id ?? skuExists._id,
+        productId: skuExists.id ?? skuExists._id,
       });
     }
 
@@ -605,7 +594,7 @@ export const mongoProductRepository: ProductRepository = {
       weight: existing.weight ?? null,
       length: existing.length ?? null,
        
-      parameters: Array.isArray(existing.parameters) ? (existing.parameters as any) : [],
+      parameters: Array.isArray(existing.parameters) ? (existing.parameters as ProductParameterValue[]) : [],
       imageLinks: Array.isArray(existing.imageLinks) ? existing.imageLinks : [],
       imageBase64s: Array.isArray(existing.imageBase64s) ? existing.imageBase64s : [],
        
@@ -848,7 +837,7 @@ export const mongoProductRepository: ProductRepository = {
     const uniqueIds = Array.from(new Set(tagIds));
     const tags = await db
       .collection('product_tags')
-      .find((buildLookupFilterForIds as any)(uniqueIds))
+      .find(buildLookupFilterForIds(uniqueIds))
       .project({ _id: 1, id: 1 })
       .toArray();
     const now = new Date();
@@ -889,7 +878,7 @@ export const mongoProductRepository: ProductRepository = {
     const uniqueIds = Array.from(new Set(producerIds));
     const producers = await db
       .collection('product_producers')
-      .find((buildLookupFilterForIds as any)(uniqueIds))
+      .find(buildLookupFilterForIds(uniqueIds))
       .project({ _id: 1, id: 1 })
       .toArray();
     const now = new Date();
@@ -943,7 +932,7 @@ export const mongoProductRepository: ProductRepository = {
             images: {
               imageFileId,
             },
-          } as any
+          } as import('mongodb').UpdateFilter<ProductDocument>['$pull']
         }
       );
   },
@@ -959,6 +948,6 @@ export const mongoProductRepository: ProductRepository = {
     callback: (tx: TransactionalProductRepository & Prisma.TransactionClient) => Promise<T>
   ): Promise<T> {
      
-    return callback(this as any);
+    return callback(this as unknown as TransactionalProductRepository & Prisma.TransactionClient);
   },
 };

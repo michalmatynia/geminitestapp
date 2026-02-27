@@ -19,7 +19,7 @@ export type TanstackLifecycleStage = 'start' | 'success' | 'error' | 'retry' | '
 
 export type TanstackCriticality = 'low' | 'normal' | 'high' | 'critical';
 
-export type TanstackFactoryDomain = 'global' | 'products' | 'image_studio' | 'integrations';
+export type TanstackFactoryDomain = 'global' | 'products' | 'image_studio' | 'integrations' | 'cms';
 
 export type TanstackFactoryMeta = {
   source: string;

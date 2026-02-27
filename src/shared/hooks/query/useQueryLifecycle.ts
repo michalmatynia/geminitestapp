@@ -43,7 +43,7 @@ export function useQueryLifecycle(): {
         break;
       case 'success': {
         existing.priority = Math.min(existing.priority + 0.2, 10);
-        const query = queryClient.getQueryCache().find({ queryKey: queryKey as any });
+        const query = queryClient.getQueryCache().find({ queryKey });
         if (query?.state.data) {
           existing.dataSize = JSON.stringify(query.state.data).length;
         }
@@ -87,8 +87,10 @@ export function useQueryLifecycle(): {
         const baseStaleTime = 5 * 60 * 1000; // 5 minutes
         const adjustedStaleTime = baseStaleTime * (metadata.priority / 5);
         
-        if (typeof (query as any).setOptions === 'function') {
-          (query as any).setOptions({
+        // Use type-safe check for setOptions if it exists on the instance
+        const queryWithSetOptions = query as Query & { setOptions?: (options: any) => void };
+        if (typeof queryWithSetOptions.setOptions === 'function') {
+          queryWithSetOptions.setOptions({
             staleTime: Math.max(adjustedStaleTime, 30 * 1000), // Min 30 seconds
             gcTime: adjustedStaleTime * 6, // 6x stale time
           });

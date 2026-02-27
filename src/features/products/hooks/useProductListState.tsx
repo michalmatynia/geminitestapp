@@ -319,7 +319,6 @@ export function useProductListState(): ProductListContextType & {
 
   const modals = useProductListModals({
     handleOpenCreateModal,
-    handleOpenCreateFromDraft,
     prefetchIntegrationSelectionData,
     prefetchProductListingsData,
     refreshProductListingsData,

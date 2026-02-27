@@ -94,7 +94,7 @@ export function reducePageBuilderStateCore(
       const def = getSectionDefinition(action.sectionType);
       if (!def) return state;
 
-      const settings = buildSectionSettings(action.sectionType, {});
+      const settings = buildSectionSettings(action.sectionType, action.initialSettings ?? {});
       // For Grid sections, auto-create Column blocks
       let initialBlocks: BlockInstance[] = [];
       if (action.sectionType === 'Grid') {

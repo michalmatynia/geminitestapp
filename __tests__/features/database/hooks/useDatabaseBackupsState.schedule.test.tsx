@@ -84,30 +84,30 @@ describe('useDatabaseBackupsState schedule persistence', () => {
         },
       }),
       refetch: settingsRefetch,
-    } as ReturnType<typeof useSettingsMap>);
+    } as any);
 
     vi.mocked(useUpdateSetting).mockReturnValue({
       mutateAsync: updateSettingMutateAsync,
       isPending: false,
-    } as ReturnType<typeof useUpdateSetting>);
+    } as any);
 
     vi.mocked(useDatabaseBackups).mockReturnValue({
       data: [],
       isFetching: false,
-    } as ReturnType<typeof useDatabaseBackups>);
+    } as any);
 
     vi.mocked(useCreateBackupMutation).mockReturnValue({
       mutateAsync: vi.fn(),
-    } as ReturnType<typeof useCreateBackupMutation>);
+    } as any);
     vi.mocked(useRestoreBackupMutation).mockReturnValue({
       mutateAsync: vi.fn(),
-    } as ReturnType<typeof useRestoreBackupMutation>);
+    } as any);
     vi.mocked(useUploadBackupMutation).mockReturnValue({
       mutateAsync: vi.fn(),
-    } as ReturnType<typeof useUploadBackupMutation>);
+    } as any);
     vi.mocked(useDeleteBackupMutation).mockReturnValue({
       mutateAsync: vi.fn(),
-    } as ReturnType<typeof useDeleteBackupMutation>);
+    } as any);
   });
 
   afterEach(() => {
@@ -183,7 +183,7 @@ describe('useDatabaseBackupsState schedule persistence', () => {
     vi.mocked(useSettingsMap).mockReturnValue({
       data: createSettingsMap(customSchedule),
       refetch: settingsRefetch,
-    } as ReturnType<typeof useSettingsMap>);
+    } as any);
 
     const { result } = renderHook(() => useDatabaseBackupsState(), { wrapper });
 

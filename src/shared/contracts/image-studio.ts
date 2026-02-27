@@ -492,6 +492,7 @@ export const createImageStudioSlotSchema = z.object({
   imageFileId: z.string().nullable().optional(),
   imageUrl: z.string().nullable().optional(),
   imageBase64: z.string().nullable().optional(),
+  asset3dId: z.string().nullable().optional(),
   metadata: slotGenerationMetadataSchema.nullable().optional(),
 });
 

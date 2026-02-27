@@ -66,9 +66,9 @@ export function useQueryAnalytics(config: AnalyticsConfig = {}): {
 } {
   const queryClient = useQueryClient();
   const metricsRef = useRef<Map<string, QueryMetrics>>(new Map());
-  const fetchStartedAtRef = useRef<WeakMap<Query, number>>(new WeakMap());
-  const handledDataUpdatedAtRef = useRef<WeakMap<Query, number>>(new WeakMap());
-  const handledErrorUpdatedAtRef = useRef<WeakMap<Query, number>>(new WeakMap());
+  const fetchStartedAtRef = useRef<WeakMap<Query<unknown, unknown, unknown, readonly unknown[]>, number>>(new WeakMap());
+  const handledDataUpdatedAtRef = useRef<WeakMap<Query<unknown, unknown, unknown, readonly unknown[]>, number>>(new WeakMap());
+  const handledErrorUpdatedAtRef = useRef<WeakMap<Query<unknown, unknown, unknown, readonly unknown[]>, number>>(new WeakMap());
   const enabled = config.enabled !== false;
   const sampleRate = config.sampleRate || 1;
   const maxEntries = config.maxEntries || 1000;
@@ -134,7 +134,7 @@ export function useQueryAnalytics(config: AnalyticsConfig = {}): {
 
     const unsubscribe = queryClient.getQueryCache().subscribe((event): void => {
       if (event.type !== 'updated') return;
-      const query = event.query;
+      const query = event.query as Query<unknown, unknown, unknown, readonly unknown[]>;
 
       if (query.state.fetchStatus === 'fetching') {
         if (!fetchStartedAtRef.current.has(query)) {

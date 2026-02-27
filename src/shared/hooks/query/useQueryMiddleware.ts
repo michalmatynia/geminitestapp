@@ -167,8 +167,9 @@ export const cacheOptimizationMiddleware: QueryMiddleware = {
   onQuerySuccess: (query: Query, data: unknown): void => {
     // Automatically set longer stale time for large datasets
     if (Array.isArray(data) && data.length > 100) {
-      if (typeof (query as any).setOptions === 'function') {
-        (query as any).setOptions({
+      const queryWithSetOptions = query as Query & { setOptions?: (options: any) => void };
+      if (typeof queryWithSetOptions.setOptions === 'function') {
+        queryWithSetOptions.setOptions({
           staleTime: 10 * 60 * 1000, // 10 minutes for large datasets
         });
       }
@@ -247,10 +248,10 @@ export const securityMiddleware: QueryMiddleware = {
   onQuerySuccess: (_query: Query, data: unknown): void => {
     // Sanitize sensitive data from logs
     if (typeof data === 'object' && data !== null) {
-      const sanitized = { ...data };
+      const sanitized = { ...data } as Record<string, unknown>;
       ['password', 'token', 'secret', 'apiKey'].forEach((key: string) => {
         if (key in sanitized) {
-          (sanitized as any)[key] = '[REDACTED]';
+          sanitized[key] = '[REDACTED]';
         }
       });
     }

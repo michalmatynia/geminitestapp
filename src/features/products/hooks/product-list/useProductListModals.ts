@@ -10,7 +10,6 @@ import type { Toast } from '@/shared/contracts/ui';
 
 export function useProductListModals({
   handleOpenCreateModal,
-  handleOpenCreateFromDraft,
   prefetchIntegrationSelectionData,
   prefetchProductListingsData,
   refreshProductListingsData,
@@ -18,7 +17,6 @@ export function useProductListModals({
   toast,
 }: {
   handleOpenCreateModal: () => void;
-  handleOpenCreateFromDraft: (draft: ProductDraftDto) => void;
   prefetchIntegrationSelectionData: () => void;
   prefetchProductListingsData: (productId: string) => void;
   refreshProductListingsData: (productId: string) => void;

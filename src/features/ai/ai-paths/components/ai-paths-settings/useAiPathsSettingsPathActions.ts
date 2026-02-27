@@ -31,7 +31,11 @@ import {
 } from '@/features/ai/ai-paths/lib';
 import { deleteAiPathsSettings } from '@/features/ai/ai-paths/lib/settings-store-client';
 
-import { parseRuntimeState } from '../AiPathsSettingsUtils';
+import {
+  normalizeParserSamples,
+  normalizeUpdaterSamples,
+  parseRuntimeState,
+} from '../AiPathsSettingsUtils';
 
 type ConfirmFn = (input: {
   title: string;
@@ -207,8 +211,8 @@ export function useAiPathsSettingsPathActions({
       setAiPathsValidation(
         normalizeAiPathsValidationConfig(config.aiPathsValidation)
       );
-      setParserSamples(config.parserSamples ?? {});
-      setUpdaterSamples(config.updaterSamples ?? {});
+      setParserSamples(normalizeParserSamples(config.parserSamples));
+      setUpdaterSamples(normalizeUpdaterSamples(config.updaterSamples));
       setRuntimeState(parseRuntimeState(config.runtimeState));
       setLastRunAt(config.lastRunAt ?? null);
       setIsPathLocked(Boolean(config.isLocked));
@@ -296,7 +300,7 @@ export function useAiPathsSettingsPathActions({
       isActive: true,
       parserSamples: {},
       updaterSamples: {},
-      runtimeState: null,
+      runtimeState: {},
       lastRunAt: null,
       runCount: 0,
       uiState: {
@@ -373,7 +377,7 @@ export function useAiPathsSettingsPathActions({
         edges: duplicatedEdges,
         updatedAt: now,
         isLocked: false,
-        runtimeState: null,
+        runtimeState: {},
         lastRunAt: null,
         runCount: 0,
         uiState: {

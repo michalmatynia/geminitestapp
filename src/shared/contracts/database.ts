@@ -171,7 +171,7 @@ export const databaseSyncResultSchema = z.object({
   direction: databaseSyncDirectionSchema,
   startedAt: z.string(),
   finishedAt: z.string(),
-  backups: z.any().optional(),
+  backups: z.unknown().optional(),
   collections: z.array(databaseSyncCollectionResultSchema),
 });
 
@@ -263,8 +263,8 @@ export const crudRequestSchema = z.object({
   provider: z.enum(['mongodb', 'prisma', 'postgresql']),
   collection: z.string(),
   operation: crudOperationSchema,
-  filter: z.record(z.string(), z.any()).optional(),
-  data: z.record(z.string(), z.any()).optional(),
+  filter: z.record(z.string(), z.unknown()).optional(),
+  data: z.record(z.string(), z.unknown()).optional(),
   id: z.string().optional(),
 });
 
@@ -272,7 +272,7 @@ export type CrudRequest = z.infer<typeof crudRequestSchema>;
 
 export const crudResultSchema = z.object({
   success: z.boolean(),
-  data: z.any().optional(),
+  data: z.unknown().optional(),
   error: z.string().optional(),
 });
 

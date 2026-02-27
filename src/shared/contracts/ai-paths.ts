@@ -80,8 +80,8 @@ export type AiPathRunRecord = AiPathRunRecordDto;
 
 export const aiPathRunDetailSchema = z.object({
   run: aiPathRunRecordSchema,
-  nodes: z.array(z.any()), // aiPathRunNodeSchema - can't use it yet because it is defined below
-  events: z.array(z.any()), // aiPathRunEventSchema - defined below
+  nodes: z.array(z.lazy(() => aiPathRunNodeSchema)),
+  events: z.array(z.lazy(() => aiPathRunEventSchema)),
 });
 
 export type AiPathRunDetailDto = z.infer<typeof aiPathRunDetailSchema>;
@@ -485,9 +485,9 @@ export const pathConfigSchema = z.object({
   updatedAt: z.string(),
   isLocked: z.boolean().optional(),
   isActive: z.boolean().optional(),
-  parserSamples: z.record(z.string(), z.any()).optional(),
-  updaterSamples: z.record(z.string(), z.any()).optional(),
-  runtimeState: z.any().optional(),
+  parserSamples: z.record(z.string(), z.unknown()).optional(),
+  updaterSamples: z.record(z.string(), z.unknown()).optional(),
+  runtimeState: z.union([z.string(), z.record(z.string(), z.unknown())]).optional(),
   lastRunAt: z.string().nullable().optional(),
   runCount: z.number().optional(),
   aiPathsValidation: aiPathsValidationConfigSchema.optional(),
@@ -544,7 +544,7 @@ export const dbNodePresetSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
-  config: z.any(),
+  config: z.record(z.string(), z.unknown()),
   createdAt: z.string(),
   updatedAt: z.string(),
 });

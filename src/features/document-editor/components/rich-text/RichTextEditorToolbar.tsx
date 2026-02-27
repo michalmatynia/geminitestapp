@@ -3,7 +3,7 @@
 import React from 'react';
 import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
-import type { RichTextEditorVariant } from '../types';
+import type { RichTextEditorVariant } from '../../types';
 
 export interface ToolbarButtonProps {
   title: string;

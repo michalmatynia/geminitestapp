@@ -52,6 +52,8 @@ import { QUERY_KEYS } from '@/shared/lib/query-keys';
 
 import {
   buildPersistedRuntimeState,
+  normalizeParserSamples,
+  normalizeUpdaterSamples,
   parseRuntimeState,
   sanitizePathConfig,
 } from '../AiPathsSettingsUtils';
@@ -681,8 +683,8 @@ export function useAiPathsPersistence({
         setAiPathsValidation(
           normalizeAiPathsValidationConfig(activeConfig.aiPathsValidation)
         );
-        setParserSamples(activeConfig.parserSamples ?? {});
-        setUpdaterSamples(activeConfig.updaterSamples ?? {});
+        setParserSamples(normalizeParserSamples(activeConfig.parserSamples));
+        setUpdaterSamples(normalizeUpdaterSamples(activeConfig.updaterSamples));
         setRuntimeState(parseRuntimeState(activeConfig.runtimeState));
         setLastRunAt(activeConfig.lastRunAt ?? null);
         setIsPathLocked(Boolean(activeConfig.isLocked));

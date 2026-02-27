@@ -5,12 +5,12 @@ import React from 'react';
 import type {
   AiNode,
   Edge,
-} from '@/features/ai/ai-paths/lib';
+} from '@/shared/contracts/ai-paths';
 import {
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
   PORT_SIZE,
-} from '@/features/ai/ai-paths/lib';
+} from '@/features/ai/ai-paths/lib/core/constants';
 
 import {
   buildConnectorInfo,

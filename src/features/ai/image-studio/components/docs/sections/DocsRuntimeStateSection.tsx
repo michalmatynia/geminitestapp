@@ -57,7 +57,7 @@ export function DocsRuntimeStateSection({
   runOutputsLength: number;
   generationHistoryLength: number;
   tool: string;
-  activeMaskId: string;
+  activeMaskId: string | null;
   maskGenMode: string;
   maskGenLoading: boolean;
   maskInvert: boolean;
@@ -72,7 +72,7 @@ export function DocsRuntimeStateSection({
   extractDraftPromptLength: number;
   slotImageUrlDraftLength: number;
   slotBase64DraftLength: number;
-  metricValue: (v: unknown) => string;
+  metricValue: (value: string | number | boolean | null | undefined) => string;
 }): React.JSX.Element {
   return (
     <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-3'>

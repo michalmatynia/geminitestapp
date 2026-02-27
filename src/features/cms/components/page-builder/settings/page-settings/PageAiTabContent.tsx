@@ -136,7 +136,7 @@ export function PageAiTabContent({
         <Button
           type='button'
           size='sm'
-          onClick={(): void => void ai.handleGeneratePageAi(modelOptions)}
+          onClick={(): void => void ai.handleGeneratePageAi()}
           disabled={ai.generatePageAiMutation.isPending}
         >
           {ai.generatePageAiMutation.isPending ? 'Generating...' : 'Generate'}

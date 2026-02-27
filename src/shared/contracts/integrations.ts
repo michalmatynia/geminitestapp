@@ -2,7 +2,10 @@ import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
 import {
+  productCategorySchema,
   productParameterValueSchema,
+  productTagSchema,
+  producerSchema,
   type ParameterRepository,
   type ProductParameter,
   type ProductParameterValue,
@@ -48,7 +51,7 @@ export type ImageRetryPreset = z.infer<typeof imageRetryPresetSchema>;
 
 export const integrationSchema = namedDtoSchema.extend({
   slug: z.string(),
-  credentials: z.record(z.string(), z.any()).optional(),
+  credentials: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type Integration = z.infer<typeof integrationSchema>;
@@ -384,7 +387,7 @@ export interface CategoryMappingUpdateInput {
 
 export const categoryMappingWithDetailsSchema = categoryMappingSchema.extend({
   externalCategory: externalCategorySchema,
-  internalCategory: z.any(), // ProductCategory
+  internalCategory: productCategorySchema.nullable(),
 });
 
 export interface CategoryMappingWithDetails extends CategoryMapping {
@@ -421,7 +424,7 @@ export interface TagMapping {
 
 export const tagMappingWithDetailsSchema = tagMappingSchema.extend({
   externalTag: externalTagSchema,
-  internalTag: z.any(), // ProductTag
+  internalTag: productTagSchema.nullable(),
 });
 
 export interface TagMappingWithDetails extends TagMapping {
@@ -501,7 +504,7 @@ export interface ProducerMapping {
 
 export const producerMappingWithDetailsSchema = producerMappingSchema.extend({
   externalProducer: externalProducerSchema,
-  internalProducer: z.any(), // Producer
+  internalProducer: producerSchema.nullable(),
 });
 
 export interface ProducerMappingWithDetails extends ProducerMapping {

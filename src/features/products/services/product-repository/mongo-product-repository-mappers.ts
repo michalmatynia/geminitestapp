@@ -32,6 +32,7 @@ export type ProductDocument = Omit<
   categoryId?: string | null;
   tags?: ProductWithImages['tags'];
   producers?: ProductWithImages['producers'];
+  noteIds?: string[];
 };
 
 const toTrimmedString = (value: unknown): string | null => {
@@ -278,16 +279,14 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
   const fallbackAssignedAt =
     doc.updatedAt instanceof Date
       ? doc.updatedAt.toISOString()
-      : ((doc.updatedAt as unknown as string) || new Date().toISOString());
+      : (String(doc.updatedAt) || new Date().toISOString());
   const tags = normalizeTagRelations(doc.tags, productId, fallbackAssignedAt);
   const producers = normalizeProducerRelations(
     doc.producers,
     productId,
     fallbackAssignedAt
   );
-  const noteIds = Array.isArray((doc as unknown as { noteIds?: unknown }).noteIds)
-    ? (doc as unknown as { noteIds: string[] }).noteIds
-    : [];
+  const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
 
   return {
     id: productId,
@@ -323,11 +322,11 @@ export const toProductResponse = (doc: WithId<ProductDocument>): ProductWithImag
     createdAt:
       doc.createdAt instanceof Date
         ? doc.createdAt.toISOString()
-        : (doc.createdAt as unknown as string),
+        : String(doc.createdAt),
     updatedAt:
       doc.updatedAt instanceof Date
         ? doc.updatedAt.toISOString()
-        : (doc.updatedAt as unknown as string),
+        : String(doc.updatedAt),
     images: images.map((img) => ({ ...img, assignedAt: img.assignedAt })),
     catalogs: catalogs.map((cat) => ({ ...cat, assignedAt: cat.assignedAt })),
     categoryId: resolveCategoryId(doc),
@@ -348,13 +347,11 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     pl: doc.description_pl,
     de: doc.description_de,
   });
-  const noteIds = Array.isArray((doc as unknown as { noteIds?: unknown }).noteIds)
-    ? (doc as unknown as { noteIds: string[] }).noteIds
-    : [];
+  const noteIds = Array.isArray(doc.noteIds) ? doc.noteIds : [];
   const fallbackAssignedAt =
     doc.updatedAt instanceof Date
       ? doc.updatedAt.toISOString()
-      : ((doc.updatedAt as unknown as string) || new Date().toISOString());
+      : (String(doc.updatedAt) || new Date().toISOString());
   const tags = normalizeTagRelations(doc.tags, productId, fallbackAssignedAt);
   const producers = normalizeProducerRelations(
     doc.producers,
@@ -396,11 +393,11 @@ export const toProductBase = (doc: ProductDocument): ProductRecord => {
     createdAt:
       doc.createdAt instanceof Date
         ? doc.createdAt.toISOString()
-        : (doc.createdAt as unknown as string),
+        : String(doc.createdAt),
     updatedAt:
       doc.updatedAt instanceof Date
         ? doc.updatedAt.toISOString()
-        : (doc.updatedAt as unknown as string),
+        : String(doc.updatedAt),
     categoryId: resolveCategoryId(doc),
     tags,
     producers,

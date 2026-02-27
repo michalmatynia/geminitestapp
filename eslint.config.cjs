@@ -108,35 +108,6 @@ module.exports = tseslint.config(
       'react/prop-types': 'off',
       // Next.js specific rules
       '@next/next/no-img-element': 'warn', // Warn instead of error for <img>
-      // Import plugin rules
-      /*
-      'import/order': [
-        'error',
-        {
-          'groups': ['builtin', 'external', 'internal', ['parent', 'sibling', 'index'], 'object', 'type'],
-          'pathGroups': [
-            {
-              'pattern': '@/**',
-              'group': 'internal',
-            },
-          ],
-          'newlines-between': 'always',
-          'alphabetize': {
-            'order': 'asc',
-            'caseInsensitive': true,
-          },
-        },
-      ],
-      'import/no-restricted-paths': [
-        'error',
-        {
-          'zones': [
-            { target: './src/shared', from: './src/features' },
-            { target: './src/app/api', from: './src/features' },
-          ],
-        },
-      ],
-      */
       // Allow 'use client' and 'use server' directives
       "no-restricted-imports": ["error", {
         "patterns": [{
@@ -272,12 +243,6 @@ module.exports = tseslint.config(
     files: [
       'src/shared/hooks/query/*.ts',
       'src/shared/hooks/useQueryComposition.ts',
-      'src/shared/hooks/useQueryScheduler.ts',
-      'src/shared/hooks/useQueryAnalytics.ts',
-      'src/features/products/hooks/useEnhancedQueries.ts',
-      'src/features/products/hooks/useProductEnhancements.ts',
-      'src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsRuntime.ts',
-      'src/features/ai/ai-paths/context/hooks/useLegacySync.ts',
       'src/shared/dtos/*.ts',
       'src/mocks/__tests__/*.ts',
     ],

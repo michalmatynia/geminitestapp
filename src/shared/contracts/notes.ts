@@ -194,9 +194,9 @@ export const noteSchema = dtoBaseSchema.extend({
   categories: z.array(z.string()).optional().default([]),
   categoryIds: z.array(z.string()).optional().default([]),
   relatedNoteIds: z.array(z.string()).optional().default([]),
-  relations: z.array(z.any()).optional().default([]),
-  relationsFrom: z.array(z.any()).optional(),
-  relationsTo: z.array(z.any()).optional(),
+  relations: z.array(z.unknown()).optional().default([]),
+  relationsFrom: z.array(z.unknown()).optional(),
+  relationsTo: z.array(z.unknown()).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 

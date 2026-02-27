@@ -3,6 +3,10 @@
 import { useMemo } from 'react';
 import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type {
+  RunStudioEnqueueResult,
+  RunStudioPayload,
+} from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import type { ImageStudioSettings } from '../../utils/studio-settings';
 import { 
   PROMPT_ENGINE_SETTINGS_KEY, 
@@ -57,7 +61,7 @@ interface UseDocsSnapshotsProps {
   maskGenLoading: boolean;
   maskThresholdSensitivity: number;
   maskEdgeSensitivity: number;
-  runMutation: UseMutationResult<unknown, Error, unknown>;
+  runMutation: UseMutationResult<RunStudioEnqueueResult, Error, RunStudioPayload>;
   runOutputs: unknown[];
   generationHistory: unknown[];
   settingsLoaded: boolean;

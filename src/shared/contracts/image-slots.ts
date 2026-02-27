@@ -8,7 +8,7 @@ import { imageFileSelectionSchema, type ImageFileSelection } from './files';
 
 export const managedImageSlotFileSchema = z.object({
   type: z.literal('file'),
-  data: z.any(), // Browser File object
+  data: z.unknown(), // Browser File object
   previewUrl: z.string(),
   slotId: z.string(),
   originalIndex: z.number().optional(),

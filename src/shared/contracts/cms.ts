@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { dtoBaseSchema, namedDtoSchema } from './base';
+import { chatMessageSchema } from './chatbot';
 
 export const cmsPageStatusSchema = z.enum(['draft', 'published', 'scheduled']);
 export type CmsPageStatusDto = z.infer<typeof cmsPageStatusSchema>;
@@ -289,7 +290,7 @@ export const pageBuilderActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('SET_CURRENT_PAGE'), page: z.lazy(() => cmsPageSchema) }),
   z.object({ type: z.literal('CLEAR_CURRENT_PAGE') }),
   z.object({ type: z.literal('SELECT_NODE'), nodeId: z.string().nullable() }),
-  z.object({ type: z.literal('ADD_SECTION'), sectionType: z.string(), zone: pageZoneSchema }),
+  z.object({ type: z.literal('ADD_SECTION'), sectionType: z.string(), zone: pageZoneSchema, initialSettings: z.record(z.string(), z.unknown()).optional() }),
   z.object({ type: z.literal('REMOVE_SECTION'), sectionId: z.string() }),
   z.object({ type: z.literal('ADD_BLOCK'), sectionId: z.string(), blockType: z.string() }),
   z.object({ type: z.literal('REMOVE_BLOCK'), sectionId: z.string(), blockId: z.string() }),
@@ -408,7 +409,7 @@ export const cmsCssAiRequestSchema = z.object({
   provider: cmsCssAiProviderSchema.optional(),
   modelId: z.string().optional(),
   agentId: z.string().optional(),
-  messages: z.array(z.any()).optional(),
+  messages: z.array(chatMessageSchema).optional(),
 });
 
 export type CmsCssAiRequestDto = z.infer<typeof cmsCssAiRequestSchema>;

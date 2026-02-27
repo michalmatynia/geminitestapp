@@ -113,10 +113,11 @@ export const deserializeSemanticCanvasToPathConfig = (
   const edges = semanticDocument.edges.map((edge: SemanticEdge): Edge =>
     toAiEdge(edge),
   );
-  const runtimeState: unknown =
+  const runtimeState = (
     semanticDocument.execution?.runtimeState !== undefined
       ? semanticDocument.execution.runtimeState
-      : (base.runtimeState as unknown);
+      : (base.runtimeState as unknown)
+  ) as PathConfig['runtimeState'];
 
   return {
     ...base,

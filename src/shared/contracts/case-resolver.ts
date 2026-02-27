@@ -274,7 +274,7 @@ export interface CaseResolverEdgeMeta {
 
 export const caseResolverGraphSchema = z.object({
   nodes: z.array(aiNodeSchema),
-  edges: z.array(z.any()), // aiEdgeSchema
+  edges: z.array(edgeSchema),
   nodeMeta: z.record(z.string(), caseResolverNodeMetaSchema).optional(),
   edgeMeta: z.record(z.string(), caseResolverEdgeMetaSchema).optional(),
   pdfExtractionPresetId: caseResolverPdfExtractionPresetIdSchema.optional(),

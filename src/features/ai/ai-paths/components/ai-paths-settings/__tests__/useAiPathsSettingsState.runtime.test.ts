@@ -24,7 +24,7 @@ describe('buildRuntimePersistenceConfig', () => {
       ...createDefaultPathConfig(pathId),
       isActive: false,
       isLocked: true,
-      runtimeState: { inputs: { old: { value: 1 } }, outputs: {} } as unknown,
+      runtimeState: { inputs: { old: { value: 1 } }, outputs: {} } as any,
       lastRunAt: '2026-02-23T00:00:00.000Z',
     };
     const runtimeState = { inputs: { nodeA: { value: 42 } }, outputs: {} } as unknown as RuntimeState;

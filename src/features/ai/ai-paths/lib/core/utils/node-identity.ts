@@ -240,7 +240,7 @@ const remapNodeKeyedRecord = (
 const remapRuntimeState = (
   runtimeState: unknown,
   remapNodeId: (nodeId: string) => string
-): { runtimeState: unknown; changed: boolean } => {
+): { runtimeState: Record<string, unknown> | string | undefined; changed: boolean } => {
   const remapRuntimeObject = (
     value: Record<string, unknown>
   ): { runtimeState: Record<string, unknown>; changed: boolean } => {
@@ -269,23 +269,23 @@ const remapRuntimeState = (
     try {
       const parsed = JSON.parse(runtimeState) as unknown;
       if (!isRecord(parsed)) {
-        return { runtimeState, changed: false };
+        return { runtimeState: runtimeState as string | Record<string, unknown> | undefined, changed: false };
       }
       const remapped = remapRuntimeObject(parsed);
       if (!remapped.changed) {
-        return { runtimeState, changed: false };
+        return { runtimeState: runtimeState as string | Record<string, unknown> | undefined, changed: false };
       }
       return {
         runtimeState: JSON.stringify(remapped.runtimeState),
         changed: true,
       };
     } catch {
-      return { runtimeState, changed: false };
+      return { runtimeState: runtimeState as string | Record<string, unknown> | undefined, changed: false };
     }
   }
 
   if (!isRecord(runtimeState)) {
-    return { runtimeState, changed: false };
+    return { runtimeState: runtimeState as string | Record<string, unknown> | undefined, changed: false };
   }
 
   const remapped = remapRuntimeObject(runtimeState);

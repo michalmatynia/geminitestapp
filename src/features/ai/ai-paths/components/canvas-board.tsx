@@ -174,7 +174,7 @@ export function CanvasBoard({
       state.handleDisconnectPort(direction, nodeId, port);
     },
     onFireTrigger: (node) => {
-      state.fireTrigger(node);
+      void state.fireTrigger(node);
     },
     onRemoveEdge: (edgeId) => {
       state.handleRemoveEdge(edgeId);

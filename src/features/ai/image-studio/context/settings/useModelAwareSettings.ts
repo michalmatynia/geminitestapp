@@ -15,7 +15,7 @@ export function useModelAwareSettings({
   imageModelsQuery,
 }: {
   studioSettings: ImageStudioSettings;
-  imageModelsQuery: UseQueryResult<{ models: string[] }, Error>;
+  imageModelsQuery: UseQueryResult<{ models?: string[] }, Error>;
 }) {
   const quickSwitchModels = useMemo(() => {
     return normalizeImageStudioModelPresets(

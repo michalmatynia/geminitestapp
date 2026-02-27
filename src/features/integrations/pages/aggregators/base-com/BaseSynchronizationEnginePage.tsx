@@ -1,6 +1,6 @@
 'use client';
 
-import { ProductSyncSettings } from '@/features/product-sync/components/ProductSyncSettings';
+import { ProductSyncSettings } from '@/shared/lib/product-sync/components/ProductSyncSettings';
 import { SectionHeader } from '@/shared/ui';
 
 export default function BaseSynchronizationEnginePage(): React.JSX.Element {

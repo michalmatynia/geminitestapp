@@ -1,3 +1,3 @@
 'use client';
 
-export { ProductSyncSettings } from '@/features/product-sync/components/ProductSyncSettings';
+export { ProductSyncSettings } from '@/shared/lib/product-sync/components/ProductSyncSettings';

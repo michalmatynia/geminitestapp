@@ -8,7 +8,7 @@ import {
   FormSection,
   FormField,
 } from '@/shared/ui';
-import { DEFAULT_ANIMATION_CONFIG, TEXT_EFFECTS, type TextEffect } from '@/features/gsap';
+import { DEFAULT_ANIMATION_CONFIG, TEXT_EFFECTS, type TextEffect } from '@/shared/lib/gsap';
 import { useAnimationConfigContext } from '../AnimationConfigContext';
 
 export function AdvancedTextEffectsSection(): React.JSX.Element {

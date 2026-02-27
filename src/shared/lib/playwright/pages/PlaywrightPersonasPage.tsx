@@ -1,9 +1,9 @@
 'use client';
 
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { PlaywrightSettingsForm } from '@/features/playwright/components/PlaywrightSettingsForm';
-import { usePlaywrightPersonas, useSavePlaywrightPersonasMutation } from '@/features/playwright/hooks/usePlaywrightPersonas';
-import { buildPlaywrightSettings, createPlaywrightPersonaId } from '@/features/playwright/utils/personas';
+import { PlaywrightSettingsForm } from '@/shared/lib/playwright/components/PlaywrightSettingsForm';
+import { usePlaywrightPersonas, useSavePlaywrightPersonasMutation } from '@/shared/lib/playwright/hooks/usePlaywrightPersonas';
+import { buildPlaywrightSettings, createPlaywrightPersonaId } from '@/shared/lib/playwright/utils/personas';
 import type {
   PlaywrightPersona,
   PlaywrightSettings,

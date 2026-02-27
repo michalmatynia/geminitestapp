@@ -2,7 +2,7 @@
 
 import React, { useCallback } from 'react';
 
-import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
+import { DEFAULT_ANIMATION_CONFIG } from '@/shared/lib/gsap';
 import {
   FormSection,
   FormField,

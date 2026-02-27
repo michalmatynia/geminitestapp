@@ -7,7 +7,7 @@ import {
   FormSection,
   FormField,
 } from '@/shared/ui';
-import { DEFAULT_ANIMATION_CONFIG, VELOCITY_EFFECTS, type VelocityEffect } from '@/features/gsap';
+import { DEFAULT_ANIMATION_CONFIG, VELOCITY_EFFECTS, type VelocityEffect } from '@/shared/lib/gsap';
 import { useAnimationConfigContext } from '../AnimationConfigContext';
 
 export function AdvancedVelocitySection(): React.JSX.Element {

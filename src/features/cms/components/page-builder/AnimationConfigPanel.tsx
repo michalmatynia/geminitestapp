@@ -3,7 +3,7 @@
 import { Zap } from 'lucide-react';
 import React from 'react';
 
-import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
+import { DEFAULT_ANIMATION_CONFIG } from '@/shared/lib/gsap';
 import type { 
   AnimationPresetDto as AnimationPreset,
   AnimationTriggerDto as AnimationTrigger

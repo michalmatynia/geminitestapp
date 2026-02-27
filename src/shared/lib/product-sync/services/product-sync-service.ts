@@ -18,7 +18,7 @@ import {
   touchProductSyncProfileLastRunAt,
   updateProductSyncRun,
   updateProductSyncRunStatus,
-} from '@/features/product-sync/services/product-sync-repository';
+} from '@/shared/lib/product-sync/services/product-sync-repository';
 import { getProductRepository } from '@/features/products/server';
 import type {
   ProductSyncAppField,

@@ -6,13 +6,13 @@ import type {
   TimelineMode,
   ScrollMode,
   RevealStyle,
-} from '@/features/gsap';
+} from '@/shared/lib/gsap';
 import {
   DEFAULT_ANIMATION_CONFIG,
   TIMELINE_MODES,
   SCROLL_MODES,
   REVEAL_STYLES,
-} from '@/features/gsap';
+} from '@/shared/lib/gsap';
 import {
   SelectSimple,
   FormSection,

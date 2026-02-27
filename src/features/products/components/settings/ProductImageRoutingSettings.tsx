@@ -11,7 +11,7 @@ import {
   PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY,
   PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY,
 } from '@/features/products/constants';
-import { normalizeProductImageExternalBaseUrl } from '@/features/products/utils/image-routing';
+import { normalizeProductImageExternalBaseUrl } from '@/shared/utils/image-routing';
 import {
   normalizeProductStudioSequenceGenerationMode,
   type ProductStudioSequenceGenerationMode,

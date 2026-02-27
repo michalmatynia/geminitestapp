@@ -1,3 +1,3 @@
 import 'server-only';
 
-export * from '@/features/product-sync/services/product-sync-repository';
+export * from '@/shared/lib/product-sync/services/product-sync-repository';

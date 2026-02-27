@@ -1,8 +1,8 @@
 import { render, screen, act } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 
-import { PlaywrightSettingsProvider, usePlaywrightSettings } from '@/features/playwright/context/PlaywrightSettingsContext';
-import { buildPlaywrightSettings } from '@/features/playwright/utils/personas';
+import { PlaywrightSettingsProvider, usePlaywrightSettings } from '@/shared/lib/playwright/context/PlaywrightSettingsContext';
+import { buildPlaywrightSettings } from '@/shared/lib/playwright/utils/personas';
 
 const TestComponent = () => {
   const { settings, setSettings } = usePlaywrightSettings();

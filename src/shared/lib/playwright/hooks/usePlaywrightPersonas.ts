@@ -2,8 +2,8 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 
-import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
-import { fetchPlaywrightPersonas } from '@/features/playwright/utils/personas';
+import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/lib/playwright/constants/playwright';
+import { fetchPlaywrightPersonas } from '@/shared/lib/playwright/utils/personas';
 import { invalidateSettingsCache } from '@/shared/api/settings-client';
 import type { PlaywrightPersona } from '@/shared/contracts/playwright';
 import type { ListQuery, VoidMutation } from '@/shared/contracts/ui';

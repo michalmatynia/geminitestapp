@@ -15,7 +15,7 @@ import type {
 import { internalError, notFoundError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';
 
-import type { AnyBulkWriteOperation, Filter, UpdateFilter, Document } from 'mongodb';
+import type { AnyBulkWriteOperation, Filter, Document } from 'mongodb';
 
 const COLLECTION = 'product_categories';
 

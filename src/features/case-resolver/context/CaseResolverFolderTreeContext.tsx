@@ -27,7 +27,7 @@ import {
   fromCaseResolverFileNodeId,
   fromCaseResolverAssetNodeId,
 } from '../master-tree';
-import { createMasterFolderTreeAdapterV3 } from '../../foldertree/v2';
+import { createMasterFolderTreeAdapterV3 } from '@/shared/lib/foldertree/v2';
 import { 
   buildCaseResolverNodeFileRelationIndexFromAssets,
 } from '../nodefile-relations';

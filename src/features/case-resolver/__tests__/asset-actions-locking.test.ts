@@ -1,7 +1,10 @@
 import { renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { useCaseResolverStateAssetActions } from '@/features/case-resolver/hooks/useCaseResolverState.asset-actions';
+import {
+  useCaseResolverStateAssetActions,
+  type UseCaseResolverStateAssetActionsResult,
+} from '@/features/case-resolver/hooks/useCaseResolverState.asset-actions';
 import {
   createCaseResolverFile,
   parseCaseResolverWorkspace,
@@ -11,6 +14,7 @@ import type {
   CaseResolverFileEditDraft,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
+import type { SettingsStoreValue } from '@/shared/providers/SettingsStoreProvider';
 
 type Deferred<T> = {
   promise: Promise<T>;
@@ -56,7 +60,7 @@ const createMutableState = <T,>(initial: T): {
 };
 
 const buildHarness = (sourceFile: CaseResolverFile): {
-  result: any;
+  result: { current: UseCaseResolverStateAssetActionsResult };
   getWorkspace: () => CaseResolverWorkspace;
   setWorkspace: (next: CaseResolverWorkspace) => void;
   toast: ReturnType<typeof vi.fn>;
@@ -80,11 +84,20 @@ const buildHarness = (sourceFile: CaseResolverFile): {
     workspace = updater(workspace);
   };
 
+  const mockSettingsStore: SettingsStoreValue = {
+    map: new Map(),
+    isLoading: false,
+    isFetching: false,
+    error: null,
+    get: () => undefined,
+    getBoolean: (_key, fallback = false) => fallback,
+    getNumber: (_key, fallback) => fallback,
+    refetch: () => {},
+  };
+
   const { result } = renderHook(() =>
     useCaseResolverStateAssetActions({
-      settingsStore: {
-        get: () => undefined,
-      },
+      settingsStore: mockSettingsStore,
       toast,
       updateWorkspace,
       workspace,
@@ -101,7 +114,7 @@ const buildHarness = (sourceFile: CaseResolverFile): {
       setSelectedFolderPath: selectedFolderState.set,
       setSelectedAssetId: selectedAssetState.set,
       treeSaveToast: 'Case Resolver tree changes saved.',
-    } as any)
+    })
   );
 
   return {

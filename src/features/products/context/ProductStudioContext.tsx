@@ -15,7 +15,7 @@ import {
 import { useProductFormCore } from '../ProductFormCoreContext';
 import { useProductFormImages } from '../ProductFormImageContext';
 import { useProductFormStudio } from '../ProductFormStudioContext';
-import { resolveProductImageUrl } from '../../utils/image-routing';
+import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import { studioKeys, useStudioProjects } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import { getImageStudioSlotImageSrc } from '@/features/ai/image-studio/utils/image-src';
 import { invalidateProductsAndCounts } from '@/features/products/hooks/productCache';

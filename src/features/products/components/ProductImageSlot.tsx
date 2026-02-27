@@ -5,7 +5,7 @@ import {
   PlusIcon, XIcon, GripVertical, MoreVertical, Eye } from 'lucide-react';
 import NextImage from 'next/image';
 
-import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
+import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import {
   Button,
   ActionMenu,

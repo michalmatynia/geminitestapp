@@ -16,7 +16,7 @@ import {
   useRelinkBaseProductsMutation,
   useRunProductSyncProfileMutation,
   useUpdateProductSyncProfileMutation,
-} from '@/features/product-sync/hooks/useProductSyncSettings';
+} from '@/shared/lib/product-sync/hooks/useProductSyncSettings';
 import {
   PRODUCT_SYNC_APP_FIELDS,
   PRODUCT_SYNC_DIRECTION_OPTIONS,

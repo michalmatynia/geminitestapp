@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { api } from '@/shared/lib/api-client';
 import { loadImageStudioAnalysisPlanSnapshot } from '@/features/ai/image-studio/utils/analysis-bridge';
 import { useGenerationToolbarHandlers } from '../GenerationToolbar.handlers';
+import { type GenerationToolbarState } from '../GenerationToolbar.types';
 
 vi.mock('@/shared/lib/query-invalidation', () => ({
   invalidateImageStudioSlots: vi.fn(),
@@ -124,7 +125,7 @@ const createAnalysisResponse = () => ({
   pipelineVersion: 'test-v1',
 });
 
-const createState = (overrides?: Record<string, unknown>) => {
+const createState = (overrides?: Record<string, unknown>): GenerationToolbarState => {
   return {
     activeProjectId: 'project-alpha',
     projectId: null,
@@ -196,7 +197,7 @@ const createState = (overrides?: Record<string, unknown>) => {
     analysisBusy: false,
     analysisStatus: 'idle',
     ...overrides,
-  };
+  } as unknown as GenerationToolbarState;
 };
 
 beforeEach(() => {
@@ -211,7 +212,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     const response = createAnalysisResponse();
     const postSpy = vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
 
-    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state));
     await result.current.handleRunAnalysisFromCenter();
 
     expect(postSpy).toHaveBeenCalledWith(
@@ -259,7 +260,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     const response = createAnalysisResponse();
     const postSpy = vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
 
-    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state));
     await result.current.handleRunAnalysisFromAutoScaler();
 
     expect(postSpy).toHaveBeenCalledWith(
@@ -280,7 +281,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     const response = createAnalysisResponse();
     vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
 
-    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state));
     await result.current.handleRunAnalysisFromCenter();
 
     expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout_v1');
@@ -293,7 +294,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     const response = createAnalysisResponse();
     vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
 
-    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state));
     await result.current.handleRunAnalysisFromCenter();
 
     expect(state.setCenterMode).toHaveBeenCalledWith('server_object_layout_v1');
@@ -306,7 +307,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     const response = createAnalysisResponse();
     vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
 
-    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state));
     await result.current.handleRunAnalysisFromAutoScaler();
 
     expect(state.setCenterMode).toHaveBeenCalledWith('server_object_layout_v1');
@@ -319,7 +320,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     const response = createAnalysisResponse();
     vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
 
-    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state));
     await result.current.handleRunAnalysisFromCenter();
 
     expect(state.setCenterMode).not.toHaveBeenCalled();
@@ -331,7 +332,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     });
     const postSpy = vi.spyOn(api, 'post');
 
-    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state));
     await result.current.handleRunAnalysisFromCenter();
 
     expect(postSpy).not.toHaveBeenCalled();
@@ -348,7 +349,7 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     const state = createState();
     vi.spyOn(api, 'post').mockRejectedValueOnce(new Error('analysis failed'));
 
-    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state));
     await result.current.handleRunAnalysisFromAutoScaler();
 
     expect(state.applyAnalysisLayoutToCenter).not.toHaveBeenCalled();

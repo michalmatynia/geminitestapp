@@ -21,7 +21,7 @@ import {
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
 } from '@/features/ai/insights/settings';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
+import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/lib/playwright/constants/playwright';
 import type {
   AiPathRuntimeAnalyticsSummary,
   AnalyticsSummaryDto,

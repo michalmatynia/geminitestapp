@@ -8,6 +8,7 @@ import {
 } from '@/features/ai/image-studio/utils/analysis-bridge';
 
 import { useGenerationToolbarEffects } from '../useGenerationToolbarEffects';
+import { type GenerationToolbarState } from '../GenerationToolbar.types';
 
 const BASE_LAYOUT = {
   paddingPercent: 8,
@@ -23,7 +24,7 @@ const BASE_LAYOUT = {
   detection: 'auto',
 } as const;
 
-const createState = (overrides?: Record<string, unknown>) => ({
+const createState = (overrides?: Record<string, unknown>): GenerationToolbarState => ({
   activeProjectId: 'project-alpha',
   centerLayoutDetection: 'auto',
   centerLayoutShadowPolicy: 'auto',
@@ -50,7 +51,7 @@ const createState = (overrides?: Record<string, unknown>) => ({
   autoScaleBusy: false,
   autoScaleRequestInFlightRef: { current: false },
   ...(overrides ?? {}),
-});
+} as unknown as GenerationToolbarState);
 
 const createActions = () => ({
   handleCenterObject: vi.fn(async () => {}),
@@ -81,12 +82,12 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
 
     const state = createState();
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.setAnalysisPlanSnapshot).toHaveBeenCalled();
     });
-    const snapshotArg = state.setAnalysisPlanSnapshot.mock.calls.at(-1)?.[0];
+    const snapshotArg = vi.mocked(state.setAnalysisPlanSnapshot).mock.calls.at(-1)?.[0];
     expect(snapshotArg?.slotId).toBe('slot-1');
     expect(snapshotArg?.sourceSignature).toBe('signature_slot_1_v1');
   });
@@ -102,7 +103,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
 
     const state = createState();
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.applyAnalysisLayoutToCenter).toHaveBeenCalledWith(
@@ -127,7 +128,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
       centerMode: 'client_alpha_bbox',
     });
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.applyAnalysisLayoutToCenter).toHaveBeenCalledWith(
@@ -151,7 +152,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
       centerMode: 'server_alpha_bbox',
     });
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.applyAnalysisLayoutToCenter).toHaveBeenCalledWith(
@@ -175,7 +176,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
       workingSlot: { id: 'slot-1' },
     });
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.setSelectedSlotId).toHaveBeenCalledWith('slot-2');
@@ -199,7 +200,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
       slotSelectionLocked: true,
     });
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.toast).toHaveBeenCalledWith('Cannot apply while slot selection is locked.', {
@@ -224,7 +225,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
       slots: [{ id: 'slot-1' }],
     });
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.toast).toHaveBeenCalledWith('Analyzed slot no longer exists.', {
@@ -249,7 +250,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
       workingSourceSignature: 'signature_slot_1_new',
     });
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.toast).toHaveBeenCalledWith(
@@ -275,7 +276,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
       workingSourceSignature: '',
     });
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.toast).toHaveBeenCalledWith(
@@ -299,7 +300,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
 
     const state = createState();
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.applyAnalysisLayoutToAutoScaler).toHaveBeenCalledWith(
@@ -324,7 +325,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
       centerMode: 'client_alpha_bbox',
     });
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.applyAnalysisLayoutToAutoScaler).toHaveBeenCalledWith(
@@ -346,7 +347,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
 
     const state = createState();
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.applyAnalysisLayoutToAutoScaler).toHaveBeenCalledWith(
@@ -364,7 +365,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
       queuedAnalysisRunTarget: 'object_layout',
     });
     const actions = createActions();
-    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout_v1');
@@ -379,7 +380,7 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
       queuedAnalysisRunTarget: 'object_layout',
     });
     const actions = createActions();
-    const { rerender } = renderHook(() => useGenerationToolbarEffects(state as any, actions));
+    const { rerender } = renderHook(() => useGenerationToolbarEffects(state, actions));
 
     await waitFor(() => {
       expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout_v1');

@@ -2,9 +2,9 @@
 
 import React, { useMemo, useRef, useEffect, type ReactNode } from 'react';
 
-import type { GsapAnimationConfig, AnimationPreset, AnimationEasing } from '@/features/gsap';
-import { DEFAULT_ANIMATION_CONFIG, PARALLAX_DEFAULTS } from '@/features/gsap';
-import { getGsapFromVars } from '@/features/gsap/utils/presets';
+import type { GsapAnimationConfig, AnimationPreset, AnimationEasing } from '@/shared/lib/gsap';
+import { DEFAULT_ANIMATION_CONFIG, PARALLAX_DEFAULTS } from '@/shared/lib/gsap';
+import { getGsapFromVars } from '@/shared/lib/gsap/utils/presets';
 import { vectorShapesToPathWithBounds } from '@/shared/ui';
 
 import { useBlockSettings } from './sections/FrontendBlockRenderer';

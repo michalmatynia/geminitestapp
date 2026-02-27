@@ -5,7 +5,7 @@ import { decryptSecret } from '@/features/integrations/server';
 import {
   defaultPlaywrightSettings,
   PLAYWRIGHT_PERSONA_SETTINGS_KEY,
-} from '@/features/playwright/constants/playwright';
+} from '@/shared/lib/playwright/constants/playwright';
 import { getSettingValue } from '@/features/products/server';
 import type { IntegrationConnectionRecord } from '@/shared/contracts/integrations';
 import { parseJsonSetting } from '@/shared/utils/settings-json';

@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { runBaseListingBackfill } from '@/features/product-sync/services/product-sync-service';
+import { runBaseListingBackfill } from '@/shared/lib/product-sync/services/product-sync-service';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 type ProductSyncBackfillJobData = {

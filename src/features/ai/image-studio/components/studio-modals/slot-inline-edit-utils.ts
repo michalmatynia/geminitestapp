@@ -1,4 +1,4 @@
-import { resolveProductImageUrl } from '@/features/products/utils/image-routing';
+import { resolveProductImageUrl } from '@/shared/utils/image-routing';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 

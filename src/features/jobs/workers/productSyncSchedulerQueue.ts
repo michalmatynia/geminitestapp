@@ -4,8 +4,8 @@ import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import {
   findDueProductSyncProfiles,
   recoverStaleProductSyncRuns,
-} from '@/features/product-sync/services/product-sync-repository';
-import { startProductSyncRun } from '@/features/product-sync/services/product-sync-run-starter';
+} from '@/shared/lib/product-sync/services/product-sync-repository';
+import { startProductSyncRun } from '@/shared/lib/product-sync/services/product-sync-run-starter';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 type ProductSyncSchedulerJobData = {

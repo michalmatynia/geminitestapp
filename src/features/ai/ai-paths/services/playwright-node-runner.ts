@@ -6,7 +6,7 @@ import { createRequire } from 'module';
 import path from 'path';
 import vm from 'vm';
 
-import { defaultPlaywrightSettings, PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/features/playwright/constants/playwright';
+import { defaultPlaywrightSettings, PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/lib/playwright/constants/playwright';
 import { getSettingValue } from '@/features/products/server';
 import {
   playwrightSettingsSchema,

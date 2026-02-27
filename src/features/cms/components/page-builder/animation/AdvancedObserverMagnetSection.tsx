@@ -8,12 +8,12 @@ import React, { useCallback } from 'react';
 
 import type {
   DragAxis,
-} from '@/features/gsap';
+} from '@/shared/lib/gsap';
 import {
   DEFAULT_ANIMATION_CONFIG,
   DRAG_AXES,
   OBSERVER_TYPES,
-} from '@/features/gsap';
+} from '@/shared/lib/gsap';
 import {
   Button,
   Checkbox,

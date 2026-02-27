@@ -7,7 +7,7 @@ import {
   deleteProductSyncProfile,
   getProductSyncProfile,
   updateProductSyncProfile,
-} from '@/features/product-sync/services/product-sync-repository';
+} from '@/shared/lib/product-sync/services/product-sync-repository';
 import type { ProductSyncProfile } from '@/shared/contracts/product-sync';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';

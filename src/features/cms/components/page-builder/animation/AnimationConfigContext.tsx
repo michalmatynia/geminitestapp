@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext } from 'react';
 
-import type { GsapAnimationConfig } from '@/features/gsap';
+import type { GsapAnimationConfig } from '@/shared/lib/gsap';
 import type { VectorShape } from '@/shared/ui';
 
 import type { VectorOverlayResult } from '../../../hooks/usePageBuilderContext';

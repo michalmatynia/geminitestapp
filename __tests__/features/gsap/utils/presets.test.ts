@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getGsapFromVars,
   getParallaxDefaults,
-} from '@/features/gsap/utils/presets';
+} from '@/shared/lib/gsap/utils/presets';
 
 describe('gsap presets', () => {
   describe('getGsapFromVars', () => {

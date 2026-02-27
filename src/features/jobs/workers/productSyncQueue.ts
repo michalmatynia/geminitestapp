@@ -1,7 +1,7 @@
 import 'server-only';
 
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { processProductSyncRun } from '@/features/product-sync/services/product-sync-service';
+import { processProductSyncRun } from '@/shared/lib/product-sync/services/product-sync-service';
 import type { ProductSyncRunTriggerDto as ProductSyncRunTrigger } from '@/shared/contracts/product-sync';
 import { createManagedQueue } from '@/shared/lib/queue';
 

@@ -41,7 +41,7 @@ import {
 } from '@/features/integrations/hooks/useIntegrationQueries';
 import { normalizeSteps } from '@/features/integrations/utils/connections';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { defaultPlaywrightSettings } from '@/features/playwright';
+import { defaultPlaywrightSettings } from '@/shared/lib/playwright';
 import type {
   Integration,
   IntegrationConnection,
@@ -260,7 +260,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
       ) {
         return;
       }
-      const { findPlaywrightPersonaMatch } = await import('@/features/playwright');
+      const { findPlaywrightPersonaMatch } = await import('@/shared/lib/playwright');
       const match = findPlaywrightPersonaMatch(playwrightSettings, playwrightPersonas);
       setPlaywrightPersonaId(match?.id ?? null);
     };
@@ -549,7 +549,7 @@ export function IntegrationsProvider({ children }: { children: ReactNode }): Rea
     }
     const persona = playwrightPersonas.find((p: PlaywrightPersona) => p.id === personaId);
     if (!persona) return;
-    const { buildPlaywrightSettings } = await import('@/features/playwright');
+    const { buildPlaywrightSettings } = await import('@/shared/lib/playwright');
     setPlaywrightPersonaId(persona.id);
     setPlaywrightSettings(buildPlaywrightSettings(persona.settings));
     toast(`Applied persona "${persona.name}".`, { variant: 'success' });

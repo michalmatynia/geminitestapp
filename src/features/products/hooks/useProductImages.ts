@@ -7,7 +7,7 @@ import {
   createExistingImageSlot,
   createFileImageSlot,
   swapSlots,
-} from '@/features/image-slots';
+} from '@/shared/lib/image-slots';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { ProductWithImages, ProductImageRecord } from '@/shared/contracts/products';

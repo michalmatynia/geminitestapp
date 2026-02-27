@@ -2,8 +2,8 @@
 
 import { ChangeEvent, ReactElement, useMemo } from 'react';
 
-import { playwrightDeviceOptions } from '@/features/playwright/constants/playwright';
-import { usePlaywrightSettings, PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
+import { playwrightDeviceOptions } from '@/shared/lib/playwright/constants/playwright';
+import { usePlaywrightSettings, PlaywrightSettingsProvider } from '@/shared/lib/playwright/context/PlaywrightSettingsContext';
 import type { PlaywrightSettings } from '@/shared/contracts/playwright';
 import { Input, SelectSimple, FormSection, FormField, ToggleRow, Hint, FormActions, CollapsibleSection } from '@/shared/ui';
 

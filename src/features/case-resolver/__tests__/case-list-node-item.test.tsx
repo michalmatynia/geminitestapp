@@ -7,6 +7,8 @@ import {
   toCaseResolverCaseContentFolderNodeId,
   toCaseResolverCaseNodeId,
 } from '@/features/case-resolver/master-tree';
+import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
+import type { MasterTreeViewNode } from '@/shared/utils/master-folder-tree-engine';
 
 const FolderClosedIcon = () => <span data-testid='folder-closed-icon' />;
 const FolderOpenIcon = () => <span data-testid='folder-open-icon' />;
@@ -15,9 +17,14 @@ const createBaseProps = () => ({
   node: {
     id: toCaseResolverCaseNodeId('case-1'),
     name: 'Case One',
+    type: 'folder',
     kind: 'case_entry',
+    path: 'case-1',
+    parentId: null,
+    sortOrder: 0,
     metadata: { isLocked: false },
-  } as any,
+    children: [],
+  } as MasterTreeViewNode,
   depth: 0,
   hasChildren: false,
   isExpanded: false,
@@ -26,7 +33,7 @@ const createBaseProps = () => ({
   isDropTarget: false,
   dropPosition: null as 'inside' | 'before' | 'after' | null,
   toggleExpand: vi.fn(),
-  filesById: new Map<string, any>(),
+  filesById: new Map<string, CaseResolverFile>(),
   caseTagPathById: new Map<string, string>(),
   caseIdentifierPathById: new Map<string, string>(),
   caseCategoryPathById: new Map<string, string>(),
@@ -79,9 +86,14 @@ describe('CaseListNodeItem', () => {
     props.node = {
       id: toCaseResolverCaseContentFolderNodeId('case-1', 'evidence'),
       name: 'evidence',
+      type: 'folder',
       kind: 'case_content_folder',
+      path: 'case-1/evidence',
+      parentId: toCaseResolverCaseNodeId('case-1'),
+      sortOrder: 0,
       metadata: { isLocked: false },
-    } as any;
+      children: [],
+    };
     props.hasChildren = true;
     props.isExpanded = false;
 
@@ -100,9 +112,14 @@ describe('CaseListNodeItem', () => {
     props.node = {
       id: toCaseResolverCaseContentFileNodeId('case-1', 'file-1'),
       name: 'Transcript.pdf',
+      type: 'file',
       kind: 'case_content_file',
+      path: 'case-1/Transcript.pdf',
+      parentId: toCaseResolverCaseNodeId('case-1'),
+      sortOrder: 0,
       metadata: { isLocked: false },
-    } as any;
+      children: [],
+    };
     props.filesById.set('file-1', {
       id: 'file-1',
       name: 'Transcript.pdf',

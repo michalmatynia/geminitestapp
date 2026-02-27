@@ -1,6 +1,6 @@
 import { JSX, Suspense } from 'react';
 
-import { PlaywrightPersonasPage } from '@/features/playwright/public';
+import { PlaywrightPersonasPage } from '@/shared/lib/playwright/public';
 
 export const dynamic = 'force-dynamic';
 

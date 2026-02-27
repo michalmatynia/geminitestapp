@@ -1,6 +1,6 @@
 import {
   PRODUCT_SIMPLE_PARAMETER_ID_PREFIX,
-} from '@/features/products/constants';
+} from '@/shared/contracts/products';
 import type {
   ProductParameterValue,
   ProductSimpleParameterValue,

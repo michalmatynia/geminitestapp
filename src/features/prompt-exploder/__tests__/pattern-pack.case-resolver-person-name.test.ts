@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PromptValidationRule } from '@/features/prompt-engine/settings';
+import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import { PROMPT_EXPLODER_PATTERN_PACK } from '@/features/prompt-exploder/pattern-pack';
 
 const ADDRESSER_NAME_RULE_IDS = [

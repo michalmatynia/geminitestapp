@@ -1,9 +1,11 @@
 import {
   defaultPromptEngineSettings,
-  type PromptEngineSettings,
-  type PromptValidationRule,
-  type PromptValidationScope,
 } from '@/features/prompt-engine/settings';
+import type { 
+  PromptEngineSettings,
+  PromptValidationRule,
+  PromptValidationScope,
+} from '@/shared/contracts/prompt-engine';
 
 import {
   PROMPT_EXPLODER_PATTERN_PACK,

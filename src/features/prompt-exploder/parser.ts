@@ -1,7 +1,7 @@
 import { extractParamsFromPrompt } from '@/features/prompt-engine/prompt-params';
 import type {
   PromptValidationRule,
-} from '@/features/prompt-engine/settings';
+} from '@/shared/contracts/prompt-engine';
 
 import { buildPromptExploderBindings } from './parser-bindings';
 import {

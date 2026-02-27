@@ -16,9 +16,12 @@ import type { ValidatorPatternList } from '@/features/admin/pages/validator-scop
 import {
   parsePromptEngineSettings,
   parsePromptValidationRules,
-  PROMPT_ENGINE_SETTINGS_KEY,
 } from '@/features/prompt-engine/settings';
-import type { PromptValidationRule, PromptEngineSettings } from '@/features/prompt-engine/settings';
+import { 
+  PROMPT_ENGINE_SETTINGS_KEY,
+  type PromptValidationRule, 
+  type PromptEngineSettings 
+} from '@/shared/contracts/prompt-engine';
 import {
   useSettingsMap,
   useUpdateSetting,

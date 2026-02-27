@@ -14,8 +14,8 @@ import {
 } from '@/features/prompt-core/runtime-observability';
 import type {
   PromptValidationRule,
-} from '@/features/prompt-engine/settings';
-import type { PromptEngineSettings } from '@/features/prompt-engine/settings';
+  PromptEngineSettings,
+} from '@/shared/contracts/prompt-engine';
 import {
   type PromptValidationRuntimeSelection,
   type PromptValidationRuntimeIdentityDto,

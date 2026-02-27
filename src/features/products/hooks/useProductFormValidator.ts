@@ -1,7 +1,14 @@
 
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type SetStateAction,
+} from 'react';
 import { useFormContext } from 'react-hook-form';
 
 import * as productsApi from '@/features/products/api/products';
@@ -71,14 +78,22 @@ const extractNameEnSegment = (value: string, segmentIndex: number): string => {
 const escapeRegexSegment = (value: string): string =>
   value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const resolveBooleanStateAction = (
+  next: SetStateAction<boolean>,
+  current: boolean
+): boolean =>
+  typeof next === 'function'
+    ? (next as (prev: boolean) => boolean)(current)
+    : next;
+
 // --- Hook Interface ---
 
 export interface UseProductFormValidatorResult {
   validationInstanceScope: ProductValidationInstanceScope;
   validatorEnabled: boolean;
   formatterEnabled: boolean;
-  setValidatorEnabled: (enabled: boolean) => void;
-  setFormatterEnabled: (enabled: boolean) => void;
+  setValidatorEnabled: (enabled: SetStateAction<boolean>) => void;
+  setFormatterEnabled: (enabled: SetStateAction<boolean>) => void;
   validationDenyBehavior: ProductValidationDenyBehavior;
   setValidationDenyBehavior: (behavior: ProductValidationDenyBehavior) => void;
   denyActionLabel: 'Deny' | 'Mute';
@@ -133,8 +148,8 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   const [validatorManuallyChanged, setValidatorManuallyChanged] = useState(false);
   const updateValidatorSettingsMutation = useUpdateValidatorSettingsMutation();
 
-  const setValidatorEnabled = useCallback((enabled: boolean): void => {
-    const nextEnabled = Boolean(enabled);
+  const setValidatorEnabled = useCallback((enabled: SetStateAction<boolean>): void => {
+    const nextEnabled = Boolean(resolveBooleanStateAction(enabled, validatorEnabled));
     setValidatorManuallyChanged(true);
     setValidatorInitialized(true);
     setValidatorEnabledState(nextEnabled);
@@ -159,10 +174,12 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           }
         );
       });
-  }, [updateValidatorSettingsMutation]);
+  }, [updateValidatorSettingsMutation, validatorEnabled]);
 
-  const setFormatterEnabled = useCallback((enabled: boolean): void => {
-    const nextEnabled = validatorEnabled ? Boolean(enabled) : false;
+  const setFormatterEnabled = useCallback((enabled: SetStateAction<boolean>): void => {
+    const nextEnabled = validatorEnabled
+      ? Boolean(resolveBooleanStateAction(enabled, formatterEnabled))
+      : false;
     setValidatorManuallyChanged(true);
     setValidatorInitialized(true);
     setFormatterEnabledState(nextEnabled);
@@ -180,7 +197,7 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
           }
         );
       });
-  }, [updateValidatorSettingsMutation, validatorEnabled]);
+  }, [formatterEnabled, updateValidatorSettingsMutation, validatorEnabled]);
 
   const [validationDenyBehaviorOverrides, setValidationDenyBehaviorOverrides] = useState<
     Partial<Record<ProductValidationInstanceScope, ProductValidationDenyBehavior>>

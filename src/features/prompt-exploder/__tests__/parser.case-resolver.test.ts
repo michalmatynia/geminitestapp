@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   defaultPromptEngineSettings,
-  type PromptValidationRule,
 } from '@/features/prompt-engine/settings';
+import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import { explodePromptText } from '@/features/prompt-exploder/parser';
 import { getPromptExploderScopedRules } from '@/features/prompt-exploder/pattern-pack';
 

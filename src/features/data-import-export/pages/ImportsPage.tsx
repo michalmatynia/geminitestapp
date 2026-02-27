@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use client';
 import { Download, Upload, ClipboardList } from 'lucide-react';
 import Link from 'next/link';

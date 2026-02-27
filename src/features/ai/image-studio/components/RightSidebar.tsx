@@ -493,6 +493,7 @@ export function RightSidebar(): React.JSX.Element {
       activeRequestPreviewJson,
       maskShapeCount: activeRequestPreview.maskShapeCount,
       requestPreviewMode,
+      resolvedPromptLength: promptText.length,
       sequenceStepCount: sequenceRequestPreview.stepCount || 0,
       setRequestPreviewMode,
 
@@ -514,7 +515,7 @@ export function RightSidebar(): React.JSX.Element {
       selectedModelId,
       sequenceRunBusy,
     }),
-    [switchToControls, canvasSizePresetOptions, canvasSizePresetValue, projectCanvasSizeLabel, canRecenterCanvasImage, quickActionsHostEl, quickActionsPanelContent, projectId, actionHistoryEntries.length, actionHistoryItems, activeActionHistoryIndex, historyMode, handleRestoreActionStep, activeRequestPreview, activeRequestPreviewEndpoint, activeRequestPreviewJson, requestPreviewMode, sequenceRequestPreview, setRequestPreviewMode, estimatedGenerationCost, estimatedPromptTokens, generationBusy, generationLabel, hasExtractedControls, modelSupportsSequenceGeneration, quickModelValue, handleQuickModelChange, handleRunGeneration, handleRunSequenceGeneration, quickModelOptions, selectedModelId, sequenceRunBusy]
+    [switchToControls, canvasSizePresetOptions, canvasSizePresetValue, projectCanvasSizeLabel, canRecenterCanvasImage, quickActionsHostEl, quickActionsPanelContent, projectId, actionHistoryEntries.length, actionHistoryItems, activeActionHistoryIndex, historyMode, handleRestoreActionStep, activeRequestPreview, activeRequestPreviewEndpoint, activeRequestPreviewJson, requestPreviewMode, promptText, sequenceRequestPreview, setRequestPreviewMode, estimatedGenerationCost, estimatedPromptTokens, generationBusy, generationLabel, hasExtractedControls, modelSupportsSequenceGeneration, quickModelValue, handleQuickModelChange, handleRunGeneration, handleRunSequenceGeneration, quickModelOptions, selectedModelId, sequenceRunBusy]
   );
 
   return (

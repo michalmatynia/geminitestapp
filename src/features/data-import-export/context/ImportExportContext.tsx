@@ -23,6 +23,8 @@ import { useCatalogs } from '@/features/products/hooks/useProductSettingsQueries
 import type {
   ImportResponse,
   Template,
+  DebugWarehouses,
+  CatalogOption,
 } from '@/shared/contracts/data-import-export';
 import type { 
   IntegrationConnectionBasic,
@@ -42,7 +44,6 @@ import type { ImportExportContextType } from './ImportExportContext.types';
 import { useImportExportPreferences } from './import-export/useImportExportPreferences';
 import { useImportExportTemplates } from './import-export/useImportExportTemplates';
 import { useImportExportData } from './import-export/useImportExportData';
-import type { ProductCategory } from '@/shared/contracts/products';
 
 const ImportExportContext = createContext<ImportExportContextType | undefined>(undefined);
 
@@ -81,7 +82,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   const [isBaseConnected, setIsBaseConnected] = useState(false);
   const [baseConnections, setBaseConnections] = useState<IntegrationConnectionBasic[]>([]);
   const [selectedBaseConnectionId, setSelectedBaseConnectionId] = useState('');
-  const [debugWarehouses, setDebugWarehouses] = useState(null);
+  const [debugWarehouses, setDebugWarehouses] = useState<DebugWarehouses | null>(null);
 
   const lastSavedImportTemplateId = useRef<string | null>(null);
   const lastSavedImportActiveTemplateId = useRef<string | null>(null);
@@ -100,7 +101,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   [integrationsWithConnectionsData]
   );
   const catalogsQuery = useCatalogs();
-  const catalogsData = useMemo<ProductCategory[]>(() => catalogsQuery.data || [], [catalogsQuery.data]);
+  const catalogsData = useMemo<CatalogOption[]>(() => (catalogsQuery.data as unknown as CatalogOption[]) || [], [catalogsQuery.data]);
   const loadingCatalogs = catalogsQuery.isLoading;
   
   const { data: importTemplates = [], isLoading: loadingImportTemplates } = useTemplates('import');
@@ -167,7 +168,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     let timer: NodeJS.Timeout | null = null;
     if (catalogsData.length > 0 && !catalogId && !hasInitializedCatalog.current) {
-      const defaultCatalog = catalogsData.find((catalog: ProductCategory) => catalog.isDefault);
+      const defaultCatalog = catalogsData.find((catalog: CatalogOption) => catalog.isDefault);
       if (defaultCatalog) {
         timer = setTimeout(() => {
           setCatalogId(defaultCatalog.id);
@@ -545,7 +546,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     setActiveImportRunId,
     setPollImportRun,
     activeImportRunId,
-    resumeImportRunMutation,
+    resumeImportRunMutation: resumeImportRunMutation as any,
     cancelImportRunMutation,
     saveExportSettingsMutation,
     exportActiveTemplateId: templates.exportActiveTemplateId,

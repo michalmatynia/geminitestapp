@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import Image from '@tiptap/extension-image';
@@ -10,7 +8,7 @@ import { TableHeader } from '@tiptap/extension-table-header';
 import { TableRow } from '@tiptap/extension-table-row';
 import TaskItem from '@tiptap/extension-task-item';
 import TaskList from '@tiptap/extension-task-list';
-import { EditorContent, useEditor, type Editor } from '@tiptap/react';
+import { EditorContent, useEditor, type Editor, type AnyExtension } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import {
   AlignCenter,
@@ -50,7 +48,6 @@ import {
   underlineMark, 
   inlineTextAlignMark, 
   textAlignExtension, 
-  TEXT_ALIGN_OPTIONS 
 } from './rich-text/RichTextEditorExtensions';
 import { ToolbarButton } from './rich-text/RichTextEditorToolbar';
 
@@ -115,7 +112,7 @@ export default function RichTextEditorImpl({
   }, [headingLevelsSignature]);
 
   const extensions = useMemo(() => {
-    const activeExtensions: any[] = [
+    const activeExtensions: AnyExtension[] = [
       StarterKit.configure({
         heading: { levels: normalizedHeadingLevels },
         link: false,

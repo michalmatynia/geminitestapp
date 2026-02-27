@@ -10,7 +10,7 @@ import {
 import type {
   PromptExploderRuleSegmentType,
   PromptValidationRule,
-} from '@/features/prompt-engine/settings';
+} from '@/shared/contracts/prompt-engine';
 
 import { DEFAULT_PATTERN_IDS } from './parser-default-patterns';
 

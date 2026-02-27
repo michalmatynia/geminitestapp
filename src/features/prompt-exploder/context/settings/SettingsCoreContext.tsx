@@ -2,7 +2,7 @@
 
 import { createContext, useContext } from 'react';
 import type { ValidatorPatternList } from '@/features/admin/pages/validator-scope';
-import type { PromptEngineSettings } from '@/features/prompt-engine/settings';
+import type { PromptEngineSettings } from '@/shared/contracts/prompt-engine';
 import { parsePromptExploderSettings } from '../../settings';
 
 export interface SettingsCoreState {

@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
@@ -28,13 +26,14 @@ import {
   useParameters as useProductParameters, 
   useSimpleParameters as useProductSimpleParameters 
 } from '@/features/products/hooks/useProductSettingsQueries';
-import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/features/products/constants';
 import { useImportExport } from '@/features/data-import-export/context/ImportExportContext';
 import { 
   parseParameterTarget, 
   toParameterTargetValue, 
   getParameterDisplayName 
 } from './imports-page-utils';
+import type { TemplateMapping } from '@/shared/contracts/data-import-export';
+import { PRODUCT_SIMPLE_PARAMETER_ID_PREFIX } from '@/shared/contracts/products';
 
 export function TemplatesTabContent(): React.JSX.Element {
   const {
@@ -86,8 +85,8 @@ export function TemplatesTabContent(): React.JSX.Element {
           if (!parameterId || seen.has(parameterId)) return null;
           seen.add(parameterId);
           return {
-            value: `\${PRODUCT_PARAMETER_TARGET_PREFIX}\${parameterId}`,
-            label: `Parameter: \${getParameterDisplayName(parameter)}`,
+            value: `${PRODUCT_PARAMETER_TARGET_PREFIX}${parameterId}`,
+            label: `Parameter: ${getParameterDisplayName(parameter)}`,
           };
         })
         .filter(
@@ -109,8 +108,8 @@ export function TemplatesTabContent(): React.JSX.Element {
             if (!parameterId || seen.has(parameterId)) return null;
             seen.add(parameterId);
             return {
-              value: `\${PRODUCT_PARAMETER_TARGET_PREFIX}\${PRODUCT_SIMPLE_PARAMETER_ID_PREFIX}\${parameterId}`,
-              label: `Simple parameter: \${getParameterDisplayName(parameter)}`,
+              value: `${PRODUCT_PARAMETER_TARGET_PREFIX}${PRODUCT_SIMPLE_PARAMETER_ID_PREFIX}${parameterId}`,
+              label: `Simple parameter: ${getParameterDisplayName(parameter)}`,
             };
           }
         )
@@ -174,12 +173,12 @@ export function TemplatesTabContent(): React.JSX.Element {
           normalizedParameterValue
         );
         const languageSuffix = parsedParameterTarget.languageCode
-          ? ` (\${parsedParameterTarget.languageCode.toUpperCase()})`
+          ? ` (${parsedParameterTarget.languageCode.toUpperCase()})`
           : '';
         if (knownParameterLabel) {
-          return `\${knownParameterLabel}\${languageSuffix}`;
+          return `${knownParameterLabel}${languageSuffix}`;
         }
-        return `Parameter: \${parsedParameterTarget.parameterId}\${languageSuffix}`;
+        return `Parameter: ${parsedParameterTarget.parameterId}${languageSuffix}`;
       }
 
       return normalizedSourceKey;
@@ -223,18 +222,35 @@ export function TemplatesTabContent(): React.JSX.Element {
   );
 
   const updateMapping = (index: number, patch: Partial<TemplateMapping>): void => {
-    const setMappings = templateScope === 'import' ? setImportTemplateMappings : setExportTemplateMappings;
-    setMappings((prev: TemplateMapping[]) => prev.map((m: TemplateMapping, i: number) => i === index ? { ...m, ...patch } : m));
+    if (templateScope === 'import') {
+      setImportTemplateMappings((prev: TemplateMapping[]) =>
+        prev.map((m: TemplateMapping, i: number) => (i === index ? { ...m, ...patch } : m))
+      );
+    } else {
+      setExportTemplateMappings((prev: TemplateMapping[]) =>
+        prev.map((m: TemplateMapping, i: number) => (i === index ? { ...m, ...patch } : m))
+      );
+    }
   };
 
   const addMappingRow = (): void => {
-    const setMappings = templateScope === 'import' ? setImportTemplateMappings : setExportTemplateMappings;
-    setMappings((prev: TemplateMapping[]) => [...prev, { sourceKey: '', targetField: '' }]);
+    if (templateScope === 'import') {
+      setImportTemplateMappings((prev: TemplateMapping[]) => [...prev, { sourceKey: '', targetField: '' }]);
+    } else {
+      setExportTemplateMappings((prev: TemplateMapping[]) => [...prev, { sourceKey: '', targetField: '' }]);
+    }
   };
 
   const removeMappingRow = (index: number): void => {
-    const setMappings = templateScope === 'import' ? setImportTemplateMappings : setExportTemplateMappings;
-    setMappings((prev: TemplateMapping[]) => prev.length === 1 ? [{ sourceKey: '', targetField: '' }] : prev.filter((_: TemplateMapping, i: number) => i !== index));
+    if (templateScope === 'import') {
+      setImportTemplateMappings((prev: TemplateMapping[]) =>
+        prev.length === 1 ? [{ sourceKey: '', targetField: '' }] : prev.filter((_: TemplateMapping, i: number) => i !== index)
+      );
+    } else {
+      setExportTemplateMappings((prev: TemplateMapping[]) =>
+        prev.length === 1 ? [{ sourceKey: '', targetField: '' }] : prev.filter((_: TemplateMapping, i: number) => i !== index)
+      );
+    }
   };
 
   return (
@@ -297,7 +313,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                 key={t.id} 
                 variant='ghost' 
                 size='sm'
-                className={`w-full justify-start text-xs font-medium \${currentActiveTemplateId === t.id ? 'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary' : 'text-gray-400'}`} 
+                className={`w-full justify-start text-xs font-medium ${currentActiveTemplateId === t.id ? 'bg-primary/10 text-primary hover:bg-primary/20 hover:text-primary' : 'text-gray-400'}`} 
                 onClick={() => applyTemplate(t, templateScope)}
               >
                 {t.name}
@@ -482,14 +498,14 @@ export function TemplatesTabContent(): React.JSX.Element {
                               ? [
                                 {
                                   value: m.sourceKey,
-                                  label: `\${m.sourceKey} (custom)`,
+                                  label: `${m.sourceKey} (custom)`,
                                 },
                               ]
                               : []),
                             ...importSourceFieldOptions.map((field: string) => ({
                               value: field,
                               label: importSourceFieldValues[field]
-                                ? `\${field} (\${importSourceFieldValues[field].slice(0, 60)})`
+                                ? `${field} (${importSourceFieldValues[field].slice(0, 60)})`
                                 : field,
                             })),
                           ]}
@@ -516,7 +532,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                             ? [
                               {
                                 value: m.targetField,
-                                label: `\${m.targetField} (custom)`,
+                                label: `${m.targetField} (custom)`,
                               },
                             ]
                             : []),
@@ -553,7 +569,7 @@ export function TemplatesTabContent(): React.JSX.Element {
                         const parsedSourceParameter = parseParameterTarget(sourceValue);
                         if (parsedSourceParameter) {
                           const baseFieldKey = parsedSourceParameter.languageCode
-                            ? `\${parsedSourceParameter.parameterId}|\${parsedSourceParameter.languageCode}`
+                            ? `${parsedSourceParameter.parameterId}|${parsedSourceParameter.languageCode}`
                             : parsedSourceParameter.parameterId;
                           return (
                             <p className='text-[11px] text-amber-300'>
@@ -636,13 +652,13 @@ export function TemplatesTabContent(): React.JSX.Element {
                 {loadingImportSourceFields
                   ? 'Loading source fields from selected inventory...'
                   : importSourceFieldOptions.length > 0
-                    ? `Loaded \${importSourceFieldOptions.length} source fields from the selected inventory schema.`
+                    ? `Loaded ${importSourceFieldOptions.length} source fields from the selected inventory schema.`
                     : 'No source fields loaded yet. Go to Imports tab, select connection + inventory to load schema.'}
                 {catalogId
                   ? customParameterTargetsQuery.isLoading ||
                     simpleParameterTargetsQuery.isLoading
                     ? ' Loading parameter targets...'
-                    : ` Parameter targets: \${customParameterTargetFields.length + simpleParameterTargetFields.length} (\${customParameterTargetFields.length} custom, \${simpleParameterTargetFields.length} simple).`
+                    : ` Parameter targets: ${customParameterTargetFields.length + simpleParameterTargetFields.length} (${customParameterTargetFields.length} custom, ${simpleParameterTargetFields.length} simple).`
                   : ' Select a catalog in Imports tab to load parameter targets.'}
               </p>
             )}
@@ -654,7 +670,7 @@ export function TemplatesTabContent(): React.JSX.Element {
         isOpen={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
         title='Delete Template'
-        message={`Are you sure you want to permanently delete this \${templateScope} template? This action cannot be undone.`}
+        message={`Are you sure you want to permanently delete this ${templateScope} template? This action cannot be undone.`}
         confirmText='Delete Template'
         isDangerous={true}
         loading={savingImportTemplate || savingExportTemplate}

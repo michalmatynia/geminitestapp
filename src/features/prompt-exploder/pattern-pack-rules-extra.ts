@@ -4,7 +4,7 @@ import type {
   PromptExploderRuleSegmentType,
   PromptValidationRule,
   PromptValidationScope,
-} from '@/features/prompt-engine/settings';
+} from '@/shared/contracts/prompt-engine';
 
 const PROMPT_EXPLODER_SCOPE = ['prompt_exploder'] as const;
 

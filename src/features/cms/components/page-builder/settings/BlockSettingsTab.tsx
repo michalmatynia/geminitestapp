@@ -1,4 +1,3 @@
-// @ts-nocheck - Persistent type resolution issues with usePageBuilderState.
 'use client';
 
 import React, { useMemo, useCallback } from 'react';
@@ -13,11 +12,11 @@ import { prependManagementFields, groupSettingsFields, renderFieldGroups } from 
 import { getBlockDefinition, IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS, getImageBackgroundTargetOptions, type ImageBackgroundTarget } from '../section-registry';
 import { usePageBuilderSelection, usePageBuilderDispatch } from '../../hooks/usePageBuilderContext';
 import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
-import type { BlockInstance, SectionInstance, PageSelectionValue } from '../../types/page-builder';
+import type { BlockInstance } from '@/shared/contracts/cms';
 
 export function BlockSettingsTab(): React.JSX.Element | null {
   const dispatch = usePageBuilderDispatch();
-  const selection = usePageBuilderSelection() as PageSelectionValue;
+  const selection = usePageBuilderSelection();
   const selectedBlock = selection.selectedBlock;
   const selectedParentSection = selection.selectedParentSection;
   const selectedParentColumn = selection.selectedParentColumn;
@@ -30,7 +29,7 @@ export function BlockSettingsTab(): React.JSX.Element | null {
   const isRowBlock = selectedBlock?.type === 'Row' && selectedParentSection?.type === 'Grid';
   const selectedGridRow = useMemo<BlockInstance | null>(() => {
     if (selectedParentSection?.type !== 'Grid' || !selectedParentColumn) return null;
-    return ((selectedParentSection as SectionInstance).blocks as BlockInstance[]).find((b: BlockInstance) => b.type === 'Row' && (b.blocks ?? []).some((c: BlockInstance) => c.id === selectedParentColumn.id)) ?? null;
+    return ((selectedParentSection).blocks).find((b: BlockInstance) => b.type === 'Row' && (b.blocks ?? []).some((c: BlockInstance) => c.id === selectedParentColumn.id)) ?? null;
   }, [selectedParentSection, selectedParentColumn]);
 
   const rowHeightMode = (selectedBlock?.settings?.['heightMode'] as string) || 'inherit';
@@ -55,24 +54,24 @@ export function BlockSettingsTab(): React.JSX.Element | null {
 
   const handleRemoveBlock = useCallback((): void => {
     if (!selectedBlock || !selectedParentSection) return;
-    if (selectedParentBlock && selectedParentColumn) dispatch({ type: 'REMOVE_ELEMENT_FROM_NESTED_BLOCK', sectionId: (selectedParentSection as SectionInstance).id, columnId: (selectedParentColumn as BlockInstance).id, parentBlockId: (selectedParentBlock as BlockInstance).id, elementId: (selectedBlock as BlockInstance).id });
-    else if (selectedParentBlock) dispatch({ type: 'REMOVE_ELEMENT_FROM_SECTION_BLOCK', sectionId: (selectedParentSection as SectionInstance).id, parentBlockId: (selectedParentBlock as BlockInstance).id, elementId: (selectedBlock as BlockInstance).id });
-    else if (selectedParentColumn) dispatch({ type: 'REMOVE_BLOCK_FROM_COLUMN', sectionId: (selectedParentSection as SectionInstance).id, columnId: (selectedParentColumn as BlockInstance).id, blockId: (selectedBlock as BlockInstance).id });
-    else if (selectedParentRow) dispatch({ type: 'REMOVE_ELEMENT_FROM_SECTION_BLOCK', sectionId: (selectedParentSection as SectionInstance).id, parentBlockId: (selectedParentRow as BlockInstance).id, elementId: (selectedBlock as BlockInstance).id });
-    else dispatch({ type: 'REMOVE_BLOCK', sectionId: (selectedParentSection as SectionInstance).id, blockId: (selectedBlock as BlockInstance).id });
+    if (selectedParentBlock && selectedParentColumn) dispatch({ type: 'REMOVE_ELEMENT_FROM_NESTED_BLOCK', sectionId: (selectedParentSection).id, columnId: (selectedParentColumn).id, parentBlockId: (selectedParentBlock).id, elementId: (selectedBlock).id });
+    else if (selectedParentBlock) dispatch({ type: 'REMOVE_ELEMENT_FROM_SECTION_BLOCK', sectionId: (selectedParentSection).id, parentBlockId: (selectedParentBlock).id, elementId: (selectedBlock).id });
+    else if (selectedParentColumn) dispatch({ type: 'REMOVE_BLOCK_FROM_COLUMN', sectionId: (selectedParentSection).id, columnId: (selectedParentColumn).id, blockId: (selectedBlock).id });
+    else if (selectedParentRow) dispatch({ type: 'REMOVE_ELEMENT_FROM_SECTION_BLOCK', sectionId: (selectedParentSection).id, parentBlockId: (selectedParentRow).id, elementId: (selectedBlock).id });
+    else dispatch({ type: 'REMOVE_BLOCK', sectionId: (selectedParentSection).id, blockId: (selectedBlock).id });
   }, [selectedBlock, selectedParentSection, selectedParentColumn, selectedParentRow, selectedParentBlock, dispatch]);
 
   const handleMakeBackground = useCallback((target: 'grid' | 'row' | 'column'): void => {
     if (selectedBlock?.type !== 'ImageElement' || selectedParentSection?.type !== 'Grid' || !imageBackgroundSrc || selectedParentBlock) return;
     const backgroundImage = { ...selectedBlock.settings };
-    if (target === 'grid') dispatch({ type: 'UPDATE_SECTION_SETTINGS', sectionId: (selectedParentSection as SectionInstance).id, settings: { backgroundImage } });
-    else if (target === 'row') { if (selectedGridRow) dispatch({ type: 'UPDATE_BLOCK_SETTINGS', sectionId: (selectedParentSection as SectionInstance).id, blockId: (selectedGridRow as BlockInstance).id, settings: { backgroundImage } }); }
-    else { if (selectedParentColumn) dispatch({ type: 'UPDATE_COLUMN_SETTINGS', sectionId: (selectedParentSection as SectionInstance).id, columnId: (selectedParentColumn as BlockInstance).id, settings: { backgroundImage } }); }
-    if (selectedParentColumn) dispatch({ type: 'REMOVE_BLOCK_FROM_COLUMN', sectionId: (selectedParentSection as SectionInstance).id, columnId: (selectedParentColumn as BlockInstance).id, blockId: (selectedBlock as BlockInstance).id });
-    else dispatch({ type: 'REMOVE_BLOCK', sectionId: (selectedParentSection as SectionInstance).id, blockId: (selectedBlock as BlockInstance).id });
+    if (target === 'grid') dispatch({ type: 'UPDATE_SECTION_SETTINGS', sectionId: (selectedParentSection).id, settings: { backgroundImage } });
+    else if (target === 'row') { if (selectedGridRow) dispatch({ type: 'UPDATE_BLOCK_SETTINGS', sectionId: (selectedParentSection).id, blockId: (selectedGridRow).id, settings: { backgroundImage } }); }
+    else { if (selectedParentColumn) dispatch({ type: 'UPDATE_COLUMN_SETTINGS', sectionId: (selectedParentSection).id, columnId: (selectedParentColumn).id, settings: { backgroundImage } }); }
+    if (selectedParentColumn) dispatch({ type: 'REMOVE_BLOCK_FROM_COLUMN', sectionId: (selectedParentSection).id, columnId: (selectedParentColumn).id, blockId: (selectedBlock).id });
+    else dispatch({ type: 'REMOVE_BLOCK', sectionId: (selectedParentSection).id, blockId: (selectedBlock).id });
   }, [dispatch, imageBackgroundSrc, selectedBlock, selectedGridRow, selectedParentBlock, selectedParentColumn, selectedParentSection]);
 
-  const handleRemoveRow = useCallback(() => isRowBlock && selectedParentSection && selectedBlock && dispatch({ type: 'REMOVE_GRID_ROW', sectionId: (selectedParentSection as SectionInstance).id, rowId: (selectedBlock as BlockInstance).id }), [isRowBlock, selectedParentSection, selectedBlock, dispatch]);
+  const handleRemoveRow = useCallback(() => isRowBlock && selectedParentSection && selectedBlock && dispatch({ type: 'REMOVE_GRID_ROW', sectionId: (selectedParentSection).id, rowId: (selectedBlock).id }), [isRowBlock, selectedParentSection, selectedBlock, dispatch]);
 
   if (!selectedBlock) return null;
   const blockDef = getBlockDefinition(selectedBlock.type);

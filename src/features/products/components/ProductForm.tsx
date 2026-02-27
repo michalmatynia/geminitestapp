@@ -95,12 +95,8 @@ export default function ProductForm({
           validationInstanceScope: validator.validationInstanceScope,
           validatorEnabled: validator.validatorEnabled,
           formatterEnabled: validator.formatterEnabled,
-          setValidatorEnabled: (val): void => {
-            validator.setValidatorEnabled(typeof val === 'function' ? val(validator.validatorEnabled) : val);
-          },
-          setFormatterEnabled: (val): void => {
-            validator.setFormatterEnabled(typeof val === 'function' ? val(validator.formatterEnabled) : val);
-          },
+          setValidatorEnabled: validator.setValidatorEnabled,
+          setFormatterEnabled: validator.setFormatterEnabled,
           validationDenyBehavior: validator.validationDenyBehavior,
           setValidationDenyBehavior: (behavior: React.SetStateAction<ProductValidationDenyBehavior>): void => {
             if (typeof behavior === 'string') {

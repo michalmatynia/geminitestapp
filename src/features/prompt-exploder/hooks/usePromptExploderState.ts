@@ -10,9 +10,11 @@ import {
 import { recordPromptValidationCounter } from '@/features/prompt-core/runtime-observability';
 import {
   parsePromptEngineSettings,
-  PROMPT_ENGINE_SETTINGS_KEY,
-  type PromptValidationRule,
 } from '@/features/prompt-engine/settings';
+import { 
+  PROMPT_ENGINE_SETTINGS_KEY,
+  type PromptValidationRule 
+} from '@/shared/contracts/prompt-engine';
 import {
   useSettingsMap,
   useUpdateSetting,

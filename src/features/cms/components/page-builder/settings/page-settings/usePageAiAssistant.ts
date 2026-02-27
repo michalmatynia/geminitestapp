@@ -1,4 +1,3 @@
-// @ts-nocheck - Persistent type resolution issues with usePageBuilder state.
 'use client';
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';
@@ -12,10 +11,10 @@ import { logClientError } from '@/features/observability';
 import { SECTION_TEMPLATES } from '../../section-templates';
 import { getSectionDefinition } from '../../section-registry';
 import type { SectionInstance, PageZone } from '../../../types/page-builder';
-import { usePageBuilder } from '../../../../hooks/usePageBuilderContext';
+import { usePageBuilder, type PageBuilderContextValue } from '../../../../hooks/usePageBuilderContext';
 
 export function usePageAiAssistant() {
-  const { state, dispatch } = usePageBuilder();
+  const { state, dispatch } = usePageBuilder() as PageBuilderContextValue;
   const page = state.currentPage;
   const { toast } = useToast();
   

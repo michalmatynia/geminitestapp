@@ -24,6 +24,7 @@ import {
   getImageStudioProjectSettingsKey,
   normalizeImageStudioModelPresets,
   parseImageStudioSettings,
+  type ImageStudioSettings,
 } from '../utils/studio-settings';
 
 import { 
@@ -102,7 +103,6 @@ export function ImageStudioSettingsProvider({
     hydratedSignatureRef,
     settingsLoaded,
     setSettingsLoaded,
-    projectSettingsKey,
     studioSettingsRaw,
     globalStudioSettingsRaw,
     openaiModelFallback,
@@ -146,7 +146,7 @@ export function ImageStudioSettingsProvider({
         ...prev,
         targetAi: {
           ...prev.targetAi,
-          openai: { ...prev.targetAi.openai, advanced_overrides: parsed },
+          openai: { ...prev.targetAi.openai, advanced_overrides: parsed as Record<string, unknown> },
         },
       }));
     } catch {
@@ -201,7 +201,7 @@ export function ImageStudioSettingsProvider({
       activeGenerationModel,
     );
 
-    const nextStudioSettings = {
+    const nextStudioSettings: ImageStudioSettings = {
       ...studioSettings,
       targetAi: {
         ...studioSettings.targetAi,
@@ -379,11 +379,12 @@ export function ImageStudioSettingsProvider({
     (operation: string, checked: boolean): void => {
       setStudioSettings((prev) => {
         const operations = prev.projectSequencing.operations;
+        const op = operation as any;
         const nextOperations = checked
-          ? operations.includes(operation)
+          ? operations.includes(op)
             ? operations
-            : [...operations, operation]
-          : operations.filter((entry) => entry !== operation);
+            : [...operations, op]
+          : operations.filter((entry) => entry !== op);
         return {
           ...prev,
           projectSequencing: {
@@ -400,7 +401,8 @@ export function ImageStudioSettingsProvider({
     (operation: string, direction: number): void => {
       setStudioSettings((prev) => {
         const operations = [...prev.projectSequencing.operations];
-        const index = operations.indexOf(operation);
+        const op = operation as any;
+        const index = operations.indexOf(op);
         if (index < 0) return prev;
         const target = index + direction;
         if (target < 0 || target >= operations.length) return prev;

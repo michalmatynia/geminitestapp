@@ -1,4 +1,4 @@
-import type { PromptValidationRule, PromptValidationScope } from '@/features/prompt-engine/settings';
+import type { PromptValidationRule, PromptValidationScope } from '@/shared/contracts/prompt-engine';
 
 import type { PromptExploderPatternSnapshot } from './types';
 import type { PromptExploderRuntimeValidationScope } from './validation-stack';

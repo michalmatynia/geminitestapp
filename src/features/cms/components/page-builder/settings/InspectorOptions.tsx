@@ -1,15 +1,14 @@
-// @ts-nocheck - Persistent type resolution issues with usePageBuilder state.
 'use client';
 
 import React, { useCallback } from 'react';
 import { ToggleRow } from '@/shared/ui';
 import { usePageBuilderState, usePageBuilderDispatch } from '../../hooks/usePageBuilderContext';
-import type { InspectorSettings } from '../../types/page-builder';
+import type { InspectorSettings } from '@/shared/contracts/cms';
 
 export function InspectorOptions(): React.JSX.Element | null {
   const state = usePageBuilderState();
   const dispatch = usePageBuilderDispatch();
-  const inspectorSettings = state.inspectorSettings as InspectorSettings;
+  const inspectorSettings = state.inspectorSettings;
 
   const updateInspectorSetting = useCallback((patch: Partial<InspectorSettings>): void => 
     dispatch({ type: 'UPDATE_INSPECTOR_SETTINGS', settings: patch }), [dispatch]);

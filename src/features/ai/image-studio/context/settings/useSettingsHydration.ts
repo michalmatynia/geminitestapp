@@ -23,6 +23,7 @@ export function useSettingsHydration({
   globalStudioSettingsRaw,
   openaiModelFallback,
   apiKeyFallback,
+  promptEngineRaw,
   setStudioSettings,
   setAdvancedOverridesText,
   setImageStudioApiKey,
@@ -45,6 +46,7 @@ export function useSettingsHydration({
   globalStudioSettingsRaw: string | null | undefined;
   openaiModelFallback: string | null | undefined;
   apiKeyFallback: string;
+  promptEngineRaw: string | null | undefined;
   setStudioSettings: (settings: ImageStudioSettings) => void;
   setAdvancedOverridesText: (text: string) => void;
   setImageStudioApiKey: (key: string) => void;

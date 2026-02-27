@@ -1,10 +1,12 @@
 import {
   defaultPromptEngineSettings,
-  type PromptEngineSettings,
-  type PromptExploderRuleSegmentType,
-  type PromptValidationRule,
-  type PromptValidationScope,
 } from '@/features/prompt-engine/settings';
+import type { 
+  PromptEngineSettings,
+  PromptExploderRuleSegmentType,
+  PromptValidationRule,
+  PromptValidationScope,
+} from '@/shared/contracts/prompt-engine';
 
 import type { PromptExploderRuntimeValidationScope } from './validation-stack';
 

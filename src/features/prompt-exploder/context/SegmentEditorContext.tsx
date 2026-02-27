@@ -8,7 +8,7 @@
 
 import React, { createContext, useCallback, useEffect, useMemo, useState, useContext } from 'react';
 
-import { PROMPT_ENGINE_SETTINGS_KEY } from '@/features/prompt-engine/settings';
+import { PROMPT_ENGINE_SETTINGS_KEY } from '@/shared/contracts/prompt-engine';
 import { useToast } from '@/shared/ui';
 import { serializeSetting } from '@/shared/utils/settings-json';
 

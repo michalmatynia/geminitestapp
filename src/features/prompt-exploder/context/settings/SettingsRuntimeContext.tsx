@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext } from 'react';
-import type { PromptValidationRule } from '@/features/prompt-engine/settings';
+import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import type { 
   PromptValidationOrchestrationResult 
 } from '../../prompt-validation-orchestrator';

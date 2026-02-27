@@ -50,7 +50,7 @@ export const initialState: PageBuilderState = {
   history: { past: [], future: [] },
 };
 
-interface PageBuilderContextValue extends PageSelectionValue, VectorOverlayValue {
+export interface PageBuilderContextValue extends PageSelectionValue, VectorOverlayValue {
   state: PageBuilderState;
   dispatch: React.Dispatch<PageBuilderAction>;
 }

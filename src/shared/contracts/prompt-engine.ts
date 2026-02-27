@@ -11,6 +11,8 @@ import {
   type PromptExploderValidationRuleStack,
 } from './prompt-exploder';
 
+export const PROMPT_ENGINE_SETTINGS_KEY = 'prompt_engine_settings';
+
 /**
  * Prompt Validation DTOs
  */

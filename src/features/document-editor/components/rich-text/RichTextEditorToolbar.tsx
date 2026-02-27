@@ -1,15 +1,7 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
-import { 
-  Undo, Redo, Bold, Italic, Underline, Strikethrough, Code, 
-  Heading1, Heading2, Heading3, Pilcrow, List, ListOrdered, 
-  CheckSquare, Quote, Minus, Link as LinkIcon, Image as ImageIcon, 
-  Table as TableIcon, AlignLeft, AlignRight, AlignCenter, AlignJustify, Eraser 
-} from 'lucide-react';
-import { Button, SelectSimple } from '@/shared/ui';
+import { Button } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import type { RichTextEditorVariant } from '../types';
 

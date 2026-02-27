@@ -40,7 +40,7 @@ export function CanvasBoard({
   confirmNodeSwitch,
   openNodeConfigOnSingleClick = false,
   nodeDiagnosticsById = {},
-  onFocusNodeDiagnostics,
+  onFocusNodeDiagnostics: _onFocusNodeDiagnostics,
   resolveConnectorTooltip,
 }: CanvasBoardProps): React.JSX.Element {
   const state = useCanvasBoardState({
@@ -69,7 +69,7 @@ export function CanvasBoard({
     edgeRoutingMode,
     setEdgeRoutingMode,
     edgePaths,
-    handlePointerDownNode,
+    handlePointerDownNode: _handlePointerDownNode,
     handlePointerMoveNode,
     handlePointerUpNode,
     handlePanStart,
@@ -172,9 +172,9 @@ export function CanvasBoard({
 
   const onFocusNodeDiagnostics = React.useCallback(
     (nodeId: string) => {
-      onFocusNodeDiagnostics?.(nodeId);
+      _onFocusNodeDiagnostics?.(nodeId);
     },
-    [onFocusNodeDiagnostics]
+    [_onFocusNodeDiagnostics]
   );
 
   const onFireTrigger = React.useCallback(
@@ -186,108 +186,10 @@ export function CanvasBoard({
 
   const handlePointerDownNode = React.useCallback(
     (nodeId: string, event: React.PointerEvent) => {
-      handlePointerDownNode(nodeId, event);
+      _handlePointerDownNode(nodeId, event);
       event.stopPropagation();
     },
-    [handlePointerDownNode]
-  );
-
-  const handlePointerMoveNode = React.useCallback(
-    (nodeId: string, event: React.PointerEvent) => {
-      handlePointerMoveNode(nodeId, event);
-    },
-    [handlePointerMoveNode]
-  );
-
-  const handlePointerUpNode = React.useCallback(
-    (nodeId: string, event: React.PointerEvent) => {
-      handlePointerUpNode(nodeId, event);
-    },
-    [handlePointerUpNode]
-  );
-
-  const handlePanStart = React.useCallback(
-    (event: React.PointerEvent) => {
-      handlePanStart(event);
-    },
-    [handlePanStart]
-  );
-
-  const handlePanMove = React.useCallback(
-    (event: React.PointerEvent) => {
-      handlePanMove(event);
-    },
-    [handlePanMove]
-  );
-
-  const handlePanEnd = React.useCallback(
-    (event: React.PointerEvent) => {
-      handlePanEnd(event);
-    },
-    [handlePanEnd]
-  );
-
-  const handleWheel = React.useCallback(
-    (event: React.WheelEvent) => {
-      handleWheel(event);
-    },
-    [handleWheel]
-  );
-
-  const handleRemoveEdge = React.useCallback(
-    (edgeId: string) => {
-      handleRemoveEdge(edgeId);
-    },
-    [handleRemoveEdge]
-  );
-
-  const handleDisconnectPort = React.useCallback(
-    (direction: 'input' | 'output', nodeId: string, port: string) => {
-      handleDisconnectPort(direction, nodeId, port);
-    },
-    [handleDisconnectPort]
-  );
-
-  const handleStartConnection = React.useCallback(
-    (event: React.PointerEvent<Element>, node: AiNode, port: string) => {
-      handleStartConnection(event, node, port);
-    },
-    [handleStartConnection]
-  );
-
-  const handleCompleteConnection = React.useCallback(
-    (event: React.PointerEvent<Element>, node: AiNode, port: string) => {
-      void handleCompleteConnection(event, node, port);
-    },
-    [handleCompleteConnection]
-  );
-
-  const handleReconnectInput = React.useCallback(
-    (event: React.PointerEvent<Element>, nodeId: string, port: string) => {
-      void handleReconnectInput(event, nodeId, port);
-    },
-    [handleReconnectInput]
-  );
-
-  const handleSelectNode = React.useCallback(
-    (nodeId: string, options?: { toggle?: boolean }) => {
-      handleSelectNode(nodeId, options);
-    },
-    [handleSelectNode]
-  );
-
-  const handleDrop = React.useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
-      handleDrop(event);
-    },
-    [handleDrop]
-  );
-
-  const handleDragOver = React.useCallback(
-    (event: React.DragEvent<HTMLDivElement>) => {
-      handleDragOver(event);
-    },
-    [handleDragOver]
+    [_handlePointerDownNode]
   );
 
   const canvasInteractions: CanvasBoardState = React.useMemo(

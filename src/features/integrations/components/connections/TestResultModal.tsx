@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { useIntegrationsTesting } from '@/features/integrations/context/IntegrationsContext';
+import { useIntegrationsTesting } from '@/features/integrations/context/integrations/IntegrationsTestingContext';
 import type { ModalStateProps } from '@/shared/contracts/ui';
 import { MetadataItem, Hint, Alert, CopyButton } from '@/shared/ui';
 import { DetailModal } from '@/shared/ui/templates/modals';

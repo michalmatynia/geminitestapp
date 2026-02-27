@@ -1,4 +1,4 @@
-import type { PromptValidationRule } from '@/features/prompt-engine/settings';
+import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 
 import { learningTokens, type TemplateMergeMode } from '../template-learning';
 

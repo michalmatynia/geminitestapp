@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import type { PromptExploderRuleSegmentType } from '@/features/prompt-engine/settings';
+import type { PromptExploderRuleSegmentType } from '@/shared/contracts/prompt-engine';
 import { Button, Input, Label, StatusToggle, Textarea, SelectSimple } from '@/shared/ui';
 
 import { usePromptExploderParserTuningContext } from './PromptExploderParserTuningContext';

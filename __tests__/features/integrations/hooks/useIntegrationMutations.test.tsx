@@ -132,9 +132,13 @@ describe('useIntegrationMutations invalidation', () => {
     await result.current.mutateAsync({
       integrationId: 'int-1',
       connectionId: 'conn-1',
+      userPassword: 'password-123',
     });
 
-    expect(api.delete).toHaveBeenCalledWith('/api/integrations/connections/conn-1');
+    expect(api.delete).toHaveBeenCalledWith(
+      '/api/integrations/connections/conn-1',
+      { body: JSON.stringify({ userPassword: 'password-123' }) }
+    );
     await waitFor(() => expect(invalidateSpy).toHaveBeenCalled());
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: QUERY_KEYS.integrations.connections(),
@@ -151,11 +155,13 @@ describe('useIntegrationMutations invalidation', () => {
     await result.current.mutateAsync({
       integrationId: 'int-1',
       connectionId: 'conn-1',
+      userPassword: 'password-123',
       replacementConnectionId: 'conn-2',
     });
 
     expect(api.delete).toHaveBeenCalledWith(
-      '/api/integrations/connections/conn-1?replacementConnectionId=conn-2'
+      '/api/integrations/connections/conn-1?replacementConnectionId=conn-2',
+      { body: JSON.stringify({ userPassword: 'password-123' }) }
     );
   });
 

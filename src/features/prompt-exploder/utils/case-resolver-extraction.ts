@@ -1,6 +1,6 @@
 'use client';
 
-import type { PromptValidationRule } from '@/features/prompt-engine/settings';
+import type { PromptValidationRule } from '@/shared/contracts/prompt-engine';
 import { readRegexCaptureGroup } from '@/features/prompt-exploder/helpers/capture';
 
 import type {

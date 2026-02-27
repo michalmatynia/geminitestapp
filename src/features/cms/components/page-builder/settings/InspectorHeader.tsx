@@ -1,4 +1,3 @@
-// @ts-nocheck - Persistent type resolution issues with usePageBuilderState.
 'use client';
 
 import React, { useMemo, useCallback } from 'react';
@@ -9,7 +8,7 @@ import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { usePageBuilderState } from '../../../hooks/page-builder/PageStateContext';
 import { usePageBuilderDispatch } from '../../../hooks/page-builder/PageDispatchContext';
 import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
-import type { InspectorSettings } from '../../types/page-builder';
+import type { InspectorSettings } from '@/shared/contracts/cms';
 
 export function InspectorHeader(): React.JSX.Element {
   const state = usePageBuilderState();
@@ -20,7 +19,7 @@ export function InspectorHeader(): React.JSX.Element {
     setActiveTab,
   } = useComponentSettingsContext();
 
-  const inspectorSettings = state.inspectorSettings as InspectorSettings;
+  const inspectorSettings = state.inspectorSettings;
 
   const updateInspectorSetting = useCallback((patch: Partial<InspectorSettings>): void => 
     dispatch({ type: 'UPDATE_INSPECTOR_SETTINGS', settings: patch }), [dispatch]);

@@ -363,19 +363,6 @@ const resolvePrismaReplacementConnectionId = async (input: {
   return fallbackConnection?.id ?? null;
 };
 
-const buildMongoConnectionFieldFilter = (
-  candidates: ReturnType<typeof toConnectionIdCandidates>
-): Record<string, unknown> => ({
-  connectionId: {
-    $in: [
-      ...candidates.asStrings,
-      ...candidates.asDocumentIds.filter(
-        (candidate): candidate is ObjectId => candidate instanceof ObjectId
-      ),
-    ],
-  },
-});
-
 const countMongoConnectionDependencies = async (
   connectionId: string
 ): Promise<ConnectionDependencyCounts> => {
@@ -477,7 +464,7 @@ const updateMongoConnectionScopedSettings = async (
   replacementConnectionId: string | null
 ): Promise<void> => {
   const db = await getMongoDb();
-  const settings = db.collection<{ value?: string }>('settings');
+  const settings = db.collection<{ _id: string | ObjectId; key?: string; value?: string; createdAt?: Date; updatedAt?: Date }>('settings');
   const [defaultConnectionSetting, activeTemplateSetting, syncProfilesSetting] =
     await Promise.all([
       settings.findOne({

@@ -1,10 +1,10 @@
-import {
-  type PromptExploderCaptureApplyTo,
-  type PromptExploderCaptureNormalize,
-  type PromptExploderRuleSegmentType,
-  type PromptValidationRule,
-  type PromptValidationScope,
-} from '@/features/prompt-engine/settings';
+import type {
+  PromptExploderCaptureApplyTo,
+  PromptExploderCaptureNormalize,
+  PromptExploderRuleSegmentType,
+  PromptValidationRule,
+  PromptValidationScope,
+} from '@/shared/contracts/prompt-engine';
 
 import { PROMPT_EXPLODER_PATTERN_PACK_EXTRA } from './pattern-pack-rules-extra';
 

@@ -16,10 +16,11 @@ import {
   PromptEngineSettingsDto,
   promptEngineSettingsSchema,
   promptValidationRuleSchema,
+  PROMPT_ENGINE_SETTINGS_KEY,
 } from '@/shared/contracts/prompt-engine';
 import { PromptExploderSegmentTypeDto } from '@/shared/contracts/prompt-exploder';
 
-export const PROMPT_ENGINE_SETTINGS_KEY = 'prompt_engine_settings';
+export { PROMPT_ENGINE_SETTINGS_KEY };
 
 export type PromptValidationSeverity = PromptValidationSeverityDto;
 export type PromptValidationChainMode = PromptValidationChainModeDto;

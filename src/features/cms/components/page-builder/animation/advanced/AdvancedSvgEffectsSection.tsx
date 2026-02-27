@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
@@ -17,8 +15,9 @@ import { getDocumentationTooltip } from '@/features/tooltip-engine';
 import { DEFAULT_ANIMATION_CONFIG } from '@/features/gsap';
 import { useAnimationConfigContext } from '../AnimationConfigContext';
 import type { VectorOverlayResult } from '../../../hooks/usePageBuilderContext';
+import { type VectorShape } from '@/shared/contracts/vector';
 
-const EMPTY_SHAPES: any[] = [];
+const EMPTY_SHAPES: VectorShape[] = [];
 
 export function AdvancedSvgEffectsSection(): React.JSX.Element {
   const { config, onChange, openVectorOverlay } = useAnimationConfigContext();

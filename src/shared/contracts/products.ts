@@ -5,6 +5,8 @@ import { imageFileRecordSchema, type ImageFileRecordDto as ImageFileRecord } fro
 import { ManagedImageSlot } from './image-slots';
 import { commonListQuerySchema } from '../validations/api-schemas';
 
+export const PRODUCT_SIMPLE_PARAMETER_ID_PREFIX = 'sp:';
+
 /**
  * Product Category Contract
  */

@@ -6,10 +6,13 @@ import {
   promptExploderLearnedTemplateSchema,
   promptExploderRuntimeValidationScopeSchema,
   promptExploderValidationRuleStackSchema,
+  type PromptExploderSegmentType,
   type PromptExploderLearnedTemplate,
   type PromptExploderRuntimeValidationScope,
   type PromptExploderValidationRuleStack,
 } from './prompt-exploder';
+
+export type PromptExploderRuleSegmentType = PromptExploderSegmentType;
 
 export const PROMPT_ENGINE_SETTINGS_KEY = 'prompt_engine_settings';
 

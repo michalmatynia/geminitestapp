@@ -36,6 +36,8 @@ const createState = (overrides?: Record<string, unknown>) => ({
   workingSlot: { id: 'slot-1' },
   setSelectedSlotId: vi.fn(),
   setWorkingSlotId: vi.fn(),
+  centerMode: 'server_object_layout_v1',
+  setCenterMode: vi.fn(),
   toast: vi.fn(),
   workingSourceSignature: 'signature_slot_1_v1',
   applyAnalysisLayoutToCenter: vi.fn(),
@@ -110,6 +112,30 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
     });
     expect(state.applyAnalysisLayoutToAutoScaler).not.toHaveBeenCalled();
     expect(loadImageStudioAnalysisApplyIntent('project-alpha')).toBeNull();
+  });
+
+  it('coerces object-layout intent to object-layout center mode family before apply', async () => {
+    saveImageStudioAnalysisApplyIntent('project-alpha', {
+      slotId: 'slot-1',
+      sourceSignature: 'signature_slot_1_v1',
+      target: 'object_layout',
+      runAfterApply: false,
+      layout: BASE_LAYOUT,
+    });
+
+    const state = createState({
+      centerMode: 'client_alpha_bbox',
+    });
+    const actions = createActions();
+    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+
+    await waitFor(() => {
+      expect(state.applyAnalysisLayoutToCenter).toHaveBeenCalledWith(
+        expect.objectContaining({ paddingPercent: 8 }),
+        'manual'
+      );
+    });
+    expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout_v1');
   });
 
   it('switches to analyzed slot first when intent slot differs from working slot', async () => {
@@ -282,5 +308,42 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
     });
     expect(state.applyAnalysisLayoutToCenter).not.toHaveBeenCalled();
     expect(loadImageStudioAnalysisApplyIntent('project-alpha')).toBeNull();
+  });
+
+  it('coerces center mode before queued object-layout auto-run and defers run', async () => {
+    const state = createState({
+      centerMode: 'client_alpha_bbox',
+      queuedAnalysisRunTarget: 'object_layout',
+    });
+    const actions = createActions();
+    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+
+    await waitFor(() => {
+      expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout_v1');
+    });
+    expect(actions.handleCenterObject).not.toHaveBeenCalled();
+    expect(state.setQueuedAnalysisRunTarget).not.toHaveBeenCalled();
+  });
+
+  it('runs queued object-layout auto-run after center mode is coerced', async () => {
+    const state = createState({
+      centerMode: 'client_alpha_bbox',
+      queuedAnalysisRunTarget: 'object_layout',
+    });
+    const actions = createActions();
+    const { rerender } = renderHook(() => useGenerationToolbarEffects(state as any, actions));
+
+    await waitFor(() => {
+      expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout_v1');
+    });
+    expect(actions.handleCenterObject).not.toHaveBeenCalled();
+
+    state.centerMode = 'client_object_layout_v1';
+    rerender();
+
+    await waitFor(() => {
+      expect(actions.handleCenterObject).toHaveBeenCalledTimes(1);
+    });
+    expect(state.setQueuedAnalysisRunTarget).toHaveBeenCalledWith(null);
   });
 });

@@ -10,7 +10,7 @@ import {
 import { auth } from '@/features/auth/server';
 import { getSettingValue } from '@/features/products/services/aiDescriptionService';
 import { formatProgrammaticPrompt } from '@/features/prompt-engine/prompt-formatter';
-import { extractParamsFromPrompt } from '@/features/prompt-engine/prompt-params';
+import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 import {
   type PromptValidationIssue,
   validateProgrammaticPrompt,

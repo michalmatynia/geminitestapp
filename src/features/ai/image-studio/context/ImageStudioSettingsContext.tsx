@@ -378,9 +378,10 @@ export function ImageStudioSettingsProvider({
   const toggleProjectSequencingOperation = useCallback(
     (operation: string, checked: boolean): void => {
       setStudioSettings((prev) => {
-        const operations = prev.projectSequencing.operations;
-        const op = operation as any;
-        const nextOperations = checked
+        type Op = 'crop_center' | 'mask' | 'generate' | 'regenerate' | 'upscale';
+        const operations = prev.projectSequencing.operations as Op[];
+        const op = operation as Op;
+        const nextOperations: Op[] = checked
           ? operations.includes(op)
             ? operations
             : [...operations, op]
@@ -400,13 +401,15 @@ export function ImageStudioSettingsProvider({
   const moveProjectSequencingOperation = useCallback(
     (operation: string, direction: number): void => {
       setStudioSettings((prev) => {
-        const operations = [...prev.projectSequencing.operations];
-        const op = operation as any;
+        type Op = 'crop_center' | 'mask' | 'generate' | 'regenerate' | 'upscale';
+        const operations = [...(prev.projectSequencing.operations as Op[])];
+        const op = operation as Op;
         const index = operations.indexOf(op);
         if (index < 0) return prev;
         const target = index + direction;
         if (target < 0 || target >= operations.length) return prev;
-        [operations[index], operations[target]] = [operations[target]!, operations[index]!];
+        const [removed] = operations.splice(index, 1);
+        if (removed) operations.splice(target, 0, removed);
         return {
           ...prev,
           projectSequencing: {

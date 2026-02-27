@@ -153,6 +153,7 @@ const createState = (overrides?: Record<string, unknown>) => {
     upscaleStrategy: 'scale',
     cropMode: 'server_bbox',
     centerMode: 'server_object_layout_v1',
+    setCenterMode: vi.fn(),
     autoScaleMode: 'server_auto_scaler_v1',
     upscaleScale: '2',
     upscaleSmoothingQuality: 'high',
@@ -270,6 +271,32 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     );
     expect(state.applyAnalysisLayoutToCenter).toHaveBeenCalledTimes(1);
     expect(state.applyAnalysisLayoutToAutoScaler).toHaveBeenCalledTimes(1);
+  });
+
+  it('switches client alpha mode to client object-layout mode during analysis sync', async () => {
+    const state = createState({
+      centerMode: 'client_alpha_bbox',
+    });
+    const response = createAnalysisResponse();
+    vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
+
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    await result.current.handleRunAnalysisFromCenter();
+
+    expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout_v1');
+  });
+
+  it('switches server alpha mode to server object-layout mode during analysis sync', async () => {
+    const state = createState({
+      centerMode: 'server_alpha_bbox',
+    });
+    const response = createAnalysisResponse();
+    vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
+
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    await result.current.handleRunAnalysisFromCenter();
+
+    expect(state.setCenterMode).toHaveBeenCalledWith('server_object_layout_v1');
   });
 
   it('blocks run analysis when working source signature is missing', async () => {

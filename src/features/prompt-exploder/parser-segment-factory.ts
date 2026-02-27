@@ -1,4 +1,4 @@
-import { extractParamsFromPrompt } from '@/features/prompt-engine/prompt-params';
+import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 
 import { flattenItemsToTextLines } from './parser-list-items';
 import { collectMatchedRules } from './parser-runtime-patterns';

@@ -14,7 +14,7 @@ import type { SectionInstance, PageZone } from '../../../types/page-builder';
 import { usePageBuilder, type PageBuilderContextValue } from '../../../../hooks/usePageBuilderContext';
 
 export function usePageAiAssistant() {
-  const { state, dispatch } = usePageBuilder() as PageBuilderContextValue;
+  const { state, dispatch } = usePageBuilder();
   const page = state.currentPage;
   const { toast } = useToast();
   

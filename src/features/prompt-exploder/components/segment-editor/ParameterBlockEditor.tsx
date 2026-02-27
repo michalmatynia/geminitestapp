@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { FormField, Label, SelectSimple, Textarea } from '@/shared/ui';
-import { extractParamsFromPrompt } from '@/features/prompt-engine/prompt-params';
+import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 import { useDocumentState, useDocumentActions } from '../../context/hooks/useDocument';
 import { 
   promptExploderSafeJsonStringify, 

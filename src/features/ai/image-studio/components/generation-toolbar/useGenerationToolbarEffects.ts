@@ -30,6 +30,8 @@ export function useGenerationToolbarEffects(
     workingSlot,
     setSelectedSlotId,
     setWorkingSlotId,
+    centerMode,
+    setCenterMode,
     toast,
     workingSourceSignature,
     applyAnalysisLayoutToCenter,
@@ -44,6 +46,12 @@ export function useGenerationToolbarEffects(
   } = state;
 
   const { handleCenterObject, handleAutoScale } = actions;
+  const preferredObjectLayoutMode =
+    centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1'
+      ? 'client_object_layout_v1'
+      : 'server_object_layout_v1';
+  const centerModeIsObjectLayout =
+    centerMode === 'client_object_layout_v1' || centerMode === 'server_object_layout_v1';
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -136,6 +144,9 @@ export function useGenerationToolbarEffects(
 
     lastConsumedAnalysisIntentRef.current = intentKey;
     if (intent.target === 'object_layout') {
+      if (centerMode !== preferredObjectLayoutMode) {
+        setCenterMode(preferredObjectLayoutMode);
+      }
       applyAnalysisLayoutToCenter(intent.layout, intent.runAfterApply ? 'auto' : 'manual');
     } else {
       applyAnalysisLayoutToAutoScaler(intent.layout, intent.runAfterApply ? 'auto' : 'manual');
@@ -145,7 +156,10 @@ export function useGenerationToolbarEffects(
     activeProjectId,
     applyAnalysisLayoutToAutoScaler,
     applyAnalysisLayoutToCenter,
+    centerMode,
     lastConsumedAnalysisIntentRef,
+    preferredObjectLayoutMode,
+    setCenterMode,
     setSelectedSlotId,
     setWorkingSlotId,
     slotSelectionLocked,
@@ -179,6 +193,12 @@ export function useGenerationToolbarEffects(
     if (!queuedAnalysisRunTarget) return;
     if (queuedAnalysisRunTarget === 'object_layout') {
       if (centerBusy || centerRequestInFlightRef.current) return;
+      if (!centerModeIsObjectLayout) {
+        if (centerMode !== preferredObjectLayoutMode) {
+          setCenterMode(preferredObjectLayoutMode);
+        }
+        return;
+      }
       setQueuedAnalysisRunTarget(null);
       void (async () => { await handleCenterObject(); })();
       return;
@@ -189,9 +209,13 @@ export function useGenerationToolbarEffects(
   }, [
     autoScaleBusy,
     centerBusy,
+    centerMode,
+    centerModeIsObjectLayout,
     handleAutoScale,
     handleCenterObject,
+    preferredObjectLayoutMode,
     queuedAnalysisRunTarget,
+    setCenterMode,
     setQueuedAnalysisRunTarget,
     autoScaleRequestInFlightRef,
     centerRequestInFlightRef,

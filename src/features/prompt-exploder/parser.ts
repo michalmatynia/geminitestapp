@@ -1,4 +1,4 @@
-import { extractParamsFromPrompt } from '@/features/prompt-engine/prompt-params';
+import { extractParamsFromPrompt } from '@/shared/utils/prompt-params';
 import type {
   PromptValidationRule,
 } from '@/shared/contracts/prompt-engine';

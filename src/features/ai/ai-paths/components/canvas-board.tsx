@@ -2,27 +2,26 @@
 
 import React from 'react';
 import {
-  type AiNode,
   type DataContractNodeIssueSummary,
-  type Edge,
-  type RuntimeState,
-  type AiPathRuntimeNodeStatusMap,
-  type AiPathRuntimeEvent,
 } from '@/features/ai/ai-paths/lib';
-import { type RuntimeRunStatus } from './CanvasBoardUIContext';
-import type { ConnectorInfo } from './canvas-board-connectors';
-import { type EdgeRoutingMode, type EdgePath } from '../context/hooks/useEdgePaths';
-import { type CanvasRendererMode } from './CanvasBoard.utils';
-import { type ViewState, type PanState, type DragState, type ConnectingState } from '../context/CanvasContext';
-import { Button, Tooltip, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-// Re-export types from core
-export * from './engine-core';
-export * from './engine-modules/engine-types';
-
-const DEFAULT_NODE_SELECTION_TOOL_MODE: 'select' | 'pan' = 'select';
-const DEFAULT_NODE_SELECTION_SCOPE_MODE = 'portion';
+import { useCanvasBoardState } from './useCanvasBoardState';
+import { CanvasBoardUIProvider } from './CanvasBoardUIContext';
+import { CanvasControlPanel } from './canvas-control-panel';
+import { CanvasMinimap } from './canvas-minimap';
+import { CanvasSvgEdgeLayer } from './canvas-svg-edge-layer';
+import { CanvasSvgNodeLayer } from './canvas-svg-node-layer';
+import { CanvasConnectorTooltip } from './canvas-connector-tooltip';
+import { CanvasNodeDiagnosticsTooltip } from './canvas-node-diagnostics-tooltip';
+import { CanvasSelectionMarquee } from './canvas-selection-marquee';
+import { CanvasLongPressIndicator } from './canvas-long-press-indicator';
+import { 
+  type CanvasBoardConnectorTooltipOverrideInput, 
+  type CanvasBoardConnectorTooltipOverride,
+  type CanvasBoardState
+} from './CanvasBoard.utils';
+import type { ConnectorInfo } from './canvas-board-connectors';
 
 export interface CanvasBoardProps {
   viewportClassName?: string | undefined;
@@ -40,7 +39,7 @@ export function CanvasBoard({
   confirmNodeSwitch,
   openNodeConfigOnSingleClick = false,
   nodeDiagnosticsById = {},
-  onFocusNodeDiagnostics: _onFocusNodeDiagnostics,
+  onFocusNodeDiagnostics,
   resolveConnectorTooltip,
 }: CanvasBoardProps): React.JSX.Element {
   const state = useCanvasBoardState({
@@ -52,51 +51,12 @@ export function CanvasBoard({
     view,
     viewportRef,
     canvasRef,
-    nodes,
-    edges,
-    connecting,
-    connectingPos,
-    runtimeState,
-    runtimeNodeStatuses,
-    runtimeRunStatus,
-    nodeDurations,
-    fireTrigger,
-    selectedNodeId,
-    selectedEdgeId,
     selectionToolMode,
-    selectEdge,
-    setConfigOpen,
     edgeRoutingMode,
-    setEdgeRoutingMode,
-    edgePaths,
-    handlePointerDownNode: _handlePointerDownNode,
-    handlePointerMoveNode,
-    handlePointerUpNode,
-    handlePanStart,
-    handlePanMove,
-    handlePanEnd,
-    handleWheel,
-    handleRemoveEdge,
-    handleDisconnectPort,
-    handleStartConnection,
-    handleCompleteConnection,
-    handleReconnectInput,
-    handleSelectNode,
-    handleDrop,
-    handleDragOver,
-    zoomTo,
-    fitToNodes,
-    fitToSelection,
-    resetView,
-    centerOnCanvasPoint,
     selectionMarqueeRect,
     touchLongPressIndicator,
     ConfirmationModal,
-    selectedNodeIdSet,
-    hoveredConnectorKey,
-    setHoveredConnectorKey,
     pinnedConnectorKey,
-    setPinnedConnectorKey,
     svgConnectorTooltip,
     setSvgConnectorTooltip,
     svgNodeDiagnosticsTooltip,
@@ -106,46 +66,19 @@ export function CanvasBoard({
     showMinimap,
     setShowMinimap,
     viewportSize,
-    prefersReducedMotion,
     svgPerf,
-    effectiveFlowIntensity,
-    isSvgRenderer,
-    getConnectorInfo,
-    getPortValue,
-    activeShapeId,
-    nodeById,
-    setNodes,
-    updateNode,
-    removeNode,
-    setNodeSelection,
-    toggleNodeSelection,
-    selectNode,
-    startDrag,
-    endDrag,
-    dragState,
-    updateLastPointerCanvasPosFromClient,
-    stopViewAnimation,
-    resolveActiveNodeSelectionIds,
-    confirm,
-    setEdges,
-    setRuntimeState,
-    pruneRuntimeInputsInternal,
+    isPanning,
+    handlePanStart,
+    handlePanMove,
+    handlePanEnd,
+    handleWheel,
+    handleDrop,
+    handleDragOver,
+    zoomTo,
+    fitToNodes,
+    fitToSelection,
+    resetView,
   } = state;
-
-  const selectionToolModeProps = React.useMemo(
-    (): {
-      selectionToolMode: 'node' | 'marquee';
-      onSelectionToolModeChange: (mode: 'node' | 'marquee') => void;
-    } => {
-      return {
-        selectionToolMode: selectionToolMode ?? DEFAULT_NODE_SELECTION_TOOL_MODE,
-        onSelectionToolModeChange: (mode: 'node' | 'marquee') => {
-          selectionActions.setSelectionToolMode(mode);
-        },
-      };
-    },
-    [selectionActions.setSelectionToolMode, selectionToolMode]
-  );
 
   const handleConnectorHover = React.useCallback(
     (payload: { clientX: number; clientY: number; info: ConnectorInfo }) => {
@@ -170,236 +103,55 @@ export function CanvasBoard({
     setSvgNodeDiagnosticsTooltip(null);
   }, [setSvgNodeDiagnosticsTooltip]);
 
-  const onFocusNodeDiagnostics = React.useCallback(
-    (nodeId: string) => {
-      _onFocusNodeDiagnostics?.(nodeId);
-    },
-    [_onFocusNodeDiagnostics]
-  );
+  // Combined UI context value
+  const canvasInteractions: CanvasBoardState = React.useMemo(() => ({
+    ...state,
+    openNodeConfigOnSingleClick,
+    onConnectorHover: handleConnectorHover,
+    onConnectorLeave: handleConnectorLeave,
+    onNodeDiagnosticsHover: handleNodeDiagnosticsHover,
+    onNodeDiagnosticsLeave: handleNodeDiagnosticsLeave,
+    onFocusNodeDiagnostics,
+    resolveConnectorTooltip,
+  }), [
+    state,
+    openNodeConfigOnSingleClick,
+    handleConnectorHover,
+    handleConnectorLeave,
+    handleNodeDiagnosticsHover,
+    handleNodeDiagnosticsLeave,
+    onFocusNodeDiagnostics,
+    resolveConnectorTooltip,
+  ]);
 
-  const onFireTrigger = React.useCallback(
-    (node: AiNode, event?: React.MouseEvent<any> | React.PointerEvent<any>) => {
-      void fireTrigger(node, event);
-    },
-    [fireTrigger]
-  );
-
-  const handlePointerDownNode = React.useCallback(
-    (nodeId: string, event: React.PointerEvent) => {
-      _handlePointerDownNode(nodeId, event);
-      event.stopPropagation();
-    },
-    [_handlePointerDownNode]
-  );
-
-  const canvasInteractions: CanvasBoardState = React.useMemo(
-    () => ({
-      // View State
-      view,
-      panState: null, // TODO: implement pan state
-      dragState: dragState,
-      lastDrop: null, // TODO: implement last drop
-      connecting,
-      connectingPos,
-      isPanning: false, // TODO: implement isPanning
-      isDraggingNode: false, // TODO: implement isDraggingNode
-      isConnecting: Boolean(connecting),
-
-      // Refs
-      viewportRef,
-      canvasRef,
-
-      // Graph Data
-      nodes,
-      edges,
-      flowIntensity: effectiveFlowIntensity,
-      nodeById,
-      edgePaths,
-      edgeMetaMap: new Map(), // TODO: implement edgeMetaMap
-
-      // Runtime State
-      runtimeState,
-      runtimeNodeStatuses,
-      runtimeEvents: undefined, // TODO: implement runtimeEvents
-      runtimeRunStatus,
-      nodeDurations,
-
-      // Actions
-      fireTrigger,
-
-      // Selection
-      selectedNodeId,
-      selectedNodeIds: Array.from(selectedNodeIdSet),
-      selectedEdgeId,
-      selectionToolMode: selectionToolMode ?? DEFAULT_NODE_SELECTION_TOOL_MODE,
-      selectedNodeIdSet,
-
-      // UI Actions
-      selectEdge,
-      setConfigOpen,
-      setEdgeRoutingMode,
-
-      // Event Handlers
-      handlePointerDownNode,
-      handlePointerMoveNode,
-      handlePointerUpNode,
-      handlePanStart,
-      handlePanMove,
-      handlePanEnd,
-      handleWheel,
-      handleRemoveEdge,
-      handleDisconnectPort,
-      handleStartConnection,
-      handleCompleteConnection,
-      handleReconnectInput,
-      handleSelectNode,
-      handleDrop,
-      handleDragOver,
-
-      // Navigation
-      zoomTo,
-      fitToNodes,
-      fitToSelection,
-      resetView,
-      centerOnCanvasPoint,
-
-      // Derived UI State
-      selectionMarqueeRect,
-      touchLongPressIndicator: touchLongPressIndicator ?? null, // Use local state if available
-      ConfirmationModal,
-
-      // Local UI State
-      hoveredConnectorKey,
-      setHoveredConnectorKey,
-      pinnedConnectorKey,
-      setPinnedConnectorKey,
-      svgConnectorTooltip,
-      setSvgConnectorTooltip,
-      svgNodeDiagnosticsTooltip,
-      setSvgNodeDiagnosticsTooltip,
-      rendererMode,
-      setRendererMode,
-      showMinimap,
-      setShowMinimap,
-      viewportSize,
-      prefersReducedMotion,
-      svgPerf,
-      effectiveFlowIntensity,
-      isSvgRenderer,
-
-      // Helpers
-      getConnectorInfo,
-      getPortValue,
-      activeShapeId: null, // TODO: implement activeShapeId
-      edgeRoutingMode,
-      nodeDiagnosticsById,
-    }),
-    [
-      view,
-      viewportSize,
-      detailLevel,
-      nodes,
-      edges,
-      edgePaths,
-      edgeMetaMap,
-      edgeRoutingMode,
-      connecting,
-      connectingPos,
-      nodeById,
-      selectedNodeId,
-      selectedNodeIdSet,
-      selectedEdgeId,
-      runtimeState,
-      runtimeNodeStatuses,
-      runtimeRunStatus,
-      nodeDurations,
-      nodeDiagnosticsById,
-      inputPulseNodes,
-      outputPulseNodes,
-      activeEdgeIds,
-      triggerConnected,
-      wireFlowEnabled,
-      flowingIntensity,
-      reduceVisualEffects,
-      openNodeConfigOnSingleClick,
-      zoomTo,
-      fitToNodes,
-      fitToSelection,
-      resetView,
-      centerOnCanvasPoint,
-      selectionMarqueeRect,
-      touchLongPressIndicator,
-      ConfirmationModal,
-      hoveredConnectorKey,
-      setHoveredConnectorKey,
-      pinnedConnectorKey,
-      setPinnedConnectorKey,
-      svgConnectorTooltip,
-      setSvgConnectorTooltip,
-      svgNodeDiagnosticsTooltip,
-      setSvgNodeDiagnosticsTooltip,
-      rendererMode,
-      setRendererMode,
-      showMinimap,
-      setShowMinimap,
-      prefersReducedMotion,
-      svgPerf,
-      effectiveFlowIntensity,
-      isSvgRenderer,
-      getConnectorInfo,
-      getPortValue,
-      activeShapeId,
-      nodeById,
-      setNodes,
-      updateNode,
-      removeNode,
-      setNodeSelection,
-      toggleNodeSelection,
-      selectNode,
-      selectEdge,
-      setConfigOpen,
-      setEdgeRoutingMode,
-      handlePointerDownNode,
-      handlePointerMoveNode,
-      handlePointerUpNode,
-      handlePanStart,
-      handlePanMove,
-      handlePanEnd,
-      handleWheel,
-      handleRemoveEdge,
-      handleDisconnectPort,
-      handleStartConnection,
-      handleCompleteConnection,
-      handleReconnectInput,
-      handleSelectNode,
-      handleDrop,
-      handleDragOver,
-      fireTrigger,
-      confirmNodeSwitch,
-    ]
-  );
-
-  // Render logic
   return (
     <CanvasBoardUIProvider value={canvasInteractions}>
       <div ref={viewportRef} className={cn('relative h-full w-full', viewportClassName)}>
         <CanvasControlPanel
-          {...{
-            rendererMode,
-            onRendererModeChange,
-            edgeRoutingMode,
-            onEdgeRoutingModeChange,
-            showMinimap,
-            onToggleMinimap,
-            selectionToolMode: selectionToolMode ?? DEFAULT_NODE_SELECTION_TOOL_MODE,
-            onZoomIn,
-            onZoomOut,
-            onFitToNodes,
-            onFitToSelection,
-            onResetView,
-            viewScale,
-            svgPerf,
+          rendererMode={rendererMode}
+          onRendererModeChange={setRendererMode}
+          edgeRoutingMode={edgeRoutingMode}
+          onEdgeRoutingModeChange={state.setEdgeRoutingMode}
+          showMinimap={showMinimap}
+          onToggleMinimap={() => setShowMinimap(!showMinimap)}
+          selectionToolMode={selectionToolMode}
+          onZoomIn={() => {
+            zoomTo(view.scale * 1.2);
           }}
+          onZoomOut={() => {
+            zoomTo(view.scale / 1.2);
+          }}
+          onFitToNodes={() => {
+            fitToNodes();
+          }}
+          onFitToSelection={() => {
+            fitToSelection();
+          }}
+          onResetView={() => {
+            resetView();
+          }}
+          viewScale={view.scale}
+          svgPerf={svgPerf}
         />
 
         <div
@@ -413,7 +165,6 @@ export function CanvasBoard({
           onDrop={handleDrop}
         >
           <svg
-            ref={svgRef}
             width={viewportSize?.width ?? 0}
             height={viewportSize?.height ?? 0}
             viewBox={`0 0 ${viewportSize?.width ?? 0} ${viewportSize?.height ?? 0}`}
@@ -421,26 +172,44 @@ export function CanvasBoard({
               'opacity-50': svgPerf && svgPerf.fps < 30,
             })}
             style={{
-              cursor: isPanning ? 'grabbing' : 'grab',
+              cursor: isPanning ? 'grabbing' : (selectionToolMode === 'pan' ? 'grab' : 'default'),
             }}
           >
-            <CanvasSelectionMarquee rect={selectionMarqueeRect} />
-            <CanvasLongPressIndicator indicator={touchLongPressIndicator} />
+            {selectionMarqueeRect && <CanvasSelectionMarquee rect={selectionMarqueeRect} />}
+            {touchLongPressIndicator && (
+              <CanvasLongPressIndicator 
+                indicator={{
+                  clientX: touchLongPressIndicator.x,
+                  clientY: touchLongPressIndicator.y,
+                  progress: touchLongPressIndicator.progress
+                }} 
+              />
+            )}
             <CanvasSvgEdgeLayer />
             <CanvasSvgNodeLayer />
-            <CanvasConnectorTooltip
-              tooltip={svgConnectorTooltip}
-              position={svgConnectorTooltipPosition}
-              override={svgConnectorTooltipOverride}
-            />
-            <CanvasNodeDiagnosticsTooltip
-              tooltip={svgNodeDiagnosticsTooltip}
-              position={svgNodeDiagnosticsTooltipPosition}
-            />
+            {svgConnectorTooltip && (
+              <CanvasConnectorTooltip
+                tooltip={svgConnectorTooltip}
+                override={resolveConnectorTooltip?.({
+                  direction: svgConnectorTooltip.info.direction,
+                  node: state.nodeById.get(svgConnectorTooltip.info.nodeId)!,
+                  port: svgConnectorTooltip.info.port,
+                })}
+              />
+            )}
+            {svgNodeDiagnosticsTooltip && (
+              <CanvasNodeDiagnosticsTooltip
+                tooltip={svgNodeDiagnosticsTooltip}
+                title={
+                  state.nodeById.get(svgNodeDiagnosticsTooltip.nodeId)?.title ||
+                  svgNodeDiagnosticsTooltip.nodeId
+                }
+              />
+            )}
           </svg>
         </div>
         {showMinimap && <CanvasMinimap />}
-        {ConfirmationModal && <ConfirmationModal />}
+        <ConfirmationModal />
       </div>
     </CanvasBoardUIProvider>
   );

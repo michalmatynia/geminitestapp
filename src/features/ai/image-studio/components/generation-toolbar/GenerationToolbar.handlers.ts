@@ -865,6 +865,10 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
         detection: layout.detection,
       };
     };
+    const preferredObjectLayoutMode: ImageStudioCenterMode =
+      centerMode === 'client_alpha_bbox' || centerMode === 'client_object_layout_v1'
+        ? 'client_object_layout_v1'
+        : 'server_object_layout_v1';
 
     const layoutPayload = trigger === 'object_layout'
       ? centerLayoutPayload
@@ -885,6 +889,9 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
         .then((raw) => imageStudioAnalysisResponseSchema.parse(raw));
 
       const sharedLayout = toSharedLayout(response.analysis.layout);
+      if (centerMode !== preferredObjectLayoutMode) {
+        state.setCenterMode(preferredObjectLayoutMode);
+      }
       const snapshot = saveImageStudioAnalysisPlanSnapshot(activeProjectId, {
         slotId,
         sourceSignature: workingSourceSignature,
@@ -917,6 +924,7 @@ export function useGenerationToolbarHandlers(state: GenerationToolbarState): Gen
     analysisBusy,
     autoScaleLayoutPayload,
     centerLayoutPayload,
+    centerMode,
     setAnalysisBusy,
     setAnalysisStatus,
     state,

@@ -2,7 +2,7 @@ import {
   extractParamsFromPrompt,
   flattenParams,
   inferParamSpecs,
-} from '@/features/prompt-engine/prompt-params';
+} from '@/shared/utils/prompt-params';
 import type {
   ParamSpecDto as ParamSpec,
   ParamSpecKindDto as ParamSpecKind,

@@ -5,7 +5,6 @@ import { auth } from '@/features/auth/server';
 import {
   buildBaseProductData,
   checkBaseSkuExists,
-  decryptSecret,
   exportProductImagesToBase,
   exportProductToBase,
   getExportWarehouseId,
@@ -16,6 +15,7 @@ import {
   findProductListingByIdAcrossProviders,
   findProductListingByProductAndConnectionAcrossProviders,
 } from '@/features/integrations/server';
+import { resolveBaseConnectionToken } from '@/features/integrations/services/base-token-resolver';
 import { ErrorSystem } from '@/features/observability/server';
 import { parseJsonBody } from '@/features/products/server';
 import { getProductRepository } from '@/features/products/server';
@@ -236,10 +236,14 @@ export async function postExportToBaseHandler(
       ['baselinker', 'base-com', 'base'].includes(i.slug)
     );
     const baseIntegrationId = baseIntegration?.id ?? connection.integrationId ?? null;
-    const tokenValue = baseIntegration?.credentials?.['token'] as unknown;
-    const token = typeof tokenValue === 'string'
-      ? decryptSecret(tokenValue)
-      : '';
+    const tokenResolution = resolveBaseConnectionToken(connection);
+    if (!tokenResolution.token) {
+      throw badRequestError(
+        tokenResolution.error ?? 'No Base API token configured. Please test or re-save the connection.',
+        { connectionId: data.connectionId }
+      );
+    }
+    const token = tokenResolution.token;
 
     let imageDiagnosticsContext: Record<string, unknown> = {
       productId,

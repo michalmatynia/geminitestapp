@@ -2,13 +2,8 @@
 
 import {
   ArrowLeft,
-  ExternalLink,
-  Lock,
-  Pencil,
   Plus,
   Save,
-  Trash2,
-  Unlock,
 } from 'lucide-react';
 import Link from 'next/link';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -22,11 +17,9 @@ import {
   EmptyState,
   FormSection,
   Input,
-  Pagination,
   SearchInput,
   SectionHeader,
   SelectSimple,
-  StandardDataTablePanel,
   useToast,
 } from '@/shared/ui';
 import {
@@ -42,8 +35,7 @@ import {
   VALIDATOR_SCOPE_DESCRIPTIONS,
   VALIDATOR_SCOPE_LABELS,
 } from './validator-scope';
-
-import type { ColumnDef } from '@tanstack/react-table';
+import { ValidatorListTree } from './validator-lists/ValidatorListTree';
 
 const scopeOptions: Array<{ value: ValidatorScope; label: string }> = [
   { value: 'products', label: VALIDATOR_SCOPE_LABELS.products },
@@ -80,13 +72,6 @@ const canonicalizeLists = (lists: ValidatorPatternList[]): string =>
       deletionLocked: list.deletionLocked,
     }))
   );
-
-const formatUpdatedAt = (value: string | null | undefined): string => {
-  if (!value) return 'Unknown';
-  const parsed = Date.parse(value);
-  if (Number.isNaN(parsed)) return 'Unknown';
-  return new Date(parsed).toLocaleString();
-};
 
 type ValidatorPatternListEditorState = {
   id: string;
@@ -136,6 +121,33 @@ const EDITOR_FIELDS: SettingsField<ValidatorPatternListEditorState>[] = [
 ];
 
 /**
+ * Merges reordered visible items back into the full list array.
+ *
+ * When a search filter is active, drag-drop only affects visible items.
+ * This function places them back into their original position slots in the
+ * full array so that non-visible items are not displaced.
+ */
+function mergeReorderedVisible(
+  allLists: ValidatorPatternList[],
+  reorderedVisible: ValidatorPatternList[]
+): ValidatorPatternList[] {
+  if (reorderedVisible.length === allLists.length) {
+    return reorderedVisible;
+  }
+  const visibleIds = new Set(reorderedVisible.map((l) => l.id));
+  const originalSlots: number[] = [];
+  allLists.forEach((l, i) => {
+    if (visibleIds.has(l.id)) originalSlots.push(i);
+  });
+  const result = [...allLists];
+  reorderedVisible.forEach((item, newIdx) => {
+    const slot = originalSlots[newIdx];
+    if (slot !== undefined) result[slot] = item;
+  });
+  return result;
+}
+
+/**
  * Validator docs: see docs/validator/function-reference.md#ui.adminvalidatorpatternlistspage
  */
 export function AdminValidatorPatternListsPage(): React.JSX.Element {
@@ -158,14 +170,11 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorState, setEditorState] =
     useState<ValidatorPatternListEditorState>(EMPTY_EDITOR_STATE);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
 
   useEffect(() => {
     const raw = rawPatternLists ?? '';
     if (loadedFrom === raw) return;
     setLists(parsedPatternLists);
-    setPage(1);
     setLoadedFrom(raw);
   }, [loadedFrom, parsedPatternLists, rawPatternLists]);
 
@@ -180,11 +189,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
       setLists((current: ValidatorPatternList[]) =>
         current.map((list: ValidatorPatternList) => {
           if (list.id !== id) return list;
-          return {
-            ...list,
-            ...patch,
-            updatedAt: now,
-          };
+          return { ...list, ...patch, updatedAt: now };
         })
       );
     },
@@ -208,16 +213,12 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
       updatedAt: now,
     };
     setLists((current: ValidatorPatternList[]) => [...current, nextList]);
-    const nextTotalPages = Math.max(1, Math.ceil((lists.length + 1) / pageSize));
-    setPage(nextTotalPages);
     setQuery('');
     setNewListName('');
     setNewListDescription('');
     setNewListScope('products');
-    toast('Validation pattern list added. Save to persist.', {
-      variant: 'success',
-    });
-  }, [lists.length, newListDescription, newListName, newListScope, pageSize, toast]);
+    toast('Validation pattern list added. Save to persist.', { variant: 'success' });
+  }, [newListDescription, newListName, newListScope, toast]);
 
   const handleRemoveList = useCallback(
     (list: ValidatorPatternList): void => {
@@ -226,9 +227,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
         return;
       }
       if (lists.length <= 1) {
-        toast('At least one validation pattern list is required.', {
-          variant: 'warning',
-        });
+        toast('At least one validation pattern list is required.', { variant: 'warning' });
         return;
       }
       confirm({
@@ -249,7 +248,6 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
 
   const handleReset = useCallback((): void => {
     setLists(parsedPatternLists);
-    setPage(1);
     setQuery('');
     setEditorOpen(false);
     setEditorState(EMPTY_EDITOR_STATE);
@@ -275,16 +273,10 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
       return;
     }
 
-    const value = serializeSetting({
-      version: 1,
-      lists: normalized,
-    });
+    const value = serializeSetting({ version: 1, lists: normalized });
 
     try {
-      await updateSetting.mutateAsync({
-        key: VALIDATOR_PATTERN_LISTS_KEY,
-        value,
-      });
+      await updateSetting.mutateAsync({ key: VALIDATOR_PATTERN_LISTS_KEY, value });
       setLists(normalized);
       toast('Validation pattern lists saved.', { variant: 'success' });
     } catch (error: unknown) {
@@ -314,34 +306,9 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
   }, [lists, query]);
 
   const totalLocked = useMemo(
-    () =>
-      lists.filter((list: ValidatorPatternList): boolean => list.deletionLocked).length,
+    () => lists.filter((list: ValidatorPatternList) => list.deletionLocked).length,
     [lists]
   );
-  const totalPages = useMemo(
-    () => Math.max(1, Math.ceil(filteredLists.length / pageSize)),
-    [filteredLists.length, pageSize]
-  );
-  const paginatedLists = useMemo((): ValidatorPatternList[] => {
-    const clampedPage = Math.min(page, totalPages);
-    const start = (clampedPage - 1) * pageSize;
-    return filteredLists.slice(start, start + pageSize);
-  }, [filteredLists, page, pageSize, totalPages]);
-  const pageStart = useMemo((): number => {
-    if (filteredLists.length === 0) return 0;
-    const clampedPage = Math.min(page, totalPages);
-    return (clampedPage - 1) * pageSize + 1;
-  }, [filteredLists.length, page, pageSize, totalPages]);
-  const pageEnd = useMemo((): number => {
-    if (filteredLists.length === 0) return 0;
-    return Math.min(filteredLists.length, pageStart + pageSize - 1);
-  }, [filteredLists.length, pageSize, pageStart]);
-
-  useEffect(() => {
-    if (page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
 
   const handleOpenEditor = useCallback((list: ValidatorPatternList): void => {
     setEditorState({
@@ -386,147 +353,22 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
     toast('List updated. Save to persist.', { variant: 'success' });
   }, [editorState, handleListChange, toast]);
 
-  const columns = useMemo<ColumnDef<ValidatorPatternList>[]>(() => [
-    {
-      id: 'name',
-      header: 'List',
-      cell: ({ row }) => {
-        const list = row.original;
-        return (
-          <div className='min-w-0 space-y-1'>
-            <Link
-              href={`/admin/validator?list=${encodeURIComponent(list.id)}`}
-              className='block truncate text-sm font-medium text-gray-100 transition-colors hover:text-white hover:underline'
-            >
-              {list.name.trim() || 'Unnamed List'}
-            </Link>
-            <p className='truncate text-[11px] text-muted-foreground'>
-              ID: {list.id}
-            </p>
-          </div>
-        );
-      },
+  // Drag-drop reorder: merge visible reorder back into full list
+  const handleReorder = useCallback(
+    (reorderedVisible: ValidatorPatternList[]): void => {
+      setLists((current) => mergeReorderedVisible(current, reorderedVisible));
     },
-    {
-      id: 'scope',
-      header: 'Scope',
-      cell: ({ row }) => {
-        const list = row.original;
-        return (
-          <Badge variant='outline' className='text-[10px]'>
-            {VALIDATOR_SCOPE_LABELS[list.scope]}
-          </Badge>
-        );
-      },
+    []
+  );
+
+  const handleToggleLock = useCallback(
+    (listId: string): void => {
+      const list = lists.find((l) => l.id === listId);
+      if (!list) return;
+      handleListChange(listId, { deletionLocked: !list.deletionLocked });
     },
-    {
-      id: 'description',
-      header: 'Description',
-      cell: ({ row }) => {
-        const list = row.original;
-        const description =
-          list.description.trim() || VALIDATOR_SCOPE_DESCRIPTIONS[list.scope];
-        return (
-          <p className='line-clamp-2 text-xs text-muted-foreground'>
-            {description}
-          </p>
-        );
-      },
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      cell: ({ row }) => {
-        const list = row.original;
-        return list.deletionLocked ? (
-          <Badge variant='outline' className='text-[10px] border-amber-300/40 text-amber-300'>
-            Locked
-          </Badge>
-        ) : (
-          <Badge variant='outline' className='text-[10px] border-emerald-300/40 text-emerald-300'>
-            Unlocked
-          </Badge>
-        );
-      },
-    },
-    {
-      id: 'updatedAt',
-      header: 'Updated',
-      cell: ({ row }) => (
-        <span className='text-xs text-muted-foreground'>
-          {formatUpdatedAt(row.original.updatedAt ?? undefined)}
-        </span>
-      ),
-    },
-    {
-      id: 'actions',
-      header: () => <div className='text-right'>Actions</div>,
-      cell: ({ row }) => {
-        const list = row.original;
-        return (
-          <div className='flex flex-wrap items-center justify-end gap-2'>
-            <Button type='button' size='xs' variant='outline' asChild>
-              <Link href={`/admin/validator?list=${encodeURIComponent(list.id)}`}>
-                <ExternalLink className='mr-1.5 size-3.5' />
-                Enter
-              </Link>
-            </Button>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={(): void => {
-                handleOpenEditor(list);
-              }}
-            >
-              <Pencil className='mr-1.5 size-3.5' />
-              Edit
-            </Button>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={(): void => {
-                handleListChange(list.id, {
-                  deletionLocked: !list.deletionLocked,
-                });
-              }}
-              disabled={updateSetting.isPending}
-            >
-              {list.deletionLocked ? (
-                <Unlock className='mr-1.5 size-3.5 text-emerald-300' />
-              ) : (
-                <Lock className='mr-1.5 size-3.5 text-amber-300' />
-              )}
-              {list.deletionLocked ? 'Unlock' : 'Lock'}
-            </Button>
-            <Button
-              type='button'
-              size='xs'
-              variant='outline'
-              onClick={(): void => {
-                handleRemoveList(list);
-              }}
-              disabled={list.deletionLocked || updateSetting.isPending}
-              className='text-red-300 hover:text-red-200'
-              title={
-                list.deletionLocked
-                  ? 'Unlock list before removing'
-                  : 'Remove list'
-              }
-            >
-              <Trash2 className='size-3.5' />
-            </Button>
-          </div>
-        );
-      },
-    },
-  ], [
-    handleListChange,
-    handleOpenEditor,
-    handleRemoveList,
-    updateSetting.isPending,
-  ]);
+    [handleListChange, lists]
+  );
 
   return (
     <div className='container mx-auto space-y-6 py-10'>
@@ -545,9 +387,7 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
             <Button
               type='button'
               size='xs'
-              onClick={(): void => {
-                void handleSave();
-              }}
+              onClick={(): void => { void handleSave(); }}
               disabled={!isDirty || updateSetting.isPending}
             >
               <Save className='mr-2 size-4' />
@@ -596,39 +436,28 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
         </div>
       </FormSection>
 
-      <StandardDataTablePanel
+      <FormSection
         title='Available Lists'
-        description='Browse lists like product list rows and enter any list to edit its validation rules.'
-        filters={(
-          <div className='max-w-sm'>
-            <SearchInput
-              placeholder='Search lists by name, id, scope, or description...'
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setPage(1);
-              }}
-              onClear={() => {
-                setQuery('');
-                setPage(1);
-              }}
-              size='sm'
-            />
-          </div>
-        )}
+        description='Drag to reorder. Click Enter to manage patterns. Reset or Save when done.'
+        className='p-4'
         actions={(
           <div className='flex flex-wrap items-center gap-2'>
+            <div className='max-w-sm'>
+              <SearchInput
+                placeholder='Search lists...'
+                value={query}
+                onChange={(event) => { setQuery(event.target.value); }}
+                onClear={() => { setQuery(''); }}
+                size='sm'
+              />
+            </div>
             <Badge variant='outline' className='text-[10px]'>
-              {filteredLists.length} shown
-            </Badge>
-            <Badge variant='outline' className='text-[10px]'>
-              {lists.length} total
+              {filteredLists.length === lists.length
+                ? `${lists.length} lists`
+                : `${filteredLists.length} / ${lists.length} shown`}
             </Badge>
             <Badge variant='outline' className='text-[10px]'>
               {totalLocked} locked
-            </Badge>
-            <Badge variant='outline' className='text-[10px]'>
-              {pageStart}-{pageEnd}
             </Badge>
             <Button
               type='button'
@@ -641,36 +470,25 @@ export function AdminValidatorPatternListsPage(): React.JSX.Element {
             </Button>
           </div>
         )}
-        columns={columns}
-        data={paginatedLists}
-        isLoading={settingsQuery.isLoading && !settingsQuery.data}
-        loadingVariant='table'
-        emptyState={(
-          <EmptyState
-            title='No validation pattern lists'
-            description={
-              query.trim()
-                ? 'No lists match your search query.'
-                : 'Create a validation pattern list to get started.'
-            }
-          />
-        )}
-        footer={(
-          <div className='flex justify-end border-t border-border/50 pt-3'>
-            <Pagination
-              page={page}
-              totalPages={totalPages}
-              onPageChange={setPage}
-              pageSize={pageSize}
-              onPageSizeChange={setPageSize}
-              pageSizeOptions={[5, 10, 20, 50]}
-              showPageSize
-              showLabels={false}
-              variant='compact'
+      >
+        <div className='mt-3'>
+          {lists.length === 0 ? (
+            <EmptyState
+              title='No validation pattern lists'
+              description='Create a validation pattern list to get started.'
             />
-          </div>
-        )}
-      />
+          ) : (
+            <ValidatorListTree
+              lists={filteredLists}
+              onReorder={handleReorder}
+              onEdit={handleOpenEditor}
+              onToggleLock={handleToggleLock}
+              onRemove={handleRemoveList}
+              isPending={updateSetting.isPending}
+            />
+          )}
+        </div>
+      </FormSection>
 
       <SettingsPanelBuilder<ValidatorPatternListEditorState>
         open={editorOpen}

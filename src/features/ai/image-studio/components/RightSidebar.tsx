@@ -7,6 +7,7 @@ import { createPortal } from 'react-dom';
 import {
   Button,
   DetailModal,
+  useToast,
 } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
@@ -130,7 +131,6 @@ export function RightSidebar(): React.JSX.Element {
   const [historyMode, setHistoryMode] = useState<'actions' | 'runs'>('actions');
   const [quickActionsHostEl, setQuickActionsHostEl] = useState<HTMLElement | null>(null);
   
-  // @ts-expect-error - Complex toast type resolution
   const { toast } = useToast();
 
   const switchToControls = React.useCallback(() => setSidebarTab('controls'), []);

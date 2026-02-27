@@ -1,9 +1,9 @@
-import type { ClientLoggingSettings } from '@/shared/contracts/observability';
+import { 
+  type ClientLoggingSettings,
+  CLIENT_LOGGING_KEYS
+} from '@/shared/contracts/observability';
 
-export const CLIENT_LOGGING_KEYS = {
-  featureFlags: 'client_logging_feature_flags',
-  tags: 'client_logging_tags',
-} as const;
+export { CLIENT_LOGGING_KEYS };
 
 export const DEFAULT_CLIENT_LOGGING_SETTINGS: ClientLoggingSettings = {
   featureFlags: null,

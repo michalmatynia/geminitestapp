@@ -1,10 +1,10 @@
-import { CLIENT_LOGGING_KEYS } from '@/features/observability/constants/client-logging';
+import { CLIENT_LOGGING_KEYS } from '@/shared/contracts/observability';
 import {
   FOLDER_TREE_PROFILE_V2_KEY_PREFIX,
   FOLDER_TREE_V2_MIGRATION_MARKER_KEY,
   FOLDER_TREE_UI_STATE_V2_KEY_PREFIX,
-} from '@/features/foldertree/v2/settings';
-import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/features/products/constants';
+} from '@/shared/contracts/master-folder-tree';
+import { PRODUCT_STUDIO_DEFAULT_PROJECT_SETTING_KEY } from '@/shared/contracts/products';
 import { APP_FONT_SET_SETTING_KEY } from '@/shared/constants/typography';
 import { FOLDER_TREE_PROFILES_V2_SETTING_KEY } from '@/shared/utils/folder-tree-profiles-v2';
 

@@ -24,6 +24,9 @@ export const PORT_SIZE = 12;
 export const PORT_STACK_TOP = Math.round(NODE_MIN_HEIGHT * 0.3);
 export const DB_PROVIDER_PLACEHOLDERS = ['MongoDB', 'PostgreSQL', 'Prisma', 'Redis'];
 export const DEFAULT_CONTEXT_ROLE = 'entity';
+
+export type SvgDetailLevel = 'full' | 'compact' | 'skeleton';
+
 export const CACHEABLE_NODE_TYPES: NodeType[] = [
   'constant',
   'math',

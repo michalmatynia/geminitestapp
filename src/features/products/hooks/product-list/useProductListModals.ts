@@ -6,9 +6,11 @@ import type {
   ProductDraftDto 
 } from '@/shared/contracts/products';
 import { useIntegrationOperations } from '@/features/integrations/hooks/useIntegrationOperations';
+import type { Toast } from '@/shared/contracts/ui';
 
 export function useProductListModals({
   handleOpenCreateModal,
+  handleOpenCreateFromDraft,
   prefetchIntegrationSelectionData,
   prefetchProductListingsData,
   refreshProductListingsData,
@@ -21,7 +23,7 @@ export function useProductListModals({
   prefetchProductListingsData: (productId: string) => void;
   refreshProductListingsData: (productId: string) => void;
   rowSelection: Record<string, boolean>;
-  toast: { (msg: string, opt?: unknown): void };
+  toast: Toast;
 }) {
   const [createDraft, setCreateDraft] = useState<ProductDraftDto | null>(null);
   

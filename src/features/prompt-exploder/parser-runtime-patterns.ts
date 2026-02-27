@@ -1,4 +1,4 @@
-import { validateRegexSafety } from '@/features/products/utils/validator-regex-safety';
+import { validateRegexSafety } from '@/shared/utils/regex-safety';
 import {
   PromptValidationRuleCompileError,
 } from '@/features/prompt-core/errors';

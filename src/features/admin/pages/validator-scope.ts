@@ -1,8 +1,11 @@
-import type { ValidatorScope, ValidatorPatternList } from '@/shared/contracts/admin';
+import { 
+  type ValidatorScope, 
+  type ValidatorPatternList,
+  VALIDATOR_PATTERN_LISTS_KEY 
+} from '@/shared/contracts/admin';
 
+export { VALIDATOR_PATTERN_LISTS_KEY };
 export type { ValidatorScope, ValidatorPatternList };
-
-export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
 
 export const VALIDATOR_SCOPE_LABELS: Record<ValidatorScope, string> = {
   products: 'Product Patterns',

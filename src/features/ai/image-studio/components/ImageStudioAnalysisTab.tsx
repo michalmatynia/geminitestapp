@@ -609,7 +609,10 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
           layoutPresetOptions={layoutPresetOptions}
           layoutPresetDraftName={layoutPresetDraftName} setLayoutPresetDraftName={setLayoutPresetDraftName}
           onCenterLayoutPresetChange={(value: string) => {
-            const presetValues = getObjectLayoutPresetValuesFromOption(value, layoutCustomPresets);
+            const presetValues = getObjectLayoutPresetValuesFromOption(
+              value as Parameters<typeof getObjectLayoutPresetValuesFromOption>[0],
+              layoutCustomPresets
+            );
             if (!presetValues) return;
             setLayoutDetection(presetValues.detection);
             setLayoutShadowPolicy(presetValues.shadowPolicy);

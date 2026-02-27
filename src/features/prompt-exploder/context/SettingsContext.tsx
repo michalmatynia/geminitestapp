@@ -10,9 +10,11 @@ import React, { createContext, useCallback, useEffect, useMemo, useState, useCon
 
 import {
   parseValidatorPatternLists,
-  VALIDATOR_PATTERN_LISTS_KEY,
 } from '@/features/admin/pages/validator-scope';
-import type { ValidatorPatternList } from '@/features/admin/pages/validator-scope';
+import { 
+  type ValidatorPatternList,
+  VALIDATOR_PATTERN_LISTS_KEY 
+} from '@/shared/contracts/admin';
 import {
   parsePromptEngineSettings,
   parsePromptValidationRules,

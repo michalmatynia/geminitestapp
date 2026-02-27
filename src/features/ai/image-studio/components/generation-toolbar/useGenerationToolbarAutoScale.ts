@@ -93,7 +93,11 @@ export function useGenerationToolbarAutoScale({
           `Auto scaler request payload is invalid (${describeSchemaValidationIssue(validation.error.issues)}).`
         );
       }
-      return validation.data;
+      return {
+        mode: validation.data.mode,
+        requestId: validation.data.requestId ?? autoScaleRequestId,
+        layout: validation.data.layout as Record<string, unknown> | undefined,
+      };
     };
     const abortController = new AbortController();
     autoScaleAbortControllerRef.current = abortController;

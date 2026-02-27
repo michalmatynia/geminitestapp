@@ -57,8 +57,7 @@ function segmentizeJsLikeText(input: string): Segment[] {
     if (kind === 'comment') {
       buf += char;
       if (state.inLineComment) {
-        if (char === '
-') {
+        if (char === '\n') {
           state.inLineComment = false;
           flush();
           kind = 'code';
@@ -77,12 +76,12 @@ function segmentizeJsLikeText(input: string): Segment[] {
 
     if (kind === 'single_string') {
       buf += char;
-      if (!state.escaped && char === ''') {
+      if (!state.escaped && char === "'") {
         state.inSingle = false;
         flush();
         kind = 'code';
       }
-      state.escaped = !state.escaped && char === '';
+      state.escaped = !state.escaped && char === '\\';
       continue;
     }
 
@@ -93,7 +92,7 @@ function segmentizeJsLikeText(input: string): Segment[] {
         flush();
         kind = 'code';
       }
-      state.escaped = !state.escaped && char === '';
+      state.escaped = !state.escaped && char === '\\';
       continue;
     }
 
@@ -104,7 +103,7 @@ function segmentizeJsLikeText(input: string): Segment[] {
         flush();
         kind = 'code';
       }
-      state.escaped = !state.escaped && char === '';
+      state.escaped = !state.escaped && char === '\\';
       continue;
     }
 
@@ -125,12 +124,12 @@ function segmentizeJsLikeText(input: string): Segment[] {
       index += 1;
       continue;
     }
-    if (char === ''') {
+    if (char === "'") {
       flush();
       kind = 'single_string';
       state.inSingle = true;
       state.escaped = false;
-      buf = ''';
+      buf = "'";
       continue;
     }
     if (char === '"') {
@@ -167,8 +166,7 @@ export function normalizeParamsObject(rawObjectText: string): string {
     if (segment.kind === 'single_string') {
       const inner = segment.text.slice(1, -1);
       // Best-effort safety: only convert simple single-quoted strings.
-      if (!inner || inner.includes('
-') || inner.includes('') || inner.includes('') || inner.includes('"')) {
+      if (!inner || inner.includes('\n') || inner.includes('\r') || inner.includes('\\') || inner.includes('"')) {
         return segment.text;
       }
       return `"${inner}"`;
@@ -190,8 +188,7 @@ export function findMatchingBrace(input: string, startIndex: number): number {
     const next = input[index + 1] ?? '';
 
     if (state.inLineComment) {
-      if (char === '
-') state.inLineComment = false;
+      if (char === '\n') state.inLineComment = false;
       continue;
     }
     if (state.inBlockComment) {
@@ -203,18 +200,18 @@ export function findMatchingBrace(input: string, startIndex: number): number {
     }
 
     if (state.inSingle) {
-      if (!state.escaped && char === ''') state.inSingle = false;
-      state.escaped = !state.escaped && char === '';
+      if (!state.escaped && char === "'") state.inSingle = false;
+      state.escaped = !state.escaped && char === '\\';
       continue;
     }
     if (state.inDouble) {
       if (!state.escaped && char === '"') state.inDouble = false;
-      state.escaped = !state.escaped && char === '';
+      state.escaped = !state.escaped && char === '\\';
       continue;
     }
     if (state.inTemplate) {
       if (!state.escaped && char === '`') state.inTemplate = false;
-      state.escaped = !state.escaped && char === '';
+      state.escaped = !state.escaped && char === '\\';
       continue;
     }
 
@@ -229,7 +226,7 @@ export function findMatchingBrace(input: string, startIndex: number): number {
       continue;
     }
 
-    if (char === ''') {
+    if (char === "'") {
       state.inSingle = true;
       state.escaped = false;
       continue;
@@ -263,8 +260,7 @@ export function stripJsComments(input: string): string {
     const next = input[index + 1] ?? '';
 
     if (state.inLineComment) {
-      if (char === '
-') {
+      if (char === '\n') {
         state.inLineComment = false;
         out.push(char);
       }
@@ -281,20 +277,20 @@ export function stripJsComments(input: string): string {
 
     if (state.inSingle) {
       out.push(char);
-      if (!state.escaped && char === ''') state.inSingle = false;
-      state.escaped = !state.escaped && char === '';
+      if (!state.escaped && char === "'") state.inSingle = false;
+      state.escaped = !state.escaped && char === '\\';
       continue;
     }
     if (state.inDouble) {
       out.push(char);
       if (!state.escaped && char === '"') state.inDouble = false;
-      state.escaped = !state.escaped && char === '';
+      state.escaped = !state.escaped && char === '\\';
       continue;
     }
     if (state.inTemplate) {
       out.push(char);
       if (!state.escaped && char === '`') state.inTemplate = false;
-      state.escaped = !state.escaped && char === '';
+      state.escaped = !state.escaped && char === '\\';
       continue;
     }
 
@@ -310,7 +306,7 @@ export function stripJsComments(input: string): string {
     }
 
     out.push(char);
-    if (char === ''') state.inSingle = true;
+    if (char === "'") state.inSingle = true;
     if (char === '"') state.inDouble = true;
     if (char === '`') state.inTemplate = true;
   }
@@ -328,24 +324,24 @@ export function removeTrailingCommas(input: string): string {
     if (isInString(state)) {
       out.push(char);
       if (state.inSingle) {
-        if (!state.escaped && char === ''') state.inSingle = false;
-        state.escaped = !state.escaped && char === '';
+        if (!state.escaped && char === "'") state.inSingle = false;
+        state.escaped = !state.escaped && char === '\\';
         continue;
       }
       if (state.inDouble) {
         if (!state.escaped && char === '"') state.inDouble = false;
-        state.escaped = !state.escaped && char === '';
+        state.escaped = !state.escaped && char === '\\';
         continue;
       }
       if (state.inTemplate) {
         if (!state.escaped && char === '`') state.inTemplate = false;
-        state.escaped = !state.escaped && char === '';
+        state.escaped = !state.escaped && char === '\\';
         continue;
       }
       continue;
     }
 
-    if (char === ''') {
+    if (char === "'") {
       state.inSingle = true;
       out.push(char);
       continue;
@@ -498,18 +494,18 @@ function splitLineCodeAndLineComment(line: string): { code: string; comment: str
     const next = line[index + 1] ?? '';
 
     if (state.inSingle) {
-      if (!state.escaped && char === ''') state.inSingle = false;
-      state.escaped = !state.escaped && char === '';
+      if (!state.escaped && char === "'") state.inSingle = false;
+      state.escaped = !state.escaped && char === '\\';
       continue;
     }
     if (state.inDouble) {
       if (!state.escaped && char === '"') state.inDouble = false;
-      state.escaped = !state.escaped && char === '';
+      state.escaped = !state.escaped && char === '\\';
       continue;
     }
     if (state.inTemplate) {
       if (!state.escaped && char === '`') state.inTemplate = false;
-      state.escaped = !state.escaped && char === '';
+      state.escaped = !state.escaped && char === '\\';
       continue;
     }
 
@@ -517,7 +513,7 @@ function splitLineCodeAndLineComment(line: string): { code: string; comment: str
       return { code: line.slice(0, index), comment: line.slice(index + 2) };
     }
 
-    if (char === ''') {
+    if (char === "'") {
       state.inSingle = true;
       state.escaped = false;
       continue;
@@ -615,8 +611,7 @@ function extractConstraintHintsByPath(rawObjectText: string): Record<string, str
   const commentsByPath: Record<string, string[]> = {};
   let lastKeyPath: string | null = null;
 
-  const lines = rawObjectText.split(/?
-/);
+  const lines = rawObjectText.split(/\r?\n/);
   lines.forEach((line: string) => {
     const trimmed = line.trim();
     if (!trimmed) return;

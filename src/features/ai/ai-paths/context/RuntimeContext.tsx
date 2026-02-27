@@ -32,7 +32,13 @@ export interface LastErrorInfo {
   pathId?: string | null;
 }
 
-export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping';
+export type RuntimeRunStatus =
+  | 'idle'
+  | 'running'
+  | 'paused'
+  | 'stepping'
+  | 'completed'
+  | 'failed';
 
 export interface RuntimeControlHandlers {
   fireTrigger?: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>;

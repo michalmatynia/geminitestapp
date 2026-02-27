@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { upsertFilemakerCaptureCandidate } from '@/features/case-resolver-capture/filemaker-upsert';
-import type { FilemakerDatabase } from '@/features/filemaker/types';
+import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
 import type { PromptExploderCaseResolverPartyCandidateDto as PromptExploderCaseResolverPartyCandidate } from '@/shared/contracts/prompt-exploder';
 
 const createDatabase = (): FilemakerDatabase => ({

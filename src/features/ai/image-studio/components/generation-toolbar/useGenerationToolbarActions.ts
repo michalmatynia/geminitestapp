@@ -135,7 +135,10 @@ export function useGenerationToolbarActions(
         masks: payloadMasks,
       });
 
-      void invalidateImageStudioSlots(queryClient, projectId);
+      const normalizedProjectId = projectId?.trim() ?? '';
+      if (normalizedProjectId) {
+        void invalidateImageStudioSlots(queryClient, normalizedProjectId);
+      }
 
       const createdCount = Array.isArray(response.masks) ? response.masks.length : 0;
       if (createdCount === 0) {

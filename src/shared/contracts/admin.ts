@@ -9,6 +9,8 @@ import type {
   ProductValidatorSettingsDto,
 } from './products';
 
+export const VALIDATOR_PATTERN_LISTS_KEY = 'validator_pattern_lists';
+
 /**
  * Admin Activity DTOs
  */

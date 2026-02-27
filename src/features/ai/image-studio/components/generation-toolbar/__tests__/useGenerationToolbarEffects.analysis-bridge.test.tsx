@@ -138,6 +138,30 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
     expect(state.setCenterMode).toHaveBeenCalledWith('client_object_layout_v1');
   });
 
+  it('coerces object-layout intent to server object-layout when starting from server alpha mode', async () => {
+    saveImageStudioAnalysisApplyIntent('project-alpha', {
+      slotId: 'slot-1',
+      sourceSignature: 'signature_slot_1_v1',
+      target: 'object_layout',
+      runAfterApply: false,
+      layout: BASE_LAYOUT,
+    });
+
+    const state = createState({
+      centerMode: 'server_alpha_bbox',
+    });
+    const actions = createActions();
+    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+
+    await waitFor(() => {
+      expect(state.applyAnalysisLayoutToCenter).toHaveBeenCalledWith(
+        expect.objectContaining({ paddingPercent: 8 }),
+        'manual'
+      );
+    });
+    expect(state.setCenterMode).toHaveBeenCalledWith('server_object_layout_v1');
+  });
+
   it('switches to analyzed slot first when intent slot differs from working slot', async () => {
     saveImageStudioAnalysisApplyIntent('project-alpha', {
       slotId: 'slot-2',
@@ -285,6 +309,30 @@ describe('useGenerationToolbarEffects analysis bridge', () => {
     });
     expect(state.applyAnalysisLayoutToCenter).not.toHaveBeenCalled();
     expect(loadImageStudioAnalysisApplyIntent('project-alpha')).toBeNull();
+  });
+
+  it('does not coerce center mode for auto scaler intent consumption', async () => {
+    saveImageStudioAnalysisApplyIntent('project-alpha', {
+      slotId: 'slot-1',
+      sourceSignature: 'signature_slot_1_v1',
+      target: 'auto_scaler',
+      runAfterApply: false,
+      layout: BASE_LAYOUT,
+    });
+
+    const state = createState({
+      centerMode: 'client_alpha_bbox',
+    });
+    const actions = createActions();
+    renderHook(() => useGenerationToolbarEffects(state as any, actions));
+
+    await waitFor(() => {
+      expect(state.applyAnalysisLayoutToAutoScaler).toHaveBeenCalledWith(
+        expect.objectContaining({ paddingPercent: 8 }),
+        'manual'
+      );
+    });
+    expect(state.setCenterMode).not.toHaveBeenCalled();
   });
 
   it('consumes matching auto scaler intent in auto mode and clears intent', async () => {

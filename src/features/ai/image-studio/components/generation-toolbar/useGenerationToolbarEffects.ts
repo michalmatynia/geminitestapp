@@ -194,9 +194,7 @@ export function useGenerationToolbarEffects(
     if (queuedAnalysisRunTarget === 'object_layout') {
       if (centerBusy || centerRequestInFlightRef.current) return;
       if (!centerModeIsObjectLayout) {
-        if (centerMode !== preferredObjectLayoutMode) {
-          setCenterMode(preferredObjectLayoutMode);
-        }
+        setCenterMode(preferredObjectLayoutMode);
         return;
       }
       setQueuedAnalysisRunTarget(null);

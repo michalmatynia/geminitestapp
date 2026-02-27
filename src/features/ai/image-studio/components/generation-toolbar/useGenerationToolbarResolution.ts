@@ -91,11 +91,13 @@ export function useGenerationToolbarResolution(state: GenerationToolbarState) {
         diagnostics: resolved.diagnostics,
       };
     }
-    const overflowCropRect = resolveCanvasOverflowCropRect({
-      canvasWidth,
-      canvasHeight,
-      imageFrame: imageContentFrame,
-    });
+    const overflowCropRect = imageContentFrame
+      ? resolveCanvasOverflowCropRect({
+        canvasWidth,
+        canvasHeight,
+        imageFrame: imageContentFrame,
+      })
+      : null;
     if (overflowCropRect) {
       return {
         cropRect: overflowCropRect,

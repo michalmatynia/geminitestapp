@@ -546,7 +546,7 @@ export function ImportExportProvider({ children }: { children: React.ReactNode }
     setActiveImportRunId,
     setPollImportRun,
     activeImportRunId,
-    resumeImportRunMutation: resumeImportRunMutation as any,
+    resumeImportRunMutation,
     cancelImportRunMutation,
     saveExportSettingsMutation,
     exportActiveTemplateId: templates.exportActiveTemplateId,

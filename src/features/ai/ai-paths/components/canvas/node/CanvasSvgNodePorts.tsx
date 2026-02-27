@@ -24,12 +24,12 @@ export interface CanvasSvgNodePortsProps {
   showPortLabels: boolean;
   buildConnectorKey: (direction: 'input' | 'output', nodeId: string, portName: string) => string;
   onReconnectInput: (event: React.PointerEvent, nodeId: string, portName: string) => void | Promise<void>;
-  onCompleteConnection: (event: React.PointerEvent, nodeId: string, portName: string) => void | Promise<void>;
+  onCompleteConnection: (event: React.PointerEvent, node: AiNode, portName: string) => void | Promise<void>;
   onDisconnectPort: (direction: 'input' | 'output', nodeId: string, portName: string) => void | Promise<void>;
   onStartConnection: (event: React.PointerEvent, node: AiNode, portName: string) => void | Promise<void>;
   setHoveredConnectorKey: (key: string | null) => void;
-  onConnectorHover: (state: SvgConnectorTooltipState) => void;
-  onConnectorLeave: () => void;
+  onConnectorHover?: (state: SvgConnectorTooltipState) => void;
+  onConnectorLeave?: () => void;
   getConnectorInfo: (direction: 'input' | 'output', nodeId: string, portName: string) => ConnectorInfo;
   setPinnedConnectorKey: (key: string | null) => void;
 }

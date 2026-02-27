@@ -9,6 +9,7 @@ import type {
   Edge,
   PathFlowIntensity,
   RuntimeState,
+  SvgDetailLevel,
 } from '@/features/ai/ai-paths/lib';
 
 import type { ConnectorInfo } from './canvas-board-connectors';
@@ -18,7 +19,6 @@ import type { EdgeRoutingMode } from '../context/hooks/useEdgePaths';
 import type { RuntimeRunStatus } from './CanvasBoard.types';
 
 export type CanvasRendererMode = 'legacy' | 'svg';
-export type SvgDetailLevel = 'full' | 'compact' | 'skeleton';
 
 export interface CanvasBoardUIContextValue {
   // View & Viewport

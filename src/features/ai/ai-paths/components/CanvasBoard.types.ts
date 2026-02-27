@@ -5,13 +5,21 @@ import type { AiNode, DataContractNodeIssueSummary, Edge, RuntimeState, AiPathRu
 import { 
   type CanvasRendererMode,
   type SvgConnectorTooltipState,
-  type SvgNodeDiagnosticsTooltipState
+  type SvgNodeDiagnosticsTooltipState,
+  type CanvasBoardConnectorTooltipOverrideInput,
+  type CanvasBoardConnectorTooltipOverride
 } from './CanvasBoard.utils';
 import { type EdgeRoutingMode, type EdgePath } from '../context/hooks/useEdgePaths';
 import type { ConnectorInfo } from './canvas-board-connectors';
 import { type ViewState, type PanState, type DragState, type ConnectingState } from '../context/CanvasContext';
 
-export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping';
+export type RuntimeRunStatus =
+  | 'idle'
+  | 'running'
+  | 'paused'
+  | 'stepping'
+  | 'completed'
+  | 'failed';
 
 export interface CanvasBoardState {
   // View State
@@ -44,7 +52,7 @@ export interface CanvasBoardState {
   nodeDurations: Record<string, number>;
   
   // Actions
-  fireTrigger: (node: AiNode, event?: React.MouseEvent<Element> | React.PointerEvent<Element>) => Promise<void>;
+  fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
   
   // Selection
   selectedNodeId: string | null;
@@ -112,6 +120,17 @@ export interface CanvasBoardState {
   activeShapeId: string | null;
   edgeRoutingMode: EdgeRoutingMode;
   nodeDiagnosticsById: Record<string, DataContractNodeIssueSummary>;
+
+  // UI Interaction Overrides
+  openNodeConfigOnSingleClick?: boolean;
+  onConnectorHover?: (payload: { clientX: number; clientY: number; info: ConnectorInfo }) => void;
+  onConnectorLeave?: () => void;
+  onNodeDiagnosticsHover?: (payload: { clientX: number; clientY: number; nodeId: string; summary: DataContractNodeIssueSummary }) => void;
+  onNodeDiagnosticsLeave?: () => void;
+  onFocusNodeDiagnostics?: (nodeId: string) => void;
+  resolveConnectorTooltip?: (
+    input: CanvasBoardConnectorTooltipOverrideInput
+  ) => CanvasBoardConnectorTooltipOverride | null | undefined;
 }
 
 export interface UseCanvasBoardStateProps {

@@ -299,6 +299,32 @@ describe('useGenerationToolbarHandlers analysis layout integration', () => {
     expect(state.setCenterMode).toHaveBeenCalledWith('server_object_layout_v1');
   });
 
+  it('preserves server family when analysis is triggered from Auto Scaler', async () => {
+    const state = createState({
+      centerMode: 'server_alpha_bbox',
+    });
+    const response = createAnalysisResponse();
+    vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
+
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    await result.current.handleRunAnalysisFromAutoScaler();
+
+    expect(state.setCenterMode).toHaveBeenCalledWith('server_object_layout_v1');
+  });
+
+  it('does not change center mode when already using object-layout family', async () => {
+    const state = createState({
+      centerMode: 'client_object_layout_v1',
+    });
+    const response = createAnalysisResponse();
+    vi.spyOn(api, 'post').mockResolvedValueOnce(response as never);
+
+    const { result } = renderHook(() => useGenerationToolbarHandlers(state as never));
+    await result.current.handleRunAnalysisFromCenter();
+
+    expect(state.setCenterMode).not.toHaveBeenCalled();
+  });
+
   it('blocks run analysis when working source signature is missing', async () => {
     const state = createState({
       workingSourceSignature: '',

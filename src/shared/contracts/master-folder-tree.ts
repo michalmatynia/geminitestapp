@@ -1,5 +1,9 @@
 import { z } from 'zod';
 
+export const FOLDER_TREE_UI_STATE_V2_KEY_PREFIX = 'folder_tree_ui_state::';
+export const FOLDER_TREE_PROFILE_V2_KEY_PREFIX = 'folder_tree_profile::';
+export const FOLDER_TREE_V2_MIGRATION_MARKER_KEY = 'folder_tree_v2_migrated_at';
+
 /**
  * Master Folder Tree DTOs
  */

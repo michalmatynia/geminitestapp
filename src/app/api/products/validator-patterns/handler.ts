@@ -15,7 +15,7 @@ import {
   normalizeProductValidationPatternReplacementScopes,
   normalizeProductValidationPatternScopes,
 } from '@/features/products/utils/validator-instance-behavior';
-import { validateRegexSafety } from '@/features/products/utils/validator-regex-safety';
+import { validateRegexSafety } from '@/shared/utils/regex-safety';
 import { parseDynamicReplacementRecipe } from '@/features/products/utils/validator-replacement-recipe';
 import { validateAndNormalizeRuntimeConfig } from '@/features/products/validations/validator-runtime-config';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

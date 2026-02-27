@@ -50,7 +50,7 @@ import { useGraphActions, useGraphState } from '../GraphContext';
 import { usePersistenceActions } from '../PersistenceContext';
 import { usePresetsActions } from '../PresetsContext';
 import { useRunHistoryActions } from '../RunHistoryContext';
-import { useRuntimeActions } from '../RuntimeContext';
+import { useRuntimeActions, type RuntimeRunStatus } from '../RuntimeContext';
 import { useSelectionActions } from '../SelectionContext';
 
 
@@ -340,7 +340,7 @@ export interface StateBridgeRuntimeProps {
   runtimeState: RuntimeState;
   lastRunAt?: string | null | undefined;
   lastError?: { message: string; time: string; pathId?: string | null } | null | undefined;
-  runtimeRunStatus?: 'idle' | 'running' | 'paused' | 'stepping' | undefined;
+  runtimeRunStatus?: RuntimeRunStatus | undefined;
   handleFireTrigger?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>) | undefined;
   handleFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>) | undefined;
   handlePauseActiveRun?: (() => void) | undefined;
@@ -674,7 +674,7 @@ export interface StateBridgeAllProps {
   runtimeState: RuntimeState;
   lastRunAt?: string | null | undefined;
   lastError?: { message: string; time: string; pathId?: string | null } | null | undefined;
-  runtimeRunStatus?: 'idle' | 'running' | 'paused' | 'stepping' | undefined;
+  runtimeRunStatus?: RuntimeRunStatus | undefined;
   handleFireTrigger?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>) | undefined;
   handleFireTriggerPersistent?: ((node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => void | Promise<void>) | undefined;
   handlePauseActiveRun?: (() => void) | undefined;

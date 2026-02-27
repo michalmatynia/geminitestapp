@@ -145,6 +145,11 @@ export const clientLoggingSettingsSchema = z.object({
 
 export type ClientLoggingSettings = z.infer<typeof clientLoggingSettingsSchema>;
 
+export const CLIENT_LOGGING_KEYS = {
+  featureFlags: 'client_logging_feature_flags',
+  tags: 'client_logging_tags',
+} as const;
+
 export const systemLogFilterFormValuesSchema = z.object({
   level: z.union([systemLogLevelSchema, z.literal('all')]),
   query: z.string(),

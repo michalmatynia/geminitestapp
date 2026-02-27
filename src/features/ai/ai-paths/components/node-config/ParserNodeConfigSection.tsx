@@ -325,16 +325,25 @@ export function ParserNodeConfigSection(): React.JSX.Element | null {
   };
   const applyPreset = (mode: 'replace' | 'merge'): void => {
     if (!activePreset || activePreset.id === 'custom') return;
+    const presetMappings = Object.entries(activePreset.mappings).reduce<Record<string, string>>(
+      (acc, [key, value]) => {
+        if (typeof value === 'string') {
+          acc[key] = value;
+        }
+        return acc;
+      },
+      {}
+    );
     if (mode === 'replace') {
       commitMappingsImmediate(
-        activePreset.mappings as Record<string, string>,
+        presetMappings,
         outputMode,
         activePreset.id
       );
       return;
     }
     const merged: Record<string, string> = { ...draftMappings };
-    Object.entries(activePreset.mappings as Record<string, string>).forEach(([key, value]: [string, string]) => {
+    Object.entries(presetMappings).forEach(([key, value]: [string, string]) => {
       if (!(key in merged)) {
         merged[key] = value;
       }

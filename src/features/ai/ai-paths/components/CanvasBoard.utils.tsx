@@ -5,13 +5,14 @@ import type {
   DataContractPreflightIssue,
   PathFlowIntensity,
   Edge,
-  SvgDetailLevel,
   RuntimeState,
-  RuntimeEvent,
-  NodeProcessingStatus,
+  SvgDetailLevel,
 } from '@/features/ai/ai-paths/lib';
 import { type ConnectorInfo } from './canvas-board-connectors';
 import { type EdgeRoutingMode } from '../context/hooks/useEdgePaths';
+
+type RuntimeEvent = Record<string, unknown>;
+type NodeProcessingStatus = string;
 
 export const DEFAULT_NODE_NOTE_COLOR = '#f5e7c3';
 export const RENDERER_MODE_STORAGE_KEY = 'ai-paths:canvas-renderer-mode';

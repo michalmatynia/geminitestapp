@@ -43,6 +43,7 @@ import { useSettingsState } from './hooks/useSettings';
 import type {
   PromptExploderBinding,
   PromptExploderDocument,
+  PromptExploderParamUiControl,
   PromptExploderSegment,
 } from '../types';
 
@@ -573,7 +574,7 @@ export function DocumentProvider({ children }: { children: React.ReactNode }): R
         if (control === 'auto') {
           delete nextControls[path];
         } else {
-          nextControls[path] = control;
+          nextControls[path] = control as PromptExploderParamUiControl;
         }
         return { ...current, paramUiControls: nextControls };
       });

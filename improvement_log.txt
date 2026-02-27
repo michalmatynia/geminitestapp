@@ -82,5 +82,10 @@ I've completed several high-value "general improvements" across the codebase, fo
     - Restored full type safety to `src/features/ai/image-studio/components/CenterPreview.tsx`.
     - Resolved multiple unused state variables and actions across UI, masking, and preview contexts.
 
+19. **AI Image Studio Docs:**
+    - Restored full type safety to `src/features/ai/image-studio/components/docs/useDocsSnapshots.ts` and `src/features/ai/image-studio/components/docs/sections/DocsRuntimeStateSection.tsx`.
+    - Defined comprehensive `UseDocsSnapshotsProps` interface to replace implicit `any` props.
+    - Cleaned up unused imports and standardized type usage.
+
 ### **Impact**
 These changes have eliminated hundreds of potential runtime errors, fixed dozens of "silent" template literal bugs, and provided a significantly more robust foundation for the application's most critical features. All refactored files now pass strict ESLint checks.

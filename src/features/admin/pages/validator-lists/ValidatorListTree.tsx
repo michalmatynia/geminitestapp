@@ -99,7 +99,7 @@ export function ValidatorListTree({
   useEffect(() => {
     void controller.replaceNodes(masterNodes, 'external_sync');
     // controller is a stable object; masterNodes changes drive the sync
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [masterNodes]);
 
   const listById = useMemo(

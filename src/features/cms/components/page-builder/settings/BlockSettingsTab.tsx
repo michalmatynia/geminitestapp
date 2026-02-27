@@ -1,5 +1,4 @@
-/* eslint-disable */
-// @ts-nocheck
+// @ts-nocheck - Persistent type resolution issues with usePageBuilderState.
 'use client';
 
 import React, { useMemo, useCallback } from 'react';
@@ -14,11 +13,11 @@ import { prependManagementFields, groupSettingsFields, renderFieldGroups } from 
 import { getBlockDefinition, IMAGE_ELEMENT_BACKGROUND_MODE_SETTINGS, getImageBackgroundTargetOptions, type ImageBackgroundTarget } from '../section-registry';
 import { usePageBuilderSelection, usePageBuilderDispatch } from '../../hooks/usePageBuilderContext';
 import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
-import type { BlockInstance, SectionInstance } from '../../types/page-builder';
+import type { BlockInstance, SectionInstance, PageSelectionValue } from '../../types/page-builder';
 
 export function BlockSettingsTab(): React.JSX.Element | null {
   const dispatch = usePageBuilderDispatch();
-  const selection = usePageBuilderSelection();
+  const selection = usePageBuilderSelection() as PageSelectionValue;
   const selectedBlock = selection.selectedBlock;
   const selectedParentSection = selection.selectedParentSection;
   const selectedParentColumn = selection.selectedParentColumn;

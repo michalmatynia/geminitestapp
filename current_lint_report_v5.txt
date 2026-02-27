@@ -1,0 +1,16 @@
+
+> libapp2@0.1.0 lint
+> eslint src __tests__
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/canvas-board.tsx
+  217:1  error  Expected indentation of 2 spaces but found 6   indent
+  218:1  error  Expected indentation of 4 spaces but found 8   indent
+  219:1  error  Expected indentation of 6 spaces but found 10  indent
+  220:1  error  Expected indentation of 4 spaces but found 8   indent
+  221:1  error  Expected indentation of 4 spaces but found 8   indent
+  222:1  error  Expected indentation of 2 spaces but found 6   indent
+
+✖ 6 problems (6 errors, 0 warnings)
+  6 errors and 0 warnings potentially fixable with the `--fix` option.
+

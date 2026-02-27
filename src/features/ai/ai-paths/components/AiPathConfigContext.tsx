@@ -35,7 +35,7 @@ export interface AiPathSelectionData {
   onDirtyChange: (dirty: boolean) => void;
 }
 const AiPathSelectionContext = createContext<AiPathSelectionData | null>(null);
-export const useAiPathSelection = () => {
+export const useAiPathSelection = (): AiPathSelectionData => {
   const context = useContext(AiPathSelectionContext);
   if (!context) throw new Error('useAiPathSelection must be used within AiPathConfigProvider');
   return context;
@@ -48,7 +48,7 @@ export interface AiPathGraphData {
   isPathLocked: boolean;
 }
 const AiPathGraphContext = createContext<AiPathGraphData | null>(null);
-export const useAiPathGraph = () => {
+export const useAiPathGraph = (): AiPathGraphData => {
   const context = useContext(AiPathGraphContext);
   if (!context) throw new Error('useAiPathGraph must be used within AiPathConfigProvider');
   return context;
@@ -78,7 +78,7 @@ export interface AiPathRuntimeData {
   sendingToAi: boolean;
 }
 const AiPathRuntimeContext = createContext<AiPathRuntimeData | null>(null);
-export const useAiPathRuntime = () => {
+export const useAiPathRuntime = (): AiPathRuntimeData => {
   const context = useContext(AiPathRuntimeContext);
   if (!context) throw new Error('useAiPathRuntime must be used within AiPathConfigProvider');
   return context;
@@ -94,7 +94,7 @@ export interface AiPathPresetsData {
   saveDbNodePresets: (nextPresets: DbNodePreset[]) => Promise<void>;
 }
 const AiPathPresetsContext = createContext<AiPathPresetsData | null>(null);
-export const useAiPathPresets = () => {
+export const useAiPathPresets = (): AiPathPresetsData => {
   const context = useContext(AiPathPresetsContext);
   if (!context) throw new Error('useAiPathPresets must be used within AiPathConfigProvider');
   return context;
@@ -120,7 +120,7 @@ export interface AiPathOrchestratorData {
   ) => void;
 }
 const AiPathOrchestratorContext = createContext<AiPathOrchestratorData | null>(null);
-export const useAiPathOrchestrator = () => {
+export const useAiPathOrchestrator = (): AiPathOrchestratorData => {
   const context = useContext(AiPathOrchestratorContext);
   if (!context) throw new Error('useAiPathOrchestrator must be used within AiPathConfigProvider');
   return context;

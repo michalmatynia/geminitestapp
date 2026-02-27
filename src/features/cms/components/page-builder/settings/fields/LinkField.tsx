@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React, { useMemo, useState } from 'react';
@@ -15,8 +13,8 @@ export function LinkField({ value, onChange }: { value: string; onChange: (v: st
   const options = useMemo<SelectOption<string>[]>(() =>
     slugs.map(s => ({
       id: s.id,
-      label: `/\${s.slug}`,
-      value: `/\${s.slug}`,
+      label: `/${s.slug}`,
+      value: `/${s.slug}`,
     })),
   [slugs]
   );

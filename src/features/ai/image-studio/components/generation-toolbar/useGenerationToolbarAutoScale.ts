@@ -1,10 +1,10 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
+import type { QueryClient } from '@tanstack/react-query';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
 import { studioKeys } from '../../hooks/useImageStudioQueries';
 import {
   buildAutoScalerRequestId,
@@ -18,8 +18,26 @@ import {
 import {
   imageStudioAutoScalerRequestSchema,
   imageStudioAutoScalerResponseSchema,
+  type ImageStudioAutoScalerMode,
 } from '../../contracts/autoscaler';
 import { describeSchemaValidationIssue } from './GenerationToolbar.utils';
+
+interface UseGenerationToolbarAutoScaleProps {
+  workingSlot: ImageStudioSlotRecord | null;
+  workingSlotImageSrc: string | null;
+  autoScaleMode: ImageStudioAutoScalerMode;
+  clientProcessingImageSrc: string | null;
+  autoScaleRequestInFlightRef: React.MutableRefObject<boolean>;
+  setAutoScaleBusy: (busy: boolean) => void;
+  setAutoScaleStatus: (status: 'idle' | 'resolving' | 'preparing' | 'uploading' | 'processing' | 'persisting') => void;
+  autoScaleLayoutPayload?: Record<string, unknown> | null;
+  autoScaleAbortControllerRef: React.MutableRefObject<AbortController | null>;
+  projectId: string;
+  queryClient: QueryClient;
+  setSelectedSlotId: (id: string | null) => void;
+  setWorkingSlotId: (id: string | null) => void;
+  toast: (message: string, options?: { variant?: 'default' | 'destructive' | 'success' | 'error' | 'info' | 'warning' }) => void;
+}
 
 export function useGenerationToolbarAutoScale({
   workingSlot,
@@ -36,7 +54,7 @@ export function useGenerationToolbarAutoScale({
   setSelectedSlotId,
   setWorkingSlotId,
   toast,
-}) {
+}: UseGenerationToolbarAutoScaleProps) {
   const handleAutoScale = useCallback(async (): Promise<void> => {
     if (!workingSlot?.id) {
       toast('No active source slot selected.', { variant: 'info' });
@@ -60,8 +78,8 @@ export function useGenerationToolbarAutoScale({
     setAutoScaleBusy(true);
     setAutoScaleStatus('resolving');
     const autoScaleRequestId = buildAutoScalerRequestId();
-    const buildValidatedAutoScaleRequestPayload = (mode): {
-      mode: any;
+    const buildValidatedAutoScaleRequestPayload = (mode: ImageStudioAutoScalerMode): {
+      mode: ImageStudioAutoScalerMode;
       requestId: string;
       layout?: Record<string, unknown>;
     } => {
@@ -193,7 +211,7 @@ export function useGenerationToolbarAutoScale({
         const responseSlot = response.slot;
         if (responseSlot) {
           const responseSlotId = responseSlot.id;
-          queryClient.setQueryData(
+          queryClient.setQueryData<{ slots: ImageStudioSlotRecord[] }>(
             studioKeys.slots(normalizedProjectId),
             (old) => {
               if (!old) return old;

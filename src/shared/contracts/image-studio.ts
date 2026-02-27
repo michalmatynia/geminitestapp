@@ -486,6 +486,31 @@ export type ImageStudioSlot = z.infer<typeof imageStudioSlotSchema>;
 export type ImageStudioSlotRecord = ImageStudioSlot;
 export type ImageStudioSlotDto = ImageStudioSlot;
 
+export const createImageStudioSlotSchema = z.object({
+  name: z.string().nullable().optional(),
+  folderPath: z.string().nullable().optional(),
+  imageFileId: z.string().nullable().optional(),
+  imageUrl: z.string().nullable().optional(),
+  imageBase64: z.string().nullable().optional(),
+  metadata: slotGenerationMetadataSchema.nullable().optional(),
+});
+
+export type CreateImageStudioSlotDto = z.infer<typeof createImageStudioSlotSchema>;
+
+export const updateImageStudioSlotSchema = createImageStudioSlotSchema.partial();
+
+export type UpdateImageStudioSlotDto = z.infer<typeof updateImageStudioSlotSchema>;
+
+export const imageStudioAssetDtoSchema = z.object({
+  id: z.string(),
+  filepath: z.string(),
+  filename: z.string().optional(),
+  width: z.number().nullable().optional(),
+  height: z.number().nullable().optional(),
+});
+
+export type ImageStudioAssetDto = z.infer<typeof imageStudioAssetDtoSchema>;
+
 export const imageStudioProjectSchema = dtoBaseSchema.extend({
   canvasWidthPx: z.number().nullable(),
   canvasHeightPx: z.number().nullable(),

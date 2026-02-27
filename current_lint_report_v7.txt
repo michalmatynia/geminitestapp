@@ -1,0 +1,21 @@
+
+> libapp2@0.1.0 lint
+> eslint src __tests__
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/CanvasBoard.types.ts
+  53:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:82  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/canvas-board.tsx
+  438:1  error  Expected indentation of 12 spaces but found 26  indent
+  439:1  error  Expected indentation of 14 spaces but found 28  indent
+  440:1  error  Expected indentation of 12 spaces but found 26  indent
+  441:1  error  Expected indentation of 12 spaces but found 26  indent
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/analysis/sections/AnalysisSettingsSection.tsx
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+✖ 7 problems (6 errors, 1 warning)
+  4 errors and 1 warning potentially fixable with the `--fix` option.
+

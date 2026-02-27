@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
@@ -8,8 +6,6 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNotesAppContext } from '@/features/notesapp/hooks/NotesAppContext';
 import { Button } from '@/shared/ui';
 import { buildBreadcrumbPath } from '../../utils';
-
-import type { NoteCategoryRecordWithChildrenDto as CategoryWithChildren } from '@/shared/contracts/notes';
 
 type BreadcrumbItem = { id: string | null; name: string; isNote?: boolean };
 
@@ -28,7 +24,7 @@ export function NoteDetailBreadcrumbs(): React.JSX.Element | null {
 
   const onExpandFolderTree = (): void => setIsFolderTreeCollapsed(false);
 
-  const categories = folderTree as CategoryWithChildren[];
+  const categories = folderTree;
   const breadcrumbs = buildBreadcrumbPath(
     selectedNote.categories?.[0]?.categoryId || null,
     selectedNote.title,

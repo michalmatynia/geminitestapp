@@ -1,0 +1,18 @@
+
+> libapp2@0.1.0 lint
+> eslint src __tests__
+
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/__tests__/features/integrations/services/integration-repository.test.ts
+  71:3  warning  'mockCountDocuments' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  72:3  warning  'mockUpdateMany' is assigned a value but never used. Allowed unused vars must match /^_/u      @typescript-eslint/no-unused-vars
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/admin/pages/validator-lists/ValidatorListTree.tsx
+  102:5  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/products/components/settings/validator-settings/ValidatorPatternTree.tsx
+  196:5  warning  Unused eslint-disable directive (no problems were reported from 'react-hooks/exhaustive-deps')
+
+✖ 4 problems (0 errors, 4 warnings)
+  0 errors and 2 warnings potentially fixable with the `--fix` option.
+

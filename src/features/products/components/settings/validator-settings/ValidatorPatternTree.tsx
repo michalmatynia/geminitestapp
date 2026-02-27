@@ -193,7 +193,7 @@ export function ValidatorPatternTree(): React.JSX.Element {
   useEffect(() => {
     void controller.replaceNodes(masterNodes, 'external_sync');
     // controller is a stable object; masterNodes changes are the trigger
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, [masterNodes]);
 
   const { onNodeDrop } = useValidatorPatternTreeActions({

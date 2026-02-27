@@ -64,10 +64,6 @@ export function BaseQuickExportButton({
   const [linkExistingPending, setLinkExistingPending] = useState(false);
 
   const resolveQuickExportContext = async (): Promise<QuickExportContext | null> => {
-    let connectionId = '';
-    let inventoryId = '';
-    let templateId = '';
-
     try {
       const [preferredConnection, defaultInventory] = await Promise.all([
         queryClient.fetchQuery({
@@ -87,8 +83,8 @@ export function BaseQuickExportButton({
         }),
       ]);
 
-      connectionId = preferredConnection?.connectionId?.trim() || '';
-      inventoryId = defaultInventory?.inventoryId?.trim() || '';
+      const connectionId = preferredConnection?.connectionId?.trim() || '';
+      const inventoryId = defaultInventory?.inventoryId?.trim() || '';
 
       if (!connectionId) {
         toast('Set a default Base.com connection first.', { variant: 'error' });
@@ -137,17 +133,17 @@ export function BaseQuickExportButton({
       const scopedTemplate = await api.get<{ templateId?: string | null }>(
         `/api/integrations/exports/base/active-template?connectionId=${encodeURIComponent(connectionId)}&inventoryId=${encodeURIComponent(inventoryId)}`
       );
-      templateId = scopedTemplate?.templateId?.trim() || '';
+      const templateId = scopedTemplate?.templateId?.trim() || '';
+
+      return {
+        connectionId,
+        inventoryId,
+        templateId,
+      };
     } catch {
       toast('Failed to load Base.com export defaults.', { variant: 'error' });
       return null;
     }
-
-    return {
-      connectionId,
-      inventoryId,
-      templateId,
-    };
   };
 
   const runQuickExportMutation = async (context: QuickExportContext): Promise<void> => {

@@ -68,8 +68,6 @@ const {
   mockFindOne,
   mockInsertOne,
   mockDeleteMany,
-  mockCountDocuments,
-  mockUpdateMany,
   mockFindOneAndUpdate,
 } = vi.hoisted(() => {
   const mockInsertOne = vi.fn();

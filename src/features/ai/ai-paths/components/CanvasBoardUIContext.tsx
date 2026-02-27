@@ -15,10 +15,10 @@ import type { ConnectorInfo } from './canvas-board-connectors';
 
 import type { EdgePath } from '../context/hooks/useEdgePaths';
 import type { EdgeRoutingMode } from '../context/hooks/useEdgePaths';
+import type { RuntimeRunStatus } from './CanvasBoard.types';
 
 export type CanvasRendererMode = 'legacy' | 'svg';
 export type SvgDetailLevel = 'full' | 'compact' | 'skeleton';
-export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping';
 
 export interface CanvasBoardUIContextValue {
   // View & Viewport

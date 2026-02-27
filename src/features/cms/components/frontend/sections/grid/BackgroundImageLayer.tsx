@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
@@ -48,12 +46,12 @@ function buildImageElementPresentation(
   const transparencyStrength = clampNumber(settings['transparencyStrength'], 0, 100, 0);
 
   const wrapperStyles: React.CSSProperties = {
-    width: `\${width}%`,
+    width: `${width}%`,
   };
-  if (height > 0) wrapperStyles.height = `\${height}px`;
+  if (height > 0) wrapperStyles.height = `${height}px`;
   if (aspectRatio !== 'auto') wrapperStyles.aspectRatio = aspectRatio;
   if (borderWidth > 0 && borderStyle !== 'none') {
-    wrapperStyles.borderWidth = `\${borderWidth}px`;
+    wrapperStyles.borderWidth = `${borderWidth}px`;
     wrapperStyles.borderStyle = borderStyle;
     wrapperStyles.borderColor = borderColor;
   }
@@ -61,7 +59,7 @@ function buildImageElementPresentation(
     wrapperStyles.borderRadius = '9999px';
     wrapperStyles.overflow = 'hidden';
   } else if (shape === 'rounded' && borderRadius > 0) {
-    wrapperStyles.borderRadius = `\${borderRadius}px`;
+    wrapperStyles.borderRadius = `${borderRadius}px`;
     wrapperStyles.overflow = 'hidden';
   }
 
@@ -73,21 +71,21 @@ function buildImageElementPresentation(
     const spread = (shadow['spread'] as number) ?? 0;
     const color = shadow['color'] as string | undefined;
     if ((x || y || blurShadow || spread) && color) {
-      wrapperStyles.boxShadow = `\${x}px \${y}px \${blurShadow}px \${spread}px \${color}`;
+      wrapperStyles.boxShadow = `${x}px ${y}px ${blurShadow}px ${spread}px ${color}`;
     }
   }
 
   Object.assign(wrapperStyles, buildTransparencyMaskStyles(transparencyMode, transparencyDirection, transparencyStrength));
 
   const filters: string[] = [];
-  if (blur > 0) filters.push(`blur(\${blur}px)`);
-  if (grayscale > 0) filters.push(`grayscale(\${grayscale / 100})`);
-  if (brightness !== 100) filters.push(`brightness(\${brightness / 100})`);
-  if (contrast !== 100) filters.push(`contrast(\${contrast / 100})`);
+  if (blur > 0) filters.push(`blur(${blur}px)`);
+  if (grayscale > 0) filters.push(`grayscale(${grayscale / 100})`);
+  if (brightness !== 100) filters.push(`brightness(${brightness / 100})`);
+  if (contrast !== 100) filters.push(`contrast(${contrast / 100})`);
 
   const transforms: string[] = [];
-  if (scale !== 100) transforms.push(`scale(\${scale / 100})`);
-  if (rotate !== 0) transforms.push(`rotate(\${rotate}deg)`);
+  if (scale !== 100) transforms.push(`scale(${scale / 100})`);
+  if (rotate !== 0) transforms.push(`rotate(${rotate}deg)`);
 
   const imageStyles: React.CSSProperties = {
     width: '100%',
@@ -103,7 +101,7 @@ function buildImageElementPresentation(
     overlayStyles.backgroundColor = overlayColor;
     overlayStyles.opacity = overlayOpacity;
   } else if (overlayType === 'gradient') {
-    overlayStyles.backgroundImage = `linear-gradient(\${resolveGradientDirection(overlayGradientDirection)}, \${overlayGradientFrom}, \${overlayGradientTo})`;
+    overlayStyles.backgroundImage = `linear-gradient(${resolveGradientDirection(overlayGradientDirection)}, ${overlayGradientFrom}, ${overlayGradientTo})`;
     overlayStyles.opacity = overlayOpacity;
   }
   if (wrapperStyles.borderRadius) {

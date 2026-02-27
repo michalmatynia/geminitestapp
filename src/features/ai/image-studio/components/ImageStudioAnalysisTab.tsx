@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -27,6 +25,7 @@ import {
   loadImageStudioAnalysisPlanSnapshot,
   saveImageStudioAnalysisApplyIntent,
   type ImageStudioAnalysisPlanSnapshot,
+  type ImageStudioAnalysisSharedLayout,
   saveImageStudioAnalysisPlanSnapshot,
 } from '../utils/analysis-bridge';
 import { getImageStudioSlotImageSrc } from '../utils/image-src';
@@ -42,6 +41,7 @@ import {
   resolveObjectLayoutPresetOptionValue,
   saveObjectLayoutCustomPreset,
   saveObjectLayoutAdvancedDefaults,
+  type ObjectLayoutCustomPreset,
 } from '../utils/object-layout-presets';
 
 import { 
@@ -106,7 +106,7 @@ export function ImageStudioAnalysisTab(): React.JSX.Element {
   );
   const [layoutFillMissingCanvasWhite, setLayoutFillMissingCanvasWhite] = useState(false);
   const [layoutShadowPolicy, setLayoutShadowPolicy] = useState<ShadowPolicy>('auto');
-  const [layoutCustomPresets, setLayoutCustomPresets] = useState([]);
+  const [layoutCustomPresets, setLayoutCustomPresets] = useState<ObjectLayoutCustomPreset[]>([]);
   const [layoutPresetDraftName, setLayoutPresetDraftName] = useState('');
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState<AnalysisStatus>('idle');

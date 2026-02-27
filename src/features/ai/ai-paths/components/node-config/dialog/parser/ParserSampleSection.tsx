@@ -1,9 +1,21 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
 import { Button, FormField, Input, SelectSimple, Textarea } from '@/shared/ui';
+import type { ParserSampleState } from '@/features/ai/ai-paths/lib';
+
+export interface ParserSampleSectionProps {
+  selectedNodeId: string;
+  sampleState: ParserSampleState;
+  setParserSamples: React.Dispatch<React.SetStateAction<Record<string, ParserSampleState>>>;
+  simulationOptions: Array<{ id: string; label: string; entityId: string; entityType: string }>;
+  parserSampleLoading: boolean;
+  handleFetchParserSample: (nodeId: string, entityType: string, entityId: string) => Promise<void>;
+  parsedSampleError: string | null;
+  sampleMappingsLength: number;
+  applySampleMappings: (mode: 'replace' | 'merge') => void;
+  handleDetectImages: () => void;
+}
 
 export function ParserSampleSection({
   selectedNodeId,
@@ -16,7 +28,7 @@ export function ParserSampleSection({
   sampleMappingsLength,
   applySampleMappings,
   handleDetectImages,
-}) {
+}: ParserSampleSectionProps): React.JSX.Element {
   return (
     <FormField label='Sample JSON'>
       <div className='grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-center'>
@@ -142,12 +154,12 @@ export function ParserSampleSection({
               },
             }))
           }
-          options={[1, 2, 3, 4].map((d) => ({ value: String(d), label: `Depth \${d}` }))}
+          options={[1, 2, 3, 4].map((d) => ({ value: String(d), label: `Depth ${d}` }))}
           className='w-[160px]'
         />
         <Button
           type='button'
-          className={`rounded-md border px-3 text-[10px] \${
+          className={`rounded-md border px-3 text-[10px] ${
             sampleState.includeContainers
               ? 'text-emerald-200 hover:bg-emerald-500/10'
               : 'text-gray-300 hover:bg-muted/60'

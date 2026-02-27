@@ -1,5 +1,4 @@
-/* eslint-disable */
-// @ts-nocheck
+// @ts-nocheck - Persistent type resolution issues with usePageBuilderState.
 'use client';
 
 import React, { useMemo, useCallback } from 'react';
@@ -7,7 +6,8 @@ import { MousePointer2, Monitor, Smartphone, PanelRightClose, Paintbrush } from 
 import { Button, SectionHeader, Tooltip } from '@/shared/ui';
 import { DOCUMENTATION_MODULE_IDS } from '@/features/documentation';
 import { getDocumentationTooltip } from '@/features/tooltip-engine';
-import { usePageBuilderState, usePageBuilderDispatch } from '../../hooks/usePageBuilderContext';
+import { usePageBuilderState } from '../../../hooks/page-builder/PageStateContext';
+import { usePageBuilderDispatch } from '../../../hooks/page-builder/PageDispatchContext';
 import { useComponentSettingsContext } from '../context/ComponentSettingsContext';
 import type { InspectorSettings } from '../../types/page-builder';
 

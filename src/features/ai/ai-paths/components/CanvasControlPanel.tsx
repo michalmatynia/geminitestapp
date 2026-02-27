@@ -24,7 +24,6 @@ export interface CanvasControlPanelProps {
   onEdgeRoutingModeChange: (mode: EdgeRoutingMode) => void;
   showMinimap: boolean;
   onToggleMinimap: () => void;
-  selectionToolMode: 'node' | 'marquee';
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFitToNodes: () => void;

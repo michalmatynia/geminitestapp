@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useEffect } from 'react';
@@ -162,14 +160,12 @@ export function useGenerationToolbarEffects(
       skipCenterAdvancedDefaultsSaveRef.current = false;
       return;
     }
-    void (async () => {
-      await saveObjectLayoutAdvancedDefaults(activeProjectId, {
-        detection: centerLayoutDetection,
-        shadowPolicy: centerLayoutShadowPolicy,
-        whiteThreshold: centerLayoutWhiteThresholdValue,
-        chromaThreshold: centerLayoutChromaThresholdValue,
-      });
-    })();
+    saveObjectLayoutAdvancedDefaults(activeProjectId, {
+      detection: centerLayoutDetection,
+      shadowPolicy: centerLayoutShadowPolicy,
+      whiteThreshold: centerLayoutWhiteThresholdValue,
+      chromaThreshold: centerLayoutChromaThresholdValue,
+    });
   }, [
     activeProjectId,
     centerLayoutChromaThresholdValue,

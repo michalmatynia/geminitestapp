@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React, { useEffect, useMemo } from 'react';
@@ -109,7 +107,7 @@ export function PageAiTabContent({
         <Textarea
           value={ai.pageAiPrompt}
           onChange={(e: React.ChangeEvent<HTMLTextAreaElement>): void => ai.setPageAiPrompt(e.target.value)}
-          placeholder={`Describe what you need.\\n\\nContext:\\n\${pageAiPlaceholder}`}
+          placeholder={`Describe what you need.\n\nContext:\n${pageAiPlaceholder}`}
           className='min-h-[120px] text-xs'
           spellCheck={false}
         />
@@ -122,7 +120,7 @@ export function PageAiTabContent({
           size='sm'
           onClick={(): void => {
             const current = ai.pageAiPrompt.trim();
-            const nextPrompt = current.length ? `${current}\\n\\n\${pageAiPlaceholder}` : pageAiPlaceholder;
+            const nextPrompt = current.length ? `${current}\n\n${pageAiPlaceholder}` : pageAiPlaceholder;
             ai.setPageAiPrompt(nextPrompt);
           }}
         >

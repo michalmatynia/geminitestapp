@@ -1,3 +1,5 @@
+import type { Dispatch, SetStateAction } from 'react';
+
 import { integrationDefinitions } from '@/shared/contracts/integrations';
 import type { 
   Integration, 

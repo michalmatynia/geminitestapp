@@ -1,7 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
-'use client';
-
 import { useCallback } from 'react';
 import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
@@ -14,6 +10,7 @@ import {
 } from './GenerationToolbarImageUtils';
 import { type GenerationToolbarState } from './GenerationToolbar.types';
 import { type VectorShape } from '@/shared/contracts/vector';
+import { useGenerationToolbarResolution } from './useGenerationToolbarResolution';
 
 export function useGenerationToolbarActions(
   state: GenerationToolbarState,
@@ -181,7 +178,7 @@ export function useGenerationToolbarActions(
     controller.abort();
   }, [autoScaleAbortControllerRef]);
 
-  const handleSquareCrop = useCallback(async (handleCrop: (cropRect: CropRect, options: { includeCanvasContext: boolean }) => void): Promise<void> => {
+  const handleSquareCrop = useCallback(async (handleCrop: (cropRect: CropRect, options: { includeCanvasContext: boolean }) => Promise<void>): Promise<void> => {
     if (!workingSlot?.id) {
       toast('No active source slot selected.', { variant: 'info' });
       return;
@@ -193,13 +190,13 @@ export function useGenerationToolbarActions(
     try {
       const squareCropRect = await resolveCenteredSquareCropRect();
       cropDiagnosticsRef.current = null;
-      void handleCrop(squareCropRect, { includeCanvasContext: false });
+      handleCrop(squareCropRect, { includeCanvasContext: false }).catch(() => {});
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to prepare square crop.', { variant: 'error' });
     }
   }, [resolveCenteredSquareCropRect, toast, workingSlot?.id, workingSlotImageSrc, cropDiagnosticsRef]);
 
-  const handlePreviewViewCrop = useCallback(async (handleCrop: (cropRect: CropRect, options: { includeCanvasContext: boolean }) => void): Promise<void> => {
+  const handlePreviewViewCrop = useCallback(async (handleCrop: (cropRect: CropRect, options: { includeCanvasContext: boolean }) => Promise<void>): Promise<void> => {
     const activeSlotId = workingSlot?.id?.trim() ?? '';
     if (!activeSlotId) {
       toast('No active source slot selected.', { variant: 'info' });
@@ -236,12 +233,12 @@ export function useGenerationToolbarActions(
           cropCanvasContext
         );
         if (canvasCropRect) {
-          void handleCrop(canvasCropRect, { includeCanvasContext: true });
+          handleCrop(canvasCropRect, { includeCanvasContext: true }).catch(() => {});
           return;
         }
       }
 
-      void handleCrop(previewCrop.cropRect, { includeCanvasContext: false });
+      handleCrop(previewCrop.cropRect, { includeCanvasContext: false }).catch(() => {});
     } catch (error) {
       toast(error instanceof Error ? error.message : 'Failed to prepare crop from preview view.', { variant: 'error' });
     }

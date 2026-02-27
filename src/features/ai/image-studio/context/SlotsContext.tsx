@@ -13,7 +13,13 @@ import {
 } from '@/features/ai/image-studio/hooks/useImageStudioMutations';
 import { studioKeys, useStudioSlots } from '@/features/ai/image-studio/hooks/useImageStudioQueries';
 import type { ImageFileSelection } from '@/shared/contracts/files';
-import type { ImageStudioSlotRecord, StudioSlotsResponse } from '@/shared/contracts/image-studio';
+import type { 
+  ImageStudioSlotRecord, 
+  StudioSlotsResponse, 
+  ImageStudioAssetDto as ImageStudioUploadedAsset,
+  CreateImageStudioSlotDto,
+  UpdateImageStudioSlotDto
+} from '@/shared/contracts/image-studio';
 import { useSettingsMap, useUpdateSetting } from '@/shared/hooks/use-settings';
 import { api } from '@/shared/lib/api-client';
 import { createCreateMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -84,13 +90,7 @@ export interface SlotsState {
   driveImportOpen: boolean;
   driveImportMode: 'create' | 'replace' | 'temporary-object' | 'environment';
   driveImportTargetId: string | null;
-  temporaryObjectUpload: {
-    id: string;
-    filepath: string;
-    filename?: string;
-    width?: number | null;
-    height?: number | null;
-  } | null;
+  temporaryObjectUpload: ImageStudioUploadedAsset | null;
   slotUpdateBusy: boolean;
   slotInlineEditOpen: boolean;
   slotImageUrlDraft: string;
@@ -110,8 +110,8 @@ export interface SlotsActions {
   setSlotSelectionLocked: (locked: boolean) => void;
   setVirtualFolders: React.Dispatch<React.SetStateAction<string[]>>;
   setSelectedFolder: (f: string) => void;
-  createSlots: (slots: Array<Partial<ImageStudioSlotRecord>>) => Promise<ImageStudioSlotRecord[]>;
-  updateSlotMutation: UseMutationResult<ImageStudioSlotRecord, Error, { id: string; data: Partial<ImageStudioSlotRecord> }>;
+  createSlots: (slots: CreateImageStudioSlotDto[]) => Promise<ImageStudioSlotRecord[]>;
+  updateSlotMutation: UseMutationResult<ImageStudioSlotRecord, Error, { id: string; data: UpdateImageStudioSlotDto }>;
   deleteSlotMutation: UseMutationResult<void, Error, string>;
   moveSlot: (input: { slot: ImageStudioSlotRecord; targetFolder: string }) => Promise<void>;
   handleMoveFolder: (folderPath: string, targetFolder: string) => Promise<void>;
@@ -125,13 +125,7 @@ export interface SlotsActions {
   setDriveImportOpen: (o: boolean) => void;
   setDriveImportMode: (m: 'create' | 'replace' | 'temporary-object' | 'environment') => void;
   setDriveImportTargetId: (id: string | null) => void;
-  setTemporaryObjectUpload: React.Dispatch<React.SetStateAction<{
-    id: string;
-    filepath: string;
-    filename?: string;
-    width?: number | null;
-    height?: number | null;
-  } | null>>;
+  setTemporaryObjectUpload: React.Dispatch<React.SetStateAction<ImageStudioUploadedAsset | null>>;
   setSlotUpdateBusy: (b: boolean) => void;
   setSlotInlineEditOpen: (o: boolean) => void;
   setSlotImageUrlDraft: (s: string) => void;
@@ -293,13 +287,7 @@ export function SlotsProvider({ children }: { children: React.ReactNode }): Reac
   const [driveImportOpen, setDriveImportOpen] = useState<boolean>(false);
   const [driveImportMode, setDriveImportMode] = useState<'create' | 'replace' | 'temporary-object' | 'environment'>('create');
   const [driveImportTargetId, setDriveImportTargetId] = useState<string | null>(null);
-  const [temporaryObjectUpload, setTemporaryObjectUpload] = useState<{
-    id: string;
-    filepath: string;
-    filename?: string;
-    width?: number | null;
-    height?: number | null;
-  } | null>(null);
+  const [temporaryObjectUpload, setTemporaryObjectUpload] = useState<ImageStudioUploadedAsset | null>(null);
   const [slotUpdateBusy, setSlotUpdateBusy] = useState<boolean>(false);
   const [slotInlineEditOpen, setSlotInlineEditOpen] = useState<boolean>(false);
   const [slotImageUrlDraft, setSlotImageUrlDraft] = useState<string>('');

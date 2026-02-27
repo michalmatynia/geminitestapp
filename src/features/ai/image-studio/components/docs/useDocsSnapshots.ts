@@ -1,17 +1,15 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { useMemo } from 'react';
+import type { UseMutationResult, UseQueryResult } from '@tanstack/react-query';
+import type { ImageStudioSlotRecord } from '@/shared/contracts/image-studio';
+import type { ImageStudioSettings } from '../../utils/studio-settings';
 import { 
   PROMPT_ENGINE_SETTINGS_KEY, 
   parsePromptEngineSettings 
 } from '@/features/prompt-engine/settings';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 import { 
-  IMAGE_STUDIO_OPENAI_API_KEY_KEY, 
-  IMAGE_STUDIO_SETTINGS_KEY,
-  IMAGE_STUDIO_TREE_KEY_PREFIX,
   parseImageStudioFolderTree
 } from '../../utils/studio-tree';
 import { 
@@ -19,6 +17,56 @@ import {
   IMAGE_STUDIO_UI_PRESETS_KEY, 
   parseImageStudioUiPresets 
 } from '../../utils/ui-presets';
+
+interface UseDocsSnapshotsProps {
+  projectId: string;
+  projectsQuery: UseQueryResult<unknown[], Error>;
+  projectSearch: string;
+  slots: ImageStudioSlotRecord[];
+  selectedSlot: ImageStudioSlotRecord | null;
+  workingSlot: ImageStudioSlotRecord | null;
+  selectedFolder: string;
+  virtualFolders: unknown[];
+  previewMode: string;
+  compositeAssets: unknown[];
+  slotCreateOpen: boolean;
+  driveImportOpen: boolean;
+  slotInlineEditOpen: boolean;
+  slotImageUrlDraft: string;
+  slotBase64Draft: string;
+  promptText: string;
+  paramsState: Record<string, unknown> | null;
+  paramSpecs: Record<string, unknown> | null;
+  paramUiOverrides: Record<string, unknown>;
+  paramFlipMap: Record<string, boolean>;
+  promptIssueCount: number;
+  extractReviewOpen: boolean;
+  extractDraftPrompt: string;
+  extractResult: { ok: boolean } | null;
+  tool: string;
+  maskShapes: unknown[];
+  visibleMaskShapeCount: number;
+  closedMaskShapeCount: number;
+  maskEligibleCount: number;
+  activeMaskId: string | null;
+  selectedPointIndex: number | null;
+  maskInvert: boolean;
+  maskFeather: number;
+  brushRadius: number;
+  maskGenMode: string;
+  maskGenLoading: boolean;
+  maskThresholdSensitivity: number;
+  maskEdgeSensitivity: number;
+  runMutation: UseMutationResult<unknown, Error, unknown>;
+  runOutputs: unknown[];
+  generationHistory: unknown[];
+  settingsLoaded: boolean;
+  heavySettings: UseQueryResult<Map<string, string>, Error>;
+  studioSettings: ImageStudioSettings;
+  apiKeyConfigured: boolean;
+  heavyMap: Map<string, string>;
+  projectTreeKey: string | null;
+}
 
 export function useDocsSnapshots({
   projectId,
@@ -68,7 +116,7 @@ export function useDocsSnapshots({
   apiKeyConfigured,
   heavyMap,
   projectTreeKey,
-}) {
+}: UseDocsSnapshotsProps) {
   const uiPresets = useMemo(
     () => parseImageStudioUiPresets(heavyMap.get(IMAGE_STUDIO_UI_PRESETS_KEY)),
     [heavyMap]

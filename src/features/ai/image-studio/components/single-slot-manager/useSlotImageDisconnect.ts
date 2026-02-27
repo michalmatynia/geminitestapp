@@ -1,4 +1,3 @@
-// @ts-nocheck - Persistent ESLint misidentification of correctly typed props
 'use client';
 
 import { useCallback } from 'react';
@@ -56,8 +55,7 @@ export function useSlotImageDisconnect({
       lastConsumedSlotIdRef.current = null;
       clearObjectDraftSyncTimeouts();
       setUploadError(null);
-      // @ts-expect-error - Lint incorrectly flags this as error type
-      const previousTemporaryUpload: ImageStudioUploadedAsset | null = temporaryObjectUpload;
+      const previousTemporaryUpload = temporaryObjectUpload;
       const selectedSlotImageLocked = Boolean(
         objectSlot &&
         !previousTemporaryUpload &&
@@ -83,7 +81,7 @@ export function useSlotImageDisconnect({
             imageBase64: null,
           } as const;
           const slotIdCandidates = resolveSlotIdCandidates(objectSlot.id);
-          let patchedSlot = null;
+          let patchedSlot: ImageStudioSlot | null = null;
 
           if (projectId.trim() && slotIdCandidates.length > 0) {
             const candidateSet = new Set(slotIdCandidates);

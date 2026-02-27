@@ -37,7 +37,7 @@ export function ConnectionFormFields({
     ? 'Integration name (e.g. Allegro Main)'
     : isBaselinker
       ? 'Integration name (e.g. Main Baselinker)'
-      : "Integration name (e.g. John's Tradera)";
+      : 'Integration name (e.g. John\'s Tradera)';
 
   const usernameLabel = isAllegro
     ? 'Allegro client ID'

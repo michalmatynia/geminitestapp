@@ -1,9 +1,15 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
 import { Button, Input, SelectSimple } from '@/shared/ui';
+
+export interface ParserMappingListProps {
+  entries: Array<[string, string]>;
+  updateMappingKey: (index: number, value: string) => void;
+  updateMappingPath: (index: number, value: string) => void;
+  uniqueSuggestedPathOptions: Array<{ label: string; value: string }>;
+  removeMapping: (index: number) => void;
+}
 
 export function ParserMappingList({
   entries,
@@ -11,12 +17,12 @@ export function ParserMappingList({
   updateMappingPath,
   uniqueSuggestedPathOptions,
   removeMapping,
-}) {
+}: ParserMappingListProps): React.JSX.Element {
   return (
     <div className='space-y-3'>
       {entries.map(([key, path], index) => (
         <div
-          key={`\${key}-\${index}`}
+          key={`${key}-${index}`}
           className='grid gap-2 sm:grid-cols-[160px_1fr_auto] sm:items-start'
         >
           <Input

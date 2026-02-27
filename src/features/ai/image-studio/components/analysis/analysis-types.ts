@@ -1,6 +1,7 @@
 import type {
   ImageStudioAnalysisSummary,
   ImageStudioAnalysisResponse,
+  ImageStudioAnalysisMode,
 } from '../../contracts/analysis';
 import type {
   ImageStudioCenterDetectionMode,
@@ -8,6 +9,7 @@ import type {
 } from '../../contracts/center';
 
 export type AnalysisStatus = 'idle' | 'resolving' | 'processing';
+export type AnalysisMode = ImageStudioAnalysisMode;
 export type ShadowPolicy = ImageStudioCenterShadowPolicy;
 export type DetectionMode = ImageStudioCenterDetectionMode;
 export type AnalysisResult = ImageStudioAnalysisSummary & Pick<

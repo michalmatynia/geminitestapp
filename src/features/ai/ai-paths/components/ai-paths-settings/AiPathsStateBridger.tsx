@@ -1,8 +1,5 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
-import React from 'react';
 import { useStateBridgeAll } from '../../context';
 import { type UseAiPathsSettingsStateReturn } from './useAiPathsSettingsState';
 

@@ -35,8 +35,8 @@ vi.mock('@/shared/ui', () => ({
 
 vi.mock('@/shared/lib/api-client', () => ({
   api: {
-    get: (...args: unknown[]) => apiGetMock(...args),
-    post: (...args: unknown[]) => apiPostMock(...args),
+    get: (...args: unknown[]) => apiGetMock(...args) as Promise<unknown>,
+    post: (...args: unknown[]) => apiPostMock(...args) as Promise<unknown>,
   },
 }));
 
@@ -49,7 +49,7 @@ vi.mock('@/features/integrations/hooks/useProductListingMutations', () => ({
 
 vi.mock('@/shared/lib/query-invalidation', () => ({
   invalidateProductListingsAndBadges: (...args: unknown[]) =>
-    invalidateProductListingsAndBadgesMock(...args),
+    invalidateProductListingsAndBadgesMock(...args) as Promise<void>,
 }));
 
 import { BaseQuickExportButton } from './BaseQuickExportButton';

@@ -1,4 +1,3 @@
-// @ts-nocheck - Persistent ESLint misidentification of correctly typed props and mutation results
 'use client';
 
 import { useCallback } from 'react';
@@ -81,7 +80,6 @@ export function useSlotImageUpload({
         lastConsumedSlotIdRef.current = null;
         const selectedSlotId = objectSlot?.id?.trim() ?? '';
         if (selectedSlotId) {
-          // @ts-expect-error - Lint incorrectly flags uploaded as error type
           const updatePayload: UpdateImageStudioSlotDto = {
             imageFileId: uploaded.id,
             imageUrl: uploaded.filepath,
@@ -109,10 +107,8 @@ export function useSlotImageUpload({
 
           setTemporaryObjectUpload(null);
           setSelectedSlotId(updatedSlot.id);
-          // @ts-expect-error - Lint incorrectly flags uploaded as error type
           setObjectImageLinkDraft(uploaded.filepath);
           setObjectImageBase64Draft('');
-          // @ts-expect-error - Lint incorrectly flags uploaded as error type
           if (previousTemp && previousTemp.id !== uploaded.id) {
             await deleteUploadedAsset(previousTemp).catch(() => {
               // Best effort cleanup.
@@ -127,12 +123,9 @@ export function useSlotImageUpload({
 
         const createdSlots = await createSlots([
           {
-            // @ts-expect-error - Lint incorrectly flags uploaded as error type
             name: uploaded.filename?.trim() || `Card ${Date.now()}`,
             ...(getFolderForNewSlot() ? { folderPath: getFolderForNewSlot() } : {}),
-            // @ts-expect-error - Lint incorrectly flags uploaded as error type
             imageFileId: uploaded.id,
-            // @ts-expect-error - Lint incorrectly flags uploaded as error type
             imageUrl: uploaded.filepath,
             imageBase64: null,
           },
@@ -144,10 +137,8 @@ export function useSlotImageUpload({
 
         setTemporaryObjectUpload(null);
         setSelectedSlotId(createdSlot.id);
-        // @ts-expect-error - Lint incorrectly flags uploaded as error type
         setObjectImageLinkDraft(uploaded.filepath);
         setObjectImageBase64Draft('');
-        // @ts-expect-error - Lint incorrectly flags uploaded as error type
         if (previousTemp && previousTemp.id !== uploaded.id) {
           await deleteUploadedAsset(previousTemp).catch(() => {
             // Best effort cleanup.

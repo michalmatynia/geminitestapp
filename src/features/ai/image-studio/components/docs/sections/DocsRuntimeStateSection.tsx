@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
@@ -74,7 +72,7 @@ export function DocsRuntimeStateSection({
   extractDraftPromptLength: number;
   slotImageUrlDraftLength: number;
   slotBase64DraftLength: number;
-  metricValue: (v: any) => string;
+  metricValue: (v: unknown) => string;
 }): React.JSX.Element {
   return (
     <Card variant='subtle' padding='lg' className='border-border/60 bg-card/40 space-y-3'>

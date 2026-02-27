@@ -1,21 +1,17 @@
+'use client';
+
 import React from 'react';
-import type {
-  AiNode,
-  PathFlowIntensity,
-  Edge,
-  RuntimeState,
-  AiPathRuntimeNodeStatusMap,
-  AiPathRuntimeEvent,
-  DataContractNodeIssueSummary,
-} from '@/features/ai/ai-paths/lib';
-import type { EdgeRoutingMode, EdgePath } from '../context/hooks/useEdgePaths';
-import {
+import type { AiNode, DataContractNodeIssueSummary, Edge, RuntimeState, AiPathRuntimeNodeStatusMap, AiPathRuntimeEvent } from '@/features/ai/ai-paths/lib';
+import { 
   type CanvasRendererMode,
   type SvgConnectorTooltipState,
-  type SvgNodeDiagnosticsTooltipState,
+  type SvgNodeDiagnosticsTooltipState
 } from './CanvasBoard.utils';
-import { type ConnectorInfo } from './canvas-board-connectors';
+import { type EdgeRoutingMode, type EdgePath } from '../context/hooks/useEdgePaths';
+import type { ConnectorInfo } from './canvas-board-connectors';
 import { type ViewState, type PanState, type DragState, type ConnectingState } from '../context/CanvasContext';
+
+export type RuntimeRunStatus = 'idle' | 'running' | 'paused' | 'stepping';
 
 export interface CanvasBoardState {
   // View State
@@ -36,7 +32,7 @@ export interface CanvasBoardState {
   // Graph Data
   nodes: AiNode[];
   edges: Edge[];
-  flowIntensity: PathFlowIntensity | undefined;
+  flowIntensity: import('@/features/ai/ai-paths/lib').PathFlowIntensity | undefined;
   nodeById: Map<string, AiNode>;
   edgePaths: EdgePath[];
   
@@ -44,11 +40,11 @@ export interface CanvasBoardState {
   runtimeState: RuntimeState;
   runtimeNodeStatuses: AiPathRuntimeNodeStatusMap;
   runtimeEvents: AiPathRuntimeEvent[] | undefined;
-  runtimeRunStatus: string;
+  runtimeRunStatus: RuntimeRunStatus;
   nodeDurations: Record<string, number>;
   
   // Actions
-  fireTrigger: (node: AiNode, event?: React.MouseEvent<HTMLButtonElement>) => Promise<void>;
+  fireTrigger: (node: AiNode, event?: React.MouseEvent<Element> | React.PointerEvent<Element>) => Promise<void>;
   
   // Selection
   selectedNodeId: string | null;
@@ -88,7 +84,7 @@ export interface CanvasBoardState {
   
   // Derived UI State
   selectionMarqueeRect: { x: number; y: number; width: number; height: number } | null;
-  touchLongPressIndicator: { x: number; y: number; progress: number; phase: 'pending' | 'activated' } | null;
+  touchLongPressIndicator: { x: number; y: number; progress: number } | null;
   ConfirmationModal: React.ComponentType;
   
   // Local UI State
@@ -107,7 +103,7 @@ export interface CanvasBoardState {
   viewportSize: { width: number; height: number } | null;
   prefersReducedMotion: boolean;
   svgPerf: { fps: number; avgFrameMs: number; slowFrameRatio: number };
-  effectiveFlowIntensity: PathFlowIntensity;
+  effectiveFlowIntensity: import('@/features/ai/ai-paths/lib').PathFlowIntensity;
   isSvgRenderer: boolean;
   
   // Helpers

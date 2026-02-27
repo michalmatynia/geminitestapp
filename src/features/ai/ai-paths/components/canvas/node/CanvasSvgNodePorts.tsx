@@ -1,18 +1,38 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import React from 'react';
 import { 
   NODE_WIDTH, 
   PORT_SIZE, 
-  getPortOffsetY 
+  getPortOffsetY,
+  type AiNode
 } from '@/features/ai/ai-paths/lib';
 import { 
   INPUT_CONNECTOR_COLORS, 
   OUTPUT_CONNECTOR_COLORS 
 } from './canvas-svg-node-utils';
 import { formatPortLabel } from '@/features/ai/ai-paths/utils/ui-utils';
+import { type SvgConnectorTooltipState } from '../../CanvasBoard.utils';
+import { type ConnectorInfo } from '../../canvas-board-connectors';
+
+export interface CanvasSvgNodePortsProps {
+  node: AiNode;
+  incomingEdgePortSet: Set<string>;
+  hoveredConnectorKey: string | null;
+  pinnedConnectorKey: string | null;
+  connectorHitRadius: number;
+  showPortLabels: boolean;
+  buildConnectorKey: (direction: 'input' | 'output', nodeId: string, portName: string) => string;
+  onReconnectInput: (event: React.PointerEvent, nodeId: string, portName: string) => void | Promise<void>;
+  onCompleteConnection: (event: React.PointerEvent, nodeId: string, portName: string) => void | Promise<void>;
+  onDisconnectPort: (direction: 'input' | 'output', nodeId: string, portName: string) => void | Promise<void>;
+  onStartConnection: (event: React.PointerEvent, node: AiNode, portName: string) => void | Promise<void>;
+  setHoveredConnectorKey: (key: string | null) => void;
+  onConnectorHover: (state: SvgConnectorTooltipState) => void;
+  onConnectorLeave: () => void;
+  getConnectorInfo: (direction: 'input' | 'output', nodeId: string, portName: string) => ConnectorInfo;
+  setPinnedConnectorKey: (key: string | null) => void;
+}
 
 export function CanvasSvgNodePorts({
   node,
@@ -31,7 +51,7 @@ export function CanvasSvgNodePorts({
   onConnectorLeave,
   getConnectorInfo,
   setPinnedConnectorKey,
-}) {
+}: CanvasSvgNodePortsProps): React.JSX.Element {
   return (
     <>
       {node.inputs?.map((port, index) => {
@@ -59,20 +79,20 @@ export function CanvasSvgNodePorts({
               stroke={INPUT_CONNECTOR_COLORS.stroke}
               strokeWidth={isHovered || isPinned ? 2 : 1}
               style={{ cursor: 'crosshair' }}
-              onPointerDown={(event) => {
+              onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
                 event.stopPropagation();
                 void onReconnectInput(event, node.id, port);
               }}
-              onPointerUp={(event) => {
+              onPointerUp={(event: React.PointerEvent<SVGCircleElement>) => {
                 event.stopPropagation();
-                onCompleteConnection(event, node, port);
+                void onCompleteConnection(event, node, port);
               }}
-              onContextMenu={(event) => {
+              onContextMenu={(event: React.MouseEvent<SVGCircleElement>) => {
                 event.preventDefault();
                 event.stopPropagation();
-                onDisconnectPort('input', node.id, port);
+                void onDisconnectPort('input', node.id, port);
               }}
-              onPointerEnter={(event) => {
+              onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
                 setHoveredConnectorKey(key);
                 onConnectorHover?.({
                   clientX: event.clientX,
@@ -84,7 +104,7 @@ export function CanvasSvgNodePorts({
                 setHoveredConnectorKey(null);
                 onConnectorLeave?.();
               }}
-              onClick={(event) => {
+              onClick={(event: React.MouseEvent<SVGCircleElement>) => {
                 event.stopPropagation();
                 if (isPinned) {
                   setPinnedConnectorKey(null);
@@ -105,15 +125,15 @@ export function CanvasSvgNodePorts({
               fill='transparent'
               stroke='none'
               style={{ cursor: 'crosshair' }}
-              onPointerDown={(event) => {
+              onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
                 event.stopPropagation();
                 void onReconnectInput(event, node.id, port);
               }}
-              onPointerUp={(event) => {
+              onPointerUp={(event: React.PointerEvent<SVGCircleElement>) => {
                 event.stopPropagation();
-                onCompleteConnection(event, node, port);
+                void onCompleteConnection(event, node, port);
               }}
-              onPointerEnter={(event) => {
+              onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
                 setHoveredConnectorKey(key);
                 onConnectorHover?.({
                   clientX: event.clientX,
@@ -125,7 +145,7 @@ export function CanvasSvgNodePorts({
                 setHoveredConnectorKey(null);
                 onConnectorLeave?.();
               }}
-              onClick={(event) => {
+              onClick={(event: React.MouseEvent<SVGCircleElement>) => {
                 event.stopPropagation();
                 if (isPinned) {
                   setPinnedConnectorKey(null);
@@ -170,16 +190,16 @@ export function CanvasSvgNodePorts({
               stroke={OUTPUT_CONNECTOR_COLORS.stroke}
               strokeWidth={isHovered || isPinned ? 2 : 1}
               style={{ cursor: 'crosshair' }}
-              onPointerDown={(event) => {
+              onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
                 event.stopPropagation();
                 void onStartConnection(event, node, port);
               }}
-              onContextMenu={(event) => {
+              onContextMenu={(event: React.MouseEvent<SVGCircleElement>) => {
                 event.preventDefault();
                 event.stopPropagation();
-                onDisconnectPort('output', node.id, port);
+                void onDisconnectPort('output', node.id, port);
               }}
-              onPointerEnter={(event) => {
+              onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
                 setHoveredConnectorKey(key);
                 onConnectorHover?.({
                   clientX: event.clientX,
@@ -187,7 +207,7 @@ export function CanvasSvgNodePorts({
                   info: getConnectorInfo('output', node.id, port),
                 });
               }}
-              onPointerMove={(event) => {
+              onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
                 setHoveredConnectorKey(key);
                 onConnectorHover?.({
                   clientX: event.clientX,
@@ -199,7 +219,7 @@ export function CanvasSvgNodePorts({
                 setHoveredConnectorKey(null);
                 onConnectorLeave?.();
               }}
-              onClick={(event) => {
+              onClick={(event: React.MouseEvent<SVGCircleElement>) => {
                 event.stopPropagation();
                 if (isPinned) {
                   setPinnedConnectorKey(null);
@@ -220,11 +240,11 @@ export function CanvasSvgNodePorts({
               fill='transparent'
               stroke='none'
               style={{ cursor: 'crosshair' }}
-              onPointerDown={(event) => {
+              onPointerDown={(event: React.PointerEvent<SVGCircleElement>) => {
                 event.stopPropagation();
                 void onStartConnection(event, node, port);
               }}
-              onPointerEnter={(event) => {
+              onPointerEnter={(event: React.PointerEvent<SVGCircleElement>) => {
                 setHoveredConnectorKey(key);
                 onConnectorHover?.({
                   clientX: event.clientX,
@@ -232,7 +252,7 @@ export function CanvasSvgNodePorts({
                   info: getConnectorInfo('output', node.id, port),
                 });
               }}
-              onPointerMove={(event) => {
+              onPointerMove={(event: React.PointerEvent<SVGCircleElement>) => {
                 setHoveredConnectorKey(key);
                 onConnectorHover?.({
                   clientX: event.clientX,
@@ -244,7 +264,7 @@ export function CanvasSvgNodePorts({
                 setHoveredConnectorKey(null);
                 onConnectorLeave?.();
               }}
-              onClick={(event) => {
+              onClick={(event: React.MouseEvent<SVGCircleElement>) => {
                 event.stopPropagation();
                 if (isPinned) {
                   setPinnedConnectorKey(null);

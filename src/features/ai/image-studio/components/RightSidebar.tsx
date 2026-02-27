@@ -372,7 +372,7 @@ export function RightSidebar(): React.JSX.Element {
     setSequenceRunBusy,
     setSidebarTab,
     slots,
-    studioSettings: studioSettings as ImageStudioSettings,
+    studioSettings,
     toast: (msg: string, opt?: { variant?: 'success' | 'error' | 'info' | 'warning' }) => {
       // @ts-expect-error - Complex toast type mismatch
       toast(msg, opt);

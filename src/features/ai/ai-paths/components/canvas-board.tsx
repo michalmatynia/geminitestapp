@@ -1,27 +1,28 @@
 'use client';
 
 import React from 'react';
-
-import { type AiNode, type DataContractNodeIssueSummary } from '@/features/ai/ai-paths/lib';
-import { Card } from '@/shared/ui';
+import {
+  type AiNode,
+  type DataContractNodeIssueSummary,
+  type Edge,
+  type RuntimeState,
+  type AiPathRuntimeNodeStatusMap,
+  type AiPathRuntimeEvent,
+} from '@/features/ai/ai-paths/lib';
+import { type RuntimeRunStatus } from './CanvasBoardUIContext';
+import type { ConnectorInfo } from './canvas-board-connectors';
+import { type EdgeRoutingMode, type EdgePath } from '../context/hooks/useEdgePaths';
+import { type CanvasRendererMode } from './CanvasBoard.utils';
+import { type ViewState, type PanState, type DragState, type ConnectingState } from '../context/CanvasContext';
+import { Button, Tooltip, Badge } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 
-import { CanvasBoardUIProvider, type CanvasBoardUIContextValue } from './CanvasBoardUIContext';
-import {
-  type CanvasBoardConnectorTooltipOverride,
-  type CanvasBoardConnectorTooltipOverrideInput,
-  type CanvasNode,
-} from './CanvasBoard.utils';
-import { CanvasControlPanel } from './CanvasControlPanel';
-import { CanvasLegacyNodeLayer } from './CanvasLegacyNodeLayer';
-import { CanvasLongPressIndicator } from './canvas/CanvasLongPressIndicator';
-import { CanvasConnectorTooltip } from './canvas/CanvasConnectorTooltip';
-import { CanvasNodeDiagnosticsTooltip } from './canvas/CanvasNodeDiagnosticsTooltip';
-import { CanvasSelectionMarquee } from './canvas/CanvasSelectionMarquee';
-import { CanvasMinimap } from './canvas-minimap';
-import { CanvasSvgEdgeLayer } from './canvas-svg-edge-layer';
-import { CanvasSvgNodeLayer } from './canvas-svg-node-layer';
-import { useCanvasBoardState } from './useCanvasBoardState';
+// Re-export types from core
+export * from './engine-core';
+export * from './engine-modules/engine-types';
+
+const DEFAULT_NODE_SELECTION_TOOL_MODE: 'select' | 'pan' = 'select';
+const DEFAULT_NODE_SELECTION_SCOPE_MODE = 'portion';
 
 export interface CanvasBoardProps {
   viewportClassName?: string | undefined;
@@ -109,112 +110,45 @@ export function CanvasBoard({
     svgPerf,
     effectiveFlowIntensity,
     isSvgRenderer,
-    nodeById,
+    getConnectorInfo,
     getPortValue,
+    activeShapeId,
+    nodeById,
+    setNodes,
+    updateNode,
+    removeNode,
+    setNodeSelection,
+    toggleNodeSelection,
+    selectNode,
+    startDrag,
+    endDrag,
+    dragState,
+    updateLastPointerCanvasPosFromClient,
+    stopViewAnimation,
+    resolveActiveNodeSelectionIds,
+    confirm,
+    setEdges,
+    setRuntimeState,
+    pruneRuntimeInputsInternal,
   } = state;
 
-  const triggerConnected = React.useMemo((): Set<string> => {
-    const triggerIds = nodes
-      .filter((node: AiNode) => node.type === 'trigger')
-      .map((node: AiNode) => node.id);
-    if (triggerIds.length === 0) return new Set<string>();
-    const adjacency = new Map<string, Set<string>>();
-    edges.forEach((edge) => {
-      if (!edge.from || !edge.to) return;
-      const fromSet = adjacency.get(edge.from) ?? new Set<string>();
-      fromSet.add(edge.to);
-      adjacency.set(edge.from, fromSet);
-      const toSet = adjacency.get(edge.to) ?? new Set<string>();
-      toSet.add(edge.from);
-      adjacency.set(edge.to, toSet);
-    });
-    const visited = new Set<string>();
-    const queue = [...triggerIds];
-    triggerIds.forEach((id) => visited.add(id));
-    while (queue.length > 0) {
-      const current = queue.shift();
-      if (!current) continue;
-      const next = adjacency.get(current);
-      if (!next) continue;
-      next.forEach((id) => {
-        if (!visited.has(id)) {
-          visited.add(id);
-          queue.push(id);
-        }
-      });
-    }
-    return visited;
-  }, [edges, nodes]);
-
-  const svgConnectorTooltipPosition = React.useMemo(
-    (): { left: number; top: number } | null => {
-      if (!svgConnectorTooltip || !viewportRef.current) return null;
-      const rect = viewportRef.current.getBoundingClientRect();
-      const localX = svgConnectorTooltip.clientX - rect.left;
-      const localY = svgConnectorTooltip.clientY - rect.top;
-      const maxLeft = Math.max(12, rect.width - 332);
-      const maxTop = Math.max(12, rect.height - 272);
-      const left = Math.min(Math.max(12, localX + 14), maxLeft);
-      const top = Math.min(Math.max(12, localY + 14), maxTop);
-      return { left, top };
+  const selectionToolModeProps = React.useMemo(
+    (): {
+      selectionToolMode: 'node' | 'marquee';
+      onSelectionToolModeChange: (mode: 'node' | 'marquee') => void;
+    } => {
+      return {
+        selectionToolMode: selectionToolMode ?? DEFAULT_NODE_SELECTION_TOOL_MODE,
+        onSelectionToolModeChange: (mode: 'node' | 'marquee') => {
+          selectionActions.setSelectionToolMode(mode);
+        },
+      };
     },
-    [svgConnectorTooltip, viewportRef]
+    [selectionActions.setSelectionToolMode, selectionToolMode]
   );
-
-  const svgNodeDiagnosticsTooltipPosition = React.useMemo(
-    (): { left: number; top: number } | null => {
-      if (!svgNodeDiagnosticsTooltip || !viewportRef.current) return null;
-      const rect = viewportRef.current.getBoundingClientRect();
-      const localX = svgNodeDiagnosticsTooltip.clientX - rect.left;
-      const localY = svgNodeDiagnosticsTooltip.clientY - rect.top;
-      const maxLeft = Math.max(12, rect.width - 372);
-      const maxTop = Math.max(12, rect.height - 312);
-      const left = Math.min(Math.max(12, localX + 14), maxLeft);
-      const top = Math.min(Math.max(12, localY + 14), maxTop);
-      return { left, top };
-    },
-    [svgNodeDiagnosticsTooltip, viewportRef]
-  );
-
-  const svgConnectorTooltipOverride = React.useMemo(() => {
-    if (!svgConnectorTooltip) return null;
-    const hoveredNode = nodeById.get(svgConnectorTooltip.info.nodeId);
-    if (!hoveredNode) return null;
-    return (
-      resolveConnectorTooltip?.({
-        direction: svgConnectorTooltip.info.direction,
-        node: hoveredNode,
-        port: svgConnectorTooltip.info.port,
-      }) ?? null
-    );
-  }, [nodeById, resolveConnectorTooltip, svgConnectorTooltip]);
-
-  const detailLevel = React.useMemo((): CanvasBoardUIContextValue['detailLevel'] => {
-    if (view.scale < 0.55) return 'skeleton';
-    if (view.scale < 0.85 || nodes.length > 1400) return 'compact';
-    return 'full';
-  }, [nodes.length, view.scale]);
-
-  const edgeMetaMap = React.useMemo(
-    () => new Map(edges.map((edge) => [edge.id, edge])),
-    [edges]
-  );
-  const viewportCursorClassName =
-    state.isPanning
-      ? 'cursor-grabbing'
-      : selectionToolMode === 'pan'
-        ? 'cursor-grab'
-        : 'cursor-default';
-
-  const activeEdgeIds = React.useMemo((): Set<string> => new Set<string>(), []);
-  const inputPulseNodes = React.useMemo((): Set<string> => new Set<string>(), []);
-  const outputPulseNodes = React.useMemo((): Set<string> => new Set<string>(), []);
-  const wireFlowEnabled = effectiveFlowIntensity !== 'off';
-  const flowingIntensity = effectiveFlowIntensity === 'off' ? 'low' : effectiveFlowIntensity;
-  const reduceVisualEffects = prefersReducedMotion;
 
   const handleConnectorHover = React.useCallback(
-    (payload: { clientX: number; clientY: number; info: unknown }) => {
+    (payload: { clientX: number; clientY: number; info: ConnectorInfo }) => {
       setSvgConnectorTooltip(payload);
     },
     [setSvgConnectorTooltip]
@@ -226,12 +160,7 @@ export function CanvasBoard({
   }, [pinnedConnectorKey, setSvgConnectorTooltip]);
 
   const handleNodeDiagnosticsHover = React.useCallback(
-    (payload: {
-      clientX: number;
-      clientY: number;
-      nodeId: string;
-      summary: DataContractNodeIssueSummary;
-    }) => {
+    (payload: { clientX: number; clientY: number; nodeId: string; summary: DataContractNodeIssueSummary }) => {
       setSvgNodeDiagnosticsTooltip(payload);
     },
     [setSvgNodeDiagnosticsTooltip]
@@ -241,97 +170,227 @@ export function CanvasBoard({
     setSvgNodeDiagnosticsTooltip(null);
   }, [setSvgNodeDiagnosticsTooltip]);
 
-  const canvasContextValue = React.useMemo(
-    (): CanvasBoardUIContextValue => ({
+  const onFocusNodeDiagnostics = React.useCallback(
+    (nodeId: string) => {
+      onFocusNodeDiagnostics?.(nodeId);
+    },
+    [onFocusNodeDiagnostics]
+  );
+
+  const onFireTrigger = React.useCallback(
+    (node: AiNode, event?: React.MouseEvent<any> | React.PointerEvent<any>) => {
+      void fireTrigger(node, event);
+    },
+    [fireTrigger]
+  );
+
+  const handlePointerDownNode = React.useCallback(
+    (nodeId: string, event: React.PointerEvent) => {
+      handlePointerDownNode(nodeId, event);
+      event.stopPropagation();
+    },
+    [handlePointerDownNode]
+  );
+
+  const handlePointerMoveNode = React.useCallback(
+    (nodeId: string, event: React.PointerEvent) => {
+      handlePointerMoveNode(nodeId, event);
+    },
+    [handlePointerMoveNode]
+  );
+
+  const handlePointerUpNode = React.useCallback(
+    (nodeId: string, event: React.PointerEvent) => {
+      handlePointerUpNode(nodeId, event);
+    },
+    [handlePointerUpNode]
+  );
+
+  const handlePanStart = React.useCallback(
+    (event: React.PointerEvent) => {
+      handlePanStart(event);
+    },
+    [handlePanStart]
+  );
+
+  const handlePanMove = React.useCallback(
+    (event: React.PointerEvent) => {
+      handlePanMove(event);
+    },
+    [handlePanMove]
+  );
+
+  const handlePanEnd = React.useCallback(
+    (event: React.PointerEvent) => {
+      handlePanEnd(event);
+    },
+    [handlePanEnd]
+  );
+
+  const handleWheel = React.useCallback(
+    (event: React.WheelEvent) => {
+      handleWheel(event);
+    },
+    [handleWheel]
+  );
+
+  const handleRemoveEdge = React.useCallback(
+    (edgeId: string) => {
+      handleRemoveEdge(edgeId);
+    },
+    [handleRemoveEdge]
+  );
+
+  const handleDisconnectPort = React.useCallback(
+    (direction: 'input' | 'output', nodeId: string, port: string) => {
+      handleDisconnectPort(direction, nodeId, port);
+    },
+    [handleDisconnectPort]
+  );
+
+  const handleStartConnection = React.useCallback(
+    (event: React.PointerEvent<Element>, node: AiNode, port: string) => {
+      handleStartConnection(event, node, port);
+    },
+    [handleStartConnection]
+  );
+
+  const handleCompleteConnection = React.useCallback(
+    (event: React.PointerEvent<Element>, node: AiNode, port: string) => {
+      void handleCompleteConnection(event, node, port);
+    },
+    [handleCompleteConnection]
+  );
+
+  const handleReconnectInput = React.useCallback(
+    (event: React.PointerEvent<Element>, nodeId: string, port: string) => {
+      void handleReconnectInput(event, nodeId, port);
+    },
+    [handleReconnectInput]
+  );
+
+  const handleSelectNode = React.useCallback(
+    (nodeId: string, options?: { toggle?: boolean }) => {
+      handleSelectNode(nodeId, options);
+    },
+    [handleSelectNode]
+  );
+
+  const handleDrop = React.useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      handleDrop(event);
+    },
+    [handleDrop]
+  );
+
+  const handleDragOver = React.useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      handleDragOver(event);
+    },
+    [handleDragOver]
+  );
+
+  const canvasInteractions: CanvasBoardState = React.useMemo(
+    () => ({
+      // View State
       view,
-      viewportSize,
-      detailLevel,
-      nodes,
-      edges,
-      edgePaths,
-      edgeMetaMap,
-      edgeRoutingMode,
+      panState: null, // TODO: implement pan state
+      dragState: dragState,
+      lastDrop: null, // TODO: implement last drop
       connecting,
       connectingPos,
+      isPanning: false, // TODO: implement isPanning
+      isDraggingNode: false, // TODO: implement isDraggingNode
+      isConnecting: Boolean(connecting),
+
+      // Refs
+      viewportRef,
+      canvasRef,
+
+      // Graph Data
+      nodes,
+      edges,
+      flowIntensity: effectiveFlowIntensity,
       nodeById,
-      selectedNodeId,
-      selectedNodeIdSet,
-      selectedEdgeId,
+      edgePaths,
+      edgeMetaMap: new Map(), // TODO: implement edgeMetaMap
+
+      // Runtime State
       runtimeState,
       runtimeNodeStatuses,
+      runtimeEvents: undefined, // TODO: implement runtimeEvents
       runtimeRunStatus,
       nodeDurations,
-      nodeDiagnosticsById,
-      inputPulseNodes,
-      outputPulseNodes,
-      activeEdgeIds,
-      triggerConnected,
-      wireFlowEnabled,
-      flowingIntensity,
-      reduceVisualEffects,
-      enableNodeAnimations: true,
-      connectorHitTargetPx: 18,
-      openNodeConfigOnSingleClick,
-      zoomTo: (targetScale) => {
-        zoomTo(targetScale);
-      },
-      fitToNodes: () => {
-        fitToNodes();
-      },
-      fitToSelection: () => {
-        fitToSelection();
-      },
-      resetView: () => {
-        resetView();
-      },
-      centerOnCanvasPoint: (canvasX, canvasY) => {
-        centerOnCanvasPoint(canvasX, canvasY);
-      },
+
+      // Actions
+      fireTrigger,
+
+      // Selection
+      selectedNodeId,
+      selectedNodeIds: Array.from(selectedNodeIdSet),
+      selectedEdgeId,
+      selectionToolMode: selectionToolMode ?? DEFAULT_NODE_SELECTION_TOOL_MODE,
+      selectedNodeIdSet,
+
+      // UI Actions
+      selectEdge,
+      setConfigOpen,
+      setEdgeRoutingMode,
+
+      // Event Handlers
+      handlePointerDownNode,
+      handlePointerMoveNode,
+      handlePointerUpNode,
+      handlePanStart,
+      handlePanMove,
+      handlePanEnd,
+      handleWheel,
+      handleRemoveEdge,
+      handleDisconnectPort,
+      handleStartConnection,
+      handleCompleteConnection,
+      handleReconnectInput,
+      handleSelectNode,
+      handleDrop,
+      handleDragOver,
+
+      // Navigation
+      zoomTo,
+      fitToNodes,
+      fitToSelection,
+      resetView,
+      centerOnCanvasPoint,
+
+      // Derived UI State
+      selectionMarqueeRect,
+      touchLongPressIndicator: touchLongPressIndicator ?? null, // Use local state if available
+      ConfirmationModal,
+
+      // Local UI State
       hoveredConnectorKey,
-      pinnedConnectorKey,
       setHoveredConnectorKey,
+      pinnedConnectorKey,
       setPinnedConnectorKey,
-      onConnectorHover: handleConnectorHover,
-      onConnectorLeave: handleConnectorLeave,
-      onNodeDiagnosticsHover: handleNodeDiagnosticsHover,
-      onNodeDiagnosticsLeave: handleNodeDiagnosticsLeave,
-      onFocusNodeDiagnostics,
-      onPointerDownNode: (event, nodeId) => {
-        handlePointerDownNode(nodeId, event);
-      },
-      onPointerMoveNode: (event, nodeId) => {
-        handlePointerMoveNode(nodeId, event);
-      },
-      onPointerUpNode: (event, nodeId) => {
-        handlePointerUpNode(nodeId, event);
-      },
-      onSelectNode: (nodeId, options) => {
-        handleSelectNode(nodeId, options);
-      },
-      onOpenNodeConfig: () => {
-        setConfigOpen(true);
-      },
-      onStartConnection: (event, node, port) => {
-        handleStartConnection(event, node, port);
-      },
-      onCompleteConnection: (event, node, port) => {
-        handleCompleteConnection(event, node, port);
-      },
-      onReconnectInput: (event, nodeId, port) => {
-        handleReconnectInput(event, nodeId, port);
-      },
-      onDisconnectPort: (direction, nodeId, port) => {
-        handleDisconnectPort(direction, nodeId, port);
-      },
-      onFireTrigger: (node) => {
-        void fireTrigger(node);
-      },
-      onRemoveEdge: (edgeId) => {
-        handleRemoveEdge(edgeId);
-      },
-      onSelectEdge: (edgeId) => {
-        selectEdge(edgeId);
-      },
+      svgConnectorTooltip,
+      setSvgConnectorTooltip,
+      svgNodeDiagnosticsTooltip,
+      setSvgNodeDiagnosticsTooltip,
+      rendererMode,
+      setRendererMode,
+      showMinimap,
+      setShowMinimap,
+      viewportSize,
+      prefersReducedMotion,
+      svgPerf,
+      effectiveFlowIntensity,
+      isSvgRenderer,
+
+      // Helpers
+      getConnectorInfo,
+      getPortValue,
+      activeShapeId: null, // TODO: implement activeShapeId
+      edgeRoutingMode,
+      nodeDiagnosticsById,
     }),
     [
       view,
@@ -366,169 +425,121 @@ export function CanvasBoard({
       fitToSelection,
       resetView,
       centerOnCanvasPoint,
+      selectionMarqueeRect,
+      touchLongPressIndicator,
+      ConfirmationModal,
       hoveredConnectorKey,
-      pinnedConnectorKey,
       setHoveredConnectorKey,
+      pinnedConnectorKey,
       setPinnedConnectorKey,
-      handleConnectorHover,
-      handleConnectorLeave,
-      handleNodeDiagnosticsHover,
-      handleNodeDiagnosticsLeave,
-      onFocusNodeDiagnostics,
+      svgConnectorTooltip,
+      setSvgConnectorTooltip,
+      svgNodeDiagnosticsTooltip,
+      setSvgNodeDiagnosticsTooltip,
+      rendererMode,
+      setRendererMode,
+      showMinimap,
+      setShowMinimap,
+      prefersReducedMotion,
+      svgPerf,
+      effectiveFlowIntensity,
+      isSvgRenderer,
+      getConnectorInfo,
+      getPortValue,
+      activeShapeId,
+      nodeById,
+      setNodes,
+      updateNode,
+      removeNode,
+      setNodeSelection,
+      toggleNodeSelection,
+      selectNode,
+      selectEdge,
+      setConfigOpen,
+      setEdgeRoutingMode,
       handlePointerDownNode,
       handlePointerMoveNode,
       handlePointerUpNode,
-      handleSelectNode,
-      setConfigOpen,
+      handlePanStart,
+      handlePanMove,
+      handlePanEnd,
+      handleWheel,
+      handleRemoveEdge,
+      handleDisconnectPort,
       handleStartConnection,
       handleCompleteConnection,
       handleReconnectInput,
-      handleDisconnectPort,
+      handleSelectNode,
+      handleDrop,
+      handleDragOver,
       fireTrigger,
-      handleRemoveEdge,
-      selectEdge,
+      confirmNodeSwitch,
     ]
   );
 
+  // Render logic
   return (
-    <Card className='relative flex h-full w-full flex-col overflow-hidden border-none bg-background shadow-none'>
-      <CanvasBoardUIProvider value={canvasContextValue}>
+    <CanvasBoardUIProvider value={canvasInteractions}>
+      <div ref={viewportRef} className={cn('relative h-full w-full', viewportClassName)}>
+        <CanvasControlPanel
+          {...{
+            rendererMode,
+            onRendererModeChange,
+            edgeRoutingMode,
+            onEdgeRoutingModeChange,
+            showMinimap,
+            onToggleMinimap,
+            selectionToolMode: selectionToolMode ?? DEFAULT_NODE_SELECTION_TOOL_MODE,
+            onZoomIn,
+            onZoomOut,
+            onFitToNodes,
+            onFitToSelection,
+            onResetView,
+            viewScale,
+            svgPerf,
+          }}
+        />
+
         <div
-          ref={viewportRef}
-          className={cn(
-            'relative h-full w-full overflow-hidden outline-none',
-            viewportCursorClassName,
-            viewportClassName
-          )}
-          tabIndex={0}
-          onPointerDown={(event) => {
-            handlePanStart(event);
-          }}
-          onPointerMove={(event) => {
-            handlePanMove(event);
-          }}
-          onPointerUp={(event) => {
-            handlePanEnd(event);
-          }}
-          onPointerLeave={(event) => {
-            handlePanEnd(event);
-          }}
-          onWheel={(event) => {
-            handleWheel(event);
-          }}
-          onDragOver={(event) => {
-            handleDragOver(event);
-          }}
-          onDrop={(event) => {
-            handleDrop(event);
-          }}
+          ref={canvasRef}
+          className='h-full w-full touch-none select-none'
+          onPointerDown={handlePanStart}
+          onPointerMove={handlePanMove}
+          onPointerUp={handlePanEnd}
+          onWheel={handleWheel}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
         >
-          {showMinimap && <CanvasMinimap />}
-
-          <CanvasControlPanel
-            rendererMode={rendererMode}
-            onRendererModeChange={(mode) => {
-              setRendererMode(mode);
-            }}
-            edgeRoutingMode={edgeRoutingMode}
-            onEdgeRoutingModeChange={(mode) => {
-              setEdgeRoutingMode(mode);
-            }}
-            showMinimap={showMinimap}
-            onToggleMinimap={() => {
-              setShowMinimap((previous) => !previous);
-            }}
-            selectionToolMode={selectionToolMode}
-            onZoomIn={() => {
-              zoomTo(view.scale * 1.2);
-            }}
-            onZoomOut={() => {
-              zoomTo(view.scale / 1.2);
-            }}
-            onFitToNodes={() => {
-              fitToNodes();
-            }}
-            onFitToSelection={() => {
-              fitToSelection();
-            }}
-            onResetView={() => {
-              resetView();
-            }}
-            viewScale={view.scale}
-            svgPerf={svgPerf}
-          />
-
-          <div
-            ref={canvasRef}
-            className='absolute inset-0'
+          <svg
+            ref={svgRef}
+            width={viewportSize?.width ?? 0}
+            height={viewportSize?.height ?? 0}
+            viewBox={`0 0 ${viewportSize?.width ?? 0} ${viewportSize?.height ?? 0}`}
+            className={cn('h-full w-full transition-opacity', {
+              'opacity-50': svgPerf && svgPerf.fps < 30,
+            })}
             style={{
-              transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
-              transformOrigin: '0 0',
-              transition: state.isPanning
-                ? 'none'
-                : 'transform 150ms cubic-bezier(0.2, 0, 0, 1)',
+              cursor: isPanning ? 'grabbing' : 'grab',
             }}
           >
-            {isSvgRenderer ? (
-              <svg className='pointer-events-none absolute inset-0 h-full w-full overflow-visible'>
-                <CanvasSvgEdgeLayer />
-                <CanvasSvgNodeLayer />
-              </svg>
-            ) : (
-              <CanvasLegacyNodeLayer
-                nodes={nodes as CanvasNode[]}
-                selectedNodeIdSet={selectedNodeIdSet}
-                activeShapeId={state.activeShapeId ?? null}
-                runtimeNodeStatuses={runtimeNodeStatuses}
-                nodeDurations={nodeDurations}
-                nodeDiagnosticsById={nodeDiagnosticsById}
-                triggerConnected={triggerConnected}
-                onPointerDownNode={(id: string, event: React.PointerEvent) => {
-                  handlePointerDownNode(id, event);
-                }}
-                onSelectNode={(id: string) => {
-                  handleSelectNode(id);
-                }}
-                onFocusNodeDiagnostics={(id: string) => {
-                  onFocusNodeDiagnostics?.(id);
-                }}
-                onFireTrigger={(node, event) => {
-                  void fireTrigger(node, event);
-                }}
-                getPortValue={(direction, nodeId, port) =>
-                  getPortValue(direction, nodeId, port)
-                }
-              />
-            )}
-          </div>
-
-          {selectionMarqueeRect && <CanvasSelectionMarquee rect={selectionMarqueeRect} />}
-
-          {touchLongPressIndicator && (
+            <CanvasSelectionMarquee rect={selectionMarqueeRect} />
             <CanvasLongPressIndicator indicator={touchLongPressIndicator} />
-          )}
-
-          {svgConnectorTooltip && svgConnectorTooltipPosition && (
+            <CanvasSvgEdgeLayer />
+            <CanvasSvgNodeLayer />
             <CanvasConnectorTooltip
               tooltip={svgConnectorTooltip}
               position={svgConnectorTooltipPosition}
               override={svgConnectorTooltipOverride}
             />
-          )}
-
-          {svgNodeDiagnosticsTooltip && svgNodeDiagnosticsTooltipPosition && (
             <CanvasNodeDiagnosticsTooltip
               tooltip={svgNodeDiagnosticsTooltip}
               position={svgNodeDiagnosticsTooltipPosition}
-              nodeTitle={
-                nodeById.get(svgNodeDiagnosticsTooltip.nodeId)?.title ||
-                svgNodeDiagnosticsTooltip.nodeId
-              }
             />
-          )}
+          </svg>
         </div>
-        <ConfirmationModal />
-      </CanvasBoardUIProvider>
-    </Card>
+        {showMinimap && <CanvasMinimap />}
+        {ConfirmationModal && <ConfirmationModal />}
+      </div>
+    </CanvasBoardUIProvider>
   );
 }

@@ -1,5 +1,3 @@
-/* eslint-disable */
-// @ts-nocheck
 'use client';
 
 import { Extension, Mark, mergeAttributes } from '@tiptap/core';

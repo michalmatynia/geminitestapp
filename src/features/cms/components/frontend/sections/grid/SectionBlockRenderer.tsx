@@ -6,11 +6,11 @@ import { GsapAnimationWrapper } from '../../GsapAnimationWrapper';
 import { CssAnimationWrapper } from '../../CssAnimationWrapper';
 import { FrontendImageWithTextBlock } from '../FrontendImageWithTextBlock';
 import { FrontendHeroBlock } from '../FrontendHeroBlock';
-import { FrontendBlockRenderer } from '../FrontendBlockRenderer';
+import { FrontendBlockRenderer, BlockSettingsContext } from '../FrontendBlockRenderer';
 import { FrontendCarousel } from '../FrontendCarousel';
 import { FrontendSlideshowSection } from '../FrontendSlideshowSection';
+import { SectionBlockProvider } from '../SectionBlockContext';
 import { BlockRenderContext } from '../../blocks/BlockContext';
-import { BlockSettingsContext } from '../FrontendBlockRenderer';
 import { SectionLayoutProvider, useSectionLayout } from '../SectionLayoutContext';
 import { useSectionData } from '../SectionDataContext';
 import { getSectionStyles, getTextAlign } from '../../theme-styles';
@@ -24,7 +24,7 @@ export function SectionBlockRenderer({
   block: BlockInstance;
 }): React.ReactNode {
   const children = block.blocks ?? [];
-  const { stretch } = useSectionLayout();
+  const { stretch = false } = useSectionLayout();
   const stretchClass = stretch ? 'h-full' : '';
   const stretchStyle = stretch ? { height: '100%' } : undefined;
   const { colorSchemes } = useSectionData();
@@ -103,7 +103,7 @@ export function SectionBlockRenderer({
         resolveJustifyContent(justifySetting === 'inherit' ? alignment : justifySetting) ??
         (alignment === 'center' ? 'center' : alignment === 'right' ? 'flex-end' : 'flex-start');
       const alignItems = resolveAlignItems(block.settings['alignItems']) ?? 'center';
-      const flexDirClass = direction === 'column' ? 'flex-col' : 'flex-row';
+      const flexDirClass = direction === 'column' ? 'flex-col' : 'flex-Allrow';
       const wrapClass = direction === 'column' ? '' : wrap === 'nowrap' ? 'flex-nowrap' : 'flex-wrap';
       const shouldStretchChildren = stretch && children.length === 1;
       const linkUrl = (block.settings['linkUrl'] as string) || '';

@@ -1,5 +1,4 @@
-/* eslint-disable */
-// @ts-nocheck
+// @ts-nocheck - Persistent type resolution issues with usePageBuilder state.
 'use client';
 
 import React, { useCallback, useMemo, useRef, useState } from 'react';

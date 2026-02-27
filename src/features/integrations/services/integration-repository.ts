@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { ObjectId, type WithId } from 'mongodb';
+import { ObjectId, type WithId, type Filter, type Document } from 'mongodb';
 
 import { isBaseIntegrationSlug } from '@/features/integrations/constants/slugs';
 import { badRequestError, conflictError } from '@/shared/errors/app-error';
@@ -381,7 +381,12 @@ const countMongoConnectionDependencies = async (
 ): Promise<ConnectionDependencyCounts> => {
   const db = await getMongoDb();
   const candidates = toConnectionIdCandidates(connectionId);
-  const filter = buildMongoConnectionFieldFilter(candidates);
+  const filter = {
+    _id: {
+      $in: candidates.asDocumentIds,
+    },
+  } as Filter<{ _id: ObjectId | string }>;
+
   const [
     productListings,
     categoryMappings,
@@ -391,13 +396,13 @@ const countMongoConnectionDependencies = async (
     tagMappings,
     externalTags,
   ] = await Promise.all([
-    db.collection('product_listings').countDocuments(filter),
-    db.collection('category_mappings').countDocuments(filter),
-    db.collection('external_categories').countDocuments(filter),
-    db.collection('producer_mappings').countDocuments(filter),
-    db.collection('external_producers').countDocuments(filter),
-    db.collection('tag_mappings').countDocuments(filter),
-    db.collection('external_tags').countDocuments(filter),
+    db.collection('product_listings').countDocuments(filter as Filter<Document>),
+    db.collection('category_mappings').countDocuments(filter as Filter<Document>),
+    db.collection('external_categories').countDocuments(filter as Filter<Document>),
+    db.collection('producer_mappings').countDocuments(filter as Filter<Document>),
+    db.collection('external_producers').countDocuments(filter as Filter<Document>),
+    db.collection('tag_mappings').countDocuments(filter as Filter<Document>),
+    db.collection('external_tags').countDocuments(filter as Filter<Document>),
   ]);
   return withDependencyTotal({
     productListings,
@@ -413,15 +418,20 @@ const countMongoConnectionDependencies = async (
 const cleanupMongoConnectionReferences = async (connectionId: string): Promise<void> => {
   const db = await getMongoDb();
   const candidates = toConnectionIdCandidates(connectionId);
-  const filter = buildMongoConnectionFieldFilter(candidates);
+  const filter = {
+    _id: {
+      $in: candidates.asDocumentIds,
+    },
+  } as Filter<{ _id: ObjectId | string }>;
+
   await Promise.all([
-    db.collection('product_listings').deleteMany(filter),
-    db.collection('category_mappings').deleteMany(filter),
-    db.collection('external_categories').deleteMany(filter),
-    db.collection('producer_mappings').deleteMany(filter),
-    db.collection('external_producers').deleteMany(filter),
-    db.collection('tag_mappings').deleteMany(filter),
-    db.collection('external_tags').deleteMany(filter),
+    db.collection('product_listings').deleteMany(filter as Filter<Document>),
+    db.collection('category_mappings').deleteMany(filter as Filter<Document>),
+    db.collection('external_categories').deleteMany(filter as Filter<Document>),
+    db.collection('producer_mappings').deleteMany(filter as Filter<Document>),
+    db.collection('external_producers').deleteMany(filter as Filter<Document>),
+    db.collection('tag_mappings').deleteMany(filter as Filter<Document>),
+    db.collection('external_tags').deleteMany(filter as Filter<Document>),
   ]);
 };
 
@@ -431,27 +441,32 @@ const reassignMongoConnectionReferences = async (
 ): Promise<void> => {
   const db = await getMongoDb();
   const candidates = toConnectionIdCandidates(sourceConnectionId);
-  const filter = buildMongoConnectionFieldFilter(candidates);
+  const filter = {
+    _id: {
+      $in: candidates.asDocumentIds,
+    },
+  } as Filter<{ _id: ObjectId | string }>;
+
   await Promise.all([
-    db.collection('product_listings').updateMany(filter, {
+    db.collection('product_listings').updateMany(filter as Filter<Document>, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
-    db.collection('category_mappings').updateMany(filter, {
+    db.collection('category_mappings').updateMany(filter as Filter<Document>, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
-    db.collection('external_categories').updateMany(filter, {
+    db.collection('external_categories').updateMany(filter as Filter<Document>, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
-    db.collection('producer_mappings').updateMany(filter, {
+    db.collection('producer_mappings').updateMany(filter as Filter<Document>, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
-    db.collection('external_producers').updateMany(filter, {
+    db.collection('external_producers').updateMany(filter as Filter<Document>, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
-    db.collection('tag_mappings').updateMany(filter, {
+    db.collection('tag_mappings').updateMany(filter as Filter<Document>, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
-    db.collection('external_tags').updateMany(filter, {
+    db.collection('external_tags').updateMany(filter as Filter<Document>, {
       $set: { connectionId: replacementConnectionId, updatedAt: new Date() },
     }),
   ]);

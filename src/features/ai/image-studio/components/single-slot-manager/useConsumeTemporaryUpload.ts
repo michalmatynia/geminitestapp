@@ -1,4 +1,3 @@
-// @ts-nocheck - Persistent ESLint misidentification of correctly typed props as error types
 'use client';
 
 import { useCallback, useRef } from 'react';
@@ -14,7 +13,11 @@ import {
   isImageStudioSlotImageLocked, 
   setImageStudioSlotImageLocked 
 } from '../../utils/slot-image-lock';
-import type { ImageStudioSlotDto as ImageStudioSlot, ImageStudioAssetDto as ImageStudioUploadedAsset, UpdateImageStudioSlotDto } from '@/shared/contracts/image-studio';
+import type { 
+  ImageStudioSlotDto as ImageStudioSlot, 
+  ImageStudioAssetDto as ImageStudioUploadedAsset, 
+  UpdateImageStudioSlotDto 
+} from '@/shared/contracts/image-studio';
 import type { QueryClient, UseMutationResult } from '@tanstack/react-query';
 
 interface ConsumeTemporaryUploadProps {
@@ -23,7 +26,7 @@ interface ConsumeTemporaryUploadProps {
   objectSlot: ImageStudioSlot | null;
   queryClient: QueryClient;
   updateSlotMutation: UseMutationResult<ImageStudioSlot, Error, { id: string; data: UpdateImageStudioSlotDto }>;
-  setTemporaryObjectUpload: (asset: ImageStudioUploadedAsset | null) => void;
+  setTemporaryObjectUpload: React.Dispatch<React.SetStateAction<ImageStudioUploadedAsset | null>>;
   setSelectedSlotId: (id: string | null) => void;
   setWorkingSlotId: (id: string | null) => void;
   setPreviewMode: (mode: 'view' | 'edit' | 'image' | 'analysis') => void;
@@ -51,8 +54,7 @@ export function useConsumeTemporaryUpload({
 
   const consumeTemporaryObjectUpload = useCallback(
     async (options?: { loadToCanvas?: boolean }): Promise<boolean> => {
-      // @ts-expect-error - Lint incorrectly flags this as error type
-      const asset = temporaryObjectUpload as ImageStudioUploadedAsset | null;
+      const asset = temporaryObjectUpload;
       if (!asset) return false;
       const currentTemporaryUploadId = asset.id.trim();
       const normalizedTemporaryFilepath = (asset.filepath || '').trim();
@@ -89,8 +91,7 @@ export function useConsumeTemporaryUpload({
           if (!normalizedProjectId) {
             throw new Error('Select a project first.');
           }
-          // @ts-expect-error - Lint incorrectly flags this as error type
-          const currentObjectSlot = objectSlot as ImageStudioSlot | null;
+          const currentObjectSlot = objectSlot;
           const selectedSlotIdBeforeEnsure = currentObjectSlot?.id?.trim() ?? '';
           const selectedSlotWasEmpty = Boolean(
             selectedSlotIdBeforeEnsure && !slotHasRenderableImage(currentObjectSlot)
@@ -117,7 +118,6 @@ export function useConsumeTemporaryUpload({
             const existingMatch = findMatchingSlot(refreshedSlots);
             if (existingMatch) {
               if (slotHasRenderableImage(existingMatch)) return existingMatch;
-              // @ts-expect-error - Mutation result typing
               const patchedExisting = await updateSlotMutation.mutateAsync({
                 id: existingMatch.id,
                 data: {
@@ -130,7 +130,6 @@ export function useConsumeTemporaryUpload({
             }
 
             if (currentObjectSlot?.id && !slotHasRenderableImage(currentObjectSlot)) {
-              // @ts-expect-error - Mutation result typing
               const patchedSelected = await updateSlotMutation.mutateAsync({
                 id: currentObjectSlot.id,
                 data: {
@@ -147,7 +146,6 @@ export function useConsumeTemporaryUpload({
               {
                 slots: [
                   {
-                    // @ts-expect-error - Lint incorrectly flags this as error type
                     name: asset.filename?.trim() || `Card ${Date.now()}`,
                     ...(getFolderForNewSlot() ? { folderPath: getFolderForNewSlot() } : {}),
                     ...(currentTemporaryUploadId ? { imageFileId: currentTemporaryUploadId } : {}),
@@ -167,7 +165,6 @@ export function useConsumeTemporaryUpload({
               {
                 uploadId: currentTemporaryUploadId || null,
                 filepath: normalizedTemporaryFilepath || null,
-                // @ts-expect-error - Lint incorrectly flags this as error type
                 filename: asset.filename?.trim() || null,
                 folderPath: getFolderForNewSlot() || null,
                 selectedSlotId: currentObjectSlot?.id ?? null,
@@ -192,7 +189,6 @@ export function useConsumeTemporaryUpload({
             !isImageStudioSlotImageLocked(ensuredSlot)
           ) {
             try {
-              // @ts-expect-error - Mutation result typing
               ensuredSlot = await updateSlotMutation.mutateAsync({
                 id: targetSlotId,
                 data: {
@@ -215,7 +211,7 @@ export function useConsumeTemporaryUpload({
               }
               if (!ensuredSlot) return current;
               const existingIndex = current.slots.findIndex(
-                (slot) => slot.id === ensuredSlot!.id
+                (slot) => slot.id === ensuredSlot.id
               );
               if (existingIndex < 0) {
                 return {
@@ -247,7 +243,6 @@ export function useConsumeTemporaryUpload({
           void invalidateImageStudioSlots(queryClient, normalizedProjectId);
           return true;
         } catch (error) {
-          // @ts-expect-error - Lint incorrectly flags asset as error type
           setTemporaryObjectUpload((current) => current ?? asset);
           setUploadError(error instanceof Error ? error.message : 'Failed to create card from temporary upload');
           return false;

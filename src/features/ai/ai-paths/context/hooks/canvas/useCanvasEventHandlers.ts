@@ -2,6 +2,11 @@ import { useCallback, useRef } from 'react';
 import { clampScale } from '@/shared/lib/ai-paths';
 import { type UseCanvasInteractionsNavigationValue } from '../useCanvasInteractions.navigation';
 
+export interface UseCanvasEventHandlersValue {
+  handleWheel: (event: React.WheelEvent) => void;
+  wheelGestureActiveUntilRef: React.MutableRefObject<number>;
+}
+
 export function useCanvasEventHandlers(args: {
   viewportRef: React.RefObject<HTMLDivElement>;
   canvasRef: React.RefObject<HTMLCanvasElement>;
@@ -9,7 +14,7 @@ export function useCanvasEventHandlers(args: {
   nav: UseCanvasInteractionsNavigationValue;
   updateLastPointerCanvasPosFromClient: (x: number, y: number) => void;
   resolveViewportPointFromClient: (x: number, y: number) => { x: number; y: number } | null;
-}) {
+}): UseCanvasEventHandlersValue {
   const { nav, resolveViewportPointFromClient, updateLastPointerCanvasPosFromClient } = args;
   
   const wheelGestureActiveUntilRef = useRef(0);

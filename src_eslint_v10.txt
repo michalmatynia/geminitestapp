@@ -1,0 +1,83 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts
+  146:1   error  Expected indentation of 2 spaces but found 6                                       indent
+  147:1   error  Expected indentation of 4 spaces but found 8                                       indent
+  148:1   error  Expected indentation of 4 spaces but found 8                                       indent
+  149:1   error  Expected indentation of 4 spaces but found 8                                       indent
+  149:16  error  This assertion is unnecessary since it does not change the type of the expression  @typescript-eslint/no-unnecessary-type-assertion
+  150:1   error  Expected indentation of 2 spaces but found 6                                       indent
+  513:1   error  Expected indentation of 4 spaces but found 10                                      indent
+  514:1   error  Expected indentation of 6 spaces but found 12                                      indent
+  514:44  error  Unsafe argument of type `Edge[]` assigned to a parameter of type `EdgeDto[]`       @typescript-eslint/no-unsafe-argument
+  514:63  error  Unsafe argument of type `Edge[]` assigned to a parameter of type `EdgeDto[]`       @typescript-eslint/no-unsafe-argument
+  515:1   error  Expected indentation of 6 spaces but found 12                                      indent
+  516:1   error  Expected indentation of 4 spaces but found 10                                      indent
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/useCanvasBoardState.ts
+  345:5  error  Unsafe assignment of type `any[]` to a variable of type `EdgePath[]`  @typescript-eslint/no-unsafe-assignment
+  395:7  error  Unsafe call of a type that could not be resolved                      @typescript-eslint/no-unsafe-call
+  398:7  error  Unsafe call of a type that could not be resolved                      @typescript-eslint/no-unsafe-call
+  401:7  error  Unsafe call of a type that could not be resolved                      @typescript-eslint/no-unsafe-call
+  404:7  error  Unsafe call of a type that could not be resolved                      @typescript-eslint/no-unsafe-call
+  407:7  error  Unsafe call of a type that could not be resolved                      @typescript-eslint/no-unsafe-call
+  409:5  error  Unsafe assignment of an `any` value                                   @typescript-eslint/no-unsafe-assignment
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts
+   57:9    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+   57:28   error  Unsafe call of a type that could not be resolved                                       @typescript-eslint/no-unsafe-call
+   61:9    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+   61:59   error  Unsafe call of a type that could not be resolved                                       @typescript-eslint/no-unsafe-call
+   82:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+   85:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+   86:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+   88:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+   89:5    error  Unsafe assignment of an `any` value                                                    @typescript-eslint/no-unsafe-assignment
+   89:133  error  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+   90:5    error  Unsafe assignment of an `any` value                                                    @typescript-eslint/no-unsafe-assignment
+   90:135  error  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  109:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  115:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  116:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  117:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  132:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  138:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  149:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  150:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  151:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  155:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  161:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  164:18   error  This assertion is unnecessary since it does not change the type of the expression      @typescript-eslint/no-unnecessary-type-assertion
+  169:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  171:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  172:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  173:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  178:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  181:18   error  This assertion is unnecessary since it does not change the type of the expression      @typescript-eslint/no-unnecessary-type-assertion
+  187:34   error  Unsafe argument of type error typed assigned to a parameter of type `EdgeRoutingMode`  @typescript-eslint/no-unsafe-argument
+  208:18   error  This assertion is unnecessary since it does not change the type of the expression      @typescript-eslint/no-unnecessary-type-assertion
+  232:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  233:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  234:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  244:5    error  Unsafe assignment of an error typed value                                              @typescript-eslint/no-unsafe-assignment
+  254:14   error  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  255:13   error  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  256:14   error  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  257:15   error  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  258:18   error  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  260:25   error  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  267:59   error  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+  267:82   error  Unexpected any. Specify a different type                                               @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/hooks/database-node/useDatabaseActionConfig.ts
+  59:11  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  63:28  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  88:11  error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  88:81  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts
+  175:5   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  175:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 69 problems (69 errors, 0 warnings)
+  13 errors and 0 warnings potentially fixable with the `--fix` option.
+

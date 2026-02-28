@@ -6,9 +6,18 @@ import {
 } from '../useCanvasInteractions.helpers';
 import { type UseCanvasInteractionsNavigationValue } from '../useCanvasInteractions.navigation';
 
+export interface UseCanvasTouchHandlersValue {
+  maybeStartTouchPanInertia: (lastSample: TouchPointSample) => void;
+  activeTouchPointersRef: React.MutableRefObject<Map<number, TouchPointSample>>;
+  touchGestureRef: React.MutableRefObject<TouchGestureState | null>;
+  touchLongPressSelectionRef: React.MutableRefObject<TouchLongPressSelectionState | null>;
+  touchLongPressIndicatorRafRef: React.MutableRefObject<number | null>;
+  touchLongPressIndicatorHideTimerRef: React.MutableRefObject<number | null>;
+}
+
 export function useCanvasTouchHandlers(args: {
   nav: UseCanvasInteractionsNavigationValue;
-}) {
+}): UseCanvasTouchHandlersValue {
   const activeTouchPointersRef = useRef<Map<number, TouchPointSample>>(new Map());
   const touchGestureRef = useRef<TouchGestureState | null>(null);
   const touchLongPressSelectionRef = useRef<TouchLongPressSelectionState | null>(null);

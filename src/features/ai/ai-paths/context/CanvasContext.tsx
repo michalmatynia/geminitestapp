@@ -49,6 +49,8 @@ export interface CanvasState {
   connecting: ConnectingState | null;
   connectingPos: { x: number; y: number } | null;
   lastDrop: { x: number; y: number } | null;
+  edgeRoutingMode: 'bezier' | 'orthogonal';
+  isPanning: boolean;
 }
 
 export interface CanvasRefs {
@@ -67,6 +69,7 @@ export interface CanvasActions {
   setPanState: (panState: PanState | null) => void;
   startPan: (startX: number, startY: number) => void;
   endPan: () => void;
+  setIsPanning: (isPanning: boolean) => void;
 
   // Drag actions
   setDragState: (dragState: DragState | null) => void;
@@ -78,6 +81,9 @@ export interface CanvasActions {
   setConnectingPos: (pos: { x: number; y: number } | null) => void;
   startConnection: (fromNodeId: string, fromPort: string, start: { x: number; y: number }) => void;
   endConnection: () => void;
+
+  // Routing
+  setEdgeRoutingMode: (mode: 'bezier' | 'orthogonal') => void;
 
   // Drop actions
   setLastDrop: (pos: { x: number; y: number } | null) => void;
@@ -116,6 +122,8 @@ export function CanvasProvider({
   const [connecting, setConnectingInternal] = useState<ConnectingState | null>(null);
   const [connectingPos, setConnectingPosInternal] = useState<{ x: number; y: number } | null>(null);
   const [lastDrop, setLastDropInternal] = useState<{ x: number; y: number } | null>(null);
+  const [edgeRoutingMode, setEdgeRoutingMode] = useState<'bezier' | 'orthogonal'>('bezier');
+  const [isPanning, setIsPanning] = useState(false);
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);
@@ -186,6 +194,12 @@ export function CanvasProvider({
 
       // Drop
       setLastDrop: setLastDropInternal,
+
+      // Routing
+      setEdgeRoutingMode,
+
+      // Flags
+      setIsPanning,
     }),
     []
   );
@@ -198,8 +212,10 @@ export function CanvasProvider({
       connecting,
       connectingPos,
       lastDrop,
+      edgeRoutingMode,
+      isPanning,
     }),
-    [view, panState, dragState, connecting, connectingPos, lastDrop]
+    [view, panState, dragState, connecting, connectingPos, lastDrop, edgeRoutingMode, isPanning]
   );
 
   const refs = useMemo<CanvasRefs>(

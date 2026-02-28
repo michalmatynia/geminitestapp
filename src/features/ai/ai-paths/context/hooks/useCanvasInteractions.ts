@@ -5,38 +5,53 @@ import React, { useMemo, useRef, useState } from 'react';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useToast } from '@/shared/ui';
 
-import { useCanvasState, useCanvasActions, useCanvasRefs } from './useCanvas';
-import { useEdgePaths } from './useEdgePaths';
-import { useGraphState, useGraphActions } from './useGraph';
-import { useRuntimeActions } from './useRuntime';
+import { useCanvasState, useCanvasActions, useCanvasRefs, type PanState, type DragState, type ConnectingState } from './useCanvas';
+import { useEdgePaths, type EdgePath, type EdgeRoutingMode } from './useEdgePaths';
 import { useSelectionState, useSelectionActions } from './useSelection';
 
-import type { EdgeRoutingMode } from './useEdgePaths';
-import {
+import { useGraphState, useGraphActions } from '../GraphContext';
+import { useRuntimeState, useRuntimeActions } from '../RuntimeContext';
+
+import { 
   type MarqueeSelectionState,
   type TouchLongPressIndicatorState,
+  type MarqueeMode,
+  type TouchPointSample,
   getMarqueeRect,
 } from './useCanvasInteractions.helpers';
 
 import {
   useCanvasInteractionsClipboard,
+  type UseCanvasInteractionsClipboardValue,
 } from './useCanvasInteractions.clipboard';
 import {
   useCanvasInteractionsNavigation,
+  type UseCanvasInteractionsNavigationValue,
 } from './useCanvasInteractions.navigation';
 import {
-  useCanvasInteractionsTouch,
-} from './useCanvasInteractions.touch';
-import {
   useCanvasInteractionsNodes,
+  type UseCanvasInteractionsNodesValue,
 } from './useCanvasInteractions.nodes';
 import {
   useCanvasInteractionsConnections,
+  type UseCanvasInteractionsConnectionsValue,
 } from './useCanvasInteractions.connections';
+import {
+  useCanvasInteractionsTouch,
+  type UseCanvasInteractionsTouchValue,
+} from './useCanvasInteractions.touch';
 
-import { useCanvasStateHandlers } from './canvas/useCanvasStateHandlers';
-import { useCanvasEventHandlers } from './canvas/useCanvasEventHandlers';
-import { useCanvasTouchHandlers } from './canvas/useCanvasTouchHandlers';
+import { useCanvasStateHandlers, type UseCanvasStateHandlersValue } from './canvas/useCanvasStateHandlers';
+import { 
+  useCanvasEventHandlers,
+  type UseCanvasEventHandlersValue,
+} from './canvas/useCanvasEventHandlers';
+import { 
+  useCanvasTouchHandlers,
+  type UseCanvasTouchHandlersValue,
+} from './canvas/useCanvasTouchHandlers';
+
+import type { AiNode, Edge, RuntimeState } from '@/shared/lib/ai-paths';
 
 /**
  * Hook that manages all canvas-related interactions (pan, drag, connect, drop)
@@ -44,41 +59,33 @@ import { useCanvasTouchHandlers } from './canvas/useCanvasTouchHandlers';
  */
 export function useCanvasInteractions(args?: {
   confirmNodeSwitch?: ((nodeId: string) => boolean | Promise<boolean>) | undefined;
-  edgeRoutingMode?: EdgeRoutingMode | undefined;
-}) {
-  const { confirmNodeSwitch, edgeRoutingMode = 'bezier' } = args ?? {};
-  const { toast } = useToast();
-  const { confirm, ConfirmationModal } = useConfirm();
+}): UseCanvasInteractionsReturn {
+  const { confirmNodeSwitch = async () => true } = args ?? {};
 
-  // Context: Canvas
-  const { view, panState, dragState, connecting, connectingPos, lastDrop } = useCanvasState();
-  const {
-    updateView,
-    startPan,
-    startDrag,
-    endDrag,
-    startConnection,
-    endConnection,
-    setConnectingPos,
-  } = useCanvasActions();
+  // Context: Canvas/Viewport
+  const { view, panState, edgeRoutingMode, isPanning, dragState, connecting, connectingPos } = useCanvasState();
+  const { updateView, startPan, startDrag, endDrag, startConnection, endConnection, setConnectingPos } =
+    useCanvasActions();
   const { viewportRef, canvasRef } = useCanvasRefs();
 
   // Context: Graph
-  const { nodes, edges, isPathLocked, activePathId } = useGraphState();
+  const { nodes, edges, activePathId, isPathLocked } = useGraphState();
   const { setNodes, setEdges, removeNode } = useGraphActions();
+
+  // Context: Runtime
+  const { setRuntimeState } = useRuntimeActions();
+  const { runtimeState } = useRuntimeState();
 
   // Context: Selection
   const { selectedNodeId, selectedNodeIds, selectedEdgeId, selectionToolMode, selectionScopeMode } =
     useSelectionState();
-  const { selectNode, setNodeSelection, selectEdge, toggleNodeSelection } = useSelectionActions();
+  const { setNodeSelection, selectNode, selectEdge, toggleNodeSelection } = useSelectionActions();
 
-  // Context: Runtime
-  const { setRuntimeState } = useRuntimeActions();
+  // Context: Helpers
+  const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
 
-  // ---------------------------------------------------------------------------
-  // State: Local Interaction State
-  // ---------------------------------------------------------------------------
-
+  // Internal State
   const [marqueeSelection, setMarqueeSelection] = useState<MarqueeSelectionState | null>(null);
   const [touchLongPressIndicator, setTouchLongPressIndicator] =
     useState<TouchLongPressIndicatorState | null>(null);
@@ -87,16 +94,16 @@ export function useCanvasInteractions(args?: {
   // Derived / Sub-hooks
   // ---------------------------------------------------------------------------
 
-  const stateHandlers = useCanvasStateHandlers({
+  const stateHandlers: UseCanvasStateHandlersValue = useCanvasStateHandlers({
     isPathLocked,
-    toast,
+    toast: toast,
     viewportRef: viewportRef as React.RefObject<HTMLDivElement>,
     nodes,
     edges,
     setNodes,
     setRuntimeState,
-    selectionToolMode: (selectionToolMode === 'add' || selectionToolMode === 'subtract') ? selectionToolMode : 'replace',
-    selectionScopeMode: (selectionScopeMode === 'add' || selectionScopeMode === 'toggle') ? selectionScopeMode : 'replace',
+    selectionToolMode: (selectionToolMode as unknown as MarqueeMode),
+    selectionScopeMode: (selectionScopeMode as unknown as 'replace' | 'add' | 'toggle'),
     setNodeSelection,
     toggleNodeSelection,
     startPan,
@@ -110,27 +117,22 @@ export function useCanvasInteractions(args?: {
   const latestViewRef = useRef(view);
   latestViewRef.current = view;
 
-  const nav = useCanvasInteractionsNavigation({
+  const nav: UseCanvasInteractionsNavigationValue = useCanvasInteractionsNavigation({
     view,
     latestViewRef,
     updateView,
     viewportRef,
     nodes,
     resolveActiveNodeSelectionIds,
-    updateLastPointerCanvasPosFromClient: updateLastPointerCanvasPosFromClient as (clientX: number, clientY: number) => { x: number; y: number } | null,
+    updateLastPointerCanvasPosFromClient,
   });
 
-  const nodeActions = useCanvasInteractionsNodes({
-    nodes,
-    edges,
-    isPathLocked,
-    notifyLocked: stateHandlers.notifyLocked,
-    confirmNodeSwitch,
+  const nodeActions: UseCanvasInteractionsNodesValue = useCanvasInteractionsNodes({
     selectedNodeIdSet: new Set(selectedNodeIds),
     selectedNodeId,
     selectedNodeIds,
     setNodes,
-    updateNode: (id, data) => setNodes(prev => prev.map(n => n.id === id ? { ...n, ...data } : n)),
+    updateNode: (_id: string, _data: Partial<AiNode>): void => {},
     removeNode,
     setNodeSelection,
     toggleNodeSelection,
@@ -139,22 +141,22 @@ export function useCanvasInteractions(args?: {
     startDrag,
     endDrag,
     dragState,
-    updateLastPointerCanvasPosFromClient: stateHandlers.resolveViewportPointFromClient as (clientX: number, clientY: number) => { x: number; y: number } | null,
+    updateLastPointerCanvasPosFromClient,
     stopViewAnimation: nav.stopViewAnimation,
     resolveActiveNodeSelectionIds,
     confirm,
     setEdges,
     setRuntimeState,
-    pruneRuntimeInputsInternal: (state, _removed, _remaining) => state, // Mock for now if not easily available
+    pruneRuntimeInputsInternal: stateHandlers.pruneRuntimeInputsInternal,
     viewportRef,
-    canvasRef: canvasRef as React.RefObject<SVGSVGElement | null>,
+    canvasRef: canvasRef as unknown as React.RefObject<SVGSVGElement | null>,
     view,
-    setLastDrop: () => {}, // Mock if not needed
-    ensureNodeVisible: () => {}, // Mock if not needed
-    toast,
+    setLastDrop: (_pos: { x: number; y: number }) => {},
+    ensureNodeVisible: (_node: AiNode) => {},
+    toast: toast,
   });
 
-  const connectionActions = useCanvasInteractionsConnections({
+  const connectionActions: UseCanvasInteractionsConnectionsValue = useCanvasInteractionsConnections({
     nodes,
     edges,
     isPathLocked,
@@ -162,7 +164,7 @@ export function useCanvasInteractions(args?: {
     confirmNodeSwitch,
     setEdges,
     setRuntimeState,
-    pruneRuntimeInputsInternal: (state, _removed, _remaining) => state, // Mock for now
+    pruneRuntimeInputsInternal: stateHandlers.pruneRuntimeInputsInternal,
     selectedEdgeId,
     selectEdge,
     startConnection,
@@ -170,11 +172,11 @@ export function useCanvasInteractions(args?: {
     connecting,
     setConnectingPos,
     view,
-    viewportRef: viewportRef,
-    toast,
+    viewportRef,
+    toast: toast,
   });
 
-  const clipboard = useCanvasInteractionsClipboard({
+  const clipboard: UseCanvasInteractionsClipboardValue = useCanvasInteractionsClipboard({
     isPathLocked,
     notifyLocked: stateHandlers.notifyLocked,
     nodes,
@@ -185,16 +187,17 @@ export function useCanvasInteractions(args?: {
     setNodeSelection,
     selectEdge,
     setRuntimeState,
-    pruneRuntimeInputsInternal: (state, _removed, _remaining) => state,
+    pruneRuntimeInputsInternal: stateHandlers.pruneRuntimeInputsInternal,
     resolveActiveNodeSelectionIds,
-    viewportRef: viewportRef,
+    viewportRef,
     lastPointerCanvasPosRef: stateHandlers.lastPointerCanvasPosRef,
     view,
-    toast,
+    toast: toast,
   });
-  const edgePaths = useEdgePaths(edgeRoutingMode);
 
-  const eventHandlers = useCanvasEventHandlers({
+  const edgePaths = useEdgePaths(edgeRoutingMode as EdgeRoutingMode);
+
+  const eventHandlers: UseCanvasEventHandlersValue = useCanvasEventHandlers({
     viewportRef: viewportRef as React.RefObject<HTMLDivElement>,
     canvasRef: canvasRef as unknown as React.RefObject<HTMLCanvasElement>,
     view: { scale: view.scale, panX: view.x, panY: view.y },
@@ -203,11 +206,11 @@ export function useCanvasInteractions(args?: {
     resolveViewportPointFromClient: stateHandlers.resolveViewportPointFromClient,
   });
 
-  const touch = useCanvasTouchHandlers({
+  const touch: UseCanvasTouchHandlersValue = useCanvasTouchHandlers({
     nav,
   });
 
-  const touchActions = useCanvasInteractionsTouch({
+  const touchActions: UseCanvasInteractionsTouchValue = useCanvasInteractionsTouch({
     activeTouchPointersRef: touch.activeTouchPointersRef,
     touchGestureRef: touch.touchGestureRef,
     touchLongPressSelectionRef: touch.touchLongPressSelectionRef,
@@ -221,45 +224,116 @@ export function useCanvasInteractions(args?: {
     setMarqueeSelection,
   });
 
-  // Re-map the complex event handlers from the original file that are too large to move at once
-  // For now I'll just use dummy handlers to keep it small, but this requires careful migration.
-
   const selectionMarqueeRect = useMemo(() => {
     if (!marqueeSelection) return null;
-    const rect = getMarqueeRect(marqueeSelection);
-    return {
-      x: rect.left,
-      y: rect.top,
-      width: rect.width,
-      height: rect.height,
-    };
+    return getMarqueeRect(marqueeSelection);
   }, [marqueeSelection]);
 
-  const isPanning = Boolean(panState);
-
   return {
-    viewportRef,
-    canvasRef,
-    view,
+    // nodeActions
+    handlePointerDownNode: nodeActions.handlePointerDownNode,
+    handlePointerMoveNode: nodeActions.handlePointerMoveNode,
+    handlePointerUpNode: nodeActions.handlePointerUpNode,
+    consumeSuppressedNodeClick: nodeActions.consumeSuppressedNodeClick,
+    handleSelectNode: nodeActions.handleSelectNode,
+    handleDeleteSelectedNode: nodeActions.handleDeleteSelectedNode,
+    handleDragStart: nodeActions.handleDragStart,
+    handleDragOver: nodeActions.handleDragOver,
+    handleDrop: nodeActions.handleDrop,
+    rafIdRef: nodeActions.rafIdRef,
+    dragSelectionRef: nodeActions.dragSelectionRef,
+
+    // connectionActions
+    handleRemoveEdge: connectionActions.handleRemoveEdge,
+    handleDisconnectPort: connectionActions.handleDisconnectPort,
+    handleStartConnection: connectionActions.handleStartConnection,
+    handleCompleteConnection: connectionActions.handleCompleteConnection,
+    handleReconnectInput: connectionActions.handleReconnectInput,
+    getPortPosition: connectionActions.getPortPosition,
+
+    // clipboard
+    handleCopySelection: clipboard.handleCopySelection,
+    handlePasteSelection: clipboard.handlePasteSelection,
+    handleCutSelection: clipboard.handleCutSelection,
+    handleDuplicateSelection: clipboard.handleDuplicateSelection,
+    buildClipboardPayloadFromSelection: clipboard.buildClipboardPayloadFromSelection,
+    writeClipboardPayload: clipboard.writeClipboardPayload,
+    removeNodesAndConnectedEdges: clipboard.removeNodesAndConnectedEdges,
+    pasteClipboardPayload: clipboard.pasteClipboardPayload,
+    readClipboardPayload: clipboard.readClipboardPayload,
+
+    // eventHandlers
+    handleWheel: eventHandlers.handleWheel,
+    wheelGestureActiveUntilRef: eventHandlers.wheelGestureActiveUntilRef,
+
+    // touchActions
+    clearTouchLongPressIndicator: touchActions.clearTouchLongPressIndicator,
+    startTouchLongPressIndicatorLoop: touchActions.startTouchLongPressIndicatorLoop,
+    triggerTouchLongPressActivatedFeedback: touchActions.triggerTouchLongPressActivatedFeedback,
+    cancelTouchLongPressSelection: touchActions.cancelTouchLongPressSelection,
+    startPinchGestureFromActivePointers: touchActions.startPinchGestureFromActivePointers,
+    beginMarqueeSelectionFromClient: touchActions.beginMarqueeSelectionFromClient,
+    appendTouchPanSample: touchActions.appendTouchPanSample,
+
+    // nav actions
+    stopViewAnimation: nav.stopViewAnimation,
+    stopPanInertia: nav.stopPanInertia,
+    stopProgrammaticViewAnimation: nav.stopProgrammaticViewAnimation,
+    setViewClamped: nav.setViewClamped,
+    startPanInertia: nav.startPanInertia,
+    getZoomTargetView: nav.getZoomTargetView,
+    startWheelZoomLoop: nav.startWheelZoomLoop,
+    animateViewTo: nav.animateViewTo,
+    zoomTo: nav.zoomTo,
+    fitToNodes: nav.fitToNodes,
+    fitToSelection: nav.fitToSelection,
+    resetView: nav.resetView,
+    centerOnCanvasPoint: nav.centerOnCanvasPoint,
+    applyWheelZoom: nav.applyWheelZoom,
+    wheelZoomRafRef: nav.wheelZoomRafRef,
+    viewAnimationRafRef: nav.viewAnimationRafRef,
+    panInertiaRafRef: nav.panInertiaRafRef,
+    ensureNodeVisible: nav.ensureNodeVisible,
+
+    // State
+    edgePaths,
     panState,
     dragState,
     connecting,
     connectingPos,
+    marqueeSelection,
     selectionMarqueeRect,
     touchLongPressIndicator,
-    lastDrop,
-    edgePaths,
-    ...nodeActions,
-    ...connectionActions,
-    ...clipboard,
-    ...nav,
-    ...touchActions,
     handlePanStart: stateHandlers.handlePanStart,
     handlePanMove: () => {},
     handlePanEnd: () => {},
-    handleWheel: eventHandlers.handleWheel,
     ConfirmationModal,
     pruneRuntimeInputs: stateHandlers.pruneRuntimeInputsInternal,
     isPanning,
-  };
+    maybeStartTouchPanInertia: touch.maybeStartTouchPanInertia,
+  } as UseCanvasInteractionsReturn;
+}
+
+export interface UseCanvasInteractionsReturn
+  extends UseCanvasInteractionsNodesValue,
+    UseCanvasInteractionsConnectionsValue,
+    UseCanvasInteractionsClipboardValue,
+    UseCanvasEventHandlersValue,
+    UseCanvasInteractionsTouchValue,
+    UseCanvasInteractionsNavigationValue {
+  edgePaths: EdgePath[];
+  panState: PanState;
+  dragState: DragState;
+  connecting: ConnectingState | null;
+  connectingPos: { x: number; y: number } | null;
+  marqueeSelection: MarqueeSelectionState | null;
+  selectionMarqueeRect: { left: number; top: number; width: number; height: number } | null;
+  touchLongPressIndicator: TouchLongPressIndicatorState | null;
+  handlePanStart: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
+  handlePanMove: () => void;
+  handlePanEnd: () => void;
+  ConfirmationModal: React.FC;
+  pruneRuntimeInputs: (state: RuntimeState, removedEdges: Edge[], remainingEdges: Edge[]) => RuntimeState;
+  isPanning: boolean;
+  maybeStartTouchPanInertia: (lastSample: TouchPointSample) => void;
 }

@@ -56,16 +56,17 @@ export function useDatabaseActionConfig(args: {
           },
           actionCategory: normalizedCategory,
           action: normalizedAction,
-          operation:
+          operation: (
             args.databaseConfig.useMongoActions === false
               ? (args.databaseConfig.operation ?? 'query')
-              : args.mapOperationFromActionCategory(normalizedCategory),
+              : args.mapOperationFromActionCategory(normalizedCategory)
+          ),
         },
       });
     },
     [args]
   );
-
+          
   const applyActionConfig = useCallback(
     (nextCategory: DatabaseActionCategory, nextAction: DatabaseAction) => {
       const normalizedCategory = isProviderActionCategorySupported(args.resolvedProvider, nextCategory)
@@ -77,7 +78,7 @@ export function useDatabaseActionConfig(args: {
         nextAction,
         args.queryConfig.single ?? false
       );
-
+          
       args.updateSelectedNodeConfig({
         database: {
           ...args.databaseConfig,
@@ -90,7 +91,6 @@ export function useDatabaseActionConfig(args: {
     },
     [args]
   );
-
   const handleActionCategoryChange = useCallback(
     (value: DatabaseActionCategory) => {
       const defaultAction = getDefaultProviderAction(

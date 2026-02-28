@@ -23,6 +23,7 @@ import {
   parsePromptEngineSettings,
 } from '@/shared/lib/prompt-engine/settings';
 import type { AiQuery, DatabasePresetOption } from '@/shared/contracts/database';
+import type { Toast } from '@/shared/contracts/ui';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';
 import { useSettingsMap } from '@/shared/hooks/use-settings';
 import { createListQueryV2, createMutationV2 } from '@/shared/lib/query-factories-v2';
@@ -172,9 +173,8 @@ export function useDatabaseNodeConfigState() {
     queryTemplateValue,
     isUpdateAction,
     updateSelectedNodeConfig,
-    toast,
+    toast: toast as Toast,
   });
-
   const {
     handleProviderChange,
     handleActionCategoryChange,

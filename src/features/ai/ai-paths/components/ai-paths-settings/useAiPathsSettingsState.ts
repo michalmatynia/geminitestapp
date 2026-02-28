@@ -145,7 +145,7 @@ export function useAiPathsSettingsState({
   const validation = useAiPathsValidationActions({
     setAiPathsValidation: setAiPathsValidationState,
     setLastError: setLastErrorString,
-    toast,
+    toast: toast,
   });
 
   const reportAiPathsError = useCallback(
@@ -510,10 +510,11 @@ export function useAiPathsSettingsState({
     persistPathSettings: persistPathSettingsVoid,
     reportAiPathsError,
     pruneRuntimeInputs: (_state, removed, remaining) => {
-      runtimeMgmt.pruneRuntimeInputs(removed as string[], remaining as string[]);
+      runtimeMgmt.pruneRuntimeInputs(removed, remaining);
       return _state;
     },
   });
+
 
   const pathActions = useAiPathsSettingsPathActions({
     activePathId,

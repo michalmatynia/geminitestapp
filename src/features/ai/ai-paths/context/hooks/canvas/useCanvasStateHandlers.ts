@@ -1,14 +1,36 @@
 import { useCallback, useRef } from 'react';
 import type { AiNode, RuntimeState, Edge } from '@/shared/lib/ai-paths';
+import type { Toast } from '@/shared/contracts/ui';
 import { 
   getMarqueeRect, 
   setPointerCaptureSafe 
 } from '../useCanvasInteractions.helpers';
 import type { MarqueeMode, MarqueeSelectionState } from '../useCanvasInteractions.helpers';
 
+export interface UseCanvasStateHandlersValue {
+  notifyLocked: () => void;
+  resolveViewportPointFromClient: (clientX: number, clientY: number) => { x: number; y: number } | null;
+  updateLastPointerCanvasPosFromClient: (clientX: number, clientY: number) => void;
+  pruneRuntimeInputsInternal: (state: RuntimeState, removedEdges: Edge[], remainingEdges: Edge[]) => RuntimeState;
+  resolveActiveNodeSelectionIds: () => string[];
+  resolveNodesWithinMarquee: (
+    rect: { left: number; top: number; width: number; height: number },
+    nodes: AiNode[]
+  ) => string[];
+  resolveNodeSelectionByScope: (
+    nodeId: string,
+    nodes: AiNode[],
+    edges: Edge[],
+    scope: 'portion' | 'wiring'
+  ) => string[];
+  handlePanStart: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
+  lastPointerCanvasPosRef: React.MutableRefObject<{ x: number; y: number }>;
+  hasCanvasKeyboardFocusRef: React.MutableRefObject<boolean>;
+}
+
 export function useCanvasStateHandlers(args: {
   isPathLocked: boolean;
-  toast: (message: string, options?: { variant?: string }) => void;
+  toast: Toast;
   viewportRef: React.RefObject<HTMLDivElement>;
   nodes: AiNode[];
   edges: Edge[];
@@ -19,7 +41,7 @@ export function useCanvasStateHandlers(args: {
   setNodeSelection: (ids: string[]) => void;
   toggleNodeSelection: (id: string) => void;
   startPan: (x: number, y: number) => void;
-}) {
+}): UseCanvasStateHandlersValue {
   const { toast, viewportRef, startPan } = args;
 
   const lastPointerCanvasPosRef = useRef({ x: 0, y: 0 });

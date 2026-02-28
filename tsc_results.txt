@@ -1,0 +1,38 @@
+src/features/ai/ai-paths/components/ai-paths-settings/runtime/useAiPathsLocalExecution.logic.ts(10,58): error TS2345: Argument of type '{ finalizeLocalRunOutcome: (outcome: { status: "completed" | "paused" | "canceled" | "error"; error?: unknown; state: RuntimeState; }, meta: { startedAt: string; startedAtMs: number; triggerEvent: string | null; triggerContext: Record<string, unknown> | null; }) => void; persistDebugSnapshot: (pathId: string | null,...' is not assignable to parameter of type '{ finalizeLocalRunOutcome: (outcome: unknown, meta: Record<string, unknown>) => void; }'.
+  Types of property 'finalizeLocalRunOutcome' are incompatible.
+    Type '(outcome: { status: "completed" | "paused" | "canceled" | "error"; error?: unknown; state: RuntimeState; }, meta: { startedAt: string; startedAtMs: number; triggerEvent: string | null; triggerContext: Record<string, unknown> | null; }) => void' is not assignable to type '(outcome: unknown, meta: Record<string, unknown>) => void'.
+      Types of parameters 'outcome' and 'outcome' are incompatible.
+        Type 'unknown' is not assignable to type '{ status: "error" | "completed" | "canceled" | "paused"; error?: unknown; state: RuntimeState; }'.
+src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(148,5): error TS2322: Type 'Toast' is not assignable to type '(message: string, options?: { variant?: string | undefined; } | undefined) => void'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type '{ variant?: string | undefined; } | undefined' is not assignable to type 'ToastOptions | undefined'.
+      Type '{ variant?: string | undefined; }' is not assignable to type 'ToastOptions'.
+        Types of property 'variant' are incompatible.
+          Type 'string | undefined' is not assignable to type 'ToastVariant | undefined'.
+            Type 'string' is not assignable to type 'ToastVariant | undefined'.
+src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(513,38): error TS2345: Argument of type 'string[]' is not assignable to parameter of type 'EdgeDto[]'.
+  Type 'string' is not assignable to type 'EdgeDto'.
+src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(513,38): error TS2352: Conversion of type 'EdgeDto[]' to type 'string[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'EdgeDto' is not comparable to type 'string'.
+src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts(513,59): error TS2352: Conversion of type 'EdgeDto[]' to type 'string[]' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'EdgeDto' is not comparable to type 'string'.
+src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts(92,5): error TS2322: Type 'Toast' is not assignable to type '(message: string, options?: { variant?: string | undefined; } | undefined) => void'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type '{ variant?: string | undefined; } | undefined' is not assignable to type 'ToastOptions | undefined'.
+      Type '{ variant?: string | undefined; }' is not assignable to type 'ToastOptions'.
+        Types of property 'variant' are incompatible.
+          Type 'string | undefined' is not assignable to type 'ToastVariant | undefined'.
+            Type 'string' is not assignable to type 'ToastVariant | undefined'.
+src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts(98,25): error TS2367: This comparison appears to be unintentional because the types 'SelectionToolMode' and '"add"' have no overlap.
+src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts(98,56): error TS2367: This comparison appears to be unintentional because the types 'SelectionToolMode' and '"subtract"' have no overlap.
+src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts(99,26): error TS2367: This comparison appears to be unintentional because the types 'SelectionScopeMode' and '"add"' have no overlap.
+src/features/ai/ai-paths/context/hooks/useCanvasInteractions.ts(99,58): error TS2367: This comparison appears to be unintentional because the types 'SelectionScopeMode' and '"toggle"' have no overlap.
+src/features/ai/ai-paths/hooks/database-node/useDatabaseActionConfig.ts(59,11): error TS2322: Type 'string' is not assignable to type '"update" | "action" | "query" | "delete" | "insert" | "distinct"'.
+src/features/ai/ai-paths/hooks/database-node/useDatabaseActionConfig.ts(87,11): error TS2322: Type 'string' is not assignable to type '"update" | "action" | "query" | "delete" | "insert" | "distinct"'.
+src/features/ai/ai-paths/hooks/useDatabaseNodeConfigState.ts(175,5): error TS2322: Type '(message: string, options?: { variant?: "error" | "success" | "info" | "warning" | undefined; } | undefined) => void' is not assignable to type '(message: string, options?: { variant?: string | undefined; } | undefined) => void'.
+  Types of parameters 'options' and 'options' are incompatible.
+    Type '{ variant?: string | undefined; } | undefined' is not assignable to type '{ variant?: "error" | "success" | "info" | "warning" | undefined; } | undefined'.
+      Type '{ variant?: string | undefined; }' is not assignable to type '{ variant?: "error" | "success" | "info" | "warning" | undefined; }'.
+        Types of property 'variant' are incompatible.
+          Type 'string | undefined' is not assignable to type '"error" | "success" | "info" | "warning" | undefined'.
+            Type 'string' is not assignable to type '"error" | "success" | "info" | "warning" | undefined'.

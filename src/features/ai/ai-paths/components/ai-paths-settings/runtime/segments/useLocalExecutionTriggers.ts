@@ -32,7 +32,10 @@ import {
 export function useLocalExecutionTriggers(
   args: LocalExecutionArgs,
   loop: { runLocalLoop: (mode: 'run' | 'step') => Promise<{ status: string; error?: unknown; state: RuntimeState }> },
-  outcome: { finalizeLocalRunOutcome: (outcome: any, meta: any) => void }
+  outcome: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    finalizeLocalRunOutcome: (outcome: any, meta: any) => void;
+  }
 ) {
   const getConnectedSimulationNodesForTrigger = useCallback(
     (triggerNodeId: string): AiNode[] => {

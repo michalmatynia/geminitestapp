@@ -83,6 +83,28 @@ export const shouldAdoptIncomingWorkspace = ({
   return { adopt: false, reason: 'keep_current' };
 };
 
+export const shouldRefetchSettingsStoreForRequestedFile = ({
+  requestedFileId,
+  requestedFileResolvedInWorkspace,
+  requestedFileResolvedInStore,
+  isStoreLoading,
+  isStoreFetching,
+  lastRefetchedFileId,
+}: {
+  requestedFileId: string | null;
+  requestedFileResolvedInWorkspace: boolean;
+  requestedFileResolvedInStore: boolean;
+  isStoreLoading: boolean;
+  isStoreFetching: boolean;
+  lastRefetchedFileId: string | null;
+}): boolean => {
+  const normalizedRequestedFileId = normalizeRequestedFileId(requestedFileId);
+  if (!normalizedRequestedFileId) return false;
+  if (requestedFileResolvedInWorkspace || requestedFileResolvedInStore) return false;
+  if (isStoreLoading || isStoreFetching) return false;
+  return lastRefetchedFileId !== normalizedRequestedFileId;
+};
+
 export const resolvePreferredCaseResolverWorkspace = ({
   storeWorkspace,
   hasStoreWorkspace,

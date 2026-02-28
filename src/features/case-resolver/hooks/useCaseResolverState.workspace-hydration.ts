@@ -65,13 +65,20 @@ export function useCaseResolverStateWorkspaceHydration({
   }, [hasWorkspaceFromStore, parsedWorkspace, preferredWorkspaceReason, preferredWorkspaceSource]);
 
   useEffect(() => {
+    const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
     const workspaceHasTreeData =
       workspaceRef.current.files.length > 0 ||
       workspaceRef.current.assets.length > 0 ||
       workspaceRef.current.folders.length > 0;
-    if (workspaceHasTreeData) return;
+    const requestedFileResolvedInWorkspace =
+      normalizedRequestedFileId.length === 0
+        ? true
+        : workspaceRef.current.files.some((file): boolean => file.id === normalizedRequestedFileId);
+    if (workspaceHasTreeData && requestedFileResolvedInWorkspace) return;
     const shouldBootstrapRefresh =
-      !canHydrateWorkspaceFromStore || preferredWorkspaceSource === 'store';
+      !canHydrateWorkspaceFromStore ||
+      preferredWorkspaceSource === 'store' ||
+      !requestedFileResolvedInWorkspace;
     if (!shouldBootstrapRefresh) return;
     let cancelled = false;
     void (async (): Promise<void> => {
@@ -102,7 +109,7 @@ export function useCaseResolverStateWorkspaceHydration({
             ? `metadata_revision=${metadata.revision} exists=${metadata.exists ? 'true' : 'false'}`
             : 'metadata=unavailable'
         );
-        if (canHydrateWorkspaceFromStore) {
+        if (canHydrateWorkspaceFromStore && requestedFileResolvedInWorkspace) {
           logCaseResolverWorkspaceEvent({
             source: 'case_view_bootstrap',
             action: 'refresh_failed_no_retry',

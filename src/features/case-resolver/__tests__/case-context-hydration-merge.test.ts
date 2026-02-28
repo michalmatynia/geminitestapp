@@ -6,6 +6,7 @@ import {
 } from '@/features/case-resolver/settings';
 import {
   resolvePreferredCaseResolverWorkspace,
+  shouldRefetchSettingsStoreForRequestedFile,
   shouldAdoptIncomingWorkspace,
 } from '@/features/case-resolver/hooks/useCaseResolverState.helpers.hydration';
 
@@ -188,5 +189,53 @@ describe('case resolver workspace hydration merge', () => {
     expect(selection.source).toBe('none');
     expect(selection.reason).toBe('no_workspace_source');
     expect(selection.workspace.files).toEqual([]);
+  });
+
+  it('requests a one-shot store refetch when the requested file is missing from both store and active workspace', () => {
+    const shouldRefetch = shouldRefetchSettingsStoreForRequestedFile({
+      requestedFileId: 'case-requested',
+      requestedFileResolvedInWorkspace: false,
+      requestedFileResolvedInStore: false,
+      isStoreLoading: false,
+      isStoreFetching: false,
+      lastRefetchedFileId: null,
+    });
+
+    expect(shouldRefetch).toBe(true);
+  });
+
+  it('does not refetch the store when the requested file is already available or already retried', () => {
+    expect(
+      shouldRefetchSettingsStoreForRequestedFile({
+        requestedFileId: 'case-requested',
+        requestedFileResolvedInWorkspace: true,
+        requestedFileResolvedInStore: false,
+        isStoreLoading: false,
+        isStoreFetching: false,
+        lastRefetchedFileId: null,
+      })
+    ).toBe(false);
+
+    expect(
+      shouldRefetchSettingsStoreForRequestedFile({
+        requestedFileId: 'case-requested',
+        requestedFileResolvedInWorkspace: false,
+        requestedFileResolvedInStore: true,
+        isStoreLoading: false,
+        isStoreFetching: false,
+        lastRefetchedFileId: null,
+      })
+    ).toBe(false);
+
+    expect(
+      shouldRefetchSettingsStoreForRequestedFile({
+        requestedFileId: 'case-requested',
+        requestedFileResolvedInWorkspace: false,
+        requestedFileResolvedInStore: false,
+        isStoreLoading: false,
+        isStoreFetching: false,
+        lastRefetchedFileId: 'case-requested',
+      })
+    ).toBe(false);
   });
 });

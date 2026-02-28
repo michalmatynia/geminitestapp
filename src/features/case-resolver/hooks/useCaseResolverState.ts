@@ -40,12 +40,16 @@ import {
   parseCaseResolverTags,
   parseCaseResolverWorkspace,
 } from '../settings';
+import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
 import { fromCaseResolverCaseNodeId, fromCaseResolverFileNodeId } from '../master-tree';
 import { type CaseResolverFileEditDraft, type CaseResolverStateValue } from '../types';
 import { useCaseResolverStateFolderActions } from './useCaseResolverState.folder-actions';
 import { useCaseResolverStateAssetActions } from './useCaseResolverState.asset-actions';
 import { serializeWorkspaceForUnsavedChangesCheck } from './useCaseResolverState.helpers';
-import { resolvePreferredCaseResolverWorkspace } from './useCaseResolverState.helpers.hydration';
+import {
+  resolvePreferredCaseResolverWorkspace,
+  shouldRefetchSettingsStoreForRequestedFile,
+} from './useCaseResolverState.helpers.hydration';
 import { useCaseResolverStateSelectionActions } from './useCaseResolverState.selection-actions';
 import {
   useCaseResolverPersistence,
@@ -192,6 +196,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     useState<string>(() => serializeWorkspaceForUnsavedChangesCheck(initialWorkspaceState));
 
   const handledRequestedFileIdRef = useRef<string | null>(null);
+  const requestedStoreRefreshFileIdRef = useRef<string | null>(null);
 
   const persistence: UseCaseResolverPersistenceValue = useCaseResolverPersistence({
     initialWorkspaceState,
@@ -319,6 +324,52 @@ export function useCaseResolverState(): CaseResolverStateValue {
   useEffect(() => {
     workspaceRef.current = workspace;
   }, [workspace]);
+
+  useEffect((): void => {
+    const normalizedRequestedFileId = requestedFileId?.trim() ?? '';
+    if (!normalizedRequestedFileId) {
+      requestedStoreRefreshFileIdRef.current = null;
+      return;
+    }
+
+    const requestedFileResolvedInWorkspace = workspace.files.some(
+      (file: CaseResolverFile): boolean => file.id === normalizedRequestedFileId
+    );
+    const requestedFileResolvedInStore = parsedWorkspaceFromStore.files.some(
+      (file: CaseResolverFile): boolean => file.id === normalizedRequestedFileId
+    );
+    if (requestedFileResolvedInWorkspace || requestedFileResolvedInStore) {
+      requestedStoreRefreshFileIdRef.current = null;
+      return;
+    }
+
+    if (
+      !shouldRefetchSettingsStoreForRequestedFile({
+        requestedFileId: normalizedRequestedFileId,
+        requestedFileResolvedInWorkspace,
+        requestedFileResolvedInStore,
+        isStoreLoading: settingsStore.isLoading,
+        isStoreFetching: settingsStore.isFetching,
+        lastRefetchedFileId: requestedStoreRefreshFileIdRef.current,
+      })
+    ) {
+      return;
+    }
+
+    requestedStoreRefreshFileIdRef.current = normalizedRequestedFileId;
+    logCaseResolverWorkspaceEvent({
+      source: 'case_view',
+      action: 'requested_context_store_refetch',
+      message: `requested_file_id=${normalizedRequestedFileId} reason=missing_from_store_snapshot`,
+    });
+    settingsStoreRef.current.refetch();
+  }, [
+    parsedWorkspaceFromStore,
+    requestedFileId,
+    settingsStore.isFetching,
+    settingsStore.isLoading,
+    workspace.files,
+  ]);
 
   const creationActions = useCaseResolverStateCreationActions({
     workspace,

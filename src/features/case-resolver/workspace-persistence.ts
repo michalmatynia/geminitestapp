@@ -387,10 +387,12 @@ export const fetchCaseResolverWorkspaceRecord = async (
   options?: {
     fresh?: boolean;
     strategy?: 'light_then_heavy' | 'light_only' | 'heavy_only';
+    requiredFileId?: string | null;
   }
 ): Promise<CaseResolverWorkspace | null> => {
   const startedAt = Date.now();
   const fetchStrategy = options?.strategy ?? 'light_then_heavy';
+  const requiredFileId = options?.requiredFileId?.trim() ?? '';
   const attemptScopes: Array<'light' | 'heavy'> =
     fetchStrategy === 'heavy_only'
       ? ['heavy']
@@ -465,6 +467,19 @@ export const fetchCaseResolverWorkspaceRecord = async (
         continue;
       }
       const workspace = readWorkspaceFromSettingRecord(workspaceRecord, '');
+      if (
+        requiredFileId.length > 0 &&
+        !workspace.files.some((file): boolean => file.id === requiredFileId)
+      ) {
+        lastFailureMessage = `Attempt ${attempt.key} returned workspace without required file ${requiredFileId}.`;
+        logCaseResolverWorkspaceEvent({
+          source,
+          action: 'refresh_attempt_failed',
+          durationMs: Date.now() - startedAt,
+          message: lastFailureMessage,
+        });
+        continue;
+      }
       logCaseResolverWorkspaceEvent({
         source,
         action: 'refresh_success',

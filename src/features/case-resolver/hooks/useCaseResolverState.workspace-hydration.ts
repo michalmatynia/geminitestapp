@@ -91,7 +91,9 @@ export function useCaseResolverStateWorkspaceHydration({
           ? true
           : metadata.exists !== false && metadata.revision >= currentRevision;
       const snapshot = shouldFetchRecord
-        ? await fetchCaseResolverWorkspaceRecord('case_view_bootstrap')
+        ? await fetchCaseResolverWorkspaceRecord('case_view_bootstrap', {
+          requiredFileId: requestedFileId,
+        })
         : null;
       if (!isMountedRef.current || cancelled) return;
       if (!snapshot) {

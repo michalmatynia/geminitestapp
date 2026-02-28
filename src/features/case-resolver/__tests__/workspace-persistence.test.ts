@@ -236,6 +236,51 @@ describe('case-resolver workspace persistence', () => {
     );
   });
 
+  it('continues to keyed heavy when keyed light workspace is missing the required file', async () => {
+    const lightWorkspace = createDefaultCaseResolverWorkspace();
+    const targetCase = createCaseResolverFile({
+      id: 'case-required-1',
+      fileType: 'case',
+      name: 'Required Case',
+    });
+    const heavyWorkspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      files: [targetCase],
+    };
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(lightWorkspace),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(lightWorkspace),
+        })
+      )
+      .mockResolvedValueOnce(
+        toJsonResponse(200, {
+          key: CASE_RESOLVER_WORKSPACE_KEY,
+          value: JSON.stringify(heavyWorkspace),
+        })
+      );
+    globalThis.fetch = fetchMock as unknown as typeof globalThis.fetch;
+
+    const result = await fetchCaseResolverWorkspaceRecord('test_source', {
+      requiredFileId: targetCase.id,
+    });
+
+    expect(result).not.toBeNull();
+    expect(result?.files.some((file) => file.id === targetCase.id)).toBe(true);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock.mock.calls[2]?.[0]).toBe(
+      `/api/settings?scope=heavy&fresh=1&key=${encodeURIComponent(CASE_RESOLVER_WORKSPACE_KEY)}`
+    );
+  });
+
   it('supports object payload shape for key snapshot fetch responses', async () => {
     const workspace = createDefaultCaseResolverWorkspace();
     const fetchMock = vi.fn().mockResolvedValue(

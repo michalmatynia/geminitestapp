@@ -423,7 +423,10 @@ export function useCaseResolverStateRequestedContext({
 
     void (async (): Promise<void> => {
       const refreshedWorkspace = await fetchCaseResolverWorkspaceRecord(
-        'case_view_requested_context_resolve'
+        'case_view_requested_context_resolve',
+        {
+          requiredFileId: normalizedRequestedFileId,
+        }
       );
       if (!isMountedRef.current) return;
       const currentInFlight = requestedContextInFlightRef.current;

@@ -7,7 +7,10 @@ import type { ApiHandlerContext } from '@/shared/contracts/ui';
 /**
  * GET /api/products/paged
  * Returns { products: ProductWithImages[], total: number } in a single request,
- * using a $facet aggregation on MongoDB so the DB is queried only once.
+ * using the repository's optimized paged fetch path.
+ * MongoDB uses a single $facet aggregation for filtered queries and keeps the
+ * unfiltered path on the indexed list query + estimatedDocumentCount fast path.
+ * Prisma continues to use parallel findMany + count queries.
  */
 export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Promise<Response> {
   const filters = ctx.query as ProductFiltersParsed;

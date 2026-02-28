@@ -32,7 +32,7 @@ export const ErrorSystem = {
       const category = context.category || classifyError(error);
 
       // 1. Log to System Log (DB + Console)
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'error',
         message: `[${service}] ${message}`,
         source: service,
@@ -78,7 +78,7 @@ export const ErrorSystem = {
       const service = context.service || 'unknown';
       const category = context.category || classifyError(message);
 
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'warn',
         message: `[${service}] ${message}`,
         source: service,
@@ -111,7 +111,7 @@ export const ErrorSystem = {
       const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
       const service = context.service || 'unknown';
 
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'warn',
         message: `[Validation] [${service}] ${message}`,
         source: service,
@@ -136,7 +136,7 @@ export const ErrorSystem = {
       const service = context.service || 'unknown';
       const category = context.category || classifyError(message);
 
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'info',
         message: `[${service}] ${message}`,
         source: service,

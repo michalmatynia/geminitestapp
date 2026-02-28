@@ -103,6 +103,15 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   const { watch, getValues, setValue } = useFormContext<ProductFormData>();
 
   const validatorConfigQuery = useProductValidatorConfig();
+  const configEnabledByDefault = validatorConfigQuery.data?.enabledByDefault;
+  const configFormatterEnabledByDefault = validatorConfigQuery.data?.formatterEnabledByDefault;
+  const defaultValidatorEnabled =
+    typeof configEnabledByDefault === 'boolean' ? configEnabledByDefault : true;
+  const defaultFormatterEnabled =
+    defaultValidatorEnabled && typeof configFormatterEnabledByDefault === 'boolean'
+      ? configFormatterEnabledByDefault
+      : false;
+  const entityIdentity = `${product?.id?.trim() ?? ''}::${draft?.id?.trim() ?? ''}`;
 
   const [
     nameEn,
@@ -143,16 +152,17 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   ]);
 
   const [validatorEnabled, setValidatorEnabledState] = useState<boolean>(
-    () => draft?.validatorEnabled ?? true
+    () => defaultValidatorEnabled
   );
-  const [formatterEnabled, setFormatterEnabledState] = useState<boolean>(() =>
-    (draft?.validatorEnabled ?? true) ? (draft?.formatterEnabled ?? false) : false
+  const [formatterEnabled, setFormatterEnabledState] = useState<boolean>(
+    () => defaultFormatterEnabled
   );
   const [validatorInitialized, setValidatorInitialized] = useState<boolean>(
-    () => typeof draft?.validatorEnabled === 'boolean'
+    () => typeof configEnabledByDefault === 'boolean'
   );
   const [validatorManuallyChanged, setValidatorManuallyChanged] = useState(false);
   const updateValidatorSettingsMutation = useUpdateValidatorSettingsMutation();
+  const lastEntityIdentityRef = useRef<string>(entityIdentity);
 
   const setValidatorEnabled = useCallback(
     (enabled: SetStateAction<boolean>): void => {
@@ -438,19 +448,18 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   }, [latestProductsQuery.data, product?.id]);
 
   useEffect(() => {
-    if (draft) {
-      const nextValidatorEnabled = draft.validatorEnabled ?? true;
-      setValidatorEnabledState(nextValidatorEnabled);
-      setFormatterEnabledState(nextValidatorEnabled ? (draft.formatterEnabled ?? false) : false);
-      setValidatorInitialized(true);
-      setValidatorManuallyChanged(false);
-      return;
-    }
-    setValidatorEnabledState(true);
-    setFormatterEnabledState(false);
-    setValidatorInitialized(false);
+    if (lastEntityIdentityRef.current === entityIdentity) return;
+    lastEntityIdentityRef.current = entityIdentity;
+    setValidatorEnabledState(defaultValidatorEnabled);
+    setFormatterEnabledState(defaultFormatterEnabled);
+    setValidatorInitialized(typeof configEnabledByDefault === 'boolean');
     setValidatorManuallyChanged(false);
-  }, [draft?.id, product?.id]);
+  }, [
+    configEnabledByDefault,
+    defaultFormatterEnabled,
+    defaultValidatorEnabled,
+    entityIdentity,
+  ]);
 
   useEffect(() => {
     if (validatorEnabled) return;
@@ -461,21 +470,14 @@ export function useProductFormValidator(scopeOverride?: string): UseProductFormV
   useEffect(() => {
     if (validatorInitialized) return;
     if (validatorManuallyChanged) return;
-    const enabledByDefault = validatorConfigQuery.data?.enabledByDefault;
-    if (typeof enabledByDefault !== 'boolean') return;
-    const formatterEnabledByDefault = validatorConfigQuery.data?.formatterEnabledByDefault;
-    setValidatorEnabledState(enabledByDefault);
-    setFormatterEnabledState(
-      enabledByDefault
-        ? typeof formatterEnabledByDefault === 'boolean'
-          ? formatterEnabledByDefault
-          : false
-        : false
-    );
+    if (typeof configEnabledByDefault !== 'boolean') return;
+    setValidatorEnabledState(defaultValidatorEnabled);
+    setFormatterEnabledState(defaultFormatterEnabled);
     setValidatorInitialized(true);
   }, [
-    validatorConfigQuery.data?.enabledByDefault,
-    validatorConfigQuery.data?.formatterEnabledByDefault,
+    configEnabledByDefault,
+    defaultFormatterEnabled,
+    defaultValidatorEnabled,
     validatorInitialized,
     validatorManuallyChanged,
   ]);

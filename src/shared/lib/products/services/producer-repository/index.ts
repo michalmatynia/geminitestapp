@@ -20,7 +20,7 @@ export const getProducerRepository = async (
     }
     return prismaProducerRepository;
   } catch (error) {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'producer-repository',
       action: 'getProducerRepository',
       providerOverride,

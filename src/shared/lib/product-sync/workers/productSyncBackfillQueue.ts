@@ -24,14 +24,14 @@ const queue = createManagedQueue<ProductSyncBackfillJobData>({
     return runBaseListingBackfill(data);
   },
   onCompleted: async (jobId, result) => {
-    await (ErrorSystem as any).logInfo('Product sync backfill completed', {
+    await ErrorSystem.logInfo('Product sync backfill completed', {
       service: 'product-sync-backfill-queue',
       jobId,
       result,
     });
   },
   onFailed: async (jobId, error, data) => {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'product-sync-backfill-queue',
       jobId,
       data,

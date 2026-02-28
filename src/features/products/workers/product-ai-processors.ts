@@ -417,7 +417,7 @@ const fetchAllLanguages = async (): Promise<LanguageRecord[]> => {
 
 const resolveFallbackLanguages = async (): Promise<string[]> => {
   const allLanguages = await fetchAllLanguages();
-  void (logSystemEvent as any)({
+  void logSystemEvent({
     level: 'info',
     source: 'product-ai-processors',
     message: `Found ${allLanguages.length} available languages`,
@@ -430,7 +430,7 @@ const resolveFallbackLanguages = async (): Promise<string[]> => {
   const defaults = defaultLanguages
     .filter((lang: { code: string }) => lang.code !== 'EN')
     .map((lang: { name: string }) => lang.name);
-  void (logSystemEvent as any)({
+  void logSystemEvent({
     level: 'info',
     source: 'product-ai-processors',
     message: 'Using default languages fallback',
@@ -451,7 +451,7 @@ export async function processDescriptionGeneration(job: Job): Promise<{ descript
     const product = await productRepository.getProductById(productId);
 
     if (!product) {
-      void (ErrorSystem as any).logWarning(`Product not found for ID: "${productId}" (possibly a SKU)`, {
+      void ErrorSystem.logWarning(`Product not found for ID: "${productId}" (possibly a SKU)`, {
         service: 'product-ai-queue',
         productId,
       });
@@ -494,7 +494,7 @@ export async function processTranslation(job: Job): Promise<Record<string, unkno
   const product = await productRepository.getProductById(productId);
 
   if (!product) {
-    void (ErrorSystem as any).logWarning(`Product not found for ID: "${productId}"`, {
+    void ErrorSystem.logWarning(`Product not found for ID: "${productId}"`, {
       service: 'product-ai-queue-translation',
       productId,
     });

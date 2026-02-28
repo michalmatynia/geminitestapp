@@ -39,7 +39,7 @@ const REQUIRE_DURABLE_QUEUE =
 
 const debugQueueLog = (message: string, context?: Record<string, unknown>): void => {
   if (!DEBUG_AI_PATH_QUEUE) return;
-  void (logSystemEvent as any)({
+  void logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
     message,
@@ -49,7 +49,7 @@ const debugQueueLog = (message: string, context?: Record<string, unknown>): void
 
 const debugQueueWarn = (message: string, context?: Record<string, unknown>): void => {
   if (!DEBUG_AI_PATH_QUEUE) return;
-  void (logSystemEvent as any)({
+  void logSystemEvent({
     level: 'warn',
     source: LOG_SOURCE,
     message,
@@ -329,12 +329,12 @@ const queue = createManagedQueue<AiPathRunJobData>({
   onFailed: async (_jobId, error, data) => {
     try {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-      void (ErrorSystem as any).captureException(error, {
+      void ErrorSystem.captureException(error, {
         service: LOG_SOURCE,
         runId: data.runId,
       });
     } catch {
-      void (logSystemEvent as any)({
+      void logSystemEvent({
         level: 'error',
         source: LOG_SOURCE,
         message: 'Fatal queue error',
@@ -505,12 +505,12 @@ export const processSingleRun = async (runId: string): Promise<void> => {
   } catch (error) {
     try {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-      void (ErrorSystem as any).captureException(error, {
+      void ErrorSystem.captureException(error, {
         service: `${LOG_SOURCE}-single`,
         runId,
       });
     } catch {
-      void (logSystemEvent as any)({
+      void logSystemEvent({
         level: 'error',
         source: LOG_SOURCE,
         message: 'Fatal inline execution error',
@@ -531,7 +531,7 @@ const scheduleLocalFallbackRun = (runId: string, delayMs: number): void => {
     () => {
       localFallbackTimers.delete(runId);
       void processSingleRun(runId).catch((error: unknown) => {
-        void (logSystemEvent as any)({
+        void logSystemEvent({
           level: 'error',
           source: LOG_SOURCE,
           message: `[aiPathRunQueue] Local fallback execution failed for run ${runId}`,

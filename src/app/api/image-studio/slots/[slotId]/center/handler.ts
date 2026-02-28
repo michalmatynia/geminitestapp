@@ -1068,7 +1068,7 @@ export async function postCenterSlotHandler(
     });
 
     if (processed.authoritativeSource === 'client_upload_fallback') {
-      void (logSystemEvent as any)({
+      void logSystemEvent({
         level: 'warn',
         source: 'image-studio.center',
         message:
@@ -1196,7 +1196,7 @@ export async function postCenterSlotHandler(
     }
 
     const durationMs = Date.now() - startedAt;
-    void (logSystemEvent as any)({
+    void logSystemEvent({
       level: 'info',
       source: 'image-studio.center',
       message: 'Image Studio center persisted.',
@@ -1268,7 +1268,7 @@ export async function postCenterSlotHandler(
         )
         : error;
 
-    void (logSystemEvent as any)({
+    void logSystemEvent({
       level: 'warn',
       source: 'image-studio.center',
       message: 'Image Studio center failed.',

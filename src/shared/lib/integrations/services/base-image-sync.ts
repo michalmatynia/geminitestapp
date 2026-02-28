@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any */
 import 'server-only';
 
 import { getProductListingRepository } from '@/shared/lib/integrations/server';
@@ -90,38 +91,30 @@ export const syncBaseImagesForListing = async (
   inventoryIdOverride?: string | null
 ): Promise<{ productId: string; listingId: string; count: number; added: number }> => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const productRepo: any = await getProductRepository();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     const product: any = await productRepo.getProductById(productId);
     if (!product) {
       throw notFoundError('Product not found', { productId });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const listingRepo: any = await getProductListingRepository();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment
     const listing: any = await listingRepo.getListingById(listingId);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    
     if (listing?.productId !== productId) {
       throw notFoundError('Listing not found', { listingId, productId });
     }
 
     let inventoryId =
       inventoryIdOverride ||
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       listing.inventoryId ||
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
       listing.exportHistory
         ?.slice()
         .reverse()
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         .find((event: ProductListingExportEvent) => event.inventoryId)?.inventoryId ||
       null;
 
     if (!inventoryId) {
       const connectionForInventory = await integrationService.getConnectionById(
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
         listing.connectionId
       );
       if (connectionForInventory?.baseLastInventoryId) {
@@ -135,17 +128,14 @@ export const syncBaseImagesForListing = async (
       );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const baseProductId = listing.externalListingId || product.baseProductId;
     if (!baseProductId) {
       throw badRequestError('Missing Base.com product id for image sync.');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
     const connection = await integrationService.getConnectionById(listing.connectionId);
     if (!connection) {
       throw notFoundError('Connection not found', {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         connectionId: listing.connectionId,
       });
     }
@@ -159,7 +149,6 @@ export const syncBaseImagesForListing = async (
 
     if (!token) {
       throw badRequestError('Base.com API token not found in connection.', {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         connectionId: listing.connectionId,
       });
     }
@@ -169,16 +158,13 @@ export const syncBaseImagesForListing = async (
       throw notFoundError('Base.com product not found', { baseProductId, inventoryId });
     }
 
-     
     const urls = extractBaseImageUrls(records[0] ?? {}).filter(Boolean);
     if (urls.length === 0) {
       throw badRequestError('No image URLs found in Base.com product data.');
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     const existingLinks = Array.isArray(product.imageLinks) ? (product.imageLinks as string[]) : [];
     const nextLinks = mergeImageLinks(existingLinks, urls);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     await productRepo.updateProduct(productId, { imageLinks: nextLinks });
 
     return {
@@ -188,8 +174,6 @@ export const syncBaseImagesForListing = async (
       added: urls.length,
     };
   } catch (error) {
-     
-     
     await ErrorSystem.captureException(error, {
       service: 'base-image-sync',
       action: 'syncBaseImagesForListing',

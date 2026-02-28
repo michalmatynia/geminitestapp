@@ -31,7 +31,7 @@ const queue = createManagedQueue<BaseImportQueueJobData>({
     };
   },
   onCompleted: async (jobId, _result, data) => {
-    await (ErrorSystem as any).logInfo('Base import job completed', {
+    await ErrorSystem.logInfo('Base import job completed', {
       service: 'base-import-queue',
       runId: data.runId,
       reason: data.reason,
@@ -39,7 +39,7 @@ const queue = createManagedQueue<BaseImportQueueJobData>({
     });
   },
   onFailed: async (jobId, error, data) => {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'base-import-queue',
       runId: data.runId,
       reason: data.reason,
@@ -63,7 +63,7 @@ export const enqueueBaseImportRunJob = async (data: BaseImportQueueJobData): Pro
   const jobId = [data.reason, data.runId, statusesKey, String(dedupeBucket)].join('__');
   const queuedJobId = await queue.enqueue(data, { jobId });
 
-  await (ErrorSystem as any).logInfo('Base import job queued', {
+  await ErrorSystem.logInfo('Base import job queued', {
     service: 'base-import-queue',
     runId: data.runId,
     reason: data.reason,

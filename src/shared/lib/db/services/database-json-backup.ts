@@ -197,7 +197,7 @@ export async function createPrismaJsonBackup(): Promise<DatabaseBackupResult> {
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       logLines.push(`[ERROR] ${modelName}: ${msg}`);
-      void (ErrorSystem as any).logWarning(`[database-json-backup] Failed to backup model ${modelName}`, {
+      void ErrorSystem.logWarning(`[database-json-backup] Failed to backup model ${modelName}`, {
         service: 'database-json-backup',
         model: modelName,
         error,
@@ -280,7 +280,7 @@ export async function restorePrismaJsonBackup(
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       logLines.push(`[TRUNCATE ERROR] ${modelName}: ${msg}`);
-      void (ErrorSystem as any).logWarning(`[database-json-backup] Failed to truncate model ${modelName}`, {
+      void ErrorSystem.logWarning(`[database-json-backup] Failed to truncate model ${modelName}`, {
         service: 'database-json-backup',
         model: modelName,
         error,
@@ -324,7 +324,7 @@ export async function restorePrismaJsonBackup(
     } catch (error) {
       const msg = error instanceof Error ? error.message : 'Unknown error';
       logLines.push(`[ERROR] ${modelName}: ${msg}`);
-      void (ErrorSystem as any).logWarning(
+      void ErrorSystem.logWarning(
         `[database-json-backup] Failed to insert data for model ${modelName}`,
         {
           service: 'database-json-backup',
@@ -343,7 +343,7 @@ export async function restorePrismaJsonBackup(
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Unknown error';
     logLines.push(`[WARNING] Sequence reset failed: ${msg}`);
-    void (ErrorSystem as any).logWarning('[database-json-backup] Sequence reset failed', {
+    void ErrorSystem.logWarning('[database-json-backup] Sequence reset failed', {
       service: 'database-json-backup',
       error,
     });
@@ -362,7 +362,7 @@ export async function restorePrismaJsonBackup(
     const existingLog = await fs.readFile(restoreLogPath, 'utf-8');
     logData = JSON.parse(existingLog) as Record<string, { date: string; logFile: string }>;
   } catch (error) {
-    void (ErrorSystem as any).logWarning('[database-json-backup] Failed to load restore-log.json', {
+    void ErrorSystem.logWarning('[database-json-backup] Failed to load restore-log.json', {
       service: 'database-json-backup',
       error,
     });

@@ -129,7 +129,7 @@ export const createErrorResponse = async (
   const requestDiagnostics = extractRequestDiagnostics(options?.request);
 
   // Log the error
-  void (logSystemEvent as any)({
+  void logSystemEvent({
     level,
     message: resolved.message,
     source: options?.source ?? 'api',

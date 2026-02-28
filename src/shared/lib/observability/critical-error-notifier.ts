@@ -212,7 +212,7 @@ export const notifyCriticalError = async (
       }
     );
     if (!res.ok) {
-      void (ErrorSystem as any).logWarning('[critical-error-notifier] Webhook failed', {
+      void ErrorSystem.logWarning('[critical-error-notifier] Webhook failed', {
         service: 'critical-error-notifier',
         status: res.status,
         statusText: res.statusText,
@@ -221,7 +221,7 @@ export const notifyCriticalError = async (
     }
     return { delivered: true, throttled: false };
   } catch (error) {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'critical-error-notifier',
       action: 'notifyCriticalError',
     });

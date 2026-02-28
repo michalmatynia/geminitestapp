@@ -22,7 +22,7 @@ const queue = createManagedQueue<TraderaListingQueueJobData>({
     return { ok: true, listingId: data.listingId, action: data.action };
   },
   onCompleted: async (jobId, _result, data) => {
-    await (ErrorSystem as any).logInfo('Tradera listing job completed', {
+    await ErrorSystem.logInfo('Tradera listing job completed', {
       service: 'tradera-listing-queue',
       listingId: data.listingId,
       action: data.action,
@@ -30,7 +30,7 @@ const queue = createManagedQueue<TraderaListingQueueJobData>({
     });
   },
   onFailed: async (jobId, error, data) => {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'tradera-listing-queue',
       listingId: data.listingId,
       action: data.action,
@@ -55,7 +55,7 @@ export const enqueueTraderaListingJob = async (
   const queuedJobId = await queue.enqueue(data, {
     jobId,
   });
-  await (ErrorSystem as any).logInfo('Tradera listing job queued', {
+  await ErrorSystem.logInfo('Tradera listing job queued', {
     service: 'tradera-listing-queue',
     listingId: data.listingId,
     action: data.action,

@@ -35,7 +35,7 @@ async function GET_handler(
         } catch (error) {
           try {
             const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-            void (ErrorSystem as any).captureException(error, {
+            void ErrorSystem.captureException(error, {
               service: 'agent-stream',
               action: 'sendSnapshot',
               runId,

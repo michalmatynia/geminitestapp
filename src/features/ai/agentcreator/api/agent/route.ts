@@ -48,7 +48,7 @@ async function GET_handler(_req: NextRequest, _ctx: ApiHandlerContext): Promise<
     },
   });
   if (DEBUG_CHATBOT) {
-    void (ErrorSystem as any).logInfo('Runs loaded', {
+    void ErrorSystem.logInfo('Runs loaded', {
       service: 'agent-api',
       count: runs.length,
       durationMs: Date.now() - requestStart,
@@ -141,7 +141,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   const planSettings = normalizePlanSettings(body.planSettings);
 
   if (DEBUG_CHATBOT) {
-    void (ErrorSystem as any).logInfo('Request', {
+    void ErrorSystem.logInfo('Request', {
       service: 'agent-api',
       promptLength: body.prompt.trim().length,
       model: body.model?.trim() || null,
@@ -240,7 +240,7 @@ async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): Promise<
   startAgentQueue();
 
   if (DEBUG_CHATBOT) {
-    void (ErrorSystem as any).logInfo('Queued', {
+    void ErrorSystem.logInfo('Queued', {
       service: 'agent-api',
       runId: run.id,
       status: run.status,
@@ -287,7 +287,7 @@ async function DELETE_handler(req: NextRequest, _ctx: ApiHandlerContext): Promis
     )
   );
   if (DEBUG_CHATBOT) {
-    void (ErrorSystem as any).logInfo('Deleted', {
+    void ErrorSystem.logInfo('Deleted', {
       service: 'agent-api',
       count: ids.length,
       durationMs: Date.now() - requestStart,

@@ -816,7 +816,7 @@ export async function postUpscaleSlotHandler(
     });
 
     if (processed.authoritativeSource === 'client_upload_fallback') {
-      void (logSystemEvent as any)({
+      void logSystemEvent({
         level: 'warn',
         source: 'image-studio.upscale',
         message:
@@ -953,7 +953,7 @@ export async function postUpscaleSlotHandler(
     }
 
     const durationMs = Date.now() - startedAt;
-    void (logSystemEvent as any)({
+    void logSystemEvent({
       level: 'info',
       source: 'image-studio.upscale',
       message: 'Image Studio upscale persisted.',
@@ -1003,7 +1003,7 @@ export async function postUpscaleSlotHandler(
 
     return NextResponse.json(responseBody, { status: 201 });
   } catch (error) {
-    void (logSystemEvent as any)({
+    void logSystemEvent({
       level: 'warn',
       source: 'image-studio.upscale',
       message: 'Image Studio upscale failed.',

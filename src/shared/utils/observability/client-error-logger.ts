@@ -171,7 +171,11 @@ export const initClientErrorReporting = (): void => {
   }
 
   window.addEventListener('error', (event: ErrorEvent): void => {
-    logClientError(event.error ?? event.message, {
+    if (!(event.error instanceof Error)) {
+      return;
+    }
+
+    logClientError(event.error, {
       context: {
         source: 'window.error',
         filename: event.filename,

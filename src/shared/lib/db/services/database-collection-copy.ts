@@ -585,7 +585,7 @@ export async function copyCollection(
       ...(result.warnings?.length ? { warnings: result.warnings } : {}),
     };
   } catch (error) {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'database-collection-copy',
       action: 'copyCollection',
       collection: collectionName,

@@ -89,12 +89,30 @@ describe('Centralized Error Logging', () => {
     );
   });
 
-  it('should attach global error listeners when initialized', () => {
+  it('should attach global error listeners and ignore opaque window errors', () => {
     initClientErrorReporting();
     expect(window.addEventListener).toHaveBeenCalledWith('error', expect.any(Function));
     expect(window.addEventListener).toHaveBeenCalledWith(
       'unhandledrejection',
       expect.any(Function)
     );
+
+    const errorHandler = vi
+      .mocked(window.addEventListener)
+      .mock.calls.find(([eventName]) => eventName === 'error')?.[1] as
+      | ((event: ErrorEvent) => void)
+      | undefined;
+
+    expect(errorHandler).toBeTypeOf('function');
+
+    errorHandler?.({
+      message: 'Script error.',
+      filename: 'http://cdn.example.com/app.js',
+      lineno: 0,
+      colno: 0,
+      error: undefined,
+    } as ErrorEvent);
+
+    expect(navigator.sendBeacon).not.toHaveBeenCalled();
   });
 });

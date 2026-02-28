@@ -24,14 +24,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   }
   const { productId, type, payload } = parsed.data;
 
-  await (logSystemEvent as any)({
+  await logSystemEvent({
     level: 'info',
     message: '[api/products/ai-jobs/enqueue] Received request',
     context: { productId, type },
   });
 
   const job = await enqueueProductAiJob(productId, type as ProductAiJobType, payload);
-  await (logSystemEvent as any)({
+  await logSystemEvent({
     level: 'info',
     message: `[api/products/ai-jobs/enqueue] Job ${job.id} created`,
     context: { jobId: job.id },
@@ -43,7 +43,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
   if (inlineJobs) {
     // WORKAROUND: In serverless/development, immediately process this job
     // since setInterval doesn't persist across function invocations
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       message: `[api/products/ai-jobs/enqueue] About to call processProductAiJob for job ${job.id}`,
       context: { jobId: job.id },
@@ -52,14 +52,14 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     // Process the job asynchronously but log any errors
     processProductAiJob(job.id)
       .then(async (): Promise<void> => {
-        await (logSystemEvent as any)({
+        await logSystemEvent({
           level: 'info',
           message: `[api/products/ai-jobs/enqueue] Job ${job.id} processing initiated successfully`,
           context: { jobId: job.id },
         });
       })
       .catch((err: unknown) => {
-        void (ErrorSystem as any).captureException(err, {
+        void ErrorSystem.captureException(err, {
           service: 'api/products/ai-jobs/enqueue',
           jobId: job.id,
           productId: productId,
@@ -70,7 +70,7 @@ export async function POST_handler(req: NextRequest, _ctx: ApiHandlerContext): P
     startProductAiJobQueue();
   }
 
-  await (logSystemEvent as any)({
+  await logSystemEvent({
     level: 'info',
     message: '[api/products/ai-jobs/enqueue] Returning response to client',
   });

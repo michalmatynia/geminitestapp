@@ -16,7 +16,7 @@ export const createHomeTimingRecorder = () => {
   const flush = async (): Promise<void> => {
     if (!shouldLogHomeTiming()) return;
     timings['total'] = performance.now() - totalStart;
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       message: '[timing] home',
       context: timings,

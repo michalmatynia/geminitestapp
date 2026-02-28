@@ -37,7 +37,7 @@ async function GET_handler(
     throw notFoundError('Run not found.');
   }
   if (DEBUG_CHATBOT) {
-    void (ErrorSystem as any).logInfo('Run loaded', {
+    void ErrorSystem.logInfo('Run loaded', {
       service: 'agent-api',
       runId,
       status: run.status,
@@ -75,7 +75,7 @@ async function POST_handler(
     throw badRequestError('Unsupported action.');
   }
   if (DEBUG_CHATBOT) {
-    void (ErrorSystem as any).logInfo('Request', {
+    void ErrorSystem.logInfo('Request', {
       service: 'agent-api',
       runId,
       action: body.action,
@@ -134,7 +134,7 @@ async function POST_handler(
     }
     await logAgentAudit(updated.id, 'info', 'Agent run resume requested.');
     if (DEBUG_CHATBOT) {
-      void (ErrorSystem as any).logInfo('Resumed', {
+      void ErrorSystem.logInfo('Resumed', {
         service: 'agent-api',
         runId,
         status: updated.status,
@@ -205,7 +205,7 @@ async function POST_handler(
       stepId: body.stepId,
     });
     if (DEBUG_CHATBOT) {
-      void (ErrorSystem as any).logInfo('Step retry queued', {
+      void ErrorSystem.logInfo('Step retry queued', {
         service: 'agent-api',
         runId,
         stepId: body.stepId,
@@ -272,7 +272,7 @@ async function POST_handler(
       status: body.status,
     });
     if (DEBUG_CHATBOT) {
-      void (ErrorSystem as any).logInfo('Step overridden', {
+      void ErrorSystem.logInfo('Step overridden', {
         service: 'agent-api',
         runId,
         stepId: body.stepId,
@@ -320,7 +320,7 @@ async function POST_handler(
       stepId: body.stepId.trim(),
     });
     if (DEBUG_CHATBOT) {
-      void (ErrorSystem as any).logInfo('Step approved', {
+      void ErrorSystem.logInfo('Step approved', {
         service: 'agent-api',
         runId,
         stepId: body.stepId.trim(),
@@ -332,7 +332,7 @@ async function POST_handler(
 
   if (run.status === 'completed' || run.status === 'failed' || run.status === 'stopped') {
     if (DEBUG_CHATBOT) {
-      void (ErrorSystem as any).logInfo('Already terminal', {
+      void ErrorSystem.logInfo('Already terminal', {
         service: 'agent-api',
         runId,
         status: run.status,
@@ -355,7 +355,7 @@ async function POST_handler(
   await logAgentAudit(updated.id, 'warning', 'Agent run stopped by user.');
 
   if (DEBUG_CHATBOT) {
-    void (ErrorSystem as any).logInfo('Stopped', {
+    void ErrorSystem.logInfo('Stopped', {
       service: 'agent-api',
       runId,
       status: updated.status,
@@ -399,7 +399,7 @@ async function DELETE_handler(
     deletedAt: new Date().toISOString(),
   });
   if (DEBUG_CHATBOT) {
-    void (ErrorSystem as any).logInfo('Deleted', {
+    void ErrorSystem.logInfo('Deleted', {
       service: 'agent-api',
       runId,
       durationMs: Date.now() - requestStart,

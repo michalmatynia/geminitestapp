@@ -531,7 +531,7 @@ export async function postDatabasesPreviewHandler(
       try {
         await adminClient.query(`DROP DATABASE IF EXISTS "${previewDbName}" WITH (FORCE)`);
       } catch (e) {
-        void (ErrorSystem as any).captureException(e, {
+        void ErrorSystem.captureException(e, {
           service: 'api/databases/preview',
           action: 'drop_preview_db',
         });

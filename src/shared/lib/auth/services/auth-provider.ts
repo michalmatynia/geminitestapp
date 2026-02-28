@@ -58,7 +58,7 @@ const warnAuthProviderDrift = (
   if (appProvider === authProvider) return;
   // Explicit auth provider settings are intentional overrides in mixed-provider deployments.
   if (source !== 'default') return;
-  void (ErrorSystem as any).logWarning(
+  void ErrorSystem.logWarning(
     `Auth provider "${authProvider}" from ${source} differs from app provider "${appProvider}".`,
     {
       service: 'auth-provider',

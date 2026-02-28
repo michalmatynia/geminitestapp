@@ -20,7 +20,7 @@ export const getTagRepository = async (
     }
     return prismaTagRepository;
   } catch (error) {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'tag-repository',
       action: 'getTagRepository',
       providerOverride,

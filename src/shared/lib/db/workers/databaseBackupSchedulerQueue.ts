@@ -66,7 +66,7 @@ const queue = createManagedQueue<DatabaseBackupSchedulerJobData>({
     await tickDatabaseBackupScheduler();
   },
   onFailed: async (_jobId, error) => {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'database-backup-scheduler-queue',
     });
   },
@@ -86,7 +86,7 @@ const unregisterRepeatScheduler = async (): Promise<void> => {
       );
     }
   } catch (error) {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'database-backup-scheduler-queue',
       action: 'unregisterRepeatScheduler',
     });
@@ -120,7 +120,7 @@ const syncRepeatSchedulerRegistration = (): void => {
       queueState.schedulerRegistered = true;
     } catch (error) {
       queueState.schedulerRegistered = false;
-      void (ErrorSystem as any).captureException(error, {
+      void ErrorSystem.captureException(error, {
         service: 'database-backup-scheduler-queue',
         action: 'registerScheduler',
       });
@@ -149,7 +149,7 @@ export const startDatabaseBackupSchedulerQueue = (): void => {
       )
       .catch((error) => {
         queueState.startupTickQueued = false;
-        void (ErrorSystem as any).captureException(error, {
+        void ErrorSystem.captureException(error, {
           service: 'database-backup-scheduler-queue',
           action: 'enqueueStartupTick',
         });

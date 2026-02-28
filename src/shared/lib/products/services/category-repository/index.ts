@@ -20,7 +20,7 @@ export const getCategoryRepository = async (
     }
     return prismaCategoryRepository;
   } catch (error) {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'category-repository',
       action: 'getCategoryRepository',
       providerOverride,

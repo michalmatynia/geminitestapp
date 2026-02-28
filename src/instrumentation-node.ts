@@ -88,18 +88,18 @@ export async function registerNodeInstrumentation() {
       try {
         const service = (context?.['service'] as string) || 'shared-logger';
         if (level === 'error') {
-          await (ErrorSystem as any).captureException(error || message, {
+          await ErrorSystem.captureException(error || message, {
             service,
             message,
             ...context,
           });
         } else if (level === 'warn') {
-          await (ErrorSystem as any).logWarning(message, {
+          await ErrorSystem.logWarning(message, {
             service,
             ...context,
           });
         } else {
-          await (ErrorSystem as any).logInfo(message, {
+          await ErrorSystem.logInfo(message, {
             service,
             ...context,
           });

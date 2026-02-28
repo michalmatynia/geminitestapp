@@ -56,7 +56,7 @@ const queue = createManagedQueue<TraderaRelistSchedulerJobData>({
     return { scheduled: true, count: dueListingIds.length };
   },
   onFailed: async (_jobId, error) => {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'tradera-relist-scheduler-queue',
     });
   },
@@ -86,7 +86,7 @@ export const startTraderaRelistSchedulerQueue = (): void => {
     );
   })().catch(async (error) => {
     repeatRegistered = false;
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'tradera-relist-scheduler-queue',
       action: 'registerRepeat',
     });

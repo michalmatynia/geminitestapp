@@ -101,7 +101,7 @@ type LogSystemEventInput = {
 const logSystemTelemetryEvent = async (input: LogSystemEventInput): Promise<void> => {
   try {
     const { logSystemEvent } = await import('@/shared/lib/observability/system-logger');
-    await (logSystemEvent as any)(input);
+    await logSystemEvent(input);
   } catch (error) {
     logger.error('query-telemetry failed to persist log event', error, {
       source: input.source,

@@ -128,7 +128,7 @@ export async function postDatabasesRestoreHandler(
       logData = JSON.parse(logFile) as Record<string, { date: string; logFile: string }>;
     } catch (error) {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-      void (ErrorSystem as any).logWarning('Failed to load restore-log.json', { error, stage, backupName });
+      void ErrorSystem.logWarning('Failed to load restore-log.json', { error, stage, backupName });
       // No log yet.
     }
 
@@ -241,7 +241,7 @@ export async function postDatabasesRestoreHandler(
       `);
     } catch (error) {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-      void (ErrorSystem as any).logWarning('Sequence reset failed after restore', {
+      void ErrorSystem.logWarning('Sequence reset failed after restore', {
         error,
         stage,
         backupName,
@@ -263,7 +263,7 @@ export async function postDatabasesRestoreHandler(
       logData = JSON.parse(logFile) as Record<string, { date: string; logFile: string }>;
     } catch (error) {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-      void (ErrorSystem as any).logWarning('Failed to load restore-log.json', { error, stage, backupName });
+      void ErrorSystem.logWarning('Failed to load restore-log.json', { error, stage, backupName });
       // No log yet.
     }
 

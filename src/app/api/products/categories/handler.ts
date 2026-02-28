@@ -68,7 +68,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
 
   timings['total'] = performance.now() - requestStart;
   if (shouldLogTiming()) {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       message: '[timing] products.categories.GET',
       context: { timings },

@@ -255,7 +255,7 @@ export async function uploadFile(
       errorMessage: error instanceof Error ? error.message : 'Upload failed',
       meta: options?.allowOrphanRecord ? { orphanRecord: true, storageSource } : { storageSource },
     }).catch(() => {});
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'fileUploader',
       action: 'uploadFile',
       filename,
@@ -353,7 +353,7 @@ export async function uploadNoteFile(
       errorMessage: error instanceof Error ? error.message : 'Upload failed',
       meta: { storageSource },
     }).catch(() => {});
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'fileUploader',
       action: 'uploadNoteFile',
       filename,
@@ -396,7 +396,7 @@ export async function deleteNoteFile(
     }
     return await noteService.deleteNoteFile(noteId, slotIndex);
   } catch (error) {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'fileUploader',
       action: 'deleteNoteFile',
       noteId,

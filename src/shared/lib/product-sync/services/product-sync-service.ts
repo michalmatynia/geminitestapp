@@ -675,7 +675,7 @@ export const processProductSyncRun = async (runId: string): Promise<ProductSyncR
 
     return updatedRun;
   } catch (error) {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'product-sync-service',
       action: 'processProductSyncRun',
       runId,

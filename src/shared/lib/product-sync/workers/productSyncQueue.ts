@@ -29,7 +29,7 @@ const queue = createManagedQueue<ProductSyncQueueJobData>({
     };
   },
   onCompleted: async (jobId, _result, data) => {
-    await (ErrorSystem as any).logInfo('Product sync job completed', {
+    await ErrorSystem.logInfo('Product sync job completed', {
       service: 'product-sync-queue',
       runId: data.runId,
       profileId: data.profileId,
@@ -38,7 +38,7 @@ const queue = createManagedQueue<ProductSyncQueueJobData>({
     });
   },
   onFailed: async (jobId, error, data) => {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'product-sync-queue',
       runId: data.runId,
       profileId: data.profileId,

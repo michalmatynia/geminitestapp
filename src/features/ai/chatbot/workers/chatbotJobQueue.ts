@@ -24,14 +24,14 @@ const queue = createManagedQueue<ChatbotJobData>({
       startedAt: new Date(),
     });
 
-    void (ErrorSystem as any).logInfo('Processing job', { service: 'chatbot-job-queue', jobId: data.jobId });
+    void ErrorSystem.logInfo('Processing job', { service: 'chatbot-job-queue', jobId: data.jobId });
     await processJob(data.jobId);
-    void (ErrorSystem as any).logInfo('Job completed', { service: 'chatbot-job-queue', jobId: data.jobId });
+    void ErrorSystem.logInfo('Job completed', { service: 'chatbot-job-queue', jobId: data.jobId });
   },
   onFailed: async (_jobId, error, data) => {
     const message = error instanceof Error ? error.message : 'Job failed.';
 
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'chatbot-job-queue',
       jobId: data.jobId,
     });

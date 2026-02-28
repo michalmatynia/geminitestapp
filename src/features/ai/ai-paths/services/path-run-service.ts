@@ -69,7 +69,7 @@ const dispatchRun = async (runId: string, options?: { delayMs?: number }): Promi
   try {
     await enqueuePathRunJob(runId, options);
   } catch (queueError) {
-    void (ErrorSystem as any).captureException(queueError, {
+    void ErrorSystem.captureException(queueError, {
       service: 'ai-paths-service',
       action: 'enqueueJob',
       runId,
@@ -88,7 +88,7 @@ const cleanupRunQueueEntries = async (runId: string): Promise<void> => {
   try {
     await removePathRunQueueEntries([runId]);
   } catch (error) {
-    void (ErrorSystem as any).logWarning(`Non-critical queue cleanup failure for run ${runId}`, {
+    void ErrorSystem.logWarning(`Non-critical queue cleanup failure for run ${runId}`, {
       service: 'ai-paths-service',
       action: 'cleanupRunQueueEntries',
       runId,
@@ -109,7 +109,7 @@ const cleanupRunQueueEntriesBatch = async (runIds: string[]): Promise<void> => {
   try {
     await removePathRunQueueEntries(uniqueRunIds);
   } catch (error) {
-    void (ErrorSystem as any).logWarning('Non-critical queue cleanup failure for bulk run deletion', {
+    void ErrorSystem.logWarning('Non-critical queue cleanup failure for bulk run deletion', {
       service: 'ai-paths-service',
       action: 'cleanupRunQueueEntriesBatch',
       runCount: uniqueRunIds.length,
@@ -348,7 +348,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
         recordRuntimeRunQueued({ runId: run.id }),
       ]);
     } catch (parallelError) {
-      void (ErrorSystem as any).logWarning(`Non-critical setup failure for run ${run.id}`, {
+      void ErrorSystem.logWarning(`Non-critical setup failure for run ${run.id}`, {
         service: 'ai-paths-service',
         error: parallelError,
         runId: run.id,
@@ -366,7 +366,7 @@ export const enqueuePathRun = async (input: EnqueueRunInput): Promise<AiPathRunR
     }
     return await execute();
   } catch (error) {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'ai-paths-service',
       action: 'enqueuePathRun',
       pathId: input.pathId,
@@ -427,7 +427,7 @@ export const resumePathRun = async (
         recordRuntimeRunQueued({ runId: updated.id }),
       ]);
     } catch (auxError) {
-      void (ErrorSystem as any).logWarning(`Non-critical resume logging failure for run ${runId}`, {
+      void ErrorSystem.logWarning(`Non-critical resume logging failure for run ${runId}`, {
         service: 'ai-paths-service',
         error: auxError,
         runId,
@@ -439,7 +439,7 @@ export const resumePathRun = async (
 
     return updated;
   } catch (error) {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'ai-paths-service',
       action: 'resumePathRun',
       runId,
@@ -510,7 +510,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
         recordRuntimeRunQueued({ runId: updated.id }),
       ]);
     } catch (auxError) {
-      void (ErrorSystem as any).logWarning(
+      void ErrorSystem.logWarning(
         `Non-critical retry logging failure for run ${runId}, node ${nodeId}`,
         {
           service: 'ai-paths-service',
@@ -526,7 +526,7 @@ export const retryPathRunNode = async (runId: string, nodeId: string): Promise<A
 
     return updated;
   } catch (error) {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'ai-paths-service',
       action: 'retryPathRunNode',
       runId,
@@ -548,7 +548,7 @@ export const deletePathRunWithRepository = async (
     await cleanupRunQueueEntries(runId);
     return await repo.deleteRun(runId);
   } catch (error) {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'ai-paths-service',
       action: 'deletePathRun',
       runId,
@@ -569,7 +569,7 @@ export const deletePathRunsWithRepository = async (
     await cleanupRunQueueEntriesBatch(runIds);
     return await repo.deleteRuns(options);
   } catch (error) {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'ai-paths-service',
       action: 'deletePathRuns',
       options,
@@ -648,7 +648,7 @@ export const cancelPathRunWithRepository = async (
         }),
       ]);
     } catch (auxError) {
-      void (ErrorSystem as any).logWarning(`Non-critical cancellation logging failure for run ${runId}`, {
+      void ErrorSystem.logWarning(`Non-critical cancellation logging failure for run ${runId}`, {
         service: 'ai-paths-service',
         error: auxError,
         runId,
@@ -660,7 +660,7 @@ export const cancelPathRunWithRepository = async (
 
     return updated;
   } catch (error) {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'ai-paths-service',
       action: 'cancelPathRun',
       runId,

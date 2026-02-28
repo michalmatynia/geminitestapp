@@ -38,7 +38,7 @@ export const createCancellationMonitor = (params: {
       params.abortController.abort();
       return true;
     } catch (error) {
-      void (ErrorSystem as any).logWarning('Failed to check cancellation status', {
+      void ErrorSystem.logWarning('Failed to check cancellation status', {
         service: 'ai-paths-executor',
         error,
         runId: params.runId,

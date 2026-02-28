@@ -37,7 +37,7 @@ const LOG_SOURCE = 'export-template-repository';
 
 const getExportTemplateProvider = async (): Promise<ExportTemplateProvider> => {
   const provider = await getProductDataProvider();
-  await (logSystemEvent as any)({
+  await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
     message: `Provider: ${provider}`,
@@ -81,7 +81,7 @@ const parseTemplates = async (value: string | null): Promise<Template[]> => {
   try {
     const parsed = JSON.parse(value) as unknown;
     if (!Array.isArray(parsed)) {
-      void (ErrorSystem as any).logWarning('[ExportTemplateRepository] Parsed value is not an array', {
+      void ErrorSystem.logWarning('[ExportTemplateRepository] Parsed value is not an array', {
         service: 'export-template-repository',
         parsed,
       });
@@ -207,7 +207,7 @@ const readTemplatesValue = async (): Promise<string | null> => {
       $or: [{ _id: toMongoId(SETTINGS_KEY) }, { key: SETTINGS_KEY }],
     });
     const val = typeof doc?.value === 'string' ? doc.value : null;
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
       message: 'Read templates (Mongo)',
@@ -219,7 +219,7 @@ const readTemplatesValue = async (): Promise<string | null> => {
     where: { key: SETTINGS_KEY },
     select: { value: true },
   });
-  await (logSystemEvent as any)({
+  await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
     message: 'Read templates (Prisma)',
@@ -310,7 +310,7 @@ const readImageRetryPresetsValue = async (): Promise<string | null> => {
 
 const writeTemplatesValue = async (value: string): Promise<void> => {
   const provider = await getExportTemplateProvider();
-  await (logSystemEvent as any)({
+  await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
     message: 'Writing templates...',
@@ -337,7 +337,7 @@ const writeTemplatesValue = async (value: string): Promise<void> => {
     update: { value },
     create: { key: SETTINGS_KEY, value },
   });
-  await (logSystemEvent as any)({
+  await logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
     message: 'Wrote templates (Prisma)',

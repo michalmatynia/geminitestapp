@@ -53,7 +53,7 @@ const parsePrismaModelNamesFromSchema = (): string[] => {
     }
     return Array.from(names).sort((a, b) => a.localeCompare(b));
   } catch (error) {
-    void (ErrorSystem as any).logWarning(
+    void ErrorSystem.logWarning(
       '[database-engine-status] Failed to parse Prisma schema for model names',
       {
         service: 'database-engine-status',
@@ -75,7 +75,7 @@ const getKnownPrismaCollections = (): string[] => {
       return Array.from(new Set(modelNames)).sort((a, b) => a.localeCompare(b));
     }
   } catch (error) {
-    void (ErrorSystem as any).logWarning(
+    void ErrorSystem.logWarning(
       '[database-engine-status] Failed to extract models from prisma._dmmf',
       {
         service: 'database-engine-status',
@@ -96,7 +96,7 @@ const getKnownMongoCollections = async (): Promise<string[]> => {
       .filter((name): name is string => Boolean(name && !name.startsWith('system.')))
       .sort((a, b) => a.localeCompare(b));
   } catch (error) {
-    void (ErrorSystem as any).logWarning('[database-engine-status] Failed to list Mongo collections', {
+    void ErrorSystem.logWarning('[database-engine-status] Failed to list Mongo collections', {
       service: 'database-engine-status',
       error,
     });

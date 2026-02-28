@@ -72,7 +72,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     });
   } catch (error) {
     const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-    void (ErrorSystem as any).captureException(error, { service: 'api/databases/backups', type });
+    void ErrorSystem.captureException(error, { service: 'api/databases/backups', type });
     throw error;
   }
 }

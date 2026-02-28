@@ -17,7 +17,7 @@ const runStartupBackupSchedulerCatchup = (): void => {
         await import('@/shared/lib/db/services/database-backup-scheduler');
       await tickDatabaseBackupScheduler();
     } catch (error) {
-      void (logSystemEvent as any)({
+      void logSystemEvent({
         level: 'warn',
         source: LOG_SOURCE,
         message: 'Startup backup scheduler catch-up tick failed',
@@ -57,7 +57,7 @@ export const initializeQueues = (): void => {
   initialized = true;
 
   if (process.env['DISABLE_QUEUE_WORKERS'] === 'true') {
-    void (logSystemEvent as any)({
+    void logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
       message: 'Worker startup disabled by DISABLE_QUEUE_WORKERS',
@@ -67,7 +67,7 @@ export const initializeQueues = (): void => {
   }
 
   if (!isRedisAvailable()) {
-    void (logSystemEvent as any)({
+    void logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
       message: 'Redis not available, using inline processing mode',
@@ -79,7 +79,7 @@ export const initializeQueues = (): void => {
   void (async (): Promise<void> => {
     const redisReachable = await isRedisReachable();
     if (!redisReachable) {
-      void (logSystemEvent as any)({
+      void logSystemEvent({
         level: 'warn',
         source: LOG_SOURCE,
         message: 'Redis unreachable, skipping BullMQ workers',
@@ -132,7 +132,7 @@ export const initializeQueues = (): void => {
         | undefined
     )?.();
 
-    void (logSystemEvent as any)({
+    void logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
       message: 'Starting BullMQ workers...',

@@ -173,20 +173,69 @@ export const mongoProductRepository: ProductRepository = {
     const searchFilter = await buildMongoWhere(filters);
     const projectStage = buildListProjectStage(filters);
 
-    const [docs, total] = await Promise.all([
-      (async () => {
-        let cursor = collection.find(searchFilter).sort({ createdAt: -1 });
-        if (isEmptyFilter(searchFilter)) {
-          cursor = cursor.hint({ createdAt: -1 });
-        }
-        cursor = cursor.skip(skip).limit(pageSize);
-        if (projectStage) {
-          cursor = cursor.project<WithId<ProductDocument>>(projectStage);
-        }
-        return await cursor.toArray();
-      })(),
-      collection.countDocuments(searchFilter),
-    ]);
+    if (isEmptyFilter(searchFilter)) {
+      const [docs, total] = await Promise.all([
+        (async () => {
+          if (projectStage) {
+            const pipeline: Document[] = [
+              { $match: searchFilter },
+              { $sort: { createdAt: -1 } },
+              { $skip: skip },
+              { $limit: pageSize },
+              { $project: projectStage },
+            ];
+            return await collection
+              .aggregate<WithId<ProductDocument>>(pipeline, { hint: { createdAt: -1 } })
+              .toArray();
+          }
+
+          return await collection
+            .find(searchFilter)
+            .sort({ createdAt: -1 })
+            .hint({ createdAt: -1 })
+            .skip(skip)
+            .limit(pageSize)
+            .toArray();
+        })(),
+        collection.estimatedDocumentCount(),
+      ]);
+
+      return {
+        products: docs.map((doc) => toProductResponse(doc)),
+        total,
+      };
+    }
+
+    const productsPipeline: Document[] = [
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: pageSize },
+    ];
+    if (projectStage) {
+      productsPipeline.push({ $project: projectStage });
+    }
+
+    type ProductListFacetResult = {
+      products?: WithId<ProductDocument>[];
+      meta?: Array<{ total?: number }>;
+    };
+
+    // Filtered Mongo queries use a single aggregation so the page data and total
+    // count are derived from the same matched set without a second filtered scan.
+    const [result] = await collection
+      .aggregate<ProductListFacetResult>([
+        { $match: searchFilter },
+        {
+          $facet: {
+            products: productsPipeline,
+            meta: [{ $count: 'total' }],
+          },
+        },
+      ])
+      .toArray();
+
+    const docs = result?.products ?? [];
+    const total = result?.meta?.[0]?.total ?? 0;
 
     return {
       products: docs.map((doc) => toProductResponse(doc)),

@@ -32,7 +32,7 @@ const queue = createManagedQueue<ProductAiJobData>({
     // Mark stale running jobs as failed
     const staleResult = await jobRepository.markStaleRunningJobs(STALE_RUNNING_TTL_MS);
     if (staleResult.count > 0) {
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'info',
         source: LOG_SOURCE,
         message: `Marked ${staleResult.count} stale running jobs as failed`,
@@ -42,7 +42,7 @@ const queue = createManagedQueue<ProductAiJobData>({
 
     const job = await jobRepository.findJobById(data.jobId);
     if (!job) {
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'warn',
         source: LOG_SOURCE,
         message: `Job ${data.jobId} not found, skipping`,
@@ -51,7 +51,7 @@ const queue = createManagedQueue<ProductAiJobData>({
       return;
     }
     if (job.status !== 'running' && job.status !== 'pending') {
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'info',
         source: LOG_SOURCE,
         message: `Job ${data.jobId} has status "${job.status}", skipping`,
@@ -72,7 +72,7 @@ const queue = createManagedQueue<ProductAiJobData>({
     }
 
     const typedJob = job as unknown as Job;
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
       message: `Processing job ${job.id} of type "${job.type}"`,
@@ -90,7 +90,7 @@ const queue = createManagedQueue<ProductAiJobData>({
         payload: job.payload,
         createdAt: job.createdAt,
       });
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'info',
         source: LOG_SOURCE,
         message: `Job ${job.id} completed`,
@@ -99,7 +99,7 @@ const queue = createManagedQueue<ProductAiJobData>({
       return result;
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Job failed.';
-      await (ErrorSystem as any).captureException(error, {
+      await ErrorSystem.captureException(error, {
         service: LOG_SOURCE,
         jobId: job.id,
         productId: job.productId,
@@ -125,7 +125,7 @@ export const startProductAiJobQueue = (): void => {
 
 export const stopProductAiJobQueue = (reason?: string): void => {
   const suffix = reason ? `: ${reason}` : '';
-  void (logSystemEvent as any)({
+  void logSystemEvent({
     level: 'info',
     source: LOG_SOURCE,
     message: `Queue worker stopped${suffix}`,
@@ -167,7 +167,7 @@ export const enqueueProductAiJobToQueue = async (
 // Inline processing for serverless/development environments
 export const processProductAiJob = async (jobId: string): Promise<void> => {
   const SINGLE_LOG_SOURCE = 'product-ai-queue-single';
-  await (logSystemEvent as any)({
+  await logSystemEvent({
     level: 'info',
     source: SINGLE_LOG_SOURCE,
     message: `Processing job ${jobId}`,
@@ -178,7 +178,7 @@ export const processProductAiJob = async (jobId: string): Promise<void> => {
   const job = await jobRepository.findJobById(jobId);
 
   if (!job) {
-    void (ErrorSystem as any).logWarning(`Job ${jobId} not found`, {
+    void ErrorSystem.logWarning(`Job ${jobId} not found`, {
       service: SINGLE_LOG_SOURCE,
       jobId,
     });
@@ -186,7 +186,7 @@ export const processProductAiJob = async (jobId: string): Promise<void> => {
   }
 
   if (job.status !== 'pending') {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       source: SINGLE_LOG_SOURCE,
       message: `Job ${jobId} is not pending (status: ${job.status}), skipping`,
@@ -217,7 +217,7 @@ export const processProductAiJob = async (jobId: string): Promise<void> => {
       payload: job.payload,
       createdAt: job.createdAt,
     });
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       source: SINGLE_LOG_SOURCE,
       message: `Job ${job.id} completed`,
@@ -225,7 +225,7 @@ export const processProductAiJob = async (jobId: string): Promise<void> => {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Job failed.';
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: SINGLE_LOG_SOURCE,
       jobId: job.id,
       productId: job.productId,

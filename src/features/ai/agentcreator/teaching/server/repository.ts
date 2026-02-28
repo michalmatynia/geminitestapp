@@ -39,7 +39,7 @@ let warnedNoMongo = false;
 const isMongoAvailable = (): boolean => {
   if (process.env['MONGODB_URI']) return true;
   if (!warnedNoMongo) {
-    void (logSystemEvent as any)({
+    void logSystemEvent({
       level: 'warn',
       message: 'MONGODB_URI missing; agent teaching data will be empty.',
       source: 'agent-teaching',

@@ -148,6 +148,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
         <div className='min-w-0 flex flex-1 items-center gap-2'>
           <button
             type='button'
+            draggable={false}
             className='min-w-0 truncate text-left text-sm text-gray-200 hover:underline focus:outline-none focus:underline'
             onClick={(event): void => {
               event.preventDefault();
@@ -187,6 +188,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
         <div className='min-w-0 flex flex-1 items-center gap-2'>
           <button
             type='button'
+            draggable={false}
             className='min-w-0 truncate text-left font-medium text-gray-100 hover:underline focus:outline-none focus:underline'
             onClick={(event): void => {
               event.preventDefault();
@@ -262,6 +264,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
               {caseFile ? (
                 <button
                   type='button'
+                  draggable={false}
                   className='min-w-0 truncate text-left font-medium text-inherit hover:underline focus:outline-none focus:underline'
                   onClick={(event): void => {
                     event.preventDefault();
@@ -281,6 +284,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
             </div>
             <button
               type='button'
+              draggable={false}
               className={`${
                 caseStatus === 'completed'
                   ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-200'
@@ -303,6 +307,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
             </button>
             <button
               type='button'
+              draggable={false}
               className={`inline-flex items-center gap-1 rounded border px-2 py-0.5 text-[11px] font-medium transition ${
                 isHeldCase
                   ? 'border-cyan-400/60 bg-cyan-500/20 text-cyan-100'
@@ -322,6 +327,7 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
             {canShowNestHeldAction ? (
               <button
                 type='button'
+                draggable={false}
                 className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-medium transition ${
                   canNestHeldHere
                     ? 'border-blue-500/40 bg-blue-500/15 text-blue-100 hover:brightness-110'

@@ -20,6 +20,7 @@ import {
   useSaveCategoryMutation,
   useSaveParameterMutation,
   useSaveTagMutation,
+  useProductValidatorConfig,
   useUpdateValidationPatternMutation,
   useUpdatePriceGroupMutation,
   useUpdateValidatorSettingsMutation,
@@ -44,6 +45,7 @@ vi.mock('@/features/products/api/settings', () => ({
   updateCategory: vi.fn(),
   createCategory: vi.fn(),
   deleteTag: vi.fn(),
+  getProductValidatorConfig: vi.fn(),
   updateValidatorSettings: vi.fn(),
 }));
 
@@ -153,6 +155,42 @@ describe('useProductSettingsQueries invalidation', () => {
     expect(invalidateSpy).toHaveBeenCalledWith({
       queryKey: productSettingsKeys.validatorConfig(false),
     });
+  });
+
+  it('useProductValidatorConfig refetches on mount when an invalidated cache entry is stale', async () => {
+    vi.mocked(productSettingsApi.getProductValidatorConfig)
+      .mockResolvedValueOnce({
+        enabledByDefault: true,
+        formatterEnabledByDefault: true,
+        patterns: [],
+        instanceDenyBehavior: null,
+      } as never)
+      .mockResolvedValueOnce({
+        enabledByDefault: true,
+        formatterEnabledByDefault: false,
+        patterns: [],
+        instanceDenyBehavior: null,
+      } as never);
+
+    const firstRender = renderHook(() => useProductValidatorConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(firstRender.result.current.data?.formatterEnabledByDefault).toBe(true)
+    );
+    expect(productSettingsApi.getProductValidatorConfig).toHaveBeenCalledTimes(1);
+
+    firstRender.unmount();
+
+    await queryClient.invalidateQueries({
+      queryKey: productSettingsKeys.validatorConfig(false),
+    });
+
+    const secondRender = renderHook(() => useProductValidatorConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(secondRender.result.current.data?.formatterEnabledByDefault).toBe(false)
+    );
+    expect(productSettingsApi.getProductValidatorConfig).toHaveBeenCalledTimes(2);
   });
 
   it('useUpdatePriceGroupMutation invalidates metadata/settings price-group keys', async () => {

@@ -137,8 +137,10 @@ export function useProductValidatorConfig(
     queryKey,
     queryFn: () => api.getProductValidatorConfig(includeDisabled),
     // Same rationale as useValidationPatterns: config is stable within a session.
+    // Keep refetch-on-mount enabled so a stale invalidated cache refreshes when
+    // the Product form opens after validator settings were changed elsewhere.
     staleTime: 5 * 60 * 1_000,
-    refetchOnMount: false,
+    refetchOnMount: true,
     refetchOnWindowFocus: false,
     refetchOnReconnect: true,
     meta: {

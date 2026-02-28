@@ -175,7 +175,7 @@ export async function withRetry<T>(
 
       // Log retry attempt
       if (logRetries) {
-        void (logSystemEvent as any)({
+        void logSystemEvent({
           level: 'warn',
           message: `Retry attempt ${attempt}/${maxAttempts} after ${nextDelay}ms`,
           source: source ?? 'retry',
@@ -302,7 +302,7 @@ export async function withCircuitBreaker<T>(
     // Check if threshold reached
     if (state.failures >= failureThreshold) {
       state.isOpen = true;
-      void (logSystemEvent as any)({
+      void logSystemEvent({
         level: 'error',
         message: `Circuit breaker opened for ${circuitId} after ${state.failures} failures`,
         source: 'circuit-breaker',

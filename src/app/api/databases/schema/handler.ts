@@ -321,7 +321,7 @@ export async function getDatabasesSchemaHandler(
       collections.push(...enrichCollections(mongoResult.value, 'mongodb'));
     } else {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-      void (ErrorSystem as any).logWarning('Failed to fetch MongoDB schema', {
+      void ErrorSystem.logWarning('Failed to fetch MongoDB schema', {
         error: mongoResult.reason,
         service: 'api/databases/schema',
       });
@@ -332,7 +332,7 @@ export async function getDatabasesSchemaHandler(
       collections.push(...enrichCollections(prismaResult.value, 'prisma'));
     } else {
       const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-      void (ErrorSystem as any).logWarning('Failed to fetch Prisma schema', {
+      void ErrorSystem.logWarning('Failed to fetch Prisma schema', {
         error: prismaResult.reason,
         service: 'api/databases/schema',
       });

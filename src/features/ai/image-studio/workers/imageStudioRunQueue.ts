@@ -431,7 +431,7 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
   processor: async (data) => {
     const run = await getImageStudioRunById(data.runId);
     if (!run) {
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'warn',
         source: LOG_SOURCE,
         message: `Run ${data.runId} not found, skipping`,
@@ -441,7 +441,7 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
     }
 
     if (run.status === 'completed' || run.status === 'failed') {
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'info',
         source: LOG_SOURCE,
         message: `Run ${run.id} already terminal (${run.status}), skipping`,
@@ -585,7 +585,7 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
         ts: Date.now(),
       });
 
-      await (ErrorSystem as any).captureException(error, {
+      await ErrorSystem.captureException(error, {
         service: LOG_SOURCE,
         runId: run.id,
       });
@@ -594,7 +594,7 @@ const queue = createManagedQueue<ImageStudioRunJobData>({
     }
   },
   onFailed: async (jobId, error, data) => {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: LOG_SOURCE,
       action: 'onFailed',
       jobId,
@@ -612,7 +612,7 @@ const processInlineRunInBackground = (
   reason: 'redis_unavailable' | 'enqueue_failed'
 ): void => {
   void queue.processInline({ runId }).catch(async (inlineError: unknown) => {
-    await (ErrorSystem as any).captureException(inlineError, {
+    await ErrorSystem.captureException(inlineError, {
       service: LOG_SOURCE,
       action: 'inline-background-failed',
       runId,
@@ -625,7 +625,7 @@ export const enqueueImageStudioRunJob = async (
   runId: string
 ): Promise<ImageStudioRunDispatchMode> => {
   if (!isRedisAvailable()) {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
       message: `Redis unavailable for run ${runId}; processing inline in background`,
@@ -639,7 +639,7 @@ export const enqueueImageStudioRunJob = async (
     await queue.enqueue({ runId }, { jobId: runId });
     return 'queued';
   } catch (enqueueError) {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'warn',
       source: LOG_SOURCE,
       message: `Queue enqueue failed for run ${runId}; falling back to inline processing`,

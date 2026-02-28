@@ -25,7 +25,7 @@ const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord | null> => {
   const normalized = normalizeEmail(email);
   const provider = requireAuthProvider(await getAuthDataProvider());
-  await (logSystemEvent as any)({
+  await logSystemEvent({
     level: 'info',
     message: `[AUTH-REPO] Finding user ${normalized} using ${provider}`,
     context: { email: normalized, provider },
@@ -53,7 +53,7 @@ export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord
     };
   }
   if (!process.env['MONGODB_URI']) {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'warn',
       message: '[AUTH-REPO] MONGODB_URI missing',
     });
@@ -62,7 +62,7 @@ export const findAuthUserByEmail = async (email: string): Promise<AuthUserRecord
   const db = await getMongoDb();
   const user = await db.collection<MongoUserDoc>('users').findOne({ email: normalized });
   if (!user || !user.email) {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       message: '[AUTH-REPO] MongoDB user not found',
       context: { email: normalized },

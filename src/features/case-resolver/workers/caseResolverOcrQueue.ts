@@ -767,7 +767,7 @@ const runCaseResolverOcr = async (input: {
       }
       const errorMessage = error instanceof Error ? error.message : String(error);
       const errorCategory = classifyCaseResolverOcrError(error);
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'warn',
         source: LOG_SOURCE,
         message: `OCR request failed for model ${model.provider}:${model.model}; trying next model candidate`,
@@ -818,7 +818,7 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
     }
   },
   onCompleted: async (jobId, _result, data) => {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
       message: `OCR job ${data.jobId} completed`,
@@ -844,7 +844,7 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
         errorCategory,
         retryableError: true,
       });
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'warn',
         source: LOG_SOURCE,
         message: `OCR job ${data.jobId} failed transiently (attempt ${attemptsMade}/${maxAttempts}); retrying`,
@@ -866,7 +866,7 @@ const queue = createManagedQueue<CaseResolverOcrQueueJobData>({
       errorCategory,
       retryableError: retryable,
     });
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: LOG_SOURCE,
       action: 'onFailed',
       queueJobId: jobId,
@@ -888,7 +888,7 @@ export const enqueueCaseResolverOcrJob = async (
   data: CaseResolverOcrQueueJobData
 ): Promise<CaseResolverOcrDispatchMode> => {
   if (!isRedisAvailable()) {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       source: LOG_SOURCE,
       message: `Redis unavailable for OCR job ${data.jobId}; processing inline`,
@@ -905,7 +905,7 @@ export const enqueueCaseResolverOcrJob = async (
     await queue.enqueue(data, { jobId: data.jobId });
     return 'queued';
   } catch (enqueueError) {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'warn',
       source: LOG_SOURCE,
       message: `Queue enqueue failed for OCR job ${data.jobId}; falling back to inline processing`,
@@ -920,7 +920,7 @@ export const enqueueCaseResolverOcrJob = async (
       await queue.processInline(data);
       return 'inline';
     } catch (inlineError) {
-      await (ErrorSystem as any).captureException(inlineError, {
+      await ErrorSystem.captureException(inlineError, {
         service: LOG_SOURCE,
         action: 'inline-fallback-failed',
         runtimeJobId: data.jobId,

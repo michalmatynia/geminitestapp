@@ -142,7 +142,7 @@ export async function POST_handler(_req: NextRequest, ctx: ApiHandlerContext): P
   CachedProductService.invalidateAll();
 
   if (shouldLogTiming()) {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       message: '[timing] products.categories.reorder.POST',
       context: {

@@ -39,7 +39,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
   try {
     if (!('chatbotAgentRun' in prisma)) {
       if (DEBUG_CHATBOT) {
-        void (ErrorSystem as any).logWarning('Agent tables not initialized.', { service: 'agent-engine' });
+        void ErrorSystem.logWarning('Agent tables not initialized.', { service: 'agent-engine' });
       }
       return;
     }
@@ -50,7 +50,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
 
     if (!run) {
       if (DEBUG_CHATBOT) {
-        void (ErrorSystem as any).logWarning('Run not found', { service: 'agent-engine', runId });
+        void ErrorSystem.logWarning('Run not found', { service: 'agent-engine', runId });
       }
       return;
     }
@@ -441,7 +441,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
     const message = error instanceof Error ? error.message : 'Unknown error';
 
     // Use centralized error system
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'agent-engine',
       runId,
       errorId,
@@ -467,7 +467,7 @@ export async function runAgentControlLoop(runId: string): Promise<void> {
     } catch (innerError) {
       try {
         const { ErrorSystem } = await import('@/shared/lib/observability/system-logger');
-        void (ErrorSystem as any).captureException(innerError, {
+        void ErrorSystem.captureException(innerError, {
           service: 'agent-engine',
           action: 'persistError',
           targetRunId: runId,

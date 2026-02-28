@@ -67,7 +67,7 @@ export const createMongoBackup = async (): Promise<DatabaseBackupResult> => {
       log: logContent,
     };
   } catch (error) {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'database-backup-mongo',
       databaseName,
     });
@@ -124,7 +124,7 @@ export const createPostgresBackup = async (): Promise<DatabaseBackupResult> => {
       log: logContent,
     };
   } catch (error) {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'database-backup-postgres',
       databaseName,
     });

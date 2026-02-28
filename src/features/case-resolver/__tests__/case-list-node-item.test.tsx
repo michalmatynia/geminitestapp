@@ -74,7 +74,11 @@ describe('CaseListNodeItem', () => {
 
     render(<CaseListNodeItem {...props} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Case One' }));
+    const openCaseButton = screen.getByRole('button', { name: 'Case One' });
+
+    expect(openCaseButton).toHaveAttribute('draggable', 'false');
+
+    fireEvent.click(openCaseButton);
 
     expect(props.handleOpenCase).toHaveBeenCalledWith('case-1');
     expect(screen.getByRole('button', { name: 'Child' })).toBeInTheDocument();
@@ -131,7 +135,11 @@ describe('CaseListNodeItem', () => {
 
     render(<CaseListNodeItem {...props} />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Transcript.pdf' }));
+    const openFileButton = screen.getByRole('button', { name: 'Transcript.pdf' });
+
+    expect(openFileButton).toHaveAttribute('draggable', 'false');
+
+    fireEvent.click(openFileButton);
 
     expect(props.handleOpenFile).toHaveBeenCalledWith('file-1');
     expect(props.handleOpenCase).not.toHaveBeenCalled();

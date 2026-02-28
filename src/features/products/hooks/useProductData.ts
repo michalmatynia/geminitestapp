@@ -1,12 +1,10 @@
 'use client';
 
-import { useQueries, useQueryClient, type UseMutationResult } from '@tanstack/react-query';
+import { useQueryClient, type UseMutationResult } from '@tanstack/react-query';
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 
 import {
-  countProducts,
   createProduct,
-  getProducts,
   updateProduct,
   deleteProduct,
 } from '@/features/products/api';
@@ -15,6 +13,7 @@ import {
   type UseProductsOptions,
   useProducts as useProductsQuery,
   useProductsCount as useProductsCountQuery,
+  useProductsWithCount,
 } from '@/features/products/hooks/useProductsQuery';
 import {
   addQueuedProductId,
@@ -28,15 +27,12 @@ import type { DeleteResponse } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 import { useOfflineMutation } from '@/shared/hooks/offline/useOfflineMutation';
 import { api } from '@/shared/lib/api-client';
-import { normalizeQueryKey } from '@/shared/lib/query-key-utils';
 import { withCsrfHeaders } from '@/shared/lib/security/csrf-client';
 
 import {
-  getProductCountQueryKey,
-  getProductListQueryKey,
-  getProductDetailQueryKey,
   productsAllQueryKey,
   productsCountsQueryKey,
+  getProductDetailQueryKey,
   refetchProductsAndCounts,
 } from './productCache';
 
@@ -419,39 +415,19 @@ export function useProductData({
     ]
   );
 
-  // Use parallel queries
-  const results = useQueries({
-    queries: [
-      {
-        queryKey: normalizeQueryKey(getProductListQueryKey(filters)),
-        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<ProductWithImages[]> =>
-          getProducts(filters, signal),
-        enabled: queriesEnabled,
-        staleTime: 10_000,
-        refetchOnMount: true,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-      },
-      {
-        queryKey: normalizeQueryKey(getProductCountQueryKey(filters)),
-        queryFn: ({ signal }: { signal?: AbortSignal }): Promise<number> =>
-          countProducts(filters, signal),
-        enabled: queriesEnabled,
-        staleTime: 10_000,
-        refetchOnMount: true,
-        refetchOnWindowFocus: false,
-        refetchOnReconnect: false,
-      },
-    ],
+  const productsWithCountQuery = useProductsWithCount(filters, {
+    enabled: queriesEnabled,
   });
-
-  const productsQuery = results[0];
-  const countQuery = results[1];
+  const loadError = useMemo((): Error | null => {
+    const error = productsWithCountQuery.error;
+    if (!error) return null;
+    if (error instanceof Error) return error;
+    return new Error(String(error));
+  }, [productsWithCountQuery.error]);
 
   const totalPages = useMemo(() => {
-    const total = countQuery.data || 0;
-    return Math.ceil(total / pageSize);
-  }, [countQuery.data, pageSize]);
+    return Math.ceil(productsWithCountQuery.total / pageSize);
+  }, [pageSize, productsWithCountQuery.total]);
 
   // Keep pagination valid when filters change.
   useEffect(() => {
@@ -528,7 +504,7 @@ export function useProductData({
   );
 
   return {
-    data: productsQuery.data || [],
+    data: productsWithCountQuery.products,
     totalPages,
     page,
     setPage: handleSetPage,
@@ -566,9 +542,9 @@ export function useProductData({
     setCatalogFilter: handleSetCatalogFilter,
     baseExported,
     setBaseExported: handleSetBaseExported,
-    loadError: productsQuery.error || countQuery.error,
-    isLoading: productsQuery.isPending || countQuery.isPending,
-    isFetching: productsQuery.isFetching || countQuery.isFetching,
+    loadError,
+    isLoading: productsWithCountQuery.isLoading,
+    isFetching: productsWithCountQuery.isFetching,
     refresh,
   };
 }

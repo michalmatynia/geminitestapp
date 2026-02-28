@@ -448,7 +448,7 @@ export const deleteFromConfiguredStorage = async (params: {
       fastComet: settings.fastComet,
     });
   } catch (error) {
-    await (ErrorSystem as any).logWarning('FastComet delete failed; continuing.', {
+    await ErrorSystem.logWarning('FastComet delete failed; continuing.', {
       service: 'file-storage-service',
       filepath: params.filepath,
       error: error instanceof Error ? error.message : String(error),

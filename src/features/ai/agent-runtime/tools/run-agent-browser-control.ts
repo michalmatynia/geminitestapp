@@ -36,7 +36,7 @@ export async function runAgentBrowserControl({
 }): Promise<AgentToolResult> {
   const debugEnabled = process.env['DEBUG_CHATBOT'] === 'true';
   if (!('agentBrowserLog' in prisma) || !('agentBrowserSnapshot' in prisma)) {
-    void (ErrorSystem as any).logWarning('[chatbot][agent][tool] Agent browser tables not initialized.', {
+    void ErrorSystem.logWarning('[chatbot][agent][tool] Agent browser tables not initialized.', {
       service: 'agent-control',
       runId,
     });
@@ -148,7 +148,7 @@ export async function runAgentBrowserControl({
     const message = error instanceof Error ? error.message : 'Control action failed.';
 
     try {
-      await (ErrorSystem as any).captureException(error, {
+      await ErrorSystem.captureException(error, {
         service: 'agent-control',
         action: 'runAgentBrowserControl',
         runId,

@@ -238,7 +238,7 @@ export const prismaCategoryRepository: CategoryRepository = {
           ...(data.name !== undefined && { name: data.name }),
           ...(data.description !== undefined && { description: data.description }),
           ...(data.color !== undefined && { color: data.color }),
-          ...(data.parentId !== undefined && data.parentId !== null && { parentId: data.parentId }),
+          ...(data.parentId !== undefined ? { parentId: data.parentId } : {}),
           ...(data.catalogId !== undefined && { catalogId: data.catalogId }),
           ...(data.sortIndex !== undefined && data.sortIndex !== null
             ? { sortIndex: data.sortIndex }

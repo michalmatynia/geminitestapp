@@ -212,7 +212,7 @@ async function getProducts(
 
     return products;
   } catch (error) {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'product-service',
       action: 'getProducts',
       filters,

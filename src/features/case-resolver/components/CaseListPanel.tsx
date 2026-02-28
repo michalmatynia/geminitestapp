@@ -629,6 +629,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           />
           <FolderTreeViewportV2
             controller={controller}
+            enableDnd={!isHierarchyLocked}
             canStartDrag={canStartDrag}
             canDrop={canDrop}
             rootDropUi={rootDropUi}

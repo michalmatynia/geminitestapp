@@ -13,7 +13,7 @@ export async function processAgentRun(runId: string): Promise<void> {
 
   if (!('chatbotAgentRun' in prisma)) {
     if (debugEnabled) {
-      void (ErrorSystem as any).logWarning('Agent tables not initialized.', { service: 'agent-processor' });
+      void ErrorSystem.logWarning('Agent tables not initialized.', { service: 'agent-processor' });
     }
     return;
   }
@@ -40,7 +40,7 @@ export async function processAgentRun(runId: string): Promise<void> {
   try {
     await runAgentControlLoop(nextRun.id);
   } catch (error: unknown) {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: 'agent-queue',
       runId: nextRun.id,
     });

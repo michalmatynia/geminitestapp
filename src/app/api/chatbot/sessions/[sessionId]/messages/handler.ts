@@ -36,7 +36,7 @@ export async function GET_handler(
     orderBy: { createdAt: 'asc' },
   });
   if (DEBUG_CHATBOT) {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       message: '[chatbot][sessions][GET] Messages loaded',
       context: {
@@ -84,7 +84,7 @@ export async function POST_handler(
     throw badRequestError('Role and content are required.');
   }
   if (DEBUG_CHATBOT) {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       message: '[chatbot][sessions][POST] Request',
       context: {
@@ -106,7 +106,7 @@ export async function POST_handler(
     data: { updatedAt: new Date() },
   });
   if (DEBUG_CHATBOT) {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       message: '[chatbot][sessions][POST] Created',
       context: {

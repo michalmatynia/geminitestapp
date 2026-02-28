@@ -117,7 +117,7 @@ export async function runAgentTool(
   }
 
   if (!('agentBrowserLog' in prisma) || !('agentBrowserSnapshot' in prisma)) {
-    void (ErrorSystem as any).logWarning('[chatbot][agent][tool] Agent browser tables not initialized.', {
+    void ErrorSystem.logWarning('[chatbot][agent][tool] Agent browser tables not initialized.', {
       service: 'agent-tool',
       runId,
     });
@@ -928,7 +928,7 @@ export async function runAgentTool(
         }
       } catch (recordError) {
         try {
-          await (ErrorSystem as any).captureException(recordError, {
+          await ErrorSystem.captureException(recordError, {
             service: 'agent-tool',
             action: 'captureVideo',
             runId,
@@ -955,7 +955,7 @@ export async function runAgentTool(
           });
         } catch (updateError) {
           try {
-            await (ErrorSystem as any).captureException(updateError, {
+            await ErrorSystem.captureException(updateError, {
               service: 'agent-tool',
               action: 'updateRecordingPath',
               runId,
@@ -1015,7 +1015,7 @@ export async function runAgentTool(
     const message = error instanceof Error ? error.message : 'Tool failed.';
 
     try {
-      await (ErrorSystem as any).captureException(error, {
+      await ErrorSystem.captureException(error, {
         service: 'agent-tool',
         action: 'runAgentTool',
         runId,

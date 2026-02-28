@@ -39,7 +39,7 @@ async function POST_handler(
   }
 
   if (DEBUG_CHATBOT) {
-    void (ErrorSystem as any).logInfo('Control request', {
+    void ErrorSystem.logInfo('Control request', {
       service: 'agent-api',
       runId,
       action,

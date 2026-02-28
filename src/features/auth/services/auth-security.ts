@@ -326,7 +326,7 @@ export const recordLoginFailure = async (input: {
       policy.lockoutDurationMinutes
     );
     if (result.lockedUntil) {
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'warn',
         message: 'Auth email lockout triggered',
         source: 'auth.security',
@@ -349,7 +349,7 @@ export const recordLoginFailure = async (input: {
       policy.ipRateLimitDurationMinutes
     );
     if (result.lockedUntil) {
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'warn',
         message: 'Auth IP rate limit triggered',
         source: 'auth.security',
@@ -376,7 +376,7 @@ export const recordLoginSuccess = async (input: {
   if (emailKey) await resetAttempt('email', emailKey);
   if (ipKey) await resetAttempt('ip', ipKey);
 
-  await (logSystemEvent as any)({
+  await logSystemEvent({
     level: 'info',
     message: 'User signed in successfully',
     source: 'auth.security',

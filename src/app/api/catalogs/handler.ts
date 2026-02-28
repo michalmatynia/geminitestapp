@@ -100,7 +100,7 @@ export async function GET_handler(req: NextRequest, ctx: ApiHandlerContext): Pro
       }
       catalogs = updatedCatalogs;
     } catch (error: unknown) {
-      void (logSystemEvent as any)({
+      void logSystemEvent({
         level: 'warn',
         message: 'Failed to normalize catalog language IDs',
         source: 'catalogs.GET',

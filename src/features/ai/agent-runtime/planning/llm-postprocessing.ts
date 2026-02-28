@@ -111,7 +111,7 @@ export async function dedupePlanStepsWithLLM({
     }
     return dedupedSteps;
   } catch (error) {
-    void (ErrorSystem as any).logWarning('[chatbot][agent][engine] Plan dedupe failed', {
+    void ErrorSystem.logWarning('[chatbot][agent][engine] Plan dedupe failed', {
       ...(runId && { runId }),
       error,
     });
@@ -193,7 +193,7 @@ export async function guardRepetitionWithLLM({
     }
     return guarded;
   } catch (error) {
-    void (ErrorSystem as any).logWarning('[chatbot][agent][engine] Repetition guard failed', {
+    void ErrorSystem.logWarning('[chatbot][agent][engine] Repetition guard failed', {
       ...(runId && { runId }),
       error,
     });
@@ -274,7 +274,7 @@ export async function buildCheckpointBriefWithLLM({
     }
     return { summary, nextActions, risks };
   } catch (err) {
-    void (ErrorSystem as any).logWarning('[chatbot][agent][engine] Checkpoint brief failed', {
+    void ErrorSystem.logWarning('[chatbot][agent][engine] Checkpoint brief failed', {
       ...(runId && { runId }),
       error: err,
     });
@@ -378,7 +378,7 @@ export async function optimizePlanWithLLM({
       optimizedSteps,
     };
   } catch (error) {
-    void (ErrorSystem as any).logWarning('[chatbot][agent][engine] Plan optimization failed', {
+    void ErrorSystem.logWarning('[chatbot][agent][engine] Plan optimization failed', {
       ...(runId && { runId }),
       error,
     });
@@ -449,7 +449,7 @@ export async function enrichPlanHierarchyWithLLM({
     }
     return enriched;
   } catch (error) {
-    void (ErrorSystem as any).logWarning('[chatbot][agent][engine] Hierarchy enrichment failed', {
+    void ErrorSystem.logWarning('[chatbot][agent][engine] Hierarchy enrichment failed', {
       ...(runId && { runId }),
       error,
     });
@@ -529,7 +529,7 @@ export async function expandHierarchyFromStepsWithLLM({
     }
     return expanded;
   } catch (error) {
-    void (ErrorSystem as any).logWarning('[chatbot][agent][engine] Plan hierarchy expansion failed', {
+    void ErrorSystem.logWarning('[chatbot][agent][engine] Plan hierarchy expansion failed', {
       runId,
       error,
     });

@@ -57,7 +57,7 @@ const credentialsProvider = Credentials({
 
       if (!email || !password) {
         // Log non-critical info without awaiting
-        void (ErrorSystem as any).logInfo('[AUTH] Missing email or password', { service: 'auth' });
+        void ErrorSystem.logInfo('[AUTH] Missing email or password', { service: 'auth' });
         return null;
       }
 
@@ -74,7 +74,7 @@ const credentialsProvider = Credentials({
       ]);
 
       if (!allowed.allowed) {
-        void (ErrorSystem as any).logWarning('[AUTH] Login blocked due to rate limits', {
+        void ErrorSystem.logWarning('[AUTH] Login blocked due to rate limits', {
           service: 'auth',
           email,
           ip,
@@ -84,7 +84,7 @@ const credentialsProvider = Credentials({
       }
 
       if (!user) {
-        void (ErrorSystem as any).logInfo('[AUTH] User not found or challenge invalid', {
+        void ErrorSystem.logInfo('[AUTH] User not found or challenge invalid', {
           service: 'auth',
           email,
         });
@@ -118,7 +118,7 @@ const credentialsProvider = Credentials({
       // But we still verify MFA if enabled
       if (!challengeId) {
         if (!user.passwordHash) {
-          void (ErrorSystem as any).logWarning('[AUTH] User has no password hash', {
+          void ErrorSystem.logWarning('[AUTH] User has no password hash', {
             service: 'auth',
             userId: user.id,
           });
@@ -169,7 +169,7 @@ const credentialsProvider = Credentials({
         image: user.image ?? null,
       };
     } catch (error) {
-      void (ErrorSystem as any).captureException(error, {
+      void ErrorSystem.captureException(error, {
         service: 'auth',
         action: 'authorize',
       });
@@ -190,7 +190,7 @@ const buildProviders = (): Provider[] => {
     );
   } else {
     // Non-critical warning, log to system but don't spam if not configured
-    void (ErrorSystem as any).logWarning(
+    void ErrorSystem.logWarning(
       '[AUTH] Google Client ID/Secret not found. Google login will be unavailable.',
       {
         service: 'auth',
@@ -207,7 +207,7 @@ const buildProviders = (): Provider[] => {
       })
     );
   } else {
-    void (ErrorSystem as any).logWarning(
+    void ErrorSystem.logWarning(
       '[AUTH] Facebook Client ID/Secret not found. Facebook login will be unavailable.',
       {
         service: 'auth',
@@ -223,7 +223,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
   try {
     const authLoggingEnabled = process.env['AUTH_LOGGING'] === 'true';
     if (authLoggingEnabled) {
-      await (ErrorSystem as any).logInfo('[AUTH] Starting configuration...', { service: 'auth' });
+      await ErrorSystem.logInfo('[AUTH] Starting configuration...', { service: 'auth' });
     }
     const configuredProvider = await getAuthDataProvider();
     const provider = requireAuthProvider(configuredProvider);
@@ -234,7 +234,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
           ? PrismaAdapter(prisma)
           : MongoDBAdapter(getMongoClient(), { databaseName: process.env['MONGODB_DB'] ?? 'app' });
     } catch (error) {
-      await (ErrorSystem as any).logWarning('[AUTH] Adapter initialization failed.', {
+      await ErrorSystem.logWarning('[AUTH] Adapter initialization failed.', {
         service: 'auth',
         provider,
         error,
@@ -242,7 +242,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
       throw configurationError(`[AUTH] Adapter initialization failed for "${provider}".`);
     }
     if (authLoggingEnabled) {
-      await (ErrorSystem as any).logInfo(`[AUTH] Adapter configured for ${provider}.`, {
+      await ErrorSystem.logInfo(`[AUTH] Adapter configured for ${provider}.`, {
         service: 'auth',
         provider,
       });
@@ -282,7 +282,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
             token.accountBanned = Boolean(security.bannedAt);
             tokenMeta.authRefreshedAt = now;
           } catch (error) {
-            await (ErrorSystem as any).captureException(error, {
+            await ErrorSystem.captureException(error, {
               service: 'auth',
               action: 'jwt_callback',
               userId,
@@ -332,7 +332,7 @@ const buildAuthConfig = async (): Promise<NextAuthConfig> => {
       },
     };
   } catch (error: unknown) {
-    await (ErrorSystem as any).captureException(error, {
+    await ErrorSystem.captureException(error, {
       service: 'auth',
       action: 'configuration',
     });

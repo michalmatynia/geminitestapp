@@ -130,7 +130,7 @@ const persistBackupSchedule = async (schedule: DatabaseEngineBackupSchedule): Pr
       });
       wrotePrisma = true;
     } catch (error) {
-      void (ErrorSystem as any).logWarning(
+      void ErrorSystem.logWarning(
         '[database-backup-scheduler] Failed to persist schedule to Prisma',
         {
           service: 'database-backup-scheduler',
@@ -155,7 +155,7 @@ const persistBackupSchedule = async (schedule: DatabaseEngineBackupSchedule): Pr
       );
       wroteMongo = true;
     } catch (error) {
-      void (ErrorSystem as any).logWarning(
+      void ErrorSystem.logWarning(
         '[database-backup-scheduler] Failed to persist schedule to MongoDB',
         {
           service: 'database-backup-scheduler',
@@ -187,7 +187,7 @@ const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise
     void queueModule
       .enqueueProductAiJobToQueue(job.id, job.productId, runtimeType, job.payload)
       .catch((error: unknown) => {
-        void (ErrorSystem as any).captureException(error, {
+        void ErrorSystem.captureException(error, {
           service: LOG_SOURCE,
           context: {
             dbType,
@@ -196,7 +196,7 @@ const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise
           },
         });
         void queueModule.processProductAiJob(job.id).catch((inlineError: unknown) => {
-          void (ErrorSystem as any).captureException(inlineError, {
+          void ErrorSystem.captureException(inlineError, {
             service: LOG_SOURCE,
             context: {
               dbType,
@@ -207,7 +207,7 @@ const enqueueScheduledBackup = async (dbType: DatabaseEngineBackupType): Promise
         });
       });
   } catch (error: unknown) {
-    void (ErrorSystem as any).captureException(error, {
+    void ErrorSystem.captureException(error, {
       service: LOG_SOURCE,
       context: {
         dbType,
@@ -300,7 +300,7 @@ export async function tickDatabaseBackupScheduler(
       };
       changed = true;
       result.skipped.push({ dbType, reason: 'enqueue_failed' });
-      await (ErrorSystem as any).captureException(error, {
+      await ErrorSystem.captureException(error, {
         service: LOG_SOURCE,
         context: { dbType, action: 'enqueueScheduledBackup' },
       });

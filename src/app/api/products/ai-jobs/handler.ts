@@ -16,7 +16,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
   try {
     const staleCount = await cleanupStaleRunningProductAiJobs(1000 * 60 * 10);
     if (staleCount > 0) {
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'info',
         message: `[api/products/ai-jobs] Marked ${staleCount} stale running jobs as failed`,
         context: { staleCount },
@@ -28,7 +28,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
     const checkStatus = searchParams.get('status');
     if (checkStatus === 'true') {
       const status = await getQueueStatus();
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'info',
         message: '[api/products/ai-jobs] Queue status',
         context: { status },
@@ -68,7 +68,7 @@ export async function GET_handler(req: NextRequest, _ctx: ApiHandlerContext): Pr
       error instanceof Prisma.PrismaClientKnownRequestError &&
       (error.code === 'P2021' || error.code === 'P2022')
     ) {
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'warn',
         message: '[api/products/ai-jobs] Prisma schema mismatch; returning empty job list.',
         context: { code: error.code },

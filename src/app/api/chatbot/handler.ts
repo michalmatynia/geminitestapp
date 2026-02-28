@@ -68,7 +68,7 @@ export async function GET_handler(_req: NextRequest, ctx: ApiHandlerContext): Pr
   const catalog = await listBrainModels();
 
   if (DEBUG_CHATBOT) {
-    await (logSystemEvent as any)({
+    await logSystemEvent({
       level: 'info',
       message: '[chatbot][models] Loaded via Brain catalog',
       context: {
@@ -132,7 +132,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
       );
 
       if (DEBUG_CHATBOT) {
-        await (logSystemEvent as any)({
+        await logSystemEvent({
           level: 'info',
           message: '[chatbot][chat] Multipart payload',
           context: {
@@ -251,7 +251,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
 
     const normalizedRequestedModel = requestedModel?.trim() || '';
     if (normalizedRequestedModel && normalizedRequestedModel !== brainConfig.modelId) {
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'info',
         message: '[chatbot][chat] Ignored legacy requested model in favor of Brain',
         context: {
@@ -263,7 +263,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
     }
 
     if (DEBUG_CHATBOT) {
-      await (logSystemEvent as any)({
+      await logSystemEvent({
         level: 'info',
         message: '[chatbot][chat] Request summary',
         context: {
@@ -315,7 +315,7 @@ export async function POST_handler(req: NextRequest, ctx: ApiHandlerContext): Pr
         }
 
         if (DEBUG_CHATBOT) {
-          await (logSystemEvent as any)({
+          await logSystemEvent({
             level: 'info',
             message: '[chatbot][chat] Saved to session',
             context: {

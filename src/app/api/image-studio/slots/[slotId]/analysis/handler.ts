@@ -245,7 +245,7 @@ export async function postAnalyzeSlotHandler(
     const effectiveMode =
       source.sourceKind === 'source_slot' ? 'server_analysis_v1' : 'client_analysis_v1';
 
-    void (logSystemEvent as any)({
+    void logSystemEvent({
       level: 'info',
       source: 'image-studio.analysis',
       message: 'Image Studio analysis completed.',
@@ -290,7 +290,7 @@ export async function postAnalyzeSlotHandler(
 
     return NextResponse.json(responseBody, { status: 200 });
   } catch (error) {
-    void (logSystemEvent as any)({
+    void logSystemEvent({
       level: 'warn',
       source: 'image-studio.analysis',
       message: 'Image Studio analysis failed.',

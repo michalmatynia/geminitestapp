@@ -73,7 +73,8 @@ export async function getCategories(
 ): Promise<ProductCategoryWithChildren[]> {
   try {
     return await api.get<ProductCategoryWithChildren[]>('/api/products/categories/tree', {
-      params: { catalogId: catalogId || undefined },
+      params: { catalogId: catalogId || undefined, fresh: 1 },
+      cache: 'no-store',
     });
   } catch (error) {
     logClientError(error instanceof Error ? error : new Error('Failed to load categories'), {
@@ -86,7 +87,8 @@ export async function getCategories(
 export async function getCategoriesFlat(catalogId: string | null): Promise<ProductCategory[]> {
   try {
     return await api.get<ProductCategory[]>('/api/products/categories', {
-      params: { catalogId: catalogId || undefined },
+      params: { catalogId: catalogId || undefined, fresh: 1 },
+      cache: 'no-store',
     });
   } catch (error) {
     logClientError(error instanceof Error ? error : new Error('Failed to load flat categories'), {

@@ -183,7 +183,7 @@ export async function postExportToBaseHandler(
           categoryId: product.categoryId ?? null,
         },
       }),
-      (ErrorSystem as any).logInfo('[export-to-base] Resources loaded and mapping prepared', {
+      ErrorSystem.logInfo('[export-to-base] Resources loaded and mapping prepared', {
         productId,
         sku: product.sku,
         connectionName: connection.name,
@@ -248,7 +248,7 @@ export async function postExportToBaseHandler(
     };
 
     if (!baseIntegration && baseIntegrationId) {
-      await (ErrorSystem as any).logWarning(
+      await ErrorSystem.logWarning(
         '[export-to-base] Base integration slug not found while resolving listing badge integration; falling back to connection.integrationId.',
         {
           productId,
@@ -390,7 +390,7 @@ export async function postExportToBaseHandler(
     // not a new product creation.
     const allowDuplicateSku = imagesOnly ? true : (data.allowDuplicateSku ?? false);
     if (!allowDuplicateSku && !listingExternalId && product.sku) {
-      await (ErrorSystem as any).logInfo('[export-to-base] Checking if SKU exists in Base.com', {
+      await ErrorSystem.logInfo('[export-to-base] Checking if SKU exists in Base.com', {
         sku: product.sku,
         inventoryId: resolvedInventoryId,
       });
@@ -399,7 +399,7 @@ export async function postExportToBaseHandler(
       const tokenVal = token;
       const skuCheck = await checkBaseSkuExists(tokenVal, resolvedInventoryId, skuVal);
       if (skuCheck.exists) {
-        await (ErrorSystem as any).logWarning('[export-to-base] SKU already exists in Base.com', {
+        await ErrorSystem.logWarning('[export-to-base] SKU already exists in Base.com', {
           sku: product.sku,
           existingProductId: skuCheck.productId,
         });
@@ -436,7 +436,7 @@ export async function postExportToBaseHandler(
     let effectiveMappings = warehouseResolution.effectiveMappings;
 
     // Export to Base.com
-    await (ErrorSystem as any).logInfo('[export-to-base] Calling Base.com API', {
+    await ErrorSystem.logInfo('[export-to-base] Calling Base.com API', {
       productId,
       inventoryId: targetInventoryId,
       mappingsCount: effectiveMappings.length,
@@ -561,7 +561,7 @@ export async function postExportToBaseHandler(
       warehouseMismatch &&
       allowStockFallback
     ) {
-      await (ErrorSystem as any).logWarning('[export-to-base] Warehouse mismatch, retrying without stock', {
+      await ErrorSystem.logWarning('[export-to-base] Warehouse mismatch, retrying without stock', {
         productId,
         inventoryId: targetInventoryId,
         warehouseId,
@@ -598,7 +598,7 @@ export async function postExportToBaseHandler(
         }
       );
     } else if (!imagesOnly && !result.success && warehouseMismatch) {
-      await (ErrorSystem as any).logWarning('[export-to-base] Warehouse mismatch, failing export', {
+      await ErrorSystem.logWarning('[export-to-base] Warehouse mismatch, failing export', {
         productId,
         inventoryId: targetInventoryId,
         warehouseId,
@@ -614,7 +614,7 @@ export async function postExportToBaseHandler(
       includeStockWithoutWarehouse &&
       isStockMismatch(result.error)
     ) {
-      await (ErrorSystem as any).logWarning('[export-to-base] Retrying without stock export', {
+      await ErrorSystem.logWarning('[export-to-base] Retrying without stock export', {
         productId,
         inventoryId: targetInventoryId,
         warehouseId,
@@ -669,7 +669,7 @@ export async function postExportToBaseHandler(
       });
 
       if (!exportImagesAsBase64 || !imageTransform) {
-        void (ErrorSystem as any).logWarning(
+        void ErrorSystem.logWarning(
           '[export-to-base] Image export failed, retrying with base64 + JPEG resize',
           {
             ...imageDiagnosticsContext,
@@ -784,7 +784,7 @@ export async function postExportToBaseHandler(
     if (!result.success && !imagesOnly && !canRetryWrite && product.sku) {
       const createdAfterTimeout = await checkBaseSkuExists(token, targetInventoryId, product.sku);
       if (createdAfterTimeout.exists) {
-        await (ErrorSystem as any).logWarning(
+        await ErrorSystem.logWarning(
           '[export-to-base] Initial export failed but SKU now exists; treating export as successful to avoid duplicate create.',
           {
             productId,
@@ -821,7 +821,7 @@ export async function postExportToBaseHandler(
       });
     }
 
-    await (ErrorSystem as any).logInfo('[export-to-base] Export successful', {
+    await ErrorSystem.logInfo('[export-to-base] Export successful', {
       productId,
       externalProductId: result.productId,
     });

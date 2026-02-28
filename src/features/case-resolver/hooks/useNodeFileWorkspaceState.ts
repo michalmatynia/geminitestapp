@@ -11,7 +11,6 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai/ai-paths/context';
-import {} from '@/shared/lib/ai-paths';
 import type {
   AiNode,
   CaseResolverNodeMeta,

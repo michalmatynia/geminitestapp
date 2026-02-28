@@ -7,7 +7,7 @@ import {
   updateImageStudioSlot,
   type ImageStudioSlotRecord,
 } from '@/features/ai/image-studio/server/slot-repository';
-import { uploadFile } from '@/features/files/file-uploader';
+import { uploadFile } from '@/shared/lib/files/file-uploader';
 import { DEFAULT_IMAGE_SLOT_COUNT } from '@/shared/lib/image-slots';
 import { getProductStudioConfig } from '@/shared/lib/products/services/product-studio-config';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';

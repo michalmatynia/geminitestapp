@@ -9,8 +9,8 @@ import {
   parseCaseResolverCaptureSettings,
   type CaseResolverCaptureSettings as CaseResolverCaptureSettingsType,
 } from '@/features/case-resolver-capture/settings';
-import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '@/shared/lib/filemaker/settings';
-import { useCountries } from '@/shared/lib/internationalization/hooks/useInternationalizationQueries';
+import { FILEMAKER_DATABASE_KEY, parseFilemakerDatabase } from '@/features/filemaker/settings';
+import { useCountries } from '@/features/internationalization/hooks/useInternationalizationQueries';
 import type {
   CaseResolverCategory,
   CaseResolverEditorNodeContext,

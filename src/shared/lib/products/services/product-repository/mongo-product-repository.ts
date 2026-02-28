@@ -4,7 +4,7 @@ import { randomUUID } from 'crypto';
 
 import { Filter, type Document, WithId } from 'mongodb';
 
-import { mongoImageFileRepository } from '@/features/files/services/image-file-service';
+import { mongoImageFileRepository } from '@/shared/lib/files/services/image-file-service';
 import { mongoCatalogRepository } from '@/shared/lib/products/services/catalog-repository/mongo-catalog-repository';
 import {
   toProductBase,

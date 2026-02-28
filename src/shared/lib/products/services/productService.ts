@@ -4,7 +4,7 @@ import {
   deleteFileFromStorage,
   uploadFile,
   getImageFileRepository,
-} from '@/features/files/services/image-file-service';
+} from '@/shared/lib/files/services/image-file-service';
 import { logActivity } from '@/shared/utils/observability/activity-service';
 import { ActivityTypes } from '@/shared/constants/observability';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';

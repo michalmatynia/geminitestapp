@@ -7,7 +7,10 @@ import { FolderPlus, FilePlus, FileImage, FileCode2 } from 'lucide-react';
 import { Button, Switch } from '@/shared/ui';
 import { FolderTreeSearchBar } from '@/shared/lib/foldertree/v2/search';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
-import { useCaseResolverFolderTreeContext } from '../context/CaseResolverFolderTreeContext';
+import {
+  useCaseResolverFolderTreeDataContext,
+  useCaseResolverFolderTreeUiContext,
+} from '../context/CaseResolverFolderTreeContext';
 
 type CaseResolverTreeHeaderProps = {
   searchQuery: string;
@@ -36,11 +39,14 @@ export function CaseResolverTreeHeader({
   const {
     activeCaseFile,
     activeCaseChildCount,
-    showChildCaseFolders,
-    setShowChildCaseFolders,
     selectedFolderForFolderCreate,
     selectedFolderForCreate,
-  } = useCaseResolverFolderTreeContext();
+  } = useCaseResolverFolderTreeDataContext();
+
+  const {
+    showChildCaseFolders,
+    setShowChildCaseFolders,
+  } = useCaseResolverFolderTreeUiContext();
 
   const hasCaseContext = Boolean(activeCaseId || activeCaseFile);
 

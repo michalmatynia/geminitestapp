@@ -6,6 +6,7 @@ import type {
 } from '@/shared/contracts/ai-paths-runtime';
 
 import { aiJobsApi, aiGenerationApi } from '../../../api';
+import { generateProductAiDescription } from '../server/description-generator';
 import {
   coerceInput,
   coerceInputArray,
@@ -541,21 +542,23 @@ export const handleAiDescription: NodeHandler = async ({
     reportAiPathsError,
     toast,
   });
-  const body = {
-    entityJson,
-    imageUrls,
-    descriptionConfig: {
-      visionOutputEnabled: node.config?.description?.visionOutputEnabled,
-      generationOutputEnabled: node.config?.description?.generationOutputEnabled,
-    },
-  };
   try {
-    const result = await aiGenerationApi.generateDescription(body);
-    if (!result.ok) {
-      throw new Error('AI description generation failed.');
-    }
+    const entityProductId =
+      typeof entityJson['id'] === 'string'
+        ? entityJson['id']
+        : typeof entityJson['_id'] === 'string'
+          ? entityJson['_id']
+          : 'unknown';
+    const result = await generateProductAiDescription({
+      productId: entityProductId,
+      images: imageUrls,
+      options: {
+        visionEnabled: node.config?.description?.visionOutputEnabled,
+        generationEnabled: node.config?.description?.generationOutputEnabled,
+      },
+    });
     executed.ai.add(node.id);
-    return { description_en: result.data.description ?? '' };
+    return { description_en: result.description ?? '' };
   } catch (error) {
     reportAiPathsError(
       error,

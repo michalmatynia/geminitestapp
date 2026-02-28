@@ -10,7 +10,7 @@ import {
   shouldRunTraderaRelistScheduler,
 } from '@/features/integrations/services/tradera-listing-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getSettingValue } from '@/features/products/server';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { createManagedQueue } from '@/shared/lib/queue';
 
 import { enqueueTraderaListingJob } from './traderaListingQueue';

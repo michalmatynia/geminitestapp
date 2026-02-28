@@ -14,11 +14,13 @@ export const syncProductAiJobs: SyncHandler = async ({ mongo, prisma, normalizeI
       const id = normalizeId(doc as unknown as Record<string, unknown>);
       const productId = (doc as { productId?: string }).productId;
       if (!id || !productId) return null;
+      const rawType = (doc as { type?: unknown }).type;
       return {
         id,
         productId,
         status: ((doc as { status?: string }).status as ProductAiJobStatus) ?? 'pending',
-        type: (doc as { type?: string }).type ?? 'description_generation',
+        type:
+          typeof rawType === 'string' && rawType.trim().length > 0 ? rawType : 'unknown_legacy',
         payload: ((doc as { payload?: unknown }).payload ?? {}) as Prisma.InputJsonValue,
         result: ((doc as { result?: unknown }).result ?? null) as Prisma.InputJsonValue,
         errorMessage: (doc as { errorMessage?: string | null }).errorMessage ?? null,

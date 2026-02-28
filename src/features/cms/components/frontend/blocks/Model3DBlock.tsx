@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { Viewer3D, type EnvironmentPreset, type LightingPreset } from '@/shared/lib/viewer3d';
+import { Viewer3D, type EnvironmentPreset, type LightingPreset } from '@/features/viewer3d';
 
 import { useRequiredBlockSettings } from './BlockContext';
 import { toBoolean } from './image-utils';

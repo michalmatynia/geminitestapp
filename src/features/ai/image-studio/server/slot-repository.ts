@@ -2,8 +2,8 @@ import 'server-only';
 
 import fs from 'fs/promises';
 
-import { getImageFileRepository } from '@/features/files/services/image-file-repository';
-import { getDiskPathFromPublicPath } from '@/features/files/file-uploader';
+import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import { getProductRepository } from '@/shared/lib/products/services/product-repository';
 import { pruneProductStudioSourceSlotsForProject } from '@/shared/lib/products/services/product-studio-config';
 import type { ImageFileRecord } from '@/shared/contracts/files';

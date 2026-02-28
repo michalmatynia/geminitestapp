@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getCurrencyRepository } from '@/shared/lib/internationalization/server';
+import { getCurrencyRepository } from '@/features/internationalization/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError, notFoundError, duplicateEntryError } from '@/shared/errors/app-error';
 

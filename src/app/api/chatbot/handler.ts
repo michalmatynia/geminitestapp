@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
 import { listBrainModels } from '@/shared/lib/ai-brain/server-model-catalog';
-import { runChatbotModel } from '@/features/ai/chatbot/server-model-runtime';
+import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/server';
 import { logSystemError, logSystemEvent } from '@/shared/lib/observability/system-logger';
 import type { ChatMessageDto as ChatMessage } from '@/shared/contracts/chatbot';

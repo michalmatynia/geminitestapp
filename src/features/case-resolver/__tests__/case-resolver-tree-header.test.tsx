@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { CaseResolverTreeHeader } from '@/features/case-resolver/components/CaseResolverTreeHeader';
 import type { CaseResolverPageContextValue } from '@/features/case-resolver/context/CaseResolverPageContext';
-import type { CaseResolverFolderTreeContextValue } from '@/features/case-resolver/context/CaseResolverFolderTreeContext';
+import type {
+  CaseResolverFolderTreeDataContextValue,
+  CaseResolverFolderTreeUiContextValue,
+} from '@/features/case-resolver/context/CaseResolverFolderTreeContext';
 import type { CaseResolverFile } from '@/shared/contracts/case-resolver';
 
 const routerPushMock = vi.fn();
@@ -29,18 +32,25 @@ const pageContext = {
   caseResolverIdentifiers: [] as Array<{ id: string; name: string }>,
 } as unknown as CaseResolverPageContextValue;
 
-const folderTreeContext = {
+const folderTreeDataContext = {
   activeCaseFile: {
     id: 'case-a',
     name: 'Case A',
     caseIdentifierId: null,
   } as unknown as CaseResolverFile,
   activeCaseChildCount: 0,
-  showChildCaseFolders: true,
-  setShowChildCaseFolders: setShowChildCaseFoldersMock,
   selectedFolderForFolderCreate: null,
   selectedFolderForCreate: null,
-} as unknown as CaseResolverFolderTreeContextValue;
+} as unknown as CaseResolverFolderTreeDataContextValue;
+
+const folderTreeUiContext = {
+  showChildCaseFolders: true,
+  setShowChildCaseFolders: setShowChildCaseFoldersMock,
+  highlightedNodeFileAssetIds: [],
+  setHighlightedNodeFileAssetIds: vi.fn(),
+  highlightedNodeFileAssetIdSet: new Set<string>(),
+  highlightedFolderAncestorNodeIds: [],
+} as unknown as CaseResolverFolderTreeUiContextValue;
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -53,7 +63,8 @@ vi.mock('@/features/case-resolver/context/CaseResolverPageContext', () => ({
 }));
 
 vi.mock('@/features/case-resolver/context/CaseResolverFolderTreeContext', () => ({
-  useCaseResolverFolderTreeContext: () => folderTreeContext,
+  useCaseResolverFolderTreeDataContext: () => folderTreeDataContext,
+  useCaseResolverFolderTreeUiContext: () => folderTreeUiContext,
 }));
 
 describe('CaseResolverTreeHeader', () => {
@@ -70,13 +81,13 @@ describe('CaseResolverTreeHeader', () => {
     pageContext.requestedCaseIssue = null;
     pageContext.canCreateInActiveCase = true;
     pageContext.activeCaseId = 'case-a';
-    folderTreeContext.activeCaseFile = {
+    folderTreeDataContext.activeCaseFile = {
       id: 'case-a',
       name: 'Case A',
       caseIdentifierId: null,
     } as unknown as CaseResolverFile;
-    folderTreeContext.activeCaseChildCount = 2;
-    folderTreeContext.showChildCaseFolders = true;
+    folderTreeDataContext.activeCaseChildCount = 2;
+    folderTreeUiContext.showChildCaseFolders = true;
   });
 
   it('shows nested folders/files switch in active case and toggles child scope visibility', () => {
@@ -90,8 +101,8 @@ describe('CaseResolverTreeHeader', () => {
   });
 
   it('shows nested switch when case context exists even if activeCaseFile is unresolved', () => {
-    folderTreeContext.activeCaseFile = null;
-    folderTreeContext.activeCaseChildCount = 0;
+    folderTreeDataContext.activeCaseFile = null;
+    folderTreeDataContext.activeCaseChildCount = 0;
     pageContext.activeCaseId = 'case-a';
 
     render(<CaseResolverTreeHeader searchQuery='' onSearchChange={vi.fn()} />);

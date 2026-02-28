@@ -37,7 +37,7 @@ vi.mock('@/shared/lib/ai-brain/server', () => ({
   resolveBrainModelExecutionConfig: resolveBrainModelExecutionConfigMock,
 }));
 
-vi.mock('@/features/ai/chatbot/server-model-runtime', () => ({
+vi.mock('@/shared/lib/ai/chatbot/server-model-runtime', () => ({
   runChatbotModel: runChatbotModelMock,
 }));
 

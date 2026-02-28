@@ -4,7 +4,7 @@ import { join } from 'path';
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAsset3DRepository } from '@/shared/lib/viewer3d/server';
+import { getAsset3DRepository } from '@/features/viewer3d/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { notFoundError } from '@/shared/errors/app-error';
 

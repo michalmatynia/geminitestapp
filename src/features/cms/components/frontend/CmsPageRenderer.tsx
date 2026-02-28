@@ -3,7 +3,7 @@ import {
   isCmsSectionHidden,
   normalizePageZone,
 } from '@/features/cms/utils/page-builder-normalization';
-import type { GsapAnimationConfig } from '@/shared/lib/gsap';
+import type { GsapAnimationConfig } from '@/features/gsap';
 import type { CssAnimationConfig } from '@/shared/contracts/cms';
 import type { PageComponent, BlockInstance, PageZone } from '@/shared/contracts/cms';
 import type { ColorSchemeColors } from '@/shared/contracts/cms-theme';

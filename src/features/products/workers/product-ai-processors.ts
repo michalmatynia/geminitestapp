@@ -3,8 +3,6 @@ import 'server-only';
 import fs from 'fs/promises';
 import path from 'path';
 
-import { ObjectId } from 'mongodb';
-
 import {
   resolveAiPathsNodeExecutionConfig,
   resolveBrainExecutionConfigForCapability,
@@ -18,43 +16,22 @@ import {
   markDatabaseBackupJobRunning,
   markDatabaseBackupJobSucceeded,
 } from '@/shared/lib/db/services/database-backup-scheduler';
-import type { ImageFileRecord } from '@/features/files/services/image-file-service';
-import { getImageFileRepository } from '@/features/files/services/image-file-repository';
+import type { ImageFileRecord } from '@/shared/lib/files/services/image-file-service';
+import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import {
   listBaseListingsForSync,
   syncBaseImagesForListing,
 } from '@/features/integrations/services/base-image-sync';
-import { defaultLanguages } from '@/shared/lib/internationalization/server';
-import { getInternationalizationProvider } from '@/shared/lib/internationalization/services/internationalization-provider';
-import { logSystemEvent } from '@/shared/lib/observability/system-logger';
-import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import {
-  generateProductAiDescription,
-  getProductRepository,
-  translateProduct,
-} from '@/features/products/server';
+import { getProductRepository } from '@/features/products/server';
 import { buildImageBase64Slots } from '@/shared/lib/products/services/image-base64';
 import type { ProductAiJobRecord } from '@/shared/contracts/jobs';
-import type { ProductCreateInputDto as ProductFormData } from '@/shared/contracts/products';
-import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
-import { getMongoDb } from '@/shared/lib/db/mongo-client';
-import prisma from '@/shared/lib/db/prisma';
+import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 
 import type { ChatCompletionContentPart } from 'openai/resources/chat/completions';
 
-type LanguageRecord = {
-  id: string;
-  code: string;
-  name: string;
-};
-
 export type JobPayload = {
   isTest?: boolean;
-  productData?: ProductFormData;
   imageUrls?: string[];
-  visionOutputEnabled?: boolean;
-  generationOutputEnabled?: boolean;
-  languageIds?: string[];
   prompt?: string;
   modelId?: string;
   temperature?: number;
@@ -335,290 +312,8 @@ export async function processBaseImageSyncAll(job: Job): Promise<Record<string, 
   };
 }
 
-const normalizeLanguageDoc = (doc: Record<string, unknown>): LanguageRecord | null => {
-  const rawId = doc['id'] ?? doc['_id'];
-  const rawCode = doc['code'] ?? doc['languageCode'] ?? doc['isoCode'];
-  const rawName = doc['name'] ?? doc['languageName'];
-
-  const id = typeof rawId === 'string' ? rawId : typeof rawId === 'number' ? String(rawId) : '';
-  const code =
-    typeof rawCode === 'string'
-      ? rawCode.trim()
-      : typeof rawCode === 'number'
-        ? String(rawCode)
-        : '';
-  const name =
-    typeof rawName === 'string'
-      ? rawName.trim()
-      : typeof rawName === 'number'
-        ? String(rawName)
-        : '';
-
-  if (!id || !code || !name) return null;
-  return { id, code, name };
-};
-
-const normalizeIdValue = (value: unknown): string => {
-  if (typeof value === 'string') return value.trim();
-  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
-  if (value instanceof ObjectId) return value.toString();
-  return '';
-};
-
-const fetchLanguagesByIds = async (ids: string[]): Promise<LanguageRecord[]> => {
-  const normalizedIds = ids.map((id: string) => normalizeIdValue(id)).filter(Boolean);
-  if (!normalizedIds.length) return [];
-  const provider = await getInternationalizationProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const objectIds = normalizedIds
-      .filter((id: string) => ObjectId.isValid(id))
-      .map((id: string) => new ObjectId(id));
-    const docs = await mongo
-      .collection<Record<string, unknown>>('languages')
-      .find({
-        $or: [
-          ...(objectIds.length ? [{ _id: { $in: Array.from(objectIds) } }] : []),
-          { id: { $in: normalizedIds } },
-          { code: { $in: normalizedIds } },
-        ],
-      })
-      .toArray();
-    return docs
-      .map((doc: Record<string, unknown>) => normalizeLanguageDoc(doc))
-      .filter(Boolean) as LanguageRecord[];
-  }
-  const languages = await prisma.language.findMany({
-    where: { id: { in: normalizedIds } },
-  });
-  return languages.map((lang: { id: string; code: string; name: string }) => ({
-    id: lang.id,
-    code: lang.code,
-    name: lang.name,
-  }));
-};
-
-const fetchAllLanguages = async (): Promise<LanguageRecord[]> => {
-  const provider = await getInternationalizationProvider();
-  if (provider === 'mongodb') {
-    const mongo = await getMongoDb();
-    const docs = await mongo.collection<Record<string, unknown>>('languages').find({}).toArray();
-    return docs
-      .map((doc: Record<string, unknown>) => normalizeLanguageDoc(doc))
-      .filter(Boolean) as LanguageRecord[];
-  }
-  const languages = await prisma.language.findMany();
-  return languages.map((lang: { id: string; code: string; name: string }) => ({
-    id: lang.id,
-    code: lang.code,
-    name: lang.name,
-  }));
-};
-
-const resolveFallbackLanguages = async (): Promise<string[]> => {
-  const allLanguages = await fetchAllLanguages();
-  void logSystemEvent({
-    level: 'info',
-    source: 'product-ai-processors',
-    message: `Found ${allLanguages.length} available languages`,
-    context: { count: allLanguages.length },
-  });
-  const filtered = allLanguages.filter((lang: LanguageRecord) => lang.code.toUpperCase() !== 'EN');
-  if (filtered.length > 0) {
-    return filtered.map((lang: LanguageRecord) => lang.name);
-  }
-  const defaults = defaultLanguages
-    .filter((lang: { code: string }) => lang.code !== 'EN')
-    .map((lang: { name: string }) => lang.name);
-  void logSystemEvent({
-    level: 'info',
-    source: 'product-ai-processors',
-    message: 'Using default languages fallback',
-    context: { defaults },
-  });
-  return defaults;
-};
-
-export async function processDescriptionGeneration(job: Job): Promise<{ description: string }> {
-  const { productId, payload } = job;
-
-  let allImageUrls: string[];
-
-  if (payload.productData && payload.isTest) {
-    allImageUrls = payload.imageUrls || [];
-  } else {
-    const productRepository = await getProductRepository();
-    const product = await productRepository.getProductById(productId);
-
-    if (!product) {
-      void ErrorSystem.logWarning(`Product not found for ID: "${productId}" (possibly a SKU)`, {
-        service: 'product-ai-queue',
-        productId,
-      });
-      throw notFoundError('Product not found', { productId });
-    }
-
-    const uploadedImages = product.images
-      .map((img: { imageFile?: { filepath: string } }) => img.imageFile?.filepath)
-      .filter((p: string | undefined): p is string => Boolean(p));
-    const rawExternalImages = product.imageLinks || [];
-    const externalImages = rawExternalImages.filter((url: string) => url && url.trim().length > 0);
-    const uploadedSet = new Set(uploadedImages);
-    const uniqueExternalImages = externalImages.filter((url: string) => !uploadedSet.has(url));
-    allImageUrls = [...uploadedImages, ...uniqueExternalImages];
-  }
-
-  const result = await generateProductAiDescription({
-    productId,
-    images: allImageUrls,
-    options: {
-      visionEnabled: payload.visionOutputEnabled,
-      generationEnabled: payload.generationOutputEnabled,
-    },
-  });
-
-  if (!payload.isTest) {
-    const productRepository = await getProductRepository();
-    await productRepository.updateProduct(productId, {
-      description_en: result.description,
-    });
-  }
-
-  return result;
-}
-
-export async function processTranslation(job: Job): Promise<Record<string, unknown>> {
-  const { productId } = job;
-
-  const productRepository = await getProductRepository();
-  const product = await productRepository.getProductById(productId);
-
-  if (!product) {
-    void ErrorSystem.logWarning(`Product not found for ID: "${productId}"`, {
-      service: 'product-ai-queue-translation',
-      productId,
-    });
-    throw notFoundError('Product not found', { productId });
-  }
-
-  const sourceLanguage = 'English';
-  const sourceName = product.name_en || '';
-  const sourceDescription = product.description_en || '';
-
-  if (!sourceName && !sourceDescription) {
-    throw badRequestError('Product has no English name or description to translate from', {
-      productId,
-    });
-  }
-
-  let targetLanguages: string[];
-
-  if (product.catalogs && product.catalogs.length > 0) {
-    const firstCatalog = product.catalogs[0];
-    const hasEmbeddedCatalog = Boolean(firstCatalog?.catalog);
-
-    if (hasEmbeddedCatalog) {
-      const languageSet = new Set<string>();
-      for (const catalogAssignment of product.catalogs) {
-        const catalog = catalogAssignment.catalog;
-        if (catalog && Array.isArray(catalog.languageIds)) {
-          const languages = await fetchLanguagesByIds(catalog.languageIds);
-          languages.forEach((lang: LanguageRecord) => {
-            if (lang.code.toUpperCase() !== 'EN') {
-              languageSet.add(lang.name);
-            }
-          });
-        }
-      }
-      targetLanguages = Array.from(languageSet);
-    } else {
-      let catalogIds: string[] = [];
-      if (Array.isArray(product.catalogs)) {
-        catalogIds = product.catalogs
-          .map((c: { catalogId?: string; catalog?: { id: string } }) => {
-            return c.catalogId || c.catalog?.id;
-          })
-          .filter((id: string | undefined): id is string => Boolean(id));
-      }
-
-      if (catalogIds.length === 0) {
-        throw badRequestError('Product has catalog assignments but no valid catalog IDs found', {
-          productId,
-        });
-      }
-
-      const catalogs = await prisma.catalog.findMany({
-        where: { id: { in: catalogIds } },
-        include: {
-          languages: {
-            include: {
-              language: true,
-            },
-          },
-        },
-      });
-
-      const languageSet = new Set<string>();
-      catalogs.forEach((catalog: { languages: { language: { name: string; code: string } }[] }) => {
-        catalog.languages.forEach((cl: { language: { name: string; code: string } }) => {
-          if (cl.language.code.toUpperCase() !== 'EN') {
-            languageSet.add(cl.language.name);
-          }
-        });
-      });
-      targetLanguages = Array.from(languageSet);
-    }
-  } else {
-    targetLanguages = await resolveFallbackLanguages();
-  }
-
-  if (targetLanguages.length === 0) {
-    targetLanguages = await resolveFallbackLanguages();
-  }
-
-  if (targetLanguages.length === 0) {
-    throw badRequestError(
-      'No target languages to translate to. Either assign the product to a catalog with languages, or add languages to the Product Settings.',
-      { productId }
-    );
-  }
-
-  const result = await translateProduct({
-    productId,
-    sourceLanguage,
-    targetLanguages,
-    productName: sourceName,
-    productDescription: sourceDescription,
-  });
-
-  const updateData: Record<string, string> = {};
-  for (const [langName, translation] of Object.entries(result.translations)) {
-    const nameLower = langName.toLowerCase();
-    if (nameLower === 'polish' || nameLower === 'pl' || nameLower.includes('polsk')) {
-      updateData['name_pl'] = translation.name;
-      updateData['description_pl'] = translation.description;
-    } else if (nameLower === 'german' || nameLower === 'de' || nameLower.includes('deutsch')) {
-      updateData['name_de'] = translation.name;
-      updateData['description_de'] = translation.description;
-    } else if (nameLower === 'english' || nameLower === 'en') {
-      updateData['name_en'] = translation.name;
-      updateData['description_en'] = translation.description;
-    }
-  }
-
-  if (updateData && Object.keys(updateData).length > 0) {
-    await productRepository.updateProduct(productId, updateData);
-  }
-
-  return result as unknown as Record<string, unknown>;
-}
-
 export async function dispatchProductAiJob(job: Job): Promise<unknown> {
   switch (job.type) {
-    case 'description_generation':
-      return processDescriptionGeneration(job);
-    case 'translation':
-      return processTranslation(job);
     case 'graph_model':
       return processGraphModel(job);
     case 'db_sync':

@@ -25,6 +25,8 @@ export type CaseListSearchPanelProps = {
   workspace: CaseResolverWorkspace;
   identifierLabelById: Map<string, string>;
   query: string;
+  onPrefetchCase: (caseId: string) => void;
+  onPrefetchFile: (file: CaseResolverFile) => void;
   onOpenCase: (caseId: string) => void;
   onOpenFile: (file: CaseResolverFile) => void;
 };
@@ -38,9 +40,11 @@ function resolveFileIcon(fileType: CaseResolverFile['fileType']): React.JSX.Elem
 
 function FileSubRow({
   matched,
+  onPrefetchFile,
   onOpenFile,
 }: {
   matched: CaseListSearchMatchedFile;
+  onPrefetchFile: (file: CaseResolverFile) => void;
   onOpenFile: (file: CaseResolverFile) => void;
 }): React.JSX.Element {
   const { file, folderPath } = matched;
@@ -52,6 +56,12 @@ function FileSubRow({
       <button
         type='button'
         className='min-w-0 flex-1 truncate text-left text-gray-300 hover:underline focus:outline-none'
+        onMouseEnter={(): void => {
+          onPrefetchFile(file);
+        }}
+        onFocus={(): void => {
+          onPrefetchFile(file);
+        }}
         onClick={(event): void => {
           event.preventDefault();
           event.stopPropagation();
@@ -76,12 +86,16 @@ function CaseAccordionRow({
   entry,
   isExpanded,
   onToggle,
+  onPrefetchCase,
+  onPrefetchFile,
   onOpenCase,
   onOpenFile,
 }: {
   entry: CaseListSearchEntry;
   isExpanded: boolean;
   onToggle: () => void;
+  onPrefetchCase: (caseId: string) => void;
+  onPrefetchFile: (file: CaseResolverFile) => void;
   onOpenCase: (caseId: string) => void;
   onOpenFile: (file: CaseResolverFile) => void;
 }): React.JSX.Element {
@@ -118,6 +132,12 @@ function CaseAccordionRow({
         <button
           type='button'
           className='min-w-0 flex-1 truncate text-left font-medium text-gray-200 hover:underline focus:outline-none'
+          onMouseEnter={(): void => {
+            onPrefetchCase(caseFile.id);
+          }}
+          onFocus={(): void => {
+            onPrefetchCase(caseFile.id);
+          }}
           onClick={(event): void => {
             event.preventDefault();
             event.stopPropagation();
@@ -147,6 +167,12 @@ function CaseAccordionRow({
         <button
           type='button'
           className='shrink-0 opacity-0 transition-opacity group-hover:opacity-100 inline-flex size-5 items-center justify-center rounded hover:bg-muted/60 text-gray-400 hover:text-gray-200'
+          onMouseEnter={(): void => {
+            onPrefetchCase(caseFile.id);
+          }}
+          onFocus={(): void => {
+            onPrefetchCase(caseFile.id);
+          }}
           onClick={(event): void => {
             event.preventDefault();
             event.stopPropagation();
@@ -162,7 +188,12 @@ function CaseAccordionRow({
       {isExpanded && hasFiles ? (
         <div className='mt-0.5 space-y-0.5'>
           {matchedFiles.map((matched) => (
-            <FileSubRow key={matched.file.id} matched={matched} onOpenFile={onOpenFile} />
+            <FileSubRow
+              key={matched.file.id}
+              matched={matched}
+              onPrefetchFile={onPrefetchFile}
+              onOpenFile={onOpenFile}
+            />
           ))}
         </div>
       ) : null}
@@ -174,6 +205,8 @@ export function CaseListSearchPanel({
   workspace,
   identifierLabelById,
   query,
+  onPrefetchCase,
+  onPrefetchFile,
   onOpenCase,
   onOpenFile,
 }: CaseListSearchPanelProps): React.JSX.Element {
@@ -248,6 +281,8 @@ export function CaseListSearchPanel({
                 entry={entry}
                 isExpanded={expandedCaseIds.has(entry.caseFile.id)}
                 onToggle={() => toggleCase(entry.caseFile.id)}
+                onPrefetchCase={onPrefetchCase}
+                onPrefetchFile={onPrefetchFile}
                 onOpenCase={onOpenCase}
                 onOpenFile={onOpenFile}
               />

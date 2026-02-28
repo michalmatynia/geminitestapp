@@ -7,7 +7,7 @@ import type {
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
 import type { FilemakerDatabase } from '@/shared/contracts/filemaker';
-import { buildFilemakerPartyOptions } from '@/shared/lib/filemaker/settings';
+import { buildFilemakerPartyOptions } from '@/features/filemaker/settings';
 import { buildPathLabelMap } from '../pages/admin-case-resolver-page-helpers';
 
 export function useAdminCaseResolverMetadataActions({

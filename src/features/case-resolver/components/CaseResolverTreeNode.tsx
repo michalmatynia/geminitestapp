@@ -6,7 +6,8 @@ import { ChevronDown, ChevronRight, Lock, Unlock, Trash2, GitBranch } from 'luci
 import type { FolderTreeViewportRenderNodeInput } from '@/shared/lib/foldertree/v2';
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
-  useCaseResolverFolderTreeContext,
+  useCaseResolverFolderTreeDataContext,
+  useCaseResolverFolderTreeUiContext,
   isCaseResolverVirtualSectionNode,
   isUnassignedNode,
 } from '../context/CaseResolverFolderTreeContext';
@@ -76,7 +77,6 @@ export function CaseResolverTreeNode({
   } = useCaseResolverPageContext();
 
   const {
-    highlightedNodeFileAssetIdSet,
     fileLockById,
     folderCaseFileStatsByPath,
     childCaseIdSet,
@@ -84,7 +84,8 @@ export function CaseResolverTreeNode({
     folderOwnerCaseIdsByPath,
     fileOwnerCaseIdById,
     assetOwnerCaseIdById,
-  } = useCaseResolverFolderTreeContext();
+  } = useCaseResolverFolderTreeDataContext();
+  const { highlightedNodeFileAssetIdSet } = useCaseResolverFolderTreeUiContext();
 
   const folderPath = fromCaseResolverFolderNodeId(node.id);
   const fileId = fromCaseResolverFileNodeId(node.id);

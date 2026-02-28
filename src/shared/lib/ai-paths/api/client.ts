@@ -669,17 +669,6 @@ export const aiJobsApi = {
 
 export const aiGenerationApi = {
   /**
-   * Generate a description using AI
-   */
-  async generateDescription(body: {
-    entityJson: Record<string, unknown>;
-    imageUrls: string[];
-    descriptionConfig?: Record<string, unknown>;
-  }): Promise<ApiResponse<{ description?: string }>> {
-    return apiPost<{ description?: string }>('/api/generate-description', body);
-  },
-
-  /**
    * Update a product's description
    */
   async updateProductDescription(

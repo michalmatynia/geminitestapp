@@ -6,7 +6,7 @@ import {
   InternationalizationSettings,
   InternationalizationProvider,
   useInternationalizationContext,
-} from '@/shared/lib/internationalization';
+} from '@/features/internationalization';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import { ProductSyncSettings } from '@/features/product-sync/components/ProductSyncSettings';
 import { ParametersSettings } from '@/features/products/components/constructor/ParametersSettings';

@@ -50,6 +50,8 @@ const createBaseProps = () => ({
   nestHeldDisabledReason: null,
   handleToggleHeldCase: vi.fn(),
   handleNestHeldCase: vi.fn(),
+  handlePrefetchCase: vi.fn(),
+  handlePrefetchFile: vi.fn(),
   handleOpenCase: vi.fn(),
   handleOpenFile: vi.fn(),
   handleEditCase: vi.fn(),
@@ -78,8 +80,10 @@ describe('CaseListNodeItem', () => {
 
     expect(openCaseButton).toHaveAttribute('draggable', 'false');
 
+    fireEvent.mouseEnter(openCaseButton);
     fireEvent.click(openCaseButton);
 
+    expect(props.handlePrefetchCase).toHaveBeenCalledWith('case-1');
     expect(props.handleOpenCase).toHaveBeenCalledWith('case-1');
     expect(screen.getByRole('button', { name: 'Child' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete' })).toBeInTheDocument();
@@ -139,8 +143,10 @@ describe('CaseListNodeItem', () => {
 
     expect(openFileButton).toHaveAttribute('draggable', 'false');
 
+    fireEvent.mouseEnter(openFileButton);
     fireEvent.click(openFileButton);
 
+    expect(props.handlePrefetchFile).toHaveBeenCalledWith('file-1');
     expect(props.handleOpenFile).toHaveBeenCalledWith('file-1');
     expect(props.handleOpenCase).not.toHaveBeenCalled();
     expect(screen.queryByRole('button', { name: 'Child' })).not.toBeInTheDocument();

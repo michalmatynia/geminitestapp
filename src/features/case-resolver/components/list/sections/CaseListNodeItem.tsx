@@ -41,6 +41,8 @@ export interface CaseListNodeItemProps {
   nestHeldDisabledReason?: string | null;
   handleToggleHeldCase: (caseId: string) => void;
   handleNestHeldCase: (targetCaseId: string) => void;
+  handlePrefetchCase: (id: string) => void;
+  handlePrefetchFile: (id: string) => void;
   handleOpenCase: (id: string) => void;
   handleOpenFile: (id: string) => void;
   handleCreateCase: (parentId: string | null) => void;
@@ -71,6 +73,8 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
   nestHeldDisabledReason,
   handleToggleHeldCase,
   handleNestHeldCase,
+  handlePrefetchCase,
+  handlePrefetchFile,
   handleOpenCase,
   handleOpenFile,
   handleCreateCase,
@@ -190,6 +194,14 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
             type='button'
             draggable={false}
             className='min-w-0 truncate text-left font-medium text-gray-100 hover:underline focus:outline-none focus:underline'
+            onMouseEnter={(): void => {
+              if (!fileId) return;
+              handlePrefetchFile(fileId);
+            }}
+            onFocus={(): void => {
+              if (!fileId) return;
+              handlePrefetchFile(fileId);
+            }}
             onClick={(event): void => {
               event.preventDefault();
               event.stopPropagation();
@@ -266,6 +278,12 @@ export const CaseListNodeItem = React.memo(function CaseListNodeItem({
                   type='button'
                   draggable={false}
                   className='min-w-0 truncate text-left font-medium text-inherit hover:underline focus:outline-none focus:underline'
+                  onMouseEnter={(): void => {
+                    handlePrefetchCase(caseFile.id);
+                  }}
+                  onFocus={(): void => {
+                    handlePrefetchCase(caseFile.id);
+                  }}
                   onClick={(event): void => {
                     event.preventDefault();
                     event.stopPropagation();

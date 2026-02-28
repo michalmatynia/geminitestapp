@@ -5,12 +5,8 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 
 import { CanvasBoard } from '@/features/ai/ai-paths/components/canvas-board';
 import { AiPathsProvider } from '@/features/ai/ai-paths/context/AiPathsProvider';
-import {
-  AI_PATHS_UI_STATE_KEY,
-  EMPTY_RUNTIME_STATE,
-  type Edge as AiEdge,
-  type AiNode,
-} from '@/shared/lib/ai-paths';
+import { AI_PATHS_UI_STATE_KEY, EMPTY_RUNTIME_STATE } from '@/shared/lib/ai-paths/core/constants';
+import type { AiNode, Edge as AiEdge } from '@/shared/contracts/case-resolver';
 import {
   fetchAiPathsSettingsCached,
   invalidateAiPathsSettingsCache,

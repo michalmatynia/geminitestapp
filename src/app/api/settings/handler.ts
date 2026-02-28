@@ -9,7 +9,7 @@ import {
   FASTCOMET_STORAGE_CONFIG_SETTING_KEY,
   FILE_STORAGE_SOURCE_SETTING_KEY,
 } from '@/features/files/constants/storage-settings';
-import { invalidateFileStorageSettingsCache } from '@/features/files/services/storage/file-storage-service';
+import { invalidateFileStorageSettingsCache } from '@/shared/lib/files/services/storage/file-storage-service';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { initializeQueues } from '@/shared/lib/queue/queue-init';
+import { initializeQueues } from '@/features/jobs/queue-init';
 import type { QueueHealthStatus } from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { getQueueHealth, isRedisAvailable } from '@/shared/lib/queue';

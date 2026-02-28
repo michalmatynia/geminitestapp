@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { deleteNoteFile } from '@/features/files/server';
+import { deleteNoteFile } from '@/features/notesapp/server';
 import { noteService } from '@/features/notesapp/server';
 import type { NoteFileDto } from '@/shared/contracts/notes';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

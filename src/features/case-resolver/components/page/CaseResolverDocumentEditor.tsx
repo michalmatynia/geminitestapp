@@ -23,7 +23,7 @@ import { DocumentWysiwygEditor } from '@/shared/lib/document-editor';
 import {
   encodeFilemakerPartyReference,
   decodeFilemakerPartyReference,
-} from '@/shared/lib/filemaker/settings';
+} from '@/features/filemaker/settings';
 import {
   Badge,
   Button,

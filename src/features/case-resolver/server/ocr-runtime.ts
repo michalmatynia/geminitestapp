@@ -2,7 +2,7 @@ import 'server-only';
 
 import path from 'path';
 
-import { getDiskPathFromPublicPath } from '@/features/files/file-uploader';
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 
 const CASE_RESOLVER_UPLOAD_PREFIX = '/uploads/case-resolver/';
 const CASE_RESOLVER_UPLOAD_DISK_PREFIX = path.resolve(

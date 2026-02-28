@@ -4,9 +4,9 @@ import { Upload, FolderOpen } from 'lucide-react';
 import NextImage from 'next/image';
 import React, { useState } from 'react';
 
-import { Viewer3D } from '@/shared/lib/viewer3d';
-import { Asset3DPreviewModal } from '@/shared/lib/viewer3d';
-import { useAsset3DById } from '@/shared/lib/viewer3d/hooks/useAsset3dQueries';
+import { Viewer3D } from '@/features/viewer3d';
+import { Asset3DPreviewModal } from '@/features/viewer3d';
+import { useAsset3DById } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { Asset3DRecord } from '@/shared/contracts/viewer3d';
 import {
   Input,

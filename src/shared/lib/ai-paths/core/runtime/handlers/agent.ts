@@ -1,7 +1,7 @@
 import {
   AGENT_PERSONA_SETTINGS_KEY,
   DEFAULT_AGENT_PERSONA_SETTINGS,
-} from '@/features/ai/agentcreator/constants/personas';
+} from '@/shared/contracts/agents';
 import type { AgentPersona } from '@/shared/contracts/agents';
 import type {
   NodeHandler,

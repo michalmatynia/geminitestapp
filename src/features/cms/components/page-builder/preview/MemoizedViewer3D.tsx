@@ -2,7 +2,7 @@
 
 import React, { useMemo, memo } from 'react';
 
-import { Viewer3D, type EnvironmentPreset, type LightingPreset } from '@/shared/lib/viewer3d';
+import { Viewer3D, type EnvironmentPreset, type LightingPreset } from '@/features/viewer3d';
 
 import { toRadians } from './preview-utils';
 

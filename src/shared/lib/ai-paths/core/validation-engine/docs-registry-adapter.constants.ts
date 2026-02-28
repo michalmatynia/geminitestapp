@@ -2,7 +2,7 @@ import {
   DOCS_DESCRIPTION_SNIPPET,
   DOCS_JOBS_SNIPPET,
   DOCS_WIRING_SNIPPET,
-} from '@/features/ai/ai-paths/components/ai-paths-settings/docs-snippets';
+} from '@/shared/lib/ai-paths/core/definitions/docs-snippets';
 import { type AiPathsDocsManifest } from './docs-registry-adapter.types';
 
 export const DOC_ASSERTION_BLOCK_REGEX = /```ai-paths-assertion\s*([\s\S]*?)```/gim;

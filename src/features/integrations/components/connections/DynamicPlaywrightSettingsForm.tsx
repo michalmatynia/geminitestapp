@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { useIntegrationsContext } from '@/features/integrations/context/IntegrationsContext';
-import { PlaywrightSettingsProvider } from '@/shared/lib/playwright/context/PlaywrightSettingsContext';
+import { PlaywrightSettingsProvider } from '@/features/playwright/context/PlaywrightSettingsContext';
 import { LoadingState } from '@/shared/ui';
 
 export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
@@ -13,7 +13,7 @@ export function DynamicPlaywrightSettingsForm(): React.JSX.Element {
 
   useEffect(() => {
     const loadComponent = async (): Promise<void> => {
-      const { PlaywrightSettingsFormContent } = await import('@/shared/lib/playwright');
+      const { PlaywrightSettingsFormContent } = await import('@/features/playwright');
       setComponent(() => PlaywrightSettingsFormContent);
     };
     void loadComponent();

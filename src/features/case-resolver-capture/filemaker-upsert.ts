@@ -9,7 +9,7 @@ import {
   createFilemakerAddress,
   createFilemakerOrganization,
   createFilemakerPerson,
-} from '@/shared/lib/filemaker/settings';
+} from '@/features/filemaker/settings';
 import type { CaseResolverPartyReference } from '@/shared/contracts/case-resolver';
 import type {
   FilemakerAddressDto as FilemakerAddress,

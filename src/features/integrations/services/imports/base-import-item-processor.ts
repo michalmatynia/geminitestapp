@@ -1,7 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { getImageFileRepository } from '@/features/files/services/image-file-repository';
+import { getImageFileRepository } from '@/shared/lib/files/services/image-file-repository';
 import type { BaseProductRecord } from '@/features/integrations/services/imports/base-client';
 import {
   MAX_IMAGES_PER_PRODUCT,

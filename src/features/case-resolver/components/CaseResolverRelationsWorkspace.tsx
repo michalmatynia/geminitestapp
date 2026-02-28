@@ -12,13 +12,9 @@ import {
   useSelectionActions,
   useSelectionState,
 } from '@/features/ai/ai-paths/context';
-import {
-  EMPTY_RUNTIME_STATE,
-  stableStringify,
-  typeStyles,
-  type AiNode,
-  type Edge,
-} from '@/shared/lib/ai-paths';
+import { EMPTY_RUNTIME_STATE, typeStyles } from '@/shared/lib/ai-paths/core/constants';
+import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
+import type { AiNode, Edge } from '@/shared/contracts/case-resolver';
 import type {
   CaseResolverAssetFile,
   CaseResolverFile,

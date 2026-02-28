@@ -33,7 +33,8 @@ import {
   toTruthyBoolean,
 } from '@/features/integrations/services/tradera-system-settings';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
-import { getProductRepository, getSettingValue } from '@/features/products/server';
+import { getProductRepository } from '@/features/products/server';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import type {
   IntegrationConnectionRecord,
   ProductListing,

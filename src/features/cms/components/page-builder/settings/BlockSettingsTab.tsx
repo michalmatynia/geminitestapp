@@ -9,7 +9,7 @@ import {
   APP_EMBED_SETTING_KEY,
   type AppEmbedId,
   APP_EMBED_OPTIONS,
-} from '@/shared/lib/app-embeds/lib/constants';
+} from '@/features/app-embeds/lib/constants';
 
 import { SettingsFormProvider } from './SettingsFormContext';
 import {

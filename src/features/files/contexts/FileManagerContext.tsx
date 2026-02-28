@@ -9,7 +9,7 @@ import {
 } from '@/features/files/hooks/useFileQueries';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
 import type { ExpandedImageFile } from '@/features/products';
-import { useAssets3D } from '@/shared/lib/viewer3d/hooks/useAsset3dQueries';
+import { useAssets3D } from '@/features/viewer3d/hooks/useAsset3dQueries';
 import type { ImageFileSelection } from '@/shared/contracts/files';
 import type { Asset3DRecord, Asset3DListFilters } from '@/shared/contracts/viewer3d';
 import { useConfirm } from '@/shared/hooks/ui/useConfirm';

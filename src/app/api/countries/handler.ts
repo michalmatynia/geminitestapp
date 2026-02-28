@@ -8,8 +8,8 @@ import {
   countryMappings,
   defaultCountries,
   defaultCurrencies,
-} from '@/shared/lib/internationalization/server';
-import { getInternationalizationProvider } from '@/shared/lib/internationalization/services/internationalization-provider';
+} from '@/features/internationalization/server';
+import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
 import { parseJsonBody } from '@/features/products/server';
 import type { CountryWithCurrenciesDto as CountryWithCurrencies } from '@/shared/contracts/internationalization';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

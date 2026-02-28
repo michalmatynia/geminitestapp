@@ -1,1 +1,1 @@
-export * from '@/features/files/file-uploader';
+export * from '@/shared/lib/files/file-uploader';

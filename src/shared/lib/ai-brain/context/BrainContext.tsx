@@ -19,9 +19,9 @@ import {
   DEFAULT_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_LOGS_INSIGHT_SYSTEM_PROMPT,
   DEFAULT_RUNTIME_ANALYTICS_INSIGHT_SYSTEM_PROMPT,
-} from '@/features/ai/insights/settings';
+} from '@/shared/contracts/ai-insights';
 import { logClientError } from '@/shared/utils/observability/client-error-logger';
-import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/lib/playwright/constants/playwright';
+import { PLAYWRIGHT_PERSONA_SETTINGS_KEY } from '@/shared/contracts/playwright';
 import type { AiPathRuntimeAnalyticsSummary, AnalyticsSummaryDto } from '@/shared/contracts';
 import type { SystemLogMetricsDto as SystemLogMetrics } from '@/shared/contracts/observability';
 import type { SingleQuery } from '@/shared/contracts/ui';

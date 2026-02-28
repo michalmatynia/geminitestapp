@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterAll } from 'vitest';
 
 import * as api from '@/shared/lib/ai-paths/api';
+import { generateProductAiDescription } from '@/shared/lib/ai-paths/core/runtime/server/description-generator';
 import {
   handleTemplate,
   handlePrompt,
@@ -11,15 +12,18 @@ import {
 
 import { createMockContext } from '../../test-utils';
 
-vi.mock('@/features/ai/ai-paths/lib/api', () => ({
+vi.mock('@/shared/lib/ai-paths/api', () => ({
   aiJobsApi: {
     enqueue: vi.fn(),
     poll: vi.fn(),
   },
   aiGenerationApi: {
-    generateDescription: vi.fn(),
     updateProductDescription: vi.fn(),
   },
+}));
+
+vi.mock('@/shared/lib/ai-paths/core/runtime/server/description-generator', () => ({
+  generateProductAiDescription: vi.fn(),
 }));
 
 describe('Generation Handlers', () => {
@@ -184,32 +188,69 @@ describe('Generation Handlers', () => {
   });
 
   describe('handleAiDescription', () => {
-    it('should call generateDescription API', async () => {
-      vi.mocked(api.aiGenerationApi.generateDescription).mockResolvedValue({
-        ok: true,
-        data: { description: 'Generated description' },
-      } as any);
+    it('should call the AI Paths description generator', async () => {
+      vi.mocked(generateProductAiDescription).mockResolvedValue({
+        analysisInitial: '',
+        analysisFinal: '',
+        descriptionInitial: 'Generated description',
+        descriptionFinal: '',
+        description: 'Generated description',
+        analysis: '',
+        visionModel: 'vision-model',
+        generationModel: 'generation-model',
+        visionOutputEnabled: true,
+        generationOutputEnabled: false,
+        visionBrainApplied: null,
+        generationBrainApplied: null,
+      });
 
       const ctx = createMockContext({
+        node: {
+          id: 'n-description',
+          type: 'ai_description',
+          config: {
+            description: {
+              visionOutputEnabled: true,
+              generationOutputEnabled: false,
+            },
+          },
+        } as any,
         nodeInputs: { entityJson: { id: 'p1' } },
       });
       const result = await handleAiDescription(ctx);
       expect(result['description_en']).toBe('Generated description');
-      expect(api.aiGenerationApi.generateDescription).toHaveBeenCalled();
+      expect(generateProductAiDescription).toHaveBeenCalledWith({
+        productId: 'p1',
+        images: [],
+        options: {
+          visionEnabled: true,
+          generationEnabled: false,
+        },
+      });
     });
 
     it('should filter blocked image URLs by outbound policy before description generation', async () => {
-      vi.mocked(api.aiGenerationApi.generateDescription).mockResolvedValue({
-        ok: true,
-        data: { description: 'Generated description' },
-      } as any);
+      vi.mocked(generateProductAiDescription).mockResolvedValue({
+        analysisInitial: '',
+        analysisFinal: '',
+        descriptionInitial: 'Generated description',
+        descriptionFinal: '',
+        description: 'Generated description',
+        analysis: '',
+        visionModel: 'vision-model',
+        generationModel: 'generation-model',
+        visionOutputEnabled: true,
+        generationOutputEnabled: true,
+        visionBrainApplied: null,
+        generationBrainApplied: null,
+      });
       const reportAiPathsError = vi.fn();
       const toast = vi.fn();
 
       const ctx = createMockContext({
         node: {
           id: 'n-description',
-          type: 'description',
+          type: 'ai_description',
         } as any,
         nodeInputs: {
           entityJson: {
@@ -222,9 +263,9 @@ describe('Generation Handlers', () => {
       });
       const result = await handleAiDescription(ctx);
       expect(result['description_en']).toBe('Generated description');
-      expect(api.aiGenerationApi.generateDescription).toHaveBeenCalledWith(
+      expect(generateProductAiDescription).toHaveBeenCalledWith(
         expect.objectContaining({
-          imageUrls: ['https://cdn.example.com/image-2.jpg'],
+          images: ['https://cdn.example.com/image-2.jpg'],
         })
       );
       expect(reportAiPathsError).toHaveBeenCalledWith(

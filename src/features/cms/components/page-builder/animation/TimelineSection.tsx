@@ -2,13 +2,13 @@
 
 import React, { useCallback } from 'react';
 
-import type { TimelineMode, ScrollMode, RevealStyle } from '@/shared/lib/gsap';
+import type { TimelineMode, ScrollMode, RevealStyle } from '@/features/gsap';
 import {
   DEFAULT_ANIMATION_CONFIG,
   TIMELINE_MODES,
   SCROLL_MODES,
   REVEAL_STYLES,
-} from '@/shared/lib/gsap';
+} from '@/features/gsap';
 import { SelectSimple, FormSection, FormField, ToggleRow, Input } from '@/shared/ui';
 
 import { useAnimationConfigContext } from './AnimationConfigContext';

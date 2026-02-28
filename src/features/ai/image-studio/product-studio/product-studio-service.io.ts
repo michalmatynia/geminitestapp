@@ -4,7 +4,7 @@ import sharp from 'sharp';
 import {
   getDiskPathFromPublicPath,
   uploadFile,
-} from '@/features/files/services/image-file-service';
+} from '@/shared/lib/files/services/image-file-service';
 import { badRequestError, operationFailedError } from '@/shared/errors/app-error';
 import {
   DATA_URL_REGEX,

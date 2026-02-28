@@ -1,1 +1,1 @@
-export { LanguageModal } from '@/shared/lib/internationalization/components/language-modal/LanguageModal';
+export { LanguageModal } from '@/features/internationalization/components/language-modal/LanguageModal';

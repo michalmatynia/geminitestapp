@@ -1,6 +1,6 @@
 import type { ChatMessageRoleDto } from '@/shared/contracts/chatbot';
 import { resolveBrainModelExecutionConfig } from '@/shared/lib/ai-brain/server';
-import { runChatbotModel } from '@/features/ai/chatbot/server-model-runtime';
+import { runChatbotModel } from '@/shared/lib/ai/chatbot/server-model-runtime';
 import { chatbotJobRepository } from '@/features/ai/chatbot/services/chatbot-job-repository';
 import { chatbotSessionRepository } from '@/features/ai/chatbot/services/chatbot-session-repository';
 

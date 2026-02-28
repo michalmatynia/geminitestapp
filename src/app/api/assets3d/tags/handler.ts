@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getAsset3DRepository } from '@/shared/lib/viewer3d/server';
+import { getAsset3DRepository } from '@/features/viewer3d/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logger } from '@/shared/utils/logger';
 

@@ -55,6 +55,8 @@ type CaseListNodeItemWrapperProps = FolderTreeViewportRenderNodeInput & {
   isHeldCaseAncestorOf: (candidateCaseId: string) => boolean;
   handleToggleHeldCase: (caseId: string) => void;
   handleNestHeldCase: (targetCaseId: string) => void;
+  handlePrefetchCase: (id: string) => void;
+  handlePrefetchFile: (id: string) => void;
   handleOpenCase: (id: string) => void;
   handleOpenFile: (id: string) => void;
   handleCreateCase: (parentId: string | null) => void;
@@ -379,6 +381,39 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
     [router]
   );
 
+  const prefetchedCaseHrefSetRef = useRef<Set<string>>(new Set());
+
+  const prefetchCaseResolverHref = useCallback(
+    (fileId: string): void => {
+      const normalizedFileId = fileId.trim();
+      if (!normalizedFileId) return;
+      const href = buildCaseResolverCaseHref(normalizedFileId);
+      if (prefetchedCaseHrefSetRef.current.has(href)) return;
+      prefetchedCaseHrefSetRef.current.add(href);
+      router.prefetch(href);
+    },
+    [router]
+  );
+
+  const handlePrefetchCase = useCallback(
+    (caseId: string): void => {
+      prefetchCaseResolverHref(caseId);
+    },
+    [prefetchCaseResolverHref]
+  );
+
+  const handlePrefetchFile = useCallback(
+    (fileId: string): void => {
+      prefetchCaseResolverHref(fileId);
+    },
+    [prefetchCaseResolverHref]
+  );
+
+  useEffect((): void => {
+    if (!heldCaseFile) return;
+    handlePrefetchCase(heldCaseFile.id);
+  }, [handlePrefetchCase, heldCaseFile]);
+
   const handleOpenFile = useCallback(
     (fileId: string): void => {
       router.push(buildCaseResolverCaseHref(fileId));
@@ -490,6 +525,8 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
         isHeldCaseAncestorOf={isHeldCaseAncestorOf}
         handleToggleHeldCase={handleToggleHeldCase}
         handleNestHeldCase={handleNestHeldCaseVoid}
+        handlePrefetchCase={handlePrefetchCase}
+        handlePrefetchFile={handlePrefetchFile}
         handleOpenCase={handleOpenCase}
         handleOpenFile={handleOpenFile}
         handleCreateCase={handleCreateCaseLocal}
@@ -511,6 +548,8 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
       isHeldCaseAncestorOf,
       handleToggleHeldCase,
       handleNestHeldCaseVoid,
+      handlePrefetchCase,
+      handlePrefetchFile,
       handleOpenCase,
       handleOpenFile,
       handleCreateCaseLocal,
@@ -549,6 +588,10 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           workspace={workspace}
           identifierLabelById={caseIdentifierPathById}
           query={treeSearchQuery}
+          onPrefetchCase={handlePrefetchCase}
+          onPrefetchFile={(file) => {
+            handlePrefetchFile(file.id);
+          }}
           onOpenCase={(caseId) => router.push(buildCaseResolverCaseHref(caseId))}
           onOpenFile={(file) => {
             router.push(buildCaseResolverCaseHref(file.id));
@@ -593,6 +636,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           <CaseListHeldDock
             heldCaseFile={heldCaseFile}
             isHierarchyLocked={isHierarchyLocked}
+            onPrefetchCase={handlePrefetchCase}
             onOpenCase={handleOpenCase}
             onClearHeldCase={handleClearHeldCase}
           />
@@ -624,6 +668,7 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           <CaseListHeldDock
             heldCaseFile={heldCaseFile}
             isHierarchyLocked={isHierarchyLocked}
+            onPrefetchCase={handlePrefetchCase}
             onOpenCase={handleOpenCase}
             onClearHeldCase={handleClearHeldCase}
           />

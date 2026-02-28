@@ -4,7 +4,7 @@ import path from 'path';
 import { NextRequest, NextResponse } from 'next/server';
 
 import { getImageFileRepository } from '@/features/files/server';
-import { uploadFile } from '@/features/files/file-uploader';
+import { uploadFile } from '@/shared/lib/files/file-uploader';
 import type { ImageFileRecord } from '@/shared/contracts/files';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { badRequestError } from '@/shared/errors/app-error';

@@ -2,7 +2,7 @@ import { WithId } from 'mongodb';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { getInternationalizationProvider } from '@/shared/lib/internationalization/services/internationalization-provider';
+import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { configurationError, notFoundError, duplicateEntryError } from '@/shared/errors/app-error';
 import { getMongoDb } from '@/shared/lib/db/mongo-client';

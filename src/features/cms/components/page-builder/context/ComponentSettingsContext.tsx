@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useMemo, useCallback } from 'react';
 
-import { DEFAULT_ANIMATION_CONFIG, type GsapAnimationConfig } from '@/shared/lib/gsap';
+import { DEFAULT_ANIMATION_CONFIG, type GsapAnimationConfig } from '@/features/gsap';
 import {
   DEFAULT_CUSTOM_CSS_AI_CONFIG,
   type CustomCssAiConfig,

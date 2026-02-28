@@ -4,14 +4,17 @@ import { z } from 'zod';
 import { enqueueProductAiJob } from '@/features/jobs/server';
 import { startProductAiJobQueue, processProductAiJob } from '@/features/jobs/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts/jobs';
+import {
+  productAiJobTypeSchema,
+  type ProductAiJobTypeDto as ProductAiJobType,
+} from '@/shared/contracts/jobs';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { logSystemEvent } from '@/shared/lib/observability/system-logger';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 
 const enqueueSchema = z.object({
   productId: z.string().trim().min(1),
-  type: z.string().trim().min(1),
+  type: productAiJobTypeSchema,
   payload: z.record(z.string(), z.unknown()).optional(),
 });
 

@@ -85,8 +85,6 @@ export type QueueHealthStatus = QueueHealthStatusDto;
  */
 
 export const productAiJobTypeSchema = z.enum([
-  'description_generation',
-  'translation',
   'attribute_extraction',
   'image_analysis',
   'db_backup',

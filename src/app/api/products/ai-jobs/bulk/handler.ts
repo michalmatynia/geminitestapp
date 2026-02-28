@@ -5,12 +5,15 @@ import { enqueueProductAiJob } from '@/features/jobs/server';
 import { startProductAiJobQueue } from '@/features/jobs/server';
 import { getProductRepository } from '@/features/products/server';
 import { parseJsonBody } from '@/features/products/server';
-import type { ProductAiJobTypeDto as ProductAiJobType } from '@/shared/contracts/jobs';
+import {
+  productAiJobTypeSchema,
+  type ProductAiJobTypeDto as ProductAiJobType,
+} from '@/shared/contracts/jobs';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 
 const bulkJobSchema = z.object({
-  type: z.string().trim().min(1),
+  type: productAiJobTypeSchema,
   config: z.record(z.string(), z.unknown()).optional(),
 });
 

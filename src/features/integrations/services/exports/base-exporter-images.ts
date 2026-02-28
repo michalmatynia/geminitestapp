@@ -5,7 +5,7 @@ import path from 'path';
 
 import sharp from 'sharp';
 
-import { getDiskPathFromPublicPath } from '@/features/files/file-uploader';
+import { getDiskPathFromPublicPath } from '@/shared/lib/files/file-uploader';
 import type { ImageUrlDiagnostic } from '@/shared/contracts/integrations';
 import type { ProductWithImagesDto as ProductWithImages } from '@/shared/contracts/products';
 

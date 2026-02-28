@@ -3,8 +3,6 @@ import 'server-only';
 export { default as ProductEditPage } from './pages/ProductEditPage';
 export { ProductPublicPage } from './pages/ProductPublicPage';
 export * from '@/shared/lib/api/parse-json';
-export * from '@/shared/lib/products/services/aiDescriptionService';
-export * from '@/shared/lib/products/services/aiTranslationService';
 export * from '@/shared/lib/products/services/catalog-repository';
 export * from '@/shared/lib/products/services/category-repository';
 export * from '@/shared/lib/products/services/parameter-repository';

@@ -3,7 +3,7 @@
 import React from 'react';
 import { Locate } from 'lucide-react';
 import { VectorDrawingCanvas, VectorDrawingProvider } from '@/shared/lib/vector-drawing';
-import { Viewer3D } from '@/shared/lib/viewer3d/components/Viewer3D';
+import { Viewer3D } from '@/features/viewer3d/components/Viewer3D';
 import { Button, LoadingState } from '@/shared/ui';
 import { cn } from '@/shared/utils';
 import { SplitVariantPreview } from '../SplitVariantPreview';

@@ -5,7 +5,7 @@ import type {
   CaseResolverCaptureProposalState,
 } from '@/features/case-resolver-capture/proposals';
 import { type CaseResolverCaptureAction } from '@/features/case-resolver-capture/settings';
-import { encodeFilemakerPartyReference } from '@/shared/lib/filemaker/settings';
+import { encodeFilemakerPartyReference } from '@/features/filemaker/settings';
 import { Badge, Button, FormField, SelectSimple } from '@/shared/ui';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { DetailModal } from '@/shared/ui/templates/modals/DetailModal';

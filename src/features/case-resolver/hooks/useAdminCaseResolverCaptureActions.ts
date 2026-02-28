@@ -13,7 +13,7 @@ import {
   FILEMAKER_DATABASE_KEY,
   decodeFilemakerPartyReference,
   normalizeFilemakerDatabase,
-} from '@/shared/lib/filemaker/settings';
+} from '@/features/filemaker/settings';
 import type { CaseResolverFile, CaseResolverWorkspace } from '@/shared/contracts/case-resolver';
 import { useToast } from '@/shared/ui';
 import { useUpdateSetting } from '@/shared/hooks/use-settings';

@@ -17,8 +17,10 @@ import {
 
 export * from './studio-sequencing-settings';
 
+import { IMAGE_STUDIO_OPENAI_API_KEY_KEY } from '@/shared/contracts/image-studio';
+
+export { IMAGE_STUDIO_OPENAI_API_KEY_KEY };
 export const IMAGE_STUDIO_SETTINGS_KEY = 'image_studio_settings';
-export const IMAGE_STUDIO_OPENAI_API_KEY_KEY = 'image_studio_openai_api_key';
 export const IMAGE_STUDIO_PROJECT_SETTINGS_KEY_PREFIX = 'image_studio_project_settings_';
 
 export function sanitizeImageStudioProjectIdForSettings(value: string): string {

@@ -2,7 +2,7 @@
 
 import React, { useMemo } from 'react';
 
-import { useInternationalizationContext } from '@/shared/lib/internationalization';
+import { useInternationalizationContext } from '@/features/internationalization';
 import type { PriceGroup } from '@/shared/contracts/products';
 import type { EntityModalProps } from '@/shared/contracts/ui';
 import {

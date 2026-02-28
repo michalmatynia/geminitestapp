@@ -6,8 +6,8 @@ import {
   fallbackLanguages,
   defaultLanguages,
   countryMappings,
-} from '@/shared/lib/internationalization/server';
-import { getInternationalizationProvider } from '@/shared/lib/internationalization/services/internationalization-provider';
+} from '@/features/internationalization/server';
+import { getInternationalizationProvider } from '@/features/internationalization/services/internationalization-provider';
 import { parseJsonBody } from '@/features/products/server';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { conflictError, internalError } from '@/shared/errors/app-error';

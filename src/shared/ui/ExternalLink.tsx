@@ -1,4 +1,4 @@
-'use client';
+
 
 import { ExternalLink as ExternalLinkIcon } from 'lucide-react';
 import Link from 'next/link';

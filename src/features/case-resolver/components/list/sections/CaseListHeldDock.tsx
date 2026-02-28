@@ -9,6 +9,7 @@ import { Button } from '@/shared/ui';
 type CaseListHeldDockProps = {
   heldCaseFile: CaseResolverFile | null;
   isHierarchyLocked: boolean;
+  onPrefetchCase: (caseId: string) => void;
   onOpenCase: (caseId: string) => void;
   onClearHeldCase: () => void;
 };
@@ -16,6 +17,7 @@ type CaseListHeldDockProps = {
 export function CaseListHeldDock({
   heldCaseFile,
   isHierarchyLocked,
+  onPrefetchCase,
   onOpenCase,
   onClearHeldCase,
 }: CaseListHeldDockProps): React.JSX.Element | null {
@@ -41,6 +43,12 @@ export function CaseListHeldDock({
             variant='outline'
             size='xs'
             className='h-7'
+            onMouseEnter={(): void => {
+              onPrefetchCase(heldCaseFile.id);
+            }}
+            onFocus={(): void => {
+              onPrefetchCase(heldCaseFile.id);
+            }}
             onClick={(): void => {
               onOpenCase(heldCaseFile.id);
             }}

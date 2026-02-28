@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Input, Checkbox, SelectSimple, FormSection, FormField } from '@/shared/ui';
-import { DEFAULT_ANIMATION_CONFIG, TEXT_EFFECTS, type TextEffect } from '@/shared/lib/gsap';
+import { DEFAULT_ANIMATION_CONFIG, TEXT_EFFECTS, type TextEffect } from '@/features/gsap';
 import { useAnimationConfigContext } from '../AnimationConfigContext';
 
 export function AdvancedTextEffectsSection(): React.JSX.Element {

@@ -2,7 +2,7 @@
 
 import { useQueries, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
 
-import { getLanguages } from '@/shared/lib/internationalization/api';
+import { getLanguages } from '@/features/internationalization/api';
 import type { Language } from '@/shared/contracts/internationalization';
 import type {
   CatalogRecord,

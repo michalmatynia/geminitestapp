@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { fallbackCurrencies } from '@/shared/lib/internationalization/server';
+import { fallbackCurrencies } from '@/features/internationalization/server';
 import { getProductDataProvider } from '@/features/products/server';
 import type { PriceGroupWithDetails } from '@/shared/contracts/products';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';

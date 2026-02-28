@@ -1,6 +1,6 @@
 import { Brain, Sparkles } from 'lucide-react';
 
-import { palette } from '@/shared/lib/ai-paths';
+import { palette } from '@/shared/lib/ai-paths/core/definitions';
 import { type NodeDefinition } from '@/shared/contracts/case-resolver';
 import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract';
 

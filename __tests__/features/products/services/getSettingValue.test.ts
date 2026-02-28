@@ -26,7 +26,7 @@ vi.mock('@/shared/lib/db/mongo-client', () => ({
   }),
 }));
 
-import { getSettingValue } from '@/shared/lib/products/services/aiDescriptionService';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
 
 describe('getSettingValue', () => {
   beforeEach(() => {

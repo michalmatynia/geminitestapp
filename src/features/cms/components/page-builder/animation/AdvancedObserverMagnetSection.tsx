@@ -1,8 +1,8 @@
 import { Hand, Layers, MousePointer2, RotateCw } from 'lucide-react';
 import React, { useCallback } from 'react';
 
-import type { DragAxis } from '@/shared/lib/gsap';
-import { DEFAULT_ANIMATION_CONFIG, DRAG_AXES, OBSERVER_TYPES } from '@/shared/lib/gsap';
+import type { DragAxis } from '@/features/gsap';
+import { DEFAULT_ANIMATION_CONFIG, DRAG_AXES, OBSERVER_TYPES } from '@/features/gsap';
 import {
   Button,
   Checkbox,

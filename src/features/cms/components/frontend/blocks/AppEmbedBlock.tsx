@@ -2,7 +2,7 @@
 
 import React from 'react';
 
-import { APP_EMBED_OPTIONS, type AppEmbedId } from '@/shared/lib/app-embeds/lib/constants';
+import { APP_EMBED_OPTIONS, type AppEmbedId } from '@/features/app-embeds/lib/constants';
 import { Card } from '@/shared/ui';
 
 import { useRequiredBlockSettings } from './BlockContext';

@@ -22,7 +22,8 @@ import type { MasterTreeNode } from '@/shared/utils/master-folder-tree-contract'
 import { useCaseResolverPageContext } from '../context/CaseResolverPageContext';
 import {
   CaseResolverFolderTreeProvider,
-  useCaseResolverFolderTreeContext,
+  useCaseResolverFolderTreeDataContext,
+  useCaseResolverFolderTreeUiContext,
   isCaseResolverVirtualSectionNode,
 } from '../context/CaseResolverFolderTreeContext';
 import {
@@ -62,11 +63,11 @@ function CaseResolverFolderTreeInner(): React.JSX.Element {
     masterNodes,
     selectedMasterNodeId,
     initialExpandedFolderNodeIds,
-    highlightedFolderAncestorNodeIds,
     isNodeFileCanvasActive,
-    setHighlightedNodeFileAssetIds,
     adapter,
-  } = useCaseResolverFolderTreeContext();
+  } = useCaseResolverFolderTreeDataContext();
+  const { highlightedFolderAncestorNodeIds, setHighlightedNodeFileAssetIds } =
+    useCaseResolverFolderTreeUiContext();
 
   const { ConfirmationModal } = useConfirm();
   const [pendingNodeCanvasAction, setPendingNodeCanvasAction] =

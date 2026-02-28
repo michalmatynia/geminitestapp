@@ -10,7 +10,7 @@ import {
   type ImageStudioSettings,
 } from '@/features/ai/image-studio/studio-settings';
 import { PRODUCT_STUDIO_SEQUENCE_GENERATION_MODE_SETTING_KEY } from '@/shared/lib/products/constants';
-import { getSettingValue } from '@/shared/lib/products/services/aiDescriptionService';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import {
   normalizeProductStudioSequenceGenerationMode,
   type ProductStudioSequenceGenerationMode,

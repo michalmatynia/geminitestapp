@@ -22,7 +22,7 @@ import {
   startImageStudioSequenceQueue,
   type ImageStudioSequenceDispatchMode,
 } from '@/features/ai/image-studio/workers/imageStudioSequenceQueue';
-import { getSettingValue } from '@/shared/lib/products/services/aiDescriptionService';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import { badRequestError, notFoundError, operationFailedError } from '@/shared/errors/app-error';
 
 type SequenceStepInputLike = {

@@ -3,8 +3,8 @@ import {
   CANVAS_WIDTH,
   NODE_MIN_HEIGHT,
   NODE_WIDTH,
-  getDefaultConfigForType,
-} from '@/shared/lib/ai-paths';
+} from '@/shared/lib/ai-paths/core/constants';
+import { getDefaultConfigForType } from '@/shared/lib/ai-paths/core/normalization';
 import { type EdgeDto as AiEdge } from '@/shared/contracts/ai-paths';
 import {
   CASE_RESOLVER_DOCUMENT_NODE_INPUT_PORTS,

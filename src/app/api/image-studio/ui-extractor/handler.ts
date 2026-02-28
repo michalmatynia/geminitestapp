@@ -11,7 +11,7 @@ import {
   parseImageStudioSettings,
 } from '@/features/ai/image-studio/studio-settings';
 import { auth } from '@/features/auth/server';
-import { getSettingValue } from '@/shared/lib/products/services/aiDescriptionService';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
 import { authError, internalError } from '@/shared/errors/app-error';
 import { parseJsonBody } from '@/shared/lib/api/parse-json';

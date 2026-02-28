@@ -5,7 +5,7 @@ import {
   TRADERA_SETTINGS_KEYS,
   type TraderaSystemSettings,
 } from '@/features/integrations/constants/tradera';
-import { getSettingValue } from '@/features/products/server';
+import { getSettingValue } from '@/shared/lib/ai/server-settings';
 
 export const toTruthyBoolean = (value: string | null | undefined, fallback: boolean): boolean => {
   if (!value) return fallback;

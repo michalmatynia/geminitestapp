@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Input, SelectSimple, FormSection, FormField } from '@/shared/ui';
-import { DEFAULT_ANIMATION_CONFIG, VELOCITY_EFFECTS, type VelocityEffect } from '@/shared/lib/gsap';
+import { DEFAULT_ANIMATION_CONFIG, VELOCITY_EFFECTS, type VelocityEffect } from '@/features/gsap';
 import { useAnimationConfigContext } from '../AnimationConfigContext';
 
 export function AdvancedVelocitySection(): React.JSX.Element {

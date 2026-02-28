@@ -5,7 +5,7 @@ import type {
   CaseResolverRelationGraph,
   CaseResolverWorkspace,
 } from '@/shared/contracts/case-resolver';
-import { stableStringify } from '@/shared/lib/ai-paths';
+import { stableStringify } from '@/shared/lib/ai-paths/core/utils/runtime';
 import {
   createCaseResolverAssetFile,
   normalizeFolderPath,

@@ -1,3 +1,4 @@
+import { type ZodIssue } from 'zod';
 import { type QueryClient, type UseQueryResult } from '@tanstack/react-query';
 import React from 'react';
 import {
@@ -18,6 +19,11 @@ import { type ImageStudioCenterLayoutConfig } from '../../contracts/center';
 import { type PreviewCanvasImageFrameBinding } from '../../context/UiContext';
 import { type ObjectLayoutCustomPreset } from '@/features/ai/image-studio/utils/object-layout-presets';
 import { type ImageStudioAnalysisSummaryChipData } from '@/features/ai/image-studio/components/ImageStudioAnalysisSummaryChip';
+
+export interface GenerationToolbarHelpers {
+  fetchProjectSlots: (id: string) => Promise<ImageStudioSlotRecord[]>;
+  describeSchemaValidationIssue: (issues: ZodIssue[]) => string;
+}
 
 export interface GenerationToolbarHandlers {
   handleUpscale: () => Promise<void>;

@@ -20,7 +20,7 @@ export function useDatabaseQueryExecution(args: {
   queryTemplateValue: string;
   isUpdateAction: boolean;
   updateSelectedNodeConfig: (config: { database: DatabaseConfig }) => void;
-  toast: any;
+  toast: (message: string, options?: { variant?: string }) => void;
 }) {
   const [testQueryResult, setTestQueryResult] = useState<string>('');
   const [testQueryLoading, setTestQueryLoading] = useState(false);

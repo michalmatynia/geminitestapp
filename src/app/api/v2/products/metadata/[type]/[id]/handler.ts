@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { 
   getProducerRepository,
   getTagRepository,
   getParameterRepository,
+  type ProductTagUpdateInputDto,
+  type ProductParameterUpdateInput,
 } from '@/features/products/server';
 import { deleteSimpleParameter } from '@/shared/lib/products/services/simple-parameter-service';
 import type { ApiHandlerContext } from '@/shared/contracts/ui';
@@ -44,30 +47,34 @@ export async function PUT_products_metadata_id_handler(
   params: { type: string, id: string }
 ): Promise<Response> {
   const { type, id } = params;
-  const data = await req.json();
+  const data = (await req.json()) as Record<string, unknown>;
 
   if (type === 'producers') {
     const repo = await getProducerRepository();
-    return NextResponse.json(await repo.updateProducer(id, data));
+    const updateData = data as { name?: string; website?: string | null };
+    return NextResponse.json(await repo.updateProducer(id, updateData));
   }
   if (type === 'tags') {
     const repo = await getTagRepository();
-    return NextResponse.json(await repo.updateTag(id, data));
+    const updateData = data as ProductTagUpdateInputDto;
+    return NextResponse.json(await repo.updateTag(id, updateData));
   }
   if (type === 'parameters') {
     const repo = await getParameterRepository();
-    return NextResponse.json(await repo.updateParameter(id, data));
+    const updateData = data as ProductParameterUpdateInput;
+    return NextResponse.json(await repo.updateParameter(id, updateData));
   }
   if (type === 'price-groups') {
     const item = await prisma.priceGroup.update({
       where: { id },
-      data,
+      data: data as Prisma.PriceGroupUpdateInput,
     });
     return NextResponse.json(item);
   }
-  
+
   throw badRequestError(`Invalid products metadata type for PUT: ${type}`);
 }
+
 
 export async function DELETE_products_metadata_id_handler(
   _req: NextRequest, 

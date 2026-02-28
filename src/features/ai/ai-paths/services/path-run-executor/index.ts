@@ -20,6 +20,7 @@ import {
 } from '@/features/ai/ai-paths/services/runtime-analytics-service';
 import { ErrorSystem } from '@/shared/utils/observability/error-system';
 import type {
+  AiPathNodeStatus,
   AiPathRunNodeRecord,
   AiPathRunRecord,
   AiPathRunRepository,
@@ -383,9 +384,10 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
 
           const tasks: Promise<unknown>[] = [
             repo.upsertRunNode(run.id, node.id, {
-              status,
+              status: status as AiPathNodeStatus,
               outputs: safeOutputs,
               finishedAt,
+              nodeType: node.type,
               errorMessage: status === 'failed' ? (nextOutputs['message'] as string) : null,
             }),
             repo.createRunEvent({
@@ -447,8 +449,9 @@ export const executePathRun = async (run: AiPathRunRecord): Promise<void> => {
           const tasks: Promise<unknown>[] = [
             repo.upsertRunNode(run.id, node.id, {
               status: 'failed',
-              outputs: errorOutputs,
+              outputs: errorOutputs ?? undefined,
               finishedAt,
+              nodeType: node.type,
               errorMessage: message,
             }),
             repo.createRunEvent({

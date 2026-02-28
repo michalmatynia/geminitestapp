@@ -28,12 +28,12 @@ export async function PUT_products_entity_handler(
   params: { type: string, id: string }
 ): Promise<Response> {
   const { type, id } = params;
-  const data = await req.json();
+  const data = (await req.json()) as Record<string, unknown>;
 
   if (type === 'catalogs') {
     const provider = await getProductDataProvider();
     const repo = await getCatalogRepository(provider);
-    return NextResponse.json(await repo.updateCatalog(id, data));
+    return NextResponse.json(await repo.updateCatalog(id, data as any));
   }
   
   throw badRequestError(`Invalid products entity type for PUT: ${type}`);

@@ -306,7 +306,7 @@ export interface UseAiPathsSettingsStateReturn {
   ensureNodeVisible: (node: AiNode) => void;
   getCanvasCenterPosition: () => { x: number; y: number };
   persistActivePathPreference: (pathId: string | null) => Promise<void>;
-  persistPathSettings: (nextPaths: any, configId: string, config: any) => Promise<void>;
+  persistPathSettings: (nextPaths: PathMeta[], configId: string, config: PathConfig) => Promise<void>;
   persistRuntimePathState: (pathId: string, runtimeState: RuntimeState) => Promise<void>;
   persistSettingsBulk: (items: Array<{ key: string; value: string }>) => Promise<void>;
 }

@@ -8,7 +8,7 @@ import type { MarqueeMode, MarqueeSelectionState } from '../useCanvasInteraction
 
 export function useCanvasStateHandlers(args: {
   isPathLocked: boolean;
-  toast: any;
+  toast: (message: string, options?: { variant?: string }) => void;
   viewportRef: React.RefObject<HTMLDivElement>;
   nodes: AiNode[];
   edges: Edge[];
@@ -138,16 +138,23 @@ export function useCanvasStateHandlers(args: {
 
   const handlePanStart = useCallback(
     (event: React.MouseEvent | React.PointerEvent | React.TouchEvent): void => {
-      const isTouchEvent = 'touches' in event;
-      const clientX = isTouchEvent ? event.touches[0]?.clientX : (event as React.MouseEvent).clientX;
-      const clientY = isTouchEvent ? event.touches[0]?.clientY : (event as React.MouseEvent).clientY;
+      let clientX: number | undefined;
+      let clientY: number | undefined;
+
+      if ('touches' in event) {
+        clientX = event.touches[0]?.clientX;
+        clientY = event.touches[0]?.clientY;
+      } else {
+        clientX = event.clientX;
+        clientY = event.clientY;
+      }
 
       if (clientX === undefined || clientY === undefined) return;
 
       const viewportPoint = resolveViewportPointFromClient(clientX, clientY);
       if (!viewportPoint) return;
 
-      if (!isTouchEvent) {
+      if (!('touches' in event)) {
         setPointerCaptureSafe(args.viewportRef.current, (event as React.PointerEvent).pointerId);
       }
 

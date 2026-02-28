@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { badRequestError } from '@/shared/errors/app-error';
+import type { ImportExportTemplateMapping } from '@/shared/contracts/data-import-export';
 
 export const exportSchema = z.object({
   connectionId: z.string().min(1),
@@ -76,19 +77,15 @@ export const guessExtension = (mime: string): string => {
   return '.jpg';
 };
 
-export type BaseFieldMapping = {
-  sourceKey: string;
-  targetField: string;
-  [key: string]: unknown;
-};
+export type BaseFieldMapping = ImportExportTemplateMapping;
 
 export type BaseExportProductLike = {
   id: string;
   sku?: string | null;
   categoryId?: string | null;
-  producers?: any[];
-  tags?: any[];
-  catalogs?: any[];
-  parameters?: any[];
-  [key: string]: any;
+  producers?: unknown[];
+  tags?: unknown[];
+  catalogs?: unknown[];
+  parameters?: Array<{ name?: string; id?: string; value?: unknown }>;
+  [key: string]: unknown;
 };

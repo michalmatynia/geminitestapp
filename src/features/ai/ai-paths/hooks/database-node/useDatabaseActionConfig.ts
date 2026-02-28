@@ -18,7 +18,7 @@ export function useDatabaseActionConfig(args: {
   appDbProvider: 'prisma' | 'mongodb';
   resolvedProvider: 'prisma' | 'mongodb';
   updateSelectedNodeConfig: (config: { database: DatabaseConfig }) => void;
-  mapOperationFromActionCategory: (cat: DatabaseActionCategory) => any;
+  mapOperationFromActionCategory: (cat: DatabaseActionCategory) => string;
 }) {
   const handleProviderChange = useCallback(
     (nextProvider: DbQueryConfig['provider']) => {

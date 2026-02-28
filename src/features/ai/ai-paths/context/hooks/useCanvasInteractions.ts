@@ -95,8 +95,8 @@ export function useCanvasInteractions(args?: {
     edges,
     setNodes,
     setRuntimeState,
-    selectionToolMode: ((selectionToolMode as any) === 'add' || (selectionToolMode as any) === 'subtract') ? (selectionToolMode as any) : 'replace',
-    selectionScopeMode: ((selectionScopeMode as any) === 'add' || (selectionScopeMode as any) === 'toggle') ? (selectionScopeMode as any) : 'replace',
+    selectionToolMode: (selectionToolMode === 'add' || selectionToolMode === 'subtract') ? selectionToolMode : 'replace',
+    selectionScopeMode: (selectionScopeMode === 'add' || selectionScopeMode === 'toggle') ? selectionScopeMode : 'replace',
     setNodeSelection,
     toggleNodeSelection,
     startPan,
@@ -117,7 +117,7 @@ export function useCanvasInteractions(args?: {
     viewportRef,
     nodes,
     resolveActiveNodeSelectionIds,
-    updateLastPointerCanvasPosFromClient: updateLastPointerCanvasPosFromClient as any,
+    updateLastPointerCanvasPosFromClient: updateLastPointerCanvasPosFromClient as (clientX: number, clientY: number) => { x: number; y: number } | null,
   });
 
   const nodeActions = useCanvasInteractionsNodes({
@@ -139,7 +139,7 @@ export function useCanvasInteractions(args?: {
     startDrag,
     endDrag,
     dragState,
-    updateLastPointerCanvasPosFromClient: stateHandlers.resolveViewportPointFromClient as any,
+    updateLastPointerCanvasPosFromClient: stateHandlers.resolveViewportPointFromClient as (clientX: number, clientY: number) => { x: number; y: number } | null,
     stopViewAnimation: nav.stopViewAnimation,
     resolveActiveNodeSelectionIds,
     confirm,

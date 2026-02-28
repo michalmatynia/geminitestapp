@@ -125,11 +125,11 @@ export const captureSnapshot = async (
   runDir: string,
   label: string,
   log?: (level: string, message: string, metadata?: Record<string, unknown>) => Promise<void>,
-      activeStepId?: string | null
-      ): Promise<{ id: string; domText: string; domHtml: string; url: string }> => {
-        if (!page) {
-          return { id: '', domText: '', domHtml: '', url: '' };
-        }  const domHtml = await page.content();
+  activeStepId?: string | null
+): Promise<{ id: string; domText: string; domHtml: string; url: string }> => {
+  if (!page) {
+    return { id: '', domText: '', domHtml: '', url: '' };
+  }  const domHtml = await page.content();
   const domText = await page.evaluate(
     () => document.body?.innerText || document.documentElement?.innerText || ''
   );

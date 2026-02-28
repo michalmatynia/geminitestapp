@@ -4,9 +4,10 @@ import {
   type TouchGestureState,
   type TouchLongPressSelectionState,
 } from '../useCanvasInteractions.helpers';
+import { type UseCanvasInteractionsNavigationValue } from '../useCanvasInteractions.navigation';
 
 export function useCanvasTouchHandlers(args: {
-  nav: any;
+  nav: UseCanvasInteractionsNavigationValue;
 }) {
   const activeTouchPointersRef = useRef<Map<number, TouchPointSample>>(new Map());
   const touchGestureRef = useRef<TouchGestureState | null>(null);
@@ -17,9 +18,8 @@ export function useCanvasTouchHandlers(args: {
   const maybeStartTouchPanInertia = useCallback(
     (lastSample: TouchPointSample): void => {
       const now = performance.now();
-      const s = lastSample as any;
-      if (now - (s.ts ?? s.time) > 100) return;
-      args.nav.startPanInertia(s.vx ?? 0, s.vy ?? 0);
+      if (now - (lastSample.ts ?? lastSample.time ?? 0) > 100) return;
+      args.nav.startPanInertia(lastSample.vx ?? 0, lastSample.vy ?? 0);
     },
     [args.nav]
   );

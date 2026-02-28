@@ -126,6 +126,7 @@ export type BaseParameterImportSummary = {
 import {
   type ProductParameterDto as ProductParameter,
   type ProductParameterValueDto as ProductParameterValue,
+  type CreateProductParameterDto as ParameterCreateInput,
 } from '../products';
 
 export type ApplyBaseParameterImportInput = {
@@ -142,7 +143,7 @@ export type ApplyBaseParameterImportInput = {
   prefetchedLinks?: Record<string, string> | null;
   parameterRepository: {
     listParameters: (input: { catalogId: string }) => Promise<ProductParameter[]>;
-    createParameter: (input: Record<string, unknown>) => Promise<ProductParameter>;
+    createParameter: (input: ParameterCreateInput) => Promise<ProductParameter>;
   };
 };
 

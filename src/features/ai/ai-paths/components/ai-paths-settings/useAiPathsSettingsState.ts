@@ -151,7 +151,7 @@ export function useAiPathsSettingsState({
       const message =
         fallbackMessage ??
         (error instanceof Error ? error.message : String(error ?? 'Unknown error'));
-      void validation.reportAiPathsError(message, context);
+      validation.reportAiPathsError(message, context);
     },
     [validation.reportAiPathsError]
   );
@@ -423,7 +423,7 @@ export function useAiPathsSettingsState({
   });
 
   const persistPathSettingsVoid = useCallback(
-    async (nextPaths: any, configId: string, config: any): Promise<void> => {
+    async (nextPaths: PathMeta[], configId: string, config: PathConfig): Promise<void> => {
       await persistence.persistPathSettings(nextPaths, configId, config);
     },
     [persistence.persistPathSettings]
@@ -508,7 +508,7 @@ export function useAiPathsSettingsState({
     persistPathSettings: persistPathSettingsVoid,
     reportAiPathsError,
     pruneRuntimeInputs: (_state, removed, remaining) => {
-      runtimeMgmt.pruneRuntimeInputs(removed as any, remaining as any);
+      runtimeMgmt.pruneRuntimeInputs(removed as string[], remaining as string[]);
       return _state;
     },
   });

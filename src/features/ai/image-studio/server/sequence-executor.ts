@@ -70,7 +70,7 @@ export async function executeImageStudioSequenceStep(
       run: context.run,
       step: context.step,
       currentSlot,
-      runtimeMask: context.runtimeMask,
+      _runtimeMask: context.runtimeMask,
     });
 
     return {

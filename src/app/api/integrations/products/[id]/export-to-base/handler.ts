@@ -36,6 +36,7 @@ import {
   inFlightExportRequests,
   exportSchema,
   type BaseExportRequestData,
+  type BaseFieldMapping,
 } from './helpers';
 import {
   isBaseImageError,
@@ -528,7 +529,7 @@ export async function postExportToBaseHandler(
         token,
         targetInventoryId,
         exportProduct,
-        effectiveMappings as any,
+        effectiveMappings,
         warehouseId,
         {
           imageBaseUrl,
@@ -572,7 +573,7 @@ export async function postExportToBaseHandler(
       });
       warehouseId = null;
       effectiveMappings = effectiveMappings.filter(
-        (mapping: Record<string, any>) => !String(mapping['sourceKey'] ?? '').trim().toLowerCase().startsWith('stock')
+        (mapping: BaseFieldMapping) => !String(mapping['sourceKey'] ?? '').trim().toLowerCase().startsWith('stock')
       );
       includeStockWithoutWarehouse = false;
       ({ exportFields } = await buildExportSnapshot(
@@ -584,8 +585,9 @@ export async function postExportToBaseHandler(
         token,
         targetInventoryId,
         exportProduct,
-        effectiveMappings as any,
+        effectiveMappings,
         warehouseId,
+
         {
           imageBaseUrl,
           includeStockWithoutWarehouse,
@@ -625,7 +627,7 @@ export async function postExportToBaseHandler(
       });
       warehouseId = null;
       effectiveMappings = effectiveMappings.filter(
-        (mapping: Record<string, any>) => !String(mapping['sourceKey'] ?? '').trim().toLowerCase().startsWith('stock')
+        (mapping: BaseFieldMapping) => !String(mapping['sourceKey'] ?? '').trim().toLowerCase().startsWith('stock')
       );
       includeStockWithoutWarehouse = false;
       ({ exportFields } = await buildExportSnapshot(
@@ -637,8 +639,9 @@ export async function postExportToBaseHandler(
         token,
         targetInventoryId,
         exportProduct,
-        effectiveMappings as any,
+        effectiveMappings,
         warehouseId,
+
         {
           imageBaseUrl,
           includeStockWithoutWarehouse,
@@ -718,7 +721,7 @@ export async function postExportToBaseHandler(
               token,
               targetInventoryId,
               exportProduct,
-              effectiveMappings as any,
+              effectiveMappings,
               warehouseId,
               {
                 imageBaseUrl,
@@ -762,7 +765,7 @@ export async function postExportToBaseHandler(
               token,
               targetInventoryId,
               exportProduct,
-              effectiveMappings as any,
+              effectiveMappings,
               warehouseId,
               {
                 imageBaseUrl,

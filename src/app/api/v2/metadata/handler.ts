@@ -43,19 +43,20 @@ export async function POST_intl_handler(
   params: { type: string }
 ): Promise<Response> {
   const { type } = params;
-  const data = await req.json();
+  const data = (await req.json()) as Record<string, unknown>;
 
   if (type === 'currencies') {
     const repo = await getCurrencyRepository();
-    return NextResponse.json(await repo.createCurrency(data));
+    return NextResponse.json(await repo.createCurrency(data as any));
   }
 
   if (type === 'countries') {
     const country = await prisma.country.create({
       data: {
-        ...data,
-        currencies: data.currencyIds ? {
-          connect: data.currencyIds.map((id: string) => ({ id })),
+        code: data['code'] as string,
+        name: data['name'] as string,
+        currencies: data['currencyIds'] ? {
+          connect: (data['currencyIds'] as string[]).map((id: string) => ({ id })),
         } : undefined,
       },
       include: { currencies: true },
@@ -66,9 +67,11 @@ export async function POST_intl_handler(
   if (type === 'languages') {
     const language = await prisma.language.create({
       data: {
-        ...data,
-        countries: data.countryIds ? {
-          connect: data.countryIds.map((id: string) => ({ id })),
+        code: data['code'] as string,
+        name: data['name'] as string,
+        nativeName: data['nativeName'] as string,
+        countries: data['countryIds'] ? {
+          connect: (data['countryIds'] as string[]).map((id: string) => ({ id })),
         } : undefined,
       },
       include: { countries: true },

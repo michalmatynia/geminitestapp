@@ -23,9 +23,10 @@ import {
 import { studioKeys } from '../../../hooks/useImageStudioQueries';
 import {
   type GenerationToolbarState,
+  type GenerationToolbarHelpers,
 } from '../GenerationToolbar.types';
 
-export function useCropHandlers(state: GenerationToolbarState, helpers: any) {
+export function useCropHandlers(state: GenerationToolbarState, helpers: GenerationToolbarHelpers) {
   const {
     workingSlot,
     projectId,
@@ -43,7 +44,7 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: any) {
     setSelectedSlotId,
     workingSlotImageSrc,
     projectCanvasSize,
-    maskShapes,
+    maskShapesForExport,
     getPreviewCanvasImageFrame,
   } = state;
 
@@ -86,7 +87,7 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: any) {
     }
 
     const { cropRect: rect, diagnostics } = resolveCropRectFromShapesWithDiagnostics(
-      maskShapes,
+      maskShapesForExport,
       projectCanvasSize.width,
       projectCanvasSize.height,
       sourceDim.width,
@@ -101,7 +102,7 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: any) {
     return { rect, context };
   }, [
     cropMode,
-    maskShapes,
+    maskShapesForExport,
     resolveWorkingSlotImageContentFrame,
     resolveWorkingSourceDimensions,
     projectCanvasSize,
@@ -130,8 +131,8 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: any) {
       const canvasRect = mapImageCropRectToCanvasRect(rect, sourceDim.width, sourceDim.height, context);
       if (!canvasRect) throw new Error('Failed to map image crop to canvas.');
       
-      const polygons = polygonsFromShapes(maskShapes, 1000);
-      const maskDataUrl = renderMaskDataUrlFromPolygons(polygons, 1000, 1000);
+      const polygons = polygonsFromShapes(maskShapesForExport, 1000, 1000);
+      const maskDataUrl = renderMaskDataUrlFromPolygons(polygons, 1000, 1000, 'white', false);
       const uploadBlob = await dataUrlToUploadBlob(maskDataUrl);
 
       setCropStatus('uploading');
@@ -147,7 +148,7 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: any) {
       formData.append('canvasHeight', canvasRect.height.toString());
       formData.append('mask', uploadBlob, 'mask.png');
 
-      const response = await api.post<any>(
+      const response = await api.post<{ slot: ImageStudioSlotRecord }>(
         `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/crop`,
         formData,
         { timeout: CROP_REQUEST_TIMEOUT_MS }
@@ -168,7 +169,7 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: any) {
 
       setWorkingSlotId(response.slot.id);
       setSelectedSlotId(response.slot.id);
-      if (maskAttachMode === 'replace') {
+      if ((maskAttachMode as string) === 'replace') {
         setMaskShapes([]);
         setActiveMaskId(null);
         setTool('select');
@@ -187,7 +188,7 @@ export function useCropHandlers(state: GenerationToolbarState, helpers: any) {
     setCropStatus,
     resolveCropRect,
     resolveWorkingSourceDimensions,
-    maskShapes,
+    maskShapesForExport,
     cropMode,
     projectId,
     queryClient,

@@ -85,8 +85,8 @@ export async function resolveToolContext(input: {
   const runDir = path.join(process.cwd(), 'tmp', 'chatbot-agent', runId);
   await fs.mkdir(runDir, { recursive: true });
 
-  let launch: Browser | null = null;
-  let context: BrowserContext | null = null;
+  let launch: Browser | null;
+  let context: BrowserContext | null;
 
   if (injectedContext) {
     context = injectedContext;

@@ -31,8 +31,8 @@ import {
 
 export function useLocalExecutionTriggers(
   args: LocalExecutionArgs,
-  loop: { runLocalLoop: (mode: 'run' | 'step') => Promise<{ status: string; error?: any; state: RuntimeState }> },
-  outcome: { finalizeLocalRunOutcome: (outcome: any, meta: any) => void }
+  loop: { runLocalLoop: (mode: 'run' | 'step') => Promise<{ status: string; error?: unknown; state: RuntimeState }> },
+  outcome: { finalizeLocalRunOutcome: (outcome: unknown, meta: Record<string, unknown>) => void }
 ) {
   const getConnectedSimulationNodesForTrigger = useCallback(
     (triggerNodeId: string): AiNode[] => {

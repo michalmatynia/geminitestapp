@@ -243,6 +243,8 @@ export const applyBaseParameterImport = async (
           name_en: names.name_en,
           name_pl: names.name_pl ?? null,
           name_de: names.name_de ?? null,
+          selectorType: 'text',
+          optionLabels: [],
         });
         if (!matched) continue;
         byId.set(matched.id, matched);

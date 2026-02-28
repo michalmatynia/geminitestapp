@@ -1,0 +1,67 @@
+import { NextRequest, NextResponse } from 'next/server';
+
+import { getDraft, updateDraft, deleteDraft } from '@/features/drafter/server';
+import {
+  updateDraftPayloadSchema,
+  resolveDraftCategoryId,
+} from '@/features/drafter/validations/draft-payload';
+import type { UpdateProductDraftDto } from '@/features/products/server';
+import { parseJsonBody } from '@/features/products/server';
+import type { ApiHandlerContext } from '@/shared/contracts/ui';
+import { notFoundError } from '@/shared/errors/app-error';
+
+/**
+ * GET /api/drafts/[id]
+ * Get a single product draft by ID
+ */
+export async function GET_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
+  const draft = await getDraft(params.id);
+  if (!draft) {
+    throw notFoundError('Draft not found.', { draftId: params.id });
+  }
+  return NextResponse.json(draft);
+}
+
+/**
+ * PUT /api/drafts/[id]
+ * Update a product draft by ID
+ */
+export async function PUT_handler(
+  req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
+  const parsed = await parseJsonBody(req, updateDraftPayloadSchema, {
+    logPrefix: 'drafts.[id].PUT',
+  });
+  if (!parsed.ok) {
+    return parsed.response;
+  }
+  const data = parsed.data;
+  const categoryId = resolveDraftCategoryId(data);
+  const updated = await updateDraft(params.id, {
+    ...data,
+    ...(categoryId !== undefined ? { categoryId } : {}),
+  } as UpdateProductDraftDto);
+  if (!updated) {
+    throw notFoundError('Draft not found.', { draftId: params.id });
+  }
+  return NextResponse.json(updated);
+}
+
+/**
+ * DELETE /api/drafts/[id]
+ * Delete a product draft by ID
+ */
+export async function DELETE_handler(
+  _req: NextRequest,
+  _ctx: ApiHandlerContext,
+  params: { id: string }
+): Promise<Response> {
+  await deleteDraft(params.id);
+  return NextResponse.json({ ok: true });
+}

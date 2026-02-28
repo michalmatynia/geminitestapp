@@ -6,7 +6,7 @@ import { logClientError } from '@/shared/utils/observability/client-error-logger
 export function useAiPathsValidationActions(args: {
   setAiPathsValidation: (config: AiPathsValidationConfig) => void;
   setLastError: (error: string | null) => void;
-  toast: any;
+  toast: (message: string, options?: { variant?: string }) => void;
 }) {
   const { setAiPathsValidation, setLastError, toast } = args;
 
@@ -42,7 +42,9 @@ export function useAiPathsValidationActions(args: {
       console.error(fullMessage, context, error);
       toast(fallbackMessage || message, { variant: 'error' });
       void persistLastError(fallbackMessage || message);
-      void logClientError(error, {
+      
+      const errorToLog = error instanceof Error ? error : new Error(message);
+      logClientError(errorToLog, {
         context: {
           service: 'ai-paths',
           ...context,

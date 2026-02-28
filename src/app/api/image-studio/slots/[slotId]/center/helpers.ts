@@ -4,7 +4,13 @@ import {
   type ImageStudioCenterRequest,
   type ImageStudioCenterResponse,
   imageStudioCenterResponseSchema,
-  type ImageStudioSlotRecord
+  type ImageStudioSlotRecord,
+  type ImageStudioCenterObjectBounds,
+  type ImageStudioCenterLayoutMetadata,
+  type ImageStudioObjectDetectionUsed,
+  type ImageStudioDetectionDetails,
+  type ImageStudioCenterShadowPolicy,
+  type ImageStudioCenterDetectionMode
 } from '@/shared/contracts/image-studio';
 import { 
   coerceBoolean,
@@ -84,26 +90,29 @@ export async function parseCenterRequestPayload(
 export function normalizeCenterRequestBody(body: unknown): Partial<ImageStudioCenterRequest> {
   if (!body || typeof body !== 'object') return {};
   
-  const root = (body as any).center && typeof (body as any).center === 'object' ? (body as any).center : (body as any);
-  
-  const layout = root.layout || {};
-  
+  const bodyObj = body as Record<string, unknown>;
+  const centerVal = bodyObj['center'];
+  const root = (centerVal && typeof centerVal === 'object' ? centerVal : bodyObj) as Record<string, unknown>;
+
+  const layoutVal = root['layout'];
+  const layout = (layoutVal && typeof layoutVal === 'object' ? layoutVal : {}) as Record<string, unknown>;
+
   return {
-    mode: typeof root.mode === 'string' ? root.mode.trim() : root.mode,
-    dataUrl: typeof root.dataUrl === 'string' ? root.dataUrl.trim() : root.dataUrl,
-    name: typeof root.name === 'string' ? root.name.trim() : root.name,
-    requestId: typeof root.requestId === 'string' ? root.requestId.trim() : root.requestId,
+    mode: typeof root['mode'] === 'string' ? (root['mode'].trim() as ImageStudioCenterRequest['mode']) : undefined,
+    dataUrl: typeof root['dataUrl'] === 'string' ? root['dataUrl'].trim() : (root['dataUrl'] as string | undefined),
+    name: typeof root['name'] === 'string' ? root['name'].trim() : (root['name'] as string | undefined),
+    requestId: typeof root['requestId'] === 'string' ? root['requestId'].trim() : (root['requestId'] as string | undefined),
     layout: {
-      paddingPercent: coerceFiniteNumber(layout.paddingPercent) ?? undefined,
-      paddingXPercent: coerceFiniteNumber(layout.paddingXPercent) ?? undefined,
-      paddingYPercent: coerceFiniteNumber(layout.paddingYPercent) ?? undefined,
-      fillMissingCanvasWhite: coerceBoolean(layout.fillMissingCanvasWhite) ?? undefined,
-      targetCanvasWidth: coerceFiniteNumber(layout.targetCanvasWidth) ?? undefined,
-      targetCanvasHeight: coerceFiniteNumber(layout.targetCanvasHeight) ?? undefined,
-      whiteThreshold: coerceFiniteNumber(layout.whiteThreshold) ?? undefined,
-      chromaThreshold: coerceFiniteNumber(layout.chromaThreshold) ?? undefined,
-      shadowPolicy: typeof layout.shadowPolicy === 'string' ? (layout.shadowPolicy.trim()) : layout.shadowPolicy,
-      detection: typeof layout.detection === 'string' ? (layout.detection.trim()) : layout.detection,
+      paddingPercent: coerceFiniteNumber(layout['paddingPercent']) ?? undefined,
+      paddingXPercent: coerceFiniteNumber(layout['paddingXPercent']) ?? undefined,
+      paddingYPercent: coerceFiniteNumber(layout['paddingYPercent']) ?? undefined,
+      fillMissingCanvasWhite: coerceBoolean(layout['fillMissingCanvasWhite']) ?? undefined,
+      targetCanvasWidth: coerceFiniteNumber(layout['targetCanvasWidth']) ?? undefined,
+      targetCanvasHeight: coerceFiniteNumber(layout['targetCanvasHeight']) ?? undefined,
+      whiteThreshold: coerceFiniteNumber(layout['whiteThreshold']) ?? undefined,
+      chromaThreshold: coerceFiniteNumber(layout['chromaThreshold']) ?? undefined,
+      shadowPolicy: (typeof layout['shadowPolicy'] === 'string' ? layout['shadowPolicy'].trim() : layout['shadowPolicy']) as ImageStudioCenterShadowPolicy,
+      detection: (typeof layout['detection'] === 'string' ? layout['detection'].trim() : layout['detection']) as ImageStudioCenterDetectionMode,
     }
   };
 }
@@ -121,9 +130,21 @@ export const buildClientPayloadSignature = (
   return null;
 };
 
-export function readCenterMetadataFromSlot(slot: ImageStudioSlotRecord): Record<string, any> {
-  const metadata = slot.metadata || {};
-  return (metadata.center as Record<string, any>) || {};
+export type ImageStudioCenterMetadata = {
+  effectiveMode?: string;
+  sourceObjectBounds?: ImageStudioCenterObjectBounds | null;
+  targetObjectBounds?: ImageStudioCenterObjectBounds | null;
+  layout?: ImageStudioCenterLayoutMetadata | null;
+  detectionUsed?: ImageStudioObjectDetectionUsed | null;
+  confidenceBefore?: number | null;
+  detectionDetails?: ImageStudioDetectionDetails | null;
+  scale?: number | null;
+};
+
+export function readCenterMetadataFromSlot(slot: ImageStudioSlotRecord): ImageStudioCenterMetadata {
+  const metadata = (slot.metadata || {}) as Record<string, unknown>;
+  const center = metadata['center'];
+  return (center || {}) as ImageStudioCenterMetadata;
 }
 
 export function parseCenterResponsePayload(
@@ -133,14 +154,19 @@ export function parseCenterResponsePayload(
   try {
     return imageStudioCenterResponseSchema.parse(data);
   } catch (error) {
-    const err = error as any;
-    const validationError = new Error('Center response validation failed');
-    (validationError as any).code = 'BAD_REQUEST';
-    (validationError as any).httpStatus = 400;
-    (validationError as any).meta = {
+    const err = error as { format?: () => unknown };
+    const validationError = new Error('Center response validation failed') as Error & {
+      code?: string;
+      httpStatus?: number;
+      meta?: Record<string, unknown>;
+    };
+    
+    validationError.code = 'BAD_REQUEST';
+    validationError.httpStatus = 400;
+    validationError.meta = {
       centerErrorCode: 'IMAGE_STUDIO_CENTER_OUTPUT_INVALID',
       responseStage: context?.responseStage || 'unknown',
-      errors: typeof err.format === 'function' ? err.format() : err,
+      errors: typeof err?.format === 'function' ? err.format() : error,
     };
     throw validationError;
   }

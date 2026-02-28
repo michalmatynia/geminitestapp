@@ -20,6 +20,7 @@ export type ToolOutput = {
   extractedItems?: string[];
   extractionType?: 'product_names' | 'emails';
   extractionPlan?: unknown;
+  cloudflareDetected?: boolean;
 };
 
 export type AgentToolResult = {

@@ -28,7 +28,7 @@ export async function executeGenerateStep(params: {
   currentSlot: ImageStudioSlotRecord;
   _runtimeMask?: ImageStudioSequenceMaskContext | null;
 }): Promise<{ nextSlotId: string; producedSlotIds: string[]; generatedRunId: string }> {
-  const { run, step, currentSlot, runtimeMask } = params;
+  const { run, step, currentSlot } = params;
   const config = step.config;
   
   const promptTemplate = config.promptTemplate || '';

@@ -102,7 +102,7 @@ export async function runAgentTool(
     return true;
   };
 
-  let page: Page | null = null;
+  let page: Page | null;
   if (injectedContext && context.pages().length > 0) {
     page = context.pages()[0] ?? null;
     if (page) {

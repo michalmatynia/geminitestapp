@@ -1,5 +1,5 @@
 export * from './segments/index';
-export { exportSchema, type BaseExportRequestData } from './segments/common';
+export { exportSchema, type BaseExportRequestData, type BaseFieldMapping } from './segments/common';
 
 export const BASE_EXPORT_RUN_PATH_ID = 'integration-base-export';
 export const BASE_EXPORT_RUN_PATH_NAME = 'Base.com Export Jobs';

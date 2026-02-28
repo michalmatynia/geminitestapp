@@ -62,7 +62,7 @@ export function useAiPathsPersistence(args: UseAiPathsPersistenceArgs): UseAiPat
 
   const [uiStateLoaded, setUiStateLoaded] = useState(false);
   const loadInFlightRef = useRef(false);
-  const settingsWriteQueueRef = useRef<Promise<any>>(Promise.resolve());
+  const settingsWriteQueueRef = useRef<Promise<void>>(Promise.resolve());
 
   const stringifyForStorage = useCallback((value: unknown, label: string): string => {
     try {
@@ -126,7 +126,7 @@ export function useAiPathsPersistence(args: UseAiPathsPersistenceArgs): UseAiPat
         const validationItem = settings.find((s) => s.key === 'ai_paths_validation_v1');
         if (validationItem?.value) {
           try {
-            setAiPathsValidation(JSON.parse(validationItem.value));
+            setAiPathsValidation(JSON.parse(validationItem.value) as AiPathsValidationConfig);
           } catch {
             // ignore
           }

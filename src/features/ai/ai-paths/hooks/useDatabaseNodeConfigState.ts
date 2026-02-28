@@ -208,7 +208,7 @@ export function useDatabaseNodeConfigState() {
   const schemaSyncMutation = createMutationV2<void, string | undefined>({
     mutationFn: async (_provider) => { await dbApi.schema(); },
     onSuccess: () => {
-      schemaQuery.refetch();
+      void schemaQuery.refetch();
       toast('Schema synced', { variant: 'success' });
     },
     meta: {

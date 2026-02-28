@@ -3,6 +3,7 @@ import { api } from '@/shared/lib/api-client';
 import { invalidateImageStudioSlots } from '@/shared/lib/query-invalidation';
 import {
   type StudioSlotsResponse,
+  type ImageStudioSlotRecord,
 } from '@/shared/contracts/image-studio';
 import {
   buildCenterRequestId,
@@ -22,9 +23,10 @@ import {
 import { studioKeys } from '../../../hooks/useImageStudioQueries';
 import {
   type GenerationToolbarState,
+  type GenerationToolbarHelpers,
 } from '../GenerationToolbar.types';
 
-export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers: any) {
+export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers: GenerationToolbarHelpers) {
   const {
     workingSlot,
     projectId,
@@ -108,7 +110,7 @@ export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers
             formData.append('center', JSON.stringify({ layout: centerLayoutPayload }));
           }
           formData.append('image', uploadBlob, `center-client-${Date.now()}.png`);
-          return api.post<any>(`/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`, formData, {
+          return api.post<unknown>(`/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`, formData, {
             signal: abortController.signal,
             timeout: 60000,
             headers: { 'x-idempotency-key': centerRequestId },
@@ -118,7 +120,7 @@ export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers
         setCenterStatus('processing');
         const payload = buildValidatedCenterRequestPayload(centerMode as ImageStudioCenterMode);
         response = await withCenterRetry(() => 
-          api.post<any>(`/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`, payload, {
+          api.post<unknown>(`/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/center`, payload, {
             signal: abortController.signal,
             timeout: 60000,
             headers: { 'x-idempotency-key': centerRequestId },
@@ -132,7 +134,7 @@ export function useCenterAndScaleHandlers(state: GenerationToolbarState, helpers
         void invalidateImageStudioSlots(queryClient, normalizedProjectId);
         const slotsSnapshot = await fetchProjectSlots(normalizedProjectId);
         queryClient.setQueryData<StudioSlotsResponse>(studioKeys.slots(normalizedProjectId), {
-          slots: [response.slot, ...slotsSnapshot.filter((s: any) => s.id !== response.slot.id)],
+          slots: [response.slot, ...slotsSnapshot.filter((s: ImageStudioSlotRecord) => s.id !== response.slot.id)],
         });
       }
 

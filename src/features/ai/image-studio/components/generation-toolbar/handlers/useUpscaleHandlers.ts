@@ -14,9 +14,10 @@ import {
 import { studioKeys } from '../../../hooks/useImageStudioQueries';
 import {
   type GenerationToolbarState,
+  type GenerationToolbarHelpers,
 } from '../GenerationToolbar.types';
 
-export function useUpscaleHandlers(state: GenerationToolbarState, helpers: any) {
+export function useUpscaleHandlers(state: GenerationToolbarState, helpers: GenerationToolbarHelpers) {
   const {
     workingSlot,
     projectId,
@@ -61,7 +62,7 @@ export function useUpscaleHandlers(state: GenerationToolbarState, helpers: any) 
     try {
       const sourceDim = await resolveUpscaleSourceDimensions();
       setUpscaleStatus('processing');
-      const response = await api.post<any>(
+      const response = await api.post<{ slot: ImageStudioSlotRecord }>(
         `/api/image-studio/slots/${encodeURIComponent(workingSlot.id)}/upscale`,
         {
           mode: upscaleMode,

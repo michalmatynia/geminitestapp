@@ -25,6 +25,7 @@ type ToolOutput = {
   extractionType?: 'product_names' | 'emails';
   extractionPlan?: ExtractionPlan | null;
   recoveryPlan?: FailureRecoveryPlan | null;
+  cloudflareDetected?: boolean;
 };
 
 export type AgentToolResult = {

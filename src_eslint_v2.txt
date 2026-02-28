@@ -1,0 +1,83 @@
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/integrations/products/[id]/export-to-base/segments/preparation.ts
+   42:7   error  Unsafe return of a value of type `any`                        @typescript-eslint/no-unsafe-return
+  262:25  error  Unsafe return of a value of type error                        @typescript-eslint/no-unsafe-return
+  262:25  error  Unsafe call of a type that could not be resolved              @typescript-eslint/no-unsafe-call
+  262:36  error  Unsafe member access .trim on a type that cannot be resolved  @typescript-eslint/no-unsafe-member-access
+  491:51  error  Unsafe return of a value of type error                        @typescript-eslint/no-unsafe-return
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/v2/metadata/handler.ts
+  46:9   error  Unsafe assignment of an `any` value                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  46:16  error  This assertion is unnecessary since it does not change the type of the expression                                                                                                                                                          @typescript-eslint/no-unnecessary-type-assertion
+  46:38  error  Unexpected any. Specify a different type                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+  50:56  error  Unsafe argument of type `any` assigned to a parameter of type `{ symbol: string | null; code: string; name: string; isDefault: boolean; isActive: boolean; description?: string | null | undefined; exchangeRate?: number | undefined; }`  @typescript-eslint/no-unsafe-argument
+  56:9   error  Unsafe assignment of an `any` value                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  56:20  error  Unsafe member access .code on an `any` value                                                                                                                                                                                               @typescript-eslint/no-unsafe-member-access
+  57:9   error  Unsafe assignment of an `any` value                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  57:20  error  Unsafe member access .name on an `any` value                                                                                                                                                                                               @typescript-eslint/no-unsafe-member-access
+  58:26  error  Unsafe member access .currencyIds on an `any` value                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+  59:26  error  Unsafe member access .currencyIds on an `any` value                                                                                                                                                                                        @typescript-eslint/no-unsafe-member-access
+  70:9   error  Unsafe assignment of an `any` value                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  70:20  error  Unsafe member access .code on an `any` value                                                                                                                                                                                               @typescript-eslint/no-unsafe-member-access
+  71:9   error  Unsafe assignment of an `any` value                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  71:20  error  Unsafe member access .name on an `any` value                                                                                                                                                                                               @typescript-eslint/no-unsafe-member-access
+  72:9   error  Unsafe assignment of an `any` value                                                                                                                                                                                                        @typescript-eslint/no-unsafe-assignment
+  72:26  error  Unsafe member access .nativeName on an `any` value                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
+  73:25  error  Unsafe member access .countryIds on an `any` value                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
+  74:26  error  Unsafe member access .countryIds on an `any` value                                                                                                                                                                                         @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/app/api/v2/products/entities/handler.ts
+  31:9   error  Unsafe assignment of an `any` value                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unsafe-assignment
+  36:59  error  Unsafe argument of type `any` assigned to a parameter of type `{ name?: string | undefined; defaultPriceGroupId?: string | null | undefined; defaultLanguageId?: string | null | undefined; description?: string | null | undefined; isDefault?: boolean | undefined; languageIds?: string[] | undefined; priceGroupIds?: string[] | undefined; }`  @typescript-eslint/no-unsafe-argument
+  36:59  error  This assertion is unnecessary since it does not change the type of the expression                                                                                                                                                                                                                                                                   @typescript-eslint/no-unnecessary-type-assertion
+  36:67  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/hooks/useAiPathsValidationActions.ts
+  47:12  error  Placing a void expression inside another expression is forbidden. Move it to its own statement instead  @typescript-eslint/no-confusing-void-expression
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsPersistence.ts
+  129:34  error  Unsafe argument of type error typed assigned to a parameter of type `{ schemaVersion?: number | undefined; enabled?: boolean | undefined; policy?: "report_only" | "warn_below_threshold" | "block_below_threshold" | undefined; warnThreshold?: number | undefined; ... 7 more ...; docsSyncState?: { ...; } | undefined; }`  @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/ai-paths-settings/useAiPathsSettingsState.ts
+  154:12  error  Placing a void expression inside another expression is forbidden. Move it to its own statement instead                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-confusing-void-expression
+  427:45  error  Unsafe argument of type `PathMeta[]` assigned to a parameter of type `{ id: string; name: string; createdAt: string; updatedAt: string; }[]`                                                                                                                                                                                                                                                            @typescript-eslint/no-unsafe-argument
+  427:66  error  Unsafe argument of type error typed assigned to a parameter of type `{ id: string; version: number; name: string; description: string; trigger: string; nodes: { id: string; type: "template" | "document" | "math" | "context" | "model" | "prompt" | "regex" | "trigger" | ... 32 more ... | "canvas_output"; ... 12 more ...; outputContracts?: Record<...> | undefined; }[]; ... 15 more ...; ...`  @typescript-eslint/no-unsafe-argument
+  798:26  error  Promise-returning function provided to property where a void return was expected                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-misused-promises
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/components/node-config/dialog/StringMutatorNodeConfigSection.tsx
+  88:28  error  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  88:33  error  Unsafe member access .id on an `any` value  @typescript-eslint/no-unsafe-member-access
+  88:50  error  Unsafe assignment of an `any` value         @typescript-eslint/no-unsafe-assignment
+  88:68  error  Unexpected any. Specify a different type    @typescript-eslint/no-explicit-any
+  88:73  error  Unsafe member access .id on an `any` value  @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/context/hooks/canvas/useCanvasEventHandlers.ts
+   8:8   error  Unexpected any. Specify a different type                       @typescript-eslint/no-explicit-any
+  12:11  error  Unsafe object destructuring of a property with an `any` value  @typescript-eslint/no-unsafe-assignment
+  46:13  error  Unsafe assignment of an `any` value                            @typescript-eslint/no-unsafe-assignment
+  46:26  error  Unsafe call of an `any` typed value                            @typescript-eslint/no-unsafe-call
+  46:30  error  Unsafe member access .getZoomTargetView on an `any` value      @typescript-eslint/no-unsafe-member-access
+  47:7   error  Unsafe call of an `any` typed value                            @typescript-eslint/no-unsafe-call
+  47:11  error  Unsafe member access .setViewClamped on an `any` value         @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/context/hooks/canvas/useCanvasTouchHandlers.ts
+  22:32  error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+  22:52  error  Unsafe argument of type error typed assigned to a parameter of type `number`  @typescript-eslint/no-unsafe-argument
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/ai-paths/server/inference/config.ts
+  24:5   error  Unsafe assignment of an `any` value       @typescript-eslint/no-unsafe-assignment
+  24:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/features/ai/image-studio/components/generation-toolbar/GenerationToolbar.handlers.ts
+  27:13  error  Unsafe assignment of an `any` value            @typescript-eslint/no-unsafe-assignment
+  27:49  error  Unexpected any. Specify a different type       @typescript-eslint/no-explicit-any
+  30:7   error  Unsafe return of a value of type `any`         @typescript-eslint/no-unsafe-return
+  30:20  error  Unsafe member access .slots on an `any` value  @typescript-eslint/no-unsafe-member-access
+
+/Users/michalmatynia/Desktop/NPM/2026/Gemini new Pull/geminitestapp/src/shared/ui/vector-canvas.hooks.ts
+  35:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  36:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+✖ 55 problems (55 errors, 0 warnings)
+  2 errors and 0 warnings potentially fixable with the `--fix` option.
+

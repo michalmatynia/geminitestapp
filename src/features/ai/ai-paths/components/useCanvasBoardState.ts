@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   useCanvasState,
+  useCanvasActions,
   useCanvasRefs,
   useCanvasInteractions,
   useGraphState,
@@ -30,6 +31,7 @@ export function useCanvasBoardState({
 }: UseCanvasBoardStateProps): CanvasBoardState {
   // --- Context Hooks ---
   const canvasState = useCanvasState();
+  const canvasActions = useCanvasActions();
   const canvasRefs = useCanvasRefs();
   const graphState = useGraphState();
   const runtimeStateContext = useRuntimeState();
@@ -37,11 +39,11 @@ export function useCanvasBoardState({
   const selectionState = useSelectionState();
   const selectionActions = useSelectionActions();
 
-  const [edgeRoutingMode, setEdgeRoutingMode] = React.useState<EdgeRoutingMode>('bezier');
+  const { edgeRoutingMode } = canvasState;
+  const { setEdgeRoutingMode } = canvasActions;
 
   const canvasInteractions = useCanvasInteractions({
     confirmNodeSwitch,
-    edgeRoutingMode,
   });
 
   const selectedNodeIdSet = React.useMemo(
@@ -80,10 +82,6 @@ export function useCanvasBoardState({
     if (storedMode === 'legacy' || storedMode === 'svg') {
       setRendererMode(storedMode);
     }
-    const storedRoutingMode = window.localStorage.getItem(EDGE_ROUTING_MODE_STORAGE_KEY);
-    if (storedRoutingMode === 'bezier' || storedRoutingMode === 'orthogonal') {
-      setEdgeRoutingMode(storedRoutingMode);
-    }
     const storedMinimapVisibility = window.localStorage.getItem(MINIMAP_VISIBILITY_STORAGE_KEY);
     if (storedMinimapVisibility === '0') {
       setShowMinimap(false);
@@ -94,11 +92,6 @@ export function useCanvasBoardState({
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(RENDERER_MODE_STORAGE_KEY, rendererMode);
   }, [rendererMode]);
-
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem(EDGE_ROUTING_MODE_STORAGE_KEY, edgeRoutingMode);
-  }, [edgeRoutingMode]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;

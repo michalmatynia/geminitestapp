@@ -411,25 +411,49 @@ export async function getAnalyticsSummary(input: {
       .aggregate<{
         path: string;
         count: number;
-      }>([{ $match: { ...match, type: 'pageview' } }, { $group: { _id: '$path', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 20 }, { $project: { _id: 0, path: '$_id', count: 1 } }])
+      }>([
+        { $match: { ...match, type: 'pageview' } },
+        { $group: { _id: '$path', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 20 },
+        { $project: { _id: 0, path: '$_id', count: 1 } },
+      ])
       .toArray(),
     col
       .aggregate<{
         referrer: string;
         count: number;
-      }>([{ $match: { ...match, referrer: { $exists: true, $ne: '' } } }, { $group: { _id: '$referrer', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 20 }, { $project: { _id: 0, referrer: '$_id', count: 1 } }])
+      }>([
+        { $match: { ...match, referrer: { $exists: true, $ne: '' } } },
+        { $group: { _id: '$referrer', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 20 },
+        { $project: { _id: 0, referrer: '$_id', count: 1 } },
+      ])
       .toArray(),
     col
       .aggregate<{
         language: string;
         count: number;
-      }>([{ $match: { ...match, language: { $exists: true, $ne: '' } } }, { $group: { _id: '$language', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 20 }, { $project: { _id: 0, language: '$_id', count: 1 } }])
+      }>([
+        { $match: { ...match, language: { $exists: true, $ne: '' } } },
+        { $group: { _id: '$language', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 20 },
+        { $project: { _id: 0, language: '$_id', count: 1 } },
+      ])
       .toArray(),
     col
       .aggregate<{
         country: string;
         count: number;
-      }>([{ $match: { ...match, country: { $exists: true, $ne: '' } } }, { $group: { _id: '$country', count: { $sum: 1 } } }, { $sort: { count: -1 } }, { $limit: 20 }, { $project: { _id: 0, country: '$_id', count: 1 } }])
+      }>([
+        { $match: { ...match, country: { $exists: true, $ne: '' } } },
+        { $group: { _id: '$country', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+        { $limit: 20 },
+        { $project: { _id: 0, country: '$_id', count: 1 } },
+      ])
       .toArray(),
     col.find(match).sort({ ts: -1 }).limit(50).toArray(),
   ]);

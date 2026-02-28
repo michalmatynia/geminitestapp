@@ -71,15 +71,15 @@ export const evaluateRunPreflight = (args: EvaluateRunPreflightArgs): RunPreflig
   const compileReport = nodeValidationEnabled
     ? compileGraph(args.nodes, args.edges)
     : compileGraph(args.nodes, args.edges, {
-      scopeMode,
-      ...(scopeRootNodeIds ? { scopeRootNodeIds } : {}),
-    });
+        scopeMode,
+        ...(scopeRootNodeIds ? { scopeRootNodeIds } : {}),
+      });
 
   const dependencyReport = strictFlowMode
     ? inspectPathDependencies(args.nodes, args.edges, {
-      scopeMode,
-      ...(scopeRootNodeIds ? { scopeRootNodeIds } : {}),
-    })
+        scopeMode,
+        ...(scopeRootNodeIds ? { scopeRootNodeIds } : {}),
+      })
     : null;
 
   const dataContractReport = evaluateDataContractPreflight({

@@ -401,12 +401,12 @@ export const applyAiPathsMaintenanceActions = async (
   const normalizedActionIds =
     actionIds && actionIds.length > 0
       ? Array.from(
-        new Set(
-          actionIds.filter((actionId): actionId is AiPathsMaintenanceActionId =>
-            isAiPathsMaintenanceActionId(actionId)
+          new Set(
+            actionIds.filter((actionId): actionId is AiPathsMaintenanceActionId =>
+              isAiPathsMaintenanceActionId(actionId)
+            )
           )
         )
-      )
       : undefined;
   let data: unknown;
   try {
@@ -425,8 +425,8 @@ export const applyAiPathsMaintenanceActions = async (
   const payload = data && typeof data === 'object' ? (data as Record<string, unknown>) : {};
   const appliedActionIds = Array.isArray(payload['appliedActionIds'])
     ? payload['appliedActionIds'].filter((value: unknown): value is AiPathsMaintenanceActionId =>
-      isAiPathsMaintenanceActionId(value)
-    )
+        isAiPathsMaintenanceActionId(value)
+      )
     : [];
   const report = normalizeAiPathsMaintenanceReport(payload['report']);
   invalidateAiPathsSettingsCache();

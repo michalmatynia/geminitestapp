@@ -119,7 +119,24 @@ export type UpdateAiBrainMemory = Partial<CreateAiBrainMemory>;
 
 const providerListSchema = z.array(z.string().trim().min(1)).default([]);
 
+export const aiBrainCatalogPoolSchema = z.enum([
+  'modelPresets',
+  'paidModels',
+  'ollamaModels',
+  'agentModels',
+  'deepthinkingAgents',
+  'playwrightPersonas',
+]);
+export type AiBrainCatalogPool = z.infer<typeof aiBrainCatalogPoolSchema>;
+
+export const aiBrainCatalogEntrySchema = z.object({
+  pool: aiBrainCatalogPoolSchema,
+  value: z.string().trim().min(1),
+});
+export type AiBrainCatalogEntry = z.infer<typeof aiBrainCatalogEntrySchema>;
+
 export const aiBrainProviderCatalogSchema = z.object({
+  entries: z.array(aiBrainCatalogEntrySchema).optional().default([]),
   modelPresets: providerListSchema,
   paidModels: providerListSchema,
   ollamaModels: providerListSchema,

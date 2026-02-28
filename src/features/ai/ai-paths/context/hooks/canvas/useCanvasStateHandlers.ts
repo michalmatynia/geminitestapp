@@ -28,6 +28,8 @@ export interface UseCanvasStateHandlersValue {
     scope: 'portion' | 'wiring'
   ) => string[];
   handlePanStart: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
+  handlePanMove: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
+  handlePanEnd: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
   lastPointerCanvasPosRef: React.MutableRefObject<{ x: number; y: number }>;
   hasCanvasKeyboardFocusRef: React.MutableRefObject<boolean>;
 }
@@ -45,8 +47,12 @@ export function useCanvasStateHandlers(args: {
   setNodeSelection: (ids: string[]) => void;
   toggleNodeSelection: (id: string) => void;
   startPan: (x: number, y: number) => void;
+  endPan: () => void;
+  setIsPanning: (isPanning: boolean) => void;
+  updateView: (next: { x: number; y: number }) => void;
+  panState: { startX: number; startY: number; originX: number; originY: number } | null;
 }): UseCanvasStateHandlersValue {
-  const { toast, viewportRef, startPan } = args;
+  const { toast, viewportRef, startPan, endPan, setIsPanning, updateView } = args;
 
   const lastPointerCanvasPosRef = useRef({ x: 0, y: 0 });
   const hasCanvasKeyboardFocusRef = useRef(false);
@@ -177,16 +183,61 @@ export function useCanvasStateHandlers(args: {
 
       if (clientX === undefined || clientY === undefined) return;
 
-      const viewportPoint = resolveViewportPointFromClient(clientX, clientY);
-      if (!viewportPoint) return;
+      updateLastPointerCanvasPosFromClient(clientX, clientY);
 
-      if (!('touches' in event)) {
-        setPointerCaptureSafe(args.viewportRef.current, (event as React.PointerEvent).pointerId);
+      if (
+        'button' in event &&
+        typeof event.button === 'number' &&
+        event.button !== 0 &&
+        event.button !== -1
+      ) {
+        return;
       }
 
-      startPan(viewportPoint.x, viewportPoint.y);
+      if (!('touches' in event) && 'pointerId' in event) {
+        setPointerCaptureSafe(args.viewportRef.current, event.pointerId);
+      }
+
+      startPan(clientX, clientY);
+      setIsPanning(true);
     },
-    [args.viewportRef, resolveViewportPointFromClient, startPan]
+    [
+      args.viewportRef,
+      setIsPanning,
+      startPan,
+      updateLastPointerCanvasPosFromClient,
+    ]
+  );
+
+  const handlePanMove = useCallback(
+    (event: React.MouseEvent | React.PointerEvent | React.TouchEvent): void => {
+      if (!args.panState) return;
+
+      let clientX: number | undefined;
+      let clientY: number | undefined;
+      if ('touches' in event) {
+        clientX = event.touches[0]?.clientX;
+        clientY = event.touches[0]?.clientY;
+      } else {
+        clientX = event.clientX;
+        clientY = event.clientY;
+      }
+      if (clientX === undefined || clientY === undefined) return;
+
+      updateLastPointerCanvasPosFromClient(clientX, clientY);
+      const nextX = args.panState.originX + (clientX - args.panState.startX);
+      const nextY = args.panState.originY + (clientY - args.panState.startY);
+      updateView({ x: nextX, y: nextY });
+    },
+    [args.panState, updateView, updateLastPointerCanvasPosFromClient]
+  );
+
+  const handlePanEnd = useCallback(
+    (_event: React.MouseEvent | React.PointerEvent | React.TouchEvent): void => {
+      endPan();
+      setIsPanning(false);
+    },
+    [endPan, setIsPanning]
   );
 
   return {
@@ -198,6 +249,8 @@ export function useCanvasStateHandlers(args: {
     resolveNodesWithinMarquee,
     resolveNodeSelectionByScope,
     handlePanStart,
+    handlePanMove,
+    handlePanEnd,
     lastPointerCanvasPosRef,
     hasCanvasKeyboardFocusRef,
   };

@@ -56,7 +56,7 @@ export function useSmartCache(): {
   preloadCriticalData: <TData = unknown>(
     criticalQueries: Array<{ queryKey: unknown[]; queryFn: () => Promise<TData> }>
   ) => Promise<void>;
-  } {
+} {
   const queryClient = useQueryClient();
 
   const optimizeCache = useCallback((): void => {
@@ -152,7 +152,7 @@ export function useCacheWarming(): {
   warmUserSpecificData: (userId: string) => Promise<void>;
   warmNavigationData: (routes: string[]) => Promise<void>;
   warmFrequentlyAccessedData: () => Promise<void>;
-  } {
+} {
   const queryClient = useQueryClient();
 
   const warmUserSpecificData = useCallback(

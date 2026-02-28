@@ -40,7 +40,10 @@ import {
   parseCaseResolverTags,
   parseCaseResolverWorkspace,
 } from '../settings';
-import { logCaseResolverWorkspaceEvent } from '../workspace-persistence';
+import {
+  logCaseResolverWorkspaceEvent,
+  readCaseResolverNavigationWorkspace,
+} from '../workspace-persistence';
 import {
   fromCaseResolverCaseContentFileNodeId,
   fromCaseResolverCaseNodeId,
@@ -142,14 +145,36 @@ export function useCaseResolverState(): CaseResolverStateValue {
     (): CaseResolverWorkspace => parseCaseResolverWorkspace(rawWorkspaceFromStore),
     [rawWorkspaceFromStore]
   );
+  const navigationWorkspace = useMemo(
+    (): CaseResolverWorkspace | null => readCaseResolverNavigationWorkspace(),
+    [requestedFileId]
+  );
+  const hasNavigationWorkspace = useMemo(
+    (): boolean =>
+      Boolean(
+        navigationWorkspace &&
+        (navigationWorkspace.files.length > 0 ||
+          navigationWorkspace.assets.length > 0 ||
+          navigationWorkspace.folders.length > 0)
+      ),
+    [navigationWorkspace]
+  );
   const preferredWorkspaceSelection = useMemo(
     () =>
       resolvePreferredCaseResolverWorkspace({
         storeWorkspace: parsedWorkspaceFromStore,
+        navigationWorkspace: navigationWorkspace ?? undefined,
         hasStoreWorkspace: hasWorkspaceFromStore,
+        hasNavigationWorkspace,
         requestedFileId,
       }),
-    [hasWorkspaceFromStore, parsedWorkspaceFromStore, requestedFileId]
+    [
+      hasNavigationWorkspace,
+      hasWorkspaceFromStore,
+      navigationWorkspace,
+      parsedWorkspaceFromStore,
+      requestedFileId,
+    ]
   );
   const parsedWorkspace = preferredWorkspaceSelection.workspace;
   const canHydrateWorkspaceFromStore = preferredWorkspaceSelection.source !== 'none';
@@ -422,12 +447,7 @@ export function useCaseResolverState(): CaseResolverStateValue {
     window.setTimeout((): void => {
       handleRetryCaseContext();
     }, 0);
-  }, [
-    handleRetryCaseContext,
-    requestedCaseIssue,
-    requestedCaseStatus,
-    requestedFileId,
-  ]);
+  }, [handleRetryCaseContext, requestedCaseIssue, requestedCaseStatus, requestedFileId]);
 
   const creationActions = useCaseResolverStateCreationActions({
     workspace,

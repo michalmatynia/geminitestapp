@@ -143,8 +143,8 @@ export const syncCatalogs: SyncHandler = async ({ mongo, prisma, normalizeId }) 
   const deleted = await prisma.catalog.deleteMany();
   const created = data.length
     ? await prisma.catalog.createMany({
-      data: data.map(({ languageIds: _, ...rest }) => rest) as Prisma.CatalogCreateManyInput[],
-    })
+        data: data.map(({ languageIds: _, ...rest }) => rest) as Prisma.CatalogCreateManyInput[],
+      })
     : { count: 0 };
 
   const catalogLanguages = data.flatMap((catalog) =>

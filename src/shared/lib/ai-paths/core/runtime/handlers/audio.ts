@@ -250,11 +250,11 @@ export const handleAudioSpeaker: NodeHandler = async ({
     isRecord(configRaw)
       ? configRaw
       : {
-        enabled: true,
-        autoPlay: true,
-        gain: 1,
-        stopPrevious: true,
-      }
+          enabled: true,
+          autoPlay: true,
+          gain: 1,
+          stopPrevious: true,
+        }
   ) as Record<string, unknown>;
 
   if (config['enabled'] === false) {

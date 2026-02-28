@@ -1,4 +1,6 @@
 import {
+  type AiBrainCatalogEntry,
+  type AiBrainCatalogPool,
   type AiBrainProvider,
   type AiBrainFeature,
   type AiBrainCapabilityKey,
@@ -12,9 +14,16 @@ import {
   AI_BRAIN_SETTINGS_KEY as SETTINGS_KEY,
   AI_BRAIN_PROVIDER_CATALOG_KEY as CATALOG_KEY,
 } from '@/shared/contracts/ai-brain';
+import {
+  catalogToEntries,
+  entriesToCatalogArrays,
+  sanitizeCatalogEntries,
+} from '@/shared/lib/ai-brain/catalog-entries';
 import { parseJsonSetting } from '@/shared/utils/settings-json';
 
 export type {
+  AiBrainCatalogEntry,
+  AiBrainCatalogPool,
   AiBrainProvider,
   AiBrainFeature,
   AiBrainCapabilityKey,
@@ -331,6 +340,17 @@ export const defaultBrainSettings: AiBrainSettings = {
 };
 
 export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
+  entries: [
+    { pool: 'modelPresets', value: 'gpt-4o-mini' },
+    { pool: 'modelPresets', value: 'gpt-4o' },
+    { pool: 'modelPresets', value: 'gpt-4.1-mini' },
+    { pool: 'modelPresets', value: 'gpt-4.1' },
+    { pool: 'modelPresets', value: 'o1-mini' },
+    { pool: 'modelPresets', value: 'claude-3-5-sonnet-20241022' },
+    { pool: 'modelPresets', value: 'claude-3-5-haiku-20241022' },
+    { pool: 'modelPresets', value: 'gemini-1.5-pro' },
+    { pool: 'modelPresets', value: 'gemini-1.5-flash' },
+  ],
   modelPresets: [
     'gpt-4o-mini',
     'gpt-4o',
@@ -349,18 +369,6 @@ export const defaultBrainProviderCatalog: AiBrainProviderCatalog = {
   playwrightPersonas: [],
 };
 
-const sanitizeProviderList = (values: string[]): string[] => {
-  const seen = new Set<string>();
-  const next: string[] = [];
-  values.forEach((value: string) => {
-    const trimmed = value.trim();
-    if (!trimmed || seen.has(trimmed)) return;
-    seen.add(trimmed);
-    next.push(trimmed);
-  });
-  return next;
-};
-
 export const parseBrainSettings = (raw: string | null | undefined): AiBrainSettings => {
   const parsed = parseJsonSetting<unknown>(raw, null);
   const result = settingsSchema.safeParse(parsed ?? defaultBrainSettings);
@@ -374,13 +382,13 @@ export const parseBrainProviderCatalog = (
   const parsed = parseJsonSetting<unknown>(raw, null);
   const result = providerCatalogSchema.safeParse(parsed ?? defaultBrainProviderCatalog);
   if (!result.success) return defaultBrainProviderCatalog;
+
+  const entries = catalogToEntries(result.data);
+  const arrays = entriesToCatalogArrays(entries);
+
   return {
-    modelPresets: sanitizeProviderList(result.data.modelPresets),
-    paidModels: sanitizeProviderList(result.data.paidModels),
-    ollamaModels: sanitizeProviderList(result.data.ollamaModels),
-    agentModels: sanitizeProviderList(result.data.agentModels),
-    deepthinkingAgents: sanitizeProviderList(result.data.deepthinkingAgents),
-    playwrightPersonas: sanitizeProviderList(result.data.playwrightPersonas),
+    entries,
+    ...arrays,
   };
 };
 
@@ -454,11 +462,11 @@ export const sanitizeBrainAssignmentForProviders = (
 
 export const sanitizeBrainProviderCatalog = (
   catalog: AiBrainProviderCatalog
-): AiBrainProviderCatalog => ({
-  modelPresets: sanitizeProviderList(catalog.modelPresets),
-  paidModels: sanitizeProviderList(catalog.paidModels),
-  ollamaModels: sanitizeProviderList(catalog.ollamaModels),
-  agentModels: sanitizeProviderList(catalog.agentModels),
-  deepthinkingAgents: sanitizeProviderList(catalog.deepthinkingAgents),
-  playwrightPersonas: sanitizeProviderList(catalog.playwrightPersonas),
-});
+): AiBrainProviderCatalog => {
+  const entries = sanitizeCatalogEntries(catalogToEntries(catalog));
+  const arrays = entriesToCatalogArrays(entries);
+  return {
+    entries,
+    ...arrays,
+  };
+};

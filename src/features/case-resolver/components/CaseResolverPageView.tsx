@@ -1,6 +1,8 @@
 'use client';
 
 import React from 'react';
+import { createPortal } from 'react-dom';
+import { Eye, EyeOff } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 
 import {
@@ -38,6 +40,8 @@ export function CaseResolverPageView(): React.JSX.Element {
     selectedAsset,
     folderPanelCollapsed,
     setFolderPanelCollapsed,
+    isMenuCollapsed,
+    setIsMenuCollapsed,
     handleSelectFile,
     handleSelectAsset,
     handleSelectFolder,
@@ -108,6 +112,24 @@ export function CaseResolverPageView(): React.JSX.Element {
     },
     [isDirtyDocumentDraft]
   );
+
+  const menuToggleButton =
+    typeof document === 'undefined'
+      ? null
+      : createPortal(
+        <Button
+          size='xs'
+          type='button'
+          variant='outline'
+          onClick={(): void => setIsMenuCollapsed(!isMenuCollapsed)}
+          title={isMenuCollapsed ? 'Show side admin menu' : 'Hide side admin menu'}
+          aria-label={isMenuCollapsed ? 'Show side admin menu' : 'Hide side admin menu'}
+          className='fixed left-1/2 top-0 z-40 h-8 w-10 -translate-x-1/2 rounded-b-lg rounded-t-none border-t-0 bg-background/90 px-0 shadow-md backdrop-blur-sm animate-in fade-in slide-in-from-top-2'
+        >
+          {isMenuCollapsed ? <EyeOff className='size-4' /> : <Eye className='size-4' />}
+        </Button>,
+        document.body
+      );
 
   return (
     <CaseResolverRuntimeProvider
@@ -186,9 +208,14 @@ export function CaseResolverPageView(): React.JSX.Element {
         }}
       >
         <div className='flex h-full flex-col overflow-hidden bg-background'>
+          {menuToggleButton}
           <div className='flex flex-1 overflow-hidden'>
             {!folderPanelCollapsed && (
-              <div className='w-80 flex-shrink-0 border-r border-border bg-card/20'>
+              <div
+                className={`${
+                  isMenuCollapsed ? 'w-[26rem]' : 'w-80'
+                } flex-shrink-0 border-r border-border bg-card/20`}
+              >
                 <CaseResolverFolderTree />
               </div>
             )}

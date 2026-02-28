@@ -122,8 +122,17 @@ export function CanvasProvider({
   const [connecting, setConnectingInternal] = useState<ConnectingState | null>(null);
   const [connectingPos, setConnectingPosInternal] = useState<{ x: number; y: number } | null>(null);
   const [lastDrop, setLastDropInternal] = useState<{ x: number; y: number } | null>(null);
-  const [edgeRoutingMode, setEdgeRoutingMode] = useState<'bezier' | 'orthogonal'>('bezier');
+  const [edgeRoutingMode, setEdgeRoutingMode] = useState<'bezier' | 'orthogonal'>(() => {
+    if (typeof window === 'undefined') return 'bezier';
+    const stored = window.localStorage.getItem('ai-paths:canvas-edge-routing-mode');
+    return stored === 'bezier' || stored === 'orthogonal' ? stored : 'bezier';
+  });
   const [isPanning, setIsPanning] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('ai-paths:canvas-edge-routing-mode', edgeRoutingMode);
+  }, [edgeRoutingMode]);
 
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLDivElement | null>(null);

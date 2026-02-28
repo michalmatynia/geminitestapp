@@ -36,6 +36,7 @@ import {
   sortCaseTreeNodes,
   parseBoolean,
 } from './list/case-list-utils';
+import { primeCaseResolverNavigationWorkspace } from '../workspace-persistence';
 import { CaseListSorting } from './list/sections/CaseListSorting';
 import { CaseListNodeItem } from './list/sections/CaseListNodeItem';
 import { CaseListHeldDock } from './list/sections/CaseListHeldDock';
@@ -376,9 +377,10 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
 
   const handleOpenCase = useCallback(
     (caseId: string): void => {
+      primeCaseResolverNavigationWorkspace(workspace);
       router.push(buildCaseResolverCaseHref(caseId));
     },
-    [router]
+    [router, workspace]
   );
 
   const prefetchedCaseHrefSetRef = useRef<Set<string>>(new Set());
@@ -416,9 +418,10 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
 
   const handleOpenFile = useCallback(
     (fileId: string): void => {
+      primeCaseResolverNavigationWorkspace(workspace);
       router.push(buildCaseResolverCaseHref(fileId));
     },
-    [router]
+    [router, workspace]
   );
 
   const handleCreateCaseLocal = useCallback(
@@ -592,9 +595,9 @@ export const CaseListPanel = memo(function CaseListPanel(): React.JSX.Element {
           onPrefetchFile={(file) => {
             handlePrefetchFile(file.id);
           }}
-          onOpenCase={(caseId) => router.push(buildCaseResolverCaseHref(caseId))}
+          onOpenCase={handleOpenCase}
           onOpenFile={(file) => {
-            router.push(buildCaseResolverCaseHref(file.id));
+            handleOpenFile(file.id);
           }}
         />
       ) : isLoading ? (

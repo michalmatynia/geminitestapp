@@ -10,6 +10,8 @@ import {
 const CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY = '__caseResolverWorkspaceDebugEvents';
 const CASE_RESOLVER_WORKSPACE_DEBUG_EVENT_NAME = 'case-resolver-workspace-debug';
 const CASE_RESOLVER_WORKSPACE_DEBUG_LIMIT = 200;
+const CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_KEY = '__caseResolverWorkspaceNavigationCache';
+const CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_TTL_MS = 2 * 60 * 1000;
 const CASE_RESOLVER_WORKSPACE_MAX_PAYLOAD_BYTES_DEFAULT = 1_500_000;
 const CASE_RESOLVER_CONFLICT_RETRY_BASE_DELAY_MS_DEFAULT = 150;
 const CASE_RESOLVER_CONFLICT_RETRY_MAX_DELAY_MS_DEFAULT = 1_500;
@@ -70,6 +72,11 @@ type WorkspaceSettingsPayloadLike = {
   value?: unknown;
 };
 
+type CaseResolverWorkspaceNavigationCache = {
+  workspace: CaseResolverWorkspace;
+  cachedAtMs: number;
+};
+
 type PersistWorkspaceInput = {
   workspace: CaseResolverWorkspace;
   expectedRevision: number;
@@ -123,6 +130,40 @@ const writeDebugBuffer = (events: CaseResolverWorkspaceDebugEvent[]): void => {
     [CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY]?: CaseResolverWorkspaceDebugEvent[];
   };
   scope[CASE_RESOLVER_WORKSPACE_DEBUG_EVENTS_KEY] = events;
+};
+
+const readNavigationCache = (): CaseResolverWorkspaceNavigationCache | null => {
+  const scope = globalThis as typeof globalThis & {
+    [CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_KEY]?: CaseResolverWorkspaceNavigationCache;
+  };
+  const cache = scope[CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_KEY];
+  if (!cache || typeof cache !== 'object') return null;
+  if (
+    !cache.workspace ||
+    typeof cache.cachedAtMs !== 'number' ||
+    !Number.isFinite(cache.cachedAtMs)
+  ) {
+    return null;
+  }
+  if (Date.now() - cache.cachedAtMs > CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_TTL_MS) {
+    return null;
+  }
+  return cache;
+};
+
+export const primeCaseResolverNavigationWorkspace = (workspace: CaseResolverWorkspace): void => {
+  const scope = globalThis as typeof globalThis & {
+    [CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_KEY]?: CaseResolverWorkspaceNavigationCache;
+  };
+  scope[CASE_RESOLVER_WORKSPACE_NAVIGATION_CACHE_KEY] = {
+    workspace,
+    cachedAtMs: Date.now(),
+  };
+};
+
+export const readCaseResolverNavigationWorkspace = (): CaseResolverWorkspace | null => {
+  const cache = readNavigationCache();
+  return cache?.workspace ?? null;
 };
 
 const safeParseJson = <T>(value: string): T | null => {

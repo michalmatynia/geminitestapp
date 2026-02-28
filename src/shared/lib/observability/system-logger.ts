@@ -380,12 +380,12 @@ export async function logSystemEvent(input: SystemLogInput): Promise<void> {
     const fingerprint =
       input.level === 'error' || input.level === 'warn' || errorInfo
         ? buildErrorFingerprint({
-          message: input.message,
-          source: input.source ?? null,
-          path: input.request?.url ? (requestInfo.path ?? null) : null,
-          statusCode: input.statusCode ?? null,
-          errorInfo,
-        })
+            message: input.message,
+            source: input.source ?? null,
+            path: input.request?.url ? (requestInfo.path ?? null) : null,
+            statusCode: input.statusCode ?? null,
+            errorInfo,
+          })
         : null;
     const context = {
       ...(input.context ?? {}),

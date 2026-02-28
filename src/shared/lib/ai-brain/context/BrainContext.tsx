@@ -34,6 +34,13 @@ import { useToast, type SelectSimpleOption } from '@/shared/ui';
 import { parseJsonSetting, serializeSetting } from '@/shared/utils/settings-json';
 
 import {
+  appendCatalogPoolValues,
+  catalogToEntries,
+  entriesToCatalogArrays,
+  hasCatalogPoolEntries,
+  replaceCatalogPoolValues,
+} from '@/shared/lib/ai-brain/catalog-entries';
+import {
   AI_BRAIN_PROVIDER_CATALOG_KEY,
   AI_BRAIN_SETTINGS_KEY,
   BRAIN_CAPABILITY_KEYS,
@@ -247,11 +254,15 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
     const playwrightPersonaIds = parsePlaywrightPersonaIds(
       map.get(PLAYWRIGHT_PERSONA_SETTINGS_KEY)
     );
+    const parsedEntries = catalogToEntries(parsedCatalog);
+    const mergedEntries =
+      !hasCatalogPoolEntries(parsedEntries, 'playwrightPersonas') &&
+      playwrightPersonaIds.length > 0
+        ? appendCatalogPoolValues(parsedEntries, 'playwrightPersonas', playwrightPersonaIds)
+        : parsedEntries;
     const mergedCatalog = sanitizeBrainProviderCatalog({
       ...parsedCatalog,
-      ...(parsedCatalog.playwrightPersonas.length === 0 && playwrightPersonaIds.length > 0
-        ? { playwrightPersonas: playwrightPersonaIds }
-        : {}),
+      entries: mergedEntries,
     });
 
     setSettings(parsedBrain);
@@ -369,6 +380,7 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
   }, [ollamaModelsQuery.data?.sources?.liveOllamaModels]);
 
   const modelQuickPicks = useMemo((): SelectSimpleOption[] => {
+    const normalizedCatalogArrays = entriesToCatalogArrays(catalogToEntries(providerCatalog));
     const seen = new Set<string>();
     const options: SelectSimpleOption[] = [];
     const append = (values: string[], source: string): void => {
@@ -383,14 +395,15 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
         });
       });
     };
-    append(providerCatalog.modelPresets, 'model preset');
-    append(providerCatalog.paidModels, 'paid model');
-    append(providerCatalog.ollamaModels, 'ollama');
+    append(normalizedCatalogArrays.modelPresets, 'model preset');
+    append(normalizedCatalogArrays.paidModels, 'paid model');
+    append(normalizedCatalogArrays.ollamaModels, 'ollama');
     append(liveOllamaModels, 'ollama (live)');
     return options;
   }, [liveOllamaModels, providerCatalog]);
 
   const agentQuickPicks = useMemo((): SelectSimpleOption[] => {
+    const normalizedCatalogArrays = entriesToCatalogArrays(catalogToEntries(providerCatalog));
     const seen = new Set<string>();
     const options: SelectSimpleOption[] = [];
     const append = (values: string[], source: string): void => {
@@ -405,9 +418,9 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
         });
       });
     };
-    append(providerCatalog.agentModels, 'agent');
-    append(providerCatalog.deepthinkingAgents, 'deepthinking');
-    append(providerCatalog.playwrightPersonas, 'playwright persona');
+    append(normalizedCatalogArrays.agentModels, 'agent');
+    append(normalizedCatalogArrays.deepthinkingAgents, 'deepthinking');
+    append(normalizedCatalogArrays.playwrightPersonas, 'playwright persona');
     return options;
   }, [providerCatalog]);
 
@@ -689,9 +702,14 @@ export function BrainProvider({ children }: { children: React.ReactNode }): Reac
       toast('No Playwright personas found to sync.', { variant: 'error' });
       return;
     }
-    setProviderCatalog((prev: AiBrainProviderCatalog) =>
-      sanitizeBrainProviderCatalog({ ...prev, playwrightPersonas: ids })
-    );
+    setProviderCatalog((prev: AiBrainProviderCatalog) => {
+      const baseEntries = catalogToEntries(prev);
+      const nextEntries = replaceCatalogPoolValues(baseEntries, 'playwrightPersonas', ids);
+      return sanitizeBrainProviderCatalog({
+        ...prev,
+        entries: nextEntries,
+      });
+    });
     toast('Playwright personas synced into Brain provider catalog.', { variant: 'success' });
   }, [settingsQuery.data, toast]);
 

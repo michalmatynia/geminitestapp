@@ -37,10 +37,10 @@ export const buildDatabaseInputHash = (
   };
   const mappings = Array.isArray(dbConfig.mappings)
     ? dbConfig.mappings.map((mapping) => ({
-      sourcePort: mapping?.sourcePort ?? null,
-      sourcePath: mapping?.sourcePath ?? null,
-      targetPath: mapping?.targetPath ?? null,
-    }))
+        sourcePort: mapping?.sourcePort ?? null,
+        sourcePath: mapping?.sourcePath ?? null,
+        targetPath: mapping?.targetPath ?? null,
+      }))
     : [];
   const baseConfig = {
     operation,
@@ -90,8 +90,8 @@ export const buildDatabaseInputHash = (
   if (operation === 'update') {
     const sourcePorts = mappings.length
       ? mappings
-        .map((mapping) => mapping.sourcePort)
-        .filter((port): port is string => typeof port === 'string' && port.trim().length > 0)
+          .map((mapping) => mapping.sourcePort)
+          .filter((port): port is string => typeof port === 'string' && port.trim().length > 0)
       : [];
     sourcePorts.forEach(includeInput);
     includeInput('entityId');

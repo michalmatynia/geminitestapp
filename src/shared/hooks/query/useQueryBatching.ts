@@ -25,9 +25,9 @@ export function useQueryBatching(config: QueryBatchConfig = {}): {
         queryFn: () => Promise<unknown>;
         resolve: (data: unknown) => void;
         reject: (error: Error) => void;
-          }
-          >
-          >(new Map());
+      }
+    >
+  >(new Map());
   const batchTimeout = useRef<NodeJS.Timeout | null>(null);
 
   const maxBatchSize = config.maxBatchSize || 10;
@@ -147,7 +147,7 @@ export function useQueryDeduplication(): {
     queryKey: unknown[],
     queryFn: () => Promise<TData>
   ) => Promise<TData>;
-  } {
+} {
   const activeQueries = useRef<Map<string, Promise<unknown>>>(new Map());
 
   const deduplicatedQuery = useCallback(

@@ -78,6 +78,8 @@ export function useCanvasInteractions(args?: {
   const {
     updateView,
     startPan,
+    endPan,
+    setIsPanning,
     startDrag,
     endDrag,
     startConnection,
@@ -125,6 +127,10 @@ export function useCanvasInteractions(args?: {
     setNodeSelection,
     toggleNodeSelection,
     startPan,
+    endPan,
+    setIsPanning,
+    updateView: (next) => updateView(next),
+    panState,
   });
 
   const { resolveActiveNodeSelectionIds, updateLastPointerCanvasPosFromClient } = stateHandlers;
@@ -322,8 +328,8 @@ export function useCanvasInteractions(args?: {
     selectionMarqueeRect,
     touchLongPressIndicator,
     handlePanStart: stateHandlers.handlePanStart,
-    handlePanMove: () => {},
-    handlePanEnd: () => {},
+    handlePanMove: stateHandlers.handlePanMove,
+    handlePanEnd: stateHandlers.handlePanEnd,
     ConfirmationModal,
     pruneRuntimeInputs: stateHandlers.pruneRuntimeInputsInternal,
     isPanning,
@@ -348,8 +354,8 @@ export interface UseCanvasInteractionsReturn
   selectionMarqueeRect: { left: number; top: number; width: number; height: number } | null;
   touchLongPressIndicator: TouchLongPressIndicatorState | null;
   handlePanStart: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
-  handlePanMove: () => void;
-  handlePanEnd: () => void;
+  handlePanMove: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
+  handlePanEnd: (event: React.MouseEvent | React.PointerEvent | React.TouchEvent) => void;
   ConfirmationModal: React.FC;
   pruneRuntimeInputs: (
     state: RuntimeState,

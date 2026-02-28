@@ -53,12 +53,12 @@ export const AI_PATHS_NODE_DOCS: AiPathsNodeDoc[] = ALL_NODE_TYPES.map((type: No
   const fallbackDefinition =
     type === 'description_updater'
       ? {
-        type: 'description_updater' as const,
-        title: 'Description Updater (Deprecated)',
-        description: 'Writes description_en back to the product.',
-        inputs: ['productId', 'description_en'],
-        outputs: ['description_en'],
-      }
+          type: 'description_updater' as const,
+          title: 'Description Updater (Deprecated)',
+          description: 'Writes description_en back to the product.',
+          inputs: ['productId', 'description_en'],
+          outputs: ['description_en'],
+        }
       : null;
   const def = definitionByType.get(type) ?? fallbackDefinition;
   const notes =

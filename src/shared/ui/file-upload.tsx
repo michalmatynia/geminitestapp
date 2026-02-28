@@ -55,12 +55,12 @@ const composeEventHandler =
     theirHandler: ((event: E) => void) | undefined,
     ourHandler: (event: E) => void
   ) =>
-    (event: E): void => {
-      theirHandler?.(event);
-      if (!event.defaultPrevented) {
-        ourHandler(event);
-      }
-    };
+  (event: E): void => {
+    theirHandler?.(event);
+    if (!event.defaultPrevented) {
+      ourHandler(event);
+    }
+  };
 
 export function FileUploadButton({
   accept,

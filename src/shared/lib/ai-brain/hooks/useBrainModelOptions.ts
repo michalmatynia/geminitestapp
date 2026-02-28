@@ -53,10 +53,10 @@ export function useBrainModelOptions({
   const models = useMemo((): string[] => {
     const discovered = Array.isArray(modelsQuery.data?.models)
       ? (modelsQuery.data?.models ?? []).filter((modelId) => {
-        if (!targetFamilies) return true;
-        const descriptor = modelsQuery.data?.descriptors?.[modelId];
-        return Boolean(descriptor?.family && targetFamilies.includes(descriptor.family));
-      })
+          if (!targetFamilies) return true;
+          const descriptor = modelsQuery.data?.descriptors?.[modelId];
+          return Boolean(descriptor?.family && targetFamilies.includes(descriptor.family));
+        })
       : [];
     return normalizeUnique([...discovered, ...(effectiveModelId ? [effectiveModelId] : [])]);
   }, [effectiveModelId, modelsQuery.data?.descriptors, modelsQuery.data?.models, targetFamilies]);

@@ -73,15 +73,15 @@ const resolveRegexSelection = (match: RegExpExecArray, selector: string | undefi
       : null;
   const groups = rawGroups
     ? (Object.fromEntries(
-      Object.entries(rawGroups).map(([name, value]: [string, unknown]) => [
-        name,
-        typeof value === 'string'
-          ? value
-          : value === undefined || value === null
-            ? ''
-            : safeStringify(value),
-      ])
-    ) as Record<string, string>)
+        Object.entries(rawGroups).map(([name, value]: [string, unknown]) => [
+          name,
+          typeof value === 'string'
+            ? value
+            : value === undefined || value === null
+              ? ''
+              : safeStringify(value),
+        ])
+      ) as Record<string, string>)
     : null;
   if (key === 'groups') {
     return groups;
@@ -164,10 +164,10 @@ export const handleRegex: NodeHandler = ({
   const aiPromptTemplate = regexConfig.aiPrompt ?? '';
   const aiPrompt = aiPromptTemplate.trim()
     ? renderTemplate(
-      aiPromptTemplate,
+        aiPromptTemplate,
         { ...nodeInputs, text: textForPrompt, lines: items } as Record<string, unknown>,
         textForPrompt
-    )
+      )
     : '';
   const aiAutoRun = regexConfig.aiAutoRun ?? false;
 
@@ -240,8 +240,8 @@ export const handleRegex: NodeHandler = ({
       const groups =
         match.groups && typeof match.groups === 'object'
           ? (Object.fromEntries(
-            Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
-          ) as Record<string, string>)
+              Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
+            ) as Record<string, string>)
           : null;
       const selectedValue = resolveRegexSelection(match, groupBy);
       const extracted = resolveExtractedValue(selectedValue, {
@@ -288,11 +288,11 @@ export const handleRegex: NodeHandler = ({
           const groups =
             match.groups && typeof match.groups === 'object'
               ? (Object.fromEntries(
-                Object.entries(match.groups).map(([k, v]: [string, unknown]) => [
-                  k,
-                  safeStringify(v),
-                ])
-              ) as Record<string, string>)
+                  Object.entries(match.groups).map(([k, v]: [string, unknown]) => [
+                    k,
+                    safeStringify(v),
+                  ])
+                ) as Record<string, string>)
               : null;
           const selectedValue = resolveRegexSelection(match, groupBy);
           const extracted = resolveExtractedValue(selectedValue, {
@@ -353,8 +353,8 @@ export const handleRegex: NodeHandler = ({
       const groups =
         match.groups && typeof match.groups === 'object'
           ? (Object.fromEntries(
-            Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
-          ) as Record<string, string>)
+              Object.entries(match.groups).map(([k, v]: [string, unknown]) => [k, safeStringify(v)])
+            ) as Record<string, string>)
           : null;
       const selectedValue = resolveRegexSelection(match, groupBy);
       const extracted = resolveExtractedValue(selectedValue, {
@@ -379,9 +379,9 @@ export const handleRegex: NodeHandler = ({
   const grouped =
     regexConfig.outputMode === 'array'
       ? Object.entries(groupedObject).map(([key, items]: [string, RegexMatchRecord[]]) => ({
-        key,
-        items,
-      }))
+          key,
+          items,
+        }))
       : groupedObject;
   const extractedValues = matches
     .filter((record: RegexMatchRecord): boolean => record.match !== null)

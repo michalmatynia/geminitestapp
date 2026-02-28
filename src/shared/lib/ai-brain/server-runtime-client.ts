@@ -259,10 +259,10 @@ export const runBrainChatCompletion = async (input: {
       body: JSON.stringify({
         ...(systemPrompt
           ? {
-            systemInstruction: {
-              parts: [{ text: systemPrompt }],
-            },
-          }
+              systemInstruction: {
+                parts: [{ text: systemPrompt }],
+              },
+            }
           : {}),
         contents,
         generationConfig: {

@@ -1,14 +1,65 @@
 'use client';
 
-import { KeyRound } from 'lucide-react';
+import { KeyRound, Plus } from 'lucide-react';
+import React, { useCallback, useMemo, useState } from 'react';
 
-import { Button, Input, Label, FormSection } from '@/shared/ui';
+import {
+  appendCatalogPoolValues,
+  BRAIN_CATALOG_POOL_LABELS,
+  BRAIN_CATALOG_POOL_VALUES,
+  catalogToEntries,
+  isSameCatalogEntry,
+} from '@/shared/lib/ai-brain/catalog-entries';
+import { useConfirm } from '@/shared/hooks/ui/useConfirm';
+import { Button, FormSection, Input, Label, useToast } from '@/shared/ui';
+import {
+  SettingsPanelBuilder,
+  type SettingsField,
+} from '@/shared/ui/templates/SettingsPanelBuilder';
 
 import { useBrain } from '../context/BrainContext';
-import { type AiBrainProviderCatalog } from '../settings';
-import { CatalogEditorField } from './CatalogEditorField';
+import {
+  sanitizeBrainProviderCatalog,
+  type AiBrainCatalogEntry,
+  type AiBrainCatalogPool,
+  type AiBrainProviderCatalog,
+} from '../settings';
+import { BrainCatalogTree } from './BrainCatalogTree';
+
+type CatalogEntryEditorState = {
+  value: string;
+  pool: AiBrainCatalogPool;
+};
+
+const EMPTY_EDITOR_STATE: CatalogEntryEditorState = {
+  value: '',
+  pool: 'modelPresets',
+};
+
+const CATALOG_ENTRY_EDITOR_FIELDS: SettingsField<CatalogEntryEditorState>[] = [
+  {
+    key: 'value',
+    label: 'Item ID',
+    type: 'text',
+    placeholder: 'gpt-4.1-mini',
+    required: true,
+  },
+  {
+    key: 'pool',
+    label: 'Pool',
+    type: 'select',
+    options: BRAIN_CATALOG_POOL_VALUES.map((pool) => ({
+      label: BRAIN_CATALOG_POOL_LABELS[pool],
+      value: pool,
+    })),
+  },
+];
+
+type CatalogEditorMode = 'create' | 'edit';
 
 export function ProvidersTab(): React.JSX.Element {
+  const { toast } = useToast();
+  const { confirm, ConfirmationModal } = useConfirm();
   const {
     openaiApiKey,
     setOpenaiApiKey,
@@ -21,7 +72,143 @@ export function ProvidersTab(): React.JSX.Element {
     ollamaModelsQuery,
     liveOllamaModels,
     syncPlaywrightPersonas,
+    saving,
   } = useBrain();
+
+  const [editorMode, setEditorMode] = useState<CatalogEditorMode>('create');
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [editorState, setEditorState] = useState<CatalogEntryEditorState>(EMPTY_EDITOR_STATE);
+  const [editingOriginal, setEditingOriginal] = useState<AiBrainCatalogEntry | null>(null);
+
+  const catalogEntries = useMemo(() => catalogToEntries(providerCatalog), [providerCatalog]);
+
+  const setCatalogEntries = useCallback(
+    (nextEntries: AiBrainCatalogEntry[]): void => {
+      setProviderCatalog((prev: AiBrainProviderCatalog) =>
+        sanitizeBrainProviderCatalog({
+          ...prev,
+          entries: nextEntries,
+        })
+      );
+    },
+    [setProviderCatalog]
+  );
+
+  const handleAddLiveToCatalog = useCallback((): void => {
+    setProviderCatalog((prev: AiBrainProviderCatalog) => {
+      const baseEntries = catalogToEntries(prev);
+      const nextEntries = appendCatalogPoolValues(baseEntries, 'ollamaModels', liveOllamaModels);
+      return sanitizeBrainProviderCatalog({
+        ...prev,
+        entries: nextEntries,
+      });
+    });
+  }, [liveOllamaModels, setProviderCatalog]);
+
+  const openCreateEditor = useCallback((): void => {
+    setEditorMode('create');
+    setEditingOriginal(null);
+    setEditorState(EMPTY_EDITOR_STATE);
+    setEditorOpen(true);
+  }, []);
+
+  const openEditEditor = useCallback((entry: AiBrainCatalogEntry): void => {
+    setEditorMode('edit');
+    setEditingOriginal(entry);
+    setEditorState({
+      value: entry.value,
+      pool: entry.pool,
+    });
+    setEditorOpen(true);
+  }, []);
+
+  const closeEditor = useCallback((): void => {
+    setEditorOpen(false);
+    setEditorMode('create');
+    setEditingOriginal(null);
+    setEditorState(EMPTY_EDITOR_STATE);
+  }, []);
+
+  const handleEditorChange = useCallback((patch: Partial<CatalogEntryEditorState>): void => {
+    setEditorState((prev) => ({
+      ...prev,
+      ...patch,
+    }));
+  }, []);
+
+  const handleSaveEditor = useCallback(async (): Promise<void> => {
+    const value = editorState.value.trim();
+    if (!value) {
+      toast('Item ID is required.', { variant: 'error' });
+      return;
+    }
+
+    const candidate: AiBrainCatalogEntry = {
+      pool: editorState.pool,
+      value,
+    };
+
+    const duplicate = catalogEntries.some((entry) => {
+      if (
+        editorMode === 'edit' &&
+        editingOriginal &&
+        isSameCatalogEntry(entry, editingOriginal)
+      ) {
+        return false;
+      }
+      return isSameCatalogEntry(entry, candidate);
+    });
+
+    if (duplicate) {
+      toast('This item already exists in the selected pool.', { variant: 'error' });
+      return;
+    }
+
+    if (editorMode === 'edit' && editingOriginal) {
+      const index = catalogEntries.findIndex((entry) => isSameCatalogEntry(entry, editingOriginal));
+      if (index >= 0) {
+        const next = [...catalogEntries];
+        next[index] = candidate;
+        setCatalogEntries(next);
+      } else {
+        setCatalogEntries([...catalogEntries, candidate]);
+      }
+    } else {
+      setCatalogEntries([...catalogEntries, candidate]);
+    }
+
+    closeEditor();
+    toast('Catalog entry updated. Save Brain settings to persist.', { variant: 'success' });
+  }, [
+    catalogEntries,
+    closeEditor,
+    editingOriginal,
+    editorMode,
+    editorState.pool,
+    editorState.value,
+    setCatalogEntries,
+    toast,
+  ]);
+
+  const handleRemoveEntry = useCallback(
+    (entry: AiBrainCatalogEntry): void => {
+      confirm({
+        title: 'Remove catalog item?',
+        message: `Remove "${entry.value}" from ${BRAIN_CATALOG_POOL_LABELS[entry.pool]}? Save Brain settings to persist.`,
+        confirmText: 'Remove',
+        isDangerous: true,
+        onConfirm: (): void => {
+          setCatalogEntries(
+            catalogEntries.filter((candidate) => !isSameCatalogEntry(candidate, entry))
+          );
+          toast('Catalog entry removed. Save Brain settings to persist.', {
+            variant: 'success',
+          });
+        },
+      });
+    },
+    [catalogEntries, confirm, setCatalogEntries, toast]
+  );
 
   return (
     <div className='space-y-4'>
@@ -42,12 +229,7 @@ export function ProvidersTab(): React.JSX.Element {
             <Button
               variant='outline'
               size='sm'
-              onClick={() =>
-                setProviderCatalog((prev: AiBrainProviderCatalog) => ({
-                  ...prev,
-                  ollamaModels: Array.from(new Set([...prev.ollamaModels, ...liveOllamaModels])),
-                }))
-              }
+              onClick={handleAddLiveToCatalog}
               disabled={liveOllamaModels.length === 0}
             >
               Add Live to Catalog
@@ -64,10 +246,8 @@ export function ProvidersTab(): React.JSX.Element {
                 : 'Failed to load Ollama models.'
               : `${liveOllamaModels.length} live model(s) available for Brain routing.`}
         </div>
-        {}
         {ollamaModelsQuery.data?.warning?.message ? (
           <div className='mt-1 text-[11px] text-amber-300'>
-            {}
             {ollamaModelsQuery.data.warning.message}
           </div>
         ) : null}
@@ -78,13 +258,15 @@ export function ProvidersTab(): React.JSX.Element {
         titleIcon={<KeyRound className='size-4 text-emerald-300' />}
         className='p-4'
       >
-        <div className='grid gap-3 md:grid-cols-3 mt-3'>
+        <div className='mt-3 grid gap-3 md:grid-cols-3'>
           <div className='space-y-1'>
             <Label className='text-xs text-gray-400'>OpenAI API key</Label>
             <Input
               type='password'
               value={openaiApiKey}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setOpenaiApiKey(e.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setOpenaiApiKey(event.target.value)
+              }
               placeholder='sk-...'
             />
           </div>
@@ -93,8 +275,8 @@ export function ProvidersTab(): React.JSX.Element {
             <Input
               type='password'
               value={anthropicApiKey}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setAnthropicApiKey(e.target.value)
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setAnthropicApiKey(event.target.value)
               }
               placeholder='sk-ant-...'
             />
@@ -104,7 +286,9 @@ export function ProvidersTab(): React.JSX.Element {
             <Input
               type='password'
               value={geminiApiKey}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setGeminiApiKey(e.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setGeminiApiKey(event.target.value)
+              }
               placeholder='AIza...'
             />
           </div>
@@ -113,83 +297,48 @@ export function ProvidersTab(): React.JSX.Element {
 
       <FormSection
         title='Model and Agent Catalog'
-        description='Define pools for agent models, deepthinking agents, paid models, Ollama, and Playwright personas.'
+        description='Flat Brain catalog list across all pools. Drag to reorder, click edit to update ID/pool.'
         actions={
-          <Button variant='outline' size='sm' onClick={syncPlaywrightPersonas}>
-            Sync Playwright Personas
-          </Button>
+          <div className='flex flex-wrap items-center gap-2'>
+            <Button variant='outline' size='sm' onClick={syncPlaywrightPersonas}>
+              Sync Playwright Personas
+            </Button>
+            <Button variant='outline' size='sm' onClick={openCreateEditor}>
+              <Plus className='mr-1.5 size-3.5' />
+              Add Item
+            </Button>
+          </div>
         }
         className='p-4'
       >
-        <div className='mt-4 grid gap-4 lg:grid-cols-2'>
-          <CatalogEditorField
-            label='Core model presets'
-            description='General model defaults used across the Brain editors.'
-            value={providerCatalog.modelPresets}
-            onChange={(next: string[]) =>
-              setProviderCatalog((prev: AiBrainProviderCatalog) => ({
-                ...prev,
-                modelPresets: next,
-              }))
-            }
-            placeholder='gpt-4o-mini&#10;claude-3-5-sonnet-20241022'
-          />
-          <CatalogEditorField
-            label='Paid models'
-            description='Premium models you want to route explicitly.'
-            value={providerCatalog.paidModels}
-            onChange={(next: string[]) =>
-              setProviderCatalog((prev: AiBrainProviderCatalog) => ({ ...prev, paidModels: next }))
-            }
-            placeholder='gpt-4.1&#10;o1-mini'
-          />
-          <CatalogEditorField
-            label='Ollama models'
-            description='Local/Ollama model ids (e.g. llama3.1, mistral).'
-            value={providerCatalog.ollamaModels}
-            onChange={(next: string[]) =>
-              setProviderCatalog((prev: AiBrainProviderCatalog) => ({
-                ...prev,
-                ollamaModels: next,
-              }))
-            }
-            placeholder='llama3.1&#10;mistral'
-          />
-          <CatalogEditorField
-            label='Agent models'
-            description='General purpose agent ids.'
-            value={providerCatalog.agentModels}
-            onChange={(next: string[]) =>
-              setProviderCatalog((prev: AiBrainProviderCatalog) => ({ ...prev, agentModels: next }))
-            }
-            placeholder='agent_sales_ops&#10;agent_growth'
-          />
-          <CatalogEditorField
-            label='Deepthinking agents'
-            description='Agent ids specialized for deeper multi-step reasoning.'
-            value={providerCatalog.deepthinkingAgents}
-            onChange={(next: string[]) =>
-              setProviderCatalog((prev: AiBrainProviderCatalog) => ({
-                ...prev,
-                deepthinkingAgents: next,
-              }))
-            }
-            placeholder='deepthink_incident&#10;deepthink_forecast'
-          />
-          <CatalogEditorField
-            label='Playwright personas'
-            description='Persona ids for tasks that require browser automation.'
-            value={providerCatalog.playwrightPersonas}
-            onChange={(next: string[]) =>
-              setProviderCatalog((prev: AiBrainProviderCatalog) => ({
-                ...prev,
-                playwrightPersonas: next,
-              }))
-            }
-            placeholder='persona_checkout_bot&#10;persona_scraper'
+        <div className='mt-2 text-[11px] text-gray-500'>
+          {catalogEntries.length} catalog item{catalogEntries.length === 1 ? '' : 's'}.
+        </div>
+        <div className='mt-3'>
+          <BrainCatalogTree
+            entries={catalogEntries}
+            onChange={setCatalogEntries}
+            onEdit={openEditEditor}
+            onRemove={handleRemoveEntry}
+            isPending={saving}
           />
         </div>
       </FormSection>
+
+      <SettingsPanelBuilder<CatalogEntryEditorState>
+        open={editorOpen}
+        onClose={closeEditor}
+        title={editorMode === 'edit' ? 'Edit Catalog Item' : 'Add Catalog Item'}
+        subtitle='Update item ID and pool. Save Brain settings to persist changes.'
+        fields={CATALOG_ENTRY_EDITOR_FIELDS}
+        values={editorState}
+        onChange={handleEditorChange}
+        onSave={handleSaveEditor}
+        size='sm'
+      />
+
+      <ConfirmationModal />
     </div>
   );
 }
+

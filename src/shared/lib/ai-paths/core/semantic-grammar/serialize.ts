@@ -126,11 +126,11 @@ export const serializePathConfigToSemanticCanvas = (
     const identityExtension =
       nodeTypeId.length > 0 || instanceId.length > 0
         ? {
-          aiPathsIdentity: {
-            ...(nodeTypeId.length > 0 ? { nodeTypeId } : {}),
-            instanceId: instanceId.length > 0 ? instanceId : node.id,
-          },
-        }
+            aiPathsIdentity: {
+              ...(nodeTypeId.length > 0 ? { nodeTypeId } : {}),
+              instanceId: instanceId.length > 0 ? instanceId : node.id,
+            },
+          }
         : null;
     return {
       id: node.id,

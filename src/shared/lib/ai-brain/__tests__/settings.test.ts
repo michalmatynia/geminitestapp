@@ -5,7 +5,9 @@ import {
   getDefaultCapabilityForFeature,
   getBrainCapabilityDefinition,
   getBrainCapabilityModelFamilies,
+  parseBrainProviderCatalog,
   resolveBrainCapabilityAssignment,
+  sanitizeBrainProviderCatalog,
   sanitizeBrainAssignment,
   sanitizeBrainAssignmentForProviders,
 } from '../settings';
@@ -79,5 +81,76 @@ describe('ai-brain settings helpers', () => {
       'ocr',
     ]);
     expect(getBrainCapabilityModelFamilies('chatbot.reply')).toEqual(['chat']);
+  });
+
+  it('hydrates provider catalog entries from legacy pool arrays', () => {
+    const parsed = parseBrainProviderCatalog(
+      JSON.stringify({
+        modelPresets: [' gpt-4o-mini ', 'gpt-4o-mini'],
+        paidModels: ['gpt-4.1'],
+        ollamaModels: ['llama3.1'],
+        agentModels: [],
+        deepthinkingAgents: [],
+        playwrightPersonas: ['persona_checkout_bot'],
+      })
+    );
+
+    expect(parsed.entries).toEqual([
+      { pool: 'modelPresets', value: 'gpt-4o-mini' },
+      { pool: 'paidModels', value: 'gpt-4.1' },
+      { pool: 'ollamaModels', value: 'llama3.1' },
+      { pool: 'playwrightPersonas', value: 'persona_checkout_bot' },
+    ]);
+    expect(parsed.modelPresets).toEqual(['gpt-4o-mini']);
+    expect(parsed.paidModels).toEqual(['gpt-4.1']);
+    expect(parsed.ollamaModels).toEqual(['llama3.1']);
+    expect(parsed.playwrightPersonas).toEqual(['persona_checkout_bot']);
+  });
+
+  it('treats non-empty entries as canonical and preserves entry order', () => {
+    const parsed = parseBrainProviderCatalog(
+      JSON.stringify({
+        entries: [
+          { pool: 'paidModels', value: 'gpt-4.1' },
+          { pool: 'modelPresets', value: 'gpt-4o-mini' },
+        ],
+        modelPresets: ['legacy-ignored'],
+        paidModels: ['legacy-ignored'],
+        ollamaModels: [],
+        agentModels: [],
+        deepthinkingAgents: [],
+        playwrightPersonas: [],
+      })
+    );
+
+    expect(parsed.entries).toEqual([
+      { pool: 'paidModels', value: 'gpt-4.1' },
+      { pool: 'modelPresets', value: 'gpt-4o-mini' },
+    ]);
+    expect(parsed.paidModels).toEqual(['gpt-4.1']);
+    expect(parsed.modelPresets).toEqual(['gpt-4o-mini']);
+  });
+
+  it('sanitizes provider entries and emits both entries and arrays', () => {
+    const sanitized = sanitizeBrainProviderCatalog({
+      entries: [
+        { pool: 'modelPresets', value: ' gpt-4o-mini ' },
+        { pool: 'modelPresets', value: 'gpt-4o-mini' },
+        { pool: 'paidModels', value: 'gpt-4.1' },
+      ],
+      modelPresets: ['legacy'],
+      paidModels: ['legacy'],
+      ollamaModels: [],
+      agentModels: [],
+      deepthinkingAgents: [],
+      playwrightPersonas: [],
+    });
+
+    expect(sanitized.entries).toEqual([
+      { pool: 'modelPresets', value: 'gpt-4o-mini' },
+      { pool: 'paidModels', value: 'gpt-4.1' },
+    ]);
+    expect(sanitized.modelPresets).toEqual(['gpt-4o-mini']);
+    expect(sanitized.paidModels).toEqual(['gpt-4.1']);
   });
 });

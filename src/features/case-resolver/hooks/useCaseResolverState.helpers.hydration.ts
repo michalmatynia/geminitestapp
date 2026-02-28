@@ -13,11 +13,13 @@ export type CaseResolverWorkspaceHydrationDecision = {
   reason: CaseResolverWorkspaceHydrationDecisionReason;
 };
 
-export type CaseResolverWorkspaceHydrationSource = 'store' | 'heavy' | 'none';
+export type CaseResolverWorkspaceHydrationSource = 'store' | 'navigation' | 'heavy' | 'none';
 
 export type CaseResolverWorkspaceHydrationSourceReason =
   | CaseResolverWorkspaceHydrationDecisionReason
   | 'store_only'
+  | 'navigation_requested_file_fallback'
+  | 'navigation_only'
   | 'heavy_only'
   | 'store_preferred'
   | 'no_workspace_source';
@@ -107,19 +109,53 @@ export const shouldRefetchSettingsStoreForRequestedFile = ({
 
 export const resolvePreferredCaseResolverWorkspace = ({
   storeWorkspace,
+  navigationWorkspace,
   hasStoreWorkspace,
+  hasNavigationWorkspace,
+  requestedFileId,
 }: {
   storeWorkspace: CaseResolverWorkspace;
+  navigationWorkspace?: CaseResolverWorkspace;
   heavyWorkspace?: CaseResolverWorkspace;
   hasStoreWorkspace: boolean;
+  hasNavigationWorkspace?: boolean;
   hasHeavyWorkspace?: boolean;
-  requestedFileId?: string | null;
+  requestedFileId: string | null;
 }): CaseResolverWorkspaceHydrationSourceSelection => {
+  const normalizedRequestedFileId = normalizeRequestedFileId(requestedFileId);
+  const resolvedNavigationWorkspace = navigationWorkspace ?? storeWorkspace;
+  const navigationHasRequestedFile =
+    normalizedRequestedFileId.length > 0 &&
+    hasRequestedFile(resolvedNavigationWorkspace, normalizedRequestedFileId);
+  const storeHasRequestedFile =
+    normalizedRequestedFileId.length > 0 &&
+    hasRequestedFile(storeWorkspace, normalizedRequestedFileId);
+
   if (hasStoreWorkspace) {
+    if (
+      normalizedRequestedFileId.length > 0 &&
+      hasNavigationWorkspace &&
+      navigationHasRequestedFile &&
+      !storeHasRequestedFile
+    ) {
+      return {
+        workspace: resolvedNavigationWorkspace,
+        source: 'navigation',
+        reason: 'navigation_requested_file_fallback',
+      };
+    }
     return {
       workspace: storeWorkspace,
       source: 'store',
       reason: 'store_only',
+    };
+  }
+
+  if (hasNavigationWorkspace && navigationHasRequestedFile) {
+    return {
+      workspace: resolvedNavigationWorkspace,
+      source: 'navigation',
+      reason: 'navigation_only',
     };
   }
 

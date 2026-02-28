@@ -19,7 +19,7 @@ export function useQueryScheduler(): {
   ) => void;
   cancelScheduledQuery: (id: string) => void;
   clearAllScheduled: () => void;
-  } {
+} {
   const queryClient = useQueryClient();
   const scheduledQueries = useRef<
     Map<
@@ -29,9 +29,9 @@ export function useQueryScheduler(): {
         queryFn: () => Promise<unknown>;
         config: QuerySchedulerConfig;
         timeout?: NodeJS.Timeout;
-          }
-          >
-          >(new Map());
+      }
+    >
+  >(new Map());
 
   const scheduleQuery = useCallback(
     (

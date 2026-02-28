@@ -28,6 +28,8 @@ import { ValidatorListNodeItem } from './ValidatorListNodeItem';
 
 // ─── Tree Profile ─────────────────────────────────────────────────────────────
 
+const VALIDATOR_LIST_MASTER_SETTINGS_HREF = '/admin/settings/folder-trees';
+
 const VALIDATOR_LIST_TREE_PROFILE: FolderTreeProfileV2 = {
   version: 2,
   placeholders: {
@@ -172,13 +174,32 @@ export function ValidatorListTree({
   return (
     <MasterFolderTreeRuntimeProvider>
       <ValidatorListTreeContext.Provider value={contextValue}>
-        <FolderTreeViewportV2
-          controller={controller}
-          renderNode={renderNode}
-          onNodeDrop={onNodeDrop}
-          enableDnd={!isPending}
-          emptyLabel='No validation pattern lists'
-        />
+        <div className='relative'>
+          <FolderTreeViewportV2
+            controller={controller}
+            renderNode={renderNode}
+            onNodeDrop={onNodeDrop}
+            enableDnd={!isPending}
+            emptyLabel='No validation pattern lists'
+          />
+          <button
+            type='button'
+            className='absolute bottom-2 right-2 z-20 inline-flex size-6 items-center justify-center rounded-full border border-border bg-muted/80 text-[11px] font-semibold lowercase text-gray-300 shadow-sm transition hover:bg-muted hover:text-white'
+            title='Open master tree instance settings'
+            aria-label='Open master tree instance settings'
+            onMouseDown={(event: React.MouseEvent<HTMLButtonElement>): void => {
+              event.stopPropagation();
+            }}
+            onClick={(event: React.MouseEvent<HTMLButtonElement>): void => {
+              event.preventDefault();
+              event.stopPropagation();
+              if (typeof window === 'undefined') return;
+              window.location.assign(VALIDATOR_LIST_MASTER_SETTINGS_HREF);
+            }}
+          >
+            m
+          </button>
+        </div>
       </ValidatorListTreeContext.Provider>
     </MasterFolderTreeRuntimeProvider>
   );

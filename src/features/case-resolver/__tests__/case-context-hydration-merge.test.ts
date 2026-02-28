@@ -120,6 +120,7 @@ describe('case resolver workspace hydration merge', () => {
     const selection = resolvePreferredCaseResolverWorkspace({
       storeWorkspace,
       hasStoreWorkspace: true,
+      hasNavigationWorkspace: false,
       hasHeavyWorkspace: true,
       requestedFileId: 'case-heavy',
     });
@@ -154,6 +155,7 @@ describe('case resolver workspace hydration merge', () => {
       storeWorkspace,
       heavyWorkspace,
       hasStoreWorkspace: true,
+      hasNavigationWorkspace: false,
       hasHeavyWorkspace: true,
       requestedFileId: null,
     });
@@ -168,6 +170,7 @@ describe('case resolver workspace hydration merge', () => {
       storeWorkspace: createDefaultCaseResolverWorkspace(),
       heavyWorkspace: createDefaultCaseResolverWorkspace(),
       hasStoreWorkspace: false,
+      hasNavigationWorkspace: false,
       hasHeavyWorkspace: true,
       requestedFileId: null,
     });
@@ -182,6 +185,7 @@ describe('case resolver workspace hydration merge', () => {
       storeWorkspace: createDefaultCaseResolverWorkspace(),
       heavyWorkspace: createDefaultCaseResolverWorkspace(),
       hasStoreWorkspace: false,
+      hasNavigationWorkspace: false,
       hasHeavyWorkspace: false,
       requestedFileId: null,
     });
@@ -237,5 +241,61 @@ describe('case resolver workspace hydration merge', () => {
         lastRefetchedFileId: 'case-requested',
       })
     ).toBe(false);
+  });
+
+  it('uses navigation workspace fallback when store snapshot misses the requested file', () => {
+    const requestedCase = createCaseResolverFile({
+      id: 'case-requested',
+      fileType: 'case',
+      name: 'Requested Case',
+    });
+    const storeWorkspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      id: 'workspace-store',
+      files: [],
+      workspaceRevision: 4,
+    };
+    const navigationWorkspace = {
+      ...createDefaultCaseResolverWorkspace(),
+      id: 'workspace-nav',
+      files: [requestedCase],
+      activeFileId: requestedCase.id,
+      workspaceRevision: 3,
+    };
+
+    const selection = resolvePreferredCaseResolverWorkspace({
+      storeWorkspace,
+      navigationWorkspace,
+      hasStoreWorkspace: true,
+      hasNavigationWorkspace: true,
+      requestedFileId: requestedCase.id,
+    });
+
+    expect(selection.source).toBe('navigation');
+    expect(selection.reason).toBe('navigation_requested_file_fallback');
+    expect(selection.workspace.files.some((file) => file.id === requestedCase.id)).toBe(true);
+  });
+
+  it('uses navigation workspace when store is unavailable and requested file is present in navigation cache', () => {
+    const requestedCase = createCaseResolverFile({
+      id: 'case-requested',
+      fileType: 'case',
+      name: 'Requested Case',
+    });
+    const selection = resolvePreferredCaseResolverWorkspace({
+      storeWorkspace: createDefaultCaseResolverWorkspace(),
+      navigationWorkspace: {
+        ...createDefaultCaseResolverWorkspace(),
+        id: 'workspace-nav',
+        files: [requestedCase],
+        activeFileId: requestedCase.id,
+      },
+      hasStoreWorkspace: false,
+      hasNavigationWorkspace: true,
+      requestedFileId: requestedCase.id,
+    });
+
+    expect(selection.source).toBe('navigation');
+    expect(selection.reason).toBe('navigation_only');
   });
 });
